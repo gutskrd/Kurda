@@ -1,14 +1,14 @@
 /**
  * Hamo: a man in a traditional Kurdish suit — a dark brown jacket crossed
- * over an olive shirt, a plain green pştên wound at the waist, wide trousers
+ * over a white shirt, a plain green pştên at the waist, wide trousers
  * gathered at the ankle, and brown shoes — standing with his hands on his
  * hips, his head turned a little to one side, smiling under a full black
  * moustache, his hair black like the reference’s.
  *
  * Drawn flat, each part one tone, with a few shade shapes where the form
- * turns: his jaw, under his nose, inside his ear, the folds of the jacket,
- * sash and trousers. That is all the shading the suit has, so it is all the
- * drawing has; the pştên shows only the folds of its winding.
+ * turns: his jaw, under his nose, inside his ear, the folds of the jacket
+ * and trousers. That is all the shading the suit has, so it is all the
+ * drawing has; the pştên is one flat tone of green, as he asked for it.
  *
  * His head reaches down over his neck to just above the collar, the same
  * skin tone as the neck drawn beneath it, so the head can nod without a seam
@@ -36,10 +36,8 @@ const C = {
   moustache: '#1f1510',
   suit: '#5b3b26',
   fold: '#452a18',
-  shirt: '#9e9468',
+  shirt: '#f1ede4',
   sash: '#45502c',
-  sashFold: '#2d3519',
-  sashLight: '#6b7442',
   shoe: '#99572e',
 } as const;
 
@@ -183,15 +181,10 @@ const SASH_BOW_BOTTOM = 3;
 /** How deep the wound cloth reaches below its top edge, measured between the reference’s hands: a thin band worn up at the waist, his fingers curling over its top edge. */
 const SASH_DEPTH = 33;
 
-/** The bow of a winding at `y`, growing from the top edge’s sag to the bottom edge’s as the cloth rounds. */
-const bowAt = (y: number): number => SASH_BOW_TOP + ((SASH_BOW_BOTTOM - SASH_BOW_TOP) * (y - SASH_TOP)) / SASH_DEPTH;
-
 /**
- * The pştên, wound round his waist from hip to hip: its top and bottom edges
- * bow down together at the front, its ends run under his hands and round his
- * sides, where they follow the line of his hips. It reaches below his hands,
- * so the whole of it shows from one side of him to the other: cloth he wears,
- * that his hands rest on, not a thing held out in front of him.
+ * The pştên, wound round his waist from hip to hip in one flat green: its top
+ * and bottom edges bow down together at the front, its ends run under his
+ * hands and round his sides, where they follow the line of his hips.
  */
 function sashOutline(bottom: number): string {
   const [t, b] = [SASH_TOP, bottom];
@@ -199,42 +192,6 @@ function sashOutline(bottom: number): string {
   return (
     `M112.4,${n(t + 2.5)}L116,${t}Q180,${n(t + SASH_BOW_TOP * 2)} 244,${t}H244.6L244,330L241,341.5L241,${n(b)}` +
     `Q180,${n(b + SASH_BOW_BOTTOM * 2)} 116,${n(b)}H111L112.4,338Z`
-  );
-}
-
-/**
- * The folds of the wound cloth: darker lines where one winding lies over the
- * next, each bowing down at the front with the sash, and a faint light
- * between them where the cloth rounds.
- */
-function sashFolds(): string {
-  const at = (y: number): string => `M104,${n(y)}H116Q180,${n(y + bowAt(y) * 2)} 244,${n(y)}H252`;
-  const t = SASH_TOP;
-  return (
-    line([t + 6.5, t + 13.5, t + 20.5, t + 27.5].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
-    line([t + 10, t + 24, t + 31].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
-  );
-}
-
-/** Where his fingers press into the pştên, the cloth gathers: short creases running out from under each hand towards the middle. */
-const GATHERS: readonly (readonly Pt[])[] = [
-  [[154, 332], [163, 333.5], [173, 334.3]],
-  [[155, 341], [164, 342.3], [174, 342.9]],
-  [[205, 330.5], [196, 332.1], [187, 332.9]],
-  [[208, 339], [199, 340.5], [190, 341.2]],
-];
-
-/**
- * The pştên's shade, kept inside it: a little along its bottom edge, where
- * the wound cloth turns under round him, and the creases his fingers make in
- * it. It is what makes it cloth worn at the waist, not a flat band.
- */
-function sashShade(bottom: number): string {
-  const strip = (from: number, to: number): string =>
-    `M100,${n(from)}H116Q180,${n(from + bowAt(from) * 2)} 244,${n(from)}H254V${n(to)}H244Q180,${n(to + bowAt(to) * 2)} 116,${n(to)}H100Z`;
-  return (
-    fill(strip(bottom - 3.2, bottom), '#000', alpha(0.24)) +
-    fill(GATHERS.map((s) => taper(s, [0.6, 1.6, 0.2])).join(''), '#000', alpha(0.38))
   );
 }
 
@@ -335,14 +292,10 @@ const NECK: Knot[] = [
 
 const strokes = (list: readonly (readonly Pt[])[]): string => list.map((s) => curve(s.map(([x, y]) => [x, y] as const), false)).join('');
 
-function body(p: string): string {
-  const id = (name: string): string => `${p}${name}`;
-  const bottom = SASH_TOP + SASH_DEPTH;
-  const sash = sashOutline(bottom);
+function body(): string {
+  const sash = sashOutline(SASH_TOP + SASH_DEPTH);
   return part(
-    [
-      clipDef(id('sash'), sash),
-    ],
+    [],
     [
       // the ankles, between cuff and shoe
       fill('M125,660h35v18h-35zM204.6,660h36.9v17.6h-36.9z', C.skin),
@@ -355,7 +308,6 @@ function body(p: string): string {
       // drawn over the jacket's hem, so they fall straight from the sash
       line(strokes(PLEATS), C.fold, 3.4),
       fill(sash, C.sash),
-      clipped(id('sash'), sashFolds() + sashShade(bottom)),
       // the hands lie over the pştên in the skin of his face, the fingers forward and the thumbs back
       fill(curve(HAND_LEFT) + curve(HAND_RIGHT), C.skin),
       fill(CREASES.map((s) => taper(s, [0.2, 0.8, 0.25])).join(''), C.shade),
@@ -405,29 +357,19 @@ const JAW: Knot[] = [
 ];
 
 /**
- * His nose, as the reference draws it: no line down the ridge at all, only
- * a soft, broad shade on the far side of its lower half where the nose
- * rounds toward the tip, the crease round the far wing, the near wing only
- * faintly, and the shadow under the tip, which tucks under the moustache so
- * the base is hidden the way the reference’s is.
+ * His nose, as the reference draws it: no line down the ridge and no edge
+ * drawn round it, only a soft, broad shade on the far side of its lower half
+ * where it rounds toward the tip, and a soft shadow under the tip that tucks
+ * under the moustache, so the base is hidden the way the reference’s is.
  */
 const NOSE_SIDE: Knot[] = [
-  [196.8, 112.5, 0.5], [199.0, 115.5], [201.0, 119.5], [202.8, 123.5], [203.4, 126.8], [202.0, 128.4, 0.5], [199.4, 128.0],
-  [197.4, 125.5], [196.4, 121], [196.2, 116],
-];
-
-const NOSE_WING_FAR: Knot[] = [
-  [200.6, 121.0, 0.4], [203.1, 122.4], [204.8, 125.0], [204.4, 127.8], [202.6, 129.0, 0.4], [202.4, 127.8], [203.2, 125.4],
-  [201.9, 123.2], [200.4, 122.2],
-];
-
-const NOSE_WING_NEAR: Knot[] = [
-  [191.9, 123.6, 0.4], [190.7, 125.6], [190.8, 127.7], [191.9, 128.7, 0.4], [191.4, 127.5], [191.5, 125.7],
+  [196.8, 112.5, 0.5], [198.8, 115.5], [200.6, 119.5], [202.0, 123.5], [202.4, 126.6], [201.0, 128.0, 0.5], [199.0, 127.6],
+  [197.4, 125.2], [196.4, 121], [196.2, 116],
 ];
 
 const NOSE_BASE: Knot[] = [
-  [191.4, 127.8, 0.5], [195.3, 127.3], [199.0, 127.5], [202.2, 128.5], [202.0, 131.6, 0.5], [197.8, 130.9], [194.0, 131.0],
-  [191.2, 129.6],
+  [193.0, 128.0, 0.5], [196.5, 127.4], [199.6, 127.6], [201.8, 128.8], [201.4, 131.4, 0.5], [198.0, 131.2], [194.6, 131.2],
+  [192.6, 129.8],
 ];
 
 /**
@@ -438,16 +380,14 @@ const NOSE_BASE: Knot[] = [
  * brow is the same shape foreshortened, its inner end blunt and low.
  */
 const BROW_LEFT: Knot[] = [
-  [165.4, 100.5, 0.15], [166.9, 99.3], [168.3, 97.8], [169.6, 96.8], [171.0, 96.2], [172.3, 95.4], [174.3, 95.2], [176.4, 95.3],
-  [178.4, 95.7], [180.4, 95.8], [182.4, 96.3], [184.5, 96.8], [186.5, 97.5], [188.6, 98.9, 0.5], [188.8, 100.6], [187.2, 101.2],
-  [185.0, 100.8], [182.4, 100.6], [180.4, 100.3], [178.4, 99.6], [176.4, 98.9], [174.3, 98.8], [172.3, 98.8], [170.3, 99.1],
-  [168.3, 99.4], [166.9, 100.2],
+  [165.4, 100.5, 0.15], [167.0, 98.9], [169.6, 96.9], [172.5, 95.5], [175.5, 95.2], [178.5, 95.5], [181.5, 96.0], [184.5, 96.7],
+  [187.0, 97.7], [188.7, 99.0, 0.5], [188.8, 100.7], [186.5, 101.1], [183.5, 100.8], [180.5, 100.3], [177.5, 99.5], [174.5, 98.9],
+  [171.5, 98.9], [168.5, 99.4], [166.5, 100.1],
 ];
 
 const BROW_RIGHT: Knot[] = [
-  [198.3, 100.6, 0.5], [199.4, 98.9], [200.7, 97.8], [202.1, 97.3], [204.7, 97.2], [206.1, 96.8], [207.5, 96.3], [210.2, 96.3],
-  [211.5, 97.2], [212.9, 98.6], [214.2, 99.7], [216.0, 100.7, 0.15], [214.2, 101.3], [212.9, 101.3], [211.5, 100.4], [210.2, 99.8],
-  [208.8, 99.8], [207.5, 100.3], [206.1, 100.4], [204.7, 100.8], [203.4, 101.3], [202.1, 101.8], [200.7, 101.8], [199.4, 101.8],
+  [198.3, 100.6, 0.5], [199.6, 98.7], [201.5, 97.5], [204.0, 97.1], [207.0, 96.4], [209.8, 96.3], [212.0, 97.3], [214.0, 99.0],
+  [216.0, 100.7, 0.15], [214.2, 101.3], [212.0, 100.9], [209.5, 99.9], [206.5, 100.3], [203.5, 101.1], [200.5, 101.8], [199.2, 101.7],
 ];
 
 /**
@@ -517,10 +457,8 @@ function head(): string {
       fill(curve(EAR_SHADE) + curve(EAR_SHADE2), C.earShade),
       fill(curve(FACE), C.skin),
       fill(curve(JAW), C.shade, alpha(0.85)),
-      fill(curve(NOSE_SIDE), C.shade, alpha(0.2)),
-      fill(curve(NOSE_WING_FAR), C.shade, alpha(0.45)),
-      fill(curve(NOSE_WING_NEAR), C.shade, alpha(0.25)),
-      fill(curve(NOSE_BASE), C.shade, alpha(0.5)),
+      fill(curve(NOSE_SIDE), C.shade, alpha(0.18)),
+      fill(curve(NOSE_BASE), C.shade, alpha(0.35)),
       fill(curve(HAIR), C.hair),
       fill(curve(BROW_LEFT) + curve(BROW_RIGHT), C.brow),
     ],
@@ -632,7 +570,7 @@ export function drawHamo(p: string): CharacterArt {
     // head to hips: his hands on his sash, and the top of his trousers
     half: { x: 34, y: 42, w: 278, h: 360 },
     headPivot: { x: 181, y: 160 },
-    body: body(p),
+    body: body(),
     head: head(),
     eyes: { open: eyesOpen(p), closed: eyesClosed(), happy: eyesHappy() },
     mouths: humanMouths(
