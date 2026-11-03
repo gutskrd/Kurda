@@ -176,11 +176,11 @@ const PLEATS: readonly (readonly Pt[])[] = [
 ];
 
 /** Where the pştên's top edge is at his sides, and how far it and every band in it bow down at the front: a little, as cloth round a waist does. */
-const SASH_TOP = 317;
+const SASH_TOP = 313;
 const SASH_BOW = 2.5;
 
-/** How deep the wound cloth reaches below its top edge: a slimmer band than it once was, as the reference wears it. */
-const SASH_DEPTH = 50;
+/** How deep the wound cloth reaches below its top edge: a slimmer band than it once was, its top edge back under his fingers so his hands hold it. */
+const SASH_DEPTH = 54;
 
 /**
  * The pştên, wound round his waist from hip to hip: its top and bottom edges
@@ -192,7 +192,7 @@ const SASH_DEPTH = 50;
 function sashOutline(bottom: number): string {
   const [t, b] = [SASH_TOP, bottom];
   return (
-    `M112.4,319.5L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L241.6,341.5L241.6,348L247.3,362.5L248.4,${n(b)}` +
+    `M112.4,315.5L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L241.6,341.5L241.6,348L247.3,362.5L248.4,${n(b)}` +
     `H244Q180,${n(b + SASH_BOW * 2)} 116,${n(b)}H104.2L106.3,359.4L110.3,348.4L112.4,340Z`
   );
 }
@@ -205,8 +205,8 @@ function sashOutline(bottom: number): string {
 function sashFolds(): string {
   const at = (y: number): string => `M104,${n(y)}H116Q180,${n(y + SASH_BOW * 2)} 244,${n(y)}H252`;
   return (
-    line([324.5, 332.5, 341, 349.5, 358].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
-    line([328.5, 345, 362.5].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
+    line([320.5, 329.5, 338.5, 347.5, 356.5].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
+    line([325, 343, 361].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
   );
 }
 
@@ -403,17 +403,32 @@ const NOSE_SHADE: Knot[] = [
 ];
 
 /** His brows: thick and straight, a little heavier toward the middle. */
-const BROW_LEFT: Knot[] = [
-  [164.4, 101.2, 0.4], [165.4, 99.4], [167.4, 98.1], [170.4, 97.5], [173.4, 97.2], [176.4, 97.3], [179.4, 97.5],
-  [182.4, 98], [185.2, 98.6], [187.6, 100.4, 0.4], [186.8, 102.2], [184.8, 102.7], [182, 102.1], [179, 101.5],
-  [176, 101.2], [173, 101.2], [170, 101.4], [167, 101.8],
+/**
+ * His brows, measured from the reference: bold and nearly straight, a gentle
+ * arch of barely a unit, sitting low over the eyes, heaviest through the
+ * squared inner end and tapering to a fine tail at the temple. Each is a
+ * stroke of varying width, so the taper is the shape.
+ */
+const BROW_LEFT: Pt[] = [
+  [163.9, 103.3],
+  [167.4, 101.8],
+  [171.4, 100.9],
+  [175.9, 100.6],
+  [180.4, 100.9],
+  [184.9, 101.9],
 ];
 
-const BROW_RIGHT: Knot[] = [
-  [198.8, 101.6], [199.2, 100.3], [200.5, 99.3], [203.2, 98.4], [207.6, 98.0], [211.4, 98.0], [213.6, 98.5],
-  [215.6, 99.7], [216.2, 101.4], [215.9, 102.3], [215.4, 102.5], [213.4, 102.1], [209.9, 102.2], [200.6, 103.3],
-  [199.4, 103.0],
+const BROW_RIGHT: Pt[] = [
+  [199.4, 101.9],
+  [203.4, 100.7],
+  [207.9, 100.3],
+  [212.1, 100.7],
+  [215.4, 101.6],
+  [217.4, 102.7],
 ];
+
+const BROW_W_LEFT = [0.6, 2.5, 3.3, 3.6, 3.6, 3.1];
+const BROW_W_RIGHT = [3.1, 3.6, 3.6, 3.3, 2.5, 0.6];
 
 /**
  * His face and neck down to just above the collar, in one flat tone. Its top
@@ -484,11 +499,11 @@ function head(): string {
       fill(curve(EAR_SHADE) + curve(EAR_SHADE2), C.earShade),
       fill(curve(FACE), C.skin),
       fill(curve(JAW), C.shade, alpha(0.85)),
-      // the nose: shade down its far side and under it
-      fill(taper([[197.4, 104], [197.2, 110], [198.2, 117.4], [199.6, 122]], [0, 1.1, 1.5, 1.4]), C.shade, alpha(0.55)),
-      fill(curve(NOSE_SHADE), C.shade, alpha(0.85)),
+      // the nose: shade down its far side and under it, kept light so the nose reads straight and fine rather than smudged
+      fill(taper([[197.4, 104], [197.2, 110], [198.2, 117.4], [199.6, 122]], [0, 1, 1.3, 1.2]), C.shade, alpha(0.42)),
+      fill(curve(NOSE_SHADE), C.shade, alpha(0.6)),
       fill(curve(HAIR), C.hair),
-      fill(curve(BROW_LEFT) + curve(BROW_RIGHT), C.brow),
+      fill(taper(BROW_LEFT, BROW_W_LEFT) + taper(BROW_RIGHT, BROW_W_RIGHT), C.brow),
     ],
   );
 }
