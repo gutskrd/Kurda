@@ -83,6 +83,10 @@ describe('the lesson’s speaking characters', () => {
     act(() => clip.finish());
     await settle();
     expect(mouth()).toBe('rest');
+    // the speaking loop must stop with the clip. The animated values may still
+    // have a flush frame or two queued (they run once and stop); a loop that
+    // leaked reschedules itself every frame, so it alone survives the draining.
+    for (let i = 0; i < 5 && frames.pending > 0; i++) act(() => frames.step());
     expect(frames.pending).toBe(0);
   });
 
