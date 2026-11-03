@@ -41,6 +41,7 @@ const C = {
   suit: '#5b3b26',
   fold: '#452a18',
   shirt: '#9e9468',
+  shirtFold: '#7c7450',
   sash: '#45502c',
   sashFold: '#2d3519',
   sashLight: '#6b7442',
@@ -95,14 +96,14 @@ const SHIRT: Knot[] = [
 
 /** Wide trousers, full to the knee and gathered in at each ankle, the space between the legs left open. */
 const TROUSERS: Knot[] = [
-  [110.1, 350.3], [106.3, 359.4], [102.3, 373.9], [98.4, 393.3], [94.5, 422.6], [90.7, 468.6], [87.3, 533.6],
-  [86.9, 565.9], [90.3, 604.8], [94.6, 624.6], [98.4, 636], [102.4, 644], [106.8, 650.6], [114.1, 658.5],
+  [110.1, 350.3], [106.3, 359.4], [102.3, 373.9], [97.4, 393.3], [91, 422.6], [85.5, 468.6], [81, 533.6],
+  [80.5, 565.9], [84.5, 604.8], [90, 624.6], [95.4, 636], [100.4, 644], [105.6, 650.6], [113.5, 658.5],
   [121.8, 663.8], [123.2, 667.6, 0.4], [125.3, 667.6, 0.3], [125.6, 665.1, 0.3], [138.9, 665], [149.3, 664.6],
   [158.3, 664, 0.4], [159.4, 663], [165.4, 657.2], [169.3, 650.4], [173.6, 635.7], [174.6, 626.2], [176.6, 560],
   [178.8, 490.9], [180.1, 470.9, 0.3], [181.6, 490.9], [183.4, 550], [185.2, 607.4], [186.9, 631.2], [190.7, 646.5],
   [194.9, 655.2], [198.4, 659.3], [204.8, 664.4, 0.4], [206.6, 663.4], [211.9, 664.4], [224.1, 664.8],
-  [233.4, 664.3], [240.3, 664, 0.4], [241, 661.8], [249.7, 654.3], [257.9, 642.3], [262.1, 632.5], [266, 617.4],
-  [269.1, 592.4], [269.9, 578.9], [266, 496.4], [261.9, 449], [258.1, 416.2], [254.2, 391.4], [247.3, 362.5],
+  [233.4, 664.3], [240.3, 664, 0.4], [241, 661.8], [250.5, 654.3], [259.9, 642.3], [266.5, 632.5], [271.5, 617.4],
+  [275.5, 592.4], [276.5, 578.9], [271.5, 496.4], [266, 449], [261.5, 416.2], [255.8, 391.4], [247.3, 362.5],
   [243.4, 351.2], [243, 350, 0], [110.5, 350, 0],
 ];
 
@@ -151,6 +152,51 @@ const FOLDS: readonly (readonly Pt[])[] = [
   ],
 ];
 
+/**
+ * The stitched seams that finish the jacket: a band sewn along each edge of
+ * the front opening from the collar down to where the two sides cross, and a
+ * short run of the collar band itself on the far shoulder.
+ */
+const SEAMS: readonly (readonly Pt[])[] = [
+  [
+    [144.2, 150.9],
+    [157.3, 166.3],
+    [162.7, 175.2],
+    [162.8, 187],
+    [168.2, 220.6],
+    [170.8, 231.7],
+    [173.9, 251.2],
+    [175.6, 261.3],
+    [178.7, 273.4],
+    [180.9, 287.6],
+    [184.8, 305.4],
+  ],
+  [
+    [204.9, 164.5],
+    [205.9, 167.4],
+    [204.9, 170.2],
+    [205.5, 189.3],
+    [204.7, 199.5],
+    [202.4, 217.4],
+    [201.0, 237.0],
+    [199.2, 249.4],
+    [193.9, 305.6],
+  ],
+  [
+    [209.3, 161.9],
+    [216.4, 165.6],
+    [224.3, 169.4],
+  ],
+];
+
+/** The shirt’s own centre seam, the line of its placket, down the middle of what the jacket leaves open. */
+const SHIRT_SEAM: readonly Pt[] = [
+  [183.9, 198],
+  [185.8, 240],
+  [187.4, 276],
+  [188.4, 304],
+];
+
 /** The pleats that fall from the sash, two to each leg: pressed tucks, the inner pair longer. */
 const PLEATS: readonly (readonly Pt[])[] = [
   [
@@ -180,7 +226,7 @@ const PLEATS: readonly (readonly Pt[])[] = [
 ];
 
 /** Where the pştên's top edge is at his sides, and how far it and every band in it bow down at the front: a little, as cloth round a waist does. */
-const SASH_TOP = 309.5;
+const SASH_TOP = 317;
 const SASH_BOW = 2.5;
 
 
@@ -194,13 +240,13 @@ const SASH_BOW = 2.5;
 function sashOutline(bottom: number): string {
   const [t, b] = [SASH_TOP, bottom];
   return (
-    `M112.4,312L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L241.6,341.5L241.6,348L247.3,362.5L248.4,${n(b)}` +
+    `M112.4,319.5L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L241.6,341.5L241.6,348L247.3,362.5L248.4,${n(b)}` +
     `H244Q180,${n(b + SASH_BOW * 2)} 116,${n(b)}H104.2L106.3,359.4L110.3,348.4L112.4,340Z`
   );
 }
 
-/** How deep the wound cloth reaches below its top edge. */
-const SASH_DEPTH = 57.6;
+/** How deep the wound cloth reaches below its top edge: measured against the reference, a third of a head rather than half of one. */
+const SASH_DEPTH = 50;
 
 /**
  * The folds of the wound cloth: darker lines where one winding lies over the
@@ -210,8 +256,8 @@ const SASH_DEPTH = 57.6;
 function sashFolds(): string {
   const at = (y: number): string => `M104,${n(y)}H116Q180,${n(y + SASH_BOW * 2)} 244,${n(y)}H252`;
   return (
-    line([317.5, 326, 335, 344, 352.5].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
-    line([321.5, 339.5, 357.5].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
+    line([324.5, 332.5, 341, 349.5, 358].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
+    line([328.5, 345, 362.5].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
   );
 }
 
@@ -345,8 +391,10 @@ function body(p: string): string {
       fill(curve(TROUSERS), C.suit),
       fill(curve(NECK), C.skin),
       fill(curve(SHIRT), C.shirt),
+      line(curve(SHIRT_SEAM.map(([x, y]) => [x, y] as const), false), C.shirtFold, 1.1, ' stroke-opacity="0.6"'),
       `<path d="${curve(JACKET)}${curve(GAP_LEFT)}${curve(GAP_RIGHT)}" fill="${C.suit}" fill-rule="evenodd"/>`,
       fill(FOLDS.map((s) => taper(s, s.map((_, i) => (i === 0 || i === s.length - 1 ? 0.3 : 2.4)))).join(''), C.fold),
+      line(strokes(SEAMS), C.fold, 1.2, ' stroke-opacity="0.75"'),
       // drawn over the jacket's hem, so they fall straight from the sash
       line(strokes(PLEATS), C.fold, 3.4),
       fill(sash, C.sash),
@@ -364,8 +412,8 @@ function body(p: string): string {
 const HAIR: Knot[] = [
   [176.6, 50.0], [186.1, 50.0], [200.6, 53.3], [205.3, 55.8], [210.9, 57.9], [215.0, 61.6], [216.6, 64.3],
   [217.5, 67.6], [218.1, 73.6], [219.7, 79.9], [219.8, 84], [219.6, 87], [219.1, 90], [218.5, 92], [217.9, 94],
-  [217.3, 95.3, 0.2], [216.4, 94], [216, 92], [215.6, 90], [215, 87.5], [214.4, 84.5], [213.6, 82], [212.6, 79.2], [210.9, 76.9], [208.9, 75.7], [206.9, 76.0], [202.6, 78.4],
-  [192.4, 80.5], [169.7, 77.1], [167.0, 77.6], [163.5, 79.2], [160.6, 83.3], [159.9, 86.6], [159.7, 92.8],
+  [217.3, 95.3, 0.2], [216.4, 94], [216, 92], [215.6, 90], [215, 87.5], [214.4, 84.5], [213.6, 81], [212.6, 76.8], [210.9, 73.9], [208.9, 72.2], [206.9, 72.3], [202.6, 74.4],
+  [192.4, 76.2], [169.7, 73.1], [167.0, 74.1], [163.5, 76.2], [160.6, 80.8], [159.9, 85.1], [159.7, 92.8],
   [155.9, 99.8], [155.3, 104.6], [154.9, 117.1], [153.9, 118.6], [151.9, 118.5, 0.4], [150.9, 112.4], [147.4, 104.8],
   [145.2, 103.4], [141.1, 102.7], [140.4, 102.2], [137.9, 84.1], [138.5, 79.1], [140.5, 72.9], [144.2, 68.3],
   [147.2, 65.9], [149.1, 61.3], [152.5, 57.3], [160.8, 53.2], [167.8, 51.4],
