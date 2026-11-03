@@ -449,8 +449,8 @@ const BROW_RIGHT: Pt[] = [
   [215.4, 98.7],
   [217.4, 100.9],
 ];
-const BROW_W_LEFT = [0.4, 1.6, 2.3, 2.4, 2, 1.3];
-const BROW_W_RIGHT = [1.3, 1.9, 2.3, 2.1, 1.3, 0.4];
+const BROW_W_LEFT = [0.7, 2.4, 3.2, 3.4, 3, 2.2];
+const BROW_W_RIGHT = [2.2, 3, 3.4, 3.2, 2.4, 0.7];
 
 /**
  * His face and neck down to just above the collar, in one flat tone. Its top
