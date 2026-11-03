@@ -24,18 +24,18 @@ import { humanMouths } from './mouth.js';
 const C = {
   hair: '#060606',
   sheen: '#2d2c2f',
-  skin: '#b8785f',
-  chest: '#ad6f58',
-  shade: '#a6604a',
-  blush: '#a8574a',
-  hand: '#b2715a',
+  skin: '#c88e74',
+  chest: '#bc8167',
+  shade: '#b17257',
+  blush: '#b2614f',
+  hand: '#c28569',
   handGap: '#4a0306',
-  white: '#fbd8c8',
+  white: '#fde2d4',
   iris: '#7a4f33',
   irisLight: '#9c6c4b',
   pupil: '#2e1810',
-  lid: '#40251a',
-  brow: '#6c3d2b',
+  lid: '#3a2217',
+  brow: '#56301d',
   dress: '#540403',
   dressShade: '#400403',
   shoe: '#480204',
@@ -45,6 +45,9 @@ const C = {
   goldShade: '#83560b',
   rose: '#c6825a',
   roseShade: '#7e3f26',
+  flower: '#9c1b28',
+  flowerLight: '#c4454f',
+  leaf: '#2d6340',
 } as const;
 
 // ─────────────────────────────────────────────────────────────── the body
@@ -134,6 +137,19 @@ const STRANDS_HEAD: readonly (readonly Pt[])[] = [
     [189.6, 205],
     [191.2, 228],
     [191.6, 240],
+  ],
+  // the sweep of the hair combed down from the middle parting, one wave to each side
+  [
+    [141.8, 110.2],
+    [127.5, 113.5],
+    [115.5, 120.5],
+    [106.5, 131],
+  ],
+  [
+    [148.2, 110],
+    [161.5, 112.5],
+    [172.5, 119.5],
+    [180.5, 130],
   ],
 ];
 
@@ -357,7 +373,7 @@ function body(p: string): string {
       clipDef(id('beltrim'), curve(BELT)),
       linearAt(id('hand'), [
         [0, C.hand],
-        [1, '#c2826b'],
+        [1, '#d09781'],
       ], 0, 396, 0, 446),
     ],
     [
@@ -429,22 +445,55 @@ const BROW_RIGHT: Pt[] = [
   [153.6, 162.6],
   [149.6, 164.4],
 ];
-const BROW_WIDTH = [0.3, 1.3, 1.8, 1.8, 1.4, 0.4];
+const BROW_WIDTH = [0.4, 1.7, 2.3, 2.3, 1.8, 0.5];
+
+/** Two loose wisps that escape the parting, one curling onto each temple: hair that has somewhere to go. */
+const WISPS: readonly (readonly Pt[])[] = [
+  [
+    [113.6, 151],
+    [112.2, 160],
+    [113.8, 170],
+    [117, 177.5],
+  ],
+  [
+    [172.5, 151],
+    [173.9, 160],
+    [172.3, 170],
+    [169.1, 177.5],
+  ],
+];
+
+/** A small rose worn above her temple, on the hair: five petals round a lighter heart, two leaves beneath. */
+function temple(): string {
+  const [cx, cy] = [107.5, 134.5];
+  const ring = (count: number, r: number, size: number, squash: number): string =>
+    Array.from({ length: count }, (_, i) => -Math.PI / 2 + ((i + (r < 4 ? 0.5 : 0)) * 2 * Math.PI) / count)
+      .map((a) => oval(cx + r * Math.cos(a), cy + r * Math.sin(a), size, size * squash))
+      .join('');
+  return (
+    fill(oval(cx - 7.6, cy + 6.2, 4.4, 2.5) + oval(cx + 7.4, cy + 6.6, 4.2, 2.4), C.leaf) +
+    fill(ring(5, 5, 3.7, 0.9), C.flower) +
+    fill(ring(5, 2.9, 2.2, 0.9), C.flowerLight) +
+    fill(oval(cx, cy, 1.7, 1.6), C.flower)
+  );
+}
 
 function head(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
     [
       radialBox(id('blush'), [
-        [0, C.blush, 0.42],
-        [0.55, C.blush, 0.24],
+        [0, C.blush, 0.5],
+        [0.55, C.blush, 0.28],
         [1, C.blush, 0],
       ]),
     ],
     [
       fill(curve(HAIR_CAP), C.hair),
       strands(STRANDS_HEAD),
+      temple(),
       fill(curve(FACE), C.skin),
+      fill(WISPS.map((s) => taper(s, [2.1, 1.6, 0.9, 0])).join(''), C.hair),
       fill(curve(CHIN), C.shade, alpha(0.85)),
       ellipse(121.4, 188.6, 9, 6.6, `url(#${id('blush')})`),
       ellipse(165.4, 188.6, 9, 6.6, `url(#${id('blush')})`),
@@ -490,13 +539,18 @@ const LASHES: readonly (readonly Pt[])[] = [
     [115.6, 172.2],
     [114.4, 172],
   ],
+  [
+    [119.9, 171.5],
+    [118.5, 170.1],
+    [117.4, 169.5],
+  ],
 ];
 
 const flip = (pts: readonly Pt[]): Pt[] => pts.map(([x, y]) => [2 * EYE_AXIS - x, y] as Pt);
 
 function lids(): string {
   const one = (f: (p: readonly Pt[]) => readonly Pt[]): string =>
-    taper(f(LID), [0.5, 1.5, 1.9, 1.8, 1.2, 0.3]) + LASHES.map((l) => taper(f(l), [0.8, 0.5, 0])).join('');
+    taper(f(LID), [0.6, 1.8, 2.2, 2.1, 1.4, 0.4]) + LASHES.map((l) => taper(f(l), [0.9, 0.6, 0])).join('');
   return one((x) => x) + one(flip);
 }
 
@@ -584,10 +638,10 @@ export function drawXezo(p: string): CharacterArt {
       {
         open: { left: [136.2, 201], right: [150.9, 201.6], top: 200.6, bottom: 203.9 },
         upperLip: 1.2,
-        lowerLip: 3,
+        lowerLip: 3.3,
         sideLip: 1.8,
         middle: 0.5,
-        colours: { lip: '#a0695a', line: '#7a4538', inside: '#5a1f1c', teeth: '#fbdcd0', tongue: '#cf7a70' },
+        colours: { lip: '#b0635a', line: '#7a4538', inside: '#5a1f1c', teeth: '#fbdcd0', tongue: '#cf7a70' },
       },
       p,
     ),
