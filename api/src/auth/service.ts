@@ -710,12 +710,13 @@ export class AuthService {
       shortLived: input.remember === false,
     });
     // the device is known from now on; a sign-in from one this account has
-    // never used is worth an email to its owner (not the very first, though)
+    // never used is worth an email to its owner — though not the very first,
+    // and not the console's, whose own new-device alert below already says it
     let newDevice = false;
     if (deviceId !== null) {
       const seen = await this.devices.remember(user.id, 'device', deviceId).catch(() => null);
       newDevice = seen?.isNew === true && !seen.firstForAccount;
-      if (newDevice) await this.securityNotice(user, 'new-sign-in', false);
+      if (newDevice && !forConsole) await this.securityNotice(user, 'new-sign-in', false);
     }
     if (network !== null) await this.devices.remember(user.id, 'network', network).catch(() => undefined);
     const remember = input.remember !== false;

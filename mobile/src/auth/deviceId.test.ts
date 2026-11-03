@@ -84,8 +84,27 @@ describe('the stored device id', () => {
     expect(store.get).toHaveBeenCalledTimes(1);
   });
 
-  it('uses an id held in memory for the session when the keystore cannot be read', async () => {
-    const store: DeviceIdStore = { get: () => Promise.reject(new Error('keychain locked')), set: vi.fn(async () => undefined) };
+  it('stores a fresh id even when the keystore cannot be read, so the next launch is the same device', async () => {
+    // an entry the keystore can no longer decrypt: reads fail until a write replaces it
+    let kept: string | null = null;
+    const store: DeviceIdStore = {
+      get: vi.fn(async () => {
+        if (kept === null) throw new Error('undecryptable entry');
+        return kept;
+      }),
+      set: vi.fn(async (id: string) => {
+        kept = id;
+      }),
+    };
+    expect(await loadDeviceId(store, () => 'rescued')).toBe('rescued');
+    expect(store.set).toHaveBeenCalledWith('rescued');
+    forgetDeviceId(); // the app is closed and opened again
+    expect(await loadDeviceId(store, () => 'a-different-one')).toBe('rescued');
+  });
+
+  it('uses an id held in memory for the session when the keystore can be neither read nor written', async () => {
+    const locked = () => Promise.reject(new Error('keychain locked'));
+    const store: DeviceIdStore = { get: locked, set: locked };
     const id = await loadDeviceId(store, () => 'in-memory');
     expect(id).toBe('in-memory');
     expect(await loadDeviceId(store, () => 'another')).toBe('in-memory');

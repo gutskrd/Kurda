@@ -81,10 +81,13 @@ let pending: Promise<string> | null = null;
 /**
  * The id, read once and then held in memory for every request after.
  *
- * A first launch makes one and stores it. If the store cannot be read or
- * written (a locked keychain, a broken keystore) the id made here is used for
- * as long as the app is open rather than sending none, and the store is
- * tried again next launch.
+ * A first launch makes one and stores it. If the store cannot be read (a
+ * locked keychain, an entry the keystore can no longer decrypt) a fresh id is
+ * made and the store is still asked to keep it — an unreadable entry can often
+ * still be overwritten, and without that write every launch was a new device,
+ * with a "new sign-in" email to the owner each time. Only where the write
+ * fails too does the id live just for as long as the app is open, rather than
+ * sending none, and the store is tried again next launch.
  */
 export function loadDeviceId(store: DeviceIdStore, make: () => string = newDeviceId): Promise<string> {
   pending ??= (async () => {
@@ -92,7 +95,7 @@ export function loadDeviceId(store: DeviceIdStore, make: () => string = newDevic
     try {
       stored = await store.get();
     } catch {
-      return make();
+      // fall through: a fresh id, offered to the store below
     }
     if (isDeviceId(stored)) return stored;
     const id = make();

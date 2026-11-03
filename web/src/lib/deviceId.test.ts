@@ -12,6 +12,7 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   localStorage.clear();
+  document.cookie = 'hevalo_device_id=; Max-Age=0; Path=/';
 });
 
 describe('deviceId', () => {
@@ -36,6 +37,23 @@ describe('deviceId', () => {
   it('replaces a stored value too long to send', async () => {
     localStorage.setItem('hevalo_device_id', 'x'.repeat(201));
     expect((await fresh()).deviceId()).toMatch(V4);
+  });
+
+  /** Safari drops script-written storage it thinks idle; the cookie copy keeps the device recognised. */
+  it('keeps a cookie copy, and falls back to it when localStorage is purged', async () => {
+    const first = (await fresh()).deviceId();
+    expect(document.cookie).toContain(`hevalo_device_id=${first}`);
+    localStorage.clear(); // the browser purged it; the cookie survived
+    expect((await fresh()).deviceId()).toBe(first);
+    // and the id is put back for next time
+    expect(localStorage.getItem('hevalo_device_id')).toBe(first);
+  });
+
+  it('prefers the localStorage id and repairs the cookie copy from it', async () => {
+    localStorage.setItem('hevalo_device_id', 'an-earlier-id');
+    document.cookie = 'hevalo_device_id=a-stale-cookie; Path=/';
+    expect((await fresh()).deviceId()).toBe('an-earlier-id');
+    expect(document.cookie).toContain('hevalo_device_id=an-earlier-id');
   });
 
   /** A private window, or a browser that refuses storage: an id for this tab only. */

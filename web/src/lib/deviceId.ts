@@ -7,11 +7,16 @@
  * lock the owner out, and a sign-in from a device the account has never used
  * gets an email to its owner.
  *
- * It is a random UUID, made once and kept in localStorage. It says nothing
- * about the browser or the person: it is only "the same browser as last time".
- * Where storage is blocked or throws (a private window, a locked-down browser)
- * the id lives for this tab only, which costs that browser nothing more than
- * being a new device next time. It belongs in a header, never in a URL or a log.
+ * It is a random UUID, made once and kept in localStorage with a copy in a
+ * cookie, so a browser that purges one store (Safari drops script-written
+ * storage it thinks idle; "clear browsing data" can take one and not the
+ * other) does not come back as a "new device", with the owner emailed each
+ * time. The cookie is this module's own second copy — the server never reads
+ * it; the id travels only as the header. It says nothing about the browser or
+ * the person: it is only "the same browser as last time". Where both stores
+ * are blocked or throw (a private window, a locked-down browser) the id lives
+ * for this tab only, which costs that browser nothing more than being a new
+ * device next time. It belongs in a header, never in a URL or a log.
  */
 const KEY = 'hevalo_device_id';
 /** What the API accepts (api/src/auth/routes.ts `deviceIdOf`). */
@@ -39,14 +44,37 @@ function stored(): string | null {
   }
 }
 
-/** The id, made on first use. The same answer for the life of the tab. */
-export function deviceId(): string {
-  if (current) return current;
-  current = stored() ?? newId();
+function cookieStored(): string | null {
   try {
-    localStorage.setItem(KEY, current);
+    for (const part of document.cookie.split('; ')) {
+      if (!part.startsWith(`${KEY}=`)) continue;
+      const value = decodeURIComponent(part.slice(KEY.length + 1));
+      return value && value.length <= MAX ? value : null;
+    }
+  } catch {
+    // no cookies here; localStorage or a fresh id answers instead
+  }
+  return null;
+}
+
+function keep(id: string): void {
+  try {
+    localStorage.setItem(KEY, id);
   } catch {
     // kept in memory for this tab
   }
+  try {
+    const secure = location.protocol === 'https:' ? '; Secure' : '';
+    document.cookie = `${KEY}=${encodeURIComponent(id)}; Max-Age=31536000; Path=/; SameSite=Lax${secure}`;
+  } catch {
+    // without the copy, a purged localStorage makes this a new device again
+  }
+}
+
+/** The id, made on first use. The same answer for the life of the tab. */
+export function deviceId(): string {
+  if (current) return current;
+  current = stored() ?? cookieStored() ?? newId();
+  keep(current);
   return current;
 }
