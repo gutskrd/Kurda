@@ -3,7 +3,8 @@
  * a cream shirt, a woven pştên wound at the waist in bands of colour and
  * small diamonds and crosses, wide trousers gathered at the ankle, and white
  * klaş — standing with his hands on his hips, his head turned a little to one
- * side, smiling under a full black moustache.
+ * side: a young man with a curly fringe over his forehead, a thin moustache,
+ * a shadow of stubble on his chin and a small gold ring in his ear.
  *
  * Drawn flat, each part one tone, with a few shade shapes where the form
  * turns: his jaw, under his nose, inside his ear, the folds of the jacket,
@@ -23,20 +24,21 @@ import { alpha, circle, clipDef, clipped, curve, fill, line, oval, part, taper }
 import { humanMouths } from './mouth.js';
 
 const C = {
-  hair: '#3e2a19',
-  hairSheen: '#5e4128',
-  skin: '#b66d55',
-  shade: '#a15d46',
-  ear: '#ac6551',
-  earShade: '#93533d',
-  brow: '#4a2818',
-  white: '#ecc6b5',
+  hair: '#241812',
+  hairSheen: '#473125',
+  skin: '#c08063',
+  shade: '#aa6d50',
+  ear: '#b4775c',
+  earShade: '#9c6246',
+  brow: '#2e1c12',
+  white: '#f2d2bf',
   iris: '#623622',
   irisLight: '#8a5636',
   pupil: '#2e160d',
-  lash: '#3a1f14',
-  moustache: '#43281a',
+  lash: '#2e1810',
+  moustache: '#2c1c13',
   blushTone: '#a3543f',
+  gold: '#c59232',
   suit: '#5c3a26',
   fold: '#45291a',
   shirt: '#f4ead8',
@@ -567,8 +569,12 @@ function head(): string {
     [
       fill(curve(EAR), C.ear),
       fill(curve(EAR_SHADE) + curve(EAR_SHADE2), C.earShade),
+      // the small gold ring he wears in his ear
+      fill(oval(143.2, 127.6, 2.2, 2.4), C.gold),
+      fill(oval(143.2, 127.4, 1.1, 1.2), C.ear),
       fill(curve(FACE), C.skin),
       fill(curve(JAW), C.shade, alpha(0.85)),
+      fill(curve(STUBBLE), C.moustache, alpha(0.2)),
       // the nose: shade down its far side and under it
       fill(taper([[197.4, 104], [197.2, 110], [198.2, 117.4], [199.6, 122]], [0, 1.1, 1.5, 1.4]), C.shade, alpha(0.55)),
       fill(curve(NOSE_SHADE), C.shade, alpha(0.85)),
@@ -576,6 +582,7 @@ function head(): string {
       fill(oval(171, 124.5, 7.2, 4.8), C.blushTone, alpha(0.16)),
       fill(oval(208, 123, 5.4, 3.8), C.blushTone, alpha(0.13)),
       fill(curve(HAIR), C.hair),
+      fringe(),
       line(strokes(HAIR_SHEEN), C.hairSheen, 1.7, ' stroke-opacity="0.8"'),
       fill(curve(lifted(BROW_LEFT)) + curve(lifted(BROW_RIGHT)), C.brow),
     ],
@@ -675,24 +682,47 @@ function eyesHappy(): string {
   return part([], [fill(arc(EYE_LEFT, 1) + arc(EYE_RIGHT, 0.95), C.lash)]);
 }
 
-/** His moustache: full and thick across his lip, tapering to points that turn down past the corners of his mouth. */
+/** His moustache: a young man's, thin along the lip, dipping a little at the philtrum, the ends turning down just past the mouth. */
 const MOUSTACHE: Knot[] = [
-  [171, 137.9, 0.15],
-  [174.6, 136.4],
-  [178.6, 134.5],
-  [189.4, 129.7],
-  [194.4, 131.1],
-  [197.4, 130.5],
-  [199.2, 130.9],
-  [207.4, 135],
-  [212, 137.9, 0.15],
-  [210.1, 138],
-  [204.4, 138.4],
-  [194.4, 137.5],
-  [190.9, 138],
-  [179.9, 138.4],
-  [174.9, 138.3],
+  [178.4, 139.4, 0.2],
+  [180.8, 136.9],
+  [184.2, 134.9],
+  [188.0, 133.9],
+  [191.9, 134.4],
+  [192.9, 135.2, 0.2],
+  [194.1, 134.3],
+  [197.4, 133.7],
+  [201.2, 134.4],
+  [204.6, 136.2],
+  [207.6, 138.8, 0.2],
+  [205.9, 140.1],
+  [202.4, 139.6],
+  [198.0, 138.9],
+  [193.2, 138.8],
+  [188.6, 138.9],
+  [184.0, 139.5],
+  [181.0, 139.9],
 ];
+
+/** The soft young beard on his chin: a shadow of stubble, not a drawn beard. */
+const STUBBLE: Knot[] = [
+  [184.4, 148.6], [189.6, 147.6], [195.8, 148.2], [199.4, 150.6], [200.2, 154.4], [198.2, 158.6],
+  [194.2, 161.8], [189.6, 162.8], [185.0, 161.2], [181.9, 157.4], [181.4, 152.4],
+];
+
+/**
+ * His fringe: a band of hair over the forehead whose lower edge falls in a
+ * row of soft round curls, each lobe a half-ellipse, the band's top hidden
+ * under the hair.
+ */
+function fringe(): string {
+  const lobes: ReadonlyArray<readonly [number, number]> = [
+    [10.4, 6.6], [9.2, 5.2], [10.8, 7], [9, 5], [10.6, 6.4], [8.4, 4.6],
+  ];
+  let d = 'M155.9,80L158.9,75Q178,71 200,72L213.9,76L214.5,82.4';
+  for (const [w, deep] of lobes) d += `a${n(w / 2)},${n(deep)} 0 0 1 -${n(w)},0`;
+  return fill(`${d}Z`, C.hair);
+}
 
 export function drawHamo(p: string): CharacterArt {
   return {

@@ -24,18 +24,18 @@ import { humanMouths } from './mouth.js';
 const C = {
   hair: '#060606',
   sheen: '#2d2c2f',
-  skin: '#b8785f',
-  chest: '#ad6f58',
-  shade: '#a6604a',
-  blush: '#a8574a',
-  hand: '#b2715a',
+  skin: '#c88e74',
+  chest: '#bc8167',
+  shade: '#b17257',
+  blush: '#b2614f',
+  hand: '#c28569',
   handGap: '#4a0306',
-  white: '#fbd8c8',
+  white: '#fde2d4',
   iris: '#7a4f33',
   irisLight: '#9c6c4b',
   pupil: '#2e1810',
-  lid: '#40251a',
-  brow: '#6c3d2b',
+  lid: '#3a2217',
+  brow: '#56301d',
   dress: '#540403',
   dressShade: '#400403',
   shoe: '#480204',
@@ -373,7 +373,7 @@ function body(p: string): string {
       clipDef(id('beltrim'), curve(BELT)),
       linearAt(id('hand'), [
         [0, C.hand],
-        [1, '#c2826b'],
+        [1, '#d09781'],
       ], 0, 396, 0, 446),
     ],
     [
@@ -445,7 +445,7 @@ const BROW_RIGHT: Pt[] = [
   [153.6, 162.6],
   [149.6, 164.4],
 ];
-const BROW_WIDTH = [0.3, 1.3, 1.8, 1.8, 1.4, 0.4];
+const BROW_WIDTH = [0.4, 1.7, 2.3, 2.3, 1.8, 0.5];
 
 /** Two loose wisps that escape the parting, one curling onto each temple: hair that has somewhere to go. */
 const WISPS: readonly (readonly Pt[])[] = [
@@ -483,8 +483,8 @@ function head(p: string): string {
   return part(
     [
       radialBox(id('blush'), [
-        [0, C.blush, 0.42],
-        [0.55, C.blush, 0.24],
+        [0, C.blush, 0.5],
+        [0.55, C.blush, 0.28],
         [1, C.blush, 0],
       ]),
     ],
@@ -500,8 +500,6 @@ function head(p: string): string {
       // the nose: a soft shade down one side and a softer one beneath it
       fill(taper([[137.6, 177.4], [137.3, 183.4], [137.6, 188.4], [138.6, 190.6]], [0, 1.4, 1.7, 0.9]), C.shade, alpha(0.55)),
       fill(taper([[137.4, 190.4], [140.2, 191.3], [143.2, 190.9]], [0.3, 1.2, 0.3]), C.shade, alpha(0.5)),
-      // the small mark above the right corner of her mouth, hers alone
-      fill(oval(154.8, 197.6, 0.75, 0.7), C.lid, alpha(0.8)),
       fill(taper(BROW_LEFT, BROW_WIDTH) + taper(BROW_RIGHT, BROW_WIDTH), C.brow),
     ],
   );
@@ -552,7 +550,7 @@ const flip = (pts: readonly Pt[]): Pt[] => pts.map(([x, y]) => [2 * EYE_AXIS - x
 
 function lids(): string {
   const one = (f: (p: readonly Pt[]) => readonly Pt[]): string =>
-    taper(f(LID), [0.5, 1.5, 1.9, 1.8, 1.2, 0.3]) + LASHES.map((l) => taper(f(l), [0.8, 0.5, 0])).join('');
+    taper(f(LID), [0.6, 1.8, 2.2, 2.1, 1.4, 0.4]) + LASHES.map((l) => taper(f(l), [0.9, 0.6, 0])).join('');
   return one((x) => x) + one(flip);
 }
 
@@ -640,10 +638,10 @@ export function drawXezo(p: string): CharacterArt {
       {
         open: { left: [136.2, 201], right: [150.9, 201.6], top: 200.6, bottom: 203.9 },
         upperLip: 1.2,
-        lowerLip: 3,
+        lowerLip: 3.3,
         sideLip: 1.8,
         middle: 0.5,
-        colours: { lip: '#aa5f55', line: '#7a4538', inside: '#5a1f1c', teeth: '#fbdcd0', tongue: '#cf7a70' },
+        colours: { lip: '#b0635a', line: '#7a4538', inside: '#5a1f1c', teeth: '#fbdcd0', tongue: '#cf7a70' },
       },
       p,
     ),
