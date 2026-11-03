@@ -54,8 +54,8 @@ const JACKET: Knot[] = [
   [209.8, 159.3], [213.9, 162.5], [225.7, 167.2], [243.4, 172.7],
   [251.5, 176.4], [258.1, 180.5], [270.0, 192.2], [277.7, 203.4], [289.7, 224.9], [300.4, 250.2], [303.6, 261.5],
   [303.9, 269.0], [300.2, 280.9], [290.6, 299.3], [281.0, 313.1], [266.9, 329.8], [264.8, 330.7], [260.2, 330.7],
-  [253.1, 329.2], [242.4, 341.1], [241.2, 346.0], [247.3, 362.5], [247.4, 364.0], [246.4, 365.7],
-  [105.5, 365.6, 0.4], [105.2, 364.1], [106.3, 359.4], [110.3, 348.4], [112.6, 344.3], [112.4, 338.5],
+  [253.1, 329.2], [242.4, 341.1], [241.2, 346.0], [243.9, 351.4], [244.0, 352.6], [243.2, 353.3],
+  [108.5, 353.2, 0.4], [108.7, 352.1], [109.3, 350.2], [110.3, 348.4], [112.6, 344.3], [112.4, 338.5],
   [108.3, 334.0], [100.2, 336.6], [96.1, 335.6], [71.7, 314.2], [64.2, 306.1], [56.2, 295.6], [48.5, 283.1],
   [44.6, 275.0], [43.6, 271.3], [43.0, 262.4], [44.2, 253.3], [52.2, 226.6], [64.4, 201.1], [72.6, 188.8],
   [82.5, 180.4], [88.1, 176.7], [95.2, 173.3], [127.3, 163.4], [134.1, 160.0], [138.7, 154.6], [143.4, 147.0],
@@ -176,10 +176,10 @@ const PLEATS: readonly (readonly Pt[])[] = [
 ];
 
 /** Where the pştên's top edge is at his sides, and how far it and every band in it bow down at the front: a little, as cloth round a waist does. */
-const SASH_TOP = 327;
+const SASH_TOP = 314.5;
 const SASH_BOW = 2.5;
 
-/** How deep the wound cloth reaches below its top edge: a thin band sitting low at the waist, as the reference wears it, his fingers curling over its top edge. */
+/** How deep the wound cloth reaches below its top edge: a thin band worn up at the waist, as the reference wears it, his fingers curling over its top edge. */
 const SASH_DEPTH = 40;
 
 /**
@@ -192,8 +192,8 @@ const SASH_DEPTH = 40;
 function sashOutline(bottom: number): string {
   const [t, b] = [SASH_TOP, bottom];
   return (
-    `M112.4,329.5L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L243,341.5L241.6,348L247.3,362.5L248.4,${n(b)}` +
-    `H244Q180,${n(b + SASH_BOW * 2)} 116,${n(b)}H104.2L106.3,359.4L110.3,348.4L112.4,340Z`
+    `M112.4,317L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L243,341.5L241.6,348L244.2,${n(b)}` +
+    `H244Q180,${n(b + SASH_BOW * 2)} 116,${n(b)}H108.1L110.3,348.4L112.4,340Z`
   );
 }
 
@@ -205,8 +205,8 @@ function sashOutline(bottom: number): string {
 function sashFolds(): string {
   const at = (y: number): string => `M104,${n(y)}H116Q180,${n(y + SASH_BOW * 2)} 244,${n(y)}H252`;
   return (
-    line([333.5, 341.5, 349.5, 357.5].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
-    line([337.5, 353.5, 361.5].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
+    line([321, 329, 337, 345].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
+    line([325, 341, 349].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
   );
 }
 
