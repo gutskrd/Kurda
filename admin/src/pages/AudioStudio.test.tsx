@@ -138,6 +138,21 @@ describe('the audio studio', () => {
     await waitFor(() => expect(location.hash).toBe('#/audio/stories'));
   });
 
+  it('lets the person leave: an address that is another page’s is never pulled back here', async () => {
+    fakeApi(on('GET', '/admin/lesson-audio', json(LISTING)), on('GET', '/admin/alphabet/audio', json({ recordings: [] })));
+    localStorage.setItem('kurda_admin_audio_tab', 'lessons');
+    location.hash = '#/audio/lessons';
+    renderUi(<AudioStudio />);
+    await screen.findByRole('heading', { name: 'Record lesson sentences' });
+    // the person taps a link out; the route changes while this page still hangs on screen,
+    // and sending them back to a side then locked them into the Record audio section
+    location.hash = '#/dashboard';
+    window.dispatchEvent(new HashChangeEvent('hashchange'));
+    // give a wrong redirect its chance to fire before looking
+    await new Promise((resolve) => setTimeout(resolve, 60));
+    expect(location.hash).toBe('#/dashboard');
+  });
+
   it('asks before removing a recording, in a dialog rather than the browser’s', async () => {
     const user = userEvent.setup();
     const api = fakeApi(on('GET', '/admin/lesson-audio', json(LISTING)), on('DELETE', /^\/admin\/lesson-audio\?key=silav/, json({ ok: true })));

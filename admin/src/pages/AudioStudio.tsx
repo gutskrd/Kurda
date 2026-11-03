@@ -80,10 +80,14 @@ export function AudioStudio(): React.JSX.Element {
   const requested = route.rest[0];
   const side = SIDES.find((s) => s.key === requested);
 
-  // #/audio alone: the side used last
+  // #/audio alone: the side used last. Only while the address is still this
+  // page's: this effect also fires as the person leaves (the route changes
+  // before the page unmounts), and sending them back then locked them into
+  // the Record audio section — every link out snapped straight back.
+  const page = route.page;
   useEffect(() => {
-    if (!side) location.replace(`#/audio/${savedSide()}`);
-  }, [side]);
+    if (!side && page === 'audio') location.replace(`#/audio/${savedSide()}`);
+  }, [side, page]);
 
   useEffect(() => {
     if (!side) return;
