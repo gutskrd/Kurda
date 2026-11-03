@@ -1,15 +1,15 @@
 /**
- * Hamo: a man in a traditional Kurdish suit — a sand-khaki jacket crossed
- * over a pale shirt, a woven pştên wound at the waist in bands of colour and
- * small diamonds and crosses, wide trousers gathered at the ankle, and white
- * klaş — standing with his hands on his hips, his head turned a little to one
- * side, smiling under a full, well-groomed moustache, his black hair swept
- * back with a little light along its waves.
+ * Hamo: a man in a traditional Kurdish suit — a dark brown jacket crossed
+ * over an olive shirt, a plain green pştên wound at the waist, wide trousers
+ * gathered at the ankle, and brown shoes — standing with his hands on his
+ * hips, his head turned a little to one side, smiling under a full,
+ * well-groomed moustache, his black hair swept back with a little light
+ * along its waves.
  *
  * Drawn flat, each part one tone, with a few shade shapes where the form
  * turns: his jaw, under his nose, inside his ear, the folds of the jacket,
  * sash and trousers. That is all the shading the suit has, so it is all the
- * drawing has; the pştên's weave is its only pattern.
+ * drawing has; the pştên shows only the folds of its winding.
  *
  * His head reaches down over his neck to just above the collar, the same
  * skin tone as the neck drawn beneath it, so the head can nod without a seam
@@ -38,11 +38,13 @@ const C = {
   lash: '#2e1810',
   moustache: '#1f1510',
   blushTone: '#a85d44',
-  suit: '#b2905f',
-  fold: '#8d6c40',
-  shirt: '#d9c9a4',
-  sash: '#182248',
-  shoe: '#ece2cf',
+  suit: '#5b3b26',
+  fold: '#452a18',
+  shirt: '#9e9468',
+  sash: '#45502c',
+  sashFold: '#2d3519',
+  sashLight: '#6b7442',
+  shoe: '#99572e',
 } as const;
 
 // ─────────────────────────────────────────────────────────────── the body
@@ -181,8 +183,6 @@ const PLEATS: readonly (readonly Pt[])[] = [
 const SASH_TOP = 309.5;
 const SASH_BOW = 2.5;
 
-/** How far the pştên bows down at `x`: most at the front, none where it turns round his sides (a parabola, so each edge is one curve). */
-const bow = (x: number): number => SASH_BOW * (1 - ((x - 180) / 64) ** 2);
 
 /**
  * The pştên, wound round his waist from hip to hip: its top and bottom edges
@@ -199,78 +199,20 @@ function sashOutline(bottom: number): string {
   );
 }
 
+/** How deep the wound cloth reaches below its top edge. */
+const SASH_DEPTH = 57.6;
+
 /**
- * The pştên's weave, top to bottom: bands of colour, each with its own small
- * figure along it (diamonds, crosses, a zigzag, dots) as such sashes are
- * woven. The bands bow down at the front as cloth wound at the waist does,
- * so they wrap round him rather than lie flat across him.
+ * The folds of the wound cloth: darker lines where one winding lies over the
+ * next, each bowing down at the front with the sash, and a faint light
+ * between them where the cloth rounds.
  */
-const WEAVE: readonly (readonly [number, string, ('diamond' | 'cross' | 'zigzag' | 'dots')?, string?])[] = [
-  [5.5, '#24685d', 'diamond', '#b55e21'],
-  [1.6, '#901b22'],
-  [5.5, '#182248', 'cross', '#cbc1a7'],
-  [4.6, '#b58021', 'diamond', '#901b22'],
-  [1.4, '#cbc1a7'],
-  [5, '#482149', 'zigzag', '#b55e21'],
-  [4.6, '#2d6340', 'diamond', '#cfc9b6'],
-  [1.4, '#cbc1a7'],
-  [5.5, '#901b22', 'cross', '#b58021'],
-  [4, '#182248', 'dots', '#cbc1a7'],
-  [5, '#b55e21', 'diamond', '#182248'],
-  [1.4, '#cbc1a7'],
-  [5.5, '#24685d', 'cross', '#b58021'],
-  [6.6, '#182248', 'diamond', '#b55e21'],
-];
-
-/** Whether a point lies inside an outline, taken as the polygon through its knots. */
-function inside(knots: readonly Knot[], x: number, y: number): boolean {
-  let within = false;
-  for (let i = 0, j = knots.length - 1; i < knots.length; j = i++) {
-    const [xi, yi] = knots[i]!;
-    const [xj, yj] = knots[j]!;
-    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) within = !within;
-  }
-  return within;
-}
-
-/** Whether his hands hide the whole of a small figure `r` across at a point of the weave. */
-const hidden = (x: number, y: number, r: number): boolean =>
-  [HAND_LEFT, HAND_RIGHT].some((hand) => [[x - r, y], [x + r, y], [x, y - r], [x, y + r]].every(([px, py]) => inside(hand, px!, py!)));
-
-/** The weave, clipped to the pştên; its figures only where his hands leave them showing. */
-function woven(): string {
-  const out: string[] = [];
-  let y = SASH_TOP;
-  WEAVE.forEach(([h, colour, figure, ink], band) => {
-    const [a, b] = [n(y), n(y + h)];
-    out.push(fill(`M100,${a}H116Q180,${n(y + SASH_BOW * 2)} 244,${a}H254V${b}H244Q180,${n(y + h + SASH_BOW * 2)} 116,${b}H100Z`, colour));
-    if (figure && ink) {
-      const mid = y + h / 2;
-      const r = n(h * 0.3);
-      const along = Array.from({ length: 19 }, (_, i) => 116 + i * 7 + (band % 2) * 3.5)
-        .map((x) => [x, mid + bow(x)] as const)
-        .filter(([x, yy]) => !hidden(x, yy, h * 0.3))
-        .map(([x, yy]) => [n(x), n(yy)] as const);
-      if (figure === 'diamond') out.push(fill(along.map(([x, yy]) => `M${x},${yy}m0,-${r}l${r},${r}l-${r},${r}l-${r},-${r}Z`).join(''), ink));
-      else if (figure === 'cross') out.push(line(along.map(([x, yy]) => `M${x},${yy}m-${r},0h${n(h * 0.6)}m-${r},-${r}v${n(h * 0.6)}`).join(''), ink, 0.9));
-      else if (figure === 'zigzag') {
-        // one line, broken where a hand lies over it
-        const zig = Array.from({ length: 38 }, (_, i) => 114 + i * 3.5).map((x, i) => [x, mid + bow(x) + (i % 2 === 0 ? -h * 0.3 : h * 0.3)] as const);
-        let d = '';
-        let pen = false;
-        for (const [x, yy] of zig) {
-          if (hidden(x, yy, 0)) pen = false;
-          else {
-            d += `${pen ? 'L' : 'M'}${n(x)},${n(yy)}`;
-            pen = true;
-          }
-        }
-        out.push(line(d, ink, 0.9));
-      } else out.push(line(along.map(([x, yy]) => `M${x},${yy}h0`).join(''), ink, 1.2));
-    }
-    y += h;
-  });
-  return out.join('');
+function sashFolds(): string {
+  const at = (y: number): string => `M104,${n(y)}H116Q180,${n(y + SASH_BOW * 2)} 244,${n(y)}H252`;
+  return (
+    line([317.5, 326, 335, 344, 352.5].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
+    line([321.5, 339.5, 357.5].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
+  );
 }
 
 /** Where his fingers press into the pştên, the cloth gathers: short creases running out from under each hand towards the middle. */
@@ -390,7 +332,7 @@ const strokes = (list: readonly (readonly Pt[])[]): string => list.map((s) => cu
 
 function body(p: string): string {
   const id = (name: string): string => `${p}${name}`;
-  const bottom = SASH_TOP + WEAVE.reduce((deep, [h]) => deep + h, 0);
+  const bottom = SASH_TOP + SASH_DEPTH;
   const sash = sashOutline(bottom);
   return part(
     [
@@ -408,7 +350,7 @@ function body(p: string): string {
       // drawn over the jacket's hem, so they fall straight from the sash
       line(strokes(PLEATS), C.fold, 3.4),
       fill(sash, C.sash),
-      clipped(id('sash'), woven() + sashShade(bottom)),
+      clipped(id('sash'), sashFolds() + sashShade(bottom)),
       // the hands lie over the pştên in the skin of his face, the fingers forward and the thumbs back
       fill(curve(HAND_LEFT) + curve(HAND_RIGHT), C.skin),
       fill(CREASES.map((s) => taper(s, [0.2, 0.8, 0.25])).join(''), C.shade),
@@ -485,18 +427,30 @@ const HAIR_SHEEN: readonly (readonly Pt[])[] = [
   ],
 ];
 
-/** His brows: thick and straight, a little heavier toward the middle. */
-const BROW_LEFT: Knot[] = [
-  [164.4, 101.2, 0.4], [165.4, 99.4], [167.4, 98.1], [170.4, 97.5], [173.4, 97.2], [176.4, 97.3], [179.4, 97.5],
-  [182.4, 98], [185.2, 98.6], [187.6, 100.4, 0.4], [186.8, 102.2], [184.8, 102.7], [182, 102.1], [179, 101.5],
-  [176, 101.2], [173, 101.2], [170, 101.4], [167, 101.8],
+/**
+ * His brows: full and softly arched, the arch peaking a little outside the
+ * middle, heaviest over the inner half and tapering out to a fine tail that
+ * turns down at the temple. Each is a stroke of varying width, so the taper
+ * is the shape.
+ */
+const BROW_LEFT: Pt[] = [
+  [164.4, 101.4],
+  [167.4, 98.6],
+  [171.4, 97],
+  [175.9, 96.7],
+  [180.4, 97.5],
+  [184.9, 99.3],
 ];
-
-const BROW_RIGHT: Knot[] = [
-  [198.8, 101.6], [199.2, 100.3], [200.5, 99.3], [203.2, 98.4], [207.6, 98.0], [211.4, 98.0], [213.6, 98.5],
-  [215.6, 99.7], [216.2, 101.4], [215.9, 102.3], [215.4, 102.5], [213.4, 102.1], [209.9, 102.2], [200.6, 103.3],
-  [199.4, 103.0],
+const BROW_RIGHT: Pt[] = [
+  [199.4, 99.7],
+  [203.4, 97.9],
+  [207.9, 97],
+  [212.1, 97.3],
+  [215.4, 98.7],
+  [217.4, 100.9],
 ];
+const BROW_W_LEFT = [0.4, 1.6, 2.3, 2.4, 2, 1.3];
+const BROW_W_RIGHT = [1.3, 1.9, 2.3, 2.1, 1.3, 0.4];
 
 /**
  * His face and neck down to just above the collar, in one flat tone. Its top
@@ -559,9 +513,6 @@ const FACE: Knot[] = [
   [146, 69.4],
 ];
 
-/** The brows drawn a little above their rest line, so the face reads open and good-humoured rather than heavy. */
-const lifted = (knots: readonly Knot[]): Knot[] => knots.map((k) => (k.length > 2 ? [k[0], k[1] - 1.4, k[2]!] : [k[0], k[1] - 1.4]) as Knot);
-
 function head(): string {
   return part(
     [],
@@ -578,7 +529,7 @@ function head(): string {
       fill(oval(208, 123, 5.4, 3.8), C.blushTone, alpha(0.13)),
       fill(curve(HAIR), C.hair),
       line(strokes(HAIR_SHEEN), C.hairSheen, 1.7, ' stroke-opacity="0.8"'),
-      fill(curve(lifted(BROW_LEFT)) + curve(lifted(BROW_RIGHT)), C.brow),
+      fill(taper(BROW_LEFT, BROW_W_LEFT) + taper(BROW_RIGHT, BROW_W_RIGHT), C.brow),
     ],
   );
 }
