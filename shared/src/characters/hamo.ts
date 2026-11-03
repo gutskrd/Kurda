@@ -105,7 +105,7 @@ const TROUSERS: Knot[] = [
   [194.9, 655.2], [198.4, 659.3], [204.8, 664.4, 0.4], [206.6, 663.4], [211.9, 664.4], [224.1, 664.8],
   [233.4, 664.3], [240.3, 664, 0.4], [241, 661.8], [249.7, 654.3], [257.9, 642.3], [262.1, 632.5], [266, 617.4],
   [269.1, 592.4], [269.9, 578.9], [266, 496.4], [261.9, 449], [258.1, 416.2], [254.2, 391.4], [247.3, 362.5],
-  [250.5, 352], [256.5, 342], [262.5, 334], [266.2, 327.5, 0],
+  [250.5, 352], [257.0, 342], [263.5, 336], [266.8, 332.5], [267.5, 326.5, 0],
 ];
 
 /**
@@ -151,6 +151,25 @@ const FOLDS: readonly (readonly Pt[])[] = [
     [261.4, 323.5],
     [261.8, 327.8],
   ],
+  // the lower edge of each cuff where it lies over the hip
+  [
+    [96.4, 335.4],
+    [100.4, 336.8],
+    [104.6, 336.0],
+    [108.2, 334.2],
+  ],
+  [
+    [264.6, 332.0],
+    [258.6, 335.4],
+    [251.4, 339.6],
+    [244.6, 343.4],
+  ],
+];
+
+/** The shadow each cuff throws on the trousers beneath it, as the reference shows under both wrists. */
+const CUFF_SHADE: Knot[][] = [
+  [[96.3, 336.2], [100.3, 337.2], [108.2, 334.6], [111.8, 338.8], [110.6, 342.8], [104.4, 343.6], [98.4, 342.2]],
+  [[265.6, 331.0], [258.0, 334.8], [250.0, 339.6], [243.0, 342.2], [244.5, 347.5], [250.5, 345.0], [257.5, 340.5], [263.3, 335.5]],
 ];
 
 /** The pleats that fall from the sash, two to each leg: pressed tucks, the inner pair longer. */
@@ -358,6 +377,7 @@ function body(p: string): string {
       fill(curve(SHIRT), C.shirt),
       `<path d="${curve(JACKET)}${curve(GAP_LEFT)}${curve(GAP_RIGHT)}" fill="${C.suit}" fill-rule="evenodd"/>`,
       fill(FOLDS.map((s) => taper(s, s.map((_, i) => (i === 0 || i === s.length - 1 ? 0.3 : 2.4)))).join(''), C.fold),
+      fill(CUFF_SHADE.map((s) => curve(s)).join(''), '#000', alpha(0.2)),
       // drawn over the jacket's hem, so they fall straight from the sash
       line(strokes(PLEATS), C.fold, 3.4),
       fill(sash, C.sash),
@@ -410,25 +430,49 @@ const JAW: Knot[] = [
   [193.2, 159.6], [195.2, 161.4], [197.2, 161.6], [199.6, 161.1], [200.2, 162],
 ];
 
-/** The shade under his nose and down its far side. */
-const NOSE_SHADE: Knot[] = [
-  [205.9, 134.1], [205.5, 134.9], [203.4, 134.9], [198.3, 132.6], [194.4, 133.1], [189.6, 131.8], [183.1, 134.5],
-  [182.2, 134.2], [182.0, 133.1], [182.6, 131.7], [185.6, 130.2], [185.5, 127.4], [186.6, 126.2], [189.3, 126.4],
-  [194.7, 128.4], [198.1, 127.4], [198.6, 125.1], [198.0, 119.4], [198.8, 118.7, 0.4], [200.3, 120.9],
-  [200.6, 126.2], [199.9, 129.8, 0.4], [205.5, 133.1],
+/**
+ * His nose, as the reference draws it: one long straight ridge from between
+ * the brows to a rounded tip just above the moustache, with a broad soft
+ * shade down its far side. The far wing shows as the crease round it, the
+ * near wing only faintly, and the shadow under the tip tucks under the
+ * moustache so the base is hidden the way the reference’s is.
+ */
+const NOSE_RIDGE_SHADE: Knot[] = [
+  [195.4, 103.2, 0.3], [195.8, 108.5], [196.3, 114], [197.0, 119.5], [197.8, 124.2], [199.0, 127.0], [200.8, 127.6, 0.4],
+  [201.9, 125.4], [201.2, 121.6], [200.0, 117.2], [198.8, 112.0], [197.5, 106.6],
 ];
 
-/** His brows: full and nearly straight, level along the top as in the reference, their ends gently tapered. */
+const NOSE_WING_FAR: Knot[] = [
+  [200.6, 121.0, 0.4], [203.1, 122.4], [204.8, 125.0], [204.4, 127.8], [202.6, 129.0, 0.4], [202.4, 127.8], [203.2, 125.4],
+  [201.9, 123.2], [200.4, 122.2],
+];
+
+const NOSE_WING_NEAR: Knot[] = [
+  [191.9, 123.6, 0.4], [190.7, 125.6], [190.8, 127.7], [191.9, 128.7, 0.4], [191.4, 127.5], [191.5, 125.7],
+];
+
+const NOSE_BASE: Knot[] = [
+  [191.4, 127.8, 0.5], [195.3, 127.3], [199.0, 127.5], [202.2, 128.5], [202.0, 131.6, 0.5], [197.8, 130.9], [194.0, 131.0],
+  [191.2, 129.6],
+];
+
+/**
+ * His brows, traced from the reference: a thick body that runs level along
+ * the top, an outer tail that sweeps down to a point toward the temple, and
+ * a softer, slightly lower inner end. The profile is the reference’s at the
+ * scale of each brow’s own length.
+ */
 const BROW_LEFT: Knot[] = [
-  [164.4, 100.7, 0.4], [165.6, 99.2], [167.6, 98.4], [170.4, 98.1], [173.4, 97.9], [176.4, 97.9], [179.4, 98.0],
-  [182.4, 98.1], [185.2, 98.4], [187.6, 99.7, 0.4], [186.8, 101.8], [184.8, 102.2], [182, 102.0], [179, 101.7],
-  [176, 101.5], [173, 101.5], [170, 101.6], [167, 101.9],
+  [164.0, 100.8, 0.15], [165.1, 99.7], [166.9, 98.3], [168.8, 97.5], [170.5, 97.1], [172.4, 96.85], [174.8, 96.8],
+  [177.2, 96.8], [179.6, 96.95], [181.5, 97.2], [183.2, 97.5], [185.1, 98.0], [186.8, 98.6], [188.0, 99.2, 0.5],
+  [187.6, 100.0], [186.8, 99.9], [185.1, 99.8], [183.2, 99.7], [179.6, 99.7], [176.0, 99.7], [172.4, 99.8],
+  [170.5, 100.1], [168.8, 100.6], [166.9, 101.1], [165.1, 101.3],
 ];
 
 const BROW_RIGHT: Knot[] = [
-  [198.8, 101.2], [199.2, 100.0], [200.5, 99.2], [203.2, 98.6], [207.6, 98.3], [211.4, 98.3], [213.6, 98.6],
-  [215.6, 99.4], [216.2, 100.9], [215.9, 101.9], [215.4, 102.2], [213.4, 101.9], [209.9, 102.0], [200.6, 103.0],
-  [199.4, 102.8],
+  [198.8, 98.4, 0.5], [200.2, 97.9], [202.3, 97.45], [204.1, 97.25], [206.2, 97.2], [208.5, 97.25], [210.2, 97.5],
+  [212.4, 98.0], [214.1, 98.6], [215.3, 99.3], [216.4, 100.0, 0.15], [215.3, 100.6], [214.1, 100.5], [212.4, 100.3],
+  [210.2, 100.0], [207.6, 99.8], [205.0, 99.8], [202.3, 99.9], [200.2, 100.0], [199.1, 99.9],
 ];
 
 /**
@@ -498,9 +542,10 @@ function head(): string {
       fill(curve(EAR_SHADE) + curve(EAR_SHADE2), C.earShade),
       fill(curve(FACE), C.skin),
       fill(curve(JAW), C.shade, alpha(0.85)),
-      // the nose: shade down its far side and under it, kept light so the nose reads straight and fine rather than smudged
-      fill(taper([[197.4, 104], [197.2, 110], [198.2, 117.4], [199.6, 122]], [0, 1, 1.3, 1.2]), C.shade, alpha(0.42)),
-      fill(curve(NOSE_SHADE), C.shade, alpha(0.6)),
+      fill(curve(NOSE_RIDGE_SHADE), C.shade, alpha(0.32)),
+      fill(curve(NOSE_WING_FAR), C.shade, alpha(0.55)),
+      fill(curve(NOSE_WING_NEAR), C.shade, alpha(0.3)),
+      fill(curve(NOSE_BASE), C.shade, alpha(0.5)),
       fill(curve(HAIR), C.hair),
       fill(curve(BROW_LEFT) + curve(BROW_RIGHT), C.brow),
     ],
