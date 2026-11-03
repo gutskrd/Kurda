@@ -11,7 +11,8 @@
  */
 import type { Chunk, SourceEntry } from './ferheng.js';
 
-const BASE = 'https://raw.githubusercontent.com/kurdish-tech/kurdish-tech.github.io/main/public/data';
+// The Ferheng project moved into a repository of its own; the layout under public/data is unchanged.
+const BASE = 'https://raw.githubusercontent.com/kurdish-tech/ferheng/main/public/data';
 
 /** Their directory → the dialect we store. */
 export const FERHENG_LANGS: Record<string, string> = { ku: 'kurmanji', sor: 'sorani', zza: 'zazaki' };
