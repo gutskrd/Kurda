@@ -286,6 +286,22 @@ describe.skipIf(!DATABASE_URL)('sign-in protection (integration)', () => {
     expect(await mailsTo(owner.email, 'new-sign-in')).toBe(1);
   });
 
+  it.skipIf(!REDIS_URL)('does not mail the owner about the console’s own new-device sign-in — its alert already says it', async () => {
+    const owner = await account('condev');
+    await pool.query(`UPDATE users SET roles = '{admin,superadmin}' WHERE id = $1`, [owner.id]);
+    // the account's first device, so the console below is a genuinely new, later one
+    expect((await login(owner.email, PASSWORD, { deviceId: `laptop-${randomUUID()}` })).statusCode).toBe(200);
+    const res = await app.inject({
+      method: 'POST',
+      url: '/admin/auth/login',
+      headers: { 'x-device-id': `console-${randomUUID()}` },
+      payload: { email: owner.email, password: PASSWORD },
+      remoteAddress: nextIp(),
+    });
+    expect(res.statusCode, res.body).toBe(200);
+    expect(await mailsTo(owner.email, 'new-sign-in')).toBe(0);
+  });
+
   it.skipIf(!REDIS_URL)('tells the owner when their account is locked, once a day at most', async () => {
     const owner = await account('lockmail');
     await failFromStrangers(owner.email, 5);
