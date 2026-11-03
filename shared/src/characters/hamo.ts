@@ -373,23 +373,22 @@ const NOSE_BASE: Knot[] = [
 ];
 
 /**
- * His brows, traced edge by edge from the reference and set over each eye
- * at the reference’s height above it: a thin tail low at the temple rising
- * to the brow’s peak over the outer third of the eye, then a full body
- * sloping down to a heavier inner end a few units from the bridge of the
- * nose, as the reference’s sit. Each edge is a smooth offset of one
- * centreline, so neither wavers. The far
- * brow is the same shape foreshortened, its inner end blunt and low.
+ * His brows, traced from the reference edge by edge and set on his head at
+ * the reference’s own scale, each the reference’s distance above its eye:
+ * a point at the temple rising to a full body over the outer third of the
+ * eye, then sloping down to a heavier, lower inner end. The far brow is the
+ * same shape foreshortened, its inner end blunt and low, its tail running
+ * out toward the temple. The traces are smoothed before they are sampled,
+ * so neither edge wavers.
  */
 const BROW_LEFT: Knot[] = [
-  [165.3, 100.0, 0.15], [166.8, 98.2], [169.2, 96.5], [172.2, 95.3], [175.9, 95.0], [179.5, 95.2], [183.2, 95.7], [186.8, 96.5],
-  [189.8, 97.6], [192.1, 99.3, 0.5], [188.7, 101.4], [185.7, 100.7], [182.3, 99.9], [178.9, 99.2], [175.8, 98.9], [172.9, 99.1],
-  [170.5, 99.6], [167.9, 100.2],
+  [164.2, 101.1, 0.15], [167.0, 98.0], [170.4, 96.4], [173.7, 96.0], [176.6, 96.1], [179.4, 96.4], [182.7, 97.0], [186.1, 98.1],
+  [188.9, 99.7, 0.5], [186.1, 101.6], [182.7, 101.4], [179.4, 100.7], [176.6, 99.9], [173.7, 99.3], [170.4, 99.2], [167.0, 99.8],
 ];
 
 const BROW_RIGHT: Knot[] = [
-  [200.0, 100.4, 0.5], [201.5, 98.3], [204.0, 97.0], [206.6, 96.3], [209.6, 96.1], [212.8, 97.0], [215.1, 98.8],
-  [216.6, 100.4, 0.15], [214.1, 100.6], [211.6, 100.2], [209.6, 100.1], [207.4, 100.5], [205.2, 101.0], [203.3, 101.5],
+  [198.9, 100.1, 0.5], [201.3, 98.5], [203.2, 97.5], [205.6, 96.7], [208.0, 96.3], [210.4, 96.4], [212.3, 96.9], [214.7, 97.9],
+  [216.8, 99.4, 0.15], [214.6, 100.3], [212.3, 99.9], [210.4, 99.5], [208.0, 100.1], [205.6, 101.0], [203.2, 101.8], [201.3, 102.0],
 ];
 
 /**
