@@ -420,15 +420,19 @@ function body(p: string): string {
 
 // ─────────────────────────────────────────────────────────────── the head
 
-/** His hair: full on top, a little wavy along the hairline, down to a short sideburn in front of his ear. */
+/**
+ * His hair, after the reference: swept up and back into a glossy pompadour
+ * whose crest rises at the front and slopes away to the crown, short at the
+ * sides, down to a short sideburn in front of his ear.
+ */
 const HAIR: Knot[] = [
-  [176.6, 50.0], [186.1, 50.0], [200.6, 53.3], [205.3, 55.8], [210.9, 57.9], [215.0, 61.6], [216.6, 64.3],
+  [180.5, 45.3], [188.5, 46.4], [196.5, 49.4], [202.6, 53.3], [205.3, 55.8], [210.9, 57.9], [215.0, 61.6], [216.6, 64.3],
   [217.5, 67.6], [218.1, 73.6], [219.7, 79.9], [219.8, 84], [219.6, 87], [219.1, 90], [218.5, 92], [217.9, 94],
   [217.3, 95.3, 0.2], [216.4, 94], [216, 92], [215.6, 90], [215, 87.5], [214.4, 84.5], [213.6, 81], [212.6, 76.8], [210.9, 73.9], [208.9, 72.2], [206.9, 72.3], [202.6, 74.4],
   [192.4, 76.2], [169.7, 73.1], [167.0, 74.1], [163.5, 76.2], [160.6, 80.8], [159.9, 85.1], [159.7, 92.8],
   [155.9, 99.8], [155.3, 104.6], [154.9, 117.1], [153.9, 118.6], [151.9, 118.5, 0.4], [150.9, 112.4], [147.4, 104.8],
   [145.2, 103.4], [141.1, 102.7], [140.4, 102.2], [137.9, 84.1], [138.5, 79.1], [140.5, 72.9], [144.2, 68.3],
-  [147.2, 65.9], [149.1, 61.3], [152.5, 57.3], [160.8, 53.2], [167.8, 51.4],
+  [147.2, 65.9], [149.1, 61.3], [152.5, 56.5], [158.5, 51.0], [165.5, 47.3], [172.5, 45.5],
 ];
 
 /** The ear on the side he is turned from, and the shade inside it. */
@@ -467,23 +471,23 @@ const NOSE_SHADE: Knot[] = [
   [200.6, 126.2], [199.9, 129.8, 0.4], [205.5, 133.1],
 ];
 
-/** Light along the combed waves over his forehead, so the hair reads groomed rather than a flat cap. */
+/** Light along the sweep of the pompadour: strokes that rise from the front hairline and curl back over the crest, so the hair reads glossy and combed up. */
 const HAIR_SHEEN: readonly (readonly Pt[])[] = [
   [
-    [152.6, 61.5],
-    [161.5, 56.8],
-    [172.5, 55.2],
+    [155.5, 62.5],
+    [162.5, 53.8],
+    [172.0, 49.4],
   ],
   [
-    [150.2, 69.5],
-    [158.2, 63.8],
-    [169.5, 61],
-    [181.5, 61.2],
+    [158.5, 70.5],
+    [165.5, 60.5],
+    [176.5, 53.5],
+    [188.0, 52.0],
   ],
   [
-    [194.5, 58],
-    [204.5, 61.5],
-    [211, 66.8],
+    [193.5, 51.5],
+    [202.0, 54.8],
+    [209.0, 60.5],
   ],
 ];
 
@@ -596,27 +600,31 @@ function head(): string {
 
 // ─────────────────────────────────────────────────────────────── the eyes
 
-/** Each eye's opening, from its outer corner round to its inner one; the head is turned, so the far eye is a little smaller. */
+/**
+ * Each eye's opening, from its outer corner round to its inner one: almond
+ * and a little hooded, as the reference draws them, so the lids cut the top
+ * of each iris. The head is turned, so the far eye is a little smaller.
+ */
 const EYE_LEFT: Knot[] = [
-  [167.8, 109.4, 0.2],
-  [170.6, 106.8],
-  [175.4, 105.8],
-  [180.2, 106.6],
-  [183.3, 109.6, 0.2],
-  [180, 112],
-  [175.6, 112.7],
-  [171, 111.8],
+  [167.8, 109.6, 0.2],
+  [170.6, 107.8],
+  [175.4, 107.0],
+  [180.2, 107.7],
+  [183.3, 109.8, 0.2],
+  [180, 111.4],
+  [175.6, 112.0],
+  [171, 111.2],
 ];
 
 const EYE_RIGHT: Knot[] = [
-  [199.8, 110, 0.2],
-  [202.4, 107.2],
-  [205.8, 106.2],
-  [209.8, 106.8],
-  [212.9, 109.4, 0.2],
-  [210.4, 111.8],
-  [206, 112.7],
-  [202.2, 112],
+  [199.8, 110.2, 0.2],
+  [202.4, 108.1],
+  [205.8, 107.3],
+  [209.8, 107.8],
+  [212.9, 109.6, 0.2],
+  [210.4, 111.2],
+  [206, 112.0],
+  [202.2, 111.4],
 ];
 
 /** Where each iris sits and how big it is; the far eye is a little smaller, the head being turned. */
@@ -637,11 +645,14 @@ function eyesOpen(p: string): string {
   const iris = ([x, y, r]: readonly [number, number, number]): string =>
     circle(x, y, r, `url(#${id('iris')})`) +
     circle(x, y, r * 0.48, C.pupil) +
-    circle(x + r * 0.6, y - r * 0.24, r * 0.26, C.white) +
-    circle(x - r * 0.42, y + r * 0.38, r * 0.14, C.white);
+    circle(x + r * 0.6, y - r * 0.24, r * 0.2, C.white) +
+    circle(x - r * 0.42, y + r * 0.38, r * 0.1, C.white);
   // the soft line of the lower lid, so the eye sits in the face rather than on it
   const under = (eye: readonly Knot[]): string =>
     curve([eye[7], eye[6], eye[5]].map((k) => [(k as Knot)[0], (k as Knot)[1] + 0.7] as const), false);
+  // the fold of the upper lid, a little above the opening
+  const crease = (eye: readonly Knot[]): string =>
+    curve([eye[1], eye[2], eye[3]].map((k) => [(k as Knot)[0], (k as Knot)[1] - 2.2] as const), false);
   return part(
     [
       radialBox(id('iris'), [
@@ -658,7 +669,9 @@ function eyesOpen(p: string): string {
       clipped(id('eyeL'), `<g data-iris="left">${iris(IRIS[0] as readonly [number, number, number])}</g>`),
       clipped(id('eyeR'), `<g data-iris="right">${iris(IRIS[1] as readonly [number, number, number])}</g>`),
       line(under(EYE_LEFT) + under(EYE_RIGHT), C.lash, 0.6, ' stroke-opacity="0.3"'),
-      fill(lid(EYE_LEFT, 1) + lid(EYE_RIGHT, 0.95), C.lash),
+      // the crease of the lid above each eye, which the reference marks clearly
+      line(crease(EYE_LEFT) + crease(EYE_RIGHT), C.shade, 0.8, ' stroke-opacity="0.5"'),
+      fill(lid(EYE_LEFT, 1.15) + lid(EYE_RIGHT, 1.1), C.lash),
     ],
   );
 }
@@ -688,28 +701,34 @@ function eyesHappy(): string {
 }
 
 /**
- * His moustache: full and well groomed, two rounded sides dipping a little
- * at the philtrum, the ends ending just past the corners of his mouth.
+ * His moustache, measured from the reference: fuller and wider than a lip
+ * brush, nearly two thirds of the face across, dipping a little at the
+ * philtrum, each end sweeping down past the corner of his mouth to the line
+ * of its centre — the near end a little further, the head being turned.
  */
 const MOUSTACHE: Knot[] = [
-  [176.9, 138.9, 0.3],
-  [179.4, 134.9],
-  [183.4, 131.9],
-  [187.9, 130.9],
-  [191.4, 131.9],
-  [192.9, 133.4, 0.3],
-  [194.4, 131.7],
-  [197.9, 130.7],
-  [202.4, 131.4],
-  [206.4, 133.9],
-  [209.4, 137.9, 0.3],
-  [206.9, 139.9],
-  [202.9, 139.9],
+  [172.9, 143.3, 0.3],
+  [175.4, 137.4],
+  [178.9, 133.2],
+  [183.4, 130.8],
+  [187.9, 129.9],
+  [191.4, 130.9],
+  [192.9, 132.4, 0.3],
+  [194.4, 130.7],
+  [197.9, 129.7],
+  [202.4, 130.4],
+  [206.4, 132.6],
+  [209.4, 136.2],
+  [211.4, 141.9, 0.3],
+  [208.4, 142.4],
+  [205.4, 140.9],
+  [201.9, 139.4],
   [197.9, 139.1],
   [192.9, 138.9],
   [187.9, 139.1],
-  [182.9, 139.9],
-  [179.4, 139.9],
+  [183.9, 139.6],
+  [179.9, 141.2],
+  [176.4, 142.9],
 ];
 
 export function drawHamo(p: string): CharacterArt {
