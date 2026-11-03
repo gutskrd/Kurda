@@ -55,11 +55,16 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
   const tiles = !!bank && mode === 'tiles';
   const [placed, setPlaced] = useState<number[]>([]);
 
-  // played once by itself: AUTOPLAY_MS after the exercise appears, or as soon after as the clip has loaded
+  // played once by itself: AUTOPLAY_MS after the exercise appears, or as soon after as the clip has loaded.
+  // A clip the learner has already set playing counts as that once, so the timer never restarts it
+  // behind them (a short clip could have ended by then).
   const shownAt = useRef(Date.now());
   const autoplayed = useRef(false);
   const loaded = audio.clock !== null;
-  const { play } = audio;
+  const { play, playing } = audio;
+  useEffect(() => {
+    if (playing) autoplayed.current = true;
+  }, [playing]);
   useEffect(() => {
     if (!loaded || disabled || autoplayed.current) return;
     const id = setTimeout(() => {
@@ -67,7 +72,7 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
       play(1);
     }, Math.max(0, AUTOPLAY_MS - (Date.now() - shownAt.current)));
     return () => clearTimeout(id);
-  }, [loaded, disabled, play]);
+  }, [loaded, disabled, play, playing]);
 
   // audio download/playback failure → auto-skip once (KUR-035 edge case)
   const cannotPlay = !audio.supported || audio.error;
