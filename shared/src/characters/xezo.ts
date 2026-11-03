@@ -45,6 +45,9 @@ const C = {
   goldShade: '#83560b',
   rose: '#c6825a',
   roseShade: '#7e3f26',
+  flower: '#9c1b28',
+  flowerLight: '#c4454f',
+  leaf: '#2d6340',
 } as const;
 
 // ─────────────────────────────────────────────────────────────── the body
@@ -134,6 +137,19 @@ const STRANDS_HEAD: readonly (readonly Pt[])[] = [
     [189.6, 205],
     [191.2, 228],
     [191.6, 240],
+  ],
+  // the sweep of the hair combed down from the middle parting, one wave to each side
+  [
+    [141.8, 110.2],
+    [127.5, 113.5],
+    [115.5, 120.5],
+    [106.5, 131],
+  ],
+  [
+    [148.2, 110],
+    [161.5, 112.5],
+    [172.5, 119.5],
+    [180.5, 130],
   ],
 ];
 
@@ -431,6 +447,37 @@ const BROW_RIGHT: Pt[] = [
 ];
 const BROW_WIDTH = [0.3, 1.3, 1.8, 1.8, 1.4, 0.4];
 
+/** Two loose wisps that escape the parting, one curling onto each temple: hair that has somewhere to go. */
+const WISPS: readonly (readonly Pt[])[] = [
+  [
+    [113.6, 151],
+    [112.2, 160],
+    [113.8, 170],
+    [117, 177.5],
+  ],
+  [
+    [172.5, 151],
+    [173.9, 160],
+    [172.3, 170],
+    [169.1, 177.5],
+  ],
+];
+
+/** A small rose worn above her temple, on the hair: five petals round a lighter heart, two leaves beneath. */
+function temple(): string {
+  const [cx, cy] = [107.5, 134.5];
+  const ring = (count: number, r: number, size: number, squash: number): string =>
+    Array.from({ length: count }, (_, i) => -Math.PI / 2 + ((i + (r < 4 ? 0.5 : 0)) * 2 * Math.PI) / count)
+      .map((a) => oval(cx + r * Math.cos(a), cy + r * Math.sin(a), size, size * squash))
+      .join('');
+  return (
+    fill(oval(cx - 7.6, cy + 6.2, 4.4, 2.5) + oval(cx + 7.4, cy + 6.6, 4.2, 2.4), C.leaf) +
+    fill(ring(5, 5, 3.7, 0.9), C.flower) +
+    fill(ring(5, 2.9, 2.2, 0.9), C.flowerLight) +
+    fill(oval(cx, cy, 1.7, 1.6), C.flower)
+  );
+}
+
 function head(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
@@ -444,13 +491,17 @@ function head(p: string): string {
     [
       fill(curve(HAIR_CAP), C.hair),
       strands(STRANDS_HEAD),
+      temple(),
       fill(curve(FACE), C.skin),
+      fill(WISPS.map((s) => taper(s, [2.1, 1.6, 0.9, 0])).join(''), C.hair),
       fill(curve(CHIN), C.shade, alpha(0.85)),
       ellipse(121.4, 188.6, 9, 6.6, `url(#${id('blush')})`),
       ellipse(165.4, 188.6, 9, 6.6, `url(#${id('blush')})`),
       // the nose: a soft shade down one side and a softer one beneath it
       fill(taper([[137.6, 177.4], [137.3, 183.4], [137.6, 188.4], [138.6, 190.6]], [0, 1.4, 1.7, 0.9]), C.shade, alpha(0.55)),
       fill(taper([[137.4, 190.4], [140.2, 191.3], [143.2, 190.9]], [0.3, 1.2, 0.3]), C.shade, alpha(0.5)),
+      // the small mark above the right corner of her mouth, hers alone
+      fill(oval(154.8, 197.6, 0.75, 0.7), C.lid, alpha(0.8)),
       fill(taper(BROW_LEFT, BROW_WIDTH) + taper(BROW_RIGHT, BROW_WIDTH), C.brow),
     ],
   );
@@ -489,6 +540,11 @@ const LASHES: readonly (readonly Pt[])[] = [
     [117.4, 173.2],
     [115.6, 172.2],
     [114.4, 172],
+  ],
+  [
+    [119.9, 171.5],
+    [118.5, 170.1],
+    [117.4, 169.5],
   ],
 ];
 
@@ -587,7 +643,7 @@ export function drawXezo(p: string): CharacterArt {
         lowerLip: 3,
         sideLip: 1.8,
         middle: 0.5,
-        colours: { lip: '#a0695a', line: '#7a4538', inside: '#5a1f1c', teeth: '#fbdcd0', tongue: '#cf7a70' },
+        colours: { lip: '#aa5f55', line: '#7a4538', inside: '#5a1f1c', teeth: '#fbdcd0', tongue: '#cf7a70' },
       },
       p,
     ),

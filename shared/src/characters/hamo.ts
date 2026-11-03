@@ -16,14 +16,15 @@
  * mouth, so every mouth shape tucks its top under it, as a real mouth does.
  */
 import type { Pt } from '../art/svg.js';
-import { n } from '../art/svg.js';
+import { n, radialBox } from '../art/svg.js';
 import type { CharacterArt } from './types.js';
 import type { Knot } from './pen.js';
-import { alpha, circle, clipDef, clipped, curve, fill, line, part, taper } from './pen.js';
+import { alpha, circle, clipDef, clipped, curve, fill, line, oval, part, taper } from './pen.js';
 import { humanMouths } from './mouth.js';
 
 const C = {
   hair: '#3e2a19',
+  hairSheen: '#5e4128',
   skin: '#b66d55',
   shade: '#a15d46',
   ear: '#ac6551',
@@ -31,9 +32,11 @@ const C = {
   brow: '#4a2818',
   white: '#ecc6b5',
   iris: '#623622',
+  irisLight: '#8a5636',
   pupil: '#2e160d',
   lash: '#3a1f14',
   moustache: '#43281a',
+  blushTone: '#a3543f',
   suit: '#5c3a26',
   fold: '#45291a',
   shirt: '#f4ead8',
@@ -461,6 +464,26 @@ const NOSE_SHADE: Knot[] = [
   [200.6, 126.2], [199.9, 129.8, 0.4], [205.5, 133.1],
 ];
 
+/** Light along the combed waves over his forehead, so the hair reads groomed rather than a flat cap. */
+const HAIR_SHEEN: readonly (readonly Pt[])[] = [
+  [
+    [152.6, 61.5],
+    [161.5, 56.8],
+    [172.5, 55.2],
+  ],
+  [
+    [150.2, 69.5],
+    [158.2, 63.8],
+    [169.5, 61],
+    [181.5, 61.2],
+  ],
+  [
+    [194.5, 58],
+    [204.5, 61.5],
+    [211, 66.8],
+  ],
+];
+
 /** His brows: thick and straight, a little heavier toward the middle. */
 const BROW_LEFT: Knot[] = [
   [164.4, 101.2, 0.4], [165.4, 99.4], [167.4, 98.1], [170.4, 97.5], [173.4, 97.2], [176.4, 97.3], [179.4, 97.5],
@@ -535,6 +558,9 @@ const FACE: Knot[] = [
   [146, 69.4],
 ];
 
+/** The brows drawn a little above their rest line, so the face reads open and good-humoured rather than heavy. */
+const lifted = (knots: readonly Knot[]): Knot[] => knots.map((k) => (k.length > 2 ? [k[0], k[1] - 1.4, k[2]!] : [k[0], k[1] - 1.4]) as Knot);
+
 function head(): string {
   return part(
     [],
@@ -546,8 +572,12 @@ function head(): string {
       // the nose: shade down its far side and under it
       fill(taper([[197.4, 104], [197.2, 110], [198.2, 117.4], [199.6, 122]], [0, 1.1, 1.5, 1.4]), C.shade, alpha(0.55)),
       fill(curve(NOSE_SHADE), C.shade, alpha(0.85)),
+      // a little warmth high on each cheek, so the face reads lived-in rather than flat; the far cheek smaller, the head being turned
+      fill(oval(171, 124.5, 7.2, 4.8), C.blushTone, alpha(0.16)),
+      fill(oval(208, 123, 5.4, 3.8), C.blushTone, alpha(0.13)),
       fill(curve(HAIR), C.hair),
-      fill(curve(BROW_LEFT) + curve(BROW_RIGHT), C.brow),
+      line(strokes(HAIR_SHEEN), C.hairSheen, 1.7, ' stroke-opacity="0.8"'),
+      fill(curve(lifted(BROW_LEFT)) + curve(lifted(BROW_RIGHT)), C.brow),
     ],
   );
 }
@@ -591,15 +621,31 @@ function lid(eye: readonly Knot[], weight: number): string {
 
 function eyesOpen(p: string): string {
   const id = (name: string): string => `${p}${name}`;
+  // lit toward the middle and darker at the rim, with a spark low on the other side: eyes with somewhere to look from
   const iris = ([x, y, r]: readonly [number, number, number]): string =>
-    circle(x, y, r, C.iris) + circle(x, y, r * 0.48, C.pupil) + circle(x + r * 0.6, y - r * 0.24, r * 0.26, C.white);
+    circle(x, y, r, `url(#${id('iris')})`) +
+    circle(x, y, r * 0.48, C.pupil) +
+    circle(x + r * 0.6, y - r * 0.24, r * 0.26, C.white) +
+    circle(x - r * 0.42, y + r * 0.38, r * 0.14, C.white);
+  // the soft line of the lower lid, so the eye sits in the face rather than on it
+  const under = (eye: readonly Knot[]): string =>
+    curve([eye[7], eye[6], eye[5]].map((k) => [(k as Knot)[0], (k as Knot)[1] + 0.7] as const), false);
   return part(
-    [clipDef(id('eyeL'), curve(EYE_LEFT)), clipDef(id('eyeR'), curve(EYE_RIGHT))],
+    [
+      radialBox(id('iris'), [
+        [0, C.irisLight],
+        [0.62, C.iris],
+        [1, '#4a2817'],
+      ]),
+      clipDef(id('eyeL'), curve(EYE_LEFT)),
+      clipDef(id('eyeR'), curve(EYE_RIGHT)),
+    ],
     [
       fill(curve(EYE_LEFT) + curve(EYE_RIGHT), C.white),
       // each iris in a group of its own, so it can look aside within its eye (`irisReach`)
       clipped(id('eyeL'), `<g data-iris="left">${iris(IRIS[0] as readonly [number, number, number])}</g>`),
       clipped(id('eyeR'), `<g data-iris="right">${iris(IRIS[1] as readonly [number, number, number])}</g>`),
+      line(under(EYE_LEFT) + under(EYE_RIGHT), C.lash, 0.6, ' stroke-opacity="0.3"'),
       fill(lid(EYE_LEFT, 1) + lid(EYE_RIGHT, 0.95), C.lash),
     ],
   );
