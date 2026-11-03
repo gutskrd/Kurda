@@ -177,10 +177,20 @@ const PLEATS: readonly (readonly Pt[])[] = [
 
 /** Where the pştên's top edge is at his sides, and how far it and every band in it bow down at the front: a little, as cloth round a waist does. */
 const SASH_TOP = 314.5;
-const SASH_BOW = 2.5;
+
+/**
+ * How far each edge of the band bows down at the front, measured from the
+ * reference: the top edge sags a little, the bottom edge twice as deep, so
+ * the band curves full over the middle rather than lying as a flat ribbon.
+ */
+const SASH_BOW_TOP = 3.5;
+const SASH_BOW_BOTTOM = 7;
 
 /** How deep the wound cloth reaches below its top edge: a thin band worn up at the waist, as the reference wears it, his fingers curling over its top edge. */
 const SASH_DEPTH = 40;
+
+/** The bow of a winding at `y`, growing from the top edge’s sag to the bottom edge’s as the cloth rounds. */
+const bowAt = (y: number): number => SASH_BOW_TOP + ((SASH_BOW_BOTTOM - SASH_BOW_TOP) * (y - SASH_TOP)) / SASH_DEPTH;
 
 /**
  * The pştên, wound round his waist from hip to hip: its top and bottom edges
@@ -192,8 +202,8 @@ const SASH_DEPTH = 40;
 function sashOutline(bottom: number): string {
   const [t, b] = [SASH_TOP, bottom];
   return (
-    `M112.4,317L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L243,341.5L241.6,348L244.2,${n(b)}` +
-    `H244Q180,${n(b + SASH_BOW * 2)} 116,${n(b)}H108.1L110.3,348.4L112.4,340Z`
+    `M112.4,317L116,${t}Q180,${n(t + SASH_BOW_TOP * 2)} 244,${t}H244.6L243,341.5L241.6,348L244.2,${n(b)}` +
+    `H244Q180,${n(b + SASH_BOW_BOTTOM * 2)} 116,${n(b)}H108.1L110.3,348.4L112.4,340Z`
   );
 }
 
@@ -203,7 +213,7 @@ function sashOutline(bottom: number): string {
  * between them where the cloth rounds.
  */
 function sashFolds(): string {
-  const at = (y: number): string => `M104,${n(y)}H116Q180,${n(y + SASH_BOW * 2)} 244,${n(y)}H252`;
+  const at = (y: number): string => `M104,${n(y)}H116Q180,${n(y + bowAt(y) * 2)} 244,${n(y)}H252`;
   return (
     line([321, 329, 337, 345].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
     line([325, 341, 349].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
@@ -225,7 +235,7 @@ const GATHERS: readonly (readonly Pt[])[] = [
  */
 function sashShade(bottom: number): string {
   const strip = (from: number, to: number): string =>
-    `M100,${n(from)}H116Q180,${n(from + SASH_BOW * 2)} 244,${n(from)}H254V${n(to)}H244Q180,${n(to + SASH_BOW * 2)} 116,${n(to)}H100Z`;
+    `M100,${n(from)}H116Q180,${n(from + bowAt(from) * 2)} 244,${n(from)}H254V${n(to)}H244Q180,${n(to + bowAt(to) * 2)} 116,${n(to)}H100Z`;
   return (
     fill(strip(bottom - 3.2, bottom), '#000', alpha(0.24)) +
     fill(GATHERS.map((s) => taper(s, [0.6, 1.6, 0.2])).join(''), '#000', alpha(0.38))
