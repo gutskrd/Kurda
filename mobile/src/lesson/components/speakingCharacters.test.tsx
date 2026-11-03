@@ -90,6 +90,29 @@ describe('the lesson’s speaking characters', () => {
     expect(frames.pending).toBe(0);
   });
 
+  // the clip plays once by itself a moment after the exercise appears; one the learner has already played is that once
+  it('does not play a clip again by itself once the learner has played it', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      renderWithProviders(
+        <ListeningExercise exercise={listening({ audioVoice: SAID })} text="" onChangeText={noop} onSkip={noop} disabled={false} />,
+      );
+      await settle();
+      fireEvent.click(screen.getByRole('button', { name: 'Play audio' }));
+      await settle();
+      const clip = FakeAudio.of(CLIP)!;
+      act(() => clip.finish());
+      await settle();
+      // past the moment the exercise would have played it by itself
+      act(() => vi.advanceTimersByTime(1000));
+      await settle();
+      expect(clip.paused).toBe(true);
+      expect(frames.pending).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   // he puts his head in at the window beside the bubble, listening, and says nothing, so a screen reader is not told he said it
   it('brings Hevalo in to listen, his head in at the window, when nobody has been chosen to say the clip', async () => {
     renderWithProviders(<ListeningExercise exercise={listening()} text="" onChangeText={noop} onSkip={noop} disabled={false} />);

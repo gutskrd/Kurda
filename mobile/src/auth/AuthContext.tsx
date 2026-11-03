@@ -161,8 +161,11 @@ export function AuthProvider({
   // the client and re-runs the restore effect in a loop — bouncing the
   // user back to the login screen. useState initialisers run once.
   const [storage] = useState<TokenStorage>(() => storageProp ?? createTokenStorage());
+  // Trailing slashes are stripped because every consumer joins `${baseUrl}${path}`
+  // with absolute paths — a hand-typed EXPO_PUBLIC_API_URL ending in `/` would
+  // otherwise double the slash on every request and 404.
   const [baseUrl] = useState<string>(
-    () => baseUrlProp ?? process.env.EXPO_PUBLIC_API_URL ?? defaultApiBaseUrl(),
+    () => (baseUrlProp ?? process.env.EXPO_PUBLIC_API_URL ?? defaultApiBaseUrl()).replace(/\/+$/, ''),
   );
   // read once as the app starts, then held in memory for every request (auth/deviceId.ts)
   const [deviceStore] = useState(() => {
