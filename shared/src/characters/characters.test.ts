@@ -333,8 +333,8 @@ describe('the characters', () => {
       it('stays small: the whole figure within its budget, and a mouth a sliver of it', () => {
         const total = parts(art).reduce((s, [, m]) => s + bytes(m), 0);
         // each of the deer's ears carries its own light, so either can be drawn alone;
-        // Hamo spends a little of the budget on his curled fringe, warm eyes, stubble and earring
-        expect(total).toBeLessThan(33_000);
+        // Hamo spends a little of the budget on his groomed hair and warm eyes
+        expect(total).toBeLessThan(32_000);
         for (const v of VISEMES) expect(bytes(art.mouths[v]), v).toBeLessThan(2_500);
         // Xezo's eyes carry a second lash each
         expect(bytes(art.eyes.open) + bytes(art.eyes.closed)).toBeLessThan(3_800);
