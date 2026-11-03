@@ -405,15 +405,15 @@ const JAW: Knot[] = [
 ];
 
 /**
- * His nose, as the reference draws it: one long straight ridge from between
- * the brows to a rounded tip just above the moustache, with a broad soft
- * shade down its far side. The far wing shows as the crease round it, the
- * near wing only faintly, and the shadow under the tip tucks under the
- * moustache so the base is hidden the way the reference’s is.
+ * His nose, as the reference draws it: no line down the ridge at all, only
+ * a soft, broad shade on the far side of its lower half where the nose
+ * rounds toward the tip, the crease round the far wing, the near wing only
+ * faintly, and the shadow under the tip, which tucks under the moustache so
+ * the base is hidden the way the reference’s is.
  */
-const NOSE_RIDGE_SHADE: Knot[] = [
-  [195.4, 103.2, 0.3], [195.8, 108.5], [196.3, 114], [197.0, 119.5], [197.8, 124.2], [199.0, 127.0], [200.8, 127.6, 0.4],
-  [201.9, 125.4], [201.2, 121.6], [200.0, 117.2], [198.8, 112.0], [197.5, 106.6],
+const NOSE_SIDE: Knot[] = [
+  [196.8, 112.5, 0.5], [199.0, 115.5], [201.0, 119.5], [202.8, 123.5], [203.4, 126.8], [202.0, 128.4, 0.5], [199.4, 128.0],
+  [197.4, 125.5], [196.4, 121], [196.2, 116],
 ];
 
 const NOSE_WING_FAR: Knot[] = [
@@ -431,22 +431,23 @@ const NOSE_BASE: Knot[] = [
 ];
 
 /**
- * His brows, traced from the reference: a thick body that runs level along
- * the top, an outer tail that sweeps down to a point toward the temple, and
- * a softer, slightly lower inner end. The profile is the reference’s at the
- * scale of each brow’s own length.
+ * His brows, traced edge by edge from the reference and set over each eye
+ * at the reference’s height above it: a thin tail low at the temple rising
+ * to the brow’s peak over the outer third of the eye, then a full body
+ * sloping down to a heavier inner end near the bridge of the nose. The far
+ * brow is the same shape foreshortened, its inner end blunt and low.
  */
 const BROW_LEFT: Knot[] = [
-  [164.0, 101.0, 0.15], [165.1, 99.7], [166.9, 98.2], [168.8, 97.3], [170.5, 96.9], [172.4, 96.75], [174.8, 96.7],
-  [177.2, 96.7], [179.6, 96.85], [181.5, 97.1], [183.2, 97.4], [185.1, 97.9], [186.8, 98.5], [188.0, 99.2, 0.5],
-  [187.7, 100.6], [186.8, 100.9], [185.1, 101.0], [183.2, 101.0], [179.6, 100.9], [176.0, 100.8], [172.4, 100.8],
-  [170.5, 101.0], [168.8, 101.4], [166.9, 101.8], [165.1, 101.9],
+  [165.4, 100.5, 0.15], [166.9, 99.3], [168.3, 97.8], [169.6, 96.8], [171.0, 96.2], [172.3, 95.4], [174.3, 95.2], [176.4, 95.3],
+  [178.4, 95.7], [180.4, 95.8], [182.4, 96.3], [184.5, 96.8], [186.5, 97.5], [188.6, 98.9, 0.5], [188.8, 100.6], [187.2, 101.2],
+  [185.0, 100.8], [182.4, 100.6], [180.4, 100.3], [178.4, 99.6], [176.4, 98.9], [174.3, 98.8], [172.3, 98.8], [170.3, 99.1],
+  [168.3, 99.4], [166.9, 100.2],
 ];
 
 const BROW_RIGHT: Knot[] = [
-  [198.8, 98.6, 0.5], [200.2, 97.9], [202.3, 97.35], [204.1, 97.1], [206.2, 97.0], [208.5, 97.05], [210.2, 97.3],
-  [212.4, 97.8], [214.1, 98.4], [215.3, 99.1], [216.4, 100.0, 0.15], [215.3, 100.9], [214.1, 101.2], [212.4, 101.3],
-  [210.2, 101.3], [207.6, 101.2], [205.0, 101.1], [202.3, 101.0], [200.2, 100.8], [199.1, 100.3],
+  [198.3, 100.6, 0.5], [199.4, 98.9], [200.7, 97.8], [202.1, 97.3], [204.7, 97.2], [206.1, 96.8], [207.5, 96.3], [210.2, 96.3],
+  [211.5, 97.2], [212.9, 98.6], [214.2, 99.7], [216.0, 100.7, 0.15], [214.2, 101.3], [212.9, 101.3], [211.5, 100.4], [210.2, 99.8],
+  [208.8, 99.8], [207.5, 100.3], [206.1, 100.4], [204.7, 100.8], [203.4, 101.3], [202.1, 101.8], [200.7, 101.8], [199.4, 101.8],
 ];
 
 /**
@@ -516,9 +517,9 @@ function head(): string {
       fill(curve(EAR_SHADE) + curve(EAR_SHADE2), C.earShade),
       fill(curve(FACE), C.skin),
       fill(curve(JAW), C.shade, alpha(0.85)),
-      fill(curve(NOSE_RIDGE_SHADE), C.shade, alpha(0.32)),
-      fill(curve(NOSE_WING_FAR), C.shade, alpha(0.55)),
-      fill(curve(NOSE_WING_NEAR), C.shade, alpha(0.3)),
+      fill(curve(NOSE_SIDE), C.shade, alpha(0.2)),
+      fill(curve(NOSE_WING_FAR), C.shade, alpha(0.45)),
+      fill(curve(NOSE_WING_NEAR), C.shade, alpha(0.25)),
       fill(curve(NOSE_BASE), C.shade, alpha(0.5)),
       fill(curve(HAIR), C.hair),
       fill(curve(BROW_LEFT) + curve(BROW_RIGHT), C.brow),
