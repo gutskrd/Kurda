@@ -30,10 +30,11 @@ export type TabName = 'Home' | 'Learn' | 'Messages' | 'Search' | 'Profile';
  *   Home is the community's wall — what everyone wrote and pictured — and is
  *   where you land.
  *
- *   Learn is lessons and games together, behind one switch at its top. They
- *   were two places (the lessons a screen pushed from the top of Play), and
- *   continuing a lesson took two taps and a decision; it is one tap now, and a
- *   game is two from anywhere.
+ *   Learn is lessons, stories and games together, behind one switch at its
+ *   top. Lessons and games were two places (the lessons a screen pushed from
+ *   the top of Play), and continuing a lesson took two taps and a decision;
+ *   it is one tap now, a story to read is two, and a game is two from
+ *   anywhere.
  *
  *   Messages is conversations — with one person or with a group — and the
  *   friend requests waiting on you, at the top where they cannot sink.
@@ -62,11 +63,17 @@ export function linkingScreens(): Record<TabName, string> {
   return Object.fromEntries(TABS.map((t) => [t.name, t.path])) as Record<TabName, string>;
 }
 
-/** The two halves of the Learn tab. */
-export type LearnView = 'lessons' | 'games';
+/**
+ * The three groups of the Learn tab, in the order the switch shows them:
+ * the lessons, the stories to read, and the games. Stories sit between the
+ * two because that is what they are — reading first, a quiz after.
+ */
+export type LearnView = 'lessons' | 'stories' | 'games';
+
+export const LEARN_VIEWS: readonly LearnView[] = ['lessons', 'stories', 'games'] as const;
 
 export function isLearnView(v: unknown): v is LearnView {
-  return v === 'lessons' || v === 'games';
+  return v === 'lessons' || v === 'stories' || v === 'games';
 }
 
 /**
@@ -80,6 +87,13 @@ export function isLearnView(v: unknown): v is LearnView {
  * lesson, any other game's invite — is passed through untouched; only the
  * exact old addresses are rewritten, with their query kept.
  *
+ * The website's Learn addresses are read here too, since a link to a story
+ * is copied from a browser as often as from the app: `/app/learn` is the
+ * Learn tab, `/app/learn/stories` its Stories view, `/app/learn/games` its
+ * Games view, and `/app/learn/stories/<slug>` the story itself, at the
+ * reader's own address. `/app/stories` is left alone: on the website that is
+ * the community wall's old address, not the library's.
+ *
  * Pure, so the rewriting is tested without a navigator; App.tsx runs every
  * incoming path through it before React Navigation reads it.
  */
@@ -88,10 +102,17 @@ export function legacyTabPath(path: string): string {
   const lead = rawPath.startsWith('/') ? '/' : '';
   const bare = rawPath.replace(/^\/+/, '').replace(/\/+$/, '');
   const rest = query ? `&${query}` : '';
+  const story = /^app\/learn\/stories\/([^/]+)$/.exec(bare);
+  if (story) return `${lead}app/games/stories/${story[1]}${query ? `?${query}` : ''}`;
   switch (bare) {
+    case 'app/learn':
+      return `${lead}learn${query ? `?${query}` : ''}`;
+    case 'app/learn/stories':
+      return `${lead}learn?view=stories${rest}`;
     case 'play':
     case 'app/games':
     case 'app/play':
+    case 'app/learn/games':
       return `${lead}learn?view=games${rest}`;
     // the word game's lobby, from before the game was renamed
     case 'app/games/wordle-battle':

@@ -112,7 +112,7 @@ import { DevicesScreen } from './src/security/DevicesScreen';
 import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
 import { ComposeScreen } from './src/composer/ComposeScreen';
-import { StoriesHubScreen } from './src/stories/StoriesHubScreen';
+import { StoriesScreen } from './src/stories/StoriesScreen';
 import { StoryReaderScreen } from './src/stories/StoryReaderScreen';
 import { StoryGameScreen } from './src/stories/StoryGameScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
@@ -172,8 +172,9 @@ const linking: LinkingOptions<RootStackParamList> = {
       WordSet: 'app/words/:set',
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
-      // `/app/games/stories?id=…` is a game to join; without an id it is the hub
+      // `/app/games/stories?id=…` is a game to join; without an id it is the library
       Stories: inviteRoutePath('stories'),
+      // a story's address; the website's `/app/learn/stories/:slug` is rewritten to it (navigation/tabs.ts)
       StoryReader: 'app/games/stories/:slug',
       // a shared post: the address the website gives a written one and a picture
       LibraryPost: 'app/library/:postId',
@@ -571,12 +572,9 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
+      {/* the library is reading, which a guest may do; the games behind it keep their own wall */}
       <RootStack.Screen name="Stories" options={{ presentation: 'card' }}>
-        {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <StoriesHubScreen id={route.params?.id} onExit={() => navigation.goBack()} />
-          </GuestWall>
-        )}
+        {({ route, navigation }) => <StoriesScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="StoryReader" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}

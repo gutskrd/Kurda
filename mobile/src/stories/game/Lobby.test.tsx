@@ -160,7 +160,7 @@ describe('Lobby', () => {
     });
     testAuth.client = fakeClient({
       ...routes(),
-      'GET /stories?dialect=kurmanci': ok({ stories: [item('s1', 'Nanê Germ'), item('s9', 'Bajar')] }),
+      'GET /stories?dialect=kurmanci&limit=50': ok({ stories: [item('s1', 'Nanê Germ'), item('s9', 'Bajar')] }),
     });
     renderWithProviders(<Lobby view={lobby()} apply={() => null} onLeft={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Change settings' }));

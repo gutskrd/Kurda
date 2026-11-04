@@ -58,7 +58,7 @@ function routes(extra: Record<string, unknown> = {}) {
   return {
     'GET /friends?limit=500': ok({ total: 3, friends: [ROJDA, AZAD, SIPAN] }),
     'GET /play/invites': ok(noInvites),
-    'GET /stories?dialect=kurmanci': ok({ stories: [story] }),
+    'GET /stories?dialect=kurmanci&limit=50': ok({ stories: [story] }),
     'GET /story-games/options': ok({ canHostOpen: false }),
     ...extra,
   } as Parameters<typeof fakeClient>[0];

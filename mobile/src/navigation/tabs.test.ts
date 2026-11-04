@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { TABS, isLearnView, legacyTabPath, linkingScreens } from './tabs';
+import { LEARN_VIEWS, TABS, isLearnView, legacyTabPath, linkingScreens } from './tabs';
 import { LOCALES, TRANSLATIONS } from '../i18n/translations';
 
 describe('tab registry', () => {
@@ -85,8 +85,24 @@ describe('old addresses', () => {
     }
   });
 
-  it('knows the two halves of Learn and nothing else', () => {
+  /*
+   * The website's Learn addresses, as copied from a browser: the tab, its
+   * Stories and Games views, and a story at the reader's own address. The
+   * website's old /app/stories is the community wall, so it is not touched.
+   */
+  it('opens the website’s Learn addresses on the tab, its views and the reader', () => {
+    expect(legacyTabPath('app/learn')).toBe('learn');
+    expect(legacyTabPath('/app/learn/stories')).toBe('/learn?view=stories');
+    expect(legacyTabPath('app/learn/stories?from=share')).toBe('learn?view=stories&from=share');
+    expect(legacyTabPath('app/learn/games')).toBe('learn?view=games');
+    expect(legacyTabPath('/app/learn/stories/nane-germ')).toBe('/app/games/stories/nane-germ');
+    expect(legacyTabPath('app/stories?section=poems')).toBe('app/stories?section=poems');
+  });
+
+  it('knows the three groups of Learn, in order, and nothing else', () => {
+    expect(LEARN_VIEWS).toEqual(['lessons', 'stories', 'games']);
     expect(isLearnView('lessons')).toBe(true);
+    expect(isLearnView('stories')).toBe(true);
     expect(isLearnView('games')).toBe(true);
     expect(isLearnView('play')).toBe(false);
     expect(isLearnView(undefined)).toBe(false);

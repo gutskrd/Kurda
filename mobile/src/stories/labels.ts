@@ -1,9 +1,14 @@
 import {
+  categoryName,
   lengthMinutes,
+  type CefrLevel,
   type GameAccess,
+  type StoryAudioCoverage,
+  type StoryCategory,
   type StoryDialect,
   type StoryGameMode,
   type StoryLength,
+  type StoryTradition,
   type TextDuring,
   type TimerSeconds,
 } from '@kurda/shared';
@@ -40,6 +45,44 @@ export const ACCESS_KEY: Record<GameAccess, TranslationKey> = {
   friends: 'stories.access.friends',
   open: 'stories.access.open',
 };
+
+/**
+ * What each CEFR letter means, in words, beside the letter: a learner who
+ * knows their level knows it as "A2"; one who does not knows "Elementary".
+ */
+export const CEFR_NAME_KEY: Record<CefrLevel, TranslationKey> = {
+  A1: 'stories.cefr.A1',
+  A2: 'stories.cefr.A2',
+  B1: 'stories.cefr.B1',
+  B2: 'stories.cefr.B2',
+  C1: 'stories.cefr.C1',
+};
+
+/** "A2 · Elementary". */
+export function cefrLabel(cefr: CefrLevel, t: Translate): string {
+  return `${cefr} · ${t(CEFR_NAME_KEY[cefr])}`;
+}
+
+/** Where a story comes from, which the reader is told: never an original presented as folklore. */
+export const TRADITION_KEY: Record<StoryTradition, TranslationKey> = {
+  traditional: 'stories.overview.tradition.traditional',
+  adapted: 'stories.overview.tradition.adapted',
+  original: 'stories.overview.tradition.original',
+};
+
+/** The audio badge's word, or null for a story with no recording at all. */
+export function narrationLabel(coverage: StoryAudioCoverage, t: Translate): string | null {
+  if (coverage === 'full') return t('stories.library.narrated');
+  if (coverage === 'partial') return t('stories.library.partlyNarrated');
+  return null;
+}
+
+/** A category's name in the reader's language, from the library's list; the slug itself for one the list does not know. */
+export function categoryLabel(slug: string | null | undefined, categories: readonly StoryCategory[] | undefined, locale: string): string | null {
+  if (!slug) return null;
+  const found = categories?.find((c) => c.slug === slug);
+  return found ? categoryName(found, locale) : slug;
+}
 
 export function timerLabel(seconds: TimerSeconds, t: Translate): string {
   return seconds === 0 ? t('stories.timer.off') : t('stories.timer.seconds', { seconds });

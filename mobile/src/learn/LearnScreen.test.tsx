@@ -56,6 +56,37 @@ const MAP = {
 
 const STREAK = { current: 6, longest: 9, freezes: 0, lastActiveOn: null, daysLearned: 31 };
 
+const NANE_GERM = {
+  id: 's1',
+  slug: 'nane-germ',
+  title: 'Nanê Germ',
+  summary: 'Dayik nan dipêje.',
+  dialect: 'kurmanci',
+  language: 'ku',
+  level: 1,
+  cefr: 'A1',
+  length: 'short',
+  wordCount: 80,
+  readingMinutes: 2,
+  fullyNarrated: false,
+  audioCoverage: 'none',
+  category: 'everyday',
+  tradition: 'original',
+  author: null,
+  featured: true,
+  cover: null,
+  publishedAt: '2026-10-01T00:00:00.000Z',
+};
+const LIBRARY = {
+  featured: [NANE_GERM],
+  recent: [NANE_GERM],
+  continue: [],
+  bookmarks: [],
+  categories: [{ slug: 'everyday', name: { en: 'Everyday life' }, position: 7, count: 1 }],
+  total: 1,
+  me: { finished: 0, total: 1, averageScore: null },
+};
+
 function client(streak: Record<string, unknown> = STREAK) {
   testAuth.client = fakeClient({
     'GET /courses': ok({ courses: [{ id: 'c1', slug: 'kmr', title: 'Kurmancî', dialect: 'kmr' }] }),
@@ -64,13 +95,15 @@ function client(streak: Record<string, unknown> = STREAK) {
     'GET /me': ok({ user: { streak } }),
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
     'GET /practice/due': ok({ due: 8, available: 20, open: null }),
-    'GET /stories': ok({ stories: [{ slug: 'a' }] }),
+    'GET /stories/library': ok(LIBRARY),
+    'GET /story-games/active': ok({ games: [] }),
     'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
     'GET /play/invites': ok({ incoming: [], outgoing: [] }),
   });
 }
 
 const lessonsTab = () => screen.getByRole('button', { name: 'Lessons' });
+const storiesTab = () => screen.getByRole('button', { name: 'Stories' });
 const gamesTab = () => screen.getByRole('button', { name: 'Games' });
 
 describe('Learn', () => {
@@ -131,6 +164,31 @@ describe('Learn', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Alphabet');
     fireEvent.click(screen.getByRole('button', { name: 'Words to know, Colours, numbers, days, months' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Words');
+  });
+
+  /*
+   * Three groups, in the order reading sits between the course and the
+   * games: Lessons · Stories · Games. The Stories view is the library, and
+   * the games no longer carry a Stories card, so the way to a story is this
+   * switch and nothing else.
+   */
+  it('offers Lessons, Stories and Games in that order, and shows the library under Stories', async () => {
+    client();
+    renderWithProviders(<LearnScreen />);
+    const switches = [lessonsTab(), storiesTab(), gamesTab()];
+    expect(switches[0]!.compareDocumentPosition(switches[1]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(switches[1]!.compareDocumentPosition(switches[2]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    fireEvent.click(storiesTab());
+    expect(storiesTab().getAttribute('aria-selected')).toBe('true');
+    expect(await screen.findByRole('heading', { name: 'Featured' })).toBeTruthy();
+    // on two shelves (featured, and the newest); either opens the story
+    fireEvent.click(screen.getAllByRole('button', { name: 'Nanê Germ' })[0]!);
+    expect(navigation.navigate).toHaveBeenCalledWith('StoryReader', { slug: 'nane-germ' });
+    await waitFor(() => expect(localStorage.getItem(LEARN_VIEW_KEY)).toBe('stories'));
+
+    fireEvent.click(gamesTab());
+    expect(await screen.findByTestId('game-wordle')).toBeTruthy();
+    expect(screen.queryByTestId('game-stories')).toBeNull();
   });
 
   it('switches to the games, and remembers the choice on this device', async () => {

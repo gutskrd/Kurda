@@ -16,7 +16,6 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { listStories } from '../stories/api';
 import { getMyRanks } from '../ranks/api';
 import { daysLeftText, seasonTitle } from '../ranks/format';
 import { acceptInvite, listInvites } from '../play/api';
@@ -25,7 +24,7 @@ import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
 import { useUserEvents } from '../realtime/useUserEvents';
 
-type GameRoute = 'Stories' | 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race';
+type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race';
 type Mode = 'solo' | 'friends' | 'both';
 
 interface GameCard {
@@ -39,12 +38,12 @@ interface GameCard {
 }
 
 /**
- * The games, in the order they are offered: Stories first (it is the one that
- * is most like learning), then each game alone and then its version against a
- * friend, then the race.
+ * The games, in the order they are offered: each game alone and then its
+ * version against a friend, then the race. Stories are not among them any
+ * more: reading is Learn's own middle group, and a story's quiz starts from
+ * the story.
  */
 export const GAME_CARDS: readonly GameCard[] = [
-  { key: 'stories', route: 'Stories', icon: 'story', name: 'stories.title', line: 'games.card.stories', mode: 'both' },
   { key: 'wordle', route: 'Wordle', icon: 'grid', name: 'games.wordle.name', line: 'games.card.wordle', mode: 'solo' },
   { key: 'battle', route: 'WordleBattle', icon: 'people', name: 'games.battle.name', line: 'games.card.battle', mode: 'friends' },
   { key: 'rhyme', route: 'Rhyme', icon: 'speaker', name: 'games.rhyme.name', line: 'games.card.rhyme', mode: 'solo' },
@@ -59,7 +58,7 @@ const MODE_LABEL: Record<Mode, TranslationKey> = {
 };
 
 /**
- * Learn's second half: the games.
+ * Learn's third group: the games.
  *
  * At the top, small, the way into the rankings and the league — there for the
  * people who look for them, out of the way of the people who only came to
@@ -75,12 +74,6 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const { t, locale } = useI18n();
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
-  /**
-   * Whether any story is published yet. Until one is, the card says "Coming
-   * soon" and opens nothing — a hub with an empty list is a promise the screen
-   * cannot keep. Asked again on each visit; the list is cached on the server.
-   */
-  const [hasStories, setHasStories] = useState<boolean | null>(null);
   const [ranks, setRanks] = useState<MyRanks | null>(null);
   // the season's line under Ranks is held in grey until its answer, so the word above it does not jump
   const [ranksSettled, setRanksSettled] = useState(false);
@@ -89,9 +82,6 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   useFocusEffect(
     useCallback(() => {
       let live = true;
-      void listStories(client).then((res) => {
-        if (live && res.ok) setHasStories(res.data.stories.length > 0);
-      });
       // a guest holds no rank and is sent no invites, and the server refuses both questions
       if (isGuest) {
         setRanksSettled(true);
@@ -223,23 +213,19 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         </Text>
         <View style={[styles.grid, { flexDirection: dir.row }]}>
           {GAME_CARDS.map((card) => {
-            const soon = card.key === 'stories' && hasStories === false;
             const name = t(card.name);
-            const mode = soon ? t('stories.card.soon') : t(MODE_LABEL[card.mode]);
+            const mode = t(MODE_LABEL[card.mode]);
             return (
               <PressableScale
                 key={card.key}
-                disabled={soon}
                 onPress={() => navigation.navigate(card.route)}
                 accessibilityRole="button"
-                accessibilityState={{ disabled: soon }}
                 accessibilityLabel={`${name}, ${mode}. ${t(card.line)}`}
                 testID={`game-${card.key}`}
                 style={[
                   styles.card,
                   {
                     backgroundColor: colors.surface,
-                    opacity: soon ? 0.55 : 1,
                     alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start',
                   },
                 ]}

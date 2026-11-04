@@ -31,9 +31,6 @@ export const RTL_LOCALES: readonly Locale[] = APP_LOCALES.filter((l) => localeDi
 export type TranslationKey =
   // --- Stories and playing with friends (mobile-games) ---
   | 'stories.title'
-  | 'stories.card.body'
-  | 'stories.card.open'
-  | 'stories.card.soon'
   | 'stories.close'
   | 'stories.variety'
   | 'stories.length.short'
@@ -43,9 +40,7 @@ export type TranslationKey =
   | 'stories.minutes'
   | 'stories.minutesRange'
   | 'stories.aboutMinutes'
-  | 'stories.narrated'
   | 'stories.narratedShort'
-  | 'stories.done'
   | 'stories.mode.solo'
   | 'stories.mode.duo'
   | 'stories.mode.group'
@@ -70,11 +65,6 @@ export type TranslationKey =
   | 'stories.status.reading'
   | 'stories.filter.all'
   | 'stories.filter.level'
-  | 'stories.filter.none'
-  | 'stories.read'
-  | 'stories.empty.sorani'
-  | 'stories.empty.kurmanci'
-  | 'stories.empty.switch'
   | 'stories.together.setup'
   | 'stories.join.label'
   | 'stories.join.placeholder'
@@ -2395,7 +2385,6 @@ export type TranslationKey =
   | 'learn.map.title'
   | 'learn.games.invites'
   | 'learn.games.leagueHint'
-  | 'games.card.stories'
   | 'games.card.wordle'
   | 'games.card.battle'
   | 'games.card.rhyme'
@@ -2804,16 +2793,49 @@ export type TranslationKey =
   | 'maintenance.title'
   | 'maintenance.body'
   | 'maintenance.backBy'
-  | 'maintenance.checkEvery';
+  | 'maintenance.checkEvery'
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  | 'learn.view.stories'
+  | 'stories.library.progressTitle'
+  | 'stories.library.finishedOf'
+  | 'stories.library.averageScore'
+  | 'stories.library.noScore'
+  | 'stories.library.search'
+  | 'stories.library.clearSearch'
+  | 'stories.library.continue'
+  | 'stories.library.featured'
+  | 'stories.library.recent'
+  | 'stories.library.categories'
+  | 'stories.library.all'
+  | 'stories.library.bookmarks'
+  | 'stories.library.found'
+  | 'stories.library.more'
+  | 'stories.library.empty'
+  | 'stories.library.emptyAll'
+  | 'stories.library.clearFilters'
+  | 'stories.library.bookmark'
+  | 'stories.library.bookmarked'
+  | 'stories.library.narrated'
+  | 'stories.library.partlyNarrated'
+  | 'stories.library.progress'
+  | 'stories.library.finished'
+  | 'stories.library.together'
+  | 'stories.cefr.A1'
+  | 'stories.cefr.A2'
+  | 'stories.cefr.B1'
+  | 'stories.cefr.B2'
+  | 'stories.cefr.C1'
+  | 'stories.overview.tradition.traditional'
+  | 'stories.overview.tradition.adapted'
+  | 'stories.overview.tradition.original'
+  | 'stories.empty.sorani'
+  | 'stories.empty.kurmanci';
 
 type Catalog = Record<TranslationKey, string>;
 
 const en: Catalog = {
   // --- Stories and playing with friends (mobile-games) ---
   'stories.title': 'Stories',
-  'stories.card.body': 'Read a short Kurdish story, then answer questions about it — alone, with a friend or with a group.',
-  'stories.card.open': 'Open Stories',
-  'stories.card.soon': 'Coming soon',
   'stories.close': 'Close',
   'stories.variety': 'Variety',
   'stories.length.short': 'Short',
@@ -2823,9 +2845,7 @@ const en: Catalog = {
   'stories.minutes': '{count} min',
   'stories.minutesRange': '{min}–{max} min',
   'stories.aboutMinutes': '~{count} min',
-  'stories.narrated': 'read aloud',
   'stories.narratedShort': 'Audio',
-  'stories.done': 'Done · {correct}/{total}',
   'stories.mode.solo': 'Just me',
   'stories.mode.duo': 'With a friend',
   'stories.mode.group': 'With a group',
@@ -2850,11 +2870,6 @@ const en: Catalog = {
   'stories.status.reading': 'Reading',
   'stories.filter.all': 'All',
   'stories.filter.level': 'Level',
-  'stories.filter.none': 'No stories of this length yet.',
-  'stories.read': 'Read a story',
-  'stories.empty.sorani': 'Soranî stories are on their way — a native speaker checks each one first.',
-  'stories.empty.kurmanci': 'Kurmancî stories are on their way — a native speaker checks each one first.',
-  'stories.empty.switch': 'Read {variety} stories',
   'stories.together.setup': 'Play with friends',
   'stories.join.label': 'Join with a code or a link',
   'stories.join.placeholder': 'ABC 234',
@@ -5163,7 +5178,6 @@ const en: Catalog = {
   'learn.map.title': 'Course map',
   'learn.games.invites': 'Invites from friends',
   'learn.games.leagueHint': 'This week',
-  'games.card.stories': 'Read a short story, then answer questions about it.',
   'games.card.wordle': 'Guess the Kurdish word in six tries.',
   'games.card.battle': 'Race a friend to the same word.',
   'games.card.rhyme': 'Find words that rhyme, against the clock.',
@@ -5574,14 +5588,47 @@ const en: Catalog = {
   'learn.more.title': 'More for today',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  'learn.view.stories': 'Stories',
+  'stories.library.progressTitle': 'Your progress',
+  'stories.library.finishedOf': '{finished} of {total} stories read',
+  'stories.library.averageScore': 'Average check score',
+  'stories.library.noScore': 'No checks yet',
+  'stories.library.search': 'Search stories',
+  'stories.library.clearSearch': 'Clear the search',
+  'stories.library.continue': 'Continue reading',
+  'stories.library.featured': 'Featured',
+  'stories.library.recent': 'Recently added',
+  'stories.library.categories': 'Categories',
+  'stories.library.all': 'All stories',
+  'stories.library.bookmarks': 'Bookmarks',
+  'stories.library.found': '{count} stories found',
+  'stories.library.more': 'More',
+  'stories.library.empty': 'No stories match. Try another filter.',
+  'stories.library.emptyAll': 'Stories are on their way — a native speaker checks each one first.',
+  'stories.library.clearFilters': 'Clear filters',
+  'stories.library.bookmark': 'Bookmark',
+  'stories.library.bookmarked': 'Bookmarked',
+  'stories.library.narrated': 'Narrated',
+  'stories.library.partlyNarrated': 'Partly narrated',
+  'stories.library.progress': '{percent}% read',
+  'stories.library.finished': 'Finished',
+  'stories.library.together': 'Play together',
+  'stories.cefr.A1': 'Beginner',
+  'stories.cefr.A2': 'Elementary',
+  'stories.cefr.B1': 'Intermediate',
+  'stories.cefr.B2': 'Upper intermediate',
+  'stories.cefr.C1': 'Advanced',
+  'stories.overview.tradition.traditional': 'Traditional tale',
+  'stories.overview.tradition.adapted': 'Traditional tale, retold for learners',
+  'stories.overview.tradition.original': 'Written for learners',
+  'stories.empty.sorani': 'Soranî stories are on their way — a native speaker checks each one first.',
+  'stories.empty.kurmanci': 'Kurmancî stories are on their way — a native speaker checks each one first.',
 };
 
 const ku: Catalog = {
   // --- Stories and playing with friends (mobile-games) ---
   'stories.title': 'Çîrok',
-  'stories.card.body': 'Çîrokeke kurt bixwîne, paşê bersiva pirsan bide — bi tenê, bi hevalekî re an bi komekê re.',
-  'stories.card.open': 'Çîrokan veke',
-  'stories.card.soon': 'Di nêzîk de',
   'stories.close': 'Bigire',
   'stories.variety': 'Zarava',
   'stories.length.short': 'Kurt',
@@ -5591,9 +5638,7 @@ const ku: Catalog = {
   'stories.minutes': '{count} xulek',
   'stories.minutesRange': '{min}–{max} xulek',
   'stories.aboutMinutes': '~{count} xulek',
-  'stories.narrated': 'bi deng tê xwendin',
   'stories.narratedShort': 'Deng',
-  'stories.done': 'Qediya · {correct}/{total}',
   'stories.mode.solo': 'Bi tenê',
   'stories.mode.duo': 'Bi hevalekî re',
   'stories.mode.group': 'Bi komekê re',
@@ -5618,11 +5663,6 @@ const ku: Catalog = {
   'stories.status.reading': 'Tê xwendin',
   'stories.filter.all': 'Hemû',
   'stories.filter.level': 'Ast',
-  'stories.filter.none': 'Hîn çîrokeke bi vê dirêjahiyê tune.',
-  'stories.read': 'Çîrokekê bixwîne',
-  'stories.empty.sorani': 'Çîrokên soranî di rê de ne — axêverekî zikmakî berê her yekê kontrol dike.',
-  'stories.empty.kurmanci': 'Çîrokên kurmancî di rê de ne — axêverekî zikmakî berê her yekê kontrol dike.',
-  'stories.empty.switch': 'Çîrokên {variety} bixwîne',
   'stories.together.setup': 'Bi hevalan re bilîze',
   'stories.join.label': 'Bi kod an girêdanekê tevlî bibe',
   'stories.join.placeholder': 'ABC 234',
@@ -7930,7 +7970,6 @@ const ku: Catalog = {
   'learn.map.title': 'Nexşeya kursê',
   'learn.games.invites': 'Vexwendinên ji hevalan',
   'learn.games.leagueHint': 'Vê hefteyê',
-  'games.card.stories': 'Çîrokek kurt bixwîne, paşê bersiva pirsan bide.',
   'games.card.wordle': 'Peyva kurdî di şeş ceribandinan de texmîn bike.',
   'games.card.battle': 'Bi hevalekî re ji bo heman peyvê pêşbaziyê bike.',
   'games.card.rhyme': 'Li hember demê peyvên hevserwa bibîne.',
@@ -8341,14 +8380,47 @@ const ku: Catalog = {
   'learn.more.title': 'Ji bo îro zêdetir',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  'learn.view.stories': 'Çîrok',
+  'stories.library.progressTitle': 'Pêşketina te',
+  'stories.library.finishedOf': '{finished} ji {total} çîrokan hatine xwendin',
+  'stories.library.averageScore': 'Navîniya encamên kontrolê',
+  'stories.library.noScore': 'Hîn kontrol tune',
+  'stories.library.search': 'Li çîrokan bigere',
+  'stories.library.clearSearch': 'Lêgerînê paqij bike',
+  'stories.library.continue': 'Xwendinê bidomîne',
+  'stories.library.featured': 'Hilbijartî',
+  'stories.library.recent': 'Nû hatine zêdekirin',
+  'stories.library.categories': 'Cure',
+  'stories.library.all': 'Hemû çîrok',
+  'stories.library.bookmarks': 'Nîşankirî',
+  'stories.library.found': '{count} çîrok hatin dîtin',
+  'stories.library.more': 'Zêdetir',
+  'stories.library.empty': 'Çîrokek li gorî vê tune. Fîlterek din biceribîne.',
+  'stories.library.emptyAll': 'Çîrok li ser rê ne — axêverekî zikmakî her yekê pêşî kontrol dike.',
+  'stories.library.clearFilters': 'Fîlteran paqij bike',
+  'stories.library.bookmark': 'Nîşan bike',
+  'stories.library.bookmarked': 'Nîşankirî',
+  'stories.library.narrated': 'Bi deng',
+  'stories.library.partlyNarrated': 'Hinek bi deng',
+  'stories.library.progress': '%{percent} hatiye xwendin',
+  'stories.library.finished': 'Qediya',
+  'stories.library.together': 'Bi hev re bilîzin',
+  'stories.cefr.A1': 'Destpêk',
+  'stories.cefr.A2': 'Bingehîn',
+  'stories.cefr.B1': 'Navîn',
+  'stories.cefr.B2': 'Navîna bilind',
+  'stories.cefr.C1': 'Pêşketî',
+  'stories.overview.tradition.traditional': 'Çîrokeke gelêrî',
+  'stories.overview.tradition.adapted': 'Çîrokeke gelêrî, ji bo fêrbûnê ji nû ve hatiye vegotin',
+  'stories.overview.tradition.original': 'Ji bo fêrbûnê hatiye nivîsandin',
+  'stories.empty.sorani': 'Çîrokên soranî di rê de ne — axêverekî zikmakî berê her yekê kontrol dike.',
+  'stories.empty.kurmanci': 'Çîrokên kurmancî di rê de ne — axêverekî zikmakî berê her yekê kontrol dike.',
 };
 
 const de: Catalog = {
   // --- Stories and playing with friends (mobile-games) ---
   'stories.title': 'Geschichten',
-  'stories.card.body': 'Lies eine kurze kurdische Geschichte und beantworte dann Fragen dazu – allein, mit einem Freund oder in einer Gruppe.',
-  'stories.card.open': 'Geschichten öffnen',
-  'stories.card.soon': 'Bald verfügbar',
   'stories.close': 'Schließen',
   'stories.variety': 'Variante',
   'stories.length.short': 'Kurz',
@@ -8358,9 +8430,7 @@ const de: Catalog = {
   'stories.minutes': '{count} Min.',
   'stories.minutesRange': '{min}–{max} Min.',
   'stories.aboutMinutes': '~{count} Min.',
-  'stories.narrated': 'vorgelesen',
   'stories.narratedShort': 'Audio',
-  'stories.done': 'Fertig · {correct}/{total}',
   'stories.mode.solo': 'Nur ich',
   'stories.mode.duo': 'Mit einem Freund',
   'stories.mode.group': 'In einer Gruppe',
@@ -8385,11 +8455,6 @@ const de: Catalog = {
   'stories.status.reading': 'Lesen',
   'stories.filter.all': 'Alle',
   'stories.filter.level': 'Stufe',
-  'stories.filter.none': 'Noch keine Geschichten dieser Länge.',
-  'stories.read': 'Eine Geschichte lesen',
-  'stories.empty.sorani': 'Soranî-Geschichten sind unterwegs – jede wird zuerst von einer Muttersprachlerin oder einem Muttersprachler geprüft.',
-  'stories.empty.kurmanci': 'Kurmancî-Geschichten sind unterwegs – jede wird zuerst von einer Muttersprachlerin oder einem Muttersprachler geprüft.',
-  'stories.empty.switch': '{variety}-Geschichten lesen',
   'stories.together.setup': 'Mit Freunden spielen',
   'stories.join.label': 'Mit Code oder Link beitreten',
   'stories.join.placeholder': 'ABC 234',
@@ -10697,7 +10762,6 @@ const de: Catalog = {
   'learn.map.title': 'Kursübersicht',
   'learn.games.invites': 'Einladungen von Freunden',
   'learn.games.leagueHint': 'Diese Woche',
-  'games.card.stories': 'Lies eine kurze Geschichte und beantworte Fragen dazu.',
   'games.card.wordle': 'Errate das kurdische Wort in sechs Versuchen.',
   'games.card.battle': 'Wer findet dasselbe Wort zuerst?',
   'games.card.rhyme': 'Finde Reimwörter gegen die Uhr.',
@@ -11108,14 +11172,47 @@ const de: Catalog = {
   'learn.more.title': 'Mehr für heute',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  'learn.view.stories': 'Geschichten',
+  'stories.library.progressTitle': 'Dein Fortschritt',
+  'stories.library.finishedOf': '{finished} von {total} Geschichten gelesen',
+  'stories.library.averageScore': 'Durchschnitt beim Verständnis-Check',
+  'stories.library.noScore': 'Noch kein Check',
+  'stories.library.search': 'Geschichten suchen',
+  'stories.library.clearSearch': 'Suche löschen',
+  'stories.library.continue': 'Weiterlesen',
+  'stories.library.featured': 'Empfohlen',
+  'stories.library.recent': 'Neu dazugekommen',
+  'stories.library.categories': 'Kategorien',
+  'stories.library.all': 'Alle Geschichten',
+  'stories.library.bookmarks': 'Lesezeichen',
+  'stories.library.found': '{count} Geschichten gefunden',
+  'stories.library.more': 'Mehr',
+  'stories.library.empty': 'Keine passende Geschichte. Probiere einen anderen Filter.',
+  'stories.library.emptyAll': 'Die Geschichten kommen — jede wird zuerst von einem Muttersprachler geprüft.',
+  'stories.library.clearFilters': 'Filter zurücksetzen',
+  'stories.library.bookmark': 'Lesezeichen setzen',
+  'stories.library.bookmarked': 'Lesezeichen gesetzt',
+  'stories.library.narrated': 'Vorgelesen',
+  'stories.library.partlyNarrated': 'Teils vorgelesen',
+  'stories.library.progress': '{percent} % gelesen',
+  'stories.library.finished': 'Zu Ende gelesen',
+  'stories.library.together': 'Zusammen spielen',
+  'stories.cefr.A1': 'Anfänger',
+  'stories.cefr.A2': 'Grundstufe',
+  'stories.cefr.B1': 'Mittelstufe',
+  'stories.cefr.B2': 'Obere Mittelstufe',
+  'stories.cefr.C1': 'Fortgeschritten',
+  'stories.overview.tradition.traditional': 'Traditionelle Erzählung',
+  'stories.overview.tradition.adapted': 'Traditionelle Erzählung, für Lernende nacherzählt',
+  'stories.overview.tradition.original': 'Für Lernende geschrieben',
+  'stories.empty.sorani': 'Soranî-Geschichten sind unterwegs – jede wird zuerst von einer Muttersprachlerin oder einem Muttersprachler geprüft.',
+  'stories.empty.kurmanci': 'Kurmancî-Geschichten sind unterwegs – jede wird zuerst von einer Muttersprachlerin oder einem Muttersprachler geprüft.',
 };
 
 const es: Catalog = {
   // --- Stories and playing with friends (mobile-games) ---
   'stories.title': 'Historias',
-  'stories.card.body': 'Lee una historia corta en kurdo y luego responde preguntas sobre ella: solo, con un amigo o en grupo.',
-  'stories.card.open': 'Abrir historias',
-  'stories.card.soon': 'Muy pronto',
   'stories.close': 'Cerrar',
   'stories.variety': 'Variedad',
   'stories.length.short': 'Corta',
@@ -11125,9 +11222,7 @@ const es: Catalog = {
   'stories.minutes': '{count} min',
   'stories.minutesRange': '{min}–{max} min',
   'stories.aboutMinutes': '~{count} min',
-  'stories.narrated': 'leída en voz alta',
   'stories.narratedShort': 'Audio',
-  'stories.done': 'Hecha · {correct}/{total}',
   'stories.mode.solo': 'Solo yo',
   'stories.mode.duo': 'Con un amigo',
   'stories.mode.group': 'En grupo',
@@ -11152,11 +11247,6 @@ const es: Catalog = {
   'stories.status.reading': 'Leyendo',
   'stories.filter.all': 'Todas',
   'stories.filter.level': 'Nivel',
-  'stories.filter.none': 'Todavía no hay historias de esta longitud.',
-  'stories.read': 'Leer una historia',
-  'stories.empty.sorani': 'Las historias en soraní están en camino: una persona nativa revisa cada una primero.',
-  'stories.empty.kurmanci': 'Las historias en kurmancî están en camino: una persona nativa revisa cada una primero.',
-  'stories.empty.switch': 'Leer historias en {variety}',
   'stories.together.setup': 'Jugar con amigos',
   'stories.join.label': 'Unirse con un código o un enlace',
   'stories.join.placeholder': 'ABC 234',
@@ -13464,7 +13554,6 @@ const es: Catalog = {
   'learn.map.title': 'Mapa del curso',
   'learn.games.invites': 'Invitaciones de amigos',
   'learn.games.leagueHint': 'Esta semana',
-  'games.card.stories': 'Lee un cuento corto y responde preguntas sobre él.',
   'games.card.wordle': 'Adivina la palabra kurda en seis intentos.',
   'games.card.battle': 'Compite con un amigo por la misma palabra.',
   'games.card.rhyme': 'Encuentra rimas contra el reloj.',
@@ -13875,14 +13964,47 @@ const es: Catalog = {
   'learn.more.title': 'Más para hoy',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  'learn.view.stories': 'Historias',
+  'stories.library.progressTitle': 'Tu progreso',
+  'stories.library.finishedOf': '{finished} de {total} historias leídas',
+  'stories.library.averageScore': 'Media en las comprobaciones',
+  'stories.library.noScore': 'Aún sin comprobaciones',
+  'stories.library.search': 'Buscar historias',
+  'stories.library.clearSearch': 'Borrar la búsqueda',
+  'stories.library.continue': 'Seguir leyendo',
+  'stories.library.featured': 'Destacadas',
+  'stories.library.recent': 'Añadidas recientemente',
+  'stories.library.categories': 'Categorías',
+  'stories.library.all': 'Todas las historias',
+  'stories.library.bookmarks': 'Marcadores',
+  'stories.library.found': '{count} historias encontradas',
+  'stories.library.more': 'Más',
+  'stories.library.empty': 'Ninguna historia coincide. Prueba otro filtro.',
+  'stories.library.emptyAll': 'Las historias están en camino: un hablante nativo revisa cada una antes.',
+  'stories.library.clearFilters': 'Quitar filtros',
+  'stories.library.bookmark': 'Guardar en marcadores',
+  'stories.library.bookmarked': 'En marcadores',
+  'stories.library.narrated': 'Narrada',
+  'stories.library.partlyNarrated': 'Narrada en parte',
+  'stories.library.progress': '{percent} % leído',
+  'stories.library.finished': 'Terminada',
+  'stories.library.together': 'Jugar juntos',
+  'stories.cefr.A1': 'Principiante',
+  'stories.cefr.A2': 'Elemental',
+  'stories.cefr.B1': 'Intermedio',
+  'stories.cefr.B2': 'Intermedio alto',
+  'stories.cefr.C1': 'Avanzado',
+  'stories.overview.tradition.traditional': 'Cuento tradicional',
+  'stories.overview.tradition.adapted': 'Cuento tradicional, adaptado para estudiantes',
+  'stories.overview.tradition.original': 'Escrita para estudiantes',
+  'stories.empty.sorani': 'Las historias en soraní están en camino: una persona nativa revisa cada una primero.',
+  'stories.empty.kurmanci': 'Las historias en kurmancî están en camino: una persona nativa revisa cada una primero.',
 };
 
 const tr: Catalog = {
   // --- Stories and playing with friends (mobile-games) ---
   'stories.title': 'Hikâyeler',
-  'stories.card.body': 'Kısa bir Kürtçe hikâye oku, sonra hakkındaki soruları yanıtla — tek başına, bir arkadaşınla ya da bir grupla.',
-  'stories.card.open': 'Hikâyeleri aç',
-  'stories.card.soon': 'Çok yakında',
   'stories.close': 'Kapat',
   'stories.variety': 'Lehçe',
   'stories.length.short': 'Kısa',
@@ -13892,9 +14014,7 @@ const tr: Catalog = {
   'stories.minutes': '{count} dk',
   'stories.minutesRange': '{min}–{max} dk',
   'stories.aboutMinutes': '~{count} dk',
-  'stories.narrated': 'sesli okunmuş',
   'stories.narratedShort': 'Ses',
-  'stories.done': 'Bitti · {correct}/{total}',
   'stories.mode.solo': 'Yalnız ben',
   'stories.mode.duo': 'Bir arkadaşla',
   'stories.mode.group': 'Bir grupla',
@@ -13919,11 +14039,6 @@ const tr: Catalog = {
   'stories.status.reading': 'Okunuyor',
   'stories.filter.all': 'Tümü',
   'stories.filter.level': 'Seviye',
-  'stories.filter.none': 'Henüz bu uzunlukta hikâye yok.',
-  'stories.read': 'Bir hikâye oku',
-  'stories.empty.sorani': 'Soranice hikâyeler yolda — her birini önce anadili Kürtçe olan biri kontrol ediyor.',
-  'stories.empty.kurmanci': 'Kurmanci hikâyeler yolda — her birini önce anadili Kürtçe olan biri kontrol ediyor.',
-  'stories.empty.switch': '{variety} hikâyeler oku',
   'stories.together.setup': 'Arkadaşlarla oyna',
   'stories.join.label': 'Kod ya da bağlantıyla katıl',
   'stories.join.placeholder': 'ABC 234',
@@ -16231,7 +16346,6 @@ const tr: Catalog = {
   'learn.map.title': 'Kurs haritası',
   'learn.games.invites': 'Arkadaşlardan davetler',
   'learn.games.leagueHint': 'Bu hafta',
-  'games.card.stories': 'Kısa bir öykü oku, sonra sorularını yanıtla.',
   'games.card.wordle': 'Kürtçe kelimeyi altı denemede bul.',
   'games.card.battle': 'Aynı kelime için bir arkadaşınla yarış.',
   'games.card.rhyme': 'Zamana karşı kafiyeli kelimeler bul.',
@@ -16642,14 +16756,47 @@ const tr: Catalog = {
   'learn.more.title': 'Bugün için daha fazlası',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  'learn.view.stories': 'Hikâyeler',
+  'stories.library.progressTitle': 'İlerlemen',
+  'stories.library.finishedOf': '{total} hikâyeden {finished} okundu',
+  'stories.library.averageScore': 'Ortalama kontrol puanı',
+  'stories.library.noScore': 'Henüz kontrol yok',
+  'stories.library.search': 'Hikâye ara',
+  'stories.library.clearSearch': 'Aramayı temizle',
+  'stories.library.continue': 'Okumaya devam et',
+  'stories.library.featured': 'Öne çıkanlar',
+  'stories.library.recent': 'Yeni eklenenler',
+  'stories.library.categories': 'Kategoriler',
+  'stories.library.all': 'Tüm hikâyeler',
+  'stories.library.bookmarks': 'Yer imleri',
+  'stories.library.found': '{count} hikâye bulundu',
+  'stories.library.more': 'Daha fazla',
+  'stories.library.empty': 'Eşleşen hikâye yok. Başka bir filtre dene.',
+  'stories.library.emptyAll': 'Hikâyeler yolda — her birini önce anadili konuşan biri kontrol ediyor.',
+  'stories.library.clearFilters': 'Filtreleri temizle',
+  'stories.library.bookmark': 'Yer imi ekle',
+  'stories.library.bookmarked': 'Yer imi eklendi',
+  'stories.library.narrated': 'Seslendirilmiş',
+  'stories.library.partlyNarrated': 'Kısmen seslendirilmiş',
+  'stories.library.progress': '%{percent} okundu',
+  'stories.library.finished': 'Bitti',
+  'stories.library.together': 'Birlikte oynayın',
+  'stories.cefr.A1': 'Başlangıç',
+  'stories.cefr.A2': 'Temel',
+  'stories.cefr.B1': 'Orta',
+  'stories.cefr.B2': 'Orta üstü',
+  'stories.cefr.C1': 'İleri',
+  'stories.overview.tradition.traditional': 'Geleneksel masal',
+  'stories.overview.tradition.adapted': 'Geleneksel masal, öğrenenler için yeniden anlatıldı',
+  'stories.overview.tradition.original': 'Öğrenenler için yazıldı',
+  'stories.empty.sorani': 'Soranice hikâyeler yolda — her birini önce anadili Kürtçe olan biri kontrol ediyor.',
+  'stories.empty.kurmanci': 'Kurmanci hikâyeler yolda — her birini önce anadili Kürtçe olan biri kontrol ediyor.',
 };
 
 const ar: Catalog = {
   // --- Stories and playing with friends (mobile-games) ---
   'stories.title': 'قصص',
-  'stories.card.body': 'اقرأ قصة كردية قصيرة، ثم أجب عن أسئلة حولها — وحدك أو مع صديق أو مع مجموعة.',
-  'stories.card.open': 'افتح القصص',
-  'stories.card.soon': 'قريبًا',
   'stories.close': 'إغلاق',
   'stories.variety': 'اللهجة',
   'stories.length.short': 'قصيرة',
@@ -16659,9 +16806,7 @@ const ar: Catalog = {
   'stories.minutes': '{count} د',
   'stories.minutesRange': '{min}–{max} د',
   'stories.aboutMinutes': '~{count} د',
-  'stories.narrated': 'مقروءة بصوت عالٍ',
   'stories.narratedShort': 'صوت',
-  'stories.done': 'تمّت · {correct}/{total}',
   'stories.mode.solo': 'وحدي',
   'stories.mode.duo': 'مع صديق',
   'stories.mode.group': 'مع مجموعة',
@@ -16686,11 +16831,6 @@ const ar: Catalog = {
   'stories.status.reading': 'قراءة',
   'stories.filter.all': 'الكل',
   'stories.filter.level': 'المستوى',
-  'stories.filter.none': 'لا توجد قصص بهذا الطول بعد.',
-  'stories.read': 'اقرأ قصة',
-  'stories.empty.sorani': 'القصص بالسورانية في الطريق — يراجع متحدث أصلي كل قصة أولًا.',
-  'stories.empty.kurmanci': 'القصص بالكرمانجية في الطريق — يراجع متحدث أصلي كل قصة أولًا.',
-  'stories.empty.switch': 'اقرأ قصصًا بـ{variety}',
   'stories.together.setup': 'العب مع الأصدقاء',
   'stories.join.label': 'انضم برمز أو رابط',
   'stories.join.placeholder': 'ABC 234',
@@ -18998,7 +19138,6 @@ const ar: Catalog = {
   'learn.map.title': 'خريطة الدورة',
   'learn.games.invites': 'دعوات من الأصدقاء',
   'learn.games.leagueHint': 'هذا الأسبوع',
-  'games.card.stories': 'اقرأ قصة قصيرة، ثم أجب عن أسئلة عنها.',
   'games.card.wordle': 'خمّن الكلمة الكردية في ست محاولات.',
   'games.card.battle': 'سابق صديقاً إلى الكلمة نفسها.',
   'games.card.rhyme': 'جد كلمات مقفّاة قبل نفاد الوقت.',
@@ -19409,14 +19548,47 @@ const ar: Catalog = {
   'learn.more.title': 'المزيد لليوم',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  'learn.view.stories': 'قصص',
+  'stories.library.progressTitle': 'تقدّمك',
+  'stories.library.finishedOf': 'قرأت {finished} من {total} قصص',
+  'stories.library.averageScore': 'متوسّط نتائج الاختبار',
+  'stories.library.noScore': 'لا اختبارات بعد',
+  'stories.library.search': 'ابحث في القصص',
+  'stories.library.clearSearch': 'مسح البحث',
+  'stories.library.continue': 'تابع القراءة',
+  'stories.library.featured': 'مختارات',
+  'stories.library.recent': 'أُضيفت مؤخّرًا',
+  'stories.library.categories': 'الفئات',
+  'stories.library.all': 'كلّ القصص',
+  'stories.library.bookmarks': 'الإشارات المرجعية',
+  'stories.library.found': 'وُجدت {count} قصص',
+  'stories.library.more': 'المزيد',
+  'stories.library.empty': 'لا قصص مطابقة. جرّب فلترًا آخر.',
+  'stories.library.emptyAll': 'القصص في الطريق — يراجع كلّ واحدة متحدّث أصلي أوّلًا.',
+  'stories.library.clearFilters': 'مسح الفلاتر',
+  'stories.library.bookmark': 'أضف إشارة مرجعية',
+  'stories.library.bookmarked': 'مُضاف إلى الإشارات',
+  'stories.library.narrated': 'مسرودة صوتيًا',
+  'stories.library.partlyNarrated': 'مسرودة جزئيًا',
+  'stories.library.progress': 'قُرئ {percent}٪',
+  'stories.library.finished': 'انتهت',
+  'stories.library.together': 'العبوا معًا',
+  'stories.cefr.A1': 'مبتدئ',
+  'stories.cefr.A2': 'أساسي',
+  'stories.cefr.B1': 'متوسّط',
+  'stories.cefr.B2': 'فوق المتوسّط',
+  'stories.cefr.C1': 'متقدّم',
+  'stories.overview.tradition.traditional': 'حكاية تراثية',
+  'stories.overview.tradition.adapted': 'حكاية تراثية أُعيدت روايتها للمتعلّمين',
+  'stories.overview.tradition.original': 'كُتبت للمتعلّمين',
+  'stories.empty.sorani': 'القصص بالسورانية في الطريق — يراجع متحدث أصلي كل قصة أولًا.',
+  'stories.empty.kurmanci': 'القصص بالكرمانجية في الطريق — يراجع متحدث أصلي كل قصة أولًا.',
 };
 
 const fr: Catalog = {
   // --- Stories and playing with friends (mobile-games) ---
   'stories.title': 'Histoires',
-  'stories.card.body': 'Lis une courte histoire kurde, puis réponds à des questions – seul, avec un ami ou en groupe.',
-  'stories.card.open': 'Ouvrir les histoires',
-  'stories.card.soon': 'Bientôt',
   'stories.close': 'Fermer',
   'stories.variety': 'Variante',
   'stories.length.short': 'Courte',
@@ -19426,9 +19598,7 @@ const fr: Catalog = {
   'stories.minutes': '{count} min',
   'stories.minutesRange': '{min}–{max} min',
   'stories.aboutMinutes': '~{count} min',
-  'stories.narrated': 'lue à voix haute',
   'stories.narratedShort': 'Audio',
-  'stories.done': 'Fait · {correct}/{total}',
   'stories.mode.solo': 'Seul',
   'stories.mode.duo': 'Avec un ami',
   'stories.mode.group': 'En groupe',
@@ -19453,11 +19623,6 @@ const fr: Catalog = {
   'stories.status.reading': 'Lecture',
   'stories.filter.all': 'Toutes',
   'stories.filter.level': 'Niveau',
-  'stories.filter.none': 'Pas encore d’histoire de cette longueur.',
-  'stories.read': 'Lire une histoire',
-  'stories.empty.sorani': 'Les histoires en soranî arrivent – un locuteur natif relit chacune d’abord.',
-  'stories.empty.kurmanci': 'Les histoires en kurmancî arrivent – un locuteur natif relit chacune d’abord.',
-  'stories.empty.switch': 'Lire des histoires en {variety}',
   'stories.together.setup': 'Jouer avec des amis',
   'stories.join.label': 'Rejoindre avec un code ou un lien',
   'stories.join.placeholder': 'ABC 234',
@@ -21765,7 +21930,6 @@ const fr: Catalog = {
   'learn.map.title': 'Plan du cours',
   'learn.games.invites': 'Invitations d’amis',
   'learn.games.leagueHint': 'Cette semaine',
-  'games.card.stories': 'Lis une courte histoire, puis réponds à des questions.',
   'games.card.wordle': 'Devine le mot kurde en six essais.',
   'games.card.battle': 'Fais la course avec un ami vers le même mot.',
   'games.card.rhyme': 'Trouve des rimes contre la montre.',
@@ -22176,14 +22340,47 @@ const fr: Catalog = {
   'learn.more.title': 'Plus pour aujourd’hui',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  'learn.view.stories': 'Histoires',
+  'stories.library.progressTitle': 'Ta progression',
+  'stories.library.finishedOf': '{finished} histoires lues sur {total}',
+  'stories.library.averageScore': 'Moyenne aux vérifications',
+  'stories.library.noScore': 'Pas encore de vérification',
+  'stories.library.search': 'Chercher une histoire',
+  'stories.library.clearSearch': 'Effacer la recherche',
+  'stories.library.continue': 'Reprendre la lecture',
+  'stories.library.featured': 'À la une',
+  'stories.library.recent': 'Ajoutées récemment',
+  'stories.library.categories': 'Catégories',
+  'stories.library.all': 'Toutes les histoires',
+  'stories.library.bookmarks': 'Signets',
+  'stories.library.found': '{count} histoires trouvées',
+  'stories.library.more': 'Plus',
+  'stories.library.empty': 'Aucune histoire ne correspond. Essaie un autre filtre.',
+  'stories.library.emptyAll': 'Les histoires arrivent — chacune est d’abord relue par un locuteur natif.',
+  'stories.library.clearFilters': 'Effacer les filtres',
+  'stories.library.bookmark': 'Ajouter un signet',
+  'stories.library.bookmarked': 'Dans les signets',
+  'stories.library.narrated': 'Lue à voix haute',
+  'stories.library.partlyNarrated': 'Lue en partie',
+  'stories.library.progress': '{percent} % lu',
+  'stories.library.finished': 'Terminée',
+  'stories.library.together': 'Jouer ensemble',
+  'stories.cefr.A1': 'Débutant',
+  'stories.cefr.A2': 'Élémentaire',
+  'stories.cefr.B1': 'Intermédiaire',
+  'stories.cefr.B2': 'Intermédiaire avancé',
+  'stories.cefr.C1': 'Avancé',
+  'stories.overview.tradition.traditional': 'Conte traditionnel',
+  'stories.overview.tradition.adapted': 'Conte traditionnel, réécrit pour les apprenants',
+  'stories.overview.tradition.original': 'Écrite pour les apprenants',
+  'stories.empty.sorani': 'Les histoires en soranî arrivent – un locuteur natif relit chacune d’abord.',
+  'stories.empty.kurmanci': 'Les histoires en kurmancî arrivent – un locuteur natif relit chacune d’abord.',
 };
 
 const nl: Catalog = {
   // --- Stories and playing with friends (mobile-games) ---
   'stories.title': 'Verhalen',
-  'stories.card.body': 'Lees een kort Koerdisch verhaal en beantwoord daarna vragen erover – alleen, met een vriend of met een groep.',
-  'stories.card.open': 'Verhalen openen',
-  'stories.card.soon': 'Binnenkort',
   'stories.close': 'Sluiten',
   'stories.variety': 'Variant',
   'stories.length.short': 'Kort',
@@ -22193,9 +22390,7 @@ const nl: Catalog = {
   'stories.minutes': '{count} min',
   'stories.minutesRange': '{min}–{max} min',
   'stories.aboutMinutes': '~{count} min',
-  'stories.narrated': 'voorgelezen',
   'stories.narratedShort': 'Audio',
-  'stories.done': 'Klaar · {correct}/{total}',
   'stories.mode.solo': 'Alleen ik',
   'stories.mode.duo': 'Met een vriend',
   'stories.mode.group': 'Met een groep',
@@ -22220,11 +22415,6 @@ const nl: Catalog = {
   'stories.status.reading': 'Lezen',
   'stories.filter.all': 'Alle',
   'stories.filter.level': 'Niveau',
-  'stories.filter.none': 'Nog geen verhalen van deze lengte.',
-  'stories.read': 'Lees een verhaal',
-  'stories.empty.sorani': 'Soranî-verhalen komen eraan – een moedertaalspreker controleert ze eerst één voor één.',
-  'stories.empty.kurmanci': 'Kurmancî-verhalen komen eraan – een moedertaalspreker controleert ze eerst één voor één.',
-  'stories.empty.switch': '{variety}-verhalen lezen',
   'stories.together.setup': 'Met vrienden spelen',
   'stories.join.label': 'Meedoen met een code of link',
   'stories.join.placeholder': 'ABC 234',
@@ -24532,7 +24722,6 @@ const nl: Catalog = {
   'learn.map.title': 'Cursuskaart',
   'learn.games.invites': 'Uitnodigingen van vrienden',
   'learn.games.leagueHint': 'Deze week',
-  'games.card.stories': 'Lees een kort verhaal en beantwoord er vragen over.',
   'games.card.wordle': 'Raad het Koerdische woord in zes pogingen.',
   'games.card.battle': 'Race met een vriend naar hetzelfde woord.',
   'games.card.rhyme': 'Vind rijmwoorden tegen de klok.',
@@ -24943,15 +25132,48 @@ const nl: Catalog = {
   'learn.more.title': 'Meer voor vandaag',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  'learn.view.stories': 'Verhalen',
+  'stories.library.progressTitle': 'Je voortgang',
+  'stories.library.finishedOf': '{finished} van {total} verhalen gelezen',
+  'stories.library.averageScore': 'Gemiddelde score bij de controlevragen',
+  'stories.library.noScore': 'Nog geen controle gedaan',
+  'stories.library.search': 'Zoek verhalen',
+  'stories.library.clearSearch': 'Zoekopdracht wissen',
+  'stories.library.continue': 'Verder lezen',
+  'stories.library.featured': 'Uitgelicht',
+  'stories.library.recent': 'Nieuw toegevoegd',
+  'stories.library.categories': 'Categorieën',
+  'stories.library.all': 'Alle verhalen',
+  'stories.library.bookmarks': 'Bladwijzers',
+  'stories.library.found': '{count} verhalen gevonden',
+  'stories.library.more': 'Meer',
+  'stories.library.empty': 'Geen verhalen gevonden. Probeer een ander filter.',
+  'stories.library.emptyAll': 'De verhalen komen eraan — een moedertaalspreker controleert ze eerst.',
+  'stories.library.clearFilters': 'Filters wissen',
+  'stories.library.bookmark': 'Bladwijzer',
+  'stories.library.bookmarked': 'Bladwijzer gezet',
+  'stories.library.narrated': 'Ingesproken',
+  'stories.library.partlyNarrated': 'Deels ingesproken',
+  'stories.library.progress': '{percent}% gelezen',
+  'stories.library.finished': 'Uitgelezen',
+  'stories.library.together': 'Samen spelen',
+  'stories.cefr.A1': 'Beginner',
+  'stories.cefr.A2': 'Basis',
+  'stories.cefr.B1': 'Gemiddeld',
+  'stories.cefr.B2': 'Hoger gemiddeld',
+  'stories.cefr.C1': 'Gevorderd',
+  'stories.overview.tradition.traditional': 'Traditioneel verhaal',
+  'stories.overview.tradition.adapted': 'Traditioneel verhaal, herverteld voor leerlingen',
+  'stories.overview.tradition.original': 'Geschreven voor leerlingen',
+  'stories.empty.sorani': 'Soranî-verhalen komen eraan – een moedertaalspreker controleert ze eerst één voor één.',
+  'stories.empty.kurmanci': 'Kurmancî-verhalen komen eraan – een moedertaalspreker controleert ze eerst één voor één.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
 const ckb: Catalog = {
   // --- Stories and playing with friends (mobile-games) ---
   'stories.title': 'چیرۆکەکان',
-  'stories.card.body': 'چیرۆکێکی کورت بخوێنەوە، پاشان وەڵامی پرسیارەکان بدەوە — بە تەنیا، لەگەڵ هاوڕێیەک یان لەگەڵ گرووپێک.',
-  'stories.card.open': 'چیرۆکەکان بکەرەوە',
-  'stories.card.soon': 'بەم زووانە',
   'stories.close': 'دایبخە',
   'stories.variety': 'شێوەزار',
   'stories.length.short': 'کورت',
@@ -24961,9 +25183,7 @@ const ckb: Catalog = {
   'stories.minutes': '{count} خولەک',
   'stories.minutesRange': '{min}–{max} خولەک',
   'stories.aboutMinutes': '~{count} خولەک',
-  'stories.narrated': 'بە دەنگ خوێندراوەتەوە',
   'stories.narratedShort': 'دەنگ',
-  'stories.done': 'تەواو · {correct}/{total}',
   'stories.mode.solo': 'تەنیا خۆم',
   'stories.mode.duo': 'لەگەڵ هاوڕێیەک',
   'stories.mode.group': 'لەگەڵ گرووپێک',
@@ -24988,11 +25208,6 @@ const ckb: Catalog = {
   'stories.status.reading': 'خوێندنەوە',
   'stories.filter.all': 'هەموو',
   'stories.filter.level': 'ئاست',
-  'stories.filter.none': 'هێشتا چیرۆکێک بەم درێژییە نییە.',
-  'stories.read': 'چیرۆکێک بخوێنەوە',
-  'stories.empty.sorani': 'چیرۆکە سۆرانییەکان بەڕێوەن — قسەکەرێکی زگماک پێشتر هەر یەکێکیان دەپشکنێت.',
-  'stories.empty.kurmanci': 'چیرۆکە کورمانجییەکان بەڕێوەن — قسەکەرێکی زگماک پێشتر هەر یەکێکیان دەپشکنێت.',
-  'stories.empty.switch': 'چیرۆکەکانی {variety} بخوێنەوە',
   'stories.together.setup': 'لەگەڵ هاوڕێیان یاری بکە',
   'stories.join.label': 'بە کۆد یان بەستەرێک بەشداربە',
   'stories.join.placeholder': 'ABC 234',
@@ -27300,7 +27515,6 @@ const ckb: Catalog = {
   'learn.map.title': 'نەخشەی خول',
   'learn.games.invites': 'بانگهێشتی هاوڕێکان',
   'learn.games.leagueHint': 'ئەم هەفتەیە',
-  'games.card.stories': 'چیرۆکێکی کورت بخوێنەوە، پاشان وەڵامی پرسیارەکان بدەرەوە.',
   'games.card.wordle': 'وشە کوردییەکە بە شەش هەوڵ بدۆزەرەوە.',
   'games.card.battle': 'لەگەڵ هاوڕێیەک بۆ هەمان وشە پێشبڕکێ بکە.',
   'games.card.rhyme': 'لە دژی کات وشەی هاوسەروا بدۆزەرەوە.',
@@ -27711,6 +27925,42 @@ const ckb: Catalog = {
   'learn.more.title': 'زیاتر بۆ ئەمڕۆ',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
+  // --- Learn’s Stories group and the library (learn-mobile) ---
+  'learn.view.stories': 'چیرۆک',
+  'stories.library.progressTitle': 'پێشکەوتنی تۆ',
+  'stories.library.finishedOf': '{finished} لە {total} چیرۆک خوێندراونەتەوە',
+  'stories.library.averageScore': 'تێکڕای نمرەی پشکنین',
+  'stories.library.noScore': 'هێشتا پشکنین نەکراوە',
+  'stories.library.search': 'بگەڕێ لە چیرۆکەکان',
+  'stories.library.clearSearch': 'گەڕانەکە پاک بکەرەوە',
+  'stories.library.continue': 'خوێندنەوە بەردەوام بکە',
+  'stories.library.featured': 'هەڵبژێردراو',
+  'stories.library.recent': 'بە تازەیی زیادکراون',
+  'stories.library.categories': 'جۆرەکان',
+  'stories.library.all': 'هەموو چیرۆکەکان',
+  'stories.library.bookmarks': 'نیشانکراوەکان',
+  'stories.library.found': '{count} چیرۆک دۆزرایەوە',
+  'stories.library.more': 'زیاتر',
+  'stories.library.empty': 'هیچ چیرۆکێک نەگونجا. فلتەرێکی دیکە تاقی بکەرەوە.',
+  'stories.library.emptyAll': 'چیرۆکەکان لە ڕێگان — قسەکەرێکی ڕەسەن پێشتر هەر یەکێکیان دەپشکنێت.',
+  'stories.library.clearFilters': 'فلتەرەکان لاببە',
+  'stories.library.bookmark': 'نیشان بکە',
+  'stories.library.bookmarked': 'نیشانکراوە',
+  'stories.library.narrated': 'بە دەنگ',
+  'stories.library.partlyNarrated': 'بەشێکی بە دەنگ',
+  'stories.library.progress': '٪{percent} خوێندراوەتەوە',
+  'stories.library.finished': 'تەواو بوو',
+  'stories.library.together': 'پێکەوە یاری بکەن',
+  'stories.cefr.A1': 'سەرەتایی',
+  'stories.cefr.A2': 'بنەڕەتی',
+  'stories.cefr.B1': 'ناوەند',
+  'stories.cefr.B2': 'ناوەندی بەرز',
+  'stories.cefr.C1': 'پێشکەوتوو',
+  'stories.overview.tradition.traditional': 'چیرۆکی گەلێری',
+  'stories.overview.tradition.adapted': 'چیرۆکی گەلێری، بۆ فێرخوازان گێڕدراوەتەوە',
+  'stories.overview.tradition.original': 'بۆ فێرخوازان نووسراوە',
+  'stories.empty.sorani': 'چیرۆکە سۆرانییەکان بەڕێوەن — قسەکەرێکی زگماک پێشتر هەر یەکێکیان دەپشکنێت.',
+  'stories.empty.kurmanci': 'چیرۆکە کورمانجییەکان بەڕێوەن — قسەکەرێکی زگماک پێشتر هەر یەکێکیان دەپشکنێت.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
