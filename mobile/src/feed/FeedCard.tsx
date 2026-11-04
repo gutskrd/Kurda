@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Animated, Pressable, Share, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
 import { HeartBurst } from '../theme/MotionParts';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -73,6 +74,8 @@ export function FeedCard({
 }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
+  // a guest reads the wall; liking, reposting and saving are the account's (auth/AccountGate)
+  const { require } = useAccountGate();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
@@ -102,6 +105,7 @@ export function FeedCard({
    */
   const toggle = useCallback(
     async (kind: EngagementKind) => {
+      if (!require(kind === 'bookmark' ? 'save' : 'react')) return;
       if (pending.current) return;
       pending.current = kind;
       const before = shown;
@@ -118,17 +122,19 @@ export function FeedCard({
       setShown(res.data.engagement);
       onChanged?.({ ...item, engagement: res.data.engagement });
     },
-    [client, item, onChanged, shown],
+    [client, item, onChanged, shown, require],
   );
 
   const like = useCallback(() => {
+    // a guest's heart does not pop and then ask: the offer comes first
+    if (!require('react')) return;
     // a like is felt and pops; taking one back is quiet
     if (!shown.liked) {
       haptic('tap');
       setLikes((n) => n + 1);
     }
     void toggle('like');
-  }, [shown.liked, toggle]);
+  }, [shown.liked, toggle, require]);
 
   /*
    * One tap opens the post; two quick taps like it. The first tap waits a
@@ -145,6 +151,8 @@ export function FeedCard({
       lastTap.current = 0;
       if (single.current) clearTimeout(single.current);
       single.current = null;
+      // a guest's double tap asks for the account before any heart blooms
+      if (!require('react')) return;
       setBlooms((n) => n + 1);
       if (!shown.liked) like();
       return;
@@ -154,7 +162,7 @@ export function FeedCard({
       single.current = null;
       open();
     }, DOUBLE_TAP_MS);
-  }, [like, open, shown.liked]);
+  }, [like, open, shown.liked, require]);
 
   /**
    * Hand the post to whatever the phone shares with: the system sheet, where

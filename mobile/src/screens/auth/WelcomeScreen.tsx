@@ -44,10 +44,12 @@ function appleFullName(name: AppleAuthentication.AppleAuthenticationFullName | n
  */
 export function WelcomeScreen({ navigation, onBack }: Props) {
   const { colors, scheme } = useTheme();
-  const { oauthSignIn, baseUrl } = useAuth();
+  const { oauthSignIn, continueAsGuest, baseUrl } = useAuth();
   const [appleAvailable, setAppleAvailable] = useState(false);
   const { t } = useI18n();
   const [conn, setConn] = useState<'checking' | 'ok' | 'fail'>('checking');
+  // a guest session on its way: the line is not tapped twice while the first answer is out
+  const [guestBusy, setGuestBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -145,6 +147,15 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
     }
   };
 
+  const onGuest = async () => {
+    if (guestBusy) return;
+    setGuestBusy(true);
+    const err = await continueAsGuest();
+    setGuestBusy(false);
+    // Hevalo offline for a while is said by the screen over the app, not by an alert on top of it
+    if (err && !currentMaintenance()) Alert.alert(t('welcome.couldNotSignIn'), err.message);
+  };
+
   return (
     <AuthScreenShell title={t('welcome.title')} subtitle={t('welcome.subtitle')} onBack={onBack} hero="person">
       <View style={styles.methods}>
@@ -188,7 +199,23 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         <Text style={[styles.linkText, { color: colors.primary }]}>{t('welcome.haveAccount')}</Text>
       </Pressable>
 
-      {/* the rules and the privacy policy, each a link: Apple and Google make an account too */}
+      {/*
+        The quiet way in: try the lessons first, as a guest, and decide about
+        an account later. Quieter than the sign-in link above it on purpose —
+        it is the way for somebody not ready to choose, not the way in.
+      */}
+      <Pressable
+        onPress={onGuest}
+        disabled={guestBusy}
+        style={styles.link}
+        accessibilityRole="button"
+        accessibilityState={{ busy: guestBusy, disabled: guestBusy }}
+        testID="welcome-guest"
+      >
+        <Text style={[styles.linkText, { color: colors.textSecondary, opacity: guestBusy ? 0.6 : 1 }]}>{t('welcome.guest')}</Text>
+      </Pressable>
+
+      {/* the rules and the privacy policy, each a link: Apple, Google and a guest session make an account too */}
       <AgreeLine style={styles.agree} />
 
       {/*

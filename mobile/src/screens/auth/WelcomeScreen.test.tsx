@@ -5,7 +5,7 @@ vi.mock('react-native-svg', () => import('../../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../../reports/testing/stubs'));
-const auth = vi.hoisted(() => ({ oauthSignIn: vi.fn(), baseUrl: 'https://api.test' }));
+const auth = vi.hoisted(() => ({ oauthSignIn: vi.fn(), continueAsGuest: vi.fn(), baseUrl: 'https://api.test' }));
 vi.mock('../../auth/AuthContext', () => ({ useAuth: () => auth }));
 vi.mock('../../auth/google', () => ({ signInWithGoogle: vi.fn(), isGoogleConfigured: false }));
 const apple = vi.hoisted(() => ({ signInAsync: vi.fn() }));
@@ -40,6 +40,7 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   auth.oauthSignIn.mockReset();
+  auth.continueAsGuest.mockReset();
   apple.signInAsync.mockReset();
   delete g.__DEV__;
 });
@@ -84,5 +85,25 @@ describe('continuing with Apple', () => {
       authorizationCode: 'c1a2b3.0.authorization-code',
       fullName: null,
     });
+  });
+});
+
+describe('trying Hevalo first', () => {
+  /*
+   * Under the ways in, the quiet one: a guest session, for somebody not ready
+   * to choose. One tap, one request; the answer signs them in like any other.
+   */
+  it('offers a guest session under the sign-in methods and starts one on a tap', async () => {
+    auth.continueAsGuest.mockResolvedValue(null);
+    const navigation = { navigate: vi.fn(), goBack: vi.fn(), canGoBack: () => false };
+    const props = { navigation, route: { key: 'w', name: 'Welcome' } } as unknown as Parameters<typeof WelcomeScreen>[0];
+    renderWithProviders(<WelcomeScreen {...props} />);
+    const line = await screen.findByRole('button', { name: 'Try Hevalo first, no account needed' });
+    await act(async () => {
+      fireEvent.click(line);
+    });
+    expect(auth.continueAsGuest).toHaveBeenCalledTimes(1);
+    // the way in is a session, not a screen: nothing is navigated to
+    expect(navigation.navigate).not.toHaveBeenCalled();
   });
 });

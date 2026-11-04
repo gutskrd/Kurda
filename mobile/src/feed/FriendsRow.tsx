@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useAuth } from '../auth/AuthContext';
+import { useAccountGate } from '../auth/AccountGate';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -35,6 +36,8 @@ const MOST = 20;
  */
 export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.JSX.Element {
   const { client, user } = useAuth();
+  // a guest has no friends yet and the social summary is refused to one: the row is you and the way to some
+  const { isGuest, require } = useAccountGate();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -46,6 +49,10 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
 
   useFocusEffect(
     useCallback(() => {
+      if (isGuest) {
+        setFriends([]);
+        return;
+      }
       let active = true;
       void client.get<SocialRailData>('/me/social').then((res) => {
         if (active && res.ok) setFriends(res.data.friends ?? []);
@@ -54,7 +61,7 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
         active = false;
       };
       // a pull on the wall asks again
-    }, [client, refreshKey]),
+    }, [client, refreshKey, isGuest]),
   );
 
   const { playing, online, offline } = bucket(friends ?? []);
@@ -77,7 +84,11 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
       accessibilityLabel={t('nav.friends')}
       testID="friends-row"
     >
-      <Face label={t('feed.friends.you')} spoken={`${t('feed.friends.you')}, ${t('post.open')}`} onPress={() => navigation.navigate('Compose')}>
+      <Face
+        label={t('feed.friends.you')}
+        spoken={`${t('feed.friends.you')}, ${t('post.open')}`}
+        onPress={() => require('post') && navigation.navigate('Compose')}
+      >
         <InitialsAvatar name={me} id={user?.id ?? ''} size={FACE} photoUrl={user?.profilePhotoUrl ?? undefined} />
         <View style={[styles.plus, { backgroundColor: colors.primary, borderColor: colors.background }]}>
           <Icon name="plus" size={14} color={colors.textOnPrimary} />
@@ -85,7 +96,11 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
       </Face>
 
       {friends !== null && ordered.length === 0 ? (
-        <Face label={t('feed.friends.find')} spoken={t('feed.friends.find')} onPress={() => navigation.navigate('Tabs', { screen: 'Search' })}>
+        <Face
+          label={t('feed.friends.find')}
+          spoken={t('feed.friends.find')}
+          onPress={() => require('friends') && navigation.navigate('Tabs', { screen: 'Search' })}
+        >
           <View style={[styles.find, { backgroundColor: colors.controlTrack }]}>
             <Icon name="people" size={26} color={colors.textPrimary} />
           </View>

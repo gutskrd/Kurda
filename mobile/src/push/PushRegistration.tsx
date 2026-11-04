@@ -13,9 +13,13 @@ import { getPushToken } from './tokenSource';
  * allowed to notify (the offer after a lesson, Settings), and on coming back
  * to the front, in case it was allowed in the phone's settings meanwhile.
  * Mounted once under the signed-in tree.
+ *
+ * Not for a guest: nothing is sent to a guest — no messages, invites or gifts
+ * — and registering the phone is one of the routes refused to one, so the
+ * phone is registered once the account is claimed, as at any sign-in.
  */
 export function PushRegistration(): null {
-  const { client, status } = useAuth();
+  const { client, status, isGuest } = useAuth();
   const { t } = useI18n();
   const tokenRef = useRef<string | null>(null);
   // read when a token is fetched, so a change of language renames the Android
@@ -24,7 +28,7 @@ export function PushRegistration(): null {
   channelName.current = t('notifications.title');
 
   useEffect(() => {
-    if (status !== 'signedIn') return;
+    if (status !== 'signedIn' || isGuest) return;
     let active = true;
     const sync = () => {
       void getPushToken(channelName.current).then((device) => {
@@ -51,7 +55,7 @@ export function PushRegistration(): null {
         void removeDevice(client, token);
       }
     };
-  }, [client, status]);
+  }, [client, status, isGuest]);
 
   return null;
 }
