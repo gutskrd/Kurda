@@ -14,12 +14,17 @@
  * the teeth and tongue kept inside it by a clip. Nothing else is drawn, so no
  * second edge can show beside the first, and one shape laid over another
  * leaves no hairline of skin between them at any size.
+ *
+ * Two more shapes are expressions rather than sounds: a wide grin, the smile
+ * pulled wider with its corners up, and the tongue poked out between the
+ * lips, which is the one shape that reaches past them.
  */
 import type { Viseme } from '../lipsync/visemes.js';
 import type { Pt } from '../art/svg.js';
 import { n } from '../art/svg.js';
+import type { MouthShape } from './types.js';
 import type { Knot } from './pen.js';
-import { clipDef, clipped, curve, fill, oval, part, taper } from './pen.js';
+import { alpha, clipDef, clipped, curve, fill, oval, part, taper } from './pen.js';
 
 export interface Smile {
   /** the opening at rest — the upper teeth framed by the lips: its two ends, and its top and bottom at the middle */
@@ -65,7 +70,7 @@ interface Shape {
  * small and pushed forward, `i` spread with both rows of teeth, `etc` the
  * teeth nearly together, `l` with the tongue lifted to the teeth.
  */
-const SHAPES: Record<Exclude<Viseme, 'mbp' | 'fv'>, Shape> = {
+const SHAPES: Record<Exclude<Viseme, 'mbp' | 'fv'> | 'grin', Shape> = {
   rest: { width: 1, corner: 0, top: 0, drop: 0, round: 0, teeth: 1, lower: 1, tongue: 0, pout: 0 },
   etc: { width: 1, corner: 0, top: 0, drop: 0.16, round: 0, teeth: 1, lower: 1, tongue: 0, pout: 0 },
   i: { width: 1.1, corner: -0.05, top: -0.02, drop: 0.2, round: 0, teeth: 1, lower: 1, tongue: 0, pout: 0 },
@@ -74,6 +79,8 @@ const SHAPES: Record<Exclude<Viseme, 'mbp' | 'fv'>, Shape> = {
   a: { width: 1, corner: 0.12, top: 0, drop: 0.95, round: 0.45, teeth: 1, lower: 0.8, tongue: 0.34, pout: 0 },
   o: { width: 0.6, corner: 0.16, top: -0.08, drop: 0.7, round: 1, teeth: 0.5, lower: 0.5, tongue: 0.22, pout: 0.3 },
   u: { width: 0.38, corner: 0.12, top: 0.04, drop: 0.3, round: 1, teeth: 0, lower: 0, tongue: 0, pout: 0.6 },
+  // the smile pulled wide, its corners up above its ends at rest, both rows of teeth showing
+  grin: { width: 1.3, corner: -0.2, top: -0.03, drop: 0.32, round: 0, teeth: 1, lower: 0.9, tongue: 0, pout: 0 },
 };
 
 /** How much of the smile's band of teeth is the upper row; the rest is the lower row. */
@@ -275,9 +282,57 @@ function teethOnLip(s: Smile, clipId: string): string {
   );
 }
 
-/** All ten shapes for one face; `p` prefixes the clip ids so faces on one page never share one. */
-export function humanMouths(s: Smile, p: string): Record<Viseme, string> {
-  const id = (v: Viseme): string => `${p}m${v}`;
+/**
+ * The tongue poked out: the mouth a little open and narrowed, as lips are
+ * round a tongue, the upper teeth showing over it, and the tongue itself
+ * coming out from under them, over the lower lip and down, round at its tip,
+ * with the furrow along its middle. The one shape drawn past the lips, so it
+ * is the one shape not kept inside the clip.
+ */
+function tongueOut(s: Smile, clipId: string): string {
+  const m = measures(s);
+  const c = s.colours;
+  const k: Shape = { ...SHAPES.rest, width: 0.74, drop: 0.3, round: 0.5, teeth: 1, lower: 0 };
+  const open = opening(s, k);
+  const top = (open[2] as Knot)[1];
+  const bottom = (open[6] as Knot)[1];
+  const span = (open[4] as Knot)[0] - (open[0] as Knot)[0];
+  const cx = (open[6] as Knot)[0];
+  const rows = m.bottom - m.top;
+  const hu = rows * UPPER_ROW;
+  const rowLeft = (open[0] as Knot)[0] - 3;
+  const rowRight = (open[4] as Knot)[0] + 3;
+  const inner = [fill(box(rowLeft, top - 2, rowRight - rowLeft, bottom - top + 4), c.inside), fill(box(rowLeft, top - 4, rowRight - rowLeft, hu + 4), c.teeth)];
+  // from just under the upper teeth to a tip well past the lower lip
+  const root = top + hu;
+  const tip = bottom + m.hw * 0.78;
+  const tw = span * 0.33;
+  const tongue = curve([
+    [cx - tw * 0.95, root, 0.3],
+    [cx - tw * 1.05, bottom + (tip - bottom) * 0.3],
+    [cx - tw * 0.72, tip - (tip - bottom) * 0.12],
+    [cx, tip],
+    [cx + tw * 0.72, tip - (tip - bottom) * 0.12],
+    [cx + tw * 1.05, bottom + (tip - bottom) * 0.3],
+    [cx + tw * 0.95, root, 0.3],
+  ]);
+  const furrow = taper(
+    [
+      [cx, bottom + (tip - bottom) * 0.1],
+      [cx, bottom + (tip - bottom) * 0.5],
+      [cx, tip - (tip - bottom) * 0.18],
+    ],
+    [0, tw * 0.22, 0],
+  );
+  return part(
+    [clipDef(clipId, curve(open))],
+    [fill(curve(lips(s, k, open)), c.lip), clipped(clipId, inner.join('')), fill(tongue, c.tongue), fill(furrow, c.line, alpha(0.35))],
+  );
+}
+
+/** All twelve shapes for one face, the ten visemes and the two expressions; `p` prefixes the clip ids so faces on one page never share one. */
+export function humanMouths(s: Smile, p: string): Record<MouthShape, string> {
+  const id = (v: MouthShape): string => `${p}m${v}`;
   return {
     rest: shaped(s, SHAPES.rest, id('rest')),
     mbp: pressed(s),
@@ -289,5 +344,7 @@ export function humanMouths(s: Smile, p: string): Record<Viseme, string> {
     i: shaped(s, SHAPES.i, id('i')),
     o: shaped(s, SHAPES.o, id('o')),
     u: shaped(s, SHAPES.u, id('u')),
+    grin: shaped(s, SHAPES.grin, id('grin')),
+    tongue: tongueOut(s, id('tongue')),
   };
 }

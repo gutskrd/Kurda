@@ -12,11 +12,21 @@
  * the head and the eyes, which is how the icon is painted. His mouth is a
  * deer's, a small line under the nose; it opens beneath the nose and the nose
  * is the overlay, so every shape tucks its top under it.
+ *
+ * Who he is. Hevalo is a young deer, curious about everything and quick on
+ * his feet: he hops when he is pleased, tilts his head when something puzzles
+ * him, and pricks up both ears at anything new. He is cheeky in a sweet way
+ * — a tongue poked out, a wink — and kind when you get something wrong: a
+ * miss gets a curious look and a sniff, never a sad face. He has no brows,
+ * so his ears and his lids do their work: ears up and eyes wide when he is
+ * startled, one eye narrowed when he is weighing something up; a miss gets
+ * the curious tilt and a glance aside, nothing sterner. He flicks an ear now
+ * and then, sniffs the air, and, rarely, lets his tongue show.
  */
 import type { Viseme } from '../lipsync/visemes.js';
 import type { Pt } from '../art/svg.js';
 import { linearAt, linearBox, n, radialBox } from '../art/svg.js';
-import type { CharacterArt } from './types.js';
+import type { BrowState, CharacterArt, MouthShape } from './types.js';
 import type { Knot } from './pen.js';
 import { alpha, clipDef, clipped, curve, ellipse, fill, line, mirror, oval, part, symmetric, taper } from './pen.js';
 
@@ -607,13 +617,26 @@ const lidLight = (id: string): string =>
     [1, '#dba06a'],
   ], 0.5, 0.4, 0.55);
 
-/** The whites of the eyes, with nothing in them. */
-function whites(p: string): string {
-  const id = (name: string): string => `${p}${name}`;
+type Side = 'left' | 'right';
+const SIDES: readonly Side[] = ['left', 'right'];
+
+/** The middle of an eye's white. */
+const eyeX = (side: Side): number => (side === 'left' ? EYE_AXIS - EYE_WHITE.apart : EYE_AXIS + EYE_WHITE.apart);
+
+/**
+ * The whites of the eyes, with nothing in them: both, or the one side asked
+ * for (`tag` names the light they share, so a part drawn for one state never
+ * defines another's); `wide` open they are a little taller and wider, as a
+ * startled eye is.
+ */
+function whites(p: string, tag = 'white', sides: readonly Side[] = SIDES, wide = false): string {
+  const id = `${p}${tag}`;
+  const rx = EYE_WHITE.rx + (wide ? 2 : 0);
+  const ry = EYE_WHITE.ry + (wide ? 7 : 0);
   return part(
     [
       // each eye is white in the middle, warming to a light cream at its edge, which meets the fur round it cleanly, as on the icon
-      radialBox(id('white'), [
+      radialBox(id, [
         [0, C.white],
         [0.6, C.white],
         [0.8, '#fbf2e8'],
@@ -621,22 +644,26 @@ function whites(p: string): string {
         [1, '#f1d7b8'],
       ], 0.5, 0.49),
     ],
-    [
-      ellipse(EYE_AXIS - EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx, EYE_WHITE.ry, `url(#${id('white')})`),
-      ellipse(EYE_AXIS + EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx, EYE_WHITE.ry, `url(#${id('white')})`),
-    ],
+    sides.map((side) => ellipse(eyeX(side), EYE_WHITE.y, rx, ry, `url(#${id})`)),
   );
 }
 
-/** One pupil and the light in it; the light is on the same side in both, as one light falls on them. */
-function pupil(side: 'left' | 'right'): string {
+/** One pupil and the light in it; the light is on the same side in both, as one light falls on them. Smaller by `scale` when he is startled. */
+function pupil(side: Side, scale = 1): string {
   const x = side === 'left' ? EYE_AXIS - PUPIL.apart : EYE_AXIS + PUPIL.apart;
-  const dx = PUPIL_LIGHT.dx;
-  return ellipse(x, PUPIL.y, PUPIL.rx, PUPIL.ry, C.pupil) + fill(oval(x + dx, PUPIL.y + PUPIL_LIGHT.dy, PUPIL_LIGHT.r), C.white);
+  const dx = PUPIL_LIGHT.dx * scale;
+  return (
+    ellipse(x, PUPIL.y, PUPIL.rx * scale, PUPIL.ry * scale, C.pupil) + fill(oval(x + dx, PUPIL.y + PUPIL_LIGHT.dy * scale, PUPIL_LIGHT.r * scale), C.white)
+  );
 }
 
 function eyesOpen(p: string): string {
   return whites(p) + pupil('left') + pupil('right');
+}
+
+/** Startled: the whites a little bigger and the pupils small in them, so more white shows all round. */
+function eyesWide(p: string): string {
+  return whites(p, 'whiteWide', SIDES, true) + pupil('left', 0.8) + pupil('right', 0.8);
 }
 
 /** The lids half down, from the brow to about the middle of each eye, closing along a soft dark edge. */
@@ -690,9 +717,9 @@ function eyesClosed(p: string): string {
   );
 }
 
-/** Smiling eyes: shut, the line where the lids meet curved up instead of down, as a face is when it beams. */
-function eyesHappy(p: string): string {
-  const id = (name: string): string => `${p}${name}`;
+/** A smiling lid over each eye asked for: shut, the line where the lids meet curved up instead of down, as a face is when it beams. */
+function happyLids(p: string, tag: string, sides: readonly Side[]): string {
+  const id = `${p}${tag}`;
   const arc = (cx: number): string =>
     taper(
       [
@@ -705,13 +732,65 @@ function eyesHappy(p: string): string {
       [2.4, 7, 8.4, 7, 2.4],
     );
   return part(
-    [lidLight(id('lidHappy'))],
-    [
-      ellipse(EYE_AXIS - EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id('lidHappy')})`),
-      ellipse(EYE_AXIS + EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id('lidHappy')})`),
-      fill(arc(EYE_AXIS - EYE_WHITE.apart) + arc(EYE_AXIS + EYE_WHITE.apart), C.pupil),
-    ],
+    [lidLight(id)],
+    [...sides.map((side) => ellipse(eyeX(side), EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id})`)), fill(sides.map((side) => arc(eyeX(side))).join(''), C.pupil)],
   );
+}
+
+function eyesHappy(p: string): string {
+  return happyLids(p, 'lidHappy', SIDES);
+}
+
+/** A wink: the left eye shut in a smile, the right one open and looking at you. */
+function eyesWink(p: string): string {
+  return whites(p, 'whiteWink', ['right']) + pupil('right') + happyLids(p, 'lidWink', ['left']);
+}
+
+/**
+ * A lid lowered partway over one eye, its edge on a slant: `outer` and
+ * `inner` are how far down the eye (0 to 1) it comes at the outer corner and
+ * the inner one. The deer has no brows, so a narrowed eye says what a brow
+ * would: one eye narrowed is him weighing you up, both narrowed a little,
+ * lower toward the nose, a small frown.
+ */
+function lidSlant(p: string, tag: string, side: Side, outer: number, inner: number): string {
+  const id = `${p}${tag}`;
+  const cx = eyeX(side);
+  const top = EYE_WHITE.y - EYE_WHITE.ry;
+  const tall = 2 * EYE_WHITE.ry;
+  const [atLeft, atRight] = side === 'left' ? [outer, inner] : [inner, outer];
+  const yl = top + tall * atLeft;
+  const yr = top + tall * atRight;
+  // the lid closes along a soft curve, sagging a little below the line between its corners
+  const mid = (yl + yr) / 2 + 8;
+  const cover =
+    `M${n(cx - 60)},${n(200)}H${n(cx + 60)}V${n(yr)}C${n(cx + 40)},${n(yr + (mid - yr) * 0.75)} ${n(cx + 20)},${n(mid)} ${n(cx)},${n(mid)}` +
+    `C${n(cx - 20)},${n(mid)} ${n(cx - 40)},${n(yl + (mid - yl) * 0.75)} ${n(cx - 60)},${n(yl)}z`;
+  const edge = taper(
+    [
+      [cx - 52, yl + (mid - yl) * 0.14 + 2],
+      [cx - 26, yl + (mid - yl) * 0.86 + 1],
+      [cx, mid + 1],
+      [cx + 26, yr + (mid - yr) * 0.86 + 1],
+      [cx + 52, yr + (mid - yr) * 0.14 + 2],
+    ],
+    [1, 3.8, 4.6, 3.8, 1],
+  );
+  // a lighter line than a blink's, so the look stays thoughtful rather than stern
+  return part(
+    [lidLight(id), clipDef(`${id}C`, cover)],
+    [clipped(`${id}C`, ellipse(cx, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id})`)), fill(edge, C.pupil, alpha(0.7))],
+  );
+}
+
+/** What he has for brows: nothing to raise, one eye narrowed for `one`, both drawn down a little toward the nose for `knit`. */
+function deerBrows(p: string): Record<BrowState, string> {
+  return {
+    neutral: '',
+    raised: '',
+    one: lidSlant(p, 'lidOne', 'left', 0.3, 0.3),
+    knit: lidSlant(p, 'lidKnitL', 'left', 0.12, 0.24) + lidSlant(p, 'lidKnitR', 'right', 0.12, 0.24),
+  };
 }
 
 // ─────────────────────────────────────────────────────────────── the mouth
@@ -861,8 +940,33 @@ function deerOpen(o: DeerOpening, clipId: string): string {
   );
 }
 
-function deerMouths(p: string): Record<Viseme, string> {
-  const id = (v: Viseme): string => `${p}mouth-${v}`;
+/** The grin: the mouth pulled wide and shallow, both rows of teeth showing, its corners up by the line it hangs from. */
+const DEER_GRIN: DeerOpening = { hw: 52, corner: 428, bottom: 462, tongue: 0, teeth: 13, lower: 11 };
+
+/**
+ * The tongue poked out: the mouth line as at rest, drawn over the root of
+ * the tongue so it comes out from under the lip, the tongue hanging down over
+ * the chin of the muzzle, round at its tip, with the furrow along its middle.
+ */
+function tongueOut(): string {
+  const tongue = curve([
+    [AXIS - 14, 436, 0.3],
+    [AXIS - 21, 448],
+    [AXIS - 13, 466],
+    [AXIS, 471],
+    [AXIS + 13, 466],
+    [AXIS + 21, 448],
+    [AXIS + 14, 436, 0.3],
+    [AXIS, 433],
+  ]);
+  return part(
+    [],
+    [fill(tongue, C.tongue), fill(taper([[AXIS, 441], [AXIS, 453], [AXIS, 465]], [0, 4.2, 0]), C.mouth, alpha(0.3)), mouthTaper(428.5, 43, 10, 6.6)],
+  );
+}
+
+function deerMouths(p: string): Record<MouthShape, string> {
+  const id = (v: MouthShape): string => `${p}mouth-${v}`;
   return {
     rest: mouthTaper(428.5, 43, 10, 6.6),
     // pressed: the same line drawn flatter and firmer
@@ -885,12 +989,15 @@ function deerMouths(p: string): Record<Viseme, string> {
     i: deerOpen(DEER_OPEN.i, id('i')),
     o: deerOpen(DEER_OPEN.o, id('o')),
     u: deerOpen(DEER_OPEN.u, id('u')),
+    grin: deerOpen(DEER_GRIN, id('grin')),
+    tongue: tongueOut(),
   };
 }
 
 export function drawHevalo(p: string): CharacterArt {
   const outline = faceOutline(p);
   const features = faceFeatures(p);
+  const crownAndEars = head(p);
   return {
     id: 'hevalo',
     name: 'Hevalo',
@@ -902,10 +1009,12 @@ export function drawHevalo(p: string): CharacterArt {
     body: body(p),
     chest: body(p, false),
     neck: { box: NECK_BOX, sill: NECK_SILL, body: neck(p) },
-    head: head(p),
-    eyes: { open: eyesOpen(p), half: whites(p) + pupil('left') + pupil('right') + lidsHalf(p), closed: eyesClosed(p), happy: eyesHappy(p) },
+    head: crownAndEars,
+    eyes: { open: eyesOpen(p), half: whites(p) + pupil('left') + pupil('right') + lidsHalf(p), closed: eyesClosed(p), happy: eyesHappy(p), wink: eyesWink(p), wide: eyesWide(p) },
     mouths: deerMouths(p),
     overlay: nose(p),
+    // his brows are his lids: the head has none to leave out
+    brows: { bare: crownAndEars, states: deerBrows(p) },
     rig: {
       face: outline + features,
       faceLayers: { outline, features, shape: curve(HEAD) },
