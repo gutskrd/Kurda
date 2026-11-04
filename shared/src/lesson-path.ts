@@ -151,13 +151,21 @@ export interface PlacedStop<S extends PathSkill> {
   trail: 'walked' | 'ahead' | null;
 }
 
-/** The unit colours, in the order units take them; the apps hold the colour values. */
-export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose'] as const;
+/** The unit colours the apps know; the apps hold the colour values. */
+export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose', 'saffron'] as const;
 export type UnitTone = (typeof UNIT_TONES)[number];
+
+/**
+ * The order units take their colours in: the warm ones only, earth, sun,
+ * field and pomegranate, so a path reads as the land it teaches and never
+ * cold. The blue and the violet stay named for what still wears them (a
+ * streak's ice) and are not dealt to units.
+ */
+export const UNIT_TONE_ORDER: readonly UnitTone[] = ['clay', 'saffron', 'meadow', 'rose', 'pine'];
 
 /** The colour of a course's unit, by its place in the course from 0. */
 export function unitTone(index: number): UnitTone {
-  return UNIT_TONES[index % UNIT_TONES.length]!;
+  return UNIT_TONE_ORDER[index % UNIT_TONE_ORDER.length]!;
 }
 
 export interface PathUnit<S extends PathSkill> {

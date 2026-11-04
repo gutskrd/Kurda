@@ -31,8 +31,8 @@ describe('the card at the top of the practice hub', () => {
   it('is painted in the unit’s own colour, else by what it offers', () => {
     expect(heroTone({ kind: 'unit', unit: { ...unit(2), tone: 'rose' } })).toBe('rose');
     expect(heroTone({ kind: 'due', count: 3 })).toBe('meadow');
-    expect(heroTone({ kind: 'weak' })).toBe('river');
-    expect(heroTone({ kind: 'none' })).toBe('dusk');
+    expect(heroTone({ kind: 'weak' })).toBe('saffron');
+    expect(heroTone({ kind: 'none' })).toBe('pine');
   });
 
   it('gives every row a colour of its own', () => {

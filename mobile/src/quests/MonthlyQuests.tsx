@@ -22,7 +22,7 @@ const CHARACTER_HEIGHT = 108;
 /**
  * The month's quests, as a card: how many are done this month, counting up
  * as the screen opens, over a bar of how much of the month's possible that
- * is so far (model.ts `monthProgress`) — in the dusk violet of an epic
+ * is so far (model.ts `monthProgress`) — in the saffron of a rare
  * chest, with Xezal at its end, cheering when a chest waits to be opened and
  * otherwise just glad to see you. The bar fills as the count climbs (a
  * translate on the native driver; the count by frames, as `useCountUp`
@@ -34,7 +34,7 @@ export function MonthlyQuests({ day, cheer }: { day: QuestDay; cheer: boolean })
   const { t, locale } = useI18n();
   const dir = useDirection();
   const reduce = useReducedMotion();
-  const tone = TONES[scheme].dusk;
+  const tone = TONES[scheme].saffron;
   const { done, possible, share } = monthProgress(day);
   const count = useCountUp(done, { delayMs: FILL_AT_MS, ms: FILL_MS });
   const fill = useRef(new Animated.Value(reduce ? share : 0)).current;

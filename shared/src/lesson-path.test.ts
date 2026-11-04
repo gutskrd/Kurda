@@ -3,7 +3,7 @@ import {
   PATH_GEOMETRY,
   PATH_JUMP,
   PATH_MASCOT,
-  UNIT_TONES,
+  UNIT_TONE_ORDER,
   jumpMistakesAllowed,
   jumpPassed,
   jumpPlan,
@@ -154,12 +154,12 @@ describe('lessonPath — the way it winds', () => {
 
 describe('lessonPath — units', () => {
   it('numbers units, gives each a colour in turn, and says what each covers', () => {
-    const units = Array.from({ length: UNIT_TONES.length + 1 }, (_, i) => [skill(`s${i}`, 'locked', 0, 2, { hasGrammar: i === 0 })]);
+    const units = Array.from({ length: UNIT_TONE_ORDER.length + 1 }, (_, i) => [skill(`s${i}`, 'locked', 0, 2, { hasGrammar: i === 0 })]);
     const path = lessonPath(map(...units));
     expect(path.units.map((u) => u.number)).toEqual(units.map((_, i) => i + 1));
-    expect(path.units[0]!.tone).toBe(UNIT_TONES[0]);
+    expect(path.units[0]!.tone).toBe(UNIT_TONE_ORDER[0]);
     // the colours come round again rather than running out
-    expect(path.units[UNIT_TONES.length]!.tone).toBe(UNIT_TONES[0]);
+    expect(path.units[UNIT_TONE_ORDER.length]!.tone).toBe(UNIT_TONE_ORDER[0]);
     expect(path.units[0]!.topics).toEqual(['Skill s0']);
     expect(path.units[0]!.guide.map((s) => s.skillId)).toEqual(['s0']);
     expect(path.units[1]!.guide).toEqual([]);

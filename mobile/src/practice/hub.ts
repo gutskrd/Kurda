@@ -117,10 +117,10 @@ export function practiceXpRange(): { min: number; max: number } {
 }
 
 /** The colour each kind's badge wears (coursemap/path.ts `TONES`): one each, so the rows are told apart at a glance. */
-export const ROW_TONES: Record<HubRow['key'], UnitTone> = { mistakes: 'rose', words: 'river', listen: 'meadow', speak: 'clay', unit: 'dusk' };
+export const ROW_TONES: Record<HubRow['key'], UnitTone> = { mistakes: 'rose', words: 'saffron', listen: 'meadow', speak: 'clay', unit: 'pine' };
 
 /** The colour the card at the top is painted in: a unit's own, else by what it offers. */
 export function heroTone(hero: Hero): UnitTone {
   if (hero.kind === 'unit') return hero.unit.tone;
-  return hero.kind === 'due' ? 'meadow' : hero.kind === 'weak' ? 'river' : 'dusk';
+  return hero.kind === 'due' ? 'meadow' : hero.kind === 'weak' ? 'saffron' : 'pine';
 }

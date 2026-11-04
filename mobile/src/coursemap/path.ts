@@ -39,6 +39,7 @@ export const TONES: Record<ColorScheme, Record<UnitTone, ToneColors>> = {
     dusk: { fill: '#b9aaf0', lip: '#8273bd', ink: '#18122e', text: '#c4b7f4' },
     pine: { fill: '#bcd283', lip: '#849a4f', ink: '#1a220a', text: '#c6da94' },
     rose: { fill: '#eda0bf', lip: '#b56a8a', ink: '#2b0f1b', text: '#f1b1ca' },
+    saffron: { fill: '#f0c060', lip: '#b88a2a', ink: '#2a1d05', text: '#f3ca74' },
   },
   light: {
     meadow: { fill: '#2e7a52', lip: '#1f5739', ink: '#ffffff', text: '#256843' },
@@ -47,6 +48,7 @@ export const TONES: Record<ColorScheme, Record<UnitTone, ToneColors>> = {
     dusk: { fill: '#6551a6', lip: '#493a7d', ink: '#ffffff', text: '#57459a' },
     pine: { fill: '#56692b', lip: '#3e4c1e', ink: '#ffffff', text: '#4b5c25' },
     rose: { fill: '#a3446b', lip: '#78304e', ink: '#ffffff', text: '#8f3b5d' },
+    saffron: { fill: '#9a6508', lip: '#6f4806', ink: '#ffffff', text: '#8a5a07' },
   },
 };
 

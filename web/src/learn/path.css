@@ -17,6 +17,7 @@
 .lp-tone-river { --u-fill: #86bfe8; --u-lip: #4f88b3; --u-ink: #0b1a26; --u-text: #96c9ee; }
 .lp-tone-clay { --u-fill: #eda585; --u-lip: #b46e50; --u-ink: #2a120a; --u-text: #f2b59a; }
 .lp-tone-dusk { --u-fill: #b9aaf0; --u-lip: #8273bd; --u-ink: #18122e; --u-text: #c4b7f4; }
+.lp-tone-saffron { --u-fill: #f0c060; --u-lip: #b88a2a; --u-ink: #2a1d05; --u-text: #f3ca74; }
 .lp-tone-pine { --u-fill: #bcd283; --u-lip: #849a4f; --u-ink: #1a220a; --u-text: #c6da94; }
 .lp-tone-rose { --u-fill: #eda0bf; --u-lip: #b56a8a; --u-ink: #2b0f1b; --u-text: #f1b1ca; }
 
@@ -24,6 +25,7 @@
 :root[data-theme='light'] .lp-tone-river { --u-fill: #2a6a93; --u-lip: #1c4c6b; --u-ink: #ffffff; --u-text: #235a7e; }
 :root[data-theme='light'] .lp-tone-clay { --u-fill: #a9532f; --u-lip: #7d3c21; --u-ink: #ffffff; --u-text: #934627; }
 :root[data-theme='light'] .lp-tone-dusk { --u-fill: #6551a6; --u-lip: #493a7d; --u-ink: #ffffff; --u-text: #57459a; }
+:root[data-theme='light'] .lp-tone-saffron { --u-fill: #9a6508; --u-lip: #6f4806; --u-ink: #ffffff; --u-text: #8a5a07; }
 :root[data-theme='light'] .lp-tone-pine { --u-fill: #56692b; --u-lip: #3e4c1e; --u-ink: #ffffff; --u-text: #4b5c25; }
 :root[data-theme='light'] .lp-tone-rose { --u-fill: #a3446b; --u-lip: #78304e; --u-ink: #ffffff; --u-text: #8f3b5d; }
 

@@ -166,6 +166,7 @@ export {
   PATH_RETURN,
   PATH_JUMP,
   UNIT_TONES,
+  UNIT_TONE_ORDER,
   jumpMistakesAllowed,
   jumpPassed,
   jumpPlan,

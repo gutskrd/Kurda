@@ -26,7 +26,7 @@ export const CHEST_NAME: Record<ChestTier, TranslationKey> = {
 };
 
 /** The unit colour a chest's screen is painted in (coursemap/path.ts `TONES`): green, blue, violet, by how much it holds. */
-export const CHEST_TONE: Record<ChestTier, UnitTone> = { common: 'meadow', rare: 'river', epic: 'dusk' };
+export const CHEST_TONE: Record<ChestTier, UnitTone> = { common: 'meadow', rare: 'saffron', epic: 'rose' };
 
 /**
  * Why a chest did not open, in the words the chest's screen uses: offline

@@ -32,7 +32,7 @@ const learned: PracticeHub = {
   words: true,
   skipSpeaking: false,
   units: [
-    { unitId: 'u2', title: 'Food', number: 2, tone: 'river' },
+    { unitId: 'u2', title: 'Food', number: 2, tone: 'saffron' },
     { unitId: 'u1', title: 'Greetings', number: 1, tone: 'meadow' },
   ],
 };
