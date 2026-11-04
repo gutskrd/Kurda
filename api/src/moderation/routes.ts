@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount, requireAuth } from '../plugins/auth.js';
 import { requireCapability } from '../admin/routes.js';
 
 /** Moderators, superadmins and the legacy admin role (it used to be only the last). */
@@ -21,7 +21,7 @@ export function registerModerationRoutes(app: FastifyInstance, moderation: Moder
         }),
       },
       config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { messageType, messageId, reason } = req.body as { messageType: 'dm' | 'group'; messageId: string; reason?: string };

@@ -9,7 +9,7 @@ import {
   GROUP_REQUEST_NOTE_MAX,
   type GroupBanDuration,
 } from '@kurda/shared';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
@@ -59,7 +59,7 @@ export function registerGroupRoutes(
         }),
       },
       // a group's name and description are published text
-      preHandler: [requireBirthMonth, requireUnrestricted('post')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
     },
     async (req, reply) => {
       const input = req.body as { name: string; description?: string; privacy?: 'open' | 'invite' };
@@ -83,11 +83,11 @@ export function registerGroupRoutes(
   );
 
   /** Discover open groups + your own. */
-  app.get('/groups', { preHandler: requireAuth }, async (req) => ({ groups: await groups.discover(req.user!.id, 30, publicUrl) }));
-  app.get('/me/groups', { preHandler: requireAuth }, async (req) => ({ groups: await groups.myGroups(req.user!.id, publicUrl) }));
+  app.get('/groups', { preHandler: requireAccount }, async (req) => ({ groups: await groups.discover(req.user!.id, 30, publicUrl) }));
+  app.get('/me/groups', { preHandler: requireAccount }, async (req) => ({ groups: await groups.myGroups(req.user!.id, publicUrl) }));
 
   /** Group detail with roster. */
-  app.get('/groups/:id', { schema: { params: idParam }, preHandler: requireAuth }, async (req) =>
+  app.get('/groups/:id', { schema: { params: idParam }, preHandler: requireAccount }, async (req) =>
     groups.get((req.params as { id: string }).id, req.user!.id, publicUrl),
   );
 
@@ -109,7 +109,7 @@ export function registerGroupRoutes(
           .refine((b) => b.name !== undefined || b.description !== undefined, { message: 'nothing to change' }),
       },
       config: { rateLimit: { max: 20, windowMs: 10 * 60_000, per: 'user-or-ip' as const } },
-      preHandler: [requireBirthMonth, requireUnrestricted('post')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
     },
     async (req) => {
       const { id } = req.params as { id: string };
@@ -135,7 +135,7 @@ export function registerGroupRoutes(
         rateLimit: { max: limits?.uploadRateMax ?? 10, windowMs: limits?.uploadRateWindowMs ?? 60 * 60_000, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      preHandler: [requireBirthMonth, requireUnrestricted('media')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('media')],
     },
     async (req, reply) => {
       if (!app.storage || !limits) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
@@ -156,7 +156,7 @@ export function registerGroupRoutes(
   );
   app.delete(
     '/groups/:id/photo',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
       const res = await clearGroupPhoto({ pool: app.db, storage: app.storage, usage, log: app.log }, (req.params as { id: string }).id, req.user!.id);
@@ -180,11 +180,11 @@ export function registerGroupRoutes(
     for (const userId of userIds) await app.realtime.revoke(groupRoom(groupId), userId).catch(() => undefined);
   };
 
-  app.post('/groups/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireBirthMonth }, async (req) => {
+  app.post('/groups/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth] }, async (req) => {
     await groups.join(req.user!.id, (req.params as { id: string }).id);
     return ok;
   });
-  app.post('/groups/:id/leave', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
+  app.post('/groups/:id/leave', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req) => {
     const { id } = req.params as { id: string };
     await groups.leave(req.user!.id, id);
     await leaveRoom(id, [req.user!.id]);
@@ -192,7 +192,7 @@ export function registerGroupRoutes(
   });
   app.post(
     '/groups/:id/invite',
-    { schema: { params: idParam, body: z.object({ userId: z.uuid() }) }, preHandler: requireBirthMonth },
+    { schema: { params: idParam, body: z.object({ userId: z.uuid() }) }, preHandler: [requireAccount, requireBirthMonth] },
     async (req) => {
       await groups.invite(req.user!.id, (req.params as { id: string }).id, (req.body as { userId: string }).userId);
       return ok;
@@ -200,7 +200,7 @@ export function registerGroupRoutes(
   );
   app.post(
     '/groups/:id/transfer',
-    { schema: { params: idParam, body: z.object({ userId: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: idParam, body: z.object({ userId: z.uuid() }) }, preHandler: requireAccount },
     async (req) => {
       await groups.transferOwnership(req.user!.id, (req.params as { id: string }).id, (req.body as { userId: string }).userId);
       return ok;
@@ -208,7 +208,7 @@ export function registerGroupRoutes(
   );
   app.put(
     '/groups/:id/members/:userId/role',
-    { schema: { params: memberParam, body: z.object({ role: z.enum(['moderator', 'member']) }) }, preHandler: requireAuth },
+    { schema: { params: memberParam, body: z.object({ role: z.enum(['moderator', 'member']) }) }, preHandler: requireAccount },
     async (req) => {
       const { id, userId } = req.params as { id: string; userId: string };
       await groups.setRole(req.user!.id, id, userId, (req.body as { role: 'moderator' | 'member' }).role);
@@ -217,7 +217,7 @@ export function registerGroupRoutes(
   );
   app.delete(
     '/groups/:id/members/:userId',
-    { schema: { params: memberParam }, preHandler: requireAuth },
+    { schema: { params: memberParam }, preHandler: requireAccount },
     async (req) => {
       const { id, userId } = req.params as { id: string; userId: string };
       await groups.removeMember(req.user!.id, id, userId);
@@ -246,7 +246,7 @@ export function registerGroupRoutes(
         }),
       },
       config: { rateLimit: { max: 60, windowMs: 60 * 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { id } = req.params as { id: string };
@@ -261,13 +261,13 @@ export function registerGroupRoutes(
     },
   );
   /** Lift a ban (the owner or an admin). It does not add them back. */
-  app.delete('/groups/:id/bans/:userId', { schema: { params: memberParam }, preHandler: requireAuth }, async (req) => {
+  app.delete('/groups/:id/bans/:userId', { schema: { params: memberParam }, preHandler: requireAccount }, async (req) => {
     const { id, userId } = req.params as { id: string; userId: string };
     await groups.unban(req.user!.id, id, userId);
     return ok;
   });
   /** The bans in force, newest first (the owner and admins). */
-  app.get('/groups/:id/bans', { schema: { params: idParam }, preHandler: requireAuth }, async (req) => ({
+  app.get('/groups/:id/bans', { schema: { params: idParam }, preHandler: requireAccount }, async (req) => ({
     bans: await groups.bans(req.user!.id, (req.params as { id: string }).id, publicUrl),
   }));
 
@@ -282,7 +282,7 @@ export function registerGroupRoutes(
       schema: { params: idParam, body: z.object({ note: z.string().max(GROUP_REQUEST_NOTE_MAX).nullable().optional() }) },
       config: { rateLimit: { max: 5, windowMs: 24 * 60 * 60_000, per: 'user-or-ip' as const } },
       // the note reaches the group's admins
-      preHandler: [requireBirthMonth, requireUnrestricted('post')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
     },
     async (req) => {
       const { id } = req.params as { id: string };
@@ -292,30 +292,30 @@ export function registerGroupRoutes(
     },
   );
   /** Take back one's own waiting request. */
-  app.delete('/groups/:id/requests', { schema: { params: idParam }, preHandler: requireAuth }, async (req) => {
+  app.delete('/groups/:id/requests', { schema: { params: idParam }, preHandler: requireAccount }, async (req) => {
     await groups.withdrawRequest(req.user!.id, (req.params as { id: string }).id);
     return ok;
   });
   /** The requests waiting, oldest first (the owner and admins). */
-  app.get('/groups/:id/requests', { schema: { params: idParam }, preHandler: requireAuth }, async (req) => ({
+  app.get('/groups/:id/requests', { schema: { params: idParam }, preHandler: requireAccount }, async (req) => ({
     requests: await groups.requests(req.user!.id, (req.params as { id: string }).id, publicUrl),
   }));
   /** Let them back: the ban lifted, and a member again when every rule allows it. */
-  app.post('/groups/:id/requests/:userId/approve', { schema: { params: memberParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
+  app.post('/groups/:id/requests/:userId/approve', { schema: { params: memberParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req) => {
     const { id, userId } = req.params as { id: string; userId: string };
     return groups.approve(req.user!.id, id, userId);
   });
   /** Turn it down: a longer wait before the next, or with `stopRequests` no more from them. */
   app.post(
     '/groups/:id/requests/:userId/decline',
-    { schema: { params: memberParam, body: z.object({ stopRequests: z.boolean().optional() }).optional() }, preHandler: requireAuth },
+    { schema: { params: memberParam, body: z.object({ stopRequests: z.boolean().optional() }).optional() }, preHandler: requireAccount },
     async (req) => {
       const { id, userId } = req.params as { id: string; userId: string };
       await groups.decline(req.user!.id, id, userId, (req.body as { stopRequests?: boolean } | undefined)?.stopRequests ?? false);
       return ok;
     },
   );
-  app.delete('/groups/:id', { schema: { params: idParam }, preHandler: requireAuth }, async (req) => {
+  app.delete('/groups/:id', { schema: { params: idParam }, preHandler: requireAccount }, async (req) => {
     const { id } = req.params as { id: string };
     // who was in it, read before the rows go with the group
     const members = await app.db.query<{ user_id: string }>(`SELECT user_id FROM group_members WHERE group_id = $1`, [id]);

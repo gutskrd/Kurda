@@ -28,6 +28,7 @@ describe('blockedBeforeActivation', () => {
     expect(blockedBeforeActivation('POST', '/auth/verify-email-code')).toBe(false);
     expect(blockedBeforeActivation('POST', '/auth/resend-verification-code')).toBe(false);
     expect(blockedBeforeActivation('POST', '/auth/refresh')).toBe(false);
+    expect(blockedBeforeActivation('POST', '/auth/claim')).toBe(false);
     expect(blockedBeforeActivation('POST', '/me/heartbeat')).toBe(false);
     expect(blockedBeforeActivation('DELETE', '/me')).toBe(false);
     expect(blockedBeforeActivation('DELETE', '/me/sessions')).toBe(false);

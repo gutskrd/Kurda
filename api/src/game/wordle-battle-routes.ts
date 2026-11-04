@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { WordleBattleService, type WordleBattleDeps } from './wordle-battle-service.js';
 
@@ -35,7 +35,7 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
   });
 
   /** Create a battle lobby (creator auto-joins); pick difficulty + player cap. */
-  app.post('/wordle/battles', { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireBirthMonth }, async (req, reply) => {
+  app.post('/wordle/battles', { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] }, async (req, reply) => {
     const body = req.body as z.infer<typeof createBody>;
     const res = await battles.create(req.user!.id, body);
     if (!res.ok) {
@@ -48,7 +48,7 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
   });
 
   /** Join an open lobby. */
-  app.post('/wordle/battles/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireBirthMonth }, async (req, reply) => {
+  app.post('/wordle/battles/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth] }, async (req, reply) => {
     const res = await battles.join((req.params as { id: string }).id, req.user!.id);
     if (res.ok) return res.battle;
     switch (res.reason) {
@@ -64,7 +64,7 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
   });
 
   /** Creator starts the match (needs ≥2 players). */
-  app.post('/wordle/battles/:id/start', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
+  app.post('/wordle/battles/:id/start', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const res = await battles.start((req.params as { id: string }).id, req.user!.id);
     if (res.ok) return res.battle;
     switch (res.reason) {
@@ -83,14 +83,14 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
    * Leave: out of a lobby (the host leaving calls it off), or out of a battle
    * under way (finished where you stand; the others stop waiting for you).
    */
-  app.post('/wordle/battles/:id/leave', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
+  app.post('/wordle/battles/:id/leave', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const res = await battles.leave((req.params as { id: string }).id, req.user!.id);
     if (!res.ok) return notFound(reply);
     return { ok: true };
   });
 
   /** The host takes a player out of the lobby, by seat. */
-  app.post('/wordle/battles/:id/remove', { schema: { params: idParam, body: removeBody }, preHandler: requireAuth }, async (req, reply) => {
+  app.post('/wordle/battles/:id/remove', { schema: { params: idParam, body: removeBody }, preHandler: requireAccount }, async (req, reply) => {
     const { seat } = req.body as z.infer<typeof removeBody>;
     const res = await battles.remove((req.params as { id: string }).id, req.user!.id, seat);
     if (res.ok) return res.battle;
@@ -109,7 +109,7 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
   /** Submit one guess (scored server-side; own feedback + opponent progress back). */
   app.post(
     '/wordle/battles/:id/guesses',
-    { schema: { params: idParam, body: guessBody }, config: { rateLimit: { max: 60, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: idParam, body: guessBody }, config: { rateLimit: { max: 60, windowMs: 60_000 } }, preHandler: requireAccount },
     async (req, reply) => {
       const { word } = req.body as z.infer<typeof guessBody>;
       const res = await battles.guess((req.params as { id: string }).id, req.user!.id, word);
@@ -123,7 +123,7 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
    * Someone who may join sees the lobby first; a latecomer is told the battle
    * already started (409 GAME_STARTED) rather than shown a game they are not in.
    */
-  app.get('/wordle/battles/:id', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
+  app.get('/wordle/battles/:id', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const res = await battles.read((req.params as { id: string }).id, req.user!.id);
     if (res.ok) return res.battle;
     if (res.reason === 'started') {
@@ -133,7 +133,7 @@ export function registerWordleBattleRoutes(app: FastifyInstance, deps: Omit<Word
   });
 
   /** Post-match results: all guess histories + the word + placement + XP. */
-  app.get('/wordle/battles/:id/results', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
+  app.get('/wordle/battles/:id/results', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const results = await battles.results(id, req.user!.id);
     if (results) return results;

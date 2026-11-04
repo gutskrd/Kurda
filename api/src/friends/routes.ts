@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { BLOCKS_PAGE_MAX, FRIENDS_PAGE_MAX, type FriendService } from './service.js';
 
@@ -26,7 +26,7 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
           offset: z.coerce.number().int().min(0).max(FRIENDS_PAGE_MAX).optional(),
         }),
       },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { limit, offset } = req.query as { limit?: number; offset?: number };
@@ -35,45 +35,45 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
   );
 
   /** Incoming pending requests. */
-  app.get('/friends/requests', { preHandler: requireAuth }, async (req) => ({
+  app.get('/friends/requests', { preHandler: requireAccount }, async (req) => ({
     requests: await friends.incomingRequests(req.user!.id, publicUrl),
   }));
 
   /** Requests you have sent that are still unanswered. */
-  app.get('/friends/requests/outgoing', { preHandler: requireAuth }, async (req) => ({
+  app.get('/friends/requests/outgoing', { preHandler: requireAccount }, async (req) => ({
     requests: await friends.outgoingRequests(req.user!.id, publicUrl),
   }));
 
   /** People-you-may-know (friends-of-friends, ranked by mutual count). */
   app.get(
     '/friends/suggestions',
-    { config: { rateLimit: SUGGESTIONS_LIMIT }, preHandler: requireAuth },
+    { config: { rateLimit: SUGGESTIONS_LIMIT }, preHandler: requireAccount },
     async (req) => ({ suggestions: await friends.suggestions(req.user!.id, publicUrl) }),
   );
 
   /** Send a friend request (auto-accepts a mutual pending request). */
   app.post(
     '/friends/requests',
-    { schema: { body: z.object({ userId: z.uuid() }) }, config: { rateLimit: REQUEST_LIMIT }, preHandler: requireBirthMonth },
+    { schema: { body: z.object({ userId: z.uuid() }) }, config: { rateLimit: REQUEST_LIMIT }, preHandler: [requireAccount, requireBirthMonth] },
     async (req) => ({ outcome: await friends.request(req.user!.id, (req.body as { userId: string }).userId) }),
   );
 
   /** Accept / decline a request from :userId. */
   app.post(
     '/friends/requests/:userId/accept',
-    { schema: { params: targetParam }, config: { skipValidation: true }, preHandler: requireBirthMonth },
+    { schema: { params: targetParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth] },
     async (req) => ({ result: await friends.respond(req.user!.id, (req.params as { userId: string }).userId, true) }),
   );
   app.post(
     '/friends/requests/:userId/decline',
-    { schema: { params: targetParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: targetParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req) => ({ result: await friends.respond(req.user!.id, (req.params as { userId: string }).userId, false) }),
   );
 
   /** Withdraw a request you sent. */
   app.delete(
     '/friends/requests/:userId',
-    { schema: { params: targetParam }, preHandler: requireAuth },
+    { schema: { params: targetParam }, preHandler: requireAccount },
     async (req) => {
       await friends.cancelRequest(req.user!.id, (req.params as { userId: string }).userId);
       return { ok: true };
@@ -83,7 +83,7 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
   /** Remove a friend. */
   app.delete(
     '/friends/:userId',
-    { schema: { params: targetParam }, preHandler: requireAuth },
+    { schema: { params: targetParam }, preHandler: requireAccount },
     async (req) => {
       await friends.unfriend(req.user!.id, (req.params as { userId: string }).userId);
       return { ok: true };
@@ -107,7 +107,7 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
         }),
       },
       config: { rateLimit: BLOCKS_LIMIT },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { limit, offset = 0 } = req.query as { limit?: number; offset?: number };
@@ -118,7 +118,7 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
   /** Block / unblock (silent + absolute). */
   app.post(
     '/friends/:userId/block',
-    { schema: { params: targetParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: targetParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req) => {
       await friends.block(req.user!.id, (req.params as { userId: string }).userId);
       return { ok: true };
@@ -126,7 +126,7 @@ export function registerFriendRoutes(app: FastifyInstance, friends: FriendServic
   );
   app.delete(
     '/friends/:userId/block',
-    { schema: { params: targetParam }, preHandler: requireAuth },
+    { schema: { params: targetParam }, preHandler: requireAccount },
     async (req) => {
       await friends.unblock(req.user!.id, (req.params as { userId: string }).userId);
       return { ok: true };

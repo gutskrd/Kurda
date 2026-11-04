@@ -581,8 +581,9 @@ export class SanctionsService {
 
   /** Put a permanently banned account's address on the registry signup checks. */
   async registerBannedEmail(db: Executor, userId: string, sanctionId: string): Promise<void> {
-    const u = await db.query<{ email: string }>(`SELECT email FROM users WHERE id = $1`, [userId]);
-    if (!u.rows[0]) return;
+    const u = await db.query<{ email: string | null }>(`SELECT email FROM users WHERE id = $1`, [userId]);
+    // a guest has no address to register; the device caps are what stand in its way
+    if (!u.rows[0] || u.rows[0].email === null) return;
     await db.query(
       `INSERT INTO ban_registry (kind, value_hash, sanction_id) VALUES ('email', $1, $2)
        ON CONFLICT (kind, value_hash) DO UPDATE SET sanction_id = EXCLUDED.sanction_id`,
@@ -605,19 +606,20 @@ export class SanctionsService {
       [userId],
     );
     if (stillBanned.rowCount) return;
-    const u = await db.query<{ email: string }>(`SELECT email FROM users WHERE id = $1`, [userId]);
+    const u = await db.query<{ email: string | null }>(`SELECT email FROM users WHERE id = $1`, [userId]);
+    const address = u.rows[0]?.email ?? null;
     const entries = await db.query<{ value_hash: string }>(
       `SELECT value_hash FROM ban_registry
         WHERE kind = 'email'
           AND (value_hash = $2 OR sanction_id IN (SELECT id FROM sanctions WHERE user_id = $1 AND kind = 'permanent_ban'))`,
-      [userId, u.rows[0] ? emailRegistryHash(u.rows[0].email) : null],
+      [userId, address === null ? null : emailRegistryHash(address)],
     );
     if (entries.rows.length === 0) return;
     // the hashes are keyed, so the comparison is made here; unbanning is rare
     const others = await db.query<{ id: string; email: string }>(
       `SELECT DISTINCT ON (s.user_id) s.id, u.email
          FROM sanctions s JOIN users u ON u.id = s.user_id
-        WHERE s.kind = 'permanent_ban' AND ${IN_FORCE_SQL} AND s.user_id <> $1
+        WHERE s.kind = 'permanent_ban' AND ${IN_FORCE_SQL} AND s.user_id <> $1 AND u.email IS NOT NULL
         ORDER BY s.user_id, s.created_at`,
       [userId],
     );
@@ -649,7 +651,7 @@ export class SanctionsService {
       `SELECT DISTINCT ON (s.user_id) s.id AS sanction_id, u.email
          FROM sanctions s JOIN users u ON u.id = s.user_id
         WHERE s.kind = 'permanent_ban' AND ${IN_FORCE_SQL}
-          AND u.email NOT LIKE '%@deleted.kurda.app'
+          AND u.email IS NOT NULL AND u.email NOT LIKE '%@deleted.kurda.app'
           AND NOT EXISTS (SELECT 1 FROM ban_registry r JOIN sanctions mine ON mine.id = r.sanction_id
                            WHERE r.kind = 'email' AND mine.user_id = s.user_id)
         ORDER BY s.user_id, s.created_at

@@ -10,7 +10,7 @@ import {
   TEXT_DURING_OPTIONS,
   TIMER_PRESETS,
 } from '@kurda/shared';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import type { RoomBus } from '../realtime/bus.js';
 import type { XpService } from '../xp/service.js';
@@ -133,17 +133,17 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
     clearInterval(sweeps);
   });
 
-  app.get('/story-games/options', { preHandler: requireAuth }, async (req) => games.options(req.user!.id));
+  app.get('/story-games/options', { preHandler: requireAccount }, async (req) => games.options(req.user!.id));
 
-  app.get('/story-games/active', { preHandler: requireAuth }, async (req) => ({ games: await games.active(req.user!.id) }));
+  app.get('/story-games/active', { preHandler: requireAccount }, async (req) => ({ games: await games.active(req.user!.id) }));
 
-  app.get('/story-games/history', { preHandler: requireAuth }, async (req) => ({
+  app.get('/story-games/history', { preHandler: requireAccount }, async (req) => ({
     progress: await games.history(req.user!.id),
   }));
 
   app.post(
     '/story-games',
-    { schema: { body: createBody }, config: perMinute(20), preHandler: requireBirthMonth },
+    { schema: { body: createBody }, config: perMinute(20), preHandler: [requireAccount, requireBirthMonth] },
     async (req, reply) => {
       const view = await games.create(req.user!.id, req.body as z.infer<typeof createBody>);
       return reply.code(201).send(view);
@@ -152,7 +152,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   app.post(
     '/story-games/join',
-    { schema: { body: joinBody }, config: perMinute(10), preHandler: requireBirthMonth },
+    { schema: { body: joinBody }, config: perMinute(10), preHandler: [requireAccount, requireBirthMonth] },
     async (req) => {
       const body = req.body as z.infer<typeof joinBody>;
       const target = 'code' in body ? { code: body.code } : { id: body.id };
@@ -162,7 +162,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   app.get(
     '/story-games/:id',
-    { schema: { params: idParam, querystring: pollQuery }, config: perMinute(120), preHandler: requireAuth },
+    { schema: { params: idParam, querystring: pollQuery }, config: perMinute(120), preHandler: requireAccount },
     async (req) => {
       const { id } = req.params as z.infer<typeof idParam>;
       const { v } = req.query as z.infer<typeof pollQuery>;
@@ -174,7 +174,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   app.get(
     '/story-games/:id/story',
-    { schema: { params: idParam }, config: perMinute(60), preHandler: requireAuth },
+    { schema: { params: idParam }, config: perMinute(60), preHandler: requireAccount },
     async (req, reply) => {
       const { id } = req.params as z.infer<typeof idParam>;
       const { story, frozen } = await games.story(id, req.user!.id);
@@ -188,7 +188,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   app.patch(
     '/story-games/:id/settings',
-    { schema: { params: idParam, body: settingsBody }, config: perMinute(60), preHandler: requireAuth },
+    { schema: { params: idParam, body: settingsBody }, config: perMinute(60), preHandler: requireAccount },
     async (req) => {
       const { id } = req.params as z.infer<typeof idParam>;
       return games.updateSettings(id, req.user!.id, req.body as z.infer<typeof settingsBody>);
@@ -199,7 +199,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
   const bodiless = () => ({
     config: { ...perMinute(60), skipValidation: true },
     schema: { params: idParam },
-    preHandler: requireAuth,
+    preHandler: requireAccount,
   });
 
   app.post('/story-games/:id/start', bodiless(), async (req) =>
@@ -217,7 +217,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   app.post(
     '/story-games/:id/answers',
-    { schema: { params: idParam, body: answerBody }, config: perMinute(60), preHandler: requireAuth },
+    { schema: { params: idParam, body: answerBody }, config: perMinute(60), preHandler: requireAccount },
     async (req) => {
       // when the answer arrived, before anything is awaited
       const receipt = Date.now();
@@ -229,7 +229,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   app.post(
     '/story-games/:id/continue',
-    { schema: { params: idParam, body: indexBody }, config: perMinute(60), preHandler: requireAuth },
+    { schema: { params: idParam, body: indexBody }, config: perMinute(60), preHandler: requireAccount },
     async (req) => {
       const { id } = req.params as z.infer<typeof idParam>;
       return games.continueAfter(id, req.user!.id, (req.body as z.infer<typeof indexBody>).index);
@@ -238,7 +238,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   app.post(
     '/story-games/:id/advance',
-    { schema: { params: idParam, body: advanceBody }, config: perMinute(60), preHandler: requireAuth },
+    { schema: { params: idParam, body: advanceBody }, config: perMinute(60), preHandler: requireAccount },
     async (req) => {
       const { id } = req.params as z.infer<typeof idParam>;
       return games.advanceByHost(id, req.user!.id, (req.body as z.infer<typeof advanceBody>).from);
@@ -247,7 +247,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   app.post(
     '/story-games/:id/remove',
-    { schema: { params: idParam, body: removeBody }, config: perMinute(60), preHandler: requireAuth },
+    { schema: { params: idParam, body: removeBody }, config: perMinute(60), preHandler: requireAccount },
     async (req) => {
       const { id } = req.params as z.infer<typeof idParam>;
       return games.remove(id, req.user!.id, (req.body as z.infer<typeof removeBody>).seat);
@@ -256,7 +256,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
 
   app.post(
     '/story-games/:id/extra-time',
-    { schema: { params: idParam, body: extraTimeBody }, config: perMinute(60), preHandler: requireAuth },
+    { schema: { params: idParam, body: extraTimeBody }, config: perMinute(60), preHandler: requireAccount },
     async (req) => {
       const { id } = req.params as z.infer<typeof idParam>;
       return games.setExtraTime(id, req.user!.id, (req.body as z.infer<typeof extraTimeBody>).on);

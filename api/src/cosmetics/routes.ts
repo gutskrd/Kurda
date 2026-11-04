@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { avatarRegistry } from './avatars.js';
 import type { CosmeticsService } from './service.js';
 
@@ -19,13 +19,13 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
    *  Static/global data — no per-user DB work. */
   app.get(
     '/cosmetics/avatars',
-    { config: { skipValidation: true }, preHandler: requireAuth },
+    { config: { skipValidation: true }, preHandler: requireAccount },
     async () => ({ avatars: avatarRegistry() }),
   );
 
   app.put(
     '/me/cosmetics/avatar',
-    { schema: { body: z.object({ key: z.string().min(1).max(64).nullable() }) }, config: { rateLimit }, preHandler: requireAuth },
+    { schema: { body: z.object({ key: z.string().min(1).max(64).nullable() }) }, config: { rateLimit }, preHandler: requireAccount },
     async (req) => {
       const { key } = req.body as { key: string | null };
       await cosmetics.equipAvatar(req.user!.id, key);
@@ -35,7 +35,7 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
 
   app.put(
     '/me/cosmetics/background',
-    { schema: { body: skuBody }, config: { rateLimit }, preHandler: requireAuth },
+    { schema: { body: skuBody }, config: { rateLimit }, preHandler: requireAccount },
     async (req) => {
       const { sku } = req.body as { sku: string | null };
       await cosmetics.equipBackground(req.user!.id, sku);
@@ -45,7 +45,7 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
 
   app.put(
     '/me/cosmetics/icon',
-    { schema: { body: skuBody }, config: { rateLimit }, preHandler: requireAuth },
+    { schema: { body: skuBody }, config: { rateLimit }, preHandler: requireAccount },
     async (req) => {
       const { sku } = req.body as { sku: string | null };
       await cosmetics.equipIcon(req.user!.id, sku);
@@ -56,7 +56,7 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
   /** Wear a season frame you were given (or none). */
   app.put(
     '/me/cosmetics/frame',
-    { schema: { body: skuBody }, config: { rateLimit }, preHandler: requireAuth },
+    { schema: { body: skuBody }, config: { rateLimit }, preHandler: requireAccount },
     async (req) => {
       const { sku } = req.body as { sku: string | null };
       await cosmetics.equipFrame(req.user!.id, sku);
@@ -67,7 +67,7 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
   /** Show/hide the equipped premium icon (keeps the selection). */
   app.put(
     '/me/cosmetics/icon/visibility',
-    { schema: { body: z.object({ enabled: z.boolean() }) }, config: { rateLimit }, preHandler: requireAuth },
+    { schema: { body: z.object({ enabled: z.boolean() }) }, config: { rateLimit }, preHandler: requireAccount },
     async (req) => {
       const { enabled } = req.body as { enabled: boolean };
       await cosmetics.setIconVisibility(req.user!.id, enabled);
@@ -77,7 +77,7 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
 
   app.put(
     '/me/favorites/poem',
-    { schema: { body: postBody }, config: { rateLimit }, preHandler: requireAuth },
+    { schema: { body: postBody }, config: { rateLimit }, preHandler: requireAccount },
     async (req) => {
       await cosmetics.setFavorite(req.user!.id, 'poem', (req.body as { postId: string }).postId);
       return { favoritePoemId: (req.body as { postId: string }).postId };
@@ -85,7 +85,7 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
   );
   app.delete(
     '/me/favorites/poem',
-    { config: { skipValidation: true, rateLimit }, preHandler: requireAuth },
+    { config: { skipValidation: true, rateLimit }, preHandler: requireAccount },
     async (req) => {
       await cosmetics.setFavorite(req.user!.id, 'poem', null);
       return { favoritePoemId: null };
@@ -94,7 +94,7 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
 
   app.put(
     '/me/favorites/story',
-    { schema: { body: postBody }, config: { rateLimit }, preHandler: requireAuth },
+    { schema: { body: postBody }, config: { rateLimit }, preHandler: requireAccount },
     async (req) => {
       await cosmetics.setFavorite(req.user!.id, 'story', (req.body as { postId: string }).postId);
       return { favoriteStoryId: (req.body as { postId: string }).postId };
@@ -102,7 +102,7 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
   );
   app.delete(
     '/me/favorites/story',
-    { config: { skipValidation: true, rateLimit }, preHandler: requireAuth },
+    { config: { skipValidation: true, rateLimit }, preHandler: requireAccount },
     async (req) => {
       await cosmetics.setFavorite(req.user!.id, 'story', null);
       return { favoriteStoryId: null };

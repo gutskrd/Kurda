@@ -16,6 +16,7 @@ import { exportProgress } from './progress-export.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 import { userHash } from '../moderation/pseudonym.js';
 import type { AppleTokens } from '../auth/apple-tokens.js';
+import { GUEST_IDLE_DAYS } from '../auth/guest.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -49,14 +50,15 @@ export class GdprService {
 
   /** Starts the 14-day grace period; logging in again cancels it. */
   async requestDeletion(userId: string): Promise<void> {
-    const result = await this.pool.query<{ email: string; username: string; locale: string }>(
+    const result = await this.pool.query<{ email: string | null; username: string; locale: string }>(
       `UPDATE users SET deletion_requested_at = now()
        WHERE id = $1 AND deletion_requested_at IS NULL AND deleted_at IS NULL
        RETURNING email, username, locale`,
       [userId],
     );
     const user = result.rows[0];
-    if (user && this.deps.jobs) {
+    // the notice goes to the address; a guest's row has none (DELETE /me closes a guest at once)
+    if (user && user.email !== null && this.deps.jobs) {
       await this.deps.jobs
         .enqueue(sendEmailJob, {
           to: user.email,
@@ -139,12 +141,45 @@ export class GdprService {
    * account keeps (XP, lessons, streaks, ledgers) — numbers tied to no name,
    * address or birth date — and moderation records, which are about other
    * people's safety.
+   *
+   * The same close serves a guest (auth/guest.ts) who taps delete, or whom
+   * nobody has touched for GUEST_IDLE_DAYS: a guest has no address for a
+   * notice and no way to sign in again, so the grace period would wait for
+   * nothing.
    */
-  async closeNow(userId: string, reason: 'under_minimum_age'): Promise<void> {
+  async closeNow(userId: string, reason: 'under_minimum_age' | 'guest_left' | 'guest_idle'): Promise<void> {
     await this.leaveStoryGames(userId);
     await this.revokeAppleSignIn(userId);
     const files = await this.eraseAndAnonymize(userId);
     this.deps.log?.info({ userId, reason, files }, 'account closed and its data removed');
+  }
+
+  /**
+   * Closes the guests nobody has touched for GUEST_IDLE_DAYS (jobs/guest-jobs.ts).
+   *
+   * "Touched" is the latest of what the row already records: when it was
+   * made, the app's presence heartbeat (`last_seen_at`, sent while the app is
+   * open), and the last refresh token issued to it — the app refreshes its
+   * session whenever it is used, so a guest still learning has a token from
+   * this week, and one left on a phone's home screen does not. Nothing new is
+   * written on a request to know this.
+   *
+   * Idempotent — each close sets deleted_at, so a rerun skips processed rows;
+   * batched, since the job runs twice a day and a backlog can wait a run.
+   */
+  async purgeIdleGuests(now = new Date()): Promise<number> {
+    const cutoff = new Date(now.getTime() - GUEST_IDLE_DAYS * 24 * 3_600_000);
+    const due = await this.pool.query<{ id: string }>(
+      `SELECT u.id FROM users u
+        WHERE u.guest AND u.deleted_at IS NULL
+          AND GREATEST(u.created_at, COALESCE(u.last_seen_at, u.created_at),
+                       COALESCE((SELECT max(rt.created_at) FROM refresh_tokens rt WHERE rt.user_id = u.id), u.created_at)) < $1
+        ORDER BY u.created_at
+        LIMIT 200`,
+      [cutoff],
+    );
+    for (const row of due.rows) await this.closeNow(row.id, 'guest_idle');
+    return due.rows.length;
   }
 
   /**

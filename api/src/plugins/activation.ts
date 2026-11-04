@@ -35,6 +35,10 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
  *   POST /auth/register                 (no token yet, so the gate never fires)
  *   POST /auth/request-password-reset   you can forget a password before
  *   POST /auth/reset-password           you ever confirm the address
+ *   POST /auth/claim                    a guest claims the account (auth/guest.ts). A guest is never
+ *                                       unconfirmed, so the gate has nothing to say to one; it is
+ *                                       listed so that an account that has claimed and asks again is
+ *                                       told NOT_A_GUEST by the route, not to confirm its address first
  *   DELETE /me                          leave. Being unverified must not trap an account.
  *   DELETE /me/sessions                 sign out everywhere
  *   POST /me/heartbeat                  presence, which the app pings while you sit on
@@ -72,6 +76,8 @@ const EXEMPT = new Set([
   // a password can be forgotten before an address is confirmed
   'POST /auth/request-password-reset',
   'POST /auth/reset-password',
+  // claiming a guest account, which the route itself refuses to anyone else
+  'POST /auth/claim',
   // leaving, and being present while you decide
   'DELETE /me',
   'DELETE /me/sessions',

@@ -10,6 +10,7 @@ import { MediaService } from '../media/service.js';
 import { createStorage } from '../media/storage.js';
 import { makeCleanupOrphansJob } from './cleanup-orphans.js';
 import { makeAnonymizeJob, makeExportJob } from './gdpr-jobs.js';
+import { makePurgeGuestsJob } from './guest-jobs.js';
 import { makePushSendJob } from './push-jobs.js';
 import { PushService } from '../push/service.js';
 import { DeviceTokenService } from '../push/tokens-service.js';
@@ -51,6 +52,8 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
     // the grace period's end revokes what Sign in with Apple issued, as Apple requires
     const gdpr = new GdprService(pool, { storage, storyGames, log, apple: appleTokens(config, pool, { log }) });
     registry.register(makeAnonymizeJob(gdpr));
+    // the same close for the guests nobody has touched in two months
+    registry.register(makePurgeGuestsJob(gdpr));
     if (storage) {
       registry.register(makeExportJob(gdpr));
     }

@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { requireAccount, requireAuth, requireRoles } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { cosmeticAssetUrl } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
@@ -152,7 +152,7 @@ export function registerShopRoutes(
     {
       schema: { body: purchaseBody },
       config: { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { sku, idempotencyKey, expectedPrice } = req.body as z.infer<typeof purchaseBody>;
@@ -178,7 +178,7 @@ export function registerShopRoutes(
     {
       schema: { body: giftBody },
       config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireBirthMonth,
+      preHandler: [requireAccount, requireBirthMonth],
     },
     async (req) => {
       const { sku, toUserId, idempotencyKey, expectedPrice } = req.body as z.infer<typeof giftBody>;
@@ -203,7 +203,7 @@ export function registerShopRoutes(
   );
 
   /** Gifts the caller has received, and how many are unopened. */
-  app.get('/me/gifts', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
+  app.get('/me/gifts', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => ({
     gifts: (await shop.giftsReceived(req.user!.id)).map((g) => ({
       ...g,
       assetUrl: cosmeticAssetUrl(g.category, g.assetKey, publicUrl),
@@ -220,12 +220,12 @@ export function registerShopRoutes(
    * (`unread.gifts`), which the apps already poll; this stays for the phone
    * builds in people's hands that still ask here.
    */
-  app.get('/me/gifts/unseen', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
+  app.get('/me/gifts/unseen', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => ({
     unseen: await shop.unseenGiftCount(req.user!.id),
   }));
 
   /** Mark received gifts as opened (clears the badge). */
-  app.post('/me/gifts/seen', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
+  app.post('/me/gifts/seen', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => ({
     seen: await shop.markGiftsSeen(req.user!.id),
   }));
 
@@ -258,7 +258,7 @@ export function registerShopRoutes(
     /** The one-time "we refreshed your items" notice has been shown. */
     app.post(
       '/me/inventory/refreshed/seen',
-      { config: { skipValidation: true }, preHandler: requireAuth },
+      { config: { skipValidation: true }, preHandler: requireAccount },
       async (req) => ({ seen: await returns.markNoticed(req.user!.id) }),
     );
 
@@ -273,7 +273,7 @@ export function registerShopRoutes(
         // no body: the item is in the path, and the refund was settled when its art changed
         schema: { params: z.object({ sku: z.string().min(1).max(80) }) },
         config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
-        preHandler: requireAuth,
+        preHandler: requireAccount,
       },
       async (req) => returns.returnItem(req.user!.id, (req.params as { sku: string }).sku),
     );
