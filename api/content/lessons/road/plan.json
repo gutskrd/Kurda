@@ -2580,7 +2580,7 @@
           "titleKu": "Duh çi bû?",
           "titleEn": "What happened yesterday?",
           "grammar": "the past of intransitive verbs: past stem + -im, -î, —, -in (ez çûm, tu hatî, ew rabû, em man); the negative with ne- (neçûm, nehat)",
-          "grammarMd": "Verbs that take no object (go, come, sit, sleep…) make their past from the **past stem** with the personal endings:\n\n| | çûn (go) | hatin (come) |\n|---|---|---|\n| ez | çûm | hatim |\n| tu | çûyî | hatî |\n| ew | çû | hat |\n| em, hûn, ew | çûn | hatin |\n\nThe past stem is the dictionary form without **-n**: *çûn → çû*, *rabûn → rabû*, *ketin → ket*, *mayîn → ma*.\n\n**Not** is **ne-** in front: *Ez neçûm.* I didn’t go. · *Ew nehat.* He didn’t come.\n\n*Duh çi bû?* What happened yesterday? · *Ez duh çûm bazarê.* I went to the market yesterday.",
+          "grammarMd": "Verbs that take no object (go, come, sit, sleep…) make their past from the **past stem** with the personal endings:\n\n| | çûn (go) | hatin (come) |\n|---|---|---|\n| ez | çûm | hatim |\n| tu | çûyî | hatî |\n| ew | çû | hat |\n| em, hûn, ew | çûn | hatin |\n\nThe past stem is usually the dictionary form without **-n**: *çûn → çû*, *rabûn → rabû*, *ketin → ket*; many verbs in -în end in -iya (*revîn → reviya*, *tirsîn → tirsiya*), and a few are short (*mayîn → ma*).\n\n**Not** is **ne-** in front: *Ez neçûm.* I didn’t go. · *Ew nehat.* He didn’t come.\n\n*Duh çi bû?* What happened yesterday? · *Ez duh çûm bazarê.* I went to the market yesterday.",
           "lessons": [
             {
               "key": "u09s1l1",
@@ -2654,8 +2654,8 @@
           "position": 2,
           "titleKu": "Berê",
           "titleEn": "In the old days",
-          "grammar": "time in the past: duh, pêr, par, berê, wê demê, hefteya borî, … berî niha (sê roj berî niha); dema ku … (when …)",
-          "grammarMd": "Words that put a story in the past:\n\n- *duh* yesterday · *pêr* the day before yesterday · *par* last year · *berê* before, in the old days\n- *hefteya borî* last week · *sala borî* last year · *wê demê* at that time\n- *sê roj berî niha* three days ago · *bîst sal berî niha* twenty years ago\n\n**dema ku** (or just **dema**) joins two things that happened at the same time: *Dema ku ez zarok bûm, em li zozanan bûn.* When I was a child, we were on the summer pastures.\n\n**hebû** is the past of *heye*: *Gurek hebû.* There was a wolf. · *Hespekî me hebû.* We had a horse.",
+          "grammar": "time in the past: duh, pêr, par, berê, wê demê, hefteya borî, … berê / berî … (sê roj berê, berî sê rojan); dema ku … (when …)",
+          "grammarMd": "Words that put a story in the past:\n\n- *duh* yesterday · *pêr* the day before yesterday · *par* last year · *berê* before, in the old days\n- *hefteya borî* last week · *sala borî* last year · *wê demê* at that time\n- *sê roj berê* or *berî sê rojan* three days ago · *berî sî salan* thirty years ago\n\n**dema ku** (or just **dema**) joins two things that happened at the same time: *Dema ku ez zarok bûm, em li zozanan bûn.* When I was a child, we were on the summer pastures.\n\n**hebû** is the past of *heye*: *Gurek hebû.* There was a wolf. · *Hespekî me hebû.* We had a horse.",
           "lessons": [
             {
               "key": "u09s2l1",
@@ -2731,7 +2731,7 @@
           "titleKu": "Pêşî, paşê",
           "titleEn": "First, then",
           "grammar": "telling events in order: pêşî, paşê, piştre, piştî ku …, berî ku … (+ subjunctive), di dawiyê de; more intransitive pasts (geriya, meşiya, kenî, sekinî)",
-          "grammarMd": "To tell what happened in order:\n\n- **pêşî** first · **paşê / piştre** then, afterwards · **di dawiyê de** in the end\n- **piştî ku** + past: *Piştî ku em gihîştin, me çay vexwar.* After we arrived, we drank tea.\n- **berî ku** + subjunctive: *Berî ku ez razim, ez dixwînim.* Before I go to sleep, I read.\n\nMore pasts: *ez geriyam* I walked around · *ew meşiya* she walked · *em kenîn* we laughed · *ew sekinî* he stopped · *çivîk firiya* the bird flew.\n\nA day in a few words: *Pêşî ez rabûm. Paşê ez çûm baxçe. Di dawiyê de ez vegeriyam malê.*",
+          "grammarMd": "To tell what happened in order:\n\n- **pêşî** first · **paşê / piştre** then, afterwards · **di dawiyê de** in the end\n- **piştî ku** + past: *Piştî ku em gihîştin, em li qehwexaneyê rûniştin.* After we arrived, we sat in the tea house.\n- **berî ku** + subjunctive: *Berî ku ez razim, ez dixwînim.* Before I go to sleep, I read.\n\nMore pasts: *ez geriyam* I walked around · *ew meşiya* she walked · *em kenîn* we laughed · *ew sekinî* he stopped · *çivîk firiya* the bird flew.\n\nA day in a few words: *Pêşî ez rabûm. Paşê ez çûm baxçe. Di dawiyê de ez vegeriyam malê.*",
           "lessons": [
             {
               "key": "u09s3l1",
@@ -2889,7 +2889,7 @@
           "titleKu": "Min nan xwar",
           "titleEn": "I ate bread",
           "grammar": "the past of transitive verbs is ergative: the doer takes the oblique (min, te, wî, wê, me, we, wan) and the verb uses the past stem (min nan xwar, te çi kir?, wê got)",
-          "grammarMd": "With verbs that take an object (eat, see, say, do…) the past works differently. The **doer** is in the oblique — the same **min, te, wî, wê, me, we, wan** you know from *navê min* — and the verb is the **past stem**:\n\n- *Min nan xwar.* I ate bread.\n- *Te çi kir?* What did you do?\n- *Wî çay vexwar.* He drank tea.\n- *Me ew dît.* We saw him.\n\nA noun doer is oblique too: a feminine one takes -ê (*Xezalê got …* Xezal said …), a plural -an (*zarokan got …* the children said …); masculine names usually stay as they are (*Hamo got …*).\n\nThe past stems: *xwar* (ate) · *vexwar* (drank) · *kir* (did) · *got* (said) · *dît* (saw) · *da* (gave) · *anî* (brought) · *bir* (took away) · *xwest* (wanted).\n\nNot: *Min nexwar.* I didn’t eat. · *Wê negot.* She didn’t say.",
+          "grammarMd": "With verbs that take an object (eat, see, say, do…) the past works differently. The **doer** is in the oblique — the same **min, te, wî, wê, me, we, wan** you know from *navê min* — and the verb is the **past stem**:\n\n- *Min nan xwar.* I ate bread.\n- *Te çi kir?* What did you do?\n- *Wî çay vexwar.* He drank tea.\n- *Me ew dît.* We saw him.\n\nThe verb takes **-in** when the object is plural: *Min sêv xwarin.* I ate the apples. · *Me ew dîtin.* We saw them.\n\nA noun doer is oblique too: a feminine one takes -ê (*Xezalê got …* Xezal said …), a plural -an (*zarokan got …* the children said …); masculine names usually stay as they are (*Hamo got …*).\n\nThe past stems: *xwar* (ate) · *vexwar* (drank) · *kir* (did) · *got* (said) · *dît* (saw) · *da* (gave) · *anî* (brought) · *bir* (took away) · *xwest* (wanted).\n\nNot: *Min nexwar.* I didn’t eat. · *Wê negot.* She didn’t say.",
           "lessons": [
             {
               "key": "u10s1l1",
