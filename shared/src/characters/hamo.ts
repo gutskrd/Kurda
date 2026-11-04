@@ -542,26 +542,31 @@ function eyesHappy(): string {
 }
 
 /**
- * His moustache, a handlebar after the owner’s reference: thick right across
- * his lip, a lobe either side of a small dip under the nose, each lobe
- * drooping a little over the lip and then sweeping out and up past the
- * corner of the mouth into a hook that curls back in on itself and ends in
- * a round knob near the height of his nostrils. The near hook, on the cheek
- * turned toward us, reaches further out than the far one. Drawn as one flat
- * shape, so the curl is a hook with a knob rather than a spiral, in the way
- * everything else on him is cut out.
+ * His moustache, a handlebar after the owner’s reference, drawn as one brush
+ * stroke from the tip of one curl to the tip of the other: fine at the tips,
+ * widening round each curl, fullest over the lobes either side of a slight
+ * narrowing under the nose (where a little of the lip shows, as it does in
+ * the reference), and tapering again into the far curl. Each curl is a true
+ * spiral of a turn and a quarter, its tip tucked inside, the outer turn just
+ * clear of the inner one so the curl reads as a curl and not a knob. The
+ * near curl, on the cheek turned toward us, is the larger.
  */
-const MOUSTACHE: Knot[] = [
-  // the near knob, and the outside of the near hook coming down
-  [168.2, 128.8, 0.6], [166.4, 127.4], [164.0, 128.4], [163.4, 131.4], [164.6, 134.8],
-  // the underside: the near lobe, the dip under the nose, the far lobe
-  [168.4, 138.2], [173.6, 139.6], [180.0, 140.0], [186.4, 139.8], [191.6, 139.0], [195.4, 138.6], [199.2, 138.9],
-  [203.0, 139.4], [206.6, 139.2], [209.4, 138.0], [211.2, 136.2],
-  // the outside of the far hook going up, its knob, and its inside coming down
-  [212.2, 133.8], [212.4, 131.0], [211.4, 128.8], [209.6, 128.0], [208.0, 129.2, 0.6], [209.0, 130.8], [208.6, 132.6],
-  // the top edge, under the nose, back to the near hook
-  [206.2, 133.2], [203.0, 132.4], [200.2, 131.6], [197.6, 130.8], [194.6, 131.6], [190.6, 132.6], [185.6, 133.2],
-  [180.6, 133.0], [175.2, 132.2], [170.8, 131.0], [169.2, 130.4], [168.6, 129.6],
+const MOUSTACHE_SPINE: Pt[] = [
+  // the near curl, from its tip outward
+  [166.4, 129.8], [165.7, 131.1], [167.2, 132.4], [169.0, 132.1], [170.6, 129.6], [169.0, 127.1], [165.6, 127.0], [163.0, 129.6],
+  [163.2, 133.0], [165.8, 135.4],
+  // the near lobe, the parting under the nose, the far lobe
+  [169.8, 135.8], [174.0, 136.2], [180.0, 136.0], [186.0, 135.8], [191.4, 135.4], [195.0, 135.2], [197.6, 135.0], [200.4, 135.2],
+  [203.6, 135.6], [206.6, 135.2],
+  // the far curl, inward to its tip
+  [209.0, 134.8], [212.4, 131.6], [211.4, 128.6], [209.0, 127.8], [206.4, 129.8], [207.2, 132.4], [209.2, 132.5], [210.4, 131.2],
+  [209.6, 130.1],
+];
+
+const MOUSTACHE_WIDTH: number[] = [
+  0.9, 1.1, 1.3, 1.5, 1.8, 2.0, 2.2, 2.4, 2.8, 4.0,
+  5.4, 7.2, 8.6, 8.4, 7.4, 5.8, 4.4, 5.8, 7.2, 6.0,
+  4.6, 2.6, 2.1, 1.9, 1.7, 1.5, 1.2, 1.0, 0.8,
 ];
 
 export function drawHamo(p: string): CharacterArt {
@@ -587,7 +592,7 @@ export function drawHamo(p: string): CharacterArt {
       },
       p,
     ),
-    overlay: fill(curve(MOUSTACHE), C.moustache),
+    overlay: fill(taper(MOUSTACHE_SPINE, MOUSTACHE_WIDTH), C.moustache),
     irisReach: 2.4,
     // his far eye, on the right, is the smaller: his face is turned a little to the left
     turned: 'left',
