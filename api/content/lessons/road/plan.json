@@ -2721,7 +2721,7 @@
                 {"ku": "heywan", "en": "animal", "pos": "noun", "gender": "m", "forms": ["heywan", "heywanên", "heywanan", "heywanek", "heywanê", "heywanekî", "heywanî"]},
                 {"ku": "kûvî", "en": "wild", "pos": "adj", "forms": ["kûvî"]},
                 {"ku": "xezal", "en": "gazelle", "pos": "noun", "gender": "f", "forms": ["xezal", "xezalên", "xezalan", "xezalek", "xezala", "xezalê", "xezaleke"]},
-                {"ku": "pezkûvî", "en": "deer", "pos": "noun", "gender": "m", "forms": ["pezkûvî", "pezkûviyên", "pezkûviyan", "pezkûviyek", "pezkûviyê", "pezkûviyekî", "pezkûviyî"]}
+                {"ku": "pezkûvî", "en": "deer", "pos": "noun", "gender": "m", "forms": ["pezkûvî", "pezkûviyên", "pezkûviyan", "pezkûviyek", "pezkûviyê", "pezkûviyekî", "pezkûviyî", "pezkûviya"]}
               ]
             }
           ]

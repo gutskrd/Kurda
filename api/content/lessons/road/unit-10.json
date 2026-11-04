@@ -630,7 +630,9 @@
                       "The doe is very beautiful.",
                       "The doe is very beautiful",
                       "The female is really beautiful.",
-                      "The female is really beautiful"
+                      "The female is really beautiful",
+                      "The female is very pretty.",
+                      "The doe is very pretty."
                     ]
                   }
                 },
@@ -718,7 +720,7 @@
                   "payload": {
                     "voice": "xezo",
                     "prompt": "Say what everyone is thinking: “The female deer is very beautiful.”",
-                    "reference": "Pezkûviyê mê gelek spehî ye."
+                    "reference": "Pezkûviya mê gelek spehî ye."
                   }
                 },
                 {
@@ -1520,7 +1522,9 @@
                     "prompt": "Tell Xezal about your quiet afternoon: “I read the book and wrote a letter.”",
                     "accepted": [
                       "Min pirtûk xwend û nameyek nivîsî.",
-                      "Min pirtûk xwend û nameyek nivîsî"
+                      "Min pirtûk xwend û nameyek nivîsî",
+                      "Min pirtûk xwend û min nameyek nivîsî.",
+                      "Min pirtûk xwend û min nameyek nivîsî"
                     ]
                   }
                 },
@@ -1672,8 +1676,8 @@
                       "Hamo burned a loaf of bread",
                       "Hamo burnt a loaf of bread.",
                       "Hamo burnt a loaf of bread",
-                      "Hamo burned a bread.",
-                      "Hamo burned a bread"
+                      "Hamo burned a flatbread.",
+                      "Hamo burned a flatbread"
                     ]
                   }
                 },
@@ -1913,7 +1917,7 @@
                         "en": "A house of stone… It’s in ruins. Who was its owner?"
                       },
                       {
-                        "speaker": 1,
+                        "speaker": 0,
                         "text": "Belkî Dapîr dizane…",
                         "en": "Maybe Grandma knows…"
                       }
@@ -2205,7 +2209,9 @@
                       "The children were playing in the river all day.",
                       "The children were playing in the river all day",
                       "All day the children played in the river.",
-                      "All day the children played in the river"
+                      "All day the children played in the river",
+                      "The children used to play in the river every day.",
+                      "The children played in the river every day."
                     ]
                   }
                 },
@@ -2869,7 +2875,7 @@
                     "prompt": "On the way back to the tents, Xezal teases: “Xalo, tu ji bo hevjîna xwe bilûr lêdixî?” What does Hamo answer?",
                     "options": [
                       "Na… lê ez ê fêr bibim!",
-                      "Na… lê ez fêr bûm!",
+                      "Na… lê ez ê fêr dibim!",
                       "Na… lê min fêr bû!"
                     ],
                     "correctIndex": 0
