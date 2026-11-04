@@ -153,8 +153,9 @@ export function StoryText({
     const el = reading.current;
     if (!current || !el) return;
     const box = el.getBoundingClientRect();
-    const height = window.innerHeight;
-    if (box.height > 0 && box.top >= IN_SIGHT.top && box.bottom <= height - IN_SIGHT.bottom) return;
+    const clearOfBar = box.top >= IN_SIGHT.top;
+    const clearOfPlayer = box.bottom <= window.innerHeight - IN_SIGHT.bottom;
+    if (box.height > 0 && clearOfBar && clearOfPlayer) return;
     el.scrollIntoView?.({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
   }, [current?.paragraph, current?.sentence, calm]);
 
