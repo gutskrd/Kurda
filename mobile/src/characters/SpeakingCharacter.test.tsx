@@ -19,8 +19,10 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { AppState, type AppStateStatus } from 'react-native';
 import {
+  ACTS,
   NOD_DEGREES,
   SWAY,
+  TAP_RUN_MS,
   characterArt,
   encodeLipsync,
   eyeShift,
@@ -29,6 +31,7 @@ import {
   voiceTimeline,
   type RecordingVoice,
 } from '@kurda/shared';
+import { onHaptic, resetHaptics, type HapticEvent } from '../feedback/haptics';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { characterLayers, irisesMoved } from './layers';
@@ -51,6 +54,7 @@ const SAID: RecordingVoice = {
 };
 
 const HAMO = characterLayers('hamo', 'bust');
+const XEZO = characterLayers('xezo', 'bust');
 
 function clock(at = 0, duration = 1, playing = true): PlaybackClock & { currentTime: number; duration: number; playing: boolean } {
   return { currentTime: at, duration, playing };
@@ -62,9 +66,14 @@ function mouthShown(): string | undefined {
   return (Object.entries(HAMO.mouths) as Array<[string, string]>).find(([, xml]) => layers.includes(xml))?.[0];
 }
 
+/** the layers on screen now */
+function shown(): string[] {
+  return [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup') ?? '');
+}
+
 /** how far the head group is turned, and about which point */
 function headTurn(): { angle: number; origin: string } {
-  const head = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === HAMO.head)!;
+  const head = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === HAMO.bare)!;
   const group = head.parentElement as HTMLElement;
   return { angle: Number(/rotate\((-?[\d.]+)deg\)/.exec(group.style.transform)?.[1] ?? 0), origin: group.style.transformOrigin };
 }
@@ -100,12 +109,30 @@ function step(player: ReturnType<typeof clock>, seconds: number): void {
 }
 
 describe('SpeakingCharacter', () => {
-  it('says who it is to a screen reader, and draws the body, the head, the eyes, a mouth and the moustache', async () => {
+  it('says who it is to a screen reader, and draws the body, the bare head, the eyes, the brows, a mouth and the moustache in its two pieces', async () => {
     renderWithProviders(<SpeakingCharacter speaker="hamo" voice={SAID} player={null} playing={false} size={104} />);
     await settle();
     expect(screen.getByRole('img', { name: 'Said by Hamo' })).toBeTruthy();
-    expect(new Set(drawn.markups)).toEqual(new Set([HAMO.body, HAMO.head, HAMO.eyes.open, HAMO.mouths.rest, HAMO.overlay]));
+    expect(new Set(drawn.markups)).toEqual(
+      new Set([HAMO.body, HAMO.bare, HAMO.eyes.open, HAMO.brows.neutral, HAMO.mouths.rest, HAMO.moustache!.body, HAMO.moustache!.end]),
+    );
     expect(mouthShown()).toBe('rest');
+    // the whole head, with its brows drawn in, is never drawn on top of them
+    expect(drawn.markups).not.toContain(HAMO.head);
+    expect(drawn.markups).not.toContain(HAMO.overlay);
+  });
+
+  it('draws Xezo’s loose hair as a layer that swings about where it parts, and her brows over her bare head', async () => {
+    renderWithProviders(<SpeakingCharacter speaker="xezo" player={null} playing={false} size={104} />);
+    await settle();
+    expect(drawn.markups).toContain(XEZO.bare);
+    expect(drawn.markups).toContain(XEZO.hair!.art);
+    expect(drawn.markups).toContain(XEZO.brows.neutral);
+    expect(drawn.markups).not.toContain(XEZO.head);
+    const hair = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === XEZO.hair!.art)!;
+    expect((hair.parentElement as HTMLElement).style.transformOrigin).toBe(`${XEZO.hair!.pivot.x * 100}% ${XEZO.hair!.pivot.y * 100}%`);
+    // nothing blushes until something pleases her
+    expect(drawn.markups).not.toContain(XEZO.cheeks);
   });
 
   it('keeps the shape of its frame from the first render, and leaves room in its tile around the head', async () => {
@@ -298,6 +325,88 @@ describe('SpeakingCharacter', () => {
     await act(() => new Promise((r) => setTimeout(r, 400)));
     expect(drawn.markups).toContain(HAMO.eyes.happy);
     expect(mouthShown()).toBe('a');
+    // Hamo cheers with his brows up
+    expect(shown()).toContain(HAMO.brows.raised);
+  });
+
+  it('winks when asked, one eye shut in a smile and a grin; Xezo blushes with it', async () => {
+    const view = renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} reaction="wink" />);
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    expect(shown()).toContain(HAMO.eyes.wink);
+    expect(mouthShown()).toBe('grin');
+    view.unmount();
+    drawn.markups = [];
+    renderWithProviders(<SpeakingCharacter speaker="xezo" player={null} playing={false} size={104} reaction="wink" />);
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    expect(shown()).toContain(XEZO.eyes.wink);
+    expect(shown()).toContain(XEZO.cheeks);
+  });
+
+  it('meets a miss its own way: Hamo with one brow raised, Xezo with a pout', async () => {
+    const view = renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} reaction="hmm" />);
+    await act(() => new Promise((r) => setTimeout(r, 700)));
+    expect(shown()).toContain(HAMO.brows.one);
+    expect(mouthShown()).toBe('mbp');
+    view.unmount();
+    renderWithProviders(<SpeakingCharacter speaker="xezo" player={null} playing={false} size={104} reaction="hmm" />);
+    await act(() => new Promise((r) => setTimeout(r, 700)));
+    expect(shown()).toContain(XEZO.brows.knit);
+    expect([...document.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === XEZO.mouths.u)).toBe(true);
+    // and it passes: the brows come back to rest
+    await act(() => new Promise((r) => setTimeout(r, ACTS.hmm.ms)));
+    expect(shown()).toContain(XEZO.brows.neutral);
+    expect(shown()).not.toContain(XEZO.brows.knit);
+  });
+
+  it('plays a chuckle only as Hamo, and a start with wide eyes, raised brows and a round mouth for anyone', async () => {
+    const view = renderWithProviders(<SpeakingCharacter speaker="xezo" player={null} playing={false} size={104} reaction="chuckle" />);
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    // Xezo giggles instead: smiling eyes, a grin, a blush
+    expect(shown()).toContain(XEZO.eyes.happy);
+    expect(shown()).toContain(XEZO.cheeks);
+    view.unmount();
+    renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} reaction="surprised" />);
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    expect(shown()).toContain(HAMO.eyes.wide);
+    expect(shown()).toContain(HAMO.brows.raised);
+    expect(mouthShown()).toBe('o');
+  });
+
+  it('greets a first tap, giggles at a second quick one, and at a third starts and then laughs with one light buzz', async () => {
+    resetHaptics();
+    const felt: HapticEvent[] = [];
+    const stop = onHaptic((event) => felt.push(event));
+    const again = vi.fn();
+    renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} onPress={again} />);
+    await settle();
+    const figure = screen.getByRole('img', { name: 'Said by Hamo' });
+    fireEvent.click(figure);
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    expect(shown()).toContain(HAMO.eyes.happy);
+    expect(mouthShown()).toBe('a');
+    fireEvent.click(figure);
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    // a giggle: smiling eyes and a grin
+    expect(shown()).toContain(HAMO.eyes.happy);
+    expect(mouthShown()).toBe('grin');
+    fireEvent.click(figure);
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    // a start, with a light buzz
+    expect(shown()).toContain(HAMO.eyes.wide);
+    expect(mouthShown()).toBe('o');
+    expect(felt).toEqual(['tap', 'select']);
+    // and then his chuckle
+    await act(() => new Promise((r) => setTimeout(r, ACTS.surprised.ms + 100)));
+    expect(shown()).toContain(HAMO.eyes.happy);
+    expect(shown()).toContain(HAMO.brows.raised);
+    // every tap still said it again
+    expect(again).toHaveBeenCalledTimes(3);
+    // a tap after the run is over greets again
+    await act(() => new Promise((r) => setTimeout(r, TAP_RUN_MS)));
+    fireEvent.click(figure);
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    expect(mouthShown()).toBe('a');
+    stop();
   });
 
   it('greets a tap, and then does what the screen asked (says it again)', async () => {
