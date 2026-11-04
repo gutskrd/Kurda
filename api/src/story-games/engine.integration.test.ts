@@ -410,6 +410,48 @@ describe.skipIf(!DATABASE_URL)('story game engine (integration)', () => {
       expect(streak.rows[0]?.days_learned ?? 0).toBe(0);
     });
 
+    it('pays a story twice in a day, then nothing, while every finish still counts as learning', async () => {
+      const { svc } = instance();
+      const me = await user();
+      const s = await story();
+      const finish = async () => {
+        let v = await svc.create(me, base(s.id, { mode: 'solo', skipReading: true }));
+        for (let i = 0; i < 3; i++) {
+          v = await svc.answer(v.id, me, i, rightOf(v), Date.now());
+          if (i < 2) v = await svc.continueAfter(v.id, me, i);
+        }
+        return v;
+      };
+      // the first time through, then a repeat at a quarter, then the cap
+      const first = await finish();
+      expect(first.results!.me).toMatchObject({ xp: 20, learningCounted: true });
+      const second = await finish();
+      expect(second.results!.me).toMatchObject({ xp: 5, learningCounted: true });
+      const third = await finish();
+      expect(third.results!.me).toMatchObject({ xp: 0, learningCounted: true });
+      const paid = await pool.query<{ xp_awarded: number; learning_counted: boolean }>(
+        `SELECT xp_awarded, learning_counted FROM story_game_players WHERE game_id = $1 AND user_id = $2`,
+        [third.id, me],
+      );
+      expect(paid.rows[0]).toEqual({ xp_awarded: 0, learning_counted: true });
+      const ledger = await pool.query(`SELECT count(*)::int n, COALESCE(sum(amount),0)::int xp FROM xp_ledger WHERE user_id = $1`, [me]);
+      expect(ledger.rows[0]).toEqual({ n: 2, xp: 25 });
+      // the day is learned all the same
+      const streak = await pool.query(`SELECT days_learned FROM user_streaks WHERE user_id = $1`, [me]);
+      expect(streak.rows[0]?.days_learned).toBe(1);
+      // another story is its own count
+      const other = await story();
+      let v = await svc.create(me, base(other.id, { mode: 'solo', skipReading: true }));
+      for (let i = 0; i < 3; i++) {
+        v = await svc.answer(v.id, me, i, rightOf(v), Date.now());
+        if (i < 2) v = await svc.continueAfter(v.id, me, i);
+      }
+      expect(v.results!.me!.xp).toBe(20);
+      // and yesterday's finishes do not count against today
+      await pool.query(`UPDATE story_games SET finished_at = finished_at - interval '1 day' WHERE id = ANY($1::uuid[])`, [[first.id, second.id]]);
+      expect((await finish()).results!.me!.xp).toBe(5);
+    });
+
     it('pays once: finishing again, by the sweep or a late tap, pays nothing more', async () => {
       const { svc } = instance();
       const me = await user();
