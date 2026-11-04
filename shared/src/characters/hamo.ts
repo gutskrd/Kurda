@@ -373,22 +373,20 @@ const NOSE_BASE: Knot[] = [
 ];
 
 /**
- * His brows, traced from the reference edge by edge and set on his head at
- * the reference’s own scale, each the reference’s distance above its eye:
- * a point at the temple rising to a full body over the outer third of the
- * eye, then sloping down to a heavier, lower inner end. The far brow is the
- * same shape foreshortened, its inner end blunt and low, its tail running
- * out toward the temple. The traces are smoothed before they are sampled,
- * so neither edge wavers.
+ * His brows, set straight as the owner asked: each a level bar the thickness
+ * of a finger, blunt and a touch heavier at its inner end and tapering to a
+ * point at the temple, its outer end a hair higher than its inner one, so
+ * he looks steady rather than surprised. The far brow is the same bar
+ * foreshortened, its tail running out toward the far temple.
  */
 const BROW_LEFT: Knot[] = [
-  [164.2, 101.1, 0.15], [167.0, 98.0], [170.4, 96.4], [173.7, 96.0], [176.6, 96.1], [179.4, 96.4], [182.7, 97.0], [186.1, 98.1],
-  [188.9, 99.7, 0.5], [186.1, 101.6], [182.7, 101.4], [179.4, 100.7], [176.6, 99.9], [173.7, 99.3], [170.4, 99.2], [167.0, 99.8],
+  [164.2, 99.2, 0.15], [165.0, 98.6], [170.0, 98.0], [176.0, 97.5], [182.0, 97.3], [188.6, 97.4],
+  [189.4, 99.6, 0.5], [188.0, 101.6], [182.0, 101.3], [176.0, 100.9], [170.0, 100.4], [165.6, 99.9],
 ];
 
 const BROW_RIGHT: Knot[] = [
-  [198.9, 100.1, 0.5], [201.3, 98.5], [203.2, 97.5], [205.6, 96.7], [208.0, 96.3], [210.4, 96.4], [212.3, 96.9], [214.7, 97.9],
-  [216.8, 99.4, 0.15], [214.6, 100.3], [212.3, 99.9], [210.4, 99.5], [208.0, 100.1], [205.6, 101.0], [203.2, 101.8], [201.3, 102.0],
+  [198.9, 100.0, 0.5], [200.5, 97.8], [205.0, 97.2], [210.0, 97.0], [214.5, 97.3], [216.9, 98.6, 0.15],
+  [214.6, 100.0], [210.0, 100.6], [205.0, 101.0], [200.8, 101.6],
 ];
 
 /**
@@ -543,23 +541,27 @@ function eyesHappy(): string {
   return part([], [fill(arc(EYE_LEFT, 1) + arc(EYE_RIGHT, 0.95), C.lash)]);
 }
 
-/** His moustache: full and thick across his lip, tapering to points that turn down past the corners of his mouth. */
+/**
+ * His moustache, a handlebar after the owner’s reference: thick right across
+ * his lip, a lobe either side of a small dip under the nose, each lobe
+ * drooping a little over the lip and then sweeping out and up past the
+ * corner of the mouth into a hook that curls back in on itself and ends in
+ * a round knob near the height of his nostrils. The near hook, on the cheek
+ * turned toward us, reaches further out than the far one. Drawn as one flat
+ * shape, so the curl is a hook with a knob rather than a spiral, in the way
+ * everything else on him is cut out.
+ */
 const MOUSTACHE: Knot[] = [
-  [171, 137.9, 0.15],
-  [174.6, 136.4],
-  [178.6, 134.5],
-  [189.4, 129.7],
-  [194.4, 131.1],
-  [197.4, 130.5],
-  [199.2, 130.9],
-  [207.4, 135],
-  [212, 137.9, 0.15],
-  [210.1, 138],
-  [204.4, 138.4],
-  [194.4, 137.5],
-  [190.9, 138],
-  [179.9, 138.4],
-  [174.9, 138.3],
+  // the near knob, and the outside of the near hook coming down
+  [168.2, 128.8, 0.6], [166.4, 127.4], [164.0, 128.4], [163.4, 131.4], [164.6, 134.8],
+  // the underside: the near lobe, the dip under the nose, the far lobe
+  [168.4, 138.2], [173.6, 139.6], [180.0, 140.0], [186.4, 139.8], [191.6, 139.0], [195.4, 138.6], [199.2, 138.9],
+  [203.0, 139.4], [206.6, 139.2], [209.4, 138.0], [211.2, 136.2],
+  // the outside of the far hook going up, its knob, and its inside coming down
+  [212.2, 133.8], [212.4, 131.0], [211.4, 128.8], [209.6, 128.0], [208.0, 129.2, 0.6], [209.0, 130.8], [208.6, 132.6],
+  // the top edge, under the nose, back to the near hook
+  [206.2, 133.2], [203.0, 132.4], [200.2, 131.6], [197.6, 130.8], [194.6, 131.6], [190.6, 132.6], [185.6, 133.2],
+  [180.6, 133.0], [175.2, 132.2], [170.8, 131.0], [169.2, 130.4], [168.6, 129.6],
 ];
 
 export function drawHamo(p: string): CharacterArt {
