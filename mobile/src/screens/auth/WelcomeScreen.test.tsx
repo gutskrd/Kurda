@@ -5,7 +5,8 @@ vi.mock('react-native-svg', () => import('../../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../../reports/testing/stubs'));
-const auth = vi.hoisted(() => ({ oauthSignIn: vi.fn(), continueAsGuest: vi.fn(), baseUrl: 'https://api.test' }));
+vi.mock('@react-navigation/native', () => import('../../auth/guide/testing/navigation'));
+const auth = vi.hoisted(() => ({ oauthSignIn: vi.fn(), continueAsGuest: vi.fn(), client: { put: vi.fn() }, baseUrl: 'https://api.test' }));
 vi.mock('../../auth/AuthContext', () => ({ useAuth: () => auth }));
 vi.mock('../../auth/google', () => ({ signInWithGoogle: vi.fn(), isGoogleConfigured: false }));
 const apple = vi.hoisted(() => ({ signInAsync: vi.fn() }));
@@ -22,12 +23,14 @@ vi.mock('expo-apple-authentication', async () => {
       createElement('button', { type: 'button', onClick: onPress }, 'Continue with Apple'),
   };
 });
-import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { TRANSLATIONS } from '../../i18n/translations';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { WelcomeScreen } from './WelcomeScreen';
 
-patchReactNativeWeb();
+patchReactNativeWeb({ reduceMotion: true });
+const en = TRANSLATIONS.en;
 
 const g = globalThis as typeof globalThis & { __DEV__?: boolean };
 
@@ -88,22 +91,58 @@ describe('continuing with Apple', () => {
   });
 });
 
+function renderWelcome() {
+  const navigation = { navigate: vi.fn(), goBack: vi.fn(), canGoBack: () => false };
+  const props = { navigation, route: { key: 'w', name: 'Welcome' } } as unknown as Parameters<typeof WelcomeScreen>[0];
+  renderWithProviders(<WelcomeScreen {...props} />);
+  return navigation;
+}
+
+describe('the sign-in choice', () => {
+  it('has Hevalo greeting from the window, in a bubble under it', async () => {
+    renderWelcome();
+    expect(screen.getByTestId('hevalo-window')).toBeTruthy();
+    expect(screen.getByTestId('speech-bubble').textContent).toBe(en['guide.welcome.says']);
+  });
+});
+
 describe('trying Hevalo first', () => {
   /*
    * Under the ways in, the quiet one: a guest session, for somebody not ready
-   * to choose. One tap, one request; the answer signs them in like any other.
+   * to choose. The line opens Hevalo's introduction in the screen's place, and
+   * its last step makes the session; the answer signs them in like any other.
    */
-  it('offers a guest session under the sign-in methods and starts one on a tap', async () => {
+  it('offers a guest session under the sign-in methods, introduces Hevalo, and starts one at the end', async () => {
     auth.continueAsGuest.mockResolvedValue(null);
-    const navigation = { navigate: vi.fn(), goBack: vi.fn(), canGoBack: () => false };
-    const props = { navigation, route: { key: 'w', name: 'Welcome' } } as unknown as Parameters<typeof WelcomeScreen>[0];
-    renderWithProviders(<WelcomeScreen {...props} />);
+    const navigation = renderWelcome();
     const line = await screen.findByRole('button', { name: 'Try Hevalo first, no account needed' });
     await act(async () => {
       fireEvent.click(line);
     });
-    expect(auth.continueAsGuest).toHaveBeenCalledTimes(1);
+    expect(await screen.findByText(en['guide.guest.hello.question'])).toBeTruthy();
+    expect(auth.continueAsGuest).not.toHaveBeenCalled();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: en['common.continue'] }));
+    });
+    await screen.findByText(en['guide.guest.goal.question']);
+    await waitFor(() => expect(document.querySelector('[data-testid^="slide-out"]')).toBeNull());
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: en['guide.guest.start'] }));
+    });
+    await waitFor(() => expect(auth.continueAsGuest).toHaveBeenCalledTimes(1));
     // the way in is a session, not a screen: nothing is navigated to
     expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
+  it('comes back to the choice from the introduction’s first step', async () => {
+    renderWelcome();
+    await act(async () => {
+      fireEvent.click(await screen.findByRole('button', { name: 'Try Hevalo first, no account needed' }));
+    });
+    await screen.findByText(en['guide.guest.hello.question']);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: en['common.back'] }));
+    });
+    expect(await screen.findByText(en['welcome.title'])).toBeTruthy();
   });
 });

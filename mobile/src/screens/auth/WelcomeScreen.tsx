@@ -15,6 +15,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { AUTH_HEAD_ROWS, AuthScreenShell } from './AuthForm';
+import { GuestStartFlow } from './GuestStartFlow';
 import { useI18n } from '../../i18n/I18nContext';
 import { currentMaintenance } from '../../maintenance/maintenance';
 
@@ -44,15 +45,19 @@ function appleFullName(name: AppleAuthentication.AppleAuthenticationFullName | n
  * (EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID + backend GOOGLE_CLIENT_IDS); until then it
  * falls back to a "coming soon" notice rather than a broken flow. See
  * docs/auth/google-signin.md.
+ *
+ * Hevalo greets from the window over the choice, and the quiet way in under
+ * it — try Hevalo first, as a guest — opens his two-step introduction
+ * (GuestStartFlow) in this screen's place, with its own way back here.
  */
 export function WelcomeScreen({ navigation, onBack }: Props) {
   const { colors, scheme } = useTheme();
-  const { oauthSignIn, continueAsGuest, baseUrl } = useAuth();
+  const { oauthSignIn, baseUrl } = useAuth();
   const [appleAvailable, setAppleAvailable] = useState(false);
   const { t } = useI18n();
   const [conn, setConn] = useState<'checking' | 'ok' | 'fail'>('checking');
-  // a guest session on its way: the line is not tapped twice while the first answer is out
-  const [guestBusy, setGuestBusy] = useState(false);
+  // the guest introduction, in place of the choice, until it is left or the session starts
+  const [guestFlow, setGuestFlow] = useState(false);
   // the ways in rise one after another under the head the shell brings in (AUTH_HEAD_ROWS)
   const entering = useListEntrance(true);
   const row = (i: number) => entering(AUTH_HEAD_ROWS + i);
@@ -153,17 +158,10 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
     }
   };
 
-  const onGuest = async () => {
-    if (guestBusy) return;
-    setGuestBusy(true);
-    const err = await continueAsGuest();
-    setGuestBusy(false);
-    // Hevalo offline for a while is said by the screen over the app, not by an alert on top of it
-    if (err && !currentMaintenance()) Alert.alert(t('welcome.couldNotSignIn'), err.message);
-  };
+  if (guestFlow) return <GuestStartFlow onExit={() => setGuestFlow(false)} />;
 
   return (
-    <AuthScreenShell title={t('welcome.title')} subtitle={t('welcome.subtitle')} onBack={onBack} hero="hevalo">
+    <AuthScreenShell title={t('welcome.title')} subtitle={t('welcome.subtitle')} onBack={onBack} hero="hevalo" says={t('guide.welcome.says')}>
       <View style={styles.methods}>
         {appleAvailable ? (
           <Rise delay={row(0)}>
@@ -216,18 +214,12 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       {/*
         The quiet way in: try the lessons first, as a guest, and decide about
         an account later. Quieter than the sign-in link above it on purpose —
-        it is the way for somebody not ready to choose, not the way in.
+        it is the way for somebody not ready to choose, not the way in. It
+        opens Hevalo's introduction, which starts the session at its end.
       */}
       <Rise delay={row(4)}>
-        <Pressable
-          onPress={onGuest}
-          disabled={guestBusy}
-          style={styles.link}
-          accessibilityRole="button"
-          accessibilityState={{ busy: guestBusy, disabled: guestBusy }}
-          testID="welcome-guest"
-        >
-          <Text style={[styles.linkText, { color: colors.textSecondary, opacity: guestBusy ? 0.6 : 1 }]}>{t('welcome.guest')}</Text>
+        <Pressable onPress={() => setGuestFlow(true)} style={styles.link} accessibilityRole="button" testID="welcome-guest">
+          <Text style={[styles.linkText, { color: colors.textSecondary }]}>{t('welcome.guest')}</Text>
         </Pressable>
       </Rise>
 
