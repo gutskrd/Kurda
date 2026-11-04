@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 import {
   storySentences,
   storyTextDirection,
@@ -24,6 +24,30 @@ export function playerName(p: Pick<StoryGamePlayer, 'seat' | 'name' | 'isMe'>, t
   if (p.isMe) return t('games.you');
   return p.name ?? t('stories.game.playerN', { seat: p.seat });
 }
+
+/**
+ * Where a game is in its questions (design notes §6): a small ring filled as
+ * far as this question, and "2 of 5" beside it. The heading is still named
+ * "Question 2 of 5" for a screen reader, which is what the game announces
+ * and what the keyboard lands on; the ring and the short words are for the
+ * eye. `ref` and the rest go to the heading, so a question can still take
+ * the focus when it appears.
+ */
+export const QuestionCounter = forwardRef<HTMLHeadingElement, { index: number; total: number; id: string }>(function QuestionCounter({ index, total, id }, ref) {
+  const t = useT();
+  const r = 9;
+  const c = 2 * Math.PI * r;
+  const share = total > 0 ? Math.min(1, index / total) : 0;
+  return (
+    <h2 id={id} ref={ref} tabIndex={-1} className="sg-q-title" aria-label={t('stories.status.question', { index, total })}>
+      <svg className="sg-q-ring" width="24" height="24" viewBox="-12 -12 24 24" aria-hidden="true" focusable="false">
+        <circle className="sg-q-ring-track" r={r} />
+        <circle className="sg-q-ring-fill" r={r} strokeDasharray={`${c * share} ${c}`} />
+      </svg>
+      <span aria-hidden="true">{t('stories.check.counter', { index, total })}</span>
+    </h2>
+  );
+});
 
 /** "Question 2 of 5 · 60 seconds each · The story stays visible", for the lobby and the reading. */
 export function SettingsLine({ view }: { view: StoryGameView }): React.JSX.Element {

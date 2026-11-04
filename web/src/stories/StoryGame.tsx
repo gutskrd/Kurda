@@ -124,7 +124,8 @@ function lobbyInvites(view: StoryGameView): { invite?: React.ReactNode; invited?
 
 /**
  * Playing again from the results: a duo's rematch both ask for, a group's
- * next round the host opens (play/RematchPanel). Solo has its own Try again.
+ * next round the host opens (play/RematchPanel). A solo check is taken again
+ * from the story itself, where its best score and what a repeat pays are shown.
  */
 function PlayAgain({ view }: { view: StoryGameView }): React.JSX.Element | null {
   const t = useT();

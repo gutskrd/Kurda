@@ -2042,16 +2042,37 @@
   gap: 12px;
 }
 .sg-q-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-sans);
   font-size: 0.95rem;
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--ink-3);
   margin: 0;
+  font-variant-numeric: tabular-nums;
 }
 .sg-q-title:focus {
   /* focused by the page so a screen reader starts here; nothing to press */
   outline: none;
+}
+/* the ring beside the counter: filled as far as this question, in the gold of what is being done */
+.sg-q-ring {
+  flex: none;
+  transform: rotate(-90deg);
+}
+.sg-q-ring circle {
+  fill: none;
+  stroke-width: 3;
+}
+.sg-q-ring-track {
+  stroke: var(--surface-3);
+}
+.sg-q-ring-fill {
+  stroke: var(--gold);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--dur-progress) var(--ease-out);
 }
 .sg-clock {
   display: inline-flex;
@@ -2115,13 +2136,14 @@
   gap: 10px;
 }
 .sg-option {
+  /* a full-width pill, as the options of a check are (design notes §6) */
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
   min-height: 60px;
-  padding: 10px 16px;
-  border-radius: var(--r-md);
+  padding: 10px 18px 10px 14px;
+  border-radius: var(--r-pill);
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--ink);
@@ -2153,9 +2175,9 @@ button.sg-option:focus-visible {
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   border: 1px solid var(--border-strong);
   font-size: 0.9rem;
   font-weight: 700;
@@ -2321,6 +2343,12 @@ button.sg-option:focus-visible {
 }
 .sg-not-counted {
   color: var(--ink-2);
+}
+.sg-repeat-note {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
 }
 .sg-standings {
   padding: 16px 18px;

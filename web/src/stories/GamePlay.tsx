@@ -10,7 +10,7 @@ import { BookIcon, CheckIcon, CloseIcon, TimerIcon } from '../components/icons';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { useT } from '../i18n/I18nProvider';
 import { storyError } from './api';
-import { EnglishToggle, Evidence, ExtraTimeToggle, FromMemoryNote, optionNumber, typingElsewhere, useTick, type Act, type Announce } from './GameParts';
+import { EnglishToggle, Evidence, ExtraTimeToggle, FromMemoryNote, QuestionCounter, optionNumber, typingElsewhere, useTick, type Act, type Announce } from './GameParts';
 import { rememberTextSize, rememberedEnglish, rememberedTextSize, showEnglishFor } from './prefs';
 import { StoryPlayerBar, StorySpeaker, TextSizeControl } from './ReaderControls';
 import { StoryText } from './StoryText';
@@ -167,11 +167,12 @@ function StoryPane({ story, size, wide, label }: { story: StoryDetail; size: num
 }
 
 /**
- * One question (contract §A1): its number, the prompt (and English under it
- * at level 1, or when asked for), the options numbered 1–4 — the keys 1–4
- * answer on a keyboard — and, for a timed question, a bar and a count that
- * are only ever announced at "10 seconds left". The heading takes the focus
- * when the question appears, and nothing takes it after.
+ * One question (contract §A1): its place in the questions as a ring and
+ * "2 of 5", the prompt (and English under it at level 1, or when asked for),
+ * the options as full-width pills numbered 1–4 — the keys 1–4 answer on a
+ * keyboard — and, for a timed question, a bar and a count that are only ever
+ * announced at "10 seconds left". The heading takes the focus when the
+ * question appears, and nothing takes it after.
  *
  * Sending is careful: "Sending…" until the server has it, the same answer
  * again after a network failure, then "Answer locked — 2 of 4 answered".
@@ -269,9 +270,7 @@ export function GameQuestion({
       {wide && visibleText && story && <StoryPane story={story} size={size} wide label={t('stories.game.storyPane')} />}
       <div className="sg-q">
         <div className="sg-q-top">
-          <h2 id="sg-q-title" ref={heading} tabIndex={-1} className="sg-q-title">
-            {t('stories.status.question', { index: q.index + 1, total: q.total })}
-          </h2>
+          <QuestionCounter id="sg-q-title" ref={heading} index={q.index + 1} total={q.total} />
           {timed && left !== null && (
             <span className={`sg-clock${left <= 10_000 ? ' is-low' : ''}`} aria-hidden>
               <TimerIcon size={16} />
@@ -409,9 +408,7 @@ export function GameReveal({
 
   return (
     <section className="sg-reveal" aria-labelledby="sg-r-title">
-      <h2 id="sg-r-title" className="sg-q-title">
-        {t('stories.status.question', { index: r.index + 1, total: q.total })}
-      </h2>
+      <QuestionCounter id="sg-r-title" index={r.index + 1} total={q.total} />
       <p className={`sg-verdict ${r.myCorrect ? 'is-right' : r.myChoice === null ? 'is-none' : 'is-wrong'}`}>
         {r.myCorrect ? <CheckIcon size={20} /> : r.myChoice === null ? null : <CloseIcon size={20} />}
         {r.myCorrect ? t('stories.game.right') : r.myChoice === null ? t('stories.game.noAnswer') : t('stories.game.notThisTime')}
