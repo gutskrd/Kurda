@@ -34,6 +34,20 @@ export function useCelebrationHold(active: boolean): void {
   }, [active, gate]);
 }
 
+const NONE: ReadonlySet<string> = new Set();
+const FreshContext = createContext<ReadonlySet<string>>(NONE);
+
+/**
+ * The badges unlocked since the app opened, by key: the ones found waiting
+ * when it started and the ones earned while it is open, whether their
+ * celebration has played yet or not. They are news until the app is next
+ * opened, so the Badges page and a profile's showcase mark them "New"
+ * (NewChip) without asking the server anything more.
+ */
+export function useFreshBadges(): ReadonlySet<string> {
+  return useContext(FreshContext);
+}
+
 /**
  * A moment between the unlock and the celebration, so a badge earned by the
  * game that just ended does not jump in front of that game's own result
@@ -54,13 +68,22 @@ export function BadgeCelebrationHost({ children }: { children: ReactNode }): Rea
   const [queue, setQueue] = useState<PendingBadge[]>([]);
   const [holds, setHolds] = useState(0);
   const [ready, setReady] = useState(false);
+  // every badge that arrived new this session, kept after its celebration for the "New" chips
+  const [fresh, setFresh] = useState<ReadonlySet<string>>(NONE);
   const seen = useRef(new Set<string>());
   // the unlocks that came while the app was open, as the person earned them —
   // felt as they are celebrated; the ones waiting from before are only shown
   const live = useRef(new Set<string>());
 
   const add = useCallback((items: PendingBadge[]) => {
-    setQueue((q) => enqueue(q, items.filter((i) => badgeDef(i.key) !== undefined), seen.current));
+    const known = items.filter((i) => badgeDef(i.key) !== undefined);
+    setQueue((q) => enqueue(q, known, seen.current));
+    setFresh((f) => {
+      if (known.every((i) => f.has(i.key))) return f;
+      const next = new Set(f);
+      for (const i of known) next.add(i.key);
+      return next;
+    });
   }, []);
 
   useEffect(() => {
@@ -119,10 +142,12 @@ export function BadgeCelebrationHost({ children }: { children: ReactNode }): Rea
 
   return (
     <GateContext.Provider value={gate}>
-      {children}
-      {head && ready && holds === 0 ? (
-        <BadgeMoment key={seenId(head)} badge={head} felt={live.current.has(seenId(head))} onClose={close} />
-      ) : null}
+      <FreshContext.Provider value={fresh}>
+        {children}
+        {head && ready && holds === 0 ? (
+          <BadgeMoment key={seenId(head)} badge={head} felt={live.current.has(seenId(head))} onClose={close} />
+        ) : null}
+      </FreshContext.Provider>
     </GateContext.Provider>
   );
 }
