@@ -9,7 +9,8 @@ import { defaultJwksResolver, OAuthService } from './oauth.js';
 import { appleTokens } from './apple-tokens.js';
 import { signupRejected } from './rejections.js';
 import { isBannedEmail } from '../moderation/ban-registry.js';
-import { AuthService } from './service.js';
+import { AuthService, notAGuest } from './service.js';
+import { GuestService } from './guest.js';
 import { RiskService } from '../risk/service.js';
 import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
 import { validatePassword, PASSWORD_ERROR_MESSAGE, PASSWORD_MIN, PASSWORD_MAX } from './password-policy.js';
@@ -18,6 +19,7 @@ import { sessionName } from './session-name.js';
 import { APP_LOCALE_CODES } from '@kurda/shared';
 import { safeTimeZone } from '../streaks/streak-logic.js';
 import { assertOldEnough, birthMonthSchema, birthYearSchema } from '../users/birth-month.js';
+import { createMeReader } from '../users/routes.js';
 import type { AdminAccess } from '../admin/owner-access.js';
 
 /** Rejects a password that fails policy with a specific, actionable reason. */
@@ -35,6 +37,14 @@ function deviceIdOf(headers: Record<string, unknown>): string | null {
   return null;
 }
 
+// an unknown zone is dropped (the account gets UTC) rather than stored:
+// see safeTimeZone in streaks/streak-logic.ts for what one used to break
+const timezoneField = z
+  .string()
+  .max(50)
+  .optional()
+  .transform((tz) => (tz && safeTimeZone(tz) === tz ? tz : undefined));
+
 export const registerBodySchema = z.object({
   email: emailAddress,
   username: z.string().min(3).max(30),
@@ -43,13 +53,7 @@ export const registerBodySchema = z.object({
   /* every language the interface is offered in — one list, so the picker
        cannot offer something the server would refuse */
     locale: z.enum(APP_LOCALE_CODES).optional(),
-  // an unknown zone is dropped (the account gets UTC) rather than stored:
-  // see safeTimeZone in streaks/streak-logic.ts for what one used to break
-  timezone: z
-    .string()
-    .max(50)
-    .optional()
-    .transform((tz) => (tz && safeTimeZone(tz) === tz ? tz : undefined)),
+  timezone: timezoneField,
   deviceName: z.string().max(80).optional(),
   captchaToken: z.string().max(3_000).optional(),
   /** Explicit, versioned consent to ToS + privacy policy (KUR-109). */
@@ -61,6 +65,34 @@ export const registerBodySchema = z.object({
    * which tell us nothing about age, are asked once after signing in, and
    * until then are treated as not known to be adults — users/age.ts.)
    */
+  birthYear: birthYearSchema,
+  birthMonth: birthMonthSchema,
+});
+
+/**
+ * "Try Hevalo without an account" (auth/guest.ts): what the app knows about
+ * itself and nothing about a person. The locale and time zone are optional, as
+ * at sign-up, so the first lesson is in the right language and the streak day
+ * ends at the learner's midnight.
+ */
+export const guestBodySchema = z.object({
+  deviceName: z.string().max(80).optional(),
+  locale: z.enum(APP_LOCALE_CODES).optional(),
+  timezone: timezoneField,
+});
+
+/**
+ * A guest claims the account: what sign-up asks, minus what the guest already
+ * has (a username, which they may keep or replace) and the device, which is
+ * already signed in.
+ */
+export const claimBodySchema = z.object({
+  email: emailAddress,
+  password: z.string().min(PASSWORD_MIN).max(PASSWORD_MAX),
+  username: z.string().min(3).max(30).optional(),
+  locale: z.enum(APP_LOCALE_CODES).optional(),
+  captchaToken: z.string().max(3_000).optional(),
+  acceptTerms: z.literal(true),
   birthYear: birthYearSchema,
   birthMonth: birthMonthSchema,
 });
@@ -135,6 +167,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
   // logs decisions for tuning + audit. IP reputation defaults to neutral until a
   // provider is configured (graceful degradation).
   const risk = new RiskService(app.db, { redis: app.redis });
+  const guests = new GuestService(config, app.db);
+  const me = createMeReader(app);
 
   app.post(
     '/auth/register',
@@ -182,6 +216,85 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         app.log.warn({ err }, 'failed to attach user to risk decision');
       });
       return reply.code(201).send(result);
+    },
+  );
+
+  /**
+   * A guest account, signed in (auth/guest.ts). The same anti-abuse caps as
+   * sign-up — the per-IP limit here, the per-device and per-network account
+   * caps in the risk service — so this is not a cheaper way to mint accounts;
+   * no CAPTCHA, since there is nothing typed to protect and the caps are what
+   * stop a script. A device asking again within a day is handed the guest it
+   * made (200, not 201), before any of that: reopening the app is not a sign-up.
+   */
+  app.post(
+    '/auth/guest',
+    {
+      schema: { body: guestBodySchema },
+      config: { rateLimit: { max: 5, windowMs: 60_000, per: 'ip' as const } },
+    },
+    async (req, reply) => {
+      const body = req.body as z.infer<typeof guestBodySchema>;
+      const deviceId = deviceIdOf(req.headers);
+      const deviceName = sessionName(body.deviceName, req.headers['user-agent']);
+      const resumed = await guests.resume(deviceId, deviceName);
+      if (resumed) {
+        await app.securityLog.record('signin.succeeded', { userId: resumed.user.id, details: { method: 'guest', newAccount: false } });
+        return reply.code(200).send(resumed);
+      }
+      const { assessment, decisionId } = await risk.assessSignup({ ip: req.ip, deviceId });
+      if (assessment.hardBlock) throw await rejected('too many accounts from this device or network');
+      const result = await guests.start({ deviceName, deviceId, locale: body.locale, timezone: body.timezone });
+      await risk.attachUser(decisionId, result.user.id).catch((err) => {
+        app.log.warn({ err }, 'failed to attach user to risk decision');
+      });
+      await app.securityLog.record('signin.succeeded', { userId: result.user.id, details: { method: 'guest', newAccount: true } });
+      return reply.code(201).send(result);
+    },
+  );
+
+  /**
+   * A guest claims the account (auth/service.ts `claim`): the checks sign-up
+   * makes, in the same order and with the same answers, then the row is
+   * upgraded in place and the verification code sent. Answers with the /me
+   * shape, since the app replaces everything it holds about the person with
+   * it. Per account, since a guest is signed in: a stolen guest session must
+   * not become a way to try addresses.
+   */
+  app.post(
+    '/auth/claim',
+    {
+      schema: { body: claimBodySchema },
+      preHandler: requireAuth,
+      config: { rateLimit: { max: 5, windowMs: 60_000, per: 'user-or-ip' as const } },
+    },
+    async (req) => {
+      if (req.user!.guest !== true) throw notAGuest();
+      const body = req.body as z.infer<typeof claimBodySchema>;
+      // first, so nothing about a child is checked, scored or stored (COPPA);
+      // the guest row stays as it was, with no birth month on it
+      assertOldEnough({ year: body.birthYear, month: body.birthMonth });
+      let username: string | undefined;
+      if (body.username !== undefined) {
+        const uname = validateUsername(body.username);
+        if (!uname.ok) throw new AppError('INVALID_USERNAME', 400, USERNAME_ERROR_MESSAGE[uname.reason], { reason: uname.reason });
+        username = uname.value;
+      }
+      assertPasswordPolicy(body.password);
+      if (isDisposableEmail(body.email)) throw await rejected('throwaway email address');
+      if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw await rejected('challenge not passed');
+      await service.assertNotBreached(body.password);
+      if (await isBannedEmail(app.db, body.email)) throw await rejected('banned email address');
+
+      const claimed = await service.claim(req.user!.id, {
+        email: body.email,
+        password: body.password,
+        username,
+        birthYear: body.birthYear,
+        birthMonth: body.birthMonth,
+        locale: body.locale,
+      });
+      return { user: await me(claimed.id) };
     },
   );
 
@@ -439,12 +552,15 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof oauthBodySchema>;
+      // signed in as a guest: a new identity claims the guest's row (auth/oauth.ts)
+      const guestId = req.user?.guest === true ? req.user.id : null;
       const result = await oauth.signIn(
         body.provider,
         body.idToken,
         sessionName(body.deviceName, req.headers['user-agent']),
         deviceIdOf(req.headers),
         { authorizationCode: body.authorizationCode, fullName: body.fullName },
+        guestId,
       );
       await app.securityLog.record('signin.succeeded', { userId: result.user.id, details: { method: body.provider, newAccount: result.created } });
       return reply.code(result.created ? 201 : 200).send(result);
