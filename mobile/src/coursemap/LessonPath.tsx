@@ -22,8 +22,8 @@ import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
-import { timing } from '../theme/animate';
-import { display } from '../theme/fonts';
+import { timing, useEnter } from '../theme/animate';
+import { display, sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { duration } from '../theme/motion';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -51,6 +51,8 @@ type Unit = PathUnit<SkillNode>;
  * changed (shared `pathChanges`) rather than only the new state.
  */
 const LAST_DRAWN = new Map<string, PathSnapshot>();
+
+const NO_STOPS: ReadonlySet<string> = new Set();
 
 /** What coming back changed, and where the learner was before it: the bubble and Hevalo move on from there. */
 interface Return {
@@ -221,13 +223,15 @@ export function LessonPath({
 
   // what each stop shows of the return: one object per stop for the whole return, so each plays it once
   const stopChanges = useMemo(() => (back ? changesByStop(back) : {}), [back]);
+  // the line into the skill to do now has been walked only since the lesson: it fills in as the path moves on to it
+  const freshTrail = useMemo(() => (back && back.was !== null && back.changes.current ? new Set([back.changes.current]) : NO_STOPS), [back]);
   // Hevalo by the current skill — by the one before it until the path has moved on — when the screen leaves him room
   const mascotAt = path.current && width + 2 * layout.gutter >= MASCOT_MIN_WIDTH ? (waiting ? back.was : path.current) : null;
   const cheer = moved !== null && moved === back && (back.changes.finished.length > 0 || back.changes.opened.length > 0);
 
   return (
     <View style={styles.units}>
-      {path.units.map((unit) => {
+      {path.units.map((unit, i) => {
         const tone = TONES[scheme][unit.tone];
         return (
           <View
@@ -240,6 +244,7 @@ export function LessonPath({
               placeUnits();
             }}
           >
+            {i > 0 ? <UnitDivider number={unit.number} total={path.units.length} /> : null}
             <Banner unit={unit} tone={tone} onGuide={() => setGuide({ title: t('coursemap.path.guideFor', { unit: unit.title }), skills: unit.guide })} />
             {unit.stops.length > 0 ? (
               <View
@@ -253,7 +258,7 @@ export function LessonPath({
               >
                 {width > 0 ? (
                   <>
-                    <Trail unit={unit} width={width} sign={sign} walked={tone.fill} ahead={REST[scheme].line} />
+                    <Trail unit={unit} width={width} sign={sign} walked={tone.fill} ahead={REST[scheme].line} fresh={freshTrail} />
                     {unit.stops.map((placed, i) => (
                       <PathStopView
                         key={placed.stop.key}
@@ -377,6 +382,27 @@ function PathStopView({
 }
 
 /**
+ * Between one unit and the next, a quiet line across the page — "Unit 2 of 4"
+ * between two hairlines in the grey of the line ahead — so a long path reads
+ * in chapters, and where in the course this unit lies is said where it
+ * begins. The first unit has the course's own heading above it instead.
+ */
+function UnitDivider({ number, total }: { number: number; total: number }): React.JSX.Element {
+  const { colors, scheme } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
+  return (
+    <View style={[styles.divider, { flexDirection: dir.row }]} testID="lp-unit-divider">
+      <View style={[styles.hairline, { backgroundColor: REST[scheme].line }]} />
+      <Text style={[styles.dividerText, { color: colors.textSecondary }]}>
+        {t('coursemap.path.unitOf', { n: formatNumber(number, locale), total: formatNumber(total, locale) })}
+      </Text>
+      <View style={[styles.hairline, { backgroundColor: REST[scheme].line }]} />
+    </View>
+  );
+}
+
+/**
  * A unit's banner, in its colour, sitting on a darker lip of the same colour:
  * where one unit ends and the next begins, so the path needs no other line
  * between them. Its number and name are one heading, read as one ("Unit 2,
@@ -424,12 +450,16 @@ function unitHeading(number: string, title: string): string {
  * colour, so it is always clear which unit these stops belong to — and its
  * guide still one tap away.
  *
- * Scrolled on into the next unit, it turns into that one: the new colour and
- * name cross-fade in over the old (`duration.base`, opacity alone, on the
- * native driver). Under Reduce Motion it simply changes.
+ * It arrives as the banner goes up under it — a short fade, settling down a
+ * few points — and, scrolled on into the next unit, it turns into that one:
+ * the new colour and name cross-fade in over the old (`duration.base`,
+ * opacity alone, on the native driver). Under Reduce Motion it simply
+ * appears, and simply changes.
  */
 export function PinnedUnit({ unit }: { unit: UnitPlace }): React.JSX.Element {
   const reduce = useReducedMotion();
+  const arrive = useEnter(!reduce, 0, duration.base);
+  const dropIn = { opacity: arrive, transform: [{ translateY: arrive.interpolate({ inputRange: [0, 1], outputRange: [-PIN_DROP, 0] }) }] };
   const fade = useRef(new Animated.Value(1)).current;
   // the unit it is turning from, drawn under the new one while that fades in
   const [from, setFrom] = useState<UnitPlace | null>(null);
@@ -453,7 +483,7 @@ export function PinnedUnit({ unit }: { unit: UnitPlace }): React.JSX.Element {
     // a new unit, not a new object for the same one, is what turns it
   }, [unit.unitId, reduce]);
   return (
-    <View testID="lp-pinned-unit">
+    <Animated.View testID="lp-pinned-unit" style={dropIn}>
       {from ? (
         <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <PinFace unit={from} />
@@ -462,9 +492,12 @@ export function PinnedUnit({ unit }: { unit: UnitPlace }): React.JSX.Element {
       <Animated.View style={{ opacity: fade }}>
         <PinFace unit={unit} />
       </Animated.View>
-    </View>
+    </Animated.View>
   );
 }
+
+/** How far the pinned unit settles down as it arrives. */
+const PIN_DROP = 6;
 
 function PinFace({ unit }: { unit: UnitPlace }): React.JSX.Element {
   const { t } = useI18n();
@@ -500,15 +533,36 @@ function PinFace({ unit }: { unit: UnitPlace }): React.JSX.Element {
 /**
  * The line between stops: a gentle S from one centre to the next, drawn as
  * round dots — the stretch already walked in the unit's colour, the rest grey.
+ * A stretch walked only since the last lesson (`fresh`, by the stop it leads
+ * to) is drawn grey still, and its colour fades in over it as the path moves
+ * on (`PATH_RETURN`): the trail fills as the next stop opens.
  */
-function Trail({ unit, width, sign, walked, ahead }: { unit: Unit; width: number; sign: number; walked: string; ahead: string }): React.JSX.Element {
-  const lines: Record<'walked' | 'ahead', string[]> = { walked: [], ahead: [] };
+function Trail({
+  unit,
+  width,
+  sign,
+  walked,
+  ahead,
+  fresh,
+}: {
+  unit: Unit;
+  width: number;
+  sign: number;
+  walked: string;
+  ahead: string;
+  fresh: ReadonlySet<string>;
+}): React.JSX.Element {
+  const lines: Record<'walked' | 'ahead' | 'fresh', string[]> = { walked: [], ahead: [], fresh: [] };
   const cx = (x: number) => width / 2 + sign * x;
   unit.stops.forEach((p, i) => {
     const before = unit.stops[i - 1];
     if (!before || !p.trail) return;
     const bend = STEP / 2;
-    lines[p.trail].push(`M ${cx(before.x)} ${before.y} C ${cx(before.x)} ${before.y + bend}, ${cx(p.x)} ${p.y - bend}, ${cx(p.x)} ${p.y}`);
+    const d = `M ${cx(before.x)} ${before.y} C ${cx(before.x)} ${before.y + bend}, ${cx(p.x)} ${p.y - bend}, ${cx(p.x)} ${p.y}`;
+    if (p.trail === 'walked' && fresh.has(p.stop.key)) {
+      lines.fresh.push(d);
+      lines.ahead.push(d);
+    } else lines[p.trail].push(d);
   });
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
@@ -516,9 +570,26 @@ function Trail({ unit, width, sign, walked, ahead }: { unit: Unit; width: number
         <Path d={lines.ahead.join(' ')} stroke={ahead} strokeWidth={7} strokeLinecap="round" strokeDasharray={[0.01, 15]} fill="none" />
         <Path d={lines.walked.join(' ')} stroke={walked} strokeWidth={7} strokeLinecap="round" strokeDasharray={[0.01, 15]} fill="none" />
       </Svg>
+      {lines.fresh.length > 0 ? <FreshTrail d={lines.fresh.join(' ')} width={width} height={unit.height} colour={walked} /> : null}
     </View>
   );
 }
+
+/** The stretch walked since the lesson, in the unit's colour, fading in over the grey as the opened stop takes its number. */
+function FreshTrail({ d, width, height, colour }: { d: string; width: number; height: number; colour: string }): React.JSX.Element {
+  const p = useEnter(true, TRAIL_AT_MS, TRAIL_MS);
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, { opacity: p }]}>
+      <Svg width={width} height={height}>
+        <Path d={d} stroke={colour} strokeWidth={7} strokeLinecap="round" strokeDasharray={[0.01, 15]} fill="none" />
+      </Svg>
+    </Animated.View>
+  );
+}
+
+/** When the fresh trail starts to fill (as the finished stop's pop lands) and how long it takes (full as the bubble arrives). */
+const TRAIL_AT_MS = PATH_RETURN.finishAtMs + PATH_RETURN.popMs / 2;
+const TRAIL_MS = PATH_RETURN.bubbleAtMs - TRAIL_AT_MS;
 
 /**
  * The path while the course loads: a unit's banner and its first stops, on
@@ -569,6 +640,9 @@ const styles = StyleSheet.create({
   topicsSkeleton: { marginTop: 2 },
   units: { gap: spacing.lg },
   unit: { gap: 0 },
+  divider: { alignItems: 'center', gap: spacing.sm + 4, paddingHorizontal: spacing.xs, marginBottom: spacing.md },
+  hairline: { flex: 1, height: StyleSheet.hairlineWidth },
+  dividerText: { ...sectionLabel },
   path: { position: 'relative' },
   bannerLip: { borderRadius: radii.xl, paddingBottom: BANNER_LIP },
   banner: { borderRadius: radii.xl, paddingVertical: spacing.md + 4, paddingHorizontal: spacing.lg, gap: 2 },

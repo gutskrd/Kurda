@@ -4,7 +4,7 @@
  * other kind of practice — each either ready to start or saying, in one line,
  * why it is not. Pure, so the choices are tested apart from the screen.
  */
-import type { PracticeHub, PracticeHubUnit, PracticeMode } from '@kurda/shared';
+import { ACCURACY_BONUS_XP, BASE_LESSON_XP, type PracticeHub, type PracticeHubUnit, type PracticeMode, type UnitTone } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { IconName } from '../theme/Icon';
 
@@ -99,4 +99,28 @@ function speakRow(hub: PracticeHub, micRefused: boolean): HubRow {
   if (!hub.speak) return { ...row, detail: { key: 'practice.hub.speakNone' }, action: null };
   if (micRefused) return { ...row, detail: { key: 'practice.hub.micOff' }, action: { kind: 'settings' } };
   return { ...row, detail: { key: 'practice.hub.speakDetail' }, action: { kind: 'start', mode: 'speak' } };
+}
+
+/**
+ * What a practice session pays, said on the button that starts one: half of
+ * what a fresh lesson does, from none right to all right. The server's
+ * practice service halves `lessonCompletionXp` and rounds the same way, so
+ * the promise is the one it keeps.
+ */
+export const PRACTICE_XP_FACTOR = 0.5;
+
+export function practiceXpRange(): { min: number; max: number } {
+  return {
+    min: Math.max(1, Math.round(BASE_LESSON_XP * PRACTICE_XP_FACTOR)),
+    max: Math.max(1, Math.round((BASE_LESSON_XP + ACCURACY_BONUS_XP) * PRACTICE_XP_FACTOR)),
+  };
+}
+
+/** The colour each kind's badge wears (coursemap/path.ts `TONES`): one each, so the rows are told apart at a glance. */
+export const ROW_TONES: Record<HubRow['key'], UnitTone> = { mistakes: 'rose', words: 'river', listen: 'meadow', speak: 'clay', unit: 'dusk' };
+
+/** The colour the card at the top is painted in: a unit's own, else by what it offers. */
+export function heroTone(hero: Hero): UnitTone {
+  if (hero.kind === 'unit') return hero.unit.tone;
+  return hero.kind === 'due' ? 'meadow' : hero.kind === 'weak' ? 'river' : 'dusk';
 }

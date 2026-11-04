@@ -12,6 +12,7 @@ import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ChestArt } from './ChestArt';
+import { ChestWobble } from './ChestWobble';
 import type { QuestDay } from '@kurda/shared';
 
 /** The card's height, in grey while the quests are on their way: the chest, and the padding round it. */
@@ -21,9 +22,9 @@ const CHEST = 36;
 /**
  * Today's quests on Learn, slim: a chest, "Daily quests" with how many are
  * done (or that a chest is ready, today's or an earlier day's, with a gold dot
- * on the chest as well), and
- * a short bar for each of the three. A tap opens them in full (QuestsScreen),
- * where a chest waiting is opened.
+ * on the chest as well — and the chest shaking now and then, ChestWobble),
+ * and a short bar for each of the three. A tap opens them in full
+ * (QuestsScreen), where a chest waiting is opened.
  *
  * Read each time Learn comes into view. Held in grey while it loads; when it
  * did not load it says so, and a tap asks again; with no quests today it is
@@ -95,7 +96,9 @@ export function QuestsCard(): React.JSX.Element | null {
       testID="quests-card"
     >
       <View>
-        <ChestArt tier={chest.chest} size={CHEST} open={chest.claimed} />
+        <ChestWobble active={ready !== null} testID="quests-card-shaking">
+          <ChestArt tier={chest.chest} size={CHEST} open={chest.claimed} />
+        </ChestWobble>
         {ready ? <View style={[styles.dot, dir.rtl ? styles.dotRtl : null, { backgroundColor: colors.gold, borderColor: colors.surface }]} testID="quests-card-dot" /> : null}
       </View>
       <View style={styles.main}>

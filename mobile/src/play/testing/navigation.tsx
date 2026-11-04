@@ -23,4 +23,9 @@ export function useFocusEffect(effect: () => void | (() => void)): void {
   useEffect(() => effect(), [effect]);
 }
 
+/** A screen under test is the one in front, so whatever moves while it is in view moves. */
+export function useIsFocused(): boolean {
+  return true;
+}
+
 export function useScrollToTop(): void {}
