@@ -139,9 +139,27 @@ describe('the five places', () => {
     visit('/app/learn');
     expect(await screen.findByRole('heading', { level: 1, name: 'Learn' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /The Kurdish alphabet/ })).toHaveAttribute('href', '/app/alphabet');
+    // and the words after the letters, open too
+    expect(screen.getByRole('link', { name: /Words to know/ })).toHaveAttribute('href', '/app/learn/words');
+    expect(screen.getByRole('link', { name: /Words to know/ })).toHaveTextContent('Colours, numbers, days, months');
     // the published dictionary, which needs no account
     expect(screen.getByRole('link', { name: /Dictionary/ })).toHaveAttribute('href', '/dictionary/');
     expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register');
+  });
+
+  it('opens the words to know, and a set, at their addresses inside Learn', async () => {
+    serve();
+    const sets = visit('/app/learn/words');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Words to know' })).toBeInTheDocument();
+    // Learn stays lit: the page is one of its tools
+    expect(screen.getByRole('link', { name: 'Learn' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: /^Months, / })).toHaveAttribute('href', '/app/learn/words/months?script=kmr');
+    sets.unmount();
+
+    visit('/app/learn/words/months?script=ckb');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Months' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Soranî', selected: true })).toBeInTheDocument();
+    expect(where()).toBe('/app/learn/words/months?script=ckb');
   });
 
   it('shows a visitor on Search where words and people are', async () => {

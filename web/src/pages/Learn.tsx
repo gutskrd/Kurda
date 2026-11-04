@@ -19,6 +19,7 @@ import { LearnHeader } from '../learn/LearnHeader';
 import { StreakSheet } from '../learn/StreakSheet';
 import { QuestsCard } from '../quests/QuestsCard';
 import { publishedDictionary } from '../layouts/navLinks';
+import { TEASER_COLOURS } from '../words/sets';
 
 /** Three letters a beginner meets first: one familiar, one with a mark, one with a hat. */
 const ALPHABET_TEASER = 'Aa Çç Êê';
@@ -165,7 +166,8 @@ function TodayStrip(): React.JSX.Element {
 }
 
 /**
- * Practice tools: review, the alphabet and the dictionary, side by side.
+ * Practice tools: review, the alphabet, the words to know and the dictionary,
+ * side by side.
  *
  * Tools, not courses — each is something to reach for between lessons — so
  * they share a row rather than each taking a card of the page's full width.
@@ -201,6 +203,16 @@ function Tools({ signedIn }: { signedIn: boolean }): React.JSX.Element {
           </span>
           <span className="learn-tool-title ab-start-title">{t('alphabet.title')}</span>
           <span className="learn-tool-body ab-start-body">{t('alphabet.link')}</span>
+        </Link>
+        {/* and the first words after them: colours, numbers, days and months (pages/Words.tsx) */}
+        <Link to="/app/learn/words" className="learn-tool learn-tool-link">
+          <span className="wd-start-dots" aria-hidden="true">
+            {TEASER_COLOURS.map((hex) => (
+              <i key={hex} style={{ background: hex }} />
+            ))}
+          </span>
+          <span className="learn-tool-title">{t('words.title')}</span>
+          <span className="learn-tool-body">{t('words.toolHint')}</span>
         </Link>
         {dictionary}
       </div>

@@ -53,6 +53,8 @@ const Review = lazy(() => import('./pages/Review').then((m) => ({ default: m.Rev
 const NextLesson = lazy(() => import('./pages/NextLesson').then((m) => ({ default: m.NextLesson })));
 const Dictionary = lazy(() => import('./pages/Dictionary').then((m) => ({ default: m.Dictionary })));
 const Alphabet = lazy(() => import('./pages/Alphabet').then((m) => ({ default: m.Alphabet })));
+const Words = lazy(() => import('./pages/Words').then((m) => ({ default: m.Words })));
+const WordSet = lazy(() => import('./pages/WordSet').then((m) => ({ default: m.WordSet })));
 const Rankings = lazy(() => import('./pages/Rankings').then((m) => ({ default: m.Rankings })));
 // Game Ranks, leagues and badges (contract 4): the badge collection and the season
 const BadgesPage = lazy(() => import('./badges/BadgesPage').then((m) => ({ default: m.BadgesPage })));
@@ -228,6 +230,10 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="dictionary" element={<RequireAccount what="gate.what.course"><Dictionary /></RequireAccount>} />
         {/* the first thing a beginner needs, and open to everyone — see pages/Alphabet.tsx */}
         <Route path="alphabet" element={<Alphabet />} />
+        {/* the words after the letters — colours, numbers, days, months — open to
+            everyone too, each set on a page of its own (pages/Words.tsx, WordSet.tsx) */}
+        <Route path="learn/words" element={<Words />} />
+        <Route path="learn/words/:set" element={<WordSet />} />
         {/* one route for both kinds: a post knows which it is */}
         <Route path="library/:id" element={<LibraryPostPage />} />
         <Route path="civak" element={<CivakMoved />} />
