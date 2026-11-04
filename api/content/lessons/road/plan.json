@@ -1659,7 +1659,7 @@
                 {"ku": "ajovan", "en": "driver", "pos": "noun", "gender": "mf", "forms": ["ajovan", "ajovanên", "ajovanan", "ajovanek", "ajovanê", "ajovanekî", "ajovanî", "ajovana", "ajovaneke"]},
                 {"ku": "ajotin", "en": "to drive", "pos": "verb", "forms": ["ajotin", "diajom", "diajoyî", "diajo", "diajon"]},
                 {"ku": "rêwî", "en": "passenger, traveller", "pos": "noun", "gender": "mf", "forms": ["rêwî", "rêwiyên", "rêwiyan", "rêwiyek", "rêwiyê", "rêwiyekî", "rêwiyî", "rêwiya", "rêwiyeke"]},
-                {"ku": "bilêt", "en": "ticket", "pos": "noun", "gender": "f", "forms": ["bilêt", "bilêtên", "bilêtan", "bilêtek", "bilêta", "bilêtê", "bilêteke"]},
+                {"ku": "bilêt", "en": "ticket", "pos": "noun", "gender": "f", "forms": ["bilêt", "bilêtên", "bilêtan", "bilêtek", "bilêta", "bilêtê", "bilêteke", "bilêtekê"]},
                 {"ku": "rawestgeh", "en": "stop, station", "pos": "noun", "gender": "f", "forms": ["rawestgeh", "rawestgehên", "rawestgehan", "rawestgehek", "rawestgeha", "rawestgehê", "rawestgeheke"]}
               ]
             },
