@@ -22,11 +22,14 @@ import {
   QUESTION_COUNTS_BY_LENGTH,
   STORY_DIALECTS,
   STORY_LENGTHS,
+  STORY_LEVELS,
   STORY_SENTENCE_SOFT_MAX,
   STORY_WORD_BANDS,
+  cefrOf,
   countStoryWords,
   emptyStoryLibraryInput,
   glossSpans,
+  isStoryLevel,
   isStorySlug,
   lengthMinutes,
   normalizeKurdish,
@@ -38,12 +41,15 @@ import {
   storySlugFor,
   validateStory,
   type QuestionKind,
+  type SpeakerId,
+  type StoryCategory,
   type StoryDialect,
   type StoryGlossEntry,
   type StoryInput,
   type CefrLevel,
   type StoryLanguage,
   type StoryLength,
+  type StoryLevel,
   type StoryLibraryInput,
   type StoryProblem,
   type StoryQuestionInput,
@@ -70,7 +76,7 @@ export interface StorySentenceAudio {
   recorded: boolean;
   url?: string;
   durationMs?: number;
-  speaker?: string | null;
+  speaker?: SpeakerId | null;
   updatedAt?: string;
 }
 
@@ -163,9 +169,15 @@ export interface AdminStorySummary {
   problems: { errors: number; warnings: number };
 }
 
-/** What POST and PUT take: the whole story, every time (PUT adds `lockVersion`). */
+/**
+ * What POST and PUT take: the whole story, every time (PUT adds `lockVersion`).
+ * `sameStoryAs` only when the editor changed which story this is a version
+ * of: another story's id joins its group, null leaves the group, and left out
+ * the group stays as it is.
+ */
 export interface StoryDraft extends StoryInput {
   slug: string;
+  sameStoryAs?: string | null;
 }
 
 export const DIALECT_NAME: Record<StoryDialect, string> = { kurmanci: 'Kurmancî', sorani: 'Soranî' };
@@ -176,6 +188,61 @@ export const STATUS_NAME: Record<StoryStatus, string> = {
   published: 'Published',
   archived: 'Archived',
 };
+export const REVIEW_NAME: Record<StoryReviewStatus, string> = { unreviewed: 'Unreviewed', approved: 'Approved' };
+export const AUDIO_NAME: Record<StoryAudioCoverage, string> = { none: 'No audio', partial: 'Partly recorded', full: 'Recorded' };
+
+/** The word beside each CEFR letter, as the reader is shown it ("A2 · Elementary"). */
+export const CEFR_WORD: Record<CefrLevel, string> = {
+  A1: 'Beginner',
+  A2: 'Elementary',
+  B1: 'Intermediate',
+  B2: 'Upper intermediate',
+  C1: 'Advanced',
+};
+
+/** "A2 — Elementary" for the select; a level outside the scale (an old row) is named by its number. */
+export function cefrLabel(level: number, separator = ' — '): string {
+  if (!isStoryLevel(level)) return `Level ${level}`;
+  const cefr = cefrOf(level);
+  return `${cefr}${separator}${CEFR_WORD[cefr]}`;
+}
+
+/** The levels the select offers: the five of the scale, plus a stored one outside it so it is not quietly changed. */
+export function levelOptions(current: number): Array<{ level: number; label: string }> {
+  const levels: number[] = [...STORY_LEVELS];
+  if (!levels.includes(current)) levels.push(current);
+  return levels.map((level) => ({ level, label: cefrLabel(level) }));
+}
+
+export const TRADITION_NAME: Record<StoryTradition, string> = { traditional: 'Traditional', adapted: 'Adapted', original: 'Original' };
+
+/** What each tradition means, in one line beside its radio. */
+export const TRADITION_HINT: Record<StoryTradition, string> = {
+  traditional: 'Documented folklore, retold close to a source.',
+  adapted: 'Traditional material, retold freely for learners.',
+  original: 'Written for learners. Never presented as folklore.',
+};
+
+/** How the reader is told where a story comes from: "Traditional tale, retold for learners". */
+export function traditionLine(tradition: string): string {
+  switch (tradition) {
+    case 'traditional':
+      return 'Traditional tale';
+    case 'adapted':
+      return 'Traditional tale, retold for learners';
+    default:
+      return 'Written for learners';
+  }
+}
+
+/** A category's name for the admin (English, as the console is), or its slug while the list is not loaded. */
+export function categoryLabel(categories: readonly StoryCategory[] | undefined, slug: string | null): string | null {
+  if (!slug) return null;
+  return categories?.find((c) => c.slug === slug)?.name.en ?? slug;
+}
+
+/** The interface languages a translation can be in, English first since it is the fallback the reader gets. */
+export const TRANSLATION_LOCALES: readonly string[] = ['en', ...APP_LOCALES.map((l) => l.code).filter((c) => c !== 'en')];
 
 /** What each kind of question asks, for the select in the editor. */
 export const KIND_HINT: Record<QuestionKind, string> = {
@@ -253,9 +320,17 @@ export interface StoryForm {
   /**
    * How the story is filed and attributed (category, tradition, source,
    * translations, cover, reading time): loaded with the story and sent back
-   * with it, so a save never drops what another editor set.
+   * with it, so a save never drops what another editor set. Text fields hold
+   * what was typed, blanks and all; the draft trims them as the API does.
    */
   library: StoryLibraryInput;
+  /**
+   * Which story this is another telling of, when the editor changed it here:
+   * another story's id to join its group, null to leave the group it is in,
+   * and left out when nothing changed. Sent with the next save (the API joins
+   * or leaves the group in the same transaction), then cleared.
+   */
+  sameStoryAs?: string | null;
 }
 
 let nextKey = 0;
@@ -425,8 +500,25 @@ function glossEntry(row: GlossRow): StoryGlossEntry {
  * so a problem's path (`questions[3].options[1]`) is the same row on screen.
  */
 export function draftFromForm(form: StoryForm): StoryDraft {
+  const lib = form.library;
+  const translations: Record<string, string> = {};
+  for (const [locale, text] of Object.entries(lib.translations)) {
+    const tidy = tidyBody(text);
+    // a translation left empty is no translation, not an empty one the reader would be shown
+    if (tidy) translations[locale] = tidy;
+  }
   return {
-    ...form.library,
+    language: lib.language,
+    category: lib.category === null ? null : trimmedOrNull(lib.category),
+    tradition: lib.tradition,
+    author: lib.author === null ? null : trimmedOrNull(lib.author),
+    source: lib.source === null ? null : trimmedOrNull(lib.source),
+    sourceUrl: lib.sourceUrl === null ? null : trimmedOrNull(lib.sourceUrl),
+    attributionNote: lib.attributionNote === null ? null : trimmedOrNull(lib.attributionNote),
+    translations,
+    cover: lib.cover === null ? null : trimmedOrNull(lib.cover),
+    readingMinutes: lib.readingMinutes,
+    ...(form.sameStoryAs !== undefined ? { sameStoryAs: form.sameStoryAs } : {}),
     slug: form.slug.trim(),
     dialect: form.dialect,
     level: form.level,
@@ -453,12 +545,59 @@ export function isDirty(form: StoryForm, loaded: StoryForm): boolean {
   return JSON.stringify(draftFromForm(form)) !== JSON.stringify(draftFromForm(loaded));
 }
 
+/**
+ * The content a reviewer read, in the order the API compares it: a change to
+ * any of it takes an approved story's approval away when it is saved, while a
+ * change to how the story is filed or attributed does not. Kept in step with
+ * the API's own comparison, so the editor can say ahead of a save that the
+ * story will need approving again.
+ */
+function contentOf(draft: StoryDraft): string {
+  return JSON.stringify([
+    draft.dialect,
+    draft.level,
+    draft.title,
+    draft.summary,
+    draft.body,
+    draft.glossary.map((g) => [g.term, Object.entries(g.meanings).sort(([a], [b]) => a.localeCompare(b))]),
+    draft.questions.map((q) => [q.kind, q.prompt, q.promptEn, q.options, q.correctIndex, q.explanation, q.explanationEn, q.evidenceParagraph, q.evidenceSentence]),
+    Object.entries(draft.translations).sort(([a], [b]) => a.localeCompare(b)),
+  ]);
+}
+
+/** Whether the unsaved edits touch what a reviewer read (text, glossary, questions, translations), not only the filing. */
+export function contentChanged(form: StoryForm, loaded: StoryForm): boolean {
+  return contentOf(draftFromForm(form)) !== contentOf(draftFromForm(loaded));
+}
+
+export interface TranslationCheck {
+  locale: string;
+  text: string;
+  /** blank-line-separated paragraphs in the translation */
+  paragraphs: number;
+  /** paragraphs in the body, which the translation's must match one for one */
+  expected: number;
+  state: 'empty' | 'ok' | 'mismatch';
+}
+
+/** Each interface language's translation against the body's paragraphs, as the editor types, English first. */
+export function translationChecks(form: Pick<StoryForm, 'body' | 'library'>): TranslationCheck[] {
+  const expected = storyParagraphs(tidyBody(form.body)).length;
+  return TRANSLATION_LOCALES.map((locale) => {
+    const text = form.library.translations[locale] ?? '';
+    const paragraphs = storyParagraphs(tidyBody(text)).length;
+    return { locale, text, paragraphs, expected, state: paragraphs === 0 ? 'empty' : paragraphs === expected ? 'ok' : 'mismatch' };
+  });
+}
+
 // ---------------------------------------------------------------------------
 // Editing
 // ---------------------------------------------------------------------------
 
 type TextField = 'title' | 'summary' | 'body';
 type QuestionTextField = 'prompt' | 'promptEn' | 'explanation' | 'explanationEn';
+/** The library's text fields, typed as they are (the draft trims them). */
+export type LibraryTextField = 'author' | 'source' | 'sourceUrl' | 'attributionNote';
 
 export type EditorAction =
   | { type: 'load'; form: StoryForm }
@@ -466,6 +605,14 @@ export type EditorAction =
   | { type: 'slug'; value: string }
   | { type: 'dialect'; value: StoryDialect }
   | { type: 'level'; value: number }
+  | { type: 'lib/text'; field: LibraryTextField; value: string }
+  | { type: 'lib/category'; value: string | null }
+  | { type: 'lib/tradition'; value: StoryTradition }
+  | { type: 'lib/cover'; value: string | null }
+  | { type: 'lib/minutes'; value: number | null }
+  | { type: 'translation'; locale: string; value: string }
+  /** join another story's group (its id), leave the group (null), or take the change back (undefined) */
+  | { type: 'link'; sameStoryAs: string | null | undefined }
   | { type: 'gloss/add'; row?: GlossRow }
   | { type: 'gloss/remove'; index: number }
   | { type: 'gloss/set'; index: number; field: 'term' | 'en'; value: string }
@@ -516,6 +663,24 @@ export function editorReducer(form: StoryForm, action: EditorAction): StoryForm 
       return followTitle({ ...form, dialect: action.value });
     case 'level':
       return { ...form, level: action.value };
+
+    case 'lib/text':
+      return { ...form, library: { ...form.library, [action.field]: action.value } };
+    case 'lib/category':
+      return { ...form, library: { ...form.library, category: action.value } };
+    case 'lib/tradition':
+      return { ...form, library: { ...form.library, tradition: action.value } };
+    case 'lib/cover':
+      return { ...form, library: { ...form.library, cover: action.value } };
+    case 'lib/minutes':
+      return { ...form, library: { ...form.library, readingMinutes: action.value } };
+    case 'translation':
+      return { ...form, library: { ...form.library, translations: { ...form.library.translations, [action.locale]: action.value } } };
+    case 'link': {
+      const rest = { ...form };
+      delete rest.sameStoryAs;
+      return action.sameStoryAs === undefined ? rest : { ...rest, sameStoryAs: action.sameStoryAs };
+    }
 
     case 'gloss/add':
       return form.glossary.length >= GLOSSARY_MAX
@@ -847,10 +1012,20 @@ export function problemsAt(problems: readonly StoryProblem[], path: string, exac
 const FIELD_NAME: Record<string, string> = {
   dialect: 'Variety',
   level: 'Level',
+  language: 'Language',
   title: 'Title',
   slug: 'Address',
   summary: 'Summary',
   body: 'Text',
+  category: 'Category',
+  tradition: 'Tradition',
+  author: 'Author',
+  source: 'Source',
+  sourceUrl: 'Source address',
+  attributionNote: 'Attribution note',
+  cover: 'Cover',
+  readingMinutes: 'Reading time',
+  translations: 'Translation',
   glossary: 'Glossary',
   questions: 'Questions',
   meanings: 'meaning',
@@ -885,6 +1060,9 @@ export function describePath(path: string): string {
       );
     } else if (parts.length > 0 && parts[parts.length - 1] === 'meaning') {
       parts[parts.length - 1] = `meaning (${localeName(segment)})`;
+    } else if (parts.length > 0 && parts[parts.length - 1] === 'Translation') {
+      // 'translations.de' reads as "Translation (German)"
+      parts[parts.length - 1] = `Translation (${localeName(segment)})`;
     } else if ((segment === 'body' && path !== 'body') || segment === 'term') {
       // 'body.paragraphs[1]' reads as "Paragraph 2", 'glossary[0].term' as "Glossary word 1"
       continue;
@@ -949,39 +1127,72 @@ export function isEditable(status: StoryStatus | null): boolean {
 // The list
 // ---------------------------------------------------------------------------
 
+/**
+ * What the list asks the server for. The server filters and pages
+ * (GET /admin/stories?…&limit&offset), so every choice here is a query
+ * parameter; `query` is matched against the title and the address.
+ */
 export interface ListFilter {
   status: StoryStatus | 'all';
   dialect: StoryDialect | 'all';
-  /** title or slug contains it, case and letter variants aside */
+  level: StoryLevel | 'all';
+  /** a category slug */
+  category: string | 'all';
+  review: StoryReviewStatus | 'all';
+  /** only the library's featured stories */
+  featured: boolean;
   query: string;
 }
 
-function fold(text: string): string {
-  return text.normalize('NFC').toLowerCase().replace(/[êîûçş]/g, (ch) => ({ ê: 'e', î: 'i', û: 'u', ç: 'c', ş: 's' })[ch]!);
+export const STATUS_TABS: ReadonlyArray<StoryStatus | 'all'> = ['all', 'draft', 'in_review', 'published', 'archived'];
+
+export const DEFAULT_FILTER: ListFilter = { status: 'all', dialect: 'all', level: 'all', category: 'all', review: 'all', featured: false, query: '' };
+
+/** How many rows a page of the list holds (the server allows up to 100). */
+export const PAGE_SIZE = 50;
+
+/** A saved filter read back, each part checked, so a stale or hand-edited one cannot ask for what the server refuses. */
+export function readListFilter(raw: unknown): ListFilter {
+  if (typeof raw !== 'object' || raw === null) return DEFAULT_FILTER;
+  const r = raw as Partial<Record<keyof ListFilter, unknown>>;
+  return {
+    status: STATUS_TABS.some((s) => s === r.status) ? (r.status as ListFilter['status']) : 'all',
+    dialect: r.dialect === 'kurmanci' || r.dialect === 'sorani' ? r.dialect : 'all',
+    level: isStoryLevel(r.level) ? r.level : 'all',
+    category: typeof r.category === 'string' && r.category !== '' ? r.category : 'all',
+    review: r.review === 'unreviewed' || r.review === 'approved' ? r.review : 'all',
+    featured: r.featured === true,
+    query: typeof r.query === 'string' ? r.query : '',
+  };
 }
 
-export function filterStories(list: readonly AdminStorySummary[], filter: ListFilter): AdminStorySummary[] {
-  const q = fold(filter.query.trim());
-  return list.filter(
-    (s) =>
-      (filter.status === 'all' || s.status === filter.status) &&
-      (filter.dialect === 'all' || s.dialect === filter.dialect) &&
-      (!q || fold(s.title).includes(q) || s.slug.includes(q)),
+/** Whether anything narrows the list beyond the status tab. */
+export function isFiltered(filter: ListFilter): boolean {
+  return (
+    filter.status !== 'all' ||
+    filter.dialect !== 'all' ||
+    filter.level !== 'all' ||
+    filter.category !== 'all' ||
+    filter.review !== 'all' ||
+    filter.featured ||
+    filter.query.trim() !== ''
   );
 }
 
-/** How many stories in each status (and all), within one variety or both. */
-export function statusCounts(
-  list: readonly AdminStorySummary[],
-  dialect: StoryDialect | 'all' = 'all',
-): Record<StoryStatus | 'all', number> {
-  const counts = { all: 0, draft: 0, in_review: 0, published: 0, archived: 0 };
-  for (const s of list) {
-    if (dialect !== 'all' && s.dialect !== dialect) continue;
-    counts.all += 1;
-    counts[s.status] += 1;
-  }
-  return counts;
+/** The query string for one page of the list, with only the parts that narrow it. */
+export function listParams(filter: ListFilter, page = 0, pageSize = PAGE_SIZE): string {
+  const p = new URLSearchParams();
+  const q = filter.query.trim();
+  if (q) p.set('q', q.slice(0, 80));
+  if (filter.status !== 'all') p.set('status', filter.status);
+  if (filter.dialect !== 'all') p.set('dialect', filter.dialect);
+  if (filter.level !== 'all') p.set('level', String(filter.level));
+  if (filter.category !== 'all') p.set('category', filter.category);
+  if (filter.review !== 'all') p.set('review', filter.review);
+  if (filter.featured) p.set('featured', '1');
+  p.set('limit', String(pageSize));
+  if (page > 0) p.set('offset', String(page * pageSize));
+  return p.toString();
 }
 
 /**

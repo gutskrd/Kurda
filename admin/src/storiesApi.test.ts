@@ -1,10 +1,25 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiError } from './api';
-import { draftFromForm, editorReducer, formFromStory, type AdminStory } from './stories';
-import { getStory, listStories, runStoryAction, storyFailure } from './storiesApi';
+import { DEFAULT_FILTER, draftFromForm, editorReducer, formFromStory, type AdminStory } from './stories';
+import {
+  categoryCounts,
+  categoryInUse,
+  createCategory,
+  deleteCategory,
+  featureStory,
+  getStory,
+  listCategories,
+  listStories,
+  reviewStory,
+  runStoryAction,
+  searchStories,
+  statusCounts,
+  storyFailure,
+  updateCategory,
+} from './storiesApi';
 import { failure, fakeApi, json, on } from './test/fetch';
-import { STORY_ID, storyFixture, summaryOf } from './test/stories';
+import { CATEGORIES, STORY_ID, storyFixture, summaryOf } from './test/stories';
 
 const AT = `/admin/stories/${STORY_ID}`;
 
@@ -17,12 +32,94 @@ function edited(story: AdminStory) {
 }
 
 describe('reading', () => {
-  it('lists every story and opens one', async () => {
+  it('asks the server for a page of the list, filtered, and opens one story', async () => {
     const story = storyFixture();
-    const api = fakeApi(on('GET', '/admin/stories', json({ stories: [summaryOf(story)] })), on('GET', AT, json(story)));
-    expect(await listStories()).toEqual([summaryOf(story)]);
+    const page = { stories: [summaryOf(story)], total: 61 };
+    const api = fakeApi(on('GET', /^\/admin\/stories\?/, json(page)), on('GET', AT, json(story)));
+    expect(await listStories(DEFAULT_FILTER)).toEqual(page);
+    await listStories({ ...DEFAULT_FILTER, status: 'draft', dialect: 'sorani', level: 2, category: 'fable', review: 'approved', featured: true, query: ' Rêya ' }, 1);
     expect(await getStory(STORY_ID)).toEqual(story);
-    expect(api.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['GET /admin/stories', `GET ${AT}`]);
+    expect(api.calls.map((c) => `${c.method} ${c.path}`)).toEqual([
+      'GET /admin/stories?limit=50',
+      'GET /admin/stories?q=R%C3%AAya&status=draft&dialect=sorani&level=2&category=fable&review=approved&featured=1&limit=50&offset=50',
+      `GET ${AT}`,
+    ]);
+  });
+
+  it('counts the status tabs with one single-row page per status, under the other filters', async () => {
+    const api = fakeApi(
+      on('GET', /^\/admin\/stories\?/, (call) => json({ stories: [], total: call.path.includes('status=published') ? 7 : call.path.includes('status=draft') ? 2 : 0 })),
+    );
+    expect(await statusCounts({ ...DEFAULT_FILTER, dialect: 'kurmanci' })).toEqual({ all: 9, draft: 2, in_review: 0, published: 7, archived: 0 });
+    expect(api.calls.map((c) => c.path)).toEqual([
+      '/admin/stories?status=draft&dialect=kurmanci&limit=50',
+      '/admin/stories?status=in_review&dialect=kurmanci&limit=50',
+      '/admin/stories?status=published&dialect=kurmanci&limit=50',
+      '/admin/stories?status=archived&dialect=kurmanci&limit=50',
+    ]);
+  });
+
+  it('finds other stories by title in one variety, for the versions picker', async () => {
+    const story = storyFixture();
+    const api = fakeApi(on('GET', /^\/admin\/stories\?/, json({ stories: [summaryOf(story)], total: 1 })));
+    expect(await searchStories(' Rêya ', 'sorani')).toEqual([summaryOf(story)]);
+    expect(api.calls[0]!.path).toBe('/admin/stories?q=R%C3%AAya&limit=10&dialect=sorani');
+  });
+});
+
+describe('review and featuring', () => {
+  it('approves with the version it loaded and an optional note', async () => {
+    const story = storyFixture();
+    const approved = storyFixture({ reviewStatus: 'approved', lockVersion: 5 });
+    const api = fakeApi(on('POST', `${AT}/review`, json(approved)));
+    expect(await reviewStory(story, true, 'Read twice.')).toEqual(approved);
+    expect(await reviewStory(approved, false, null)).toEqual(approved);
+    expect(api.calls.map((c) => c.body)).toEqual([
+      { approved: true, note: 'Read twice.', lockVersion: 4 },
+      { approved: false, note: null, lockVersion: 5 },
+    ]);
+  });
+
+  it('features and unfeatures with the version it loaded', async () => {
+    const story = storyFixture();
+    const api = fakeApi(on('POST', `${AT}/feature`, (call) => json(storyFixture({ featured: (call.body as { featured: boolean }).featured, lockVersion: 5 }))));
+    expect((await featureStory(story, true)).featured).toBe(true);
+    expect(api.calls).toEqual([{ method: 'POST', path: `${AT}/feature`, body: { featured: true, lockVersion: 4 } }]);
+  });
+});
+
+describe('categories', () => {
+  it('lists, adds, renames and deletes them, and counts the stories filed under each', async () => {
+    const api = fakeApi(
+      on('GET', '/admin/story-categories', json({ categories: CATEGORIES })),
+      on('POST', '/admin/story-categories', (call) => json({ ...(call.body as object), position: 8 }, 201)),
+      on('PUT', '/admin/story-categories/fable', (call) => json({ slug: 'fable', ...(call.body as object) })),
+      on('DELETE', '/admin/story-categories/fable', json({ slug: 'fable', deleted: true, unfiled: 0 })),
+      on('DELETE', '/admin/story-categories/legend?force=1', json({ slug: 'legend', deleted: true, unfiled: 3 })),
+      on('GET', /^\/admin\/stories\?category=/, (call) => json({ stories: [], total: call.path.includes('fable') ? 4 : 0 })),
+    );
+    expect(await listCategories()).toEqual(CATEGORIES);
+    expect(await createCategory('riddles', { name: { en: 'Riddles' } })).toEqual({ slug: 'riddles', name: { en: 'Riddles' }, position: 8 });
+    expect(await updateCategory('fable', { name: { en: 'Fables', ku: 'Fabl' }, position: 2 })).toEqual({ slug: 'fable', name: { en: 'Fables', ku: 'Fabl' }, position: 2 });
+    expect(await deleteCategory('fable')).toMatchObject({ deleted: true });
+    expect(await deleteCategory('legend', true)).toMatchObject({ unfiled: 3 });
+    expect(await categoryCounts(['fable', 'legend'])).toEqual({ fable: 4, legend: 0 });
+    expect(api.calls.map((c) => `${c.method} ${c.path}`)).toEqual([
+      'GET /admin/story-categories',
+      'POST /admin/story-categories',
+      'PUT /admin/story-categories/fable',
+      'DELETE /admin/story-categories/fable',
+      'DELETE /admin/story-categories/legend?force=1',
+      'GET /admin/stories?category=fable&limit=1',
+      'GET /admin/stories?category=legend&limit=1',
+    ]);
+  });
+
+  it('reads how many stories a refused delete was about', () => {
+    expect(categoryInUse(new ApiError(409, 'IN_USE', '3 stories are filed under this category', { count: 3 }))).toBe(3);
+    expect(categoryInUse(new ApiError(409, 'IN_USE', 'in use'))).toBe(0);
+    expect(categoryInUse(new ApiError(404, 'NOT_FOUND', 'no such category'))).toBeNull();
+    expect(categoryInUse(new TypeError('Failed to fetch'))).toBeNull();
   });
 });
 
@@ -98,6 +195,7 @@ describe('saving', () => {
     expect(kind(409, 'IN_USE')).toBe('in_use');
     expect(kind(409, 'NOT_EDITABLE')).toBe('state');
     expect(kind(409, 'BAD_STATE')).toBe('state');
+    expect(kind(409, 'NOT_REVIEWED')).toBe('not_reviewed');
     expect(kind(404, 'NOT_FOUND')).toBe('not_found');
     expect(kind(403, 'FORBIDDEN')).toBe('forbidden');
     expect(kind(500, 'INTERNAL_ERROR')).toBe('other');

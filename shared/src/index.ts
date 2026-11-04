@@ -464,6 +464,8 @@ export {
 export * from './stories.js';
 /** What a story must be before it is saved or published, one copy for the API, the importer and the editor. */
 export * from './story-authoring.js';
+/** The pictures a story can wear as its cover: the shop's backgrounds, keyed as `stories.cover` stores them. */
+export * from './story-covers.js';
 
 /**
  * Inviting friends to any online game and playing again (play), gifts that

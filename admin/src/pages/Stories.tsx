@@ -2,14 +2,16 @@ import { useEffect, useRef } from 'react';
 import { go, useRoute } from '../nav';
 import type { AdminStory } from '../stories';
 import { useToast } from '../ui';
+import { StoryCategories } from './StoryCategories';
 import { StoryEditor } from './StoryEditor';
 import { StoryList } from './StoryList';
 
 /**
- * Stories: the texts the app's reading quizzes are about (they replaced the
- * ranked quiz). The list is #/stories, a story #/stories/<id>, a new one
- * #/stories/new — addresses of their own, so the back button leaves a story
- * for the list and a story can be bookmarked or sent to a reviewer.
+ * Stories: the texts the app's library offers to read, each with the
+ * questions a quiz asks about it. The list is #/stories, a story
+ * #/stories/<id>, a new one #/stories/new, the library's categories
+ * #/stories/categories — addresses of their own, so the back button leaves a
+ * story for the list and a story can be bookmarked or sent to a reviewer.
  */
 export function Stories(): React.JSX.Element {
   const route = useRoute();
@@ -23,6 +25,7 @@ export function Stories(): React.JSX.Element {
   }, [sub]);
 
   if (!sub) return <StoryList onNew={() => go('stories/new')} />;
+  if (sub === 'categories') return <StoryCategories />;
 
   const id = sub === 'new' ? null : sub;
   const initial = id && created.current?.id === id ? created.current : null;

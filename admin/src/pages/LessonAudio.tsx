@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LESSON_AUDIO_MAX_SECONDS, LESSON_AUDIO_TEXT_MAX } from '@kurda/shared';
-import { api, ApiError } from '../api';
-import { ClipRecorder, ShortcutHint } from '../recorder';
+import { api } from '../api';
+import { ShortcutHint } from '../recorder';
 import { conversationHref } from '../conversations';
 import {
   addPhrase,
@@ -30,9 +30,9 @@ import {
   type Scope,
 } from '../lessonAudio';
 import { Banner, Button, EmptyState, ErrorState, Icon, Loading, Tabs, useDialogs } from '../ui';
-import { SpeakerPicker, bustUrl, speakerName, useSpeakerChange } from '../ui/SpeakerPicker';
-import { SpeakingPreview } from '../ui/SpeakingPreview';
-import { rememberSpeaker, rememberedSpeaker, uploadWithVoice, type Speaker } from '../voice';
+import { bustUrl, speakerName, useSpeakerChange } from '../ui/SpeakerPicker';
+import { rememberSpeaker, rememberedSpeaker, type Speaker } from '../voice';
+import { SentenceStudio, usePlayer, type Player } from './SentenceStudio';
 
 const FILTER_LABEL: Record<Filter, string> = {
   missing: 'Still to record',
@@ -59,9 +59,9 @@ const FILTER_LABEL: Record<Filter, string> = {
  * on that one lesson or story (`focus`). Anything else can be recorded too,
  * through "Add a phrase".
  *
- * Each row's studio also says who is shown saying it: a new take goes up with
- * that character and a mouth timeline made from it (voice.ts), and a change
- * to a saved one is sent at once.
+ * Each row's studio (SentenceStudio, which the story editor shares) also says
+ * who is shown saying it: a new take goes up with that character and a mouth
+ * timeline made from it (voice.ts), and a change to a saved one is sent at once.
  */
 export function LessonAudio({
   scope = 'lessons',
@@ -499,92 +499,34 @@ function Row({
         <span className={`badge${status.tone}`}>{status.label}</span>
       </div>
       {selected && (
-        <div className="la-studio">
+        <SentenceStudio
+          text={item.text}
+          recordKey={item.key}
+          path={recordPath(item)}
+          recording={
+            item.url
+              ? { url: item.url, durationMs: item.durationMs, updatedAt: item.updatedAt, speaker: item.speaker ?? null, lipsync: item.lipsync, hasLipsync: item.hasLipsync }
+              : null
+          }
+          speaker={speaker}
+          onSpeaker={onSpeaker}
+          onSaved={onSaved}
+          onRemoved={() => onRemoved(item.key)}
+          removePrompt={removePrompt}
+          listeningNeedsIt={listening}
+          confirm={confirm}
+          shortcuts
+          onPrev={onPrev}
+          onNext={onNext}
+        >
           {item.line && first && (
             <p className="la-conversation">
               A line of a conversation: it is best recorded with the rest of it, where the line before can be heard first.{' '}
               <a href={conversationHref(item.line.conversation, first.lessonId, item.line.part)}>Record {item.line.name}’s part</a>
             </p>
           )}
-          <div className="voice-row">
-            <SpeakerPicker
-              value={speaker}
-              onChange={onSpeaker}
-              hint={item.recorded ? 'Changed as soon as you choose.' : 'Saved with the recording, and kept for the next one.'}
-            />
-            {item.recorded && item.url && item.speaker && (
-              <SpeakingPreview
-                key={`${item.url}|${item.speaker}`}
-                speaker={item.speaker}
-                url={item.url}
-                text={item.text}
-                lipsync={item.lipsync ?? (item.hasLipsync ? undefined : null)}
-                durationMs={item.durationMs}
-              />
-            )}
-          </div>
-          <ClipRecorder
-            say={item.text}
-            maxSeconds={LESSON_AUDIO_MAX_SECONDS}
-            what="one sentence"
-            recording={item.url ? { url: item.url, durationMs: item.durationMs, updatedAt: item.updatedAt } : null}
-            shortcuts
-            onPrev={onPrev}
-            onNext={onNext}
-            onSave={async (wav) => {
-              const res = await uploadWithVoice<Saved>(recordPath(item), wav, { speaker, text: item.text });
-              onSaved({ ...res, key: item.key });
-            }}
-            removePrompt={removePrompt}
-            onRemove={async () => {
-              const remove = (force: boolean) =>
-                api(`/admin/lesson-audio?key=${encodeURIComponent(item.key)}${force ? '&force=1' : ''}`, { method: 'DELETE' });
-              try {
-                // the prompt the editor just confirmed already said what a listening item loses
-                await remove(listening);
-              } catch (err) {
-                // a lesson published since the list was loaded: ask again, with what the server knows
-                if (!(err instanceof ApiError && err.code === 'LISTENING_AUDIO_IN_USE')) throw err;
-                const yes = await confirm({ title: 'A listening item plays this', body: err.message, confirmLabel: 'Remove anyway', tone: 'danger' });
-                if (!yes) return;
-                await remove(true);
-              }
-              onRemoved(item.key);
-            }}
-          />
-        </div>
+        </SentenceStudio>
       )}
     </div>
   );
-}
-
-export interface Player {
-  playing: string | null;
-  toggle: (url: string) => void;
-}
-
-/** One audio element for the whole list, so starting a row stops the last one. */
-export function usePlayer(): Player {
-  const [playing, setPlaying] = useState<string | null>(null);
-  const audio = useRef<HTMLAudioElement | null>(null);
-  useEffect(
-    () => () => {
-      audio.current?.pause();
-    },
-    [],
-  );
-  const toggle = (url: string): void => {
-    const el = (audio.current ??= new Audio());
-    if (playing === url && !el.paused) {
-      el.pause();
-      setPlaying(null);
-      return;
-    }
-    el.onended = () => setPlaying(null);
-    el.onerror = () => setPlaying(null);
-    el.src = url;
-    setPlaying(url);
-    void el.play().catch(() => setPlaying(null));
-  };
-  return { playing, toggle };
 }
