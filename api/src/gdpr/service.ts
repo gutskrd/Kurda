@@ -603,6 +603,9 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`UPDATE story_games SET host_id = NULL WHERE host_id = $1`);
   await q(`DELETE FROM story_game_answers WHERE user_id = $1`);
   await q(`DELETE FROM story_game_players WHERE user_id = $1`);
+  // their shelf and where they were in each story: a reading record is theirs alone
+  await q(`DELETE FROM story_bookmarks WHERE user_id = $1`);
+  await q(`DELETE FROM story_reading WHERE user_id = $1`);
   // their Game Ranks: ratings, history, leaves, choices, seasons (ranks/gdpr.ts)
   await eraseRanks(executor, userId);
 

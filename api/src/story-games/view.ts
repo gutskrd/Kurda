@@ -250,6 +250,7 @@ export function renderView(input: ViewInput): StoryGameView {
       evidenceSentence: q.evidenceSentence,
     }));
     results = {
+      storySlug: input.storySlug,
       standings,
       me: me
         ? {

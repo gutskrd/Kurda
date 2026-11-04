@@ -8,6 +8,7 @@ import {
   normalizeKurdish,
   storyAudioSentences,
   storyParagraphs,
+  storySentences,
   type ConversationPayload,
   type LipsyncData,
   type SpeakerId,
@@ -115,6 +116,61 @@ interface RecordingRow {
   has_lipsync: boolean;
   /** only when asked for */
   lipsync: LipsyncData | null;
+}
+
+/** One sentence of a story as the editor's audio section lists it: where it is, what is said, and its recording if any. */
+export interface StorySentenceAudio {
+  /** index into storyParagraphs(body) */
+  paragraph: number;
+  /** index into storySentences(paragraph), which is what the reader highlights */
+  sentence: number;
+  text: string;
+  /** its recording key, the one the studio's PUT /admin/lesson-audio?text= files it under */
+  key: string;
+  recorded: boolean;
+  url?: string;
+  durationMs?: number;
+  speaker?: SpeakerId | null;
+  updatedAt?: string;
+}
+
+export interface StoryAudio {
+  sentences: StorySentenceAudio[];
+  recorded: number;
+  total: number;
+}
+
+/**
+ * A story's recordable sentences in reading order with their recordings, for
+ * the editor's audio section: the same cut the reader plays and the studio
+ * lists (`storyAudioSentences`), the same sentences left out (one no
+ * recording can hold is the editor's to split), and one query for the
+ * recordings — the whole studio listing walks every lesson, which one story's
+ * editor has no use for.
+ */
+export async function storySentenceRecordings(db: Pick<pg.Pool, 'query'>, body: string): Promise<StoryAudio> {
+  const sentences: StorySentenceAudio[] = [];
+  storyParagraphs(body).forEach((paragraph, p) => {
+    const recordable = new Set(storyAudioSentences(paragraph));
+    storySentences(paragraph).forEach((text, i) => {
+      if (!recordable.has(text) || normalizeKurdish(text).length > LESSON_AUDIO_TEXT_MAX) return;
+      sentences.push({ paragraph: p, sentence: i, text, key: lessonAudioKey(text), recorded: false });
+    });
+  });
+  const keys = [...new Set(sentences.map((s) => s.key))];
+  if (keys.length > 0) {
+    const res = await db.query<{ key: string; url: string; duration_ms: number; speaker: SpeakerId | null; updated_at: Date }>(
+      `SELECT key, url, duration_ms, speaker, updated_at FROM lesson_audio WHERE key = ANY($1::text[])`,
+      [keys],
+    );
+    const byKey = new Map(res.rows.map((r) => [r.key, r]));
+    for (const s of sentences) {
+      const r = byKey.get(s.key);
+      if (!r) continue;
+      Object.assign(s, { recorded: true, url: r.url, durationMs: r.duration_ms, speaker: r.speaker, updatedAt: r.updated_at.toISOString() });
+    }
+  }
+  return { sentences, recorded: sentences.filter((s) => s.recorded).length, total: sentences.length };
 }
 
 /** A text a lesson or story needs, before anything is known of its recording. */

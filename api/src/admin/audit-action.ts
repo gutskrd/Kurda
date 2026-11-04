@@ -20,13 +20,13 @@ export function isAuditableAdminMutation(method: string, url: string, statusCode
 /**
  * The thing a route acts on, from its path parameters: most routes name it
  * `:id`, but a user's bot score is `:userId`, a tag, rule, flag or event its
- * `:key`, and a shop item its `:sku` — and an audit row with no target cannot be
- * found by the thing it changed.
+ * `:key`, a shop item its `:sku` and a story category its `:slug` — and an
+ * audit row with no target cannot be found by the thing it changed.
  */
 export function auditTargetId(params: unknown): string | null {
   if (typeof params !== 'object' || params === null) return null;
   const p = params as Record<string, unknown>;
-  for (const name of ['id', 'userId', 'key', 'sku', 'slot']) {
+  for (const name of ['id', 'userId', 'key', 'sku', 'slot', 'slug']) {
     if (typeof p[name] === 'string' && p[name]) return p[name] as string;
   }
   return null;
@@ -50,6 +50,7 @@ export function auditTargetType(routeUrl: string): string | null {
   if (routeUrl.startsWith('/admin/experiments/:key')) return 'experiment';
   if (routeUrl.startsWith('/admin/content/lessons/:id')) return 'lesson';
   if (routeUrl.startsWith('/admin/stories/:id')) return 'story';
+  if (routeUrl.startsWith('/admin/story-categories/:slug')) return 'story_category';
   if (routeUrl.startsWith('/admin/art/:slot')) return 'picture';
   return null;
 }
