@@ -994,7 +994,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "lîste", "en": "list", "pos": "noun", "gender": "f", "forms": ["lîste", "lîsteyên", "lîsteyan", "lîsteyek", "lîsteya", "lîsteyê", "lîsteyeke"]},
-                {"ku": "roj", "en": "day; sun", "pos": "noun", "gender": "f", "forms": ["roj", "rojên", "rojan", "rojek", "roja", "rojê", "rojeke"]},
+                {"ku": "roj", "en": "day; sun", "pos": "noun", "gender": "f", "forms": ["roj", "rojên", "rojan", "rojek", "roja", "rojê", "rojeke", "rojekê"]},
                 {"ku": "sibeh", "en": "morning", "pos": "noun", "gender": "f", "forms": ["sibeh", "sibehên", "sibehan", "sibehek", "sibeha", "sibehê", "sibeheke"]},
                 {"ku": "hefte", "en": "week", "pos": "noun", "gender": "f", "forms": ["hefte", "hefteyên", "hefteyan", "hefteyek", "hefteya", "hefteyê", "hefteyeke"]},
                 {"ku": "dawî", "en": "end; last", "pos": "noun", "gender": "f", "forms": ["dawî", "dawiyên", "dawiyan", "dawiyek", "dawiya", "dawiyê", "dawiyeke"]}
@@ -1608,7 +1608,7 @@
                 {"ku": "wisa", "en": "so, like that", "pos": "adv", "forms": ["wisa"]},
                 {"ku": "wiha", "en": "like this, this way", "pos": "adv", "forms": ["wiha"]},
                 {"ku": "girtin", "en": "to take, to hold; to close", "pos": "verb", "forms": ["girtin", "digirim", "digirî", "digire", "digirin", "nagirim", "nagire"]},
-                {"ku": "vekirin", "en": "to open", "pos": "verb", "forms": ["vekirin", "vedikim", "vedikî", "vedike", "vedikin", "venakim", "venake"]}
+                {"ku": "vekirin", "en": "to open", "pos": "verb", "forms": ["vekirin", "vedikim", "vedikî", "vedike", "vedikin", "venakim", "venake", "vekî", "vekin", "veneke", "venekin"]}
               ]
             },
             {
@@ -3263,7 +3263,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "berhem", "en": "harvest; produce", "pos": "noun", "gender": "f", "forms": ["berhem", "berhemên", "berheman", "berhemek", "berhema", "berhemê", "berhemeke"]},
-                {"ku": "çandin", "en": "to plant, to sow", "pos": "verb", "forms": ["çandin", "diçînim", "diçînî", "diçîne", "diçînin", "biçînim", "biçîne", "çand"]},
+                {"ku": "çandin", "en": "to plant, to sow", "pos": "verb", "forms": ["çandin", "diçînim", "diçînî", "diçîne", "diçînin", "biçînim", "biçîne", "çand", "biçînin"]},
                 {"ku": "civîn", "en": "meeting, council", "pos": "noun", "gender": "f", "forms": ["civîn", "civînên", "civînan", "civînek", "civîna", "civînê", "civîneke"]},
                 {"ku": "ked", "en": "labour, effort", "pos": "noun", "gender": "f", "forms": ["ked", "kedên", "kedan", "kedek", "keda", "kedê", "kedeke"]},
                 {"ku": "bêkar", "en": "unemployed; idle", "pos": "adj", "forms": ["bêkar"]},
@@ -3289,7 +3289,7 @@
               "beat": "At the family council Hamo speaks first: he has thought, he has slept on it (twice), and he has decided — Xezal must take the job. Then he asks everyone else what they have decided.",
               "voice": "hamo",
               "new": [
-                {"ku": "-iye / -ye", "en": "has …ed (the present perfect: hatiye, min kiriye)", "pos": "particle", "forms": ["hatime", "hatiyî", "hatiye", "hatine", "çûme", "çûyî", "çûye", "çûne", "bûme", "bûyî", "bûye", "bûne", "mame", "mayî", "maye", "mane", "gihîştime", "gihîştiye", "gihîştine", "rabûme", "rabûye", "rûniştime", "rûniştiye", "vegeriyame", "vegeriyaye", "vegeriyane", "ketime", "ketiye", "derketiye", "razame", "razaye", "xebitîme", "xebitiye", "kiriye", "kirine", "xwariye", "xwarine", "dîtiye", "dîtine", "gotiye", "daye", "dane", "xwendiye", "nivîsiye", "aniye", "biriye", "girtiye", "xwestiye", "bihîstiye", "vexwariye", "şandiye", "nedîtiye", "nekiriye", "neçûme", "negotiye", "fikirîme", "fikiriye"]},
+                {"ku": "-iye / -ye", "en": "has …ed (the present perfect: hatiye, min kiriye)", "pos": "particle", "forms": ["hatime", "hatiyî", "hatiye", "hatine", "çûme", "çûyî", "çûye", "çûne", "bûme", "bûyî", "bûye", "bûne", "mame", "mayî", "maye", "mane", "gihîştime", "gihîştiye", "gihîştine", "rabûme", "rabûye", "rûniştime", "rûniştiye", "vegeriyame", "vegeriyaye", "vegeriyane", "ketime", "ketiye", "derketiye", "razame", "razaye", "xebitîme", "xebitiye", "kiriye", "kirine", "xwariye", "xwarine", "dîtiye", "dîtine", "gotiye", "daye", "dane", "xwendiye", "nivîsiye", "aniye", "biriye", "girtiye", "xwestiye", "bihîstiye", "vexwariye", "şandiye", "nedîtiye", "nekiriye", "neçûme", "negotiye", "fikirîme", "fikiriye", "çandiye"]},
                 {"ku": "tu car", "en": "never (ever)", "pos": "phrase", "forms": ["tu", "car"]},
                 {"ku": "tecrûbe", "en": "experience", "pos": "noun", "gender": "f", "forms": ["tecrûbe", "tecrûbeyên", "tecrûbeyan", "tecrûbeyek", "tecrûbeya", "tecrûbeyê", "tecrûbeyeke"]},
                 {"ku": "pêşkeftin", "en": "progress", "pos": "noun", "gender": "f", "forms": ["pêşkeftin", "pêşkeftinên", "pêşkeftinan", "pêşkeftinek", "pêşkeftina", "pêşkeftinê", "pêşkeftineke"]},
@@ -3578,7 +3578,7 @@
               "voice": "hamo",
               "new": [
                 {"ku": "wate", "en": "meaning", "pos": "noun", "gender": "f", "forms": ["wate", "wateyên", "wateyan", "wateyek", "wateya", "wateyê", "wateyeke"]},
-                {"ku": "li derî xistin", "en": "to knock at the door", "pos": "phrase", "forms": ["li", "derî", "xistin"]},
+                {"ku": "li derî xistin", "en": "to knock at the door", "pos": "phrase", "forms": ["li", "derî", "xistin", "dixe", "dixin"]},
                 {"ku": "bandor", "en": "influence, effect", "pos": "noun", "gender": "f", "forms": ["bandor", "bandorên", "bandoran", "bandorek", "bandora", "bandorê", "bandoreke"]},
                 {"ku": "aqilmend", "en": "wise", "pos": "adj", "forms": ["aqilmend"]},
                 {"ku": "pîrek", "en": "old woman (in tales)", "pos": "noun", "gender": "f", "forms": ["pîrek", "pîrekên", "pîrekan", "pîrekek", "pîreka", "pîrekê", "pîrekeke"]},
