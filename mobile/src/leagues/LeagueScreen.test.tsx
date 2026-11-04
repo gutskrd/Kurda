@@ -69,6 +69,8 @@ describe('the league page', () => {
     renderWithProviders(<LeagueScreen onExit={() => undefined} />);
     expect(await screen.findByText('Your week starts with a lesson')).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Hevalo is resting' })).toBeTruthy();
+    // and his own word on it
+    expect(screen.getByText('Do a lesson and I’ll wake up — then we take our place at this week’s table.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Start a lesson' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
   });

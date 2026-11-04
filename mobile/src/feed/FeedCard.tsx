@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Animated, Pressable, Share, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
@@ -57,8 +57,11 @@ const DOUBLE_TAP_MS = 260;
  *
  * No signed-out variant, unlike the web card: the phone's tabs sit behind the
  * auth stack, so anyone looking at this has an account.
+ *
+ * Memoised: a wall of twenty re-renders when one post is liked, and nineteen
+ * of them have nothing new to draw.
  */
-export function FeedCard({
+export const FeedCard = memo(function FeedCard({
   item,
   onChanged,
   standalone = false,
@@ -288,7 +291,7 @@ export function FeedCard({
       ) : null}
     </View>
   );
-}
+});
 
 /**
  * The heart that blooms in the middle of a post liked by a double tap: it
@@ -412,7 +415,6 @@ function Action({
   onPress: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const { locale } = useI18n();
   const colour = tint ?? colors.textPrimary;
   const glyph = <Icon name={icon} size={20} color={colour} />;
   return (
@@ -431,8 +433,57 @@ function Action({
       ) : (
         glyph
       )}
-      {count ? <Text style={[styles.count, { color: tint ?? colors.textPrimary }]}>{pillCount(count, locale)}</Text> : null}
+      {count ? <TickCount value={count} color={tint ?? colors.textPrimary} /> : null}
     </Pressable>
+  );
+}
+
+/** The height of a pill's count line, which the old number leaves through and the new one arrives through. */
+const COUNT_LINE = 20;
+
+/**
+ * A pill's count, ticking: when the number changes the old one slides out
+ * and the new one rises into its place — upwards for one more, downwards for
+ * one fewer — on the native driver and the standard spring, so a like is
+ * seen to count. Under Reduce Motion the number simply changes.
+ */
+function TickCount({ value, color }: { value: number; color: string }): React.JSX.Element {
+  const { locale } = useI18n();
+  const reduce = useReducedMotion();
+  const [tick, setTick] = useState<{ now: number; was: number | null; up: boolean }>({ now: value, was: null, up: true });
+  const p = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (value === tick.now) return;
+    if (reduce) {
+      setTick({ now: value, was: null, up: true });
+      return;
+    }
+    setTick({ now: value, was: tick.now, up: value > tick.now });
+    p.setValue(0);
+    const run = springTo(p, 1, 'standard');
+    run.start(({ finished }) => {
+      if (finished) setTick((s) => ({ ...s, was: null }));
+    });
+    return () => run.stop();
+    // once per change of the number; what it was is read from the tick shown until now
+  }, [value]);
+  const sign = tick.up ? 1 : -1;
+  const leaving = p.interpolate({ inputRange: [0, 1], outputRange: [0, -sign * COUNT_LINE] });
+  const arriving = p.interpolate({ inputRange: [0, 1], outputRange: [sign * COUNT_LINE, 0] });
+  const fadeOut = p.interpolate({ inputRange: [0, 1], outputRange: [1, 0] });
+  return (
+    <View style={styles.tick}>
+      {tick.was !== null ? (
+        <Animated.Text
+          style={[styles.count, styles.tickOld, { color, opacity: fadeOut, transform: [{ translateY: leaving }] }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {pillCount(tick.was, locale)}
+        </Animated.Text>
+      ) : null}
+      <Animated.Text style={[styles.count, { color, opacity: p, transform: [{ translateY: arriving }] }]}>{pillCount(tick.now, locale)}</Animated.Text>
+    </View>
   );
 }
 
@@ -459,5 +510,8 @@ const styles = StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: PILL, height: PILL, borderRadius: radii.pill },
   pillWide: { paddingHorizontal: spacing.sm + 4 },
   pressed: { opacity: 0.6 },
-  count: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  count: { fontSize: typography.sizes.sm, lineHeight: COUNT_LINE, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  // the count's window: one line tall, so a number sliding out is gone at its edge
+  tick: { height: COUNT_LINE, overflow: 'hidden', justifyContent: 'center' },
+  tickOld: { position: 'absolute', left: 0, right: 0 },
 });

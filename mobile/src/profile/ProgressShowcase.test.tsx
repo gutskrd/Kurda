@@ -44,6 +44,23 @@ describe('ProgressShowcase', () => {
     expect(screen.getAllByText('Gir II').length).toBeGreaterThan(0);
   });
 
+  it('marks a badge earned since the app opened as new, and the others not', () => {
+    renderWithProviders(
+      <ProgressShowcase
+        own
+        badges={[
+          { key: 'agir', family: 'habit', tier: 2, tierKey: 'ziv' },
+          { key: 'peyvok', family: 'learning', tier: 1, tierKey: 'sifir' },
+        ]}
+        league={null}
+        ranks={[]}
+        fresh={new Set(['agir'])}
+      />,
+    );
+    expect(screen.getAllByTestId('badge-new')).toHaveLength(1);
+    expect(screen.getByText('New')).toBeTruthy();
+  });
+
   it('falls back to a bare "Placing" when the count is not sent', () => {
     renderWithProviders(
       <ProgressShowcase

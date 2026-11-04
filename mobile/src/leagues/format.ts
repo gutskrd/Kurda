@@ -134,3 +134,58 @@ export function lastWeekLine(t: Translate, result: LeagueWeekResult): string {
   if (result.outcome === 'demoted') return t('leagues.lastWeek.demoted', { tier: leagueName(t, after) });
   return t('leagues.lastWeek.stayed', { tier: leagueName(t, after) });
 }
+
+/**
+ * A closed week worth a moment on its own stage: which way it went, the tier
+ * raced in and the tier it left the learner in. Null when there is nothing to
+ * stage — a personal week, a week not taken part in, or a tier the app does
+ * not know.
+ */
+export interface Ceremony {
+  kind: 'promoted' | 'demoted' | 'stayed' | 'trophy';
+  from: LeagueTier;
+  now: LeagueTier;
+}
+
+export function ceremonyFor(week: LeagueWeekResult | null | undefined): Ceremony | null {
+  if (!week || week.mode !== 'league') return null;
+  const from = knownTier(week.tier);
+  const now = knownTier(week.tierAfter ?? week.tier);
+  if (!from || !now) return null;
+  if (week.trophy) return { kind: 'trophy', from, now };
+  if (week.outcome === 'promoted') return { kind: 'promoted', from, now };
+  if (week.outcome === 'demoted') return { kind: 'demoted', from, now };
+  if (week.outcome === 'stayed') return { kind: 'stayed', from, now };
+  return null;
+}
+
+/**
+ * The ceremony's first line: where the learner finished and what it meant
+ * ("You finished #15 last week and moved up to Çem."). A move down is said
+ * as the fresh start it is, never as a fall. Without a place to name it is
+ * last week's plain line.
+ */
+export function ceremonyLine(t: Translate, week: LeagueWeekResult, ceremony: Ceremony): string {
+  if (week.rank == null) return lastWeekLine(t, week);
+  const vars = { rank: week.rank, tier: leagueName(t, ceremony.now) };
+  switch (ceremony.kind) {
+    case 'promoted':
+      return t('leagues.ceremony.finishedUp', vars);
+    case 'demoted':
+      return t('leagues.ceremony.finishedDown', vars);
+    case 'trophy':
+      return t('leagues.ceremony.finishedTrophy', vars);
+    default:
+      return t('leagues.ceremony.finishedStayed', vars);
+  }
+}
+
+/**
+ * The one rule the ceremony ends on: how to move up from the league the
+ * learner is in now, as the group's own numbers put it, or at the top what
+ * the trophy takes. Null while the group has no promotion places yet.
+ */
+export function moveUpRule(t: Translate, view: { tier: LeagueTier; promoteCount: number; goalXp: number }): string | null {
+  if (view.tier === 'okyanus') return t('leagues.rules.trophy');
+  return view.promoteCount > 0 ? t('leagues.rules.promote', { count: view.promoteCount, goal: view.goalXp }) : null;
+}

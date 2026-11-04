@@ -1,6 +1,6 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
@@ -8,6 +8,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useDirection } from '../reports/direction';
+import { springTo, useListEntrance } from '../theme/animate';
 import { bucket, type RailFriend, type SocialRailData } from '../social/rail';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -33,6 +34,9 @@ const MOST = 20;
  * counted; the rings only say who is about.
  *
  * With no friends yet, the second circle finds some.
+ *
+ * The faces spring in one after another the first time they arrive, the way
+ * people turn up; a row drawn again later is simply there.
  */
 export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -67,6 +71,8 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
   const { playing, online, offline } = bucket(friends ?? []);
   const ordered = [...playing, ...online, ...offline].slice(0, MOST);
   const me = user?.displayName ?? user?.username ?? '';
+  // the first faces spring in once, as the friends arrive; "you" is there from the start
+  const entering = useListEntrance(friends !== null);
 
   return (
     <ScrollView
@@ -99,6 +105,7 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
         <Face
           label={t('feed.friends.find')}
           spoken={t('feed.friends.find')}
+          delay={entering(1)}
           onPress={() => require('friends') && navigation.navigate('Tabs', { screen: 'Search' })}
         >
           <View style={[styles.find, { backgroundColor: colors.controlTrack }]}>
@@ -107,12 +114,12 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
         </Face>
       ) : null}
 
-      {ordered.map((f) => {
+      {ordered.map((f, i) => {
         const name = f.displayName || f.username;
         const ring = f.activity ? 'playing' : f.online ? 'online' : 'none';
         const spoken = f.activity ? t('feed.friends.playing', { name }) : f.online ? t('feed.friends.online', { name }) : name;
         return (
-          <Face key={f.userId} label={name} spoken={spoken} ring={ring} onPress={() => navigation.navigate('UserProfile', { userId: f.userId })}>
+          <Face key={f.userId} label={name} spoken={spoken} ring={ring} delay={entering(i + 1)} onPress={() => navigation.navigate('UserProfile', { userId: f.userId })}>
             <InitialsAvatar name={name} id={f.userId} size={FACE} photoUrl={f.avatarUrl ?? undefined} />
           </Face>
         );
@@ -125,16 +132,39 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
 const PLAYING_FROM = '#F5B400';
 const PLAYING_TO = '#F0533C';
 
+/**
+ * A face springing in: from a little smaller, on the bouncy spring, `delay`
+ * after the row arrives (useListEntrance's beat for its place). Null is a
+ * face that is simply there — every face after the first screenful, every
+ * face on a later visit, and every face under Reduce Motion.
+ */
+function SpringIn({ delay, children }: { delay: number | null; children: ReactNode }): React.JSX.Element {
+  const arrive = useRef(new Animated.Value(delay === null ? 1 : 0)).current;
+  useEffect(() => {
+    if (delay === null) return;
+    const run = springTo(arrive, 1, 'bouncy', delay);
+    run.start();
+    return () => run.stop();
+    // once, as the face mounts
+  }, []);
+  const scale = arrive.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] });
+  const opacity = arrive.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
+  return <Animated.View style={{ opacity, transform: [{ scale }] }}>{children}</Animated.View>;
+}
+
 /** One circle and the name under it. */
 function Face({
   label,
   spoken,
   ring = 'none',
+  delay = null,
   onPress,
   children,
 }: {
   label: string;
   spoken: string;
+  /** when the face springs in, or null for one that is simply there */
+  delay?: number | null;
   /**
    * Who is about, as a ring: a warm gradient for a friend playing a game now
    * (the liveliest thing on the row, and the one worth a tap), quiet green for
@@ -153,8 +183,9 @@ function Face({
       accessibilityLabel={spoken}
       style={({ pressed }) => [styles.face, pressed && styles.pressed]}
     >
-      <View style={styles.ring}>
-        {ring !== 'none' ? (
+      <SpringIn delay={delay}>
+        <View style={styles.ring}>
+          {ring !== 'none' ? (
           <Svg width={CIRCLE} height={CIRCLE} style={StyleSheet.absoluteFill} pointerEvents="none">
             <Defs>
               <LinearGradient id="playing" x1="0" y1="1" x2="1" y2="0">
@@ -171,9 +202,10 @@ function Face({
               fill="none"
             />
           </Svg>
-        ) : null}
-        {children}
-      </View>
+          ) : null}
+          {children}
+        </View>
+      </SpringIn>
       <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
         {label}
       </Text>

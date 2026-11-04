@@ -10,6 +10,7 @@ import { GAME_NAME_KEY } from '../play/labels';
 import { BadgeMedal, LeagueEmblem, PlacementEmblem, RankEmblem } from '../ranks/art';
 import { TIER_NAME_KEY, rankLabel, rankName } from '../ranks/format';
 import { badgeLabel, badgeName } from '../badges/format';
+import { NewChip } from '../badges/NewChip';
 import { knownTier, leagueLabel, leagueName } from '../leagues/format';
 import { Icon } from '../theme/Icon';
 
@@ -27,6 +28,7 @@ export function ProgressShowcase({
   ranks,
   league,
   badges,
+  fresh,
   own,
   onBadges,
   onRanks,
@@ -35,6 +37,8 @@ export function ProgressShowcase({
   ranks: ProfileRank[];
   league: ProfileLeague | null | undefined;
   badges: ShowcaseBadge[];
+  /** badges earned since the app opened (`useFreshBadges`), which wear a "New" chip */
+  fresh?: ReadonlySet<string>;
   own: boolean;
   onBadges?: () => void;
   onRanks?: (game: ProfileRank['game']) => void;
@@ -61,9 +65,12 @@ export function ProgressShowcase({
               accessibilityLabel={t('profile.showcaseA11y', { badges: badges.map((b) => showcaseLabel(t, b)).join(', ') })}
               style={styles.badges}
             >
-              {badges.map((b) => (
+              {badges.map((b, i) => (
                 <View key={b.key} style={styles.badge}>
-                  <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={badgeDef(b.key)?.tiers.length ?? 4} size={68} label={showcaseLabel(t, b)} shine="loop" />
+                  <View style={styles.medal}>
+                    <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={badgeDef(b.key)?.tiers.length ?? 4} size={68} label={showcaseLabel(t, b)} shine="loop" />
+                    {fresh?.has(b.key) ? <NewChip delayMs={120 + i * 80} /> : null}
+                  </View>
                   <Text style={[styles.badgeName, { color: colors.textPrimary }]} numberOfLines={1}>
                     {badgeName(t, b.key)}
                   </Text>
@@ -185,6 +192,7 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   badges: { flexDirection: 'row', justifyContent: 'space-around' },
   badge: { alignItems: 'center', gap: 4, width: 96 },
+  medal: { width: 68, height: 68 },
   badgeName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   empty: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingHorizontal: spacing.md, minHeight: MIN_TOUCH_TARGET },
   emptyText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

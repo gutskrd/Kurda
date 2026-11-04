@@ -1,11 +1,12 @@
-import { useCallback, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Animated, Easing, FlatList, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { FIRST_LEAGUE_TIER, LEAGUE_TIERS, leagueTierIndex, type LeagueTier, type LeagueView, type LeagueWeekXp } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display, sectionLabel } from '../theme/fonts';
@@ -23,7 +24,8 @@ import { getLeague } from '../ranks/api';
 import { leagueTint } from '../ranks/tint';
 import { GoalRing } from './GoalRing';
 import { LeagueMoment } from './LeagueMoment';
-import { useListEntrance } from '../theme/animate';
+import { springTo, timing, useListEntrance } from '../theme/animate';
+import { duration } from '../theme/motion';
 import { Rise } from '../theme/MotionParts';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useDirection } from '../reports/direction';
@@ -147,8 +149,8 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
             labelOf={(k) => (k === 'league' ? t('profile.league') : t('rankings.leaderboard'))}
           />
         </View>
-        {/* moved up last week: celebrated once, the first time the league is opened after */}
-        <LeagueMoment week={league?.lastWeek} />
+        {/* the week that closed: its ceremony, once, the first time the league is opened after */}
+        <LeagueMoment league={league} />
         {tab === 'league' ? (
           <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={loadLeague} skeleton={<LeagueSkeleton />}>
             {league ? (
@@ -201,7 +203,7 @@ function LeagueTab({
       ListFooterComponent={<LeaveLeagues busy={joining} onLeave={onLeave} />}
       renderItem={({ item, index }) => (
         <Rise delay={entering(index)}>
-          <TableRow item={item} />
+          <TableRow item={item} delay={entering(index)} />
         </Rise>
       )}
     />
@@ -228,7 +230,8 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
           {t('leagues.leagueName', { tier: leagueName(t, tier) })}
         </Text>
         {meaning ? <Text style={[styles.heroMeaning, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
-        <View style={[styles.ends, { flexDirection: dir.row }]}>
+        {/* how long the week has left, as a quiet pill: whole days, never a clock running down */}
+        <View style={[styles.ends, styles.daysPill, { flexDirection: dir.row, backgroundColor: colors.controlTrack, alignSelf: dir.rtl ? 'flex-end' : 'flex-start' }]}>
           <Icon name="timer" size={16} color={colors.textSecondary} />
           <Text style={[styles.left, dir.text, { color: colors.textSecondary }]}>{weekLeftText(t, league.endsAt, locale)}</Text>
         </View>
@@ -343,23 +346,74 @@ function Ladder({ tier }: { tier: LeagueTier }): React.JSX.Element {
         const league = leagueLabel(t, key);
         const label =
           i < here ? t('leagues.ladder.reached', { league }) : i === here ? t('leagues.ladder.here', { league }) : t('leagues.ladder.ahead', { league });
-        return <LeagueEmblem key={key} tier={key} size={i === here ? LADDER_SIZE.here : size} label={label} locked={i > here} />;
+        if (i === here) {
+          return (
+            <Bobbing key={key}>
+              <LeagueEmblem tier={key} size={LADDER_SIZE.here} label={label} />
+            </Bobbing>
+          );
+        }
+        return <LeagueEmblem key={key} tier={key} size={size} label={label} locked={i > here} />;
       })}
     </ScrollView>
   );
 }
 
+/** How far, and how slowly, the learner's own emblem rides on its water. */
+const BOB = { distance: 3, ms: 2600 } as const;
+
 /**
- * Before the week's first lesson: Hevalo asleep, and the lesson that starts
- * the week. Nothing about falling behind — there is nothing to be behind yet.
+ * The learner's own emblem on the ladder, afloat: it rises and settles a few
+ * points every couple of seconds, on the native driver, so the one league
+ * that is theirs is the one thing on the row that is alive. It holds still
+ * while the page is not in front (the loop is started on focus and stopped
+ * on blur) and under Reduce Motion, where it is simply there.
+ */
+function Bobbing({ children }: { children: ReactNode }): React.JSX.Element {
+  const reduce = useReducedMotion();
+  const ride = useRef(new Animated.Value(0)).current;
+  useFocusEffect(
+    useCallback(() => {
+      if (reduce) {
+        ride.setValue(0);
+        return;
+      }
+      const ease = Easing.inOut(Easing.sin);
+      const loop = Animated.loop(
+        Animated.sequence([
+          Animated.timing(ride, { toValue: 1, duration: BOB.ms / 2, easing: ease, useNativeDriver: true }),
+          Animated.timing(ride, { toValue: 0, duration: BOB.ms / 2, easing: ease, useNativeDriver: true }),
+        ]),
+      );
+      loop.start();
+      return () => {
+        loop.stop();
+        ride.setValue(0);
+      };
+    }, [reduce, ride]),
+  );
+  const translateY = ride.interpolate({ inputRange: [0, 1], outputRange: [0, -BOB.distance] });
+  return <Animated.View style={{ transform: [{ translateY }] }}>{children}</Animated.View>;
+}
+
+/**
+ * Before the week's first lesson: Hevalo asleep, a line in his own words
+ * about the lesson that wakes him and puts the two of you on the table, and
+ * the lesson itself. Nothing about falling behind — there is nothing to be
+ * behind yet.
  */
 function Resting(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const navigation = useNavigation<RootNavigation>();
   return (
     <View style={styles.resting}>
       <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={RESTING_HEIGHT} resting />
+      {/* what he would say, were he awake: his words in a bubble, read as his */}
+      <View style={[styles.bubble, { backgroundColor: colors.glassFill }]} accessibilityRole="text">
+        <Text style={[styles.bubbleText, dir.text, { color: colors.textPrimary }]}>{t('leagues.resting.hevalo')}</Text>
+      </View>
       <Text style={[styles.waitTitle, { color: colors.textPrimary }]}>{t('leagues.resting.title')}</Text>
       <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>{t('leagues.notJoined.body')}</Text>
       <ClayButton
@@ -477,7 +531,13 @@ const ROW = MIN_TOUCH_TARGET + 4 + spacing.xs;
 /** display(34) sets 1.12 */
 const LEAGUE_TITLE_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
 
-function TableRow({ item }: { item: TableItem }): React.JSX.Element {
+/**
+ * One row of the group's table, drawn once per row and not again when the
+ * list re-renders round it. `delay` is the row's place in the entrance, for
+ * the learner's own row, which swells once as it arrives so the eye finds
+ * it without looking for it.
+ */
+const TableRow = memo(function TableRow({ item, delay }: { item: TableItem; delay: number | null }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   if (item.kind === 'gap') return <View style={styles.gap} />;
@@ -495,12 +555,9 @@ function TableRow({ item }: { item: TableItem }): React.JSX.Element {
   const row = item.row;
   const name = row.isSelf ? t('games.you') : (row.username ?? t('leagues.unnamed'));
   const zoneWord = row.zone === 'promotion' ? t('leagues.zone.promotion') : row.zone === 'demotion' ? t('leagues.zone.demotion') : null;
-  return (
-    <View
-      accessible
-      accessibilityLabel={[`#${row.rank}`, name, t('leagues.xpCount', { xp: row.weeklyXp }), zoneWord].filter(Boolean).join(', ')}
-      style={[styles.row, { backgroundColor: row.isSelf ? colors.glassFill : 'transparent' }, row.isSelf && { borderColor: colors.primary, borderWidth: 1 }]}
-    >
+  const label = [`#${row.rank}`, name, t('leagues.xpCount', { xp: row.weeklyXp }), zoneWord].filter(Boolean).join(', ');
+  const body = (
+    <>
       <Text style={[styles.rank, { color: colors.textSecondary }]}>{row.rank}</Text>
       {row.username ? (
         <InitialsAvatar name={row.username} id={row.userId ?? `row-${row.rank}`} size={32} />
@@ -517,7 +574,45 @@ function TableRow({ item }: { item: TableItem }): React.JSX.Element {
         <Icon name={row.zone === 'promotion' ? 'move-up' : 'move-down'} size={12} color={row.zone === 'promotion' ? colors.success : colors.textSecondary} />
       ) : null}
       <Text style={[styles.score, { color: colors.textPrimary }]}>{t('leagues.xpCount', { xp: formatCompact(row.weeklyXp, locale) })}</Text>
+    </>
+  );
+  if (row.isSelf) {
+    return (
+      <OwnRow accessible accessibilityLabel={label} delay={delay} style={[styles.row, { backgroundColor: colors.glassFill, borderColor: colors.primary, borderWidth: 1 }]}>
+        {body}
+      </OwnRow>
+    );
+  }
+  return (
+    <View accessible accessibilityLabel={label} style={styles.row}>
+      {body}
     </View>
+  );
+});
+
+/** How much the learner's own row swells as it arrives. */
+const OWN_ROW_SWELL = 1.03;
+
+/**
+ * The learner's own row: once it has risen into place it swells a little and
+ * settles on the bouncy spring, so it is found at a glance in a table of
+ * twenty. Once, as it arrives, and not under Reduce Motion, where its colour
+ * and its edge mark it alone. Everything else is a plain View's.
+ */
+function OwnRow({ delay, style, children, ...rest }: React.ComponentProps<typeof View> & { delay: number | null }): React.JSX.Element {
+  const reduce = useReducedMotion();
+  const scale = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (reduce || delay === null) return;
+    const run = Animated.sequence([timing(scale, OWN_ROW_SWELL, duration.quick + 40, { delay: delay + duration.slow }), springTo(scale, 1, 'bouncy')]);
+    run.start();
+    return () => run.stop();
+    // once, as the row arrives
+  }, []);
+  return (
+    <Animated.View {...rest} style={[style, { transform: [{ scale }] }]}>
+      {children}
+    </Animated.View>
   );
 }
 
@@ -707,6 +802,10 @@ const styles = StyleSheet.create({
   ladder: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', gap: LADDER_GAP, paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
   divider: { height: StyleSheet.hairlineWidth, marginHorizontal: -layout.gutter },
   resting: { alignItems: 'center', gap: spacing.sm, paddingTop: spacing.md, paddingBottom: spacing.sm },
+  // his words, in a bubble under him: filled, not framed, like every surface here
+  bubble: { borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 2, maxWidth: 320 },
+  bubbleText: { fontSize: typography.sizes.md, lineHeight: 22, fontStyle: 'italic', textAlign: 'center' },
+  daysPill: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, marginTop: spacing.sm },
   leave: { alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.md },
   hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   heroTitle: { ...display(typography.sizes.xl) },

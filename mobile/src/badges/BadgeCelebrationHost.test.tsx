@@ -4,7 +4,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
-import { BadgeCelebrationHost, useCelebrationHold } from './BadgeCelebrationHost';
+import { Text } from 'react-native';
+import { BadgeCelebrationHost, useCelebrationHold, useFreshBadges } from './BadgeCelebrationHost';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 
@@ -31,6 +32,12 @@ const unseen = [
 function Holding({ hold }: { hold: boolean }): React.JSX.Element {
   useCelebrationHold(hold);
   return <></>;
+}
+
+/** What a page would mark "New": the fresh keys, in one line. */
+function Fresh(): React.JSX.Element {
+  const fresh = useFreshBadges();
+  return <Text>{[...fresh].sort().join(',') || 'none'}</Text>;
 }
 
 describe('BadgeCelebrationHost', () => {
@@ -68,6 +75,19 @@ describe('BadgeCelebrationHost', () => {
       </BadgeCelebrationHost>,
     );
     expect(await screen.findByText('Agir', {}, { timeout: 3000 })).toBeTruthy();
+  });
+
+  it('tells the pages which badges are news this session, before and after their celebration', async () => {
+    testAuth.client = fakeClient({ 'GET /me/badges/unseen': ok({ unseen }), 'POST /me/badges/seen': ok({ seen: true }) });
+    renderWithProviders(
+      <BadgeCelebrationHost>
+        <Fresh />
+      </BadgeCelebrationHost>,
+    );
+    expect(await screen.findByText('agir,tire-rast')).toBeTruthy();
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }, { timeout: 3000 }));
+    // celebrated, and still news until the app is next opened
+    expect(screen.getByText('agir,tire-rast')).toBeTruthy();
   });
 
   it('opens the badges page from the moment', async () => {

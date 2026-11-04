@@ -18,6 +18,8 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { Note, Sheet } from '../stories/ui';
 import { BadgeMedal } from '../ranks/art';
+import { useFreshBadges } from './BadgeCelebrationHost';
+import { NewChip } from './NewChip';
 import { getBadges, setShowcase } from '../ranks/api';
 import { Meter } from '../ranks/Meter';
 import { badgeTint } from '../ranks/tint';
@@ -56,6 +58,8 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [error, setError] = useState<ApiError | null>(null);
   const [open, setOpen] = useState<BadgeView | null>(null);
   const [picking, setPicking] = useState(false);
+  // earned since the app opened: marked "New" on their tiles
+  const fresh = useFreshBadges();
 
   const load = useCallback(() => {
     void getBadges(client).then((res) => {
@@ -87,7 +91,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                   </Text>
                   <View style={styles.grid}>
                     {nearest.map((b) => (
-                      <BadgeTile key={b.key} badge={b} width={tile} onPress={() => setOpen(b)} />
+                      <BadgeTile key={b.key} badge={b} width={tile} fresh={fresh.has(b.key)} onPress={() => setOpen(b)} />
                     ))}
                   </View>
                 </View>
@@ -113,7 +117,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                   ) : null}
                   <View style={styles.grid}>
                     {group.badges.map((b) => (
-                      <BadgeTile key={b.key} badge={b} width={tile} onPress={() => setOpen(b)} />
+                      <BadgeTile key={b.key} badge={b} width={tile} fresh={fresh.has(b.key)} onPress={() => setOpen(b)} />
                     ))}
                   </View>
                 </View>
@@ -272,7 +276,8 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
 /** display(22) sets 1.12 */
 const SUMMARY_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
 
-function BadgeTile({ badge, width, onPress }: { badge: BadgeView; width: number; onPress: () => void }): React.JSX.Element {
+/** One badge in the grid; `fresh` is a badge earned since the app opened, which wears a "New" chip. */
+function BadgeTile({ badge, width, fresh = false, onPress }: { badge: BadgeView; width: number; fresh?: boolean; onPress: () => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t } = useI18n();
   const label = badgeLabel(t, badge);
@@ -287,7 +292,10 @@ function BadgeTile({ badge, width, onPress }: { badge: BadgeView; width: number;
       accessibilityLabel={[label, progress].filter(Boolean).join('. ')}
       style={[styles.tile, { width }]}
     >
-      <BadgeMedal badgeKey={badge.key} tier={badge.tier} tierCount={badge.tierCount} hidden={badge.hidden} size={size} label={label} />
+      <View style={{ width: size, height: size }}>
+        <BadgeMedal badgeKey={badge.key} tier={badge.tier} tierCount={badge.tierCount} hidden={badge.hidden} size={size} label={label} />
+        {fresh && badge.tier > 0 ? <NewChip /> : null}
+      </View>
       <Text style={[styles.tileName, { color: badge.tier > 0 ? colors.textPrimary : colors.textSecondary }]} numberOfLines={2}>
         {name}
       </Text>
