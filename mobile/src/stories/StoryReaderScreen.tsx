@@ -34,7 +34,7 @@ import { display } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
-import { activeGames, createGame, getCategories, getStory, saveProgress, saveWord, setBookmark, type ProgressInput } from './api';
+import { activeGames, createGame, getCategories, getStory, saveProgress, saveWord, savedWords, setBookmark, type ProgressInput } from './api';
 import { StoryCover } from './covers';
 import { DIALECT_NAME, TRADITION_KEY, categoryLabel, cefrLabel, narrationLabel } from './labels';
 import { narrationItems, narrationLine, narrationTrack } from './narration';
@@ -148,6 +148,9 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   // the end of the text reached in this sitting, before the server has said so
   const [reachedEnd, setReachedEnd] = useState(false);
   const [continueFrom, setContinueFrom] = useState<number | null>(null);
+  // the glossary's dictionary words already in the reader's vocabulary, and a save that did not take
+  const [saved, setSaved] = useState<ReadonlySet<string>>(new Set());
+  const [saveError, setSaveError] = useState<{ entryId: string; text: string } | null>(null);
   const { narrator, state: narration } = useNarration(prefs.rate);
   const clips = useClipPlayer();
   const scroll = useRef<ScrollView>(null);
@@ -167,6 +170,39 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     });
   }, [client, slug]);
   useEffect(load, [load]);
+  // which of the story's dictionary words are saved already: asked only when it has any
+  const headwords = !!story?.glossary.some((g) => !!g.entryId);
+  useEffect(() => {
+    if (!headwords) return;
+    let live = true;
+    void savedWords(client).then((res) => {
+      if (live && res.ok) setSaved(new Set(res.data.words.map((w) => w.entryId)));
+    });
+    return () => {
+      live = false;
+    };
+  }, [client, headwords]);
+
+  /** Save word / Saved: at once on the screen, then on the server; a refusal takes it back and says why (a full vocabulary, limits/limitCopy.ts). */
+  const toggleSave = (entryId: string): void => {
+    const on = !saved.has(entryId);
+    haptic('tap');
+    const mark = (value: boolean) =>
+      setSaved((was) => {
+        const next = new Set(was);
+        if (value) next.add(entryId);
+        else next.delete(entryId);
+        return next;
+      });
+    mark(on);
+    setSaveError(null);
+    void saveWord(client, entryId, on).then((res) => {
+      if (res.ok) return;
+      mark(!on);
+      setSaveError({ entryId, text: limitErrorText(res.error, t) ?? describeError(res.error, t) });
+    });
+  };
+
   // the category's name, for the slug the story carries; the list is small and cached on the server
   useEffect(() => {
     let live = true;
@@ -453,9 +489,19 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
         <SectionLabel>{t('stories.overview.vocabulary')}</SectionLabel>
         <Card padding="tight">
           {story.glossary.map((entry) => (
-            <VocabularyRow key={entry.term} entry={entry} story={story} onOpen={() => setGloss(entry)} clips={clips} />
+            <VocabularyRow
+              key={entry.term}
+              entry={entry}
+              story={story}
+              onOpen={() => setGloss(entry)}
+              clips={clips}
+              saved={!!entry.entryId && saved.has(entry.entryId)}
+              onSave={entry.entryId ? () => toggleSave(entry.entryId!) : undefined}
+            />
           ))}
         </Card>
+        {/* a save refused from the list is said under it; one refused in the word's sheet is said there */}
+        {saveError && !gloss ? <Note tone="danger" icon="alert">{saveError.text}</Note> : null}
       </View>
     ) : null;
 
@@ -616,7 +662,13 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
           entry={gloss}
           story={story}
           clips={clips}
-          onClose={() => setGloss(null)}
+          saved={!!gloss.entryId && saved.has(gloss.entryId)}
+          onSave={gloss.entryId ? () => toggleSave(gloss.entryId!) : undefined}
+          error={saveError && saveError.entryId === gloss.entryId ? saveError.text : null}
+          onClose={() => {
+            setGloss(null);
+            setSaveError(null);
+          }}
         />
       ) : null}
 
@@ -725,17 +777,26 @@ function CheckCard({
   );
 }
 
-/** A glossary word in the overview's list: the word, its meaning, a play button where there is a clip. */
+/**
+ * A glossary word in the key vocabulary: the word and its meaning (a tap
+ * opens its sheet), a play button where the dictionary has a clip, and a
+ * save button where the word is a dictionary headword.
+ */
 function VocabularyRow({
   entry,
   story,
   onOpen,
   clips,
+  saved,
+  onSave,
 }: {
   entry: StoryGlossEntry;
   story: Pick<StoryDetail, 'dialect'>;
   onOpen: () => void;
   clips: Clips;
+  saved: boolean;
+  /** only for a word the dictionary has */
+  onSave?: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -774,6 +835,18 @@ function VocabularyRow({
           <Icon name="speaker" size={18} color={playing ? colors.textOnPrimary : colors.primary} />
         </Pressable>
       ) : null}
+      {onSave ? (
+        <Pressable
+          onPress={onSave}
+          accessibilityRole="button"
+          // after the word itself, as the play button is: "Save word" needs no name repeated
+          accessibilityLabel={saved ? t('stories.reader.saved') : t('stories.reader.saveWord')}
+          accessibilityState={{ selected: saved }}
+          style={({ pressed }) => [styles.wordPlay, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+        >
+          <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={18} color={saved ? colors.gold : colors.primary} />
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -785,30 +858,30 @@ function VocabularyRow({
  * Save word / Saved where the word is a dictionary headword — with the
  * vocabulary's limit said when the shelf is full.
  */
-function GlossSheet({ entry, story, clips, onClose }: { entry: StoryGlossEntry; story: Pick<StoryDetail, 'dialect'>; clips: Clips; onClose: () => void }): React.JSX.Element {
-  const { client } = useAuth();
+function GlossSheet({
+  entry,
+  story,
+  clips,
+  saved,
+  onSave,
+  error,
+  onClose,
+}: {
+  entry: StoryGlossEntry;
+  story: Pick<StoryDetail, 'dialect'>;
+  clips: Clips;
+  saved: boolean;
+  /** only for a word the dictionary has */
+  onSave?: () => void;
+  /** why the last save of this word did not take */
+  error: string | null;
+  onClose: () => void;
+}): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const meaning = glossFor(entry, locale);
   const english = meaning.lang === 'en' && locale !== 'en';
-  const [saved, setSaved] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
   const url = entry.audioUrl ?? null;
-  const entryId = entry.entryId ?? null;
-
-  const toggleSave = (): void => {
-    if (!entryId) return;
-    const next = !saved;
-    haptic('tap');
-    setSaved(next);
-    setSaveError(null);
-    void saveWord(client, entryId, next).then((res) => {
-      if (res.ok) return;
-      // it did not take: the word goes back, and a full vocabulary says why (limits/limitCopy.ts)
-      setSaved(!next);
-      setSaveError(limitErrorText(res.error, t) ?? describeError(res.error, t));
-    });
-  };
 
   return (
     <Sheet title={t('stories.reader.meaning')} onClose={onClose}>
@@ -820,23 +893,23 @@ function GlossSheet({ entry, story, clips, onClose }: { entry: StoryGlossEntry; 
         {meaning.text}
       </Text>
       {english ? <Text style={[styles.sheetText, { color: colors.textSecondary }]}>{t('stories.reader.inEnglish')}</Text> : null}
-      {(url && clips.supported) || entryId ? (
+      {(url && clips.supported) || onSave ? (
         <View style={styles.glossActions}>
           {url && clips.supported ? (
             <ClayButton label={t('stories.reader.playWord')} icon="speaker" onPress={() => clips.play(url)} />
           ) : null}
-          {entryId ? (
+          {onSave ? (
             <ClayButton
               label={saved ? t('stories.reader.saved') : t('stories.reader.saveWord')}
               icon={saved ? 'bookmark-fill' : 'bookmark'}
               tone={saved ? 'neutral' : 'primary'}
-              onPress={toggleSave}
+              onPress={onSave}
               accessibilityLabel={saved ? t('stories.reader.saved') : t('stories.reader.saveWord')}
             />
           ) : null}
         </View>
       ) : null}
-      {saveError ? <Note tone="danger" icon="alert">{saveError}</Note> : null}
+      {error ? <Note tone="danger" icon="alert">{error}</Note> : null}
     </Sheet>
   );
 }

@@ -75,6 +75,9 @@ export const saveProgress = (client: ApiClient, id: string, input: ProgressInput
 export const saveWord = (client: ApiClient, entryId: string, on: boolean): Promise<ApiResult<unknown>> =>
   on ? client.put(`/dictionary/entries/${entryId}/save`) : client.delete(`/dictionary/entries/${entryId}/save`);
 
+/** The words already in the reader's vocabulary (the dictionary's list), so Save can say Saved where one already is. */
+export const savedWords = (client: ApiClient): Promise<ApiResult<{ words: { entryId: string }[] }>> => client.get('/me/saved-words');
+
 export const activeGames = (client: ApiClient): Promise<ApiResult<{ games: StoryGameSummary[] }>> =>
   client.get('/story-games/active');
 

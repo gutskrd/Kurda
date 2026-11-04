@@ -180,6 +180,7 @@ describe('StoryReaderScreen', () => {
   it('saves a word from its sheet when it is a headword, and says why when the vocabulary is full', async () => {
     const client = routes(
       {
+        'GET /me/saved-words': ok({ words: [] }),
         'PUT /dictionary/entries/e1/save': fail({ status: 409, code: 'LIMIT_REACHED', details: { limit: 'saved_words', max: 500 } }),
       },
       { ...NANE_GERM, glossary: [{ term: 'germ', meanings: { en: 'warm' }, entryId: 'e1', pos: 'adjective' }] },
@@ -191,11 +192,44 @@ describe('StoryReaderScreen', () => {
     fireEvent.click(word);
     expect(screen.getByText('Meaning')).toBeTruthy();
     expect(screen.getByText('adjective')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Save word' }));
+    // the sheet's button comes after the list's
+    fireEvent.click(screen.getAllByRole('button', { name: 'Save word' }).at(-1)!);
     // at once Saved; the server's refusal takes it back and says the limit
     await waitFor(() => expect(client.calls.some((c) => c.method === 'PUT' && c.path === '/dictionary/entries/e1/save')).toBe(true));
-    expect(await screen.findByRole('button', { name: 'Save word' })).toBeTruthy();
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Save word' })).toHaveLength(2));
     expect(screen.getByText(/500/)).toBeTruthy();
+  });
+
+  it('knows the words already saved, and saves one from the key vocabulary that its sheet then shows as saved', async () => {
+    const client = routes(
+      {
+        'GET /me/saved-words': ok({ words: [{ entryId: 'e2' }] }),
+        'PUT /dictionary/entries/e1/save': ok({ saved: true }),
+        'DELETE /dictionary/entries/e2/save': ok({ saved: false }),
+      },
+      {
+        ...NANE_GERM,
+        glossary: [
+          { term: 'germ', meanings: { en: 'warm' }, entryId: 'e1' },
+          { term: 'nan', meanings: { en: 'bread' }, entryId: 'e2' },
+          { term: 'dayik', meanings: { en: 'mother' } },
+        ],
+      },
+    );
+    testAuth.client = client;
+    renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
+    await screen.findByRole('button', { name: 'germ' });
+    // one Save per dictionary word, and the one already saved says so
+    await waitFor(() => expect(screen.getAllByRole('button', { name: 'Saved' })).toHaveLength(1));
+    expect(screen.getAllByRole('button', { name: 'Save word' })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Save word' }));
+    expect(screen.getAllByRole('button', { name: 'Saved' })).toHaveLength(2);
+    await waitFor(() => expect(client.calls.some((c) => c.method === 'PUT' && c.path === '/dictionary/entries/e1/save')).toBe(true));
+    fireEvent.click(screen.getByRole('button', { name: 'germ' }));
+    expect(screen.getAllByRole('button', { name: 'Saved' })).toHaveLength(3);
+    // and taken out again from the list
+    fireEvent.click(screen.getAllByRole('button', { name: 'Saved' })[1]!);
+    await waitFor(() => expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/dictionary/entries/e2/save')).toBe(true));
   });
 
   it('shows a paragraph’s translation on request, in the reader’s language or English', async () => {
