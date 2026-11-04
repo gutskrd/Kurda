@@ -32,6 +32,7 @@ interface ListBody {
     skill: { id: string; title: string };
   }>;
   skills: Array<{ id: string; titleEn: string; unitTitle: string; courseTitle: string; nextPosition: number }>;
+  courses: Array<{ id: string; slug: string; title: string }>;
 }
 
 describe.skipIf(!DATABASE_URL)('admin lesson list (integration)', () => {
@@ -159,6 +160,27 @@ describe.skipIf(!DATABASE_URL)('admin lesson list (integration)', () => {
     // LIKE wildcards are matched literally, not as wildcards
     const wild = (await list(`?q=${encodeURIComponent('%_%')}`)).json() as ListBody;
     expect(wild.lessons.filter((l) => l.course.id === courseId)).toEqual([]);
+  });
+
+  it('keeps one course’s lessons when asked, and names every course it can keep', async () => {
+    const other = await new ContentRepository(pool).createCourse({ slug: `ll-other-${suffix}`, titleKu: 'K', titleEn: `Other course ${suffix}` });
+    try {
+      const ours = (await list(`?course=ll-${suffix}`)).json() as ListBody;
+      expect(ours.lessons.map((l) => l.id)).toEqual([draftId, nextDraftId]);
+      expect(ours.total).toBe(2);
+      expect((await list(`?course=ll-other-${suffix}`)).json()).toMatchObject({ lessons: [], total: 0 });
+      // the filter and the search narrow together
+      expect(((await list(`?course=ll-${suffix}&q=family`)).json() as ListBody).lessons.map((l) => l.id)).toEqual([nextDraftId]);
+      expect(ours.courses).toEqual(
+        expect.arrayContaining([
+          { id: courseId, slug: `ll-${suffix}`, title: `List course ${suffix}` },
+          { id: other, slug: `ll-other-${suffix}`, title: `Other course ${suffix}` },
+        ]),
+      );
+      expect((await list('?course=Not%20a%20slug')).statusCode).toBe(400);
+    } finally {
+      await pool.query(`DELETE FROM courses WHERE id = $1`, [other]);
+    }
   });
 
   it('leaves archived slots out unless asked for everything', async () => {

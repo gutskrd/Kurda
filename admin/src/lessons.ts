@@ -65,9 +65,18 @@ export interface SkillOption {
   nextPosition: number;
 }
 
+/** A course the lesson list can show on its own, by its slug. */
+export interface CourseOption {
+  id: string;
+  slug: string;
+  title: string;
+}
+
 export interface LessonList {
   lessons: LessonRow[];
   skills: SkillOption[];
+  /** every course; missing from an API older than this panel, which then offers no course filter */
+  courses?: CourseOption[];
   total: number;
 }
 

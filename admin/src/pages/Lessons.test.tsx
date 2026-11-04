@@ -113,6 +113,52 @@ describe('the lesson list', () => {
     expect(api.calls.filter((c) => c.path.includes('q=')).map((c) => c.path)).toEqual(['/admin/content/lessons?status=all&q=family']);
   });
 
+  describe('by course', () => {
+    const COURSES = [
+      { id: 'c-1', slug: 'kurmanji-basics', title: 'Kurmancî for beginners' },
+      { id: 'c-2', slug: 'kurmanji-road', title: 'The Kurmanji Road' },
+    ];
+    const road = row({ id: 'l-9', skillId: 's-9', titleEn: 'Arriving', titleKu: 'Gihîştin', course: { id: 'c-2', title: 'The Kurmanji Road' } });
+    const ROAD: LessonList = { ...LIST, lessons: [road], total: 1, courses: COURSES };
+
+    it('shows one course’s lessons, asked of the server', async () => {
+      const user = userEvent.setup();
+      const api = fakeApi(
+        on('GET', '/admin/content/lessons?status=all', json({ ...LIST, lessons: [...LIST.lessons, road], total: 4, courses: COURSES })),
+        on('GET', '/admin/content/lessons?status=all&course=kurmanji-road', json(ROAD)),
+      );
+      location.hash = '#/lessons';
+      renderUi(<Lessons />);
+      await waitFor(() => expect(titles()).toHaveLength(4));
+      const course = screen.getByLabelText('Course');
+      expect([...(course as HTMLSelectElement).options].map((o) => o.text)).toEqual(['Every course', 'Kurmancî for beginners', 'The Kurmanji Road']);
+      await user.selectOptions(course, 'The Kurmanji Road');
+      await waitFor(() => expect(titles()).toEqual(['Arriving']));
+      expect(api.calls.map((c) => c.path)).toContain('/admin/content/lessons?status=all&course=kurmanji-road');
+      // the status tabs count that course's lessons
+      expect(within(screen.getByRole('tablist', { name: 'Status' })).getByRole('tab', { name: /^All/ })).toHaveTextContent('1');
+    });
+
+    it('opens on the course the address names', async () => {
+      const api = fakeApi(on('GET', '/admin/content/lessons?status=all&course=kurmanji-road', json(ROAD)));
+      location.hash = '#/lessons?course=kurmanji-road';
+      renderUi(<Lessons />);
+      await waitFor(() => expect(titles()).toEqual(['Arriving']));
+      expect(screen.getByLabelText('Course')).toHaveValue('kurmanji-road');
+      expect(api.calls.map((c) => c.path)).toEqual(['/admin/content/lessons?status=all&course=kurmanji-road']);
+      // who records what in that course, in the audio studio
+      expect(screen.getByRole('link', { name: 'Recording plan for The Kurmanji Road' })).toHaveAttribute('href', '#/audio/lessons?course=kurmanji-road');
+    });
+
+    it('offers no course filter when there is one course, or the server names none', async () => {
+      fakeApi(on('GET', '/admin/content/lessons?status=all', json(LIST)));
+      location.hash = '#/lessons';
+      renderUi(<Lessons />);
+      await waitFor(() => expect(titles()).toHaveLength(3));
+      expect(screen.queryByLabelText('Course')).toBeNull();
+    });
+  });
+
   it('creates a draft in a skill chosen by name, at the next free position', async () => {
     const user = userEvent.setup();
     const api = fakeApi(on('GET', '/admin/content/lessons?status=all', json(LIST)), on('POST', '/admin/content/lessons', json({ lessonId: 'l-new' }, 201)));

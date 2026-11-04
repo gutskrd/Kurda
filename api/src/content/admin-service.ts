@@ -73,6 +73,8 @@ export interface SkillOption {
 export interface LessonListFilters {
   /** the newest version's status; omitted lists everything but archived slots */
   status?: ContentStatus | 'all';
+  /** one course's lessons, by its slug (`kurmanji-road`) */
+  course?: string;
   /** words of a title (Kurdish or English, the lesson's, skill's or unit's), or a lesson id */
   q?: string;
   limit?: number;
@@ -80,6 +82,13 @@ export interface LessonListFilters {
 
 /** Most lessons a list answers with: the whole curriculum today is a few hundred. */
 export const LESSON_LIST_MAX = 500;
+
+/** A course the lesson list can be narrowed to. */
+export interface CourseOption {
+  id: string;
+  slug: string;
+  title: string;
+}
 
 interface LessonRow {
   id: string;
@@ -134,6 +143,10 @@ export class ContentAdminService {
       where.push(`l.status = $${params.length}`);
     } else if (!filters.status) {
       where.push(`l.status <> 'archived'`);
+    }
+    if (filters.course) {
+      params.push(filters.course);
+      where.push(`c.slug = $${params.length}`);
     }
     const q = filters.q?.trim();
     if (q) {
@@ -197,6 +210,12 @@ export class ContentAdminService {
         skill: { id: r.skill_id, title: r.skill_title, position: r.skill_position },
       })),
     };
+  }
+
+  /** Every course, in course order: what the lesson list can be narrowed to. */
+  async courseOptions(): Promise<CourseOption[]> {
+    const res = await this.pool.query<{ id: string; slug: string; title_en: string }>(`SELECT id, slug, title_en FROM courses ORDER BY slug`);
+    return res.rows.map((r) => ({ id: r.id, slug: r.slug, title: r.title_en }));
   }
 
   /** The skills a new lesson can go in, in course order, each with its next free position. */
