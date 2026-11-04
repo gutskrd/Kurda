@@ -466,8 +466,8 @@ const FACE: Knot[] = [
 const BROW_MOVES: Readonly<Record<BrowState, { near: readonly [number, number, number]; far: readonly [number, number, number] }>> = {
   neutral: { near: [0, 0, 0], far: [0, 0, 0] },
   raised: { near: [0, -2.6, -0.5], far: [0, -2.2, -0.4] },
-  // one brow up, most at its inner end: the look that asks "really?"
-  one: { near: [0, -1.6, -2.6], far: [0, 0.3, 0.4] },
+  // one brow up, most at its inner end, the other left where it is: the look that asks "really?"
+  one: { near: [0, -1.3, -2.2], far: [0, 0, 0] },
   // both drawn down and in toward the nose, the inner ends lowest
   knit: { near: [0.9, 1.0, 1.3], far: [-0.8, 0.9, 1.1] },
 };
@@ -670,7 +670,7 @@ export function drawHamo(p: string): CharacterArt {
         lowerLip: 2.4,
         sideLip: 2,
         middle: 0.53,
-        colours: { lip: '#94594a', line: '#5a2a1e', inside: '#4a1a12', teeth: '#f3d8cc', tongue: '#c0695c' },
+        colours: { lip: '#85493a', line: '#5a2a1e', inside: '#4a1a12', teeth: '#f3d8cc', tongue: '#c0695c' },
       },
       p,
     ),

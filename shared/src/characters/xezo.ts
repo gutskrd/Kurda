@@ -113,18 +113,24 @@ const SHADE_SHOULDER_RIGHT: Knot[] = [
   [200.1, 352.2], [193.7, 353], [192.3, 351.6, 0.4], [193, 350.3], [198.3, 348.7], [200, 344.6], [199, 260],
 ];
 
-/** The two locks of hair that fall forward over her chest, each ending behind the belt. */
+/**
+ * The two locks of hair that fall forward over her chest, each ending behind
+ * the belt. Each begins well up under the crown's cap and reaches out to the
+ * back hair at the shoulder: the cap turns with her head, these stay with
+ * her body, and so the hem of hair over each sleeve and the outline of the
+ * shoulders hold still however she tilts.
+ */
 const LOCK_LEFT: Knot[] = [
   [91.2, 372.3, 0.4], [90.1, 371.8], [88.9, 368.2], [88.3, 361.2], [87.1, 357.8], [88.4, 344.8], [87.8, 340.1],
-  [84.7, 334.9], [80.6, 324.5], [77.7, 312.1], [77.8, 304.9], [82.9, 268], [83.2, 258], [83.3, 250], [83.5, 240.4], [81.1, 238.7], [80.6, 237.4, 0.4], [85.1, 236], [111.1, 236],
-  [112, 236.5], [112.1, 270.4], [112.6, 276.9], [111.8, 280.6], [112.4, 350.3], [111.5, 351.9], [110, 352.3],
+  [84.7, 334.9], [80.6, 324.5], [77.7, 312.1], [77.8, 304.9], [82.9, 268], [83.2, 258], [83.3, 250], [78, 246.2], [71, 243.5, 0.4], [71.4, 236], [74, 228, 0.4],
+  [78.5, 225], [111.1, 225], [112, 225.5], [112.1, 270.4], [112.6, 276.9], [111.8, 280.6], [112.4, 350.3], [111.5, 351.9], [110, 352.3],
   [103.5, 350.6], [98.3, 347.8], [96.9, 348], [96.3, 350.6], [97.1, 363.3], [97.6, 365.4], [96.4, 367.6],
 ];
 
 const LOCK_RIGHT: Knot[] = [
   [175.5, 352.9, 0.4], [174.7, 350.9], [175.5, 336.1], [174.6, 304.9], [175.3, 284.9], [174.4, 273.1],
-  [175.2, 260.4], [174.6, 249.1], [175.2, 247.1], [174.7, 243.9], [175.1, 237.4], [177.4, 236], [204.6, 236.3, 0.4],
-  [205.4, 239.1], [203.3, 241.7], [203.5, 254.9], [205.1, 279.5], [206.9, 285.4], [208.2, 309.9], [206.4, 323],
+  [175.2, 260.4], [174.6, 249.1], [175.2, 247.1], [174.7, 243.9], [175.1, 226], [177.4, 225], [212, 225.3],
+  [217.6, 228, 0.4], [220.8, 236], [223, 243.5, 0.4], [214, 243.4], [208.4, 241.6], [204.6, 243], [203.5, 254.9], [205.1, 279.5], [206.9, 285.4], [208.2, 309.9], [206.4, 323],
   [202.1, 334.8], [202.1, 343.7], [198.1, 348.7], [196.7, 349.6], [192.5, 350.4, 0.4], [191.2, 347.9],
   [190.2, 347.6], [179.8, 352],
 ];
@@ -408,15 +414,18 @@ function body(p: string): string {
 /**
  * The crown and the hair down either side of her face, to her shoulders,
  * parted in the middle. It runs on under her face, so the face is laid on
- * hair rather than beside it.
+ * hair rather than beside it. From the jaw down its sides curve in, a few
+ * units inside the back hair and the two locks that take over the outline
+ * there: those stay with the body when the head tilts, and a corner of the
+ * cap that reached the outline would swing out past it and show as a step.
  */
 const HAIR_CAP: Knot[] = [
   [146.1, 106.3], [154.9, 107.2], [164.3, 110.3], [172.8, 115.3], [181.5, 122.9], [188.7, 131.9], [192.7, 140.2],
-  [197.2, 162.7], [223.7, 242.8, 0.4], [214, 242.9], [207.4, 238.7], [203.8, 240.4], [201.6, 243], [176, 242.6],
-  [175.2, 241.8], [174.7, 229.7], [172.1, 227.5], [169.1, 227], [166.7, 225.1], [164.1, 226.1], [162.4, 225.3],
+  [197.2, 162.7], [201.2, 177], [205.3, 191], [209.2, 205], [211.8, 219], [211.4, 232], [208.2, 240.4], [203.2, 243, 0.4],
+  [176, 242.6], [175.2, 241.8], [174.7, 229.7], [172.1, 227.5], [169.1, 227], [166.7, 225.1], [164.1, 226.1], [162.4, 225.3],
   [161.6, 211.6, 0.15], [161.7, 212.3], [126.5, 211.7, 0.4], [126, 223.6], [124, 225], [120.5, 225.6], [117.7, 228],
-  [115.3, 228.2], [112.8, 229.5], [112, 233.4], [112, 241.8], [111.1, 242.8], [85.2, 243], [84, 242.4],
-  [83.3, 239.9], [81.1, 239], [77.7, 240.3], [75.2, 242.8], [69.5, 242.6, 0.4], [69.2, 239.8], [89.9, 168.5],
+  [115.3, 228.2], [112.8, 229.5], [112, 233.4], [112, 241.8], [111.1, 242.8], [88.4, 243, 0.4], [83.4, 240.4],
+  [80.2, 232], [79.6, 220], [80.8, 208], [83.5, 196], [86.6, 182], [89.9, 168.5],
   [92.4, 150.3], [94.2, 142.6], [97.3, 135.5], [101.1, 129.4], [108.6, 120.7], [115.4, 115.3], [125.2, 110.3],
   [135.6, 107.2],
 ];
@@ -455,19 +464,27 @@ const BROW_RIGHT: Pt[] = [
 ];
 const BROW_WIDTH = [0.4, 1.7, 2.3, 2.3, 1.8, 0.5];
 
-/** Two loose wisps that escape the parting, one curling onto each temple: hair that has somewhere to go. */
+/**
+ * Two loose locks that escape the parting and fall onto her forehead, one
+ * to each side, ending well above the brows: hair that has somewhere to go.
+ * Each is rooted a little inside the hair, narrow where it leaves the
+ * parting, full along its fall and drawn to a point, so it reads as a soft
+ * lock of hair lying on the skin rather than a line scratched across it.
+ */
 const WISPS: readonly (readonly Pt[])[] = [
   [
-    [113.6, 151],
-    [112.2, 160],
-    [113.8, 170],
-    [117, 177.5],
+    [142.2, 133.4],
+    [139.6, 139.5],
+    [137.4, 146.5],
+    [135.2, 153],
+    [132.4, 158],
   ],
   [
-    [172.5, 151],
-    [173.9, 160],
-    [172.3, 170],
-    [169.1, 177.5],
+    [144.8, 133.4],
+    [147.4, 139.5],
+    [149.6, 146.5],
+    [151.8, 153],
+    [154.6, 158],
   ],
 ];
 
@@ -511,9 +528,14 @@ function brows(state: BrowState): string {
   return fill(taper(moved(BROW_LEFT, m.left), BROW_WIDTH) + taper(moved(BROW_RIGHT, m.right), BROW_WIDTH), C.brow);
 }
 
-/** The two wisps, as a layer of their own: they swing a little about where they part from the crown. */
+/**
+ * The two strands, as a layer of their own: they swing a little about the
+ * parting they fall from. The pivot sits at their roots, so a swing carries
+ * their tips a few units and their roots nowhere: they stay hair coming out
+ * of hair, not lines lifted off the face.
+ */
 function wisps(): RigPart {
-  return { art: fill(WISPS.map((s) => taper(s, [2.1, 1.6, 0.9, 0])).join(''), C.hair), pivot: { x: 143.1, y: 138 } };
+  return { art: fill(WISPS.map((s) => taper(s, [1.8, 3, 2.8, 1.6, 0])).join(''), C.hair), pivot: { x: 143.5, y: 132.5 } };
 }
 
 /** The blush deepening on both cheeks when she is pleased or teased: the same spots as the faint one she always has, wider and pinker. */
