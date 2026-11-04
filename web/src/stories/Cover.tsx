@@ -56,6 +56,14 @@ function diamond(cx: number, cy: number, w: number, h: number): string {
   return `M${n(cx)},${n(cy - h / 2)}L${n(cx + w / 2)},${n(cy)}L${n(cx)},${n(cy + h / 2)}L${n(cx - w / 2)},${n(cy)}Z`;
 }
 
+/**
+ * How strongly the weave stands on its ground. The band sits on shelves beside
+ * soft painted covers, so it is kept quiet: the motifs are all there, flat, a
+ * little closer to the ground's own colour than cloth would be, and the dark
+ * eye is the strongest mark in it.
+ */
+const QUIET = { stripe: 0.5, teeth: 0.38, diamond: 0.55, hooks: 0.45, eye: 0.75 } as const;
+
 /** The kilim band for a category, as an SVG string the size of BOX. */
 export function kilimBand(category: string | null): string {
   const { ground, weave, eye } = weaveFor(category);
@@ -68,9 +76,9 @@ export function kilimBand(category: string | null): string {
     teeth.push(`M${x},24L${x + 8},34L${x + 16},24Z`);
     teeth.push(`M${x},${h - 24}L${x + 8},${h - 34}L${x + 16},${h - 24}Z`);
   }
-  out.push(`<rect y="18" width="${w}" height="6" fill="${weave}"/>`);
-  out.push(`<rect y="${h - 24}" width="${w}" height="6" fill="${weave}"/>`);
-  out.push(`<path d="${teeth.join('')}" fill="${weave}" fill-opacity="0.8"/>`);
+  out.push(`<rect y="18" width="${w}" height="6" fill="${weave}" fill-opacity="${QUIET.stripe}"/>`);
+  out.push(`<rect y="${h - 24}" width="${w}" height="6" fill="${weave}" fill-opacity="${QUIET.stripe}"/>`);
+  out.push(`<path d="${teeth.join('')}" fill="${weave}" fill-opacity="${QUIET.teeth}"/>`);
   // the row of diamonds, each with a smaller one of the ground inside it and the dark eye at its heart
   const step = 64;
   const outer: string[] = [];
@@ -85,10 +93,10 @@ export function kilimBand(category: string | null): string {
     hooks.push(`M${n(cx - 27)},${n(h / 2)}l-7,-7v5l4,4l-4,4v5Z`);
     hooks.push(`M${n(cx + 27)},${n(h / 2)}l7,-7v5l-4,4l4,4v5Z`);
   }
-  out.push(`<path d="${outer.join('')}" fill="${weave}"/>`);
+  out.push(`<path d="${outer.join('')}" fill="${weave}" fill-opacity="${QUIET.diamond}"/>`);
   out.push(`<path d="${inner.join('')}" fill="${ground}"/>`);
-  out.push(`<path d="${eyes.join('')}" fill="${eye}"/>`);
-  out.push(`<path d="${hooks.join('')}" fill="${weave}" fill-opacity="0.9"/>`);
+  out.push(`<path d="${eyes.join('')}" fill="${eye}" fill-opacity="${QUIET.eye}"/>`);
+  out.push(`<path d="${hooks.join('')}" fill="${weave}" fill-opacity="${QUIET.hooks}"/>`);
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${out.join('')}</svg>`;
 }
 

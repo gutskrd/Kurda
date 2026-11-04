@@ -754,7 +754,8 @@
   padding: 8px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--app-bg) 82%, transparent);
+  /* nearly solid: the text scrolls under it, and must not read through it */
+  background: color-mix(in srgb, var(--app-bg) 94%, transparent);
   -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
 }
@@ -938,7 +939,8 @@
   border-color: var(--border-strong);
   background: var(--surface-2);
 }
-.story-translation {
+/* a paragraph's translation: the interface's face in secondary ink, a step smaller, so it never reads as the story */
+.story-para .story-translation {
   max-width: 36em;
   margin: 8px 0 0;
   padding-inline-start: 14px;
@@ -946,7 +948,7 @@
   font-family: var(--font-sans);
   font-size: calc(var(--story-size) * 0.95rem);
   line-height: 1.6;
-  color: var(--ink-3);
+  color: var(--ink-2);
 }
 /* a finger needs 44px: the reader's and the game's small controls grow on touch screens */
 @media (pointer: coarse) {
