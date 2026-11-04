@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { FEED_PERIODS, FEED_SORTS, type FeedPeriod, type FeedSort } from '@kurda/shared';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { FeedService, isFeedKind, isFeedSection } from './service.js';
 
@@ -74,7 +74,7 @@ export function registerFeedRoutes(app: FastifyInstance): void {
           offset: z.coerce.number().int().min(0).max(10_000).optional(),
         }),
       },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { limit, offset } = req.query as { limit?: number; offset?: number };

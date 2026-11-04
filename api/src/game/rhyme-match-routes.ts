@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { RhymeMatchService, type RhymeMatchDeps } from './rhyme-match-service.js';
 
@@ -35,7 +35,7 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
   });
 
   /** Create a match lobby (creator auto-joins). */
-  app.post('/rhyme/matches', { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireBirthMonth }, async (req, reply) => {
+  app.post('/rhyme/matches', { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] }, async (req, reply) => {
     const res = await matches.create(req.user!.id, req.body as z.infer<typeof createBody>);
     if (!res.ok) {
       if (res.reason === 'open-needs-adult') {
@@ -47,7 +47,7 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
   });
 
   /** Join an open lobby. */
-  app.post('/rhyme/matches/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireBirthMonth }, async (req, reply) => {
+  app.post('/rhyme/matches/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth] }, async (req, reply) => {
     const res = await matches.join((req.params as { id: string }).id, req.user!.id);
     if (res.ok) return res.match;
     switch (res.reason) {
@@ -63,7 +63,7 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
   });
 
   /** Creator starts the match (needs ≥2 players). */
-  app.post('/rhyme/matches/:id/start', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
+  app.post('/rhyme/matches/:id/start', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const res = await matches.start((req.params as { id: string }).id, req.user!.id);
     if (res.ok) return res.match;
     switch (res.reason) {
@@ -79,14 +79,14 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
   });
 
   /** Leave: a lobby (the host leaving calls it off), or a match under way (your score stands). */
-  app.post('/rhyme/matches/:id/leave', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
+  app.post('/rhyme/matches/:id/leave', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const res = await matches.leave((req.params as { id: string }).id, req.user!.id);
     if (!res.ok) return notFound(reply);
     return { ok: true };
   });
 
   /** The host takes a player out of the lobby, by seat. */
-  app.post('/rhyme/matches/:id/remove', { schema: { params: idParam, body: removeBody }, preHandler: requireAuth }, async (req, reply) => {
+  app.post('/rhyme/matches/:id/remove', { schema: { params: idParam, body: removeBody }, preHandler: requireAccount }, async (req, reply) => {
     const { seat } = req.body as z.infer<typeof removeBody>;
     const res = await matches.remove((req.params as { id: string }).id, req.user!.id, seat);
     if (res.ok) return res.match;
@@ -105,7 +105,7 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
   /** Submit a rhyme (scored server-side); returns the result + live scoreboard. */
   app.post(
     '/rhyme/matches/:id/submissions',
-    { schema: { params: idParam, body: submitBody }, config: { rateLimit: { max: 120, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: idParam, body: submitBody }, config: { rateLimit: { max: 120, windowMs: 60_000 } }, preHandler: requireAccount },
     async (req, reply) => {
       const { word } = req.body as z.infer<typeof submitBody>;
       const res = await matches.submit((req.params as { id: string }).id, req.user!.id, word);
@@ -126,7 +126,7 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
    * Someone who may join sees the lobby first; a latecomer is told the match
    * already started (409 GAME_STARTED), not that its time is up.
    */
-  app.get('/rhyme/matches/:id', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
+  app.get('/rhyme/matches/:id', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const res = await matches.read((req.params as { id: string }).id, req.user!.id);
     if (res.ok) return res.match;
     if (res.reason === 'started') {
@@ -136,7 +136,7 @@ export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeM
   });
 
   /** Post-match results: placement + scores + everyone's used words + XP. */
-  app.get('/rhyme/matches/:id/results', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
+  app.get('/rhyme/matches/:id/results', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const { id } = req.params as { id: string };
     const results = await matches.results(id, req.user!.id);
     if (results) return results;

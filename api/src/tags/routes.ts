@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { requireAccount, requireRoles } from '../plugins/auth.js';
 import { TagService } from './service.js';
 import { SocialService } from '../social/service.js';
 import { FriendService } from '../friends/service.js';
@@ -45,20 +45,20 @@ export function registerTagRoutes(app: FastifyInstance, tags = new TagService(ap
   });
 
   /** My own tags. */
-  app.get('/me/tags', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) =>
+  app.get('/me/tags', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) =>
     tags.profileTags(req.user!.id),
   );
 
   /** My own self-claimed tags incl. hidden ones (owner manage UI, #287). */
-  app.get('/me/tags/claimed', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => ({
+  app.get('/me/tags/claimed', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => ({
     tags: await tags.claimedTags(req.user!.id),
   }));
 
   /** The claimable catalog. */
-  app.get('/tags', { config: { skipValidation: true }, preHandler: requireAuth }, async () => ({ tags: await tags.catalog() }));
+  app.get('/tags', { config: { skipValidation: true }, preHandler: requireAccount }, async () => ({ tags: await tags.catalog() }));
 
   /** Self-claim a claimable tag (sensitive ones need `consent: true`). */
-  app.post('/me/tags/claim', { schema: { body: claimBody }, preHandler: requireAuth }, async (req, reply) => {
+  app.post('/me/tags/claim', { schema: { body: claimBody }, preHandler: requireAccount }, async (req, reply) => {
     const { key, value, consent } = req.body as z.infer<typeof claimBody>;
     const res = await tags.claim(req.user!.id, key, value, consent);
     if (res.ok) return { claimed: true };
@@ -67,7 +67,7 @@ export function registerTagRoutes(app: FastifyInstance, tags = new TagService(ap
   });
 
   /** Show/hide a claimed tag. */
-  app.post('/me/tags/display', { schema: { body: displayBody }, preHandler: requireAuth }, async (req, reply) => {
+  app.post('/me/tags/display', { schema: { body: displayBody }, preHandler: requireAccount }, async (req, reply) => {
     const { key, displayed } = req.body as z.infer<typeof displayBody>;
     const ok = await tags.setDisplayed(req.user!.id, key, displayed);
     if (!ok) return reply.code(404).send({ code: 'NOT_FOUND', message: 'you have not claimed that tag' });
@@ -75,7 +75,7 @@ export function registerTagRoutes(app: FastifyInstance, tags = new TagService(ap
   });
 
   /** Revoke a self-claimed tag (removes the data). */
-  app.delete('/me/tags/:key', { schema: { params: keyParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req, reply) => {
+  app.delete('/me/tags/:key', { schema: { params: keyParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req, reply) => {
     const ok = await tags.unclaim(req.user!.id, (req.params as { key: string }).key);
     if (!ok) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such claimed tag' });
     return { removed: true };

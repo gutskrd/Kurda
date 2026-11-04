@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { requireAccount, requireRoles } from '../plugins/auth.js';
 import type { TournamentService } from './service.js';
 import { MAX_CAPACITY, MIN_CAPACITY } from './service.js';
 
@@ -32,7 +32,7 @@ export function registerTournamentRoutes(app: FastifyInstance, tournaments: Tour
     '/tournaments',
     {
       schema: { querystring: z.object({ status: z.string().max(20).optional() }) },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => ({ tournaments: await tournaments.list((req.query as { status?: string }).status) }),
   );
@@ -40,14 +40,14 @@ export function registerTournamentRoutes(app: FastifyInstance, tournaments: Tour
   /** Live bracket view, as the caller may see it (minors are named to their friends only). */
   app.get(
     '/tournaments/:id',
-    { schema: { params: idParam }, preHandler: requireAuth },
+    { schema: { params: idParam }, preHandler: requireAccount },
     async (req) => tournaments.bracket((req.params as { id: string }).id, req.user!.id),
   );
 
   /** Register the caller. */
   app.post(
     '/tournaments/:id/register',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req) => {
       await tournaments.register((req.params as { id: string }).id, req.user!.id);
       return { registered: true };
@@ -67,7 +67,7 @@ export function registerTournamentRoutes(app: FastifyInstance, tournaments: Tour
   /** Confirm presence for a ready match (guards the no-show forfeit). */
   app.post(
     '/tournaments/:id/matches/:matchId/check-in',
-    { schema: { params: matchParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: matchParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req) => {
       const { id, matchId } = req.params as { id: string; matchId: string };
       await tournaments.checkIn(id, matchId, req.user!.id);

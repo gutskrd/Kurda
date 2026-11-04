@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import type { ReportsService } from '../moderation/reports-service.js';
 import { LibraryModerationService, type LibraryTargetType } from './moderation-service.js';
 
@@ -25,13 +25,13 @@ export function registerLibraryReportRoutes(app: FastifyInstance, reports?: Repo
 
   app.post(
     '/library/posts/:id/report',
-    { schema: { params: idParam, body: reportBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: idParam, body: reportBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireAccount },
     report('library_post'),
   );
 
   app.post(
     '/library/comments/:id/report',
-    { schema: { params: idParam, body: reportBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: idParam, body: reportBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireAccount },
     report('library_comment'),
   );
 }

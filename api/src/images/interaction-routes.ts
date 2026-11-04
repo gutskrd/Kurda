@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
@@ -45,7 +45,7 @@ export function registerImageInteractionRoutes(
   /** Set (or change) the caller's reaction on a post. */
   app.put(
     '/images/:id/reaction',
-    { schema: { params: idParam, body: reactionBody }, config: { rateLimit: { max: 60, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: idParam, body: reactionBody }, config: { rateLimit: { max: 60, windowMs: 60_000 } }, preHandler: requireAccount },
     async (req, reply) => {
       const res = await reactions.set((req.params as { id: string }).id, req.user!.id, (req.body as z.infer<typeof reactionBody>).reaction);
       if (!res.ok) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such image' });
@@ -56,7 +56,7 @@ export function registerImageInteractionRoutes(
   /** Remove the caller's reaction. */
   app.delete(
     '/images/:id/reaction',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req) => reactions.clear((req.params as { id: string }).id, req.user!.id),
   );
 
@@ -70,7 +70,7 @@ export function registerImageInteractionRoutes(
   /** Post a comment or reply (rate-limited + trust-gated + auto-screened). */
   app.post(
     '/images/:id/comments',
-    { schema: { params: idParam, body: commentBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
+    { schema: { params: idParam, body: commentBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const postId = (req.params as { id: string }).id;
       const input = req.body as CreateCommentInput;
@@ -138,7 +138,7 @@ export function registerImageInteractionRoutes(
   /** Edit own comment (admins any). */
   app.patch(
     '/images/comments/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: [requireAuth, requireUnrestricted('post')] },
+    { schema: { params: idParam, body: editBody }, preHandler: [requireAccount, requireUnrestricted('post')] },
     async (req, reply) =>
       respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req), req.body as CreateCommentInput)),
   );
@@ -146,7 +146,7 @@ export function registerImageInteractionRoutes(
   /** Soft-delete (author or admin); subtree preserved as a tombstone. */
   app.delete(
     '/images/comments/:id',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req, reply) =>
       respond(reply, await comments.remove((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req))),
   );

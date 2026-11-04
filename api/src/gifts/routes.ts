@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { MAX_GIFT_RECIPIENTS } from '@kurda/shared';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import type { GiftService } from './service.js';
 
@@ -56,7 +56,7 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
     {
       schema: { body: sendBody },
       config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireBirthMonth,
+      preHandler: [requireAccount, requireBirthMonth],
     },
     async (req) => {
       const body = req.body as z.infer<typeof sendBody>;
@@ -79,7 +79,7 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
   );
 
   /** What can be given to these friends, who owns what already, and the sender's balance. */
-  app.get('/gifts/catalog', { schema: { querystring: catalogQuery }, preHandler: requireAuth }, async (req) => {
+  app.get('/gifts/catalog', { schema: { querystring: catalogQuery }, preHandler: requireAccount }, async (req) => {
     const { to } = req.query as z.infer<typeof catalogQuery>;
     return gifts.catalog(req.user!.id, to);
   });
@@ -90,7 +90,7 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
     {
       schema: { params: idParam },
       config: { skipValidation: true, rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => gifts.open(req.user!.id, (req.params as { id: string }).id),
   );
@@ -98,7 +98,7 @@ export function registerGiftRoutes(app: FastifyInstance, gifts: GiftService): vo
   /** One gift card as the caller sees it, for whoever can see the message it is on. */
   app.get(
     '/gifts/batches/:id',
-    { schema: { params: idParam }, preHandler: requireAuth },
+    { schema: { params: idParam }, preHandler: requireAccount },
     async (req) => ({ card: await gifts.batchCard(req.user!.id, (req.params as { id: string }).id) }),
   );
 }

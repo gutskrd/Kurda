@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { isWrittenPostType } from '@kurda/shared';
 import { checkPostPictures } from '../media/postMedia.js';
@@ -142,7 +142,7 @@ export function registerLibraryRoutes(
     {
       schema: { body: createBody },
       config: { rateLimit: { max: 20, windowMs: 60_000 } },
-      preHandler: [requireBirthMonth, requireUnrestricted('post')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
@@ -213,7 +213,7 @@ export function registerLibraryRoutes(
     '/library/posts/:id',
     // an edit can put new words in front of readers, so it waits for a birth
     // month like a new post does; unpublish and delete never do
-    { schema: { params: idParam, body: updateBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
+    { schema: { params: idParam, body: updateBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const patch = req.body as z.infer<typeof updateBody>;
       const current = await editable(req, reply);
@@ -251,14 +251,14 @@ export function registerLibraryRoutes(
   /** Unpublish → draft (author or admin). */
   app.post(
     '/library/posts/:id/unpublish',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req, reply) => respond(reply, await library.setStatus((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req), 'draft')),
   );
 
   /** Publish a draft (author or admin). */
   app.post(
     '/library/posts/:id/publish',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const current = await editable(req, reply);
       if (!current) return reply;
@@ -289,7 +289,7 @@ export function registerLibraryRoutes(
   /** Soft-remove (author or admin); retained for moderation (#285). */
   app.delete(
     '/library/posts/:id',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req, reply) => respond(reply, await library.setStatus((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req), 'removed')),
   );
 
@@ -297,7 +297,7 @@ export function registerLibraryRoutes(
    * Your server drafts, so one saved by an app installed before drafts moved
    * onto the device can be found, finished and published.
    */
-  app.get('/me/library/drafts', { schema: { querystring: page }, preHandler: requireAuth }, async (req) => {
+  app.get('/me/library/drafts', { schema: { querystring: page }, preHandler: requireAccount }, async (req) => {
     const { limit, offset } = req.query as z.infer<typeof page>;
     const drafts = await library.drafts(req.user!.id, { limit, offset });
     const withAuthor = await library.withAuthors(drafts, publicUrl);

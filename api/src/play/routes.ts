@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { DECLINE_REASONS, MAX_INVITEES_PER_REQUEST, PLAY_GAMES, type DeclineReason, type PlayGame } from '@kurda/shared';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import type { XpService } from '../xp/service.js';
 import type { FriendService } from '../friends/service.js';
@@ -101,7 +101,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   /** Make a lobby with the host in it, post its card where it was started, and ask friends. */
   app.post(
     '/play/lobbies',
-    { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireBirthMonth },
+    { schema: { body: createBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
     async (req, reply) => {
       const body = req.body as z.infer<typeof createBody>;
       const created = await play.createLobby(req.user!.id, body);
@@ -112,7 +112,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   /** Ask friends into your lobby: always ok, with how many were asked. */
   app.post(
     '/play/invites',
-    { schema: { body: inviteBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireBirthMonth },
+    { schema: { body: inviteBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
     async (req) => {
       const body = req.body as z.infer<typeof inviteBody>;
       const { invited } = await play.invite(req.user!.id, body.game, body.lobbyId, body.userIds);
@@ -121,19 +121,19 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   );
 
   /** The banners to show, and your list of answers to your own invites. */
-  app.get('/play/invites', { preHandler: requireAuth }, async (req) => play.lists(req.user!.id));
+  app.get('/play/invites', { preHandler: requireAccount }, async (req) => play.lists(req.user!.id));
 
   /** Yes: into the lobby (the game's own join). Saying yes twice is one yes. */
   app.post(
     '/play/invites/:id/accept',
-    { schema: { params: inviteParam }, config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireBirthMonth },
+    { schema: { params: inviteParam }, config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
     async (req) => play.accept(req.user!.id, (req.params as { id: string }).id),
   );
 
   /** Not now — a preset reason, never free text. */
   app.post(
     '/play/invites/:id/decline',
-    { schema: { params: inviteParam, body: declineBody }, preHandler: requireAuth },
+    { schema: { params: inviteParam, body: declineBody }, preHandler: requireAccount },
     async (req) => {
       const reason = ((req.body as { reason?: DeclineReason } | undefined)?.reason ?? null) as DeclineReason | null;
       await play.decline(req.user!.id, (req.params as { id: string }).id, reason);
@@ -142,7 +142,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   );
 
   /** The host takes an invite back. */
-  app.delete('/play/invites/:id', { schema: { params: inviteParam }, preHandler: requireAuth }, async (req) => {
+  app.delete('/play/invites/:id', { schema: { params: inviteParam }, preHandler: requireAccount }, async (req) => {
     await play.cancel(req.user!.id, (req.params as { id: string }).id);
     return { ok: true };
   });
@@ -150,7 +150,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   /** The host's Rated/Friendly toggle, in the lobby only (Game Ranks). */
   app.put(
     '/play/:game/:lobbyId/rated',
-    { schema: { params: lobbyParams, body: ratedBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: lobbyParams, body: ratedBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAccount },
     async (req) => {
       const p = req.params as { game: PlayGame; lobbyId: string };
       const { rated } = req.body as z.infer<typeof ratedBody>;
@@ -160,13 +160,13 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   );
 
   /** A game card's live state, as the viewer may see it ('unavailable' otherwise). */
-  app.get('/play/cards/:game/:lobbyId', { schema: { params: lobbyParams }, preHandler: requireAuth }, async (req) => {
+  app.get('/play/cards/:game/:lobbyId', { schema: { params: lobbyParams }, preHandler: requireAccount }, async (req) => {
     const p = req.params as { game: PlayGame; lobbyId: string };
     return play.card(req.user!.id, p.game, p.lobbyId);
   });
 
   /** Where playing again stands: offers, the next game once there is one, the running score. */
-  app.get('/play/:game/:lobbyId/rematch', { schema: { params: lobbyParams }, preHandler: requireAuth }, async (req) => {
+  app.get('/play/:game/:lobbyId/rematch', { schema: { params: lobbyParams }, preHandler: requireAccount }, async (req) => {
     const p = req.params as { game: PlayGame; lobbyId: string };
     return play.rematchState(req.user!.id, p.game, p.lobbyId);
   });
@@ -174,7 +174,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   /** Play again: offer a rematch (two players), or open the next round (the host of more). */
   app.post(
     '/play/:game/:lobbyId/rematch',
-    { schema: { params: lobbyParams }, config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireBirthMonth },
+    { schema: { params: lobbyParams }, config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
     async (req) => {
       const p = req.params as { game: PlayGame; lobbyId: string };
       return play.offerRematch(req.user!.id, p.game, p.lobbyId);
@@ -182,7 +182,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   );
 
   /** No thanks, or leaving the results: a rematch offer is off. */
-  app.delete('/play/:game/:lobbyId/rematch', { schema: { params: lobbyParams }, preHandler: requireAuth }, async (req) => {
+  app.delete('/play/:game/:lobbyId/rematch', { schema: { params: lobbyParams }, preHandler: requireAccount }, async (req) => {
     const p = req.params as { game: PlayGame; lobbyId: string };
     return play.declineRematch(req.user!.id, p.game, p.lobbyId);
   });

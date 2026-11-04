@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import type { GroupChatService } from './chat-service.js';
 import { MAX_GROUP_MESSAGE_LEN } from './chat-service.js';
@@ -18,7 +18,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
       // no requireUnrestricted('chat') here: `send` asks it first of all
       // (`assertCanPost`), with the same 403 MUTED, and asking twice was a
       // second query on every message
-      preHandler: requireBirthMonth,
+      preHandler: [requireAccount, requireBirthMonth],
     },
     async (req) =>
       chat.send(req.user!.id, (req.params as { id: string }).id, (req.body as { body: string }).body, (k) =>
@@ -29,7 +29,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   /** Channel history and what the reader's view has had cleared — authorized on fetch, so removal revokes access at once. */
   app.get(
     '/groups/:id/chat',
-    { schema: { params: idParam, querystring: z.object({ before: z.string().datetime().optional() }) }, preHandler: requireAuth },
+    { schema: { params: idParam, querystring: z.object({ before: z.string().datetime().optional() }) }, preHandler: requireAccount },
     async (req) => {
       const { id } = req.params as { id: string };
       const { before } = req.query as { before?: string };
@@ -48,7 +48,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
     {
       schema: { params: idParam, body: z.object({ for: z.enum(['me', 'everyone']) }) },
       config: { rateLimit: { max: 10, windowMs: 60 * 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => ({
       cleared: await chat.clear(req.user!.id, (req.params as { id: string }).id, (req.body as { for: 'me' | 'everyone' }).for),
@@ -58,7 +58,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   /** Mark the channel read. */
   app.post(
     '/groups/:id/chat/read',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req) => {
       await chat.markRead(req.user!.id, (req.params as { id: string }).id);
       return { ok: true };
@@ -77,7 +77,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
         skipValidation: true,
         rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const },
       },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       await chat.typing(req.user!.id, (req.params as { id: string }).id);
@@ -88,7 +88,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   /** Delete a message (staff any, author own). */
   app.delete(
     '/groups/:id/chat/:messageId',
-    { schema: { params: z.object({ id: z.uuid(), messageId: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: z.uuid(), messageId: z.uuid() }) }, preHandler: requireAccount },
     async (req) => {
       const { id, messageId } = req.params as { id: string; messageId: string };
       await chat.deleteMessage(req.user!.id, id, messageId);
@@ -101,7 +101,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
     '/groups/:id/mutes',
     {
       schema: { params: idParam, body: z.object({ userId: z.uuid(), duration: z.enum(['1h', '24h', 'perm']) }) },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { id } = req.params as { id: string };
@@ -112,7 +112,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   );
   app.delete(
     '/groups/:id/mutes/:userId',
-    { schema: { params: z.object({ id: z.uuid(), userId: z.uuid() }) }, preHandler: requireAuth },
+    { schema: { params: z.object({ id: z.uuid(), userId: z.uuid() }) }, preHandler: requireAccount },
     async (req) => {
       const { id, userId } = req.params as { id: string; userId: string };
       await chat.unmute(req.user!.id, id, userId);
@@ -121,7 +121,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
   );
 
   /** Unread counts across the caller's groups. */
-  app.get('/me/groups/unread', { preHandler: requireAuth }, async (req) => ({
+  app.get('/me/groups/unread', { preHandler: requireAccount }, async (req) => ({
     unread: await chat.unread(req.user!.id),
   }));
 }

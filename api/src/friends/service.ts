@@ -606,6 +606,8 @@ export class FriendService {
           AND u.deleted_at IS NULL
           AND u.profile_visibility <> 'nobody'
           AND NOT ${notKnownAdultSql('u')}
+          -- a guest cannot be befriended, so is never suggested (auth/guest.ts)
+          AND NOT u.guest
           AND u.id NOT IN (SELECT fid FROM my_friends)
           AND NOT EXISTS (
             SELECT 1 FROM friendships fp

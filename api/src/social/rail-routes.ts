@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import type { FriendService } from '../friends/service.js';
 import type { InboxService } from '../notifications/inbox-service.js';
 import type { GroupChatService } from '../groups/chat-service.js';
@@ -30,7 +30,7 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
   const rail = new SocialRailService(app.db);
   const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
 
-  app.get('/me/social', { preHandler: requireAuth }, async (req) => {
+  app.get('/me/social', { preHandler: requireAccount }, async (req) => {
     const me = req.user!.id;
 
     const [friends, requests, groups, unreadGroups, inbox] = await Promise.all([
