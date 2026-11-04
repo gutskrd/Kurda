@@ -6,9 +6,17 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo } from '../theme/animate';
 import { useTheme } from '../theme/ThemeProvider';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
+import type { PlaybackClock } from './voice';
 
 /** How far past the window's top and sides a hop or a twitch of an ear may carry him into the room before anything cuts him off, as a share of its height. */
 const ROOM = 0.3;
+
+/** What he is saying at the window, read as a speaking character reads a player: the clock, whether it runs, and a name for the line. */
+export interface WindowSpeech {
+  player: PlaybackClock | null;
+  playing: boolean;
+  source: string | null;
+}
 
 /**
  * Hevalo putting his head in at the window (shared `windowArt`): we are in a
@@ -20,6 +28,10 @@ const ROOM = 0.3;
  * glances about, follows a finger, and cheers or tilts his head at a
  * `reaction`.
  *
+ * Given `speech` and the `text` of a line, he says it: his mouth moves with
+ * the words by the clock the speech keeps (auth/guide/speech.ts), with no
+ * recording behind it.
+ *
  * Decorative: the words beside him say whatever he does, so a screen reader
  * passes him by. Turned round (`flip`), he faces the other way and the
  * window is mirrored with him, its pot and its view changing sides.
@@ -29,6 +41,8 @@ export function HevaloWindow({
   reaction = null,
   flip = false,
   pop = true,
+  speech = null,
+  text = null,
   style,
 }: {
   /** how tall the window is drawn, in points; its width follows */
@@ -37,6 +51,9 @@ export function HevaloWindow({
   flip?: boolean;
   /** he comes in at the window as it appears; false, he is there already */
   pop?: boolean;
+  /** the line he is saying, and its clock; null, he is quiet */
+  speech?: WindowSpeech | null;
+  text?: string | null;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { scheme } = useTheme();
@@ -95,7 +112,17 @@ export function HevaloWindow({
           ]}
           testID="hevalo-window-figure"
         >
-          <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="head" size={figure.width * width} flip={flip} reaction={reaction} />
+          <SpeakingCharacter
+            speaker="hevalo"
+            player={speech?.player ?? null}
+            playing={speech?.playing ?? false}
+            source={speech?.source ?? null}
+            text={text}
+            crop="head"
+            size={figure.width * width}
+            flip={flip}
+            reaction={reaction}
+          />
         </Animated.View>
       </View>
       <View style={[StyleSheet.absoluteFill, mirrored]}>

@@ -5,6 +5,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale, type TranslationKey } from '../i18n/translations';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { Drift } from '../auth/guide/Drift';
+import { useScreenFocus } from '../auth/guide/focus';
+import { HevaloGuide, SpeechBubble } from '../auth/guide/HevaloGuide';
+import { useSpokenLine } from '../auth/guide/speech';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useDirection } from '../reports/direction';
 import { springTo } from '../theme/animate';
@@ -99,6 +103,11 @@ const LINE_STAGGER_MS = ENTRANCE.staggerMs * 2;
  * The slides turn rather than swap: the one leaving moves out the way the
  * reader is going and the next rises into its place (SlideSwap), and the
  * dots at the top say where they are with a capsule that slides along them.
+ *
+ * Hevalo is the guide through them: on each slide he says its line, his
+ * mouth moving with the words (auth/guide), and each slide's art floats and
+ * arrives a little further than the words, so the intro has depth rather
+ * than being three still cards. All of it stops under Reduce Motion.
  */
 export function OnboardingScreen({
   onComplete,
@@ -122,10 +131,14 @@ export function OnboardingScreen({
   // which way the last turn went, for the slide leaving: told from the slide before it
   const shown = useRef(state.stepIndex);
   const turned = useRef<SlideDirection>('forward');
+  // whether any slide has turned yet: the first one's art is simply there, the later ones' arrive with the turn
+  const turns = useRef(0);
   if (shown.current !== state.stepIndex) {
     turned.current = slideDirection(shown.current, state.stepIndex);
     shown.current = state.stepIndex;
+    turns.current += 1;
   }
+  const arriving = turns.current > 0 ? turned.current : null;
 
   const end = (via: CompletedVia): void => {
     // compute the record from the current state (dispatch only marks it inert);
@@ -154,9 +167,9 @@ export function OnboardingScreen({
         </View>
 
         <SlideSwap id={step} direction={turned.current} mirrored={dir.rtl} style={styles.body}>
-          {step === 'language' && <LanguageSlide selected={state.selectedLanguage} onSelect={selectLanguage} />}
-          {step === 'welcome' && <WelcomeSlide />}
-          {step === 'notifications' && <NotificationsSlide />}
+          {step === 'language' && <LanguageSlide selected={state.selectedLanguage} onSelect={selectLanguage} arriving={arriving} mirrored={dir.rtl} />}
+          {step === 'welcome' && <WelcomeSlide arriving={arriving} mirrored={dir.rtl} />}
+          {step === 'notifications' && <NotificationsSlide arriving={arriving} mirrored={dir.rtl} />}
         </SlideSwap>
 
         <View style={styles.nav}>
@@ -224,12 +237,26 @@ function Dots({ count, index, mirrored }: { count: number; index: number; mirror
   );
 }
 
-function LanguageSlide({ selected, onSelect }: { selected: string | null; onSelect: (l: Locale) => void }): React.JSX.Element {
+/** How a slide arrived, for its art: the way it turned in, or null for the slide the intro opened on. */
+interface SlideArrival {
+  arriving: SlideDirection | null;
+  mirrored: boolean;
+}
+
+/**
+ * The language choice, with Hevalo at the top asking which language to talk
+ * in — in the language of the moment, so the question changes under him as
+ * a language is tapped, and he says the new one. A globe stood here, breathing;
+ * the app's own guide is who should ask the first question.
+ */
+function LanguageSlide({ selected, onSelect, arriving, mirrored }: { selected: string | null; onSelect: (l: Locale) => void } & SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <View style={styles.slide}>
-      <View style={styles.slideIcon}><BreathingIcon name="globe" size={52} tone="primary" /></View>
+      <Drift direction={arriving} mirrored={mirrored} style={styles.guideArt}>
+        <HevaloGuide says={t('guide.intro.language.says')} />
+      </Drift>
       <Text style={[styles.title, { color: colors.textPrimary }]}>{t('onboarding.language.title')}</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('onboarding.language.help')}</Text>
       <ScrollView style={styles.langList} contentContainerStyle={{ gap: spacing.sm, paddingVertical: spacing.sm }}>
@@ -274,16 +301,34 @@ const greeted = (): void => undefined;
  * two and a half seconds — which meant reading at the slide's pace rather
  * than one's own, and seeing one line only unless one waited. Now all four
  * are there, rising in one after another as the slide arrives, and Hevalo
- * stands over them, alive: he breathes, blinks, glances about, and greets a
- * tap. Under Reduce Motion the lines are simply there.
+ * stands over them, alive: he breathes, blinks, glances about, greets a
+ * tap, and says hello — a bubble over his head, his mouth moving with the
+ * words — while he floats a little, as the art of every slide does. Under
+ * Reduce Motion the lines are simply there and he stands still.
  */
-function WelcomeSlide(): React.JSX.Element {
+function WelcomeSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const reduce = useReducedMotion();
+  const focused = useScreenFocus();
+  const hello = t('guide.intro.welcome.says');
+  const speech = useSpokenLine(hello, !reduce && focused);
   return (
     <View style={[styles.slide, styles.centered]}>
-      <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="half" height={HERO_HEIGHT} onPress={greeted} style={styles.hero} />
+      <SpeechBubble text={hello} tail="bottom" style={styles.heroBubble} />
+      <Drift direction={arriving} mirrored={mirrored}>
+        <SpeakingCharacter
+          speaker="hevalo"
+          player={speech.player}
+          playing={speech.playing}
+          source={speech.source}
+          text={hello}
+          crop="half"
+          height={HERO_HEIGHT}
+          onPress={greeted}
+          style={styles.hero}
+        />
+      </Drift>
       <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
       <View style={styles.propList}>
@@ -301,13 +346,16 @@ function WelcomeSlide(): React.JSX.Element {
  *  prompt here, before there is anything to be reminded of. The system prompt
  *  comes after a lesson, from a card that can be turned down, or from the
  *  control at the top of Settings → Notification settings (push/). */
-function NotificationsSlide(): React.JSX.Element {
+function NotificationsSlide({ arriving, mirrored }: SlideArrival): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <View style={[styles.slide, styles.centered]}>
-      {/* one breath as the slide arrives, then still: there are three lines to read under it */}
-      <BreathingIcon name="bell" size={64} tone="primary" breaths={1} />
+      <HevaloGuide says={t('guide.intro.notify.says')} style={styles.guideArt} />
+      {/* one breath as the slide arrives, then still but for the float: there are three lines to read under it */}
+      <Drift direction={arriving} mirrored={mirrored} style={styles.notifArt}>
+        <BreathingIcon name="bell" size={56} tone="primary" breaths={1} />
+      </Drift>
       <Text style={[styles.title, { color: colors.textPrimary }, styles.notifTitle]}>{t('onboarding.notify.title')}</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('onboarding.notify.body')}</Text>
       <Text style={[styles.notifHint, { color: colors.textSecondary }]}>{t('onboarding.notify.later')}</Text>
@@ -327,7 +375,10 @@ const styles = StyleSheet.create({
   body: { flex: 1, justifyContent: 'center' },
   slide: { flex: 1, justifyContent: 'center' },
   centered: { alignItems: 'center' },
-  slideIcon: { alignSelf: 'center', marginBottom: spacing.md },
+  // Hevalo and his bubble take the slide's width, as a row; the art under him floats in the middle
+  guideArt: { alignSelf: 'stretch', alignItems: 'stretch', marginBottom: spacing.lg },
+  notifArt: { marginTop: spacing.sm },
+  heroBubble: { marginBottom: spacing.md, maxWidth: 300 },
   hero: { marginBottom: spacing.sm },
   title: { ...display(typography.sizes.xxl), textAlign: 'center' },
   notifTitle: { marginTop: spacing.lg },

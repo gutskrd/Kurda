@@ -6,6 +6,8 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
+// the reset form it opens is drawn on the sign-in shell, whose guide asks the navigator whether the screen is in front
+vi.mock('@react-navigation/native', () => import('../auth/guide/testing/navigation'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { ApiClient } from '../api/client';
 import { MemoryTokenStorage } from '../api/types';
