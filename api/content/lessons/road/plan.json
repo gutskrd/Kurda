@@ -1607,7 +1607,7 @@
                 {"ku": "bi wext", "en": "on time", "pos": "phrase", "forms": ["bi", "wext"]},
                 {"ku": "wisa", "en": "so, like that", "pos": "adv", "forms": ["wisa"]},
                 {"ku": "wiha", "en": "like this, this way", "pos": "adv", "forms": ["wiha"]},
-                {"ku": "girtin", "en": "to take, to hold; to close", "pos": "verb", "forms": ["girtin", "digirim", "digirî", "digire", "digirin", "nagirim", "nagire"]},
+                {"ku": "girtin", "en": "to take, to hold; to close", "pos": "verb", "forms": ["girtin", "digirim", "digirî", "digire", "digirin", "nagirim", "nagire", "bigirî", "bigirin"]},
                 {"ku": "vekirin", "en": "to open", "pos": "verb", "forms": ["vekirin", "vedikim", "vedikî", "vedike", "vedikin", "venakim", "venake"]}
               ]
             },
@@ -2118,7 +2118,7 @@
               "voice": "xezo",
               "new": [
                 {"ku": "govend", "en": "govend, the circle dance", "pos": "noun", "gender": "f", "forms": ["govend", "govendên", "govendan", "govendek", "govenda", "govendê", "govendeke"]},
-                {"ku": "reqisîn", "en": "to dance", "pos": "verb", "forms": ["reqisîn", "direqisim", "direqisî", "direqise", "direqisin", "bireqisim", "bireqise"]},
+                {"ku": "reqisîn", "en": "to dance", "pos": "verb", "forms": ["reqisîn", "direqisim", "direqisî", "direqise", "direqisin", "bireqisim", "bireqise", "bireqisî", "bireqisin"]},
                 {"ku": "stran", "en": "song", "pos": "noun", "gender": "f", "forms": ["stran", "stranên", "stranan", "stranek", "strana", "stranê", "straneke"]},
                 {"ku": "def", "en": "frame drum", "pos": "noun", "gender": "f", "forms": ["def", "defên", "defan", "defek", "defa", "defê", "defeke"]},
                 {"ku": "zirne", "en": "shawm (the zurna)", "pos": "noun", "gender": "f", "forms": ["zirne", "zirneyên", "zirneyan", "zirneyek", "zirneya", "zirneyê", "zirneyeke"]},
@@ -2193,7 +2193,7 @@
               "beat": "Newroz morning: rain, then sun. The whole village climbs to the hill for the seyran; at dusk Hamo lights the fire and the young people jump over it, one by one, in the smoke.",
               "voice": "hamo",
               "new": [
-                {"ku": "vêxistin", "en": "to light (a fire), to switch on", "pos": "verb", "forms": ["vêxistin", "vêdixim", "vêdixî", "vêdixe", "vêdixin", "vêxim", "vêxe"]},
+                {"ku": "vêxistin", "en": "to light (a fire), to switch on", "pos": "verb", "forms": ["vêxistin", "vêdixim", "vêdixî", "vêdixe", "vêdixin", "vêxim", "vêxe", "vêxin"]},
                 {"ku": "baz dan", "en": "to jump", "pos": "verb", "forms": ["baz", "dan"]},
                 {"ku": "dûman", "en": "smoke", "pos": "noun", "gender": "f", "forms": ["dûman", "dûmanên", "dûmanan", "dûmanek", "dûmana", "dûmanê", "dûmaneke"]},
                 {"ku": "seyran", "en": "outing, picnic in the open", "pos": "noun", "gender": "f", "forms": ["seyran", "seyranên", "seyranan", "seyranek", "seyrana", "seyranê", "seyraneke"]},
