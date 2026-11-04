@@ -2,7 +2,9 @@
  * Native recordings of the Kurdish that lessons use — the "Lessons" side of
  * the admin's audio studio, beside the alphabet's recordings.
  *
- *   GET    /admin/lesson-audio            what the lessons need, what is recorded, where each is used
+ *   GET    /admin/lesson-audio            what the lessons need, what is recorded, where each is used,
+ *                                         and who each is planned for (`plannedSpeaker`, from the
+ *                                         exercises' `voice` and the conversations' characters)
  *                                         (&withLipsync=1: each with its stored timeline, or null)
  *   PUT    /admin/lesson-audio?text=…     store a recording of that text (raw audio/wav body)
  *   DELETE /admin/lesson-audio?key=…      remove one (&force=1 when a published listening item plays it)

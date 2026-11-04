@@ -375,3 +375,164 @@ describe('who says each recording', () => {
     expect(within(studio).getByText('xołemêşî — the colour grey')).toBeInTheDocument();
   });
 });
+
+describe('the recording plan', () => {
+  const road = (lesson: number, title: string): Usage =>
+    usage({
+      courseId: 'c-road',
+      courseSlug: 'kurmanji-road',
+      courseTitle: 'The Kurmanji Road',
+      unitId: 'r-u1',
+      unitTitle: 'Silav',
+      skillId: 'r-s1',
+      skillTitle: 'Arriving',
+      lessonPosition: lesson,
+      lessonId: `r-l${lesson}`,
+      lessonTitle: title,
+      lessonStatus: 'draft',
+      live: false,
+    });
+  const planned = (text: string, lesson: number, title: string, voice: Item['plannedSpeaker'], said?: Item['speaker']): Item => ({
+    ...item(text, [road(lesson, title)], said !== undefined),
+    plannedSpeaker: voice,
+    ...(said !== undefined ? { speaker: said, hasLipsync: false } : {}),
+  });
+  const PLAN: Listing = {
+    items: [
+      { ...item('Spas', [usage({ courseSlug: 'kurmanji-basics' })]) },
+      planned('Silav, ez Hamo me', 1, 'Welcome', 'hamo'),
+      planned('Ez Xezal im', 1, 'Welcome', 'xezo'),
+      planned('Bi xêr hatî', 1, 'Welcome', 'hamo', 'hamo'),
+      planned('Sêv', 2, 'The family', 'hevalo'),
+      // planned for Hamo, and Xezal made the take
+      planned('Spas dikim', 2, 'The family', 'hamo', 'xezo'),
+      planned('Nan', 2, 'The family', 'hamo'),
+    ],
+    summary: { needed: 7, recorded: 2, missing: 5, unused: 0 },
+  };
+  const rowOf = (text: string): HTMLElement => [...document.querySelectorAll<HTMLElement>('.la-row')].find((r) => r.querySelector('.la-text')?.textContent?.endsWith(text))!;
+
+  it('says who each row still to record is for, and opens the picker on them', async () => {
+    const user = userEvent.setup();
+    fakeApi(on('GET', '/admin/lesson-audio', json(PLAN)));
+    location.hash = '#/audio/lessons';
+    renderUi(<AudioStudio />);
+    await waitFor(() => expect(rowTexts()).toContain('Silav, ez Hamo me'));
+    expect(rowOf('Silav, ez Hamo me')).toHaveTextContent('For Hamo');
+    expect(rowOf('Ez Xezal im')).toHaveTextContent('For Xezal');
+    expect(rowOf('Sêv')).toHaveTextContent('For Hevalo');
+    // a text nothing plans says nothing of the kind
+    expect(rowOf('Spas')).not.toHaveTextContent(/For /);
+
+    // the picker opens on the plan's character, not the last one picked (Hevalo, until someone is picked)
+    await user.click(within(rowOf('Ez Xezal im')).getByRole('button', { name: /Ez Xezal im/ }));
+    let picker = screen.getByRole('radiogroup', { name: 'Who says it' });
+    expect(within(picker).getByRole('radio', { name: 'Xezo' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByText('The lesson plans it for Xezal. Saved with the recording.')).toBeInTheDocument();
+    // another choice is this row's alone, and not kept for the next new recording
+    await user.click(within(picker).getByRole('radio', { name: 'Hamo' }));
+    expect(within(picker).getByRole('radio', { name: 'Hamo' })).toHaveAttribute('aria-checked', 'true');
+    expect(localStorage.getItem('kurda_admin_speaker')).toBeNull();
+
+    // a row without a plan opens on the last pick, as before
+    await user.click(within(rowOf('Spas')).getByRole('button', { name: /^Spas/ }));
+    picker = screen.getByRole('radiogroup', { name: 'Who says it' });
+    expect(within(picker).getByRole('radio', { name: 'Hevalo' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('keeps a recorded row on who was heard, whoever it was planned for', async () => {
+    const user = userEvent.setup();
+    fakeApi(on('GET', '/admin/lesson-audio', json(PLAN)));
+    location.hash = '#/audio/lessons?show=recorded';
+    renderUi(<AudioStudio />);
+    await waitFor(() => expect(rowTexts()).toContain('Spas dikim'));
+    expect(within(rowOf('Spas dikim')).getByRole('img', { name: 'Said by Xezo' })).toBeInTheDocument();
+    expect(rowOf('Spas dikim')).not.toHaveTextContent('For Hamo');
+    await user.click(within(rowOf('Spas dikim')).getByRole('button', { name: /^Spas dikim/ }));
+    expect(screen.getByRole('radio', { name: 'Xezo' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('filters by voice, counting what is left for each, with the way to that character’s script', async () => {
+    const user = userEvent.setup();
+    fakeApi(on('GET', '/admin/lesson-audio', json(PLAN)));
+    location.hash = '#/audio/lessons';
+    renderUi(<AudioStudio />);
+    const voices = await screen.findByRole('tablist', { name: 'Voice' });
+    expect(within(voices).getAllByRole('tab').map((t) => t.textContent)).toEqual(['All5', 'Hamo2', 'Xezal1', 'Hevalo1']);
+    await user.click(within(voices).getByRole('tab', { name: /Hamo/ }));
+    expect(rowTexts()).toEqual(['Silav, ez Hamo me', 'Nan']);
+    expect(screen.getByText('2 of 4 recorded')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Open Hamo’s script' })).toHaveAttribute('href', '#/audio/lessons?voice=hamo');
+  });
+
+  it('shows one course on its own, from the filter or the address', async () => {
+    const user = userEvent.setup();
+    fakeApi(on('GET', '/admin/lesson-audio', json(PLAN)));
+    location.hash = '#/audio/lessons';
+    renderUi(<AudioStudio />);
+    await waitFor(() => expect(rowTexts()).toContain('Spas'));
+    await user.selectOptions(screen.getByLabelText('Course'), 'The Kurmanji Road');
+    expect(rowTexts()).not.toContain('Spas');
+    expect(rowTexts()).toContain('Nan');
+  });
+
+  it('opens on a course named in the address', async () => {
+    fakeApi(on('GET', '/admin/lesson-audio', json(PLAN)));
+    location.hash = '#/audio/lessons?course=kurmanji-basics';
+    renderUi(<AudioStudio />);
+    await waitFor(() => expect(rowTexts()).toEqual(['Spas']));
+    expect(screen.getByLabelText('Course')).toHaveValue('kurmanji-basics');
+  });
+
+  it('gives each character’s progress on the course’s plan, with a link to their script', async () => {
+    fakeApi(on('GET', '/admin/lesson-audio', json(PLAN)));
+    location.hash = '#/audio/lessons';
+    renderUi(<AudioStudio />);
+    const plan = await screen.findByRole('region', { name: 'Recording plan' });
+    expect(within(plan).getByRole('heading', { name: 'The Kurmanji Road' })).toBeInTheDocument();
+    // nothing in the older course is planned for anyone: it has no plan to show
+    expect(within(plan).queryByRole('heading', { name: 'Kurmancî for beginners' })).toBeNull();
+    const lines = within(plan).getAllByRole('listitem').map((li) => li.textContent);
+    expect(lines).toEqual(['Hamo2 / 4 recordedScript', 'Xezal0 / 1 recordedScript', 'Hevalo0 / 1 recordedScript']);
+    expect(within(plan).getByRole('link', { name: 'Hamo’s script for The Kurmanji Road' })).toHaveAttribute('href', '#/audio/lessons?voice=hamo&course=kurmanji-road');
+  });
+
+  it('lays out a character’s script in course order, numbered under each lesson, and records it in a row from the keyboard', async () => {
+    const user = userEvent.setup();
+    const api = fakeApi(
+      on('GET', '/admin/lesson-audio', json(PLAN)),
+      on('PUT', /^\/admin\/lesson-audio\?text=/, json({ key: 'x', url: 'https://cdn.test/new.wav', durationMs: 1200, updatedAt: '2026-11-04T10:00:00.000Z', speaker: 'hamo' })),
+    );
+    location.hash = '#/audio/lessons?voice=hamo&course=kurmanji-road';
+    renderUi(<AudioStudio />);
+    expect(await screen.findByRole('heading', { name: 'Hamo’s script' })).toBeInTheDocument();
+    await waitFor(() => expect(rowTexts()).toEqual(['1. Silav, ez Hamo me', '2. Bi xêr hatî', '3. Spas dikim', '4. Nan']));
+    // under each lesson's heading, recorded lines and missing ones alike
+    const lessons = [...document.querySelectorAll('.la-lesson')].map((l) => [l.querySelector('.la-lesson-head strong')?.textContent, l.querySelectorAll('.la-row').length]);
+    expect(lessons).toEqual([
+      ['Welcome', 2],
+      ['The family', 2],
+    ]);
+    expect(screen.getByText('2 of 4 recorded')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Xezal’s script' })).toHaveAttribute('href', '#/audio/lessons?voice=xezo&course=kurmanji-road');
+    expect(screen.getByRole('link', { name: 'Every sentence' })).toHaveAttribute('href', '#/audio/lessons?course=kurmanji-road');
+    // a script has no row for the plan to name: every line is Hamo's
+    expect(document.querySelector('.la-for')).toBeNull();
+
+    // R records and stops, Enter saves, and the next of Hamo's missing lines comes up
+    await user.click(screen.getByRole('button', { name: 'Record next missing' }));
+    const studio = screen.getByRole('group', { name: 'Record “Silav, ez Hamo me”' });
+    expect(screen.getByRole('radio', { name: 'Hamo' })).toHaveAttribute('aria-checked', 'true');
+    await user.keyboard('r');
+    await within(studio).findByRole('button', { name: 'Stop' });
+    await user.keyboard('r');
+    await within(studio).findByRole('button', { name: 'Save' });
+    await user.keyboard('{Enter}');
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(api.calls.find((c) => c.method === 'PUT')!.path).toBe(`/admin/lesson-audio?text=${encodeURIComponent('Silav, ez Hamo me')}&speaker=hamo`);
+    expect(await screen.findByRole('group', { name: 'Record “Nan”' })).toBeInTheDocument();
+    // and the arrows move along the script
+    await user.keyboard('{ArrowUp}');
+    expect(await screen.findByRole('group', { name: 'Record “Spas dikim”' })).toBeInTheDocument();
+  });
+});

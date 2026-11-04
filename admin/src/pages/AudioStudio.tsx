@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { isSpeakerId } from '@kurda/shared';
 import { useRoute } from '../nav';
 import type { Filter } from '../lessonAudio';
 import { PageHeader, Tabs } from '../ui';
@@ -69,8 +70,10 @@ function savedSide(): Side {
  * #/audio/lessons, #/audio/stories) and a link of its own in the nav, because
  * the owner could not find where to record. `?show=missing` opens on what is
  * still missing (the dashboard's links); `?lesson=` and `?story=` on one
- * lesson or story (the Record links in their lists). All sides record, trim,
- * level and save the same way (recorder.tsx). Two more sides are for who is
+ * lesson or story (the Record links in their lists); `?course=` on one
+ * course's sentences, and `?voice=hamo` on that character's script, the lines
+ * the lessons plan for them (lessonAudio.ts). All sides record, trim, level
+ * and save the same way (recorder.tsx). Two more sides are for who is
  * shown saying the recordings: #/audio/dictionary for the dictionary's
  * pronunciations, which are not recorded here (DictionaryVoices.tsx), and
  * #/audio/characters for every recording at once (Characters.tsx).
@@ -107,6 +110,9 @@ export function AudioStudio(): React.JSX.Element {
   const show = route.query.get('show');
   const focus = side.key === 'stories' ? route.query.get('story') : side.key === 'lessons' ? route.query.get('lesson') : null;
   const storyFocus = focus && side.key === 'stories' ? `${focus}:0` : focus;
+  const course = side.key === 'lessons' ? route.query.get('course') : null;
+  const asked = route.query.get('voice');
+  const voice = side.key === 'lessons' && isSpeakerId(asked) ? asked : null;
 
   return (
     <div>
@@ -127,9 +133,11 @@ export function AudioStudio(): React.JSX.Element {
         <AlphabetAudio key="letters" initialFilter={show === 'missing' || show === 'recorded' || show === 'all' ? (show as LetterFilter) : undefined} />
       ) : (
         <LessonAudio
-          key={`${side.key}:${storyFocus ?? ''}:${show ?? ''}`}
+          key={`${side.key}:${storyFocus ?? ''}:${show ?? ''}:${course ?? ''}:${voice ?? ''}`}
           scope={side.key}
           focus={storyFocus}
+          course={course}
+          voice={voice}
           initialFilter={show === 'missing' || show === 'recorded' || show === 'all' || show === 'unused' ? (show as Filter) : undefined}
         />
       )}

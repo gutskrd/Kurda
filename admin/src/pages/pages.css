@@ -277,6 +277,35 @@
 .la-add-form { display: flex; gap: 8px; align-items: stretch; }
 .la-add-form input { flex: 1 1 auto; min-width: 0; font-size: 16px; }
 .aa-actions button { min-height: var(--target); }
+/* the plan: who records what, filtered by course and voice, each character's progress and script */
+.la-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 20px; margin: 2px 0 12px; }
+.la-course-pick { display: flex; align-items: center; gap: 8px; min-width: 0; max-width: 100%; }
+.la-course-pick label { font-size: 13px; font-weight: 600; color: var(--text-2); }
+.la-course-pick select { min-width: 0; max-width: 100%; }
+.la-voice-filter { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; min-width: 0; max-width: 100%; }
+.la-voice-filter .tabs { margin: 0; }
+.la-voice-note { font-size: 12.5px; }
+.la-for { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--text-2); white-space: nowrap; }
+.la-n { font-size: 0.7em; font-weight: 600; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.la-plan { display: grid; gap: 14px; margin-bottom: 16px; }
+.la-plan-head { display: grid; gap: 2px; }
+.la-plan-title { margin: 0; font-size: 17px; }
+.la-plan-course-title { margin: 0 0 8px; font-size: 13.5px; font-weight: 650; color: var(--text-2); }
+.la-plan-lines { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.la-plan-line {
+  display: grid; align-items: center; gap: 4px 12px;
+  grid-template-columns: 28px 12em 9.5em minmax(60px, 1fr) 4.5em; grid-template-areas: 'face who count bar script';
+}
+.la-plan-line > .voice-tag { grid-area: face; }
+.la-plan-who { grid-area: who; font-weight: 600; }
+.la-plan-count { grid-area: count; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.la-plan-bar { grid-area: bar; }
+.la-plan-script { grid-area: script; justify-self: end; }
+.la-plan-nobody { display: block; }
+.la-script-who { display: flex; align-items: center; gap: 12px; flex: 1 1 260px; min-width: 0; }
+.la-script-bust { flex: 0 0 auto; width: 48px; height: 48px; border-radius: 50%; background: var(--surface-strong); border: 1px solid var(--hairline); }
+.la-script-title { margin: 0; font-size: 19px; }
+.la-script-links { display: flex; flex-wrap: wrap; gap: 6px 12px; }
 @media (max-width: 899px) {
   /* on a phone the recorder comes first; a tap on a sound brings it back into view */
   .aa-layout { display: flex; flex-direction: column; }
@@ -285,6 +314,10 @@
 @media (max-width: 560px) {
   .la-play { width: var(--target); height: var(--target); }
   .la-row-line { grid-template-columns: var(--target) minmax(0, 1fr); }
+  .la-row .la-for { grid-column: 2; justify-self: start; margin-left: 8px; }
+  .la-plan-line { grid-template-columns: 28px minmax(0, 1fr) auto; grid-template-areas: 'face who script' 'face count script' 'bar bar bar'; }
+  .la-course-pick { flex: 1 1 100%; }
+  .la-course-pick select { flex: 1 1 auto; }
 }
 
 /* ---- shared bits of the converted pages ----------------------------------------- */

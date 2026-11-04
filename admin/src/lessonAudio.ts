@@ -3,8 +3,14 @@
  * lessons need, how the page filters and groups it, and which item comes next
  * when an editor is working through what is missing. Kept apart from the page
  * so it can be tested without a browser.
+ *
+ * It also reads the recording plan: who each text is for (`plannedSpeaker`,
+ * from the exercises' `voice`), so the page can show one character's lines,
+ * count what is left for each, and lay out a character's script — their lines
+ * in course order, numbered, for one person to record in a row.
  */
 import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey, type LipsyncData, type SpeakerId } from '@kurda/shared';
+import { VOICE_ORDER } from './voicePlan';
 
 export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing' | 'conversation';
 
@@ -17,6 +23,12 @@ export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'li
  */
 export interface Usage {
   courseId: string;
+  /**
+   * What the course filter names the course by (`?course=kurmanji-road`); a
+   * story's is its courseId. Missing from an API older than this panel, which
+   * a deploy can leave running for a few minutes: `courseKey` falls back.
+   */
+  courseSlug?: string;
   courseTitle: string;
   unitId: string;
   unitTitle: string;
@@ -43,6 +55,12 @@ export interface Item {
   updatedAt: string | null;
   /** who is shown saying it, or null for no character */
   speaker?: SpeakerId | null;
+  /**
+   * who is to record it: the `voice` of the first exercise in course order
+   * that names one, or a conversation line's character; null when nothing
+   * plans it (missing from an older API, and on a phrase added here)
+   */
+  plannedSpeaker?: SpeakerId | null;
   /** it has a mouth timeline */
   hasLipsync?: boolean;
   /**
@@ -330,4 +348,101 @@ export function inScope(item: Item, scope: Scope, focus?: string | null): Item |
 /** A listening item with no clip of its own cannot be done until its text is recorded. */
 export function neededForListening(item: Item): boolean {
   return item.usedIn.some((u) => u.listeningNeedsIt);
+}
+
+/** The course a use is in, as the course filter and the address name it. */
+export function courseKey(u: Pick<Usage, 'courseId' | 'courseSlug'>): string {
+  return u.courseSlug ?? u.courseId;
+}
+
+/** The courses the items are used in, in the order the list has them (course order): what the course filter offers. */
+export function coursesOf(items: readonly Item[]): Array<{ slug: string; title: string }> {
+  const out = new Map<string, string>();
+  for (const item of items) for (const u of item.usedIn) if (!out.has(courseKey(u))) out.set(courseKey(u), u.courseTitle);
+  return [...out].map(([slug, title]) => ({ slug, title }));
+}
+
+/**
+ * An item as one course sees it — with only its uses in that course, the
+ * first of which is where it is filed there — or null when the course does
+ * not use it. Without a course, the item as it is.
+ */
+export function inCourse(item: Item, course: string | null): Item | null {
+  if (!course) return item;
+  const here = item.usedIn.filter((u) => courseKey(u) === course);
+  if (here.length === 0) return null;
+  return here.length === item.usedIn.length ? item : { ...item, usedIn: here };
+}
+
+/**
+ * Whose line an item is: who it is planned for, else — once it is recorded —
+ * who was heard saying it. A text no lesson uses is nobody's: it belongs to
+ * no script.
+ */
+export function voiceOf(item: Item): SpeakerId | null {
+  if (isLoose(item)) return null;
+  return item.plannedSpeaker ?? (item.recorded ? (item.speaker ?? null) : null);
+}
+
+/** The studio's Voice filter: everything, or one character's lines. */
+export type VoiceFilter = 'all' | SpeakerId;
+
+export function matchesVoice(item: Item, voice: VoiceFilter): boolean {
+  return voice === 'all' || voiceOf(item) === voice;
+}
+
+/** What is left to record, in all and for each character: the Voice filter's counts. */
+export function voiceCounts(items: readonly Item[]): Record<VoiceFilter, number> {
+  const out = { all: 0, hamo: 0, xezo: 0, hevalo: 0 } as Record<VoiceFilter, number>;
+  for (const item of items) {
+    if (item.recorded) continue;
+    out.all += 1;
+    const voice = voiceOf(item);
+    if (voice) out[voice] += 1;
+  }
+  return out;
+}
+
+export interface PlanLine {
+  /** the character, or null for what nothing plans yet */
+  voice: SpeakerId | null;
+  recorded: number;
+  total: number;
+}
+
+export interface CoursePlan {
+  slug: string;
+  title: string;
+  /** Hamo, Xezal and Hevalo in that order, then what is planned for nobody when there is any */
+  lines: PlanLine[];
+}
+
+/**
+ * The recording plan, course by course: for each character, how much of what
+ * is theirs is recorded. A text used in two courses counts in both, since
+ * each course needs it. A course nothing in which is planned for anyone has
+ * no plan, and is left out.
+ */
+export function recordingPlan(items: readonly Item[]): CoursePlan[] {
+  return coursesOf(items).flatMap(({ slug, title }) => {
+    const here = items.filter((item) => item.usedIn.some((u) => courseKey(u) === slug));
+    const count = (voice: SpeakerId | null): PlanLine => {
+      const theirs = here.filter((item) => voiceOf(item) === voice);
+      return { voice, recorded: theirs.filter((item) => item.recorded).length, total: theirs.length };
+    };
+    const lines = VOICE_ORDER.map(count);
+    if (lines.every((line) => line.total === 0)) return [];
+    const unplanned = count(null);
+    return [{ slug, title, lines: unplanned.total > 0 ? [...lines, unplanned] : lines }];
+  });
+}
+
+/** A character's script: their lines in the order the page lists them (course order), recorded or not. */
+export function voiceScript(items: readonly Item[], voice: SpeakerId): Item[] {
+  return displayOrder(items.filter((item) => voiceOf(item) === voice));
+}
+
+/** Where a character's script is: #/audio/lessons?voice=hamo&course=kurmanji-road. */
+export function scriptHref(voice: SpeakerId, course: string | null): string {
+  return `#/audio/lessons?voice=${voice}${course ? `&course=${encodeURIComponent(course)}` : ''}`;
 }

@@ -59,6 +59,7 @@ interface Usage {
 interface Item {
   key: string;
   text: string;
+  plannedSpeaker: string | null;
   recorded: boolean;
   url: string | null;
   durationMs: number | null;
@@ -193,7 +194,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
       ],
     });
     ex.un = await repo.addExercise(live, 5, 'translate', { prompt: 'Not recorded', accepted: [T.unrecorded] });
-    ex.sp = await repo.addExercise(live, 6, 'speaking', { prompt: 'Say: good day', reference: T.speaking });
+    ex.sp = await repo.addExercise(live, 6, 'speaking', { prompt: 'Say: good day', reference: T.speaking, voice: 'hamo' });
     // its Kurdish is the question, not an option: hearing it first gives nothing away
     ex.mcq = await repo.addExercise(live, 8, 'multiple_choice', {
       prompt: `"${T.quoted}" tê çi wateyê?`,
@@ -270,6 +271,7 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
       lessonVersion: 2,
       live: true,
       courseId,
+      courseSlug: `la-${s}`,
       courseTitle: `Audio course ${s}`,
       unitId,
       unitTitle: 'Unit one',
@@ -289,6 +291,9 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
     expect(item(items, T.left1)!.usedIn[0]!.exerciseTypes).toEqual(['match_pairs']);
     expect(item(items, T.left2)).toBeDefined();
     expect(item(items, T.speaking)!.usedIn[0]!.exerciseTypes).toEqual(['speaking']);
+    // who records each: the exercise's voice, which the stored payload kept; none where it names none
+    expect(item(items, T.speaking)!.plannedSpeaker).toBe('hamo');
+    expect(mc.plannedSpeaker).toBeNull();
     // the right-hand cards and multiple-choice options are not
     expect(items.find((i) => i.key === 'water')?.usedIn.some((u) => u.courseTitle.endsWith(s))).not.toBe(true);
 
