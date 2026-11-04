@@ -8,7 +8,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { onHaptic } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { Narrator, narrationTrack, type NarrationState, type PlayerLike, type PlayerStatus } from './narration';
-import { NarrationBar, rateLabel } from './NarrationBar';
+import { NarrationBar, lineTime, rateLabel } from './NarrationBar';
 import type { NarrationRate } from './prefs';
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -87,6 +87,21 @@ describe('rateLabel', () => {
     expect(rateLabel(0.75)).toBe('0.75×');
     expect(rateLabel(1)).toBe('1×');
     expect(rateLabel(1.25)).toBe('1.25×');
+  });
+});
+
+describe('lineTime', () => {
+  it('reads a tap on the line as a point on the track, from the screen and the line’s place on it', () => {
+    // a line 300 wide starting 40 in, over a story of a minute
+    expect(lineTime(40 + 225, 40, 300, 60_000)).toBe(45_000);
+    expect(lineTime(40, 40, 300, 60_000)).toBe(0);
+    // a finger a little past either end is that end
+    expect(lineTime(10, 40, 300, 60_000)).toBe(0);
+    expect(lineTime(400, 40, 300, 60_000)).toBe(60_000);
+    // nothing to read yet: no line measured, no story, no point
+    expect(lineTime(100, 40, 0, 60_000)).toBeNull();
+    expect(lineTime(100, 40, 300, 0)).toBeNull();
+    expect(lineTime(Number.NaN, 40, 300, 60_000)).toBeNull();
   });
 });
 

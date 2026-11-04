@@ -170,6 +170,23 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     });
   }, [client, slug]);
   useEffect(load, [load]);
+  /*
+   * Coming back to the story — from its check, above all — the reader's own
+   * record is asked again: the best score, and how many checks today, have
+   * changed while the game was on top. The first focus is the load itself.
+   */
+  const refreshMe = useCallback(() => {
+    void getStory(client, slug).then((res) => {
+      if (res.ok) setMe(res.data.me ?? null);
+    });
+  }, [client, slug]);
+  const focusedBefore = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      if (focusedBefore.current) refreshMe();
+      focusedBefore.current = true;
+    }, [refreshMe]),
+  );
   // which of the story's dictionary words are saved already: asked only when it has any
   const headwords = !!story?.glossary.some((g) => !!g.entryId);
   useEffect(() => {
@@ -497,6 +514,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
               clips={clips}
               saved={!!entry.entryId && saved.has(entry.entryId)}
               onSave={entry.entryId ? () => toggleSave(entry.entryId!) : undefined}
+              saveColumn={headwords}
             />
           ))}
         </Card>
@@ -789,6 +807,7 @@ function VocabularyRow({
   clips,
   saved,
   onSave,
+  saveColumn,
 }: {
   entry: StoryGlossEntry;
   story: Pick<StoryDetail, 'dialect'>;
@@ -797,6 +816,8 @@ function VocabularyRow({
   saved: boolean;
   /** only for a word the dictionary has */
   onSave?: () => void;
+  /** some word in the list can be saved: a row without Save keeps its place, so the play buttons stand in one column */
+  saveColumn: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -846,6 +867,8 @@ function VocabularyRow({
         >
           <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={18} color={saved ? colors.gold : colors.primary} />
         </Pressable>
+      ) : saveColumn && playable ? (
+        <View style={styles.wordSlot} />
       ) : null}
     </View>
   );
@@ -982,6 +1005,7 @@ const styles = StyleSheet.create({
   wordTerm: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   wordMeaning: { fontSize: typography.sizes.sm },
   wordPlay: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  wordSlot: { width: 40, height: 40 },
   sheetText: { fontSize: typography.sizes.md, lineHeight: 22 },
   glossTerm: { ...display(typography.sizes.xl) },
   glossPos: { fontSize: typography.sizes.sm, fontStyle: 'italic' },

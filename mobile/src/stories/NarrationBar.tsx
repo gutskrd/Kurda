@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -13,6 +13,19 @@ import { useNarrationPosition } from './useNarration';
 
 /** How far a screen reader's step along the line moves the sound. */
 export const SEEK_STEP_MS = 10_000;
+
+/**
+ * The point on the track a tap on the line names: how far along the line the
+ * finger is, as a share of the whole story, kept within it. Read from where
+ * the tap is on the screen and where the line is, never from the touched
+ * view's own coordinates: a tap on the knob would measure from the knob, and
+ * the browser build has lost the line by the time the press ends.
+ */
+export function lineTime(pageX: number, lineLeft: number, lineWidth: number, total: number): number | null {
+  if (!Number.isFinite(pageX) || lineWidth <= 0 || total <= 0) return null;
+  const share = Math.max(0, Math.min(1, (pageX - lineLeft) / lineWidth));
+  return share * total;
+}
 
 /** What the speed chip says: the number as spoken of a speed, with the times sign. */
 export function rateLabel(rate: NarrationRate): string {
@@ -61,7 +74,14 @@ export function NarrationBar({
   // stopped part-way, the line stays where the story will go on from
   const resumeAt = mine ? null : narrator.resumeMs;
   const elapsed = Math.min(mine ? position : (resumeAt ?? 0), total);
-  const [lineWidth, setLineWidth] = useState(0);
+  // where the line is on the screen, measured when it is laid out and again as a finger lands on it
+  const line = useRef<View>(null);
+  const lineBox = useRef({ left: 0, width: 0 });
+  const measureLine = (): void => {
+    line.current?.measureInWindow((left, _top, width) => {
+      lineBox.current = { left, width };
+    });
+  };
   const ink = colors.primary;
   const onInk = colors.textOnPrimary;
 
@@ -80,8 +100,8 @@ export function NarrationBar({
   };
 
   const onLinePress = (e: GestureResponderEvent): void => {
-    if (lineWidth <= 0 || total <= 0) return;
-    seekTo((e.nativeEvent.locationX / lineWidth) * total);
+    const at = lineTime(e.nativeEvent.pageX, lineBox.current.left, lineBox.current.width, total);
+    if (at !== null) seekTo(at);
   };
 
   const step = (icon: 'skip-back' | 'skip-forward', label: string, onPress: () => void, disabled: boolean) => (
@@ -102,8 +122,10 @@ export function NarrationBar({
   return (
     <View style={[styles.bar, { backgroundColor: ink }]}>
       <Pressable
+        ref={line}
         onPress={onLinePress}
-        onLayout={(e) => setLineWidth(e.nativeEvent.layout.width)}
+        onPressIn={measureLine}
+        onLayout={measureLine}
         accessibilityRole="adjustable"
         accessibilityLabel={t('stories.player.seek')}
         // the aria form, which both the phone's screen readers and the browser build read (as the age ruler's)
@@ -118,9 +140,9 @@ export function NarrationBar({
         onAccessibilityAction={(e) => seekTo(elapsed + (e.nativeEvent.actionName === 'increment' ? SEEK_STEP_MS : -SEEK_STEP_MS))}
         style={styles.line}
       >
-        <View style={[styles.track, { backgroundColor: onInk }]} />
-        <View style={[styles.fill, { backgroundColor: colors.gold, width: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
-        <View style={[styles.knob, { backgroundColor: colors.gold, left: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
+        <View pointerEvents="none" style={[styles.track, { backgroundColor: onInk }]} />
+        <View pointerEvents="none" style={[styles.fill, { backgroundColor: colors.gold, width: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
+        <View pointerEvents="none" style={[styles.knob, { backgroundColor: colors.gold, left: total > 0 ? `${(elapsed / total) * 100}%` : '0%' }]} />
       </Pressable>
       <View style={styles.times}>
         <Text style={[styles.time, { color: onInk }]}>{clockText(elapsed)}</Text>
