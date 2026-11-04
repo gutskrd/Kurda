@@ -541,32 +541,23 @@ function eyesHappy(): string {
   return part([], [fill(arc(EYE_LEFT, 1) + arc(EYE_RIGHT, 0.95), C.lash)]);
 }
 
-/**
- * His moustache, a handlebar after the owner’s reference, drawn as one brush
- * stroke from the tip of one curl to the tip of the other: fine at the tips,
- * widening round each curl, fullest over the lobes either side of a slight
- * narrowing under the nose (where a little of the lip shows, as it does in
- * the reference), and tapering again into the far curl. Each curl is a true
- * spiral of a turn and a quarter, its tip tucked inside, the outer turn just
- * clear of the inner one so the curl reads as a curl and not a knob. The
- * near curl, on the cheek turned toward us, is the larger.
- */
-const MOUSTACHE_SPINE: Pt[] = [
-  // the near curl, from its tip outward
-  [166.4, 129.8], [165.7, 131.1], [167.2, 132.4], [169.0, 132.1], [170.6, 129.6], [169.0, 127.1], [165.6, 127.0], [163.0, 129.6],
-  [163.2, 133.0], [165.8, 135.4],
-  // the near lobe, the parting under the nose, the far lobe
-  [169.8, 135.8], [174.0, 136.2], [180.0, 136.0], [186.0, 135.8], [191.4, 135.4], [195.0, 135.2], [197.6, 135.0], [200.4, 135.2],
-  [203.6, 135.6], [206.6, 135.2],
-  // the far curl, inward to its tip
-  [209.0, 134.8], [212.4, 131.6], [211.4, 128.6], [209.0, 127.8], [206.4, 129.8], [207.2, 132.4], [209.2, 132.5], [210.4, 131.2],
-  [209.6, 130.1],
-];
-
-const MOUSTACHE_WIDTH: number[] = [
-  0.9, 1.1, 1.3, 1.5, 1.8, 2.0, 2.2, 2.4, 2.8, 4.0,
-  5.4, 7.2, 8.6, 8.4, 7.4, 5.8, 4.4, 5.8, 7.2, 6.0,
-  4.6, 2.6, 2.1, 1.9, 1.7, 1.5, 1.2, 1.0, 0.8,
+/** His moustache: full and thick across his lip, tapering to points that turn down past the corners of his mouth. */
+const MOUSTACHE: Knot[] = [
+  [171, 137.9, 0.15],
+  [174.6, 136.4],
+  [178.6, 134.5],
+  [189.4, 129.7],
+  [194.4, 131.1],
+  [197.4, 130.5],
+  [199.2, 130.9],
+  [207.4, 135],
+  [212, 137.9, 0.15],
+  [210.1, 138],
+  [204.4, 138.4],
+  [194.4, 137.5],
+  [190.9, 138],
+  [179.9, 138.4],
+  [174.9, 138.3],
 ];
 
 export function drawHamo(p: string): CharacterArt {
@@ -592,7 +583,7 @@ export function drawHamo(p: string): CharacterArt {
       },
       p,
     ),
-    overlay: fill(taper(MOUSTACHE_SPINE, MOUSTACHE_WIDTH), C.moustache),
+    overlay: fill(curve(MOUSTACHE), C.moustache),
     irisReach: 2.4,
     // his far eye, on the right, is the smaller: his face is turned a little to the left
     turned: 'left',
