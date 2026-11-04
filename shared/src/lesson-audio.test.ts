@@ -105,12 +105,23 @@ describe('lessonAudioTargets', () => {
   });
 
   it('puts `say` first, on any type', () => {
-    expect(lessonAudioTargets('translate', { prompt: 'x', accepted: ['Spas dikim'], say: 'Spas' })).toEqual(['Spas', 'Spas dikim']);
+    expect(lessonAudioTargets('writing', { prompt: 'x', accepted: ['Spas dikim'], say: 'Spas' })).toEqual(['Spas', 'Spas dikim']);
+    expect(lessonAudioTargets('listening', { accepted: ['Ez baş im'], say: 'Tu çawa yî?' })).toEqual(['Tu çawa yî?', 'Ez baş im']);
     expect(lessonAudioTargets('match_pairs', { pairs: [{ left: 'av', right: 'water' }, { left: 'nan', right: 'bread' }], say: 'Av û nan' })).toEqual([
       'Av û nan',
       'av',
       'nan',
     ]);
+  });
+
+  it('asks only for the Kurdish of a Kurdish → English translation, never its English answer', () => {
+    const payload = { say: 'Ez ji Amedê me.', prompt: 'Translate into English', accepted: ['I am from Amed.', 'I’m from Amed'] };
+    expect(lessonAudioTargets('translate', payload)).toEqual(['Ez ji Amedê me.']);
+    expect(primaryAudioTarget('translate', payload)).toBe('Ez ji Amedê me.');
+    // English → Kurdish, with no `say`: the Kurdish answer is what is heard
+    expect(lessonAudioTargets('translate', { prompt: 'I am from Amed.', accepted: ['Ez ji Amedê me.', 'Ez ji Amedê me'] })).toEqual(['Ez ji Amedê me.']);
+    // a `say` with nothing in it names no Kurdish, so the answer is still the one
+    expect(lessonAudioTargets('translate', { say: ' ? ', prompt: 'x', accepted: ['Spas'] })).toEqual(['Spas']);
   });
 
   it('lists a text once even when it appears twice, keeping the first spelling', () => {

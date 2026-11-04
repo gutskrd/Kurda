@@ -216,6 +216,16 @@ describe('modelAudioAfterAnswer', () => {
     });
   });
 
+  it('is a Kurdish → English item’s Kurdish, never its English answer', async () => {
+    const db = fakeDb({ 'ez ji amedê me': URL('amed'), 'i am from amed': URL('english') });
+    const payload = { say: 'Ez ji Amedê me.', prompt: 'Translate into English', accepted: ['I am from Amed.'] };
+    expect(await modelAudioAfterAnswer(db as never, 'translate', payload)).toEqual({ modelAudioUrl: URL('amed') });
+    // and before the answer nothing is looked up for it: the prompt does not show the Kurdish
+    const before = fakeDb({ 'ez ji amedê me': URL('amed') });
+    expect(await lessonAudioFor(before as never, [{ type: 'translate', payload }])).toEqual([{}]);
+    expect(before.calls).toHaveLength(0);
+  });
+
   it('says who says it, when a character is chosen for it', async () => {
     const db = fakeDb({ îro: URL('iro'), spas: URL('spas') }, { îro: { speaker: 'xezo', lipsync: TIMELINE }, spas: { speaker: 'hamo' } });
     expect(await modelAudioAfterAnswer(db as never, 'translate', { prompt: 'today', accepted: ['Îro.'] })).toEqual({

@@ -47,9 +47,10 @@ const FILTER_LABEL: Record<Filter, string> = {
  * one list the API reads off every lesson and story — published or still a
  * draft — so an editor can record before anything goes live.
  *
- * For a lesson: each item's `say`, the first accepted answer of a translation,
- * writing or listening item, a speaking item's model sentence, and every
- * match-pairs card. For a story: every sentence, as the story reader cuts it.
+ * For a lesson: each item's `say`, the first accepted answer of a writing or
+ * listening item and of a translation without `say` (one with it goes from
+ * Kurdish to English, and its answers are English), a speaking item's model
+ * sentence, and every match-pairs card. For a story: every sentence, as the story reader cuts it.
  * A sentence recorded once is sent with everything that uses it — with the
  * exercise, or once it is answered where hearing it first would give the
  * answer away (api/src/lessonaudio/delivery.ts).
@@ -281,8 +282,9 @@ export function LessonAudio({
           <details className="aa-more">
             <summary>What is on this list</summary>
             <p className="subtle">
-              Each item’s “say”, the first accepted answer of a translation, writing or listening item, a speaking item’s model
-              sentence, and every match-pairs card. One recording is sent with every exercise that uses its sentence, in any lesson:
+              Each item’s “say”, the first accepted answer of a writing or listening item and of a translation into Kurdish (one
+              from Kurdish names its Kurdish in “say”, and its English answers are not recorded), a speaking item’s model sentence,
+              and every match-pairs card. One recording is sent with every exercise that uses its sentence, in any lesson:
               with the exercise, or once it is answered where hearing it first would give the answer away. A listening item without a
               clip of its own uses the recording as its clip, so its lesson cannot be published until the recording is made.
             </p>
