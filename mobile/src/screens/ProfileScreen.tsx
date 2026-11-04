@@ -3,13 +3,14 @@ import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation
 import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
+import { GuestBenefits, useAccountGate } from '../auth/AccountGate';
 import { refreshFelt } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { GradientBackground } from '../theme/glass';
+import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { LinearGradient } from 'expo-linear-gradient';
-import { statValue, statCaption } from '../theme/fonts';
+import { display, statValue, statCaption } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
@@ -57,6 +58,63 @@ interface Me extends ProfileCosmetics {
 }
 
 /**
+ * The Profile tab: your profile, or, as a guest, the offer of one.
+ *
+ * A guest has a generated name and nothing of their own to show — no face, no
+ * bio, no friends, no profile anyone else can open — and most of what the
+ * account's profile loads is refused to them. So the tab is not that profile
+ * with its numbers greyed out; it is a card that says they are learning as a
+ * guest, what an account keeps for them, and the two ways to one. The menu
+ * stays, because the places behind it that are open to anyone (the badges, the
+ * library, settings) are reached through it.
+ */
+export function ProfileScreen(): React.JSX.Element {
+  const { isGuest } = useAccountGate();
+  return isGuest ? <GuestProfile /> : <AccountProfile />;
+}
+
+function GuestProfile(): React.JSX.Element {
+  const { user } = useAuth();
+  const navigation = useNavigation<RootNavigation>();
+  const { colors } = useTheme();
+  const tabBarInset = useTabBarInset();
+  const topInset = useScreenTopInset();
+  const openMenu = useOpenMenu();
+  const dir = useDirection();
+  const { t } = useI18n();
+  return (
+    <GradientBackground>
+      <ScrollView contentContainerStyle={[styles.content, { paddingTop: topInset, paddingBottom: tabBarInset }]} showsVerticalScrollIndicator={false}>
+        {/* the given name at the top and the menu at the end, as on the account's profile */}
+        <View style={[styles.topBar, { flexDirection: dir.row }]}>
+          <Text style={[styles.topName, dir.text, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
+            {user?.username}
+          </Text>
+          <HeaderButton icon="menu" label={t('nav.menu')} onPress={openMenu} edge="end" testID="profile-menu" />
+        </View>
+
+        <GlassCard style={styles.guestCard}>
+          <View style={styles.guestInner}>
+            <View style={styles.guestHead}>
+              <InitialsAvatar name={user?.username ?? ''} id={user?.id ?? ''} size={AVATAR} photoUrl={null} />
+              <Text style={[styles.guestTitle, { color: colors.textPrimary }]} accessibilityRole="header">
+                {t('guest.profile.title')}
+              </Text>
+              <Text style={[styles.guestBody, { color: colors.textSecondary }]}>{t('guest.profile.body')}</Text>
+            </View>
+            <GuestBenefits />
+            <View style={styles.guestActions}>
+              <ClayButton label={t('guest.createAccount')} tone="primary" size="large" onPress={() => navigation.navigate('ClaimAccount')} />
+              <ClayButton label={t('welcome.haveAccount')} variant="outline" tone="primary" size="large" onPress={() => navigation.navigate('SignIn')} />
+            </View>
+          </View>
+        </GlassCard>
+      </ScrollView>
+    </GradientBackground>
+  );
+}
+
+/**
  * Your profile: your name at the top, a face, three numbers, and two buttons.
  *
  * In the order somebody opening their own profile wants it answered: is this
@@ -72,7 +130,7 @@ interface Me extends ProfileCosmetics {
  * other ones — XP, Zêr, icons — are one quiet line underneath: still there,
  * still yours, no longer shouting over the face.
  */
-export function ProfileScreen() {
+function AccountProfile() {
   const { user, client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
@@ -516,4 +574,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
   },
   actionText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+
+  // a guest's card: the face they were given, the offer, and the four things an account keeps
+  guestCard: { marginTop: spacing.md },
+  guestInner: { gap: spacing.md },
+  guestHead: { alignItems: 'center', gap: spacing.sm },
+  guestTitle: { ...display(typography.sizes.lg), textAlign: 'center', marginTop: spacing.xs },
+  guestBody: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
+  guestActions: { gap: spacing.sm },
 });

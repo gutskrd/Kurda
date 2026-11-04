@@ -5,10 +5,12 @@ import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
+import { useAccountGate } from '../auth/AccountGate';
 import type { TabNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { ErrorRetry, GradientBackground } from '../theme/glass';
+import { display } from '../theme/fonts';
+import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Chips } from '../theme/Chips';
 import { SearchField } from '../theme/SearchField';
@@ -65,6 +67,8 @@ interface RequestRow {
  */
 export function MessagesScreen(): React.JSX.Element {
   const { client } = useAuth();
+  // a guest has no conversations and may start none: the tab says what an account opens (auth/AccountGate)
+  const { isGuest, require } = useAccountGate();
   const navigation = useNavigation<TabNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
@@ -89,6 +93,8 @@ export function MessagesScreen(): React.JSX.Element {
   useScrollToTop(listRef);
 
   const load = useCallback(async () => {
+    // every one of these is refused to a guest, and the tab shows them none of it
+    if (isGuest) return;
     const [c, g, gu, r, n] = await Promise.all([
       client.get<{ conversations: DirectConversation[] }>('/chat/conversations'),
       client.get<{ groups: Group[] }>('/me/groups'),
@@ -115,7 +121,7 @@ export function MessagesScreen(): React.JSX.Element {
       ...(gu.ok ? { groups: gu.data.unread.reduce((sum, x) => sum + Math.max(0, x.unread), 0) } : {}),
       ...(r.ok ? { requests: r.data.requests.length } : {}),
     });
-  }, [client, report]);
+  }, [client, report, isGuest]);
 
   useFocusEffect(
     useCallback(() => {
@@ -234,6 +240,50 @@ export function MessagesScreen(): React.JSX.Element {
     ) : (
       <EmptyState title={t('messages.empty')} body={t('messages.empty.body')} action={{ label: t('messages.findFriends'), onPress: findFriends }} />
     );
+
+  /*
+   * A guest's Messages: the tab, its title and its pencil as everyone has
+   * them, and under the title what an account opens here — not an empty list
+   * saying to find friends, which a guest cannot do either. The pencil and
+   * the button both make the offer.
+   */
+  if (isGuest) {
+    return (
+      <GradientBackground>
+        <TitleBar
+          title={t('nav.messages')}
+          collapse={title}
+          right={<HeaderButton icon="compose" label={t('messages.new')} onPress={() => require('message')} edge="end" />}
+        />
+        <Animated.ScrollView
+          onScroll={title.onScroll}
+          scrollEventThrottle={16}
+          contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.head}>
+            <LargeTitle title={t('nav.messages')} collapse={title} />
+          </View>
+          <View style={styles.guest} testID="messages-guest">
+            <View style={[styles.guestMark, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              <Icon name="send" size={30} tone="primary" />
+            </View>
+            <Text style={[styles.guestTitle, { color: colors.textPrimary }]} accessibilityRole="header">
+              {t('guest.messages.title')}
+            </Text>
+            <Text style={[styles.guestBody, { color: colors.textSecondary }]}>{t('guest.messages.body')}</Text>
+            <ClayButton
+              label={t('guest.createAccount')}
+              tone="primary"
+              size="large"
+              onPress={() => navigation.navigate('ClaimAccount')}
+              style={styles.guestAction}
+            />
+          </View>
+        </Animated.ScrollView>
+      </GradientBackground>
+    );
+  }
 
   return (
     <GradientBackground>
@@ -426,4 +476,11 @@ const styles = StyleSheet.create({
   countText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   discover: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, marginTop: spacing.sm },
   discoverText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+
+  // a guest's tab: the offer, centred under the title with room above it
+  guest: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: spacing.xl },
+  guestMark: { width: 64, height: 64, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
+  guestTitle: { ...display(typography.sizes.lg), textAlign: 'center' },
+  guestBody: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center', maxWidth: 300 },
+  guestAction: { alignSelf: 'stretch', marginTop: spacing.sm },
 });

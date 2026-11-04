@@ -60,10 +60,13 @@ const FRESH_MS = 15_000;
  *
  * The gift count is the one the shop's badge already keeps (useUnseenGifts),
  * so the two cannot disagree.
+ *
+ * A guest's counts are all zero without asking: nothing can be sent to one,
+ * and the four routes are among those refused to one.
  */
 export function UnreadProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const { client, user } = useAuth();
-  const signedIn = Boolean(user);
+  const { client, user, isGuest } = useAuth();
+  const signedIn = Boolean(user) && !isGuest;
   const gifts = useUnseenGifts();
   const [counts, setCounts] = useState<Omit<UnreadCounts, 'gifts'>>(EMPTY);
   const lastAnswer = useRef(0);

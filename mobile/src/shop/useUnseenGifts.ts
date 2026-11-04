@@ -38,9 +38,10 @@ export function giftsWereOpened(): void {
 export const refreshGiftBadge = giftsWereOpened;
 
 export function useUnseenGifts(): number {
-  const { client, user } = useAuth();
+  const { client, user, isGuest } = useAuth();
   const [count, setCount] = useState(0);
-  const signedIn = Boolean(user);
+  // a guest gets no gifts, and the social summary is refused to one: zero without asking
+  const signedIn = Boolean(user) && !isGuest;
 
   const refresh = useCallback(() => {
     if (!signedIn) return;

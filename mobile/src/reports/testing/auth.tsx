@@ -51,7 +51,8 @@ export const fail = (error: Partial<ApiError> & { code?: string; details?: unkno
 
 export const testAuth: {
   client: ApiClient;
-  user: { id: string; username: string; email: string; displayName: string | null; profilePhotoUrl: string | null; emailVerified: boolean };
+  /** `guest: true` for a test of what a guest sees; the stand-in's `isGuest` follows it */
+  user: { id: string; username: string; email: string; displayName: string | null; profilePhotoUrl: string | null; emailVerified: boolean; guest?: boolean };
   baseUrl: string;
 } = {
   client: fakeClient(),
@@ -60,7 +61,7 @@ export const testAuth: {
 };
 
 export function useAuth() {
-  return { ...testAuth, status: 'signedIn' as const };
+  return { ...testAuth, isGuest: testAuth.user.guest === true, status: 'signedIn' as const };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }): React.JSX.Element {

@@ -15,7 +15,7 @@ import { accountStanding } from '../reports/api';
  * known it is taken as nothing to do, so a row never turns gold and back.
  */
 export function useSettingsAttention(): { pushOff: boolean; standing: StandingStatus | null } {
-  const { client } = useAuth();
+  const { client, isGuest } = useAuth();
   const [pushOff, setPushOff] = useState(false);
   const [standing, setStanding] = useState<StandingStatus | null>(null);
 
@@ -27,13 +27,16 @@ export function useSettingsAttention(): { pushOff: boolean; standing: StandingSt
           if (active) setPushOff(state.status === 'denied' || state.status === 'undetermined');
         });
       }
-      void accountStanding(client).then((res) => {
-        if (active && res.ok) setStanding(res.data.status);
-      });
+      // a guest has no standing to be limited, and the route is refused to one: nothing to ask
+      if (!isGuest) {
+        void accountStanding(client).then((res) => {
+          if (active && res.ok) setStanding(res.data.status);
+        });
+      }
       return () => {
         active = false;
       };
-    }, [client]),
+    }, [client, isGuest]),
   );
 
   return { pushOff, standing };

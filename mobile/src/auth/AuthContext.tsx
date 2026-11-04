@@ -13,6 +13,7 @@ import type { AgeStopKind } from './birthMonth';
 import type { SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
 import { onMaintenanceOver, showMaintenance } from '../maintenance/maintenance';
+import { notifyGuestRefused } from './guestRefused';
 
 export interface SessionUser {
   id: string;
@@ -39,6 +40,13 @@ export interface SessionUser {
   minor?: boolean;
   /** takes part in the weekly leagues (/me only) */
   leaguesEnabled?: boolean;
+  /**
+   * A guest: an account made by "Try Hevalo first" with a generated username
+   * and no email, which learns like anyone and is refused the social, public
+   * and purchasable routes until it is claimed (POST /auth/claim). Absent on
+   * an older server, which reads as a full account.
+   */
+  guest?: boolean;
 }
 
 /** A failed request, with the server's code when it sent one. */
@@ -56,9 +64,26 @@ export interface AppleSignInExtras {
   fullName?: string | null;
 }
 
+/** What a guest fills in to make the account their own: the register form's fields, as POST /auth/claim takes them. */
+export interface ClaimInput {
+  email: string;
+  password: string;
+  /** a chosen username; left out, the generated one stays */
+  username?: string;
+  locale?: Locale;
+  birthYear: number;
+  birthMonth: number;
+}
+
 interface AuthContextValue {
   status: AuthStatus;
   user: SessionUser | null;
+  /**
+   * Signed in as a guest (`user.guest`). A guest is `signedIn` like anyone —
+   * the lessons, the map and the games neither know nor care — and the places
+   * that need an account ask through the account gate (auth/AccountGate).
+   */
+  isGuest: boolean;
   client: ApiClient;
   /** API origin, used to derive the realtime WebSocket URL (KUR-054). */
   baseUrl: string;
@@ -90,6 +115,22 @@ interface AuthContextValue {
     birthYear: number;
     birthMonth: number;
   }): Promise<AuthFailure | null>;
+  /**
+   * Start as a guest (POST /auth/guest): a session for an account with a
+   * generated name, made on the spot, so somebody can try the lessons before
+   * they give an email address. Applied like a sign-in. Resolves to the
+   * failure, or null on success.
+   */
+  continueAsGuest(): Promise<AuthFailure | null>;
+  /**
+   * Make the guest account a full one (POST /auth/claim): the same account,
+   * with everything learned on it, now with an email, a password and a birth
+   * month. The server answers with the user — `guest` false and
+   * `emailVerified` false, a code on its way by email — and the app's
+   * verify-email gate takes over from there. The tokens stay: it is the same
+   * session. Resolves to the failure, with its code, as `register` does.
+   */
+  claimAccount(input: ClaimInput): Promise<AuthFailure | null>;
   /** Re-read the signed-in account (after answering the birth month question). */
   refreshUser(): Promise<void>;
   /**
@@ -179,7 +220,7 @@ export function AuthProvider({
     return name ? { deviceName: name } : {};
   });
 
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [status, setStatus] = useState<AuthStatus>('restoring');
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ageStop, setAgeStop] = useState<AgeStopKind | null>(null);
@@ -199,12 +240,15 @@ export function AuthProvider({
         onSuspended: setSuspension,
         // Hevalo offline for a while: the screen over the app, and the session kept
         onMaintenance: showMaintenance,
+        // a guest refused something only an account may do: the offer to make one (auth/AccountGate)
+        onGuestRefused: notifyGuestRefused,
         deviceId: () => loadDeviceId(deviceStore),
       }),
     [baseUrl, storage, deviceStore],
   );
 
-  useHeartbeat(client, status === 'signedIn');
+  // a guest has no friends to be seen online by, so the presence beat is not sent for one
+  useHeartbeat(client, status === 'signedIn' && user?.guest !== true);
 
   useEffect(() => {
     let cancelled = false;
@@ -259,6 +303,7 @@ export function AuthProvider({
   const value: AuthContextValue = {
     status,
     user,
+    isGuest: user?.guest === true,
     client,
     baseUrl,
     login: async (email, password) => {
@@ -282,6 +327,21 @@ export function AuthProvider({
       });
       if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
       await applyAuth(res.data);
+      return null;
+    },
+    continueAsGuest: async () => {
+      // the language chosen in the intro is the account's, as it is for a sign-up: a claim later keeps it
+      const res = await client.post<AuthPayload>('/auth/guest', { ...device, locale });
+      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
+      await applyAuth(res.data);
+      return null;
+    },
+    claimAccount: async (input) => {
+      // consent is versioned server-side, as at sign-up; the claim form shows the same notice
+      const res = await client.post<{ user: SessionUser }>('/auth/claim', { ...input, acceptTerms: true });
+      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
+      // the same session: only who it belongs to has changed
+      setUser(res.data.user);
       return null;
     },
     refreshUser: async () => {

@@ -3,6 +3,7 @@ import { matchedParts } from '@kurda/shared';
 import { useNavigation, useScrollToTop } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { useAccountGate } from '../auth/AccountGate';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -81,6 +82,14 @@ interface LessonRow {
  */
 export function SearchScreen(): React.JSX.Element {
   const { client } = useAuth();
+  /*
+   * A guest searches the words, the lessons and the games, not the people:
+   * finding somebody leads to befriending or writing to them, which an
+   * account does, and the people search is one of the routes refused to a
+   * guest. The scope is not offered rather than offered and refused.
+   */
+  const { isGuest } = useAccountGate();
+  const scopes = useMemo(() => (isGuest ? SCOPES.filter((s) => s !== 'people') : SCOPES), [isGuest]);
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -126,15 +135,20 @@ export function SearchScreen(): React.JSX.Element {
         // a list that will not parse is a list that is not there
       }
     });
-    void client.get<{ suggestions: Suggestion[] }>('/friends/suggestions').then((r) => {
-      if (!live) return;
-      if (r.ok) setSuggestions(r.data.suggestions);
+    if (isGuest) {
+      // nobody to suggest to a guest, and the suggestions are refused to one: settled at once
       setSuggestionsSettled(true);
-    });
+    } else {
+      void client.get<{ suggestions: Suggestion[] }>('/friends/suggestions').then((r) => {
+        if (!live) return;
+        if (r.ok) setSuggestions(r.data.suggestions);
+        setSuggestionsSettled(true);
+      });
+    }
     return () => {
       live = false;
     };
-  }, [client]);
+  }, [client, isGuest]);
 
   /** Keep what was searched for, once it led somewhere (or was sent with the return key). */
   const remember = useCallback((term: string) => {
@@ -184,7 +198,8 @@ export function SearchScreen(): React.JSX.Element {
 
   const run = useCallback(
     async (q: string, only: Scope) => {
-      const wanted = scopesToRun(only);
+      // "all" is every scope a guest has, which is every scope but the people
+      const wanted = scopesToRun(only).filter((s) => s !== 'people' || !isGuest);
       const trimmed = q.trim();
 
       if (wanted.includes('lessons')) setLessons(filterByLabel(allLessons, (l) => l.title, trimmed));
@@ -211,7 +226,7 @@ export function SearchScreen(): React.JSX.Element {
       const refused = [p, w].find((r) => r && !r.ok);
       if (refused && !refused.ok) setFailure(refused.error);
     },
-    [client, allLessons],
+    [client, allLessons, isGuest],
   );
 
   /* One timer, reset on every keystroke and on a change of scope. */
@@ -314,7 +329,7 @@ export function SearchScreen(): React.JSX.Element {
           placeholder={t('search.placeholder')}
           onSubmit={() => remember(query)}
         />
-        <Chips options={SCOPES} value={scope} onChange={setScope} labelOf={(s) => t(SCOPE_LABEL[s])} />
+        <Chips options={scopes} value={scope} onChange={setScope} labelOf={(s) => t(SCOPE_LABEL[s])} />
       </View>
 
       <ScrollView

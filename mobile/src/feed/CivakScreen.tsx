@@ -5,6 +5,7 @@ import { Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
+import { useAccountGate } from '../auth/AccountGate';
 import { layout, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
@@ -58,6 +59,8 @@ const PAGE = 20;
  */
 export function CivakScreen(): React.JSX.Element {
   const { client } = useAuth();
+  // a guest reads the wall; writing on it is the account's (auth/AccountGate)
+  const { require } = useAccountGate();
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
@@ -65,6 +68,9 @@ export function CivakScreen(): React.JSX.Element {
   const { refresh: refreshBadges } = useUnread();
 
   const navigation = useNavigation<TabNavigation>();
+  const compose = useCallback(() => {
+    if (require('post')) navigation.navigate('Compose');
+  }, [require, navigation]);
   const listRef = useRef<FlatList<FeedItem>>(null);
   // tapping Home while on Home goes back to the newest post
   useScrollToTop(listRef);
@@ -191,7 +197,7 @@ export function CivakScreen(): React.JSX.Element {
             onPress={() => setFiltering(true)}
             testID="home-filter"
           />
-          <HeaderButton icon="plus" label={t('post.open')} onPress={() => navigation.navigate('Compose')} testID="home-post" />
+          <HeaderButton icon="plus" label={t('post.open')} onPress={compose} testID="home-post" />
           <NotificationBell />
         </View>
 
@@ -251,7 +257,7 @@ export function CivakScreen(): React.JSX.Element {
                 title={t('civak.empty.welcome')}
                 body={t('civak.empty.body')}
                 action={{ label: t('civak.empty.findPeople'), onPress: () => navigation.navigate('Search') }}
-                secondary={{ label: t('civak.empty.write'), onPress: () => navigation.navigate('Compose') }}
+                secondary={{ label: t('civak.empty.write'), onPress: compose }}
               />
             ) : (
               // nothing in what was asked for: the way back to the whole wall first
@@ -259,7 +265,7 @@ export function CivakScreen(): React.JSX.Element {
                 title={t('civak.empty')}
                 body={t('civak.empty.body')}
                 action={{ label: t('civak.filter.clear'), onPress: () => choose(DEFAULT_FILTER) }}
-                secondary={{ label: t('post.open'), onPress: () => navigation.navigate('Compose') }}
+                secondary={{ label: t('post.open'), onPress: compose }}
               />
             )
           }

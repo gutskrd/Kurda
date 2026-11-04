@@ -141,6 +141,18 @@ export type RootStackParamList = {
    * the pictures a meme (both from the Memes page).
    */
   Compose: { postId?: string; pickPictures?: boolean; meme?: boolean } | undefined;
+  /**
+   * A guest making the account their own (screens/auth/ClaimAccountScreen):
+   * the sign-up form over the app, opened from the account gate's offer.
+   */
+  ClaimAccount: undefined;
+  /**
+   * A guest signing in to an account they already have (screens/auth/SignInModal):
+   * the sign-in form, and the reset behind it, over the app. A sign-in replaces
+   * the guest session and the modal closes itself. `email`: what was typed on
+   * the screen that sent you here, so it is not typed twice.
+   */
+  SignIn: { email?: string } | undefined;
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;

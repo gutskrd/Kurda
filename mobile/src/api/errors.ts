@@ -24,6 +24,14 @@ import { limitErrorText } from '../limits/limitCopy';
 export type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
 /**
+ * The server's refusal of a guest at something only an account may do: the
+ * social, public and purchasable routes. The gate (auth/AccountGate) asks
+ * before the request where it can; the client watches for this code where it
+ * could not.
+ */
+export const GUEST_ACCOUNT_CODE = 'GUEST_ACCOUNT';
+
+/**
  * Server codes precise enough to say in the reader’s own language.
  *
  * The API raises 114 distinct codes and every message is English, so this is
@@ -79,6 +87,8 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   OPEN_GROUPS_ADULTS_ONLY: 'error.code.openGroupsAdultsOnly',
   VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
   LEARN_FIRST: 'error.code.learnFirst',
+  // a guest at something only an account may do; the gate's sheet says it first, this is the words under it
+  [GUEST_ACCOUNT_CODE]: 'error.code.guestAccount',
   // Hevalo offline for a while: the screen over the app says the rest (maintenance/)
   MAINTENANCE: 'maintenance.title',
 };
@@ -195,6 +205,15 @@ export function describeError(error: ApiError, t: Translate): string {
  */
 export function isMaintenance(error: ApiError): boolean {
   return error.code === MAINTENANCE_CODE;
+}
+
+/**
+ * Was this call refused because the account is a guest's? The offer to create
+ * an account is already up (the client told the gate), so a screen does not
+ * answer it with an alert of its own on top.
+ */
+export function isGuestRefusal(error: ApiError): boolean {
+  return error.code === GUEST_ACCOUNT_CODE;
 }
 
 /** Does this failure look like lost connectivity? Drives the offline banner. */
