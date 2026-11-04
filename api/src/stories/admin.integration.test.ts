@@ -680,7 +680,8 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
       expect(unfiled.problems.errors.map((e: { code: string }) => e.code)).toEqual(['CATEGORY_MISSING']);
       expect((await call('DELETE', `/admin/story-categories/${cat('songs')}`)).statusCode).toBe(404);
       const audit = await pool.query(
-        `SELECT action FROM admin_audit_log WHERE target_type = 'story_category' AND target_id = $1 ORDER BY created_at, id`,
+        // the service's own rows; every admin request is also logged by its route, which this does not count
+        `SELECT action FROM admin_audit_log WHERE target_type = 'story_category' AND target_id = $1 AND action LIKE 'story.%' ORDER BY created_at, id`,
         [cat('songs')],
       );
       expect(audit.rows.map((r) => r.action)).toEqual(['story.category.create', 'story.category.update', 'story.category.delete']);

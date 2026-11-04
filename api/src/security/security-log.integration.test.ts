@@ -188,7 +188,11 @@ describe.skipIf(!DATABASE_URL)('the security log (integration)', { timeout: 30_0
       (count) => count > 0,
     );
     const mail = sent.find((m) => m.to === owner.email)!;
-    expect(mail.vars.headline).toBe('Admin console sign-in from a new device or network');
+    // The sweep sends every critical alert still waiting in one email, and the suites running beside this one raise
+    // their own (each console sign-in in a fresh test is a new place), so this alert may arrive alone or in a tally.
+    const title = 'Admin console sign-in from a new device or network';
+    expect(mail.vars.list).toContain(title);
+    expect(mail.vars.headline === title || /^\d+ alerts$/.test(mail.vars.headline), mail.vars.headline).toBe(true);
     expect(mail.vars.link).toBe('https://admin.example/#/security-log');
     expect(JSON.stringify(mail)).not.toContain(from);
 

@@ -110,6 +110,10 @@ describe.skipIf(!DATABASE_URL)('story sentences in the audio studio (integration
     ids[name] = res.json().id;
     let lockVersion = res.json().lockVersion as number;
     if (status !== 'draft') {
+      // publishing needs an editor's approval first, as it does in the panel
+      const approved = await call('POST', `/admin/stories/${ids[name]}/review`, { approved: true, lockVersion });
+      expect(approved.statusCode, approved.body).toBe(200);
+      lockVersion = approved.json().lockVersion;
       const published = await call('POST', `/admin/stories/${ids[name]}/publish`, { lockVersion });
       expect(published.statusCode).toBe(200);
       lockVersion = published.json().lockVersion;

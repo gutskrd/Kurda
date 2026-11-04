@@ -205,7 +205,9 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
         });
         // audited as a review and a publish in the panel are, with the story the editor put live
         const audit = await pool.query(
-          `SELECT admin_id, action, reason, before, after FROM admin_audit_log WHERE target_id = $1 ORDER BY created_at, id`,
+          // both rows come from one transaction, so they share a timestamp: the lock version each began from puts them in order
+          `SELECT admin_id, action, reason, before, after FROM admin_audit_log WHERE target_id = $1
+            ORDER BY created_at, (before->>'lockVersion')::int, id`,
           [published.rows[0].id],
         );
         expect(audit.rows).toEqual([
