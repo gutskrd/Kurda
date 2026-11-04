@@ -1139,8 +1139,7 @@
                     "prompt": "Hevalo looks puzzled at the girl with the huge bag. Hamo explains, beaming. What does he say, in English?",
                     "accepted": [
                       "That girl is my niece.",
-                      "The girl is my niece.",
-                      "This girl is my niece."
+                      "The girl is my niece."
                     ],
                     "voice": "hamo"
                   }
@@ -1167,7 +1166,8 @@
                     "prompt": "Xezal is Hamo’s niece. Write what he tells everyone: “She is my niece.”",
                     "accepted": [
                       "Ew xwarziya min e.",
-                      "Ew xwarziya min e"
+                      "Ew xwarziya min e",
+                      "Xezal xwarziya min e."
                     ],
                     "voice": "hamo"
                   }
@@ -1286,7 +1286,7 @@
                     "say": "Hevalo? Navê te Hevalo ye?",
                     "prompt": "The deer gives his name, and Xezal starts to giggle: “Hevalo? Navê te Hevalo ye?” What is so funny?",
                     "options": [
-                      "A deer whose name means “friend!”",
+                      "A deer whose name means “friend”",
                       "A deer who is hungry",
                       "A deer who is a student"
                     ],
@@ -1956,7 +1956,6 @@
                       "The hen is hungry, the dog is hungry too.",
                       "The hen is hungry, and the dog is hungry too.",
                       "The hen is hungry and so is the dog.",
-                      "The hens are hungry, and the dog is hungry too.",
                       "The hen is hungry, the dog is also hungry."
                     ],
                     "voice": "hamo"
@@ -2378,7 +2377,9 @@
                     "prompt": "Hamo is a Kurd from Sêvan. And Xezal? Write: “She is a Kurd too, from Amed.”",
                     "accepted": [
                       "Ew jî kurd e, ji Amedê.",
-                      "Ew jî kurd e, ji Amedê"
+                      "Ew jî kurd e, ji Amedê",
+                      "Ew jî kurd e, ew ji Amedê ye.",
+                      "Xezal jî kurd e, ji Amedê."
                     ],
                     "voice": "hamo"
                   }
@@ -3394,7 +3395,7 @@
                   "position": 8,
                   "type": "translate",
                   "payload": {
-                    "say": "Xezo, çay ji kerema xwe!",
+                    "say": "Xezo, çay, ji kerema xwe!",
                     "prompt": "Hamo holds out his empty glass to his niece. What does he say, in English?",
                     "accepted": [
                       "Xezo, tea please!",
@@ -3609,7 +3610,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Sêv li wir e, Hevalo!",
+                        "text": "Sêv li wir in, Hevalo!",
                         "en": "The apples are over there, Hevalo!"
                       },
                       {
@@ -3630,7 +3631,7 @@
                       {
                         "speaker": 0,
                         "text": "Û ew jî sar e!",
-                        "en": "And this is cold too! (she points at his moustache)"
+                        "en": "And that is cold too! (she points at his moustache)"
                       },
                       {
                         "speaker": 1,
