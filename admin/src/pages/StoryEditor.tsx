@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { useContext, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import {
   GLOSSARY_MAX,
   MAX_OPTIONS,
@@ -8,7 +8,7 @@ import {
   QUESTION_KINDS,
   STORY_DIALECTS,
   STORY_LENGTHS,
-  STORY_LEVELS,
+  STORY_REVIEW_NOTE_MAX,
   STORY_SUMMARY_MAX,
   STORY_TITLE_MAX,
   localeDir,
@@ -30,7 +30,9 @@ import {
   blankForm,
   blankGloss,
   blankQuestion,
+  contentChanged,
   describePath,
+  draftFromForm,
   editorReducer,
   fieldId,
   fieldIdsFor,
@@ -40,6 +42,7 @@ import {
   isDirty,
   isEditable,
   kindTally,
+  levelOptions,
   liveChecks,
   localeName,
   looksRandomSlug,
@@ -57,17 +60,14 @@ import {
   type StoryForm,
 } from '../stories';
 import { setLeaveGuard } from '../nav';
-import { getStory, runStoryAction, storyFailure, type StoryFailure } from '../storiesApi';
-import { Badge, Banner, Icon, Loading, PageHeader, Time, useDialogs, type ConfirmOptions } from '../ui';
+import { featureStory, getStory, listCategories, reviewStory, runStoryAction, storyFailure, type StoryFailure } from '../storiesApi';
+import { Badge, Banner, Icon, Loading, PageHeader, Time, useDialogs, useLoad, type ConfirmOptions } from '../ui';
+import { AudioSection } from './StoryAudioSection';
+import { Field, ProblemList, ReadOnly, described, type FieldProblems, type ProblemTone } from './StoryEditorFields';
+import { AttributionSection, LibraryFields, TranslationsSection } from './StoryLibraryFields';
+import { StoryPreview } from './StoryPreview';
+import { ReviewSection, VersionsSection } from './StoryReviewSections';
 import { STATUS_TONE, storyRecordHref } from './StoryList';
-
-const LEVEL_NAME: Record<number, string> = {
-  1: '1 · first steps (A1)',
-  2: '2 · elementary (A2)',
-  3: '3 · intermediate (B1)',
-  4: '4 · upper intermediate (B2)',
-  5: '5 · advanced (C1)',
-};
 
 const DONE: Record<Exclude<StoryAction, 'delete'>, string> = {
   save: 'Saved.',
@@ -76,6 +76,9 @@ const DONE: Record<Exclude<StoryAction, 'delete'>, string> = {
   unpublish: 'Unpublished: it is a draft again, and learners no longer see it.',
   archive: 'Archived.',
 };
+
+/** What the editor was doing while a request was out: an action, a reload, a review or a feature change. */
+type Busy = StoryAction | 'reload' | 'review' | 'feature' | null;
 
 const NOT_DONE: Record<StoryAction, string> = {
   save: 'Not saved',
@@ -86,15 +89,6 @@ const NOT_DONE: Record<StoryAction, string> = {
   delete: 'Not deleted',
 };
 
-type Tone = 'error' | 'publish' | 'warning';
-interface FieldProblems {
-  error: StoryProblem[];
-  publish: StoryProblem[];
-  warning: StoryProblem[];
-}
-
-const TAG: Record<Tone, string> = { error: 'Must fix', publish: 'Before publishing', warning: 'Check' };
-
 const LEAVE: ConfirmOptions = {
   title: 'Leave without saving?',
   body: 'Your changes here will be lost.',
@@ -104,13 +98,6 @@ const LEAVE: ConfirmOptions = {
 };
 
 const BACK = { href: '#/stories', label: 'All stories' };
-
-/**
- * Whether the story's fields can be changed: not while it is published or
- * archived, nor while a request is out. Text fields go read-only rather than
- * disabled, so a published story's text can still be selected and copied.
- */
-const ReadOnly = createContext(false);
 
 function reducedMotion(): boolean {
   return typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -163,7 +150,7 @@ export function StoryEditor({
   const [form, dispatchForm] = useReducer(editorReducer, start);
   const [phase, setPhase] = useState<'loading' | 'ready' | 'failed'>(id && !initial ? 'loading' : 'ready');
   const [loadProblem, setLoadProblem] = useState<string | null>(null);
-  const [busy, setBusy] = useState<StoryAction | 'reload' | null>(null);
+  const [busy, setBusy] = useState<Busy>(null);
   const [notice, setNotice] = useState<{ tone: 'ok' | 'error'; text: string } | null>(
     initial ? { tone: 'ok', text: 'Saved.' } : null,
   );
@@ -171,6 +158,7 @@ export function StoryEditor({
   const [server, setServer] = useState<StoryValidation | null>(null);
   const [open, setOpen] = useState<Set<string>>(() => initiallyOpen(start));
   const [previewOpen, setPreviewOpen] = useState(true);
+  const categories = useLoad(listCategories, []);
 
   const dispatch = (action: EditorAction): void => {
     dispatchForm(action);
@@ -265,7 +253,12 @@ export function StoryEditor({
   }, []);
 
   const canSave = editable && !busy && !conflict && checks.blocking.length === 0 && (dirty || story === null);
-  const canPublish = editable && !busy && !conflict && checks.blocking.length === 0 && checks.beforePublish.length === 0;
+  const canSubmit = editable && !busy && !conflict && checks.blocking.length === 0 && checks.beforePublish.length === 0;
+  // publishing waits for a reviewer, and an approval is of the words as they are: edits to them need it again
+  const approved = story?.reviewStatus === 'approved';
+  const reapprove = approved && contentChanged(form, loaded);
+  const canPublish = canSubmit && approved && !reapprove;
+  const textChanged = story !== null && draftFromForm(form).body !== draftFromForm(loaded).body;
 
   // Ctrl/⌘+S saves, as in any editor
   const saveRef = useRef<() => void>(() => undefined);
@@ -293,6 +286,8 @@ export function StoryEditor({
       for (const target of fieldIdsFor(path)) {
         const el = document.getElementById(target);
         if (!el) continue;
+        // a translation folded away, say: what hides the field is opened first
+        for (let d = el.closest('details'); d; d = d.parentElement?.closest('details') ?? null) d.open = true;
         el.scrollIntoView?.({ block: 'center', behavior: reducedMotion() ? 'auto' : 'smooth' });
         el.focus({ preventScroll: true });
         break;
@@ -329,6 +324,65 @@ export function StoryEditor({
       setNotice({ tone: 'error', text: `Could not reload: ${storyFailure(err).message}` });
     } finally {
       setBusy(null);
+    }
+  }
+
+  /**
+   * The story as the server now has it after a change that is not a save — a
+   * review, a feature — which touches its standing and its version, not its
+   * words: the form, and any unsaved edits in it, stay as they are.
+   */
+  const refresh = (next: AdminStory): void => setStory(next);
+
+  /** A refusal of a review or a feature change: a stale copy is a conflict, anything else a notice. */
+  const refused = (what: string, err: unknown): void => {
+    const failure = storyFailure(err);
+    if (failure.kind === 'stale' || failure.kind === 'state') setConflict({ kind: failure.kind, message: failure.message });
+    else setNotice({ tone: 'error', text: `${what}: ${failure.message}.` });
+  };
+
+  /** Approve the story, or withdraw its approval, with a note for the record if the reviewer wants one. */
+  async function review(approve: boolean): Promise<void> {
+    if (!story) return;
+    const title = story.title || 'this story';
+    const note = await dialogs.prompt({
+      title: approve ? `Approve “${title}”?` : `Withdraw the approval of “${title}”?`,
+      body: approve
+        ? 'You have read every paragraph and every question as they are saved now, and the story may be published.'
+        : 'It cannot be published again until someone approves it anew.',
+      label: 'Note (optional)',
+      placeholder: approve ? 'Read against the source; two typos fixed.' : 'Why the approval is taken back.',
+      confirmLabel: approve ? 'Approve' : 'Withdraw approval',
+      multiline: true,
+      maxLength: STORY_REVIEW_NOTE_MAX,
+      // a note is welcome, not required
+      validate: () => null,
+    });
+    if (note === null || !mounted.current) return;
+    setBusy('review');
+    setNotice(null);
+    try {
+      refresh(await reviewStory(story, approve, note.trim() || null));
+      setNotice({ tone: 'ok', text: approve ? 'Approved: it can be published.' : 'Approval withdrawn.' });
+    } catch (err) {
+      refused(approve ? 'Not approved' : 'Approval not withdrawn', err);
+    } finally {
+      if (mounted.current) setBusy(null);
+    }
+  }
+
+  /** Put the story in the library's Featured row, or take it out: a library decision, saved at once. */
+  async function feature(on: boolean): Promise<void> {
+    if (!story) return;
+    setBusy('feature');
+    setNotice(null);
+    try {
+      refresh(await featureStory(story, on));
+      setNotice({ tone: 'ok', text: on ? 'Featured: it is in the library’s Featured row.' : 'No longer featured.' });
+    } catch (err) {
+      refused(on ? 'Not featured' : 'Still featured', err);
+    } finally {
+      if (mounted.current) setBusy(null);
     }
   }
 
@@ -441,6 +495,9 @@ export function StoryEditor({
         setServer({ errors: [{ code: 'SLUG_TAKEN', path: 'slug', message: failure.message }], warnings: [] });
         setNotice({ tone: 'error', text: `${prefix}: ${failure.message}.` });
         return;
+      case 'not_reviewed':
+        setNotice({ tone: 'error', text: `${prefix}: ${failure.message}. Approve it under Review first.` });
+        return;
       case 'not_found':
         setNotice({ tone: 'error', text: `${prefix}: this story no longer exists. It may have been deleted.` });
         return;
@@ -481,6 +538,8 @@ export function StoryEditor({
         meta={
           <span className="badges st-badges">
             {status && <Badge tone={STATUS_TONE[status]}>{STATUS_NAME[status]}</Badge>}
+            {story && status !== 'archived' && <Badge tone={approved ? 'ok' : 'warn'}>{approved ? 'Approved' : 'Unreviewed'}</Badge>}
+            {story?.featured && <Badge tone="info">★ Featured</Badge>}
             {story && needsNativeReview(story) && <Badge tone="warn">Starter (needs native review)</Badge>}
             {dirty && <Badge>Unsaved changes</Badge>}
           </span>
@@ -568,16 +627,16 @@ export function StoryEditor({
                   ))}
                 </select>
               </Field>
-              <Field path="level" label="Level" problems={at('level')}>
+              <Field path="level" label="Level" hint="Shown to learners as the CEFR letter, which is how they know their own level." problems={at('level')}>
                 <select
                   {...described('level', at('level'))}
                   disabled={ro}
                   value={form.level}
                   onChange={(e) => dispatch({ type: 'level', value: Number(e.target.value) })}
                 >
-                  {STORY_LEVELS.map((l) => (
-                    <option key={l} value={l}>
-                      {LEVEL_NAME[l]}
+                  {levelOptions(form.level).map((o) => (
+                    <option key={o.level} value={o.level}>
+                      {o.label}
                     </option>
                   ))}
                 </select>
@@ -604,10 +663,10 @@ export function StoryEditor({
               problems={at('slug')}
               hint={
                 form.dialect === 'sorani'
-                  ? 'Where the story lives: /app/games/stories/' +
+                  ? 'Where the story lives: /app/learn/stories/' +
                     (form.slug || '…') +
                     '. A Soranî title cannot be spelled in an address, so it starts with random letters: replace them with a word or two in Latin letters.'
-                  : 'Where the story lives: /app/games/stories/' +
+                  : 'Where the story lives: /app/learn/stories/' +
                     (form.slug || '…') +
                     (form.slugEdited ? '.' : '. Made from the title until you change it.')
               }
@@ -642,7 +701,19 @@ export function StoryEditor({
                 onChange={(e) => dispatch({ type: 'text', field: 'summary', value: e.target.value })}
               />
             </Field>
+            <LibraryFields
+              form={form}
+              dispatch={dispatch}
+              at={at}
+              facts={facts}
+              categories={categories}
+              story={story}
+              featuring={busy === 'feature'}
+              onFeature={(on) => void feature(on)}
+            />
           </section>
+
+          <AttributionSection form={form} dispatch={dispatch} at={at} />
 
           <section className="card st-section" aria-labelledby="st-text">
             <h2 className="st-h2" id="st-text">
@@ -697,6 +768,8 @@ export function StoryEditor({
             )}
           </section>
 
+          <TranslationsSection form={form} dispatch={dispatch} at={at} facts={facts} />
+
           <section className="card st-section" aria-labelledby="st-gloss" id={fieldId('glossary')} tabIndex={-1}>
             <div className="row st-section-head">
               <h2 className="st-h2" id="st-gloss">
@@ -727,6 +800,7 @@ export function StoryEditor({
                 row={row}
                 found={places[g] ?? []}
                 dialect={form.dialect}
+                matched={story ? story.glossaryMatches.some((m) => sameTerm(m.term, row.term)) : null}
                 at={at}
                 dispatch={dispatch}
               />
@@ -796,6 +870,11 @@ export function StoryEditor({
               Add a question
             </button>
           </section>
+
+          <AudioSection story={story} textChanged={textChanged} onAudio={(audio) => setStory((s) => (s ? { ...s, audio } : s))} />
+          <VersionsSection story={story} form={form} dispatch={dispatch} />
+          <ReviewSection story={story} busy={busy !== null || conflict !== null} contentPending={Boolean(reapprove)} onReview={(a) => void review(a)} />
+          <StoryPreview form={form} facts={facts} story={story} categories={categories.data} />
         </div>
         </ReadOnly.Provider>
 
@@ -807,7 +886,10 @@ export function StoryEditor({
             conflict={conflict !== null}
             checks={checks}
             canSave={canSave}
+            canSubmit={canSubmit}
             canPublish={canPublish}
+            approved={Boolean(approved)}
+            reapprove={Boolean(reapprove)}
             onAct={(a) => void act(a)}
           />
           <Checks checks={checks} server={server} onGo={go} />
@@ -827,76 +909,6 @@ export function StoryEditor({
         </div>
       )}
     </div>
-  );
-}
-
-/** Props that tie a control to its path: its id, and its problems for assistive tech. */
-function described(path: string, problems: FieldProblems): { id: string; 'aria-invalid'?: true; 'aria-describedby'?: string } {
-  const any = problems.error.length + problems.publish.length + problems.warning.length > 0;
-  return {
-    id: fieldId(path),
-    ...(problems.error.length > 0 ? { 'aria-invalid': true as const } : {}),
-    ...(any ? { 'aria-describedby': `${fieldId(path)}-problems` } : {}),
-  };
-}
-
-function Field({
-  path,
-  label,
-  optional,
-  hint,
-  counter,
-  problems,
-  children,
-}: {
-  path: string;
-  label: string;
-  optional?: boolean;
-  hint?: string;
-  counter?: { n: number; max: number; soft?: number };
-  problems: FieldProblems;
-  children: React.ReactNode;
-}): React.JSX.Element {
-  return (
-    <div className="st-field">
-      <div className="st-label-row">
-        <label htmlFor={fieldId(path)}>
-          {label}
-          {optional && <span className="subtle"> (optional)</span>}
-        </label>
-        {counter && <Counter {...counter} />}
-      </div>
-      {children}
-      {hint && <div className="subtle st-hint">{hint}</div>}
-      <ProblemList id={`${fieldId(path)}-problems`} problems={problems} />
-    </div>
-  );
-}
-
-function Counter({ n, max, soft }: { n: number; max: number; soft?: number }): React.JSX.Element {
-  const tone = n > max ? ' is-over' : soft !== undefined && n > soft ? ' is-near' : '';
-  return (
-    <span className={`st-counter${tone}`}>
-      {n} / {max}
-    </span>
-  );
-}
-
-function ProblemList({ id, problems }: { id: string; problems: FieldProblems }): React.JSX.Element | null {
-  const items: Array<[Tone, StoryProblem]> = [
-    ...problems.error.map((p) => ['error', p] as [Tone, StoryProblem]),
-    ...problems.publish.map((p) => ['publish', p] as [Tone, StoryProblem]),
-    ...problems.warning.map((p) => ['warning', p] as [Tone, StoryProblem]),
-  ];
-  if (items.length === 0) return null;
-  return (
-    <ul className="st-problems" id={id}>
-      {items.map(([tone, p], i) => (
-        <li key={i} className={`st-problem is-${tone}`}>
-          <span className="st-problem-tag">{TAG[tone]}:</span> {p.message}
-        </li>
-      ))}
-    </ul>
   );
 }
 
@@ -939,11 +951,17 @@ function ParagraphPreview({
   );
 }
 
+/** Two spellings of a glossary term that the dictionary match treats as one word. */
+function sameTerm(a: string, b: string): boolean {
+  return a.normalize('NFC').trim().toLowerCase() === b.normalize('NFC').trim().toLowerCase();
+}
+
 function GlossaryRow({
   index,
   row,
   found,
   dialect,
+  matched,
   at,
   dispatch,
 }: {
@@ -951,6 +969,8 @@ function GlossaryRow({
   row: GlossRow;
   found: number[];
   dialect: StoryDialect;
+  /** whether the saved story's term is a dictionary headword; null for a story not saved yet */
+  matched: boolean | null;
   at: (path: string, exact?: boolean) => FieldProblems;
   dispatch: (a: EditorAction) => void;
 }): React.JSX.Element {
@@ -963,7 +983,14 @@ function GlossaryRow({
     <div className="st-gloss" id={fieldId(base)} tabIndex={-1}>
       <div className="st-gloss-line">
         <div className="st-field">
-          <label htmlFor={fieldId(`${base}.term`)}>Word {index + 1}</label>
+          <div className="st-label-row">
+            <label htmlFor={fieldId(`${base}.term`)}>Word {index + 1}</label>
+            {matched !== null && row.term.trim() !== '' && (
+              <Badge tone={matched ? 'ok' : 'neutral'} title="Matched against the dictionary’s headwords when the story is saved">
+                {matched ? 'In the dictionary' : 'Not in the dictionary — cannot be saved by learners'}
+              </Badge>
+            )}
+          </div>
           <input
             {...described(`${base}.term`, termProblems)}
             readOnly={ro}
@@ -1354,16 +1381,24 @@ function Actions({
   conflict,
   checks,
   canSave,
+  canSubmit,
   canPublish,
+  approved,
+  reapprove,
   onAct,
 }: {
   status: AdminStory['status'] | null;
   dirty: boolean;
-  busy: StoryAction | 'reload' | null;
+  busy: Busy;
   conflict: boolean;
   checks: LiveChecks;
   canSave: boolean;
+  canSubmit: boolean;
   canPublish: boolean;
+  /** a reviewer has approved the story as saved */
+  approved: boolean;
+  /** the unsaved edits change what was approved */
+  reapprove: boolean;
   onAct: (a: StoryAction) => void;
 }): React.JSX.Element {
   const actions = availableActions(status);
@@ -1379,7 +1414,7 @@ function Actions({
   };
   const enabled: Record<StoryAction, boolean> = {
     save: canSave,
-    submit: canPublish,
+    submit: canSubmit,
     publish: canPublish,
     unpublish: !busy && !conflict,
     archive: !busy && !conflict,
@@ -1393,6 +1428,10 @@ function Actions({
       reasons.push(
         `${before === 1 ? 'One problem' : `${before} problems`} to fix before it can be ${actions.includes('submit') ? 'submitted or ' : ''}published.`,
       );
+    } else if (actions.includes('publish') && !approved) {
+      reasons.push('A reviewer has to approve the story before it can be published (Review, below the text).');
+    } else if (actions.includes('publish') && reapprove) {
+      reasons.push('The unsaved edits change what was approved: save, then have it approved again to publish.');
     } else if (!dirty && status !== null) reasons.push('No unsaved changes.');
   }
   return (
@@ -1475,7 +1514,7 @@ function CheckGroup({
   onGo,
 }: {
   title: string;
-  tone: Tone;
+  tone: ProblemTone;
   list: readonly StoryProblem[];
   onGo: (path: string) => void;
 }): React.JSX.Element {
