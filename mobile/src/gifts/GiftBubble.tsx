@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { GiftCard } from '@kurda/shared';
 import { assetUrl } from '../api/env';
-import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import type { Translate } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
@@ -132,10 +132,10 @@ export function recipientsLine(card: GiftCard, t: Translate): string {
 /** The wrapped present, rising and settling slowly — a gift waiting is the one moving thing in a thread. */
 function Breathing({ card }: { card: GiftCard }): React.JSX.Element {
   const { colors } = useTheme();
-  const reduce = useReducedMotion();
+  const alive = useMotionAlive();
   const lift = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (reduce || card.myGiftId === null) return;
+    if (!alive || card.myGiftId === null) return;
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(lift, { toValue: 1, duration: 1100, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
@@ -144,7 +144,7 @@ function Breathing({ card }: { card: GiftCard }): React.JSX.Element {
     );
     loop.start();
     return () => loop.stop();
-  }, [reduce, lift, card.myGiftId]);
+  }, [alive, lift, card.myGiftId]);
   const translateY = lift.interpolate({ inputRange: [0, 1], outputRange: [0, -3] });
   const rotate = lift.interpolate({ inputRange: [0, 1], outputRange: ['-2deg', '2deg'] });
   return (

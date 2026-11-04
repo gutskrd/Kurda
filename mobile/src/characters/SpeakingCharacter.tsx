@@ -1,7 +1,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
-  AppState,
   Easing,
   Pressable,
   StyleSheet,
@@ -36,6 +35,7 @@ import {
   type Viseme,
 } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useScreenAwake } from '../a11y/useMotionAlive';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { Rise } from '../theme/MotionParts';
@@ -200,7 +200,8 @@ export function SpeakingCharacter({
   const [blink, setBlink] = useState<EyeState>('open');
   const [actEyes, setActEyes] = useState<EyeState | null>(null);
   const [actMouth, setActMouth] = useState<Viseme | null>(null);
-  const [awake, setAwake] = useState(AppState.currentState !== 'background');
+  // in front and on a focused screen: a character on a tab behind another has nobody to breathe for
+  const awake = useScreenAwake();
 
   // ---- what moves, all on the native driver ----
   const values = useRef({
@@ -227,11 +228,6 @@ export function SpeakingCharacter({
   const [length, setLength] = useState<{ source: string | null; ms: number } | null>(null);
   const durationMs = length && length.source === source ? length.ms : null;
   const timeline = useMemo(() => voiceTimeline(voice, text, durationMs), [voice, text, durationMs]);
-
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => setAwake(state !== 'background'));
-    return () => sub.remove();
-  }, []);
 
   // ---- the words, unless it is listening ----
   const live = !quiet && playing && player !== null && awake;

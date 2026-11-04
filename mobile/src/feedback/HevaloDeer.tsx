@@ -4,6 +4,7 @@ import { SvgXml } from 'react-native-svg';
 import { DEER_BOARD_PIVOT, DEER_BOARD_TEXT, DEER_INK, DEER_PICTURE, DEER_VIEW, deerBoard, deerCard, deerTiltFor } from '@kurda/shared';
 import MASCOT from '../../assets/mascot-deer.png';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 
 /**
  * Hevalo the deer — the mascot from the app icon — holding up a wooden board.
@@ -43,6 +44,7 @@ export function HevaloDeer({
   cheer?: boolean;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
+  const alive = useMotionAlive();
   const id = `deer-${useId().replace(/[^\w-]/g, '')}`;
   const height = (size * VB_H) / VB_W;
   const stars = board.kind === 'stars' ? Math.max(0, Math.min(5, Math.round(board.stars))) : 4;
@@ -52,9 +54,9 @@ export function HevaloDeer({
   const hop = useRef(new Animated.Value(0)).current;
   const native = Platform.OS !== 'web';
 
-  // the idle loop: a slow bob
+  // the idle loop: a slow bob, only while the screen is in front and motion is wanted
   useEffect(() => {
-    if (reduce) {
+    if (!alive) {
       bob.setValue(0);
       return;
     }
@@ -66,7 +68,7 @@ export function HevaloDeer({
     );
     bobLoop.start();
     return () => bobLoop.stop();
-  }, [reduce, bob, native]);
+  }, [alive, bob, native]);
 
   // more stars, the board tips up a little further, with a small hop each time
   useEffect(() => {
