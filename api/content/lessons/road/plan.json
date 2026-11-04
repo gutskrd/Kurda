@@ -1291,7 +1291,7 @@
               "new": [
                 {"ku": "bawer kirin", "en": "to believe", "pos": "verb", "forms": ["bawer", "kirin"]},
                 {"ku": "henek", "en": "joke", "pos": "noun", "gender": "m", "forms": ["henek", "henekên", "henekan", "henekek", "henekê", "henekekî", "henekî"]},
-                {"ku": "kenîn", "en": "to laugh", "pos": "verb", "forms": ["kenîn", "dikenim", "dikenî", "dikene", "dikenin", "nakenim", "nakene"]},
+                {"ku": "kenîn", "en": "to laugh", "pos": "verb", "forms": ["kenîn", "dikenim", "dikenî", "dikene", "dikenin", "nakenim", "nakene", "bikenin"]},
                 {"ku": "bersiv", "en": "answer", "pos": "noun", "gender": "f", "forms": ["bersiv", "bersivên", "bersivan", "bersivek", "bersiva", "bersivê", "bersiveke"]},
                 {"ku": "pirs", "en": "question", "pos": "noun", "gender": "f", "forms": ["pirs", "pirsên", "pirsan", "pirsek", "pirsa", "pirsê", "pirseke"]}
               ]
@@ -3289,12 +3289,12 @@
               "beat": "At the family council Hamo speaks first: he has thought, he has slept on it (twice), and he has decided — Xezal must take the job. Then he asks everyone else what they have decided.",
               "voice": "hamo",
               "new": [
-                {"ku": "-iye / -ye", "en": "has …ed (the present perfect: hatiye, min kiriye)", "pos": "particle", "forms": ["hatime", "hatiyî", "hatiye", "hatine", "çûme", "çûyî", "çûye", "çûne", "bûme", "bûyî", "bûye", "bûne", "mame", "mayî", "maye", "mane", "gihîştime", "gihîştiye", "gihîştine", "rabûme", "rabûye", "rûniştime", "rûniştiye", "vegeriyame", "vegeriyaye", "vegeriyane", "ketime", "ketiye", "derketiye", "razame", "razaye", "xebitîme", "xebitiye", "kiriye", "kirine", "xwariye", "xwarine", "dîtiye", "dîtine", "gotiye", "daye", "dane", "xwendiye", "nivîsiye", "aniye", "biriye", "girtiye", "xwestiye", "bihîstiye", "vexwariye", "şandiye", "nedîtiye", "nekiriye", "neçûme", "negotiye"]},
+                {"ku": "-iye / -ye", "en": "has …ed (the present perfect: hatiye, min kiriye)", "pos": "particle", "forms": ["hatime", "hatiyî", "hatiye", "hatine", "çûme", "çûyî", "çûye", "çûne", "bûme", "bûyî", "bûye", "bûne", "mame", "mayî", "maye", "mane", "gihîştime", "gihîştiye", "gihîştine", "rabûme", "rabûye", "rûniştime", "rûniştiye", "vegeriyame", "vegeriyaye", "vegeriyane", "ketime", "ketiye", "derketiye", "razame", "razaye", "xebitîme", "xebitiye", "kiriye", "kirine", "xwariye", "xwarine", "dîtiye", "dîtine", "gotiye", "daye", "dane", "xwendiye", "nivîsiye", "aniye", "biriye", "girtiye", "xwestiye", "bihîstiye", "vexwariye", "şandiye", "nedîtiye", "nekiriye", "neçûme", "negotiye", "fikirîme", "fikiriye"]},
                 {"ku": "tu car", "en": "never (ever)", "pos": "phrase", "forms": ["tu", "car"]},
                 {"ku": "tecrûbe", "en": "experience", "pos": "noun", "gender": "f", "forms": ["tecrûbe", "tecrûbeyên", "tecrûbeyan", "tecrûbeyek", "tecrûbeya", "tecrûbeyê", "tecrûbeyeke"]},
                 {"ku": "pêşkeftin", "en": "progress", "pos": "noun", "gender": "f", "forms": ["pêşkeftin", "pêşkeftinên", "pêşkeftinan", "pêşkeftinek", "pêşkeftina", "pêşkeftinê", "pêşkeftineke"]},
                 {"ku": "teqez", "en": "definitely", "pos": "adv", "forms": ["teqez"]},
-                {"ku": "guhertin", "en": "to change", "pos": "verb", "forms": ["guhertin", "diguherînim", "diguherînî", "diguherîne", "diguherînin", "biguherîne", "guhert"]}
+                {"ku": "guhertin", "en": "to change", "pos": "verb", "forms": ["guhertin", "diguherînim", "diguherînî", "diguherîne", "diguherînin", "biguherîne", "guhert", "naguherîne"]}
               ]
             },
             {
@@ -3419,7 +3419,7 @@
               "new": [
                 {"ku": "hevxwendekar", "en": "fellow student, classmate", "pos": "noun", "gender": "mf", "forms": ["hevxwendekar", "hevxwendekarên", "hevxwendekaran", "hevxwendekarek", "hevxwendekarê", "hevxwendekarekî", "hevxwendekarî", "hevxwendekara", "hevxwendekareke"]},
                 {"ku": "bawername", "en": "certificate, diploma", "pos": "noun", "gender": "f", "forms": ["bawername", "bawernameyên", "bawernameyan", "bawernameyek", "bawernameya", "bawernameyê", "bawernameyeke"]},
-                {"ku": "pesn dan", "en": "to praise", "pos": "verb", "forms": ["pesn", "dan"]},
+                {"ku": "pesn dan", "en": "to praise", "pos": "verb", "forms": ["pesn", "dan", "pesnê"]},
                 {"ku": "rêveber", "en": "director, head", "pos": "noun", "gender": "mf", "forms": ["rêveber", "rêveberên", "rêveberan", "rêveberek", "rêveberê", "rêveberekî", "rêveberî", "rêvebera", "rêvebereke"]},
                 {"ku": "zanyarî", "en": "information, knowledge", "pos": "noun", "gender": "f", "forms": ["zanyarî", "zanyariyên", "zanyariyan", "zanyariyek", "zanyariya", "zanyariyê", "zanyariyeke"]}
               ]
@@ -3443,8 +3443,8 @@
               "voice": "hamo",
               "new": [
                 {"ku": "armanc", "en": "goal, aim", "pos": "noun", "gender": "f", "forms": ["armanc", "armancên", "armancan", "armancek", "armanca", "armancê", "armanceke"]},
-                {"ku": "bi dest xistin", "en": "to obtain, to achieve", "pos": "verb", "forms": ["bi", "dest", "xistin", "xist"]},
-                {"ku": "pêk anîn", "en": "to carry out, to achieve", "pos": "verb", "forms": ["pêk", "anîn"]},
+                {"ku": "bi dest xistin", "en": "to obtain, to achieve", "pos": "verb", "forms": ["bi", "dest", "xistin", "xist", "bixim", "bixe"]},
+                {"ku": "pêk anîn", "en": "to carry out, to achieve", "pos": "verb", "forms": ["pêk", "anîn", "bînin"]},
                 {"ku": "gav", "en": "step", "pos": "noun", "gender": "f", "forms": ["gav", "gavên", "gavan", "gavek", "gava", "gavê", "gaveke"]},
                 {"ku": "bername", "en": "programme, plan", "pos": "noun", "gender": "f", "forms": ["bername", "bernameyên", "bernameyan", "bernameyek", "bernameya", "bernameyê", "bernameyeke"]},
                 {"ku": "fêrbûn", "en": "learning", "pos": "noun", "gender": "f", "forms": ["fêrbûn", "fêrbûnên", "fêrbûnan", "fêrbûnek", "fêrbûna", "fêrbûnê", "fêrbûneke"]}
