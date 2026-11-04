@@ -639,7 +639,7 @@
                     "prompt": "Which one is right for “We are buying bread.”?",
                     "options": [
                       "Em nan dikirim.",
-                      "Em nanan dikirin.",
+                      "Em nan dikire.",
                       "Em nan dikirin."
                     ],
                     "correctIndex": 2
@@ -833,7 +833,7 @@
                   "type": "conversation",
                   "payload": {
                     "id": "roadu04s1l4a",
-                    "title": "Deyna kevn",
+                    "title": "Deynê kevn",
                     "speakers": [
                       {
                         "name": "Hamo",
@@ -862,7 +862,7 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Ew dibêje: «Hamo, li ser te deynek heye!»",
+                        "text": "Ew dibêje: «Hamo, deynê min li ser te ye!»",
                         "en": "He says: “Hamo, you owe me!”"
                       },
                       {
@@ -932,9 +932,9 @@
                   "payload": {
                     "prompt": "Xezal does her best Mîrza voice. Type what she says.",
                     "accepted": [
-                      "Li ser te deynek heye, Hamo!",
-                      "Li ser te deynek heye, Hamo",
-                      "Li ser te deynek heye Hamo"
+                      "Deynê min li ser te ye, Hamo!",
+                      "Deynê min li ser te ye, Hamo",
+                      "Deynê min li ser te ye Hamo"
                     ],
                     "voice": "xezo"
                   }
@@ -2865,11 +2865,11 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Mîrza, hesab çi ye?",
+                    "say": "Mîrza, hesab çend e?",
                     "prompt": "Hamo pulls out his purse at Mîrza’s stall. What does he ask?",
                     "options": [
-                      "Mîrza, what is the bill?",
-                      "Mîrza, what is the price of the teapot?",
+                      "Mîrza, how much is the bill?",
+                      "Mîrza, how much is the teapot?",
                       "Mîrza, where is the bill?"
                     ],
                     "correctIndex": 0,
