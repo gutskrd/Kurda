@@ -2862,7 +2862,9 @@ export type TranslationKey =
   | 'stories.player.recorded'
   | 'stories.player.narrator'
   | 'stories.player.forward'
-  | 'stories.player.back';
+  | 'stories.player.back'
+  // --- The library, one story found (learn-mobile) ---
+  | 'stories.library.found.one';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -5690,6 +5692,8 @@ const en: Catalog = {
   'stories.player.narrator': 'Read by {name}',
   'stories.player.forward': 'Forward ten seconds',
   'stories.player.back': 'Back ten seconds',
+  // --- The library, one story found (learn-mobile) ---
+  'stories.library.found.one': '{count} story found',
 };
 
 const ku: Catalog = {
@@ -8515,6 +8519,8 @@ const ku: Catalog = {
   'stories.player.narrator': '{name} dixwîne',
   'stories.player.forward': 'Deh çirke pêş',
   'stories.player.back': 'Deh çirke paş',
+  // --- The library, one story found (learn-mobile) ---
+  'stories.library.found.one': '{count} çîrok hat dîtin',
 };
 
 const de: Catalog = {
@@ -11340,6 +11346,8 @@ const de: Catalog = {
   'stories.player.narrator': 'Gelesen von {name}',
   'stories.player.forward': 'Zehn Sekunden vor',
   'stories.player.back': 'Zehn Sekunden zurück',
+  // --- The library, one story found (learn-mobile) ---
+  'stories.library.found.one': '{count} Geschichte gefunden',
 };
 
 const es: Catalog = {
@@ -14165,6 +14173,8 @@ const es: Catalog = {
   'stories.player.narrator': 'Lee {name}',
   'stories.player.forward': 'Diez segundos adelante',
   'stories.player.back': 'Diez segundos atrás',
+  // --- The library, one story found (learn-mobile) ---
+  'stories.library.found.one': '{count} historia encontrada',
 };
 
 const tr: Catalog = {
@@ -16990,6 +17000,8 @@ const tr: Catalog = {
   'stories.player.narrator': '{name} okuyor',
   'stories.player.forward': 'On saniye ileri',
   'stories.player.back': 'On saniye geri',
+  // --- The library, one story found (learn-mobile) ---
+  'stories.library.found.one': '{count} hikâye bulundu',
 };
 
 const ar: Catalog = {
@@ -19815,6 +19827,8 @@ const ar: Catalog = {
   'stories.player.narrator': 'بصوت {name}',
   'stories.player.forward': 'تقديم عشر ثوانٍ',
   'stories.player.back': 'ترجيع عشر ثوانٍ',
+  // --- The library, one story found (learn-mobile) ---
+  'stories.library.found.one': 'وُجدت قصة واحدة',
 };
 
 const fr: Catalog = {
@@ -22640,6 +22654,8 @@ const fr: Catalog = {
   'stories.player.narrator': 'Lu par {name}',
   'stories.player.forward': 'Avancer de dix secondes',
   'stories.player.back': 'Reculer de dix secondes',
+  // --- The library, one story found (learn-mobile) ---
+  'stories.library.found.one': '{count} histoire trouvée',
 };
 
 const nl: Catalog = {
@@ -25465,6 +25481,8 @@ const nl: Catalog = {
   'stories.player.narrator': 'Voorgelezen door {name}',
   'stories.player.forward': 'Tien seconden vooruit',
   'stories.player.back': 'Tien seconden terug',
+  // --- The library, one story found (learn-mobile) ---
+  'stories.library.found.one': '{count} verhaal gevonden',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -28291,6 +28309,8 @@ const ckb: Catalog = {
   'stories.player.narrator': '{name} دەخوێنێتەوە',
   'stories.player.forward': 'دە چرکە بۆ پێشەوە',
   'stories.player.back': 'دە چرکە بۆ دواوە',
+  // --- The library, one story found (learn-mobile) ---
+  'stories.library.found.one': '{count} چیرۆک دۆزرایەوە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

@@ -210,20 +210,26 @@ describe('StoriesView', () => {
     renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Featured' });
     fireEvent.click(screen.getByRole('button', { name: 'A2' }));
-    expect(await screen.findByText('1 stories found')).toBeTruthy();
+    expect(await screen.findByText('1 story found')).toBeTruthy();
     expect(felt).toEqual(['select']);
     fireEvent.click(screen.getByRole('button', { name: 'Soranî' }));
     expect(await screen.findByText('No stories match. Try another filter.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
     await screen.findByRole('heading', { name: 'Featured' });
     fireEvent.click(screen.getByRole('button', { name: 'Narrated' }));
-    expect(await screen.findByText('1 stories found')).toBeTruthy();
+    expect(await screen.findByText('1 story found')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
     await screen.findByRole('heading', { name: 'Featured' });
     // a category from the shelves' own chips, with its count
     fireEvent.click(screen.getByRole('button', { name: 'Animal fables, 1' }));
     expect(await screen.findByRole('button', { name: 'بازاڕ' })).toBeTruthy();
-    expect(screen.getByLabelText('Animal fables')).toBeTruthy();
+    expect(screen.getByText('1 story found')).toBeTruthy();
+    // the category leads the chips, lit, and lets go on its own
+    const chosen = screen.getByRole('button', { name: 'Animal fables' });
+    expect(chosen.getAttribute('aria-selected')).toBe('true');
+    fireEvent.click(chosen);
+    expect(await screen.findByRole('heading', { name: 'Featured' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Animal fables' })).toBeNull();
     stop();
   });
 

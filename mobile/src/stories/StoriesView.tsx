@@ -306,6 +306,15 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
 
   const chips = (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chips, { flexDirection: dir.row }]} keyboardShouldPersistTaps="handled">
+      {/* a category chosen from the shelves leads the row, lit, and a tap lets it go without clearing the rest */}
+      {filter.category ? (
+        <FilterChip
+          icon="tag"
+          label={categoryLabel(filter.category, categories, locale) ?? filter.category}
+          on
+          onPress={() => setFilter({ ...filter, category: null, all: false })}
+        />
+      ) : null}
       <FilterChip icon="headphones" label={t('stories.library.narrated')} on={filter.narrated} onPress={() => setFilter({ ...filter, narrated: !filter.narrated, all: false })} />
       {STORY_DIALECTS.map((d) => (
         <FilterChip key={d} label={DIALECT_NAME[d]} on={filter.dialect === d} onPress={() => setFilter({ ...filter, dialect: filter.dialect === d ? null : d, all: false })} />
@@ -323,7 +332,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
       <View style={styles.section}>
         <View style={[styles.resultsHead, { flexDirection: dir.row }]}>
           <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header" accessibilityLiveRegion="polite">
-            {results && !searching ? t('stories.library.found', { count: formatNumber(count, locale) }) : t('common.loading')}
+            {results && !searching ? t(count === 1 ? 'stories.library.found.one' : 'stories.library.found', { count: formatNumber(count, locale) }) : t('common.loading')}
           </Text>
           <Pressable
             onPress={() => {
@@ -337,11 +346,6 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
             <Text style={[styles.clearText, { color: colors.primary }]}>{t('stories.library.clearFilters')}</Text>
           </Pressable>
         </View>
-        {filter.category ? (
-          <View style={[styles.categoryRow, { flexDirection: dir.row }]}>
-            <Pill icon="tag" label={categoryLabel(filter.category, categories, locale) ?? filter.category} tone="primary" />
-          </View>
-        ) : null}
         {searching && !results ? (
           <GridSkeleton cardWidth={cardWidth} count={columns * 2} />
         ) : resultsError ? (
@@ -516,7 +520,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
 }
 
 /** One chip of the filter row: a toggle that reads as pressed, with a count where there is one. */
-function FilterChip({ label, on, onPress, icon, count }: { label: string; on: boolean; onPress: () => void; icon?: 'headphones'; count?: number }): React.JSX.Element {
+function FilterChip({ label, on, onPress, icon, count }: { label: string; on: boolean; onPress: () => void; icon?: 'headphones' | 'tag'; count?: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
   return (
@@ -792,7 +796,6 @@ const styles = StyleSheet.create({
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   chipCount: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   categories: { flexWrap: 'wrap', gap: spacing.sm },
-  categoryRow: { gap: spacing.sm },
   resultsHead: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   clear: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   clearText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
