@@ -36,8 +36,8 @@ const CHEST = 46;
  * they stand, one after another, as the list opens — the quests seen for the
  * first time today. Under Reduce Motion every bar is simply where it is. A
  * quest already finished has the gold edge; a chest that can be opened
- * shakes now and then (ChestWobble); one whose chest has been opened shows it
- * open.
+ * shakes now and then (ChestWobble) and its lock glints; one whose chest has
+ * been opened shows it open.
  */
 export function QuestRows({ rows, play = false, arrive = false }: { rows: readonly QuestRow[]; play?: boolean; arrive?: boolean }): React.JSX.Element {
   // whether the list is arriving is settled as it mounts: a bar half-way to where it stands is not sent back for a prop that changed
@@ -143,7 +143,7 @@ function Row({ row, play, arrive, delayMs }: { row: QuestRow; play: boolean; arr
         <View style={[styles.chest, dir.rtl ? styles.chestRtl : null]}>
           {fresh ? <ConfettiBurst progress={sparks} count={8} seed={row.target * 13 + row.to} colours={[colors.gold, '#FFE16A', '#FFBD1F']} reach={44} /> : null}
           <ChestWobble active={row.claimable} testID="quest-chest-shaking">
-            <ChestArt tier={row.chest} size={CHEST} open={row.claimed} />
+            <ChestArt tier={row.chest} size={CHEST} open={row.claimed} shine={row.claimable} />
           </ChestWobble>
         </View>
       </View>

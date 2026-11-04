@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ChestOpening, ChestTier } from '@kurda/shared';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useAuth } from '../auth/AuthContext';
 import { useCelebrationHold } from '../badges/BadgeCelebrationHost';
@@ -19,7 +20,7 @@ import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { ChestArt } from './ChestArt';
+import { CHEST_RATIO, ChestArt } from './ChestArt';
 import { CHEST_NAME, CHEST_TONE, CLAIM_WORDS, claimProblem, type ClaimProblem } from './model';
 
 /** How long one bob of the waiting chest takes, up and back, and how far it goes. */
@@ -32,13 +33,17 @@ const SPARKLES = [
   { x: 0.5, y: 0.5, size: 20, delay: 1000 },
   { x: -0.7, y: 0.3, size: 12, delay: 1400 },
 ];
+/** How far the rays out of the open chest reach, against the drawing's own: across most of the screen. */
+const RAYS_REACH = 2.4;
 
 /**
  * A quest's chest, on a screen of its own in the colour of what it holds:
- * its name, the chest bobbing gently with a few sparkles round it, and "Tap
- * to open". A tap asks the server to open it; the lid pops, gold bursts out,
- * and the Zêr it held arrives big, with the learner's Zêr counting up to its
- * new total in the corner — felt and heard once.
+ * its name, the chest bobbing gently with a few sparkles round it and a glint
+ * now and then on its lock, and "Tap to open". A tap asks the server to open
+ * it; the lid swings back, light bursts out of it in rays that turn slowly,
+ * gold is thrown, and what it held rises out of it as a tile with its count,
+ * with the learner's Zêr counting up to its new total in the corner — felt
+ * and heard once.
  *
  * Anything in the way is said plainly, with a way on: offline, the chest
  * stays shut and waits on Learn; already opened, nothing is lost. Nothing to
@@ -103,7 +108,7 @@ export function ChestScreen({
             <SoftGlow colour="#FFFFFF" size={size * 1.25} id="chest-glow" />
             <Sparkles size={size} />
             <Bobbing still={busy}>
-              <ChestArt tier={tier} size={size} />
+              <ChestArt tier={tier} size={size} shine={!busy} testID="chest-art" />
             </Bobbing>
           </Pressable>
           {problem ? null : <Text style={[styles.tap, { color: tone.ink, opacity: busy ? 0.6 : 1 }]}>{t('quests.chest.tap')}</Text>}
@@ -131,10 +136,14 @@ export function ChestScreen({
 }
 
 /**
- * The chest just opened: the lid pops on a spring, a ring and a burst of
- * gold leave it, then "+N Zêr" arrives, and the balance in the corner counts
- * up to what the server says it now is. The celebration (theme/celebration.ts)
- * is felt and heard once as the lid goes; badges wait for it.
+ * The chest just opened: the lid swings back about its hinge on the spring,
+ * the light inside blooms and a fan of rays rises out of it and keeps
+ * turning, a ring and a burst of gold leave it and a few stars flash, then
+ * what it held rises out of the chest as a tile with its count ("× 40") and
+ * "+N Zêr" lands under it, while the balance in the corner counts up to what
+ * the server says it now is. The celebration (theme/celebration.ts) is felt
+ * and heard once as the lid goes; badges wait for it. Under Reduce Motion
+ * the chest simply stands open and the gold fades in, its rays still.
  */
 function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: ChestTier; size: number; ink: string }): React.JSX.Element {
   const { colors } = useTheme();
@@ -145,24 +154,20 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
   useCelebrationHold(moment.playing);
   const { plan } = moment;
   const balance = useCountUp(opening.balance, { from: Math.max(0, opening.balance - opening.amount), delayMs: plan.detailsDelayMs });
-  const reward = t('quests.chest.reward', { amount: formatNumber(opening.amount, locale) });
+  const amount = formatNumber(opening.amount, locale);
+  const reward = t('quests.chest.reward', { amount });
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(reward);
     // said once, as it opens
   }, []);
 
-  // the lid pops on the spring; under Reduce Motion it is simply open, and only the gold under it fades in
-  const lid = plan.travel
-    ? {
-        transform: [
-          { translateY: moment.art.interpolate({ inputRange: [0, 1], outputRange: [0, -size * 0.2] }) },
-          { rotate: moment.art.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-14deg'] }) },
-        ],
-      }
-    : undefined;
+  // the lid goes on the spring and the stars with the burst; under Reduce Motion it is simply open, and only the gold fades in
   const light = moment.art.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
-  const lift = plan.travel ? moment.details.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) : 0;
+  const motion = plan.travel ? { lid: moment.art, light, sparkle: moment.burst } : { light };
+  // the tile rises out of the chest's mouth to its place above it
+  const rise = plan.travel ? moment.details.interpolate({ inputRange: [0, 1], outputRange: [size * 0.32, 0] }) : 0;
+  const chestHeight = size * CHEST_RATIO;
 
   return (
     <>
@@ -179,20 +184,30 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
           accessible={moment.playing}
           accessibilityRole={moment.playing ? 'button' : undefined}
           accessibilityLabel={moment.playing ? t('common.skip') : undefined}
-          style={[styles.stage, { width: size * 1.6, height: size * 1.25 }]}
+          style={[styles.stage, styles.openStage, { width: size * 1.6, height: chestHeight + size * 0.7 }]}
         >
-          <SoftGlow colour={colors.gold} size={size * 1.25} id="chest-open-glow" />
+          <SoftGlow colour={colors.gold} size={size * 1.4} id="chest-open-glow" />
           {plan.travel ? <GlowRing progress={moment.ring} colour="#FFFFFF" size={size * 0.9} /> : null}
-          <ChestArt tier={tier} size={size} open={!plan.travel} lid={lid} light={light} />
+          <ChestArt tier={tier} size={size} open={!plan.travel} motion={motion} rays={plan.travel ? 'turning' : 'still'} reach={RAYS_REACH} testID="chest-art" />
           {plan.travel ? (
             // the gold comes out of the open top, in front of the chest
             <View style={[StyleSheet.absoluteFill, { transform: [{ translateY: -size * 0.12 }] }]} pointerEvents="none">
               <ConfettiBurst progress={moment.burst} count={BURST.badge} seed={opening.amount * 7 + 3} colours={[colors.gold, '#FFE16A', '#FFBD1F', '#FFFFFF']} reach={size * 0.75} />
             </View>
           ) : null}
+          <Animated.View
+            style={[styles.tile, { backgroundColor: colors.surface, opacity: moment.details, transform: [{ translateY: rise }] }]}
+            pointerEvents="none"
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            <Icon name="coin" size={44} color={colors.gold} />
+            <Text style={[styles.count, { color: colors.textPrimary }]} maxFontSizeMultiplier={1.3}>
+              {`× ${amount}`}
+            </Text>
+          </Animated.View>
         </Pressable>
-        <Animated.View style={[styles.reward, { opacity: moment.details, transform: [{ translateY: lift }] }]}>
-          <Icon name="coin" size={40} color={colors.gold} />
+        <Animated.View style={[styles.reward, { opacity: moment.details }]}>
           <Text style={[styles.amount, { color: ink }]} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
             {reward}
           </Text>
@@ -202,12 +217,12 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
   );
 }
 
-/** The waiting chest, rising and settling gently for as long as it waits; still under Reduce Motion, or while it is being opened. */
+/** The waiting chest, rising and settling gently for as long as it waits; still while it is being opened, under Reduce Motion, and when nobody is looking. */
 function Bobbing({ still, children }: { still: boolean; children: React.ReactNode }): React.JSX.Element {
-  const reduce = useReducedMotion();
+  const alive = useMotionAlive();
   const bob = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (reduce || still) {
+    if (!alive || still) {
       bob.setValue(0);
       return;
     }
@@ -220,7 +235,7 @@ function Bobbing({ still, children }: { still: boolean; children: React.ReactNod
     );
     loop.start();
     return () => loop.stop();
-  }, [reduce, still, bob]);
+  }, [alive, still, bob]);
   const translateY = bob.interpolate({ inputRange: [0, 1], outputRange: [BOB / 2, -BOB / 2] });
   return <Animated.View style={{ transform: [{ translateY }] }}>{children}</Animated.View>;
 }
@@ -240,9 +255,10 @@ function Sparkles({ size }: { size: number }): React.JSX.Element {
 
 function Twinkle({ delay, x, y, children }: { delay: number; x: number; y: number; children: React.ReactNode }): React.JSX.Element {
   const reduce = useReducedMotion();
+  const alive = useMotionAlive();
   const glint = useRef(new Animated.Value(reduce ? 1 : 0.25)).current;
   useEffect(() => {
-    if (reduce) {
+    if (!alive) {
       glint.setValue(0.8);
       return;
     }
@@ -256,7 +272,7 @@ function Twinkle({ delay, x, y, children }: { delay: number; x: number; y: numbe
     );
     loop.start();
     return () => loop.stop();
-  }, [reduce, delay, glint]);
+  }, [alive, delay, glint]);
   const scale = glint.interpolate({ inputRange: [0.25, 1], outputRange: [0.8, 1.1] });
   return <Animated.View style={[styles.sparkle, { opacity: glint, transform: [{ translateX: x }, { translateY: y }, { scale }] }]}>{children}</Animated.View>;
 }
@@ -268,12 +284,16 @@ const styles = StyleSheet.create({
   sparkle: { position: 'absolute' },
   name: { ...display(typography.sizes.xxl), textAlign: 'center' },
   stage: { alignItems: 'center', justifyContent: 'center' },
+  // the open chest stands at the foot of its stage, with room above it for the tile to rise into
+  openStage: { justifyContent: 'flex-end' },
+  tile: { position: 'absolute', top: 0, alignItems: 'center', gap: spacing.xs, borderRadius: radii.lg, paddingHorizontal: spacing.md + 4, paddingVertical: spacing.sm + 4, minWidth: 96 },
+  count: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'], writingDirection: 'ltr' },
   tap: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
   problem: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', maxWidth: 340 },
   corner: { paddingHorizontal: spacing.lg },
   balance: { alignItems: 'center', gap: spacing.xs, borderRadius: radii.pill, paddingHorizontal: spacing.sm + 4, paddingVertical: spacing.xs + 2 },
   balanceText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  reward: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  reward: { alignItems: 'center' },
   amount: { ...display(44), textAlign: 'center', fontVariant: ['tabular-nums'] },
   bar: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm, minHeight: 50 + spacing.sm },
 });

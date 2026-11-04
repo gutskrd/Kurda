@@ -25,6 +25,8 @@ import {
   type BadgeTier,
 } from './index.js';
 import { coinSvg, gemSvg } from './currency.js';
+import { CHEST_BOX, CHEST_LAYERS, CHEST_TINTS, chestDrawing, chestGlint, chestLayerSvg, chestSvg, type ChestLayerId } from './chest.js';
+import type { ChestTier } from '../quests.js';
 import { SEASON_ICONS } from './icons.js';
 import { PICTURES } from './pictures.js';
 import { PROPS } from './props/index.js';
@@ -822,5 +824,101 @@ describe('the currencies', () => {
     expect(paths(coinSvg({ size: 26 }))).toBeLessThan(paths(coinSvg({ size: 64 })));
     expect(paths(gemSvg({ size: 15 }))).toBeLessThan(paths(gemSvg({ size: 26 })));
     expect(paths(gemSvg({ size: 26 }))).toBeLessThan(paths(gemSvg({ size: 64 })));
+  });
+});
+
+describe('the chest', () => {
+  const CHESTS: readonly ChestTier[] = ['common', 'rare', 'epic'];
+
+  it('draws every tier shut and open, large and small, as a valid picture, and the same picture each time', () => {
+    for (const tier of CHESTS) {
+      for (const size of [28, 46, 96, 220]) {
+        checkSvg(chestSvg({ tier, size }), size);
+        checkSvg(chestSvg({ tier, size, open: true }), size);
+      }
+      checkSvg(chestSvg({ tier, allLayers: true }), 96);
+      expect(chestSvg({ tier })).toBe(chestSvg({ tier }));
+      expect(chestSvg({ tier, open: true })).not.toBe(chestSvg({ tier }));
+    }
+    expect(new Set(CHESTS.map((tier) => chestSvg({ tier }))).size).toBe(3);
+  });
+
+  it('is drawn as the layers the apps move, back to front, each standing alone in its own box', () => {
+    expect(CHEST_LAYERS).toEqual(['shadow', 'lidOpen', 'rays', 'body', 'light', 'lock', 'glint', 'lid', 'sparkle']);
+    const drawing = chestDrawing('rare');
+    expect(Object.keys(drawing.layers)).toEqual([...CHEST_LAYERS]);
+    const holder = new Map<string, ChestLayerId>();
+    for (const id of CHEST_LAYERS) {
+      const layer = drawing.layers[id];
+      expect(layer.id).toBe(id);
+      expect(layer.box.w).toBeGreaterThan(0);
+      expect(layer.box.h).toBeGreaterThan(0);
+      // a layer carries its own defs: every reference in it points inside it, and no id is another layer's
+      const refs: string[] = [];
+      const ids = new Set<string>();
+      walk(parse(chestLayerSvg(layer)), (e) => {
+        if (e.attrs.id) ids.add(e.attrs.id);
+        for (const v of Object.values(e.attrs)) for (const m of v.matchAll(/url\(#([^)]*)\)/g)) refs.push(m[1] ?? '');
+      });
+      for (const r of refs) expect(ids.has(r), `${id} refers to ${r}`).toBe(true);
+      for (const i of ids) {
+        expect(holder.get(i), `id ${i} in ${id} and ${holder.get(i)}`).toBeUndefined();
+        holder.set(i, id);
+      }
+    }
+    // the whole picture names each part, so a page can move the groups
+    const parts = (svg: string): string[] => [...svg.matchAll(/data-part="([^"]+)"/g)].map((m) => m[1] ?? '');
+    expect(parts(chestSvg({ tier: 'rare', allLayers: true }))).toEqual([...CHEST_LAYERS]);
+    expect(parts(chestSvg({ tier: 'rare' }))).toEqual(['shadow', 'body', 'lock', 'lid']);
+    expect(parts(chestSvg({ tier: 'rare', open: true }))).toEqual(['shadow', 'lidOpen', 'rays', 'body', 'light', 'lock']);
+    // the hinge is on the lid and the mouth in the light, both inside the shut chest's box; the rays turn about the mouth
+    const within = (pt: readonly [number, number], box: { x: number; y: number; w: number; h: number }): boolean =>
+      pt[0] >= box.x && pt[0] <= box.x + box.w && pt[1] >= box.y && pt[1] <= box.y + box.h;
+    expect(within(drawing.hinge, drawing.layers.lid.box)).toBe(true);
+    expect(within(drawing.mouth, drawing.layers.light.box)).toBe(true);
+    expect(within(drawing.hinge, CHEST_BOX)).toBe(true);
+    const rays = drawing.layers.rays.box;
+    expect([rays.x + rays.w / 2, rays.y + rays.h / 2]).toEqual(drawing.mouth);
+    expect(drawing.box).toEqual(CHEST_BOX);
+  });
+
+  it('wears warm colours only: amber wood in iron, amber in gold, and pomegranate lacquer in gold with a garnet', () => {
+    expect(CHEST_TINTS.common.wood).toBe(CHEST_TINTS.rare.wood);
+    expect(CHEST_TINTS.common.metal).not.toBe(CHEST_TINTS.rare.metal);
+    expect(CHEST_TINTS.rare.metal).toBe(CHEST_TINTS.epic.metal);
+    expect(CHEST_TINTS.epic.wood.face).toBe('#a8233a');
+    expect(CHEST_TINTS.epic.gem).toBe(true);
+    expect(CHEST_TINTS.rare.gem).toBe(false);
+    // nothing blue, violet or green anywhere: every colour drawn has at least as much red as blue, and as green
+    for (const tier of CHESTS) {
+      for (const [hex] of chestSvg({ tier, allLayers: true }).matchAll(/#[0-9a-f]{6}/g)) {
+        const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+        expect(r >= b && r >= g, `${tier} wears ${hex}`).toBe(true);
+      }
+    }
+    expect(chestSvg({ tier: 'epic' })).toContain('#c8243f');
+    expect(chestSvg({ tier: 'rare' })).not.toContain('#c8243f');
+  });
+
+  it('draws less as it gets smaller, draws the glint at each phase, and refuses what it cannot draw', () => {
+    for (const tier of CHESTS) {
+      expect(elements(chestSvg({ tier, size: 24 })), tier).toBeLessThan(elements(chestSvg({ tier, size: 46 })));
+      expect(elements(chestSvg({ tier, size: 46 })), tier).toBeLessThan(elements(chestSvg({ tier, size: 96 })));
+    }
+    const phases = [0, 0.25, 0.5, 1].map((phase) => chestLayerSvg(chestGlint(phase)));
+    expect(new Set(phases).size).toBe(4);
+    expect(chestLayerSvg(chestGlint(0.25))).toBe(phases[1]);
+    for (const svg of phases) parse(svg);
+    expect(() => chestGlint(1.5)).toThrow(RangeError);
+    expect(() => chestSvg({ tier: 'legendary' as ChestTier })).toThrow(RangeError);
+    expect(() => chestSvg({ tier: 'rare', size: 0 })).toThrow(RangeError);
+    expect(() => chestSvg({ tier: 'rare', idPrefix: 'a b' })).toThrow(RangeError);
+  });
+
+  it('labels itself, and escapes a caller’s label', () => {
+    expect(chestSvg({ tier: 'epic' })).toMatch(/>Chest<\/title>/);
+    const svg = chestSvg({ tier: 'epic', title: 'Epic <chest> & "more"' });
+    checkSvg(svg, 96);
+    expect(svg).toContain('Epic &lt;chest&gt; &amp; &quot;more&quot;');
   });
 });
