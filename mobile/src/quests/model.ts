@@ -4,7 +4,7 @@
  * themselves — where each quest stands and which chest opens next — are the
  * shared rules (`questRows`, `nextChest`), as the website lists them.
  */
-import type { ChestTier, QuestKind, UnitTone } from '@kurda/shared';
+import type { ChestTier, QuestDay, QuestKind, UnitTone } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import type { TranslationKey } from '../i18n/translations';
 
@@ -48,3 +48,20 @@ export const CLAIM_WORDS: Record<ClaimProblem, TranslationKey> = {
   notDone: 'quests.chest.notDone',
   failed: 'quests.chest.failed',
 };
+
+/** Three quests a day, always (`QuestDay.quests`): what a month can hold, for the bar on its card. */
+export const QUESTS_PER_DAY = 3;
+
+/**
+ * How the month is going, for its card: the quests done this month against
+ * the most that could have been done by today — three a day, counting today
+ * — as a share for the bar. The day is the learner's own (`QuestDay.date`),
+ * not the phone's clock, which may have crossed midnight before the server's
+ * did. A tally larger than that is simply full.
+ */
+export function monthProgress(day: Pick<QuestDay, 'date' | 'monthDone'>): { done: number; possible: number; share: number } {
+  const dayOfMonth = Number(day.date.slice(8, 10)) || 1;
+  const done = Math.max(0, day.monthDone);
+  const possible = Math.max(dayOfMonth * QUESTS_PER_DAY, done);
+  return { done, possible, share: possible > 0 ? done / possible : 0 };
+}

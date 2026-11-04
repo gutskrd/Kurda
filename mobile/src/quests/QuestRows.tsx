@@ -13,6 +13,7 @@ import { duration } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ChestArt } from './ChestArt';
+import { ChestWobble } from './ChestWobble';
 import { QUEST_WORDS } from './model';
 
 /** When the first bar starts to fill, and how far behind it each one after starts. */
@@ -31,38 +32,46 @@ const CHEST = 46;
  * With `play`, each bar moves from where the session found it to where it
  * left it, one after another, the count climbing with it; a quest finished
  * just now lifts a little, takes a gold edge and throws a few sparks from its
- * chest as its bar arrives. Under Reduce Motion every bar is simply where it
- * is. A quest already finished has the gold edge; one whose chest has been
- * opened shows it open.
+ * chest as its bar arrives. With `arrive`, the bars fill from empty to where
+ * they stand, one after another, as the list opens — the quests seen for the
+ * first time today. Under Reduce Motion every bar is simply where it is. A
+ * quest already finished has the gold edge; a chest that can be opened
+ * shakes now and then (ChestWobble); one whose chest has been opened shows it
+ * open.
  */
-export function QuestRows({ rows, play = false }: { rows: readonly QuestRow[]; play?: boolean }): React.JSX.Element {
+export function QuestRows({ rows, play = false, arrive = false }: { rows: readonly QuestRow[]; play?: boolean; arrive?: boolean }): React.JSX.Element {
+  // whether the list is arriving is settled as it mounts: a bar half-way to where it stands is not sent back for a prop that changed
+  const arriving = useRef(arrive).current;
   // the bars that move take their turns; the rest wait for nothing
   let turn = 0;
   return (
     <View style={styles.list}>
       {rows.map((row) => {
-        const moves = play && row.to > row.from;
+        const moves = play ? row.to > row.from : arriving && row.to > 0;
         const delay = moves ? FILL_AT_MS + turn++ * FILL_STAGGER_MS : 0;
-        return <Row key={row.id} row={row} play={moves} delayMs={delay} />;
+        return <Row key={row.id} row={row} play={play && moves} arrive={arriving && moves} delayMs={delay} />;
       })}
     </View>
   );
 }
 
-function Row({ row, play, delayMs }: { row: QuestRow; play: boolean; delayMs: number }): React.JSX.Element {
+function Row({ row, play, arrive, delayMs }: { row: QuestRow; play: boolean; arrive: boolean; delayMs: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
   const reduce = useReducedMotion();
-  const moving = play && !reduce;
+  const moving = (play || arrive) && !reduce;
+  // where the bar starts: before the session, at nothing as the list opens, or where it stands
+  const from = !moving ? row.to : play ? row.from : 0;
   const share = (n: number) => Math.min(1, n / Math.max(1, row.target));
-  const fill = useRef(new Animated.Value(share(moving ? row.from : row.to))).current;
-  const lift = useRef(new Animated.Value(justDone(row) && moving ? 0 : 1)).current;
+  const fill = useRef(new Animated.Value(share(from))).current;
+  const lift = useRef(new Animated.Value(justDone(row) && play && !reduce ? 0 : 1)).current;
   const sparks = useRef(new Animated.Value(0)).current;
   const [width, setWidth] = useState(0);
-  const count = useCountUp(row.to, { from: moving ? row.from : row.to, delayMs, ms: FILL_MS });
+  const count = useCountUp(row.to, { from, delayMs, ms: FILL_MS });
   const finished = row.to >= row.target;
-  const fresh = justDone(row) && moving;
+  // finished by the session just done: the lift, the sparks and the knock are for that moment alone
+  const fresh = justDone(row) && play && !reduce;
 
   useEffect(() => {
     if (!moving) {
@@ -133,7 +142,9 @@ function Row({ row, play, delayMs }: { row: QuestRow; play: boolean; delayMs: nu
         </View>
         <View style={[styles.chest, dir.rtl ? styles.chestRtl : null]}>
           {fresh ? <ConfettiBurst progress={sparks} count={8} seed={row.target * 13 + row.to} colours={[colors.gold, '#FFE16A', '#FFBD1F']} reach={44} /> : null}
-          <ChestArt tier={row.chest} size={CHEST} open={row.claimed} />
+          <ChestWobble active={row.claimable} testID="quest-chest-shaking">
+            <ChestArt tier={row.chest} size={CHEST} open={row.claimed} />
+          </ChestWobble>
         </View>
       </View>
     </Animated.View>
