@@ -1,13 +1,16 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
-  ACTS,
   BLINK_STEPS,
   BREATH,
+  BROW_STATES,
+  CHARACTER_HABITS,
   CHARACTER_NAMES,
   HABITS,
+  MOUTH_SHAPES,
   RESTING,
   SWAY,
-  VISEMES,
+  TAP_RUN_MS,
+  actFor,
   between,
   characterArt,
   cropBody,
@@ -18,21 +21,27 @@ import {
   glanceTarget,
   leanToward,
   lookToward,
+  pickAct,
+  reactionAct,
   sampleKeys,
   speakingFrame,
+  tapActs,
   voiceTimeline,
   type ActName,
+  type BrowState,
   type CharacterArt,
   type CharacterBox,
   type CharacterCrop,
   type CharacterId,
   type CharacterPoint,
+  type CharacterReaction,
+  type CheekState,
   type EyeState,
   type Keys,
   type LipsyncTimeline,
+  type MouthShape,
   type RecordingVoice,
   type SpeakingFrame,
-  type Viseme,
 } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import { prefersReducedMotion } from '../lib/motion';
@@ -41,8 +50,7 @@ import './characters.css';
 /** Where the recording plays: the element itself, a ref to it, or a function that finds it. */
 export type AudioSource = HTMLAudioElement | null | { readonly current: HTMLAudioElement | null } | (() => HTMLAudioElement | null);
 
-/** Something a character reacts to: an answer that was right, or one that was not yet. */
-export type CharacterReaction = 'cheer' | 'hmm';
+export type { CharacterReaction } from '@kurda/shared';
 
 /** Paused this long, the frame loop stops; the blinks go on with a cheap timer. */
 const IDLE_MS = 1200;
@@ -77,17 +85,19 @@ function ground(art: CharacterArt, frame: CharacterBox, crop: CharacterCrop): { 
 
 /**
  * One inline SVG holding every layer: the body, then the head's group with
- * every pair of eyes and all ten mouths, every one hidden but the shown one,
- * so speaking only flips an attribute on two groups. The deer's ears, pupils
- * and nose are groups of their own, so they can move. Resting, three "z"s
- * wait beside the head for the stylesheet to float them up.
+ * every pair of eyes, every way the brows can sit, the cheeks blushing and
+ * all twelve mouths, every one hidden but the shown one, so speaking or an
+ * expression only flips an attribute on a few groups. The deer's ears,
+ * pupils and nose, Xezal's loose hair and the near end of Hamo's moustache
+ * are groups of their own, so they can move. Resting, three "z"s wait beside
+ * the head for the stylesheet to float them up.
  */
 function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: CharacterCrop, resting: boolean, mirrored: boolean): string {
   const own = (part: string): string => part.split(`${TEMPLATE}-`).join(`${prefix}-`);
   const hidden = ' visibility="hidden"';
   const feet = { x: frame.x + frame.w / 2, y: ground(art, frame, crop).y };
   const rig = art.rig;
-  const states: EyeState[] = ['half', 'closed', 'happy'];
+  const states: EyeState[] = ['half', 'closed', 'happy', 'wink', 'wide'];
   // the deer's eyes are whites and pupils always, with a lid over them for a blink or a smile
   const eyes = rig
     ? own(rig.look.whites) +
@@ -95,13 +105,22 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
       '<g data-eyes="open"></g>' +
       states.map((s) => `<g data-eyes="${s}"${hidden}>${own(s === 'half' ? rig.look.half : eyesFor(art, s))}</g>`).join('')
     : `<g data-eyes="open">${own(art.eyes.open)}</g>` + states.map((s) => `<g data-eyes="${s}"${hidden}>${own(eyesFor(art, s))}</g>`).join('');
+  // the brows as they sit (the deer's lids), over the eyes, and the cheeks if they blush
+  const face =
+    BROW_STATES.map((b) => `<g data-brows="${b}"${b === 'neutral' ? '' : hidden}>${own(art.brows?.states[b] ?? '')}</g>`).join('') +
+    (art.cheeks ? `<g data-cheeks="blush"${hidden}>${own(art.cheeks.blush)}</g>` : '');
+  const hair = art.hair ? `<g data-sc="hair"${about(art.hair.pivot)}>${own(art.hair.art)}</g>` : '';
   const head = rig
     ? own(rig.crown) +
       `<g data-sc="ear-left"${about(rig.ears.left.pivot)}>${own(rig.ears.left.art)}</g>` +
       `<g data-sc="ear-right"${about(rig.ears.right.pivot)}>${own(rig.ears.right.art)}</g>` +
       own(rig.face)
-    : own(art.head);
-  const nose = rig ? `<g data-sc="nose"${about(rig.sniff)}>${own(art.overlay)}</g>` : own(art.overlay);
+    : own(art.brows?.bare ?? art.head) + hair;
+  const nose = rig
+    ? `<g data-sc="nose"${about(rig.sniff)}>${own(art.overlay)}</g>`
+    : art.moustache
+      ? own(art.moustache.body) + `<g data-sc="lift"${about(art.moustache.end.pivot)}>${own(art.moustache.end.art)}</g>`
+      : own(art.overlay);
   // a soft shadow on the ground under a standing figure
   const shadow =
     crop === 'full'
@@ -126,14 +145,15 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     // turned the other way round about the middle of its box, so that a face drawn turned a little turns the other way
     (mirrored ? `<g transform="matrix(-1 0 0 1 ${2 * frame.x + frame.w} 0)">` : '<g>') +
     shadow +
-    `<g class="sc-breathe"${about(feet)}><g data-sc="hop"${about(feet)}>` +
+    `<g class="sc-breathe"${about(feet)}><g data-sc="wiggle"${about(feet)}><g data-sc="hop"${about(feet)}>` +
     own(cropBody(art, crop)) +
     `<g data-sc="head"><g class="sc-drift"${about(art.headPivot)}><g data-sc="tilt"${about(art.headPivot)}>` +
     head +
     eyes +
-    VISEMES.map((v) => `<g data-mouth="${v}"${v === 'rest' ? '' : hidden}>${own(art.mouths[v])}</g>`).join('') +
+    face +
+    MOUTH_SHAPES.map((v) => `<g data-mouth="${v}"${v === 'rest' ? '' : hidden}>${own(art.mouths[v])}</g>`).join('') +
     nose +
-    '</g></g></g></g></g></g>' +
+    '</g></g></g></g></g></g></g>' +
     snooze +
     '</svg>'
   );
@@ -190,7 +210,10 @@ export interface SpeakingCharacterProps {
   size?: number;
   /** a play button beside it already says what is heard: the picture is left out of the accessibility tree */
   decorative?: boolean;
-  /** what it has just seen: it reacts each time this changes, and when it arrives with one */
+  /**
+   * what it has just seen: it reacts each time this changes, and when it arrives with one. `cheer` and `hmm` for an answer;
+   * the rest (shared `CharacterReaction`) for the moments in between, each played the character's own way
+   */
   reaction?: CharacterReaction | null;
   /**
    * Asleep, where there is nothing to do yet (shared `RESTING`): eyes shut,
@@ -210,7 +233,10 @@ export interface SpeakingCharacterProps {
   mirrored?: boolean;
   /** never speaks, whatever the element plays: it listens while another character says its line */
   quiet?: boolean;
-  /** a click or a tap on the character: it greets you, and then this (say it again, usually) */
+  /**
+   * a click or a tap on the character: it greets you, and then this (say it again, usually). Quick ones in a row get more: the
+   * second a giggle, the third a start and a laugh (shared `tapActs`)
+   */
   onPress?: () => void;
   className?: string;
 }
@@ -229,14 +255,18 @@ export interface SpeakingCharacterProps {
  * hidden, and when it goes; a blink now and then runs on a timer meanwhile.
  *
  * Between the words it breathes and its head drifts (a stylesheet animation,
- * running only while it is on screen), it glances about, and the deer
- * twitches an ear or sniffs (shared `HABITS`). Its eyes follow the pointer or
- * a finger. A click gets a greeting and then `onPress`; `reaction` gets a
- * cheer for a right answer and a curious tilt of the head for one that was
- * not yet (shared `ACTS`), played as web animations on the groups. A reader
- * who asked for less motion gets none of that movement: the mouth still
- * moves, since it is part of what is being said, and a reaction still
- * changes the face.
+ * running only while it is on screen), it glances about, and each has habits
+ * of its own (shared `CHARACTER_HABITS`): the deer twitches an ear or sniffs,
+ * Hamo lifts the near end of his moustache, Xezal tucks her hair back. Its
+ * eyes follow the pointer or a finger. A click gets a greeting and then
+ * `onPress`, a second quick one a giggle and a third a start and a laugh;
+ * `reaction` gets a cheer for a right answer and a curious tilt of the head
+ * for one that was not yet, or a wink, a start, a giggle, a chuckle, a pout
+ * or the tongue, each played the character's own way (shared `actFor`) as web
+ * animations on the groups, with the brows and the cheeks swapped like the
+ * eyes and the mouth. A reader who asked for less motion gets none of that
+ * movement: the mouth still moves, since it is part of what is being said,
+ * and a reaction still changes the face.
  */
 export function SpeakingCharacter({
   speaker,
@@ -286,6 +316,9 @@ export function SpeakingCharacter({
     host.querySelectorAll('[data-mouth]').forEach((g) => mouths.set(g.getAttribute('data-mouth') ?? '', g));
     const eyeGroups = new Map<string, Element>();
     host.querySelectorAll('[data-eyes]').forEach((g) => eyeGroups.set(g.getAttribute('data-eyes') ?? '', g));
+    const browGroups = new Map<string, Element>();
+    host.querySelectorAll('[data-brows]').forEach((g) => browGroups.set(g.getAttribute('data-brows') ?? '', g));
+    const cheeks = q('[data-cheeks="blush"]');
     // the deer's pupils, or a person's irises: what moves when it looks at something
     const pupils = art.rig
       ? { left: q<SVGGElement>('[data-pupil="left"]'), right: q<SVGGElement>('[data-pupil="right"]') }
@@ -299,18 +332,25 @@ export function SpeakingCharacter({
     const query = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
 
     // ---- what an act holds, over what speech and the blinks say ----
-    const held: { eyes: EyeState | null; mouth: Viseme | null } = { eyes: null, mouth: null };
+    const held: { eyes: EyeState | null; mouth: MouthShape | null; brows: BrowState | null; cheeks: CheekState | null } = {
+      eyes: null,
+      mouth: null,
+      brows: null,
+      cheeks: null,
+    };
 
     // ---- drawing ----
-    let shown: SpeakingFrame = { mouth: 'rest', eyes: 'open', nod: 0 };
+    let shown: { mouth: MouthShape; eyes: EyeState; nod: number; brows: BrowState; blush: boolean } = { mouth: 'rest', eyes: 'open', nod: 0, brows: 'neutral', blush: false };
     const show = (el: Element | null | undefined, on: boolean): void => {
       if (on) el?.removeAttribute('visibility');
       else el?.setAttribute('visibility', 'hidden');
     };
     const draw = (next: SpeakingFrame, force = false): void => {
-      const mouth = next.mouth === 'rest' && held.mouth ? held.mouth : next.mouth;
+      const mouth: MouthShape = next.mouth === 'rest' && held.mouth ? held.mouth : next.mouth;
       // asleep the eyes stay shut, but for the face a greeting puts on
       const eyes = held.eyes ?? (resting ? 'closed' : next.eyes);
+      const brows = held.brows ?? 'neutral';
+      const blush = held.cheeks === 'blush';
       // and the head stays dipped to one side, or leans toward whoever it is talking with
       const nod = next.nod + (resting ? RESTING.dip : 0) + lean;
       if (force || mouth !== shown.mouth) {
@@ -321,14 +361,16 @@ export function SpeakingCharacter({
         }
       }
       if (force || eyes !== shown.eyes) eyeGroups.forEach((g, state) => show(g, state === eyes));
+      if (force || brows !== shown.brows) browGroups.forEach((g, state) => show(g, state === brows));
+      if (force || blush !== shown.blush) show(cheeks, blush);
       if (force || nod !== shown.nod) {
         if (nod === 0) head?.removeAttribute('transform');
         else head?.setAttribute('transform', `rotate(${nod} ${pivot})`);
       }
-      shown = { mouth, eyes, nod };
+      shown = { mouth, eyes, nod, brows, blush };
     };
     // the same markup may still show the last recording's face
-    draw(shown, true);
+    draw({ mouth: 'rest', eyes: 'open', nod: 0 }, true);
 
     // ---- the recording ----
     const wanted = src ? absolute(src) : null;
@@ -433,19 +475,27 @@ export function SpeakingCharacter({
     const can = (g: Element | null): g is Element & { animate: Element['animate'] } => !!g && typeof (g as Element).animate === 'function';
     const groups = {
       hop: q('[data-sc="hop"]'),
+      wiggle: q('[data-sc="wiggle"]'),
       tilt: q('[data-sc="tilt"]'),
       earLeft: q('[data-sc="ear-left"]'),
       earRight: q('[data-sc="ear-right"]'),
       nose: q('[data-sc="nose"]'),
+      lift: q('[data-sc="lift"]'),
+      hair: q('[data-sc="hair"]'),
       shadow: q('[data-sc="shadow"]'),
     };
     const running: Animation[] = [];
     const holds: number[] = [];
+    // when the act under way is over, so a habit waits for it even where it moves nothing (under less motion)
+    let actUntil = 0;
     const stopAct = (): void => {
       running.splice(0).forEach((a) => a.cancel());
       holds.splice(0).forEach((h) => window.clearTimeout(h));
+      actUntil = 0;
       held.eyes = null;
       held.mouth = null;
+      held.brows = null;
+      held.cheeks = null;
     };
     const run = (g: Element | null, keyframes: Keyframe[], ms: number): void => {
       if (!can(g) || keyframes.length < 2) return;
@@ -453,8 +503,9 @@ export function SpeakingCharacter({
     };
     const redraw = (): void => draw(speaking() ? face(true) : face(false));
     const act = (name: ActName): void => {
-      const a = ACTS[name];
+      const a = actFor(speaker, name);
       stopAct();
+      actUntil = performance.now() + a.ms;
       if (!reduced.now) {
         if (art.rig) {
           if (a.earLeft) run(groups.earLeft, frames(a.earLeft, (v) => `rotate(${v}deg)`), a.ms);
@@ -464,7 +515,11 @@ export function SpeakingCharacter({
         if (a.rise || a.stretch) run(groups.hop, hopFrames(a.rise, a.stretch, ground(art, frame, crop).height), a.ms);
         if (a.rise && groups.shadow) run(groups.shadow, frames(a.rise, (v) => `scale(${1 - v * 4}, 1)`), a.ms);
         if (a.tilt) run(groups.tilt, frames(a.tilt, (v) => `rotate(${v}deg)`), a.ms);
-        if (a.look && art.rig) {
+        if (a.wiggle) run(groups.wiggle, frames(a.wiggle, (v) => `rotate(${v}deg)`), a.ms);
+        if (a.lift) run(groups.lift, frames(a.lift, (v) => `rotate(${v}deg)`), a.ms);
+        if (a.hair) run(groups.hair, frames(a.hair, (v) => `rotate(${v}deg)`), a.ms);
+        // the deer's pupils and a person's irises alike; one looking at whoever it talks with keeps its eyes on them
+        if (a.look && !steady) {
           look(a.look);
           holds.push(window.setTimeout(() => (following ? undefined : look(null)), a.ms * 0.8));
         }
@@ -477,6 +532,8 @@ export function SpeakingCharacter({
       };
       hold(a.eyes, (v) => (held.eyes = v));
       hold(a.mouth, (v) => (held.mouth = v));
+      hold(a.brows, (v) => (held.brows = v));
+      hold(a.cheeks, (v) => (held.cheeks = v));
     };
     play.current = act;
 
@@ -531,19 +588,20 @@ export function SpeakingCharacter({
       };
       next();
     };
+    const busy = (): boolean => performance.now() < actUntil || running.some((a) => a.playState === 'running');
     const startHabits = (): void => {
       stopHabits();
-      if (!awake() || reduced.now || !art.rig || resting) return;
-      // one looking at whoever it talks with keeps its eyes on them
-      if (!steady) {
+      if (!awake() || reduced.now || resting) return;
+      // the deer glances about, unless he is looking at whoever he talks with
+      if (art.rig && !steady) {
         every(HABITS.glance, () => {
-          if (following || running.some((a) => a.playState === 'running')) return;
+          if (following || busy()) return;
           look(glanceTarget());
           habits.push(window.setTimeout(() => (following ? undefined : look(null)), between(HABITS.glanceHold)));
         });
       }
-      every(HABITS.twitch, () => (running.some((a) => a.playState === 'running') ? undefined : act(Math.random() < 0.5 ? 'twitchLeft' : 'twitchRight')));
-      every(HABITS.sniff, () => (running.some((a) => a.playState === 'running') ? undefined : act('sniff')));
+      // and each has habits of its own: an ear, a sniff, a lift of the moustache, a tuck of the hair
+      for (const habit of CHARACTER_HABITS[speaker]) every(habit.every, () => (busy() ? undefined : act(pickAct(habit))));
     };
 
     // the breath and the drift run only while the character can be seen and the reader wants motion
@@ -644,18 +702,18 @@ export function SpeakingCharacter({
       query?.removeEventListener?.('change', onMotion);
       play.current = () => undefined;
     };
-  }, [markup, art, frame, crop, src, text, voice, decorative, resting, quiet, gazeX, gazeY]);
+  }, [markup, art, frame, crop, src, text, voice, decorative, resting, quiet, gazeX, gazeY, speaker]);
 
-  // a reaction plays when it is given, and each time it changes; the deer pricks up his ears on arriving
+  // a reaction plays when it is given, and each time it changes, as this character plays it; the deer pricks up his ears on arriving
   const arrived = useRef(false);
   useEffect(() => {
     const wait = window.setTimeout(() => {
-      if (reaction) play.current(reaction);
+      if (reaction) play.current(reactionAct(speaker, reaction));
       else if (!arrived.current && art.rig && !resting) play.current('arrive');
       arrived.current = true;
     }, reaction ? 120 : 160);
     return () => window.clearTimeout(wait);
-  }, [reaction, art, resting]);
+  }, [reaction, art, resting, speaker]);
 
   const name = CHARACTER_NAMES[speaker];
   const style = {
@@ -675,9 +733,16 @@ export function SpeakingCharacter({
     style.height = size;
     style.width = (size * frame.w) / frame.h;
   }
+  // clicks close together are one run: a greeting, then a giggle, then a start and a laugh
+  const taps = useRef({ count: 0, at: 0 });
   const greet = onPress
     ? () => {
-        play.current('greet');
+        const now = Date.now();
+        const count = now - taps.current.at < TAP_RUN_MS ? taps.current.count + 1 : 1;
+        taps.current = { count, at: now };
+        const [first, then] = tapActs(speaker, count);
+        play.current(first ?? 'greet');
+        if (first && then) window.setTimeout(() => play.current(then), actFor(speaker, first).ms);
         press.current?.();
       }
     : undefined;

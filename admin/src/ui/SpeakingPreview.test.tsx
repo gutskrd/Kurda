@@ -63,7 +63,8 @@ describe('the speaking preview', () => {
     const user = userEvent.setup();
     const { container } = renderUi(<SpeakingPreview speaker="hamo" url="https://media.test/silav.wav" text="Silav" lipsync={TIMELINE} durationMs={1000} />);
     const { audio, at } = clock(container);
-    expect(container.querySelectorAll('[data-mouth]')).toHaveLength(10);
+    // the ten visemes and the two expressions, the grin and the tongue
+    expect(container.querySelectorAll('[data-mouth]')).toHaveLength(12);
     frame(0);
     expect(shownMouths(container)).toEqual(['rest']);
 
