@@ -10,7 +10,7 @@ vi.mock('@react-navigation/native', () => import('./testing/navigation'));
 import { useState } from 'react';
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { onHaptic, resetHaptics } from '../../feedback/haptics';
-import type { HapticEvent } from '../../feedback/hapticPacing';
+import { PACING, type HapticEvent } from '../../feedback/hapticPacing';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
@@ -175,6 +175,8 @@ describe('StepFlow', () => {
     fireEvent.change(screen.getByTestId('name'), { target: { value: 'Rojda' } });
     await press(en['common.continue']);
     await screen.findByText('A word?');
+    // a person takes longer than the pacer's gap between two taps; a test that did not lost the second buzz
+    await new Promise((resolve) => setTimeout(resolve, PACING.minGapMs + 10));
     await press('Send');
     await waitFor(() => expect(onFinish).toHaveBeenCalledTimes(1));
     expect(felt).toEqual(['select', 'select']);
