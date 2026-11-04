@@ -10,6 +10,13 @@ export const BASE_LESSON_XP = 10;
 export const ACCURACY_BONUS_XP = 10;
 /** Repeats of an already-completed lesson pay this fraction (anti-farm). */
 export const REPEAT_XP_FACTOR = 0.25;
+/**
+ * Finishes of one story's quiz that still pay in a day (the first at the
+ * repeat rate once the story was ever finished); the next pays nothing, as a
+ * lesson's third repeat does. Shared so the reader can say so before the quiz
+ * is started, with the same number the server pays by.
+ */
+export const PAID_STORY_REPEATS_PER_DAY = 2;
 
 /**
  * The least and the most a lesson pays: from none right to all right, the

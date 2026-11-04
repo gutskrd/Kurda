@@ -1,14 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CEFR_LEVELS,
   MIN_QUESTION_BANK,
   QUESTION_COUNTS,
   QUESTION_COUNTS_BY_LENGTH,
+  STORY_ASSESSMENT,
   STORY_DIALECTS,
   STORY_LENGTHS,
+  STORY_LEVELS,
   STORY_WORD_BANDS,
+  categoryName,
+  cefrOf,
   countStoryWords,
   glossFor,
   isAllowedQuestionCount,
+  isStoryLevel,
+  levelOfCefr,
+  narrationAt,
   normalizeJoinCode,
   formatJoinCode,
   glossSpans,
@@ -20,8 +28,10 @@ import {
   storyDialectForCourse,
   storyLengthFor,
   storyParagraphs,
+  storyQueryString,
   storySentences,
   storyTextDirection,
+  type StoryNarration,
 } from './stories.js';
 
 describe('story presets', () => {
@@ -193,5 +203,83 @@ describe('course dialects', () => {
     expect(storyDialectForCourse('kurmanji')).toBe('kurmanci');
     expect(storyDialectForCourse('sorani')).toBe('sorani');
     expect(storyDialectForCourse(null)).toBe('kurmanci');
+  });
+});
+
+describe('levels', () => {
+  it('runs from 1 (A1) to 5 (C1), each with its CEFR name', () => {
+    expect(STORY_LEVELS).toEqual([1, 2, 3, 4, 5]);
+    expect(STORY_LEVELS.map(cefrOf)).toEqual([...CEFR_LEVELS]);
+    expect(cefrOf(1)).toBe('A1');
+    expect(cefrOf(5)).toBe('C1');
+    for (const level of STORY_LEVELS) expect(isStoryLevel(level)).toBe(true);
+    for (const not of [0, 6, '1', 1.5, null, undefined]) expect(isStoryLevel(not)).toBe(false);
+  });
+
+  it('reads a CEFR name back however it was typed, and nothing else', () => {
+    expect(levelOfCefr('A1')).toBe(1);
+    expect(levelOfCefr('b1')).toBe(3);
+    expect(levelOfCefr(' C1 ')).toBe(5);
+    for (const not of ['A0', 'C2', '2', '', 'intermediate']) expect(levelOfCefr(not)).toBeNull();
+    for (const cefr of CEFR_LEVELS) expect(cefrOf(levelOfCefr(cefr)!)).toBe(cefr);
+  });
+});
+
+describe('categories', () => {
+  const folktale = { slug: 'folktale', name: { en: 'Folktales', ku: 'Çîrokên gelêrî', de: '  ' }, position: 0 };
+
+  it('names a category in the reader’s language, else in English', () => {
+    expect(categoryName(folktale, 'ku')).toBe('Çîrokên gelêrî');
+    expect(categoryName(folktale, 'en')).toBe('Folktales');
+    expect(categoryName(folktale, 'fr')).toBe('Folktales');
+    // a blank translation is no translation
+    expect(categoryName(folktale, 'de')).toBe('Folktales');
+    // a prototype key is not a translation either
+    expect(categoryName(folktale, 'constructor')).toBe('Folktales');
+  });
+});
+
+describe('the stitched narration', () => {
+  const narration: StoryNarration = {
+    sentences: [
+      { paragraph: 0, sentence: 0, key: 'a', url: 'https://cdn.test/a.wav', durationMs: 1000, startMs: 0 },
+      { paragraph: 0, sentence: 1, key: 'b', url: 'https://cdn.test/b.wav', durationMs: 2000, startMs: 1000 },
+      { paragraph: 1, sentence: 0, key: 'c', url: 'https://cdn.test/c.wav', durationMs: 500, startMs: 3000 },
+    ],
+    totalMs: 3500,
+    complete: true,
+  };
+
+  it('says which sentence plays at a position, and how far into it', () => {
+    expect(narrationAt(narration, 0)).toEqual({ index: 0, offsetMs: 0 });
+    expect(narrationAt(narration, 999)).toEqual({ index: 0, offsetMs: 999 });
+    expect(narrationAt(narration, 1000)).toEqual({ index: 1, offsetMs: 0 });
+    expect(narrationAt(narration, 2500)).toEqual({ index: 1, offsetMs: 1500 });
+    expect(narrationAt(narration, 3100)).toEqual({ index: 2, offsetMs: 100 });
+  });
+
+  it('lands on something playable at either edge, and on nothing in an empty track', () => {
+    expect(narrationAt(narration, -50)).toEqual({ index: 0, offsetMs: 0 });
+    expect(narrationAt(narration, 3500)).toEqual({ index: 2, offsetMs: 500 });
+    expect(narrationAt(narration, 99_999)).toEqual({ index: 2, offsetMs: 500 });
+    expect(narrationAt({ sentences: [], totalMs: 0, complete: false }, 10)).toEqual({ index: -1, offsetMs: 0 });
+  });
+});
+
+describe('the library query string', () => {
+  it('writes the filters in one order, leaves out what is not set, and is empty for nothing', () => {
+    expect(storyQueryString({})).toBe('');
+    expect(storyQueryString({ q: '  ', category: '', audio: false })).toBe('');
+    expect(storyQueryString({ offset: 24, q: 'rojîn', audio: true, level: 2 })).toBe('?q=roj%C3%AEn&level=2&audio=1&offset=24');
+    expect(storyQueryString({ dialect: 'sorani', sort: 'title', limit: 12, language: 'ku', category: 'fable' })).toBe(
+      '?category=fable&dialect=sorani&language=ku&sort=title&limit=12',
+    );
+  });
+});
+
+describe('the assessment', () => {
+  it('is a solo game every length can be played at', () => {
+    expect(STORY_ASSESSMENT.mode).toBe('solo');
+    for (const length of STORY_LENGTHS) expect(isAllowedQuestionCount(length, STORY_ASSESSMENT.questionCount)).toBe(true);
   });
 });

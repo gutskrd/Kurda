@@ -502,6 +502,7 @@ describe('the results', () => {
       status: 'finished',
       code: null,
       results: {
+      storySlug: 'qelema-sin',
         standings: [
           { seat: 1, name: 'Ada', avatarUrl: null, isMe: true, score: 400, correct: 4, place: 1 },
           { seat: 2, name: 'Rojda', avatarUrl: null, isMe: false, score: 300, correct: 3, place: 2 },
@@ -627,6 +628,7 @@ describe('after merging with the social and rating tracks', () => {
       code: null,
       players,
       results: {
+        storySlug: 'qelema-sin',
         standings: [
           { seat: 1, name: 'Ada', avatarUrl: null, isMe: true, score: 300, correct: 3, place: 1 },
           { seat: 2, name: null, avatarUrl: null, isMe: false, score: 200, correct: 2, place: 2 },

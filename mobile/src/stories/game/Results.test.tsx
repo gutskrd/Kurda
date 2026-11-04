@@ -25,6 +25,7 @@ function finished(results: Partial<StoryGameResults>, over: Partial<StoryGameVie
     {
       status: 'finished',
       results: {
+      storySlug: 'nane-germ',
         standings: [],
         me: { place: 1, score: 400, correct: 4, answered: 5, total: 5, xp: 12, learningCounted: true },
         review,
@@ -100,7 +101,7 @@ describe('Results', () => {
     view.unmount();
     renderWithProviders(
       <Results
-        view={gameView({ status: 'finished', mode: 'solo', results: { standings: [], me: null, review: withEnglish } }, { questionCount: 5, level: 3 })}
+        view={gameView({ status: 'finished', mode: 'solo', results: { storySlug: 'nane-germ', standings: [], me: null, review: withEnglish } }, { questionCount: 5, level: 3 })}
         story={NANE_GERM}
         onOpenGame={() => undefined}
         onRead={() => undefined}

@@ -41,6 +41,15 @@ const story: StoryListItem = {
   wordCount: 180,
   readingMinutes: 2,
   fullyNarrated: false,
+  language: 'ku',
+  cefr: 'A1',
+  audioCoverage: 'none',
+  category: 'everyday',
+  tradition: 'original',
+  author: null,
+  featured: false,
+  cover: null,
+  publishedAt: null,
 };
 
 const noInvites: InviteLists = { incoming: [], outgoing: [] };

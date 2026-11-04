@@ -25,6 +25,7 @@ import {
   STORY_SENTENCE_SOFT_MAX,
   STORY_WORD_BANDS,
   countStoryWords,
+  emptyStoryLibraryInput,
   glossSpans,
   isStorySlug,
   lengthMinutes,
@@ -40,9 +41,13 @@ import {
   type StoryDialect,
   type StoryGlossEntry,
   type StoryInput,
+  type CefrLevel,
+  type StoryLanguage,
   type StoryLength,
+  type StoryLibraryInput,
   type StoryProblem,
   type StoryQuestionInput,
+  type StoryTradition,
   type StoryValidation,
 } from '@kurda/shared';
 
@@ -52,7 +57,32 @@ import {
 
 export type StoryStatus = 'draft' | 'in_review' | 'published' | 'archived';
 /** 'starter': one of the stories the app shipped with, waiting for a native speaker to read and publish it */
-export type StorySource = 'admin' | 'starter';
+export type StoryOrigin = 'admin' | 'starter';
+export type StoryReviewStatus = 'unreviewed' | 'approved';
+export type StoryAudioCoverage = 'none' | 'partial' | 'full';
+
+/** One sentence of the story with its recording, for the editor's audio section. */
+export interface StorySentenceAudio {
+  paragraph: number;
+  sentence: number;
+  text: string;
+  key: string;
+  recorded: boolean;
+  url?: string;
+  durationMs?: number;
+  speaker?: string | null;
+  updatedAt?: string;
+}
+
+/** Another telling of the same story, in the editor's Versions section. */
+export interface AdminStoryVersion {
+  id: string;
+  slug: string;
+  title: string;
+  dialect: StoryDialect;
+  language: StoryLanguage;
+  status: StoryStatus;
+}
 
 export interface AdminStoryQuestion extends StoryQuestionInput {
   id: string;
@@ -63,14 +93,27 @@ export interface AdminStory {
   id: string;
   slug: string;
   dialect: StoryDialect;
+  language: StoryLanguage;
   level: number;
+  cefr: CefrLevel | null;
   title: string;
   summary: string | null;
   body: string;
   glossary: StoryGlossEntry[];
   questions: AdminStoryQuestion[];
+  category: string | null;
+  tradition: StoryTradition;
+  author: string | null;
+  /** the collection, teller, region or publication it comes from */
+  source: string | null;
+  sourceUrl: string | null;
+  attributionNote: string | null;
+  translations: Record<string, string>;
+  cover: string | null;
+  /** the editor's reading time, null for the estimate (`readingMinutes` is whichever applies) */
+  readingMinutesOverride: number | null;
   status: StoryStatus;
-  source: StorySource;
+  origin: StoryOrigin;
   wordCount: number;
   length: StoryLength | null;
   readingMinutes: number;
@@ -78,6 +121,17 @@ export interface AdminStory {
   publishedAt: string | null;
   createdAt: string;
   updatedAt: string;
+  featured: boolean;
+  featuredAt: string | null;
+  reviewStatus: StoryReviewStatus;
+  reviewedBy: { id: string; username: string | null } | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  translationGroup: string | null;
+  versions: AdminStoryVersion[];
+  /** the glossary terms that are dictionary headwords, with the entry each was linked to */
+  glossaryMatches: Array<{ term: string; entryId: string; headword: string }>;
+  audio: { sentences: StorySentenceAudio[]; recorded: number; total: number };
   /** what would stop it being published (errors) and what is worth a look (warnings) */
   problems: StoryValidation;
 }
@@ -87,16 +141,24 @@ export interface AdminStorySummary {
   id: string;
   slug: string;
   dialect: StoryDialect;
+  language: StoryLanguage;
   level: number;
+  cefr: CefrLevel | null;
   title: string;
   status: StoryStatus;
-  source: StorySource;
+  origin: StoryOrigin;
   wordCount: number;
   length: StoryLength | null;
   questionCount: number;
   lockVersion: number;
   publishedAt: string | null;
   updatedAt: string;
+  category: string | null;
+  tradition: StoryTradition;
+  reviewStatus: StoryReviewStatus;
+  featured: boolean;
+  audio: StoryAudioCoverage;
+  translationGroup: string | null;
   /** how many problems `validateStory(…, 'publish')` finds */
   problems: { errors: number; warnings: number };
 }
@@ -131,8 +193,8 @@ export const KIND_HINT: Record<QuestionKind, string> = {
  * someone publishes them, which is the review. One unpublished later (to fix a
  * typo, say) has been read once already and is not marked again.
  */
-export function needsNativeReview(story: { source: StorySource; publishedAt: string | null }): boolean {
-  return story.source === 'starter' && story.publishedAt === null;
+export function needsNativeReview(story: { origin: StoryOrigin; publishedAt: string | null }): boolean {
+  return story.origin === 'starter' && story.publishedAt === null;
 }
 
 // ---------------------------------------------------------------------------
@@ -188,6 +250,12 @@ export interface StoryForm {
   body: string;
   glossary: GlossRow[];
   questions: QuestionForm[];
+  /**
+   * How the story is filed and attributed (category, tradition, source,
+   * translations, cover, reading time): loaded with the story and sent back
+   * with it, so a save never drops what another editor set.
+   */
+  library: StoryLibraryInput;
 }
 
 let nextKey = 0;
@@ -257,6 +325,7 @@ export function blankForm(dialect: StoryDialect = 'kurmanci', random: () => numb
     body: '',
     glossary: [],
     questions: [],
+    library: emptyStoryLibraryInput(),
   };
   return { ...form, slug: autoSlug(form) };
 }
@@ -305,6 +374,18 @@ export function formFromStory(
       evidenceSentence: q.evidenceSentence,
       evidenceQuote: evidenceText(paragraphs, q.evidenceParagraph, q.evidenceSentence),
     })),
+    library: {
+      language: story.language,
+      category: story.category,
+      tradition: story.tradition,
+      author: story.author,
+      source: story.source,
+      sourceUrl: story.sourceUrl,
+      attributionNote: story.attributionNote,
+      translations: { ...story.translations },
+      cover: story.cover,
+      readingMinutes: story.readingMinutesOverride,
+    },
   };
 }
 
@@ -345,6 +426,7 @@ function glossEntry(row: GlossRow): StoryGlossEntry {
  */
 export function draftFromForm(form: StoryForm): StoryDraft {
   return {
+    ...form.library,
     slug: form.slug.trim(),
     dialect: form.dialect,
     level: form.level,

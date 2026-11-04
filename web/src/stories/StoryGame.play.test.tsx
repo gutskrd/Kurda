@@ -82,6 +82,7 @@ describe('a story game with friends', () => {
       code: null,
       players: [player(1, { name: 'Ada', isMe: true, isHost: true }), player(2, { name: 'Rojda' })],
       results: {
+      storySlug: 'qelema-sin',
         standings: [
           { seat: 1, name: 'Ada', avatarUrl: null, isMe: true, score: 400, correct: 4, place: 1 },
           { seat: 2, name: 'Rojda', avatarUrl: null, isMe: false, score: 300, correct: 3, place: 2 },

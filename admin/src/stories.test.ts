@@ -349,7 +349,8 @@ describe('the live checks', () => {
     // a new story with only a title: no text yet is fine in a draft
     const started = edit(blankForm('kurmanci', fixed), { type: 'text', field: 'title', value: 'Qelema Şîn' });
     expect(liveChecks(started).blocking).toEqual([]);
-    expect(codes(liveChecks(started).beforePublish)).toEqual(['BODY_EMPTY@body']);
+    // a new story is filed under no category yet, and that too waits until it is published
+    expect(codes(liveChecks(started).beforePublish)).toEqual(['CATEGORY_MISSING@category', 'BODY_EMPTY@body']);
     // a text between the lengths (144 words: past short, short of medium) likewise
     const between = edit(formFromStory(storyFixture()), { type: 'text', field: 'body', value: `${BODY}\n\n${BODY}` });
     expect(liveChecks(between).blocking).toEqual([]);
@@ -475,10 +476,10 @@ describe('status', () => {
   });
 
   it('marks a starter story until someone has published it', () => {
-    expect(needsNativeReview({ source: 'starter', publishedAt: null })).toBe(true);
+    expect(needsNativeReview({ origin: 'starter', publishedAt: null })).toBe(true);
     // unpublished again after a review, it has been read once already
-    expect(needsNativeReview({ source: 'starter', publishedAt: '2026-10-05T10:00:00.000Z' })).toBe(false);
-    expect(needsNativeReview({ source: 'admin', publishedAt: null })).toBe(false);
+    expect(needsNativeReview({ origin: 'starter', publishedAt: '2026-10-05T10:00:00.000Z' })).toBe(false);
+    expect(needsNativeReview({ origin: 'admin', publishedAt: null })).toBe(false);
   });
 });
 
@@ -486,7 +487,7 @@ describe('the list', () => {
   const base = storyFixture();
   const list = [
     summaryOf(base, { id: '1', title: 'Rêya Dibistanê', status: 'published', publishedAt: '2026-10-05T10:00:00.000Z' }),
-    summaryOf(base, { id: '2', title: 'Şorbeya Nîskê', slug: 'sorbeya-niske', length: 'medium', status: 'draft', source: 'starter', questionCount: 8, problems: { errors: 1, warnings: 2 } }),
+    summaryOf(base, { id: '2', title: 'Şorbeya Nîskê', slug: 'sorbeya-niske', length: 'medium', status: 'draft', origin: 'starter', questionCount: 8, problems: { errors: 1, warnings: 2 } }),
     summaryOf(base, { id: '3', title: 'کلیلی ماڵەوە', slug: 'ckb-the-house-key', dialect: 'sorani', status: 'in_review', problems: { errors: 0, warnings: 1 } }),
     summaryOf(base, { id: '4', title: 'Rovî û Hirç', slug: 'rovi-u-hirc', length: null, status: 'archived' }),
     summaryOf(base, { id: '5', title: 'Barana Newrozê', slug: 'barana-newroze', length: 'long', status: 'published', dialect: 'kurmanci' }),

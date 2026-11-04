@@ -61,7 +61,7 @@ const starter = storyFixture({
   id: '0b5c1a52-6c1e-4f43-9a37-2a1f6b6a9d02',
   slug: 'sorbeya-niske',
   title: 'Şorbeya Nîskê',
-  source: 'starter',
+  origin: 'starter',
   length: 'medium',
 });
 const soranî = storyFixture({
@@ -76,7 +76,7 @@ const published = storyFixture({
   slug: 'qelema-sin',
   title: 'Qelema Şîn',
   status: 'published',
-  source: 'starter',
+  origin: 'starter',
   publishedAt: '2026-10-05T10:00:00.000Z',
 });
 

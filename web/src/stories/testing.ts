@@ -18,6 +18,15 @@ export function listItem(over: Partial<StoryListItem> = {}): StoryListItem {
     wordCount: 90,
     readingMinutes: 2,
     fullyNarrated: false,
+    language: 'ku',
+    cefr: 'A1',
+    audioCoverage: 'none',
+    category: 'everyday',
+    tradition: 'original',
+    author: null,
+    featured: false,
+    cover: null,
+    publishedAt: null,
     ...over,
   };
 }
@@ -28,6 +37,12 @@ export function detail(over: Partial<StoryDetail> = {}): StoryDetail {
     paragraphs: ['Îro Rojîn diçe dibistanê. Ew deh salî ye.', 'Şîlan hevala wê ye. Şîlan dibişire.'],
     glossary: [{ term: 'dibistanê', meanings: { en: 'to school', de: 'zur Schule' } }],
     audio: {},
+    translations: {},
+    source: null,
+    sourceUrl: null,
+    attributionNote: null,
+    versions: [],
+    narration: null,
     ...over,
   };
 }
