@@ -90,7 +90,8 @@ export function SentenceStudio({
             speaker={recording.speaker}
             url={recording.url}
             text={text}
-            lipsync={recording.lipsync ?? (recording.hasLipsync ? undefined : null)}
+            // the stored timeline; none when the list said there is none; not known when it said nothing
+            lipsync={recording.lipsync ?? (recording.hasLipsync === false ? null : undefined)}
             durationMs={recording.durationMs}
           />
         )}
