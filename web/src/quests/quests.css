@@ -467,15 +467,15 @@ button.quests-card:active {
   color: #ffffff;
   animation: chest-arrive var(--dur-slow) var(--ease-out) both;
 }
-/* each tier its own colour, deep enough for white words on it */
+/* each tier its own colour, deep enough for white words on it: the warm tones the phone's chest screens wear (coursemap/path.ts), amber, saffron and rose */
 .chest-screen.tier-common {
   --chest-bg: radial-gradient(90% 60% at 50% 45%, #d98a36, #a95a1c);
 }
 .chest-screen.tier-rare {
-  --chest-bg: radial-gradient(90% 60% at 50% 45%, #4a95e2, #2560b4);
+  --chest-bg: radial-gradient(90% 60% at 50% 45%, #c28a24, #8a5a07);
 }
 .chest-screen.tier-epic {
-  --chest-bg: radial-gradient(90% 60% at 50% 45%, #9a68e4, #5d33ae);
+  --chest-bg: radial-gradient(90% 60% at 50% 45%, #b4506f, #78304e);
 }
 @keyframes chest-arrive {
   from {

@@ -27,8 +27,8 @@ const TIER: Record<ChestTier, MessageKey> = {
   epic: 'quests.tier.epic',
 };
 
-/** The celebration's colours for each tier (ranks.css `tone-*`): gold, blue, violet. */
-const TONE: Record<ChestTier, string> = { common: 'zer', rare: 'ciya', epic: 'lutke' };
+/** The celebration's colours for each tier (ranks.css `tone-*`), all warm as the chests are: gold, the star's pale gold, copper. */
+const TONE: Record<ChestTier, string> = { common: 'zer', rare: 'sterk', epic: 'sifir' };
 /** How far the rays out of the open chest reach, against the drawing's own: across most of the screen. */
 const RAYS_REACH = 2.4;
 
