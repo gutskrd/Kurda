@@ -1,15 +1,17 @@
 /**
  * The reward chest a finished quest pays out of, designed once and drawn the
  * same by the phone and the website: a chunky trunk seen from three quarters
- * and a little above — a domed lid of planks wider than the boxy body under
- * it, bands with chipped corners and rivets wrapping over both, a
- * shield-shaped lock plate hanging from the lid's rim, a handle on the near
- * end, and a soft pool of shadow on the ground.
+ * and a little above — a barrel of a lid lying along the body, its planks
+ * running the length of it and rolling away over the crest, bound in broad
+ * bevelled straps that run on down the body, a broad belt round the seam of
+ * the two, an ornate shield of a lock plate hung on the belt under a knob on
+ * the lid, a ring handle on the near end, and a soft pool of shadow on the
+ * ground.
  *
  * Three tiers, all warm, by how much the chest holds: common is amber wood
  * bound in dark iron; rare the same wood bound in gold, with a gold lock
  * plate; epic is lacquered in a deep pomegranate red, gold-bound, with a
- * garnet set in its plate and a few gold studs in its planks.
+ * garnet for the knob and a few gold studs in its planks.
  *
  * It is drawn as layers with stable ids, back to front, because the
  * renderers move them: the lid swings open about its hinge, the light inside
@@ -22,8 +24,10 @@
  *
  * Flat painted cut-outs: each form is a flat colour with one highlight and
  * one shade step, and nothing is outlined in a foreign ink — a piece's edge
- * is its own darkest tone. The only gradients are the soft lights, which
- * fade to nothing, and the ground's shadow.
+ * is its own darkest tone. The metal's bevel is that one highlight, along
+ * the edge the light falls on, and a nick or two in it at full size. The
+ * only gradients are the soft lights, which fade to nothing, and the
+ * ground's shadow.
  */
 import type { ChestTier } from '../quests.js';
 import { CANVAS, escapeXml, linearAt, n, n2, prefixFor, radialAt, type Pt } from './svg.js';
@@ -110,8 +114,8 @@ interface Metal {
 
 const AMBER: Wood = { face: '#e3a044', light: '#f2c26e', shade: '#b9732b', line: '#a5611f', deep: '#5b300f', inside: '#7d4a1d' };
 const POMEGRANATE: Wood = { face: '#a8233a', light: '#c9455c', shade: '#7c1528', line: '#6a1021', deep: '#3b0810', inside: '#5a0f1e' };
-/** Dark iron, warm rather than blue: the bands of a common chest. */
-const IRON: Metal = { face: '#6a6560', light: '#8f8983', shade: '#4a4642', deep: '#2b2825', rivet: '#a39d96' };
+/** Dark iron, a warm grey rather than a blue one: the straps of a common chest, their bevels catching a little light. */
+const IRON: Metal = { face: '#716e6b', light: '#a9a5a0', shade: '#4e4b48', deep: '#2b2927', rivet: '#bdb8b2' };
 /** The sun's gold, as the badges wear it (palette.ts). */
 const GOLD: Metal = { face: '#ffbd1f', light: '#ffe16a', shade: '#d9800b', deep: '#6b3500', rivet: '#fff8d1' };
 /** The garnet in the epic chest's plate: a pomegranate seed. */
@@ -134,20 +138,44 @@ export const CHEST_TINTS: Readonly<Record<ChestTier, Tint>> = {
 
 // ─────────────────────────────────────────────────────────────── shapes
 
-const FRONT = { x0: 14, x1: 90, y0: 60, y1: 104 };
-/** The bands, as the x of each one's left and right edge, on the lid and the body alike. */
+/** The body's front face, from under the belt to its foot. */
+const FRONT = { x0: 14, x1: 90, y0: 58, y1: 104 };
+/** The belt: the broad band round the seam of lid and body, lipped a little past both. */
+const BELT = { x0: 12, x1: 92, y0: 55, y1: 65 };
+/**
+ * The lid: a barrel lying along the chest, as wide as the body. Its front
+ * rises from the belt to the crest; its top rolls back from the crest for
+ * `ROLL` of the depth, and what is behind that is out of sight from here.
+ * Its near end is the body's right edge; its far end is the barrel's arch,
+ * in the plane the depth sweeps through.
+ */
+const LID = { x0: FRONT.x0, x1: FRONT.x1, crest: 28, foot: BELT.y0 };
+const ROLL = 0.5;
+/** The planks of the lid's front, as the seams between them: closer together toward the crest, where the barrel turns away. */
+const LID_SEAMS = [50.6, 46.2, 42.2, 38.5, 35.1, 31.9] as const;
+/** The straps, as the x of each one's left and right edge, over the lid and down the body alike. */
 const BANDS: readonly (readonly [number, number])[] = [
-  [26, 36],
-  [68, 78],
+  [24, 34],
+  [60, 70],
 ];
-const LOCK = { cx: 52, top: 61, w: 28 };
+/** The chest's corners wear a strap each too: the rims of the lid's arches, and the body's upright edges under them. */
+const CORNERS: readonly (readonly [number, number])[] = [
+  [FRONT.x0, FRONT.x0 + 6],
+  [FRONT.x1 - 6, FRONT.x1],
+];
+const STRAPS: readonly (readonly [number, number])[] = [...CORNERS, ...BANDS];
+/** The lock plate: hung on the belt, its point down the body; the knob above it is the lid's, on the hasp. */
+const LOCK = { cx: 52, top: BELT.y0, w: 28, point: 90 };
 const MOUTH: Pt = [61, 54];
 const HINGE: Pt = [66, 54];
 
 const back = ([x, y]: Pt): Pt => [x + DEPTH[0], y + DEPTH[1]];
+const roll = ([x, y]: Pt): Pt => [x + DEPTH[0] * ROLL, y + DEPTH[1] * ROLL];
 const p = ([x, y]: Pt): string => `${n(x)} ${n(y)}`;
 const poly = (pts: readonly Pt[]): string => `M${pts.map(p).join('L')}Z`;
 const line = (a: Pt, b: Pt): string => `M${p(a)}L${p(b)}`;
+/** A strap's front, upright between two x's and two y's, and the bevel the light catches down its left edge. */
+const upright = (x0: number, x1: number, y0: number, y1: number): string => `M${n(x0)} ${n(y0)}H${n(x1)}V${n(y1)}H${n(x0)}Z`;
 
 /** The body's front face, its bottom-left corner rounded; the right edge meets the end. */
 const FRONT_FACE = `M${FRONT.x0} ${FRONT.y0}H${FRONT.x1}V${FRONT.y1}H${FRONT.x0 + 5}Q${FRONT.x0} ${FRONT.y1} ${FRONT.x0} ${FRONT.y1 - 5}Z`;
@@ -155,64 +183,46 @@ const FRONT_FACE = `M${FRONT.x0} ${FRONT.y0}H${FRONT.x1}V${FRONT.y1}H${FRONT.x0 
 const END_FACE = poly([[FRONT.x1, FRONT.y0], back([FRONT.x1, FRONT.y0]), back([FRONT.x1, FRONT.y1]), [FRONT.x1, FRONT.y1]]);
 /** The whole body, for its edge. */
 const BODY = `M${FRONT.x0} ${FRONT.y0}H${FRONT.x1}L${p(back([FRONT.x1, FRONT.y0]))}L${p(back([FRONT.x1, FRONT.y1]))}L${FRONT.x1} ${FRONT.y1}H${FRONT.x0 + 5}Q${FRONT.x0} ${FRONT.y1} ${FRONT.x0} ${FRONT.y1 - 5}Z`;
-/** The chest's mouth, seen into once the lid is up. */
-const MOUTH_FACE = poly([[FRONT.x0, FRONT.y0], [FRONT.x1, FRONT.y0], back([FRONT.x1, FRONT.y0]), back([FRONT.x0, FRONT.y0])]);
+/** The chest's mouth, seen into once the lid is up: the top of the body, inside the belt. */
+const MOUTH_FACE = poly([[FRONT.x0, BELT.y0], [FRONT.x1, BELT.y0], back([FRONT.x1, BELT.y0]), back([FRONT.x0, BELT.y0])]);
 
-/**
- * The lid: a barrel seen from three quarters and a little above. Its front
- * face is the dome, a lip wider than the body each side; its top is the
- * crest of that dome swept back the chest's depth, the planks seen from
- * above; its far end is the dome's right arch swept back the same way.
- * Before the top was drawn the lid stopped at its front crest and jumped up
- * to the end cap, and the eye read a piece of the lid as missing.
- */
-const LID = { x0: 10, x1: 92, y0: 26, y1: 64, rim: 58 };
-/** The crest of the dome, from the left foot of its arch over the top to the right foot. */
-const CREST = `M${LID.x0} 44C${LID.x0} 32 18 ${LID.y0} 32 ${LID.y0}H70C84 ${LID.y0} ${LID.x1} 32 ${LID.x1} 44`;
-const LID_FACE = `${CREST}V${LID.y1}H${LID.x0}Z`;
-/** The lid's right profile, front corner up and over the dome: what the end's arch band follows. */
-const LID_RIGHT = `M${LID.x1} ${LID.y1}V44C${LID.x1} 32 84 ${LID.y0} 70 ${LID.y0}`;
-const LID_LEFT = `M${LID.x0} ${LID.y1}V44C${LID.x0} 32 18 ${LID.y0} 32 ${LID.y0}`;
-/** Everything of the lid behind its front face: the top and the far end in one, under the face. */
-const LID_BACK =
-  `${CREST}V${LID.y1}L${p(back([LID.x1, LID.y1]))}L${p(back([LID.x1, 44]))}C${p(back([LID.x1, 32]))} ${p(back([84, LID.y0]))} ${p(back([70, LID.y0]))}` +
-  `H${n(32 + DEPTH[0])}C${p(back([18, LID.y0]))} ${p(back([LID.x0, 32]))} ${p(back([LID.x0, 44]))}Z`;
-/** The lid's end, turned away: the right profile swept back, the top of the dome with it. */
-const LID_END = `M${LID.x1} ${LID.y1}L${p(back([LID.x1, LID.y1]))}L${p(back([LID.x1, 44]))}C${p(back([LID.x1, 32]))} ${p(back([84, LID.y0]))} ${p(back([70, LID.y0]))}L70 ${LID.y0}C84 ${LID.y0} ${LID.x1} 32 ${LID.x1} 44Z`;
-/** The arch of the far rim of the end. */
-const LID_END_ARCH = `M${p(back([LID.x1, LID.y1]))}L${p(back([LID.x1, 44]))}C${p(back([LID.x1, 32]))} ${p(back([84, LID.y0]))} ${p(back([70, LID.y0]))}`;
-/** The whole lid, for its clip: the face and what is behind it. */
-const LID_ALL = LID_FACE + LID_BACK;
-/**
- * The lid's outline, for its edge: up the left foot and arch to where the far
- * crest rises above the near one, along the far crest, down the far arch and
- * the back of the end, under the end to the front corner, and along the foot.
- * (The far crest is the near one's cubic swept back, cut where it crosses.)
- */
-const LID_OUTLINE =
-  `M${LID.x0} ${LID.y1}V44C${LID.x0} 32 18 ${LID.y0} 32 ${LID.y0}L31.71 24.48C35.36 20.16 41.6 18 50 18H88C102 18 110 24 110 36V56L${LID.x1} ${LID.y1}Z`;
+/** The belt's front, its end turned away, and the bevel along its top edge. */
+const BELT_FRONT = upright(BELT.x0, BELT.x1, BELT.y0, BELT.y1);
+const BELT_END = poly([[BELT.x1, BELT.y0], back([BELT.x1, BELT.y0]), back([BELT.x1, BELT.y1]), [BELT.x1, BELT.y1]]);
+const BELT_BEVEL = upright(BELT.x0, BELT.x1, BELT.y0, BELT.y0 + 2.2);
 
-/** The rim band along the lid's bottom edge, with its lip; its top-left corner chipped. */
-const RIM = `M8 ${LID.rim + 2}L10 ${LID.rim}H94V${LID.y1}H8Z`;
-const RIM_END = poly([[94, LID.rim], back([94, LID.rim]), back([94, LID.y1]), [94, LID.y1]]);
+/** The lid's front: the planks from the belt up to the crest. */
+const LID_FRONT = upright(LID.x0, LID.x1, LID.crest, LID.foot);
+/** The crest's roll: the top, as far back as it shows. */
+const LID_TOP = poly([[LID.x0, LID.crest], roll([LID.x0, LID.crest]), roll([LID.x1, LID.crest]), [LID.x1, LID.crest]]);
+/** The far end's arch: from the crest's roll round and down to the back foot. */
+const CAP_APEX = roll([LID.x1, LID.crest]);
+const CAP_BACK = back([LID.x1, LID.foot]);
+const CAP_ARCH = `M${p(CAP_APEX)}C${n(CAP_APEX[0] + 6)} ${n(CAP_APEX[1] + 3)} ${n(CAP_BACK[0])} ${n(CAP_BACK[1] - 10)} ${p(CAP_BACK)}`;
+/** The far end itself: the body's right edge up to the crest, over the roll, round the arch and back along the belt. */
+const LID_END = `M${LID.x1} ${LID.foot}V${LID.crest}L${p(CAP_APEX)}${CAP_ARCH.slice(CAP_ARCH.indexOf('C'))}Z`;
+/** The whole lid, for its clip and its edge. */
+const LID_ALL = `M${LID.x0} ${LID.foot}V${LID.crest}L${p(roll([LID.x0, LID.crest]))}H${n(CAP_APEX[0])}${CAP_ARCH.slice(CAP_ARCH.indexOf('C'))}L${LID.x1} ${LID.foot}Z`;
 
 /** The lid thrown back: standing on the body's back edge, leaning away, its inside towards us. */
 const OPEN = { x0: 33, x1: 109, y0: 52, top: 12 };
 const OPEN_FACE = `M${OPEN.x0} ${OPEN.y0}C28 40 29 26 38 ${OPEN.top + 2}L108 ${OPEN.top - 2}C116 24 116 40 ${OPEN.x1} ${OPEN.y0}Z`;
 const OPEN_RIM = `M36 ${OPEN.top + 2.5}L110 ${OPEN.top - 1.5}`;
 
-/** The shield of the lock plate, hanging from the rim down the front: its top under the lid's lip. */
-const SHIELD = (cx: number, top: number, w: number, tall: number): string => {
+/** The shield of the lock plate: square-shouldered at the top, drawn to a point below. */
+const SHIELD = (cx: number, top: number, w: number, point: number): string => {
   const half = w / 2;
-  const waist = top + tall * 0.45;
-  return `M${n(cx - half)} ${n(top)}H${n(cx + half)}V${n(waist)}C${n(cx + half)} ${n(top + tall * 0.8)} ${n(cx + half * 0.55)} ${n(top + tall * 0.95)} ${n(cx)} ${n(top + tall)}` +
-    `C${n(cx - half * 0.55)} ${n(top + tall * 0.95)} ${n(cx - half)} ${n(top + tall * 0.8)} ${n(cx - half)} ${n(waist)}Z`;
+  const waist = top + (point - top) * 0.31;
+  return `M${n(cx - half)} ${n(top)}H${n(cx + half)}V${n(waist)}C${n(cx + half)} ${n(top + (point - top) * 0.66)} ${n(cx + half * 0.57)} ${n(top + (point - top) * 0.88)} ${n(cx)} ${n(point)}` +
+    `C${n(cx - half * 0.57)} ${n(top + (point - top) * 0.88)} ${n(cx - half)} ${n(top + (point - top) * 0.66)} ${n(cx - half)} ${n(waist)}Z`;
 };
-const PLATE = SHIELD(LOCK.cx, LOCK.top, LOCK.w, 34);
-const PLATE_INNER = SHIELD(LOCK.cx, LOCK.top + 2.4, LOCK.w - 4.8, 29.4);
-/** The round medallion on the plate the keyhole sits in, like a boss on a shield. */
-const MEDALLION = { cy: LOCK.top + 14, r: 7.2 };
-const LOCK_BOX: ChestBox = { x: 34, y: 52, w: 36, h: 46 };
+const PLATE = SHIELD(LOCK.cx, LOCK.top, LOCK.w, LOCK.point);
+const PLATE_INNER = SHIELD(LOCK.cx, LOCK.top + 2.2, LOCK.w - 4.4, LOCK.point - 2.8);
+/** The round medallion on the plate the keyhole sits in. */
+const MEDALLION = { cy: LOCK.top + 15, r: 7.6 };
+/** The hasp: the tongue down from the lid's foot that the knob sits on, over the plate's top. */
+const HASP = { top: 46.5, w: 12, knob: 50.2 };
+const LOCK_BOX: ChestBox = { x: 36, y: 53, w: 32, h: 39 };
 
 /** A four-pointed star, `r` from its middle to a point. */
 function star(x: number, y: number, r: number): string {
@@ -302,101 +312,103 @@ function bodyLayer(l: Layer, b: Brush): ChestBox {
   l.add(fill(END_FACE, wood.shade));
   l.add(fill(FRONT_FACE, wood.face));
   if (b.detail > 0) {
-    // the planks: two lines across the front, and across the end with it
-    for (const y of [75, 89]) {
-      l.add(stroke(line([FRONT.x0 + 1.5, y], [FRONT.x1, y]), wood.line, 1.6));
-      l.add(stroke(line([FRONT.x1, y], back([FRONT.x1 - 1.5, y])), wood.line, 1.4));
+    // the planks: three seams across the front, and across the end with them
+    for (const y of [75, 85, 95]) {
+      l.add(stroke(line([FRONT.x0 + 1.5, y], [FRONT.x1, y]), wood.line, 1.5));
+      l.add(stroke(line([FRONT.x1, y], back([FRONT.x1 - 1.5, y])), wood.line, 1.3));
     }
   }
   if (b.detail === 2) {
-    // the grain: a few short light streaks along the planks
-    for (const [x0, x1, y] of [[40, 54, 68.5], [78, 88, 82], [18, 24, 96.5], [44, 58, 96.5]] as const) l.add(stroke(line([x0, y], [x1, y]), wood.light, 1.3, ' stroke-opacity="0.5"'));
+    // the grain: a few short light streaks along the planks, between the straps
+    for (const [x0, x1, y] of [[72, 82, 70.5], [73, 80, 80], [71, 83, 90.5], [74, 81, 100.5]] as const) l.add(stroke(line([x0, y], [x1, y]), wood.light, 1.3, ' stroke-opacity="0.5"'));
   }
-  if (b.tint.studs && b.detail === 2) for (const [x, y] of [[48, 68], [56, 68], [48, 96], [56, 96]] as const) l.add(stud(x, y));
-  // the bands down the front, each with its bottom corner chipped, wrapped under the rim above
-  for (const [x0, x1] of BANDS) {
-    l.add(fill(`M${x0} ${FRONT.y0}H${x1}V${FRONT.y1 - 3}L${n(x1 - 2.5)} ${FRONT.y1}H${x0}Z`, metal.face));
-    l.add(fill(`M${x0} ${FRONT.y0}H${n(x0 + 2.5)}V${FRONT.y1}H${x0}Z`, metal.light));
-    if (b.detail > 0) l.add(stroke(`M${x0} ${FRONT.y0}H${x1}V${FRONT.y1 - 3}L${n(x1 - 2.5)} ${FRONT.y1}H${x0}Z`, metal.deep, b.thin));
-    if (b.detail === 2) for (const y of [70, 96]) l.add(rivet((x0 + x1) / 2, y, metal));
+  if (b.tint.studs && b.detail === 2) for (const [x, y] of [[77, 75], [77, 98]] as const) l.add(stud(x, y));
+  // the straps down the front, the corners' and the two in line with the lid's, each bevelled down its left edge and shaded down its right
+  for (const [x0, x1] of STRAPS) {
+    l.add(fill(upright(x0, x1, FRONT.y0, FRONT.y1), metal.face));
+    l.add(fill(upright(x0, x0 + 2.2, FRONT.y0, FRONT.y1), metal.light));
+    l.add(fill(upright(x1 - 1.4, x1, FRONT.y0, FRONT.y1), metal.shade));
+    if (b.detail > 0) l.add(stroke(upright(x0, x1, FRONT.y0, FRONT.y1), metal.deep, b.thin));
   }
-  // one band round the end, and the handle on it: a bracket with a ring hanging from it
+  if (b.detail === 2) for (const [x0, x1] of BANDS) for (const y of [73, 99]) l.add(rivet((x0 + x1) / 2, y, metal));
+  // one strap round the end, and the handle on it: a bracket with a ring hanging from it
   const ex = 97;
   const slope = DEPTH[1] / DEPTH[0];
   const at = (x: number, y: number): Pt => [x, y + (x - FRONT.x1) * slope];
   l.add(fill(poly([at(ex, FRONT.y0), at(ex + 6, FRONT.y0), at(ex + 6, FRONT.y1), at(ex, FRONT.y1)]), metal.shade));
   if (b.detail > 0) {
-    l.add(fill(poly([at(ex - 1, 69), at(ex + 7, 69), at(ex + 7, 73.5), at(ex - 1, 73.5)]), metal.face));
-    l.add(stroke(`M${p(at(ex + 0.5, 73.5))}C${p(at(ex - 1, 84))} ${p(at(ex + 7, 84))} ${p(at(ex + 5.5, 73.5))}`, metal.face, 2.6));
-    l.add(stroke(`M${p(at(ex + 0.5, 73.5))}C${p(at(ex - 1, 84))} ${p(at(ex + 7, 84))} ${p(at(ex + 5.5, 73.5))}`, metal.deep, b.thin, ' stroke-opacity="0.6"'));
+    l.add(fill(poly([at(ex - 1, 71), at(ex + 7, 71), at(ex + 7, 75.5), at(ex - 1, 75.5)]), metal.face));
+    l.add(stroke(`M${p(at(ex + 0.5, 75.5))}C${p(at(ex - 1.5, 87))} ${p(at(ex + 7.5, 87))} ${p(at(ex + 5.5, 75.5))}`, metal.face, 2.8));
+    l.add(stroke(`M${p(at(ex + 0.5, 75.5))}C${p(at(ex - 1.5, 87))} ${p(at(ex + 7.5, 87))} ${p(at(ex + 5.5, 75.5))}`, metal.deep, b.thin, ' stroke-opacity="0.6"'));
   }
   l.add(stroke(BODY, wood.deep, b.edge));
-  return { x: 12, y: 50, w: 98, h: 56 };
-}
-
-/** The lid shut: its top, its end and its face, the bands over all three, the rim band and the hasp over the lock plate's top. */
-function lidLayer(l: Layer, b: Brush): ChestBox {
-  const { wood, metal } = b.tint;
-  const clip = l.clip(LID_ALL);
-  // the top catches the light, the end turns away, the face is between
-  l.add(fill(LID_BACK, wood.light));
-  l.add(fill(LID_END, wood.shade));
-  l.add(fill(LID_FACE, wood.face));
-  l.add(`<g clip-path="url(#${clip})">`);
-  // the plank along the crest, the lightest on the face, and the crest itself as the plank line it is
-  l.add(fill(`M${LID.x0} 36H${LID.x1}V${LID.y0 - 2}H${LID.x0}Z`, wood.light));
+  // the belt round the seam, over the straps: its end turned away, its front, and the bevel along its top
+  l.add(fill(BELT_END, metal.shade));
+  l.add(fill(BELT_FRONT, metal.face));
+  l.add(fill(BELT_BEVEL, metal.light));
   if (b.detail > 0) {
-    l.add(stroke(CREST, wood.line, 1.4));
-    for (const y of [36, 47]) {
-      l.add(stroke(line([LID.x0, y], [LID.x1, y]), wood.line, 1.6));
-      l.add(stroke(line([LID.x1, y], back([LID.x1, y])), wood.line, 1.4));
-    }
-    // one plank line along the top, halfway back
-    const half: Pt = [DEPTH[0] / 2, DEPTH[1] / 2];
-    l.add(stroke(`M${n(LID.x0 + half[0])} ${n(44 + half[1])}C${n(LID.x0 + half[0])} ${n(32 + half[1])} ${n(18 + half[0])} ${n(LID.y0 + half[1])} ${n(32 + half[0])} ${n(LID.y0 + half[1])}H${n(70 + half[0])}C${n(84 + half[0])} ${n(LID.y0 + half[1])} ${n(LID.x1 + half[0])} ${n(32 + half[1])} ${n(LID.x1 + half[0])} ${n(44 + half[1])}`, wood.line, 1.2, ' stroke-opacity="0.8"'));
+    l.add(stroke(BELT_FRONT, metal.deep, b.thin));
+    l.add(stroke(BELT_END, metal.deep, b.thin));
   }
   if (b.detail === 2) {
-    // the grain: a few short light streaks along the planks
-    for (const [x0, x1, y] of [[40, 52, 41.5], [74, 84, 52.5], [16, 24, 52]] as const) l.add(stroke(line([x0, y], [x1, y]), wood.light, 1.3, ' stroke-opacity="0.55"'));
+    for (const x of [17, 87]) l.add(rivet(x, 60.4, metal));
+    // a nick or two in the metal
+    for (const [a, c] of [[[74, 58.8], [78, 59.3]], [[21.5, 62], [24.5, 62.5]]] as const) l.add(stroke(line(a, c), metal.light, 1.1));
   }
-  if (b.tint.studs && b.detail === 2) for (const [x, y] of [[48, 52], [56, 52]] as const) l.add(stud(x, y));
-  // the bands over the dome, in line with the body's: down the face, and over the top to the far crest
-  for (const [x0, x1] of BANDS) {
-    const top = poly([[x0, LID.y0], back([x0, LID.y0]), back([x1, LID.y0]), [x1, LID.y0]]);
+  return { x: 12, y: 46, w: 98, h: 60 };
+}
+
+/** The lid shut: its front, the roll of its top, its far end, the straps over all three, and the hasp with the knob over the lock plate. */
+function lidLayer(l: Layer, b: Brush): ChestBox {
+  const { wood, metal, gem } = b.tint;
+  const clip = l.clip(LID_ALL);
+  // the front between, the roll of the top catching the light, the far end turned away
+  l.add(fill(LID_FRONT, wood.face));
+  l.add(fill(LID_TOP, wood.light));
+  l.add(fill(LID_END, wood.shade));
+  l.add(`<g clip-path="url(#${clip})">`);
+  if (b.detail > 0) {
+    for (const y of LID_SEAMS) l.add(stroke(line([LID.x0, y], [LID.x1, y]), wood.line, 1.5));
+    // the crest itself, a line of light where the roll begins
+    l.add(stroke(line([LID.x0, LID.crest], [LID.x1, LID.crest]), wood.light, 1.2, ' stroke-opacity="0.8"'));
+  }
+  if (b.detail === 2) {
+    // the grain, and the planks' ends on the far end, running back with the depth
+    for (const [x0, x1, y] of [[38, 52, 52.8], [72, 82, 48.3], [40, 50, 44.2], [74, 84, 40.3], [42, 56, 33.5]] as const) l.add(stroke(line([x0, y], [x1, y]), wood.light, 1.3, ' stroke-opacity="0.55"'));
+    for (const y of [41, 48]) l.add(stroke(line([LID.x1 + 0.6, y], [LID.x1 + 11, y - 11 * (-DEPTH[1] / DEPTH[0])]), wood.line, 1.2));
+  }
+  if (b.tint.studs && b.detail === 2) for (const [x, y] of [[44, 36.8], [52, 36.8]] as const) l.add(stud(x, y));
+  // the straps, in line with the body's: up the front, bevelled down the left and shaded down the right, and over the roll in the light
+  for (const [x0, x1] of STRAPS) {
+    const top = poly([[x0, LID.crest], roll([x0, LID.crest]), roll([x1, LID.crest]), [x1, LID.crest]]);
     l.add(fill(top, metal.light));
-    l.add(fill(`M${x0} ${LID.y0}H${x1}V${LID.y1}H${x0}Z`, metal.face));
-    l.add(fill(`M${x0} ${LID.y0}H${n(x0 + 2.5)}V${LID.y1}H${x0}Z`, metal.light));
+    l.add(fill(upright(x0, x1, LID.crest, LID.foot), metal.face));
+    l.add(fill(upright(x0, x0 + 2.2, LID.crest, LID.foot), metal.light));
+    l.add(fill(upright(x1 - 1.4, x1, LID.crest, LID.foot), metal.shade));
     if (b.detail > 0) {
-      l.add(stroke(`M${x0} ${LID.y0}H${x1}V${LID.y1}H${x0}Z`, metal.deep, b.thin));
+      l.add(stroke(upright(x0, x1, LID.crest, LID.foot), metal.deep, b.thin));
       l.add(stroke(top, metal.deep, b.thin));
     }
-    if (b.detail === 2) for (const y of [34, 50]) l.add(rivet((x0 + x1) / 2, y, metal));
   }
-  // the arches: up and over at the lid's left end, at its right front corner, and along the far rim of the end
-  l.add(stroke(LID_LEFT, metal.face, 5));
-  l.add(stroke(LID_RIGHT, metal.face, 6));
-  l.add(stroke(LID_END_ARCH, metal.shade, 5));
-  if (b.detail > 0) {
-    l.add(stroke(LID_LEFT, metal.deep, b.thin, ' transform="translate(2 0)"'));
-    l.add(stroke(LID_RIGHT, metal.deep, b.thin, ' transform="translate(-3 0)"'));
-    l.add(stroke(LID_END_ARCH, metal.deep, b.thin, ' transform="translate(-2.5 0)" stroke-opacity="0.7"'));
+  if (b.detail === 2) for (const [x0, x1] of BANDS) for (const y of [35, 48.5]) l.add(rivet((x0 + x1) / 2, y, metal));
+  // the far end's rim: the arch, turned away
+  l.add(stroke(CAP_ARCH, metal.shade, 5));
+  if (b.detail > 0) l.add(stroke(CAP_ARCH, metal.deep, b.thin, ' transform="translate(-2.6 0)" stroke-opacity="0.7"'));
+  if (b.detail === 2) {
+    // a nick or two in the metal
+    for (const [a, c] of [[[27.6, 39.5], [28.3, 43]], [[66.6, 31], [67.2, 34.5]], [[104.6, 31.5], [105.8, 34.4]]] as const) l.add(stroke(line(a, c), metal.light, 1.1));
   }
   l.add('</g>');
-  l.add(stroke(LID_OUTLINE, wood.deep, b.edge));
-  // the rim band along the bottom edge, lipped a little wider than the lid, and round the end
-  l.add(fill(RIM_END, metal.shade));
-  l.add(fill(RIM, metal.face));
-  l.add(fill(`M10 ${LID.rim}H94V${LID.rim + 2.5}H8.5Z`, metal.light));
-  if (b.detail > 0) {
-    l.add(stroke(RIM, metal.deep, b.thin));
-    l.add(stroke(RIM_END, metal.deep, b.thin));
-  }
-  if (b.detail === 2) for (const x of [16, 88]) l.add(rivet(x, 61, metal));
-  // the hasp, down from the rim over the plate, with its pin
-  const hasp = `M${LOCK.cx - 5} ${LID.rim}H${LOCK.cx + 5}V${LID.y1 + 5}Q${LOCK.cx + 5} ${LID.y1 + 7} ${LOCK.cx + 3} ${LID.y1 + 7}H${LOCK.cx - 3}Q${LOCK.cx - 5} ${LID.y1 + 7} ${LOCK.cx - 5} ${LID.y1 + 5}Z`;
-  l.add(fill(hasp, metal.face));
-  l.add(stroke(hasp, metal.deep, b.thin));
-  if (b.detail === 2) l.add(rivet(LOCK.cx, LID.y1 + 2, metal, 1.6));
+  l.add(stroke(LID_ALL, wood.deep, b.edge));
+  // the hasp, down from the lid's foot over the plate's top, with the knob on it: the epic chest's garnet
+  const { cx } = LOCK;
+  const h = HASP.w / 2;
+  l.add(fill(`M${n(cx - h)} ${n(LID.foot + 1)}V${n(HASP.top + 2.5)}Q${n(cx - h)} ${n(HASP.top)} ${n(cx - h + 2.5)} ${n(HASP.top)}H${n(cx + h - 2.5)}Q${n(cx + h)} ${n(HASP.top)} ${n(cx + h)} ${n(HASP.top + 2.5)}V${n(LID.foot + 1)}Z`, metal.face));
+  if (b.detail > 0) l.add(stroke(`M${n(cx - h)} ${n(LID.foot + 1)}V${n(HASP.top + 2.5)}Q${n(cx - h)} ${n(HASP.top)} ${n(cx - h + 2.5)} ${n(HASP.top)}H${n(cx + h - 2.5)}Q${n(cx + h)} ${n(HASP.top)} ${n(cx + h)} ${n(HASP.top + 2.5)}V${n(LID.foot + 1)}`, metal.deep, b.thin));
+  const knob = gem ? GARNET : { face: metal.rivet, light: '#ffffff', deep: metal.deep };
+  l.add(`<circle cx="${cx}" cy="${n(HASP.knob)}" r="3.2" fill="${knob.deep}"/>`);
+  l.add(`<circle cx="${cx}" cy="${n(HASP.knob)}" r="2.3" fill="${knob.face}"/>`);
+  if (b.detail === 2) l.add(`<circle cx="${n(cx - 0.8)}" cy="${n(HASP.knob - 0.8)}" r="0.8" fill="${knob.light}"/>`);
   return { x: 6, y: 16, w: 108, h: 50 };
 }
 
@@ -409,7 +421,7 @@ function lidOpenLayer(l: Layer, b: Brush): ChestBox {
   // the plank by the rim, catching the light
   l.add(fill(`M20 24H120V0H20Z`, wood.shade));
   if (b.detail > 0) for (const y of [24, 37]) l.add(stroke(line([26, y], [116, y]), wood.deep, 1.4, ' stroke-opacity="0.7"'));
-  for (const [x0, x1] of BANDS) {
+  for (const [x0, x1] of STRAPS) {
     const dx = DEPTH[0] + 2;
     l.add(fill(`M${n(x0 + dx)} 0H${n(x1 + dx)}V60H${n(x0 + dx)}Z`, metal.shade));
     l.add(fill(`M${n(x0 + dx)} 0H${n(x0 + dx + 2.5)}V60H${n(x0 + dx)}Z`, metal.face));
@@ -478,29 +490,29 @@ function raysLayer(l: Layer): ChestBox {
   return { x: cx - r, y: cy - r, w: r * 2, h: r * 2 };
 }
 
-/** The lock plate: a shield of the chest's metal under the lid's lip, a round boss on it with the keyhole, and the epic chest's garnet above. */
+/** The lock plate: a shield of the chest's metal hung on the belt, square-shouldered with a scroll at each shoulder, a round medallion on it with the keyhole, drawn to a point down the body. */
 function lockLayer(l: Layer, b: Brush): ChestBox {
   const { metal } = b.tint;
   const { cx } = LOCK;
   const { cy, r } = MEDALLION;
   l.add(fill(PLATE, metal.deep));
   l.add(fill(PLATE_INNER, metal.face));
-  if (b.detail > 0) l.add(stroke(`M${n(cx - LOCK.w / 2 + 2.4)} ${n(LOCK.top + 2.4)}H${n(cx + LOCK.w / 2 - 2.4)}`, metal.light, 2));
-  // the boss: a ring of the metal's shade with the face inside and a glint of light on its upper left
+  if (b.detail > 0) l.add(stroke(line([cx - LOCK.w / 2 + 2.2, LOCK.top + 2.3], [cx + LOCK.w / 2 - 2.2, LOCK.top + 2.3]), metal.light, 1.8));
+  if (b.detail === 2) {
+    // the scrolls at the shoulders, engraved
+    for (const side of [-1, 1]) {
+      const x = cx + side * 9.2;
+      l.add(stroke(`M${n(x - 2.6)} ${n(LOCK.top + 6.6)}A2.6 2.6 0 0 1 ${n(x + 2.6)} ${n(LOCK.top + 6.6)}`, metal.shade, 1.6));
+    }
+  }
+  // the medallion: a ring of the metal's shade with the face inside and a glint of light on its upper left
   l.add(`<circle cx="${cx}" cy="${n(cy)}" r="${n(r)}" fill="${metal.shade}"/>`);
   l.add(`<circle cx="${cx}" cy="${n(cy)}" r="${n(r - 2)}" fill="${metal.face}"/>`);
   if (b.detail > 0) l.add(`<path d="M${n(cx - r + 2.6)} ${n(cy - 1)}A${n(r - 2)} ${n(r - 2)} 0 0 1 ${n(cx - 1)} ${n(cy - r + 2.6)}" fill="none" stroke="${metal.light}" stroke-width="1.6" stroke-linecap="round"/>`);
-  if (b.tint.gem) {
-    // the garnet above the boss, a rounded seed, its light at the upper left
-    const gy = LOCK.top + 4.6;
-    l.add(`<circle cx="${cx}" cy="${n(gy)}" r="3.4" fill="${GARNET.deep}"/>`);
-    l.add(`<circle cx="${cx}" cy="${n(gy)}" r="2.6" fill="${GARNET.face}"/>`);
-    if (b.detail > 0) l.add(`<circle cx="${n(cx - 0.9)}" cy="${n(gy - 1)}" r="0.9" fill="${GARNET.light}"/>`);
-  }
-  // the keyhole in the boss
-  const ky = cy - 1.2;
+  // the keyhole in the medallion
+  const ky = cy - 1.4;
   l.add(fill(`M${cx} ${n(ky - 2.2)}A2.2 2.2 0 1 1 ${n(cx - 0.01)} ${n(ky - 2.2)}ZM${n(cx - 1.3)} ${n(ky + 1)}H${n(cx + 1.3)}L${n(cx + 1.9)} ${n(ky + 5.4)}H${n(cx - 1.9)}Z`, metal.deep));
-  if (b.detail === 2) for (const [x, y] of [[cx - LOCK.w / 2 + 4, LOCK.top + 5], [cx + LOCK.w / 2 - 4, LOCK.top + 5]] as const) l.add(rivet(x, y, metal, 1.3));
+  if (b.detail === 2) for (const x of [cx - 10.2, cx + 10.2]) l.add(rivet(x, cy - 2, metal, 1.3));
   return LOCK_BOX;
 }
 

@@ -231,11 +231,11 @@
 }
 @keyframes chest-glint {
   from {
-    transform: translate(29px, 76px) rotate(24deg);
+    transform: translate(29px, 69px) rotate(24deg);
   }
   16%,
   to {
-    transform: translate(75px, 76px) rotate(24deg);
+    transform: translate(75px, 69px) rotate(24deg);
   }
 }
 
