@@ -15,7 +15,7 @@ import { ArrowIcon, HeadphonesIcon } from '../components/icons';
 import { describeError } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
 import { dialectName } from '../learn/map';
-import { STORIES_HUB, createGame, gamePath, storyError } from './api';
+import { STORIES_LIBRARY, createGame, gamePath, storyError } from './api';
 import { rememberTextSize, rememberedExtraTime, rememberedSolo, rememberedTextSize, soloCountFor } from './prefs';
 import { StoryPlayerBar, StorySpeaker, TextSizeControl } from './ReaderControls';
 import { LENGTH_KEY, SetupSheet } from './SetupSheet';
@@ -61,7 +61,7 @@ function ReaderPage({ slug }: { slug: string }): React.JSX.Element {
 
   return (
     <div className="container story-page">
-      <Link to={STORIES_HUB} className="back-link">
+      <Link to={STORIES_LIBRARY} className="back-link">
         <ArrowIcon size={16} />
         {t('stories.reader.back')}
       </Link>

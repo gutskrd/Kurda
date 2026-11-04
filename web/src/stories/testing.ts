@@ -3,7 +3,7 @@
  * test files import it.
  */
 import { vi } from 'vitest';
-import type { StoryDetail, StoryGameView, StoryListItem } from '@kurda/shared';
+import type { StoryDetail, StoryGameView, StoryLibrary, StoryListItem } from '@kurda/shared';
 import { jsonResponse } from '../test/utils';
 
 export function listItem(over: Partial<StoryListItem> = {}): StoryListItem {
@@ -145,5 +145,27 @@ export function heldPoll(): { answer: (call: Call) => Promise<unknown>; release:
   return {
     answer: () => new Promise((resolve) => waiting.push(resolve)),
     release: (view) => waiting.splice(0).forEach((r) => r(view)),
+  };
+}
+
+/** The library's front page as the server answers it, for a signed-in reader unless `me` is taken away. */
+export function libraryFixture(over: Partial<StoryLibrary> = {}): StoryLibrary {
+  const fable = listItem({ id: 'f1', slug: 'senge-u-penge', title: 'Şengê û Pengê', level: 2, cefr: 'A2', category: 'fable', readingMinutes: 4, audioCoverage: 'full', fullyNarrated: true, featured: true, me: { bookmarked: false, paragraph: 0, share: 0, finishedAt: null, bestCorrect: null, total: null, attemptsToday: 0 } });
+  const started = listItem({ id: 'c1', slug: 'bazar', title: 'Bazar', level: 1, cefr: 'A1', category: 'everyday', readingMinutes: 4, me: { bookmarked: false, paragraph: 2, share: 0.5, finishedAt: null, bestCorrect: null, total: null, attemptsToday: 0 } });
+  const kept = listItem({ id: 'b1', slug: 'dara-tuye', title: 'Dara Tûyê', level: 3, cefr: 'B1', category: 'nature', readingMinutes: 6, cover: 'hamo', me: { bookmarked: true, paragraph: 0, share: 0, finishedAt: '2026-10-01T00:00:00Z', bestCorrect: 4, total: 5, attemptsToday: 0 } });
+  return {
+    featured: [fable],
+    recent: [kept, fable, started],
+    continue: [started],
+    bookmarks: [kept],
+    categories: [
+      { slug: 'fable', name: { en: 'Fables', ku: 'Çîrokên heywanan' }, position: 1, count: 1 },
+      { slug: 'everyday', name: { en: 'Everyday' }, position: 6, count: 1 },
+      { slug: 'nature', name: { en: 'Nature' }, position: 5, count: 1 },
+      { slug: 'legend', name: { en: 'Legends' }, position: 2, count: 0 },
+    ],
+    total: 4,
+    me: { finished: 1, total: 4, averageScore: 0.8 },
+    ...over,
   };
 }

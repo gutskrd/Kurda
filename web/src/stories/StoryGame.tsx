@@ -8,7 +8,7 @@ import { ErrorState, Loading } from '../components/states';
 import { ArrowIcon } from '../components/icons';
 import { describeError } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
-import { STORIES_HUB } from './api';
+import { STORIES_LIBRARY } from './api';
 import { GameLobby } from './GameLobby';
 import { GameQuestion, GameReading, GameReveal } from './GamePlay';
 import { GameResults } from './GameResults';
@@ -54,7 +54,7 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
 
   async function leave(): Promise<void> {
     await game.act('/leave');
-    navigate(STORIES_HUB);
+    navigate(STORIES_LIBRARY);
   }
 
   return (
@@ -150,7 +150,7 @@ function GameHead({ view, onLeave }: { view: StoryGameView; onLeave: () => Promi
   return (
     <header className="sg-head">
       <div className="sg-head-text">
-        <Link to={STORIES_HUB} className="back-link sg-back">
+        <Link to={STORIES_LIBRARY} className="back-link sg-back">
           <ArrowIcon size={16} />
           {t('stories.reader.back')}
         </Link>
@@ -189,7 +189,7 @@ function GameEnded({ title, body }: { title: string; body: string }): React.JSX.
       </h2>
       <p>{body}</p>
       <div className="sg-ended-actions">
-        <Link to={STORIES_HUB} className="btn btn-secondary">
+        <Link to={STORIES_LIBRARY} className="btn btn-secondary">
           {t('stories.backToStories')}
         </Link>
       </div>

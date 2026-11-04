@@ -11,7 +11,7 @@
 [lang='ckb'].story-title,
 [lang='ckb'].story-summary,
 .story-text [lang='ckb'],
-.story-hub [lang='ckb'],
+.story-library [lang='ckb'],
 .story-game [lang='ckb'],
 .story-setup [lang='ckb'],
 .story-words [lang='ckb'],
@@ -91,13 +91,15 @@
   color: color-mix(in srgb, var(--primary-ink) 70%, transparent);
 }
 
-/* ---- the hub ------------------------------------------------------------------ */
-.story-hub .page-header {
-  margin-bottom: 22px;
-}
-.story-hub .back-link,
-.story-page .back-link {
-  margin-bottom: 18px;
+/* ---- the library (StoriesLibrary.tsx) ------------------------------------------ */
+/*
+ * Shelves of covers: each row of the library scrolls sideways, as a shelf is
+ * walked along, and a search or a filter lays its finds out as a grid. The
+ * cover is the picture, the title the only large type; the facts under it are
+ * small and quiet.
+ */
+.story-library .story-section-title {
+  margin-bottom: 10px;
 }
 .story-section-title {
   font-family: var(--font-sans);
@@ -160,12 +162,395 @@
   transform: scaleX(-1);
 }
 
-.story-filters {
+/* "Your progress": the ring of stories finished, and the average check score beside it */
+.story-progress-card {
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.story-progress-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px 28px;
-  margin-bottom: 18px;
+  gap: 14px 28px;
 }
+.story-progress-ring-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+.story-progress-ring {
+  flex: none;
+  transform: rotate(-90deg);
+}
+.story-progress-ring circle {
+  fill: none;
+  stroke-width: 5;
+}
+.story-progress-ring-track {
+  stroke: var(--surface-3);
+}
+.story-progress-ring-fill {
+  stroke: var(--gold);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--dur-progress) var(--ease-out);
+}
+.story-progress-text,
+.story-progress-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+}
+.story-progress-text strong,
+.story-progress-tile strong {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.story-progress-tile {
+  justify-content: center;
+  padding-inline-start: 28px;
+  border-inline-start: 1px solid var(--separator);
+}
+@media (max-width: 520px) {
+  .story-progress-tile {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+}
+
+/* the search field and the filter chips */
+.story-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.story-search {
+  max-width: 480px;
+}
+.story-chip-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.story-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.story-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--text-secondary);
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+.story-chip:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.story-chip.is-on {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-ink);
+}
+.story-chip-count {
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.story-guest-line {
+  margin: -8px 0 22px;
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.story-guest-line a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* a shelf: cards walked along sideways, the first a little in from the edge on a phone */
+.story-shelf {
+  margin-bottom: 26px;
+}
+.story-shelf-row {
+  list-style: none;
+  margin: 0 -16px;
+  padding: 2px 16px 10px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 16px;
+  scrollbar-width: thin;
+}
+.story-shelf-row > li {
+  flex: 0 0 236px;
+  scroll-snap-align: start;
+}
+@media (min-width: 760px) {
+  .story-shelf-row {
+    margin: 0;
+    padding: 2px 0 10px;
+    scroll-padding-inline: 0;
+  }
+  .story-shelf-row > li {
+    flex-basis: 256px;
+  }
+}
+.story-categories .story-chip-row {
+  padding-bottom: 4px;
+}
+
+/* a search or a filter: the finds as a grid, the count above and More under */
+.story-results {
+  margin-bottom: 26px;
+}
+.story-results-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+}
+.story-results-clear {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.story-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 600px) {
+  .story-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 960px) {
+  .story-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.story-more {
+  margin: 18px 0 0;
+  text-align: center;
+}
+
+/* a card: the cover, the words under it, the facts, and the bookmark on the cover's corner */
+.story-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  overflow: hidden;
+  transition:
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.story-card:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.story-card-link {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.story-card-link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: var(--r-lg);
+}
+.story-cover {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+.story-cover > svg,
+.story-cover-light > svg,
+.story-cover-dark > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.story-cover.is-light-dark > span {
+  position: absolute;
+  inset: 0;
+}
+/* a character's light is drawn once for each scheme, and only the scheme's own is shown */
+.story-cover-light {
+  display: none;
+}
+:root[data-theme='light'] .story-cover-light {
+  display: block;
+}
+:root[data-theme='light'] .story-cover-dark {
+  display: none;
+}
+.story-card-cover {
+  flex: none;
+}
+.story-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 6px;
+  padding: 12px 14px 14px;
+}
+.story-card-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.story-card-title[lang='ckb'] {
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+.story-card-summary {
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  /* one line, as a shelf's cards must stay one height */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.story-card-summary[lang='ckb'] {
+  line-height: 1.8;
+}
+.story-card-meta,
+.story-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 0;
+  margin-top: auto;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.story-card-meta > span + span::before,
+.story-meta > span + span::before {
+  /* a quiet dot between the facts, never read out */
+  content: '·';
+  margin-inline: 8px;
+  color: var(--ink-4);
+}
+.story-cefr {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border-radius: var(--r-xs);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: var(--text-tab);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  /* a level's letters read the same way in every language */
+  direction: ltr;
+}
+.story-narrated {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gold-ink);
+}
+/* how far the reader got, as a hairline along the card's foot */
+.story-card-progress {
+  display: block;
+  height: 3px;
+  background: var(--surface-3);
+}
+.story-card-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transition: width var(--dur-progress) var(--ease-out);
+}
+[dir='rtl'] .story-card-progress > span {
+  margin-inline-start: auto;
+}
+.story-card-bookmark {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0;
+  background: color-mix(in srgb, var(--app-bg) 70%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.story-card-bookmark:hover {
+  background: color-mix(in srgb, var(--app-bg) 90%, transparent);
+}
+.story-card-bookmark.is-on {
+  color: var(--gold-ink);
+}
+.story-card-bookmark:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.story-card-problem {
+  display: block;
+  padding: 0 14px 10px;
+  font-size: var(--text-caption);
+  color: var(--danger);
+}
+@media (pointer: coarse) {
+  .story-card-bookmark {
+    width: 44px;
+    height: 44px;
+  }
+  .story-chip {
+    min-height: 44px;
+  }
+}
+
+/* playing with others, at the foot of the library */
 .story-play {
   display: flex;
   flex-wrap: wrap;
@@ -177,11 +562,8 @@
   border: 1px solid var(--border);
   background: var(--surface);
 }
-.story-play-guest {
-  align-items: center;
-  justify-content: space-between;
-}
-.story-play-guest p {
+.story-play-title {
+  flex: 1 1 100%;
   margin: 0;
 }
 .story-join {
@@ -217,97 +599,6 @@
   margin: 8px 0 0;
   font-size: 0.85rem;
   color: var(--danger);
-}
-
-.story-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
-}
-@media (min-width: 760px) {
-  .story-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-.story-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  height: 100%;
-  padding: 18px 18px 16px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--ink);
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
-.story-card:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-2);
-}
-.story-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-.story-card-title {
-  font-family: var(--font-display);
-  font-size: 1.22rem;
-  font-weight: 600;
-  line-height: 1.25;
-}
-.story-card-title[lang='ckb'] {
-  font-size: 1.15rem;
-  line-height: 1.5;
-}
-.story-card-summary {
-  color: var(--ink-2);
-  font-size: 0.94rem;
-  line-height: 1.55;
-}
-/* a placeholder summary's second line: a narrow card wraps a summary onto it, a wide one does not */
-@media (min-width: 960px) {
-  .story-skel-wrap {
-    display: none;
-  }
-}
-.story-card-summary[lang='ckb'] {
-  line-height: 1.8;
-}
-.story-card-meta,
-.story-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 14px;
-  margin-top: auto;
-  font-size: 0.82rem;
-  color: var(--ink-3);
-}
-.story-card-meta > span + span::before,
-.story-meta > span + span::before {
-  /* a quiet dot between the facts, never read out */
-  content: '·';
-  margin-inline-end: 14px;
-  color: var(--ink-4);
-}
-.story-card-meta,
-.story-meta {
-  column-gap: 0;
-}
-.story-narrated {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--gold-ink);
-}
-.story-done {
-  flex: none;
 }
 .story-empty {
   display: grid;
@@ -750,7 +1041,7 @@
   }
   .story-game .btn-sm,
   .story-page .btn-sm,
-  .story-hub .btn-sm {
+  .story-library .btn-sm {
     height: 44px;
   }
 }

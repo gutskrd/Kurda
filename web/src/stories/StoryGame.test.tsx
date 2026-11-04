@@ -612,7 +612,7 @@ describe('the results', () => {
     expect(await screen.findByText(/Answer at least half the questions in one day/)).toBeInTheDocument();
     expect(screen.queryByText(/XP/)).toBeNull();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Read the story again' })).toHaveAttribute('href', '/app/games/stories/qelema-sin');
+    expect(screen.getByRole('link', { name: 'Read the story again' })).toHaveAttribute('href', '/app/learn/stories/qelema-sin');
   });
 });
 

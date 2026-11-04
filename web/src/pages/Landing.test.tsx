@@ -29,7 +29,7 @@ describe('Landing', () => {
       ['Peyvok', '/app/games/peyvok'],
       ['Rhyming Words', '/app/games/rhyme'],
       ['Typing Race', '/app/games/race'],
-      ['Stories', '/app/games/stories'],
+      ['Stories', '/app/learn/stories'],
     ]) {
       expect(screen.getByRole('link', { name }), name).toHaveAttribute('href', href);
     }

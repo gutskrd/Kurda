@@ -22,13 +22,18 @@ function listKey(dialect: StoryDialect | null): string {
   return dialect ?? 'all';
 }
 
-/** `GET /stories` (one variety, or every published story), kept for a few minutes. */
+/**
+ * `GET /stories` (one variety, or every published story), kept for a few
+ * minutes. The list is paged, so the most a page gives is asked for: the
+ * sheet that sets up a game needs to know which lengths exist, not every
+ * story, and fifty is more than a variety has for now.
+ */
 function fetchList(client: ApiClient, dialect: StoryDialect | null, fresh = false): Promise<Listed> {
   const key = listKey(dialect);
   const kept = lists.get(key);
   if (!fresh && kept && Date.now() - kept.at < KEEP_MS) return kept.stories;
   const stories = client
-    .get<{ stories: StoryListItem[] }>(dialect ? `/stories?dialect=${dialect}` : '/stories')
+    .get<{ stories: StoryListItem[] }>(dialect ? `/stories?dialect=${dialect}&limit=50` : '/stories?limit=50')
     .then((r): Listed => (r.ok ? { stories: Array.isArray(r.data.stories) ? r.data.stories : [] } : { error: r.error }));
   lists.set(key, { at: Date.now(), stories });
   // a failure is not kept: the next look asks again

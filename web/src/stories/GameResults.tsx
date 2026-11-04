@@ -13,7 +13,7 @@ import { Button } from '../components/Button';
 import { CheckIcon, CloseIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { RankResult } from '../ranks/RankResult';
-import { STORIES_HUB, createGame, gamePath, readerPath, storyError } from './api';
+import { STORIES_LIBRARY, createGame, gamePath, readerPath, storyError } from './api';
 import { Evidence, playerName, type Announce } from './GameParts';
 import { rememberedExtraTime, rememberedEnglish, showEnglishFor } from './prefs';
 import { PlayerReport } from '../reports/PlayerReport';
@@ -90,7 +90,7 @@ export function GameResults({
         <Link to={readerPath(view.settings.storySlug)} className="btn btn-secondary">
           {t('stories.results.readAgain')}
         </Link>
-        <Link to={STORIES_HUB} className="btn btn-ghost">
+        <Link to={STORIES_LIBRARY} className="btn btn-ghost">
           {t('stories.backToStories')}
         </Link>
       </div>
