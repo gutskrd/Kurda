@@ -1,6 +1,7 @@
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 import {
   Animated,
+  Platform,
   Easing,
   Pressable,
   StyleSheet,
@@ -98,6 +99,9 @@ export interface SpeakingCharacterProps {
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
 }
+
+/** How many of each character are on the screen right now, for the browser's one document (see where it is read). */
+const onScreen = new Map<SpeakerId, number>();
 
 /** The widest a turn of the head goes, with room to spare: Animated maps the angle onto a string. */
 const TURN_RANGE = 30;
@@ -199,7 +203,22 @@ export function SpeakingCharacter({
   const { t } = useI18n();
   const reduce = useReducedMotion();
   const finger = useGaze();
-  const layers = characterLayers(speaker, crop);
+  // in a browser every drawing shares one document, so a second Hevalo on the page would take the first one's fills
+  // unless its ids are its own; the first keeps the kept layers, a phone scopes ids per drawing and never needs this
+  const own = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const [seat] = useState(() => {
+    const taken = onScreen.get(speaker) ?? 0;
+    onScreen.set(speaker, taken + 1);
+    return taken;
+  });
+  useEffect(
+    () => () => {
+      onScreen.set(speaker, Math.max(0, (onScreen.get(speaker) ?? 1) - 1));
+    },
+    [speaker],
+  );
+  const idPrefix = Platform.OS === 'web' && seat > 0 ? `sc${own}` : undefined;
+  const layers = useMemo(() => characterLayers(speaker, crop, idPrefix), [speaker, crop, idPrefix]);
   const art = characterArt(speaker);
   const rig = layers.rig;
   // the place it takes, and the drawing inside it: the same but in a tile, where the drawing leaves room

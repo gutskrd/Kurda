@@ -97,12 +97,19 @@ export function irisesMoved(open: string, shift: { left: CharacterPoint; right: 
   );
 }
 
-/** One character's layers for a crop, made the first time they are asked for and kept. */
-export function characterLayers(speaker: SpeakerId, crop: CharacterCrop): CharacterLayers {
+/**
+ * One character's layers for a crop, made the first time they are asked for
+ * and kept. Given an `idPrefix` the drawing's gradient and clip ids carry it
+ * instead of the character's own: in a browser every drawing on the page
+ * shares one document, so two Hevalos with the same ids leave one without
+ * its fur; on a phone each drawing is its own root and the ids never meet.
+ * Prefixed layers belong to one mounted character and are not kept.
+ */
+export function characterLayers(speaker: SpeakerId, crop: CharacterCrop, idPrefix?: string): CharacterLayers {
   const key = `${speaker}|${crop}`;
-  const kept = made.get(key);
+  const kept = idPrefix ? undefined : made.get(key);
   if (kept) return kept;
-  const art = characterArt(speaker);
+  const art = characterArt(speaker, idPrefix);
   const frame = cropBox(art, crop);
   const svg = (inner: string): string => (inner ? `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box(frame)}">${inner}</svg>` : '');
   const share = (p: CharacterPoint): Share => ({ x: (p.x - frame.x) / frame.w, y: (p.y - frame.y) / frame.h });
@@ -153,6 +160,6 @@ export function characterLayers(speaker: SpeakerId, crop: CharacterCrop): Charac
         }
       : null,
   };
-  made.set(key, layers);
+  if (!idPrefix) made.set(key, layers);
   return layers;
 }
