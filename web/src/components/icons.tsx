@@ -27,6 +27,7 @@ import { BookOpen } from '@phosphor-icons/react/dist/icons/BookOpen';
 import { BookOpenText } from '@phosphor-icons/react/dist/icons/BookOpenText';
 import { Bell } from '@phosphor-icons/react/dist/icons/Bell';
 import { BookmarkSimple } from '@phosphor-icons/react/dist/icons/BookmarkSimple';
+import { CalendarBlank } from '@phosphor-icons/react/dist/icons/CalendarBlank';
 import { CaretRight } from '@phosphor-icons/react/dist/icons/CaretRight';
 import { ChatCircle } from '@phosphor-icons/react/dist/icons/ChatCircle';
 import { Eye } from '@phosphor-icons/react/dist/icons/Eye';
@@ -237,6 +238,8 @@ export const TextIcon = named(TextAa, 22);
  * `BookOpen`, which Learn already uses for lessons.
  */
 export const DictionaryIcon = named(BookOpenText, 22);
+/** the days of the week, among the words to know */
+export const CalendarIcon = named(CalendarBlank, 22);
 /** Throw something away — always behind a confirm. */
 export const TrashIcon = named(Trash, 22);
 /** Add something — it makes no claim about what. */

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import '@fontsource-variable/vazirmatn';
 import {
   LATIN_LETTERS,
@@ -27,6 +27,7 @@ import type { MessageKey } from '../i18n/en';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { publishedDictionary } from '../layouts/navLinks';
 import { isSynthesised, latinSound, latinWord, play, soraniSound, soraniWord, spokenAlphabet, useRecordings } from '../alphabet/audio';
+import { useScript } from '../alphabet/script';
 import { CharacterStage, STAGE } from '../characters/CharacterStage';
 import type { SpokenClip } from '../characters/clips';
 import { Practice } from '../alphabet/Practice';
@@ -138,18 +139,6 @@ function useSeen(script: Script): [Set<string>, (id: string) => void] {
       return next;
     });
   return [useMemo(() => new Set(all[script]), [all, script]), mark];
-}
-
-function useScript(locale: AppLocale): [Script, (s: Script) => void] {
-  const [params, setParams] = useSearchParams();
-  const asked = params.get('script');
-  const script: Script = asked === 'ckb' || asked === 'kmr' ? asked : locale === 'ckb' ? 'ckb' : 'kmr';
-  const set = (s: Script): void => {
-    const next = new URLSearchParams(params);
-    next.set('script', s);
-    setParams(next, { replace: true });
-  };
-  return [script, set];
 }
 
 export function Alphabet(): React.JSX.Element {
@@ -328,6 +317,10 @@ export function Alphabet(): React.JSX.Element {
               {t('alphabet.next.title')}
             </h2>
             <div className="ab-next-links">
+              {/* the words that come after the letters: colours, numbers, days and months (pages/Words.tsx) */}
+              <Link className="btn btn-secondary" to={`/app/learn/words?script=${script}`}>
+                {t('words.fromAlphabet')}
+              </Link>
               <a className="btn btn-secondary" href={dictionary}>
                 {t('alphabet.next.dictionary')}
               </a>

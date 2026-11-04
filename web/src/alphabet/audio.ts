@@ -4,20 +4,30 @@ import {
   alphabetRecordings,
   alphabetSounds,
   isSpeakerId,
+  wordSetRecordings,
+  wordSetSounds,
   type AlphabetAudioResponse,
   type AlphabetSounds,
   type RecordingVoice,
+  type SetWord,
   type SoraniLetter,
+  type WordDialect,
+  type WordSetSounds,
 } from '@kurda/shared';
 import { spokenClips, type SpokenClip } from '../characters/clips';
 import { API_URL } from '../lib/config';
 
 /**
  * Where each sound is. The clips are files on this site (see
- * scripts/alphabet-audio/generate.py), so playing one costs a few kilobytes
- * from the edge and no request to anybody's server. Which file, or which
- * recording, a key plays is worked out in @kurda/shared (alphabet/sounds.ts),
- * the same for the phone.
+ * scripts/alphabet-audio/generate.py and words.py), so playing one costs a
+ * few kilobytes from the edge and no request to anybody's server. Which file,
+ * or which recording, a key plays is worked out in @kurda/shared
+ * (alphabet/sounds.ts, word-sets/sounds.ts), the same for the phone.
+ *
+ * The word sets (colours, numbers, days, months) are here too: their
+ * recordings come in the alphabet's own answer, GET /alphabet/audio, under
+ * the words' keys, so one request serves the alphabet page and the words
+ * pages alike, whichever is opened first.
  *
  * A key with no clip answers null, and the page shows no play button there:
  * a sound that could not be made accurately is left out rather than guessed.
@@ -29,6 +39,7 @@ import { API_URL } from '../lib/config';
  * unreachable) the synthesised clips play, so the page never waits on them.
  */
 let sounds: AlphabetSounds = alphabetSounds();
+let words: WordSetSounds = wordSetSounds();
 /** who says a recording, by its URL, with the words it says; only the recordings an editor gave a character */
 let voices: ReadonlyMap<string, { voice: RecordingVoice; text: string | null }> = new Map();
 let version = 0;
@@ -39,10 +50,13 @@ export function loadRecordings(): Promise<void> {
   loading ??= fetch(`${API_URL}/alphabet/audio`)
     .then((res) => (res.ok ? (res.json() as Promise<Partial<AlphabetAudioResponse>>) : { clips: {} }))
     .then(({ clips, voices: said }) => {
-      // only https URLs to keys the page knows: anything else is not ours to play
-      const recorded = alphabetRecordings(clips);
+      // only https URLs to keys the pages know: anything else is not ours to play
+      const letters = alphabetRecordings(clips);
+      const spoken = wordSetRecordings(clips);
+      const recorded = { ...letters, ...spoken };
       if (Object.keys(recorded).length === 0) return;
-      sounds = alphabetSounds(recorded);
+      sounds = alphabetSounds(letters);
+      words = wordSetSounds(spoken);
       const heard = new Map<string, { voice: RecordingVoice; text: string | null }>();
       for (const [key, url] of Object.entries(recorded)) {
         const voice = said?.[key];
@@ -73,6 +87,14 @@ export function currentSounds(): AlphabetSounds {
   return sounds;
 }
 
+/** The word sets' sounds as they stand now, for the same reason. */
+export function currentWordSounds(): WordSetSounds {
+  return words;
+}
+
+/** Where a word of the sets plays from in a dialect: its recording, else its synthesised clip; null when it has neither yet. */
+export const wordSound = (word: SetWord, dialect: WordDialect): string | null => words.of(word, dialect);
+
 /**
  * The recordings among `srcs` that an editor gave a character, with who says
  * each: a synthesised clip never has one.
@@ -81,8 +103,8 @@ export function spokenAlphabet(...srcs: Array<string | null>): SpokenClip[] {
   return spokenClips(srcs.map((src) => ({ src, ...(src ? voices.get(src) : undefined) })));
 }
 
-/** True for a synthesised clip, so the page can say so — and only then. */
-export const isSynthesised = (src: string | null): boolean => sounds.isSynthesised(src);
+/** True for a synthesised clip, a letter's or a word's, so the page can say so — and only then. */
+export const isSynthesised = (src: string | null): boolean => sounds.isSynthesised(src) || words.isSynthesised(src);
 
 export const latinSound = (id: string): string | null => sounds.latinSound(id);
 export const latinWord = (id: string): string | null => sounds.latinWord(id);
