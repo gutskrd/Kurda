@@ -25,7 +25,26 @@ import {
   type BadgeTier,
 } from './index.js';
 import { coinSvg, gemSvg } from './currency.js';
-import { CHEST_BOX, CHEST_LAYERS, CHEST_TINTS, chestDrawing, chestGlint, chestLayerSvg, chestSvg, type ChestLayerId } from './chest.js';
+import {
+  CHEST_BOX,
+  CHEST_FOOT,
+  CHEST_HOP,
+  CHEST_HOP_LAND,
+  CHEST_HOP_LID,
+  CHEST_HOP_LIGHT,
+  CHEST_HOP_MS,
+  CHEST_HOP_SHADOW,
+  CHEST_HOP_SPARKLE,
+  CHEST_LAYERS,
+  CHEST_TINTS,
+  chestDrawing,
+  chestGlint,
+  chestHopAt,
+  chestLayerSvg,
+  chestSvg,
+  type ChestHopCurve,
+  type ChestLayerId,
+} from './chest.js';
 import type { ChestTier } from '../quests.js';
 import { SEASON_ICONS } from './icons.js';
 import { PICTURES } from './pictures.js';
@@ -920,5 +939,88 @@ describe('the chest', () => {
     const svg = chestSvg({ tier: 'epic', title: 'Epic <chest> & "more"' });
     checkSvg(svg, 96);
     expect(svg).toContain('Epic &lt;chest&gt; &amp; &quot;more&quot;');
+  });
+});
+
+describe('the chest’s hop', () => {
+  const shares = (curve: ChestHopCurve): number[] => curve.map(([at]) => at);
+  const ordered = (ats: number[]): boolean => ats.every((at, i) => i === 0 || at > (ats[i - 1] as number));
+
+  it('runs a second from rest to rest, every frame later than the last', () => {
+    expect(CHEST_HOP_MS).toBe(1000);
+    expect(ordered(CHEST_HOP.map((f) => f.at))).toBe(true);
+    expect(CHEST_HOP[0]).toEqual({ at: 0, rise: 0, wide: 1, tall: 1, tilt: 0 });
+    expect(CHEST_HOP[CHEST_HOP.length - 1]).toEqual({ at: 1, rise: 0, wide: 1, tall: 1, tilt: 0 });
+    for (const curve of [CHEST_HOP_LID, CHEST_HOP_LIGHT, CHEST_HOP_SHADOW, CHEST_HOP_SPARKLE]) {
+      expect(ordered(shares(curve))).toBe(true);
+      expect(curve[0]?.[0]).toBe(0);
+      expect(curve[curve.length - 1]?.[0]).toBe(1);
+    }
+  });
+
+  it('crouches before it springs, is highest before it lands, and never leaves the ground again', () => {
+    const top = CHEST_HOP.reduce((best, f) => (f.rise > best.rise ? f : best));
+    const crouch = CHEST_HOP.find((f) => f.tall < 1) as (typeof CHEST_HOP)[number];
+    expect(crouch.at).toBeLessThan(top.at);
+    expect(crouch.wide).toBeGreaterThan(1);
+    expect(top.at).toBeLessThan(CHEST_HOP_LAND);
+    expect(top.tall).toBeGreaterThan(1);
+    const landing = CHEST_HOP.find((f) => f.at === CHEST_HOP_LAND) as (typeof CHEST_HOP)[number];
+    expect(landing.rise).toBe(0);
+    expect(landing.wide).toBeGreaterThan(1);
+    expect(landing.tall).toBeLessThan(1);
+    expect(CHEST_HOP.filter((f) => f.at > CHEST_HOP_LAND).every((f) => f.rise === 0)).toBe(true);
+    // a squash keeps roughly the chest's area, so it reads as the same chest pressed, not a smaller one
+    for (const f of CHEST_HOP) expect(f.wide * f.tall).toBeGreaterThan(0.9);
+    for (const f of CHEST_HOP) expect(f.wide * f.tall).toBeLessThan(1.1);
+    // the shiver is in the crouch, and the chest flies straight
+    expect(CHEST_HOP.filter((f) => f.tilt !== 0).every((f) => f.at < top.at && f.tall < 1)).toBe(true);
+  });
+
+  it('keeps the lid shut through the crouch, opens it on the way up, and rocks it back as it lands', () => {
+    const top = CHEST_HOP.reduce((best, f) => (f.rise > best.rise ? f : best));
+    const crouchEnd = CHEST_HOP.filter((f) => f.rise === 0 && f.at < top.at).pop() as (typeof CHEST_HOP)[number];
+    expect(chestHopAt(CHEST_HOP_LID, crouchEnd.at)).toBe(0);
+    expect(chestHopAt(CHEST_HOP_LID, top.at)).toBeGreaterThan(0.5);
+    expect(chestHopAt(CHEST_HOP_LID, CHEST_HOP_LAND)).toBeGreaterThanOrEqual(1);
+    expect(Math.max(...CHEST_HOP_LID.map(([, v]) => v))).toBeGreaterThan(1);
+    expect(chestHopAt(CHEST_HOP_LID, 1)).toBe(1);
+    // the light comes with the lid, the stars with the landing
+    expect(chestHopAt(CHEST_HOP_LIGHT, crouchEnd.at)).toBe(0);
+    expect(chestHopAt(CHEST_HOP_LIGHT, 1)).toBe(1);
+    expect(chestHopAt(CHEST_HOP_SPARKLE, top.at)).toBe(0);
+    expect(chestHopAt(CHEST_HOP_SPARKLE, CHEST_HOP_LAND)).toBeGreaterThan(0);
+    expect(chestHopAt(CHEST_HOP_SPARKLE, 1)).toBe(1);
+    // the shadow is smallest under the chest in the air and pressed wide as it lands
+    expect(chestHopAt(CHEST_HOP_SHADOW, top.at)).toBeLessThan(1);
+    expect(chestHopAt(CHEST_HOP_SHADOW, CHEST_HOP_LAND)).toBeGreaterThan(1);
+    expect(chestHopAt(CHEST_HOP_SHADOW, 0)).toBe(1);
+    expect(chestHopAt(CHEST_HOP_SHADOW, 1)).toBe(1);
+  });
+
+  it('reads a curve by straight lines, flat beyond its ends', () => {
+    const curve: ChestHopCurve = [
+      [0, 0],
+      [0.5, 1],
+      [1, 0.5],
+    ];
+    expect(chestHopAt(curve, -1)).toBe(0);
+    expect(chestHopAt(curve, 0.25)).toBeCloseTo(0.5);
+    expect(chestHopAt(curve, 0.5)).toBe(1);
+    expect(chestHopAt(curve, 0.75)).toBeCloseTo(0.75);
+    expect(chestHopAt(curve, 2)).toBe(0.5);
+    expect(() => chestHopAt([], 0.5)).toThrow(RangeError);
+  });
+
+  it('stands on a foot inside the shut chest’s box, under its body', () => {
+    const [x, y] = CHEST_FOOT;
+    expect(x).toBeGreaterThan(CHEST_BOX.x);
+    expect(x).toBeLessThan(CHEST_BOX.x + CHEST_BOX.w);
+    expect(y).toBeGreaterThan(CHEST_BOX.y);
+    expect(y).toBeLessThan(CHEST_BOX.y + CHEST_BOX.h);
+    // the body's box (what the chest stands on) ends at the foot
+    const { body, shadow } = chestDrawing('common').layers;
+    expect(body.box.y + body.box.h).toBeGreaterThanOrEqual(y);
+    expect(shadow.box.y).toBeLessThanOrEqual(y + 2);
   });
 });

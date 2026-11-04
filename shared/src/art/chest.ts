@@ -619,3 +619,109 @@ export function chestSvg(opts: ChestSvgOptions): string {
     `<title id="${t}">${escapeXml(opts.title ?? 'Chest')}</title>${groups}</svg>`
   );
 }
+
+// ─────────────────────────────────────────────────────────────── the hop
+
+/**
+ * How a chest opens: not a lid lifting off a box that stands still, but the
+ * whole chest jumping for joy. It crouches, with a shiver of effort, springs
+ * up stretching tall, and the lid bursts open at the top of the hop; it lands
+ * wide and short, rebounds, and settles while the lid rocks back onto its
+ * hinge and the stars fly. One second, end to end.
+ *
+ * Pure numbers, as shares of `CHEST_HOP_MS`, so the phone (one value run
+ * straight through them) and the website (keyframes at the same shares,
+ * quests.css) play the same hop, and it is tested without a screen.
+ * Everything but the shadow moves as one piece about the chest's foot
+ * (`CHEST_FOOT`), which a squash and a stretch keep still; the shadow stays
+ * on the ground and shrinks while the chest is in the air.
+ */
+export const CHEST_HOP_MS = 1000;
+/** The point the chest stands on, in the drawing's units. */
+export const CHEST_FOOT: Pt = [60, 104];
+
+/** The chest's body at one moment of the hop: how high (as a share of its box's height, up), how wide and tall, and its lean. */
+export interface ChestHopFrame {
+  at: number;
+  rise: number;
+  wide: number;
+  tall: number;
+  tilt: number;
+}
+
+export const CHEST_HOP: readonly ChestHopFrame[] = [
+  { at: 0, rise: 0, wide: 1, tall: 1, tilt: 0 },
+  // the crouch, and a shiver in it
+  { at: 0.12, rise: 0, wide: 1.1, tall: 0.86, tilt: 0 },
+  { at: 0.15, rise: 0, wide: 1.1, tall: 0.86, tilt: -3 },
+  { at: 0.18, rise: 0, wide: 1.1, tall: 0.86, tilt: 3 },
+  { at: 0.21, rise: 0, wide: 1.1, tall: 0.86, tilt: -2 },
+  { at: 0.24, rise: 0, wide: 1.08, tall: 0.9, tilt: 0 },
+  // up, stretching; the top of the hop is where the lid bursts open
+  { at: 0.34, rise: 0.24, wide: 0.92, tall: 1.12, tilt: 0 },
+  { at: 0.44, rise: 0.3, wide: 0.96, tall: 1.06, tilt: 0 },
+  { at: 0.52, rise: 0.2, wide: 0.94, tall: 1.1, tilt: 0 },
+  // the landing, wide and short, and the settling
+  { at: 0.6, rise: 0, wide: 1.14, tall: 0.84, tilt: 0 },
+  { at: 0.72, rise: 0, wide: 0.97, tall: 1.05, tilt: 0 },
+  { at: 0.84, rise: 0, wide: 1.01, tall: 0.98, tilt: 0 },
+  { at: 1, rise: 0, wide: 1, tall: 1, tilt: 0 },
+];
+
+/** A part's own measure through the hop: `[share of the hop, value]`, straight lines between. */
+export type ChestHopCurve = readonly (readonly [number, number])[];
+
+/** When the chest lands: the moment it is felt, the ring widens and the gold is thrown. */
+export const CHEST_HOP_LAND = 0.6;
+/**
+ * The lid, 0 shut → 1 open, as the renderers already read it: shut through
+ * the crouch, thrown open on the way up, past open as the chest lands, and
+ * rocking back onto its hinge.
+ */
+export const CHEST_HOP_LID: ChestHopCurve = [
+  [0, 0],
+  [0.3, 0],
+  [0.5, 1],
+  [0.62, 1.18],
+  [0.74, 0.94],
+  [0.86, 1.02],
+  [1, 1],
+];
+/** The light inside, 0 → 1: blooming as the lid opens. */
+export const CHEST_HOP_LIGHT: ChestHopCurve = [
+  [0, 0],
+  [0.4, 0],
+  [0.62, 1],
+  [1, 1],
+];
+/** The shadow's size, 1 at rest: smallest under the chest at the top of its hop, pressed wide as it lands. */
+export const CHEST_HOP_SHADOW: ChestHopCurve = [
+  [0, 1],
+  [0.24, 1.04],
+  [0.44, 0.8],
+  [0.6, 1.1],
+  [0.72, 1],
+  [1, 1],
+];
+/** The stars, 0 → 1 through their burst: from the landing to the end of the hop. */
+export const CHEST_HOP_SPARKLE: ChestHopCurve = [
+  [0, 0],
+  [CHEST_HOP_LAND - 0.02, 0],
+  [1, 1],
+];
+
+/** A curve's value at `share` of the hop, straight lines between its points; held flat beyond its ends. */
+export function chestHopAt(curve: ChestHopCurve, share: number): number {
+  const first = curve[0];
+  const last = curve[curve.length - 1];
+  if (first === undefined || last === undefined) throw new RangeError('art: an empty hop curve');
+  if (share <= first[0]) return first[1];
+  if (share >= last[0]) return last[1];
+  for (let i = 1; i < curve.length; i++) {
+    const [t1, v1] = curve[i] as readonly [number, number];
+    if (share > t1) continue;
+    const [t0, v0] = curve[i - 1] as readonly [number, number];
+    return t1 === t0 ? v1 : v0 + ((share - t0) / (t1 - t0)) * (v1 - v0);
+  }
+  return last[1];
+}

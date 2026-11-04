@@ -10,12 +10,14 @@ import { CHEST_LAYERS, chestDrawing, type ChestTier } from '@kurda/shared';
  *
  * Its layers are groups named by part (`data-part`), which the stylesheet
  * (quests.css) moves: `open` stands it open with the light out of it,
- * `popping` plays the opening — the lid swings away about its hinge and the
- * open one lands on a spring, the light blooms, the rays turn and the stars
- * burst — `shine` passes a glint over its lock now and then, and `reach` is
- * how far the rays go, as a multiple of the drawing's own. Under reduced
- * motion the stylesheet lets everything land where it ends. A picture only:
- * whatever holds it says what it is.
+ * `popping` plays the opening — the chest hops (the shared CHEST_HOP: a
+ * crouch, a spring up with the lid bursting open at the top, a landing),
+ * everything but the shadow moving as one group (`chest-hop`) about the
+ * chest's foot while the shadow shrinks under it, the light blooms, the rays
+ * turn and the stars burst as it lands — `shine` passes a glint over its lock
+ * now and then, and `reach` is how far the rays go, as a multiple of the
+ * drawing's own. Under reduced motion the stylesheet lets everything land
+ * where it ends. A picture only: whatever holds it says what it is.
  */
 export function Chest({
   tier,
@@ -50,9 +52,12 @@ export function Chest({
       aria-hidden="true"
       focusable="false"
     >
-      {CHEST_LAYERS.map((part) => (
-        <g key={part} data-part={part} dangerouslySetInnerHTML={{ __html: drawing.layers[part].markup }} />
-      ))}
+      <g data-part="shadow" dangerouslySetInnerHTML={{ __html: drawing.layers.shadow.markup }} />
+      <g className="chest-hop">
+        {CHEST_LAYERS.filter((part) => part !== 'shadow').map((part) => (
+          <g key={part} data-part={part} dangerouslySetInnerHTML={{ __html: drawing.layers[part].markup }} />
+        ))}
+      </g>
     </svg>
   );
 }

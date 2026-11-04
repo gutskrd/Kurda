@@ -1,7 +1,24 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, Easing, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { CHEST_BOX, CHEST_SMALL, chestDrawing, chestGlint, chestLayerSvg, type ChestBox, type ChestDrawing, type ChestLayer, type ChestTier } from '@kurda/shared';
+import {
+  CHEST_BOX,
+  CHEST_FOOT,
+  CHEST_HOP,
+  CHEST_HOP_LID,
+  CHEST_HOP_LIGHT,
+  CHEST_HOP_SHADOW,
+  CHEST_HOP_SPARKLE,
+  CHEST_SMALL,
+  chestDrawing,
+  chestGlint,
+  chestLayerSvg,
+  type ChestBox,
+  type ChestDrawing,
+  type ChestHopCurve,
+  type ChestLayer,
+  type ChestTier,
+} from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 
 /**
@@ -11,21 +28,28 @@ import { useMotionAlive } from '../a11y/useMotionAlive';
  * screen. `size` is how wide the shut chest is drawn; the height follows.
  *
  * Each of the drawing's layers is its own small picture laid over the same
- * frame, so the parts can move without anything being drawn again: the shut
- * lid swings up and away about its hinge and the open one lands in its place
- * (`motion.lid`, 0 → 1, a spring that may pass 1), the light inside blooms
- * (`motion.light`), the stars burst (`motion.sparkle`), the fan of rays
- * behind it turns slowly (`rays: 'turning'`, a loop on the native driver that
- * runs only while the screen is in view and the phone has not asked for less
- * motion), and a glint passes over the lock plate now and then (`shine`, for
- * a chest that can be opened: six still frames faded in and out in turn, as
- * the badges' glint is). `open` draws it standing open, with the gold out of
- * it, for a chest whose Zêr has been taken. Decorative: whatever holds it
- * says what it is.
+ * frame, so the parts can move without anything being drawn again. A chest
+ * opens with a hop (`motion.hop`, 0 → 1 straight through the shared
+ * `CHEST_HOP`): everything but the shadow crouches, springs up about the
+ * chest's foot and lands, the shadow shrinking under it while it is in the
+ * air, and the lid, the light and the stars take their cue from the same
+ * value — the shut lid swings up and away about its hinge and the open one
+ * lands in its place at the top of the hop, rocking back as the chest lands,
+ * the light inside blooms with it, and the stars burst on the landing. Each
+ * of those can also be driven on its own (`lid`, `light`, `sparkle`). The fan
+ * of rays behind it turns slowly (`rays: 'turning'`, a loop on the native
+ * driver that runs only while the screen is in view and the phone has not
+ * asked for less motion), and a glint passes over the lock plate now and
+ * then (`shine`, for a chest that can be opened: six still frames faded in
+ * and out in turn, as the badges' glint is). `open` draws it standing open,
+ * with the gold out of it, for a chest whose Zêr has been taken. Decorative:
+ * whatever holds it says what it is.
  */
 
-/** How the chest's moving parts stand, each 0 → 1; a part left out stands as drawn. */
+/** How the chest's moving parts stand, each 0 → 1; a part left out stands as drawn, or follows the hop when there is one. */
 export interface ChestMotion {
+  /** 0 → 1 through the hop it opens with (shared `CHEST_HOP`); the lid, the light and the stars follow it unless given */
+  hop?: AnimatedNumber;
   /** 0 shut → 1 open */
   lid?: AnimatedNumber;
   /** 0 → 1: the light inside, and the rays with it */
@@ -35,6 +59,10 @@ export interface ChestMotion {
 }
 
 type AnimatedNumber = Animated.Value | Animated.AnimatedInterpolation<number>;
+
+/** A shared hop curve read off a value: straight lines between its points, flat beyond them, as `chestHopAt` reads it. */
+const along = (value: AnimatedNumber, curve: ChestHopCurve): Animated.AnimatedInterpolation<number> =>
+  value.interpolate({ inputRange: curve.map(([at]) => at), outputRange: curve.map(([v]) => v).map((_, i) => curve[i]?.[1] ?? 0), extrapolate: 'clamp' });
 
 /** The chest's height against its width. */
 export const CHEST_RATIO = CHEST_BOX.h / CHEST_BOX.w;
@@ -80,9 +108,13 @@ export function ChestArt({
   const height = drawing.box.h * unit;
   const { layers } = drawing;
   const alive = useMotionAlive();
-  const opening = motion?.lid !== undefined;
+  const hop = motion?.hop;
+  // the lid, the light and the stars take their cue from the hop unless they are driven on their own
+  const lid = motion?.lid ?? (hop ? along(hop, CHEST_HOP_LID) : undefined);
+  const sparkle = motion?.sparkle ?? (hop ? along(hop, CHEST_HOP_SPARKLE) : undefined);
+  const opening = lid !== undefined;
   const showOpen = open || opening;
-  const light = motion?.light ?? (open ? 1 : 0);
+  const light = motion?.light ?? (hop ? along(hop, CHEST_HOP_LIGHT) : open ? 1 : 0);
   const turning = rays === 'turning' && alive;
 
   // the rays' turn, once round and round again, only while somebody is looking
@@ -98,31 +130,45 @@ export function ChestArt({
   }, [turning, turn]);
 
   // the shut lid: up and away about the hinge, gone by the time the open one has landed
-  const lidStyle: Animated.WithAnimatedObject<ViewStyle> | null = motion?.lid
+  const lidStyle: Animated.WithAnimatedObject<ViewStyle> | null = lid
     ? {
-        opacity: motion.lid.interpolate({ inputRange: [0, 0.35, 0.6, 1], outputRange: [1, 1, 0, 0], extrapolate: 'clamp' }),
+        opacity: lid.interpolate({ inputRange: [0, 0.35, 0.6, 1], outputRange: [1, 1, 0, 0], extrapolate: 'clamp' }),
         transform: [
-          { translateY: motion.lid.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, -height * 0.22, -height * 0.22], extrapolate: 'clamp' }) },
-          { rotate: motion.lid.interpolate({ inputRange: [0, 0.6, 1], outputRange: ['0deg', '-34deg', '-34deg'], extrapolate: 'clamp' }) },
+          { translateY: lid.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, -height * 0.22, -height * 0.22], extrapolate: 'clamp' }) },
+          { rotate: lid.interpolate({ inputRange: [0, 0.6, 1], outputRange: ['0deg', '-34deg', '-34deg'], extrapolate: 'clamp' }) },
         ],
       }
     : null;
-  // the open lid: in from the hinge on the same spring, so it bounces as it lands
-  const openStyle: Animated.WithAnimatedObject<ViewStyle> | null = motion?.lid
+  // the open lid: in from the hinge on the same value, which passes 1 and comes back, so it rocks as it lands
+  const openStyle: Animated.WithAnimatedObject<ViewStyle> | null = lid
     ? {
-        opacity: motion.lid.interpolate({ inputRange: [0, 0.4, 0.65, 1], outputRange: [0, 0, 1, 1], extrapolate: 'clamp' }),
+        opacity: lid.interpolate({ inputRange: [0, 0.4, 0.65, 1], outputRange: [0, 0, 1, 1], extrapolate: 'clamp' }),
         transform: [
-          { rotate: motion.lid.interpolate({ inputRange: [0.4, 1], outputRange: ['26deg', '0deg'] }) },
-          { scale: motion.lid.interpolate({ inputRange: [0.4, 1], outputRange: [0.55, 1] }) },
+          { rotate: lid.interpolate({ inputRange: [0.4, 1], outputRange: ['26deg', '0deg'] }) },
+          { scale: lid.interpolate({ inputRange: [0.4, 1], outputRange: [0.55, 1] }) },
         ],
       }
     : null;
-  const sparkleStyle: Animated.WithAnimatedObject<ViewStyle> | null = motion?.sparkle
+  const sparkleStyle: Animated.WithAnimatedObject<ViewStyle> | null = sparkle
     ? {
-        opacity: motion.sparkle.interpolate({ inputRange: [0, 0.12, 0.7, 1], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }),
-        transform: [{ scale: motion.sparkle.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1.2], extrapolate: 'clamp' }) }],
+        opacity: sparkle.interpolate({ inputRange: [0, 0.12, 0.7, 1], outputRange: [0, 1, 1, 0], extrapolate: 'clamp' }),
+        transform: [{ scale: sparkle.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1.2], extrapolate: 'clamp' }) }],
       }
     : null;
+  // the hop: the chest's body crouches, springs and lands about its foot; the shadow stays on the ground and shrinks under it
+  const ats = CHEST_HOP.map((f) => f.at);
+  const hopStyle: Animated.WithAnimatedObject<ViewStyle> | null = hop
+    ? {
+        transformOrigin: `${(CHEST_FOOT[0] - drawing.box.x) * unit}px ${(CHEST_FOOT[1] - drawing.box.y) * unit}px`,
+        transform: [
+          { translateY: hop.interpolate({ inputRange: ats, outputRange: CHEST_HOP.map((f) => -f.rise * height), extrapolate: 'clamp' }) },
+          { scaleX: hop.interpolate({ inputRange: ats, outputRange: CHEST_HOP.map((f) => f.wide), extrapolate: 'clamp' }) },
+          { scaleY: hop.interpolate({ inputRange: ats, outputRange: CHEST_HOP.map((f) => f.tall), extrapolate: 'clamp' }) },
+          { rotate: hop.interpolate({ inputRange: ats, outputRange: CHEST_HOP.map((f) => `${f.tilt}deg`), extrapolate: 'clamp' }) },
+        ],
+      }
+    : null;
+  const shadowStyle: Animated.WithAnimatedObject<ViewStyle> | null = hop ? { transform: [{ scale: along(hop, CHEST_HOP_SHADOW) }] } : null;
   const raysStyle: Animated.WithAnimatedObject<ViewStyle> = {
     opacity: light,
     transform: [{ rotate: turn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] }) }, { scale: reach }],
@@ -131,15 +177,17 @@ export function ChestArt({
 
   return (
     <View style={[{ width: size, height }, style]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID={testID}>
-      <Part drawing={drawing} layer={layers.shadow} unit={unit} />
-      {showOpen ? <Part drawing={drawing} layer={layers.lidOpen} unit={unit} style={[openStyle, { transformOrigin: hingeOf(layers.lidOpen) }]} testID={testID ? `${testID}-lid-open` : undefined} /> : null}
-      {rays && showOpen ? <Part drawing={drawing} layer={layers.rays} unit={unit} style={raysStyle} testID={testID ? `${testID}-rays${turning ? '-turning' : ''}` : undefined} /> : null}
-      <Part drawing={drawing} layer={layers.body} unit={unit} />
-      {showOpen ? <Part drawing={drawing} layer={layers.light} unit={unit} style={{ opacity: light }} /> : null}
-      <Part drawing={drawing} layer={layers.lock} unit={unit} />
-      {shine && !showOpen ? <Glint drawing={drawing} unit={unit} /> : null}
-      {!open ? <Part drawing={drawing} layer={layers.lid} unit={unit} style={[lidStyle, { transformOrigin: hingeOf(layers.lid) }]} testID={testID ? `${testID}-lid` : undefined} /> : null}
-      {sparkleStyle ? <Part drawing={drawing} layer={layers.sparkle} unit={unit} style={sparkleStyle} /> : null}
+      <Part drawing={drawing} layer={layers.shadow} unit={unit} style={shadowStyle} />
+      <Animated.View style={[StyleSheet.absoluteFill, hopStyle]} pointerEvents="none" testID={testID && hop ? `${testID}-hop` : undefined}>
+        {showOpen ? <Part drawing={drawing} layer={layers.lidOpen} unit={unit} style={[openStyle, { transformOrigin: hingeOf(layers.lidOpen) }]} testID={testID ? `${testID}-lid-open` : undefined} /> : null}
+        {rays && showOpen ? <Part drawing={drawing} layer={layers.rays} unit={unit} style={raysStyle} testID={testID ? `${testID}-rays${turning ? '-turning' : ''}` : undefined} /> : null}
+        <Part drawing={drawing} layer={layers.body} unit={unit} />
+        {showOpen ? <Part drawing={drawing} layer={layers.light} unit={unit} style={{ opacity: light }} /> : null}
+        <Part drawing={drawing} layer={layers.lock} unit={unit} />
+        {shine && !showOpen ? <Glint drawing={drawing} unit={unit} /> : null}
+        {!open ? <Part drawing={drawing} layer={layers.lid} unit={unit} style={[lidStyle, { transformOrigin: hingeOf(layers.lid) }]} testID={testID ? `${testID}-lid` : undefined} /> : null}
+        {sparkleStyle ? <Part drawing={drawing} layer={layers.sparkle} unit={unit} style={sparkleStyle} /> : null}
+      </Animated.View>
     </View>
   );
 }
