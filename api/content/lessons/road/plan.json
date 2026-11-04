@@ -1135,7 +1135,7 @@
               "beat": "Hamo orders cheese, honey and olives; Mîrza pours tea; Xezal wants pomegranates; and Hevalo wants — you can guess.",
               "voice": "hamo",
               "new": [
-                {"ku": "kîlo", "en": "kilo", "pos": "noun", "forms": ["kîlo"]},
+                {"ku": "kîlo", "en": "kilo", "pos": "noun", "forms": ["kîlo", "kîloyek"]},
                 {"ku": "teze", "en": "fresh", "pos": "adj", "forms": ["teze"]},
                 {"ku": "zeytûn", "en": "olive", "pos": "noun", "gender": "f", "forms": ["zeytûn", "zeytûnên", "zeytûnan", "zeytûnek", "zeytûna", "zeytûnê", "zeytûneke"]},
                 {"ku": "birinc", "en": "rice", "pos": "noun", "gender": "m", "forms": ["birinc", "birincên", "birincan", "birincek", "birincê", "birincekî", "birincî"]},
