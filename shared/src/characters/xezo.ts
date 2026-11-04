@@ -17,8 +17,8 @@
  * Who she is. Xezal is bright and quick, a little cheeky and easily
  * delighted: she giggles with her shoulders, tilts her head to listen, and
  * winks when you get something right. She blushes when she is pleased or
- * teased. Her two loose wisps of hair have somewhere to go: she tucks them
- * back now and then with a tilt of the head and a glance aside. A miss gets
+ * teased. Her two loose wisps of hair have somewhere to go: she tucks the
+ * near one back now and then with a tilt of the head and a glance aside. A miss gets
  * a short pout, brows knitted and lips pushed out, that lasts a moment and
  * is gone, because she is on your side.
  */
@@ -475,28 +475,28 @@ const BROW_RIGHT: Pt[] = [
 const BROW_WIDTH = [0.4, 1.7, 2.3, 2.3, 1.8, 0.5];
 
 /**
- * Two loose locks that escape the parting and fall onto her forehead, one
- * to each side, ending well above the brows: hair that has somewhere to go.
- * Each is rooted a little inside the hair, narrow where it leaves the
- * parting, full along its fall and drawn to a point, so it reads as a soft
- * lock of hair lying on the skin rather than a line scratched across it.
+ * Two loose wisps that escape the parting, one curling down onto each
+ * temple, as she has always worn them. The near one is a layer of its own
+ * that swings from its root when she tucks it back; the far one stays with
+ * the head.
  */
-const WISPS: readonly (readonly Pt[])[] = [
-  [
-    [142.2, 133.4],
-    [139.6, 139.5],
-    [137.4, 146.5],
-    [135.2, 153],
-    [132.4, 158],
-  ],
-  [
-    [144.8, 133.4],
-    [147.4, 139.5],
-    [149.6, 146.5],
-    [151.8, 153],
-    [154.6, 158],
-  ],
+const WISP_NEAR: readonly Pt[] = [
+  [113.6, 151],
+  [112.2, 160],
+  [113.8, 170],
+  [117, 177.5],
 ];
+const WISP_FAR: readonly Pt[] = [
+  [172.5, 151],
+  [173.9, 160],
+  [172.3, 170],
+  [169.1, 177.5],
+];
+const WISP_WIDTHS = [2.1, 1.6, 0.9, 0];
+
+function wisp(spine: readonly Pt[]): string {
+  return fill(taper(spine, WISP_WIDTHS), C.hair);
+}
 
 /** A small rose worn above her temple, on the hair: five petals round a lighter heart, two leaves beneath. */
 function temple(): string {
@@ -539,13 +539,13 @@ function brows(state: BrowState): string {
 }
 
 /**
- * The two strands, as a layer of their own: they swing a little about the
- * parting they fall from. The pivot sits at their roots, so a swing carries
- * their tips a few units and their roots nowhere: they stay hair coming out
- * of hair, not lines lifted off the face.
+ * The near wisp, as a layer of their own: it swings about its own root, so
+ * a swing carries its tip a few units along the temple and its root
+ * nowhere. It stays hair coming out of hair; swung from the parting, as it
+ * once was, its root lifted off the face.
  */
 function wisps(): RigPart {
-  return { art: fill(WISPS.map((s) => taper(s, [1.8, 3, 2.8, 1.6, 0])).join(''), C.hair), pivot: { x: 143.5, y: 132.5 } };
+  return { art: wisp(WISP_NEAR), pivot: { x: 113.6, y: 149.5 } };
 }
 
 /** The blush deepening on both cheeks when she is pleased or teased: the same spots as the faint one she always has, wider and pinker. */
@@ -563,7 +563,7 @@ function blush(p: string): string {
   );
 }
 
-/** Her head; `bare`, without the brows and the loose wisps, for a player that draws those as layers of their own. */
+/** Her head; `bare`, without the brows and the near wisp, for a player that draws those as layers of their own. */
 function head(p: string, bare = false): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
@@ -579,6 +579,7 @@ function head(p: string, bare = false): string {
       strands(STRANDS_HEAD),
       temple(),
       fill(curve(FACE), C.skin),
+      wisp(WISP_FAR),
       ...(bare ? [] : [wisps().art]),
       fill(curve(CHIN), C.shade, alpha(0.85)),
       ellipse(121.4, 188.6, 9, 6.6, `url(#${id('blush')})`),

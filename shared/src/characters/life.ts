@@ -444,11 +444,12 @@ export const ACTS: Readonly<Record<ActName, Act>> = {
       [0.7, 6],
       [1, 0],
     ],
+    // positive turns the wisp back toward the hair it came from, where it hides a moment, and it springs back
     hair: [
       [0, 0],
-      [0.25, -9],
-      [0.5, 4],
-      [0.75, -1.5],
+      [0.25, 9],
+      [0.5, -4],
+      [0.75, 1.5],
       [1, 0],
     ],
     look: { x: 0.6, y: -0.2 },
