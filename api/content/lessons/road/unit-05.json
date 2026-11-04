@@ -111,7 +111,8 @@
                       "It's Monday the day after tomorrow.",
                       "The day after tomorrow is Monday",
                       "It is Monday the day after tomorrow",
-                      "It's Monday the day after tomorrow"
+                      "It's Monday the day after tomorrow",
+                      "Monday is the day after tomorrow."
                     ],
                     "voice": "hamo"
                   }
@@ -400,12 +401,12 @@
                   "position": 11,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Nazê rolls her eyes and tells you about Hamo’s Fridays. Type what you hear.",
+                    "prompt": "Xezal rolls her eyes and tells you about her uncle’s Fridays. Type what you hear.",
                     "accepted": [
                       "Roja Înê Hamo tenê çay vedixwe.",
                       "Roja Înê Hamo tenê çay vedixwe"
                     ],
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -1024,7 +1025,7 @@
           "position": 2,
           "titleKu": "Meh û sal",
           "titleEn": "Months and the year",
-          "grammarMd": "The months on the wall calendar:\n\n*Kanûna Paşîn* January · *Sibat* February · *Adar* March · *Nîsan* April · *Gulan* May · *Hezîran* June · *Tîrmeh* July · *Tebax* August · *Îlon* September · *Cotmeh* October · *Mijdar* November · *Kanûna Pêşîn* December\n\n“In March” is **di Adarê de** or **meha Adarê**. A date puts the number first with **-ê**: *21ê Adarê* the 21st of March.\n\nOrdinals add **-em** (after a vowel **-yem**): *yekem* first · *duyem* second · *sêyem* third · *dehem* tenth. They go before the noun: *cara yekem* the first time · *roja duyem* the second day.",
+          "grammarMd": "The months on the wall calendar:\n\n*Kanûna Paşîn* January · *Sibat* February · *Adar* March · *Nîsan* April · *Gulan* May · *Hezîran* June · *Tîrmeh* July · *Tebax* August · *Îlon* September · *Cotmeh* October · *Mijdar* November · *Kanûna Pêşîn* December\n\n“In March” is **di Adarê de** or **di meha Adarê de**. A date puts the number first with **-ê**: *21ê Adarê* (say *bîst û yekê Adarê*) the 21st of March.\n\nOrdinals add **-em** (after a vowel **-yem**): *yekem* first · *duyem* second · *sêyem* third · *dehem* tenth. They come after the noun, joined to it by the ezafe: *cara yekem* the first time · *roja duyem* the second day. The longer form in **-emîn** may come before the noun: *yekemîn car* the first time.",
           "lessons": [
             {
               "key": "u05s2l1",
