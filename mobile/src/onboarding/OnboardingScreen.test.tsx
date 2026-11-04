@@ -6,6 +6,7 @@ vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
+vi.mock('@react-navigation/native', () => import('../auth/guide/testing/navigation'));
 /*
  * The timings a slide leaves on, held until the test lets each finish: under
  * test every animation otherwise ends the moment it begins, and a slide on
