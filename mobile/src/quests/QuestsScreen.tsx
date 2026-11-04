@@ -13,6 +13,7 @@ import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
 import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
+import { CHEST_RATIO } from './ChestArt';
 import { ChestScreen } from './ChestScreen';
 import { MonthlyQuests } from './MonthlyQuests';
 import { QuestRows } from './QuestRows';
@@ -180,7 +181,7 @@ function RowsSkeleton(): React.JSX.Element {
 }
 
 /** A row: its words (17pt on a 22pt line), the bar under them, and the padding round both. */
-const ROW_HEIGHT = 22 + spacing.sm + 46 * (100 / 120) + spacing.md + spacing.sm + 2;
+const ROW_HEIGHT = 22 + spacing.sm + 46 * CHEST_RATIO + spacing.md + spacing.sm + 2;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
