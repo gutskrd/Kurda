@@ -66,7 +66,7 @@ const me = (over: Partial<NonNullable<StoryListItem['me']>> = {}): NonNullable<S
   ...over,
 });
 
-const NAN = story({ featured: true, cover: 'mountains', me: me() });
+const NAN = story({ featured: true, cover: 'gola-sin', me: me() });
 const BAJAR = story({ id: 's2', slug: 'bajar', title: 'Bajar', length: 'long', level: 2, cefr: 'A2', category: 'village', audioCoverage: 'full', fullyNarrated: true, me: me({ share: 0.4, paragraph: 3 }) });
 const BAZAR = story({ id: 's3', slug: 'bazar', title: 'بازاڕ', dialect: 'sorani', category: 'fable', me: me({ bookmarked: true }) });
 

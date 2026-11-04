@@ -121,7 +121,7 @@ const SEARCH_DEBOUNCE_MS = 300;
  * filters" at its head. A guest sees the same shelves without the personal
  * rows, since the server keeps none for them.
  *
- * Each story is a card with its cover (the editor's landscape, or a kilim in
+ * Each story is a card with its cover (the editor's picture, or a kilim in
  * its category's colours), its title and a line of its summary, its CEFR
  * level, category and minutes, a headphones mark when it is read aloud, a
  * bookmark toggle that answers at once and asks the server after, and a
