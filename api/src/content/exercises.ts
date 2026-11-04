@@ -31,9 +31,20 @@ import { SELF_RATINGS, defaultScorer } from './speaking-scorer.js';
  */
 const say = z.string().min(1).max(300).optional();
 
+/**
+ * Who is to record this item's Kurdish: the character whose recording plays
+ * (`SPEAKERS`). The audio studio lists the item for them (`plannedSpeaker`),
+ * so the person who voices Hamo can sit down with Hamo's lines and say them
+ * in a row. It is the plan, kept with the item; the recording itself says who
+ * is heard, so nothing a learner is sent carries it. A conversation has no
+ * `voice`: each of its lines is its part's character's.
+ */
+const voice = z.enum(SPEAKERS, { error: 'must be hevalo, hamo or xezo' }).optional();
+
 export const multipleChoicePayloadSchema = z
   .object({
     say,
+    voice,
     prompt: z.string().min(1).max(500),
     options: z.array(z.string().min(1).max(200)).min(2).max(6),
     correctIndex: z.number().int().min(0),
@@ -53,6 +64,7 @@ const strictSchema = z.boolean().optional();
 
 export const translatePayloadSchema = z.object({
   say,
+  voice,
   prompt: z.string().min(1).max(500),
   /** All accepted answers; the first is the canonical/shown correction. */
   accepted: z.array(z.string().min(1).max(300)).min(1).max(12),
@@ -61,6 +73,7 @@ export const translatePayloadSchema = z.object({
 
 export const matchPairsPayloadSchema = z.object({
   say,
+  voice,
   pairs: z
     .array(z.object({ left: z.string().min(1).max(120), right: z.string().min(1).max(120) }))
     .min(2)
@@ -69,6 +82,7 @@ export const matchPairsPayloadSchema = z.object({
 
 export const listeningPayloadSchema = z.object({
   say,
+  voice,
   /**
    * CDN URL of the audio clip to play (KUR-013). Optional: a studio recording
    * of the first accepted transcription is played in its place when there is one.
@@ -83,6 +97,7 @@ export const listeningPayloadSchema = z.object({
 
 export const speakingPayloadSchema = z.object({
   say,
+  voice,
   /** what the learner is asked to say aloud */
   prompt: z.string().min(1).max(500),
   /** the target phrase, passed to the pronunciation scorer (KUR-120) */
@@ -91,6 +106,7 @@ export const speakingPayloadSchema = z.object({
 
 export const writingPayloadSchema = z.object({
   say,
+  voice,
   prompt: z.string().min(1).max(500),
   /** accepted full-text answers; punctuation/case-insensitive, diacritic-tolerant */
   accepted: z.array(z.string().min(1).max(500)).min(1).max(12),
@@ -292,11 +308,14 @@ export function exerciseSeed(sessionId: string, exerciseId: string): string {
 
 /**
  * Strips the correct answer from a stored exercise before it goes to the
- * client (KUR-028). The client never receives correctIndex / accepted;
- * multiple-choice options and match-pairs sides are shuffled per session with
- * `seed` (`${sessionId}:${exerciseId}`). Match pairs is the one exception: its
- * pairs are answered as they are made, so it says which meaning each card pairs
- * with (`pairOf`); the matching is still graded here when it is sent.
+ * client (KUR-028). The client never receives correctIndex / accepted, nor
+ * `voice` — the recording plan, which no player needs: who is heard travels
+ * with each recording (lessonaudio/delivery.ts), and a plan can differ from
+ * the take that was made. Multiple-choice options and match-pairs sides are
+ * shuffled per session with `seed` (`${sessionId}:${exerciseId}`). Match pairs
+ * is the one exception: its pairs are answered as they are made, so it says
+ * which meaning each card pairs with (`pairOf`); the matching is still graded
+ * here when it is sent.
  */
 export function sanitizeExercise(
   type: ExerciseType,

@@ -497,6 +497,54 @@ describe('writing (KUR-037)', () => {
  * war, ser head). A spelling or dictation item that forgave them would count
  * its target errors as successes, so an item can ask for the letter.
  */
+describe('who records an item (voice)', () => {
+  const items: Array<[ExerciseType, Record<string, unknown>]> = [
+    ['multiple_choice', { say: 'Sêv', prompt: '"Sêv" çi ye?', options: ['apple', 'bread'], correctIndex: 0 }],
+    ['translate', { prompt: 'I am Hamo', accepted: ['Ez Hamo me'] }],
+    ['match_pairs', { pairs: [{ left: 'av', right: 'water' }, { left: 'nan', right: 'bread' }] }],
+    ['listening', { accepted: ['Ez baş im'] }],
+    ['speaking', { prompt: 'Say: hello', reference: 'Silav' }],
+    ['writing', { prompt: 'Write: my name is Xezal', accepted: ['Navê min Xezal e'] }],
+  ];
+
+  it.each(items)('%s keeps a voice in its stored payload, and takes none as well', (type, payload) => {
+    for (const voice of ['hamo', 'xezo', 'hevalo']) {
+      expect(validateExercisePayload(type, { ...payload, voice })).toMatchObject({ voice });
+    }
+    expect(validateExercisePayload(type, payload)).not.toHaveProperty('voice');
+  });
+
+  it.each(items)('%s refuses a voice that is not one of the characters', (type, payload) => {
+    let err: unknown;
+    try {
+      validateExercisePayload(type, { ...payload, voice: 'kawa' });
+    } catch (e) {
+      err = e;
+    }
+    expect(err).toBeInstanceOf(InvalidExercisePayloadError);
+    expect((err as InvalidExercisePayloadError).issues.map((i) => i.path)).toEqual(['voice']);
+  });
+
+  it.each(items)('%s sends no voice to the learner: the recording says who is heard', (type, payload) => {
+    expect(sanitizeExercise(type, { ...payload, voice: 'hamo' }, SEED)).not.toHaveProperty('voice');
+  });
+
+  it('is not part of a conversation, whose lines are each their part’s', () => {
+    const conversation = {
+      id: 'roadtest01',
+      speakers: [{ character: 'hamo' }, { character: 'xezo' }],
+      lines: [
+        { speaker: 0, text: 'Silav!' },
+        { speaker: 1, text: 'Silav, Hamo!' },
+      ],
+      prompt: 'Who speaks first?',
+      options: ['Hamo', 'Xezal'],
+      correctIndex: 0,
+    };
+    expect(validateExercisePayload('conversation', { ...conversation, voice: 'hamo' })).not.toHaveProperty('voice');
+  });
+});
+
 describe('strict spelling', () => {
   const translate = { prompt: 'war', accepted: ['şer'], strict: true };
   const listening = { audioUrl: 'https://cdn.kurda.app/audio/ser.mp3', accepted: ['şer'], strict: true };

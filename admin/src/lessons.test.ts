@@ -40,6 +40,36 @@ describe('an exercise’s checks — the server’s limits, in words', () => {
   });
 });
 
+describe('who records an exercise', () => {
+  it('carries over to a new kind, and never onto a conversation', () => {
+    expect(blankPayload('translate', { prompt: 'Hello', say: 'Silav', voice: 'hamo', options: ['a'] })).toEqual({
+      say: 'Silav',
+      voice: 'hamo',
+      prompt: 'Hello',
+      accepted: [''],
+    });
+    expect(blankPayload('conversation', { prompt: 'x', voice: 'hamo' })).not.toHaveProperty('voice');
+    // only one of the characters is carried
+    expect(blankPayload('speaking', { voice: 'kawa' })).not.toHaveProperty('voice');
+  });
+
+  it('is sent when chosen, left out when it is none', () => {
+    const [chosen, none] = forSave([
+      ex('speaking', { prompt: 'Say: hello', reference: 'Silav', voice: 'xezo' }),
+      ex('speaking', { prompt: 'Say: hello', reference: 'Silav', voice: '' }),
+    ]);
+    expect(chosen!.payload).toEqual({ prompt: 'Say: hello', reference: 'Silav', voice: 'xezo' });
+    expect(none!.payload).toEqual({ prompt: 'Say: hello', reference: 'Silav' });
+  });
+
+  it('must be one of the characters', () => {
+    expect(exerciseIssues(ex('listening', { accepted: ['Silav'], voice: 'hamo' }))).toEqual([]);
+    expect(exerciseIssues(ex('listening', { accepted: ['Silav'], voice: 'kawa' }))).toEqual([
+      { path: 'voice', message: 'Choose who records it: Hamo, Xezal, Hevalo or none.' },
+    ]);
+  });
+});
+
 describe('what is sent', () => {
   it('numbers the exercises in screen order, trims text, and leaves out empty optional fields', () => {
     const sent = forSave([

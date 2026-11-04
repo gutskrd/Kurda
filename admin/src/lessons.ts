@@ -115,10 +115,10 @@ export function newConversationId(): string {
   return `c${Array.from(bytes, (b) => b.toString(36).padStart(2, '0')).join('')}`.slice(0, 14);
 }
 
-/** A new exercise of a type, keeping what carries over from the one it replaces (its prompt, its "say"). */
+/** A new exercise of a type, keeping what carries over from the one it replaces (its prompt, its "say", who records it). */
 export function blankPayload(type: ExerciseType, from: Payload = {}): Payload {
   const prompt = typeof from.prompt === 'string' ? from.prompt : '';
-  const say = typeof from.say === 'string' && from.say ? { say: from.say } : {};
+  const carried = { ...(typeof from.say === 'string' && from.say ? { say: from.say } : {}), ...(isSpeakerId(from.voice) ? { voice: from.voice } : {}) };
   switch (type) {
     case 'conversation':
       // Xezo and Hamo to start, each with a line: the smallest conversation there is
@@ -135,17 +135,17 @@ export function blankPayload(type: ExerciseType, from: Payload = {}): Payload {
         correctIndex: 0,
       };
     case 'multiple_choice':
-      return { ...say, prompt, options: ['', ''], correctIndex: 0 };
+      return { ...carried, prompt, options: ['', ''], correctIndex: 0 };
     case 'translate':
-      return { ...say, prompt, accepted: [''] };
+      return { ...carried, prompt, accepted: [''] };
     case 'match_pairs':
-      return { ...say, pairs: [{ left: '', right: '' }, { left: '', right: '' }] };
+      return { ...carried, pairs: [{ left: '', right: '' }, { left: '', right: '' }] };
     case 'listening':
-      return { ...say, accepted: [''] };
+      return { ...carried, accepted: [''] };
     case 'speaking':
-      return { ...say, prompt, reference: '' };
+      return { ...carried, prompt, reference: '' };
     case 'writing':
-      return { ...say, prompt, accepted: [''] };
+      return { ...carried, prompt, accepted: [''] };
   }
 }
 
@@ -172,6 +172,9 @@ export function exerciseIssues(ex: Exercise): Issue[] {
     });
   };
   if (str(p.say).length > 300) out.push({ path: 'say', message: '“Say” is longer than 300 characters.' });
+  if (ex.type !== 'conversation' && p.voice !== undefined && !isSpeakerId(p.voice)) {
+    out.push({ path: 'voice', message: 'Choose who records it: Hamo, Xezal, Hevalo or none.' });
+  }
   switch (ex.type) {
     case 'multiple_choice': {
       need('prompt', 'The question', 500);
@@ -298,7 +301,7 @@ export function forSave(exercises: readonly Exercise[]): Exercise[] {
       if (v === undefined || (k === 'strict' && v === false)) continue;
       if (typeof v === 'string') {
         const t = v.trim();
-        const optional = k === 'say' || k === 'audioUrl' || (k === 'prompt' && ex.type === 'listening');
+        const optional = k === 'say' || k === 'voice' || k === 'audioUrl' || (k === 'prompt' && ex.type === 'listening');
         if (!t && optional) continue;
         payload[k] = t;
       } else {

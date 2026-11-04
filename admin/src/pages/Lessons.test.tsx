@@ -167,6 +167,34 @@ describe('the lesson editor', () => {
     expect(await screen.findByText('Draft saved.')).toBeInTheDocument();
   });
 
+  it('says who records each item, Hamo first, and saves the choice or none', async () => {
+    const user = userEvent.setup();
+    const voiced: LessonDetail = {
+      ...DETAIL,
+      exercises: [
+        { position: 1, type: 'translate', payload: { prompt: 'Hello', accepted: ['Silav'], voice: 'xezo' } },
+        DETAIL.exercises[1]!,
+      ],
+    };
+    const api = fakeApi(on('GET', '/admin/content/lessons/l-1', json(voiced)), on('PUT', '/admin/content/lessons/l-1', json({ ok: true, lockVersion: 5 })));
+    location.hash = '#/lessons/l-1';
+    renderUi(<Lessons />);
+    const first = await screen.findByRole('article', { name: /1\s*Translate/ });
+    const recordedBy = within(first).getByLabelText('Recorded by');
+    expect([...(recordedBy as HTMLSelectElement).options].map((o) => o.text)).toEqual(['Hamo', 'Xezal', 'Hevalo', 'None']);
+    expect(recordedBy).toHaveValue('xezo');
+    const second = screen.getByRole('article', { name: /2\s*Multiple choice/ });
+    expect(within(second).getByLabelText('Recorded by')).toHaveValue('');
+
+    await user.selectOptions(recordedBy, 'None');
+    await user.selectOptions(within(second).getByLabelText('Recorded by'), 'Hamo');
+    await user.click(screen.getByRole('button', { name: 'Save draft' }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    const sent = (api.calls.find((c) => c.method === 'PUT')!.body as { exercises: Array<{ payload: Record<string, unknown> }> }).exercises;
+    expect(sent[0]!.payload).not.toHaveProperty('voice');
+    expect(sent[1]!.payload).toMatchObject({ voice: 'hamo' });
+  });
+
   it('marks what is missing before sending, and what the server refused after', async () => {
     const user = userEvent.setup();
     const api = fakeApi(
