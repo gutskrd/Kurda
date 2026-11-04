@@ -19,7 +19,7 @@ import { useStoryPrefs } from '../prefs';
 import { evidenceText } from '../segments';
 import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextProps, storyTextStyle } from '../storyText';
 import { Note } from '../ui';
-import { showEnglish } from './Question';
+import { OPTION_MIN_HEIGHT, QuestionSteps, showEnglish } from './Question';
 
 /** The one thing said aloud on a reveal: the verdict, and the right answer. */
 export function revealAnnouncement(myCorrect: boolean | null, right: string, t: Translate): string {
@@ -98,6 +98,7 @@ export function Reveal({
       <Text style={[styles.index, { color: colors.textSecondary }]}>
         {t('stories.questionOf', { index: r.index + 1, total: q?.total ?? view.settings.questionCount })}
       </Text>
+      <QuestionSteps index={r.index} total={q?.total ?? view.settings.questionCount} />
       <AnswerMotion
         key={r.index}
         onMount
@@ -213,12 +214,13 @@ const styles = StyleSheet.create({
   verdictText: { ...display(typography.sizes.lg) },
   prompt: { ...display(typography.sizes.lg), lineHeight: 30 },
   options: { gap: spacing.sm },
+  // the same pills the question offered, now saying which was right
   option: {
     alignItems: 'center',
     gap: spacing.sm,
-    minHeight: MIN_TOUCH_TARGET,
-    borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
+    minHeight: OPTION_MIN_HEIGHT,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md + spacing.xs,
     paddingVertical: spacing.sm,
   },
   optionMain: { flex: 1, gap: 2 },

@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { FIRE_STAGE_DAYS, fireLevel, type StoryDetail, type StoryGameStanding, type StoryGameView } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
@@ -11,7 +11,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { useI18n } from '../../i18n/I18nContext';
 import { InviteSheet } from '../../play/InviteSheet';
 import { RematchPanel } from '../../play/RematchPanel';
-import { createGame } from '../api';
+import { createGame, getStory } from '../api';
 import { createErrorMessage } from '../SetupSheet';
 import { evidenceText } from '../segments';
 import { useStoryPrefs } from '../prefs';
@@ -32,11 +32,14 @@ function nameOf(s: StoryGameStanding, t: (k: 'stories.player' | 'games.you', v?:
 }
 
 /**
- * The end of a game (contract §A1 "Results"): how everyone did, laid out for
- * the number of players (no places for two; a podium only from four), what
- * this game earned you and whether it counted as a day of learning, every
- * question again with the missed ones first, and what next — play again with
- * the same people, read the story again, or go back to the stories.
+ * The end of a game (contract §A1 "Results", design notes §6): how everyone
+ * did, laid out for the number of players (no places for two; a podium only
+ * from four), what this game earned you and whether it counted as a day of
+ * learning — with a line on why when a repeat on the same day paid less or
+ * nothing, from the reader's own record of the story — every question again
+ * with the missed ones first, and what next: back to the story the game was
+ * on (`results.storySlug`), another story from the library, or the same
+ * questions again (alone) or with the same people.
  */
 export function Results({
   view,
@@ -48,7 +51,8 @@ export function Results({
   view: StoryGameView;
   story: StoryDetail | null;
   onOpenGame: (id: string) => void;
-  onRead: () => void;
+  /** back to the reader, on the story this game was played on */
+  onRead: (slug: string) => void;
   onBack: () => void;
 }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -60,6 +64,20 @@ export function Results({
   const [againError, setAgainError] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
   useFocusOn(headRef, view.results ? view.id : null);
+  // today's finished games on this story, this one among them: a second pays a quarter, from the third none
+  const [attemptsToday, setAttemptsToday] = useState<number | null>(null);
+  const slug = view.results?.storySlug ?? null;
+  const paid = !!view.results?.me;
+  useEffect(() => {
+    if (!slug || !paid) return;
+    let live = true;
+    void getStory(client, slug).then((res) => {
+      if (live && res.ok) setAttemptsToday(res.data.me?.attemptsToday ?? null);
+    });
+    return () => {
+      live = false;
+    };
+  }, [client, slug, paid]);
   const results = view.results;
   if (!results) return null;
   const me = results.me;
@@ -123,6 +141,12 @@ export function Results({
           ) : (
             <Text style={[styles.notCounted, { color: colors.textSecondary }]}>{t('stories.results.notCounted')}</Text>
           )}
+          {/* a game that counted and paid nothing is the day's third on this story; one that paid after another today, a repeat */}
+          {me.learningCounted && me.xp === 0 ? (
+            <Text style={[styles.notCounted, { color: colors.textSecondary }]}>{t('stories.results.noXp')}</Text>
+          ) : me.xp > 0 && (attemptsToday ?? 0) >= 2 ? (
+            <Text style={[styles.notCounted, { color: colors.textSecondary }]}>{t('stories.check.repeatXp')}</Text>
+          ) : null}
         </Card>
       ) : null}
 
@@ -188,7 +212,7 @@ export function Results({
 
       <View style={styles.actions}>
         {view.mode === 'solo' ? (
-          <ClayButton label={t('stories.results.again')} icon="repost" tone="primary" size="large" busy={again} onPress={() => void soloAgain()} />
+          <ClayButton label={t('stories.results.toStory')} icon="story" tone="primary" size="large" onPress={() => onRead(results.storySlug)} />
         ) : (
           <RematchPanel
             game="stories"
@@ -199,9 +223,12 @@ export function Results({
             onInviteOthers={() => setInviting(true)}
           />
         )}
+        {view.mode !== 'solo' ? <ClayButton label={t('stories.results.toStory')} icon="story" onPress={() => onRead(results.storySlug)} /> : null}
+        <ClayButton label={t('stories.results.another')} icon="book" onPress={onBack} />
+        {view.mode === 'solo' ? (
+          <ClayButton label={t('stories.results.again')} icon="repost" variant="outline" busy={again} onPress={() => void soloAgain()} />
+        ) : null}
         {againError ? <Note tone="danger" icon="alert">{againError}</Note> : null}
-        <ClayButton label={t('stories.results.readAgain')} icon="story" onPress={onRead} />
-        <ClayButton label={t('stories.results.back')} variant="outline" onPress={onBack} />
       </View>
 
       {results.review.length > 0 ? (

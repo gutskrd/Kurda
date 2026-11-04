@@ -90,7 +90,8 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
         view={view}
         story={story}
         onOpenGame={(next) => navigation.replace('StoryGame', { id: next })}
-        onRead={() => navigation.navigate('StoryReader', { slug: view.settings.storySlug })}
+        // back to the reader this game was opened from when it is still under it, else a reader for the story
+        onRead={(slug) => navigation.popTo('StoryReader', { slug })}
         onBack={toStories}
       />
     );

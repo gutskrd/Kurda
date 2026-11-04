@@ -24,6 +24,22 @@ import { ExtraTimeSwitch } from './ExtraTimeSwitch';
 /** Options are numbered 1–4, the same numbers the web's keys use. */
 export const OPTION_MIN_HEIGHT = 60;
 
+/**
+ * Where the game is, under its "Question 2 of 5": one short line per
+ * question, the ones behind and the one on screen in gold. Hidden from screen
+ * readers, which hear the words above it.
+ */
+export function QuestionSteps({ index, total }: { index: number; total: number }): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.steps} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="question-steps">
+      {Array.from({ length: total }, (_, i) => (
+        <View key={i} style={[styles.step, { backgroundColor: i <= index ? colors.gold : colors.controlTrack }]} />
+      ))}
+    </View>
+  );
+}
+
 /** Whether English is shown under the question: what this phone was told, else only at level 1. */
 export function showEnglish(pref: boolean | null, level: number): boolean {
   return pref ?? level === 1;
@@ -159,6 +175,7 @@ export function Question({
           </PressableScale>
         ) : null}
       </View>
+      <QuestionSteps index={q.index} total={q.total} />
 
       {timed && left !== null ? <TimerBar left={left} total={total} /> : null}
 
@@ -296,6 +313,8 @@ function TimerBar({ left, total, withText }: { left: number; total: number; with
 }
 
 const styles = StyleSheet.create({
+  steps: { flexDirection: 'row', gap: spacing.xs },
+  step: { flex: 1, height: 4, borderRadius: radii.pill },
   timer: { gap: spacing.xs },
   timerText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
@@ -316,12 +335,13 @@ const styles = StyleSheet.create({
   toggle: { alignSelf: 'flex-start', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   toggleText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   options: { gap: spacing.sm },
+  // a full-width pill (design notes §6), padded in from its rounded ends
   option: {
     alignItems: 'center',
     gap: spacing.md,
     minHeight: OPTION_MIN_HEIGHT,
-    borderRadius: radii.lg,
-    paddingHorizontal: spacing.md,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md + spacing.xs,
     paddingVertical: spacing.sm,
   },
   badge: { width: 30, height: 30, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

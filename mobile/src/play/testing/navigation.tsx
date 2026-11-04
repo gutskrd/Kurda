@@ -11,6 +11,7 @@ import { vi } from 'vitest';
 export const navigation = {
   navigate: vi.fn(),
   replace: vi.fn(),
+  popTo: vi.fn(),
   goBack: vi.fn(),
   setParams: vi.fn(),
 };

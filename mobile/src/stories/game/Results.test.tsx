@@ -37,10 +37,8 @@ function finished(results: Partial<StoryGameResults>, over: Partial<StoryGameVie
   );
 }
 
-function renderResults(view: StoryGameView, onOpenGame = vi.fn()) {
-  return renderWithProviders(
-    <Results view={view} story={NANE_GERM} onOpenGame={onOpenGame} onRead={() => undefined} onBack={() => undefined} />,
-  );
+function renderResults(view: StoryGameView, onOpenGame = vi.fn(), onRead = vi.fn(), onBack = vi.fn()) {
+  return renderWithProviders(<Results view={view} story={NANE_GERM} onOpenGame={onOpenGame} onRead={onRead} onBack={onBack} />);
 }
 
 describe('Results', () => {
@@ -77,6 +75,40 @@ describe('Results', () => {
       />,
     );
     expect(screen.getByText('Answer at least half the questions in one day to count a day of learning.')).toBeTruthy();
+  });
+
+  it('leads back to the story the game was on, or on to another story', () => {
+    testAuth.client = fakeClient();
+    const onRead = vi.fn();
+    const onBack = vi.fn();
+    renderResults(finished({ storySlug: 'bajar' }, { mode: 'solo' }), vi.fn(), onRead, onBack);
+    const actions = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? b.textContent);
+    // the story first, then another, then the same questions again
+    expect(actions.indexOf('Back to the story')).toBeLessThan(actions.indexOf('Another story'));
+    expect(actions.indexOf('Another story')).toBeLessThan(actions.indexOf('Quiz yourself again'));
+    fireEvent.click(screen.getByRole('button', { name: 'Back to the story' }));
+    expect(onRead).toHaveBeenCalledWith('bajar');
+    fireEvent.click(screen.getByRole('button', { name: 'Another story' }));
+    expect(onBack).toHaveBeenCalled();
+  });
+
+  it('says a repeat on the same day paid a quarter, from the reader’s record of the story', async () => {
+    testAuth.client = fakeClient({ 'GET /stories/nane-germ': ok({ ...NANE_GERM, me: { bookmarked: false, paragraph: 0, share: 1, finishedAt: '2026-11-04T09:00:00.000Z', bestCorrect: 4, total: 5, attemptsToday: 2 } }) });
+    renderResults(finished({ me: { place: 1, score: 400, correct: 4, answered: 5, total: 5, xp: 3, learningCounted: true } }, { mode: 'solo' }));
+    expect(await screen.findByText('A repeat check earns a quarter of the XP.')).toBeTruthy();
+    expect(screen.getByLabelText('3 XP earned')).toBeTruthy();
+  });
+
+  it('says why a check that counted earned no XP, and nothing of the kind on a first check', async () => {
+    testAuth.client = fakeClient({ 'GET /stories/nane-germ': ok({ ...NANE_GERM, me: { bookmarked: false, paragraph: 0, share: 1, finishedAt: null, bestCorrect: 4, total: 5, attemptsToday: 3 } }) });
+    const view = renderResults(finished({ me: { place: 1, score: 400, correct: 4, answered: 5, total: 5, xp: 0, learningCounted: true } }, { mode: 'solo' }));
+    expect(screen.getByText('This story already earned you XP twice today, so this check earned none. It still counts as a day of learning.')).toBeTruthy();
+    view.unmount();
+    testAuth.client = fakeClient({ 'GET /stories/nane-germ': ok({ ...NANE_GERM, me: { bookmarked: false, paragraph: 0, share: 1, finishedAt: null, bestCorrect: 4, total: 5, attemptsToday: 1 } }) });
+    renderResults(finished({}, { mode: 'solo' }));
+    await waitFor(() => expect((testAuth.client as ReturnType<typeof fakeClient>).calls.some((c) => c.path === '/stories/nane-germ')).toBe(true));
+    expect(screen.queryByText('A repeat check earns a quarter of the XP.')).toBeNull();
+    expect(screen.queryByText(/earned none/)).toBeNull();
   });
 
   it('goes over the missed questions first, with the sentence that answers them', () => {

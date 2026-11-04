@@ -96,6 +96,19 @@ describe('Question', () => {
   });
   afterEach(cleanup);
 
+  it('shows where the game is in words and as a line of one step per question, the ones so far lit', () => {
+    testAuth.client = fakeClient();
+    renderQuestion(gameView({ mode: 'solo', question: question({ index: 1 }) }));
+    expect(screen.getByRole('heading', { name: 'Question 2 of 5' })).toBeTruthy();
+    const steps = screen.getByTestId('question-steps');
+    expect(steps.children).toHaveLength(5);
+    const lit = [...steps.children].map((c) => (c as HTMLElement).style.backgroundColor);
+    // the two so far share one colour, the three to come another
+    expect(new Set(lit.slice(0, 2)).size).toBe(1);
+    expect(new Set(lit.slice(2)).size).toBe(1);
+    expect(lit[0]).not.toBe(lit[2]);
+  });
+
   it('heads the question with where it is, and numbers every option', () => {
     testAuth.client = fakeClient();
     renderQuestion(gameView());

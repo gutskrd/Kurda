@@ -175,7 +175,6 @@ export type TranslationKey =
   | 'stories.results.players'
   | 'stories.results.place'
   | 'stories.results.again'
-  | 'stories.results.readAgain'
   | 'stories.results.back'
   | 'stories.results.review'
   | 'stories.game.unavailable'
@@ -2864,7 +2863,11 @@ export type TranslationKey =
   | 'stories.player.forward'
   | 'stories.player.back'
   // --- The library, one story found (learn-mobile) ---
-  | 'stories.library.found.one';
+  | 'stories.library.found.one'
+  // --- The check's results (learn-mobile) ---
+  | 'stories.results.toStory'
+  | 'stories.results.another'
+  | 'stories.results.noXp';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -3015,7 +3018,6 @@ const en: Catalog = {
   'stories.results.players': 'In this game',
   'stories.results.place': 'place {place}',
   'stories.results.again': 'Quiz yourself again',
-  'stories.results.readAgain': 'Read the story again',
   'stories.results.back': 'Back to stories',
   'stories.results.review': 'Go over the questions',
   'stories.game.unavailable': 'This game isn’t available.',
@@ -5694,6 +5696,10 @@ const en: Catalog = {
   'stories.player.back': 'Back ten seconds',
   // --- The library, one story found (learn-mobile) ---
   'stories.library.found.one': '{count} story found',
+  // --- The check's results (learn-mobile) ---
+  'stories.results.toStory': 'Back to the story',
+  'stories.results.another': 'Another story',
+  'stories.results.noXp': 'This story already earned you XP twice today, so this check earned none. It still counts as a day of learning.',
 };
 
 const ku: Catalog = {
@@ -5843,7 +5849,6 @@ const ku: Catalog = {
   'stories.results.players': 'Di vê lîstikê de',
   'stories.results.place': 'cihê {place}',
   'stories.results.again': 'Dîsa xwe biceribîne',
-  'stories.results.readAgain': 'Çîrokê dîsa bixwîne',
   'stories.results.back': 'Vegere çîrokan',
   'stories.results.review': 'Li pirsan binêre',
   'stories.game.unavailable': 'Ev lîstik ne berdest e.',
@@ -8521,6 +8526,10 @@ const ku: Catalog = {
   'stories.player.back': 'Deh çirke paş',
   // --- The library, one story found (learn-mobile) ---
   'stories.library.found.one': '{count} çîrok hat dîtin',
+  // --- The check's results (learn-mobile) ---
+  'stories.results.toStory': 'Vegere çîrokê',
+  'stories.results.another': 'Çîrokeke din',
+  'stories.results.noXp': 'Îro vê çîrokê du caran XP da te, lewma vê kontrolê XP neda. Dîsa jî wek rojeke fêrbûnê tê hesibandin.',
 };
 
 const de: Catalog = {
@@ -8670,7 +8679,6 @@ const de: Catalog = {
   'stories.results.players': 'In diesem Spiel',
   'stories.results.place': 'Platz {place}',
   'stories.results.again': 'Noch einmal üben',
-  'stories.results.readAgain': 'Geschichte nochmal lesen',
   'stories.results.back': 'Zurück zu den Geschichten',
   'stories.results.review': 'Fragen durchgehen',
   'stories.game.unavailable': 'Dieses Spiel ist nicht verfügbar.',
@@ -11348,6 +11356,10 @@ const de: Catalog = {
   'stories.player.back': 'Zehn Sekunden zurück',
   // --- The library, one story found (learn-mobile) ---
   'stories.library.found.one': '{count} Geschichte gefunden',
+  // --- The check's results (learn-mobile) ---
+  'stories.results.toStory': 'Zurück zur Geschichte',
+  'stories.results.another': 'Eine andere Geschichte',
+  'stories.results.noXp': 'Diese Geschichte hat dir heute schon zweimal XP gebracht, deshalb gab es für diesen Check keine. Als Lerntag zählt er trotzdem.',
 };
 
 const es: Catalog = {
@@ -11497,7 +11509,6 @@ const es: Catalog = {
   'stories.results.players': 'En esta partida',
   'stories.results.place': 'puesto {place}',
   'stories.results.again': 'Ponte a prueba otra vez',
-  'stories.results.readAgain': 'Volver a leer la historia',
   'stories.results.back': 'Volver a las historias',
   'stories.results.review': 'Repasar las preguntas',
   'stories.game.unavailable': 'Esta partida no está disponible.',
@@ -14175,6 +14186,10 @@ const es: Catalog = {
   'stories.player.back': 'Diez segundos atrás',
   // --- The library, one story found (learn-mobile) ---
   'stories.library.found.one': '{count} historia encontrada',
+  // --- The check's results (learn-mobile) ---
+  'stories.results.toStory': 'Volver a la historia',
+  'stories.results.another': 'Otra historia',
+  'stories.results.noXp': 'Esta historia ya te dio XP dos veces hoy, así que esta comprobación no te ha dado ninguno. Aun así cuenta como día de aprendizaje.',
 };
 
 const tr: Catalog = {
@@ -14324,7 +14339,6 @@ const tr: Catalog = {
   'stories.results.players': 'Bu oyunda',
   'stories.results.place': '{place}. sıra',
   'stories.results.again': 'Kendini yeniden sına',
-  'stories.results.readAgain': 'Hikâyeyi yeniden oku',
   'stories.results.back': 'Hikâyelere dön',
   'stories.results.review': 'Sorulara göz at',
   'stories.game.unavailable': 'Bu oyun kullanılamıyor.',
@@ -17002,6 +17016,10 @@ const tr: Catalog = {
   'stories.player.back': 'On saniye geri',
   // --- The library, one story found (learn-mobile) ---
   'stories.library.found.one': '{count} hikâye bulundu',
+  // --- The check's results (learn-mobile) ---
+  'stories.results.toStory': 'Hikâyeye dön',
+  'stories.results.another': 'Başka bir hikâye',
+  'stories.results.noXp': 'Bu hikâye bugün sana zaten iki kez XP kazandırdı, bu yüzden bu kontrol XP kazandırmadı. Yine de öğrenme günü sayılır.',
 };
 
 const ar: Catalog = {
@@ -17151,7 +17169,6 @@ const ar: Catalog = {
   'stories.results.players': 'في هذه اللعبة',
   'stories.results.place': 'المركز {place}',
   'stories.results.again': 'اختبر نفسك مجددًا',
-  'stories.results.readAgain': 'اقرأ القصة مجددًا',
   'stories.results.back': 'العودة إلى القصص',
   'stories.results.review': 'راجع الأسئلة',
   'stories.game.unavailable': 'هذه اللعبة غير متاحة.',
@@ -19829,6 +19846,10 @@ const ar: Catalog = {
   'stories.player.back': 'ترجيع عشر ثوانٍ',
   // --- The library, one story found (learn-mobile) ---
   'stories.library.found.one': 'وُجدت قصة واحدة',
+  // --- The check's results (learn-mobile) ---
+  'stories.results.toStory': 'العودة إلى القصة',
+  'stories.results.another': 'قصة أخرى',
+  'stories.results.noXp': 'منحتك هذه القصة XP مرّتين اليوم، لذا لم يمنحك هذا الاختبار أيّ XP. لكنه يُحسب يوم تعلّم.',
 };
 
 const fr: Catalog = {
@@ -19978,7 +19999,6 @@ const fr: Catalog = {
   'stories.results.players': 'Dans cette partie',
   'stories.results.place': '{place}e place',
   'stories.results.again': 'Te tester à nouveau',
-  'stories.results.readAgain': 'Relire l’histoire',
   'stories.results.back': 'Retour aux histoires',
   'stories.results.review': 'Revoir les questions',
   'stories.game.unavailable': 'Cette partie n’est pas disponible.',
@@ -22656,6 +22676,10 @@ const fr: Catalog = {
   'stories.player.back': 'Reculer de dix secondes',
   // --- The library, one story found (learn-mobile) ---
   'stories.library.found.one': '{count} histoire trouvée',
+  // --- The check's results (learn-mobile) ---
+  'stories.results.toStory': 'Retour à l’histoire',
+  'stories.results.another': 'Une autre histoire',
+  'stories.results.noXp': 'Cette histoire t’a déjà rapporté des XP deux fois aujourd’hui, donc cette vérification n’en rapporte pas. Elle compte quand même comme journée d’apprentissage.',
 };
 
 const nl: Catalog = {
@@ -22805,7 +22829,6 @@ const nl: Catalog = {
   'stories.results.players': 'In dit spel',
   'stories.results.place': 'plaats {place}',
   'stories.results.again': 'Test jezelf opnieuw',
-  'stories.results.readAgain': 'Lees het verhaal opnieuw',
   'stories.results.back': 'Terug naar de verhalen',
   'stories.results.review': 'De vragen nalopen',
   'stories.game.unavailable': 'Dit spel is niet beschikbaar.',
@@ -25483,6 +25506,10 @@ const nl: Catalog = {
   'stories.player.back': 'Tien seconden terug',
   // --- The library, one story found (learn-mobile) ---
   'stories.library.found.one': '{count} verhaal gevonden',
+  // --- The check's results (learn-mobile) ---
+  'stories.results.toStory': 'Terug naar het verhaal',
+  'stories.results.another': 'Een ander verhaal',
+  'stories.results.noXp': 'Dit verhaal leverde je vandaag al twee keer XP op, dus deze controle leverde niets op. Hij telt wel als leerdag.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -25633,7 +25660,6 @@ const ckb: Catalog = {
   'stories.results.players': 'لەم یارییەدا',
   'stories.results.place': 'پلەی {place}',
   'stories.results.again': 'دووبارە خۆت تاقی بکەرەوە',
-  'stories.results.readAgain': 'چیرۆکەکە دووبارە بخوێنەوە',
   'stories.results.back': 'بگەڕێوە بۆ چیرۆکەکان',
   'stories.results.review': 'سەیری پرسیارەکان بکە',
   'stories.game.unavailable': 'ئەم یارییە بەردەست نییە.',
@@ -28311,6 +28337,10 @@ const ckb: Catalog = {
   'stories.player.back': 'دە چرکە بۆ دواوە',
   // --- The library, one story found (learn-mobile) ---
   'stories.library.found.one': '{count} چیرۆک دۆزرایەوە',
+  // --- The check's results (learn-mobile) ---
+  'stories.results.toStory': 'گەڕانەوە بۆ چیرۆکەکە',
+  'stories.results.another': 'چیرۆکێکی دیکە',
+  'stories.results.noXp': 'ئەمڕۆ ئەم چیرۆکە دوو جار XPی پێدایت، بۆیە ئەم پشکنینە هیچ XPی نەدا. هێشتا وەک ڕۆژێکی فێربوون دەژمێردرێت.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };
