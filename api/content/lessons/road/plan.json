@@ -2917,7 +2917,7 @@
               "beat": "At the tents Bişar asks everyone what they saw on the climb. Baran saw an eagle; Hêvî saw a hundred flowers; Hamo saw nothing, because he was talking.",
               "voice": "hamo",
               "new": [
-                {"ku": "dît", "en": "saw (past of dîtin)", "pos": "verb", "forms": ["dît", "dîtin", "dîtim", "dîtî", "nedît"]},
+                {"ku": "dît", "en": "saw (past of dîtin)", "pos": "verb", "forms": ["dît", "dîtin", "dîtim", "dîtî", "nedît", "nedîtim", "nedîtî", "nedîtin"]},
                 {"ku": "da", "en": "gave (past of dan)", "pos": "verb", "forms": ["da", "dan", "neda"]},
                 {"ku": "anî", "en": "brought (past of anîn)", "pos": "verb", "forms": ["anî", "anîn", "neanî"]},
                 {"ku": "bir", "en": "took (away) (past of birin)", "pos": "verb", "forms": ["bir", "birin", "nebir"]},
@@ -3053,7 +3053,7 @@
               "beat": "Hamo tells you how it used to be: when he was little, the whole village came up here every summer, the women milked, the men made cheese, and the children played in the river all day.",
               "voice": "hamo",
               "new": [
-                {"ku": "di-", "en": "was …-ing, used to (the past continuous: diçûm, min dixwar)", "pos": "particle", "forms": ["dixwar", "dixwarin", "vedixwar", "dikir", "digot", "digotin", "didît", "dida", "dianî", "dixwest", "dixwend", "dinivîsî", "dikirî", "dipijand", "diçûm", "diçûyî", "diçû", "diçûn", "dihatim", "dihat", "dihatin", "dibûm", "dibû", "dibûn", "rûdinişt", "radibû", "radiza", "diket", "dima", "digihîşt", "dimeşiya", "dikenî", "digirî", "disekinî", "dijiya", "dixebitî", "dizanî", "dizanibû", "dilîst", "dipirsî", "difikirî", "dibihîst", "digirt", "ditirsiya", "dilîstin", "nedizanî", "nediçûm", "nediçûn"]},
+                {"ku": "di-", "en": "was …-ing, used to (the past continuous: diçûm, min dixwar)", "pos": "particle", "forms": ["dixwar", "dixwarin", "vedixwar", "dikir", "digot", "digotin", "didît", "dida", "dianî", "dixwest", "dixwend", "dinivîsî", "dikirî", "dipijand", "diçûm", "diçûyî", "diçû", "diçûn", "dihatim", "dihat", "dihatin", "dibûm", "dibû", "dibûn", "rûdinişt", "radibû", "radiza", "diket", "dima", "digihîşt", "dimeşiya", "dikenî", "digirî", "disekinî", "dijiya", "dixebitî", "dizanî", "dizanibû", "dilîst", "dipirsî", "difikirî", "dibihîst", "digirt", "ditirsiya", "dilîstin", "nedizanî", "nediçûm", "nediçûn", "didot", "didotin", "çêdikir"]},
                 {"ku": "adet", "en": "custom; habit", "pos": "noun", "gender": "f", "forms": ["adet", "adetên", "adetan", "adetek", "adeta", "adetê", "adeteke"]},
                 {"ku": "berdewam", "en": "continuously; all the time", "pos": "adv", "forms": ["berdewam"]},
                 {"ku": "kevirî", "en": "made of stone", "pos": "adj", "forms": ["kevirî"]},
@@ -3131,7 +3131,7 @@
                 {"ku": "qewimîn", "en": "to happen", "pos": "verb", "forms": ["qewimîn", "diqewime", "qewimî"]},
                 {"ku": "bûyer", "en": "event", "pos": "noun", "gender": "f", "forms": ["bûyer", "bûyerên", "bûyeran", "bûyerek", "bûyera", "bûyerê", "bûyereke"]},
                 {"ku": "serpêhatî", "en": "adventure; what happened to someone", "pos": "noun", "gender": "f", "forms": ["serpêhatî", "serpêhatiyên", "serpêhatiyan", "serpêhatiyek", "serpêhatiya", "serpêhatiyê", "serpêhatiyeke"]},
-                {"ku": "behs kirin", "en": "to talk about", "pos": "verb", "forms": ["behs", "kirin"]},
+                {"ku": "behs kirin", "en": "to talk about", "pos": "verb", "forms": ["behs", "kirin", "behsa"]},
                 {"ku": "vegotin", "en": "to tell (a story), to narrate", "pos": "verb", "forms": ["vegotin", "vedibêjim", "vedibêjî", "vedibêje", "vedibêjin", "vebêjim", "vebêje", "vegot"]}
               ]
             },
