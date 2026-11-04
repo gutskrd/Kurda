@@ -2705,7 +2705,7 @@ export const ku: Catalogue = {
   'meta.words.title': 'Reng, hejmar, roj û mehên kurdî',
   'meta.words.description': 'Reng, hejmar, rojên hefteyê û meh bi kurmancî û soranî, her yek bi dengê xwe û wateya xwe. Belaş, bê hesab.',
   'meta.stories.title': 'Çîrokên kurdî ji bo xwendin û guhdarîkirinê',
-  'meta.stories.description': 'Çîrokên kurt bi kurmancî û soranî li gorî astê, bi peyvên şirovekirî, gelek ji wan bi deng, û çend pirs ji bo ku tu bibînî te çi fêm kir. Xwendin belaş e, bê hesab.',
+  'meta.stories.description': 'Çîrokên kurt bi kurmancî û soranî li gorî astê, bi peyvên şîrovekirî, gelek ji wan bi deng, û çend pirs ji bo ku tu bibînî te çi fêm kir. Xwendin belaş e, bê hesab.',
 
   // ---- age, minors, the daily reward, streaks and leagues ------------------
   'age.label': 'Meh û sala jidayikbûnê',
