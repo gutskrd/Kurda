@@ -15,12 +15,18 @@ export function apiBaseUrl(env: AppEnv, override?: string): string {
 
 /**
  * The API base URL to use when no explicit override (EXPO_PUBLIC_API_URL) is
- * baked into the build. A release build (preview / production, where __DEV__ is
- * false) must reach the live API — never localhost, which a real device can't
- * reach. Only an actual dev build (dev client / Metro) uses the local server.
+ * baked into the build or set in the shell that starts the dev server.
+ *
+ * The live API, in every kind of build. A development build used to fall back
+ * to localhost, on the theory that a developer runs the API beside the app,
+ * and the one place that theory held was a simulator on the same machine. On
+ * a phone, localhost is the phone, so the first development build anybody
+ * installed opened on "API unreachable" and could not sign in. Somebody who
+ * does run the API locally says so once with EXPO_PUBLIC_API_URL; everybody
+ * else gets the app that works.
  */
 export function defaultApiBaseUrl(): string {
-  return apiBaseUrl(__DEV__ ? 'development' : 'production');
+  return apiBaseUrl('production');
 }
 
 /**

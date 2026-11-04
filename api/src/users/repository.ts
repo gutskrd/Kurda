@@ -5,7 +5,8 @@ import { canonicalUsername } from './username.js';
 
 export interface UserRow {
   id: string;
-  email: string;
+  /** null for a guest (auth/guest.ts), and only for a guest: the table holds that rule too */
+  email: string | null;
   username: string;
   display_name: string | null;
   password_hash: string | null;
@@ -17,6 +18,8 @@ export interface UserRow {
   /** both null until given — see migration 1751000140000 */
   birth_year: number | null;
   birth_month: number | null;
+  /** a guest account, until claimed (auth/guest.ts); migration 1751000210000 */
+  guest: boolean;
   created_at: Date;
   updated_at: Date;
   deleted_at: Date | null;

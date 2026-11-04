@@ -19,7 +19,8 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export interface UserSearchResult {
   id: string;
   username: string;
-  email: string;
+  /** null for a guest account, which has none until claimed (auth/guest.ts) */
+  email: string | null;
   ban: BanState;
   /** a chat mute in force now (with or without an end) */
   muted: boolean;
@@ -55,7 +56,8 @@ export const USERS_PAGE_MAX = 100;
 export interface UserDetail extends Partial<AdminUserModeration> {
   id: string;
   username: string;
-  email: string;
+  /** null for a guest account, which has none until claimed (auth/guest.ts) */
+  email: string | null;
   displayName: string | null;
   roles: string[];
   createdAt: Date;
@@ -160,7 +162,7 @@ export class UserAdminService {
     const res = await this.pool.query<{
       id: string;
       username: string;
-      email: string;
+      email: string | null;
       banned_at: Date | null;
       banned_until: Date | null;
       muted: boolean;
@@ -200,7 +202,7 @@ export class UserAdminService {
 
   async detail(userId: string, opts: { moderation?: boolean } = {}): Promise<UserDetail | null> {
     const u = await this.pool.query<{
-      id: string; username: string; email: string; display_name: string | null; roles: string[];
+      id: string; username: string; email: string | null; display_name: string | null; roles: string[];
       created_at: Date; banned_at: Date | null; banned_until: Date | null; muted_until: Date | null;
       age_known: boolean; minor: boolean;
     }>(

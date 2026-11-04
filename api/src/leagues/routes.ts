@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { weekStart } from '@kurda/shared';
-import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { requireAccount, requireRoles } from '../plugins/auth.js';
 import { RANK_TOOL_ROLES } from '../admin/roles.js';
 import { AppError } from '../plugins/errors.js';
 import type { LeagueService } from './service.js';
@@ -19,7 +19,7 @@ export function registerLeagueRoutes(app: FastifyInstance, leagues: LeagueServic
    * The caller's week (`LeagueView` in @kurda/shared): their group and its
    * zones, or personal mode. Reading it never joins anyone — learning XP does.
    */
-  app.get('/me/league', { preHandler: requireAuth }, async (req) => leagues.standings(req.user!.id));
+  app.get('/me/league', { preHandler: requireAccount }, async (req) => leagues.standings(req.user!.id));
 
   /** Admin: a week's groups (this week by default), the tier spread, and the settle and merge runs. */
   app.get(

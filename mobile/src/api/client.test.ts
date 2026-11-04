@@ -298,6 +298,29 @@ describe('ApiClient', () => {
     expect(onSuspended).not.toHaveBeenCalled();
   });
 
+  /*
+   * A guest refused something only an account may do (403 GUEST_ACCOUNT) is
+   * told to the account gate, which makes the offer of one; the call still
+   * comes back as the refusal, and no other 403 is mistaken for it.
+   */
+  it('passes a guest’s refusal to onGuestRefused, and keeps the refusal, and no other 403', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(403, { code: 'GUEST_ACCOUNT', message: 'guest accounts cannot do this' }))
+      .mockResolvedValueOnce(jsonResponse(403, { code: 'FORBIDDEN', message: 'not yours' }));
+    const storage = new MemoryTokenStorage();
+    await storage.set({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+    const onGuestRefused = vi.fn();
+    const client = new ApiClient({ baseUrl: 'https://api.test', storage, onLogout: () => undefined, onGuestRefused, fetchFn: fetchFn as never });
+    const first = await client.post('/friends/requests', { userId: 'u2' });
+    expect(first).toMatchObject({ ok: false, error: { kind: 'client', code: 'GUEST_ACCOUNT', status: 403 } });
+    expect(onGuestRefused).toHaveBeenCalledTimes(1);
+    await client.delete('/library/posts/p1');
+    expect(onGuestRefused).toHaveBeenCalledTimes(1);
+    // the session is untouched: a guest refused is still signed in
+    expect(await storage.get()).toEqual({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+  });
+
   it('ends the session on the server with the stored refresh token', async () => {
     const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
     const { client, storage, ready } = makeClient(fetchFn);

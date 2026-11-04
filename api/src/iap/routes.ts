@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { requireAccount, requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
 import type { IapService } from './service.js';
@@ -44,7 +44,7 @@ export function registerIapRoutes(app: FastifyInstance, iap: IapService, config:
     {
       schema: { body: redeemBody },
       config: { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { platform: p, productId, receipt } = req.body as z.infer<typeof redeemBody>;
@@ -53,7 +53,7 @@ export function registerIapRoutes(app: FastifyInstance, iap: IapService, config:
   );
 
   /** The caller's receipts, for restore-purchases reconciliation. */
-  app.get('/me/iap/receipts', { preHandler: requireAuth }, async (req) => ({
+  app.get('/me/iap/receipts', { preHandler: requireAccount }, async (req) => ({
     receipts: await iap.receipts(req.user!.id),
   }));
 

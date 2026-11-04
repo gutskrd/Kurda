@@ -83,13 +83,16 @@ export const COUNTRY_BOARD_TTL_SECONDS = 120;
  * account whose leagues setting was never chosen (a teen in personal mode) is
  * not "out": a friends board still shows them to their friends, as before.
  * Whoever is left out still sees their own score and place.
+ *
+ * A guest (auth/guest.ts) is on no board of any scope: a guest has no
+ * profile for the name to lead to, and no friends to be listed for.
  */
 function listedSql(alias: string, scope: 'public' | 'friends'): string {
   const shown =
     scope === 'public'
       ? `${alias}.profile_visibility IN ('everyone', 'members')`
       : `${alias}.profile_visibility <> 'nobody'`;
-  return `(${shown} AND ${alias}.leagues_enabled IS DISTINCT FROM false)`;
+  return `(${shown} AND ${alias}.leagues_enabled IS DISTINCT FROM false AND NOT ${alias}.guest)`;
 }
 
 /**

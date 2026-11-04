@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
 import type { ApiError, ApiResult } from '../api/types';
 import { describeError, isMaintenance } from '../api/errors';
@@ -66,6 +67,8 @@ interface Profile {
 /** Public profile with a friend action + block (KUR-082). */
 export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit: () => void }) {
   const { client } = useAuth();
+  // anyone's profile is open to a guest; writing to them or befriending them is the account's (auth/AccountGate)
+  const { require } = useAccountGate();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -235,7 +238,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     label={t('profile.message')}
                     tone="primary"
                     size="large"
-                    onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
+                    onPress={() => require('message') && navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
                   />
                   {/* the quiz's 1v1 challenge went with the quiz: any game, through the invite sheet */}
                   <PlayWithButton friendId={profile.userId} name={profile.displayName ?? profile.username} />
@@ -249,7 +252,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                   size="large"
                   busy={busy}
                   disabled={!isActionable(profile.friendStatus)}
-                  onPress={() => act(profile.friendStatus)}
+                  onPress={() => require('friends') && act(profile.friendStatus)}
                 />
               ) : null}
               {/*

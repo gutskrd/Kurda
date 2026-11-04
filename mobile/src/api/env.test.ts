@@ -29,9 +29,9 @@ describe('defaultApiBaseUrl', () => {
     expect(defaultApiBaseUrl()).toBe('https://kurda-api.onrender.com');
   });
 
-  it('uses the local server only in a dev build (__DEV__ true)', () => {
+  it('uses the live API in a development build too: a phone cannot reach localhost', () => {
     g.__DEV__ = true;
-    expect(defaultApiBaseUrl()).toBe('http://localhost:3000');
+    expect(defaultApiBaseUrl()).toBe('https://kurda-api.onrender.com');
   });
 });
 

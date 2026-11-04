@@ -26,7 +26,7 @@ import { useDirection } from '../reports/direction';
  * opens the league. Nothing here counts down.
  */
 export function LeagueLine(): React.JSX.Element | null {
-  const { client } = useAuth();
+  const { client, isGuest } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
@@ -37,6 +37,11 @@ export function LeagueLine(): React.JSX.Element | null {
 
   useFocusEffect(
     useCallback(() => {
+      // a guest is in no league, and the server refuses the question: the line stays away
+      if (isGuest) {
+        setSettled(true);
+        return;
+      }
       let live = true;
       void getLeague(client).then((res) => {
         if (!live) return;
@@ -46,7 +51,7 @@ export function LeagueLine(): React.JSX.Element | null {
       return () => {
         live = false;
       };
-    }, [client]),
+    }, [client, isGuest]),
   );
 
   if (!league) return settled ? null : <LeagueLineSkeleton />;

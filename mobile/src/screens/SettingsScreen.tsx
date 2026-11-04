@@ -47,7 +47,7 @@ interface Entry {
  * anything on the page behind it ("accent" finds Keyboard and accents).
  */
 export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
-  const { client, logout, deleteAccount } = useAuth();
+  const { client, logout, deleteAccount, isGuest } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { preference } = useTheme();
   const { t, locale } = useI18n();
@@ -120,11 +120,28 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const visibility = account.visibility ? t(VISIBILITY_LABEL[account.visibility]) : undefined;
   const username = account.username ? `@${account.username}` : undefined;
 
-  const sections: Array<{ key: string; title?: string; entries: Entry[] }> = [
-    {
-      key: 'account',
-      title: t('settings.group.account'),
-      entries: [
+  /*
+   * A guest's account section is one row: the way to an account. The name,
+   * the password and the devices are an account's to change, and a guest has
+   * no password and no other devices to see.
+   */
+  const accountEntries: Entry[] = isGuest
+    ? [
+        {
+          key: 'claim',
+          terms: [t('guest.settings.create'), t('guest.settings.createHint')],
+          row: (
+            <SettingsRow
+              icon="user-plus"
+              title={t('guest.settings.create')}
+              subtitle={t('guest.settings.createHint')}
+              onPress={() => navigation.navigate('ClaimAccount')}
+              testID="settings-claim"
+            />
+          ),
+        },
+      ]
+    : [
         {
           key: 'username',
           terms: [t('auth.username'), username],
@@ -140,7 +157,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           terms: [t('security.devices.title'), t('settings.group.security')],
           row: <SettingsRow icon="devices" title={t('security.devices.title')} onPress={() => navigation.navigate('Devices')} />,
         },
-      ],
+      ];
+
+  const sections: Array<{ key: string; title?: string; entries: Entry[] }> = [
+    {
+      key: 'account',
+      title: t('settings.group.account'),
+      entries: accountEntries,
     },
     {
       key: 'preferences',
@@ -308,9 +331,19 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           terms: [t('settings.delete.title')],
           row: <SettingsRow icon="trash" title={t('settings.delete.title')} destructive opens={false} onPress={confirmDelete} />,
         },
-      ],
+        // a guest signs out and nothing more: no other devices, no data to ask for, no account of their own to delete
+      ].filter((entry) => !isGuest || entry.key === 'logout'),
     },
   ];
+
+  /*
+   * A guest is in no league and has no profile to show or hide, no blocks,
+   * no reports and no standing: the league switch and the privacy section
+   * would each open on the server refusing them.
+   */
+  const offered = isGuest
+    ? sections.filter((s) => s.key !== 'privacy').map((s) => ({ ...s, entries: s.entries.filter((e) => e.key !== 'leagues') }))
+    : sections;
 
   // every word typed, found anywhere in a row's words; accents set aside, so "e" finds "ê"
   const words = foldForSearch(query).split(/\s+/).filter(Boolean);
@@ -319,8 +352,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     return words.every((w) => said.includes(w));
   };
   const shown = words.length
-    ? sections.map((s) => ({ ...s, entries: s.entries.filter(finds) })).filter((s) => s.entries.length > 0)
-    : sections;
+    ? offered.map((s) => ({ ...s, entries: s.entries.filter(finds) })).filter((s) => s.entries.length > 0)
+    : offered;
 
   return (
     <SettingsPage title={t('settings.title')} onExit={onExit}>

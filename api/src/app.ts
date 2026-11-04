@@ -932,6 +932,8 @@ declare module 'fastify' {
       emailVerified: boolean;
       /** a birth month on record, as the auth middleware read it with the account (users/age.ts `requireBirthMonth`) */
       birthMonthKnown?: boolean;
+      /** a guest account (auth/guest.ts): learning only, until claimed (`requireAccount`) */
+      guest?: boolean;
     };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;

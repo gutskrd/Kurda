@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import type { ReportsService } from '../moderation/reports-service.js';
 import { ImageReportService, type ImageTargetType } from './report-service.js';
 
@@ -24,13 +24,13 @@ export function registerImageReportRoutes(app: FastifyInstance, reports?: Report
 
   app.post(
     '/images/:id/report',
-    { schema: { params: idParam, body: reportBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: idParam, body: reportBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireAccount },
     report('image_post'),
   );
 
   app.post(
     '/images/comments/:id/report',
-    { schema: { params: idParam, body: reportBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: idParam, body: reportBody }, config: { rateLimit: { max: 20, windowMs: 60_000 } }, preHandler: requireAccount },
     report('image_comment'),
   );
 }

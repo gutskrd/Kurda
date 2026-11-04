@@ -169,13 +169,17 @@ export class RiskService {
     return Number(res.rows[0]?.n ?? 0);
   }
 
-  /** A device is "known good" if a verified account was created from it. */
+  /**
+   * A device is "known good" if a verified account was created from it. A guest
+   * (auth/guest.ts) is marked verified so its lessons save, but has proved
+   * nothing, so it does not count.
+   */
   private async deviceHasGoodAccount(deviceHash: string): Promise<boolean> {
     const res = await this.pool.query<{ ok: boolean }>(
       `SELECT EXISTS (
          SELECT 1 FROM risk_decisions rd
          JOIN users u ON u.id = rd.user_id
-         WHERE rd.device_hash = $1 AND u.email_verified_at IS NOT NULL
+         WHERE rd.device_hash = $1 AND u.email_verified_at IS NOT NULL AND NOT u.guest
        ) AS ok`,
       [deviceHash],
     );

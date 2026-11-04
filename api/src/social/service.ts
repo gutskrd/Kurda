@@ -184,6 +184,8 @@ export class SocialService {
             -- strangers cannot look a minor up (they reach friends another way),
             -- nor anyone whose age is not on record yet
             AND NOT ${notKnownAdultSql('u')}
+            -- a guest (auth/guest.ts) is nobody's to find until the account is claimed
+            AND NOT u.guest
             AND (${matched})
             AND NOT EXISTS (
               SELECT 1 FROM blocks b
@@ -248,6 +250,7 @@ export class SocialService {
       profile_visibility: Visibility;
       birth_year: number | null;
       birth_month: number | null;
+      guest: boolean;
       streak: number;
       tier: string | null;
       frame_sku: string | null;
@@ -288,7 +291,7 @@ export class SocialService {
       // somebody with a block between them and the viewer is not shown either.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
               u.last_seen_at, u.premium_until, u.xp, u.profile_visibility, u.country,
-              u.birth_year, u.birth_month,
+              u.birth_year, u.birth_month, u.guest,
               u.equipped_background_sku, u.equipped_icon_sku, u.premium_icon_enabled,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
@@ -349,6 +352,9 @@ export class SocialService {
     if (!u) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
 
     const isSelf = viewerId !== null && viewerId === targetId;
+    // a guest (auth/guest.ts) has no profile anyone else can open: to everyone
+    // but themselves the id is as good as unknown, and said so, not "private"
+    if (u.guest && !isSelf) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
     // one read says both whether a block stands between them and where they stand
     const friendStatus: FriendStatus =
       isSelf ? 'self' : viewerId === null ? 'none' : await this.friends.statusBetween(viewerId, targetId);

@@ -2,14 +2,27 @@ import { useState, type ReactNode, type Ref } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
+import { HevaloWindow } from '../../characters/HevaloWindow';
+import { useListEntrance } from '../../theme/animate';
 import { GlassCard, GradientBackground } from '../../theme/glass';
 import { BreathingIcon, Icon, type IconName } from '../../theme/Icon';
+import { Rise } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { display } from '../../theme/fonts';
 import { useI18n } from '../../i18n/I18nContext';
 import { useDirection } from '../../reports/direction';
+
+/** How tall the window Hevalo looks in at is drawn over the sign-in choice; its width follows. */
+const WINDOW_HEIGHT = 150;
+
+/**
+ * Where a screen's own rows start in the order things rise in: the name and
+ * its line, the hero and the title come first (`useListEntrance` counts
+ * them), so a screen that rises its buttons in after them counts on from here.
+ */
+export const AUTH_HEAD_ROWS = 3;
 
 export function AuthScreenShell({
   title,
@@ -23,10 +36,12 @@ export function AuthScreenShell({
   subtitle?: string;
   children: ReactNode;
   onBack?: () => void;
-  /** optional breathing hero glyph shown above the title (sign-in choice) */
-  hero?: IconName;
+  /** what stands over the title: a breathing glyph, or Hevalo himself at a village window (the sign-in choice) */
+  hero?: IconName | 'hevalo';
 }) {
   const { colors } = useTheme();
+  // the head rises in a row at a time, as a list's rows do; a screen's own buttons may follow on (AUTH_HEAD_ROWS)
+  const entering = useListEntrance(true);
   /**
    * A hero makes the head a centred composition.
    *
@@ -77,18 +92,37 @@ export function AuthScreenShell({
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-        <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
-        <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
+        <Rise delay={entering(0)}>
+          <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
+          <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
+        </Rise>
         <GlassCard>
-          {hero ? <BreathingIcon name={hero} size={52} tone="primary" style={styles.hero} /> : null}
-          <Text
-            style={[styles.title, { color: colors.textPrimary }, subtitle ? null : styles.titleAlone, centred && styles.centred]}
-          >
-            {title}
-          </Text>
-          {subtitle ? (
-            <Text style={[styles.subtitle, { color: colors.textSecondary }, centred && styles.centred]}>{subtitle}</Text>
+          {hero === 'hevalo' ? (
+            /*
+              Hevalo looking in at the window: we are in the village room and
+              he has come to see who is at the door. He comes up over the sill
+              as the card arrives, and is alive while the choice is made. A
+              glyph of a person stood here, breathing; the app's own character
+              is who should greet somebody choosing how to come in.
+            */
+            <Rise delay={entering(1)} style={styles.hero}>
+              <HevaloWindow size={WINDOW_HEIGHT} />
+            </Rise>
+          ) : hero ? (
+            <Rise delay={entering(1)} style={styles.hero}>
+              <BreathingIcon name={hero} size={52} tone="primary" />
+            </Rise>
           ) : null}
+          <Rise delay={entering(2)}>
+            <Text
+              style={[styles.title, { color: colors.textPrimary }, subtitle ? null : styles.titleAlone, centred && styles.centred]}
+            >
+              {title}
+            </Text>
+            {subtitle ? (
+              <Text style={[styles.subtitle, { color: colors.textSecondary }, centred && styles.centred]}>{subtitle}</Text>
+            ) : null}
+          </Rise>
           {children}
         </GlassCard>
         </ScrollView>
@@ -244,7 +278,7 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.6 },
   brand: { ...display(typography.sizes.xxl), textAlign: 'center' },
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
-  hero: { alignSelf: 'center', marginBottom: spacing.md },
+  hero: { alignSelf: 'center', alignItems: 'center', marginBottom: spacing.md },
   title: { ...display(typography.sizes.lg) },
   centred: { textAlign: 'center' },
   titleAlone: { marginBottom: spacing.md },

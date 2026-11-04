@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { useAccountGate } from '../auth/AccountGate';
 import { MIN_TOUCH_TARGET, decorative } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -79,6 +80,8 @@ function CommentRow({
   renderAudio?: (url: string) => ReactNode;
 }): React.JSX.Element {
   const { user } = useAuth();
+  // a guest may read a thread; answering in it is the account's
+  const { require } = useAccountGate();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const navigation = useNavigation<RootNavigation>();
@@ -127,7 +130,7 @@ function CommentRow({
         {/* nothing to answer or take back until the server has it */}
         {!c.pending && !removed ? (
           <View style={styles.actions}>
-            <Pressable onPress={() => thread.reply(c)} hitSlop={ACTION_SLOP} accessibilityRole="button" style={styles.action}>
+            <Pressable onPress={() => require('comment') && thread.reply(c)} hitSlop={ACTION_SLOP} accessibilityRole="button" style={styles.action}>
               <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('comments.reply')}</Text>
             </Pressable>
             {mine ? (
@@ -202,7 +205,32 @@ export function CommentComposer({
   const { colors } = useTheme();
   const { t } = useI18n();
   const bottom = useScreenBottomInset(spacing.md);
+  const { isGuest, require } = useAccountGate();
   const target = thread.replyingTo;
+  /*
+   * A guest sees where a comment would go and, tapping it, the offer of an
+   * account — not a field to type a comment into and then be refused it.
+   */
+  if (isGuest) {
+    return (
+      <View style={[styles.composerWrap, { paddingBottom: bottom }]}>
+        <Pressable
+          onPress={() => require('comment')}
+          accessibilityRole="button"
+          accessibilityLabel={placeholder}
+          testID="comment-composer-guest"
+          style={({ pressed }) => [styles.composer, { backgroundColor: colors.glassFill, opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Text style={[styles.input, { color: colors.textSecondary }]} numberOfLines={1}>
+            {placeholder}
+          </Text>
+          <View style={styles.send}>
+            <Icon name="lock" size={20} color={colors.textSecondary} />
+          </View>
+        </Pressable>
+      </View>
+    );
+  }
   return (
     <View style={[styles.composerWrap, { paddingBottom: bottom }]}>
       {target ? (

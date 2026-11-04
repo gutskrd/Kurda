@@ -44,7 +44,9 @@ type Executor = Pick<pg.Pool, 'query'>;
  * is asked, so a minor who never chose joins in on their own once they are 18.
  */
 export function inLeaguesSql(alias: string): string {
-  return `COALESCE(${alias}.leagues_enabled, NOT ${notKnownAdultSql(alias)})`;
+  // never a guest (auth/guest.ts): a league table is a list of other people,
+  // which a guest may not be on, whatever the setting says
+  return `(COALESCE(${alias}.leagues_enabled, NOT ${notKnownAdultSql(alias)}) AND NOT ${alias}.guest)`;
 }
 
 /**

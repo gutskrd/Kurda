@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { RANKED_GAMES, isSeasonId, type RankedGame } from '@kurda/shared';
-import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { requireAccount, requireRoles } from '../plugins/auth.js';
 import { RANK_TOOL_ROLES } from '../admin/roles.js';
 import { AppError } from '../plugins/errors.js';
 import type { RankService } from './service.js';
@@ -32,15 +32,15 @@ export function registerRankRoutes(
   const { ranks, seasons, admin } = deps;
 
   /** Your rank in every game, a running rated-game cooldown, and the season (`MyRanks`). */
-  app.get('/ranks/me', { preHandler: requireAuth }, async (req) => ranks.myRanks(req.user!.id));
+  app.get('/ranks/me', { preHandler: requireAccount }, async (req) => ranks.myRanks(req.user!.id));
 
   /** Your rank in one game (`RankCard`). */
-  app.get('/ranks/me/:game', { schema: { params: gameParam }, preHandler: requireAuth }, async (req) =>
+  app.get('/ranks/me/:game', { schema: { params: gameParam }, preHandler: requireAccount }, async (req) =>
     ranks.card(req.user!.id, (req.params as { game: RankedGame }).game),
   );
 
   /** What a game you played did to your rank, with its one plain reason (`RankResult`). */
-  app.get('/ranks/results/:game/:ref', { schema: { params: refParams }, preHandler: requireAuth }, async (req) => {
+  app.get('/ranks/results/:game/:ref', { schema: { params: refParams }, preHandler: requireAccount }, async (req) => {
     const p = req.params as { game: RankedGame; ref: string };
     const result = await ranks.result(req.user!.id, p.game, p.ref);
     if (!result) throw notFound();
@@ -48,7 +48,7 @@ export function registerRankRoutes(
   });
 
   /** In a lobby you are in: "Win ≈ +24 · Lose ≈ −8" per opponent, and whether it would count now (`ExpectedGains`). */
-  app.get('/ranks/expected/:game/:lobbyId', { schema: { params: lobbyParams }, preHandler: requireAuth }, async (req) => {
+  app.get('/ranks/expected/:game/:lobbyId', { schema: { params: lobbyParams }, preHandler: requireAccount }, async (req) => {
     const p = req.params as { game: RankedGame; lobbyId: string };
     const gains = await ranks.expected(req.user!.id, p.game, p.lobbyId);
     if (!gains) throw notFound();
@@ -58,7 +58,7 @@ export function registerRankRoutes(
   /** A game's Friends board (always) or Top board (`RankBoard`). */
   app.get(
     '/ranks/boards/:game',
-    { schema: { params: gameParam, querystring: boardQuery }, preHandler: requireAuth },
+    { schema: { params: gameParam, querystring: boardQuery }, preHandler: requireAccount },
     async (req) => {
       const { scope } = req.query as z.infer<typeof boardQuery>;
       return ranks.board(req.user!.id, (req.params as { game: RankedGame }).game, scope);
@@ -66,7 +66,7 @@ export function registerRankRoutes(
   );
 
   /** Your remembered Rated/Friendly choice per game (what a setup sheet starts on). */
-  app.get('/ranks/preferences', { preHandler: requireAuth }, async (req) => {
+  app.get('/ranks/preferences', { preHandler: requireAccount }, async (req) => {
     const rows = await app.db.query<{ game: RankedGame; rated: boolean }>(
       `SELECT game, rated FROM rank_preferences WHERE user_id = $1`,
       [req.user!.id],
@@ -77,7 +77,7 @@ export function registerRankRoutes(
   /** Remember a Rated/Friendly choice for a game (a setup sheet's toggle, before any lobby exists). */
   app.put(
     '/ranks/preferences/:game',
-    { schema: { params: gameParam, body: ratedBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth },
+    { schema: { params: gameParam, body: ratedBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAccount },
     async (req) => {
       const { game: g } = req.params as { game: RankedGame };
       const { rated } = req.body as z.infer<typeof ratedBody>;
@@ -87,10 +87,10 @@ export function registerRankRoutes(
   );
 
   /** The season now, its rewards, and your last season (`SeasonOverview`). */
-  app.get('/ranks/seasons/current', { preHandler: requireAuth }, async (req) => seasons.overview(req.user!.id));
+  app.get('/ranks/seasons/current', { preHandler: requireAccount }, async (req) => seasons.overview(req.user!.id));
 
   /** Your season emblems, kept forever (`SeasonEmblem[]`). */
-  app.get('/ranks/seasons/me', { preHandler: requireAuth }, async (req) => ({ emblems: await seasons.emblems(req.user!.id) }));
+  app.get('/ranks/seasons/me', { preHandler: requireAccount }, async (req) => ({ emblems: await seasons.emblems(req.user!.id) }));
 
   // ---- admin -----------------------------------------------------------------
 

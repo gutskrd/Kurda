@@ -6,7 +6,7 @@ import { DELETION_GRACE_DAYS, GdprService } from '../gdpr/service.js';
 import { appleTokens } from '../auth/apple-tokens.js';
 import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
-import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { guestAccountError, requireAccount, requireAuth, requireRoles } from '../plugins/auth.js';
 import { validateUsername, USERNAME_ERROR_MESSAGE } from './username.js';
 import { StreakService } from '../streaks/service.js';
 import { SocialService } from '../social/service.js';
@@ -84,7 +84,8 @@ export const patchMeBodySchema = z
 
 interface MeRow {
   id: string;
-  email: string;
+  /** null for a guest, who has none until the account is claimed */
+  email: string | null;
   username: string;
   display_name: string | null;
   bio: string | null;
@@ -108,6 +109,8 @@ interface MeRow {
   premium_icon_enabled: boolean;
   premium_until: Date | null;
   country: string | null;
+  /** a guest account (auth/guest.ts): learning only, until claimed */
+  guest: boolean;
   created_at: Date;
 }
 
@@ -123,10 +126,20 @@ function toMe(row: MeRow) {
     roles: row.roles,
     emailVerified: row.email_verified_at !== null,
     consentVersion: row.consent_version,
-    needsReconsent: row.consent_version !== CURRENT_POLICY_VERSION,
+    /**
+     * A guest has consented to nothing yet, and is not asked to until the
+     * claim form, which records it: a re-consent prompt would be the wrong
+     * question for an account that has no account.
+     */
+    needsReconsent: !row.guest && row.consent_version !== CURRENT_POLICY_VERSION,
     analyticsConsent: row.analytics_consent,
-    /** no birth month on record yet: the clients ask once before anything else */
-    birthDateRequired: row.birth_year == null,
+    /**
+     * no birth month on record yet: the clients ask once before anything else.
+     * Never for a guest, whom the claim form asks, and who is offered nothing
+     * that needs the answer.
+     */
+    birthDateRequired: row.birth_year == null && !row.guest,
+    guest: row.guest,
     /** 13–17 today, worked out now rather than stored (users/age.ts) */
     minor: isMinorRow(row),
     /**
@@ -159,21 +172,22 @@ async function scheduleOrphan(app: FastifyInstance, oldKey: string | null, newKe
   await app.db.query(`UPDATE media_uploads SET confirmed_at = NULL, created_at = now() WHERE key = $1`, [oldKey]);
 }
 
-export function registerUserRoutes(app: FastifyInstance, config: AppConfig): void {
+/**
+ * What GET /me answers with, for one account: the row's own fields, the
+ * streak settled on read, and the resolved cosmetics and progression the
+ * public profile shows. Its own function because POST /auth/claim answers
+ * with the same thing — the app replaces what it holds for the signed-in
+ * person with it, and two renderings of "me" would drift apart.
+ */
+export function createMeReader(app: FastifyInstance): (userId: string) => Promise<Record<string, unknown>> {
   const streaks = new StreakService(app.db);
-  const limits = mediaLimits(config);
-  const usage = new MediaUsageService(app.db, app.redis ?? null);
-  // The raw-image body parser is registered app-wide (registerImageUploadParser),
-  // shared with the meme/image upload route (KUR-290).
-
+  const social = new SocialService(app.db, new FriendService(app.db));
   /** Resolve a stored photo key to a public CDN URL (null when unset/no storage). */
   const photoUrl = (key: string | null): string | null =>
     key && app.storage ? app.storage.publicUrl(key) : null;
 
-  const social = new SocialService(app.db, new FriendService(app.db));
-
-  app.get('/me', { preHandler: requireAuth }, async (req) => {
-    const result = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [req.user!.id]);
+  return async (userId) => {
+    const result = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]);
     const row = result.rows[0] as MeRow;
     // settle the streak on read so a lapsed day shows as broken (KUR-031)
     const streak = await streaks.get(row.id, row.timezone);
@@ -181,28 +195,36 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     // favorites (self view: friendStatus 'self', details always visible)
     const publicDto = toPublicProfileDto(await social.profile(row.id, row.id), app.storage);
     return {
-      user: {
-        ...toMe(row),
-        streak,
-        profilePhotoUrl: photoUrl(row.profile_photo_key),
-        // resolved, safe cosmetic + progression fields (same as public profile)
-        avatarUrl: publicDto.avatarUrl,
-        background: publicDto.background,
-        icon: publicDto.icon,
-        level: publicDto.level,
-        premium: publicDto.premium,
-        favoritePoem: publicDto.favoritePoem,
-        favoriteStory: publicDto.favoriteStory,
-        // self-only equip state, for the cosmetic pickers (not exposed publicly)
-        premiumIconEnabled: row.premium_icon_enabled,
-        country: row.country,
-        selectedAvatarKey: row.selected_avatar_key,
-        equippedBackgroundSku: row.equipped_background_sku,
-        equippedIconSku: row.equipped_icon_sku,
-        premiumUntil: row.premium_until,
-      },
+      ...toMe(row),
+      streak,
+      profilePhotoUrl: photoUrl(row.profile_photo_key),
+      // resolved, safe cosmetic + progression fields (same as public profile)
+      avatarUrl: publicDto.avatarUrl,
+      background: publicDto.background,
+      icon: publicDto.icon,
+      level: publicDto.level,
+      premium: publicDto.premium,
+      favoritePoem: publicDto.favoritePoem,
+      favoriteStory: publicDto.favoriteStory,
+      // self-only equip state, for the cosmetic pickers (not exposed publicly)
+      premiumIconEnabled: row.premium_icon_enabled,
+      country: row.country,
+      selectedAvatarKey: row.selected_avatar_key,
+      equippedBackgroundSku: row.equipped_background_sku,
+      equippedIconSku: row.equipped_icon_sku,
+      premiumUntil: row.premium_until,
     };
-  });
+  };
+}
+
+export function registerUserRoutes(app: FastifyInstance, config: AppConfig): void {
+  const limits = mediaLimits(config);
+  const usage = new MediaUsageService(app.db, app.redis ?? null);
+  // The raw-image body parser is registered app-wide (registerImageUploadParser),
+  // shared with the meme/image upload route (KUR-290).
+  const me = createMeReader(app);
+
+  app.get('/me', { preHandler: requireAuth }, async (req) => ({ user: await me(req.user!.id) }));
 
   /**
    * Presence heartbeat: the client pings this periodically while the app is
@@ -235,8 +257,9 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      // a picture like any other: a feature limit on pictures covers this one too
-      preHandler: [requireAuth, requireUnrestricted('media')],
+      // a picture like any other: a feature limit on pictures covers this one
+      // too — and it is shown to other people, which a guest is not yet
+      preHandler: [requireAccount, requireUnrestricted('media')],
     },
     async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
@@ -266,7 +289,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   );
 
   /** Clear the photo (revert to the initials fallback). */
-  app.delete('/me/profile-picture', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
+  app.delete('/me/profile-picture', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => {
     const prev = await app.db.query<{ profile_photo_key: string | null }>(
       `SELECT profile_photo_key FROM users WHERE id = $1`,
       [req.user!.id],
@@ -425,8 +448,18 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     },
   );
 
-  /** GDPR: start the 14-day deletion grace period (KUR-024). */
+  /**
+   * GDPR: start the 14-day deletion grace period (KUR-024).
+   *
+   * A guest is closed at once instead: the grace period exists so the owner
+   * can sign in again and change their mind, and a guest has no way to sign
+   * in again — nor an address for the notice the grace period sends.
+   */
   app.delete('/me', { preHandler: requireAuth }, async (req) => {
+    if (req.user!.guest === true) {
+      await gdpr.closeNow(req.user!.id, 'guest_left');
+      return { deletionScheduled: false, deleted: true, graceDays: 0 };
+    }
     await gdpr.requestDeletion(req.user!.id);
     return { deletionScheduled: true, graceDays: DELETION_GRACE_DAYS };
   });
@@ -499,10 +532,13 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     async (req) => {
       const body = req.body as z.infer<typeof patchMeBodySchema>;
       const userId = req.user!.id;
-      // what others read about you is published text: not while you may not post
-      if (body.displayName !== undefined || body.bio !== undefined || body.username !== undefined) {
-        await assertUnrestricted(app.db, userId, 'post');
-      }
+      // what others read about you is published text: not while you may not
+      // post — and not as a guest, whom nobody reads; nor may a guest join the
+      // leagues, a table of other people. Language, time zone, country and the
+      // speaking setting are the learner's own, and stay open to a guest.
+      const published = body.displayName !== undefined || body.bio !== undefined || body.username !== undefined;
+      if (req.user!.guest === true && (published || body.leaguesEnabled !== undefined)) throw guestAccountError();
+      if (published) await assertUnrestricted(app.db, userId, 'post');
 
       const sets: string[] = [];
       const values: unknown[] = [userId];

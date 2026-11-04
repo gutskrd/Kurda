@@ -17,13 +17,18 @@ const RealtimeContext = createContext<RealtimeClient | null>(null);
  *
  * Every hook below works without it too (they do nothing), so a screen can be
  * rendered on its own in a test or before sign-in finishes.
+ *
+ * A guest has no channel to listen on — nobody can write to them, invite them
+ * or send them a gift, and the ticket is one of the routes refused to them —
+ * so no connection is opened for one. The hooks then do nothing, as they do
+ * before sign-in.
  */
 export function RealtimeProvider({ children }: { children: ReactNode }): React.JSX.Element {
-  const { client, baseUrl, status } = useAuth();
+  const { client, baseUrl, status, isGuest } = useAuth();
   const [realtime, setRealtime] = useState<RealtimeClient | null>(null);
 
   useEffect(() => {
-    if (status !== 'signedIn') return;
+    if (status !== 'signedIn' || isGuest) return;
     const rt = new RealtimeClient({
       baseUrl,
       fetchTicket: async () => {
@@ -42,7 +47,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }): React.J
       rt.stop();
       setRealtime(null);
     };
-  }, [client, baseUrl, status]);
+  }, [client, baseUrl, status, isGuest]);
 
   return <RealtimeContext.Provider value={realtime}>{children}</RealtimeContext.Provider>;
 }

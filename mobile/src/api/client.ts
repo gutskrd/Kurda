@@ -1,5 +1,6 @@
 import { maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
+import { GUEST_ACCOUNT_CODE } from './errors';
 import type { ApiError, ApiResult, TokenPair, TokenStorage } from './types';
 
 type FetchLike = (url: string, init: RequestInit) => Promise<Response>;
@@ -25,6 +26,15 @@ export interface ApiClientOptions {
    * it is.
    */
   onMaintenance?: (notice: MaintenanceNotice) => void;
+  /**
+   * Called when a guest account was refused something only a full account may
+   * do (403 GUEST_ACCOUNT). The app gates those places before a request is
+   * made, so this is the net under the gate: a route it forgot, or a server
+   * that has grown a new refusal, opens the offer to create an account instead
+   * of an alert with the server's words in it. The call still comes back as
+   * the refusal it is.
+   */
+  onGuestRefused?: () => void;
   fetchFn?: FetchLike;
   /** Injectable for tests. */
   idGenerator?: () => string;
@@ -299,6 +309,9 @@ export class ApiClient {
       const notice = maintenanceNoticeOf(envelope);
       if (notice) this.opts.onMaintenance?.(notice);
     }
+
+    // a guest at a door only an account opens: the offer to make one goes up (auth/AccountGate)
+    if (res.status === 403 && envelope.code === GUEST_ACCOUNT_CODE) this.opts.onGuestRefused?.();
 
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get('retry-after'));

@@ -46,7 +46,7 @@ import { lobbyRoute } from './routes';
  * ever hears "can't play right now" or "would rather play something else".
  */
 export function InviteBanner(): React.JSX.Element | null {
-  const { client } = useAuth();
+  const { client, isGuest } = useAuth();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const onTabs = useOnTabs();
@@ -63,10 +63,12 @@ export function InviteBanner(): React.JSX.Element | null {
   const answered = useRef(new Set<string>());
 
   const load = useCallback(() => {
+    // nobody can invite a guest, and the server refuses the question: nothing to ask for
+    if (isGuest) return;
     void listInvites(client).then((res) => {
       if (res.ok) setInvites(res.data.incoming.filter((i) => !answered.current.has(i.id)));
     });
-  }, [client]);
+  }, [client, isGuest]);
   useEffect(load, [load]);
   useRealtimeReconnect(load);
 

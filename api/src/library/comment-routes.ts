@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted, voiceAttachable } from '../moderation/restrictions.js';
 import { LibraryCommentService, type CreateCommentInput } from './comment-service.js';
@@ -51,7 +51,7 @@ export function registerLibraryCommentRoutes(
     {
       schema: { params: postIdParam, body: createBody },
       config: { rateLimit: { max: 30, windowMs: 60_000 } },
-      preHandler: [requireBirthMonth, requireUnrestricted('post')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
     },
     async (req, reply) => {
       const { postId } = req.params as { postId: string };
@@ -132,7 +132,7 @@ export function registerLibraryCommentRoutes(
   /** Edit own comment (admins any). */
   app.patch(
     '/library/comments/:id',
-    { schema: { params: idParam, body: editBody }, preHandler: [requireBirthMonth, requireUnrestricted('post')] },
+    { schema: { params: idParam, body: editBody }, preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')] },
     async (req, reply) => {
       const input = req.body as CreateCommentInput;
       // a voice note added in an edit is checked like one on a new comment (the
@@ -152,7 +152,7 @@ export function registerLibraryCommentRoutes(
   /** Soft-delete (author or admin); subtree preserved as a tombstone. */
   app.delete(
     '/library/comments/:id',
-    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req, reply) =>
       respond(reply, await comments.remove((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req))),
   );

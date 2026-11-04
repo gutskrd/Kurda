@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { VISIBILITIES, type SocialService, type Visibility } from './service.js';
 import { toPublicProfileDto } from './profile-dto.js';
 import { AppError } from '../plugins/errors.js';
@@ -41,7 +41,7 @@ export function registerSocialRoutes(
     {
       schema: { querystring: z.object({ q: z.string().min(1).max(30) }) },
       config: { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => ({
       results: await social.search(req.user!.id, (req.query as { q: string }).q, (k) => (app.storage ? app.storage.publicUrl(k) : null)),
@@ -53,7 +53,7 @@ export function registerSocialRoutes(
     '/me/privacy',
     {
       schema: { body: z.object({ visibility: z.enum(VISIBILITIES) }) },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { visibility } = req.body as { visibility: Visibility };
@@ -199,7 +199,7 @@ export function registerSocialRoutes(
         }),
       },
       config: { rateLimit: { max: 5, windowMs: 60 * 60_000, per: 'user-or-ip' as const } },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { id } = req.params as { id: string };
@@ -234,7 +234,7 @@ export function registerSocialRoutes(
           >,
         ),
       },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => ({
       sections: await activity.setSections(req.user!.id, req.body as Record<string, boolean>),
@@ -258,7 +258,7 @@ export function registerSocialRoutes(
         params: z.object({ type: z.string().max(16), id: z.uuid(), kind: z.string().max(16) }),
       },
       config: { rateLimit: { max: 120, windowMs: 60_000, per: 'user-or-ip' as const }, skipValidation: true },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { type, id, kind } = req.params as { type: string; id: string; kind: string };

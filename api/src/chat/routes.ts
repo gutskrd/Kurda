@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
 import type { ChatService } from './service.js';
@@ -18,7 +18,7 @@ export function registerChatRoutes(
   aiMod?: AiModerationService,
 ): void {
   /** Conversation list with last message + unread counts. */
-  app.get('/chat/conversations', { preHandler: requireAuth }, async (req) => ({
+  app.get('/chat/conversations', { preHandler: requireAccount }, async (req) => ({
     conversations: await chat.conversations(req.user!.id, (k) => (app.storage ? app.storage.publicUrl(k) : null)),
   }));
 
@@ -30,7 +30,7 @@ export function registerChatRoutes(
         params: userParam,
         querystring: z.object({ before: z.string().datetime().optional() }),
       },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       const { userId } = req.params as { userId: string };
@@ -46,7 +46,7 @@ export function registerChatRoutes(
     {
       schema: { params: userParam, body: z.object({ body: z.string().min(1).max(MAX_MESSAGE_LEN) }) },
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: [requireBirthMonth, requireUnrestricted('chat')],
+      preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('chat')],
     },
     async (req, reply) => {
       const { userId } = req.params as { userId: string };
@@ -85,7 +85,7 @@ export function registerChatRoutes(
 
   if (trust) {
     /** Current trust level + per-action caps (transparency for the client). */
-    app.get('/me/trust', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
+    app.get('/me/trust', { config: { skipValidation: true }, preHandler: requireAccount }, async (req) => {
       const level = await trust.getLevel(req.user!.id);
       return { level, caps: trust.capsFor(level) };
     });
@@ -94,7 +94,7 @@ export function registerChatRoutes(
   /** Mark their messages read (fires a read receipt). */
   app.post(
     '/chat/:userId/read',
-    { schema: { params: userParam }, config: { skipValidation: true }, preHandler: requireAuth },
+    { schema: { params: userParam }, config: { skipValidation: true }, preHandler: requireAccount },
     async (req) => ({ read: await chat.markRead(req.user!.id, (req.params as { userId: string }).userId) }),
   );
 
@@ -111,7 +111,7 @@ export function registerChatRoutes(
         skipValidation: true,
         rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const },
       },
-      preHandler: requireAuth,
+      preHandler: requireAccount,
     },
     async (req) => {
       await chat.typing(req.user!.id, (req.params as { userId: string }).userId);

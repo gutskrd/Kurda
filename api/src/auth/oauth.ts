@@ -138,9 +138,16 @@ export class OAuthService {
     /** the app's `x-device-id`: the devices list lists the session under it */
     deviceId?: string | null,
     extras: AppleSignInExtras = {},
+    /**
+     * The guest signed in while asking (auth/guest.ts): an identity nobody has
+     * claims that row rather than making a new one, so what was learned as a
+     * guest is kept. An identity that already has an account signs that
+     * account in as ever, and the guest row is simply left behind.
+     */
+    guestId: string | null = null,
   ): Promise<{ user: PublicUser; tokens: IssuedTokens; created: boolean }> {
     const identity = await verifyProviderToken(this.config, provider, idToken, this.jwksResolver);
-    const signedIn = await this.signInAs(identity, deviceName, deviceId, extras);
+    const signedIn = await this.signInAs(identity, deviceName, deviceId, extras, guestId);
     if (provider === 'apple' && extras.authorizationCode && this.apple) {
       // After the sign-in has succeeded, and not awaited: Apple being slow or
       // down must not hold it up. `keep` logs its own failures as warnings.
@@ -154,6 +161,7 @@ export class OAuthService {
     deviceName: string | undefined,
     deviceId: string | null | undefined,
     extras: AppleSignInExtras,
+    guestId: string | null,
   ): Promise<{ user: PublicUser; tokens: IssuedTokens; created: boolean }> {
     // 1) known identity → login
     const known = await this.pool.query<{ user_id: string }>(
@@ -201,6 +209,21 @@ export class OAuthService {
     // the person shared, which Apple gives it on their first sign-in only. It
     // names a new account; an existing one keeps the name it has.
     const name = identity.name ?? (identity.provider === 'apple' ? displayNameFrom(extras.fullName) : null);
+
+    // 3a) a guest asked: their row becomes the account, keeping its username
+    //     and everything learned; `created` all the same, since to the app
+    //     this identity has just become an account and the sign-up steps that
+    //     follow one (the birth month question) are still to come
+    if (guestId !== null) {
+      const claimed = await this.claimGuest(guestId, identity, email, name);
+      if (claimed) {
+        await this.link(claimed.id, identity);
+        const tokens = await issueTokenPair(this.config, this.pool, claimed, { deviceName, deviceId });
+        return { user: toPublicUser(claimed), tokens, created: true };
+      }
+      // not a guest any more (claimed elsewhere a moment ago): a new account, as for anyone
+    }
+
     const username = await uniqueUsername(
       this.pool,
       name ?? identity.email?.split('@')[0] ?? 'learner',
@@ -231,6 +254,36 @@ export class OAuthService {
     await this.link(user.id, identity);
     const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
     return { user: toPublicUser(user), tokens, created: true };
+  }
+
+  /**
+   * The guest row takes the provider's address (confirmed when the provider
+   * says so; a provider-confirmed address is how every social sign-up is
+   * confirmed) and the shared name where it had none, and stops being a guest.
+   * Null when the row is no longer a guest. An address already on another
+   * account is answered as sign-up answers it, without saying whose it is.
+   */
+  private async claimGuest(guestId: string, identity: ProviderIdentity, email: string, name: string | null): Promise<UserRow | null> {
+    try {
+      const claimed = await this.pool.query<UserRow>(
+        `UPDATE users SET email = $2, email_verified_at = CASE WHEN $3 THEN now() ELSE NULL END,
+                display_name = COALESCE(display_name, $4),
+                guest = false, guest_device_hash = NULL
+          WHERE id = $1 AND guest AND deleted_at IS NULL
+          RETURNING *`,
+        [guestId, email, identity.emailVerified, name],
+      );
+      return claimed.rows[0] ?? null;
+    } catch (err) {
+      if ((err as { constraint?: string }).constraint === 'users_email_active_uniq') {
+        throw new AppError(
+          'REGISTRATION_FAILED',
+          409,
+          'unable to register with these details — if you already have an account, log in or reset your password',
+        );
+      }
+      throw err;
+    }
   }
 
   private async link(userId: string, identity: ProviderIdentity): Promise<void> {

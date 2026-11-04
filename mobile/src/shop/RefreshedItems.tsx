@@ -52,14 +52,15 @@ const RETURN_COPY: Record<string, TranslationKey> = {
  * so with a way to the Shop. Either button marks it seen, on every device.
  */
 export function RefreshedNotice(): React.JSX.Element | null {
-  const { client, user } = useAuth();
+  const { client, user, isGuest } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    // a guest owns nothing from the shop, and the inventory is refused to one
+    if (!user || isGuest) return;
     let active = true;
     void getInventory(client).then((res) => {
       if (active && res.ok && shouldShowRefreshNotice(res.data)) setOpen(true);
@@ -67,7 +68,7 @@ export function RefreshedNotice(): React.JSX.Element | null {
     return () => {
       active = false;
     };
-  }, [client, user]);
+  }, [client, user, isGuest]);
 
   if (!open) return null;
 
