@@ -332,6 +332,47 @@ describe('the story page', () => {
     expect(document.querySelector('.story-sentence.is-reading')?.textContent).toBe(S2);
   });
 
+  it('brings the sentence being read to the middle of the screen, and leaves the page alone while it is in sight', async () => {
+    const asked: Array<{ text: string | null; options: unknown }> = [];
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value(this: Element, options: unknown) {
+        asked.push({ text: this.textContent, options });
+      },
+    });
+    // the first sentence is below the fold, the second in the middle of the screen
+    const rect = (top: number) => ({ top, bottom: top + 30, height: 30, left: 0, right: 300, width: 300, x: 0, y: top, toJSON: () => ({}) }) as DOMRect;
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      if (this.textContent === S1) return rect(window.innerHeight + 200);
+      if (this.textContent === S2) return rect(300);
+      return rect(0);
+    });
+    fakeApi({
+      'GET /stories/qelema-sin': detail({
+        narration: {
+          sentences: [
+            { paragraph: 0, sentence: 0, key: lessonAudioKey(S1), url: 'https://cdn.test/1.m4a', durationMs: 2000, startMs: 0 },
+            { paragraph: 0, sentence: 1, key: lessonAudioKey(S2), url: 'https://cdn.test/2.m4a', durationMs: 3000, startMs: 2000 },
+          ],
+          totalMs: 5000,
+          complete: true,
+        },
+      }),
+    });
+    try {
+      reader();
+      await userEvent.click((await screen.findAllByRole('button', { name: 'Listen' }))[0]!);
+      const sentences = () => asked.filter((a) => a.text === S1 || a.text === S2);
+      await waitFor(() => expect(sentences()).toEqual([{ text: S1, options: { block: 'center', behavior: 'smooth' } }]));
+      act(() => soundPlayer()!.dispatchEvent(new Event('ended')));
+      expect(document.querySelector('.story-sentence.is-reading')?.textContent).toBe(S2);
+      // already in sight, clear of the bar and the player: the page stays where it is
+      expect(sentences()).toHaveLength(1);
+    } finally {
+      delete (Element.prototype as { scrollIntoView?: unknown }).scrollIntoView;
+    }
+  });
+
   it('offers Listen on a paragraph with recordings, and nothing on one without', async () => {
     fakeApi({ 'GET /stories/qelema-sin': detail({ audio: { [lessonAudioKey(S1)]: 'https://cdn.test/1.m4a' } }) });
     reader();

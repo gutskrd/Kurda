@@ -455,12 +455,41 @@
   font-size: 0.8rem;
   color: var(--ink-3);
 }
+/*
+ * A quiet dot between the facts, never read out. Every fact after the first
+ * carries one in front, and the row starts a dot's width early with that
+ * width cut off (the first fact steps in by as much), so a dot that a wrap
+ * would put at the start of a line is never seen.
+ */
+.story-card-meta,
+.story-meta,
+.story-byline {
+  --dot: 20px;
+  margin-inline-start: calc(-1 * var(--dot));
+  clip-path: inset(-4px -4px -4px var(--dot));
+}
+.story-card-meta:dir(rtl),
+.story-meta:dir(rtl),
+.story-byline:dir(rtl) {
+  clip-path: inset(-4px var(--dot) -4px -4px);
+}
+.story-card-meta > span:first-child,
+.story-meta > span:first-child,
+.story-byline > span:first-child {
+  margin-inline-start: var(--dot);
+}
 .story-card-meta > span + span::before,
-.story-meta > span + span::before {
-  /* a quiet dot between the facts, never read out */
+.story-meta > span + span::before,
+.story-byline > span + span::before {
   content: '·';
-  margin-inline: 8px;
+  display: inline-block;
+  width: var(--dot);
+  text-align: center;
   color: var(--ink-4);
+}
+/* the headphones sit a gap after their dot; the dot needs no more room than it has elsewhere */
+.story-narrated::before {
+  margin-inline-end: -5px;
 }
 .story-cefr {
   display: inline-flex;
@@ -649,7 +678,7 @@
   min-width: 0;
 }
 .story-meta {
-  margin: 0;
+  margin-block: 0;
 }
 .story-title {
   margin: 0;
@@ -667,14 +696,9 @@
   display: flex;
   flex-wrap: wrap;
   gap: 4px 0;
-  margin: 0;
+  margin-block: 0;
   font-size: var(--text-secondary);
   color: var(--ink-3);
-}
-.story-byline > span + span::before {
-  content: '·';
-  margin-inline: 8px;
-  color: var(--ink-4);
 }
 .story-summary {
   margin: 0;
@@ -717,7 +741,8 @@
 /* the reader's tools: the size, and how long is left, in reach while the text scrolls */
 .story-tools {
   position: sticky;
-  top: calc(var(--nav-h) + var(--invite-banner-h, 0px) + 8px);
+  /* hangs from the app's bar, which stays at the top at every width */
+  top: calc(var(--nav-bottom) + var(--invite-banner-h, 0px) + 8px);
   z-index: 5;
   width: fit-content;
   max-width: 100%;
@@ -732,11 +757,6 @@
   background: color-mix(in srgb, var(--app-bg) 82%, transparent);
   -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
-}
-@media (max-width: 860px) {
-  .story-tools {
-    top: 8px;
-  }
 }
 .story-tools-left {
   padding: 0 8px;
@@ -803,7 +823,7 @@
   font-size: var(--text-secondary);
 }
 
-/* the text: the display serif at 18px and up, room between the lines, a measure of 36 em */
+/* the text: the display serif at about 19.5px to start with, room between the lines, a measure of 36 em */
 .story-reader {
   position: relative;
   margin-bottom: 26px;
@@ -813,7 +833,9 @@
 }
 .story-para {
   margin-bottom: 1.25em;
-  font-size: calc(var(--story-size) * 1.125rem);
+  font-size: calc(var(--story-size) * 1.0625rem);
+  /* Read and Continue bring a paragraph to the top: below the app's bar and the reader's tools, not under them */
+  scroll-margin-top: calc(var(--nav-bottom) + var(--invite-banner-h, 0px) + 80px);
 }
 .story-para p {
   margin: 0;
@@ -1406,167 +1428,6 @@
   .story-player.is-docked .story-player-narrator-name {
     display: none;
   }
-}
-
-/* the text */
-.story-text {
-  --story-size: 1.15rem;
-}
-.story-para {
-  margin-bottom: 1.1em;
-}
-.story-para p {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--story-size);
-  line-height: 1.8;
-  color: var(--ink);
-  text-wrap: pretty;
-}
-.story-para p[lang='ckb'] {
-  /* Arabic script needs more air between lines for its marks */
-  line-height: 2.05;
-}
-.story-sentence {
-  border-radius: 4px;
-  transition: background 0.2s ease;
-  -webkit-box-decoration-break: clone;
-  box-decoration-break: clone;
-}
-.story-sentence.is-reading {
-  background: color-mix(in srgb, var(--gold) 22%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 22%, transparent);
-}
-.story-sentence.is-evidence,
-.story-para p.is-evidence {
-  background: color-mix(in srgb, var(--success) 18%, transparent);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 18%, transparent);
-}
-.story-gloss-hold {
-  /* a glossary word keeps the quote or comma beside it on its own line */
-  white-space: nowrap;
-}
-.story-gloss {
-  display: inline;
-  padding: 0;
-  margin: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: inherit;
-  cursor: help;
-  text-decoration: underline dotted;
-  text-decoration-color: var(--gold);
-  text-decoration-thickness: 2px;
-  text-underline-offset: 0.28em;
-}
-.story-gloss:hover,
-.story-gloss[aria-expanded='true'] {
-  color: var(--gold-ink);
-}
-.story-gloss:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-  border-radius: 3px;
-}
-.story-listen {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 36px;
-  margin-top: 6px;
-  padding: 0 12px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--ink-3);
-  font-size: 0.84rem;
-  cursor: pointer;
-}
-.story-listen:hover,
-.story-listen.is-on {
-  color: var(--ink);
-  border-color: var(--border-strong);
-  background: var(--surface-2);
-}
-/* a finger needs 44px (contract §A1): the reader's and the game's small controls grow on touch screens */
-@media (pointer: coarse) {
-  .story-listen,
-  .sg-english {
-    min-height: 44px;
-  }
-  .story-player-rate {
-    height: 44px;
-  }
-  .story-gloss-close {
-    min-width: 44px;
-    min-height: 44px;
-  }
-  .story-game .btn-sm,
-  .story-page .btn-sm,
-  .story-library .btn-sm {
-    height: 44px;
-  }
-}
-
-/* a glossary word's meaning, beside the word */
-.story-gloss-pop {
-  position: fixed;
-  z-index: 60;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  width: max-content;
-  max-width: min(320px, calc(100vw - 24px));
-  padding: 12px 14px 10px;
-  border-radius: var(--r-md);
-  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
-  background: var(--panel-bg);
-  box-shadow: var(--shadow);
-  color: var(--ink);
-}
-.story-gloss-pop:focus {
-  outline: none;
-}
-.story-gloss-pop:focus-visible {
-  outline: 2px solid var(--focus);
-}
-.story-gloss-term {
-  font-family: var(--font-display);
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: var(--gold-ink);
-}
-.story-gloss-meaning {
-  font-size: 0.95rem;
-  line-height: 1.45;
-}
-.story-gloss-close {
-  align-self: flex-end;
-  min-height: 32px;
-  padding: 0 8px;
-  border: 0;
-  background: none;
-  color: var(--ink-3);
-  font-size: 0.82rem;
-  cursor: pointer;
-}
-.story-gloss-close:hover {
-  color: var(--ink);
-}
-
-/* "Words in this story" */
-.story-words {
-  margin-top: 34px;
-  padding-top: 22px;
-  border-top: 1px solid var(--border);
-}
-.story-word {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  gap: 14px;
-  padding: 9px 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
 
 /* ---- setting up a quiz -------------------------------------------------------- */
@@ -2492,14 +2353,15 @@ button.sg-option:focus-visible {
   line-height: 1.8;
 }
 .sg-review-answers {
+  /* the two answers line up: the labels in one column, the answers in the next */
   display: grid;
-  gap: 6px;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 6px 12px;
   margin: 6px 0 10px;
 }
 .sg-review-answers div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
+  display: contents;
 }
 .sg-review-answers dt {
   color: var(--ink-3);

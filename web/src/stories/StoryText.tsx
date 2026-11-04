@@ -82,6 +82,9 @@ export function paragraphSentences(paragraph: string, glossary: readonly StoryGl
   return out;
 }
 
+/** How much of the screen's top (the app's bar) and foot (the docked player) a sentence must clear to count as in sight. */
+const IN_SIGHT = { top: 96, bottom: 168 } as const;
+
 /**
  * A story's text, as the reader and the game show it.
  *
@@ -138,11 +141,21 @@ export function StoryText({
   const calm = useMediaQuery('(prefers-reduced-motion: reduce)');
   const current = audio?.current ?? null;
 
-  // the sentence being read stays in view; under reduced motion it jumps rather than glides
+  /*
+   * The sentence being read stays in view. While it is already in sight —
+   * clear of the bar at the top and the player docked at the foot — the page
+   * stays where the reader put it; once it leaves, it is brought to the middle
+   * of the screen, where the next few lines are in sight too, rather than to
+   * an edge the player would cover. Under reduced motion it jumps rather than
+   * glides.
+   */
   useEffect(() => {
-    if (current && reading.current) {
-      reading.current.scrollIntoView?.({ block: 'nearest', behavior: calm ? 'auto' : 'smooth' });
-    }
+    const el = reading.current;
+    if (!current || !el) return;
+    const box = el.getBoundingClientRect();
+    const height = window.innerHeight;
+    if (box.height > 0 && box.top >= IN_SIGHT.top && box.bottom <= height - IN_SIGHT.bottom) return;
+    el.scrollIntoView?.({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
   }, [current?.paragraph, current?.sentence, calm]);
 
   // the evidence for an answer is brought into view when it changes

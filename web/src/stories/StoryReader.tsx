@@ -19,6 +19,7 @@ import { Button } from '../components/Button';
 import { ErrorState, Loading } from '../components/states';
 import { ArrowIcon, BookmarkIcon, HeadphonesIcon, LockIcon } from '../components/icons';
 import { describeError } from '../lib/api';
+import { prefersReducedMotion } from '../lib/motion';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { dialectName } from '../learn/map';
@@ -135,7 +136,8 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
 
   const scrollToParagraph = (index: number): void => {
     const el = text.current?.querySelector<HTMLElement>(`[data-paragraph="${index}"]`) ?? text.current;
-    el?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+    // a reader who asked for less motion is taken there at once
+    el?.scrollIntoView?.({ block: 'start', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
   };
 
   const startReading = (): void => {
@@ -284,10 +286,16 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
             {story.attributionNote && <p>{story.attributionNote}</p>}
           </footer>
         )}
+        {/*
+         * Docked inside the text, the player stays at the foot of the screen
+         * while the text is on it, and nowhere above it: the overview's own
+         * buttons are never under it, and Listen brings the text — and the
+         * player with it — into view.
+         */}
+        {audio.track.length > 0 && <StoryPlayerBar audio={audio} docked />}
       </div>
 
       <CheckBlock story={story} me={me} id="story-check-end" />
-      {audio.track.length > 0 && <StoryPlayerBar audio={audio} docked />}
     </article>
   );
 }
