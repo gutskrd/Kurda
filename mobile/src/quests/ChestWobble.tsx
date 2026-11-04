@@ -1,19 +1,19 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Animated, Easing, StyleSheet } from 'react-native';
-import { useLive } from '../coursemap/live';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 
 /**
  * A chest that can be opened, asking to be: every few seconds it rocks on
  * its base — a quick shake, like something knocking from inside — and rests.
  * Only while `active` (a chest with Zêr in it, not opened yet), and only
  * while the screen is in front and the phone has not asked for less motion
- * (`useLive`): a shut chest and an opened one sit still, and so does a
+ * (`useMotionAlive`): a shut chest and an opened one sit still, and so does a
  * waiting one on a screen nobody is looking at. One rotation on the native
  * driver, about the chest's foot. `testID` is on it only while it moves, so
  * a test can count the chests that are shaking.
  */
 export function ChestWobble({ active, children, testID }: { active: boolean; children: ReactNode; testID?: string }): React.JSX.Element {
-  const live = useLive();
+  const live = useMotionAlive();
   const moving = active && live;
   const tilt = useRef(new Animated.Value(0)).current;
   useEffect(() => {

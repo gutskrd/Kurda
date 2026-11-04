@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { PATH_GEOMETRY, PATH_MASCOT } from '@kurda/shared';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
-import { useLive } from './live';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 
 /**
  * Hevalo beside the current stop on the path (`mascotSpot` places him): on
@@ -37,7 +37,7 @@ export function PathMascot({
   cheer: boolean;
   onPress: () => void;
 }): React.JSX.Element {
-  const live = useLive();
+  const live = useMotionAlive();
   const rock = useRef(new Animated.Value(0)).current;
   const hop = useRef(new Animated.Value(0)).current;
   const greeted = useRef(false);

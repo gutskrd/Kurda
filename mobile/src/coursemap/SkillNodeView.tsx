@@ -11,7 +11,7 @@ import { duration } from '../theme/motion';
 import { DrawnCheck, PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { useLive } from './live';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { GOLD_INK, GOLD_LIP, REST, mix, type ToneColors } from './path';
 import type { SkillNode } from './types';
 
@@ -315,7 +315,7 @@ function Ring({
  * front of the learner: one small thing moving where the next step is, which
  * is how the eye finds it on a long path. Slow and shallow, so it is company
  * rather than a nag, and it stops the moment the screen is not the one in
- * view, the app is not in front, or the phone asks for less motion (`useLive`),
+ * view, the app is not in front, or the phone asks for less motion (`useMotionAlive`),
  * so it never costs a frame nobody sees. It gives under the finger as every
  * button does. "Jump here?" over a later unit is `still` from the first: it
  * is an offer, not the next step, and there can be several on the screen at
@@ -339,7 +339,7 @@ function Callout({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const reduce = useReducedMotion();
-  const live = useLive();
+  const live = useMotionAlive();
   const lift = useRef(new Animated.Value(0)).current;
   const shown = useRef(new Animated.Value(arriving && !reduce ? 0 : 1)).current;
   // the bob waits for the fade-in the first time, and never again (the screen coming back into view starts it at once)
