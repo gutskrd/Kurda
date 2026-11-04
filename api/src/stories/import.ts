@@ -16,9 +16,9 @@
 import { readFile } from 'node:fs/promises';
 import type pg from 'pg';
 import type { FastifyBaseLogger } from 'fastify';
-import { validateStory, type StoryGlossEntry, type StoryInput, type StoryValidationStage } from '@kurda/shared';
+import { validateStory, type StoryGlossEntry, type StoryInput, type StoryLanguage, type StoryTradition, type StoryValidationStage } from '@kurda/shared';
 import type { Cache } from '../cache/cache.js';
-import { StoryAdminService, saveStory, tidyStory, type StoryDraft } from './admin-service.js';
+import { StoryAdminService, canonicalContent, saveStory, tidyStory, type StoryDraft } from './admin-service.js';
 import { storyFileSchema, storyInputFrom } from './schema.js';
 import { bustStoryLists, type QuestionRow } from './service.js';
 
@@ -76,46 +76,39 @@ export function parseStoryFile(
   return { drafts, issues, warnings };
 }
 
-// a story's content in one fixed order — jsonb does not keep the key order it was given
-function canonical(story: StoryInput): string {
-  return JSON.stringify([
-    story.dialect,
-    story.level,
-    story.title,
-    story.summary,
-    story.body,
-    story.glossary.map((g) => [g.term, Object.entries(g.meanings).sort(([a], [b]) => a.localeCompare(b))]),
-    story.questions.map((q) => [
-      q.kind,
-      q.prompt,
-      q.promptEn,
-      q.options,
-      q.correctIndex,
-      q.explanation,
-      q.explanationEn,
-      q.evidenceParagraph,
-      q.evidenceSentence,
-    ]),
-  ]);
-}
-
 interface StoredRow {
   id: string;
   status: string;
   /** who last changed it in the admin panel; null when a file (this command, the seeding) wrote it last */
   updated_by: string | null;
-  dialect: StoryInput['dialect'];
+  dialect: StoryDraft['dialect'];
+  language: StoryLanguage;
   level: number;
   title: string;
   summary: string | null;
   body: string;
   glossary: StoryGlossEntry[];
+  category: string | null;
+  tradition: StoryTradition;
+  author: string | null;
+  story_source: string | null;
+  source_url: string | null;
+  attribution_note: string | null;
+  translations: Record<string, string>;
+  cover: string | null;
+  reading_minutes: number | null;
 }
 
+/**
+ * The stored story in the file's own shape, so "unchanged" compares what the
+ * file says with what is there — every field the file can set, the library
+ * fields included: a file that only adds a category to a story is a change.
+ */
 async function storedContent(db: pg.PoolClient, row: StoredRow): Promise<string> {
   const questions = await db.query<QuestionRow>(`SELECT * FROM story_questions WHERE story_id = $1 ORDER BY position`, [row.id]);
-  return canonical({
+  const content = {
     dialect: row.dialect,
+    language: row.language,
     level: row.level,
     title: row.title,
     summary: row.summary,
@@ -132,7 +125,33 @@ async function storedContent(db: pg.PoolClient, row: StoredRow): Promise<string>
       evidenceParagraph: q.evidence_paragraph,
       evidenceSentence: q.evidence_sentence,
     })),
-  });
+    category: row.category,
+    tradition: row.tradition,
+    author: row.author,
+    source: row.story_source,
+    sourceUrl: row.source_url,
+    attributionNote: row.attribution_note,
+    translations: row.translations ?? {},
+    cover: row.cover,
+    readingMinutes: row.reading_minutes,
+  };
+  return canonicalFile(content);
+}
+
+/** `canonicalContent` plus the library fields, which the importer owns as much as the text. */
+function canonicalFile(story: StoryInput): string {
+  return JSON.stringify([
+    canonicalContent(story),
+    story.language ?? 'ku',
+    story.category,
+    story.tradition,
+    story.author,
+    story.source,
+    story.sourceUrl,
+    story.attributionNote,
+    story.cover,
+    story.readingMinutes,
+  ]);
 }
 
 export interface StoryImportOptions {
@@ -163,7 +182,8 @@ export interface StoryImportOptions {
  * is deleted leaves it null, and their drafts unprotected.)
  *
  * With `publish`, every story the file created or that is a draft is
- * published through the admin's own status change, as `publishedBy`: checked,
+ * approved and published through the admin's own review and status change,
+ * as `publishedBy` — the editor named has read the file — so it is checked,
  * attributed and audited like a publish in the panel, and the hub's cached
  * list is emptied once it is committed. A dry run does everything inside a
  * transaction it then rolls back, so it reports exactly what a real run
@@ -184,7 +204,9 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
     await client.query('BEGIN');
     for (const draft of drafts) {
       const found = await client.query<StoredRow>(
-        `SELECT id, status, updated_by, dialect, level, title, summary, body, glossary FROM stories WHERE slug = $1 FOR UPDATE`,
+        `SELECT id, status, updated_by, dialect, language, level, title, summary, body, glossary, category, tradition, author,
+                story_source, source_url, attribution_note, translations, cover, reading_minutes
+           FROM stories WHERE slug = $1 FOR UPDATE`,
         [draft.slug],
       );
       const row = found.rows[0];
@@ -196,7 +218,7 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
       } else if (row.status !== 'draft') {
         result.stories.push({ slug: draft.slug, outcome: 'kept', note: `${row.status.replace('_', ' ')}: not overwritten`, published: false });
         continue;
-      } else if ((await storedContent(client, row)) === canonical(draft)) {
+      } else if ((await storedContent(client, row)) === canonicalFile(draft)) {
         id = row.id;
         outcome = 'unchanged';
       } else if (row.updated_by !== null && options.force !== true) {
@@ -214,11 +236,18 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
       }
       if (publish) {
         // the row is this transaction's since the SELECT above, so its version now is the one this run left
-        const current = await client.query<{ lock_version: number }>(`SELECT lock_version FROM stories WHERE id = $1`, [id]);
+        const version = async () => (await client.query<{ lock_version: number }>(`SELECT lock_version FROM stories WHERE id = $1`, [id])).rows[0]!.lock_version;
+        // the editor who publishes from a file has read it: their approval goes on record before the publish asks for it
+        await admin.reviewIn(
+          client,
+          id,
+          { approved: true, note: 'approved by the stories:import command' },
+          { adminId: options.publishedBy!, lockVersion: await version(), reason: 'published by the stories:import command' },
+        );
         listChanged =
           (await admin.transitionIn(client, id, 'publish', {
             adminId: options.publishedBy!,
-            lockVersion: current.rows[0]!.lock_version,
+            lockVersion: await version(),
             reason: 'published by the stories:import command',
           })) || listChanged;
       }
