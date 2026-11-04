@@ -106,12 +106,8 @@ export type TranslationKey =
   | 'stories.reader.nextSentence'
   | 'stories.reader.slower'
   | 'stories.reader.normalSpeed'
-  | 'stories.reader.words'
   | 'stories.reader.meaning'
   | 'stories.reader.inEnglish'
-  | 'stories.reader.readIt'
-  | 'stories.reader.quizYourself'
-  | 'stories.reader.quizSettings'
   | 'stories.reader.unfinishedTitle'
   | 'stories.reader.unfinishedBody'
   | 'stories.reader.startAgain'
@@ -2829,7 +2825,36 @@ export type TranslationKey =
   | 'stories.overview.tradition.adapted'
   | 'stories.overview.tradition.original'
   | 'stories.empty.sorani'
-  | 'stories.empty.kurmanci';
+  | 'stories.empty.kurmanci'
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  | 'stories.overview.read'
+  | 'stories.overview.continue'
+  | 'stories.overview.minutesLeft'
+  | 'stories.overview.listen'
+  | 'stories.overview.words'
+  | 'stories.overview.by'
+  | 'stories.overview.source'
+  | 'stories.overview.vocabulary'
+  | 'stories.overview.readIn'
+  | 'stories.reader.continueFrom'
+  | 'stories.reader.translation'
+  | 'stories.reader.hideTranslation'
+  | 'stories.reader.translationOf'
+  | 'stories.reader.hideTranslationOf'
+  | 'stories.reader.saveWord'
+  | 'stories.reader.saved'
+  | 'stories.reader.playWord'
+  | 'stories.reader.overview'
+  | 'stories.reader.finished'
+  | 'stories.player.replay'
+  | 'stories.check.title'
+  | 'stories.check.locked'
+  | 'stories.check.start'
+  | 'stories.check.again'
+  | 'stories.check.best'
+  | 'stories.check.questions'
+  | 'stories.check.noXp'
+  | 'stories.check.repeatXp';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -2911,12 +2936,8 @@ const en: Catalog = {
   'stories.reader.nextSentence': 'Next sentence',
   'stories.reader.slower': 'Slower',
   'stories.reader.normalSpeed': 'Normal speed',
-  'stories.reader.words': 'Words in this story',
   'stories.reader.meaning': 'Meaning',
   'stories.reader.inEnglish': 'Shown in English — there’s no translation in your language yet.',
-  'stories.reader.readIt': 'Read it? Now play it.',
-  'stories.reader.quizYourself': 'Quiz yourself',
-  'stories.reader.quizSettings': 'Quiz settings',
   'stories.reader.unfinishedTitle': 'You started a quiz on this story',
   'stories.reader.unfinishedBody': 'Continue where you stopped, or start again with new questions.',
   'stories.reader.startAgain': 'Start again',
@@ -5624,6 +5645,35 @@ const en: Catalog = {
   'stories.overview.tradition.original': 'Written for learners',
   'stories.empty.sorani': 'Soranî stories are on their way — a native speaker checks each one first.',
   'stories.empty.kurmanci': 'Kurmancî stories are on their way — a native speaker checks each one first.',
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  'stories.overview.read': 'Read',
+  'stories.overview.continue': 'Continue',
+  'stories.overview.minutesLeft': '{count} min left',
+  'stories.overview.listen': 'Listen',
+  'stories.overview.words': '{count} words',
+  'stories.overview.by': 'By {author}',
+  'stories.overview.source': 'Source: {source}',
+  'stories.overview.vocabulary': 'Key vocabulary',
+  'stories.overview.readIn': 'Read in {variety}',
+  'stories.reader.continueFrom': 'Continue from paragraph {n}',
+  'stories.reader.translation': 'Translation',
+  'stories.reader.hideTranslation': 'Hide translation',
+  'stories.reader.translationOf': 'Translation of paragraph {n}',
+  'stories.reader.hideTranslationOf': 'Hide the translation of paragraph {n}',
+  'stories.reader.saveWord': 'Save word',
+  'stories.reader.saved': 'Saved',
+  'stories.reader.playWord': 'Hear the word',
+  'stories.reader.overview': 'About this story',
+  'stories.reader.finished': 'You’ve reached the end of the story.',
+  'stories.player.replay': 'Play this sentence again',
+  'stories.check.title': 'Check what you understood',
+  'stories.check.locked': 'Finish the story first.',
+  'stories.check.start': 'Start the check',
+  'stories.check.again': 'Check again',
+  'stories.check.best': 'Best so far: {correct} of {total}',
+  'stories.check.questions': '{count} questions, no timer',
+  'stories.check.noXp': 'You’ve checked this story twice today, so another check earns no XP.',
+  'stories.check.repeatXp': 'A repeat check earns a quarter of the XP.',
 };
 
 const ku: Catalog = {
@@ -5704,12 +5754,8 @@ const ku: Catalog = {
   'stories.reader.nextSentence': 'Hevoka din',
   'stories.reader.slower': 'Hêdîtir',
   'stories.reader.normalSpeed': 'Leza asayî',
-  'stories.reader.words': 'Peyvên vê çîrokê',
   'stories.reader.meaning': 'Wate',
   'stories.reader.inEnglish': 'Bi îngilîzî tê nîşandan — hîn wergera bi zimanê te tune.',
-  'stories.reader.readIt': 'Te xwend? Niha bilîze.',
-  'stories.reader.quizYourself': 'Xwe biceribîne',
-  'stories.reader.quizSettings': 'Mîhengên pirsan',
   'stories.reader.unfinishedTitle': 'Te li ser vê çîrokê pirsan dest pê kiribû',
   'stories.reader.unfinishedBody': 'Ji cihê ku te lê hiştibû berdewam bike, an bi pirsên nû dîsa dest pê bike.',
   'stories.reader.startAgain': 'Dîsa dest pê bike',
@@ -8416,6 +8462,35 @@ const ku: Catalog = {
   'stories.overview.tradition.original': 'Ji bo fêrbûnê hatiye nivîsandin',
   'stories.empty.sorani': 'Çîrokên soranî di rê de ne — axêverekî zikmakî berê her yekê kontrol dike.',
   'stories.empty.kurmanci': 'Çîrokên kurmancî di rê de ne — axêverekî zikmakî berê her yekê kontrol dike.',
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  'stories.overview.read': 'Bixwîne',
+  'stories.overview.continue': 'Bidomîne',
+  'stories.overview.minutesLeft': '{count} xulek mane',
+  'stories.overview.listen': 'Guhdarî bike',
+  'stories.overview.words': '{count} peyv',
+  'stories.overview.by': 'Ji {author}',
+  'stories.overview.source': 'Çavkanî: {source}',
+  'stories.overview.vocabulary': 'Peyvên girîng',
+  'stories.overview.readIn': 'Bi {variety} bixwîne',
+  'stories.reader.continueFrom': 'Ji paragrafa {n} bidomîne',
+  'stories.reader.translation': 'Werger',
+  'stories.reader.hideTranslation': 'Wergerê veşêre',
+  'stories.reader.translationOf': 'Wergera paragrafa {n}',
+  'stories.reader.hideTranslationOf': 'Wergera paragrafa {n} veşêre',
+  'stories.reader.saveWord': 'Peyvê tomar bike',
+  'stories.reader.saved': 'Tomarkirî',
+  'stories.reader.playWord': 'Peyvê bibihîze',
+  'stories.reader.overview': 'Li ser vê çîrokê',
+  'stories.reader.finished': 'Tu gihîştî dawiya çîrokê.',
+  'stories.player.replay': 'Vê hevokê dîsa bilîze',
+  'stories.check.title': 'Kontrol bike ka te çi fêm kir',
+  'stories.check.locked': 'Pêşî çîrokê biqedîne.',
+  'stories.check.start': 'Kontrolê bide destpêkirin',
+  'stories.check.again': 'Dîsa kontrol bike',
+  'stories.check.best': 'Ya herî baş: {correct} ji {total}',
+  'stories.check.questions': '{count} pirs, bê demjimêr',
+  'stories.check.noXp': 'Îro te du caran ev çîrok kontrol kir, lewma kontroleke din XP nade.',
+  'stories.check.repeatXp': 'Kontroleke dubare çaryeka XPyê dide.',
 };
 
 const de: Catalog = {
@@ -8496,12 +8571,8 @@ const de: Catalog = {
   'stories.reader.nextSentence': 'Nächster Satz',
   'stories.reader.slower': 'Langsamer',
   'stories.reader.normalSpeed': 'Normales Tempo',
-  'stories.reader.words': 'Wörter in dieser Geschichte',
   'stories.reader.meaning': 'Bedeutung',
   'stories.reader.inEnglish': 'Auf Englisch – eine Übersetzung in deine Sprache gibt es noch nicht.',
-  'stories.reader.readIt': 'Gelesen? Jetzt spielen.',
-  'stories.reader.quizYourself': 'Teste dich selbst',
-  'stories.reader.quizSettings': 'Quiz-Einstellungen',
   'stories.reader.unfinishedTitle': 'Du hast schon ein Quiz zu dieser Geschichte begonnen',
   'stories.reader.unfinishedBody': 'Mach dort weiter, wo du aufgehört hast, oder fang mit neuen Fragen neu an.',
   'stories.reader.startAgain': 'Neu beginnen',
@@ -11208,6 +11279,35 @@ const de: Catalog = {
   'stories.overview.tradition.original': 'Für Lernende geschrieben',
   'stories.empty.sorani': 'Soranî-Geschichten sind unterwegs – jede wird zuerst von einer Muttersprachlerin oder einem Muttersprachler geprüft.',
   'stories.empty.kurmanci': 'Kurmancî-Geschichten sind unterwegs – jede wird zuerst von einer Muttersprachlerin oder einem Muttersprachler geprüft.',
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  'stories.overview.read': 'Lesen',
+  'stories.overview.continue': 'Weiter',
+  'stories.overview.minutesLeft': 'noch {count} Min.',
+  'stories.overview.listen': 'Anhören',
+  'stories.overview.words': '{count} Wörter',
+  'stories.overview.by': 'Von {author}',
+  'stories.overview.source': 'Quelle: {source}',
+  'stories.overview.vocabulary': 'Wichtige Wörter',
+  'stories.overview.readIn': 'Auf {variety} lesen',
+  'stories.reader.continueFrom': 'Bei Absatz {n} weiterlesen',
+  'stories.reader.translation': 'Übersetzung',
+  'stories.reader.hideTranslation': 'Übersetzung ausblenden',
+  'stories.reader.translationOf': 'Übersetzung von Absatz {n}',
+  'stories.reader.hideTranslationOf': 'Übersetzung von Absatz {n} ausblenden',
+  'stories.reader.saveWord': 'Wort speichern',
+  'stories.reader.saved': 'Gespeichert',
+  'stories.reader.playWord': 'Wort anhören',
+  'stories.reader.overview': 'Über diese Geschichte',
+  'stories.reader.finished': 'Du bist am Ende der Geschichte.',
+  'stories.player.replay': 'Diesen Satz noch einmal abspielen',
+  'stories.check.title': 'Prüfe, was du verstanden hast',
+  'stories.check.locked': 'Lies zuerst die Geschichte zu Ende.',
+  'stories.check.start': 'Check starten',
+  'stories.check.again': 'Noch einmal prüfen',
+  'stories.check.best': 'Bisher am besten: {correct} von {total}',
+  'stories.check.questions': '{count} Fragen, ohne Zeitlimit',
+  'stories.check.noXp': 'Du hast diese Geschichte heute schon zweimal geprüft; ein weiterer Check bringt keine XP.',
+  'stories.check.repeatXp': 'Ein wiederholter Check bringt ein Viertel der XP.',
 };
 
 const es: Catalog = {
@@ -11288,12 +11388,8 @@ const es: Catalog = {
   'stories.reader.nextSentence': 'Frase siguiente',
   'stories.reader.slower': 'Más despacio',
   'stories.reader.normalSpeed': 'Velocidad normal',
-  'stories.reader.words': 'Palabras de esta historia',
   'stories.reader.meaning': 'Significado',
   'stories.reader.inEnglish': 'Se muestra en inglés: todavía no hay traducción a tu idioma.',
-  'stories.reader.readIt': '¿La leíste? Ahora juega.',
-  'stories.reader.quizYourself': 'Ponte a prueba',
-  'stories.reader.quizSettings': 'Ajustes del cuestionario',
   'stories.reader.unfinishedTitle': 'Empezaste un cuestionario sobre esta historia',
   'stories.reader.unfinishedBody': 'Sigue donde lo dejaste o empieza de nuevo con preguntas nuevas.',
   'stories.reader.startAgain': 'Empezar de nuevo',
@@ -14000,6 +14096,35 @@ const es: Catalog = {
   'stories.overview.tradition.original': 'Escrita para estudiantes',
   'stories.empty.sorani': 'Las historias en soraní están en camino: una persona nativa revisa cada una primero.',
   'stories.empty.kurmanci': 'Las historias en kurmancî están en camino: una persona nativa revisa cada una primero.',
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  'stories.overview.read': 'Leer',
+  'stories.overview.continue': 'Continuar',
+  'stories.overview.minutesLeft': 'quedan {count} min',
+  'stories.overview.listen': 'Escuchar',
+  'stories.overview.words': '{count} palabras',
+  'stories.overview.by': 'De {author}',
+  'stories.overview.source': 'Fuente: {source}',
+  'stories.overview.vocabulary': 'Vocabulario clave',
+  'stories.overview.readIn': 'Leer en {variety}',
+  'stories.reader.continueFrom': 'Continuar en el párrafo {n}',
+  'stories.reader.translation': 'Traducción',
+  'stories.reader.hideTranslation': 'Ocultar traducción',
+  'stories.reader.translationOf': 'Traducción del párrafo {n}',
+  'stories.reader.hideTranslationOf': 'Ocultar la traducción del párrafo {n}',
+  'stories.reader.saveWord': 'Guardar palabra',
+  'stories.reader.saved': 'Guardada',
+  'stories.reader.playWord': 'Escuchar la palabra',
+  'stories.reader.overview': 'Sobre esta historia',
+  'stories.reader.finished': 'Has llegado al final de la historia.',
+  'stories.player.replay': 'Repetir esta frase',
+  'stories.check.title': 'Comprueba lo que has entendido',
+  'stories.check.locked': 'Termina la historia primero.',
+  'stories.check.start': 'Empezar la comprobación',
+  'stories.check.again': 'Comprobar de nuevo',
+  'stories.check.best': 'Mejor hasta ahora: {correct} de {total}',
+  'stories.check.questions': '{count} preguntas, sin tiempo límite',
+  'stories.check.noXp': 'Ya has comprobado esta historia dos veces hoy; otra comprobación no da XP.',
+  'stories.check.repeatXp': 'Una comprobación repetida da un cuarto de los XP.',
 };
 
 const tr: Catalog = {
@@ -14080,12 +14205,8 @@ const tr: Catalog = {
   'stories.reader.nextSentence': 'Sonraki cümle',
   'stories.reader.slower': 'Daha yavaş',
   'stories.reader.normalSpeed': 'Normal hız',
-  'stories.reader.words': 'Bu hikâyedeki kelimeler',
   'stories.reader.meaning': 'Anlamı',
   'stories.reader.inEnglish': 'İngilizce gösteriliyor — dilinde henüz çeviri yok.',
-  'stories.reader.readIt': 'Okudun mu? Şimdi oyna.',
-  'stories.reader.quizYourself': 'Kendini sına',
-  'stories.reader.quizSettings': 'Sınav ayarları',
   'stories.reader.unfinishedTitle': 'Bu hikâyede bir sınava başlamıştın',
   'stories.reader.unfinishedBody': 'Kaldığın yerden devam et ya da yeni sorularla baştan başla.',
   'stories.reader.startAgain': 'Baştan başla',
@@ -16792,6 +16913,35 @@ const tr: Catalog = {
   'stories.overview.tradition.original': 'Öğrenenler için yazıldı',
   'stories.empty.sorani': 'Soranice hikâyeler yolda — her birini önce anadili Kürtçe olan biri kontrol ediyor.',
   'stories.empty.kurmanci': 'Kurmanci hikâyeler yolda — her birini önce anadili Kürtçe olan biri kontrol ediyor.',
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  'stories.overview.read': 'Oku',
+  'stories.overview.continue': 'Devam et',
+  'stories.overview.minutesLeft': '{count} dk kaldı',
+  'stories.overview.listen': 'Dinle',
+  'stories.overview.words': '{count} kelime',
+  'stories.overview.by': '{author} tarafından',
+  'stories.overview.source': 'Kaynak: {source}',
+  'stories.overview.vocabulary': 'Önemli kelimeler',
+  'stories.overview.readIn': '{variety} olarak oku',
+  'stories.reader.continueFrom': '{n}. paragraftan devam et',
+  'stories.reader.translation': 'Çeviri',
+  'stories.reader.hideTranslation': 'Çeviriyi gizle',
+  'stories.reader.translationOf': '{n}. paragrafın çevirisi',
+  'stories.reader.hideTranslationOf': '{n}. paragrafın çevirisini gizle',
+  'stories.reader.saveWord': 'Kelimeyi kaydet',
+  'stories.reader.saved': 'Kaydedildi',
+  'stories.reader.playWord': 'Kelimeyi dinle',
+  'stories.reader.overview': 'Bu hikâye hakkında',
+  'stories.reader.finished': 'Hikâyenin sonuna geldin.',
+  'stories.player.replay': 'Bu cümleyi yeniden dinle',
+  'stories.check.title': 'Ne anladığını kontrol et',
+  'stories.check.locked': 'Önce hikâyeyi bitir.',
+  'stories.check.start': 'Kontrole başla',
+  'stories.check.again': 'Yeniden kontrol et',
+  'stories.check.best': 'Şimdiye kadar en iyi: {total} soruda {correct}',
+  'stories.check.questions': '{count} soru, süre yok',
+  'stories.check.noXp': 'Bu hikâyeyi bugün iki kez kontrol ettin; bir kontrol daha XP kazandırmaz.',
+  'stories.check.repeatXp': 'Tekrar kontrol, XP’nin dörtte birini kazandırır.',
 };
 
 const ar: Catalog = {
@@ -16872,12 +17022,8 @@ const ar: Catalog = {
   'stories.reader.nextSentence': 'الجملة التالية',
   'stories.reader.slower': 'أبطأ',
   'stories.reader.normalSpeed': 'السرعة العادية',
-  'stories.reader.words': 'كلمات هذه القصة',
   'stories.reader.meaning': 'المعنى',
   'stories.reader.inEnglish': 'معروض بالإنجليزية — لا توجد ترجمة بلغتك بعد.',
-  'stories.reader.readIt': 'قرأتها؟ العب الآن.',
-  'stories.reader.quizYourself': 'اختبر نفسك',
-  'stories.reader.quizSettings': 'إعدادات الاختبار',
   'stories.reader.unfinishedTitle': 'بدأت اختبارًا على هذه القصة',
   'stories.reader.unfinishedBody': 'تابع من حيث توقفت، أو ابدأ من جديد بأسئلة جديدة.',
   'stories.reader.startAgain': 'ابدأ من جديد',
@@ -19584,6 +19730,35 @@ const ar: Catalog = {
   'stories.overview.tradition.original': 'كُتبت للمتعلّمين',
   'stories.empty.sorani': 'القصص بالسورانية في الطريق — يراجع متحدث أصلي كل قصة أولًا.',
   'stories.empty.kurmanci': 'القصص بالكرمانجية في الطريق — يراجع متحدث أصلي كل قصة أولًا.',
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  'stories.overview.read': 'اقرأ',
+  'stories.overview.continue': 'تابع',
+  'stories.overview.minutesLeft': 'بقيت {count} د',
+  'stories.overview.listen': 'استمع',
+  'stories.overview.words': '{count} كلمة',
+  'stories.overview.by': 'بقلم {author}',
+  'stories.overview.source': 'المصدر: {source}',
+  'stories.overview.vocabulary': 'المفردات الأساسية',
+  'stories.overview.readIn': 'اقرأ بـ{variety}',
+  'stories.reader.continueFrom': 'تابع من الفقرة {n}',
+  'stories.reader.translation': 'الترجمة',
+  'stories.reader.hideTranslation': 'إخفاء الترجمة',
+  'stories.reader.translationOf': 'ترجمة الفقرة {n}',
+  'stories.reader.hideTranslationOf': 'إخفاء ترجمة الفقرة {n}',
+  'stories.reader.saveWord': 'احفظ الكلمة',
+  'stories.reader.saved': 'محفوظة',
+  'stories.reader.playWord': 'اسمع الكلمة',
+  'stories.reader.overview': 'عن هذه القصة',
+  'stories.reader.finished': 'وصلت إلى نهاية القصة.',
+  'stories.player.replay': 'أعد تشغيل هذه الجملة',
+  'stories.check.title': 'تحقّق ممّا فهمت',
+  'stories.check.locked': 'أكمل القصة أوّلًا.',
+  'stories.check.start': 'ابدأ الاختبار',
+  'stories.check.again': 'تحقّق مرّة أخرى',
+  'stories.check.best': 'الأفضل حتى الآن: {correct} من {total}',
+  'stories.check.questions': '{count} أسئلة، بلا مؤقّت',
+  'stories.check.noXp': 'اختبرت هذه القصة مرّتين اليوم، فلن يمنحك اختبار آخر أيّ XP.',
+  'stories.check.repeatXp': 'الاختبار المكرّر يمنح ربع XP.',
 };
 
 const fr: Catalog = {
@@ -19664,12 +19839,8 @@ const fr: Catalog = {
   'stories.reader.nextSentence': 'Phrase suivante',
   'stories.reader.slower': 'Plus lent',
   'stories.reader.normalSpeed': 'Vitesse normale',
-  'stories.reader.words': 'Mots de cette histoire',
   'stories.reader.meaning': 'Sens',
   'stories.reader.inEnglish': 'Affiché en anglais – pas encore de traduction dans ta langue.',
-  'stories.reader.readIt': 'Tu l’as lue ? Maintenant, joue.',
-  'stories.reader.quizYourself': 'Teste-toi',
-  'stories.reader.quizSettings': 'Réglages du quiz',
   'stories.reader.unfinishedTitle': 'Tu as commencé un quiz sur cette histoire',
   'stories.reader.unfinishedBody': 'Reprends là où tu t’es arrêté, ou recommence avec de nouvelles questions.',
   'stories.reader.startAgain': 'Recommencer',
@@ -22376,6 +22547,35 @@ const fr: Catalog = {
   'stories.overview.tradition.original': 'Écrite pour les apprenants',
   'stories.empty.sorani': 'Les histoires en soranî arrivent – un locuteur natif relit chacune d’abord.',
   'stories.empty.kurmanci': 'Les histoires en kurmancî arrivent – un locuteur natif relit chacune d’abord.',
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  'stories.overview.read': 'Lire',
+  'stories.overview.continue': 'Continuer',
+  'stories.overview.minutesLeft': 'encore {count} min',
+  'stories.overview.listen': 'Écouter',
+  'stories.overview.words': '{count} mots',
+  'stories.overview.by': 'Par {author}',
+  'stories.overview.source': 'Source : {source}',
+  'stories.overview.vocabulary': 'Vocabulaire clé',
+  'stories.overview.readIn': 'Lire en {variety}',
+  'stories.reader.continueFrom': 'Reprendre au paragraphe {n}',
+  'stories.reader.translation': 'Traduction',
+  'stories.reader.hideTranslation': 'Masquer la traduction',
+  'stories.reader.translationOf': 'Traduction du paragraphe {n}',
+  'stories.reader.hideTranslationOf': 'Masquer la traduction du paragraphe {n}',
+  'stories.reader.saveWord': 'Enregistrer le mot',
+  'stories.reader.saved': 'Enregistré',
+  'stories.reader.playWord': 'Écouter le mot',
+  'stories.reader.overview': 'À propos de cette histoire',
+  'stories.reader.finished': 'Tu es arrivé à la fin de l’histoire.',
+  'stories.player.replay': 'Réécouter cette phrase',
+  'stories.check.title': 'Vérifie ce que tu as compris',
+  'stories.check.locked': 'Termine d’abord l’histoire.',
+  'stories.check.start': 'Commencer la vérification',
+  'stories.check.again': 'Vérifier à nouveau',
+  'stories.check.best': 'Meilleur résultat : {correct} sur {total}',
+  'stories.check.questions': '{count} questions, sans chrono',
+  'stories.check.noXp': 'Tu as déjà vérifié cette histoire deux fois aujourd’hui ; une autre vérification ne rapporte pas d’XP.',
+  'stories.check.repeatXp': 'Une vérification répétée rapporte un quart des XP.',
 };
 
 const nl: Catalog = {
@@ -22456,12 +22656,8 @@ const nl: Catalog = {
   'stories.reader.nextSentence': 'Volgende zin',
   'stories.reader.slower': 'Langzamer',
   'stories.reader.normalSpeed': 'Normale snelheid',
-  'stories.reader.words': 'Woorden in dit verhaal',
   'stories.reader.meaning': 'Betekenis',
   'stories.reader.inEnglish': 'In het Engels – er is nog geen vertaling in jouw taal.',
-  'stories.reader.readIt': 'Gelezen? Speel nu.',
-  'stories.reader.quizYourself': 'Test jezelf',
-  'stories.reader.quizSettings': 'Quizinstellingen',
   'stories.reader.unfinishedTitle': 'Je bent al een quiz over dit verhaal begonnen',
   'stories.reader.unfinishedBody': 'Ga verder waar je was, of begin opnieuw met nieuwe vragen.',
   'stories.reader.startAgain': 'Opnieuw beginnen',
@@ -25168,6 +25364,35 @@ const nl: Catalog = {
   'stories.overview.tradition.original': 'Geschreven voor leerlingen',
   'stories.empty.sorani': 'Soranî-verhalen komen eraan – een moedertaalspreker controleert ze eerst één voor één.',
   'stories.empty.kurmanci': 'Kurmancî-verhalen komen eraan – een moedertaalspreker controleert ze eerst één voor één.',
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  'stories.overview.read': 'Lezen',
+  'stories.overview.continue': 'Verder',
+  'stories.overview.minutesLeft': 'nog {count} min',
+  'stories.overview.listen': 'Luisteren',
+  'stories.overview.words': '{count} woorden',
+  'stories.overview.by': 'Door {author}',
+  'stories.overview.source': 'Bron: {source}',
+  'stories.overview.vocabulary': 'Belangrijke woorden',
+  'stories.overview.readIn': 'Lees in het {variety}',
+  'stories.reader.continueFrom': 'Verder bij alinea {n}',
+  'stories.reader.translation': 'Vertaling',
+  'stories.reader.hideTranslation': 'Vertaling verbergen',
+  'stories.reader.translationOf': 'Vertaling van alinea {n}',
+  'stories.reader.hideTranslationOf': 'Vertaling van alinea {n} verbergen',
+  'stories.reader.saveWord': 'Woord bewaren',
+  'stories.reader.saved': 'Bewaard',
+  'stories.reader.playWord': 'Hoor het woord',
+  'stories.reader.overview': 'Over dit verhaal',
+  'stories.reader.finished': 'Je bent aan het einde van het verhaal.',
+  'stories.player.replay': 'Deze zin opnieuw afspelen',
+  'stories.check.title': 'Kijk wat je begrepen hebt',
+  'stories.check.locked': 'Lees eerst het verhaal uit.',
+  'stories.check.start': 'Begin de controle',
+  'stories.check.again': 'Nog eens controleren',
+  'stories.check.best': 'Beste tot nu toe: {correct} van {total}',
+  'stories.check.questions': '{count} vragen, zonder tijdslimiet',
+  'stories.check.noXp': 'Je hebt dit verhaal vandaag al twee keer gecontroleerd; een volgende controle levert geen XP op.',
+  'stories.check.repeatXp': 'Een herhaalde controle levert een kwart van de XP op.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -25249,12 +25474,8 @@ const ckb: Catalog = {
   'stories.reader.nextSentence': 'ڕستەی دواتر',
   'stories.reader.slower': 'هێواشتر',
   'stories.reader.normalSpeed': 'خێرایی ئاسایی',
-  'stories.reader.words': 'وشەکانی ئەم چیرۆکە',
   'stories.reader.meaning': 'واتا',
   'stories.reader.inEnglish': 'بە ئینگلیزی پیشان دەدرێت — هێشتا وەرگێڕان بە زمانی تۆ نییە.',
-  'stories.reader.readIt': 'خوێندتەوە؟ ئێستا یاری پێبکە.',
-  'stories.reader.quizYourself': 'خۆت تاقی بکەرەوە',
-  'stories.reader.quizSettings': 'ڕێکخستنەکانی تاقیکردنەوە',
   'stories.reader.unfinishedTitle': 'تۆ تاقیکردنەوەیەکت لەسەر ئەم چیرۆکە دەست پێکردبوو',
   'stories.reader.unfinishedBody': 'لەو شوێنەی وەستایت بەردەوام بە، یان بە پرسیاری نوێ دووبارە دەست پێبکەرەوە.',
   'stories.reader.startAgain': 'دووبارە دەست پێبکەرەوە',
@@ -27961,6 +28182,35 @@ const ckb: Catalog = {
   'stories.overview.tradition.original': 'بۆ فێرخوازان نووسراوە',
   'stories.empty.sorani': 'چیرۆکە سۆرانییەکان بەڕێوەن — قسەکەرێکی زگماک پێشتر هەر یەکێکیان دەپشکنێت.',
   'stories.empty.kurmanci': 'چیرۆکە کورمانجییەکان بەڕێوەن — قسەکەرێکی زگماک پێشتر هەر یەکێکیان دەپشکنێت.',
+  // --- A story’s overview, its reader and its check (learn-mobile) ---
+  'stories.overview.read': 'بخوێنەوە',
+  'stories.overview.continue': 'بەردەوام بە',
+  'stories.overview.minutesLeft': '{count} خولەک ماوە',
+  'stories.overview.listen': 'گوێ بگرە',
+  'stories.overview.words': '{count} وشە',
+  'stories.overview.by': 'لە {author}',
+  'stories.overview.source': 'سەرچاوە: {source}',
+  'stories.overview.vocabulary': 'وشە سەرەکییەکان',
+  'stories.overview.readIn': 'بە {variety} بخوێنەوە',
+  'stories.reader.continueFrom': 'لە پەرەگرافی {n} بەردەوام بە',
+  'stories.reader.translation': 'وەرگێڕان',
+  'stories.reader.hideTranslation': 'وەرگێڕان بشارەوە',
+  'stories.reader.translationOf': 'وەرگێڕانی پەرەگرافی {n}',
+  'stories.reader.hideTranslationOf': 'وەرگێڕانی پەرەگرافی {n} بشارەوە',
+  'stories.reader.saveWord': 'وشە پاشەکەوت بکە',
+  'stories.reader.saved': 'پاشەکەوت کرا',
+  'stories.reader.playWord': 'گوێ لە وشە بگرە',
+  'stories.reader.overview': 'دەربارەی ئەم چیرۆکە',
+  'stories.reader.finished': 'گەیشتیت بە کۆتایی چیرۆکەکە.',
+  'stories.player.replay': 'ئەم ڕستە دووبارە لێبدە',
+  'stories.check.title': 'بپشکنە چیت تێگەیشت',
+  'stories.check.locked': 'سەرەتا چیرۆکەکە تەواو بکە.',
+  'stories.check.start': 'پشکنین دەست پێ بکە',
+  'stories.check.again': 'دووبارە بپشکنە',
+  'stories.check.best': 'باشترین تا ئێستا: {correct} لە {total}',
+  'stories.check.questions': '{count} پرسیار، بەبێ کاتژمێر',
+  'stories.check.noXp': 'ئەمڕۆ دوو جار ئەم چیرۆکەت پشکنی، بۆیە پشکنینێکی دیکە XP نادات.',
+  'stories.check.repeatXp': 'پشکنینی دووبارە چارەکی XP دەدات.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

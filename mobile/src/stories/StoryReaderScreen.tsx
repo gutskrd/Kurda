@@ -1,27 +1,43 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { heldRow } from '../theme/MotionParts';
-import { glossFor, type StoryDetail, type StoryGameMode, type StoryGlossEntry } from '@kurda/shared';
+import {
+  PAID_STORY_REPEATS_PER_DAY,
+  STORY_ASSESSMENT,
+  glossFor,
+  type StoryDetail,
+  type StoryGameMode,
+  type StoryCategory,
+  type StoryGlossEntry,
+  type StoryMe,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { useAccountGate } from '../auth/AccountGate';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useClipPlayer } from '../alphabet/useClipPlayer';
+import { haptic } from '../feedback/haptics';
+import { limitErrorText } from '../limits/limitCopy';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
-import { activeGames, createGame, getGame, getStory, isView } from './api';
-import { DIALECT_NAME, LENGTH_KEY } from './labels';
+import { formatNumber } from '../i18n/format';
+import { activeGames, createGame, getCategories, getStory, saveProgress, saveWord, setBookmark, type ProgressInput } from './api';
+import { StoryCover } from './covers';
+import { DIALECT_NAME, TRADITION_KEY, categoryLabel, cefrLabel, narrationLabel } from './labels';
 import { narrationItems, narrationLine } from './narration';
 import { TEXT_SCALES, useStoryPrefs, type TextScale } from './prefs';
 import { createErrorMessage, SetupSheet } from './SetupSheet';
-import { createInput, initialSetup } from './setup';
 import { STORY_BODY_SIZE, StoryText, storyLineHeight } from './StoryText';
 import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { useNarration } from './useNarration';
@@ -29,67 +45,225 @@ import { COLUMN, Card, Note, Pill, SectionLabel, Sheet } from './ui';
 import { NarrationBar } from './NarrationBar';
 import { CHARACTER_SIZE, SpeakingCharacter } from '../characters/SpeakingCharacter';
 
+/** A reading position is sent to the server at most this often; also on leaving the text. */
+export const PROGRESS_EVERY_MS = 10_000;
+
+/** How far down the screen a paragraph's top must be for it to count as the one being read. */
+const READING_LINE = 0.6;
+
 /**
- * Reading a story (contract §A1 "Reader"), then playing it.
+ * Where the reader is in the text, from where the text is scrolled to: the
+ * last paragraph whose top has passed the reading line, how far through the
+ * paragraphs that is, and whether the end has been reached — the last
+ * paragraph passing the line, or the list scrolled to its foot.
+ */
+export function readingPosition(
+  scrollY: number,
+  viewportHeight: number,
+  contentHeight: number,
+  textTop: number,
+  paragraphTops: ReadonlyMap<number, number>,
+  paragraphs: number,
+): ProgressInput {
+  if (paragraphs === 0) return { paragraph: 0, share: 0, finished: false };
+  const line = scrollY + viewportHeight * READING_LINE;
+  let paragraph = 0;
+  for (let p = 0; p < paragraphs; p += 1) {
+    const top = paragraphTops.get(p);
+    if (top !== undefined && textTop + top <= line) paragraph = p;
+  }
+  const atEnd = contentHeight > 0 && scrollY + viewportHeight >= contentHeight - 24;
+  if (atEnd) paragraph = paragraphs - 1;
+  const finished = paragraph >= paragraphs - 1;
+  return { paragraph, share: finished ? 1 : Math.min(1, (paragraph + 1) / paragraphs), finished };
+}
+
+/** How many minutes of a story are left at `share` of it: never less than one while there is any. */
+export function minutesLeft(readingMinutes: number, share: number): number {
+  return Math.max(1, Math.ceil(readingMinutes * (1 - Math.max(0, Math.min(1, share)))));
+}
+
+/** The translation shown under the paragraphs: the reader's language, else English, else none. */
+export function translationFor(story: Pick<StoryDetail, 'translations'>, locale: string): { paragraphs: string[]; lang: string } | null {
+  const own = story.translations[locale];
+  if (own && own.length > 0) return { paragraphs: own, lang: locale };
+  const en = story.translations.en;
+  if (en && en.length > 0) return { paragraphs: en, lang: 'en' };
+  return null;
+}
+
+type Mode = 'overview' | 'reading';
+
+/**
+ * A story (design notes §1–§3): its overview first, then the text.
  *
- * Every string from the story carries the story's own direction and language
- * (`storyTextStyle`), so a Soranî story reads right to left in any interface
- * language. The text size is the reader's own (remembered on this phone) on
- * top of the system's Dynamic Type. Glossary words are underlined in the text
- * and listed again under "Words in this story", which is the way to them for
- * a screen reader. Audio is never started by touching the text: each
- * paragraph with recordings has a Listen button, and a story recorded from
- * end to end has a bar to play all of it.
+ * The overview is the story's cover page: its picture, title, level with its
+ * word ("A2 · Elementary"), category, minutes and words, whether it is read
+ * aloud, who wrote or told it and from what tradition, its synopsis, the
+ * other versions of the same story, then Read (or Continue, with the minutes
+ * left) and Listen, the key vocabulary with a play button where the
+ * dictionary has a clip and Save where the word is a headword, and the check
+ * at the end — locked with a line until the story has been finished.
  *
- * Then the three ways to play: "Quiz yourself" starts at once with the
- * settings this phone remembers (no timer, the text on screen, by default);
- * "With a friend" and "With a group" open the setup sheet with this story.
+ * The text is set in the display serif, generously leaded, with glossary
+ * words marked in dotted gold; a tap on one opens its meaning, part of speech
+ * and the same play and save; a Translation toggle under each paragraph shows
+ * it in the reader's language. Every string from the story carries the
+ * story's own direction and language (`storyTextStyle`), so a Soranî story
+ * reads right to left in any interface language; the text size is the
+ * reader's own, remembered on this phone, on top of the system's Dynamic
+ * Type. Where the reader is comes from where the text is scrolled to and is
+ * remembered on the server at most every ten seconds and on leaving — so the
+ * overview can say "Continue · 3 min left" and offer the paragraph to go on
+ * from. Audio is never started by touching the text: each paragraph with
+ * recordings has a Listen button, and a story with recordings has the player
+ * bar.
+ *
+ * The check is the solo game with the assessment's settings (five untimed
+ * questions, the text at hand), opened in the game screen; the two ways to
+ * play with other people open the setup sheet with this story.
  */
 export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
+  const gate = useAccountGate();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const reduceMotion = useReducedMotion();
   const { prefs, update } = useStoryPrefs();
+  const bottomInset = useScreenBottomInset(spacing.md);
   const [story, setStory] = useState<StoryDetail | null>(null);
+  const [me, setMe] = useState<StoryMe | null>(null);
+  const [categories, setCategories] = useState<StoryCategory[] | undefined>(undefined);
   const [error, setError] = useState<ApiError | null>(null);
+  const [mode, setMode] = useState<Mode>('overview');
   const [gloss, setGloss] = useState<StoryGlossEntry | null>(null);
   const [setupMode, setSetupMode] = useState<StoryGameMode | null>(null);
   const [unfinished, setUnfinished] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [translated, setTranslated] = useState<ReadonlySet<number>>(new Set());
+  // the end of the text reached in this sitting, before the server has said so
+  const [reachedEnd, setReachedEnd] = useState(false);
+  const [continueFrom, setContinueFrom] = useState<number | null>(null);
   const { narrator, state: narration } = useNarration(prefs.rate);
+  const clips = useClipPlayer();
   const scroll = useRef<ScrollView>(null);
   const textTop = useRef(0);
   const paragraphTops = useRef(new Map<number, number>());
+  const scrollTarget = useRef<number | null>(null);
 
   const load = useCallback(() => {
     setError(null);
     void getStory(client, slug).then((res) => {
-      if (res.ok) setStory(res.data);
-      else setError(res.error);
+      if (res.ok) {
+        setStory(res.data);
+        setMe(res.data.me ?? null);
+        // a place to go on from, when there is one: not the first paragraph, and not a story read to its end
+        setContinueFrom(res.data.me && res.data.me.paragraph > 0 && !res.data.me.finishedAt ? res.data.me.paragraph : null);
+      } else setError(res.error);
     });
   }, [client, slug]);
   useEffect(load, [load]);
+  // the category's name, for the slug the story carries; the list is small and cached on the server
+  useEffect(() => {
+    let live = true;
+    void getCategories(client).then((res) => {
+      if (live && res.ok) setCategories(res.data.categories);
+    });
+    return () => {
+      live = false;
+    };
+  }, [client]);
 
-  // the sound stops when this screen is left, for a game or for anything else
-  useFocusEffect(useCallback(() => () => narrator.stop(), [narrator]));
+  /*
+   * The reading position, sent at most every ten seconds while it changes and
+   * once more on leaving the text, with `finished` the first time the end is
+   * reached (the server keeps that for good).
+   */
+  const pending = useRef<ProgressInput | null>(null);
+  const lastSent = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const storyId = story?.id ?? null;
+  const flush = useCallback(() => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+    const next = pending.current;
+    if (!next || !storyId) return;
+    pending.current = null;
+    lastSent.current = Date.now();
+    void saveProgress(client, storyId, next).then((res) => {
+      if (res.ok) setMe(res.data.me);
+    });
+  }, [client, storyId]);
+  const noteProgress = (next: ProgressInput): void => {
+    const was = pending.current;
+    if (was && was.paragraph === next.paragraph && was.finished === next.finished) return;
+    pending.current = next;
+    if (next.finished) setReachedEnd(true);
+    if (timer.current) return;
+    const wait = Math.max(0, lastSent.current + PROGRESS_EVERY_MS - Date.now());
+    timer.current = setTimeout(flush, wait);
+  };
+  useEffect(() => () => flush(), [flush]);
+  // the sound stops and the position is kept when this screen is left, for a game or for anything else
+  useFocusEffect(
+    useCallback(
+      () => () => {
+        narrator.stop();
+        flush();
+      },
+      [narrator, flush],
+    ),
+  );
 
   const items = useMemo(() => (story ? narrationItems(story.paragraphs, story.audio) : []), [story]);
   const listenable = useMemo(() => new Set(items.map((i) => i.paragraph)), [items]);
   // what each recorded sentence says and who says it; a paragraph with a character keeps room for one
   const lines = useMemo(() => new Map(items.map((i) => [i, narrationLine(story?.paragraphs ?? [], story?.voices, i)])), [items, story]);
   const voiced = useMemo(() => new Set(items.filter((i) => lines.get(i)?.voice).map((i) => i.paragraph)), [items, lines]);
+  const translation = useMemo(() => (story ? translationFor(story, locale) : null), [story, locale]);
 
   // the sentence being read stays in view; reduced motion jumps rather than glides
   const followed = narration.scope === 'story' ? narration.current?.paragraph : undefined;
   useEffect(() => {
-    if (followed === undefined) return;
+    if (followed === undefined || mode !== 'reading') return;
     const y = paragraphTops.current.get(followed);
     if (y === undefined) return;
     scroll.current?.scrollTo({ y: Math.max(0, textTop.current + y - 96), animated: !reduceMotion });
-  }, [followed, reduceMotion]);
+  }, [followed, reduceMotion, mode]);
+
+  const scrollToParagraph = (p: number): void => {
+    const y = paragraphTops.current.get(p);
+    if (y === undefined || textTop.current === 0) {
+      scrollTarget.current = p;
+      return;
+    }
+    scrollTarget.current = null;
+    scroll.current?.scrollTo({ y: Math.max(0, textTop.current + y - 72), animated: !reduceMotion });
+  };
+  const onParagraphLayout = (p: number, y: number): void => {
+    paragraphTops.current.set(p, y);
+    if (scrollTarget.current === p) scrollToParagraph(p);
+  };
+
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>): void => {
+    if (!story || mode !== 'reading') return;
+    const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+    noteProgress(readingPosition(contentOffset.y, layoutMeasurement.height, contentSize.height, textTop.current, paragraphTops.current, story.paragraphs.length));
+  };
+
+  const startReading = (from: number | null): void => {
+    setMode('reading');
+    if (from !== null && from > 0) scrollToParagraph(from);
+  };
+  const toOverview = (): void => {
+    flush();
+    narrator.stop();
+    setMode('overview');
+  };
 
   const listenTo = (paragraph: number): void => {
     if (narration.scope === 'paragraph' && narration.paragraph === paragraph) {
@@ -97,6 +271,32 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
       return;
     }
     narrator.play(items.filter((i) => i.paragraph === paragraph), 'paragraph');
+  };
+  /** Listen from the overview: the whole story, from the paragraph being read. */
+  const listenFrom = (paragraph: number): void => {
+    startReading(paragraph);
+    const start = items.findIndex((i) => i.paragraph >= paragraph);
+    narrator.play(items, 'story', Math.max(0, start));
+  };
+
+  const toggleBookmark = (): void => {
+    if (!story) return;
+    const on = !(me?.bookmarked ?? false);
+    haptic('tap');
+    const patch = (value: boolean) =>
+      setMe((was) => ({
+        bookmarked: value,
+        paragraph: was?.paragraph ?? 0,
+        share: was?.share ?? 0,
+        finishedAt: was?.finishedAt ?? null,
+        bestCorrect: was?.bestCorrect ?? null,
+        total: was?.total ?? null,
+        attemptsToday: was?.attemptsToday ?? 0,
+      }));
+    patch(on);
+    void setBookmark(client, story.id, on).then((res) => {
+      if (!res.ok) patch(!on);
+    });
   };
 
   const textScale = prefs.textScale;
@@ -106,9 +306,10 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     update({ textScale: next });
   };
 
-  /** "Quiz yourself": back to an unfinished solo game on this story, or a new one at once. */
-  const quizYourself = async (fresh = false): Promise<void> => {
+  /** The check: back to an unfinished one on this story, or a new solo game with the assessment's settings. */
+  const startCheck = async (fresh = false): Promise<void> => {
     if (!story || starting) return;
+    if (!gate.require('play')) return;
     setStartError(null);
     setStarting(true);
     if (!fresh) {
@@ -120,8 +321,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
       }
     }
     narrator.stop();
-    const setup = initialSetup({ mode: 'solo', dialect: story.dialect, story, solo: prefs.quiz });
-    const res = await createGame(client, createInput(setup, { skipReading: true, extraTime: prefs.extraTime }));
+    flush();
+    const res = await createGame(client, { ...STORY_ASSESSMENT, storyId: story.id, extraTime: prefs.extraTime });
     setStarting(false);
     if (!res.ok) {
       setStartError(createErrorMessage(res.error, t));
@@ -131,41 +332,53 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     navigation.navigate('StoryGame', { id: res.data.id });
   };
 
-  /** The active list has titles, not ids; a title match is confirmed against the game itself. */
+  /** An unfinished solo game on this story, to go back to rather than throw away. */
   const findUnfinishedSolo = async (s: StoryDetail): Promise<string | null> => {
     const res = await activeGames(client);
     if (!res.ok) return null;
-    for (const g of res.data.games.filter((x) => x.mode === 'solo' && x.storyTitle === s.title)) {
-      const view = await getGame(client, g.id);
-      if (view.ok && isView(view.data) && view.data.settings.storyId === s.id) return g.id;
-    }
-    return null;
+    return res.data.games.find((g) => g.mode === 'solo' && g.storyId === s.id)?.id ?? null;
   };
 
-  const headerRight = (
-    <View style={styles.sizeControls}>
-      <Pressable
-        onPress={() => resize(-1)}
-        disabled={scaleIndex <= 0}
-        accessibilityRole="button"
-        accessibilityLabel={t('stories.reader.smaller')}
-        accessibilityState={{ disabled: scaleIndex <= 0 }}
-        style={[styles.sizeButton, { opacity: scaleIndex <= 0 ? 0.35 : 1 }]}
-      >
-        <Text style={[styles.sizeSmall, { color: colors.primary }]}>A</Text>
-      </Pressable>
-      <Pressable
-        onPress={() => resize(1)}
-        disabled={scaleIndex >= TEXT_SCALES.length - 1}
-        accessibilityRole="button"
-        accessibilityLabel={t('stories.reader.larger')}
-        accessibilityState={{ disabled: scaleIndex >= TEXT_SCALES.length - 1 }}
-        style={[styles.sizeButton, { opacity: scaleIndex >= TEXT_SCALES.length - 1 ? 0.35 : 1 }]}
-      >
-        <Text style={[styles.sizeLarge, { color: colors.primary }]}>A</Text>
-      </Pressable>
-    </View>
+  const bookmarkButton = (
+    <Pressable
+      onPress={toggleBookmark}
+      accessibilityRole="button"
+      accessibilityLabel={me?.bookmarked ? t('stories.library.bookmarked') : t('stories.library.bookmark')}
+      accessibilityState={{ selected: me?.bookmarked ?? false }}
+      style={styles.headerButton}
+    >
+      <Icon name={me?.bookmarked ? 'bookmark-fill' : 'bookmark'} size={22} color={me?.bookmarked ? colors.gold : colors.textPrimary} />
+    </Pressable>
   );
+
+  const headerRight =
+    mode === 'reading' ? (
+      <View style={styles.sizeControls}>
+        <Pressable
+          onPress={() => resize(-1)}
+          disabled={scaleIndex <= 0}
+          accessibilityRole="button"
+          accessibilityLabel={t('stories.reader.smaller')}
+          accessibilityState={{ disabled: scaleIndex <= 0 }}
+          style={[styles.sizeButton, { opacity: scaleIndex <= 0 ? 0.35 : 1 }]}
+        >
+          <Text style={[styles.sizeSmall, { color: colors.primary }]}>A</Text>
+        </Pressable>
+        <Pressable
+          onPress={() => resize(1)}
+          disabled={scaleIndex >= TEXT_SCALES.length - 1}
+          accessibilityRole="button"
+          accessibilityLabel={t('stories.reader.larger')}
+          accessibilityState={{ disabled: scaleIndex >= TEXT_SCALES.length - 1 }}
+          style={[styles.sizeButton, { opacity: scaleIndex >= TEXT_SCALES.length - 1 ? 0.35 : 1 }]}
+        >
+          <Text style={[styles.sizeLarge, { color: colors.primary }]}>A</Text>
+        </Pressable>
+        {bookmarkButton}
+      </View>
+    ) : story ? (
+      bookmarkButton
+    ) : undefined;
 
   if (error || !story) {
     return (
@@ -180,7 +393,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             <ErrorRetry message={describeError(error, t)} onRetry={load} />
           )
         ) : (
-          <ReaderSkeleton scale={textScale} />
+          <OverviewSkeleton />
         )}
       </GradientBackground>
     );
@@ -188,6 +401,11 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
 
   const dir = storyTextStyle(story.dialect);
   const props = storyTextProps(story.dialect);
+  const finished = !!me?.finishedAt || reachedEnd;
+  const share = me?.finishedAt ? 1 : (me?.share ?? 0);
+  const left = minutesLeft(story.readingMinutes, share);
+  const narrated = narrationLabel(story.audioCoverage, t);
+  const category = categoryLabel(story.category, categories, locale);
   const reading = narration.current;
   const line = reading ? lines.get(reading) : undefined;
   // the character faces back toward the Listen it stands after
@@ -210,116 +428,179 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
         }
       : null;
 
+  const check = (
+    <CheckCard
+      me={me}
+      unlocked={finished}
+      starting={starting}
+      error={startError}
+      onStart={() => void startCheck()}
+    />
+  );
+
+  const vocabulary =
+    story.glossary.length > 0 ? (
+      <View style={styles.section}>
+        <SectionLabel>{t('stories.overview.vocabulary')}</SectionLabel>
+        <Card padding="tight">
+          {story.glossary.map((entry) => (
+            <VocabularyRow key={entry.term} entry={entry} story={story} onOpen={() => setGloss(entry)} clips={clips} />
+          ))}
+        </Card>
+      </View>
+    ) : null;
+
   return (
     <GradientBackground>
-      <ScreenHeader title={t('stories.title')} onBack={onExit} right={headerRight} />
-      <ScrollView ref={scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <View style={styles.head}>
-          <Text {...props} style={[styles.title, { color: colors.textPrimary }, dir]} accessibilityRole="header">
-            {story.title}
-          </Text>
-          <View style={[styles.pills, storyRowStyle(story.dialect)]}>
-            <Pill label={DIALECT_NAME[story.dialect]} tone="primary" />
-            <Pill label={t('stories.level', { level: story.level })} />
-            <Pill label={t(LENGTH_KEY[story.length])} />
-            <Pill label={t('stories.aboutMinutes', { count: story.readingMinutes })} />
-            {story.fullyNarrated ? <Pill icon="headphones" label={t('stories.narratedShort')} tone="primary" /> : null}
-          </View>
-          {story.summary ? (
-            <Text {...props} style={[styles.summary, { color: colors.textSecondary }, dir]}>
-              {story.summary}
+      {/* the bar names the place in the app's words; the story's own title is in the body, in its own script */}
+      <ScreenHeader title={t('stories.title')} onBack={mode === 'reading' ? toOverview : onExit} right={headerRight} />
+      {mode === 'overview' ? (
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomInset + spacing.lg }]} showsVerticalScrollIndicator={false}>
+          <StoryCover cover={story.cover} category={story.category} style={styles.cover} radius={radii.lg} />
+          <View style={styles.head}>
+            <Text {...props} style={[styles.title, { color: colors.textPrimary }, dir]} accessibilityRole="header">
+              {story.title}
             </Text>
-          ) : null}
-        </View>
-
-        {story.fullyNarrated && items.length > 0 ? (
-          <NarrationBar
-            narrator={narrator}
-            state={narration}
-            items={items}
-            rate={prefs.rate}
-            onRate={(rate) => update({ rate })}
-          />
-        ) : null}
-
-        <View onLayout={(e) => (textTop.current = e.nativeEvent.layout.y)}>
-          <StoryText
-            story={story}
-            fontSize={Math.round(STORY_BODY_SIZE * textScale)}
-            current={narration.current ? { paragraph: narration.current.paragraph, sentence: narration.current.sentence } : null}
-            onGloss={setGloss}
-            listenable={listenable}
-            listening={narration.scope === 'paragraph' ? narration.paragraph : null}
-            playing={narration.playing}
-            onListen={listenTo}
-            voiced={voiced}
-            speaker={speaker}
-            onParagraphLayout={(p, y) => paragraphTops.current.set(p, y)}
-          />
-        </View>
-
-        {story.glossary.length > 0 ? (
-          <View style={styles.section}>
-            <SectionLabel>{t('stories.reader.words')}</SectionLabel>
-            <Card padding="tight">
-              {story.glossary.map((entry) => {
-                const meaning = glossFor(entry, locale);
-                const english = meaning.lang === 'en' && locale !== 'en';
-                return (
+            <View style={[styles.pills, storyRowStyle(story.dialect)]}>
+              <Pill label={cefrLabel(story.cefr, t)} tone="gold" />
+              {category ? <Pill icon="tag" label={category} /> : null}
+              <Pill label={DIALECT_NAME[story.dialect]} />
+              <Pill label={t('stories.aboutMinutes', { count: story.readingMinutes })} />
+              <Pill label={t('stories.overview.words', { count: formatNumber(story.wordCount, locale) })} />
+              {narrated ? <Pill icon="headphones" label={narrated} tone="primary" /> : null}
+            </View>
+            {story.summary ? (
+              <Text {...props} style={[styles.summary, { color: colors.textPrimary }, dir]}>
+                {story.summary}
+              </Text>
+            ) : null}
+            <Text style={[styles.byline, { color: colors.textSecondary }]}>
+              {[story.author ? t('stories.overview.by', { author: story.author }) : null, t(TRADITION_KEY[story.tradition])].filter(Boolean).join(' · ')}
+            </Text>
+            {story.source ? <Text style={[styles.source, { color: colors.textSecondary }]}>{t('stories.overview.source', { source: story.source })}</Text> : null}
+            {story.attributionNote ? <Text style={[styles.source, { color: colors.textSecondary }]}>{story.attributionNote}</Text> : null}
+            {story.versions.length > 0 ? (
+              <View style={styles.versions}>
+                {story.versions.map((v) => (
                   <Pressable
-                    key={entry.term}
-                    onPress={() => setGloss(entry)}
+                    key={v.id}
+                    onPress={() => navigation.push('StoryReader', { slug: v.slug })}
                     accessibilityRole="button"
-                    // the word in the story's language; its meaning, in the app's (or English), as the value
-                    accessibilityLabel={entry.term}
-                    {...props}
-                    accessibilityValue={{ text: meaning.text }}
-                    // the meaning sits under its word, on the side the story is written from
-                    style={({ pressed }) => [styles.wordRow, { alignItems: dir.textAlign === 'right' ? 'flex-end' : 'flex-start' }, pressed && heldRow(colors.controlTrack)]}
+                    style={({ pressed }) => [styles.version, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
                   >
-                    <Text {...props} style={[styles.wordTerm, { color: colors.textPrimary }, dir]}>
-                      {entry.term}
-                    </Text>
-                    <Text
-                      {...(english ? ENGLISH_TEXT_PROPS : {})}
-                      style={[styles.wordMeaning, { color: colors.textSecondary }, english ? ENGLISH_TEXT_STYLE : null]}
-                    >
-                      {meaning.text}
-                    </Text>
+                    <Icon name="translate" size={14} color={colors.primary} />
+                    <Text style={[styles.versionText, { color: colors.primary }]}>{t('stories.overview.readIn', { variety: DIALECT_NAME[v.dialect] })}</Text>
                   </Pressable>
-                );
-              })}
-            </Card>
+                ))}
+              </View>
+            ) : null}
           </View>
-        ) : null}
 
-        <Card style={styles.play}>
-          <Text style={[styles.playTitle, { color: colors.textPrimary }]} accessibilityRole="header">
-            {t('stories.reader.readIt')}
-          </Text>
-          <ClayButton
-            label={t('stories.reader.quizYourself')}
-            icon="check"
-            tone="primary"
-            size="large"
-            busy={starting}
-            onPress={() => void quizYourself()}
-          />
-          <Pressable
-            onPress={() => setSetupMode('solo')}
-            accessibilityRole="button"
-            style={styles.settingsLink}
-            hitSlop={8}
+          <View style={styles.actions}>
+            <ClayButton
+              label={continueFrom !== null || (share > 0 && !finished) ? `${t('stories.overview.continue')} · ${t('stories.overview.minutesLeft', { count: left })}` : t('stories.overview.read')}
+              icon="book"
+              tone="primary"
+              size="large"
+              onPress={() => startReading(continueFrom)}
+            />
+            {items.length > 0 ? (
+              <ClayButton label={t('stories.overview.listen')} icon="headphones" onPress={() => listenFrom(continueFrom ?? 0)} />
+            ) : null}
+          </View>
+
+          {vocabulary}
+          {check}
+
+          <View style={styles.section}>
+            <SectionLabel>{t('stories.library.together')}</SectionLabel>
+            <View style={styles.actions}>
+              <ClayButton label={t('stories.mode.duo')} icon="person" onPress={() => setSetupMode('duo')} />
+              <ClayButton label={t('stories.mode.group')} icon="people" onPress={() => setSetupMode('group')} />
+            </View>
+          </View>
+        </ScrollView>
+      ) : (
+        <>
+          <ScrollView
+            ref={scroll}
+            testID="story-text"
+            contentContainerStyle={[styles.content, { paddingBottom: bottomInset + spacing.lg }]}
+            showsVerticalScrollIndicator={false}
+            onScroll={onScroll}
+            scrollEventThrottle={100}
           >
-            <Text style={[styles.settingsText, { color: colors.primary }]}>{t('stories.reader.quizSettings')}</Text>
-          </Pressable>
-          {startError ? <Note tone="danger" icon="alert">{startError}</Note> : null}
-          <ClayButton label={t('stories.mode.duo')} icon="person" onPress={() => setSetupMode('duo')} />
-          <ClayButton label={t('stories.mode.group')} icon="people" onPress={() => setSetupMode('group')} />
-        </Card>
-      </ScrollView>
+            <View style={styles.readingHead}>
+              <Text {...props} style={[styles.readingTitle, { color: colors.textPrimary }, dir]} numberOfLines={1} accessibilityRole="header">
+                {story.title}
+              </Text>
+              <Text style={[styles.readingMeta, { color: colors.textSecondary }]}>
+                {finished ? t('stories.library.finished') : t('stories.overview.minutesLeft', { count: left })}
+              </Text>
+            </View>
+            {continueFrom !== null ? (
+              <Pressable
+                onPress={() => {
+                  scrollToParagraph(continueFrom);
+                  setContinueFrom(null);
+                }}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.continueChip, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+              >
+                <Icon name="move-down" size={16} color={colors.primary} />
+                <Text style={[styles.continueChipText, { color: colors.primary }]}>{t('stories.reader.continueFrom', { n: continueFrom + 1 })}</Text>
+              </Pressable>
+            ) : null}
 
-      {gloss ? <GlossSheet entry={gloss} dialect={story.dialect} onClose={() => setGloss(null)} /> : null}
+            <View onLayout={(e) => (textTop.current = e.nativeEvent.layout.y)}>
+              <StoryText
+                story={story}
+                fontSize={Math.round(STORY_BODY_SIZE * textScale)}
+                current={narration.current ? { paragraph: narration.current.paragraph, sentence: narration.current.sentence } : null}
+                onGloss={setGloss}
+                listenable={listenable}
+                listening={narration.scope === 'paragraph' ? narration.paragraph : null}
+                playing={narration.playing}
+                onListen={listenTo}
+                voiced={voiced}
+                speaker={speaker}
+                translation={translation}
+                translated={translated}
+                onToggleTranslation={(p) =>
+                  setTranslated((was) => {
+                    const next = new Set(was);
+                    if (next.has(p)) next.delete(p);
+                    else next.add(p);
+                    return next;
+                  })
+                }
+                onParagraphLayout={onParagraphLayout}
+              />
+            </View>
+
+            <View style={styles.end}>
+              <Text style={[styles.endText, { color: colors.textSecondary }]}>{t('stories.reader.finished')}</Text>
+              {check}
+              {vocabulary}
+              <ClayButton label={t('stories.reader.overview')} variant="outline" icon="story" onPress={toOverview} />
+            </View>
+          </ScrollView>
+          {items.length > 0 ? (
+            <View style={[styles.player, { paddingBottom: Math.max(bottomInset, spacing.sm) }]}>
+              <NarrationBar narrator={narrator} state={narration} items={items} rate={prefs.rate} onRate={(rate) => update({ rate })} />
+            </View>
+          ) : null}
+        </>
+      )}
+
+      {gloss ? (
+        <GlossSheet
+          entry={gloss}
+          story={story}
+          clips={clips}
+          onClose={() => setGloss(null)}
+        />
+      ) : null}
 
       {setupMode ? (
         <SetupSheet
@@ -327,7 +608,6 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
           stories={[story]}
           story={story}
           initialMode={setupMode}
-          skipReading={setupMode === 'solo'}
           onClose={() => setSetupMode(null)}
           onCreated={(view) => {
             setSetupMode(null);
@@ -354,7 +634,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                   navigation.navigate('StoryGame', { id });
                 }}
               />
-              <ClayButton label={t('stories.reader.startAgain')} busy={starting} onPress={() => void quizYourself(true)} />
+              <ClayButton label={t('stories.reader.startAgain')} busy={starting} onPress={() => void startCheck(true)} />
             </>
           }
         >
@@ -365,90 +645,255 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   );
 }
 
-/** A word's meaning in the interface language (English when there is none), marked as English when it is. */
-function GlossSheet({ entry, dialect, onClose }: { entry: StoryGlossEntry; dialect: StoryDetail['dialect']; onClose: () => void }): React.JSX.Element {
+/** The one player a screen shares for its word clips (alphabet/useClipPlayer). */
+type Clips = ReturnType<typeof useClipPlayer>;
+
+/**
+ * The check (design notes §1, §6): its name, what it is (five questions, no
+ * timer), the best score so far, a note on the XP a repeat earns today, and
+ * the button — disabled, with "Finish the story first", until the story has
+ * been read to its end.
+ */
+function CheckCard({
+  me,
+  unlocked,
+  starting,
+  error,
+  onStart,
+}: {
+  me: StoryMe | null;
+  unlocked: boolean;
+  starting: boolean;
+  error: string | null;
+  onStart: () => void;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const attempts = me?.attemptsToday ?? 0;
+  // from the third check of a day on, the game pays nothing; the second pays a quarter
+  const unpaid = attempts >= PAID_STORY_REPEATS_PER_DAY;
+  const checked = me?.bestCorrect !== null && me?.bestCorrect !== undefined && me.total !== null;
+  return (
+    <Card style={styles.check}>
+      <View style={styles.checkHead}>
+        <Icon name={unlocked ? 'check' : 'lock'} size={20} color={unlocked ? colors.success : colors.textSecondary} />
+        <Text style={[styles.checkTitle, { color: colors.textPrimary }]} accessibilityRole="header">
+          {t('stories.check.title')}
+        </Text>
+      </View>
+      <Text style={[styles.checkLine, { color: colors.textSecondary }]}>{t('stories.check.questions', { count: STORY_ASSESSMENT.questionCount })}</Text>
+      {checked && me ? (
+        <Text style={[styles.checkBest, { color: colors.goldText }]}>
+          {t('stories.check.best', { correct: formatNumber(me.bestCorrect ?? 0, locale), total: formatNumber(me.total ?? 0, locale) })}
+        </Text>
+      ) : null}
+      {unlocked && unpaid ? (
+        <Text style={[styles.checkLine, { color: colors.textSecondary }]}>{t('stories.check.noXp')}</Text>
+      ) : unlocked && attempts > 0 ? (
+        <Text style={[styles.checkLine, { color: colors.textSecondary }]}>{t('stories.check.repeatXp')}</Text>
+      ) : null}
+      {!unlocked ? <Note icon="lock">{t('stories.check.locked')}</Note> : null}
+      <ClayButton
+        label={checked ? t('stories.check.again') : t('stories.check.start')}
+        icon="check"
+        tone="primary"
+        size="large"
+        busy={starting}
+        disabled={!unlocked}
+        onPress={onStart}
+      />
+      {error ? <Note tone="danger" icon="alert">{error}</Note> : null}
+    </Card>
+  );
+}
+
+/** A glossary word in the overview's list: the word, its meaning, a play button where there is a clip. */
+function VocabularyRow({
+  entry,
+  story,
+  onOpen,
+  clips,
+}: {
+  entry: StoryGlossEntry;
+  story: Pick<StoryDetail, 'dialect'>;
+  onOpen: () => void;
+  clips: Clips;
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t, locale } = useI18n();
+  const dir = storyTextStyle(story.dialect);
+  const props = storyTextProps(story.dialect);
+  const meaning = glossFor(entry, locale);
+  const english = meaning.lang === 'en' && locale !== 'en';
+  const url = entry.audioUrl ?? null;
+  const playable = !!url && clips.supported;
+  const playing = clips.isPlaying(url);
+  return (
+    <View style={[styles.wordRow, { flexDirection: dir.textAlign === 'right' ? 'row-reverse' : 'row' }]}>
+      <Pressable
+        onPress={onOpen}
+        accessibilityRole="button"
+        // the word in the story's language; its meaning, in the app's (or English), as the value
+        accessibilityLabel={entry.term}
+        {...props}
+        accessibilityValue={{ text: meaning.text }}
+        style={({ pressed }) => [styles.wordMain, { alignItems: dir.textAlign === 'right' ? 'flex-end' : 'flex-start' }, pressed && heldRow(colors.controlTrack)]}
+      >
+        <Text {...props} style={[styles.wordTerm, { color: colors.textPrimary }, dir]}>
+          {entry.term}
+        </Text>
+        <Text {...(english ? ENGLISH_TEXT_PROPS : {})} style={[styles.wordMeaning, { color: colors.textSecondary }, english ? ENGLISH_TEXT_STYLE : null]}>
+          {meaning.text}
+        </Text>
+      </Pressable>
+      {playable && url ? (
+        <Pressable
+          onPress={() => clips.play(url)}
+          accessibilityRole="button"
+          accessibilityLabel={t('stories.reader.playWord')}
+          style={({ pressed }) => [styles.wordPlay, { backgroundColor: playing ? colors.primary : colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+        >
+          <Icon name="speaker" size={18} color={playing ? colors.textOnPrimary : colors.primary} />
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * A word's sheet (design notes §3): the word, its part of speech when the
+ * dictionary knows it, its meaning in the interface language (English when
+ * there is none, marked as English), a play button where there is a clip, and
+ * Save word / Saved where the word is a dictionary headword — with the
+ * vocabulary's limit said when the shelf is full.
+ */
+function GlossSheet({ entry, story, clips, onClose }: { entry: StoryGlossEntry; story: Pick<StoryDetail, 'dialect'>; clips: Clips; onClose: () => void }): React.JSX.Element {
+  const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const meaning = glossFor(entry, locale);
   const english = meaning.lang === 'en' && locale !== 'en';
+  const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const url = entry.audioUrl ?? null;
+  const entryId = entry.entryId ?? null;
+
+  const toggleSave = (): void => {
+    if (!entryId) return;
+    const next = !saved;
+    haptic('tap');
+    setSaved(next);
+    setSaveError(null);
+    void saveWord(client, entryId, next).then((res) => {
+      if (res.ok) return;
+      // it did not take: the word goes back, and a full vocabulary says why (limits/limitCopy.ts)
+      setSaved(!next);
+      setSaveError(limitErrorText(res.error, t) ?? describeError(res.error, t));
+    });
+  };
+
   return (
     <Sheet title={t('stories.reader.meaning')} onClose={onClose}>
-      <Text {...storyTextProps(dialect)} style={[styles.glossTerm, { color: colors.textPrimary }, storyTextStyle(dialect)]}>
+      <Text {...storyTextProps(story.dialect)} style={[styles.glossTerm, { color: colors.textPrimary }, storyTextStyle(story.dialect)]}>
         {entry.term}
       </Text>
-      <Text
-        {...(english ? ENGLISH_TEXT_PROPS : {})}
-        style={[styles.glossMeaning, { color: colors.textPrimary }, english ? ENGLISH_TEXT_STYLE : null]}
-      >
+      {entry.pos ? <Text style={[styles.glossPos, { color: colors.textSecondary }]}>{entry.pos}</Text> : null}
+      <Text {...(english ? ENGLISH_TEXT_PROPS : {})} style={[styles.glossMeaning, { color: colors.textPrimary }, english ? ENGLISH_TEXT_STYLE : null]}>
         {meaning.text}
       </Text>
       {english ? <Text style={[styles.sheetText, { color: colors.textSecondary }]}>{t('stories.reader.inEnglish')}</Text> : null}
+      {(url && clips.supported) || entryId ? (
+        <View style={styles.glossActions}>
+          {url && clips.supported ? (
+            <ClayButton label={t('stories.reader.playWord')} icon="speaker" onPress={() => clips.play(url)} />
+          ) : null}
+          {entryId ? (
+            <ClayButton
+              label={saved ? t('stories.reader.saved') : t('stories.reader.saveWord')}
+              icon={saved ? 'bookmark-fill' : 'bookmark'}
+              tone={saved ? 'neutral' : 'primary'}
+              onPress={toggleSave}
+              accessibilityLabel={saved ? t('stories.reader.saved') : t('stories.reader.saveWord')}
+            />
+          ) : null}
+        </View>
+      ) : null}
+      {saveError ? <Note tone="danger" icon="alert">{saveError}</Note> : null}
     </Sheet>
   );
 }
 
 /**
- * The story while it loads, in the reader's own column: the title, the facts,
- * the summary, and paragraphs at the reader's chosen size and the story's own
- * line height — so the words arrive on the lines that were waiting for them.
+ * The overview while it loads, in its own column: the cover's shape, the
+ * title, the facts as pills, two lines of summary, and the first button —
+ * so the words arrive on the lines that were waiting for them.
  */
-function ReaderSkeleton({ scale }: { scale: number }): React.JSX.Element {
+function OverviewSkeleton(): React.JSX.Element {
   const { t } = useI18n();
-  const line = storyLineHeight(Math.round(STORY_BODY_SIZE * scale));
-  const size = Math.round(STORY_BODY_SIZE * scale);
-  const widths = ['96%', '92%', '98%', '70%'] as const;
-  const { height } = useWindowDimensions();
-  const paragraphs = Math.max(3, Math.ceil((height - 260) / (line * widths.length + spacing.md)));
   return (
     <View style={styles.content} accessibilityLabel={t('common.loading')}>
+      <Skeleton width="100%" height={COVER_HEIGHT} radius={radii.lg} />
       <View style={styles.head}>
         <SkeletonText size={typography.sizes.xl} lineHeight={TITLE_LINE} width="60%" />
         <View style={styles.pills}>
-          {[72, 56, 64, 80].map((w) => (
+          {[96, 72, 56, 64].map((w) => (
             <Skeleton key={w} width={w} height={lineOf(typography.sizes.xs) + 6} radius={radii.pill} />
           ))}
         </View>
         <View>
-          <SkeletonText size={typography.sizes.md} lineHeight={22} width="94%" />
-          <SkeletonText size={typography.sizes.md} lineHeight={22} width="58%" />
+          <SkeletonText size={typography.sizes.md} lineHeight={storyLineHeight(typography.sizes.md)} width="94%" />
+          <SkeletonText size={typography.sizes.md} lineHeight={storyLineHeight(typography.sizes.md)} width="58%" />
         </View>
       </View>
-      <View style={styles.paragraphs}>
-        {Array.from({ length: paragraphs }, (_, p) => (
-          <View key={p}>
-            {widths.map((w, i) => (
-              <SkeletonText key={i} size={size} lineHeight={line} width={w} />
-            ))}
-          </View>
-        ))}
-      </View>
+      <Skeleton width="100%" height={50} radius={radii.pill} />
     </View>
   );
 }
 
 /** display(28) sets 1.12 */
 const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
+const COVER_HEIGHT = 180;
 
 const styles = StyleSheet.create({
-  paragraphs: { gap: spacing.md },
-  content: { ...COLUMN, padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
+  content: { ...COLUMN, padding: spacing.lg, gap: spacing.lg },
+  cover: { width: '100%', height: COVER_HEIGHT },
   head: { gap: spacing.sm },
   title: { ...display(typography.sizes.xl) },
-  summary: { fontSize: typography.sizes.md, lineHeight: 22 },
+  summary: { fontSize: typography.sizes.md, lineHeight: 24 },
+  byline: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  source: { fontSize: typography.sizes.xs, lineHeight: 18 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  versions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  version: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 36, borderRadius: radii.pill, paddingHorizontal: spacing.md - 2 },
+  versionText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  actions: { gap: spacing.sm },
+  headerButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   sizeControls: { flexDirection: 'row', alignItems: 'center' },
   sizeButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   sizeSmall: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   sizeLarge: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   section: { gap: spacing.sm },
-  wordRow: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingVertical: spacing.xs, gap: 2 },
+  readingHead: { gap: 2 },
+  readingTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  readingMeta: { fontSize: typography.sizes.xs },
+  continueChip: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.pill, paddingHorizontal: spacing.md },
+  continueChipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  end: { gap: spacing.lg, paddingTop: spacing.md },
+  endText: { fontSize: typography.sizes.sm, textAlign: 'center', fontStyle: 'italic' },
+  player: { paddingHorizontal: spacing.md, paddingTop: spacing.xs },
+  check: { gap: spacing.sm },
+  checkHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  checkTitle: { ...display(typography.sizes.lg), flex: 1 },
+  checkLine: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  checkBest: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  wordRow: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
+  wordMain: { flex: 1, justifyContent: 'center', paddingVertical: spacing.xs, gap: 2 },
   wordTerm: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   wordMeaning: { fontSize: typography.sizes.sm },
-  play: { gap: spacing.md },
-  playTitle: { ...display(typography.sizes.lg) },
-  settingsLink: { alignSelf: 'center', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  settingsText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  wordPlay: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   sheetText: { fontSize: typography.sizes.md, lineHeight: 22 },
   glossTerm: { ...display(typography.sizes.xl) },
+  glossPos: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   glossMeaning: { fontSize: typography.sizes.lg, lineHeight: 26 },
+  glossActions: { gap: spacing.sm },
 });

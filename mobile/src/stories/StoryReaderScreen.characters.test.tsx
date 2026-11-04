@@ -111,15 +111,22 @@ afterEach(() => {
 function read(s: StoryDetail): void {
   testAuth.client = fakeClient({
     'GET /stories/nane-germ': ok(s),
+    'GET /stories/categories': ok({ categories: [] }),
     'GET /story-games/options': ok({ canHostOpen: false }),
     'GET /story-games/active': ok({ games: [] }),
   });
   renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
 }
 
+/** The text is behind the overview: Read opens it. */
+async function openText(): Promise<void> {
+  fireEvent.click(await screen.findByRole('button', { name: 'Read' }));
+}
+
 describe('the story reader’s speaking characters', () => {
   it('shows who says the sentence being read, saying it, and the next speaker with the next line', async () => {
     read(story(true));
+    await openText();
     const listen = await screen.findByRole('button', { name: 'Listen to paragraph 1' });
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
 
@@ -139,6 +146,7 @@ describe('the story reader’s speaking characters', () => {
 
   it('shows nobody when no line of the story has a speaker', async () => {
     read(story(false));
+    await openText();
     fireEvent.click(await screen.findByRole('button', { name: 'Listen to paragraph 1' }));
     expect(await screen.findByRole('button', { name: 'Pause paragraph 1' })).toBeTruthy();
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();

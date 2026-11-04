@@ -12,6 +12,7 @@ import {
   type StoryListItem,
   type StoryMe,
   type StoryProgress,
+  type StoryCategory,
   type StoryQuery,
   type TextDuring,
   type TimerSeconds,
@@ -49,6 +50,9 @@ export function listStories(client: ApiClient, filter: StoryFilter = {}): Promis
 
 export const getStory = (client: ApiClient, slugOrId: string): Promise<ApiResult<StoryDetail>> =>
   client.get(`/stories/${encodeURIComponent(slugOrId)}`);
+
+/** Every category by name, for a story that carries only its category's slug. */
+export const getCategories = (client: ApiClient): Promise<ApiResult<{ categories: StoryCategory[] }>> => client.get('/stories/categories');
 
 /** On or off the caller's shelf. */
 export const setBookmark = (client: ApiClient, id: string, on: boolean): Promise<ApiResult<{ bookmarked: boolean }>> =>

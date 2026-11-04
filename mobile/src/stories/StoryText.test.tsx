@@ -20,8 +20,8 @@ const story = {
 
 describe('storyLineHeight', () => {
   it('spaces lines for the reader’s size alone — React Native adds the system text size to it', () => {
-    expect(storyLineHeight(STORY_BODY_SIZE)).toBe(29);
-    expect(storyLineHeight(Math.round(STORY_BODY_SIZE * 1.5))).toBe(43);
+    expect(storyLineHeight(STORY_BODY_SIZE)).toBe(30);
+    expect(storyLineHeight(Math.round(STORY_BODY_SIZE * 1.5))).toBe(45);
   });
 });
 
@@ -41,6 +41,19 @@ describe('StoryText', () => {
   it('marks nothing where there is nobody to open a meaning for', () => {
     renderWithProviders(<StoryText story={story} />);
     expect(screen.queryAllByText('nan')).toHaveLength(0);
+  });
+
+  it('shows a paragraph’s translation under it on request, marked as English when it is the fallback', () => {
+    const onToggle = vi.fn();
+    const translation = { paragraphs: ['My mother bakes bread. The bread is warm.', 'We eat bread.'], lang: 'en' };
+    const view = renderWithProviders(<StoryText story={story} translation={translation} translated={new Set()} onToggleTranslation={onToggle} />);
+    expect(screen.queryByText('We eat bread.')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Translation of paragraph 2' }));
+    expect(onToggle).toHaveBeenCalledWith(1);
+    view.rerender(<StoryText story={story} translation={translation} translated={new Set([1])} onToggleTranslation={onToggle} />);
+    expect(screen.getByText('We eat bread.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Hide the translation of paragraph 2' })).toBeTruthy();
+    expect(screen.queryByText('My mother bakes bread. The bread is warm.')).toBeNull();
   });
 
   it('gives a Listen button only to a paragraph that has recordings, and says which one plays', () => {
