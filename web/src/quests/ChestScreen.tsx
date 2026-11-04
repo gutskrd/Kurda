@@ -29,6 +29,8 @@ const TIER: Record<ChestTier, MessageKey> = {
 
 /** The celebration's colours for each tier (ranks.css `tone-*`): gold, blue, violet. */
 const TONE: Record<ChestTier, string> = { common: 'zer', rare: 'ciya', epic: 'lutke' };
+/** How far the rays out of the open chest reach, against the drawing's own: across most of the screen. */
+const RAYS_REACH = 2.4;
 
 type Phase = 'closed' | 'opening' | 'open' | 'gone';
 
@@ -170,7 +172,7 @@ export function ChestScreen({
             aria-disabled={phase !== 'closed'}
           >
             <span className="chest-float">
-              <Chest tier={chest.chest} open={phase === 'gone'} size={208} />
+              <Chest tier={chest.chest} open={phase === 'gone'} shine={phase === 'closed'} size={208} />
               <span className="chest-sparkles" aria-hidden="true">
                 {[0, 1, 2, 3].map((i) => (
                   <span key={i} className={`chest-sparkle s${i}`}>
@@ -208,21 +210,33 @@ export function ChestScreen({
   );
 }
 
-/** The lid pops, the tier's colours are thrown out and "+N Zêr" lands: the app's one celebration, felt once. */
+/**
+ * The lid swings back, light bursts out of the chest in rays that keep
+ * turning, the tier's colours are thrown out, what it held rises out of it
+ * as a tile with its count ("× 40") and "+N Zêr" lands: the app's one
+ * celebration, felt once.
+ */
 function Opened({ tier, amount }: { tier: ChestTier; amount: number }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const moment = useCelebrationMoment();
+  const number = new Intl.NumberFormat(locale).format(amount);
   return (
     <div className={`celebrate chest-opened tone-${TONE[tier]} ${moment.playing ? 'is-playing' : 'is-done'}`} onClick={moment.playing ? moment.skip : undefined}>
       <CelebrationArt flecks={BURST.tier} seed={amount * 7 + tier.length} reach={170}>
-        <Chest tier={tier} open size={208} className="is-popping" />
+        <span className="chest-open-stage">
+          <span className="chest-tile" aria-hidden="true">
+            <CoinIcon size={36} weight="fill" />
+            <span dir="ltr">{`× ${number}`}</span>
+          </span>
+          <Chest tier={tier} open popping reach={RAYS_REACH} size={208} />
+        </span>
       </CelebrationArt>
       <p className="celebrate-details chest-reward">
         <span className="chest-coin" aria-hidden="true">
           <CoinIcon size={30} weight="fill" />
         </span>
-        <span dir="ltr">{t('quests.reward', { amount: new Intl.NumberFormat(locale).format(amount) })}</span>
+        <span dir="ltr">{t('quests.reward', { amount: number })}</span>
       </p>
     </div>
   );
