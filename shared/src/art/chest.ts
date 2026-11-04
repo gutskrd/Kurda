@@ -2,7 +2,7 @@
  * The reward chest a finished quest pays out of, designed once and drawn the
  * same by the phone and the website: a chunky trunk seen from three quarters
  * and a little above — a barrel of a lid lying along the body, its planks
- * running the length of it and rolling away over the crest, bound in broad
+ * running the length of it and curving over at both ends, bound in broad
  * bevelled straps that run on down the body, a broad belt round the seam of
  * the two, an ornate shield of a lock plate hung on the belt under a knob on
  * the lid, a ring handle on the near end, and a soft pool of shadow on the
@@ -143,16 +143,22 @@ const FRONT = { x0: 14, x1: 90, y0: 58, y1: 104 };
 /** The belt: the broad band round the seam of lid and body, lipped a little past both. */
 const BELT = { x0: 12, x1: 92, y0: 55, y1: 65 };
 /**
- * The lid: a barrel lying along the chest, as wide as the body. Its front
- * rises from the belt to the crest; its top rolls back from the crest for
- * `ROLL` of the depth, and what is behind that is out of sight from here.
- * Its near end is the body's right edge; its far end is the barrel's arch,
- * in the plane the depth sweeps through.
+ * The lid: a barrel lying along the chest, as wide as the body. Its
+ * cross-section is a half-ellipse standing on the belt, `rise` tall and the
+ * chest's depth across, so the planks run the length of it and curve over at
+ * both ends alike: the near end is the round cap, in the plane the depth
+ * sweeps through; the far end is the shoulder where the front's planks turn
+ * away out of sight. `THETA_TOP` is how far round from the front foot the
+ * topmost plank line lies, where the outline turns from the front to the
+ * back; from here the front shows up to it and the cap beyond it.
  */
-const LID = { x0: FRONT.x0, x1: FRONT.x1, crest: 28, foot: BELT.y0 };
-const ROLL = 0.5;
-/** The planks of the lid's front, as the seams between them: closer together toward the crest, where the barrel turns away. */
-const LID_SEAMS = [50.6, 46.2, 42.2, 38.5, 35.1, 31.9] as const;
+const LID = { x0: FRONT.x0, x1: FRONT.x1, foot: BELT.y0, rise: 24 };
+const THETA_TOP = Math.PI - Math.atan(LID.rise / (-DEPTH[1] / 2));
+const rad = (deg: number): number => (deg * Math.PI) / 180;
+/** The planks of the lid, as the seams between them: so far round the barrel each, so they close up toward the top, where it turns away. */
+const LID_SEAMS: readonly number[] = [18, 36, 54, 72].map(rad);
+/** The light lies on the barrel from here round to the top: the planks over the shoulder. */
+const LID_LIT = rad(54);
 /** The straps, as the x of each one's left and right edge, over the lid and down the body alike. */
 const BANDS: readonly (readonly [number, number])[] = [
   [24, 34],
@@ -170,7 +176,6 @@ const MOUTH: Pt = [61, 54];
 const HINGE: Pt = [66, 54];
 
 const back = ([x, y]: Pt): Pt => [x + DEPTH[0], y + DEPTH[1]];
-const roll = ([x, y]: Pt): Pt => [x + DEPTH[0] * ROLL, y + DEPTH[1] * ROLL];
 const p = ([x, y]: Pt): string => `${n(x)} ${n(y)}`;
 const poly = (pts: readonly Pt[]): string => `M${pts.map(p).join('L')}Z`;
 const line = (a: Pt, b: Pt): string => `M${p(a)}L${p(b)}`;
@@ -191,18 +196,44 @@ const BELT_FRONT = upright(BELT.x0, BELT.x1, BELT.y0, BELT.y1);
 const BELT_END = poly([[BELT.x1, BELT.y0], back([BELT.x1, BELT.y0]), back([BELT.x1, BELT.y1]), [BELT.x1, BELT.y1]]);
 const BELT_BEVEL = upright(BELT.x0, BELT.x1, BELT.y0, BELT.y0 + 2.2);
 
-/** The lid's front: the planks from the belt up to the crest. */
-const LID_FRONT = upright(LID.x0, LID.x1, LID.crest, LID.foot);
-/** The crest's roll: the top, as far back as it shows. */
-const LID_TOP = poly([[LID.x0, LID.crest], roll([LID.x0, LID.crest]), roll([LID.x1, LID.crest]), [LID.x1, LID.crest]]);
-/** The far end's arch: from the crest's roll round and down to the back foot. */
-const CAP_APEX = roll([LID.x1, LID.crest]);
-const CAP_BACK = back([LID.x1, LID.foot]);
-const CAP_ARCH = `M${p(CAP_APEX)}C${n(CAP_APEX[0] + 6)} ${n(CAP_APEX[1] + 3)} ${n(CAP_BACK[0])} ${n(CAP_BACK[1] - 10)} ${p(CAP_BACK)}`;
-/** The far end itself: the body's right edge up to the crest, over the roll, round the arch and back along the belt. */
-const LID_END = `M${LID.x1} ${LID.foot}V${LID.crest}L${p(CAP_APEX)}${CAP_ARCH.slice(CAP_ARCH.indexOf('C'))}Z`;
-/** The whole lid, for its clip and its edge. */
-const LID_ALL = `M${LID.x0} ${LID.foot}V${LID.crest}L${p(roll([LID.x0, LID.crest]))}H${n(CAP_APEX[0])}${CAP_ARCH.slice(CAP_ARCH.indexOf('C'))}L${LID.x1} ${LID.foot}Z`;
+/** A point on the barrel at `x`, `theta` round from the front foot (0) over the top to the back foot (π). */
+const barrel = (x: number, theta: number): Pt => {
+  const z = (1 - Math.cos(theta)) / 2;
+  return [x + DEPTH[0] * z, LID.foot - LID.rise * Math.sin(theta) + DEPTH[1] * z];
+};
+/** How that point moves as `theta` grows: the tangent, for the curves' control points. */
+const barrelTangent = (theta: number): Pt => [(DEPTH[0] * Math.sin(theta)) / 2, -LID.rise * Math.cos(theta) + (DEPTH[1] * Math.sin(theta)) / 2];
+/** The barrel's curve at `x` from one angle round to another, as cubic curves (one a sixth of a turn at most), to follow an `M` or an `L`. */
+function arc(x: number, from: number, to: number): string {
+  const pieces = Math.max(1, Math.ceil(Math.abs(to - from) / (Math.PI / 3)));
+  let d = '';
+  for (let i = 0; i < pieces; i++) {
+    const a = from + ((to - from) * i) / pieces;
+    const c = from + ((to - from) * (i + 1)) / pieces;
+    const k = (4 / 3) * Math.tan((c - a) / 4);
+    const [ax, ay] = barrel(x, a);
+    const [atx, aty] = barrelTangent(a);
+    const [cx, cy] = barrel(x, c);
+    const [ctx, cty] = barrelTangent(c);
+    d += `C${n(ax + k * atx)} ${n(ay + k * aty)} ${n(cx - k * ctx)} ${n(cy - k * cty)} ${n(cx)} ${n(cy)}`;
+  }
+  return d;
+}
+/** A band of the barrel's front between two x's, from `low` round to `high`: up the far side, across, and down the near. */
+const hoop = (x0: number, x1: number, low: number, high: number): string => `M${p(barrel(x0, low))}${arc(x0, low, high)}L${p(barrel(x1, high))}${arc(x1, high, low)}Z`;
+/** A line along the barrel at `theta`, the length of the lid unless told otherwise. */
+const along = (theta: number, x0 = LID.x0, x1 = LID.x1): string => line(barrel(x0, theta), barrel(x1, theta));
+
+/** The lid's front: the planks from the belt round to where they turn away. */
+const LID_FRONT = hoop(LID.x0, LID.x1, 0, THETA_TOP);
+/** The planks over the shoulder, in the light. */
+const LID_LIGHT = hoop(LID.x0, LID.x1, LID_LIT, THETA_TOP);
+/** The end's cap: the whole half-ellipse, turned away from the light. */
+const LID_END = `M${p(barrel(LID.x1, 0))}${arc(LID.x1, 0, Math.PI)}Z`;
+/** The cap's rim where it shows past the front: from the top round and down to the back foot. */
+const CAP_RIM = `M${p(barrel(LID.x1, THETA_TOP))}${arc(LID.x1, THETA_TOP, Math.PI)}`;
+/** The whole lid, for its clip and its edge: up the far shoulder, along the top, round the cap and back along the belt. */
+const LID_ALL = `M${p(barrel(LID.x0, 0))}${arc(LID.x0, 0, THETA_TOP)}L${p(barrel(LID.x1, THETA_TOP))}${arc(LID.x1, THETA_TOP, Math.PI)}L${p(barrel(LID.x1, 0))}Z`;
 
 /** The lid thrown back: standing on the body's back edge, leaning away, its inside towards us. */
 const OPEN = { x0: 33, x1: 109, y0: 52, top: 12 };
@@ -358,45 +389,37 @@ function bodyLayer(l: Layer, b: Brush): ChestBox {
   return { x: 12, y: 46, w: 98, h: 60 };
 }
 
-/** The lid shut: its front, the roll of its top, its far end, the straps over all three, and the hasp with the knob over the lock plate. */
+/** The lid shut: the barrel's front, the light over its shoulder, its end cap, the straps over it, and the hasp with the knob over the lock plate. */
 function lidLayer(l: Layer, b: Brush): ChestBox {
   const { wood, metal, gem } = b.tint;
   const clip = l.clip(LID_ALL);
-  // the front between, the roll of the top catching the light, the far end turned away
+  // the front, the planks over the shoulder catching the light, the end cap turned away
   l.add(fill(LID_FRONT, wood.face));
-  l.add(fill(LID_TOP, wood.light));
+  l.add(fill(LID_LIGHT, wood.light));
   l.add(fill(LID_END, wood.shade));
   l.add(`<g clip-path="url(#${clip})">`);
-  if (b.detail > 0) {
-    for (const y of LID_SEAMS) l.add(stroke(line([LID.x0, y], [LID.x1, y]), wood.line, 1.5));
-    // the crest itself, a line of light where the roll begins
-    l.add(stroke(line([LID.x0, LID.crest], [LID.x1, LID.crest]), wood.light, 1.2, ' stroke-opacity="0.8"'));
-  }
+  if (b.detail > 0) for (const theta of LID_SEAMS) l.add(stroke(along(theta), wood.line, 1.5));
   if (b.detail === 2) {
-    // the grain, and the planks' ends on the far end, running back with the depth
-    for (const [x0, x1, y] of [[38, 52, 52.8], [72, 82, 48.3], [40, 50, 44.2], [74, 84, 40.3], [42, 56, 33.5]] as const) l.add(stroke(line([x0, y], [x1, y]), wood.light, 1.3, ' stroke-opacity="0.55"'));
-    for (const y of [41, 48]) l.add(stroke(line([LID.x1 + 0.6, y], [LID.x1 + 11, y - 11 * (-DEPTH[1] / DEPTH[0])]), wood.line, 1.2));
+    // the grain: a few short light streaks along the planks, between the straps; and the planks' ends across the cap
+    for (const [x0, x1, deg] of [[38, 52, 8], [72, 82, 24], [44, 56, 30], [40, 50, 40], [74, 82, 46]] as const) l.add(stroke(along(rad(deg), x0, x1), wood.light, 1.3, ' stroke-opacity="0.55"'));
+    for (const theta of LID_SEAMS.slice(0, 2)) l.add(stroke(line(barrel(LID.x1 + 0.6, theta), barrel(LID.x1 + 0.6, Math.PI - theta)), wood.line, 1.2));
   }
-  if (b.tint.studs && b.detail === 2) for (const [x, y] of [[44, 36.8], [52, 36.8]] as const) l.add(stud(x, y));
-  // the straps, in line with the body's: up the front, bevelled down the left and shaded down the right, and over the roll in the light
+  if (b.tint.studs && b.detail === 2) for (const x of [44, 52]) l.add(stud(...barrel(x, rad(46))));
+  // the straps, in line with the body's: up the barrel and over the shoulder, each bevelled down its left edge and shaded down its right
   for (const [x0, x1] of STRAPS) {
-    const top = poly([[x0, LID.crest], roll([x0, LID.crest]), roll([x1, LID.crest]), [x1, LID.crest]]);
-    l.add(fill(top, metal.light));
-    l.add(fill(upright(x0, x1, LID.crest, LID.foot), metal.face));
-    l.add(fill(upright(x0, x0 + 2.2, LID.crest, LID.foot), metal.light));
-    l.add(fill(upright(x1 - 1.4, x1, LID.crest, LID.foot), metal.shade));
-    if (b.detail > 0) {
-      l.add(stroke(upright(x0, x1, LID.crest, LID.foot), metal.deep, b.thin));
-      l.add(stroke(top, metal.deep, b.thin));
-    }
+    const strap = hoop(x0, x1, 0, THETA_TOP);
+    l.add(fill(strap, metal.face));
+    l.add(fill(hoop(x0, x0 + 2.2, 0, THETA_TOP), metal.light));
+    l.add(fill(hoop(x1 - 1.4, x1, 0, THETA_TOP), metal.shade));
+    if (b.detail > 0) l.add(stroke(strap, metal.deep, b.thin));
   }
-  if (b.detail === 2) for (const [x0, x1] of BANDS) for (const y of [35, 48.5]) l.add(rivet((x0 + x1) / 2, y, metal));
-  // the far end's rim: the arch, turned away
-  l.add(stroke(CAP_ARCH, metal.shade, 5));
-  if (b.detail > 0) l.add(stroke(CAP_ARCH, metal.deep, b.thin, ' transform="translate(-2.6 0)" stroke-opacity="0.7"'));
+  if (b.detail === 2) for (const [x0, x1] of BANDS) for (const deg of [16, 50]) l.add(rivet(...barrel((x0 + x1) / 2, rad(deg)), metal));
+  // the cap's rim, where it shows past the front
+  l.add(stroke(CAP_RIM, metal.shade, 5));
+  if (b.detail > 0) l.add(stroke(CAP_RIM, metal.deep, b.thin, ' transform="translate(-2.6 0)" stroke-opacity="0.7"'));
   if (b.detail === 2) {
     // a nick or two in the metal
-    for (const [a, c] of [[[27.6, 39.5], [28.3, 43]], [[66.6, 31], [67.2, 34.5]], [[104.6, 31.5], [105.8, 34.4]]] as const) l.add(stroke(line(a, c), metal.light, 1.1));
+    for (const [x0, d0, x1, d1] of [[27.6, 33, 28.3, 39], [66.6, 60, 67.2, 68], [88.5, 122, 88.5, 131]] as const) l.add(stroke(line(barrel(x0, rad(d0)), barrel(x1, rad(d1))), metal.light, 1.1));
   }
   l.add('</g>');
   l.add(stroke(LID_ALL, wood.deep, b.edge));
