@@ -661,11 +661,11 @@
                   "payload": {
                     "say": "Gelî tarî bû û ez tirsiyam.",
                     "voice": "xezo",
-                    "prompt": "Xezal tells you what Baran admitted to her in a whisper. What was it?",
+                    "prompt": "Xezal repeats, word for word, what Baran admitted to her in a whisper. What did he say?",
                     "options": [
-                      "The valley was dark and he was afraid.",
-                      "The valley was dark but he wasn’t afraid.",
-                      "The valley was bright and he slept."
+                      "“The valley was dark and I was afraid.”",
+                      "“The valley was dark but I wasn’t afraid.”",
+                      "“The valley was bright and I slept.”"
                     ],
                     "correctIndex": 0
                   }
@@ -687,7 +687,9 @@
                     "prompt": "Xezal asks the question nobody else dares to. Put it together: “Were you afraid in the darkness?”",
                     "accepted": [
                       "Tu di tarîtiyê de tirsiyayî?",
-                      "Tu di tarîtiyê de tirsiyayî"
+                      "Tu di tarîtiyê de tirsiyayî",
+                      "Di tarîtiyê de tu tirsiyayî?",
+                      "Di tarîtiyê de tu tirsiyayî"
                     ]
                   }
                 },
@@ -713,8 +715,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo shakes his head. Type what he says.",
                     "accepted": [
-                      "Tarîtî hat û Baran hîn li bin darê bû.",
-                      "Tarîtî hat û Baran hîn li bin darê bû"
+                      "Tarî ket û Baran hîn li bin darê bû.",
+                      "Tarî ket û Baran hîn li bin darê bû"
                     ]
                   }
                 }
@@ -925,7 +927,11 @@
                       "Li gelî konek heye.",
                       "Li gelî konek heye",
                       "Konek li gelî heye.",
-                      "Konek li gelî heye"
+                      "Konek li gelî heye",
+                      "Di gelî de konek heye.",
+                      "Di gelî de konek heye",
+                      "Konek di gelî de heye.",
+                      "Konek di gelî de heye"
                     ]
                   }
                 },
@@ -1245,7 +1251,11 @@
                       "Di zemanê berê de dibistan dûr bû.",
                       "Di zemanê berê de dibistan dûr bû",
                       "Di zemanê berê de, dibistan dûr bû.",
-                      "Di zemanê berê de, dibistan dûr bû"
+                      "Di zemanê berê de, dibistan dûr bû",
+                      "Berê dibistan dûr bû.",
+                      "Berê dibistan dûr bû",
+                      "Dibistan berê dûr bû.",
+                      "Dibistan berê dûr bû"
                     ]
                   }
                 }
@@ -1620,7 +1630,9 @@
                     "prompt": "Hamo changes the story a little. Say: “Maybe it was a bear.”",
                     "accepted": [
                       "Belkî ew hirç bû.",
-                      "Belkî ew hirç bû"
+                      "Belkî ew hirç bû",
+                      "Belkî hirç bû.",
+                      "Belkî hirç bû"
                     ]
                   }
                 },
@@ -2353,10 +2365,10 @@
                     "voice": "hamo",
                     "prompt": "Be fair to Nazê. Say: “Nazê worked all day.”",
                     "accepted": [
-                      "Nazê hemû roj xebitî.",
-                      "Nazê hemû roj xebitî",
                       "Nazê hemû rojê xebitî.",
-                      "Nazê hemû rojê xebitî"
+                      "Nazê hemû rojê xebitî",
+                      "Nazê hemû roj xebitî.",
+                      "Nazê hemû roj xebitî"
                     ]
                   }
                 },
@@ -3593,7 +3605,7 @@
                   "type": "translate",
                   "payload": {
                     "voice": "xezo",
-                    "prompt": "Look at the lady donkey. Say: “Ferhad’s donkey is shy.”",
+                    "prompt": "Look at the lady donkey: a she-donkey takes the feminine ending, kera, where Bozo is kerê. Say: “Ferhad’s donkey is shy.”",
                     "accepted": [
                       "Kera Ferhad şermok e.",
                       "Kera Ferhad şermok e"
