@@ -60,12 +60,20 @@ const C = {
 
 // ─────────────────────────────────────────────────────────────── the body
 
-/** The hair that falls behind her shoulders, from under the crown to below her elbows. */
+/**
+ * The hair that falls behind her shoulders, from just above the head's pivot
+ * to below her elbows. It begins there and not under the crown because it
+ * stays with the body while the crown's cap turns with her head: begun at
+ * the temple, its flat top stood out of the cap as a step on whichever side
+ * the head turned away from. At the pivot's height a turn barely moves the
+ * cap's edge, so the two meet there without a seam, and above it the cap is
+ * the whole outline, on the same line.
+ */
 const BACK_HAIR: Knot[] = [
-  [93.2, 150.3, 0.4], [91, 165.1], [83.1, 194.4], [50.4, 302.9], [42.5, 333.4], [42.4, 347.9], [45.5, 360.9],
+  [79, 208, 0.4], [50.4, 302.9], [42.5, 333.4], [42.4, 347.9], [45.5, 360.9],
   [51.6, 373.1], [53.4, 376.4], [55.4, 379.8, 0.4], [57, 380.6], [58, 401.5, 0.4], [221, 403.6, 0.4], [222.6, 403.4],
   [223.2, 400], [224.6, 396.6], [227.6, 393.8], [235.7, 385.9], [243.1, 376.6], [247.5, 368.9], [250.4, 360.6], [252.3, 351.4],
-  [252.6, 333.4], [249.5, 317.4], [245.5, 304.1], [205.9, 191.4], [196.8, 162.6], [194.5, 150.5, 0.4],
+  [252.6, 333.4], [249.5, 317.4], [245.5, 304.1], [211.7, 208, 0.4],
 ];
 
 /** The dress, neckline to hem: the V at the front, the sleeves widening from the shoulders. */
@@ -414,18 +422,20 @@ function body(p: string): string {
 /**
  * The crown and the hair down either side of her face, to her shoulders,
  * parted in the middle. It runs on under her face, so the face is laid on
- * hair rather than beside it. From the jaw down its sides curve in, a few
- * units inside the back hair and the two locks that take over the outline
- * there: those stay with the body when the head tilts, and a corner of the
- * cap that reached the outline would swing out past it and show as a step.
+ * hair rather than beside it. Down to the height of the head's pivot its
+ * sides are the outline, on the line the back hair continues; below that
+ * they curve in, a few units inside the back hair and the two locks that
+ * take over the outline there: those stay with the body when the head
+ * tilts, and a corner of the cap that reached the outline would swing out
+ * past it and show as a step.
  */
 const HAIR_CAP: Knot[] = [
   [146.1, 106.3], [154.9, 107.2], [164.3, 110.3], [172.8, 115.3], [181.5, 122.9], [188.7, 131.9], [192.7, 140.2],
-  [197.2, 162.7], [201.2, 177], [205.3, 191], [209.2, 205], [211.8, 219], [211.4, 232], [208.2, 240.4], [203.2, 243, 0.4],
+  [197.2, 162.7], [201.4, 177], [205.8, 191], [210.7, 205], [211.7, 208], [211.8, 219], [211.4, 232], [208.2, 240.4], [203.2, 243, 0.4],
   [176, 242.6], [175.2, 241.8], [174.7, 229.7], [172.1, 227.5], [169.1, 227], [166.7, 225.1], [164.1, 226.1], [162.4, 225.3],
   [161.6, 211.6, 0.15], [161.7, 212.3], [126.5, 211.7, 0.4], [126, 223.6], [124, 225], [120.5, 225.6], [117.7, 228],
   [115.3, 228.2], [112.8, 229.5], [112, 233.4], [112, 241.8], [111.1, 242.8], [88.4, 243, 0.4], [83.4, 240.4],
-  [80.2, 232], [79.6, 220], [80.8, 208], [83.5, 196], [86.6, 182], [89.9, 168.5],
+  [80.2, 232], [79.4, 220], [79, 208], [82.6, 196], [86.4, 182], [89.9, 168.5],
   [92.4, 150.3], [94.2, 142.6], [97.3, 135.5], [101.1, 129.4], [108.6, 120.7], [115.4, 115.3], [125.2, 110.3],
   [135.6, 107.2],
 ];
