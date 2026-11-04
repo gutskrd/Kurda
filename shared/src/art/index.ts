@@ -12,6 +12,24 @@ export { rankEmblemSvg, placementEmblemSvg, PLACEMENT_GAMES, SMALL_EMBLEM, type 
 export { leagueEmblemSvg, SMALL_LEAGUE, type LeagueEmblemOptions } from './leagues.js';
 export { coinSvg, gemSvg, CURRENCY_CANVAS, type CurrencyOptions } from './currency.js';
 export {
+  CHEST_BOX,
+  CHEST_LAYERS,
+  CHEST_SMALL,
+  CHEST_TINTS,
+  CHEST_TINY,
+  CHEST_VIEW,
+  chestDrawing,
+  chestGlint,
+  chestLayerSvg,
+  chestSvg,
+  type ChestBox,
+  type ChestDrawing,
+  type ChestLayer,
+  type ChestLayerId,
+  type ChestOptions,
+  type ChestSvgOptions,
+} from './chest.js';
+export {
   seasonFrameSvg,
   seasonFrameShineSvg,
   SEASON_FRAME_INNER,
