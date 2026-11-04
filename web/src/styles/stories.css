@@ -613,7 +613,7 @@
   text-align: center;
 }
 
-/* ---- the reader --------------------------------------------------------------- */
+/* ---- the story page: the overview, then the reader (StoryReader.tsx) ------------ */
 .story-page {
   max-width: 760px;
   padding-top: 32px;
@@ -625,13 +625,44 @@
     padding-bottom: calc(40px + env(safe-area-inset-bottom));
   }
 }
-.story-head {
+.story-page .back-link {
   margin-bottom: 18px;
 }
+
+/* the overview: the cover beside the words on a wide screen, above them on a phone */
+.story-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 26px;
+}
+@media (min-width: 700px) {
+  .story-overview {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
+  }
+}
+.story-overview-cover {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-lg);
+}
+@media (max-width: 699px) {
+  .story-overview-cover {
+    aspect-ratio: 16 / 9;
+  }
+}
+.story-overview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
 .story-meta {
-  margin: 0 0 12px;
+  margin: 0;
 }
 .story-title {
+  margin: 0;
   font-size: clamp(1.9rem, 4.4vw, 2.6rem);
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -641,8 +672,22 @@
   letter-spacing: normal;
   line-height: 1.45;
 }
+/* where the story comes from, in one quiet line: its tradition, its author, its variety */
+.story-byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin: 0;
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.story-byline > span + span::before {
+  content: '·';
+  margin-inline: 8px;
+  color: var(--ink-4);
+}
 .story-summary {
-  margin-top: 10px;
+  margin: 0;
   color: var(--ink-2);
   font-size: 1.05rem;
   line-height: 1.6;
@@ -650,8 +695,37 @@
 .story-summary[lang='ckb'] {
   line-height: 1.9;
 }
+.story-overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+@media (max-width: 520px) {
+  .story-overview-actions .btn-primary {
+    flex: 1 1 100%;
+  }
+}
+.story-overview-bookmark.is-on {
+  color: var(--gold-ink);
+}
+.story-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  font-size: var(--text-secondary);
+}
+.story-versions a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* the reader's tools: the size, and how long is left, in reach while the text scrolls */
 .story-tools {
-  /* stays in reach while reading: the size and, for a narrated story, its player */
   position: sticky;
   top: calc(var(--nav-h) + var(--invite-banner-h, 0px) + 8px);
   z-index: 5;
@@ -674,7 +748,13 @@
     top: 8px;
   }
 }
-/* who says the line being read (ReaderControls.tsx), first in the tools so it stays in view */
+.story-tools-left {
+  padding: 0 8px;
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+/* who says the line being read (ReaderControls.tsx), first in a game's tools so it stays in view */
 .story-speaker {
   --speaker-size: 52px;
 }
@@ -712,6 +792,399 @@
 }
 .story-size-a.is-small {
   font-size: 0.95rem;
+}
+
+/* the way back to where a reader was */
+.story-resume {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  background: var(--gold-soft);
+  font-size: var(--text-secondary);
+  color: var(--ink);
+}
+.story-resume .link-btn {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+
+/* the text: the display serif at 18px and up, room between the lines, a measure of 36 em */
+.story-reader {
+  position: relative;
+  margin-bottom: 26px;
+}
+.story-text {
+  --story-size: 1;
+}
+.story-para {
+  margin-bottom: 1.25em;
+  font-size: calc(var(--story-size) * 1.125rem);
+}
+.story-para p {
+  margin: 0;
+  max-width: 36em;
+  font-family: var(--font-display);
+  font-size: inherit;
+  line-height: 1.65;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.story-para p[lang='ckb'] {
+  /* Arabic script needs more air between lines for its marks */
+  line-height: 2;
+}
+.story-sentence {
+  border-radius: 4px;
+  transition: background var(--dur) ease;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+/* the sentence being read sits on a gold band, and says itself again when tapped */
+.story-sentence.is-reading {
+  background: color-mix(in srgb, var(--gold) 22%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 22%, transparent);
+  cursor: pointer;
+}
+.story-sentence.is-evidence,
+.story-para p.is-evidence {
+  background: color-mix(in srgb, var(--success) 18%, transparent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 18%, transparent);
+}
+.story-replay {
+  display: inline-grid;
+  place-items: center;
+  vertical-align: middle;
+  width: 24px;
+  height: 24px;
+  margin-inline-start: 4px;
+  border-radius: 50%;
+  border: 0;
+  background: color-mix(in srgb, var(--gold) 28%, transparent);
+  color: var(--gold-ink);
+  cursor: pointer;
+}
+.story-replay:hover {
+  background: color-mix(in srgb, var(--gold) 44%, transparent);
+}
+.story-gloss-hold {
+  /* a glossary word keeps the quote or comma beside it on its own line */
+  white-space: nowrap;
+}
+.story-gloss {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: help;
+  text-decoration: underline dotted;
+  text-decoration-color: var(--gold);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.28em;
+}
+.story-gloss:hover,
+.story-gloss[aria-expanded='true'] {
+  color: var(--gold-ink);
+}
+.story-gloss:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
+/* under a paragraph: Listen, and the Translation toggle */
+.story-para-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-top: 6px;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
+.story-listen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 0.84rem;
+  cursor: pointer;
+}
+.story-listen:hover,
+.story-listen.is-on {
+  color: var(--ink);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.story-translation {
+  max-width: 36em;
+  margin: 8px 0 0;
+  padding-inline-start: 14px;
+  border-inline-start: 2px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  font-family: var(--font-sans);
+  font-size: calc(var(--story-size) * 0.95rem);
+  line-height: 1.6;
+  color: var(--ink-3);
+}
+/* a finger needs 44px: the reader's and the game's small controls grow on touch screens */
+@media (pointer: coarse) {
+  .story-listen,
+  .sg-english,
+  .story-save,
+  .story-play-word {
+    min-height: 44px;
+  }
+  .story-play-word {
+    min-width: 44px;
+  }
+  .story-player-rate {
+    height: 44px;
+  }
+  .story-gloss-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .story-game .btn-sm,
+  .story-page .btn-sm,
+  .story-library .btn-sm {
+    height: 44px;
+  }
+}
+
+/* a glossary word's meaning, beside the word */
+.story-gloss-pop {
+  position: fixed;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: max-content;
+  max-width: min(340px, calc(100vw - 24px));
+  padding: 12px 14px 10px;
+  border-radius: var(--r-md);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+}
+.story-gloss-pop:focus {
+  outline: none;
+}
+.story-gloss-pop:focus-visible {
+  outline: 2px solid var(--focus);
+}
+.story-gloss-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+.story-gloss-term {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--gold-ink);
+}
+.story-gloss-pos,
+.story-word-pos {
+  font-size: var(--text-caption);
+  font-style: italic;
+  color: var(--ink-3);
+}
+.story-gloss-meaning {
+  font-size: 0.95rem;
+  line-height: 1.45;
+}
+.story-gloss-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-top: 2px;
+}
+.story-gloss-close {
+  margin-inline-start: auto;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--ink-3);
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.story-gloss-close:hover {
+  color: var(--ink);
+}
+/* a pronunciation from the dictionary, and Save word */
+.story-play-word {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.story-play-word:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.story-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.story-save:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.story-save.is-on {
+  color: var(--gold-ink);
+  border-color: color-mix(in srgb, var(--gold) 50%, transparent);
+  background: var(--gold-soft);
+}
+.story-save-problem {
+  flex: 1 1 100%;
+  font-size: var(--text-caption);
+  color: var(--danger);
+}
+
+/* "Key vocabulary" */
+.story-words {
+  margin-bottom: 26px;
+}
+.story-word-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+@media (min-width: 700px) {
+  .story-word-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+}
+.story-word {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head save'
+    'meaning save';
+  gap: 2px 12px;
+  align-items: center;
+  padding: 9px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
+}
+.story-word-head {
+  grid-area: head;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.story-word-term {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+.story-word-meaning {
+  grid-area: meaning;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+.story-word-save {
+  grid-area: save;
+}
+.story-word .story-save-problem {
+  grid-column: 1 / -1;
+}
+
+/* the check, before and after the text */
+.story-check {
+  margin-bottom: 26px;
+  padding: 22px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  box-shadow: var(--glass-rim);
+}
+.story-check p {
+  margin: 0 0 16px;
+}
+.story-check.is-locked {
+  border-style: dashed;
+  box-shadow: none;
+}
+.story-check-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-3);
+}
+.story-check-best {
+  font-size: 1.1rem;
+  font-weight: 650;
+  color: var(--gold-ink);
+}
+.story-check-note {
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.story-check-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+@media (max-width: 520px) {
+  .story-check-actions .btn {
+    flex: 1 1 100%;
+  }
+}
+.story-check .msg {
+  margin: 14px 0 0;
+}
+/* where the story comes from, after the text */
+.story-about {
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.story-about p {
+  margin: 0 0 8px;
+  max-width: 60ch;
+}
+.story-about a {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 /*
@@ -1098,56 +1571,12 @@
   padding-top: 22px;
   border-top: 1px solid var(--border);
 }
-.story-words dl {
-  margin: 0;
-  display: grid;
-  gap: 2px;
-}
 .story-word {
   display: grid;
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   gap: 14px;
   padding: 9px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
-}
-.story-word dt {
-  font-family: var(--font-display);
-  font-weight: 600;
-  color: var(--ink);
-}
-.story-word dd {
-  margin: 0;
-  color: var(--ink-2);
-}
-
-/* the quiz after a story */
-.story-quiz {
-  margin-top: 34px;
-  padding: 22px;
-  border-radius: var(--r-xl);
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  box-shadow: var(--glass-rim);
-}
-.story-quiz p {
-  margin: 0 0 16px;
-}
-.story-quiz-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-@media (max-width: 520px) {
-  .story-quiz-actions .btn {
-    flex: 1 1 100%;
-  }
-}
-.story-quiz-settings {
-  margin-top: 14px;
-  min-height: 44px;
-}
-.story-quiz .msg {
-  margin: 14px 0 0;
 }
 
 /* ---- setting up a quiz -------------------------------------------------------- */

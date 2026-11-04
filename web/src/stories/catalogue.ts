@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { StoryDialect, StoryListItem } from '@kurda/shared';
+import type { StoryCategory, StoryDialect, StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import type { ApiClient } from '../lib/api';
 import { API_URL } from '../lib/config';
@@ -141,4 +141,39 @@ export function useStoriesAvailable(enabled = true): Availability {
 /** For tests: forget the answer. */
 export function resetStoriesAvailable(): void {
   available = null;
+}
+
+let categories: Promise<StoryCategory[] | null> | null = null;
+
+/**
+ * The categories stories are filed under (`GET /stories/categories`), asked
+ * for once per tab: a story page names its own from them, and the list
+ * changes when an editor adds one, not while anyone reads. Null while on
+ * the way or when the answer never came, and a page then shows the story
+ * without naming its category rather than showing its slug.
+ */
+export function useStoryCategories(): StoryCategory[] | null {
+  const { client } = useAuth();
+  const [list, setList] = useState<StoryCategory[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    categories ??= client.get<{ categories: StoryCategory[] }>('/stories/categories').then((r) => {
+      if (r.ok && Array.isArray(r.data.categories)) return r.data.categories;
+      // an answer that did not come is asked for again next time
+      categories = null;
+      return null;
+    });
+    void categories.then((c) => {
+      if (live) setList(c);
+    });
+    return () => {
+      live = false;
+    };
+  }, [client]);
+  return list;
+}
+
+/** For tests: forget the categories. */
+export function clearStoryCategories(): void {
+  categories = null;
 }

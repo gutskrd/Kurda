@@ -7,8 +7,11 @@ import {
   type StoryDialect,
   type StoryGlossEntry,
 } from '@kurda/shared';
+import { useAuth } from '../auth/AuthProvider';
+import { saveWord, saveWordError, unsaveWord } from '../dictionary/save';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import { PlayIcon } from '../components/icons';
+import { BookmarkIcon, PlayIcon, SpeakerIcon, StopIcon, WaveformIcon } from '../components/icons';
+import { play } from '../lib/sound';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { TEXT_SIZES } from './prefs';
 import type { StoryAudio } from './useStoryAudio';
@@ -85,12 +88,19 @@ export function paragraphSentences(paragraph: string, glossary: readonly StoryGl
  * Every string from the story carries the story's own `lang` and `dir` — a
  * Soranî story reads right to left inside an English page, in a face made for
  * Arabic script, and a screen reader speaks it as Kurdish. Words from the
- * glossary are buttons that open their meaning (in the reader's language,
- * else English, marked as English); "Words in this story" lists the same
- * meanings for anyone who would rather not hunt for them.
+ * glossary are marked with a dotted gold line and open their meaning (in the
+ * reader's language, else English, marked as English), the part of speech
+ * and a pronunciation when the dictionary has them, and Save word when the
+ * term is a dictionary headword.
  *
- * Nothing plays by touching the text. A paragraph with recordings has its own
- * Listen button, and the sentence being read is marked and kept in view.
+ * Nothing plays by touching the text, with one exception: the sentence being
+ * read aloud, on its gold band, says itself again when tapped (the player's
+ * replay), and carries a small button for the same so a keyboard can ask
+ * too. A paragraph with recordings has its own Listen button, and under it,
+ * when the story has a translation in the reader's language, a Translation
+ * toggle that shows the paragraph's own translation in secondary ink.
+ *
+ * `observe` hands each paragraph's element to the reading-progress watcher.
  */
 export function StoryText({
   paragraphs,
@@ -99,6 +109,8 @@ export function StoryText({
   textSize,
   audio,
   evidence,
+  translations,
+  observe,
   className,
 }: {
   paragraphs: readonly string[];
@@ -110,12 +122,17 @@ export function StoryText({
   audio?: StoryAudio;
   /** the sentence (or paragraph) an answer comes from, marked */
   evidence?: Evidence | null;
+  /** the story's translation into the reader's language (or English), one entry per paragraph; none shows no toggle */
+  translations?: { lang: string; paragraphs: readonly string[] } | null;
+  /** a ref for each paragraph, for the reading-progress watcher */
+  observe?: (index: number) => (el: HTMLElement | null) => void;
   className?: string;
 }): React.JSX.Element {
   const t = useT();
   const { lang, dir } = storyTextDirection(dialect);
   const cut = useMemo(() => paragraphs.map((p) => paragraphSentences(p, glossary)), [paragraphs, glossary]);
   const [open, setOpen] = useState<{ key: string; entry: StoryGlossEntry; anchor: HTMLElement } | null>(null);
+  const [shownTranslations, setShownTranslations] = useState<ReadonlySet<number>>(() => new Set());
   const reading = useRef<HTMLSpanElement | null>(null);
   const marked = useRef<HTMLElement | null>(null);
   const calm = useMediaQuery('(prefers-reduced-motion: reduce)');
@@ -133,17 +150,28 @@ export function StoryText({
     if (evidence && marked.current) marked.current.scrollIntoView?.({ block: 'center', behavior: calm ? 'auto' : 'smooth' });
   }, [evidence?.paragraph, evidence?.sentence, calm]);
 
+  const toggleTranslation = (p: number): void =>
+    setShownTranslations((s) => {
+      const next = new Set(s);
+      if (next.has(p)) next.delete(p);
+      else next.add(p);
+      return next;
+    });
+
   return (
     <div
       className={`story-text${className ? ` ${className}` : ''}`}
-      style={{ '--story-size': `${TEXT_SIZES[textSize] ?? 1}rem` } as React.CSSProperties}
+      style={{ '--story-size': `${TEXT_SIZES[textSize] ?? 1}` } as React.CSSProperties}
     >
       {cut.map((sentences, p) => {
         const hasAudio = audio?.paragraphsWithAudio.has(p) ?? false;
         const thisPlaying = audio?.playing && audio.scope?.kind === 'paragraph' && audio.scope.paragraph === p;
         const wholeParagraph = evidence?.paragraph === p && evidence.sentence === null;
+        const translation = translations?.paragraphs[p];
+        const translated = translation !== undefined && translation.trim() !== '';
+        const showTranslation = translated && shownTranslations.has(p);
         return (
-          <div className="story-para" key={p} dir={dir}>
+          <div className="story-para" key={p} dir={dir} ref={observe?.(p)} data-paragraph={p}>
             <p
               lang={lang}
               className={wholeParagraph ? 'is-evidence' : undefined}
@@ -161,6 +189,15 @@ export function StoryText({
                         if (isReading) reading.current = el;
                         if (isEvidence) marked.current = el;
                       }}
+                      onClick={
+                        isReading && audio
+                          ? (e) => {
+                              // a tap on the band says the sentence again; a tap on a word in it opens the word
+                              if ((e.target as HTMLElement).closest('.story-gloss')) return;
+                              audio.replay();
+                            }
+                          : undefined
+                      }
                     >
                       {s.pieces.map((piece, i) =>
                         piece.gloss ? (
@@ -179,20 +216,45 @@ export function StoryText({
                         ),
                       )}
                     </span>
+                    {isReading && audio && (
+                      <button type="button" className="story-replay" onClick={audio.replay} aria-label={t('stories.reader.replay')}>
+                        <SpeakerIcon size={14} />
+                      </button>
+                    )}
                   </span>
                 );
               })}
             </p>
-            {audio && hasAudio && (
-              <button
-                type="button"
-                className={`story-listen${thisPlaying ? ' is-on' : ''}`}
-                aria-pressed={thisPlaying}
-                onClick={() => (thisPlaying ? audio.halt() : audio.playParagraph(p))}
-              >
-                <PlayIcon size={14} />
-                {thisPlaying ? t('stories.reader.stop') : t('stories.reader.listen')}
-              </button>
+            {(hasAudio || translated) && (
+              <div className="story-para-tools">
+                {audio && hasAudio && (
+                  <button
+                    type="button"
+                    className={`story-listen${thisPlaying ? ' is-on' : ''}`}
+                    aria-pressed={thisPlaying}
+                    onClick={() => (thisPlaying ? audio.halt() : audio.playParagraph(p))}
+                  >
+                    {thisPlaying ? <StopIcon size={14} /> : <PlayIcon size={14} />}
+                    {thisPlaying ? t('stories.reader.stop') : t('stories.reader.listen')}
+                  </button>
+                )}
+                {translated && (
+                  <button
+                    type="button"
+                    className={`story-listen story-translate${showTranslation ? ' is-on' : ''}`}
+                    aria-expanded={showTranslation}
+                    aria-controls={`story-translation-${p}`}
+                    onClick={() => toggleTranslation(p)}
+                  >
+                    {showTranslation ? t('stories.reader.hideTranslation') : t('stories.reader.translation')}
+                  </button>
+                )}
+              </div>
+            )}
+            {showTranslation && translations && (
+              <p id={`story-translation-${p}`} className="story-translation" lang={translations.lang} dir={translations.lang === 'ar' || translations.lang === 'ckb' ? 'rtl' : 'ltr'}>
+                {translation}
+              </p>
             )}
           </div>
         );
@@ -229,8 +291,61 @@ function GlossWord({
 }
 
 /**
- * The meaning of a glossary word, beside the word. Escape, a click elsewhere
- * or the close button shuts it and hands focus back to the word.
+ * Save word / Saved for a glossary term that is a dictionary headword, from
+ * the popover and from the key vocabulary alike. The mark fills at once; a
+ * refusal turns it back and says why — a full vocabulary names its limit.
+ * Only for a signed-in reader: a visitor has no vocabulary to save into.
+ */
+export function SaveWordButton({ entryId, className }: { entryId: string; className?: string }): React.JSX.Element | null {
+  const t = useT();
+  const { client, status } = useAuth();
+  const [saved, setSaved] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  if (status !== 'signedIn') return null;
+  const toggle = async (): Promise<void> => {
+    if (busy) return;
+    const next = !saved;
+    setSaved(next);
+    setProblem(null);
+    setBusy(true);
+    const res = next ? await saveWord(client, entryId) : await unsaveWord(client, entryId);
+    setBusy(false);
+    if (res.ok) return;
+    setSaved(!next);
+    setProblem(saveWordError(res.error, t));
+  };
+  return (
+    <>
+      <button type="button" className={`story-save${saved ? ' is-on' : ''}${className ? ` ${className}` : ''}`} aria-pressed={saved} onClick={() => void toggle()}>
+        <BookmarkIcon size={14} weight={saved ? 'fill' : 'regular'} />
+        {saved ? t('stories.reader.savedWord') : t('stories.reader.saveWord')}
+      </button>
+      {problem && (
+        <span className="story-save-problem" role="alert">
+          {problem}
+        </span>
+      )}
+    </>
+  );
+}
+
+/** A pronunciation from the dictionary, played through the app's one player. */
+export function PlayWordButton({ url }: { url: string }): React.JSX.Element {
+  const t = useT();
+  return (
+    <button type="button" className="story-play-word" onClick={() => play(url)} aria-label={t('dictionary.playPronunciation')}>
+      <WaveformIcon size={16} />
+    </button>
+  );
+}
+
+/**
+ * The meaning of a glossary word, beside the word (design notes §3): the
+ * word, its part of speech when the dictionary knows it, the meaning, a
+ * play button when the dictionary has a recording, and Save word when the
+ * term is a headword. Escape, a click elsewhere or the close button shuts it
+ * and hands focus back to the word.
  */
 function GlossPopover({
   entry,
@@ -300,52 +415,29 @@ function GlossPopover({
       tabIndex={-1}
       style={pos ? { top: pos.top, left: pos.left } : { visibility: 'hidden' }}
     >
-      <span className="story-gloss-term" id={id} lang={lang} dir={dir}>
-        {entry.term}
+      <span className="story-gloss-head">
+        <span className="story-gloss-term" id={id} lang={lang} dir={dir}>
+          {entry.term}
+        </span>
+        {entry.pos && <span className="story-gloss-pos">{entry.pos}</span>}
+        {entry.audioUrl && <PlayWordButton url={entry.audioUrl} />}
       </span>
       <span className="story-gloss-meaning" lang={meaning.lang} dir={meaning.lang === 'en' ? 'ltr' : undefined}>
         {meaning.text}
       </span>
-      <button
-        type="button"
-        className="story-gloss-close"
-        onClick={() => {
-          onClose();
-          anchor.focus();
-        }}
-      >
-        {t('common.close')}
-      </button>
+      <span className="story-gloss-foot">
+        {entry.entryId && <SaveWordButton entryId={entry.entryId} />}
+        <button
+          type="button"
+          className="story-gloss-close"
+          onClick={() => {
+            onClose();
+            anchor.focus();
+          }}
+        >
+          {t('common.close')}
+        </button>
+      </span>
     </div>
-  );
-}
-
-/** "Words in this story": every glossary word with its meaning — the way to them that needs no hunting. */
-export function StoryWords({ glossary, dialect }: { glossary: readonly StoryGlossEntry[]; dialect: StoryDialect }): React.JSX.Element | null {
-  const t = useT();
-  const locale = useLocale();
-  const { lang, dir } = storyTextDirection(dialect);
-  if (glossary.length === 0) return null;
-  return (
-    <section className="story-words" aria-labelledby="story-words-title">
-      <h2 id="story-words-title" className="story-section-title">
-        {t('stories.reader.words')}
-      </h2>
-      <dl>
-        {glossary.map((g) => {
-          const meaning = glossFor(g, locale);
-          return (
-            <div key={g.term} className="story-word">
-              <dt lang={lang} dir={dir}>
-                {g.term}
-              </dt>
-              <dd lang={meaning.lang} dir={meaning.lang === 'en' ? 'ltr' : undefined}>
-                {meaning.text}
-              </dd>
-            </div>
-          );
-        })}
-      </dl>
-    </section>
   );
 }
