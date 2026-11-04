@@ -1,9 +1,8 @@
-import type { Viseme } from '../lipsync/visemes.js';
 import { n, prefixFor } from '../art/svg.js';
 import { drawHevalo } from './hevalo.js';
 import { curve, type Knot } from './pen.js';
 import { ACTS, BLINK_STEPS, HABITS, between, eyesMiddle, glanceTarget, pupilShift, sampleHold, sampleKeys, type Act, type Keys } from './life.js';
-import type { CharacterPoint, EyeState } from './types.js';
+import type { CharacterPoint, EyeState, MouthShape } from './types.js';
 
 /**
  * Hevalo as a companion beside a form, drawn as the mascot is from the chest
@@ -474,7 +473,7 @@ export function companionSvg({ prefix }: { prefix: string }): string {
     const x = side === 'left' ? 2 * HEAD_AXIS - CHEEK.x : CHEEK.x;
     return `<ellipse data-cp="cheek-${side}" cx="${x}" cy="${CHEEK.y}" rx="${CHEEK.rx}" ry="${CHEEK.ry}" fill="url(#${id('cheek')})" transform="${cheekAt(side, 0)}"/>`;
   };
-  const mouths = (Object.keys(art.mouths) as Viseme[]).map((m) => `<g data-mouth="${m}"${m === 'rest' ? '' : ' visibility="hidden"'}>${art.mouths[m]}</g>`).join('');
+  const mouths = (Object.keys(art.mouths) as MouthShape[]).map((m) => `<g data-mouth="${m}"${m === 'rest' ? '' : ' visibility="hidden"'}>${art.mouths[m]}</g>`).join('');
   // drawn as he is before he comes up, out of sight below the sill, until a frame moves him
   const first = companionTransforms(BELOW);
   const of = (side: 'left' | 'right', part: 'leg' | 'cannon' | 'cast' | 'hoof' | 'hoofShadow' | 'contact'): string => first[`${part}${side === 'left' ? 'Left' : 'Right'}`];
@@ -827,7 +826,7 @@ interface Pose {
   look: LookAt;
   /** 0: pupils as drawn, turned in; 1: in the middle of each eye, looking */
   focus: number;
-  mouth: Viseme;
+  mouth: MouthShape;
 }
 
 /** One frame of him, for `companionTransforms` and the eyes, mouth and signs. */
@@ -860,7 +859,7 @@ export interface CompanionFrame {
   look: CharacterPoint;
   focus: number;
   eyes: readonly [EyeState, EyeState];
-  mouth: Viseme;
+  mouth: MouthShape;
   emote: CompanionEmote | null;
   /** a Kurdish word in a bubble (the website's), or none */
   say: CompanionWord | null;
@@ -1019,7 +1018,7 @@ export class CompanionMotion {
     }
     if (field === 'text' || field === 'code') {
       // watching the keys go in, his mouth round
-      const mouth: Viseme = now < this.ooUntil ? 'o' : 'rest';
+      const mouth: MouthShape = now < this.ooUntil ? 'o' : 'rest';
       return { hooves: [0, 0], ears: [6 * a, 6 * a], tilt: 0, eyes: ['open', 'open'], look: 'field', focus: 1, mouth };
     }
     return { hooves: [0, 0], ears: [0, 0], tilt: 0, eyes: ['open', 'open'], look: 'pointer', focus: 0, mouth: 'rest' };

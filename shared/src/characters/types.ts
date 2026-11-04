@@ -1,4 +1,4 @@
-import type { Viseme } from '../lipsync/visemes.js';
+import { VISEMES, type Viseme } from '../lipsync/visemes.js';
 
 /** The characters who can say a recording. */
 export const CHARACTER_IDS = ['hevalo', 'hamo', 'xezo'] as const;
@@ -32,9 +32,33 @@ export interface CharacterPoint {
 
 /**
  * How the eyes look: open; half shut, on the way into a blink and out of it;
- * shut; and shut in a smile, curved up, for a character pleased with you.
+ * shut; shut in a smile, curved up, for a character pleased with you; one
+ * shut in a smile and the other open, a wink; and open wide, surprised.
  */
-export type EyeState = 'open' | 'half' | 'closed' | 'happy';
+export type EyeState = 'open' | 'half' | 'closed' | 'happy' | 'wink' | 'wide';
+
+export const EYE_STATES: readonly EyeState[] = ['open', 'half', 'closed', 'happy', 'wink', 'wide'];
+
+/**
+ * How the brows sit: at rest; both raised; one raised (the near one, the
+ * quizzical look); and knitted, drawn down and together. The deer has no
+ * brows: his ears say most of it, and these states lower his lids instead
+ * (one eye narrowed for `one`, both for `knit`; `raised` draws nothing, the
+ * wide eyes and the ears doing the work).
+ */
+export type BrowState = 'neutral' | 'raised' | 'one' | 'knit';
+
+export const BROW_STATES: readonly BrowState[] = ['neutral', 'raised', 'one', 'knit'];
+
+/** A mouth beyond the visemes, for an expression: a wide grin, and the tongue poked out. */
+export type ExpressionMouth = 'grin' | 'tongue';
+
+export const EXPRESSION_MOUTHS: readonly ExpressionMouth[] = ['grin', 'tongue'];
+
+/** Every mouth a character is drawn with: the ten visemes, then the expressions. */
+export type MouthShape = Viseme | ExpressionMouth;
+
+export const MOUTH_SHAPES: readonly MouthShape[] = [...VISEMES, ...EXPRESSION_MOUTHS];
 
 /** One part of the head that turns on its own (an ear), and the point it turns about. */
 export interface RigPart {
@@ -139,13 +163,34 @@ export interface CharacterArt {
   head: string;
   /**
    * The eyes in each state, each one whole: open; half shut (left out, a
-   * blink goes straight from open to shut); shut; and smiling.
+   * blink goes straight from open to shut); shut; smiling; winking; and wide.
    */
-  eyes: { open: string; half?: string; closed: string; happy: string };
+  eyes: { open: string; half?: string; closed: string; happy: string; wink: string; wide: string };
   /** one mouth for each shape, all in the same place on the face */
-  mouths: Record<Viseme, string>;
+  mouths: Record<MouthShape, string>;
   /** what lies over the mouth (a moustache, a nose); may be '' */
   overlay: string;
+  /**
+   * The brows as a layer of their own, for a player that can raise or knit
+   * them. `head` is drawn with them at rest (and with any `hair` that moves);
+   * a player that moves either draws `bare`, the head without them, in its
+   * place, then the brows in one of their `states` after the eyes, and the
+   * hair. A character whose brows are its lids (the deer) has `bare` the same
+   * as `head`, and draws nothing for `neutral`.
+   */
+  brows?: { bare: string; states: Record<BrowState, string> };
+  /** the cheeks blushing, drawn over the head (over `bare`) while a character is pleased or shy; only a character drawn for it has it */
+  cheeks?: { blush: string };
+  /** a lock of hair that swings on its own, turning about where it parts from the rest; drawn in `head` too, and left out of `bare` */
+  hair?: RigPart;
+  /**
+   * The overlay as two layers, for a player that lifts the near end of a
+   * moustache: `body`, all of it but that end, and `end`, the near end turning
+   * about its root. Both are cut from the one outline, so drawn together at
+   * rest they are the overlay to the pixel; a player draws them in place of
+   * `overlay`, `body` first.
+   */
+  moustache?: { body: string; end: RigPart };
   /** the parts that move on their own; only a character drawn for it has them */
   rig?: CharacterRig;
   /**

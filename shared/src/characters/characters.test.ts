@@ -2,10 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { VISEMES } from '../lipsync/visemes.js';
 import {
   ACTS,
+  BROW_STATES,
   CHARACTER_IDS,
   CHARACTER_NAMES,
   CHARACTERS,
   DEFAULT_CHARACTER,
+  EXPRESSION_MOUTHS,
+  EYE_STATES,
+  MOUTH_SHAPES,
   STAGE_FIGURE_SHARE,
   WINDOW_PLACE,
   WINDOW_VIEW,
@@ -13,6 +17,8 @@ import {
   characterSvg,
   cropBody,
   cropBox,
+  faceLayers,
+  headFor,
   headGroup,
   isCharacterId,
   stageBackdrop,
@@ -132,7 +138,14 @@ function extras(art: CharacterArt): [string, string][] {
   return [
     ...(art.chest ? ([['chest', art.chest]] as [string, string][]) : []),
     ['eyes.happy', art.eyes.happy],
+    ['eyes.wink', art.eyes.wink],
+    ['eyes.wide', art.eyes.wide],
     ...(art.eyes.half ? ([['eyes.half', art.eyes.half]] as [string, string][]) : []),
+    ...EXPRESSION_MOUTHS.map((m) => [`mouth.${m}`, art.mouths[m]] as [string, string]),
+    ...(art.brows ? ([['brows.bare', art.brows.bare], ...BROW_STATES.map((b) => [`brows.${b}`, art.brows!.states[b]])] as [string, string][]) : []),
+    ...(art.cheeks ? ([['cheeks.blush', art.cheeks.blush]] as [string, string][]) : []),
+    ...(art.hair ? ([['hair', art.hair.art]] as [string, string][]) : []),
+    ...(art.moustache ? ([['moustache.body', art.moustache.body], ['moustache.end', art.moustache.end.art]] as [string, string][]) : []),
     ...(rig
       ? ([
           ['rig.face', rig.face],
@@ -270,21 +283,104 @@ describe('the characters', () => {
     describe(id, () => {
       const art = characterArt(id);
 
-      it('has every mouth shape and both eye states, each drawn', () => {
+      it('has every mouth shape and every eye state, each drawn', () => {
         expect(art.id).toBe(id);
         expect(art.name).toBe(CHARACTER_NAMES[id]);
-        expect(Object.keys(art.mouths).sort()).toEqual([...VISEMES].sort());
-        for (const v of VISEMES) expect(art.mouths[v].length, v).toBeGreaterThan(40);
-        expect(art.eyes.open.length).toBeGreaterThan(40);
-        expect(art.eyes.closed.length).toBeGreaterThan(40);
+        expect(Object.keys(art.mouths).sort()).toEqual([...MOUTH_SHAPES].sort());
+        for (const v of MOUTH_SHAPES) expect(art.mouths[v].length, v).toBeGreaterThan(40);
+        for (const state of EYE_STATES) if (state !== 'half') expect(art.eyes[state].length, state).toBeGreaterThan(40);
         expect(art.head.length).toBeGreaterThan(200);
         expect(art.body.length).toBeGreaterThan(200);
       });
 
-      it('draws every mouth shape differently, and the eyes shut differently from open', () => {
-        const mouths = new Set(VISEMES.map((v) => art.mouths[v]));
-        expect(mouths.size).toBe(VISEMES.length);
-        expect(art.eyes.closed).not.toBe(art.eyes.open);
+      it('draws every mouth shape differently, and every eye state differently from the others', () => {
+        const mouths = new Set(MOUTH_SHAPES.map((v) => art.mouths[v]));
+        expect(mouths.size).toBe(MOUTH_SHAPES.length);
+        const eyes = new Set(EYE_STATES.map((state) => art.eyes[state] ?? art.eyes.closed));
+        expect(eyes.size).toBe(EYE_STATES.length - (art.eyes.half ? 0 : 1));
+      });
+
+      it('winks with one eye smiling and the other open, and opens its eyes wider when startled', () => {
+        const open = extent(art.eyes.open);
+        const wide = extent(art.eyes.wide);
+        expect(wide.h).toBeGreaterThan(open.h * 1.08);
+        expect(Math.abs(wide.y + wide.h / 2 - (open.y + open.h / 2))).toBeLessThan(open.h * 0.1);
+        // the wink: one eye drawn open (its iris or its pupil, on the right), the other not
+        const wink = art.eyes.wink;
+        if (art.rig) {
+          expect(shapes(wink).filter((s) => s.w > 90 && s.h > 100)).toHaveLength(2);
+        } else {
+          expect(wink).toContain('data-iris="right"');
+          expect(wink).not.toContain('data-iris="left"');
+        }
+        // the wink and the wide eyes sit where the open ones do
+        for (const state of ['wink', 'wide'] as const) {
+          const box = extent(art.eyes[state]);
+          expect(inside(box, { x: open.x - 8, y: open.y - 12, w: open.w + 16, h: open.h + 24 }), state).toBe(true);
+        }
+      });
+
+      it('grins and pokes its tongue out in the place of its mouth, the tongue reaching below the lips', () => {
+        const rest = extent(art.mouths.rest);
+        const grin = extent(art.mouths.grin);
+        const tongue = extent(art.mouths.tongue);
+        const middle = (b: CharacterBox): number => b.x + b.w / 2;
+        expect(Math.abs(middle(grin) - middle(rest))).toBeLessThan(rest.w * 0.15);
+        expect(grin.w).toBeGreaterThan(extent(art.mouths.a).w * 1.05);
+        expect(Math.abs(middle(tongue) - middle(rest))).toBeLessThan(rest.w * 0.15);
+        expect(tongue.y + tongue.h).toBeGreaterThan(rest.y + rest.h + 2);
+        // a grin stays on the face: no wider than the eyes are apart
+        expect(grin.w).toBeLessThan(extent(art.eyes.open).w);
+      });
+
+      it('keeps its brows at rest as part of the head, and moves them as a layer of their own', () => {
+        const brows = art.brows!;
+        expect(brows).toBeDefined();
+        if (art.rig) {
+          // the deer has no brows: his head is his head, and his lids do the work
+          expect(brows.bare).toBe(art.head);
+          expect(brows.states.neutral).toBe('');
+          expect(brows.states.raised).toBe('');
+          const eyes = extent(art.eyes.open);
+          // each lid is drawn over the whole eye (a hair past its white) and cut off at its edge
+          for (const state of ['one', 'knit'] as const) expect(inside(extent(brows.states[state]), { x: eyes.x - 10, y: eyes.y - 30, w: eyes.w + 20, h: eyes.h + 40 }), state).toBe(true);
+          expect(extent(brows.states.one).w).toBeLessThan(eyes.w * 0.6);
+          return;
+        }
+        expect(art.head).toContain(brows.states.neutral);
+        expect(brows.bare).not.toContain(brows.states.neutral);
+        expect(brows.bare.length).toBeLessThan(art.head.length);
+        if (art.hair) {
+          expect(art.head).toContain(art.hair.art);
+          expect(brows.bare).not.toContain(art.hair.art);
+        }
+        // raised brows sit higher than at rest, knitted ones lower and nearer each other; none leaves the face
+        const rest = extent(brows.states.neutral);
+        const raised = extent(brows.states.raised);
+        const knit = extent(brows.states.knit);
+        const one = extent(brows.states.one);
+        expect(raised.y).toBeLessThan(rest.y - 1.5);
+        expect(knit.y + knit.h).toBeGreaterThan(rest.y + rest.h + 0.5);
+        expect(knit.w).toBeLessThan(rest.w);
+        expect(one.y).toBeLessThan(rest.y - 1);
+        const face = extent(art.head);
+        for (const state of BROW_STATES) expect(inside(extent(brows.states[state]), face), state).toBe(true);
+        // and every state is as heavy a stroke as the brows at rest
+        for (const state of BROW_STATES) expect(Math.abs(bytes(brows.states[state]) - bytes(brows.states.neutral)), state).toBeLessThan(bytes(brows.states.neutral) * 0.2);
+      });
+
+      it('writes every expression as well-formed markup that only uses what every platform draws', () => {
+        for (const [name, markup] of extras(art)) {
+          const { problems, ids, refs } = inspect(markup);
+          expect(problems, name).toEqual([]);
+          for (const r of refs) expect(ids, `${name} points at #${r}`).toContain(r);
+        }
+        // every expression that can share a drawing with the plain figure has ids of its own; the bare head, the rig and the
+        // half-shut eyes stand in for the head and the open eyes, so they share theirs
+        const all = [...parts(art), ...extras(art)]
+          .filter(([name]) => !['brows.bare', 'chest', 'eyes.half'].includes(name) && !name.startsWith('rig.'))
+          .flatMap(([, m]) => inspect(m).ids);
+        expect(new Set(all).size).toBe(all.length);
       });
 
       it('has frames that make sense: the bust inside the figure, the neck inside the bust', () => {
@@ -335,10 +431,11 @@ describe('the characters', () => {
         // each of the deer's ears carries its own light, so either can be drawn alone;
         // Hamo spends a little of the budget on his groomed hair and warm eyes
         expect(total).toBeLessThan(32_000);
-        for (const v of VISEMES) expect(bytes(art.mouths[v]), v).toBeLessThan(2_500);
+        for (const v of MOUTH_SHAPES) expect(bytes(art.mouths[v]), v).toBeLessThan(2_500);
         // Xezo's eyes carry a second lash each
         expect(bytes(art.eyes.open) + bytes(art.eyes.closed)).toBeLessThan(3_800);
-        const budget: Record<string, number> = { 'rig.face': 9_000, chest: 5_000 };
+        // the bare head is the head less its brows; the deer's is his head
+        const budget: Record<string, number> = { 'rig.face': 9_000, chest: 5_000, 'brows.bare': bytes(art.head) + 1 };
         for (const [name, markup] of extras(art)) expect(bytes(markup), name).toBeLessThan(budget[name] ?? 3_000);
       });
 
@@ -409,6 +506,78 @@ describe('the characters', () => {
     for (const id of CHARACTER_IDS) {
       expect(characterSvg(id, { mouth: 'a', idPrefix: 'again' })).toBe(characterSvg(id, { mouth: 'a', idPrefix: 'again' }));
     }
+  });
+
+  it('cuts Hamo’s moustache into its near end and the rest from the one outline, the two overlapping at the root', () => {
+    const art = characterArt('hamo');
+    const { body, end } = art.moustache!;
+    const d = /<path d="([^"]+)" fill="#1f1510"\/>/.exec(art.overlay)?.[1];
+    expect(d).toBeTruthy();
+    // each piece is the whole moustache inside a clip, so at rest the two together are the overlay to the pixel
+    expect(body).toContain(`d="${d}"`);
+    expect(end.art).toContain(`d="${d}"`);
+    const cut = (markup: string): number[] => (/<clipPath[^>]*><path d="M([\d.]+),[\d.]+H([\d.]+)/.exec(markup) ?? []).slice(1).map(Number);
+    const [bodyFrom] = cut(body);
+    const [, endTo] = cut(end.art);
+    expect(endTo!).toBeGreaterThan(bodyFrom!);
+    expect(endTo! - bodyFrom!).toBeLessThan(3);
+    // the end turns about its root, between the two cuts and in the middle of the moustache's height
+    const whole = extent(art.overlay);
+    expect(end.pivot.x).toBeGreaterThanOrEqual(bodyFrom!);
+    expect(end.pivot.x).toBeLessThanOrEqual(endTo!);
+    expect(end.pivot.y).toBeGreaterThan(whole.y);
+    expect(end.pivot.y).toBeLessThan(whole.y + whole.h);
+    // the near end is the shorter piece, on the side his face turns toward us
+    expect(end.pivot.x - whole.x).toBeLessThan(whole.w / 3);
+    expect(characterArt('hevalo').moustache).toBeUndefined();
+    expect(characterArt('xezo').moustache).toBeUndefined();
+  });
+
+  it('gives Xezo a blush on both cheeks and wisps of hair that swing from the parting; the others neither', () => {
+    const art = characterArt('xezo');
+    const blush = extent(art.cheeks!.blush);
+    const eyes = extent(art.eyes.open);
+    const face = extent(art.head);
+    // under the eyes, either side of the nose, inside the face
+    expect(blush.y).toBeGreaterThan(eyes.y + eyes.h * 0.5);
+    expect(blush.x + blush.w / 2).toBeCloseTo(eyes.x + eyes.w / 2, 0);
+    expect(inside(blush, face)).toBe(true);
+    expect(shapes(art.cheeks!.blush)).toHaveLength(2);
+    const hair = art.hair!;
+    const wisps = extent(hair.art);
+    expect(hair.pivot.y).toBeLessThan(wisps.y);
+    expect(hair.pivot.x).toBeGreaterThan(wisps.x);
+    expect(hair.pivot.x).toBeLessThan(wisps.x + wisps.w);
+    for (const other of ['hevalo', 'hamo'] as const) {
+      expect(characterArt(other).cheeks).toBeUndefined();
+      expect(characterArt(other).hair).toBeUndefined();
+    }
+  });
+
+  it('draws a face with its brows and cheeks as layers over the bare head when asked, and whole when not', () => {
+    for (const id of CHARACTER_IDS) {
+      const art = characterArt(id);
+      expect(headGroup(art)).toBe(`<g>${art.head}${art.eyes.open}${art.mouths.rest}${art.overlay}</g>`);
+      expect(headFor(art, false)).toBe(art.head);
+      expect(headFor(art, true)).toBe(art.brows!.bare);
+      const face = { brows: 'one', blush: true } as const;
+      const asked = headGroup(art, 'grin', 'wink', 0, face);
+      expect(asked).toContain(art.brows!.bare);
+      expect(asked).toContain(art.eyes.wink);
+      expect(asked).toContain(art.mouths.grin);
+      expect(asked).toContain(faceLayers(art, face));
+      expect(asked).toContain(art.brows!.states.one);
+      if (art.cheeks) expect(asked).toContain(art.cheeks.blush);
+      if (art.hair) expect(asked).toContain(art.hair.art);
+      // the layers come after the eyes, so the deer's lids lie over his eyes
+      expect(asked.indexOf(art.eyes.wink)).toBeLessThan(asked.indexOf(art.brows!.states.one));
+      const still = parse(characterSvg(id, { eyes: 'wide', mouth: 'tongue', brows: 'one', blush: true, idPrefix: 'face' }));
+      expect(inspect(characterSvg(id, { eyes: 'wide', mouth: 'tongue', brows: 'one', blush: true, idPrefix: 'face' })).problems).toEqual([]);
+      expect((still.children[0] as El).name).toBe('svg');
+    }
+    expect(() => characterSvg('hamo', { brows: 'arched' as never })).toThrow(RangeError);
+    expect(() => characterSvg('hamo', { mouth: 'smirk' as never })).toThrow(RangeError);
+    expect(characterSvg('hamo', { eyes: 'wink', idPrefix: 'w' })).toContain(characterArt('hamo', 'w').eyes.wink);
   });
 
   it('gives the three their own ids, so all can share a page', () => {

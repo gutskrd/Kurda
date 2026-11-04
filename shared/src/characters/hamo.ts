@@ -14,10 +14,18 @@
  * skin tone as the neck drawn beneath it, so the head can nod without a seam
  * showing where the two meet. His moustache is the overlay: it lies over the
  * mouth, so every mouth shape tucks its top under it, as a real mouth does.
+ *
+ * Who he is. Hamo is the warm uncle: steady, patient and easily pleased,
+ * the one who laughs at his own stories. He chuckles with his whole face,
+ * brows up and eyes shut, shoulders going; proud of his moustache, he gives
+ * the near end of it a small lift when he is pleased with you. Puzzled, he
+ * raises one brow and waits rather than frowning; a miss gets that brow and
+ * a thoughtful look, never a cross word. His brows are straight bars, so his
+ * feelings show in how high they sit and how they slant, not in any arch.
  */
 import type { Pt } from '../art/svg.js';
 import { n } from '../art/svg.js';
-import type { CharacterArt } from './types.js';
+import type { BrowState, CharacterArt, RigPart } from './types.js';
 import type { Knot } from './pen.js';
 import { alpha, circle, clipDef, clipped, curve, fill, line, part, taper } from './pen.js';
 import { humanMouths } from './mouth.js';
@@ -448,7 +456,32 @@ const FACE: Knot[] = [
   [146, 69.4],
 ];
 
-function head(): string {
+/**
+ * How the brows sit for each state: each bar carried `dy` up or down (and
+ * `dx` toward the nose), and its inner end a further `slant` beyond that,
+ * fading to nothing at the temple, so a raised brow lifts most where a brow
+ * does. The near brow (on the left as seen) moves the more, as the near
+ * side of a turned face does.
+ */
+const BROW_MOVES: Readonly<Record<BrowState, { near: readonly [number, number, number]; far: readonly [number, number, number] }>> = {
+  neutral: { near: [0, 0, 0], far: [0, 0, 0] },
+  raised: { near: [0, -2.6, -0.5], far: [0, -2.2, -0.4] },
+  // one brow up, most at its inner end: the look that asks "really?"
+  one: { near: [0, -1.6, -2.6], far: [0, 0.3, 0.4] },
+  // both drawn down and in toward the nose, the inner ends lowest
+  knit: { near: [0.9, 1.0, 1.3], far: [-0.8, 0.9, 1.1] },
+};
+
+/** The brows as they sit for `state`; at rest they are exactly as traced. */
+function brows(state: BrowState): string {
+  const moved = (knots: readonly Knot[], [dx, dy, slant]: readonly [number, number, number], inner: number, outer: number): Knot[] =>
+    knots.map(([x, y, r]) => [x + dx, y + dy + slant * ((x - outer) / (inner - outer)), r ?? 1] as const);
+  const m = BROW_MOVES[state];
+  return fill(curve(moved(BROW_LEFT, m.near, 189.4, 164.2)) + curve(moved(BROW_RIGHT, m.far, 198.9, 216.9)), C.brow);
+}
+
+/** His head; without its brows (`withBrows` false), for a player that draws them as a layer of their own. */
+function head(withBrows = true): string {
   return part(
     [],
     [
@@ -459,7 +492,7 @@ function head(): string {
       fill(curve(NOSE_SIDE), C.shade, alpha(0.18)),
       fill(curve(NOSE_BASE), C.shade, alpha(0.35)),
       fill(curve(HAIR), C.hair),
-      fill(curve(BROW_LEFT) + curve(BROW_RIGHT), C.brow),
+      ...(withBrows ? [brows('neutral')] : []),
     ],
   );
 }
@@ -501,20 +534,45 @@ function lid(eye: readonly Knot[], weight: number): string {
   return taper(top, [0.4 * weight, 1.1 * weight, 1.3 * weight, 1.1 * weight, 0.3 * weight]);
 }
 
-function eyesOpen(p: string): string {
-  const id = (name: string): string => `${p}${name}`;
+type Side = 'left' | 'right';
+const SIDES: readonly Side[] = ['left', 'right'];
+
+/** An eye's opening made `tall` times taller about its middle, the lids lifting and dropping as a startled eye's do. */
+function opened(eye: readonly Knot[], tall: number): Knot[] {
+  const ys = eye.map((k) => k[1]);
+  const mid = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return eye.map(([x, y, r]) => [x, mid + (y - mid) * tall, r ?? 1] as const);
+}
+
+/**
+ * The open eyes asked for: each its white, its iris in a clip of its own,
+ * and the lash line of its upper lid. `tag` names the clips, so a part drawn
+ * for one state never defines another's; `tall` opens them wider and `pupil`
+ * shrinks the pupils, for a startled look.
+ */
+function eyesDrawn(p: string, tag: string, sides: readonly Side[], tall = 1, pupil = 0.48): string {
+  const id = (side: Side): string => `${p}${tag}${side === 'left' ? 'L' : 'R'}`;
+  const eye = (side: Side): Knot[] => opened(side === 'left' ? EYE_LEFT : EYE_RIGHT, tall);
   const iris = ([x, y, r]: readonly [number, number, number]): string =>
-    circle(x, y, r, C.iris) + circle(x, y, r * 0.48, C.pupil) + circle(x + r * 0.6, y - r * 0.24, r * 0.26, C.white);
+    circle(x, y, r, C.iris) + circle(x, y, r * pupil, C.pupil) + circle(x + r * 0.6, y - r * 0.24, r * 0.26, C.white);
   return part(
-    [clipDef(id('eyeL'), curve(EYE_LEFT)), clipDef(id('eyeR'), curve(EYE_RIGHT))],
+    sides.map((side) => clipDef(id(side), curve(eye(side)))),
     [
-      fill(curve(EYE_LEFT) + curve(EYE_RIGHT), C.white),
+      fill(sides.map((side) => curve(eye(side))).join(''), C.white),
       // each iris in a group of its own, so it can look aside within its eye (`irisReach`)
-      clipped(id('eyeL'), `<g data-iris="left">${iris(IRIS[0] as readonly [number, number, number])}</g>`),
-      clipped(id('eyeR'), `<g data-iris="right">${iris(IRIS[1] as readonly [number, number, number])}</g>`),
-      fill(lid(EYE_LEFT, 1) + lid(EYE_RIGHT, 0.95), C.lash),
+      ...sides.map((side) => clipped(id(side), `<g data-iris="${side}">${iris(IRIS[side === 'left' ? 0 : 1] as readonly [number, number, number])}</g>`)),
+      fill(sides.map((side) => lid(eye(side), side === 'left' ? 1 : 0.95)).join(''), C.lash),
     ],
   );
+}
+
+function eyesOpen(p: string): string {
+  return eyesDrawn(p, 'eye', SIDES);
+}
+
+/** Startled: the eyes opened wide, the pupils small in them. */
+function eyesWide(p: string): string {
+  return eyesDrawn(p, 'wide', SIDES, 1.4, 0.4);
 }
 
 /** A blink: the eyes shut along a dark lash line, the crease of each lid above it. */
@@ -531,14 +589,21 @@ function eyesClosed(): string {
   );
 }
 
-/** Smiling eyes: shut, the lash line along where the upper lid was, curved up, the way eyes close when someone beams. */
+/** A smiling eye: shut, the lash line along where the upper lid was, curved up, the way eyes close when someone beams. */
+function smilingEye(eye: readonly Knot[], weight: number): string {
+  return taper(
+    [eye[0], eye[1], eye[2], eye[3], eye[4]].map((k) => [(k as Knot)[0], (k as Knot)[1] + 1.8] as Pt),
+    [0.4 * weight, 1.2 * weight, 1.5 * weight, 1.2 * weight, 0.4 * weight],
+  );
+}
+
 function eyesHappy(): string {
-  const arc = (eye: readonly Knot[], weight: number): string =>
-    taper(
-      [eye[0], eye[1], eye[2], eye[3], eye[4]].map((k) => [(k as Knot)[0], (k as Knot)[1] + 1.8] as Pt),
-      [0.4 * weight, 1.2 * weight, 1.5 * weight, 1.2 * weight, 0.4 * weight],
-    );
-  return part([], [fill(arc(EYE_LEFT, 1) + arc(EYE_RIGHT, 0.95), C.lash)]);
+  return part([], [fill(smilingEye(EYE_LEFT, 1) + smilingEye(EYE_RIGHT, 0.95), C.lash)]);
+}
+
+/** A wink: the near eye shut in a smile, the far one open and on you. */
+function eyesWink(p: string): string {
+  return eyesDrawn(p, 'wink', ['right']) + part([], [fill(smilingEye(EYE_LEFT, 1), C.lash)]);
 }
 
 /** His moustache: full and thick across his lip, tapering to points that turn down past the corners of his mouth. */
@@ -560,6 +625,30 @@ const MOUSTACHE: Knot[] = [
   [174.9, 138.3],
 ];
 
+/**
+ * Where the near end of the moustache parts from the rest, for the lift he
+ * gives it: an upright cut just inside the near lobe's root, and how far the
+ * two pieces overlap there. Each piece is the whole moustache's own outline
+ * inside a clip, so drawn together at rest they are the moustache to the
+ * pixel, and the end can turn a little about its root with nothing opening
+ * between them.
+ */
+const MOUSTACHE_CUT = 178.4;
+const MOUSTACHE_LAP = 0.6;
+
+function moustacheParts(p: string): { body: string; end: RigPart } {
+  const whole = fill(curve(MOUSTACHE), C.moustache);
+  const body = `${p}stacheBody`;
+  const end = `${p}stacheEnd`;
+  return {
+    body: part([clipDef(body, `M${n(MOUSTACHE_CUT)},120H230V150H${n(MOUSTACHE_CUT)}z`)], [clipped(body, whole)]),
+    end: {
+      art: part([clipDef(end, `M160,120H${n(MOUSTACHE_CUT + MOUSTACHE_LAP)}V150H160z`)], [clipped(end, whole)]),
+      pivot: { x: MOUSTACHE_CUT + MOUSTACHE_LAP / 2, y: 136.4 },
+    },
+  };
+}
+
 export function drawHamo(p: string): CharacterArt {
   return {
     id: 'hamo',
@@ -571,7 +660,9 @@ export function drawHamo(p: string): CharacterArt {
     headPivot: { x: 181, y: 160 },
     body: body(),
     head: head(),
-    eyes: { open: eyesOpen(p), closed: eyesClosed(), happy: eyesHappy() },
+    eyes: { open: eyesOpen(p), closed: eyesClosed(), happy: eyesHappy(), wink: eyesWink(p), wide: eyesWide(p) },
+    brows: { bare: head(false), states: { neutral: brows('neutral'), raised: brows('raised'), one: brows('one'), knit: brows('knit') } },
+    moustache: moustacheParts(p),
     mouths: humanMouths(
       {
         open: { left: [184.4, 139], right: [201.3, 139.2], top: 138.2, bottom: 142.9 },
