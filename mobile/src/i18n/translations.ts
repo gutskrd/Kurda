@@ -104,8 +104,6 @@ export type TranslationKey =
   | 'stories.reader.sentenceOf'
   | 'stories.reader.previousSentence'
   | 'stories.reader.nextSentence'
-  | 'stories.reader.slower'
-  | 'stories.reader.normalSpeed'
   | 'stories.reader.meaning'
   | 'stories.reader.inEnglish'
   | 'stories.reader.unfinishedTitle'
@@ -2854,7 +2852,17 @@ export type TranslationKey =
   | 'stories.check.best'
   | 'stories.check.questions'
   | 'stories.check.noXp'
-  | 'stories.check.repeatXp';
+  | 'stories.check.repeatXp'
+  // --- The story player (learn-mobile) ---
+  | 'stories.player.seek'
+  | 'stories.player.elapsed'
+  | 'stories.player.speed'
+  | 'stories.player.buffering'
+  | 'stories.player.error'
+  | 'stories.player.recorded'
+  | 'stories.player.narrator'
+  | 'stories.player.forward'
+  | 'stories.player.back';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -2934,8 +2942,6 @@ const en: Catalog = {
   'stories.reader.sentenceOf': 'Sentence {index} of {total}',
   'stories.reader.previousSentence': 'Previous sentence',
   'stories.reader.nextSentence': 'Next sentence',
-  'stories.reader.slower': 'Slower',
-  'stories.reader.normalSpeed': 'Normal speed',
   'stories.reader.meaning': 'Meaning',
   'stories.reader.inEnglish': 'Shown in English — there’s no translation in your language yet.',
   'stories.reader.unfinishedTitle': 'You started a quiz on this story',
@@ -5674,6 +5680,16 @@ const en: Catalog = {
   'stories.check.questions': '{count} questions, no timer',
   'stories.check.noXp': 'You’ve checked this story twice today, so another check earns no XP.',
   'stories.check.repeatXp': 'A repeat check earns a quarter of the XP.',
+  // --- The story player (learn-mobile) ---
+  'stories.player.seek': 'Position in the story',
+  'stories.player.elapsed': '{elapsed} of {total}',
+  'stories.player.speed': 'Speed: {rate}×',
+  'stories.player.buffering': 'Loading…',
+  'stories.player.error': 'This part couldn’t play. Try again.',
+  'stories.player.recorded': '{recorded} of {total} sentences recorded',
+  'stories.player.narrator': 'Read by {name}',
+  'stories.player.forward': 'Forward ten seconds',
+  'stories.player.back': 'Back ten seconds',
 };
 
 const ku: Catalog = {
@@ -5752,8 +5768,6 @@ const ku: Catalog = {
   'stories.reader.sentenceOf': 'Hevoka {index} ji {total}',
   'stories.reader.previousSentence': 'Hevoka berê',
   'stories.reader.nextSentence': 'Hevoka din',
-  'stories.reader.slower': 'Hêdîtir',
-  'stories.reader.normalSpeed': 'Leza asayî',
   'stories.reader.meaning': 'Wate',
   'stories.reader.inEnglish': 'Bi îngilîzî tê nîşandan — hîn wergera bi zimanê te tune.',
   'stories.reader.unfinishedTitle': 'Te li ser vê çîrokê pirsan dest pê kiribû',
@@ -8491,6 +8505,16 @@ const ku: Catalog = {
   'stories.check.questions': '{count} pirs, bê demjimêr',
   'stories.check.noXp': 'Îro te du caran ev çîrok kontrol kir, lewma kontroleke din XP nade.',
   'stories.check.repeatXp': 'Kontroleke dubare çaryeka XPyê dide.',
+  // --- The story player (learn-mobile) ---
+  'stories.player.seek': 'Cih di çîrokê de',
+  'stories.player.elapsed': '{elapsed} ji {total}',
+  'stories.player.speed': 'Lez: {rate}×',
+  'stories.player.buffering': 'Tê barkirin…',
+  'stories.player.error': 'Ev beş nehat lîstin. Dîsa biceribîne.',
+  'stories.player.recorded': '{recorded} ji {total} hevokan hatine tomarkirin',
+  'stories.player.narrator': '{name} dixwîne',
+  'stories.player.forward': 'Deh çirke pêş',
+  'stories.player.back': 'Deh çirke paş',
 };
 
 const de: Catalog = {
@@ -8569,8 +8593,6 @@ const de: Catalog = {
   'stories.reader.sentenceOf': 'Satz {index} von {total}',
   'stories.reader.previousSentence': 'Vorheriger Satz',
   'stories.reader.nextSentence': 'Nächster Satz',
-  'stories.reader.slower': 'Langsamer',
-  'stories.reader.normalSpeed': 'Normales Tempo',
   'stories.reader.meaning': 'Bedeutung',
   'stories.reader.inEnglish': 'Auf Englisch – eine Übersetzung in deine Sprache gibt es noch nicht.',
   'stories.reader.unfinishedTitle': 'Du hast schon ein Quiz zu dieser Geschichte begonnen',
@@ -11308,6 +11330,16 @@ const de: Catalog = {
   'stories.check.questions': '{count} Fragen, ohne Zeitlimit',
   'stories.check.noXp': 'Du hast diese Geschichte heute schon zweimal geprüft; ein weiterer Check bringt keine XP.',
   'stories.check.repeatXp': 'Ein wiederholter Check bringt ein Viertel der XP.',
+  // --- The story player (learn-mobile) ---
+  'stories.player.seek': 'Stelle in der Geschichte',
+  'stories.player.elapsed': '{elapsed} von {total}',
+  'stories.player.speed': 'Tempo: {rate}×',
+  'stories.player.buffering': 'Lädt…',
+  'stories.player.error': 'Dieser Teil ließ sich nicht abspielen. Versuch es noch einmal.',
+  'stories.player.recorded': '{recorded} von {total} Sätzen aufgenommen',
+  'stories.player.narrator': 'Gelesen von {name}',
+  'stories.player.forward': 'Zehn Sekunden vor',
+  'stories.player.back': 'Zehn Sekunden zurück',
 };
 
 const es: Catalog = {
@@ -11386,8 +11418,6 @@ const es: Catalog = {
   'stories.reader.sentenceOf': 'Frase {index} de {total}',
   'stories.reader.previousSentence': 'Frase anterior',
   'stories.reader.nextSentence': 'Frase siguiente',
-  'stories.reader.slower': 'Más despacio',
-  'stories.reader.normalSpeed': 'Velocidad normal',
   'stories.reader.meaning': 'Significado',
   'stories.reader.inEnglish': 'Se muestra en inglés: todavía no hay traducción a tu idioma.',
   'stories.reader.unfinishedTitle': 'Empezaste un cuestionario sobre esta historia',
@@ -14125,6 +14155,16 @@ const es: Catalog = {
   'stories.check.questions': '{count} preguntas, sin tiempo límite',
   'stories.check.noXp': 'Ya has comprobado esta historia dos veces hoy; otra comprobación no da XP.',
   'stories.check.repeatXp': 'Una comprobación repetida da un cuarto de los XP.',
+  // --- The story player (learn-mobile) ---
+  'stories.player.seek': 'Posición en la historia',
+  'stories.player.elapsed': '{elapsed} de {total}',
+  'stories.player.speed': 'Velocidad: {rate}×',
+  'stories.player.buffering': 'Cargando…',
+  'stories.player.error': 'Esta parte no se pudo reproducir. Inténtalo de nuevo.',
+  'stories.player.recorded': '{recorded} de {total} frases grabadas',
+  'stories.player.narrator': 'Lee {name}',
+  'stories.player.forward': 'Diez segundos adelante',
+  'stories.player.back': 'Diez segundos atrás',
 };
 
 const tr: Catalog = {
@@ -14203,8 +14243,6 @@ const tr: Catalog = {
   'stories.reader.sentenceOf': 'Cümle {index}/{total}',
   'stories.reader.previousSentence': 'Önceki cümle',
   'stories.reader.nextSentence': 'Sonraki cümle',
-  'stories.reader.slower': 'Daha yavaş',
-  'stories.reader.normalSpeed': 'Normal hız',
   'stories.reader.meaning': 'Anlamı',
   'stories.reader.inEnglish': 'İngilizce gösteriliyor — dilinde henüz çeviri yok.',
   'stories.reader.unfinishedTitle': 'Bu hikâyede bir sınava başlamıştın',
@@ -16942,6 +16980,16 @@ const tr: Catalog = {
   'stories.check.questions': '{count} soru, süre yok',
   'stories.check.noXp': 'Bu hikâyeyi bugün iki kez kontrol ettin; bir kontrol daha XP kazandırmaz.',
   'stories.check.repeatXp': 'Tekrar kontrol, XP’nin dörtte birini kazandırır.',
+  // --- The story player (learn-mobile) ---
+  'stories.player.seek': 'Hikâyedeki konum',
+  'stories.player.elapsed': '{total} içinde {elapsed}',
+  'stories.player.speed': 'Hız: {rate}×',
+  'stories.player.buffering': 'Yükleniyor…',
+  'stories.player.error': 'Bu bölüm çalınamadı. Yeniden dene.',
+  'stories.player.recorded': '{total} cümleden {recorded} kaydedildi',
+  'stories.player.narrator': '{name} okuyor',
+  'stories.player.forward': 'On saniye ileri',
+  'stories.player.back': 'On saniye geri',
 };
 
 const ar: Catalog = {
@@ -17020,8 +17068,6 @@ const ar: Catalog = {
   'stories.reader.sentenceOf': 'الجملة {index} من {total}',
   'stories.reader.previousSentence': 'الجملة السابقة',
   'stories.reader.nextSentence': 'الجملة التالية',
-  'stories.reader.slower': 'أبطأ',
-  'stories.reader.normalSpeed': 'السرعة العادية',
   'stories.reader.meaning': 'المعنى',
   'stories.reader.inEnglish': 'معروض بالإنجليزية — لا توجد ترجمة بلغتك بعد.',
   'stories.reader.unfinishedTitle': 'بدأت اختبارًا على هذه القصة',
@@ -19759,6 +19805,16 @@ const ar: Catalog = {
   'stories.check.questions': '{count} أسئلة، بلا مؤقّت',
   'stories.check.noXp': 'اختبرت هذه القصة مرّتين اليوم، فلن يمنحك اختبار آخر أيّ XP.',
   'stories.check.repeatXp': 'الاختبار المكرّر يمنح ربع XP.',
+  // --- The story player (learn-mobile) ---
+  'stories.player.seek': 'الموضع في القصة',
+  'stories.player.elapsed': '{elapsed} من {total}',
+  'stories.player.speed': 'السرعة: {rate}×',
+  'stories.player.buffering': 'جارٍ التحميل…',
+  'stories.player.error': 'تعذّر تشغيل هذا الجزء. حاول مرّة أخرى.',
+  'stories.player.recorded': 'سُجّلت {recorded} من {total} جمل',
+  'stories.player.narrator': 'بصوت {name}',
+  'stories.player.forward': 'تقديم عشر ثوانٍ',
+  'stories.player.back': 'ترجيع عشر ثوانٍ',
 };
 
 const fr: Catalog = {
@@ -19837,8 +19893,6 @@ const fr: Catalog = {
   'stories.reader.sentenceOf': 'Phrase {index} sur {total}',
   'stories.reader.previousSentence': 'Phrase précédente',
   'stories.reader.nextSentence': 'Phrase suivante',
-  'stories.reader.slower': 'Plus lent',
-  'stories.reader.normalSpeed': 'Vitesse normale',
   'stories.reader.meaning': 'Sens',
   'stories.reader.inEnglish': 'Affiché en anglais – pas encore de traduction dans ta langue.',
   'stories.reader.unfinishedTitle': 'Tu as commencé un quiz sur cette histoire',
@@ -22576,6 +22630,16 @@ const fr: Catalog = {
   'stories.check.questions': '{count} questions, sans chrono',
   'stories.check.noXp': 'Tu as déjà vérifié cette histoire deux fois aujourd’hui ; une autre vérification ne rapporte pas d’XP.',
   'stories.check.repeatXp': 'Une vérification répétée rapporte un quart des XP.',
+  // --- The story player (learn-mobile) ---
+  'stories.player.seek': 'Position dans l’histoire',
+  'stories.player.elapsed': '{elapsed} sur {total}',
+  'stories.player.speed': 'Vitesse : {rate}×',
+  'stories.player.buffering': 'Chargement…',
+  'stories.player.error': 'Ce passage n’a pas pu être lu. Réessaie.',
+  'stories.player.recorded': '{recorded} phrases enregistrées sur {total}',
+  'stories.player.narrator': 'Lu par {name}',
+  'stories.player.forward': 'Avancer de dix secondes',
+  'stories.player.back': 'Reculer de dix secondes',
 };
 
 const nl: Catalog = {
@@ -22654,8 +22718,6 @@ const nl: Catalog = {
   'stories.reader.sentenceOf': 'Zin {index} van {total}',
   'stories.reader.previousSentence': 'Vorige zin',
   'stories.reader.nextSentence': 'Volgende zin',
-  'stories.reader.slower': 'Langzamer',
-  'stories.reader.normalSpeed': 'Normale snelheid',
   'stories.reader.meaning': 'Betekenis',
   'stories.reader.inEnglish': 'In het Engels – er is nog geen vertaling in jouw taal.',
   'stories.reader.unfinishedTitle': 'Je bent al een quiz over dit verhaal begonnen',
@@ -25393,6 +25455,16 @@ const nl: Catalog = {
   'stories.check.questions': '{count} vragen, zonder tijdslimiet',
   'stories.check.noXp': 'Je hebt dit verhaal vandaag al twee keer gecontroleerd; een volgende controle levert geen XP op.',
   'stories.check.repeatXp': 'Een herhaalde controle levert een kwart van de XP op.',
+  // --- The story player (learn-mobile) ---
+  'stories.player.seek': 'Positie in het verhaal',
+  'stories.player.elapsed': '{elapsed} van {total}',
+  'stories.player.speed': 'Snelheid: {rate}×',
+  'stories.player.buffering': 'Laden…',
+  'stories.player.error': 'Dit stuk kon niet worden afgespeeld. Probeer het opnieuw.',
+  'stories.player.recorded': '{recorded} van {total} zinnen ingesproken',
+  'stories.player.narrator': 'Voorgelezen door {name}',
+  'stories.player.forward': 'Tien seconden vooruit',
+  'stories.player.back': 'Tien seconden terug',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -25472,8 +25544,6 @@ const ckb: Catalog = {
   'stories.reader.sentenceOf': 'ڕستەی {index} لە {total}',
   'stories.reader.previousSentence': 'ڕستەی پێشوو',
   'stories.reader.nextSentence': 'ڕستەی دواتر',
-  'stories.reader.slower': 'هێواشتر',
-  'stories.reader.normalSpeed': 'خێرایی ئاسایی',
   'stories.reader.meaning': 'واتا',
   'stories.reader.inEnglish': 'بە ئینگلیزی پیشان دەدرێت — هێشتا وەرگێڕان بە زمانی تۆ نییە.',
   'stories.reader.unfinishedTitle': 'تۆ تاقیکردنەوەیەکت لەسەر ئەم چیرۆکە دەست پێکردبوو',
@@ -28211,6 +28281,16 @@ const ckb: Catalog = {
   'stories.check.questions': '{count} پرسیار، بەبێ کاتژمێر',
   'stories.check.noXp': 'ئەمڕۆ دوو جار ئەم چیرۆکەت پشکنی، بۆیە پشکنینێکی دیکە XP نادات.',
   'stories.check.repeatXp': 'پشکنینی دووبارە چارەکی XP دەدات.',
+  // --- The story player (learn-mobile) ---
+  'stories.player.seek': 'شوێن لە چیرۆکەکە',
+  'stories.player.elapsed': '{elapsed} لە {total}',
+  'stories.player.speed': 'خێرایی: {rate}×',
+  'stories.player.buffering': 'بار دەکرێت…',
+  'stories.player.error': 'ئەم بەشە لێنەدرا. دووبارە هەوڵ بدە.',
+  'stories.player.recorded': '{recorded} لە {total} ڕستە تۆمارکراون',
+  'stories.player.narrator': '{name} دەخوێنێتەوە',
+  'stories.player.forward': 'دە چرکە بۆ پێشەوە',
+  'stories.player.back': 'دە چرکە بۆ دواوە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

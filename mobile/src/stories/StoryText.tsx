@@ -171,12 +171,13 @@ export function StoryText({
                     </Text>
                   );
                 }
+                // the sentence keeps its own words for a screen reader; what a tap on it does is the hint
                 return (
                   <Text
                     key={si}
                     style={bg}
                     onPress={reading && onReplay ? onReplay : undefined}
-                    accessibilityLabel={reading && onReplay ? t('stories.player.replay') : undefined}
+                    accessibilityHint={reading && onReplay ? t('stories.player.replay') : undefined}
                   >
                     {seg.text}
                   </Text>

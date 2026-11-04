@@ -56,6 +56,19 @@ describe('StoryText', () => {
     expect(screen.queryByText('My mother bakes bread. The bread is warm.')).toBeNull();
   });
 
+  it('says the sentence being read again when it is tapped, and nothing else when another is', () => {
+    const onReplay = vi.fn();
+    const view = renderWithProviders(<StoryText story={story} current={{ paragraph: 0, sentence: 1 }} onReplay={onReplay} />);
+    fireEvent.click(screen.getByText('Dayika min nan dipêje.', { exact: false }));
+    expect(onReplay).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByText('Nan germ e.', { exact: false }));
+    expect(onReplay).toHaveBeenCalledTimes(1);
+    // nothing being read: a tap on the text is only a tap
+    view.rerender(<StoryText story={story} current={null} onReplay={onReplay} />);
+    fireEvent.click(screen.getByText('Nan germ e.', { exact: false }));
+    expect(onReplay).toHaveBeenCalledTimes(1);
+  });
+
   it('gives a Listen button only to a paragraph that has recordings, and says which one plays', () => {
     const onListen = vi.fn();
     const view = renderWithProviders(<StoryText story={story} listenable={new Set([1])} onListen={onListen} />);

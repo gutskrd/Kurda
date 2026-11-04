@@ -149,7 +149,9 @@ describe('StoryReaderScreen', () => {
     await waitFor(() => expect(client.calls.some((c) => c.method === 'PUT' && c.path === '/stories/s1/progress')).toBe(true));
     expect(client.calls.find((c) => c.path === '/stories/s1/progress')?.body).toEqual({ paragraph: 0, share: 0.5, finished: false });
 
-    // the foot of the text: finished, and the check opens (an enabled button carries no aria-disabled at all)
+    // the foot of the text: finished, and the check opens (an enabled button carries no aria-disabled at all).
+    // The scroller reports at most one scroll a tenth of a second, so the second comes after that.
+    await new Promise((resolve) => setTimeout(resolve, 150));
     scrollText(900, 1300, 400);
     await waitFor(() => expect(screen.getAllByRole('button', { name: 'Start the check' })[0]!.getAttribute('aria-disabled')).toBeNull());
     fireEvent.click(screen.getAllByRole('button', { name: 'Start the check' })[0]!);

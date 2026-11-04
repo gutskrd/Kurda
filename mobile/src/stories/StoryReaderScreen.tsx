@@ -3,12 +3,14 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { heldRow } from '../theme/MotionParts';
 import {
+  CHARACTER_NAMES,
   PAID_STORY_REPEATS_PER_DAY,
   STORY_ASSESSMENT,
   glossFor,
+  storyAudioSentences,
+  type StoryCategory,
   type StoryDetail,
   type StoryGameMode,
-  type StoryCategory,
   type StoryGlossEntry,
   type StoryMe,
 } from '@kurda/shared';
@@ -35,7 +37,7 @@ import { formatNumber } from '../i18n/format';
 import { activeGames, createGame, getCategories, getStory, saveProgress, saveWord, setBookmark, type ProgressInput } from './api';
 import { StoryCover } from './covers';
 import { DIALECT_NAME, TRADITION_KEY, categoryLabel, cefrLabel, narrationLabel } from './labels';
-import { narrationItems, narrationLine } from './narration';
+import { narrationItems, narrationLine, narrationTrack } from './narration';
 import { TEXT_SCALES, useStoryPrefs, type TextScale } from './prefs';
 import { createErrorMessage, SetupSheet } from './SetupSheet';
 import { STORY_BODY_SIZE, StoryText, storyLineHeight } from './StoryText';
@@ -219,11 +221,17 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
     ),
   );
 
+  // each paragraph's own recordings, for its Listen; and the whole story as the server's stitched track, for the bar
   const items = useMemo(() => (story ? narrationItems(story.paragraphs, story.audio) : []), [story]);
+  const track = useMemo(() => (story?.narration ? narrationTrack(story.narration) : items), [story, items]);
   const listenable = useMemo(() => new Set(items.map((i) => i.paragraph)), [items]);
-  // what each recorded sentence says and who says it; a paragraph with a character keeps room for one
-  const lines = useMemo(() => new Map(items.map((i) => [i, narrationLine(story?.paragraphs ?? [], story?.voices, i)])), [items, story]);
-  const voiced = useMemo(() => new Set(items.filter((i) => lines.get(i)?.voice).map((i) => i.paragraph)), [items, lines]);
+  // the paragraphs with a sentence a character says keep room for the character, so nothing moves when it appears
+  const voiced = useMemo(
+    () => new Set(items.filter((i) => narrationLine(story?.paragraphs ?? [], story?.voices, i).voice).map((i) => i.paragraph)),
+    [items, story],
+  );
+  // how many of the story's sentences could be recorded, for "n of m recorded" when not all are
+  const recordable = useMemo(() => (story ? story.paragraphs.reduce((n, p) => n + storyAudioSentences(p).length, 0) : 0), [story]);
   const translation = useMemo(() => (story ? translationFor(story, locale) : null), [story, locale]);
 
   // the sentence being read stays in view; reduced motion jumps rather than glides
@@ -275,8 +283,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   /** Listen from the overview: the whole story, from the paragraph being read. */
   const listenFrom = (paragraph: number): void => {
     startReading(paragraph);
-    const start = items.findIndex((i) => i.paragraph >= paragraph);
-    narrator.play(items, 'story', Math.max(0, start));
+    const start = track.findIndex((i) => i.paragraph >= paragraph);
+    narrator.play(track, 'story', Math.max(0, start));
   };
 
   const toggleBookmark = (): void => {
@@ -407,7 +415,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
   const narrated = narrationLabel(story.audioCoverage, t);
   const category = categoryLabel(story.category, categories, locale);
   const reading = narration.current;
-  const line = reading ? lines.get(reading) : undefined;
+  // what the sentence being read says and who says it, whichever queue it came from
+  const line = reading ? narrationLine(story.paragraphs, story.voices, reading) : undefined;
   // the character faces back toward the Listen it stands after
   const speaker =
     reading && line?.voice
@@ -504,7 +513,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
               size="large"
               onPress={() => startReading(continueFrom)}
             />
-            {items.length > 0 ? (
+            {track.length > 0 ? (
               <ClayButton label={t('stories.overview.listen')} icon="headphones" onPress={() => listenFrom(continueFrom ?? 0)} />
             ) : null}
           </View>
@@ -562,6 +571,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                 listening={narration.scope === 'paragraph' ? narration.paragraph : null}
                 playing={narration.playing}
                 onListen={listenTo}
+                onReplay={narration.scope ? () => narrator.replay() : undefined}
                 voiced={voiced}
                 speaker={speaker}
                 translation={translation}
@@ -585,9 +595,17 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
               <ClayButton label={t('stories.reader.overview')} variant="outline" icon="story" onPress={toOverview} />
             </View>
           </ScrollView>
-          {items.length > 0 ? (
+          {track.length > 0 ? (
             <View style={[styles.player, { paddingBottom: Math.max(bottomInset, spacing.sm) }]}>
-              <NarrationBar narrator={narrator} state={narration} items={items} rate={prefs.rate} onRate={(rate) => update({ rate })} />
+              <NarrationBar
+                narrator={narrator}
+                state={narration}
+                items={track}
+                rate={prefs.rate}
+                onRate={(rate) => update({ rate })}
+                speaker={narration.scope === 'story' && line?.voice ? CHARACTER_NAMES[line.voice.speaker] : null}
+                recorded={story.narration && !story.narration.complete ? { recorded: story.narration.sentences.length, total: recordable } : null}
+              />
             </View>
           ) : null}
         </>
