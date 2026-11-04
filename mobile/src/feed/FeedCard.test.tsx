@@ -147,6 +147,8 @@ describe('a post in the chain', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Like' }));
     });
     expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
+    // the count ticks up in the pill
+    expect(screen.getByText('1')).toBeTruthy();
     expect(client.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['POST /posts/library/p1/like']);
   });
 
