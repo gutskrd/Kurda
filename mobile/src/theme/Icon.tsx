@@ -85,12 +85,17 @@ function CurrencyIcon({ name, size, style }: { name: 'coin' | 'gem'; size: numbe
  * fades — for the hero glyphs on the onboarding / sign-in slides. Falls back to
  * a static icon when the user prefers reduced motion.
  */
-export function BreathingIcon(props: {
+export function BreathingIcon({
+  breaths = 3,
+  ...props
+}: {
   name: IconName;
   size?: number;
   color?: string;
   tone?: 'primary' | 'secondary' | 'onPrimary';
   style?: StyleProp<ViewStyle>;
+  /** how many breaths it takes before it is still: three by default, one for a glyph beside words to be read */
+  breaths?: number;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
   const opacity = useRef(new Animated.Value(1)).current;
@@ -103,11 +108,11 @@ export function BreathingIcon(props: {
         Animated.timing(opacity, { toValue: 0.4, duration: 1700, useNativeDriver: true }),
         Animated.timing(opacity, { toValue: 1, duration: 1700, useNativeDriver: true }),
       ]),
-      { iterations: 3 },
+      { iterations: breaths },
     );
     loop.start();
     return () => loop.stop();
-  }, [reduce, opacity]);
+  }, [reduce, opacity, breaths]);
 
   return (
     <Animated.View style={{ opacity: reduce ? 1 : opacity }}>

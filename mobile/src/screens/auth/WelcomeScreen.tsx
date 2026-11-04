@@ -5,13 +5,16 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { useAuth } from '../../auth/AuthContext';
 import { isGoogleConfigured, signInWithGoogle } from '../../auth/google';
+import { haptic } from '../../feedback/haptics';
 import { AgreeLine } from '../../legal/links';
+import { useListEntrance } from '../../theme/animate';
 import { Icon, type IconName } from '../../theme/Icon';
 import { GoogleMark } from '../../theme/BrandMark';
+import { PressableScale, Rise } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
-import { AuthScreenShell } from './AuthForm';
+import { AUTH_HEAD_ROWS, AuthScreenShell } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
 import { currentMaintenance } from '../../maintenance/maintenance';
 
@@ -48,6 +51,9 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
   const [appleAvailable, setAppleAvailable] = useState(false);
   const { t } = useI18n();
   const [conn, setConn] = useState<'checking' | 'ok' | 'fail'>('checking');
+  // the ways in rise one after another under the head the shell brings in (AUTH_HEAD_ROWS)
+  const entering = useListEntrance(true);
+  const row = (i: number) => entering(AUTH_HEAD_ROWS + i);
 
   useEffect(() => {
     let active = true;
@@ -146,20 +152,22 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
   };
 
   return (
-    <AuthScreenShell title={t('welcome.title')} subtitle={t('welcome.subtitle')} onBack={onBack} hero="person">
+    <AuthScreenShell title={t('welcome.title')} subtitle={t('welcome.subtitle')} onBack={onBack} hero="hevalo">
       <View style={styles.methods}>
         {appleAvailable ? (
-          <AppleAuthentication.AppleAuthenticationButton
-            buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
-            buttonStyle={
-              scheme === 'dark'
-                ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
-                : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
-            }
-            cornerRadius={radii.pill}
-            style={styles.appleButton}
-            onPress={onApple}
-          />
+          <Rise delay={row(0)}>
+            <AppleAuthentication.AppleAuthenticationButton
+              buttonType={AppleAuthentication.AppleAuthenticationButtonType.CONTINUE}
+              buttonStyle={
+                scheme === 'dark'
+                  ? AppleAuthentication.AppleAuthenticationButtonStyle.WHITE
+                  : AppleAuthentication.AppleAuthenticationButtonStyle.BLACK
+              }
+              cornerRadius={radii.pill}
+              style={styles.appleButton}
+              onPress={onApple}
+            />
+          </Rise>
         ) : null}
         {/*
           Only in a build that has Google's client ids. Without them the button
@@ -167,29 +175,37 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
           is an unfinished app to anybody reviewing it.
         */}
         {isGoogleConfigured ? (
-          <MethodButton
-            mark={<GoogleMark size={18} />}
-            label={t('welcome.google')}
-            onPress={onGoogle}
-            background={GOOGLE_SURFACE}
-            foreground={GOOGLE_INK}
-          />
+          <Rise delay={row(1)}>
+            <MethodButton
+              mark={<GoogleMark size={18} />}
+              label={t('welcome.google')}
+              onPress={onGoogle}
+              background={GOOGLE_SURFACE}
+              foreground={GOOGLE_INK}
+            />
+          </Rise>
         ) : null}
-        <MethodButton
-          icon="mail-fill"
-          label={t('welcome.email')}
-          onPress={() => navigation.navigate('Register')}
-          background={colors.primary}
-          foreground={colors.textOnPrimary}
-        />
+        <Rise delay={row(2)}>
+          <MethodButton
+            icon="mail-fill"
+            label={t('welcome.email')}
+            onPress={() => navigation.navigate('Register')}
+            background={colors.primary}
+            foreground={colors.textOnPrimary}
+          />
+        </Rise>
       </View>
 
-      <Pressable onPress={() => navigation.navigate('Login')} style={styles.link} accessibilityRole="button">
-        <Text style={[styles.linkText, { color: colors.primary }]}>{t('welcome.haveAccount')}</Text>
-      </Pressable>
+      <Rise delay={row(3)}>
+        <Pressable onPress={() => navigation.navigate('Login')} style={styles.link} accessibilityRole="button">
+          <Text style={[styles.linkText, { color: colors.primary }]}>{t('welcome.haveAccount')}</Text>
+        </Pressable>
+      </Rise>
 
       {/* the rules and the privacy policy, each a link: Apple and Google make an account too */}
-      <AgreeLine style={styles.agree} />
+      <Rise delay={row(4)}>
+        <AgreeLine style={styles.agree} />
+      </Rise>
 
       {/*
         Which API this build talks to, and whether it answers.
@@ -235,6 +251,10 @@ const GOOGLE_INK = '#1F1F1F';
  * or a `mark`, which is somebody else's logo and brings its own colours. Never
  * both, and never neither: a company's mark is not ours to re-tint, and an icon
  * that ignored the theme would be the only one in the app that did.
+ *
+ * It gives a little under the finger and springs back, and the tap is felt:
+ * the first thing a finger does in the app is choose its way in, and a way
+ * in that starts with a light knock is one that answered.
  */
 function MethodButton({
   icon,
@@ -250,17 +270,17 @@ function MethodButton({
   foreground: string;
 } & ({ icon: IconName; mark?: never } | { mark: React.JSX.Element; icon?: never })) {
   return (
-    <Pressable
-      onPress={onPress}
+    <PressableScale
+      onPress={() => {
+        haptic('tap');
+        onPress();
+      }}
       accessibilityRole="button"
-      style={({ pressed }) => [
-        styles.method,
-        { backgroundColor: background, opacity: pressed ? 0.9 : 1 },
-      ]}
+      style={[styles.method, { backgroundColor: background }]}
     >
       {mark ?? (icon ? <Icon name={icon} size={20} color={foreground} /> : null)}
       <Text style={[styles.methodText, { color: foreground }]}>{label}</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 

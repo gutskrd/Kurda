@@ -81,6 +81,11 @@ export function isLastStep(state: OnboardingState): boolean {
   return state.stepIndex === LAST_INDEX;
 }
 
+/** Which way the intro turns between two slides: on to a later one, or back to an earlier (staying put counts as on). */
+export function slideDirection(from: number, to: number): 'forward' | 'back' {
+  return to >= from ? 'forward' : 'back';
+}
+
 /**
  * What persists once onboarding ends: the completed flag (so it never shows
  * again) and the chosen language (saved as the preferred app language, #184).

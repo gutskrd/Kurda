@@ -11,9 +11,18 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#b874f0"
+      "backgroundColor": "#F9F9F8"
     },
     "ios": {
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#F9F9F8",
+        "dark": {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#0E1014"
+        }
+      },
       "supportsTablet": false,
       "bundleIdentifier": "app.hevalo.mobile",
       "appStoreUrl": "",
@@ -132,6 +141,15 @@
       }
     },
     "android": {
+      "splash": {
+        "image": "./assets/splash-icon.png",
+        "resizeMode": "contain",
+        "backgroundColor": "#F9F9F8",
+        "dark": {
+          "image": "./assets/splash-icon.png",
+          "backgroundColor": "#0E1014"
+        }
+      },
       "package": "app.hevalo.mobile",
       "playStoreUrl": "",
       "adaptiveIcon": {

@@ -1,12 +1,18 @@
-import { useCallback, useEffect, useReducer, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { haptic } from '../feedback/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale, type TranslationKey } from '../i18n/translations';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { useDirection } from '../reports/direction';
+import { springTo } from '../theme/animate';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { BreathingIcon, Icon } from '../theme/Icon';
+import { ENTRANCE } from '../theme/motion';
+import { PressableScale, Rise } from '../theme/MotionParts';
+import { SlideSwap, type SlideDirection } from '../theme/SlideSwap';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
@@ -17,6 +23,7 @@ import {
   isFirstStep,
   isLastStep,
   onboardingReducer,
+  slideDirection,
   type CompletedVia,
   type OnboardingStep,
   type PersistedOnboarding,
@@ -78,10 +85,20 @@ const VALUE_PROPS: readonly TranslationKey[] = [
   'onboarding.prop.streak',
 ];
 
+/** How tall Hevalo stands on the welcome slide, head to the tops of his legs. */
+const HERO_HEIGHT = 200;
+
+/** The lines under his name follow each other a little further apart than rows in a list do: each is read, not scanned. */
+const LINE_STAGGER_MS = ENTRANCE.staggerMs * 2;
+
 /**
- * The 2-slide first-launch intro (KUR-272/273), on the glass theme. `initialStep`
+ * The 3-slide first-launch intro (KUR-272/273), on the glass theme. `initialStep`
  * lets the auth Welcome choice re-open it partway (at the intro) so "‹ Back"
  * walks all the way back to the language chooser.
+ *
+ * The slides turn rather than swap: the one leaving moves out the way the
+ * reader is going and the next rises into its place (SlideSwap), and the
+ * dots at the top say where they are with a capsule that slides along them.
  */
 export function OnboardingScreen({
   onComplete,
@@ -93,6 +110,7 @@ export function OnboardingScreen({
   const { colors } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+  const dir = useDirection();
   const [state, dispatch] = useReducer(onboardingReducer, initialStep, (start) => {
     const base = initOnboardingState();
     const idx = start ? ONBOARDING_STEPS.indexOf(start) : 0;
@@ -100,6 +118,14 @@ export function OnboardingScreen({
   });
   const { locale, setLocale } = useI18n();
   const step = currentStep(state);
+
+  // which way the last turn went, for the slide leaving: told from the slide before it
+  const shown = useRef(state.stepIndex);
+  const turned = useRef<SlideDirection>('forward');
+  if (shown.current !== state.stepIndex) {
+    turned.current = slideDirection(shown.current, state.stepIndex);
+    shown.current = state.stepIndex;
+  }
 
   const end = (via: CompletedVia): void => {
     // compute the record from the current state (dispatch only marks it inert);
@@ -117,18 +143,7 @@ export function OnboardingScreen({
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: insets.top + spacing.md, paddingBottom: insets.bottom + spacing.lg }]}>
         <View style={styles.topBar}>
-          <View style={styles.dots}>
-            {ONBOARDING_STEPS.map((s, i) => (
-              <View
-                key={s}
-                style={[
-                  styles.dot,
-                  { backgroundColor: colors.controlTrack },
-                  i === state.stepIndex && [styles.dotActive, { backgroundColor: colors.primary }],
-                ]}
-              />
-            ))}
-          </View>
+          <Dots count={ONBOARDING_STEPS.length} index={state.stepIndex} mirrored={dir.rtl} />
           {!isLastStep(state) ? (
             <Pressable onPress={() => end('skipped')} accessibilityRole="button" hitSlop={8}>
               <Text style={[styles.skip, { color: colors.textSecondary }]}>{t('common.skip')}</Text>
@@ -138,11 +153,11 @@ export function OnboardingScreen({
           )}
         </View>
 
-        <View style={styles.body}>
+        <SlideSwap id={step} direction={turned.current} mirrored={dir.rtl} style={styles.body}>
           {step === 'language' && <LanguageSlide selected={state.selectedLanguage} onSelect={selectLanguage} />}
           {step === 'welcome' && <WelcomeSlide />}
           {step === 'notifications' && <NotificationsSlide />}
-        </View>
+        </SlideSwap>
 
         <View style={styles.nav}>
           {!isFirstStep(state) ? (
@@ -163,6 +178,52 @@ export function OnboardingScreen({
   );
 }
 
+/** A dot, the slot each dot has (the capsule's width), and the air between slots. */
+const DOT = 8;
+const DOT_SLOT = 18;
+const DOT_GAP = 4;
+
+/** Where the capsule sits for the slide at `index`, from the left of the dots. */
+function dotSlotX(index: number, count: number, mirrored: boolean): number {
+  return (mirrored ? count - 1 - index : index) * (DOT_SLOT + DOT_GAP);
+}
+
+/**
+ * Which slide this is, of how many: a dot for each, and over the one showing
+ * a capsule in the brand's colour that slides along to the next.
+ *
+ * The capsule used to be the dot itself, drawn wider — which jumped from one
+ * dot to the next, since a width is laid out and not moved. The capsule is
+ * its own shape of one width, and travels on a transform, the way the
+ * segmented control's does: on the native driver, and simply there under
+ * Reduce Motion. Decorative: the slides say what they are.
+ */
+function Dots({ count, index, mirrored }: { count: number; index: number; mirrored: boolean }): React.JSX.Element {
+  const { colors } = useTheme();
+  const reduce = useReducedMotion();
+  const x = useRef(new Animated.Value(dotSlotX(index, count, mirrored))).current;
+  useEffect(() => {
+    const to = dotSlotX(index, count, mirrored);
+    if (reduce) {
+      x.setValue(to);
+      return;
+    }
+    const slide = springTo(x, to);
+    slide.start();
+    return () => slide.stop();
+  }, [index, count, mirrored, reduce, x]);
+  return (
+    <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {Array.from({ length: count }, (_, i) => (
+        <View key={i} style={styles.dotSlot}>
+          <View style={[styles.dot, { backgroundColor: colors.controlTrack }]} />
+        </View>
+      ))}
+      <Animated.View style={[styles.dotActive, { backgroundColor: colors.primary, transform: [{ translateX: x }] }]} testID="onboarding-dots-active" />
+    </View>
+  );
+}
+
 function LanguageSlide({ selected, onSelect }: { selected: string | null; onSelect: (l: Locale) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -175,7 +236,8 @@ function LanguageSlide({ selected, onSelect }: { selected: string | null; onSele
         {LOCALES.map((locale) => {
           const active = selected === locale;
           return (
-            <Pressable
+            // gives a little under the finger, and ticks when the choice changes
+            <PressableScale
               key={locale}
               onPress={() => {
                 if (!active) haptic('select');
@@ -194,7 +256,7 @@ function LanguageSlide({ selected, onSelect }: { selected: string | null; onSele
                 {LOCALE_LABEL[locale]}
               </Text>
               {active ? <Icon name="check" size={22} color={colors.primary} /> : null}
-            </Pressable>
+            </PressableScale>
           );
         })}
       </ScrollView>
@@ -202,33 +264,35 @@ function LanguageSlide({ selected, onSelect }: { selected: string | null; onSele
   );
 }
 
+/** The greeting is the whole answer to a tap on Hevalo here: there is nothing to say again. */
+const greeted = (): void => undefined;
+
+/**
+ * Hevalo himself, with his name and what the app is in four lines.
+ *
+ * A book glyph used to stand here, and the four lines took turns, one every
+ * two and a half seconds — which meant reading at the slide's pace rather
+ * than one's own, and seeing one line only unless one waited. Now all four
+ * are there, rising in one after another as the slide arrives, and Hevalo
+ * stands over them, alive: he breathes, blinks, glances about, and greets a
+ * tap. Under Reduce Motion the lines are simply there.
+ */
 function WelcomeSlide(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const reduce = useReducedMotion();
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    if (reduce) return;
-    const id = setInterval(() => setI((n) => (n + 1) % VALUE_PROPS.length), 2600);
-    return () => clearInterval(id);
-  }, [reduce]);
-
   return (
     <View style={[styles.slide, styles.centered]}>
-      <BreathingIcon name="book" size={60} tone="primary" style={styles.slideIcon} />
+      <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="half" height={HERO_HEIGHT} onPress={greeted} style={styles.hero} />
       <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
       <Text style={[styles.tagline, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
-      {reduce ? (
-        <View style={styles.propList}>
-          {VALUE_PROPS.map((p) => (
-            <Text key={p} style={[styles.prop, { color: colors.textSecondary }]}>
-              {p}
-            </Text>
-          ))}
-        </View>
-      ) : (
-        <Text style={[styles.propRotating, { color: colors.textSecondary }]}>{t(VALUE_PROPS[i]!)}</Text>
-      )}
+      <View style={styles.propList}>
+        {VALUE_PROPS.map((p, i) => (
+          <Rise key={p} delay={reduce ? null : i * LINE_STAGGER_MS}>
+            <Text style={[styles.prop, { color: colors.textSecondary }]}>{t(p)}</Text>
+          </Rise>
+        ))}
+      </View>
     </View>
   );
 }
@@ -242,7 +306,8 @@ function NotificationsSlide(): React.JSX.Element {
   const { t } = useI18n();
   return (
     <View style={[styles.slide, styles.centered]}>
-      <BreathingIcon name="bell" size={64} tone="primary" />
+      {/* one breath as the slide arrives, then still: there are three lines to read under it */}
+      <BreathingIcon name="bell" size={64} tone="primary" breaths={1} />
       <Text style={[styles.title, { color: colors.textPrimary }, styles.notifTitle]}>{t('onboarding.notify.title')}</Text>
       <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('onboarding.notify.body')}</Text>
       <Text style={[styles.notifHint, { color: colors.textSecondary }]}>{t('onboarding.notify.later')}</Text>
@@ -253,14 +318,17 @@ function NotificationsSlide(): React.JSX.Element {
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg, paddingTop: spacing.xl, paddingBottom: spacing.lg },
   topBar: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 32 },
-  dots: { flexDirection: 'row', gap: 6 },
-  dot: { width: 8, height: 8, borderRadius: radii.pill },
-  dotActive: { width: 20 },
+  dots: { flexDirection: 'row', gap: DOT_GAP },
+  dotSlot: { width: DOT_SLOT, height: DOT, alignItems: 'center', justifyContent: 'center' },
+  dot: { width: DOT, height: DOT, borderRadius: radii.pill },
+  // over the dots, free to travel between them
+  dotActive: { position: 'absolute', left: 0, top: 0, width: DOT_SLOT, height: DOT, borderRadius: radii.pill },
   skip: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
   body: { flex: 1, justifyContent: 'center' },
   slide: { flex: 1, justifyContent: 'center' },
   centered: { alignItems: 'center' },
   slideIcon: { alignSelf: 'center', marginBottom: spacing.md },
+  hero: { marginBottom: spacing.sm },
   title: { ...display(typography.sizes.xxl), textAlign: 'center' },
   notifTitle: { marginTop: spacing.lg },
   notifHint: { fontSize: typography.sizes.sm, textAlign: 'center', marginTop: spacing.lg, fontStyle: 'italic' },
@@ -279,9 +347,8 @@ const styles = StyleSheet.create({
   langLabelActive: { fontWeight: typography.weights.bold },
   brand: { ...display(typography.sizes.xxl) },
   tagline: { fontSize: typography.sizes.lg, marginTop: spacing.xs, fontStyle: 'italic', marginBottom: spacing.lg },
-  propList: { marginTop: spacing.lg, gap: spacing.sm, alignItems: 'center' },
+  propList: { marginTop: spacing.sm, gap: spacing.sm, alignItems: 'center', paddingHorizontal: spacing.lg },
   prop: { fontSize: typography.sizes.md, textAlign: 'center' },
-  propRotating: { fontSize: typography.sizes.lg, fontWeight: typography.weights.medium, textAlign: 'center', marginTop: spacing.lg, minHeight: 56, paddingHorizontal: spacing.lg },
   nav: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md },
   back: { paddingVertical: spacing.md, paddingHorizontal: spacing.lg },
   backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
