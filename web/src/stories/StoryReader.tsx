@@ -167,7 +167,7 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
   return (
     <article className="story-article" aria-labelledby="story-title">
       <header className="story-overview">
-        <StoryCover cover={story.cover} category={story.category} className="story-overview-cover" />
+        <StoryCover cover={story.cover} category={story.category} className="story-overview-cover" eager />
         <div className="story-overview-body">
           <p className="story-meta">
             <span className="story-cefr" title={cefrLabel(story.cefr, t)}>

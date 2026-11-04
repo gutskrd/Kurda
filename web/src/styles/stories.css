@@ -401,25 +401,15 @@
   background: var(--surface-3);
 }
 .story-cover > svg,
-.story-cover-light > svg,
-.story-cover-dark > svg {
+.story-cover > img {
   display: block;
   width: 100%;
   height: 100%;
 }
-.story-cover.is-light-dark > span {
-  position: absolute;
-  inset: 0;
-}
-/* a character's light is drawn once for each scheme, and only the scheme's own is shown */
-.story-cover-light {
-  display: none;
-}
-:root[data-theme='light'] .story-cover-light {
-  display: block;
-}
-:root[data-theme='light'] .story-cover-dark {
-  display: none;
+/* a chosen picture fills the box as the band does: cropped to it, never stretched */
+.story-cover > img {
+  object-fit: cover;
+  user-select: none;
 }
 .story-card-cover {
   flex: none;

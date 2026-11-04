@@ -152,7 +152,7 @@ export function heldPoll(): { answer: (call: Call) => Promise<unknown>; release:
 export function libraryFixture(over: Partial<StoryLibrary> = {}): StoryLibrary {
   const fable = listItem({ id: 'f1', slug: 'senge-u-penge', title: 'Şengê û Pengê', level: 2, cefr: 'A2', category: 'fable', readingMinutes: 4, audioCoverage: 'full', fullyNarrated: true, featured: true, me: { bookmarked: false, paragraph: 0, share: 0, finishedAt: null, bestCorrect: null, total: null, attemptsToday: 0 } });
   const started = listItem({ id: 'c1', slug: 'bazar', title: 'Bazar', level: 1, cefr: 'A1', category: 'everyday', readingMinutes: 4, me: { bookmarked: false, paragraph: 2, share: 0.5, finishedAt: null, bestCorrect: null, total: null, attemptsToday: 0 } });
-  const kept = listItem({ id: 'b1', slug: 'dara-tuye', title: 'Dara Tûyê', level: 3, cefr: 'B1', category: 'nature', readingMinutes: 6, cover: 'hamo', me: { bookmarked: true, paragraph: 0, share: 0, finishedAt: '2026-10-01T00:00:00Z', bestCorrect: 4, total: 5, attemptsToday: 0 } });
+  const kept = listItem({ id: 'b1', slug: 'dara-tuye', title: 'Dara Tûyê', level: 3, cefr: 'B1', category: 'nature', readingMinutes: 6, cover: 'gola-sin', me: { bookmarked: true, paragraph: 0, share: 0, finishedAt: '2026-10-01T00:00:00Z', bestCorrect: 4, total: 5, attemptsToday: 0 } });
   return {
     featured: [fable],
     recent: [kept, fable, started],

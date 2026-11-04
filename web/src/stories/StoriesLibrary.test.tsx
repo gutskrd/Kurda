@@ -46,7 +46,9 @@ describe('the library', () => {
     expect(within(card).getByText('Fables')).toBeInTheDocument();
     expect(within(card).getByText('~4 min')).toBeInTheDocument();
     expect(within(card).getByText('Read aloud')).toBeInTheDocument();
+    // a story without a chosen cover wears its category's kilim band; one with a cover, its picture
     expect(card.querySelector('.story-cover svg')).not.toBeNull();
+    expect(cardOf('Dara Tûyê', shelf('Bookmarks')).querySelector('.story-cover img')).toHaveAttribute('src', '/cosmetics/backgrounds/made-06-gola-sin.webp');
 
     // a story part-read says how long is left, and shows it as a hairline
     const started = cardOf('Bazar', shelf('Continue reading'));

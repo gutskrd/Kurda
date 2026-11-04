@@ -1,19 +1,19 @@
-import { useMemo } from 'react';
-import { CHARACTER_IDS, stageBackdrop, type CharacterId } from '@kurda/shared';
+import { useMemo, useState } from 'react';
+import { storyCoverPath } from '@kurda/shared';
 
 /**
- * A story's cover (design notes §7): the shared background its editor chose,
- * or, for a story without one, a kilim band keyed by its category — so the
- * grid never shows an empty card, and stories filed together look like a
- * shelf of the same weave.
+ * A story's cover (design notes §7): the picture its editor chose from the
+ * shared list of covers (shared `STORY_COVERS` — the shop's painted scenes and
+ * woven kilims, the same list the admin offers), or, for a story without one,
+ * a quiet kilim band keyed by its category — so the grid never shows an empty
+ * card, and stories filed together look like a shelf of the same weave.
  *
- * The backgrounds the apps can draw are the characters' stage light (shared
- * `stageBackdrop`: the deer's purple, Hamo's evening gold, Xezo's rose), so a
- * cover key is one of their ids; anything else falls back to the band. The
- * band follows the house rules for cloth: flat colour planes, the kilim's
- * diamond with a dark eye at its heart, a saw-tooth edge along each selvedge,
- * no gradients and no shading. Decorative throughout — the title beside it
- * is what names the story.
+ * A key the list does not know (none chosen, or a picture taken out since)
+ * gets the band, and so does a picture that will not load, rather than a
+ * broken image. The band follows the house rules for cloth: flat colour
+ * planes, the kilim's diamond with a dark eye at its heart, a saw-tooth edge
+ * along each selvedge, no gradients and no shading. Decorative throughout —
+ * the title beside it is what names the story.
  */
 
 /** The drawing's own box; it is stretched to the card's shape, so only the proportion matters. */
@@ -92,33 +92,34 @@ export function kilimBand(category: string | null): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${out.join('')}</svg>`;
 }
 
-/** Whether a cover key names a character whose stage light the apps can draw. */
-export function isCharacterCover(cover: string | null | undefined): cover is CharacterId {
-  return (CHARACTER_IDS as readonly unknown[]).includes(cover);
-}
-
 /**
  * The picture at the head of a card or a story page. Fills whatever box it
  * is given (`.story-cover`), so the card and the page's wide band share one
- * drawing. A character's light is drawn once for a light page and once for a
- * dark one, as the stage draws it; the band is the same on both.
+ * drawing. A card's picture waits until it is near the screen; the story
+ * page's own (`eager`) is the first thing on it, so it is asked for at once.
  */
-export function StoryCover({ cover, category, className }: { cover: string | null; category: string | null; className?: string }): React.JSX.Element {
-  const markup = useMemo(() => {
-    if (isCharacterCover(cover)) {
-      return {
-        light: { __html: stageBackdrop(cover, BOX.w, BOX.h, 0.5, { idPrefix: `cover-${cover}-light` }) },
-        dark: { __html: stageBackdrop(cover, BOX.w, BOX.h, 0.5, { dark: true, idPrefix: `cover-${cover}-dark` }) },
-      };
-    }
-    return { band: { __html: kilimBand(category) } };
-  }, [cover, category]);
+export function StoryCover({
+  cover,
+  category,
+  className,
+  eager = false,
+}: {
+  cover: string | null;
+  category: string | null;
+  className?: string;
+  eager?: boolean;
+}): React.JSX.Element {
+  const src = storyCoverPath(cover);
+  // the picture that would not load, so the band takes its place until the key changes
+  const [failed, setFailed] = useState<string | null>(null);
+  const band = useMemo(() => ({ __html: kilimBand(category) }), [category]);
   const cls = `story-cover${className ? ` ${className}` : ''}`;
-  if ('band' in markup) return <span className={cls} aria-hidden="true" dangerouslySetInnerHTML={markup.band} />;
-  return (
-    <span className={`${cls} is-light-dark`} aria-hidden="true">
-      <span className="story-cover-light" dangerouslySetInnerHTML={markup.light} />
-      <span className="story-cover-dark" dangerouslySetInnerHTML={markup.dark} />
-    </span>
-  );
+  if (src && failed !== src) {
+    return (
+      <span className={`${cls} has-picture`} aria-hidden="true">
+        <img src={src} alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" draggable={false} onError={() => setFailed(src)} />
+      </span>
+    );
+  }
+  return <span className={cls} aria-hidden="true" dangerouslySetInnerHTML={band} />;
 }
