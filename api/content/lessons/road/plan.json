@@ -210,7 +210,7 @@
                 {"ku": "mirîşk", "en": "hen, chicken", "pos": "noun", "gender": "f", "forms": ["mirîşk", "mirîşkên", "mirîşkan", "mirîşkek", "mirîşka", "mirîşkê", "mirîşkeke"]},
                 {"ku": "kûçik", "en": "dog", "pos": "noun", "gender": "m", "forms": ["kûçik", "kûçikên", "kûçikan", "kûçikek", "kûçikê", "kûçikekî", "kûçikî"]},
                 {"ku": "pisîk", "en": "cat", "pos": "noun", "gender": "f", "forms": ["pisîk", "pisîkên", "pisîkan", "pisîkek", "pisîka", "pisîkê", "pisîkeke"]},
-                {"ku": "ker", "en": "donkey", "pos": "noun", "gender": "m", "forms": ["ker", "kerên", "keran", "kerek", "kerê", "kerekî", "kerî"]},
+                {"ku": "ker", "en": "donkey", "pos": "noun", "gender": "m", "forms": ["ker", "kerên", "keran", "kerek", "kerê", "kerekî", "kerî", "kera"]},
                 {"ku": "kur", "en": "boy; son", "pos": "noun", "gender": "m", "forms": ["kur", "kurên", "kuran", "kurek", "kurê", "kurekî", "kurî"]}
               ]
             }
@@ -996,7 +996,7 @@
                 {"ku": "lîste", "en": "list", "pos": "noun", "gender": "f", "forms": ["lîste", "lîsteyên", "lîsteyan", "lîsteyek", "lîsteya", "lîsteyê", "lîsteyeke"]},
                 {"ku": "roj", "en": "day; sun", "pos": "noun", "gender": "f", "forms": ["roj", "rojên", "rojan", "rojek", "roja", "rojê", "rojeke"]},
                 {"ku": "sibeh", "en": "morning", "pos": "noun", "gender": "f", "forms": ["sibeh", "sibehên", "sibehan", "sibehek", "sibeha", "sibehê", "sibeheke"]},
-                {"ku": "hefte", "en": "week", "pos": "noun", "gender": "f", "forms": ["hefte", "hefteyên", "hefteyan", "hefteyek", "hefteya", "hefteyê", "hefteyeke"]},
+                {"ku": "hefte", "en": "week", "pos": "noun", "gender": "f", "forms": ["hefte", "hefteyên", "hefteyan", "hefteyek", "hefteya", "hefteyê", "hefteyeke", "hefteyekê"]},
                 {"ku": "dawî", "en": "end; last", "pos": "noun", "gender": "f", "forms": ["dawî", "dawiyên", "dawiyan", "dawiyek", "dawiya", "dawiyê", "dawiyeke"]}
               ]
             }
