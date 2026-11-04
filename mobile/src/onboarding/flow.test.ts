@@ -8,6 +8,7 @@ import {
   onboardingReducer,
   persistedFromState,
   shouldShowOnboarding,
+  slideDirection,
   type OnboardingAction,
   type OnboardingState,
 } from './flow';
@@ -47,6 +48,19 @@ describe('navigation', () => {
   it('goes back and clamps at the first slide', () => {
     expect(currentStep(run({ type: 'next' }, { type: 'back' }))).toBe('language');
     expect(currentStep(run({ type: 'back' }))).toBe('language');
+  });
+
+  /*
+   * The slides turn the way the reader is going: on to a later slide the old
+   * one leaves to the start side, back to an earlier one it leaves to the
+   * end side. A step that goes nowhere (next on the last slide) turns on.
+   */
+  it('knows which way it is turning', () => {
+    expect(slideDirection(0, 1)).toBe('forward');
+    expect(slideDirection(1, 2)).toBe('forward');
+    expect(slideDirection(2, 1)).toBe('back');
+    expect(slideDirection(1, 0)).toBe('back');
+    expect(slideDirection(2, 2)).toBe('forward');
   });
 });
 

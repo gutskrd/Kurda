@@ -12,7 +12,8 @@ import { useDirection } from '../reports/direction';
 import { unreadBadge } from '../notifications/inbox';
 import { useUnread } from '../messages/unread';
 import { haptic } from '../feedback/haptics';
-import { springTo } from '../theme/animate';
+import { springTo, timing } from '../theme/animate';
+import { POP_SCALE, duration } from '../theme/motion';
 import { TAB_BAR_HEIGHT } from './tabBarLayout';
 import { TABS, type TabName } from './tabs';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -24,6 +25,8 @@ const GLYPH = 26;
 const AVATAR = 24;
 /** How far a tab sinks while it is held: enough to feel, not enough to look like it moved. */
 const PRESSED_SCALE = 0.86;
+/** The soft capsule behind the tab you are on: room round the glyph, and no taller than the bar's middle. */
+const PILL = { width: 56, height: 32 } as const;
 
 /**
  * The tab bar: five places, docked along the bottom edge, each one an icon.
@@ -37,9 +40,12 @@ const PRESSED_SCALE = 0.86;
  * held, as the system bar does for somebody using large text, so nobody has
  * to guess what a glyph means.
  *
- * A tab sinks a little under the finger and springs back, and moving to
- * another tab gives the light tick of a selection. Somebody who has asked
- * for less motion gets neither the sink nor the spring.
+ * A tab sinks a little under the finger and springs back, and the one chosen
+ * pops a little as it is chosen, with a soft tinted capsule sliding along
+ * the bar to sit behind it — so the change of tab is seen moving, not only
+ * found. Moving to another tab gives the light tick of a selection. Somebody
+ * who has asked for less motion gets neither the sink, the pop nor the
+ * slide: the capsule is simply behind the tab they are on.
  *
  * Two things badge, and nothing else does: Messages, with how many unread
  * messages and friend requests are waiting (1–9, then "9+"), and Profile, with
@@ -79,6 +85,32 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
     refresh({ soon: true });
   }, [state.index, refresh]);
 
+  /*
+   * The capsule behind the tab you are on: one shape, moved along the bar
+   * on a transform. The bar's width is measured once it is laid out; until
+   * then there is nothing to place it by and it is not drawn. It arrives
+   * where it belongs with no slide the first time, and slides there on the
+   * standard spring after that — straight there under Reduce Motion.
+   */
+  const [barWidth, setBarWidth] = useState(0);
+  const slot = barWidth > 0 ? barWidth / state.routes.length : 0;
+  // counted from the left whichever way the tabs run
+  const place = mirrored ? state.routes.length - 1 - state.index : state.index;
+  const pillX = useRef(new Animated.Value(0)).current;
+  const pillPlaced = useRef(false);
+  useEffect(() => {
+    if (slot <= 0) return;
+    const to = place * slot + (slot - PILL.width) / 2;
+    if (reduceMotion || !pillPlaced.current) {
+      pillPlaced.current = true;
+      pillX.setValue(to);
+      return;
+    }
+    const slide = springTo(pillX, to);
+    slide.start();
+    return () => slide.stop();
+  }, [place, slot, reduceMotion, pillX]);
+
   const ink = colors.textPrimary;
 
   return (
@@ -91,7 +123,15 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
       <View
         style={[styles.row, { flexDirection: dir.row }]}
         accessibilityRole="tablist"
+        onLayout={(e) => setBarWidth(e.nativeEvent.layout.width)}
       >
+        {slot > 0 ? (
+          <Animated.View
+            pointerEvents="none"
+            testID="tab-pill"
+            style={[styles.pill, { backgroundColor: colors.controlTrack, transform: [{ translateX: pillX }] }]}
+          />
+        ) : null}
         {state.routes.map((route, i) => {
           const tab = TABS.find((x) => x.name === route.name);
           const name = (tab?.name ?? route.name) as TabName;
@@ -173,7 +213,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   );
 }
 
-/** One tab: the whole fifth of the bar is the target, and it sinks while held. */
+/** One tab: the whole fifth of the bar is the target; it sinks while held, and pops a little as it becomes the tab you are on. */
 function TabButton({
   name,
   spoken,
@@ -202,6 +242,15 @@ function TabButton({
     if (reduceMotion) return;
     springTo(scale, toValue, toValue === 1 ? 'release' : 'standard').start();
   };
+  // chosen: up past its size and back on the bouncy spring, taking over from the finger's release
+  const was = useRef(focused);
+  useEffect(() => {
+    if (focused && !was.current && !reduceMotion) {
+      scale.stopAnimation();
+      Animated.sequence([timing(scale, POP_SCALE, duration.quick), springTo(scale, 1, 'bouncy')]).start();
+    }
+    was.current = focused;
+  }, [focused, reduceMotion, scale]);
   return (
     <Pressable
       onPress={onPress}
@@ -251,6 +300,8 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   row: { height: TAB_BAR_HEIGHT, alignItems: 'stretch' },
+  // behind the tabs, free to travel along the bar; centred on the bar's height
+  pill: { position: 'absolute', left: 0, top: (TAB_BAR_HEIGHT - PILL.height) / 2, width: PILL.width, height: PILL.height, borderRadius: radii.pill },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
   glyph: { width: GLYPH + 6, height: GLYPH + 6, alignItems: 'center', justifyContent: 'center' },
   // the ring sits round the picture with a hairline of air between them

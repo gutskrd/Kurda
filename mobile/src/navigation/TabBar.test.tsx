@@ -11,6 +11,8 @@ import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { onHaptic, resetHaptics } from '../feedback/haptics';
+import type { HapticEvent } from '../feedback/hapticPacing';
 import { UnreadProvider } from '../messages/unread';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { TabBar } from './TabBar';
@@ -131,5 +133,24 @@ describe('the tab bar', () => {
     fireEvent.click(await screen.findByRole('tab', { name: 'Learn' }));
     expect(emitted).toContainEqual(expect.objectContaining({ type: 'tabPress', target: 'Learn-key' }));
     expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
+  /*
+   * Moving to another tab is a choice changing, and is felt as one; tapping
+   * the tab you are on changes nothing and is felt as nothing.
+   */
+  it('ticks as you move to another tab, and is quiet when you tap the one you are on', async () => {
+    resetHaptics();
+    const felt: HapticEvent[] = [];
+    const stop = onHaptic((e) => felt.push(e));
+    try {
+      open({ index: 0 });
+      fireEvent.click(await screen.findByRole('tab', { name: 'Home' }));
+      expect(felt).toEqual([]);
+      fireEvent.click(screen.getByRole('tab', { name: 'Learn' }));
+      expect(felt).toEqual(['select']);
+    } finally {
+      stop();
+    }
   });
 });
