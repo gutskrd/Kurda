@@ -34,7 +34,6 @@ const C = {
   hair: '#1c1410',
   skin: '#b66d55',
   shade: '#a15d46',
-  ear: '#ac6551',
   earShade: '#93533d',
   brow: '#241710',
   white: '#ecc6b5',
@@ -280,17 +279,22 @@ const SHOE_RIGHT: Knot[] = [
  * His neck: the same tone as his face, running on down under the collar.
  * The head covers all of it but the band in the collar's opening; it is
  * here so that band, and whatever a turn of the head uncovers, is skin.
- * Above the lapels it keeps a few units inside the jaw on both sides: the
- * head turns and the body does not, and a neck drawn out to the jaw line
- * stood proud of the cheek as a step whenever the head was tilted. From the
- * lapels down it follows them, so the opening between a lapel and the jaw
- * that a turn reveals is neck and not the page.
+ * Above the lapels it keeps well inside the jaw on both sides: the head
+ * turns and the body does not, and a neck drawn out to the jaw line stood
+ * proud of the cheek as a step whenever the head was tilted. The acts tilt
+ * the head up to eight degrees one way and four the other, with a degree of
+ * sway on top, so each side is set from where the jaw's edge lands at the
+ * far end of that, a unit and a half inside it: on the right (which a dip
+ * toward the near side uncovers) that is three units in from the jaw at
+ * rest, on the left (uncovered by a tilt the other way, below the ear's
+ * lobe) two. From the lapels down it follows them, so the opening between a
+ * lapel and the jaw that a turn reveals is neck and not the page.
  */
 const NECK: Knot[] = [
-  [153.2, 118],
-  [152.2, 131],
-  [152, 140],
-  [152.4, 145.5, 0],
+  [152, 118],
+  [151, 131],
+  [149.5, 140],
+  [150.6, 145.5, 0],
   [145.8, 147.4, 0],
   [150, 152.4],
   [155, 158.4],
@@ -301,12 +305,12 @@ const NECK: Knot[] = [
   [202.4, 166.8],
   [201.4, 162.6],
   [203.8, 158.2],
-  [209.4, 154, 0],
-  [204.5, 152.6, 0],
-  [206.3, 148],
-  [209.4, 141],
-  [212.3, 128.4],
-  [213, 118],
+  [208.8, 154, 0],
+  [203.6, 152.6, 0],
+  [205.3, 148],
+  [207.5, 141],
+  [209.8, 128.4],
+  [209.5, 118],
 ];
 
 const strokes = (list: readonly (readonly Pt[])[]): string => list.map((s) => curve(s.map(([x, y]) => [x, y] as const), false)).join('');
@@ -347,12 +351,12 @@ const HAIR: Knot[] = [
   [147.2, 65.9], [149.1, 61.3], [152.5, 57.3], [160.8, 53.2], [167.8, 51.4],
 ];
 
-/** The ear on the side he is turned from, and the shade inside it. */
 /**
- * His near ear. Its inner edge runs a little way under the face, which is
- * drawn over it: an edge that only met the face's outline left a sliver of
- * nothing between the lobe and the jaw wherever the two curves disagreed
- * by half a unit, and a turn of the head opened it wide.
+ * His near ear, in the skin of his face (its shape is the shade inside it,
+ * not a tone of its own). Its inner edge runs a little way under the face,
+ * which is drawn over it: an edge that only met the face's outline left a
+ * sliver of nothing between the lobe and the jaw wherever the two curves
+ * disagreed by half a unit, and a turn of the head opened it wide.
  */
 const EAR: Knot[] = [
   [150.6, 132.6, 0.15], [148.4, 131.9], [147.7, 130.2], [144.5, 128.9], [141.0, 125.4], [137.5, 116.1],
@@ -502,7 +506,7 @@ function head(withBrows = true): string {
   return part(
     [],
     [
-      fill(curve(EAR), C.ear),
+      fill(curve(EAR), C.skin),
       fill(curve(EAR_SHADE) + curve(EAR_SHADE2), C.earShade),
       fill(curve(FACE), C.skin),
       fill(curve(JAW), C.shade, alpha(0.85)),
