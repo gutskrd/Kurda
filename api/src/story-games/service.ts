@@ -18,6 +18,7 @@ import {
   readingSoftCapSeconds,
   storyAudioSentences,
   storyParagraphs,
+  cefrOf,
   type GameAccess,
   type InviteSummary,
   type LobbyCard,
@@ -29,14 +30,17 @@ import {
   type StoryGameStatus,
   type StoryGameSummary,
   type StoryGameView,
+  type StoryGlossEntry,
+  type StoryLanguage,
   type StoryLength,
   type StoryLevel,
   type StoryProgress,
+  type StoryTradition,
   type TextDuring,
   type TimerSeconds,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { sentenceRecordings } from '../stories/service.js';
+import { audioCoverage, glossaryForReader, narrationOf, sentenceRecordings } from '../stories/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import { areFriendsSql } from '../users/age.js';
 import { XpService } from '../xp/service.js';
@@ -634,55 +638,80 @@ export class StoryGamesService {
       dialect: StoryDialect;
       level: StoryLevel;
       length: StoryLength;
+      language: StoryLanguage;
+      category: string | null;
+      tradition: StoryTradition;
+      author: string | null;
+      story_source: string | null;
+      source_url: string | null;
+      attribution_note: string | null;
+      translations: Record<string, string>;
+      cover: string | null;
+      featured: boolean;
+      reading_minutes: number | null;
+      published_at: Date | null;
     }>(
-      `SELECT g.story_id, g.story_snapshot, g.dialect, g.level, g.length
+      `SELECT g.story_id, g.story_snapshot, g.dialect, g.level, g.length,
+              s.language, s.category, s.tradition, s.author, s.story_source, s.source_url, s.attribution_note, s.translations,
+              s.cover, s.featured, s.reading_minutes, s.published_at
          FROM story_games g JOIN story_game_players p ON p.game_id = g.id AND p.user_id = $2 AND NOT p.removed
+         JOIN stories s ON s.id = g.story_id
         WHERE g.id = $1`,
       [gameId, userId],
     );
     const row = res.rows[0];
     if (!row) throw notFound();
-    let detail: Omit<StoryDetail, 'audio' | 'fullyNarrated'>;
+    // the text as the game copied it, or the live story before a copy is made (the lobby); how it is filed and
+    // attributed is read from the story itself either way, since those are not content and a game never freezes them
+    let text: { id: string; slug: string; title: string; summary: string | null; wordCount: number; paragraphs: string[]; glossary: StoryGlossEntry[] };
     if (row.story_snapshot) {
       const s = row.story_snapshot;
-      detail = {
-        id: row.story_id,
-        slug: s.slug,
-        title: s.title,
-        summary: s.summary ?? null,
-        dialect: row.dialect,
-        level: row.level,
-        length: row.length,
-        wordCount: s.wordCount,
-        readingMinutes: readingMinutes(row.dialect, s.wordCount),
-        paragraphs: s.paragraphs,
-        glossary: s.glossary,
-      };
+      text = { id: row.story_id, slug: s.slug, title: s.title, summary: s.summary ?? null, wordCount: s.wordCount, paragraphs: s.paragraphs, glossary: s.glossary };
     } else {
       const live = await this.stories.getPublishedForGame(row.story_id);
       if (!live) throw new AppError('STORY_UNAVAILABLE', 404, 'this story is being updated');
-      detail = {
-        id: live.id,
-        slug: live.slug,
-        title: live.title,
-        summary: live.summary ?? null,
-        dialect: live.dialect,
-        level: live.level,
-        length: live.length,
-        wordCount: live.wordCount,
-        readingMinutes: readingMinutes(live.dialect, live.wordCount),
-        paragraphs: storyParagraphs(live.body),
-        glossary: live.glossary,
-      };
+      text = { id: live.id, slug: live.slug, title: live.title, summary: live.summary ?? null, wordCount: live.wordCount, paragraphs: storyParagraphs(live.body), glossary: live.glossary };
     }
-    const keys = [...new Set(detail.paragraphs.flatMap((p) => storyAudioSentences(p)).map((s) => lessonAudioKey(s)))];
-    const { audio, voices } = await sentenceRecordings(this.pool, keys);
+    const keys = [...new Set(text.paragraphs.flatMap((p) => storyAudioSentences(p)).map((s) => lessonAudioKey(s)))];
+    const [{ audio, durations, voices }, glossary] = await Promise.all([
+      sentenceRecordings(this.pool, keys),
+      glossaryForReader(this.pool, row.dialect, text.glossary),
+    ]);
+    // a translation written for a text that has since changed shape would sit beside the wrong paragraphs: left out
+    const translations: Record<string, string[]> = {};
+    for (const [locale, t] of Object.entries(row.translations ?? {})) {
+      if (typeof t !== 'string') continue;
+      const paragraphs = storyParagraphs(t);
+      if (paragraphs.length === text.paragraphs.length) translations[locale] = paragraphs;
+    }
+    const recorded = keys.filter((k) => audio[k] !== undefined).length;
+    const coverage = audioCoverage(recorded, keys.length);
     return {
       story: {
-        ...detail,
+        ...text,
+        glossary,
+        dialect: row.dialect,
+        language: row.language,
+        level: row.level,
+        cefr: cefrOf(row.level),
+        length: row.length,
+        readingMinutes: row.reading_minutes ?? readingMinutes(row.dialect, text.wordCount),
+        fullyNarrated: coverage === 'full',
+        audioCoverage: coverage,
+        category: row.category,
+        tradition: row.tradition,
+        author: row.author,
+        featured: row.featured,
+        cover: row.cover,
+        publishedAt: row.published_at?.toISOString() ?? null,
         audio,
         ...(Object.keys(voices).length > 0 ? { voices } : {}),
-        fullyNarrated: keys.length > 0 && keys.every((k) => audio[k] !== undefined),
+        translations,
+        source: row.story_source,
+        sourceUrl: row.source_url,
+        attributionNote: row.attribution_note,
+        versions: [],
+        narration: narrationOf(text.paragraphs, audio, durations),
       },
       frozen: row.story_snapshot !== null,
     };

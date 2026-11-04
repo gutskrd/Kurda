@@ -61,7 +61,13 @@ import { getStory, runStoryAction, storyFailure, type StoryFailure } from '../st
 import { Badge, Banner, Icon, Loading, PageHeader, Time, useDialogs, type ConfirmOptions } from '../ui';
 import { STATUS_TONE, storyRecordHref } from './StoryList';
 
-const LEVEL_NAME: Record<number, string> = { 1: '1 · first steps (A1)', 2: '2 · elementary (A2)', 3: '3 · intermediate (B1)' };
+const LEVEL_NAME: Record<number, string> = {
+  1: '1 · first steps (A1)',
+  2: '2 · elementary (A2)',
+  3: '3 · intermediate (B1)',
+  4: '4 · upper intermediate (B2)',
+  5: '5 · advanced (C1)',
+};
 
 const DONE: Record<Exclude<StoryAction, 'delete'>, string> = {
   save: 'Saved.',

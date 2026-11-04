@@ -3,7 +3,7 @@
  * stage), so a suite can create, publish and read them through the real
  * routes and break one thing at a time.
  */
-import { MIN_QUESTION_BANK, type StoryDialect, type StoryLength } from '@kurda/shared';
+import { MIN_QUESTION_BANK, type StoryDialect, type StoryLength, type StoryLibraryInput } from '@kurda/shared';
 
 /** Three paragraphs, 82 words: a short Kurmancî story. */
 export const KURMANCI_PARAGRAPHS = [
@@ -30,7 +30,7 @@ export interface TestQuestion {
   evidenceSentence: number | null;
 }
 
-export interface TestStory {
+export interface TestStory extends StoryLibraryInput {
   slug: string;
   dialect: StoryDialect;
   level: number;
@@ -61,7 +61,7 @@ export function testBank(n: number, tag = ''): TestQuestion[] {
   });
 }
 
-/** A story that can be published as it is. */
+/** A story that can be published as it is: filed under a seeded category, written for learners. */
 export function testStory(
   slug: string,
   over: Partial<TestStory> & { length?: StoryLength } = {},
@@ -79,6 +79,16 @@ export function testStory(
     body,
     glossary: dialect === 'sorani' ? [] : [{ term: 'cotkar', meanings: { en: 'farmer' } }],
     questions: testBank(MIN_QUESTION_BANK[length]),
+    language: 'ku',
+    category: 'folktale',
+    tradition: 'original',
+    author: null,
+    source: null,
+    sourceUrl: null,
+    attributionNote: null,
+    translations: {},
+    cover: null,
+    readingMinutes: null,
     ...rest,
   };
 }

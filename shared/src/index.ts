@@ -92,7 +92,7 @@ export {
 /** A right answer's praise, in the course's own Kurdish: content, kept beside the player rather than in the translations. */
 export { PRAISE, praiseFor, praiseWords } from './praise.js';
 /** What a lesson pays, for the server's XP rules and the "+10–20 XP" a stop's card shows. */
-export { ACCURACY_BONUS_XP, BASE_LESSON_XP, REPEAT_XP_FACTOR, lessonXpRange } from './xp.js';
+export { ACCURACY_BONUS_XP, BASE_LESSON_XP, PAID_STORY_REPEATS_PER_DAY, REPEAT_XP_FACTOR, lessonXpRange } from './xp.js';
 /** How often a buzz may be felt, on the phone and on a touch screen alike. */
 export { HAPTIC_EVENTS, PACING, createPacer, type HapticEvent, type Pacer, type PacingRules } from './haptics.js';
 /** Apple's springs, the rubber band past an edge, and where a flick comes to rest: what the phone's sheets and menus move by. */

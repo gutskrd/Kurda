@@ -7,7 +7,8 @@ import { countStoryWords, type QuestionKind, type StoryDialect, type StoryLength
  * routes belong to another part of the API.
  *
  * The text is a short made-up story in plain Kurmancî; its paragraphs are what
- * the questions' evidence points at. Every question has three options, the
+ * the questions' evidence points at. A published fixture is approved too, as
+ * the table requires of anything published. Every question has three options, the
  * right one at a known authored position, so a suite can answer right or
  * wrong on purpose after the game's shuffle (read the plan, or the reveal).
  */
@@ -41,8 +42,9 @@ export async function insertStory(pool: Pick<pg.Pool, 'query'>, opts: StoryFixtu
   const body = PARAGRAPHS.join('\n\n');
   const title = opts.title ?? `Bazar ${opts.slug}`;
   const story = await pool.query<{ id: string }>(
-    `INSERT INTO stories (slug, dialect, level, title, summary, body, word_count, length, glossary, status, source)
-     VALUES ($1, $2, $3, $4, 'Rojek li bazarê.', $5, $6, $7, $8, $9, 'admin') RETURNING id`,
+    `INSERT INTO stories (slug, dialect, level, title, summary, body, word_count, length, glossary, status, source, category, review_status)
+     VALUES ($1, $2, $3, $4, 'Rojek li bazarê.', $5, $6, $7, $8, $9, 'admin', 'everyday',
+             CASE WHEN $9 = 'published' THEN 'approved' ELSE 'unreviewed' END) RETURNING id`,
     [
       opts.slug,
       opts.dialect ?? 'kurmanci',

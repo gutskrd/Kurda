@@ -39,6 +39,15 @@ function story(over: Partial<StoryInput> = {}): StoryInput {
     title: 'Kulîlkên Sor',
     summary: 'Rojîn bi dibistanê re diçe çiyê.',
     body: BODY,
+    category: 'folktale',
+    tradition: 'original',
+    author: null,
+    source: null,
+    sourceUrl: null,
+    attributionNote: null,
+    translations: {},
+    cover: null,
+    readingMinutes: null,
     glossary: [
       { term: 'cotkar', meanings: { en: 'farmer' } },
       { term: 'kulîlkên sor', meanings: { en: 'red flowers', de: 'rote Blumen' } },
@@ -109,7 +118,8 @@ describe('validateStory', () => {
     expect(codes(validateStory(story({ summary: 'x'.repeat(301) })).errors)).toEqual(['SUMMARY_TOO_LONG']);
     expect(codes(validateStory(story({ summary: null })).errors)).toEqual([]);
     expect(codes(validateStory(story({ body: `${BODY} ${'a'.repeat(6000)}` })).errors)).toContain('BODY_TOO_LONG');
-    expect(codes(validateStory(story({ level: 4 })).errors)).toEqual(['LEVEL']);
+    expect(codes(validateStory(story({ level: 6 })).errors)).toEqual(['LEVEL']);
+    expect(codes(validateStory(story({ level: 5 })).errors)).toEqual([]);
     expect(codes(validateStory(story({ dialect: 'zazaki' as never })).errors)).toEqual(['DIALECT']);
   });
 
@@ -254,6 +264,75 @@ describe('validateStory', () => {
       const many = Array.from({ length: 31 }, (_, i) => question({ correctIndex: i % 3 }));
       expect(codes(validateStory(story({ questions: many })).errors)).toEqual(['BANK_TOO_LARGE']);
     });
+  });
+});
+
+describe('the library fields', () => {
+  it('needs a category to publish, and lets a draft wait for one', () => {
+    const unfiled = story({ category: null });
+    expect(codes(validateStory(unfiled, 'draft').errors)).toEqual([]);
+    expect(codes(validateStory(unfiled, 'draft').warnings)).toContain('CATEGORY_MISSING');
+    expect(codes(validateStory(unfiled, 'publish').errors)).toEqual(['CATEGORY_MISSING']);
+    // a category is named by its slug, at any stage
+    expect(codes(validateStory(story({ category: 'Animal fables' }), 'draft').errors)).toEqual(['CATEGORY']);
+  });
+
+  it('knows the languages and traditions, and lets the language be left out', () => {
+    expect(validateStory(story({ language: undefined })).errors).toEqual([]);
+    expect(validateStory(story({ language: 'ku' })).errors).toEqual([]);
+    expect(codes(validateStory(story({ language: 'tr' })).errors)).toEqual(['LANGUAGE']);
+    for (const tradition of ['traditional', 'adapted', 'original']) {
+      expect(codes(validateStory(story({ tradition, source: 'Gundê Rojînê' })).errors)).toEqual([]);
+    }
+    expect(codes(validateStory(story({ tradition: 'folklore' })).errors)).toEqual(['TRADITION']);
+  });
+
+  it('asks a traditional or adapted story for its source, without insisting', () => {
+    expect(codes(validateStory(story({ tradition: 'adapted' })).warnings)).toEqual(['SOURCE_MISSING']);
+    expect(codes(validateStory(story({ tradition: 'adapted' })).errors)).toEqual([]);
+    expect(codes(validateStory(story({ tradition: 'traditional', source: '  ' })).warnings)).toEqual(['SOURCE_MISSING']);
+    expect(codes(validateStory(story({ tradition: 'traditional', source: 'Oral tradition, Botan' })).warnings)).toEqual([]);
+    expect(codes(validateStory(story({ tradition: 'original' })).warnings)).toEqual([]);
+  });
+
+  it('keeps the attribution within its limits and the source address on https', () => {
+    expect(codes(validateStory(story({ author: 'x'.repeat(121) })).errors)).toEqual(['AUTHOR_TOO_LONG']);
+    expect(codes(validateStory(story({ source: 'x'.repeat(301) })).errors)).toEqual(['SOURCE_TOO_LONG']);
+    expect(codes(validateStory(story({ attributionNote: 'x'.repeat(601) })).errors)).toEqual(['ATTRIBUTION_NOTE_TOO_LONG']);
+    expect(codes(validateStory(story({ cover: 'x'.repeat(81) })).errors)).toEqual(['COVER_TOO_LONG']);
+    expect(codes(validateStory(story({ sourceUrl: `https://example.org/${'x'.repeat(500)}` })).errors)).toEqual(['SOURCE_URL_TOO_LONG']);
+    expect(codes(validateStory(story({ sourceUrl: 'http://example.org/tale' })).errors)).toEqual(['SOURCE_URL']);
+    expect(codes(validateStory(story({ sourceUrl: 'example.org/tale' })).errors)).toEqual(['SOURCE_URL']);
+    expect(codes(validateStory(story({ sourceUrl: 'https://' })).errors)).toEqual(['SOURCE_URL']);
+    expect(codes(validateStory(story({ sourceUrl: 'https://example.org/tale' })).errors)).toEqual([]);
+    expect(codes(validateStory(story({ author: 'Çîroka gelêrî', source: 'Botan', attributionNote: 'Legend, not history.' })).errors)).toEqual([]);
+  });
+
+  it('takes a reading time as whole minutes, one to a hundred and twenty', () => {
+    expect(codes(validateStory(story({ readingMinutes: 1 })).errors)).toEqual([]);
+    expect(codes(validateStory(story({ readingMinutes: 120 })).errors)).toEqual([]);
+    expect(codes(validateStory(story({ readingMinutes: null })).errors)).toEqual([]);
+    for (const bad of [0, 121, 2.5, -1]) expect(codes(validateStory(story({ readingMinutes: bad })).errors)).toEqual(['READING_MINUTES']);
+  });
+
+  it('wants a translation in an interface language with exactly the text’s paragraphs', () => {
+    const en = ['Rojîn is ten years old.', 'One day the teacher says they will go to the mountain.', 'On the mountain they see red flowers.'];
+    expect(validateStory(story({ translations: { en: en.join('\n\n'), de: en.join('\n\n') } })).errors).toEqual([]);
+    const short = validateStory(story({ translations: { en: en.slice(0, 2).join('\n\n') } }));
+    expect(short.errors).toEqual([
+      {
+        code: 'TRANSLATION_PARAGRAPHS',
+        path: 'translations.en',
+        message: 'the translation has 2 paragraphs and the text 3: they are shown side by side, so separate them the same way',
+      },
+    ]);
+    // one paragraph too many, and a translation written as one block
+    expect(codes(validateStory(story({ translations: { en: [...en, 'And then.'].join('\n\n') } })).errors)).toEqual(['TRANSLATION_PARAGRAPHS']);
+    expect(codes(validateStory(story({ translations: { en: en.join(' ') } })).errors)).toEqual(['TRANSLATION_PARAGRAPHS']);
+    expect(codes(validateStory(story({ translations: { klingon: en.join('\n\n') } })).errors)).toEqual(['TRANSLATION_LOCALE']);
+    expect(codes(validateStory(story({ translations: { en: 'x'.repeat(9001) } })).errors)).toContain('TRANSLATION_TOO_LONG');
+    // the same rule in a draft: a misaligned translation is wrong at any stage
+    expect(codes(validateStory(story({ translations: { en: en[0]! } }), 'draft').errors)).toEqual(['TRANSLATION_PARAGRAPHS']);
   });
 });
 

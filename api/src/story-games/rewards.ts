@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { PAID_STORY_REPEATS_PER_DAY } from '@kurda/shared';
 import { lessonCompletionXp, type XpService } from '../xp/service.js';
 import type { StreakService } from '../streaks/service.js';
 import type { DailyGoalService } from '../goals/service.js';
@@ -34,10 +35,14 @@ interface Log {
  * player gave on their own local today (a game left open overnight does not
  * buy tomorrow's streak) must be at least half the questions (`countsAsLearning`).
  * Then XP as for a lesson, a quarter of it for a story they had already
- * finished before (`story_completions`, kept beyond the games themselves), a
- * day learned and the streak (which also unlocks the daily reward), and the
- * daily goal. No Gems, no rating, and the place in the game never changes the
- * XP — two friends reading together are not racing for it.
+ * finished before (`story_completions`, kept beyond the games themselves),
+ * and none at all once the same story has paid them PAID_STORY_REPEATS_PER_DAY
+ * times on their local day — a lesson's third repeat pays nothing either, and
+ * a story read once an hour would otherwise be the easiest XP in the app.
+ * The day learned, the streak (which also unlocks the daily reward) and the
+ * daily goal are still recorded then: reading again is learning, it just stops
+ * being a way to climb. No Gems, no rating, and the place in the game never
+ * changes the XP — two friends reading together are not racing for it.
  *
  * Players are paid in user-id order, each in a savepoint: two games finishing
  * at once with the same people take the users' rows in the same order (no
@@ -99,15 +104,25 @@ async function payOne(
     game.storyId,
   ]);
   const isRepeat = (before.rowCount ?? 0) > 0;
+  // their earlier paid finishes of this story today (this game is not among them: it is paid below)
+  const paidToday = await client.query<{ n: number }>(
+    `SELECT count(*)::int n FROM story_game_players p JOIN story_games g ON g.id = p.game_id
+      WHERE p.user_id = $1 AND g.story_id = $2 AND g.id <> $3 AND p.xp_awarded > 0
+        AND g.finished_at IS NOT NULL AND (g.finished_at AT TIME ZONE $4)::date = $5::date`,
+    [userId, game.storyId, game.id, tz, localDate(now, tz)],
+  );
+  const capped = paidToday.rows[0]!.n >= PAID_STORY_REPEATS_PER_DAY;
   const player = await client.query<{ correct: number }>(
     `SELECT correct FROM story_game_players WHERE game_id = $1 AND user_id = $2`,
     [game.id, userId],
   );
   const accuracy = (player.rows[0]?.correct ?? 0) / game.questionCount;
-  const xp = await deps.xp.award(
-    { userId, source: STORY_XP_SOURCE, amount: lessonCompletionXp(accuracy, isRepeat), refId: `${game.id}:${userId}` },
-    client,
-  );
+  const xp = capped
+    ? 0
+    : await deps.xp.award(
+        { userId, source: STORY_XP_SOURCE, amount: lessonCompletionXp(accuracy, isRepeat), refId: `${game.id}:${userId}` },
+        client,
+      );
   const streak = await deps.streaks.recordActivity(userId, tz, now, client);
   await deps.goals.evaluate(client, userId, tz, now);
   await client.query(

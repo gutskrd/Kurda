@@ -236,6 +236,8 @@ describe('renderView', () => {
     ]);
     expect(final.results!.me).toMatchObject({ place: 3, score: 100, xp: 15, learningCounted: true, total: 3 });
     expect(final.results!.review).toHaveLength(3);
+    // the results lead back to the reader
+    expect(final.results!.storySlug).toBe('s');
     expect(render({ status: 'finished', finished_at: T, plan: null }).results!.review).toEqual([]);
     expect(render({ status: 'cancelled' }).results).toBeNull();
     expect(render({ status: 'reveal' }).results).toBeNull();

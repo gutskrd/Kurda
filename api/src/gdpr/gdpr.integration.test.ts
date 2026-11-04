@@ -242,6 +242,9 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
       for (const id of [finished, lobby]) {
         await pool.query(`INSERT INTO story_game_players (game_id, user_id, seat, score) VALUES ($1, $2, 1, 200)`, [id, user.id]);
       }
+      // their shelf and their place in the story go too
+      await pool.query(`INSERT INTO story_bookmarks (user_id, story_id) VALUES ($1, $2)`, [user.id, story.id]);
+      await pool.query(`INSERT INTO story_reading (user_id, story_id, paragraph, share) VALUES ($1, $2, 2, 0.5)`, [user.id, story.id]);
       await pool.query(
         `UPDATE users SET deletion_requested_at = now() - interval '${DELETION_GRACE_DAYS + 1} days' WHERE id = $1`,
         [user.id],
@@ -252,6 +255,8 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
       expect((await pool.query(`SELECT host_id FROM story_games WHERE id = $1`, [finished])).rows).toEqual([{ host_id: null }]);
       const seat = await pool.query(`SELECT 1 FROM story_game_players WHERE game_id = $1 AND user_id = $2`, [finished, user.id]);
       expect(seat.rowCount).toBe(0);
+      expect((await pool.query(`SELECT 1 FROM story_bookmarks WHERE user_id = $1`, [user.id])).rowCount).toBe(0);
+      expect((await pool.query(`SELECT 1 FROM story_reading WHERE user_id = $1`, [user.id])).rowCount).toBe(0);
     } finally {
       await deleteStories(pool, [story.id]);
     }
