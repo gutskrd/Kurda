@@ -336,6 +336,15 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     },
   ];
 
+  /*
+   * A guest is in no league and has no profile to show or hide, no blocks,
+   * no reports and no standing: the league switch and the privacy section
+   * would each open on the server refusing them.
+   */
+  const offered = isGuest
+    ? sections.filter((s) => s.key !== 'privacy').map((s) => ({ ...s, entries: s.entries.filter((e) => e.key !== 'leagues') }))
+    : sections;
+
   // every word typed, found anywhere in a row's words; accents set aside, so "e" finds "ê"
   const words = foldForSearch(query).split(/\s+/).filter(Boolean);
   const finds = (e: Entry): boolean => {
@@ -343,8 +352,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     return words.every((w) => said.includes(w));
   };
   const shown = words.length
-    ? sections.map((s) => ({ ...s, entries: s.entries.filter(finds) })).filter((s) => s.entries.length > 0)
-    : sections;
+    ? offered.map((s) => ({ ...s, entries: s.entries.filter(finds) })).filter((s) => s.entries.length > 0)
+    : offered;
 
   return (
     <SettingsPage title={t('settings.title')} onExit={onExit}>

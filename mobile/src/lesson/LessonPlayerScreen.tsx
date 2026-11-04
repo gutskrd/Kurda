@@ -189,7 +189,7 @@ export function SessionPlayer({
   /** what a finished session shows in place of a lesson's results (a test to jump ahead says whether it passed) */
   renderResults?: (results: SessionResults) => React.ReactNode;
 } & LessonWaysOn) {
-  const { client } = useAuth();
+  const { client, isGuest } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
@@ -272,11 +272,11 @@ export function SessionPlayer({
 
   // learner's course-wide "skip speaking" preference (KUR-036), and where they stand
   useEffect(() => {
-    void readStanding(client).then(({ standing, skipSpeaking: skip }) => {
+    void readStanding(client, isGuest).then(({ standing, skipSpeaking: skip }) => {
       before.current = standing;
       setSkipSpeaking(skip);
     });
-  }, [client]);
+  }, [client, isGuest]);
 
   // auto-skip speaking exercises when the learner has opted out
   useEffect(() => {
@@ -350,7 +350,7 @@ export function SessionPlayer({
       if (renderResults) return;
       const streakNow: StreakMark = { current: res.data.streak.current, lastActiveOn: res.data.streak.lastActiveOn };
       const outcome = { kind, accuracy: res.data.accuracy, skipped: state.skipped.length };
-      void readStanding(client).then(({ standing }) => {
+      void readStanding(client, isGuest).then(({ standing }) => {
         setMoments(lessonMoments(before.current, standing, streakNow, outcome));
         setGoalDone(standing?.goalCompleted === true);
       });
@@ -824,18 +824,19 @@ interface LeagueReply {
 /**
  * `/me`, `/me/daily-goal` and `/me/league`, read together: where the learner
  * stands, for `lessonMoments`. The league counts only while the learner races
- * in one — never in their own week, never opted out.
+ * in one — never in their own week, never opted out. A guest is in no league
+ * and is refused the question, so for one it is not asked.
  */
-async function readStanding(client: ApiClient): Promise<{ standing: Standing | null; skipSpeaking: boolean }> {
+async function readStanding(client: ApiClient, guest = false): Promise<{ standing: Standing | null; skipSpeaking: boolean }> {
   const [me, goal, league] = await Promise.all([
     client.get<{ user: { skipSpeaking?: boolean; level?: { level?: number; progress?: number }; streak?: StreakMark } }>('/me'),
     client.get<DailyGoalReply>('/me/daily-goal'),
-    client.get<LeagueReply>('/me/league'),
+    guest ? Promise.resolve(null) : client.get<LeagueReply>('/me/league'),
   ]);
   if (!me.ok) return { standing: null, skipSpeaking: false };
   const user = me.data.user;
   const target = goal.ok ? goal.data.effectiveGoal || goal.data.goal : undefined;
-  const racing = league.ok && league.data.mode === 'league' && league.data.joined === true && !league.data.optedOut ? league.data : null;
+  const racing = league?.ok && league.data.mode === 'league' && league.data.joined === true && !league.data.optedOut ? league.data : null;
   return {
     skipSpeaking: !!user.skipSpeaking,
     standing: {

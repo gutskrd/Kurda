@@ -70,7 +70,7 @@ const MODE_LABEL: Record<Mode, TranslationKey> = {
  */
 export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
-  const { client } = useAuth();
+  const { client, isGuest } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
@@ -92,18 +92,23 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       void listStories(client).then((res) => {
         if (live && res.ok) setHasStories(res.data.stories.length > 0);
       });
-      void getMyRanks(client).then((res) => {
-        if (!live) return;
-        if (res.ok) setRanks(res.data);
+      // a guest holds no rank and is sent no invites, and the server refuses both questions
+      if (isGuest) {
         setRanksSettled(true);
-      });
-      void listInvites(client).then((res) => {
-        if (live && res.ok) setInvites(res.data.incoming);
-      });
+      } else {
+        void getMyRanks(client).then((res) => {
+          if (!live) return;
+          if (res.ok) setRanks(res.data);
+          setRanksSettled(true);
+        });
+        void listInvites(client).then((res) => {
+          if (live && res.ok) setInvites(res.data.incoming);
+        });
+      }
       return () => {
         live = false;
       };
-    }, [client]),
+    }, [client, isGuest]),
   );
 
   // an invite that arrives, or is answered somewhere else, while this is open
