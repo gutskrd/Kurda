@@ -82,8 +82,12 @@ export function NarrationBar({
       lineBox.current = { left, width };
     });
   };
-  const ink = colors.primary;
-  const onInk = colors.textOnPrimary;
+  // In the light the bar is the app's ink. In the dark that ink is white, and a white panel at
+  // the foot of a dark page pulls the eye off the text, so there it is the raised surface with
+  // its edge drawn, and the controls are drawn in the text's colour.
+  const dark = colors.scheme === 'dark';
+  const ink = dark ? colors.surfaceRaised : colors.primary;
+  const onInk = dark ? colors.textPrimary : colors.textOnPrimary;
 
   /** Pause or carry on; a story stopped part-way goes on from inside the sentence it stopped in. */
   const toggle = (): void => {
@@ -120,7 +124,7 @@ export function NarrationBar({
   const times = t('stories.player.elapsed', { elapsed: clockText(elapsed), total: clockText(total) });
 
   return (
-    <View style={[styles.bar, { backgroundColor: ink }]}>
+    <View style={[styles.bar, { backgroundColor: ink }, dark && { borderWidth: StyleSheet.hairlineWidth, borderColor: colors.glassBorder }]}>
       <Pressable
         ref={line}
         onPress={onLinePress}
