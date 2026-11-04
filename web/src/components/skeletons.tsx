@@ -547,37 +547,73 @@ export function ShopSkeleton({ count = 10, label }: { count?: number; label?: Me
   );
 }
 
+/** One story card's place: its cover, a title, a line of summary and the row of facts, in the card's own classes. */
+function StoryCardBox({ title }: { title: string }): React.JSX.Element {
+  return (
+    <div className="story-card">
+      <span className="story-card-link">
+        <Skeleton className="story-cover story-card-cover" radius="0" />
+        <span className="story-card-body">
+          <span className="story-card-title">
+            <Skeleton line w={title} />
+          </span>
+          <span className="story-card-summary">
+            <Skeleton line w="86%" />
+          </span>
+          <span className="story-card-meta">
+            <Skeleton line w={148} />
+          </span>
+        </span>
+      </span>
+    </div>
+  );
+}
+
 /**
- * The stories to read: cards in the list's own grid (one column on a phone,
- * two from a tablet up), each a title, a line of what it is about and its
- * level, length and minutes. Eight — four rows of two on a wide screen.
+ * The stories a search or a filter found: cards in the results' own grid
+ * (one column on a phone, two or three from a tablet up), each a cover, a
+ * title, a line of what it is about and its facts.
  */
-export function StoryListSkeleton({ count = 8, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
+export function StoryListSkeleton({ count = 6, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
   const t = useT();
   const titles = ['48%', '36%', '56%', '40%', '44%', '30%', '52%', '38%'];
   return (
     <SkeletonRegion label={t(label ?? 'common.loading')}>
-      <ul className="story-list">
+      <ul className="story-grid">
         {times(count, (i) => (
           <li key={i}>
-            <div className="story-card">
-              <span className="story-card-head">
-                <span className="story-card-title">
-                  <Skeleton line w={titles[i % titles.length]} />
-                </span>
-              </span>
-              <span className="story-card-summary">
-                <Skeleton line w="86%" />
-                {/* a narrow card (a phone, or two to a row on a tablet) wraps the line */}
-                <Skeleton line w="36%" className="story-skel-wrap" />
-              </span>
-              <span className="story-card-meta">
-                <Skeleton line w={168} />
-              </span>
-            </div>
+            <StoryCardBox title={titles[i % titles.length]!} />
           </li>
         ))}
       </ul>
+    </SkeletonRegion>
+  );
+}
+
+/**
+ * The library's shelves while they are on their way: two rows of cards under
+ * a heading's line each, in the shelves' own classes, so the page keeps its
+ * shape when the stories land.
+ */
+export function StoryLibrarySkeleton({ label }: { label?: MessageKey }): React.JSX.Element {
+  const t = useT();
+  const titles = ['48%', '36%', '56%', '40%'];
+  return (
+    <SkeletonRegion label={t(label ?? 'common.loading')}>
+      {times(2, (row) => (
+        <div className="story-shelf" key={row}>
+          <h2 className="story-section-title">
+            <Skeleton line w={row === 0 ? 112 : 136} />
+          </h2>
+          <ul className="story-shelf-row">
+            {times(4, (i) => (
+              <li key={i}>
+                <StoryCardBox title={titles[(i + row) % titles.length]!} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </SkeletonRegion>
   );
 }

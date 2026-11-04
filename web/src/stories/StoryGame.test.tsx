@@ -313,6 +313,14 @@ describe('a question', () => {
     expect(screen.getByRole('button', { name: /Deh/ })).toBeDisabled();
   });
 
+  it('counts the questions as "1 of 3" to the eye, and "Question 1 of 3" to the ear', async () => {
+    fakeApi({ 'GET /story-games/g-1/story': story, 'GET /story-games/g-1': question() });
+    game();
+    const heading = await screen.findByRole('heading', { name: 'Question 1 of 3' });
+    expect(heading).toHaveTextContent('1 of 3');
+    expect(heading.querySelector('.sg-q-ring')).not.toBeNull();
+  });
+
   it('answers with the digit row on a Soranî or Arabic layout too', async () => {
     const { calls } = fakeApi({
       'GET /story-games/g-1/story': story,
@@ -502,7 +510,7 @@ describe('the results', () => {
       status: 'finished',
       code: null,
       results: {
-      storySlug: 'qelema-sin',
+        storySlug: 'qelema-sin',
         standings: [
           { seat: 1, name: 'Ada', avatarUrl: null, isMe: true, score: 400, correct: 4, place: 1 },
           { seat: 2, name: 'Rojda', avatarUrl: null, isMe: false, score: 300, correct: 3, place: 2 },
@@ -606,13 +614,39 @@ describe('the results', () => {
     const base = results();
     fakeApi({
       'GET /story-games/g-1/story': story,
-      'GET /story-games/g-1': { ...base, mode: 'solo', results: { ...base.results!, standings: base.results!.standings.slice(0, 1), me: { ...base.results!.me!, xp: 0, learningCounted: false } } },
+      'GET /story-games/g-1': {
+        ...base,
+        mode: 'solo',
+        // the story was renamed since the game began: the results carry the address it has now
+        results: { ...base.results!, storySlug: 'qelema-sin-a-nu', standings: base.results!.standings.slice(0, 1), me: { ...base.results!.me!, xp: 0, learningCounted: false } },
+      },
     });
     game();
     expect(await screen.findByText(/Answer at least half the questions in one day/)).toBeInTheDocument();
     expect(screen.queryByText(/XP/)).toBeNull();
-    expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Read the story again' })).toHaveAttribute('href', '/app/games/stories/qelema-sin');
+    // two ways on: the story the check was on, by the slug the results carry, and the library
+    expect(screen.getByRole('link', { name: 'Back to the story' })).toHaveAttribute('href', '/app/learn/stories/qelema-sin-a-nu');
+    expect(screen.getByRole('link', { name: 'Another story' })).toHaveAttribute('href', '/app/learn/stories');
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
+  it('says what a repeated check paid, from the story’s own count of today’s checks', async () => {
+    const base = results();
+    const solo = { ...base, mode: 'solo' as const, results: { ...base.results!, standings: base.results!.standings.slice(0, 1), me: { ...base.results!.me!, xp: 4 } } };
+    const me = { bookmarked: false, paragraph: 1, share: 1, finishedAt: '2026-10-01T00:00:00Z', bestCorrect: 4, total: 5, attemptsToday: 2 };
+    fakeApi({ 'GET /story-games/g-1/story': story, 'GET /story-games/g-1': solo, 'GET /stories/st-1': detail({ me }) });
+    const second = game();
+    expect(await screen.findByText(/earned a quarter of the usual XP/)).toBeInTheDocument();
+    expect(screen.getByText('+4 XP')).toBeInTheDocument();
+    second.unmount();
+
+    fakeApi({
+      'GET /story-games/g-1/story': story,
+      'GET /story-games/g-1': { ...solo, results: { ...solo.results, me: { ...solo.results.me!, xp: 0 } } },
+      'GET /stories/st-1': detail({ me: { ...me, attemptsToday: 3 } }),
+    });
+    game();
+    expect(await screen.findByText(/already checked this story 2 times today, so this one earned no XP/)).toBeInTheDocument();
   });
 });
 

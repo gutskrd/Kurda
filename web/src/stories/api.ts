@@ -5,7 +5,18 @@
  * `StoryGameView` …) — the API returns them and the phone reads the same — so
  * nothing here redefines one.
  */
-import type { StoryDialect, StoryGameMode, StoryGameView, StoryLength, StoryLevel, QuestionCount, TextDuring, TimerSeconds, GameAccess } from '@kurda/shared';
+import type {
+  GameAccess,
+  QuestionCount,
+  StoryDialect,
+  StoryGameMode,
+  StoryGameView,
+  StoryLength,
+  StoryLevel,
+  StoryMe,
+  TextDuring,
+  TimerSeconds,
+} from '@kurda/shared';
 import type { ApiClient } from '../lib/api';
 import { describeError } from '../lib/api';
 import type { ApiError, ApiResult } from '../lib/types';
@@ -13,10 +24,15 @@ import type { MessageKey } from '../i18n/en';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/** Where a story is read, and where a game on it is played. */
-export const STORIES_HUB = '/app/games/stories';
-export const readerPath = (slug: string): string => `${STORIES_HUB}/${encodeURIComponent(slug)}`;
-export const gamePath = (id: string): string => `${STORIES_HUB}/play/${encodeURIComponent(id)}`;
+/**
+ * Where the stories live: the library is Learn's Stories group, a story is
+ * read under it, and a game on one is played at the games' address — the
+ * game is a game, whichever group it was started from, and the invites
+ * already sent point there.
+ */
+export const STORIES_LIBRARY = '/app/learn/stories';
+export const readerPath = (slug: string): string => `${STORIES_LIBRARY}/${encodeURIComponent(slug)}`;
+export const gamePath = (id: string): string => `/app/games/stories/play/${encodeURIComponent(id)}`;
 
 /** `POST /story-games`, as the setup sheet fills it in. */
 export interface CreateStoryGame {
@@ -37,6 +53,21 @@ export interface CreateStoryGame {
 
 export function createGame(client: ApiClient, body: CreateStoryGame): Promise<ApiResult<StoryGameView>> {
   return client.post<StoryGameView>('/story-games', body);
+}
+
+/** Keep a story on your shelf, or take it off: `PUT` / `DELETE /stories/:id/bookmark`, both idempotent. */
+export function setBookmark(client: ApiClient, storyId: string, on: boolean): Promise<ApiResult<{ bookmarked: boolean }>> {
+  const path = `/stories/${encodeURIComponent(storyId)}/bookmark`;
+  return on ? client.put<{ bookmarked: boolean }>(path) : client.delete<{ bookmarked: boolean }>(path);
+}
+
+/** Where a reader has got to in a story: `PUT /stories/:id/progress`, answered with their whole record on it. */
+export function putProgress(
+  client: ApiClient,
+  storyId: string,
+  body: { paragraph: number; share: number; finished?: boolean },
+): Promise<ApiResult<{ me: StoryMe }>> {
+  return client.put<{ me: StoryMe }>(`/stories/${encodeURIComponent(storyId)}/progress`, body);
 }
 
 /** The refusals a story game can answer with, in the reader's words. */

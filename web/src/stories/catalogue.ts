@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { StoryDialect, StoryListItem } from '@kurda/shared';
+import type { StoryCategory, StoryDialect, StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import type { ApiClient } from '../lib/api';
 import { API_URL } from '../lib/config';
@@ -22,13 +22,18 @@ function listKey(dialect: StoryDialect | null): string {
   return dialect ?? 'all';
 }
 
-/** `GET /stories` (one variety, or every published story), kept for a few minutes. */
+/**
+ * `GET /stories` (one variety, or every published story), kept for a few
+ * minutes. The list is paged, so the most a page gives is asked for: the
+ * sheet that sets up a game needs to know which lengths exist, not every
+ * story, and fifty is more than a variety has for now.
+ */
 function fetchList(client: ApiClient, dialect: StoryDialect | null, fresh = false): Promise<Listed> {
   const key = listKey(dialect);
   const kept = lists.get(key);
   if (!fresh && kept && Date.now() - kept.at < KEEP_MS) return kept.stories;
   const stories = client
-    .get<{ stories: StoryListItem[] }>(dialect ? `/stories?dialect=${dialect}` : '/stories')
+    .get<{ stories: StoryListItem[] }>(dialect ? `/stories?dialect=${dialect}&limit=50` : '/stories?limit=50')
     .then((r): Listed => (r.ok ? { stories: Array.isArray(r.data.stories) ? r.data.stories : [] } : { error: r.error }));
   lists.set(key, { at: Date.now(), stories });
   // a failure is not kept: the next look asks again
@@ -136,4 +141,39 @@ export function useStoriesAvailable(enabled = true): Availability {
 /** For tests: forget the answer. */
 export function resetStoriesAvailable(): void {
   available = null;
+}
+
+let categories: Promise<StoryCategory[] | null> | null = null;
+
+/**
+ * The categories stories are filed under (`GET /stories/categories`), asked
+ * for once per tab: a story page names its own from them, and the list
+ * changes when an editor adds one, not while anyone reads. Null while on
+ * the way or when the answer never came, and a page then shows the story
+ * without naming its category rather than showing its slug.
+ */
+export function useStoryCategories(): StoryCategory[] | null {
+  const { client } = useAuth();
+  const [list, setList] = useState<StoryCategory[] | null>(null);
+  useEffect(() => {
+    let live = true;
+    categories ??= client.get<{ categories: StoryCategory[] }>('/stories/categories').then((r) => {
+      if (r.ok && Array.isArray(r.data.categories)) return r.data.categories;
+      // an answer that did not come is asked for again next time
+      categories = null;
+      return null;
+    });
+    void categories.then((c) => {
+      if (live) setList(c);
+    });
+    return () => {
+      live = false;
+    };
+  }, [client]);
+  return list;
+}
+
+/** For tests: forget the categories. */
+export function clearStoryCategories(): void {
+  categories = null;
 }

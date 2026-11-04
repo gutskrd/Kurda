@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
+  PAID_STORY_REPEATS_PER_DAY,
   storyTextDirection,
   type StoryDetail,
   type StoryGameReviewItem,
@@ -9,26 +10,28 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
-import { Button } from '../components/Button';
 import { CheckIcon, CloseIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { RankResult } from '../ranks/RankResult';
-import { STORIES_HUB, createGame, gamePath, readerPath, storyError } from './api';
+import { STORIES_LIBRARY, readerPath } from './api';
 import { Evidence, playerName, type Announce } from './GameParts';
-import { rememberedExtraTime, rememberedEnglish, showEnglishFor } from './prefs';
+import { rememberedEnglish, showEnglishFor } from './prefs';
 import { PlayerReport } from '../reports/PlayerReport';
 
 /**
- * The end of a game (contract §A1): how it went, whether it counted, and
- * every question again — the missed ones first, with the story's own words
- * for each answer.
+ * The end of a game (contract §A1, design notes §6): how it went, the XP
+ * and whether it counted — and, for a check repeated the same day, what a
+ * repeat pays, from the server's own count — then every question again, the
+ * missed ones first, with the story's own words for each answer. Two ways
+ * on: back to the story, or another story.
  *
  * Standings never shame: a podium only from four players; a duo is two
  * scores and a total, without places; three players are listed by seat,
  * with your own place said to you alone. Rank never changes XP.
  *
  * `again` is "Play again" from the play layer (a pair rematch, or the host's
- * next round), so every game plays again the same way.
+ * next round), so every game plays again the same way; a check is taken
+ * again from the story itself.
  */
 export function GameResults({
   view,
@@ -45,6 +48,7 @@ export function GameResults({
   const heading = useRef<HTMLHeadingElement>(null);
   const results = view.results;
   const me = results?.me ?? null;
+  const repeat = useRepeatNote(view.mode === 'solo' && me !== null && me.learningCounted ? view.settings.storyId : null);
 
   useEffect(() => {
     heading.current?.focus();
@@ -76,6 +80,7 @@ export function GameResults({
               t('stories.results.notCounted')
             )}
           </p>
+          {repeat && <p className="sg-repeat-note">{repeat}</p>}
         </div>
       )}
 
@@ -86,12 +91,12 @@ export function GameResults({
       {view.mode !== 'solo' && <OtherPlayers view={view} />}
 
       <div className="sg-results-actions">
-        {view.mode === 'solo' ? <TryAgain view={view} /> : again}
-        <Link to={readerPath(view.settings.storySlug)} className="btn btn-secondary">
-          {t('stories.results.readAgain')}
+        {again}
+        <Link to={readerPath(results?.storySlug ?? view.settings.storySlug)} className={view.mode === 'solo' ? 'btn btn-primary' : 'btn btn-secondary'}>
+          {t('stories.check.backToStory')}
         </Link>
-        <Link to={STORIES_HUB} className="btn btn-ghost">
-          {t('stories.backToStories')}
+        <Link to={STORIES_LIBRARY} className="btn btn-secondary">
+          {t('stories.check.anotherStory')}
         </Link>
       </div>
 
@@ -268,42 +273,28 @@ function Review({ view, items, story }: { view: StoryGameView; items: StoryGameR
   );
 }
 
-/** A solo quiz again on the same story, with the same settings. */
-function TryAgain({ view }: { view: StoryGameView }): React.JSX.Element {
+/**
+ * What a check repeated today paid, in the server's own numbers: the story's
+ * record for this reader, read once the results are in, says how many checks
+ * they finished on it today — this one among them. From the third on a check
+ * pays nothing (PAID_STORY_REPEATS_PER_DAY); a second pays a quarter. Nothing
+ * for a first check, or while the record is on its way.
+ */
+function useRepeatNote(storyId: string | null): string | null {
   const t = useT();
   const { client } = useAuth();
-  const navigate = useNavigate();
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  return (
-    <>
-      <Button
-        disabled={busy}
-        onClick={() => {
-          setBusy(true);
-          void createGame(client, {
-            mode: 'solo',
-            storyId: view.settings.storyId,
-            questionCount: view.settings.questionCount,
-            timerSeconds: view.settings.timerSeconds,
-            textDuring: view.settings.textDuring,
-            access: 'friends',
-            skipReading: true,
-            extraTime: rememberedExtraTime(),
-          }).then((res) => {
-            setBusy(false);
-            if (res.ok) navigate(gamePath(res.data.id));
-            else setError(storyError(res.error, t));
-          });
-        }}
-      >
-        {t('stories.results.tryAgain')}
-      </Button>
-      {error && (
-        <p className="msg msg-error" role="alert">
-          {error}
-        </p>
-      )}
-    </>
-  );
+  const [attempts, setAttempts] = useState<number | null>(null);
+  useEffect(() => {
+    if (!storyId) return;
+    let live = true;
+    void client.get<StoryDetail>(`/stories/${encodeURIComponent(storyId)}`).then((res) => {
+      if (live && res.ok && res.data.me) setAttempts(res.data.me.attemptsToday);
+    });
+    return () => {
+      live = false;
+    };
+  }, [client, storyId]);
+  if (attempts === null || attempts < 2) return null;
+  if (attempts > PAID_STORY_REPEATS_PER_DAY) return t('stories.check.resultCapped', { count: attempts - 1 });
+  return t('stories.check.resultRepeat');
 }

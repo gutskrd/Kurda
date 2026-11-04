@@ -11,7 +11,7 @@
 [lang='ckb'].story-title,
 [lang='ckb'].story-summary,
 .story-text [lang='ckb'],
-.story-hub [lang='ckb'],
+.story-library [lang='ckb'],
 .story-game [lang='ckb'],
 .story-setup [lang='ckb'],
 .story-words [lang='ckb'],
@@ -91,13 +91,15 @@
   color: color-mix(in srgb, var(--primary-ink) 70%, transparent);
 }
 
-/* ---- the hub ------------------------------------------------------------------ */
-.story-hub .page-header {
-  margin-bottom: 22px;
-}
-.story-hub .back-link,
-.story-page .back-link {
-  margin-bottom: 18px;
+/* ---- the library (StoriesLibrary.tsx) ------------------------------------------ */
+/*
+ * Shelves of covers: each row of the library scrolls sideways, as a shelf is
+ * walked along, and a search or a filter lays its finds out as a grid. The
+ * cover is the picture, the title the only large type; the facts under it are
+ * small and quiet.
+ */
+.story-library .story-section-title {
+  margin-bottom: 10px;
 }
 .story-section-title {
   font-family: var(--font-sans);
@@ -160,12 +162,439 @@
   transform: scaleX(-1);
 }
 
-.story-filters {
+/* "Your progress": the ring of stories finished, and the average check score beside it */
+.story-progress-card {
+  margin-bottom: 22px;
+  padding: 16px 18px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.story-progress-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 18px 28px;
-  margin-bottom: 18px;
+  gap: 14px 28px;
 }
+.story-progress-ring-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+.story-progress-ring {
+  flex: none;
+  transform: rotate(-90deg);
+}
+.story-progress-ring circle {
+  fill: none;
+  stroke-width: 5;
+}
+.story-progress-ring-track {
+  stroke: var(--surface-3);
+}
+.story-progress-ring-fill {
+  stroke: var(--gold);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--dur-progress) var(--ease-out);
+}
+.story-progress-text,
+.story-progress-tile {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+}
+.story-progress-text strong,
+.story-progress-tile strong {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+.story-progress-tile {
+  justify-content: center;
+  padding-inline-start: 28px;
+  border-inline-start: 1px solid var(--separator);
+}
+@media (max-width: 520px) {
+  .story-progress-tile {
+    padding-inline-start: 0;
+    border-inline-start: 0;
+  }
+}
+
+/* the search field and the filter chips */
+.story-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+.story-search {
+  max-width: 480px;
+}
+.story-chip-rows {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+}
+.story-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+/*
+ * On a phone each group of filters is one row that scrolls sideways, out to
+ * the screen's edges as the shelves do, so the shelves start on the first
+ * screen rather than under five rows of chips.
+ */
+@media (max-width: 640px) {
+  .story-chip-rows {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .story-filters .story-chip-row {
+    flex-wrap: nowrap;
+    margin-inline: -16px;
+    padding: 2px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .story-filters .story-chip-row::-webkit-scrollbar {
+    display: none;
+  }
+  .story-filters .story-chip {
+    flex: none;
+  }
+}
+.story-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--text-secondary);
+  font-weight: 550;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+.story-chip:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.story-chip.is-on {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: var(--primary-ink);
+}
+.story-chip-count {
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.story-guest-line {
+  margin: -8px 0 22px;
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.story-guest-line a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* a shelf: cards walked along sideways, the first a little in from the edge on a phone */
+.story-shelf {
+  margin-bottom: 26px;
+}
+.story-shelf-row {
+  list-style: none;
+  margin: 0 -16px;
+  padding: 2px 16px 10px;
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scroll-padding-inline: 16px;
+  scrollbar-width: thin;
+}
+.story-shelf-row > li {
+  flex: 0 0 236px;
+  scroll-snap-align: start;
+}
+@media (min-width: 760px) {
+  .story-shelf-row {
+    margin: 0;
+    padding: 2px 0 10px;
+    scroll-padding-inline: 0;
+  }
+  .story-shelf-row > li {
+    flex-basis: 256px;
+  }
+}
+.story-categories .story-chip-row {
+  padding-bottom: 4px;
+}
+
+/* a search or a filter: the finds as a grid, the count above and More under */
+.story-results {
+  margin-bottom: 26px;
+}
+.story-results-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 16px;
+}
+.story-results-clear {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.story-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+}
+@media (min-width: 600px) {
+  .story-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 960px) {
+  .story-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.story-more {
+  margin: 18px 0 0;
+  text-align: center;
+}
+
+/* a card: the cover, the words under it, the facts, and the bookmark on the cover's corner */
+.story-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink);
+  overflow: hidden;
+  transition:
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.story-card:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.story-card-link {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  color: inherit;
+  text-decoration: none;
+}
+.story-card-link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: -2px;
+  border-radius: var(--r-lg);
+}
+.story-cover {
+  display: block;
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+.story-cover > svg,
+.story-cover > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* a chosen picture fills the box as the band does: cropped to it, never stretched */
+.story-cover > img {
+  object-fit: cover;
+  user-select: none;
+}
+.story-card-cover {
+  flex: none;
+}
+.story-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 6px;
+  padding: 12px 14px 14px;
+}
+.story-card-title {
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.story-card-title[lang='ckb'] {
+  font-size: 1.1rem;
+  line-height: 1.5;
+}
+.story-card-summary {
+  color: var(--ink-2);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  /* one line, as a shelf's cards must stay one height */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.story-card-summary[lang='ckb'] {
+  line-height: 1.8;
+}
+.story-card-meta,
+.story-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 0;
+  margin-top: auto;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+/*
+ * A quiet dot between the facts, never read out. Every fact after the first
+ * carries one in front, and the row starts a dot's width early with that
+ * width cut off (the first fact steps in by as much), so a dot that a wrap
+ * would put at the start of a line is never seen.
+ */
+.story-card-meta,
+.story-meta,
+.story-byline {
+  --dot: 20px;
+  margin-inline-start: calc(-1 * var(--dot));
+  clip-path: inset(-4px -4px -4px var(--dot));
+}
+.story-card-meta:dir(rtl),
+.story-meta:dir(rtl),
+.story-byline:dir(rtl) {
+  clip-path: inset(-4px var(--dot) -4px -4px);
+}
+.story-card-meta > span:first-child,
+.story-meta > span:first-child,
+.story-byline > span:first-child {
+  margin-inline-start: var(--dot);
+}
+.story-card-meta > span + span::before,
+.story-meta > span + span::before,
+.story-byline > span + span::before {
+  content: '·';
+  display: inline-block;
+  width: var(--dot);
+  text-align: center;
+  color: var(--ink-4);
+}
+/* the headphones sit a gap after their dot; the dot needs no more room than it has elsewhere */
+.story-narrated::before {
+  margin-inline-end: -5px;
+}
+.story-cefr {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 0 7px;
+  border-radius: var(--r-xs);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: var(--text-tab);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  /* a level's letters read the same way in every language */
+  direction: ltr;
+}
+.story-narrated {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--gold-ink);
+}
+/* how far the reader got, as a hairline along the card's foot */
+.story-card-progress {
+  display: block;
+  height: 3px;
+  background: var(--surface-3);
+}
+.story-card-progress > span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  transition: width var(--dur-progress) var(--ease-out);
+}
+[dir='rtl'] .story-card-progress > span {
+  margin-inline-start: auto;
+}
+.story-card-bookmark {
+  position: absolute;
+  top: 8px;
+  inset-inline-end: 8px;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 0;
+  background: color-mix(in srgb, var(--app-bg) 70%, transparent);
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.story-card-bookmark:hover {
+  background: color-mix(in srgb, var(--app-bg) 90%, transparent);
+}
+.story-card-bookmark.is-on {
+  color: var(--gold-ink);
+}
+.story-card-bookmark:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.story-card-problem {
+  display: block;
+  padding: 0 14px 10px;
+  font-size: var(--text-caption);
+  color: var(--danger);
+}
+@media (pointer: coarse) {
+  .story-card-bookmark {
+    width: 44px;
+    height: 44px;
+  }
+  .story-chip {
+    min-height: 44px;
+  }
+}
+
+/* playing with others, at the foot of the library */
 .story-play {
   display: flex;
   flex-wrap: wrap;
@@ -177,11 +606,8 @@
   border: 1px solid var(--border);
   background: var(--surface);
 }
-.story-play-guest {
-  align-items: center;
-  justify-content: space-between;
-}
-.story-play-guest p {
+.story-play-title {
+  flex: 1 1 100%;
   margin: 0;
 }
 .story-join {
@@ -218,97 +644,6 @@
   font-size: 0.85rem;
   color: var(--danger);
 }
-
-.story-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
-}
-@media (min-width: 760px) {
-  .story-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-.story-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  height: 100%;
-  padding: 18px 18px 16px;
-  border-radius: var(--r-lg);
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--ink);
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
-.story-card:hover {
-  border-color: var(--border-strong);
-  background: var(--surface-2);
-}
-.story-card-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-}
-.story-card-title {
-  font-family: var(--font-display);
-  font-size: 1.22rem;
-  font-weight: 600;
-  line-height: 1.25;
-}
-.story-card-title[lang='ckb'] {
-  font-size: 1.15rem;
-  line-height: 1.5;
-}
-.story-card-summary {
-  color: var(--ink-2);
-  font-size: 0.94rem;
-  line-height: 1.55;
-}
-/* a placeholder summary's second line: a narrow card wraps a summary onto it, a wide one does not */
-@media (min-width: 960px) {
-  .story-skel-wrap {
-    display: none;
-  }
-}
-.story-card-summary[lang='ckb'] {
-  line-height: 1.8;
-}
-.story-card-meta,
-.story-meta {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 14px;
-  margin-top: auto;
-  font-size: 0.82rem;
-  color: var(--ink-3);
-}
-.story-card-meta > span + span::before,
-.story-meta > span + span::before {
-  /* a quiet dot between the facts, never read out */
-  content: '·';
-  margin-inline-end: 14px;
-  color: var(--ink-4);
-}
-.story-card-meta,
-.story-meta {
-  column-gap: 0;
-}
-.story-narrated {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--gold-ink);
-}
-.story-done {
-  flex: none;
-}
 .story-empty {
   display: grid;
   justify-items: center;
@@ -322,7 +657,7 @@
   text-align: center;
 }
 
-/* ---- the reader --------------------------------------------------------------- */
+/* ---- the story page: the overview, then the reader (StoryReader.tsx) ------------ */
 .story-page {
   max-width: 760px;
   padding-top: 32px;
@@ -334,13 +669,44 @@
     padding-bottom: calc(40px + env(safe-area-inset-bottom));
   }
 }
-.story-head {
+.story-page .back-link {
   margin-bottom: 18px;
 }
+
+/* the overview: the cover beside the words on a wide screen, above them on a phone */
+.story-overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+  margin-bottom: 26px;
+}
+@media (min-width: 700px) {
+  .story-overview {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 26px;
+    align-items: start;
+  }
+}
+.story-overview-cover {
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-lg);
+}
+@media (max-width: 699px) {
+  .story-overview-cover {
+    aspect-ratio: 16 / 9;
+  }
+}
+.story-overview-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
 .story-meta {
-  margin: 0 0 12px;
+  margin-block: 0;
 }
 .story-title {
+  margin: 0;
   font-size: clamp(1.9rem, 4.4vw, 2.6rem);
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -350,8 +716,17 @@
   letter-spacing: normal;
   line-height: 1.45;
 }
+/* where the story comes from, in one quiet line: its tradition, its author, its variety */
+.story-byline {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 0;
+  margin-block: 0;
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
 .story-summary {
-  margin-top: 10px;
+  margin: 0;
   color: var(--ink-2);
   font-size: 1.05rem;
   line-height: 1.6;
@@ -359,10 +734,40 @@
 .story-summary[lang='ckb'] {
   line-height: 1.9;
 }
+.story-overview-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+@media (max-width: 520px) {
+  .story-overview-actions .btn-primary {
+    flex: 1 1 100%;
+  }
+}
+.story-overview-bookmark.is-on {
+  color: var(--gold-ink);
+}
+.story-versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 0;
+  font-size: var(--text-secondary);
+}
+.story-versions a {
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* the reader's tools: the size, and how long is left, in reach while the text scrolls */
 .story-tools {
-  /* stays in reach while reading: the size and, for a narrated story, its player */
   position: sticky;
-  top: calc(var(--nav-h) + var(--invite-banner-h, 0px) + 8px);
+  /* hangs from the app's bar, which stays at the top at every width */
+  top: calc(var(--nav-bottom) + var(--invite-banner-h, 0px) + 8px);
   z-index: 5;
   width: fit-content;
   max-width: 100%;
@@ -374,16 +779,18 @@
   padding: 8px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: color-mix(in srgb, var(--app-bg) 82%, transparent);
+  /* nearly solid: the text scrolls under it, and must not read through it */
+  background: color-mix(in srgb, var(--app-bg) 94%, transparent);
   -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
 }
-@media (max-width: 860px) {
-  .story-tools {
-    top: 8px;
-  }
+.story-tools-left {
+  padding: 0 8px;
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
 }
-/* who says the line being read (ReaderControls.tsx), first in the tools so it stays in view */
+/* who says the line being read (ReaderControls.tsx), first in a game's tools so it stays in view */
 .story-speaker {
   --speaker-size: 52px;
 }
@@ -423,106 +830,84 @@
   font-size: 0.95rem;
 }
 
-.story-player {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+/* the way back to where a reader was */
+.story-resume {
+  display: flex;
   flex-wrap: wrap;
-}
-.story-player-icon {
-  display: inline-grid;
-  place-items: center;
-  width: 32px;
-  color: var(--gold-ink);
-}
-.story-player-btn {
-  display: inline-grid;
-  place-items: center;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  border: 0;
-  background: transparent;
+  align-items: center;
+  gap: 10px 14px;
+  margin: 0 0 18px;
+  padding: 12px 16px;
+  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  background: var(--gold-soft);
+  font-size: var(--text-secondary);
   color: var(--ink);
-  cursor: pointer;
 }
-.story-player-btn:hover:not(:disabled) {
-  background: var(--surface-2);
-}
-.story-player-btn:disabled {
-  color: var(--ink-4);
-  cursor: default;
-}
-.story-player-btn.is-main {
-  background: var(--primary);
-  color: var(--primary-ink);
-}
-.story-player-btn.is-main:hover {
-  background: var(--primary-hover);
-}
-/* previous and next point the way the page reads */
-[dir='rtl'] .story-player-btn svg {
-  transform: scaleX(-1);
-}
-.story-player-speed {
-  display: inline-flex;
-  margin-inline-start: 4px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border-strong);
-  overflow: hidden;
-}
-.story-player-rate {
-  min-width: 52px;
-  height: 36px;
-  padding: 0 10px;
-  border: 0;
-  background: transparent;
-  color: var(--ink-2);
-  font-size: 0.85rem;
-  font-variant-numeric: tabular-nums;
-  cursor: pointer;
-  /* a number: the same in every direction */
-  direction: ltr;
-}
-.story-player-rate.is-on {
-  background: var(--surface-2);
-  color: var(--ink);
-  font-weight: 650;
+.story-resume .link-btn {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
 }
 
-/* the text */
+/* the text: the display serif at about 19.5px to start with, room between the lines, a measure of 36 em */
+.story-reader {
+  position: relative;
+  margin-bottom: 26px;
+}
 .story-text {
-  --story-size: 1.15rem;
+  --story-size: 1;
 }
 .story-para {
-  margin-bottom: 1.1em;
+  margin-bottom: 1.25em;
+  font-size: calc(var(--story-size) * 1.0625rem);
+  /* Read and Continue bring a paragraph to the top: below the app's bar and the reader's tools, not under them */
+  scroll-margin-top: calc(var(--nav-bottom) + var(--invite-banner-h, 0px) + 80px);
 }
 .story-para p {
   margin: 0;
+  max-width: 36em;
   font-family: var(--font-display);
-  font-size: var(--story-size);
-  line-height: 1.8;
+  font-size: inherit;
+  line-height: 1.65;
   color: var(--ink);
   text-wrap: pretty;
 }
 .story-para p[lang='ckb'] {
   /* Arabic script needs more air between lines for its marks */
-  line-height: 2.05;
+  line-height: 2;
 }
 .story-sentence {
   border-radius: 4px;
-  transition: background 0.2s ease;
+  transition: background var(--dur) ease;
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
 }
+/* the sentence being read sits on a gold band, and says itself again when tapped */
 .story-sentence.is-reading {
   background: color-mix(in srgb, var(--gold) 22%, transparent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--gold) 22%, transparent);
+  cursor: pointer;
 }
 .story-sentence.is-evidence,
 .story-para p.is-evidence {
   background: color-mix(in srgb, var(--success) 18%, transparent);
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--success) 18%, transparent);
+}
+.story-replay {
+  display: inline-grid;
+  place-items: center;
+  vertical-align: middle;
+  width: 24px;
+  height: 24px;
+  margin-inline-start: 4px;
+  border-radius: 50%;
+  border: 0;
+  background: color-mix(in srgb, var(--gold) 28%, transparent);
+  color: var(--gold-ink);
+  cursor: pointer;
+}
+.story-replay:hover {
+  background: color-mix(in srgb, var(--gold) 44%, transparent);
 }
 .story-gloss-hold {
   /* a glossary word keeps the quote or comma beside it on its own line */
@@ -551,12 +936,20 @@
   outline-offset: 2px;
   border-radius: 3px;
 }
+/* under a paragraph: Listen, and the Translation toggle */
+.story-para-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  margin-top: 6px;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+}
 .story-listen {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   min-height: 36px;
-  margin-top: 6px;
   padding: 0 12px;
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
@@ -571,11 +964,27 @@
   border-color: var(--border-strong);
   background: var(--surface-2);
 }
-/* a finger needs 44px (contract §A1): the reader's and the game's small controls grow on touch screens */
+/* a paragraph's translation: the interface's face in secondary ink, a step smaller, so it never reads as the story */
+.story-para .story-translation {
+  max-width: 36em;
+  margin: 8px 0 0;
+  padding-inline-start: 14px;
+  border-inline-start: 2px solid color-mix(in srgb, var(--gold) 40%, transparent);
+  font-family: var(--font-sans);
+  font-size: calc(var(--story-size) * 0.95rem);
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+/* a finger needs 44px: the reader's and the game's small controls grow on touch screens */
 @media (pointer: coarse) {
   .story-listen,
-  .sg-english {
+  .sg-english,
+  .story-save,
+  .story-play-word {
     min-height: 44px;
+  }
+  .story-play-word {
+    min-width: 44px;
   }
   .story-player-rate {
     height: 44px;
@@ -586,7 +995,7 @@
   }
   .story-game .btn-sm,
   .story-page .btn-sm,
-  .story-hub .btn-sm {
+  .story-library .btn-sm {
     height: 44px;
   }
 }
@@ -597,9 +1006,9 @@
   z-index: 60;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   width: max-content;
-  max-width: min(320px, calc(100vw - 24px));
+  max-width: min(340px, calc(100vw - 24px));
   padding: 12px 14px 10px;
   border-radius: var(--r-md);
   border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
@@ -613,18 +1022,38 @@
 .story-gloss-pop:focus-visible {
   outline: 2px solid var(--focus);
 }
+.story-gloss-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
 .story-gloss-term {
   font-family: var(--font-display);
   font-size: 1.1rem;
   font-weight: 600;
   color: var(--gold-ink);
 }
+.story-gloss-pos,
+.story-word-pos {
+  font-size: var(--text-caption);
+  font-style: italic;
+  color: var(--ink-3);
+}
 .story-gloss-meaning {
   font-size: 0.95rem;
   line-height: 1.45;
 }
+.story-gloss-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  margin-top: 2px;
+}
 .story-gloss-close {
-  align-self: flex-end;
+  margin-inline-start: auto;
   min-height: 32px;
   padding: 0 8px;
   border: 0;
@@ -636,63 +1065,396 @@
 .story-gloss-close:hover {
   color: var(--ink);
 }
-
-/* "Words in this story" */
-.story-words {
-  margin-top: 34px;
-  padding-top: 22px;
-  border-top: 1px solid var(--border);
+/* a pronunciation from the dictionary, and Save word */
+.story-play-word {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
 }
-.story-words dl {
+.story-play-word:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.story-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.story-save:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.story-save.is-on {
+  color: var(--gold-ink);
+  border-color: color-mix(in srgb, var(--gold) 50%, transparent);
+  background: var(--gold-soft);
+}
+.story-save-problem {
+  flex: 1 1 100%;
+  font-size: var(--text-caption);
+  color: var(--danger);
+}
+
+/* "Key vocabulary" */
+.story-words {
+  margin-bottom: 26px;
+}
+.story-word-list {
+  list-style: none;
   margin: 0;
+  padding: 0;
   display: grid;
   gap: 2px;
 }
+@media (min-width: 700px) {
+  .story-word-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 24px;
+  }
+}
 .story-word {
   display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
-  gap: 14px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    'head save'
+    'meaning save';
+  gap: 2px 12px;
+  align-items: center;
   padding: 9px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--border) 60%, transparent);
 }
-.story-word dt {
+.story-word-head {
+  grid-area: head;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+}
+.story-word-term {
   font-family: var(--font-display);
+  font-size: 1.1rem;
   font-weight: 600;
   color: var(--ink);
 }
-.story-word dd {
-  margin: 0;
+.story-word-meaning {
+  grid-area: meaning;
   color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+.story-word-save {
+  grid-area: save;
+}
+.story-word .story-save-problem {
+  grid-column: 1 / -1;
 }
 
-/* the quiz after a story */
-.story-quiz {
-  margin-top: 34px;
+/* the check, before and after the text */
+.story-check {
+  margin-bottom: 26px;
   padding: 22px;
   border-radius: var(--r-xl);
   border: 1px solid var(--border-strong);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
-.story-quiz p {
+.story-check p {
   margin: 0 0 16px;
 }
-.story-quiz-actions {
+.story-check.is-locked {
+  border-style: dashed;
+  box-shadow: none;
+}
+.story-check-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-3);
+}
+.story-check-best {
+  font-size: 1.1rem;
+  font-weight: 650;
+  color: var(--gold-ink);
+}
+.story-check-note {
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.story-check-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
 }
 @media (max-width: 520px) {
-  .story-quiz-actions .btn {
+  .story-check-actions .btn {
     flex: 1 1 100%;
   }
 }
-.story-quiz-settings {
-  margin-top: 14px;
-  min-height: 44px;
-}
-.story-quiz .msg {
+.story-check .msg {
   margin: 14px 0 0;
+}
+/* where the story comes from, after the text */
+.story-about {
+  margin-top: 30px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border);
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.story-about p {
+  margin: 0 0 8px;
+  max-width: 60ch;
+}
+.story-about a {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/*
+ * The player (ReaderControls.tsx): among a game's tools it is a quiet row of
+ * buttons; docked under the reader it is one bar in ink — the primary colour,
+ * as the app's one filled button is — held at the foot of the screen, with the
+ * narrator, the buttons, the seek line and the clock on one row.
+ */
+.story-player {
+  --player-ink: var(--ink);
+  --player-ink-2: var(--ink-3);
+  --player-dim: var(--ink-4);
+  --player-fill: var(--surface-2);
+  --player-line: var(--border-strong);
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+.story-player-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.story-player-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  color: var(--gold-ink);
+}
+.story-player-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 0;
+  background: transparent;
+  color: var(--player-ink);
+  cursor: pointer;
+}
+.story-player-btn:hover:not(:disabled) {
+  background: var(--player-fill);
+}
+.story-player-btn:disabled {
+  color: var(--player-dim);
+  cursor: default;
+}
+.story-player-btn.is-main {
+  background: var(--primary);
+  color: var(--primary-ink);
+}
+.story-player-btn.is-main:hover {
+  background: var(--primary-hover);
+}
+/* while the network holds a sentence up, a quiet spinner where the pause mark was */
+.story-player-spinner {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+}
+/* previous and next point the way the page reads */
+[dir='rtl'] .story-player-btn svg {
+  transform: scaleX(-1);
+}
+.story-player-rate {
+  flex: none;
+  min-width: 56px;
+  height: 36px;
+  padding: 0 10px;
+  margin-inline-start: 4px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--player-line);
+  background: transparent;
+  color: var(--player-ink);
+  font-size: 0.85rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  /* a number: the same in every direction */
+  direction: ltr;
+}
+.story-player-rate:hover {
+  background: var(--player-fill);
+}
+.story-player-narrator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding-inline-end: 6px;
+  color: var(--player-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.story-player-face {
+  --speaker-size: 34px;
+}
+/* the seek line and the clock take what width is left; on a narrow row they wrap to a row of their own */
+.story-player-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 160px;
+  min-width: 140px;
+}
+.story-player-clock {
+  flex: none;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--player-ink-2);
+  white-space: nowrap;
+}
+.story-player-seek {
+  --seek: 0%;
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.story-player-seek:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-pill);
+}
+/* a thin line, the gold of what has been heard up to the dot, drawn once for each engine */
+.story-player-seek::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(to right, var(--gold) var(--seek), var(--player-line) var(--seek));
+}
+.story-player-seek::-moz-range-track {
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--player-line);
+}
+.story-player-seek::-moz-range-progress {
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+}
+.story-player-seek::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5.5px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--player-ink);
+}
+.story-player-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--player-ink);
+}
+/* a right-to-left page reads the line from its right, as it reads everything */
+[dir='rtl'] .story-player-seek::-webkit-slider-runnable-track {
+  background: linear-gradient(to left, var(--gold) var(--seek), var(--player-line) var(--seek));
+}
+.story-player-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 0 6px;
+  font-size: 0.8rem;
+  color: var(--player-ink-2);
+}
+.story-player-note {
+  margin: 0;
+}
+.story-player-note.is-error {
+  color: var(--danger);
+}
+
+/* under the reader: the bar in ink, at the foot of the screen, the width of the text */
+.story-player.is-docked {
+  --player-ink: var(--primary-ink);
+  --player-ink-2: color-mix(in srgb, var(--primary-ink) 72%, transparent);
+  --player-dim: color-mix(in srgb, var(--primary-ink) 38%, transparent);
+  --player-fill: color-mix(in srgb, var(--primary-ink) 12%, transparent);
+  --player-line: color-mix(in srgb, var(--primary-ink) 28%, transparent);
+  position: sticky;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 6;
+  display: flex;
+  gap: 2px;
+  margin-top: 22px;
+  padding: 8px 10px;
+  border-radius: var(--r-xl);
+  background: var(--primary);
+  color: var(--primary-ink);
+  box-shadow: var(--shadow);
+}
+.story-player.is-docked .story-player-icon {
+  display: none;
+}
+.story-player.is-docked .story-player-btn.is-main {
+  background: var(--primary-ink);
+  color: var(--primary);
+}
+.story-player.is-docked .story-player-btn.is-main:hover {
+  background: color-mix(in srgb, var(--primary-ink) 86%, var(--primary));
+}
+.story-player.is-docked .story-player-note.is-error {
+  /* red words on an ink bar are hard to read: the error reads in the bar's own ink, marked by its role */
+  color: var(--player-ink);
+  font-weight: 600;
+}
+@media (max-width: 520px) {
+  .story-player.is-docked {
+    border-radius: var(--r-lg);
+    padding: 6px 8px;
+  }
+  .story-player.is-docked .story-player-narrator-name {
+    display: none;
+  }
 }
 
 /* ---- setting up a quiz -------------------------------------------------------- */
@@ -1158,16 +1920,37 @@
   gap: 12px;
 }
 .sg-q-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   font-family: var(--font-sans);
   font-size: 0.95rem;
   font-weight: 650;
   letter-spacing: 0.02em;
   color: var(--ink-3);
   margin: 0;
+  font-variant-numeric: tabular-nums;
 }
 .sg-q-title:focus {
   /* focused by the page so a screen reader starts here; nothing to press */
   outline: none;
+}
+/* the ring beside the counter: filled as far as this question, in the gold of what is being done */
+.sg-q-ring {
+  flex: none;
+  transform: rotate(-90deg);
+}
+.sg-q-ring circle {
+  fill: none;
+  stroke-width: 3;
+}
+.sg-q-ring-track {
+  stroke: var(--surface-3);
+}
+.sg-q-ring-fill {
+  stroke: var(--gold);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--dur-progress) var(--ease-out);
 }
 .sg-clock {
   display: inline-flex;
@@ -1231,13 +2014,14 @@
   gap: 10px;
 }
 .sg-option {
+  /* a full-width pill, as the options of a check are (design notes §6) */
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
   min-height: 60px;
-  padding: 10px 16px;
-  border-radius: var(--r-md);
+  padding: 10px 18px 10px 14px;
+  border-radius: var(--r-pill);
   border: 1px solid var(--border-strong);
   background: var(--surface);
   color: var(--ink);
@@ -1269,9 +2053,9 @@ button.sg-option:focus-visible {
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
   border: 1px solid var(--border-strong);
   font-size: 0.9rem;
   font-weight: 700;
@@ -1438,6 +2222,12 @@ button.sg-option:focus-visible {
 .sg-not-counted {
   color: var(--ink-2);
 }
+.sg-repeat-note {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
 .sg-standings {
   padding: 16px 18px;
   border-radius: var(--r-lg);
@@ -1590,14 +2380,15 @@ button.sg-option:focus-visible {
   line-height: 1.8;
 }
 .sg-review-answers {
+  /* the two answers line up: the labels in one column, the answers in the next */
   display: grid;
-  gap: 6px;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: baseline;
+  gap: 6px 12px;
   margin: 6px 0 10px;
 }
 .sg-review-answers div {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px 10px;
+  display: contents;
 }
 .sg-review-answers dt {
   color: var(--ink-3);

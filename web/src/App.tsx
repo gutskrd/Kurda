@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { arrivalHeld } from './auth/arrival';
 import { MarketingLayout } from './layouts/MarketingLayout';
@@ -36,7 +36,7 @@ const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
 const Rhyme = lazy(() => import('./pages/Rhyme').then((m) => ({ default: m.Rhyme })));
 const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })));
-const StoriesHub = lazy(() => import('./stories/StoriesHub').then((m) => ({ default: m.StoriesHub })));
+const StoriesLibrary = lazy(() => import('./stories/StoriesLibrary').then((m) => ({ default: m.StoriesLibrary })));
 const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ default: m.StoryReader })));
 const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
 const WordleBattle = lazy(() => import('./pages/WordleBattle').then((m) => ({ default: m.WordleBattle })));
@@ -124,6 +124,18 @@ function CivakMoved(): React.JSX.Element {
 function PeyvokMoved({ to }: { to: string }): React.JSX.Element {
   const { search } = useLocation();
   return <Navigate to={{ pathname: to, search }} replace />;
+}
+
+/**
+ * The stories' old addresses, from when they were a game: the list and a
+ * story now live under Learn's Stories group. An invite link already sent
+ * (`?id=`) comes along, and so does a story's slug. The game itself stays
+ * where it was (`games/stories/play/:gameId`), so nothing below moves it.
+ */
+function StoriesMoved(): React.JSX.Element {
+  const { search } = useLocation();
+  const { slug } = useParams();
+  return <Navigate to={{ pathname: slug ? `/app/learn/stories/${encodeURIComponent(slug)}` : '/app/learn/stories', search }} replace />;
 }
 
 /**
@@ -218,10 +230,16 @@ export function AppRoutes(): React.JSX.Element {
         }
       >
         <Route index element={<Civak />} />
-        {/* Learn's Lessons half. Open to read: a visitor gets the alphabet, the
+        {/* Learn's Lessons group. Open to read: a visitor gets the alphabet, the
             dictionary and the games, and is asked for an account where the
             courses would be (see pages/Learn.tsx) */}
         <Route path="learn" element={<Learn />} />
+        {/* Learn's Stories group: the library, and a story to read under it
+            (stories/StoriesLibrary.tsx, StoryReader.tsx). Open to everyone; a
+            bookmark, a place kept in a story and the check after it ask for an
+            account themselves */}
+        <Route path="learn/stories" element={<StoriesLibrary />} />
+        <Route path="learn/stories/:slug" element={<StoryReader />} />
         {/* the learning loop: a course's map, and the lesson a new account
             starts with (see pages/NextLesson.tsx); the lesson itself and a
             review are above, on a screen of their own */}
@@ -244,7 +262,7 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="poems" element={<Navigate to="/app/civak?section=gotin&kind=helbest" replace />} />
         <Route path="dimen" element={<Navigate to="/app/civak?section=dimen" replace />} />
         <Route path="dimen/:id" element={<DimenPost />} />
-        {/* Learn's Games half, at the address the games always had */}
+        {/* Learn's Games group, at the address the games always had */}
         <Route path="games" element={<Games />} />
         {/* the phone's old names for two places, so a shared link still lands */}
         <Route path="play" element={<Navigate to="/app/games" replace />} />
@@ -256,11 +274,13 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="games/wordle" element={<PeyvokMoved to="/app/games/peyvok" />} />
         <Route path="games/rhyme" element={<RequireAccount what="gate.what.play"><Rhyme /></RequireAccount>} />
         <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
-        {/* Stories replaced the ranked quiz: its old address leads there. The
-            list and a story are open to read; a quiz on one needs an account */}
-        <Route path="games/quiz" element={<Navigate to="/app/games/stories" replace />} />
-        <Route path="games/stories" element={<StoriesHub />} />
-        <Route path="games/stories/:slug" element={<StoryReader />} />
+        {/* Stories replaced the ranked quiz, then moved from the games to Learn's
+            own Stories group: both old addresses lead there (an invite's `?id=`
+            and a story's slug kept). A game on a story stays here: a quiz on one
+            needs an account */}
+        <Route path="games/quiz" element={<Navigate to="/app/learn/stories" replace />} />
+        <Route path="games/stories" element={<StoriesMoved />} />
+        <Route path="games/stories/:slug" element={<StoriesMoved />} />
         <Route
           path="games/stories/play/:gameId"
           element={<RequireAccount what="gate.what.play"><StoryGame /></RequireAccount>}

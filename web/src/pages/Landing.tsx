@@ -165,7 +165,7 @@ const GAMES: ReadonlyArray<{
     id: 'stories',
     name: 'games.stories.name',
     body: 'landing.play.stories',
-    href: '/app/games/stories',
+    href: '/app/learn/stories',
     tags: ['landing.play.tag.read', 'landing.play.tag.solo', 'landing.play.tag.friend'],
     visual: <StoriesMini />,
   },
