@@ -246,6 +246,31 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+/*
+ * On a phone each group of filters is one row that scrolls sideways, out to
+ * the screen's edges as the shelves do, so the shelves start on the first
+ * screen rather than under five rows of chips.
+ */
+@media (max-width: 640px) {
+  .story-chip-rows {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+  .story-filters .story-chip-row {
+    flex-wrap: nowrap;
+    margin-inline: -16px;
+    padding: 2px 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .story-filters .story-chip-row::-webkit-scrollbar {
+    display: none;
+  }
+  .story-filters .story-chip {
+    flex: none;
+  }
+}
 .story-chip {
   display: inline-flex;
   align-items: center;
