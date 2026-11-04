@@ -277,25 +277,36 @@ const SHOE_RIGHT: Knot[] = [
 ];
 
 /**
- * His neck: the same tone as his face, as wide as his jaw, running on down
- * under the collar. The head covers all of it but a thin band above the
- * collar; it is here so that band, and anything a nod uncovers, is skin.
+ * His neck: the same tone as his face, running on down under the collar.
+ * The head covers all of it but the band in the collar's opening; it is
+ * here so that band, and whatever a turn of the head uncovers, is skin.
+ * Above the lapels it keeps a few units inside the jaw on both sides: the
+ * head turns and the body does not, and a neck drawn out to the jaw line
+ * stood proud of the cheek as a step whenever the head was tilted. From the
+ * lapels down it follows them, so the opening between a lapel and the jaw
+ * that a turn reveals is neck and not the page.
  */
 const NECK: Knot[] = [
-  [149.4, 118],
-  [149.4, 131],
-  [149, 140],
-  [148.9, 145.6],
-  [148.2, 150, 0],
-  [160, 168],
+  [153.2, 118],
+  [152.2, 131],
+  [152, 140],
+  [152.4, 145.5, 0],
+  [145.8, 147.4, 0],
+  [150, 152.4],
+  [155, 158.4],
+  [160, 164.4],
+  [165.4, 173.6],
   [183.6, 198],
   [201.6, 168],
-  [207.6, 156, 0],
-  [207.4, 152.4],
-  [209, 148],
-  [212, 141],
-  [214.6, 131],
-  [214.8, 118],
+  [202.4, 166.8],
+  [201.4, 162.6],
+  [203.8, 158.2],
+  [209.4, 154, 0],
+  [204.5, 152.6, 0],
+  [206.3, 148],
+  [209.4, 141],
+  [212.3, 128.4],
+  [213, 118],
 ];
 
 const strokes = (list: readonly (readonly Pt[])[]): string => list.map((s) => curve(s.map(([x, y]) => [x, y] as const), false)).join('');
@@ -337,11 +348,17 @@ const HAIR: Knot[] = [
 ];
 
 /** The ear on the side he is turned from, and the shade inside it. */
+/**
+ * His near ear. Its inner edge runs a little way under the face, which is
+ * drawn over it: an edge that only met the face's outline left a sliver of
+ * nothing between the lobe and the jaw wherever the two curves disagreed
+ * by half a unit, and a turn of the head opened it wide.
+ */
 const EAR: Knot[] = [
-  [149.5, 132.4, 0.15], [148.4, 131.9], [147.7, 130.2], [144.5, 128.9], [141.0, 125.4], [137.5, 116.1],
+  [150.6, 132.6, 0.15], [148.4, 131.9], [147.7, 130.2], [144.5, 128.9], [141.0, 125.4], [137.5, 116.1],
   [136.9, 112.4], [137.1, 108.4], [137.6, 106.7], [139.9, 103.0], [139.8, 97.7], [140.7, 96.1], [147.9, 96.0],
-  [148.7, 96.4], [149.1, 103.1], [147.9, 104.3], [151.0, 112.6], [151.7, 118.1], [151.6, 118.9], [149.5, 120.6],
-  [149.3, 122.1], [150.2, 123.4], [149.2, 128.4],
+  [148.7, 96.4], [149.1, 103.1], [147.9, 104.3], [151.6, 112.6], [152.2, 118.1], [152.1, 118.9], [152.0, 120.6],
+  [151.8, 122.1], [151.7, 123.4], [151.3, 128.4],
 ];
 
 const EAR_SHADE: Knot[] = [
