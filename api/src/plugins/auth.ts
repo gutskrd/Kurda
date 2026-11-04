@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { verifyAccessToken } from '../auth/tokens.js';
 import type { AppConfig } from '../config/env.js';
+import { AppError } from './errors.js';
 
 export type AuthFailure = 'invalid_token' | 'account_disabled';
 
@@ -38,7 +39,8 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
     //
     // `birth_month_known` rides along for `requireBirthMonth`, which every
     // route that reaches other people asks: the row is read here anyway, so
-    // asking again was a second round trip on each of those requests.
+    // asking again was a second round trip on each of those requests. `guest`
+    // rides along for `requireAccount`, for the same reason.
     const family = claims.fam && UUID_RE.test(claims.fam) ? claims.fam : null;
     const result = await app.db.query<{
       id: string;
@@ -49,9 +51,10 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       banned_until: Date | null;
       email_verified_at: Date | null;
       birth_month_known: boolean;
+      guest: boolean;
       session_live: boolean;
     }>(
-      `SELECT id, roles, token_version, deleted_at, banned_at, banned_until, email_verified_at,
+      `SELECT id, roles, token_version, deleted_at, banned_at, banned_until, email_verified_at, guest,
               birth_year IS NOT NULL AS birth_month_known,
               ($2::uuid IS NULL OR EXISTS (
                 SELECT 1 FROM refresh_tokens rt
@@ -83,6 +86,7 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       familyId: claims.fam,
       emailVerified: user.email_verified_at !== null,
       birthMonthKnown: user.birth_month_known,
+      guest: user.guest,
     };
   });
 }
@@ -107,6 +111,38 @@ export async function requireAuth(req: FastifyRequest, reply: FastifyReply): Pro
   if (!req.user) {
     await reject(req, reply);
   }
+}
+
+/**
+ * The one refusal a guest hears from anything that reaches other people or
+ * costs money: the app offers to create the account on it.
+ */
+export function guestAccountError(): AppError {
+  return new AppError('GUEST_ACCOUNT', 403, 'create your account to do this');
+}
+
+/**
+ * preHandler guard: signed in, and not a guest.
+ *
+ * A guest (auth/guest.ts) is a learner with no email, password or birth
+ * month: they can take lessons, practise, keep a streak and earn badges
+ * exactly as a signed-in learner, and nothing more. Everything social
+ * (friends, chat, groups, posting, reactions, reports), public-facing (a
+ * profile others read, search, boards, ranks) or purchasable (the shop, gifts,
+ * store receipts) asks for this guard first, so a guest is told to create the
+ * account rather than, say, to answer the birth month question
+ * (`requireBirthMonth`, which comes after this one on routes that ask both).
+ *
+ * Deliberately a guard and not a gate like the activation hook: the guest's
+ * learning writes have to go through, and which routes are "social" is a
+ * judgement made route by route, where the route's own purpose is in view.
+ */
+export async function requireAccount(req: FastifyRequest, reply: FastifyReply): Promise<void> {
+  if (!req.user) {
+    await reject(req, reply);
+    return;
+  }
+  if (req.user.guest === true) throw guestAccountError();
 }
 
 /**

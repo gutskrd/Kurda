@@ -1,6 +1,7 @@
 import argon2 from 'argon2';
 import type pg from 'pg';
 import type { Redis } from 'ioredis';
+import { normalizeKurdish } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
 import { grantBootstrapAdmins } from '../admin/bootstrap-admins.js';
@@ -88,7 +89,8 @@ export interface RegisterInput {
 
 export interface PublicUser {
   id: string;
-  email: string;
+  /** null for a guest, who has none until the account is claimed */
+  email: string | null;
   username: string;
   displayName: string | null;
   locale: string;
@@ -97,8 +99,12 @@ export interface PublicUser {
   /**
    * No birth month on record yet: every client asks once, before anything
    * else, and nothing is offered until it is answered (POST /me/birth-date).
+   * Never for a guest: the claim form asks, and a guest is offered nothing
+   * that needs the answer.
    */
   birthDateRequired: boolean;
+  /** a guest account (auth/guest.ts): learning only, until claimed */
+  guest: boolean;
   createdAt: string;
 }
 
@@ -111,7 +117,8 @@ export function toPublicUser(row: UserRow): PublicUser {
     locale: row.locale,
     timezone: row.timezone,
     emailVerified: row.email_verified_at !== null,
-    birthDateRequired: row.birth_year == null,
+    birthDateRequired: row.birth_year == null && !row.guest,
+    guest: row.guest,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -138,6 +145,11 @@ export type CaptchaReason = 'attempts' | 'network' | 'surge';
  */
 export function captchaRequired(reason: CaptchaReason): AppError {
   return new AppError('CAPTCHA_REQUIRED', 403, 'complete the challenge to sign in', { captchaRequired: true, reason });
+}
+
+/** Claiming is for guests: an account that already has an address has nothing to claim. */
+export function notAGuest(): AppError {
+  return new AppError('NOT_A_GUEST', 403, 'this account is not a guest account');
 }
 
 export class AuthService {
@@ -183,10 +195,12 @@ export class AuthService {
    * Best-effort: signing in never fails because a notice could not be queued.
    */
   private async securityNotice(
-    user: { id: string; email: string; username: string; locale?: string },
+    user: { id: string; email: string | null; username: string; locale?: string },
     template: 'new-sign-in' | 'sign-in-attempts' | 'password-changed',
     daily: boolean,
   ): Promise<void> {
+    // a guest has no address to send it to (and nothing of these can happen to one)
+    if (user.email === null) return;
     try {
       if (daily) {
         const claimed = await this.pool.query(
@@ -225,10 +239,11 @@ export class AuthService {
   /** Legacy link-based verification, still served by /auth/resend-verification. */
   private async sendVerificationEmail(user: {
     id: string;
-    email: string;
+    email: string | null;
     username: string;
     locale?: string;
   }) {
+    if (user.email === null) return;
     try {
       const token = await createEmailToken(this.pool, user.id, 'verify_email');
       if (this.deps.jobs) {
@@ -251,10 +266,12 @@ export class AuthService {
    */
   private async sendVerificationCode(user: {
     id: string;
-    email: string;
+    email: string | null;
     username: string;
     locale?: string;
   }): Promise<string | null> {
+    // no address, no code: a guest's row has none until the account is claimed
+    if (user.email === null) return null;
     try {
       const code = await createVerificationCode(this.pool, user.id);
       if (this.deps.jobs) {
@@ -285,7 +302,7 @@ export class AuthService {
    */
   async resendVerificationCode(userId: string): Promise<void> {
     const res = await this.pool.query<{
-      email: string;
+      email: string | null;
       username: string;
       locale: string;
       email_verified_at: Date | null;
@@ -346,7 +363,8 @@ export class AuthService {
   /** Always succeeds from the caller's perspective (no enumeration). */
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.users.findByEmail(email);
-    if (!user) return;
+    // found by its address, so it has one; the check keeps the type honest
+    if (!user || user.email === null) return;
     // a mailbox is not a target: past RESET_EMAILS_PER_HOUR, nothing more is
     // sent, and the answer is the same as ever
     const recent = await this.pool.query<{ n: number }>(
@@ -408,7 +426,7 @@ export class AuthService {
     const passwordHash = await hashPassword(newPassword);
     // token_version bump invalidates every outstanding access token;
     // revoking refresh tokens kills all sessions (KUR-016 semantics)
-    const updated = await this.pool.query<{ email: string; username: string; locale: string }>(
+    const updated = await this.pool.query<{ email: string | null; username: string; locale: string }>(
       `UPDATE users SET password_hash = $2, token_version = token_version + 1
        WHERE id = $1 AND deleted_at IS NULL
        RETURNING email, username, locale`,
@@ -422,7 +440,7 @@ export class AuthService {
     await this.lockouts.release('account', userId);
     await this.deps.security?.record('password.reset', { userId });
     const user = updated.rows[0];
-    if (user && this.deps.jobs) {
+    if (user && user.email !== null && this.deps.jobs) {
       await this.deps.jobs
         .enqueue(sendEmailJob, {
           to: user.email,
@@ -447,7 +465,7 @@ export class AuthService {
     current: string,
     next: string,
   ): Promise<{ changed: true; accessToken: string | null; accessExpiresInSeconds: number }> {
-    const found = await this.pool.query<{ password_hash: string | null; email: string; username: string; locale: string }>(
+    const found = await this.pool.query<{ password_hash: string | null; email: string | null; username: string; locale: string }>(
       `SELECT password_hash, email, username, locale FROM users WHERE id = $1 AND deleted_at IS NULL`,
       [userId],
     );
@@ -498,7 +516,7 @@ export class AuthService {
   /** Always succeeds from the caller's perspective (no enumeration). */
   async resendVerification(email: string): Promise<void> {
     const user = await this.users.findByEmail(email);
-    if (!user) return;
+    if (!user || user.email === null) return;
     const verified = await this.pool.query<{ email_verified_at: Date | null }>(
       `SELECT email_verified_at FROM users WHERE id = $1`,
       [user.id],
@@ -564,6 +582,81 @@ export class AuthService {
     // Email ownership is proven by a 6-digit code the client enters (KUR-014).
     await this.sendVerificationCode(user);
     return { user: toPublicUser(user), tokens };
+  }
+
+  /**
+   * A guest claims their account (auth/guest.ts): the same row gets the
+   * address, the password, the chosen username (or keeps the generated one),
+   * the birth month and the consent a sign-up records, and stops being a
+   * guest. Everything learned as a guest — XP, streak, lessons, badges — is
+   * already on the row, so nothing is moved.
+   *
+   * From here on the account is a fresh sign-up: the address is unconfirmed,
+   * so the activation gate (plugins/activation.ts) holds its writes until the
+   * code this sends is entered, as it does after POST /auth/register. The
+   * sessions the guest had stay signed in; the guard reads the row on every
+   * request, so they are held at the same gate at once.
+   *
+   * The route has already checked the address, password, username and age
+   * the way sign-up does; this is the write, and the refusals the database
+   * can give: an address or a name in use, or a row that is no longer a
+   * guest (claimed from another device a moment ago).
+   */
+  async claim(
+    userId: string,
+    input: {
+      email: string;
+      password: string;
+      username?: string;
+      birthYear: number;
+      birthMonth: number;
+      locale?: string;
+    },
+  ): Promise<UserRow> {
+    const passwordHash = await hashPassword(input.password);
+    const birth = { birth_year: input.birthYear, birth_month: input.birthMonth };
+    let claimed: pg.QueryResult<UserRow>;
+    try {
+      claimed = await this.pool.query<UserRow>(
+        `UPDATE users SET email = $2, password_hash = $3,
+                username = COALESCE($4, username),
+                birth_year = $5, birth_month = $6,
+                locale = COALESCE($7, locale),
+                consent_version = $8, consented_at = now(),
+                -- a minor's profile starts private, as at sign-up
+                profile_visibility = CASE WHEN $9 THEN 'friends' ELSE profile_visibility END,
+                guest = false, guest_device_hash = NULL, email_verified_at = NULL
+          WHERE id = $1 AND guest AND deleted_at IS NULL
+          RETURNING *`,
+        [
+          userId,
+          normalizeKurdish(input.email),
+          passwordHash,
+          input.username ?? null,
+          birth.birth_year,
+          birth.birth_month,
+          input.locale ?? null,
+          CURRENT_POLICY_VERSION,
+          isMinorRow(birth),
+        ],
+      );
+    } catch (err) {
+      const constraint = (err as { constraint?: string }).constraint;
+      // usernames are public, so a specific answer; addresses are not (as at sign-up)
+      if (constraint === 'users_username_active_uniq') throw new AppError('USERNAME_TAKEN', 409, 'username already in use');
+      if (constraint === 'users_email_active_uniq') {
+        throw new AppError(
+          'REGISTRATION_FAILED',
+          409,
+          'unable to register with these details — if you already have an account, log in or reset your password',
+        );
+      }
+      throw err;
+    }
+    const user = claimed.rows[0];
+    if (!user) throw notAGuest();
+    await this.sendVerificationCode(user);
+    return user;
   }
 
   /**
