@@ -204,19 +204,20 @@ export function SpeakingCharacter({
   const reduce = useReducedMotion();
   const finger = useGaze();
   // in a browser every drawing shares one document, so a second Hevalo on the page would take the first one's fills
-  // unless its ids are its own; the first keeps the kept layers, a phone scopes ids per drawing and never needs this
+  // unless its ids are its own; the first keeps the kept layers, a phone scopes ids per drawing and never needs this.
+  // The seat is taken when the drawing is committed, not while it renders: a drawing that is replaced (a new key, a
+  // remount) renders before the old one lets go, and taking the seat during render made it the second of itself.
   const own = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const [seat] = useState(() => {
+  const [seat, setSeat] = useState(0);
+  useEffect(() => {
+    if (Platform.OS !== 'web') return;
     const taken = onScreen.get(speaker) ?? 0;
     onScreen.set(speaker, taken + 1);
-    return taken;
-  });
-  useEffect(
-    () => () => {
+    setSeat(taken);
+    return () => {
       onScreen.set(speaker, Math.max(0, (onScreen.get(speaker) ?? 1) - 1));
-    },
-    [speaker],
-  );
+    };
+  }, [speaker]);
   const idPrefix = Platform.OS === 'web' && seat > 0 ? `sc${own}` : undefined;
   const layers = useMemo(() => characterLayers(speaker, crop, idPrefix), [speaker, crop, idPrefix]);
   const art = characterArt(speaker);
