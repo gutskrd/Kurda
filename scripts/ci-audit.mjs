@@ -66,10 +66,16 @@ const ALLOWLIST = {
   // machine, is not bundled into the app, and has no fixed release (the
   // advisory's patched range starts at 4.6.6; the CLI is written against 3).
   //
+  // Since expo 57.0.31 the command line sits inside the expo package's own
+  // node_modules rather than at the root, because the peers of its router
+  // server no longer fit beside the root react, and npm places its zod there
+  // beside it. Nothing else under that folder asks for zod, so the copy there
+  // is the same build-only one and is accepted under either path.
+  //
   // REMOVE once an Expo release moves @expo/cli to a patched zod.
   'GHSA-mrhx-c7xc-m3w5': {
     why: 'zod memory exhaustion — only the copy inside @expo/cli (build-only, zod 3, no fixed 3.x); the API runs the fixed 4.6.7',
-    only: ['node_modules/@expo/cli/'],
+    only: ['node_modules/@expo/cli/', 'node_modules/expo/node_modules/'],
   },
   // fastify's seven advisories, one of them an authentication bypass, were here
   // for about a minute. `^5.11.0` already allowed the fix, so `npm update
