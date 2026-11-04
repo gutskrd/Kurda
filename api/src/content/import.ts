@@ -18,20 +18,20 @@ import { InvalidExercisePayloadError, validateExercisePayload, type MultipleChoi
  * what is stored at its slot; an unchanged lesson is left alone.
  */
 
-const exerciseSchema = z.object({
+export const exerciseSchema = z.object({
   position: z.number().int().positive(),
   type: z.string().min(1),
   payload: z.unknown(),
 });
 
-const lessonSchema = z.object({
+export const lessonSchema = z.object({
   position: z.number().int().positive(),
   titleKu: z.string().min(1),
   titleEn: z.string().min(1),
   exercises: z.array(exerciseSchema).min(1),
 });
 
-const skillSchema = z.object({
+export const skillSchema = z.object({
   position: z.number().int().positive(),
   titleKu: z.string().min(1),
   titleEn: z.string().min(1),
@@ -39,7 +39,7 @@ const skillSchema = z.object({
   lessons: z.array(lessonSchema).min(1),
 });
 
-const unitSchema = z.object({
+export const unitSchema = z.object({
   position: z.number().int().positive(),
   titleKu: z.string().min(1),
   titleEn: z.string().min(1),
