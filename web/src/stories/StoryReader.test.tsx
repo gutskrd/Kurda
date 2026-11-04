@@ -155,7 +155,7 @@ describe('Story reader', () => {
     reader();
     const bar = await screen.findByRole('group', { name: 'Listen to the story' });
     expect(within(bar).getByRole('button', { name: 'Play' })).toBeInTheDocument();
-    expect(within(bar).getByRole('button', { name: '0.75×' })).toHaveAttribute('aria-pressed', 'false');
+    expect(within(bar).getByRole('button', { name: 'Speed: 1×' })).toBeInTheDocument();
   });
 
   it('remembers the text size', async () => {

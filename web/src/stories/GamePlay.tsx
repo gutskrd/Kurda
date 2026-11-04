@@ -49,7 +49,7 @@ export function GameReading({
   const [size, setSize] = useState(rememberedTextSize);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const audio = useStoryAudio(story?.paragraphs ?? NO_PARAGRAPHS, story?.audio ?? NO_AUDIO, story?.voices);
+  const audio = useStoryAudio(story?.paragraphs ?? NO_PARAGRAPHS, story?.audio ?? NO_AUDIO, story?.voices, false, story?.narration);
   const solo = view.mode === 'solo';
   const soft = view.readingSoftCapAt ? Date.parse(view.readingSoftCapAt) : null;
   const hard = view.readingHardCapAt ? Date.parse(view.readingHardCapAt) : null;
@@ -99,7 +99,8 @@ export function GameReading({
                 rememberTextSize(n);
               }}
             />
-            {story.fullyNarrated && <StoryPlayerBar audio={audio} />}
+            {/* whatever is recorded plays as one track; a partly recorded story says so on the bar */}
+            {audio.track.length > 0 && <StoryPlayerBar audio={audio} />}
           </div>
           <StoryText paragraphs={story.paragraphs} glossary={story.glossary} dialect={story.dialect} textSize={size} audio={audio} />
         </>

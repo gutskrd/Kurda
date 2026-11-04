@@ -423,11 +423,30 @@
   font-size: 0.95rem;
 }
 
+/*
+ * The player (ReaderControls.tsx): among a game's tools it is a quiet row of
+ * buttons; docked under the reader it is one bar in ink — the primary colour,
+ * as the app's one filled button is — held at the foot of the screen, with the
+ * narrator, the buttons, the seek line and the clock on one row.
+ */
 .story-player {
+  --player-ink: var(--ink);
+  --player-ink-2: var(--ink-3);
+  --player-dim: var(--ink-4);
+  --player-fill: var(--surface-2);
+  --player-line: var(--border-strong);
   display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+.story-player-row {
+  display: flex;
   align-items: center;
   gap: 4px;
   flex-wrap: wrap;
+  min-width: 0;
 }
 .story-player-icon {
   display: inline-grid;
@@ -438,19 +457,20 @@
 .story-player-btn {
   display: inline-grid;
   place-items: center;
+  flex: none;
   width: 44px;
   height: 44px;
   border-radius: 50%;
   border: 0;
   background: transparent;
-  color: var(--ink);
+  color: var(--player-ink);
   cursor: pointer;
 }
 .story-player-btn:hover:not(:disabled) {
-  background: var(--surface-2);
+  background: var(--player-fill);
 }
 .story-player-btn:disabled {
-  color: var(--ink-4);
+  color: var(--player-dim);
   cursor: default;
 }
 .story-player-btn.is-main {
@@ -460,34 +480,178 @@
 .story-player-btn.is-main:hover {
   background: var(--primary-hover);
 }
+/* while the network holds a sentence up, a quiet spinner where the pause mark was */
+.story-player-spinner {
+  width: 18px;
+  height: 18px;
+  border-width: 2px;
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
+  border-top-color: currentColor;
+}
 /* previous and next point the way the page reads */
 [dir='rtl'] .story-player-btn svg {
   transform: scaleX(-1);
 }
-.story-player-speed {
-  display: inline-flex;
-  margin-inline-start: 4px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border-strong);
-  overflow: hidden;
-}
 .story-player-rate {
-  min-width: 52px;
+  flex: none;
+  min-width: 56px;
   height: 36px;
   padding: 0 10px;
-  border: 0;
+  margin-inline-start: 4px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--player-line);
   background: transparent;
-  color: var(--ink-2);
+  color: var(--player-ink);
   font-size: 0.85rem;
+  font-weight: 650;
   font-variant-numeric: tabular-nums;
   cursor: pointer;
   /* a number: the same in every direction */
   direction: ltr;
 }
-.story-player-rate.is-on {
-  background: var(--surface-2);
-  color: var(--ink);
-  font-weight: 650;
+.story-player-rate:hover {
+  background: var(--player-fill);
+}
+.story-player-narrator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  padding-inline-end: 6px;
+  color: var(--player-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+.story-player-face {
+  --speaker-size: 34px;
+}
+/* the seek line and the clock take what width is left; on a narrow row they wrap to a row of their own */
+.story-player-line {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1 1 160px;
+  min-width: 140px;
+}
+.story-player-clock {
+  flex: none;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--player-ink-2);
+  white-space: nowrap;
+}
+.story-player-seek {
+  --seek: 0%;
+  flex: 1;
+  min-width: 0;
+  height: 28px;
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  cursor: pointer;
+}
+.story-player-seek:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-pill);
+}
+/* a thin line, the gold of what has been heard up to the dot, drawn once for each engine */
+.story-player-seek::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(to right, var(--gold) var(--seek), var(--player-line) var(--seek));
+}
+.story-player-seek::-moz-range-track {
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--player-line);
+}
+.story-player-seek::-moz-range-progress {
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+}
+.story-player-seek::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  margin-top: -5.5px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--player-ink);
+}
+.story-player-seek::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--player-ink);
+}
+/* a right-to-left page reads the line from its right, as it reads everything */
+[dir='rtl'] .story-player-seek::-webkit-slider-runnable-track {
+  background: linear-gradient(to left, var(--gold) var(--seek), var(--player-line) var(--seek));
+}
+.story-player-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 0 6px;
+  font-size: 0.8rem;
+  color: var(--player-ink-2);
+}
+.story-player-note {
+  margin: 0;
+}
+.story-player-note.is-error {
+  color: var(--danger);
+}
+
+/* under the reader: the bar in ink, at the foot of the screen, the width of the text */
+.story-player.is-docked {
+  --player-ink: var(--primary-ink);
+  --player-ink-2: color-mix(in srgb, var(--primary-ink) 72%, transparent);
+  --player-dim: color-mix(in srgb, var(--primary-ink) 38%, transparent);
+  --player-fill: color-mix(in srgb, var(--primary-ink) 12%, transparent);
+  --player-line: color-mix(in srgb, var(--primary-ink) 28%, transparent);
+  position: sticky;
+  bottom: calc(12px + env(safe-area-inset-bottom));
+  z-index: 6;
+  display: flex;
+  gap: 2px;
+  margin-top: 22px;
+  padding: 8px 10px;
+  border-radius: var(--r-xl);
+  background: var(--primary);
+  color: var(--primary-ink);
+  box-shadow: var(--shadow);
+}
+.story-player.is-docked .story-player-icon {
+  display: none;
+}
+.story-player.is-docked .story-player-btn.is-main {
+  background: var(--primary-ink);
+  color: var(--primary);
+}
+.story-player.is-docked .story-player-btn.is-main:hover {
+  background: color-mix(in srgb, var(--primary-ink) 86%, var(--primary));
+}
+.story-player.is-docked .story-player-note.is-error {
+  /* red words on an ink bar are hard to read: the error reads in the bar's own ink, marked by its role */
+  color: var(--player-ink);
+  font-weight: 600;
+}
+@media (max-width: 520px) {
+  .story-player.is-docked {
+    border-radius: var(--r-lg);
+    padding: 6px 8px;
+  }
+  .story-player.is-docked .story-player-narrator-name {
+    display: none;
+  }
 }
 
 /* the text */
