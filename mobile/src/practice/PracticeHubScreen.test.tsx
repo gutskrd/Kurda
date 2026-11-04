@@ -68,7 +68,9 @@ describe('the practice hub', () => {
     open(learned);
     const hero = await screen.findByTestId('practice-hero');
     expect(within(hero).getByText('8 words due')).toBeTruthy();
-    fireEvent.click(within(hero).getByRole('button', { name: 'Start, 8 words due' }));
+    // the button says what a session pays: half of a fresh lesson, in the server's own numbers
+    expect(within(hero).getByText('+5–10 XP')).toBeTruthy();
+    fireEvent.click(within(hero).getByRole('button', { name: 'Start, 8 words due, +5–10 XP' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Practice', { mode: 'review' });
   });
 
@@ -76,7 +78,7 @@ describe('the practice hub', () => {
     open({ ...learned, due: 0 });
     const hero = await screen.findByTestId('practice-hero');
     expect(within(hero).getByText('Unit 2 review')).toBeTruthy();
-    fireEvent.click(within(hero).getByRole('button', { name: 'Start, Food' }));
+    fireEvent.click(within(hero).getByRole('button', { name: 'Start, Food, +5–10 XP' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Practice', { mode: 'unit', unitId: 'u2' });
   });
 
@@ -116,6 +118,8 @@ describe('the practice hub', () => {
       fireEvent.click(button);
     }
     expect(navigation.navigate).not.toHaveBeenCalled();
+    // the way to the lessons pays nothing of its own, so it promises nothing
+    expect(within(hero).queryByText('+5–10 XP')).toBeNull();
     fireEvent.click(within(hero).getByRole('button', { name: 'Go to lessons' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
   });
