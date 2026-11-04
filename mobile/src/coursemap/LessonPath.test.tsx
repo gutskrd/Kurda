@@ -77,6 +77,27 @@ describe('the lesson path', () => {
     expect(button('Family, you are here, 1 of 3 lessons done')).toBeTruthy();
     expect(button('Food, locked, 0 of 1 lessons done')).toBeTruthy();
     expect(button('Unit 2 trophy, not earned yet')).toBeTruthy();
+    // between the units, where in the course the next one lies; the first has the course's heading above it instead
+    expect(screen.getAllByTestId('lp-unit-divider')).toHaveLength(1);
+    expect(screen.getByText('Unit 2 of 2')).toBeTruthy();
+  });
+
+  /*
+   * "Start" bobs over the current skill for as long as the path is in front
+   * of somebody who has not asked for less motion, and says so while it does.
+   * Under Reduce Motion it stands still from the first frame.
+   */
+  it('bobs the Start pill while the path is in view, and holds it still under Reduce Motion', async () => {
+    client();
+    patchReactNativeWeb({ reduceMotion: false });
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    expect(await screen.findByTestId('lp-callout-bobbing')).toBeTruthy();
+    cleanup();
+    patchReactNativeWeb({ reduceMotion: true });
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+    expect(button('Continue: Family')).toBeTruthy();
+    expect(screen.queryByTestId('lp-callout-bobbing')).toBeNull();
   });
 
   it('starts the next lesson in one tap from the bubble over the current skill', () => {
@@ -187,11 +208,12 @@ describe('the lesson path', () => {
     const second: UnitPlace = { ...first, unitId: 'u2', number: 2, title: 'Family & Food', tone: TONES.dark.river };
     const fades = vi.spyOn(Animated, 'timing');
     const turn = async () => {
-      fades.mockClear();
       const view = renderWithProviders(<PinnedUnit unit={first} />);
       // the number over the name, said as one heading
       expect(screen.getByRole('heading', { name: 'Unit 1, Basics' })).toBeTruthy();
       await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+      // the header's own arrival is not what is counted here: only what the change of unit asks for
+      fades.mockClear();
       view.rerender(<PinnedUnit unit={second} />);
       expect(screen.getByRole('heading', { name: 'Unit 2, Family & Food' })).toBeTruthy();
       expect(screen.queryByText('Basics')).toBeNull();

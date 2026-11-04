@@ -2727,6 +2727,11 @@ export type TranslationKey =
   | 'quests.chest.failed'
   | 'quests.chest.claimed'
   | 'quests.chest.notDone'
+  // path, practice and quests alive
+  | 'coursemap.path.unitOf'
+  | 'practice.hub.xp'
+  | 'quests.monthly.title'
+  | 'quests.monthly.soFar'
   | 'learn.more.title'
   | 'coursemap.xp.first'
   | 'coursemap.xp.again'
@@ -5431,6 +5436,11 @@ const en: Catalog = {
   'quests.chest.failed': 'The chest didn’t open just now. It’s still yours: try again, or open it later from Learn.',
   'quests.chest.claimed': 'This chest is already open, and its Zêr is yours.',
   'quests.chest.notDone': 'This quest isn’t finished yet, so its chest stays shut for now.',
+  // path, practice and quests alive
+  'coursemap.path.unitOf': 'Unit {n} of {total}',
+  'practice.hub.xp': '+{min}–{max} XP',
+  'quests.monthly.title': 'This month',
+  'quests.monthly.soFar': '{done} of {possible} so far this month',
   'learn.more.title': 'More for today',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
@@ -8128,6 +8138,11 @@ const ku: Catalog = {
   'quests.chest.failed': 'Sindoq niha venebû. Ew hîn jî ya te ye: dîsa biceribîne, an paşê ji Fêrbûnê veke.',
   'quests.chest.claimed': 'Ev sindoq berê vebûye, û Zêrê wê yê te ye.',
   'quests.chest.notDone': 'Ev erk hîn neqediyaye, loma sindoqa wê niha girtî dimîne.',
+  // path, practice and quests alive
+  'coursemap.path.unitOf': 'Yekîneya {n} ji {total}',
+  'practice.hub.xp': '+{min}–{max} XP',
+  'quests.monthly.title': 'Ev meh',
+  'quests.monthly.soFar': '{done} ji {possible} heta niha di vê mehê de',
   'learn.more.title': 'Ji bo îro zêdetir',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
@@ -10825,6 +10840,11 @@ const de: Catalog = {
   'quests.chest.failed': 'Die Truhe ließ sich gerade nicht öffnen. Sie gehört trotzdem dir: Versuche es erneut oder öffne sie später unter Lernen.',
   'quests.chest.claimed': 'Diese Truhe ist schon offen, und ihr Zêr gehört dir.',
   'quests.chest.notDone': 'Diese Aufgabe ist noch nicht geschafft, deshalb bleibt ihre Truhe vorerst zu.',
+  // path, practice and quests alive
+  'coursemap.path.unitOf': 'Einheit {n} von {total}',
+  'practice.hub.xp': '+{min}–{max} XP',
+  'quests.monthly.title': 'Diesen Monat',
+  'quests.monthly.soFar': '{done} von {possible} bisher in diesem Monat',
   'learn.more.title': 'Mehr für heute',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
@@ -13522,6 +13542,11 @@ const es: Catalog = {
   'quests.chest.failed': 'El cofre no se ha abierto ahora. Sigue siendo tuyo: inténtalo de nuevo o ábrelo más tarde desde Aprender.',
   'quests.chest.claimed': 'Este cofre ya está abierto y su Zêr es tuyo.',
   'quests.chest.notDone': 'Esta misión aún no está cumplida, así que su cofre sigue cerrado por ahora.',
+  // path, practice and quests alive
+  'coursemap.path.unitOf': 'Unidad {n} de {total}',
+  'practice.hub.xp': '+{min}–{max} XP',
+  'quests.monthly.title': 'Este mes',
+  'quests.monthly.soFar': '{done} de {possible} hasta ahora este mes',
   'learn.more.title': 'Más para hoy',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
@@ -16219,6 +16244,11 @@ const tr: Catalog = {
   'quests.chest.failed': 'Sandık şu an açılmadı. Hâlâ senin: tekrar dene ya da daha sonra Öğren’den aç.',
   'quests.chest.claimed': 'Bu sandık zaten açık ve içindeki Zêr senin.',
   'quests.chest.notDone': 'Bu görev henüz bitmedi, bu yüzden sandığı şimdilik kapalı kalıyor.',
+  // path, practice and quests alive
+  'coursemap.path.unitOf': 'Ünite {n} / {total}',
+  'practice.hub.xp': '+{min}–{max} XP',
+  'quests.monthly.title': 'Bu ay',
+  'quests.monthly.soFar': 'Bu ay şimdiye kadar {done} / {possible}',
   'learn.more.title': 'Bugün için daha fazlası',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
@@ -18916,6 +18946,11 @@ const ar: Catalog = {
   'quests.chest.failed': 'لم يُفتح الصندوق الآن. ما زال لك: حاول مرة أخرى، أو افتحه لاحقًا من تعلّم.',
   'quests.chest.claimed': 'هذا الصندوق مفتوح بالفعل، وZêr الذي فيه لك.',
   'quests.chest.notDone': 'لم تكتمل هذه المهمة بعد، لذا يبقى صندوقها مغلقًا الآن.',
+  // path, practice and quests alive
+  'coursemap.path.unitOf': 'الوحدة {n} من {total}',
+  'practice.hub.xp': '+{min}–{max} XP',
+  'quests.monthly.title': 'هذا الشهر',
+  'quests.monthly.soFar': '{done} من {possible} حتى الآن هذا الشهر',
   'learn.more.title': 'المزيد لليوم',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
@@ -21613,6 +21648,11 @@ const fr: Catalog = {
   'quests.chest.failed': 'Le coffre ne s’est pas ouvert. Il est toujours à toi : réessaie, ou ouvre-le plus tard depuis Apprendre.',
   'quests.chest.claimed': 'Ce coffre est déjà ouvert, et ses Zêr sont à toi.',
   'quests.chest.notDone': 'Cette quête n’est pas encore accomplie, alors son coffre reste fermé pour l’instant.',
+  // path, practice and quests alive
+  'coursemap.path.unitOf': 'Unité {n} sur {total}',
+  'practice.hub.xp': '+{min}–{max} XP',
+  'quests.monthly.title': 'Ce mois-ci',
+  'quests.monthly.soFar': '{done} sur {possible} jusqu’ici ce mois-ci',
   'learn.more.title': 'Plus pour aujourd’hui',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
@@ -24310,6 +24350,11 @@ const nl: Catalog = {
   'quests.chest.failed': 'De kist ging nu niet open. Hij is nog steeds van jou: probeer het opnieuw, of open hem later bij Leren.',
   'quests.chest.claimed': 'Deze kist is al open, en de Zêr erin is van jou.',
   'quests.chest.notDone': 'Deze opdracht is nog niet voltooid, dus de kist blijft voorlopig dicht.',
+  // path, practice and quests alive
+  'coursemap.path.unitOf': 'Eenheid {n} van {total}',
+  'practice.hub.xp': '+{min}–{max} XP',
+  'quests.monthly.title': 'Deze maand',
+  'quests.monthly.soFar': '{done} van {possible} tot nu toe deze maand',
   'learn.more.title': 'Meer voor vandaag',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',
@@ -27008,6 +27053,11 @@ const ckb: Catalog = {
   'quests.chest.failed': 'سندوقەکە ئێستا نەکرایەوە. هێشتا هی تۆیە: دووبارە هەوڵ بدەرەوە، یان دواتر لە فێربوونەوە بیکەرەوە.',
   'quests.chest.claimed': 'ئەم سندوقە پێشتر کراوەتەوە، و Zêrەکەی هی تۆیە.',
   'quests.chest.notDone': 'ئەم ئەرکە هێشتا تەواو نەبووە، بۆیە سندوقەکەی ئێستا داخراو دەمێنێتەوە.',
+  // path, practice and quests alive
+  'coursemap.path.unitOf': 'یەکەی {n} لە {total}',
+  'practice.hub.xp': '+{min}–{max} XP',
+  'quests.monthly.title': 'ئەم مانگە',
+  'quests.monthly.soFar': '{done} لە {possible} تا ئێستا لەم مانگە',
   'learn.more.title': 'زیاتر بۆ ئەمڕۆ',
   'coursemap.xp.first': '+{min}–{max} XP',
   'coursemap.xp.again': '+{min}–{max} XP',

@@ -7,9 +7,11 @@ import { haptic } from '../feedback/haptics';
 import { useDirection } from '../reports/direction';
 import { ease, springTo, timing } from '../theme/animate';
 import { Icon, type IconName } from '../theme/Icon';
-import { DrawnCheck } from '../theme/MotionParts';
+import { duration } from '../theme/motion';
+import { DrawnCheck, PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
+import { useLive } from './live';
 import { GOLD_INK, GOLD_LIP, REST, mix, type ToneColors } from './path';
 import type { SkillNode } from './types';
 
@@ -39,6 +41,9 @@ export interface StopChange {
 
 /** How far a stop swells as it pops. */
 const POP = 1.12;
+/** How far the current skill's ring swells, once, and how long after the path opens — when the page has scrolled to it. */
+const PULSE = 1.08;
+const PULSE_AT_MS = 700;
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
@@ -50,8 +55,9 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
  * padlock when closed, review's arrows, a unit's trophy.
  *
  * Over the current skill floats "Start" (or "Continue"), which opens its next
- * lesson in one tap; it bobs gently, and stands still for anyone who has asked
- * their phone for less motion.
+ * lesson in one tap; it bobs gently for as long as the path is in front, and
+ * stands still for anyone who has asked their phone for less motion. The
+ * current skill's ring swells once as the path opens on it.
  *
  * The first stop of a later unit that can be jumped to (`jump`) is drawn in its
  * unit's colour with a skip-forward glyph rather than grey with a padlock, and
@@ -227,7 +233,8 @@ function testName(stop: Stop): string {
  * from the top, clockwise. Back from a lesson it fills on from where it stood
  * (`from`) once the page has settled. A stroke along a circle is not
  * something the native driver can move, so this one short animation runs on
- * the JS thread, as the goal ring's does.
+ * the JS thread, as the goal ring's does. The swell as the path first opens
+ * on it is a scale, on the native driver.
  */
 function Ring({
   done,
@@ -249,8 +256,18 @@ function Ring({
   const r = NODE / 2 + RING_GAP + RING_STROKE / 2;
   const c = 2 * Math.PI * r;
   const share = total > 0 ? Math.max(0, Math.min(1, done / total)) : 0;
+  const reduce = useReducedMotion();
   const shown = useRef(new Animated.Value(from ?? share)).current;
   const opacity = useRef(new Animated.Value(1)).current;
+  // a glance at where to go on: the ring swells once, after the page has scrolled to it; a ring filling on from a lesson has its own moment
+  const pulse = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (from !== undefined || reduce) return;
+    const run = Animated.sequence([Animated.delay(PULSE_AT_MS), timing(pulse, PULSE, duration.quick + 40), springTo(pulse, 1, 'bouncy')]);
+    run.start();
+    return () => run.stop();
+    // once, as it is first drawn
+  }, []);
   useEffect(() => {
     if (from === undefined) {
       shown.setValue(share);
@@ -266,7 +283,12 @@ function Ring({
   }, [from, share, goneAt, shown, opacity]);
   const offset = shown.interpolate({ inputRange: [0, 1], outputRange: [c, 0] });
   return (
-    <Animated.View style={[styles.ring, { opacity }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Animated.View
+      style={[styles.ring, { opacity, transform: [{ scale: pulse }] }]}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       <Svg width={RING} height={RING}>
         <Circle cx={RING / 2} cy={RING / 2} r={r} stroke={track} strokeWidth={RING_STROKE} fill="none" />
         {share > 0 ? (
@@ -289,12 +311,15 @@ function Ring({
 }
 
 /**
- * "Start" over the current skill, bobbing gently unless the phone asks for less
- * motion — a few times as the path appears, then still. A bob that never
- * stops is something moving at the edge of the eye for as long as the screen
- * is open, long after it has said where to tap. "Jump here?" over a later
- * unit is `still` from the first: it is an offer, not the next step, and there
- * can be several on the screen at once.
+ * "Start" over the current skill, bobbing gently for as long as the path is in
+ * front of the learner: one small thing moving where the next step is, which
+ * is how the eye finds it on a long path. Slow and shallow, so it is company
+ * rather than a nag, and it stops the moment the screen is not the one in
+ * view, the app is not in front, or the phone asks for less motion (`useLive`),
+ * so it never costs a frame nobody sees. It gives under the finger as every
+ * button does. "Jump here?" over a later unit is `still` from the first: it
+ * is an offer, not the next step, and there can be several on the screen at
+ * once.
  */
 function Callout({
   text,
@@ -314,30 +339,53 @@ function Callout({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const reduce = useReducedMotion();
+  const live = useLive();
   const lift = useRef(new Animated.Value(0)).current;
   const shown = useRef(new Animated.Value(arriving && !reduce ? 0 : 1)).current;
+  // the bob waits for the fade-in the first time, and never again (the screen coming back into view starts it at once)
+  const arrived = useRef(!arriving || reduce);
 
+  // just moved here from the stop before: it fades in once the rest of the path has moved
   useEffect(() => {
-    if (reduce || still) {
-      lift.setValue(0);
+    if (reduce || !arriving) {
       shown.setValue(1);
       return;
     }
+    const run = timing(shown, 1, PATH_RETURN.bubbleMs, { delay: PATH_RETURN.bubbleAtMs });
+    run.start(({ finished }) => {
+      if (finished) arrived.current = true;
+    });
+    return () => run.stop();
+  }, [reduce, arriving, shown]);
+
+  useEffect(() => {
+    if (!live || still) {
+      lift.setValue(0);
+      return;
+    }
+    const half = BOB_MS / 2;
     const bob = Animated.loop(
       Animated.sequence([
-        Animated.timing(lift, { toValue: -5, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(lift, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+        Animated.timing(lift, { toValue: -BOB, duration: half, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
+        Animated.timing(lift, { toValue: 0, duration: half, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
       ]),
-      { iterations: BOBS },
     );
-    const run = arriving ? Animated.sequence([timing(shown, 1, PATH_RETURN.bubbleMs, { delay: PATH_RETURN.bubbleAtMs }), bob]) : bob;
-    run.start();
-    return () => run.stop();
-  }, [reduce, still, lift, shown, arriving]);
+    const wait = setTimeout(() => bob.start(), arrived.current ? 0 : PATH_RETURN.bubbleAtMs + PATH_RETURN.bubbleMs);
+    return () => {
+      clearTimeout(wait);
+      bob.stop();
+      lift.setValue(0);
+    };
+  }, [live, still, lift]);
 
   return (
-    <Animated.View style={[styles.calloutWrap, { opacity: shown, transform: [{ translateY: lift }] }]} pointerEvents="box-none">
-      <Pressable
+    <Animated.View
+      style={[styles.calloutWrap, { opacity: shown, transform: [{ translateY: lift }] }]}
+      pointerEvents="box-none"
+      // said while it bobs, so a test can tell a pill that moves from one that stands still
+      testID={live && !still ? 'lp-callout-bobbing' : undefined}
+    >
+      <PressableScale
         onPress={onPress}
         accessibilityRole="button"
         accessibilityLabel={label}
@@ -345,15 +393,16 @@ function Callout({
         style={[styles.callout, { backgroundColor: colors.surfaceRaised, borderColor: tone.fill }]}
       >
         <Text style={[styles.calloutText, { color: tone.text }]}>{text}</Text>
-      </Pressable>
+      </PressableScale>
       <View style={[styles.calloutTip, { backgroundColor: colors.surfaceRaised, borderColor: tone.fill }]} />
     </Animated.View>
   );
 }
 
 const CALLOUT_WIDTH = 180;
-/** How many times "Start" bobs before it rests where it is. */
-const BOBS = 3;
+/** One bob of "Start", up and back, and how far it rises: slow and shallow. */
+const BOB_MS = 2200;
+const BOB = 4;
 
 const styles = StyleSheet.create({
   stop: { position: 'absolute', width: NODE, height: NODE + LIP_RAISED },
