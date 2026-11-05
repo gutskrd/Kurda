@@ -39,9 +39,11 @@ import { dialectName } from '../learn/map';
  */
 
 /** What a game's board is handed for the item in front of the player. */
-export interface SoloRound<Item, H, C> {
-  /** the round's id: what a game's clips are played from (`hearItClipPath`) */
+export interface SoloRound<Item, H, C, B = unknown> {
+  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Kurdish Detective's hints) */
   sessionId: string;
+  /** what the whole round shares, as the round was sent (Kurdish Detective's case board); null for a game without */
+  board: B | null;
   item: Item;
   index: number;
   total: number;
@@ -53,7 +55,7 @@ export interface SoloRound<Item, H, C> {
   submit: (answer: unknown) => Promise<void>;
 }
 
-interface Props<Item, H, C> {
+interface Props<Item, H, C, B> {
   game: LearnGameId;
   dialect: GameDialect;
   title: string;
@@ -67,7 +69,7 @@ interface Props<Item, H, C> {
   suggested?: GameDifficulty;
   /** a round left unfinished, to offer first */
   open: string | null;
-  renderRound: (round: SoloRound<Item, H, C>) => React.ReactNode;
+  renderRound: (round: SoloRound<Item, H, C, B>) => React.ReactNode;
   /** the explanation for an item's `why`, in the reader's words */
   explain: (why: string) => string | null;
   /** after a round is paid: the game refreshes what it shows (the ladder) */
@@ -92,7 +94,7 @@ function nextOpen(states: readonly SoloItemState[]): number {
   return at < 0 ? states.length : at;
 }
 
-export function SoloGameShell<Item, H, C>({
+export function SoloGameShell<Item, H, C, B = unknown>({
   game,
   dialect,
   title,
@@ -106,12 +108,12 @@ export function SoloGameShell<Item, H, C>({
   onFinished,
   resultsExtra,
   roundItems,
-}: Props<Item, H, C>): React.JSX.Element {
+}: Props<Item, H, C, B>): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
   const [phase, setPhase] = useState<Phase>('intro');
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
-  const [session, setSession] = useState<SoloSessionView<Item> | null>(null);
+  const [session, setSession] = useState<SoloSessionView<Item, B> | null>(null);
   const [index, setIndex] = useState(0);
   const [result, setResult] = useState<SoloAnswerResult<H, C> | null>(null);
   const [results, setResults] = useState<SoloResults | null>(null);
@@ -135,7 +137,7 @@ export function SoloGameShell<Item, H, C>({
     [t],
   );
 
-  const begin = useCallback((view: SoloSessionView<Item>) => {
+  const begin = useCallback((view: SoloSessionView<Item, B>) => {
     setSession(view);
     setIndex(nextOpen(view.states));
     setResult(null);
@@ -162,7 +164,7 @@ export function SoloGameShell<Item, H, C>({
     if (!chosen) return;
     setBusy(true);
     setError(null);
-    const res = await client.post<SoloSessionView<Item>>('/games/solo/sessions', { game, dialect, difficulty: chosen });
+    const res = await client.post<SoloSessionView<Item, B>>('/games/solo/sessions', { game, dialect, difficulty: chosen });
     setBusy(false);
     if (!res.ok) return fail(res.error.code, describeError(res.error, t));
     begin(res.data);
@@ -171,7 +173,7 @@ export function SoloGameShell<Item, H, C>({
   const resume = async (): Promise<void> => {
     if (!open) return;
     setBusy(true);
-    const res = await client.get<SoloSessionView<Item> & { expired: boolean }>(`/games/solo/sessions/${open}`);
+    const res = await client.get<SoloSessionView<Item, B> & { expired: boolean }>(`/games/solo/sessions/${open}`);
     setBusy(false);
     if (!res.ok) return fail(res.error.code, describeError(res.error, t));
     if (res.data.expired) return fail('GAME_SESSION_EXPIRED', '');
@@ -281,7 +283,7 @@ export function SoloGameShell<Item, H, C>({
           </span>
         </header>
 
-        {renderRound({ sessionId: session.id, item, index, total: session.items.length, state, result, busy, submit })}
+        {renderRound({ sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit })}
 
         <div className={`solo-feedback${result ? ` is-${result.correct ? 'right' : result.done ? 'missed' : 'again'}` : ''}`} aria-live="polite">
           {result && (

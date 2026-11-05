@@ -42,6 +42,8 @@ const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })
 const BuildSentence = lazy(() => import('./games/BuildSentence').then((m) => ({ default: m.BuildSentence })));
 const MemoryThief = lazy(() => import('./games/MemoryThief').then((m) => ({ default: m.MemoryThief })));
 const HearIt = lazy(() => import('./games/HearIt').then((m) => ({ default: m.HearIt })));
+const WhatWouldYouSay = lazy(() => import('./games/WhatWouldYouSay').then((m) => ({ default: m.WhatWouldYouSay })));
+const Detective = lazy(() => import('./games/Detective').then((m) => ({ default: m.Detective })));
 const StoriesLibrary = lazy(() => import('./stories/StoriesLibrary').then((m) => ({ default: m.StoriesLibrary })));
 const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ default: m.StoryReader })));
 const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
@@ -287,6 +289,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="games/kingdom" element={<RequireAccount what="gate.what.play"><KingdomPage /></RequireAccount>} />
         <Route path="games/memory-thief" element={<RequireAccount what="gate.what.play"><MemoryThief /></RequireAccount>} />
         <Route path="games/hear-it" element={<RequireAccount what="gate.what.play"><HearIt /></RequireAccount>} />
+        <Route path="games/what-would-you-say" element={<RequireAccount what="gate.what.play"><WhatWouldYouSay /></RequireAccount>} />
+        <Route path="games/detective" element={<RequireAccount what="gate.what.play"><Detective /></RequireAccount>} />
         {/* Stories replaced the ranked quiz, then moved from the games to Learn's
             own Stories group: both old addresses lead there (an invite's `?id=`
             and a story's slug kept). A game on a story stays here: a quiz on one

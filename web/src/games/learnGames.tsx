@@ -6,6 +6,8 @@ import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { defaultVariety } from '../stories/prefs';
 import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '../lastletter/learnCard';
+import { SceneMini } from './SceneMini';
+import { CaseMini } from './CaseMini';
 // the path's colours: a game's card wears one of its tones (`lp-tone-*`)
 import '../learn/path.css';
 import './games.css';
@@ -148,6 +150,8 @@ export const WEB_LEARN_GAMES: Partial<Record<LearnGameId, WebGame>> = {
   'build-sentence': { href: '/app/games/build-sentence', nameKey: 'games.sentence.name', bodyKey: 'games.sentence.body', modes: ['solo'], Visual: SentenceMini },
   'memory-thief': { href: '/app/games/memory-thief', nameKey: 'games.memory.name', bodyKey: 'games.memory.body', modes: ['solo'], Visual: MemoryMini },
   'hear-it': { href: '/app/games/hear-it', nameKey: 'games.hear.name', bodyKey: 'games.hear.body', modes: ['solo'], Visual: HearMini },
+  'what-would-you-say': { href: '/app/games/what-would-you-say', nameKey: 'games.say.name', bodyKey: 'games.say.body', modes: ['solo'], Visual: SceneMini },
+  detective: { href: '/app/games/detective', nameKey: 'games.detective.name', bodyKey: 'games.detective.body', modes: ['solo'], Visual: CaseMini },
   'last-letter': { href: LAST_LETTER_CARD.href, nameKey: LAST_LETTER_CARD.nameKey, bodyKey: LAST_LETTER_CARD.blurbKey, modes: ['online', 'solo'], Visual: ChainMini },
   // the party games are listed where /games/availability finds enough approved cards for the learner's variety
   impostor: { href: '/app/games/impostor', nameKey: 'games.impostor.name', bodyKey: 'games.invite.blurb.impostor', modes: ['online'], Visual: TableMini },
