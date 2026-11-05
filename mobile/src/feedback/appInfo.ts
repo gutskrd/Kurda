@@ -17,6 +17,29 @@ const config = (appJson as AppJson).expo;
 
 export const APP_VERSION: string = config.version ?? '0.0.0';
 
+/**
+ * The build number of the binary that is running (CFBundleVersion on iOS, the
+ * version code on Android), or null where there is none to read.
+ *
+ * It is not in app.json: the store builds number themselves remotely, so only
+ * the binary knows it. It is read from the Application native module, which
+ * every build already carries because the notifications package depends on
+ * it, straight from where Expo installs its native modules rather than through
+ * the package's JavaScript, which this app does not list. Where the module is
+ * missing (a test, the web preview) the answer is null, and whoever shows the
+ * version shows it without the build.
+ */
+export function nativeBuildNumber(
+  modules: Record<string, unknown> | undefined = (globalThis as { expo?: { modules?: Record<string, unknown> } }).expo?.modules,
+): string | null {
+  try {
+    const build = (modules?.ExpoApplication as { nativeBuildVersion?: unknown } | undefined)?.nativeBuildVersion;
+    return typeof build === 'string' && build.trim() ? build.trim() : typeof build === 'number' ? String(build) : null;
+  } catch {
+    return null;
+  }
+}
+
 export function appPlatform(os: string): AppPlatform {
   return os === 'ios' ? 'ios' : os === 'android' ? 'android' : 'web';
 }

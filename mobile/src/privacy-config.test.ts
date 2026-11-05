@@ -12,7 +12,7 @@ const appJson = rawAppJson as unknown as {
       privacyManifests: {
         NSPrivacyTracking: boolean;
         NSPrivacyTrackingDomains: string[];
-        NSPrivacyCollectedDataTypes: Array<{ NSPrivacyCollectedDataType: string; NSPrivacyCollectedDataTypeTracking: boolean }>;
+        NSPrivacyCollectedDataTypes: Array<{ NSPrivacyCollectedDataType: string; NSPrivacyCollectedDataTypeLinked: boolean; NSPrivacyCollectedDataTypeTracking: boolean }>;
         NSPrivacyAccessedAPITypes: Array<{ NSPrivacyAccessedAPIType: string; NSPrivacyAccessedAPITypeReasons: string[] }>;
       };
     };
@@ -76,7 +76,8 @@ describe('iOS privacy config (KUR-277)', () => {
    * manifest and the App Store privacy label have to match what is collected.
    * Messages, game results, feedback, the install's random device id, the
    * birth month and self-chosen identity tags are kept; a phone number is
-   * never asked for, and no crash reports are sent anywhere.
+   * never asked for. Crash reports are sent (errors/crashReporting.ts), but
+   * without an account or a device id, so they are declared as not linked.
    */
   it('declares exactly the data the app collects', () => {
     const types = new Set(privacyManifests.NSPrivacyCollectedDataTypes.map((d) => d.NSPrivacyCollectedDataType));
@@ -93,11 +94,14 @@ describe('iOS privacy config (KUR-277)', () => {
       'DeviceID',
       'SensitiveInfo',
       'OtherDataTypes',
+      'CrashData',
     ]) {
       expect(types.has(`NSPrivacyCollectedDataType${t}`), t).toBe(true);
     }
-    for (const t of ['PhoneNumber', 'CrashData', 'PreciseLocation', 'Contacts', 'AdvertisingData']) {
+    for (const t of ['PhoneNumber', 'PreciseLocation', 'Contacts', 'AdvertisingData']) {
       expect(types.has(`NSPrivacyCollectedDataType${t}`), t).toBe(false);
     }
+    const crash = privacyManifests.NSPrivacyCollectedDataTypes.find((d) => d.NSPrivacyCollectedDataType === 'NSPrivacyCollectedDataTypeCrashData');
+    expect(crash?.NSPrivacyCollectedDataTypeLinked).toBe(false);
   });
 });

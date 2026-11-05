@@ -90,6 +90,7 @@ import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { useReducedMotion } from './src/a11y/useReducedMotion';
 import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
+import { noteScreen } from './src/errors/crashReporting';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SettingsPageScreen } from './src/settings/SettingsPageScreen';
@@ -851,6 +852,8 @@ function ThemedNavigation() {
       ),
     [navigation],
   );
+  // which screen is open, for a crash report to say where it happened: the route's name only, never its params
+  const onScreen = () => noteScreen(navigation.getCurrentRoute()?.name);
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
     ...base,
@@ -864,7 +867,7 @@ function ThemedNavigation() {
     },
   };
   return (
-    <NavigationContainer key={opened.round} ref={navigation} initialState={opened.state} linking={linking} theme={navTheme}>
+    <NavigationContainer key={opened.round} ref={navigation} initialState={opened.state} linking={linking} theme={navTheme} onReady={onScreen} onStateChange={onScreen}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <View style={{ flex: 1 }}>
         {/*
