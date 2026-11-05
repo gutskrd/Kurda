@@ -6,6 +6,7 @@ import {
   dialectDirection,
   whoAmIPoints,
   type GameDialect,
+  type GameDifficulty,
   type MultiMoveAnswer,
   type MultiView,
   type SoloResults,
@@ -36,6 +37,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { SoloGameShell, type SoloRound } from '../games/SoloGameShell';
 import { useAvailability } from '../games/learnGames';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
+import { DIFFICULTY_KEY } from '../games/partyChoices';
 import { ForeheadCard, GuessTiles, QuestionDeck, WHO_AM_I_TONE } from './WhoAmIStage';
 
 type Round = SoloRound<WhoAmIItemView, WhoAmIHint, WhoAmICorrection>;
@@ -237,6 +239,16 @@ function RaceRoom({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen
       onNew={onNew}
       onOpen={onOpen}
       newLabel={t('games.whoAmI.name')}
+      lobbyNote={(v) => {
+        const s = v.settings as { difficulty?: GameDifficulty; minutes?: number };
+        return (
+          <Text style={[styles.note, { color: colors.textSecondary }]}>
+            {v.dialect === 'ckb' ? 'Soranî' : 'Kurmancî'}
+            {s.difficulty ? ` · ${t(DIFFICULTY_KEY[s.difficulty])}` : ''}
+            {s.minutes ? ` · ${t('games.whoAmI.minutesCount', { count: s.minutes })}` : ''}
+          </Text>
+        );
+      }}
       playing={(v) => <RaceBoard view={v} skew={room.skew} move={room.move} />}
       ending={(v) => {
         const reveal = v.board?.reveal ?? [];
@@ -366,6 +378,7 @@ const styles = StyleSheet.create({
   board: { gap: spacing.md },
   line: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
   clock: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
+  note: { fontSize: typography.sizes.sm, textAlign: 'center' },
   total: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   bold: { fontWeight: typography.weights.bold },
   others: { gap: spacing.sm },
