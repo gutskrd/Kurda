@@ -12,7 +12,7 @@ import { AgeRuler } from '../../auth/guide/AgeRuler';
 import { MonthChips } from '../../auth/guide/MonthChips';
 import { PasswordStrengthMeter } from '../../auth/guide/PasswordStrength';
 import { AnswerSummary } from '../../auth/guide/AnswerSummary';
-import { STARTING_AGE, birthYearFrom } from '../../auth/guide/age';
+import { birthYearFrom } from '../../auth/guide/age';
 import { USERNAME_RULE_VARS, checkUsername } from '../../username/validate';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { LinkText } from './AuthForm';
@@ -30,6 +30,8 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
  * Create button. Each is checked as it is answered, and the server's own
  * refusals go back to the step they are about — a leaked password to the
  * password, a taken name to the name — rather than landing under a form.
+ * Nothing is answered for them: the age and the month both start unchosen,
+ * and Continue waits until each is picked.
  *
  * What is sent is exactly what the form sent: the name, the address, the
  * password, the language chosen in the intro, and the birth month and year
@@ -44,7 +46,7 @@ export function RegisterScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const [username, setUsername] = useState('');
-  const [age, setAge] = useState(STARTING_AGE);
+  const [age, setAge] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -77,7 +79,16 @@ export function RegisterScreen({ navigation }: Props) {
       key: 'age',
       question: t('guide.register.age.question'),
       says: t('guide.register.age.says'),
-      render: () => <AgeRuler value={age} onChange={setAge} />,
+      check: () => (age === null ? t('guide.register.age.required') : null),
+      render: (tools) => (
+        <AgeRuler
+          value={age}
+          onChange={(next) => {
+            tools.edited();
+            setAge(next);
+          }}
+        />
+      ),
     },
     {
       key: 'month',
@@ -147,7 +158,8 @@ export function RegisterScreen({ navigation }: Props) {
       // the rules and the privacy policy, each a link, before an account exists
       footer: <AgreeLine style={styles.terms} />,
       commit: async () => {
-        // the month is answered on its own step; this is only for the types
+        // the age and the month are answered on their own steps; this is only for the types
+        if (age === null) return { ok: false, error: t('guide.register.age.required'), at: 'age' };
         if (month === null) return { ok: false, error: t('guide.register.month.required'), at: 'month' };
         setMayHaveAccount(false);
         const error = await register({

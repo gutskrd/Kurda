@@ -15,7 +15,7 @@ import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react
 import { TRANSLATIONS } from '../../i18n/translations';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
-import { STARTING_AGE, birthYearFrom } from '../../auth/guide/age';
+import { ageRange, birthYearFrom, offsetForAge } from '../../auth/guide/age';
 import { RegisterScreen } from './RegisterScreen';
 
 /*
@@ -53,12 +53,20 @@ async function press(name: string): Promise<void> {
   });
 }
 
-/** Answers the questions as somebody signing up with an Apple address would, up to the last look, and sends them. */
-async function signUp(email: string, { send = true }: { send?: boolean } = {}) {
+/** Slides the ruler until `age` is under its pointer. */
+function chooseAge(age: number): void {
+  act(() => {
+    fireEvent.scroll(screen.getByTestId('age-ruler-scroll'), { target: { scrollLeft: offsetForAge(age, ageRange().min) } });
+  });
+}
+
+/** Answers the questions as somebody `age` years old signing up would, up to the last look, and sends them. */
+async function signUp(email: string, { send = true, age = 34 }: { send?: boolean; age?: number } = {}) {
   fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda_k' } });
   await press(en['common.continue']);
-  // the ruler rests on an adult's age, which is kept as it is
+  // the ruler starts with no age, so it is slid to one
   expect(await screen.findByRole('slider')).toBeTruthy();
+  chooseAge(age);
   await press(en['common.continue']);
   fireEvent.click(await screen.findByRole('radio', { name: 'March' }));
   await press(en['common.continue']);
@@ -84,7 +92,7 @@ describe('signing up', () => {
       password: 'berbang2026',
       locale: 'en',
       birthMonth: 3,
-      birthYear: birthYearFrom(STARTING_AGE, 3),
+      birthYear: birthYearFrom(34, 3),
     });
   });
 
@@ -98,11 +106,33 @@ describe('signing up', () => {
     expect(auth.register).not.toHaveBeenCalled();
   });
 
+  /*
+   * The server reads the birth year as the age, so an age the ruler already
+   * stood on would make a known adult of anyone who only tapped Continue.
+   */
+  it('does not go on from the age until the ruler is moved, and chooses none for them', async () => {
+    renderRegister();
+    fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda_k' } });
+    await press(en['common.continue']);
+    await screen.findByRole('slider');
+    expect(screen.getByTestId('age-ruler-number').textContent).toBe('–');
+    await press(en['common.continue']);
+    expect(screen.getByTestId('step-error').textContent).toBe(en['guide.register.age.required']);
+    expect(screen.getByText(en['guide.register.age.question'])).toBeTruthy();
+    // sliding to an age takes the line away, and then it goes on
+    chooseAge(16);
+    expect(screen.queryByTestId('step-error')).toBeNull();
+    await press(en['common.continue']);
+    expect(await screen.findByRole('radio', { name: 'March' })).toBeTruthy();
+    expect(auth.register).not.toHaveBeenCalled();
+  });
+
   it('does not go on from the month until one is picked', async () => {
     renderRegister();
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda_k' } });
     await press(en['common.continue']);
     await screen.findByRole('slider');
+    chooseAge(34);
     await press(en['common.continue']);
     await screen.findByRole('radio', { name: 'March' });
     await press(en['common.continue']);
@@ -169,7 +199,9 @@ describe('signing up', () => {
   it('leaves a sign-up for somebody under 13 to the explanation, with no form to try again on', async () => {
     auth.register.mockResolvedValue({ message: 'accounts are for people aged 13 and over', code: 'UNDER_MINIMUM_AGE' });
     renderRegister();
-    await signUp('name@icloud.com');
+    await signUp('name@icloud.com', { age: 9 });
+    // the age they slid to is the one sent, for the server to refuse
+    await waitFor(() => expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ birthYear: birthYearFrom(9, 3), birthMonth: 3 })));
     await waitFor(() => expect(auth.stopForAge).toHaveBeenCalledWith('refused'));
     expect(screen.queryByText('accounts are for people aged 13 and over')).toBeNull();
   });
@@ -192,6 +224,7 @@ describe('signing up', () => {
     fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda_k' } });
     await press(en['common.continue']);
     await screen.findByRole('slider');
+    chooseAge(34);
     await press(en['common.continue']);
     fireEvent.click(await screen.findByRole('radio', { name: 'March' }));
     await press(en['common.continue']);

@@ -11,7 +11,7 @@ import { AgeRuler } from '../../auth/guide/AgeRuler';
 import { MonthChips } from '../../auth/guide/MonthChips';
 import { PasswordStrengthMeter } from '../../auth/guide/PasswordStrength';
 import { AnswerSummary } from '../../auth/guide/AnswerSummary';
-import { STARTING_AGE, birthYearFrom } from '../../auth/guide/age';
+import { birthYearFrom } from '../../auth/guide/age';
 import { USERNAME_RULE_VARS, checkUsername } from '../../username/validate';
 import { LinkText } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
@@ -54,7 +54,8 @@ export function ClaimAccountScreen({
   const [username, setUsername] = useState(user?.username ?? '');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [age, setAge] = useState(STARTING_AGE);
+  // unchosen until the ruler is moved, as on the sign-up: an age set for them would be the answer of whoever only taps on
+  const [age, setAge] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
   const [mayHaveAccount, setMayHaveAccount] = useState(false);
 
@@ -132,7 +133,16 @@ export function ClaimAccountScreen({
       key: 'age',
       question: t('guide.register.age.question'),
       says: t('guide.claim.age.says'),
-      render: () => <AgeRuler value={age} onChange={setAge} />,
+      check: () => (age === null ? t('guide.register.age.required') : null),
+      render: (tools) => (
+        <AgeRuler
+          value={age}
+          onChange={(next) => {
+            tools.edited();
+            setAge(next);
+          }}
+        />
+      ),
     },
     {
       key: 'month',
@@ -166,6 +176,7 @@ export function ClaimAccountScreen({
       // the rules and the privacy policy, each a link: the guest agreed as a guest, and agrees again as the account's owner
       footer: <AgreeLine style={styles.terms} />,
       commit: async () => {
+        if (age === null) return { ok: false, error: t('guide.register.age.required'), at: 'age' };
         if (month === null) return { ok: false, error: t('guide.register.month.required'), at: 'month' };
         setMayHaveAccount(false);
         const error = await claimAccount({

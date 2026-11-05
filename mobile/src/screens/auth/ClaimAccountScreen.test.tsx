@@ -17,7 +17,7 @@ import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react
 import { TRANSLATIONS } from '../../i18n/translations';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
-import { STARTING_AGE, birthYearFrom } from '../../auth/guide/age';
+import { ageRange, birthYearFrom, offsetForAge } from '../../auth/guide/age';
 import { ClaimAccountScreen } from './ClaimAccountScreen';
 
 /*
@@ -54,8 +54,15 @@ async function press(name: string): Promise<void> {
   });
 }
 
-/** Keeps the name (or types `name`), then answers the rest and makes the account. */
-async function claim(email: string, name?: string) {
+/** Slides the ruler until `age` is under its pointer. */
+function chooseAge(age: number): void {
+  act(() => {
+    fireEvent.scroll(screen.getByTestId('age-ruler-scroll'), { target: { scrollLeft: offsetForAge(age, ageRange().min) } });
+  });
+}
+
+/** Up to the age: keeps the name (or types `name`), then gives the address and a password. */
+async function toAge(email: string, name?: string) {
   if (name !== undefined) fireEvent.change(screen.getByTestId('username'), { target: { value: name } });
   await press(en['common.continue']);
   fireEvent.change(await screen.findByTestId('email'), { target: { value: email } });
@@ -63,6 +70,13 @@ async function claim(email: string, name?: string) {
   fireEvent.change(await screen.findByTestId('password'), { target: { value: 'berbang2026' } });
   await press(en['common.continue']);
   await screen.findByRole('slider');
+}
+
+/** Keeps the name (or types `name`), then answers the rest as somebody `age` years old and makes the account. */
+async function claim(email: string, { name, age = 34 }: { name?: string; age?: number } = {}) {
+  await toAge(email, name);
+  // the ruler starts with no age, so it is slid to one
+  chooseAge(age);
   await press(en['common.continue']);
   fireEvent.click(await screen.findByRole('radio', { name: 'March' }));
   await press(en['common.continue']);
@@ -83,14 +97,14 @@ describe('claiming the guest account', () => {
       password: 'berbang2026',
       locale: 'en',
       birthMonth: 3,
-      birthYear: birthYearFrom(STARTING_AGE, 3),
+      birthYear: birthYearFrom(34, 3),
     });
   });
 
   it('sends a new name when one was chosen', async () => {
     auth.claimAccount.mockResolvedValue(null);
     renderClaim();
-    await claim('rojda@icloud.com', 'rojda_k');
+    await claim('rojda@icloud.com', { name: 'rojda_k' });
     await waitFor(() => expect(auth.claimAccount).toHaveBeenCalledWith(expect.objectContaining({ username: 'rojda_k' })));
   });
 
@@ -107,10 +121,24 @@ describe('claiming the guest account', () => {
     expect(handlers.onForgotPassword).toHaveBeenCalledWith('rojda@icloud.com');
   });
 
+  it('waits on the age until the ruler is moved, choosing none for the guest', async () => {
+    renderClaim();
+    await toAge('rojda@icloud.com');
+    expect(screen.getByTestId('age-ruler-number').textContent).toBe('–');
+    await press(en['common.continue']);
+    expect(screen.getByTestId('step-error').textContent).toBe(en['guide.register.age.required']);
+    expect(screen.getByText(en['guide.register.age.question'])).toBeTruthy();
+    chooseAge(15);
+    await press(en['common.continue']);
+    expect(await screen.findByRole('radio', { name: 'March' })).toBeTruthy();
+    expect(auth.claimAccount).not.toHaveBeenCalled();
+  });
+
   it('ends the guest session and leaves the explanation when the guest is under 13', async () => {
     auth.claimAccount.mockResolvedValue({ message: 'accounts are for people aged 13 and over', code: 'UNDER_MINIMUM_AGE' });
     renderClaim();
-    await claim('rojda@icloud.com');
+    await claim('rojda@icloud.com', { age: 11 });
+    await waitFor(() => expect(auth.claimAccount).toHaveBeenCalledWith(expect.objectContaining({ birthYear: birthYearFrom(11, 3), birthMonth: 3 })));
     await waitFor(() => expect(auth.stopForAge).toHaveBeenCalledWith('refused'));
     expect(auth.logout).toHaveBeenCalledTimes(1);
   });

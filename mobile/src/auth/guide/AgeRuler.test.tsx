@@ -17,7 +17,8 @@ import { AgeRuler } from './AgeRuler';
  * The ruler: the big number and "years old" over it, a tick a year with the
  * numbers every ten, the age under the pointer following the scroll a year
  * at a time with a tick in the hand, and to a screen reader one adjustable
- * control that says the age.
+ * control that says the age. Before it is moved there is no age at all, only
+ * a dash and the invitation to slide.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -39,8 +40,8 @@ afterEach(() => {
   cleanup();
 });
 
-function Ruler({ start = 20 }: { start?: number }) {
-  const [age, setAge] = useState(start);
+function Ruler({ start = 20 }: { start?: number | null }) {
+  const [age, setAge] = useState<number | null>(start);
   return (
     <AgeRuler
       value={age}
@@ -104,6 +105,29 @@ describe('AgeRuler', () => {
     scrollTo(1e6);
     expect(changes).toEqual([range.max]);
     expect(screen.getByRole('slider').getAttribute('aria-valuetext')).toBe(`${range.max} years old`);
+  });
+
+  it('starts with no age: a dash for the number, the invitation to slide, and nothing said as chosen', () => {
+    renderWithProviders(<Ruler start={null} />);
+    expect(screen.getByTestId('age-ruler-number').textContent).toBe('–');
+    expect(screen.getByTestId('age-ruler-unit').textContent).toBe('Slide to your age');
+    expect(screen.queryByText('years old')).toBeNull();
+    const slider = screen.getByRole('slider');
+    expect(slider.getAttribute('aria-valuenow')).toBeNull();
+    expect(slider.getAttribute('aria-valuetext')).toBe('not chosen yet');
+    expect(changes).toEqual([]);
+  });
+
+  it('chooses nothing while the scroll stays on the year it rests on, and the first year it moves to', async () => {
+    renderWithProviders(<Ruler start={null} />);
+    scrollTo(RULER.tick * 0.3);
+    expect(changes).toEqual([]);
+    expect(screen.getByTestId('age-ruler-number').textContent).toBe('–');
+    scrollTo(offsetForAge(27, range.min));
+    await waitFor(() => expect(changes).toEqual([27]));
+    expect(screen.getByTestId('age-ruler-number').textContent).toBe('27');
+    expect(screen.getByTestId('age-ruler-unit').textContent).toBe('years old');
+    expect(screen.getByRole('slider').getAttribute('aria-valuetext')).toBe('27 years old');
   });
 
   it('says an age set from outside, as a screen reader’s swipe sets one', () => {

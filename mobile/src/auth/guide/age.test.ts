@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { EARLIEST_BIRTH_YEAR, ageInYears } from '@kurda/shared';
-import { RULER, ageAtOffset, ageRange, birthYearFrom, offsetForAge, stepAge } from './age';
+import { RULER, ageAtOffset, ageRange, birthYearFrom, chosenAtOffset, offsetForAge, stepAge } from './age';
 
 /*
  * The ruler's arithmetic: the ages it runs over, where each sits and which
- * one a scroll lands on, a screen reader's step, and the birth year an age
- * and a month come to — the year the server counts back to the same age.
+ * one a scroll lands on, which scroll chooses an age, a screen reader's step,
+ * and the birth year an age and a month come to — the year the server counts
+ * back to the same age.
  */
 
 const TODAY = new Date('2026-11-04T12:00:00Z');
@@ -29,6 +30,19 @@ describe('the age ruler’s arithmetic', () => {
     const range = ageRange(TODAY);
     expect(ageAtOffset(-500, range)).toBe(range.min);
     expect(ageAtOffset(1e6, range)).toBe(range.max);
+  });
+
+  it('chooses no age until the ruler moves off the year it rests on, and nothing for a scroll that stays put', () => {
+    const range = ageRange(TODAY);
+    // at rest, on the youngest year: nobody has answered yet
+    expect(chosenAtOffset(0, null, range)).toBeNull();
+    expect(chosenAtOffset(RULER.tick * 0.4, null, range)).toBeNull();
+    // the first year it moves to is the answer, young or old
+    expect(chosenAtOffset(offsetForAge(2, range.min), null, range)).toBe(2);
+    expect(chosenAtOffset(offsetForAge(34, range.min), null, range)).toBe(34);
+    // once an age is chosen, coming back to the first year is a choice too, and staying on a year is none
+    expect(chosenAtOffset(0, 5, range)).toBe(range.min);
+    expect(chosenAtOffset(offsetForAge(34, range.min), 34, range)).toBeNull();
   });
 
   it('steps a year each way for a screen reader, and stops at the ends', () => {

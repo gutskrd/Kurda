@@ -8,6 +8,11 @@
  * the server still wants a birth year and month (shared `age`). The month is
  * asked right after, and the two together give the year: somebody who is 20
  * and was born in a month still to come this year was born 21 years ago.
+ *
+ * No age is chosen until somebody moves the ruler. It rests at its start, on
+ * the youngest year, and that resting place answers nothing: the server
+ * reads the birth year as the age, so an age the ruler already stood on would
+ * be the answer of everyone who only tapped Continue, child or not.
  */
 import { EARLIEST_BIRTH_YEAR } from '@kurda/shared';
 
@@ -21,9 +26,6 @@ export const RULER = {
   /** a tall tick, with a number, every so many years */
   every: 10,
 } as const;
-
-/** The age the ruler rests on before anybody touches it: an adult's, hinting at nothing about the ages that are refused. */
-export const STARTING_AGE = 20;
 
 /** The youngest and oldest the ruler goes: one, and whoever was born in the earliest year the server takes. */
 export function ageRange(now: Date = new Date()): { min: number; max: number } {
@@ -39,6 +41,19 @@ export function offsetForAge(age: number, min: number, tick: number = RULER.tick
 export function ageAtOffset(x: number, range: { min: number; max: number }, tick: number = RULER.tick): number {
   const age = range.min + Math.round(Math.max(0, x) / tick);
   return Math.max(range.min, Math.min(range.max, age));
+}
+
+/**
+ * The age a scroll to `x` chooses, or null when it chooses nothing: a scroll
+ * that stays on the year already chosen, or, while none is chosen yet, one
+ * that stays on the year the ruler rests on. That year is where the ruler was
+ * put, not where anybody put it; moving off it is the first answer.
+ */
+export function chosenAtOffset(x: number, current: number | null, range: { min: number; max: number }, tick: number = RULER.tick): number | null {
+  const age = ageAtOffset(x, range, tick);
+  if (age === current) return null;
+  if (current === null && age === range.min) return null;
+  return age;
 }
 
 /** One year older or younger, for a screen reader's swipe, kept within the range. */

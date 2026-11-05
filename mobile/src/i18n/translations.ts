@@ -977,6 +977,8 @@ export type TranslationKey =
   | 'guide.age.label'
   | 'guide.age.value'
   | 'guide.age.yearsOld'
+  | 'guide.age.prompt'
+  | 'guide.age.unset'
   | 'guide.password.weak'
   | 'guide.password.fair'
   | 'guide.password.good'
@@ -987,6 +989,7 @@ export type TranslationKey =
   | 'guide.register.name.taken'
   | 'guide.register.age.question'
   | 'guide.register.age.says'
+  | 'guide.register.age.required'
   | 'guide.register.month.question'
   | 'guide.register.month.says'
   | 'guide.register.month.required'
@@ -3263,6 +3266,8 @@ const en: Catalog = {
   'guide.age.label': 'Age',
   'guide.age.value': '{age} years old',
   'guide.age.yearsOld': 'years old',
+  'guide.age.prompt': 'Slide to your age',
+  'guide.age.unset': 'not chosen yet',
   'guide.password.weak': 'Weak',
   'guide.password.fair': 'Fair',
   'guide.password.good': 'Good',
@@ -3273,6 +3278,7 @@ const en: Catalog = {
   'guide.register.name.taken': 'That one’s taken already — how about another?',
   'guide.register.age.question': 'How old are you?',
   'guide.register.age.says': 'We ask everyone. Only the month and year are kept, promise.',
+  'guide.register.age.required': 'Pick your age on the ruler to go on.',
   'guide.register.month.question': 'And which month?',
   'guide.register.month.says': 'The month you were born in. Just the month, not the day.',
   'guide.register.month.required': 'Pick a month to go on.',
@@ -6104,6 +6110,8 @@ const ku: Catalog = {
   'guide.age.label': 'Temen',
   'guide.age.value': '{age} salî',
   'guide.age.yearsOld': 'salî',
+  'guide.age.prompt': 'Bikişîne heta temenê xwe',
+  'guide.age.unset': 'hê nehatiye hilbijartin',
   'guide.password.weak': 'Lawaz',
   'guide.password.fair': 'Nîvçe',
   'guide.password.good': 'Baş',
@@ -6114,6 +6122,7 @@ const ku: Catalog = {
   'guide.register.name.taken': 'Ew nav hatiye girtin — yekî din çawa ye?',
   'guide.register.age.question': 'Tu çend salî yî?',
   'guide.register.age.says': 'Em vê ji her kesî dipirsin. Tenê meh û sal tên tomarkirin, soz.',
+  'guide.register.age.required': 'Temenê xwe hilbijêre da ku em berdewam bikin.',
   'guide.register.month.question': 'Û kîjan meh?',
   'guide.register.month.says': 'Meha ku tu tê de ji dayik bûyî. Tenê meh, ne roj.',
   'guide.register.month.required': 'Mehekê hilbijêre da ku em berdewam bikin.',
@@ -8944,6 +8953,8 @@ const de: Catalog = {
   'guide.age.label': 'Alter',
   'guide.age.value': '{age} Jahre alt',
   'guide.age.yearsOld': 'Jahre alt',
+  'guide.age.prompt': 'Schieb das Lineal auf dein Alter',
+  'guide.age.unset': 'noch nicht gewählt',
   'guide.password.weak': 'Schwach',
   'guide.password.fair': 'Mittel',
   'guide.password.good': 'Gut',
@@ -8954,6 +8965,7 @@ const de: Catalog = {
   'guide.register.name.taken': 'Den gibt es schon — wie wäre es mit einem anderen?',
   'guide.register.age.question': 'Wie alt bist du?',
   'guide.register.age.says': 'Das fragen wir alle. Gespeichert werden nur Monat und Jahr, versprochen.',
+  'guide.register.age.required': 'Wähle dein Alter auf dem Lineal, um weiterzugehen.',
   'guide.register.month.question': 'Und in welchem Monat?',
   'guide.register.month.says': 'Der Monat, in dem du geboren bist. Nur der Monat, nicht der Tag.',
   'guide.register.month.required': 'Wähle einen Monat, um weiterzugehen.',
@@ -11784,6 +11796,8 @@ const es: Catalog = {
   'guide.age.label': 'Edad',
   'guide.age.value': '{age} años',
   'guide.age.yearsOld': 'años',
+  'guide.age.prompt': 'Desliza la regla hasta tu edad',
+  'guide.age.unset': 'sin elegir todavía',
   'guide.password.weak': 'Débil',
   'guide.password.fair': 'Regular',
   'guide.password.good': 'Buena',
@@ -11794,6 +11808,7 @@ const es: Catalog = {
   'guide.register.name.taken': 'Ese ya está cogido. ¿Probamos con otro?',
   'guide.register.age.question': '¿Cuántos años tienes?',
   'guide.register.age.says': 'Se lo preguntamos a todo el mundo. Solo guardamos el mes y el año, prometido.',
+  'guide.register.age.required': 'Elige tu edad en la regla para seguir.',
   'guide.register.month.question': '¿Y en qué mes?',
   'guide.register.month.says': 'El mes en que naciste. Solo el mes, no el día.',
   'guide.register.month.required': 'Elige un mes para seguir.',
@@ -14624,6 +14639,8 @@ const tr: Catalog = {
   'guide.age.label': 'Yaş',
   'guide.age.value': '{age} yaşında',
   'guide.age.yearsOld': 'yaşında',
+  'guide.age.prompt': 'Cetveli yaşına kaydır',
+  'guide.age.unset': 'henüz seçilmedi',
   'guide.password.weak': 'Zayıf',
   'guide.password.fair': 'Orta',
   'guide.password.good': 'İyi',
@@ -14634,6 +14651,7 @@ const tr: Catalog = {
   'guide.register.name.taken': 'O alınmış bile, başka bir tane deneyelim mi?',
   'guide.register.age.question': 'Kaç yaşındasın?',
   'guide.register.age.says': 'Bunu herkese soruyoruz. Yalnızca ay ve yıl saklanır, söz.',
+  'guide.register.age.required': 'Devam etmek için cetvelde yaşını seç.',
   'guide.register.month.question': 'Peki hangi ay?',
   'guide.register.month.says': 'Doğduğun ay. Yalnızca ay, gün değil.',
   'guide.register.month.required': 'Devam etmek için bir ay seç.',
@@ -17464,6 +17482,8 @@ const ar: Catalog = {
   'guide.age.label': 'العمر',
   'guide.age.value': '{age} سنة',
   'guide.age.yearsOld': 'سنة',
+  'guide.age.prompt': 'اسحب المسطرة إلى عمرك',
+  'guide.age.unset': 'لم يُحدَّد بعد',
   'guide.password.weak': 'ضعيفة',
   'guide.password.fair': 'متوسطة',
   'guide.password.good': 'جيدة',
@@ -17474,6 +17494,7 @@ const ar: Catalog = {
   'guide.register.name.taken': 'هذا الاسم مأخوذ، ما رأيك بآخر؟',
   'guide.register.age.question': 'كم عمرك؟',
   'guide.register.age.says': 'نسأل الجميع هذا. لا نحفظ إلا الشهر والسنة، أعدك.',
+  'guide.register.age.required': 'حدّد عمرك على المسطرة للمتابعة.',
   'guide.register.month.question': 'وفي أي شهر؟',
   'guide.register.month.says': 'الشهر الذي وُلدت فيه. الشهر فقط، لا اليوم.',
   'guide.register.month.required': 'اختر شهرًا للمتابعة.',
@@ -20304,6 +20325,8 @@ const fr: Catalog = {
   'guide.age.label': 'Âge',
   'guide.age.value': '{age} ans',
   'guide.age.yearsOld': 'ans',
+  'guide.age.prompt': 'Fais glisser la règle jusqu’à ton âge',
+  'guide.age.unset': 'pas encore choisi',
   'guide.password.weak': 'Faible',
   'guide.password.fair': 'Moyen',
   'guide.password.good': 'Bon',
@@ -20314,6 +20337,7 @@ const fr: Catalog = {
   'guide.register.name.taken': 'Celui-là est déjà pris, on en essaie un autre ?',
   'guide.register.age.question': 'Quel âge as-tu ?',
   'guide.register.age.says': 'On le demande à tout le monde. Seuls le mois et l’année sont gardés, promis.',
+  'guide.register.age.required': 'Choisis ton âge sur la règle pour continuer.',
   'guide.register.month.question': 'Et quel mois ?',
   'guide.register.month.says': 'Le mois où tu es né. Juste le mois, pas le jour.',
   'guide.register.month.required': 'Choisis un mois pour continuer.',
@@ -23144,6 +23168,8 @@ const nl: Catalog = {
   'guide.age.label': 'Leeftijd',
   'guide.age.value': '{age} jaar',
   'guide.age.yearsOld': 'jaar',
+  'guide.age.prompt': 'Schuif de liniaal naar je leeftijd',
+  'guide.age.unset': 'nog niet gekozen',
   'guide.password.weak': 'Zwak',
   'guide.password.fair': 'Matig',
   'guide.password.good': 'Goed',
@@ -23154,6 +23180,7 @@ const nl: Catalog = {
   'guide.register.name.taken': 'Die is al bezet, zullen we een andere proberen?',
   'guide.register.age.question': 'Hoe oud ben je?',
   'guide.register.age.says': 'Dat vragen we iedereen. Alleen de maand en het jaar worden bewaard, beloofd.',
+  'guide.register.age.required': 'Kies je leeftijd op de liniaal om verder te gaan.',
   'guide.register.month.question': 'En welke maand?',
   'guide.register.month.says': 'De maand waarin je geboren bent. Alleen de maand, niet de dag.',
   'guide.register.month.required': 'Kies een maand om verder te gaan.',
@@ -25985,6 +26012,8 @@ const ckb: Catalog = {
   'guide.age.label': 'تەمەن',
   'guide.age.value': '{age} ساڵ',
   'guide.age.yearsOld': 'ساڵ',
+  'guide.age.prompt': 'ڕایبکێشە بۆ سەر تەمەنی خۆت',
+  'guide.age.unset': 'هێشتا هەڵنەبژێردراوە',
   'guide.password.weak': 'لاواز',
   'guide.password.fair': 'مامناوەند',
   'guide.password.good': 'باش',
@@ -25995,6 +26024,7 @@ const ckb: Catalog = {
   'guide.register.name.taken': 'ئەوە پێشتر گیراوە — یەکێکی تر چۆنە؟',
   'guide.register.age.question': 'تەمەنت چەندە؟',
   'guide.register.age.says': 'لە هەمووان دەپرسین. تەنها مانگ و ساڵ هەڵدەگیرێن، بەڵێن.',
+  'guide.register.age.required': 'تەمەنی خۆت هەڵبژێرە بۆ ئەوەی بەردەوام بین.',
   'guide.register.month.question': 'و کام مانگ؟',
   'guide.register.month.says': 'ئەو مانگەی تێیدا لەدایک بوویت. تەنها مانگ، نەک ڕۆژ.',
   'guide.register.month.required': 'مانگێک هەڵبژێرە بۆ ئەوەی بەردەوام بین.',
