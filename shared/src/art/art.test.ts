@@ -27,6 +27,8 @@ import {
 import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
+import { KINGDOM_PLOTS, KINGDOM_SCENE, kingdomBuildingSvg, kingdomLife, kingdomLifeSvg, kingdomSceneSvg } from './kingdom.js';
+import { KINGDOM_BUILDINGS, type KingdomBuilding, type KingdomLevel } from '../games/kingdom/buildings.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
 import {
   CHEST_BOX,
@@ -1077,5 +1079,102 @@ describe('the join ticket', () => {
     for (const tile of TICKET_ART_TILES) {
       expect(tile.y - 0).toBeCloseTo(TICKET_ART_BOX.height - (tile.y + tile.height));
     }
+  });
+});
+
+describe('the kingdom’s village', () => {
+  const LEVELS = [0, 1, 2, 3, 4, 5] as const;
+  const all = (level: KingdomLevel): Record<KingdomBuilding, KingdomLevel> =>
+    Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, level])) as Record<KingdomBuilding, KingdomLevel>;
+
+  it('draws every building at every stage, from the empty plot up, large and small, by the same rules as every drawing', () => {
+    for (const building of KINGDOM_BUILDINGS) {
+      for (const level of LEVELS) {
+        for (const size of [48, 120, 168]) checkSvg(kingdomBuildingSvg({ building, level, size }), size);
+        checkSvg(kingdomBuildingSvg({ building, level, size: 96, dark: true }), 96);
+      }
+    }
+  });
+
+  it('adds to a building at each stage rather than drawing something else, and never draws two stages alike', () => {
+    for (const building of KINGDOM_BUILDINGS) {
+      const stages = LEVELS.map((level) => kingdomBuildingSvg({ building, level, idPrefix: 'k' }));
+      expect(new Set(stages).size, building).toBe(6);
+      for (let i = 2; i < stages.length; i++) expect(elements(stages[i]!), `${building} ${i}`).toBeGreaterThanOrEqual(elements(stages[i - 1]!));
+    }
+  });
+
+  it('draws the whole village as a valid, self-contained picture of its own shape, the same every time', () => {
+    for (const level of LEVELS) {
+      for (const dark of [false, true]) {
+        const svg = kingdomSceneSvg({ levels: all(level), dark, width: 360 });
+        const root = parse(svg);
+        expect(root.attrs.viewBox).toBe(`0 0 ${KINGDOM_SCENE.width} ${KINGDOM_SCENE.height}`);
+        expect(root.attrs.role).toBe('img');
+        expect(root.children[0]?.name).toBe('title');
+        expect(root.attrs['aria-labelledby']).toBe(root.children[0]?.attrs.id);
+        const ids = new Set<string>();
+        walk(root, (e) => {
+          expect(ALLOWED.has(e.name), e.name).toBe(true);
+          for (const [k, v] of Object.entries(e.attrs)) {
+            expect(k.startsWith('on') || /href$/i.test(k), k).toBe(false);
+            if (k !== 'xmlns') expect(v, `${k} on <${e.name}>`).not.toMatch(/NaN|Infinity|undefined|null/);
+          }
+          if (e.attrs.id) ids.add(e.attrs.id);
+        });
+        for (const m of svg.matchAll(/url\(#([^)]+)\)/g)) expect(ids.has(m[1]!), m[1]).toBe(true);
+        expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|data:/i);
+        // the whole village at its fullest, six buildings and the land, drawn once per visit: about two badges' worth
+        expect(svg.length).toBeLessThan(64 * 1024);
+      }
+    }
+    const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
+    expect(kingdomSceneSvg({ levels: some })).toBe(kingdomSceneSvg({ levels: some }));
+    expect(kingdomSceneSvg({ levels: some })).not.toBe(kingdomSceneSvg({ levels: { ...some, teahouse: 1 } }));
+    expect(kingdomSceneSvg({ levels: some, dark: true })).not.toBe(kingdomSceneSvg({ levels: some }));
+  });
+
+  it('puts every building, and a tap on it, inside the scene, and no two taps on one spot', () => {
+    const boxes = KINGDOM_BUILDINGS.map((b) => KINGDOM_PLOTS[b].box);
+    for (const box of boxes) {
+      expect(box.x).toBeGreaterThanOrEqual(0);
+      expect(box.y).toBeGreaterThanOrEqual(0);
+      expect(box.x + box.w).toBeLessThanOrEqual(KINGDOM_SCENE.width);
+      expect(box.y + box.h).toBeLessThanOrEqual(KINGDOM_SCENE.height);
+    }
+    boxes.forEach((a, i) =>
+      boxes.slice(i + 1).forEach((b) => {
+        const apart = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
+        expect(apart).toBe(true);
+      }),
+    );
+  });
+
+  it('moves only what has been built — smoke from chimneys, water in the spring, leaves in the orchard — inside the scene', () => {
+    expect(kingdomLife(all(0))).toEqual([]);
+    const full = kingdomLife(all(5));
+    expect(new Set(full.map((s) => s.kind))).toEqual(new Set(['smoke', 'water', 'leaf']));
+    for (const s of full) {
+      expect(s.x).toBeGreaterThan(0);
+      expect(s.x).toBeLessThan(KINGDOM_SCENE.width);
+      expect(s.y).toBeGreaterThan(0);
+      expect(s.y).toBeLessThan(KINGDOM_SCENE.height);
+    }
+    expect(kingdomLife({ ...all(0), spring: 1 }).map((s) => s.kind)).toEqual(['water']);
+    for (const kind of ['smoke', 'water', 'leaf'] as const) {
+      const sprite = parse(kingdomLifeSvg(kind));
+      expect(sprite.attrs['aria-hidden']).toBe('true');
+      walk(sprite, (e) => expect(ALLOWED.has(e.name), e.name).toBe(true));
+    }
+  });
+
+  it('escapes its label and refuses what it cannot draw', () => {
+    const svg = kingdomBuildingSvg({ building: 'spring', level: 2, title: 'Kanî & <b>' });
+    checkSvg(svg, 120);
+    expect(svg).toContain('Kanî &amp; &lt;b&gt;');
+    expect(() => kingdomBuildingSvg({ building: 'castle' as KingdomBuilding, level: 1 })).toThrow(RangeError);
+    expect(() => kingdomBuildingSvg({ building: 'spring', level: 6 as KingdomLevel })).toThrow(RangeError);
+    expect(() => kingdomSceneSvg({ levels: { ...all(1), orchard: -1 as KingdomLevel } })).toThrow(RangeError);
+    expect(() => kingdomSceneSvg({ levels: all(1), width: 0 })).toThrow(RangeError);
   });
 });
