@@ -2745,10 +2745,10 @@ export const en = {
   'alphabet.exploredAll': 'All {total} explored. Nice work!',
 
   // ---- words to know: the colours, the numbers, the days and the months --------
-  'words.title': 'Words to know',
-  'words.toolHint': 'Colours, numbers, days, months',
+  'words.title': 'Letters and words',
+  'words.toolHint': 'Letters, colours, numbers, days, months',
   'words.fromAlphabet': 'Learn colours, numbers, days and months',
-  'words.lead': 'Learn them as you learned the letters: tap a word to hear it.',
+  'words.lead': 'Start with the letters, then the first words. Tap a letter or a word to hear it.',
   'words.set.colours': 'Colours',
   'words.set.numbers': 'Numbers',
   'words.set.days': 'Days of the week',
@@ -2757,6 +2757,8 @@ export const en = {
   'words.set.numbersBody': 'Thirty words, and with them every number up to {max}.',
   'words.set.daysBody': 'The week starts on Saturday, and five days carry their number.',
   'words.set.monthsBody': 'On the calendar, and the Kurdish months from Newroz.',
+  'words.set.letters': 'Alphabet',
+  'words.set.lettersBody': 'Every letter, and how it sounds',
   'words.tileLabel': '{word}, {meaning}',
   'words.explored': '{n} of {total} explored',
   'words.exploredAll': 'All {total} explored. Nice work!',

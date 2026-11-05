@@ -2648,10 +2648,10 @@ export const ckb: Catalogue = {
   'alphabet.exploredAll': 'هەموو {total} پیتەکە بینران. دەستخۆش!',
 
   // ---- words to know: the colours, the numbers, the days and the months --------
-  'words.title': 'وشە بنەڕەتییەکان',
-  'words.toolHint': 'ڕەنگ، ژمارە، ڕۆژ، مانگ',
+  'words.title': 'پیت و وشە',
+  'words.toolHint': 'پیت، ڕەنگ، ژمارە، ڕۆژ، مانگ',
   'words.fromAlphabet': 'ڕەنگ و ژمارە و ڕۆژ و مانگەکان فێربە',
-  'words.lead': 'وەک پیتەکان فێریان بە: کرتە لە وشەیەک بکە بۆ ئەوەی گوێی لێ بێت.',
+  'words.lead': 'بە پیتەکان دەست پێ بکە، پاشان یەکەم وشەکان. کرتە لە پیتێک یان وشەیەک بکە بۆ ئەوەی گوێی لێ بێت.',
   'words.set.colours': 'ڕەنگەکان',
   'words.set.numbers': 'ژمارەکان',
   'words.set.days': 'ڕۆژەکانی هەفتە',
@@ -2660,6 +2660,8 @@ export const ckb: Catalogue = {
   'words.set.numbersBody': 'سی وشە، و بەوانە هەموو ژمارەیەک تا {max}.',
   'words.set.daysBody': 'هەفتە بە شەممە دەست پێ دەکات، و پێنج ڕۆژ ژمارەکەیان لە ناویاندایە.',
   'words.set.monthsBody': 'مانگەکانی ساڵنامە، و مانگە کوردییەکان لە نەورۆزەوە.',
+  'words.set.letters': 'ئەلفوبێ',
+  'words.set.lettersBody': 'هەموو پیتێک و دەنگەکەی',
   'words.tileLabel': '{word}، {meaning}',
   'words.explored': '{n} لە {total} بینراون',
   'words.exploredAll': 'هەموو {total} وشەکە بینران. دەستخۆش!',

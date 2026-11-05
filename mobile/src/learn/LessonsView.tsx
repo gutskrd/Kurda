@@ -293,16 +293,9 @@ export function LessonsView({
               onPress={() => navigation.navigate('PracticeHub')}
             />
             <ToolTile icon="text" title={t('nav.dictionary')} detail={t('learn.tools.dictionaryHint')} onPress={() => navigation.navigate('Dictionary')} />
-            {/* the letters every course is written in, shown rather than drawn as an icon */}
+            {/* the letters and the first words after them, one way in (WordsScreen): the letters shown rather than drawn as an icon */}
             <ToolTile
               letters={locale === 'ckb' ? SORANI_TEASER : LATIN_TEASER}
-              title={t('nav.alphabet')}
-              detail={t('learn.tools.alphabetHint')}
-              onPress={() => navigation.navigate('Alphabet')}
-            />
-            {/* the words to know next to the letters: a few numbers, in the reader's own digits */}
-            <ToolTile
-              letters={locale === 'ckb' || locale === 'ar' ? EASTERN_TEASER : WESTERN_TEASER}
               title={t('words.title')}
               detail={t('words.toolHint')}
               onPress={() => navigation.navigate('Words')}
@@ -513,8 +506,6 @@ const LARGE_BUTTON = 50;
 /** A few letters of each alphabet, in place of an icon: the alphabet's tile shows what it holds. */
 const LATIN_TEASER = { text: 'Aa Çç Êê', rtl: false } as const;
 const SORANI_TEASER = { text: 'ئ ب پ چ', rtl: true } as const;
-const WESTERN_TEASER = { text: '1 2 3', rtl: false } as const;
-const EASTERN_TEASER = { text: '١ ٢ ٣', rtl: true } as const;
 
 function ToolTile({
   icon,

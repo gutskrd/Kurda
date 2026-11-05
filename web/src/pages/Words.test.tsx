@@ -14,11 +14,32 @@ const show = (path = '/app/learn/words') => {
   return renderApp(<Words />, [path]);
 };
 
-describe('Words to know', () => {
+describe('Letters and words', () => {
+  it('starts with the alphabet, counting the letters opened here in the script the page teaches', async () => {
+    localStorage.setItem('hevalo_alphabet_seen', JSON.stringify({ kmr: ['a', 'b', 'gone'], ckb: ['alif'] }));
+    show();
+    const letters = await screen.findByRole('link', { name: 'Alphabet, 2 of 31 explored' });
+    expect(letters).toHaveAttribute('href', '/app/alphabet?script=kmr');
+    expect(letters).toHaveTextContent('Alfabe');
+    expect(letters).toHaveAccessibleDescription('Every letter, and how it sounds');
+    // first, before the four sets, each with its own picture
+    const cards = screen.getAllByRole('link', { name: / explored$/ });
+    expect(cards[0]).toBe(letters);
+    expect(cards).toHaveLength(5);
+    for (const card of cards) expect(card.querySelector('.wd-teaser svg')).not.toBeNull();
+  });
+
+  it('opens the Soranî alphabet from the Soranî page, its letters on the blocks', async () => {
+    show('/app/learn/words?script=ckb');
+    const letters = await screen.findByRole('link', { name: 'Alphabet, 0 of 34 explored' });
+    expect(letters).toHaveAttribute('href', '/app/alphabet?script=ckb');
+    expect(letters.querySelector('.wd-set-name')).toHaveTextContent('ئەلفوبێ');
+  });
+
   it('lists the four sets with their Kurdish names and how many of each have been opened here', async () => {
     localStorage.setItem('hevalo_words_colours_seen', JSON.stringify({ kmr: ['red', 'blue'], ckb: ['red'] }));
     show();
-    expect(await screen.findByRole('heading', { level: 1, name: 'Words to know' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Letters and words' })).toBeInTheDocument();
     const colours = screen.getByRole('link', { name: 'Colours, 2 of 11 explored' });
     expect(colours).toHaveAttribute('href', '/app/learn/words/colours?script=kmr');
     expect(colours).toHaveTextContent('Reng');

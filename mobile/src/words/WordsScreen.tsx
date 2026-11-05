@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { KURDISH_NUMBER_MAX, WORD_SET_IDS, wordSet, wordSetSvg, type WordSetId } from '@kurda/shared';
+import { KURDISH_NUMBER_MAX, WORD_SET_IDS, wordSet, wordSetSvg, type AlphabetScript, type WordSetId, type WordsCardId } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import type { TranslationKey } from '../i18n/translations';
@@ -16,7 +16,7 @@ import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { useSeenCounts } from './seen';
+import { useLettersSeen, useSeenCounts } from './seen';
 import { SET_TITLE } from './WordSetScreen';
 
 const SET_BODY: Record<WordSetId, TranslationKey> = {
@@ -27,18 +27,25 @@ const SET_BODY: Record<WordSetId, TranslationKey> = {
 };
 
 /**
- * Words to know: the colours, the numbers, the days of the week and the
- * months, each a set taught the way the alphabet is — one big card a set, with
- * a picture of what is in it and how many of its words have been opened on
- * this phone. A card opens its set (WordSetScreen).
+ * Letters and words: the alphabet first, then the colours, the numbers, the
+ * days of the week and the months, each a set taught the way the alphabet is.
+ * One big card each, with a picture of what is in it and how much of it has
+ * been opened on this phone; the letters' card opens the alphabet
+ * (AlphabetScreen), a set's card opens the set (WordSetScreen).
+ *
+ * The letters stood on their own tile in Learn's tools beside this one; they
+ * are the first of the same steps, so they sit at the top of the same list.
  */
 export function WordsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const navigation = useNavigation<RootNavigation>();
   const bottom = useScreenBottomInset(spacing.xl);
   const counts = useSeenCounts();
+  // the alphabet opens in the reader's own script, so its card counts that one
+  const script: AlphabetScript = locale === 'ckb' ? 'ckb' : 'kmr';
+  const letters = useLettersSeen(script);
 
   return (
     <GradientBackground>
@@ -46,8 +53,26 @@ export function WordsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
         <ScreenHeader title={t('words.title')} onBack={onExit} />
         <ScrollView style={styles.screen} contentContainerStyle={[styles.column, { paddingBottom: bottom }]} showsVerticalScrollIndicator={false}>
           <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]}>{t('words.lead')}</Text>
+          <Card
+            id="letters"
+            script={script}
+            title={t('nav.alphabet')}
+            body={t('learn.tools.alphabetHint')}
+            seen={letters.seen}
+            total={letters.total}
+            onPress={() => navigation.navigate('Alphabet')}
+          />
           {WORD_SET_IDS.map((set) => (
-            <SetCard key={set} set={set} seen={counts[set] ?? 0} onPress={() => navigation.navigate('WordSet', { set })} />
+            <Card
+              key={set}
+              id={set}
+              script={script}
+              title={t(SET_TITLE[set])}
+              body={t(SET_BODY[set], { max: formatNumber(KURDISH_NUMBER_MAX, locale) })}
+              seen={counts[set] ?? 0}
+              total={wordSet(set).length}
+              onPress={() => navigation.navigate('WordSet', { set })}
+            />
           ))}
         </ScrollView>
       </View>
@@ -55,14 +80,21 @@ export function WordsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   );
 }
 
-function SetCard({ set, seen, onPress }: { set: WordSetId; seen: number; onPress: () => void }): React.JSX.Element {
+interface CardProps {
+  id: WordsCardId;
+  script: AlphabetScript;
+  title: string;
+  body: string;
+  seen: number;
+  total: number;
+  onPress: () => void;
+}
+
+function Card({ id, script, title, body, seen, total, onPress }: CardProps): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  const total = wordSet(set).length;
-  const title = t(SET_TITLE[set]);
-  const body = t(SET_BODY[set], { max: formatNumber(KURDISH_NUMBER_MAX, locale) });
-  const all = seen === total;
+  const all = total > 0 && seen >= total;
   const progress = all
     ? t('words.exploredAll', { total: formatNumber(total, locale) })
     : t('words.explored', { n: formatNumber(seen, locale), total: formatNumber(total, locale) });
@@ -74,13 +106,13 @@ function SetCard({ set, seen, onPress }: { set: WordSetId; seen: number; onPress
       accessibilityHint={body}
       style={[styles.card, { backgroundColor: colors.surface, flexDirection: dir.row }]}
     >
-      <Teaser set={set} />
+      <Teaser id={id} script={script} />
       <View style={styles.text}>
         <Text style={[styles.title, dir.text, { color: colors.textPrimary }]}>{title}</Text>
         <Text style={[styles.body, dir.text, { color: colors.textSecondary }]}>{body}</Text>
         <View style={[styles.progress, { flexDirection: dir.row }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
           <View style={[styles.track, { backgroundColor: colors.controlTrack }]}>
-            <View style={[styles.fill, { width: `${Math.round((seen / total) * 100)}%`, backgroundColor: colors.success }, dir.rtl && styles.fillEnd]} />
+            <View style={[styles.fill, { width: `${total > 0 ? Math.round((Math.min(seen, total) / total) * 100) : 0}%`, backgroundColor: colors.success }, dir.rtl && styles.fillEnd]} />
           </View>
           <Text style={[styles.count, { color: all ? colors.success : colors.textSecondary }]}>{progress}</Text>
         </View>
@@ -91,13 +123,14 @@ function SetCard({ set, seen, onPress }: { set: WordSetId; seen: number; onPress
 }
 
 /**
- * A picture of what a set holds, in place of an icon, as the alphabet's tool
- * shows its letters: a paint palette, an abacus, the sun (roj, the day) and a
- * wall calendar, drawn in the shared art so the browser shows the same four.
+ * A picture of what a card holds, in place of an icon: toy blocks with the
+ * first letters (in the script the alphabet opens in), a paint palette, an
+ * abacus, the sun (roj, the day) and a wall calendar, drawn in the shared art
+ * so the browser shows the same five.
  */
-function Teaser({ set }: { set: WordSetId }): React.JSX.Element {
+function Teaser({ id, script }: { id: WordsCardId; script: AlphabetScript }): React.JSX.Element {
   const { colors } = useTheme();
-  const xml = useMemo(() => wordSetSvg({ set, size: PICTURE }), [set]);
+  const xml = useMemo(() => wordSetSvg({ set: id, size: PICTURE, script: script === 'ckb' ? 'arabic' : 'latin' }), [id, script]);
   return (
     <View style={[styles.teaser, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <SvgXml xml={xml} width={PICTURE} height={PICTURE} />

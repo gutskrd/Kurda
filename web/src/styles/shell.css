@@ -1123,11 +1123,11 @@
 }
 .learn-tools {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--space-3);
 }
 .learn-tools.is-guest {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 .learn-tool {
   display: flex;
@@ -1154,27 +1154,24 @@
 .learn-tool-link > svg {
   color: var(--ink-2);
 }
-.learn-tool-title,
-.learn-tool .ab-start-title {
+.learn-tool-title {
   margin: 0;
   font-family: var(--font-sans);
   font-size: var(--text-body);
   font-weight: 700;
 }
-.learn-tool-body,
-.learn-tool .ab-start-body {
+.learn-tool-body {
   font-size: var(--text-secondary);
   color: var(--ink-3);
 }
-.learn-tool.ab-start {
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 6px;
-  margin: 0;
-}
-.learn-tool .ab-start-letters {
+/* Letters and words shows its first letters where an icon would be */
+.learn-tool-letters {
+  font-family: var(--font-display);
   font-size: 1.5rem;
   line-height: 1;
+  letter-spacing: 0.04em;
+  color: var(--gold-ink);
+  direction: ltr;
 }
 .learn-tool.learn-review {
   justify-content: space-between;
@@ -1193,10 +1190,6 @@
     flex-direction: row;
     flex-wrap: wrap;
     align-items: center;
-  }
-  /* three link tiles in two columns: the last takes its row rather than sitting beside a gap */
-  .learn-tools > .learn-tool-link:last-child {
-    grid-column: 1 / -1;
   }
 }
 @media (max-width: 380px) {

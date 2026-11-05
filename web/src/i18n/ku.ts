@@ -2655,10 +2655,10 @@ export const ku: Catalogue = {
   'alphabet.exploredAll': 'Hemû {total} hatin dîtin. Destxweş!',
 
   // ---- words to know: the colours, the numbers, the days and the months --------
-  'words.title': 'Peyvên bingehîn',
-  'words.toolHint': 'Reng, hejmar, roj, meh',
+  'words.title': 'Tîp û peyv',
+  'words.toolHint': 'Tîp, reng, hejmar, roj, meh',
   'words.fromAlphabet': 'Reng, hejmar, roj û mehan hîn bibe',
-  'words.lead': 'Wan wek tîpan hîn bibe: li peyvekê bitikîne da ku bibihîzî.',
+  'words.lead': 'Bi tîpan dest pê bike, paşê bi peyvên pêşîn. Li tîpekê an peyvekê bitikîne da ku bibihîzî.',
   'words.set.colours': 'Reng',
   'words.set.numbers': 'Hejmar',
   'words.set.days': 'Rojên hefteyê',
@@ -2667,6 +2667,8 @@ export const ku: Catalogue = {
   'words.set.numbersBody': 'Sî peyv, û bi wan her hejmar heta {max}.',
   'words.set.daysBody': 'Hefte bi Şemiyê dest pê dike, û pênc roj hejmara xwe di navê xwe de hildigirin.',
   'words.set.monthsBody': 'Mehên salnameyê, û mehên kurdî ji Newrozê ve.',
+  'words.set.letters': 'Alfabe',
+  'words.set.lettersBody': 'Her tîp û dengê wê',
   'words.tileLabel': '{word}, {meaning}',
   'words.explored': '{n} ji {total} hatin dîtin',
   'words.exploredAll': 'Hemû {total} hatin dîtin. Destxweş!',

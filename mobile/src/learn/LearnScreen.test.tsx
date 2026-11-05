@@ -160,9 +160,9 @@ describe('Learn', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('PracticeHub');
     fireEvent.click(screen.getByRole('button', { name: 'Dictionary, Look up any word' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Dictionary');
-    fireEvent.click(screen.getByRole('button', { name: 'Alphabet, Every letter, and how it sounds' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Alphabet');
-    fireEvent.click(screen.getByRole('button', { name: 'Words to know, Colours, numbers, days, months' }));
+    // the letters are the first step of Letters and words, not a tile of their own
+    expect(screen.queryByRole('button', { name: /^Alphabet,/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Letters and words, Letters, colours, numbers, days, months' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Words');
   });
 

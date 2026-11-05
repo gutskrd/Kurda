@@ -2651,10 +2651,10 @@ export const de: Catalogue = {
   'alphabet.exploredAll': 'Alle {total} entdeckt. Gut gemacht!',
 
   // ---- words to know: the colours, the numbers, the days and the months --------
-  'words.title': 'Wichtige Wörter',
-  'words.toolHint': 'Farben, Zahlen, Tage, Monate',
+  'words.title': 'Buchstaben und Wörter',
+  'words.toolHint': 'Buchstaben, Farben, Zahlen, Tage, Monate',
   'words.fromAlphabet': 'Farben, Zahlen, Tage und Monate lernen',
-  'words.lead': 'Lerne sie wie die Buchstaben: Tippe auf ein Wort, um es zu hören.',
+  'words.lead': 'Fang mit den Buchstaben an, dann kommen die ersten Wörter. Tippe auf einen Buchstaben oder ein Wort, um es zu hören.',
   'words.set.colours': 'Farben',
   'words.set.numbers': 'Zahlen',
   'words.set.days': 'Wochentage',
@@ -2663,6 +2663,8 @@ export const de: Catalogue = {
   'words.set.numbersBody': 'Dreißig Wörter – und mit ihnen jede Zahl bis {max}.',
   'words.set.daysBody': 'Die Woche beginnt am Samstag, und fünf Tage tragen ihre Zahl im Namen.',
   'words.set.monthsBody': 'Die Monate im Kalender und die kurdischen Monate ab Newroz.',
+  'words.set.letters': 'Alphabet',
+  'words.set.lettersBody': 'Jeder Buchstabe und sein Klang',
   'words.tileLabel': '{word}, {meaning}',
   'words.explored': '{n} von {total} entdeckt',
   'words.exploredAll': 'Alle {total} entdeckt. Gut gemacht!',

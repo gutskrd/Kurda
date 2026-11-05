@@ -19,7 +19,6 @@ import { LearnHeader } from '../learn/LearnHeader';
 import { StreakSheet } from '../learn/StreakSheet';
 import { QuestsCard } from '../quests/QuestsCard';
 import { publishedDictionary } from '../layouts/navLinks';
-import { TEASER_COLOURS } from '../words/sets';
 
 /** Three letters a beginner meets first: one familiar, one with a mark, one with a hat. */
 const ALPHABET_TEASER = 'Aa Çç Êê';
@@ -196,20 +195,10 @@ function Tools({ signedIn }: { signedIn: boolean }): React.JSX.Element {
       </h2>
       <div className={`learn-tools${signedIn ? '' : ' is-guest'}`}>
         {signedIn && <ReviewEntry />}
-        {/* before any course, the letters it is written in */}
-        <Link to="/app/alphabet" className="learn-tool learn-tool-link ab-start">
-          <span className="ab-start-letters" lang="ku" aria-hidden="true">
-            {ALPHABET_TEASER}
-          </span>
-          <span className="learn-tool-title ab-start-title">{t('alphabet.title')}</span>
-          <span className="learn-tool-body ab-start-body">{t('alphabet.link')}</span>
-        </Link>
-        {/* and the first words after them: colours, numbers, days and months (pages/Words.tsx) */}
+        {/* the letters every course is written in, and the first words after them: one way in (pages/Words.tsx) */}
         <Link to="/app/learn/words" className="learn-tool learn-tool-link">
-          <span className="wd-start-dots" aria-hidden="true">
-            {TEASER_COLOURS.map((hex) => (
-              <i key={hex} style={{ background: hex }} />
-            ))}
+          <span className="learn-tool-letters" lang="ku" aria-hidden="true">
+            {ALPHABET_TEASER}
           </span>
           <span className="learn-tool-title">{t('words.title')}</span>
           <span className="learn-tool-body">{t('words.toolHint')}</span>

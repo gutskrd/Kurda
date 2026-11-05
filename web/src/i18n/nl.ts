@@ -2651,10 +2651,10 @@ export const nl: Catalogue = {
   'alphabet.exploredAll': 'Alle {total} verkend. Goed gedaan!',
 
   // ---- words to know: the colours, the numbers, the days and the months --------
-  'words.title': 'Basiswoorden',
-  'words.toolHint': 'Kleuren, getallen, dagen, maanden',
+  'words.title': 'Letters en woorden',
+  'words.toolHint': 'Letters, kleuren, getallen, dagen, maanden',
   'words.fromAlphabet': 'Leer kleuren, getallen, dagen en maanden',
-  'words.lead': 'Leer ze zoals de letters: tik op een woord om het te horen.',
+  'words.lead': 'Begin met de letters, daarna de eerste woorden. Tik op een letter of woord om het te horen.',
   'words.set.colours': 'Kleuren',
   'words.set.numbers': 'Getallen',
   'words.set.days': 'Dagen van de week',
@@ -2663,6 +2663,8 @@ export const nl: Catalogue = {
   'words.set.numbersBody': 'Dertig woorden, en daarmee elk getal tot {max}.',
   'words.set.daysBody': 'De week begint op zaterdag, en vijf dagen dragen hun nummer in hun naam.',
   'words.set.monthsBody': 'De maanden van de kalender, en de Koerdische maanden vanaf Newroz.',
+  'words.set.letters': 'Alfabet',
+  'words.set.lettersBody': 'Elke letter en hoe hij klinkt',
   'words.tileLabel': '{word}, {meaning}',
   'words.explored': '{n} van {total} verkend',
   'words.exploredAll': 'Alle {total} verkend. Goed gedaan!',

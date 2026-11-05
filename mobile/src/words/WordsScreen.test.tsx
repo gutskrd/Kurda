@@ -69,7 +69,19 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
-describe('words to know', () => {
+describe('letters and words', () => {
+  it('starts with the alphabet, counting its letters opened here, and opens it', async () => {
+    localStorage.setItem('hevalo_alphabet_seen_v1', JSON.stringify({ kmr: ['a', 'b', 'c', 'gone'], ckb: ['alif'] }));
+    renderWithProviders(<WordsScreen onExit={() => undefined} />);
+    const letters = await screen.findByRole('button', { name: 'Alphabet, 3 of 31 explored' });
+    // first in the list, before the word sets
+    const cards = screen.getAllByRole('button', { name: / explored$/ });
+    expect(cards[0]).toBe(letters);
+    expect(cards).toHaveLength(5);
+    await press('Alphabet, 3 of 31 explored');
+    expect(navigation.navigate).toHaveBeenCalledWith('Alphabet');
+  });
+
   it('lists the four sets with how many of each have been opened, and opens one', async () => {
     localStorage.setItem('hevalo_words_colours_seen_v1', JSON.stringify({ kmr: ['red', 'blue'], ckb: ['red'] }));
     renderWithProviders(<WordsScreen onExit={() => undefined} />);

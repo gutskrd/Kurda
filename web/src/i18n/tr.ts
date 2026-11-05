@@ -2645,10 +2645,10 @@ export const tr: Catalogue = {
   'alphabet.exploredAll': '{total} harfin hepsi keşfedildi. Harika!',
 
   // ---- words to know: the colours, the numbers, the days and the months --------
-  'words.title': 'Temel kelimeler',
-  'words.toolHint': 'Renkler, sayılar, günler, aylar',
+  'words.title': 'Harfler ve kelimeler',
+  'words.toolHint': 'Harfler, renkler, sayılar, günler, aylar',
   'words.fromAlphabet': 'Renkleri, sayıları, günleri ve ayları öğren',
-  'words.lead': 'Harfler gibi öğren: duymak için bir kelimeye dokun.',
+  'words.lead': 'Harflerle başla, ardından ilk kelimelere geç. Duymak için bir harfe ya da kelimeye dokun.',
   'words.set.colours': 'Renkler',
   'words.set.numbers': 'Sayılar',
   'words.set.days': 'Haftanın günleri',
@@ -2657,6 +2657,8 @@ export const tr: Catalogue = {
   'words.set.numbersBody': 'Otuz kelime ve onlarla {max}’a kadar her sayı.',
   'words.set.daysBody': 'Hafta cumartesi başlar ve beş gün adında sırasını taşır.',
   'words.set.monthsBody': 'Takvimdeki aylar ve Newroz’dan başlayan Kürt ayları.',
+  'words.set.letters': 'Alfabe',
+  'words.set.lettersBody': 'Her harf ve nasıl okunduğu',
   'words.tileLabel': '{word}, {meaning}',
   'words.explored': '{total} kelimeden {n} tanesi keşfedildi',
   'words.exploredAll': '{total} kelimenin hepsi keşfedildi. Harika!',

@@ -2643,10 +2643,10 @@ export const ar: Catalogue = {
   'alphabet.exploredAll': 'استكشفت الحروف الـ{total} كلها. أحسنت!',
 
   // ---- words to know: the colours, the numbers, the days and the months --------
-  'words.title': 'كلمات أساسية',
-  'words.toolHint': 'الألوان والأرقام والأيام والأشهر',
+  'words.title': 'الحروف والكلمات',
+  'words.toolHint': 'الحروف والألوان والأرقام والأيام والأشهر',
   'words.fromAlphabet': 'تعلّم الألوان والأرقام والأيام والأشهر',
-  'words.lead': 'تعلّمها كما تعلّمت الحروف: اضغط على كلمة لتسمعها.',
+  'words.lead': 'ابدأ بالحروف ثم بأولى الكلمات. اضغط على حرف أو كلمة لتسمعها.',
   'words.set.colours': 'الألوان',
   'words.set.numbers': 'الأرقام',
   'words.set.days': 'أيام الأسبوع',
@@ -2655,6 +2655,8 @@ export const ar: Catalogue = {
   'words.set.numbersBody': 'ثلاثون كلمة، وبها كل عدد حتى {max}.',
   'words.set.daysBody': 'يبدأ الأسبوع يوم السبت، وخمسة أيام تحمل رقمها في اسمها.',
   'words.set.monthsBody': 'أشهر التقويم، والأشهر الكردية بدءًا من نوروز.',
+  'words.set.letters': 'الأبجدية',
+  'words.set.lettersBody': 'كل حرف وكيف يُنطق',
   'words.tileLabel': '{word}، {meaning}',
   'words.explored': 'استكشفت {n} من {total}',
   'words.exploredAll': 'استكشفت الكلمات الـ{total} كلها. أحسنت!',
