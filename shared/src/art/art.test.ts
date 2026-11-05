@@ -27,7 +27,7 @@ import {
 import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import { KINGDOM_PLOTS, KINGDOM_SCENE, kingdomBuildingSvg, kingdomLife, kingdomLifeSvg, kingdomSceneSvg } from './kingdom.js';
+import { KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingSvg, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, type KingdomFrame, type KingdomNode } from './kingdom.js';
 import { KINGDOM_BUILDINGS, type KingdomBuilding, type KingdomLevel } from '../games/kingdom/buildings.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
 import {
@@ -1082,16 +1082,31 @@ describe('the join ticket', () => {
   });
 });
 
+/**
+ * The village is the one drawing allowed two things the rest of the art is
+ * not, because its owner asked for them: a heavy dark outline round every
+ * object, and isometric depth. Everything else still holds — flat planes of
+ * colour (no gradient anywhere in the village's own drawing; only the deer
+ * keeps the soft light the app's own drawing of Hevalo has always had),
+ * nothing outside the drawing, every drawing well-formed and labelled — and
+ * the scene, the one large picture in the app, has a weight budget of its
+ * own below.
+ */
 describe('the kingdom’s village', () => {
   const LEVELS = [0, 1, 2, 3, 4, 5] as const;
   const all = (level: KingdomLevel): Record<KingdomBuilding, KingdomLevel> =>
     Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, level])) as Record<KingdomBuilding, KingdomLevel>;
+  const flatColour = (svg: string): void => expect(svg).not.toMatch(/Gradient|<filter|<mask|blur/);
 
-  it('draws every building at every stage, from the empty plot up, large and small, by the same rules as every drawing', () => {
+  it('draws every building at every stage, and every stage being built, large and small, by the same rules as every drawing', () => {
     for (const building of KINGDOM_BUILDINGS) {
       for (const level of LEVELS) {
         for (const size of [48, 120, 168]) checkSvg(kingdomBuildingSvg({ building, level, size }), size);
         checkSvg(kingdomBuildingSvg({ building, level, size: 96, dark: true }), 96);
+        const rising = kingdomBuildingSvg({ building, level, rising: true, size: 120 });
+        checkSvg(rising, 120);
+        flatColour(rising);
+        if (level < 5) expect(rising, `${building} ${level}`).not.toBe(kingdomBuildingSvg({ building, level, size: 120 }));
       }
     }
   });
@@ -1104,43 +1119,51 @@ describe('the kingdom’s village', () => {
     }
   });
 
-  it('draws the whole village as a valid, self-contained picture of its own shape, the same every time', () => {
+  it('draws the whole village as a valid, self-contained, flat-coloured picture of its own shape, the same every time', () => {
     for (const level of LEVELS) {
       for (const dark of [false, true]) {
-        const svg = kingdomSceneSvg({ levels: all(level), dark, width: 360 });
+        const svg = kingdomSceneSvg({ levels: all(level), dark, width: 500, rising: level < 5 ? [...KINGDOM_BUILDINGS] : [] });
         const root = parse(svg);
         expect(root.attrs.viewBox).toBe(`0 0 ${KINGDOM_SCENE.width} ${KINGDOM_SCENE.height}`);
         expect(root.attrs.role).toBe('img');
         expect(root.children[0]?.name).toBe('title');
         expect(root.attrs['aria-labelledby']).toBe(root.children[0]?.attrs.id);
-        const ids = new Set<string>();
         walk(root, (e) => {
           expect(ALLOWED.has(e.name), e.name).toBe(true);
           for (const [k, v] of Object.entries(e.attrs)) {
             expect(k.startsWith('on') || /href$/i.test(k), k).toBe(false);
             if (k !== 'xmlns') expect(v, `${k} on <${e.name}>`).not.toMatch(/NaN|Infinity|undefined|null/);
           }
-          if (e.attrs.id) ids.add(e.attrs.id);
         });
-        for (const m of svg.matchAll(/url\(#([^)]+)\)/g)) expect(ids.has(m[1]!), m[1]).toBe(true);
         expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|data:/i);
-        // the whole village at its fullest, six buildings and the land, drawn once per visit: about two badges' worth
-        expect(svg.length).toBeLessThan(64 * 1024);
+        flatColour(svg);
+        // the one large picture in the app, drawn once per visit and kept: the whole village at its fullest, with every
+        // building in scaffolding, the lake, the peaks and the scenery, is allowed about five badges' worth
+        expect(svg.length).toBeLessThan(176 * 1024);
       }
     }
     const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
     expect(kingdomSceneSvg({ levels: some })).toBe(kingdomSceneSvg({ levels: some }));
     expect(kingdomSceneSvg({ levels: some })).not.toBe(kingdomSceneSvg({ levels: { ...some, teahouse: 1 } }));
     expect(kingdomSceneSvg({ levels: some, dark: true })).not.toBe(kingdomSceneSvg({ levels: some }));
+    expect(kingdomSceneSvg({ levels: some, rising: ['school'] })).not.toBe(kingdomSceneSvg({ levels: some }));
+    // what sways is left to the apps when they move it, and the scene still stands without it
+    expect(kingdomSceneSvg({ levels: some, moving: true }).length).toBeLessThan(kingdomSceneSvg({ levels: some }).length);
+    // a building left off its plot, for an app to raise it there itself
+    expect(kingdomSceneSvg({ levels: some, without: 'market' }).length).toBeLessThan(kingdomSceneSvg({ levels: some }).length);
   });
 
-  it('puts every building, and a tap on it, inside the scene, and no two taps on one spot', () => {
+  it('puts every building, its tap and its badge inside the frame an app keeps in view, and no two taps on one spot', () => {
+    const inFrame = (x: number, y: number): boolean => x >= KINGDOM_FRAME.x && x <= KINGDOM_FRAME.x + KINGDOM_FRAME.w && y >= KINGDOM_FRAME.y && y <= KINGDOM_FRAME.y + KINGDOM_FRAME.h;
+    expect(KINGDOM_FRAME.x + KINGDOM_FRAME.w).toBeLessThanOrEqual(KINGDOM_SCENE.width);
+    expect(KINGDOM_FRAME.y + KINGDOM_FRAME.h).toBeLessThanOrEqual(KINGDOM_SCENE.height);
     const boxes = KINGDOM_BUILDINGS.map((b) => KINGDOM_PLOTS[b].box);
-    for (const box of boxes) {
-      expect(box.x).toBeGreaterThanOrEqual(0);
-      expect(box.y).toBeGreaterThanOrEqual(0);
-      expect(box.x + box.w).toBeLessThanOrEqual(KINGDOM_SCENE.width);
-      expect(box.y + box.h).toBeLessThanOrEqual(KINGDOM_SCENE.height);
+    for (const b of KINGDOM_BUILDINGS) {
+      const { box, badge } = KINGDOM_PLOTS[b];
+      expect(inFrame(box.x, box.y) && inFrame(box.x + box.w, box.y + box.h), b).toBe(true);
+      expect(inFrame(badge.x, badge.y), b).toBe(true);
+      // tall enough to hit with a thumb on a phone, where the frame is drawn about as wide as the screen
+      expect(Math.min(box.w, box.h), b).toBeGreaterThan(48);
     }
     boxes.forEach((a, i) =>
       boxes.slice(i + 1).forEach((b) => {
@@ -1148,23 +1171,75 @@ describe('the kingdom’s village', () => {
         expect(apart).toBe(true);
       }),
     );
+    // each building alone, to raise it in place, and its scaffolding on its own to drop away
+    for (const building of KINGDOM_BUILDINGS) {
+      const whole = kingdomPlotSvg({ building, level: 2, rising: true });
+      const parts = [kingdomPlotSvg({ building, level: 2, rising: true, scaffold: 'none' }), kingdomPlotSvg({ building, level: 2, rising: true, scaffold: 'only' })];
+      for (const svg of [whole, ...parts]) {
+        const root = parse(svg);
+        expect(root.attrs['aria-hidden']).toBe('true');
+        walk(root, (e) => expect(ALLOWED.has(e.name), e.name).toBe(true));
+        flatColour(svg);
+      }
+      expect(parts[0]!.length + parts[1]!.length, building).toBeGreaterThan(whole.length * 0.9);
+    }
   });
 
-  it('moves only what has been built — smoke from chimneys, water in the spring, leaves in the orchard — inside the scene', () => {
-    expect(kingdomLife(all(0))).toEqual([]);
+  it('moves only what has been built, inside the canvas, every loop closing on itself so it never jumps', () => {
+    const ids = (levels: Record<KingdomBuilding, KingdomLevel>): string[] => kingdomLife(levels).map((a) => a.id);
+    // the deer, the flock, the hens, the dog, the sky and the tenûr's smoke are always there; the cat, the bees and the chimneys' smoke come with what they belong to
+    expect(ids(all(0))).toEqual(expect.arrayContaining(['hevalo', 'sheep0', 'goat0', 'hen0', 'dog', 'birds', 'cloud0', 'tenur0']));
+    expect(ids(all(0))).not.toContain('cat');
+    expect(ids(all(0))).not.toContain('bees');
+    expect(ids({ ...all(0), houses: 1 })).toContain('cat');
+    expect(ids({ ...all(0), orchard: 3 })).toContain('bees');
+    expect(ids({ ...all(0), teahouse: 2 })).toContain('teahousesmoke00');
+    expect(ids({ ...all(0), spring: 2 })).toEqual(expect.arrayContaining(['ripple0', 'spout', 'falls']));
     const full = kingdomLife(all(5));
-    expect(new Set(full.map((s) => s.kind))).toEqual(new Set(['smoke', 'water', 'leaf']));
-    for (const s of full) {
-      expect(s.x).toBeGreaterThan(0);
-      expect(s.x).toBeLessThan(KINGDOM_SCENE.width);
-      expect(s.y).toBeGreaterThan(0);
-      expect(s.y).toBeLessThan(KINGDOM_SCENE.height);
+    expect(new Set(full.map((a) => a.id)).size).toBe(full.length);
+    const check = (node: KingdomNode, where: string): void => {
+      for (const v of [node.box.x, node.box.y, node.box.w, node.box.h, ...node.origin, ...Object.values(node.still)]) expect(Number.isFinite(v), where).toBe(true);
+      if (node.motion) {
+        const f = node.motion.frames;
+        expect(node.motion.period, where).toBeGreaterThan(200);
+        expect(f[0]!.t, where).toBe(0);
+        expect(f[f.length - 1]!.t, where).toBe(1);
+        for (let i = 1; i < f.length; i++) expect(f[i]!.t, where).toBeGreaterThan(f[i - 1]!.t);
+        const pose = ({ x, y, r, sx, sy, o }: KingdomFrame) => ({ x, y, r, sx, sy, o });
+        const first = pose(f[0]!);
+        const last = pose(f[f.length - 1]!);
+        // a loop closes on itself, or jumps back only while it cannot be seen (smoke gone, a cloud past the edge)
+        if (first.o > 0 || last.o > 0) {
+          // a whole turn (the bees circling) ends where it began
+          for (const k of Object.keys(first) as (keyof typeof first)[]) expect(k === 'r' ? (last.r - first.r) % 360 : last[k], `${where} ${k}`).toBeCloseTo(k === 'r' ? 0 : first[k], 2);
+        }
+        for (const frame of f) for (const v of Object.values(frame)) expect(Number.isFinite(v), where).toBe(true);
+      }
+      node.children?.forEach((c, i) => check(c, `${where}.${i}`));
+    };
+    for (const actor of full) {
+      check(actor, actor.id);
+      // where it stands when nothing moves (a cloud starts its drift off the canvas's edge)
+      const x = actor.box.x + actor.still.x;
+      const y = actor.box.y + actor.still.y;
+      expect(x + actor.box.w, actor.id).toBeGreaterThan(0);
+      expect(x, actor.id).toBeLessThan(KINGDOM_SCENE.width);
+      expect(y, actor.id).toBeGreaterThan(0);
+      expect(y + actor.box.h, actor.id).toBeLessThan(KINGDOM_SCENE.height);
     }
-    expect(kingdomLife({ ...all(0), spring: 1 }).map((s) => s.kind)).toEqual(['water']);
-    for (const kind of ['smoke', 'water', 'leaf'] as const) {
-      const sprite = parse(kingdomLifeSvg(kind));
-      expect(sprite.attrs['aria-hidden']).toBe('true');
-      walk(sprite, (e) => expect(ALLOWED.has(e.name), e.name).toBe(true));
+    // the deer is the app's own drawing of Hevalo, shown whole when nothing moves
+    const deer = full.find((a) => a.id === 'hevalo')!;
+    expect(deer.still.o).toBe(1);
+    expect(kingdomSpriteSvg('deerHead')).toMatch(/kgdeer-/);
+    for (const sprite of KINGDOM_SPRITES) {
+      for (const dark of [false, true]) {
+        const svg = kingdomSpriteSvg(sprite, { dark });
+        const root = parse(svg);
+        expect(root.attrs['aria-hidden'], sprite).toBe('true');
+        walk(root, (e) => expect(ALLOWED.has(e.name), `${sprite} <${e.name}>`).toBe(true));
+        expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|data:/i);
+        if (!sprite.startsWith('deer')) flatColour(svg);
+      }
     }
   });
 
@@ -1176,5 +1251,7 @@ describe('the kingdom’s village', () => {
     expect(() => kingdomBuildingSvg({ building: 'spring', level: 6 as KingdomLevel })).toThrow(RangeError);
     expect(() => kingdomSceneSvg({ levels: { ...all(1), orchard: -1 as KingdomLevel } })).toThrow(RangeError);
     expect(() => kingdomSceneSvg({ levels: all(1), width: 0 })).toThrow(RangeError);
+    expect(() => kingdomLife({ ...all(1), market: 9 as KingdomLevel })).toThrow(RangeError);
+    expect(() => kingdomSpriteSvg('dragon' as never)).toThrow(RangeError);
   });
 });

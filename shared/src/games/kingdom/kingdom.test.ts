@@ -2,11 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   KINGDOM,
   KINGDOM_BUILDINGS,
+  KINGDOM_LEVEL_TOTAL,
   NO_KINGDOM_LEVELS,
   buildingView,
   isKingdomBuilding,
   kingdomBuildings,
+  kingdomLevelCount,
   kingdomLevels,
+  kingdomRising,
   levelFor,
   newLevels,
   kingdomProgress,
@@ -106,5 +109,21 @@ describe('new levels', () => {
   it('read the levels a view stands at back for the drawing', () => {
     const view = kingdomBuildings({ ...zero, spring: 30 }, { ...NO_KINGDOM_LEVELS, market: 1 });
     expect(kingdomLevels(view)).toEqual({ houses: 0, school: 0, teahouse: 0, spring: 2, market: 1, orchard: 0 });
+  });
+});
+
+describe('the village as it is drawn', () => {
+  it('shows a building going up once the learner is half-way to its next level, and never a finished one', () => {
+    // the school at 10 of 4–16 is half-way to level 2; the orchard at 4 of 3–10 is not; the market at 96 is finished
+    const view = kingdomBuildings({ ...zero, school: 10, orchard: 4, market: 96 }, NO_KINGDOM_LEVELS);
+    expect(kingdomRising(view)).toEqual(['school']);
+    expect(kingdomRising(kingdomBuildings({ ...zero, houses: 6 }, NO_KINGDOM_LEVELS))).toEqual(['houses']);
+    expect(kingdomRising(kingdomBuildings(zero, NO_KINGDOM_LEVELS))).toEqual([]);
+  });
+
+  it('counts the village’s levels out of all thirty', () => {
+    expect(KINGDOM_LEVEL_TOTAL).toBe(30);
+    expect(kingdomLevelCount(kingdomBuildings({ ...zero, school: 20, orchard: 3, houses: 12 }, NO_KINGDOM_LEVELS))).toBe(4);
+    expect(kingdomLevelCount(kingdomBuildings({ houses: 1800, school: 192, teahouse: 8, spring: 340, market: 96, orchard: 180 }, NO_KINGDOM_LEVELS))).toBe(30);
   });
 });

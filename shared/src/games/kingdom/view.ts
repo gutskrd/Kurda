@@ -119,3 +119,19 @@ export function kingdomProgress(b: Pick<KingdomBuildingView, 'count' | 'from' | 
   const span = b.next - b.from;
   return span <= 0 ? 1 : Math.max(0, Math.min(1, (b.count - b.from) / span));
 }
+
+/** From this share of the way to its next level, a building is drawn with that level going up in scaffolding. */
+export const KINGDOM_RISING_FROM = 0.5;
+
+/** The buildings past half-way to their next level, which the village draws being built. */
+export function kingdomRising(buildings: readonly Pick<KingdomBuildingView, 'id' | 'level' | 'count' | 'from' | 'next'>[]): KingdomBuilding[] {
+  return buildings.filter((b) => b.level < KINGDOM_MAX_LEVEL && kingdomProgress(b) >= KINGDOM_RISING_FROM).map((b) => b.id);
+}
+
+/** Every level the village has: what the village's top bar counts, out of `KINGDOM_LEVEL_TOTAL`. */
+export function kingdomLevelCount(buildings: readonly Pick<KingdomBuildingView, 'level'>[]): number {
+  return buildings.reduce((sum, b) => sum + b.level, 0);
+}
+
+/** The most levels a village can have: every building finished. */
+export const KINGDOM_LEVEL_TOTAL = KINGDOM_BUILDINGS.length * KINGDOM_MAX_LEVEL;
