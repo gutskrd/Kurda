@@ -58,6 +58,16 @@ export const REST: Record<ColorScheme, { fill: string; lip: string; ink: string;
   light: { fill: '#e4e4e1', lip: '#c9c9c5', ink: '#74767c', line: 'rgba(17,17,17,0.18)' },
 };
 
+/**
+ * The glyph on a stop's drawn face where the face is not the unit's colour:
+ * on an open stop's parchment (deep by day, the unit's ink by evening, when
+ * the parchment stays light) and on a closed one's field stone.
+ */
+export const FACE_INK: Record<ColorScheme, { paper: (tone: ToneColors) => string; stone: string }> = {
+  light: { paper: (tone) => tone.text, stone: '#6a6252' },
+  dark: { paper: (tone) => tone.ink, stone: '#e2e3e8' },
+};
+
 /** The sun's gold under an earned trophy, and the glyph on it. */
 export const GOLD_LIP: Record<ColorScheme, string> = { dark: '#b88d1f', light: '#b07f00' };
 export const GOLD_INK = '#3a2a00';

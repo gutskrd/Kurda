@@ -605,7 +605,7 @@ function Banner({ unit, tone, onRail }: { unit: Unit; tone: ToneColors; onRail?:
 }
 
 /** The one ink the banners are outlined in, as the stops and the land are (shared art/path-land.ts). */
-const OUTLINE = { light: '#3b2a20', dark: '#130e12' } as const;
+const OUTLINE = { light: '#4a2a1a', dark: '#3a2016' } as const;
 
 /** "Unit 2, Family & Food": a unit's number and name, said as one heading. */
 function unitHeading(number: string, title: string): string {

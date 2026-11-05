@@ -11,7 +11,7 @@ import { duration } from '../theme/motion';
 import { DrawnCheck, PressableScale } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { REST, stopLook, type ToneColors } from './path';
+import { FACE_INK, REST, stopLook, type ToneColors } from './path';
 import { STOP_FACE, StopArt, TOKEN_HEIGHT } from './PathWorld';
 import type { SkillNode } from './types';
 
@@ -161,7 +161,7 @@ export function SkillNodeView({
     };
   }, [change, finishing, opening, unlocking, pop, lock, shut, wobble]);
 
-  const glyph = glyphOf(stop, look, tone, rest.ink);
+  const glyph = glyphOf(stop, look, tone, FACE_INK[scheme]);
   const tilt = wobble.interpolate({ inputRange: [-1, 1], outputRange: [`${-PATH_MOTION.wobble}deg`, `${PATH_MOTION.wobble}deg`] });
   const lifted = rise ? { opacity: rise, transform: [{ translateY: rise.interpolate({ inputRange: [0, 1], outputRange: [PATH_MOTION.rise, 0] }) }] } : null;
 
@@ -208,7 +208,7 @@ export function SkillNodeView({
                   // the padlock it had, giving way to its number
                   <>
                     <Animated.View style={[styles.glyphLayer, { opacity: lock }]}>
-                      <Icon name="lock" size={26} color={rest.ink} />
+                      <Icon name="lock" size={26} color={FACE_INK[scheme].stone} />
                     </Animated.View>
                     <Animated.Text style={[styles.number, { color: glyph.colour, opacity: lock.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
                       {stop.number}
@@ -236,8 +236,8 @@ export function SkillNodeView({
 }
 
 /** The glyph on a stop's face, by what it is: a skill's check, star, number or padlock, review's arrows; the drawn stops carry their own. */
-function glyphOf(stop: Stop, look: string, tone: ToneColors, restInk: string): { icon?: IconName; number?: number; colour: string } | null {
-  if (stop.kind === 'review') return { icon: 'review', colour: tone.text };
+function glyphOf(stop: Stop, look: string, tone: ToneColors, ink: (typeof FACE_INK)['dark']): { icon?: IconName; number?: number; colour: string } | null {
+  if (stop.kind === 'review') return { icon: 'review', colour: ink.paper(tone) };
   if (stop.kind !== 'skill' || look === 'jump') return null;
   switch (stop.state) {
     case 'done':
@@ -246,9 +246,9 @@ function glyphOf(stop: Stop, look: string, tone: ToneColors, restInk: string): {
     case 'current':
       return null;
     case 'available':
-      return { number: stop.number, colour: tone.text };
+      return { number: stop.number, colour: ink.paper(tone) };
     case 'locked':
-      return { icon: 'lock', colour: restInk };
+      return { icon: 'lock', colour: ink.stone };
   }
 }
 
@@ -329,7 +329,7 @@ function Progress({
   const gap = count > 1 ? Math.min(PIP.gap, (2 * PATH_STOP_ART.rx - 22) / (count - 1)) : 0;
   const side = PATH_STOP_ART.raised;
   const unlit = scheme === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.3)';
-  const outline = scheme === 'dark' ? '#130e12' : '#3b2a20';
+  const outline = scheme === 'dark' ? '#3a2016' : '#4a2a1a';
   return (
     <>
       {glow ? (
@@ -402,7 +402,7 @@ function Callout({
     run.start();
     return () => run.stop();
   }, [reduce, arriving, shown]);
-  const outline = scheme === 'dark' ? '#130e12' : '#3b2a20';
+  const outline = scheme === 'dark' ? '#3a2016' : '#4a2a1a';
   return (
     <Animated.View style={[styles.calloutWrap, { opacity: shown }]} pointerEvents="box-none" testID={bobbing ? 'lp-callout-bobbing' : undefined}>
       <View style={[styles.calloutLip, { backgroundColor: tone.lip, borderColor: outline }]}>

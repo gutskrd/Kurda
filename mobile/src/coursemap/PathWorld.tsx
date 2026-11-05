@@ -319,7 +319,7 @@ export function PathHostView({
       testID={`lp-host-${host}`}
     >
       {said ? (
-        <Animated.View style={[styles.bubble, { opacity: shown, backgroundColor: colors.surfaceRaised, borderColor: scheme === 'dark' ? '#000000' : '#3b2a20' }]}>
+        <Animated.View style={[styles.bubble, { opacity: shown, backgroundColor: colors.surfaceRaised, borderColor: scheme === 'dark' ? '#000000' : '#4a2a1a' }]}>
           <Text style={[styles.bubbleText, { color: colors.textPrimary }]} numberOfLines={1}>
             {said}
           </Text>

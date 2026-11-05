@@ -106,12 +106,12 @@
   background: var(--u-fill);
   color: var(--u-ink);
   /* outlined in the world's one ink, on its darker lip, as the stops are */
-  border: 2px solid #130e12;
-  box-shadow: 0 5px 0 var(--u-lip), 0 5px 0 2px #130e12;
+  border: 2px solid #3a2016;
+  box-shadow: 0 5px 0 var(--u-lip), 0 5px 0 2px #3a2016;
 }
 :root[data-theme='light'] .lp-banner {
-  border-color: #3b2a20;
-  box-shadow: 0 5px 0 var(--u-lip), 0 5px 0 2px #3b2a20;
+  border-color: #4a2a1a;
+  box-shadow: 0 5px 0 var(--u-lip), 0 5px 0 2px #4a2a1a;
 }
 .lp-banner-text {
   display: grid;
@@ -437,9 +437,21 @@
 .lp-node.is-current .lp-node-glyph {
   color: var(--u-ink);
 }
+/* on an open stop's parchment: deep by day; by evening the parchment stays light, so the unit's own ink */
 .lp-node.is-available .lp-node-glyph,
 .lp-node.is-review .lp-node-glyph {
+  color: var(--u-ink);
+}
+:root[data-theme='light'] .lp-node.is-available .lp-node-glyph,
+:root[data-theme='light'] .lp-node.is-review .lp-node-glyph {
   color: var(--u-text);
+}
+/* on a closed stop's field stone */
+.lp-node.is-locked .lp-node-glyph {
+  color: #e2e3e8;
+}
+:root[data-theme='light'] .lp-node.is-locked .lp-node-glyph {
+  color: #6a6252;
 }
 .lp-node-badge {
   position: absolute;
@@ -480,11 +492,11 @@
   height: 8px;
   border-radius: 50%;
   background: rgba(0, 0, 0, 0.4);
-  box-shadow: 0 0 0 1.5px #130e12;
+  box-shadow: 0 0 0 1.5px #3a2016;
 }
 :root[data-theme='light'] .lp-light {
   background: rgba(0, 0, 0, 0.3);
-  box-shadow: 0 0 0 1.5px #3b2a20;
+  box-shadow: 0 0 0 1.5px #4a2a1a;
 }
 .lp-light.is-lit {
   background: var(--gold);
@@ -537,7 +549,7 @@
   align-items: center;
   min-height: 40px;
   padding: 0 var(--space-4);
-  border: 2px solid #130e12;
+  border: 2px solid #3a2016;
   border-radius: var(--r-md);
   background: var(--u-fill);
   color: var(--u-ink);
@@ -546,11 +558,11 @@
   letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
-  box-shadow: 0 4px 0 var(--u-lip), 0 4px 0 2px #130e12;
+  box-shadow: 0 4px 0 var(--u-lip), 0 4px 0 2px #3a2016;
 }
 :root[data-theme='light'] .lp-callout {
-  border-color: #3b2a20;
-  box-shadow: 0 4px 0 var(--u-lip), 0 4px 0 2px #3b2a20;
+  border-color: #4a2a1a;
+  box-shadow: 0 4px 0 var(--u-lip), 0 4px 0 2px #4a2a1a;
 }
 [dir='rtl'] .lp-callout {
   translate: 50% 0;
@@ -565,11 +577,11 @@
   margin-left: -6px;
   background: var(--u-lip);
   rotate: 45deg;
-  border-right: 2px solid #130e12;
-  border-bottom: 2px solid #130e12;
+  border-right: 2px solid #3a2016;
+  border-bottom: 2px solid #3a2016;
 }
 :root[data-theme='light'] .lp-callout::after {
-  border-color: #3b2a20;
+  border-color: #4a2a1a;
 }
 .lp-callout:hover {
   color: var(--u-ink);
@@ -616,7 +628,7 @@
   position: absolute;
   top: 0;
   padding: 6px 10px;
-  border: 2px solid #130e12;
+  border: 2px solid #3a2016;
   border-radius: var(--r-md);
   background: var(--surface-solid);
   color: var(--ink);
@@ -627,7 +639,7 @@
   animation: lp-arrive var(--dur) var(--ease-out) both;
 }
 :root[data-theme='light'] .lp-host-say {
-  border-color: #3b2a20;
+  border-color: #4a2a1a;
 }
 @media (max-width: 339px) {
   .lp-mascot,

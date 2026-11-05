@@ -43,13 +43,21 @@ interface Tones {
   shade: string;
 }
 
-/** The one ink every outline is drawn in, warm by day and nearly black by evening. */
-const INK = { day: '#3b2a20', dusk: '#130e12' } as const;
+/**
+ * The one ink every outline is drawn in, by day and by evening: the village's
+ * own dark brown (art/kingdom/pen.ts), so the path and the village read as
+ * one world.
+ */
+const INK = { day: '#4a2a1a', dusk: '#3a2016' } as const;
 
-/** The evening: every colour of the day taken toward the dusk's blue, keeping lit windows and fire bright. */
-const DUSK = '#141a30';
-const dusk = (hex: string, dark: boolean, amount = 0.52): string => (dark ? mix(hex, DUSK, amount) : hex);
-const tones = (t: Tones, dark: boolean): Tones => (dark ? { light: dusk(t.light, true, 0.46), face: dusk(t.face, true), shade: dusk(t.shade, true, 0.56) } : t);
+/**
+ * The evening, for a dark screen: the same land in the last light, every
+ * colour of the day taken a little toward the dusk's violet — as the village
+ * is at dusk — keeping lit windows and fire bright.
+ */
+const DUSK = '#2a2448';
+const dusk = (hex: string, dark: boolean, amount = 0.24): string => (dark ? mix(hex, DUSK, amount) : hex);
+const tones = (t: Tones, dark: boolean): Tones => (dark ? { light: dusk(t.light, true, 0.18), face: dusk(t.face, true), shade: dusk(t.shade, true, 0.3) } : t);
 
 const STONE: Tones = { light: '#f6e8cc', face: '#e2c9a0', shade: '#b99870' };
 const STONE_GREY: Tones = { light: '#eee9df', face: '#d2c9b9', shade: '#a59a87' };
@@ -209,7 +217,7 @@ export function pathLandSvg(opts: PathLandOptions): string {
   const sign = rtl ? -1 : 1;
   const X = (x: number): number => W / 2 + sign * x;
   const ink = dark ? INK.dusk : INK.day;
-  const pen = new Pen(ink, 1.6);
+  const pen = new Pen(ink, 1.4);
   const random = seeded(`land|${opts.ground}|${opts.seed ?? ''}|${Math.round(W)}|${Math.round(H)}`);
   const c = (hex: string): string => dusk(hex, dark);
 
@@ -492,9 +500,9 @@ export const PATH_STOP_TONES: Record<'light' | 'dark', Record<UnitTone, { fill: 
 };
 
 /** What is not open yet: a muted field stone. */
-const REST_STONE = { light: { face: '#d8d3c6', side: '#aaa290', glint: '#efebe2' }, dark: { face: '#3c3f48', side: '#272930', glint: '#555966' } } as const;
+const REST_STONE = { light: { face: '#d8d3c6', side: '#aaa290', glint: '#efebe2' }, dark: { face: '#5a5d6a', side: '#3e404b', glint: '#7d8090' } } as const;
 /** An open stop's face, and the guide's and a story's parchment. */
-const PAPER = { light: { face: '#fbf5e6', side: '#d9c9a5', glint: '#ffffff' }, dark: { face: '#2f333c', side: '#20232a', glint: '#454a56' } } as const;
+const PAPER = { light: { face: '#fbf5e6', side: '#d9c9a5', glint: '#ffffff' }, dark: { face: '#ece2cb', side: '#bba984', glint: '#fff8e8' } } as const;
 
 export interface PathStopOptions {
   look: PathStopLook;
@@ -521,8 +529,8 @@ export function pathStopSvg(opts: PathStopOptions): string {
   const size = opts.size ?? PATH_STOP_ART.box;
   if (!(size > 0) || !Number.isFinite(size)) throw new RangeError(`art: size must be a positive number, got ${String(size)}`);
   const { box: B, cx, cy, rx, ry } = PATH_STOP_ART;
-  const ink = dark ? INK.dusk : mix(t.lip, '#000000', 0.55);
-  const restInk = dark ? INK.dusk : '#5c5446';
+  const ink = dark ? INK.dusk : INK.day;
+  const restInk = ink;
   const prefix = prefixFor(opts.idPrefix, 'stop', look, tone, part, dark);
   const side = look === 'current' ? PATH_STOP_ART.raised : look === 'chest' || look === 'chestOpen' || look === 'jump' ? 6 : PATH_STOP_ART.side;
 
@@ -552,7 +560,7 @@ export function pathStopSvg(opts: PathStopOptions): string {
     }
   })();
   const line = disc.ink;
-  const p = new Pen(line, 2.4);
+  const p = new Pen(line, 2.2);
 
   if (part === 'base') {
     // its shade on the ground, then its side: the face's lower half, carried down by `side`
@@ -722,7 +730,7 @@ export function pathLandmarkSvg(opts: PathLandmarkOptions): string {
   const prefix = prefixFor(opts.idPrefix, 'landmark', landmark, dark);
   const fit = FIT[landmark];
   // drawn at its own scale, then fitted to the canvas: the outline keeps one weight whatever the fit
-  const pen = new Pen(dark ? INK.dusk : INK.day, 1.7 / fit.s);
+  const pen = new Pen(dark ? INK.dusk : INK.day, 1.4 / fit.s);
   draw(pen, dark);
   const body = `<g transform="translate(${n(fit.x)} ${n(fit.y)}) scale(${n2(fit.s)})">${pen.markup()}</g>`;
   const label = opts.title
