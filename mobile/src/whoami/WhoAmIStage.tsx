@@ -63,7 +63,16 @@ const STAGE = 220;
 const CARD_W = STAGE * FOREHEAD.width;
 const CARD_H = 64;
 
-export function ForeheadCard({ dialect, category, identity }: { dialect: GameDialect; category: string; identity: { word: string; meanings: Meanings } | null }): React.JSX.Element {
+export function ForeheadCard({
+  dialect,
+  category,
+  identity,
+}: {
+  dialect: GameDialect;
+  /** what kind of thing it is, when the card may say (every tile that kind); null when it may not */
+  category: string | null;
+  identity: { word: string; meanings: Meanings } | null;
+}): React.JSX.Element {
   const { t, locale } = useI18n();
   const { scheme } = useTheme();
   const reduce = useReducedMotion();
@@ -82,7 +91,7 @@ export function ForeheadCard({ dialect, category, identity }: { dialect: GameDia
     return () => anim.stop();
   }, [shown, reduce, turn]);
   const rotateY = turn.interpolate({ inputRange: [0, 1], outputRange: ['90deg', '0deg'] });
-  const kind = CATEGORY_KEY[category] ? t(CATEGORY_KEY[category]!) : null;
+  const kind = category !== null && CATEGORY_KEY[category] ? t(CATEGORY_KEY[category]!) : null;
   return (
     <View style={styles.stage}>
       <View accessible={false} importantForAccessibility="no-hide-descendants">

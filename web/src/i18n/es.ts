@@ -2038,7 +2038,7 @@ export const es: Catalogue = {
   'games.solo.results.score': '{correct} de {total} bien',
   'games.solo.results.firstTry': 'Al primer intento: {n}',
   'games.solo.results.xp': '+{xp} XP',
-  'games.solo.results.noXp': 'Acierta al menos {needed} para ganar XP y que hoy cuente. Esta vez: {correct}.',
+  'games.solo.results.noXp': 'Acierta al menos {needed} al primer intento para ganar XP y que hoy cuente. Esta vez: {correct}.',
   'games.solo.results.repeat': 'Acertada hace poco, así que esta vez no da XP',
   'games.solo.results.streak': 'Hoy cuenta para tu racha.',
   'games.solo.playAgain': 'Jugar otra vez',

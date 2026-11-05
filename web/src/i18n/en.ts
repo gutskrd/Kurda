@@ -2137,7 +2137,7 @@ export const en = {
   'games.solo.results.score': '{correct} of {total} right',
   'games.solo.results.firstTry': 'On the first try: {n}',
   'games.solo.results.xp': '+{xp} XP',
-  'games.solo.results.noXp': 'Get at least {needed} right to earn XP and count today. This time: {correct}.',
+  'games.solo.results.noXp': 'Get at least {needed} right on the first try to earn XP and count today. This time: {correct}.',
   'games.solo.results.repeat': 'Answered right lately, so no XP this time',
   'games.solo.results.streak': 'Today counts for your streak.',
   'games.solo.playAgain': 'Play again',

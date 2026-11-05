@@ -2040,7 +2040,7 @@ export const de: Catalogue = {
   'games.solo.results.score': '{correct} von {total} richtig',
   'games.solo.results.firstTry': 'Beim ersten Versuch: {n}',
   'games.solo.results.xp': '+{xp} XP',
-  'games.solo.results.noXp': 'Mit mindestens {needed} richtigen Antworten bekommst du XP und der Tag zählt. Diesmal: {correct}.',
+  'games.solo.results.noXp': 'Beantworte mindestens {needed} gleich beim ersten Versuch richtig, dann bekommst du XP und der Tag zählt. Diesmal: {correct}.',
   'games.solo.results.repeat': 'Vor Kurzem schon richtig beantwortet, daher diesmal keine XP',
   'games.solo.results.streak': 'Heute zählt für deine Serie.',
   'games.solo.playAgain': 'Noch einmal spielen',

@@ -17,9 +17,13 @@ afterEach(() => {
 });
 
 // stand-in passages for the stage, never shown to a learner
-const item = (over: Partial<MemoryThiefItemView> = {}): MemoryThiefItemView => ({
+type Passage = Omit<MemoryThiefItemView, 'phase' | 'text' | 'parts' | 'tiles'> & {
+  text: string;
+  parts: NonNullable<MemoryThiefItemView['parts']>;
+  tiles: string[] | null;
+};
+const item = (over: Partial<Passage> = {}): Passage => ({
   index: 0,
-  key: 'k0',
   kind: 'story',
   title: 'Rêwîtî',
   parts: [{ line: 0 }, { gap: 0 }, { text: ' li ber ' }, { gap: 1 }, { text: ' ye.' }],
@@ -31,14 +35,19 @@ const item = (over: Partial<MemoryThiefItemView> = {}): MemoryThiefItemView => (
   level: 1,
   ...over,
 });
+/** A passage as the server sends it while it is studied: whole, and nothing of its gaps. */
+const studied = (p: Passage): MemoryThiefItemView => ({ ...p, phase: 'study', parts: null, tiles: null });
+/** The same once its study is over: its gaps and tiles, and never the passage again. */
+const restored = (p: Passage): MemoryThiefItemView => ({ ...p, phase: 'restore', text: null });
 
-const session = (items: MemoryThiefItemView[], dialect: 'kmr' | 'ckb' = 'kmr'): SoloSessionView<MemoryThiefItemView> => ({
+const session = (passages: Passage[], dialect: 'kmr' | 'ckb' = 'kmr', phase: 'study' | 'restore' = 'study'): SoloSessionView<MemoryThiefItemView> & { passages: Passage[] } => ({
   id: '00000000-0000-4000-8000-0000000000cc',
   game: 'memory-thief',
   dialect,
   difficulty: 'beginner',
-  items,
-  states: items.map((_, i) => ({ index: i, attempts: 0, correct: false, firstTry: false, done: false })),
+  items: passages.map(phase === 'study' ? studied : restored),
+  passages,
+  states: passages.map((_, i) => ({ index: i, attempts: 0, correct: false, firstTry: false, done: false })),
   maxAttempts: 2,
   finished: false,
   expiresAt: new Date(Date.now() + 3600_000).toISOString(),
@@ -50,8 +59,9 @@ interface Answer {
   attempt: number;
 }
 
-function server(round: SoloSessionView<MemoryThiefItemView>, grade: (a: Answer) => unknown, available = true) {
+function server(round: SoloSessionView<MemoryThiefItemView> & { passages: Passage[] }, grade: (a: Answer) => unknown, available = true) {
   const sent: Answer[] = [];
+  const begun: number[] = [];
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
     'fetch',
@@ -63,7 +73,12 @@ function server(round: SoloSessionView<MemoryThiefItemView>, grade: (a: Answer) 
           games: [{ id: 'memory-thief', available, difficulties: available ? ['beginner'] : [], levels: {}, levelled: true, minimum: 6 }],
         });
       if (url.includes('/games/solo/open')) return jsonResponse(200, { id: null });
-      if (url.endsWith('/games/solo/sessions')) return jsonResponse(201, round);
+      if (url.endsWith('/games/solo/sessions')) return jsonResponse(201, { ...round, passages: undefined });
+      if (url.includes('/begin')) {
+        const { index } = JSON.parse(String(init?.body)) as { index: number };
+        begun.push(index);
+        return jsonResponse(200, { item: restored(round.passages[index]!) });
+      }
       if (url.includes('/answers')) {
         const body = JSON.parse(String(init?.body)) as Answer;
         sent.push(body);
@@ -72,7 +87,7 @@ function server(round: SoloSessionView<MemoryThiefItemView>, grade: (a: Answer) 
       return jsonResponse(200, {});
     }),
   );
-  return sent;
+  return Object.assign(sent, { begun });
 }
 
 const correction = (verdicts: Array<'right' | 'typo' | 'wrong'>, given: string[]) => ({
@@ -109,7 +124,10 @@ describe('The Memory Thief', () => {
     expect(screen.getByRole('timer', { name: '20 s to study' })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Words to give back' })).toBeNull();
 
+    // ready: the gaps are asked for once the study is over, never sent with the passage
+    expect(sent.begun).toEqual([]);
     await userEvent.click(screen.getByRole('button', { name: 'I’m ready' }));
+    expect(sent.begun).toEqual([0]);
     // the words are gone from the page, and gaps stand where they were
     expect(await screen.findByRole('button', { name: 'Missing word 1, empty' })).toBeInTheDocument();
     expect(page).not.toHaveTextContent('Gund');
@@ -178,6 +196,19 @@ describe('The Memory Thief', () => {
     expect(sent[0]).toMatchObject({ answer: { gaps: ['gund', 'ciya'] } });
     expect(await screen.findByText('Accepted — mind the marks')).toBeInTheDocument();
     expect(screen.getByText(/your lessons teach/)).toBeInTheDocument();
+  });
+
+  it('opens a passage whose words already vanished on its gaps, with no study and nothing to lift', async () => {
+    const sent = server(session([item()], 'kmr', 'restore'), () => ({}));
+    renderApp(<MemoryThief />, ['/app/games/memory-thief']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    expect(await screen.findByRole('button', { name: 'Missing word 1, empty' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'I’m ready' })).toBeNull();
+    const page = screen.getByRole('article', { name: 'The passage' });
+    expect(page).toHaveTextContent('li ber');
+    expect(page).not.toHaveTextContent('Gund');
+    expect(within(screen.getByRole('group', { name: 'Words to give back' })).getByRole('button', { name: 'gund' })).toBeInTheDocument();
+    expect(sent.begun).toEqual([]);
   });
 
   it('names who says each line of a conversation, and reads a Soranî page right to left', async () => {

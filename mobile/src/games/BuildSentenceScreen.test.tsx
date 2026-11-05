@@ -25,7 +25,7 @@ patchReactNativeWeb({ reduceMotion: true });
 const ID = '00000000-0000-4000-8000-0000000000bb';
 
 // stand-in words for the tiles, never shown to a learner
-const item = (index: number, tiles: string[]): SentenceItemView => ({ index, key: `k${index}`, meaning: { en: `Meaning ${index}` }, tiles, rung: 'short', level: 1 });
+const item = (index: number, tiles: string[]): SentenceItemView => ({ index, meaning: { en: `Meaning ${index}` }, tiles, rung: 'short', level: 1 });
 
 const ladder = (dialect: 'kmr' | 'ckb'): SentenceLadderView & { open: string | null } => ({
   dialect,
@@ -154,7 +154,7 @@ describe('BuildSentenceScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     fireEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
     expect(await screen.findByText('0 of 1 right')).toBeTruthy();
-    expect(screen.getByText('Get at least 1 right to earn XP and count today. This time: 0.')).toBeTruthy();
+    expect(screen.getByText('Get at least 1 right on the first try to earn XP and count today. This time: 0.')).toBeTruthy();
   });
 
   it('plays in the learner’s Soranî, the line filling from the right', async () => {

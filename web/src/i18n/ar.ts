@@ -2034,7 +2034,7 @@ export const ar: Catalogue = {
   'games.solo.results.score': '{correct} صحيحة من {total}',
   'games.solo.results.firstTry': 'من المحاولة الأولى: {n}',
   'games.solo.results.xp': '+{xp} XP',
-  'games.solo.results.noXp': 'أجب عن {needed} على الأقل بشكل صحيح لتكسب XP ويُحتسب اليوم. هذه المرة: {correct}.',
+  'games.solo.results.noXp': 'أجب عن {needed} على الأقل بشكل صحيح من المحاولة الأولى لتكسب XP ويُحتسب اليوم. هذه المرة: {correct}.',
   'games.solo.results.repeat': 'أُجيب عنها صحيحًا مؤخرًا، فلا XP هذه المرة',
   'games.solo.results.streak': 'يُحتسب اليوم ضمن سلسلتك.',
   'games.solo.playAgain': 'العب مرة أخرى',

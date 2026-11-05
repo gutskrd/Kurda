@@ -2042,7 +2042,7 @@ export const ku: Catalogue = {
   'games.solo.results.score': '{correct} ji {total} rast',
   'games.solo.results.firstTry': 'Di ceribandina yekem de: {n}',
   'games.solo.results.xp': '+{xp} XP',
-  'games.solo.results.noXp': 'Herî kêm {needed} rast bike da ku XP bistînî û îro were hesibandin. Vê carê: {correct}.',
+  'games.solo.results.noXp': 'Herî kêm {needed} di ceribandina yekem de rast bike da ku XP bistînî û îro were hesibandin. Vê carê: {correct}.',
   'games.solo.results.repeat': 'Van demên dawî rast hatibû bersivandin, ji ber vê carê XP tune',
   'games.solo.results.streak': 'Îro ji bo rêzeya te tê hesibandin.',
   'games.solo.playAgain': 'Dîsa bilîze',

@@ -25,9 +25,13 @@ patchReactNativeWeb({ reduceMotion: true });
 const ID = '00000000-0000-4000-8000-0000000000ee';
 
 // stand-in passages for the stage, never shown to a learner
-const item = (over: Partial<MemoryThiefItemView> = {}): MemoryThiefItemView => ({
+type Passage = Omit<MemoryThiefItemView, 'phase' | 'text' | 'parts' | 'tiles'> & {
+  text: string;
+  parts: NonNullable<MemoryThiefItemView['parts']>;
+  tiles: string[] | null;
+};
+const item = (over: Partial<Passage> = {}): Passage => ({
   index: 0,
-  key: 'k0',
   kind: 'story',
   title: 'Rêwîtî',
   parts: [{ line: 0 }, { gap: 0 }, { text: ' li ber ' }, { gap: 1 }, { text: ' ye.' }],
@@ -39,14 +43,20 @@ const item = (over: Partial<MemoryThiefItemView> = {}): MemoryThiefItemView => (
   level: 1,
   ...over,
 });
+/** A passage as the server sends it while it is studied: whole, and nothing of its gaps. */
+const studied = (p: Passage): MemoryThiefItemView => ({ ...p, phase: 'study', parts: null, tiles: null });
+/** The same once its study is over: its gaps and tiles, and never the passage again. */
+const restored = (p: Passage): MemoryThiefItemView => ({ ...p, phase: 'restore', text: null });
 
-const session = (items: MemoryThiefItemView[], dialect: 'kmr' | 'ckb' = 'kmr'): SoloSessionView<MemoryThiefItemView> => ({
+type Round = SoloSessionView<MemoryThiefItemView> & { passages: Passage[] };
+const session = (passages: Passage[], dialect: 'kmr' | 'ckb' = 'kmr', phase: 'study' | 'restore' = 'study'): Round => ({
   id: ID,
   game: 'memory-thief',
   dialect,
   difficulty: 'beginner',
-  items,
-  states: items.map((_, i) => ({ index: i, attempts: 0, correct: false, firstTry: false, done: false })),
+  items: passages.map(phase === 'study' ? studied : restored),
+  passages,
+  states: passages.map((_, i) => ({ index: i, attempts: 0, correct: false, firstTry: false, done: false })),
   maxAttempts: 2,
   finished: false,
   expiresAt: '2026-11-06T10:00:00.000Z',
@@ -55,12 +65,14 @@ const session = (items: MemoryThiefItemView[], dialect: 'kmr' | 'ckb' = 'kmr'): 
 const availability = (dialect: 'kmr' | 'ckb', available = true) =>
   ok({ dialect, games: [{ id: 'memory-thief', available, difficulties: available ? ['beginner'] : [], levels: {}, levelled: true, minimum: 6 }] });
 
-function routes(round: SoloSessionView<MemoryThiefItemView>, answers: unknown[]) {
+function routes(round: Round, answers: unknown[]) {
   let n = 0;
+  const { passages, ...view } = round;
   return fakeClient({
     [`GET /games/availability?dialect=${round.dialect}`]: availability(round.dialect),
     [`GET /games/solo/open?game=memory-thief&dialect=${round.dialect}`]: ok({ id: null }),
-    'POST /games/solo/sessions': ok(round),
+    'POST /games/solo/sessions': ok(view),
+    [`POST /games/solo/sessions/${ID}/begin`]: (body) => ok({ item: restored(passages[(body as { index: number }).index]!) }),
     [`POST /games/solo/sessions/${ID}/answers`]: () => ok(answers[n++]),
   });
 }
@@ -105,8 +117,11 @@ describe('MemoryThiefScreen', () => {
     expect(page.textContent).toContain('çiya');
     expect(screen.getByLabelText('20 s to study')).toBeTruthy();
 
+    // ready: the gaps are asked for once the study is over, never sent with the passage
+    expect(client.calls.some((c) => c.path.endsWith('/begin'))).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'I’m ready' }));
     expect(await screen.findByRole('button', { name: 'Missing word 1, empty' })).toBeTruthy();
+    expect(client.calls.find((c) => c.path.endsWith('/begin'))!.body).toEqual({ index: 0 });
     expect(page.textContent).not.toContain('Gund');
     expect(page.textContent).not.toContain('çiya');
 
@@ -148,6 +163,19 @@ describe('MemoryThiefScreen', () => {
     await waitFor(() => expect(client.calls.filter((c) => c.path.endsWith('/answers'))).toHaveLength(1));
     expect(client.calls.find((c) => c.path.endsWith('/answers'))!.body).toMatchObject({ answer: { gaps: ['gund', 'ciya'] } });
     expect(await screen.findByText('Accepted — mind the marks')).toBeTruthy();
+  });
+
+  it('opens a passage whose words already vanished on its gaps, with no study', async () => {
+    const client = routes(session([item()], 'kmr', 'restore'), []);
+    testAuth.client = client;
+    renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
+    await screen.findByText('Up to 10 XP');
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    expect(await screen.findByRole('button', { name: 'Missing word 1, empty' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'I’m ready' })).toBeNull();
+    expect((await screen.findByTestId('memory-page')).textContent).not.toContain('Gund');
+    expect(within(screen.getByTestId('memory-tray')).getByRole('button', { name: 'gund' })).toBeTruthy();
+    expect(client.calls.some((c) => c.path.endsWith('/begin'))).toBe(false);
   });
 
   it('names who says each line, and lays a Soranî page out from the right', async () => {

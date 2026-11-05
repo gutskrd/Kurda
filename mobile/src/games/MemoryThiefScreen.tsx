@@ -6,6 +6,7 @@ import {
   learnGame,
   meaningIn,
   memoryStudyLines,
+  memoryTextLines,
   type GameDialect,
   type MemoryStudyPiece,
   type MemoryThiefCorrection,
@@ -246,12 +247,20 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
   const dir = useDirection();
   const reduce = useReducedMotion();
   const tone = TONES[scheme][GAME.tone];
-  const { item, result, busy, submit, state } = round;
+  const { item, result, busy, submit, state, begin } = round;
   const rtl = dialect === 'ckb';
   const flow = rtl ? 'row-reverse' : 'row';
-  const typed = item.tiles === null;
-  const lines = useMemo(() => memoryStudyLines(item.text, item.parts), [item.text, item.parts]);
-  const [phase, setPhase] = useState<Phase>(state.attempts > 0 ? 'restore' : 'study');
+  const typed = item.phase === 'restore' && item.tiles === null;
+  // the passage as it was studied, kept for the ink to lift off once the gaps have come (the server never sends both)
+  const studied = useRef<{ index: number; text: string } | null>(null);
+  if (item.text !== null) studied.current = { index: item.index, text: item.text };
+  const passage = item.text ?? (studied.current?.index === item.index ? studied.current.text : null);
+  const lines = useMemo(() => (item.parts ? memoryStudyLines(passage, item.parts) : memoryTextLines(passage ?? '')), [passage, item.parts]);
+  // an item already begun or tried (a round come back to) starts with its gaps
+  const [phase, setPhase] = useState<Phase>(state.attempts > 0 || item.phase === 'restore' ? 'restore' : 'study');
+  const [leaving, setLeaving] = useState(false);
+  // the clock asks for the gaps once; after a failed ask it is the button's to try again
+  const timeUp = useRef(false);
   const [left, setLeft] = useState(item.studySeconds);
   const [given, setGiven] = useState<string[]>(() => Array.from({ length: item.gaps }, () => ''));
   const [used, setUsed] = useState<Array<number | null>>(() => Array.from({ length: item.gaps }, () => null));
@@ -261,9 +270,11 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
   const locked = done || busy || phase !== 'restore';
   const wrong = useMemo(() => new Set(!done && result && !result.correct ? (result.hint?.wrong ?? []) : []), [done, result]);
 
-  // a new passage starts with the study (one already tried, in a round come back to, with its gaps)
+  // a new passage starts with the study (one already begun or tried, in a round come back to, with its gaps)
   useEffect(() => {
-    setPhase(state.attempts > 0 ? 'restore' : 'study');
+    setPhase(state.attempts > 0 || item.phase === 'restore' ? 'restore' : 'study');
+    setLeaving(false);
+    timeUp.current = false;
     setLeft(item.studySeconds);
     setGiven(Array.from({ length: item.gaps }, () => ''));
     setUsed(Array.from({ length: item.gaps }, () => null));
@@ -272,15 +283,26 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
     // only when the passage changes, not when its tries do
   }, [item.index]);
 
+  // the study is over: the gaps are asked for, and once they are here the thief comes
+  const endStudy = useCallback(async () => {
+    if (phase !== 'study' || leaving) return;
+    setLeaving(true);
+    if (await begin()) setPhase('vanish');
+    setLeaving(false);
+  }, [begin, leaving, phase]);
+
   useEffect(() => {
     if (phase !== 'study') return;
     if (left <= 0) {
-      setPhase('vanish');
+      if (!timeUp.current) {
+        timeUp.current = true;
+        void endStudy();
+      }
       return;
     }
     const tick = setTimeout(() => setLeft((n) => n - 1), 1000);
     return () => clearTimeout(tick);
-  }, [phase, left]);
+  }, [phase, left, endStudy]);
 
   useEffect(() => {
     if (phase !== 'vanish') return;
@@ -408,7 +430,7 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
           <Text style={[styles.muted, dir.text, { color: colors.textSecondary }]} accessibilityRole="timer" accessibilityLabel={t('games.memory.timeLeft', { n: left })}>
             {t('games.memory.timeLeft', { n: left })}
           </Text>
-          <TileButton label={t('games.memory.ready')} onPress={() => setPhase('vanish')} />
+          <TileButton label={t('games.memory.ready')} onPress={() => void endStudy()} busy={leaving} disabled={leaving} />
         </View>
       ) : null}
       {phase === 'vanish' ? <Text style={[styles.muted, dir.text, { color: colors.textSecondary }]}>{t('games.memory.vanishing')}</Text> : null}
@@ -450,7 +472,7 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
             </View>
           ) : (
             <View style={[styles.tray, { flexDirection: flow }]} accessibilityLabel={t('games.memory.tiles')} testID="memory-tray">
-              {item.tiles!.map((word, i) =>
+              {(item.tiles ?? []).map((word, i) =>
                 used.includes(i) ? (
                   <View key={i} style={[styles.ghost, { backgroundColor: colors.controlTrack }]} aria-hidden>
                     <Text style={[styles.ghostText, rtl ? styles.rtl : null]}>{word}</Text>

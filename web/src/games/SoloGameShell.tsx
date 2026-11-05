@@ -59,6 +59,12 @@ export interface SoloRound<Item, H, C, B = unknown> {
   busy: boolean;
   /** send one try; the result comes back through `result` */
   submit: (answer: unknown) => Promise<void>;
+  /**
+   * For an item studied before it is answered (The Memory Thief): ask for
+   * what it is answered with. The item comes back changed for good, through
+   * `item`; false when the server could not be reached (the error is shown).
+   */
+  begin: () => Promise<boolean>;
 }
 
 interface Props<Item, H, C, B> {
@@ -209,6 +215,17 @@ export function SoloGameShell<Item, H, C, B = unknown>({
     [busy, client, fail, index, session, t],
   );
 
+  const beginItem = useCallback(async (): Promise<boolean> => {
+    if (!session) return false;
+    const res = await client.post<{ item: Item }>(`/games/solo/sessions/${session.id}/begin`, { index });
+    if (!res.ok) {
+      fail(res.error.code, describeError(res.error, t));
+      return false;
+    }
+    setSession((s) => (s ? { ...s, items: s.items.map((it, i) => (i === index ? res.data.item : it)) } : s));
+    return true;
+  }, [client, fail, index, session, t]);
+
   const next = (): void => {
     if (!session) return;
     const at = nextOpen(session.states);
@@ -246,7 +263,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
               <li>{t('games.solo.results.streak')}</li>
             </>
           ) : (
-            <li className="solo-honest">{t('games.solo.results.noXp', { needed: results.needed, correct: results.correct })}</li>
+            <li className="solo-honest">{t('games.solo.results.noXp', { needed: results.needed, correct: results.firstTry })}</li>
           )}
           {results.learningCounted && results.items.some((i) => i.correct && i.repeat) && <li className="solo-muted">{t('games.solo.results.repeat')}</li>}
         </ul>
@@ -292,7 +309,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         {error && <p className="field-error">{error}</p>}
       </div>
     );
-    const round = { sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit };
+    const round = { sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit, begin: beginItem };
     return (
       <section className="solo solo--round" aria-labelledby="solo-title">
         <header className="solo-bar">

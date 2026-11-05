@@ -2046,7 +2046,7 @@ export const ckb: Catalogue = {
   'games.solo.results.score': '{correct} لە {total} ڕاست',
   'games.solo.results.firstTry': 'لە یەکەم هەوڵدا: {n}',
   'games.solo.results.xp': '+{xp} XP',
-  'games.solo.results.noXp': 'لانیکەم {needed} ڕاست بکە بۆ ئەوەی XP بەدەست بهێنیت و ئەمڕۆ بژمێردرێت. ئەم جارە: {correct}.',
+  'games.solo.results.noXp': 'لانیکەم {needed} لە یەکەم هەوڵدا ڕاست بکە بۆ ئەوەی XP بەدەست بهێنیت و ئەمڕۆ بژمێردرێت. ئەم جارە: {correct}.',
   'games.solo.results.repeat': 'لەم دواییانەدا بە ڕاستی وەڵام درابووەوە، بۆیە ئەم جارە XP نییە',
   'games.solo.results.streak': 'ئەمڕۆ بۆ زنجیرەکەت دەژمێردرێت.',
   'games.solo.playAgain': 'دووبارە یاری بکە',

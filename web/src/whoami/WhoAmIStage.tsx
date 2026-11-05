@@ -48,8 +48,8 @@ export function yesNo(dialect: GameDialect, answer: boolean, t: Translate): stri
   return t(answer ? 'games.whoAmI.yesKmr' : 'games.whoAmI.noKmr');
 }
 
-export function categoryName(category: string, t: Translate): string | null {
-  const key = CATEGORY_KEY[category];
+export function categoryName(category: string | null, t: Translate): string | null {
+  const key = category === null ? undefined : CATEGORY_KEY[category];
   return key ? t(key) : null;
 }
 
@@ -60,7 +60,8 @@ export function ForeheadCard({
   identity,
 }: {
   dialect: GameDialect;
-  category: string;
+  /** what kind of thing it is, when the card may say (every tile that kind); null when it may not */
+  category: string | null;
   identity: { word: string; meanings: Meanings } | null;
 }): React.JSX.Element {
   const t = useT();

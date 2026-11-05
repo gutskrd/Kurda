@@ -2040,7 +2040,7 @@ export const nl: Catalogue = {
   'games.solo.results.score': '{correct} van {total} goed',
   'games.solo.results.firstTry': 'In één keer: {n}',
   'games.solo.results.xp': '+{xp} XP',
-  'games.solo.results.noXp': 'Heb er minstens {needed} goed om XP te verdienen en vandaag te laten tellen. Deze keer: {correct}.',
+  'games.solo.results.noXp': 'Heb er minstens {needed} in één keer goed om XP te verdienen en vandaag te laten tellen. Deze keer: {correct}.',
   'games.solo.results.repeat': 'Kort geleden al goed beantwoord, dus deze keer geen XP',
   'games.solo.results.streak': 'Vandaag telt mee voor je reeks.',
   'games.solo.playAgain': 'Nog een keer spelen',

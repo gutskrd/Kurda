@@ -2039,7 +2039,7 @@ export const fr: Catalogue = {
   'games.solo.results.score': '{correct} sur {total} justes',
   'games.solo.results.firstTry': 'Du premier coup : {n}',
   'games.solo.results.xp': '+{xp} XP',
-  'games.solo.results.noXp': 'Trouve-en au moins {needed} pour gagner des XP et que la journée compte. Cette fois : {correct}.',
+  'games.solo.results.noXp': 'Trouve-en au moins {needed} du premier coup pour gagner des XP et que la journée compte. Cette fois : {correct}.',
   'games.solo.results.repeat': 'Trouvée récemment, donc pas d’XP cette fois',
   'games.solo.results.streak': 'Aujourd’hui compte pour ta série.',
   'games.solo.playAgain': 'Rejouer',

@@ -16,7 +16,6 @@ afterEach(() => {
 // stand-in words for the tiles, never shown to a learner
 const item = (index: number, tiles: string[]): SentenceItemView => ({
   index,
-  key: `k${index}`,
   meaning: { en: `Meaning ${index}` },
   tiles,
   rung: 'short',
@@ -164,7 +163,7 @@ describe('Build a Kurdish Sentence', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Check' }));
     await userEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
     expect(await screen.findByText('0 of 1 right')).toBeInTheDocument();
-    expect(screen.getByText('Get at least 1 right to earn XP and count today. This time: 0.')).toBeInTheDocument();
+    expect(screen.getByText('Get at least 1 right on the first try to earn XP and count today. This time: 0.')).toBeInTheDocument();
     expect(screen.queryByText(/^\+\d+ XP$/)).toBeNull();
   });
 

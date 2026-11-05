@@ -2035,7 +2035,7 @@ export const tr: Catalogue = {
   'games.solo.results.score': '{total} sorudan {correct} doğru',
   'games.solo.results.firstTry': 'İlk denemede: {n}',
   'games.solo.results.xp': '+{xp} XP',
-  'games.solo.results.noXp': 'XP kazanmak ve bugünün sayılması için en az {needed} doğru yap. Bu sefer: {correct}.',
+  'games.solo.results.noXp': 'XP kazanmak ve bugünün sayılması için en az {needed} soruyu ilk denemede doğru yap. Bu sefer: {correct}.',
   'games.solo.results.repeat': 'Yakın zamanda doğru cevaplandı, bu yüzden bu sefer XP yok',
   'games.solo.results.streak': 'Bugün serine sayılıyor.',
   'games.solo.playAgain': 'Yeniden oyna',

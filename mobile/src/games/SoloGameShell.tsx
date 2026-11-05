@@ -61,6 +61,12 @@ export interface SoloRound<Item, H, C, B = unknown> {
   result: SoloAnswerResult<H, C> | null;
   busy: boolean;
   submit: (answer: unknown) => Promise<void>;
+  /**
+   * For an item studied before it is answered (The Memory Thief): ask for
+   * what it is answered with. The item comes back changed for good, through
+   * `item`; false when the server could not be reached (the error is shown).
+   */
+  begin: () => Promise<boolean>;
 }
 
 interface Props<Item, H, C, B> {
@@ -226,6 +232,17 @@ export function SoloGameShell<Item, H, C, B = unknown>({
     [busy, client, fail, index, session, t],
   );
 
+  const beginItem = useCallback(async (): Promise<boolean> => {
+    if (!session) return false;
+    const res = await client.post<{ item: Item }>(`/games/solo/sessions/${session.id}/begin`, { index });
+    if (!res.ok) {
+      fail(res.error.code, describeError(res.error, t));
+      return false;
+    }
+    setSession((s) => (s ? { ...s, items: s.items.map((it, i) => (i === index ? res.data.item : it)) } : s));
+    return true;
+  }, [client, fail, index, session, t]);
+
   const next = (): void => {
     if (!session) return;
     const at = nextOpen(session.states);
@@ -257,7 +274,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
             {results.items.some((i) => i.correct && i.repeat) ? <Text style={muted}>{t('games.solo.results.repeat')}</Text> : null}
           </>
         ) : (
-          <Text style={[...text, styles.honest]}>{t('games.solo.results.noXp', { needed: results.needed, correct: results.correct })}</Text>
+          <Text style={[...text, styles.honest]}>{t('games.solo.results.noXp', { needed: results.needed, correct: results.firstTry })}</Text>
         )}
         {resultsExtra}
         <View style={styles.actions}>
@@ -296,7 +313,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         {result?.done ? <TileButton label={last ? t('games.solo.seeResults') : t('games.solo.next')} onPress={next} busy={busy} /> : null}
       </View>
     ) : null;
-    const round = { sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit };
+    const round = { sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit, begin: beginItem };
     body = (
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={[styles.bar, { flexDirection: dir.row }]}>
