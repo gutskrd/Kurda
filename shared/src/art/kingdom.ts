@@ -267,6 +267,8 @@ export interface KingdomSceneOptions {
    * default) draws everything still, for a picture on its own.
    */
   moving?: boolean;
+  /** only the frame the village stands in, not the whole canvas: for a picture of the village on its own, such as a tile */
+  framed?: boolean;
   /** how wide it is drawn, in pixels; its height follows */
   width?: number;
   /** for a dark screen: the village at dusk, its windows lit */
@@ -283,16 +285,17 @@ function levelOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, b: Kin
 
 /** The whole village, each building at its level. */
 export function kingdomSceneSvg(o: KingdomSceneOptions): string {
-  const width = checkSize(o.width, KINGDOM_SCENE.width);
-  const height = (width * KINGDOM_SCENE.height) / KINGDOM_SCENE.width;
+  const view = o.framed ? KINGDOM_FRAME : { x: 0, y: 0, w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };
+  const width = checkSize(o.width, view.w);
+  const height = (width * view.h) / view.w;
   const levels = Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, levelOf(o.levels, b)])) as Record<KingdomBuilding, KingdomLevel>;
   const rising = new Set(o.rising ?? []);
   const key = KINGDOM_BUILDINGS.map((b) => `${levels[b]}${rising.has(b) ? 'r' : ''}`).join('');
   const p = prefixFor(o.idPrefix, 'kingdom', key, o.dark === true, o.without ?? '', o.moving === true);
   const pal = o.dark ? DUSK : DAY;
   const rand = seeded('kingdom-land');
-  const view = { x: -KINGDOM_ORIGIN.x, y: -KINGDOM_ORIGIN.y, w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };
-  const ground = land(pal, rand, view);
+  const canvas = { x: -KINGDOM_ORIGIN.x, y: -KINGDOM_ORIGIN.y, w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };
+  const ground = land(pal, rand, canvas);
   const drawn: Drawn[] = paths(pal, seeded('kingdom-paths')).map((part) => ({ depth: part.depth, svg: part.svg() }));
   drawn.push(...scenery(pal, seeded('kingdom-scenery'), levels, o.moving === true));
   for (const b of KINGDOM_BUILDINGS) {
@@ -302,7 +305,7 @@ export function kingdomSceneSvg(o: KingdomSceneOptions): string {
   }
   const t = `${p}t`;
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(width)}" height="${n2(height)}" viewBox="0 0 ${KINGDOM_SCENE.width} ${KINGDOM_SCENE.height}" role="img" aria-labelledby="${t}">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(width)}" height="${n2(height)}" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" role="img" aria-labelledby="${t}">` +
     `<title id="${t}">${escapeXml(o.title ?? 'Your village')}</title>` +
     `<g transform="translate(${KINGDOM_ORIGIN.x} ${KINGDOM_ORIGIN.y})">${inked(ground + sorted(drawn))}</g></svg>`
   );

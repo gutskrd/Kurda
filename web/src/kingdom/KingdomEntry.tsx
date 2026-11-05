@@ -18,7 +18,7 @@ const SAMPLE = { houses: 3, school: 2, teahouse: 2, spring: 3, market: 1, orchar
  */
 export function KingdomTile(): React.JSX.Element {
   const t = useT();
-  const picture = useMemo(() => ({ __html: kingdomSceneSvg({ levels: SAMPLE, width: 300, title: t('kingdom.title'), idPrefix: 'kgtile' }) }), [t]);
+  const picture = useMemo(() => ({ __html: kingdomSceneSvg({ levels: SAMPLE, framed: true, width: 300, title: t('kingdom.title'), idPrefix: 'kgtile' }) }), [t]);
   return (
     <article className="game-tile game-tile--kingdom">
       <div className="game-tile-visual kingdom-tile-visual" aria-hidden="true" dangerouslySetInnerHTML={picture} />

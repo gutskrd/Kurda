@@ -8,6 +8,7 @@ import { KingdomPage } from './KingdomPage';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   localStorage.clear();
 });
 
@@ -43,7 +44,22 @@ describe('KingdomPage', () => {
     expect(screen.getByRole('button', { name: `${en['kingdom.name.teahouse']}, ${en['kingdom.empty']}` })).toBeInTheDocument();
     const list = screen.getByRole('list');
     expect(within(list).getAllByRole('listitem')).toHaveLength(6);
+    expect(screen.getByRole('heading', { name: en['kingdom.list'] })).toBeInTheDocument();
     expect(screen.queryByText(en['kingdom.intro'])).not.toBeInTheDocument();
+  });
+
+  it('shows each building’s level on a badge under it, and how many of the thirty levels stand in the top bar', async () => {
+    serve(village());
+    const { container } = renderApp(<KingdomPage />);
+    const houses = await screen.findByRole('button', { name: `${en['kingdom.name.houses']}, Level 1 of 5` });
+    expect(houses).toHaveTextContent('Lv 1');
+    expect(screen.getByRole('button', { name: `${en['kingdom.name.teahouse']}, ${en['kingdom.empty']}` })).toHaveTextContent('Lv 0');
+    // houses, school, spring and orchard at level 1
+    expect(screen.getByRole('img', { name: '4 of 30 building levels' })).toHaveTextContent('4/30');
+    // the village's life is laid over the scene and hidden from screen readers; Hevalo is the app's own drawing of him
+    const life = container.querySelector('.kingdom-life');
+    expect(life).toHaveAttribute('aria-hidden', 'true');
+    expect(life?.innerHTML).toContain('kgdeer-');
   });
 
   it('opens a building’s sheet: what built it, what grows it next, and the way to that part of Learn', async () => {
@@ -92,11 +108,15 @@ describe('KingdomPage', () => {
       }),
     );
     renderApp(<KingdomPage />);
-    const first = await screen.findByRole('dialog', { name: en['kingdom.celebrate.kicker'] });
+    // each new level goes up in the scene first, then is celebrated
+    await waitFor(() => expect(document.querySelector('.kingdom-raise')).not.toBeNull());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    const first = await screen.findByRole('dialog', { name: en['kingdom.celebrate.kicker'] }, { timeout: 4000 });
+    expect(document.querySelector('.kingdom-raise')).toBeNull();
     expect(within(first).getByRole('heading', { name: `${en['kingdom.name.houses']} · level 1` })).toBeInTheDocument();
     expect(within(first).getByText('+20 Zêr')).toBeInTheDocument();
     await user.click(within(first).getByRole('button', { name: en['kingdom.celebrate.next'] }));
-    const second = await screen.findByRole('dialog', { name: en['kingdom.celebrate.kicker'] });
+    const second = await screen.findByRole('dialog', { name: en['kingdom.celebrate.kicker'] }, { timeout: 4000 });
     expect(within(second).getByRole('heading', { name: `${en['kingdom.name.orchard']} · level 1` })).toBeInTheDocument();
     // nothing paid, nothing said about it
     expect(within(second).queryByText(/Zêr/)).not.toBeInTheDocument();
@@ -105,6 +125,14 @@ describe('KingdomPage', () => {
     await waitFor(() =>
       expect(seen).toEqual([{ levels: [{ building: 'houses', level: 1 }] }, { levels: [{ building: 'orchard', level: 1 }] }]),
     );
+  });
+
+  it('celebrates straight away, with nothing raised in the scene, for a reader who asked for less motion', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce'), media: query, addEventListener: () => undefined, removeEventListener: () => undefined }));
+    serve(village({ celebrate: [{ building: 'school', level: 1, zer: 0, reachedAt: '2026-11-05T10:00:00.000Z' }] }));
+    renderApp(<KingdomPage />);
+    expect(await screen.findByRole('dialog', { name: en['kingdom.celebrate.kicker'] })).toBeInTheDocument();
+    expect(document.querySelector('.kingdom-raise')).toBeNull();
   });
 
   it('says when the village could not be read, with a way to try again', async () => {
