@@ -865,6 +865,56 @@
   animation: pin-in 360ms var(--ease-spring) 300ms backwards;
 }
 
+/*
+ * A friendship (social/FriendTickets.tsx): Add turns into a small ticket that
+ * lifts off the button and slips away to the person asked, and Requested's
+ * own ticket pops on; taking the request back brings the ticket home. An
+ * accepted request has its stub torn off (as Join's is) and its "Friends"
+ * stamp lands with a burst; a declined one folds away.
+ */
+@keyframes ask-away {
+  from {
+    opacity: 1;
+    transform: scale(0.6);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(-6px) rotate(calc(var(--t-out) * 4deg)) scale(1.08);
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(var(--t-out) * -64px), -40px) rotate(calc(var(--t-out) * -18deg)) scale(0.8);
+  }
+}
+@keyframes ask-back {
+  from {
+    opacity: 0;
+    transform: translate(calc(var(--t-out) * -64px), -40px) rotate(calc(var(--t-out) * -18deg)) scale(0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes ask-glyph {
+  from {
+    transform: scale(0.3) rotate(-20deg);
+  }
+}
+.friend-ask-ticket.is-away {
+  animation: ask-away 640ms var(--ease-out) forwards;
+}
+.friend-ask-ticket.is-back {
+  animation: ask-back 520ms var(--ease-out) forwards;
+}
+.friend-ask-sent.is-fresh > svg {
+  animation: ask-glyph 420ms var(--ease-spring) 260ms backwards;
+}
+
 /* ---- typing a code in ----------------------------------------------------------- */
 /*
  * Typing a code (play/JoinCode.tsx): each character pops into its box (a
@@ -1042,7 +1092,8 @@
 /* tickets, still: nothing swings, tears, folds, shakes, flies or bursts — the state and the stamp are the answer */
 @media (prefers-reduced-motion: reduce) {
   .ticket-burst,
-  .ticket-shine {
+  .ticket-shine,
+  .friend-ask-ticket {
     display: none;
   }
   .ticket.is-torn > .ticket-stub,

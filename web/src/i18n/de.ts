@@ -467,6 +467,8 @@ export const de: Catalogue = {
   'friends.removeWho': '{name} als Freund entfernen',
   'friends.block': 'Blockieren',
   'friends.blockWho': '{name} blockieren',
+  'friends.stamp': 'Befreundet',
+  'friends.nowFriends': 'Du und {name} seid jetzt befreundet',
   'saved.title': 'Gespeichert',
   'nav.dictionary': 'Wörterbuch',
   'dictionary.noResults': 'Keine Treffer für „{query}“.',

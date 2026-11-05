@@ -461,6 +461,8 @@ export const tr: Catalogue = {
   'friends.removeWho': '{name} kişisini arkadaşlıktan çıkar',
   'friends.block': 'Engelle',
   'friends.blockWho': '{name} kişisini engelle',
+  'friends.stamp': 'Arkadaşsınız',
+  'friends.nowFriends': '{name} ile artık arkadaşsınız',
   'saved.title': 'Kaydedilenler',
   'nav.dictionary': 'Sözlük',
   'dictionary.noResults': '“{query}” için sonuç yok.',

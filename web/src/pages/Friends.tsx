@@ -6,7 +6,6 @@ import { describeError } from '../lib/api';
 import { useProfileModal } from '../profile/ProfileModal';
 import { ErrorState, EmptyState } from '../components/states';
 import { FriendListSkeleton } from '../components/skeletons';
-import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
 import { useT } from '../i18n/I18nProvider';
 import { PlayWithButton } from '../play/PlayButtons';
@@ -14,6 +13,7 @@ import type { UserSummary } from '../lib/types';
 import { LinkButton } from '../components/Button';
 import { SearchIcon } from '../components/icons';
 import { useRail } from '../social/RailProvider';
+import { RequestTicket } from '../social/FriendTickets';
 
 function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
   const { openProfile } = useProfileModal();
@@ -41,10 +41,15 @@ function Row({ user, actions, meta }: { user: UserSummary; actions?: React.React
  * with the people you may know under it — so this page keeps to the people
  * already in your life, and a way across to Search at the top. Messages links
  * here from its "Friend requests" row, which is why requests come first.
+ *
+ * Each request waiting on you is a friendship ticket (social/FriendTickets.tsx):
+ * Accept tears its stub and stamps it "Friends", Decline folds it away, and
+ * then the lists catch up.
  */
 export function Friends(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
+  const { openProfile } = useProfileModal();
   const friends = useApiGet<{ friends: UserSummary[] }>('/friends');
   const requests = useApiGet<{ requests: UserSummary[] }>('/friends/requests');
   const sent = useApiGet<{ requests: UserSummary[] }>('/friends/requests/outgoing');
@@ -79,10 +84,19 @@ export function Friends(): React.JSX.Element {
     friends.reload();
   }
 
-  async function respond(userId: string, accept: boolean): Promise<void> {
+  /** Answer a request; whether it went through, so its ticket is stamped or folded only when it did. */
+  async function respond(userId: string, accept: boolean): Promise<boolean> {
     setErr(null);
     const res = await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
-    if (!res.ok) setErr(describeError(res.error, t));
+    if (!res.ok) {
+      setErr(describeError(res.error, t));
+      requests.reload();
+    }
+    return res.ok;
+  }
+
+  /** Once a ticket has had its moment: the request leaves, and a new friend joins the list. */
+  function settled(): void {
     requests.reload();
     friends.reload();
   }
@@ -118,19 +132,12 @@ export function Friends(): React.JSX.Element {
           <h2 className="friend-heading">{t('friends.requests')}</h2>
           <div className="post-list">
             {requests.data!.requests.map((u) => (
-              <Row
+              <RequestTicket
                 key={u.userId}
-                user={u}
-                actions={
-                  <span className="friend-actions">
-                    <Button size="sm" onClick={() => respond(u.userId, true)}>
-                      {t('friends.accept')}
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => respond(u.userId, false)}>
-                      {t('friends.decline')}
-                    </Button>
-                  </span>
-                }
+                person={u}
+                onAnswer={(accept) => respond(u.userId, accept)}
+                onSettled={settled}
+                onOpen={() => openProfile({ kind: 'user', userId: u.userId, username: u.username })}
               />
             ))}
           </div>

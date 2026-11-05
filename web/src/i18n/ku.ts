@@ -468,6 +468,8 @@ export const ku: Catalogue = {
   'friends.removeWho': '{name} ji hevaltiyê rake',
   'friends.block': 'Asteng bike',
   'friends.blockWho': '{name} asteng bike',
+  'friends.stamp': 'Heval in',
+  'friends.nowFriends': 'Tu û {name} êdî heval in',
   'saved.title': 'Tomarkirî',
   'nav.dictionary': 'Ferheng',
   'dictionary.noResults': 'Ji bo “{query}” tu encam tune.',

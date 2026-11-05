@@ -7,14 +7,15 @@ import { renderApp, jsonResponse } from '../test/utils';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   localStorage.clear();
   sessionStorage.clear();
 });
 
-function routed(user: unknown, calls: Array<{ url: string; body: unknown }> = []) {
+function routed(user: unknown, calls: Array<{ url: string; body: unknown; method?: string }> = []) {
   return vi.fn(async (url: string, init?: RequestInit) => {
     if (url.includes('/friends/requests')) {
-      calls.push({ url, body: init?.body ? JSON.parse(init.body as string) : null });
+      calls.push({ url, body: init?.body ? JSON.parse(init.body as string) : null, method: init?.method ?? 'GET' });
       return jsonResponse(200, { ok: true });
     }
     if (url.includes('/users/')) return jsonResponse(200, user);
@@ -22,7 +23,7 @@ function routed(user: unknown, calls: Array<{ url: string; body: unknown }> = []
   });
 }
 
-function render(user: unknown, calls?: Array<{ url: string; body: unknown }>) {
+function render(user: unknown, calls?: Array<{ url: string; body: unknown; method?: string }>) {
   vi.stubGlobal('fetch', routed(user, calls));
   renderApp(<Routes><Route path="/app/users/:id" element={<UserProfile />} /></Routes>, ['/app/users/u2']);
 }
@@ -80,5 +81,38 @@ describe('UserProfile (other user, full page)', () => {
     expect(screen.getByText(/private/i)).toBeInTheDocument();
     // full showcase is not rendered
     expect(document.querySelector('.mkp-showcase')).toBeNull();
+  });
+
+  it('hands over a ticket for a friend request, and takes it back from Requested', async () => {
+    const calls: Array<{ url: string; body: unknown; method?: string }> = [];
+    render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'none', private: false }, calls);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Add friend' }));
+    expect(calls).toContainEqual(expect.objectContaining({ method: 'POST', body: { userId: 'u2' } }));
+    const requested = await screen.findByRole('button', { name: 'Cancel your request to zana' });
+    expect(requested).toHaveTextContent('Requested');
+    expect(screen.getByRole('status')).toHaveTextContent('Request sent');
+    // the ticket on its way to them
+    expect(document.querySelector('.friend-ask-ticket.is-away')).not.toBeNull();
+
+    await userEvent.click(requested);
+    await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    expect(await screen.findByRole('button', { name: 'Add friend' })).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'DELETE' && c.url.endsWith('/friends/requests/u2'))).toBe(true);
+    // and back it comes
+    expect(document.querySelector('.friend-ask-ticket.is-back')).not.toBeNull();
+  });
+
+  it('sends no ticket flying under Reduce Motion: the button simply says Requested', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('prefers-reduced-motion'),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'none', private: false });
+    await userEvent.click(await screen.findByRole('button', { name: 'Add friend' }));
+    expect(await screen.findByRole('button', { name: 'Cancel your request to zana' })).toHaveTextContent('Requested');
+    expect(document.querySelector('.friend-ask-ticket')).toBeNull();
   });
 });

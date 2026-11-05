@@ -464,6 +464,8 @@ export const es: Catalogue = {
   'friends.removeWho': 'Quitar a {name} de tus amigos',
   'friends.block': 'Bloquear',
   'friends.blockWho': 'Bloquear a {name}',
+  'friends.stamp': 'Amigos',
+  'friends.nowFriends': '{name} y tú ahora son amigos',
   'saved.title': 'Guardado',
   'nav.dictionary': 'Diccionario',
   'dictionary.noResults': 'Sin resultados para «{query}».',

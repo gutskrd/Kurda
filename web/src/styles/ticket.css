@@ -287,3 +287,147 @@
   opacity: 0;
   pointer-events: none;
 }
+
+/* ---- a friendship, asked and answered (social/FriendTickets.tsx) ------------------ */
+/*
+ * Add, with the small ticket that slips away from it to the person asked
+ * (and comes back if the request is taken back); Requested, with the ticket
+ * left on it. How the ticket moves is in motion.css.
+ */
+.friend-ask {
+  position: relative;
+  display: inline-flex;
+}
+.friend-ask.is-block {
+  display: flex;
+  flex-direction: column;
+}
+.friend-ask-sent > svg {
+  color: var(--like);
+}
+.friend-ask-ticket {
+  --stub-w: 18px;
+  --notch: 4px;
+  --t-r: 5px;
+  /* a small thing in flight: inked a little stronger than a ticket at rest, to be seen going */
+  --t-fill: color-mix(in srgb, var(--t-accent) 18%, var(--surface-solid));
+  --t-stub-fill: color-mix(in srgb, var(--t-accent) 32%, var(--surface-solid));
+  --t-edge: color-mix(in srgb, var(--t-accent) 70%, var(--border));
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  width: 54px;
+  height: 30px;
+  margin: -15px 0 0 -27px;
+  opacity: 0;
+  pointer-events: none;
+}
+.friend-ask-ticket > .ticket-stub {
+  min-width: 18px;
+  padding: 0;
+}
+/*
+ * A request waiting on you: their face on the stub, their name and what they
+ * want on the body, and the two answers. In the social rail's narrow column
+ * the answers go under the name.
+ */
+.request-ticket {
+  --stub-w: 64px;
+}
+.request-stub .friend-avatar {
+  width: 40px;
+  height: 40px;
+}
+.request-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  min-height: 64px;
+  padding: 10px 14px;
+}
+.request-text {
+  flex: 1 1 140px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.request-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  color: var(--ink);
+}
+button.request-name {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+button.request-name:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+button.request-name:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-xs);
+}
+.request-sub {
+  font-size: var(--text-caption);
+  color: var(--t-ink);
+}
+.request-actions {
+  display: inline-flex;
+  gap: 6px;
+  flex: none;
+}
+.request-actions .btn {
+  min-height: 44px;
+}
+/* stamped: where the answers were */
+.request-stamped {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  min-height: 44px;
+  padding-inline: 8px;
+}
+.request-stamped > .ticket-burst {
+  left: 50%;
+  top: 50%;
+}
+.request-ticket.is-compact {
+  --stub-w: 44px;
+  --notch: 6px;
+  --t-r: var(--r-md);
+  margin: 0 2px 8px;
+}
+.request-ticket.is-compact .request-stub .friend-avatar {
+  width: 28px;
+  height: 28px;
+}
+.request-ticket.is-compact .request-main {
+  min-height: 0;
+  padding: 8px 10px;
+}
+.request-ticket.is-compact .request-text {
+  flex-basis: 100%;
+}
+.request-ticket.is-compact .request-actions {
+  flex: 1;
+}
+.request-ticket.is-compact .request-actions .btn {
+  flex: 1;
+  min-height: 36px;
+}
+@media (pointer: coarse) {
+  .request-ticket.is-compact .request-actions .btn {
+    min-height: 44px;
+  }
+}

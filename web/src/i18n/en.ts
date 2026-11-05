@@ -507,6 +507,8 @@ export const en = {
   'friends.removeWho': 'Remove {name} as a friend',
   'friends.block': 'Block',
   'friends.blockWho': 'Block {name}',
+  'friends.stamp': 'Friends',
+  'friends.nowFriends': 'You and {name} are friends now',
 
   // ---- saved ---------------------------------------------------------------
   'saved.title': 'Saved',

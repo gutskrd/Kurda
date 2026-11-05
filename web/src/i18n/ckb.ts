@@ -472,6 +472,8 @@ export const ckb: Catalogue = {
   'friends.removeWho': '{name} لە هاوڕێیەتی لابە',
   'friends.block': 'بلۆککردن',
   'friends.blockWho': '{name} بلۆک بکە',
+  'friends.stamp': 'هاوڕێن',
+  'friends.nowFriends': 'تۆ و {name} ئێستا هاوڕێن',
   'saved.title': 'پاشەکەوتکراو',
   'nav.dictionary': 'فەرهەنگ',
   'dictionary.noResults': 'هیچ ئەنجامێک بۆ «{query}» نییە.',

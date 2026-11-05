@@ -459,6 +459,8 @@ export const ar: Catalogue = {
   'friends.removeWho': 'إزالة {name} من أصدقائك',
   'friends.block': 'حظر',
   'friends.blockWho': 'حظر {name}',
+  'friends.stamp': 'أصدقاء',
+  'friends.nowFriends': 'أنت و{name} أصدقاء الآن',
   'saved.title': 'المحفوظات',
   'nav.dictionary': 'القاموس',
   'dictionary.noResults': 'لا نتائج لـ «{query}».',

@@ -467,6 +467,8 @@ export const nl: Catalogue = {
   'friends.removeWho': '{name} als vriend verwijderen',
   'friends.block': 'Blokkeren',
   'friends.blockWho': '{name} blokkeren',
+  'friends.stamp': 'Vrienden',
+  'friends.nowFriends': 'Jij en {name} zijn nu vrienden',
   'saved.title': 'Bewaard',
   'nav.dictionary': 'Woordenboek',
   'dictionary.noResults': 'Geen resultaten voor “{query}”.',
