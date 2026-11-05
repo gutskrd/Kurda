@@ -3,7 +3,8 @@ import {
   claimState,
   progressPct,
   questTitle,
-  rewardLabel,
+  rewardParts,
+  rewardSpoken,
   sortQuests,
   type QuestView,
 } from './quests.js';
@@ -51,11 +52,21 @@ describe('questTitle', () => {
   });
 });
 
-describe('rewardLabel', () => {
-  it('renders currencies present, joined', () => {
-    expect(rewardLabel({ zer: 200, gems: 30 })).toBe('🪙 200 · 💎 30');
-    expect(rewardLabel({ gems: 40 })).toBe('💎 40');
-    expect(rewardLabel({})).toBe('');
+describe('rewardParts and rewardSpoken', () => {
+  it('lists the currencies a reward pays, Zêr first, and none for nothing', () => {
+    expect(rewardParts({ zer: 200, gems: 30 })).toEqual([
+      { currency: 'zer', amount: 200 },
+      { currency: 'gems', amount: 30 },
+    ]);
+    expect(rewardParts({ gems: 40 })).toEqual([{ currency: 'gems', amount: 40 }]);
+    expect(rewardParts({ zer: 0 })).toEqual([]);
+    expect(rewardParts({})).toEqual([]);
+  });
+
+  it('says the reward in words, never as emoji', () => {
+    expect(rewardSpoken({ zer: 200, gems: 30 }, t)).toBe('+200 Zêr, +30 Gems');
+    expect(rewardSpoken({ zer: 1500 }, t, (n) => n.toLocaleString('en'))).toBe('+1,500 Zêr');
+    expect(rewardSpoken({}, t)).toBe('');
   });
 });
 

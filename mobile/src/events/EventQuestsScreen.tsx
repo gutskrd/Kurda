@@ -1,16 +1,21 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { ApiError } from '../api/types';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import { describeError, describeErrorOr, isMaintenance } from '../api/errors';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
+import { playSound } from '../feedback/sounds';
 import { useI18n } from '../i18n/I18nContext';
-import { formatCountdown, remainingUntil } from '../i18n/format';
+import { formatCountdown, formatNumber, remainingUntil } from '../i18n/format';
 import { useDirection } from '../reports/direction';
 import { Icon } from '../theme/Icon';
+import { timing } from '../theme/animate';
+import { ConfettiBurst } from '../theme/CelebrationParts';
+import { duration } from '../theme/motion';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
@@ -20,7 +25,8 @@ import {
   claimState,
   progressPct,
   questTitle,
-  rewardLabel,
+  rewardParts,
+  rewardSpoken,
   sortQuests,
   type EventQuestsView,
   type QuestView,
@@ -31,7 +37,12 @@ interface ActiveEvent {
   name: string;
 }
 
-/** Event quests progress + explicit claim buttons (KUR-091). */
+/**
+ * Event quests progress + explicit claim buttons (KUR-091). A reward is drawn
+ * with the app's own coin and gem, and a claim that goes through is felt and
+ * heard as a reward is everywhere else (`haptic('celebrate')`, the reward
+ * chime), with a few sparks off the quest — a chest's moment, made small.
+ */
 export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { t } = useI18n();
@@ -39,6 +50,8 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const [events, setEvents] = useState<EventQuestsView[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [claiming, setClaiming] = useState<string | null>(null);
+  // the quest claimed just now, whose row throws its sparks once
+  const [justClaimed, setJustClaimed] = useState<string | null>(null);
   const [now, setNow] = useState(Date.now());
 
   // tick so the ends-in countdown stays live while the screen is open
@@ -91,6 +104,11 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
       setClaimError(null);
       const res = await client.post(`/events/${eventKey}/quests/${quest.id}/claim`);
       setClaiming(null);
+      if (res.ok) {
+        haptic('celebrate');
+        playSound('reward');
+        setJustClaimed(quest.id);
+      }
       // Hevalo offline for a while is said by the screen over the app
       if (!res.ok && !isMaintenance(res.error)) {
         haptic('error');
@@ -127,6 +145,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
                       key={q.id}
                       quest={q}
                       busy={claiming === q.id}
+                      fresh={justClaimed === q.id}
                       onClaim={() => claim(event.eventKey, q)}
                     />
                   ))}
@@ -169,16 +188,26 @@ function Notice({ title, text, onDismiss, onRetry }: { title?: string; text: str
   );
 }
 
-function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; onClaim: () => void }) {
-  const { t } = useI18n();
+function QuestRow({ quest, busy, fresh, onClaim }: { quest: QuestView; busy: boolean; fresh: boolean; onClaim: () => void }) {
+  const { t, locale } = useI18n();
   const { colors } = useTheme();
   const state = claimState(quest);
-  const reward = rewardLabel(quest.reward);
+  const parts = rewardParts(quest.reward);
   return (
     <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
       <View style={styles.rowTop}>
         <Text style={[styles.questTitle, { color: colors.textPrimary }]}>{questTitle(quest, t)}</Text>
-        {reward ? <Text style={[styles.reward, { color: colors.textSecondary }]}>{reward}</Text> : null}
+        {parts.length > 0 ? (
+          // the shop's coin and gem, read out as what the quest pays
+          <View style={styles.reward} accessible accessibilityLabel={rewardSpoken(quest.reward, t, (n) => formatNumber(n, locale))}>
+            {parts.map((p) => (
+              <View key={p.currency} style={styles.rewardPart}>
+                <Icon name={p.currency === 'zer' ? 'coin' : 'gem'} size={16} color={p.currency === 'zer' ? colors.gold : colors.accent} />
+                <Text style={[styles.rewardText, { color: colors.textSecondary }]}>{formatNumber(p.amount, locale)}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </View>
       <View style={[styles.track, { backgroundColor: colors.glassBorder }]}>
         <View style={[styles.fill, { width: `${Math.round(progressPct(quest) * 100)}%`, backgroundColor: colors.primary }]} />
@@ -188,25 +217,39 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
           {quest.current} / {quest.target}
         </Text>
         {state === 'claimed' ? (
-          <Text style={[styles.claimed, { color: colors.success }]}>✓ {t('events.claimed')}</Text>
+          <ClaimedMark fresh={fresh} seed={quest.target * 13 + (quest.reward.zer ?? 0) + (quest.reward.gems ?? 0)} />
         ) : state === 'claimable' ? (
-          <PressableScale
-            onPress={onClaim}
-            disabled={busy}
-            accessibilityRole="button"
-            accessibilityState={{ disabled: busy, busy }}
-            style={[styles.claimBtn, { backgroundColor: colors.primary }]}
-          >
-            {busy ? (
-              <ActivityIndicator color={colors.textOnPrimary} />
-            ) : (
-              <Text style={[styles.claimText, { color: colors.textOnPrimary }]}>{t('events.claim')}</Text>
-            )}
-          </PressableScale>
+          // the app's own button, a fingertip tall; a spinner in place of the word while the claim is out
+          <ClayButton label={t('events.claim')} tone="primary" busy={busy} onPress={onClaim} style={styles.claimBtn} />
         ) : (
           <Text style={[styles.locked, { color: colors.textSecondary }]}>{t('events.inProgress')}</Text>
         )}
       </View>
+    </View>
+  );
+}
+
+/**
+ * "Claimed", with a few gold sparks off it when the claim was made just now —
+ * the sparks a daily quest throws as it finishes (QuestRows), once. Under
+ * Reduce Motion there are none; the buzz and the chime still say it.
+ */
+function ClaimedMark({ fresh, seed }: { fresh: boolean; seed: number }): React.JSX.Element {
+  const { t } = useI18n();
+  const { colors } = useTheme();
+  const reduce = useReducedMotion();
+  const sparks = useRef(new Animated.Value(0)).current;
+  const burst = fresh && !reduce;
+  useEffect(() => {
+    if (!burst) return;
+    const run = timing(sparks, 1, duration.celebrate);
+    run.start();
+    return () => run.stop();
+  }, [burst, sparks]);
+  return (
+    <View style={styles.claimedWrap}>
+      {burst ? <ConfettiBurst progress={sparks} count={8} seed={seed} colours={[colors.gold, '#FFE16A', '#FFBD1F']} reach={44} testID="event-claim-sparks" /> : null}
+      <Text style={[styles.claimed, { color: colors.success }]}>✓ {t('events.claimed')}</Text>
     </View>
   );
 }
@@ -226,13 +269,15 @@ const styles = StyleSheet.create({
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   rowTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.sm },
   questTitle: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  reward: { fontSize: typography.sizes.sm },
+  reward: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  rewardPart: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  rewardText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   track: { height: 8, borderRadius: radii.pill, overflow: 'hidden' },
   fill: { height: 8, borderRadius: radii.pill },
   rowBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   count: { fontSize: typography.sizes.sm },
-  claimBtn: { paddingVertical: spacing.xs, paddingHorizontal: spacing.lg, borderRadius: radii.md, minWidth: 80, alignItems: 'center' },
-  claimText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.sm },
+  claimBtn: { minWidth: 96 },
+  claimedWrap: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', alignItems: 'center' },
   claimed: { fontWeight: typography.weights.bold, fontSize: typography.sizes.sm },
   locked: { fontSize: typography.sizes.sm },
 });

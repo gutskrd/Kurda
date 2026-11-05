@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
@@ -13,10 +13,17 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import type { ApiResult } from '../api/types';
+import { onHaptic, resetHaptics } from '../feedback/haptics';
+import type { HapticEvent } from '../feedback/hapticPacing';
+import { onSound, resetSounds } from '../feedback/sounds';
 import type { EventQuestsView } from './quests';
 import { EventQuestsScreen } from './EventQuestsScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
+beforeEach(() => {
+  resetHaptics();
+  resetSounds();
+});
 afterEach(cleanup);
 
 const ENDS = new Date(Date.now() + 3 * 86_400_000).toISOString();
@@ -75,6 +82,46 @@ describe('event quests', () => {
     });
     expect(screen.getByRole('alert').textContent).toContain('This reward can’t be claimed right now.');
     expect(screen.queryByText(/request failed/)).toBeNull();
+  });
+
+  /*
+   * The reward is drawn with the app's own coin and gem (no emoji) and read
+   * out in words; a claim that goes through is felt and heard as a reward,
+   * on a button a fingertip tall, and the quest says it was claimed.
+   */
+  it('shows the reward with the app’s coin and gem, and celebrates a claim that goes through', async () => {
+    let claimed = false;
+    const quests = (): EventQuestsView => {
+      const v = view('newroz', 'Newroz', !claimed);
+      return { ...v, quests: v.quests.map((q) => ({ ...q, reward: { zer: 50, gems: 5 }, claimed, claimable: !claimed })) };
+    };
+    testAuth.client = fakeClient({
+      'GET /events/active': ok({ events: [{ key: 'newroz', name: 'Newroz' }] }),
+      'GET /events/newroz/quests': () => ok(quests()),
+      'POST /events/newroz/quests/newroz-q1/claim': () => {
+        claimed = true;
+        return ok({ ok: true });
+      },
+    });
+    const felt: HapticEvent[] = [];
+    const heard: string[] = [];
+    const stopFeel = onHaptic((e) => felt.push(e));
+    const stopHear = onSound((file) => heard.push(String(file)));
+    try {
+      renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
+      expect(await screen.findByLabelText('+50 Zêr, +5 Gems')).toBeTruthy();
+      expect(document.body.textContent).not.toMatch(/🪙|💎/u);
+      const claim = screen.getByRole('button', { name: 'Claim' });
+      await act(async () => {
+        fireEvent.click(claim);
+      });
+      expect(await screen.findByText('✓ Claimed')).toBeTruthy();
+      expect(felt).toContain('celebrate');
+      expect(heard).toHaveLength(1);
+    } finally {
+      stopFeel();
+      stopHear();
+    }
   });
 
   it('says a claim did not reach Hevalo when the phone is offline', async () => {
