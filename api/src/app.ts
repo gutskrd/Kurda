@@ -183,6 +183,7 @@ import { EmailService } from './email/service.js';
 import { createEmailProvider } from './email/provider.js';
 import pino from 'pino';
 import { LOG_REDACT } from './observability/redact.js';
+import { registerClientErrorRoutes } from './observability/client-errors.js';
 import { createWorker } from './jobs/worker.js';
 import {
   ROLLUP_INTERVAL_MS,
@@ -886,6 +887,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService, achievements);
     registerTournamentRoutes(app, tournaments);
   }
+
+  // crash reports from the apps, into the log; needs neither the database nor a signed-in caller
+  registerClientErrorRoutes(app);
 
   // Render's health check asks this every few seconds for as long as the service
   // runs, near twenty thousand times a day, and each one wrote two info lines

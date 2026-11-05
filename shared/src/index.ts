@@ -497,6 +497,13 @@ export * from './typing.js';
 export * from './feedback.js';
 
 /**
+ * Crash reports from the apps: what one may carry, the limits the phone trims
+ * to and the server holds it to, and how its text is cleaned of anything that
+ * could name somebody.
+ */
+export * from './client-errors.js';
+
+/**
  * Hevalo the deer holding up a board: the board, its forelegs and where the
  * mascot's picture goes, for the rating box and the keyboard guide on both apps.
  */
