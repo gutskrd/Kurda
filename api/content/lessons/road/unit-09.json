@@ -44,7 +44,7 @@
                   "payload": {
                     "say": "Duh ez çûm çem.",
                     "voice": "hamo",
-                    "prompt": "Baran takes a deep breath and begins his story. Listen: what did he do yesterday?",
+                    "prompt": "Baran takes a deep breath and begins his story. Listen: what did he do yesterday? “Duh ez çûm çem.”",
                     "options": [
                       "He went to the river.",
                       "He came back from the river.",
@@ -92,7 +92,7 @@
                   "payload": {
                     "say": "Xezal duh ji Amedê hat.",
                     "voice": "hamo",
-                    "prompt": "Hamo tells you who else is at the table this morning. What does he say?",
+                    "prompt": "Hamo tells you who else is at the table this morning. What does he say? “Xezal duh ji Amedê hat.”",
                     "options": [
                       "Xezal came from Amed yesterday.",
                       "Xezal went to Amed yesterday.",
@@ -107,7 +107,7 @@
                   "payload": {
                     "say": "Par Baran heşt salî bû.",
                     "voice": "hamo",
-                    "prompt": "Hamo ruffles Baran’s hair: his boy is growing up fast. What does he say?",
+                    "prompt": "Hamo ruffles Baran’s hair: his boy is growing up fast. What does he say? “Par Baran heşt salî bû.”",
                     "accepted": [
                       "Last year Baran was eight.",
                       "Last year Baran was eight",
@@ -193,7 +193,7 @@
                   "payload": {
                     "say": "Ez neçûm dibistanê, ez li malê bûm.",
                     "voice": "hamo",
-                    "prompt": "Baran explains where he was not. What does he mean?",
+                    "prompt": "Baran explains where he was not. What does he mean? “Ez neçûm dibistanê, ez li malê bûm.”",
                     "accepted": [
                       "I didn’t go to school, I was at home.",
                       "I didn’t go to school, I was at home",
@@ -256,7 +256,7 @@
                   "payload": {
                     "say": "Bozo ji nişka ve reviya.",
                     "voice": "hamo",
-                    "prompt": "Baran goes on with his story. What did Bozo do?",
+                    "prompt": "Baran goes on with his story. What did Bozo do? “Bozo ji nişka ve reviya.”",
                     "options": [
                       "Suddenly Bozo ran away.",
                       "Suddenly Bozo fell asleep.",
@@ -271,7 +271,7 @@
                   "payload": {
                     "say": "Li ser zinaran bizinek bû.",
                     "voice": "hamo",
-                    "prompt": "Why did he run? Baran points up at the cliffs. What was there?",
+                    "prompt": "Why did he run? Baran points up at the cliffs. What was there? “Li ser zinaran bizinek bû.”",
                     "options": [
                       "There was a goat on the cliffs.",
                       "There was a donkey under the cliffs.",
@@ -286,7 +286,7 @@
                   "payload": {
                     "say": "Ez li dû wî çûm, lê ez li ser keviran ketim.",
                     "voice": "hamo",
-                    "prompt": "Baran rubs his knee as he remembers. What happened?",
+                    "prompt": "Baran rubs his knee as he remembers. What happened? “Ez li dû wî çûm, lê ez li ser keviran ketim.”",
                     "accepted": [
                       "I went after him, but I fell on the stones.",
                       "I went after him, but I fell on the stones",
@@ -354,7 +354,7 @@
                   "payload": {
                     "say": "Bozo her gav direve!",
                     "voice": "hamo",
-                    "prompt": "Nazê sighs, and Hamo laughs into his moustache. What does he say?",
+                    "prompt": "Nazê sighs, and Hamo laughs into his moustache. What does he say? “Bozo her gav direve!”",
                     "options": [
                       "Bozo always runs away!",
                       "Bozo never runs away!",
@@ -405,7 +405,7 @@
                   "payload": {
                     "say": "Bozo nereviya, ew çû cem bizinê!",
                     "voice": "hamo",
-                    "prompt": "Hamo always takes his donkey’s side. What does he say?",
+                    "prompt": "Hamo always takes his donkey’s side. What does he say? “Bozo nereviya, ew çû cem bizinê!”",
                     "accepted": [
                       "Bozo didn’t run away, he went to the goat!",
                       "Bozo didn’t run away, he went to the goat",
@@ -448,7 +448,7 @@
                   "payload": {
                     "say": "Tu kengî gihîştî malê?",
                     "voice": "xezo",
-                    "prompt": "Xezal has a question for Baran. What does she want to know?",
+                    "prompt": "Xezal has a question for Baran. What does she want to know? “Tu kengî gihîştî malê?”",
                     "options": [
                       "When did you get home?",
                       "When are you going home?",
@@ -471,7 +471,7 @@
                   "payload": {
                     "say": "Tu li ku rûniştî?",
                     "voice": "xezo",
-                    "prompt": "Xezal sits down next to Baran, very serious, like a judge. What does she ask him first?",
+                    "prompt": "Xezal sits down next to Baran, very serious, like a judge. What does she ask him first? “Tu li ku rûniştî?”",
                     "options": [
                       "Where did you sit down?",
                       "Where did you sleep?",
@@ -486,7 +486,7 @@
                   "payload": {
                     "say": "Tu li wir razayî?",
                     "voice": "xezo",
-                    "prompt": "Xezal raises one eyebrow. What does she ask now?",
+                    "prompt": "Xezal raises one eyebrow. What does she ask now? “Tu li wir razayî?”",
                     "options": [
                       "Did you sleep there?",
                       "Did you sit there?",
@@ -501,7 +501,7 @@
                   "payload": {
                     "say": "Tu tirsiyayî?",
                     "voice": "xezo",
-                    "prompt": "Then, softly, she asks one more thing. What?",
+                    "prompt": "Then, softly, she asks one more thing. What? “Tu tirsiyayî?”",
                     "options": [
                       "Were you afraid?",
                       "Were you tired?",
@@ -593,7 +593,7 @@
                   "payload": {
                     "say": "Ew di tarîtiyê de rabû.",
                     "voice": "hamo",
-                    "prompt": "Hamo tells Xezal what Baran whispered to him. What does it mean?",
+                    "prompt": "Hamo tells Xezal what Baran whispered to him. What does it mean? “Ew di tarîtiyê de rabû.”",
                     "accepted": [
                       "He got up in the dark.",
                       "He got up in the dark",
@@ -661,7 +661,7 @@
                   "payload": {
                     "say": "Gelî tarî bû û ez tirsiyam.",
                     "voice": "xezo",
-                    "prompt": "Xezal repeats, word for word, what Baran admitted to her in a whisper. What did he say?",
+                    "prompt": "Xezal repeats, word for word, what Baran admitted to her in a whisper. What did he say? “Gelî tarî bû û ez tirsiyam.”",
                     "options": [
                       "“The valley was dark and I was afraid.”",
                       "“The valley was dark but I wasn’t afraid.”",
@@ -734,7 +734,7 @@
                   "payload": {
                     "say": "Baran bi stêrkan vegeriya malê.",
                     "voice": "hamo",
-                    "prompt": "How did Baran find his way home in the dark? Hamo tells you, very proud.",
+                    "prompt": "How did Baran find his way home in the dark? Hamo tells you, very proud. “Baran bi stêrkan vegeriya malê.”",
                     "options": [
                       "He came back home by the stars.",
                       "He came back home with Bozo.",
@@ -749,7 +749,7 @@
                   "payload": {
                     "say": "Bozo bi tena serê xwe vegeriya.",
                     "voice": "hamo",
-                    "prompt": "And Bozo? Hamo strokes his moustache.",
+                    "prompt": "And Bozo? Hamo strokes his moustache. “Bozo bi tena serê xwe vegeriya.”",
                     "options": [
                       "Bozo came back all on his own.",
                       "Bozo came back with Baran.",
@@ -840,7 +840,7 @@
                   "payload": {
                     "say": "Ji pûnga Dapîrê tiştek nema.",
                     "voice": "hamo",
-                    "prompt": "Nazê shows you what is left of Dapîr’s garden. What does Hamo say?",
+                    "prompt": "Nazê shows you what is left of Dapîr’s garden. What does Hamo say? “Ji pûnga Dapîrê tiştek nema.”",
                     "accepted": [
                       "Nothing was left of Grandma’s mint.",
                       "Nothing was left of Grandma’s mint",
@@ -941,7 +941,7 @@
                   "payload": {
                     "say": "Li wir qet kes tune.",
                     "voice": "hamo",
-                    "prompt": "Hamo frowns out of the window. What does he say about that place?",
+                    "prompt": "Hamo frowns out of the window. What does he say about that place? “Li wir qet kes tune.”",
                     "options": [
                       "Nobody is ever there.",
                       "Everyone is there.",
@@ -968,7 +968,7 @@
                   "payload": {
                     "say": "Bozo, tu çima ketî baxçe?",
                     "voice": "hamo",
-                    "prompt": "Hamo scolds his donkey. What does he ask him?",
+                    "prompt": "Hamo scolds his donkey. What does he ask him? “Bozo, tu çima ketî baxçe?”",
                     "options": [
                       "Bozo, why did you go into the garden?",
                       "Bozo, when did you come back?",
@@ -983,7 +983,7 @@
                   "payload": {
                     "say": "Ev kon yê kê ye?",
                     "voice": "hamo",
-                    "prompt": "Hamo wonders aloud, half to himself. What does he wonder?",
+                    "prompt": "Hamo wonders aloud, half to himself. What does he wonder? “Ev kon yê kê ye?”",
                     "accepted": [
                       "Whose tent is this?",
                       "Whose tent is this",
@@ -1028,7 +1028,7 @@
                   "payload": {
                     "say": "Dema ku ez zarok bûm, em her havîn li zozanan bûn.",
                     "voice": "hamo",
-                    "prompt": "Hamo sits back and strokes his moustache. Nazê quietly pours more tea: this will take a while. What does he say?",
+                    "prompt": "Hamo sits back and strokes his moustache. Nazê quietly pours more tea: this will take a while. What does he say? “Dema ku ez zarok bûm, em her havîn li zozanan bûn.”",
                     "options": [
                       "When I was a child, we spent every summer on the pastures.",
                       "When I was a child, we went to Amed every summer.",
@@ -1076,7 +1076,7 @@
                   "payload": {
                     "say": "Pêr Xezal ji Amedê hat.",
                     "voice": "hamo",
-                    "prompt": "Hamo counts on his fingers. When did Xezal arrive?",
+                    "prompt": "Hamo counts on his fingers. When did Xezal arrive? “Pêr Xezal ji Amedê hat.”",
                     "options": [
                       "The day before yesterday.",
                       "Yesterday.",
@@ -1091,7 +1091,7 @@
                   "payload": {
                     "say": "Di zemanê berê de jiyan hêsan nebû.",
                     "voice": "hamo",
-                    "prompt": "For a moment Hamo grows serious. What does he say?",
+                    "prompt": "For a moment Hamo grows serious. What does he say? “Di zemanê berê de jiyan hêsan nebû.”",
                     "accepted": [
                       "In the old days life wasn’t easy.",
                       "In the old days life wasn’t easy",
@@ -1163,7 +1163,7 @@
                   "payload": {
                     "say": "Dema ku ez ciwan bûm, simbêlên min hîn dirêjtir bûn.",
                     "voice": "hamo",
-                    "prompt": "Hamo lifts the near end of his moustache. What does he claim?",
+                    "prompt": "Hamo lifts the near end of his moustache. What does he claim? “Dema ku ez ciwan bûm, simbêlên min hîn dirêjtir bûn.”",
                     "options": [
                       "When I was young, my moustache was even longer.",
                       "When I was young, I had no moustache.",
@@ -1228,7 +1228,7 @@
                   "payload": {
                     "say": "Pêr Hevalo dîsa ket baxçe.",
                     "voice": "hamo",
-                    "prompt": "Who else is in trouble? Hamo tells on someone.",
+                    "prompt": "Who else is in trouble? Hamo tells on someone. “Pêr Hevalo dîsa ket baxçe.”",
                     "accepted": [
                       "The day before yesterday Hevalo got into the garden again.",
                       "The day before yesterday Hevalo got into the garden again",
@@ -1273,7 +1273,7 @@
                   "payload": {
                     "say": "Roja yekem ez ketim poleke şaş!",
                     "voice": "xezo",
-                    "prompt": "Xezal covers her face and giggles. What happened on her first day in Amed?",
+                    "prompt": "Xezal covers her face and giggles. What happened on her first day in Amed? “Roja yekem ez ketim poleke şaş!”",
                     "options": [
                       "On the first day she walked into the wrong class!",
                       "On the first day she was late for class.",
@@ -1288,7 +1288,7 @@
                   "payload": {
                     "say": "Ez ji hemû azmûnan derbas bûm.",
                     "voice": "xezo",
-                    "prompt": "Then comes her proudest news. What does she say?",
+                    "prompt": "Then comes her proudest news. What does she say? “Ez ji hemû azmûnan derbas bûm.”",
                     "options": [
                       "I passed all the exams.",
                       "I failed all the exams.",
@@ -1303,7 +1303,7 @@
                   "payload": {
                     "say": "Dersa min di saet nehan de dest pê dike.",
                     "voice": "xezo",
-                    "prompt": "Xezal tells you about her mornings in the city. What does she say?",
+                    "prompt": "Xezal tells you about her mornings in the city. What does she say? “Dersa min di saet nehan de dest pê dike.”",
                     "accepted": [
                       "My class starts at nine o’clock.",
                       "My class starts at nine o’clock",
@@ -1375,7 +1375,7 @@
                   "payload": {
                     "say": "Di pola me de sî xwendekar bûn.",
                     "voice": "xezo",
-                    "prompt": "How big was Xezal’s class at the university?",
+                    "prompt": "How big was Xezal’s class at the university? “Di pola me de sî xwendekar bûn.”",
                     "options": [
                       "Thirty students.",
                       "Thirteen students.",
@@ -1423,7 +1423,7 @@
                   "payload": {
                     "say": "Ders qediya û em derketin.",
                     "voice": "xezo",
-                    "prompt": "What happened at the end of Xezal’s first day?",
+                    "prompt": "What happened at the end of Xezal’s first day? “Ders qediya û em derketin.”",
                     "options": [
                       "The lesson ended and we went out.",
                       "The lesson started and we went in.",
@@ -1438,7 +1438,7 @@
                   "payload": {
                     "say": "Tu xwendekareke serkeftî yî, Xezo.",
                     "voice": "hamo",
-                    "prompt": "Hamo lifts the end of his moustache, very pleased. What does he tell her?",
+                    "prompt": "Hamo lifts the end of his moustache, very pleased. What does he tell her? “Tu xwendekareke serkeftî yî, Xezo.”",
                     "accepted": [
                       "You are a successful student, Xezo.",
                       "You are a successful student, Xezo",
@@ -1481,7 +1481,7 @@
                   "payload": {
                     "say": "Tu ji azmûnê derbas bûyî?",
                     "voice": "hamo",
-                    "prompt": "Hamo has one more question for Xezal. What does he ask?",
+                    "prompt": "Hamo has one more question for Xezal. What does he ask? “Tu ji azmûnê derbas bûyî?”",
                     "options": [
                       "Did you pass the exam?",
                       "Did you start the exam?",
@@ -1504,7 +1504,7 @@
                   "payload": {
                     "say": "Hingê ji daristanê gurek derket!",
                     "voice": "hamo",
-                    "prompt": "Hamo lowers his voice. Everyone leans in. What came out of the forest?",
+                    "prompt": "Hamo lowers his voice. Everyone leans in. What came out of the forest? “Hingê ji daristanê gurek derket!”",
                     "options": [
                       "A wolf.",
                       "A bear.",
@@ -1519,7 +1519,7 @@
                   "payload": {
                     "say": "Li dora min tarîtî bû.",
                     "voice": "hamo",
-                    "prompt": "Hamo sets the scene first. What does he say?",
+                    "prompt": "Hamo sets the scene first. What does he say? “Li dora min tarîtî bû.”",
                     "options": [
                       "All around me it was dark.",
                       "There was light all around me.",
@@ -1611,7 +1611,7 @@
                   "payload": {
                     "say": "Gur wek hespekî mezin bû.",
                     "voice": "hamo",
-                    "prompt": "Hamo spreads his arms as wide as they go. What does he claim?",
+                    "prompt": "Hamo spreads his arms as wide as they go. What does he claim? “Gur wek hespekî mezin bû.”",
                     "accepted": [
                       "The wolf was as big as a horse.",
                       "The wolf was as big as a horse",
@@ -1693,7 +1693,7 @@
                   "payload": {
                     "say": "Belkî ew rovî bû, xalo.",
                     "voice": "xezo",
-                    "prompt": "Xezal winks at you. What does she suggest?",
+                    "prompt": "Xezal winks at you. What does she suggest? “Belkî ew rovî bû, xalo.”",
                     "options": [
                       "Maybe it was a fox, uncle.",
                       "Maybe it was a bear, uncle.",
@@ -1717,7 +1717,7 @@
                   "payload": {
                     "say": "Hirç li daristanan dijîn.",
                     "voice": "hamo",
-                    "prompt": "Baran asks where bears live. What does Hamo answer?",
+                    "prompt": "Baran asks where bears live. What does Hamo answer? “Hirç li daristanan dijîn.”",
                     "accepted": [
                       "Bears live in forests.",
                       "Bears live in forests",
@@ -1769,7 +1769,7 @@
                   "payload": {
                     "say": "Peyamek ji Bişar hat.",
                     "voice": "hamo",
-                    "prompt": "A boy on a donkey comes down the lane with news from the summer pastures. What does Hamo announce?",
+                    "prompt": "A boy on a donkey comes down the lane with news from the summer pastures. What does Hamo announce? “Peyamek ji Bişar hat.”",
                     "options": [
                       "A message has come from Bişar.",
                       "Bişar has come from the pastures.",
@@ -1784,7 +1784,7 @@
                   "payload": {
                     "say": "Peyam ji kê ye?",
                     "voice": "hevalo",
-                    "prompt": "Hevalo trots up, curious. What does he ask?",
+                    "prompt": "Hevalo trots up, curious. What does he ask? “Peyam ji kê ye?”",
                     "options": [
                       "Who is the message from?",
                       "Where is the message?",
@@ -1828,7 +1828,7 @@
                   "payload": {
                     "say": "Heywanekî kûvî her şev tê ber konê Bişar.",
                     "voice": "hamo",
-                    "prompt": "Hamo reads the message out. What does Bişar write?",
+                    "prompt": "Hamo reads the message out. What does Bişar write? “Heywanekî kûvî her şev tê ber konê Bişar.”",
                     "accepted": [
                       "A wild animal comes to Bişar’s tent every night.",
                       "A wild animal comes to Bişar’s tent every night",
@@ -1861,7 +1861,7 @@
                   "payload": {
                     "say": "Pezkûvî? Ez jî pezkûvî me!",
                     "voice": "hevalo",
-                    "prompt": "Hevalo’s ears shoot straight up. What does he say?",
+                    "prompt": "Hevalo’s ears shoot straight up. What does he say? “Pezkûvî? Ez jî pezkûvî me!”",
                     "options": [
                       "A deer? I’m a deer too!",
                       "A deer? I’m afraid of deer!",
@@ -1890,7 +1890,7 @@
                   "payload": {
                     "say": "Xezal? Ez Xezal im!",
                     "voice": "xezo",
-                    "prompt": "Xezal hears her own name and folds her arms. What does she say?",
+                    "prompt": "Xezal hears her own name and folds her arms. What does she say? “Xezal? Ez Xezal im!”",
                     "options": [
                       "A gazelle? I’m Xezal!",
                       "A gazelle? I’m not wild!",
@@ -1951,7 +1951,7 @@
                   "payload": {
                     "say": "Hevalo pezkûviyekî ciwan e, lê ew ne kûvî ye.",
                     "voice": "hamo",
-                    "prompt": "Hamo explains the difference to Baran. What does he say?",
+                    "prompt": "Hamo explains the difference to Baran. What does he say? “Hevalo pezkûviyekî ciwan e, lê ew ne kûvî ye.”",
                     "accepted": [
                       "Hevalo is a young deer, but he isn’t wild.",
                       "Hevalo is a young deer, but he isn’t wild",
@@ -1970,7 +1970,7 @@
                   "payload": {
                     "say": "Ez dixwazim wî heywanî bibînim!",
                     "voice": "hevalo",
-                    "prompt": "Hevalo can’t keep still. What does he say?",
+                    "prompt": "Hevalo can’t keep still. What does he say? “Ez dixwazim wî heywanî bibînim!”",
                     "options": [
                       "I want to see that animal!",
                       "I don’t want to see that animal!",
@@ -1997,7 +1997,7 @@
                   "payload": {
                     "say": "Kî dizane? Belkî ew heywan li benda Hevalo ye…",
                     "voice": "hamo",
-                    "prompt": "Hamo winks at you. What does he say?",
+                    "prompt": "Hamo winks at you. What does he say? “Kî dizane? Belkî ew heywan li benda Hevalo ye…”",
                     "options": [
                       "Who knows? Maybe that animal is waiting for Hevalo…",
                       "Who knows? Maybe that animal is afraid of Hevalo…",
@@ -2028,7 +2028,7 @@
                   "payload": {
                     "say": "Pêşî em zû rabûn.",
                     "voice": "hamo",
-                    "prompt": "Hamo teaches Baran how to tell a story properly, starting with the first thing that happened. What does he say?",
+                    "prompt": "Hamo teaches Baran how to tell a story properly, starting with the first thing that happened. What does he say? “Pêşî em zû rabûn.”",
                     "options": [
                       "First, we got up early.",
                       "In the end, we got up early.",
@@ -2076,7 +2076,7 @@
                   "payload": {
                     "say": "Piştî ku em gihîştin bazarê, em li qehwexaneyê rûniştin.",
                     "voice": "hamo",
-                    "prompt": "His example is the best day of his life: the day Bozo came to the family. What happened at the market?",
+                    "prompt": "His example is the best day of his life: the day Bozo came to the family. What happened at the market? “Piştî ku em gihîştin bazarê, em li qehwexaneyê rûniştin.”",
                     "options": [
                       "They sat in the tea house.",
                       "They went straight home.",
@@ -2091,7 +2091,7 @@
                   "payload": {
                     "say": "Kerekî gewr yekser hat cem min.",
                     "voice": "hamo",
-                    "prompt": "And then the hero of the story appears. What happened?",
+                    "prompt": "And then the hero of the story appears. What happened? “Kerekî gewr yekser hat cem min.”",
                     "options": [
                       "A grey donkey came straight to me.",
                       "A grey donkey ran away from me.",
@@ -2106,7 +2106,7 @@
                   "payload": {
                     "say": "Piştî demekê, ew li dû min hat.",
                     "voice": "hamo",
-                    "prompt": "Hamo smiles at the memory. What does he say?",
+                    "prompt": "Hamo smiles at the memory. What does he say? “Piştî demekê, ew li dû min hat.”",
                     "accepted": [
                       "After a while, he followed me.",
                       "After a while, he followed me",
@@ -2197,7 +2197,7 @@
                   "payload": {
                     "say": "Rêwîtiya ji bazarê heta malê sê saet bû.",
                     "voice": "hamo",
-                    "prompt": "How long was the walk home with the new donkey?",
+                    "prompt": "How long was the walk home with the new donkey? “Rêwîtiya ji bazarê heta malê sê saet bû.”",
                     "accepted": [
                       "The journey from the market to the house was three hours.",
                       "The journey from the market to the house was three hours",
@@ -2251,7 +2251,7 @@
                   "payload": {
                     "say": "Baran meşiya, meşiya, meşiya…",
                     "voice": "hamo",
-                    "prompt": "Hamo retells Baran’s day, and it turns into an epic. How does it start?",
+                    "prompt": "Hamo retells Baran’s day, and it turns into an epic. How does it start? “Baran meşiya, meşiya, meşiya…”",
                     "options": [
                       "Baran walked, and walked, and walked…",
                       "Baran ran, and ran, and ran…",
@@ -2266,7 +2266,7 @@
                   "payload": {
                     "say": "Ew di gelî de geriya.",
                     "voice": "hamo",
-                    "prompt": "What did the young hero do next?",
+                    "prompt": "What did the young hero do next? “Ew di gelî de geriya.”",
                     "options": [
                       "He wandered around in the valley.",
                       "He waited in the valley.",
@@ -2281,7 +2281,7 @@
                   "payload": {
                     "say": "Li ber zinarekî ew sekinî.",
                     "voice": "hamo",
-                    "prompt": "Hamo stops in his chair for effect. What does he say?",
+                    "prompt": "Hamo stops in his chair for effect. What does he say? “Li ber zinarekî ew sekinî.”",
                     "accepted": [
                       "He stopped in front of a cliff.",
                       "He stopped in front of a cliff",
@@ -2349,7 +2349,7 @@
                   "payload": {
                     "say": "Çivîkek di ser serê wî re firiya.",
                     "voice": "hamo",
-                    "prompt": "Every epic needs a sign from the sky. What happened above Baran’s head?",
+                    "prompt": "Every epic needs a sign from the sky. What happened above Baran’s head? “Çivîkek di ser serê wî re firiya.”",
                     "options": [
                       "A bird flew over his head.",
                       "A bird sat on his head.",
@@ -2420,7 +2420,7 @@
                   "payload": {
                     "say": "Hamo nexebitî, ew tenê kenî.",
                     "voice": "hamo",
-                    "prompt": "Nazê has the last word. What does she say about her husband?",
+                    "prompt": "Nazê has the last word. What does she say about her husband? “Hamo nexebitî, ew tenê kenî.”",
                     "accepted": [
                       "Hamo didn’t work, he just laughed.",
                       "Hamo didn’t work, he just laughed",
@@ -2484,7 +2484,7 @@
                   "payload": {
                     "say": "Sê têjikên pisîka Hêviyê çêbûn!",
                     "voice": "hamo",
-                    "prompt": "Hêvî bursts into the kitchen with the news of the day, and Hamo repeats it for you. What happened?",
+                    "prompt": "Hêvî bursts into the kitchen with the news of the day, and Hamo repeats it for you. What happened? “Sê têjikên pisîka Hêviyê çêbûn!”",
                     "options": [
                       "Hêvî’s cat had three kittens!",
                       "Hêvî found three kittens in the garden!",
@@ -2499,7 +2499,7 @@
                   "payload": {
                     "say": "Ez her gav bêhnfireh im.",
                     "voice": "hamo",
-                    "prompt": "Hamo is proud of one thing (after his moustache). What is it?",
+                    "prompt": "Hamo is proud of one thing (after his moustache). What is it? “Ez her gav bêhnfireh im.”",
                     "options": [
                       "I am always patient.",
                       "I am always impatient.",
@@ -2600,7 +2600,7 @@
                   "payload": {
                     "say": "Otobûsa Xezalê du saet dereng ma.",
                     "voice": "hamo",
-                    "prompt": "Why was Xezal grumpy when she arrived?",
+                    "prompt": "Why was Xezal grumpy when she arrived? “Otobûsa Xezalê du saet dereng ma.”",
                     "accepted": [
                       "Xezal’s bus was two hours late.",
                       "Xezal’s bus was two hours late",
@@ -2668,7 +2668,7 @@
                   "payload": {
                     "say": "Xalo, tu bêhnfireh î, ji ber ku tu tenê rûdinî!",
                     "voice": "xezo",
-                    "prompt": "Xezal teases her uncle. What does she say?",
+                    "prompt": "Xezal teases her uncle. What does she say? “Xalo, tu bêhnfireh î, ji ber ku tu tenê rûdinî!”",
                     "accepted": [
                       "Uncle, you are patient because you just sit!",
                       "Uncle, you are patient because you just sit",
@@ -2735,7 +2735,7 @@
                   "payload": {
                     "say": "Rojeke dirêj bû, û ez bêtaqet nebûm!",
                     "voice": "hamo",
-                    "prompt": "Hamo stretches and yawns, very pleased with himself. What does he say?",
+                    "prompt": "Hamo stretches and yawns, very pleased with himself. What does he say? “Rojeke dirêj bû, û ez bêtaqet nebûm!”",
                     "accepted": [
                       "It was a long day, and I wasn’t impatient!",
                       "It was a long day, and I wasn’t impatient",
@@ -2762,7 +2762,7 @@
                   "payload": {
                     "say": "Biryara min ev e: em ê biçin zozanan!",
                     "voice": "hamo",
-                    "prompt": "After dinner Hamo stands up and clears his throat. What has he decided?",
+                    "prompt": "After dinner Hamo stands up and clears his throat. What has he decided? “Biryara min ev e: em ê biçin zozanan!”",
                     "options": [
                       "My decision is this: we will go to the summer pastures!",
                       "My decision is this: we will stay in the village!",
@@ -2777,7 +2777,7 @@
                   "payload": {
                     "say": "Berê em koçer bûn.",
                     "voice": "hamo",
-                    "prompt": "Dapîr nods slowly. Hamo tells you why this matters to the family.",
+                    "prompt": "Dapîr nods slowly. Hamo tells you why this matters to the family. “Berê em koçer bûn.”",
                     "options": [
                       "In the old days we were nomads.",
                       "In the old days we were shepherds in the city.",
@@ -2873,7 +2873,7 @@
                   "payload": {
                     "say": "Em ê hemû bar bikin.",
                     "voice": "hamo",
-                    "prompt": "Hamo spreads his arms wide. What does he announce?",
+                    "prompt": "Hamo spreads his arms wide. What does he announce? “Em ê hemû bar bikin.”",
                     "accepted": [
                       "We will all move.",
                       "We will all move",
@@ -2945,7 +2945,7 @@
                   "payload": {
                     "say": "Bişar rêberekî baş e; ew hemû rêyan dizane.",
                     "voice": "hamo",
-                    "prompt": "Hamo has another guide in mind for the high pastures. What does he say?",
+                    "prompt": "Hamo has another guide in mind for the high pastures. What does he say? “Bişar rêberekî baş e; ew hemû rêyan dizane.”",
                     "accepted": [
                       "Bişar is a good guide; he knows all the roads.",
                       "Bişar is a good guide; he knows all the roads",
@@ -3016,7 +3016,7 @@
                   "payload": {
                     "say": "Xalo… Bozo dîsa reviya!",
                     "voice": "xezo",
-                    "prompt": "The yard is empty. Xezal looks at her uncle. What does she say?",
+                    "prompt": "The yard is empty. Xezal looks at her uncle. What does she say? “Xalo… Bozo dîsa reviya!”",
                     "options": [
                       "Uncle… Bozo ran away again!",
                       "Uncle… Bozo came back again!",
@@ -3047,7 +3047,7 @@
                   "payload": {
                     "say": "Dema ku diya min neh salî bû, li gund dibistan tunebû.",
                     "voice": "hamo",
-                    "prompt": "Dapîr is packing her old saddlebags, and Hamo tells you about her childhood. What does he say?",
+                    "prompt": "Dapîr is packing her old saddlebags, and Hamo tells you about her childhood. What does he say? “Dema ku diya min neh salî bû, li gund dibistan tunebû.”",
                     "options": [
                       "When my mother was nine, there was no school in the village.",
                       "When my mother was nine, she went to school in the city.",
@@ -3095,7 +3095,7 @@
                   "payload": {
                     "say": "Hespekî wê hebû.",
                     "voice": "hamo",
-                    "prompt": "What did young Şemsê have, that every child in Sêvan envied?",
+                    "prompt": "What did young Şemsê have, that every child in Sêvan envied? “Hespekî wê hebû.”",
                     "options": [
                       "She had a horse.",
                       "She had a donkey.",
@@ -3110,7 +3110,7 @@
                   "payload": {
                     "say": "Ew hemû havînê ji hespê peya nebû!",
                     "voice": "hamo",
-                    "prompt": "Hamo shakes his head in wonder. What does he say about his mother?",
+                    "prompt": "Hamo shakes his head in wonder. What does he say about his mother? “Ew hemû havînê ji hespê peya nebû!”",
                     "accepted": [
                       "She didn’t get off the horse all summer!",
                       "She didn’t get off the horse all summer",
@@ -3194,7 +3194,7 @@
                   "payload": {
                     "say": "Roj zû hiltê.",
                     "voice": "hamo",
-                    "prompt": "Why do people on the pastures get up so early?",
+                    "prompt": "Why do people on the pastures get up so early? “Roj zû hiltê.”",
                     "options": [
                       "The sun rises early.",
                       "The sun sets early.",
@@ -3230,7 +3230,7 @@
                   "payload": {
                     "say": "Hebû tunebû, keçeke biçûk hebû…",
                     "voice": "hamo",
-                    "prompt": "Dapîr starts a tale the old way, and Hamo repeats the first words for you. What do they mean?",
+                    "prompt": "Dapîr starts a tale the old way, and Hamo repeats the first words for you. What do they mean? “Hebû tunebû, keçeke biçûk hebû…”",
                     "accepted": [
                       "Once upon a time there was a little girl…",
                       "Once upon a time there was a little girl",
@@ -3270,7 +3270,7 @@
                   "payload": {
                     "say": "Cara dawî ez rojeke tevahî dereng mam.",
                     "voice": "hamo",
-                    "prompt": "Hamo wants to show how organised the family will be this year. Then he confesses something. What?",
+                    "prompt": "Hamo wants to show how organised the family will be this year. Then he confesses something. What? “Cara dawî ez rojeke tevahî dereng mam.”",
                     "options": [
                       "Last time I was a whole day late.",
                       "Last time I was an hour late.",
@@ -3285,7 +3285,7 @@
                   "payload": {
                     "say": "Ji ber xeletiyê ez çûm gundekî din.",
                     "voice": "hamo",
-                    "prompt": "How did that happen? Hamo explains with great dignity.",
+                    "prompt": "How did that happen? Hamo explains with great dignity. “Ji ber xeletiyê ez çûm gundekî din.”",
                     "options": [
                       "By mistake I went to another village.",
                       "On purpose I went to another village.",
@@ -3300,7 +3300,7 @@
                   "payload": {
                     "say": "Ev ne xeletiya min bû!",
                     "voice": "hamo",
-                    "prompt": "Nazê raises an eyebrow. Hamo protests.",
+                    "prompt": "Nazê raises an eyebrow. Hamo protests. “Ev ne xeletiya min bû!”",
                     "accepted": [
                       "It wasn’t my mistake!",
                       "It wasn’t my mistake",
@@ -3374,7 +3374,7 @@
                   "payload": {
                     "say": "Em ê tevî Dapîrê biçin.",
                     "voice": "hamo",
-                    "prompt": "Who is coming to the pastures this year?",
+                    "prompt": "Who is coming to the pastures this year? “Em ê tevî Dapîrê biçin.”",
                     "options": [
                       "We will go with Grandma.",
                       "We will go without Grandma.",
@@ -3403,7 +3403,7 @@
                   "payload": {
                     "say": "Hamo tevî kerê xwe çû, lê bê nexşe.",
                     "voice": "xezo",
-                    "prompt": "Xezal tells you the real story behind the mistake. What does she say?",
+                    "prompt": "Xezal tells you the real story behind the mistake. What does she say? “Hamo tevî kerê xwe çû, lê bê nexşe.”",
                     "accepted": [
                       "Hamo went with his donkey, but without a map.",
                       "Hamo went with his donkey, but without a map",
@@ -3478,7 +3478,7 @@
                   "payload": {
                     "say": "Ez gazî Bozo dikim, lê ew nayê.",
                     "voice": "xezo",
-                    "prompt": "Up the valley, Xezal turns to you, out of breath. What does she say?",
+                    "prompt": "Up the valley, Xezal turns to you, out of breath. What does she say? “Ez gazî Bozo dikim, lê ew nayê.”",
                     "options": [
                       "I’m calling Bozo, but he isn’t coming.",
                       "I’m looking for Bozo, but I can’t see him.",
@@ -3493,7 +3493,7 @@
                   "payload": {
                     "say": "Li vir şopên wî hene!",
                     "voice": "hevalo",
-                    "prompt": "Hevalo has his nose to the ground. What has he found?",
+                    "prompt": "Hevalo has his nose to the ground. What has he found? “Li vir şopên wî hene!”",
                     "options": [
                       "His tracks are here!",
                       "His apples are here!",
@@ -3589,7 +3589,7 @@
                   "payload": {
                     "say": "Bozo evîndar e!",
                     "voice": "xezo",
-                    "prompt": "Xezal can’t stop giggling. Why?",
+                    "prompt": "Xezal can’t stop giggling. Why? “Bozo evîndar e!”",
                     "accepted": [
                       "Bozo is in love!",
                       "Bozo is in love",
@@ -3655,7 +3655,7 @@
                   "payload": {
                     "say": "Kera Ferhad şermok e, ew li erdê dinêre.",
                     "voice": "xezo",
-                    "prompt": "And the lady donkey? What does Xezal say about her?",
+                    "prompt": "And the lady donkey? What does Xezal say about her? “Kera Ferhad şermok e, ew li erdê dinêre.”",
                     "options": [
                       "Ferhad’s donkey is shy; she looks at the ground.",
                       "Ferhad’s donkey is brave; she looks at Bozo.",
@@ -3670,7 +3670,7 @@
                   "payload": {
                     "say": "Wek Nazê, berî sî salan!",
                     "voice": "hamo",
-                    "prompt": "Hamo smiles a slow, soft smile. What does he say?",
+                    "prompt": "Hamo smiles a slow, soft smile. What does he say? “Wek Nazê, berî sî salan!”",
                     "accepted": [
                       "Like Nazê, thirty years ago!",
                       "Like Nazê, thirty years ago",
@@ -3721,7 +3721,7 @@
                   "payload": {
                     "say": "Bozo û kera Ferhad: evîneke nû!",
                     "voice": "xezo",
-                    "prompt": "Xezal announces it like the evening news. What does she say?",
+                    "prompt": "Xezal announces it like the evening news. What does she say? “Bozo û kera Ferhad: evîneke nû!”",
                     "accepted": [
                       "Bozo and Ferhad’s donkey: a new love!",
                       "Bozo and Ferhad’s donkey: a new love",
@@ -3746,7 +3746,7 @@
                   "payload": {
                     "say": "Dema ku Dapîr keçik bû, ew bi diya xwe re çû zozanan.",
                     "voice": "hamo",
-                    "prompt": "The evening before they leave, Dapîr remembers, and Hamo tells you what she says.",
+                    "prompt": "The evening before they leave, Dapîr remembers, and Hamo tells you what she says. “Dema ku Dapîr keçik bû, ew bi diya xwe re çû zozanan.”",
                     "options": [
                       "When Grandma was a girl, she went to the summer pastures with her mother.",
                       "When Grandma was a girl, she lived in the city with her mother.",
@@ -3761,7 +3761,7 @@
                   "payload": {
                     "say": "Li zozanan dawet hebûn.",
                     "voice": "hamo",
-                    "prompt": "What happened up there in the summers of the old days?",
+                    "prompt": "What happened up there in the summers of the old days? “Li zozanan dawet hebûn.”",
                     "options": [
                       "There were weddings on the summer pastures.",
                       "There were no weddings on the pastures.",
@@ -3843,7 +3843,7 @@
                   "payload": {
                     "say": "Zava xortekî ji gundekî din bû.",
                     "voice": "hamo",
-                    "prompt": "Hamo remembers one wedding in particular. What does he say?",
+                    "prompt": "Hamo remembers one wedding in particular. What does he say? “Zava xortekî ji gundekî din bû.”",
                     "accepted": [
                       "The bridegroom was a young man from another village.",
                       "The bridegroom was a young man from another village",
@@ -3911,7 +3911,7 @@
                   "payload": {
                     "say": "Di berbangê de stêrk hîn li asman bûn.",
                     "voice": "hamo",
-                    "prompt": "Very early next morning, Hamo looks up. What does he say?",
+                    "prompt": "Very early next morning, Hamo looks up. What does he say? “Di berbangê de stêrk hîn li asman bûn.”",
                     "accepted": [
                       "At dawn the stars were still in the sky.",
                       "At dawn the stars were still in the sky",
@@ -3978,7 +3978,7 @@
                   "payload": {
                     "say": "Şivanek li dû wan tê… Ez wî nas dikim!",
                     "voice": "hamo",
-                    "prompt": "A shepherd walks behind the flock. Hamo shades his eyes. What does he say?",
+                    "prompt": "A shepherd walks behind the flock. Hamo shades his eyes. What does he say? “Şivanek li dû wan tê… Ez wî nas dikim!”",
                     "options": [
                       "A shepherd is coming behind them… I know him!",
                       "A shepherd is coming behind them… I don’t know him!",

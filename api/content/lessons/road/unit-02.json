@@ -171,7 +171,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez birayê Gulîstanê me.",
-                    "prompt": "Hamo puts his finger on the girl with the plaits. What does he say, in English?",
+                    "prompt": "Hamo puts his finger on the girl with the plaits. What does he say, in English? “Ez birayê Gulîstanê me.”",
                     "accepted": [
                       "I am Gulîstan’s brother.",
                       "I am the brother of Gulîstan.",
@@ -382,7 +382,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ew diya min e û dapîra Xezalê ye.",
-                    "prompt": "Dapîr Şemsê leans on her stick, and on everyone. Hamo explains. What does he say, in English?",
+                    "prompt": "Dapîr Şemsê leans on her stick, and on everyone. Hamo explains. What does he say, in English? “Ew diya min e û dapîra Xezalê ye.”",
                     "accepted": [
                       "She is my mother and Xezal’s grandmother.",
                       "She is my mother and Xezal’s grandma.",
@@ -425,7 +425,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Nan û çay, fermo!",
-                    "prompt": "Hamo sets down the tray. What does he say, in English?",
+                    "prompt": "Hamo sets down the tray. What does he say, in English? “Nan û çay, fermo!”",
                     "accepted": [
                       "Bread and tea, help yourself!",
                       "Bread and tea, here you are!",
@@ -674,7 +674,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev tu yî? Bi rastî?",
-                    "prompt": "Xezal looks from the photo to her uncle and back. What does she ask, in English?",
+                    "prompt": "Xezal looks from the photo to her uncle and back. What does she ask, in English? “Ev tu yî? Bi rastî?”",
                     "accepted": [
                       "Is this you? Really?",
                       "Is that you? Really?",
@@ -716,7 +716,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez ne pîr im! Ez ciwan im, simbêlê min jî ciwan e!",
-                    "prompt": "Hamo sits up very straight. What does he say, in English?",
+                    "prompt": "Hamo sits up very straight. What does he say, in English? “Ez ne pîr im! Ez ciwan im, simbêlê min jî ciwan e!”",
                     "accepted": [
                       "I am not old! I am young, and my moustache is young too!",
                       "I am not old! I am young, my moustache is young too!",
@@ -951,7 +951,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Mala wan li Amedê ye, mala me li Sêvanê ye.",
-                    "prompt": "Hamo tells you where Xezal’s family lives. What does he say, in English?",
+                    "prompt": "Hamo tells you where Xezal’s family lives. What does he say, in English? “Mala wan li Amedê ye, mala me li Sêvanê ye.”",
                     "accepted": [
                       "Their house is in Amed, our house is in Sêvan.",
                       "Their home is in Amed, our home is in Sêvan.",
@@ -1177,7 +1177,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hewşa me biçûk e, lê baxçe mezin e.",
-                    "prompt": "Hamo comes running and looks round. What does he say, in English?",
+                    "prompt": "Hamo comes running and looks round. What does he say, in English? “Hewşa me biçûk e, lê baxçe mezin e.”",
                     "accepted": [
                       "Our yard is small, but the orchard is big.",
                       "Our courtyard is small, but the orchard is big.",
@@ -1392,7 +1392,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Baran, Hêvî û Xezal neviyên dapîrê ne.",
-                    "prompt": "Dapîr gathers all three children round her. What does Hamo say, in English?",
+                    "prompt": "Dapîr gathers all three children round her. What does Hamo say, in English? “Baran, Hêvî û Xezal neviyên dapîrê ne.”",
                     "accepted": [
                       "Baran, Hêvî and Xezal are Grandma’s grandchildren.",
                       "Baran, Hêvî, and Xezal are Grandma’s grandchildren.",
@@ -1446,7 +1446,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hêvî delal e, Baran zîrek e.",
-                    "prompt": "Hamo is a proud father. What does he say, in English?",
+                    "prompt": "Hamo is a proud father. What does he say, in English? “Hêvî delal e, Baran zîrek e.”",
                     "accepted": [
                       "Hêvî is lovely, Baran is clever.",
                       "Hêvî is sweet, Baran is clever.",
@@ -1686,7 +1686,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev çente yê min e, û ev kiras jî yê min e.",
-                    "prompt": "Xezal pulls her things out of the pile. What does she say, in English?",
+                    "prompt": "Xezal pulls her things out of the pile. What does she say, in English? “Ev çente yê min e, û ev kiras jî yê min e.”",
                     "accepted": [
                       "This bag is mine, and this dress is mine too.",
                       "This bag is mine, and this shirt is mine too.",
@@ -1728,7 +1728,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Pirtûka Baran li vir e, lê çenteyê wî li ku ye?",
-                    "prompt": "Xezal is still sorting. What does she say, in English?",
+                    "prompt": "Xezal is still sorting. What does she say, in English? “Pirtûka Baran li vir e, lê çenteyê wî li ku ye?”",
                     "accepted": [
                       "Baran’s book is here, but where is his bag?",
                       "Baran’s book is here, but where is his schoolbag?",
@@ -1948,7 +1948,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev wêneyê kalê me ye, bavê Hamo.",
-                    "prompt": "Xezal shows Dapîr the photo wall. What does she say, in English?",
+                    "prompt": "Xezal shows Dapîr the photo wall. What does she say, in English? “Ev wêneyê kalê me ye, bavê Hamo.”",
                     "accepted": [
                       "This is a photo of our grandfather, Hamo’s father.",
                       "This is our grandfather’s photo, Hamo’s father.",
@@ -2009,7 +2009,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Kalo, roj baş! Tu çawa yî?",
-                    "prompt": "An old man with a stick passes the gate, and Hamo calls out warmly, as Kurds greet any old man. What does he say, in English?",
+                    "prompt": "An old man with a stick passes the gate, and Hamo calls out warmly, as Kurds greet any old man. What does he say, in English? “Kalo, roj baş! Tu çawa yî?”",
                     "accepted": [
                       "Grandpa, good day! How are you?",
                       "Good day, grandpa! How are you?",
@@ -2183,7 +2183,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Du sêv ji bo Hevalo, yek sêv ji bo Bozo.",
-                    "prompt": "Hamo shares out apples from his pockets. What does he say, in English?",
+                    "prompt": "Hamo shares out apples from his pockets. What does he say, in English? “Du sêv ji bo Hevalo, yek sêv ji bo Bozo.”",
                     "accepted": [
                       "Two apples for Hevalo, one apple for Bozo.",
                       "Two apples for Hevalo and one apple for Bozo.",
@@ -2226,7 +2226,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Çar mirîşk û pisîkek li hewşê ne.",
-                    "prompt": "Hamo looks round the yard. What does he say, in English?",
+                    "prompt": "Hamo looks round the yard. What does he say, in English? “Çar mirîşk û pisîkek li hewşê ne.”",
                     "accepted": [
                       "Four hens and a cat are in the yard.",
                       "There are four hens and a cat in the yard.",
@@ -2413,7 +2413,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hevalo, sêv çend in?",
-                    "prompt": "Hamo turns slowly to the deer. What does he ask, in English?",
+                    "prompt": "Hamo turns slowly to the deer. What does he ask, in English? “Hevalo, sêv çend in?”",
                     "accepted": [
                       "Hevalo, how many apples are there?",
                       "Hevalo, how many apples?",
@@ -2468,7 +2468,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Neh sêv li vir in, lê yek li ku ye?",
-                    "prompt": "Hamo strokes his moustache, thinking hard. What does he say, in English?",
+                    "prompt": "Hamo strokes his moustache, thinking hard. What does he say, in English? “Neh sêv li vir in, lê yek li ku ye?”",
                     "accepted": [
                       "Nine apples are here, but where is one?",
                       "There are nine apples here, but where is the other one?",
@@ -2708,7 +2708,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Pisîka min yazdeh salî ye.",
-                    "prompt": "Xezal tells Baran about her cat at home in Amed. What does she say, in English?",
+                    "prompt": "Xezal tells Baran about her cat at home in Amed. What does she say, in English? “Pisîka min yazdeh salî ye.”",
                     "accepted": [
                       "My cat is eleven years old.",
                       "My cat is eleven."
@@ -2745,7 +2745,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Bozo diwanzdeh salî ye, lê ew ne pîr e!",
-                    "prompt": "Hamo pats the donkey’s neck. What does he say, in English?",
+                    "prompt": "Hamo pats the donkey’s neck. What does he say, in English? “Bozo diwanzdeh salî ye, lê ew ne pîr e!”",
                     "accepted": [
                       "Bozo is twelve years old, but he is not old!",
                       "Bozo is twelve, but he is not old!",
@@ -2987,7 +2987,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ji yekê heta bîstê? Dapîr, ji kerema xwe!",
-                    "prompt": "Xezal is hopping from foot to foot. What does she say, in English?",
+                    "prompt": "Xezal is hopping from foot to foot. What does she say, in English? “Ji yekê heta bîstê? Dapîr, ji kerema xwe!”",
                     "accepted": [
                       "From one to twenty? Grandma, please!",
                       "From one to twenty? Please, Grandma!",
@@ -3063,7 +3063,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Goreyên Hevalo biçûk in, û pir xweşik in!",
-                    "prompt": "Xezal helps the deer try them on. What does she say, in English?",
+                    "prompt": "Xezal helps the deer try them on. What does she say, in English? “Goreyên Hevalo biçûk in, û pir xweşik in!”",
                     "accepted": [
                       "Hevalo’s socks are small, and very pretty!",
                       "Hevalo’s socks are small and very pretty!",
@@ -3225,7 +3225,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Xwişkeke min heye: diya Xezalê.",
-                    "prompt": "Hamo smiles at his niece. What does he say, in English?",
+                    "prompt": "Hamo smiles at his niece. What does he say, in English? “Xwişkeke min heye: diya Xezalê.”",
                     "accepted": [
                       "I have a sister: Xezal’s mother.",
                       "I have one sister: Xezal’s mother.",
@@ -3289,7 +3289,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Pisîkeke Xezalê heye, lê kûçikê wê tune.",
-                    "prompt": "Hamo tells you about his niece’s life in the city. What does he say, in English?",
+                    "prompt": "Hamo tells you about his niece’s life in the city. What does he say, in English? “Pisîkeke Xezalê heye, lê kûçikê wê tune.”",
                     "accepted": [
                       "Xezal has a cat, but she doesn’t have a dog.",
                       "Xezal has a cat, but she has no dog.",
@@ -3439,7 +3439,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Miheke me û du berxên wê hene.",
-                    "prompt": "Hamo shows you the stable. What does he say, in English?",
+                    "prompt": "Hamo shows you the stable. What does he say, in English? “Miheke me û du berxên wê hene.”",
                     "accepted": [
                       "We have a ewe and her two lambs.",
                       "We have one ewe and her two lambs.",
@@ -3480,7 +3480,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Telefoneke min heye, lê pereyê min tune!",
-                    "prompt": "Xezal shrugs and grins. What does she say, in English?",
+                    "prompt": "Xezal shrugs and grins. What does she say, in English? “Telefoneke min heye, lê pereyê min tune!”",
                     "accepted": [
                       "I have a phone, but I don’t have any money!",
                       "I have a phone, but no money!",
@@ -3748,7 +3748,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Xwarina Nazê pir xweş e!",
-                    "prompt": "Hamo wipes his moustache, very happy. What does he say, in English?",
+                    "prompt": "Hamo wipes his moustache, very happy. What does he say, in English? “Xwarina Nazê pir xweş e!”",
                     "accepted": [
                       "Nazê’s food is very tasty!",
                       "Nazê’s cooking is very good!",
@@ -3812,7 +3812,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Goşt tune? Baş e, hêk û penîr hene.",
-                    "prompt": "Hevalo asks for meat (to be polite). Hamo answers. What does he say, in English?",
+                    "prompt": "Hevalo asks for meat (to be polite). Hamo answers. What does he say, in English? “Goşt tune? Baş e, hêk û penîr hene.”",
                     "accepted": [
                       "No meat? Fine, there are eggs and cheese.",
                       "There is no meat? All right, there are eggs and cheese.",
@@ -4011,7 +4011,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hin tişt kevn in, hin tişt nû ne.",
-                    "prompt": "Hamo looks through everything in the box. What does he say, in English?",
+                    "prompt": "Hamo looks through everything in the box. What does he say, in English? “Hin tişt kevn in, hin tişt nû ne.”",
                     "accepted": [
                       "Some things are old, some things are new.",
                       "Some things are old, and some are new.",
@@ -4051,7 +4051,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Kilît ya dapîrê ye, lê sindoq ya kê ye?",
-                    "prompt": "Xezal looks from the key to the box. What does she ask, in English?",
+                    "prompt": "Xezal looks from the key to the box. What does she ask, in English? “Kilît ya dapîrê ye, lê sindoq ya kê ye?”",
                     "accepted": [
                       "The key is Grandma’s, but whose is the box?",
                       "The key is Grandma’s, but whose box is it?",

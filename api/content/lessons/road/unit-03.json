@@ -28,7 +28,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev ode ye.",
-                    "prompt": "Hamo opens the first door with a deep bow, as if you were a visiting governor. What does he say?",
+                    "prompt": "Hamo opens the first door with a deep bow, as if you were a visiting governor. What does he say? “Ev ode ye.”",
                     "options": [
                       "This is a room.",
                       "This is a door.",
@@ -43,7 +43,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ew jî derî ye.",
-                    "prompt": "Hamo points grandly across the hall. Listen: what is over there?",
+                    "prompt": "Hamo points grandly across the hall. Listen: what is over there? “Ew jî derî ye.”",
                     "options": [
                       "And that is a wall.",
                       "And that is a door.",
@@ -91,7 +91,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Xanî mezin e.",
-                    "prompt": "Hamo spreads his arms wide in the hall. What is he so proud of?",
+                    "prompt": "Hamo spreads his arms wide in the hall. What is he so proud of? “Xanî mezin e.”",
                     "options": [
                       "The house is big.",
                       "The house is old.",
@@ -143,7 +143,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Pencere mezin e.",
-                    "prompt": "Hevalo pokes his nose out of the window. What does Hamo say about it?",
+                    "prompt": "Hevalo pokes his nose out of the window. What does Hamo say about it? “Pencere mezin e.”",
                     "accepted": [
                       "The window is big",
                       "The window is large"
@@ -156,7 +156,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ban kevn e, lê xweş e.",
-                    "prompt": "Hamo looks up at the roof beams and smiles. What does he say?",
+                    "prompt": "Hamo looks up at the roof beams and smiles. What does he say? “Ban kevn e, lê xweş e.”",
                     "options": [
                       "The roof is new and nice.",
                       "The wall is old, but nice.",
@@ -183,7 +183,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev xaniyê me ye.",
-                    "prompt": "Back at the blue gate, Hamo sums up the tour. What does he say?",
+                    "prompt": "Back at the blue gate, Hamo sums up the tour. What does he say? “Ev xaniyê me ye.”",
                     "options": [
                       "This is your house.",
                       "This is our house.",
@@ -255,7 +255,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li vê odeyê mirîşkek heye!",
-                    "prompt": "Hamo opens the next door and jumps back. What has he found?",
+                    "prompt": "Hamo opens the next door and jumps back. What has he found? “Li vê odeyê mirîşkek heye!”",
                     "options": [
                       "There is a hen in that house!",
                       "There is a hen in this room!",
@@ -316,7 +316,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Pêlava Hamo li serşokê ye.",
-                    "prompt": "Hevalo trots out of the bathroom with something in his mouth. Listen: what was in there?",
+                    "prompt": "Hevalo trots out of the bathroom with something in his mouth. Listen: what was in there? “Pêlava Hamo li serşokê ye.”",
                     "options": [
                       "Hamo’s hat is in the bathroom.",
                       "Hamo’s shoe is in the bathroom.",
@@ -380,7 +380,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev mase kevn e, lê xweşik e.",
-                    "prompt": "Hamo strokes the kitchen table. What does he say?",
+                    "prompt": "Hamo strokes the kitchen table. What does he say? “Ev mase kevn e, lê xweşik e.”",
                     "options": [
                       "This table is old, but beautiful.",
                       "This chair is old, but beautiful.",
@@ -409,7 +409,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev kursî ji wê malê ye.",
-                    "prompt": "One chair does not match the others. Hamo laughs. What does he explain?",
+                    "prompt": "One chair does not match the others. Hamo laughs. What does he explain? “Ev kursî ji wê malê ye.”",
                     "accepted": [
                       "This chair is from that house",
                       "This chair comes from that house",
@@ -423,7 +423,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li van odeyan gelek pencere hene.",
-                    "prompt": "Listen. What does Hamo say about the upstairs rooms?",
+                    "prompt": "Listen. What does Hamo say about the upstairs rooms? “Li van odeyan gelek pencere hene.”",
                     "options": [
                       "There are many windows in these rooms.",
                       "There is one window in this room.",
@@ -482,7 +482,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Nîşan li derve ye.",
-                    "prompt": "Xezal taps the X on the map. Listen: where is it?",
+                    "prompt": "Xezal taps the X on the map. Listen: where is it? “Nîşan li derve ye.”",
                     "options": [
                       "The mark is inside.",
                       "The mark is on the door.",
@@ -497,7 +497,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Nîşan ne li hundir e.",
-                    "prompt": "Xezal shakes her head at the house. What does she say?",
+                    "prompt": "Xezal shakes her head at the house. What does she say? “Nîşan ne li hundir e.”",
                     "options": [
                       "The mark is not inside.",
                       "The mark is not outside.",
@@ -616,7 +616,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Belkî ew li wir e.",
-                    "prompt": "Hamo points — very innocently — towards the apple trees. What does he say?",
+                    "prompt": "Hamo points — very innocently — towards the apple trees. What does he say? “Belkî ew li wir e.”",
                     "options": [
                       "Maybe it is over there.",
                       "It is not over there.",
@@ -659,7 +659,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Rê hêsan e.",
-                    "prompt": "Hamo waves the worry away. What does he say?",
+                    "prompt": "Hamo waves the worry away. What does he say? “Rê hêsan e.”",
                     "accepted": [
                       "The way is easy",
                       "The road is easy",
@@ -754,7 +754,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Nanê tenûrê germ e.",
-                    "prompt": "In the yard Hamo breaks a loaf fresh from the clay oven. What does he say?",
+                    "prompt": "In the yard Hamo breaks a loaf fresh from the clay oven. What does he say? “Nanê tenûrê germ e.”",
                     "options": [
                       "The oven bread is hot.",
                       "The oven bread is cold.",
@@ -802,7 +802,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev ode tarî ye. Ronî tune.",
-                    "prompt": "Hamo opens the storeroom door. Listen: what is it like inside?",
+                    "prompt": "Hamo opens the storeroom door. Listen: what is it like inside? “Ev ode tarî ye. Ronî tune.”",
                     "options": [
                       "It is bright: there is a lot of light.",
                       "It is cold: there is no bread.",
@@ -829,7 +829,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Odeya te kîjan e?",
-                    "prompt": "Hamo turns to you on the stairs. What is he asking?",
+                    "prompt": "Hamo turns to you on the stairs. What is he asking? “Odeya te kîjan e?”",
                     "accepted": [
                       "Which is your room",
                       "Which one is your room",
@@ -952,7 +952,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev nîşan nû ye!",
-                    "prompt": "Xezal leans in close to the windowsill. What does she whisper?",
+                    "prompt": "Xezal leans in close to the windowsill. What does she whisper? “Ev nîşan nû ye!”",
                     "options": [
                       "This mark is new!",
                       "This mark is old!",
@@ -979,7 +979,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Bêhna nanê tenûrê xweş e.",
-                    "prompt": "Hevalo lifts his nose by the oven. What does Hamo say?",
+                    "prompt": "Hevalo lifts his nose by the oven. What does Hamo say? “Bêhna nanê tenûrê xweş e.”",
                     "accepted": [
                       "The smell of oven bread is nice",
                       "The smell of the oven bread is nice",
@@ -1046,7 +1046,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sêv sor in.",
-                    "prompt": "Hamo holds up two apples from his orchard. What does he say?",
+                    "prompt": "Hamo holds up two apples from his orchard. What does he say? “Sêv sor in.”",
                     "options": [
                       "The apples are green.",
                       "The apples are red.",
@@ -1061,7 +1061,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Derî şîn e.",
-                    "prompt": "Hamo points at his gate. Listen: what colour is it?",
+                    "prompt": "Hamo points at his gate. Listen: what colour is it? “Derî şîn e.”",
                     "options": [
                       "The gate is green.",
                       "The gate is black.",
@@ -1109,7 +1109,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Simbêlê min reş e!",
-                    "prompt": "Hamo lifts the near end of his moustache, very pleased. What does he say?",
+                    "prompt": "Hamo lifts the near end of his moustache, very pleased. What does he say? “Simbêlê min reş e!”",
                     "options": [
                       "My moustache is white!",
                       "My moustache is black!",
@@ -1124,7 +1124,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Bizina Dapîr Şemsê spî ye.",
-                    "prompt": "A goat with a long white beard wanders past. What does Hamo tell you?",
+                    "prompt": "A goat with a long white beard wanders past. What does Hamo tell you? “Bizina Dapîr Şemsê spî ye.”",
                     "options": [
                       "Grandma Şemsê’s goat is black.",
                       "Grandma Şemsê’s cow is white.",
@@ -1164,7 +1164,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Kulîlk zer e.",
-                    "prompt": "Hevalo sniffs a flower by the wall. What does Hamo say about it?",
+                    "prompt": "Hevalo sniffs a flower by the wall. What does Hamo say about it? “Kulîlk zer e.”",
                     "accepted": [
                       "The flower is yellow"
                     ],
@@ -1234,7 +1234,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Dar kesk in, kulîlk zer in.",
-                    "prompt": "Hamo sweeps his arm over the orchard. Listen: what does he say?",
+                    "prompt": "Hamo sweeps his arm over the orchard. Listen: what does he say? “Dar kesk in, kulîlk zer in.”",
                     "options": [
                       "The trees are yellow, the flowers are green.",
                       "The trees are green, the apples are red.",
@@ -1257,7 +1257,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Deriyê şîn li ku ye?",
-                    "prompt": "Xezal reads the next clue on the map and looks up. What does she ask?",
+                    "prompt": "Xezal reads the next clue on the map and looks up. What does she ask? “Deriyê şîn li ku ye?”",
                     "options": [
                       "Where is the white wall?",
                       "Is the door blue?",
@@ -1305,7 +1305,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Bozo kerekî gewr e.",
-                    "prompt": "Xezal pats the donkey’s neck. Listen: what is Bozo?",
+                    "prompt": "Xezal pats the donkey’s neck. Listen: what is Bozo? “Bozo kerekî gewr e.”",
                     "options": [
                       "Bozo is a brown donkey.",
                       "Bozo is a grey donkey.",
@@ -1356,7 +1356,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Kirasê Hêviyê pembe ye.",
-                    "prompt": "Little Hêvî twirls in front of you. What does Hamo say?",
+                    "prompt": "Little Hêvî twirls in front of you. What does Hamo say? “Kirasê Hêviyê pembe ye.”",
                     "accepted": [
                       "Hêvî’s dress is pink",
                       "Hêvî's dress is pink",
@@ -1408,7 +1408,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li gund sê deriyên şîn hene!",
-                    "prompt": "Xezal counts on her fingers, and her face falls. Why?",
+                    "prompt": "Xezal counts on her fingers, and her face falls. Why? “Li gund sê deriyên şîn hene!”",
                     "options": [
                       "There are three blue doors in the village!",
                       "There is one blue door in the village!",
@@ -1469,7 +1469,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Kumê Bozo porteqalî ye, ne pembe!",
-                    "prompt": "Hevalo says something about Bozo’s hat, and Xezal corrects him. What does she say?",
+                    "prompt": "Hevalo says something about Bozo’s hat, and Xezal corrects him. What does she say? “Kumê Bozo porteqalî ye, ne pembe!”",
                     "options": [
                       "Bozo’s hat is pink, not orange!",
                       "Bozo’s hat is purple, not pink!",
@@ -1492,7 +1492,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sêva sor şîrîn e.",
-                    "prompt": "Hamo bites into a red apple and closes his eyes. What does he say?",
+                    "prompt": "Hamo bites into a red apple and closes his eyes. What does he say? “Sêva sor şîrîn e.”",
                     "options": [
                       "The red apple is sweet.",
                       "The red apple is sour.",
@@ -1507,7 +1507,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sêva kesk tirş e, lê xweş e!",
-                    "prompt": "Xezal crunches a green one. What does she say?",
+                    "prompt": "Xezal crunches a green one. What does she say? “Sêva kesk tirş e, lê xweş e!”",
                     "options": [
                       "The green apple is sweet and tasty!",
                       "The green apple is sour, but tasty!",
@@ -1626,7 +1626,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ew hinek tirş e.",
-                    "prompt": "Xezal offers you a slice of green apple. What does she warn you?",
+                    "prompt": "Xezal offers you a slice of green apple. What does she warn you? “Ew hinek tirş e.”",
                     "accepted": [
                       "It is a little sour",
                       "It is a bit sour",
@@ -1695,7 +1695,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li vê darê nîşanek heye!",
-                    "prompt": "Hevalo stops chewing and stares up into a tree. What does he say?",
+                    "prompt": "Hevalo stops chewing and stares up into a tree. What does he say? “Li vê darê nîşanek heye!”",
                     "options": [
                       "There is a mark on this tree!",
                       "There is an apple on this tree!",
@@ -1756,7 +1756,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Pelên gûzê mezin in.",
-                    "prompt": "Hamo picks a big leaf up off the ground. What does he say?",
+                    "prompt": "Hamo picks a big leaf up off the ground. What does he say? “Pelên gûzê mezin in.”",
                     "options": [
                       "Walnut leaves are small.",
                       "Apple leaves are big.",
@@ -1779,7 +1779,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Gundê me rengîn e.",
-                    "prompt": "From the top of the lane Hamo looks down over Sêvan. What does he say?",
+                    "prompt": "From the top of the lane Hamo looks down over Sêvan. What does he say? “Gundê me rengîn e.”",
                     "options": [
                       "Our village is small.",
                       "Our village is colourful.",
@@ -1827,7 +1827,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Asman şîn e, ewr spî ne.",
-                    "prompt": "Hevalo lies on his back in the grass. Listen: what does Hamo say about the sky?",
+                    "prompt": "Hevalo lies on his back in the grass. Listen: what does Hamo say about the sky? “Asman şîn e, ewr spî ne.”",
                     "options": [
                       "The sky is blue, the clouds are white.",
                       "The sky is grey, the clouds are white.",
@@ -1854,7 +1854,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev ne zêr e, ev sêveke zer e!",
-                    "prompt": "Hevalo finds something shiny in the grass. Hamo laughs. What does he say?",
+                    "prompt": "Hevalo finds something shiny in the grass. Hamo laughs. What does he say? “Ev ne zêr e, ev sêveke zer e!”",
                     "accepted": [
                       "This is not gold, this is a yellow apple",
                       "It is not gold, it is a yellow apple",
@@ -1898,7 +1898,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Belkî li wir zêr heye!",
-                    "prompt": "Hamo winks at you as Xezal runs ahead to the walnut tree. What does he say?",
+                    "prompt": "Hamo winks at you as Xezal runs ahead to the walnut tree. What does he say? “Belkî li wir zêr heye!”",
                     "options": [
                       "There is no gold there.",
                       "Maybe there are apples there!",
@@ -2058,7 +2058,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Berçavka min li ku ye?",
-                    "prompt": "Hamo pats all his pockets, one after another. What is he asking?",
+                    "prompt": "Hamo pats all his pockets, one after another. What is he asking? “Berçavka min li ku ye?”",
                     "options": [
                       "Where is my moustache?",
                       "Where is my map?",
@@ -2073,7 +2073,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ne li ser maseyê ye.",
-                    "prompt": "Xezal checks the table. What does Hamo say?",
+                    "prompt": "Xezal checks the table. What does Hamo say? “Ne li ser maseyê ye.”",
                     "options": [
                       "They are not on the table.",
                       "They are not under the table.",
@@ -2121,7 +2121,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ne li bin nivînê ye.",
-                    "prompt": "Hevalo crawls out from under the bed. Listen: what does Hamo say?",
+                    "prompt": "Hevalo crawls out from under the bed. Listen: what does Hamo say? “Ne li bin nivînê ye.”",
                     "options": [
                       "They are not on the bed.",
                       "They are under the bed.",
@@ -2176,7 +2176,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Pisîk li ber derî ye.",
-                    "prompt": "Hamo opens the front door and nearly trips. What does he say?",
+                    "prompt": "Hamo opens the front door and nearly trips. What does he say? “Pisîk li ber derî ye.”",
                     "accepted": [
                       "The cat is in front of the door",
                       "The cat is at the door",
@@ -2203,7 +2203,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sêv li ser serê Hevalo ye.",
-                    "prompt": "Listen. Where is the apple now?",
+                    "prompt": "Listen. Where is the apple now? “Sêv li ser serê Hevalo ye.”",
                     "options": [
                       "Under Hevalo’s bed",
                       "Behind Hevalo",
@@ -2272,7 +2272,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Nexşe di sindoqê de ye.",
-                    "prompt": "Xezal asks where the map was kept all these years. What does Hamo say?",
+                    "prompt": "Xezal asks where the map was kept all these years. What does Hamo say? “Nexşe di sindoqê de ye.”",
                     "options": [
                       "The map is in the box.",
                       "The map is on the box.",
@@ -2287,7 +2287,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Di nav keviran de, li kêleka kaniyê.",
-                    "prompt": "Hamo reads the last clue, in the corner of the map. Where should you look?",
+                    "prompt": "Hamo reads the last clue, in the corner of the map. Where should you look? “Di nav keviran de, li kêleka kaniyê.”",
                     "options": [
                       "Under the stones, in the spring.",
                       "Among the stones, next to the spring.",
@@ -2372,7 +2372,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Bozo li cem Dapîr Şemsê ye.",
-                    "prompt": "Xezal wonders where the donkey is. What does Hamo say?",
+                    "prompt": "Xezal wonders where the donkey is. What does Hamo say? “Bozo li cem Dapîr Şemsê ye.”",
                     "accepted": [
                       "Bozo is at Grandma Şemsê’s",
                       "Bozo is at Grandma Şemsê's",
@@ -2415,7 +2415,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Kevirekî mezin li kêleka kaniyê heye.",
-                    "prompt": "Listen. What is next to the spring?",
+                    "prompt": "Listen. What is next to the spring? “Kevirekî mezin li kêleka kaniyê heye.”",
                     "options": [
                       "A big stone",
                       "A big tree",
@@ -2485,7 +2485,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Çiya bilind e, çem kûr e.",
-                    "prompt": "From the walnut tree you can see the whole valley. What does Hamo say?",
+                    "prompt": "From the walnut tree you can see the whole valley. What does Hamo say? “Çiya bilind e, çem kûr e.”",
                     "options": [
                       "The mountain is low, the river is deep.",
                       "The mountain is high, the river is deep.",
@@ -2533,7 +2533,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Dîwarê kaniyê nizm e.",
-                    "prompt": "Xezal sits on the edge of the spring. Listen: what is it like?",
+                    "prompt": "Xezal sits on the edge of the spring. Listen: what is it like? “Dîwarê kaniyê nizm e.”",
                     "options": [
                       "The wall of the spring is low.",
                       "The wall of the spring is high.",
@@ -2624,7 +2624,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Kanî kûr e.",
-                    "prompt": "Hevalo leans over the water. What does Xezal warn him?",
+                    "prompt": "Hevalo leans over the water. What does Xezal warn him? “Kanî kûr e.”",
                     "accepted": [
                       "The spring is deep"
                     ],
@@ -2700,7 +2700,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sêveke kevn! Ya Hevalo ye!",
-                    "prompt": "Hamo laughs so hard his moustache shakes. What does he say?",
+                    "prompt": "Hamo laughs so hard his moustache shakes. What does he say? “Sêveke kevn! Ya Hevalo ye!”",
                     "options": [
                       "A new apple! It is Hamo’s!",
                       "Old gold! It is Hevalo’s!",
@@ -2757,7 +2757,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li bin kevir qutiyek heye!",
-                    "prompt": "Xezal lifts a big flat stone and gasps. What does she say?",
+                    "prompt": "Xezal lifts a big flat stone and gasps. What does she say? “Li bin kevir qutiyek heye!”",
                     "options": [
                       "There is a stone under the tin!",
                       "There is no tin under the stone.",
@@ -2801,7 +2801,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Di qutiyê de gog û nîvê wêneyekî hene.",
-                    "prompt": "Hevalo noses the tin open. Listen: what is inside?",
+                    "prompt": "Hevalo noses the tin open. Listen: what is inside? “Di qutiyê de gog û nîvê wêneyekî hene.”",
                     "options": [
                       "Gold and a whole photo",
                       "Marbles and half of a photo",
@@ -2883,7 +2883,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Xezîne li vir veşartî ye.",
-                    "prompt": "Hamo admits it at last. What does he say?",
+                    "prompt": "Hamo admits it at last. What does he say? “Xezîne li vir veşartî ye.”",
                     "accepted": [
                       "The treasure is hidden here",
                       "The treasure is hidden in this place"
@@ -2946,7 +2946,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Nîvê vî wêneyî li cem wê ye. Li Amedê.",
-                    "prompt": "Xezal asks about the missing half. What does Hamo answer?",
+                    "prompt": "Xezal asks about the missing half. What does Hamo answer? “Nîvê vî wêneyî li cem wê ye. Li Amedê.”",
                     "accepted": [
                       "Half of this photo is with her. In Amed",
                       "The other half of this photo is with her, in Amed",
@@ -3024,7 +3024,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev dibistana gund e.",
-                    "prompt": "Hamo stops at a building with a big yard full of children. What does he say?",
+                    "prompt": "Hamo stops at a building with a big yard full of children. What does he say? “Ev dibistana gund e.”",
                     "options": [
                       "This is the village school.",
                       "This is the village shop.",
@@ -3039,7 +3039,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Dikana Ferhad biçûk e, lê xweş e.",
-                    "prompt": "Next, a tiny shop with a blue door. Listen: what does Hamo say?",
+                    "prompt": "Next, a tiny shop with a blue door. Listen: what does Hamo say? “Dikana Ferhad biçûk e, lê xweş e.”",
                     "options": [
                       "Ferhad’s shop is big and nice.",
                       "Ferhad’s shop is small, but nice.",
@@ -3087,7 +3087,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Aşê kevn li kêleka çem e.",
-                    "prompt": "You hear water turning a wooden wheel. What does Hamo say?",
+                    "prompt": "You hear water turning a wooden wheel. What does Hamo say? “Aşê kevn li kêleka çem e.”",
                     "options": [
                       "The old mill is next to the river.",
                       "The old mill is behind the school.",
@@ -3126,7 +3126,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Zeviyên me li pişt aş in.",
-                    "prompt": "Hamo waves towards the green land past the mill. What does he say?",
+                    "prompt": "Hamo waves towards the green land past the mill. What does he say? “Zeviyên me li pişt aş in.”",
                     "accepted": [
                       "Our fields are behind the mill"
                     ],
@@ -3197,7 +3197,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Meydana gund li ku ye?",
-                    "prompt": "A visitor stops Hamo in the lane. What is she asking?",
+                    "prompt": "A visitor stops Hamo in the lane. What is she asking? “Meydana gund li ku ye?”",
                     "options": [
                       "Where is the village square?",
                       "Where is the village school?",
@@ -3233,7 +3233,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li gundê me gelek mal hene.",
-                    "prompt": "Up on the flat roof, Hamo starts to count the village. What does he say?",
+                    "prompt": "Up on the flat roof, Hamo starts to count the village. What does he say? “Li gundê me gelek mal hene.”",
                     "options": [
                       "There are few houses in our village.",
                       "There are many houses in our village.",
@@ -3281,7 +3281,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li gund tenê şivanek heye.",
-                    "prompt": "Hamo shades his eyes and looks up at the hills. Listen: how many shepherds are there?",
+                    "prompt": "Hamo shades his eyes and looks up at the hills. Listen: how many shepherds are there? “Li gund tenê şivanek heye.”",
                     "options": [
                       "Only one shepherd",
                       "Many shepherds",
@@ -3296,7 +3296,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Mirîşk gelek in, mirov hindik in!",
-                    "prompt": "Hamo looks down at the yards and sighs. What does he say?",
+                    "prompt": "Hamo looks down at the yards and sighs. What does he say? “Mirîşk gelek in, mirov hindik in!”",
                     "options": [
                       "The people are many, the hens are few!",
                       "The hens are many, the people are few!",
@@ -3337,7 +3337,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Şivan li çiyê ye, bi pez re.",
-                    "prompt": "Xezal asks where the shepherd is. What does Hamo say?",
+                    "prompt": "Xezal asks where the shepherd is. What does Hamo say? “Şivan li çiyê ye, bi pez re.”",
                     "accepted": [
                       "The shepherd is on the mountain, with the sheep",
                       "The shepherd is on the mountain with the flock",
@@ -3390,7 +3390,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Mirovên gund baş in.",
-                    "prompt": "Hamo smiles at the people in the lanes below. What does he say?",
+                    "prompt": "Hamo smiles at the people in the lanes below. What does he say? “Mirovên gund baş in.”",
                     "options": [
                       "The village people are few.",
                       "The village houses are good.",
@@ -3448,7 +3448,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Meydan paqij û bêdeng e.",
-                    "prompt": "Early afternoon in the square. Listen: what is it like?",
+                    "prompt": "Early afternoon in the square. Listen: what is it like? “Meydan paqij û bêdeng e.”",
                     "options": [
                       "The square is dirty and loud.",
                       "The square is clean and full.",
@@ -3563,7 +3563,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Sibe li bajêr bazar e!",
-                    "prompt": "Ferhad has big news, and Hamo passes it on. What is it?",
+                    "prompt": "Ferhad has big news, and Hamo passes it on. What is it? “Sibe li bajêr bazar e!”",
                     "accepted": [
                       "Tomorrow there is a market in the town",
                       "There is a market in town tomorrow",
@@ -3621,7 +3621,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Îro gund bêdeng e.",
-                    "prompt": "Xezal looks around the empty lanes. Listen: what does she say?",
+                    "prompt": "Xezal looks around the empty lanes. Listen: what does she say? “Îro gund bêdeng e.”",
                     "options": [
                       "The village is quiet today.",
                       "The village is clean today.",
@@ -3660,7 +3660,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Pêlavên te qirêj in, xalo!",
-                    "prompt": "Xezal looks at Hamo’s feet. Market day is tomorrow. What does she say?",
+                    "prompt": "Xezal looks at Hamo’s feet. Market day is tomorrow. What does she say? “Pêlavên te qirêj in, xalo!”",
                     "accepted": [
                       "Your shoes are dirty, uncle",
                       "Uncle, your shoes are dirty"
@@ -3720,7 +3720,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev lîsteya bazarê ye.",
-                    "prompt": "Hamo unrolls a long sheet of paper, written in enormous letters. What does he say?",
+                    "prompt": "Hamo unrolls a long sheet of paper, written in enormous letters. What does he say? “Ev lîsteya bazarê ye.”",
                     "options": [
                       "This is the market list.",
                       "This is the village map.",
@@ -3764,7 +3764,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li ser lîsteyê nan, çay, şekir û penîr hene.",
-                    "prompt": "Hamo reads his list aloud. What is on it?",
+                    "prompt": "Hamo reads his list aloud. What is on it? “Li ser lîsteyê nan, çay, şekir û penîr hene.”",
                     "options": [
                       "Bread, apples, sugar and meat",
                       "Tea, eggs, sugar and cheese",
@@ -3779,7 +3779,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Li dawiya lîsteyê deh sêv hene!",
-                    "prompt": "Xezal reads the bottom of the list and bursts out laughing. Why?",
+                    "prompt": "Xezal reads the bottom of the list and bursts out laughing. Why? “Li dawiya lîsteyê deh sêv hene!”",
                     "accepted": [
                       "At the end of the list there are ten apples",
                       "There are ten apples at the end of the list",
@@ -3794,7 +3794,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Bazar sibehê ye an êvarê?",
-                    "prompt": "Xezal asks Hamo about tomorrow. What does she want to know?",
+                    "prompt": "Xezal asks Hamo about tomorrow. What does she want to know? “Bazar sibehê ye an êvarê?”",
                     "options": [
                       "Is the market big or small?",
                       "Is the market in the morning or in the evening?",
@@ -3930,7 +3930,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Bozo bê kumê xwe aciz e.",
-                    "prompt": "Bozo won’t move a hoof. What does Xezal explain?",
+                    "prompt": "Bozo won’t move a hoof. What does Xezal explain? “Bozo bê kumê xwe aciz e.”",
                     "accepted": [
                       "Bozo is annoyed without his hat",
                       "Without his hat Bozo is annoyed",

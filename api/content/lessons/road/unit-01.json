@@ -173,7 +173,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez baş im. Û tu?",
-                    "prompt": "Hamo answers, then turns the question back to you. What does he say, in English?",
+                    "prompt": "Hamo answers, then turns the question back to you. What does he say, in English? “Ez baş im. Û tu?”",
                     "accepted": [
                       "I am well. And you?",
                       "I am fine. And you?",
@@ -680,7 +680,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hevalo birçî ye, ez jî birçî me!",
-                    "prompt": "Hamo laughs and pats his belly. What does he say, in English?",
+                    "prompt": "Hamo laughs and pats his belly. What does he say, in English? “Hevalo birçî ye, ez jî birçî me!”",
                     "accepted": [
                       "Hevalo is hungry, and I am hungry too!",
                       "Hevalo is hungry, I am hungry too!",
@@ -895,7 +895,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Çay germ e û gelek xweş e.",
-                    "prompt": "Hamo raises his glass to the light. What does he say, in English?",
+                    "prompt": "Hamo raises his glass to the light. What does he say, in English? “Çay germ e û gelek xweş e.”",
                     "accepted": [
                       "The tea is hot and very nice.",
                       "The tea is hot and very tasty.",
@@ -911,7 +911,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Tu birçî yî? Fermo, sêv û çay.",
-                    "prompt": "Hamo pushes the tray towards you. What is he saying?",
+                    "prompt": "Hamo pushes the tray towards you. What is he saying? “Tu birçî yî? Fermo, sêv û çay.”",
                     "accepted": [
                       "Are you hungry? Here you are, apples and tea.",
                       "Are you hungry? Here you are, an apple and tea.",
@@ -1136,7 +1136,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ew keç xwarziya min e.",
-                    "prompt": "Hevalo looks puzzled at the girl with the huge bag. Hamo explains, beaming. What does he say, in English?",
+                    "prompt": "Hevalo looks puzzled at the girl with the huge bag. Hamo explains, beaming. What does he say, in English? “Ew keç xwarziya min e.”",
                     "accepted": [
                       "That girl is my niece.",
                       "The girl is my niece."
@@ -1189,7 +1189,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Tu mêvan î? Navê te çi ye?",
-                    "prompt": "Xezal shakes your hand. What does she ask, in English?",
+                    "prompt": "Xezal shakes your hand. What does she ask, in English? “Tu mêvan î? Navê te çi ye?”",
                     "accepted": [
                       "Are you a guest? What is your name?",
                       "You are a guest? What is your name?",
@@ -1351,7 +1351,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez ne Xezo me, ez Xezal im!",
-                    "prompt": "Hamo calls “Xezo!” from the door, and she shouts back. What does she say, in English?",
+                    "prompt": "Hamo calls “Xezo!” from the door, and she shouts back. What does she say, in English? “Ez ne Xezo me, ez Xezal im!”",
                     "accepted": [
                       "I am not Xezo, I am Xezal!",
                       "I am not Xezo. I am Xezal!",
@@ -1419,7 +1419,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Tu xwendekar î? Ez jî xwendekar im!",
-                    "prompt": "Xezal claps her hands. What does she say, in English?",
+                    "prompt": "Xezal claps her hands. What does she say, in English? “Tu xwendekar î? Ez jî xwendekar im!”",
                     "accepted": [
                       "Are you a student? I am a student too!",
                       "Are you a student? Me too!",
@@ -1650,7 +1650,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Naxêr, spas. Lê Hevalo birçî ye!",
-                    "prompt": "Hamo offers Xezal an apple. What does she answer, in English?",
+                    "prompt": "Hamo offers Xezal an apple. What does she answer, in English? “Naxêr, spas. Lê Hevalo birçî ye!”",
                     "accepted": [
                       "No, thanks. But Hevalo is hungry!",
                       "No, thank you. But Hevalo is hungry!",
@@ -1903,7 +1903,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Bozo ker e, lê ew heval e.",
-                    "prompt": "Bozo nibbles Hamo’s sleeve. What does Hamo say, in English?",
+                    "prompt": "Bozo nibbles Hamo’s sleeve. What does Hamo say, in English? “Bozo ker e, lê ew heval e.”",
                     "accepted": [
                       "Bozo is a donkey, but he is a friend.",
                       "Bozo is a donkey but he is a friend.",
@@ -1951,7 +1951,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Mirîşk birçî ye, kûçik jî birçî ye.",
-                    "prompt": "Feeding time in the yard. What does Hamo say, in English?",
+                    "prompt": "Feeding time in the yard. What does Hamo say, in English? “Mirîşk birçî ye, kûçik jî birçî ye.”",
                     "accepted": [
                       "The hen is hungry, the dog is hungry too.",
                       "The hen is hungry, and the dog is hungry too.",
@@ -2158,7 +2158,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Sêvan gund e, Amed bajar e.",
-                    "prompt": "Hevalo, very full now, explains where you are. What does he say, in English?",
+                    "prompt": "Hevalo, very full now, explains where you are. What does he say, in English? “Sêvan gund e, Amed bajar e.”",
                     "accepted": [
                       "Sêvan is a village, Amed is a city.",
                       "Sêvan is a village and Amed is a city.",
@@ -2333,7 +2333,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Amed nêzîk e, lê welatê te dûr e.",
-                    "prompt": "Hamo shakes his head in wonder. What does he say, in English?",
+                    "prompt": "Hamo shakes his head in wonder. What does he say, in English? “Amed nêzîk e, lê welatê te dûr e.”",
                     "accepted": [
                       "Amed is near, but your country is far.",
                       "Amed is close, but your country is far away.",
@@ -2389,7 +2389,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Niha tu li Sêvanê yî.",
-                    "prompt": "Hamo spreads his arms at the valley. What does he say, in English?",
+                    "prompt": "Hamo spreads his arms at the valley. What does he say, in English? “Niha tu li Sêvanê yî.”",
                     "accepted": [
                       "Now you are in Sêvan.",
                       "You are in Sêvan now.",
@@ -2669,7 +2669,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Zimanê min kurdî ye.",
-                    "prompt": "Xezal says it with pride. What does she say, in English?",
+                    "prompt": "Xezal says it with pride. What does she say, in English? “Zimanê min kurdî ye.”",
                     "accepted": [
                       "My language is Kurdish.",
                       "Kurdish is my language.",
@@ -2709,7 +2709,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Sêv pir xweş e!",
-                    "prompt": "Hevalo answers with his mouth full. What does he say, in English?",
+                    "prompt": "Hevalo answers with his mouth full. What does he say, in English? “Sêv pir xweş e!”",
                     "accepted": [
                       "The apples are very tasty!",
                       "Apples are very tasty!",
@@ -2943,7 +2943,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Mala Ferhad nêzîk e.",
-                    "prompt": "Hamo points at the next roof. What does he say, in English?",
+                    "prompt": "Hamo points at the next roof. What does he say, in English? “Mala Ferhad nêzîk e.”",
                     "accepted": [
                       "Ferhad’s house is near.",
                       "Ferhad’s house is close.",
@@ -2971,7 +2971,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Îro ez li Sêvanê me, lê mala min li Amedê ye.",
-                    "prompt": "Xezal tells you about herself. What does she say, in English?",
+                    "prompt": "Xezal tells you about herself. What does she say, in English? “Îro ez li Sêvanê me, lê mala min li Amedê ye.”",
                     "accepted": [
                       "Today I am in Sêvan, but my home is in Amed.",
                       "I am in Sêvan today, but my home is in Amed.",
@@ -3166,7 +3166,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Mirîşk çawa ne? Ew nexweş in?",
-                    "prompt": "Hamo even asks after the hens. What does he say, in English?",
+                    "prompt": "Hamo even asks after the hens. What does he say, in English? “Mirîşk çawa ne? Ew nexweş in?”",
                     "accepted": [
                       "How are the hens? Are they ill?",
                       "How are the hens? Are they sick?",
@@ -3229,7 +3229,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hûn westiyayî ne?",
-                    "prompt": "You and Xezal yawn at the same moment. What does Hamo ask, in English?",
+                    "prompt": "You and Xezal yawn at the same moment. What does Hamo ask, in English? “Hûn westiyayî ne?”",
                     "accepted": [
                       "Are you tired?",
                       "Are you both tired?",
@@ -3396,7 +3396,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Xezo, çay, ji kerema xwe!",
-                    "prompt": "Hamo holds out his empty glass to his niece. What does he say, in English?",
+                    "prompt": "Hamo holds out his empty glass to his niece. What does he say, in English? “Xezo, çay, ji kerema xwe!”",
                     "accepted": [
                       "Xezo, tea please!",
                       "Xezo, tea, please!",
@@ -3438,7 +3438,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Naxêr, xalo, ez ne aciz im. Ez tenê westiyayî me.",
-                    "prompt": "Xezal answers her uncle. What does she say, in English?",
+                    "prompt": "Xezal answers her uncle. What does she say, in English? “Naxêr, xalo, ez ne aciz im. Ez tenê westiyayî me.”",
                     "accepted": [
                       "No, uncle, I am not bored. I am just tired.",
                       "No, uncle, I am not bored. I am only tired.",
@@ -3715,7 +3715,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Çay germ e, av sar e.",
-                    "prompt": "Hamo pours tea for you and water for the deer. What does he say, in English?",
+                    "prompt": "Hamo pours tea for you and water for the deer. What does he say, in English? “Çay germ e, av sar e.”",
                     "accepted": [
                       "The tea is hot, the water is cold.",
                       "The tea is hot and the water is cold.",
@@ -3765,7 +3765,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Şekir li vir e, lê av li ku ye?",
-                    "prompt": "Hamo looks under the tray. What does he say, in English?",
+                    "prompt": "Hamo looks under the tray. What does he say, in English? “Şekir li vir e, lê av li ku ye?”",
                     "accepted": [
                       "The sugar is here, but where is the water?",
                       "Sugar is here, but where is the water?",
@@ -3986,7 +3986,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Sibe malbat li vir e.",
-                    "prompt": "Hamo strokes his moustache, very pleased with himself. What does he say, in English?",
+                    "prompt": "Hamo strokes his moustache, very pleased with himself. What does he say, in English? “Sibe malbat li vir e.”",
                     "accepted": [
                       "Tomorrow the family will be here.",
                       "The family will be here tomorrow.",
@@ -4037,7 +4037,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Îro mêvan, sibe malbat!",
-                    "prompt": "Hamo looks round his busy yard and laughs. What does he say, in English?",
+                    "prompt": "Hamo looks round his busy yard and laughs. What does he say, in English? “Îro mêvan, sibe malbat!”",
                     "accepted": [
                       "Today guests, tomorrow family!",
                       "Today a guest, tomorrow family!",

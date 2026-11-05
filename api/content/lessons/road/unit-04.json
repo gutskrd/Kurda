@@ -28,7 +28,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Em diçin bazarê!",
-                    "prompt": "Bozo, in his hat, sets off down the hill with the empty baskets. What does Hamo call out?",
+                    "prompt": "Bozo, in his hat, sets off down the hill with the empty baskets. What does Hamo call out? “Em diçin bazarê!”",
                     "options": [
                       "We are coming from the market!",
                       "We are going to the market!",
@@ -43,7 +43,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Xezal jî tê.",
-                    "prompt": "Hamo looks back up the lane. Listen: who is coming?",
+                    "prompt": "Hamo looks back up the lane. Listen: who is coming? “Xezal jî tê.”",
                     "options": [
                       "Xezal is going home.",
                       "Xezal is not here.",
@@ -104,7 +104,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hevalo çi dike?",
-                    "prompt": "Hevalo has vanished again — probably into an orchard. What does Hamo ask?",
+                    "prompt": "Hevalo has vanished again — probably into an orchard. What does Hamo ask? “Hevalo çi dike?”",
                     "accepted": [
                       "What is Hevalo doing",
                       "What does Hevalo do",
@@ -144,7 +144,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Tu jî têyî?",
-                    "prompt": "Hamo turns to you with the baskets. What is he asking?",
+                    "prompt": "Hamo turns to you with the baskets. What is he asking? “Tu jî têyî?”",
                     "options": [
                       "Are you going home?",
                       "Are you hungry too?",
@@ -184,7 +184,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hûn çi dikin?",
-                    "prompt": "Ferhad calls down from his roof as you all pass, and Hamo repeats it for you. What is the question?",
+                    "prompt": "Ferhad calls down from his roof as you all pass, and Hamo repeats it for you. What is the question? “Hûn çi dikin?”",
                     "options": [
                       "Where are you going?",
                       "What do you want?",
@@ -258,7 +258,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ez çemê Sêvanê dibînim.",
-                    "prompt": "Halfway down the hill, Hamo stops and shades his eyes. What does he say?",
+                    "prompt": "Halfway down the hill, Hamo stops and shades his eyes. What does he say? “Ez çemê Sêvanê dibînim.”",
                     "options": [
                       "I can hear the river of Sêvan.",
                       "I know the river of Sêvan.",
@@ -306,7 +306,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Bozo li kulîlkan dinêre.",
-                    "prompt": "Bozo has stopped again. Listen: what is he doing?",
+                    "prompt": "Bozo has stopped again. Listen: what is he doing? “Bozo li kulîlkan dinêre.”",
                     "options": [
                       "Bozo is eating the flowers.",
                       "Bozo is looking at the flowers.",
@@ -334,7 +334,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Dengê Hamo bilind e, ew gelek diaxive!",
-                    "prompt": "Xezal rolls her eyes and whispers to you. What does she say?",
+                    "prompt": "Xezal rolls her eyes and whispers to you. What does she say? “Dengê Hamo bilind e, ew gelek diaxive!”",
                     "accepted": [
                       "Hamo’s voice is loud, he talks a lot",
                       "Hamo's voice is loud, he talks a lot",
@@ -387,7 +387,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hamo dibêje: ev çem kûr e.",
-                    "prompt": "Xezal translates Hamo for Hevalo. Listen: what does Hamo say about the river?",
+                    "prompt": "Xezal translates Hamo for Hevalo. Listen: what does Hamo say about the river? “Hamo dibêje: ev çem kûr e.”",
                     "options": [
                       "Hamo says the river is long.",
                       "Hamo says the river is deep.",
@@ -414,7 +414,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Dengê çem xweş e.",
-                    "prompt": "Listen: what does Hamo like so much?",
+                    "prompt": "Listen: what does Hamo like so much? “Dengê çem xweş e.”",
                     "options": [
                       "The sound of the river",
                       "The colour of the river",
@@ -429,7 +429,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Em bi kurdî diaxivin.",
-                    "prompt": "A woman with a basket of eggs greets you on the road. What does Hamo tell her proudly?",
+                    "prompt": "A woman with a basket of eggs greets you on the road. What does Hamo tell her proudly? “Em bi kurdî diaxivin.”",
                     "accepted": [
                       "We speak Kurdish",
                       "We are speaking Kurdish",
@@ -486,7 +486,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev firoşkar penîr difiroşe.",
-                    "prompt": "Hamo nods at a stall stacked with white rounds. What does he tell you?",
+                    "prompt": "Hamo nods at a stall stacked with white rounds. What does he tell you? “Ev firoşkar penîr difiroşe.”",
                     "options": [
                       "This seller sells cheese.",
                       "This seller buys cheese.",
@@ -534,7 +534,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Mîrza fêkî difiroşe.",
-                    "prompt": "Hamo spots an old friend behind a mountain of fruit. Listen: what does Mîrza sell?",
+                    "prompt": "Hamo spots an old friend behind a mountain of fruit. Listen: what does Mîrza sell? “Mîrza fêkî difiroşe.”",
                     "options": [
                       "Cheese",
                       "Bread",
@@ -620,7 +620,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez tenê li sêvan dinêrim!",
-                    "prompt": "Hevalo’s nose is deep in Mîrza’s apple crate. What does he say?",
+                    "prompt": "Hevalo’s nose is deep in Mîrza’s apple crate. What does he say? “Ez tenê li sêvan dinêrim!”",
                     "accepted": [
                       "I am only looking at the apples",
                       "I am just looking at the apples",
@@ -687,7 +687,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hamo pere dide, Mîrza sêv dide.",
-                    "prompt": "You watch the two old friends at the stall. What happens?",
+                    "prompt": "You watch the two old friends at the stall. What happens? “Hamo pere dide, Mîrza sêv dide.”",
                     "accepted": [
                       "Hamo gives money, Mîrza gives apples",
                       "Hamo gives the money, Mîrza gives the apples",
@@ -702,7 +702,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Tu çi dikirî?",
-                    "prompt": "A seller calls out to you, and Hamo repeats it slowly. What is the question?",
+                    "prompt": "A seller calls out to you, and Hamo repeats it slowly. What is the question? “Tu çi dikirî?”",
                     "options": [
                       "What are you selling?",
                       "What are you buying?",
@@ -774,7 +774,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Mîrza hîn li bazarê dixebite.",
-                    "prompt": "Over glasses of tea, Hamo tells you about his old friend. What does he say?",
+                    "prompt": "Over glasses of tea, Hamo tells you about his old friend. What does he say? “Mîrza hîn li bazarê dixebite.”",
                     "options": [
                       "Mîrza no longer works at the market.",
                       "Mîrza still works at the market.",
@@ -818,7 +818,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ez ji çaya Mîrza hez dikim.",
-                    "prompt": "Hamo sips and sighs happily. What does he say?",
+                    "prompt": "Hamo sips and sighs happily. What does he say? “Ez ji çaya Mîrza hez dikim.”",
                     "options": [
                       "I love Mîrza’s tea.",
                       "I make Mîrza’s tea.",
@@ -905,7 +905,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ew zebeş bîst salî ye!",
-                    "prompt": "Hamo’s moustache quivers with outrage. What does he protest?",
+                    "prompt": "Hamo’s moustache quivers with outrage. What does he protest? “Ew zebeş bîst salî ye!”",
                     "accepted": [
                       "That watermelon is twenty years old",
                       "That melon is twenty years old",
@@ -969,7 +969,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Tu hîn li Amedê yî?",
-                    "prompt": "Mîrza asks about Xezal, and Hamo passes the question on to her. What is it?",
+                    "prompt": "Mîrza asks about Xezal, and Hamo passes the question on to her. What is it? “Tu hîn li Amedê yî?”",
                     "accepted": [
                       "Are you still in Amed",
                       "Are you still living in Amed",
@@ -995,7 +995,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hamo hîn ji zebeşan hez dike!",
-                    "prompt": "Xezal grins at you behind Hamo’s back. What does she whisper?",
+                    "prompt": "Xezal grins at you behind Hamo’s back. What does she whisper? “Hamo hîn ji zebeşan hez dike!”",
                     "options": [
                       "Hamo still loves watermelons!",
                       "Hamo no longer likes watermelons!",
@@ -1031,7 +1031,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Niha em li lîsteyê dinêrin!",
-                    "prompt": "The old debt is paid at last. Hamo pulls out his enormous list. What does he say?",
+                    "prompt": "The old debt is paid at last. Hamo pulls out his enormous list. What does he say? “Niha em li lîsteyê dinêrin!”",
                     "options": [
                       "Now we look at the list!",
                       "Now we go home!",
@@ -1062,7 +1062,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ez bacansor dixwazim.",
-                    "prompt": "At the vegetable stall Hamo reads from his list. What does he say?",
+                    "prompt": "At the vegetable stall Hamo reads from his list. What does he say? “Ez bacansor dixwazim.”",
                     "options": [
                       "I want potatoes.",
                       "I want onions.",
@@ -1110,7 +1110,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Kartol û pîvaz jî dixwazim.",
-                    "prompt": "Hamo goes on down his list. Listen: what else does he want?",
+                    "prompt": "Hamo goes on down his list. Listen: what else does he want? “Kartol û pîvaz jî dixwazim.”",
                     "options": [
                       "Tomatoes and apples too.",
                       "Potatoes and onions too.",
@@ -1138,7 +1138,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hevalo sêv dixwaze.",
-                    "prompt": "Hevalo tugs at Hamo’s sleeve. What does Hamo tell the seller?",
+                    "prompt": "Hevalo tugs at Hamo’s sleeve. What does Hamo tell the seller? “Hevalo sêv dixwaze.”",
                     "accepted": [
                       "Hevalo wants an apple",
                       "Hevalo wants apples",
@@ -1178,7 +1178,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Tu çi dixwî?",
-                    "prompt": "Hamo sees Hevalo chewing. What does he ask?",
+                    "prompt": "Hamo sees Hevalo chewing. What does he ask? “Tu çi dixwî?”",
                     "options": [
                       "What are you eating?",
                       "What do you want?",
@@ -1205,7 +1205,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Xezal av vedixwe.",
-                    "prompt": "It is hot at the market. Listen: what is Xezal doing?",
+                    "prompt": "It is hot at the market. Listen: what is Xezal doing? “Xezal av vedixwe.”",
                     "accepted": [
                       "Xezal is drinking water",
                       "Xezal drinks water"
@@ -1286,7 +1286,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Xalo, ez dikarim!",
-                    "prompt": "Hamo looks at the pile of bags. Xezal rolls up her sleeves. What does she say?",
+                    "prompt": "Hamo looks at the pile of bags. Xezal rolls up her sleeves. What does she say? “Xalo, ez dikarim!”",
                     "options": [
                       "Uncle, I can do it!",
                       "Uncle, I can’t!",
@@ -1334,7 +1334,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Tu dikarî? Baş e!",
-                    "prompt": "Hamo strokes his moustache. Listen: what does he say?",
+                    "prompt": "Hamo strokes his moustache. Listen: what does he say? “Tu dikarî? Baş e!”",
                     "options": [
                       "You want it? Good!",
                       "You know? Good!",
@@ -1362,7 +1362,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hingivê vê firoşkarê baş e.",
-                    "prompt": "Xezal tastes from a jar and nods. What does she say?",
+                    "prompt": "Xezal tastes from a jar and nods. What does she say? “Hingivê vê firoşkarê baş e.”",
                     "accepted": [
                       "This seller’s honey is good",
                       "This seller's honey is good",
@@ -1403,7 +1403,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hevalo jî dikare?",
-                    "prompt": "Hevalo offers to carry the honey jar. What does Xezal ask?",
+                    "prompt": "Hevalo offers to carry the honey jar. What does Xezal ask? “Hevalo jî dikare?”",
                     "options": [
                       "Does Hevalo want it too?",
                       "Can Hevalo do it too?",
@@ -1431,7 +1431,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez rûn û şîr dikirim.",
-                    "prompt": "Xezal shows you her shopping. What does she say?",
+                    "prompt": "Xezal shows you her shopping. What does she say? “Ez rûn û şîr dikirim.”",
                     "accepted": [
                       "I am buying butter and milk",
                       "I buy butter and milk",
@@ -1518,7 +1518,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Kîloyek penîr, ji kerema xwe.",
-                    "prompt": "At Mîrza’s stall Hamo starts his order. What does he ask for?",
+                    "prompt": "At Mîrza’s stall Hamo starts his order. What does he ask for? “Kîloyek penîr, ji kerema xwe.”",
                     "options": [
                       "Two kilos of cheese, please.",
                       "A kilo of cheese, please.",
@@ -1566,7 +1566,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Zeytûn teze ne?",
-                    "prompt": "Hamo peers into a barrel. What does he ask Mîrza?",
+                    "prompt": "Hamo peers into a barrel. What does he ask Mîrza? “Zeytûn teze ne?”",
                     "options": [
                       "Are the olives fresh?",
                       "Are the olives cheap?",
@@ -1652,7 +1652,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Masî teze ye?",
-                    "prompt": "Hamo looks at a tray of fish from the river. What does he ask?",
+                    "prompt": "Hamo looks at a tray of fish from the river. What does he ask? “Masî teze ye?”",
                     "accepted": [
                       "Is the fish fresh",
                       "Is this fish fresh",
@@ -1716,7 +1716,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Xwê li ku ye?",
-                    "prompt": "Mîrza is hunting under his counter. Hamo asks for him. What is missing?",
+                    "prompt": "Mîrza is hunting under his counter. Hamo asks for him. What is missing? “Xwê li ku ye?”",
                     "options": [
                       "The rice",
                       "The salt",
@@ -1758,7 +1758,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev birinc ji Mêrdînê ye.",
-                    "prompt": "Mîrza is proud of his rice. Hamo tells you where it comes from. What does he say?",
+                    "prompt": "Mîrza is proud of his rice. Hamo tells you where it comes from. What does he say? “Ev birinc ji Mêrdînê ye.”",
                     "accepted": [
                       "This rice is from Mêrdîn",
                       "This rice comes from Mêrdîn",
@@ -1803,7 +1803,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Em nan û penîr dixwin, çay vedixwin.",
-                    "prompt": "Lunch on a bench at the edge of the market. Listen: what is everyone having?",
+                    "prompt": "Lunch on a bench at the edge of the market. Listen: what is everyone having? “Em nan û penîr dixwin, çay vedixwin.”",
                     "options": [
                       "Rice and fish, and water to drink",
                       "Bread and honey, and milk to drink",
@@ -1847,7 +1847,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ez tî me. Qedehek av, ji kerema xwe.",
-                    "prompt": "Xezal fans herself in the heat. What does she say?",
+                    "prompt": "Xezal fans herself in the heat. What does she say? “Ez tî me. Qedehek av, ji kerema xwe.”",
                     "options": [
                       "I’m hungry. Some bread, please.",
                       "I’m thirsty. A glass of water, please.",
@@ -1983,7 +1983,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Qedehek av û fîncanek çay, ji kerema xwe.",
-                    "prompt": "Hamo orders for the table. What does he ask for?",
+                    "prompt": "Hamo orders for the table. What does he ask for? “Qedehek av û fîncanek çay, ji kerema xwe.”",
                     "accepted": [
                       "A glass of water and a cup of tea, please",
                       "One glass of water and one cup of tea, please"
@@ -1996,7 +1996,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hevalo têr e. Ev ne baş e…",
-                    "prompt": "Hamo strokes his moustache and frowns at the deer. What does he say?",
+                    "prompt": "Hamo strokes his moustache and frowns at the deer. What does he say? “Hevalo têr e. Ev ne baş e…”",
                     "options": [
                       "Hevalo is hungry. This is good…",
                       "Hevalo is thirsty. This is not good…",
@@ -2058,7 +2058,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sêvên min li ku ne?!",
-                    "prompt": "A shout from the stalls: Mîrza, with both hands in the air. Hamo repeats it for you. What is Mîrza shouting?",
+                    "prompt": "A shout from the stalls: Mîrza, with both hands in the air. Hamo repeats it for you. What is Mîrza shouting? “Sêvên min li ku ne?!”",
                     "options": [
                       "Who wants my apples?!",
                       "Where are my apples?!",
@@ -2089,7 +2089,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sêvên te li bin maseyê ne, Mîrza!",
-                    "prompt": "Hamo hurries to Mîrza’s stall and looks around. What does he find?",
+                    "prompt": "Hamo hurries to Mîrza’s stall and looks around. What does he find? “Sêvên te li bin maseyê ne, Mîrza!”",
                     "options": [
                       "Mîrza’s apples are under the table.",
                       "Mîrza’s apples are in Hevalo’s mouth.",
@@ -2137,7 +2137,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Penîr bi çend e?",
-                    "prompt": "Hamo points at a round of cheese. What is he asking?",
+                    "prompt": "Hamo points at a round of cheese. What is he asking? “Penîr bi çend e?”",
                     "options": [
                       "How many cheeses are there?",
                       "Is the cheese fresh?",
@@ -2152,7 +2152,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Pêncî?! Na, na, na!",
-                    "prompt": "The seller answers, and Hamo clutches his moustache. What does he say?",
+                    "prompt": "The seller answers, and Hamo clutches his moustache. What does he say? “Pêncî?! Na, na, na!”",
                     "options": [
                       "Fifty?! No, no, no!",
                       "Fifteen?! No, no, no!",
@@ -2204,7 +2204,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Kîloyek sêv bi sî ye.",
-                    "prompt": "Mîrza tells you his apple price. What is it?",
+                    "prompt": "Mîrza tells you his apple price. What is it? “Kîloyek sêv bi sî ye.”",
                     "accepted": [
                       "A kilo of apples is thirty",
                       "One kilo of apples is thirty",
@@ -2280,7 +2280,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Bacansor bi sî û pênc e.",
-                    "prompt": "Listen: how much are the tomatoes?",
+                    "prompt": "Listen: how much are the tomatoes? “Bacansor bi sî û pênc e.”",
                     "options": [
                       "53",
                       "35",
@@ -2328,7 +2328,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hemû bi hev re hezar û sed e.",
-                    "prompt": "Xezal taps away at her phone, then looks up. What does she announce?",
+                    "prompt": "Xezal taps away at her phone, then looks up. What does she announce? “Hemû bi hev re hezar û sed e.”",
                     "options": [
                       "All together it is one hundred and ten.",
                       "All together it is one thousand one hundred.",
@@ -2376,7 +2376,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hezar?! Ez nexweş im!",
-                    "prompt": "Hamo sways and sinks into Bozo’s baskets. What does he moan?",
+                    "prompt": "Hamo sways and sinks into Bozo’s baskets. What does he moan? “Hezar?! Ez nexweş im!”",
                     "options": [
                       "A thousand?! I feel ill!",
                       "A hundred?! I feel ill!",
@@ -2404,7 +2404,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hingiv biha ye, lê kartol erzan in.",
-                    "prompt": "Xezal reads through the list. What does she say?",
+                    "prompt": "Xezal reads through the list. What does she say? “Hingiv biha ye, lê kartol erzan in.”",
                     "accepted": [
                       "Honey is expensive, but potatoes are cheap",
                       "The honey is expensive, but the potatoes are cheap"
@@ -2470,7 +2470,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Li bazarê sêv erzan in.",
-                    "prompt": "Hevalo is very interested in this piece of news. What does Xezal say?",
+                    "prompt": "Hevalo is very interested in this piece of news. What does Xezal say? “Li bazarê sêv erzan in.”",
                     "accepted": [
                       "Apples are cheap at the market",
                       "At the market apples are cheap",
@@ -2485,7 +2485,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Nirxê hingiv sed û heştê ye.",
-                    "prompt": "Listen: how much is the honey?",
+                    "prompt": "Listen: how much is the honey? “Nirxê hingiv sed û heştê ye.”",
                     "options": [
                       "108",
                       "80",
@@ -2571,7 +2571,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev çaydank bi çend e, Mîrza?",
-                    "prompt": "Hamo lifts a shining copper teapot from Mîrza’s stall. What does he ask?",
+                    "prompt": "Hamo lifts a shining copper teapot from Mîrza’s stall. What does he ask? “Ev çaydank bi çend e, Mîrza?”",
                     "options": [
                       "Is this teapot yours, Mîrza?",
                       "How old is this teapot, Mîrza?",
@@ -2696,7 +2696,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Zêde ye! Bi sed.",
-                    "prompt": "Hamo shakes his head at Mîrza’s price. What does he say?",
+                    "prompt": "Hamo shakes his head at Mîrza’s price. What does he say? “Zêde ye! Bi sed.”",
                     "accepted": [
                       "It is too much! For a hundred",
                       "That is too much! A hundred",
@@ -2713,7 +2713,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Na, mixabin. Ev kêm e.",
-                    "prompt": "Xezal passes on Mîrza’s answer. What does he say?",
+                    "prompt": "Xezal passes on Mîrza’s answer. What does he say? “Na, mixabin. Ev kêm e.”",
                     "options": [
                       "No, sorry. That is too little.",
                       "Yes, fine. That is enough.",
@@ -2780,7 +2780,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Mixabin, li vê dikanê çaydank tune.",
-                    "prompt": "Hamo tries the shop next door first. What does he tell you?",
+                    "prompt": "Hamo tries the shop next door first. What does he tell you? “Mixabin, li vê dikanê çaydank tune.”",
                     "accepted": [
                       "Unfortunately, there are no teapots in this shop",
                       "Unfortunately there is no teapot in this shop",
@@ -2821,7 +2821,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Xezo, tu pir zîrek î!",
-                    "prompt": "Hamo carries the teapot away, beaming. What does he tell his niece?",
+                    "prompt": "Hamo carries the teapot away, beaming. What does he tell his niece? “Xezo, tu pir zîrek î!”",
                     "options": [
                       "Xezo, you are very cheeky!",
                       "Xezo, you are very tired!",
@@ -2866,7 +2866,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Mîrza, hesab çend e?",
-                    "prompt": "Hamo pulls out his purse at Mîrza’s stall. What does he ask?",
+                    "prompt": "Hamo pulls out his purse at Mîrza’s stall. What does he ask? “Mîrza, hesab çend e?”",
                     "options": [
                       "Mîrza, how much is the bill?",
                       "Mîrza, how much is the teapot?",
@@ -2910,7 +2910,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Pêşî penîr, paşê hingiv, paşê çaydank.",
-                    "prompt": "Hamo goes down the bill line by line. Listen: in what order?",
+                    "prompt": "Hamo goes down the bill line by line. Listen: in what order? “Pêşî penîr, paşê hingiv, paşê çaydank.”",
                     "options": [
                       "First the honey, then the cheese, then the teapot",
                       "First the teapot, then the cheese, then the honey",
@@ -2925,7 +2925,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hamo dîsa li pereyan dinêre.",
-                    "prompt": "Mîrza has given Hamo his change. Xezal giggles. What is Hamo doing?",
+                    "prompt": "Mîrza has given Hamo his change. Xezal giggles. What is Hamo doing? “Hamo dîsa li pereyan dinêre.”",
                     "accepted": [
                       "Hamo is looking at the money again",
                       "Hamo looks at the money again",
@@ -3062,7 +3062,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hejmara telefona te çi ye?",
-                    "prompt": "Mîrza wants to send Xezal a photo of the teapot. Hamo asks her for him. What is the question?",
+                    "prompt": "Mîrza wants to send Xezal a photo of the teapot. Hamo asks her for him. What is the question? “Hejmara telefona te çi ye?”",
                     "accepted": [
                       "What is your phone number",
                       "What is your telephone number",
@@ -3103,7 +3103,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Di sindoqê de sêv tune!",
-                    "prompt": "Mîrza has gone pale. Xezal looks into his crate. What does she say?",
+                    "prompt": "Mîrza has gone pale. Xezal looks into his crate. What does she say? “Di sindoqê de sêv tune!”",
                     "options": [
                       "There are no apples in the crate!",
                       "There are many apples in the crate!",
@@ -3156,7 +3156,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ez nizanim! Ez qet nizanim!",
-                    "prompt": "Mîrza asks Hevalo about the apples. Hevalo answers — very, very quickly. What does he say?",
+                    "prompt": "Mîrza asks Hevalo about the apples. Hevalo answers — very, very quickly. What does he say? “Ez nizanim! Ez qet nizanim!”",
                     "options": [
                       "I know! I know everything!",
                       "I don’t know! I have no idea at all!",
@@ -3204,7 +3204,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Bozo tiştekî nabêje.",
-                    "prompt": "Mîrza turns to the donkey. Bozo looks the other way. What does Hamo say?",
+                    "prompt": "Mîrza turns to the donkey. Bozo looks the other way. What does Hamo say? “Bozo tiştekî nabêje.”",
                     "options": [
                       "Bozo says nothing.",
                       "Bozo knows nothing.",
@@ -3232,7 +3232,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ne sûcê min e!",
-                    "prompt": "Hevalo’s ears go flat. What does he say?",
+                    "prompt": "Hevalo’s ears go flat. What does he say? “Ne sûcê min e!”",
                     "accepted": [
                       "It is not my fault",
                       "That is not my fault",
@@ -3287,7 +3287,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez derew nakim!",
-                    "prompt": "Hevalo puts a hoof on his heart. What does he say?",
+                    "prompt": "Hevalo puts a hoof on his heart. What does he say? “Ez derew nakim!”",
                     "accepted": [
                       "I am not lying",
                       "I do not lie",
@@ -3343,7 +3343,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Ev rastî ye an derew e?",
-                    "prompt": "Xezal narrows her eyes at Hevalo. What does she ask?",
+                    "prompt": "Xezal narrows her eyes at Hevalo. What does she ask? “Ev rastî ye an derew e?”",
                     "options": [
                       "Is this the apple or the crate?",
                       "Is this the truth or a lie?",
@@ -3380,7 +3380,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Sûcê kê ye?",
-                    "prompt": "Mîrza throws up his hands, and Hamo asks the question for everyone. What is it?",
+                    "prompt": "Mîrza throws up his hands, and Hamo asks the question for everyone. What is it? “Sûcê kê ye?”",
                     "options": [
                       "Whose apples are they?",
                       "Whose fault is it?",
@@ -3403,7 +3403,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hevalo, tu birçî yî?",
-                    "prompt": "Xezal begins her questioning like a real detective. What does she ask first?",
+                    "prompt": "Xezal begins her questioning like a real detective. What does she ask first? “Hevalo, tu birçî yî?”",
                     "options": [
                       "Hevalo, are you tired?",
                       "Hevalo, are you thirsty?",
@@ -3418,7 +3418,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Na, ez ne birçî me.",
-                    "prompt": "Hevalo answers, looking up at the sky. What does he say?",
+                    "prompt": "Hevalo answers, looking up at the sky. What does he say? “Na, ez ne birçî me.”",
                     "options": [
                       "No, I’m not hungry.",
                       "Yes, I’m very hungry.",
@@ -3466,7 +3466,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Çima zikê te tije ye?",
-                    "prompt": "Xezal points at Hevalo’s very round belly. What does she ask?",
+                    "prompt": "Xezal points at Hevalo’s very round belly. What does she ask? “Çima zikê te tije ye?”",
                     "accepted": [
                       "Why is your belly full",
                       "Why is your tummy full",
@@ -3518,7 +3518,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Jixwe, Hevalo her roj birçî ye!",
-                    "prompt": "Hamo cannot help laughing. What does he say?",
+                    "prompt": "Hamo cannot help laughing. What does he say? “Jixwe, Hevalo her roj birçî ye!”",
                     "options": [
                       "Of course, Hevalo is hungry every day!",
                       "Of course, Hevalo is never hungry!",
@@ -3547,7 +3547,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hê na!",
-                    "prompt": "Xezal asks “Tu têr î?”, and Hevalo answers with his mouth full. What does he say?",
+                    "prompt": "Xezal asks “Tu têr î?”, and Hevalo answers with his mouth full. What does he say? “Hê na!”",
                     "accepted": [
                       "Not yet",
                       "No, not yet"
@@ -3622,7 +3622,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Li ser devê te çi heye?",
-                    "prompt": "Xezal spots something on the suspect’s mouth. What does she ask?",
+                    "prompt": "Xezal spots something on the suspect’s mouth. What does she ask? “Li ser devê te çi heye?”",
                     "options": [
                       "What is in your belly?",
                       "Why is your mouth open?",
@@ -3645,7 +3645,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Pirsa min ev e: sêv li ku ne?",
-                    "prompt": "The whole market gathers round. Xezal, the lawyer, begins. What does she say?",
+                    "prompt": "The whole market gathers round. Xezal, the lawyer, begins. What does she say? “Pirsa min ev e: sêv li ku ne?”",
                     "options": [
                       "My question is this: where are the apples?",
                       "My answer is this: the apples are here.",
@@ -3760,7 +3760,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez bawer nakim!",
-                    "prompt": "Xezal folds her arms. What does she say?",
+                    "prompt": "Xezal folds her arms. What does she say? “Ez bawer nakim!”",
                     "accepted": [
                       "I don’t believe it",
                       "I do not believe it",
@@ -3815,7 +3815,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Hamo dikene û pere dide.",
-                    "prompt": "Listen. How does the trial end?",
+                    "prompt": "Listen. How does the trial end? “Hamo dikene û pere dide.”",
                     "options": [
                       "Hamo shouts and goes home.",
                       "Hamo laughs and pays.",
@@ -3842,7 +3842,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Pirsa te baş e, lê bersiva min tune.",
-                    "prompt": "The next witness is Bozo. Hamo answers for him, grinning. What does he say?",
+                    "prompt": "The next witness is Bozo. Hamo answers for him, grinning. What does he say? “Pirsa te baş e, lê bersiva min tune.”",
                     "accepted": [
                       "Your question is good, but I have no answer",
                       "Your question is good, but I don’t have an answer",
@@ -3905,7 +3905,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Mîrza, ez pereyê sêvan didim!",
-                    "prompt": "Hamo wipes his eyes and reaches for his purse. What does he say?",
+                    "prompt": "Hamo wipes his eyes and reaches for his purse. What does he say? “Mîrza, ez pereyê sêvan didim!”",
                     "options": [
                       "Mîrza, give me the apples!",
                       "Mîrza, sell me more apples!",
@@ -3928,7 +3928,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Em vedigerin malê.",
-                    "prompt": "The sun is going down over the market. Hamo picks up the last bag. What does he say?",
+                    "prompt": "The sun is going down over the market. Hamo picks up the last bag. What does he say? “Em vedigerin malê.”",
                     "options": [
                       "We are staying at the market.",
                       "We are going back home.",
@@ -3972,7 +3972,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Barê Bozo giran e.",
-                    "prompt": "Bozo groans under the baskets. Listen: what does Hamo say?",
+                    "prompt": "Bozo groans under the baskets. Listen: what does Hamo say? “Barê Bozo giran e.”",
                     "options": [
                       "Bozo’s load is heavy.",
                       "Bozo’s load is light.",
@@ -3987,7 +3987,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Barê Hevalo sivik e: tenê sêvek!",
-                    "prompt": "Hevalo trots along, carrying almost nothing. What does Xezal say?",
+                    "prompt": "Hevalo trots along, carrying almost nothing. What does Xezal say? “Barê Hevalo sivik e: tenê sêvek!”",
                     "accepted": [
                       "Hevalo’s load is light: just one apple",
                       "Hevalo's load is light: only one apple",
@@ -4128,7 +4128,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Diya min dibêje: hûn hemû jî tên!",
-                    "prompt": "Xezal puts down her phone, beaming. What news does she have?",
+                    "prompt": "Xezal puts down her phone, beaming. What news does she have? “Diya min dibêje: hûn hemû jî tên!”",
                     "accepted": [
                       "My mother says you are all coming too",
                       "My mother says: you are all coming too",
@@ -4170,7 +4170,7 @@
                   "type": "multiple_choice",
                   "payload": {
                     "say": "Bozo bi lez naçe; barê wî giran e.",
-                    "prompt": "Hevalo asks why Bozo is so slow. What does Hamo say?",
+                    "prompt": "Hevalo asks why Bozo is so slow. What does Hamo say? “Bozo bi lez naçe; barê wî giran e.”",
                     "options": [
                       "Bozo is going fast; his load is light.",
                       "Bozo isn’t going fast; his load is heavy.",
