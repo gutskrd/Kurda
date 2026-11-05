@@ -3,7 +3,7 @@ import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Alert } from 'react-native';
 import type { AccountDeletion } from '../auth/AuthContext';
-import { fakeClient, testAuth } from '../reports/testing/auth';
+import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { SettingsScreen } from './SettingsScreen';
 
@@ -34,6 +34,34 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+});
+
+describe('signing out everywhere', () => {
+  it('signs this phone out once the server has ended every session', async () => {
+    testAuth.client = fakeClient({ 'DELETE /me/sessions': ok({ revoked: true, everywhere: true }) });
+    goAheadWithEverything();
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Sign out everywhere' }));
+    });
+    expect(logout).toHaveBeenCalledTimes(1);
+  });
+
+  /*
+   * When the server did not take it nothing was signed out anywhere, so the
+   * phone stays signed in and says so: signing it out regardless would leave
+   * the person believing the other devices were out too.
+   */
+  it('stays signed in and says so when the server did not take it', async () => {
+    testAuth.client = fakeClient({ 'DELETE /me/sessions': { ok: false, error: { kind: 'network', message: 'Network request failed' } } });
+    const alert = goAheadWithEverything();
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Sign out everywhere' }));
+    });
+    expect(logout).not.toHaveBeenCalled();
+    expect(alert).toHaveBeenLastCalledWith('You’re still signed in everywhere', 'Can’t reach Hevalo right now. Check your connection and try again.');
+  });
 });
 
 describe('deleting the account', () => {

@@ -3,7 +3,7 @@ import { foldForSearch } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
+import { describeError, isMaintenance } from '../api/errors';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
@@ -70,14 +70,29 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
    * token there is — so this device's session dies with the rest. Signing out
    * locally afterwards is not tidying up; it is the only way the app and the
    * server still agree about what just happened.
+   *
+   * And only afterwards. When the server did not take it, nothing was signed
+   * out anywhere, and signing this phone out regardless would leave the person
+   * believing the other devices were out too.
    */
+  const endEverySession = async () => {
+    const res = await client.delete('/me/sessions');
+    if (res.ok) {
+      await logout();
+      return;
+    }
+    // Hevalo offline for a while is said by the screen over the app, not by an alert on top of it
+    if (isMaintenance(res.error)) return;
+    haptic('error');
+    Alert.alert(t('settings.sessions.signOutFailed'), describeError(res.error, t));
+  };
   const signOutEverywhere = () => {
     Alert.alert(t('settings.sessions.signOutEverywhere'), t('settings.sessions.help'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('settings.sessions.signOutEverywhere'),
         style: 'destructive',
-        onPress: () => void client.delete('/me/sessions').then(() => logout()),
+        onPress: () => void endEverySession(),
       },
     ]);
   };

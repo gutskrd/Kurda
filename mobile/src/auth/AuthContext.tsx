@@ -177,7 +177,13 @@ interface AuthContextValue {
   verifyEmailCode(code: string): Promise<string | null>;
   /** Ask the server to email a fresh verification code. */
   resendVerificationCode(): Promise<string | null>;
-  requestPasswordReset(email: string): Promise<void>;
+  /**
+   * Ask for a reset link. The server answers the same whether or not the
+   * address has an account, so the only failures are its not answering at all
+   * (offline, a fault, too many requests). Resolves to that failure in words,
+   * or null once the request was taken.
+   */
+  requestPasswordReset(email: string): Promise<string | null>;
   logout(): Promise<void>;
   /**
    * Start account deletion (KUR-275). Schedules a grace-period delete server-side
@@ -404,7 +410,8 @@ export function AuthProvider({
       return null;
     },
     requestPasswordReset: async (email) => {
-      await client.post('/auth/request-password-reset', { email });
+      const res = await client.post('/auth/request-password-reset', { email });
+      return res.ok ? null : describeError(res.error, t);
     },
     logout: async () => {
       // end the session on the server too, not only on this phone

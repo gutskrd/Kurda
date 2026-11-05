@@ -2047,6 +2047,7 @@ export type TranslationKey =
   | 'settings.sessions.title'
   | 'settings.sessions.help'
   | 'settings.sessions.signOutEverywhere'
+  | 'settings.sessions.signOutFailed'
   | 'settings.data.title'
   | 'settings.data.help'
   | 'settings.data.request'
@@ -4384,6 +4385,7 @@ const en: Catalog = {
   'settings.sessions.title': 'Sessions',
   'settings.sessions.help': 'Sign out here, or on every device at once.',
   'settings.sessions.signOutEverywhere': 'Sign out everywhere',
+  'settings.sessions.signOutFailed': 'You’re still signed in everywhere',
   'settings.data.title': 'Your data',
   'settings.data.help': 'Request a copy of your Hevalo data. We’ll prepare it and email you when it’s ready.',
   'settings.data.request': 'Request data export',
@@ -7236,6 +7238,7 @@ const ku: Catalog = {
   'settings.sessions.title': 'Danişîn',
   'settings.sessions.help': 'Li vir derkeve, an jî li ser hemû cîhazan bi carekê.',
   'settings.sessions.signOutEverywhere': 'Li her derê derkeve',
+  'settings.sessions.signOutFailed': 'Hesabê te hê jî li ser hemû cîhazan vekirî ye',
   'settings.data.title': 'Daneyên te',
   'settings.data.help': 'Kopiyeke daneyên xwe yên Hevalo bixwaze. Em ê wê amade bikin û gava amade bû ji te re e-nameyekê bişînin.',
   'settings.data.request': 'Daxwaza derxistina daneyan bike',
@@ -10088,6 +10091,7 @@ const de: Catalog = {
   'settings.sessions.title': 'Sitzungen',
   'settings.sessions.help': 'Melde dich hier ab — oder auf allen Geräten gleichzeitig.',
   'settings.sessions.signOutEverywhere': 'Überall abmelden',
+  'settings.sessions.signOutFailed': 'Du bist noch überall angemeldet',
   'settings.data.title': 'Deine Daten',
   'settings.data.help': 'Fordere eine Kopie deiner Hevalo-Daten an. Wir bereiten sie vor und schreiben dir, sobald sie fertig ist.',
   'settings.data.request': 'Datenexport anfordern',
@@ -12940,6 +12944,7 @@ const es: Catalog = {
   'settings.sessions.title': 'Sesiones',
   'settings.sessions.help': 'Cierra sesión aquí, o en todos los dispositivos a la vez.',
   'settings.sessions.signOutEverywhere': 'Cerrar sesión en todas partes',
+  'settings.sessions.signOutFailed': 'Sigues con la sesión iniciada en todas partes',
   'settings.data.title': 'Tus datos',
   'settings.data.help': 'Solicita una copia de tus datos de Hevalo. La prepararemos y te avisaremos por correo cuando esté lista.',
   'settings.data.request': 'Solicitar exportación de datos',
@@ -15792,6 +15797,7 @@ const tr: Catalog = {
   'settings.sessions.title': 'Oturumlar',
   'settings.sessions.help': 'Buradan çık, ya da tüm cihazlarda tek seferde.',
   'settings.sessions.signOutEverywhere': 'Her yerde çıkış yap',
+  'settings.sessions.signOutFailed': 'Oturumun hâlâ her yerde açık',
   'settings.data.title': 'Verilerin',
   'settings.data.help': 'Hevalo verilerinin bir kopyasını iste. Hazırlayıp hazır olduğunda sana e-posta göndeririz.',
   'settings.data.request': 'Veri dışa aktarımı iste',
@@ -18644,6 +18650,7 @@ const ar: Catalog = {
   'settings.sessions.title': 'الجلسات',
   'settings.sessions.help': 'سجّل الخروج من هنا، أو من جميع الأجهزة دفعة واحدة.',
   'settings.sessions.signOutEverywhere': 'تسجيل الخروج من كل مكان',
+  'settings.sessions.signOutFailed': 'ما زلت مسجَّل الدخول في كل مكان',
   'settings.data.title': 'بياناتك',
   'settings.data.help': 'اطلب نسخة من بيانات Hevalo الخاصة بك. سنجهّزها ونراسلك عندما تكون جاهزة.',
   'settings.data.request': 'طلب تصدير البيانات',
@@ -21496,6 +21503,7 @@ const fr: Catalog = {
   'settings.sessions.title': 'Sessions',
   'settings.sessions.help': 'Déconnectez-vous ici, ou sur tous vos appareils d’un coup.',
   'settings.sessions.signOutEverywhere': 'Se déconnecter partout',
+  'settings.sessions.signOutFailed': 'Tu es toujours connecté partout',
   'settings.data.title': 'Vos données',
   'settings.data.help': 'Demande une copie de tes données Hevalo. Nous la préparons et t’écrivons dès qu’elle est prête.',
   'settings.data.request': 'Demander un export de mes données',
@@ -24348,6 +24356,7 @@ const nl: Catalog = {
   'settings.sessions.title': 'Sessies',
   'settings.sessions.help': 'Log hier uit, of in één keer op al je apparaten.',
   'settings.sessions.signOutEverywhere': 'Overal uitloggen',
+  'settings.sessions.signOutFailed': 'Je bent nog overal ingelogd',
   'settings.data.title': 'Jouw gegevens',
   'settings.data.help': 'Vraag een kopie van je Hevalo-gegevens aan. We maken die klaar en mailen je zodra het zover is.',
   'settings.data.request': 'Gegevensexport aanvragen',
@@ -27201,6 +27210,7 @@ const ckb: Catalog = {
   'settings.sessions.title': 'دانیشتنەکان',
   'settings.sessions.help': 'لێرە بچۆ دەرەوە، یان لە هەموو ئامێرەکان بە یەک جار.',
   'settings.sessions.signOutEverywhere': 'لە هەموو شوێنێک بچۆ دەرەوە',
+  'settings.sessions.signOutFailed': 'هەژمارەکەت هێشتا لەسەر هەموو ئامێرەکان کراوەیە',
   'settings.data.title': 'داتاکانت',
   'settings.data.help': 'داوای کۆپییەک لە داتاکانی Hevalo بکە. ئامادەی دەکەین و کاتێک ئامادە بوو ئیمەیڵت بۆ دەنێرین.',
   'settings.data.request': 'داوای هەناردەی داتا بکە',

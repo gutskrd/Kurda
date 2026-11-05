@@ -6,7 +6,7 @@ import { FIELD_ERROR_COPY, validateEmail, FIELD_ERROR_VARS } from '../../auth/va
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
-import { AuthScreenShell, Field, LinkText, SubmitButton } from './AuthForm';
+import { AuthScreenShell, Field, FormError, LinkText, SubmitButton } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
@@ -42,15 +42,19 @@ export function ForgotPasswordForm({
   const [busy, setBusy] = useState(false);
   const { t } = useI18n();
   const [sent, setSent] = useState(false);
+  // the request never reached the server (offline, a fault, too many tries): "on its way" would not be true
+  const [failure, setFailure] = useState<string | null>(null);
 
   const submit = async () => {
     const emailError = validateEmail(email);
     setError(emailError ? t(FIELD_ERROR_COPY[emailError], FIELD_ERROR_VARS) : null);
     if (emailError) return;
     setBusy(true);
-    await requestPasswordReset(email.trim());
+    setFailure(null);
+    const err = await requestPasswordReset(email.trim());
     setBusy(false);
-    setSent(true);
+    if (err) setFailure(err);
+    else setSent(true);
   };
 
   return (
@@ -76,6 +80,7 @@ export function ForgotPasswordForm({
             keyboardType="email-address"
             testID="email"
           />
+          <FormError message={failure} />
           <SubmitButton label={t('auth.reset.sendLink')} busy={busy} onPress={submit} />
         </>
       )}
