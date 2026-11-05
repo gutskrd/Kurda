@@ -307,8 +307,8 @@ export const FrameIcon = named(FrameCorners, 22);
 export const SearchIcon = named(MagnifyingGlass, 18);
 /** The order a list is in: what the sort select carries in place of its word on a phone. */
 export const SortIcon = named(ArrowsDownUp, 18);
-/** The wall's filter: drawn in line while it shows everything, filled in while it is narrowed. */
-export const FeedFilterIcon = named(Funnel, 20);
+/** A sort and filter panel's funnel (the wall, the stories library): drawn in line while nothing is narrowed, filled in while something is. */
+export const FunnelIcon = named(Funnel, 20);
 /** a new conversation: a note being written, beside the list of them */
 export const NewMessageIcon = named(NotePencil, 22);
 

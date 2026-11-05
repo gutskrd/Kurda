@@ -1,0 +1,405 @@
+/*
+ * Sort and filter (components/FilterSheet.tsx): the community wall's and the
+ * stories library's.
+ *
+ * A funnel in ink, filled in while anything is narrowed; behind it one panel
+ * — a popover under the funnel on a wide screen, a sheet from the bottom edge
+ * on a phone. While anything differs from the plain view, a chip for each
+ * part says what, and its ✕ undoes that part. No colour of its own: a filter
+ * is not an alert.
+ */
+.ffilter {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+.ffilter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.ffilter.is-open .ffilter-btn {
+  background: var(--surface-2);
+}
+.ffilter-btn.is-on {
+  border-color: var(--border-strong);
+}
+
+.ffilter-chip {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.ffilter-chip-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 100%;
+  padding-inline: 12px 4px;
+  border: 0;
+  border-start-start-radius: 999px;
+  border-end-start-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ffilter-chip-main > svg {
+  flex-shrink: 0;
+}
+.ffilter-chip-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ffilter-chip-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-inline-end: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+/* the chip and its ✕ stay small to the eye; the places to press are a full 44px */
+.ffilter-chip-main,
+.ffilter-chip-clear {
+  position: relative;
+}
+.ffilter-chip-main::after {
+  content: '';
+  position: absolute;
+  inset: -5px 0;
+}
+.ffilter-chip-clear::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.ffilter-chips {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+/*
+ * The panel: a popover under the funnel on a wide screen, a sheet from the
+ * bottom edge on a phone. A head with its title and ✕, the choices in a body
+ * that scrolls on its own, and a foot that stays put with Reset and Show posts.
+ */
+.ffilter-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-end: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  max-height: min(72vh, 640px);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-lg);
+  animation: ffilter-in var(--dur-fast) ease-out;
+}
+@keyframes ffilter-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.ffilter-grip,
+.ffilter-scrim {
+  display: none;
+}
+.ffilter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 10px 4px;
+  padding-inline: 18px 10px;
+}
+/* a panel's headings are part of the control, in the face the controls are in */
+.ffilter-title,
+.ffilter-section-title {
+  font-family: var(--font-sans);
+}
+.ffilter-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.ffilter-close {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.ffilter-close::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+.ffilter-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 8px 8px;
+}
+.ffilter-section + .ffilter-section {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--separator);
+}
+.ffilter-section-title {
+  margin: 0;
+  padding: 10px 10px 4px;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ffilter-radios.is-vertical {
+  display: flex;
+  flex-direction: column;
+}
+.ffilter-group {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+.ffilter-heading {
+  padding: 6px 10px 2px;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.ffilter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: start;
+  cursor: pointer;
+}
+.ffilter-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.ffilter-item-hint {
+  color: var(--ink-3);
+  font-size: 0.8rem;
+}
+.ffilter-item.is-on .ffilter-item-text > span:first-child {
+  font-weight: 600;
+}
+.ffilter-item > svg {
+  flex-shrink: 0;
+}
+.ffilter-item:focus-visible,
+.ffilter-period:focus-visible {
+  outline: 2px solid var(--focus, var(--ink));
+  outline-offset: -2px;
+}
+/* the range: a row of chips that wraps, the chosen one filled in ink */
+.ffilter-periods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 10px 8px;
+}
+.ffilter-period {
+  height: 34px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ffilter-period.is-on {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-weight: 600;
+}
+/* a chip with a count after its word (the stories' categories) */
+.ffilter-period {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.ffilter-pill-count {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.ffilter-period.is-on .ffilter-pill-count {
+  color: inherit;
+  opacity: 0.75;
+}
+/* on and off, as the settings rows draw it, at the row's end */
+.ffilter-switch {
+  position: relative;
+  flex: none;
+  width: 46px;
+  height: 28px;
+  border-radius: 999px;
+  background: var(--switch-off);
+  transition: background var(--dur-fast) ease;
+}
+.ffilter-switch > span {
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--switch-off-thumb);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition:
+    transform var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.ffilter-toggle.is-on .ffilter-switch {
+  background: var(--switch-on);
+}
+.ffilter-toggle.is-on .ffilter-switch > span {
+  transform: translateX(18px);
+  background: var(--switch-on-thumb);
+}
+[dir='rtl'] .ffilter-toggle.is-on .ffilter-switch > span {
+  transform: translateX(-18px);
+}
+.ffilter-toggle.is-on .ffilter-item-text > span:first-child {
+  font-weight: 600;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ffilter-switch,
+  .ffilter-switch > span {
+    transition: none;
+  }
+}
+.ffilter-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--separator);
+  background: var(--panel-bg);
+}
+/* only where there is a pointer to hover with: a finger's last place would otherwise stay lit under the sheet */
+@media (hover: hover) {
+  .ffilter-btn:hover,
+  .ffilter-item:hover,
+  .ffilter-close:hover {
+    background: var(--surface-2);
+  }
+  .ffilter-period:not(.is-on):hover {
+    background: var(--surface-2);
+  }
+  .ffilter-chip-clear:hover {
+    color: var(--ink);
+    background: var(--surface-3);
+  }
+}
+
+/* a phone: the panel rises from the bottom edge, where the thumb already is */
+@media (max-width: 640px) {
+  .ffilter-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    background: var(--scrim);
+    animation: fade 0.15s ease;
+  }
+  .ffilter-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    inset-inline: 0;
+    z-index: 111;
+    width: auto;
+    max-height: 88dvh;
+    border-bottom: 0;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    animation: sheet-up var(--dur-slow) var(--ease-spring);
+  }
+  .ffilter-grip {
+    display: block;
+    align-self: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 4px;
+    margin-top: 10px;
+    border-radius: 999px;
+    background: var(--border-strong);
+  }
+  .ffilter-head {
+    padding-top: 8px;
+  }
+  .ffilter-item {
+    min-height: 48px;
+    font-size: 1rem;
+  }
+  .ffilter-period {
+    height: 38px;
+  }
+  .ffilter-foot {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+}

@@ -10,6 +10,7 @@ import './styles/ui.css';
 import './styles/layout.css';
 import './styles/pages.css';
 import './styles/feed.css';
+import './styles/filter.css';
 import './styles/rail.css';
 import './styles/editor.css';
 import './styles/product.css';
