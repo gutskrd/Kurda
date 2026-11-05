@@ -291,18 +291,10 @@ export {
   type TagRow,
 } from './tags.js';
 /**
- * Refreshed shop items: the one-time notice and returning an item for what was
- * paid, after the shop's art was replaced.
+ * Refreshed shop items: the one-time notice that the shop's art was replaced.
+ * The items stay their owners'; nothing bought is ever handed back.
  */
-export {
-  ITEM_RETURN_ERRORS,
-  shouldShowRefreshNotice,
-  type ItemRefund,
-  type ItemReturnError,
-  type RefreshedInventory,
-  type RefundCurrency,
-  type ReturnItemResult,
-} from './cosmetics.js';
+export { shouldShowRefreshNotice, type RefreshedInventory } from './cosmetics.js';
 
 /**
  * Writing a post — words and up to four pictures in one box: the limits, what

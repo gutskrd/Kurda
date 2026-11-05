@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ITEM_RETURN_ERRORS, shouldShowRefreshNotice } from './cosmetics.js';
+import * as shared from './index.js';
+import { shouldShowRefreshNotice } from './cosmetics.js';
 
 describe('refreshed shop items', () => {
   it('shows the notice only while there is something to tell', () => {
@@ -11,7 +12,8 @@ describe('refreshed shop items', () => {
     expect(shouldShowRefreshNotice(undefined)).toBe(false);
   });
 
-  it('names the four ways a return can be refused', () => {
-    expect([...ITEM_RETURN_ERRORS]).toEqual(['ITEM_NOT_FOUND', 'NOT_RETURNABLE', 'NOTHING_TO_REFUND', 'RETURN_CONFLICT']);
+  it('offers no way to return an item: purchases are final', () => {
+    // the return flow’s error list went with the flow itself
+    expect('ITEM_RETURN_ERRORS' in shared).toBe(false);
   });
 });

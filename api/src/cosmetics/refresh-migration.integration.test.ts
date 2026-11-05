@@ -17,7 +17,6 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { WalletService } from '../wallet/service.js';
 import { ShopService } from '../shop/service.js';
-import { ItemReturns } from '../shop/returns.js';
 import { activate } from '../test/activate.js';
 import { canonicalPair } from '../friends/pair.js';
 
@@ -191,8 +190,7 @@ describe.skipIf(!DATABASE_URL)('the code-made cosmetics migration (integration)'
     expect(live.rows[0].n).toBe(migration.MADE.length);
   });
 
-  it('rolls both migrations back and forward again keeping who has been told, and pays a buy-back once more', async () => {
-    const returns = new ItemReturns(pool, wallet);
+  it('rolls both migrations back and forward again keeping who has been told, and records a buy-back afresh', async () => {
     const record = (user: string) =>
       pool
         .query<{ id: string; refund_amount: number; noticed_at: Date | null; returned_at: Date | null }>(
@@ -201,9 +199,15 @@ describe.skipIf(!DATABASE_URL)('the code-made cosmetics migration (integration)'
         )
         .then((r) => r.rows[0]);
 
-    // the friend has seen the notice; the buyer has seen it and handed the item back
+    // The friend has seen the notice. The buyer handed the item back while
+    // returns still existed: what such a return left behind is written here
+    // directly, since nothing in the app can return an item any more.
     await pool.query(`UPDATE cosmetic_refreshes SET noticed_at = now() WHERE user_id = $1 AND sku = $2`, [ids.friend, SKU]);
-    expect(await returns.returnItem(ids.buyer!, SKU)).toMatchObject({ duplicate: false, refund: { amount: 300 } });
+    await pool.query(`DELETE FROM user_entitlements WHERE user_id = $1 AND sku = $2`, [ids.buyer, SKU]);
+    await pool.query(`UPDATE cosmetic_refreshes SET returned_at = now(), noticed_at = now() WHERE user_id = $1 AND sku = $2`, [
+      ids.buyer,
+      SKU,
+    ]);
     const friendBefore = await record(ids.friend!);
     const buyerBefore = await record(ids.buyer!);
     expect(friendBefore!.noticed_at).not.toBeNull();
@@ -228,19 +232,21 @@ describe.skipIf(!DATABASE_URL)('the code-made cosmetics migration (integration)'
     // the friend is not told a second time
     const friendAfter = await record(ids.friend!);
     expect(friendAfter).toEqual(friendBefore);
-    // the buyer owns it afresh: a new record, with what they paid this time
+    // the buyer owns it afresh: a new record, to be told about once more
     const buyerAfter = await record(ids.buyer!);
-    expect(buyerAfter).toMatchObject({ refund_amount: 450, noticed_at: null, returned_at: null });
+    expect(buyerAfter).toMatchObject({ noticed_at: null, returned_at: null });
     expect(buyerAfter!.id).not.toBe(buyerBefore!.id);
 
-    // and returning it again pays again — once
-    const back = await returns.returnItem(ids.buyer!, SKU);
-    expect(back).toMatchObject({ duplicate: false, refund: { amount: 450, currency: 'zer' }, balance: before });
-    const paid = await pool.query(
-      `SELECT amount FROM wallet_ledger WHERE user_id = $1 AND reason = 'shop_return' AND ref_id = $2 ORDER BY created_at`,
-      [ids.buyer, SKU],
-    );
-    expect(paid.rows).toEqual([{ amount: 300 }, { amount: 450 }]);
+    // and nothing can give the second purchase back: the item stays, and so does the balance
+    const res = await app.inject({
+      method: 'POST',
+      url: `/shop/items/${SKU}/return`,
+      headers: { authorization: `Bearer ${tokens.buyer}` },
+    });
+    expect(res.statusCode).toBe(404);
+    expect((await wallet.balances(ids.buyer!)).zer).toBe(before - 450);
+    const owned = await pool.query(`SELECT 1 FROM user_entitlements WHERE user_id = $1 AND sku = $2`, [ids.buyer, SKU]);
+    expect(owned.rowCount).toBe(1);
     expect(await wallet.verifyConsistency(ids.buyer!, 'zer')).toBe(true);
   });
 });

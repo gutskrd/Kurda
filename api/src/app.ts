@@ -34,7 +34,7 @@ import { registerShopRoutes } from './shop/routes.js';
 import { registerShopAdminRoutes } from './shop/admin-routes.js';
 import { ArtOverrideService } from './art/overrides.js';
 import { registerArtRoutes } from './art/routes.js';
-import { ItemReturns } from './shop/returns.js';
+import { RefreshedNotices } from './shop/refreshed.js';
 import { GiftService } from './gifts/service.js';
 import { registerGiftRoutes } from './gifts/routes.js';
 import { CosmeticsService } from './cosmetics/service.js';
@@ -855,8 +855,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     registerShopRoutes(app, shop, {
       gifts,
-      // owners of items whose art was replaced: the notice, and returns
-      returns: new ItemReturns(app.db, new WalletService(app.db)),
+      // owners of items whose art was replaced: the one-time notice (they keep the item)
+      refreshed: new RefreshedNotices(app.db),
     });
     // the admin's art uploads, partial edits, and delete-or-retire
     registerShopAdminRoutes(app, shop, config);
