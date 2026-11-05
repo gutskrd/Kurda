@@ -24,6 +24,7 @@ import { useMyAccount } from '../settings/account';
 import { useSettingsAttention } from '../settings/attention';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 import { SettingsNote, SettingsPage, SettingsRow, SettingsSection, useOnOff } from '../settings/list';
+import { VersionLine } from '../settings/VersionLine';
 
 /** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
 export const COPYRIGHT_URL = LEGAL_URLS.copyright;
@@ -45,7 +46,8 @@ interface Entry {
  * you; then help and the fine print; and at the very end, apart from the rest,
  * the rows that sign you out or delete the account, so nobody reaches them
  * while looking for something else. Every choice with more than one answer is
- * a page of its own, where each answer says what it means.
+ * a page of its own, where each answer says what it means. Under it all, in
+ * one quiet line, the version and build, which is what support asks first.
  *
  * The search at the top finds a row by its name, its value, or the name of
  * anything on the page behind it ("accent" finds Keyboard and accents).
@@ -424,6 +426,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           </SettingsSection>
         ))}
         {shown.length === 0 ? <SettingsNote>{t('settings.search.none', { query: query.trim() })}</SettingsNote> : null}
+        <VersionLine />
       </SettingsPage>
 
       <BottomSheet visible={guestLeaving} onClose={() => setGuestLeaving(false)} title={t('guest.logout.title')} testID="guest-logout">

@@ -1559,6 +1559,8 @@ export type TranslationKey =
   | 'settings.support.noMail.address'
   | 'settings.faq'
   | 'settings.about'
+  | 'settings.version'
+  | 'settings.versionBuild'
   | 'settings.teaching'
   | 'settings.credits.title'
   | 'settings.credits.lead'
@@ -3881,6 +3883,8 @@ const en: Catalog = {
   'settings.support.noMail.address': 'Write to us at {email} from the app you use for email.',
   'settings.faq': 'Help & FAQ',
   'settings.about': 'About us',
+  'settings.version': 'Version {version}',
+  'settings.versionBuild': 'Version {version} ({build})',
   'settings.teaching': 'How Hevalo teaches',
   'settings.credits.title': 'Credits & licences',
   'settings.credits.lead': 'Hevalo also uses other people’s work, under these licences:',
@@ -6748,6 +6752,8 @@ const ku: Catalog = {
   'settings.support.noMail.address': 'Ji sepana xwe ya e-nameyê li {email} ji me re binivîse.',
   'settings.faq': 'Alîkarî û pirs',
   'settings.about': 'Derbarê me de',
+  'settings.version': 'Guherto {version}',
+  'settings.versionBuild': 'Guherto {version} ({build})',
   'settings.teaching': 'Hevalo çawa hîn dike',
   'settings.credits.title': 'Spas û lîsans',
   'settings.credits.lead': 'Hevalo karê kesên din jî bi kar tîne, bi van lîsansan:',
@@ -9614,6 +9620,8 @@ const de: Catalog = {
   'settings.support.noMail.address': 'Schreib uns an {email}, mit der App, die du für E-Mails nutzt.',
   'settings.faq': 'Hilfe und FAQ',
   'settings.about': 'Über uns',
+  'settings.version': 'Version {version}',
+  'settings.versionBuild': 'Version {version} ({build})',
   'settings.teaching': 'Wie Hevalo lehrt',
   'settings.credits.title': 'Danksagungen und Lizenzen',
   'settings.credits.lead': 'Hevalo nutzt auch die Arbeit anderer, unter diesen Lizenzen:',
@@ -12480,6 +12488,8 @@ const es: Catalog = {
   'settings.support.noMail.address': 'Escríbenos a {email} desde la app que uses para el correo.',
   'settings.faq': 'Ayuda y preguntas frecuentes',
   'settings.about': 'Sobre nosotros',
+  'settings.version': 'Versión {version}',
+  'settings.versionBuild': 'Versión {version} ({build})',
   'settings.teaching': 'Cómo enseña Hevalo',
   'settings.credits.title': 'Créditos y licencias',
   'settings.credits.lead': 'Hevalo también usa el trabajo de otras personas, con estas licencias:',
@@ -15346,6 +15356,8 @@ const tr: Catalog = {
   'settings.support.noMail.address': 'E-posta için kullandığın uygulamadan {email} adresine yaz.',
   'settings.faq': 'Yardım ve SSS',
   'settings.about': 'Hakkımızda',
+  'settings.version': 'Sürüm {version}',
+  'settings.versionBuild': 'Sürüm {version} ({build})',
   'settings.teaching': 'Hevalo nasıl öğretir',
   'settings.credits.title': 'Teşekkürler ve lisanslar',
   'settings.credits.lead': 'Hevalo başkalarının emeğini de bu lisanslarla kullanıyor:',
@@ -18212,6 +18224,8 @@ const ar: Catalog = {
   'settings.support.noMail.address': 'راسلنا على {email} من التطبيق الذي تستخدمه للبريد.',
   'settings.faq': 'المساعدة والأسئلة الشائعة',
   'settings.about': 'من نحن',
+  'settings.version': 'الإصدار {version}',
+  'settings.versionBuild': 'الإصدار {version} ({build})',
   'settings.teaching': 'كيف يعلّم Hevalo',
   'settings.credits.title': 'الشكر والتراخيص',
   'settings.credits.lead': 'يستخدم Hevalo أيضًا أعمال آخرين، بموجب هذه التراخيص:',
@@ -21078,6 +21092,8 @@ const fr: Catalog = {
   'settings.support.noMail.address': 'Écris-nous à {email} depuis l’app que tu utilises pour tes mails.',
   'settings.faq': 'Aide et FAQ',
   'settings.about': 'Qui sommes-nous',
+  'settings.version': 'Version {version}',
+  'settings.versionBuild': 'Version {version} ({build})',
   'settings.teaching': 'Comment Hevalo enseigne',
   'settings.credits.title': 'Crédits et licences',
   'settings.credits.lead': 'Hevalo utilise aussi le travail d’autres personnes, sous ces licences :',
@@ -23944,6 +23960,8 @@ const nl: Catalog = {
   'settings.support.noMail.address': 'Mail ons op {email} vanuit de app die je voor e-mail gebruikt.',
   'settings.faq': 'Hulp en veelgestelde vragen',
   'settings.about': 'Over ons',
+  'settings.version': 'Versie {version}',
+  'settings.versionBuild': 'Versie {version} ({build})',
   'settings.teaching': 'Hoe Hevalo lesgeeft',
   'settings.credits.title': 'Met dank aan, en licenties',
   'settings.credits.lead': 'Hevalo gebruikt ook werk van anderen, onder deze licenties:',
@@ -26811,6 +26829,8 @@ const ckb: Catalog = {
   'settings.support.noMail.address': 'لەو ئەپەی ئیمەیڵی پێ دەنێریت، بۆ {email} بنووسە.',
   'settings.faq': 'یارمەتی و پرسیارە باوەکان',
   'settings.about': 'دەربارەی ئێمە',
+  'settings.version': 'وەشانی {version}',
+  'settings.versionBuild': 'وەشانی {version} ({build})',
   'settings.teaching': 'Hevalo چۆن فێر دەکات',
   'settings.credits.title': 'سوپاس و مۆڵەتەکان',
   'settings.credits.lead': 'Hevalo کاری کەسانی تریش بەکاردەهێنێت، بەم مۆڵەتانە:',
