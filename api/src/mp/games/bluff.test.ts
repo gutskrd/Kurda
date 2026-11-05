@@ -48,6 +48,10 @@ describe('the deal', () => {
     expect((await bluffModule.deal!(db, lobby('s2'), [])).deck).not.toEqual(a.deck);
   });
 
+  it('refuses to start with no card to deal', async () => {
+    await expect(bluffModule.deal!(cards([]), lobby('s1'), [])).rejects.toMatchObject({ code: 'NOT_ENOUGH_CONTENT', statusCode: 409 });
+  });
+
   it('keeps the deck out of what the lobby shows', async () => {
     const dealt = await bluffModule.deal!(db, lobby('s1'), []);
     expect(bluffModule.publicSettings(dealt)).toEqual({ dialect: 'kmr', language: 'en', rounds: 5, writeSeconds: 60 });

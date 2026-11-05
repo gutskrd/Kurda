@@ -25,6 +25,7 @@ import {
   type BluffWriteSeconds,
   type LetterDialect,
 } from '@kurda/shared';
+import { AppError } from '../../plugins/errors.js';
 import type { GameModule, LobbyChoices } from '../module.js';
 
 type Executor = Pick<pg.Pool, 'query'>;
@@ -159,6 +160,8 @@ export const bluffModule: GameModule<BluffState, BluffMove, BluffSettings, Bluff
       .sort((a, b) => a.k - b.k)
       .slice(0, lobby.settings.rounds)
       .map((x) => x.c);
+    // a game with no word to play is refused at the start, not begun and ended at once
+    if (deck.length === 0) throw new AppError('NOT_ENOUGH_CONTENT', 409, 'there are no approved cards with a meaning in this language yet');
     return { ...lobby.settings, deck };
   },
 

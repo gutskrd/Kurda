@@ -25,6 +25,7 @@ import {
 } from '@kurda/shared';
 import { TrustedSources } from '../../games/sources.js';
 import { identitiesAt, whoAmIPool } from '../../games/who-am-i.js';
+import { AppError } from '../../plugins/errors.js';
 import type { GameModule, LobbyChoices } from '../module.js';
 
 /**
@@ -101,8 +102,9 @@ export const whoAmIRaceModule: GameModule<WhoAmIRaceState, WhoAmIRaceMove, WhoAm
 
   /**
    * A hidden identity for every seat, each a different one while the pool
-   * has enough, drawn with the game's seed. A seat no deal could be made for
-   * sits the race out (the rules end a race nobody could be dealt into).
+   * has enough, drawn with the game's seed. When even one seat cannot be
+   * dealt an identity, the start is refused (409 NOT_ENOUGH_CONTENT) and the
+   * lobby stays as it was.
    */
   async deal(db, lobby, seats) {
     const { identities, templates } = await whoAmIPool(new TrustedSources(db), lobby.dialect);
@@ -121,6 +123,8 @@ export const whoAmIRaceModule: GameModule<WhoAmIRaceState, WhoAmIRaceMove, WhoAm
         break;
       }
     }
+    // a race somebody could not be dealt into is refused at the start, not begun without them
+    if (deals.length < seats.length) throw new AppError('NOT_ENOUGH_CONTENT', 409, 'there are not enough approved identities at this difficulty yet');
     return { ...lobby.settings, deals };
   },
 
