@@ -24,8 +24,9 @@ import { JoinCodeCard } from '../play/JoinByCode';
 import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
 import { useUserEvents } from '../realtime/useUserEvents';
+import { PHONE_LEARN_GAMES, useListedLearnGames, type LearnGameRoute } from '../games/learnGames';
 
-type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race';
+type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race' | LearnGameRoute;
 type Mode = 'solo' | 'friends' | 'both';
 
 interface GameCard {
@@ -80,6 +81,15 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   // the season's line under Ranks is held in grey until its answer, so the word above it does not jump
   const [ranksSettled, setRanksSettled] = useState(false);
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
+  // the learning games (games/learnGames.ts), each listed once it has enough approved content in the learner's Kurdish
+  const learnGames = useListedLearnGames();
+  const cards: GameCard[] = [
+    ...GAME_CARDS,
+    ...learnGames.flatMap((g): GameCard[] => {
+      const phone = PHONE_LEARN_GAMES[g.id];
+      return phone ? [{ key: g.id, route: phone.route, icon: g.glyph, name: phone.name, line: phone.line, mode: g.mode === 'solo' ? 'solo' : 'both' }] : [];
+    }),
+  ];
 
   useFocusEffect(
     useCallback(() => {
@@ -217,7 +227,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           {t('nav.games')}
         </Text>
         <View style={[styles.grid, { flexDirection: dir.row }]}>
-          {GAME_CARDS.map((card) => {
+          {cards.map((card) => {
             const name = t(card.name);
             const mode = t(MODE_LABEL[card.mode]);
             return (

@@ -97,6 +97,8 @@ export type RootStackParamList = {
   WordleBattle: { id?: string } | undefined;
   Rhyme: undefined;
   Race: undefined;
+  /** Build a Kurdish Sentence, the first of the learning games (games/BuildSentenceScreen) */
+  BuildSentence: undefined;
   /** An id when a join code, an invite or an old invite link opened it; nothing when you came to make one. */
   RhymeMatch: { id?: string } | undefined;
   /** An id when an invite link opened it (`/app/games/stories?id=…`): it hands over to that game. */

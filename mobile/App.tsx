@@ -104,6 +104,7 @@ import { WordleBattleScreen } from './src/wordle/WordleBattleScreen';
 import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
 import { RhymeMatchScreen } from './src/rhyme/RhymeMatchScreen';
 import { RaceScreen } from './src/race/RaceScreen';
+import { BuildSentenceScreen } from './src/games/BuildSentenceScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
@@ -572,6 +573,10 @@ function SignedInRoot() {
             <RaceScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
+      </RootStack.Screen>
+      {/* a learning game is learning, as a lesson is: a guest plays it too (api/src/games) */}
+      <RootStack.Screen name="BuildSentence" options={{ presentation: 'card' }}>
+        {({ navigation }) => <BuildSentenceScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* the library is reading, which a guest may do; the games behind it keep their own wall */}
       <RootStack.Screen name="Stories" options={{ presentation: 'card' }}>
