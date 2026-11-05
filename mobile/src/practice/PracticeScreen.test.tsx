@@ -12,16 +12,21 @@ vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
 vi.mock('../lesson/useRecorder', () => import('../lesson/useRecorder.native'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import type { ApiResult } from '../api/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { PracticeScreen } from './PracticeScreen';
+import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  resetHardwareBack();
+});
 
 const navigation = { navigate: vi.fn(), replace: vi.fn() } as unknown as RootNavigation;
 const session = ok({ sessionId: 'p1', exercises: [{ id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'] }] });
@@ -80,6 +85,17 @@ describe('practice', () => {
     expect(await screen.findByText('Bread?')).toBeTruthy();
     expect(screen.queryByText('Water?')).toBeNull();
     expect(client.calls.some((c) => c.path === '/practice/session')).toBe(false);
+
+    // Android's back asks before leaving a review with answers in it, as the ✕ does
+    const onExit = vi.fn();
+    cleanup();
+    renderWithProviders(<PracticeScreen navigation={navigation} sessionId="p9" onExit={onExit} />);
+    await screen.findByText('Bread?');
+    act(() => {
+      pressBack();
+    });
+    expect(await screen.findByText('Leave for now?')).toBeTruthy();
+    expect(onExit).not.toHaveBeenCalled();
   });
 
   it('practises what is due when it is given nothing', async () => {

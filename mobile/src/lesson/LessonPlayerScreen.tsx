@@ -11,6 +11,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { BottomSheet } from '../theme/BottomSheet';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { encodeAnswer } from './answers';
 import { ConversationExercise } from './components/ConversationExercise';
@@ -499,6 +500,8 @@ export function SessionPlayer({
     }
     setLeaving(true);
   };
+  // Android's back is the ✕ too, asking the same once something is answered; a finished session's results go as they please
+  useHardwareBack(state.status === 'finished' ? null : quit);
 
   if (state.status === 'finished' && results && renderResults) return <GradientBackground>{renderResults(results)}</GradientBackground>;
   if (state.status === 'finished' && results) {

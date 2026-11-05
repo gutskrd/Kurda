@@ -13,6 +13,8 @@ vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
 // the phone's recorder, as Metro picks it on iOS and Android
 vi.mock('./useRecorder', () => import('./useRecorder.native'));
+// Android's back, pressed by the test (navigation/testing/hardwareBack)
+vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
 vi.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn(), addListener: () => () => undefined, isFocused: () => true }),
   useFocusEffect: (run: () => void | (() => void)) => {
@@ -33,9 +35,13 @@ import { resetAutoplayPref, setAutoplay } from '../feedback/autoplayPref';
 import { FakeAudio } from '../characters/testing/audio';
 import { useInvitesQuieted } from '../play/quietInvites';
 import type { SessionResults, SessionView } from './types';
+import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  resetHardwareBack();
+});
 
 const view: SessionView = {
   sessionId: 's1',
@@ -187,6 +193,41 @@ describe('the way out of a lesson', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Quit lesson' }));
     fireEvent.click(await screen.findByRole('button', { name: 'Leave' }));
     expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  /*
+   * Android's back (the button, or the swipe in from the edge) is the ✕ as
+   * well: it goes at once before anything is answered, and asks after.
+   */
+  it('takes Android’s back through the same question once something is answered', async () => {
+    testAuth.client = fakeClient(standing);
+    const onExit = vi.fn();
+    const resumed: SessionView = {
+      ...view,
+      answered: { mc: { verdict: 'correct', accepted: true } },
+      exercises: [...view.exercises, { id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'], position: 2 }],
+    };
+    renderWithProviders(<SessionPlayer view={resumed} paths={paths} onExit={onExit} />);
+    await screen.findByRole('button', { name: 'Quit lesson' });
+    act(() => {
+      expect(pressBack()).toBe(true);
+    });
+    expect(await screen.findByText('Leave for now?')).toBeTruthy();
+    expect(onExit).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Leave' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets Android’s back go at once before anything is answered', async () => {
+    testAuth.client = fakeClient(standing);
+    const onExit = vi.fn();
+    renderWithProviders(<SessionPlayer view={view} paths={paths} onExit={onExit} />);
+    await screen.findByRole('button', { name: 'Quit lesson' });
+    act(() => {
+      pressBack();
+    });
+    expect(onExit).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('Leave for now?')).toBeNull();
   });
 });
 
