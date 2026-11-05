@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, Easing, Pressable, Share, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
-import Svg, { Line } from 'react-native-svg';
 import * as Clipboard from 'expo-clipboard';
 import { formatJoinCode, type PlayGame } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -15,13 +14,14 @@ import { ClayButton, GlassCard } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { HeartBurst } from '../theme/MotionParts';
 import { LIP, SHINE } from '../theme/Tile';
-import { tileTone, type TileTone } from '../theme/tileTones';
+import type { TileTone } from '../theme/tileTones';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useAnnouncer } from '../stories/ui';
 import { InviteSheet } from './InviteSheet';
 import { GAME_NAME_KEY } from './labels';
 import { codePath, codeTone, shareMessage, spelledCode } from './joinCode';
+import { TicketTear } from './Ticket';
 
 /**
  * A lobby's join code, as a ticket: the way in for anyone the host tells — in
@@ -44,6 +44,10 @@ import { codePath, codeTone, shareMessage, spelledCode } from './joinCode';
  *
  * A code always reads left to right, on a Soranî or an Arabic screen too; the
  * words round it follow the language.
+ *
+ * Its tear line, notches and rule are the ones every invitation's ticket is
+ * cut with (Ticket.tsx), so an invite in a chat, on the banner or in the
+ * lobby's list reads as the same kind of ticket as this one.
  */
 export function CodeTicket({
   game,
@@ -100,7 +104,7 @@ export function CodeTicket({
         </View>
         <CodeTiles game={game} code={code} onPress={copy} />
       </View>
-      <Perforation />
+      <TicketTear />
       <View style={styles.bottom}>
         <View style={[styles.actions, { flexDirection: dir.row }]}>
           <CopyButton copied={copied} fired={fired} onPress={copy} />
@@ -266,27 +270,6 @@ export function Face({ tone, height, children }: { tone: TileTone; height: numbe
 }
 
 /**
- * The ticket's tear-off line: a notch cut from each side and a dashed rule
- * between them, in the quiet grey of an idle tile's edge. The notches are the
- * page showing through, so they are drawn in the page's colour.
- */
-function Perforation(): React.JSX.Element {
-  const { colors } = useTheme();
-  const rule = tileTone(colors, 'idle').edge;
-  return (
-    <View style={styles.perforation} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <View style={[styles.notch, styles.notchStart, { backgroundColor: colors.background }]} />
-      <View style={styles.rule}>
-        <Svg width="100%" height={2}>
-          <Line x1="0" y1="1" x2="100%" y2="1" stroke={rule} strokeWidth={2} strokeDasharray="6 6" strokeLinecap="round" />
-        </Svg>
-      </View>
-      <View style={[styles.notch, styles.notchEnd, { backgroundColor: colors.background }]} />
-    </View>
-  );
-}
-
-/**
  * Copy, which answers: its glyph becomes a check that pops with a small burst
  * and its word becomes "Copied", on the green of something done, for a moment.
  * The burst is the like's (MotionParts HeartBurst), so it is still under
@@ -358,8 +341,6 @@ export function LobbyShare({
   );
 }
 
-const NOTCH = 22;
-
 const styles = StyleSheet.create({
   top: { alignItems: 'center', gap: spacing.md, paddingBottom: spacing.md },
   heading: { alignItems: 'center', gap: spacing.xs + 2 },
@@ -371,11 +352,6 @@ const styles = StyleSheet.create({
   face: { borderWidth: 2, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   char: { writingDirection: 'ltr', textAlign: 'center', includeFontPadding: false },
   glint: { position: 'absolute', top: -8, bottom: -8, left: 0, backgroundColor: SHINE },
-  perforation: { flexDirection: 'row', alignItems: 'center', height: NOTCH, marginHorizontal: -spacing.lg },
-  notch: { width: NOTCH, height: NOTCH, borderRadius: radii.pill },
-  notchStart: { marginLeft: -NOTCH / 2 },
-  notchEnd: { marginRight: -NOTCH / 2 },
-  rule: { flex: 1, marginHorizontal: spacing.sm },
   bottom: { gap: spacing.sm, paddingTop: spacing.md },
   actions: { gap: spacing.sm },
   action: { flex: 1 },
