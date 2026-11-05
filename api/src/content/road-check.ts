@@ -1,5 +1,5 @@
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { CONVERSATION_ID, conversationClips, lessonAudioKey, lessonAudioTargets } from '@kurda/shared';
+import { CONVERSATION_ID, conversationClips, lessonAudioKey, lessonAudioTargets, shownInPrompt } from '@kurda/shared';
 import { InvalidExercisePayloadError, validateExercisePayload } from './exercises.js';
 import { courseContentSchema } from './import.js';
 import type { ExerciseType } from './repository.js';
@@ -368,6 +368,9 @@ const LISTENING = (ex: RawExercise): boolean => ex.type === 'listening' || (ex.t
 const PRODUCTION = (ex: RawExercise): boolean =>
   ex.type === 'writing' || ex.type === 'speaking' || (ex.type === 'translate' && !(typeof ex.payload.say === 'string' && ex.payload.say.trim() !== ''));
 
+/** The kinds whose `say` is the sentence they ask about, shown to the learner only in their prompt. */
+const QUOTES_SAY: ReadonlySet<string> = new Set(['multiple_choice', 'translate', 'writing']);
+
 interface RawExercise {
   position: number;
   type: string;
@@ -623,6 +626,13 @@ function checkUnit(
           for (const w of words) for (const id of lex.signs.get(w) ?? []) if (lex.items[id]!.index <= entry.index) used.add(id);
         }
         for (const id of used) met.set(id, (met.get(id) ?? 0) + 1);
+
+        // 7: what the item asks about is on screen. Its Kurdish in `say` is never sent as text, and its recording
+        // is played before the answer only when the prompt shows that Kurdish (lessonaudio/delivery.ts), so an
+        // item whose prompt does not would ask about a sentence the learner can neither read nor hear.
+        if (QUOTES_SAY.has(ex.type) && typeof ex.payload.say === 'string' && ex.payload.say.trim() !== '' && !shownInPrompt(ex.payload.prompt, ex.payload.say)) {
+          add('its Kurdish (say) is not in the prompt, so the learner can neither read nor hear it before answering: quote it there', { ...eat, field: 'payload.prompt' });
+        }
 
         // 5: who records it
         const texts = recordedTexts(ex.type, ex.payload);

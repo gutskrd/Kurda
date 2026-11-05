@@ -434,6 +434,7 @@ export {
   lessonAudioKey,
   lessonAudioTargets,
   primaryAudioTarget,
+  shownInPrompt,
 } from './lesson-audio.js';
 /** Conversations in lessons: their shape, limits, and the keys each part's recordings are filed under. */
 export * from './conversation.js';

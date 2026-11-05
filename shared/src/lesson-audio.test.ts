@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey, lessonAudioTargets, primaryAudioTarget } from './lesson-audio.js';
+import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey, lessonAudioTargets, primaryAudioTarget, shownInPrompt } from './lesson-audio.js';
 
 // explicit code points, so precomposed and decomposed are unambiguous
 const E_CIRC_DECOMPOSED = 'e' + String.fromCharCode(0x302);
@@ -185,5 +185,19 @@ describe('primaryAudioTarget', () => {
   it('ignores a `say` with nothing in it', () => {
     expect(primaryAudioTarget('translate', { prompt: 'x', accepted: ['Spas'], say: ' ? ' })).toBe('Spas');
     expect(primaryAudioTarget('speaking', {})).toBeNull();
+  });
+});
+
+describe('shownInPrompt', () => {
+  it('finds a Kurdish sentence quoted in a prompt, whatever its quotes, case and final stop', () => {
+    expect(shownInPrompt('Hamo scratches his head. What does he say? “Nayê bîra min.”', 'Nayê bîra min.')).toBe(true);
+    expect(shownInPrompt('What does Xezal whisper? «Hêvî dipirse: “Gur dê wan bixapîne?”»', 'Hêvî dipirse: “Gur dê wan bixapîne?”')).toBe(true);
+    expect(shownInPrompt('Hamo opens the gate: "silav!" What does it mean?', 'Silav!')).toBe(true);
+  });
+
+  it('wants whole words: a sentence the prompt only paraphrases, or a word inside a longer one, is not shown', () => {
+    expect(shownInPrompt('Hamo scratches his head. What does he say?', 'Nayê bîra min.')).toBe(false);
+    expect(shownInPrompt('Which word is “Silavek”?', 'Silav')).toBe(false);
+    expect(shownInPrompt(undefined, 'Silav')).toBe(false);
   });
 });

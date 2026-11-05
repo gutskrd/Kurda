@@ -180,7 +180,7 @@ function exampleUnit(): { course: typeof ROAD_COURSE; units: unknown[] } {
   const meet = numbered([
     mc('Silav!', 'Hamo opens the gate. What does “Silav!” mean?', ['Hello!', 'Thanks!', 'Goodbye!'], 0, 'hamo'),
     pairs([['silav', 'hello'], ['ez', 'I'], ['tu', 'you'], ['baş', 'good']], 'hamo'),
-    mc('Ez Hamo me.', 'What does Hamo say?', ['You are Hamo.', 'I am Hamo.', 'Hello, Hamo.'], 1, 'hamo'),
+    mc('Ez Hamo me.', 'What does Hamo say? “Ez Hamo me.”', ['You are Hamo.', 'I am Hamo.', 'Hello, Hamo.'], 1, 'hamo'),
     listen(['Ez baş im.', 'Ez baş im'], 'hamo'),
     tr('I am well.', ['Ez baş im.', 'Ez baş im'], 'hamo'),
     speak('Say it aloud: “Silav, ez Xezal im.” (Hello, I am Xezal.)', 'Silav, ez Xezal im.', 'xezo'),
@@ -188,12 +188,12 @@ function exampleUnit(): { course: typeof ROAD_COURSE; units: unknown[] } {
     write('Write: I am from Amed.', ['Ez ji Amedê me.', 'Ez ji Amedê me'], 'hamo'),
     tr('“Silav, Hamo!” in English', ['Hello, Hamo!', 'Hello Hamo', 'Hi Hamo'], 'xezo', 'Silav, Hamo!'),
     listen(['Silav, ez Hamo me.', 'Silav ez Hamo me'], 'hamo'),
-    mc('Ez baş im.', 'Hamo is asked how he is. What does he answer?', ['I am from Amed.', 'I am well.', 'I am Hamo.'], 1, 'hamo'),
+    mc('Ez baş im.', 'Hamo is asked how he is. What does he answer? “Ez baş im.”', ['I am from Amed.', 'I am well.', 'I am Hamo.'], 1, 'hamo'),
     mc('Tu!', 'Xezal points at you: “Tu!” What does it mean?', ['you', 'I', 'hello'], 0, 'xezo'),
   ]);
   const talk = numbered([
     CONVERSATION,
-    mc('Tu çawa yî?', 'Xezal asks Hamo something. What?', ['Who are you?', 'How are you?', 'Where are you from?'], 1, 'xezo'),
+    mc('Tu çawa yî?', 'Xezal asks Hamo something. What? “Tu çawa yî?”', ['Who are you?', 'How are you?', 'Where are you from?'], 1, 'xezo'),
     pairs([['çawa', 'how'], ['spas', 'thanks'], ['erê', 'yes'], ['silav', 'hello']], 'hamo'),
     listen(['Ez baş im, spas.', 'Ez baş im spas', 'Ez baş im, spas'], 'hamo'),
     tr('How are you?', ['Tu çawa yî?', 'Tu çawa yî'], 'hamo'),
@@ -201,7 +201,7 @@ function exampleUnit(): { course: typeof ROAD_COURSE; units: unknown[] } {
     speak('Say it aloud: “Spas, Hamo!” (Thanks, Hamo!)', 'Spas, Hamo!', 'xezo'),
     write('Write: Yes, you are Hamo.', ['Erê, tu Hamo yî.', 'Erê, tu Hamo yî', 'Erê tu Hamo yî'], 'xezo'),
     mc(undefined, 'Which is right for “you are well”?', ['Tu baş î.', 'Tu baş yî.', 'Tu baş im.'], 0),
-    mc('Tu ji Amedê yî?', 'What does Hamo ask?', ['Are you going to Amed?', 'Are you in Amed?', 'Are you from Amed?'], 2, 'hamo'),
+    mc('Tu ji Amedê yî?', 'What does Hamo ask? “Tu ji Amedê yî?”', ['Are you going to Amed?', 'Are you in Amed?', 'Are you from Amed?'], 2, 'hamo'),
     listen(['Tu çawa yî, Hamo?', 'Tu çawa yî Hamo'], 'xezo'),
     tr('Thanks!', ['Spas!', 'Spas'], 'hamo'),
   ]);
@@ -287,6 +287,13 @@ describe('the road’s check, on an example unit', () => {
       for (const li of [0, 1]) for (const ex of lessonOf(doc, li).exercises) if (ex.payload.voice) ex.payload.voice = 'xezo';
     });
     expect(allXezal.text).toContain('unit 1: Hamo records 0 % of the unit’s sentences (at least 65 %)');
+  });
+
+  it('asks for the Kurdish an item is about to be in its prompt, where the learner can read it and hear it', () => {
+    const { text } = check((doc) => {
+      lessonOf(doc, 0).exercises[2]!.payload.prompt = 'What does Hamo say?';
+    });
+    expect(text).toEqual(['u01s1l1 #3 payload.prompt: its Kurdish (say) is not in the prompt, so the learner can neither read nor hear it before answering: quote it there']);
   });
 
   it('keeps conversation ids unique and their length in bounds', () => {

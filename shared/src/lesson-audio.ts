@@ -157,6 +157,25 @@ export function lessonAudioTargets(type: string, payload: unknown): string[] {
   return out;
 }
 
+/** a letter, a mark or a digit — or the ZWNJ, which sits inside a Soranî word */
+const WORD = String.raw`[\p{L}\p{M}\p{N}\u200c]`;
+
+/**
+ * Whether `text` stands as whole words in what `prompt` shows, once both are
+ * keyed the way recordings are (`lessonAudioKey`). The API plays a multiple-
+ * choice or translate item's model before the answer only when its Kurdish is
+ * on screen like this (lessonaudio/delivery.ts); the road's check asks the
+ * same of every item whose Kurdish is in `say`, so none is left with nothing
+ * to read or hear.
+ */
+export function shownInPrompt(prompt: unknown, text: string): boolean {
+  if (typeof prompt !== 'string') return false;
+  const key = lessonAudioKey(text);
+  if (key === '') return false;
+  const escaped = key.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+  return new RegExp(`(?<!${WORD})${escaped}(?!${WORD})`, 'u').test(lessonAudioKey(prompt));
+}
+
 /**
  * The one text a learner should hear as the model for an exercise: `say` when
  * set, else the first accepted answer (translate, writing, listening) or the
