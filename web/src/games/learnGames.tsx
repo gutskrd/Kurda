@@ -111,11 +111,47 @@ function HearMini(): React.JSX.Element {
   );
 }
 
+/** Seats along a table with one of them lit: Kurdish Impostor, without words. */
+function TableMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--table" aria-hidden>
+      <span className="lg-mini-seats">
+        <span className="lg-mini-seat" />
+        <span className="lg-mini-seat is-lit" />
+        <span className="lg-mini-seat" />
+      </span>
+      <span className="lg-mini-tile is-on" style={{ width: 96 }} />
+      <span className="lg-mini-seats">
+        <span className="lg-mini-seat" />
+        <span className="lg-mini-seat" />
+      </span>
+    </div>
+  );
+}
+
+/** A card with its words struck through, and a buzzer: Don't Say the Word!, without words. */
+function CardMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--card" aria-hidden>
+      <span className="lg-mini-card">
+        <span className="lg-mini-tile is-on" style={{ width: 54 }} />
+        <span className="lg-mini-strike" style={{ width: 40 }} />
+        <span className="lg-mini-strike" style={{ width: 48 }} />
+        <span className="lg-mini-strike" style={{ width: 34 }} />
+      </span>
+      <span className="lg-mini-buzzer" />
+    </div>
+  );
+}
+
 export const WEB_LEARN_GAMES: Partial<Record<LearnGameId, WebGame>> = {
   'build-sentence': { href: '/app/games/build-sentence', nameKey: 'games.sentence.name', bodyKey: 'games.sentence.body', modes: ['solo'], Visual: SentenceMini },
   'memory-thief': { href: '/app/games/memory-thief', nameKey: 'games.memory.name', bodyKey: 'games.memory.body', modes: ['solo'], Visual: MemoryMini },
   'hear-it': { href: '/app/games/hear-it', nameKey: 'games.hear.name', bodyKey: 'games.hear.body', modes: ['solo'], Visual: HearMini },
   'last-letter': { href: LAST_LETTER_CARD.href, nameKey: LAST_LETTER_CARD.nameKey, bodyKey: LAST_LETTER_CARD.blurbKey, modes: ['online', 'solo'], Visual: ChainMini },
+  // the party games are listed where /games/availability finds enough approved cards for the learner's variety
+  impostor: { href: '/app/games/impostor', nameKey: 'games.impostor.name', bodyKey: 'games.invite.blurb.impostor', modes: ['online'], Visual: TableMini },
+  'dont-say': { href: '/app/games/dont-say', nameKey: 'games.dontSay.name', bodyKey: 'games.invite.blurb.dontSay', modes: ['online'], Visual: CardMini },
 };
 
 const PLAYABLE = Object.keys(WEB_LEARN_GAMES) as LearnGameId[];

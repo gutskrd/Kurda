@@ -556,3 +556,52 @@
   border-radius: 50%;
   background: var(--u-fill, var(--border-strong));
 }
+
+/* Kurdish Impostor's card: seats along a table, one of them lit where the clue is being given */
+.lg-mini--table {
+  gap: 10px;
+}
+.lg-mini-seats {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+.lg-mini-seat {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--bg);
+}
+.lg-mini-seat.is-lit {
+  border-color: var(--u-fill, var(--border-strong));
+  background: var(--u-fill, var(--border-strong));
+}
+
+/* Don't Say the Word!'s card: a card of struck-through words, and the buzzer beside it */
+.lg-mini--card {
+  grid-auto-flow: column;
+  align-items: end;
+  gap: 18px;
+}
+.lg-mini-card {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--u-fill, var(--border-strong));
+  background: var(--bg);
+}
+.lg-mini-strike {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--u-lip, var(--border-strong));
+}
+.lg-mini-buzzer {
+  width: 34px;
+  height: 18px;
+  border-radius: 34px 34px 4px 4px;
+  background: var(--u-fill, var(--border-strong));
+  box-shadow: 0 4px 0 var(--u-lip, var(--border-strong));
+}

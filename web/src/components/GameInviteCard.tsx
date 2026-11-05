@@ -46,6 +46,8 @@ const ACTION_KEY: Record<GameInviteType, MessageKey> = {
   'rhyme-match': 'games.rhymeMatch.join',
   stories: 'games.stories.join',
   'last-letter': 'games.lastLetter.join',
+  impostor: 'games.impostor.join',
+  'dont-say': 'games.dontSay.join',
 };
 
 /**

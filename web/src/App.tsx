@@ -35,6 +35,8 @@ const DimenPost = lazy(() => import('./pages/DimenPost').then((m) => ({ default:
 const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games })));
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
 const LastLetter = lazy(() => import('./lastletter/LastLetter').then((m) => ({ default: m.LastLetter })));
+const Impostor = lazy(() => import('./impostor/Impostor').then((m) => ({ default: m.Impostor })));
+const DontSay = lazy(() => import('./dontsay/DontSay').then((m) => ({ default: m.DontSay })));
 const Rhyme = lazy(() => import('./pages/Rhyme').then((m) => ({ default: m.Rhyme })));
 const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })));
 const BuildSentence = lazy(() => import('./games/BuildSentence').then((m) => ({ default: m.BuildSentence })));
@@ -310,6 +312,14 @@ export function AppRoutes(): React.JSX.Element {
         <Route
           path="games/last-letter"
           element={<RequireAccount what="gate.what.playOthers"><LastLetter /></RequireAccount>}
+        />
+        <Route
+          path="games/impostor"
+          element={<RequireAccount what="gate.what.playOthers"><Impostor /></RequireAccount>}
+        />
+        <Route
+          path="games/dont-say"
+          element={<RequireAccount what="gate.what.playOthers"><DontSay /></RequireAccount>}
         />
         <Route path="rankings" element={<Rankings />} />
         <Route path="leagues" element={<Navigate to="/app/rankings" replace />} />

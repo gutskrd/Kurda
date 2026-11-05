@@ -1,6 +1,6 @@
 import { useEffect, useState, type HTMLAttributes, type ReactNode } from 'react';
 import type { PlayGame } from '@kurda/shared';
-import { BookIcon, ChainIcon, TicketIcon, TilesIcon, WaveformIcon } from '../components/icons';
+import { BookIcon, ChainIcon, DontSayIcon, ImpostorIcon, TicketIcon, TilesIcon, WaveformIcon } from '../components/icons';
 
 /**
  * A ticket: the one shape every invitation on the website takes, so asking
@@ -96,6 +96,8 @@ const GAME_GLYPH: Record<PlayGame, (p: { size?: number }) => React.JSX.Element> 
   'rhyme-match': WaveformIcon,
   stories: BookIcon,
   'last-letter': ChainIcon,
+  impostor: ImpostorIcon,
+  'dont-say': DontSayIcon,
 };
 
 /** The mark on a game ticket's stub; a ticket glyph for anything that is not a game. */
