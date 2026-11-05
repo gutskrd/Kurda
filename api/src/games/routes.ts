@@ -10,11 +10,13 @@
  *   GET  /games/solo/sessions/:id                      a round as it stands
  *   POST /games/solo/sessions/:id/answers              { index, answer, attempt? }: one try, checked here
  *   POST /games/solo/sessions/:id/finish               pay it once and say how it went
+ *   POST /games/solo/sessions/:id/hints                { evidence? }: spend a hint (Kurdish Detective), answered with the board
  *   GET  /games/solo/sessions/:id/clips/:clip          a round's recording by its opaque handle (no token: the address is the permission)
  *
- * The games played alone: Build a Kurdish Sentence, The Memory Thief and
- * Hear It, Find It, each an engine registered with the solo round, and each
- * counting its own availability where rows alone do not say it.
+ * The games played alone: Build a Kurdish Sentence, The Memory Thief, Hear
+ * It, Find It, What Would You Say? and Kurdish Detective, each an engine
+ * registered with the solo round, and each counting its own availability
+ * where rows alone do not say it.
  *
  * For the people who edit lessons and stories (content.edit), and who publish
  * them (content.publish), behind the admin 2FA gate like every staff route:
@@ -27,8 +29,9 @@
  *   POST   /admin/game-content/:id/(publish|unpublish|archive)  { lockVersion }   (content.publish)
  *   POST   /admin/game-content/:id/review               { approved, note?, lockVersion }   (content.publish)
  *   DELETE /admin/game-content/:id?lockVersion=
- *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories' | 'vocabulary', dialect, limit? }: drafts from approved content
+ *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories' | 'vocabulary' | 'conversations', dialect, limit? }: drafts from approved content
  *   GET    /admin/game-content/vocabulary?dialect&q&limit   published vocabulary, for a card editor to pick its Kurdish from
+ *   GET    /admin/game-content/lines?dialect=&q=         published lines to copy into a case or a scene
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -57,6 +60,8 @@ import { TrustedSources } from './sources.js';
 import { BuildSentenceGame } from './build-sentence.js';
 import { MemoryThiefGame } from './memory-thief.js';
 import { HearItGame } from './hear-it.js';
+import { WhatWouldYouSayGame } from './what-would-you-say.js';
+import { DetectiveGame } from './detective.js';
 import { registerGameClipRoute } from './clips.js';
 import { GameAvailabilityService } from './availability.js';
 import { SoloService } from './solo.js';
@@ -95,7 +100,7 @@ const updateContentBody = lockBody.extend({ level: z.number().int().min(1).max(5
 const reviewBody = lockBody.extend({ approved: z.boolean(), note: z.string().max(GAME_CONTENT_REVIEW_NOTE_MAX).nullish() });
 const deleteQuery = z.object({ lockVersion: z.coerce.number().int().min(0) });
 const importBody = z.object({
-  from: z.enum(['lessons', 'stories', 'vocabulary']),
+  from: z.enum(['lessons', 'stories', 'vocabulary', 'conversations']),
   dialect: z.enum(GAME_DIALECTS),
   limit: z.number().int().min(1).max(2000).optional(),
 });
@@ -104,6 +109,8 @@ const vocabularyQuery = z.object({
   q: z.preprocess(absentIfEmpty, z.string().max(60).optional()),
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });
+const hintBody = z.object({ evidence: z.string().max(40).optional() });
+const linesQuery = z.object({ dialect: z.enum(GAME_DIALECTS), q: z.preprocess(absentIfEmpty, z.string().max(80).optional()) });
 
 function context(req: FastifyRequest): { adminId: string; requestId: string } {
   return { adminId: req.user!.id, requestId: req.id };
@@ -139,6 +146,8 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
   solo.register(sentences);
   solo.register(memory);
   solo.register(hearing);
+  solo.register(new WhatWouldYouSayGame(sources));
+  solo.register(new DetectiveGame(sources));
   const content = new GameContentAdminService(app.db, sources, availability, cache);
   return { sources, sentences, memory, hearing, availability, solo, content };
 }
@@ -194,6 +203,10 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
     return solo.answer((req.params as z.infer<typeof idParam>).id, req.user!.id, b.index, b.answer, b.attempt);
   });
 
+  app.post('/games/solo/sessions/:id/hints', { schema: { params: idParam, body: hintBody }, preHandler: requireAuth }, async (req) =>
+    solo.hint((req.params as z.infer<typeof idParam>).id, req.user!.id, req.body),
+  );
+
   app.post(
     '/games/solo/sessions/:id/finish',
     { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
@@ -213,6 +226,11 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
   app.get('/admin/game-content/vocabulary', { schema: { querystring: vocabularyQuery }, preHandler: canEdit }, async (req) => {
     const q = req.query as z.infer<typeof vocabularyQuery>;
     return content.vocabulary(q.dialect, q.q, q.limit);
+  });
+
+  app.get('/admin/game-content/lines', { schema: { querystring: linesQuery }, preHandler: canEdit }, async (req) => {
+    const q = req.query as z.infer<typeof linesQuery>;
+    return { lines: await content.publishedLines(q.dialect, q.q ?? '') };
   });
 
   app.get('/admin/game-content/:id', { schema: { params: idParam }, preHandler: canEdit }, async (req, reply) => {
@@ -258,6 +276,7 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
   app.post('/admin/game-content/import', { schema: { body: importBody }, preHandler: canEdit }, async (req) => {
     const b = req.body as z.infer<typeof importBody>;
     if (b.from === 'vocabulary') return content.importStarterWordCards(b.dialect, context(req), b.limit);
+    if (b.from === 'conversations') return content.importScenarios(b.dialect, context(req), b.limit);
     return b.from === 'lessons'
       ? content.importLessonSentences(b.dialect, context(req), b.limit)
       : content.importStoryPassages(b.dialect, context(req), b.limit);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { checkGameContent, kurdishTexts } from '../content.js';
-import { SCENARIO_CANDIDATES, buildsFromTiles, pickWrongReplies, scenarioLevel, type ReplyCandidate } from './rules.js';
+import { SCENARIO_CANDIDATES, buildsFromTiles, guessPlace, pickWrongReplies, scenarioLevel, type ReplyCandidate } from './rules.js';
 
 const en = (text: string) => ({ en: text });
 
@@ -62,6 +62,14 @@ describe('pickWrongReplies', () => {
 
   it('picks the same lines however often it is asked', () => {
     expect(pickWrongReplies(pair, [...pool].reverse(), 'kmr').map((c) => c.ku).sort()).toEqual([...texts].sort());
+  });
+});
+
+describe('guessPlace', () => {
+  it('suggests the place a conversation’s English mentions most, or none', () => {
+    expect(guessPlace(['Mîrza, a kilo of cheese and some honey, please.', 'The market is big.', 'Here is the bread.'])).toBe('market');
+    expect(guessPlace(['The doctor is coming.', 'Is honey medicine too?'])).toBe('doctor');
+    expect(guessPlace(['Hello!', null, 'How are you?'])).toBeNull();
   });
 });
 

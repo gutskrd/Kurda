@@ -37,15 +37,18 @@ import {
   SENTENCE_WORDS,
   alphabetClipText,
   checkGameContent,
+  conversationLineKey,
   fitsDialect,
   foldForDialect,
   gameWords,
+  scenarioLevel,
   storyParagraphs,
   storySpelling,
   toDialect,
   type GameContentByKind,
   type GameContentKind,
   type GameDialect,
+  type GameLevel,
   type Meanings,
   type SpeakerId,
 } from '@kurda/shared';
@@ -146,6 +149,30 @@ export interface PublishedContent<K extends GameContentKind> {
   key: string;
   level: number;
   payload: GameContentByKind[K];
+}
+
+/**
+ * One line of a published conversation, where it stands and who says it: for
+ * a scene made of the line and the one after it, for a case's evidence, and
+ * for the admin's line picker, so none of them types the Kurdish again.
+ */
+export interface TaughtLine {
+  /** the exercise, the conversation's own id, and its title when it is in the variety's script */
+  exerciseId: string;
+  conversation: string;
+  title: string | null;
+  /** the line's place in the conversation, and the part (by place) that says it */
+  index: number;
+  part: number;
+  speaker: SpeakerId | null;
+  ku: string;
+  en: string | null;
+  /** the lesson-audio key a recording of this line is filed under ('' when it cannot be filed) */
+  recording: string;
+  /** from where its unit stands in its course (`scenarioLevel`) */
+  level: GameLevel;
+  /** 'conversation:<exerciseId>:<index>' */
+  origin: string;
 }
 
 // ---------- reading a published lesson's exercises ----------
@@ -272,6 +299,39 @@ export function wordsOfExercise(row: Pick<ExerciseRow, 'type' | 'payload'>, dial
   return pairs
     .filter((p) => fitsDialect(p.ku, dialect) && gameWords(p.ku).length === 1)
     .map((p) => ({ key: itemKey('w', dialect, foldForDialect(p.ku, dialect)), ku: gameWords(p.ku)[0]!, meanings: { en: p.meaning.trim() } }));
+}
+
+/**
+ * Every line of one conversation exercise in the variety's script (pure, for
+ * the tests), each with the key its recording is filed under and the level
+ * its unit gives it.
+ */
+export function conversationLinesOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payload'>, dialect: GameDialect, level: GameLevel): TaughtLine[] {
+  if (row.type !== 'conversation') return [];
+  const p = conversationPayloadSchema.safeParse(row.payload);
+  if (!p.success) return [];
+  const { speakers, lines, id, title } = p.data;
+  const out: TaughtLine[] = [];
+  lines.forEach((line, index) => {
+    const ku = line.text.trim();
+    if (!fitsDialect(ku, dialect)) return;
+    const en = line.en?.trim() || null;
+    out.push({
+      exerciseId: row.id,
+      conversation: id,
+      title: title && fitsDialect(title, dialect) ? title : null,
+      index,
+      part: line.speaker,
+      speaker: speakers[line.speaker]?.character ?? null,
+      ku,
+      // an English that is in the other script is no English
+      en: en && !fitsDialect(en, 'ckb') ? en : null,
+      recording: conversationLineKey(id, line.speaker, line.text),
+      level,
+      origin: `conversation:${row.id}:${index}`,
+    });
+  });
+  return out;
 }
 
 // ---------- the readers ----------
@@ -463,6 +523,40 @@ export class TrustedSources {
         if (!checked.ok) continue;
         const key = kind === 'sentence' ? sentenceKey(dialect, (checked.payload as GameContentByKind['sentence']).ku) : `gc:${row.id}`;
         out.push({ id: row.id, key, level: row.level, payload: checked.payload as GameContentByKind[K] });
+      }
+      return out;
+    });
+  }
+
+  /**
+   * Every line of every live published lesson's conversations in this
+   * variety, in order, each with its level: where its unit stands in its
+   * course, the first units easiest. A draft, a lesson in review or a version
+   * replaced is never among them.
+   */
+  conversationLines(dialect: GameDialect): Promise<TaughtLine[]> {
+    return this.pooled('conversation-lines', dialect, async () => {
+      const res = await this.db.query<ExerciseRow & { unit_rank: number; unit_count: number }>(
+        `WITH live AS (
+           SELECT DISTINCT ON (l.skill_id, l.position) l.id, c.dialect,
+                  (SELECT count(*)::int FROM units u2 WHERE u2.course_id = u.course_id AND u2.position <= u.position) AS unit_rank,
+                  (SELECT count(*)::int FROM units u3 WHERE u3.course_id = u.course_id) AS unit_count
+             FROM lessons l
+             JOIN skills s ON s.id = l.skill_id
+             JOIN units u ON u.id = s.unit_id
+             JOIN courses c ON c.id = u.course_id
+            WHERE l.status = 'published'
+            ORDER BY l.skill_id, l.position, l.version DESC
+         )
+         SELECT e.id, e.type, e.payload, live.dialect, live.unit_rank, live.unit_count
+           FROM live JOIN exercises e ON e.lesson_id = live.id
+          WHERE e.type = 'conversation'
+          ORDER BY live.unit_rank, live.id, e.position`,
+      );
+      const out: TaughtLine[] = [];
+      for (const row of res.rows) {
+        if (toDialect(row.dialect) !== dialect) continue;
+        out.push(...conversationLinesOf(row, dialect, scenarioLevel(row.unit_rank, row.unit_count)));
       }
       return out;
     });

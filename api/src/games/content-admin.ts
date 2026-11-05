@@ -18,17 +18,20 @@
  *
  * The importers make drafts from what is already approved, so no Kurdish is
  * typed again: published lessons' sentences become `sentence` rows, published
- * stories' paragraphs `passage` rows (their glossary terms the words to hide).
- * The starter word cards for Kurdish Impostor are published vocabulary sorted
- * into a short list of categories by each word's English meaning
- * (word-categories.ts): the word and its meaning are copied, and the category's
- * name — the one new Kurdish, the impostor's hint — makes them starter drafts
- * for native review. An import run twice adds nothing: each row remembers
- * where it came from (`origin`, unique per kind and variety).
+ * stories' paragraphs `passage` rows (their glossary terms the words to hide),
+ * published conversations `scenario` rows (a line, the line that answered it,
+ * and real lines from other conversations as wrong replies). The starter word
+ * cards for Kurdish Impostor are published vocabulary sorted into a short list
+ * of categories by each word's English meaning (word-categories.ts): the word
+ * and its meaning are copied, and the category's name — the one new Kurdish,
+ * the impostor's hint — makes them starter drafts for native review. An import
+ * run twice adds nothing: each row remembers where it came from (`origin`,
+ * unique per kind and variety).
  *
  * The word and forbidden-word cards' editors pick their Kurdish from the same
  * published vocabulary (`vocabulary`), so a card is made by choosing words,
- * not by typing them.
+ * not by typing them. The line picker lists published lines for an editor to
+ * put in a case or a scene the same way, by copying.
  *
  * Reviewing, publishing, unpublishing, archiving, deleting and importing are
  * audited, the row before and after, beside the automatic audit of every
@@ -36,14 +39,21 @@
  */
 import type pg from 'pg';
 import {
+  CHARACTER_NAMES,
   GAME_LEVELS,
   LEARN_GAMES,
   PASSAGE_HIDDEN,
+  SCENARIO_TILE_WORDS,
   checkGameContent,
   contentHeadline,
   foldForDialect,
   gameOfKind,
+  gameWords,
+  guessPlace,
+  lessonAudioKey,
+  pickWrongReplies,
   sentenceShape,
+  storySentences,
   type AdminGameContent,
   type GameContentIssue,
   type GameContentKind,
@@ -53,14 +63,17 @@ import {
   type GameContentSource,
   type GameContentStatus,
   type GameDialect,
+  type GameLevel,
   type Meanings,
+  type PublishedLine,
+  type ReplyCandidate,
 } from '@kurda/shared';
 import { AuditService } from '../admin/audit-service.js';
 import type { Cache } from '../cache/cache.js';
 import { escapeLike } from '../db/like.js';
 import { AppError } from '../plugins/errors.js';
 import { bustAvailability, type GameAvailabilityService } from './availability.js';
-import { bustGamePools, type TrustedSources, type VocabularyWord } from './sources.js';
+import { bustGamePools, type TaughtLine, type TrustedSources, type VocabularyWord } from './sources.js';
 import { STARTER_CATEGORIES, starterCategoryOf } from './word-categories.js';
 
 /** A row as the admin panel lists and edits it (@kurda/shared `AdminGameContent`). */
@@ -174,6 +187,12 @@ export interface ImportResult {
   created: number;
   skipped: number;
 }
+
+/** Scenes an import takes from one conversation at most: a few good moments, not every line of it. */
+export const SCENES_PER_CONVERSATION = 2;
+
+/** Lines the picker lists at once. */
+export const PICKED_LINES_MAX = 60;
 
 /** The readiness view (@kurda/shared `GameContentReadiness`). */
 export type Readiness = GameContentReadiness;
@@ -515,6 +534,108 @@ export class GameContentAdminService {
     const a = await this.insertDrafts('word_category', dialect, categories, ctx, 'starter categories', 'starter');
     const b = await this.insertDrafts('word_card', dialect, cards, ctx, 'published vocabulary', 'starter');
     return { created: a.created + b.created, skipped: a.skipped + b.skipped };
+  }
+
+  /**
+   * Published conversations as `scenario` drafts: in each, up to
+   * SCENES_PER_CONVERSATION moments where one person says a line and someone
+   * else answers it — a question answered first — with the answer as the
+   * right reply and real lines from other conversations of about the same
+   * level as the wrong ones (`pickWrongReplies`), each with its English and
+   * the key its recording is filed under. The situation is the editor's to
+   * write; the draft says only who is speaking, and suggests the place the
+   * conversation's English mentions most.
+   */
+  async importScenarios(dialect: GameDialect, ctx: ActionContext, limit = 200): Promise<ImportResult> {
+    const lines = await this.sources.conversationLines(dialect);
+    const byExercise = new Map<string, TaughtLine[]>();
+    for (const l of lines) byExercise.set(l.exerciseId, [...(byExercise.get(l.exerciseId) ?? []), l]);
+    const pool: ReplyCandidate[] = lines.filter((l) => l.en).map((l) => ({ ku: l.ku, en: l.en, conversation: l.conversation, level: l.level }));
+    const recordingOf = new Map(lines.map((l) => [`${l.conversation}\u0000${l.ku}`, l.recording]));
+    const words = (ku: string) => gameWords(ku).length;
+
+    const drafts: Array<{ level: number; payload: GameContentPayload; origin: string }> = [];
+    for (const conversation of byExercise.values()) {
+      if (drafts.length >= limit) break;
+      const pairs: Array<[TaughtLine, TaughtLine]> = [];
+      for (let i = 0; i + 1 < conversation.length; i++) {
+        const [a, b] = [conversation[i]!, conversation[i + 1]!];
+        // someone else answering, both with their English, the answer of a size to choose or build
+        if (a.index + 1 !== b.index || a.part === b.part || !a.en || !b.en) continue;
+        if (words(b.ku) < SCENARIO_TILE_WORDS.min || words(b.ku) > SCENARIO_TILE_WORDS.max + 2) continue;
+        pairs.push([a, b]);
+      }
+      const asked = (l: TaughtLine) => /[?؟]\s*$/u.test(l.ku);
+      pairs.sort((x, y) => Number(asked(y[0])) - Number(asked(x[0])) || x[0].index - y[0].index);
+      const place = guessPlace(conversation.map((l) => l.en));
+      let taken = 0;
+      for (const [a, b] of pairs) {
+        if (taken >= SCENES_PER_CONVERSATION || drafts.length >= limit) break;
+        const wrong = pickWrongReplies({ line: a.ku, reply: b.ku, conversation: a.conversation, level: a.level }, pool, dialect);
+        if (wrong.length < 2) continue;
+        const said = a.speaker ? CHARACTER_NAMES[a.speaker] : null;
+        const payload = {
+          situation: { en: said ? `${said} says this to you.` : 'Someone says this to you.' },
+          ...(place ? { place } : {}),
+          ...(a.speaker ? { speaker: a.speaker } : {}),
+          line: { ku: a.ku, meanings: { en: a.en }, ...(a.recording ? { recording: a.recording } : {}) },
+          reply: { ku: b.ku, meanings: { en: b.en }, ...(b.recording ? { recording: b.recording } : {}) },
+          others: wrong.map((w) => {
+            const recording = recordingOf.get(`${w.conversation}\u0000${w.ku}`);
+            return { ku: w.ku, meanings: { en: w.en! }, ...(recording ? { recording } : {}) };
+          }),
+          origin: { type: 'conversation', ref: `${a.exerciseId}:${a.index}` },
+        };
+        const checked = checkGameContent('scenario', dialect, payload);
+        if (!checked.ok) continue;
+        drafts.push({ level: a.level, payload: checked.payload, origin: a.origin });
+        taken++;
+      }
+    }
+    return this.insertDrafts('scenario', dialect, drafts, ctx, 'published conversations');
+  }
+
+  /**
+   * Published lines an editor may copy into a case's evidence or a scene: the
+   * lines of published conversations, published lessons' sentences and
+   * published stories' sentences, in this variety only, those matching `q`
+   * (in the Kurdish or its English, folded) first by where they come from.
+   */
+  async publishedLines(dialect: GameDialect, q = '', limit = PICKED_LINES_MAX): Promise<PublishedLine[]> {
+    const [conversation, sentences, passages] = await Promise.all([
+      this.sources.conversationLines(dialect),
+      this.sources.lessonSentences(dialect),
+      this.sources.storyPassages(dialect),
+    ]);
+    const out: PublishedLine[] = [];
+    const seen = new Set<string>();
+    const want = foldForDialect(q, dialect, true);
+    const wantEn = q.trim().toLowerCase();
+    const add = (line: PublishedLine): void => {
+      const key = foldForDialect(line.ku, dialect);
+      if (out.length >= limit || seen.has(key)) return;
+      if (q.trim() !== '' && !foldForDialect(line.ku, dialect, true).includes(want) && !(line.en ?? '').toLowerCase().includes(wantEn)) return;
+      seen.add(key);
+      out.push(line);
+    };
+    for (const l of conversation) {
+      add({ ku: l.ku, en: l.en, speaker: l.speaker, recording: l.recording || null, origin: { type: 'conversation', ref: `${l.exerciseId}:${l.index}` }, from: l.title, level: l.level });
+    }
+    for (const s of sentences) {
+      // a conversation's lines are listed above, with who says them
+      if (!s.origin.startsWith('lesson:')) continue;
+      const level = sentenceShape(s.ku, s.meaning.en, dialect).level;
+      add({ ku: s.ku, en: s.meaning.en, speaker: null, recording: lessonAudioKey(s.ku) || null, origin: { type: 'lesson', ref: s.origin.slice('lesson:'.length) }, from: null, level });
+    }
+    for (const p of passages) {
+      for (const sentence of storySentences(p.text)) {
+        const ku = sentence.trim();
+        if (ku === '') continue;
+        const level = Math.min(5, Math.max(1, p.level)) as GameLevel;
+        add({ ku, en: null, speaker: null, recording: lessonAudioKey(ku) || null, origin: { type: 'story', ref: `${p.storyId}:${p.paragraph}` }, from: p.title, level });
+      }
+    }
+    return out;
   }
 
   /** Readiness: what each game can be played with now, per variety, and every row's state. */

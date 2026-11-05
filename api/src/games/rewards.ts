@@ -14,6 +14,8 @@
  *   sources (GAME_XP_SOURCES), so the league's daily cap on game XP applies;
  *   its ref is `${sessionId}:${userId}`, unique to the learner, so XpService
  *   pays it once whatever happens;
+ * - a game whose round has costs of its own (Kurdish Detective's hints) has
+ *   them taken off what the answers earned, never below nothing;
  * - no Zêr and no Gewher, ever.
  *
  * Runs inside the caller's transaction (the one that closes the round), so a
@@ -51,6 +53,8 @@ export interface RoundToPay {
   source: string;
   items: readonly ItemOutcome[];
   now: Date;
+  /** XP the round's own costs take off what its answers earned (Kurdish Detective's hints); absent for a game without */
+  deduct?: number;
 }
 
 /**
@@ -78,7 +82,9 @@ export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: R
     const repeat = recent.has(i.key);
     return { index: i.index, correct: i.correct, firstTry: i.correct && i.firstTry, repeat, xp: learning ? answerXp(i.level, { correct: i.correct, firstTry: i.firstTry, repeat }) : 0 };
   });
-  const earned = shown.reduce((sum, i) => sum + i.xp, 0);
+  const answered = shown.reduce((sum, i) => sum + i.xp, 0);
+  const deducted = Math.min(answered, Math.max(0, round.deduct ?? 0));
+  const earned = answered - deducted;
 
   let xp = 0;
   let streak: number | null = null;
@@ -91,8 +97,8 @@ export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: R
   }
 
   // what the round covered, for the next round's choice and the next repeat check
-  const answered = items.filter((i) => i.answered);
-  if (answered.length > 0) {
+  const covered = items.filter((i) => i.answered);
+  if (covered.length > 0) {
     await client.query(
       `INSERT INTO game_seen (user_id, game, item_key, attempts, correct, last_seen_at, last_correct_at)
        SELECT $1::uuid, $2::text, s.key, 1, CASE WHEN s.correct THEN 1 ELSE 0 END, $4::timestamptz, CASE WHEN s.correct THEN $4::timestamptz END
@@ -102,9 +108,12 @@ export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: R
          correct = game_seen.correct + EXCLUDED.correct,
          last_seen_at = EXCLUDED.last_seen_at,
          last_correct_at = COALESCE(EXCLUDED.last_correct_at, game_seen.last_correct_at)`,
-      [userId, game, JSON.stringify(answered.map((i) => ({ key: i.key, correct: i.correct }))), now],
+      [userId, game, JSON.stringify(covered.map((i) => ({ key: i.key, correct: i.correct }))), now],
     );
   }
 
-  return { correct, total, firstTry, xp, learningCounted: learning, needed: Math.max(1, Math.ceil(total / 2)), items: shown, streak };
+  const results: SoloResults = { correct, total, firstTry, xp, learningCounted: learning, needed: Math.max(1, Math.ceil(total / 2)), items: shown, streak };
+  // what the costs took, only for a game that has them, and only from a round that was paying
+  if (round.deduct !== undefined) results.deducted = learning ? deducted : 0;
+  return results;
 }

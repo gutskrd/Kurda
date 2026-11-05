@@ -15,7 +15,7 @@
  * answer, a nudge and a correction.
  */
 import { foldForDialect, gameWords, type GameDialect } from '../dialect.js';
-import type { GameLevel, Meanings, SpokenAudio } from '../content.js';
+import type { GameLevel, Meanings, ScenePlace, SpokenAudio } from '../content.js';
 import type { GameDifficulty } from '../solo.js';
 
 /** Replies to choose from, the real one among them, by difficulty (advanced builds most replies from tiles). */
@@ -148,6 +148,40 @@ export function pickWrongReplies(pair: ScenarioPair, pool: readonly ReplyCandida
     out.push(c);
   }
   return out;
+}
+
+/**
+ * The places a conversation's English points to, most particular first: what
+ * an importer suggests as a scene's place, for the editor to keep or change.
+ */
+const PLACE_WORDS: ReadonlyArray<readonly [ScenePlace, RegExp]> = [
+  ['doctor', /\b(doctors?|medicine|ill|sick|hospital|fever)\b/gi],
+  ['bus', /\b(bus|buses|driver|ticket)\b/gi],
+  ['school', /\b(school|teachers?|class|homework|pupils?)\b/gi],
+  ['market', /\b(market|bazaar|buy|kilo|price|cheese|bread)\b/gi],
+  ['shop', /\b(shop|bookshop|bookseller|store|shopkeeper)\b/gi],
+  ['cafe', /\b(tea house|café|cafe|coffee)\b/gi],
+  ['phone', /\b(phone|calls?|ringing)\b/gi],
+  ['party', /\b(birthday|party|wedding|newroz|celebrat\w*|guests?)\b/gi],
+  ['work', /\b(work|office|job)\b/gi],
+  ['street', /\b(street|road|way|left|right|square)\b/gi],
+  ['village', /\b(village|orchard|meadow|spring|pastures?|mountains?|fields?)\b/gi],
+  ['home', /\b(house|home|kitchen|room|window|door|garden|bed)\b/gi],
+];
+
+/** The place a conversation's English mentions most (ties to the more particular one), or null when it names none. */
+export function guessPlace(english: ReadonlyArray<string | null | undefined>): ScenePlace | null {
+  const text = english.filter((e): e is string => typeof e === 'string').join(' \n ');
+  let best: ScenePlace | null = null;
+  let most = 0;
+  for (const [place, words] of PLACE_WORDS) {
+    const n = text.match(words)?.length ?? 0;
+    if (n > most) {
+      best = place;
+      most = n;
+    }
+  }
+  return best;
 }
 
 // ---------- what travels between the server and the apps ----------

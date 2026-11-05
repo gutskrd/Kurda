@@ -7,6 +7,7 @@
  *   GET  /games/solo/sessions/:id        come back to it: the items and how far it got
  *   POST /games/solo/sessions/:id/answers  one try at one item: right or not, a hint or the correction
  *   POST /games/solo/sessions/:id/finish   pay it (once), record the learning, say how it went
+ *   POST /games/solo/sessions/:id/hints    spend a hint, for a game whose rounds have them (Kurdish Detective)
  *
  * A game plugs in an engine (`SoloEngine`): how a round is made from its
  * approved pool, what an item looks like to the player, how a try is graded,
@@ -73,6 +74,22 @@ export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correct
   correction(item: Item, last: Answer | null, dialect: GameDialect): Correction;
   /** the key of the explanation the apps word */
   why(item: Item): string | null;
+  /**
+   * What the whole round shares beside its items, as the player is sent it,
+   * from what the round decided and how far it has got (Kurdish Detective's
+   * case board). Sent with the round when it is made and when it is read.
+   */
+  board?(items: Item[], meta: Record<string, unknown>, states: SoloItemState[]): unknown;
+  /** XP the round's own costs take off what its answers earned, at the finish (Kurdish Detective's hints) */
+  deduction?(meta: Record<string, unknown>): number;
+  /** what a request for a hint may ask for, for a game whose rounds have hints to spend */
+  hintAsk?: z.ZodType<unknown>;
+  /**
+   * Spend one hint on the round as a whole: what the round decides from now
+   * on (its new `meta`), or an AppError when there is none to give. The
+   * finish takes what was spent into account through `deduction`.
+   */
+  spendHint?(round: { items: Item[]; meta: Record<string, unknown>; states: SoloItemState[] }, ask: unknown): Record<string, unknown>;
   /** after the round is paid, inside the same transaction (Build a Kurdish Sentence moves its ladder) */
   finished?(client: pg.PoolClient, round: { userId: string; dialect: GameDialect; meta: Record<string, unknown>; results: SoloResults }): Promise<void>;
 }
@@ -175,16 +192,18 @@ export class SoloService {
        RETURNING expires_at`,
       [id, userId, game, dialect, difficulty, JSON.stringify(round.items), JSON.stringify(round.meta), round.items.length, SOLO_SESSION_HOURS],
     );
+    const states = statesOf(round.items.length, []);
     return {
       id,
       game,
       dialect,
       difficulty,
       items: round.items.map((item, i) => engine.view(item, i)),
-      states: statesOf(round.items.length, []),
+      states,
       maxAttempts: SOLO_MAX_ATTEMPTS,
       finished: false,
       expiresAt: res.rows[0]!.expires_at.toISOString(),
+      ...(engine.board ? { board: engine.board(round.items, round.meta, states) } : {}),
     };
   }
 
@@ -212,18 +231,20 @@ export class SoloService {
     const row = await this.load(this.pool, id, userId);
     const engine = this.engine(row.game);
     const answers = await this.answersOf(this.pool, row.id);
+    const states = statesOf(row.total_count, answers);
     return {
       id: row.id,
       game: row.game,
       dialect: row.dialect,
       difficulty: row.difficulty,
       items: row.items.map((item, i) => engine.view(item, i)),
-      states: statesOf(row.total_count, answers),
+      states,
       maxAttempts: SOLO_MAX_ATTEMPTS,
       finished: row.finished_at !== null,
       expiresAt: row.expires_at.toISOString(),
       expired: row.expired && row.finished_at === null,
       results: row.results,
+      ...(engine.board ? { board: engine.board(row.items, row.meta, states) } : {}),
     };
   }
 
@@ -298,6 +319,27 @@ export class SoloService {
   }
 
   /**
+   * Spend a hint on an open round, under the round's lock so two at once are
+   * two hints, never one counted twice. Answered with the round's board as it
+   * now stands.
+   */
+  async hint(id: string, userId: string, raw: unknown): Promise<{ board: unknown }> {
+    return this.tx(async (client) => {
+      const row = await this.load(client, id, userId, true);
+      const engine = this.engine(row.game);
+      if (!engine.spendHint || !engine.hintAsk) throw new AppError('NO_HINTS', 409, 'this game has no hints to spend');
+      if (row.finished_at) throw new AppError('GAME_SESSION_FINISHED', 409, 'this round is finished');
+      if (row.expired) throw new AppError('GAME_SESSION_EXPIRED', 410, 'this round has expired; start a new one');
+      const ask = engine.hintAsk.safeParse(raw ?? {});
+      if (!ask.success) throw new AppError('BAD_REQUEST', 400, 'that is not a hint this game gives');
+      const states = statesOf(row.total_count, await this.answersOf(client, row.id));
+      const meta = engine.spendHint({ items: row.items, meta: row.meta, states }, ask.data);
+      await client.query(`UPDATE game_sessions SET meta = $2::jsonb WHERE id = $1`, [row.id, JSON.stringify(meta)]);
+      return { board: engine.board ? engine.board(row.items, meta, states) : null };
+    });
+  }
+
+  /**
    * Close the round and pay it, once. A round asked to finish again answers
    * with the results it was paid with. Items never tried count as missed: a
    * round is scored out of all of it.
@@ -319,7 +361,8 @@ export class SoloService {
         firstTry: states[i]!.firstTry,
       }));
       const source = learnGame(row.game).xpSources[0]!;
-      const results = await payRound(client, this.deps, { sessionId: row.id, userId, game: row.game, source, items, now });
+      const deduct = engine.deduction?.(row.meta);
+      const results = await payRound(client, this.deps, { sessionId: row.id, userId, game: row.game, source, items, now, deduct });
       await engine.finished?.(client, { userId, dialect: row.dialect, meta: row.meta, results });
       await client.query(
         `UPDATE game_sessions SET finished_at = $2, results = $3::jsonb, xp_awarded = $4, learning_counted = $5 WHERE id = $1`,

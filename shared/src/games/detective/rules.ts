@@ -16,7 +16,7 @@
  * never less than nothing.
  */
 import { isSpeakerId, type SpeakerId } from '../../lipsync/speakers.js';
-import type { CaseFileContent, Meanings } from '../content.js';
+import type { CaseFileContent, ContentOrigin, GameLevel, Meanings } from '../content.js';
 
 /** Hints one case allows, whatever they are spent on. */
 export const DETECTIVE_HINTS = 3;
@@ -98,4 +98,23 @@ export interface DetectiveCorrection {
 /** POST /games/detective/sessions/:id/hints: spend a hint on a card's meaning, or (no card) on the next written hint. */
 export interface DetectiveHintAsk {
   evidence?: string;
+}
+
+/**
+ * A published line an editor can pick for a case's evidence or a scene's
+ * replies (GET /admin/game-content/lines), so the Kurdish is copied from where
+ * a person approved it and never typed again: a conversation's line, a
+ * lesson's sentence, a story's sentence.
+ */
+export interface PublishedLine {
+  ku: string;
+  /** what the lesson gives it to mean; a story's sentences have none, and the editor writes it */
+  en: string | null;
+  speaker: SpeakerId | null;
+  /** the lesson-audio key its recording is (or would be) filed under */
+  recording: string | null;
+  origin: ContentOrigin;
+  /** where it is from, for the picker's list: the conversation's or story's title */
+  from: string | null;
+  level: GameLevel;
 }
