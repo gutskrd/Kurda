@@ -43,6 +43,7 @@ import {
   GAME_LEVELS,
   LEARN_GAMES,
   PASSAGE_HIDDEN,
+  SCENARIO_LINE_WORDS,
   SCENARIO_TILE_WORDS,
   checkGameContent,
   contentHeadline,
@@ -560,9 +561,9 @@ export class GameContentAdminService {
       const pairs: Array<[TaughtLine, TaughtLine]> = [];
       for (let i = 0; i + 1 < conversation.length; i++) {
         const [a, b] = [conversation[i]!, conversation[i + 1]!];
-        // someone else answering, both with their English, the answer of a size to choose or build
+        // someone else answering, both with their English, each long enough to say something particular, the answer of a size to choose or build
         if (a.index + 1 !== b.index || a.part === b.part || !a.en || !b.en) continue;
-        if (words(b.ku) < SCENARIO_TILE_WORDS.min || words(b.ku) > SCENARIO_TILE_WORDS.max + 2) continue;
+        if (words(a.ku) < SCENARIO_LINE_WORDS || words(b.ku) < SCENARIO_LINE_WORDS || words(b.ku) > SCENARIO_TILE_WORDS.max + 2) continue;
         pairs.push([a, b]);
       }
       const asked = (l: TaughtLine) => /[?؟]\s*$/u.test(l.ku);

@@ -30,6 +30,13 @@ export const SCENARIO_TILE_WORDS = { min: 2, max: 10 } as const;
 /** Wrong replies an importer puts in a draft for the editor to check; a scenario keeps two to four. */
 export const SCENARIO_CANDIDATES = 4;
 
+/**
+ * The fewest words a line an importer takes may have — the line heard, the
+ * reply and a wrong reply alike: a line of one or two words ("And Baran?",
+ * "In Hewlêr?") could follow too many others to be clearly right or wrong.
+ */
+export const SCENARIO_LINE_WORDS = 3;
+
 /** Whether a reply is built from tiles: at advanced level, when it has a sensible number of words for it. */
 export function buildsFromTiles(difficulty: GameDifficulty, reply: string): boolean {
   const n = gameWords(reply).length;
@@ -107,7 +114,8 @@ function hash(text: string): number {
  * importer). A line is offered only when it is clearly wrong after the line
  * heard and still a fair choice:
  *   - from another conversation, at the pair's level or one either side;
- *   - about as long as the real reply, so length gives nothing away;
+ *   - SCENARIO_LINE_WORDS or more, and about as long as the real reply, so
+ *     length gives nothing away;
  *   - sharing few of its meaningful words with the line heard or the reply,
  *     so it is no paraphrase that would fit too;
  *   - not made mostly of words that answer anything (yes, no, thanks);
@@ -127,7 +135,7 @@ export function pickWrongReplies(pair: ScenarioPair, pool: readonly ReplyCandida
   const fits = pool.filter((c) => {
     if (c.conversation === pair.conversation || Math.abs(c.level - pair.level) > 1) return false;
     const words = gameWords(c.ku);
-    if (words.length < 2 || Math.abs(words.length - replyWords) > slack) return false;
+    if (words.length < SCENARIO_LINE_WORDS || Math.abs(words.length - replyWords) > slack) return false;
     const mine = contentWords(c.ku, dialect);
     if (overlap(mine, heard) > 0.34 || overlap(mine, real) > 0.34 || overlap(real, mine) > 0.34) return false;
     const plain = words.filter((w) => !generic.has(foldForDialect(w, dialect, true))).length;
