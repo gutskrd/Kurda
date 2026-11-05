@@ -42,8 +42,14 @@ import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.j
 const MODEL = { width: 300, height: 618, radius: 52.5, depth: 30 } as const;
 /** How far the rounded side reaches in from the outline, and how deep it runs toward the glass and the back. */
 const SIDE = { inset: 3.5, round: 5 } as const;
-/** Room around the phone on the canvas, so a turned edge, a button or the float never runs off it. */
-export const PHONE_GL_MARGIN = 64;
+/**
+ * Room around the phone on the canvas, so a turned edge, a button or the
+ * float never runs off it: a fifth of the phone's width, which on a narrow
+ * phone screen still leaves the canvas inside the page.
+ */
+function marginFor(width: number): number {
+  return Math.round(Math.min(64, width * 0.2));
+}
 
 const DEG = Math.PI / 180;
 
@@ -209,13 +215,14 @@ export function mountPhoneGl(canvas: HTMLCanvasElement, stage: PhoneStage): Phon
   const far = 6000;
 
   const fit = (next: PhoneStage): void => {
-    const canvasWidth = next.width + PHONE_GL_MARGIN * 2;
-    const canvasHeight = next.height + PHONE_GL_MARGIN * 2;
+    const margin = marginFor(next.width);
+    const canvasWidth = next.width + margin * 2;
+    const canvasHeight = next.height + margin * 2;
     renderer.setSize(canvasWidth, canvasHeight, false);
     canvas.style.width = `${canvasWidth}px`;
     canvas.style.height = `${canvasHeight}px`;
-    canvas.style.left = `${-PHONE_GL_MARGIN}px`;
-    canvas.style.top = `${-PHONE_GL_MARGIN}px`;
+    canvas.style.left = `${-margin}px`;
+    canvas.style.top = `${-margin}px`;
     model.scale.setScalar(next.width / MODEL.width);
     // the eye: where the CSS perspective puts it, in a world whose origin is the phone box's centre and whose y points up
     const eyeX = next.originX - next.width / 2;
