@@ -10,8 +10,9 @@
  *   POST   /admin/game-content/:id/{submit|publish|unpublish|archive}   { lockVersion }
  *   POST   /admin/game-content/:id/review     { approved, note?, lockVersion }
  *   DELETE /admin/game-content/:id?lockVersion=
- *   POST   /admin/game-content/import         { from: 'lessons' | 'stories' | 'vocabulary', dialect }: drafts from approved content
+ *   POST   /admin/game-content/import         { from: 'lessons' | 'stories' | 'vocabulary' | 'conversations', dialect }: drafts from approved content
  *   GET    /admin/game-content/vocabulary?dialect&q&limit   published vocabulary, for a card's words to be picked from
+ *   GET    /admin/game-content/lines?dialect=&q=   published lines to copy into a scene or a case, never typed again
  *
  * The rules are the stories': every change names the version it was made on
  * (409 STALE when someone else changed it first), publishing needs a
@@ -29,6 +30,7 @@ import {
   type GameContentStatus,
   type GameDialect,
   type LearnGameId,
+  type PublishedLine,
 } from '@kurda/shared';
 import { api } from './api';
 
@@ -177,7 +179,8 @@ export const reviewGameContent = (id: string, approved: boolean, note: string | 
 export const deleteGameContent = (id: string, lockVersion: number): Promise<{ id: string; deleted: true }> =>
   api(`${at(id)}?lockVersion=${lockVersion}`, { method: 'DELETE' });
 
-export type GameContentImport = 'lessons' | 'stories' | 'vocabulary';
+/** Where an import takes its drafts from: lessons' sentences, stories' paragraphs, published vocabulary's starter word cards, or conversations' scenes. */
+export type GameContentImport = 'lessons' | 'stories' | 'vocabulary' | 'conversations';
 
 export const importGameContent = (from: GameContentImport, dialect: GameDialect): Promise<{ created: number; skipped: number }> =>
   api(`${BASE}/import`, { method: 'POST', body: { from, dialect } });
@@ -199,3 +202,7 @@ export const searchVocabulary = (dialect: GameDialect, q: string): Promise<{ wor
 /** The categories of a variety the word cards can be filed under (every one, whatever its state: the card is reviewed itself). */
 export const listWordCategories = (dialect: GameDialect): Promise<{ rows: AdminGameContent[]; total: number }> =>
   api(`${BASE}?kind=word_category&dialect=${dialect}&limit=100`);
+
+/** Published lines of a variety, for a scene's or a case's Kurdish to be copied from. */
+export const publishedLines = (dialect: GameDialect, q: string): Promise<{ lines: PublishedLine[] }> =>
+  api(`${BASE}/lines?dialect=${dialect}${q.trim() ? `&q=${encodeURIComponent(q.trim())}` : ''}`);

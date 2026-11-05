@@ -38,6 +38,7 @@ import {
   type GameContentImport,
 } from '../gameContent';
 import { TabooCardFields, WordCardFields } from './GameCardFields';
+import { CaseFileFields, ScenarioFields } from './SceneCaseFields';
 import {
   Badge,
   Banner,
@@ -143,7 +144,7 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' }): React.JSX.Elem
         <>
           <Section
             title="Import from approved content"
-            description="Makes drafts from what is already published, without typing the Kurdish again: lessons’ sentences with their English and accepted orders, stories’ paragraphs with their glossary words to hide, and Kurdish Impostor’s word cards — published words sorted into starter categories by their meaning, whose category names wait for a native speaker. Each draft still needs review. Running an import twice adds nothing new."
+            description="Makes drafts from what is already published, without typing the Kurdish again: lessons’ sentences with their English and accepted orders, stories’ paragraphs with their glossary words to hide, conversations’ moments as scenes with real wrong replies from other conversations, and Kurdish Impostor’s word cards — published words sorted into starter categories by their meaning, whose category names wait for a native speaker. Each draft still needs review. Running an import twice adds nothing new."
           >
             <div className="row">
               {GAME_DIALECTS.map((d) => (
@@ -153,6 +154,9 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' }): React.JSX.Elem
                   </Button>
                   <Button icon="upload" busy={importing} onClick={() => void runImport('stories', d)}>
                     Passages from stories ({GAME_DIALECT_NAME[d]})
+                  </Button>
+                  <Button icon="upload" busy={importing} onClick={() => void runImport('conversations', d)}>
+                    Scenes from conversations ({GAME_DIALECT_NAME[d]})
                   </Button>
                   <Button icon="upload" busy={importing} onClick={() => void runImport('vocabulary', d)}>
                     Starter word cards from vocabulary ({GAME_DIALECT_NAME[d]})
@@ -711,6 +715,10 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
           <SentenceFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
         ) : kind === 'passage' ? (
           <PassageFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
+        ) : kind === 'scenario' ? (
+          <ScenarioFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
+        ) : kind === 'case_file' ? (
+          <CaseFileFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
         ) : kind === 'word_card' ? (
           <WordCardFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} Meanings={MeaningsFields} />
         ) : kind === 'taboo_card' ? (

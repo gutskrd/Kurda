@@ -666,3 +666,13 @@ button.cv-line-main {
 .gc-pick { min-height: 36px; padding: 4px 10px; border: 1px solid var(--separator); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
 .gc-pick:hover { background: var(--hover, rgba(127, 127, 127, 0.12)); }
 .gc-picked { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+/* What Would You Say?'s and Kurdish Detective's editors (SceneCaseFields.tsx): Kurdish shown, never typed, and the line picker */
+.gc-line { display: grid; gap: 2px; }
+.gc-line-ku { font-size: 15px; font-weight: 600; }
+.gc-card { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid var(--separator); border-radius: 10px; }
+.gc-card.row { display: flex; flex-wrap: wrap; align-items: center; }
+.gc-proof { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 6px 0 0; border: 0; }
+.gc-proof legend { padding: 0; color: var(--text-dim); font-size: 12px; }
+.gc-picker { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--separator); border-radius: 10px; }
+.gc-picker-list { display: grid; gap: 6px; max-height: 360px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.gc-picker-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--separator); }
