@@ -175,11 +175,11 @@ describe('WarningDialog', () => {
     });
     testAuth.client = client;
     renderWithProviders(<WarningDialog />);
-    expect(await screen.findByText('A note from Hevalo')).toBeTruthy();
+    expect(await screen.findByText('A warning about your account')).toBeTruthy();
     expect(screen.getByText('This is a warning about one of our rules: Scam or spam. A warning doesn’t limit anything on your account.')).toBeTruthy();
     expect(screen.getByText('Please stop posting links.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'I understand' }));
-    await waitFor(() => expect(screen.queryByText('A note from Hevalo')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('A warning about your account')).toBeNull());
     expect(client.calls.find((c) => c.path === '/me/standing/ack')?.body).toEqual({ ids: ['w1'] });
   });
 
@@ -188,7 +188,7 @@ describe('WarningDialog', () => {
     testAuth.client = client;
     renderWithProviders(<WarningDialog />);
     await waitFor(() => expect(client.calls.length).toBe(1));
-    expect(screen.queryByText('A note from Hevalo')).toBeNull();
+    expect(screen.queryByText('A warning about your account')).toBeNull();
   });
 
   it('asks again when the app comes back to the front, and shows a warning given meanwhile', async () => {
@@ -205,9 +205,9 @@ describe('WarningDialog', () => {
     testAuth.client = client;
     renderWithProviders(<WarningDialog />);
     await waitFor(() => expect(client.calls.length).toBe(1));
-    expect(screen.queryByText('A note from Hevalo')).toBeNull();
+    expect(screen.queryByText('A warning about your account')).toBeNull();
     act(() => listeners.forEach((cb) => cb('active')));
-    expect(await screen.findByText('A note from Hevalo')).toBeTruthy();
+    expect(await screen.findByText('A warning about your account')).toBeTruthy();
     spy.mockRestore();
   });
 });
