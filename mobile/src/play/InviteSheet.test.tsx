@@ -184,7 +184,7 @@ describe('InviteSheet', () => {
     await screen.findByRole('radio', { name: 'Rojda' });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Create the game' }).getAttribute('aria-disabled')).not.toBe('true'));
     fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
-    expect(await screen.findByText('This isn’t on the server yet. It will work once the server is updated.')).toBeTruthy();
+    expect(await screen.findByText('This part of Hevalo isn’t available yet. Please try again later.')).toBeTruthy();
     expect(screen.queryByText('route not found')).toBeNull();
     expect(navigation.navigate).not.toHaveBeenCalled();
   });
@@ -308,7 +308,7 @@ describe('InviteSheet, its tickets', () => {
     renderWithProviders(<InviteSheet target={{ kind: 'lobby', game: 'rhyme-match', lobbyId: 'm1', mode: 'group' }} onClose={() => undefined} />);
     fireEvent.click(await screen.findByRole('checkbox', { name: 'Sipan' }));
     fireEvent.click(screen.getByRole('button', { name: 'Send invites (1)' }));
-    expect(await screen.findByText('This isn’t on the server yet. It will work once the server is updated.')).toBeTruthy();
+    expect(await screen.findByText('This part of Hevalo isn’t available yet. Please try again later.')).toBeTruthy();
     expect(felt).toEqual(['error']);
     // still written out, still picked, ready to try again
     expect(screen.getAllByText('Sipan')).toHaveLength(2);
