@@ -5,7 +5,7 @@ import type { StoryLibrary, StoryListItem } from '@kurda/shared';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
-import { onHaptic } from '../feedback/haptics';
+import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { resetPrefsCache } from './prefs';
 import { NO_FILTER, StoriesView, defaultDialect, isFiltering, libraryQuery } from './StoriesView';
@@ -136,6 +136,8 @@ describe('StoriesView', () => {
   beforeEach(() => {
     localStorage.clear();
     resetPrefsCache();
+    // each test starts with a quiet phone: the chips tapped in the one before must not use up the bookmark's buzz
+    resetHaptics();
     testAuth.user = { ...testAuth.user, guest: false };
     navigation.navigate.mockClear();
     navigation.replace.mockClear();
