@@ -135,6 +135,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
     return { token: res.json().tokens.accessToken as string, id };
   }
 
+  /** The file any recording not of this suite's is read as. */
+  const OTHERS = wav(999);
+
   const call = (method: 'GET' | 'POST', url: string, token: string, payload?: unknown, headers: Record<string, string> = {}) =>
     app.inject({ method, url, payload: payload as never, headers: { ...headers, ...(token ? { authorization: `Bearer ${token}` } : {}) }, remoteAddress: '10.96.251.3' });
 
@@ -205,9 +208,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
+    // another suite's recording may be in a round too: the bucket holds a file for it, the same for all of them
     app.storage!.read = async (key) => {
-      const found = objects.get(key);
-      if (!found) return null;
+      const found = objects.get(key) ?? OTHERS;
       return { body: Readable.from([found.subarray(0, 100), found.subarray(100)]), contentType: 'audio/wav', contentLength: found.length };
     };
 
@@ -377,7 +380,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
       view.items.forEach((v: Record<string, unknown>, i: number) => {
         expect(Object.keys(v).sort()).toEqual(['clip', 'index', 'level', 'meanings', 'newVoice', 'options', 'replays', 'speaker', 'stage']);
         expect(v.clip).toBe(items[i]!.clip);
-        expect(sent).not.toContain(items[i]!.recording.id);
+        // the handle is no key of the recording's, and an item that asks for a meaning never carries the Kurdish it asks about
+        expect(String(v.clip)).not.toContain(items[i]!.recording.id);
+        if (items[i]!.stage === 'phrase') expect(JSON.stringify(v)).not.toContain(items[i]!.text);
       });
       // a letter's sound is never a word to find
       const services = learnGameServices(app, { xp: new XpService(app.db) });
@@ -397,11 +402,12 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
       expect(whole.headers['accept-ranges']).toBe('bytes');
       expect(String(whole.headers['cache-control'])).toMatch(/^private/);
       const media = (await pool.query<{ media_key: string }>(`SELECT media_key FROM lesson_audio WHERE key = $1`, [items[0]!.recording.id])).rows[0]!.media_key;
-      expect(whole.rawPayload.equals(objects.get(media)!)).toBe(true);
+      const file = objects.get(media) ?? OTHERS;
+      expect(whole.rawPayload.equals(file)).toBe(true);
 
       const start = await call('GET', path, '', undefined, { range: 'bytes=0-1' });
       expect(start.statusCode).toBe(206);
-      expect(start.headers['content-range']).toBe(`bytes 0-1/${objects.get(media)!.length}`);
+      expect(start.headers['content-range']).toBe(`bytes 0-1/${file.length}`);
       expect(start.rawPayload.toString('latin1')).toBe('RI');
       expect((await call('GET', path, '', undefined, { range: 'bytes=999999-' })).statusCode).toBe(416);
 
