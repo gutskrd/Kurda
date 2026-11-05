@@ -654,7 +654,7 @@
             {
               "key": "u02s4l3",
               "position": 3,
-              "titleKu": "Kî çi heye?",
+              "titleKu": "Kê çi heye?",
               "titleEn": "Who has what?",
               "focus": "talk",
               "beat": "A game at dinner: everyone says one thing they have and one they don’t. Hevalo: “Sêveke min tune!” So everyone gives him one — and now he has six.",
@@ -700,8 +700,8 @@
           "position": 1,
           "titleKu": "Ev mala me ye",
           "titleEn": "This is our house",
-          "grammar": "this and that: ev / ew, and after a preposition vî / vê / van, wî / wê / wan (li vê odeyê, di wî xanî de)",
-          "grammarMd": "**ev** means *this, these* and **ew** *that, those* — when they are the subject:\n\n- *Ev ode ye.* This is a room. · *Ew derî şîn e.* That door is blue.\n\nAfter a preposition (li, ji, di … de, bi) they change, and so does the noun:\n\n- masculine: **vî / wî** + **-î**: *di vî xanî de* in this house · *li wî gundî* in that village\n- feminine: **vê / wê** + **-ê**: *li vê odeyê* in this room · *ji wê malê* from that house\n- plural: **van / wan** + **-an**: *li van gundan* in these villages\n\nThis changed form is the **oblique**. You already know it from *ji Amedê* and *li malê*.",
+          "grammar": "this and that: ev / ew, and after a preposition vî / vê / van, wî / wê / wan (li vê odeyê, li wî gundî)",
+          "grammarMd": "**ev** means *this, these* and **ew** *that, those* — when they are the subject:\n\n- *Ev ode ye.* This is a room. · *Ew derî şîn e.* That door is blue.\n\nAfter a preposition (li, ji, di … de, bi) they change, and so does the noun:\n\n- masculine: **vî / wî** + **-î**: *li vî gundî* in this village · *ji wî gundî* from that village\n- feminine: **vê / wê** + **-ê**: *li vê odeyê* in this room · *ji wê malê* from that house\n- plural: **van / wan** + **-an**: *li van gundan* in these villages\n\nThis changed form is the **oblique**. You already know it from *ji Amedê* and *li malê*.",
           "lessons": [
             {
               "key": "u03s1l1",
@@ -1070,7 +1070,7 @@
             {
               "key": "u04s1l4",
               "position": 4,
-              "titleKu": "Deyna kevn",
+              "titleKu": "Deynê kevn",
               "titleEn": "The old debt",
               "focus": "review",
               "beat": "Over tea Hamo and Mîrza tell old stories. Then Mîrza remembers: Hamo still owes him for a watermelon — from twenty years ago.",
