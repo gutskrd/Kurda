@@ -1,13 +1,13 @@
 import { useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import '@fontsource-variable/vazirmatn';
-import { KURDISH_NUMBER_MAX, WORD_SET_IDS, easternDigits, wordIn, wordSet, type AlphabetScript, type WordSetId } from '@kurda/shared';
+import { KURDISH_NUMBER_MAX, WORD_SET_IDS, wordIn, wordSet, wordSetSvg, type AlphabetScript, type WordSetId } from '@kurda/shared';
 import { useScript } from '../alphabet/script';
-import { CalendarIcon, ChevronIcon } from '../components/icons';
+import { ChevronIcon } from '../components/icons';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import { formatNumber, scriptDir, scriptLang } from '../words/parts';
 import { seenCounts } from '../words/seen';
-import { SEASON_TINTS, SET_BODY, SET_NAME, SET_TITLE, TEASER_COLOURS } from '../words/sets';
+import { SET_BODY, SET_NAME, SET_TITLE } from '../words/sets';
 
 /**
  * Words to know: the colours, the numbers, the days of the week and the
@@ -82,31 +82,12 @@ function SetCard({ set, dialect, seen }: { set: WordSetId; dialect: AlphabetScri
   );
 }
 
-/** A picture of what a set holds, in place of an icon, as the alphabet's tile shows its letters. */
+/**
+ * A picture of what a set holds, in place of an icon, as the alphabet's tile
+ * shows its letters: a paint palette, an abacus, the sun (roj, the day) and a
+ * wall calendar, drawn in the shared art so the phone shows the same four.
+ */
 function Teaser({ set }: { set: WordSetId }): React.JSX.Element {
-  const locale = useLocale();
-  if (set === 'colours' || set === 'months') {
-    const dots = set === 'colours' ? TEASER_COLOURS : SEASON_TINTS;
-    return (
-      <span className="wd-teaser" aria-hidden="true">
-        <span className={`wd-teaser-dots${set === 'months' ? ' is-round' : ''}`}>
-          {dots.map((hex) => (
-            <i key={hex} style={{ background: hex }} />
-          ))}
-        </span>
-      </span>
-    );
-  }
-  if (set === 'numbers') {
-    return (
-      <span className="wd-teaser" aria-hidden="true">
-        <span className="wd-teaser-digits">{locale === 'ckb' || locale === 'ar' ? easternDigits(123) : '123'}</span>
-      </span>
-    );
-  }
-  return (
-    <span className="wd-teaser" aria-hidden="true">
-      <CalendarIcon size={26} />
-    </span>
-  );
+  const markup = useMemo(() => ({ __html: wordSetSvg({ set, size: 44 }) }), [set]);
+  return <span className="wd-teaser" aria-hidden="true" dangerouslySetInnerHTML={markup} />;
 }

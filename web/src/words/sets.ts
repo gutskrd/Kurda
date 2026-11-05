@@ -1,11 +1,12 @@
-import { SEASONS, SEASON_ORDER, WORD_COLOURS, type KurdishWord, type WordGroupId, type WordSetId } from '@kurda/shared';
+import { WORD_COLOURS, type KurdishWord, type WordGroupId, type WordSetId } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 
 /**
  * What the pages call each set, and what they show for it: the title and the
- * line under it, the set's own Kurdish name, and the colours its card is
- * pictured with. Kept apart from the two pages (Words.tsx, WordSet.tsx) so
- * both, and Learn's tile, read the same names.
+ * line under it, the set's own Kurdish name, and the colours Learn's tile is
+ * pictured with (each set's own card has a drawing, shared `wordSetSvg`).
+ * Kept apart from the two pages (Words.tsx, WordSet.tsx) so both, and Learn's
+ * tile, read the same names.
  */
 
 export const SET_TITLE: Record<WordSetId, MessageKey> = {
@@ -45,11 +46,8 @@ export const GROUP_TITLE: Partial<Record<WordGroupId, MessageKey>> = {
   kurdish: 'words.group.kurdish',
 };
 
-/** The first four colours, for the colours' card and Learn's tile. */
+/** The first four colours, for Learn's tile, where they stand for all the words. */
 export const TEASER_COLOURS: readonly string[] = ['red', 'yellow', 'green', 'blue'].map((id) => WORD_COLOURS.find((c) => c.id === id)!.hex);
-
-/** The four seasons' tints, in order, for the months' card. */
-export const SEASON_TINTS: readonly string[] = SEASON_ORDER.map((s) => SEASONS[s].tint);
 
 /** A season's tint over a month's tile or a legend's pill: faint enough that the words keep their contrast in either theme. */
 export const tinted = (hex: string): string => `${hex}2E`;

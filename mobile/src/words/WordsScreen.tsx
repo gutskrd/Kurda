@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
-import { KURDISH_NUMBER_MAX, SEASONS, SEASON_ORDER, WORD_COLOURS, WORD_SET_IDS, easternDigits, wordSet, type WordSetId } from '@kurda/shared';
+import { SvgXml } from 'react-native-svg';
+import { KURDISH_NUMBER_MAX, WORD_SET_IDS, wordSet, wordSetSvg, type WordSetId } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import type { TranslationKey } from '../i18n/translations';
@@ -23,9 +25,6 @@ const SET_BODY: Record<WordSetId, TranslationKey> = {
   days: 'words.set.daysBody',
   months: 'words.set.monthsBody',
 };
-
-/** The first four colours, for the colours' card. */
-const TEASER_COLOURS = ['red', 'yellow', 'green', 'blue'].map((id) => WORD_COLOURS.find((c) => c.id === id)!.hex);
 
 /**
  * Words to know: the colours, the numbers, the days of the week and the
@@ -91,38 +90,23 @@ function SetCard({ set, seen, onPress }: { set: WordSetId; seen: number; onPress
   );
 }
 
-/** A picture of what a set holds, in place of an icon, as the alphabet's tool shows its letters. */
+/**
+ * A picture of what a set holds, in place of an icon, as the alphabet's tool
+ * shows its letters: a paint palette, an abacus, the sun (roj, the day) and a
+ * wall calendar, drawn in the shared art so the browser shows the same four.
+ */
 function Teaser({ set }: { set: WordSetId }): React.JSX.Element {
   const { colors } = useTheme();
-  const { locale } = useI18n();
-  const box = [styles.teaser, { backgroundColor: colors.controlTrack }];
-  if (set === 'colours' || set === 'months') {
-    const dots = set === 'colours' ? TEASER_COLOURS : SEASON_ORDER.map((s) => SEASONS[s].tint);
-    return (
-      <View style={[box, styles.dots]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        {dots.map((hex) => (
-          <View key={hex} style={[styles.dot, set === 'months' && styles.round, { backgroundColor: hex }]} />
-        ))}
-      </View>
-    );
-  }
-  if (set === 'numbers') {
-    return (
-      <View style={box} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Text style={[styles.teaserText, { color: colors.goldText }]} maxFontSizeMultiplier={1.2}>
-          {locale === 'ckb' || locale === 'ar' ? easternDigits(123) : '123'}
-        </Text>
-      </View>
-    );
-  }
+  const xml = useMemo(() => wordSetSvg({ set, size: PICTURE }), [set]);
   return (
-    <View style={box} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Icon name="calendar" size={26} color={colors.goldText} />
+    <View style={[styles.teaser, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <SvgXml xml={xml} width={PICTURE} height={PICTURE} />
     </View>
   );
 }
 
 const TEASER = 56;
+const PICTURE = 44;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
@@ -140,8 +124,4 @@ const styles = StyleSheet.create({
   count: { flexShrink: 1, fontSize: typography.sizes.xs },
 
   teaser: { width: TEASER, height: TEASER, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  dots: { flexDirection: 'row', flexWrap: 'wrap', alignContent: 'center', gap: 4, padding: 10 },
-  dot: { width: 16, height: 16, borderRadius: radii.xs },
-  round: { borderRadius: radii.pill },
-  teaserText: { ...display(typography.sizes.lg) },
 });
