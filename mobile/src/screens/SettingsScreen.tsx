@@ -19,7 +19,7 @@ import { ACCENT_LABEL } from '../keyboard/KeyboardSettings';
 import { useKeyboardPrefs } from '../keyboard/prefs';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
 import { SearchField } from '../theme/SearchField';
-import { LEGAL_URLS, SUPPORT_EMAIL, openLegal } from '../legal/links';
+import { LEGAL_URLS, SUPPORT_EMAIL, contactSupport, openLegal } from '../legal/links';
 import { useMyAccount } from '../settings/account';
 import { useSettingsAttention } from '../settings/attention';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
@@ -301,15 +301,27 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           row: <FeedbackSettingsRows />,
         },
         {
+          // the answers first: most questions have been asked before, and the answer is quicker than an email
+          key: 'faq',
+          terms: [t('settings.faq')],
+          row: <SettingsRow icon="question" title={t('settings.faq')} opens={false} onPress={() => openLegal('faq')} />,
+        },
+        {
+          // the mail app, or the address copied when there is none to open
           key: 'support',
           terms: [t('settings.support'), SUPPORT_EMAIL],
-          row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} opens={false} onPress={() => openLegal('support')} />,
+          row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} opens={false} onPress={() => void contactSupport(t)} />,
         },
         {
           // the website's pages the app answers to, each opened on hevalo.app so there is one copy of each
           key: 'teaching',
           terms: [t('settings.teaching')],
           row: <SettingsRow icon="book" title={t('settings.teaching')} opens={false} onPress={() => openLegal('teaching')} />,
+        },
+        {
+          key: 'aboutPage',
+          terms: [t('settings.about')],
+          row: <SettingsRow icon="globe" title={t('settings.about')} opens={false} onPress={() => openLegal('about')} />,
         },
         {
           key: 'terms',
