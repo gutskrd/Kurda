@@ -6,14 +6,13 @@ import { BookmarkIcon, HeadphonesIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { readerPath, setBookmark } from './api';
 import { StoryCover } from './Cover';
-import { cefrLabel, minutesLeft, narratedKey } from './labels';
+import { levelHint, levelName, minutesLeft, narratedKey } from './labels';
 
 /**
  * A story on a shelf of the library (design notes §5): its cover, title and
- * one line of summary, then its facts — the CEFR letter (the word it stands
- * for on hover, and read out), its category, how long it takes (or how long
- * is left for this reader), and a headphones mark when it can be listened
- * to. A hairline along the foot shows how far the reader got; a finished
+ * one line of summary, then its facts — its level by its plain name (what
+ * that means on hover), its category, how long it takes (or how long is left
+ * for this reader), and a headphones mark when it can be listened to. A hairline along the foot shows how far the reader got; a finished
  * story's runs the whole way.
  *
  * The bookmark is a button of its own beside the link, not inside it (a
@@ -76,9 +75,8 @@ export function StoryCard({
             </span>
           )}
           <span className="story-card-meta">
-            <span className="story-cefr" title={cefrLabel(story.cefr, t)}>
-              <span aria-hidden="true">{story.cefr}</span>
-              <span className="sr-only">{cefrLabel(story.cefr, t)}</span>
+            <span className="story-cefr" title={levelHint(story.level, t)}>
+              {levelName(story.level, t)}
             </span>
             {category && <span>{category}</span>}
             <span>{left !== null ? t('stories.library.minutesLeft', { count: left }) : t('stories.minutes', { count: story.readingMinutes })}</span>

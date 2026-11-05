@@ -226,50 +226,47 @@
   }
 }
 
-/* the search field and the filter chips */
+/*
+ * The search field with the sort and filter funnel at its end (styles/filter.css
+ * draws the funnel, its panel and the chips), and under them a chip for each
+ * thing that is on.
+ */
 .story-filters {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 22px;
 }
-.story-search {
-  max-width: 480px;
-}
-.story-chip-rows {
+.story-filter-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px 18px;
+  align-items: center;
+  gap: 8px;
+  max-width: 528px;
 }
+.story-search {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+/* the funnel stands beside the field at the field's own height */
+.story-filter-sheet {
+  margin-inline-start: 0;
+}
+.story-filter-sheet .ffilter-btn {
+  width: 46px;
+  height: 46px;
+}
+.story-filter-chips {
+  align-items: center;
+}
+.story-filter-clear {
+  padding-inline: 6px;
+  font-size: 0.875rem;
+}
+/* the shelf of categories: chips that each open their own shelf, with a count */
 .story-chip-row {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-/*
- * On a phone each group of filters is one row that scrolls sideways, out to
- * the screen's edges as the shelves do, so the shelves start on the first
- * screen rather than under five rows of chips.
- */
-@media (max-width: 640px) {
-  .story-chip-rows {
-    flex-direction: column;
-    flex-wrap: nowrap;
-    gap: 8px;
-  }
-  .story-filters .story-chip-row {
-    flex-wrap: nowrap;
-    margin-inline: -16px;
-    padding: 2px 16px;
-    overflow-x: auto;
-    scrollbar-width: none;
-  }
-  .story-filters .story-chip-row::-webkit-scrollbar {
-    display: none;
-  }
-  .story-filters .story-chip {
-    flex: none;
-  }
 }
 .story-chip {
   display: inline-flex;
@@ -358,10 +355,6 @@
   flex-wrap: wrap;
   align-items: baseline;
   gap: 6px 16px;
-}
-.story-results-clear {
-  font-size: 0.85rem;
-  color: var(--ink-3);
 }
 .story-grid {
   list-style: none;
@@ -527,9 +520,8 @@
   color: var(--gold-ink);
   font-size: var(--text-tab);
   font-weight: 700;
-  letter-spacing: 0.04em;
-  /* a level's letters read the same way in every language */
-  direction: ltr;
+  /* a level's plain name is a word like any other, one line however long it is in a language */
+  white-space: nowrap;
 }
 .story-narrated {
   display: inline-flex;

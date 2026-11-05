@@ -1,26 +1,22 @@
 /**
- * The words a story's facts are shown with: a CEFR letter with the word it
- * stands for, the minutes left from where a reader got to, a category's name
- * in the reader's language. Shared by the library's cards and the story page,
- * so the two never say the same thing two ways.
+ * The words a story's facts are shown with: a level's plain name and what it
+ * means, the minutes left from where a reader got to, a category's name in
+ * the reader's language. Shared by the library's cards, its filter and the
+ * story page, so none of them says the same thing two ways.
  */
-import { categoryName, type CefrLevel, type StoryCategory, type StoryListItem } from '@kurda/shared';
+import { categoryName, levelHintKey, levelNameKey, type StoryCategory, type StoryLevel, type StoryListItem } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
-/** The word each CEFR letter stands for, as a learner would say it. */
-export const CEFR_WORD_KEY: Readonly<Record<CefrLevel, MessageKey>> = {
-  A1: 'stories.cefr.A1',
-  A2: 'stories.cefr.A2',
-  B1: 'stories.cefr.B1',
-  B2: 'stories.cefr.B2',
-  C1: 'stories.cefr.C1',
-};
+/** "Beginner": what a reader is shown for a level, never the CEFR letter (see `levelNameKey`). */
+export function levelName(level: StoryLevel, t: Translate): string {
+  return t(levelNameKey(level));
+}
 
-/** "A2 · Elementary". */
-export function cefrLabel(cefr: CefrLevel, t: Translate): string {
-  return t('stories.cefr.full', { cefr, word: t(CEFR_WORD_KEY[cefr]) });
+/** "Everyday sentences and short stories": the line under a level's name, and its tooltip on a card. */
+export function levelHint(level: StoryLevel, t: Translate): string {
+  return t(levelHintKey(level));
 }
 
 /**

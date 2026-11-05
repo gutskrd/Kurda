@@ -236,13 +236,15 @@ export function FilterSheet<V>({
   );
 }
 
-/** One titled group of choices in the panel; `id` names its title, for the radio group under it. */
-export function FilterSection({ title, id, children }: { title: string; id: string; children: React.ReactNode }): React.JSX.Element {
+/** One group of choices in the panel, under its title where it has one; `id` names the title, for the radio group under it. */
+export function FilterSection({ title, id, children }: { title?: string; id?: string; children: React.ReactNode }): React.JSX.Element {
   return (
-    <section className="ffilter-section">
-      <h3 id={id} className="ffilter-section-title">
-        {title}
-      </h3>
+    <section className={`ffilter-section${title ? '' : ' is-untitled'}`}>
+      {title && (
+        <h3 id={id} className="ffilter-section-title">
+          {title}
+        </h3>
+      )}
       {children}
     </section>
   );
@@ -292,20 +294,7 @@ export function FilterRadios({
 }
 
 /** One choice in a list: its name, a line under it saying what it means where that is not obvious, and a tick when chosen. */
-export function FilterOption({
-  on,
-  label,
-  hint,
-  lang,
-  onChoose,
-}: {
-  on: boolean;
-  label: string;
-  hint?: string;
-  /** the name's own language, where it is a word in one (Kurmancî, Soranî) */
-  lang?: string;
-  onChoose: () => void;
-}): React.JSX.Element {
+export function FilterOption({ on, label, hint, onChoose }: { on: boolean; label: string; hint?: string; onChoose: () => void }): React.JSX.Element {
   const hintId = useId();
   return (
     <button
@@ -319,7 +308,7 @@ export function FilterOption({
       onClick={onChoose}
     >
       <span className="ffilter-item-text">
-        <span lang={lang}>{label}</span>
+        <span>{label}</span>
         {hint && (
           <span id={hintId} className="ffilter-item-hint">
             {hint}
@@ -400,14 +389,12 @@ export function FilterChip<V>({
   control,
   icon,
   label,
-  lang,
   clearLabel,
   onClear,
 }: {
   control: FilterSheetControl<V>;
   icon?: React.ReactNode;
   label: string;
-  lang?: string;
   clearLabel: string;
   onClear: () => void;
 }): React.JSX.Element {
@@ -423,9 +410,7 @@ export function FilterChip<V>({
         onClick={(e) => control.show(e.currentTarget)}
       >
         {icon}
-        <span className="ffilter-chip-text" lang={lang}>
-          {label}
-        </span>
+        <span className="ffilter-chip-text">{label}</span>
       </button>
       <button type="button" className="ffilter-chip-clear" aria-label={clearLabel} title={clearLabel} onClick={onClear}>
         <CloseIcon size={14} weight="bold" />

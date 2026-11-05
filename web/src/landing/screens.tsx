@@ -1,5 +1,5 @@
 import type { CSSProperties } from 'react';
-import { fireLevel, storyCoverPath } from '@kurda/shared';
+import { fireLevel, levelNameKey, storyCoverPath } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { BookIcon, BookmarkIcon, CheckIcon, CloseIcon, CoinIcon, HomeIcon, LockIcon, SearchIcon, SendIcon, TrophyIcon } from '../components/icons';
@@ -261,7 +261,7 @@ function StoryCard({ story, wide = false }: { story: (typeof STORIES)[number]; w
       <Ku className="ps-story-title">{story.title}</Ku>
       {wide && (
         <span className="ps-story-meta">
-          <span className="ps-level">{story.level}</span>
+          <span className="ps-level">{t(levelNameKey(story.level))}</span>
           {t('stories.minutes', { count: story.minutes })}
         </span>
       )}

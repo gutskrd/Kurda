@@ -90,8 +90,9 @@ describe('the story page', () => {
     const title = await screen.findByRole('heading', { level: 1, name: 'Qelema Şîn' });
     expect(title).toHaveAttribute('lang', 'ku');
     expect(title).toHaveAttribute('dir', 'ltr');
-    expect(screen.getByTitle('A1 · Beginner')).toBeInTheDocument();
-    expect(screen.getByText('Beginner')).toBeInTheDocument();
+    // the level by its plain name, what it means on hover, and no CEFR letter
+    expect(screen.getByText('Starter')).toHaveAttribute('title', 'First words and short sentences');
+    expect(screen.queryByText('A1')).toBeNull();
     expect(await screen.findByText('Everyday')).toBeInTheDocument();
     expect(screen.getByText('~2 min')).toBeInTheDocument();
     expect(screen.getByText('90 words')).toBeInTheDocument();

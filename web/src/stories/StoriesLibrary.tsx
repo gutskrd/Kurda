@@ -3,14 +3,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import '@fontsource-variable/vazirmatn';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import {
-  CEFR_LEVELS,
-  STORY_DIALECTS,
   categoryName,
-  isStoryDialect,
-  levelOfCefr,
   storyQueryString,
   storyTextDirection,
-  type CefrLevel,
   type StoryCategory,
   type StoryDialect,
   type StoryGameSummary,
@@ -22,19 +17,18 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { ErrorState, EmptyState, Loading } from '../components/states';
-import { SearchField } from '../components/SearchField';
 import { StoryLibrarySkeleton, StoryListSkeleton } from '../components/skeletons';
 import { ChevronIcon } from '../components/icons';
 import { RequireAccount } from '../components/RequireAccount';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { describeError } from '../lib/api';
-import { dialectName } from '../learn/map';
 import { LearnHeader } from '../learn/LearnHeader';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import { STORIES_LIBRARY, gamePath, storyError } from './api';
 import { useStoryList } from './catalogue';
-import { CEFR_WORD_KEY, categoryNames } from './labels';
+import { categoryNames } from './labels';
+import { LibraryFilterBar, NO_FILTERS, isPlain, queryOf, readFilters, writeFilters, type LibraryFilters } from './LibraryFilter';
 import { defaultVariety, rememberedExtraTime } from './prefs';
 import { MODE_KEY, SetupSheet } from './SetupSheet';
 import { StoryCard } from './StoryCard';
@@ -198,51 +192,6 @@ function useStoryResults(query: StoryQuery | null): {
 }
 
 // ---------------------------------------------------------------------------
-// the filters, kept in the address so a category's shelf can be linked to
-
-interface Filters {
-  q: string;
-  cefr: CefrLevel | null;
-  dialect: StoryDialect | null;
-  narrated: boolean;
-  category: string | null;
-}
-
-function readFilters(params: URLSearchParams): Filters {
-  const cefr = params.get('level');
-  const dialect = params.get('dialect');
-  return {
-    q: params.get('q') ?? '',
-    cefr: cefr && levelOfCefr(cefr) ? (cefr.toUpperCase() as CefrLevel) : null,
-    dialect: isStoryDialect(dialect) ? dialect : null,
-    narrated: params.get('audio') === '1',
-    category: params.get('category'),
-  };
-}
-
-function writeFilters(f: Filters): URLSearchParams {
-  const p = new URLSearchParams();
-  if (f.q.trim()) p.set('q', f.q.trim());
-  if (f.cefr) p.set('level', f.cefr);
-  if (f.dialect) p.set('dialect', f.dialect);
-  if (f.narrated) p.set('audio', '1');
-  if (f.category) p.set('category', f.category);
-  return p;
-}
-
-const filtering = (f: Filters): boolean => f.q.trim() !== '' || f.cefr !== null || f.dialect !== null || f.narrated || f.category !== null;
-
-function queryOf(f: Filters): StoryQuery {
-  return {
-    q: f.q.trim() || undefined,
-    level: f.cefr ? (levelOfCefr(f.cefr) ?? undefined) : undefined,
-    dialect: f.dialect ?? undefined,
-    audio: f.narrated || undefined,
-    category: f.category ?? undefined,
-  };
-}
-
-// ---------------------------------------------------------------------------
 // the page
 
 function Library(): React.JSX.Element {
@@ -251,18 +200,21 @@ function Library(): React.JSX.Element {
   const { client, status } = useAuth();
   const signedIn = status === 'signedIn';
   const [params, setParams] = useSearchParams();
-  const filters = useMemo(() => readFilters(params), [params]);
+  const { q, filters } = useMemo(() => {
+    const { q: words, ...rest } = readFilters(params);
+    return { q: words, filters: rest };
+  }, [params]);
   // what is typed waits a moment before it becomes the address and a request
-  const [typed, setTyped] = useState(filters.q);
+  const [typed, setTyped] = useState(q);
   const settled = useDebouncedValue(typed, 300);
   useEffect(() => {
-    if (settled.trim() === filters.q.trim()) return;
-    setParams(writeFilters({ ...filters, q: settled }), { replace: true });
-  }, [settled]); // the typed words alone: the other filters change through their own chips
+    if (settled.trim() === q.trim()) return;
+    setParams(writeFilters(settled, filters), { replace: true });
+  }, [settled]); // the typed words alone: the other filters change through the panel and its chips
 
   const { library, error, reload, patch } = useLibrary(status !== 'restoring', signedIn);
-  const active = filtering(filters);
-  const results = useStoryResults(active ? queryOf(filters) : null);
+  const active = q.trim() !== '' || !isPlain(filters);
+  const results = useStoryResults(active ? queryOf(q, filters) : null);
   const names = useMemo(() => categoryNames(library?.categories, locale), [library?.categories, locale]);
   const [games, setGames] = useState<StoryGameSummary[]>([]);
 
@@ -277,7 +229,7 @@ function Library(): React.JSX.Element {
     };
   }, [client, signedIn]);
 
-  const set = (next: Partial<Filters>): void => setParams(writeFilters({ ...filters, q: typed, ...next }), { replace: true });
+  const choose = (next: LibraryFilters): void => setParams(writeFilters(typed, next), { replace: true });
   const clear = (): void => {
     setTyped('');
     setParams(new URLSearchParams(), { replace: true });
@@ -300,11 +252,19 @@ function Library(): React.JSX.Element {
   return (
     <>
       {signedIn && library?.me && <ProgressCard me={library.me} />}
-      <FilterBar filters={filters} typed={typed} onType={setTyped} onChange={set} categories={library?.categories ?? []} />
+      <LibraryFilterBar
+        q={q}
+        typed={typed}
+        onType={setTyped}
+        value={filters}
+        onChange={choose}
+        library={library}
+        shownTotal={active && results.items ? results.total : null}
+      />
       {!signedIn && status !== 'restoring' && <GuestLine />}
 
       {active ? (
-        <Results filters={filters} results={results} names={names} onClear={clear} onBookmarked={bookmarked} />
+        <Results results={results} names={names} onClear={clear} onBookmarked={bookmarked} />
       ) : error ? (
         <ErrorState title={t('stories.loadFailed')} message={error} onRetry={reload} />
       ) : !library ? (
@@ -317,7 +277,7 @@ function Library(): React.JSX.Element {
           <Shelf id="continue" title="stories.library.continue" stories={library.continue} names={names} onBookmarked={bookmarked} />
           <Shelf id="featured" title="stories.library.featured" stories={library.featured} names={names} onBookmarked={bookmarked} />
           <Shelf id="recent" title="stories.library.recent" stories={library.recent} names={names} onBookmarked={bookmarked} />
-          <Categories categories={library.categories} onPick={(slug) => set({ category: slug })} />
+          <Categories categories={library.categories} onPick={(slug) => choose({ ...NO_FILTERS, category: slug })} />
           <Shelf id="bookmarks" title="stories.library.bookmarks" stories={library.bookmarks} names={names} onBookmarked={bookmarked} />
         </>
       )}
@@ -382,69 +342,13 @@ function GuestLine(): React.JSX.Element {
   );
 }
 
-/** The search field and the filter chips: a chip pressed again lets its filter go. */
-function FilterBar({
-  filters,
-  typed,
-  onType,
-  onChange,
-  categories,
-}: {
-  filters: Filters;
-  typed: string;
-  onType: (q: string) => void;
-  onChange: (next: Partial<Filters>) => void;
-  categories: readonly StoryCategory[];
-}): React.JSX.Element {
-  const t = useT();
-  const locale = useLocale();
-  const chip = (on: boolean, label: string, onClick: () => void, title?: string): React.JSX.Element => (
-    <button key={label} type="button" className={`story-chip${on ? ' is-on' : ''}`} aria-pressed={on} title={title} onClick={onClick}>
-      {label}
-    </button>
-  );
-  return (
-    <section className="story-filters" aria-label={t('stories.filter.label')}>
-      <SearchField
-        icon
-        className="story-search"
-        value={typed}
-        onValueChange={onType}
-        aria-label={t('stories.library.searchLabel')}
-        placeholder={t('stories.library.searchPlaceholder')}
-        autoComplete="off"
-      />
-      <div className="story-chip-rows">
-        <div className="story-chip-row" role="group" aria-label={t('stories.level')}>
-          {CEFR_LEVELS.map((cefr) =>
-            chip(filters.cefr === cefr, cefr, () => onChange({ cefr: filters.cefr === cefr ? null : cefr }), t(CEFR_WORD_KEY[cefr])),
-          )}
-        </div>
-        <div className="story-chip-row" role="group" aria-label={t('stories.variety')}>
-          {STORY_DIALECTS.map((d) => chip(filters.dialect === d, dialectName(d), () => onChange({ dialect: filters.dialect === d ? null : d })))}
-          {chip(filters.narrated, t('stories.filter.narrated'), () => onChange({ narrated: !filters.narrated }))}
-        </div>
-        {categories.length > 0 && (
-          <div className="story-chip-row" role="group" aria-label={t('stories.filter.category')}>
-            {categories.map((c) =>
-              chip(filters.category === c.slug, categoryName(c, locale), () => onChange({ category: filters.category === c.slug ? null : c.slug })),
-            )}
-          </div>
-        )}
-      </div>
-    </section>
-  );
-}
-
 /** A filtered or searched list: a grid, a count, and More until the server has no more. */
 function Results({
-  filters,
   results,
   names,
   onClear,
   onBookmarked,
 }: {
-  filters: Filters;
   results: ReturnType<typeof useStoryResults>;
   names: ReadonlyMap<string, string>;
   onClear: () => void;
@@ -469,13 +373,9 @@ function Results({
   const more = results.items.length < results.total;
   return (
     <section className="story-results" aria-labelledby="story-results-title">
+      {/* what narrows the list is said by the chips under the search, each with its ✕ */}
       <h2 id="story-results-title" className="story-section-title story-results-title">
         {t('stories.library.found', { count: results.total.toLocaleString(locale) })}
-        {filtering(filters) && (
-          <button type="button" className="link-btn story-results-clear" onClick={onClear}>
-            {t('stories.library.clearFilters')}
-          </button>
-        )}
       </h2>
       <ul className="story-grid">
         {results.items.map((s) => (

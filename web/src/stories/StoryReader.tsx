@@ -26,7 +26,7 @@ import { dialectName } from '../learn/map';
 import { STORIES_LIBRARY, createGame, gamePath, readerPath, setBookmark, storyError } from './api';
 import { useStoryCategories } from './catalogue';
 import { StoryCover } from './Cover';
-import { CEFR_WORD_KEY, cefrLabel, minutesLeft, narratedKey } from './labels';
+import { levelHint, levelName, minutesLeft, narratedKey } from './labels';
 import { rememberTextSize, rememberedExtraTime, rememberedTextSize } from './prefs';
 import { StoryPlayerBar, TextSizeControl } from './ReaderControls';
 import { SetupSheet } from './SetupSheet';
@@ -172,11 +172,9 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
         <StoryCover cover={story.cover} category={story.category} className="story-overview-cover" eager />
         <div className="story-overview-body">
           <p className="story-meta">
-            <span className="story-cefr" title={cefrLabel(story.cefr, t)}>
-              <span aria-hidden="true">{story.cefr}</span>
-              <span className="sr-only">{cefrLabel(story.cefr, t)}</span>
+            <span className="story-cefr" title={levelHint(story.level, t)}>
+              {levelName(story.level, t)}
             </span>
-            <span aria-hidden="true">{t(CEFR_WORD_KEY[story.cefr])}</span>
             {category && <span>{category}</span>}
             <span>{t('stories.minutes', { count: story.readingMinutes })}</span>
             <span>{t('stories.overview.words', { count: story.wordCount.toLocaleString(locale) })}</span>
