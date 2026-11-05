@@ -1608,7 +1608,7 @@
                 {"ku": "wisa", "en": "so, like that", "pos": "adv", "forms": ["wisa"]},
                 {"ku": "wiha", "en": "like this, this way", "pos": "adv", "forms": ["wiha"]},
                 {"ku": "girtin", "en": "to take, to hold; to close", "pos": "verb", "forms": ["girtin", "digirim", "digirî", "digire", "digirin", "nagirim", "nagire", "bigirî", "bigirin"]},
-                {"ku": "vekirin", "en": "to open", "pos": "verb", "forms": ["vekirin", "vedikim", "vedikî", "vedike", "vedikin", "venakim", "venake", "vekî", "vekin", "veneke", "venekin"]}
+                {"ku": "vekirin", "en": "to open", "pos": "verb", "forms": ["vekirin", "vedikim", "vedikî", "vedike", "vedikin", "venakim", "venake", "vekî", "vekin", "vemeke", "vemekin", "venekin"]}
               ]
             },
             {
@@ -3554,7 +3554,7 @@
             {
               "key": "u12s1l3",
               "position": 3,
-              "titleKu": "Derî venekin!",
+              "titleKu": "Derî vemekin!",
               "titleEn": "Don’t open the door!",
               "focus": "talk",
               "beat": "Xezal and Hêvî act the tale out for the family. Hevalo plays the wolf — badly: he is far too friendly and keeps offering apples through the door. Hêvî shouts “Tu ne dayika me yî!” and everyone claps.",
