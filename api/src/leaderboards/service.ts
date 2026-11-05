@@ -15,6 +15,7 @@ import {
   type RankedEntry,
   type ScoreRow,
 } from './rank.js';
+import { economyBlockedSql } from '../economy/standing.js';
 
 export interface BoardEntry extends RankedEntry {
   /** already resolved: an uploaded photo, else the chosen avatar */
@@ -230,10 +231,13 @@ export class LeaderboardService {
   ): Promise<ScoreRow[]> {
     const balance = isBalanceBoard(type);
     // the public boards (everything but a friends list) name adults only, and
-    // the balance boards among them leave the staff out
+    // the balance boards among them leave the staff out. A balance board, in
+    // every scope, also leaves out everyone the economy does not pay — banned,
+    // a confirmed bot, held for payment fraud (economy/standing.ts): what they
+    // hold is under review, and a board would put it in front of everyone.
     const notFlagged = `NOT EXISTS (SELECT 1 FROM cheat_reviews cr WHERE cr.user_id = u.id AND cr.shadow_flagged = true)${
-      filter?.ids ? '' : ` AND NOT ${notKnownAdultSql('u')}${balance ? ` AND ${notStaffSql('u')}` : ''}`
-    }`;
+      balance ? ` AND NOT ${economyBlockedSql('u')}` : ''
+    }${filter?.ids ? '' : ` AND NOT ${notKnownAdultSql('u')}${balance ? ` AND ${notStaffSql('u')}` : ''}`}`;
     // an empty allow-list means "no such people", not "everyone"
     if (filter?.ids && filter.ids.length === 0) return [];
 
@@ -551,14 +555,16 @@ export class LeaderboardService {
    * Usernames and faces of those among `ids` who may be on a public board
    * right now: a live account known to be an adult, still in the leagues, with
    * a profile shown to everyone or to members (`listedSql`), and on a balance
-   * board no staff. Anyone missing from the map may not be.
+   * board no staff and nobody the economy does not pay (economy/standing.ts),
+   * so an account flagged since the board was built leaves it at the next
+   * read. Anyone missing from the map may not be.
    */
   private async listable(type: BoardType, ids: string[], signedIn: boolean): Promise<Map<string, { username: string; avatarUrl: string }>> {
     if (ids.length === 0) return new Map();
     const rows = await this.pool.query<FaceRow & { username: string }>(
       `SELECT u.id, u.username, u.profile_photo_key, u.selected_avatar_key, u.profile_visibility FROM users u
         WHERE u.id = ANY($1) AND u.deleted_at IS NULL AND NOT ${notKnownAdultSql('u')}
-          AND ${listedSql('u', 'public')}${isBalanceBoard(type) ? ` AND ${notStaffSql('u')}` : ''}`,
+          AND ${listedSql('u', 'public')}${isBalanceBoard(type) ? ` AND ${notStaffSql('u')} AND NOT ${economyBlockedSql('u')}` : ''}`,
       [ids],
     );
     return new Map(rows.rows.map((r) => [r.id, { username: r.username, avatarUrl: this.avatarOf(r, signedIn) }]));

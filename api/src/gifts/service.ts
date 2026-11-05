@@ -4,6 +4,7 @@ import {
   GIFT_MIN_FRIENDSHIP_HOURS,
   GIFTS_PER_DAY,
   GIFTS_PER_FRIEND_PER_DAY,
+  GIFTS_RECEIVED_PER_DAY,
   MAX_GIFT_RECIPIENTS,
   giftTierFor,
   type EquippableCategory,
@@ -15,6 +16,7 @@ import {
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
+import { assertEconomyNotHeld } from '../economy/standing.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
 import { cosmeticAssetUrl, resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
@@ -113,7 +115,14 @@ interface Settled {
  *   is why it is a wait rather than a refusal.
  * - **A daily cap**, per sender and per pair, over the last 24 hours rather
  *   than since midnight — midnight is the sender's, and the cap is for the
- *   recipient. A gift is a present, not a stream.
+ *   recipient. A gift is a present, not a stream. And one per recipient,
+ *   from everyone together (`GIFTS_RECEIVED_PER_DAY`), so a farm of
+ *   throwaway accounts cannot pour items into one main account.
+ * - **Not from an account paused from moving value** — a confirmed bot, or
+ *   one on a payment-fraud hold (economy/standing.ts): 403 GIFTS_PAUSED.
+ * - **Never currency.** A gift is an item; nothing turns it back into Zêr or
+ *   Gewher (purchases are final, and there is no return), so a gift can
+ *   never be a way to move currency between accounts.
  * - **Not something they own already** (a unique item), decided under a lock
  *   (`lockEntitlement`) so two friends gifting it at once cannot both win.
  * - **Never free.** A price-0 item cannot be gifted: it would be a way to put
@@ -154,6 +163,7 @@ export class GiftService {
     if (chat?.kind !== 'group' && this.deps.moderation && (await this.deps.moderation.isChatMuted(fromId))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
+    await assertEconomyNotHeld(this.pool, fromId, 'gifts');
 
     // every recipient in one query, not one each
     const statuses = await this.deps.friends.statusesBetween(fromId, toIds);
@@ -279,7 +289,14 @@ export class GiftService {
       // the same friends, listed the other way round, from each holding one
       // friend's item while waiting for the other's: a deadlock, and a gift
       // that fails. The grants below can then go in the order asked.
-      for (const to of [...candidates].sort()) await lockEntitlement(client, to, sku);
+      //
+      // The recipient's day of gifts is held first, in the same order: two
+      // senders gifting one person at the same moment would otherwise both
+      // count the day before the other's gift and both fit under its cap.
+      for (const to of [...candidates].sort()) {
+        await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`gift-received:${to}`]);
+        await lockEntitlement(client, to, sku);
+      }
 
       // something there is only one of, which they own already
       if (item.is_unique && candidates.length > 0) {
@@ -291,6 +308,22 @@ export class GiftService {
         candidates = candidates.filter((to) => {
           if (owners.has(to)) skip(to, 'already_owned');
           return !owners.has(to);
+        });
+      }
+
+      // what each recipient has been given in the last 24 hours, by anyone
+      if (candidates.length > 0) {
+        const received = await client.query<{ to_user_id: string; n: number }>(
+          `SELECT to_user_id, count(*)::int AS n FROM gifts
+            WHERE to_user_id = ANY($1::uuid[]) AND created_at > now() - interval '24 hours'
+            GROUP BY to_user_id`,
+          [candidates],
+        );
+        const receivedBy = new Map(received.rows.map((r) => [r.to_user_id, r.n]));
+        candidates = candidates.filter((to) => {
+          if ((receivedBy.get(to) ?? 0) < GIFTS_RECEIVED_PER_DAY) return true;
+          skip(to, 'daily_limit');
+          return false;
         });
       }
 

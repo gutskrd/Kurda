@@ -11,6 +11,8 @@ import { createStorage } from '../media/storage.js';
 import { makeCleanupOrphansJob } from './cleanup-orphans.js';
 import { makeAnonymizeJob, makeExportJob } from './gdpr-jobs.js';
 import { makePurgeGuestsJob } from './guest-jobs.js';
+import { makeWalletReconcileJob } from './wallet-jobs.js';
+import { WalletReconciler } from '../wallet/reconcile.js';
 import { makePushSendJob } from './push-jobs.js';
 import { PushService } from '../push/service.js';
 import { DeviceTokenService } from '../push/tokens-service.js';
@@ -54,6 +56,8 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
     registry.register(makeAnonymizeJob(gdpr));
     // the same close for the guests nobody has touched in two months
     registry.register(makePurgeGuestsJob(gdpr));
+    // the daily check that every balance still equals its ledger
+    registry.register(makeWalletReconcileJob(new WalletReconciler(pool)));
     if (storage) {
       registry.register(makeExportJob(gdpr));
     }

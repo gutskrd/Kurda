@@ -122,6 +122,27 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect((await svc.detail(targetId))!.balances.zer).toBe(500);
   });
 
+  it('credits once per request key, however often the change is sent, and logs it once', async () => {
+    const key = `adj-${suffix}`;
+    const first = await svc.adjustWallet(adminId, targetId, 'zer', 40, 'contest prize', key);
+    const again = await svc.adjustWallet(adminId, targetId, 'zer', 40, 'contest prize', key);
+    expect(first).toEqual({ ok: true, balance: 540 });
+    expect(again).toEqual({ ok: true, balance: 540, duplicate: true });
+    expect((await svc.detail(targetId))!.balances.zer).toBe(540);
+    const logged = await pool.query(
+      `SELECT 1 FROM admin_actions WHERE target_user_id = $1 AND action = 'wallet_adjust' AND reason = 'contest prize'`,
+      [targetId],
+    );
+    expect(logged.rowCount).toBe(1);
+  });
+
+  it('never lets an admin change their own balance', async () => {
+    const own = await svc.adjustWallet(adminId, adminId, 'gems', 1000, 'for me');
+    expect(own).toEqual({ ok: false, code: 'SELF_ADJUST' });
+    const ledger = await pool.query(`SELECT 1 FROM wallet_ledger WHERE user_id = $1 AND reason = 'admin_adjustment'`, [adminId]);
+    expect(ledger.rowCount).toBe(0);
+  });
+
   it('temp-ban sets a ban with expiry and bumps token_version; unban clears it', async () => {
     const before = await pool.query<{ token_version: number }>(`SELECT token_version FROM users WHERE id = $1`, [targetId]);
     const until = new Date(Date.now() + 24 * 3_600_000);

@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { WalletService } from '../wallet/service.js';
+import { assertEconomyNotHeld } from '../economy/standing.js';
 import { localDate } from '../streaks/streak-logic.js';
 import { StreakService } from '../streaks/service.js';
 import { statusFor, type DailyRewardState, type DailyRewardStatus } from './daily-cycle.js';
@@ -64,9 +65,12 @@ export class DailyRewardService {
 
   /**
    * Claim today's reward. Throws ALREADY_CLAIMED if today is already claimed,
-   * and LEARN_FIRST if no lesson or practice session has been finished today.
+   * LEARN_FIRST if no lesson or practice session has been finished today, and
+   * REWARDS_PAUSED for a confirmed bot or an account on a payment-fraud hold
+   * (economy/standing.ts). The amount is the server's own (daily-cycle.ts).
    */
   async claim(userId: string, now: Date = new Date()): Promise<ClaimResult> {
+    await assertEconomyNotHeld(this.pool, userId, 'rewards');
     const tz = await this.timezone(userId);
     const today = localDate(now, tz);
     const client = await this.pool.connect();

@@ -5,9 +5,10 @@
  * board, with the staff and empty wallets left out as well; and the caller's
  * own balance and place always live.
  *
- * Balances are written straight to `wallet_balances` and are near the column's
- * limit, so these people lead the shared board whatever else is in the
- * database, and the places asserted are places on the whole board.
+ * Balances are written straight to `wallet_balances` and are near the highest
+ * balance the database allows (migration 1751000214000), so these people lead
+ * the shared board whatever else is in the database, and the places asserted
+ * are places on the whole board.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -23,8 +24,8 @@ import { BALANCE_BOARD_DEPTH, builtKeyFor, GLOBAL_BOARD_REBUILD_SECONDS, Leaderb
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 
-/** Every balance here is above this, and nobody else’s is. */
-const BASE = 2_100_000_000;
+/** Every balance here is above this, and nobody else’s is; the highest stays under the database’s ceiling of 1,000,000,000. */
+const BASE = 999_000_000;
 /** A country no other suite uses, so its board is this suite’s alone. */
 const COUNTRY = 'NR';
 const PHOTO_URL = (key: string) => `https://media.test/${key}`;
@@ -69,6 +70,10 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     people.guest = await learner();
     people.staff = await learner();
     people.empty = await learner();
+    // everyone the economy does not pay (economy/standing.ts), each richer than the board
+    people.held = await learner();
+    people.bot = await learner();
+    people.banned = await learner();
 
     await hold(people.top!, 'zer', BASE + 300);
     await hold(people.tieA!, 'zer', BASE + 200);
@@ -83,6 +88,10 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     await hold(people.guest!, 'zer', BASE + 500);
     await hold(people.staff!, 'zer', BASE + 400);
     await hold(people.empty!, 'zer', 0);
+    await hold(people.held!, 'zer', BASE + 950);
+    await hold(people.bot!, 'zer', BASE + 940);
+    await hold(people.banned!, 'zer', BASE + 930);
+    await hold(people.held!, 'gems', BASE + 950);
     // Gewher is a board of its own: led by someone who is fourth for Zêr, and
     // without the top of the Zêr board, who holds none
     await hold(people.next!, 'gems', BASE + 20);
@@ -98,7 +107,15 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
        VALUES ($1, 'test', '[]'::jsonb, '{}'::jsonb, 1.0, true)`,
       [people.flagged!.id],
     );
-    for (const p of ['tieA', 'minor', 'hidden', 'friendsOnly', 'optedOut', 'staff', 'flagged']) await befriend(pool, people.me!.id, people[p]!.id);
+    await pool.query(`INSERT INTO account_holds (user_id, reason) VALUES ($1, 'RECEIPT_REUSE')`, [people.held!.id]);
+    await pool.query(
+      `INSERT INTO bot_scores (user_id, score, tier, flagged, status) VALUES ($1, 0.99, 'flagged', true, 'confirmed')`,
+      [people.bot!.id],
+    );
+    await pool.query(`UPDATE users SET banned_at = now(), banned_until = NULL WHERE id = $1`, [people.banned!.id]);
+    for (const p of ['tieA', 'minor', 'hidden', 'friendsOnly', 'optedOut', 'staff', 'flagged', 'held', 'bot']) {
+      await befriend(pool, people.me!.id, people[p]!.id);
+    }
 
     // a run a minute ago may have left its country board behind; this one starts from the people above
     await redis?.del(`lb:zer:country:${COUNTRY}`, `lb:gewher:country:${COUNTRY}`);
@@ -164,7 +181,7 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     for (const scope of ['global', 'country'] as const) {
       const board = await boards().board('zer', people.me!.id, { scope, limit: 100 });
       expect(listed(board, people.top!)).toBe(true);
-      for (const who of ['flagged', 'minor', 'hidden', 'friendsOnly', 'optedOut', 'guest', 'staff', 'empty']) {
+      for (const who of ['flagged', 'minor', 'hidden', 'friendsOnly', 'optedOut', 'guest', 'staff', 'empty', 'held', 'bot', 'banned']) {
         expect(listed(board, people[who]!), `${who} on the ${scope} board`).toBe(false);
       }
     }
@@ -183,6 +200,9 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
     expect(listed(board, people.optedOut!)).toBe(false);
     expect(listed(board, people.hidden!)).toBe(false);
     expect(listed(board, people.flagged!)).toBe(false);
+    // what a held account or a confirmed bot holds is under review: not on any balance board
+    expect(listed(board, people.held!)).toBe(false);
+    expect(listed(board, people.bot!)).toBe(false);
     expect(listed(board, people.top!)).toBe(false);
     // minor, friends-only, staff, tieA, then the reader
     expect(board.me).toEqual({ rank: 5, score: BASE + 50 });
@@ -191,6 +211,10 @@ describe.skipIf(!DATABASE_URL)('Zêr and Gewher boards (integration)', () => {
   it('still tells whoever is left off their own balance and place, and says nothing to an empty wallet', async () => {
     const flagged = await boards().board('zer', people.flagged!.id);
     expect(flagged.me).toEqual({ rank: 1, score: BASE + 990 });
+    const held = await boards().board('zer', people.held!.id);
+    expect(held.me).toEqual({ rank: 1, score: BASE + 950 });
+    // and the Gewher board leaves them off in the same way
+    expect(listed(await boards().board('gewher', people.me!.id, { limit: 100 }), people.held!)).toBe(false);
     const minor = await boards().board('zer', people.minor!.id);
     expect(minor.me).toEqual({ rank: 1, score: BASE + 900 });
     const optedOut = await boards().board('zer', people.optedOut!.id);

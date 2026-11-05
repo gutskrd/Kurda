@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import type { WalletService } from '../wallet/service.js';
+import { isEconomyBlocked } from '../economy/standing.js';
 import { shownToSql } from '../users/age.js';
 import {
   firstRoundMatches,
@@ -360,6 +361,11 @@ export class TournamentService {
     userId: string,
     reward: { zer: number; gems: number },
   ): Promise<void> {
+    // Nobody the economy does not pay is paid a prize (economy/standing.ts): a
+    // closed or banned account, a confirmed bot, a shadow-flagged cheater or a
+    // payment-fraud hold. The bracket still says who won; an admin can pay by
+    // hand once a review clears them.
+    if (await isEconomyBlocked(this.pool, userId)) return;
     // idempotent: the (idempotencyKey) guard makes a retry a no-op
     if (reward.zer > 0) {
       await this.wallet.credit({
@@ -380,7 +386,8 @@ export class TournamentService {
       });
     }
     // config-driven tournament-win Gem grant (KUR-068), idempotent per tournament
-    if (this.gems) await this.gems.grant(userId, 'tournament_win', tournamentId).catch(() => undefined);
+    // and champion: ledger keys are unique across everyone, so the key names both
+    if (this.gems) await this.gems.grant(userId, 'tournament_win', `${tournamentId}:${userId}`).catch(() => undefined);
     // the champion's achievement; idempotent, best-effort like the grant above
     if (this.achievements) await this.achievements.award(userId, 'tournament-win').catch(() => undefined);
   }

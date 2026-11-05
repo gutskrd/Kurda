@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { QUEST_KINDS, type ChestOpening, type ChestTier, type Quest, type QuestDay, type QuestKind, type QuestStep } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { WalletService } from '../wallet/service.js';
+import { assertEconomyNotHeld } from '../economy/standing.js';
 import { localDate, safeTimeZone, shiftDate } from '../streaks/streak-logic.js';
 import { CLAIM_DAYS, chestAmount, dayQuests, parseQuestId, pickQuests, questId, questMoves, type QuestEvent } from './daily.js';
 
@@ -186,6 +187,8 @@ export class DailyQuestService {
   async claim(userId: string, id: string, now: Date = new Date()): Promise<ChestOpening> {
     const quest = parseQuestId(id);
     if (!quest) throw new AppError('QUEST_NOT_FOUND', 404, 'no such quest');
+    // a confirmed bot or a payment-fraud hold opens no chest (economy/standing.ts)
+    await assertEconomyNotHeld(this.pool, userId, 'rewards');
     const today = localDate(now, await this.timeZone(userId));
     if (quest.day > today || quest.day <= shiftDate(today, -CLAIM_DAYS)) throw new AppError('QUEST_NOT_FOUND', 404, 'no such quest');
     const amounts = TIERS.map((tier) => chestAmount(tier, userId, id));

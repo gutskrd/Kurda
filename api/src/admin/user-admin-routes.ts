@@ -22,17 +22,28 @@ const walletBody = z.object({
   reason: z.string(),
   currency: z.enum(['zer', 'gems']),
   amount: z.number().int().min(-WALLET_ADJUST_MAX).max(WALLET_ADJUST_MAX),
+  /** the console's key for this one change, so a double click or a retry moves the money once */
+  idempotencyKey: z.string().min(8).max(120).optional(),
 });
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
 const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
 const editorBody = z.object({ on: z.boolean(), reason: z.string() });
 
 type ActionResult =
-  | { ok: true; balance?: number }
-  | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' };
+  | { ok: true; balance?: number; duplicate?: boolean }
+  | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' | 'SELF_ADJUST' };
 
 function sendResult(reply: FastifyReply, res: ActionResult) {
-  if (res.ok) return reply.send({ ok: true, ...(res.balance !== undefined ? { balance: res.balance } : {}) });
+  if (res.ok) {
+    return reply.send({
+      ok: true,
+      ...(res.balance !== undefined ? { balance: res.balance } : {}),
+      ...(res.duplicate ? { duplicate: true } : {}),
+    });
+  }
+  if (res.code === 'SELF_ADJUST') {
+    return reply.code(403).send({ code: res.code, message: 'an admin cannot change their own balance; another superadmin can' });
+  }
   if (res.code === 'NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such user' });
   if (res.code === 'ITEM_NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such shop item' });
   if (res.code === 'NOT_OWNED') return reply.code(409).send({ code: res.code, message: 'the user does not own that item' });
@@ -171,11 +182,18 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
     },
   );
 
-  app.post('/admin/users/:id/wallet', { schema: { params: idParam, body: walletBody }, preHandler: canAdjustEconomy }, async (req, reply) => {
-    const b = req.body as z.infer<typeof walletBody>;
-    const reason = normalizeReason(b.reason);
-    if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
-    if (b.amount === 0) return reply.code(400).send({ code: 'INVALID_AMOUNT', message: 'amount must be non-zero' });
-    return sendResult(reply, await users.adjustWallet(req.user!.id, (req.params as z.infer<typeof idParam>).id, b.currency, b.amount, reason));
-  });
+  // minting is rare work: a burst of these is a slip or a script, not an admin
+  const walletLimit = { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } };
+  app.post(
+    '/admin/users/:id/wallet',
+    { schema: { params: idParam, body: walletBody }, config: walletLimit, preHandler: canAdjustEconomy },
+    async (req, reply) => {
+      const b = req.body as z.infer<typeof walletBody>;
+      const reason = normalizeReason(b.reason);
+      if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
+      if (b.amount === 0) return reply.code(400).send({ code: 'INVALID_AMOUNT', message: 'amount must be non-zero' });
+      const userId = (req.params as z.infer<typeof idParam>).id;
+      return sendResult(reply, await users.adjustWallet(req.user!.id, userId, b.currency, b.amount, reason, b.idempotencyKey));
+    },
+  );
 }

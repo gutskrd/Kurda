@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireRoles } from '../plugins/auth.js';
 import type { EconomyService } from './service.js';
+import { RECONCILE_LIST_MAX, WalletReconciler } from '../wallet/reconcile.js';
 
 const currencyQuery = z.object({
   currency: z.enum(['zer', 'gems']).default('zer'),
@@ -10,6 +11,23 @@ const currencyQuery = z.object({
 
 /** Economy monitoring dashboard (KUR-074), admin-only. */
 export function registerEconomyRoutes(app: FastifyInstance, economy: EconomyService): void {
+  const reconciler = new WalletReconciler(app.db);
+
+  /**
+   * Does every balance still equal the sum of its ledger? The daily job asks
+   * the same (jobs/wallet-jobs.ts); this answers now, for the console. It
+   * reads the whole ledger, so it is limited to a few asks a minute.
+   */
+  app.get(
+    '/admin/economy/reconcile',
+    {
+      schema: { querystring: z.object({ limit: z.coerce.number().int().min(1).max(RECONCILE_LIST_MAX).optional() }) },
+      config: { rateLimit: { max: 6, windowMs: 60_000, per: 'user-or-ip' as const } },
+      preHandler: requireRoles('admin'),
+    },
+    async (req) => reconciler.check({ limit: (req.query as { limit?: number }).limit }),
+  );
+
   /** Net-supply time series for the chart. */
   app.get(
     '/admin/economy/supply',

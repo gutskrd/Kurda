@@ -33,9 +33,23 @@ export interface Balances {
   gems: number;
 }
 
-function assertValidAmount(amount: number): void {
-  if (!Number.isInteger(amount) || amount <= 0) {
-    throw new Error(`wallet amounts must be positive integers, got ${amount}`);
+/**
+ * The most one ledger row may move: the dearest price the shop accepts. The
+ * database holds the same bound (migration 1751000214000).
+ */
+export const MAX_LEDGER_AMOUNT = 10_000_000;
+/** The most a balance may reach — far past anything earned by playing; the database holds it too. */
+export const MAX_BALANCE = 1_000_000_000;
+
+function assertValidOperation(op: WalletOperation): void {
+  if (!Number.isInteger(op.amount) || op.amount <= 0) {
+    throw new Error(`wallet amounts must be positive integers, got ${op.amount}`);
+  }
+  if (op.amount > MAX_LEDGER_AMOUNT) {
+    throw new Error(`a wallet amount may be at most ${MAX_LEDGER_AMOUNT}, got ${op.amount}`);
+  }
+  if (op.reason.length === 0 || op.reason.length > 100) {
+    throw new Error('a wallet change needs a reason code of 1 to 100 characters');
   }
 }
 
@@ -49,12 +63,12 @@ export class WalletService {
   constructor(private readonly pool: pg.Pool) {}
 
   async credit(op: WalletOperation): Promise<OperationResult> {
-    assertValidAmount(op.amount);
+    assertValidOperation(op);
     return this.apply(op, op.amount);
   }
 
   async debit(op: WalletOperation): Promise<OperationResult> {
-    assertValidAmount(op.amount);
+    assertValidOperation(op);
     return this.apply(op, -op.amount);
   }
 
@@ -84,7 +98,7 @@ export class WalletService {
    * `duplicate: true` when the idempotency key was already processed.
    */
   async debitWithin(client: pg.PoolClient, op: WalletOperation): Promise<{ balance: number; duplicate: boolean }> {
-    assertValidAmount(op.amount);
+    assertValidOperation(op);
     return this.step(client, op, -op.amount);
   }
 
@@ -94,7 +108,7 @@ export class WalletService {
    * when the idempotency key was already processed.
    */
   async creditWithin(client: pg.PoolClient, op: WalletOperation): Promise<{ balance: number; duplicate: boolean }> {
-    assertValidAmount(op.amount);
+    assertValidOperation(op);
     return this.step(client, op, op.amount);
   }
 
@@ -128,6 +142,9 @@ export class WalletService {
     const current = (locked.rows[0] as { balance: number }).balance;
 
     const next = current + signedAmount;
+    if (next > MAX_BALANCE) {
+      throw new AppError('BALANCE_LIMIT', 409, `a balance may hold at most ${MAX_BALANCE.toLocaleString('en')}`);
+    }
     if (next < 0) {
       // refused — unless the key was used already, which answers as the
       // duplicate it is: the ledger is asked before the balance, as it always was

@@ -334,7 +334,7 @@ describe('a person', () => {
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Take 500 Zêr' }));
     await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)).toHaveLength(1));
-    expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)[0]!.body).toEqual({ currency: 'zer', amount: -500, reason: 'Refunded twice by mistake' });
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)[0]!.body).toEqual({ currency: 'zer', amount: -500, reason: 'Refunded twice by mistake', idempotencyKey: expect.any(String) });
     expect(await screen.findByText('Took away 500 Zêr. New balance: 700.')).toBeInTheDocument();
   });
 
@@ -353,7 +353,7 @@ describe('a person', () => {
     await user.type(within(ask).getByLabelText('Type 5000 to confirm'), '0');
     await user.click(yes);
     await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)).toHaveLength(1));
-    expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)[0]!.body).toEqual({ currency: 'zer', amount: 5000, reason: 'Prize for the spring contest' });
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)[0]!.body).toEqual({ currency: 'zer', amount: 5000, reason: 'Prize for the spring contest', idempotencyKey: expect.any(String) });
   });
 
   it('shows a moderator the balances without a way to change them', async () => {

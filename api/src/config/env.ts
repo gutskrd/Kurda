@@ -154,14 +154,23 @@ const envSchema = z.object({
   /** Shared secret guarding IAP refund webhooks; disabled when unset (KUR-072). */
   IAP_WEBHOOK_SECRET: z.string().optional(),
   /**
-   * Permit the dev/test STUB receipt verifier even under NODE_ENV=production
-   * (KUR-072). For dev/testing deploys that have no App Store / Play Store
-   * credentials yet — it lets the API boot without a real verifier. NEVER set
-   * this on a store-facing deployment: the stub does not cryptographically
-   * verify receipts, so real purchases could be forged. Default 'false' keeps
-   * production a hard error until a real verifier + credentials are wired.
+   * A name from before IAP_PURCHASES_OFF, kept only so it can be refused.
+   *
+   * It read as "allow the stub receipt verifier", and under NODE_ENV=production
+   * it never did — it booted a verifier that refuses everything — but a flag
+   * whose name says the forgeable verifier is on is one mistake away from a
+   * change that makes it so. In production it is refused at boot (loadConfig);
+   * anywhere else it changes nothing, since the stub is what development and
+   * tests use anyway.
    */
   IAP_ALLOW_STUB: z.enum(['true', 'false']).default('false'),
+  /**
+   * Run without store purchases: every receipt is refused with 503
+   * IAP_UNAVAILABLE (KUR-072). What a production deploy without App Store /
+   * Play Store credentials sets so it can boot; without it (and without real
+   * verifiers) production refuses to start. Never selects the stub.
+   */
+  IAP_PURCHASES_OFF: z.enum(['true', 'false']).default('false'),
   /** Shared secret guarding email bounce/complaint webhooks; disabled when unset (KUR-098). */
   EMAIL_WEBHOOK_SECRET: z.string().optional(),
   /**
@@ -351,6 +360,14 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       problems.push('  JWT_SECRET: required in production');
     } else if (env.JWT_SECRET === DEV_JWT_SECRET) {
       problems.push('  JWT_SECRET: the built-in development secret must not be used in production');
+    }
+    // The stub receipt verifier believes whatever a receipt says about itself,
+    // so it may never be reachable here — not even by a flag that, today, only
+    // happens to select the refusing verifier (iap/verifier.ts).
+    if (config.IAP_ALLOW_STUB === 'true') {
+      problems.push(
+        '  IAP_ALLOW_STUB: the test receipt verifier is never allowed in production — set IAP_PURCHASES_OFF=true to run without store credentials',
+      );
     }
     if (config.CORS_ORIGINS.split(',').some((o) => o.trim() === '*')) {
       problems.push("  CORS_ORIGINS: wildcard '*' is not allowed in production — use an explicit origin allowlist");

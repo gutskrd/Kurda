@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createReceiptVerifier, StubReceiptVerifier, UnavailableReceiptVerifier } from './verifier.js';
+import { assertProductionVerifier, createReceiptVerifier, StubReceiptVerifier, UnavailableReceiptVerifier } from './verifier.js';
 import { loadConfig } from '../config/env.js';
 
 const v = new StubReceiptVerifier();
@@ -46,11 +46,30 @@ describe('createReceiptVerifier', () => {
   });
 
   it('lets production boot without store credentials — but never with the stub', () => {
-    const verifier = createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'true' }));
+    const verifier = createReceiptVerifier(cfg({ ...PROD, IAP_PURCHASES_OFF: 'true' }));
     expect(verifier).toBeInstanceOf(UnavailableReceiptVerifier);
     expect(verifier).not.toBeInstanceOf(StubReceiptVerifier);
     // any other value keeps the hard error
-    expect(() => createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'false' }))).toThrow();
+    expect(() => createReceiptVerifier(cfg({ ...PROD, IAP_PURCHASES_OFF: 'false' }))).toThrow(/no production receipt verifier/);
+  });
+
+  it('refuses to start production with the stub-named flag, whatever else is set', () => {
+    expect(() => cfg({ ...PROD, IAP_ALLOW_STUB: 'true' })).toThrow(/IAP_ALLOW_STUB: the test receipt verifier is never allowed in production/);
+    expect(() => cfg({ ...PROD, IAP_ALLOW_STUB: 'true', IAP_PURCHASES_OFF: 'true' })).toThrow(/IAP_ALLOW_STUB/);
+    // false is not a request for anything, and boots
+    expect(() => cfg({ ...PROD, IAP_ALLOW_STUB: 'false', IAP_PURCHASES_OFF: 'true' })).not.toThrow();
+    // outside production the stub is what runs anyway, and the flag changes nothing
+    expect(createReceiptVerifier(cfg({ NODE_ENV: 'development', IAP_ALLOW_STUB: 'true' }))).toBeInstanceOf(StubReceiptVerifier);
+  });
+
+  it('stops a production boot that is handed a stub verifier from anywhere', () => {
+    const prod = cfg({ ...PROD, IAP_PURCHASES_OFF: 'true' });
+    expect(() => assertProductionVerifier(prod, new StubReceiptVerifier())).toThrow(/must never run in production/);
+    // the refusing verifier passes, and so does anything outside production
+    const refusing = new UnavailableReceiptVerifier();
+    expect(assertProductionVerifier(prod, refusing)).toBe(refusing);
+    const stub = new StubReceiptVerifier();
+    expect(assertProductionVerifier(cfg({ NODE_ENV: 'test' }), stub)).toBe(stub);
   });
 
   /**

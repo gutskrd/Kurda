@@ -141,7 +141,11 @@ function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => v
     if (!yes) return;
     setBusy(true);
     try {
-      const res = await api<{ balance?: number }>(`/admin/users/${user.id}/wallet`, { method: 'POST', body: { currency, amount: value, reason: reason.trim() } });
+      // one key per confirmed change: a double click or a retry moves the money once
+      const res = await api<{ balance?: number }>(`/admin/users/${user.id}/wallet`, {
+        method: 'POST',
+        body: { currency, amount: value, reason: reason.trim(), idempotencyKey: crypto.randomUUID() },
+      });
       toast.success(
         `${value > 0 ? 'Added' : 'Took away'} ${Math.abs(value).toLocaleString()} ${CURRENCY[currency]}${res.balance !== undefined ? `. New balance: ${res.balance.toLocaleString()}.` : '.'}`,
       );

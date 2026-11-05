@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { GIFT_TIERS, GIFT_UNWRAP_MS, GIFTS_PER_DAY, GIFTS_PER_FRIEND_PER_DAY, MAX_GIFT_RECIPIENTS, giftTierFor } from './gifts.js';
+import {
+  GIFT_TIERS,
+  GIFT_UNWRAP_MS,
+  GIFTS_PER_DAY,
+  GIFTS_PER_FRIEND_PER_DAY,
+  GIFTS_RECEIVED_PER_DAY,
+  MAX_GIFT_RECIPIENTS,
+  giftTierFor,
+} from './gifts.js';
 
 describe('gift tiers', () => {
   it('makes a limited item legendary whatever it costs', () => {
@@ -24,5 +32,12 @@ describe('gift tiers', () => {
   it('caps a day’s gifts above what one send can use', () => {
     expect(GIFTS_PER_DAY).toBeGreaterThanOrEqual(MAX_GIFT_RECIPIENTS);
     expect(GIFTS_PER_FRIEND_PER_DAY).toBeLessThan(GIFTS_PER_DAY);
+  });
+
+  it('caps what one person can be given in a day, whoever sends it', () => {
+    // more than one friend’s share, so a few friends can still all give on a birthday
+    expect(GIFTS_RECEIVED_PER_DAY).toBeGreaterThan(GIFTS_PER_FRIEND_PER_DAY);
+    // and no more than one sender’s whole day, so many senders cannot multiply it
+    expect(GIFTS_RECEIVED_PER_DAY).toBeLessThanOrEqual(GIFTS_PER_DAY);
   });
 });
