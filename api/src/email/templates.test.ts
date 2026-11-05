@@ -4,7 +4,7 @@ import { EMAIL_LOCALES, EMAIL_TEMPLATES, renderEmail, emailLocaleFor } from './t
 describe('renderEmail', () => {
   it('interpolates vars in the chosen locale', () => {
     const en = renderEmail('verify-email', 'en', { link: 'https://k/verify?t=1' });
-    expect(en.subject).toBe('Verify your email');
+    expect(en.subject).toBe('Confirm your email');
     expect(en.text).toContain('https://k/verify?t=1');
 
     const ku = renderEmail('password-reset', 'ku', { link: 'https://k/reset' });
@@ -13,7 +13,41 @@ describe('renderEmail', () => {
   });
 
   it('leaves unknown placeholders intact', () => {
-    expect(renderEmail('deletion-notice', 'en', {}).text).toContain('{date}');
+    expect(renderEmail('deletion-notice', 'en', {}).text).toContain('{graceDays}');
+  });
+
+  /**
+   * The deletion notice asked for `{date}` while the sender passes the
+   * account's name and the number of days left, so every notice went out
+   * reading "will be deleted on {date}". It is written for the variables
+   * the sender has, in both languages.
+   */
+  it('fills the deletion notice from what the sender passes', () => {
+    for (const locale of EMAIL_LOCALES) {
+      const r = renderEmail('deletion-notice', locale, { username: 'dilan', graceDays: '14' });
+      expect(r.text, locale).toContain('14');
+      expect(r.text, locale).toContain('dilan');
+      expect(r.text, locale).not.toMatch(/\{[a-zA-Z]+\}/);
+    }
+  });
+
+  // account and security mail is calm: no jokes, no emoji, and the action is to sign in
+  it('keeps every account email free of emoji and of log in', () => {
+    for (const template of EMAIL_TEMPLATES) {
+      for (const locale of EMAIL_LOCALES) {
+        const r = renderEmail(template, locale);
+        const all = `${r.subject}\n${r.text}\n${r.html ?? ''}`;
+        expect(all, `${template}/${locale}`).not.toMatch(/\p{Extended_Pictographic}/u);
+        expect(all, `${template}/${locale}`).not.toMatch(/log ?in\b/i);
+      }
+    }
+  });
+
+  it('says how long each emailed link or code works', () => {
+    expect(renderEmail('verify-email', 'en').text).toContain('24 hours');
+    expect(renderEmail('verify-email-code', 'en').text).toContain('15 minutes');
+    expect(renderEmail('password-reset', 'en').text).toContain('one hour');
+    expect(renderEmail('oauth-no-password', 'en').text).toContain('one hour');
   });
 
   it('every template has a subject + text in every locale', () => {
@@ -36,7 +70,7 @@ describe('branded auth emails', () => {
     expect(r.text).toContain('This code is valid for 15 minutes.');
     expect(r.text).toContain('— The Hevalo team');
     expect(r.html).toContain('952530');
-    expect(r.html).toContain('Be quick, friend 😄');
+    expect(r.html).toContain('This code is valid for 15 minutes.');
     expect(r.html).not.toMatch(/\{[a-z]+\}/); // nothing left uninterpolated
   });
 
@@ -47,7 +81,7 @@ describe('branded auth emails', () => {
     expect(r.text).toContain('952530');
     expect(r.text).toContain('Ev kod ji bo 15 xulekan derbasdar e.');
     expect(r.text).toContain('— Tîma Hevalo');
-    expect(r.html).toContain('Zû be, heval 😄');
+    expect(r.html).toContain('Ev kod ji bo 15 xulekan derbasdar e.');
   });
 
   it('renders the reset button linking to the token URL, and the raw link in text', () => {
