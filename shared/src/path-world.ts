@@ -155,8 +155,8 @@ export function hostBox(stops: readonly WorldStop[], width: number, mascotAt: Wo
  */
 export const PATH_CAIRN_GROUNDS: readonly PathGround[] = ['stubble', 'valley', 'alpine'];
 
-/** The cairn's box at its largest and its smallest (its height; it is a little narrower than tall), and its width to height. */
-export const PATH_CAIRN = { size: 124, min: 78, aspect: 0.8 } as const;
+/** The cairn's box at its largest and its smallest (its height; it is a little narrower than tall), its width to height, and the air kept round it. */
+export const PATH_CAIRN = { size: 124, min: 78, aspect: 0.8, air: 8 } as const;
 
 /**
  * Where the cairn stands in a unit: in the open beside the path, as large as
@@ -194,7 +194,9 @@ export function cairnBox(stops: readonly WorldStop[], width: number, avoid: read
         for (const side of [-1, 1]) {
           for (let reach = w / 2 + 8; reach + w / 2 <= half - PATH_SCENERY.edge; reach += 6) {
             const box = { x: side * reach, y, w, h };
-            if ([...solid, ...keep].some((b) => overlaps(box, b))) continue;
+            // a little air all round, so nothing (Hevalo's antlers least of all) brushes its knoll
+            const air = { x: box.x, y: y - PATH_CAIRN.air, w: w + 2 * PATH_CAIRN.air, h: h + 2 * PATH_CAIRN.air };
+            if ([...solid, ...keep].some((b) => overlaps(air, b))) continue;
             const off = Math.abs(y + h / 2 - middle);
             if (!best || off < Math.abs(best.y + best.h / 2 - middle)) best = box;
             break;
