@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "Hevalo solo accede a tus fotos cuando eliges una para tu foto de perfil, un meme o una publicación con imagen.",
+    "NSMicrophoneUsageDescription": "Hevalo solo usa el micrófono cuando grabas una nota de voz o haces un ejercicio oral."
+  }
+}

@@ -212,7 +212,8 @@
         "expo-image-picker",
         {
           "photosPermission": "Hevalo accesses your photos only when you choose one for your profile picture or a meme/image post.",
-          "cameraPermission": false
+          "cameraPermission": false,
+          "microphonePermission": "Hevalo uses the microphone only when you record a voice note or complete a speaking exercise."
         }
       ],
       [
@@ -244,6 +245,17 @@
         }
       ]
     ],
+    "locales": {
+      "ku": "./locales/ku.json",
+      "ckb": "./locales/ckb.json",
+      "en": "./locales/en.json",
+      "nl": "./locales/nl.json",
+      "de": "./locales/de.json",
+      "es": "./locales/es.json",
+      "fr": "./locales/fr.json",
+      "tr": "./locales/tr.json",
+      "ar": "./locales/ar.json"
+    },
     "extra": {
       "eas": {
         "projectId": "9879cead-a0b7-4879-938f-8e69d96ec2b5"

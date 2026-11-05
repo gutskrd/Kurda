@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "Hevalo opent je foto’s alleen als je er een kiest voor je profielfoto, een meme of een bericht met een afbeelding.",
+    "NSMicrophoneUsageDescription": "Hevalo gebruikt de microfoon alleen als je een spraaknotitie opneemt of een spreekoefening doet."
+  }
+}

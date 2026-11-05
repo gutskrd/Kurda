@@ -1,0 +1,6 @@
+{
+  "ios": {
+    "NSPhotoLibraryUsageDescription": "Hevalo greift nur auf deine Fotos zu, wenn du eins für dein Profilbild, ein Meme oder einen Bildbeitrag auswählst.",
+    "NSMicrophoneUsageDescription": "Hevalo nutzt das Mikrofon nur, wenn du eine Sprachnotiz aufnimmst oder eine Sprechübung machst."
+  }
+}
