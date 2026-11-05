@@ -140,7 +140,7 @@ describe('the composer', () => {
     await userEvent.click(screen.getByRole('radio', { name: 'Poem' }));
     await userEvent.type(box(), 'Words');
     expect(postButton()).toBeDisabled();
-    expect(screen.getByText('A poem needs a title.')).toBeInTheDocument();
+    expect(screen.getByText('A story or a poem needs a title.')).toBeInTheDocument();
   });
 
   it('uploads a picture as soon as it is added, and posts it with no words and its description', async () => {
