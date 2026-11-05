@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Platform, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { ClayButton } from '../../theme/glass';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../auth/AuthContext';
+import { isGoogleConfigured } from '../../auth/google';
 import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, validateEmail, validatePassword } from '../../auth/validators';
 import { StepFlow, type FlowStep } from '../../auth/guide/StepFlow';
 import { GuideField } from '../../auth/guide/GuideField';
@@ -14,6 +15,7 @@ import { AnswerSummary } from '../../auth/guide/AnswerSummary';
 import { birthYearFrom } from '../../auth/guide/age';
 import { USERNAME_RULE_VARS, checkUsername } from '../../username/validate';
 import { LinkText } from './AuthForm';
+import { AppleButton, GoogleButton, useSocialSignIn } from './SocialSignIn';
 import { useI18n } from '../../i18n/I18nContext';
 import { AgreeLine } from '../../legal/links';
 
@@ -31,6 +33,13 @@ import { AgreeLine } from '../../legal/links';
  * whole signed-in tree with the verify-email gate — this screen is gone with
  * it. Should an account ever come back already verified, the effect below
  * closes the flow, so a finished claim never leaves it standing.
+ *
+ * Where the phone offers Apple or Google, the flow opens on the choice the
+ * sign-in screen gives (SocialSignIn): either one makes this same account
+ * the guest's, keeping what was learned (the server claims the guest on a
+ * provider sign-in, api/src/auth/oauth.ts), and Continue with email goes on
+ * to the questions below. The birth month a provider does not give is asked
+ * for afterwards, as after any sign-up through one.
  *
  * Refusals are the sign-up's: an address that may already have an account
  * gets the calm notice with Sign in and Reset password; a leaked password is
@@ -58,6 +67,11 @@ export function ClaimAccountScreen({
   const [age, setAge] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
   const [mayHaveAccount, setMayHaveAccount] = useState(false);
+  // Apple's button where the phone has it, and both sheets with their answers, as on the sign-in screen
+  const { appleAvailable, onApple, onGoogle } = useSocialSignIn();
+  // every iOS the app runs on has Sign in with Apple, so the choice is known before Apple's own answer arrives
+  const offersProvider = Platform.OS === 'ios' || isGoogleConfigured;
+  const haveAccount = <LinkText label={t('welcome.haveAccount')} onPress={() => onSignIn()} />;
 
   // a claim that came back already verified, or an account signed in to meanwhile: the flow has nothing left to do
   const claimed = user !== null && user.guest !== true;
@@ -71,7 +85,23 @@ export function ClaimAccountScreen({
 
   const chosenName = username.normalize('NFC').trim();
 
+  const method: FlowStep = {
+    key: 'method',
+    question: t('guide.claim.method.question'),
+    says: t('guide.claim.method.says'),
+    // the flow's own button goes on with the email questions; the provider buttons sign in as they are pressed
+    action: t('welcome.email'),
+    render: () => (
+      <View style={styles.methods}>
+        {appleAvailable ? <AppleButton onPress={() => void onApple()} /> : null}
+        {isGoogleConfigured ? <GoogleButton onPress={() => void onGoogle()} /> : null}
+      </View>
+    ),
+    footer: haveAccount,
+  };
+
   const steps: FlowStep[] = [
+    ...(offersProvider ? [method] : []),
     {
       key: 'name',
       question: t('guide.claim.name.question'),
@@ -91,7 +121,8 @@ export function ClaimAccountScreen({
           testID="username"
         />
       ),
-      footer: <LinkText label={t('welcome.haveAccount')} onPress={() => onSignIn()} />,
+      // the way to an account they already have sits on the first step, whichever that is
+      footer: offersProvider ? undefined : haveAccount,
     },
     {
       key: 'email',
@@ -221,6 +252,7 @@ export function ClaimAccountScreen({
 }
 
 const styles = StyleSheet.create({
+  methods: { gap: spacing.md },
   // the sign-up notice's calm panel (RegisterScreen.tsx): a pause, not a mistake
   notice: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md, marginBottom: spacing.md },
   noticeText: { fontSize: typography.sizes.sm, lineHeight: 21 },

@@ -1076,6 +1076,8 @@ export type TranslationKey =
   | 'guide.claim.age.says'
   | 'guide.claim.terms.question'
   | 'guide.claim.terms.says'
+  | 'guide.claim.method.question'
+  | 'guide.claim.method.says'
   | 'guide.intro.language.says'
   | 'guide.intro.welcome.says'
   | 'guide.intro.notify.says'
@@ -3527,6 +3529,8 @@ const en: Catalog = {
   'guide.claim.age.says': 'Two last questions, the same we ask everyone.',
   'guide.claim.terms.question': 'Make it yours?',
   'guide.claim.terms.says': 'The rules, and then it’s all yours.',
+  'guide.claim.method.question': 'How will you sign in?',
+  'guide.claim.method.says': 'Pick how you’ll sign in from now on. Everything you’ve learned comes with you.',
   'guide.intro.language.says': 'Silav! Which language shall we talk in?',
   'guide.intro.welcome.says': 'I’m Hevalo. Shall we learn some Kurdish together?',
   'guide.intro.notify.says': 'On a day your streak is waiting, I can leave you a note — only if you want.',
@@ -6533,6 +6537,8 @@ const ku: Catalog = {
   'guide.claim.age.says': 'Du pirsên dawî, yên ku em ji her kesî dipirsin.',
   'guide.claim.terms.question': 'Bike ya xwe?',
   'guide.claim.terms.says': 'Rêbaz, û paşê her tişt ya te ye.',
+  'guide.claim.method.question': 'Tu dê bi kîjan rê têkevî?',
+  'guide.claim.method.says': 'Hilbijêre ka tu ji niha û pê ve dê çawa têkevî. Her tiştê ku te fêr bûye bi te re tê.',
   'guide.intro.language.says': 'Silav! Em bi kîjan zimanî biaxivin?',
   'guide.intro.welcome.says': 'Ez Hevalo me. Em bi hev re hinekî kurdî fêr bibin?',
   'guide.intro.notify.says': 'Rojekê ku zincîra te li benda te ye, ez dikarim nîşeyekê ji te re bihêlim — tenê eger tu bixwazî.',
@@ -9538,6 +9544,8 @@ const de: Catalog = {
   'guide.claim.age.says': 'Zwei letzte Fragen, dieselben, die wir allen stellen.',
   'guide.claim.terms.question': 'Zu deinem machen?',
   'guide.claim.terms.says': 'Die Regeln, und dann gehört alles dir.',
+  'guide.claim.method.question': 'Wie meldest du dich künftig an?',
+  'guide.claim.method.says': 'Such dir aus, wie du dich ab jetzt anmeldest. Alles, was du gelernt hast, kommt mit.',
   'guide.intro.language.says': 'Silav! In welcher Sprache sollen wir reden?',
   'guide.intro.welcome.says': 'Ich bin Hevalo. Lernen wir zusammen ein bisschen Kurdisch?',
   'guide.intro.notify.says': 'An einem Tag, an dem deine Serie noch wartet, kann ich dir eine Nachricht hinterlassen — nur wenn du willst.',
@@ -12543,6 +12551,8 @@ const es: Catalog = {
   'guide.claim.age.says': 'Dos últimas preguntas, las mismas que hacemos a todo el mundo.',
   'guide.claim.terms.question': '¿La hacemos tuya?',
   'guide.claim.terms.says': 'Las normas, y luego es toda tuya.',
+  'guide.claim.method.question': '¿Cómo vas a iniciar sesión?',
+  'guide.claim.method.says': 'Elige cómo entrarás a partir de ahora. Todo lo que has aprendido viene contigo.',
   'guide.intro.language.says': 'Silav! ¿En qué idioma hablamos?',
   'guide.intro.welcome.says': 'Soy Hevalo. ¿Aprendemos un poco de kurdo juntos?',
   'guide.intro.notify.says': 'Los días en que tu racha siga esperando, puedo dejarte una nota, solo si quieres.',
@@ -15548,6 +15558,8 @@ const tr: Catalog = {
   'guide.claim.age.says': 'Son iki soru, herkese sorduğumuz sorular.',
   'guide.claim.terms.question': 'Senin olsun mu?',
   'guide.claim.terms.says': 'Kurallar, sonra hepsi senin.',
+  'guide.claim.method.question': 'Nasıl giriş yapacaksın?',
+  'guide.claim.method.says': 'Bundan sonra nasıl giriş yapacağını seç. Öğrendiğin her şey seninle gelir.',
   'guide.intro.language.says': 'Silav! Hangi dilde konuşalım?',
   'guide.intro.welcome.says': 'Ben Hevalo. Birlikte biraz Kürtçe öğrenelim mi?',
   'guide.intro.notify.says': 'Serinin seni beklediği bir günde sana bir not bırakabilirim — yalnızca istersen.',
@@ -18553,6 +18565,8 @@ const ar: Catalog = {
   'guide.claim.age.says': 'سؤالان أخيران، نسألهما للجميع.',
   'guide.claim.terms.question': 'نجعله لك؟',
   'guide.claim.terms.says': 'القواعد، ثم يصير كله لك.',
+  'guide.claim.method.question': 'كيف ستسجّل الدخول؟',
+  'guide.claim.method.says': 'اختر كيف ستسجّل الدخول من الآن فصاعدًا. كل ما تعلّمته يأتي معك.',
   'guide.intro.language.says': 'سلاف! بأي لغة نتحدّث؟',
   'guide.intro.welcome.says': 'أنا هيفالو. نتعلّم بعض الكردية معًا؟',
   'guide.intro.notify.says': 'في يوم تنتظرك فيه سلسلتك، أستطيع أن أترك لك ملاحظة — إن أردت فقط.',
@@ -21558,6 +21572,8 @@ const fr: Catalog = {
   'guide.claim.age.says': 'Deux dernières questions, les mêmes qu’on pose à tout le monde.',
   'guide.claim.terms.question': 'On en fait le tien ?',
   'guide.claim.terms.says': 'Les règles, et puis tout est à toi.',
+  'guide.claim.method.question': 'Comment vas-tu te connecter ?',
+  'guide.claim.method.says': 'Choisis comment tu te connecteras désormais. Tout ce que tu as appris te suit.',
   'guide.intro.language.says': 'Silav ! Dans quelle langue on se parle ?',
   'guide.intro.welcome.says': 'Je suis Hevalo. On apprend un peu de kurde ensemble ?',
   'guide.intro.notify.says': 'Un jour où ta série attend encore, je peux te laisser un mot — seulement si tu veux.',
@@ -24563,6 +24579,8 @@ const nl: Catalog = {
   'guide.claim.age.says': 'Twee laatste vragen, dezelfde die we iedereen stellen.',
   'guide.claim.terms.question': 'Van jou maken?',
   'guide.claim.terms.says': 'De regels, en dan is alles van jou.',
+  'guide.claim.method.question': 'Hoe wil je inloggen?',
+  'guide.claim.method.says': 'Kies hoe je voortaan inlogt. Alles wat je hebt geleerd gaat mee.',
   'guide.intro.language.says': 'Silav! In welke taal zullen we praten?',
   'guide.intro.welcome.says': 'Ik ben Hevalo. Zullen we samen een beetje Koerdisch leren?',
   'guide.intro.notify.says': 'Op een dag dat je reeks nog wacht, kan ik een berichtje voor je achterlaten — alleen als je dat wilt.',
@@ -27569,6 +27587,8 @@ const ckb: Catalog = {
   'guide.claim.age.says': 'دوو پرسیاری کۆتایی، هەمان ئەوانەی لە هەمووان دەپرسین.',
   'guide.claim.terms.question': 'بیکە هی خۆت؟',
   'guide.claim.terms.says': 'یاساکان، پاشان هەمووی هی تۆیە.',
+  'guide.claim.method.question': 'بە چ ڕێگایەک دەچیتە ژوورەوە؟',
+  'guide.claim.method.says': 'هەڵیبژێرە لەمەودوا چۆن دەچیتە ژوورەوە. هەموو ئەوەی فێری بوویت لەگەڵت دێت.',
   'guide.intro.language.says': 'سڵاو! بە کام زمان قسە بکەین؟',
   'guide.intro.welcome.says': 'من هێڤالۆم. پێکەوە کەمێک کوردی فێر بین؟',
   'guide.intro.notify.says': 'ڕۆژێک کە زنجیرەکەت چاوەڕێتە، دەتوانم تێبینییەک بۆت بەجێبهێڵم — تەنها ئەگەر بتەوێت.',

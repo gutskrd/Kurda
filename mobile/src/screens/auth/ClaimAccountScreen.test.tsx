@@ -9,10 +9,33 @@ vi.mock('@react-navigation/native', () => import('../../auth/guide/testing/navig
 const auth = vi.hoisted(() => ({
   user: { id: 'g', username: 'heval4821930', email: null, guest: true, emailVerified: true } as { username: string; guest: boolean } | null,
   claimAccount: vi.fn(),
+  oauthSignIn: vi.fn(),
   stopForAge: vi.fn(),
   logout: vi.fn(),
 }));
 vi.mock('../../auth/AuthContext', () => ({ useAuth: () => auth }));
+// a build without Google's client ids, unless a test says it has them
+const google = vi.hoisted(() => ({ configured: false, signIn: vi.fn() }));
+vi.mock('../../auth/google', () => ({
+  signInWithGoogle: google.signIn,
+  get isGoogleConfigured() {
+    return google.configured;
+  },
+}));
+const apple = vi.hoisted(() => ({ available: false, signInAsync: vi.fn() }));
+// Apple's sheet is native: its button is a plain one here, and the sheet answers what each test says
+vi.mock('expo-apple-authentication', async () => {
+  const { createElement } = await import('react');
+  return {
+    isAvailableAsync: async () => apple.available,
+    signInAsync: apple.signInAsync,
+    AppleAuthenticationScope: { FULL_NAME: 0, EMAIL: 1 },
+    AppleAuthenticationButtonType: { SIGN_IN: 0, CONTINUE: 1 },
+    AppleAuthenticationButtonStyle: { WHITE: 0, WHITE_OUTLINE: 1, BLACK: 2 },
+    AppleAuthenticationButton: ({ onPress }: { onPress: () => void }) =>
+      createElement('button', { type: 'button', onClick: onPress }, 'Continue with Apple'),
+  };
+});
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { renderWithProviders } from '../../reports/testing/harness';
@@ -32,6 +55,11 @@ const en = TRANSLATIONS.en;
 
 afterEach(() => {
   cleanup();
+  google.configured = false;
+  google.signIn.mockReset();
+  apple.available = false;
+  apple.signInAsync.mockReset();
+  auth.oauthSignIn.mockReset();
   auth.claimAccount.mockReset();
   auth.stopForAge.mockReset();
   auth.logout.mockReset();
@@ -149,5 +177,69 @@ describe('claiming the guest account', () => {
     expect(handlers.onSignIn).toHaveBeenCalledWith();
     await press(en['common.back']);
     expect(handlers.onExit).toHaveBeenCalledTimes(1);
+  });
+});
+
+/*
+ * Where the phone offers Apple or Google, the claim opens on the same choice
+ * the sign-in screen gives: either one makes this account the guest's (the
+ * server claims the guest on a provider sign-in), and Continue with email
+ * goes on to the questions.
+ */
+describe('claiming the guest account with Apple or Google', () => {
+  it('opens on the choice, and claims the account through Google', async () => {
+    google.configured = true;
+    google.signIn.mockResolvedValue({ kind: 'success', idToken: 'google-id-token' });
+    auth.oauthSignIn.mockResolvedValue(null);
+    renderClaim();
+    expect(screen.getByText(en['guide.claim.method.question'])).toBeTruthy();
+    expect(screen.getByTestId('speech-bubble').textContent).toBe(en['guide.claim.method.says']);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: en['welcome.google'] }));
+    });
+    expect(auth.oauthSignIn).toHaveBeenCalledWith('google', 'google-id-token');
+    expect(auth.claimAccount).not.toHaveBeenCalled();
+  });
+
+  it('claims the account through Apple where the phone has it, with the code and the shared name', async () => {
+    google.configured = true;
+    apple.available = true;
+    apple.signInAsync.mockResolvedValue({
+      user: '001234.abcdef',
+      state: null,
+      fullName: { namePrefix: null, givenName: 'Rojda', middleName: null, familyName: null, nameSuffix: null, nickname: null },
+      email: null,
+      realUserStatus: 1,
+      identityToken: 'identity-token-from-apple',
+      authorizationCode: 'c1a2b3.0.authorization-code',
+    });
+    auth.oauthSignIn.mockResolvedValue(null);
+    renderClaim();
+    const button = await screen.findByRole('button', { name: 'Continue with Apple' });
+    await act(async () => {
+      fireEvent.click(button);
+    });
+    expect(auth.oauthSignIn).toHaveBeenCalledWith('apple', 'identity-token-from-apple', {
+      authorizationCode: 'c1a2b3.0.authorization-code',
+      fullName: 'Rojda',
+    });
+  });
+
+  it('goes on to the email questions from Continue with email, with the sign-in on the first step only', async () => {
+    google.configured = true;
+    const handlers = renderClaim();
+    fireEvent.click(screen.getByRole('button', { name: en['welcome.haveAccount'] }));
+    expect(handlers.onSignIn).toHaveBeenCalledWith();
+    await press(en['welcome.email']);
+    expect(await screen.findByText(en['guide.claim.name.question'])).toBeTruthy();
+    await turned();
+    expect(screen.queryByRole('button', { name: en['welcome.haveAccount'] })).toBeNull();
+    expect(google.signIn).not.toHaveBeenCalled();
+  });
+
+  it('asks only for the email account where neither Apple nor Google is offered', () => {
+    renderClaim();
+    expect(screen.queryByText(en['guide.claim.method.question'])).toBeNull();
+    expect(screen.getByText(en['guide.claim.name.question'])).toBeTruthy();
   });
 });

@@ -375,6 +375,15 @@ export function AuthProvider({
       }
     },
     oauthSignIn: async (provider, idToken, apple) => {
+      /*
+       * Signed in as a guest, the sign-in claims the guest's own account and
+       * keeps what was learned (api/src/auth/oauth.ts) — but only when it
+       * carries the guest's session. On this route an access token that has
+       * run out is not refused and renewed, just not read, so the sign-in
+       * made a second account and left the progress behind. Asking for the
+       * account first renews a token that ran out.
+       */
+      if (user?.guest === true) await client.get('/me');
       const extras =
         provider === 'apple'
           ? {
