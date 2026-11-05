@@ -469,6 +469,13 @@ export * from './play.js';
 export * from './gifts.js';
 
 /**
+ * The learning games (Build a Kurdish Sentence and the games after it): the
+ * one registry, the two varieties as 'kmr' | 'ckb' with their script rules,
+ * the schemas of the games' own content and the shapes a round is sent in.
+ */
+export * from './games/index.js';
+
+/**
  * Shop items by kind — the categories, the search, the filters and the orders
  * the shop, the inventory and the gift picker share (shop-items).
  */
