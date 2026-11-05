@@ -833,16 +833,18 @@
   }
 }
 
-/* the tile among Learn's games: the village as its picture, beside the race on a wide page */
+/* the tile among Learn's games: a band across the village as its picture, exactly as tall as every other game's, beside the race on a wide page */
 .kingdom-tile-visual {
-  padding: 16px;
+  display: block;
+  height: 196px;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
 }
 .kingdom-tile-visual svg {
   display: block;
   width: 100%;
-  max-width: 300px;
-  height: auto;
-  border-radius: var(--r-lg);
+  height: 100%;
 }
 @media (min-width: 1000px) {
   .game-tile--kingdom {
