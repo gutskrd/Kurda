@@ -522,24 +522,37 @@
     display: block;
   }
   /*
-   * The page reserves the strip's width on BOTH sides.
+   * The page reserves the strip's width on BOTH sides, and the open column's
+   * width at its end.
    *
-   * The strip is always there and never changes size, so the gutter is a
-   * constant — and the expanded panel floats over the page instead of pushing
-   * it. Opening the rail used to reflow everything you were reading, which is a
-   * high price for a glance at who is online.
+   * The strip is always there, so its gutter is a constant. Reserving it only
+   * on the right is what made the app look untucked: the page was then centred
+   * inside `window - 76px` while the navigation bar above it was centred inside
+   * the whole window, so the two sat on axes 38px apart at 1440px. Padding
+   * both sides costs nothing and puts the column on the window's centre line.
    *
-   * Reserving it only on the right is what made the app look untucked: the page
-   * was then centred inside `window - 76px` while the navigation bar above it
-   * was centred inside the whole window, so the two sat on axes 38px apart at
-   * 1440px. Padding both sides costs nothing — the content is capped well
-   * inside either figure — and puts the column back on the window's own centre
-   * line, with the strip still clear of it.
+   * The open column used to float over the page, so that opening it reflowed
+   * nothing. But it is open by default, and floating only worked for the pages
+   * narrow enough to stop short of it, the feed and the 720px column. Every
+   * page laid out in the full container ran on underneath it: the Games grid,
+   * a game's board and its question card, the switches in Settings, the open
+   * conversation in Messages; at 1280px even a 760px page lost its edge.
+   * Capping each page would be one fix per page, and another for the next wide
+   * one. So while the column is open the page is laid out in the room beside
+   * it, the width a page already gets in a window that much narrower, and the
+   * room is taken at the page's end: the left in a right-to-left language,
+   * where the column docks. Folding the column gives the room back at once:
+   * easing it would set the whole page sliding on every load, as the column
+   * arrives with the account.
    */
   .app-main,
   .site-main.has-rail {
     padding-left: calc(var(--rail-strip-w) + 16px);
     padding-right: calc(var(--rail-strip-w) + 16px);
+  }
+  .app-main:has(~ .social-rail:not(.is-collapsed)),
+  .site-main.has-rail:has(~ .social-rail:not(.is-collapsed)) {
+    padding-inline-end: calc(var(--rail-w) + 16px);
   }
   .social-rail {
     transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
