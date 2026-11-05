@@ -36,7 +36,7 @@ export interface Palette {
   background: string;
   gradient: readonly [string, string, string];
 
-  // glassmorphism / liquid glass — three blur tiers so we can go stronger on
+  // frosted glass — three blur tiers so we can go stronger on
   // floating surfaces (nav, modals, sheets) and lighter on flat, scrolled content
   // (cards, rows) where heavy blur costs performance and hurts readability.
   glassFill: string; // translucent tint painted over the blur

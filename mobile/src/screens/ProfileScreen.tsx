@@ -272,8 +272,10 @@ function AccountProfile() {
   }, [client, uploading, showSendError, t, locale]);
 
   /*
-   * Your profile's address, to send to somebody. The website opens it for
-   * anyone; the app opens it for anyone who has the app.
+   * Your profile's address, to send to somebody. A tapped link opens the
+   * profile on the website, even on a phone with the app: the app does not
+   * claim hevalo.app links until the association files exist (see `linking`
+   * in App.tsx), so the message promises a page, not the app.
    */
   const share = useCallback(() => {
     const id = me?.id ?? user?.id;

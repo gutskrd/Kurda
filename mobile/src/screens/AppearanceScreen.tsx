@@ -79,10 +79,6 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
             </View>
           </View>
         </GlassCard>
-
-        <Text style={[styles.footNote, { color: colors.textSecondary }]}>
-          {t('appearance.footNote')}
-        </Text>
       </ScrollView>
     </GradientBackground>
   );
@@ -102,5 +98,4 @@ const styles = StyleSheet.create({
   tileNum: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
   tileLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },
   actions: { flexDirection: 'row', gap: spacing.md, marginTop: spacing.lg },
-  footNote: { fontSize: typography.sizes.xs, textAlign: 'center', marginTop: spacing.sm, lineHeight: 18 },
 });
