@@ -47,7 +47,7 @@
 @media (max-width: 640px) {
   /* a phone's whole width, edge to edge, as a game's home */
   .kingdom-stage {
-    margin-block-start: -40px;
+    margin-block-start: -32px;
     margin-inline: -16px;
     border-radius: 0;
     height: calc(100dvh - var(--nav-h));

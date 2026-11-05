@@ -230,7 +230,7 @@ export function KingdomScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             {isRaising && current ? <Raise upgrade={current} dark={dark} scale={scale} /> : null}
             {view.buildings.map((b) => {
               const plot = KINGDOM_PLOTS[b.id];
-              const shown = isRaising && current?.building === b.id && !ticked ? current.level - 1 : levels[b.id];
+              const shown = isRaising && current?.building === b.id ? (ticked ? current.level : current.level - 1) : levels[b.id];
               return (
                 <Pressable
                   key={b.id}

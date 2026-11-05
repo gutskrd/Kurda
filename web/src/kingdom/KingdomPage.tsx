@@ -256,7 +256,7 @@ export function KingdomPage(): React.JSX.Element {
     void client.post('/kingdom/seen', { levels: [{ building: u.building, level: u.level }] });
     setQueue((q) => q.slice(1));
   };
-  const badgeLevel = (b: KingdomBuildingView): number => (isRaising && current?.building === b.id && !ticked ? current.level - 1 : levels[b.id]);
+  const badgeLevel = (b: KingdomBuildingView): number => (isRaising && current?.building === b.id ? (ticked ? current.level : current.level - 1) : levels[b.id]);
   const total = kingdomLevelCount(KINGDOM_BUILDINGS.map((id) => ({ level: levels[id] })));
 
   return (
