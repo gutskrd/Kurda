@@ -1506,7 +1506,6 @@ export const nl: Catalogue = {
   'coursemap.state.current': 'Hier ben je',
   'coursemap.unit': 'Eenheid {n}',
   'coursemap.unitDone': '{done} van {total} klaar',
-  'coursemap.guide': 'Gids',
   'coursemap.guideFor': 'Gids bij {unit}',
   'coursemap.node.label': '{title}, {state}, {done} van {total} lessen klaar',
   'coursemap.node.labelShort': '{title}, {state}',

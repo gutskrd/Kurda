@@ -2918,7 +2918,6 @@ export type TranslationKey =
   | 'lesson.speak.rateRetry'
   | 'coursemap.path.unit'
   | 'coursemap.path.unitDone'
-  | 'coursemap.path.guide'
   | 'coursemap.path.guideFor'
   | 'coursemap.path.tipsFor'
   | 'coursemap.path.label'
@@ -6277,7 +6276,6 @@ const en: Catalog = {
   'edit.countrySearch': 'Find a country',
   'coursemap.path.unit': 'Unit {n}',
   'coursemap.path.unitDone': '{done} of {total} done',
-  'coursemap.path.guide': 'Guide',
   'coursemap.path.guideFor': 'Guide to {unit}',
   'coursemap.path.tipsFor': 'Tips for {skill}',
   'coursemap.path.label': '{title}, {state}, {done} of {total} lessons done',
@@ -9636,7 +9634,6 @@ const ku: Catalog = {
   'edit.countrySearch': 'Welatekî bibîne',
   'coursemap.path.unit': 'Yekîne {n}',
   'coursemap.path.unitDone': '{done} ji {total} qediyan',
-  'coursemap.path.guide': 'Rêber',
   'coursemap.path.guideFor': 'Rêbera {unit}',
   'coursemap.path.tipsFor': 'Serişte ji bo {skill}',
   'coursemap.path.label': '{title}, {state}, {done} ji {total} dersan qediyan',
@@ -12995,7 +12992,6 @@ const de: Catalog = {
   'edit.countrySearch': 'Land suchen',
   'coursemap.path.unit': 'Einheit {n}',
   'coursemap.path.unitDone': '{done} von {total} fertig',
-  'coursemap.path.guide': 'Leitfaden',
   'coursemap.path.guideFor': 'Leitfaden zu {unit}',
   'coursemap.path.tipsFor': 'Tipps zu {skill}',
   'coursemap.path.label': '{title}, {state}, {done} von {total} Lektionen fertig',
@@ -16354,7 +16350,6 @@ const es: Catalog = {
   'edit.countrySearch': 'Buscar un país',
   'coursemap.path.unit': 'Unidad {n}',
   'coursemap.path.unitDone': '{done} de {total} hechas',
-  'coursemap.path.guide': 'Guía',
   'coursemap.path.guideFor': 'Guía de {unit}',
   'coursemap.path.tipsFor': 'Consejos para {skill}',
   'coursemap.path.label': '{title}, {state}, {done} de {total} lecciones hechas',
@@ -19713,7 +19708,6 @@ const tr: Catalog = {
   'edit.countrySearch': 'Ülke ara',
   'coursemap.path.unit': 'Ünite {n}',
   'coursemap.path.unitDone': '{done} / {total} bitti',
-  'coursemap.path.guide': 'Rehber',
   'coursemap.path.guideFor': '{unit} rehberi',
   'coursemap.path.tipsFor': '{skill} için ipuçları',
   'coursemap.path.label': '{title}, {state}, {total} dersten {done} tanesi bitti',
@@ -23072,7 +23066,6 @@ const ar: Catalog = {
   'edit.countrySearch': 'ابحث عن دولة',
   'coursemap.path.unit': 'الوحدة {n}',
   'coursemap.path.unitDone': '{done} من {total} مكتملة',
-  'coursemap.path.guide': 'الدليل',
   'coursemap.path.guideFor': 'دليل {unit}',
   'coursemap.path.tipsFor': 'نصائح لـ{skill}',
   'coursemap.path.label': '{title}، {state}، {done} من {total} دروس مكتملة',
@@ -26431,7 +26424,6 @@ const fr: Catalog = {
   'edit.countrySearch': 'Chercher un pays',
   'coursemap.path.unit': 'Unité {n}',
   'coursemap.path.unitDone': '{done} sur {total} terminées',
-  'coursemap.path.guide': 'Guide',
   'coursemap.path.guideFor': 'Guide de {unit}',
   'coursemap.path.tipsFor': 'Astuces pour {skill}',
   'coursemap.path.label': '{title}, {state}, {done} leçons sur {total} terminées',
@@ -29790,7 +29782,6 @@ const nl: Catalog = {
   'edit.countrySearch': 'Zoek een land',
   'coursemap.path.unit': 'Eenheid {n}',
   'coursemap.path.unitDone': '{done} van {total} klaar',
-  'coursemap.path.guide': 'Gids',
   'coursemap.path.guideFor': 'Gids bij {unit}',
   'coursemap.path.tipsFor': 'Tips voor {skill}',
   'coursemap.path.label': '{title}, {state}, {done} van {total} lessen klaar',
@@ -33150,7 +33141,6 @@ const ckb: Catalog = {
   'edit.countrySearch': 'وڵاتێک بدۆزەرەوە',
   'coursemap.path.unit': 'یەکەی {n}',
   'coursemap.path.unitDone': '{done} لە {total} تەواو بوون',
-  'coursemap.path.guide': 'ڕێبەر',
   'coursemap.path.guideFor': 'ڕێبەری {unit}',
   'coursemap.path.tipsFor': 'ئامۆژگاری بۆ {skill}',
   'coursemap.path.label': '{title}، {state}، {done} لە {total} وانە تەواو بوون',

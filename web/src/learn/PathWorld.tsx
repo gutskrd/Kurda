@@ -53,18 +53,18 @@ export function useDarkPage(): boolean {
   return dark;
 }
 
-/** An element's width, followed as it changes; a phone's width until it has been measured, so the path draws at once. */
-export function useWidth(ref: React.RefObject<HTMLElement | null>): number {
+/** An element's width, followed as it changes, from when it is there (`ready`). */
+export function useWidth(ref: React.RefObject<HTMLElement | null>, ready: boolean): number {
   const [width, setWidth] = useState(0);
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
-    setWidth(el.getBoundingClientRect().width || 0);
+    if (!el || !ready) return;
+    setWidth(Math.round(el.getBoundingClientRect().width || 0));
     if (typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(([entry]) => setWidth(Math.round(entry?.contentRect.width ?? 0)));
     observer.observe(el);
     return () => observer.disconnect();
-  }, [ref]);
+  }, [ref, ready]);
   return width;
 }
 
@@ -297,14 +297,14 @@ export function PathHost({
         </span>
       )}
       <span className="lp-host-figure">
-        <SpeakingCharacter speaker={host} audio={null} crop="full" size={HOST_WIDTH} decorative mirrored={flip} />
+        <SpeakingCharacter speaker={host} audio={null} crop="full" size={HOST_SIZE} decorative mirrored={flip} />
       </span>
     </li>
   );
 }
 
-/** How wide the people beside the path are drawn: as tall, whole, as Hevalo stands. */
-const HOST_WIDTH = 64;
+/** How tall the people beside the path are drawn, whole, as Hevalo stands. */
+const HOST_SIZE = 132;
 
 /** A unit as the rail lists it. */
 export interface RailUnit {

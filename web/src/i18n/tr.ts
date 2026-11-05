@@ -1501,7 +1501,6 @@ export const tr: Catalogue = {
   'coursemap.state.current': 'Buradasın',
   'coursemap.unit': 'Ünite {n}',
   'coursemap.unitDone': '{done} / {total} bitti',
-  'coursemap.guide': 'Rehber',
   'coursemap.guideFor': '{unit} rehberi',
   'coursemap.node.label': '{title}, {state}, {total} dersten {done} tanesi bitti',
   'coursemap.node.labelShort': '{title}, {state}',

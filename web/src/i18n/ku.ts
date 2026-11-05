@@ -1508,7 +1508,6 @@ export const ku: Catalogue = {
   'coursemap.state.current': 'Tu li vir î',
   'coursemap.unit': 'Yekîne {n}',
   'coursemap.unitDone': '{done} ji {total} qediyan',
-  'coursemap.guide': 'Rêber',
   'coursemap.guideFor': 'Rêbera {unit}',
   'coursemap.node.label': '{title}, {state}, {done} ji {total} dersan qediyan',
   'coursemap.node.labelShort': '{title}, {state}',

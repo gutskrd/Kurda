@@ -1506,7 +1506,6 @@ export const de: Catalogue = {
   'coursemap.state.current': 'Du bist hier',
   'coursemap.unit': 'Einheit {n}',
   'coursemap.unitDone': '{done} von {total} fertig',
-  'coursemap.guide': 'Leitfaden',
   'coursemap.guideFor': 'Leitfaden zu {unit}',
   'coursemap.node.label': '{title}, {state}, {done} von {total} Lektionen fertig',
   'coursemap.node.labelShort': '{title}, {state}',

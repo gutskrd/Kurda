@@ -748,9 +748,9 @@ const LANDMARKS: Record<PathLandmark, Draw> = {
     box(p, O, 26, -6, 24, 10, 16, stone);
     box(p, O, -26, -8, 12, 14, 48, stone);
     box(p, O, 14, -8, 12, 14, 48, stone);
-    const leaf = (u0: number, u1: number, c: string): string => poly([iso(O, u0, 2, 0), iso(O, u1, 2, 0), iso(O, u1, 2, 40), iso(O, u0, 2, 40)]);
-    p.face(leaf(-14, 0, blue.face), blue.face);
-    p.face(leaf(0, 14, blue.shade), blue.shade);
+    const leaf = (u0: number, u1: number): string => poly([iso(O, u0, 2, 0), iso(O, u1, 2, 0), iso(O, u1, 2, 40), iso(O, u0, 2, 40)]);
+    p.face(leaf(-14, 0), blue.face);
+    p.face(leaf(0, 14), blue.shade);
     for (const u of [-10, -5, 4, 9]) {
       const a = iso(O, u, 2, 3);
       const b = iso(O, u, 2, 37);

@@ -1590,7 +1590,6 @@ export const en = {
   'coursemap.state.current': 'You are here',
   'coursemap.unit': 'Unit {n}',
   'coursemap.unitDone': '{done} of {total} done',
-  'coursemap.guide': 'Guide',
   'coursemap.guideFor': 'Guide to {unit}',
   'coursemap.node.label': '{title}, {state}, {done} of {total} lessons done',
   'coursemap.node.labelShort': '{title}, {state}',

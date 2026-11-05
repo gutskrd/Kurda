@@ -1512,7 +1512,6 @@ export const ckb: Catalogue = {
   'coursemap.state.current': 'تۆ لێرەیت',
   'coursemap.unit': 'یەکەی {n}',
   'coursemap.unitDone': '{done} لە {total} تەواو بوون',
-  'coursemap.guide': 'ڕێبەر',
   'coursemap.guideFor': 'ڕێبەری {unit}',
   'coursemap.node.label': '{title}، {state}، {done} لە {total} وانە تەواو بوون',
   'coursemap.node.labelShort': '{title}، {state}',

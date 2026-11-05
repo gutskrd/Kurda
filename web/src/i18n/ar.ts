@@ -1500,7 +1500,6 @@ export const ar: Catalogue = {
   'coursemap.state.current': 'أنت هنا',
   'coursemap.unit': 'الوحدة {n}',
   'coursemap.unitDone': '{done} من {total} مكتملة',
-  'coursemap.guide': 'الدليل',
   'coursemap.guideFor': 'دليل {unit}',
   'coursemap.node.label': '{title}، {state}، {done} من {total} دروس مكتملة',
   'coursemap.node.labelShort': '{title}، {state}',

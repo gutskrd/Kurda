@@ -39,7 +39,7 @@ import './path.css';
 type Stop = PlacedStop<SkillNode>['stop'];
 type Unit = PathUnit<SkillNode>;
 
-const { node: NODE, step: STEP } = PATH_GEOMETRY;
+const { node: NODE } = PATH_GEOMETRY;
 
 /** How a skill stands, in words — said after its name to a screen reader. */
 function stateKey(stop: SkillStop<SkillNode>): MessageKey {
@@ -395,13 +395,13 @@ function useReturnStep(ret: PathReturn | null): number | null {
 function PathMascot({ x, y, flip, cheer, onPress }: { x: number; y: number; flip: boolean; cheer: boolean; onPress: () => void }): React.JSX.Element {
   return (
     <li className="lp-mascot" aria-hidden="true" style={{ top: y, '--mx': `${x}px` } as React.CSSProperties}>
-      <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={MASCOT_WIDTH} decorative mirrored={flip} reaction={cheer ? 'cheer' : null} onPress={onPress} />
+      <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={MASCOT_SIZE} decorative mirrored={flip} reaction={cheer ? 'cheer' : null} onPress={onPress} />
     </li>
   );
 }
 
 /** Hevalo drawn whole beside the path, as tall as the course's people stand (PathWorld). */
-const MASCOT_WIDTH = 64;
+const MASCOT_SIZE = 132;
 
 /** The units whose stops have risen into place already, by course, while the tab is open: each rises once. */
 const RISEN = new Set<string>();
@@ -452,10 +452,12 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
   // the review count decides where review sits, so the path waits for it (or its failure) once
   const dueSettled = due.data !== null || due.error !== null;
   const path = useMemo(() => (data && dueSettled ? lessonPath(data, { due: due.data?.due ?? 0, guides: true }) : null), [data, dueSettled, due.data]);
-  const width = useWidth(pathRef);
+  const width = useWidth(pathRef, path !== null);
   const screen = useUnitsOnScreen(pathRef, path?.units ?? []);
   // each unit rises the first time it can be seen, and only then; units not seen yet wait under the ground
   const [risen, setRisen] = useState<ReadonlySet<string>>(() => new Set(RISEN));
+  // those that rose on an earlier visit are simply there: only a rise seen now plays
+  const [risenBefore] = useState<ReadonlySet<string>>(() => new Set(RISEN));
   useEffect(() => {
     if (!screen.seen || reduceMotion) return;
     let more = false;
@@ -669,7 +671,7 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
           const near = !screen.near || screen.near.has(unit.unitId);
           const seen = !screen.seen || screen.seen.has(unit.unitId);
           const waiting = !reduceMotion && screen.seen !== null && !risen.has(`${courseId}:${unit.unitId}`);
-          const rising = !reduceMotion && screen.seen !== null && risen.has(`${courseId}:${unit.unitId}`);
+          const rising = !reduceMotion && risen.has(`${courseId}:${unit.unitId}`) && !risenBefore.has(`${courseId}:${unit.unitId}`);
           const mascotAt = playing && step! < 4 && was ? was : current;
           const here = unit.stops.find((p) => p.stop.key === mascotAt);
           const spot = here ? mascotSpot(here) : null;
