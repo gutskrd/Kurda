@@ -16,9 +16,15 @@
  * and the limits.
  */
 import type { GameAccess } from './stories.js';
+import { MULTI_GAMES } from './games/multi/games.js';
 
-/** The online games you can invite friends to. */
-export const PLAY_GAMES = ['wordle-battle', 'rhyme-match', 'stories'] as const;
+/**
+ * The online games you can invite friends to: the three with engines of their
+ * own, then every game the generic multiplayer engine runs (`MULTI_GAMES`),
+ * so a new learning game joins invites, codes, cards and rematches by being
+ * added there.
+ */
+export const PLAY_GAMES = ['wordle-battle', 'rhyme-match', 'stories', ...MULTI_GAMES] as const;
 export type PlayGame = (typeof PLAY_GAMES)[number];
 
 /**
@@ -35,7 +41,7 @@ export interface JoinedByCode {
 }
 
 export function isPlayGame(v: unknown): v is PlayGame {
-  return v === 'wordle-battle' || v === 'rhyme-match' || v === 'stories';
+  return (PLAY_GAMES as readonly unknown[]).includes(v);
 }
 
 export type { GameAccess };

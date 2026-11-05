@@ -20,7 +20,9 @@
  * two apps key their catalogues differently, so each keeps its own map.
  */
 
-export type GameInviteType = 'wordle-battle' | 'rhyme-match' | 'stories';
+import { MULTI_GAME_SEGMENT, type MultiGame } from './games/multi/games.js';
+
+export type GameInviteType = 'wordle-battle' | 'rhyme-match' | 'stories' | MultiGame;
 
 export interface GameInvite {
   type: GameInviteType;
@@ -36,6 +38,7 @@ const SEGMENT: Record<GameInviteType, string> = {
   'wordle-battle': 'peyvok-battle',
   'rhyme-match': 'rhyme-match',
   stories: 'stories',
+  ...MULTI_GAME_SEGMENT,
 };
 
 /**

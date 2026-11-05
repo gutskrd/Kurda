@@ -686,3 +686,14 @@ export * from './art-slots.js';
 export * from './scanner-paths.js';
 // taking Hevalo offline for a while from the admin, and what people see meanwhile
 export * from './maintenance.js';
+/**
+ * The multiplayer learning games: the dialect letter rules the word games
+ * share, the generic engine's contract and the room every game is drawn in,
+ * and The Last Letter's rules and Learn entry.
+ */
+export * from './games/letters.js';
+export * from './games/multi/games.js';
+export * from './games/multi/rules.js';
+export * from './games/multi/view.js';
+export * from './games/last-letter/rules.js';
+export * from './games/last-letter/learn.js';
