@@ -1,0 +1,128 @@
+/**
+ * Which learning games can be played, per variety and level: the approved
+ * content each one has, against its minimum (GET /games/availability, and the
+ * admin's readiness view).
+ *
+ * Counted only from what a game may show — the trusted readers and published
+ * `game_content` rows — so a game is never offered on drafts. A game whose
+ * content has no levels (recordings, the dictionary) counts the same pool at
+ * every level. Cached per variety for a couple of minutes: the games page asks
+ * on every visit, and the answer changes only when something is published.
+ */
+import type pg from 'pg';
+import {
+  GAME_LEVELS,
+  LEARN_GAMES,
+  availableDifficulties,
+  courseSpelling,
+  type GameAvailability,
+  type GameContentKind,
+  type GameDialect,
+  type GameLevel,
+  type GamesAvailability,
+  type LearnGameId,
+} from '@kurda/shared';
+import type { Cache } from '../cache/cache.js';
+import type { BuildSentenceGame } from './build-sentence.js';
+import type { TrustedSources } from './sources.js';
+
+const CACHE_DOMAIN = 'games-availability';
+export const AVAILABILITY_TTL_SECONDS = 120;
+
+type Levels = Record<GameLevel, number>;
+
+const zero = (): Levels => ({ 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 });
+const flat = (n: number): Levels => ({ 1: n, 2: n, 3: n, 4: n, 5: n });
+
+/** The kind of row whose count is a game's count, for the games made of their own rows. */
+const MAIN_KIND: Partial<Record<LearnGameId, GameContentKind>> = {
+  'memory-thief': 'passage',
+  'what-would-you-say': 'scenario',
+  detective: 'case_file',
+  impostor: 'word_card',
+  'dont-say': 'taboo_card',
+  bluff: 'bluff_card',
+  'who-am-i': 'identity',
+  kingdom: 'building_name',
+};
+
+/** Content without levels: these games count one pool at every level. */
+const UNLEVELLED: ReadonlySet<LearnGameId> = new Set(['hear-it', 'last-letter', 'kingdom']);
+
+/** Question templates Who Am I? needs before an identity is any use. */
+const WHO_AM_I_TEMPLATES = 12;
+
+export class GameAvailabilityService {
+  constructor(
+    private readonly db: Pick<pg.Pool, 'query'>,
+    private readonly sources: TrustedSources,
+    private readonly sentences: BuildSentenceGame,
+    private readonly cache: Cache | null = null,
+  ) {}
+
+  async forDialect(dialect: GameDialect): Promise<GamesAvailability> {
+    const load = () => this.count(dialect);
+    return this.cache ? this.cache.withCache(CACHE_DOMAIN, dialect, AVAILABILITY_TTL_SECONDS, load) : load();
+  }
+
+  private async count(dialect: GameDialect): Promise<GamesAvailability> {
+    const [rows, sentences, passages, recordings, dictionary] = await Promise.all([
+      this.db.query<{ kind: string; level: number; n: number }>(
+        `SELECT kind, level, count(*)::int AS n FROM game_content
+          WHERE dialect = $1 AND status = 'published' AND review_status = 'approved'
+          GROUP BY kind, level`,
+        [dialect],
+      ),
+      this.sentences.levels(dialect),
+      this.sources.storyPassages(dialect),
+      this.sources.recordings(dialect),
+      this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM dict_entries WHERE in_games AND dialect = $1`, [courseSpelling(dialect)]),
+    ]);
+    const byKind = new Map<string, Levels>();
+    for (const r of rows.rows) {
+      const levels = byKind.get(r.kind) ?? zero();
+      if ((GAME_LEVELS as readonly number[]).includes(r.level)) levels[r.level as GameLevel] += r.n;
+      byKind.set(r.kind, levels);
+    }
+    const total = (kind: GameContentKind) => GAME_LEVELS.reduce((sum, l) => sum + (byKind.get(kind)?.[l] ?? 0), 0);
+
+    const levelsOf = (id: LearnGameId): Levels => {
+      switch (id) {
+        case 'build-sentence':
+          return sentences;
+        case 'memory-thief': {
+          // a story paragraph with at least two glossary terms to take away is a passage too
+          const out = { ...(byKind.get('passage') ?? zero()) };
+          for (const p of passages) if (p.glossary.length >= 2 && (GAME_LEVELS as readonly number[]).includes(p.level)) out[p.level as GameLevel]++;
+          return out;
+        }
+        case 'hear-it':
+          return flat(recordings.length);
+        case 'last-letter':
+          return flat(dictionary.rows[0]?.n ?? 0);
+        case 'who-am-i':
+          return total('question_template') >= WHO_AM_I_TEMPLATES ? (byKind.get('identity') ?? zero()) : zero();
+        case 'kingdom':
+          return flat(total('building_name'));
+        default: {
+          const kind = MAIN_KIND[id];
+          return kind ? (byKind.get(kind) ?? zero()) : zero();
+        }
+      }
+    };
+
+    const games: GameAvailability[] = LEARN_GAMES.filter((g) => g.dialects.includes(dialect)).map((g) => {
+      const levels = levelsOf(g.id);
+      const levelled = !UNLEVELLED.has(g.id);
+      const difficulties = availableDifficulties(levels, g.minimum, levelled);
+      return { id: g.id, levels, levelled, minimum: g.minimum, difficulties, available: difficulties.length > 0 };
+    });
+    return { dialect, games };
+  }
+}
+
+/** Count again on the next ask: something was published or taken down. */
+export async function bustAvailability(cache: Cache | null | undefined): Promise<void> {
+  if (!cache) return;
+  await Promise.all([cache.del(CACHE_DOMAIN, 'kmr'), cache.del(CACHE_DOMAIN, 'ckb')]);
+}

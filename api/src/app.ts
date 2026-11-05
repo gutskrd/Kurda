@@ -94,6 +94,7 @@ import { ModerationService } from './moderation/service.js';
 import { registerModerationRoutes } from './moderation/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
+import { registerLearnGameRoutes } from './games/routes.js';
 import { registerWordleRoutes } from './game/wordle-routes.js';
 import { registerWordleBattleRoutes } from './game/wordle-battle-routes.js';
 import { registerRhymeRoutes } from './game/rhyme-routes.js';
@@ -637,6 +638,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService, badges);
+    // the learning games (Build a Kurdish Sentence and the games after it): approved content only,
+    // rounds made and checked here, paid by performance; and their content's review in the admin panel
+    registerLearnGameRoutes(app, { xp: xpService, milestones: badges });
     registerWordleRoutes(app, { xp: xpService, milestones: badges });
     // `play_changed` after every change to a lobby (play/events.ts), so clients
     // stop polling. The gateway it speaks through is set up further down, so it

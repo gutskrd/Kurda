@@ -99,6 +99,8 @@ describe('what a round pays', () => {
   it('offers a difficulty only when its levels hold enough', () => {
     expect(availableDifficulties({ 1: 20, 2: 10, 3: 5, 4: 0, 5: 0 }, 30)).toEqual(['beginner']);
     expect(availableDifficulties({ 1: 0, 2: 0, 3: 0, 4: 20, 5: 10 }, 30)).toEqual(['advanced']);
+    expect(availableDifficulties({ 1: 40, 2: 40, 3: 40, 4: 40, 5: 40 }, 30, false)).toEqual(['beginner', 'intermediate', 'advanced']);
+    expect(availableDifficulties({ 1: 10, 2: 10, 3: 10, 4: 10, 5: 10 }, 30, false)).toEqual([]);
   });
 });
 

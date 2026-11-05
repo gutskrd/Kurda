@@ -180,7 +180,8 @@ export interface SentenceHint {
 /** Once an item is done: the sentence the right way round, every word with what it means where that is known. */
 export interface SentenceCorrection {
   answer: string;
-  words: Array<{ word: string; meaning: string | null }>;
+  /** each word with its meanings by interface language, when an approved source gives one (`meaningIn` picks the reader's) */
+  words: Array<{ word: string; meanings: Partial<Meanings> | null }>;
   /** the place on the player's last line where it first went astray, null when it was right */
   firstWrong: number | null;
 }
@@ -188,8 +189,8 @@ export interface SentenceCorrection {
 /** The ladder as the intro shows it: every rung, how many sentences it has, and how far this learner has climbed. */
 export interface SentenceLadderView {
   dialect: GameDialect;
+  /** the highest rung opened, from 1 */
   step: number;
-  best: number;
   rungs: Array<{ rung: SentenceRung; level: GameLevel; sentences: number; open: boolean }>;
   /** a round left unfinished, to come back to */
   open: string | null;

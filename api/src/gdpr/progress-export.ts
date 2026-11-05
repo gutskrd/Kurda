@@ -6,7 +6,8 @@ import type pg from 'pg';
  * their streaks, their badges and showcase, the old achievements, the rated
  * games the ranked badges were counted from, the league seasons archived
  * before Game Ranks, the stories they kept on their shelf and how far they
- * read each one, and the dictionary words they saved.
+ * read each one, the dictionary words they saved, and their rounds of the
+ * learning games with how far up each ladder they climbed.
  *
  * A story or a word is named by what they saw (its slug and title, its
  * headword and dialect) rather than by the row ids that join them, which
@@ -68,5 +69,11 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
     savedWords: await q(
       `SELECT e.headword, e.dialect, w.saved_at FROM saved_words w JOIN dict_entries e ON e.id = w.entry_id WHERE w.user_id = $1 ORDER BY w.saved_at`,
     ),
+    // the learning games: each round as it went (not its items' answers, which are the content's), and how far up each ladder
+    learningGames: await q(
+      `SELECT game, dialect, difficulty, total_count, correct_count, first_try_count, xp_awarded, learning_counted, created_at, finished_at
+         FROM game_sessions WHERE user_id = $1 ORDER BY created_at`,
+    ),
+    learningGameProgress: await q(`SELECT game, dialect, step, updated_at FROM game_progress WHERE user_id = $1 ORDER BY game, dialect`),
   };
 }

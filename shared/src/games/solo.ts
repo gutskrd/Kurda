@@ -142,8 +142,10 @@ export interface SoloResults {
 /** Whether a game can be played now, per variety and content level (GET /games/availability). */
 export interface GameAvailability {
   id: string;
-  /** approved items for each level, 1 to 5 */
+  /** approved items for each level, 1 to 5 (for content without levels, the whole count at every level) */
   levels: Record<GameLevel, number>;
+  /** whether the content is filed by level; a game without levels is played at any difficulty or none */
+  levelled: boolean;
   minimum: number;
   /** the difficulties with enough approved content */
   difficulties: GameDifficulty[];
@@ -155,7 +157,12 @@ export interface GamesAvailability {
   games: GameAvailability[];
 }
 
-/** The difficulties whose levels together hold at least `minimum` items. */
-export function availableDifficulties(levels: Readonly<Record<number, number>>, minimum: number): GameDifficulty[] {
+/**
+ * The difficulties whose levels together hold at least `minimum` items. For
+ * content without levels every difficulty is the same pool: all of them when
+ * it holds enough, none when it does not.
+ */
+export function availableDifficulties(levels: Readonly<Record<number, number>>, minimum: number, levelled = true): GameDifficulty[] {
+  if (!levelled) return (levels[1] ?? 0) >= minimum ? [...GAME_DIFFICULTIES] : [];
   return GAME_DIFFICULTIES.filter((d) => DIFFICULTY_LEVELS[d].reduce((sum, l) => sum + (levels[l] ?? 0), 0) >= minimum);
 }

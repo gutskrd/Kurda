@@ -606,6 +606,10 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   // their shelf and where they were in each story: a reading record is theirs alone
   await q(`DELETE FROM story_bookmarks WHERE user_id = $1`);
   await q(`DELETE FROM story_reading WHERE user_id = $1`);
+  // the learning games: their rounds (with every try), what they met and how far they climbed
+  await q(`DELETE FROM game_sessions WHERE user_id = $1`);
+  await q(`DELETE FROM game_seen WHERE user_id = $1`);
+  await q(`DELETE FROM game_progress WHERE user_id = $1`);
   // their Game Ranks: ratings, history, leaves, choices, seasons (ranks/gdpr.ts)
   await eraseRanks(executor, userId);
 
