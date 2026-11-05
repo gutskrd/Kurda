@@ -89,7 +89,7 @@ export interface PathBox {
  * close to the edge it may stand; the people's height, drawn whole (as tall
  * as Hevalo is on the path), and how much room their words take above them.
  */
-export const PATH_SCENERY = { landmark: 150, landmarkMin: 96, edge: 6, host: 132, hostWidth: 88, bubble: 44 } as const;
+export const PATH_SCENERY = { landmark: 150, landmarkMin: 96, edge: 6, host: 132, hostWidth: 88, bubble: 44, overStop: 130 } as const;
 
 /** The stop's own footprint, for keeping things off it: its round, its lip and a little air. */
 const STOP_CLEAR = PATH_GEOMETRY.node / 2 + 10;
@@ -232,6 +232,8 @@ export function landClear(stops: readonly WorldStop[], width: number, stones: re
   for (const s of stones) solid.push({ x: s.x, y: s.y - s.r - 4, w: 2 * s.r + 8, h: 2 * s.r + 8 });
   solid.push(landmarkBox(width));
   const tall: PathBox[] = stops.map((s) => mascotBox(s));
+  // over any stop the learner may stand on, with the flag over them
+  for (const s of stops) tall.push({ x: s.x, y: s.y - PATH_SCENERY.overStop, w: 128, h: PATH_SCENERY.overStop });
   const host = hostBox(stops, width, null);
   if (host) tall.push(host.box);
   return { solid, tall };

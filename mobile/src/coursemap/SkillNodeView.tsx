@@ -170,14 +170,14 @@ export function SkillNodeView({
       <Animated.View style={[StyleSheet.absoluteFill, bob ? { transform: [{ translateY: bob }] } : null]} pointerEvents="box-none">
         {callout && onStart ? <Callout text={callout.text} label={callout.label} tone={tone} arriving={!!change?.arriving} bobbing={bobbing} onPress={onStart} /> : null}
         {jump ? <Callout text={jump.text} label={label} tone={tone} arriving={false} bobbing={false} onPress={onPress} /> : null}
-        {raised && stop.kind === 'skill' ? (
-          <Ring done={stop.lessonsDone} total={stop.lessonsTotal} from={change?.ringFrom} fill={tone.fill} track={rest.line} />
-        ) : finishing && change?.ringFrom !== undefined && stop.kind === 'skill' ? (
-          // the ring it had as the current skill fills to the full, and goes as the stop pops
-          <Ring done={stop.lessonsDone} total={stop.lessonsTotal} from={change.ringFrom} fill={tone.fill} track={rest.line} goneAt={PATH_RETURN.finishAtMs} />
-        ) : null}
+        {raised && stop.kind === 'skill' ? <Progress done={stop.lessonsDone} total={stop.lessonsTotal} from={change?.ringFrom} fill={tone.fill} lights={false} /> : null}
         <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="none">
           {near ? <StopArt look={look} tone={unitTone} part="base" near={near} /> : <View style={[styles.plainLip, { backgroundColor: plainColour(look, tone, rest).lip }]} />}
+          {raised && stop.kind === 'skill' ? <Progress done={stop.lessonsDone} total={stop.lessonsTotal} from={change?.ringFrom} fill={tone.fill} glow={false} /> : null}
+          {finishing && change?.ringFrom !== undefined && stop.kind === 'skill' ? (
+            // the lights it had as the current skill come on to the full, and go as the stop pops
+            <Progress done={stop.lessonsDone} total={stop.lessonsTotal} from={change.ringFrom} fill={tone.fill} goneAt={PATH_RETURN.finishAtMs} glow={false} />
+          ) : null}
         </Animated.View>
         <Animated.View style={[styles.popped, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="box-none">
           <Pressable
@@ -264,39 +264,42 @@ function testName(stop: Stop): string {
   return stop.state;
 }
 
-/** The ring round the current skill's foot, and the soft pool of light it stands in. */
-const RING = { rx: 52, ry: 30, stroke: 6 } as const;
-const RING_BOX = { w: 2 * RING.rx + 2 * RING.stroke + 24, h: 2 * RING.ry + 2 * RING.stroke + 24 } as const;
-/** Ramanujan's length of the ring's ellipse, for its dash. */
-const RING_LENGTH = Math.PI * (3 * (RING.rx + RING.ry) - Math.sqrt((3 * RING.rx + RING.ry) * (RING.rx + 3 * RING.ry)));
-const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
+/** The soft pool of the unit's light the current skill stands in. */
+const GLOW = { rx: 66, ry: 32 } as const;
+/** The lights along the disc's side, one for each of its lessons: how big, and how far apart at most. */
+const PIP = { size: 8, gap: 13, most: 8 } as const;
 
 /**
- * How far into the current skill: a ring on the ground round its foot that
- * fills as its lessons are done, from the front, clockwise, in a soft pool of
- * the unit's light. Back from a lesson it fills on from where it stood
- * (`from`) once the page has settled. A stroke along an ellipse is not
- * something the native driver can move, so this one short animation runs on
- * the JS thread, as the goal ring's does. The swell as the path first opens
- * on it is a scale, on the native driver.
+ * How far into the current skill: a light along the front of the disc's side
+ * for each of its lessons, lit in gold as each is done — read at a glance,
+ * like a board game's counters — and under it the soft pool of its unit's
+ * light, which swells once as the path opens on it. Back from a lesson the
+ * lights come on from where they stood (`from`) once the page has settled; a
+ * skill just finished keeps them, full, until its stop pops (`goneAt`).
+ * Opacity and scale only, on the native driver.
  */
-function Ring({
+function Progress({
   done,
   total,
   from,
   goneAt,
   fill,
-  track,
+  glow = true,
+  lights = true,
 }: {
   done: number;
   total: number;
   /** the share it fills on from, coming back from a lesson */
   from?: number;
-  /** a finished skill's ring, filled, fades when its stop pops (ms into the return) */
+  /** a finished skill's lights, full, go when its stop pops (ms into the return) */
   goneAt?: number;
   fill: string;
-  track: string;
+  /** the pool of light under the stop, drawn behind its base */
+  glow?: boolean;
+  /** the lights along its side, drawn over its base */
+  lights?: boolean;
 }): React.JSX.Element {
+  const { colors, scheme } = useTheme();
   const share = total > 0 ? Math.max(0, Math.min(1, done / total)) : 0;
   const reduce = useReducedMotion();
   const shown = useRef(new Animated.Value(from ?? share)).current;
@@ -304,7 +307,7 @@ function Ring({
   const pulse = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     if (from !== undefined || reduce) return;
-    const run = Animated.sequence([Animated.delay(PULSE_AT_MS), timing(pulse, PULSE, duration.quick + 40), springTo(pulse, 1, 'bouncy')]);
+    const run = Animated.sequence([Animated.delay(PULSE_AT_MS), timing(pulse, PULSE + 0.06, duration.quick + 40), springTo(pulse, 1, 'bouncy')]);
     run.start();
     return () => run.stop();
     // once, as it is first drawn
@@ -316,48 +319,49 @@ function Ring({
     }
     shown.setValue(from);
     const run = Animated.parallel([
-      Animated.timing(shown, { toValue: share, duration: PATH_RETURN.ringMs, delay: PATH_RETURN.settleMs, easing: ease.emphasis, useNativeDriver: false }),
-      ...(goneAt !== undefined ? [Animated.timing(opacity, { toValue: 0, duration: PATH_RETURN.popMs, delay: goneAt, useNativeDriver: false })] : []),
+      timing(shown, share, PATH_RETURN.ringMs, { delay: PATH_RETURN.settleMs, easing: ease.emphasis }),
+      ...(goneAt !== undefined ? [timing(opacity, 0, PATH_RETURN.popMs, { delay: goneAt })] : []),
     ]);
     run.start();
     return () => run.stop();
   }, [from, share, goneAt, shown, opacity]);
-  const offset = shown.interpolate({ inputRange: [0, 1], outputRange: [RING_LENGTH, 0] });
-  const cx = RING_BOX.w / 2;
-  const cy = RING_BOX.h / 2;
+  const count = Math.min(total, PIP.most);
+  const gap = count > 1 ? Math.min(PIP.gap, (2 * PATH_STOP_ART.rx - 22) / (count - 1)) : 0;
+  const side = PATH_STOP_ART.raised;
+  const unlit = scheme === 'dark' ? 'rgba(0,0,0,0.45)' : 'rgba(0,0,0,0.3)';
+  const outline = scheme === 'dark' ? '#130e12' : '#3b2a20';
   return (
-    <Animated.View
-      style={[styles.ring, { opacity, transform: [{ scale: pulse }] }]}
-      pointerEvents="none"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
-    >
-      <Svg width={RING_BOX.w} height={RING_BOX.h}>
-        <Defs>
-          <RadialGradient id="lpGlow" cx="50%" cy="50%" r="50%">
-            <GradientStop offset="0" stopColor={fill} stopOpacity={0.55} />
-            <GradientStop offset="1" stopColor={fill} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Ellipse cx={cx} cy={cy} rx={RING_BOX.w / 2} ry={RING_BOX.h / 2} fill="url(#lpGlow)" />
-        <Ellipse cx={cx} cy={cy} rx={RING.rx} ry={RING.ry} stroke={track} strokeWidth={RING.stroke} fill="none" />
-        {share > 0 ? (
-          <AnimatedEllipse
-            cx={cx}
-            cy={cy}
-            rx={RING.rx}
-            ry={RING.ry}
-            stroke={fill}
-            strokeWidth={RING.stroke}
-            fill="none"
-            strokeLinecap="round"
-            strokeDasharray={`${RING_LENGTH} ${RING_LENGTH}`}
-            strokeDashoffset={offset}
-            transform={`rotate(90 ${cx} ${cy})`}
-          />
-        ) : null}
-      </Svg>
-    </Animated.View>
+    <>
+      {glow ? (
+        <Animated.View style={[styles.glow, { opacity, transform: [{ scale: pulse }] }]} pointerEvents="none">
+          <Svg width={2 * GLOW.rx} height={2 * GLOW.ry}>
+            <Defs>
+              <RadialGradient id="lpGlow" cx="50%" cy="50%" r="50%">
+                <GradientStop offset="0" stopColor={fill} stopOpacity={0.6} />
+                <GradientStop offset="0.55" stopColor={fill} stopOpacity={0.28} />
+                <GradientStop offset="1" stopColor={fill} stopOpacity={0} />
+              </RadialGradient>
+            </Defs>
+            <Ellipse cx={GLOW.rx} cy={GLOW.ry} rx={GLOW.rx} ry={GLOW.ry} fill="url(#lpGlow)" />
+          </Svg>
+        </Animated.View>
+      ) : null}
+      {lights && count > 0 ? (
+        <Animated.View style={[StyleSheet.absoluteFill, { opacity }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="lp-lights">
+          {Array.from({ length: count }, (_, k) => {
+            const dx = (k - (count - 1) / 2) * gap;
+            const y = STOP_FACE.y + PATH_STOP_ART.ry * Math.sqrt(Math.max(0, 1 - (dx / PATH_STOP_ART.rx) ** 2)) + side / 2;
+            const at = { left: STOP_FACE.x + dx - PIP.size / 2, top: y - PIP.size / 2 };
+            const lit = shown.interpolate({ inputRange: [k / count, (k + 1) / count], outputRange: [0, 1], extrapolate: 'clamp' });
+            return (
+              <View key={k} style={[styles.pip, at, { backgroundColor: unlit, borderColor: outline }]}>
+                <Animated.View style={[styles.pipLit, { backgroundColor: colors.gold, opacity: lit }]} />
+              </View>
+            );
+          })}
+        </Animated.View>
+      ) : null}
+    </>
   );
 }
 
@@ -456,7 +460,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ring: { position: 'absolute', left: STOP_FACE.x - RING_BOX.w / 2, top: STOP_FACE.y + PATH_STOP_ART.raised / 2 - RING_BOX.h / 2 + 6 },
+  glow: { position: 'absolute', left: STOP_FACE.x - GLOW.rx, top: STOP_FACE.y + PATH_STOP_ART.raised + 4 - GLOW.ry },
+  pip: { position: 'absolute', width: PIP.size, height: PIP.size, borderRadius: radii.pill, borderWidth: 1.5, overflow: 'hidden' },
+  pipLit: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   calloutWrap: {
     position: 'absolute',
     // over the learner standing on the stop: the face's middle, less the token, less a little air
