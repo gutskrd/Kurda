@@ -1221,7 +1221,6 @@ export type TranslationKey =
   | 'auth.register.submit'
   | 'auth.verify.sendNewIn'
 
-  | 'nav.login'
   | 'onboarding.language.title'
   | 'onboarding.language.help'
   | 'onboarding.prop.learn'
@@ -1299,7 +1298,6 @@ export type TranslationKey =
   | 'dictionary.noExactMatch'
   | 'settings.appearance'
   | 'settings.notifications'
-  | 'settings.notificationCenter'
 
   | 'profile.changePhoto'
   | 'profile.private'
@@ -1333,9 +1331,6 @@ export type TranslationKey =
   | 'games.rhyme.rhymeWith'
   | 'games.rhyme.endRound'
   | 'games.rhyme.timeUpRound'
-  | 'leagues.nobodyRanked'
-  | 'leagues.addFriends'
-  | 'leagues.friendsSoon'
   | 'games.wordle.rules'
   | 'games.wordle.theWordWas'
   | 'games.wordle.keyboard'
@@ -1597,8 +1592,6 @@ export type TranslationKey =
   | 'field.passwordNeedsNumber'
   | 'field.invalidUsername'
   | 'field.passwordRules'
-  | 'coursemap.locked'
-  | 'coursemap.rusty'
   | 'dictionary.bookmark'
   | 'dictionary.removeBookmark'
   | 'dictionary.searchFailed'
@@ -1784,7 +1777,6 @@ export type TranslationKey =
   | 'profile.badges'
   | 'tags.claim'
   | 'notifications.pref.events'
-  | 'coursemap.nodeLabel'
   | 'coursemap.state.locked'
   | 'coursemap.state.unlocked'
   | 'coursemap.state.completed'
@@ -1870,8 +1862,6 @@ export type TranslationKey =
   | 'post.what'
   | 'post.words.sub'
   | 'post.picture.sub'
-  | 'groups.section'
-  | 'groups.none'
   | 'groups.messageDeleted'
   | 'groups.memberCount'
   | 'groups.open'
@@ -2225,7 +2215,6 @@ export type TranslationKey =
   | 'profile.levelN'
   | 'profile.stat.level'
   | 'profile.stat.streak'
-  | 'profile.currentlyOnline'
   | 'profile.offline'
   | 'profile.activity'
   | 'profile.tab.posts'
@@ -2279,7 +2268,6 @@ export type TranslationKey =
   | 'recorder.startNote'
   | 'recorder.recording'
   | 'coursemap.strength'
-  | 'coursemap.strengthDecayed'
   | 'streak.day'
   | 'streak.days'
   | 'username.rules'
@@ -3895,7 +3883,6 @@ const en: Catalog = {
   'auth.verify.enterCode6': 'Enter the 6-digit code from your email',
   'auth.register.submit': 'Create account',
   'auth.verify.sendNewIn': 'send a new code ({seconds}s)',
-  'nav.login': 'Log in',
   'onboarding.language.title': 'Choose your language',
   'onboarding.language.help': 'You can change this any time in Settings.',
   'onboarding.prop.learn': 'Learn Kurdish a little every day',
@@ -3968,7 +3955,6 @@ const en: Catalog = {
   'dictionary.noExactMatch': 'No exact match — showing closest words',
   'settings.appearance': 'Appearance & preview',
   'settings.notifications': 'Notification settings',
-  'settings.notificationCenter': 'Notification center',
   'profile.changePhoto': 'Change profile photo',
   'profile.private': 'This profile is private.',
   'friends.noResults': 'No users found.',
@@ -4000,9 +3986,6 @@ const en: Catalog = {
   'games.rhyme.rhymeWith': 'Rhyme with',
   'games.rhyme.endRound': 'End round',
   'games.rhyme.timeUpRound': 'Time’s up for this round.',
-  'leagues.nobodyRanked': 'Nobody ranked yet.',
-  'leagues.addFriends': 'Add friends to race them here.',
-  'leagues.friendsSoon': 'Friends leaderboards are coming soon.',
   'games.wordle.rules': 'Guess the Kurdish word in six tries. Green: the right letter in the right place. Yellow: in the word, but in another place. Grey: not in the word.',
   'games.wordle.theWordWas': 'The word was',
   'games.wordle.keyboard': 'Kurdish keyboard',
@@ -4260,8 +4243,6 @@ const en: Catalog = {
   'field.passwordNeedsNumber': 'Password must include at least one number',
   'field.invalidUsername': 'Username must be {usernameMin}–{usernameMax} characters (letters, digits or _)',
   'field.passwordRules': 'At least {min} characters, including a letter and a number.',
-  'coursemap.locked': 'Complete the previous skill to unlock this one.',
-  'coursemap.rusty': 'This skill is getting rusty — practice to restore it.',
   'dictionary.bookmark': 'Bookmark word',
   'dictionary.removeBookmark': 'Remove bookmark',
   'dictionary.searchFailed': 'Couldn’t search right now. Check your connection and try again.',
@@ -4286,7 +4267,6 @@ const en: Catalog = {
   'streak.days': '{count} days',
   'username.rules': '3–{max} characters · letters, numbers, _ · you can change it once every 30 days.',
   'coursemap.strength': 'Strength {percent}%',
-  'coursemap.strengthDecayed': 'Strength {percent}% · rusty',
   'lesson.speak.saved': 'Recording saved',
   'lesson.syncing': 'Syncing…',
   'recorder.startNote': 'Record a voice note',
@@ -4470,7 +4450,6 @@ const en: Catalog = {
   'profile.badges': 'Badges',
   'tags.claim': 'Add',
   'notifications.pref.events': 'Events & quests',
-  'coursemap.nodeLabel': '{title}, {state}',
   'coursemap.state.locked': 'locked',
   'coursemap.state.unlocked': 'unlocked',
   'coursemap.state.completed': 'completed',
@@ -4556,8 +4535,6 @@ const en: Catalog = {
   'post.what': 'What are you posting?',
   'post.words.sub': 'A saying, a story or a poem',
   'post.picture.sub': 'A picture or a meme',
-  'groups.section': 'Clubs',
-  'groups.none': 'You are not in any club yet.',
   'groups.messageDeleted': 'This message was removed.',
   'groups.memberCount': '{count} members',
   'groups.open': 'Open {name}',
@@ -4940,7 +4917,6 @@ const en: Catalog = {
   'profile.levelN': 'Level {level}',
   'profile.stat.level': 'Level',
   'profile.stat.streak': 'Streak',
-  'profile.currentlyOnline': 'Currently Online',
   'profile.offline': 'Offline',
   'profile.activity': 'Activity',
   'profile.tab.posts': 'Posts',
@@ -7126,7 +7102,6 @@ const ku: Catalog = {
   'auth.verify.enterCode6': 'Koda 6-hejmarî ya ji e-nameya xwe binivîse',
   'auth.register.submit': 'Hesab çêke',
   'auth.verify.sendNewIn': 'kodeke nû bişîne ({seconds}ç)',
-  'nav.login': 'Têkeve',
   'onboarding.language.title': 'Zimanê xwe hilbijêre',
   'onboarding.language.help': 'Tu dikarî vê her dem di Mîhengan de biguherînî.',
   'onboarding.prop.learn': 'Her roj hinekî kurdî fêr bibe',
@@ -7199,7 +7174,6 @@ const ku: Catalog = {
   'dictionary.noExactMatch': 'Tam li hev nayê — peyvên herî nêzîk têne nîşandan',
   'settings.appearance': 'Xuyang û pêşdîtin',
   'settings.notifications': 'Mîhengên agahdariyan',
-  'settings.notificationCenter': 'Navenda agahdariyan',
   'profile.changePhoto': 'Wêneyê profîlê biguherîne',
   'profile.private': 'Ev profîl taybet e.',
   'friends.noResults': 'Tu bikarhêner nehat dîtin.',
@@ -7231,9 +7205,6 @@ const ku: Catalog = {
   'games.rhyme.rhymeWith': 'Bi vê re serwa bibîne',
   'games.rhyme.endRound': 'Dorê biqedîne',
   'games.rhyme.timeUpRound': 'Wexta vê dorê qediya.',
-  'leagues.nobodyRanked': 'Hê kes di rêzê de tune.',
-  'leagues.addFriends': 'Hevalan zêde bike da ku li vir bi wan re pêşbazî bikî.',
-  'leagues.friendsSoon': 'Tabloyên hevalan di rê de ne.',
   'games.wordle.rules': 'Peyva kurdî di şeş ceribandinan de texmîn bike. Kesk: tîpa rast li cihê rast. Zer: di peyvê de ye, lê li cihekî din. Gewr: ne di peyvê de ye.',
   'games.wordle.theWordWas': 'Peyv ev bû',
   'games.wordle.keyboard': 'Klavyeya kurdî',
@@ -7491,8 +7462,6 @@ const ku: Catalog = {
   'field.passwordNeedsNumber': 'Divê di şîfreyê de herî kêm hejmarek hebe',
   'field.invalidUsername': 'Divê navê bikarhêner {usernameMin}–{usernameMax} tîp be (tîp, hejmar an _)',
   'field.passwordRules': 'Herî kêm {min} tîp, tê de tîpek û hejmarek.',
-  'coursemap.locked': 'Ji bo vekirina vê, jêhatiya berê biqedîne.',
-  'coursemap.rusty': 'Ev jêhatî zeng digire — temrîn bike da ku vegere.',
   'dictionary.bookmark': 'Peyvê nîşan bike',
   'dictionary.removeBookmark': 'Nîşankirinê rake',
   'dictionary.searchFailed': 'Niha lêgerîn nabe. Girêdana xwe kontrol bike û dîsa biceribîne.',
@@ -7517,7 +7486,6 @@ const ku: Catalog = {
   'streak.days': '{count} roj',
   'username.rules': '3–{max} tîp · herf, hejmar, _ · tu dikarî her 30 rojan carekê biguherînî.',
   'coursemap.strength': 'Hêz {percent}%',
-  'coursemap.strengthDecayed': 'Hêz {percent}% · zengarî',
   'lesson.speak.saved': 'Dengê te hat tomarkirin',
   'lesson.syncing': 'Tê hevdemkirin…',
   'recorder.startNote': 'Nîşeyeke dengî tomar bike',
@@ -7701,7 +7669,6 @@ const ku: Catalog = {
   'profile.badges': 'Nîşan',
   'tags.claim': 'Zêde bike',
   'notifications.pref.events': 'Bûyer û erk',
-  'coursemap.nodeLabel': '{title}, {state}',
   'coursemap.state.locked': 'girtî',
   'coursemap.state.unlocked': 'vekirî',
   'coursemap.state.completed': 'temamkirî',
@@ -7787,8 +7754,6 @@ const ku: Catalog = {
   'post.what': 'Tu çi diweşînî?',
   'post.words.sub': 'Gotinek, çîrokek an helbestek',
   'post.picture.sub': 'Wêneyek an mîmek',
-  'groups.section': 'Klûb',
-  'groups.none': 'Tu hêj ne di tu klûbê de yî.',
   'groups.messageDeleted': 'Ev peyam hate rakirin.',
   'groups.memberCount': '{count} endam',
   'groups.open': '{name} veke',
@@ -8170,7 +8135,6 @@ const ku: Catalog = {
   'profile.levelN': 'Asta {level}',
   'profile.stat.level': 'Ast',
   'profile.stat.streak': 'Rêze',
-  'profile.currentlyOnline': 'Niha serhêl e',
   'profile.offline': 'Derhêl',
   'profile.activity': 'Çalakî',
   'profile.tab.posts': 'Şandî',
@@ -10356,7 +10320,6 @@ const de: Catalog = {
   'auth.verify.enterCode6': 'Gib den 6-stelligen Code aus deiner E-Mail ein',
   'auth.register.submit': 'Konto erstellen',
   'auth.verify.sendNewIn': 'einen neuen Code senden ({seconds} s)',
-  'nav.login': 'Anmelden',
   'onboarding.language.title': 'Wähle deine Sprache',
   'onboarding.language.help': 'Du kannst das jederzeit in den Einstellungen ändern.',
   'onboarding.prop.learn': 'Lerne jeden Tag ein bisschen Kurdisch',
@@ -10429,7 +10392,6 @@ const de: Catalog = {
   'dictionary.noExactMatch': 'Keine genaue Übereinstimmung — die nächstliegenden Wörter werden gezeigt',
   'settings.appearance': 'Darstellung & Vorschau',
   'settings.notifications': 'Mitteilungseinstellungen',
-  'settings.notificationCenter': 'Mitteilungszentrale',
   'profile.changePhoto': 'Profilbild ändern',
   'profile.private': 'Dieses Profil ist privat.',
   'friends.noResults': 'Keine Benutzer gefunden.',
@@ -10461,9 +10423,6 @@ const de: Catalog = {
   'games.rhyme.rhymeWith': 'Reimt sich auf',
   'games.rhyme.endRound': 'Runde beenden',
   'games.rhyme.timeUpRound': 'Die Zeit für diese Runde ist um.',
-  'leagues.nobodyRanked': 'Noch niemand platziert.',
-  'leagues.addFriends': 'Füge Freunde hinzu, um hier gegen sie anzutreten.',
-  'leagues.friendsSoon': 'Freunde-Bestenlisten kommen bald.',
   'games.wordle.rules': 'Errate das kurdische Wort in sechs Versuchen. Grün: richtiger Buchstabe an der richtigen Stelle. Gelb: im Wort, aber an anderer Stelle. Grau: nicht im Wort.',
   'games.wordle.theWordWas': 'Das Wort war',
   'games.wordle.keyboard': 'Kurdische Tastatur',
@@ -10721,8 +10680,6 @@ const de: Catalog = {
   'field.passwordNeedsNumber': 'Das Passwort muss mindestens eine Zahl enthalten',
   'field.invalidUsername': 'Der Benutzername muss {usernameMin}–{usernameMax} Zeichen haben (Buchstaben, Ziffern oder _)',
   'field.passwordRules': 'Mindestens {min} Zeichen, davon ein Buchstabe und eine Zahl.',
-  'coursemap.locked': 'Schließe die vorherige Fähigkeit ab, um diese freizuschalten.',
-  'coursemap.rusty': 'Diese Fähigkeit rostet ein — übe, um sie aufzufrischen.',
   'dictionary.bookmark': 'Wort merken',
   'dictionary.removeBookmark': 'Merkzeichen entfernen',
   'dictionary.searchFailed': 'Suche gerade nicht möglich. Prüfe deine Verbindung und versuche es erneut.',
@@ -10747,7 +10704,6 @@ const de: Catalog = {
   'streak.days': '{count} Tage',
   'username.rules': '3–{max} Zeichen · Buchstaben, Ziffern, _ · einmal alle 30 Tage änderbar.',
   'coursemap.strength': 'Stärke {percent} %',
-  'coursemap.strengthDecayed': 'Stärke {percent} % · eingerostet',
   'lesson.speak.saved': 'Aufnahme gespeichert',
   'lesson.syncing': 'Wird synchronisiert…',
   'recorder.startNote': 'Sprachnotiz aufnehmen',
@@ -10931,7 +10887,6 @@ const de: Catalog = {
   'profile.badges': 'Abzeichen',
   'tags.claim': 'Hinzufügen',
   'notifications.pref.events': 'Events & Quests',
-  'coursemap.nodeLabel': '{title}, {state}',
   'coursemap.state.locked': 'gesperrt',
   'coursemap.state.unlocked': 'freigeschaltet',
   'coursemap.state.completed': 'abgeschlossen',
@@ -11017,8 +10972,6 @@ const de: Catalog = {
   'post.what': 'Was möchtest du posten?',
   'post.words.sub': 'Ein Spruch, eine Geschichte oder ein Gedicht',
   'post.picture.sub': 'Ein Bild oder ein Meme',
-  'groups.section': 'Clubs',
-  'groups.none': 'Du bist noch in keinem Club.',
   'groups.messageDeleted': 'Diese Nachricht wurde entfernt.',
   'groups.memberCount': '{count} Mitglieder',
   'groups.open': '{name} öffnen',
@@ -11400,7 +11353,6 @@ const de: Catalog = {
   'profile.levelN': 'Stufe {level}',
   'profile.stat.level': 'Stufe',
   'profile.stat.streak': 'Serie',
-  'profile.currentlyOnline': 'Gerade online',
   'profile.offline': 'Offline',
   'profile.activity': 'Aktivität',
   'profile.tab.posts': 'Beiträge',
@@ -13586,7 +13538,6 @@ const es: Catalog = {
   'auth.verify.enterCode6': 'Introduce el código de 6 dígitos de tu correo',
   'auth.register.submit': 'Crear cuenta',
   'auth.verify.sendNewIn': 'enviar un código nuevo ({seconds} s)',
-  'nav.login': 'Iniciar sesión',
   'onboarding.language.title': 'Elige tu idioma',
   'onboarding.language.help': 'Puedes cambiarlo cuando quieras en Ajustes.',
   'onboarding.prop.learn': 'Aprende kurdo un poco cada día',
@@ -13659,7 +13610,6 @@ const es: Catalog = {
   'dictionary.noExactMatch': 'Sin coincidencia exacta — mostrando las palabras más cercanas',
   'settings.appearance': 'Apariencia y vista previa',
   'settings.notifications': 'Ajustes de notificaciones',
-  'settings.notificationCenter': 'Centro de notificaciones',
   'profile.changePhoto': 'Cambiar la foto de perfil',
   'profile.private': 'Este perfil es privado.',
   'friends.noResults': 'No se han encontrado usuarios.',
@@ -13691,9 +13641,6 @@ const es: Catalog = {
   'games.rhyme.rhymeWith': 'Rima con',
   'games.rhyme.endRound': 'Terminar la ronda',
   'games.rhyme.timeUpRound': 'Se acabó el tiempo de esta ronda.',
-  'leagues.nobodyRanked': 'Todavía no hay nadie clasificado.',
-  'leagues.addFriends': 'Añade amigos para competir con ellos aquí.',
-  'leagues.friendsSoon': 'Las tablas de amigos llegarán pronto.',
   'games.wordle.rules': 'Adivina la palabra kurda en seis intentos. Verde: la letra correcta en su sitio. Amarillo: está en la palabra, pero en otro lugar. Gris: no está en la palabra.',
   'games.wordle.theWordWas': 'La palabra era',
   'games.wordle.keyboard': 'Teclado kurdo',
@@ -13951,8 +13898,6 @@ const es: Catalog = {
   'field.passwordNeedsNumber': 'La contraseña debe incluir al menos un número',
   'field.invalidUsername': 'El nombre de usuario debe tener entre {usernameMin} y {usernameMax} caracteres (letras, números o _)',
   'field.passwordRules': 'Al menos {min} caracteres, incluyendo una letra y un número.',
-  'coursemap.locked': 'Completa la habilidad anterior para desbloquear esta.',
-  'coursemap.rusty': 'Esta habilidad se está oxidando: practica para recuperarla.',
   'dictionary.bookmark': 'Guardar la palabra',
   'dictionary.removeBookmark': 'Quitar de guardados',
   'dictionary.searchFailed': 'No se puede buscar ahora. Comprueba tu conexión e inténtalo de nuevo.',
@@ -13977,7 +13922,6 @@ const es: Catalog = {
   'streak.days': '{count} días',
   'username.rules': '3–{max} caracteres · letras, números, _ · puedes cambiarlo una vez cada 30 días.',
   'coursemap.strength': 'Fuerza {percent} %',
-  'coursemap.strengthDecayed': 'Fuerza {percent} % · oxidado',
   'lesson.speak.saved': 'Grabación guardada',
   'lesson.syncing': 'Sincronizando…',
   'recorder.startNote': 'Grabar una nota de voz',
@@ -14161,7 +14105,6 @@ const es: Catalog = {
   'profile.badges': 'Insignias',
   'tags.claim': 'Añadir',
   'notifications.pref.events': 'Eventos y misiones',
-  'coursemap.nodeLabel': '{title}, {state}',
   'coursemap.state.locked': 'bloqueado',
   'coursemap.state.unlocked': 'desbloqueado',
   'coursemap.state.completed': 'completado',
@@ -14247,8 +14190,6 @@ const es: Catalog = {
   'post.what': '¿Qué vas a publicar?',
   'post.words.sub': 'Un dicho, un relato o un poema',
   'post.picture.sub': 'Una imagen o un meme',
-  'groups.section': 'Clubes',
-  'groups.none': 'Todavía no estás en ningún club.',
   'groups.messageDeleted': 'Este mensaje se ha eliminado.',
   'groups.memberCount': '{count} miembros',
   'groups.open': 'Abrir {name}',
@@ -14630,7 +14571,6 @@ const es: Catalog = {
   'profile.levelN': 'Nivel {level}',
   'profile.stat.level': 'Nivel',
   'profile.stat.streak': 'Racha',
-  'profile.currentlyOnline': 'En línea ahora',
   'profile.offline': 'Desconectado',
   'profile.activity': 'Actividad',
   'profile.tab.posts': 'Publicaciones',
@@ -16816,7 +16756,6 @@ const tr: Catalog = {
   'auth.verify.enterCode6': 'E-postandaki 6 haneli kodu gir',
   'auth.register.submit': 'Hesap oluştur',
   'auth.verify.sendNewIn': 'yeni bir kod gönder ({seconds} sn)',
-  'nav.login': 'Giriş yap',
   'onboarding.language.title': 'Dilini seç',
   'onboarding.language.help': 'Bunu istediğin zaman Ayarlar’dan değiştirebilirsin.',
   'onboarding.prop.learn': 'Her gün biraz Kürtçe öğren',
@@ -16889,7 +16828,6 @@ const tr: Catalog = {
   'dictionary.noExactMatch': 'Tam eşleşme yok — en yakın kelimeler gösteriliyor',
   'settings.appearance': 'Görünüm ve önizleme',
   'settings.notifications': 'Bildirim ayarları',
-  'settings.notificationCenter': 'Bildirim merkezi',
   'profile.changePhoto': 'Profil fotoğrafını değiştir',
   'profile.private': 'Bu profil gizli.',
   'friends.noResults': 'Kullanıcı bulunamadı.',
@@ -16921,9 +16859,6 @@ const tr: Catalog = {
   'games.rhyme.rhymeWith': 'Şununla kafiyeli',
   'games.rhyme.endRound': 'Turu bitir',
   'games.rhyme.timeUpRound': 'Bu turun süresi doldu.',
-  'leagues.nobodyRanked': 'Henüz sıralamada kimse yok.',
-  'leagues.addFriends': 'Burada yarışmak için arkadaş ekle.',
-  'leagues.friendsSoon': 'Arkadaş sıralamaları yakında geliyor.',
   'games.wordle.rules': 'Kürtçe kelimeyi altı denemede bul. Yeşil: doğru harf, doğru yerde. Sarı: kelimede var ama başka yerde. Gri: kelimede yok.',
   'games.wordle.theWordWas': 'Kelime şuydu',
   'games.wordle.keyboard': 'Kürtçe klavye',
@@ -17181,8 +17116,6 @@ const tr: Catalog = {
   'field.passwordNeedsNumber': 'Şifre en az bir rakam içermeli',
   'field.invalidUsername': 'Kullanıcı adı {usernameMin}–{usernameMax} karakter olmalı (harf, rakam veya _)',
   'field.passwordRules': 'En az {min} karakter; bir harf ve bir rakam içermeli.',
-  'coursemap.locked': 'Bunu açmak için önceki beceriyi tamamla.',
-  'coursemap.rusty': 'Bu beceri paslanıyor — geri kazanmak için alıştırma yap.',
   'dictionary.bookmark': 'Kelimeyi kaydet',
   'dictionary.removeBookmark': 'Kaydı kaldır',
   'dictionary.searchFailed': 'Şu anda arama yapılamıyor. Bağlantını kontrol edip tekrar dene.',
@@ -17207,7 +17140,6 @@ const tr: Catalog = {
   'streak.days': '{count} gün',
   'username.rules': '3–{max} karakter · harf, rakam, _ · 30 günde bir değiştirebilirsin.',
   'coursemap.strength': 'Güç %{percent}',
-  'coursemap.strengthDecayed': 'Güç %{percent} · paslanmış',
   'lesson.speak.saved': 'Ses kaydın alındı',
   'lesson.syncing': 'Eşitleniyor…',
   'recorder.startNote': 'Sesli not kaydet',
@@ -17391,7 +17323,6 @@ const tr: Catalog = {
   'profile.badges': 'Rozetler',
   'tags.claim': 'Ekle',
   'notifications.pref.events': 'Etkinlikler ve görevler',
-  'coursemap.nodeLabel': '{title}, {state}',
   'coursemap.state.locked': 'kilitli',
   'coursemap.state.unlocked': 'kilidi açık',
   'coursemap.state.completed': 'tamamlandı',
@@ -17477,8 +17408,6 @@ const tr: Catalog = {
   'post.what': 'Ne paylaşıyorsun?',
   'post.words.sub': 'Bir söz, bir hikâye ya da bir şiir',
   'post.picture.sub': 'Bir resim ya da bir mizah görseli',
-  'groups.section': 'Kulüpler',
-  'groups.none': 'Henüz hiçbir kulüpte değilsin.',
   'groups.messageDeleted': 'Bu mesaj kaldırıldı.',
   'groups.memberCount': '{count} üye',
   'groups.open': '{name} kulübünü aç',
@@ -17860,7 +17789,6 @@ const tr: Catalog = {
   'profile.levelN': 'Seviye {level}',
   'profile.stat.level': 'Seviye',
   'profile.stat.streak': 'Seri',
-  'profile.currentlyOnline': 'Şu anda çevrimiçi',
   'profile.offline': 'Çevrimdışı',
   'profile.activity': 'Etkinlik',
   'profile.tab.posts': 'Gönderiler',
@@ -20046,7 +19974,6 @@ const ar: Catalog = {
   'auth.verify.enterCode6': 'أدخل الرمز المكوّن من ٦ أرقام من بريدك',
   'auth.register.submit': 'إنشاء حساب',
   'auth.verify.sendNewIn': 'أرسل رمزًا جديدًا ({seconds} ثانية)',
-  'nav.login': 'تسجيل الدخول',
   'onboarding.language.title': 'اختر لغتك',
   'onboarding.language.help': 'يمكنك تغيير ذلك في أي وقت من الإعدادات.',
   'onboarding.prop.learn': 'تعلّم الكردية قليلًا كل يوم',
@@ -20119,7 +20046,6 @@ const ar: Catalog = {
   'dictionary.noExactMatch': 'لا تطابق تام — تُعرض أقرب الكلمات',
   'settings.appearance': 'المظهر والمعاينة',
   'settings.notifications': 'إعدادات الإشعارات',
-  'settings.notificationCenter': 'مركز الإشعارات',
   'profile.changePhoto': 'تغيير صورة الملف الشخصي',
   'profile.private': 'هذا الملف الشخصي خاص.',
   'friends.noResults': 'لم يُعثر على مستخدمين.',
@@ -20151,9 +20077,6 @@ const ar: Catalog = {
   'games.rhyme.rhymeWith': 'قافية مع',
   'games.rhyme.endRound': 'إنهاء الجولة',
   'games.rhyme.timeUpRound': 'انتهى وقت هذه الجولة.',
-  'leagues.nobodyRanked': 'لا أحد في الترتيب بعد.',
-  'leagues.addFriends': 'أضف أصدقاء لتتسابق معهم هنا.',
-  'leagues.friendsSoon': 'لوحات ترتيب الأصدقاء قادمة قريبًا.',
   'games.wordle.rules': 'خمّن الكلمة الكردية في ست محاولات. الأخضر: الحرف الصحيح في مكانه الصحيح. الأصفر: في الكلمة لكن في مكان آخر. الرمادي: ليس في الكلمة.',
   'games.wordle.theWordWas': 'كانت الكلمة',
   'games.wordle.keyboard': 'لوحة مفاتيح كردية',
@@ -20411,8 +20334,6 @@ const ar: Catalog = {
   'field.passwordNeedsNumber': 'يجب أن تتضمّن كلمة المرور رقمًا واحدًا على الأقل',
   'field.invalidUsername': 'يجب أن يكون اسم المستخدم بين {usernameMin} و{usernameMax} حرفًا (أحرف أو أرقام أو _)',
   'field.passwordRules': '{min} أحرف على الأقل، تتضمّن حرفًا ورقمًا.',
-  'coursemap.locked': 'أكمل المهارة السابقة لفتح هذه.',
-  'coursemap.rusty': 'هذه المهارة تصدأ — تدرّب لاستعادتها.',
   'dictionary.bookmark': 'احفظ الكلمة',
   'dictionary.removeBookmark': 'إزالة الحفظ',
   'dictionary.searchFailed': 'تعذّر البحث الآن. تحقّق من اتصالك وحاول مرة أخرى.',
@@ -20437,7 +20358,6 @@ const ar: Catalog = {
   'streak.days': '{count} يوم',
   'username.rules': '3–{max} حرفًا · حروف وأرقام و_ · يمكنك تغييره مرة كل 30 يومًا.',
   'coursemap.strength': 'القوة {percent}٪',
-  'coursemap.strengthDecayed': 'القوة {percent}٪ · صدئ',
   'lesson.speak.saved': 'تم حفظ التسجيل',
   'lesson.syncing': 'تتم المزامنة…',
   'recorder.startNote': 'سجّل ملاحظة صوتية',
@@ -20621,7 +20541,6 @@ const ar: Catalog = {
   'profile.badges': 'الشارات',
   'tags.claim': 'إضافة',
   'notifications.pref.events': 'الفعاليات والمهام',
-  'coursemap.nodeLabel': '{title}، {state}',
   'coursemap.state.locked': 'مقفل',
   'coursemap.state.unlocked': 'مفتوح',
   'coursemap.state.completed': 'مكتمل',
@@ -20707,8 +20626,6 @@ const ar: Catalog = {
   'post.what': 'ماذا تريد أن تنشر؟',
   'post.words.sub': 'قول أو قصة أو قصيدة',
   'post.picture.sub': 'صورة أو ميم',
-  'groups.section': 'النوادي',
-  'groups.none': 'لست في أي نادٍ بعد.',
   'groups.messageDeleted': 'تمت إزالة هذه الرسالة.',
   'groups.memberCount': '{count} عضوًا',
   'groups.open': 'افتح {name}',
@@ -21090,7 +21007,6 @@ const ar: Catalog = {
   'profile.levelN': 'المستوى {level}',
   'profile.stat.level': 'المستوى',
   'profile.stat.streak': 'التتابع',
-  'profile.currentlyOnline': 'متصل الآن',
   'profile.offline': 'غير متصل',
   'profile.activity': 'النشاط',
   'profile.tab.posts': 'المنشورات',
@@ -23276,7 +23192,6 @@ const fr: Catalog = {
   'auth.verify.enterCode6': 'Saisissez le code à 6 chiffres reçu par e-mail',
   'auth.register.submit': 'Créer un compte',
   'auth.verify.sendNewIn': 'envoyer un nouveau code ({seconds} s)',
-  'nav.login': 'Se connecter',
   'onboarding.language.title': 'Choisissez votre langue',
   'onboarding.language.help': 'Vous pouvez le changer à tout moment dans les Réglages.',
   'onboarding.prop.learn': 'Apprenez le kurde un peu chaque jour',
@@ -23349,7 +23264,6 @@ const fr: Catalog = {
   'dictionary.noExactMatch': 'Aucune correspondance exacte — voici les mots les plus proches',
   'settings.appearance': 'Apparence et aperçu',
   'settings.notifications': 'Réglages des notifications',
-  'settings.notificationCenter': 'Centre de notifications',
   'profile.changePhoto': 'Changer la photo de profil',
   'profile.private': 'Ce profil est privé.',
   'friends.noResults': 'Aucun utilisateur trouvé.',
@@ -23381,9 +23295,6 @@ const fr: Catalog = {
   'games.rhyme.rhymeWith': 'Rime avec',
   'games.rhyme.endRound': 'Terminer la manche',
   'games.rhyme.timeUpRound': 'Le temps de cette manche est écoulé.',
-  'leagues.nobodyRanked': 'Personne n’est encore classé.',
-  'leagues.addFriends': 'Ajoutez des amis pour les affronter ici.',
-  'leagues.friendsSoon': 'Les classements entre amis arrivent bientôt.',
   'games.wordle.rules': 'Devinez le mot kurde en six essais. Vert : la bonne lettre à la bonne place. Jaune : dans le mot, mais à une autre place. Gris : pas dans le mot.',
   'games.wordle.theWordWas': 'Le mot était',
   'games.wordle.keyboard': 'Clavier kurde',
@@ -23641,8 +23552,6 @@ const fr: Catalog = {
   'field.passwordNeedsNumber': 'Le mot de passe doit contenir au moins un chiffre',
   'field.invalidUsername': 'Le nom d’utilisateur doit faire {usernameMin}–{usernameMax} caractères (lettres, chiffres ou _)',
   'field.passwordRules': 'Au moins {min} caractères, dont une lettre et un chiffre.',
-  'coursemap.locked': 'Termine la compétence précédente pour débloquer celle-ci.',
-  'coursemap.rusty': 'Cette compétence rouille — entraîne-toi pour la retrouver.',
   'dictionary.bookmark': 'Marquer le mot',
   'dictionary.removeBookmark': 'Retirer le marque-page',
   'dictionary.searchFailed': 'Recherche impossible pour l’instant. Vérifie ta connexion et réessaie.',
@@ -23667,7 +23576,6 @@ const fr: Catalog = {
   'streak.days': '{count} jours',
   'username.rules': '3–{max} caractères · lettres, chiffres, _ · modifiable une fois tous les 30 jours.',
   'coursemap.strength': 'Force {percent} %',
-  'coursemap.strengthDecayed': 'Force {percent} % · rouillé',
   'lesson.speak.saved': 'Enregistrement sauvegardé',
   'lesson.syncing': 'Synchronisation…',
   'recorder.startNote': 'Enregistrer une note vocale',
@@ -23851,7 +23759,6 @@ const fr: Catalog = {
   'profile.badges': 'Badges',
   'tags.claim': 'Ajouter',
   'notifications.pref.events': 'Événements et quêtes',
-  'coursemap.nodeLabel': '{title}, {state}',
   'coursemap.state.locked': 'verrouillé',
   'coursemap.state.unlocked': 'déverrouillé',
   'coursemap.state.completed': 'terminé',
@@ -23937,8 +23844,6 @@ const fr: Catalog = {
   'post.what': 'Que voulez-vous publier ?',
   'post.words.sub': 'Un dicton, un récit ou un poème',
   'post.picture.sub': 'Une image ou un mème',
-  'groups.section': 'Clubs',
-  'groups.none': 'Tu n’es encore dans aucun club.',
   'groups.messageDeleted': 'Ce message a été supprimé.',
   'groups.memberCount': '{count} membres',
   'groups.open': 'Ouvrir {name}',
@@ -24320,7 +24225,6 @@ const fr: Catalog = {
   'profile.levelN': 'Niveau {level}',
   'profile.stat.level': 'Niveau',
   'profile.stat.streak': 'Série',
-  'profile.currentlyOnline': 'En ligne actuellement',
   'profile.offline': 'Hors ligne',
   'profile.activity': 'Activité',
   'profile.tab.posts': 'Publications',
@@ -26506,7 +26410,6 @@ const nl: Catalog = {
   'auth.verify.enterCode6': 'Voer de 6-cijferige code uit je e-mail in',
   'auth.register.submit': 'Account aanmaken',
   'auth.verify.sendNewIn': 'stuur een nieuwe code ({seconds}s)',
-  'nav.login': 'Inloggen',
   'onboarding.language.title': 'Kies je taal',
   'onboarding.language.help': 'Je kunt dit altijd wijzigen in Instellingen.',
   'onboarding.prop.learn': 'Leer elke dag een beetje Koerdisch',
@@ -26579,7 +26482,6 @@ const nl: Catalog = {
   'dictionary.noExactMatch': 'Geen exacte match — dichtstbijzijnde woorden worden getoond',
   'settings.appearance': 'Weergave en voorbeeld',
   'settings.notifications': 'Meldingsinstellingen',
-  'settings.notificationCenter': 'Meldingencentrum',
   'profile.changePhoto': 'Profielfoto wijzigen',
   'profile.private': 'Dit profiel is privé.',
   'friends.noResults': 'Geen gebruikers gevonden.',
@@ -26611,9 +26513,6 @@ const nl: Catalog = {
   'games.rhyme.rhymeWith': 'Rijm op',
   'games.rhyme.endRound': 'Ronde beëindigen',
   'games.rhyme.timeUpRound': 'De tijd voor deze ronde is om.',
-  'leagues.nobodyRanked': 'Nog niemand op de ranglijst.',
-  'leagues.addFriends': 'Voeg vrienden toe om hier tegen ze te racen.',
-  'leagues.friendsSoon': 'Ranglijsten voor vrienden komen eraan.',
   'games.wordle.rules': 'Raad het Koerdische woord in zes pogingen. Groen: de goede letter op de goede plek. Geel: in het woord, maar op een andere plek. Grijs: niet in het woord.',
   'games.wordle.theWordWas': 'Het woord was',
   'games.wordle.keyboard': 'Koerdisch toetsenbord',
@@ -26871,8 +26770,6 @@ const nl: Catalog = {
   'field.passwordNeedsNumber': 'Het wachtwoord moet minstens één cijfer bevatten',
   'field.invalidUsername': 'De gebruikersnaam moet {usernameMin}–{usernameMax} tekens zijn (letters, cijfers of _)',
   'field.passwordRules': 'Minstens {min} tekens, met een letter en een cijfer.',
-  'coursemap.locked': 'Rond de vorige vaardigheid af om deze te ontgrendelen.',
-  'coursemap.rusty': 'Deze vaardigheid roest weg — oefen om hem terug te krijgen.',
   'dictionary.bookmark': 'Woord bewaren',
   'dictionary.removeBookmark': 'Bewaren ongedaan maken',
   'dictionary.searchFailed': 'Zoeken lukt nu niet. Controleer je verbinding en probeer het opnieuw.',
@@ -26897,7 +26794,6 @@ const nl: Catalog = {
   'streak.days': '{count} dagen',
   'username.rules': '3–{max} tekens · letters, cijfers, _ · je kunt het één keer per 30 dagen wijzigen.',
   'coursemap.strength': 'Sterkte {percent}%',
-  'coursemap.strengthDecayed': 'Sterkte {percent}% · verroest',
   'lesson.speak.saved': 'Opname opgeslagen',
   'lesson.syncing': 'Synchroniseren…',
   'recorder.startNote': 'Spraaknotitie opnemen',
@@ -27081,7 +26977,6 @@ const nl: Catalog = {
   'profile.badges': 'Badges',
   'tags.claim': 'Toevoegen',
   'notifications.pref.events': 'Evenementen en quests',
-  'coursemap.nodeLabel': '{title}, {state}',
   'coursemap.state.locked': 'vergrendeld',
   'coursemap.state.unlocked': 'ontgrendeld',
   'coursemap.state.completed': 'voltooid',
@@ -27167,8 +27062,6 @@ const nl: Catalog = {
   'post.what': 'Wat ga je plaatsen?',
   'post.words.sub': 'Een gezegde, een verhaal of een gedicht',
   'post.picture.sub': 'Een foto of een meme',
-  'groups.section': 'Clubs',
-  'groups.none': 'Je zit nog in geen enkele club.',
   'groups.messageDeleted': 'Dit bericht is verwijderd.',
   'groups.memberCount': '{count} leden',
   'groups.open': '{name} openen',
@@ -27550,7 +27443,6 @@ const nl: Catalog = {
   'profile.levelN': 'Niveau {level}',
   'profile.stat.level': 'Niveau',
   'profile.stat.streak': 'Reeks',
-  'profile.currentlyOnline': 'Nu online',
   'profile.offline': 'Offline',
   'profile.activity': 'Activiteit',
   'profile.tab.posts': 'Berichten',
@@ -29737,7 +29629,6 @@ const ckb: Catalog = {
   'auth.verify.enterCode6': 'کۆدی ٦ ژمارەیی لە ئیمەیڵەکەت بنووسە',
   'auth.register.submit': 'هەژمار دروست بکە',
   'auth.verify.sendNewIn': 'کۆدێکی نوێ بنێرە ({seconds}چ)',
-  'nav.login': 'چوونەژوورەوە',
   'onboarding.language.title': 'زمانەکەت هەڵبژێرە',
   'onboarding.language.help': 'هەر کاتێک دەتوانیت لە ڕێکخستنەکان بیگۆڕیت.',
   'onboarding.prop.learn': 'هەموو ڕۆژێک کەمێک کوردی فێربە',
@@ -29810,7 +29701,6 @@ const ckb: Catalog = {
   'dictionary.noExactMatch': 'هیچ هاوتایەکی تەواو نییە — نزیکترین وشەکان پیشان دەدرێن',
   'settings.appearance': 'ڕووخسار و پێشبینین',
   'settings.notifications': 'ڕێکخستنی ئاگادارکردنەوەکان',
-  'settings.notificationCenter': 'ناوەندی ئاگادارکردنەوەکان',
   'profile.changePhoto': 'وێنەی پرۆفایل بگۆڕە',
   'profile.private': 'ئەم پرۆفایلە تایبەتە.',
   'friends.noResults': 'هیچ بەکارهێنەرێک نەدۆزرایەوە.',
@@ -29842,9 +29732,6 @@ const ckb: Catalog = {
   'games.rhyme.rhymeWith': 'سەروا لەگەڵ ئەمە بدۆزەرەوە',
   'games.rhyme.endRound': 'کۆتایی بە خولەکە بهێنە',
   'games.rhyme.timeUpRound': 'کاتی ئەم خولە تەواو بوو.',
-  'leagues.nobodyRanked': 'هێشتا کەس پلەی نییە.',
-  'leagues.addFriends': 'هاوڕێ زیاد بکە تا لێرە لەگەڵیان پێشبڕکێ بکەیت.',
-  'leagues.friendsSoon': 'تابلۆی هاوڕێکان بەم زووانە دێت.',
   'games.wordle.rules': 'وشە کوردییەکە بە شەش هەوڵ بدۆزەرەوە. سەوز: پیتی دروست لە شوێنی دروست. زەرد: لە وشەکەدایە، بەڵام لە شوێنێکی تر. خۆڵەمێشی: لە وشەکەدا نییە.',
   'games.wordle.theWordWas': 'وشەکە ئەمە بوو',
   'games.wordle.keyboard': 'تەختەکلیلی کوردی',
@@ -30102,8 +29989,6 @@ const ckb: Catalog = {
   'field.passwordNeedsNumber': 'وشەی تێپەڕبوون دەبێت لانیکەم یەک ژمارەی تێدابێت',
   'field.invalidUsername': 'ناوی بەکارهێنەر دەبێت {usernameMin}–{usernameMax} پیت بێت (پیت، ژمارە یان _)',
   'field.passwordRules': 'لانیکەم {min} پیت، لەگەڵ پیتێک و ژمارەیەک.',
-  'coursemap.locked': 'شارەزایی پێشوو تەواو بکە بۆ کردنەوەی ئەمە.',
-  'coursemap.rusty': 'ئەم شارەزاییە ژەنگ دەگرێت — ڕاهێنان بکە بۆ گەڕاندنەوەی.',
   'dictionary.bookmark': 'وشەکە دیاری بکە',
   'dictionary.removeBookmark': 'دیارییەکە لابە',
   'dictionary.searchFailed': 'ئێستا ناتوانرێت بگەڕێیت. پەیوەندییەکەت بپشکنە و دووبارە هەوڵ بدەوە.',
@@ -30128,7 +30013,6 @@ const ckb: Catalog = {
   'streak.days': '{count} ڕۆژ',
   'username.rules': '3–{max} پیت · پیت، ژمارە، _ · هەر 30 ڕۆژ جارێک دەتوانیت بیگۆڕیت.',
   'coursemap.strength': 'هێز {percent}%',
-  'coursemap.strengthDecayed': 'هێز {percent}% · ژەنگاوی',
   'lesson.speak.saved': 'دەنگەکەت تۆمارکرا',
   'lesson.syncing': 'هاوکاتکردن…',
   'recorder.startNote': 'تێبینییەکی دەنگی تۆمار بکە',
@@ -30312,7 +30196,6 @@ const ckb: Catalog = {
   'profile.badges': 'نیشانەکان',
   'tags.claim': 'زیادکردن',
   'notifications.pref.events': 'بۆنە و ئەرک',
-  'coursemap.nodeLabel': '{title}، {state}',
   'coursemap.state.locked': 'داخراو',
   'coursemap.state.unlocked': 'کراوە',
   'coursemap.state.completed': 'تەواوکراو',
@@ -30398,8 +30281,6 @@ const ckb: Catalog = {
   'post.what': 'چی بڵاو دەکەیتەوە؟',
   'post.words.sub': 'قسەیەک، چیرۆکێک یان شیعرێک',
   'post.picture.sub': 'وێنەیەک یان میمێک',
-  'groups.section': 'کڵۆبەکان',
-  'groups.none': 'هێشتا لە هیچ کڵۆبێکدا نیت.',
   'groups.messageDeleted': 'ئەم نامەیە لابرا.',
   'groups.memberCount': '{count} ئەندام',
   'groups.open': '{name} بکەرەوە',
@@ -30781,7 +30662,6 @@ const ckb: Catalog = {
   'profile.levelN': 'ئاستی {level}',
   'profile.stat.level': 'ئاست',
   'profile.stat.streak': 'زنجیرە',
-  'profile.currentlyOnline': 'ئێستا سەرهێڵە',
   'profile.offline': 'دەرهێڵ',
   'profile.activity': 'چالاکی',
   'profile.tab.posts': 'بڵاوکراوەکان',
