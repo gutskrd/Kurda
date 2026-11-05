@@ -97,4 +97,16 @@ describe('translation catalogs', () => {
       expect(TRANSLATIONS[locale]['onboarding.notify.later'], locale).toContain(TRANSLATIONS[locale]['settings.notifications']);
     }
   });
+
+  it('names the currencies on the leaderboards as the shop does, so a board never reads as a third currency', () => {
+    for (const locale of LOCALES) {
+      const c = TRANSLATIONS[locale];
+      expect(c['rankings.board.zer'], locale).toBe('Zêr');
+      expect(c['rankings.board.zerBlurb'], locale).toContain('Zêr');
+      // the shop says where gems come from in the same word the board ranks them by
+      expect(c['shop.earnMoreGems'].toLocaleLowerCase(locale), locale).toContain(c['rankings.board.gewher'].toLocaleLowerCase(locale));
+    }
+    expect(TRANSLATIONS.ku['rankings.board.gewher']).toBe('Gewher');
+    expect(TRANSLATIONS.ckb['rankings.board.gewher']).toBe('گەوهەر');
+  });
 });
