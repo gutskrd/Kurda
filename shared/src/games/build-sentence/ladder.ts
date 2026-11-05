@@ -108,13 +108,23 @@ export const DECOYS: Readonly<Record<GameDifficulty, number>> = { beginner: 2, i
 /** No more tiles than this in all. */
 export const MAX_TILES = 13;
 
-/** A round passed this well on its rung opens the next one. */
+/** A round passed this well on its rung opens the next one: this many of the rung's own sentences right on the first try. */
 export const STEP_UP_FIRST_TRY = 6;
 
 /**
+ * The sentences of a round on the rung it was played on that were right on
+ * the first try: what stepping up is judged by. The warm-ups from the rungs
+ * below are easier by design, and do not count.
+ */
+export function rungFirstTries(items: ReadonlyArray<{ rung: SentenceRung; firstTry: boolean }>, rung: SentenceRung): number {
+  return items.filter((i) => i.rung === rung && i.firstTry).length;
+}
+
+/**
  * The ladder after a round: a round on the learner's own rung (or above it),
- * with at least STEP_UP_FIRST_TRY of its items right on the first try, opens
- * the rung after the one it was played on. Nothing ever closes a rung again.
+ * with at least STEP_UP_FIRST_TRY of that rung's own sentences right on the
+ * first try (`rungFirstTries`), opens the rung after the one it was played
+ * on. Nothing ever closes a rung again.
  */
 export function stepAfterRound(step: number, played: SentenceRung, firstTry: number): number {
   const at = rungStep(played);
@@ -159,8 +169,6 @@ export function firstMisplaced(answer: readonly string[], orders: readonly strin
 /** One sentence to build: its meaning, and the tiles (its words and a few that are not), shuffled. */
 export interface SentenceItemView {
   index: number;
-  /** stable for the sentence, whichever lesson it came from */
-  key: string;
   meaning: Meanings;
   tiles: string[];
   rung: SentenceRung;

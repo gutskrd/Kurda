@@ -514,24 +514,30 @@ export interface HearItItemView {
   level: GameLevel;
 }
 
-/** The Memory Thief: the passage to study, then the same passage with its key words gone (games/memory-thief). */
+/**
+ * The Memory Thief: the passage to study, then the same passage with its key
+ * words gone (games/memory-thief). A passage is sent one way or the other,
+ * never both: whole while it is studied, and with its gaps once the player has
+ * asked for them (`POST /games/solo/sessions/:id/begin`), which is for good —
+ * a round come back to after that is not shown the passage again.
+ */
 export interface MemoryThiefItemView {
   index: number;
-  /** stable for the passage, wherever it was read */
-  key: string;
+  /** studied (the passage whole), or given back (its gaps) */
+  phase: 'study' | 'restore';
   /** a story's paragraph, or lines of a lesson's conversation */
   kind: 'story' | 'conversation';
   title: string | null;
-  /** the passage in parts: text, a gap numbered from 0, or where a conversation's next line starts */
-  parts: Array<{ text: string } | { gap: number } | { line: number }>;
-  /** the passage whole, for the study phase: a conversation's lines one per line of text */
-  text: string;
-  /** who says each line of `text` (a story's one line: null) */
+  /** the passage whole while it is studied (a conversation's lines one per line of text); null once its words have vanished */
+  text: string | null;
+  /** once its words have vanished, the passage in parts: text, a gap numbered from 0, or where a conversation's next line starts; null while it is studied */
+  parts: Array<{ text: string } | { gap: number } | { line: number }> | null;
+  /** who says each line (a story's one line: null) */
   speakers: Array<SpeakerId | null>;
   /** how many words vanish */
   gaps: number;
   studySeconds: number;
-  /** tiles to pick the vanished words from (beginner, intermediate), or null to type them (advanced) */
+  /** once its words have vanished, tiles to pick them from (beginner, intermediate); null to type them (advanced), and while it is studied */
   tiles: string[] | null;
   level: GameLevel;
 }

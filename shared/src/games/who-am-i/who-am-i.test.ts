@@ -6,6 +6,7 @@ import {
   answerFor,
   dealWhoAmI,
   isWhoAmIFact,
+  sharedCategory,
   whoAmIPoints,
   type WhoAmIIdentity,
   type WhoAmITemplate,
@@ -192,5 +193,44 @@ describe('the stage', () => {
     expect(deerSilhouetteSvg('red" onload="x', 100)).not.toContain('onload');
     expect(FOREHEAD.x).toBeGreaterThan(0);
     expect(FOREHEAD.y + 0.1).toBeLessThan(1);
+  });
+});
+
+describe('the kind of thing a hidden identity is', () => {
+  it('is named only when every tile is that kind, so it never singles the identity out', () => {
+    expect(sharedCategory('animal', [{ category: 'animal' }, { category: 'animal' }])).toBe('animal');
+    expect(sharedCategory('animal', [{ category: 'animal' }, { category: 'object' }])).toBeNull();
+    // tiles dealt before they carried their kind
+    expect(sharedCategory('animal', [{}, { category: 'animal' }])).toBeNull();
+  });
+
+  it('is shared by the tiles whenever the pool has enough of the kind', () => {
+    // the cup shares the facts it has with every animal: it is still dealt after the animals
+    const cupLike = { ...POOL[6]!, facts: { ...POOL[0]!.facts, alive: false, animal: false } };
+    const deal = dealWhoAmI(POOL[0]!, [...POOL.slice(0, 6), cupLike], TEMPLATES, { seed: 's', salt: '0', want: 6 })!;
+    expect(deal.candidates.every((c) => c.category === 'animal')).toBe(true);
+    expect(sharedCategory(POOL[0]!.category, deal.candidates)).toBe('animal');
+  });
+
+  it('is left off the race’s card when the tiles are of several kinds', () => {
+    const deal = dealWhoAmI(POOL[0]!, POOL, TEMPLATES, { seed: 's', salt: '0', want: 4 })!;
+    const mixed = { ...deal, candidates: [...deal.candidates.slice(0, 3), { id: 'cup', word: 'kasik', meanings: { en: 'cup' }, category: 'object' }] };
+    const s = R.init({ dialect: 'kmr', minutes: 5, difficulty: 'beginner', deals: [{ seat: 1, deal: mixed }, { seat: 2, deal }] }, [1, 2].map((seat) => ({ seat, team: null, bot: null })), {
+      now: T0,
+      seed: 'g',
+    });
+    expect(R.viewFor(s, 1).mine!.category).toBeNull();
+    expect(R.viewFor(s, 2).mine!.category).toBe('animal');
+  });
+});
+
+describe('a race that did not count', () => {
+  it('is one called off or never dealt', () => {
+    const deal = dealWhoAmI(POOL[0]!, POOL, TEMPLATES, { seed: 's', salt: '0', want: 4 })!;
+    const seats2 = [1, 2].map((seat) => ({ seat, team: null, bot: null }));
+    const s = R.init({ dialect: 'kmr', minutes: 5, difficulty: 'beginner', deals: [{ seat: 1, deal }, { seat: 2, deal }] }, seats2, { now: T0, seed: 'g' });
+    expect(R.counted!(R.end(s, T0 + 1000))).toBe(false);
+    expect(R.counted!(R.init({ dialect: 'kmr', minutes: 5, difficulty: 'beginner' }, seats2, { now: T0, seed: 'g' }))).toBe(false);
+    expect(R.counted!(R.timeout(s, [], s.endsAt))).toBe(true);
   });
 });

@@ -85,6 +85,20 @@ export function textScript(text: string): GameScript | null {
 }
 
 /**
+ * Whether a text has a letter in neither script: Cyrillic, Greek, a fullwidth
+ * or mathematical Latin letter, an IPA sign. `textScript` passes over such
+ * letters, which is right for telling the two scripts apart, but a typed clue
+ * that holds one is not Kurdish in either (and is how a banned word is
+ * disguised: a Cyrillic а in the middle of a Latin word looks the same).
+ */
+export function hasForeignLetter(text: string): boolean {
+  for (const ch of text.normalize('NFC')) {
+    if (/\p{L}/u.test(ch) && !ARABIC_LETTER.test(ch) && !LATIN_LETTER.test(ch)) return true;
+  }
+  return false;
+}
+
+/**
  * Whether a text belongs in a round of this variety: it has letters, and every
  * one of them is in the variety's script. A Kurmancî sentence with a Soranî
  * word in it, or a Soranî one carrying a Latin name, is kept out of both.

@@ -92,17 +92,33 @@ export interface MemoryThiefCorrection {
 /** A conversation's lines say who speaks each one; a story's passage has one unspoken line. */
 export type MemorySpeakers = Array<SpeakerId | null>;
 
+/** The passage as it is studied, line by line, before anything is known of what will vanish. */
+export function memoryTextLines(text: string): MemoryStudyPiece[][] {
+  return text.split('\n').map((line) => [{ text: line }]);
+}
+
 /** A piece of a line as the study phase shows it: text as written, or a word that is about to vanish (and its gap). */
 export type MemoryStudyPiece = { text: string } | { gap: number; word: string };
 
 /**
  * The passage line by line with every word that will vanish in its place, for
- * the study phase to show and then lift off: `parts` laid over `text`. A gap's
+ * the words to lift off as the study ends: `parts` laid over `text`. A gap's
  * word is what the line has where the gap stands — up to the next space, less
- * the punctuation that closes it, as the server cut it. Pure; both apps stage
- * the same lines from it.
+ * the punctuation that closes it, as the server cut it. Without the text (a
+ * round come back to after its words vanished, which is never sent the
+ * passage again) every gap's word is empty. Pure; both apps stage the same
+ * lines from it.
  */
-export function memoryStudyLines(text: string, parts: readonly MemoryPart[]): MemoryStudyPiece[][] {
+export function memoryStudyLines(text: string | null, parts: readonly MemoryPart[]): MemoryStudyPiece[][] {
+  if (text === null) {
+    const out: MemoryStudyPiece[][] = [];
+    let line = -1;
+    for (const part of parts) {
+      if ('line' in part) out[(line = part.line)] = [];
+      else (out[line] ??= []).push('text' in part ? { text: part.text } : { gap: part.gap, word: '' });
+    }
+    return out.map((l) => l ?? []);
+  }
   const lines = text.split('\n');
   const out: MemoryStudyPiece[][] = [];
   let line = -1;

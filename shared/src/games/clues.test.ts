@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { guessNames, sameClue, saysBanned, textSlip } from './clues.js';
+import { foldLookAlikes, guessNames, sameClue, saysBanned, textSlip } from './clues.js';
 
 // stand-in Kurdish for the fixtures, never shown to a learner
 const LIMITS = { maxChars: 20, maxWords: 3 };
@@ -78,5 +78,47 @@ describe('the same clue', () => {
   it('is the same letters, whatever the case, marks and punctuation', () => {
     expect(sameClue('Heywan!', 'heywan', 'kmr')).toBe(true);
     expect(sameClue('heywan', 'heywanek', 'kmr')).toBe(false);
+  });
+});
+
+describe('a banned word typed so as not to look like itself', () => {
+  it('is heard through spaces and punctuation put inside it', () => {
+    expect(saysBanned('pi sîk', 'kmr', ['pisîk'])).toBe('pisîk');
+    expect(saysBanned('p i s î k', 'kmr', ['pisîk'])).toBe('pisîk');
+    expect(saysBanned('heywan pi-sîk', 'kmr', ['pisîk'])).toBe('pisîk');
+    expect(saysBanned('pi.sîka me', 'kmr', ['pisîk'])).toBe('pisîk');
+    expect(saysBanned('pisî kên spî', 'kmr', ['pisîk'])).toBe('pisîk');
+    expect(saysBanned('kit êb', 'kmr', ['kitêban'])).toBe('kitêban');
+    expect(saysBanned('پشی لە', 'ckb', ['پشیلە'])).toBe('پشیلە');
+    // a phrase written as one word, or split elsewhere
+    expect(saysBanned('rojbaş', 'kmr', ['roj baş'])).toBe('roj baş');
+    expect(saysBanned('ro j baş', 'kmr', ['roj baş'])).toBe('roj baş');
+  });
+
+  it('is not heard where two real words only meet in the letters of a short one', () => {
+    expect(saysBanned('ma li vir e', 'kmr', ['mal'])).toBeNull();
+    expect(saysBanned('ma l', 'kmr', ['mal'])).toBe('mal');
+    expect(saysBanned('bide stranê', 'kmr', ['dest'])).toBeNull();
+  });
+
+  it('is heard through look-alike letters of other alphabets and compatibility forms', () => {
+    // a Cyrillic а and о, a Greek ι, fullwidth Latin
+    expect(saysBanned('pisîkа', 'kmr', ['pisîk'])).toBe('pisîk');
+    expect(saysBanned('mamоste', 'kmr', ['mamoste'])).toBe('mamoste');
+    expect(saysBanned('pιsîk', 'kmr', ['pisîk'])).toBe('pisîk');
+    expect(saysBanned('ｐｉｓｉｋ', 'kmr', ['pisîk'])).toBe('pisîk');
+    // Arabic presentation forms and a stretched word
+    expect(saysBanned('ﭘﺸﯿﻠﻪ', 'ckb', ['پشیلە'])).toBe('پشیلە');
+    expect(saysBanned('پشـــیلە', 'ckb', ['پشیلە'])).toBe('پشیلە');
+    expect(foldLookAlikes('Ρisîk')).toBe('pisîk');
+  });
+
+  it('is refused as a slip when it carries a letter of neither script', () => {
+    expect(textSlip('pisîkа', 'kmr', LIMITS)).toBe('script');
+    expect(textSlip('ｐｉｓｉｋ', 'kmr', LIMITS)).toBe('script');
+    expect(textSlip('heywan ɑ', 'kmr', LIMITS)).toBe('script');
+    expect(textSlip('pisîk', 'kmr', LIMITS)).toBeNull();
+    expect(textSlip('çêlek û şêr', 'kmr', LIMITS)).toBeNull();
+    expect(textSlip('ڕووبار و ماڵ', 'ckb', LIMITS)).toBeNull();
   });
 });

@@ -197,3 +197,27 @@ describe('leaving', () => {
     expect(R.places(R.end(start(4, 2), T0)).every((p) => p.place === 1 && p.score === 0)).toBe(true);
   });
 });
+
+describe('a game that did not count', () => {
+  it('is one called off: abandoned, too few left, or the impostor gone', () => {
+    expect(R.counted!(R.drop(start(4, 2), 2, T0))).toBe(false);
+    expect(R.counted!(R.drop(start(3, 2), 1, T0))).toBe(false);
+    expect(R.counted!(R.end(start(4, 2), T0))).toBe(false);
+  });
+
+  it('is never one played out to a vote', () => {
+    const escaped = vote(allClues(start(4, 2)), { 1: 3, 2: 1, 3: 1, 4: 3 });
+    expect(escaped.endedBy).toBe('escaped');
+    expect(R.counted!(escaped)).toBe(true);
+  });
+});
+
+describe('a seat the viewer may not be shown', () => {
+  it('has its clues read as turns that passed without one, and nobody else’s', () => {
+    const s = allClues(start(4, 2));
+    const view = R.viewFor(s, 1, [3]);
+    expect(view.clues.filter((c) => c.seat === 3).every((c) => c.text === null)).toBe(true);
+    expect(view.clues.filter((c) => c.seat !== 3).every((c) => c.text !== null)).toBe(true);
+    expect(R.viewFor(s, 1).clues.every((c) => c.text !== null)).toBe(true);
+  });
+});

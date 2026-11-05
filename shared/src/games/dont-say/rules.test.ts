@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DONT_SAY_BUZZ_PENALTY,
   DONT_SAY_COOP_ROUNDS,
+  DONT_SAY_GUESSES_PER_CARD,
   DONT_SAY_READY_MS,
   DONT_SAY_SKIPS_PER_TURN,
   DONT_SAY_TURN_MS,
@@ -213,5 +214,56 @@ describe('leaving', () => {
     expect(passed.turn!.seat).not.toBe(d);
     const four = start();
     expect(R.drop(four, four.turn!.seat, T0 + 2000).endedBy).toBe('too-few');
+  });
+});
+
+describe('guesses at one card', () => {
+  it('stop at DONT_SAY_GUESSES_PER_CARD for each guesser, and start again with the next card', () => {
+    const s = start([seat(1, 1), seat(2, 1), seat(3, 1)]);
+    const d = s.turn!.seat;
+    const guesser = s.seats.find((x) => x.seat !== d)!.seat;
+    const other = s.seats.find((x) => x.seat !== d && x.seat !== guesser)!.seat;
+    let state = s;
+    const wrongs = ['kûçik', 'hesp', 'mişk', 'çêlek', 'bizin', 'mirîşk'];
+    for (const w of wrongs.slice(0, DONT_SAY_GUESSES_PER_CARD)) state = play(state, guesser, { kind: 'guess', text: w }).state;
+    expect(R.viewFor(state, guesser).guessesLeft).toBe(0);
+    expect(R.apply(state, guesser, { kind: 'guess', text: 'pisîk' }, READY)).toEqual({ ok: false, reason: 'no-guesses' });
+    // another guesser still has theirs, and a right guess draws a card everyone may guess again
+    const right = play(state, other, { kind: 'guess', text: 'pisîk' });
+    expect(right.outcome).toEqual({ kind: 'guess', right: true });
+    expect(R.viewFor(right.state, guesser).guessesLeft).toBe(DONT_SAY_GUESSES_PER_CARD);
+    expect(play(right.state, guesser, { kind: 'guess', text: 'nan' }).outcome).toEqual({ kind: 'guess', right: true });
+  });
+
+  it('are not capped in a game started before the cap, which counted none', () => {
+    const s = start([seat(1, 1), seat(2, 1), seat(3, 1)]);
+    const old = { ...s, turn: { ...s.turn!, tries: undefined } };
+    const guesser = s.seats.find((x) => x.seat !== s.turn!.seat)!.seat;
+    expect(play(old, guesser, { kind: 'guess', text: 'kûçik' }).outcome).toEqual({ kind: 'guess', right: false });
+  });
+});
+
+describe('a game that did not count', () => {
+  it('is one called off or left without a team that can go on, never one whose turns or deck ran out', () => {
+    const four = start();
+    expect(R.counted!(R.drop(four, four.turn!.seat, T0 + 2000))).toBe(false);
+    expect(R.counted!(R.end(four, T0 + 2000))).toBe(false);
+    const short = start(undefined, DECK.slice(0, 1));
+    const done = R.timeout(short, [short.turn!.seat], short.turn!.endsAt);
+    expect(done.finishedAt).not.toBeNull();
+    expect(R.counted!(done)).toBe(true);
+  });
+});
+
+describe('a seat the viewer may not be shown', () => {
+  it('has its clues and guesses left out of the view', () => {
+    const s = start([seat(1, 1), seat(2, 1), seat(3, 1)]);
+    const d = s.turn!.seat;
+    const [a, b] = s.seats.filter((x) => x.seat !== d).map((x) => x.seat);
+    let state = play(s, d, { kind: 'clue', text: 'li malê dijî' }).state;
+    state = play(state, a!, { kind: 'guess', text: 'kûçik' }).state;
+    expect(R.viewFor(state, b!, [d]).clues).toEqual([]);
+    expect(R.viewFor(state, b!, [a!]).guesses).toEqual([]);
+    expect(R.viewFor(state, b!).guesses.map((g) => g.text)).toEqual(['kûçik']);
   });
 });

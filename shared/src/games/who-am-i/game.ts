@@ -107,8 +107,8 @@ export interface WhoAmITemplate {
 /** A hidden identity, dealt: the server keeps all of it, and sends the player `candidates` and `questions` only. */
 export interface WhoAmIDeal {
   identity: WhoAmIIdentity;
-  /** the tiles, shuffled; the identity is one of them */
-  candidates: Array<{ id: string; word: string; meanings: Meanings }>;
+  /** the tiles, shuffled; the identity is one of them (a deal made before tiles carried their category has none) */
+  candidates: Array<{ id: string; word: string; meanings: Meanings; category?: string }>;
   /** the questions offered: each fact asked once, every candidate with an answer to it */
   questions: Array<{ id: string; ku: string; meanings: Meanings; fact: string }>;
 }
@@ -147,8 +147,9 @@ export function dealWhoAmI(
     pool.filter((p) => p.id !== target.id && p.word !== target.word),
     (p) => p.id,
   )
-    .map((p) => ({ p, shared: Object.keys(target.facts).filter((k) => typeof p.facts[k] === 'boolean').length }))
-    .sort((a, b) => b.shared - a.shared)
+    .map((p) => ({ p, same: p.category === target.category, shared: Object.keys(target.facts).filter((k) => typeof p.facts[k] === 'boolean').length }))
+    // the identity's own kind first, so the kind the card names tells the tiles nothing apart
+    .sort((a, b) => Number(b.same) - Number(a.same) || b.shared - a.shared)
     .map((x) => x.p);
   const byFact = new Map<string, WhoAmITemplate>();
   for (const t of draw(opts.seed, `${opts.salt}:templates`, templates, (t) => t.id)) if (!byFact.has(t.fact)) byFact.set(t.fact, t);
@@ -167,12 +168,21 @@ export function dealWhoAmI(
     const questions = [...asked].sort((a, b) => splits(b) - splits(a)).slice(0, WHO_AM_I_MAX_QUESTIONS);
     return {
       identity: target,
-      candidates: draw(opts.seed, `${opts.salt}:tiles`, tiles, (x) => x.id).map((x) => ({ id: x.id, word: x.word, meanings: x.meanings })),
+      candidates: draw(opts.seed, `${opts.salt}:tiles`, tiles, (x) => x.id).map((x) => ({ id: x.id, word: x.word, meanings: x.meanings, category: x.category })),
       // the list is drawn again, so its order says nothing about which questions split the tiles
       questions: draw(opts.seed, `${opts.salt}:asked`, questions, (q) => q.id).map((q) => ({ id: q.id, ku: q.ku, meanings: q.meanings, fact: q.fact })),
     };
   }
   return null;
+}
+
+/**
+ * The kind of thing a hidden identity is, as its card may name it: only when
+ * every tile is of that kind. Among tiles of several kinds the kind would
+ * single the identity out, so the card names none.
+ */
+export function sharedCategory(category: string, tiles: ReadonlyArray<{ category?: string }>): string | null {
+  return tiles.length > 0 && tiles.every((t) => t.category === category) ? category : null;
 }
 
 /** The answer to a question about an identity: yes or no, from its facts. */
@@ -205,7 +215,8 @@ export interface WhoAmIAsked {
 /** One hidden identity of a solo round, as the player is sent it: never the identity. */
 export interface WhoAmIItemView {
   index: number;
-  category: string;
+  /** what kind of thing it is, when every tile is that kind; null when the tiles are of several */
+  category: string | null;
   tiles: WhoAmITile[];
   questions: WhoAmIQuestion[];
   asked: WhoAmIAsked[];

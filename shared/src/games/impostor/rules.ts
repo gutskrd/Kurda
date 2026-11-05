@@ -262,6 +262,16 @@ export function impostorScores(s: ImpostorState): Map<number, number> {
   return scores;
 }
 
+/**
+ * Whether a finished game counted: the table played it out to a vote, an
+ * escape or a guess. Called off with every person gone, with too few left to
+ * hide among, or with the impostor gone, it did not: nobody wins a game like
+ * that, so it pays no placement and is not rated.
+ */
+export function impostorCounted(s: Pick<ImpostorState, 'finishedAt' | 'endedBy'>): boolean {
+  return s.finishedAt !== null && s.endedBy !== 'abandoned' && s.endedBy !== 'too-few' && s.endedBy !== 'impostor-left';
+}
+
 /** What a clue would be refused for, judged as the rules judge it (the server again, always). */
 export function impostorClueRefusal(
   s: Pick<ImpostorState, 'dialect' | 'card' | 'impostor' | 'clues'>,
@@ -429,7 +439,11 @@ export const impostorRules: GameRules<ImpostorState, ImpostorMove, ImpostorSetti
     return state.finishedAt !== null;
   },
 
-  viewFor(state: ImpostorState, seat: number | null): ImpostorBoard {
+  counted(state: ImpostorState): boolean {
+    return impostorCounted(state);
+  },
+
+  viewFor(state: ImpostorState, seat: number | null, hidden: readonly number[] = []): ImpostorBoard {
     const over = state.finishedAt !== null;
     const playing = seat !== null && state.seats.some((x) => x.seat === seat);
     const scores = over ? impostorScores(state) : null;
@@ -447,7 +461,8 @@ export const impostorRules: GameRules<ImpostorState, ImpostorMove, ImpostorSetti
       hand,
       order: [...state.order],
       turn: state.turn ? { seat: state.turn.seat, round: state.turn.round, n: state.turn.n, startedAt: iso(state.turn.startedAt), endsAt: iso(state.turn.endsAt) } : null,
-      clues: state.clues.map((c) => ({ ...c })),
+      // a clue the viewer may not be shown reads as a turn that passed without one
+      clues: state.clues.map((c) => ({ ...c, text: hidden.includes(c.seat) ? null : c.text })),
       vote:
         state.phase === 'vote' && state.voting
           ? {

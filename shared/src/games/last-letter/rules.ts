@@ -310,6 +310,11 @@ export const lastLetterRules: GameRules<LastLetterState, LastLetterMove, LastLet
     return state.finishedAt !== null;
   },
 
+  // ended where it stood with everyone gone: nobody played it out
+  counted(state: LastLetterState): boolean {
+    return state.finishedAt !== null && state.endedBy !== 'abandoned';
+  },
+
   viewFor(state: LastLetterState, seat: number | null): LastLetterBoard {
     const required = requiredLetter(state);
     return {

@@ -202,6 +202,15 @@ function seeded<T>(seed: string, salt: string, items: readonly T[], keyOf: (item
     .map((x) => x.item);
 }
 
+/**
+ * Whether a finished game counted: its words were played out. Called off with
+ * every person gone, or with one player left at the table, it did not, and
+ * pays no placement and is not rated.
+ */
+export function bluffCounted(s: Pick<BluffState, 'finishedAt' | 'endedBy'>): boolean {
+  return s.finishedAt !== null && s.endedBy !== 'abandoned' && s.endedBy !== 'too-few';
+}
+
 /** Option names, in the order the options are laid out. */
 const LETTERS = 'ABCDEFGHIJ';
 
@@ -452,7 +461,11 @@ export const bluffRules: GameRules<BluffState, BluffMove, BluffSettings, BluffBo
     return state.finishedAt !== null;
   },
 
-  viewFor(state: BluffState, seat: number | null): BluffBoard {
+  counted(state: BluffState): boolean {
+    return bluffCounted(state);
+  },
+
+  viewFor(state: BluffState, seat: number | null, hidden: readonly number[] = []): BluffBoard {
     const c = state.current;
     const done = state.finishedAt !== null;
     const word = card(state)?.word ?? state.deck.at(-1)?.word ?? null;
@@ -462,6 +475,9 @@ export const bluffRules: GameRules<BluffState, BluffMove, BluffSettings, BluffBo
     const wrote = member ? (c.fakes.find((f) => f.seat === seat)?.text ?? null) : null;
     const knewIt = member && c.knewIt.includes(seat!);
     const waitingNow = waiting(state);
+    // a fake only seats the viewer may not be shown wrote is left out (one somebody else wrote word for word stays: it is theirs too)
+    const shown = (o: { real: boolean; authors: readonly number[] }) => o.real || o.authors.length === 0 || o.authors.some((a) => !hidden.includes(a));
+    const reveal = (r: BluffReveal): BluffReveal => (hidden.length === 0 ? { ...r } : { ...r, options: r.options.filter(shown) });
     return {
       dialect: state.dialect,
       language: state.language,
@@ -484,9 +500,9 @@ export const bluffRules: GameRules<BluffState, BluffMove, BluffSettings, BluffBo
           }
         : null,
       // the vote: letters and texts only, and never the viewer's own
-      options: voting && c.options ? c.options.filter((o) => seat === null || visibleTo(o, seat)).map((o) => ({ id: o.id, text: o.text })) : null,
-      reveal: revealing || done ? (state.past.at(-1) ?? null) : null,
-      history: state.past.map((r) => ({ ...r })),
+      options: voting && c.options ? c.options.filter((o) => (seat === null || visibleTo(o, seat)) && shown(o)).map((o) => ({ id: o.id, text: o.text })) : null,
+      reveal: revealing || done ? (state.past.length > 0 ? reveal(state.past.at(-1)!) : null) : null,
+      history: state.past.map(reveal),
       scores: state.seats.map((s) => ({ seat: s.seat, score: s.score, left: s.left })),
       endedBy: state.endedBy,
     };

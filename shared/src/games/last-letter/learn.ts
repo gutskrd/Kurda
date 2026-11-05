@@ -23,6 +23,12 @@ export const LAST_LETTER_MIN_HEVALO_WORDS = 150;
 /** XP for a game against Hevalo: per new word, never more than this in a game. */
 export const LAST_LETTER_SOLO_XP_PER_WORD = 2;
 export const LAST_LETTER_SOLO_XP_CAP = 20;
+/**
+ * And never more than this in a day (UTC), all games against Hevalo together:
+ * a game ends and pays as soon as the next one starts, so without a day's cap
+ * the cap per game would limit nothing.
+ */
+export const LAST_LETTER_SOLO_DAILY_XP_CAP = 40;
 /** A word paid for against Hevalo pays nothing again for this many days. */
 export const LAST_LETTER_SOLO_REPEAT_DAYS = 14;
 

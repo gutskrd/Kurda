@@ -46,6 +46,12 @@ export const DONT_SAY_TURN_MS = 60_000;
 /** Before a turn's minute starts: the describer reads the card, the guessers get ready. */
 export const DONT_SAY_READY_MS = 5_000;
 export const DONT_SAY_SKIPS_PER_TURN = 2;
+/**
+ * Guesses one guesser may make at one card. Plenty for a table guessing from
+ * the clues; too few to run down a word list without any, which a script
+ * typing guesses as fast as the route allows would otherwise do.
+ */
+export const DONT_SAY_GUESSES_PER_CARD = 6;
 export const DONT_SAY_BUZZ_PENALTY = 1;
 export const DONT_SAY_CLUE_LIMITS: TextLimits = { maxChars: 80, maxWords: 12 };
 export const DONT_SAY_GUESS_LIMITS: TextLimits = { maxChars: 40, maxWords: 3 };
@@ -72,7 +78,7 @@ export type DontSayMode = 'teams' | 'coop';
 
 export type DontSayMove = { kind: 'clue'; text: string } | { kind: 'guess'; text: string } | { kind: 'skip' };
 
-export type DontSayRefusal = TextSlip | 'not-your-turn' | 'not-ready' | 'no-skips' | 'finished';
+export type DontSayRefusal = TextSlip | 'not-your-turn' | 'not-ready' | 'no-skips' | 'no-guesses' | 'finished';
 
 /** What the mover is told: a buzz names the word the clue said (the describer holds the card). */
 export type DontSayOutcome =
@@ -112,6 +118,8 @@ interface Turn {
   clues: Line[];
   guesses: Array<Line & { right: boolean }>;
   lines: number;
+  /** guesses each guesser has made at the card in play (a state from before the cap: none counted) */
+  tries?: Record<number, number>;
 }
 
 interface Done {
@@ -162,6 +170,8 @@ export interface DontSayBoard {
   drawn: number;
   /** the describer's skips left this turn */
   skipsLeft: number | null;
+  /** the guesses the viewer has left at the card in play, while they are guessing (absent from a server before the cap) */
+  guessesLeft?: number | null;
   /** the accepted clues for the card in play */
   clues: Line[];
   /** the guesses for the card in play */
@@ -200,7 +210,7 @@ function clone(s: DontSayState): DontSayState {
     seats: s.seats.map((x) => ({ ...x })),
     order: s.order.map((x) => ({ ...x })),
     scores: { ...s.scores },
-    turn: s.turn ? { ...s.turn, clues: [...s.turn.clues], guesses: [...s.turn.guesses] } : null,
+    turn: s.turn ? { ...s.turn, clues: [...s.turn.clues], guesses: [...s.turn.guesses], tries: { ...(s.turn.tries ?? {}) } } : null,
     done: [...s.done],
     buzz: s.buzz ? { ...s.buzz } : null,
   };
@@ -245,7 +255,7 @@ function nextTurn(s: DontSayState, now: number, after: number): void {
     const card = draw(s);
     if (card === null) return finish(s, now, 'deck-empty');
     const readyAt = now + DONT_SAY_READY_MS;
-    s.turn = { n, seat, team, startedAt: now, readyAt, endsAt: readyAt + DONT_SAY_TURN_MS, card, drawn: 1, skips: 0, clues: [], guesses: [], lines: 0 };
+    s.turn = { n, seat, team, startedAt: now, readyAt, endsAt: readyAt + DONT_SAY_TURN_MS, card, drawn: 1, skips: 0, clues: [], guesses: [], lines: 0, tries: {} };
     return;
   }
   finish(s, now, 'turns-done');
@@ -257,6 +267,7 @@ function cardDone(s: DontSayState, now: number, result: DontSayResult, by: numbe
   if (turn.card !== null) s.done.push({ turn: turn.n, team: turn.team, card: turn.card, result, by });
   turn.clues = [];
   turn.guesses = [];
+  turn.tries = {};
   if (result === 'time') return;
   const card = draw(s);
   if (card === null) return finish(s, now, 'deck-empty');
@@ -281,6 +292,17 @@ export function dontSayClueSlip(board: Pick<DontSayBoard, 'dialect' | 'card'>, t
 /** What a guess would be refused for, before it is sent. */
 export function dontSayGuessSlip(dialect: GameDialect, text: string): TextSlip | null {
   return text.trim() ? textSlip(text, dialect, DONT_SAY_GUESS_LIMITS) : null;
+}
+
+/**
+ * Whether a finished game counted: its turns, or its deck, ran out. Called
+ * off with every person gone, or with a team (or the co-op table) left
+ * without a describer and someone to guess, it did not: the scores of a game
+ * nobody finished say nothing about who played better, so it pays no
+ * placement and is not rated.
+ */
+export function dontSayCounted(s: Pick<DontSayState, 'finishedAt' | 'endedBy'>): boolean {
+  return s.finishedAt !== null && s.endedBy !== 'abandoned' && s.endedBy !== 'too-few';
 }
 
 /** A co-op table's aim for the whole game. */
@@ -353,6 +375,7 @@ export const dontSayRules: GameRules<DontSayState, DontSayMove, DontSaySettings,
       return { ok: true, state: next, outcome: { kind: 'skip' } };
     }
 
+    if (move.kind === 'guess' && (turn.tries?.[seat] ?? 0) >= DONT_SAY_GUESSES_PER_CARD) return { ok: false, reason: 'no-guesses' };
     const limits = move.kind === 'clue' ? DONT_SAY_CLUE_LIMITS : DONT_SAY_GUESS_LIMITS;
     const slip = textSlip(move.text, state.dialect, limits);
     if (slip) return { ok: false, reason: slip };
@@ -372,6 +395,7 @@ export const dontSayRules: GameRules<DontSayState, DontSayMove, DontSaySettings,
       return { ok: true, state: next, outcome: { kind: 'clue' } };
     }
 
+    t.tries = { ...(t.tries ?? {}), [seat]: (t.tries?.[seat] ?? 0) + 1 };
     if (guessNames(move.text, card.target, state.dialect)) {
       next.scores[t.team] = (next.scores[t.team] ?? 0) + 1;
       cardDone(next, now, 'guessed', seat);
@@ -436,7 +460,11 @@ export const dontSayRules: GameRules<DontSayState, DontSayMove, DontSaySettings,
     return state.finishedAt !== null;
   },
 
-  viewFor(state: DontSayState, seat: number | null): DontSayBoard {
+  counted(state: DontSayState): boolean {
+    return dontSayCounted(state);
+  },
+
+  viewFor(state: DontSayState, seat: number | null, hidden: readonly number[] = []): DontSayBoard {
     const over = state.finishedAt !== null;
     const turn = state.turn;
     const playing = seat !== null && state.seats.some((x) => x.seat === seat);
@@ -456,8 +484,10 @@ export const dontSayRules: GameRules<DontSayState, DontSayMove, DontSaySettings,
       card: role === 'describer' && inPlay && !over ? { target: inPlay.target, meanings: inPlay.meanings, forbidden: [...inPlay.forbidden] } : null,
       drawn: turn?.drawn ?? 0,
       skipsLeft: role === 'describer' && turn ? DONT_SAY_SKIPS_PER_TURN - turn.skips : null,
-      clues: turn ? turn.clues.map((c) => ({ ...c })) : [],
-      guesses: turn ? turn.guesses.map((g) => ({ ...g })) : [],
+      guessesLeft: role === 'guesser' && turn && !over ? Math.max(0, DONT_SAY_GUESSES_PER_CARD - (turn.tries?.[seat!] ?? 0)) : null,
+      // what a seat the viewer may not be shown wrote is left out, as a buzzed clue is
+      clues: turn ? turn.clues.filter((c) => !hidden.includes(c.seat)).map((c) => ({ ...c })) : [],
+      guesses: turn ? turn.guesses.filter((g) => !hidden.includes(g.seat)).map((g) => ({ ...g })) : [],
       buzz: state.buzz ? { ...state.buzz } : null,
       done: state.done.map((d) => {
         const c = state.deck[d.card]!;

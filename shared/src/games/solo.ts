@@ -71,13 +71,21 @@ export function roundXpCeiling(levels: readonly number[], items = SOLO_ROUND_ITE
   return items * (baseAnswerXp(top) + FIRST_TRY_BONUS_XP);
 }
 
+/** Items a round of `total` needs right on the first try to count as learning. */
+export function roundLearningNeeds(total: number): number {
+  return Math.max(1, Math.ceil(total / 2));
+}
+
 /**
  * Whether a finished round was learning (the streak, the daily goal, its XP):
- * at least half of its items answered right, as `countsAsLearning` has it for
- * lessons — a round tapped through pays nothing and keeps no streak.
+ * at least half of its items answered right on the first try, as
+ * `countsAsLearning` has it for lessons. A second try comes after a hint that
+ * rules an option out, so counting it would let tapping at random pass most
+ * rounds of three or four options; on first tries alone a round tapped through
+ * pays nothing and keeps no streak.
  */
-export function roundCountsAsLearning(correct: number, total: number): boolean {
-  return correct >= Math.max(1, Math.ceil(total / 2));
+export function roundCountsAsLearning(firstTry: number, total: number): boolean {
+  return firstTry >= roundLearningNeeds(total);
 }
 
 /** Where one item of a session stands. */
@@ -134,7 +142,7 @@ export interface SoloResults {
   xp: number;
   /** whether it was learning: the streak and the daily goal moved */
   learningCounted: boolean;
-  /** right answers it needed to count */
+  /** answers right on the first try it needed to count */
   needed: number;
   items: Array<{ index: number; correct: boolean; firstTry: boolean; xp: number; repeat: boolean }>;
   /** the streak after the round, when it counted */

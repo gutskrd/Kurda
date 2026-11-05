@@ -26,6 +26,7 @@ import type { ApplyResult, GameRules, Placed, RulesSeat, RulesStart } from '../m
 import {
   WHO_AM_I_GUESSES,
   answerFor,
+  sharedCategory,
   whoAmIPoints,
   type WhoAmIAsked,
   type WhoAmIDeal,
@@ -88,7 +89,8 @@ export interface WhoAmIRaceBoard {
   endsAt: string;
   /** the viewer's own game: their identity only once they have it or are out */
   mine: {
-    category: string;
+    /** what kind of thing it is, when every tile is that kind (`sharedCategory`) */
+    category: string | null;
     tiles: WhoAmITile[];
     questions: WhoAmIQuestion[];
     asked: WhoAmIAsked[];
@@ -227,6 +229,11 @@ export const whoAmIRaceRules: GameRules<WhoAmIRaceState, WhoAmIRaceMove, WhoAmIR
     return state.finishedAt !== null;
   },
 
+  // called off with everyone gone, or never dealt: no race was run
+  counted(state: WhoAmIRaceState): boolean {
+    return state.finishedAt !== null && state.endedBy !== 'abandoned' && state.endedBy !== 'too-few';
+  },
+
   viewFor(state: WhoAmIRaceState, seat: number | null): WhoAmIRaceBoard {
     const done = state.finishedAt !== null;
     const me = seat === null ? undefined : state.seats.find((s) => s.seat === seat);
@@ -240,7 +247,7 @@ export const whoAmIRaceRules: GameRules<WhoAmIRaceState, WhoAmIRaceMove, WhoAmIR
       mine:
         me && deal
           ? {
-              category: deal.identity.category,
+              category: sharedCategory(deal.identity.category, deal.candidates),
               tiles: deal.candidates.map((c) => ({ id: c.id, word: c.word, meanings: showMeanings ? c.meanings : null })),
               questions: deal.questions.map((q) => ({ id: q.id, ku: q.ku, meanings: q.meanings })),
               asked: me.asked.map((a) => ({ ...a })),

@@ -5,12 +5,26 @@ import {
   firstMisplaced,
   roundRung,
   rungAt,
+  rungFirstTries,
   rungStep,
   sentenceShape,
   stepAfterRound,
 } from './build-sentence/ladder.js';
-import { GAME_DIFFICULTIES, DIFFICULTY_LEVELS, answerXp, availableDifficulties, roundCountsAsLearning, roundXpCeiling } from './solo.js';
+import { GAME_DIFFICULTIES, DIFFICULTY_LEVELS, answerXp, availableDifficulties, roundCountsAsLearning, roundLearningNeeds, roundXpCeiling } from './solo.js';
 import { LEARN_GAMES, LEARN_GAME_XP_SOURCES, LEARN_GAME_IDS, learnGame, listedLearnGames } from './registry.js';
+
+describe('stepping up the ladder', () => {
+  it('counts only the first tries on the rung the round was played on, not its warm-ups', () => {
+    const round = [
+      ...Array.from({ length: 2 }, () => ({ rung: 'short' as const, firstTry: true })),
+      ...Array.from({ length: 6 }, (_, i) => ({ rung: 'question' as const, firstTry: i < 5 })),
+    ];
+    expect(rungFirstTries(round, 'question')).toBe(5);
+    expect(stepAfterRound(2, 'question', rungFirstTries(round, 'question'))).toBe(2);
+    const better = round.map((r) => ({ ...r, firstTry: true }));
+    expect(stepAfterRound(2, 'question', rungFirstTries(better, 'question'))).toBe(3);
+  });
+});
 
 describe('the ladder', () => {
   it('puts a sentence on the rung its shape says', () => {
@@ -90,10 +104,26 @@ describe('what a round pays', () => {
     expect(roundXpCeiling([1, 2])).toBe(16);
   });
 
-  it('counts a round as learning only when at least half was right', () => {
+  it('counts a round as learning only when at least half was right on the first try', () => {
     expect(roundCountsAsLearning(4, 8)).toBe(true);
     expect(roundCountsAsLearning(3, 8)).toBe(false);
     expect(roundCountsAsLearning(0, 0)).toBe(false);
+    expect(roundLearningNeeds(8)).toBe(4);
+    expect(roundLearningNeeds(5)).toBe(3);
+  });
+
+  it('lets tapping at random through far less often once second tries do not count', () => {
+    // three choices, the second try after a hint that rules one out (What Would You Say? at beginner)
+    const binomial = (n: number, k: number, p: number): number => {
+      let c = 1;
+      for (let i = 0; i < k; i++) c = (c * (n - i)) / (i + 1);
+      return c * p ** k * (1 - p) ** (n - k);
+    };
+    const atLeast = (n: number, k: number, p: number): number => Array.from({ length: n - k + 1 }, (_, i) => binomial(n, k + i, p)).reduce((a, b) => a + b, 0);
+    const withSecondTries = atLeast(8, roundLearningNeeds(8), 1 / 3 + (2 / 3) * (1 / 2));
+    const firstTriesOnly = atLeast(8, roundLearningNeeds(8), 1 / 3);
+    expect(withSecondTries).toBeGreaterThan(0.9);
+    expect(firstTriesOnly).toBeLessThan(0.3);
   });
 
   it('offers a difficulty only when its levels hold enough', () => {

@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import { GAME_DIFFICULTIES, SOLO_ROUND_ITEMS } from '../solo.js';
 import { PASSAGE_HIDDEN } from '../content.js';
-import { MEMORY_DECOYS, MEMORY_HIDDEN, MEMORY_ROUND_PASSAGES, memoryAnswerMode, memoryStudyLines, studySeconds } from './rules.js';
+import { MEMORY_DECOYS, MEMORY_HIDDEN, MEMORY_ROUND_PASSAGES, memoryAnswerMode, memoryStudyLines, memoryTextLines, studySeconds } from './rules.js';
 
 describe('the Memory Thief’s rules', () => {
   it('takes two to six words, more as the difficulty rises', () => {
@@ -62,5 +62,16 @@ describe('the passage as it is studied', () => {
       { gap: 0, word: 'گوندەکە' },
       { gap: 1, word: 'چیایە' },
     ]);
+  });
+});
+
+describe('the passage without its text', () => {
+  it('lays out its gaps with nothing in them, for a round come back to after the words vanished', () => {
+    const lines = memoryStudyLines(null, [{ line: 0 }, { gap: 0 }, { text: ' li ber ' }, { gap: 1 }, { line: 1 }, { text: 'Erê.' }]);
+    expect(lines).toEqual([[{ gap: 0, word: '' }, { text: ' li ber ' }, { gap: 1, word: '' }], [{ text: 'Erê.' }]]);
+  });
+
+  it('is studied line by line before anything is known of what will vanish', () => {
+    expect(memoryTextLines('Tu diçî ku?\nBajar.')).toEqual([[{ text: 'Tu diçî ku?' }], [{ text: 'Bajar.' }]]);
   });
 });

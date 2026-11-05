@@ -248,3 +248,33 @@ describe('where it is offered', () => {
     expect(defaultBluffLanguage([], 'en')).toBeNull();
   });
 });
+
+describe('a game that did not count', () => {
+  it('is one called off, or left with one player, never one whose words were played out', () => {
+    expect(R.counted!(R.end(start(), T0))).toBe(false);
+    let s = start(3);
+    s = R.drop(s, 1, T0 + 10);
+    s = R.drop(s, 2, T0 + 20);
+    expect(s.endedBy).toBe('too-few');
+    expect(R.counted!(s)).toBe(false);
+  });
+});
+
+describe('a seat the viewer may not be shown', () => {
+  it('has the fake only it wrote left off the viewer’s vote and out of the reveal', () => {
+    const s = toVote(4);
+    const all = R.viewFor(s, 1).options!.map((o) => o.text);
+    expect(all).toContain('a kind of bread');
+    const hidden = R.viewFor(s, 1, [2]).options!.map((o) => o.text);
+    expect(hidden).not.toContain('a kind of bread');
+    expect(hidden).toContain('fat, plump');
+    let done = s;
+    for (const seat of [1, 2, 3, 4]) {
+      const mine = R.viewFor(done, seat).options!;
+      done = play(done, seat, { kind: 'vote', option: mine[0]!.id });
+    }
+    const reveal = R.viewFor(done, 1, [2]).reveal!;
+    expect(reveal.options.map((o) => o.text)).not.toContain('a kind of bread');
+    expect(R.viewFor(done, 1).reveal!.options.map((o) => o.text)).toContain('a kind of bread');
+  });
+});

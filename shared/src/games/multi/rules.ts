@@ -91,8 +91,27 @@ export interface GameRules<State, Move, Settings, View, Outcome = unknown> {
   /** Every person has gone: end it here, as it stands. */
   end(state: State, now: number): State;
   finished(state: State): boolean;
-  /** What one seat may see — or, for null, someone not playing (a lobby preview, a finished game read later). */
-  viewFor(state: State, seat: number | null): View;
+  /**
+   * Whether a finished game counted: played to an end the game can be judged
+   * by, rather than called off (every person gone, too few left to go on, the
+   * one player the game turned on gone). A game that did not count pays no
+   * placement and is not rated, so a table nobody finished cannot share first
+   * place. Left out, every finished game counts.
+   */
+  counted?(state: State): boolean;
+  /**
+   * What one seat may see — or, for null, someone not playing (a lobby
+   * preview, a finished game read later). `hidden` are seats whose own free
+   * text this viewer may not be shown (a block between them, or a minor and
+   * someone who is not their friend): a game that takes free text leaves it
+   * out of this view, whatever else it shows.
+   */
+  viewFor(state: State, seat: number | null, hidden?: readonly number[]): View;
   /** Places once finished, for every seat that was in the game at the start. */
   places(state: State): readonly Placed[];
+}
+
+/** Whether a finished game counted, by its rules' own word (`counted`), or yes for rules that say nothing. */
+export function gameCounted<State>(rules: Pick<GameRules<State, unknown, unknown, unknown>, 'counted'>, state: State): boolean {
+  return rules.counted ? rules.counted(state) : true;
 }
