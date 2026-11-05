@@ -170,7 +170,9 @@ describe('The Last Letter, the room', () => {
     expect(input).toHaveAttribute('dir', 'rtl');
     expect(input).toHaveAttribute('lang', 'ckb');
     expect(screen.getByRole('list', { name: 'The chain' })).toHaveAttribute('dir', 'rtl');
-    expect(screen.getByText('ئا')).toBeInTheDocument();
+    // in the ring and in the "starts with" line, and as the box's placeholder
+    expect(screen.getAllByText('ئا')).toHaveLength(2);
+    expect(input).toHaveAttribute('placeholder', 'ئا…');
   });
 
   it('lists the places when it ends, Hevalo by name, with each score in words', async () => {

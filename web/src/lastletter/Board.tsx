@@ -123,7 +123,7 @@ export function LastLetterBoardView({
         <TurnRing share={share} low={seconds <= 5 && board.yourTurn} label={t('games.lastLetter.timeLeft', { count: seconds })}>
           {board.required ? (
             <span className="ll-letter" lang={lang} dir={dir}>
-              {board.required}
+              {board.requiredSpellings[0] ?? board.required}
             </span>
           ) : (
             <span className="ll-letter is-any" aria-hidden="true">
@@ -298,9 +298,12 @@ function WordComposer({
     else setError(describeError(res.error, t));
   }
 
-  const placeholder = board.required
-    ? t('games.lastLetter.placeholder', { letter: board.requiredSpellings[0] ?? board.required })
-    : t('games.lastLetter.placeholderAny');
+  // in a right-to-left box a sentence in the reader's language is clipped and reads backwards: the letter alone says it
+  const placeholder = !board.required
+    ? t('games.lastLetter.placeholderAny')
+    : dir === 'rtl'
+      ? `${board.requiredSpellings[0] ?? board.required}…`
+      : t('games.lastLetter.placeholder', { letter: board.requiredSpellings[0] ?? board.required });
   return (
     <form className="ll-compose" onSubmit={send}>
       <label className="sr-only" htmlFor="ll-word">

@@ -38,7 +38,16 @@
 
 .ll-board {
   display: grid;
+  /* a track that never grows to fit the chain: the chain scrolls inside it instead */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4, 16px);
+  min-width: 0;
+}
+.ll-board > * {
+  min-width: 0;
+}
+.mp-room {
+  min-width: 0;
 }
 
 /* the turn: the ring with the letter in it, and whose turn it is */
@@ -259,6 +268,10 @@
 .mp-standin {
   margin: 0;
   color: var(--ink-3, var(--ink));
+}
+/* the results' heading takes the focus for screen readers (it is not a stop for the keyboard): no ring for that */
+.mp-room .match-verdict[tabindex='-1']:focus {
+  outline: none;
 }
 .mp-leave {
   display: flex;
