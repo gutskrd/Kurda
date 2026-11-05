@@ -7,7 +7,8 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { navigation } from './testing/navigation';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
-import { JoinCodeCard, JoinCodeSheet } from './JoinByCode';
+import { JOIN_CODE_LENGTH } from '@kurda/shared';
+import { FLIP_MS, FLIP_STAGGER_MS, JoinCodeCard, JoinCodeSheet, SUCCESS_MS, SUCCESS_REDUCED_MS } from './JoinByCode';
 
 // jsdom has no matchMedia, and react-native-web reads the colour scheme through it
 vi.hoisted(() => {
@@ -44,8 +45,26 @@ beforeEach(() => {
 afterEach(() => {
   stopFeeling();
   cleanup();
+  vi.useRealTimers();
   testAuth.user = { ...testAuth.user, guest: false };
 });
+
+/*
+ * Once a code is accepted the sheet runs on the clock: the boxes turn one
+ * after another, and the lobby opens after the burst. A test of that moves the
+ * clock itself rather than waiting it out, so a busy machine can neither run
+ * past "the first box has turned and the last has not" before it is looked at
+ * nor stretch the wait for the lobby past the test's own time.
+ */
+function onTheClock(): void {
+  vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+}
+/** The server's answer to the code, which arrives as a promise, not on the clock. */
+const answered = () => act(async () => undefined);
+const after = (ms: number) =>
+  act(() => {
+    vi.advanceTimersByTime(ms);
+  });
 
 function sheet(routes: Parameters<typeof fakeClient>[0] = {}) {
   const client = fakeClient(routes);
@@ -60,6 +79,7 @@ const type = (field: HTMLInputElement, value: string) => fireEvent.change(field,
 
 describe('JoinCodeSheet', () => {
   it('types into one labelled field, shows it in six boxes, and sends the code by itself as the sixth character arrives', async () => {
+    onTheClock();
     const { field, joins, onClose } = sheet({ 'POST /play/join': ok({ game: 'wordle-battle', lobbyId: LOBBY }) });
     fireEvent.focus(field);
     type(field, 'kq7');
@@ -70,20 +90,25 @@ describe('JoinCodeSheet', () => {
     expect(joins()).toHaveLength(0);
 
     type(field, 'KQ7m4x');
-    await waitFor(() => expect(joins()[0]?.body).toEqual({ code: 'KQ7M4X' }));
+    expect(joins()[0]?.body).toEqual({ code: 'KQ7M4X' });
     // in: the boxes turn green, the phone says so, and the lobby opens
-    await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: LOBBY }));
+    await answered();
+    after(SUCCESS_MS);
+    expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: LOBBY });
     expect(onClose).toHaveBeenCalled();
     expect(felt).toContain('correct');
     expect(joins()).toHaveLength(1);
   });
 
   it('reads a code pasted with a dash, spaces or in lower case', async () => {
+    onTheClock();
     const { field, joins } = sheet({ 'POST /play/join': ok({ game: 'stories', lobbyId: LOBBY }) });
     type(field, 'abc-234');
     expect(field.value).toBe('ABC234');
-    await waitFor(() => expect(joins()[0]?.body).toEqual({ code: 'ABC234' }));
-    await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: LOBBY }));
+    expect(joins()[0]?.body).toEqual({ code: 'ABC234' });
+    await answered();
+    after(SUCCESS_MS);
+    expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: LOBBY });
   });
 
   it('reads the digits an Arabic or a Soranî keyboard types', async () => {
@@ -140,36 +165,49 @@ describe('JoinCodeSheet', () => {
 
   it('tries the same code again on Join, after a refusal it may get past', async () => {
     let tries = 0;
+    onTheClock();
     const { field, joins } = sheet({
       'POST /play/join': () => (++tries === 1 ? fail({ status: 0, kind: 'network' }) : ok({ game: 'wordle-battle', lobbyId: LOBBY })),
     });
     type(field, 'ZZZ999');
-    await screen.findByTestId('join-message');
+    await answered();
+    expect(screen.getByTestId('join-message')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Join' }));
-    await waitFor(() => expect(joins()).toHaveLength(2));
-    await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: LOBBY }));
+    expect(joins()).toHaveLength(2);
+    await answered();
+    after(SUCCESS_MS);
+    expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: LOBBY });
   });
 
   it('turns the boxes green one after another, with a burst', async () => {
+    onTheClock();
     const { field } = sheet({ 'POST /play/join': ok({ game: 'wordle-battle', lobbyId: LOBBY }) });
     type(field, 'KQ7M4X');
-    await waitFor(() => expect(screen.getByTestId('code-box-0-right')).toBeTruthy());
-    // the first has turned and the last has not yet
+    await answered();
+    // halfway through its flip the first box shows green, and the last has not started
+    after(FLIP_MS / 2);
+    expect(screen.getByTestId('code-box-0-right')).toBeTruthy();
     expect(screen.queryByTestId('code-box-5-right')).toBeNull();
     expect(screen.getByTestId('join-burst')).toBeTruthy();
-    await waitFor(() => expect(screen.getByTestId('code-box-5-right')).toBeTruthy());
+    after((JOIN_CODE_LENGTH - 1) * FLIP_STAGGER_MS);
+    expect(screen.getByTestId('code-box-5-right')).toBeTruthy();
+    expect(navigation.navigate).not.toHaveBeenCalled();
   });
 
   it('under Reduce Motion turns them all green at once, with no burst, and opens the lobby a beat later', async () => {
     patchReactNativeWeb({ reduceMotion: true });
+    onTheClock();
     const { field } = sheet({ 'POST /play/join': ok({ game: 'wordle-battle', lobbyId: LOBBY }) });
     await act(async () => undefined);
     type(field, 'KQ7M4X');
-    await waitFor(() => expect(screen.getByTestId('code-box-0-right')).toBeTruthy());
+    await answered();
+    expect(screen.getByTestId('code-box-0-right')).toBeTruthy();
     expect(screen.getByTestId('code-box-5-right')).toBeTruthy();
     expect(screen.queryByTestId('join-burst')).toBeNull();
+    after(SUCCESS_REDUCED_MS - 1);
     expect(navigation.navigate).not.toHaveBeenCalled();
-    await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: LOBBY }), { timeout: 1000 });
+    after(1);
+    expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: LOBBY });
     patchReactNativeWeb({ reduceMotion: false });
   });
 });

@@ -195,11 +195,11 @@ export function JoinCodeSheet({ onClose }: { onClose: () => void }): React.JSX.E
 type Phase = 'typing' | 'joining' | 'error' | 'success';
 
 /** Each box turns green this long after the one before it, taking this long to flip over. */
-const FLIP_STAGGER_MS = 80;
-const FLIP_MS = 300;
+export const FLIP_STAGGER_MS = 80;
+export const FLIP_MS = 300;
 /** From the code being accepted to the lobby opening: the flips, then the burst. */
-const SUCCESS_MS = 1250;
-const SUCCESS_REDUCED_MS = 450;
+export const SUCCESS_MS = 1250;
+export const SUCCESS_REDUCED_MS = 450;
 /** The burst starts as the last box lands. */
 const BURST_DELAY_MS = (JOIN_CODE_LENGTH - 1) * FLIP_STAGGER_MS + FLIP_MS;
 
