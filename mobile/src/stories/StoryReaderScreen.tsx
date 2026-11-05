@@ -18,7 +18,7 @@ import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useClipPlayer } from '../alphabet/useClipPlayer';
 import { haptic } from '../feedback/haptics';
@@ -851,6 +851,7 @@ function VocabularyRow({
           onPress={() => clips.play(url)}
           accessibilityRole="button"
           accessibilityLabel={t('stories.reader.playWord')}
+          hitSlop={WORD_BUTTON_SLOP}
           style={({ pressed }) => [styles.wordPlay, { backgroundColor: playing ? colors.primary : colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
         >
           <Icon name="speaker" size={18} color={playing ? colors.textOnPrimary : colors.primary} />
@@ -863,6 +864,7 @@ function VocabularyRow({
           // after the word itself, as the play button is: "Save word" needs no name repeated
           accessibilityLabel={saved ? t('stories.reader.saved') : t('stories.reader.saveWord')}
           accessibilityState={{ selected: saved }}
+          hitSlop={WORD_BUTTON_SLOP}
           style={({ pressed }) => [styles.wordPlay, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
         >
           <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={18} color={saved ? colors.gold : colors.primary} />
@@ -967,6 +969,13 @@ function OverviewSkeleton(): React.JSX.Element {
 /** display(28) sets 1.12 */
 const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
 const COVER_HEIGHT = 180;
+/**
+ * A word's play and save buttons are drawn at 40 so the row stays a row; the
+ * touch reaches a fingertip's 44 past the edge, and the gap between the two
+ * is wider than the slop, so neither takes the other's tap.
+ */
+const WORD_BUTTON = 40;
+const WORD_BUTTON_SLOP = hitSlopFor(WORD_BUTTON, WORD_BUTTON);
 
 const styles = StyleSheet.create({
   content: { ...COLUMN, padding: spacing.lg, gap: spacing.lg },
@@ -1004,8 +1013,8 @@ const styles = StyleSheet.create({
   wordMain: { flex: 1, justifyContent: 'center', paddingVertical: spacing.xs, gap: 2 },
   wordTerm: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   wordMeaning: { fontSize: typography.sizes.sm },
-  wordPlay: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  wordSlot: { width: 40, height: 40 },
+  wordPlay: { width: WORD_BUTTON, height: WORD_BUTTON, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  wordSlot: { width: WORD_BUTTON, height: WORD_BUTTON },
   sheetText: { fontSize: typography.sizes.md, lineHeight: 22 },
   glossTerm: { ...display(typography.sizes.xl) },
   glossPos: { fontSize: typography.sizes.sm, fontStyle: 'italic' },

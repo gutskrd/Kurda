@@ -63,6 +63,22 @@ describe('notification settings', () => {
     expect(screen.getByRole('alert').textContent).toContain('Can’t reach Hevalo right now. Check your connection and try again.');
   });
 
+  // "−" and "+" read aloud say nothing: each step is named for what it does
+  it('names each quiet-hours step for what it does, and moves the time by half an hour', async () => {
+    const client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS), 'PUT /me/notification-prefs': (body) => ok({ ...PREFS, ...(body as object) }) });
+    testAuth.client = client;
+    renderWithProviders(<NotificationsScreen onExit={() => undefined} />);
+    const earlier = await screen.findByRole('button', { name: 'Start half an hour earlier' });
+    expect(screen.getByRole('button', { name: 'Start half an hour later' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'End half an hour earlier' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'End half an hour later' })).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(earlier);
+    });
+    expect(client.calls.find((c) => c.method === 'PUT')?.body).toEqual({ quietStartMin: 21 * 60 + 30 });
+    expect(screen.getByText('21:30')).toBeTruthy();
+  });
+
   it('puts quiet hours back too when turning them off did not save', async () => {
     testAuth.client = fakeClient({ 'GET /me/notification-prefs': ok(PREFS), 'PUT /me/notification-prefs': offline });
     renderWithProviders(<NotificationsScreen onExit={() => undefined} />);

@@ -114,11 +114,15 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
               <>
                 <TimeRow
                   label={t('notifications.quietFrom')}
+                  earlier={t('notifications.quietFromEarlier')}
+                  later={t('notifications.quietFromLater')}
                   minute={prefs.quietStartMin!}
                   onStep={(dir) => save({ quietStartMin: stepMinute(prefs.quietStartMin!, dir) })}
                 />
                 <TimeRow
                   label={t('notifications.quietTo')}
+                  earlier={t('notifications.quietToEarlier')}
+                  later={t('notifications.quietToLater')}
                   minute={prefs.quietEndMin!}
                   onStep={(dir) => save({ quietEndMin: stepMinute(prefs.quietEndMin!, dir) })}
                 />
@@ -169,18 +173,35 @@ function SwitchSkeleton(): React.JSX.Element {
   );
 }
 
-function TimeRow({ label, minute, onStep }: { label: string; minute: number; onStep: (dir: 1 | -1) => void }) {
+/**
+ * A time in quiet hours, with a step either side. The steps are named for
+ * what they do ("start half an hour earlier"), since "−" and "+" read aloud
+ * say nothing; `stepMinute` moves by the half hour they name.
+ */
+function TimeRow({ label, earlier, later, minute, onStep }: { label: string; earlier: string; later: string; minute: number; onStep: (dir: 1 | -1) => void }) {
   const { colors } = useTheme();
   return (
     <SettingsRow
       title={label}
       trailing={
         <View style={styles.stepper}>
-          <PressableScale onPress={() => onStep(-1)} style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]} hitSlop={8} accessibilityRole="button">
+          <PressableScale
+            onPress={() => onStep(-1)}
+            style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={earlier}
+          >
             <Text style={[styles.stepText, { color: colors.textPrimary }]}>−</Text>
           </PressableScale>
           <Text style={[styles.time, { color: colors.textPrimary }]}>{formatMinute(minute)}</Text>
-          <PressableScale onPress={() => onStep(1)} style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]} hitSlop={8} accessibilityRole="button">
+          <PressableScale
+            onPress={() => onStep(1)}
+            style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={later}
+          >
             <Text style={[styles.stepText, { color: colors.textPrimary }]}>+</Text>
           </PressableScale>
         </View>
