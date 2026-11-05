@@ -11,6 +11,7 @@ export { badgeSvg, badgeShineSvg, badgeShines, SMALL_BADGE, type BadgeOptions, t
 export { rankEmblemSvg, placementEmblemSvg, PLACEMENT_GAMES, SMALL_EMBLEM, type PlacementEmblemOptions, type RankEmblemOptions } from './ranks.js';
 export { leagueEmblemSvg, SMALL_LEAGUE, type LeagueEmblemOptions } from './leagues.js';
 export { coinSvg, gemSvg, CURRENCY_CANVAS, type CurrencyOptions } from './currency.js';
+export { wordSetSvg, type WordSetArtOptions } from './word-sets.js';
 export {
   CHEST_BOX,
   CHEST_FOOT,

@@ -25,6 +25,8 @@ import {
   type BadgeTier,
 } from './index.js';
 import { coinSvg, gemSvg } from './currency.js';
+import { wordSetSvg } from './word-sets.js';
+import { WORD_SET_IDS } from '../word-sets/words.js';
 import {
   CHEST_BOX,
   CHEST_FOOT,
@@ -843,6 +845,32 @@ describe('the currencies', () => {
     expect(paths(coinSvg({ size: 26 }))).toBeLessThan(paths(coinSvg({ size: 64 })));
     expect(paths(gemSvg({ size: 15 }))).toBeLessThan(paths(gemSvg({ size: 26 })));
     expect(paths(gemSvg({ size: 26 }))).toBeLessThan(paths(gemSvg({ size: 64 })));
+  });
+});
+
+describe('the word sets’ pictures', () => {
+  it('draws a valid, self-contained picture for every set, at the cards’ size and larger', () => {
+    for (const set of WORD_SET_IDS) {
+      for (const size of [44, 120]) checkSvg(wordSetSvg({ set, size }), size);
+    }
+  });
+
+  it('gives every set its own picture, the same every time, with ids that never meet another set’s', () => {
+    const svgs = WORD_SET_IDS.map((set) => wordSetSvg({ set, size: 44 }));
+    expect(new Set(svgs).size).toBe(WORD_SET_IDS.length);
+    expect(wordSetSvg({ set: 'months', size: 44 })).toBe(svgs[WORD_SET_IDS.indexOf('months')]);
+    const seen = new Set<string>();
+    for (const svg of svgs) {
+      for (const [, id] of svg.matchAll(/ id="([^"]+)"/g)) {
+        expect(seen.has(id!), id).toBe(false);
+        seen.add(id!);
+      }
+    }
+  });
+
+  it('counts the numbers on the abacus instead of writing them, one bead, then two, then three', () => {
+    // each bead is three ellipses: its edge, its face and its spot of light
+    expect((wordSetSvg({ set: 'numbers', size: 44 }).match(/<ellipse/g) ?? []).length).toBe(6 * 3);
   });
 });
 
