@@ -9,7 +9,7 @@ import {
   kingdomLevels,
   levelFor,
   newLevels,
-  progressToNext,
+  kingdomProgress,
   standingLevel,
   thresholdOf,
   type KingdomCounts,
@@ -75,9 +75,9 @@ describe('levels', () => {
   it('say how far it is to the next one, and that a finished building has none', () => {
     expect(buildingView('orchard', 12, 0)).toEqual({ id: 'orchard', level: 2, count: 12, from: 10, next: 30, remaining: 18, place: 'lessons' });
     expect(buildingView('orchard', 400, 5)).toMatchObject({ level: 5, next: null, remaining: 0 });
-    expect(progressToNext({ count: 20, from: 10, next: 30 })).toBe(0.5);
-    expect(progressToNext({ count: 5, from: 10, next: 30 })).toBe(0);
-    expect(progressToNext({ count: 400, from: 180, next: null })).toBe(1);
+    expect(kingdomProgress({ count: 20, from: 10, next: 30 })).toBe(0.5);
+    expect(kingdomProgress({ count: 5, from: 10, next: 30 })).toBe(0);
+    expect(kingdomProgress({ count: 400, from: 180, next: null })).toBe(1);
   });
 
   it('send each building to the part of Learn that grows it', () => {

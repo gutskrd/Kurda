@@ -6,8 +6,9 @@ import type pg from 'pg';
  * their streaks, their badges and showcase, the old achievements, the rated
  * games the ranked badges were counted from, the league seasons archived
  * before Game Ranks, the stories they kept on their shelf and how far they
- * read each one, the dictionary words they saved, and their rounds of the
- * learning games with how far up each ladder they climbed.
+ * read each one, the dictionary words they saved, their rounds of the
+ * learning games with how far up each ladder they climbed, and the levels
+ * their Kurdish Kingdom village reached.
  *
  * A story or a word is named by what they saw (its slug and title, its
  * headword and dialect) rather than by the row ids that join them, which
@@ -75,5 +76,10 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
          FROM game_sessions WHERE user_id = $1 ORDER BY created_at`,
     ),
     learningGameProgress: await q(`SELECT game, dialect, step, updated_at FROM game_progress WHERE user_id = $1 ORDER BY game, dialect`),
+    // the village their learning built: when it was founded, and each level reached, when it was shown and the Zêr it paid
+    kingdomVillage: (await q(`SELECT founded_at, intro_seen_at FROM kingdom_villages WHERE user_id = $1`))[0] ?? null,
+    kingdomLevels: await q(
+      `SELECT building, level, reached_at, seen_at, zer FROM kingdom_levels WHERE user_id = $1 ORDER BY reached_at, building, level`,
+    ),
   };
 }

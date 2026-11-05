@@ -62,6 +62,8 @@ import { DailyRewardService } from './rewards/service.js';
 import { registerDailyRewardRoutes } from './rewards/routes.js';
 import { DailyQuestService } from './quests/service.js';
 import { registerDailyQuestRoutes } from './quests/routes.js';
+import { registerKingdomRoutes } from './kingdom/routes.js';
+import { KingdomService } from './kingdom/service.js';
 import { GemService } from './gems/service.js';
 import { registerGemRoutes } from './gems/routes.js';
 import { createProgression } from './badges/progression.js';
@@ -637,6 +639,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     // today's three quests, moved by finished lessons and practice, each paying a chest of Zêr
     registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
+    // Kurdish Kingdom: the village that grows only from real learning, each new level recorded and paid for once
+    registerKingdomRoutes(app, new KingdomService(app.db, new WalletService(app.db), { cache: app.cache, log: app.log }));
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService, badges);
     // the learning games (Build a Kurdish Sentence and the games after it): approved content only,

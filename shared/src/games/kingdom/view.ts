@@ -114,7 +114,7 @@ export function kingdomLevels(buildings: readonly Pick<KingdomBuildingView, 'id'
 }
 
 /** Share of the way from this level to the next, 0–1 (1 once finished), for a progress bar. */
-export function progressToNext(b: Pick<KingdomBuildingView, 'count' | 'from' | 'next'>): number {
+export function kingdomProgress(b: Pick<KingdomBuildingView, 'count' | 'from' | 'next'>): number {
   if (b.next === null) return 1;
   const span = b.next - b.from;
   return span <= 0 ? 1 : Math.max(0, Math.min(1, (b.count - b.from) / span));
