@@ -226,30 +226,11 @@ export const de: Catalogue = {
   'pictures.next': 'Nächstes Bild',
   'post.edit': 'Bearbeiten',
   'post.source': 'Quelle: {source}',
-  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  // ---- refreshed shop items: the one-time notice (contract-3 §S); the items are kept ----
   'refresh.title': 'Deine Hintergründe und Symbole haben neue Bilder',
-  'refresh.body':
-    'Wir haben einige Hintergründe und Symbole erneuert — deine haben neue Bilder bekommen. Wenn du lieber dein Zêr zurückhättest, kannst du sie im Shop zurückgeben.',
   'refresh.bodyKeep':
     'Wir haben einige Hintergründe und Symbole erneuert — deine haben neue Bilder bekommen. Sie gehören weiter dir.',
   'refresh.gotIt': 'Verstanden',
-  'refresh.goToShop': 'Zum Shop',
-  'refresh.sectionTitle': 'Artikel mit neuen Bildern',
-  'refresh.sectionLead': 'Behalte sie, oder gib gekaufte für den bezahlten Preis zurück.',
-  'refresh.returnFor': 'Für {amount} zurückgeben',
-  'refresh.returnItem': '{name} für {amount} zurückgeben',
-  'refresh.confirmTitle': '{name} zurückgeben?',
-  'refresh.confirmAmount': 'Du bekommst {amount} zurück.',
-  'refresh.confirmBody':
-    'Der Artikel verlässt deine Sammlung und wird von deinem Profil genommen, falls du ihn nutzt. Danach kannst du ihn nicht zurückbekommen.',
-  'refresh.keep': 'Behalten',
-  'refresh.confirm': 'Zurückgeben',
-  'refresh.returning': 'Wird zurückgegeben …',
-  'refresh.returned': '{name} ist zurückgegeben. {amount} ist wieder in deiner Geldbörse.',
-  'refresh.error.notReturnable': 'Dieser Artikel kann nicht zurückgegeben werden.',
-  'refresh.error.nothingToRefund':
-    'Du hast hierfür nichts bezahlt, also gibt es nichts zurückzugeben. Er bleibt deiner.',
-  'refresh.error.conflict': 'Die Rückgabe hat nicht geklappt, und nichts hat sich geändert. Versuch es noch einmal.',
   // ---- copyright: /copyright, the provider details, the Terms and About (contract-3 §C) ----
   'meta.copyright.title': 'Urheberrecht · Hevalo',
   'meta.copyright.description':
@@ -1806,6 +1787,9 @@ export const de: Catalogue = {
   'shop.amountMore': 'noch {amount}',
   'shop.sendItem': '{name} senden',
   'shop.giftPaidByYou': '{price} {currency}, von dir bezahlt. Die Person bekommt den Gegenstand und eine Nachricht, dass er von dir ist.',
+  'shop.confirmTitle': '{name} kaufen?',
+  'shop.finalNote': 'Jeder Kauf ist endgültig: Was dir gehört, bleibt deins und kann nicht zurückgegeben werden. Lass dir ruhig Zeit, wenn du unsicher bist.',
+  'shop.giftFinal': 'Auch Geschenke sind endgültig: Einmal verschickt, gehört es der anderen Person.',
   'items.kinds': 'Arten von Gegenständen',
   'items.kind.all': 'Alle',
   'items.kind.background': 'Hintergründe',
@@ -2536,6 +2520,9 @@ export const de: Catalogue = {
   'terms.moderation.body': 'Wir können alles entfernen, was gegen diese Regeln verstößt, und Konten, die es tun, verwarnen, stummschalten oder sperren.',
   'terms.currency.title': 'Zêr und Edelsteine',
   'terms.currency.body': 'Zêr und Edelsteine lassen sich nur innerhalb von Hevalo verwenden und nicht in Geld umtauschen.',
+  'terms.final.title': 'Käufe sind endgültig',
+  'terms.final.body':
+    'Was du im Shop mit Zêr oder Edelsteinen bekommst – für dich oder als Geschenk –, ist endgültig: Es kann nicht zurückgegeben oder wieder in Zêr oder Edelsteine umgetauscht werden.',
   'terms.changes.title': 'Änderungen',
   'terms.changes.body': 'Hevalo wächst noch, und Funktionen kommen und gehen. Wenn sich diese Bedingungen in einem wichtigen Punkt ändern, bitten wir dich erneut um deine Zustimmung.',
   'terms.leaving.title': 'Gehen',

@@ -64,11 +64,32 @@ describe('Shop', () => {
     const sunset = (await screen.findByText('Sunset')).closest('figure')!;
     expect(within(sunset).getByText(/500 Zêr/)).toBeInTheDocument();
     await userEvent.click(within(sunset).getByRole('button', { name: 'Buy' }));
+    // it asks first, and says that the purchase is final
+    const confirm = await screen.findByRole('dialog', { name: 'Buy Sunset?' });
+    expect(calls.some((c) => c.url.includes('/shop/purchase'))).toBe(false);
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Buy' }));
     expect(await screen.findByText(/Sunset is yours/)).toBeInTheDocument();
     const buy = calls.find((c) => c.url.includes('/shop/purchase'));
     expect(buy?.body).toMatchObject({ sku: 'bg-1', expectedPrice: 500 });
     // after buying it flips to Owned
     expect(within(sunset).getByText('Owned')).toBeInTheDocument();
+  });
+
+  it('says kindly that a purchase is final, and buys nothing when you step back', async () => {
+    const calls: Array<{ url: string; body: unknown }> = [];
+    vi.stubGlobal('fetch', makeFetch(calls));
+    renderApp(<Shop />, ['/app/shop']);
+    const sunset = (await screen.findByText('Sunset')).closest('figure')!;
+    await userEvent.click(within(sunset).getByRole('button', { name: 'Buy' }));
+
+    const confirm = await screen.findByRole('dialog', { name: 'Buy Sunset?' });
+    expect(within(confirm).getByText('500 Zêr')).toBeInTheDocument();
+    expect(within(confirm).getByText(/Every purchase is final: once it’s yours, it stays yours and can’t be returned/)).toBeInTheDocument();
+    await userEvent.click(within(confirm).getByRole('button', { name: 'Cancel' }));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(calls.some((c) => c.url.includes('/shop/purchase'))).toBe(false);
+    expect(within(sunset).queryByText('Owned')).toBeNull();
   });
 
   it('still shows the price of something you cannot afford, and the shortfall', async () => {
@@ -385,6 +406,7 @@ describe('Shop', () => {
     renderApp(<Shop />, ['/app/shop?kind=tag']);
     const tag = (await screen.findByText('Kurdish Tag')).closest('figure')!;
     await userEvent.click(within(tag).getByRole('button', { name: 'Buy' }));
+    await userEvent.click(within(await screen.findByRole('dialog', { name: 'Buy Kurdish Tag?' })).getByRole('button', { name: 'Buy' }));
     expect(await screen.findByText('Kurdish Tag is yours. You’ll find it under Tags & badges in Edit profile.')).toBeInTheDocument();
     expect(calls.find((c) => c.url.includes('/shop/purchase'))?.body).toMatchObject({ sku: 'tag_kurdish', expectedPrice: 500 });
   });
@@ -413,6 +435,17 @@ describe('Shop', () => {
     expect(within(plain).getByText('Free')).toBeInTheDocument();
     expect(within(plain).queryByRole('button', { name: 'Gift Plain to a friend' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Gift Sunset to a friend' })).toBeInTheDocument();
+    // nothing is spent on it, so it is simply taken: no confirmation to get through
+    await userEvent.click(within(plain).getByRole('button', { name: 'Get it free' }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('has no Return control anywhere: what is bought stays bought', async () => {
+    vi.stubGlobal('fetch', makeFetch([], ['bg-old']));
+    renderApp(<Shop />, ['/app/shop']);
+    await screen.findByText('Sunset');
+    expect(screen.queryByRole('button', { name: /return/i })).toBeNull();
+    expect(screen.queryByText(/return/i)).toBeNull();
   });
 
   it('says so when nothing matches, rather than showing empty shelves — and offers the way back', async () => {

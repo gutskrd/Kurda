@@ -232,28 +232,10 @@ export const ku: Catalogue = {
   'pictures.next': 'Wêneyê din',
   'post.edit': 'Biguherîne',
   'post.source': 'Çavkanî: {source}',
-  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  // ---- refreshed shop items: the one-time notice (contract-3 §S); the items are kept ----
   'refresh.title': 'Paşxane û îkonên te wêneyên nû girtin',
-  'refresh.body':
-    'Me hin paşxane û îkon nû kirin — yên te jî wêneyên nû girtin. Heke tu Zêra xwe paşde dixwazî, tu dikarî wan di Firoşgehê de vegerînî.',
   'refresh.bodyKeep': 'Me hin paşxane û îkon nû kirin — yên te jî wêneyên nû girtin. Ew hîn yên te ne.',
   'refresh.gotIt': 'Baş e',
-  'refresh.goToShop': 'Here Firoşgehê',
-  'refresh.sectionTitle': 'Tiştên bi wêneyên nû',
-  'refresh.sectionLead': 'Wan bihêle, an yên ku te kirîne bi bihayê ku te daye vegerîne.',
-  'refresh.returnFor': 'Vegerîne ji bo {amount}',
-  'refresh.returnItem': '{name} vegerîne ji bo {amount}',
-  'refresh.confirmTitle': '{name} vegerînî?',
-  'refresh.confirmAmount': '{amount} ji te re vedigere.',
-  'refresh.confirmBody':
-    'Ew ji tiştên te derdikeve, û heke tu bikar tînî ji profîla te tê rakirin. Paşê tu nikarî wê dîsa bistînî.',
-  'refresh.keep': 'Bihêle',
-  'refresh.confirm': 'Vegerîne',
-  'refresh.returning': 'Tê vegerandin…',
-  'refresh.returned': '{name} hate vegerandin. {amount} vegeriya berîka te.',
-  'refresh.error.notReturnable': 'Ev tişt nayê vegerandin.',
-  'refresh.error.nothingToRefund': 'Te pere neda vê yekê, ji ber vê tiştek nîne ku vegere. Ew ya te ye.',
-  'refresh.error.conflict': 'Vegerandin nebû, û tiştek neguherî. Dîsa biceribîne.',
   // ---- copyright: /copyright, the provider details, the Terms and About (contract-3 §C) ----
   'meta.copyright.title': 'Mafê nivîskariyê · Hevalo',
   'meta.copyright.description':
@@ -1807,6 +1789,9 @@ export const ku: Catalogue = {
   'shop.amountMore': '{amount} din',
   'shop.sendItem': '{name} bişîne',
   'shop.giftPaidByYou': '{price} {currency}, ji aliyê te ve tê dayîn. Ew tiştê distîne, û agahdariyekê ku dibêje ji te hatiye.',
+  'shop.confirmTitle': '{name} bikirî?',
+  'shop.finalNote': 'Her kirîn dawî ye: gava bû ya te, ya te dimîne û nayê vegerandin. Heke tu ne bawer î, wexta xwe bigire.',
+  'shop.giftFinal': 'Diyarî jî dawî ne: gava hat şandin, êdî ya wan e.',
   'items.kinds': 'Cureyên tiştan',
   'items.kind.all': 'Hemû',
   'items.kind.background': 'Paşxane',
@@ -2540,6 +2525,8 @@ export const ku: Catalogue = {
   'terms.moderation.body': 'Em dikarin her tiştê ku van rêzikan dişikîne rakin, û hesabên ku wisa dikin hişyar bikin, bêdeng bikin an rawestînin.',
   'terms.currency.title': 'Zêr û gewher',
   'terms.currency.body': 'Zêr û gewher tenê di nav Hevalo de tên bikaranîn û bi pere nayên guhertin.',
+  'terms.final.title': 'Kirîn dawî ne',
+  'terms.final.body': 'Tiştên ku tu bi Zêr an gewheran ji firoşgehê distînî, ji bo xwe an wek diyarî, dawî ne: nayên vegerandin û dîsa nabin Zêr an gewher.',
   'terms.changes.title': 'Guhertin',
   'terms.changes.body': 'Hevalo hê mezin dibe, û taybetmendî dê werin û biçin. Heke ev merc di xaleke girîng de biguherin, em ê dîsa razîbûna te bixwazin.',
   'terms.leaving.title': 'Derketin',

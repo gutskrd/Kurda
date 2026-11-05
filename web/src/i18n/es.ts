@@ -226,28 +226,10 @@ export const es: Catalogue = {
   'pictures.next': 'Imagen siguiente',
   'post.edit': 'Editar',
   'post.source': 'Fuente: {source}',
-  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  // ---- refreshed shop items: the one-time notice (contract-3 §S); the items are kept ----
   'refresh.title': 'Tus fondos e iconos tienen imágenes nuevas',
-  'refresh.body':
-    'Hemos renovado algunos fondos e iconos — los tuyos tienen imágenes nuevas. Si prefieres recuperar tus Zêr, puedes devolverlos en la Tienda.',
   'refresh.bodyKeep': 'Hemos renovado algunos fondos e iconos — los tuyos tienen imágenes nuevas. Siguen siendo tuyos.',
   'refresh.gotIt': 'Entendido',
-  'refresh.goToShop': 'Ir a la Tienda',
-  'refresh.sectionTitle': 'Artículos con imágenes nuevas',
-  'refresh.sectionLead': 'Quédatelos, o devuelve los que compraste por lo que pagaste.',
-  'refresh.returnFor': 'Devolver por {amount}',
-  'refresh.returnItem': 'Devolver {name} por {amount}',
-  'refresh.confirmTitle': '¿Devolver {name}?',
-  'refresh.confirmAmount': 'Recuperas {amount}.',
-  'refresh.confirmBody':
-    'Sale de tus artículos y se quita de tu perfil si lo estás usando. No podrás recuperarlo después.',
-  'refresh.keep': 'Quedármelo',
-  'refresh.confirm': 'Devolverlo',
-  'refresh.returning': 'Devolviendo…',
-  'refresh.returned': '{name} se ha devuelto. {amount} ha vuelto a tu monedero.',
-  'refresh.error.notReturnable': 'Este artículo no se puede devolver.',
-  'refresh.error.nothingToRefund': 'No pagaste por este, así que no hay nada que devolver. Sigue siendo tuyo.',
-  'refresh.error.conflict': 'La devolución no se completó y no cambió nada. Inténtalo de nuevo.',
   // ---- copyright: /copyright, the provider details, the Terms and About (contract-3 §C) ----
   'meta.copyright.title': 'Derechos de autor · Hevalo',
   'meta.copyright.description':
@@ -1803,6 +1785,9 @@ export const es: Catalogue = {
   'shop.amountMore': '{amount} más',
   'shop.sendItem': 'Enviar {name}',
   'shop.giftPaidByYou': '{price} {currency}, los pagas tú. Recibirá el artículo y un aviso de que viene de tu parte.',
+  'shop.confirmTitle': '¿Comprar {name}?',
+  'shop.finalNote': 'Todas las compras son definitivas: lo que es tuyo sigue siendo tuyo y no se puede devolver. Tómate tu tiempo si no lo tienes claro.',
+  'shop.giftFinal': 'Los regalos también son definitivos: una vez enviado, es suyo para siempre.',
   'items.kinds': 'Tipos de artículo',
   'items.kind.all': 'Todo',
   'items.kind.background': 'Fondos',
@@ -2533,6 +2518,9 @@ export const es: Catalogue = {
   'terms.moderation.body': 'Podemos retirar cualquier cosa que incumpla estas reglas y advertir, silenciar o suspender las cuentas que lo hagan.',
   'terms.currency.title': 'Zêr y gemas',
   'terms.currency.body': 'El Zêr y las gemas solo se pueden usar dentro de Hevalo y no se pueden cambiar por dinero.',
+  'terms.final.title': 'Las compras son definitivas',
+  'terms.final.body':
+    'Lo que consigues en la tienda con Zêr o gemas, para ti o como regalo, es definitivo: no se puede devolver ni volver a cambiar por Zêr o gemas.',
   'terms.changes.title': 'Cambios',
   'terms.changes.body': 'Hevalo sigue creciendo, y habrá funciones que lleguen y otras que se vayan. Si estos términos cambian en algo importante, te pediremos que los aceptes de nuevo.',
   'terms.leaving.title': 'Irte',

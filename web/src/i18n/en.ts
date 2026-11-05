@@ -268,28 +268,10 @@ export const en = {
   'pictures.next': 'Next picture',
   'post.edit': 'Edit',
   'post.source': 'Source: {source}',
-  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  // ---- refreshed shop items: the one-time notice (contract-3 §S); the items are kept ----
   'refresh.title': 'Your backgrounds and icons have new art',
-  'refresh.body':
-    'We refreshed some backgrounds and icons — yours have new art. If you’d rather have your Zêr back, you can return them in the Shop.',
   'refresh.bodyKeep': 'We refreshed some backgrounds and icons — yours have new art. They’re still yours.',
   'refresh.gotIt': 'Got it',
-  'refresh.goToShop': 'Go to the Shop',
-  'refresh.sectionTitle': 'Items with new art',
-  'refresh.sectionLead': 'Keep them, or return any you bought for what you paid.',
-  'refresh.returnFor': 'Return for {amount}',
-  'refresh.returnItem': 'Return {name} for {amount}',
-  'refresh.confirmTitle': 'Return {name}?',
-  'refresh.confirmAmount': 'You get {amount} back.',
-  'refresh.confirmBody':
-    'It leaves your items and comes off your profile if you’re using it. You can’t get it back afterwards.',
-  'refresh.keep': 'Keep it',
-  'refresh.confirm': 'Return it',
-  'refresh.returning': 'Returning…',
-  'refresh.returned': '{name} is returned. {amount} is back in your wallet.',
-  'refresh.error.notReturnable': 'This item can’t be returned.',
-  'refresh.error.nothingToRefund': 'You didn’t pay for this one, so there’s nothing to give back. It’s yours to keep.',
-  'refresh.error.conflict': 'The return didn’t go through, and nothing changed. Try again.',
   // ---- copyright: /copyright, the provider details, the Terms and About (contract-3 §C) ----
   'meta.copyright.title': 'Copyright · Hevalo',
   'meta.copyright.description':
@@ -1894,6 +1876,9 @@ export const en = {
   'shop.amountMore': '{amount} more',
   'shop.sendItem': 'Send {name}',
   'shop.giftPaidByYou': '{price} {currency}, paid by you. They get the item, and a notification saying it came from you.',
+  'shop.confirmTitle': 'Buy {name}?',
+  'shop.finalNote': 'Every purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
+  'shop.giftFinal': 'Gifts are final too: once it’s sent, it’s theirs to keep.',
 
   // ---- items by kind: the Shop, the inventory and the gift picker (shop/ItemBrowser) ----
   'items.kinds': 'Kinds of item',
@@ -2638,6 +2623,8 @@ export const en = {
   'terms.moderation.body': 'We can remove anything that breaks these rules, and warn, mute or suspend the accounts that do.',
   'terms.currency.title': 'Zêr and gems',
   'terms.currency.body': 'Zêr and gems can only be used inside Hevalo, and they can’t be exchanged for money.',
+  'terms.final.title': 'Purchases are final',
+  'terms.final.body': 'What you get in the shop with Zêr or gems, for yourself or as a gift, is final: it can’t be returned or turned back into Zêr or gems.',
   'terms.changes.title': 'Changes',
   'terms.changes.body': 'Hevalo is still growing, and features will come and go. If these terms change in a way that matters, we will ask you to agree to them again.',
   'terms.leaving.title': 'Leaving',

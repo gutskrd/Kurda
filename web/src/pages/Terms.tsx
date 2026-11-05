@@ -76,6 +76,8 @@ export function Terms(): React.JSX.Element {
     },
     { id: 'repeat-infringers', title: 'terms.repeat.title', body: 'terms.repeat.body' },
     { title: 'terms.currency.title', body: 'terms.currency.body' },
+    // what is bought stays bought: the shop and both apps say the same when an item is bought
+    { id: 'purchases-final', title: 'terms.final.title', body: 'terms.final.body' },
     { id: 'shop-items', title: 'terms.shopArt.title', body: 'terms.shopArt.body' },
     {
       id: 'contact',

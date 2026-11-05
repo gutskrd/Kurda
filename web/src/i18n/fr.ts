@@ -226,29 +226,11 @@ export const fr: Catalogue = {
   'pictures.next': 'Image suivante',
   'post.edit': 'Modifier',
   'post.source': 'Source : {source}',
-  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  // ---- refreshed shop items: the one-time notice (contract-3 §S); the items are kept ----
   'refresh.title': 'Tes arrière-plans et icônes ont de nouvelles images',
-  'refresh.body':
-    'Nous avons renouvelé certains arrière-plans et icônes — les tiens ont de nouvelles images. Si tu préfères récupérer tes Zêr, tu peux les rendre dans la Boutique.',
   'refresh.bodyKeep':
     'Nous avons renouvelé certains arrière-plans et icônes — les tiens ont de nouvelles images. Ils sont toujours à toi.',
   'refresh.gotIt': 'Compris',
-  'refresh.goToShop': 'Aller à la Boutique',
-  'refresh.sectionTitle': 'Articles avec de nouvelles images',
-  'refresh.sectionLead': 'Garde-les, ou rends ceux que tu as achetés pour le prix payé.',
-  'refresh.returnFor': 'Rendre pour {amount}',
-  'refresh.returnItem': 'Rendre {name} pour {amount}',
-  'refresh.confirmTitle': 'Rendre {name} ?',
-  'refresh.confirmAmount': 'Tu récupères {amount}.',
-  'refresh.confirmBody':
-    'Il quitte tes articles et disparaît de ton profil si tu l’utilises. Tu ne pourras pas le récupérer ensuite.',
-  'refresh.keep': 'Le garder',
-  'refresh.confirm': 'Le rendre',
-  'refresh.returning': 'Retour en cours…',
-  'refresh.returned': '{name} est rendu. {amount} est de retour dans ton porte-monnaie.',
-  'refresh.error.notReturnable': 'Cet article ne peut pas être rendu.',
-  'refresh.error.nothingToRefund': 'Tu n’as rien payé pour celui-ci, il n’y a donc rien à rendre. Il reste à toi.',
-  'refresh.error.conflict': 'Le retour n’a pas abouti et rien n’a changé. Réessaie.',
   // ---- copyright: /copyright, the provider details, the Terms and About (contract-3 §C) ----
   'meta.copyright.title': 'Droit d’auteur · Hevalo',
   'meta.copyright.description':
@@ -1804,6 +1786,9 @@ export const fr: Catalogue = {
   'shop.amountMore': '{amount} de plus',
   'shop.sendItem': 'Envoyer {name}',
   'shop.giftPaidByYou': '{price} {currency}, à ta charge. La personne reçoit l’objet et une notification disant qu’il vient de toi.',
+  'shop.confirmTitle': 'Acheter {name} ?',
+  'shop.finalNote': 'Chaque achat est définitif : ce qui est à toi le reste, et ne peut pas être rendu. Prends ton temps si tu hésites.',
+  'shop.giftFinal': 'Les cadeaux sont définitifs eux aussi : une fois envoyé, il est à l’autre personne.',
   'items.kinds': 'Types d’objet',
   'items.kind.all': 'Tout',
   'items.kind.background': 'Arrière-plans',
@@ -2534,6 +2519,9 @@ export const fr: Catalogue = {
   'terms.moderation.body': 'Nous pouvons retirer tout ce qui enfreint ces règles, et avertir, mettre en sourdine ou suspendre les comptes concernés.',
   'terms.currency.title': 'Zêr et gemmes',
   'terms.currency.body': 'Le Zêr et les gemmes ne s’utilisent que dans Hevalo et ne peuvent pas être échangés contre de l’argent.',
+  'terms.final.title': 'Les achats sont définitifs',
+  'terms.final.body':
+    'Ce que tu obtiens dans la boutique avec des Zêr ou des gemmes, pour toi ou en cadeau, est définitif : impossible de le rendre ou de le reconvertir en Zêr ou en gemmes.',
   'terms.changes.title': 'Modifications',
   'terms.changes.body': 'Hevalo grandit encore, et des fonctionnalités arriveront et partiront. Si ces conditions changent sur un point important, nous vous demanderons de les accepter à nouveau.',
   'terms.leaving.title': 'Partir',

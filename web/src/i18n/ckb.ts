@@ -243,28 +243,10 @@ export const ckb: Catalogue = {
   'pictures.next': 'وێنەی دواتر',
   'post.edit': 'دەستکاری',
   'post.source': 'سەرچاوە: {source}',
-  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  // ---- refreshed shop items: the one-time notice (contract-3 §S); the items are kept ----
   'refresh.title': 'پاشبنەما و ئایکۆنەکانت وێنەی نوێیان هەیە',
-  'refresh.body':
-    'هەندێک پاشبنەما و ئایکۆنمان نوێ کردەوە — ئەوانەی تۆش وێنەی نوێیان هەیە. ئەگەر دەتەوێت Zêr بۆت بگەڕێتەوە، دەتوانیت لە فرۆشگا بیانگەڕێنیتەوە.',
   'refresh.bodyKeep': 'هەندێک پاشبنەما و ئایکۆنمان نوێ کردەوە — ئەوانەی تۆش وێنەی نوێیان هەیە. هێشتا هی خۆتن.',
   'refresh.gotIt': 'تێگەیشتم',
-  'refresh.goToShop': 'بڕۆ بۆ فرۆشگا',
-  'refresh.sectionTitle': 'شتەکان بە وێنەی نوێ',
-  'refresh.sectionLead': 'بیانهێڵەوە، یان ئەوانەی کڕیوتن بە هەمان نرخ بیانگەڕێنەوە.',
-  'refresh.returnFor': 'گەڕاندنەوە بە {amount}',
-  'refresh.returnItem': '{name} بگەڕێنەوە بە {amount}',
-  'refresh.confirmTitle': '{name} بگەڕێنیتەوە؟',
-  'refresh.confirmAmount': '{amount} وەردەگریتەوە.',
-  'refresh.confirmBody':
-    'لە شتەکانت دەردەچێت، و ئەگەر بەکاری دەهێنیت لە پرۆفایلەکەت لادەبرێت. دواتر ناتوانیت بیگەڕێنیتەوە.',
-  'refresh.keep': 'بیهێڵەوە',
-  'refresh.confirm': 'بیگەڕێنەوە',
-  'refresh.returning': 'دەگەڕێنرێتەوە…',
-  'refresh.returned': '{name} گەڕێنرایەوە. {amount} گەڕایەوە بۆ جزدانەکەت.',
-  'refresh.error.notReturnable': 'ئەم شتە ناگەڕێنرێتەوە.',
-  'refresh.error.nothingToRefund': 'پارەت بۆ ئەمە نەداوە، بۆیە هیچ شتێک نییە بگەڕێتەوە. هی خۆتە.',
-  'refresh.error.conflict': 'گەڕاندنەوەکە سەری نەگرت، و هیچ نەگۆڕا. دووبارە هەوڵ بدەوە.',
   // ---- copyright: /copyright, the provider details, the Terms and About (contract-3 §C) ----
   'meta.copyright.title': 'مافی بڵاوکردنەوە · Hevalo',
   'meta.copyright.description':
@@ -1811,6 +1793,9 @@ export const ckb: Catalogue = {
   'shop.amountMore': '{amount} زیاتر',
   'shop.sendItem': '{name} بنێرە',
   'shop.giftPaidByYou': '{price} {currency}، تۆ دەیدەیت. ئەو شتەکە وەردەگرێت، لەگەڵ ئاگادارییەک کە دەڵێت لە تۆوە هاتووە.',
+  'shop.confirmTitle': '{name} دەکڕیت؟',
+  'shop.finalNote': 'هەموو کڕینێک کۆتاییە: کە بوو بە هی تۆ، هی تۆ دەمێنێتەوە و ناگەڕێنرێتەوە. ئەگەر دڵنیا نیت، کاتی خۆت بگرە.',
+  'shop.giftFinal': 'دیارییەکانیش کۆتاین: کە نێردرا، ئیتر هی ئەوانە.',
   'items.kinds': 'جۆرەکانی شتەکان',
   'items.kind.all': 'هەموو',
   'items.kind.background': 'پاشبنەماکان',
@@ -2541,6 +2526,8 @@ export const ckb: Catalogue = {
   'terms.moderation.body': 'دەتوانین هەر شتێک کە ئەم یاسایانە دەشکێنێت لاببەین، و ئەو هەژمارانەی وا دەکەن ئاگادار بکەینەوە، بێدەنگیان بکەین یان ڕایانبگرین.',
   'terms.currency.title': 'Zêr و گەوهەر',
   'terms.currency.body': 'Zêr و گەوهەر تەنها لەناو Hevalo دا بەکار دەهێنرێن و ناگۆڕدرێنەوە بە پارە.',
+  'terms.final.title': 'کڕینەکان کۆتاین',
+  'terms.final.body': 'ئەوەی بە Zêr یان گەوهەر لە فرۆشگا وەریدەگریت، بۆ خۆت یان وەک دیاری، کۆتاییە: ناگەڕێنرێتەوە و دووبارە ناکرێتەوە بە Zêr یان گەوهەر.',
   'terms.changes.title': 'گۆڕانکاری',
   'terms.changes.body': 'Hevalo هێشتا گەشە دەکات، و تایبەتمەندی دێن و دەڕۆن. ئەگەر ئەم مەرجانە لە خاڵێکی گرنگدا بگۆڕێن، دیسان داوای ڕەزامەندیت لێ دەکەینەوە.',
   'terms.leaving.title': 'ڕۆیشتن',

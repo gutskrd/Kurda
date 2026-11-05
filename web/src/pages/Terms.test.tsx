@@ -42,6 +42,8 @@ describe('Terms', () => {
     expect(within(section('Copyright notices')).getByRole('link', { name: 'Go to the Copyright page' })).toHaveAttribute('href', '/copyright');
     expect(within(section('Repeated copying')).getByText(/three copyright notices/)).toBeInTheDocument();
     expect(within(section('Shop items')).getByText(/Items you own stay yours/)).toBeInTheDocument();
+    // nothing bought with Zêr or gems can be handed back, and the Terms say so
+    expect(within(section('Purchases are final')).getByText(/can’t be returned or turned back into Zêr or gems/)).toBeInTheDocument();
     const contact = section('How to reach us');
     expect(within(contact).getByText('For members')).toBeInTheDocument();
     expect(within(contact).getByText(`Write in: ${PROVIDER.authorityContact.languages.join(', ')}`)).toBeInTheDocument();

@@ -226,28 +226,10 @@ export const tr: Catalogue = {
   'pictures.next': 'Sonraki fotoğraf',
   'post.edit': 'Düzenle',
   'post.source': 'Kaynak: {source}',
-  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  // ---- refreshed shop items: the one-time notice (contract-3 §S); the items are kept ----
   'refresh.title': 'Arka planların ve simgelerin yeni görsellerle',
-  'refresh.body':
-    'Bazı arka planları ve simgeleri yeniledik — seninkiler de yeni görseller aldı. Zêr’ini geri almayı tercih edersen, onları Mağaza’dan iade edebilirsin.',
   'refresh.bodyKeep': 'Bazı arka planları ve simgeleri yeniledik — seninkiler de yeni görseller aldı. Hâlâ senin.',
   'refresh.gotIt': 'Anladım',
-  'refresh.goToShop': 'Mağaza’ya git',
-  'refresh.sectionTitle': 'Yeni görselli öğeler',
-  'refresh.sectionLead': 'Onları tut ya da satın aldıklarını ödediğin fiyata iade et.',
-  'refresh.returnFor': '{amount} karşılığında iade et',
-  'refresh.returnItem': '{name} öğesini {amount} karşılığında iade et',
-  'refresh.confirmTitle': '{name} iade edilsin mi?',
-  'refresh.confirmAmount': '{amount} geri alırsın.',
-  'refresh.confirmBody': 'Öğelerinden çıkar ve kullanıyorsan profilinden kaldırılır. Sonra geri alamazsın.',
-  'refresh.keep': 'Tut',
-  'refresh.confirm': 'İade et',
-  'refresh.returning': 'İade ediliyor…',
-  'refresh.returned': '{name} iade edildi. {amount} cüzdanına geri döndü.',
-  'refresh.error.notReturnable': 'Bu öğe iade edilemez.',
-  'refresh.error.nothingToRefund':
-    'Bunun için ödeme yapmadın, bu yüzden geri verilecek bir şey yok. Senin olarak kalır.',
-  'refresh.error.conflict': 'İade gerçekleşmedi ve hiçbir şey değişmedi. Tekrar dene.',
   // ---- copyright: /copyright, the provider details, the Terms and About (contract-3 §C) ----
   'meta.copyright.title': 'Telif hakkı · Hevalo',
   'meta.copyright.description':
@@ -1800,6 +1782,9 @@ export const tr: Catalogue = {
   'shop.amountMore': '{amount} daha',
   'shop.sendItem': '{name} gönder',
   'shop.giftPaidByYou': '{price} {currency}, ödemeyi sen yaparsın. Kişi ürünü ve senden geldiğini söyleyen bir bildirim alır.',
+  'shop.confirmTitle': '{name} satın alınsın mı?',
+  'shop.finalNote': 'Her satın alma kesindir: senin olan senin kalır ve iade edilemez. Emin değilsen acele etme.',
+  'shop.giftFinal': 'Hediyeler de kesindir: gönderildiği anda artık onundur.',
   'items.kinds': 'Ürün türleri',
   'items.kind.all': 'Tümü',
   'items.kind.background': 'Arka planlar',
@@ -2530,6 +2515,9 @@ export const tr: Catalogue = {
   'terms.moderation.body': 'Bu kuralları çiğneyen her şeyi kaldırabilir, bunu yapan hesapları uyarabilir, susturabilir ya da askıya alabiliriz.',
   'terms.currency.title': 'Zêr ve mücevherler',
   'terms.currency.body': 'Zêr ve mücevherler yalnızca Hevalo içinde kullanılabilir ve paraya çevrilemez.',
+  'terms.final.title': 'Satın almalar kesindir',
+  'terms.final.body':
+    'Mağazada Zêr ya da mücevherle kendin için veya hediye olarak aldıkların kesindir: iade edilemez ve yeniden Zêr ya da mücevhere dönüştürülemez.',
   'terms.changes.title': 'Değişiklikler',
   'terms.changes.body': 'Hevalo hâlâ büyüyor; özellikler gelip gidecek. Bu koşullar önemli bir noktada değişirse, onları yeniden kabul etmeni isteriz.',
   'terms.leaving.title': 'Ayrılmak',

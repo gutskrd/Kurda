@@ -12,7 +12,8 @@ import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { CoinIcon, GemIcon, GiftIcon } from '../components/icons';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
-import { RefreshedNotice, ReturnableItems, type InventoryWithRefunds } from '../shop/RefreshedItems';
+import { RefreshedNotice, type InventoryWithNotice } from '../shop/RefreshedItems';
+import { BuyConfirm } from '../shop/BuyConfirm';
 import {
   FilterToggle,
   ItemSearch,
@@ -130,6 +131,9 @@ function boughtMessage(category: string): MessageKey {
  * balance reaches or to what is free — and all of that is kept in the address,
  * so a narrowed Shop survives a reload and Back.
  *
+ * Buying something that costs anything asks first, and says that the purchase
+ * is final: nothing bought can be handed back for Zêr or gems.
+ *
  * Buying only grants ownership; equipping happens in Edit Profile. All prices,
  * ownership and payment are server-authoritative (POST /shop/purchase and
  * /shop/gift validate the price and move the money atomically); the client
@@ -140,12 +144,12 @@ export function Shop(): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const shop = useApiGet<{ items: ShopItem[] }>('/shop');
-  const inventory = useApiGet<InventoryWithRefunds>('/me/inventory');
+  const inventory = useApiGet<InventoryWithNotice>('/me/inventory');
   const wallet = useApiGet<{ balances: { zer: number; gems?: number } }>('/me/wallet');
   const [view, setView] = useShopView();
   const ids = useIdPrefix('shop');
 
-  /** balances learned since the wallet was read: a purchase, a gift or a return answers with the new one */
+  /** balances learned since the wallet was read: a purchase or a gift answers with the new one */
   const [known, setKnown] = useState<Partial<Record<Currency, number>>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok'; text: string } | { kind: 'err'; error: ApiError | string } | null>(null);
@@ -155,6 +159,8 @@ export function Shop(): React.JSX.Element {
   /** the tile that just succeeded — drives the one-shot celebration */
   const [celebrating, setCelebrating] = useState<string | null>(null);
   const [gifting, setGifting] = useState<Tile | null>(null);
+  /** the item whose purchase is being confirmed */
+  const [asking, setAsking] = useState<Tile | null>(null);
 
   const balanceOf = useCallback(
     (currency: Currency): number | null => known[currency] ?? wallet.data?.balances?.[currency] ?? null,
@@ -221,6 +227,24 @@ export function Shop(): React.JSX.Element {
     } else {
       setMsg({ kind: 'err', error: res.error });
     }
+  }
+
+  /** Something with a price asks first; something free is simply taken. */
+  function askToBuy(tile: Tile): void {
+    if (busy || tile.owned) return;
+    if (tile.price === 0) {
+      void buy(tile);
+      return;
+    }
+    setMsg(null);
+    setAsking(tile);
+  }
+
+  async function confirmBuy(): Promise<void> {
+    const tile = asking;
+    if (!tile) return;
+    await buy(tile);
+    setAsking(null);
   }
 
   async function gift(tile: Tile, to: Friend): Promise<void> {
@@ -303,7 +327,7 @@ export function Shop(): React.JSX.Element {
       balanceOf={balanceOf}
       busy={busy}
       celebrating={celebrating}
-      onBuy={(tile) => void buy(tile)}
+      onBuy={askToBuy}
       onGift={setGifting}
     />
   );
@@ -336,15 +360,6 @@ export function Shop(): React.JSX.Element {
       <RefreshedNotice inventory={inventory.data} />
 
       <GiftsReceived onEquipHint={() => setMsg(null)} />
-
-      {/* refreshed items the owner can hand back, above the catalogue, where the notice sends them (contract-3 §S) */}
-      <ReturnableItems
-        inventory={inventory.data}
-        onReturned={(r) => {
-          setKnown((k) => ({ ...k, [r.refund.currency]: r.balance }));
-          inventory.reload();
-        }}
-      />
 
       {/* the catalogue only grows, and scrolling all of it to find one thing is
           not browsing — it is searching, badly */}
@@ -396,6 +411,8 @@ export function Shop(): React.JSX.Element {
           </KindPanel>
         </>
       )}
+
+      <BuyConfirm item={asking} busy={busy !== null} onConfirm={() => void confirmBuy()} onCancel={() => setAsking(null)} />
 
       <Modal open={gifting !== null} onClose={() => setGifting(null)} label={t('shop.sendGift')}>
         {gifting && <GiftPicker tile={gifting} busy={busy !== null} onPick={(f) => void gift(gifting, f)} />}
@@ -512,6 +529,8 @@ function GiftPicker({
           currency: currencyName(tile.currency, t),
         })}
       </p>
+      {/* a gift is bought like anything else, and is as final */}
+      <p className="muted">{t('shop.giftFinal')}</p>
 
       {friends === null ? (
         <PickFriendSkeleton />
