@@ -44,6 +44,7 @@ function wav(seed: number): Buffer {
 
 interface Usage {
   courseId: string;
+  courseSlug: string;
   courseTitle: string;
   unitId: string;
   unitTitle: string;
@@ -185,6 +186,7 @@ describe.skipIf(!DATABASE_URL)('story sentences in the audio studio (integration
     expect(item(items, T.one)!.usedIn).toEqual([
       {
         courseId: 'stories:kurmanci',
+        courseSlug: 'stories:kurmanci',
         courseTitle: 'Stories — Kurmancî',
         unitId: ids.draft,
         unitTitle: `Title draft ${s}`,
