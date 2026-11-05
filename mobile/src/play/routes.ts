@@ -13,7 +13,9 @@ export type LobbyRoute =
   | { name: 'WordleBattle'; params: RootStackParamList['WordleBattle'] }
   | { name: 'RhymeMatch'; params: RootStackParamList['RhymeMatch'] }
   | { name: 'StoryGame'; params: RootStackParamList['StoryGame'] }
-  | { name: 'LastLetter'; params: RootStackParamList['LastLetter'] };
+  | { name: 'LastLetter'; params: RootStackParamList['LastLetter'] }
+  | { name: 'Impostor'; params: RootStackParamList['Impostor'] }
+  | { name: 'DontSay'; params: RootStackParamList['DontSay'] };
 
 export function lobbyRoute(game: PlayGame, id: string): LobbyRoute {
   switch (game) {
@@ -25,5 +27,9 @@ export function lobbyRoute(game: PlayGame, id: string): LobbyRoute {
       return { name: 'StoryGame', params: { id } };
     case 'last-letter':
       return { name: 'LastLetter', params: { id } };
+    case 'impostor':
+      return { name: 'Impostor', params: { id } };
+    case 'dont-say':
+      return { name: 'DontSay', params: { id } };
   }
 }

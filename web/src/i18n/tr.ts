@@ -2418,6 +2418,8 @@ export const tr: Catalogue = {
   'games.lastLetter.hevaloWon': 'Bu sefer Hevalo kazandı.',
   'games.invite.blurb.lastLetter': 'Bir kelime zinciri: her kelime öncekinin son harfiyle başlar.',
   'play.code.shareLastLetter': 'Hevalo’da benimle Son Harf oyna! Oyunlar → Kodla katıl’ı aç ve {code} yaz.',
+  'games.party.tooFast': 'Çok hızlı yazıyorsun. Biraz bekle ve tekrar dene.',
+  'games.party.paused': 'Hesabında yazma şimdilik duraklatıldı.',
   'games.impostor.youCaught': 'Yakalandın!',
   'games.party.withFriends': 'Arkadaşlarla',
   'games.party.howTitle': 'Nasıl oynanır',

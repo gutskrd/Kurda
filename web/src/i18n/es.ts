@@ -2421,6 +2421,8 @@ export const es: Catalogue = {
   'games.lastLetter.hevaloWon': 'Esta vez ganó Hevalo.',
   'games.invite.blurb.lastLetter': 'Una cadena de palabras: cada una empieza por la última letra de la anterior.',
   'play.code.shareLastLetter': '¡Juega a La última letra conmigo en Hevalo! Abre Juegos → Unirse con un código y escribe {code}.',
+  'games.party.tooFast': 'Estás escribiendo muy rápido. Espera un poco y vuelve a intentarlo.',
+  'games.party.paused': 'La escritura está en pausa en tu cuenta por ahora.',
   'games.impostor.youCaught': '¡Te han pillado!',
   'games.party.withFriends': 'Con amigos',
   'games.party.howTitle': 'Cómo se juega',

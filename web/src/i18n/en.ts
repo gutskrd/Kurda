@@ -2522,6 +2522,8 @@ export const en = {
   'games.lastLetter.hevaloWon': 'Hevalo won this time.',
   'games.invite.blurb.lastLetter': 'A word chain: each word starts with the last letter of the one before.',
   'play.code.shareLastLetter': 'Play The Last Letter with me on Hevalo! Open Games → Join with a code and type {code}.',
+  'games.party.tooFast': 'You’re writing quickly. Wait a little and try again.',
+  'games.party.paused': 'Writing is paused on your account for now.',
   'games.impostor.youCaught': 'You were caught!',
   'games.party.withFriends': 'With friends',
   'games.party.howTitle': 'How to play',

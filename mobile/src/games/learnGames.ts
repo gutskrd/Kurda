@@ -17,7 +17,7 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
  */
 
 /** The screens the learning games open on (root stack routes). */
-export type LearnGameRoute = 'BuildSentence' | 'MemoryThief' | 'HearIt' | 'LastLetter';
+export type LearnGameRoute = 'BuildSentence' | 'MemoryThief' | 'HearIt' | 'LastLetter' | 'Impostor' | 'DontSay';
 
 export interface PhoneGame {
   route: LearnGameRoute;
@@ -31,6 +31,9 @@ export const PHONE_LEARN_GAMES: Partial<Record<LearnGameId, PhoneGame>> = {
   'memory-thief': { route: 'MemoryThief', name: 'games.memory.name', line: 'games.card.memory' },
   'hear-it': { route: 'HearIt', name: 'games.hear.name', line: 'games.card.hear' },
   'last-letter': { route: LAST_LETTER_CARD.route, name: LAST_LETTER_CARD.nameKey, line: LAST_LETTER_CARD.lineKey },
+  // the party games are listed where /games/availability finds enough approved cards for the learner's Kurdish
+  impostor: { route: 'Impostor', name: 'games.impostor.name', line: 'games.invite.blurb.impostor' },
+  'dont-say': { route: 'DontSay', name: 'games.dontSay.name', line: 'games.invite.blurb.dontSay' },
 };
 
 const PLAYABLE = Object.keys(PHONE_LEARN_GAMES) as LearnGameId[];

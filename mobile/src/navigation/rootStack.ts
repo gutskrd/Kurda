@@ -111,6 +111,10 @@ export type RootStackParamList = {
   RhymeMatch: { id?: string } | undefined;
   /** The Last Letter: an id for a room (a code, an invite, a card); nothing for the start, with friends or against Hevalo. */
   LastLetter: { id?: string } | undefined;
+  /** Kurdish Impostor: an id for a room (a code, an invite, a card); nothing for the start. */
+  Impostor: { id?: string } | undefined;
+  /** Don't Say the Word!: an id for a room; nothing for the start. */
+  DontSay: { id?: string } | undefined;
   /** An id when an invite link opened it (`/app/games/stories?id=…`): it hands over to that game. */
   Stories: { id?: string } | undefined;
   StoryReader: { slug: string };

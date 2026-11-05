@@ -2423,6 +2423,8 @@ export const de: Catalogue = {
   'games.lastLetter.hevaloWon': 'Diesmal hat Hevalo gewonnen.',
   'games.invite.blurb.lastLetter': 'Eine Wortkette: Jedes Wort beginnt mit dem letzten Buchstaben des vorigen.',
   'play.code.shareLastLetter': 'Spiel mit mir „Der letzte Buchstabe“ auf Hevalo! Öffne Spiele → Mit einem Code beitreten und gib {code} ein.',
+  'games.party.tooFast': 'Du schreibst sehr schnell. Warte kurz und versuch es noch einmal.',
+  'games.party.paused': 'Schreiben ist für dein Konto gerade pausiert.',
   'games.impostor.youCaught': 'Du wurdest erwischt!',
   'games.party.withFriends': 'Mit Freunden',
   'games.party.howTitle': 'So wird gespielt',

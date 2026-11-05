@@ -2425,6 +2425,8 @@ export const ku: Catalogue = {
   'games.lastLetter.hevaloWon': 'Vê carê Hevalo bi ser ket.',
   'games.invite.blurb.lastLetter': 'Zincîreke peyvan: her peyv bi tîpa dawî ya peyva berê dest pê dike.',
   'play.code.shareLastLetter': 'Li ser Hevalo bi min re Tîpa Dawî bilîze! Lîstik → Bi kodekê beşdar bibe veke û {code} binivîse.',
+  'games.party.tooFast': 'Tu zû dinivîsî. Hinekî bisekine û dîsa biceribîne.',
+  'games.party.paused': 'Nivîsandin niha li ser hesabê te rawestiyaye.',
   'games.impostor.youCaught': 'Tu hatî girtin!',
   'games.party.withFriends': 'Bi hevalan re',
   'games.party.howTitle': 'Çawa tê lîstin',

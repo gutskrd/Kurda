@@ -104,6 +104,8 @@ import { WordleBattleScreen } from './src/wordle/WordleBattleScreen';
 import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
 import { RhymeMatchScreen } from './src/rhyme/RhymeMatchScreen';
 import { LastLetterScreen } from './src/lastletter/LastLetterScreen';
+import { ImpostorScreen } from './src/impostor/ImpostorScreen';
+import { DontSayScreen } from './src/dontsay/DontSayScreen';
 import { RaceScreen } from './src/race/RaceScreen';
 import { BuildSentenceScreen } from './src/games/BuildSentenceScreen';
 import { KingdomScreen } from './src/kingdom/KingdomScreen';
@@ -179,6 +181,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
       LastLetter: inviteRoutePath('last-letter'),
+      Impostor: inviteRoutePath('impostor'),
+      DontSay: inviteRoutePath('dont-say'),
       // `/app/games/stories?id=…` is a game to join; without an id it is the library
       Stories: inviteRoutePath('stories'),
       // a story's address; the website's `/app/learn/stories/:slug` is rewritten to it (navigation/tabs.ts)
@@ -577,6 +581,20 @@ function SignedInRoot() {
         {({ route, navigation }) => (
           <GuestWall reason="play" onBack={() => navigation.goBack()}>
             <LastLetterScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="Impostor" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <GuestWall reason="play" onBack={() => navigation.goBack()}>
+            <ImpostorScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="DontSay" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <GuestWall reason="play" onBack={() => navigation.goBack()}>
+            <DontSayScreen id={route.params?.id} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>

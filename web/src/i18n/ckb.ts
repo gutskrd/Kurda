@@ -2429,6 +2429,8 @@ export const ckb: Catalogue = {
   'games.lastLetter.hevaloWon': 'ئەمجارە Hevalo بردییەوە.',
   'games.invite.blurb.lastLetter': 'زنجیرەیەکی وشە: هەر وشەیەک بە دوا پیتی وشەی پێشوو دەست پێدەکات.',
   'play.code.shareLastLetter': 'لەسەر Hevalo لەگەڵم یاری دوا پیت بکە! یاری ← بە کۆدێک بەشداربە بکەرەوە و {code} بنووسە.',
+  'games.party.tooFast': 'خێرا دەنووسیت. کەمێک چاوەڕێ بکە و دووبارە هەوڵ بدەرەوە.',
+  'games.party.paused': 'نووسین بۆ ئێستا لەسەر هەژمارەکەت ڕاگیراوە.',
   'games.impostor.youCaught': 'تۆ گیرایت!',
   'games.party.withFriends': 'لەگەڵ هاوڕێیان',
   'games.party.howTitle': 'چۆن یاری دەکرێت',

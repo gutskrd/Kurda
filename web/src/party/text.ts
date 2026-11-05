@@ -28,9 +28,9 @@ export function partyTextError(error: ApiError, t: Translate, saysWordKey: Messa
     case 'CONTENT_BLOCKED':
       return t('chat.error.blocked');
     case 'TRUST_VELOCITY':
-      return t('chat.error.tooFast');
+      return t('games.party.tooFast');
     case 'AUTO_MODERATED':
-      return t('chat.error.restricted');
+      return t('games.party.paused');
     case 'TEXT_TOO_LONG':
       return t('games.party.slip.tooLong');
     case 'NOT_YOUR_TURN':

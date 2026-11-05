@@ -2423,6 +2423,8 @@ export const nl: Catalogue = {
   'games.lastLetter.hevaloWon': 'Deze keer won Hevalo.',
   'games.invite.blurb.lastLetter': 'Een woordketting: elk woord begint met de laatste letter van het vorige.',
   'play.code.shareLastLetter': 'Speel De laatste letter met me op Hevalo! Open Spellen → Meedoen met een code en typ {code}.',
+  'games.party.tooFast': 'Je schrijft snel. Wacht even en probeer het opnieuw.',
+  'games.party.paused': 'Schrijven is voorlopig gepauzeerd voor je account.',
   'games.impostor.youCaught': 'Je bent betrapt!',
   'games.party.withFriends': 'Met vrienden',
   'games.party.howTitle': 'Zo speel je',
