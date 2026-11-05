@@ -51,3 +51,23 @@ export {
   type SeasonFrameOptions,
   type SeasonFrameShineOptions,
 } from './frames.js';
+export {
+  PATH_LANDMARK_LOOP,
+  PATH_STOP_ART,
+  PATH_STOP_LOOKS,
+  PATH_STOP_TONES,
+  pathGroundColour,
+  pathLandSvg,
+  pathLandmarkSvg,
+  pathLoopSvg,
+  pathStonesSvg,
+  pathStopSvg,
+  type PathLandOptions,
+  type PathLandmarkOptions,
+  type PathLoop,
+  type PathLoopKind,
+  type PathLoopOptions,
+  type PathStonesOptions,
+  type PathStopLook,
+  type PathStopOptions,
+} from './path-land.js';
