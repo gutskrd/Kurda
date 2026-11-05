@@ -2417,6 +2417,7 @@ export const ar: Catalogue = {
   'games.lastLetter.hevaloWon': 'فاز Hevalo هذه المرة.',
   'games.invite.blurb.lastLetter': 'سلسلة كلمات: تبدأ كل كلمة بالحرف الأخير من الكلمة السابقة.',
   'play.code.shareLastLetter': 'العب معي الحرف الأخير على Hevalo! افتح الألعاب ← انضم برمز واكتب {code}.',
+  'games.impostor.youCaught': 'لقد انكشفت!',
   'games.party.withFriends': 'مع الأصدقاء',
   'games.party.howTitle': 'طريقة اللعب',
   'games.party.level': 'المستوى',

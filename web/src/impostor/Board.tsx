@@ -129,7 +129,11 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
               : t('games.impostor.guessPhase')}
         </p>
         <p className={`imp-whose${mine ? ' is-mine' : ''}`}>{status}</p>
-        {board.phase === 'guess' && board.accused && <p className="imp-caught">{t('games.impostor.caught', { name: name(board.accused.seat) })}</p>}
+        {board.phase === 'guess' && board.accused && (
+          <p className="imp-caught">
+            {board.accused.seat === view.me?.seat ? t('games.impostor.youCaught') : t('games.impostor.caught', { name: name(board.accused.seat) })}
+          </p>
+        )}
       </div>
       {wait && <PartyTimer startedAt={wait.startedAt} endsAt={wait.endsAt} now={now} low={mine && seconds <= 5} label={t('games.party.timeLeft', { count: seconds })} />}
 
