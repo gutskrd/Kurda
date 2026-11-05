@@ -1869,7 +1869,7 @@
           "titleKu": "Bi çi diçî?",
           "titleEn": "How do you get there?",
           "grammar": "transport with bi (bi trênê, bi balafirê, bi peyatî) and polite requests in the city: ji kerema xwe, ez dixwazim …, dikarî …?",
-          "grammarMd": "To say how you travel, use **bi** + the vehicle in the oblique:\n\n- *Ez bi otobûsê diçim.* I go by bus. · *Em bi trênê tên.* We are coming by train.\n- **bi peyatî** on foot: *Em bi peyatî diçin.* We are walking.\n\nAsking politely:\n\n- *Ji kerema xwe, otobûs li ku ye?* Where is the bus, please?\n- *Tu dikarî alîkariya min bikî?* Can you help me?\n- *Ez dixwazim bilêtekê bikirim.* I would like to buy a ticket.\n\n**çiqas?** is *how much, how far*: *Çiqas dûr e?* How far is it?",
+          "grammarMd": "To say how you travel, use **bi** + the vehicle in the oblique:\n\n- *Ez bi otobûsê diçim.* I go by bus. · *Em bi trênê tên.* We are coming by train.\n- **bi peyatî** on foot: *Em bi peyatî diçin.* We are walking.\n\nAsking politely:\n\n- *Ji kerema xwe, otobûs li ku ye?* Where is the bus, please?\n- *Tu dikarî alîkariya min bikî?* Can you help me?\n- *Ez dixwazim bilêtekê bikirim.* I would like to buy a ticket.\n\n**çiqas?** is *how much, how far*: *Çiqas dûr e?* How far is it?\n\n**xwe** is *one’s own* when the owner is the one doing it: *Ez navê xwe dinivîsim.* I write my (own) name. *Navê min* would be wrong here.",
           "lessons": [
             {
               "key": "u06s4l1",
@@ -2182,7 +2182,7 @@
           "titleKu": "Newroz pîroz be!",
           "titleEn": "Happy Newroz!",
           "grammar": "wishes with be: Newroza we pîroz be!, Destê te sax be!; the future and the subjunctive in a celebration",
-          "grammarMd": "Many Kurdish wishes end with **be**, the subjunctive of “is”: *may it be…*\n\n- *Newroza we pîroz be!* Happy Newroz (to you all)! — answered with *Ya we jî pîroz be!*\n- *Cejna te pîroz be!* Happy holiday!\n- *Destê te sax be!* Bless your hands! (thanks for food or work)\n- *Rojbûna te pîroz be!* Happy birthday!\n\nOn the day itself everyone speaks in the future: *Em ê agir vêxin. Ciwan ê di ser agir re baz bidin. Em ê govendê bigirin.* We will light the fire. The young will jump over it. We will dance.",
+          "grammarMd": "Many Kurdish wishes end with **be**, the subjunctive of “is”: *may it be…*\n\n- *Newroza we pîroz be!* Happy Newroz (to you all)! — answered with *Ya we jî pîroz be!*\n- *Cejna te pîroz be!* Happy holiday!\n- *Destê te sax be!* Bless your hands! (thanks for food or work)\n- *Rojbûna te pîroz be!* Happy birthday!\n\nOn the day itself everyone speaks in the future: *Em ê agir vêxin. Ciwan dê di ser agir re baz bidin. Em ê govendê bigirin.* We will light the fire. The young will jump over it. We will dance.",
           "lessons": [
             {
               "key": "u07s4l1",
