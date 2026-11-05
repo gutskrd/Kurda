@@ -1004,7 +1004,7 @@
   animation: ticket-in 520ms var(--ease-spring) 80ms backwards;
 }
 .join-code-card-art {
-  transform: rotate(-8deg);
+  transform: rotate(-5deg);
   transition: transform var(--dur-slow) var(--ease-spring);
 }
 .join-code-card:hover .join-code-card-art {

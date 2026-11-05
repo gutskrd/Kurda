@@ -1,8 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Animated, Easing, StyleSheet, Text, TextInput, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
-import Svg, { G, Line, Path, Rect } from 'react-native-svg';
-import { JOIN_CODE_LENGTH, parseInvite, type JoinedByCode, type PlayGame } from '@kurda/shared';
+import Svg, { G, Path, Rect } from 'react-native-svg';
+import {
+  JOIN_CODE_LENGTH,
+  TICKET_ART_OUTLINE,
+  TICKET_ART_PERFORATION,
+  TICKET_ART_STUB,
+  TICKET_ART_TILES,
+  parseInvite,
+  type JoinedByCode,
+  type PlayGame,
+} from '@kurda/shared';
 import { useAccountGate } from '../auth/AccountGate';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -368,39 +377,36 @@ export function JoinCodeCard({ style }: { style?: StyleProp<ViewStyle> }): React
 }
 
 /**
- * Two tickets, one tucked behind the other: flat cut-outs with a notch from
- * each side, a dashed tear-off line in a shade of their own colour, and three
- * small tiles where the code goes. Drawn, not a picture, in the palette's own
- * colours so it follows the theme.
+ * Two tickets, one tucked behind the other: the outline the website draws
+ * too (a stub, a tear line with a notch bitten from each edge where it meets
+ * them, three tiles where the code goes), the front one in the sun's gold and
+ * one in green behind it. Flat cut-outs: the stub a shade of the ticket's own
+ * colour, the tear line and the tiles in the card's colour as if punched
+ * through. A right-to-left reader sees it mirrored, stub first on the right.
  */
 export function TicketMotif({ size }: { size: number }): React.JSX.Element {
   const { colors } = useTheme();
-  const front = colors.gold;
-  const back = colors.success;
+  const dir = useDirection();
+  const height = size * 0.8;
+  const ticket = (fill: string, tiles: boolean): React.JSX.Element => (
+    <>
+      <Path d={TICKET_ART_OUTLINE} fill={fill} />
+      <Path d={TICKET_ART_STUB} fill={lipOf(fill, colors)} />
+      <Path d={TICKET_ART_PERFORATION} stroke={colors.surface} strokeWidth={1.6} strokeDasharray="2.4 2.6" strokeLinecap="round" />
+      {tiles
+        ? TICKET_ART_TILES.map((tile) => <Rect key={tile.x} x={tile.x} y={tile.y} width={tile.width} height={tile.height} rx={tile.r} fill={colors.surface} />)
+        : null}
+    </>
+  );
   return (
-    <View style={{ width: size, height: size * 0.8 }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Svg width={size} height={size * 0.8} viewBox="-8 -10 68 48">
-        <G transform="rotate(9 26 16) translate(4 -3)">
-          <Path d={TICKET} fill={back} />
-          <Line x1="37" y1="5" x2="37" y2="27" stroke={lipOf(back, colors)} strokeWidth={1.6} strokeDasharray="2.6 2.6" />
-        </G>
-        <G transform="rotate(-7 26 16) translate(-2 4)">
-          <Path d={TICKET} fill={front} />
-          <Line x1="37" y1="5" x2="37" y2="27" stroke={lipOf(front, colors)} strokeWidth={1.6} strokeDasharray="2.6 2.6" />
-          {[8, 17, 26].map((x) => (
-            <Rect key={x} x={x - 1} y="11" width="7" height="10" rx="1.8" fill={colors.surface} />
-          ))}
-        </G>
+    <View style={[{ width: size, height }, dir.flip]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Svg width={size} height={height} viewBox="-6 -13 72 57.6">
+        <G transform="translate(4 -3) rotate(9 29 16)">{ticket(colors.success, false)}</G>
+        <G transform="translate(-2 4) rotate(-7 29 16)">{ticket(colors.gold, true)}</G>
       </Svg>
     </View>
   );
 }
-
-/**
- * A ticket 52 × 32, corners of 5, with a notch of 5 cut from the middle of
- * each short side — one path, so the notches are holes and not shapes laid on.
- */
-const TICKET = 'M5 0H47A5 5 0 0 1 52 5V11A5 5 0 0 0 52 21V27A5 5 0 0 1 47 32H5A5 5 0 0 1 0 27V21A5 5 0 0 0 0 11V5A5 5 0 0 1 5 0Z';
 
 const styles = StyleSheet.create({
   hint: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },

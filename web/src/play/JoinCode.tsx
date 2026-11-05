@@ -1,6 +1,17 @@
 import { Fragment, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { BURST, JOIN_CODE_LENGTH, burstPlan, parseInvite, type JoinedByCode } from '@kurda/shared';
+import {
+  BURST,
+  JOIN_CODE_LENGTH,
+  TICKET_ART_BOX,
+  TICKET_ART_OUTLINE,
+  TICKET_ART_PERFORATION,
+  TICKET_ART_STUB,
+  TICKET_ART_TILES,
+  burstPlan,
+  parseInvite,
+  type JoinedByCode,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { Sheet } from '../components/Sheet';
@@ -262,23 +273,29 @@ function JoinedBurst(): React.JSX.Element {
 }
 
 /**
- * A ticket, flat, with a notch bitten out of each side, a perforation and
- * three tiles for the code: what the Games hub's card and the sheet wear.
- * Drawn in the sun's gold from the palette, so it follows the light and the
- * dark scheme like everything else.
+ * The ticket on the Games hub's card and at the top of the sheet: the outline
+ * both apps share (a stub, a tear line with a notch at each end, three tiles
+ * for the code), drawn flat in the sun's gold from the palette so it follows
+ * the light and the dark scheme. The stub takes the stronger tint, as the
+ * stub of every ticket in the app does; a right-to-left page mirrors it.
  */
 export function TicketArt({ className }: { className?: string }): React.JSX.Element {
   return (
-    <svg className={`ticket-art${className ? ` ${className}` : ''}`} viewBox="0 0 64 44" width="64" height="44" aria-hidden="true" focusable="false">
-      <path
-        className="ticket-art-body"
-        d="M8 4H56A4 4 0 0 1 60 8V16A6 6 0 0 0 60 28V36A4 4 0 0 1 56 40H8A4 4 0 0 1 4 36V28A6 6 0 0 0 4 16V8A4 4 0 0 1 8 4Z"
-      />
-      <path className="ticket-art-perf" d="M45 9V35" />
-      <rect className="ticket-art-tile" x="11" y="15" width="8" height="14" rx="2.5" />
-      <rect className="ticket-art-tile" x="22" y="15" width="8" height="14" rx="2.5" />
-      <rect className="ticket-art-tile" x="33" y="15" width="8" height="14" rx="2.5" />
-      <circle className="ticket-art-dot" cx="52.5" cy="22" r="3" />
+    <svg
+      className={`ticket-art${className ? ` ${className}` : ''}`}
+      viewBox={`-3 -6 ${TICKET_ART_BOX.width + 6} ${TICKET_ART_BOX.height + 12}`}
+      width="64"
+      height="44"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <path className="ticket-art-body" d={TICKET_ART_OUTLINE} />
+      <path className="ticket-art-stub" d={TICKET_ART_STUB} />
+      <path className="ticket-art-perf" d={TICKET_ART_PERFORATION} />
+      {TICKET_ART_TILES.map((tile) => (
+        <rect key={tile.x} className="ticket-art-tile" x={tile.x} y={tile.y} width={tile.width} height={tile.height} rx={tile.r} />
+      ))}
+      <path className="ticket-art-edge" d={TICKET_ART_OUTLINE} />
     </svg>
   );
 }

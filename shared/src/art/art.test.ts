@@ -26,6 +26,7 @@ import {
 } from './index.js';
 import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
+import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
 import {
   CHEST_BOX,
@@ -1064,5 +1065,17 @@ describe('the chest’s hop', () => {
     const { body, shadow } = chestDrawing('common').layers;
     expect(body.box.y + body.box.h).toBeGreaterThanOrEqual(y);
     expect(shadow.box.y).toBeLessThanOrEqual(y + 2);
+  });
+});
+
+describe('the join ticket', () => {
+  it('sets its three tiles on the body, as far from the tear line as from the far edge', () => {
+    const first = TICKET_ART_TILES[0]!;
+    const last = TICKET_ART_TILES[TICKET_ART_TILES.length - 1]!;
+    expect(TICKET_ART_TILES).toHaveLength(3);
+    expect(first.x - TICKET_ART_TEAR).toBeCloseTo(TICKET_ART_BOX.width - (last.x + last.width));
+    for (const tile of TICKET_ART_TILES) {
+      expect(tile.y - 0).toBeCloseTo(TICKET_ART_BOX.height - (tile.y + tile.height));
+    }
   });
 });

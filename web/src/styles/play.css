@@ -1147,29 +1147,35 @@
     display: none;
   }
 }
-/* the ticket: flat, in the sun's gold, a notch bitten out of each side */
+/* the ticket: flat, in the sun's gold; the stub a stronger tint than the body, the edge drawn last over both */
 .ticket-art {
   display: block;
   overflow: visible;
 }
+[dir='rtl'] .ticket-art {
+  scale: -1 1;
+}
 .ticket-art-body {
-  fill: color-mix(in srgb, var(--gold) 24%, var(--surface-solid));
-  stroke: var(--gold);
-  stroke-width: 2;
-  stroke-linejoin: round;
+  fill: color-mix(in srgb, var(--gold) 16%, var(--surface-solid));
+}
+.ticket-art-stub {
+  fill: color-mix(in srgb, var(--gold) 66%, var(--surface-solid));
 }
 .ticket-art-perf {
   fill: none;
   stroke: var(--gold);
   stroke-width: 1.5;
-  stroke-dasharray: 2.5 3;
+  stroke-dasharray: 2.4 2.6;
   stroke-linecap: round;
 }
 .ticket-art-tile {
   fill: var(--gold);
 }
-.ticket-art-dot {
-  fill: var(--gold-ink);
+.ticket-art-edge {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+  stroke-linejoin: round;
 }
 .code-sheet-head {
   display: grid;
