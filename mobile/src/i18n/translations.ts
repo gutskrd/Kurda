@@ -188,6 +188,8 @@ export type TranslationKey =
   | 'play.sheet.friendOnline'
   | 'play.sheet.send'
   | 'play.sheet.sent'
+  | 'play.sheet.sentTo'
+  | 'play.sheet.posted'
   | 'play.sheet.createAndInvite'
   | 'play.sheet.postToGroup'
   | 'play.invited.title'
@@ -235,6 +237,8 @@ export type TranslationKey =
   | 'play.card.join'
   | 'play.card.enter'
   | 'play.card.label'
+  | 'play.card.from'
+  | 'play.card.joined'
   | 'play.chat.button'
   | 'play.chat.preview'
   | 'play.code.copy'
@@ -2109,6 +2113,8 @@ export type TranslationKey =
   | 'friends.mutual'
   | 'friends.mutualOne'
   | 'friends.add'
+  | 'friends.requestSent'
+  | 'friends.nowFriends'
   | 'favorites.title'
   | 'favorites.none'
   | 'favorites.change'
@@ -3035,6 +3041,8 @@ const en: Catalog = {
   'play.sheet.friendOnline': '{name}, online now',
   'play.sheet.send': 'Send invites ({count})',
   'play.sheet.sent': 'Invites sent: {count}',
+  'play.sheet.sentTo': 'Invite sent to {name}',
+  'play.sheet.posted': 'Posted in the group',
   'play.sheet.createAndInvite': 'Create the game',
   'play.sheet.postToGroup': 'Post the game in the group',
   'play.invited.title': 'Invited',
@@ -3082,6 +3090,8 @@ const en: Catalog = {
   'play.card.join': 'Join',
   'play.card.enter': 'Open',
   'play.card.label': 'Game card: {game}. {state}',
+  'play.card.from': 'From {name}',
+  'play.card.joined': 'You’re in',
   'play.chat.button': 'Start a game',
   'play.chat.preview': '🎮 Game invite',
   'play.code.copy': 'Copy code',
@@ -4406,6 +4416,8 @@ const en: Catalog = {
   'friends.mutual': '{count} mutual friends',
   'friends.mutualOne': '1 mutual friend',
   'friends.add': 'Add',
+  'friends.requestSent': 'Request sent',
+  'friends.nowFriends': 'You and {name} are friends now',
   'favorites.title': 'Favorites',
   'favorites.none': 'None',
   'favorites.change': 'Change',
@@ -5870,6 +5882,8 @@ const ku: Catalog = {
   'play.sheet.friendOnline': '{name}, niha serxet e',
   'play.sheet.send': 'Vexwendinan bişîne ({count})',
   'play.sheet.sent': 'Vexwendin hatin şandin: {count}',
+  'play.sheet.sentTo': 'Vexwendin ji {name} re hat şandin',
+  'play.sheet.posted': 'Di komê de hat weşandin',
   'play.sheet.createAndInvite': 'Lîstikê çêke',
   'play.sheet.postToGroup': 'Lîstikê di komê de biweşîne',
   'play.invited.title': 'Vexwendî',
@@ -5917,6 +5931,8 @@ const ku: Catalog = {
   'play.card.join': 'Tevlî bibe',
   'play.card.enter': 'Veke',
   'play.card.label': 'Karta lîstikê: {game}. {state}',
+  'play.card.from': 'Ji {name}',
+  'play.card.joined': 'Tu tevlî bûyî',
   'play.chat.button': 'Lîstikekê dest pê bike',
   'play.chat.preview': '🎮 Vexwendina lîstikê',
   'play.code.copy': 'Kodê kopî bike',
@@ -7240,6 +7256,8 @@ const ku: Catalog = {
   'friends.mutual': '{count} hevalên hevpar',
   'friends.mutualOne': '1 hevalê hevpar',
   'friends.add': 'Zêde bike',
+  'friends.requestSent': 'Daxwaz hat şandin',
+  'friends.nowFriends': 'Tu û {name} niha heval in',
   'favorites.title': 'Bijare',
   'favorites.none': 'Tune',
   'favorites.change': 'Biguherîne',
@@ -8704,6 +8722,8 @@ const de: Catalog = {
   'play.sheet.friendOnline': '{name}, gerade online',
   'play.sheet.send': 'Einladungen senden ({count})',
   'play.sheet.sent': 'Einladungen gesendet: {count}',
+  'play.sheet.sentTo': 'Einladung an {name} gesendet',
+  'play.sheet.posted': 'In der Gruppe gepostet',
   'play.sheet.createAndInvite': 'Spiel erstellen',
   'play.sheet.postToGroup': 'Spiel in der Gruppe posten',
   'play.invited.title': 'Eingeladen',
@@ -8751,6 +8771,8 @@ const de: Catalog = {
   'play.card.join': 'Beitreten',
   'play.card.enter': 'Öffnen',
   'play.card.label': 'Spielkarte: {game}. {state}',
+  'play.card.from': 'Von {name}',
+  'play.card.joined': 'Du bist dabei',
   'play.chat.button': 'Ein Spiel starten',
   'play.chat.preview': '🎮 Spieleinladung',
   'play.code.copy': 'Code kopieren',
@@ -10074,6 +10096,8 @@ const de: Catalog = {
   'friends.mutual': '{count} gemeinsame Freunde',
   'friends.mutualOne': '1 gemeinsamer Freund',
   'friends.add': 'Hinzufügen',
+  'friends.requestSent': 'Anfrage gesendet',
+  'friends.nowFriends': 'Du und {name} seid jetzt befreundet',
   'favorites.title': 'Favoriten',
   'favorites.none': 'Keins',
   'favorites.change': 'Ändern',
@@ -11538,6 +11562,8 @@ const es: Catalog = {
   'play.sheet.friendOnline': '{name}, conectado ahora',
   'play.sheet.send': 'Enviar invitaciones ({count})',
   'play.sheet.sent': 'Invitaciones enviadas: {count}',
+  'play.sheet.sentTo': 'Invitación enviada a {name}',
+  'play.sheet.posted': 'Publicada en el grupo',
   'play.sheet.createAndInvite': 'Crear la partida',
   'play.sheet.postToGroup': 'Publicar la partida en el grupo',
   'play.invited.title': 'Invitados',
@@ -11585,6 +11611,8 @@ const es: Catalog = {
   'play.card.join': 'Unirse',
   'play.card.enter': 'Abrir',
   'play.card.label': 'Tarjeta de juego: {game}. {state}',
+  'play.card.from': 'De {name}',
+  'play.card.joined': 'Estás dentro',
   'play.chat.button': 'Empezar una partida',
   'play.chat.preview': '🎮 Invitación a jugar',
   'play.code.copy': 'Copiar código',
@@ -12908,6 +12936,8 @@ const es: Catalog = {
   'friends.mutual': '{count} amigos en común',
   'friends.mutualOne': '1 amigo en común',
   'friends.add': 'Añadir',
+  'friends.requestSent': 'Solicitud enviada',
+  'friends.nowFriends': '{name} ya es tu amigo',
   'favorites.title': 'Favoritos',
   'favorites.none': 'Ninguno',
   'favorites.change': 'Cambiar',
@@ -14372,6 +14402,8 @@ const tr: Catalog = {
   'play.sheet.friendOnline': '{name}, şu an çevrimiçi',
   'play.sheet.send': 'Davetleri gönder ({count})',
   'play.sheet.sent': 'Gönderilen davet: {count}',
+  'play.sheet.sentTo': '{name} davet edildi',
+  'play.sheet.posted': 'Grupta paylaşıldı',
   'play.sheet.createAndInvite': 'Oyunu oluştur',
   'play.sheet.postToGroup': 'Oyunu grupta paylaş',
   'play.invited.title': 'Davet edilenler',
@@ -14419,6 +14451,8 @@ const tr: Catalog = {
   'play.card.join': 'Katıl',
   'play.card.enter': 'Aç',
   'play.card.label': 'Oyun kartı: {game}. {state}',
+  'play.card.from': 'Gönderen: {name}',
+  'play.card.joined': 'Katıldın',
   'play.chat.button': 'Bir oyun başlat',
   'play.chat.preview': '🎮 Oyun daveti',
   'play.code.copy': 'Kodu kopyala',
@@ -15742,6 +15776,8 @@ const tr: Catalog = {
   'friends.mutual': '{count} ortak arkadaş',
   'friends.mutualOne': '1 ortak arkadaş',
   'friends.add': 'Ekle',
+  'friends.requestSent': 'İstek gönderildi',
+  'friends.nowFriends': '{name} ile artık arkadaşsınız',
   'favorites.title': 'Favoriler',
   'favorites.none': 'Yok',
   'favorites.change': 'Değiştir',
@@ -17206,6 +17242,8 @@ const ar: Catalog = {
   'play.sheet.friendOnline': '{name}، متصل الآن',
   'play.sheet.send': 'أرسل الدعوات ({count})',
   'play.sheet.sent': 'أُرسلت الدعوات: {count}',
+  'play.sheet.sentTo': 'أُرسلت الدعوة إلى {name}',
+  'play.sheet.posted': 'نُشرت في المجموعة',
   'play.sheet.createAndInvite': 'أنشئ اللعبة',
   'play.sheet.postToGroup': 'انشر اللعبة في المجموعة',
   'play.invited.title': 'المدعوّون',
@@ -17253,6 +17291,8 @@ const ar: Catalog = {
   'play.card.join': 'انضم',
   'play.card.enter': 'افتح',
   'play.card.label': 'بطاقة لعبة: {game}. {state}',
+  'play.card.from': 'من {name}',
+  'play.card.joined': 'انضممت',
   'play.chat.button': 'ابدأ لعبة',
   'play.chat.preview': '🎮 دعوة للعب',
   'play.code.copy': 'انسخ الرمز',
@@ -18576,6 +18616,8 @@ const ar: Catalog = {
   'friends.mutual': '{count} أصدقاء مشتركون',
   'friends.mutualOne': 'صديق مشترك واحد',
   'friends.add': 'إضافة',
+  'friends.requestSent': 'أُرسل الطلب',
+  'friends.nowFriends': 'أنت و{name} صديقان الآن',
   'favorites.title': 'المفضلة',
   'favorites.none': 'لا شيء',
   'favorites.change': 'تغيير',
@@ -20040,6 +20082,8 @@ const fr: Catalog = {
   'play.sheet.friendOnline': '{name}, en ligne',
   'play.sheet.send': 'Envoyer les invitations ({count})',
   'play.sheet.sent': 'Invitations envoyées : {count}',
+  'play.sheet.sentTo': 'Invitation envoyée à {name}',
+  'play.sheet.posted': 'Publiée dans le groupe',
   'play.sheet.createAndInvite': 'Créer la partie',
   'play.sheet.postToGroup': 'Publier la partie dans le groupe',
   'play.invited.title': 'Invités',
@@ -20087,6 +20131,8 @@ const fr: Catalog = {
   'play.card.join': 'Rejoindre',
   'play.card.enter': 'Ouvrir',
   'play.card.label': 'Carte de jeu : {game}. {state}',
+  'play.card.from': 'De la part de {name}',
+  'play.card.joined': 'Tu participes',
   'play.chat.button': 'Lancer une partie',
   'play.chat.preview': '🎮 Invitation à jouer',
   'play.code.copy': 'Copier le code',
@@ -21410,6 +21456,8 @@ const fr: Catalog = {
   'friends.mutual': '{count} amis en commun',
   'friends.mutualOne': '1 ami en commun',
   'friends.add': 'Ajouter',
+  'friends.requestSent': 'Demande envoyée',
+  'friends.nowFriends': '{name} et toi êtes maintenant amis',
   'favorites.title': 'Favoris',
   'favorites.none': 'Aucun',
   'favorites.change': 'Changer',
@@ -22874,6 +22922,8 @@ const nl: Catalog = {
   'play.sheet.friendOnline': '{name}, nu online',
   'play.sheet.send': 'Uitnodigingen versturen ({count})',
   'play.sheet.sent': 'Uitnodigingen verstuurd: {count}',
+  'play.sheet.sentTo': 'Uitnodiging verstuurd naar {name}',
+  'play.sheet.posted': 'In de groep geplaatst',
   'play.sheet.createAndInvite': 'Spel maken',
   'play.sheet.postToGroup': 'Spel in de groep plaatsen',
   'play.invited.title': 'Uitgenodigd',
@@ -22921,6 +22971,8 @@ const nl: Catalog = {
   'play.card.join': 'Meedoen',
   'play.card.enter': 'Openen',
   'play.card.label': 'Spelkaart: {game}. {state}',
+  'play.card.from': 'Van {name}',
+  'play.card.joined': 'Je doet mee',
   'play.chat.button': 'Een spel starten',
   'play.chat.preview': '🎮 Speluitnodiging',
   'play.code.copy': 'Code kopiëren',
@@ -24244,6 +24296,8 @@ const nl: Catalog = {
   'friends.mutual': '{count} gemeenschappelijke vrienden',
   'friends.mutualOne': '1 gemeenschappelijke vriend',
   'friends.add': 'Toevoegen',
+  'friends.requestSent': 'Verzoek verstuurd',
+  'friends.nowFriends': 'Jij en {name} zijn nu vrienden',
   'favorites.title': 'Favorieten',
   'favorites.none': 'Geen',
   'favorites.change': 'Wijzigen',
@@ -25709,6 +25763,8 @@ const ckb: Catalog = {
   'play.sheet.friendOnline': '{name}، ئێستا سەرهێڵە',
   'play.sheet.send': 'بانگهێشتەکان بنێرە ({count})',
   'play.sheet.sent': 'بانگهێشت نێردران: {count}',
+  'play.sheet.sentTo': 'بانگهێشت بۆ {name} نێردرا',
+  'play.sheet.posted': 'لە گرووپەکەدا بڵاوکرایەوە',
   'play.sheet.createAndInvite': 'یارییەکە دروست بکە',
   'play.sheet.postToGroup': 'یارییەکە لە گرووپەکەدا بڵاو بکەرەوە',
   'play.invited.title': 'بانگهێشتکراو',
@@ -25756,6 +25812,8 @@ const ckb: Catalog = {
   'play.card.join': 'بەشداربە',
   'play.card.enter': 'بیکەرەوە',
   'play.card.label': 'کارتی یاری: {game}. {state}',
+  'play.card.from': 'لە {name}ەوە',
+  'play.card.joined': 'بەشداربوویت',
   'play.chat.button': 'یارییەک دەست پێبکە',
   'play.chat.preview': '🎮 بانگهێشتی یاری',
   'play.code.copy': 'کۆدەکە کۆپی بکە',
@@ -27079,6 +27137,8 @@ const ckb: Catalog = {
   'friends.mutual': '{count} هاوڕێی هاوبەش',
   'friends.mutualOne': '1 هاوڕێی هاوبەش',
   'friends.add': 'زیادکردن',
+  'friends.requestSent': 'داواکاری نێردرا',
+  'friends.nowFriends': 'ئێستا تۆ و {name} هاوڕێن',
   'favorites.title': 'دڵخوازەکان',
   'favorites.none': 'هیچ',
   'favorites.change': 'بگۆڕە',

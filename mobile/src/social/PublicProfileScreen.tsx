@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
@@ -31,6 +31,8 @@ import { ReportSheet } from '../reports/ReportSheet';
 import { blockUser } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
 import { PlayWithButton } from '../play/PlayWithButton';
+import { useAnnouncer } from '../stories/ui';
+import { TicketSlip } from './FriendTicket';
 
 interface Profile {
   userId: string;
@@ -77,6 +79,19 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const [notFound, setNotFound] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
+  const { announce, region } = useAnnouncer();
+
+  /*
+   * A request that has gone out is said aloud, as the button hands its ticket
+   * over (TicketSlip); not on arriving at a profile already requested.
+   */
+  const status = profile?.friendStatus ?? null;
+  const lastStatus = useRef(status);
+  useEffect(() => {
+    const before = lastStatus.current;
+    lastStatus.current = status;
+    if (before === 'none' && status === 'pending_out') announce(t('friends.requestSent'));
+  }, [status, announce, t]);
 
   const load = useCallback(() => {
     void client.get<Profile>(`/users/${userId}`).then((res) => {
@@ -245,15 +260,19 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                 </>
               ) : null}
               {labelKey ? (
-                <ClayButton
-                  label={t(labelKey)}
-                  // an undo is pressable but not an invitation, so it stays neutral
-                  tone={isActionable(profile.friendStatus) && !isUndo(profile.friendStatus) ? 'primary' : 'neutral'}
-                  size="large"
-                  busy={busy}
-                  disabled={!isActionable(profile.friendStatus)}
-                  onPress={() => require('friends') && act(profile.friendStatus)}
-                />
+                // a request is a ticket handed over: it slips away from the button, and home again when taken back
+                <TicketSlip sent={profile.friendStatus === 'pending_out'}>
+                  <ClayButton
+                    label={t(labelKey)}
+                    icon={profile.friendStatus === 'pending_out' ? 'ticket' : profile.friendStatus === 'none' ? 'user-plus' : undefined}
+                    // an undo is pressable but not an invitation, so it stays neutral
+                    tone={isActionable(profile.friendStatus) && !isUndo(profile.friendStatus) ? 'primary' : 'neutral'}
+                    size="large"
+                    busy={busy}
+                    disabled={!isActionable(profile.friendStatus)}
+                    onPress={() => require('friends') && act(profile.friendStatus)}
+                  />
+                </TicketSlip>
               ) : null}
               {/*
                 Report and block sit together because they are what you reach
@@ -292,6 +311,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         {profile && !profile.private ? <ProfileActivity userId={profile.userId} sections={profile.sections} /> : null}
         </ScrollView>
       </View>
+      {region}
     </GradientBackground>
   );
 }

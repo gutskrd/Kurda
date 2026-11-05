@@ -114,7 +114,15 @@ export function gameColour(colors: Palette, game: PlayGame): string {
  * theme gets dark letters and a green one white.
  */
 export function codeTone(colors: Palette, game: PlayGame): TileTone {
-  const face = gameColour(colors, game);
+  return filledTone(colors, gameColour(colors, game));
+}
+
+/**
+ * Any face filled with one of the palette's colours, inked the same way: a
+ * code's tile in its game's colour, or a ticket's stub (Ticket.tsx) in the
+ * colour of what it is for.
+ */
+export function filledTone(colors: Palette, face: string): TileTone {
   const inks = [colors.textOnPrimary, colors.textPrimary];
   const best = inks.reduce((a, b) => (contrastRatio(b, face) > contrastRatio(a, face) ? b : a));
   return { face, edge: face, lip: lipOf(face, colors), ink: ensureContrast(best, face, AA_NORMAL) };

@@ -6,8 +6,12 @@ import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { resetPrefsCache } from '../stories/prefs';
 import { resetRatedChoices } from '../ranks/ratedPrefs';
+import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
+import { onHaptic, resetHaptics } from '../feedback/haptics';
+import type { HapticEvent } from '../feedback/hapticPacing';
 import { navigation } from './testing/navigation';
-import { InviteSheet, orderFriends, recentPlayers } from './InviteSheet';
+import { InviteSheet, orderFriends, recentPlayers, sentText } from './InviteSheet';
+import { flightMs } from './SentTickets';
 import type { FriendSummary } from './api';
 
 vi.mock('react-native', () => import('./testing/native'));
@@ -89,6 +93,33 @@ describe('recentPlayers and orderFriends', () => {
   it('searches by name and by username', () => {
     expect(orderFriends([ROJDA, AZAD], [], 'roj').rest.map((f) => f.userId)).toEqual(['u-rojda']);
     expect(orderFriends([ROJDA, AZAD], [], 'AZ').rest.map((f) => f.userId)).toEqual(['u-azad']);
+  });
+});
+
+describe('sentText', () => {
+  const t = (key: string, vars?: Record<string, unknown>) => `${key}${vars ? JSON.stringify(vars) : ''}`;
+  const friendTicket = (name: string) => ({ id: name, name, photoUrl: null });
+  const groupTicket = { id: 'group', name: 'Stories', photoUrl: null, group: true };
+
+  it('names the one friend a ticket went to, and counts them otherwise', () => {
+    expect(sentText([friendTicket('Azad')], 1, t as never)).toBe('play.sheet.sentTo{"name":"Azad"}');
+    expect(sentText([friendTicket('Azad'), friendTicket('Sipan')], 2, t as never)).toBe('play.sheet.sent{"count":2}');
+    // the server says how many it invited: a friend it skipped is not counted as sent
+    expect(sentText([friendTicket('Azad'), friendTicket('Sipan')], 1, t as never)).toBe('play.sheet.sent{"count":1}');
+  });
+
+  it('says a game posted in a group with nobody else asked was posted there', () => {
+    expect(sentText([groupTicket], 0, t as never)).toBe('play.sheet.posted');
+    expect(sentText([groupTicket, friendTicket('Azad')], 1, t as never)).toBe('play.sheet.sentTo{"name":"Azad"}');
+  });
+});
+
+describe('flightMs', () => {
+  it('has nothing to wait for under Reduce Motion, and a long row flies no longer than the three tickets drawn', () => {
+    expect(flightMs(3, true)).toBe(0);
+    expect(flightMs(0, false)).toBe(0);
+    expect(flightMs(1, false)).toBeGreaterThan(0);
+    expect(flightMs(7, false)).toBe(flightMs(3, false));
   });
 });
 
@@ -228,5 +259,98 @@ describe('InviteSheet', () => {
     expect(create.getAttribute('aria-disabled')).toBe('true');
     fireEvent.click(await screen.findByRole('radio', { name: 'Sipan' }));
     expect(screen.getByRole('button', { name: 'Create the game' }).getAttribute('aria-disabled')).not.toBe('true');
+  });
+});
+
+describe('InviteSheet, its tickets', () => {
+  let felt: HapticEvent[] = [];
+  let stopFeeling: () => void = () => undefined;
+  beforeEach(() => {
+    localStorage.clear();
+    resetPrefsCache();
+    resetRatedChoices();
+    resetHaptics();
+    navigation.navigate.mockClear();
+    felt = [];
+    stopFeeling = onHaptic((event) => felt.push(event));
+  });
+  afterEach(() => {
+    stopFeeling();
+    cleanup();
+    patchReactNativeWeb({ reduceMotion: true });
+  });
+  const tick = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+
+  it('writes a ticket out for each friend picked, hands them over, and says whom it went to', async () => {
+    patchReactNativeWeb({ reduceMotion: false });
+    const client = fakeClient(routes({ 'POST /play/invites': ok({ ok: true, invited: 1 }) }));
+    testAuth.client = client;
+    renderWithProviders(<InviteSheet target={{ kind: 'lobby', game: 'wordle-battle', lobbyId: 'b1', mode: 'group' }} onClose={() => undefined} />);
+    await screen.findByRole('checkbox', { name: 'Azad, online now' });
+    // the sheet asks the system about Reduce Motion as it opens: the answer is in before anybody taps
+    await tick();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Azad, online now' }));
+    // the row says who is picked; the ticket written out for them is a picture of it
+    expect(screen.getAllByText('Azad')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Send invites (1)' }));
+    await tick();
+    // the server has them, and the ticket is on its way: felt, but not yet said
+    expect(felt).toEqual(['tap']);
+    expect(screen.queryByText('Invite sent to Azad')).toBeNull();
+    expect(await screen.findByText('Invite sent to Azad')).toBeTruthy();
+    expect(client.calls.find((c) => c.method === 'POST' && c.path === '/play/invites')?.body).toEqual({ game: 'wordle-battle', lobbyId: 'b1', userIds: ['u-azad'] });
+    // the sheet stays for more, with nobody picked
+    expect(screen.getByRole('checkbox', { name: 'Azad, online now' }).getAttribute('aria-checked')).toBe('false');
+  });
+
+  it('sets the tickets back down beside the reason when the invites are refused', async () => {
+    testAuth.client = fakeClient(routes({ 'POST /play/invites': fail({ status: 404, code: 'NOT_FOUND', message: 'route not found' }) }));
+    renderWithProviders(<InviteSheet target={{ kind: 'lobby', game: 'rhyme-match', lobbyId: 'm1', mode: 'group' }} onClose={() => undefined} />);
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Sipan' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send invites (1)' }));
+    expect(await screen.findByText('This isn’t on the server yet. It will work once the server is updated.')).toBeTruthy();
+    expect(felt).toEqual(['error']);
+    // still written out, still picked, ready to try again
+    expect(screen.getAllByText('Sipan')).toHaveLength(2);
+    expect(screen.getByRole('checkbox', { name: 'Sipan' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.queryByText(/Invites? sent/)).toBeNull();
+  });
+
+  it('pins one ticket to the group, says it was posted, and then goes to the lobby', async () => {
+    const onClose = vi.fn();
+    testAuth.client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'rhyme-match', lobbyId: 'm7', invited: 0 }) }));
+    renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
+    fireEvent.click(await screen.findByRole('radio', { name: 'Rhyme Match' }));
+    // the group's ticket carries the game it is for
+    expect(screen.getAllByText('Rhyme Match').length).toBeGreaterThan(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
+    expect(await screen.findByText('Posted in the group')).toBeTruthy();
+    expect(onClose).not.toHaveBeenCalled();
+    await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('RhymeMatch', { id: 'm7' }));
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('goes to the new game’s lobby even when the sheet is closed while it says the invites went', async () => {
+    testAuth.client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'stories', lobbyId: 'g9', invited: 1 }) }));
+    const view = renderWithProviders(<InviteSheet target={{ kind: 'dm', friendId: 'u-rojda' }} onClose={() => undefined} />);
+    await screen.findByRole('radio', { name: 'Rojda' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Create the game' }).getAttribute('aria-disabled')).not.toBe('true'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
+    expect(await screen.findByText('Invite sent to Rojda')).toBeTruthy();
+    view.unmount();
+    expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: 'g9' });
+  });
+
+  it('under Reduce Motion, says the invites went as soon as the server has them, with nothing flying first', async () => {
+    patchReactNativeWeb({ reduceMotion: true });
+    testAuth.client = fakeClient(routes({ 'POST /play/invites': ok({ ok: true, invited: 2 }) }));
+    renderWithProviders(<InviteSheet target={{ kind: 'lobby', game: 'stories', lobbyId: 'g1', mode: 'group' }} onClose={() => undefined} />);
+    await screen.findByRole('checkbox', { name: 'Azad, online now' });
+    await tick();
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Azad, online now' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Rojda' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send invites (2)' }));
+    await tick();
+    expect(screen.getByText('Invites sent: 2')).toBeTruthy();
   });
 });

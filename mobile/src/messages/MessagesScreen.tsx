@@ -24,6 +24,7 @@ import { LargeTitle, TitleBar, useCollapsingTitle } from '../navigation/LargeTit
 import { HeaderButton } from '../navigation/HeaderButton';
 import { useOpenSlide } from '../social/SocialSlide';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { TicketBadge } from '../play/Ticket';
 import { GroupAvatar } from '../groups/GroupAvatar';
 import { resolveDeepLink, type InboxItem } from '../notifications/inbox';
 import { messagePreview } from '../chat/preview';
@@ -207,6 +208,10 @@ export function MessagesScreen(): React.JSX.Element {
                 <InitialsAvatar name={r.username} id={r.userId} size={32} />
               </View>
             ))}
+            {/* friend requests are tickets, as invites to play are: the glyph on the faces' corner */}
+            <View style={[styles.ticketBadge, dir.row === 'row-reverse' ? styles.ticketBadgeLeft : styles.ticketBadgeRight]}>
+              <TicketBadge tone="friend" size={18} ring={colors.surface} />
+            </View>
           </View>
           <View style={styles.rowMain}>
             <Text style={[styles.rowName, styles.unreadName, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -457,6 +462,9 @@ const styles = StyleSheet.create({
   faces: { flexDirection: 'row', width: 52, justifyContent: 'center' },
   face: { borderRadius: radii.pill, borderWidth: 2 },
   faceBehind: { marginLeft: -14 },
+  ticketBadge: { position: 'absolute', bottom: -4 },
+  ticketBadgeRight: { right: 0 },
+  ticketBadgeLeft: { left: 0 },
 
   row: {
     alignItems: 'center',
