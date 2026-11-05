@@ -269,6 +269,8 @@ const SEG_SLOP = { top: 6, bottom: 6 };
 
 /** A labelled (radio) segment's vertical padding: 3 + 11 + an 18pt line + 11 + 3 clears 44. */
 const SEG_PAD_V_TALL = 11;
+/** A segment label's line, set rather than left to the platform where a label may take two (`wrap`). */
+const SEG_LINE = 18;
 
 /**
  * A segmented control: a track, and a capsule that slides to the option you
@@ -290,6 +292,7 @@ export function Segmented<T extends string>({
   labelOf,
   groupLabel,
   size = 'regular',
+  wrap = false,
 }: {
   options: readonly T[];
   value: T;
@@ -309,6 +312,14 @@ export function Segmented<T extends string>({
    * that tall; the older, denser filters keep their height.
    */
   size?: 'regular' | 'large';
+  /**
+   * A label too long for its segment takes a second line, and is set a little
+   * smaller only if one of its words still will not fit, rather than losing
+   * its end. For a switch whose words run long in some languages, such as the
+   * leaderboard's "XP-ya heftane" in a third of a 360-point phone; a label
+   * that fits on one line is drawn exactly as it is without it.
+   */
+  wrap?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const reduceMotion = useReducedMotion();
@@ -365,15 +376,19 @@ export function Segmented<T extends string>({
             accessibilityLabel={label}
             // a regular segment is drawn 32pt tall; the slop takes its touch to 44 without making it look bigger
             hitSlop={padV < SEG_PAD_V_TALL ? SEG_SLOP : undefined}
-            style={[styles.segItem, { paddingVertical: padV }]}
+            // one line keeps the height it always had, and a second adds no more than its own height
+            style={[styles.segItem, wrap ? { minHeight: padV * 2 + SEG_LINE, paddingVertical: SEG_PAD } : { paddingVertical: padV }]}
           >
             <Text
               style={[
                 styles.segText,
                 { color: active ? colors.textPrimary : colors.textSecondary },
                 active && styles.segTextActive,
+                wrap && styles.segTextWrap,
               ]}
-              numberOfLines={1}
+              numberOfLines={wrap ? 2 : 1}
+              adjustsFontSizeToFit={wrap}
+              minimumFontScale={wrap ? 0.8 : undefined}
             >
               {label}
             </Text>
@@ -528,6 +543,7 @@ const styles = StyleSheet.create({
   segItem: { flex: 1, paddingVertical: 6, paddingHorizontal: spacing.xs, alignItems: 'center', justifyContent: 'center' },
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
   segTextActive: { fontWeight: typography.weights.semibold },
+  segTextWrap: { lineHeight: SEG_LINE, textAlign: 'center' },
   selectBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   selectMenuWrap: { alignSelf: 'stretch' },
   selectMenu: { alignSelf: 'stretch', gap: spacing.xs },

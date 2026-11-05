@@ -104,6 +104,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
             value={tab}
             onChange={setTab}
             labelOf={(k) => (k === 'league' ? t('profile.league') : t('rankings.leaderboard'))}
+            wrap
           />
         </View>
         {/* the week that closed: its ceremony, once, the first time the league is opened after */}

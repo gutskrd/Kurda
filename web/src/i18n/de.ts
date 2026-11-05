@@ -1812,7 +1812,7 @@ export const de: Catalogue = {
   'items.show.all': 'Alle',
   'items.show.owned': 'Im Besitz',
   'items.show.notOwned': 'Nicht im Besitz',
-  'rankings.board.weeklyXp': 'Wöchentliche XP',
+  'rankings.board.weeklyXp': 'Wochen-XP',
   'rankings.board.weeklyXpBlurb': 'Die besten Lernenden dieser Woche nach verdienter Erfahrung.',
   'rankings.scope.global': 'Weltweit',
   'rankings.scope.country': 'Mein Land',

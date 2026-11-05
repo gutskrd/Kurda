@@ -135,6 +135,7 @@ export function Leaderboard({
             onScope(next);
           }}
           labelOf={(key) => t(SCOPES.find((s) => s.key === key)!.labelKey)}
+          wrap
         />
       </View>
       <AsyncBoundary loading={!board && !error} error={!board ? error : null} onRetry={() => load(0)} skeleton={<BoardSkeleton />}>
@@ -149,8 +150,10 @@ export function Leaderboard({
  * choice of three. A second segmented control rather than a filter button and
  * a sheet: changing what the board ranks is the first thing anyone does here,
  * and three short words fit across a phone, so they are all in view, a tap
- * apart. The coin and the gem are on every row of their boards, beside the
- * amounts, where they say what the number is.
+ * apart. Not every language's words are short: the weekly board's name takes
+ * a second line where a third of a narrow phone is too little for it, rather
+ * than being cut. The coin and the gem are on every row of their boards,
+ * beside the amounts, where they say what the number is.
  */
 export function BoardSwitch({ value, onChange }: { value: BoardType; onChange: (next: BoardType) => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -161,6 +164,7 @@ export function BoardSwitch({ value, onChange }: { value: BoardType; onChange: (
       onChange={onChange}
       labelOf={(key) => t(KINDS.find((k) => k.key === key)!.labelKey)}
       groupLabel={t('rankings.rankBy')}
+      wrap
     />
   );
 }

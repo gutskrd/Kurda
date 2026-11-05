@@ -469,7 +469,7 @@ export const es: Catalogue = {
   'saved.emptyLink': 'Comunidad',
   'rankings.title': 'Clasificación',
   'rankings.tab.league': 'Liga',
-  'rankings.tab.board': 'Tabla de clasificación',
+  'rankings.tab.board': 'Clasificación',
   'games.back': 'Volver a los juegos',
   'games.emptyPool': 'Todavía no hay palabras disponibles para jugar: vuelve más tarde.',
   'games.you': 'Tú',

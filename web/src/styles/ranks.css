@@ -1406,10 +1406,10 @@
   color: var(--ink-3);
   font: inherit;
   font-weight: 650;
+  line-height: 1.15;
   cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* a name too long for half a phone takes a second line rather than losing its end */
+  overflow-wrap: break-word;
 }
 .rankings-tab.is-active {
   background: var(--surface);
@@ -1465,6 +1465,31 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/*
+ * On a phone, three equal thirds left a label about 65px between its icon and
+ * the segment's edge, and most languages' first board is longer than that:
+ * "XP-ya heftane" was cut to "XP-ya h…", and so were the weekly board in
+ * eight of the nine languages and the gems in three. So down here each
+ * segment takes the room its own words need, the short Zêr giving the long
+ * weekly board what it does not use, with the padding and the gap a step
+ * tighter; and a label that still does not fit goes onto a second line
+ * rather than losing its end. The floor is the longest word, so a word is
+ * never cut; the longest in any of the nine fits at 360px.
+ */
+@media (max-width: 560px) {
+  .rank-by {
+    grid-template-columns: repeat(3, minmax(min-content, auto));
+  }
+  .rank-by-btn {
+    gap: 4px;
+    padding: 4px 8px;
+  }
+  .rank-by-btn > span:last-child {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+  }
 }
 .rank-by-btn.is-active {
   background: var(--surface);
