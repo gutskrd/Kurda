@@ -8779,7 +8779,7 @@ const ku: Catalog = {
   'games.memory.typo': 'Hate pejirandin — hay ji nîşanan hebe',
   'games.memory.youGave': 'Te nivîsî:',
   'games.memory.why.glossary': 'Ev peyvên ferhenga çîrokê ne, yên ku hêjayî parastinê ne. Hevoka li dora her yekê bîne bîra xwe û peyv bi wê re tê.',
-  'games.memory.why.vocabulary': 'Ev peyvên ku dersên te hîn dikin in. Dîtina wan di nav nivîseke rastîn de wan di bîrê de dihêle.',
+  'games.memory.why.vocabulary': 'Ev ew peyv in ku dersên te hîn dikin. Dîtina wan di nav nivîseke rastîn de wan di bîrê de dihêle.',
   'games.hear.name': 'Bibihîze, bibîne',
   'games.card.hear': 'Li dengên rastîn guhdarî bike û ya ku te bihîst bibîne.',
   'games.hear.intro': 'Her deng mirovek e ku dipeyive. Guhdarî bike, paşê ya ku te bihîst bibîne. Peyvên ku tu dîsa dibînî dikarin bi dengekî din vegerin.',
