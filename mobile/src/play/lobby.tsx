@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, StyleSheet, Text, View } from 'react-native';
+import { Alert, AppState, Pressable, StyleSheet, Text, View } from 'react-native';
 import type { PlayGame } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -7,7 +7,7 @@ import { useRealtimeReconnect } from '../realtime/RealtimeProvider';
 import { useUserEvents } from '../realtime/useUserEvents';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { LobbyInvites } from './LobbyInvites';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
@@ -74,17 +74,24 @@ export interface LobbySeat {
  * with a flag to report them by seat, and, for the host, where each invite
  * stands. Invite friends is on the code's ticket (CodeTicket `LobbyShare`),
  * beside the other way of bringing people in.
+ *
+ * With `onRemove`, the host can take another player out by seat, asked first
+ * as a story game's lobby asks (stories/game/Lobby): it cannot be taken back,
+ * since a player removed cannot join that lobby again.
  */
 export function LobbyPeople({
   game,
   lobbyId,
   players,
   isHost,
+  onRemove,
 }: {
   game: PlayGame;
   lobbyId: string;
   players: readonly LobbySeat[];
   isHost: boolean;
+  /** the host's remove, by seat; left out, nobody is offered it */
+  onRemove?: (seat: number) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -96,6 +103,11 @@ export function LobbyPeople({
             .filter((p) => !p.gone)
             .map((p) => {
               const name = p.isMe ? t('games.you') : (p.name ?? t('stories.player', { seat: p.seat }));
+              const remove = (): void =>
+                Alert.alert(t('stories.lobby.removeTitle', { name }), t('stories.lobby.removeBody'), [
+                  { text: t('common.cancel'), style: 'cancel' },
+                  { text: t('common.remove'), style: 'destructive', onPress: () => onRemove?.(p.seat) },
+                ]);
               return (
                 <View key={p.seat} style={styles.player}>
                   <InitialsAvatar name={p.name ?? String(p.seat)} id={`seat-${p.seat}`} size={32} photoUrl={p.avatarUrl} />
@@ -105,6 +117,16 @@ export function LobbyPeople({
                   {p.isHost ? <Icon name="crown" size={14} color={colors.gold} /> : null}
                   {/* anyone else in the lobby can be reported, by seat */}
                   {!p.isMe ? <PlayerReportButton game={game} gameId={lobbyId} seat={p.seat} name={p.name ?? null} /> : null}
+                  {onRemove && isHost && !p.isMe && !p.isHost ? (
+                    <Pressable
+                      onPress={remove}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('stories.lobby.removeWho', { name })}
+                      style={styles.remove}
+                    >
+                      <Icon name="close" size={18} color={colors.textSecondary} />
+                    </Pressable>
+                  ) : null}
                 </View>
               );
             })}
@@ -120,4 +142,5 @@ const styles = StyleSheet.create({
   players: { gap: spacing.xs },
   player: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   name: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  remove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', borderRadius: radii.pill },
 });

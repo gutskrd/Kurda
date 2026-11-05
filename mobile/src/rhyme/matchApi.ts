@@ -18,7 +18,8 @@ export interface ScoreEntry {
 
 export interface MatchState {
   id: string;
-  status: 'lobby' | 'active' | 'finished';
+  /** `cancelled`: the host left the lobby, which calls the match off for everyone */
+  status: 'lobby' | 'active' | 'finished' | 'cancelled';
   dialect: Dialect;
   /** revealed once the match starts — the lobby must not give it away early */
   prompt: string | null;
@@ -93,6 +94,14 @@ export const joinMatch = (client: ApiClient, id: string): Promise<ApiResult<Matc
 
 export const startMatch = (client: ApiClient, id: string): Promise<ApiResult<MatchState>> =>
   client.post(`/rhyme/matches/${id}/start`);
+
+/** Leave: out of the lobby (the host leaving calls it off for everyone), or out of a match under way, your score standing. */
+export const leaveMatch = (client: ApiClient, id: string): Promise<ApiResult<{ ok: true }>> =>
+  client.post(`/rhyme/matches/${id}/leave`);
+
+/** The host takes a player out of the lobby, by seat; they cannot join it again. */
+export const removeFromMatch = (client: ApiClient, id: string, seat: number): Promise<ApiResult<MatchState>> =>
+  client.post(`/rhyme/matches/${id}/remove`, { seat });
 
 export const submitRhyme = (
   client: ApiClient,

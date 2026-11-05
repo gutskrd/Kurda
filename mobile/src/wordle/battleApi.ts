@@ -21,7 +21,8 @@ export interface OpponentView {
 
 export interface BattleState {
   id: string;
-  status: 'lobby' | 'active' | 'finished';
+  /** `cancelled`: the host left the lobby, which calls the battle off for everyone */
+  status: 'lobby' | 'active' | 'finished' | 'cancelled';
   difficulty: Difficulty;
   targetLength: number;
   maxPlayers: number;
@@ -94,6 +95,17 @@ export const joinBattle = (client: ApiClient, id: string): Promise<ApiResult<Bat
 
 export const startBattle = (client: ApiClient, id: string): Promise<ApiResult<BattleState>> =>
   client.post(`/wordle/battles/${id}/start`);
+
+/**
+ * Leave: out of the lobby (the host leaving calls it off for everyone), or
+ * out of a battle under way, finished where you stand so nobody waits for you.
+ */
+export const leaveBattle = (client: ApiClient, id: string): Promise<ApiResult<{ ok: true }>> =>
+  client.post(`/wordle/battles/${id}/leave`);
+
+/** The host takes a player out of the lobby, by seat; they cannot join it again. */
+export const removeFromBattle = (client: ApiClient, id: string, seat: number): Promise<ApiResult<BattleState>> =>
+  client.post(`/wordle/battles/${id}/remove`, { seat });
 
 export const guessInBattle = (client: ApiClient, id: string, word: string): Promise<ApiResult<BattleState>> =>
   client.post(`/wordle/battles/${id}/guesses`, { word });

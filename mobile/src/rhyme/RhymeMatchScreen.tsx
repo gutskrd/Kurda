@@ -13,7 +13,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
+import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
 import { LobbyRated, RatedChoice, RatedPill } from '../ranks/Rated';
 import { useRatedChoice } from '../ranks/ratedPrefs';
 import { RankResultPanel } from '../ranks/RankResultPanel';
@@ -28,6 +30,8 @@ import {
   getMatch,
   getMatchResults,
   joinMatch,
+  leaveMatch,
+  removeFromMatch,
   startMatch,
   submitRhyme,
   type Dialect,
@@ -69,6 +73,10 @@ const TICK_MS = 200;
  * `id` is optional: without one the screen creates a room (or joins one by its
  * code), with one it is that room. That is what lets a code, an invite or an
  * old invite link open straight into a match.
+ *
+ * Going back from the lobby leaves it (play/backOut), asked first; the host
+ * can take a player out by seat; and Android's back while the clock runs asks
+ * before it leaves the round.
  */
 export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -88,7 +96,7 @@ export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExi
 
   return (
     <Shell title={t('games.rhymeMatch.name')} onExit={onExit}>
-      {id ? <MatchRoom key={id} id={id} onLeave={() => setId(null)} onOpen={setId} /> : <CreateMatch onEnter={setId} />}
+      {id ? <MatchRoom key={id} id={id} onLeave={() => setId(null)} onOpen={setId} onExit={onExit} /> : <CreateMatch onEnter={setId} />}
     </Shell>
   );
 }
@@ -147,7 +155,19 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
 }
 
 /** One room: lobby, the timed round, the scoreboard. Polls until it is over. */
-function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; onOpen: (id: string) => void }): React.JSX.Element {
+function MatchRoom({
+  id,
+  onLeave,
+  onOpen,
+  onExit,
+}: {
+  id: string;
+  /** to a new match, in this screen */
+  onLeave: () => void;
+  onOpen: (id: string) => void;
+  /** the screen's own back */
+  onExit: () => void;
+}): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -163,6 +183,8 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
   const loadedOnce = useRef(false);
   // results: "Invite someone else" opens the invite sheet for this game
   const [inviting, setInviting] = useState(false);
+  // the server has no match here for this viewer any more: never one, not theirs, or the host took them out
+  const [gone, setGone] = useState(false);
 
   const load = useCallback(async () => {
     const res = await getMatch(client, id);
@@ -170,6 +192,8 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
       setMatch(res.data);
       setRemaining(res.data.remainingMs);
       loadedOnce.current = true;
+    } else if (res.error.status === 404) {
+      setGone(true);
     } else if (!loadedOnce.current) {
       // a later poll failing is a blip; the first one failing is the whole screen
       setError(res.error.code === 'GAME_STARTED' ? t('stories.join.started') : describeError(res.error, t));
@@ -184,7 +208,7 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
   useEffect(() => {
     void load();
   }, [load]);
-  useLobbyRefresh('rhyme-match', id, () => void load(), match?.status !== 'finished');
+  useLobbyRefresh('rhyme-match', id, () => void load(), !gone && match?.status !== 'finished' && match?.status !== 'cancelled');
 
   useEffect(() => {
     if (match?.status !== 'finished' || results) return;
@@ -220,6 +244,10 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
   const active = match?.status === 'active' && match.me != null && remaining > 0;
   // an invite waits while a match is on (the banner would sit over the clock)
   useQuietInvites(match?.status === 'active');
+  const isHost = match ? (match.isHost ?? match.createdBy === user?.id) : false;
+  // backing out of the lobby leaves it, asked first; Android's back while the clock runs asks before it leaves the round
+  useLeaveLobbyOnBack(!gone && match?.status === 'lobby' && match.me != null, isHost, () => leaveMatch(client, id));
+  useHardwareBack(active ? () => askLeaveGame(t, onExit) : null);
 
   const submit = useCallback(async () => {
     const typed = word.trim();
@@ -255,6 +283,17 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
     else setNotice(describeError(res.error, t));
   };
 
+  // called off by its host, or not here for this viewer any more: said plainly, with a match of their own one tap away
+  if (gone || match?.status === 'cancelled') {
+    return (
+      <GlassCard style={styles.card}>
+        <Text style={[styles.blurb, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+          {gone ? t('stories.game.unavailable') : t('stories.game.cancelled')}
+        </Text>
+        <ClayButton label={t('games.rhymeMatch.new')} tone="primary" onPress={onLeave} style={styles.stretch} />
+      </GlassCard>
+    );
+  }
   if (error && !match) {
     return (
       <GlassCard style={styles.card}>
@@ -266,7 +305,6 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
   if (!match) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
 
   const playerCount = match.scoreboard.length || (match.me ? 1 : 0);
-  const isHost = match.isHost ?? match.createdBy === user?.id;
   const seconds = Math.ceil(remaining / 1000);
 
   // ---- lobby -----------------------------------------------------------------
@@ -288,7 +326,13 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
             {t('games.lobbyWaiting', { count: playerCount })}
           </Text>
           {match.me != null ? (
-            <LobbyPeople game="rhyme-match" lobbyId={id} players={match.players ?? []} isHost={isHost} />
+            <LobbyPeople
+              game="rhyme-match"
+              lobbyId={id}
+              players={match.players ?? []}
+              isHost={isHost}
+              onRemove={isHost ? (seat) => void act(() => removeFromMatch(client, id, seat)) : undefined}
+            />
           ) : null}
           {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
           {match.me != null ? (
@@ -327,6 +371,16 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
               {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
             </Text>
           )}
+          {/* the lobby's own way out is the screen's back, which asks and then leaves (play/backOut) */}
+          {match.me != null ? (
+            <ClayButton
+              label={isHost ? t('stories.lobby.cancelGame') : t('stories.lobby.leave')}
+              tone="danger"
+              variant="outline"
+              onPress={onExit}
+              style={styles.stretch}
+            />
+          ) : null}
         </GlassCard>
       </>
     );

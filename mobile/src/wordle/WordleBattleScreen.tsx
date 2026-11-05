@@ -11,7 +11,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
+import { askLeaveGame, useLeaveLobbyOnBack } from '../play/backOut';
 import { LobbyRated, RatedChoice, RatedPill } from '../ranks/Rated';
 import { useRatedChoice } from '../ranks/ratedPrefs';
 import { RankResultPanel } from '../ranks/RankResultPanel';
@@ -31,6 +33,8 @@ import {
   getResults,
   guessInBattle,
   joinBattle,
+  leaveBattle,
+  removeFromBattle,
   startBattle,
   type BattleResults,
   type BattleState,
@@ -57,6 +61,10 @@ const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
  * `id` is optional so the screen is both halves of the feature: without one it
  * creates a room (or joins one by its code), with one it is that room. That is
  * what lets a code, an invite or an old invite link open straight into a match.
+ *
+ * Going back from the lobby leaves it (play/backOut), asked first; the host
+ * can take a player out by seat; and Android's back in the middle of a race
+ * asks before it leaves the board.
  */
 export function WordleBattleScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -76,7 +84,7 @@ export function WordleBattleScreen({ id: initialId, onExit }: { id?: string; onE
 
   return (
     <Shell title={t('games.battle.name')} onExit={onExit}>
-      {id ? <BattleRoom key={id} id={id} onLeave={() => setId(null)} onOpen={setId} /> : <CreateBattle onEnter={setId} />}
+      {id ? <BattleRoom key={id} id={id} onLeave={() => setId(null)} onOpen={setId} onExit={onExit} /> : <CreateBattle onEnter={setId} />}
     </Shell>
   );
 }
@@ -134,7 +142,19 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
 }
 
 /** One room: lobby, play, scoreboard. Polls until the match is over. */
-function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; onOpen: (id: string) => void }): React.JSX.Element {
+function BattleRoom({
+  id,
+  onLeave,
+  onOpen,
+  onExit,
+}: {
+  id: string;
+  /** to a new battle, in this screen */
+  onLeave: () => void;
+  onOpen: (id: string) => void;
+  /** the screen's own back */
+  onExit: () => void;
+}): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -148,12 +168,16 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
   const loadedOnce = useRef(false);
   // results: "Invite someone else" opens the invite sheet for this game
   const [inviting, setInviting] = useState(false);
+  // the server has no battle here for this viewer any more: never one, not theirs, or the host took them out
+  const [gone, setGone] = useState(false);
 
   const load = useCallback(async () => {
     const res = await getBattle(client, id);
     if (res.ok) {
       setBattle(res.data);
       loadedOnce.current = true;
+    } else if (res.error.status === 404) {
+      setGone(true);
     } else if (!loadedOnce.current) {
       // a later poll failing is a blip; the first one failing is the whole screen
       setError(res.error.code === 'GAME_STARTED' ? t('stories.join.started') : describeError(res.error, t));
@@ -169,7 +193,7 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
   useEffect(() => {
     void load();
   }, [load]);
-  useLobbyRefresh('wordle-battle', id, () => void load(), battle?.status !== 'finished');
+  useLobbyRefresh('wordle-battle', id, () => void load(), !gone && battle?.status !== 'finished' && battle?.status !== 'cancelled');
 
   useEffect(() => {
     if (battle?.status !== 'finished' || results) return;
@@ -182,6 +206,10 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
   const active = battle?.status === 'active' && me != null && me.status === 'playing' && !me.solved;
   // an invite waits while a battle is on (the banner would sit over the board)
   useQuietInvites(battle?.status === 'active');
+  const isHost = battle ? (battle.isHost ?? battle.createdBy === user?.id) : false;
+  // backing out of the lobby leaves it, asked first; Android's back mid-race asks before it leaves the board
+  useLeaveLobbyOnBack(!gone && battle?.status === 'lobby' && me != null, isHost, () => leaveBattle(client, id));
+  useHardwareBack(active ? () => askLeaveGame(t, onExit) : null);
 
   const submit = useCallback(async () => {
     if (!battle || !me || !active || busy) return;
@@ -228,6 +256,17 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
     else setNotice(describeError(res.error, t));
   };
 
+  // called off by its host, or not here for this viewer any more: said plainly, with a battle of their own one tap away
+  if (gone || battle?.status === 'cancelled') {
+    return (
+      <GlassCard style={styles.card}>
+        <Text style={[styles.blurb, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+          {gone ? t('stories.game.unavailable') : t('stories.game.cancelled')}
+        </Text>
+        <ClayButton label={t('games.battle.new')} tone="primary" onPress={onLeave} style={styles.stretch} />
+      </GlassCard>
+    );
+  }
   if (error && !battle) {
     return (
       <GlassCard style={styles.card}>
@@ -239,7 +278,6 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
   if (!battle) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
 
   const playerCount = (battle.me ? 1 : 0) + battle.opponents.length;
-  const isHost = battle.isHost ?? battle.createdBy === user?.id;
 
   // ---- lobby -----------------------------------------------------------------
   if (battle.status === 'lobby') {
@@ -260,7 +298,13 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
             {t('games.lobbyWaiting', { count: playerCount })}
           </Text>
           {battle.me != null ? (
-            <LobbyPeople game="wordle-battle" lobbyId={id} players={battle.players ?? []} isHost={isHost} />
+            <LobbyPeople
+              game="wordle-battle"
+              lobbyId={id}
+              players={battle.players ?? []}
+              isHost={isHost}
+              onRemove={isHost ? (seat) => void act(() => removeFromBattle(client, id, seat)) : undefined}
+            />
           ) : null}
           {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
           {battle.me != null ? (
@@ -299,6 +343,16 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
               {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
             </Text>
           )}
+          {/* the lobby's own way out is the screen's back, which asks and then leaves (play/backOut) */}
+          {battle.me != null ? (
+            <ClayButton
+              label={isHost ? t('stories.lobby.cancelGame') : t('stories.lobby.leave')}
+              tone="danger"
+              variant="outline"
+              onPress={onExit}
+              style={styles.stretch}
+            />
+          ) : null}
         </GlassCard>
       </>
     );

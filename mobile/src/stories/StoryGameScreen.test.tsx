@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+import { Alert } from 'react-native';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { StoryGameView } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
 import { gameView } from './testing/views';
 import { StoryGameScreen } from './StoryGameScreen';
+import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
 
 // the game the screen is showing, set by each test
 const game = vi.hoisted(() => ({ view: null as StoryGameView | null }));
@@ -28,9 +30,33 @@ vi.mock('./useStoryGame', () => ({
   }),
 }));
 vi.mock('./game/useGameStory', () => ({ useGameStory: () => null }));
+vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
 
 describe('StoryGameScreen', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+    resetHardwareBack();
+  });
+
+  // iOS cannot swipe a game away; Android's back asks first while the story is being read and answered
+  it('asks before Android’s back leaves a game under way, and lets it go once the game is done', () => {
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation((_title, _body, buttons) => {
+      buttons?.find((b) => b.style === 'destructive')?.onPress?.();
+    });
+    const onExit = vi.fn();
+    game.view = gameView({ status: 'reading' });
+    const view = renderWithProviders(<StoryGameScreen id="g1" onExit={onExit} />);
+    act(() => {
+      expect(pressBack()).toBe(true);
+    });
+    expect(alert.mock.calls[0]?.[0]).toBe('Leave this game?');
+    expect(onExit).toHaveBeenCalledTimes(1);
+
+    game.view = gameView({ status: 'cancelled' });
+    view.rerender(<StoryGameScreen id="g1" onExit={onExit} />);
+    expect(pressBack()).toBe(false);
+  });
 
   it('names the screen in the app’s words, never the story’s title in the app’s voice', () => {
     game.view = gameView({ status: 'cancelled' }, { storyTitle: 'Nanê Germ', dialect: 'kurmanci' });
