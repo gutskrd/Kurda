@@ -37,7 +37,7 @@ import {
   type TimerSeconds,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { audioCoverage, glossaryForReader, narrationOf, sentenceRecordings } from '../stories/service.js';
+import { PUBLISHED_SQL, audioCoverage, glossaryForReader, narrationOf, sentenceRecordings } from '../stories/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import { areFriendsSql } from '../users/age.js';
 import { XpService } from '../xp/service.js';
@@ -623,6 +623,14 @@ export class StoryGamesService {
    * not take the text away mid-game); before that, and after the copy is
    * cleared, the story as published. Recordings are looked up now.
    *
+   * The translations and the attribution are never copied into the game, so
+   * they are read from the story as it is now, and only while it is published
+   * and approved. A story that went back to draft or was archived may carry
+   * a translation or a source nobody has reviewed yet, and those must not
+   * reach a game's members any more than the story's own list would show
+   * them: the frozen text is served without its translations, and with no
+   * author or source, until the story is published again.
+   *
    * `frozen` says which it was: only the game's own copy stays the same at
    * this address. In the lobby the host can still pick another story, and the
    * address would not change with it.
@@ -647,10 +655,11 @@ export class StoryGamesService {
       featured: boolean;
       reading_minutes: number | null;
       published_at: Date | null;
+      live: boolean;
     }>(
       `SELECT g.story_id, g.story_snapshot, g.dialect, g.level, g.length,
               s.language, s.category, s.tradition, s.author, s.story_source, s.source_url, s.attribution_note, s.translations,
-              s.cover, s.featured, s.reading_minutes, s.published_at
+              s.cover, s.featured, s.reading_minutes, s.published_at, (${PUBLISHED_SQL}) AS live
          FROM story_games g JOIN story_game_players p ON p.game_id = g.id AND p.user_id = $2 AND NOT p.removed
          JOIN stories s ON s.id = g.story_id
         WHERE g.id = $1`,
@@ -658,8 +667,8 @@ export class StoryGamesService {
     );
     const row = res.rows[0];
     if (!row) throw notFound();
-    // the text as the game copied it, or the live story before a copy is made (the lobby); how it is filed and
-    // attributed is read from the story itself either way, since those are not content and a game never freezes them
+    // the text as the game copied it, or the live story before a copy is made (the lobby); how it is filed is read
+    // from the story itself either way, since that is not content and a game never freezes it
     let text: { id: string; slug: string; title: string; summary: string | null; wordCount: number; paragraphs: string[]; glossary: StoryGlossEntry[] };
     if (row.story_snapshot) {
       const s = row.story_snapshot;
@@ -674,9 +683,10 @@ export class StoryGamesService {
       sentenceRecordings(this.pool, keys),
       glossaryForReader(this.pool, row.dialect, text.glossary),
     ]);
-    // a translation written for a text that has since changed shape would sit beside the wrong paragraphs: left out
+    // a translation written for a text that has since changed shape would sit beside the wrong paragraphs: left out;
+    // and none at all while the story is not published and approved (see above)
     const translations: Record<string, string[]> = {};
-    for (const [locale, t] of Object.entries(row.translations ?? {})) {
+    for (const [locale, t] of Object.entries(row.live ? (row.translations ?? {}) : {})) {
       if (typeof t !== 'string') continue;
       const paragraphs = storyParagraphs(t);
       if (paragraphs.length === text.paragraphs.length) translations[locale] = paragraphs;
@@ -697,16 +707,16 @@ export class StoryGamesService {
         audioCoverage: coverage,
         category: row.category,
         tradition: row.tradition,
-        author: row.author,
+        author: row.live ? row.author : null,
         featured: row.featured,
         cover: row.cover,
         publishedAt: row.published_at?.toISOString() ?? null,
         audio,
         ...(Object.keys(voices).length > 0 ? { voices } : {}),
         translations,
-        source: row.story_source,
-        sourceUrl: row.source_url,
-        attributionNote: row.attribution_note,
+        source: row.live ? row.story_source : null,
+        sourceUrl: row.live ? row.source_url : null,
+        attributionNote: row.live ? row.attribution_note : null,
         versions: [],
         narration: narrationOf(text.paragraphs, audio, durations),
       },
