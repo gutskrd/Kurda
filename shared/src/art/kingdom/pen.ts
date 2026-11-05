@@ -250,6 +250,13 @@ export interface Palette {
   bread: Tri;
   flower: readonly string[];
   glow: string;
+  /** the valley round the village: pines on the slopes, the lake's sand, ploughed earth, ripe wheat, the shepherds' black felt */
+  pine: Tri;
+  forest: string;
+  sand: Tri;
+  soil: Tri;
+  wheat: Tri;
+  felt: Tri;
 }
 
 const tri = (top: string, left: string, right: string): Tri => ({ top, left, right });
@@ -301,6 +308,12 @@ export const DAY: Palette = {
   bread: tri('#f7cf8a', '#e4a95a', '#bf843b'),
   flower: ['#f25f5c', '#ffd23f', '#ffffff', '#c86bd6', '#ff9f43'],
   glow: '#33424a',
+  pine: tri('#6fb35a', '#4f9447', '#3a7639'),
+  forest: '#5e9c4a',
+  sand: tri('#f6e3b0', '#ead096', '#cfae6e'),
+  soil: tri('#c98e5a', '#ad7445', '#8a5732'),
+  wheat: tri('#f8d974', '#eab94a', '#c99331'),
+  felt: tri('#5a4a44', '#3f322e', '#2c2220'),
 };
 
 /** For a dark screen: the same village in the last light of the evening, its windows lit. */
@@ -350,4 +363,10 @@ export const DUSK: Palette = {
   bread: tri('#e9c07f', '#d39c52', '#ae7836'),
   flower: ['#ea5a57', '#f6cd45', '#f0e8e0', '#b664c6', '#f39a45'],
   glow: '#ffcf5a',
+  pine: tri('#5d9a55', '#457f44', '#336437'),
+  forest: '#4f8445',
+  sand: tri('#e2cba0', '#d0b384', '#ae905f'),
+  soil: tri('#b07d55', '#966541', '#744b2e'),
+  wheat: tri('#e8c56e', '#d3a64a', '#ad8233'),
+  felt: tri('#4e413d', '#372c29', '#271f1d'),
 };

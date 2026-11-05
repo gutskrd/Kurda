@@ -86,7 +86,7 @@ function shadeOf(t: Tri): string {
 }
 
 /** The grass lip that hangs over a wall's top edge: a wavy band along an edge between two world points. */
-function lip(a: readonly [number, number, number], b: readonly [number, number, number], t: Tri, rand: Rand): string {
+export function lip(a: readonly [number, number, number], b: readonly [number, number, number], t: Tri, rand: Rand): string {
   const steps = Math.max(3, Math.round(Math.hypot(b[0] - a[0], b[1] - a[1]) / 9));
   const top: Pt[] = [];
   const drop: Pt[] = [];
@@ -107,27 +107,31 @@ function lip(a: readonly [number, number, number], b: readonly [number, number, 
   return `<path d="${d}Z" fill="${t.left}"/>`;
 }
 
-/** A terrace: its grass, and the walls on its two near sides down to `foot`. */
-function terrace(t: Terrace, pal: Palette, rand: Rand): string {
+/**
+ * A terrace: its grass, and the walls on its two near sides, down to the
+ * lake or to the valley floor in front of each (`feet`: the near-left wall's
+ * foot, then the near-right's; both to the lake unless given).
+ */
+export function terrace(t: Terrace, pal: Palette, rand: Rand, feet: readonly [number, number] = [WATER_Z - 2, WATER_Z - 2]): string {
   const { x, y, w, d, z } = t;
-  const foot = WATER_Z - 2;
+  const [footL, footR] = feet;
   const p = new Part(0);
-  p.sil(wpoly([[x, y, z], [x + w, y, z], [x + w, y, foot], [x + w, y + d, foot], [x, y + d, foot], [x, y + d, z]]));
+  p.sil(wpoly([[x, y, z], [x + w, y, z], [x + w, y, footR], [x + w, y + d, Math.min(footL, footR)], [x, y + d, footL], [x, y + d, z]]));
   // the walls: down-left lit, down-right in shade
-  const left = (u: number, v: number): Pt => iso(x + u, y + d, foot + v);
-  const right = (u: number, v: number): Pt => iso(x + w, y + u, foot + v);
-  p.fill(wpoly([[x, y + d, foot], [x + w, y + d, foot], [x + w, y + d, z], [x, y + d, z]]), pal.cliff.left);
-  p.fill(wpoly([[x + w, y, foot], [x + w, y + d, foot], [x + w, y + d, z], [x + w, y, z]]), pal.cliff.right);
-  drystone(p, left, w, z - foot, { top: pal.cliff.top, left: pal.cliff.left, right: pal.cliff.right }, rand);
-  drystone(p, right, d, z - foot, { top: pal.cliff.left, left: pal.cliff.right, right: pal.cliff.right }, rand);
+  const left = (u: number, v: number): Pt => iso(x + u, y + d, footL + v);
+  const right = (u: number, v: number): Pt => iso(x + w, y + u, footR + v);
+  if (z > footL) p.fill(wpoly([[x, y + d, footL], [x + w, y + d, footL], [x + w, y + d, z], [x, y + d, z]]), pal.cliff.left);
+  if (z > footR) p.fill(wpoly([[x + w, y, footR], [x + w, y + d, footR], [x + w, y + d, z], [x + w, y, z]]), pal.cliff.right);
+  if (z > footL) drystone(p, left, w, z - footL, { top: pal.cliff.top, left: pal.cliff.left, right: pal.cliff.right }, rand);
+  if (z > footR) drystone(p, right, d, z - footR, { top: pal.cliff.left, left: pal.cliff.right, right: pal.cliff.right }, rand);
   // the grass
   p.fill(wpoly([[x, y, z], [x + w, y, z], [x + w, y + d, z], [x, y + d, z]]), pal.grass.top);
-  p.raw(lip([x, y + d, z], [x + w, y + d, z], pal.grass, rand) + lip([x + w, y + d, z], [x + w, y, z], { ...pal.grass, left: pal.grass.right }, rand));
+  p.raw((z > footL ? lip([x, y + d, z], [x + w, y + d, z], pal.grass, rand) : '') + (z > footR ? lip([x + w, y + d, z], [x + w, y, z], { ...pal.grass, left: pal.grass.right }, rand) : ''));
   return p.svg();
 }
 
 /** Lighter patches of meadow on a terrace, so the grass is not one flat sheet. */
-function meadow(t: Terrace, pal: Palette, rand: Rand): string {
+export function meadow(t: Terrace, pal: Palette, rand: Rand): string {
   let d = '';
   for (let i = 0; i < 5; i++) {
     const cx = t.x + 20 + rand() * (t.w - 40);
@@ -171,7 +175,7 @@ function foam(pal: Palette): string {
  * snow down its gullies, and green foothills where they meet the lake, the
  * trail coming down over them from the pass.
  */
-function mountains(pal: Palette, left: number, right: number, base: number, rand: Rand): string {
+export function mountains(pal: Palette, left: number, right: number, base: number, rand: Rand): string {
   let out = '';
   // the far range: one long ridge, ragged
   const far: Pt[] = [[left, base]];

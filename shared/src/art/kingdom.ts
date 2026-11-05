@@ -36,18 +36,25 @@ import { KINGDOM_BUILDINGS, type KingdomBuilding, type KingdomLevel } from '../g
 import { CANVAS, checkSize, escapeXml, n, n2, prefixFor, seeded } from './svg.js';
 import { DAY, DUSK, Part, inked, iso, sorted, type Drawn, type Palette } from './kingdom/pen.js';
 import { BUILDING_TOP, PLOT_SIZE, buildingParts } from './kingdom/buildings.js';
-import { TERRACES, WATER_Z, depthAt, groundAt, land, paths, terraceAt } from './kingdom/land.js';
+import { TERRACES, WATER_Z, depthAt, groundAt, paths, terraceAt } from './kingdom/land.js';
 import * as P from './kingdom/props.js';
+import { VALLEY, valleyGround, valleyThings, valleyWoods } from './kingdom/valley.js';
+import { markupExtent, overlaps, type Extent } from './kingdom/bounds.js';
+import { villageHas, type VillageFeature } from '../games/kingdom/growth.js';
 import { KINGDOM_SPRITES, SPRITE_BOX, kingdomSpriteSvg, lifeOf, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite } from './kingdom/life.js';
 
-/** The canvas the scene is drawn on, in its own units. */
-export const KINGDOM_SCENE = { width: 1000, height: 860 } as const;
+/** The canvas the world is drawn on, in its own units: the whole valley, several times the village's size. */
+export const KINGDOM_SCENE = { width: VALLEY.x1 - VALLEY.x0, height: VALLEY.y1 - VALLEY.y0 } as const;
 
 /** Where the world's origin sits on the canvas. */
-export const KINGDOM_ORIGIN = { x: 452, y: 318 } as const;
+export const KINGDOM_ORIGIN = { x: -VALLEY.x0, y: -VALLEY.y0 } as const;
 
-/** The part of the canvas that holds the village and the peaks over it: what an app keeps in view however it crops the rest. */
-export const KINGDOM_FRAME = { x: 286, y: 96, w: 408, h: 654 } as const;
+/**
+ * The village's heart on the canvas: its terraces and the peaks over them,
+ * what a picture of the village on its own (the Games tile) shows, and where
+ * an app opens its view.
+ */
+export const KINGDOM_FRAME = { x: KINGDOM_ORIGIN.x - 166, y: KINGDOM_ORIGIN.y - 222, w: 408, h: 654 } as const;
 
 /** Buildings are drawn this much larger than their plots' own units. */
 export const BUILDING_SCALE = 1.25;
@@ -209,9 +216,8 @@ function scenery(pal: Palette, rand: P.Rand, levels: Readonly<Record<KingdomBuil
   if (!moving) put((a, b, c) => P.poplar(pal, a, b, c, 58, 11), 444, 336, 1);
   // the lake: rocks standing out of it with foam round their feet, lily pads off the meadow, reeds by the falls
   out.push({ depth: 100, svg: lakeDetails(pal, rand) });
-  // the boat drawn up by the steps into the lake
+  // stepping stones down from the gate into the lake (the boat comes later, to the dock)
   out.push({ depth: 60000, svg: P.steppingStones(pal, [314, 346, WATER_Z], [318, 372, WATER_Z], 3, rand).svg() });
-  out.push(grown(boat(pal, 340, 356, WATER_Z), 340, 356, WATER_Z, BUILDING_SCALE, 60001));
   // the stream from the spring, once there is water to run, over the wall's edge into the lake
   if (levels.spring >= 1) out.push({ depth: depthAt(246, 330) - 5000, svg: stream(pal, levels.spring) });
   return out;
@@ -278,16 +284,6 @@ function halfApple(pal: Palette, x: number, y: number, z: number): Part {
   return p;
 }
 
-/** A rowing boat drawn up at the water's edge, its rope to a post. */
-function boat(pal: Palette, x: number, y: number, z: number): Part {
-  const p = new Part(x + y);
-  const [cx, cy] = iso(x, y, z);
-  const hull = `M${n(cx - 12)} ${n(cy - 6)}Q${n(cx - 2)} ${n(cy + 4)} ${n(cx + 12)} ${n(cy + 1)}L${n(cx + 13)} ${n(cy - 3)}Q${n(cx)} ${n(cy - 2)} ${n(cx - 12)} ${n(cy - 6)}Z`;
-  const inside = `M${n(cx - 10)} ${n(cy - 5.6)}Q${n(cx)} ${n(cy - 2.6)} ${n(cx + 11.6)} ${n(cy - 2.6)}Q${n(cx + 2)} ${n(cy - 7)} ${n(cx - 10)} ${n(cy - 5.6)}Z`;
-  p.sil(hull).fill(hull, pal.woodDark.left).fill(inside, pal.wood.right).line(`M${n(cx - 2)} ${n(cy - 5)}l2.6 2`, 1.4);
-  return p;
-}
-
 export interface KingdomSceneOptions {
   levels: Readonly<Record<KingdomBuilding, KingdomLevel>>;
   /** buildings past half-way to their next level, drawn with that level being built */
@@ -316,7 +312,63 @@ function levelOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, b: Kin
   return l;
 }
 
-/** The whole village, each building at its level. */
+/** The total of the levels shown, which says how far the valley round them has filled in. */
+export function kingdomTotal(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>): number {
+  return KINGDOM_BUILDINGS.reduce((sum, b) => sum + levels[b], 0);
+}
+
+/** One piece of the world, its depth among the rest, and the box it covers on the canvas. */
+interface Placed extends Drawn {
+  at: Extent;
+}
+
+/**
+ * Every piece of the world at these levels, sorted back to front, each with
+ * the box it covers on the canvas: the valley's ground, the village's paths
+ * and scenery, the valley's things as far as the village has grown, the
+ * woods, and the six buildings. Kept for the last few worlds asked for, since
+ * an app asks for the same one again as it redraws its tiles.
+ */
+function world(o: KingdomSceneOptions): Placed[] {
+  const levels = Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, levelOf(o.levels, b)])) as Record<KingdomBuilding, KingdomLevel>;
+  const rising = new Set(o.rising ?? []);
+  const moving = o.moving === true;
+  const key = `${KINGDOM_BUILDINGS.map((b) => `${levels[b]}${rising.has(b) ? 'r' : ''}`).join('')}|${o.dark === true}|${o.without ?? ''}|${moving}`;
+  const kept = WORLDS.get(key);
+  if (kept) return kept;
+  const pal = o.dark ? DUSK : DAY;
+  const total = kingdomTotal(levels);
+  const has = (f: VillageFeature): boolean => villageHas(total, f);
+  const drawn: Drawn[] = valleyGround(pal, seeded('kingdom-land'), moving);
+  drawn.push(...paths(pal, seeded('kingdom-paths')).map((part) => ({ depth: part.depth, svg: part.svg() })));
+  drawn.push(...scenery(pal, seeded('kingdom-scenery'), levels, moving));
+  drawn.push(...valleyThings(pal, seeded('kingdom-valley'), has, moving));
+  drawn.push(...valleyWoods(pal, seeded('kingdom-woods')));
+  for (const b of KINGDOM_BUILDINGS) {
+    if (b === o.without) continue;
+    const level = levels[b];
+    drawn.push({ depth: buildingDepth(b), svg: placedBuilding(b, level, pal, rising.has(b) && level < 5) });
+  }
+  const out: Placed[] = [];
+  for (const [d] of drawn.map((p, i) => [p, i] as const).sort((a, b) => a[0].depth - b[0].depth || a[1] - b[1])) {
+    const e = markupExtent(d.svg);
+    if (e) out.push({ ...d, at: { x0: e.x0 + KINGDOM_ORIGIN.x, y0: e.y0 + KINGDOM_ORIGIN.y, x1: e.x1 + KINGDOM_ORIGIN.x, y1: e.y1 + KINGDOM_ORIGIN.y } });
+  }
+  WORLDS.set(key, out);
+  if (WORLDS.size > 4) WORLDS.delete(WORLDS.keys().next().value!);
+  return out;
+}
+const WORLDS = new Map<string, Placed[]>();
+
+/** The pieces of the world that reach into a box on the canvas, as markup in canvas units. */
+function within(pieces: readonly Placed[], box: { x: number; y: number; w: number; h: number }): string {
+  const e: Extent = { x0: box.x, y0: box.y, x1: box.x + box.w, y1: box.y + box.h };
+  let body = '';
+  for (const piece of pieces) if (overlaps(piece.at, e)) body += piece.svg;
+  return `<g transform="translate(${KINGDOM_ORIGIN.x} ${KINGDOM_ORIGIN.y})">${inked(body)}</g>`;
+}
+
+/** The whole world (or, `framed`, the village's heart alone), each building at its level, as one picture. */
 export function kingdomSceneSvg(o: KingdomSceneOptions): string {
   const view = o.framed ? KINGDOM_FRAME : { x: 0, y: 0, w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };
   const width = checkSize(o.width, view.w);
@@ -325,23 +377,44 @@ export function kingdomSceneSvg(o: KingdomSceneOptions): string {
   const rising = new Set(o.rising ?? []);
   const key = KINGDOM_BUILDINGS.map((b) => `${levels[b]}${rising.has(b) ? 'r' : ''}`).join('');
   const p = prefixFor(o.idPrefix, 'kingdom', key, o.dark === true, o.without ?? '', o.moving === true);
-  const pal = o.dark ? DUSK : DAY;
-  const rand = seeded('kingdom-land');
-  const canvas = { x: -KINGDOM_ORIGIN.x, y: -KINGDOM_ORIGIN.y, w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };
-  const ground = land(pal, rand, canvas);
-  const drawn: Drawn[] = paths(pal, seeded('kingdom-paths')).map((part) => ({ depth: part.depth, svg: part.svg() }));
-  drawn.push(...scenery(pal, seeded('kingdom-scenery'), levels, o.moving === true));
-  for (const b of KINGDOM_BUILDINGS) {
-    if (b === o.without) continue;
-    const level = levels[b];
-    drawn.push({ depth: buildingDepth(b), svg: placedBuilding(b, level, pal, rising.has(b) && level < 5) });
-  }
   const t = `${p}t`;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(width)}" height="${n2(height)}" viewBox="${view.x} ${view.y} ${view.w} ${view.h}" role="img" aria-labelledby="${t}">` +
     `<title id="${t}">${escapeXml(o.title ?? 'Your village')}</title>` +
-    `<g transform="translate(${KINGDOM_ORIGIN.x} ${KINGDOM_ORIGIN.y})">${inked(ground + sorted(drawn))}</g></svg>`
+    `${within(world(o), view)}</svg>`
   );
+}
+
+/** How the world is cut into tiles: a grid of this size on the canvas, each a picture of its own. */
+export const KINGDOM_TILE = { w: 400, h: 345 } as const;
+
+/** One tile of the world: where it sits on the canvas, and its picture (which reaches one unit past its right and bottom edges, so neighbours overlap and never show a seam). */
+export interface KingdomTile {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  svg: string;
+}
+
+/**
+ * The world cut into tiles, so an app draws only those near what is in view
+ * and a world this large stays cheap. Each tile holds every piece that
+ * reaches into it, in the same order as the whole picture, so laid side by
+ * side they are that picture.
+ */
+export function kingdomTiles(o: Omit<KingdomSceneOptions, 'framed' | 'width' | 'title' | 'idPrefix'>): KingdomTile[] {
+  const pieces = world(o);
+  const out: KingdomTile[] = [];
+  for (let y = 0; y < KINGDOM_SCENE.height; y += KINGDOM_TILE.h) {
+    for (let x = 0; x < KINGDOM_SCENE.width; x += KINGDOM_TILE.w) {
+      const w = Math.min(KINGDOM_TILE.w, KINGDOM_SCENE.width - x) + 1;
+      const h = Math.min(KINGDOM_TILE.h, KINGDOM_SCENE.height - y) + 1;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${within(pieces, { x, y, w, h })}</svg>`;
+      out.push({ x, y, w, h, svg });
+    }
+  }
+  return out;
 }
 
 export interface KingdomPlotOptions {
