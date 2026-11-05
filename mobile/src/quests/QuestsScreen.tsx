@@ -5,6 +5,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
@@ -69,6 +70,14 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
       live = false;
     };
   }, [client, attempt]);
+  // from Learn, pulled down, the day's quests are read again; a failure keeps the list that is there
+  const pull = usePullRefresh(() =>
+    client.get<QuestDay>('/me/quests').then((res) => {
+      if (!res.ok) return;
+      setDay(res.data);
+      setStatus('ready');
+    }),
+  );
 
   const rows = useMemo(() => withOpened(questRows(day, place === 'lesson' ? steps : []), opened), [day, steps, place, opened]);
   const earlier = useMemo(() => withOpened(waitingRows(day), opened), [day, opened]);
@@ -146,7 +155,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
       <GradientBackground>
         <View style={styles.screen} testID="quests-screen">
           <ScreenHeader title={t('quests.title')} leading="close" backLabel={t('common.close')} onBack={onDone} />
-          <ScrollView style={styles.screen} contentContainerStyle={[styles.column, styles.learnColumn]}>
+          <ScrollView style={styles.screen} contentContainerStyle={[styles.column, styles.learnColumn]} refreshControl={pull}>
             {body}
           </ScrollView>
           {actions ? <View style={[styles.bar, { paddingBottom: bottom }]}>{actions}</View> : null}

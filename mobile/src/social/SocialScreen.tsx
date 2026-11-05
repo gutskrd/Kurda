@@ -26,6 +26,7 @@ import { mutualText, undoAction } from './format';
 import { SearchField } from '../theme/SearchField';
 import { useAnnouncer } from '../stories/ui';
 import { ACCEPTED_HOLD_MS, DECLINE_FOLD_MS, FriendRequestTicket, TicketSlip, type RequestAnswer } from './FriendTicket';
+import { usePullRefresh } from '../net/usePullRefresh';
 
 interface UserRow {
   userId: string;
@@ -77,7 +78,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const [asked, setAsked] = useState<ReadonlySet<string>>(new Set());
 
   const loadLists = useCallback(() => {
-    void client.get<{ friends: UserRow[] }>('/friends').then((r) => {
+    const lists = client.get<{ friends: UserRow[] }>('/friends').then((r) => {
       setSettled(true);
       if (r.ok) {
         setFriends(r.data.friends);
@@ -86,18 +87,25 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
         setFailed(true);
       }
     });
-    void client.get<{ requests: UserRow[] }>('/friends/requests').then((r) => r.ok && setRequests(r.data.requests));
+    const incoming = client.get<{ requests: UserRow[] }>('/friends/requests').then((r) => r.ok && setRequests(r.data.requests));
     /*
      * The half of the relationship the phone could not see. A request you sent
      * was invisible here and unactionable on their profile, so the only way to
      * find out whether you had already asked somebody was to remember.
      */
-    void client
+    const outgoing = client
       .get<{ requests: UserRow[] }>('/friends/requests/outgoing')
       .then((r) => r.ok && setSent(r.data.requests));
+    return Promise.all([lists, incoming, outgoing]);
   }, [client]);
 
-  useFocusEffect(useCallback(() => loadLists(), [loadLists]));
+  useFocusEffect(
+    useCallback(() => {
+      void loadLists();
+    }, [loadLists]),
+  );
+  // pulled down, the three lists are read again (the suggestions stay: they change far more slowly)
+  const pull = usePullRefresh(loadLists);
 
   /*
    * Suggestions load once, not on every focus like the three lists above.
@@ -275,12 +283,13 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             }
           />
         ) : failed && friends.length === 0 ? (
-          <ErrorRetry onRetry={loadLists} />
+          <ErrorRetry onRetry={() => void loadLists()} />
         ) : (
           <FlatList
             data={friends}
             keyExtractor={(u) => u.userId}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
+            refreshControl={pull}
             ListHeaderComponent={
               <View>
                 {requests.length > 0 ? (

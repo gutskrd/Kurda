@@ -8,7 +8,9 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -136,5 +138,19 @@ describe('event quests', () => {
       fireEvent.click(claim);
     });
     expect(screen.getByRole('alert').textContent).toContain('Can’t reach Hevalo right now. Check your connection and try again.');
+  });
+
+  it('reads the events and their quests again when pulled down', async () => {
+    const client = fakeClient({
+      'GET /events/active': ok({ events: [{ key: 'newroz', name: 'Newroz' }] }),
+      'GET /events/newroz/quests': ok(view('newroz', 'Newroz')),
+    });
+    testAuth.client = client;
+    renderWithProviders(<EventQuestsScreen onExit={() => undefined} />);
+    await screen.findByText('Newroz');
+    const count = () => client.calls.filter((c) => c.path === '/events/newroz/quests').length;
+    const before = count();
+    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    await waitFor(() => expect(count()).toBe(before + 1));
   });
 });

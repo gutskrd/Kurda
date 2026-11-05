@@ -20,6 +20,7 @@ import { useDirection } from '../reports/direction';
 import { ACCEPTED_HOLD_MS, DECLINE_FOLD_MS, FriendRequestTicket, type RequestAnswer } from '../social/FriendTicket';
 import { useAnnouncer } from '../stories/ui';
 import { useUnread } from './unread';
+import { usePullRefresh } from '../net/usePullRefresh';
 
 interface RequestRow {
   userId: string;
@@ -62,6 +63,15 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
       };
       // a retry asks again
     }, [client, attempt]),
+  );
+  // pulled down, the requests are read again; a failure keeps the list that is there
+  const pull = usePullRefresh(() =>
+    client.get<{ requests: RequestRow[] }>('/friends/requests').then((r) => {
+      if (r.ok) {
+        setRequests(r.data.requests);
+        setError(null);
+      }
+    }),
   );
 
   const reduce = useReducedMotion();
@@ -125,6 +135,7 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
         data={requests ?? []}
         keyExtractor={(r) => r.userId}
         contentContainerStyle={styles.list}
+        refreshControl={pull}
         ListEmptyComponent={
           requests === null ? (
             error ? (

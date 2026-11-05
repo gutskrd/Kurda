@@ -4,6 +4,7 @@ import type { MyReport } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
@@ -35,7 +36,7 @@ export function MyReportsScreen({ onExit }: { onExit: () => void }): React.JSX.E
 
   const load = useCallback(() => {
     setLoading(true);
-    void myReports(client).then((res) => {
+    return myReports(client).then((res) => {
       setLoading(false);
       if (res.ok) {
         setReports(res.data.reports);
@@ -44,7 +45,11 @@ export function MyReportsScreen({ onExit }: { onExit: () => void }): React.JSX.E
     });
   }, [client]);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+  // pulled down, the reports are read again: an outcome may have come since
+  const pull = usePullRefresh(load);
 
   return (
     <GradientBackground>
@@ -60,6 +65,7 @@ export function MyReportsScreen({ onExit }: { onExit: () => void }): React.JSX.E
           data={reports}
           keyExtractor={(r) => r.id}
           contentContainerStyle={styles.list}
+          refreshControl={pull}
           renderItem={({ item }) => <ReportRow report={item} />}
         />
       </AsyncBoundary>

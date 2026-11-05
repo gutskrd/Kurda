@@ -11,6 +11,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import { blockedUsers, unblockUser, type BlockedUser } from './blocks';
 import { EmptyState } from '../theme/EmptyState';
+import { usePullRefresh } from '../net/usePullRefresh';
 
 /** "3 Sep" / "3 Sep 2024" — the year only when it is not this one. */
 function when(iso: string): string {
@@ -48,8 +49,8 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = useCallback(
-    (offset = 0) => {
-      void blockedUsers(client, offset).then((res) => {
+    (offset = 0) =>
+      blockedUsers(client, offset).then((res) => {
         if (!res.ok) {
           setError(describeError(res.error, t));
           if (offset === 0) setList([]);
@@ -59,12 +60,17 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
         setError(null);
         setTotal(res.data.total ?? page.length);
         setList((prev) => (offset === 0 || prev === null ? page : [...prev, ...page]));
-      });
-    },
+      }),
     [client, t],
   );
 
-  useFocusEffect(useCallback(() => load(0), [load]));
+  useFocusEffect(
+    useCallback(() => {
+      void load(0);
+    }, [load]),
+  );
+  // pulled down, the list is read again from its first page
+  const pull = usePullRefresh(() => load(0));
 
   /**
    * Unblock, then take the row out — rather than reloading from the server,
@@ -103,7 +109,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
         {list === null ? (
           <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
         ) : (
-          <ScrollView contentContainerStyle={styles.list}>
+          <ScrollView contentContainerStyle={styles.list} refreshControl={pull}>
             <Text style={[styles.help, { color: colors.textSecondary }]}>{t('settings.blocked.help')}</Text>
 
             {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
@@ -140,7 +146,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                 ))}
 
                 {list.length < total ? (
-                  <Pressable onPress={() => load(list.length)} accessibilityRole="button" style={styles.more}>
+                  <Pressable onPress={() => void load(list.length)} accessibilityRole="button" style={styles.more}>
                     <Text style={[styles.action, { color: colors.primary }]}>
                       {t('common.showMoreCount', { count: total - list.length })}
                     </Text>

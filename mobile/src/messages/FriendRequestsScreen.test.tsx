@@ -8,6 +8,8 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -98,5 +100,15 @@ describe('friend requests, as friendship tickets', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Decline friend request from baran' }));
     expect(screen.queryByRole('button', { name: 'baran' })).toBeNull();
     await waitFor(() => expect(posted).toBe('decline'));
+  });
+
+  it('reads the requests again when pulled down', async () => {
+    open({ 'GET /friends/requests': ok({ requests: [{ userId: 'u3', username: 'rojin', displayName: 'Rojîn' }] }) });
+    const client = testAuth.client as ReturnType<typeof fakeClient>;
+    await screen.findByText('Rojîn wants to be friends');
+    const count = () => client.calls.filter((c) => c.method === 'GET' && c.path === '/friends/requests').length;
+    const before = count();
+    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    await waitFor(() => expect(count()).toBe(before + 1));
   });
 });

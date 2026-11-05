@@ -8,6 +8,7 @@ import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -62,14 +63,20 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const fresh = useFreshBadges();
 
   const load = useCallback(() => {
-    void getBadges(client).then((res) => {
+    return getBadges(client).then((res) => {
       if (res.ok) {
         setData(res.data);
         setError(null);
       } else setError(res.error);
     });
   }, [client]);
-  useFocusEffect(useCallback(() => load(), [load]));
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+  // pulled down, the badges are read again
+  const pull = usePullRefresh(load);
 
   const columns = width >= 600 ? 5 : width >= 360 ? 3 : 2;
   const tile = Math.floor((Math.min(width, 720) - spacing.lg * 2 - spacing.sm * (columns - 1)) / columns);
@@ -81,7 +88,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       <AsyncBoundary loading={!data && !error} error={!data ? error : null} onRetry={load} skeleton={<BadgesSkeleton columns={columns} tile={tile} />}>
         {() =>
           data ? (
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={pull}>
               <Showcase data={data} onPick={() => setPicking(true)} onOpen={setOpen} />
 
               {nearest.length > 0 ? (

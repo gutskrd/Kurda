@@ -32,6 +32,8 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 
 const story = (over: Partial<StoryListItem>): StoryListItem => ({
   id: 's1',
@@ -150,6 +152,17 @@ describe('StoriesView', () => {
     navigation.replace.mockClear();
   });
   afterEach(cleanup);
+
+  it('reads the library and the games under way again when pulled down', async () => {
+    const c = client();
+    testAuth.client = c;
+    renderWithProviders(<StoriesView />);
+    await screen.findByLabelText(/Your progress\. 1 of 3 stories read/);
+    const count = (path: string) => c.calls.filter((call) => call.path === path).length;
+    const before = [count('/stories/library'), count('/story-games/active')];
+    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    await waitFor(() => expect([count('/stories/library'), count('/story-games/active')]).toEqual([before[0]! + 1, before[1]! + 1]));
+  });
 
   it('opens on the reading so far, then the shelves: continue, featured, recent, categories, bookmarks', async () => {
     testAuth.client = client();

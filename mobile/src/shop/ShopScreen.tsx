@@ -19,6 +19,7 @@ import { haptic } from '../feedback/haptics';
 import { describeError, isMaintenance } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
@@ -96,7 +97,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const navigation = useNavigation<RootNavigation>();
 
   const load = useCallback(() => {
-    void Promise.all([
+    return Promise.all([
       client.get<{ items: ShopItem[] }>('/shop'),
       client.get<{ balances: Balances }>('/me/wallet'),
     ]).then(([cat, wallet]) => {
@@ -107,7 +108,13 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     });
   }, [client]);
 
-  useFocusEffect(useCallback(() => load(), [load]));
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+  // pulled down, the catalogue and the purse are read again
+  const pull = usePullRefresh(load);
 
   const buy = useCallback(
     async (item: ShopItem) => {
@@ -122,11 +129,11 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         // it is yours: felt as it lands, as a failure to buy it is
         haptic('tap');
         setSelected(null);
-        load();
+        void load();
         Alert.alert(t('shop.purchased'), t('shop.itemIsYours', { name: item.name }));
       } else if (res.error.code === 'PRICE_CHANGED') {
         setSelected(null);
-        load(); // pull fresh prices
+        void load(); // pull fresh prices
         Alert.alert(t('shop.priceChanged'), t('shop.priceChangedBody'));
       } else if (!isMaintenance(res.error)) {
         // the purchase did not happen and nothing else will make it: felt as an error
@@ -239,6 +246,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             contentContainerStyle={styles.content}
+            refreshControl={pull}
             scrollEventThrottle={16}
             onScroll={(e) => {
               scrollY.current = e.nativeEvent.contentOffset.y;

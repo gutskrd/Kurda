@@ -6,6 +6,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { describeError, describeErrorOr, isMaintenance } from '../api/errors';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { playSound } from '../feedback/sounds';
@@ -97,6 +98,8 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
       void load();
     }, [load]),
   );
+  // pulled down, the events and their quests are read again
+  const pull = usePullRefresh(load);
 
   const claim = useCallback(
     async (eventKey: string, quest: QuestView) => {
@@ -127,7 +130,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
 
         <AsyncBoundary loading={events === null} error={events === null ? error : null} isEmpty={events?.length === 0} onRetry={() => void load()} empty={<EmptyState title={t('events.none')} />}>
           {() => events == null ? null : (
-          <ScrollView contentContainerStyle={styles.content}>
+          <ScrollView contentContainerStyle={styles.content} refreshControl={pull}>
             {claimError ? (
               <Notice text={describeErrorOr(claimError, t, 'events.claimFailed')} onDismiss={() => setClaimError(null)} />
             ) : null}

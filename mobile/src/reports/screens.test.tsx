@@ -9,6 +9,8 @@ vi.mock('@react-native-community/netinfo', () => import('./testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('./testing/auth'));
 const navigate = vi.fn();
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }) }));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { AppState } from 'react-native';
 import type { AccountStanding, MyReport, StandingSanction } from '@kurda/shared';
@@ -70,6 +72,17 @@ const standing = (over: Partial<AccountStanding>): AccountStanding => ({
 });
 
 describe('MyReportsScreen', () => {
+  it('reads the reports again when pulled down: an outcome may have come since', async () => {
+    const client = fakeClient({ 'GET /me/reports': ok({ reports: [report({ id: 'b', status: 'open' })] }) });
+    testAuth.client = client;
+    renderWithProviders(<MyReportsScreen onExit={() => undefined} />);
+    await screen.findByText('Waiting for review');
+    const count = () => client.calls.filter((c) => c.path === '/me/reports').length;
+    const before = count();
+    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    await waitFor(() => expect(count()).toBe(before + 1));
+  });
+
   it('lists each report with what became of it, never what the sanction was', async () => {
     testAuth.client = fakeClient({
       'GET /me/reports': ok({

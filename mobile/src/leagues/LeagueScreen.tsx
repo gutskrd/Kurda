@@ -4,6 +4,7 @@ import { Alert, Animated, Easing, FlatList, ScrollView, StyleSheet, Text, View, 
 import { FIRST_LEAGUE_TIER, LEAGUE_TIERS, leagueTierIndex, type LeagueTier, type LeagueView, type LeagueWeekXp } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -61,16 +62,24 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   const [league, setLeague] = useState<LeagueView | null>(null);
   const [leagueError, setLeagueError] = useState<ApiError | null>(null);
 
-  const loadLeague = useCallback(() => {
-    void getLeague(client).then((res) => {
-      if (res.ok) {
-        setLeague(res.data);
-        setLeagueError(null);
-      } else setLeagueError(res.error);
-    });
-  }, [client]);
+  const loadLeague = useCallback(
+    () =>
+      getLeague(client).then((res) => {
+        if (res.ok) {
+          setLeague(res.data);
+          setLeagueError(null);
+        } else setLeagueError(res.error);
+      }),
+    [client],
+  );
 
-  useFocusEffect(useCallback(() => loadLeague(), [loadLeague]));
+  useFocusEffect(
+    useCallback(() => {
+      void loadLeague();
+    }, [loadLeague]),
+  );
+  // pulled down, the week's table is read again
+  const pull = usePullRefresh(loadLeague);
 
   /** In or out, one tap from where the table is or would be (Settings has the other). */
   const [joining, setJoining] = useState(false);
@@ -79,7 +88,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
       setJoining(true);
       const res = await client.patch('/me', { leaguesEnabled: on });
       setJoining(false);
-      if (res.ok) loadLeague();
+      if (res.ok) void loadLeague();
       else Alert.alert(t('error.generic'), t('common.tryAgain'));
     },
     [client, loadLeague, t],
@@ -100,9 +109,15 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
         {/* the week that closed: its ceremony, once, the first time the league is opened after */}
         <LeagueMoment league={league} />
         {tab === 'league' ? (
-          <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={loadLeague} skeleton={<LeagueSkeleton />}>
+          <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={() => void loadLeague()} skeleton={<LeagueSkeleton />}>
             {league ? (
-              <LeagueTab league={league} joining={joining} onJoin={() => void setTakingPart(true)} onLeave={() => void setTakingPart(false)} />
+              <LeagueTab
+                league={league}
+                joining={joining}
+                onJoin={() => void setTakingPart(true)}
+                onLeave={() => void setTakingPart(false)}
+                refreshControl={pull}
+              />
             ) : null}
           </AsyncBoundary>
         ) : (
@@ -118,13 +133,16 @@ function LeagueTab({
   joining,
   onJoin,
   onLeave,
+  refreshControl,
 }: {
   league: LeagueView;
   joining: boolean;
   onJoin: () => void;
   onLeave: () => void;
+  /** pull down to read the week again */
+  refreshControl: React.JSX.Element;
 }): React.JSX.Element {
-  if (league.mode === 'personal') return <PersonalWeek league={league} joining={joining} onJoin={onJoin} />;
+  if (league.mode === 'personal') return <PersonalWeek league={league} joining={joining} onJoin={onJoin} refreshControl={refreshControl} />;
   const items = league.joined ? tableItems(league.standings) : [];
   // the first screenful of the table rises in once, as it arrives
   const entering = useListEntrance(items.length > 0);
@@ -133,6 +151,7 @@ function LeagueTab({
       data={items}
       keyExtractor={(item, i) => (item.kind === 'row' ? `r-${item.row.rank}` : `${item.kind}-${i}`)}
       contentContainerStyle={styles.list}
+      refreshControl={refreshControl}
       ListHeaderComponent={<LeagueHead league={league} />}
       ListFooterComponent={<LeaveLeagues busy={joining} onLeave={onLeave} />}
       renderItem={({ item, index }) => (
@@ -540,7 +559,17 @@ function OwnRow({ delay, style, children, ...rest }: React.ComponentProps<typeof
  * missing out — the week's own goal ring, and this week beside the ones
  * before it, against nobody but yourself.
  */
-function PersonalWeek({ league, joining, onJoin }: { league: LeagueView; joining: boolean; onJoin: () => void }): React.JSX.Element {
+function PersonalWeek({
+  league,
+  joining,
+  onJoin,
+  refreshControl,
+}: {
+  league: LeagueView;
+  joining: boolean;
+  onJoin: () => void;
+  refreshControl: React.JSX.Element;
+}): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
   const tint = leagueTint(knownTier(league.tier) ?? 'kani', scheme);
@@ -551,6 +580,7 @@ function PersonalWeek({ league, joining, onJoin }: { league: LeagueView; joining
       data={[]}
       renderItem={null}
       contentContainerStyle={styles.list}
+      refreshControl={refreshControl}
       ListHeaderComponent={
         <View style={styles.head}>
           <GlassCard>

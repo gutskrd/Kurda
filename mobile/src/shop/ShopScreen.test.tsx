@@ -8,6 +8,8 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Alert } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -77,6 +79,15 @@ const rowNames = (): string[] =>
 const search = (text: string) => fireEvent.change(screen.getByLabelText('Search the shop'), { target: { value: text } });
 
 describe('the Shop, by kind', () => {
+  it('reads the catalogue and the purse again when pulled down', async () => {
+    const client = open();
+    await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
+    const count = (path: string) => client.calls.filter((c) => c.method === 'GET' && c.path === path).length;
+    const before = [count('/shop'), count('/me/wallet')];
+    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    await waitFor(() => expect([count('/shop'), count('/me/wallet')]).toEqual([before[0]! + 1, before[1]! + 1]));
+  });
+
   it('files every item under its kind, in the shared order, with a translated title and a count', async () => {
     open();
     await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });

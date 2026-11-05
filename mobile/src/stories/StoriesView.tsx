@@ -31,6 +31,7 @@ import { useStoryPrefs } from './prefs';
 import { SetupSheet } from './SetupSheet';
 import { storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { COLUMN, Note, Pill } from './ui';
+import { usePullRefresh } from '../net/usePullRefresh';
 
 /**
  * Which variety a game is set up in: Soranî when the interface is Soranî,
@@ -105,20 +106,27 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
 
   const load = useCallback(() => {
     setLibraryError(null);
-    void getLibrary(client).then((res) => {
+    const shelves = getLibrary(client).then((res) => {
       if (res.ok) setLibrary(res.data);
       else setLibraryError(res.error);
     });
     // a guest has no games to go back to, and the server refuses the question
-    if (!isGuest) {
-      void activeGames(client).then((res) => {
-        if (res.ok) setActive(res.data.games);
-      });
-    }
+    const games = isGuest
+      ? null
+      : activeGames(client).then((res) => {
+          if (res.ok) setActive(res.data.games);
+        });
+    return Promise.all([shelves, games]);
   }, [client, isGuest]);
 
   // again on coming back: a story just finished leaves "Continue reading", a check just taken moves the average
-  useFocusEffect(useCallback(() => load(), [load]));
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+  // and when pulled down, as Learn's lessons are
+  const pull = usePullRefresh(load);
 
   // what was typed or chosen, after a short pause for more typing
   const search = useRef(0);
@@ -339,6 +347,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         contentContainerStyle={[styles.content, { paddingBottom: inTab ? tabBarInset : spacing.xxl }]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
+        refreshControl={pull}
       >
         <View style={[styles.searchRow, { flexDirection: dir.row }]}>
           <View style={[styles.search, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>

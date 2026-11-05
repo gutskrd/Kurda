@@ -17,6 +17,8 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 vi.mock('expo-image-picker', () => ({ launchImageLibraryAsync: vi.fn(async () => ({ canceled: true, assets: [] })) }));
 vi.mock('expo-file-system/legacy', () => ({ FileSystemUploadType: { BINARY_CONTENT: 0 }, uploadAsync: async () => ({ status: 500, body: '' }) }));
 
@@ -51,6 +53,17 @@ describe('discovering groups', () => {
       ],
     }),
     'GET /me/groups': ok({ groups: [] }),
+  });
+
+  it('reads the groups again when pulled down', async () => {
+    const client = fakeClient(routes());
+    testAuth.client = client;
+    renderWithProviders(<ClubsScreen onExit={() => undefined} />);
+    await screen.findByText('Hevalên Kurmancî');
+    const count = (path: string) => client.calls.filter((c) => c.path === path).length;
+    const before = [count('/groups'), count('/me/groups')];
+    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    await waitFor(() => expect([count('/groups'), count('/me/groups')]).toEqual([before[0]! + 1, before[1]! + 1]));
   });
 
   it('lists each group with what it is about and its size, and Open for one you are in', async () => {
@@ -170,6 +183,18 @@ async function actionsFor(name: string, alert: ReturnType<typeof vi.spyOn>): Pro
 }
 
 describe('a group’s own page', () => {
+  it('reads the group and its members again when pulled down', async () => {
+    testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
+    const client = fakeClient({ 'GET /groups/g1': detail('member') });
+    testAuth.client = client;
+    renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Hevalên Kurmancî' });
+    const count = () => client.calls.filter((c) => c.path === '/groups/g1').length;
+    const before = count();
+    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    await waitFor(() => expect(count()).toBe(before + 1));
+  });
+
   it('shows the group as it presents itself, and the members without crowding their names with buttons', async () => {
     testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
     testAuth.client = fakeClient({ 'GET /groups/g1': detail('member') });

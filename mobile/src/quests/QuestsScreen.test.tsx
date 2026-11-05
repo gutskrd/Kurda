@@ -8,6 +8,8 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 // a badge earned meanwhile waits on the chest's moment (badges/BadgeCelebrationHost.tsx)
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { QuestDay, QuestStep } from '@kurda/shared';
 import type { ApiResult } from '../api/types';
@@ -158,6 +160,17 @@ describe('a chest', () => {
 });
 
 describe('the quests from Learn', () => {
+  it('reads the day’s quests again when pulled down', async () => {
+    const client = fakeClient({ 'GET /me/quests': ok(day) });
+    testAuth.client = client;
+    renderWithProviders(<QuestsScreen place="learn" onDone={() => undefined} />);
+    expect(await screen.findByText('Quests done this month: 7')).toBeTruthy();
+    const count = () => client.calls.filter((c) => c.path === '/me/quests').length;
+    const before = count();
+    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    await waitFor(() => expect(count()).toBe(before + 1));
+  });
+
   /*
    * Opened from Learn, the list is the whole screen: the month heads it, its
    * count climbing over a bar of what the month could hold so far (the 29th:
