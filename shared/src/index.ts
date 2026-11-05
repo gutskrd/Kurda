@@ -698,3 +698,6 @@ export * from './games/multi/view.js';
 export * from './games/last-letter/rules.js';
 export * from './games/last-letter/learn.js';
 export * from './games/last-letter/slip.js';
+
+// Kurdish Kingdom: the village that grows from real learning, its buildings, thresholds and view
+export * from './games/kingdom/index.js';
