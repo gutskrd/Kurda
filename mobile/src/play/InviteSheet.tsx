@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import {
   MAX_INVITEES_PER_REQUEST,
@@ -31,6 +32,7 @@ import { Note, SectionLabel, Sheet } from '../stories/ui';
 import { createLobby, inviteFriends, listFriends, listInvites, type FriendSummary } from './api';
 import { GAME_ICON, GAME_NAME_KEY } from './labels';
 import { lobbyRoute } from './routes';
+import { PickedTickets, SentFan, flightMs, type SendPhase, type TicketHolder } from './SentTickets';
 import { SendErrorNotice } from '../reports/SendError';
 import { RatedChoice } from '../ranks/Rated';
 import { useRatedChoice } from '../ranks/ratedPrefs';
@@ -90,6 +92,20 @@ function inviteError(error: ApiError, t: Translate): string {
 }
 
 /**
+ * What the sent tickets say: the one friend by name, how many otherwise, and
+ * a game posted in a group with nobody else asked as posted there.
+ */
+export function sentText(going: readonly TicketHolder[], invited: number, t: Translate): string {
+  const friends = going.filter((h) => !h.group);
+  if (invited === 0 && going.some((h) => h.group)) return t('play.sheet.posted');
+  if (invited === 1 && friends.length === 1) return t('play.sheet.sentTo', { name: friends[0]!.name });
+  return t('play.sheet.sent', { count: invited });
+}
+
+/** How long "sent" stays on a sheet that closes into the new game's lobby, to be seen before it goes. */
+const SENT_HOLD_MS = 900;
+
+/**
  * "Invite to play" (contract §B1): every place a game with friends starts —
  * a friend's profile, the friends list, the chat composer, a game's lobby,
  * the end of a game — opens this one sheet: the game, its presets, and
@@ -98,6 +114,10 @@ function inviteError(error: ApiError, t: Translate): string {
  * Making the game puts the host in its lobby and invites the friends picked;
  * from a chat the game's card is posted in that chat. Inviting more people
  * into a lobby that exists skips the game and its presets.
+ *
+ * Each friend picked is a ticket written out for them, and Send hands them
+ * over (SentTickets.tsx): they fly off, the sheet says who they went to, and
+ * then it closes into the lobby — or, in a lobby, stays for more.
  */
 export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -134,7 +154,28 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     if (restrictionOf(e)) setRefusal(e);
     else setError(inviteError(e, t));
   };
-  const [sent, setSent] = useState<number | null>(null);
+  const reduce = useReducedMotion();
+  const [phase, setPhase] = useState<SendPhase>('picking');
+  const [refusals, setRefusals] = useState(0);
+  /** the tickets just handed over, and what they say */
+  const [sent, setSent] = useState<{ holders: TicketHolder[]; text: string } | null>(null);
+  /*
+   * What waits for the tickets to fly. Going to a new game's lobby is never
+   * dropped: a sheet closed while "sent" is still showing goes there at once.
+   */
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  const goToLobby = useRef<(() => void) | null>(null);
+  useEffect(
+    () => () => {
+      timers.current.forEach(clearTimeout);
+      goToLobby.current?.();
+    },
+    [],
+  );
+  const after = (ms: number, then: () => void): void => {
+    if (ms <= 0) then();
+    else timers.current.push(setTimeout(then, ms));
+  };
 
   // a duo (and a battle or a match for two) invites one friend; a group up to seven
   const single = target.kind === 'lobby' ? target.mode === 'duo' : game === 'stories' && story.mode === 'duo';
@@ -178,7 +219,9 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const offerOthers = !(lockedId && single);
 
   const toggle = (id: string): void => {
-    if (id === lockedId) return;
+    if (id === lockedId || phase !== 'picking') return;
+    // picking again after a send starts the next tickets
+    setSent(null);
     setPicked((list) => {
       if (list.includes(id)) return list.filter((x) => x !== id);
       if (single) return [id];
@@ -192,34 +235,62 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     return { ...inviteSettings({ ...story, dialect }), rated };
   };
 
+  // whom the tickets are written out for: the group a game is posted in, and each friend picked
+  const holders = useMemo((): TicketHolder[] => {
+    const byId = new Map((friends ?? []).map((f) => [f.userId, f]));
+    const people = picked
+      .map((id) => byId.get(id))
+      .filter((f): f is FriendSummary => !!f)
+      .map((f) => ({ id: f.userId, name: f.displayName ?? f.username, photoUrl: f.avatarUrl }));
+    return target.kind === 'group' ? [{ id: 'group', name: t(GAME_NAME_KEY[game]), photoUrl: null, group: true }, ...people] : people;
+  }, [friends, picked, target.kind, game, t]);
+
   const submit = async (): Promise<void> => {
     if (busy) return;
     setBusy(true);
     setError(null);
     setRefusal(null);
-    if (target.kind === 'lobby') {
-      const res = await inviteFriends(client, target.game, target.lobbyId, picked);
-      setBusy(false);
-      if (!res.ok) {
-        refused(res.error);
-        return;
-      }
-      setSent(res.data.invited);
-      setPicked([]);
-      return;
-    }
+    setSent(null);
+    setPhase('sending');
+    const going = holders;
     const chat = target.kind === 'dm' ? { userId: target.friendId } : target.kind === 'group' ? { groupId: target.groupId } : undefined;
     // the DM's friend is invited by `chat` (that is what posts the card in the DM)
     const invite = picked.filter((id) => !(target.kind === 'dm' && id === target.friendId));
-    const res = await createLobby(client, { game, settings: settings(), invite: invite.length ? invite : undefined, chat });
-    setBusy(false);
+    const res =
+      target.kind === 'lobby'
+        ? await inviteFriends(client, target.game, target.lobbyId, picked)
+        : await createLobby(client, { game, settings: settings(), invite: invite.length ? invite : undefined, chat });
     if (!res.ok) {
+      // the tickets are set back down, with a shake, beside the reason
+      setBusy(false);
+      setPhase('picking');
+      setRefusals((n) => n + 1);
+      haptic('error');
       refused(res.error);
       return;
     }
-    onClose();
-    const route = lobbyRoute(res.data.game, res.data.lobbyId);
-    navigation.navigate(route.name, route.params as never);
+    haptic('tap');
+    setPhase('flying');
+    const text = sentText(going, res.data.invited, t);
+    const created = 'lobbyId' in res.data ? lobbyRoute(res.data.game, res.data.lobbyId) : null;
+    if (created) goToLobby.current = () => navigation.navigate(created.name, created.params as never);
+    after(flightMs(going.length, reduce), () => {
+      setPhase('picking');
+      setSent({ holders: going, text });
+      // the line under the sent tickets is a polite live region on Android; iOS is told once
+      if (Platform.OS === 'ios') AccessibilityInfo.announceForAccessibility(text);
+      if (!created) {
+        setBusy(false);
+        setPicked([]);
+        return;
+      }
+      after(SENT_HOLD_MS, () => {
+        const go = goToLobby.current;
+        goToLobby.current = null;
+        onClose();
+        go?.();
+      });
+    });
   };
 
   const needsFriend = target.kind === 'lobby' || target.kind === 'new' || target.kind === 'dm';
@@ -270,13 +341,13 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
       onClose={onClose}
       footer={
         <>
+          {sent ? (
+            <SentFan game={game} holders={sent.holders} text={sent.text} />
+          ) : (
+            <PickedTickets game={game} holders={holders} phase={phase} refused={refusals} />
+          )}
           <SendErrorNotice error={refusal} onNavigate={onClose} style={styles.notice} />
           {error ? <Note tone="danger" icon="alert">{error}</Note> : null}
-          {sent !== null ? (
-            <Text style={[styles.sent, { color: colors.success }]} accessibilityLiveRegion="polite">
-              {t('play.sheet.sent', { count: sent })}
-            </Text>
-          ) : null}
           <ClayButton
             label={
               target.kind === 'lobby'
@@ -442,5 +513,4 @@ const styles = StyleSheet.create({
   friendName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   friendHandle: { fontSize: typography.sizes.sm },
   check: { width: 24, height: 24, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  sent: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
 });

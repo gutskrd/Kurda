@@ -188,6 +188,8 @@ export type TranslationKey =
   | 'play.sheet.friendOnline'
   | 'play.sheet.send'
   | 'play.sheet.sent'
+  | 'play.sheet.sentTo'
+  | 'play.sheet.posted'
   | 'play.sheet.createAndInvite'
   | 'play.sheet.postToGroup'
   | 'play.invited.title'
@@ -3035,6 +3037,8 @@ const en: Catalog = {
   'play.sheet.friendOnline': '{name}, online now',
   'play.sheet.send': 'Send invites ({count})',
   'play.sheet.sent': 'Invites sent: {count}',
+  'play.sheet.sentTo': 'Invite sent to {name}',
+  'play.sheet.posted': 'Posted in the group',
   'play.sheet.createAndInvite': 'Create the game',
   'play.sheet.postToGroup': 'Post the game in the group',
   'play.invited.title': 'Invited',
@@ -5870,6 +5874,8 @@ const ku: Catalog = {
   'play.sheet.friendOnline': '{name}, niha serxet e',
   'play.sheet.send': 'Vexwendinan bişîne ({count})',
   'play.sheet.sent': 'Vexwendin hatin şandin: {count}',
+  'play.sheet.sentTo': 'Vexwendin ji {name} re hat şandin',
+  'play.sheet.posted': 'Di komê de hat weşandin',
   'play.sheet.createAndInvite': 'Lîstikê çêke',
   'play.sheet.postToGroup': 'Lîstikê di komê de biweşîne',
   'play.invited.title': 'Vexwendî',
@@ -8704,6 +8710,8 @@ const de: Catalog = {
   'play.sheet.friendOnline': '{name}, gerade online',
   'play.sheet.send': 'Einladungen senden ({count})',
   'play.sheet.sent': 'Einladungen gesendet: {count}',
+  'play.sheet.sentTo': 'Einladung an {name} gesendet',
+  'play.sheet.posted': 'In der Gruppe gepostet',
   'play.sheet.createAndInvite': 'Spiel erstellen',
   'play.sheet.postToGroup': 'Spiel in der Gruppe posten',
   'play.invited.title': 'Eingeladen',
@@ -11538,6 +11546,8 @@ const es: Catalog = {
   'play.sheet.friendOnline': '{name}, conectado ahora',
   'play.sheet.send': 'Enviar invitaciones ({count})',
   'play.sheet.sent': 'Invitaciones enviadas: {count}',
+  'play.sheet.sentTo': 'Invitación enviada a {name}',
+  'play.sheet.posted': 'Publicada en el grupo',
   'play.sheet.createAndInvite': 'Crear la partida',
   'play.sheet.postToGroup': 'Publicar la partida en el grupo',
   'play.invited.title': 'Invitados',
@@ -14372,6 +14382,8 @@ const tr: Catalog = {
   'play.sheet.friendOnline': '{name}, şu an çevrimiçi',
   'play.sheet.send': 'Davetleri gönder ({count})',
   'play.sheet.sent': 'Gönderilen davet: {count}',
+  'play.sheet.sentTo': '{name} davet edildi',
+  'play.sheet.posted': 'Grupta paylaşıldı',
   'play.sheet.createAndInvite': 'Oyunu oluştur',
   'play.sheet.postToGroup': 'Oyunu grupta paylaş',
   'play.invited.title': 'Davet edilenler',
@@ -17206,6 +17218,8 @@ const ar: Catalog = {
   'play.sheet.friendOnline': '{name}، متصل الآن',
   'play.sheet.send': 'أرسل الدعوات ({count})',
   'play.sheet.sent': 'أُرسلت الدعوات: {count}',
+  'play.sheet.sentTo': 'أُرسلت الدعوة إلى {name}',
+  'play.sheet.posted': 'نُشرت في المجموعة',
   'play.sheet.createAndInvite': 'أنشئ اللعبة',
   'play.sheet.postToGroup': 'انشر اللعبة في المجموعة',
   'play.invited.title': 'المدعوّون',
@@ -20040,6 +20054,8 @@ const fr: Catalog = {
   'play.sheet.friendOnline': '{name}, en ligne',
   'play.sheet.send': 'Envoyer les invitations ({count})',
   'play.sheet.sent': 'Invitations envoyées : {count}',
+  'play.sheet.sentTo': 'Invitation envoyée à {name}',
+  'play.sheet.posted': 'Publiée dans le groupe',
   'play.sheet.createAndInvite': 'Créer la partie',
   'play.sheet.postToGroup': 'Publier la partie dans le groupe',
   'play.invited.title': 'Invités',
@@ -22874,6 +22890,8 @@ const nl: Catalog = {
   'play.sheet.friendOnline': '{name}, nu online',
   'play.sheet.send': 'Uitnodigingen versturen ({count})',
   'play.sheet.sent': 'Uitnodigingen verstuurd: {count}',
+  'play.sheet.sentTo': 'Uitnodiging verstuurd naar {name}',
+  'play.sheet.posted': 'In de groep geplaatst',
   'play.sheet.createAndInvite': 'Spel maken',
   'play.sheet.postToGroup': 'Spel in de groep plaatsen',
   'play.invited.title': 'Uitgenodigd',
@@ -25709,6 +25727,8 @@ const ckb: Catalog = {
   'play.sheet.friendOnline': '{name}، ئێستا سەرهێڵە',
   'play.sheet.send': 'بانگهێشتەکان بنێرە ({count})',
   'play.sheet.sent': 'بانگهێشت نێردران: {count}',
+  'play.sheet.sentTo': 'بانگهێشت بۆ {name} نێردرا',
+  'play.sheet.posted': 'لە گرووپەکەدا بڵاوکرایەوە',
   'play.sheet.createAndInvite': 'یارییەکە دروست بکە',
   'play.sheet.postToGroup': 'یارییەکە لە گرووپەکەدا بڵاو بکەرەوە',
   'play.invited.title': 'بانگهێشتکراو',
