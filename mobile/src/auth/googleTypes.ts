@@ -12,7 +12,7 @@ export type GoogleResult =
   | { kind: 'not-configured' }
   /**
    * `messageKey` is ours and is translated; `message` is whatever the Google
-   * SDK said and is not. The screen shows the SDK's detail when there is one,
-   * because it is the more specific of the two.
+   * SDK said and is not. The screen says only ours: the SDK's detail is
+   * English and technical, and is kept here for whoever is debugging a build.
    */
   | { kind: 'error'; messageKey: TranslationKey; message?: string };

@@ -24,6 +24,7 @@ vi.mock('expo-apple-authentication', async () => {
   };
 });
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { Alert } from 'react-native';
 import { TRANSLATIONS } from '../../i18n/translations';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
@@ -88,6 +89,28 @@ describe('continuing with Apple', () => {
       authorizationCode: 'c1a2b3.0.authorization-code',
       fullName: null,
     });
+  });
+
+  /*
+   * The sheet’s own failure is English and technical, with a code in
+   * brackets; the reader is told which step failed and what to do, in their
+   * own language, and nothing else.
+   */
+  it('says a failed Apple sheet in the reader’s words, without the SDK’s message or code', async () => {
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    apple.signInAsync.mockRejectedValue(Object.assign(new Error('The authorization attempt failed for an unknown reason'), { code: 'ERR_REQUEST_UNKNOWN' }));
+    await continueWithApple();
+    expect(alert).toHaveBeenCalledWith(en['welcome.appleFailed'], en['common.tryAgain']);
+    expect(JSON.stringify(alert.mock.calls)).not.toMatch(/ERR_REQUEST_UNKNOWN|unknown reason/);
+    alert.mockRestore();
+  });
+
+  it('says nothing when the person cancels the Apple sheet', async () => {
+    const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
+    apple.signInAsync.mockRejectedValue(Object.assign(new Error('The user canceled the authorization attempt'), { code: 'ERR_REQUEST_CANCELED' }));
+    await continueWithApple();
+    expect(alert).not.toHaveBeenCalled();
+    alert.mockRestore();
   });
 });
 

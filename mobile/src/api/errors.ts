@@ -73,6 +73,8 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   LOGIN_VERIFICATION_REQUIRED: 'error.code.loginCheck',
   INVALID_OAUTH_TOKEN: 'error.code.oauthFailed',
   OAUTH_NOT_CONFIGURED: 'error.code.oauthUnavailable',
+  // Apple or Google names an address whose account here has not confirmed it yet: the password first
+  LINK_REQUIRES_VERIFIED_EMAIL: 'error.code.oauthLinkUnverified',
   // a session that has run out, however the server put it
   UNAUTHORIZED: 'error.sessionExpired',
   INVALID_REFRESH: 'error.sessionExpired',

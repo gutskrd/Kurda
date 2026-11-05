@@ -1641,6 +1641,7 @@ export type TranslationKey =
   | 'error.code.loginCheck'
   | 'error.code.oauthFailed'
   | 'error.code.oauthUnavailable'
+  | 'error.code.oauthLinkUnverified'
   | 'error.tooManyRetryInMin'
   | 'picture.title'
   | 'picture.choosePicture'
@@ -3953,6 +3954,7 @@ const en: Catalog = {
   'error.code.loginCheck': 'We couldn’t sign you in from here just now. Try again in a little while, or reset your password.',
   'error.code.oauthFailed': 'We couldn’t confirm that sign-in. Please try again.',
   'error.code.oauthUnavailable': 'That way of signing in isn’t available right now. Use your email instead.',
+  'error.code.oauthLinkUnverified': 'This email already has an account that isn’t confirmed yet. Log in with your password and confirm the email first, then you can sign in this way too.',
   'error.tooManyRetryInMin': 'Too many attempts. Try again in {minutes} min.',
   'picture.title': 'Post a picture',
   'picture.choosePicture': 'Choose a picture',
@@ -6810,6 +6812,7 @@ const ku: Catalog = {
   'error.code.loginCheck': 'Me niha nikarîbû te ji vir têxin hundir. Piştî demeke kurt dîsa biceribîne, an şîfreya xwe ji nû ve saz bike.',
   'error.code.oauthFailed': 'Me nekarî vê têketinê piştrast bikin. Ji kerema xwe dîsa biceribîne.',
   'error.code.oauthUnavailable': 'Ev rêya têketinê niha ne berdest e. Li şûna wê e-nameya xwe bi kar bîne.',
+  'error.code.oauthLinkUnverified': 'Bi vê e-nameyê jixwe hesabek heye ku hê nehatiye piştrastkirin. Pêşî bi şîfreya xwe têkeve û e-nameyê piştrast bike, paşê tu dikarî bi vî awayî jî têkevî.',
   'error.tooManyRetryInMin': 'Pir ceriband. Piştî {minutes} deqîqeyan dîsa biceribîne.',
   'picture.title': 'Wêneyekî bişîne',
   'picture.choosePicture': 'Wêneyekî hilbijêre',
@@ -9666,6 +9669,7 @@ const de: Catalog = {
   'error.code.loginCheck': 'Wir konnten dich gerade nicht von hier anmelden. Versuch es gleich noch einmal oder setze dein Passwort zurück.',
   'error.code.oauthFailed': 'Wir konnten diese Anmeldung nicht bestätigen. Bitte versuch es noch einmal.',
   'error.code.oauthUnavailable': 'Diese Art der Anmeldung ist gerade nicht verfügbar. Nutze stattdessen deine E-Mail-Adresse.',
+  'error.code.oauthLinkUnverified': 'Zu dieser E-Mail-Adresse gibt es schon ein Konto, das noch nicht bestätigt ist. Melde dich zuerst mit deinem Passwort an und bestätige die Adresse – danach klappt auch diese Anmeldung.',
   'error.tooManyRetryInMin': 'Zu viele Versuche. Versuche es in {minutes} Min. erneut.',
   'picture.title': 'Bild posten',
   'picture.choosePicture': 'Bild auswählen',
@@ -12522,6 +12526,7 @@ const es: Catalog = {
   'error.code.loginCheck': 'Ahora mismo no pudimos iniciar tu sesión desde aquí. Vuelve a intentarlo en un rato o restablece tu contraseña.',
   'error.code.oauthFailed': 'No pudimos confirmar ese inicio de sesión. Inténtalo de nuevo.',
   'error.code.oauthUnavailable': 'Esa forma de iniciar sesión no está disponible ahora. Usa tu correo electrónico.',
+  'error.code.oauthLinkUnverified': 'Ya hay una cuenta con este correo que aún no está confirmada. Inicia sesión con tu contraseña y confirma el correo primero; después también podrás entrar así.',
   'error.tooManyRetryInMin': 'Demasiados intentos. Inténtalo de nuevo en {minutes} min.',
   'picture.title': 'Publicar una foto',
   'picture.choosePicture': 'Elige una foto',
@@ -15378,6 +15383,7 @@ const tr: Catalog = {
   'error.code.loginCheck': 'Şu an seni buradan giriş yaptıramadık. Biraz sonra tekrar dene ya da şifreni sıfırla.',
   'error.code.oauthFailed': 'Bu girişi doğrulayamadık. Lütfen tekrar dene.',
   'error.code.oauthUnavailable': 'Bu giriş yolu şu anda kullanılamıyor. Bunun yerine e-posta adresini kullan.',
+  'error.code.oauthLinkUnverified': 'Bu e-postayla henüz onaylanmamış bir hesap zaten var. Önce şifrenle giriş yapıp e-postanı onayla, sonra bu yolla da girebilirsin.',
   'error.tooManyRetryInMin': 'Çok fazla deneme. {minutes} dk. sonra tekrar dene.',
   'picture.title': 'Bir görsel paylaş',
   'picture.choosePicture': 'Bir görsel seç',
@@ -18234,6 +18240,7 @@ const ar: Catalog = {
   'error.code.loginCheck': 'تعذّر تسجيل دخولك من هنا الآن. حاول مرة أخرى بعد قليل، أو أعد تعيين كلمة المرور.',
   'error.code.oauthFailed': 'لم نتمكّن من تأكيد تسجيل الدخول هذا. من فضلك حاول مرة أخرى.',
   'error.code.oauthUnavailable': 'طريقة تسجيل الدخول هذه غير متاحة الآن. استخدم بريدك الإلكتروني بدلًا منها.',
+  'error.code.oauthLinkUnverified': 'يوجد بالفعل حساب بهذا البريد الإلكتروني لم يُؤكَّد بعد. سجّل الدخول بكلمة المرور وأكّد بريدك أولًا، وبعدها يمكنك الدخول بهذه الطريقة أيضًا.',
   'error.tooManyRetryInMin': 'محاولات كثيرة جدًا. حاول مرة أخرى بعد {minutes} دقيقة.',
   'picture.title': 'انشر صورة',
   'picture.choosePicture': 'اختر صورة',
@@ -21090,6 +21097,7 @@ const fr: Catalog = {
   'error.code.loginCheck': 'Nous n’avons pas pu te connecter depuis ici pour l’instant. Réessaie dans un moment ou réinitialise ton mot de passe.',
   'error.code.oauthFailed': 'Nous n’avons pas pu confirmer cette connexion. Réessaie, s’il te plaît.',
   'error.code.oauthUnavailable': 'Ce moyen de connexion n’est pas disponible pour le moment. Utilise plutôt ton adresse e-mail.',
+  'error.code.oauthLinkUnverified': 'Un compte existe déjà avec cette adresse, mais elle n’est pas encore confirmée. Connecte-toi d’abord avec ton mot de passe et confirme l’adresse ; ensuite, cette connexion marchera aussi.',
   'error.tooManyRetryInMin': 'Trop de tentatives. Réessaie dans {minutes} min.',
   'picture.title': 'Publier une photo',
   'picture.choosePicture': 'Choisis une photo',
@@ -23946,6 +23954,7 @@ const nl: Catalog = {
   'error.code.loginCheck': 'We konden je hier nu niet aanmelden. Probeer het straks opnieuw of stel je wachtwoord opnieuw in.',
   'error.code.oauthFailed': 'We konden deze aanmelding niet bevestigen. Probeer het opnieuw.',
   'error.code.oauthUnavailable': 'Deze manier van aanmelden is nu niet beschikbaar. Gebruik in plaats daarvan je e-mailadres.',
+  'error.code.oauthLinkUnverified': 'Er is al een account met dit e-mailadres dat nog niet is bevestigd. Log eerst in met je wachtwoord en bevestig het adres, daarna kun je ook zo inloggen.',
   'error.tooManyRetryInMin': 'Te veel pogingen. Probeer het over {minutes} min. opnieuw.',
   'picture.title': 'Een foto plaatsen',
   'picture.choosePicture': 'Kies een foto',
@@ -26803,6 +26812,7 @@ const ckb: Catalog = {
   'error.code.loginCheck': 'ئێستا نەمانتوانی لێرەوە بتهێنینە ژوورەوە. دوای کەمێک دووبارە هەوڵ بدەرەوە، یان وشەی تێپەڕەکەت ڕێکبخەرەوە.',
   'error.code.oauthFailed': 'نەمانتوانی ئەم چوونەژوورەوەیە پشتڕاست بکەینەوە. تکایە دووبارە هەوڵ بدەرەوە.',
   'error.code.oauthUnavailable': 'ئەم ڕێگایەی چوونەژوورەوە ئێستا بەردەست نییە. لە جیاتی ئەوە ئیمەیلەکەت بەکاربهێنە.',
+  'error.code.oauthLinkUnverified': 'هەژمارێک بەم ئیمەیلە هەیە کە هێشتا پشتڕاست نەکراوەتەوە. سەرەتا بە وشەی تێپەڕەکەت بچۆ ژوورەوە و ئیمەیلەکە پشتڕاست بکەرەوە، دواتر دەتوانیت بەم ڕێگایەش بچیتە ژوورەوە.',
   'error.tooManyRetryInMin': 'هەوڵی زۆر. دوای {minutes} خولەک دووبارە هەوڵ بدەرەوە.',
   'picture.title': 'وێنەیەک بڵاوبکەرەوە',
   'picture.choosePicture': 'وێنەیەک هەڵبژێرە',

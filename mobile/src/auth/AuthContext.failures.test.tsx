@@ -43,6 +43,33 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+describe('signing in with Apple or Google', () => {
+  async function refusedWith(status: number, body: unknown): Promise<string | null> {
+    vi.stubGlobal('fetch', vi.fn(async () => json(status, body)));
+    const auth = await signedOut();
+    let said: string | null = null;
+    await act(async () => {
+      said = await auth.current.oauthSignIn('google', 'id-token-from-google-0123456789');
+    });
+    return said;
+  }
+
+  it('says a refused token in the reader’s words, without the code in brackets', async () => {
+    const said = await refusedWith(401, { code: 'INVALID_OAUTH_TOKEN', message: 'invalid google token' });
+    expect(said).toBe('We couldn’t confirm that sign-in. Please try again.');
+  });
+
+  it('says what to do when the address has an account that is not confirmed yet', async () => {
+    const said = await refusedWith(409, { code: 'LINK_REQUIRES_VERIFIED_EMAIL', message: 'an account with this email exists but is not verified' });
+    expect(said).toBe('This email already has an account that isn’t confirmed yet. Log in with your password and confirm the email first, then you can sign in this way too.');
+  });
+
+  it('never passes the server’s English through, whatever the refusal', async () => {
+    const said = await refusedWith(400, { code: 'SOMETHING_NEW', message: 'provider sub mismatch' });
+    expect(said).toBe('We couldn’t confirm that sign-in. Please try again.');
+  });
+});
+
 describe('asking for a password reset', () => {
   it('resolves to nothing once the server has the request', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => json(200, { sent: true })));

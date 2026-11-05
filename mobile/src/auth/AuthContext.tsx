@@ -3,7 +3,7 @@ import { ApiClient } from '../api/client';
 import { useHeartbeat } from './useHeartbeat';
 import { defaultApiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
-import { describeError, isMaintenance } from '../api/errors';
+import { describeError, describeErrorOr, isMaintenance } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import type { Locale } from '../i18n/translations';
 import { createDeviceIdStore, createTokenStorage } from './storage';
@@ -389,11 +389,12 @@ export function AuthProvider({
           setSuspension(suspended);
           return describeError(res.error, t);
         }
-        // Append the server's own error code (e.g. OAUTH_NOT_CONFIGURED,
-        // INVALID_OAUTH_TOKEN) when present — it names the actual cause, which
-        // the friendly copy alone hides for 5xx/401 responses.
-        const friendly = describeError(res.error, t);
-        return res.error.code ? `${friendly} (${res.error.code})` : friendly;
+        // Only the reader's own language: the codes that name a cause
+        // (OAUTH_NOT_CONFIGURED, INVALID_OAUTH_TOKEN, an address waiting to
+        // be confirmed) each have their sentence, and anything else is the
+        // plain "couldn't confirm that sign-in", never the server's English
+        // or its code in brackets.
+        return describeErrorOr(res.error, t, 'error.code.oauthFailed');
       }
       await applyAuth(res.data);
       return null;

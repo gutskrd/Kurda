@@ -99,10 +99,13 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
     };
   }, [baseUrl]);
 
+  /*
+   * The Apple sheet and the backend exchange are separate failure domains, and
+   * each alert's title says which one failed. What is under it is always in
+   * the reader's own language: the SDK's message and code are English and
+   * technical, and they told a learner nothing but that the app was broken.
+   */
   const onApple = async () => {
-    // The Apple sheet and the backend exchange are separate failure domains, so
-    // report them distinctly — a raw "something went wrong" hides whether Apple
-    // rejected the authorization (entitlement/provisioning) or our API did.
     let cred: AppleAuthentication.AppleAuthenticationCredential;
     try {
       cred = await AppleAuthentication.signInAsync({
@@ -112,12 +115,8 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         ],
       });
     } catch (e) {
-      const code = (e as { code?: string }).code;
-      if (code === 'ERR_REQUEST_CANCELED') return; // user tapped Cancel — not an error
-      Alert.alert(
-        t('welcome.appleFailed'),
-        `${(e as Error).message ?? t('common.unknownError')}${code ? `\n(${code})` : ''}`,
-      );
+      if ((e as { code?: string }).code === 'ERR_REQUEST_CANCELED') return; // user tapped Cancel — not an error
+      Alert.alert(t('welcome.appleFailed'), t('common.tryAgain'));
       return;
     }
     if (!cred.identityToken) {
@@ -134,9 +133,9 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       });
       // Hevalo offline for a while is said by the screen over the app, not by an alert on top of it
       if (err && !currentMaintenance()) Alert.alert(t('welcome.couldNotSignIn'), err);
-    } catch (e) {
+    } catch {
       // never let a post-Apple failure die silently — surface it
-      Alert.alert(t('welcome.signInError'), (e as Error)?.message ?? String(e));
+      Alert.alert(t('welcome.signInError'), t('common.tryAgain'));
     }
   };
 
@@ -147,14 +146,15 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
     // the button is not shown in a build without Google's client ids; this is only belt and braces
     if (res.kind === 'not-configured') return;
     if (res.kind === 'error') {
-      Alert.alert(t(res.messageKey), res.message ?? '');
+      // our own sentence for what went wrong, under the title that says it was Google's sheet
+      Alert.alert(t('welcome.googleFailed'), res.messageKey === 'welcome.googleFailed' ? t('common.tryAgain') : t(res.messageKey));
       return;
     }
     try {
       const err = await oauthSignIn('google', res.idToken);
       if (err && !currentMaintenance()) Alert.alert(t('welcome.couldNotSignIn'), err);
-    } catch (e) {
-      Alert.alert(t('welcome.signInError'), (e as Error)?.message ?? String(e));
+    } catch {
+      Alert.alert(t('welcome.signInError'), t('common.tryAgain'));
     }
   };
 
