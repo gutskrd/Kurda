@@ -46,8 +46,9 @@ export function storyTextDirection(dialect: StoryDialect): { lang: 'ku' | 'ckb';
 /**
  * 1 = first steps (A1), 2 = elementary (A2), 3 = intermediate (B1), 4 = upper
  * intermediate (B2), 5 = advanced (C1). The number is what is stored and
- * filtered by; the CEFR letter (`cefrOf`) is what readers are shown, because a
- * learner who knows their level knows it as "A2", not as "2".
+ * filtered by. Readers are shown a plain name for it (`levelNameKey`), since
+ * most people learning Kurdish never met the CEFR letters; the letters stay
+ * for editors and the API.
  */
 export const STORY_LEVELS = [1, 2, 3, 4, 5] as const;
 export type StoryLevel = (typeof STORY_LEVELS)[number];
@@ -69,6 +70,36 @@ export function cefrOf(level: StoryLevel): CefrLevel {
 export function levelOfCefr(cefr: string): StoryLevel | null {
   const at = (CEFR_LEVELS as readonly string[]).indexOf(cefr.trim().toUpperCase());
   return at < 0 ? null : STORY_LEVELS[at]!;
+}
+
+/** The catalogue key of a level's plain name ("Starter" … "Advanced"), the same on the website and the phone. */
+export type LevelNameKey = `level.name.${StoryLevel}`;
+/** The catalogue key of the line under a level's name that says what reading at it is like. */
+export type LevelHintKey = `level.hint.${StoryLevel}`;
+
+/**
+ * What a reader is shown for a level: a plain name and a line saying what it
+ * means, never the bare CEFR letter, which says nothing to someone who never
+ * studied a language in a classroom. Kept here, with the order, so the
+ * stories, and later the lessons and the games, all call level 2 by the same
+ * name in both apps; the words themselves are in each app's catalogues.
+ */
+export function levelNameKey(level: StoryLevel): LevelNameKey {
+  return `level.name.${level}`;
+}
+
+export function levelHintKey(level: StoryLevel): LevelHintKey {
+  return `level.hint.${level}`;
+}
+
+/** The orders GET /stories offers: easiest first (level, then length, then title — also its order when none is asked), newest first, and by title. */
+export const STORY_SORTS = ['level', 'newest', 'title'] as const;
+export type StorySort = (typeof STORY_SORTS)[number];
+/** The order a list is in when none is asked for. */
+export const DEFAULT_STORY_SORT: StorySort = 'level';
+
+export function isStorySort(v: unknown): v is StorySort {
+  return (STORY_SORTS as readonly unknown[]).includes(v);
 }
 
 /**
@@ -669,6 +700,8 @@ export interface StoryLibrary {
   bookmarks: StoryListItem[];
   /** every category, with how many published stories are filed under it */
   categories: Array<StoryCategory & { count: number }>;
+  /** how many published stories there are at each level, only for levels that have one; absent from an older server */
+  levels?: Array<{ level: StoryLevel; count: number }>;
   /** published stories in all */
   total: number;
   /** the signed-in caller's reading so far; absent when anonymous */
@@ -688,9 +721,10 @@ export interface StoryQuery {
   category?: string;
   level?: StoryLevel;
   dialect?: StoryDialect;
+  length?: StoryLength;
   language?: string;
   audio?: boolean;
-  sort?: 'newest' | 'level' | 'title';
+  sort?: StorySort;
   limit?: number;
   offset?: number;
 }
@@ -711,6 +745,7 @@ export function storyQueryString(query: StoryQuery): string {
   put('category', query.category);
   put('level', query.level);
   put('dialect', query.dialect);
+  put('length', query.length);
   put('language', query.language);
   if (query.audio) params.set('audio', '1');
   put('sort', query.sort);

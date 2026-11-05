@@ -154,6 +154,12 @@ describe.skipIf(!DATABASE_URL)('story library (integration)', () => {
       expect(lib.categories.find((c) => c.slug === 'fable')!.count).toBeGreaterThanOrEqual(2);
       expect(lib.categories.find((c) => c.slug === 'folktale')).toMatchObject({ name: { en: 'Folktales', ku: 'Çîrokên gelêrî' }, position: 0 });
       expect(lib.total).toBeGreaterThanOrEqual(4);
+      // the levels that have a story, in order, which add up to the total; a draft counts at none
+      const levels = lib.levels ?? [];
+      expect(levels.map((l) => l.level)).toEqual([...levels.map((l) => l.level)].sort());
+      expect(levels.every((l) => l.count > 0)).toBe(true);
+      expect(levels.reduce((sum, l) => sum + l.count, 0)).toBe(lib.total);
+      expect(levels.find((l) => l.level === 2)?.count).toBeGreaterThanOrEqual(1);
       // nothing personal for nobody
       expect(lib.continue).toEqual([]);
       expect(lib.bookmarks).toEqual([]);

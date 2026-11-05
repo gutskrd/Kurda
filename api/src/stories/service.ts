@@ -524,8 +524,8 @@ export class StoriesService {
    * story on the page.
    */
   async library(viewer: string | null = null): Promise<StoryLibrary> {
-    const load = async (): Promise<Pick<StoryLibrary, 'featured' | 'recent' | 'categories' | 'total'>> => {
-      const [featured, recent, categories, total] = await Promise.all([
+    const load = async (): Promise<Pick<StoryLibrary, 'featured' | 'recent' | 'categories' | 'levels' | 'total'>> => {
+      const [featured, recent, categories, levels, total] = await Promise.all([
         this.pool.query<ListRow>(
           `SELECT ${LIST_COLUMNS} FROM stories s WHERE ${PUBLISHED_SQL} AND s.featured
            ORDER BY s.featured_at DESC NULLS LAST, s.published_at DESC LIMIT ${LIBRARY_ROW}`,
@@ -538,12 +538,17 @@ export class StoriesService {
                   (SELECT count(*)::int FROM stories s WHERE s.category = c.slug AND ${PUBLISHED_SQL}) AS count
              FROM story_categories c ORDER BY c.position, c.slug`,
         ),
+        // so the library's filter offers only the levels a reader would find something at
+        this.pool.query<{ level: StoryLevel; count: number }>(
+          `SELECT s.level, count(*)::int AS count FROM stories s WHERE ${PUBLISHED_SQL} GROUP BY s.level ORDER BY s.level`,
+        ),
         this.pool.query<{ n: number }>(`SELECT count(*)::int AS n FROM stories s WHERE ${PUBLISHED_SQL}`),
       ]);
       return {
         featured: featured.rows.map(listItem),
         recent: recent.rows.map(listItem),
         categories: categories.rows,
+        levels: levels.rows.map((r) => ({ level: Number(r.level) as StoryLevel, count: r.count })),
         total: total.rows[0]?.n ?? 0,
       };
     };
@@ -589,6 +594,7 @@ export class StoriesService {
       continue: attach(reading.rows.map(listItem)),
       bookmarks: attach(bookmarks.rows.map(listItem)),
       categories: shared.categories,
+      levels: shared.levels,
       total: shared.total,
       me: { finished: tally.rows[0]?.n ?? 0, total: shared.total, averageScore: score.rows[0]?.avg ?? null },
     };

@@ -15,6 +15,9 @@ import {
   glossFor,
   isAllowedQuestionCount,
   isStoryLevel,
+  isStorySort,
+  levelHintKey,
+  levelNameKey,
   levelOfCefr,
   narrationAt,
   normalizeJoinCode,
@@ -223,6 +226,11 @@ describe('levels', () => {
     for (const not of ['A0', 'C2', '2', '', 'intermediate']) expect(levelOfCefr(not)).toBeNull();
     for (const cefr of CEFR_LEVELS) expect(cefrOf(levelOfCefr(cefr)!)).toBe(cefr);
   });
+
+  it('names every level by one plain key and one hint key, in level order', () => {
+    expect(STORY_LEVELS.map(levelNameKey)).toEqual(['level.name.1', 'level.name.2', 'level.name.3', 'level.name.4', 'level.name.5']);
+    expect(STORY_LEVELS.map(levelHintKey)).toEqual(['level.hint.1', 'level.hint.2', 'level.hint.3', 'level.hint.4', 'level.hint.5']);
+  });
 });
 
 describe('categories', () => {
@@ -274,6 +282,12 @@ describe('the library query string', () => {
     expect(storyQueryString({ dialect: 'sorani', sort: 'title', limit: 12, language: 'ku', category: 'fable' })).toBe(
       '?category=fable&dialect=sorani&language=ku&sort=title&limit=12',
     );
+    expect(storyQueryString({ length: 'medium', dialect: 'kurmanci', sort: 'newest', limit: 1 })).toBe('?dialect=kurmanci&length=medium&sort=newest&limit=1');
+  });
+
+  it('knows the orders the list offers, and nothing else', () => {
+    for (const sort of ['level', 'newest', 'title']) expect(isStorySort(sort)).toBe(true);
+    for (const not of ['oldest', 'popular', '', null, undefined]) expect(isStorySort(not)).toBe(false);
   });
 });
 
