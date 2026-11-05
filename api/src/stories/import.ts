@@ -81,6 +81,8 @@ interface StoredRow {
   status: string;
   /** who last changed it in the admin panel; null when a file (this command, the seeding) wrote it last */
   updated_by: string | null;
+  /** whether a reviewer approved the content as it stands */
+  review_status: 'unreviewed' | 'approved';
   dialect: StoryDraft['dialect'];
   language: StoryLanguage;
   level: number;
@@ -173,7 +175,10 @@ export interface StoryImportOptions {
  * is created as a draft, a draft whose content changed is updated (and its
  * lock version bumped, so an editor with it open reloads before saving over
  * it), and a story in review, published or archived is never overwritten —
- * people are looking at it.
+ * people are looking at it. A draft that was approved loses the approval when
+ * its content is replaced, as it does when an editor changes it in the panel:
+ * the approval was given to the text that is gone, and publishing asks only
+ * whether the story is approved.
  *
  * Nor, without `force`, is a draft someone changed in the admin panel: a
  * native speaker correcting a starter there must not lose the corrections to
@@ -204,7 +209,7 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
     await client.query('BEGIN');
     for (const draft of drafts) {
       const found = await client.query<StoredRow>(
-        `SELECT id, status, updated_by, dialect, language, level, title, summary, body, glossary, category, tradition, author,
+        `SELECT id, status, updated_by, review_status, dialect, language, level, title, summary, body, glossary, category, tradition, author,
                 story_source, source_url, attribution_note, translations, cover, reading_minutes
            FROM stories WHERE slug = $1 FOR UPDATE`,
         [draft.slug],
@@ -231,7 +236,14 @@ export async function importStories(pool: pg.Pool, raw: unknown, options: StoryI
         continue;
       } else {
         id = row.id;
-        await saveStory(client, draft, { id, set: 'lock_version = lock_version + 1, updated_by = NULL' });
+        // the content changed, so an approval of the old content goes with it (StoryAdminService.update does the same)
+        const resetReview = row.review_status === 'approved';
+        await saveStory(client, draft, {
+          id,
+          set:
+            'lock_version = lock_version + 1, updated_by = NULL' +
+            (resetReview ? `, review_status = 'unreviewed', reviewed_by = NULL, reviewed_at = NULL, review_note = NULL` : ''),
+        });
         outcome = 'updated';
       }
       if (publish) {

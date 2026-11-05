@@ -120,6 +120,32 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
       expect(await row(slug('a'))).toMatchObject({ title: 'Sernavê nû', lock_version: 1, source: 'starter' });
     });
 
+    /*
+     * An approval is of the text that was read. A file that replaces the text
+     * of an approved draft takes the approval with it, as an edit in the panel
+     * does, so the new text cannot be published without a review.
+     */
+    it('takes the approval off a draft whose content it replaces, and leaves it on one it leaves alone', async () => {
+      await importStories(pool, { stories: [testStory(slug('approved')), testStory(slug('approvedsame'))] });
+      await pool.query(
+        `UPDATE stories SET review_status = 'approved', reviewed_by = $2, reviewed_at = now(), review_note = 'Read twice.' WHERE slug = ANY($1)`,
+        [[slug('approved'), slug('approvedsame')], editorId],
+      );
+      const res = await importStories(pool, { stories: [testStory(slug('approved'), { title: 'Sernavekî nû' }), testStory(slug('approvedsame'))] });
+      expect(res.stories.map((st) => st.outcome)).toEqual(['updated', 'unchanged']);
+
+      const review = async (sl: string) =>
+        (await pool.query(`SELECT id, lock_version, review_status, reviewed_by, reviewed_at, review_note FROM stories WHERE slug = $1`, [sl])).rows[0];
+      const replaced = await review(slug('approved'));
+      expect(replaced).toMatchObject({ review_status: 'unreviewed', reviewed_by: null, reviewed_at: null, review_note: null });
+      expect(await review(slug('approvedsame'))).toMatchObject({ review_status: 'approved', reviewed_by: editorId, review_note: 'Read twice.' });
+      // and the new text cannot go out unread
+      const admin = new StoryAdminService(pool);
+      await expect(admin.transition(replaced.id, 'publish', { adminId: editorId, lockVersion: replaced.lock_version })).rejects.toMatchObject({
+        code: 'NOT_REVIEWED',
+      });
+    });
+
     it('never overwrites a story in review, published or archived', async () => {
       const admin = new StoryAdminService(pool);
       await importStories(pool, { stories: [testStory(slug('review')), testStory(slug('live')), testStory(slug('old'))] });
