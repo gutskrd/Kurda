@@ -734,7 +734,9 @@ function hevalo(to: ToCanvas): KingdomActor {
     const tilt = Math.abs(dx) < 4 ? 0 : Math.sign(dx) * 5;
     if (nextT - t1 > 600) headKeys.push({ t: T(t1 + 250), r: tilt, y: 0 }, { t: T(nextT - 250), r: tilt, y: 0 }, { t: T(nextT), r: 0, y: 0 });
   });
+  // back where he began, standing square, so the loop closes without a jump
   path.push({ t: 1, x: 0, y: 0 });
+  gait.push({ t: 1, y: 0, r: 0 });
   // looking about halfway down the upper path: a turn of the head each way, and a flick of the ear
   const look = times[1]!;
   headKeys.push({ t: T(look.t0 + 300), r: 0 }, { t: T(look.t0 + 800), r: -7 }, { t: T(look.t0 + 1700), r: -7 }, { t: T(look.t0 + 2200), r: 6 }, { t: T(look.t0 + 2900), r: 6 }, { t: T(look.t1), r: 0 });
@@ -1054,7 +1056,8 @@ export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, 
 
   // the stream: glints running down it, out of the woods and away
   for (let g = 0; g < 4; g++) {
-    const pts = STREAM.map(([sx, sy]) => to(sx, sy, F0));
+    // from where the stream first shows inside the world, down to where the woods take it
+    const pts = STREAM.slice(1).map(([sx, sy]) => to(sx, sy, F0));
     const base = pts[0]!;
     const keys: Key[] = pts.map((p, i) => ({ t: i / (pts.length - 1), x: p.x - base.x, y: p.y - base.y }));
     keys[0]!.o = 0;

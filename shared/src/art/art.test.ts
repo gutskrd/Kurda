@@ -27,7 +27,7 @@ import {
 import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import { KINGDOM_CAIRN, KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingSvg, kingdomPoint, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, type KingdomFrame, type KingdomNode } from './kingdom.js';
+import { KINGDOM_CAIRN, KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingSvg, kingdomPoint, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, kingdomTiles, type KingdomFrame, type KingdomNode } from './kingdom.js';
 import {
   PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
@@ -1099,11 +1099,12 @@ describe('the join ticket', () => {
  * The village is the one drawing allowed two things the rest of the art is
  * not, because its owner asked for them: a heavy dark outline round every
  * object, and isometric depth. Everything else still holds — flat planes of
- * colour (no gradient anywhere in the village's own drawing; only the deer
- * keeps the soft light the app's own drawing of Hevalo has always had),
- * nothing outside the drawing, every drawing well-formed and labelled — and
- * the scene, the one large picture in the app, has a weight budget of its
- * own below.
+ * colour (no gradient anywhere in the village's own drawing; only the deer,
+ * Hamo and Xezal keep the soft light the course's own drawings of them have
+ * always had), nothing outside the drawing, every drawing well-formed and
+ * labelled. The world is the one large picture in the app, several times the
+ * village's size, so it has weight budgets of its own below: one for the
+ * whole of it and one for each of the tiles an app draws it in.
  */
 describe('the kingdom’s village', () => {
   const LEVELS = [0, 1, 2, 3, 4, 5] as const;
@@ -1150,9 +1151,9 @@ describe('the kingdom’s village', () => {
         });
         expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|data:/i);
         flatColour(svg);
-        // the one large picture in the app, drawn once per visit and kept: the whole village at its fullest, with every
-        // building in scaffolding, the lake, the peaks and the scenery, is allowed about five badges' worth
-        expect(svg.length).toBeLessThan(176 * 1024);
+        // the one large picture in the app: the whole valley at its fullest, every building in scaffolding, woods all round,
+        // is allowed under a megabyte, and no app ever draws it whole (it draws the tiles near its view)
+        expect(svg.length).toBeLessThan(900 * 1024);
       }
     }
     const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
@@ -1213,17 +1214,34 @@ describe('the kingdom’s village', () => {
 
   it('moves only what has been built, inside the canvas, every loop closing on itself so it never jumps', () => {
     const ids = (levels: Record<KingdomBuilding, KingdomLevel>): string[] => kingdomLife(levels).map((a) => a.id);
-    // the deer, the flock, the hens, the dog, the sky and the tenûr's smoke are always there; the cat, the bees and the chimneys' smoke come with what they belong to
-    expect(ids(all(0))).toEqual(expect.arrayContaining(['hevalo', 'sheep0', 'goat0', 'hen0', 'dog', 'birds', 'cloud0', 'tenur0']));
-    expect(ids(all(0))).not.toContain('cat');
-    expect(ids(all(0))).not.toContain('bees');
+    // the deer, the camp's sheep, the hill's goats, the hens by the tenûr, the dog, the sky, the water and the tenûr's smoke are always there
+    expect(ids(all(0))).toEqual(expect.arrayContaining(['hevalo', 'campsheep0', 'campsheep1', 'goat0', 'hen0', 'dog', 'birds0', 'cloud0', 'cloudshade0', 'tenur0', 'waterfall', 'fish0', 'shimmer0', 'streamglint0', 'campflame']));
+    // the cat, the bees, the chimneys' smoke and the people come with the buildings they belong to
+    for (const id of ['cat', 'bees', 'hamo', 'xezo']) expect(ids(all(0))).not.toContain(id);
     expect(ids({ ...all(0), houses: 1 })).toContain('cat');
     expect(ids({ ...all(0), orchard: 3 })).toContain('bees');
-    expect(ids({ ...all(0), teahouse: 2 })).toContain('teahousesmoke00');
+    expect(ids({ ...all(0), teahouse: 2 })).toEqual(expect.arrayContaining(['teahousesmoke00', 'hamo']));
+    expect(ids({ ...all(0), school: 1 })).toContain('xezo');
     expect(ids({ ...all(0), spring: 2 })).toEqual(expect.arrayContaining(['ripple0', 'spout', 'falls']));
+    // the valley's animals and water come as the total rises: the fold's sheep, the mill's wheel, the boat, the cow, the donkey, the pigeons
+    const valley = ['sheep0', 'foldgoat0', 'coophen0', 'coophen0chick0', 'millwheel', 'boat', 'cow', 'donkey', 'pigeons', 'gust0'];
+    for (const id of valley) expect(ids(all(0)), id).not.toContain(id);
+    expect(ids(all(5))).toEqual(expect.arrayContaining(valley));
+    // the deer and the people answer a tap; nothing else does
+    expect(kingdomLife(all(5)).filter((a) => a.tap).map((a) => [a.id, a.tap])).toEqual(expect.arrayContaining([['hevalo', 'deer'], ['hamo', 'person'], ['xezo', 'person']]));
+    expect(kingdomLife(all(5)).filter((a) => a.tap)).toHaveLength(3);
     const full = kingdomLife(all(5));
     expect(new Set(full.map((a) => a.id)).size).toBe(full.length);
-    const check = (node: KingdomNode, where: string): void => {
+    // an animal's legs swing while it walks: its strides turn its legs about the hip and back
+    const legs = (node: KingdomNode): KingdomNode[] => [...(node.sprite?.startsWith('leg') ? [node] : []), ...(node.children ?? []).flatMap(legs)];
+    for (const id of ['campsheep0', 'cow', 'donkey', 'dog', 'goat0']) {
+      const four = legs(full.find((a) => a.id === id)!);
+      expect(four, id).toHaveLength(4);
+      for (const leg of four) expect(Math.max(...leg.motion!.frames.map((f) => Math.abs(f.r))), id).toBeGreaterThan(10);
+    }
+    // the chicks follow their hen
+    expect(full.filter((a) => a.id.startsWith('coophen0chick')).length).toBeGreaterThan(0);
+    const check = (node: KingdomNode, where: string, inClip = false): void => {
       for (const v of [node.box.x, node.box.y, node.box.w, node.box.h, ...node.origin, ...Object.values(node.still)]) expect(Number.isFinite(v), where).toBe(true);
       if (node.motion) {
         const f = node.motion.frames;
@@ -1234,14 +1252,15 @@ describe('the kingdom’s village', () => {
         const pose = ({ x, y, r, sx, sy, o }: KingdomFrame) => ({ x, y, r, sx, sy, o });
         const first = pose(f[0]!);
         const last = pose(f[f.length - 1]!);
-        // a loop closes on itself, or jumps back only while it cannot be seen (smoke gone, a cloud past the edge)
-        if (first.o > 0 || last.o > 0) {
+        // a loop closes on itself, or jumps back only while it cannot be seen (smoke gone, a cloud past the edge), or
+        // slides a repeating pattern inside a window that clips it (the waterfall's streaks), where the jump is one whole repeat
+        if ((first.o > 0 || last.o > 0) && !inClip) {
           // a whole turn (the bees circling) ends where it began
           for (const k of Object.keys(first) as (keyof typeof first)[]) expect(k === 'r' ? (last.r - first.r) % 360 : last[k], `${where} ${k}`).toBeCloseTo(k === 'r' ? 0 : first[k], 2);
         }
         for (const frame of f) for (const v of Object.values(frame)) expect(Number.isFinite(v), where).toBe(true);
       }
-      node.children?.forEach((c, i) => check(c, `${where}.${i}`));
+      node.children?.forEach((c, i) => check(c, `${where}.${i}`, node.clip === true));
     };
     for (const actor of full) {
       check(actor, actor.id);
@@ -1264,9 +1283,46 @@ describe('the kingdom’s village', () => {
         expect(root.attrs['aria-hidden'], sprite).toBe('true');
         walk(root, (e) => expect(ALLOWED.has(e.name), `${sprite} <${e.name}>`).toBe(true));
         expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|data:/i);
-        if (!sprite.startsWith('deer')) flatColour(svg);
+        if (!/^(deer|hamo|xezo)/.test(sprite)) flatColour(svg);
       }
     }
+  });
+
+  it('cuts the world into tiles that lie side by side as the whole of it, each light enough to draw on a phone', () => {
+    const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
+    for (const levels of [all(0), some, all(5)]) {
+      const tiles = kingdomTiles({ levels, moving: true });
+      // they cover the canvas, each reaching a unit past its own edge so neighbours overlap and never show a seam
+      expect(tiles.reduce((sum, t) => sum + (t.w - 1) * (t.h - 1), 0)).toBe(KINGDOM_SCENE.width * KINGDOM_SCENE.height);
+      for (const tile of tiles) {
+        const root = parse(tile.svg);
+        expect(root.attrs.viewBox).toBe(`${tile.x} ${tile.y} ${tile.w} ${tile.h}`);
+        expect(root.attrs['aria-hidden']).toBe('true');
+        walk(root, (e) => expect(ALLOWED.has(e.name), e.name).toBe(true));
+        expect(tile.svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|data:/i);
+        flatColour(tile.svg);
+        // the village's heart at its fullest is the heaviest; every other tile is far lighter
+        expect(tile.svg.length, `${tile.x},${tile.y}`).toBeLessThan(200 * 1024);
+      }
+    }
+    expect(kingdomTiles({ levels: some, moving: true }).map((t) => t.svg)).toEqual(kingdomTiles({ levels: some, moving: true }).map((t) => t.svg));
+  });
+
+  it('fills the valley in as the total rises, and draws the village’s heart on its own for its tile', () => {
+    const at = (total: number): Record<KingdomBuilding, KingdomLevel> => {
+      const l = all(0);
+      for (let i = 0; i < total; i++) l[KINGDOM_BUILDINGS[i % 6]!] = (l[KINGDOM_BUILDINGS[i % 6]!] + 1) as KingdomLevel;
+      return l;
+    };
+    const size = (total: number): number => kingdomSceneSvg({ levels: at(total) }).length;
+    // each step of the valley's growth adds to the picture (the buildings' own stages aside, which add too)
+    expect(size(10)).toBeGreaterThan(size(0));
+    expect(size(30)).toBeGreaterThan(size(20));
+    // the village's heart alone, for a picture of it such as the Games tile
+    const heart = kingdomSceneSvg({ levels: at(15), framed: true, width: 300 });
+    expect(parse(heart).attrs.viewBox).toBe(`${KINGDOM_FRAME.x} ${KINGDOM_FRAME.y} ${KINGDOM_FRAME.w} ${KINGDOM_FRAME.h}`);
+    expect(heart.length).toBeLessThan(kingdomSceneSvg({ levels: at(15) }).length);
+    expect(heart.length).toBeLessThan(260 * 1024);
   });
 
   it('escapes its label and refuses what it cannot draw', () => {
