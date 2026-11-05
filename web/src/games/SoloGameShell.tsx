@@ -40,6 +40,8 @@ import { dialectName } from '../learn/map';
 
 /** What a game's board is handed for the item in front of the player. */
 export interface SoloRound<Item, H, C> {
+  /** the round's id: what a game's clips are played from (`hearItClipPath`) */
+  sessionId: string;
   item: Item;
   index: number;
   total: number;
@@ -72,6 +74,8 @@ interface Props<Item, H, C> {
   onFinished?: (results: SoloResults) => void;
   /** more for the results screen: a rung opened */
   resultsExtra?: React.ReactNode;
+  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts */
+  roundItems?: number;
 }
 
 const DIFFICULTY_KEY: Record<GameDifficulty, MessageKey> = {
@@ -101,6 +105,7 @@ export function SoloGameShell<Item, H, C>({
   explain,
   onFinished,
   resultsExtra,
+  roundItems,
 }: Props<Item, H, C>): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
@@ -276,7 +281,7 @@ export function SoloGameShell<Item, H, C>({
           </span>
         </header>
 
-        {renderRound({ item, index, total: session.items.length, state, result, busy, submit })}
+        {renderRound({ sessionId: session.id, item, index, total: session.items.length, state, result, busy, submit })}
 
         <div className={`solo-feedback${result ? ` is-${result.correct ? 'right' : result.done ? 'missed' : 'again'}` : ''}`} aria-live="polite">
           {result && (
@@ -329,7 +334,7 @@ export function SoloGameShell<Item, H, C>({
             );
           })}
         </div>
-        {chosen && <p className="solo-muted">{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen]) })}</p>}
+        {chosen && <p className="solo-muted">{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen], roundItems) })}</p>}
       </fieldset>
       <Button size="lg" onClick={() => void start()} disabled={busy || !chosen}>
         {t('games.solo.start')}

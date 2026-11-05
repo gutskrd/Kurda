@@ -1,11 +1,12 @@
 /**
  * The Memory Thief's rules: easier rounds study longer and lose fewer words,
- * always between two and six, and only the advanced round is typed.
+ * always between two and six, only the advanced round is typed, and the
+ * passage is studied with every word that will vanish in its place.
  */
 import { describe, expect, it } from 'vitest';
 import { GAME_DIFFICULTIES, SOLO_ROUND_ITEMS } from '../solo.js';
 import { PASSAGE_HIDDEN } from '../content.js';
-import { MEMORY_DECOYS, MEMORY_HIDDEN, MEMORY_ROUND_PASSAGES, memoryAnswerMode, studySeconds } from './rules.js';
+import { MEMORY_DECOYS, MEMORY_HIDDEN, MEMORY_ROUND_PASSAGES, memoryAnswerMode, memoryStudyLines, studySeconds } from './rules.js';
 
 describe('the Memory Thief’s rules', () => {
   it('takes two to six words, more as the difficulty rises', () => {
@@ -39,5 +40,27 @@ describe('the Memory Thief’s rules', () => {
 
   it('is a shorter round than a sentence round, each passage being longer', () => {
     expect(MEMORY_ROUND_PASSAGES).toBeLessThan(SOLO_ROUND_ITEMS);
+  });
+});
+
+// stand-in passages for the layout, never shown to a learner
+describe('the passage as it is studied', () => {
+  it('puts every word that will vanish back in its place', () => {
+    const lines = memoryStudyLines('Gund li ber çiya ye, ne dûr.', [{ line: 0 }, { gap: 0 }, { text: ' li ber ' }, { gap: 1 }, { text: ' ye, ne dûr.' }]);
+    expect(lines).toEqual([[{ gap: 0, word: 'Gund' }, { text: ' li ber ' }, { gap: 1, word: 'çiya' }, { text: ' ye, ne dûr.' }]]);
+  });
+
+  it('leaves the punctuation around a gap outside it, and keeps a conversation’s lines', () => {
+    const lines = memoryStudyLines('Tu diçî ku?\n«Bajar», ez dibêjim.', [{ line: 0 }, { text: 'Tu diçî ku?' }, { line: 1 }, { text: '«' }, { gap: 0 }, { text: '», ez dibêjim.' }]);
+    expect(lines[1]).toEqual([{ text: '«' }, { gap: 0, word: 'Bajar' }, { text: '», ez dibêjim.' }]);
+    expect(lines).toHaveLength(2);
+  });
+
+  it('reads a Soranî line the same way', () => {
+    const lines = memoryStudyLines('گوندەکە لە بەر چیایە.', [{ line: 0 }, { gap: 0 }, { text: ' لە بەر ' }, { gap: 1 }, { text: '.' }]);
+    expect(lines[0]!.filter((p) => 'gap' in p)).toEqual([
+      { gap: 0, word: 'گوندەکە' },
+      { gap: 1, word: 'چیایە' },
+    ]);
   });
 });

@@ -1,0 +1,450 @@
+/*
+ * The Memory Thief (games/MemoryThief.tsx): its card's picture, and its stage
+ * — a page on a desk, the ribbon of study time along the page's top edge,
+ * words that lift off the paper like ink, soft glowing gaps, the tray of
+ * tiles or the typed fields, and the calm reveal.
+ *
+ * The game wears its tone (`lp-tone-saffron`, learn/path.css). Only transform
+ * and opacity move. Under prefers-reduced-motion base.css lands every
+ * movement at once; here the ribbon and the glow also stay still, so the
+ * page shows its state by colour alone.
+ */
+
+/* ---- the card's picture: a page, a word lifting off it, the gaps it leaves --------- */
+.lg-mini-page {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  width: min(100%, 220px);
+  padding: 16px 18px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--u-fill, var(--gold)) 10%, var(--surface-solid));
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--u-lip, var(--border-strong)) 45%, transparent);
+  transform: rotate(-1.5deg);
+}
+.lg-mini-row {
+  display: flex;
+  gap: 7px;
+}
+.lg-mini-ink,
+.lg-mini-gap,
+.lg-mini-lift {
+  height: 9px;
+  border-radius: var(--r-pill);
+}
+.lg-mini-ink {
+  background: var(--ink-3);
+}
+.lg-mini-gap {
+  background: color-mix(in srgb, var(--u-fill, var(--gold)) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--u-fill, var(--gold)) 14%, transparent);
+}
+.lg-mini-lift {
+  position: absolute;
+  top: -6px;
+  inset-inline-end: 22px;
+  background: var(--ink-3);
+  opacity: 0.55;
+  transform: rotate(-8deg);
+}
+
+/* ---- the intro: three steps ------------------------------------------------------- */
+.mt-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: 0;
+  list-style: none;
+}
+.mt-step {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  font-size: var(--text-secondary);
+}
+.mt-step-n {
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r-pill);
+  background: var(--u-fill);
+  color: var(--u-ink);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+
+/* ---- the stage: a page on a desk ------------------------------------------------- */
+.mt-board {
+  display: grid;
+  gap: var(--space-4);
+}
+.mt-desk {
+  padding: var(--space-4);
+  border-radius: var(--r-xl);
+  background: color-mix(in srgb, var(--u-lip) 18%, var(--surface-solid));
+}
+.mt-page {
+  position: relative;
+  overflow: hidden;
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background-color: color-mix(in srgb, var(--u-fill) 7%, var(--surface-solid));
+  /* ruled like a notebook page, one rule under every line of text */
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(2.1em - 1px), var(--separator) calc(2.1em - 1px), var(--separator) 2.1em);
+  background-position: 0 calc(var(--space-6) + 1.95em);
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--u-lip) 35%, transparent);
+  transform: rotate(-0.4deg);
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 2.1;
+}
+.mt-page[dir='rtl'] {
+  transform: rotate(0.4deg);
+  font-family: var(--font-sans);
+}
+.mt-kicker {
+  margin: 0;
+  color: var(--u-text, var(--ink-3));
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+.mt-title {
+  margin: 0;
+  font-size: 1.3rem;
+  line-height: 2.1;
+}
+.mt-line {
+  margin: 0;
+}
+.mt-speaker {
+  display: inline-block;
+  margin-inline-end: var(--space-2);
+  padding: 0 var(--space-2);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 650;
+  line-height: 1.7;
+  vertical-align: 0.15em;
+}
+
+/* the study's time, a ribbon along the page's top edge that runs down to nothing */
+.mt-ribbon {
+  position: absolute;
+  top: 0;
+  inset-inline: 0;
+  height: 5px;
+  background: var(--u-fill);
+  transform-origin: left center;
+  animation: mt-run var(--study-ms) linear forwards;
+}
+.mt-page[dir='rtl'] .mt-ribbon {
+  transform-origin: right center;
+}
+@keyframes mt-run {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}
+.mt-study {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+.mt-study-time {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* the words that will vanish look like every other word while they are studied */
+.mt-word {
+  display: inline-block;
+}
+/* then they lift off the paper like wet ink, one after another */
+.mt-desk.is-vanish .mt-word {
+  animation: mt-lift 900ms var(--ease-out) forwards;
+  animation-delay: calc(var(--ink-i, 0) * 160ms);
+}
+@keyframes mt-lift {
+  0% {
+    opacity: 1;
+    transform: none;
+  }
+  35% {
+    opacity: 0.9;
+    transform: translateY(-3px) scale(1.02);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-20px) rotate(-5deg) scale(1.1);
+  }
+}
+
+/* a gap: where a word stood, glowing softly until it is given back */
+.mt-gap {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  min-width: 4.5em;
+  min-height: 44px;
+  margin: 0 2px;
+  padding: 0 10px;
+  border: 0;
+  border-bottom: 2px dashed var(--u-fill);
+  border-radius: 10px 10px 3px 3px;
+  background: color-mix(in srgb, var(--u-fill) 12%, transparent);
+  color: inherit;
+  font: inherit;
+  line-height: 1.9;
+  vertical-align: baseline;
+  cursor: pointer;
+  animation: mt-arrive var(--dur-slow) var(--ease-out) both;
+  animation-delay: calc(var(--ink-i, 0) * 90ms);
+}
+.mt-gap::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--u-fill) 20%, transparent);
+  opacity: 0.2;
+  pointer-events: none;
+  animation: mt-glow 2.4s ease-in-out infinite alternate;
+}
+@keyframes mt-glow {
+  from {
+    opacity: 0.15;
+  }
+  to {
+    opacity: 0.75;
+  }
+}
+@keyframes mt-arrive {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.mt-gap:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.mt-gap.is-selected {
+  border-bottom-style: solid;
+  background: color-mix(in srgb, var(--u-fill) 24%, transparent);
+}
+.mt-gap.is-filled::before,
+.mt-gap.is-kept::before {
+  animation: none;
+  opacity: 0;
+}
+.mt-gap.is-filled,
+.mt-gap.is-kept {
+  border-bottom-style: solid;
+}
+.mt-gap.is-kept {
+  opacity: 0.7;
+}
+.mt-gap.is-again {
+  border-bottom-color: var(--danger);
+  background: var(--danger-soft);
+}
+.mt-gap.is-again::before {
+  background: var(--danger-soft);
+}
+.mt-gap-n {
+  align-self: flex-start;
+  margin-top: 6px;
+  color: var(--u-text, var(--ink-3));
+  font-family: var(--font-sans);
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+}
+.mt-gap-word {
+  color: var(--u-text);
+  font-weight: 600;
+}
+
+/* the reveal: every word settles back into the page, calmly */
+.mt-gap.is-right,
+.mt-gap.is-typo,
+.mt-gap.is-wrong {
+  border-bottom-style: solid;
+  background: transparent;
+  cursor: default;
+}
+.mt-gap.is-right::before,
+.mt-gap.is-typo::before,
+.mt-gap.is-wrong::before {
+  animation: none;
+  opacity: 0;
+}
+.mt-gap.is-typo {
+  border-bottom-style: dotted;
+}
+.mt-gap.is-wrong {
+  border-bottom-color: var(--danger);
+}
+.mt-desk.is-revealed .mt-gap-word {
+  display: inline-block;
+  animation: mt-settle var(--dur-progress) var(--ease-emphasis) both;
+  animation-delay: calc(var(--ink-i, 0) * 120ms);
+}
+@keyframes mt-settle {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---- giving the words back ---------------------------------------------------------- */
+.mt-tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.mt-tile {
+  min-height: 48px;
+}
+.mt-ghost {
+  min-height: 48px;
+}
+.mt-fields {
+  display: grid;
+  gap: var(--space-3);
+}
+.mt-field {
+  display: grid;
+  grid-template-columns: minmax(7.5em, auto) 1fr;
+  align-items: center;
+  gap: var(--space-3);
+}
+.mt-field-n {
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+.mt-field.is-again .input {
+  border-color: var(--danger);
+}
+.mt-hint {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-secondary);
+}
+.mt-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.mt-keys {
+  margin: 0;
+}
+
+/* ---- the reveal's list: each word with what it means --------------------------------- */
+.mt-reveal {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.mt-reveal-title {
+  margin: 0;
+  font-size: var(--text-secondary);
+  color: var(--ink-2);
+}
+.mt-words {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mt-reveal-word {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-3);
+}
+.mt-reveal-n {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+.mt-reveal-term {
+  color: var(--u-text);
+  font-size: 1.1rem;
+  font-weight: 650;
+}
+.mt-reveal-meaning {
+  color: var(--ink-2);
+}
+.mt-reveal-mark {
+  color: var(--success);
+}
+.mt-reveal-note {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.mt-reveal-word.is-wrong .mt-reveal-note {
+  color: var(--danger);
+}
+
+@media (max-width: 420px) {
+  .mt-desk {
+    padding: var(--space-2);
+  }
+  .mt-page {
+    padding: var(--space-5) var(--space-4) var(--space-4);
+    font-size: 1.1rem;
+  }
+  .mt-field {
+    grid-template-columns: 1fr;
+    gap: var(--space-1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mt-page,
+  .mt-page[dir='rtl'],
+  .lg-mini-page {
+    transform: none;
+  }
+  .mt-ribbon {
+    animation: none;
+    opacity: 0.6;
+  }
+  .mt-gap::before {
+    animation: none;
+    opacity: 0.45;
+  }
+}
