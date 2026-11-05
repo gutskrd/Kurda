@@ -1,11 +1,17 @@
 /**
- * The pictures on the four word-set cards: a paint palette for the colours, an
- * abacus for the numbers, the sun for the days of the week (in Kurdish one
- * word, roj, is both the day and the sun) and a wall calendar for the months.
- * Each is an object a child would know, drawn the same way so the four read as
- * one family: flat cut-outs lit from the upper left, every form with a lit rim
+ * The pictures on the cards of Letters and words: three toy blocks with the
+ * first letters for the alphabet, a paint palette for the colours, an abacus
+ * for the numbers, the sun for the days of the week (in Kurdish one word, roj,
+ * is both the day and the sun) and a wall calendar for the months. Each is an
+ * object a child would know, drawn the same way so the five read as one
+ * family: flat cut-outs lit from the upper left, every form with a lit rim
  * along its upper edge and its thickness showing as a darker band below it,
  * as the coin stands forward on its edge.
+ *
+ * The blocks are the one picture that carries letters, drawn as strokes of a
+ * round pen rather than set in a font (a drawing holds no text): A, B and C
+ * for the Latin alphabet, and ا, ب and پ for a reader who learns Soranî in its
+ * own script, so the first card shows the letters that reader will meet.
  *
  * They replaced a grid of four dots that served for both the colours and the
  * months, so the two cards looked alike, a "123" in the display font and a
@@ -22,8 +28,13 @@ import type { WordSetId } from '../word-sets/words.js';
 import { COLOURS } from '../word-sets/words.js';
 import { Drawing, checkSize, n, prefixFor, tint } from './svg.js';
 
+/** What a card on Letters and words shows: the alphabet, or one of the word sets. */
+export type WordsCardId = 'letters' | WordSetId;
+
 export interface WordSetArtOptions {
-  set: WordSetId;
+  set: WordsCardId;
+  /** the alphabet's blocks only: Latin letters, or the Arabic script Soranî is written in */
+  script?: 'latin' | 'arabic';
   /** how big it is drawn, in pixels (it is square) */
   size?: number;
   /** its text label; the cards say the set's name beside it and hide the picture from screen readers */
@@ -75,6 +86,61 @@ function dab(dr: Drawing, cx: number, cy: number, rx: number, ry: number, hex: s
 }
 
 const hexOf = (id: string): string => COLOURS.find((c) => c.id === id)!.hex;
+
+// ─────────────────────────────────────────────────────────── the letters
+
+const LETTER_PEN = 5.2;
+/** The blocks' paint and the colour of the letter cut into each: cream on the dark ones, brown on the saffron. */
+const BLOCKS: readonly { x: number; y: number; hex: string; ink: string }[] = [
+  { x: 17, y: 62, hex: '#d8493b', ink: '#fff4e2' },
+  { x: 63, y: 62, hex: '#3fa45b', ink: '#fff4e2' },
+  { x: 40, y: 17, hex: '#f2b632', ink: '#7a3f0c' },
+];
+const BLOCK = 40;
+
+/** A Latin capital as pen strokes, centred on (0, 0), about 22 units tall. */
+const LATIN_GLYPHS: readonly string[] = [
+  // A
+  'M-9 11L0 -11L9 11M-5.4 3H5.4',
+  // B: its stem, the smaller bowl above and the fuller one below
+  'M-7 11V-11H0.5C8.5 -11 8.5 -0.5 0.5 -0.5H-7M0.5 -0.5H1.5C10.5 -0.5 10.5 11 1.5 11H-7',
+  // C: most of a ring, open to the right
+  'M8 -7.5A11 11 0 1 0 8 7.5',
+];
+
+/**
+ * Alif, be and pe, as the pen writes them: a stroke straight down, and a flat
+ * boat with a small tooth at its right end and its left end turned up, its
+ * dots below it. Each is lifted by half of what hangs below its line, so the
+ * letter and its dots sit in the middle of the face together.
+ */
+const BOAT = 'M12 -5V0Q12 3 8 3H-7Q-12 3 -12 -2';
+const ARABIC_GLYPHS: readonly { d: string; dots: readonly [number, number][]; lift: number }[] = [
+  { d: 'M0 -11V11', dots: [], lift: 0 },
+  { d: BOAT, dots: [[0, 9.5]], lift: 3.5 },
+  { d: BOAT, dots: [[-4, 9], [4, 9], [0, 14.5]], lift: 5.5 },
+];
+
+/** Three toy blocks, two on the ground and one on top, each with a letter on its face. */
+function blocks(dr: Drawing, script: 'latin' | 'arabic'): void {
+  // read in the script's own direction: the first letter where the eye starts, on the ground
+  const order = script === 'arabic' ? [1, 0, 2] : [0, 1, 2];
+  BLOCKS.forEach((b, i) => {
+    form(dr, rr(b.x, b.y, BLOCK, BLOCK, 9), { light: tint(b.hex, 0.32), base: b.hex, shade: tint(b.hex, -0.32) }, 5, 2.4);
+    const cx = b.x + BLOCK / 2;
+    const cy = b.y + BLOCK / 2;
+    const g = order[i]!;
+    if (script === 'latin') {
+      dr.add(`<path d="${LATIN_GLYPHS[g]}" fill="none" stroke="${b.ink}" stroke-width="${LETTER_PEN}" stroke-linecap="round" stroke-linejoin="round"${at(cx, cy)}/>`);
+    } else {
+      const glyph = ARABIC_GLYPHS[g]!;
+      const dots = glyph.dots.map(([x, y]) => `<circle cx="${n(x)}" cy="${n(y)}" r="2.8" fill="${b.ink}"/>`).join('');
+      dr.add(
+        `<g${at(cx, cy - glyph.lift)}><path d="${glyph.d}" fill="none" stroke="${b.ink}" stroke-width="${LETTER_PEN}" stroke-linecap="round" stroke-linejoin="round"/>${dots}</g>`,
+      );
+    }
+  });
+}
 
 // ─────────────────────────────────────────────────────────── the colours
 
@@ -172,12 +238,14 @@ function calendar(dr: Drawing): void {
 }
 
 const DRAW: Record<WordSetId, (dr: Drawing) => void> = { colours: palette, numbers: abacus, days: sun, months: calendar };
-const TITLE: Record<WordSetId, string> = { colours: 'Colours', numbers: 'Numbers', days: 'Days of the week', months: 'Months' };
+const TITLE: Record<WordsCardId, string> = { letters: 'Alphabet', colours: 'Colours', numbers: 'Numbers', days: 'Days of the week', months: 'Months' };
 
-/** The picture on a word set's card. */
+/** The picture on a card of Letters and words. */
 export function wordSetSvg(opts: WordSetArtOptions): string {
   const size = checkSize(opts.size, 44);
-  const dr = new Drawing(prefixFor(opts.idPrefix, 'wordset', opts.set));
-  DRAW[opts.set](dr);
+  const script = opts.script ?? 'latin';
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'wordset', opts.set, opts.set === 'letters' ? script : undefined));
+  if (opts.set === 'letters') blocks(dr, script);
+  else DRAW[opts.set](dr);
   return dr.svg(size, opts.title ?? TITLE[opts.set]);
 }

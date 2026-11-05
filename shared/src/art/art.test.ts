@@ -849,10 +849,24 @@ describe('the currencies', () => {
 });
 
 describe('the word sets’ pictures', () => {
-  it('draws a valid, self-contained picture for every set, at the cards’ size and larger', () => {
+  it('draws a valid, self-contained picture for every set and for the alphabet, at the cards’ size and larger', () => {
     for (const set of WORD_SET_IDS) {
       for (const size of [44, 120]) checkSvg(wordSetSvg({ set, size }), size);
     }
+    for (const script of ['latin', 'arabic'] as const) {
+      for (const size of [44, 120]) checkSvg(wordSetSvg({ set: 'letters', script, size }), size);
+    }
+  });
+
+  it('writes the alphabet’s first letters on its blocks in the reader’s script, with pe’s three dots and be’s one', () => {
+    const latin = wordSetSvg({ set: 'letters', size: 44 });
+    const arabic = wordSetSvg({ set: 'letters', script: 'arabic', size: 44 });
+    expect(latin).not.toBe(arabic);
+    expect(wordSetSvg({ set: 'letters', script: 'latin', size: 44 })).toBe(latin);
+    // the letters are pen strokes, never text
+    for (const svg of [latin, arabic]) expect(svg).not.toMatch(/<text/);
+    expect((latin.match(/<circle/g) ?? []).length).toBe(0);
+    expect((arabic.match(/<circle/g) ?? []).length).toBe(4);
   });
 
   it('gives every set its own picture, the same every time, with ids that never meet another set’s', () => {

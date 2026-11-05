@@ -559,6 +559,7 @@ export {
   type CurrencyOptions,
   wordSetSvg,
   type WordSetArtOptions,
+  type WordsCardId,
   CHEST_BOX,
   CHEST_FOOT,
   CHEST_HOP,
