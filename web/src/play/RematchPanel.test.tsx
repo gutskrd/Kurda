@@ -26,6 +26,31 @@ const round = (over: Partial<RematchState> = {}): RematchState => pair({ kind: '
 const PATH = '/play/rhyme-match/r1/rematch';
 const panel = (isHost = false) => <RematchPanel game="rhyme-match" lobbyId="r1" otherName="Rojda" isHost={isHost} />;
 
+describe('RematchPanel — as tickets', () => {
+  it('hands the other’s offer over as a ticket in the game’s colour, and waits on yours in outline', async () => {
+    let state = pair({ offeredByOther: true });
+    fakeApi({ [`GET ${PATH}`]: () => state, [`POST ${PATH}`]: () => (state = pair({ offeredByMe: true })) });
+    renderPlay(panel());
+
+    const offer = (await screen.findByText('Rojda wants a rematch')).closest('.rematch-ticket');
+    expect(offer).toHaveClass('ticket', 'ticket--rhyme-match');
+    expect(offer).not.toHaveClass('is-outlined');
+    state = pair({ offeredByMe: true });
+    fakeApi({ [`GET ${PATH}`]: () => state });
+    renderPlay(panel());
+    const mine = (await screen.findByText('Rematch asked — waiting for Rojda.')).closest('.rematch-ticket');
+    expect(mine).toHaveClass('is-outlined');
+    expect(mine?.querySelector('.ticket-shine')).not.toBeNull();
+  });
+
+  it('puts the ticket glyph on Invite someone else', async () => {
+    fakeApi({ [`GET ${PATH}`]: pair() });
+    renderPlay(panel());
+    const someoneElse = await screen.findByRole('button', { name: 'Invite someone else' });
+    expect(someoneElse.querySelector('svg')).not.toBeNull();
+  });
+});
+
 describe('RematchPanel — two players', () => {
   it('asks for a rematch, then waits for the other, and can take it back', async () => {
     let state = pair();

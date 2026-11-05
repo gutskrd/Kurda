@@ -349,13 +349,21 @@
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 2px;
+  gap: 8px;
 }
+/* each friend asked: a small ticket, their face on the stub (ui/Ticket.tsx) */
 .lobby-invited-row {
+  --stub-w: 52px;
+  --notch: 6px;
+  --t-r: var(--r-md);
+}
+.lobby-invited-main {
   display: flex;
   align-items: center;
   gap: 12px;
   min-height: 52px;
+  padding-block: 4px;
+  padding-inline: 12px 6px;
 }
 .lobby-invited-text {
   flex: 1;
@@ -373,11 +381,15 @@
   font-size: 0.82rem;
   color: var(--ink-3);
 }
-.lobby-invited-row.is-accepted .lobby-invited-state {
-  color: var(--success);
+.lobby-invited-stamp {
+  margin-inline-end: 8px;
 }
 .lobby-invited-row .btn {
   min-height: 44px;
+}
+/* an answer of no, or an invite spent: the name steps back with the ticket */
+.lobby-invited-row.ticket--muted .lobby-invited-name {
+  color: var(--ink-2);
 }
 
 /* ---- playing again ---------------------------------------------------------------- */
@@ -423,6 +435,20 @@
 }
 .rematch-actions .btn {
   min-height: 44px;
+}
+/* an offer, as a ticket (ui/Ticket.tsx): the words and the answers on its body */
+.rematch-ticket {
+  --stub-w: 56px;
+  width: min(100%, 440px);
+}
+.rematch-main {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+}
+.sg-results-actions .rematch-main {
+  justify-items: start;
 }
 .rematch-series {
   margin: 0;
