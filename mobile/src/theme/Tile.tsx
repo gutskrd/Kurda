@@ -26,6 +26,9 @@ export { LIP, type TileState } from './tileTones';
 /** How long the light takes to cross a tile that has just been answered right. */
 const SWEEP_MS = 480;
 
+/** The light that crosses a tile: one white for every face it passes over (a join code's glint is the same light). */
+export const SHINE = 'rgba(255,255,255,0.75)';
+
 /**
  * A face sinking onto its lip under a finger, and coming back up on a spring
  * as it is let go: on the native driver, and stopped wherever it is by the
@@ -268,7 +271,7 @@ const styles = StyleSheet.create({
   },
   faded: { opacity: 0.5 },
   label: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, textAlign: 'center' },
-  band: { position: 'absolute', top: -8, bottom: -8, left: 0, backgroundColor: 'rgba(255,255,255,0.75)' },
+  band: { position: 'absolute', top: -8, bottom: -8, left: 0, backgroundColor: SHINE },
   spark: { position: 'absolute', right: spacing.sm, bottom: spacing.xs },
   // 50, what iOS gives the full-width button a screen is about
   buttonFace: { minHeight: 50, alignSelf: 'stretch' },

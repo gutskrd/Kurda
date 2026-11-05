@@ -1,4 +1,4 @@
-import { buildInviteUrl, type RatedState } from '@kurda/shared';
+import type { RatedState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import type { Feedback, ScoredGuess } from './board';
@@ -28,6 +28,12 @@ export interface BattleState {
   /** the viewer's own id when they host, else the host's `seat:N` */
   createdBy: string;
   isHost?: boolean;
+  /**
+   * The six characters a friend types to join (Games → Join with a code), while
+   * the battle can still be joined; null once it has started, finished or been
+   * called off. Older servers leave it out.
+   */
+  code?: string | null;
   /** the rematch or next round, once there is one */
   nextLobbyId?: string | null;
   /** everyone in it, by seat, named as this viewer may see them */
@@ -98,11 +104,3 @@ export const getBattle = (client: ApiClient, id: string): Promise<ApiResult<Batt
 /** 409s until the match is over — the word is in here, so it cannot come sooner. */
 export const getResults = (client: ApiClient, id: string): Promise<ApiResult<BattleResults>> =>
   client.get(`/wordle/battles/${id}/results`);
-
-/**
- * The link a friend follows to join, built by the same code the browser uses.
- *
- * An invite has to be readable in whichever app it is opened in, so the shape
- * of this URL is not this app's to decide — it lives in @kurda/shared.
- */
-export const inviteUrl = (id: string): string => buildInviteUrl('wordle-battle', id);

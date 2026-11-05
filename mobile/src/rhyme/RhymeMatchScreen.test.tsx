@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { act, cleanup } from '@testing-library/react';
+import { act, cleanup, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fakeClient, fail, testAuth } from '../reports/testing/auth';
+import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
+import type { MatchState } from './matchApi';
 import { RhymeMatchScreen } from './RhymeMatchScreen';
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -32,4 +33,32 @@ describe('RhymeMatchScreen', () => {
     await act(async () => undefined);
     expect(client.calls.some((c) => c.path === '/rhyme/matches/match-b')).toBe(true);
   });
+
+  const lobby = (over: Partial<MatchState> = {}): MatchState => ({
+    id: 'm1',
+    status: 'lobby',
+    dialect: 'kurmanci',
+    prompt: null,
+    windowMs: 60_000,
+    remainingMs: 0,
+    maxPlayers: 2,
+    createdBy: 'me',
+    isHost: true,
+    code: 'R8HT3N',
+    players: [{ seat: 1, userId: 'me', name: 'Rojda', avatarUrl: null, isMe: true, isHost: true, gone: false }],
+    me: { score: 0, accepted: 0, usedWords: [] },
+    scoreboard: [{ userId: 'me', score: 0, accepted: 0 }],
+    ...over,
+  });
+
+  it('shows the lobby’s code on its ticket, with Invite friends beside it, and no invite link', async () => {
+    testAuth.client = fakeClient({ 'GET /rhyme/matches/m1': ok(lobby()), 'GET /play/invites': ok({ incoming: [], outgoing: [] }) });
+    renderWithProviders(<RhymeMatchScreen id="m1" onExit={() => undefined} />);
+    expect(await screen.findByRole('button', { name: 'Join code: R 8 H T 3 N' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Invite friends' })).toBeTruthy();
+    expect(screen.queryByText('Invite link')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/\/app\/games/);
+  });
+
 });

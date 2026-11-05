@@ -5,12 +5,10 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useRealtimeReconnect } from '../realtime/RealtimeProvider';
 import { useUserEvents } from '../realtime/useUserEvents';
-import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
-import { InviteSheet } from './InviteSheet';
 import { LobbyInvites } from './LobbyInvites';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 
@@ -71,27 +69,25 @@ export interface LobbySeat {
 }
 
 /**
- * A battle's or a match's lobby beyond the link: who is in it (a friend by
+ * A battle's or a match's lobby beyond its code: who is in it (a friend by
  * name, anyone else as "Player N" — the identity rule), each other player
- * with a flag to report them by seat, Invite friends, and, for the host,
- * where each invite stands.
+ * with a flag to report them by seat, and, for the host, where each invite
+ * stands. Invite friends is on the code's ticket (CodeTicket `LobbyShare`),
+ * beside the other way of bringing people in.
  */
 export function LobbyPeople({
   game,
   lobbyId,
   players,
   isHost,
-  maxPlayers,
 }: {
   game: PlayGame;
   lobbyId: string;
   players: readonly LobbySeat[];
   isHost: boolean;
-  maxPlayers: number;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const [inviting, setInviting] = useState(false);
   return (
     <View style={styles.wrap}>
       {players.length > 0 ? (
@@ -114,14 +110,7 @@ export function LobbyPeople({
             })}
         </View>
       ) : null}
-      {/* only the host may invite into a lobby (the server refuses anyone else); the others share the link */}
-      {isHost && players.length < maxPlayers ? (
-        <ClayButton label={t('stories.lobby.invite')} icon="user-plus" tone="primary" variant="outline" onPress={() => setInviting(true)} />
-      ) : null}
       {isHost ? <LobbyInvites game={game} lobbyId={lobbyId} /> : null}
-      {inviting ? (
-        <InviteSheet target={{ kind: 'lobby', game, lobbyId, mode: maxPlayers === 2 ? 'duo' : 'group' }} onClose={() => setInviting(false)} />
-      ) : null}
     </View>
   );
 }

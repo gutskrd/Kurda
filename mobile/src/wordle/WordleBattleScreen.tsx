@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { parseInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
@@ -19,6 +19,7 @@ import { useRatedChoice } from '../ranks/ratedPrefs';
 import { RankResultPanel } from '../ranks/RankResultPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
+import { LobbyShare } from '../play/CodeTicket';
 import { RematchPanel } from '../play/RematchPanel';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
@@ -30,7 +31,6 @@ import {
   getBattle,
   getResults,
   guessInBattle,
-  inviteUrl,
   joinBattle,
   startBattle,
   type BattleResults,
@@ -251,12 +251,6 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
     else setNotice(describeError(res.error, t));
   };
 
-  const share = (): void => {
-    const url = inviteUrl(id);
-    // the sheet's own dismissal is not a failure, and has nothing to report
-    void Share.share({ message: url, url }).catch(() => undefined);
-  };
-
   if (error && !battle) {
     return (
       <GlassCard style={styles.card}>
@@ -273,56 +267,63 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
   // ---- lobby -----------------------------------------------------------------
   if (battle.status === 'lobby') {
     return (
-      <GlassCard style={styles.card}>
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>
-          {t('games.lobbyWaiting', { count: playerCount })}
-        </Text>
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.inviteLink')}</Text>
-        <Text selectable style={[styles.link, { color: colors.textPrimary }]}>
-          {inviteUrl(id)}
-        </Text>
-        <ClayButton label={t('share.title')} icon="chat" tone="neutral" onPress={share} style={styles.stretch} />
+      <>
+        {/* the code to tell people, with Invite friends beside it: for whoever is in the lobby */}
         {battle.me != null ? (
-          <LobbyPeople game="wordle-battle" lobbyId={id} players={battle.players ?? []} isHost={isHost} maxPlayers={battle.maxPlayers} />
-        ) : null}
-        {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
-        {battle.me != null ? (
-          <LobbyRated
+          <LobbyShare
             game="wordle-battle"
             lobbyId={id}
-            rated={battle.rated}
-            isHost={isHost}
-            players={playerCount}
-            seatName={seatNamer(battle.players ?? [], t)}
-            onChanged={() => void load()}
+            code={battle.code}
+            canInvite={isHost && playerCount < battle.maxPlayers}
+            mode={battle.maxPlayers === 2 ? 'duo' : 'group'}
           />
-        ) : battle.rated ? (
-          <RatedPill rated={battle.rated.rated} />
         ) : null}
-        {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
-        {battle.me == null ? (
-          <ClayButton
-            label={busy ? t('games.joining') : t('games.battle.join')}
-            tone="primary"
-            onPress={() => void act(() => joinBattle(client, id))}
-            style={styles.stretch}
-          />
-        ) : isHost && playerCount >= 2 ? (
-          <ClayButton
-            label={busy ? t('games.starting') : t('games.battle.start')}
-            tone="primary"
-            onPress={() => {
-              haptic('tap');
-              void act(() => startBattle(client, id));
-            }}
-            style={styles.stretch}
-          />
-        ) : (
-          <Text style={[styles.waiting, { color: colors.textSecondary }]}>
-            {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
+        <GlassCard style={styles.card}>
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>
+            {t('games.lobbyWaiting', { count: playerCount })}
           </Text>
-        )}
-      </GlassCard>
+          {battle.me != null ? (
+            <LobbyPeople game="wordle-battle" lobbyId={id} players={battle.players ?? []} isHost={isHost} />
+          ) : null}
+          {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
+          {battle.me != null ? (
+            <LobbyRated
+              game="wordle-battle"
+              lobbyId={id}
+              rated={battle.rated}
+              isHost={isHost}
+              players={playerCount}
+              seatName={seatNamer(battle.players ?? [], t)}
+              onChanged={() => void load()}
+            />
+          ) : battle.rated ? (
+            <RatedPill rated={battle.rated.rated} />
+          ) : null}
+          {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
+          {battle.me == null ? (
+            <ClayButton
+              label={busy ? t('games.joining') : t('games.battle.join')}
+              tone="primary"
+              onPress={() => void act(() => joinBattle(client, id))}
+              style={styles.stretch}
+            />
+          ) : isHost && playerCount >= 2 ? (
+            <ClayButton
+              label={busy ? t('games.starting') : t('games.battle.start')}
+              tone="primary"
+              onPress={() => {
+                haptic('tap');
+                void act(() => startBattle(client, id));
+              }}
+              style={styles.stretch}
+            />
+          ) : (
+            <Text style={[styles.waiting, { color: colors.textSecondary }]}>
+              {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
+            </Text>
+          )}
+        </GlassCard>
+      </>
     );
   }
 
@@ -490,7 +491,6 @@ const styles = StyleSheet.create({
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
-  link: { fontSize: typography.sizes.sm, textAlign: 'center' },
   input: {
     minHeight: MIN_TOUCH_TARGET,
     alignSelf: 'stretch',

@@ -83,15 +83,11 @@ describe('LobbyPeople', () => {
   const host = { seat: 1, name: 'Rojda', avatarUrl: null, isMe: false, isHost: true };
   const me = { seat: 2, name: 'Azad', avatarUrl: null, isMe: true, isHost: false };
 
-  it('offers Invite friends to the host only, since the server takes invites from no one else', async () => {
+  it('lists the players by name, and leaves Invite friends to the code’s ticket', async () => {
     testAuth.client = fakeClient({ 'GET /play/invites': ok(lists([])) });
-    renderWithProviders(<LobbyPeople game="wordle-battle" lobbyId="g1" players={[host, me]} isHost={false} maxPlayers={4} />);
+    renderWithProviders(<LobbyPeople game="wordle-battle" lobbyId="g1" players={[{ ...host, isMe: true }, { ...me, isMe: false }]} isHost />);
     expect(screen.getByText('You')).toBeTruthy();
+    expect(screen.getByText('Azad')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Invite friends' })).toBeNull();
-    cleanup();
-    renderWithProviders(
-      <LobbyPeople game="wordle-battle" lobbyId="g1" players={[{ ...host, isMe: true }, { ...me, isMe: false }]} isHost maxPlayers={4} />,
-    );
-    expect(screen.getByRole('button', { name: 'Invite friends' })).toBeTruthy();
   });
 });

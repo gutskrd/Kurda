@@ -71,8 +71,8 @@ function readableOn(ink: string, face: string): string {
   return ensureContrast(ink, face, AA_NORMAL);
 }
 
-/** A lip a step darker than the edge it sits under. */
-function lipOf(edge: string, colors: Palette): string {
+/** A lip a step darker than the edge it sits under (a join code's tiles stand on one too). */
+export function lipOf(edge: string, colors: Palette): string {
   return blend('#000000', edge, colors.scheme === 'dark' ? 0.3 : 0.15);
 }
 

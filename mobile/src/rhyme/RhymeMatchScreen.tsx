@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { parseInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
@@ -20,13 +20,13 @@ import { useRatedChoice } from '../ranks/ratedPrefs';
 import { RankResultPanel } from '../ranks/RankResultPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
+import { LobbyShare } from '../play/CodeTicket';
 import { RematchPanel } from '../play/RematchPanel';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import {
   createMatch,
   getMatch,
   getMatchResults,
-  inviteUrl,
   joinMatch,
   startMatch,
   submitRhyme,
@@ -276,12 +276,6 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
     else setNotice(describeError(res.error, t));
   };
 
-  const share = (): void => {
-    const url = inviteUrl(id);
-    // the sheet's own dismissal is not a failure, and has nothing to report
-    void Share.share({ message: url, url }).catch(() => undefined);
-  };
-
   if (error && !match) {
     return (
       <GlassCard style={styles.card}>
@@ -299,56 +293,63 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
   // ---- lobby -----------------------------------------------------------------
   if (match.status === 'lobby') {
     return (
-      <GlassCard style={styles.card}>
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>
-          {t('games.lobbyWaiting', { count: playerCount })}
-        </Text>
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.inviteLink')}</Text>
-        <Text selectable style={[styles.link, { color: colors.textPrimary }]}>
-          {inviteUrl(id)}
-        </Text>
-        <ClayButton label={t('share.title')} icon="chat" tone="neutral" onPress={share} style={styles.stretch} />
+      <>
+        {/* the code to tell people, with Invite friends beside it: for whoever is in the lobby */}
         {match.me != null ? (
-          <LobbyPeople game="rhyme-match" lobbyId={id} players={match.players ?? []} isHost={isHost} maxPlayers={match.maxPlayers} />
-        ) : null}
-        {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
-        {match.me != null ? (
-          <LobbyRated
+          <LobbyShare
             game="rhyme-match"
             lobbyId={id}
-            rated={match.rated}
-            isHost={isHost}
-            players={playerCount}
-            seatName={seatNamer(match.players ?? [], t)}
-            onChanged={() => void load()}
+            code={match.code}
+            canInvite={isHost && playerCount < match.maxPlayers}
+            mode={match.maxPlayers === 2 ? 'duo' : 'group'}
           />
-        ) : match.rated ? (
-          <RatedPill rated={match.rated.rated} />
         ) : null}
-        {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
-        {match.me == null ? (
-          <ClayButton
-            label={busy ? t('games.joining') : t('games.rhymeMatch.join')}
-            tone="primary"
-            onPress={() => void act(() => joinMatch(client, id))}
-            style={styles.stretch}
-          />
-        ) : isHost && playerCount >= 2 ? (
-          <ClayButton
-            label={busy ? t('games.starting') : t('games.rhymeMatch.start')}
-            tone="primary"
-            onPress={() => {
-              haptic('tap');
-              void act(() => startMatch(client, id));
-            }}
-            style={styles.stretch}
-          />
-        ) : (
-          <Text style={[styles.waiting, { color: colors.textSecondary }]}>
-            {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
+        <GlassCard style={styles.card}>
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>
+            {t('games.lobbyWaiting', { count: playerCount })}
           </Text>
-        )}
-      </GlassCard>
+          {match.me != null ? (
+            <LobbyPeople game="rhyme-match" lobbyId={id} players={match.players ?? []} isHost={isHost} />
+          ) : null}
+          {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
+          {match.me != null ? (
+            <LobbyRated
+              game="rhyme-match"
+              lobbyId={id}
+              rated={match.rated}
+              isHost={isHost}
+              players={playerCount}
+              seatName={seatNamer(match.players ?? [], t)}
+              onChanged={() => void load()}
+            />
+          ) : match.rated ? (
+            <RatedPill rated={match.rated.rated} />
+          ) : null}
+          {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
+          {match.me == null ? (
+            <ClayButton
+              label={busy ? t('games.joining') : t('games.rhymeMatch.join')}
+              tone="primary"
+              onPress={() => void act(() => joinMatch(client, id))}
+              style={styles.stretch}
+            />
+          ) : isHost && playerCount >= 2 ? (
+            <ClayButton
+              label={busy ? t('games.starting') : t('games.rhymeMatch.start')}
+              tone="primary"
+              onPress={() => {
+                haptic('tap');
+                void act(() => startMatch(client, id));
+              }}
+              style={styles.stretch}
+            />
+          ) : (
+            <Text style={[styles.waiting, { color: colors.textSecondary }]}>
+              {isHost ? t('games.waitingForPlayer') : t('games.waitingForHost')}
+            </Text>
+          )}
+        </GlassCard>
+      </>
     );
   }
 
@@ -517,7 +518,6 @@ const styles = StyleSheet.create({
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
-  link: { fontSize: typography.sizes.sm, textAlign: 'center' },
   input: {
     minHeight: MIN_TOUCH_TARGET,
     alignSelf: 'stretch',

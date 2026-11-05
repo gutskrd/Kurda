@@ -1,8 +1,9 @@
 // @vitest-environment jsdom
-import { act, cleanup } from '@testing-library/react';
+import { act, cleanup, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { fakeClient, fail, testAuth } from '../reports/testing/auth';
+import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
+import type { BattleState } from './battleApi';
 import { WordleBattleScreen } from './WordleBattleScreen';
 
 vi.mock('react-native', () => import('react-native-web'));
@@ -32,4 +33,44 @@ describe('WordleBattleScreen', () => {
     await act(async () => undefined);
     expect(client.calls.some((c) => c.path === '/wordle/battles/battle-b')).toBe(true);
   });
+
+  const seat = (n: number, name: string, me = false) => ({ seat: n, userId: me ? 'me' : `seat:${n}`, name, avatarUrl: null, isMe: me, isHost: me, gone: false });
+  const lobby = (over: Partial<BattleState> = {}): BattleState => ({
+    id: 'b1',
+    status: 'lobby',
+    difficulty: 'medium',
+    targetLength: 5,
+    maxPlayers: 4,
+    createdBy: 'me',
+    isHost: true,
+    code: 'KQ7M4X',
+    players: [seat(1, 'Rojda', true), seat(2, 'Azad')],
+    me: { guesses: [], keyboard: {}, status: 'playing', solved: false, remainingAttempts: 6 },
+    opponents: [],
+    target: null,
+    ...over,
+  });
+
+  it('shows the lobby’s code on its ticket, with Invite friends beside it, and no invite link', async () => {
+    testAuth.client = fakeClient({ 'GET /wordle/battles/b1': ok(lobby()), 'GET /play/invites': ok({ incoming: [], outgoing: [] }) });
+    renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+    expect(await screen.findByRole('button', { name: 'Join code: K Q 7 M 4 X' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Invite friends' })).toBeTruthy();
+    expect(screen.queryByText('Invite link')).toBeNull();
+    expect(document.body.textContent).not.toMatch(/\/app\/games/);
+  });
+
+  it('shows no ticket once the battle has no code, or to someone not in it yet', async () => {
+    testAuth.client = fakeClient({ 'GET /wordle/battles/b1': ok(lobby({ code: null })), 'GET /play/invites': ok({ incoming: [], outgoing: [] }) });
+    renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+    expect(await screen.findByText('You')).toBeTruthy();
+    expect(screen.queryByText('Join code')).toBeNull();
+    cleanup();
+    testAuth.client = fakeClient({ 'GET /wordle/battles/b1': ok(lobby({ me: null, isHost: false })) });
+    renderWithProviders(<WordleBattleScreen id="b1" onExit={() => undefined} />);
+    expect(await screen.findByRole('button', { name: 'Join battle' })).toBeTruthy();
+    expect(screen.queryByText('Join code')).toBeNull();
+  });
+
 });
