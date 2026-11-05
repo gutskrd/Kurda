@@ -1,10 +1,7 @@
-import { randomInt } from 'node:crypto';
 import type pg from 'pg';
 import {
   ANSWER_GRACE_MS,
   DEFAULT_QUESTION_COUNT,
-  JOIN_CODE_ALPHABET,
-  JOIN_CODE_LENGTH,
   MAX_HOSTED_GAMES,
   MAX_PLAYERS,
   MIN_PLAYERS_TO_START,
@@ -381,15 +378,15 @@ export class StoryGamesService {
 
     let row: GameRow | undefined;
     for (let attempt = 0; !row; attempt++) {
-      const code = solo ? null : newJoinCode();
       await client.query('SAVEPOINT story_code');
       try {
+        // the code comes from new_game_code(), which no game of any kind is using (migration game-join-codes)
         const res = await client.query<GameRow>(
           `INSERT INTO story_games (code, mode, host_id, story_id, dialect, level, length, question_count,
                                     timer_seconds, text_during, access, chat_group_id, rated)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+           VALUES (CASE WHEN $1::boolean THEN new_game_code() END, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
           [
-            code,
+            !solo,
             input.mode,
             hostId,
             story.id,
@@ -1956,11 +1953,4 @@ function awayKey(players: PhasePlayer[]): string {
     .map((p) => p.seat)
     .sort((a, b) => a - b)
     .join(',');
-}
-
-/** A join code: six characters from the look-alike-free alphabet, each drawn with the CSPRNG. */
-export function newJoinCode(): string {
-  let code = '';
-  for (let i = 0; i < JOIN_CODE_LENGTH; i++) code += JOIN_CODE_ALPHABET[randomInt(JOIN_CODE_ALPHABET.length)];
-  return code;
 }

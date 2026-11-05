@@ -57,6 +57,8 @@ export interface LobbyRow {
   next_lobby_id: string | null;
   rematch_of: string | null;
   updated_at: Date;
+  /** the join code, while the game is a lobby (migration game-join-codes clears it after) */
+  code: string | null;
 }
 
 /** A player's place in a game: their seat, and whether they left or were removed. */
