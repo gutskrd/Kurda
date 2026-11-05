@@ -2431,6 +2431,7 @@ export const de: Catalogue = {
   'games.whoAmI.points': 'Punkte: {count}',
   'games.whoAmI.out': 'Keine Versuche mehr',
   'games.whoAmI.gotIt': 'Erraten!',
+  'games.whoAmI.solved': 'Erraten',
   'games.whoAmI.first': '{name} hatte es zuerst!',
   'games.whoAmI.youFirst': 'Du hattest es zuerst!',
   'games.whoAmI.others': 'Die anderen',

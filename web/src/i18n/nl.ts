@@ -2431,6 +2431,7 @@ export const nl: Catalogue = {
   'games.whoAmI.points': 'Punten: {count}',
   'games.whoAmI.out': 'Geen pogingen meer',
   'games.whoAmI.gotIt': 'Geraden!',
+  'games.whoAmI.solved': 'Geraden',
   'games.whoAmI.first': '{name} had het als eerste!',
   'games.whoAmI.youFirst': 'Jij had het als eerste!',
   'games.whoAmI.others': 'De anderen',

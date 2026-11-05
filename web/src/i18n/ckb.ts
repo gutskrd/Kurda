@@ -2437,6 +2437,7 @@ export const ckb: Catalogue = {
   'games.whoAmI.points': 'خاڵ: {count}',
   'games.whoAmI.out': 'هەوڵەکان تەواو بوون',
   'games.whoAmI.gotIt': 'زانیت!',
+  'games.whoAmI.solved': 'زانی',
   'games.whoAmI.first': '{name} یەکەم کەس بوو زانی!',
   'games.whoAmI.youFirst': 'تۆ یەکەم کەس بوویت زانیت!',
   'games.whoAmI.others': 'ئەوانی تر',

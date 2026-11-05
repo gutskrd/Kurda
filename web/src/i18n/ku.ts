@@ -2433,6 +2433,7 @@ export const ku: Catalogue = {
   'games.whoAmI.points': 'Xal: {count}',
   'games.whoAmI.out': 'Texmîn qediyan',
   'games.whoAmI.gotIt': 'Te dît!',
+  'games.whoAmI.solved': 'Dît',
   'games.whoAmI.first': '{name} pêşî dît!',
   'games.whoAmI.youFirst': 'Te pêşî dît!',
   'games.whoAmI.others': 'Yên din',

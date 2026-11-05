@@ -373,6 +373,7 @@ export type TranslationKey =
   | 'games.whoAmI.points'
   | 'games.whoAmI.out'
   | 'games.whoAmI.gotIt'
+  | 'games.whoAmI.solved'
   | 'games.whoAmI.first'
   | 'games.whoAmI.youFirst'
   | 'games.whoAmI.others'
@@ -3511,6 +3512,7 @@ const en: Catalog = {
   'games.whoAmI.points': 'Points: {count}',
   'games.whoAmI.out': 'Out of guesses',
   'games.whoAmI.gotIt': 'You got it!',
+  'games.whoAmI.solved': 'Got it',
   'games.whoAmI.first': '{name} got it first!',
   'games.whoAmI.youFirst': 'You got it first!',
   'games.whoAmI.others': 'Everyone else',
@@ -6637,6 +6639,7 @@ const ku: Catalog = {
   'games.whoAmI.points': 'Xal: {count}',
   'games.whoAmI.out': 'Texmîn qediyan',
   'games.whoAmI.gotIt': 'Te dît!',
+  'games.whoAmI.solved': 'Dît',
   'games.whoAmI.first': '{name} pêşî dît!',
   'games.whoAmI.youFirst': 'Te pêşî dît!',
   'games.whoAmI.others': 'Yên din',
@@ -9762,6 +9765,7 @@ const de: Catalog = {
   'games.whoAmI.points': 'Punkte: {count}',
   'games.whoAmI.out': 'Keine Versuche mehr',
   'games.whoAmI.gotIt': 'Erraten!',
+  'games.whoAmI.solved': 'Erraten',
   'games.whoAmI.first': '{name} hatte es zuerst!',
   'games.whoAmI.youFirst': 'Du hattest es zuerst!',
   'games.whoAmI.others': 'Die anderen',
@@ -12887,6 +12891,7 @@ const es: Catalog = {
   'games.whoAmI.points': 'Puntos: {count}',
   'games.whoAmI.out': 'Sin intentos',
   'games.whoAmI.gotIt': '¡Lo adivinaste!',
+  'games.whoAmI.solved': 'Lo adivinó',
   'games.whoAmI.first': '¡{name} lo adivinó primero!',
   'games.whoAmI.youFirst': '¡Lo adivinaste primero!',
   'games.whoAmI.others': 'Los demás',
@@ -16012,6 +16017,7 @@ const tr: Catalog = {
   'games.whoAmI.points': 'Puan: {count}',
   'games.whoAmI.out': 'Tahmin hakkın bitti',
   'games.whoAmI.gotIt': 'Bildin!',
+  'games.whoAmI.solved': 'Bildi',
   'games.whoAmI.first': 'İlk bilen {name}!',
   'games.whoAmI.youFirst': 'İlk sen bildin!',
   'games.whoAmI.others': 'Diğerleri',
@@ -19137,6 +19143,7 @@ const ar: Catalog = {
   'games.whoAmI.points': 'النقاط: {count}',
   'games.whoAmI.out': 'نفدت التخمينات',
   'games.whoAmI.gotIt': 'عرفتها!',
+  'games.whoAmI.solved': 'عرفها',
   'games.whoAmI.first': '{name} عرفها أولًا!',
   'games.whoAmI.youFirst': 'عرفتها أولًا!',
   'games.whoAmI.others': 'الآخرون',
@@ -22262,6 +22269,7 @@ const fr: Catalog = {
   'games.whoAmI.points': 'Points : {count}',
   'games.whoAmI.out': 'Plus d’essais',
   'games.whoAmI.gotIt': 'Trouvé !',
+  'games.whoAmI.solved': 'Trouvé',
   'games.whoAmI.first': '{name} a trouvé en premier !',
   'games.whoAmI.youFirst': 'Tu as trouvé en premier !',
   'games.whoAmI.others': 'Les autres',
@@ -25387,6 +25395,7 @@ const nl: Catalog = {
   'games.whoAmI.points': 'Punten: {count}',
   'games.whoAmI.out': 'Geen pogingen meer',
   'games.whoAmI.gotIt': 'Geraden!',
+  'games.whoAmI.solved': 'Geraden',
   'games.whoAmI.first': '{name} had het als eerste!',
   'games.whoAmI.youFirst': 'Jij had het als eerste!',
   'games.whoAmI.others': 'De anderen',
@@ -28513,6 +28522,7 @@ const ckb: Catalog = {
   'games.whoAmI.points': 'خاڵ: {count}',
   'games.whoAmI.out': 'هەوڵەکان تەواو بوون',
   'games.whoAmI.gotIt': 'زانیت!',
+  'games.whoAmI.solved': 'زانی',
   'games.whoAmI.first': '{name} یەکەم کەس بوو زانی!',
   'games.whoAmI.youFirst': 'تۆ یەکەم کەس بوویت زانیت!',
   'games.whoAmI.others': 'ئەوانی تر',

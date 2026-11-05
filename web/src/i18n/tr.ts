@@ -2426,6 +2426,7 @@ export const tr: Catalogue = {
   'games.whoAmI.points': 'Puan: {count}',
   'games.whoAmI.out': 'Tahmin hakkın bitti',
   'games.whoAmI.gotIt': 'Bildin!',
+  'games.whoAmI.solved': 'Bildi',
   'games.whoAmI.first': 'İlk bilen {name}!',
   'games.whoAmI.youFirst': 'İlk sen bildin!',
   'games.whoAmI.others': 'Diğerleri',

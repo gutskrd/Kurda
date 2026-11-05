@@ -2425,6 +2425,7 @@ export const ar: Catalogue = {
   'games.whoAmI.points': 'النقاط: {count}',
   'games.whoAmI.out': 'نفدت التخمينات',
   'games.whoAmI.gotIt': 'عرفتها!',
+  'games.whoAmI.solved': 'عرفها',
   'games.whoAmI.first': '{name} عرفها أولًا!',
   'games.whoAmI.youFirst': 'عرفتها أولًا!',
   'games.whoAmI.others': 'الآخرون',

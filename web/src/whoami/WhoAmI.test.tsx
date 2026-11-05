@@ -218,7 +218,7 @@ describe('Who Am I?, the race', () => {
     expect(await screen.findByText('Rojda got it first!')).toBeInTheDocument();
     const others = screen.getByRole('region', { name: 'Everyone else' });
     expect(within(others).getByText('Questions: 3')).toBeInTheDocument();
-    expect(within(others).getByText('You got it!')).toBeInTheDocument();
+    expect(within(others).getByText('Got it')).toBeInTheDocument();
     expect(screen.getByRole('timer')).toBeInTheDocument();
     await userEvent.click(screen.getAllByRole('button', { name: 'Ask' })[1]!);
     await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/moves'))?.body).toEqual({ kind: 'ask', question: 'q2' }));

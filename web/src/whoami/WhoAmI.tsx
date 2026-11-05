@@ -348,7 +348,7 @@ function RaceBoard({
               <li key={s.seat} className={`${s.solved ? 'is-solved' : ''}${s.out || s.left ? ' is-out' : ''}`}>
                 <span className="wa-other-name">{name(s.seat)}</span>
                 <span className="muted">{t('games.whoAmI.seatAsked', { count: s.asked })}</span>
-                {s.solved && <span className="wa-chip">{t('games.whoAmI.gotIt')}</span>}
+                {s.solved && <span className="wa-chip">{t('games.whoAmI.solved')}</span>}
                 {s.out && <span className="wa-chip is-out">{t('games.whoAmI.out')}</span>}
               </li>
             ))}

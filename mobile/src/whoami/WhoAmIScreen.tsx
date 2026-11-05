@@ -347,7 +347,7 @@ function RaceBoard({
             <View key={s.seat} style={[styles.other, { borderColor: colors.controlTrack, opacity: s.out || s.left ? 0.6 : 1 }]}>
               <Text style={[styles.bold, { color: colors.textPrimary }]}>{name(s.seat)}</Text>
               <Text style={{ color: colors.textSecondary }}>{t('games.whoAmI.seatAsked', { count: s.asked })}</Text>
-              {s.solved ? <Text style={[styles.bold, { color: colors.success }]}>{t('games.whoAmI.gotIt')}</Text> : null}
+              {s.solved ? <Text style={[styles.bold, { color: colors.success }]}>{t('games.whoAmI.solved')}</Text> : null}
               {s.out ? <Text style={{ color: colors.danger }}>{t('games.whoAmI.out')}</Text> : null}
             </View>
           ))}

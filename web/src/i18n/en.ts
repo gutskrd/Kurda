@@ -2530,6 +2530,7 @@ export const en = {
   'games.whoAmI.points': 'Points: {count}',
   'games.whoAmI.out': 'Out of guesses',
   'games.whoAmI.gotIt': 'You got it!',
+  'games.whoAmI.solved': 'Got it',
   'games.whoAmI.first': '{name} got it first!',
   'games.whoAmI.youFirst': 'You got it first!',
   'games.whoAmI.others': 'Everyone else',

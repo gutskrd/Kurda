@@ -2430,6 +2430,7 @@ export const fr: Catalogue = {
   'games.whoAmI.points': 'Points : {count}',
   'games.whoAmI.out': 'Plus d’essais',
   'games.whoAmI.gotIt': 'Trouvé !',
+  'games.whoAmI.solved': 'Trouvé',
   'games.whoAmI.first': '{name} a trouvé en premier !',
   'games.whoAmI.youFirst': 'Tu as trouvé en premier !',
   'games.whoAmI.others': 'Les autres',

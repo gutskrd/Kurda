@@ -2429,6 +2429,7 @@ export const es: Catalogue = {
   'games.whoAmI.points': 'Puntos: {count}',
   'games.whoAmI.out': 'Sin intentos',
   'games.whoAmI.gotIt': '¡Lo adivinaste!',
+  'games.whoAmI.solved': 'Lo adivinó',
   'games.whoAmI.first': '¡{name} lo adivinó primero!',
   'games.whoAmI.youFirst': '¡Lo adivinaste primero!',
   'games.whoAmI.others': 'Los demás',
