@@ -157,7 +157,15 @@ export const KINGDOM_SWAYING = {
   ],
 } as const;
 
-/** The hand-placed scenery round the buildings: trees, rocks, the tenûr, the gate, the haystack, the boat, the stream. */
+/**
+ * Where the cairn stands on the hill behind the village, in world units: on
+ * the crest of the foothill the trail comes over from the pass, so it stands
+ * against the far range, above the goats' grazing and the poplars' tops.
+ */
+export const KINGDOM_CAIRN = [-40, -100] as const;
+const CAIRN_SCALE = 0.9;
+
+/** The hand-placed scenery round the buildings: trees, rocks, the cairn, the tenûr, the gate, the haystack, the boat, the stream. */
 function scenery(pal: Palette, rand: P.Rand, levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, moving: boolean): Drawn[] {
   const out: Drawn[] = [];
   const put = (make: (x: number, y: number, z: number) => Part | Part[], x: number, y: number, k = BUILDING_SCALE, z = groundAt(x, y)): void => {
@@ -170,6 +178,8 @@ function scenery(pal: Palette, rand: P.Rand, levels: Readonly<Record<KingdomBuil
   put((a, b, c) => P.walnut(pal, a, b, c, 18, rand), -18, 4, BUILDING_SCALE, 48);
   put((a, b, c) => P.rock(pal, a, b, c, 7, rand), 132, -20, BUILDING_SCALE, 48);
   put((a, b, c) => P.bush(pal, a, b, c, 6, rand, 3), 98, -16, BUILDING_SCALE, 48);
+  // on the crest the trail comes over, against the sky: the shepherds' cairn on its knoll of dry grass (its own scatter, so nothing else moves)
+  put((a, b, c) => P.cairn(pal, a, b, c, seeded('kingdom-cairn'), CAIRN_SCALE), ...KINGDOM_CAIRN, 1, 48);
   // the upper terrace: a signpost at the top of the path, a bench and flowers along its front
   put((a, b, c) => P.sign(pal, a, b, c, 'arrow'), 124, 2);
   put((a, b, c) => P.bush(pal, a, b, c, 5, rand, 4), 220, 106);

@@ -14,8 +14,10 @@
  *
  * - `pathLandSvg`: one unit's ground at the size it is shown, in points — its
  *   grass or snow or paving, patches of light and shade, a stream, trees,
- *   tufts, flowers and pebbles — kept off the stops, the trail, the landmark
- *   and the places people stand (`landClear`).
+ *   tufts, flowers and pebbles, and in the lands of open country the
+ *   shepherds' cairn on its knoll (the village's own drawing, `cairnBox`
+ *   says where) — kept off the stops, the trail, the landmark and the places
+ *   people stand (`landClear`).
  * - `pathStonesSvg`: the trail's stepping stones (`trailStones`), walked or
  *   still ahead.
  * - `pathStopSvg`: a stop as two pictures, its base and its face, so a press
@@ -30,8 +32,10 @@
  * what was asked for (svg.ts), scatter from a generator seeded with it.
  */
 import type { UnitTone } from '../lesson-path.js';
-import { landClear, type PathBox, type PathGround, type PathLandmark, type TrailStone, type WorldStop } from '../path-world.js';
+import { PATH_CAIRN_GROUNDS, cairnBox, landClear, type PathBox, type PathGround, type PathLandmark, type TrailStone, type WorldStop } from '../path-world.js';
 import { chestDrawing, type ChestLayerId } from './chest.js';
+import { DAY, DUSK as VILLAGE_DUSK, inked, sorted } from './kingdom/pen.js';
+import { cairn } from './kingdom/props.js';
 import { CANVAS, escapeXml, mix, n, n2, prefixFor, seeded, type Pt } from './svg.js';
 
 // ───────────────────────────────────────────────────────────── the palette
@@ -240,7 +244,11 @@ export function pathLandSvg(opts: PathLandOptions): string {
     .join('L');
   pen.flat(`${top}L${foot}Z`, c(g.base));
 
-  const { solid, tall } = landClear(opts.stops, W, opts.stones);
+  // where the stream crosses, between the first two stops after the unit's head
+  const streamY = g.stream && opts.stops.length > 2 ? (opts.stops[1]!.y + opts.stops[2]!.y) / 2 + 6 : null;
+  // a shepherds' cairn on its knoll, in the lands of open country, where the room beside the path allows, out of the water
+  const cairnAt = PATH_CAIRN_GROUNDS.includes(opts.ground) ? cairnBox(opts.stops, W, streamY === null ? [] : [{ x: 0, y: streamY - 26, w: 2 * W, h: 52 }]) : null;
+  const { solid, tall } = landClear(opts.stops, W, opts.stones, cairnAt);
   const free = (x: number, y: number, w: number, h: number, also: readonly PathBox[] = []): boolean => {
     if (Math.abs(x) + w / 2 > W / 2 + w * 0.3) return false;
     if (y < 10 || y + h > H - 6) return false;
@@ -259,10 +267,8 @@ export function pathLandSvg(opts: PathLandOptions): string {
   }
 
   // a stream across the unit, between two stops, which the stepping stones cross
-  if (g.stream && opts.stops.length > 2) {
-    const a = opts.stops[1]!;
-    const b = opts.stops[2]!;
-    const y0 = (a.y + b.y) / 2 + 6;
+  if (streamY !== null) {
+    const y0 = streamY;
     const pts: Pt[] = [];
     const steps = Math.max(6, Math.round(W / 40));
     for (let i = 0; i <= steps; i++) {
@@ -321,13 +327,37 @@ export function pathLandSvg(opts: PathLandOptions): string {
     placed.push({ x: lx, y: y + fh, kind, s });
   }
   placed.sort((a, b) => a.y - b.y);
-  for (const p of placed) tree(pen, X(p.x), p.y, p.kind, p.s, dark);
+  // the cairn among the trees, in front of those that stand behind its foot
+  let cairnDrawn = cairnAt === null;
+  const cairnFoot = cairnAt ? cairnAt.y + cairnAt.h : 0;
+  for (const p of placed) {
+    if (!cairnDrawn && p.y > cairnFoot) {
+      pen.add(cairnOn(cairnAt!, X, dark));
+      cairnDrawn = true;
+    }
+    tree(pen, X(p.x), p.y, p.kind, p.s, dark);
+  }
+  if (!cairnDrawn) pen.add(cairnOn(cairnAt!, X, dark));
 
   const prefix = prefixFor(opts.idPrefix, 'land', opts.ground, dark, rtl, opts.seed ?? '', Math.round(W), Math.round(H));
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${n(W)}" height="${n(H)}" viewBox="0 0 ${n(W)} ${n(H)}" aria-hidden="true" focusable="false" id="${prefix}">` +
     `${pen.markup()}</svg>`
   );
+}
+
+/**
+ * The cairn as the village draws it (art/kingdom/props.ts), one stone figure
+ * for the two places, fitted to its box: at its own size it reaches 55 above
+ * the knoll's middle and 15 below it, and 28 either side. Its lines keep the
+ * village's weight at any size, which is the path's weight too.
+ */
+const CAIRN_ART = { above: 55, below: 15 } as const;
+function cairnOn(box: PathBox, X: (x: number) => number, dark: boolean): string {
+  const parts = cairn(dark ? VILLAGE_DUSK : DAY, 0, 0, 0, seeded('path-cairn'));
+  const k = box.h / (CAIRN_ART.above + CAIRN_ART.below);
+  const body = inked(sorted(parts.map((p) => ({ depth: p.depth, svg: p.svg() })))).replace(/stroke-width="([\d.]+)"/g, (_, w: string) => `stroke-width="${n2(Number(w) / k)}"`);
+  return `<g transform="translate(${n(X(box.x))} ${n(box.y + CAIRN_ART.above * k)}) scale(${n2(k)})">${body}</g>`;
 }
 
 /** A tree, a rock or a stack of hay, its foot at (x, y). */

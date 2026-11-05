@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { PATH_GEOMETRY, lessonPath, mascotSpot, type PathSkill } from './lesson-path.js';
 import {
+  PATH_CAIRN,
+  PATH_CAIRN_GROUNDS,
+  PATH_GROUNDS,
   PATH_LANDMARKS,
   PATH_LANDS,
   PATH_MOTION,
   PATH_SCENERY,
+  cairnBox,
   hopAt,
   hostBox,
   landClear,
@@ -86,6 +90,57 @@ describe('where things stand beside the path', () => {
     expect(hostBox(stops, 390, lastSkill) === null).toBe(crowded);
     // and a unit too short for anyone to stand by has no one
     expect(hostBox(stops.slice(0, 2), 390, null)).toBeNull();
+  });
+});
+
+describe('the shepherds’ cairn beside the road', () => {
+  it('stands in the lands of open country only', () => {
+    expect(PATH_CAIRN_GROUNDS.length).toBeGreaterThan(0);
+    for (const g of PATH_CAIRN_GROUNDS) expect(PATH_GROUNDS).toContain(g);
+    // the village and the town keep their own landmarks to themselves
+    for (const g of ['orchard', 'meadow', 'town', 'plaza'] as const) expect(PATH_CAIRN_GROUNDS).not.toContain(g);
+  });
+
+  it('finds it room on a phone and on a wide page, inside the page and clear of the path and of everyone on it', () => {
+    for (const width of [320, 360, 390, 480, 720]) {
+      for (const current of [0, 1, 2, 3]) {
+        const u = unit(current);
+        const stops = u.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
+        const box = cairnBox(stops, width);
+        const at = `${width} current ${current}`;
+        expect(box, at).not.toBeNull();
+        expect(box!.h, at).toBeGreaterThanOrEqual(PATH_CAIRN.min);
+        expect(box!.h, at).toBeLessThanOrEqual(PATH_CAIRN.size);
+        expect(Math.abs(box!.x) + box!.w / 2, at).toBeLessThanOrEqual(width / 2 - PATH_SCENERY.edge);
+        for (const p of stops) {
+          expect(overlap(box!, stopBox(p)), `${at} on ${p.key}`).toBe(false);
+          // never where Hevalo stands by any stop, wherever the learner has got to
+          expect(overlap(box!, mascotBox(p)), `${at} by ${p.key}`).toBe(false);
+        }
+        expect(overlap(box!, landmarkBox(width)), at).toBe(false);
+        const host = hostBox(stops, width, null);
+        if (host) expect(overlap(box!, host.box), at).toBe(false);
+        // off the whole trail, the stretches still ahead too
+        const trail = trailStones(u.stops.map((p, i) => ({ ...p, trail: i === 0 ? null : ('ahead' as const) })));
+        for (const s of trail) expect(Math.abs(s.x - box!.x) * 2 < box!.w + 2 * s.r && s.y + s.r > box!.y && s.y - s.r < box!.y + box!.h, `${at} on a stone`).toBe(false);
+        // the same each time
+        expect(cairnBox(stops, width)).toEqual(box);
+      }
+    }
+  });
+
+  it('keeps out of what the land asks it to, gives a unit too short none, and keeps the trees off it', () => {
+    const u = unit(1);
+    const stops = u.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
+    const free = cairnBox(stops, 390)!;
+    const water = { x: 0, y: free.y + free.h / 2 - 20, w: 800, h: 40 };
+    const moved = cairnBox(stops, 390, [water]);
+    expect(moved).not.toBeNull();
+    expect(overlap(moved!, water)).toBe(false);
+    expect(cairnBox(stops.slice(0, 2), 390)).toBeNull();
+    const stones = trailStones(u.stops);
+    expect(landClear(stops, 390, stones, free).solid).toContainEqual(free);
+    expect(landClear(stops, 390, stones).solid).not.toContainEqual(free);
   });
 });
 

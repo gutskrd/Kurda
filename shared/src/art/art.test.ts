@@ -27,7 +27,7 @@ import {
 import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import { KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingSvg, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, type KingdomFrame, type KingdomNode } from './kingdom.js';
+import { KINGDOM_CAIRN, KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingSvg, kingdomPoint, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, type KingdomFrame, type KingdomNode } from './kingdom.js';
 import {
   PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
@@ -39,7 +39,7 @@ import {
   pathStopSvg,
   type PathStopLook,
 } from './path-land.js';
-import { PATH_LANDMARKS, PATH_LANDS, trailStones } from '../path-world.js';
+import { PATH_CAIRN_GROUNDS, PATH_LANDMARKS, PATH_LANDS, cairnBox, trailStones } from '../path-world.js';
 import { lessonPath } from '../lesson-path.js';
 import { KINGDOM_BUILDINGS, type KingdomBuilding, type KingdomLevel } from '../games/kingdom/buildings.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
@@ -1166,6 +1166,19 @@ describe('the kingdom’s village', () => {
     expect(kingdomSceneSvg({ levels: some, without: 'market' }).length).toBeLessThan(kingdomSceneSvg({ levels: some }).length);
   });
 
+  it('stands the shepherds’ cairn on the crest behind the village, against the sky, by day and at dusk', () => {
+    const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
+    // its knoll of dry grass is the only gold of its kind in the village
+    expect(kingdomSceneSvg({ levels: some })).toContain('#e8ae3c');
+    expect(kingdomSceneSvg({ levels: some, dark: true })).toContain('#cf9443');
+    // on the hill behind the terraces, and inside the frame every screen keeps in view, head and all
+    const foot = kingdomPoint(KINGDOM_CAIRN[0], KINGDOM_CAIRN[1], 48);
+    expect(foot.x).toBeGreaterThan(KINGDOM_FRAME.x + 40);
+    expect(foot.x).toBeLessThan(KINGDOM_FRAME.x + KINGDOM_FRAME.w - 40);
+    expect(foot.y - 60).toBeGreaterThan(KINGDOM_FRAME.y);
+    for (const b of KINGDOM_BUILDINGS) expect(foot.y, b).toBeLessThan(KINGDOM_PLOTS[b].box.y + KINGDOM_PLOTS[b].box.h);
+  });
+
   it('puts every building, its tap and its badge inside the frame an app keeps in view, and no two taps on one spot', () => {
     const inFrame = (x: number, y: number): boolean => x >= KINGDOM_FRAME.x && x <= KINGDOM_FRAME.x + KINGDOM_FRAME.w && y >= KINGDOM_FRAME.y && y <= KINGDOM_FRAME.y + KINGDOM_FRAME.h;
     expect(KINGDOM_FRAME.x + KINGDOM_FRAME.w).toBeLessThanOrEqual(KINGDOM_SCENE.width);
@@ -1341,6 +1354,32 @@ describe('the lesson path’s world', () => {
     expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
     expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
     expect(() => pathStopSvg({ look: 'gold' as PathStopLook, tone: 'clay', part: 'face' })).toThrow(RangeError);
+  });
+
+  it('stands a cairn beside the road in the lands of open country, and nowhere else', () => {
+    const skills = [0, 1, 2, 3].map((i) => ({ skillId: `k${i}`, title: 'S', state: (i === 0 ? 'unlocked' : 'locked') as 'unlocked' | 'locked', strength: 0, hasGrammar: i === 0, firstLessonId: `l${i}` }));
+    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills }] }, { guides: true }).units[0]!;
+    const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
+    const stones = trailStones(unit.stops);
+    for (const land of PATH_LANDS) {
+      for (const width of [390, 720]) {
+        const day = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, seed: 'u' });
+        const dusk = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark: true, seed: 'u' });
+        const has = PATH_CAIRN_GROUNDS.includes(land.ground);
+        expect(day.includes('#e8ae3c'), `${land.ground} ${width}`).toBe(has);
+        expect(dusk.includes('#cf9443'), `${land.ground} ${width} dusk`).toBe(has);
+        if (!has) continue;
+        // fitted to its box, which lies inside the land, out of the river where one runs across it
+        const streams = land.ground === 'valley' || land.ground === 'alpine';
+        const stream = (stops[1]!.y + stops[2]!.y) / 2 + 6;
+        const box = cairnBox(stops, width, streams ? [{ x: 0, y: stream - 26, w: 2 * width, h: 52 }] : [])!;
+        const scale = Number(/scale\(([\d.]+)\)/.exec(day)![1]);
+        expect(scale * 70).toBeCloseTo(box.h, 0);
+        expect(box.y).toBeGreaterThanOrEqual(0);
+        expect(box.y + box.h).toBeLessThanOrEqual(unit.height);
+        if (streams) expect(box.y >= stream + 26 || box.y + box.h <= stream - 26, land.ground).toBe(true);
+      }
+    }
   });
 
   it('draws each unit’s land within its budget, the same every time, and changes it with the season', () => {

@@ -148,6 +148,65 @@ export function hostBox(stops: readonly WorldStop[], width: number, mascotAt: Wo
   return { box, by: last.key };
 }
 
+/**
+ * The lands where a shepherds' cairn stands beside the road, on its knoll of
+ * dry grass: where the road crosses open country — the stubble on the way to
+ * the bus, the river valley, and the summer pastures in the mountains.
+ */
+export const PATH_CAIRN_GROUNDS: readonly PathGround[] = ['stubble', 'valley', 'alpine'];
+
+/** The cairn's box at its largest and its smallest (its height; it is a little narrower than tall), and its width to height. */
+export const PATH_CAIRN = { size: 124, min: 78, aspect: 0.8 } as const;
+
+/**
+ * Where the cairn stands in a unit: in the open beside the path, as large as
+ * the room there allows — off every stop and the whole of the trail, off
+ * anything else the land asks it to `avoid` (its stream), the landmark, the host,
+ * every place Hevalo may stand by a stop and the room over each stop where the
+ * learner and the flag stand. Nearest the unit's middle of the places that
+ * fit; on a page too narrow for even the smallest, it may stand where the flag
+ * over a stop would pass in front of it, and failing that nowhere. It
+ * depends on the stops' places alone, never on how far the learner has
+ * come, so it never moves as they go on. In the path's logical terms, so a right-to-left page mirrors it as it mirrors the
+ * stops.
+ */
+export function cairnBox(stops: readonly WorldStop[], width: number, avoid: readonly PathBox[] = []): PathBox | null {
+  if (stops.length < 3) return null;
+  const half = width / 2;
+  const solid: PathBox[] = [...avoid];
+  for (const s of stops) solid.push({ x: s.x, y: s.y - STOP_CLEAR, w: 2 * STOP_CLEAR, h: 2 * STOP_CLEAR + 6 });
+  // the whole trail, walked or not, so the cairn stands in the same place however far the learner has come
+  const trail = trailStones(stops.map((s, i) => ({ stop: { key: s.key }, x: s.x, y: s.y, trail: i === 0 ? null : 'ahead' })));
+  for (const s of trail) solid.push({ x: s.x, y: s.y - s.r - 4, w: 2 * s.r + 8, h: 2 * s.r + 8 });
+  solid.push(landmarkBox(width));
+  const host = hostBox(stops, width, null);
+  if (host) solid.push(host.box);
+  for (const s of stops) solid.push(mascotBox(s));
+  const flags: PathBox[] = stops.map((s) => ({ x: s.x, y: s.y - PATH_SCENERY.overStop, w: 128, h: PATH_SCENERY.overStop }));
+  const top = stops[0]!.y - PATH_GEOMETRY.node / 2;
+  const bottom = stops[stops.length - 1]!.y + PATH_GEOMETRY.node / 2;
+  const middle = (top + bottom) / 2;
+  for (const keep of [flags, []] as const) {
+    for (let h = PATH_CAIRN.size; h >= PATH_CAIRN.min; h -= 6) {
+      const w = Math.round(h * PATH_CAIRN.aspect);
+      let best: PathBox | null = null;
+      for (let y = top; y + h <= bottom; y += 6) {
+        for (const side of [-1, 1]) {
+          for (let reach = w / 2 + 8; reach + w / 2 <= half - PATH_SCENERY.edge; reach += 6) {
+            const box = { x: side * reach, y, w, h };
+            if ([...solid, ...keep].some((b) => overlaps(box, b))) continue;
+            const off = Math.abs(y + h / 2 - middle);
+            if (!best || off < Math.abs(best.y + best.h / 2 - middle)) best = box;
+            break;
+          }
+        }
+      }
+      if (best) return best;
+    }
+  }
+  return null;
+}
+
 /** One stepping stone of the trail: where it lies, how big, and the stop the stretch it is on leads to. */
 export interface TrailStone {
   x: number;
@@ -222,15 +281,17 @@ export function trailStones(stops: readonly { stop: { key: string }; x: number; 
 
 /**
  * What the drawing of the land keeps clear: every stop, every stone, the
- * landmark, the host, and the places beside the stops where Hevalo may stand
- * — so a tree never grows through the path or behind someone standing by it.
+ * landmark, the cairn where there is one, the host, and the places beside
+ * the stops where Hevalo may stand — so a tree never grows through the path
+ * or behind someone standing by it.
  * Small things (grass, flowers, pebbles) may still lie in Hevalo's places.
  */
-export function landClear(stops: readonly WorldStop[], width: number, stones: readonly TrailStone[]): { solid: PathBox[]; tall: PathBox[] } {
+export function landClear(stops: readonly WorldStop[], width: number, stones: readonly TrailStone[], cairn: PathBox | null = null): { solid: PathBox[]; tall: PathBox[] } {
   const solid: PathBox[] = [];
   for (const s of stops) solid.push({ x: s.x, y: s.y - STOP_CLEAR, w: 2 * STOP_CLEAR, h: 2 * STOP_CLEAR + 6 });
   for (const s of stones) solid.push({ x: s.x, y: s.y - s.r - 4, w: 2 * s.r + 8, h: 2 * s.r + 8 });
   solid.push(landmarkBox(width));
+  if (cairn) solid.push(cairn);
   const tall: PathBox[] = stops.map((s) => mascotBox(s));
   // over any stop the learner may stand on, with the flag over them
   for (const s of stops) tall.push({ x: s.x, y: s.y - PATH_SCENERY.overStop, w: 128, h: PATH_SCENERY.overStop });
