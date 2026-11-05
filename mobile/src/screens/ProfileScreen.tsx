@@ -424,7 +424,7 @@ function AccountProfile() {
               )}
               {uploading ? (
                 <View style={[styles.avatarOverlay, { backgroundColor: colors.scrim }]}>
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={colors.textOnScrim} />
                 </View>
               ) : null}
             </AvatarStage>
