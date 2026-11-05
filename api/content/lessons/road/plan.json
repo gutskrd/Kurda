@@ -3215,7 +3215,7 @@
                 {"ku": "dikandar", "en": "shopkeeper", "pos": "noun", "gender": "mf", "forms": ["dikandar", "dikandarên", "dikandaran", "dikandarek", "dikandarê", "dikandarekî", "dikandarî", "dikandara", "dikandareke"]},
                 {"ku": "aşpêj", "en": "cook", "pos": "noun", "gender": "mf", "forms": ["aşpêj", "aşpêjên", "aşpêjan", "aşpêjek", "aşpêjê", "aşpêjekî", "aşpêjî", "aşpêja", "aşpêjeke"]},
                 {"ku": "hosta", "en": "craftsman, builder", "pos": "noun", "gender": "mf", "forms": ["hosta", "hostayên", "hostayan", "hostayek", "hostayê", "hostayekî", "hostayî", "hostaya", "hostayeke"]},
-                {"ku": "pîşe", "en": "profession, trade", "pos": "noun", "gender": "f", "forms": ["pîşe", "pîşeyên", "pîşeyan", "pîşeyek", "pîşeya", "pîşeyê", "pîşeyeke"]}
+                {"ku": "pîşe", "en": "profession, trade", "pos": "noun", "gender": "f", "forms": ["pîşe", "pîşeyên", "pîşeyan", "pîşeyek", "pîşeya", "pîşeyê", "pîşeyeke", "pîşeyekê"]}
               ]
             },
             {

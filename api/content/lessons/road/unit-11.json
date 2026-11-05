@@ -208,7 +208,7 @@
                   "type": "speaking",
                   "payload": {
                     "prompt": "Say it the way Hamo does, with a lift of the moustache: “In our village everyone has a trade.”",
-                    "reference": "Li gundê me pîşeyeke her kesî heye.",
+                    "reference": "Li gundê me her kes xwedî pîşeyekê ye.",
                     "voice": "hamo"
                   }
                 },
@@ -710,7 +710,7 @@
                     "prompt": "Which sentence means “It is a great honour for the family”?",
                     "options": [
                       "Ev ji bo malbatê rûmeteke mezin e.",
-                      "Ev ji bo malbatê rûmeta mezin e.",
+                      "Ev ji bo malbatê rûmetek mezin e.",
                       "Ev ji bo malbatê rûmeteke mezin in."
                     ],
                     "correctIndex": 0
@@ -799,7 +799,7 @@
                         "en": "No… yes. A little. Xezal is going to Hewlêr."
                       },
                       {
-                        "speaker": 0,
+                        "speaker": 1,
                         "text": "Lê Hewlêr ne pir dûr e, ne wisa? Otobûs heye.",
                         "en": "But Hewlêr isn’t very far, is it? There’s a bus."
                       },
@@ -1285,7 +1285,9 @@
                       "Min Hewlêr tu car nedîtiye.",
                       "Min Hewlêr tu car nedîtiye",
                       "Min qet Hewlêr nedîtiye.",
-                      "Min qet Hewlêr nedîtiye"
+                      "Min qet Hewlêr nedîtiye",
+                      "Min Hewlêr qet nedîtiye.",
+                      "Min Hewlêr qet nedîtiye"
                     ],
                     "voice": "hamo"
                   }
@@ -2511,11 +2513,11 @@
                   "position": 2,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Lêbelê dengê te jî mezin e!",
+                    "say": "Lêbelê dengê te jî bilind e!",
                     "voice": "hamo",
                     "prompt": "Hamo has an answer for every “but”. What does he say to this one?",
                     "options": [
-                      "However, your voice is big too!",
+                      "However, your voice is loud too!",
                       "However, your feet are big too!",
                       "However, the school is small!"
                     ],
@@ -2958,7 +2960,11 @@
                       "Hevalo çepikan lêdixe.",
                       "Hevalo çepikan lêdixe",
                       "Hevalo çepik lêdixe.",
-                      "Hevalo çepik lêdixe"
+                      "Hevalo çepik lêdixe",
+                      "Hevalo çepikan lêdide.",
+                      "Hevalo çepikan lêdide",
+                      "Hevalo çepik lêdide.",
+                      "Hevalo çepik lêdide"
                     ],
                     "voice": "hamo"
                   }
@@ -3142,8 +3148,6 @@
                     "accepted": [
                       "Hêlîn praised Baran.",
                       "Hêlîn praised Baran",
-                      "Hêlîn praised him, Baran.",
-                      "Hêlîn praised him, Baran",
                       "Hêlîn gave Baran praise.",
                       "Hêlîn gave Baran praise"
                     ],
@@ -3159,7 +3163,9 @@
                       "Baran gotara xwe pêşkêş kir, û hemû dibistanê çepik lêxistin.",
                       "Baran gotara xwe pêşkêş kir, û hemû dibistanê çepik lêxistin",
                       "Baran gotara xwe pêşkêş kir û hemû dibistanê çepik lêxistin.",
-                      "Baran gotara xwe pêşkêş kir û hemû dibistanê çepik lêxistin"
+                      "Baran gotara xwe pêşkêş kir û hemû dibistanê çepik lêxistin",
+                      "Baran gotara xwe pêşkêş kir, û hemû dibistanê çepik lêdan.",
+                      "Baran gotara xwe pêşkêş kir û hemû dibistanê çepik lêdan"
                     ],
                     "voice": "hamo"
                   }
@@ -4331,8 +4337,6 @@
                     "accepted": [
                       "My father was a great storyteller.",
                       "My father was a great storyteller",
-                      "My father was a big storyteller.",
-                      "My father was a big storyteller",
                       "My father was a wonderful storyteller.",
                       "My father was a wonderful storyteller"
                     ],
