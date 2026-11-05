@@ -102,3 +102,14 @@
     transition: none;
   }
 }
+
+/* on a phone the box takes the whole width, and its button sits under it */
+@media (max-width: 420px) {
+  .party-compose {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .party-compose .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}

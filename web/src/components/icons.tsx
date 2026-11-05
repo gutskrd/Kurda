@@ -40,6 +40,7 @@ import { DotsThree } from '@phosphor-icons/react/dist/icons/DotsThree';
 import { Prohibit } from '@phosphor-icons/react/dist/icons/Prohibit';
 import { Detective } from '@phosphor-icons/react/dist/icons/Detective';
 import { ChatCircleSlash } from '@phosphor-icons/react/dist/icons/ChatCircleSlash';
+import { ArrowsLeftRight } from '@phosphor-icons/react/dist/icons/ArrowsLeftRight';
 import { Flag } from '@phosphor-icons/react/dist/icons/Flag';
 import { SignOut } from '@phosphor-icons/react/dist/icons/SignOut';
 import { Gear } from '@phosphor-icons/react/dist/icons/Gear';
@@ -198,6 +199,8 @@ export const ChainIcon = named(LinkGlyph, 22);
 export const ImpostorIcon = named(Detective, 22);
 /** A speech bubble struck through: Don't Say the Word!, where some words may not be said. */
 export const DontSayIcon = named(ChatCircleSlash, 22);
+/** Across to the other side: a player moved to the other team. */
+export const SwapIcon = named(ArrowsLeftRight, 18);
 export const WaveformIcon = named(Waveform, 22);
 /* the landing page's pictures of a lesson: a clip to play, a word to say */
 export const PlayIcon = named(Play, 22, 'fill');

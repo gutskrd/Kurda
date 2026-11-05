@@ -90,14 +90,15 @@
 /* the stack of cards and the buzzer */
 .ds-table {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 300px) auto;
+  justify-content: center;
   align-items: center;
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 .ds-stack {
   position: relative;
   justify-self: center;
-  width: min(100%, 300px);
+  width: 100%;
   padding: 0 10px 10px 0;
 }
 .ds-stack-under {
@@ -213,6 +214,7 @@
   gap: var(--space-3);
 }
 .ds-section-title {
+  font-family: var(--font-sans);
   margin: 0 0 var(--space-2);
   font-size: var(--text-body);
 }
@@ -347,6 +349,7 @@
 @media (max-width: 420px) {
   .ds-table {
     grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
   }
   .ds-buzzer {
     justify-self: center;

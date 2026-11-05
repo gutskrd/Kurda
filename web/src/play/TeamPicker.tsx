@@ -3,7 +3,7 @@ import type { MultiGame, MultiSeat } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
-import { HostIcon } from '../components/icons';
+import { HostIcon, SwapIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { PlayerReport } from '../reports/PlayerReport';
@@ -121,12 +121,13 @@ export function TeamPicker({
                               key={to}
                               size="sm"
                               variant="ghost"
-                              className="team-move"
+                              className={`team-move lp-tone-${teamTone(to)}`}
                               disabled={busy}
                               aria-label={t('play.teams.moveWho', { name: who, team: teamName(to, t) })}
+                              title={t('play.teams.move', { team: teamName(to, t) })}
                               onClick={() => void move(p.seat, to)}
                             >
-                              {t('play.teams.move', { team: teamName(to, t) })}
+                              <SwapIcon size={18} />
                             </Button>
                           ))}
                         {!p.isMe && <PlayerReport game={game} gameId={gameId} seat={p.seat} name={who} />}

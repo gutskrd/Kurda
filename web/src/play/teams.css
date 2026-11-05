@@ -28,6 +28,7 @@
   align-items: center;
   gap: var(--space-2);
   margin: 0;
+  font-family: var(--font-sans);
   font-size: var(--text-body);
   color: var(--u-text);
 }
@@ -57,7 +58,6 @@
 }
 .team-member {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-2);
   min-height: 48px;
@@ -77,6 +77,14 @@
 .team-move,
 .team-join {
   min-height: 44px;
+}
+.team-move {
+  min-width: 44px;
+  padding-inline: 10px;
+  color: var(--u-text);
+}
+.team-member .sg-remove {
+  flex: none;
 }
 .team-join {
   justify-self: start;
