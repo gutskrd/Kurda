@@ -173,6 +173,12 @@ export function SkillNodeView({
         {raised && stop.kind === 'skill' ? <Progress done={stop.lessonsDone} total={stop.lessonsTotal} from={change?.ringFrom} fill={tone.fill} lights={false} /> : null}
         <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ scale: pop }, { rotate: tilt }] }]} pointerEvents="none">
           {near ? <StopArt look={look} tone={unitTone} part="base" near={near} /> : <View style={[styles.plainLip, { backgroundColor: plainColour(look, tone, rest).lip }]} />}
+          {opening && near ? (
+            // the closed stone it was, over it until it opens
+            <Animated.View style={[StyleSheet.absoluteFill, { opacity: lock }]}>
+              <StopArt look="locked" tone={unitTone} part="base" near />
+            </Animated.View>
+          ) : null}
           {raised && stop.kind === 'skill' ? <Progress done={stop.lessonsDone} total={stop.lessonsTotal} from={change?.ringFrom} fill={tone.fill} glow={false} /> : null}
           {finishing && change?.ringFrom !== undefined && stop.kind === 'skill' ? (
             // the lights it had as the current skill come on to the full, and go as the stop pops
@@ -196,12 +202,25 @@ export function SkillNodeView({
                     <StopArt look="chest" tone={unitTone} part="face" near />
                   </Animated.View>
                 </>
+              ) : opening ? (
+                <>
+                  <StopArt look={look} tone={unitTone} part="face" near />
+                  <Animated.View style={[StyleSheet.absoluteFill, { opacity: lock }]}>
+                    <StopArt look="locked" tone={unitTone} part="face" near />
+                  </Animated.View>
+                </>
               ) : (
                 <StopArt look={look} tone={unitTone} part="face" near />
               )
             ) : (
               <View style={[styles.plainFace, { backgroundColor: plainColour(look, tone, rest).face }]} />
             )}
+            {opening && !glyph ? (
+              // the stop to do now: its padlock goes, and the learner arrives on it
+              <Animated.View style={[styles.glyph, { opacity: lock }]} pointerEvents="none">
+                <Icon name="lock" size={26} color={FACE_INK[scheme].stone} />
+              </Animated.View>
+            ) : null}
             {glyph ? (
               <View style={styles.glyph} pointerEvents="none">
                 {stop.kind === 'skill' && stop.state === 'available' && opening ? (
