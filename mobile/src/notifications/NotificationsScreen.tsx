@@ -7,6 +7,9 @@ import { Toggle } from '../theme/Toggle';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
+import { isMaintenance } from '../api/errors';
+import { haptic } from '../feedback/haptics';
+import { SendErrorNotice } from '../reports/SendError';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { SettingsRow, SettingsSection, SettingsSwitch } from '../settings/list';
@@ -46,12 +49,33 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
 
   useFocusEffect(useCallback(() => load(), [load]));
 
+  /**
+   * Send a change, having already moved the control.
+   *
+   * Optimistic because a switch that waits for a round trip before moving
+   * reads as one that did not register. What the changed settings were is
+   * kept, so a refusal puts them back — only those, so a second switch moved
+   * meanwhile keeps its own answer — rather than leave the screen claiming a
+   * setting the server does not have; and the reason is said above the list,
+   * as the website says it.
+   */
+  const [saveError, setSaveError] = useState<ApiError | null>(null);
   const save = useCallback(
     (patch: Partial<NotificationPrefs>) => {
+      if (!prefs) return;
+      const before = Object.fromEntries(Object.keys(patch).map((key) => [key, prefs[key as keyof NotificationPrefs]])) as Partial<NotificationPrefs>;
+      setSaveError(null);
       setPrefs((p) => (p ? { ...p, ...patch } : p));
-      void client.put('/me/notification-prefs', patch);
+      void client.put<NotificationPrefs>('/me/notification-prefs', patch).then((res) => {
+        if (res.ok) return;
+        setPrefs((p) => (p ? { ...p, ...before } : p));
+        // Hevalo offline for a while is said by the screen over the app; the switch still goes back
+        if (isMaintenance(res.error)) return;
+        haptic('error');
+        setSaveError(res.error);
+      });
     },
-    [client],
+    [client, prefs],
   );
 
   return (
@@ -64,6 +88,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
             const quiet = quietEnabled(prefs);
             return (
         <ScrollView contentContainerStyle={styles.content}>
+          <SendErrorNotice error={saveError} onDismiss={() => setSaveError(null)} style={styles.notice} />
           {/* whether the phone lets anything through at all, before what to send */}
           <DevicePushControl />
           <SettingsSection title={t('notifications.categories')} first>
@@ -167,6 +192,7 @@ function TimeRow({ label, minute, onStep }: { label: string; minute: number; onS
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { paddingBottom: spacing.xl },
+  notice: { marginHorizontal: layout.gutter, marginTop: spacing.md, marginBottom: 0 },
   sectionSkeleton: { marginTop: spacing.lg, marginBottom: spacing.sm, marginHorizontal: layout.gutter },
   flex: { flex: 1 },
   unseen: { opacity: 0 },
