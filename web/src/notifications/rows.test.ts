@@ -31,7 +31,9 @@ describe('groupByTime', () => {
 
 describe('noteKind', () => {
   it('reads the kind from the data first, then from the category', () => {
-    expect(noteKind({ category: 'games', data: { kind: 'play_invite' } })).toBe('game');
+    expect(noteKind({ category: 'games', data: { kind: 'play_invite' } })).toBe('invite');
+    expect(noteKind({ category: 'friends', data: { kind: 'friend_request' } })).toBe('friendRequest');
+    expect(noteKind({ category: 'games', data: {} })).toBe('game');
     expect(noteKind({ category: 'friends', data: { kind: 'gift' } })).toBe('gift');
     expect(noteKind({ category: 'progress', data: { kind: 'league_promotion' } })).toBe('league');
     expect(noteKind({ category: 'safety', data: { kind: 'caring_message' } })).toBe('care');

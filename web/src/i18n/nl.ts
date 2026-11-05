@@ -2203,6 +2203,8 @@ export const nl: Catalogue = {
   'play.invited.cancelWho': 'Uitnodiging aan {name} intrekken',
   'play.invited.again': 'Opnieuw uitnodigen',
   'play.invited.againWho': '{name} opnieuw uitnodigen',
+  'play.ticket.from': 'Speluitnodiging van {name}: {game}',
+  'play.ticket.joined': 'Je doet mee',
   'play.code.label': 'Deelnamecode',
   'play.code.copySpelled': 'Deelnamecode {code} kopiëren',
   'play.code.copy': 'Code kopiëren',

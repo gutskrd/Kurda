@@ -450,6 +450,11 @@
     0 0 0 2px var(--panel-bg),
     inset 0 0 0 1px var(--border);
 }
+/* an invitation wears a ticket, in its game's colour, or a heart's for a friend request (ui/Ticket.tsx) */
+.note-badge.is-ticket,
+.note-tile.is-ticket {
+  color: var(--t-ink, var(--ink));
+}
 
 .note-main {
   flex: 1;

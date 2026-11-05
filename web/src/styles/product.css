@@ -521,27 +521,40 @@ a.rank-name:hover {
 }
 
 /* ---- a game invite --------------------------------------------------------- */
+/*
+ * A ticket on its side (ui/Ticket.tsx, styles/ticket.css): the game's mark on
+ * the stub, the words and the way in on the body. Its paper is its own
+ * surface, so it reads the same in your white bubble and in theirs.
+ */
 .invite-card {
-  display: grid;
-  gap: 5px;
+  --stub-w: 52px;
   width: min(100%, 300px);
-  padding: 14px;
-  border: 1px solid var(--border-strong);
-  border-radius: 16px;
-  /* its own surface: your own bubble is white, and a see-through card vanished in it */
-  background: var(--panel-bg);
   color: var(--ink);
   text-decoration: none;
-  box-shadow: var(--glass-rim);
-  transition:
-    border-color 0.15s ease,
-    transform 0.12s ease;
-}
-a.invite-card:hover {
-  border-color: var(--border-strong);
+  transition: transform 0.12s ease;
 }
 a.invite-card:active {
   transform: translateY(1px);
+}
+a.invite-card:hover {
+  --t-edge: color-mix(in srgb, var(--t-accent) 60%, var(--border));
+}
+.invite-main {
+  display: grid;
+  align-content: start;
+  gap: 5px;
+  padding: 12px 14px 14px;
+}
+/* Rated or Friendly lines up with the words on the ticket */
+.invite-main > .invite-rated {
+  justify-self: start;
+  margin: 2px 0;
+}
+/* a stamp across the top corner: in, finished, called off (play/ChatGameCard.tsx) */
+.invite-stamp {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 10px;
 }
 .invite-eyebrow {
   font-size: var(--text-tab);

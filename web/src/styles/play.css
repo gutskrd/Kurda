@@ -145,31 +145,50 @@
   width: min(560px, calc(100vw - 32px));
   pointer-events: none;
 }
-.invite-banner {
-  /* each banner's blur is its own layer: the open "Not now" menu lifts its
-     banner above the next one, or the menu would open underneath it */
+/*
+ * Each invite is a ticket on its side (ui/Ticket.tsx): the game's mark on the
+ * stub, who asked and the answers on the body. Each sits in a slot of its
+ * own, so the ticket's shadow and the stack behind the last one are one
+ * layer: the open "Not now" menu lifts its slot above the next one, or the
+ * menu would open underneath it.
+ */
+.invite-slot {
   position: relative;
   z-index: 0;
+  isolation: isolate;
   pointer-events: auto;
+}
+.invite-slot.has-stack {
+  /* room for the edges of the tickets waiting behind */
+  margin-bottom: 12px;
+}
+.invite-banner {
+  --stub-w: 56px;
+  pointer-events: auto;
+  transform-origin: 50% 0;
+}
+.invite-banner-main {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px 12px;
-  padding: 10px 12px 10px 14px;
-  border: 1px solid var(--border-strong);
-  border-inline-start: 3px solid var(--gold);
-  border-radius: var(--r-md);
-  background: var(--panel-bg);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
-  box-shadow: var(--shadow-lg);
-  animation: invite-in 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-block: 10px;
+  padding-inline: 14px 10px;
 }
-@keyframes invite-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
+/* the invites waiting behind the last one shown: the edges of a small stack, each in its own game's colour */
+.invite-fan {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  transform-origin: 50% 0;
+}
+.invite-fan.is-1 {
+  transform: translateY(7px) scale(0.97);
+}
+.invite-fan.is-2 {
+  z-index: -2;
+  transform: translateY(13px) scale(0.94);
 }
 .invite-banner-text {
   flex: 1 1 200px;
@@ -217,15 +236,20 @@
   color: var(--ink);
   background: var(--surface);
 }
-.invite-banner:has(.invite-notnow-menu),
-.invite-banner:focus-within {
+.invite-slot:has(.invite-notnow-menu),
+.invite-slot:focus-within {
   z-index: 1;
 }
 /* a phone, or a game in play: one line — who, Join, and a tap for the rest */
 .invite-banner.is-chip {
+  --stub-w: 40px;
+  --notch: 6px;
+}
+.invite-banner.is-chip .invite-banner-main {
   flex-wrap: nowrap;
   gap: 8px;
-  padding: 4px 4px 4px 10px;
+  padding: 4px;
+  padding-inline-start: 10px;
 }
 .invite-banner.is-chip .friend-avatar {
   width: 28px;
@@ -1034,7 +1058,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .invite-banner {
+  .invite-banner,
+  .invite-fan {
     animation: none;
   }
 }

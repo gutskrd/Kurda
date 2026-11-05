@@ -2204,6 +2204,8 @@ export const ku: Catalogue = {
   'play.invited.cancelWho': 'Vexwendina {name} betal bike',
   'play.invited.again': 'Dîsa vexwîne',
   'play.invited.againWho': '{name} dîsa vexwîne',
+  'play.ticket.from': 'Vexwendina lîstikê ji {name}: {game}',
+  'play.ticket.joined': 'Tu tê de yî',
   'play.code.label': 'Koda beşdarbûnê',
   'play.code.copySpelled': 'Koda beşdarbûnê {code} kopî bike',
   'play.code.copy': 'Kodê kopî bike',

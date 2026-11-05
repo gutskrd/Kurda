@@ -2197,6 +2197,8 @@ export const tr: Catalogue = {
   'play.invited.cancelWho': '{name} davetini iptal et',
   'play.invited.again': 'Yeniden davet et',
   'play.invited.againWho': '{name} kişisini yeniden davet et',
+  'play.ticket.from': '{name} seni oyuna davet ediyor: {game}',
+  'play.ticket.joined': 'Oyundasın',
   'play.code.label': 'Katılım kodu',
   'play.code.copySpelled': '{code} katılım kodunu kopyala',
   'play.code.copy': 'Kodu kopyala',

@@ -2201,6 +2201,8 @@ export const fr: Catalogue = {
   'play.invited.cancelWho': 'Annuler l’invitation de {name}',
   'play.invited.again': 'Réinviter',
   'play.invited.againWho': 'Réinviter {name}',
+  'play.ticket.from': 'Invitation à jouer de {name} : {game}',
+  'play.ticket.joined': 'Tu en es',
   'play.code.label': 'Code pour rejoindre',
   'play.code.copySpelled': 'Copier le code pour rejoindre {code}',
   'play.code.copy': 'Copier le code',

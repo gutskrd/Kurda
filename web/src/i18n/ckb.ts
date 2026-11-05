@@ -2208,6 +2208,8 @@ export const ckb: Catalogue = {
   'play.invited.cancelWho': 'بانگهێشتی {name} هەڵبوەشێنەوە',
   'play.invited.again': 'دووبارە بانگهێشت بکە',
   'play.invited.againWho': 'دووبارە {name} بانگهێشت بکە',
+  'play.ticket.from': 'بانگهێشتی یاری لەلایەن {name}: {game}',
+  'play.ticket.joined': 'تۆ تێیدایت',
   'play.code.label': 'کۆدی بەشداربوون',
   'play.code.copySpelled': 'کۆدی بەشداربوونی {code} لەبەر بگرەوە',
   'play.code.copy': 'کۆدەکە لەبەر بگرەوە',

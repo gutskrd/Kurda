@@ -2301,6 +2301,8 @@ export const en = {
   'play.invited.cancelWho': 'Cancel the invite to {name}',
   'play.invited.again': 'Invite again',
   'play.invited.againWho': 'Invite {name} again',
+  'play.ticket.from': 'Game invite from {name}: {game}',
+  'play.ticket.joined': 'You’re in',
   'play.code.label': 'Join code',
   'play.code.copySpelled': 'Copy the join code {code}',
   'play.code.copy': 'Copy code',

@@ -2203,6 +2203,8 @@ export const de: Catalogue = {
   'play.invited.cancelWho': 'Einladung an {name} zurücknehmen',
   'play.invited.again': 'Erneut einladen',
   'play.invited.againWho': '{name} erneut einladen',
+  'play.ticket.from': 'Spieleinladung von {name}: {game}',
+  'play.ticket.joined': 'Du bist dabei',
   'play.code.label': 'Beitrittscode',
   'play.code.copySpelled': 'Beitrittscode {code} kopieren',
   'play.code.copy': 'Code kopieren',

@@ -2195,6 +2195,8 @@ export const ar: Catalogue = {
   'play.invited.cancelWho': 'ألغِ دعوة {name}',
   'play.invited.again': 'ادعُ مجددًا',
   'play.invited.againWho': 'ادعُ {name} مجددًا',
+  'play.ticket.from': 'دعوة للعب من {name}: {game}',
+  'play.ticket.joined': 'أنت مشارك',
   'play.code.label': 'رمز الانضمام',
   'play.code.copySpelled': 'انسخ رمز الانضمام {code}',
   'play.code.copy': 'انسخ الرمز',

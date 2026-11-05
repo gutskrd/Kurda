@@ -6,7 +6,9 @@ import { Avatar } from '../components/Avatar';
 import { CaretDownIcon, CloseIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { isFocusedPath } from '../layouts/focus';
+import { prefersReducedMotion } from '../lib/motion';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import { Ticket, TicketBody, TicketGlyph, TicketStub, ticketClass } from '../ui/Ticket';
 import { GAME_NAME_KEY, lobbyPath, playError, summaryParts } from './playApi';
 import { RatedBadge } from '../ranks/rated';
 import { usePlayInvites } from './PlayProvider';
@@ -28,6 +30,12 @@ const SPACE_VAR = '--invite-banner-h';
 /** between the banners and what comes under them */
 const SPACE_BELOW = 8;
 
+/** How long Join's tear and Not now's fold take (motion.css), before the lobby opens or the ticket goes. */
+export const TEAR_MS = 440;
+export const FOLD_MS = 300;
+
+const wait = (ms: number): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, ms));
+
 /**
  * The invites waiting for you (contract §B1): "Rojda invited you to Peyvok
  * Battle · Hard", with Join and "Not now ▾" (Later, or Not this game — the
@@ -46,6 +54,14 @@ const SPACE_BELOW = 8;
  * During a lesson or a review it is held altogether (`isFocusedPath`): the
  * invite waits, and its banner shows on whatever page the learner goes to
  * next.
+ *
+ * Each invite is a ticket (ui/Ticket.tsx) in its game's colour, the game's
+ * mark on its stub. It swings in as it arrives, hung from its top edge; Join
+ * tears the stub off along the perforation and then opens the lobby; Not now
+ * folds it away. Invites waiting behind the ones shown sit under the last as
+ * the edges of a small stack, each in its own game's colour, with the count.
+ * Under Reduce Motion it simply appears and goes, and Join opens the lobby at
+ * once.
  */
 export function InviteBanner(): React.JSX.Element | null {
   const t = useT();
@@ -67,16 +83,25 @@ export function InviteBanner(): React.JSX.Element | null {
   const more = Math.max(0, waiting.length - max);
   return (
     <div className="invite-banners" ref={reserve} role="region" aria-label={t('play.banner.region')}>
-      {waiting.slice(0, max).map((invite, i, shown) => (
-        <Banner
-          key={invite.id}
-          invite={invite}
-          compact={compact}
-          onDone={() => done(invite.id)}
-          // the rest are counted inside the last banner, not over the page
-          more={i === shown.length - 1 ? more : 0}
-        />
-      ))}
+      {waiting.slice(0, max).map((invite, i, shown) => {
+        const last = i === shown.length - 1;
+        // the next ones in line, as the edges of a stack under the last ticket
+        const behind = last ? waiting.slice(max, max + 2) : [];
+        return (
+          <div key={invite.id} className={`invite-slot${behind.length > 0 ? ' has-stack' : ''}`}>
+            {behind.map((b, n) => (
+              <Ticket key={b.id} tone={b.game} stub={null} className={`invite-fan is-${n + 1}`} aria-hidden="true" />
+            ))}
+            <Banner
+              invite={invite}
+              compact={compact}
+              onDone={() => done(invite.id)}
+              // the rest are counted inside the last banner, not over the page
+              more={last ? more : 0}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -151,6 +176,9 @@ function Banner({
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // how the ticket leaves: its stub torn off for Join, folded away for Not now
+  const [going, setGoing] = useState<'torn' | 'leaving' | null>(null);
+  const [still] = useState(prefersReducedMotion);
   const game = t(GAME_NAME_KEY[invite.game]);
   const parts = summaryParts(invite.game, invite.summary, t);
 
@@ -158,13 +186,19 @@ function Banner({
     setBusy(true);
     setError(null);
     const res = await client.post<{ game: typeof invite.game; lobbyId: string }>(`/play/invites/${encodeURIComponent(invite.id)}/accept`);
-    setBusy(false);
     if (!res.ok) {
+      setBusy(false);
       setError(playError(res.error, t));
       // the reason needs the whole banner to be read
       setOpened(true);
       return;
     }
+    // in: the stub tears off, and then the lobby opens
+    if (!still) {
+      setGoing('torn');
+      await wait(TEAR_MS);
+    }
+    setBusy(false);
     onDone();
     refresh();
     navigate(lobbyPath(res.data.game ?? invite.game, res.data.lobbyId ?? invite.lobbyId));
@@ -172,12 +206,21 @@ function Banner({
 
   async function decline(reason: DeclineReason): Promise<void> {
     setBusy(true);
+    if (!still) setGoing('leaving');
     // the banner goes either way: a "not now" that failed to send is still not now
-    await client.post(`/play/invites/${encodeURIComponent(invite.id)}/decline`, { reason });
+    await Promise.all([client.post(`/play/invites/${encodeURIComponent(invite.id)}/decline`, { reason }), still ? null : wait(FOLD_MS)]);
     setBusy(false);
     onDone();
     refresh();
   }
+
+  const ticket = (chip: boolean): string =>
+    ticketClass(invite.game, 'row', `invite-banner is-afloat${chip ? ' is-chip' : ''}${going ? ` is-${going}` : ''}`);
+  const stub = (
+    <TicketStub className="invite-banner-stub">
+      <TicketGlyph game={invite.game} size={compact && !full ? 18 : 24} />
+    </TicketStub>
+  );
 
   const title = invite.rematch
     ? t('play.banner.again', { name: invite.from.name, game })
@@ -191,74 +234,80 @@ function Banner({
   if (!full) {
     // the chip: who asked and to what, Join, and the rest one tap away
     return (
-      <div className="invite-banner is-chip" role="status">
-        <Avatar url={invite.from.avatarUrl} glyphSize={14} />
-        <p className="invite-banner-text">
-          <span className="invite-banner-title">{title}</span>
-        </p>
-        {typeof invite.summary.rated === 'boolean' && <RatedBadge rated={invite.summary.rated} size="sm" iconOnly className="invite-rated" />}
-        {more ? <span className="invite-banner-more">{t('play.banner.more', { count: more })}</span> : null}
-        <span className="invite-banner-actions">
-          {joinButton}
-          <button
-            type="button"
-            className="invite-banner-x invite-banner-toggle"
-            aria-expanded={false}
-            aria-label={t('play.banner.expand')}
-            title={t('play.banner.expand')}
-            onClick={() => setOpened(true)}
-          >
-            <CaretDownIcon size={16} />
-          </button>
-        </span>
+      <div className={ticket(true)} role="status">
+        {stub}
+        <TicketBody className="invite-banner-main">
+          <Avatar url={invite.from.avatarUrl} glyphSize={14} />
+          <p className="invite-banner-text">
+            <span className="invite-banner-title">{title}</span>
+          </p>
+          {typeof invite.summary.rated === 'boolean' && <RatedBadge rated={invite.summary.rated} size="sm" iconOnly className="invite-rated" />}
+          {more ? <span className="invite-banner-more">{t('play.banner.more', { count: more })}</span> : null}
+          <span className="invite-banner-actions">
+            {joinButton}
+            <button
+              type="button"
+              className="invite-banner-x invite-banner-toggle"
+              aria-expanded={false}
+              aria-label={t('play.banner.expand')}
+              title={t('play.banner.expand')}
+              onClick={() => setOpened(true)}
+            >
+              <CaretDownIcon size={16} />
+            </button>
+          </span>
+        </TicketBody>
       </div>
     );
   }
 
   return (
-    <div className="invite-banner" role="status">
-      <Avatar url={invite.from.avatarUrl} glyphSize={18} />
-      <p className="invite-banner-text">
-        <span className="invite-banner-title">{title}</span>
-        {/* Rated or Friendly, before anyone joins (Game Ranks) */}
-        {typeof invite.summary.rated === 'boolean' && <RatedBadge rated={invite.summary.rated} size="sm" className="invite-rated" />}
-        {parts.length > 0 && (
-          <span className="invite-banner-summary">
-            {parts.map((p, i) => (
-              <span key={i}>
-                {i > 0 && ' · '}
-                <span lang={p.lang} dir={p.dir}>
-                  {p.text}
+    <div className={ticket(false)} role="status">
+      {stub}
+      <TicketBody className="invite-banner-main">
+        <Avatar url={invite.from.avatarUrl} glyphSize={18} />
+        <p className="invite-banner-text">
+          <span className="invite-banner-title">{title}</span>
+          {/* Rated or Friendly, before anyone joins (Game Ranks) */}
+          {typeof invite.summary.rated === 'boolean' && <RatedBadge rated={invite.summary.rated} size="sm" className="invite-rated" />}
+          {parts.length > 0 && (
+            <span className="invite-banner-summary">
+              {parts.map((p, i) => (
+                <span key={i}>
+                  {i > 0 && ' · '}
+                  <span lang={p.lang} dir={p.dir}>
+                    {p.text}
+                  </span>
                 </span>
-              </span>
-            ))}
+              ))}
+            </span>
+          )}
+          {more ? <span className="invite-banner-more">{t('play.banner.more', { count: more })}</span> : null}
+          {error && <span className="invite-banner-error">{error}</span>}
+        </p>
+        {error ? (
+          <button type="button" className="invite-banner-x" onClick={onDone} aria-label={t('rail.dismiss')}>
+            <CloseIcon size={14} />
+          </button>
+        ) : (
+          <span className="invite-banner-actions">
+            {joinButton}
+            <NotNow disabled={busy} onPick={(reason) => void decline(reason)} />
+            {compact && (
+              <button
+                type="button"
+                className="invite-banner-x invite-banner-toggle is-open"
+                aria-expanded
+                aria-label={t('play.banner.collapse')}
+                title={t('play.banner.collapse')}
+                onClick={() => setOpened(false)}
+              >
+                <CaretDownIcon size={16} />
+              </button>
+            )}
           </span>
         )}
-        {more ? <span className="invite-banner-more">{t('play.banner.more', { count: more })}</span> : null}
-        {error && <span className="invite-banner-error">{error}</span>}
-      </p>
-      {error ? (
-        <button type="button" className="invite-banner-x" onClick={onDone} aria-label={t('rail.dismiss')}>
-          <CloseIcon size={14} />
-        </button>
-      ) : (
-        <span className="invite-banner-actions">
-          {joinButton}
-          <NotNow disabled={busy} onPick={(reason) => void decline(reason)} />
-          {compact && (
-            <button
-              type="button"
-              className="invite-banner-x invite-banner-toggle is-open"
-              aria-expanded
-              aria-label={t('play.banner.collapse')}
-              title={t('play.banner.collapse')}
-              onClick={() => setOpened(false)}
-            >
-              <CaretDownIcon size={16} />
-            </button>
-          )}
-        </span>
-      )}
+      </TicketBody>
     </div>
   );
 }

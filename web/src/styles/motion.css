@@ -7,10 +7,12 @@
  * to its new value; a list's first screenful rises in once as it arrives; a
  * sheet or a dialog springs up while the scrim fades; a heart pops with a tiny
  * burst; a speaking character rises into its tile; a join code's tiles drop
- * onto their ticket and the boxes a code is typed into answer each key; and
- * something earned is celebrated (ranks/Celebration.tsx). Nothing loops but a
- * loading shimmer, a typing caret and a ticket's slow glint (only while it is
- * in front), and nothing moves while it is being read.
+ * onto their ticket and the boxes a code is typed into answer each key; an
+ * invitation is handed over as a ticket — it swings in, tears, folds away,
+ * flies to a friend, gets stamped; and something earned is celebrated
+ * (ranks/Celebration.tsx). Nothing loops but a loading shimmer, a typing
+ * caret and a ticket's slow glint or light (only while it is in front), and
+ * nothing moves while it is being read.
  *
  * Only transform and opacity are animated. Under prefers-reduced-motion,
  * base.css takes every duration to nothing, so each of these lands at its end
@@ -675,6 +677,117 @@
     note-out var(--dur) var(--ease-out) 2500ms forwards;
 }
 
+/* ---- tickets ------------------------------------------------------------------ */
+/*
+ * How a ticket moves (ui/Ticket.tsx). An invite swings in as it arrives,
+ * hung from its top edge, and settles; Join tears the stub off along the
+ * perforation, and it drops away to the start side while the body gives a
+ * little; Not now folds the ticket over and away; a stamp lands with a small
+ * thump; a ticket waiting on somebody has a faint light cross it now and then,
+ * only while it is in front (`is-awake`). Under Reduce Motion each of these
+ * is simply its end, and the scripts that wait for a tear or a flight do not
+ * wait.
+ */
+@keyframes ticket-swing-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) rotate(calc(var(--t-out, -1) * 3deg));
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(2px) rotate(calc(var(--t-out, -1) * -1.2deg));
+  }
+  75% {
+    transform: translateY(0) rotate(calc(var(--t-out, -1) * 0.5deg));
+  }
+}
+@keyframes ticket-tear {
+  25% {
+    opacity: 1;
+    transform: translate(calc(var(--t-out) * 2px), 1px) rotate(calc(var(--t-out) * 4deg));
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(var(--t-out) * 18px), 26px) rotate(calc(var(--t-out) * 20deg));
+  }
+}
+@keyframes ticket-jolt {
+  30% {
+    transform: translateX(calc(var(--t-out) * -4px));
+  }
+}
+@keyframes ticket-fold {
+  to {
+    opacity: 0;
+    transform: perspective(600px) rotateX(78deg) translateY(-6px);
+  }
+}
+@keyframes stamp-thump {
+  from {
+    opacity: 0;
+    transform: rotate(var(--stamp-tilt)) scale(1.9);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(var(--stamp-tilt)) scale(0.9);
+  }
+}
+@keyframes ticket-shine {
+  0%,
+  72% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  74% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(100%);
+  }
+}
+.invite-banner {
+  animation: ticket-swing-in 600ms var(--ease-out) both;
+}
+.ticket.is-torn > .ticket-stub {
+  transform-origin: 100% 100%;
+  animation: ticket-tear 440ms cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+[dir='rtl'] .ticket.is-torn > .ticket-stub {
+  transform-origin: 0 100%;
+}
+.ticket.is-torn > .ticket-body {
+  animation: ticket-jolt 260ms var(--ease-out);
+}
+.ticket.is-leaving {
+  transform-origin: 50% 0;
+  animation: ticket-fold 300ms var(--ease-out) forwards;
+  pointer-events: none;
+}
+.ticket-stamp.is-fresh {
+  animation: stamp-thump 460ms var(--ease-spring) both;
+}
+.ticket.is-awake .ticket-shine {
+  animation: ticket-shine 4.8s ease-in-out infinite;
+}
+/* unseen until its moment (a burst waits for its ticket to land), then thrown out once */
+@keyframes ticket-burst {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  12% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+.ticket-burst.is-on {
+  animation: ticket-burst 420ms var(--ease-out) var(--burst-delay, 0ms) both;
+}
+
 /* ---- typing a code in ----------------------------------------------------------- */
 /*
  * Typing a code (play/JoinCode.tsx): each character pops into its box (a
@@ -847,5 +960,16 @@
   }
   .code-ticket-code:active .code-tile {
     transform: none;
+  }
+}
+/* tickets, still: nothing swings, tears, folds, shakes, flies or bursts — the state and the stamp are the answer */
+@media (prefers-reduced-motion: reduce) {
+  .ticket-burst,
+  .ticket-shine {
+    display: none;
+  }
+  .ticket.is-torn > .ticket-stub,
+  .ticket.is-leaving {
+    animation: none;
   }
 }
