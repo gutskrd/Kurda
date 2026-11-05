@@ -1,11 +1,13 @@
 /**
- * The Village (named "kingdom" throughout the code), which grows from real learning: its buildings
- * and thresholds (buildings.ts), the view the API answers with (view.ts), and
- * the village's drawings and life, which live with the rest of the art
- * (art/kingdom.ts).
+ * The Village (named "kingdom" throughout the code), which grows from real
+ * learning: its buildings and thresholds (buildings.ts), the view the API
+ * answers with (view.ts), what the valley round them gains as the total level
+ * rises (growth.ts), and the village's drawings and life, which live with the
+ * rest of the art (art/kingdom.ts).
  */
 export * from './buildings.js';
 export * from './view.js';
+export * from './growth.js';
 export {
   BUILDING_SCALE,
   KINGDOM_FRAME,
