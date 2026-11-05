@@ -11,6 +11,7 @@ import {
   type WhoAmITemplate,
 } from './game.js';
 import { WHO_AM_I_RACE_AFTER_FIRST_SECONDS, whoAmIRaceRules as R, type WhoAmIRaceState } from './rules.js';
+import { FOREHEAD, deerSilhouetteSvg } from './silhouette.js';
 
 const T0 = 1_700_000_000_000;
 
@@ -174,5 +175,22 @@ describe('the race', () => {
     expect(R.finished(s)).toBe(false);
     s = R.drop(s, 2, T0 + 2_000);
     expect(R.finished(s)).toBe(true);
+  });
+});
+
+describe('the stage', () => {
+  it('draws Hevalo as a flat one-colour silhouette, with no gradient, clip or second colour', () => {
+    const svg = deerSilhouetteSvg('#3d5a4a', 200, 'Hidden word');
+    expect(svg).toMatch(/^<svg /);
+    expect(svg).toContain('Hidden word');
+    expect(svg).not.toMatch(/url\(#|<defs>|clip-path|Gradient/);
+    const colours = new Set([...svg.matchAll(/ (?:fill|stroke)="([^"]+)"/g)].map((m) => m[1]).filter((c) => c !== 'none'));
+    expect([...colours]).toEqual(['#3d5a4a']);
+  });
+
+  it('refuses a colour that is not one, and puts the card inside the picture', () => {
+    expect(deerSilhouetteSvg('red" onload="x', 100)).not.toContain('onload');
+    expect(FOREHEAD.x).toBeGreaterThan(0);
+    expect(FOREHEAD.y + 0.1).toBeLessThan(1);
   });
 });
