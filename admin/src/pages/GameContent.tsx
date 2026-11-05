@@ -61,6 +61,7 @@ import {
   type Column,
   type Tone,
 } from '../ui';
+import { BluffCardFields, IdentityFields, QuestionTemplateFields, WordPicker } from './GameWordCards';
 
 /**
  * Game content: the learning games' own rows — sentences, passages,
@@ -69,6 +70,7 @@ import {
  *
  *   #/game-content              every row, filtered by game, kind, variety, level and status, and the importers
  *   #/game-content/readiness    what each game can be played with, per variety and level
+ *   #/game-content/words        Bluff cards and Who Am I? identities made by picking approved words
  *   #/game-content/new?kind=…   a new draft of a kind
  *   #/game-content/<id>         one row: its content, its review, its status
  *
@@ -84,6 +86,7 @@ export function GameContent(): React.JSX.Element {
   const route = useRoute();
   const sub = route.rest[0] ?? '';
   if (sub === 'readiness') return <GameContentHome tab="readiness" />;
+  if (sub === 'words') return <GameContentHome tab="words" />;
   if (!sub) return <GameContentHome tab="rows" />;
   const kind = route.query.get('kind') ?? 'sentence';
   return <GameContentEditor key={sub} id={sub === 'new' ? null : sub} newKind={isKind(kind) ? kind : 'sentence'} />;
@@ -92,7 +95,7 @@ export function GameContent(): React.JSX.Element {
 const STATUS_TONE: Record<AdminGameContent['status'], Tone> = { draft: 'warn', in_review: 'info', published: 'ok', archived: 'neutral' };
 const REVIEW_TONE: Record<AdminGameContent['reviewStatus'], Tone> = { unreviewed: 'warn', approved: 'ok' };
 
-function GameContentHome({ tab }: { tab: 'rows' | 'readiness' }): React.JSX.Element {
+function GameContentHome({ tab }: { tab: 'rows' | 'readiness' | 'words' }): React.JSX.Element {
   const toast = useToast();
   const [importing, setImporting] = useState(false);
   const [newKind, setNewKind] = useState<GameContentKind>('sentence');
@@ -132,14 +135,20 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' }): React.JSX.Elem
       <Tabs
         label="View"
         value={tab}
-        onChange={(next) => go(next === 'readiness' ? 'game-content/readiness' : 'game-content')}
+        onChange={(next) => go(next === 'readiness' ? 'game-content/readiness' : next === 'words' ? 'game-content/words' : 'game-content')}
         items={[
           { key: 'rows', label: 'Content' },
+          { key: 'words', label: 'Cards from words' },
           { key: 'readiness', label: 'Readiness' },
         ]}
       />
       {tab === 'readiness' ? (
         <Readiness />
+      ) : tab === 'words' ? (
+        <>
+          <WordPicker kind="bluff_card" />
+          <WordPicker kind="identity" />
+        </>
       ) : (
         <>
           <Section
@@ -711,7 +720,16 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
       </Section>
 
       <Section title="Content">
-        {kind === 'sentence' ? (
+        {!row && (kind === 'bluff_card' || kind === 'identity') ? (
+          // a card of a picked word: its Kurdish is copied from approved content, never typed in a blank
+          <WordPicker kind={kind} dialect={dialect} />
+        ) : kind === 'bluff_card' ? (
+          <BluffCardFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
+        ) : kind === 'identity' ? (
+          <IdentityFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
+        ) : kind === 'question_template' ? (
+          <QuestionTemplateFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
+        ) : kind === 'sentence' ? (
           <SentenceFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
         ) : kind === 'passage' ? (
           <PassageFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
@@ -726,7 +744,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
         ) : (
           <JsonFields key={`${kind}:${row?.lockVersion ?? 'new'}`} payload={payload} onChange={setPayload} readOnly={!editable} />
         )}
-        {!checked.ok ? (
+        {!row && (kind === 'bluff_card' || kind === 'identity') ? null : !checked.ok ? (
           <Banner tone="warn" title={`${checked.issues.length} to fix before it can be saved`}>
             <ul className="gc-issues">
               {checked.issues.map((i, n) => (
@@ -766,7 +784,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
               Archive
             </Button>
           )}
-          {editable && (
+          {editable && !(!row && (kind === 'bluff_card' || kind === 'identity')) && (
             <Button variant="primary" onClick={() => void save()} disabled={busy || !checked.ok || (!!row && !pending)}>
               {row ? 'Save' : 'Save draft'}
             </Button>

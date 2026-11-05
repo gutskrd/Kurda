@@ -461,7 +461,7 @@ export class MultiplayerService {
       );
     }
     // what the game is dealt from approved content goes to the rules alone: never into the lobby's stored settings
-    const settings = m.deal ? await m.deal(t.client, t.lobby.settings, { dialect: t.lobby.dialect, seed: t.lobby.seed }) : t.lobby.settings;
+    const settings = m.deal ? await m.deal(t.client, t.lobby.settings, { dialect: t.lobby.dialect, seed: t.lobby.seed, seats }) : t.lobby.settings;
     const state = m.rules.init(settings, seats, { now: t.now.getTime(), seed: t.lobby.seed });
     await this.bump(t, `status = 'active', started_at = $3, rated_state = $4`, [t.now, decision], { card: true });
     await this.saveState(t, state, { card: true });
@@ -614,12 +614,13 @@ export class MultiplayerService {
   }
 
   /** What may be offered in a dialect now (Learn's list asks this), cached for a few minutes. */
-  async availability(game: MultiGame, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean }> {
+  async availability(game: MultiGame, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean } & Record<string, unknown>> {
     const m = moduleOf(game);
     if (!m.availability) return { group: true, solo: !!m.solo };
     const read = () => m.availability!(this.pool, dialect);
     const answer = this.deps.cache ? await this.deps.cache.withCache('mp-availability', `${game}:${dialect}`, 300, read) : await read();
-    return { group: answer.group, solo: answer.solo && !!m.solo };
+    // what more the game says about it (the languages its cards are in) goes with the answer
+    return { ...answer, group: answer.group, solo: answer.solo && !!m.solo };
   }
 
   // -------------------------------------------------------------------------

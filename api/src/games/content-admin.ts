@@ -183,6 +183,29 @@ function levelOk(level: number): boolean {
   return (GAME_LEVELS as readonly number[]).includes(level);
 }
 
+/**
+ * A card made of a picked word (word-cards.ts) keeps the Kurdish it was
+ * copied with: its word, a Kurdish definition and its example may be taken
+ * out, never typed over. What is not Kurdish — meanings in the interface
+ * languages, a fact, the level — stays the editor's to change.
+ */
+function retypedKurdish(row: Pick<Row, 'kind' | 'origin' | 'payload'>, next: GameContentPayload): GameContentIssue[] {
+  if (!row.origin || (row.kind !== 'bluff_card' && row.kind !== 'identity')) return [];
+  const before = row.payload as { word?: string; definitions?: Record<string, string>; example?: { ku?: string } };
+  const after = next as { word?: string; definitions?: Record<string, string>; example?: { ku?: string } };
+  const issues: GameContentIssue[] = [];
+  if (after.word !== before.word) issues.push({ path: 'word', message: 'this word was picked from approved content: make a card of another word instead of retyping it' });
+  for (const code of ['ku', 'ckb']) {
+    const was = before.definitions?.[code];
+    const now = after.definitions?.[code];
+    if (now !== undefined && now !== was) issues.push({ path: `definitions.${code}`, message: 'a Kurdish definition is copied from approved content, never typed' });
+  }
+  if (after.example?.ku !== undefined && after.example.ku !== before.example?.ku) {
+    issues.push({ path: 'example.ku', message: 'the example is copied from approved content, never typed' });
+  }
+  return issues;
+}
+
 /** What one import added and what it found already there. */
 export interface ImportResult {
   created: number;
@@ -301,6 +324,8 @@ export class GameContentAdminService {
       if (!levelOk(input.level)) throw invalid([{ path: 'level', message: 'a level is 1 to 5' }]);
       const checked = checkGameContent(row.kind, row.dialect, input.payload);
       if (!checked.ok) throw invalid(checked.issues);
+      const retyped = retypedKurdish(row, checked.payload);
+      if (retyped.length > 0) throw invalid(retyped);
       const changed = row.level !== input.level || canonical(row.payload) !== canonical(checked.payload);
       const reset = changed && row.review_status === 'approved';
       await client.query(

@@ -1,0 +1,70 @@
+/*
+ * The small pictures on Kurdish Bluff's and Who Am I?'s cards in Learn's
+ * games (games/learnGames.tsx), drawn without any Kurdish of their own: note
+ * cards fanned on a table with a token on one, and a card held up with a
+ * question mark over two stamped answers. Each wears its game's tone.
+ */
+.lg-mini--bluff {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  padding-block: 6px;
+}
+.lg-mini-note {
+  position: relative;
+  width: 64px;
+  height: 78px;
+  margin-inline: -6px;
+  border-radius: 8px;
+  border: 2px solid var(--border-strong);
+  background-color: var(--bg);
+  background-image: repeating-linear-gradient(to bottom, transparent 0 13px, var(--border-strong) 13px 14px);
+  background-position: 0 10px;
+}
+.lg-mini-note.is-on {
+  z-index: 1;
+  border-color: var(--u-fill, var(--border-strong));
+  box-shadow: 0 3px 0 var(--u-lip, var(--border-strong));
+}
+.lg-mini-token {
+  position: absolute;
+  inset-inline-end: 6px;
+  bottom: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--u-fill, var(--border-strong));
+  box-shadow: 0 2px 0 var(--u-lip, var(--border-strong));
+}
+
+.lg-mini--whoami {
+  gap: 12px;
+}
+.lg-mini-forehead {
+  display: grid;
+  place-items: center;
+  width: 92px;
+  height: 52px;
+  border-radius: 9px;
+  border: 2px solid var(--u-fill, var(--border-strong));
+  background: var(--bg);
+  box-shadow: 0 3px 0 var(--u-lip, var(--border-strong));
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--u-text, var(--ink));
+  transform: rotate(-3deg);
+}
+.lg-mini--whoami .lg-mini-line {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.lg-mini-stamp {
+  width: 46px;
+  height: 22px;
+  border-radius: 6px;
+  border: 3px solid var(--border-strong);
+  transform: rotate(-8deg);
+}
+.lg-mini-stamp.is-yes {
+  border-color: var(--u-fill, var(--border-strong));
+}

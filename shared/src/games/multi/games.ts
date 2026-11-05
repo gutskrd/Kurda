@@ -9,7 +9,7 @@
  * database's own lists), not a change to every map.
  */
 
-export const MULTI_GAMES = ['last-letter', 'impostor', 'dont-say'] as const;
+export const MULTI_GAMES = ['last-letter', 'impostor', 'dont-say', 'bluff', 'who-am-i'] as const;
 export type MultiGame = (typeof MULTI_GAMES)[number];
 
 export function isMultiGame(v: unknown): v is MultiGame {
@@ -21,6 +21,8 @@ export const MULTI_GAME_SEGMENT: Readonly<Record<MultiGame, string>> = {
   'last-letter': 'last-letter',
   impostor: 'impostor',
   'dont-say': 'dont-say',
+  bluff: 'bluff',
+  'who-am-i': 'who-am-i',
 };
 
 /** A player who lets this many turns in a row run out is away: their next turns are passed over at once. */

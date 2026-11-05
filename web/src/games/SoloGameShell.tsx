@@ -40,7 +40,7 @@ import { dialectName } from '../learn/map';
 
 /** What a game's board is handed for the item in front of the player. */
 export interface SoloRound<Item, H, C, B = unknown> {
-  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Kurdish Detective's hints) */
+  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Kurdish Detective's hints, Who Am I?'s questions) */
   sessionId: string;
   /** what the whole round shares, as the round was sent (Kurdish Detective's case board); null for a game without */
   board: B | null;

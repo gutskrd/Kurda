@@ -12,6 +12,7 @@
  *   POST /games/solo/sessions/:id/finish               pay it once and say how it went
  *   POST /games/solo/sessions/:id/hints                { evidence? }: spend a hint (Kurdish Detective), answered with the board
  *   GET  /games/solo/sessions/:id/clips/:clip          a round's recording by its opaque handle (no token: the address is the permission)
+ *   POST /games/who-am-i/sessions/:id/ask              { index, question }: Who Am I?'s answer from the identity's facts
  *
  * The games played alone: Build a Kurdish Sentence, The Memory Thief, Hear
  * It, Find It, What Would You Say? and Kurdish Detective, each an engine
@@ -32,6 +33,8 @@
  *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories' | 'vocabulary' | 'conversations', dialect, limit? }: drafts from approved content
  *   GET    /admin/game-content/vocabulary?dialect&q&limit   published vocabulary, for a card editor to pick its Kurdish from
  *   GET    /admin/game-content/lines?dialect=&q=         published lines to copy into a case or a scene
+ *   GET    /admin/game-content/words?dialect&q&from      approved words to make a card of (word-cards.ts)
+ *   POST   /admin/game-content/from-word                { kind, dialect, ref, level, … }: a Bluff card or an identity as a draft, its Kurdish copied
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -66,6 +69,8 @@ import { registerGameClipRoute } from './clips.js';
 import { GameAvailabilityService } from './availability.js';
 import { SoloService } from './solo.js';
 import { GameContentAdminService } from './content-admin.js';
+import { WhoAmIGame, registerWhoAmIRoutes } from './who-am-i.js';
+import { registerGameWordRoutes } from './word-cards.js';
 
 const absentIfEmpty = (v: unknown): unknown => (v === '' ? undefined : v);
 const dialectQuery = z.object({ dialect: z.enum(GAME_DIALECTS) });
@@ -148,13 +153,18 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
   solo.register(hearing);
   solo.register(new WhatWouldYouSayGame(sources));
   solo.register(new DetectiveGame(sources));
+  const whoAmI = new WhoAmIGame(sources);
+  solo.register(whoAmI);
   const content = new GameContentAdminService(app.db, sources, availability, cache);
-  return { sources, sentences, memory, hearing, availability, solo, content };
+  return { sources, sentences, memory, hearing, availability, solo, content, whoAmI };
 }
 
 export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDeps): ReturnType<typeof learnGameServices> {
   const services = learnGameServices(app, deps);
-  const { sentences, availability, solo, content } = services;
+  const { sentences, availability, solo, content, whoAmI } = services;
+  // Who Am I?'s questions, asked about an identity of a round; and the admin's cards made from approved words
+  registerWhoAmIRoutes(app, whoAmI);
+  registerGameWordRoutes(app, services.sources, content);
 
   // housekeeping: every 6 hours, and once 5 minutes after boot, like the other sweeps
   const sweep = () =>

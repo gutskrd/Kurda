@@ -48,6 +48,8 @@ const ACTION_KEY: Record<GameInviteType, MessageKey> = {
   'last-letter': 'games.lastLetter.join',
   impostor: 'games.impostor.join',
   'dont-say': 'games.dontSay.join',
+  bluff: 'games.bluff.join',
+  'who-am-i': 'games.whoAmI.join',
 };
 
 /**

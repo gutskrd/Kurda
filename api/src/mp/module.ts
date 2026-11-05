@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import type { z } from 'zod';
-import type { GameAccess, GameRules, InviteSummary, LetterDialect, MultiGame } from '@kurda/shared';
+import type { GameAccess, GameRules, InviteSummary, LetterDialect, MultiGame, RulesSeat } from '@kurda/shared';
 
 type Executor = Pick<pg.Pool, 'query'>;
 
@@ -74,9 +74,11 @@ export interface GameModule<State = unknown, Move = unknown, Settings = unknown,
    * What the game is dealt from approved content when it starts — a card, a
    * deck — handed to the rules' `init` inside the settings and kept in the
    * state only, never in the lobby's stored settings or any view. Inside the
-   * start's transaction; a game that cannot be dealt refuses to start.
+   * start's transaction; a game that cannot be dealt refuses to start. The
+   * seats starting are in `ctx`, for a game that deals each its own (the Who
+   * Am I? race).
    */
-  deal?(db: Executor, settings: Settings, ctx: { dialect: LetterDialect; seed: string }): Promise<Settings>;
+  deal?(db: Executor, settings: Settings, ctx: { dialect: LetterDialect; seed: string; seats: readonly RulesSeat[] }): Promise<Settings>;
   /** what the invite banner and the chat card say about a lobby, besides Rated */
   summary(dialect: LetterDialect, settings: Settings): InviteSummary;
   /** the settings anyone in the lobby may see */
@@ -90,8 +92,12 @@ export interface GameModule<State = unknown, Move = unknown, Settings = unknown,
    * game with fewer than two people pays none), inside the finishing transaction.
    */
   payAgainstHevalo?(db: pg.PoolClient, game: SoloGame, state: State): Promise<number>;
-  /** whether the game can be offered in this dialect now, with friends and against Hevalo */
-  availability?(db: Executor, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean }>;
+  /**
+   * Whether the game can be offered in this dialect now, with friends and
+   * against Hevalo, and anything more the apps need to offer it (Kurdish
+   * Bluff: the languages its cards have real meanings in).
+   */
+  availability?(db: Executor, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean } & Record<string, unknown>>;
 }
 
 /** Paying XP from inside a finishing transaction (XpService.award with the transaction's client). */

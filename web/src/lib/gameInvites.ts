@@ -34,6 +34,8 @@ export const INVITE_NAME_KEY: Record<GameInviteType, MessageKey> = {
   'last-letter': 'games.lastLetter.name',
   impostor: 'games.impostor.name',
   'dont-say': 'games.dontSay.name',
+  bluff: 'games.bluff.name',
+  'who-am-i': 'games.whoAmI.name',
 };
 
 export const INVITE_BLURB_KEY: Record<GameInviteType, MessageKey> = {
@@ -43,4 +45,6 @@ export const INVITE_BLURB_KEY: Record<GameInviteType, MessageKey> = {
   'last-letter': 'games.invite.blurb.lastLetter',
   impostor: 'games.invite.blurb.impostor',
   'dont-say': 'games.invite.blurb.dontSay',
+  bluff: 'games.bluff.blurb',
+  'who-am-i': 'games.whoAmI.blurb',
 };

@@ -52,6 +52,8 @@ const JOIN: Record<PlayGame, (lobbyId: string) => { path: string; body?: unknown
   'last-letter': (id) => ({ path: `/mp/last-letter/${encodeURIComponent(id)}/join` }),
   impostor: (id) => ({ path: `/mp/impostor/${encodeURIComponent(id)}/join` }),
   'dont-say': (id) => ({ path: `/mp/dont-say/${encodeURIComponent(id)}/join` }),
+  bluff: (id) => ({ path: `/mp/bluff/${encodeURIComponent(id)}/join` }),
+  'who-am-i': (id) => ({ path: `/mp/who-am-i/${encodeURIComponent(id)}/join` }),
 };
 
 /**

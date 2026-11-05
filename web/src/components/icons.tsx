@@ -139,6 +139,7 @@ import { EnvelopeSimple } from '@phosphor-icons/react/dist/icons/EnvelopeSimple'
 import { Scales } from '@phosphor-icons/react/dist/icons/Scales';
 import { Copyright } from '@phosphor-icons/react/dist/icons/Copyright';
 import { Question } from '@phosphor-icons/react/dist/icons/Question';
+import { Quotes } from '@phosphor-icons/react/dist/icons/Quotes';
 import { Key } from '@phosphor-icons/react/dist/icons/Key';
 import { Ticket } from '@phosphor-icons/react/dist/icons/Ticket';
 import { UserCircle } from '@phosphor-icons/react/dist/icons/UserCircle';
@@ -382,6 +383,8 @@ export const MailIcon = named(EnvelopeSimple, 22);
 export const RulesIcon = named(Scales, 22);
 export const CopyrightIcon = named(Copyright, 22);
 export const HelpIcon = named(Question, 22);
+/** Kurdish Bluff: a meaning in quotes, real or made up. */
+export const QuotesIcon = named(Quotes, 22);
 export const KeyIcon = named(Key, 22);
 export const ProfileIcon = named(UserCircle, 22);
 /** The account's standing: the same shield as a tier's, drawn in outline at a row's size. */

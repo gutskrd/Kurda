@@ -77,7 +77,12 @@ export interface GameRules<State, Move, Settings, View, Outcome = unknown> {
    * the lobby's player count allows can start.
    */
   startProblem?(seats: readonly RulesSeat[]): string | null;
-  /** When the present wait ends by itself (a turn's time running out), epoch ms; null when it never does. */
+  /**
+   * When the present wait ends by itself (a turn's time running out), epoch
+   * ms; null when it never does. A game waiting on nobody may still have one
+   * (a reveal shown for a few seconds, a race against one clock): when it
+   * passes, `timeout` is called with no seats.
+   */
   dueAt(state: State): number | null;
   /** These seats ran out of time, or are away and are passed over: what follows. */
   timeout(state: State, seats: readonly number[], now: number): State;

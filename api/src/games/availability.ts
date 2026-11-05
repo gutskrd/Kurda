@@ -13,7 +13,9 @@ import type pg from 'pg';
 import {
   GAME_LEVELS,
   LEARN_GAMES,
+  WHO_AM_I_MIN_TEMPLATES,
   availableDifficulties,
+  bluffOffer,
   courseSpelling,
   type GameAvailability,
   type GameContentKind,
@@ -24,6 +26,7 @@ import {
   type LearnGameId,
 } from '@kurda/shared';
 import type { Cache } from '../cache/cache.js';
+import { bluffCounts } from '../mp/games/bluff.js';
 import type { BuildSentenceGame } from './build-sentence.js';
 import type { TrustedSources } from './sources.js';
 
@@ -47,11 +50,15 @@ const MAIN_KIND: Partial<Record<LearnGameId, GameContentKind>> = {
   kingdom: 'building_name',
 };
 
-/** Content without levels: these games count one pool at every level. */
-const UNLEVELLED: ReadonlySet<LearnGameId> = new Set(['hear-it', 'last-letter', 'kingdom']);
+/**
+ * Content without levels: these games count one pool at every level. Kurdish
+ * Bluff's words are played at any level in one game, so its cards are one
+ * pool too.
+ */
+const UNLEVELLED: ReadonlySet<LearnGameId> = new Set(['hear-it', 'last-letter', 'kingdom', 'bluff']);
 
 /** Question templates Who Am I? needs before an identity is any use. */
-const WHO_AM_I_TEMPLATES = 12;
+const WHO_AM_I_TEMPLATES = WHO_AM_I_MIN_TEMPLATES;
 
 /**
  * A game's own count, when what it can be played with is more than rows or
@@ -79,7 +86,7 @@ export class GameAvailabilityService {
   }
 
   private async count(dialect: GameDialect): Promise<GamesAvailability> {
-    const [rows, sentences, passages, recordings, dictionary] = await Promise.all([
+    const [rows, sentences, passages, recordings, dictionary, bluff] = await Promise.all([
       this.db.query<{ kind: string; level: number; n: number }>(
         `SELECT kind, level, count(*)::int AS n FROM game_content
           WHERE dialect = $1 AND status = 'published' AND review_status = 'approved'
@@ -90,6 +97,7 @@ export class GameAvailabilityService {
       this.sources.storyPassages(dialect),
       this.sources.recordings(dialect),
       this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM dict_entries WHERE in_games AND dialect = $1`, [courseSpelling(dialect)]),
+      bluffCounts(this.db, dialect),
     ]);
     const own = new Map(
       await Promise.all(Object.entries(this.counters).map(async ([id, counter]) => [id, await counter!.count(dialect)] as const)),
@@ -116,6 +124,9 @@ export class GameAvailabilityService {
           return flat(recordings.length);
         case 'last-letter':
           return flat(dictionary.rows[0]?.n ?? 0);
+        case 'bluff':
+          // offered where a game can be played: enough cards, and a language enough of them have a real meaning in
+          return bluffOffer(bluff.total, bluff.byLanguage).group ? flat(bluff.total) : zero();
         case 'who-am-i':
           return total('question_template') >= WHO_AM_I_TEMPLATES ? (byKind.get('identity') ?? zero()) : zero();
         case 'kingdom':

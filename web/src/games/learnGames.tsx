@@ -14,6 +14,7 @@ import './games.css';
 // the learning games' own cards are drawn by their own stylesheets
 import './memory-thief.css';
 import './hear-it.css';
+import './party-minis.css';
 
 /**
  * The learning games on the website: which of the shared registry's games
@@ -96,6 +97,32 @@ function MemoryMini(): React.JSX.Element {
   );
 }
 
+/** Note cards fanned on a table with a token on one: Kurdish Bluff, without words. */
+function BluffMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--bluff" aria-hidden>
+      <span className="lg-mini-note" style={{ transform: 'rotate(-7deg)' }} />
+      <span className="lg-mini-note is-on" style={{ transform: 'rotate(2deg)' }}>
+        <span className="lg-mini-token" />
+      </span>
+      <span className="lg-mini-note" style={{ transform: 'rotate(8deg)' }} />
+    </div>
+  );
+}
+
+/** A card with a question mark held up, and two answers stamped below: Who Am I?, without words. */
+function WhoAmIMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--whoami" aria-hidden>
+      <span className="lg-mini-forehead">?</span>
+      <span className="lg-mini-line">
+        <span className="lg-mini-stamp is-yes" />
+        <span className="lg-mini-stamp" />
+      </span>
+    </div>
+  );
+}
+
 /** A small radio: a grille, a play key and the bars of a voice: Hear It, Find It. */
 function HearMini(): React.JSX.Element {
   return (
@@ -156,6 +183,8 @@ export const WEB_LEARN_GAMES: Partial<Record<LearnGameId, WebGame>> = {
   // the party games are listed where /games/availability finds enough approved cards for the learner's variety
   impostor: { href: '/app/games/impostor', nameKey: 'games.impostor.name', bodyKey: 'games.invite.blurb.impostor', modes: ['online'], Visual: TableMini },
   'dont-say': { href: '/app/games/dont-say', nameKey: 'games.dontSay.name', bodyKey: 'games.invite.blurb.dontSay', modes: ['online'], Visual: CardMini },
+  bluff: { href: '/app/games/bluff', nameKey: 'games.bluff.name', bodyKey: 'games.bluff.blurb', modes: ['online'], Visual: BluffMini },
+  'who-am-i': { href: '/app/games/who-am-i', nameKey: 'games.whoAmI.name', bodyKey: 'games.whoAmI.blurb', modes: ['solo', 'online'], Visual: WhoAmIMini },
 };
 
 const PLAYABLE = Object.keys(WEB_LEARN_GAMES) as LearnGameId[];

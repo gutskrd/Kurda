@@ -7,7 +7,8 @@ import { AWAY_AFTER_MISSED_TURNS, AWAY_TURN_GRACE_MS, LOBBY_IDLE_MINUTES, type G
  * database's clock read after the game's lock, nobody is waited for who has
  * gone, and a player who is not there does not hold everyone else up.
  *
- * - A turn whose time ran out is a timeout for every seat it waited on.
+ * - A turn whose time ran out is a timeout for every seat it waited on; a
+ *   clock that ran out while nobody was waited on is a timeout for no seat.
  * - Hevalo's seat moves when its thinking time is up.
  * - A player who let two turns in a row run out, or who has not been heard
  *   from (presence), is away: their turn is passed over a moment after it
@@ -73,6 +74,8 @@ export function dueStep(rules: AnyRules, state: unknown, seats: readonly EngineS
   if (bot !== undefined && due !== null && now >= due) return { kind: 'bot', seat: bot };
   const people = waiting.filter((seat) => !bySeat.get(seat)?.bot);
   if (due !== null && now >= due && people.length > 0) return { kind: 'timeout', seats: people };
+  // a clock with nobody waited on (a reveal on show, a race): its time is up for no seat in particular
+  if (due !== null && now >= due && waiting.length === 0) return { kind: 'timeout', seats: [] };
   // someone waited on who is not there: passed over after a moment, not after the whole turn
   const absent = people.filter((seat) => {
     const s = bySeat.get(seat);

@@ -39,6 +39,8 @@ const SHARE_KEY: Record<PlayGame, MessageKey> = {
   'last-letter': 'play.code.shareLastLetter',
   impostor: 'play.code.shareImpostor',
   'dont-say': 'play.code.shareDontSay',
+  bluff: 'games.bluff.share',
+  'who-am-i': 'games.whoAmI.share',
 };
 
 /** How long Copy wears its tick, and how long a note stays up. */

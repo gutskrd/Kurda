@@ -70,13 +70,13 @@ describe('Kurdish Impostor on the server', () => {
     expect(await impostorModule.offers!(db, choices)).toBe(true);
     expect(await impostorModule.offers!(db, { ...choices, settings: { ...choices.settings, difficulty: 'advanced' } })).toBe(false);
     expect(await impostorModule.availability!(db, 'kmr')).toEqual({ group: true, solo: false });
-    const dealt = (await impostorModule.deal!(db, choices.settings, { dialect: 'kmr', seed: 's' })) as ImpostorSettings;
+    const dealt = (await impostorModule.deal!(db, choices.settings, { dialect: 'kmr', seed: 's', seats: [] })) as ImpostorSettings;
     expect(rows.map((r) => (r.payload as WordCardContent).word)).toContain(dealt.deal!.card.word);
     // the rules start from the deal; the lobby's own settings never held it
     expect(choices.settings).not.toHaveProperty('deal');
     const state = impostorRules.init(dealt, [1, 2, 3].map((seat) => ({ seat, team: null, bot: null })), { now: 0, seed: 's' });
     expect(state.card.word).toBe(dealt.deal!.card.word);
-    await expect(impostorModule.deal!(contentDb(rows.slice(0, 5)), choices.settings, { dialect: 'kmr', seed: 's' })).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE' });
+    await expect(impostorModule.deal!(contentDb(rows.slice(0, 5)), choices.settings, { dialect: 'kmr', seed: 's', seats: [] })).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE' });
   });
 });
 
@@ -94,12 +94,12 @@ describe('Don’t Say the Word! on the server', () => {
     const taboo = (target: string) => ({ target, meanings: { en: target }, forbidden: ['yek', 'du', 'sê'], forms: [] });
     const rows = Array.from({ length: 20 }, (_, i) => ({ kind: 'taboo_card', level: 3, payload: taboo(`peyv${'abcdefghijklmnopqrst'[i]}`) }));
     const choices = dontSayModule.lobbySchema.parse({ dialect: 'kmr', difficulty: 'intermediate' });
-    const dealt = await dontSayModule.deal!(contentDb(rows), choices.settings, { dialect: 'kmr', seed: 's' });
+    const dealt = await dontSayModule.deal!(contentDb(rows), choices.settings, { dialect: 'kmr', seed: 's', seats: [] });
     expect(dealt.deck).toHaveLength(20);
     expect(new Set(dealt.deck!.map((c) => c.target)).size).toBe(20);
     const state = dontSayRules.init(dealt, [1, 2, 3].map((seat) => ({ seat, team: 1, bot: null })), { now: 0, seed: 's' });
     expect(state.deck).toHaveLength(20);
-    await expect(dontSayModule.deal!(contentDb(rows.slice(0, 19)), choices.settings, { dialect: 'kmr', seed: 's' })).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE' });
+    await expect(dontSayModule.deal!(contentDb(rows.slice(0, 19)), choices.settings, { dialect: 'kmr', seed: 's', seats: [] })).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE' });
   });
 });
 

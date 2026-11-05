@@ -119,6 +119,10 @@ export type RootStackParamList = {
   Impostor: { id?: string } | undefined;
   /** Don't Say the Word!: an id for a room; nothing for the start. */
   DontSay: { id?: string } | undefined;
+  /** Kurdish Bluff: an id for a room (a code, an invite, a card); nothing for the start (bluff/BluffScreen) */
+  Bluff: { id?: string } | undefined;
+  /** Who Am I?: an id for a race's room; nothing for the start, alone or a race (whoami/WhoAmIScreen) */
+  WhoAmI: { id?: string } | undefined;
   /** An id when an invite link opened it (`/app/games/stories?id=…`): it hands over to that game. */
   Stories: { id?: string } | undefined;
   StoryReader: { slug: string };
