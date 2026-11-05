@@ -454,7 +454,9 @@ export class MultiplayerService {
         t.lobby.rated,
       );
     }
-    const state = m.rules.init(t.lobby.settings, seats, { now: t.now.getTime(), seed: t.lobby.seed });
+    // what only the server can look up (the cards dealt) is added for the rules, never to the lobby's settings
+    const settings = m.deal ? await m.deal(t.client, { dialect: t.lobby.dialect, settings: t.lobby.settings, seed: t.lobby.seed }, seats) : t.lobby.settings;
+    const state = m.rules.init(settings, seats, { now: t.now.getTime(), seed: t.lobby.seed });
     await this.bump(t, `status = 'active', started_at = $3, rated_state = $4`, [t.now, decision], { card: true });
     await this.saveState(t, state, { card: true });
   }
@@ -477,10 +479,11 @@ export class MultiplayerService {
     if (!parsed.success) throw new AppError('BAD_MOVE', 400, 'not a move this game takes');
     // a game that takes free text is not played anywhere the chat pipeline is not
     if (m.freeText && !this.deps.freeText) throw new AppError('UNAVAILABLE', 503, 'this game cannot take text here');
-    // free text passes the chat pipeline before the game's lock is taken, and before anyone sees it
+    // free text passes the chat pipeline before the game's lock is taken, and before anyone sees it; a move without text (a vote) passes none
+    const typed = m.freeText ? m.freeText.textOf(parsed.data) : null;
     const text =
-      m.freeText && this.deps.freeText
-        ? await gateFreeText({ db: this.pool, ...this.deps.freeText }, userId, m.freeText.textOf(parsed.data), {
+      m.freeText && this.deps.freeText && typed !== null
+        ? await gateFreeText({ db: this.pool, ...this.deps.freeText }, userId, typed, {
             maxLength: m.freeText.maxLength,
             contentRef: `${m.game}:${lobbyId}`,
           })
@@ -497,7 +500,8 @@ export class MultiplayerService {
         return;
       }
       const rules = m.rules;
-      if (!rules.waitingFor(t.lobby.state).includes(me.seat)) {
+      const may = rules.mayMove ? rules.mayMove(t.lobby.state, me.seat) : rules.waitingFor(t.lobby.state).includes(me.seat);
+      if (!may) {
         refusal = new AppError('NOT_YOUR_TURN', 409, 'it is not your turn');
         return;
       }
@@ -604,12 +608,13 @@ export class MultiplayerService {
   }
 
   /** What may be offered in a dialect now (Learn's list asks this), cached for a few minutes. */
-  async availability(game: MultiGame, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean }> {
+  async availability(game: MultiGame, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean } & Record<string, unknown>> {
     const m = moduleOf(game);
     if (!m.availability) return { group: true, solo: !!m.solo };
     const read = () => m.availability!(this.pool, dialect);
     const answer = this.deps.cache ? await this.deps.cache.withCache('mp-availability', `${game}:${dialect}`, 300, read) : await read();
-    return { group: answer.group, solo: answer.solo && !!m.solo };
+    // what more the game says about it (the languages its cards are in) goes with the answer
+    return { ...answer, group: answer.group, solo: answer.solo && !!m.solo };
   }
 
   // -------------------------------------------------------------------------

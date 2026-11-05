@@ -1,6 +1,8 @@
 import { MULTI_GAMES, type MultiGame } from '@kurda/shared';
 import type { AnyGameModule } from './module.js';
 import { lastLetterModule } from './games/last-letter.js';
+import { bluffModule } from './games/bluff.js';
+import { whoAmIRaceModule } from './games/who-am-i.js';
 
 /**
  * Every multiplayer learning game the engine runs, by its name. A new game is
@@ -11,6 +13,8 @@ import { lastLetterModule } from './games/last-letter.js';
  */
 export const GAME_MODULES: Readonly<Record<MultiGame, AnyGameModule>> = {
   'last-letter': lastLetterModule,
+  bluff: bluffModule,
+  'who-am-i': whoAmIRaceModule,
 };
 
 export function moduleOf(game: MultiGame): AnyGameModule {

@@ -10,6 +10,7 @@
  *   GET  /games/solo/sessions/:id                      a round as it stands
  *   POST /games/solo/sessions/:id/answers              { index, answer, attempt? }: one try, checked here
  *   POST /games/solo/sessions/:id/finish               pay it once and say how it went
+ *   POST /games/who-am-i/sessions/:id/ask              { index, question }: Who Am I?'s answer from the identity's facts
  *
  * For the people who edit lessons and stories (content.edit), and who publish
  * them (content.publish), behind the admin 2FA gate like every staff route:
@@ -23,6 +24,8 @@
  *   POST   /admin/game-content/:id/review               { approved, note?, lockVersion }   (content.publish)
  *   DELETE /admin/game-content/:id?lockVersion=
  *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories', dialect, limit? }: drafts from approved content
+ *   GET    /admin/game-content/words?dialect&q&from      approved words to make a card of (word-cards.ts)
+ *   POST   /admin/game-content/from-word                { kind, dialect, ref, level, … }: a Bluff card or an identity as a draft, its Kurdish copied
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -50,6 +53,8 @@ import { BuildSentenceGame } from './build-sentence.js';
 import { GameAvailabilityService } from './availability.js';
 import { SoloService } from './solo.js';
 import { GameContentAdminService } from './content-admin.js';
+import { WhoAmIGame, registerWhoAmIRoutes } from './who-am-i.js';
+import { registerGameWordRoutes } from './word-cards.js';
 
 const absentIfEmpty = (v: unknown): unknown => (v === '' ? undefined : v);
 const dialectQuery = z.object({ dialect: z.enum(GAME_DIALECTS) });
@@ -108,13 +113,18 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
     log: app.log,
   });
   solo.register(sentences);
+  const whoAmI = new WhoAmIGame(sources);
+  solo.register(whoAmI);
   const content = new GameContentAdminService(app.db, sources, availability, cache);
-  return { sources, sentences, availability, solo, content };
+  return { sources, sentences, availability, solo, content, whoAmI };
 }
 
 export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDeps): ReturnType<typeof learnGameServices> {
   const services = learnGameServices(app, deps);
-  const { sentences, availability, solo, content } = services;
+  const { sentences, availability, solo, content, whoAmI } = services;
+  // Who Am I?'s questions, asked about an identity of a round; and the admin's cards made from approved words
+  registerWhoAmIRoutes(app, whoAmI);
+  registerGameWordRoutes(app, services.sources, content);
 
   // housekeeping: every 6 hours, and once 5 minutes after boot, like the other sweeps
   const sweep = () =>

@@ -8,6 +8,8 @@ import type { MultiGame } from '@kurda/shared';
  */
 export const MULTI_GAME_TITLES: Readonly<Record<MultiGame, string>> = {
   'last-letter': 'The Last Letter',
+  bluff: 'Kurdish Bluff',
+  'who-am-i': 'Who Am I?',
 };
 
 /** SQL naming the game in `column` (a `game_lobbies.game`) by its title. Literals only: never built from input. */

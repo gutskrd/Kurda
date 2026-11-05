@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import type { z } from 'zod';
-import type { GameAccess, GameRules, InviteSummary, LetterDialect, MultiGame } from '@kurda/shared';
+import type { GameAccess, GameRules, InviteSummary, LetterDialect, MultiGame, RulesSeat } from '@kurda/shared';
 
 type Executor = Pick<pg.Pool, 'query'>;
 
@@ -56,9 +56,10 @@ export interface GameModule<State = unknown, Move = unknown, Settings = unknown,
   /**
    * The game takes free text from players (a clue, a guess, a definition):
    * the text of a move goes through the chat pipeline's gate before anything
-   * else sees it (free-text.ts), capped at `maxLength`.
+   * else sees it (free-text.ts), capped at `maxLength`. A move that carries no
+   * text (a vote) says null, and passes no gate.
    */
-  readonly freeText?: { maxLength: number; textOf: (raw: Raw) => string };
+  readonly freeText?: { maxLength: number; textOf: (raw: Raw) => string | null };
   /** played against Hevalo by one person: what the computer seat is */
   readonly solo?: { bot: 'hevalo' };
   /** the XP source placement is paid from (registered in GAME_XP_SOURCES) */
@@ -67,6 +68,13 @@ export interface GameModule<State = unknown, Move = unknown, Settings = unknown,
   summary(dialect: LetterDialect, settings: Settings): InviteSummary;
   /** the settings anyone in the lobby may see */
   publicSettings(settings: Settings): unknown;
+  /**
+   * What the rules start with that only the server can look up — the cards
+   * dealt from approved content — added to the lobby's settings for `init`,
+   * inside the transaction that starts the game. The lobby's own settings are
+   * not changed: what was dealt lives in the game's state alone.
+   */
+  deal?(db: Executor, lobby: { dialect: LetterDialect; settings: Settings; seed: string }, seats: readonly RulesSeat[]): Promise<Settings>;
   /** a move as the rules take it: the lookups the rules cannot do, inside the game's transaction */
   prepare(db: Executor, state: State, seat: number, move: RawMove<Raw>): Promise<PreparedMove<Move>>;
   /** Hevalo's move for a computer seat whose turn has come, or null for "could not think of one" */
@@ -76,8 +84,12 @@ export interface GameModule<State = unknown, Move = unknown, Settings = unknown,
    * game with fewer than two people pays none), inside the finishing transaction.
    */
   payAgainstHevalo?(db: pg.PoolClient, game: SoloGame, state: State): Promise<number>;
-  /** whether the game can be offered in this dialect now, with friends and against Hevalo */
-  availability?(db: Executor, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean }>;
+  /**
+   * Whether the game can be offered in this dialect now, with friends and
+   * against Hevalo, and anything more the apps need to offer it (Kurdish
+   * Bluff: the languages its cards have real meanings in).
+   */
+  availability?(db: Executor, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean } & Record<string, unknown>>;
 }
 
 /** Paying XP from inside a finishing transaction (XpService.award with the transaction's client). */

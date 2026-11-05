@@ -221,14 +221,16 @@ export interface WhoAmIHint {
   notThis: string;
 }
 
-/** Once an identity is done: who it was, and what it scored. */
+/**
+ * Once an identity is done: who it was. What it scored is the apps' to work
+ * out (`whoAmIPoints`) from the questions asked and the guesses made, which
+ * the round already carries.
+ */
 export interface WhoAmICorrection {
   id: string;
   word: string;
   meanings: Meanings;
   category: string;
-  questions: number;
-  points: number;
 }
 
 /** `POST /games/who-am-i/sessions/:id/ask`: the answer, and every question asked about this identity so far. */
