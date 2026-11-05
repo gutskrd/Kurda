@@ -100,7 +100,7 @@ export function GiftSheet({
   return (
     <BottomSheet visible onClose={onClose} title={t('shop.giftTo', { name: item.name })}>
       <Text style={[styles.note, { color: colors.textSecondary }]}>
-        {t('shop.giftPaidByYou', { price: item.price, currency: item.currency })}
+        {t('shop.giftPaidByYou', { price: item.price, currency: item.currency })} {t('shop.giftFinal')}
       </Text>
 
       {friends === null ? (
