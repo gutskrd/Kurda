@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ApiError } from './types';
-import { CODE_COPY, describeError, isMaintenance, isOffline, isRetryable, lockedFor } from './errors';
+import { CODE_COPY, describeError, describeErrorOr, isMaintenance, isOffline, isRetryable, lockedFor } from './errors';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 
@@ -76,6 +76,21 @@ describe('describeError', () => {
   it('says an unactivated account is an instruction, not a refusal', () => {
     const e = err({ kind: 'client', status: 403, code: 'ACCOUNT_NOT_ACTIVATED' });
     expect(describeError(e, t)).toBe(TRANSLATIONS.en['error.notActivated']);
+  });
+});
+
+describe('describeErrorOr', () => {
+  it('says the screen’s own sentence where the server’s words would have passed through', () => {
+    // a refusal with no code the phone can read: "request failed (409)" is no sentence for a reader
+    const uncoded = err({ kind: 'client', status: 409, message: 'request failed (409)' });
+    expect(describeErrorOr(uncoded, t, 'error.code.oauthFailed')).toBe(TRANSLATIONS.en['error.code.oauthFailed']);
+    expect(describeErrorOr(uncoded, translator('ku'), 'error.code.oauthFailed')).toBe(TRANSLATIONS.ku['error.code.oauthFailed']);
+  });
+
+  it('keeps what describeError already says in the reader’s words', () => {
+    expect(describeErrorOr(err({ kind: 'network' }), t, 'error.code.oauthFailed')).toBe(TRANSLATIONS.en['error.offline']);
+    const taken = err({ kind: 'client', status: 409, code: 'USERNAME_TAKEN', message: 'username already in use' });
+    expect(describeErrorOr(taken, t, 'username.updateFailed')).toBe(TRANSLATIONS.en['error.code.usernameTaken']);
   });
 });
 

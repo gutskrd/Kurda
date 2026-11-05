@@ -1,14 +1,18 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import type { ApiError } from '../api/types';
+import { describeError, describeErrorOr, isMaintenance } from '../api/errors';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { formatCountdown, remainingUntil } from '../i18n/format';
+import { useDirection } from '../reports/direction';
+import { Icon } from '../theme/Icon';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { EmptyState } from '../theme/EmptyState';
@@ -43,6 +47,16 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
     return () => clearInterval(id);
   }, []);
 
+  /*
+   * An event whose quests did not load is not an event that is not running.
+   * Dropping it said "No events" while one was on; now the ones that loaded
+   * show with a line about the rest and a way to ask again, and when none of
+   * them loaded the screen is one that did not load, with its retry.
+   */
+  const [missing, setMissing] = useState<ApiError | null>(null);
+  // a claim that did not go through, said above the quests rather than not at all
+  const [claimError, setClaimError] = useState<ApiError | null>(null);
+
   const load = useCallback(async () => {
     const active = await client.get<{ events: ActiveEvent[] }>('/events/active');
     if (!active.ok) {
@@ -52,7 +66,16 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
     const views = await Promise.all(
       active.data.events.map((e) => client.get<EventQuestsView>(`/events/${e.key}/quests`)),
     );
-    setEvents(views.filter((v) => v.ok).map((v) => (v as { data: EventQuestsView }).data));
+    const loaded = views.flatMap((v) => (v.ok ? [v.data] : []));
+    const failed = views.find((v) => !v.ok);
+    const failure = failed && !failed.ok ? failed.error : null;
+    if (failure && loaded.length === 0) {
+      setEvents(null);
+      setError(failure);
+      return;
+    }
+    setEvents(loaded);
+    setMissing(failure);
     setError(null);
   }, [client]);
 
@@ -65,8 +88,15 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
   const claim = useCallback(
     async (eventKey: string, quest: QuestView) => {
       setClaiming(quest.id);
-      await client.post(`/events/${eventKey}/quests/${quest.id}/claim`);
+      setClaimError(null);
+      const res = await client.post(`/events/${eventKey}/quests/${quest.id}/claim`);
       setClaiming(null);
+      // Hevalo offline for a while is said by the screen over the app
+      if (!res.ok && !isMaintenance(res.error)) {
+        haptic('error');
+        setClaimError(res.error);
+      }
+      // either way the quests are read again: a refusal usually means the server sees them differently
       await load();
     },
     [client, load],
@@ -80,6 +110,10 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
         <AsyncBoundary loading={events === null} error={events === null ? error : null} isEmpty={events?.length === 0} onRetry={() => void load()} empty={<EmptyState title={t('events.none')} />}>
           {() => events == null ? null : (
           <ScrollView contentContainerStyle={styles.content}>
+            {claimError ? (
+              <Notice text={describeErrorOr(claimError, t, 'events.claimFailed')} onDismiss={() => setClaimError(null)} />
+            ) : null}
+            {missing ? <Notice title={t('events.someMissing')} text={describeError(missing, t)} onRetry={() => void load()} /> : null}
             {events.map((event) => {
               const countdown = formatCountdown(remainingUntil(event.endsAt, now), t);
               return (
@@ -104,6 +138,34 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
         </AsyncBoundary>
       </View>
     </GradientBackground>
+  );
+}
+
+/**
+ * What went wrong with the list, said above it in the reader's words, with
+ * the way on: put away (a claim that did not go through), or asked again
+ * (events that did not load). Drawn as the app's other failure notices are.
+ */
+function Notice({ title, text, onDismiss, onRetry }: { title?: string; text: string; onDismiss?: () => void; onRetry?: () => void }) {
+  const { t } = useI18n();
+  const { colors } = useTheme();
+  const dir = useDirection();
+  return (
+    <View style={[styles.notice, { backgroundColor: colors.dangerFill }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
+      <View style={[styles.noticeRow, { flexDirection: dir.row }]}>
+        <Icon name="alert" size={18} color={colors.danger} />
+        <View style={styles.noticeWords}>
+          {title ? <Text style={[styles.noticeTitle, dir.text, { color: colors.danger }]}>{title}</Text> : null}
+          <Text style={[styles.noticeText, dir.text, { color: colors.danger }]}>{text}</Text>
+        </View>
+        {onDismiss ? (
+          <Pressable onPress={onDismiss} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('common.close')}>
+            <Icon name="close" size={16} color={colors.textSecondary} />
+          </Pressable>
+        ) : null}
+      </View>
+      {onRetry ? <ClayButton label={t('common.retry')} onPress={onRetry} /> : null}
+    </View>
   );
 }
 
@@ -152,6 +214,11 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { gap: spacing.lg, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingBottom: spacing.xl },
+  notice: { borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, gap: spacing.sm },
+  noticeRow: { alignItems: 'flex-start', gap: spacing.sm },
+  noticeWords: { flex: 1, gap: 2 },
+  noticeTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
+  noticeText: { fontSize: typography.sizes.sm, lineHeight: 20 },
   eventBlock: { gap: spacing.sm },
   eventHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   eventName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textTransform: 'uppercase' },

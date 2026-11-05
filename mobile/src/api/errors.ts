@@ -199,6 +199,19 @@ export function describeError(error: ApiError, t: Translate): string {
 }
 
 /**
+ * The sentence `describeError` gives, unless that would be the server's own
+ * words passed through — English, and sometimes not words at all ("request
+ * failed (409)" from a route whose refusals have no code) — when the caller's
+ * own sentence for this failure is said instead. For the screens where the
+ * reader must never see anything but their own language: signing in, a
+ * username, a reward.
+ */
+export function describeErrorOr(error: ApiError, t: Translate, fallback: TranslationKey): string {
+  const said = describeError(error, t);
+  return said === error.message ? t(fallback) : said;
+}
+
+/**
  * Was this call refused because Hevalo is offline for a while? The screen over
  * the app says so already, so a screen does not answer it with an alert of its
  * own on top.
