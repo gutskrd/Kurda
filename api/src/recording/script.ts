@@ -279,6 +279,20 @@ function quotedIn(prompt: string): string[] {
   return [...prompt.matchAll(/[“"]([^”"]+)[”"]/g)].map((m) => m[1]!.trim()).filter(Boolean);
 }
 
+/** A text without the quotation marks around it. */
+function unquoted(text: string): string {
+  return text.replace(/^[“"‘']+|[”"’']+$/g, '').trim();
+}
+
+/**
+ * A multiple-choice question that asks what the Kurdish says, so its right
+ * option is the Kurdish in English: "What does he say?", "What is she
+ * asking?". Asked anything else (why, who, what you would answer, what he
+ * wants to know) its options are not a translation, and nothing is read off them.
+ */
+const ASKS_WHAT_IT_SAYS =
+  /\bwhat (?:does|did) (?:he|she|it|they|[A-ZÇÊÎŞÛ][a-zçêîşû]+) (?:say|mean|ask|tell (?:you|him|her|them))\?|\bwhat (?:is|was|are) (?:he|she|it|they) (?:saying|asking|telling (?:you|him|her|them)|shouting)\?/i;
+
 /**
  * What an exercise's Kurdish means, read off the exercise itself. `sure` is
  * a pairing the exercise states outright (a card and its pair, a sentence and
@@ -309,10 +323,10 @@ export function exerciseMeaning(type: string, payload: unknown, text: string): {
     }
     case 'writing': {
       const m = prompt ? /\bWrite:\s*(.+)$/.exec(prompt) : null;
-      return { sure: null, guess: other(m ? m[1]!.trim() : prompt ? (quotedIn(prompt).at(-1) ?? null) : null) };
+      return { sure: null, guess: other(m ? unquoted(m[1]!) : prompt ? (quotedIn(prompt).at(-1) ?? null) : null) };
     }
     case 'multiple_choice': {
-      if (!say || lessonAudioKey(say) !== key) return { sure: null, guess: null };
+      if (!say || lessonAudioKey(say) !== key || !prompt || !ASKS_WHAT_IT_SAYS.test(prompt)) return { sure: null, guess: null };
       const options = Array.isArray(p.options) ? p.options : [];
       const right = typeof p.correctIndex === 'number' ? str(options[p.correctIndex]) : null;
       return { sure: null, guess: other(right) };
@@ -426,13 +440,22 @@ class Builder {
       const voice = d.planned ?? d.fallback;
       const speaker = d.partSpeaker !== undefined ? d.partSpeaker : isSpeakerId(voice) ? voice : null;
       const guess = d.guesses.find((g) => !kurdish.has(lessonAudioKey(g))) ?? null;
-      const { planned: _planned, fallback: _fallback, partSpeaker: _part, sure, guesses: _guesses, ...line } = d;
       return {
-        ...line,
+        id: d.id,
         seq,
+        store: d.store,
+        key: d.key,
+        text: d.text,
+        dialect: d.dialect,
         voice,
         speaker,
-        meaning: sure ?? stated.get(lessonAudioKey(d.text)) ?? guess,
+        meaning: d.sure ?? stated.get(lessonAudioKey(d.text)) ?? guess,
+        hint: d.hint,
+        cue: d.cue,
+        conversation: d.conversation,
+        before: d.before,
+        section: d.section,
+        places: d.places,
         live: d.places.some((p) => p.status === 'published'),
       };
     });
