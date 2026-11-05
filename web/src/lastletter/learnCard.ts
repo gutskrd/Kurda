@@ -19,7 +19,7 @@ export const LAST_LETTER_CARD = {
     { labelKey: 'games.lastLetter.againstHevalo' as MessageKey, blurbKey: 'games.lastLetter.againstHevaloBlurb' as MessageKey, how: 'solo' as const },
   ],
   href: LAST_LETTER_LEARN_ENTRY.path,
-  Icon: ChainIcon,
+  Icon: ChainIcon as (p: { size?: number; className?: string }) => React.JSX.Element,
 } as const;
 
 export { offeredDialects, useLastLetterAvailability } from './availability';
