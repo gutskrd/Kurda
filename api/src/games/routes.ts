@@ -10,6 +10,11 @@
  *   GET  /games/solo/sessions/:id                      a round as it stands
  *   POST /games/solo/sessions/:id/answers              { index, answer, attempt? }: one try, checked here
  *   POST /games/solo/sessions/:id/finish               pay it once and say how it went
+ *   GET  /games/solo/sessions/:id/clips/:clip          a round's recording by its opaque handle (no token: the address is the permission)
+ *
+ * The games played alone: Build a Kurdish Sentence, The Memory Thief and
+ * Hear It, Find It, each an engine registered with the solo round, and each
+ * counting its own availability where rows alone do not say it.
  *
  * For the people who edit lessons and stories (content.edit), and who publish
  * them (content.publish), behind the admin 2FA gate like every staff route:
@@ -45,8 +50,13 @@ import { XpService } from '../xp/service.js';
 import { StreakService } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
+import type { AppConfig } from '../config/env.js';
+import { RecordingFiles, type RecordingFileOptions } from '../speakers/recording-file.js';
 import { TrustedSources } from './sources.js';
 import { BuildSentenceGame } from './build-sentence.js';
+import { MemoryThiefGame } from './memory-thief.js';
+import { HearItGame } from './hear-it.js';
+import { registerGameClipRoute } from './clips.js';
 import { GameAvailabilityService } from './availability.js';
 import { SoloService } from './solo.js';
 import { GameContentAdminService } from './content-admin.js';
@@ -92,6 +102,10 @@ function context(req: FastifyRequest): { adminId: string; requestId: string } {
 export interface LearnGameDeps {
   xp: XpService;
   milestones?: MilestoneRecorder;
+  /** where a dictionary pronunciation may be fetched from, for a round's clips */
+  config?: Pick<AppConfig, 'CDN_BASE_URL'>;
+  /** test seams for reading a recording from another site */
+  recordingFiles?: RecordingFileOptions;
 }
 
 /** Everything the learning games need, made once, for the routes and for the tests. */
@@ -99,7 +113,12 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
   const cache = app.hasDecorator('cache') ? app.cache : null;
   const sources = new TrustedSources(app.db, cache);
   const sentences = new BuildSentenceGame(sources);
-  const availability = new GameAvailabilityService(app.db, sources, sentences, cache);
+  const memory = new MemoryThiefGame(sources);
+  const hearing = new HearItGame(sources);
+  const availability = new GameAvailabilityService(app.db, sources, sentences, cache, {
+    'memory-thief': { count: async (dialect) => ({ levels: await memory.levels(dialect) }) },
+    'hear-it': { count: (dialect) => hearing.availability(dialect) },
+  });
   const solo = new SoloService(app.db, {
     xp: deps.xp,
     streaks: new StreakService(app.db),
@@ -108,8 +127,10 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
     log: app.log,
   });
   solo.register(sentences);
+  solo.register(memory);
+  solo.register(hearing);
   const content = new GameContentAdminService(app.db, sources, availability, cache);
-  return { sources, sentences, availability, solo, content };
+  return { sources, sentences, memory, hearing, availability, solo, content };
 }
 
 export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDeps): ReturnType<typeof learnGameServices> {
@@ -140,6 +161,9 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
     const [ladder, open] = await Promise.all([sentences.ladder(app.db, req.user!.id, dialect), solo.open(req.user!.id, 'build-sentence', dialect)]);
     return { ...ladder, open };
   });
+
+  // a round's recordings, by the opaque handle each item carries (games/clips.ts): no token, the address is the permission
+  registerGameClipRoute(app, new RecordingFiles(app.db, app.storage, deps.config ?? {}, deps.recordingFiles));
 
   app.get('/games/solo/open', { schema: { querystring: openQuery }, preHandler: requireAuth }, async (req) => {
     const q = req.query as z.infer<typeof openQuery>;

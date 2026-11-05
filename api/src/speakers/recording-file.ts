@@ -69,7 +69,7 @@ const tooLarge = (): AppError =>
   unreachable(`the recording is larger than ${AUDIO_FILE_MAX_BYTES / (1024 * 1024)} MB`, 'too_large');
 
 /** A file being read: its bytes, and what it was stored as or claims to be. */
-interface Source {
+export interface Source {
   body: AsyncIterable<Uint8Array>;
   /** the type it was stored as; otherwise its first bytes decide */
   storedType?: string;
@@ -142,6 +142,33 @@ export class RecordingFiles {
     if (!res.body) throw unreachable('the recording’s host sent nothing', 'empty');
     return { body: res.body as unknown as AsyncIterable<Uint8Array> };
   }
+}
+
+/**
+ * Read all of `source` into memory, within AUDIO_FILE_MAX_BYTES, and say what
+ * it is: the type it was stored as, or what its first bytes show, and never
+ * anything that is not audio. For a reply that answers byte ranges (a phone's
+ * player asks for the start of a file before the rest), which a stream sent
+ * as it arrives cannot.
+ */
+export async function readAudio(source: Source, signal: AbortSignal): Promise<{ bytes: Buffer; type: string }> {
+  const parts: Uint8Array[] = [];
+  let read = 0;
+  try {
+    for await (const chunk of source.body) {
+      read += chunk.length;
+      if (read > AUDIO_FILE_MAX_BYTES) throw tooLarge();
+      parts.push(chunk);
+    }
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    throw unreachable('the recording stopped arriving part way', signal.aborted ? 'timeout' : 'network');
+  }
+  const bytes = Buffer.concat(parts);
+  const stored = source.storedType && AUDIO_TYPES.has(source.storedType) ? source.storedType : null;
+  const type = stored ?? sniffPlayableAudioType(bytes.subarray(0, SNIFF_BYTES));
+  if (!type) throw unreachable('the file there is not a recording', 'not_audio');
+  return { bytes, type };
 }
 
 /**

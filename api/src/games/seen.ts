@@ -15,15 +15,17 @@ export interface SeenItem {
   lastSeenAt: Date;
   /** answered right within the repeat window */
   recent: boolean;
+  /** rounds it was answered in, right or not (Hear It, Find It turns to another voice by it) */
+  attempts?: number;
 }
 
 export async function seenFor(db: Pick<pg.Pool, 'query'>, userId: string, game: string): Promise<Map<string, SeenItem>> {
-  const res = await db.query<{ item_key: string; last_seen_at: Date; recent: boolean }>(
-    `SELECT item_key, last_seen_at, COALESCE(last_correct_at > now() - make_interval(days => $3), false) AS recent
+  const res = await db.query<{ item_key: string; last_seen_at: Date; recent: boolean; attempts: number }>(
+    `SELECT item_key, last_seen_at, COALESCE(last_correct_at > now() - make_interval(days => $3), false) AS recent, attempts
        FROM game_seen WHERE user_id = $1 AND game = $2`,
     [userId, game, GAME_REPEAT_XP_DAYS],
   );
-  return new Map(res.rows.map((r) => [r.item_key, { lastSeenAt: r.last_seen_at, recent: r.recent }]));
+  return new Map(res.rows.map((r) => [r.item_key, { lastSeenAt: r.last_seen_at, recent: r.recent, attempts: r.attempts }]));
 }
 
 /**

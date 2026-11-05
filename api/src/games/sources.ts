@@ -61,6 +61,11 @@ const CACHE_DOMAIN = 'games-pool';
 /** The pools' generation: bumping it retires every cached pool at once. */
 const GENERATION_ID = 'generation';
 
+/** An alphabet recording of a letter's sound rather than of a word (`kmr:sound:c`, `ckb:sound:…`). */
+export function isAlphabetSoundKey(key: string): boolean {
+  return /^[a-z]+:sound:/.test(key);
+}
+
 /** A stable key for an item, from what it is: the same Kurdish is the same item, wherever it was taught. */
 export function itemKey(prefix: string, dialect: GameDialect, ...parts: string[]): string {
   const hash = createHash('sha256').update(parts.join('\u0000')).digest('hex').slice(0, 24);
@@ -100,6 +105,15 @@ export interface ConversationPair {
   conversation: string;
   line: { ku: string; en: string | null; speaker: SpeakerId | null };
   reply: { ku: string; en: string | null; speaker: SpeakerId | null };
+  origin: string;
+}
+
+/** One published conversation whole: its lines in order, who says each, and what each means where the lesson says. */
+export interface ConversationText {
+  key: string;
+  conversation: string;
+  title: string | null;
+  lines: Array<{ ku: string; en: string | null; speaker: SpeakerId | null }>;
   origin: string;
 }
 
@@ -232,6 +246,26 @@ export function pairsOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payload'>, diale
   return out;
 }
 
+/**
+ * One conversation exercise whole (pure, for the tests): only when its title
+ * and every line are in the variety's own script, so a passage made of it
+ * never mixes the two.
+ */
+export function conversationOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payload'>, dialect: GameDialect): ConversationText | null {
+  if (row.type !== 'conversation') return null;
+  const p = conversationPayloadSchema.safeParse(row.payload);
+  if (!p.success) return null;
+  const { speakers, lines, id, title } = p.data;
+  if (!lines.every((l) => fitsDialect(l.text, dialect))) return null;
+  return {
+    key: itemKey('conv', dialect, ...lines.map((l) => gradingKey(l.text))),
+    conversation: id,
+    title: title && fitsDialect(title, dialect) ? title : null,
+    lines: lines.map((l) => ({ ku: l.text, en: l.en ?? null, speaker: speakers[l.speaker]?.character ?? null })),
+    origin: `conversation:${row.id}`,
+  };
+}
+
 /** The word pairs one exercise teaches (pure, for the tests). */
 export function wordsOfExercise(row: Pick<ExerciseRow, 'type' | 'payload'>, dialect: GameDialect): VocabularyWord[] {
   const pairs = itemWords(row.type as never, row.payload, dialect === 'ckb' ? 'sorani' : 'kurmanji').pairs;
@@ -305,6 +339,18 @@ export class TrustedSources {
       const byKey = new Map<string, ConversationPair>();
       for (const row of await this.publishedExercises(dialect, ['conversation'])) {
         for (const pair of pairsOf(row, dialect)) if (!byKey.has(pair.key)) byKey.set(pair.key, pair);
+      }
+      return [...byKey.values()];
+    });
+  }
+
+  /** Published lessons' conversations whole, one per set of lines (the same conversation in two lessons is one). */
+  conversationTexts(dialect: GameDialect): Promise<ConversationText[]> {
+    return this.pooled('conversation-texts', dialect, async () => {
+      const byKey = new Map<string, ConversationText>();
+      for (const row of await this.publishedExercises(dialect, ['conversation'])) {
+        const text = conversationOf(row, dialect);
+        if (text && !byKey.has(text.key)) byKey.set(text.key, text);
       }
       return [...byKey.values()];
     });
@@ -384,6 +430,8 @@ export class TrustedSources {
         if (fitsDialect(r.text, dialect)) out.push({ key: `rec:lesson:${r.key}`, source: 'lesson', text: r.text, url: r.url, speaker: r.speaker, recordedBy: r.recorded_by });
       }
       for (const r of alphabet.rows) {
+        // a letter's sound is said as a syllable ("ba" for b), which is no word of either variety: only the example words are
+        if (isAlphabetSoundKey(r.key)) continue;
         const text = alphabetClipText(r.key);
         if (text && fitsDialect(text, dialect)) out.push({ key: `rec:alphabet:${r.key}`, source: 'alphabet', text, url: r.url, speaker: r.speaker, recordedBy: r.updated_by });
       }
