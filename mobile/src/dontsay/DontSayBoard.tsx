@@ -283,7 +283,7 @@ export function DoneCards({ board, name, title }: { board: DontSayBoard; name: (
           <Text style={[styles.doneTarget, script, { color: colors.textPrimary }]}>{d.target}</Text>
           <Text style={[styles.muted, { color: colors.textSecondary }]}>{meaningIn(d.meanings, locale)}</Text>
           {d.forbidden ? (
-            <Text style={[styles.doneForbidden, script, { color: colors.textPrimary, textDecorationColor: colors.danger }]}>{d.forbidden.join('  ')}</Text>
+            <Text style={[styles.doneForbidden, script, { color: colors.textPrimary, textDecorationColor: colors.danger }]}>{d.forbidden.join(' · ')}</Text>
           ) : null}
           <Text style={[styles.muted, { color: d.result === 'guessed' ? colors.success : d.result === 'buzzed' ? colors.danger : colors.textSecondary }]}>
             {t(RESULT_KEY[d.result])}
