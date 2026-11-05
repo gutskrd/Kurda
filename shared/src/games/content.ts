@@ -245,7 +245,13 @@ function build() {
       path: ['forbidden'],
       message: 'the word to describe is forbidden already',
     });
-  const bluffCard = z.strictObject({ word: kurdish(60), definitions: someMeanings });
+  const bluffCard = z.strictObject({
+    word: kurdish(60),
+    /** its real meaning, in each language a reviewer read it in: a game's definitions are written in one of these */
+    definitions: someMeanings,
+    /** a sentence that uses it, from the same approved source, shown when the meaning is revealed */
+    example: z.strictObject({ ku: kurdish(240), meanings: someMeanings.optional() }).optional(),
+  });
   const identity = z.strictObject({
     word: kurdish(60),
     meanings,
@@ -363,9 +369,12 @@ export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload)
       p.forms.forEach((f, i) => add(`forms.${i}`, f));
       break;
     }
-    case 'bluff_card':
-      add('word', (payload as BluffCardContent).word);
+    case 'bluff_card': {
+      const p = payload as BluffCardContent;
+      add('word', p.word);
+      add('example.ku', p.example?.ku);
       break;
+    }
     case 'identity':
       add('word', (payload as IdentityContent).word);
       break;
