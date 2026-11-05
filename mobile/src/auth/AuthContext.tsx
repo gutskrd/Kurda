@@ -57,6 +57,13 @@ export interface AuthFailure {
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
 
+/**
+ * What asking to delete the account came to. A full account is kept for
+ * `graceDays` (the server's DELETE /me says how many), and signing in again
+ * before then keeps it; a guest is closed at once, so its `graceDays` is 0.
+ */
+export type AccountDeletion = { ok: true; graceDays: number } | { ok: false; message: string };
+
 /** What Sign in with Apple gives the app besides the identity token. */
 export interface AppleSignInExtras {
   authorizationCode?: string | null;
@@ -175,9 +182,10 @@ interface AuthContextValue {
   /**
    * Start account deletion (KUR-275). Schedules a grace-period delete server-side
    * (DELETE /me) and signs out locally; logging back in before it elapses cancels
-   * it. Resolves to an error message, or null on success.
+   * it. Resolves to how long the grace period is, so the screen can say it, or
+   * to why it failed.
    */
-  deleteAccount(): Promise<string | null>;
+  deleteAccount(): Promise<AccountDeletion>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -407,11 +415,11 @@ export function AuthProvider({
     },
     deleteAccount: async () => {
       const res = await client.delete<{ deletionScheduled: boolean; graceDays: number }>('/me');
-      if (!res.ok) return describeError(res.error, t);
+      if (!res.ok) return { ok: false, message: describeError(res.error, t) };
       await storage.clear();
       setUser(null);
       setStatus('signedOut');
-      return null;
+      return { ok: true, graceDays: res.data.deletionScheduled ? res.data.graceDays : 0 };
     },
   };
 

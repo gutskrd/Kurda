@@ -94,8 +94,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     });
   };
 
-  // Apple-required in-app account deletion (KUR-275). Server keeps a 14-day
-  // grace window — signing back in cancels it — so we warn, then sign out.
+  /*
+   * Apple-required in-app account deletion (KUR-275). The server keeps the
+   * account for a grace period and signing back in cancels it, so we warn,
+   * sign out, and then say it again over the welcome screen: leaving without
+   * a word read as the app having crashed, and it is the one moment the way
+   * back has to be clear.
+   */
   const confirmDelete = () => {
     Alert.alert(t('settings.delete.confirmTitle'), t('settings.delete.warning'), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -103,8 +108,9 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         text: t('settings.delete.confirm'),
         style: 'destructive',
         onPress: () => {
-          void deleteAccount().then((err) => {
-            if (err) Alert.alert(t('settings.delete.failed'), err);
+          void deleteAccount().then((result) => {
+            if (!result.ok) Alert.alert(t('settings.delete.failed'), result.message);
+            else Alert.alert(t('settings.delete.scheduledTitle'), t('settings.delete.scheduledBody', { days: result.graceDays }));
           });
         },
       },

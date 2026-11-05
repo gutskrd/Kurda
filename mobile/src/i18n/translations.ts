@@ -1337,6 +1337,8 @@ export type TranslationKey =
   | 'settings.delete.confirmTitle'
   | 'settings.delete.warning'
   | 'settings.delete.failed'
+  | 'settings.delete.scheduledTitle'
+  | 'settings.delete.scheduledBody'
   | 'moderation.block'
   | 'profile.blocked'
   | 'profile.friends'
@@ -3615,6 +3617,8 @@ const en: Catalog = {
   'settings.delete.confirmTitle': 'Delete account?',
   'settings.delete.warning': 'Your account and all your data will be permanently deleted after 14 days. Sign in again before then to cancel.',
   'settings.delete.failed': 'Could not delete account',
+  'settings.delete.scheduledTitle': 'Your account is set to be deleted',
+  'settings.delete.scheduledBody': 'It will be gone for good in {days} days. If you change your mind, just sign in again before then and everything stays as it was.',
   'moderation.block': 'Block',
   'profile.blocked': 'Blocked',
   'profile.friends': 'Friends ✓',
@@ -6461,6 +6465,8 @@ const ku: Catalog = {
   'settings.delete.confirmTitle': 'Hesab were jêbirin?',
   'settings.delete.warning': 'Hesabê te û hemû daneyên te piştî 14 rojan bi temamî tên jêbirin. Berî wê dîsa têkeve da ku betal bikî.',
   'settings.delete.failed': 'Hesab nehate jêbirin',
+  'settings.delete.scheduledTitle': 'Hesabê te dê were jêbirin',
+  'settings.delete.scheduledBody': 'Piştî {days} rojan ew ê bi temamî were jêbirin. Heke tu poşman bibî, berî wê dîsa têkeve û her tişt wekî berê dimîne.',
   'moderation.block': 'Asteng bike',
   'profile.blocked': 'Astengkirî',
   'profile.friends': 'Heval ✓',
@@ -9306,6 +9312,8 @@ const de: Catalog = {
   'settings.delete.confirmTitle': 'Konto löschen?',
   'settings.delete.warning': 'Dein Konto und alle deine Daten werden nach 14 Tagen endgültig gelöscht. Melde dich vorher wieder an, um das abzubrechen.',
   'settings.delete.failed': 'Konto konnte nicht gelöscht werden',
+  'settings.delete.scheduledTitle': 'Dein Konto wird gelöscht',
+  'settings.delete.scheduledBody': 'In {days} Tagen ist es endgültig gelöscht. Falls du es dir anders überlegst, melde dich einfach vorher wieder an – dann bleibt alles, wie es war.',
   'moderation.block': 'Blockieren',
   'profile.blocked': 'Blockiert',
   'profile.friends': 'Befreundet ✓',
@@ -12151,6 +12159,8 @@ const es: Catalog = {
   'settings.delete.confirmTitle': '¿Eliminar la cuenta?',
   'settings.delete.warning': 'Tu cuenta y todos tus datos se eliminarán definitivamente después de 14 días. Inicia sesión antes de esa fecha para cancelarlo.',
   'settings.delete.failed': 'No se pudo eliminar la cuenta',
+  'settings.delete.scheduledTitle': 'Tu cuenta se va a eliminar',
+  'settings.delete.scheduledBody': 'Se eliminará definitivamente dentro de {days} días. Si cambias de idea, inicia sesión antes y todo seguirá como estaba.',
   'moderation.block': 'Bloquear',
   'profile.blocked': 'Bloqueado',
   'profile.friends': 'Amigos ✓',
@@ -14996,6 +15006,8 @@ const tr: Catalog = {
   'settings.delete.confirmTitle': 'Hesap silinsin mi?',
   'settings.delete.warning': 'Hesabın ve tüm verilerin 14 gün sonra kalıcı olarak silinecek. İptal etmek için o tarihten önce tekrar giriş yap.',
   'settings.delete.failed': 'Hesap silinemedi',
+  'settings.delete.scheduledTitle': 'Hesabın silinecek',
+  'settings.delete.scheduledBody': '{days} gün sonra kalıcı olarak silinecek. Fikrini değiştirirsen o zamana kadar yeniden giriş yapman yeterli; her şey olduğu gibi kalır.',
   'moderation.block': 'Engelle',
   'profile.blocked': 'Engellendi',
   'profile.friends': 'Arkadaş ✓',
@@ -17841,6 +17853,8 @@ const ar: Catalog = {
   'settings.delete.confirmTitle': 'حذف الحساب؟',
   'settings.delete.warning': 'سيُحذف حسابك وكل بياناتك نهائيًا بعد ١٤ يومًا. سجّل الدخول قبل ذلك للإلغاء.',
   'settings.delete.failed': 'تعذّر حذف الحساب',
+  'settings.delete.scheduledTitle': 'سيُحذف حسابك',
+  'settings.delete.scheduledBody': 'سيُحذف نهائيًا بعد {days} يومًا. إن غيّرت رأيك، فسجّل الدخول قبل ذلك وسيبقى كل شيء كما كان.',
   'moderation.block': 'حظر',
   'profile.blocked': 'محظور',
   'profile.friends': 'أصدقاء ✓',
@@ -20686,6 +20700,8 @@ const fr: Catalog = {
   'settings.delete.confirmTitle': 'Supprimer le compte ?',
   'settings.delete.warning': 'Ton compte et toutes tes données seront définitivement supprimés après 14 jours. Reconnecte-toi avant pour annuler.',
   'settings.delete.failed': 'Impossible de supprimer le compte',
+  'settings.delete.scheduledTitle': 'Ton compte va être supprimé',
+  'settings.delete.scheduledBody': 'Il sera définitivement supprimé dans {days} jours. Si tu changes d’avis, reconnecte-toi avant, et tout restera comme avant.',
   'moderation.block': 'Bloquer',
   'profile.blocked': 'Bloqué',
   'profile.friends': 'Amis ✓',
@@ -23531,6 +23547,8 @@ const nl: Catalog = {
   'settings.delete.confirmTitle': 'Account verwijderen?',
   'settings.delete.warning': 'Je account en al je gegevens worden na 14 dagen definitief verwijderd. Log daarvóór opnieuw in om dit te annuleren.',
   'settings.delete.failed': 'Account verwijderen is mislukt',
+  'settings.delete.scheduledTitle': 'Je account wordt verwijderd',
+  'settings.delete.scheduledBody': 'Over {days} dagen is het definitief weg. Bedenk je je, log dan daarvóór gewoon opnieuw in en alles blijft zoals het was.',
   'moderation.block': 'Blokkeren',
   'profile.blocked': 'Geblokkeerd',
   'profile.friends': 'Vrienden ✓',
@@ -26377,6 +26395,8 @@ const ckb: Catalog = {
   'settings.delete.confirmTitle': 'هەژمارەکە بسڕدرێتەوە؟',
   'settings.delete.warning': 'هەژمارەکەت و هەموو داتاکانت دوای ١٤ ڕۆژ بە یەکجاری دەسڕدرێنەوە. پێش ئەوە دووبارە بچۆ ژوورەوە بۆ هەڵوەشاندنەوەی.',
   'settings.delete.failed': 'نەتوانرا هەژمارەکە بسڕدرێتەوە',
+  'settings.delete.scheduledTitle': 'هەژمارەکەت دەسڕدرێتەوە',
+  'settings.delete.scheduledBody': 'دوای {days} ڕۆژ بە یەکجاری دەسڕدرێتەوە. ئەگەر پەشیمان بوویتەوە، تەنها پێش ئەوە دووبارە بچۆ ژوورەوە و هەموو شتێک وەک خۆی دەمێنێتەوە.',
   'moderation.block': 'ڕێگری بکە',
   'profile.blocked': 'ڕێگریکراو',
   'profile.friends': 'هاوڕێ ✓',
