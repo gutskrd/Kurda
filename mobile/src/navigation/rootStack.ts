@@ -110,7 +110,6 @@ export type RootStackParamList = {
   StoryGame: { id: string };
   Memes: undefined;
   MemeDetail: { postId: string };
-  PostPicture: undefined;
   Tags: undefined;
   ChangeUsername: undefined;
   /** Settings → Security: the current password, then the new one twice (security/ChangePasswordScreen) */
@@ -138,7 +137,6 @@ export type RootStackParamList = {
   Saved: undefined;
   EditProfile: undefined;
   LibraryPost: { postId: string };
-  LibraryCompose: undefined;
   /**
    * The post composer (composer/ComposeScreen): a new post, or `postId` to edit
    * one of yours. `pickPictures` opens the photo library at once, `meme` makes

@@ -608,8 +608,7 @@ function SignedInRoot() {
       {/*
         Writing a post — words, pictures or both — and editing one. Full screen
         and without the swipe-down: the composer asks before it lets go of
-        something written. PostPicture and LibraryCompose are the two old ways
-        in, kept as names so anything still pointing at them lands here.
+        something written.
       */}
       <RootStack.Screen name="Compose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
         {({ route, navigation }) => (
@@ -620,13 +619,6 @@ function SignedInRoot() {
               asMeme={route.params?.meme}
               onExit={() => navigation.goBack()}
             />
-          </GuestWall>
-        )}
-      </RootStack.Screen>
-      <RootStack.Screen name="PostPicture" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
-        {({ navigation }) => (
-          <GuestWall reason="post" onBack={() => navigation.goBack()}>
-            <ComposeScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
@@ -713,13 +705,6 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="LibraryPost" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
-      </RootStack.Screen>
-      <RootStack.Screen name="LibraryCompose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
-        {({ navigation }) => (
-          <GuestWall reason="post" onBack={() => navigation.goBack()}>
-            <ComposeScreen onExit={() => navigation.goBack()} />
-          </GuestWall>
-        )}
       </RootStack.Screen>
       {/*
         A guest's two ways to an account, over the app: the sign-up form that
