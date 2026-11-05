@@ -25,6 +25,7 @@ import { z } from 'zod';
 import { APP_LOCALE_CODES, type AppLocale } from '../locales.js';
 import { SPEAKERS, type SpeakerId } from '../lipsync/speakers.js';
 import { fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
+import type { GamesAvailability } from './solo.js';
 
 // ---------- the kinds, and the workflow every row goes through ----------
 
@@ -123,8 +124,8 @@ export const SENTENCE_WORDS = { min: 3, max: 10 } as const;
 export const PASSAGE_HIDDEN = { min: 2, max: 6 } as const;
 
 function build() {
-  const kurdish = (max: number) => z.string().trim().min(1).max(max);
-  const plain = (max: number) => z.string().trim().min(1).max(max);
+  const kurdish = (max: number) => z.string().trim().min(1, 'write the Kurdish here').max(max, `keep it to ${max} characters`);
+  const plain = (max: number) => z.string().trim().min(1, 'fill this in').max(max, `keep it to ${max} characters`);
   const slug = z.string().regex(GAME_SLUG_PATTERN, 'use 2–40 lower-case letters, digits and dashes');
   const locales = Object.fromEntries(APP_LOCALE_CODES.map((code) => [code, plain(400).optional()])) as Record<AppLocale, z.ZodOptional<z.ZodString>>;
   // English required: it is what every other language falls back to
@@ -535,4 +536,39 @@ export interface DetectiveStepView {
 export interface WhoAmIRoundView {
   questions: Array<{ id: string; ku: string; meanings: Meanings }>;
   guesses: string[];
+}
+
+// ---------- what the admin panel is sent ----------
+
+/** One row of game content as the admin panel lists and edits it. */
+export interface AdminGameContent {
+  id: string;
+  kind: GameContentKind;
+  /** the game its kind belongs to */
+  game: string | null;
+  dialect: GameDialect;
+  level: number;
+  payload: GameContentPayload;
+  /** its main Kurdish, for a list */
+  headline: string;
+  status: GameContentStatus;
+  reviewStatus: GameContentReview;
+  reviewedBy: { id: string; username: string | null } | null;
+  reviewedAt: string | null;
+  reviewNote: string | null;
+  source: GameContentSource;
+  /** where an importer took it from: 'lesson:<exerciseId>', 'story:<storyId>:<paragraph>' */
+  origin: string | null;
+  lockVersion: number;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  /** what would stop it being stored as it is now (a row saved before a rule tightened) */
+  issues: GameContentIssue[];
+}
+
+/** The readiness view: what each game can be played with per variety, and every row's state. */
+export interface GameContentReadiness {
+  availability: GamesAvailability[];
+  counts: Array<{ kind: GameContentKind; dialect: GameDialect; status: GameContentStatus; reviewStatus: GameContentReview; n: number }>;
 }

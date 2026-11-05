@@ -35,14 +35,15 @@ import {
   contentHeadline,
   gameOfKind,
   sentenceShape,
+  type AdminGameContent,
   type GameContentIssue,
   type GameContentKind,
+  type GameContentReadiness,
   type GameContentPayload,
   type GameContentReview,
   type GameContentSource,
   type GameContentStatus,
   type GameDialect,
-  type GamesAvailability,
   type Meanings,
 } from '@kurda/shared';
 import { AuditService } from '../admin/audit-service.js';
@@ -52,28 +53,8 @@ import { AppError } from '../plugins/errors.js';
 import { bustAvailability, type GameAvailabilityService } from './availability.js';
 import { bustGamePools, type TrustedSources } from './sources.js';
 
-export interface GameContentRow {
-  id: string;
-  kind: GameContentKind;
-  game: string | null;
-  dialect: GameDialect;
-  level: number;
-  payload: GameContentPayload;
-  headline: string;
-  status: GameContentStatus;
-  reviewStatus: GameContentReview;
-  reviewedBy: { id: string; username: string | null } | null;
-  reviewedAt: string | null;
-  reviewNote: string | null;
-  source: GameContentSource;
-  origin: string | null;
-  lockVersion: number;
-  publishedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  /** what would stop it being stored as it is now (a row saved before a rule tightened) */
-  issues: GameContentIssue[];
-}
+/** A row as the admin panel lists and edits it (@kurda/shared `AdminGameContent`). */
+export type GameContentRow = AdminGameContent;
 
 export interface GameContentFilter {
   game?: string;
@@ -184,11 +165,8 @@ export interface ImportResult {
   skipped: number;
 }
 
-/** The games' content per kind, variety and state, for the readiness view. */
-export interface Readiness {
-  availability: GamesAvailability[];
-  counts: Array<{ kind: GameContentKind; dialect: GameDialect; status: GameContentStatus; reviewStatus: GameContentReview; n: number }>;
-}
+/** The readiness view (@kurda/shared `GameContentReadiness`). */
+export type Readiness = GameContentReadiness;
 
 export class GameContentAdminService {
   private readonly audit: AuditService;

@@ -32,6 +32,7 @@ describe('who sees which page — what the API allows, not a guess', () => {
       'wordle',
       'rhyme',
       'race',
+      'game-content',
       'security',
     ]);
   });

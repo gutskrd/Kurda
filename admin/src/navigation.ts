@@ -129,6 +129,8 @@ export const NAV: readonly NavEntry[] = [
   { id: 'wordle', label: 'Peyvok', group: 'games', icon: 'grid', page: 'wordle', access: GAME_EDITORS, keywords: 'coverage word game' },
   { id: 'rhyme', label: 'Rhyme', group: 'games', icon: 'rhyme', page: 'rhyme', access: GAME_EDITORS, keywords: 'rhymes base words' },
   { id: 'race', label: 'Race texts', group: 'games', icon: 'keyboard', page: 'race', access: GAME_EDITORS, keywords: 'typing race' },
+  // the learning games' own content, behind the capability its API routes ask for (api/src/games/routes.ts)
+  { id: 'game-content', label: 'Learning game content', title: 'Game content', group: 'games', icon: 'list', page: 'game-content', access: { capability: 'content.edit' }, keywords: 'learning games sentences passages scenarios cards review readiness import build a sentence' },
 
   { id: 'ranks', label: 'Game ranks', group: 'ranks', icon: 'mountain', page: 'ranks', access: RANK_TOOLS, keywords: 'rating tiers top players suspicious pairs void reset' },
   { id: 'seasons', label: 'Seasons', group: 'ranks', icon: 'trophy', page: 'seasons', access: RANK_TOOLS, keywords: 'season rewards frames gems end close' },

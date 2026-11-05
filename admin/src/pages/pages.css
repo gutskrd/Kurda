@@ -644,3 +644,19 @@ button.cv-line-main {
   .off-layout { grid-template-columns: minmax(0, 1fr); }
   .off-preview { position: static; max-width: 320px; margin-inline: auto; width: 100%; }
 }
+
+/* ---- Game content (GameContent.tsx): the learning games' rows, their editor and the readiness view ---- */
+.gc-list { display: grid; gap: 8px; }
+.gc-list .row { flex-wrap: nowrap; }
+.gc-list input { flex: 1; min-width: 0; }
+.gc-meanings { display: grid; gap: 8px; }
+.gc-json { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; line-height: 1.5; }
+.gc-issues { margin: 6px 0 0; padding-inline-start: 18px; }
+.gc-issues code { color: var(--text-2); }
+.gc-ready { width: 100%; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
+.gc-ready th, .gc-ready td { padding: 6px; text-align: start; border-top: 1px solid var(--separator); font-weight: 400; }
+.gc-ready thead th { border-top: none; color: var(--text-dim); font-size: 12px; }
+.gc-ready tbody th { font-weight: 600; }
+@media (max-width: 720px) {
+  .gc-ready { display: block; overflow-x: auto; }
+}

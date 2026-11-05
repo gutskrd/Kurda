@@ -38,6 +38,7 @@ import { Seasons } from './pages/Seasons';
 import { Leagues } from './pages/Leagues';
 import { Badges } from './pages/Badges';
 import { Email } from './pages/Email';
+import { GameContent } from './pages/GameContent';
 
 /**
  * Each page by its key (navigation.ts has who may open it and where it sits
@@ -65,6 +66,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   wordle: () => <Games section="wordle" />,
   rhyme: () => <Games section="rhyme" />,
   race: () => <Games section="race" />,
+  'game-content': () => <GameContent />,
   ranks: () => <Ranks />,
   seasons: () => <Seasons />,
   leagues: () => <Leagues />,
