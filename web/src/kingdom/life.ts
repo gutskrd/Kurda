@@ -1,11 +1,18 @@
-import { KINGDOM_SCENE, type KingdomActor, type KingdomFrame, type KingdomNode, type KingdomSprite } from '@kurda/shared';
+import { KINGDOM_SCENE, kingdomActorReach, type KingdomActor, type KingdomFrame, type KingdomNode, type KingdomSprite } from '@kurda/shared';
 
 /**
  * The village's life as markup for the website: each actor's nodes as nested
- * boxes laid over the scene (a root's box in percent of the canvas, a child's
+ * boxes laid over the world (a root's box in percent of the canvas, a child's
  * in percent of its parent's), each with its sprite and its loop as a CSS
  * animation of `translate`, `rotate`, `scale` and `opacity` only, so the
  * browser moves them on its compositor and no script runs per frame.
+ *
+ * Each actor is its own piece of markup, so the page can lay only those near
+ * the view and add or drop one as the view moves without touching the rest.
+ * Every animation runs on one clock: an actor's wrapper carries its age
+ * (`--kg-age`, how long the page had been open when it was laid), and each of
+ * its loops starts that far back, so an actor coming into view is where it
+ * would have been all along rather than starting its loop again.
  *
  * Every node also carries its still pose inline. A running animation sits
  * over it; with less motion asked for, the stylesheet turns the animations
@@ -40,9 +47,17 @@ function moved(node: KingdomNode): Set<string> {
   return out;
 }
 
-export interface LifeMarkup {
+/** One actor ready to lay: its markup, how far it reaches on the canvas over its loop, and what a tap on it does. */
+export interface ActorMarkup {
+  id: string;
   html: string;
+  reach: { x: number; y: number; w: number; h: number };
+  tap?: KingdomActor['tap'];
+}
+
+export interface LifeMarkup {
   css: string;
+  actors: ActorMarkup[];
 }
 
 /**
@@ -53,21 +68,30 @@ export interface LifeMarkup {
 export function lifeMarkup(actors: readonly KingdomActor[], sprite: (s: KingdomSprite) => string, prefix = 'kg'): LifeMarkup {
   let css = '';
   let count = 0;
-  const node = (n: KingdomNode, parent: { w: number; h: number }): string => {
+  const node = (n: KingdomNode, parent: { w: number; h: number }, tap: boolean): string => {
     const { x, y, w, h } = n.box;
     let style = `left:${pct(x / parent.w)};top:${pct(y / parent.h)};width:${pct(w / parent.w)};height:${pct(h / parent.h)};transform-origin:${pct(n.origin[0])} ${pct(n.origin[1])};${declarations(n.still, w, h)}`;
+    if (n.clip) style += ';overflow:hidden';
+    if (tap) style += ';pointer-events:auto;cursor:pointer';
     if (n.motion && n.motion.frames.length > 1) {
       const props = moved(n);
       if (props.size > 0) {
         const name = `${prefix}${count++}`;
         css += `@keyframes ${name}{${n.motion.frames.map((f) => `${num(f.t * 100)}%{${declarations(f, w, h, props)}}`).join('')}}`;
-        style += `;animation:${name} ${Math.round(n.motion.period)}ms linear infinite`;
+        style += `;animation:${name} ${Math.round(n.motion.period)}ms linear calc(var(--kg-age,0ms) * -1) infinite`;
       }
     }
-    const inner = (n.sprite ? `<span class="kg-s">${sprite(n.sprite)}</span>` : '') + (n.children ?? []).map((c) => node(c, { w, h })).join('');
-    return `<span class="kg-n" style="${style}">${inner}</span>`;
+    const inner = (n.sprite ? `<span class="kg-s">${sprite(n.sprite)}</span>` : '') + (n.children ?? []).map((c) => node(c, { w, h }, false)).join('');
+    return `<span class="kg-n"${n.role ? ` data-role="${n.role}"` : ''} style="${style}">${inner}</span>`;
   };
   const canvas = { w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };
-  const html = actors.map((a) => node(a, canvas)).join('');
-  return { html, css };
+  return {
+    css,
+    actors: actors.map((a) => ({
+      id: a.id,
+      html: node(a, canvas, a.tap !== undefined),
+      reach: kingdomActorReach(a),
+      tap: a.tap,
+    })),
+  };
 }
