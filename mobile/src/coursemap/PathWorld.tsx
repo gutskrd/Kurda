@@ -105,7 +105,7 @@ export const UnitLand = memo(function UnitLand({
   }, [near, width, unit.height, stones, fresh, dark, rtl]);
   const box = landmarkBox(width);
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={StyleSheet.absoluteFill} pointerEvents="none" aria-hidden>
       {ground ? <SvgXml xml={ground} width={width} height={unit.height} /> : <View style={[styles.flat, { backgroundColor: pathGroundColour(land.ground, dark) }]} />}
       {trail?.ahead ? <SvgXml xml={trail.ahead} width={width} height={unit.height} style={StyleSheet.absoluteFill} /> : null}
       {trail?.walked ? <SvgXml xml={trail.walked} width={width} height={unit.height} style={StyleSheet.absoluteFill} /> : null}
@@ -242,8 +242,7 @@ export function LearnerToken({
     <Animated.View
       style={[styles.token, { left: at.x - width / 2, top: at.y - 6 - TOKEN_HEIGHT, width }, { transform: [{ translateX }, { translateY }, ...(bob ? [{ translateY: bob }] : [])] }]}
       pointerEvents="none"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      aria-hidden
       testID="lp-learner"
     >
       <View style={[styles.tokenRing, { borderColor: tone.fill, backgroundColor: colors.surfaceRaised }]}>
@@ -314,8 +313,7 @@ export function PathHostView({
     <View
       style={[styles.host, { left, top: box.y, width: box.w, height: box.h }]}
       pointerEvents="box-none"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      aria-hidden
       testID={`lp-host-${host}`}
     >
       {said ? (

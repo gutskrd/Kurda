@@ -347,7 +347,7 @@ function Progress({
         </Animated.View>
       ) : null}
       {lights && count > 0 ? (
-        <Animated.View style={[StyleSheet.absoluteFill, { opacity }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="lp-lights">
+        <Animated.View style={[StyleSheet.absoluteFill, { opacity }]} pointerEvents="none" aria-hidden testID="lp-lights">
           {Array.from({ length: count }, (_, k) => {
             const dx = (k - (count - 1) / 2) * gap;
             const y = STOP_FACE.y + PATH_STOP_ART.ry * Math.sqrt(Math.max(0, 1 - (dx / PATH_STOP_ART.rx) ** 2)) + side / 2;

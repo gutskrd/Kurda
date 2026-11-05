@@ -16,6 +16,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { LessonPath, PinnedUnit, type UnitPlace } from './LessonPath';
 import { TONES } from './path';
+import { UnitRailSheet } from './PathWorld';
 import type { CourseMap, SkillNode } from './types';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -153,9 +154,11 @@ describe('the lesson path', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('Practice');
   });
 
-  it('opens a unit’s guide from its banner, fetching each note once', async () => {
+  // the guide is the first stop of its unit's path, an open book
+  it('opens a unit’s guide from the book at the head of its path, fetching each note once', async () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    expect(screen.getAllByTestId('lp-node-guide')).toHaveLength(1);
     fireEvent.click(button('Guide to Basics'));
     expect(await screen.findByText('Silavkirin')).toBeTruthy();
     const calls = (testAuth.client as unknown as { calls: { path: string }[] }).calls;
@@ -163,6 +166,56 @@ describe('the lesson path', () => {
     // a unit without notes has no guide to offer
     expect(screen.queryByRole('button', { name: 'Guide to Family & Food' })).toBeNull();
     expect(within(document.body).getByText('Guide to Basics')).toBeTruthy();
+  });
+
+  /*
+   * Each unit's stops stand on its own land: the first unit's has Sêvan's
+   * gate beside its route and Hamo by its chest, and the learner stands on
+   * the stop to do now — once, whatever the path holds. They are pictures: a
+   * screen reader hears the stops, not them.
+   */
+  it('stands each unit on its own land, with its landmark, its person and the learner on today’s stop', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    expect(screen.getAllByTestId('lp-land')).toHaveLength(2);
+    expect(screen.getByTestId('lp-landmark-gate')).toBeTruthy();
+    expect(screen.getByTestId('lp-landmark-teahouse')).toBeTruthy();
+    expect(screen.getAllByTestId('lp-learner')).toHaveLength(1);
+    // Hamo keeps both of the first two units: by each one's chest
+    expect(screen.getAllByTestId('lp-host-hamo')).toHaveLength(2);
+    // the stop to do now carries its lessons as lights on its side, one each
+    expect(screen.getByTestId('lp-lights').children).toHaveLength(3);
+    for (const id of ['lp-learner', 'lp-landmark-gate']) expect(screen.getByTestId(id).closest('[aria-hidden="true"]')).toBeTruthy();
+    expect(screen.getAllByTestId('lp-host-hamo')[0]!.closest('[aria-hidden="true"]')).toBeTruthy();
+  });
+
+  it('draws only the units it is told are near in full, and the rest as their ground alone', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} near={new Set(['u2'])} />);
+    expect(screen.queryByTestId('lp-landmark-gate')).toBeNull();
+    expect(screen.getByTestId('lp-landmark-teahouse')).toBeTruthy();
+    // every stop is still a button that says what it is
+    expect(button('Greetings, done, and strong, 2 of 2 lessons done')).toBeTruthy();
+  });
+
+  it('opens the rail of units from a unit banner’s map button, and goes to the unit chosen there', () => {
+    client();
+    const openRail = vi.fn();
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} onOpenRail={openRail} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Course map' })[1]!);
+    expect(openRail).toHaveBeenCalledTimes(1);
+    cleanup();
+    const pick = vi.fn();
+    const units = [
+      { unitId: 'u1', number: 1, title: 'Basics', tone: TONES.dark.clay, done: 2, total: 2, here: false },
+      { unitId: 'u2', number: 2, title: 'Family & Food', tone: TONES.dark.saffron, done: 0, total: 2, here: true },
+    ];
+    renderWithProviders(<UnitRailSheet units={units} open onClose={() => undefined} onPick={pick} />);
+    const here = button('Unit 2, Family & Food');
+    expect(here.getAttribute('aria-selected')).toBe('true');
+    expect(button('Unit 1, Basics').getAttribute('aria-selected')).toBe('false');
+    fireEvent.click(button('Unit 1, Basics'));
+    expect(pick).toHaveBeenCalledWith('u1');
   });
 
   /*

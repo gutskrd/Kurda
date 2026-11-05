@@ -28,6 +28,19 @@ import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import { KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingSvg, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, type KingdomFrame, type KingdomNode } from './kingdom.js';
+import {
+  PATH_LANDMARK_LOOP,
+  PATH_STOP_ART,
+  PATH_STOP_LOOKS,
+  pathLandSvg,
+  pathLandmarkSvg,
+  pathLoopSvg,
+  pathStonesSvg,
+  pathStopSvg,
+  type PathStopLook,
+} from './path-land.js';
+import { PATH_LANDMARKS, PATH_LANDS, trailStones } from '../path-world.js';
+import { lessonPath } from '../lesson-path.js';
 import { KINGDOM_BUILDINGS, type KingdomBuilding, type KingdomLevel } from '../games/kingdom/buildings.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
 import {
@@ -1253,5 +1266,110 @@ describe('the kingdom’s village', () => {
     expect(() => kingdomSceneSvg({ levels: all(1), width: 0 })).toThrow(RangeError);
     expect(() => kingdomLife({ ...all(1), market: 9 as KingdomLevel })).toThrow(RangeError);
     expect(() => kingdomSpriteSvg('dragon' as never)).toThrow(RangeError);
+  });
+});
+
+/**
+ * The lesson path's world (art/path-land.ts) is drawn with depth — isometric,
+ * outlined in one ink, cel shaded — the one exception, with the village, to
+ * the flat cut-outs: the owner asked for the path and the village to read as
+ * one board-game world. Every other rule holds: only what both renderers draw
+ * alike, nothing outside the drawing, every reference resolved, and a budget
+ * on how much a unit's land may weigh, since a path draws two or three at once.
+ */
+describe('the lesson path’s world', () => {
+  const TONES = ['clay', 'saffron', 'meadow', 'rose', 'pine'] as const;
+
+  /** The structural rules, for a drawing that is decorative or of its own size. */
+  function sound(svg: string, viewBox?: string): number {
+    const root = parse(svg);
+    expect(root.name).toBe('svg');
+    if (viewBox) expect(root.attrs.viewBox).toBe(viewBox);
+    const ids = new Set<string>();
+    let count = 0;
+    walk(root, (e) => {
+      count += 1;
+      expect(ALLOWED.has(e.name), e.name).toBe(true);
+      for (const [k, v] of Object.entries(e.attrs)) {
+        expect(k.startsWith('on') || /href$/i.test(k), k).toBe(false);
+        if (k !== 'xmlns') expect(v, `${k} on <${e.name}>`).not.toMatch(/NaN|Infinity|undefined|null/);
+      }
+      if (e.attrs.id) {
+        expect(ids.has(e.attrs.id), `id ${e.attrs.id} twice`).toBe(false);
+        ids.add(e.attrs.id);
+      }
+    });
+    for (const m of svg.matchAll(/url\(#([^)]+)\)/g)) expect(ids.has(m[1]!), m[1]).toBe(true);
+    expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|<use|data:/i);
+    return count;
+  }
+
+  it('draws every landmark, by day and by evening, labelled when named and hidden when not', () => {
+    for (const landmark of PATH_LANDMARKS) {
+      for (const dark of [false, true]) {
+        checkSvg(pathLandmarkSvg({ landmark, dark, size: 132, title: landmark }), 132);
+        const still = pathLandmarkSvg({ landmark, dark });
+        sound(still, '0 0 120 120');
+        expect(parse(still).attrs['aria-hidden']).toBe('true');
+      }
+      // twelve different places, not one drawing twelve times
+      expect(new Set(PATH_LANDMARKS.map((l) => pathLandmarkSvg({ landmark: l, idPrefix: 'p' }))).size).toBe(PATH_LANDMARKS.length);
+    }
+  });
+
+  it('puts each landmark’s moving part inside its canvas, and draws every kind of it', () => {
+    for (const landmark of PATH_LANDMARKS) {
+      const loop = PATH_LANDMARK_LOOP[landmark];
+      expect(loop.x, landmark).toBeGreaterThanOrEqual(0);
+      expect(loop.y, landmark).toBeGreaterThanOrEqual(0);
+      expect(loop.x + loop.w, landmark).toBeLessThanOrEqual(120);
+      expect(loop.y + loop.h, landmark).toBeLessThanOrEqual(120);
+      for (const dark of [false, true]) sound(pathLoopSvg({ kind: loop.kind, dark, size: 24 }));
+    }
+  });
+
+  it('draws every look of a stop in every unit colour, base and face, by day and by evening', () => {
+    for (const look of PATH_STOP_LOOKS) {
+      for (const tone of TONES) {
+        for (const dark of [false, true]) {
+          for (const part of ['base', 'face'] as const) sound(pathStopSvg({ look, tone, part, dark }), `0 0 ${PATH_STOP_ART.box} ${PATH_STOP_ART.box}`);
+        }
+      }
+    }
+    // every look its own: the stop to do now is a finished one's face on a taller base
+    const looks = PATH_STOP_LOOKS.map((look) => (['base', 'face'] as const).map((part) => pathStopSvg({ look, tone: 'clay', part, idPrefix: 's' })).join(''));
+    expect(new Set(looks).size).toBe(PATH_STOP_LOOKS.length);
+    expect(pathStopSvg({ look: 'current', tone: 'clay', part: 'face', idPrefix: 's' })).toBe(pathStopSvg({ look: 'done', tone: 'clay', part: 'face', idPrefix: 's' }));
+    expect(() => pathStopSvg({ look: 'gold' as PathStopLook, tone: 'clay', part: 'face' })).toThrow(RangeError);
+  });
+
+  it('draws each unit’s land within its budget, the same every time, and changes it with the season', () => {
+    const skills = [0, 1, 2, 3].map((i) => ({ skillId: `k${i}`, title: 'S', state: (i === 0 ? 'unlocked' : 'locked') as 'unlocked' | 'locked', strength: 0, hasGrammar: i === 0, firstLessonId: `l${i}` }));
+    const unit = lessonPath({ units: [{ unitId: 'u', title: 'U', skills }] }, { guides: true }).units[0]!;
+    const stops = unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y }));
+    const stones = trailStones(unit.stops);
+    const drawings = new Set<string>();
+    for (const land of PATH_LANDS) {
+      for (const dark of [false, true]) {
+        for (const width of [390, 720]) {
+          const svg = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark, seed: 'u' });
+          const elements = sound(svg, `0 0 ${width} ${unit.height}`);
+          expect(parse(svg).attrs['aria-hidden']).toBe('true');
+          // a few hundred elements, and no more than the whole village weighs on a wide page
+          expect(elements, `${land.ground} ${width}`).toBeLessThan(width > 400 ? 420 : 260);
+          expect(svg.length, `${land.ground} ${width}`).toBeLessThan((width > 400 ? 64 : 36) * 1024);
+          drawings.add(svg);
+        }
+      }
+      expect(pathLandSvg({ ground: land.ground, width: 390, height: unit.height, stops, stones, seed: 'u' })).toBe(
+        pathLandSvg({ ground: land.ground, width: 390, height: unit.height, stops, stones, seed: 'u' }),
+      );
+    }
+    expect(drawings.size).toBe(PATH_LANDS.length * 4);
+    const walked = pathStonesSvg({ width: 390, height: unit.height, stones, walked: true });
+    // three elements however many stones: shade, face and light
+    expect(sound(walked)).toBe(4);
+    expect(() => pathLandSvg({ ground: 'moon' as never, width: 390, height: 600, stops, stones })).toThrow(RangeError);
+    expect(() => pathLandSvg({ ground: 'snow', width: 0, height: 600, stops, stones })).toThrow(RangeError);
   });
 });

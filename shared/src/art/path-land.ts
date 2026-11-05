@@ -348,14 +348,21 @@ function tree(pen: Pen, x: number, y: number, kind: TreeKind, s: number, dark: b
         pen.line(`M${n(x - 5 * s)} ${n(y - 54 * s)}q${n(-1 * s)} ${n(10 * s)} 0 ${n(20 * s)}`, leaf.light, 2.4 * s);
       } else {
         const leaf = T(kind === 'snowpine' ? { light: '#5f9a6a', face: '#3f7552', shade: '#2b5640' } : { light: '#6faa5c', face: '#447f45', shade: '#2f5f36' });
+        // three tiers, each in shade with its lit side and (in snow) a cap, as three paths for the whole tree
+        const shade: string[] = [];
+        const lit: string[] = [];
+        const caps: string[] = [];
         for (let k = 0; k < 3; k++) {
           const top = y - (64 - k * 16) * s;
           const half = (11 + k * 4) * s;
           const base = top + 26 * s;
-          pen.face(`M${n(x)} ${n(top)}L${n(x + half)} ${n(base)}L${n(x - half)} ${n(base)}Z`, leaf.shade, 1.3);
-          pen.flat(`M${n(x)} ${n(top + 2 * s)}L${n(x + half * 0.15)} ${n(base - 1.5 * s)}L${n(x - half + 2 * s)} ${n(base - 1.5 * s)}Z`, leaf.face);
-          if (kind === 'snowpine') pen.flat(`M${n(x)} ${n(top + 1 * s)}L${n(x + half * 0.45)} ${n(top + 11 * s)}L${n(x - half * 0.5)} ${n(top + 11 * s)}Z`, dusk(SNOW.light, dark, 0.35));
+          shade.push(`M${n(x)} ${n(top)}L${n(x + half)} ${n(base)}L${n(x - half)} ${n(base)}Z`);
+          lit.push(`M${n(x)} ${n(top + 2 * s)}L${n(x + half * 0.15)} ${n(base - 1.5 * s)}L${n(x - half + 2 * s)} ${n(base - 1.5 * s)}Z`);
+          caps.push(`M${n(x)} ${n(top + 1 * s)}L${n(x + half * 0.45)} ${n(top + 11 * s)}L${n(x - half * 0.5)} ${n(top + 11 * s)}Z`);
         }
+        pen.face(shade.reverse().join(''), leaf.shade, 1.3);
+        pen.flat(lit.join(''), leaf.face);
+        if (kind === 'snowpine') pen.flat(caps.join(''), dusk(SNOW.light, dark, 0.35));
       }
       return;
     }

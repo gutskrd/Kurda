@@ -332,12 +332,14 @@ export function UnitRail({ units, onPick }: { units: RailUnit[]; onPick: (unitId
       <ol>
         {units.map((u) => {
           const finished = u.total > 0 && u.done === u.total;
+          const number = t('coursemap.unit', { n: new Intl.NumberFormat(locale).format(u.number) });
           return (
             <li key={u.unitId} className={`lp-rail-unit lp-tone-${u.tone}${u.here ? ' is-here' : ''}${finished ? ' is-done' : ''}`}>
-              <button type="button" onClick={() => onPick(u.unitId)} aria-current={u.here ? 'step' : undefined}>
+              {/* its number and name said as one, as the unit's banner says them */}
+              <button type="button" onClick={() => onPick(u.unitId)} aria-current={u.here ? 'step' : undefined} aria-label={`${number}, ${u.title}`}>
                 <span className="lp-rail-dot" aria-hidden="true" />
                 <span className="lp-rail-words">
-                  <span className="lp-rail-number">{t('coursemap.unit', { n: new Intl.NumberFormat(locale).format(u.number) })}</span>
+                  <span className="lp-rail-number">{number}</span>
                   <span className="lp-rail-title">{u.title}</span>
                 </span>
               </button>

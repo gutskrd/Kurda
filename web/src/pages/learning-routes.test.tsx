@@ -399,6 +399,24 @@ describe('a course map', () => {
     expect(JSON.parse(sessionStorage.getItem('hevalo:path:c1')!)).toEqual({ 's:greet': { state: 'done', done: 2 }, 's:num': { state: 'current', done: 0 } });
   });
 
+  it('stands the learner on the stop to do now, and lists every unit on a rail that goes to it', async () => {
+    serve({ 'GET /courses/c1/map': basics, 'GET /courses': courses, 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+    await screen.findByRole('button', { name: /^Greetings/ });
+    expect(screen.getAllByTestId('lp-learner')).toHaveLength(1);
+    expect(screen.getByTestId('lp-learner')).toHaveAttribute('aria-hidden', 'true');
+    // the rail beside the path: every unit by its number and name, the one the learner is in marked
+    const rail = screen.getAllByRole('navigation', { name: 'Course map' })[0]!;
+    const here = within(rail).getByRole('button', { name: 'Unit 1, Basics' });
+    expect(here).toHaveAttribute('aria-current', 'step');
+    await userEvent.click(here);
+    expect(screen.getByRole('button', { name: /^Guide to Basics/ })).toHaveFocus();
+    // where there is no room for the rail, a banner's flag opens it in a sheet
+    await userEvent.click(screen.getByRole('button', { name: 'Course map' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Course map' });
+    expect(within(sheet).getByRole('button', { name: 'Unit 1, Basics' })).toBeInTheDocument();
+  });
+
   it('moves along the path with the arrow keys', async () => {
     serve({ 'GET /courses/c1/map': basics, 'GET /practice/due': { due: 0, available: 0 } });
     routes('/app/learn/course/c1');
