@@ -88,8 +88,9 @@
 
 .lp-map {
   display: grid;
-  gap: var(--space-6);
+  gap: var(--space-5);
   margin-top: var(--space-2);
+  min-width: 0;
 }
 .lp-unit {
   display: grid;
@@ -104,7 +105,13 @@
   border-radius: var(--r-xl);
   background: var(--u-fill);
   color: var(--u-ink);
-  box-shadow: 0 5px 0 var(--u-lip);
+  /* outlined in the world's one ink, on its darker lip, as the stops are */
+  border: 2px solid #130e12;
+  box-shadow: 0 5px 0 var(--u-lip), 0 5px 0 2px #130e12;
+}
+:root[data-theme='light'] .lp-banner {
+  border-color: #3b2a20;
+  box-shadow: 0 5px 0 var(--u-lip), 0 5px 0 2px #3b2a20;
 }
 .lp-banner-text {
   display: grid;
@@ -143,39 +150,137 @@
   font-variant-numeric: tabular-nums;
   opacity: 0.9;
 }
-.lp-unit-guide {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 0 var(--space-4);
-  border: 0;
+/* ---- the world -------------------------------------------------------------- */
+
+/*
+ * The path and, where the page leaves room beside it, the rail of units: a
+ * slim column of milestones that stays in reach as the path scrolls. Where
+ * there is no room, each unit banner's flag button opens the same rail in a
+ * sheet instead.
+ */
+.lp-world {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.lp-rail {
+  display: none;
+}
+@media (min-width: 1100px) {
+  .lp-world {
+    grid-template-columns: 172px minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+  .lp-world > .lp-rail {
+    display: block;
+    position: sticky;
+    top: calc(var(--nav-h, 64px) + var(--space-4));
+  }
+  .lp-unit-rail {
+    display: none;
+  }
+}
+.lp-rail-sheet .lp-rail {
+  display: block;
+}
+.lp-rail ol {
+  position: relative;
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* the rail itself: a line through every milestone's middle */
+.lp-rail ol::before {
+  content: '';
+  position: absolute;
+  inset-block: 22px;
+  inset-inline-start: 13px;
+  width: 3px;
   border-radius: var(--r-pill);
-  /* the banner's own ink, faintly, so the guide belongs to its unit */
-  background: color-mix(in srgb, var(--u-ink) 12%, transparent);
-  color: inherit;
+  background: var(--border);
+}
+.lp-rail-unit button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 44px;
+  padding: 4px var(--space-2) 4px 0;
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: var(--ink-2);
   font: inherit;
-  font-size: var(--text-secondary);
-  font-weight: 650;
+  text-align: start;
   cursor: pointer;
 }
-.lp-unit-guide:hover {
-  background: color-mix(in srgb, var(--u-ink) 20%, transparent);
+.lp-rail-unit button:hover {
+  background: var(--surface-2);
 }
-.lp-unit-guide:focus-visible {
+.lp-rail-unit button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.lp-rail-dot {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  margin-inline: 4px;
+  border-radius: 50%;
+  border: 3px solid var(--u-lip);
+  background: var(--surface-solid);
+}
+.lp-rail-unit.is-done .lp-rail-dot {
+  background: var(--u-fill);
+}
+.lp-rail-unit.is-here .lp-rail-dot {
+  width: 28px;
+  height: 28px;
+  margin-inline: 0;
+  background: var(--u-fill);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--u-fill) 35%, transparent);
+}
+.lp-rail-words {
+  display: grid;
+  min-width: 0;
+}
+.lp-rail-number {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.lp-rail-unit.is-here .lp-rail-number {
+  color: var(--u-text);
+}
+.lp-rail-title {
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--ink);
+}
+.lp-unit-rail {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--u-ink) 12%, transparent);
+  color: inherit;
+  cursor: pointer;
+}
+.lp-unit-rail:focus-visible {
   outline: 2px solid var(--u-ink);
   outline-offset: 2px;
 }
-/*
- * On the light page the banner's ink is white, and white mixed in lightens the
- * deep fill under the words (4.1:1 on the meadow). The unit's own darker lip
- * does the same job the other way, and the words stay at 6.7:1 or better.
- */
-:root[data-theme='light'] .lp-unit-guide {
+:root[data-theme='light'] .lp-unit-rail {
   background: color-mix(in srgb, var(--u-lip) 55%, transparent);
-}
-:root[data-theme='light'] .lp-unit-guide:hover {
-  background: color-mix(in srgb, var(--u-lip) 80%, transparent);
 }
 
 /* ---- the path --------------------------------------------------------------- */
@@ -184,34 +289,56 @@
  * Stops are placed by @kurda/shared's `lessonPath`: `top` from it, and `--x`,
  * how far a stop leans from the middle toward the end of the line. Placing
  * them from the logical start makes a right-to-left page lean the other way.
+ * Under them each unit's land (learn/PathWorld.tsx): its ground, its stepping
+ * stones and its landmark, drawn by @kurda/shared's art/path-land.ts in the
+ * outlined, cel-shaded look the village has, and tucked a little under the
+ * unit's banner.
  */
 .lp-path {
   position: relative;
-  margin: 0;
+  margin: -14px 0 0;
   padding: 0;
   list-style: none;
 }
-.lp-trail {
+.lp-banner {
+  position: relative;
+  z-index: 6;
+}
+.lp-land {
   position: absolute;
-  inset-inline-start: 50%;
-  top: 0;
-  overflow: visible;
+  inset: 0;
   pointer-events: none;
+  border-radius: var(--r-xl);
 }
-[dir='rtl'] .lp-trail {
-  transform: scaleX(-1);
+.lp-land > span,
+.lp-land-ground,
+.lp-land-stones {
+  position: absolute;
+  inset: 0;
+  line-height: 0;
 }
-.lp-trail path {
-  fill: none;
-  stroke-width: 7;
-  stroke-linecap: round;
-  stroke-dasharray: 0 15;
+.lp-land-ground {
+  overflow: hidden;
+  border-radius: var(--r-xl);
 }
-.lp-trail-ahead {
-  stroke: var(--lp-line);
+.lp-land svg {
+  display: block;
 }
-.lp-trail-walked {
-  stroke: var(--u-fill);
+.lp-landmark {
+  position: absolute;
+  inset-inline-start: calc(50% + var(--lx, 0px));
+  line-height: 0;
+}
+.lp-landmark-art,
+.lp-loop {
+  position: absolute;
+  line-height: 0;
+}
+.lp-landmark-art {
+  inset: 0;
+}
+.lp-land-stones.is-fresh {
+  animation: lp-glyph-in 450ms var(--ease-out) 800ms both;
 }
 
 .lp-stop {
@@ -227,8 +354,7 @@
   position: absolute;
   top: 0;
   inset-inline-start: calc(50% + var(--x, 0px) - var(--node) / 2);
-  display: grid;
-  place-items: center;
+  display: block;
   width: var(--node);
   height: var(--node);
   padding: 0;
@@ -238,34 +364,66 @@
   color: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  /* moved to with the arrow keys: clear of the bubble above it (the page's
+  /* moved to with the arrow keys: clear of the flag above it (the page's
      scroll padding, base.css, already keeps it clear of the top bar) */
-  scroll-margin-top: 56px;
+  scroll-margin-top: 120px;
   scroll-margin-bottom: calc(var(--bottom-chrome, 0px) + 72px);
 }
-/* the face is the round you see; the lip under it is what makes it feel pressable */
+/* the drawn disc: its base stays on the ground, its face (and what is on it) sinks into it under a finger */
 .lp-node-face {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 0;
+}
+.lp-art {
+  position: absolute;
+  inset-inline-start: -20px;
+  top: -28px;
+  width: 112px;
+  height: 112px;
+  line-height: 0;
+  pointer-events: none;
+}
+.lp-art-face,
+.lp-node-glyph,
+.lp-lights {
+  transition: translate var(--dur-fast) var(--ease-out);
+}
+.lp-node:active .lp-art-face,
+.lp-node:active .lp-node-glyph,
+.lp-node:active .lp-lights {
+  translate: 0 7px;
+}
+/* a unit far from the screen: its stops are plain rounds until it comes near */
+.lp-node:not(.is-drawn) .lp-node-face {
+  inset: 4px 0 16px;
   border-radius: 50%;
   background: var(--lp-rest);
-  color: var(--lp-rest-ink);
-  box-shadow: 0 5px 0 var(--lp-rest-lip);
-  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+  box-shadow: 0 8px 0 var(--lp-rest-lip);
 }
-.lp-node:active .lp-node-face {
-  transform: translateY(3px);
-  box-shadow: 0 2px 0 var(--lp-rest-lip);
+.lp-node.is-done:not(.is-drawn) .lp-node-face,
+.lp-node.is-current:not(.is-drawn) .lp-node-face {
+  background: var(--u-fill);
+  box-shadow: 0 8px 0 var(--u-lip);
+}
+.lp-node-glyph {
+  position: absolute;
+  inset-inline: 0;
+  top: 4px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  color: var(--lp-rest-ink);
 }
 .lp-node:focus-visible {
   outline: none;
 }
-.lp-node:focus-visible .lp-node-face {
+.lp-node:focus-visible .lp-node-face::after {
+  content: '';
+  position: absolute;
+  inset: -2px -6px 6px;
+  border-radius: 50%;
   outline: 3px solid var(--focus);
-  outline-offset: 5px;
+  outline-offset: 4px;
 }
 .lp-node-num {
   font-size: 1.6rem;
@@ -274,31 +432,19 @@
   line-height: 1;
 }
 
-/* done: filled in the unit's colour */
-.lp-node.is-done .lp-node-face {
-  background: var(--u-fill);
+/* the glyph on the face, in the colour the face needs */
+.lp-node.is-done .lp-node-glyph,
+.lp-node.is-current .lp-node-glyph {
   color: var(--u-ink);
-  box-shadow: 0 5px 0 var(--u-lip);
 }
-.lp-node.is-done:active .lp-node-face {
-  box-shadow: 0 2px 0 var(--u-lip);
-}
-/* strong: a rim of the sun's gold, the achievement it is */
-.lp-node.is-strong .lp-node-face::after {
-  content: '';
-  position: absolute;
-  inset: -6px;
-  border-radius: 50%;
-  border: 3px solid var(--gold);
-}
-/* ready for a refresh: still done, a little faded, with a small review sign until a review brings it back */
-.lp-node.is-refresh .lp-node-face {
-  background: color-mix(in srgb, var(--u-fill) 55%, var(--lp-rest));
+.lp-node.is-available .lp-node-glyph,
+.lp-node.is-review .lp-node-glyph {
+  color: var(--u-text);
 }
 .lp-node-badge {
   position: absolute;
-  top: -4px;
-  inset-inline-end: -4px;
+  top: -10px;
+  inset-inline-end: -6px;
   display: grid;
   place-items: center;
   width: 28px;
@@ -309,84 +455,102 @@
   box-shadow: 0 0 0 2px var(--u-fill);
 }
 
-/* current: raised higher, with a ring for its parts */
-.lp-node.is-current .lp-node-face {
-  background: var(--u-fill);
-  color: var(--u-ink);
-  box-shadow: 0 7px 0 var(--u-lip);
-}
-.lp-node.is-current:active .lp-node-face {
-  transform: translateY(5px);
-  box-shadow: 0 2px 0 var(--u-lip);
-}
-.lp-ring {
+/* the stop to do now: in a soft pool of its unit's light, its lessons as lights along its side */
+.lp-glow {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  translate: -50% -50%;
-  transform: rotate(-90deg);
-  overflow: visible;
+  inset-inline-start: -30px;
+  top: 14px;
+  width: 132px;
+  height: 64px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--u-fill) 60%, transparent), color-mix(in srgb, var(--u-fill) 25%, transparent) 55%, transparent);
   pointer-events: none;
 }
-[dir='rtl'] .lp-ring {
-  transform: rotate(-90deg) scaleY(-1);
+.lp-lights {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
-.lp-ring circle {
-  fill: none;
-  stroke-width: 6;
+[dir='rtl'] .lp-lights {
+  scale: -1 1;
 }
-.lp-ring-track {
-  stroke: var(--lp-line);
+.lp-light {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  box-shadow: 0 0 0 1.5px #130e12;
 }
-.lp-ring-fill {
-  stroke: var(--u-fill);
-  stroke-linecap: round;
+:root[data-theme='light'] .lp-light {
+  background: rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0 0 1.5px #3b2a20;
 }
-
-/* open, but not the one up next: outlined in the unit's colour */
-.lp-node.is-available .lp-node-face {
-  background: var(--surface-solid);
-  color: var(--u-text);
-  box-shadow: inset 0 0 0 4px var(--u-fill), 0 5px 0 var(--u-lip);
-}
-
-/* review: the unit's colour, quietly, behind the review arrows */
-.lp-node.is-review .lp-node-face {
-  background: var(--surface-solid);
-  color: var(--u-text);
-  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--u-fill) 60%, transparent), 0 5px 0 var(--lp-rest-lip);
-}
-
-/* a unit's trophy: grey until earned, then the sun */
-.lp-node.is-trophy.is-earned .lp-node-face {
+.lp-light.is-lit {
   background: var(--gold);
-  color: var(--lp-gold-ink);
-  box-shadow: 0 5px 0 var(--lp-gold-lip);
 }
 
-/* "Start" over the current lesson, bobbing gently — and still, for anyone who asked for less motion */
+/*
+ * The learner, on the stop to do now: their picture in a ring of the unit's
+ * colour, on a stem whose foot is on the stop's face.
+ */
+.lp-learner {
+  position: absolute;
+  z-index: 3;
+  inset-inline-start: calc(50% + var(--tx, 0px) - 25px);
+  width: 50px;
+  margin-top: -70px;
+  display: grid;
+  justify-items: center;
+  pointer-events: none;
+  list-style: none;
+}
+.lp-learner-ring {
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  border: 3px solid var(--u-fill);
+  background: var(--surface-solid);
+  overflow: hidden;
+}
+.lp-learner-ring .friend-avatar {
+  width: 42px;
+  height: 42px;
+}
+.lp-learner-stem {
+  width: 4px;
+  height: 12px;
+  border-radius: 0 0 2px 2px;
+  background: var(--u-fill);
+}
+
+/* "Start" over the learner: a chunky flag in the unit's colour on its darker lip, outlined like the stops */
 .lp-callout {
   position: absolute;
-  bottom: calc(100% + 22px);
+  bottom: 118px;
   inset-inline-start: calc(50% + var(--x, 0px));
   translate: -50% 0;
-  z-index: 2;
+  z-index: 4;
   display: inline-flex;
   align-items: center;
   min-height: 40px;
   padding: 0 var(--space-4);
+  border: 2px solid #130e12;
   border-radius: var(--r-md);
-  background: var(--surface-solid);
-  color: var(--u-text);
+  background: var(--u-fill);
+  color: var(--u-ink);
   font-size: var(--text-secondary);
   font-weight: 750;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.04em;
   text-transform: uppercase;
   white-space: nowrap;
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--u-fill) 70%, transparent), var(--shadow-sm);
-  /* two slow bobs as the page opens, to show where to look, then still: a
-     bubble that never stops moving pulls at the eye the whole time it is read */
-  animation: lp-bob 1.8s var(--ease-out) 4 alternate;
+  box-shadow: 0 4px 0 var(--u-lip), 0 4px 0 2px #130e12;
+}
+:root[data-theme='light'] .lp-callout {
+  border-color: #3b2a20;
+  box-shadow: 0 4px 0 var(--u-lip), 0 4px 0 2px #3b2a20;
 }
 [dir='rtl'] .lp-callout {
   translate: 50% 0;
@@ -394,50 +558,242 @@
 .lp-callout::after {
   content: '';
   position: absolute;
-  top: 100%;
+  top: calc(100% + 1px);
   left: 50%;
   width: 12px;
   height: 12px;
-  margin: -7px 0 0 -6px;
-  background: inherit;
+  margin-left: -6px;
+  background: var(--u-lip);
   rotate: 45deg;
-  box-shadow: 2px 2px 0 0 color-mix(in srgb, var(--u-fill) 70%, transparent);
+  border-right: 2px solid #130e12;
+  border-bottom: 2px solid #130e12;
+}
+:root[data-theme='light'] .lp-callout::after {
+  border-color: #3b2a20;
 }
 .lp-callout:hover {
-  color: var(--u-text);
+  color: var(--u-ink);
   text-decoration: none;
 }
 .lp-callout:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
-@keyframes lp-bob {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(-5px);
+
+/*
+ * Hevalo and the course's people, whole, standing beside the path (shared
+ * `mascotSpot`, `hostBox`): placed as the stops are, from the logical start,
+ * so a right-to-left page has them on its own other side. Not on the
+ * narrowest screens, where they would crowd the path.
+ */
+.lp-mascot {
+  position: absolute;
+  z-index: 2;
+  inset-inline-start: calc(50% + var(--mx, 0px) - 44px);
+  width: 88px;
+  height: 140px;
+  /* his feet on the ground beside the stop's foot: `top` is where a head-high figure's top would be */
+  margin-top: -48px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  line-height: 0;
+  list-style: none;
+}
+.lp-host {
+  position: absolute;
+  z-index: 2;
+  inset-inline-start: calc(50% + var(--hx, 0px) - 44px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  line-height: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.lp-host-say {
+  position: absolute;
+  top: 0;
+  padding: 6px 10px;
+  border: 2px solid #130e12;
+  border-radius: var(--r-md);
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-size: var(--text-secondary);
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  animation: lp-arrive var(--dur) var(--ease-out) both;
+}
+:root[data-theme='light'] .lp-host-say {
+  border-color: #3b2a20;
+}
+@media (max-width: 339px) {
+  .lp-mascot,
+  .lp-host {
+    display: none;
   }
 }
-@media (prefers-reduced-motion: reduce) {
-  .lp-callout {
-    animation: none;
+
+/* ---- motion ----------------------------------------------------------------- */
+
+/*
+ * Only the unit in view moves (`is-seen`), and nothing moves for anyone who
+ * asked for less motion: the stop to do now and the learner on it bob, the
+ * stops of a unit rise into place one after another the first time it comes
+ * into view (`is-rising`; until then `is-waiting` keeps them under the
+ * ground), and the landmark's one loop turns.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .lp-unit.is-seen .lp-stop.is-here:not(.is-open),
+  .lp-unit.is-seen .lp-learner:not(.is-hopping) {
+    animation: lp-bob 1.2s ease-in-out infinite alternate;
   }
-  .lp-node-face {
-    transition: none;
+  .lp-unit.is-waiting .lp-node {
+    opacity: 0;
+  }
+  .lp-unit.is-rising .lp-node {
+    animation: lp-rise 380ms var(--ease-out) both;
+    animation-delay: calc(var(--i, 0) * 45ms);
+  }
+  .lp-unit.is-seen .lp-loop.is-kilim,
+  .lp-unit.is-seen .lp-loop.is-flag {
+    transform-origin: 0 0;
+    animation: lp-flutter 2.8s ease-in-out infinite;
+  }
+  .lp-unit.is-seen .lp-loop.is-steam,
+  .lp-unit.is-seen .lp-loop.is-smoke {
+    animation: lp-rise-away 2.8s linear infinite;
+  }
+  .lp-unit.is-seen .lp-loop.is-water {
+    animation: lp-ripple 2.8s linear infinite;
+  }
+  .lp-unit.is-seen .lp-loop.is-flame {
+    transform-origin: 50% 100%;
+    animation: lp-flicker 0.7s ease-in-out infinite alternate;
+  }
+  .lp-unit.is-seen .lp-loop.is-bee {
+    animation: lp-orbit 2.8s linear infinite;
+  }
+  .lp-unit.is-seen .lp-loop.is-sign {
+    transform-origin: 50% 0;
+    animation: lp-swing 2.8s ease-in-out infinite;
+  }
+  /* the learner's hop, from the stop they finished to the one to do now */
+  .lp-learner.is-hopping {
+    animation: lp-hop 520ms ease-in-out both;
+  }
+  /* a chest earned by the lesson: it wobbles as the skill pops, then bursts open */
+  .lp-node.is-wobbling .lp-node-face {
+    transform-origin: 50% 80%;
+    animation: lp-wobble 250ms ease-in-out 2;
+  }
+  .lp-node.is-unlocking .lp-node-face {
+    animation: lp-node-pop var(--dur-slow) var(--ease-spring);
+  }
+}
+@keyframes lp-bob {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 -4px;
+  }
+}
+@keyframes lp-rise {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+}
+@keyframes lp-flutter {
+  0%,
+  100% {
+    transform: rotate(0deg) scaleX(1);
+  }
+  25% {
+    transform: rotate(5deg) scaleX(0.94);
+  }
+  75% {
+    transform: rotate(-5deg) scaleX(0.9);
+  }
+}
+@keyframes lp-rise-away {
+  0% {
+    opacity: 0;
+    translate: 0 4px;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 0 -10px;
+  }
+}
+@keyframes lp-ripple {
+  from {
+    opacity: 1;
+    scale: 0.6;
+  }
+  to {
+    opacity: 0;
+    scale: 1.25;
+  }
+}
+@keyframes lp-flicker {
+  from {
+    transform: scale(1.05, 0.9);
+  }
+  to {
+    transform: scale(0.95, 1.1);
+  }
+}
+@keyframes lp-orbit {
+  to {
+    rotate: 360deg;
+  }
+}
+@keyframes lp-swing {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  25% {
+    rotate: 9deg;
+  }
+  75% {
+    rotate: -9deg;
+  }
+}
+@keyframes lp-hop {
+  from {
+    translate: var(--hx) var(--hy);
+  }
+  50% {
+    translate: calc(var(--hx) / 2) calc(var(--hy) / 2 - 46px);
+  }
+  to {
+    translate: 0 0;
+  }
+}
+@keyframes lp-wobble {
+  25% {
+    rotate: -9deg;
+  }
+  75% {
+    rotate: 9deg;
   }
 }
 
 /*
  * Coming back after a lesson (learn/CoursePath.tsx, on @kurda/shared's
- * PATH_RETURN): the ring fills from the share it had, the finished stop pops
- * and its check draws in, the opened one pops as its number takes the
- * padlock's place, and the bubble arrives at the new stop before it bobs.
+ * PATH_RETURN): the finished stop pops and its check draws in, the opened one
+ * pops as its number takes the padlock's place, a chest earned wobbles and
+ * bursts open, the bubble arrives at the new stop and the learner hops there.
  * Under Reduce Motion none of it runs: the path is drawn as it is.
  */
-.lp-ring-fill.is-moving {
-  transition: stroke-dasharray 600ms var(--ease-emphasis);
-}
 @keyframes lp-node-pop {
   50% {
     transform: scale(1.12);
@@ -458,36 +814,27 @@
 .lp-node.is-opening .lp-node-face {
   animation: lp-node-pop var(--dur-slow) var(--ease-spring);
 }
-.lp-node.is-finishing .lp-node-face > svg {
+.lp-node.is-finishing .lp-node-glyph > svg {
   animation: check-draw calc(var(--dur) + 60ms) var(--ease-out) 60ms both;
 }
-.lp-node.is-opening .lp-node-face > * {
+.lp-node.is-opening .lp-node-glyph > * {
   animation: lp-glyph-in var(--dur-fast) ease-out both;
 }
 .lp-callout.is-arriving {
-  animation:
-    lp-arrive var(--dur) var(--ease-out) both,
-    lp-bob 1.8s var(--ease-out) var(--dur) 4 alternate;
+  animation: lp-arrive var(--dur) var(--ease-out) both;
 }
-
-/*
- * Hevalo beside the current stop (shared `mascotSpot`): placed as the stops
- * are, from the logical start, so a right-to-left page has him on its own
- * other side. Not on the narrowest screens, where he would crowd the path.
- */
-.lp-mascot {
-  position: absolute;
-  z-index: 1;
-  inset-inline-start: calc(50% + var(--mx, 0px) - 44px);
-  width: 88px;
-  display: flex;
-  justify-content: center;
-  line-height: 0;
-  list-style: none;
-}
-@media (max-width: 339px) {
-  .lp-mascot {
-    display: none;
+@media (prefers-reduced-motion: reduce) {
+  .lp-node.is-finishing .lp-node-face,
+  .lp-node.is-opening .lp-node-face,
+  .lp-callout.is-arriving,
+  .lp-host-say,
+  .lp-land-stones.is-fresh {
+    animation: none;
+  }
+  .lp-art-face,
+  .lp-node-glyph,
+  .lp-lights {
+    transition: none;
   }
 }
 

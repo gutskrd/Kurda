@@ -408,11 +408,14 @@ describe('a course map', () => {
     expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveFocus();
     await userEvent.keyboard('{End}');
     expect(screen.getByRole('button', { name: /trophy/ })).toHaveFocus();
+    // the unit opens with its guide, the first stop on the path
     await userEvent.keyboard('{Home}');
+    expect(screen.getByRole('button', { name: 'Guide to Basics' })).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
     expect(greetings).toHaveFocus();
   });
 
-  it('puts review on the path when words are due, and a unit’s guide on its banner', async () => {
+  it('puts review on the path when words are due, and a unit’s guide at the head of its path', async () => {
     serve({
       'GET /courses/c1/map': basics,
       'GET /practice/due': { due: 6, available: 12 },
@@ -424,7 +427,7 @@ describe('a course map', () => {
     await userEvent.click(review);
     expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/app/learn/review');
 
-    await userEvent.click(screen.getByRole('button', { name: 'Guide' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guide to Basics' }));
     const guide = await screen.findByRole('dialog', { name: 'Guide to Basics' });
     expect(await within(guide).findByRole('heading', { level: 3, name: 'Silavkirin' })).toBeInTheDocument();
 
