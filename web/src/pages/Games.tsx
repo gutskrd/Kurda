@@ -11,6 +11,7 @@ import { LearnHeader } from '../learn/LearnHeader';
 import { ChevronIcon, TrophyIcon } from '../components/icons';
 import { JoinCodeEntry } from '../play/JoinCode';
 import { LearnGameTile, useListedLearnGames } from '../games/learnGames';
+import { KingdomTile } from '../kingdom/KingdomEntry';
 
 /**
  * A game, before it has words.
@@ -183,6 +184,8 @@ export function Games(): React.JSX.Element {
         {learnGames.map((g) => (
           <LearnGameTile key={g.id} game={g} signedIn={signedIn} />
         ))}
+        {/* Kurdish Kingdom: the learner's own village, so only for someone signed in */}
+        {signedIn && <KingdomTile />}
       </div>
 
       {/* your rank in each game played against people, and the season (signed in only) */}

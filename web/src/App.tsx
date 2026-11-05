@@ -43,6 +43,7 @@ const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ de
 const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
 const WordleBattle = lazy(() => import('./pages/WordleBattle').then((m) => ({ default: m.WordleBattle })));
 const RhymeMatch = lazy(() => import('./pages/RhymeMatch').then((m) => ({ default: m.RhymeMatch })));
+const KingdomPage = lazy(() => import('./kingdom/KingdomPage').then((m) => ({ default: m.KingdomPage })));
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
 const Register = lazy(() => import('./pages/Register').then((m) => ({ default: m.Register })));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
@@ -278,6 +279,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
         {/* the learning games, each a round made and scored on the server like the others */}
         <Route path="games/build-sentence" element={<RequireAccount what="gate.what.play"><BuildSentence /></RequireAccount>} />
+        {/* Kurdish Kingdom: the village the learner's own learning builds */}
+        <Route path="games/kingdom" element={<RequireAccount what="gate.what.play"><KingdomPage /></RequireAccount>} />
         {/* Stories replaced the ranked quiz, then moved from the games to Learn's
             own Stories group: both old addresses lead there (an invite's `?id=`
             and a story's slug kept). A game on a story stays here: a quiz on one

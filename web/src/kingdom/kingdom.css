@@ -1,0 +1,294 @@
+/*
+ * Kurdish Kingdom: the village scene with a button over each building, the
+ * list of the six under it, the first visit's card and a building's sheet.
+ * The scene keeps its own shape at every width (the drawing's 360 × 300), from
+ * a 360-pixel phone to a desktop, where it stops growing and the list goes
+ * into two columns beside nothing wider than the page reads well at.
+ */
+
+.kingdom-page {
+  max-width: 760px;
+}
+
+.kingdom-scene {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background: var(--surface-2);
+}
+.kingdom-scene.is-loading {
+  aspect-ratio: 360 / 300;
+}
+.kingdom-scene-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* a building to tap: invisible until it has the focus or the pointer, then a soft ring round it */
+.kingdom-plot {
+  position: absolute;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-lg);
+  background: transparent;
+  cursor: pointer;
+  transition: box-shadow var(--dur-fast, 160ms) ease;
+}
+.kingdom-plot:hover {
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.55);
+}
+.kingdom-plot:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px var(--focus);
+}
+
+/* the village's life: sprites over the drawing, each placed by its middle */
+.kingdom-life {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.kingdom-life > span {
+  position: absolute;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+}
+.kingdom-life svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.kingdom-life-smoke {
+  opacity: 0;
+  animation: kingdom-smoke 4.8s ease-out infinite;
+}
+.kingdom-life-water {
+  animation: kingdom-water 2.6s ease-in-out infinite;
+}
+.kingdom-life-leaf {
+  transform-origin: 30% 80%;
+  animation: kingdom-leaf 3.4s ease-in-out infinite;
+}
+@keyframes kingdom-smoke {
+  0% {
+    opacity: 0;
+    transform: translateY(0) scale(0.6);
+  }
+  25% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-60%) scale(1.2);
+  }
+}
+@keyframes kingdom-water {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: translateX(-6%);
+  }
+  50% {
+    opacity: 0.95;
+    transform: translateX(6%);
+  }
+}
+@keyframes kingdom-leaf {
+  0%,
+  100% {
+    transform: rotate(-6deg);
+  }
+  50% {
+    transform: rotate(8deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kingdom-life > span {
+    animation: none;
+    opacity: 0;
+  }
+  .kingdom-plot {
+    transition: none;
+  }
+}
+
+/* the first visit's one sentence */
+.kingdom-intro {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  margin-bottom: var(--space-4);
+  padding: var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+.kingdom-intro p {
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: 1.45;
+}
+.kingdom-intro .kingdom-intro-built {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+
+.kingdom-zer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--gold-ink);
+  font-weight: 600;
+}
+
+/* the six, under the scene */
+.kingdom-list {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-2);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+@media (min-width: 640px) {
+  .kingdom-list {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+.kingdom-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 64px;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.kingdom-row:hover {
+  background: var(--surface-2);
+}
+.kingdom-row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.kingdom-row-art {
+  flex: none;
+  width: 48px;
+  height: 48px;
+}
+.kingdom-row-art svg {
+  display: block;
+}
+.kingdom-row-text {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+  min-width: 0;
+}
+.kingdom-row-name {
+  font-weight: 600;
+}
+.kingdom-row-level {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.kingdom-row-go {
+  flex: none;
+  color: var(--ink-4);
+}
+[dir='rtl'] .kingdom-row-go {
+  transform: rotate(180deg);
+}
+
+.kingdom-bar {
+  position: relative;
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.kingdom-bar > span {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: var(--gold);
+}
+
+/* a building's sheet */
+.kingdom-sheet-body {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  text-align: center;
+  padding-bottom: var(--space-2);
+}
+.kingdom-sheet-body p {
+  margin: 0;
+  max-width: 34em;
+  color: var(--ink-2);
+}
+.kingdom-sheet-body .kingdom-bar {
+  width: min(100%, 320px);
+  margin-top: var(--space-1);
+}
+.kingdom-sheet-art svg {
+  display: block;
+}
+.kingdom-sheet-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.kingdom-sheet-body .kingdom-sheet-level {
+  color: var(--ink-3);
+}
+.kingdom-sheet-heading {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.kingdom-sheet-body .kingdom-sheet-next {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.kingdom-sheet-go {
+  margin-top: var(--space-3);
+  min-width: 220px;
+}
+
+.kingdom-celebrate-art svg {
+  display: block;
+}
+
+/* the tile among Learn's games: the village as its picture, beside the race on a wide page */
+.kingdom-tile-visual {
+  padding: 16px;
+}
+.kingdom-tile-visual svg {
+  display: block;
+  width: 100%;
+  max-width: 300px;
+  height: auto;
+  border-radius: var(--r-lg);
+}
+@media (min-width: 1000px) {
+  .game-tile--kingdom {
+    grid-column: span 7;
+  }
+}
