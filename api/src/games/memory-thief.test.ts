@@ -38,16 +38,31 @@ const glossary = [
 ];
 
 describe('the words a passage can lose', () => {
-  it('are its glossary terms first, then taught words, each with a meaning', () => {
+  it('are its glossary terms first, then taught words, each with a meaning, each exactly as written', () => {
     const c = candidatesIn(['Gund li ber çiya ye. Kanî li gund e û dar mezin e.'], glossary, lexicon, 'kmr');
     expect(c.map((x) => [x.term, x.from])).toEqual([
-      ['Gund', 'glossary'],
-      ['Kanî', 'glossary'],
+      ['gund', 'glossary'],
       ['çiya', 'vocabulary'],
       ['dar', 'vocabulary'],
     ]);
-    // a glossary term without any meaning is never taken
+    // a glossary term without any meaning is never taken, nor one the passage writes only otherwise (Kanî for kanî)
     expect(c.map((x) => x.term)).not.toContain('nexşe');
+    expect(c.map((x) => x.term.toLowerCase())).not.toContain('kanî');
+  });
+
+  it('never take a meaning for a word spelled alike: marks, capitals and a word of another lesson are not the word', () => {
+    // what lessons elsewhere teach for words that look like these
+    const lookAlikes = new Map([
+      ['te', { en: 'your; you' }],
+      ['xwê', { en: 'salt' }],
+      ['dê', { en: 'mother' }],
+      ['baran', { en: 'rain' }],
+      ['ne', { en: 'not' }],
+    ]);
+    const c = candidatesIn(['Baran tê malê û xwe dişo.', 'Ew ê de bên, ew xemlandî ne.'], [], lookAlikes, 'kmr');
+    expect(c).toEqual([]);
+    // the word itself, exactly as written, is taken with the meaning given for it
+    expect(candidatesIn(['Baran li ser baranê ye, baran dibare.'], [], lookAlikes, 'kmr').map((x) => [x.term, x.meanings.en])).toEqual([['baran', 'rain']]);
   });
 
   it('are never short words or names', () => {
@@ -62,14 +77,15 @@ describe('the words a passage can lose', () => {
 });
 
 describe('the words that vanish', () => {
-  const lines = ['Gund li ber çiya ye. Kanî li gund e û dar mezin e. Mal li bajar e.'];
+  const lines = ['Gund li ber çiya ye. Kanî li gund e û dar li ber kanî mezin e. Mal li bajar e.'];
   const candidates = candidatesIn(lines, glossary, lexicon, 'kmr');
 
   it('are as many as asked, glossary first, in the order they stand', () => {
     const hidden = chooseHidden(lines, candidates, 3, 'seed', 'kmr');
     expect(hidden).toHaveLength(3);
     expect(hidden.filter((h) => h.from === 'glossary')).toHaveLength(2);
-    const at = (t: string) => lines[0]!.indexOf(t);
+    // where a word first stands, whatever its capital there
+    const at = (t: string) => lines[0]!.toLowerCase().indexOf(t.toLowerCase());
     expect(hidden.map((h) => at(h.term))).toEqual([...hidden.map((h) => at(h.term))].sort((a, b) => a - b));
   });
 
@@ -141,7 +157,7 @@ describe('the decoys', () => {
 // a story of six paragraphs and a conversation of eight lines, in each variety
 function story(dialect: GameDialect, level: number, n: number): StoryPassage[] {
   // a passage of its own for every level and paragraph: the same text twice is one passage
-  const kmr = (i: number) => `Gund ${'xweş '.repeat(i + level * 10)}li ber çiya ye. Kanî li gund e û dar mezin e. Mal li bajar e, lê rê dûr e û av sar e.`;
+  const kmr = (i: number) => `Gund ${'xweş '.repeat(i + level * 10)}li ber çiya ye. Kanî li gund e û dar li ber kanî mezin e. Mal li bajar e, lê rê dûr e û av sar e.`;
   const ckb = (i: number) => `گوندەکە ${'جوان '.repeat(i + level * 10)}لە بەر چیایە. کانییەکە لە گوندەکە دایە و دارەکە گەورەیە و ماڵەکە نزیکە.`;
   return Array.from({ length: n }, (_, i) => ({
     key: `p${dialect}${level}${i}`,
@@ -155,6 +171,9 @@ function story(dialect: GameDialect, level: number, n: number): StoryPassage[] {
         ? [
             { term: 'gund', meanings: { en: 'village' } },
             { term: 'kanî', meanings: { en: 'spring' } },
+            { term: 'çiya', meanings: { en: 'mountain' } },
+            { term: 'bajar', meanings: { en: 'city' } },
+            { term: 'dar', meanings: { en: 'tree' } },
           ]
         : [
             { term: 'گوندەکە', meanings: { en: 'the village' } },
@@ -174,6 +193,11 @@ const conversation: ConversationText = {
     { ku: 'Mal li ber çiya ye.', en: 'The house is by the mountain.', speaker: 'hevalo' },
   ],
   origin: 'conversation:x',
+  // what its own lesson teaches, exactly as written
+  taught: [
+    { word: 'bajar', meanings: { en: 'city' } },
+    { word: 'çiya', meanings: { en: 'mountain' } },
+  ],
 };
 
 const vocabulary: VocabularyWord[] = [...lexicon].map(([ku, meanings]) => ({ key: `w:${ku}`, ku, meanings }));

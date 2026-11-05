@@ -14,8 +14,14 @@
  * accepted answer — every word order the lessons accept is right. A wrong
  * first try is answered with where the line first goes astray, never the
  * answer; once an item is done, the sentence the right way round with what
- * each word means, where an approved source says (the lessons' word pairs,
- * the stories' glossaries, the row's own glosses).
+ * each word means where the sentence's own source attests it: a row's own
+ * glosses, or the meanings the lesson that teaches the sentence gives those
+ * very words (`LessonSentence.glosses`). A word is matched exactly as written
+ * — its marks and its capital kept — and never through a folded spelling or
+ * another lesson's word list: tê is not te ("you"), xwe is not xwê ("salt"),
+ * Baran is not baran ("rain"), and the ne of "xemlandî ne" is not the ne a
+ * lesson elsewhere teaches as "not". A word nothing attests has no meaning
+ * shown.
  *
  * A round with six or more right on the first try on the learner's own rung
  * opens the next rung (`game_progress`): a round holds six of the rung's own
@@ -74,7 +80,7 @@ export interface PoolSentence {
   accepted: string[];
   rung: SentenceRung;
   level: GameLevel;
-  /** a row's own glosses, by its word */
+  /** what its own source says its words mean, by each word exactly as written (NFC) */
   glosses: Map<string, Partial<Meanings>>;
 }
 
@@ -118,11 +124,11 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
   }
 
   /** The pool, every word's one spelling and the words' meanings, worked out once and kept while the pools stand. */
-  private read(dialect: GameDialect): Promise<{ sentences: PoolSentence[]; spelling: Map<string, string>; decoyWords: string[]; lexicon: Map<string, Partial<Meanings>> }> {
+  private read(dialect: GameDialect): Promise<{ sentences: PoolSentence[]; spelling: Map<string, string>; decoyWords: string[] }> {
     return this.sources.derived('build-sentence:pool', dialect, async () => {
-      const [sentences, lexicon] = await Promise.all([this.readSentences(dialect), this.lexicon(dialect)]);
+      const sentences = await this.readSentences(dialect);
       const spelling = this.spellings(sentences, dialect);
-      return { sentences, spelling, decoyWords: [...spelling.values()], lexicon };
+      return { sentences, spelling, decoyWords: [...spelling.values()] };
     });
   }
 
@@ -131,12 +137,14 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
     const byKey = new Map<string, PoolSentence>();
     for (const s of lessons) {
       const shape = sentenceShape(s.ku, s.meaning.en, dialect);
-      byKey.set(s.key, { key: s.key, ku: s.ku, meaning: s.meaning, orders: s.orders, accepted: s.accepted, rung: shape.rung, level: shape.level, glosses: new Map() });
+      const glosses = new Map((s.glosses ?? []).map((g) => [g.word.normalize('NFC'), g.meanings]));
+      byKey.set(s.key, { key: s.key, ku: s.ku, meaning: s.meaning, orders: s.orders, accepted: s.accepted, rung: shape.rung, level: shape.level, glosses });
     }
     for (const row of rows) {
       const p = row.payload;
       const key = sentenceKey(dialect, p.ku);
-      const glosses = new Map(p.glosses.map((g) => [foldForDialect(g.word, dialect), g.meanings]));
+      // a reviewer's glosses for this very sentence, by each word exactly as they wrote it
+      const glosses = new Map(p.glosses.map((g) => [g.word.normalize('NFC').trim(), g.meanings]));
       const orders = [p.ku, ...p.orders];
       const had = byKey.get(key);
       if (had) {
@@ -183,7 +191,7 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
   }
 
   async build(ask: RoundAsk, db: Pick<pg.Pool, 'query'>): Promise<{ items: SentenceItem[]; meta: Record<string, unknown> } | null> {
-    const [{ sentences: pool, spelling, decoyWords, lexicon }, step, seen] = await Promise.all([
+    const [{ sentences: pool, spelling, decoyWords }, step, seen] = await Promise.all([
       this.read(ask.dialect),
       this.step(db, ask.userId, ask.dialect),
       seenFor(db, ask.userId, BUILD_SENTENCE),
@@ -239,10 +247,8 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
           [tiles[places[0]!], tiles[other]] = [tiles[other]!, tiles[places[0]!]!];
         }
       }
-      const glosses = gameWords(s.ku).map((w) => {
-        const key = foldForDialect(w, ask.dialect);
-        return s.glosses.get(key) ?? lexicon.get(key) ?? lexicon.get(foldForDialect(w, ask.dialect, true)) ?? null;
-      });
+      // each word exactly as written, from the sentence's own source, or nothing
+      const glosses = gameWords(s.ku).map((w) => s.glosses.get(w.normalize('NFC')) ?? null);
       const accepted = [...s.orders, ...s.accepted.filter((a) => !s.orders.includes(a))].slice(0, 12);
       return {
         key: s.key,
@@ -276,18 +282,6 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
       }
     }
     return byKey;
-  }
-
-  /** What single words mean, from the variety's approved vocabulary: by strict and by lenient spelling. */
-  private async lexicon(dialect: GameDialect): Promise<Map<string, Partial<Meanings>>> {
-    const out = new Map<string, Partial<Meanings>>();
-    for (const w of await this.sources.vocabulary(dialect)) {
-      const strict = foldForDialect(w.ku, dialect);
-      if (!out.has(strict)) out.set(strict, w.meanings);
-      const lenient = foldForDialect(w.ku, dialect, true);
-      if (!out.has(lenient)) out.set(lenient, w.meanings);
-    }
-    return out;
   }
 
   view(item: SentenceItem, index: number): SentenceItemView {

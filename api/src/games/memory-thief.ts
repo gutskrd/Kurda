@@ -4,9 +4,13 @@
  *
  * The passages are published stories' paragraphs, a few lines at a time of
  * published lessons' conversations, and published `passage` rows, in the
- * learner's variety only. The words that vanish are approved ones with an
- * approved meaning: a story's glossary terms first (a row's own hidden words
- * for a row), then words the published lessons teach that the passage holds.
+ * learner's variety only. The words that vanish are approved ones with a
+ * meaning the passage's own source attests: a story's own glossary terms, a
+ * row's own hidden words, and for a conversation the words its own lesson
+ * teaches. Each is matched exactly as the passage writes it, marks and
+ * capitals kept — never a folded look-alike, nor a meaning another lesson
+ * gives a word spelled alike (tê is not te, xwe is not xwê, Baran is not
+ * baran) — so the meaning shown in the reveal is the passage's own.
  * Short words (two letters or fewer) and names are never taken; a word taken
  * from two places is one gap twice.
  *
@@ -142,8 +146,8 @@ const SENTENCE_END = /[.!?…؟]\s*$/u;
  * written with a capital where no sentence starts — a name, which is never
  * taken.
  */
-function wordsOf(lines: readonly string[], dialect: GameDialect): Map<string, { form: string; at: number[]; name: boolean }> {
-  const out = new Map<string, { form: string; at: number[]; name: boolean }>();
+function wordsOf(lines: readonly string[], dialect: GameDialect): Map<string, { form: string; forms: Set<string>; at: number[]; name: boolean }> {
+  const out = new Map<string, { form: string; forms: Set<string>; at: number[]; name: boolean }>();
   let at = 0;
   for (const line of lines) {
     let initial = true;
@@ -157,8 +161,9 @@ function wordsOf(lines: readonly string[], dialect: GameDialect): Map<string, { 
       const had = out.get(key);
       if (had) {
         had.at.push(at);
+        had.forms.add(p.word.normalize('NFC'));
         had.name ||= capital && !initial;
-      } else out.set(key, { form: p.word, at: [at], name: capital && !initial });
+      } else out.set(key, { form: p.word, forms: new Set([p.word.normalize('NFC')]), at: [at], name: capital && !initial });
       initial = false;
       at++;
     }
@@ -167,31 +172,34 @@ function wordsOf(lines: readonly string[], dialect: GameDialect): Map<string, { 
 }
 
 /**
- * The words a passage could lose, preferred first: its glossary terms (a
- * story's, or a row's own hidden words), then the words published lessons
- * teach that it holds. Each is a single word the passage has as written, at
- * least three letters long, not a name, with a meaning (pure, for the tests).
+ * The words a passage could lose, preferred first: its own glossary terms (a
+ * story's, or a row's own hidden words), then the words its own lesson
+ * teaches (`taught`, by each word exactly as written). Each is a single word
+ * the passage has exactly as the glossary or the lesson writes it — marks and
+ * capitals kept, so a word spelled alike is never taken for it — at least
+ * three letters long, not a name, with a meaning (pure, for the tests).
  */
 export function candidatesIn(
   lines: readonly string[],
   glossary: ReadonlyArray<{ term: string; meanings: Partial<Meanings> | null | undefined }>,
-  lexicon: ReadonlyMap<string, Partial<Meanings>>,
+  taught: ReadonlyMap<string, Partial<Meanings>>,
   dialect: GameDialect,
 ): Candidate[] {
   const words = wordsOf(lines, dialect);
   const out: Candidate[] = [];
   const taken = new Set<string>();
-  const keep = (key: string, meanings: Partial<Meanings> | null | undefined, from: Candidate['from']): void => {
+  const keep = (exact: string, meanings: Partial<Meanings> | null | undefined, from: Candidate['from']): void => {
+    const key = foldForDialect(exact, dialect);
     const word = words.get(key);
-    if (!word || word.name || taken.has(key) || !worthTaking(key) || !hasMeaning(meanings)) return;
+    if (!word || !word.forms.has(exact) || word.name || taken.has(key) || !worthTaking(key) || !hasMeaning(meanings)) return;
     taken.add(key);
-    out.push({ term: word.form, meanings, from });
+    out.push({ term: exact, meanings, from });
   };
   for (const g of glossary) {
     const w = gameWords(g.term);
-    if (w.length === 1) keep(foldForDialect(w[0]!, dialect), g.meanings, 'glossary');
+    if (w.length === 1) keep(w[0]!.normalize('NFC'), g.meanings, 'glossary');
   }
-  for (const key of words.keys()) keep(key, lexicon.get(key), 'vocabulary');
+  for (const word of words.values()) for (const form of word.forms) keep(form, taught.get(form), 'vocabulary');
   return out;
 }
 
@@ -348,17 +356,18 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
       this.sources.conversationTexts(dialect),
       this.sources.vocabulary(dialect),
     ]);
-    const lexicon = new Map<string, Partial<Meanings>>();
-    for (const w of vocabulary) {
-      const key = foldForDialect(w.ku, dialect);
-      if (!lexicon.has(key)) lexicon.set(key, w.meanings);
-    }
+    const none = new Map<string, Partial<Meanings>>();
     const byKey = new Map<string, PoolPassage>();
-    const add = (p: Omit<PoolPassage, 'key' | 'candidates'>, glossary: ReadonlyArray<{ term: string; meanings: Partial<Meanings> | null | undefined }>): void => {
+    // each passage with its own source's meanings only: a story's glossary, a row's hidden words, a conversation's own lesson
+    const add = (
+      p: Omit<PoolPassage, 'key' | 'candidates'>,
+      glossary: ReadonlyArray<{ term: string; meanings: Partial<Meanings> | null | undefined }>,
+      taught: ReadonlyMap<string, Partial<Meanings>> = none,
+    ): void => {
       const texts = p.lines.map((l) => l.text);
       if (!fits(texts)) return;
       const key = passageKey(dialect, texts);
-      const candidates = candidatesIn(texts, glossary, lexicon, dialect);
+      const candidates = candidatesIn(texts, glossary, taught, dialect);
       const had = byKey.get(key);
       if (had) {
         // the same text read twice: a row's choice of words first, then anything the story adds
@@ -381,11 +390,12 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
       add({ kind: 'story', source: `story:${s.storyId}`, title: s.title, lines: [{ text: s.text, speaker: null }], level }, s.glossary);
     }
     for (const c of conversations) {
+      const taught = new Map((c.taught ?? []).map((t) => [t.word, t.meanings]));
       let from = 0;
       for (const size of conversationWindows(c.lines.length)) {
         const lines = c.lines.slice(from, from + size).map((l) => ({ text: l.ku, speaker: l.speaker }));
         from += size;
-        add({ kind: 'conversation', source: c.key, title: c.title, lines, level: conversationLevel(lines.map((l) => l.text)) }, []);
+        add({ kind: 'conversation', source: c.key, title: c.title, lines, level: conversationLevel(lines.map((l) => l.text)) }, [], taught);
       }
     }
     const passages = [...byKey.values()];

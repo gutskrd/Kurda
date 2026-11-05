@@ -90,6 +90,30 @@ describe('a round', () => {
     }
   });
 
+  it('glosses a word only with what the sentence’s own lesson attests for it, exactly as written', async () => {
+    // what the lessons teaching these sentences say of their words, and look-alikes another lesson teaches
+    const own = (ku: string, en: string, glosses: Array<[string, string]> = []) => ({ ...lesson(ku, en), glosses: glosses.map(([word, m]) => ({ word, meanings: { en: m } })) });
+    const pool = [
+      own('Baran tê malê.', 'Baran comes home.', [['malê', 'home']]),
+      own('Ew xwe dişo.', 'He washes himself.'),
+      own('Ew xemlandî ne.', 'They are decorated.', [['xemlandî', 'decorated']]),
+      own('Ew de hat.', 'He came then.'),
+      ...SHORT.slice(0, 4).map((x) => own(x, `meaning of ${x}`)),
+    ];
+    const lookAlikes: VocabularyWord[] = [
+      ['te', 'your; you'],
+      ['xwê', 'salt'],
+      ['dê', 'mother'],
+      ['baran', 'rain'],
+      ['ne', 'not'],
+    ].map(([ku, en]) => ({ key: `w:${ku}`, ku: ku!, meanings: { en: en! } }));
+    const round = (await new BuildSentenceGame(fakeSources(pool, lookAlikes)).build(ask(), emptyDb))!;
+    const shown = new Map(round.items.flatMap((item) => gameWords(item.ku).map((w, i) => [w, item.glosses[i]?.en ?? null] as const)));
+    expect(shown.get('malê')).toBe('home');
+    expect(shown.get('xemlandî')).toBe('decorated');
+    for (const w of ['Baran', 'tê', 'xwe', 'de', 'ne']) expect(shown.get(w), w).toBeNull();
+  });
+
   it('sends the player the meaning and the tiles, never the sentence nor a key worked out from it', async () => {
     const round = await game.build(ask(), emptyDb);
     const view = game.view(round!.items[0]!, 0);

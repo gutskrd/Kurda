@@ -25,6 +25,15 @@
  * (`fitsDialect`): a Latin word in a Soranî lesson, or a recording whose text
  * is in the other script, is left out of both.
  *
+ * What a word means is shown only where the item itself attests it: a
+ * sentence's words by the meanings its own lesson teaches for exactly those
+ * words (`lessonWordMeanings`: the same letters, marks and capitals, never a
+ * folded look-alike from somewhere else — tê is not te, xwe is not xwê, Baran
+ * the name is not baran the rain, and ne in "xemlandî ne" is not the ne a
+ * lesson elsewhere teaches as "not"), a recording's text by the meaning its
+ * own lesson item gives it (`publishedRecordingTexts`), a dictionary entry's
+ * by its own first sense. Where nothing attests a meaning, none is shown.
+ *
  * Every item carries a key that stays the same while its Kurdish does: a
  * sentence is keyed by its text, not by the exercise it came from, so a
  * lesson published again, or the same sentence taught in two lessons, is the
@@ -72,6 +81,8 @@ type Executor = Pick<pg.Pool, 'query'>;
 
 /** How long a pool is kept, in seconds. */
 export const POOL_TTL_SECONDS = 300;
+/** A dictionary sense longer than this explains rather than translates: it is no meaning to show beside a word. */
+const DICTIONARY_GLOSS_MAX = 40;
 /** How long what a game works out from the pools is kept in this process: a fraction of a pool's life, so it follows the pools closely. */
 export const DERIVED_TTL_MS = 60_000;
 const CACHE_DOMAIN = 'games-pool';
@@ -107,6 +118,14 @@ export interface LessonSentence {
   accepted: string[];
   /** 'lesson:<exerciseId>' or 'conversation:<exerciseId>:<line>' */
   origin: string;
+  /** what its own lesson teaches its words to mean, each word exactly as written there (`taughtIn`); absent or empty when nothing is attested */
+  glosses?: AttestedWord[];
+}
+
+/** A word exactly as written, with the meaning the item it is part of attests for it. */
+export interface AttestedWord {
+  word: string;
+  meanings: Partial<Meanings>;
 }
 
 /** A word a published lesson pairs with its meaning, or a published story's glossary term. */
@@ -132,6 +151,8 @@ export interface ConversationText {
   title: string | null;
   lines: Array<{ ku: string; en: string | null; speaker: SpeakerId | null }>;
   origin: string;
+  /** what its own lesson teaches the words of its lines to mean, exactly as written (`taughtIn`) */
+  taught?: AttestedWord[];
 }
 
 /** One paragraph of a published story, with the glossary terms it holds. */
@@ -155,6 +176,8 @@ export interface HumanRecording {
   speaker: SpeakerId | null;
   /** who recorded it, so a game can offer another person's take of the same text */
   recordedBy: string | null;
+  /** what its own item says it means (a lesson's English for it, a dictionary entry's first sense); null when nothing does */
+  meanings?: Partial<Meanings> | null;
 }
 
 /** A published `game_content` row, as a game reads it. */
@@ -196,6 +219,8 @@ interface ExerciseRow {
   type: string;
   payload: unknown;
   dialect: string;
+  /** the published lesson it is in */
+  lesson_id: string;
 }
 
 const QUOTED = /[“"«‘]([^”"»’]+)[”"»’]/gu;
@@ -262,6 +287,67 @@ export function sentencesOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payload'>, d
     });
   }
   return out;
+}
+
+/** The types of exercise that pair a word with what it means: where a lesson's word meanings are read from. */
+const PAIRING_TYPES = ['match_pairs', 'translate', 'multiple_choice'] as const;
+
+/** A meaning as two are told apart: its English, without case or the closing stop. */
+const meaningKeyOf = (m: Partial<Meanings>): string => (m.en ?? '').trim().toLowerCase().replace(/[\s.!?…]+$/u, '');
+
+/**
+ * What each published lesson teaches its single words to mean (pure, for the
+ * tests): a match card and its partner, a one-word translation, a one-word
+ * question and its answer — by lesson, each word exactly as the lesson writes
+ * it (NFC, marks and capitals kept). A word one lesson gives two different
+ * meanings is no word with a meaning there: which it is cannot be told.
+ */
+export function lessonWordMeanings(rows: ReadonlyArray<Pick<ExerciseRow, 'type' | 'payload' | 'lesson_id'>>, dialect: GameDialect): Map<string, Map<string, Partial<Meanings>>> {
+  const found = new Map<string, Map<string, Partial<Meanings> | null>>();
+  for (const row of rows) {
+    if (!(PAIRING_TYPES as readonly string[]).includes(row.type)) continue;
+    const lesson = found.get(row.lesson_id) ?? new Map<string, Partial<Meanings> | null>();
+    found.set(row.lesson_id, lesson);
+    for (const pair of itemWords(row.type as never, row.payload, dialect === 'ckb' ? 'sorani' : 'kurmanji').pairs) {
+      const words = gameWords(pair.ku);
+      const en = pair.meaning.trim();
+      if (words.length !== 1 || !fitsDialect(pair.ku, dialect) || en === '' || fitsDialect(en, 'ckb')) continue;
+      const word = words[0]!.normalize('NFC');
+      const meanings = { en };
+      const had = lesson.get(word);
+      if (had === undefined) lesson.set(word, meanings);
+      else if (had !== null && meaningKeyOf(had) !== meaningKeyOf(meanings)) lesson.set(word, null);
+    }
+  }
+  const out = new Map<string, Map<string, Partial<Meanings>>>();
+  for (const [lesson, words] of found) {
+    const kept = new Map<string, Partial<Meanings>>();
+    for (const [word, meanings] of words) if (meanings) kept.set(word, meanings);
+    out.set(lesson, kept);
+  }
+  return out;
+}
+
+/** The words of a text a lesson attests a meaning for, exactly as written, each once (pure, for the tests). */
+export function taughtIn(text: string, meanings: ReadonlyMap<string, Partial<Meanings>> | undefined): AttestedWord[] {
+  if (!meanings || meanings.size === 0) return [];
+  const out: AttestedWord[] = [];
+  for (const word of new Set(gameWords(text).map((w) => w.normalize('NFC')))) {
+    const m = meanings.get(word);
+    if (m) out.push({ word, meanings: m });
+  }
+  return out;
+}
+
+/** Two items' attested words together: a word they disagree on means nothing certain, and is left out. */
+export function mergeAttested(a: readonly AttestedWord[], b: readonly AttestedWord[]): AttestedWord[] {
+  const byWord = new Map<string, AttestedWord | null>();
+  for (const w of [...a, ...b]) {
+    const had = byWord.get(w.word);
+    if (had === undefined) byWord.set(w.word, w);
+    else if (had !== null && meaningKeyOf(had.meanings) !== meaningKeyOf(w.meanings)) byWord.set(w.word, null);
+  }
+  return [...byWord.values()].filter((w): w is AttestedWord => w !== null);
 }
 
 /** The consecutive line pairs of one conversation exercise (pure, for the tests). */
@@ -358,16 +444,44 @@ export function conversationLinesOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payl
  * them under. A recording under any other key is of a draft, of a story in
  * review or rejected, or of a text corrected since.
  */
-export function publishedRecordingTexts(exercises: ReadonlyArray<Pick<ExerciseRow, 'type' | 'payload'>>, paragraphs: readonly string[]): Map<string, string> {
-  const out = new Map<string, string>();
-  const add = (key: string, text: string): void => {
-    if (key !== '' && !out.has(key)) out.set(key, text);
+export function publishedRecordingTexts(
+  exercises: ReadonlyArray<Pick<ExerciseRow, 'type' | 'payload'>>,
+  paragraphs: readonly string[],
+  dialect: GameDialect = 'kmr',
+): Map<string, { text: string; meanings: Partial<Meanings> | null }> {
+  const out = new Map<string, { text: string; meanings: Partial<Meanings> | null }>();
+  const add = (key: string, text: string, meanings: Partial<Meanings> | null): void => {
+    if (key === '') return;
+    const had = out.get(key);
+    if (!had) out.set(key, { text, meanings });
+    // the same text filed twice: a meaning only where the two agree, or one says none
+    else if (meanings && (!had.meanings || meaningKeyOf(had.meanings) === meaningKeyOf(meanings))) had.meanings = had.meanings ?? meanings;
+    else if (meanings && had.meanings) had.meanings = null;
   };
+  const english = (en: string | null | undefined): Partial<Meanings> | null => (en && en.trim() !== '' && !fitsDialect(en, 'ckb') ? { en: en.trim() } : null);
   for (const row of exercises) {
-    if (row.type === 'conversation') for (const clip of conversationClips(row.payload)) add(clip.key, clip.text);
-    else for (const text of lessonAudioTargets(row.type, row.payload)) add(lessonAudioKey(text), text);
+    if (row.type === 'conversation') {
+      const lines = conversationPayloadSchema.safeParse(row.payload);
+      for (const clip of conversationClips(row.payload)) add(clip.key, clip.text, english(lines.success ? lines.data.lines[clip.index]?.en : null));
+      continue;
+    }
+    // what this item itself says its Kurdish means: a match card's partner, a translation's English
+    const own = new Map<string, Partial<Meanings>>();
+    for (const pair of itemWords(row.type as never, row.payload, dialect === 'ckb' ? 'sorani' : 'kurmanji').pairs) {
+      const m = english(pair.meaning);
+      if (m) own.set(lessonAudioKey(pair.ku), m);
+    }
+    if (row.type === 'translate') {
+      const p = translatePayloadSchema.safeParse(row.payload);
+      const answer = p.success ? itemWords('translate', p.data, dialect === 'ckb' ? 'sorani' : 'kurmanji').answer : null;
+      // the English a translation into Kurdish asks for; or, for one out of Kurdish, its answer
+      const m = !p.success ? null : answer?.lang === 'ku' ? english(meaningOfPrompt(p.data.prompt)) : answer?.lang === 'meaning' && p.data.say ? english(p.data.accepted[0]) : null;
+      const ku = !p.success ? null : answer?.lang === 'ku' ? p.data.accepted[0]! : (p.data.say ?? null);
+      if (m && ku) own.set(lessonAudioKey(ku), m);
+    }
+    for (const text of lessonAudioTargets(row.type, row.payload)) add(lessonAudioKey(text), text, own.get(lessonAudioKey(text)) ?? null);
   }
-  for (const paragraph of paragraphs) for (const sentence of storyAudioSentences(paragraph)) add(lessonAudioKey(sentence), sentence);
+  for (const paragraph of paragraphs) for (const sentence of storyAudioSentences(paragraph)) add(lessonAudioKey(sentence), sentence, null);
   return out;
 }
 
@@ -430,7 +544,7 @@ export class TrustedSources {
           WHERE l.status = 'published'
           ORDER BY l.skill_id, l.position, l.version DESC
        )
-       SELECT e.id, e.type, e.payload, live.dialect
+       SELECT e.id, e.type, e.payload, live.dialect, live.id AS lesson_id
          FROM live JOIN exercises e ON e.lesson_id = live.id
         WHERE $1::text[] IS NULL OR e.type = ANY($1::text[])
         ORDER BY live.id, e.position`,
@@ -441,16 +555,21 @@ export class TrustedSources {
 
   /** Published lessons' sentences of 3–10 words with their English, one per Kurdish text. */
   lessonSentences(dialect: GameDialect): Promise<LessonSentence[]> {
-    return this.pooled('lesson-sentences', dialect, async () => {
+    return this.pooled('lesson-sentences-attested', dialect, async () => {
       const byKey = new Map<string, LessonSentence>();
-      for (const row of await this.publishedExercises(dialect, ['translate', 'conversation'])) {
+      const rows = await this.publishedExercises(dialect, ['translate', 'conversation', ...PAIRING_TYPES]);
+      const taught = lessonWordMeanings(rows, dialect);
+      for (const row of rows) {
+        if (row.type !== 'translate' && row.type !== 'conversation') continue;
         for (const s of sentencesOf(row, dialect)) {
+          s.glosses = taughtIn(s.ku, taught.get(row.lesson_id));
           const had = byKey.get(s.key);
           if (!had) byKey.set(s.key, s);
           else {
-            // the same sentence taught twice: every order and every answer either lesson accepts
+            // the same sentence taught twice: every order and every answer either lesson accepts, and the meanings both agree on
             for (const o of s.orders) if (!had.orders.some((x) => gradingKey(x) === gradingKey(o))) had.orders.push(o);
             had.accepted = [...new Set([...had.accepted, ...s.accepted])];
+            had.glosses = mergeAttested(had.glosses ?? [], s.glosses);
           }
         }
       }
@@ -471,11 +590,18 @@ export class TrustedSources {
 
   /** Published lessons' conversations whole, one per set of lines (the same conversation in two lessons is one). */
   conversationTexts(dialect: GameDialect): Promise<ConversationText[]> {
-    return this.pooled('conversation-texts', dialect, async () => {
+    return this.pooled('conversation-texts-attested', dialect, async () => {
       const byKey = new Map<string, ConversationText>();
-      for (const row of await this.publishedExercises(dialect, ['conversation'])) {
+      const rows = await this.publishedExercises(dialect, ['conversation', ...PAIRING_TYPES]);
+      const taught = lessonWordMeanings(rows, dialect);
+      for (const row of rows) {
+        if (row.type !== 'conversation') continue;
         const text = conversationOf(row, dialect);
-        if (text && !byKey.has(text.key)) byKey.set(text.key, text);
+        if (!text) continue;
+        text.taught = taughtIn(text.lines.map((l) => l.ku).join(' '), taught.get(row.lesson_id));
+        const had = byKey.get(text.key);
+        if (!had) byKey.set(text.key, text);
+        else had.taught = mergeAttested(had.taught ?? [], text.taught);
       }
       return [...byKey.values()];
     });
@@ -547,8 +673,9 @@ export class TrustedSources {
         this.db.query<{ key: string; url: string; speaker: SpeakerId | null; updated_by: string | null }>(
           `SELECT key, url, speaker, updated_by FROM alphabet_audio ORDER BY key`,
         ),
-        this.db.query<{ id: string; headword: string; url: string; speaker: SpeakerId | null; dialect: string; entry_dialect: string }>(
-          `SELECT a.id, e.headword, a.audio_url AS url, a.speaker, a.dialect, e.dialect AS entry_dialect
+        this.db.query<{ id: string; headword: string; url: string; speaker: SpeakerId | null; dialect: string; entry_dialect: string; gloss: string | null }>(
+          `SELECT a.id, e.headword, a.audio_url AS url, a.speaker, a.dialect, e.dialect AS entry_dialect,
+                  (SELECT s.definition_en FROM dict_senses s WHERE s.entry_id = e.id ORDER BY s.position LIMIT 1) AS gloss
              FROM dict_audio a JOIN dict_entries e ON e.id = a.entry_id
             WHERE e.in_games
             ORDER BY e.headword, a.id`,
@@ -559,13 +686,14 @@ export class TrustedSources {
       const published = publishedRecordingTexts(
         exercises,
         stories.map((p) => p.text),
+        dialect,
       );
       const out: HumanRecording[] = [];
       for (const r of lesson.rows) {
-        // a recording is played only of a text published content says now, and shown as it says it
-        const text = published.get(r.key);
-        if (text !== undefined && fitsDialect(text, dialect)) {
-          out.push({ key: `rec:lesson:${r.key}`, source: 'lesson', text, url: r.url, speaker: r.speaker, recordedBy: r.recorded_by });
+        // a recording is played only of a text published content says now, shown as it says it, with the meaning it gives it
+        const found = published.get(r.key);
+        if (found !== undefined && fitsDialect(found.text, dialect)) {
+          out.push({ key: `rec:lesson:${r.key}`, source: 'lesson', text: found.text, url: r.url, speaker: r.speaker, recordedBy: r.recorded_by, meanings: found.meanings });
         }
       }
       for (const r of alphabet.rows) {
@@ -576,7 +704,10 @@ export class TrustedSources {
       }
       for (const r of dictionary.rows) {
         if (toDialect(r.dialect) === dialect && toDialect(r.entry_dialect) === dialect && fitsDialect(r.headword, dialect)) {
-          out.push({ key: `rec:dict:${r.id}`, source: 'dictionary', text: r.headword, url: r.url, speaker: r.speaker, recordedBy: null });
+          // the entry's own first sense, when it is short enough to be a meaning rather than an explanation
+          const gloss = r.gloss?.trim() ?? '';
+          const meanings = gloss !== '' && gloss.length <= DICTIONARY_GLOSS_MAX && !fitsDialect(gloss, 'ckb') ? { en: gloss } : null;
+          out.push({ key: `rec:dict:${r.id}`, source: 'dictionary', text: r.headword, url: r.url, speaker: r.speaker, recordedBy: null, meanings });
         }
       }
       return out;

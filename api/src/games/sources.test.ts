@@ -16,8 +16,11 @@ import {
   isAlphabetSoundKey,
   meaningOfPrompt,
   pairsOf,
+  lessonWordMeanings,
+  mergeAttested,
   publishedRecordingTexts,
   sentenceKey,
+  taughtIn,
   sentencesOf,
   wordsOfExercise,
 } from './sources.js';
@@ -200,17 +203,76 @@ describe('the recordings a game may play', () => {
   ];
   const published = publishedRecordingTexts(lessons, ['Pisîk li malê ye. Ew radize.']);
 
-  it('are of texts published lessons and approved stories say, keyed as the studio files them', () => {
-    expect(published.get(lessonAudioKey('Rojbaş!'))).toBe('Rojbaş!');
-    expect(published.get(lessonAudioKey('sêv'))).toBe('sêv');
-    expect(published.get(conversationLineKey('conv456def', 1, 'Tu çawa yî?'))).toBe('Tu çawa yî?');
-    expect(published.get(lessonAudioKey('Ew radize.'))).toBe('Ew radize.');
+  it('are of texts published lessons and approved stories say, keyed as the studio files them, with what their own item says they mean', () => {
+    expect(published.get(lessonAudioKey('Rojbaş!'))).toEqual({ text: 'Rojbaş!', meanings: { en: 'Good morning.' } });
+    expect(published.get(lessonAudioKey('sêv'))).toEqual({ text: 'sêv', meanings: { en: 'apple' } });
+    expect(published.get(conversationLineKey('conv456def', 1, 'Tu çawa yî?'))).toEqual({ text: 'Tu çawa yî?', meanings: { en: 'How are you?' } });
+    // a story's sentence has no English of its own
+    expect(published.get(lessonAudioKey('Ew radize.'))).toEqual({ text: 'Ew radize.', meanings: null });
+  });
+
+  it('give a text two items mean differently no meaning at all', () => {
+    const torn = publishedRecordingTexts(
+      [
+        { type: 'match_pairs', payload: { pairs: [{ left: 'ne', right: 'not' }, { left: 'sêv', right: 'apple' }] } },
+        { type: 'match_pairs', payload: { pairs: [{ left: 'ne', right: 'are' }, { left: 'nan', right: 'bread' }] } },
+      ],
+      [],
+    );
+    expect(torn.get(lessonAudioKey('ne'))).toEqual({ text: 'ne', meanings: null });
+    expect(torn.get(lessonAudioKey('nan'))!.meanings).toEqual({ en: 'bread' });
   });
 
   it('are never of a draft’s text, a corrected text’s old spelling, or a conversation line filed as plain text', () => {
     expect(published.has(lessonAudioKey('Şev baş!'))).toBe(false);
     expect(published.has(lessonAudioKey('Rojbash!'))).toBe(false);
     expect(published.has(lessonAudioKey('Tu çawa yî?'))).toBe(false);
+  });
+});
+
+describe('what a lesson attests its words mean', () => {
+  // two lessons: one teaches the sentence, the other words that only look like some of its words
+  const rows = [
+    { lesson_id: 'L1', type: 'translate', payload: { prompt: 'In Kurdish: “Baran comes, they are decorated.”', accepted: ['Baran tê, ew xemlandî ne.'] } },
+    { lesson_id: 'L1', type: 'match_pairs', payload: { pairs: [{ left: 'xemlandî', right: 'decorated' }, { left: 'tê', right: 'comes' }] } },
+    {
+      lesson_id: 'L2',
+      type: 'match_pairs',
+      payload: {
+        pairs: [
+          { left: 'te', right: 'your; you' },
+          { left: 'xwê', right: 'salt' },
+          { left: 'dê', right: 'mother' },
+          { left: 'baran', right: 'rain' },
+          { left: 'ne', right: 'not' },
+        ],
+      },
+    },
+  ];
+  const taught = lessonWordMeanings(rows, 'kmr');
+
+  it('is by lesson, each word exactly as the lesson writes it', () => {
+    expect(taught.get('L1')).toEqual(new Map([['xemlandî', { en: 'decorated' }], ['tê', { en: 'comes' }]]));
+    expect(taught.get('L2')!.get('xwê')).toEqual({ en: 'salt' });
+  });
+
+  it('gives a sentence only its own lesson’s meanings, for its words exactly as written', () => {
+    const glosses = taughtIn('Baran tê, ew xemlandî ne.', taught.get('L1'));
+    expect(glosses).toEqual([
+      { word: 'tê', meanings: { en: 'comes' } },
+      { word: 'xemlandî', meanings: { en: 'decorated' } },
+    ]);
+    // the other lesson's look-alikes mean nothing here: te is not tê, xwê is not xwe, dê is not de, baran is not Baran, its ne is not this ne
+    expect(taughtIn('Baran tê, ew xwe xemlandî dikin û de.', taught.get('L2'))).toEqual([]);
+    expect(taughtIn('Baran tê.', undefined)).toEqual([]);
+  });
+
+  it('drops a word one lesson, or two lessons of one sentence, give different meanings', () => {
+    const twice = lessonWordMeanings([{ lesson_id: 'L3', type: 'match_pairs', payload: { pairs: [{ left: 'ne', right: 'not' }, { left: 'ne', right: 'are' }] } }], 'kmr');
+    expect(twice.get('L3')!.has('ne')).toBe(false);
+    expect(mergeAttested([{ word: 'ne', meanings: { en: 'not' } }], [{ word: 'ne', meanings: { en: 'are' } }, { word: 'tê', meanings: { en: 'comes' } }])).toEqual([
+      { word: 'tê', meanings: { en: 'comes' } },
+    ]);
   });
 });
 

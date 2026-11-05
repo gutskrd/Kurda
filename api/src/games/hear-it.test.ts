@@ -37,6 +37,42 @@ const rec = (key: string, text: string, speaker: HumanRecording['speaker'] = nul
   recordedBy,
 });
 
+describe('what a recording’s text means', () => {
+  it('is what its own items say, and nothing when they disagree or none says', () => {
+    const said = (key: string, text: string, en: string | null): HumanRecording => ({ ...rec(key, text), meanings: en ? { en } : null });
+    const [agreed, torn, silent] = groupRecordings(
+      [said('a', 'sêv', 'apple'), said('b', 'Sêv', 'apple'), said('c', 'ne', 'not'), said('d', 'ne', 'are'), said('e', 'xwe', null)],
+      'kmr',
+    );
+    expect(agreed!.meanings).toEqual({ en: 'apple' });
+    expect(torn!.meanings).toBeNull();
+    expect(silent!.meanings).toBeNull();
+  });
+
+  it('is never borrowed from a word spelled alike in the vocabulary', async () => {
+    const sources = {
+      recordings: async () => [
+        { ...rec('x1', 'xwe'), meanings: null },
+        { ...rec('x2', 'tê'), meanings: null },
+        ...['bar', 'dar', 'bêr', 'ber', 'mal', 'kal'].map((w, i) => ({ ...rec(`y${i}`, w), meanings: { en: `meaning of ${w}` } })),
+      ],
+      lessonSentences: async () => [],
+      conversations: async () => [],
+      vocabulary: async () => [
+        { key: 'w:xwê', ku: 'xwê', meanings: { en: 'salt' } },
+        { key: 'w:te', ku: 'te', meanings: { en: 'your; you' } },
+        { key: 'w:xwe', ku: 'xwe', meanings: { en: 'self' } },
+      ],
+      storyPassages: async () => [],
+      derived: async <T>(_name: string, _dialect: GameDialect, build: () => Promise<T>) => build(),
+    } as unknown as TrustedSources;
+    const { texts } = await new HearItGame(sources).pool('kmr');
+    expect(texts.find((t) => t.text === 'xwe')!.meanings).toBeNull();
+    expect(texts.find((t) => t.text === 'tê')!.meanings).toBeNull();
+    expect(texts.find((t) => t.text === 'dar')!.meanings).toEqual({ en: 'meaning of dar' });
+  });
+});
+
 describe('recordings by what they say', () => {
   it('are one text with every voice it is recorded in, a voice once', () => {
     const texts = groupRecordings(
@@ -108,7 +144,9 @@ describe('the look-alikes', () => {
   });
 
   it('are other phrases’ meanings, each once, none the same as the right one', () => {
-    const meanings = [{ en: 'Good morning.' }, { en: 'good morning' }, { en: 'Good night.' }, { en: 'See you soon.' }, { en: 'See you soon' }, { en: 'Thank you very much.' }];
+    const meanings = [{ en: 'Good morning.' }, { en: 'good morning' }, { en: 'Good night.' }, { en: 'See you soon.' }, { en: 'See you soon' }, { en: 'Thank you very much.' }].map(
+      (m, i) => ({ key: `k${i}`, meanings: m }),
+    );
     const choices = meaningChoices({ en: 'Good morning.' }, meanings, 3, 'seed');
     expect(choices.map((m) => m.en!.toLowerCase().replace('.', ''))).toEqual(expect.arrayContaining(['good night', 'see you soon', 'thank you very much']));
     expect(choices).toHaveLength(3);

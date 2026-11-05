@@ -168,8 +168,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
     { term: 'darê', meanings: { en: 'the tree' } },
     { term: 'zarok', meanings: { en: 'children' } },
   ];
+  // every glossary term written in the text exactly as the glossary writes it: only such a word is taken, with its meaning
   const paragraph = (i: number, extra: string) =>
-    `Gundê ${tag}${letters(i)} li ber çiyayê bilind e. Kanî li nav gund e û av sar e. Zarok li ber darê dilîzin û pez li zozanê ye. ${extra}`;
+    `Gundê ${tag}${letters(i)} li ber çiyayê bilind e. Li nav gund kanî heye û av sar e. Li ber darê zarok dilîzin û pez li zozanê ye. ${extra}`;
 
   async function story(level: number, paragraphs: string[], status: 'published' | 'draft'): Promise<void> {
     const body = paragraphs.join('\n\n');

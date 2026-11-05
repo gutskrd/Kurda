@@ -17,7 +17,11 @@
  * letters they share), from the lessons' vocabulary, their sentences and the
  * other recordings; for a sentence, the approved sentences closest to it word
  * by word; for a phrase, other approved phrases' meanings. A meaning is only
- * ever one an approved source gives (a lesson's English, a story's glossary).
+ * ever one an approved source gives, and what a recording's own text means is
+ * only what its own item says (a lesson's English for that very text, a
+ * dictionary entry's own sense: `HumanRecording.meanings`), never a meaning
+ * found by folding its letters into another word's — when its items disagree,
+ * or none says, it has none, and is not asked about on the phrase rung.
  *
  * The clip never travels with its text. Each item of a round gets a handle of
  * its own, random and good for that round only, and the app plays it from
@@ -111,8 +115,8 @@ export interface HearPool {
   /** the words by how many letters they have, and the sentences by how many words */
   wordsByLength: LengthBuckets;
   sentencesByLength: LengthBuckets;
-  /** the meanings once each, to draw from */
-  meaningList: ReadonlyArray<Partial<Meanings>>;
+  /** the meanings once each, with the strict key of the phrase each is of, to draw from */
+  meaningList: ReadonlyArray<{ key: string; meanings: Partial<Meanings> }>;
 }
 
 /** An item as a round keeps it, answer and all. */
@@ -151,6 +155,8 @@ export function recordingRef(r: Pick<HumanRecording, 'key' | 'source'>): Recordi
  */
 export function groupRecordings(recordings: readonly HumanRecording[], dialect: GameDialect): HearText[] {
   const byKey = new Map<string, HearText>();
+  // texts whose recordings' items say different things: they mean nothing certain
+  const torn = new Set<string>();
   for (const r of recordings) {
     const text = r.text.normalize('NFC').trim();
     const words = gameWords(text).length;
@@ -161,6 +167,14 @@ export function groupRecordings(recordings: readonly HumanRecording[], dialect: 
     const voice = `${r.speaker ?? '-'}|${r.recordedBy ?? r.key}`;
     const had = byKey.get(key) ?? { key, text, words, meanings: null, variants: [] };
     if (!had.variants.some((v) => v.voice === voice)) had.variants.push({ ref: recordingRef(r), speaker: r.speaker, voice });
+    const said = r.meanings && meaningKey(r.meanings) !== '' ? r.meanings : null;
+    if (said && !torn.has(key)) {
+      if (!had.meanings) had.meanings = said;
+      else if (meaningKey(had.meanings) !== meaningKey(said)) {
+        torn.add(key);
+        had.meanings = null;
+      }
+    }
     byKey.set(key, had);
   }
   return [...byKey.values()];
@@ -290,14 +304,23 @@ const MEANINGS_LOOKED_AT = 600;
  * (pure, for the tests). Drawn one at a time in a random order, so a large
  * pool is not shuffled whole for three of them.
  */
-export function meaningChoices(target: Partial<Meanings>, meanings: ReadonlyArray<Partial<Meanings>>, n: number, seed: string): Array<Partial<Meanings>> {
+export function meaningChoices(
+  target: Partial<Meanings>,
+  meanings: ReadonlyArray<{ key: string; meanings: Partial<Meanings> }>,
+  n: number,
+  seed: string,
+  phrase = '',
+): Array<Partial<Meanings>> {
   const own = meaningKey(target);
   const length = own.split(/\s+/).length;
   const seen = new Set([own]);
   const near: Array<Partial<Meanings>> = [];
   const far: Array<Partial<Meanings>> = [];
   let looked = 0;
-  for (const m of drawFor(`${seed}:meanings`).order(meanings)) {
+  for (const entry of drawFor(`${seed}:meanings`).order(meanings)) {
+    // what another source says the same Kurdish means may be right too: it is never a wrong option
+    if (phrase !== '' && entry.key === phrase) continue;
+    const m = entry.meanings;
     const key = meaningKey(m);
     if (key === '' || seen.has(key)) continue;
     seen.add(key);
@@ -394,7 +417,8 @@ export class HearItGame implements SoloEngine<HearItem, HearItItemView, HearItAn
     for (const w of vocabulary) mean(w.ku, w.meanings);
     for (const s of stories) for (const g of s.glossary) mean(g.term, g.meanings);
 
-    const texts = groupRecordings(recordings, dialect).map((t) => ({ ...t, meanings: meaningOf.get(foldForDialect(t.text, dialect)) ?? null }));
+    // what each text means is what its own recordings' items say (`groupRecordings`), never a folded match from elsewhere
+    const texts = groupRecordings(recordings, dialect);
 
     // the words wrong options are drawn from: one spelling each, the lower-case one where there is one
     const words = new Map<string, string>();
@@ -427,7 +451,7 @@ export class HearItGame implements SoloEngine<HearItem, HearItItemView, HearItAn
       ...pool,
       wordsByLength: lengthBuckets(words, letters),
       sentencesByLength: lengthBuckets(sentencePool, wordCount),
-      meaningList: [...meanings.values()],
+      meaningList: [...meanings.entries()].map(([key, m]) => ({ key, meanings: m })),
       texts: texts.map((t) => ({ ...t, stages: stagesFor(t, pool) })).filter((t) => t.stages.length > 0),
     };
   }
@@ -468,7 +492,10 @@ export class HearItGame implements SoloEngine<HearItem, HearItItemView, HearItAn
         answer = options.indexOf(right);
       } else if (stage === 'phrase') {
         const right = text.meanings!;
-        meaningOptions = drawFor(`${salt}:options`).shuffle([right, ...meaningChoices(right, pool.meaningList, HEAR_OPTIONS - 1, salt)]);
+        meaningOptions = drawFor(`${salt}:options`).shuffle([
+          right,
+          ...meaningChoices(right, pool.meaningList, HEAR_OPTIONS - 1, salt, foldForDialect(text.text, ask.dialect)),
+        ]);
         answer = meaningOptions.indexOf(right);
       }
       return {
