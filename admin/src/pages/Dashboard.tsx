@@ -17,6 +17,7 @@ import { isStoryUsage, type Listing } from '../lessonAudio';
 import type { AdminStorySummary } from '../stories';
 import { Badge, Button, ErrorState, Icon, Loading, PageHeader, Section, Stat, Time, UserLink, duration, relativeTime, useLoad } from '../ui';
 import { runState, type LeagueOverview } from '../progress';
+import { YourRecording } from './RecordByPerson';
 
 /** The guard of the page a tile is about, so a tile only shows to someone who can act on it. */
 function allowed(page: string, session: SessionAccess): boolean {
@@ -62,6 +63,8 @@ export function Dashboard(): React.JSX.Element {
 
       {can('security-log') && <SecurityStatus />}
       {can('audio') && <Recordings />}
+      {/* someone who only records: their own voices, since the studio's counts are not theirs to open */}
+      {can('record') && !can('audio') && <YourRecording />}
       {moderator && <ModerationPanel />}
       <Waiting
         stories={can('stories')}
@@ -141,12 +144,18 @@ function Recordings(): React.JSX.Element {
       title="What still needs a recording"
       description="Native recordings of the alphabet, the words to know, the lessons’ Kurdish and the stories’ sentences. Until one is recorded, learners hear the synthesised voice or nothing."
       actions={
-        firstMissing && (
-          <a className="button-link primary" href={`#/audio/${firstMissing.side}?show=missing`}>
-            <Icon name="mic" />
-            Record what’s missing
+        <>
+          <a className="button-link" href="#/record">
+            <Icon name="users" />
+            Record by person
           </a>
-        )
+          {firstMissing && (
+            <a className="button-link primary" href={`#/audio/${firstMissing.side}?show=missing`}>
+              <Icon name="mic" />
+              Record what’s missing
+            </a>
+          )}
+        </>
       }
       className="dash-recordings"
     >

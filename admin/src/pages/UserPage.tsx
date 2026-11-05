@@ -15,10 +15,12 @@ import {
 } from '../moderation';
 import { ROLE_NAME } from '../navigation';
 import { useSession } from '../session';
+import type { PeopleListing } from '../recordingPeople';
 import {
   ActionMenu,
   Badge,
   Button,
+  Checkbox,
   Drawer,
   EmptyState,
   ErrorState,
@@ -156,6 +158,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
       <div role="tabpanel" id="user-panel" aria-labelledby={`user-tab-${current}`}>
         {current === 'profile' && <ProfileTab user={u} />}
         {current === 'profile' && canAdjust && <TeamRole user={u} onChanged={reload} />}
+        {current === 'profile' && canAdjust && <VoiceRole user={u} onChanged={reload} />}
         {current === 'standing' && moderation && <StandingTab user={u} canModerate={canModerate} onChanged={reload} />}
         {current === 'reports' && moderation && <ReportsTab user={u} />}
         {current === 'wallet' && <WalletPanel user={u} canAdjust={canAdjust} onChanged={reload} />}
@@ -303,6 +306,128 @@ function TeamRole({ user: u, onChanged }: { user: UserDetail; onChanged: () => v
           ? `${u.username} is a content editor. They sign in at this console with their own account and code.`
           : `${u.username} is not on the team. Given the role, they sign in here with their own account and set up a sign-in code; if the console is limited to listed addresses (ADMIN_ACCESS_EMAILS), add theirs there too.`}
       </p>
+    </Section>
+  );
+}
+
+/**
+ * The voices a person lends the course, set by a superadmin: which of the
+ * people on the "Record by person" page this account records (PUT
+ * /admin/users/:id/voices), so the console opens on their own lines; and the
+ * voice actor role (PUT /admin/users/:id/voice-actor), for someone who only
+ * records — it opens that page and the lines of the voices ticked here, and
+ * nothing else in the console. Each change asks why, for the record.
+ */
+function VoiceRole({ user: u, onChanged }: { user: UserDetail; onChanged: () => void }): React.JSX.Element {
+  const dialogs = useDialogs();
+  const toast = useToast();
+  const linked = useLoad(() => api<{ voices: string[] }>(`/admin/users/${encodeURIComponent(u.id)}/voices`), [u.id]);
+  const people = useLoad(() => api<PeopleListing>('/admin/recording/people'), []);
+  const [picked, setPicked] = useState<string[] | null>(null);
+  const [busy, setBusy] = useState<'voices' | 'role' | null>(null);
+  const isActor = u.roles.includes('voice_actor');
+  const recordsAnything = u.roles.some((r) => r === 'superadmin' || r === 'content_editor' || r === 'admin');
+  const saved = linked.data?.voices ?? [];
+  const chosen = picked ?? saved;
+  const changed = picked !== null && (picked.length !== saved.length || picked.some((v) => !saved.includes(v)));
+  const nameOf = (id: string): string => people.data?.people.find((p) => p.id === id)?.name ?? id;
+
+  async function saveVoices(): Promise<void> {
+    const reason = await dialogs.prompt({
+      title: chosen.length > 0 ? `${u.username} records ${chosen.map(nameOf).join(', ')}?` : `${u.username} records no voice?`,
+      body: 'Their console opens on these voices’ lines. A voice actor can record only these.',
+      label: 'Why (kept in the audit log)',
+      placeholder: 'Records Hamo for the Road',
+      maxLength: 500,
+      confirmLabel: 'Save the voices',
+    });
+    if (reason === null) return;
+    setBusy('voices');
+    try {
+      const res = await api<{ voices: string[] }>(`/admin/users/${encodeURIComponent(u.id)}/voices`, { method: 'PUT', body: { voices: chosen, reason } });
+      linked.setData({ voices: res.voices });
+      setPicked(null);
+      toast.success(res.voices.length > 0 ? `${u.username} records ${res.voices.map(nameOf).join(', ')}.` : `${u.username} records no voice now.`);
+    } catch (err) {
+      toast.error(errorLine(err, 'people'));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function changeRole(on: boolean): Promise<void> {
+    const reason = await dialogs.prompt({
+      title: on ? `Let ${u.username} record their voices?` : `Take recording away from ${u.username}?`,
+      body: on
+        ? 'They get the voice actor role: the Record by person page and the lines of the voices ticked here, with a sign-in code of their own. Nothing else in the console.'
+        : 'They lose the voice actor role at once. Their recordings stay.',
+      label: 'Why (kept in their history)',
+      placeholder: on ? 'Records Xezal’s lines' : undefined,
+      maxLength: 500,
+      confirmLabel: on ? 'Give the role' : 'Take it away',
+      tone: on ? 'default' : 'danger',
+    });
+    if (reason === null) return;
+    setBusy('role');
+    try {
+      await api(`/admin/users/${encodeURIComponent(u.id)}/voice-actor`, { method: 'PUT', body: { on, reason } });
+      toast.success(on ? `${u.username} can now record their voices.` : `${u.username} no longer records.`);
+      onChanged();
+    } catch (err) {
+      toast.error(errorLine(err, 'people'));
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  return (
+    <Section
+      title="Voice recording"
+      description="Link someone to the voices they lend the course. Their console then opens on those voices’ lines, in order, on the Record by person page."
+      actions={
+        isActor ? (
+          <Button variant="danger" busy={busy === 'role'} onClick={() => void changeRole(false)}>
+            Take recording away
+          </Button>
+        ) : !recordsAnything ? (
+          <Button icon="mic" busy={busy === 'role'} onClick={() => void changeRole(true)}>
+            Let them record their voices
+          </Button>
+        ) : undefined
+      }
+    >
+      {linked.error != null || people.error != null ? (
+        <ErrorState error={linked.error ?? people.error} onRetry={() => void Promise.all([linked.reload(), people.reload()])} what="people" compact />
+      ) : !linked.data || !people.data ? (
+        <Loading rows={2} label="Reading the voices…" />
+      ) : (
+        <>
+          <fieldset className="voice-links">
+            <legend>Voices {u.username} records</legend>
+            {people.data.people.map((p) => (
+              <Checkbox
+                key={p.id}
+                label={p.name}
+                checked={chosen.includes(p.id)}
+                onChange={(on) => setPicked(on ? [...chosen, p.id] : chosen.filter((v) => v !== p.id))}
+                disabled={busy !== null}
+              />
+            ))}
+          </fieldset>
+          <FormActions>
+            <Button variant="primary" busy={busy === 'voices'} disabled={!changed} onClick={() => void saveVoices()}>
+              Save the voices
+            </Button>
+          </FormActions>
+          <p className="subtle">
+            {isActor
+              ? `${u.username} is a voice actor: they sign in here with their own account and code, see only Record by person, and can record only the voices ticked above.`
+              : recordsAnything
+                ? `${u.username}’s role already records anything; the voices ticked only decide where their console opens.`
+                : `Given the role, ${u.username} signs in here with their own account and sets up a sign-in code; if the console is limited to listed addresses (ADMIN_ACCESS_EMAILS), add theirs there too.`}
+          </p>
+        </>
+      )}
     </Section>
   );
 }

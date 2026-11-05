@@ -13,7 +13,6 @@
  * a lesson's text, in the clip's script for a letter or a word-set word.
  */
 import type { LipsyncData, LipsyncScript, SpeakerId } from '@kurda/shared';
-import { api } from './api';
 import type { Speaker } from './voice';
 
 export type VoiceId = string;
@@ -239,30 +238,6 @@ export function withTake(lines: readonly Line[], id: string, saved: Uploaded, by
   );
 }
 
-/** Every line of a voice, page by page; `onPage` hears how far it has got. */
-export async function loadAllLines(
-  voice: VoiceId,
-  dialect: ScriptDialect | null,
-  onPage?: (sofar: Line[], first: LinesPage) => void,
-): Promise<{ lines: Line[]; first: LinesPage }> {
-  const lines: Line[] = [];
-  let first: LinesPage | null = null;
-  let cursor: string | null = null;
-  // a few pages of a few hundred lines: a guard against a cursor that never ends
-  for (let page = 0; page < 200; page++) {
-    const query = new URLSearchParams({ status: 'all', limit: '500' });
-    if (dialect) query.set('dialect', dialect);
-    if (cursor) query.set('cursor', cursor);
-    const res: LinesPage = await api<LinesPage>(`/admin/recording/people/${encodeURIComponent(voice)}?${query.toString()}`);
-    first ??= res;
-    lines.push(...res.lines);
-    onPage?.(lines, first);
-    cursor = res.next;
-    if (!cursor) break;
-  }
-  return { lines, first: first! };
-}
-
 /** Where a person's script is in the console: #/record/hamo. */
 export function personHref(voice: VoiceId): string {
   return `#/record/${encodeURIComponent(voice)}`;
@@ -336,16 +311,4 @@ export function scriptCsv(lines: readonly Line[]): string {
 /** A file name for a person's script: "hevalo-script.md". */
 export function scriptFileName(voice: VoiceId, kind: 'md' | 'csv'): string {
   return `${voice.replace(/[^a-z0-9-]/g, '-')}-script.${kind}`;
-}
-
-/** Hand the browser a file to save. */
-export function saveFile(name: string, text: string, type: string): void {
-  const url = URL.createObjectURL(new Blob([text], { type }));
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = name;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

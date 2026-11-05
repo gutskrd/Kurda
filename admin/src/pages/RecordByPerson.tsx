@@ -9,14 +9,12 @@ import {
   counts,
   dialectName,
   isDone,
-  loadAllLines,
   matchesFilters,
   neighbour,
   nextTodo,
   personHref,
   placeLine,
   resumeAt,
-  saveFile,
   savePlace,
   savedPlace,
   scriptCsv,
@@ -29,11 +27,13 @@ import {
   withTake,
   type Filters,
   type Line,
+  type LinesPage,
   type PeopleListing,
   type Person,
   type ScriptDialect,
   type SourceFilter,
   type StatusFilter,
+  type VoiceId,
   type Uploaded,
 } from '../recordingPeople';
 import { useTake } from '../recorder';
@@ -42,6 +42,42 @@ import { ActionMenu, Badge, Banner, Button, EmptyState, ErrorState, Icon, Loadin
 import { allowMicHowTo } from '../micCapture';
 import { uploadWithVoice } from '../voice';
 import './record-people.css';
+
+/** Every line of a voice, page by page; `onPage` hears how far it has got. */
+async function loadAllLines(
+  voice: VoiceId,
+  dialect: ScriptDialect | null,
+  onPage?: (sofar: Line[], first: LinesPage) => void,
+): Promise<{ lines: Line[]; first: LinesPage }> {
+  const lines: Line[] = [];
+  let first: LinesPage | null = null;
+  let cursor: string | null = null;
+  // a few pages of a few hundred lines: a guard against a cursor that never ends
+  for (let page = 0; page < 200; page++) {
+    const query = new URLSearchParams({ status: 'all', limit: '500' });
+    if (dialect) query.set('dialect', dialect);
+    if (cursor) query.set('cursor', cursor);
+    const res: LinesPage = await api<LinesPage>(`/admin/recording/people/${encodeURIComponent(voice)}?${query.toString()}`);
+    first ??= res;
+    lines.push(...res.lines);
+    onPage?.(lines, first);
+    cursor = res.next;
+    if (!cursor) break;
+  }
+  return { lines, first: first! };
+}
+
+/** Hand the browser a file to save. */
+function saveFile(name: string, text: string, type: string): void {
+  const url = URL.createObjectURL(new Blob([text], { type }));
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
 
 const portraits = new Map<SpeakerId, string>();
 
