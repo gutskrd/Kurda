@@ -115,6 +115,8 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
   const flow = rtl ? 'row-reverse' : 'row';
   const [placed, setPlaced] = useState<number[]>([]);
   const [marked, setMarked] = useState<number | null>(null);
+  // the line last sent: the same line again would spend the second try on what was already wrong
+  const [tried, setTried] = useState<string | null>(null);
   const done = result?.done === true;
   const locked = done || busy;
   const fill = useRef(new Animated.Value(0)).current;
@@ -122,6 +124,7 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
   useEffect(() => {
     setPlaced([]);
     setMarked(null);
+    setTried(null);
     fill.setValue(0);
   }, [item.index, fill]);
 
@@ -239,9 +242,12 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
       {!done ? (
         <TileButton
           label={result && !result.correct ? t('games.solo.tryAgain') : t('games.solo.check')}
-          onPress={() => void submit({ order: placed })}
+          onPress={() => {
+            setTried(placed.join(','));
+            void submit({ order: placed });
+          }}
           busy={busy}
-          disabled={locked || placed.length === 0}
+          disabled={locked || placed.length === 0 || tried === placed.join(',')}
         />
       ) : null}
     </View>

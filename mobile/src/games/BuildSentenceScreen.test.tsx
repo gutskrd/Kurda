@@ -119,11 +119,16 @@ describe('BuildSentenceScreen', () => {
     await waitFor(() => expect(client.calls.filter((c) => c.path.endsWith('/answers'))).toHaveLength(1));
     expect(client.calls.find((c) => c.path.endsWith('/answers'))!.body).toEqual({ index: 0, answer: { order: [0, 1] }, attempt: 1 });
     expect(await screen.findByText('Not quite — you have one more try.')).toBeTruthy();
-    expect(screen.getByText('Look again from the marked word.')).toBeTruthy();
+    expect(await screen.findByText('Look again from the marked word.')).toBeTruthy();
     expect(within(line).getByRole('button', { name: 'malê, First word out of place' })).toBeTruthy();
 
+    // the same line again is not a second try: it has to change first
+    expect(screen.getByRole('button', { name: 'Try again' }).getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(within(line).getByRole('button', { name: 'malê, First word out of place' }));
+    fireEvent.click(within(tray).getByRole('button', { name: 'malê' }));
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByText('Here is how it goes.')).toBeTruthy();
+    expect(client.calls.filter((c) => c.path.endsWith('/answers'))[1]!.body).toEqual({ index: 0, answer: { order: [1, 0] }, attempt: 2 });
     expect(screen.getByText('home')).toBeTruthy();
     expect(screen.getByLabelText('No meaning listed')).toBeTruthy();
     expect(screen.getByText(/the verb comes at the end/)).toBeTruthy();

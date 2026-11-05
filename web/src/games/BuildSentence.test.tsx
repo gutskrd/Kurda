@@ -132,8 +132,12 @@ describe('Build a Kurdish Sentence', () => {
     expect(screen.getByText('Look again from the marked word.')).toBeInTheDocument();
     expect(within(line).getByRole('button', { name: 'malê, First word out of place' })).toBeInTheDocument();
 
+    // the same line again is not a second try: it has to change first
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeDisabled();
+    await userEvent.click(within(line).getByRole('button', { name: 'malê, First word out of place' }));
+    await userEvent.click(within(tray).getByRole('button', { name: 'malê' }));
     await userEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(sent[1]).toMatchObject({ attempt: 2 });
+    expect(sent[1]).toMatchObject({ attempt: 2, answer: { order: [1, 0] } });
     expect(await screen.findByText('Here is how it goes.')).toBeInTheDocument();
     const answer = screen.getByRole('list', { name: 'Here is how it goes.' });
     expect(within(answer).getByText('home')).toBeInTheDocument();

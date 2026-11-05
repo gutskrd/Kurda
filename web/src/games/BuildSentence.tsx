@@ -111,6 +111,8 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
   const script = dialectDirection(dialect);
   const [placed, setPlaced] = useState<number[]>([]);
   const [marked, setMarked] = useState<number | null>(null);
+  // the line last sent: the same line again would spend the second try on what was already wrong
+  const [tried, setTried] = useState<string | null>(null);
   const [said, setSaid] = useState('');
   const tiles = useRef(new Map<number, HTMLButtonElement>());
   const before = useRef<{ rects: Map<number, DOMRect>; moved: number } | null>(null);
@@ -121,6 +123,7 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
   useEffect(() => {
     setPlaced([]);
     setMarked(null);
+    setTried(null);
   }, [item.index]);
 
   // what came back marks the line: the first word astray after a wrong try, the same once the item is spent
@@ -141,9 +144,12 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
   const lift = (i: number): void => {
     if (!locked && placed.includes(i)) move(placed.filter((p) => p !== i), i, false);
   };
+  const unchanged = tried === placed.join(',');
   const check = useCallback(() => {
-    if (!locked && placed.length > 0) void submit({ order: placed });
-  }, [locked, placed, submit]);
+    if (locked || placed.length === 0 || unchanged) return;
+    setTried(placed.join(','));
+    void submit({ order: placed });
+  }, [locked, placed, submit, unchanged]);
 
   useLayoutEffect(() => {
     const was = before.current;
@@ -264,7 +270,7 @@ function SentenceBoard({ round, dialect }: { round: Round; dialect: GameDialect 
 
       {!done && (
         <div className="bs-actions">
-          <Button onClick={check} disabled={locked || placed.length === 0}>
+          <Button onClick={check} disabled={locked || placed.length === 0 || unchanged}>
             {result && !result.correct ? t('games.solo.tryAgain') : t('games.solo.check')}
           </Button>
           <p className="bs-keys" aria-hidden>
