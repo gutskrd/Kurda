@@ -194,7 +194,7 @@ export const lastLetterModule: GameModule<LastLetterState, LastLetterMove, LastL
   maxPlayers: LAST_LETTER_MAX_PLAYERS,
   teams: 0,
   solo: { bot: 'hevalo' },
-  xpSource: 'last_letter',
+  xpSource: 'game_last_letter',
 
   summary(dialect) {
     return { dialect: dialect === 'kmr' ? 'kurmanci' : 'sorani' };
@@ -235,9 +235,9 @@ export const lastLetterModule: GameModule<LastLetterState, LastLetterMove, LastL
     for (const key of words) {
       if (paid + LAST_LETTER_SOLO_XP_PER_WORD > LAST_LETTER_SOLO_XP_CAP) break;
       const refs = soloWordRefs(game.userId, game.dialect, key, game.now);
-      const before = await db.query(`SELECT 1 FROM xp_ledger WHERE source = 'last_letter_solo' AND ref_id = ANY($1::text[]) LIMIT 1`, [refs]);
+      const before = await db.query(`SELECT 1 FROM xp_ledger WHERE source = 'game_last_letter_solo' AND ref_id = ANY($1::text[]) LIMIT 1`, [refs]);
       if (before.rowCount) continue;
-      paid += await game.award({ userId: game.userId, source: 'last_letter_solo', amount: LAST_LETTER_SOLO_XP_PER_WORD, refId: refs[0]! });
+      paid += await game.award({ userId: game.userId, source: 'game_last_letter_solo', amount: LAST_LETTER_SOLO_XP_PER_WORD, refId: refs[0]! });
     }
     return paid;
   },

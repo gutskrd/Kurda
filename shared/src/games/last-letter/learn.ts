@@ -27,7 +27,7 @@ export const LAST_LETTER_SOLO_XP_CAP = 20;
 export const LAST_LETTER_SOLO_REPEAT_DAYS = 14;
 
 /** The XP sources the game pays from: placement in a game with people, and words against Hevalo. */
-export const LAST_LETTER_XP_SOURCES = ['last_letter', 'last_letter_solo'] as const;
+export const LAST_LETTER_XP_SOURCES = ['game_last_letter', 'game_last_letter_solo'] as const;
 
 export interface LastLetterAvailability {
   dialect: LetterDialect;

@@ -266,7 +266,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     const done = await view(second, id);
     expect(done.results![0]).toMatchObject({ seat: done.me!.seat, place: 1 });
     expect(done.results![0]!.xpAwarded).toBe(PLACEMENT_WIN_XP);
-    const xp = await pool.query(`SELECT user_id, amount FROM xp_ledger WHERE source = 'last_letter' AND ref_id LIKE $1`, [`mp:${id}:%`]);
+    const xp = await pool.query(`SELECT user_id, amount FROM xp_ledger WHERE source = 'game_last_letter' AND ref_id LIKE $1`, [`mp:${id}:%`]);
     expect(xp.rowCount).toBe(2);
     const rated = await pool.query(`SELECT outcome FROM rated_games WHERE game = 'last-letter' AND game_ref = $1`, [id]);
     expect(rated.rows[0]?.outcome ?? 'not rated (eligibility)').toBeDefined();
@@ -382,7 +382,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     await call(me, 'POST', `/mp/last-letter/${v.id}/leave`);
     await vi.waitFor(async () => expect((await view(me, v.id)).status).toBe('finished'));
     const words = (await view(me, v.id)).board!.chain.filter((w) => w.seat === v.me!.seat).length;
-    const paid = await pool.query(`SELECT count(*)::int AS n FROM xp_ledger WHERE user_id = $1 AND source = 'last_letter_solo'`, [me.id]);
+    const paid = await pool.query(`SELECT count(*)::int AS n FROM xp_ledger WHERE user_id = $1 AND source = 'game_last_letter_solo'`, [me.id]);
     expect(paid.rows[0]!.n).toBe(words);
   });
 

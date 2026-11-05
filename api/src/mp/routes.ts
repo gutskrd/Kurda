@@ -29,6 +29,11 @@ const pollQuery = z.object({ v: z.coerce.number().int().min(0).max(2_147_483_647
 const seatBody = z.object({ seat: z.number().int().min(1).max(100) });
 const teamBody = z.object({ seat: z.number().int().min(1).max(100), team: z.number().int().min(1).max(4) });
 const dialectQuery = z.object({ dialect: z.enum(['kmr', 'ckb']).optional() });
+/**
+ * A game's own choices or move: an object at the door, read field by field by
+ * the game's rules (each module parses what it takes, and refuses the rest).
+ */
+const gameBody = z.record(z.string(), z.unknown());
 
 /** Create 20/min, join 10/min, moves 60/min, the long-poll 120/min, other controls 60/min (as the story games). */
 const perMinute = (max: number) => ({ rateLimit: { max, windowMs: 60_000 } });
@@ -107,7 +112,7 @@ export function registerMultiplayerRoutes(app: FastifyInstance, deps: Multiplaye
   /** One person against Hevalo: started at once. */
   app.post(
     '/mp/:game/solo',
-    { schema: { params: gameParam }, config: perMinute(20), preHandler: [requireAccount, requireBirthMonth] },
+    { schema: { params: gameParam, body: gameBody }, config: perMinute(20), preHandler: [requireAccount, requireBirthMonth] },
     async (req, reply) => {
       const { game: g } = req.params as z.infer<typeof gameParam>;
       return reply.code(201).send(await mp.createSolo(req.user!.id, g, req.body ?? {}));
@@ -152,7 +157,7 @@ export function registerMultiplayerRoutes(app: FastifyInstance, deps: Multiplaye
 
   app.post(
     '/mp/:game/:id/moves',
-    { schema: { params: lobbyParams }, config: perMinute(60), preHandler: requireAccount },
+    { schema: { params: lobbyParams, body: gameBody }, config: perMinute(60), preHandler: requireAccount },
     async (req) => mp.move((req.params as z.infer<typeof lobbyParams>).id, req.user!.id, req.body),
   );
 
