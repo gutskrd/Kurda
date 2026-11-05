@@ -38,6 +38,7 @@ describe('pickWrongReplies', () => {
     candidate('Pirtûk li ser maseyê ye.', 'roadu04s2l4a'),
     candidate('Ez dizanim, tu ji Amedê yî!', 'roadu01s3l3a'),
     candidate('Ez heft salî me, xalo, ji kerema xwe vê pirtûkê bide min!', 'roadu03s4l4a'),
+    candidate('Erê, hemû gel. Em dikenin.', 'roadu06s1l4a'),
   ];
   const picked = pickWrongReplies(pair, pool, 'kmr');
   const texts = picked.map((c) => c.ku);
@@ -53,6 +54,8 @@ describe('pickWrongReplies', () => {
     expect(texts).not.toContain('Ez jî heft salî me.');
     expect(texts).not.toContain('Tu çend salî yî?');
     expect(texts).not.toContain('Spas, baş e.');
+    // after a question, a line that opens with yes or no looks like an answer whatever it goes on to say
+    expect(texts).not.toContain('Erê, hemû gel. Em dikenin.');
   });
 
   it('keeps lengths close to the reply’s and never two from one conversation', () => {

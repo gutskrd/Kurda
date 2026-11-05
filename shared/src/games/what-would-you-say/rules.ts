@@ -118,7 +118,9 @@ function hash(text: string): number {
  *     length gives nothing away;
  *   - sharing few of its meaningful words with the line heard or the reply,
  *     so it is no paraphrase that would fit too;
- *   - not made mostly of words that answer anything (yes, no, thanks);
+ *   - not made mostly of words that answer anything (yes, no, thanks), nor,
+ *     after a question, opening with one: "Yes, …" looks like an answer to
+ *     any question, whatever follows it;
  *   - no two alike, and no two from the same conversation.
  * The closest in length first, ties broken by a stable hash of the pair, so
  * an import run again picks the same ones. At most SCENARIO_CANDIDATES.
@@ -130,6 +132,7 @@ export function pickWrongReplies(pair: ScenarioPair, pool: readonly ReplyCandida
   const fold = (s: string) => gameWords(s).map((w) => foldForDialect(w, dialect)).join(' ');
   const taken = new Set([fold(pair.line), fold(pair.reply)]);
   const generic = ANSWERS_ANYTHING[dialect];
+  const asked = /[?؟]\s*$/u.test(pair.line.trim());
   const slack = Math.max(2, Math.ceil(replyWords * 0.5));
 
   const fits = pool.filter((c) => {
@@ -138,6 +141,7 @@ export function pickWrongReplies(pair: ScenarioPair, pool: readonly ReplyCandida
     if (words.length < SCENARIO_LINE_WORDS || Math.abs(words.length - replyWords) > slack) return false;
     const mine = contentWords(c.ku, dialect);
     if (overlap(mine, heard) > 0.34 || overlap(mine, real) > 0.34 || overlap(real, mine) > 0.34) return false;
+    if (asked && generic.has(foldForDialect(words[0]!, dialect, true))) return false;
     const plain = words.filter((w) => !generic.has(foldForDialect(w, dialect, true))).length;
     return plain >= Math.ceil(words.length / 2);
   });

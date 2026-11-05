@@ -5,7 +5,8 @@
  * accusation and the solution at the end.
  *
  * On a wide screen the board takes the larger column and the question, the
- * hints and the notebook stand beside it; on a phone they follow it. The
+ * hints and the notebook stand beside it; on a phone the question comes
+ * first, then the board, then the hints and the notebook. The
  * cards are set at a slight slant, as pinned paper is, but nothing moves:
  * a card to read again is marked by its border and a ring, not by motion.
  * Logical properties throughout, so a right-to-left page turns round whole.
@@ -84,18 +85,29 @@
   gap: var(--space-4);
   align-items: start;
 }
+/* on a wide screen the board takes the left column, the question, the hints and the notebook stand beside it */
 @media (min-width: 960px) {
   .dt-layout {
     grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      'board question'
+      'board hints'
+      'board notebook'
+      'board .';
   }
-  .dt-side {
-    position: sticky;
-    top: var(--space-4);
+  .dt-layout > .dt-board {
+    grid-area: board;
   }
-}
-.dt-side {
-  display: grid;
-  gap: var(--space-4);
+  .dt-layout > .dt-question {
+    grid-area: question;
+  }
+  .dt-layout > .dt-hints {
+    grid-area: hints;
+  }
+  .dt-layout > .dt-notebook {
+    grid-area: notebook;
+  }
 }
 .dt-muted {
   color: var(--ink-3);
@@ -111,6 +123,7 @@
   background: color-mix(in srgb, var(--u-fill) 12%, var(--surface-2));
 }
 .dt-board-title {
+  font-family: var(--font-sans);
   font-size: var(--text-body);
   font-weight: 650;
 }
@@ -288,6 +301,7 @@
 .dt-question-title,
 .dt-hints-title,
 .dt-notebook-title {
+  font-family: var(--font-sans);
   display: flex;
   align-items: center;
   gap: var(--space-2);

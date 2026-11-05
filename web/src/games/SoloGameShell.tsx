@@ -48,6 +48,12 @@ export interface SoloRound<Item, H, C, B = unknown> {
   index: number;
   total: number;
   state: SoloItemState;
+  /**
+   * The verdict, the explanation and the way on, for a game that places them
+   * itself (`feedbackInRound`): beside its question rather than under a tall
+   * board. Null for every other game, whose round has them underneath.
+   */
+  feedback: React.ReactNode;
   /** the last answer to this item, while it is on screen */
   result: SoloAnswerResult<H, C> | null;
   busy: boolean;
@@ -78,6 +84,8 @@ interface Props<Item, H, C, B> {
   resultsExtra?: React.ReactNode;
   /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts */
   roundItems?: number;
+  /** the game puts the verdict and the way on in its own round (`SoloRound.feedback`), next to what was answered */
+  feedbackInRound?: boolean;
 }
 
 const DIFFICULTY_KEY: Record<GameDifficulty, MessageKey> = {
@@ -108,6 +116,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   onFinished,
   resultsExtra,
   roundItems,
+  feedbackInRound = false,
 }: Props<Item, H, C, B>): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
@@ -260,6 +269,30 @@ export function SoloGameShell<Item, H, C, B = unknown>({
     // once this item is done, is anything left?
     const last = session.states.every((s) => s.done || s.index === index);
     const why = result?.done && result.why ? explain(result.why) : null;
+    const feedback = (
+      <div className={`solo-feedback${result ? ` is-${result.correct ? 'right' : result.done ? 'missed' : 'again'}` : ''}`} aria-live="polite">
+        {result && (
+          <>
+            <p className="solo-verdict">
+              {result.correct ? <CheckIcon size={18} /> : null}
+              {result.correct ? t(result.firstTry ? 'games.solo.rightFirstTry' : 'games.solo.right') : result.done ? t('games.solo.answerWas') : t('games.solo.notYet')}
+            </p>
+            {why && (
+              <p className="solo-why">
+                <strong>{t('games.solo.why')}</strong> {why}
+              </p>
+            )}
+            {result.done && (
+              <Button onClick={next} disabled={busy} autoFocus>
+                {last ? t('games.solo.seeResults') : t('games.solo.next')}
+              </Button>
+            )}
+          </>
+        )}
+        {error && <p className="field-error">{error}</p>}
+      </div>
+    );
+    const round = { sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit };
     return (
       <section className="solo solo--round" aria-labelledby="solo-title">
         <header className="solo-bar">
@@ -283,29 +316,9 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           </span>
         </header>
 
-        {renderRound({ sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit })}
+        {renderRound({ ...round, feedback: feedbackInRound ? feedback : null })}
 
-        <div className={`solo-feedback${result ? ` is-${result.correct ? 'right' : result.done ? 'missed' : 'again'}` : ''}`} aria-live="polite">
-          {result && (
-            <>
-              <p className="solo-verdict">
-                {result.correct ? <CheckIcon size={18} /> : null}
-                {result.correct ? t(result.firstTry ? 'games.solo.rightFirstTry' : 'games.solo.right') : result.done ? t('games.solo.answerWas') : t('games.solo.notYet')}
-              </p>
-              {why && (
-                <p className="solo-why">
-                  <strong>{t('games.solo.why')}</strong> {why}
-                </p>
-              )}
-              {result.done && (
-                <Button onClick={next} disabled={busy} autoFocus>
-                  {last ? t('games.solo.seeResults') : t('games.solo.next')}
-                </Button>
-              )}
-            </>
-          )}
-          {error && <p className="field-error">{error}</p>}
-        </div>
+        {!feedbackInRound && feedback}
       </section>
     );
   }

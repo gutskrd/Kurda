@@ -39,13 +39,15 @@ import { useAvailability } from './learnGames';
  * suspect, a plain silhouette for anyone else), and the evidence pinned up
  * one card under another — messages, statements, notes and talk overheard
  * with its recording — each in its Kurdish only until its meaning is found.
- * Then the question in hand, the hints and the notebook, which fills with
- * each deduction made.
+ * The question in hand comes before the board, so the player knows what to
+ * look for; the hints and the notebook, which fills with each deduction
+ * made, come after it.
  *
  * A card's meaning is found by the deduction it proves, or bought with a
  * hint, as is the case's next written hint; each hint costs a point of XP at
  * the finish, and the screen says so before it is spent. A wrong first try
- * marks the cards to read again. Last, the accusation: the suspects become
+ * marks the cards to read again, and the verdict comes right under the
+ * question (`feedbackInRound`). Last, the accusation: the suspects become
  * the buttons, and the solution walks back through every deduction. Nothing
  * on the board moves. The website's games/Detective.tsx stages the same case.
  */
@@ -223,7 +225,7 @@ function Question({ round, board }: { round: Round; board: Board }): React.JSX.E
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  const { item, result, busy, submit } = round;
+  const { item, result, busy, submit, feedback } = round;
   const [picked, setPicked] = useState<number | null>(null);
   const done = result?.done === true;
   const locked = done || busy;
@@ -269,6 +271,7 @@ function Question({ round, board }: { round: Round; board: Board }): React.JSX.E
             disabled={locked || picked === null}
           />
         ) : null}
+        {feedback}
         {correction ? (
           <View style={[styles.solution, { borderTopColor: colors.separator }]}>
             <Text style={[...text, styles.solutionTitle]}>{t('games.detective.solution')}</Text>
@@ -312,6 +315,7 @@ function Question({ round, board }: { round: Round; board: Board }): React.JSX.E
         />
       ) : null}
       {done && result?.correction?.entry ? <Text style={[dir.text, styles.muted, { color: colors.textSecondary }]}>{t('games.detective.noted')}</Text> : null}
+      {feedback}
     </View>
   );
 }
@@ -337,6 +341,9 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
         <Text style={muted}>{meaningIn(board.intro, locale) ?? board.intro.en}</Text>
       </View>
 
+      {/* the question first, so the player knows what to look for on the board under it */}
+      <Question round={round} board={board} />
+
       <View style={[styles.boardField, { backgroundColor: colors.controlTrack }]} accessibilityLabel={t('games.detective.board')}>
         <Text style={[dir.text, styles.section, { color: tone.text }]}>{t('games.detective.suspects')}</Text>
         <View style={[styles.suspects, { flexDirection: dir.row }]}>
@@ -353,8 +360,6 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
           <EvidenceCard key={e.id} card={e} from={name(e.from)} look={look.includes(e.id)} canSpend={canSpend} onTranslate={() => void spend(e.id)} dialect={dialect} />
         ))}
       </View>
-
-      <Question round={round} board={board} />
 
       <View style={[styles.panel, { backgroundColor: colors.surface, borderColor: colors.separator }]}>
         <View style={[styles.titleRow, { flexDirection: dir.row }]}>
@@ -438,6 +443,7 @@ export function DetectiveScreen({ onExit }: { onExit: () => void }): React.JSX.E
       difficulties={difficulties}
       open={open}
       renderRound={(round) => <CaseRound key={round.sessionId} round={round} dialect={dialect} />}
+      feedbackInRound
       explain={(why) => (why === 'step' ? t('games.detective.why.step') : why === 'accuse' ? t('games.detective.why.accuse') : null)}
       onFinished={(results: SoloResults) => setDeducted(results.deducted ?? 0)}
       resultsExtra={deducted > 0 ? <Text style={{ color: colors.textSecondary }}>{t('games.detective.deducted', { xp: deducted })}</Text> : null}

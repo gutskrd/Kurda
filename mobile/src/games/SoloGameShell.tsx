@@ -48,6 +48,12 @@ export interface SoloRound<Item, H, C, B = unknown> {
   sessionId: string;
   /** what the whole round shares, as the round was sent (Kurdish Detective's case board); null for a game without */
   board: B | null;
+  /**
+   * The verdict, the explanation and the way on, for a game that places them
+   * itself (`feedbackInRound`): beside its question rather than under a tall
+   * board. Null for every other game, whose round has them underneath.
+   */
+  feedback: ReactNode;
   item: Item;
   index: number;
   total: number;
@@ -70,6 +76,8 @@ interface Props<Item, H, C, B> {
   explain: (why: string) => string | null;
   onFinished?: (results: SoloResults) => void;
   resultsExtra?: ReactNode;
+  /** the game puts the verdict and the way on in its own round (`SoloRound.feedback`), next to what was answered */
+  feedbackInRound?: boolean;
   onExit: () => void;
   /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts */
   roundItems?: number;
@@ -126,6 +134,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   explain,
   onFinished,
   resultsExtra,
+  feedbackInRound = false,
   onExit,
   tone,
   roundItems,
@@ -269,6 +278,25 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           ? t('games.solo.answerWas')
           : t('games.solo.notYet')
       : null;
+    const feedback = verdict ? (
+      <View
+        accessibilityLiveRegion="polite"
+        style={[styles.feedback, { backgroundColor: result?.correct ? colors.successFill : result?.done ? colors.dangerFill : colors.controlTrack }]}
+      >
+        <View style={[styles.verdictRow, { flexDirection: dir.row }]}>
+          {result?.correct ? <Icon name="check" size={18} color={colors.success} /> : null}
+          <Text style={[styles.verdict, ...text]}>{verdict}</Text>
+        </View>
+        {why ? (
+          <Text style={[...text, styles.why]}>
+            <Text style={styles.whyLabel}>{t('games.solo.why')} </Text>
+            {why}
+          </Text>
+        ) : null}
+        {result?.done ? <TileButton label={last ? t('games.solo.seeResults') : t('games.solo.next')} onPress={next} busy={busy} /> : null}
+      </View>
+    ) : null;
+    const round = { sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit };
     body = (
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
         <View style={[styles.bar, { flexDirection: dir.row }]}>
@@ -277,28 +305,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
             {t('games.solo.progress', { n: index + 1, total: session.items.length })}
           </Text>
         </View>
-        {renderRound({ sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit })}
-        {verdict ? (
-          <View
-            accessibilityLiveRegion="polite"
-            style={[
-              styles.feedback,
-              { backgroundColor: result?.correct ? colors.successFill : result?.done ? colors.dangerFill : colors.controlTrack },
-            ]}
-          >
-            <View style={[styles.verdictRow, { flexDirection: dir.row }]}>
-              {result?.correct ? <Icon name="check" size={18} color={colors.success} /> : null}
-              <Text style={[styles.verdict, ...text]}>{verdict}</Text>
-            </View>
-            {why ? (
-              <Text style={[...text, styles.why]}>
-                <Text style={styles.whyLabel}>{t('games.solo.why')} </Text>
-                {why}
-              </Text>
-            ) : null}
-            {result?.done ? <TileButton label={last ? t('games.solo.seeResults') : t('games.solo.next')} onPress={next} busy={busy} /> : null}
-          </View>
-        ) : null}
+        {renderRound({ ...round, feedback: feedbackInRound ? feedback : null })}
+        {feedbackInRound ? null : feedback}
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
       </ScrollView>
     );

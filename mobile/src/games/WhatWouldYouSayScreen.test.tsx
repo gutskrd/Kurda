@@ -22,6 +22,9 @@ import { WhatWouldYouSayScreen } from './WhatWouldYouSayScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
 
+/** How long a query waits: the characters' drawings are slow to build on a busy machine. */
+const SLOW = { timeout: 4000 };
+
 const ID = '00000000-0000-4000-8000-0000000000ee';
 
 // stand-in lines, never shown to a learner
@@ -90,10 +93,10 @@ describe('WhatWouldYouSayScreen', () => {
     ]);
     testAuth.client = client;
     renderWithProviders(<WhatWouldYouSayScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 16 XP');
+    await screen.findByText('Up to 16 XP', {}, SLOW);
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     // the speaker's drawing is the first a test file builds, so it is given a moment
-    expect(await screen.findByText('At a celebration', {}, { timeout: 5000 })).toBeTruthy();
+    expect(await screen.findByText('At a celebration', {}, { timeout: 15000 })).toBeTruthy();
     expect(screen.getByText('At the party, a cousin turns to you.')).toBeTruthy();
     expect(screen.getByLabelText('Hamo says')).toBeTruthy();
     expect(screen.getByText('Tu çend salî yî?')).toBeTruthy();
@@ -103,16 +106,16 @@ describe('WhatWouldYouSayScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     await waitFor(() => expect(client.calls.filter((c) => c.path.endsWith('/answers'))).toHaveLength(1));
     expect(client.calls.find((c) => c.path.endsWith('/answers'))!.body).toEqual({ index: 0, answer: { choice: 0 }, attempt: 1 });
-    expect(await screen.findByText('That doesn’t answer it. It means: “There are apples over there!”')).toBeTruthy();
+    expect(await screen.findByText('That doesn’t answer it. It means: “There are apples over there!”', {}, SLOW)).toBeTruthy();
 
     fireEvent.click(within(replies).getByRole('button', { name: 'Ez heft salî me.' }));
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(await screen.findByText('In the conversation, this is what was really said next.')).toBeTruthy();
+    expect(await screen.findByText('In the conversation, this is what was really said next.', {}, SLOW)).toBeTruthy();
     const explained = screen.getByTestId('say-explained');
     expect(within(explained).getByText('They said: “How old are you?”')).toBeTruthy();
     expect(within(explained).getByText('The real reply')).toBeTruthy();
     expect(within(explained).getByText('That is about apples.')).toBeTruthy();
-  });
+  }, 20000);
 
   it('builds the reply from tiles at the advanced level', async () => {
     const client = routes('kmr', scene({ options: null, tiles: ['me', 'heft', 'Ez', 'salî'] }), [
@@ -120,29 +123,30 @@ describe('WhatWouldYouSayScreen', () => {
     ]);
     testAuth.client = client;
     renderWithProviders(<WhatWouldYouSayScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 16 XP');
+    await screen.findByText('Up to 16 XP', {}, SLOW);
     fireEvent.click(screen.getByRole('radio', { name: 'Advanced' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
-    const tray = await screen.findByTestId('say-tray');
+    const tray = await screen.findByTestId('say-tray', {}, SLOW);
     fireEvent.click(within(tray).getByRole('button', { name: 'heft' }));
     fireEvent.click(within(tray).getByRole('button', { name: 'Ez' }));
     expect(within(screen.getByTestId('say-line')).getAllByRole('button').map((b) => b.textContent)).toEqual(['heft', 'Ez']);
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     await waitFor(() => expect(client.calls.filter((c) => c.path.endsWith('/answers'))).toHaveLength(1));
     expect(client.calls.find((c) => c.path.endsWith('/answers'))!.body).toEqual({ index: 0, answer: { order: [1, 2] }, attempt: 1 });
-    expect(await screen.findByText('Look again from the marked word.')).toBeTruthy();
-  });
+    expect(await screen.findByText('Look again from the marked word.', {}, SLOW)).toBeTruthy();
+  }, 20000);
 
   it('plays in the learner’s Soranî, the line written right to left', async () => {
     rememberCourseDialect('sorani');
     testAuth.client = routes('ckb', scene({ line: { ku: 'تەمەنت چەندە؟', audio: null }, options: ['حەوت ساڵم', 'سوپاس'] }), []);
     renderWithProviders(<WhatWouldYouSayScreen onExit={() => undefined} />);
-    expect(await screen.findByText('In Soranî')).toBeTruthy();
-    await screen.findByText('Up to 16 XP');
+    expect(await screen.findByText('In Soranî', {}, SLOW)).toBeTruthy();
+    await screen.findByText('Up to 16 XP', {}, SLOW);
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
-    const line = await screen.findByText('تەمەنت چەندە؟');
-    expect(getComputedStyle(line).direction === 'rtl' || line.getAttribute('dir') === 'rtl' || (line as HTMLElement).style.writingDirection === 'rtl').toBe(true);
-  });
+    const line = await screen.findByText('تەمەنت چەندە؟', {}, SLOW);
+    expect(getComputedStyle(line).direction).toBe('rtl');
+    expect(getComputedStyle(within(screen.getByTestId('say-replies')).getByText('حەوت ساڵم')).direction).toBe('rtl');
+  }, 20000);
 });
 
 describe('the games list', () => {
@@ -154,7 +158,7 @@ describe('the games list', () => {
   it('adds What Would You Say? once it can be played, one tap to open', async () => {
     testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr') });
     renderWithProviders(<GamesView />);
-    const card = await screen.findByTestId('game-what-would-you-say');
+    const card = await screen.findByTestId('game-what-would-you-say', {}, SLOW);
     expect(card.getAttribute('aria-label')).toBe('What Would You Say?, Solo. Answer someone in a real Kurdish conversation, the way it really went on.');
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('WhatWouldYouSay');

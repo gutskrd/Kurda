@@ -33,14 +33,17 @@ import './detective.css';
  * messages, statements, notes, and talk overheard with its recording — each
  * in its Kurdish only, with "Meaning not found yet" where its meaning would
  * be. Beside it the question in hand and the notebook, which fills with each
- * deduction made and the cards that prove it.
+ * deduction made and the cards that prove it. On a phone the question comes
+ * first and the board under it, so the player knows what to look for.
  *
  * A card's meaning is found by the deduction it proves (the correction
  * brings it, and the board keeps it) or bought with a hint, as is the case's
  * next written hint; each hint costs a point of XP at the finish, and the
  * board says so before it is spent. A wrong first try marks the cards to read
- * again. The accusation is the last item: the suspects become the buttons,
- * and once it is made the solution walks back through every deduction.
+ * again. The verdict and the way on come right under the question
+ * (`feedbackInRound`), not under the board. The accusation is the last item:
+ * the suspects become the buttons, and once it is made the solution walks
+ * back through every deduction.
  *
  * The board is the round's (`board`), kept here as it changes: what a hint
  * bought comes back from the server as the whole board, and what a deduction
@@ -216,7 +219,7 @@ function Notebook({ board }: { board: Board }): React.JSX.Element {
 function Question({ round, board }: { round: Round; board: Board }): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
-  const { item, result, busy, submit } = round;
+  const { item, result, busy, submit, feedback } = round;
   const [picked, setPicked] = useState<number | null>(null);
   const done = result?.done === true;
   const locked = done || busy;
@@ -254,6 +257,7 @@ function Question({ round, board }: { round: Round; board: Board }): React.JSX.E
             {result && !result.correct ? t('games.solo.tryAgain') : t('games.detective.accuseButton')}
           </Button>
         )}
+        {feedback}
         {correction && (
           <div className="dt-solution">
             <h3 className="dt-solution-title">{t('games.detective.solution')}</h3>
@@ -299,6 +303,7 @@ function Question({ round, board }: { round: Round; board: Board }): React.JSX.E
         </Button>
       )}
       {done && result?.correction?.entry && <p className="dt-noted">{t('games.detective.noted')}</p>}
+      {feedback}
     </section>
   );
 }
@@ -315,27 +320,26 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
         <h2 className="dt-title">{meaningIn(board.title, locale) ?? board.title.en}</h2>
         <p className="dt-intro">{meaningIn(board.intro, locale) ?? board.intro.en}</p>
       </header>
+      {/* the question first, then the board it is answered from: on a wide screen the board takes the left column */}
       <div className="dt-layout">
+        <Question round={round} board={board} />
         <CaseFile board={board} dialect={dialect} look={look} spend={(e) => void spend(e)} spending={spending} />
-        <div className="dt-side">
-          <Question round={round} board={board} />
-          <section className="dt-hints" aria-labelledby="dt-hints-title">
-            <h2 id="dt-hints-title" className="dt-hints-title">
-              <HintIcon size={20} /> {t('games.detective.hintsLeft', { n: board.hintsLeft })}
-            </h2>
-            <p className="dt-muted">{t('games.detective.hintCost')}</p>
-            {board.hints.map((h, i) => (
-              <p key={i} className="dt-hint">
-                {meaningIn(h, locale) ?? h.en}
-              </p>
-            ))}
-            <Button variant="secondary" size="sm" onClick={() => void spend()} disabled={spending || board.hintsLeft === 0 || !board.moreHints}>
-              {t('games.detective.hint')}
-            </Button>
-            {error && <p className="field-error">{error}</p>}
-          </section>
-          <Notebook board={board} />
-        </div>
+        <section className="dt-hints" aria-labelledby="dt-hints-title">
+          <h2 id="dt-hints-title" className="dt-hints-title">
+            <HintIcon size={20} /> {t('games.detective.hintsLeft', { n: board.hintsLeft })}
+          </h2>
+          <p className="dt-muted">{t('games.detective.hintCost')}</p>
+          {board.hints.map((h, i) => (
+            <p key={i} className="dt-hint">
+              {meaningIn(h, locale) ?? h.en}
+            </p>
+          ))}
+          <Button variant="secondary" size="sm" onClick={() => void spend()} disabled={spending || board.hintsLeft === 0 || !board.moreHints}>
+            {t('games.detective.hint')}
+          </Button>
+          {error && <p className="field-error">{error}</p>}
+        </section>
+        <Notebook board={board} />
       </div>
     </div>
   );
@@ -373,6 +377,7 @@ export function Detective(): React.JSX.Element {
         difficulties={difficulties}
         open={open}
         renderRound={(round) => <CaseRound key={round.sessionId} round={round} dialect={dialect} />}
+        feedbackInRound
         explain={(why) => (why === 'step' ? t('games.detective.why.step') : why === 'accuse' ? t('games.detective.why.accuse') : null)}
         onFinished={(results: SoloResults) => setDeducted(results.deducted ?? 0)}
         resultsExtra={deducted > 0 ? <p className="dt-deducted">{t('games.detective.deducted', { xp: deducted })}</p> : null}

@@ -103,6 +103,7 @@
   overflow-wrap: anywhere;
 }
 .ws-ask {
+  font-family: var(--font-sans);
   font-size: var(--text-body);
   font-weight: 650;
 }

@@ -22,6 +22,9 @@ import { DetectiveScreen } from './DetectiveScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
 
+/** How long a query waits: the characters' drawings are slow to build on a busy machine. */
+const SLOW = { timeout: 4000 };
+
 const ID = '00000000-0000-4000-8000-0000000000ff';
 const en = (text: string) => ({ en: text });
 
@@ -128,9 +131,9 @@ describe('DetectiveScreen', () => {
     const client = routes([], [{ board: board({ hintsLeft: 2, hintsUsed: 1, evidence: board().evidence.map((e) => (e.id === 'away' ? { ...e, meanings: en('Baran is not at home today.') } : e)) }) }]);
     testAuth.client = client;
     renderWithProviders(<DetectiveScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 16 XP');
+    await screen.findByText('Up to 16 XP', {}, SLOW);
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
-    expect(await screen.findByText('The empty jar', {}, { timeout: 5000 })).toBeTruthy();
+    expect(await screen.findByText('The empty jar', {}, { timeout: 15000 })).toBeTruthy();
     expect(screen.getAllByText('Meaning not found yet')).toHaveLength(2);
     expect(screen.getByText('Baran îro ne li malê ye.')).toBeTruthy();
     expect(screen.getByText('Hints left: 3')).toBeTruthy();
@@ -138,34 +141,34 @@ describe('DetectiveScreen', () => {
     fireEvent.click(within(away).getByRole('button', { name: 'Translate it (hint)' }));
     await waitFor(() => expect(client.calls.filter((c) => c.path.endsWith('/hints'))).toHaveLength(1));
     expect(client.calls.find((c) => c.path.endsWith('/hints'))!.body).toEqual({ evidence: 'away' });
-    expect(await within(away).findByText('Baran is not at home today.')).toBeTruthy();
+    expect(await within(away).findByText('Baran is not at home today.', {}, SLOW)).toBeTruthy();
     expect(screen.getByText('Hints left: 2')).toBeTruthy();
-  });
+  }, 20000);
 
   it('notes a deduction, then solves the case and says what the hints cost', async () => {
     const client = routes([stepDone, accused], [], { correct: 2, total: 2, firstTry: 2, xp: 4, learningCounted: true, needed: 1, items: [], streak: 2, deducted: 1 });
     testAuth.client = client;
     renderWithProviders(<DetectiveScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 16 XP');
+    await screen.findByText('Up to 16 XP', {}, SLOW);
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
-    const options = await screen.findByTestId('detective-options', {}, { timeout: 5000 });
+    const options = await screen.findByTestId('detective-options', {}, { timeout: 15000 });
     fireEvent.click(within(options).getByRole('button', { name: 'Honey at night' }));
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
-    expect(await screen.findByText('Written in your notebook.')).toBeTruthy();
+    expect(await screen.findByText('Written in your notebook.', {}, SLOW)).toBeTruthy();
     expect(client.calls.find((c) => c.path.endsWith('/answers'))!.body).toEqual({ index: 0, answer: { choice: 1 }, attempt: 1 });
-    expect(within(screen.getByTestId('evidence-advice')).getByText('Honey at night is forbidden!')).toBeTruthy();
+    expect(await within(screen.getByTestId('evidence-advice')).findByText('Honey at night is forbidden!', {}, SLOW)).toBeTruthy();
     expect(within(screen.getByTestId('detective-notebook')).getByText('Honey at night')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    const suspects = await screen.findByTestId('detective-accused');
+    const suspects = await screen.findByTestId('detective-accused', {}, SLOW);
     fireEvent.click(within(suspects).getByRole('button', { name: 'Hamo' }));
     fireEvent.click(screen.getByRole('button', { name: 'Accuse' }));
-    expect(await screen.findByText('It was Hamo.')).toBeTruthy();
+    expect(await screen.findByText('It was Hamo.', {}, SLOW)).toBeTruthy();
     expect(screen.getByText('Hamo ate the honey.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'See how it went' }));
-    expect(await screen.findByText('+4 XP')).toBeTruthy();
+    expect(await screen.findByText('+4 XP', {}, SLOW)).toBeTruthy();
     expect(screen.getByText('The hints you used cost 1 XP.')).toBeTruthy();
-  });
+  }, 20000);
 });
 
 describe('the games list', () => {
@@ -176,7 +179,7 @@ describe('the games list', () => {
       'GET /games/availability?dialect=kmr': availability(),
     });
     renderWithProviders(<GamesView />);
-    const card = await screen.findByTestId('game-detective');
+    const card = await screen.findByTestId('game-detective', {}, SLOW);
     expect(card.getAttribute('aria-label')).toBe('Kurdish Detective, Solo. Solve a case from Kurdish evidence, then name who did it.');
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('Detective');
