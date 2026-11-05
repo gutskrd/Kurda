@@ -36,6 +36,7 @@ export const GAME_NAME: Readonly<Record<RankedGame, string>> = {
   'wordle-battle': 'Peyvok Battle',
   'rhyme-match': 'Rhyme Match',
   stories: 'Stories',
+  'last-letter': 'The Last Letter',
 };
 
 /** "Çiya (Mountain)" */

@@ -486,15 +486,27 @@ export class MultiplayerService {
           })
         : null;
     let outcome: unknown = null;
+    // a refusal found after settling what was due is said once that has committed:
+    // thrown inside, it would roll back a turn that had just run out
+    let refusal: AppError | null = null;
     await this.inLobby(lobbyId, async (t) => {
       const me = this.member(t, userId);
       await this.settle(t);
-      if (t.lobby.status !== 'active' || !t.lobby.state || me.left_at !== null) throw new AppError('NOT_ACTIVE', 409, 'this game is not under way');
+      if (t.lobby.status !== 'active' || !t.lobby.state || me.left_at !== null) {
+        refusal = new AppError('NOT_ACTIVE', 409, 'this game is not under way');
+        return;
+      }
       const rules = m.rules;
-      if (!rules.waitingFor(t.lobby.state).includes(me.seat)) throw new AppError('NOT_YOUR_TURN', 409, 'it is not your turn');
+      if (!rules.waitingFor(t.lobby.state).includes(me.seat)) {
+        refusal = new AppError('NOT_YOUR_TURN', 409, 'it is not your turn');
+        return;
+      }
       const prepared = await m.prepare(t.client, t.lobby.state, me.seat, { raw: parsed.data, text });
       const applied = rules.apply(t.lobby.state, me.seat, prepared.move, t.now.getTime());
-      if (!applied.ok) throw new AppError('MOVE_REFUSED', 409, 'that move is not open now', { reason: applied.reason });
+      if (!applied.ok) {
+        refusal = new AppError('MOVE_REFUSED', 409, 'that move is not open now', { reason: applied.reason });
+        return;
+      }
       outcome = applied.outcome;
       if (prepared.offense) t.offenses.push(userId);
       await this.recordMove(t, me.seat, userId, 'move', text ?? prepared.text, { outcome: applied.outcome });
@@ -506,6 +518,7 @@ export class MultiplayerService {
       await this.saveState(t, applied.state);
       await this.settle(t);
     });
+    if (refusal) throw refusal;
     return { view: await this.view(lobbyId, userId), outcome };
   }
 
