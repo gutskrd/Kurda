@@ -61,7 +61,7 @@ export const GAME_NAME: Record<LearnGameId, string> = {
   'dont-say': 'Don’t Say the Word!',
   bluff: 'Kurdish Bluff',
   'who-am-i': 'Who Am I?',
-  kingdom: 'Kurdish Kingdom',
+  kingdom: 'The Village',
 };
 
 export const KIND_NAME: Record<GameContentKind, string> = {

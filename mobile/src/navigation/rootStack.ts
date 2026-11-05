@@ -101,7 +101,7 @@ export type RootStackParamList = {
   Race: undefined;
   /** Build a Kurdish Sentence, the first of the learning games (games/BuildSentenceScreen) */
   BuildSentence: undefined;
-  /** Kurdish Kingdom: the learner's village, built by their learning (kingdom/KingdomScreen) */
+  /** The Village ("kingdom" in code): the learner's village, built by their learning (kingdom/KingdomScreen) */
   Kingdom: undefined;
   /** The Memory Thief (games/MemoryThiefScreen) */
   MemoryThief: undefined;

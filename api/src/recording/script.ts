@@ -91,7 +91,7 @@ const GAME_NAME: Record<(typeof GAME_KINDS)[number], string> = {
   scenario: 'What Would You Say?',
   case_file: 'Kurdish Detective',
   question_template: 'Who Am I?',
-  building_name: 'Kurdish Kingdom',
+  building_name: 'The Village',
 };
 
 // ---------- what the service hands in ----------

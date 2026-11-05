@@ -26,7 +26,7 @@ import { APP_LOCALE_CODES, type AppLocale } from '../locales.js';
 import { SPEAKERS, type RecordingVoice, type SpeakerId } from '../lipsync/speakers.js';
 import { fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
 import type { GamesAvailability } from './solo.js';
-// the village's buildings are Kurdish Kingdom's own list; a building name row names one of them
+// the village's buildings are The Village's own list ("kingdom" in code); a building name row names one of them
 import { KINGDOM_BUILDINGS } from './kingdom/buildings.js';
 
 // ---------- the kinds, and the workflow every row goes through ----------
@@ -43,7 +43,7 @@ import { KINGDOM_BUILDINGS } from './kingdom/buildings.js';
  *   bluff_card        — Kurdish Bluff: a word and its real meaning, per language
  *   identity          — Who Am I?: an identity and its yes/no facts
  *   question_template — Who Am I?: a yes/no question and the fact that answers it
- *   building_name     — Kurdish Kingdom: a building's Kurdish name
+ *   building_name     — The Village: a building's Kurdish name
  */
 export const GAME_CONTENT_KINDS = [
   'sentence',

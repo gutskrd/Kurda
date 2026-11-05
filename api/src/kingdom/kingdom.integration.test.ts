@@ -1,5 +1,5 @@
 /**
- * Kurdish Kingdom against real Postgres: what each building counts and what
+ * The Village ("kingdom" in code) against real Postgres: what each building counts and what
  * it does not, the levels at their thresholds, each level recorded and paid
  * for once — under a burst of visits too — no Zêr for the accounts the
  * economy does not pay, the first visit, and the village over HTTP.
@@ -25,7 +25,7 @@ import { KINGDOM_LEDGER_REASON, KINGDOM_ZER_PER_LEVEL, KingdomService, measureKi
 const DATABASE_URL = process.env.DATABASE_URL;
 const BURST = 12;
 
-describe.skipIf(!DATABASE_URL)('Kurdish Kingdom (integration)', () => {
+describe.skipIf(!DATABASE_URL)('The Village (integration)', () => {
   const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let pool: pg.Pool;
   let wallet: WalletService;

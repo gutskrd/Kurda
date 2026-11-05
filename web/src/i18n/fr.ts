@@ -3733,7 +3733,7 @@ export const fr: Catalogue = {
   'chat.noMatch': 'Rien ne correspond à ce nom.',
   'chat.newMessage.noneBody': 'Les messages se font entre amis. Trouvez d’abord quelqu’un à ajouter.',
   'profile.share': 'Partager le profil',
-  'kingdom.title': 'Royaume kurde',
+  'kingdom.title': 'Le village',
   'kingdom.card': 'Un village de montagne qui ne grandit que lorsque tu apprends.',
   'kingdom.open': 'Visiter ton village',
   'kingdom.intro': 'Ton village ne grandit qu’avec ce que tu apprends vraiment : les mots que tu retiens, les leçons et les histoires que tu réussis, ce que tu entends et dis, et chaque jour où tu reviens.',

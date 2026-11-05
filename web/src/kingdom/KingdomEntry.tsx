@@ -5,7 +5,7 @@ import { useT } from '../i18n/I18nProvider';
 import './kingdom.css';
 
 /** Where the village is. */
-export const KINGDOM_PATH = '/app/games/kingdom';
+export const KINGDOM_PATH = '/app/games/village';
 
 /** A village part-way grown, to show on the tile what the game is: not the learner's own, which the page itself shows. */
 const SAMPLE = { houses: 3, school: 2, teahouse: 2, spring: 3, market: 1, orchard: 3 } as const;

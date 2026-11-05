@@ -3739,7 +3739,7 @@ export const ku: Catalogue = {
   'chat.noMatch': 'Tiştek bi vî navî re li hev nayê.',
   'chat.newMessage.noneBody': 'Peyam di navbera hevalan de ne. Pêşî kesekî bibîne û lê zêde bike.',
   'profile.share': 'Profîlê parve bike',
-  'kingdom.title': 'Keyaniya Kurdî',
+  'kingdom.title': 'Gund',
   'kingdom.card': 'Gundekî çiyayî ku tenê bi fêrbûna te mezin dibe.',
   'kingdom.open': 'Serdana gundê xwe bike',
   'kingdom.intro': 'Gundê te tenê bi fêrbûna rastîn mezin dibe: peyvên ku tu bîr tînî, ders û çîrokên ku tu derbas dikî, tiştên ku tu dibihîzî û dibêjî, û her roja ku tu vedigerî.',

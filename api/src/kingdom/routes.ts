@@ -13,7 +13,7 @@ const seenBody = z.object({
 });
 
 /**
- * Kurdish Kingdom over HTTP: the learner's village (shared `KingdomView`) and
+ * The Village ("kingdom" in code) over HTTP: the learner's village (shared `KingdomView`) and
  * the celebrations they were shown. Open to a guest, whose learning builds the
  * village like anyone's; what a guest is not paid is decided in the service.
  * Nothing here takes a count or an amount from the client.

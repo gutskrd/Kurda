@@ -22,7 +22,7 @@ import type { WalletService } from '../wallet/service.js';
 import type { Cache } from '../cache/cache.js';
 
 /**
- * Kurdish Kingdom on the server: the village's state, worked out from the
+ * The Village ("kingdom" in code) on the server: the village's state, worked out from the
  * learner's own records, and each new level recorded — and paid for — once.
  *
  * What a building counts is read from where the learning happened (the badge

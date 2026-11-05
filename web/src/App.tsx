@@ -287,8 +287,9 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
         {/* the learning games, each a round made and scored on the server like the others */}
         <Route path="games/build-sentence" element={<RequireAccount what="gate.what.play"><BuildSentence /></RequireAccount>} />
-        {/* Kurdish Kingdom: the village the learner's own learning builds */}
-        <Route path="games/kingdom" element={<RequireAccount what="gate.what.play"><KingdomPage /></RequireAccount>} />
+        {/* The Village (called Kurdish Kingdom in code): the village the learner's own learning builds; its old address still leads there */}
+        <Route path="games/village" element={<RequireAccount what="gate.what.play"><KingdomPage /></RequireAccount>} />
+        <Route path="games/kingdom" element={<Navigate to="/app/games/village" replace />} />
         <Route path="games/memory-thief" element={<RequireAccount what="gate.what.play"><MemoryThief /></RequireAccount>} />
         <Route path="games/hear-it" element={<RequireAccount what="gate.what.play"><HearIt /></RequireAccount>} />
         <Route path="games/what-would-you-say" element={<RequireAccount what="gate.what.play"><WhatWouldYouSay /></RequireAccount>} />

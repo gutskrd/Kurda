@@ -184,7 +184,7 @@ export function Games(): React.JSX.Element {
         {learnGames.map((g) => (
           <LearnGameTile key={g.id} game={g} signedIn={signedIn} />
         ))}
-        {/* Kurdish Kingdom: the learner's own village, so only for someone signed in */}
+        {/* The Village: the learner's own village, so only for someone signed in */}
         {signedIn && <KingdomTile />}
       </div>
 

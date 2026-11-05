@@ -21,14 +21,14 @@ function signIn(): void {
   );
 }
 
-describe('Kurdish Kingdom among Learn’s games', () => {
+describe('The Village among Learn’s games', () => {
   it('is always listed for a signed-in learner, with its one way in', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
     const title = await screen.findByRole('heading', { name: en['kingdom.title'] });
     const tile = title.closest('article')!;
     expect(within(tile).getByText(en['kingdom.card'])).toBeInTheDocument();
-    expect(within(tile).getByRole('link', { name: en['kingdom.open'] })).toHaveAttribute('href', '/app/games/kingdom');
+    expect(within(tile).getByRole('link', { name: en['kingdom.open'] })).toHaveAttribute('href', '/app/games/village');
   });
 
   it('is not offered to a visitor, who has no village', async () => {

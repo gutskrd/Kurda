@@ -3830,7 +3830,7 @@ export const en = {
   'chat.noMatch': 'Nothing matches that name.',
   'chat.newMessage.noneBody': 'Messages are between friends. Find someone to add first.',
   'profile.share': 'Share profile',
-  'kingdom.title': 'Kurdish Kingdom',
+  'kingdom.title': 'The Village',
   'kingdom.card': 'A mountain village that grows only as you learn.',
   'kingdom.open': 'Visit your village',
   'kingdom.intro': 'Your village grows only from real learning: words you remember, lessons and stories you pass, what you hear and say, and every day you come back.',

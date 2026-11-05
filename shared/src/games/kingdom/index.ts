@@ -1,5 +1,5 @@
 /**
- * Kurdish Kingdom, the village that grows from real learning: its buildings
+ * The Village (named "kingdom" throughout the code), which grows from real learning: its buildings
  * and thresholds (buildings.ts), the view the API answers with (view.ts), and
  * the village's drawings and life, which live with the rest of the art
  * (art/kingdom.ts).

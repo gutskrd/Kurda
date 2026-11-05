@@ -3,7 +3,7 @@
  * the stepping stones between its stops, the stops themselves as chunky
  * raised discs, and the landmark that stands beside each unit.
  *
- * The one place, with the Kurdish Kingdom's village, where Hevalo's art has
+ * The one place, with The Village, where Hevalo's art has
  * depth: the owner asked for the path and the village to read as one small
  * world seen from a little above, like a board of stones on a sunny meadow.
  * So these pieces are drawn the way the village is — isometric where they

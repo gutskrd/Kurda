@@ -3734,7 +3734,7 @@ export const nl: Catalogue = {
   'chat.noMatch': 'Niets past bij die naam.',
   'chat.newMessage.noneBody': 'Berichten zijn tussen vrienden. Zoek eerst iemand om toe te voegen.',
   'profile.share': 'Profiel delen',
-  'kingdom.title': 'Koerdisch Koninkrijk',
+  'kingdom.title': 'Het dorp',
   'kingdom.card': 'Een bergdorp dat alleen groeit als jij leert.',
   'kingdom.open': 'Bezoek je dorp',
   'kingdom.intro': 'Je dorp groeit alleen door echt te leren: woorden die je onthoudt, lessen en verhalen die je haalt, wat je hoort en zegt, en elke dag dat je terugkomt.',

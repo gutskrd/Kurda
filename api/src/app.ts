@@ -641,7 +641,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     // today's three quests, moved by finished lessons and practice, each paying a chest of Zêr
     registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
-    // Kurdish Kingdom: the village that grows only from real learning, each new level recorded and paid for once
+    // The Village ("kingdom" in code): the village that grows only from real learning, each new level recorded and paid for once
     registerKingdomRoutes(app, new KingdomService(app.db, new WalletService(app.db), { cache: app.cache, log: app.log }));
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService, badges);

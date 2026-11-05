@@ -8,7 +8,7 @@ import type pg from 'pg';
  * before Game Ranks, the stories they kept on their shelf and how far they
  * read each one, the dictionary words they saved, their rounds of the
  * learning games with how far up each ladder they climbed, and the levels
- * their Kurdish Kingdom village reached.
+ * buildings in The Village reached.
  *
  * A story or a word is named by what they saw (its slug and title, its
  * headword and dialect) rather than by the row ids that join them, which

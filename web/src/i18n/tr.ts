@@ -3729,7 +3729,7 @@ export const tr: Catalogue = {
   'chat.noMatch': 'Bu adla eşleşen bir şey yok.',
   'chat.newMessage.noneBody': 'Mesajlar arkadaşlar arasındadır. Önce eklemek için birini bul.',
   'profile.share': 'Profili paylaş',
-  'kingdom.title': 'Kürt Krallığı',
+  'kingdom.title': 'Köy',
   'kingdom.card': 'Yalnızca sen öğrendikçe büyüyen bir dağ köyü.',
   'kingdom.open': 'Köyünü ziyaret et',
   'kingdom.intro': 'Köyün yalnızca gerçek öğrenmeyle büyür: aklında tuttuğun kelimeler, geçtiğin dersler ve hikâyeler, duyduğun ve söylediğin şeyler ve geri geldiğin her gün.',

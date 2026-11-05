@@ -1,5 +1,5 @@
 /**
- * Kurdish Kingdom: a mountain village that grows only from what the learner
+ * The Village ("kingdom" in code): a mountain village that grows only from what the learner
  * has really learned. This module is its rulebook — the six buildings, what
  * kind of learning each one counts, and the five thresholds each one climbs.
  *

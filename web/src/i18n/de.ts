@@ -3734,7 +3734,7 @@ export const de: Catalogue = {
   'chat.noMatch': 'Nichts passt zu diesem Namen.',
   'chat.newMessage.noneBody': 'Nachrichten gibt es unter Freunden. Finde zuerst jemanden zum Hinzufügen.',
   'profile.share': 'Profil teilen',
-  'kingdom.title': 'Kurdisches Königreich',
+  'kingdom.title': 'Das Dorf',
   'kingdom.card': 'Ein Bergdorf, das nur mit deinem Lernen wächst.',
   'kingdom.open': 'Dein Dorf besuchen',
   'kingdom.intro': 'Dein Dorf wächst nur durch echtes Lernen: Wörter, die du behältst, Lektionen und Geschichten, die du bestehst, was du hörst und sagst, und jeden Tag, an dem du wiederkommst.',
