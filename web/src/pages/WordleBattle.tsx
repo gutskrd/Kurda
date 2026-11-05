@@ -8,18 +8,18 @@ import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard } from '../components/WordleBoard';
 import { useWordleKeys } from '../keyboard/wordleKeys';
-import { buildInviteUrl } from '../lib/gameInvites';
 import { useRail } from '../social/RailProvider';
 import { PlayerChip } from '../ui/PlayerChip';
 import { RankList, RankRow } from '../ui/RankRow';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
-import type { RatedState } from '@kurda/shared';
+import type { GameAccess, RatedState } from '@kurda/shared';
 import { LobbyRated, RatedBadge, shownRated } from '../ranks/rated';
 import { RankResult } from '../ranks/RankResult';
 import { InviteForm } from '../play/InviteSheet';
 import { InviteFriendsButton, InvitedList } from '../play/LobbyInvites';
+import { CodeTicket } from '../play/CodeTicket';
 import { LeaveLobby, LobbyRoster, RoomUnavailable, seatName, type RoomGone, type SeatPlayer } from '../play/GameRoom';
 import { RematchPanel } from '../play/RematchPanel';
 import { useLobbyUpdates } from '../play/usePlay';
@@ -53,6 +53,10 @@ interface BattleState {
   maxPlayers: number;
   createdBy: string;
   isHost: boolean;
+  /** who may join: the host's friends, or any adult with the code */
+  access?: GameAccess;
+  /** the code a friend types to join, while the lobby can still be joined; null after */
+  code?: string | null;
   /** Rated or Friendly (Game Ranks), shown before anyone joins; decided at the start */
   rated?: RatedState;
   /** everyone in it, by seat, as this viewer may see them */
@@ -97,7 +101,7 @@ function guessMsg(err: ApiError, t: (key: MessageKey) => string): string {
   }
 }
 
-/** Peyvok Battle (KUR-306): race the same word. Create → share link → play. */
+/** Peyvok Battle (KUR-306): race the same word. Create → invite, or hand out the code → play. */
 export function WordleBattle(): React.JSX.Element {
   const [params] = useSearchParams();
   const t = useT();
@@ -121,7 +125,7 @@ export function WordleBattle(): React.JSX.Element {
 /**
  * A new battle: its difficulty and the friends to ask, in one step — the
  * invite sheet's form, in place (play/InviteSheet). Nobody asked is fine too:
- * the lobby has its link to share.
+ * the lobby has its code to hand out.
  */
 function CreateBattle(): React.JSX.Element {
   const t = useT();
@@ -146,7 +150,6 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const [current, setCurrent] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
   const loadedOnce = useRef(false);
 
   const load = useCallback(async () => {
@@ -224,16 +227,6 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
 
   useWordleKeys(active, press);
 
-  async function copyLink(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(buildInviteUrl('wordle-battle', id));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setNotice(t('games.copyFailed'));
-    }
-  }
-
   async function join(): Promise<void> {
     setBusy(true);
     const res = await client.post<BattleState>(`/wordle/battles/${id}/join`);
@@ -277,12 +270,13 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   if (battle.status === 'lobby') {
     return (
       <div className="match-lobby match-room">
-        <div className="battle-invite">
-          <span className="battle-invite-label">{t('games.inviteLink')}</span>
-          <code className="battle-invite-url">{buildInviteUrl('wordle-battle', id)}</code>
-          <Button size="sm" onClick={() => void copyLink()}>{copied ? t('games.copied') : t('games.copyLink')}</Button>
-          {battle.isHost && <InviteFriendsButton game="wordle-battle" lobbyId={id} room={room} />}
-        </div>
+        {/* the code anyone can be told, and Invite friends for the friends already here */}
+        <CodeTicket
+          game="wordle-battle"
+          code={battle.code}
+          access={battle.access}
+          invite={battle.isHost ? <InviteFriendsButton game="wordle-battle" lobbyId={id} room={room} /> : undefined}
+        />
         <LobbyRoster players={battle.players} max={battle.maxPlayers} canRemove={battle.isHost} onRemove={remove} game="wordle-battle" gameId={battle.id} />
         {/* Rated or Friendly: everyone sees it before joining, the host changes it here */}
         <LobbyRated

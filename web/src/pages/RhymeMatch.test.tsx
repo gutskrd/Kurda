@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { RhymeMatch } from './RhymeMatch';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -34,6 +34,7 @@ const lobby = {
   createdBy: 'me',
   isHost: true,
   access: 'friends',
+  code: 'RHY234',
   nextLobbyId: null,
   players: [seat(1, { userId: 'me', isMe: true, isHost: true })],
   me: { seat: 1, score: 0, accepted: 0, usedWords: [] },
@@ -52,7 +53,7 @@ const active = {
 };
 
 describe('RhymeMatch', () => {
-  it('shows the lobby with an invite link, start gated on a second player', async () => {
+  it('shows the lobby with its join code on a ticket, and no link, start gated on a second player', async () => {
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     vi.stubGlobal(
       'fetch',
@@ -63,8 +64,10 @@ describe('RhymeMatch', () => {
       }),
     );
     renderApp(<RhymeMatch />, ['/app/games/rhyme-match?id=rm1']);
-    expect(await screen.findByText(/invite link/i)).toBeInTheDocument();
-    expect(screen.getByText(/\/app\/games\/rhyme-match\?id=rm1/)).toBeInTheDocument();
+    const ticket = await screen.findByRole('group', { name: 'Join code' });
+    expect(within(ticket).getByRole('button', { name: 'Copy the join code R H Y 2 3 4' })).toBeInTheDocument();
+    expect(screen.queryByText(/invite link/i)).toBeNull();
+    expect(screen.queryByText(/\/app\/games\/rhyme-match\?id=/)).toBeNull();
     expect(await screen.findByRole('button', { name: /waiting for a second player/i })).toBeInTheDocument();
   });
 

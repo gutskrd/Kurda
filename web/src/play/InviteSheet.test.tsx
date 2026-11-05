@@ -165,7 +165,7 @@ describe('InviteSheet', () => {
     open({ kind: 'new', game: 'rhyme-match' }, true);
     expect(await screen.findByText('No friends to invite yet.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Find friends' })).toHaveAttribute('href', '/app/friends');
-    // a game can still be made, and shared by its link
+    // a game can still be made, and shared by its code
     expect(screen.getByRole('button', { name: 'Create game' })).toBeEnabled();
   });
 

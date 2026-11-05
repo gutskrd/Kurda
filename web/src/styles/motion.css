@@ -6,10 +6,11 @@
  * answer pops when it was right and shakes once when it was not; a bar slides
  * to its new value; a list's first screenful rises in once as it arrives; a
  * sheet or a dialog springs up while the scrim fades; a heart pops with a tiny
- * burst; a speaking character rises into its tile; the boxes a join code is
- * typed into answer each key; and something earned is celebrated
- * (ranks/Celebration.tsx). Nothing loops but a loading shimmer and a typing
- * caret, and nothing moves while it is being read.
+ * burst; a speaking character rises into its tile; a join code's tiles drop
+ * onto their ticket and the boxes a code is typed into answer each key; and
+ * something earned is celebrated (ranks/Celebration.tsx). Nothing loops but a
+ * loading shimmer, a typing caret and a ticket's slow glint (only while it is
+ * in front), and nothing moves while it is being read.
  *
  * Only transform and opacity are animated. Under prefers-reduced-motion,
  * base.css takes every duration to nothing, so each of these lands at its end
@@ -582,6 +583,98 @@
   }
 }
 
+/* ---- a lobby's join code ------------------------------------------------------ */
+/*
+ * A lobby's ticket (play/CodeTicket.tsx). Its tiles drop onto it one after
+ * another the first time it is shown, turning down into place with a little
+ * overshoot. While it is in front (`is-awake`: on the screen, its tab the one
+ * being looked at) a light crosses them every seven seconds, faint and quick;
+ * the class comes off as soon as it is not, and the light stops. A press on
+ * the code sinks the tiles onto their lip, as an answer tile sinks.
+ */
+@keyframes code-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) rotateX(75deg);
+  }
+  35% {
+    opacity: 1;
+  }
+}
+.code-tile {
+  transform-origin: 50% 100%;
+  animation: code-tile-in 540ms var(--ease-spring) calc(90ms + var(--i, 0) * 60ms) backwards;
+  transition:
+    transform var(--dur) var(--ease-spring),
+    box-shadow var(--dur) var(--ease-spring),
+    border-color var(--dur-fast) ease;
+}
+.code-ticket-code:active .code-tile {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--code-accent) 50%, var(--app-bg));
+  transition-duration: 60ms;
+}
+@keyframes code-glint {
+  0%,
+  84% {
+    opacity: 0;
+    transform: translateX(-110%);
+  }
+  86% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(110%);
+  }
+}
+.code-ticket.is-awake .code-tile::after {
+  animation: code-glint 7s cubic-bezier(0.45, 0, 0.25, 1) calc(1.4s + var(--i, 0) * 70ms) infinite;
+}
+/* Copy becomes a tick: the copy glyph shrinks away as the tick springs in, with six sparks */
+.code-ticket-copy-icon > svg {
+  transition:
+    opacity var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
+}
+.code-ticket-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  color: var(--success);
+  box-shadow:
+    0 -13px 0 currentColor,
+    11px -6px 0 currentColor,
+    11px 6px 0 currentColor,
+    0 13px 0 currentColor,
+    -11px 6px 0 currentColor,
+    -11px -6px 0 currentColor;
+  pointer-events: none;
+  animation: like-burst var(--dur-slow) var(--ease-out) both;
+}
+/* the toast rises in, stays, and fades by itself */
+@keyframes note-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px) scale(0.96);
+  }
+}
+@keyframes note-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+.code-ticket-note {
+  animation:
+    note-in var(--dur-slow) var(--ease-spring) both,
+    note-out var(--dur) var(--ease-out) 2500ms forwards;
+}
+
 /* ---- typing a code in ----------------------------------------------------------- */
 /*
  * Typing a code (play/JoinCode.tsx): each character pops into its box (a
@@ -742,4 +835,17 @@
 }
 .code-entry.is-still .code-box::after {
   display: none;
+}
+/* a lobby's ticket, still: its tiles are there at once, and nothing glints or sparks */
+@media (prefers-reduced-motion: reduce) {
+  .code-tile {
+    animation: none !important;
+  }
+  .code-tile::after,
+  .code-ticket-burst {
+    display: none;
+  }
+  .code-ticket-code:active .code-tile {
+    transform: none;
+  }
 }

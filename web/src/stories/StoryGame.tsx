@@ -78,12 +78,7 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
           {view.status === 'cancelled' ? (
             <GameEnded title={t('stories.game.cancelledTitle')} body={t('stories.game.cancelled')} />
           ) : view.status === 'lobby' ? (
-            <GameLobby
-              view={view}
-              act={game.act}
-              announce={announce}
-              {...lobbyInvites(view)}
-            />
+            <GameLobby view={view} act={game.act} {...lobbyInvites(view)} />
           ) : view.status === 'reading' ? (
             <GameReading view={view} story={story} act={game.act} skew={game.skew} announce={announce} />
           ) : view.status === 'question' ? (

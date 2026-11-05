@@ -1,22 +1,23 @@
 import { useEffect, useRef, useState } from 'react';
-import { MIN_PLAYERS_TO_START, MAX_PLAYERS, formatJoinCode, type StoryGameView } from '@kurda/shared';
+import { MIN_PLAYERS_TO_START, MAX_PLAYERS, type StoryGameView } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { PlayerReport } from '../reports/PlayerReport';
 import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
-import { CopyIcon, HostIcon, ShareIcon } from '../components/icons';
-import { buildInviteUrl } from '../lib/gameInvites';
+import { HostIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { SetupSheet } from './SetupSheet';
 import { storyError } from './api';
-import { ExtraTimeToggle, FromMemoryNote, SettingsLine, playerName, type Act, type Announce } from './GameParts';
+import { ExtraTimeToggle, FromMemoryNote, SettingsLine, playerName, type Act } from './GameParts';
 import { rememberedExtraTime } from './prefs';
 import { LobbyRated } from '../ranks/rated';
+import { CodeTicket } from '../play/CodeTicket';
 
 /**
- * The lobby of a duo or group game: the code and the ways to share it,
- * who is in, and — for the host — the settings, removing a player and Start
- * (contract §A1). Everyone else waits for the host and can leave.
+ * The lobby of a duo or group game: the code to hand out (the play layer's
+ * ticket, as in every game's lobby), who is in, and — for the host — the
+ * settings, removing a player and Start (contract §A1). Everyone else waits
+ * for the host and can leave.
  *
  * `invite` is the "Invite friends" button and `invited` the list of friends
  * asked, both from the play layer, so every game's lobby asks friends the
@@ -25,13 +26,11 @@ import { LobbyRated } from '../ranks/rated';
 export function GameLobby({
   view,
   act,
-  announce,
   invite,
   invited,
 }: {
   view: StoryGameView;
   act: Act;
-  announce: Announce;
   invite?: React.ReactNode;
   invited?: React.ReactNode;
 }): React.JSX.Element {
@@ -39,45 +38,21 @@ export function GameLobby({
   const [settings, setSettings] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const url = buildInviteUrl('stories', view.id);
-  const code = view.code;
   const present = view.players.filter((p) => !p.gone);
   const need = MIN_PLAYERS_TO_START[view.mode];
   const canStart = view.activeCount >= need;
 
-  // An invite's Join gets you in without your settings (it is the play layer's
-  // accept, not this game's join), so a remembered Extra time is put on here,
-  // once, before the first timed question. Turning it off in the lobby
-  // forgets it, so this never undoes a choice made here.
+  // An invite's Join, and a code typed in Games, get you in without your
+  // settings (the play layer's accept or join, not this game's own join), so
+  // a remembered Extra time is put on here, once, before the first timed
+  // question. Turning it off in the lobby forgets it, so this never undoes a
+  // choice made here.
   const extraBrought = useRef(false);
   useEffect(() => {
     if (extraBrought.current) return;
     extraBrought.current = true;
     if (rememberedExtraTime() && !view.extraTime) void act('/extra-time', { on: true });
   }, []);
-
-  async function copy(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(url);
-      setNotice(t('games.copied'));
-      announce(t('games.copied'));
-    } catch {
-      setNotice(t('games.copyFailed'));
-    }
-  }
-
-  async function share(): Promise<void> {
-    try {
-      await navigator.share({
-        title: t('games.stories.name'),
-        // a link and the code: either one gets a friend in
-        text: t('stories.game.shareText', { code: code ? formatJoinCode(code) : '' }),
-        url,
-      });
-    } catch {
-      // closing the share sheet is not an error
-    }
-  }
 
   async function start(): Promise<void> {
     setBusy(true);
@@ -92,42 +67,7 @@ export function GameLobby({
         {t('stories.game.lobby')}
       </h2>
 
-      {code && (
-        <div className="sg-code-card">
-          <span className="sg-code-label" id="sg-code-label">
-            {t('stories.game.code')}
-          </span>
-          <span
-            className="sg-code"
-            role="img"
-            // read out one character at a time: "A B C 2 3 4"
-            aria-label={t('stories.game.codeSpelled', { code: code.split('').join(' ') })}
-          >
-            {formatJoinCode(code)}
-          </span>
-          <p className="sg-code-hint">
-            {view.settings.access === 'open' ? t('stories.game.codeOpen') : t('stories.game.codeFriends')}
-          </p>
-          <div className="sg-share">
-            <Button variant="secondary" size="sm" onClick={() => void copy()}>
-              <CopyIcon size={16} />
-              {t('games.copyLink')}
-            </Button>
-            {typeof navigator !== 'undefined' && typeof navigator.share === 'function' && (
-              <Button variant="secondary" size="sm" onClick={() => void share()}>
-                <ShareIcon size={16} />
-                {t('stories.game.share')}
-              </Button>
-            )}
-            {invite}
-          </div>
-          {notice && (
-            <p className="sg-notice" role="status">
-              {notice}
-            </p>
-          )}
-        </div>
-      )}
+      <CodeTicket game="stories" code={view.code} access={view.settings.access} invite={invite} />
 
       <FromMemoryNote view={view} />
 
@@ -217,6 +157,11 @@ export function GameLobby({
           </>
         ) : (
           <p className="sg-wait">{t('games.waitingForHost')}</p>
+        )}
+        {notice && (
+          <p className="sg-notice" role="status">
+            {notice}
+          </p>
         )}
       </div>
 

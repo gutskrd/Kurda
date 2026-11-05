@@ -120,6 +120,7 @@ import { Scales } from '@phosphor-icons/react/dist/icons/Scales';
 import { Copyright } from '@phosphor-icons/react/dist/icons/Copyright';
 import { Question } from '@phosphor-icons/react/dist/icons/Question';
 import { Key } from '@phosphor-icons/react/dist/icons/Key';
+import { Ticket } from '@phosphor-icons/react/dist/icons/Ticket';
 import { UserCircle } from '@phosphor-icons/react/dist/icons/UserCircle';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 import { useMemo } from 'react';
@@ -275,6 +276,8 @@ export const InviteIcon = named(UserPlus, 22);
 // taking someone out of a group
 export const RemovePersonIcon = named(UserMinus, 22);
 export const CopyIcon = named(Copy, 20);
+/** a lobby's join code: what a friend is handed to get in */
+export const TicketIcon = named(Ticket, 20);
 export const CaretDownIcon = named(CaretDown, 16);
 
 /* Game Ranks, leagues and badges (contract 4): a rated game climbs, a friendly

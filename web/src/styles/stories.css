@@ -1570,54 +1570,6 @@
   flex-direction: column;
   gap: 16px;
 }
-.sg-code-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 24px 18px 20px;
-  border-radius: var(--r-xl);
-  border: 1px solid var(--border-strong);
-  background: var(--surface);
-  box-shadow: var(--glass-rim);
-  text-align: center;
-}
-.sg-code-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-[dir='rtl'] .sg-code-label {
-  letter-spacing: normal;
-}
-.sg-code {
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  font-size: clamp(2.2rem, 8vw, 3rem);
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--ink);
-  /* a code reads left to right in every interface */
-  direction: ltr;
-  unicode-bidi: isolate;
-  font-variant-numeric: tabular-nums;
-}
-.sg-code-hint {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--ink-2);
-}
-.sg-share {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-.sg-share .btn {
-  min-height: 44px;
-}
 .sg-notice {
   margin: 4px 0 0;
   font-size: 0.85rem;
