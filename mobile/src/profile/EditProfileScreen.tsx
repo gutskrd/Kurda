@@ -1,8 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useNavigation, usePreventRemove, type NavigationAction } from '@react-navigation/native';
 import { PressableScale } from '../theme/MotionParts';
 import { countriesIn, foldDiacritics } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import type { RootNavigation } from '../navigation/rootStack';
+import { BottomSheet } from '../theme/BottomSheet';
 import type { ApiError } from '../api/types';
 import { describeError } from '../api/errors';
 import { restrictionOf } from '../reports/sendErrors';
@@ -112,6 +115,21 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
     me !== null &&
     (displayName !== (me.displayName ?? '') || bio !== (me.bio ?? '') || country !== (me.country ?? ''));
 
+  /*
+   * A name, a bio or a country typed and not yet saved: leaving asks first,
+   * whichever way it is left — the header's back, the swipe, Android's back —
+   * and keeping on editing is the first answer, as in the composer. The
+   * avatar and the rest below save as they are chosen, so they never ask.
+   */
+  const navigation = useNavigation<RootNavigation>();
+  const [leaving, setLeaving] = useState<NavigationAction | null>(null);
+  usePreventRemove(dirty, ({ data }) => setLeaving(data.action));
+  const discard = () => {
+    const action = leaving;
+    setLeaving(null);
+    if (action) navigation.dispatch(action);
+  };
+
   const save = useCallback(async () => {
     if (!me || busy || !dirty) return;
     setBusy(true);
@@ -211,7 +229,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 
             <Text style={[styles.label, { color: colors.textSecondary }]}>{t('edit.country')}</Text>
             <View style={styles.countries}>
-              <CountryChip label={chosenCountry ? chosenCountry.name : t('edit.noCountry')} on onPress={() => undefined} />
+              {/* what it is set to now: a value, not a button, since tapping it had nothing to do */}
+              <CountryChip label={chosenCountry ? chosenCountry.name : t('edit.noCountry')} on />
               {/* taking it off is one tap, without having to find "none" */}
               {chosenCountry ? <CountryChip label={t('edit.noCountry')} on={false} onPress={() => setCountry('')} /> : null}
             </View>
@@ -299,12 +318,27 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
           </ScrollView>
         </AsyncBoundary>
       </View>
+
+      <BottomSheet visible={leaving !== null} onClose={() => setLeaving(null)} title={t('composer.close.editTitle')} testID="edit-profile-leave">
+        <View style={styles.leaveActions}>
+          <ClayButton label={t('composer.close.stay')} tone="primary" onPress={() => setLeaving(null)} />
+          <ClayButton label={t('composer.close.discard')} tone="danger" variant="outline" onPress={discard} />
+        </View>
+      </BottomSheet>
     </GradientBackground>
   );
 }
 
-function CountryChip({ label, on, onPress }: { label: string; on: boolean; onPress: () => void }): React.JSX.Element {
+/** A country, as a choice to tap, or (without `onPress`) as the one chosen. */
+function CountryChip({ label, on, onPress }: { label: string; on: boolean; onPress?: () => void }): React.JSX.Element {
   const { colors } = useTheme();
+  if (!onPress) {
+    return (
+      <View style={[styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }]}>
+        <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>{label}</Text>
+      </View>
+    );
+  }
   return (
     <Pressable
       onPress={onPress}
@@ -334,4 +368,5 @@ const styles = StyleSheet.create({
   avatars: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
   avatarTile: { width: 56, height: 56, borderRadius: radii.md, borderWidth: 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
   locked: { opacity: 0.4 },
+  leaveActions: { gap: spacing.sm },
 });
