@@ -698,8 +698,8 @@ function hevalo(to: ToCanvas): KingdomActor {
   const spring = times[8]!;
   headKeys.push({ t: T(spring.t0 + 300), r: 0, y: 0 }, { t: T(spring.t0 + 900), r: -8 }, { t: T(spring.t1 - 400), r: -8 }, { t: T(spring.t1), r: 0 }, { t: 1, r: 0, y: 0 });
   earKeys.push({ t: 1, r: 0 });
-  // he stands in the canvas about 46 units tall
-  const tall = 46;
+  // he stands in the canvas about 54 units tall, a little taller than a door, the village's own deer
+  const tall = 54;
   const k = tall / DEER.box.h;
   const w = DEER.box.w * k;
   const box = { x: base.x - w / 2, y: base.y - tall, w, h: tall };

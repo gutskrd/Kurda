@@ -687,6 +687,15 @@ const orchard: Painter = (pal, rand) => {
 
 const PAINTERS: Readonly<Record<KingdomBuilding, Painter>> = { houses, school, teahouse, spring, market, orchard };
 
+/** Where the builders work on a stage whose new pieces are set down rather than built (a bench and its kilim, a pool, crates on a cloth). */
+const WORK_SITE: Readonly<Partial<Record<KingdomBuilding, Bounds>>> = {
+  houses: [32, 36, 0, 30, 28, 18],
+  school: [16, 22, 0, 40, 28, 16],
+  teahouse: [24, 36, 0, 30, 20, 12],
+  spring: [18, 18, 0, 28, 22, 12],
+  market: [14, 26, 0, 32, 18, 14],
+};
+
 /** What each plot's sign shows. */
 const SIGN: Readonly<Record<KingdomBuilding, 'house' | 'arrow' | 'cup'>> = { houses: 'house', school: 'house', teahouse: 'cup', spring: 'arrow', market: 'arrow', orchard: 'arrow' };
 
@@ -703,25 +712,29 @@ export function buildingParts(building: KingdomBuilding, level: KingdomLevel, pa
   const out: Part[] = [];
   const next = level + 1;
   if (level === 0) out.push(...P.stakedPlot(pal, 4, 4, 0, w - 8, d - 8, seeded(`kingdom-plot-${building}`), SIGN[building]));
+  // the scaffolding goes round each new piece that is built (not planted or set down); a stage with none has its work site
+  const raisedIn: Bounds[] = [];
   for (const piece of pieces) {
     const standing = piece.from <= level && (piece.until === undefined || level < piece.until);
     const raising = rising && piece.from === next;
     if (standing) out.push(...piece.draw(1));
     else if (raising) {
       out.push(...piece.draw(0.5));
-      if (piece.bounds) {
-        const [x, y, z, bw, bd, bh] = piece.bounds;
-        const s = P.scaffold(pal, x, y, z, bw, bd, Math.max(10, bh * 0.75));
-        s.back.tag = 'scaffold';
-        s.front.tag = 'scaffold';
-        out.push(s.back, s.front);
-      }
+      if (piece.bounds) raisedIn.push(piece.bounds);
     }
   }
   if (rising) {
-    const work = [P.planks(pal, w - 22, d - 4, 0), P.tools(pal, 6, d - 2, 0)];
-    for (const part of work) part.tag = 'scaffold';
+    if (raisedIn.length === 0 && WORK_SITE[building]) raisedIn.push(WORK_SITE[building]!);
+    for (const [x, y, z, bw, bd, bh] of raisedIn) {
+      const s = P.scaffold(pal, x, y, z, bw, bd, Math.max(10, bh * 0.75));
+      out.push(s.back, s.front);
+    }
+    // a ladder up the front of the last scaffold, or against a stake where trees are being planted
+    const [x, y, z, bw, bd, bh] = raisedIn[raisedIn.length - 1] ?? [w * 0.4, d * 0.4, 0, 10, 10, 14];
+    const ladderPart = P.ladder(pal, [x + bw * 0.72, y + bd + 9, z], [x + bw * 0.72, y + bd + 3.4, z + Math.max(10, bh * 0.75)]);
+    const work = [ladderPart, P.planks(pal, w - 22, d - 4, 0), P.tools(pal, 6, d - 2, 0)];
     out.push(...work);
+    for (const part of out.slice(-(work.length + raisedIn.length * 2))) part.tag = 'scaffold';
   }
   return out;
 }

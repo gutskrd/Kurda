@@ -197,11 +197,34 @@ function scenery(pal: Palette, rand: P.Rand, levels: Readonly<Record<KingdomBuil
   put((a, b, c) => P.crate(pal, a, b, c, 8, pal.apple, rand), 330, 326);
   put((a, b, c) => P.bush(pal, a, b, c, 5, rand, 4), 222, 334);
   if (!moving) put((a, b, c) => P.poplar(pal, a, b, c, 58, 11), 444, 336, 1);
+  // the lake: rocks standing out of it with foam round their feet, lily pads off the meadow, reeds by the falls
+  out.push({ depth: 100, svg: lakeDetails(pal, rand) });
   // the boat drawn up by the steps into the lake
   out.push({ depth: 60000, svg: P.steppingStones(pal, [314, 346, WATER_Z], [318, 372, WATER_Z], 3, rand).svg() });
   out.push(grown(boat(pal, 340, 356, WATER_Z), 340, 356, WATER_Z, BUILDING_SCALE, 60001));
   // the stream from the spring, once there is water to run, over the wall's edge into the lake
   if (levels.spring >= 1) out.push({ depth: depthAt(246, 330) - 5000, svg: stream(pal, levels.spring) });
+  return out;
+}
+
+/** Things in the open lake: a few rocks with foam round them, lily pads, a bed of reeds; drawn before the terraces' things. */
+function lakeDetails(pal: Palette, rand: P.Rand): string {
+  let out = '';
+  for (const [x, y, s] of [[-60, 140, 7], [-48, 152, 4.5], [380, 420, 6], [470, 380, 5], [150, 360, 4]] as const) {
+    const [fx, fy] = iso(x, y, WATER_Z);
+    out += `<path d="M${n(fx - s * 2.2)} ${n(fy + 1)}q${n(s * 2.2)} ${n(s * 0.9)} ${n(s * 4.4)} 0" fill="none" stroke="${pal.foam}" stroke-width="1.8"/>`;
+    out += P.rock(pal, x, y, WATER_Z, s, rand).svg();
+  }
+  let pads = '';
+  for (const [x, y] of [[132, 330], [140, 340], [128, 346], [206, 352]] as const) {
+    const [px, py] = iso(x, y, WATER_Z);
+    pads += `M${n(px)} ${n(py)}l${n(-3.2)} ${n(-1.2)}a3.6 1.8 0 1 0 1.2 -1.4Z`;
+  }
+  out += `<path d="${pads}" fill="${pal.leafDark.left}" stroke-width="0.8"/>`;
+  const [rx, ry] = iso(232, 352, WATER_Z);
+  let reeds = '';
+  for (let i = 0; i < 6; i++) reeds += `M${n(rx - 6 + i * 2.4)} ${n(ry)}q${n(i % 2 ? 1.4 : -1)} -6 ${n(i % 2 ? 0.6 : -0.6)} ${n(-(9 + (i % 3) * 2.4))}`;
+  out += `<path d="${reeds}" fill="none" stroke-width="2.6"/><path d="${reeds}" fill="none" stroke="${pal.leafDark.left}" stroke-width="1.2"/>`;
   return out;
 }
 
@@ -351,7 +374,7 @@ export interface KingdomBuildingOptions {
 }
 
 /** How each building is framed on its own island: the scale that fits its fullest stage on the 120 canvas. */
-const ISLAND_FIT: Readonly<Record<KingdomBuilding, number>> = { houses: 0.62, school: 0.68, teahouse: 0.66, spring: 0.74, market: 0.66, orchard: 0.6 };
+const ISLAND_FIT: Readonly<Record<KingdomBuilding, number>> = { houses: 0.72, school: 0.8, teahouse: 0.76, spring: 0.86, market: 0.77, orchard: 0.68 };
 
 /** One building at one stage on a small island of grass with its earth edge showing: its sheet's and the list's picture. */
 export function kingdomBuildingSvg(o: KingdomBuildingOptions): string {
@@ -363,13 +386,13 @@ export function kingdomBuildingSvg(o: KingdomBuildingOptions): string {
   const t = `${p}t`;
   const { w, d } = PLOT_SIZE[o.building];
   const island = new Part(-1000);
-  island.box(-5, -5, -9, w + 10, d + 10, 9, { top: pal.grass.top, left: pal.cliff.left, right: pal.cliff.right });
+  island.box(-2, -2, -9, w + 4, d + 4, 9, { top: pal.grass.top, left: pal.cliff.left, right: pal.cliff.right });
   const body = sorted([{ depth: -1000, svg: island.svg() }, ...buildingParts(o.building, o.level, pal, o.rising === true && o.level < 5).map((q) => ({ depth: q.depth, svg: q.svg() }))]);
   // the island's middle on the canvas, a little below centre so the tallest stage has room
   const k = ISLAND_FIT[o.building];
   const [mx, my] = iso(w / 2, d / 2, 0);
   const tx = 60 - mx * k;
-  const ty = 76 - my * k;
+  const ty = 78 - my * k;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${n2(size)}" height="${n2(size)}" viewBox="0 0 ${CANVAS} ${CANVAS}" role="img" aria-labelledby="${t}">` +
     `<title id="${t}">${escapeXml(o.title ?? o.building)}</title>` +
