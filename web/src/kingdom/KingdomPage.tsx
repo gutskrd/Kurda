@@ -318,8 +318,10 @@ function Village(props: VillageProps): React.JSX.Element {
   const camRef = useRef<Camera>(openingCamera(stage));
   const stageRef = useRef(stage);
   stageRef.current = stage;
-  // what the page lays: the part of the world near the view, updated as the camera settles (and now and then while it moves)
+  // what the page lays: the tiles near the view, noted now and then while the camera moves and again as it settles; the
+  // life near the view only as it settles, since laying an actor mid-gesture costs a frame and starts its loops
   const [near, setNear] = useState(() => visibleRect(camRef.current, stage));
+  const [lifeNear, setLifeNear] = useState(() => visibleRect(camRef.current, stage, 0.15));
   const [bouncing, setBouncing] = useState<KingdomBuilding | null>(null);
   const [happy, setHappy] = useState<string | null>(null);
   const [said, setSaid] = useState<{ id: string; word: string; x: number; y: number } | null>(null);
@@ -329,6 +331,7 @@ function Village(props: VillageProps): React.JSX.Element {
   const momentum = useRef<number | null>(null);
   const settle = useRef<number | null>(null);
   const lastNear = useRef(0);
+  const invRef = useRef(1);
 
   /** The camera's transform written straight to the world (no render), and the part of the world in view noted now and then. */
   const apply = useCallback((c: Camera, settled: boolean) => {
@@ -337,21 +340,27 @@ function Village(props: VillageProps): React.JSX.Element {
     if (el) {
       const { tx, ty, s } = transformOf(c, stageRef.current);
       el.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${s})`;
-      // badges and bubbles keep their size on the screen whatever the zoom, within reason
-      el.style.setProperty('--kg-inv', String(Math.min(2.2, Math.max(0.7, 1 / s))));
-      el.classList.toggle('is-moving', !settled);
+      // badges and bubbles keep their size on the screen whatever the zoom, within reason; the variable is set only as the
+      // zoom really changes or the camera settles, since setting it restyles everything in the world
+      const inv = Math.min(2.2, Math.max(0.7, 1 / s));
+      if (settled || Math.abs(inv / invRef.current - 1) > 0.12) {
+        invRef.current = inv;
+        el.style.setProperty('--kg-inv', String(inv));
+      }
+      if (el.classList.contains('is-moving') === settled) el.classList.toggle('is-moving', !settled);
     }
     if (settle.current !== null) window.clearTimeout(settle.current);
-    const note = (): void => {
+    const note = (all: boolean): void => {
       lastNear.current = now();
-      setNear(visibleRect(camRef.current, stageRef.current));
+      setNear(visibleRect(camRef.current, stageRef.current, 0.4));
+      if (all) setLifeNear(visibleRect(camRef.current, stageRef.current, 0.15));
     };
-    if (settled) note();
+    if (settled) note(true);
     else {
-      if (now() - lastNear.current > 180) note();
+      if (now() - lastNear.current > 220) note(false);
       settle.current = window.setTimeout(() => {
         worldRef.current?.classList.remove('is-moving');
-        note();
+        note(true);
       }, 140);
     }
   }, []);
@@ -412,7 +421,7 @@ function Village(props: VillageProps): React.JSX.Element {
     return lifeMarkup(kingdomLife(levels), (s) => sprites.get(s) ?? '');
   }, [levels, dark]);
   const ages = useRef(new Map<string, number>());
-  const laid = life.actors.filter((a) => overlaps(a.reach, near));
+  const laid = life.actors.filter((a) => overlaps(a.reach, lifeNear));
   for (const a of laid) if (!ages.current.has(a.id)) ages.current.set(a.id, Math.round(now() - PAGE_START));
   for (const id of [...ages.current.keys()]) if (!laid.some((a) => a.id === id)) ages.current.delete(id);
 
@@ -646,7 +655,7 @@ function Village(props: VillageProps): React.JSX.Element {
             {tiles.map((tile) =>
               overlaps(tile, near) ? <img key={`${tile.x},${tile.y}`} className="kingdom-tile" src={tile.url} alt="" draggable={false} style={onCanvas(tile)} /> : null,
             )}
-            <style>{life.css}</style>
+            <style dangerouslySetInnerHTML={{ __html: life.css }} />
             <div className="kingdom-life" aria-hidden="true">
               {laid.map((a) => (
                 <span

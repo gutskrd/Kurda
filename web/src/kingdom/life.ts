@@ -26,13 +26,16 @@ const PROPS = ['x', 'y', 'r', 'sx', 'sy', 'o'] as const;
 const num = (v: number): string => String(Math.round(v * 1000) / 1000);
 const pct = (v: number): string => `${num(v * 100)}%`;
 
-/** A pose as CSS declarations, translation in percent of the node's own box. */
+/**
+ * A pose as CSS declarations: one `transform` (translation in percent of the
+ * node's own box, then the turn, then the scale) and the opacity. One
+ * transform rather than the separate translate, rotate and scale properties,
+ * because the browser keeps a transform's animation on its compositor.
+ */
 function declarations(p: Pose, w: number, h: number, only?: ReadonlySet<string>): string {
   const out: string[] = [];
   const want = (k: string): boolean => !only || only.has(k);
-  if (want('x') || want('y')) out.push(`translate:${pct(w ? p.x / w : 0)} ${pct(h ? p.y / h : 0)}`);
-  if (want('r')) out.push(`rotate:${num(p.r)}deg`);
-  if (want('sx') || want('sy')) out.push(`scale:${num(p.sx)} ${num(p.sy)}`);
+  if (want('x') || want('y') || want('r') || want('sx') || want('sy')) out.push(`transform:translate(${pct(w ? p.x / w : 0)},${pct(h ? p.y / h : 0)}) rotate(${num(p.r)}deg) scale(${num(p.sx)},${num(p.sy)})`);
   if (want('o')) out.push(`opacity:${num(p.o)}`);
   return out.join(';');
 }
@@ -85,13 +88,12 @@ export function lifeMarkup(actors: readonly KingdomActor[], sprite: (s: KingdomS
     return `<span class="kg-n"${n.role ? ` data-role="${n.role}"` : ''} style="${style}">${inner}</span>`;
   };
   const canvas = { w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };
-  return {
-    css,
-    actors: actors.map((a) => ({
-      id: a.id,
-      html: node(a, canvas, a.tap !== undefined),
-      reach: kingdomActorReach(a),
-      tap: a.tap,
-    })),
-  };
+  // the markup first: writing it is what gathers the keyframes
+  const laid = actors.map((a) => ({
+    id: a.id,
+    html: node(a, canvas, a.tap !== undefined),
+    reach: kingdomActorReach(a),
+    tap: a.tap,
+  }));
+  return { css, actors: laid };
 }
