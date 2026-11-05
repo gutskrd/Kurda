@@ -804,13 +804,6 @@ a.invite-card:hover {
   background: var(--gold-soft);
   color: var(--gold-ink);
 }
-.lp-round--mic {
-  width: 46px;
-  height: 46px;
-  border: 1px solid var(--border-strong);
-  background: var(--surface-2);
-  animation: lp-ring 2.6s ease-out 3;
-}
 .lp-option {
   display: inline-flex;
   align-items: center;
@@ -1028,18 +1021,8 @@ a.invite-card:hover {
     opacity: 0;
   }
 }
-@keyframes lp-ring {
-  0% {
-    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.22);
-  }
-  70%,
-  100% {
-    box-shadow: 0 0 0 14px rgba(255, 255, 255, 0);
-  }
-}
 @media (prefers-reduced-motion: reduce) {
-  .lp-caret,
-  .lp-round--mic {
+  .lp-caret {
     animation: none;
   }
 }

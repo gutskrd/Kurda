@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useT } from '../i18n/I18nProvider';
-import { CheckIcon, CoinIcon, CommentIcon, HeadphonesIcon, HeartIcon, MicIcon, PlayIcon, WaveformIcon } from '../components/icons';
+import { CheckIcon, CoinIcon, CommentIcon, HeadphonesIcon, HeartIcon, PlayIcon } from '../components/icons';
 import { ProfileCard } from '../ui/ProfileCard';
 import { LeagueLadder } from '../ui/LeagueLadder';
 import { leagueName } from '../ranks/names';
@@ -259,51 +259,6 @@ export function StoriesMini(): React.JSX.Element {
           <CheckIcon size={12} /> 3/3
         </span>
       </span>
-    </div>
-  );
-}
-
-/* ---- see it, hear it, say it, use it -------------------------------------- */
-
-/** The four small pictures for the speaking section, one per step. */
-export function SpeakVisual({ step }: { step: 'see' | 'hear' | 'say' | 'use' }): React.JSX.Element {
-  const t = useT();
-  if (step === 'see') {
-    return (
-      <div className="lp-speak-visual" aria-hidden>
-        <Ku className="lp-speak-word">{HEVAL}</Ku>
-        <span className="lp-wordcard-gloss">{t('landing.gloss.heval')}</span>
-      </div>
-    );
-  }
-  if (step === 'hear') {
-    return (
-      <div className="lp-speak-visual" aria-hidden>
-        <span className="lp-round lp-round--light">
-          <PlayIcon size={16} />
-        </span>
-        <span className="lp-wave">
-          {[6, 14, 22, 12, 26, 18, 8, 20, 12, 6].map((h, i) => (
-            <span key={i} style={{ height: h }} />
-          ))}
-        </span>
-        <span className="lp-chip">0.75×</span>
-      </div>
-    );
-  }
-  if (step === 'say') {
-    return (
-      <div className="lp-speak-visual" aria-hidden>
-        <span className="lp-round lp-round--mic">
-          <MicIcon size={20} />
-        </span>
-        <WaveformIcon size={22} className="lp-speak-faint" />
-      </div>
-    );
-  }
-  return (
-    <div className="lp-speak-visual" aria-hidden>
-      <TileRow word={HEVAL} marks={BATTLE_GUESSES[2]!.marks} />
     </div>
   );
 }

@@ -18,7 +18,7 @@ describe('the ways in to How Hevalo teaches', () => {
   it('gives the front page a section of four principles, each a link to its own', () => {
     renderApp(<Landing />);
     const section = document.getElementById('how-it-teaches')!;
-    expect(within(section).getByRole('heading', { level: 2, name: 'Built on how memory works.' })).toBeInTheDocument();
+    expect(within(section).getByRole('heading', { level: 2, name: en['landing.science.title'] })).toBeInTheDocument();
 
     const ids = new Set(PRINCIPLES.map((p) => p.id));
     const cards = within(section)
