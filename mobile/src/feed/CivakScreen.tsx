@@ -26,8 +26,6 @@ import { FriendsRow } from './FriendsRow';
 import type { FeedItem } from './types';
 import {
   DEFAULT_FILTER,
-  FeedFilterChip,
-  FeedFilterChips,
   FeedFilterSheet,
   filterLabel,
   filterSummary,
@@ -38,6 +36,7 @@ import {
 } from './FeedFilter';
 import { onPostDeleted, samePost } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
+import { FilterChip, FilterChips } from '../theme/FilterSheet';
 
 const PAGE = 20;
 
@@ -215,9 +214,9 @@ export function CivakScreen(): React.JSX.Element {
             <>
               <FriendsRow refreshKey={pulls} />
               {plain ? null : (
-                <FeedFilterChips>
+                <FilterChips style={styles.filterChips}>
                   {ordered ? (
-                    <FeedFilterChip
+                    <FilterChip
                       icon="sort"
                       label={ordered}
                       clearLabel={t('feed.sort.clear')}
@@ -226,7 +225,7 @@ export function CivakScreen(): React.JSX.Element {
                     />
                   ) : null}
                   {narrowed ? (
-                    <FeedFilterChip
+                    <FilterChip
                       icon="filter-fill"
                       label={narrowed}
                       clearLabel={t('civak.filter.clear')}
@@ -234,7 +233,7 @@ export function CivakScreen(): React.JSX.Element {
                       onClear={() => choose({ ...filter, section: 'all', kind: null })}
                     />
                   ) : null}
-                </FeedFilterChips>
+                </FilterChips>
               )}
             </>
           }
@@ -285,4 +284,6 @@ const styles = StyleSheet.create({
   bar: { alignItems: 'center', paddingHorizontal: layout.gutter, minHeight: 44 },
   wordmark: { ...display(typography.sizes.xl), flex: 1 },
   waiting: { paddingHorizontal: layout.gutter },
+  // the chips under the faces, inside the page's gutter
+  filterChips: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
 });
