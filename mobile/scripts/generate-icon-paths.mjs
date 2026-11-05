@@ -176,6 +176,24 @@ const MAP = {
   'device-tablet': { glyph: 'DeviceTablet', note: 'a tablet signed in to your account' },
   'device-computer': { glyph: 'Laptop', note: 'a computer signed in to your account, through a browser' },
 
+  // --- What Would You Say?'s places (home, shop, phone and village are house, cart, device-phone and mountains) ---
+  'place-street': { glyph: 'Signpost', note: 'web StreetIcon — a scene in the street' },
+  'place-market': { glyph: 'Basket', note: 'web MarketIcon — a scene at the market' },
+  'place-school': { glyph: 'ChalkboardTeacher', note: 'web SchoolIcon — a scene at school' },
+  'place-cafe': { glyph: 'Coffee', note: 'web CafeIcon — a scene at a café or tea house' },
+  'place-bus': { glyph: 'Bus', note: 'web BusIcon — a scene on the bus' },
+  'place-doctor': { glyph: 'Stethoscope', note: 'web DoctorIcon — a scene at the doctor’s' },
+  'place-party': { glyph: 'Confetti', note: 'web PartyIcon — a scene at a celebration' },
+  'place-work': { glyph: 'Briefcase', note: 'web WorkIcon — a scene at work' },
+
+  // --- Kurdish Detective's board ---
+  pin: { glyph: 'PushPin', weight: 'fill', note: 'web PinIcon — a card pinned to the case board' },
+  notebook: { glyph: 'Notebook', note: 'web NotebookIcon — the deductions made so far' },
+  ear: { glyph: 'Ear', note: 'web OverheardIcon — talk overheard' },
+  note: { glyph: 'Note', note: 'web NoteIcon — a note left behind' },
+  statement: { glyph: 'ChatText', note: 'web StatementIcon — what someone said' },
+  gavel: { glyph: 'Gavel', note: 'web AccuseIcon — the accusation' },
+
   // --- answering a lesson ---
   'speaker-high': { glyph: 'SpeakerHigh', weight: 'fill', note: 'the clip in a listening bubble: tap to hear it again' },
   tiles: { glyph: 'SquaresFour', note: 'answer with word tiles rather than the keyboard' },

@@ -107,6 +107,10 @@ export type RootStackParamList = {
   MemoryThief: undefined;
   /** Hear It, Find It (games/HearItScreen) */
   HearIt: undefined;
+  /** What Would You Say? (games/WhatWouldYouSayScreen) */
+  WhatWouldYouSay: undefined;
+  /** Kurdish Detective (games/DetectiveScreen) */
+  Detective: undefined;
   /** An id when a join code, an invite or an old invite link opened it; nothing when you came to make one. */
   RhymeMatch: { id?: string } | undefined;
   /** The Last Letter: an id for a room (a code, an invite, a card); nothing for the start, with friends or against Hevalo. */

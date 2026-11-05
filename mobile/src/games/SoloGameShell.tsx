@@ -43,9 +43,11 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
  * same shell, so the two say the same things in the same order.
  */
 
-export interface SoloRound<Item, H, C> {
-  /** the round's id: what a game's clips are played from (`hearItClipPath`) */
+export interface SoloRound<Item, H, C, B = unknown> {
+  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Kurdish Detective's hints) */
   sessionId: string;
+  /** what the whole round shares, as the round was sent (Kurdish Detective's case board); null for a game without */
+  board: B | null;
   item: Item;
   index: number;
   total: number;
@@ -55,7 +57,7 @@ export interface SoloRound<Item, H, C> {
   submit: (answer: unknown) => Promise<void>;
 }
 
-interface Props<Item, H, C> {
+interface Props<Item, H, C, B> {
   game: LearnGameId;
   dialect: GameDialect;
   title: string;
@@ -64,7 +66,7 @@ interface Props<Item, H, C> {
   difficulties: GameDifficulty[] | null;
   suggested?: GameDifficulty;
   open: string | null;
-  renderRound: (round: SoloRound<Item, H, C>) => ReactNode;
+  renderRound: (round: SoloRound<Item, H, C, B>) => ReactNode;
   explain: (why: string) => string | null;
   onFinished?: (results: SoloResults) => void;
   resultsExtra?: ReactNode;
@@ -111,7 +113,7 @@ function Stones({ states, here, tone }: { states: readonly SoloItemState[]; here
   );
 }
 
-export function SoloGameShell<Item, H, C>({
+export function SoloGameShell<Item, H, C, B = unknown>({
   game,
   dialect,
   title,
@@ -127,14 +129,14 @@ export function SoloGameShell<Item, H, C>({
   onExit,
   tone,
   roundItems,
-}: Props<Item, H, C> & { tone: string }): React.JSX.Element {
+}: Props<Item, H, C, B> & { tone: string }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
   const [phase, setPhase] = useState<Phase>('intro');
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
-  const [session, setSession] = useState<SoloSessionView<Item> | null>(null);
+  const [session, setSession] = useState<SoloSessionView<Item, B> | null>(null);
   const [index, setIndex] = useState(0);
   const [result, setResult] = useState<SoloAnswerResult<H, C> | null>(null);
   const [results, setResults] = useState<SoloResults | null>(null);
@@ -156,7 +158,7 @@ export function SoloGameShell<Item, H, C>({
     [t],
   );
 
-  const begin = (view: SoloSessionView<Item>): void => {
+  const begin = (view: SoloSessionView<Item, B>): void => {
     setSession(view);
     setIndex(nextOpen(view.states));
     setResult(null);
@@ -180,7 +182,7 @@ export function SoloGameShell<Item, H, C>({
     if (!chosen || busy) return;
     setBusy(true);
     setError(null);
-    const res = await client.post<SoloSessionView<Item>>('/games/solo/sessions', { game, dialect, difficulty: chosen });
+    const res = await client.post<SoloSessionView<Item, B>>('/games/solo/sessions', { game, dialect, difficulty: chosen });
     setBusy(false);
     if (!res.ok) return fail(res.error.code, describeError(res.error, t));
     begin(res.data);
@@ -189,7 +191,7 @@ export function SoloGameShell<Item, H, C>({
   const resume = async (): Promise<void> => {
     if (!open || busy) return;
     setBusy(true);
-    const res = await client.get<SoloSessionView<Item> & { expired: boolean }>(`/games/solo/sessions/${open}`);
+    const res = await client.get<SoloSessionView<Item, B> & { expired: boolean }>(`/games/solo/sessions/${open}`);
     setBusy(false);
     if (!res.ok) return fail(res.error.code, describeError(res.error, t));
     if (res.data.expired) return fail('GAME_SESSION_EXPIRED', '');
@@ -275,7 +277,7 @@ export function SoloGameShell<Item, H, C>({
             {t('games.solo.progress', { n: index + 1, total: session.items.length })}
           </Text>
         </View>
-        {renderRound({ sessionId: session.id, item, index, total: session.items.length, state, result, busy, submit })}
+        {renderRound({ sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit })}
         {verdict ? (
           <View
             accessibilityLiveRegion="polite"
