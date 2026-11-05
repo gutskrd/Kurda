@@ -92,7 +92,7 @@ export interface SoloItemState {
 }
 
 /** A session as the apps are sent it: its items without their answers, and how far it has got. */
-export interface SoloSessionView<Item> {
+export interface SoloSessionView<Item, Board = unknown> {
   id: string;
   game: string;
   dialect: GameDialect;
@@ -102,6 +102,8 @@ export interface SoloSessionView<Item> {
   maxAttempts: number;
   finished: boolean;
   expiresAt: string;
+  /** what the whole round shares beside its items, for a game that has one (Kurdish Detective's case board) */
+  board?: Board;
 }
 
 /** What an answer comes back with. */
@@ -137,6 +139,8 @@ export interface SoloResults {
   items: Array<{ index: number; correct: boolean; firstTry: boolean; xp: number; repeat: boolean }>;
   /** the streak after the round, when it counted */
   streak: number | null;
+  /** XP the round's own costs took off what its answers earned (Kurdish Detective's hints); absent when none */
+  deducted?: number;
 }
 
 /** Whether a game can be played now, per variety and content level (GET /games/availability). */

@@ -23,7 +23,7 @@
  */
 import { z } from 'zod';
 import { APP_LOCALE_CODES, type AppLocale } from '../locales.js';
-import { SPEAKERS, type SpeakerId } from '../lipsync/speakers.js';
+import { SPEAKERS, type RecordingVoice, type SpeakerId } from '../lipsync/speakers.js';
 import { fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
 import type { GamesAvailability } from './solo.js';
 // the village's buildings are Kurdish Kingdom's own list; a building name row names one of them
@@ -154,8 +154,10 @@ function build() {
     origin: origin.optional(),
   });
 
-  const line = z.strictObject({ ku: kurdish(300), meanings });
-  const option = z.strictObject({ ku: kurdish(300), meanings, why: meanings.optional() });
+  // the lesson-audio key of a line's recording, when the importer took it from a conversation that may be recorded
+  const recording = plain(200).optional();
+  const line = z.strictObject({ ku: kurdish(300), meanings, recording });
+  const option = z.strictObject({ ku: kurdish(300), meanings, why: meanings.optional(), recording });
   const scenario = z.strictObject({
     /** where and with whom, in the interface languages: not Kurdish, so it needs no native review */
     situation: meanings,
@@ -174,7 +176,8 @@ function build() {
     .strictObject({
       title: meanings,
       intro: meanings,
-      suspects: z.array(z.strictObject({ id: slug, name: plain(60), about: meanings })).min(2).max(6),
+      /** each with the character drawn as their portrait, when one of the app's characters plays them */
+      suspects: z.array(z.strictObject({ id: slug, name: plain(60), about: meanings, portrait: z.enum(SPEAKERS).optional() })).min(2).max(6),
       evidence: z
         .array(
           z.strictObject({
@@ -524,34 +527,68 @@ export interface MemoryThiefItemView {
   level: GameLevel;
 }
 
-/** What Would You Say?: the scene, the line heard, and the replies to choose from or build. */
+/**
+ * A recording played beside the Kurdish it says, and who says it (with the
+ * mouth's timeline, as lessons send it). What Would You Say? and Kurdish
+ * Detective send the recording's own address rather than a handle: the words
+ * are on screen beside it — the line heard, an overheard remark pinned to the
+ * board — exactly as a lesson sends a conversation's lines with theirs, so
+ * there is nothing behind it to give away.
+ */
+export interface SpokenAudio {
+  src: string;
+  voice: RecordingVoice | null;
+}
+
+/** What Would You Say?: the scene, the line heard, and the replies to choose from or build (games/what-would-you-say). */
 export interface WhatWouldYouSayItemView {
   index: number;
   situation: Meanings;
   place: ScenePlace | null;
   speaker: SpeakerId | null;
-  line: { ku: string; clip: ClipHandle | null };
+  line: { ku: string; audio: SpokenAudio | null };
   /** real lines to choose from, shuffled; null at advanced level, where the reply is built from tiles */
   options: string[] | null;
   tiles: string[] | null;
+  level: GameLevel;
 }
 
-/** Kurdish Detective: the case board as the player opens it; the solution stays on the server. */
+/**
+ * Kurdish Detective: the case board as the player opens it (games/detective).
+ * The solution stays on the server, and so does what a card means until the
+ * player has found it — by a deduction it proves, or by spending a hint on it.
+ */
 export interface DetectiveBoardView {
   title: Meanings;
   intro: Meanings;
-  suspects: Array<{ id: string; name: string; about: Meanings }>;
-  evidence: Array<{ id: string; kind: EvidenceKind; ku: string; meanings: Meanings; speaker: SpeakerId | null; clip: ClipHandle | null }>;
+  suspects: Array<{ id: string; name: string; about: Meanings; portrait: SpeakerId | null }>;
+  evidence: Array<{
+    id: string;
+    kind: EvidenceKind;
+    ku: string;
+    /** null until it is found or translated */
+    meanings: Meanings | null;
+    speaker: SpeakerId | null;
+    /** the suspect it comes from, when it is theirs */
+    from: string | null;
+    audio: SpokenAudio | null;
+  }>;
   steps: number;
   hintsLeft: number;
+  hintsUsed: number;
+  /** the written hints read so far, in order */
+  hints: Meanings[];
+  /** a written hint is still there to read (when none is, a hint can only translate a card) */
+  moreHints: boolean;
+  /** the notebook: each deduction made, with its answer and the evidence that proves it */
+  notebook: Array<{ step: number; prompt: Meanings; answer: Meanings; evidence: string[] }>;
+  level: GameLevel;
 }
 
-/** One deduction step on the board. */
-export interface DetectiveStepView {
-  index: number;
-  prompt: Meanings;
-  options: Meanings[];
-}
+/** One item of a case: a deduction step, or at the end the accusation (suspects by id, in the board's order). */
+export type DetectiveItemView =
+  | { index: number; kind: 'step'; prompt: Meanings; options: Meanings[] }
+  | { index: number; kind: 'accuse'; suspects: string[] };
 
 /** Who Am I?: the questions that can be asked, and the guesses to pick from. */
 export interface WhoAmIRoundView {
