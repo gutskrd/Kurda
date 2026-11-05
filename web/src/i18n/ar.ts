@@ -2415,7 +2415,6 @@ export const ar: Catalogue = {
   'games.whoAmI.questions': 'اطرح سؤالًا',
   'games.whoAmI.tapToSee': 'اضغط على سؤال لترى معناه.',
   'games.whoAmI.ask': 'اسأل',
-  'games.whoAmI.asked': 'أسئلة طُرحت',
   'games.whoAmI.guessTitle': 'من أنت؟',
   'games.whoAmI.guess': 'خمّن',
   'games.whoAmI.notThis': 'ليس هذا',

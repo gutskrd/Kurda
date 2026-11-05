@@ -180,6 +180,6 @@ describe('BluffScreen', () => {
     testAuth.client = fakeClient({ ...quiet, 'GET /mp/bluff/b1': ok(room({ dialect: 'ckb', word: 'گورز' }, { dialect: 'ckb' })) });
     renderWithProviders(<BluffScreen id="b1" onExit={() => undefined} />);
     const word = await screen.findByText('گورز');
-    expect(getComputedStyle(word).direction === 'rtl' || word.getAttribute('dir') === 'rtl' || (word as HTMLElement).style.writingDirection === 'rtl').toBe(true);
+    expect(getComputedStyle(word).direction === 'rtl' || word.getAttribute('dir') === 'rtl').toBe(true);
   });
 });

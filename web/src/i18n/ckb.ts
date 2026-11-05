@@ -2427,7 +2427,6 @@ export const ckb: Catalogue = {
   'games.whoAmI.questions': 'پرسیارێک بکە',
   'games.whoAmI.tapToSee': 'دەست بنێ بە پرسیارێک بۆ بینینی واتاکەی.',
   'games.whoAmI.ask': 'بیپرسە',
-  'games.whoAmI.asked': 'پرسراون',
   'games.whoAmI.guessTitle': 'تۆ کێیت؟',
   'games.whoAmI.guess': 'بیزانە',
   'games.whoAmI.notThis': 'ئەمە نییە',

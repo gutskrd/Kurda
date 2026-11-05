@@ -11,7 +11,7 @@ import { useGameView } from '../play/useGameView';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { languageName } from '../games/partyChoices';
 import { BluffTableView, RevealPhase } from './BluffTable';
@@ -146,5 +146,5 @@ const styles = StyleSheet.create({
   words: { alignSelf: 'stretch', gap: spacing.sm },
   word: { gap: 2 },
   wordText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
-  lastReveal: { borderRadius: 16, padding: spacing.sm, backgroundColor: '#2f4a33' },
+  lastReveal: { borderRadius: radii.lg, padding: spacing.sm, backgroundColor: '#2f4a33' },
 });

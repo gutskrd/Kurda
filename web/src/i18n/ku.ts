@@ -2423,7 +2423,6 @@ export const ku: Catalogue = {
   'games.whoAmI.questions': 'Pirsekê bipirse',
   'games.whoAmI.tapToSee': 'Li pirsekê bitikîne da ku wateya wê bibînî.',
   'games.whoAmI.ask': 'Bipirse',
-  'games.whoAmI.asked': 'Hatine pirsîn',
   'games.whoAmI.guessTitle': 'Tu kî yî?',
   'games.whoAmI.guess': 'Texmîn bike',
   'games.whoAmI.notThis': 'Ne ev e',

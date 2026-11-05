@@ -2420,7 +2420,6 @@ export const fr: Catalogue = {
   'games.whoAmI.questions': 'Pose une question',
   'games.whoAmI.tapToSee': 'Touche une question pour voir ce qu’elle veut dire.',
   'games.whoAmI.ask': 'Demander',
-  'games.whoAmI.asked': 'Posées',
   'games.whoAmI.guessTitle': 'Qui es-tu ?',
   'games.whoAmI.guess': 'Deviner',
   'games.whoAmI.notThis': 'Pas celui-ci',

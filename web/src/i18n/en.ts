@@ -2520,7 +2520,6 @@ export const en = {
   'games.whoAmI.questions': 'Ask a question',
   'games.whoAmI.tapToSee': 'Tap a question to see what it means.',
   'games.whoAmI.ask': 'Ask',
-  'games.whoAmI.asked': 'Asked',
   'games.whoAmI.guessTitle': 'Who are you?',
   'games.whoAmI.guess': 'Guess',
   'games.whoAmI.notThis': 'Not this one',

@@ -2416,7 +2416,6 @@ export const tr: Catalogue = {
   'games.whoAmI.questions': 'Bir soru sor',
   'games.whoAmI.tapToSee': 'Ne anlama geldiğini görmek için bir soruya dokun.',
   'games.whoAmI.ask': 'Sor',
-  'games.whoAmI.asked': 'Sorulanlar',
   'games.whoAmI.guessTitle': 'Sen kimsin?',
   'games.whoAmI.guess': 'Tahmin et',
   'games.whoAmI.notThis': 'Bu değil',

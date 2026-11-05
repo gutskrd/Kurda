@@ -32,7 +32,7 @@ import { InviteSheet } from '../play/InviteSheet';
 import { useGameView } from '../play/useGameView';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { SoloGameShell, type SoloRound } from '../games/SoloGameShell';
 import { useAvailability } from '../games/learnGames';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
   total: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   bold: { fontWeight: typography.weights.bold },
   others: { gap: spacing.sm },
-  other: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: 12, padding: spacing.sm, minHeight: 44 },
+  other: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radii.md, padding: spacing.sm, minHeight: 44 },
   reveal: { alignSelf: 'stretch', gap: spacing.sm },
   revealRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   revealWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },

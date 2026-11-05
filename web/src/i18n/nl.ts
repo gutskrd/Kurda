@@ -2421,7 +2421,6 @@ export const nl: Catalogue = {
   'games.whoAmI.questions': 'Stel een vraag',
   'games.whoAmI.tapToSee': 'Tik op een vraag om te zien wat die betekent.',
   'games.whoAmI.ask': 'Vragen',
-  'games.whoAmI.asked': 'Gesteld',
   'games.whoAmI.guessTitle': 'Wie ben jij?',
   'games.whoAmI.guess': 'Raden',
   'games.whoAmI.notThis': 'Deze niet',

@@ -188,7 +188,7 @@ function FakeForm({ move }: { move: Move }): React.JSX.Element {
         placeholderTextColor={SOFT_INK}
         accessibilityLabel={t('games.bluff.yourFake')}
         aria-labelledby="bluff-fake-label"
-        style={[styles.noteText, styles.input]}
+        style={styles.input}
       />
       <Text style={styles.noteMuted}>{t('games.bluff.charsLeft', { count: Math.max(0, left) })}</Text>
       {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   table: { gap: spacing.md, padding: spacing.md, borderRadius: radii.xl, backgroundColor: FELT, borderWidth: 5, borderColor: FELT_EDGE },
   head: { flexDirection: 'row', justifyContent: 'space-between' },
   headText: { color: ON_FELT, fontWeight: typography.weights.bold, fontSize: typography.sizes.sm },
-  time: { height: 6, borderRadius: 3, backgroundColor: FELT_EDGE, overflow: 'hidden' },
+  time: { height: 6, borderRadius: radii.pill, backgroundColor: FELT_EDGE, overflow: 'hidden' },
   timeFill: { height: '100%' },
   wordCard: { alignItems: 'center', gap: 4, padding: spacing.md, borderRadius: radii.lg, backgroundColor: PAPER },
   word: { fontSize: 34, fontWeight: typography.weights.bold, color: INK, textAlign: 'center' },
@@ -366,11 +366,11 @@ const styles = StyleSheet.create({
   bold: { fontWeight: typography.weights.bold },
   muted: { color: '#d9e4d6', fontSize: typography.sizes.sm },
   knew: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  note: { gap: 6, padding: spacing.md, borderRadius: 10, backgroundColor: PAPER, borderBottomWidth: 2, borderBottomColor: PAPER_LINE },
+  note: { gap: 6, padding: spacing.md, borderRadius: radii.sm, backgroundColor: PAPER, borderBottomWidth: 2, borderBottomColor: PAPER_LINE },
   noteLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: SOFT_INK },
   noteText: { fontSize: 19, lineHeight: 27, color: INK, fontStyle: 'italic' },
   noteMuted: { fontSize: typography.sizes.xs, color: SOFT_INK },
-  input: { minHeight: 84, textAlignVertical: 'top', padding: 0 },
+  input: { minHeight: 84, textAlignVertical: 'top', padding: 0, fontSize: 19, lineHeight: 27, color: INK, fontStyle: 'italic' },
   error: { color: '#b3261e', fontSize: typography.sizes.sm },
   tiltLeft: { transform: [{ rotate: '-0.8deg' }] },
   tiltRight: { transform: [{ rotate: '0.7deg' }] },
@@ -379,19 +379,19 @@ const styles = StyleSheet.create({
   chosen: { borderWidth: 3, borderColor: GOLD },
   pressed: { opacity: 0.85 },
   real: { borderWidth: 4, borderColor: REAL },
-  letter: { position: 'absolute', left: 12, top: 12, width: 28, height: 28, borderRadius: 14, backgroundColor: INK, alignItems: 'center', justifyContent: 'center' },
+  letter: { position: 'absolute', left: 12, top: 12, width: 28, height: 28, borderRadius: radii.pill, backgroundColor: INK, alignItems: 'center', justifyContent: 'center' },
   letterText: { color: PAPER, fontWeight: typography.weights.bold, fontSize: 14 },
   pinned: { position: 'absolute', right: 10, bottom: 10 },
-  token: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: 'rgba(255,255,255,0.85)', alignItems: 'center', justifyContent: 'center' },
+  token: { width: 30, height: 30, borderRadius: radii.pill, borderWidth: 2, borderColor: 'rgba(255,255,255,0.85)', alignItems: 'center', justifyContent: 'center' },
   tokenMine: { borderColor: INK },
   tokenText: { color: '#fff', fontWeight: typography.weights.bold, fontSize: 13 },
   tokens: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   tray: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 },
   pile: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  back: { width: 34, height: 46, borderRadius: 6 },
+  back: { width: 34, height: 46, borderRadius: radii.xs },
   backDown: { backgroundColor: '#c9a94d', borderWidth: 2, borderColor: '#b8963d' },
   backEmpty: { borderWidth: 2, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.35)' },
-  stamp: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 2, borderWidth: 2, borderColor: REAL, borderRadius: 6, color: REAL, fontWeight: typography.weights.bold, transform: [{ rotate: '-4deg' }] },
+  stamp: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 2, borderWidth: 2, borderColor: REAL, borderRadius: radii.xs, color: REAL, fontWeight: typography.weights.bold, transform: [{ rotate: '-4deg' }] },
   by: { color: SOFT_INK, fontWeight: typography.weights.semibold },
   lesson: { gap: 4, padding: spacing.md, borderRadius: radii.lg, backgroundColor: 'rgba(0,0,0,0.22)' },
   lessonWord: { color: ON_FELT, fontSize: 24, fontWeight: typography.weights.bold },

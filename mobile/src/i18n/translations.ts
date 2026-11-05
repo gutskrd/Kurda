@@ -363,7 +363,6 @@ export type TranslationKey =
   | 'games.whoAmI.questions'
   | 'games.whoAmI.tapToSee'
   | 'games.whoAmI.ask'
-  | 'games.whoAmI.asked'
   | 'games.whoAmI.guessTitle'
   | 'games.whoAmI.guess'
   | 'games.whoAmI.notThis'
@@ -3502,7 +3501,6 @@ const en: Catalog = {
   'games.whoAmI.questions': 'Ask a question',
   'games.whoAmI.tapToSee': 'Tap a question to see what it means.',
   'games.whoAmI.ask': 'Ask',
-  'games.whoAmI.asked': 'Asked',
   'games.whoAmI.guessTitle': 'Who are you?',
   'games.whoAmI.guess': 'Guess',
   'games.whoAmI.notThis': 'Not this one',
@@ -6629,7 +6627,6 @@ const ku: Catalog = {
   'games.whoAmI.questions': 'Pirsekê bipirse',
   'games.whoAmI.tapToSee': 'Li pirsekê bitikîne da ku wateya wê bibînî.',
   'games.whoAmI.ask': 'Bipirse',
-  'games.whoAmI.asked': 'Hatine pirsîn',
   'games.whoAmI.guessTitle': 'Tu kî yî?',
   'games.whoAmI.guess': 'Texmîn bike',
   'games.whoAmI.notThis': 'Ne ev e',
@@ -9755,7 +9752,6 @@ const de: Catalog = {
   'games.whoAmI.questions': 'Stell eine Frage',
   'games.whoAmI.tapToSee': 'Tipp auf eine Frage, um zu sehen, was sie bedeutet.',
   'games.whoAmI.ask': 'Fragen',
-  'games.whoAmI.asked': 'Gestellt',
   'games.whoAmI.guessTitle': 'Wer bist du?',
   'games.whoAmI.guess': 'Raten',
   'games.whoAmI.notThis': 'Nicht das',
@@ -12881,7 +12877,6 @@ const es: Catalog = {
   'games.whoAmI.questions': 'Haz una pregunta',
   'games.whoAmI.tapToSee': 'Toca una pregunta para ver qué significa.',
   'games.whoAmI.ask': 'Preguntar',
-  'games.whoAmI.asked': 'Preguntadas',
   'games.whoAmI.guessTitle': '¿Quién eres?',
   'games.whoAmI.guess': 'Adivinar',
   'games.whoAmI.notThis': 'Esta no',
@@ -16007,7 +16002,6 @@ const tr: Catalog = {
   'games.whoAmI.questions': 'Bir soru sor',
   'games.whoAmI.tapToSee': 'Ne anlama geldiğini görmek için bir soruya dokun.',
   'games.whoAmI.ask': 'Sor',
-  'games.whoAmI.asked': 'Sorulanlar',
   'games.whoAmI.guessTitle': 'Sen kimsin?',
   'games.whoAmI.guess': 'Tahmin et',
   'games.whoAmI.notThis': 'Bu değil',
@@ -19133,7 +19127,6 @@ const ar: Catalog = {
   'games.whoAmI.questions': 'اطرح سؤالًا',
   'games.whoAmI.tapToSee': 'اضغط على سؤال لترى معناه.',
   'games.whoAmI.ask': 'اسأل',
-  'games.whoAmI.asked': 'أسئلة طُرحت',
   'games.whoAmI.guessTitle': 'من أنت؟',
   'games.whoAmI.guess': 'خمّن',
   'games.whoAmI.notThis': 'ليس هذا',
@@ -22259,7 +22252,6 @@ const fr: Catalog = {
   'games.whoAmI.questions': 'Pose une question',
   'games.whoAmI.tapToSee': 'Touche une question pour voir ce qu’elle veut dire.',
   'games.whoAmI.ask': 'Demander',
-  'games.whoAmI.asked': 'Posées',
   'games.whoAmI.guessTitle': 'Qui es-tu ?',
   'games.whoAmI.guess': 'Deviner',
   'games.whoAmI.notThis': 'Pas celui-ci',
@@ -25385,7 +25377,6 @@ const nl: Catalog = {
   'games.whoAmI.questions': 'Stel een vraag',
   'games.whoAmI.tapToSee': 'Tik op een vraag om te zien wat die betekent.',
   'games.whoAmI.ask': 'Vragen',
-  'games.whoAmI.asked': 'Gesteld',
   'games.whoAmI.guessTitle': 'Wie ben jij?',
   'games.whoAmI.guess': 'Raden',
   'games.whoAmI.notThis': 'Deze niet',
@@ -28512,7 +28503,6 @@ const ckb: Catalog = {
   'games.whoAmI.questions': 'پرسیارێک بکە',
   'games.whoAmI.tapToSee': 'دەست بنێ بە پرسیارێک بۆ بینینی واتاکەی.',
   'games.whoAmI.ask': 'بیپرسە',
-  'games.whoAmI.asked': 'پرسراون',
   'games.whoAmI.guessTitle': 'تۆ کێیت؟',
   'games.whoAmI.guess': 'بیزانە',
   'games.whoAmI.notThis': 'ئەمە نییە',
