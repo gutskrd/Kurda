@@ -37,6 +37,9 @@ export interface GameViewHandle<Board, Outcome = unknown> {
   move: (body: unknown) => Promise<ApiResult<MultiMoveAnswer<Board, Outcome>>>;
 }
 
+/** A long-poll the server let go answers with an empty object. */
+type NoView = { [key: string]: never };
+
 const live = (status: string): boolean => status === 'lobby' || status === 'active';
 
 const sleep = (ms: number, signal: AbortSignal): Promise<void> =>
@@ -120,7 +123,7 @@ export function useGameView<Board, Outcome = unknown>(
 
   const read = useCallback(
     async (path: string, signal?: AbortSignal): Promise<boolean> => {
-      const res = await client.get<MultiView<Board> | Record<string, never>>(path, signal ? { signal } : undefined);
+      const res = await client.get<MultiView<Board> | NoView>(path, signal ? { signal } : undefined);
       if (!alive.current || signal?.aborted) return false;
       if (res.ok) {
         if (res.data && 'id' in res.data) apply(res.data as MultiView<Board>);
