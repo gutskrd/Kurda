@@ -610,39 +610,12 @@
   flex: 1 1 100%;
   margin: 0;
 }
+/* the code boxes (play/JoinCode.tsx) take a row of their own under Play with friends */
 .story-join {
-  flex: 1 1 280px;
+  flex: 1 1 100%;
   min-width: 0;
-}
-.story-join-label {
-  display: block;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: var(--ink-3);
-  margin-bottom: 6px;
-}
-.story-join-row {
-  display: flex;
-  gap: 8px;
-}
-.story-join-input {
-  flex: 1;
-  min-width: 0;
-  height: 44px;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.06em;
-}
-.story-join-input::placeholder {
-  letter-spacing: normal;
-}
-/* a code is typed left to right, but the hint in an empty field reads the page's way */
-[dir='rtl'] .story-join-input:placeholder-shown {
-  direction: rtl;
-}
-.story-join-error {
-  margin: 8px 0 0;
-  font-size: 0.85rem;
-  color: var(--danger);
+  padding-top: 14px;
+  border-top: 1px solid var(--separator);
 }
 .story-empty {
   display: grid;

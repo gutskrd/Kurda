@@ -1,9 +1,10 @@
 /*
  * Playing with friends, the same way in every online game (play/): the
- * invite sheet and its friend picker, the invite banner, a lobby's "Invited"
- * list, playing again, a game's card in a chat, and the game button in the
- * composer. Built on the lobby and setup styles a story game already has
- * (stories.css), so the three games read as one family.
+ * invite sheet and its friend picker, the invite banner, the boxes a join
+ * code is typed into, a lobby's "Invited" list, playing again, a game's card
+ * in a chat, and the game button in the composer. Built on the lobby and
+ * setup styles a story game already has (stories.css), so the three games
+ * read as one family.
  */
 
 /* ---- the invite sheet ----------------------------------------------------------- */
@@ -516,6 +517,321 @@
     width: 100%;
     justify-content: flex-end;
   }
+}
+
+/* ---- typing a code in (play/JoinCode.tsx) ---------------------------------------- */
+/*
+ * Six boxes drawn over one real field: the field is there, the size of the
+ * boxes, but unseen, so a tap anywhere on them is a tap in it. The box being
+ * filled wears the gold the app keeps for the thing you are on.
+ */
+.code-entry {
+  --box: clamp(40px, 11vw, 52px);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+.code-entry-label {
+  justify-self: start;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.code-entry-field {
+  position: relative;
+  display: grid;
+  justify-items: center;
+}
+.code-entry-input {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: transparent;
+  caret-color: transparent;
+  opacity: 0;
+  /* a phone zooms into a field typed at less than this */
+  font-size: 16px;
+  cursor: text;
+}
+.code-boxes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  perspective: 520px;
+}
+/* the halves of a code, as on a ticket */
+.code-boxes-gap {
+  flex: none;
+  width: 10px;
+  height: 3px;
+  margin-inline: 2px;
+  border-radius: 2px;
+  background: color-mix(in srgb, var(--ink) 45%, transparent);
+}
+.code-box {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  width: var(--box);
+  height: calc(var(--box) * 1.2);
+  border: 2px solid var(--input-border);
+  border-radius: var(--r-md);
+  background: var(--input-bg);
+  box-shadow: 0 3px 0 var(--border);
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: calc(var(--box) * 0.56);
+  font-weight: 700;
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.code-box.is-filled {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.code-entry.is-focused.is-idle .code-box.is-active {
+  border-color: var(--gold);
+  box-shadow:
+    0 0 0 3px var(--gold-soft),
+    0 3px 0 color-mix(in srgb, var(--gold) 50%, var(--app-bg));
+}
+/* a refusal keeps the focus in sight too, in its own colour */
+.code-entry.is-focused.is-error .code-box.is-active {
+  box-shadow:
+    0 0 0 3px var(--danger-soft),
+    0 3px 0 color-mix(in srgb, var(--danger) 40%, var(--app-bg));
+}
+.code-box-caret {
+  position: absolute;
+  width: 2px;
+  height: 46%;
+  border-radius: 1px;
+  background: var(--gold);
+}
+.code-entry:not(.is-focused) .code-box-caret {
+  display: none;
+}
+/* the light a wave carries along the boxes while the code is checked (motion.css) */
+.code-box::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--ink) 16%, transparent) 50%, transparent 70%);
+  opacity: 0;
+  pointer-events: none;
+}
+.code-entry.is-joining .code-box::after {
+  opacity: 1;
+}
+.code-entry.is-error .code-box {
+  border-color: color-mix(in srgb, var(--danger) 75%, transparent);
+  background: var(--danger-soft);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--danger) 40%, var(--app-bg));
+  color: var(--danger);
+}
+.code-entry.is-joined .code-box {
+  border-color: var(--success);
+  background: var(--success-soft);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--success) 50%, var(--app-bg));
+  color: var(--success);
+}
+.code-entry-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  --t-hi: var(--success);
+  --t-mid: var(--gold);
+}
+.code-entry-foot {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+/* in: Join says so, in the colour the boxes turned */
+.code-entry.is-joined .btn:disabled {
+  opacity: 1;
+  border-color: var(--success);
+  background: var(--success);
+  color: var(--primary-ink);
+}
+/* room for one line kept, so a refusal does not push Join down the page */
+.code-entry-message {
+  min-height: 1.4em;
+  margin: 0;
+  max-width: 40ch;
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+  text-align: center;
+  color: var(--danger);
+}
+
+/* in a page's own panel: lined up with what is above, Join beside the boxes, the refusal under both */
+.code-entry.is-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.code-entry.is-inline .code-entry-label {
+  flex-basis: 100%;
+}
+.code-entry.is-inline .code-entry-foot {
+  display: contents;
+}
+.code-entry.is-inline .btn {
+  order: 1;
+}
+.code-entry.is-inline .code-entry-message {
+  order: 2;
+  flex-basis: 100%;
+  min-height: 0;
+  max-width: none;
+  text-align: start;
+}
+.code-entry.is-inline .code-entry-message:empty {
+  display: none;
+}
+
+/* ---- "Join with a code" on the Games hub, and its sheet ---------------------------- */
+.join-code-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  margin-bottom: var(--space-6);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid color-mix(in srgb, var(--gold) 40%, var(--border));
+  border-radius: var(--r-xl);
+  background: color-mix(in srgb, var(--gold) 8%, var(--surface-solid));
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
+}
+.join-code-card:hover {
+  border-color: var(--gold);
+  background: color-mix(in srgb, var(--gold) 12%, var(--surface-solid));
+}
+.join-code-card:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.join-code-card-art {
+  flex: none;
+}
+.join-code-card-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.join-code-card-title {
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 600;
+  line-height: 1.2;
+}
+.join-code-card-sub {
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+  color: var(--ink-3);
+}
+.join-code-card-go {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+@media (max-width: 560px) {
+  .join-code-card {
+    padding: var(--space-4);
+    gap: var(--space-3);
+  }
+  .join-code-card-title {
+    font-size: var(--text-body);
+  }
+  /* a phone's card is the button already; the pill would squeeze the words */
+  .join-code-card-go {
+    display: none;
+  }
+}
+/* the ticket: flat, in the sun's gold, a notch bitten out of each side */
+.ticket-art {
+  display: block;
+  overflow: visible;
+}
+.ticket-art-body {
+  fill: color-mix(in srgb, var(--gold) 24%, var(--surface-solid));
+  stroke: var(--gold);
+  stroke-width: 2;
+  stroke-linejoin: round;
+}
+.ticket-art-perf {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 1.5;
+  stroke-dasharray: 2.5 3;
+  stroke-linecap: round;
+}
+.ticket-art-tile {
+  fill: var(--gold);
+}
+.ticket-art-dot {
+  fill: var(--gold-ink);
+}
+.code-sheet-head {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  text-align: center;
+}
+.code-sheet-head .ticket-art {
+  width: 72px;
+  height: 50px;
+  margin-bottom: var(--space-1);
+}
+.code-sheet-title {
+  font-size: var(--text-title);
+}
+.code-sheet-sub {
+  max-width: 36ch;
+  color: var(--ink-3);
+  text-wrap: balance;
+}
+.code-sheet .code-entry-foot .btn {
+  width: 100%;
+}
+.code-sheet-gate {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
 }
 
 /* a finger needs 44px: the small buttons of lobbies, cards, rematches and Play grow on touch screens */

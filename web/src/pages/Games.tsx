@@ -9,6 +9,7 @@ import { RaceMini, RhymeMini, WordleMini } from '../landing/mocks';
 import { RanksSection } from '../ranks/RanksSection';
 import { LearnHeader } from '../learn/LearnHeader';
 import { ChevronIcon, TrophyIcon } from '../components/icons';
+import { JoinCodeEntry } from '../play/JoinCode';
 
 /**
  * A game, before it has words.
@@ -82,6 +83,10 @@ const GAMES: GameCard[] = [
  * guest who took the offer got an error instead of a game. Now a guest sees
  * every game, every mode marked as needing an account, and the way to make one.
  *
+ * A friend's game is joined from here too, by the code they read out or sent
+ * ("Join with a code", play/JoinCode.tsx): one way in for every online game,
+ * at the top of the page where somebody holding a code looks first.
+ *
  * The stories, which replaced the ranked quiz here, have a group of their own
  * now (Learn → Stories, stories/StoriesLibrary.tsx): reading is not a game,
  * and the questions after a story are reached from the story.
@@ -110,6 +115,9 @@ export function Games(): React.JSX.Element {
         </span>
         <ChevronIcon size={16} className="games-rankings-go" />
       </Link>
+
+      {/* a friend's code, into their game: any of the three online games */}
+      <JoinCodeEntry />
 
       {/* the front page's tiles, with the real ways in: the same pictures, the same grid */}
       <h2 className="sr-only">{t('games.title')}</h2>
