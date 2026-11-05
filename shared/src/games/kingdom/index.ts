@@ -8,6 +8,9 @@
 export * from './buildings.js';
 export * from './view.js';
 export * from './growth.js';
+/** The camera both apps move over the village's world (camera.ts), as one name so its plain words never clash with others. */
+export * as villageCamera from './camera.js';
+export type { Camera as VillageCamera, Stage as VillageStage } from './camera.js';
 export {
   BUILDING_SCALE,
   KINGDOM_FRAME,

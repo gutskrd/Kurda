@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { KINGDOM_BUILDINGS, KINGDOM_PLOTS, KINGDOM_SCENE } from '@kurda/shared';
-import { HEART, OPENING_MIN_BUILDING, between, cameraOn, canvasAt, clampCamera, openingCamera, panBy, transformOf, visibleRect, zoomAt, zoomLimits, type Stage } from './camera';
+import { KINGDOM_BUILDINGS } from './buildings.js';
+import { KINGDOM_PLOTS, KINGDOM_SCENE } from '../../art/kingdom.js';
+import { HEART, OPENING_MIN_BUILDING, between, cameraOn, canvasAt, clampCamera, openingCamera, panBy, transformOf, visibleRect, zoomAt, zoomLimits, type Stage } from './camera.js';
 
 const phone: Stage = { w: 390, h: 780, top: 76, bottom: 200 };
 const desk: Stage = { w: 845, h: 672, top: 76, bottom: 220 };

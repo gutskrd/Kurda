@@ -18,6 +18,7 @@ import {
   kingdomSpriteSvg,
   kingdomTiles,
   praiseWords,
+  villageCamera,
   villageProgress,
   type KingdomBuilding,
   type KingdomBuildingView,
@@ -26,6 +27,8 @@ import {
   type KingdomSprite,
   type KingdomUpgrade,
   type KingdomView,
+  type VillageCamera,
+  type VillageStage,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
@@ -39,9 +42,13 @@ import type { MessageKey } from '../i18n/en';
 import { Celebration } from '../ranks/Celebration';
 import { prefersReducedMotion } from '../lib/motion';
 import { useRail } from '../social/RailProvider';
-import { between, cameraOn, canvasAt, clampCamera, openingCamera, panBy, transformOf, visibleRect, zoomAt, type Camera, type Stage } from './camera';
 import { lifeMarkup } from './life';
 import './kingdom.css';
+
+// the camera's steps (shared with the phone)
+const { between, cameraOn, canvasAt, clampCamera, openingCamera, panBy, transformOf, visibleRect, zoomAt } = villageCamera;
+type Camera = VillageCamera;
+type Stage = VillageStage;
 
 /** Where each part of Learn a building grows from is, on the website. */
 export const KINGDOM_PLACE_PATH: Readonly<Record<KingdomPlace, string>> = {

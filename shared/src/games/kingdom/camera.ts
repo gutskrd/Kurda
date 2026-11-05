@@ -1,18 +1,19 @@
-import { KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_BUILDINGS } from '@kurda/shared';
-
 /**
- * The camera over The Village's world on the website: where it looks (a
- * point on the world's canvas, in canvas units) and how near (CSS pixels per
- * canvas unit), and the pure steps the page takes with it — keep it inside
- * the world and between its zoom limits, turn a point on the screen into one
- * on the canvas, zoom about a point, find what is in view, open on the
- * village's heart, and go to a building.
+ * The camera over The Village's world, for both apps: where it looks (a
+ * point on the world's canvas, in canvas units) and how near (screen pixels
+ * per canvas unit: CSS pixels on the website, points on the phone), and the
+ * pure steps an app takes with it — keep it inside the world and between its
+ * zoom limits, turn a point on the screen into one on the canvas, zoom about
+ * a point, find what is in view, open on the village's heart, and go to a
+ * building.
  *
  * The stage shows the whole world under a top bar and over a tray of cards,
  * so the camera centres what it looks at in the band between them; the
  * world itself always covers the whole stage, under the bar and the tray
  * too, so its edge is never seen.
  */
+import { KINGDOM_BUILDINGS } from './buildings.js';
+import { KINGDOM_PLOTS, KINGDOM_SCENE } from '../../art/kingdom.js';
 
 export interface Camera {
   /** the point on the canvas at the middle of the band in view */
