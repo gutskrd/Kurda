@@ -1277,9 +1277,9 @@
                     "say": "Werin hundir, mal mala we ye!",
                     "prompt": "What else does Gulîstan say as everyone squeezes in?",
                     "accepted": [
+                      "Come in, make yourselves at home!",
                       "Come in, the house is your house!",
                       "Come in, our home is your home!",
-                      "Come in, make yourselves at home!",
                       "Come in, the house is your house",
                       "Come in, our home is your home",
                       "Come in, make yourselves at home",
@@ -3588,9 +3588,9 @@
                     "say": "Çiqas xweş e! Ez gelek spasdar im.",
                     "prompt": "Hamo looks at his front-row tickets. What does he say?",
                     "accepted": [
+                      "How nice! I am very grateful.",
                       "How nice! I am very thankful.",
                       "How lovely! I'm very grateful.",
-                      "How nice! I am very grateful.",
                       "How nice! I am very thankful",
                       "How lovely! I'm very grateful",
                       "How nice! I am very grateful"
@@ -4165,8 +4165,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo sets the clock again. What does he say?",
                     "accepted": [
-                      "Tomorrow early in the morning we leave.",
                       "We leave early tomorrow morning.",
+                      "Tomorrow early in the morning we leave.",
                       "We're leaving early tomorrow morning.",
                       "Tomorrow early in the morning we leave",
                       "We leave early tomorrow morning",
