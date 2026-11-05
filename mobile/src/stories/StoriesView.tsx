@@ -65,9 +65,9 @@ const SEARCH_DEBOUNCE_MS = 300;
  *
  * Each story is a card with its cover (the editor's picture, or a kilim in
  * its category's colours), its title and a line of its summary, its level
- * by its plain name, category and minutes, a headphones mark when it is read aloud, a
- * bookmark toggle that answers at once and asks the server after, and a
- * hairline of how far it has been read. Tapping a card opens the story's
+ * by its plain name, category and minutes, a headphones mark when it is read
+ * aloud, a bookmark toggle that answers at once and asks the server after,
+ * and a hairline of how far it has been read. Tapping a card opens the story's
  * overview (StoryReaderScreen).
  *
  * At the foot, the two ways into a game with other people on a story — set

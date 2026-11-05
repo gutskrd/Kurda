@@ -85,12 +85,28 @@ export type LevelHintKey = `level.hint.${StoryLevel}`;
  * name in both apps; the words themselves are in each app's catalogues.
  */
 export function levelNameKey(level: StoryLevel): LevelNameKey {
-  return `level.name.${level}`;
+  return LEVEL_NAME_KEYS[level];
 }
 
 export function levelHintKey(level: StoryLevel): LevelHintKey {
-  return `level.hint.${level}`;
+  return LEVEL_HINT_KEYS[level];
 }
+
+// spelled out rather than built, so a search for a key finds where it is read (scripts/check-i18n.mjs is one)
+const LEVEL_NAME_KEYS: Readonly<Record<StoryLevel, LevelNameKey>> = {
+  1: 'level.name.1',
+  2: 'level.name.2',
+  3: 'level.name.3',
+  4: 'level.name.4',
+  5: 'level.name.5',
+};
+const LEVEL_HINT_KEYS: Readonly<Record<StoryLevel, LevelHintKey>> = {
+  1: 'level.hint.1',
+  2: 'level.hint.2',
+  3: 'level.hint.3',
+  4: 'level.hint.4',
+  5: 'level.hint.5',
+};
 
 /** The orders GET /stories offers: easiest first (level, then length, then title — also its order when none is asked), newest first, and by title. */
 export const STORY_SORTS = ['level', 'newest', 'title'] as const;
