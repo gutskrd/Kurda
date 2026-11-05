@@ -91,7 +91,8 @@ const itemsRight = (type: 'listening' | 'conversation') =>
 
 /**
  * The SQL of the four counts the badges do not already have, each a single
- * value for `$1` the learner with its own parameters after it.
+ * value for `$1` the learner with its own parameters after it. The pass marks
+ * are compared as numeric, so 80% of a five-item lesson is exactly four.
  */
 const KINGDOM_SQL: Readonly<Record<Exclude<KingdomMeasure, 'words_remembered' | 'learning_days'>, readonly [string, readonly unknown[]]>> = {
   // a lesson place (any version of the lesson there) finished at least once with KINGDOM_LESSON_PASS right, out of what
@@ -105,7 +106,7 @@ const KINGDOM_SQL: Readonly<Record<Exclude<KingdomMeasure, 'words_remembered' | 
             WHERE e.lesson_id = s.lesson_id AND e.type = ANY($3::text[])
               AND NOT EXISTS (SELECT 1 FROM session_answers a WHERE a.session_id = s.id AND a.exercise_id = e.id)
          ) k
-        WHERE s.user_id = $1 AND s.completed_at IS NOT NULL AND k.scored > 0 AND s.correct_count >= $2::float8 * k.scored
+        WHERE s.user_id = $1 AND s.completed_at IS NOT NULL AND k.scored > 0 AND s.correct_count >= $2::numeric * k.scored
      ) x`,
     [KINGDOM_LESSON_PASS, SKIPPABLE_TYPES],
   ],
@@ -113,7 +114,7 @@ const KINGDOM_SQL: Readonly<Record<Exclude<KingdomMeasure, 'words_remembered' | 
   stories_passed: [
     `SELECT count(DISTINCT g.story_id) AS n FROM story_game_players p JOIN story_games g ON g.id = p.game_id
       WHERE p.user_id = $1 AND p.learning_counted AND NOT p.removed AND g.status = 'finished'
-        AND g.question_count > 0 AND p.correct >= $2::float8 * g.question_count`,
+        AND g.question_count > 0 AND p.correct >= $2::numeric * g.question_count`,
     [KINGDOM_STORY_PASS],
   ],
   listening_right: itemsRight('listening'),
