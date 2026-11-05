@@ -613,6 +613,8 @@ function TakeStage({
   const saved = useRef<HTMLAudioElement>(null);
   const file = useRef<HTMLInputElement>(null);
   const script = scriptOf(line.text);
+  // a meaning of nothing but spaces is no meaning: the row is left out rather than drawn as a label beside a blank
+  const meaning = line.meaning?.trim() || null;
   const status = line.places.some((p) => p.status === 'published') ? 'published' : line.places.some((p) => p.status === 'in_review') ? 'in_review' : 'draft';
   const judging = phase.name === 'ready' || phase.name === 'saving';
 
@@ -674,10 +676,11 @@ function TakeStage({
         <p id="rp-say" className="rp-say" lang={script.lang} dir={script.dir}>
           {line.text}
         </p>
-        {line.meaning && (
+        {meaning && (
           <p className="rp-means">
             <span className="rp-label">Means</span>
-            <span lang="en">{line.meaning}</span>
+            {/* in quotation marks: the "I" that "ez" means read as a rule beside the label without them */}
+            <q lang="en">{meaning}</q>
           </p>
         )}
         {line.hint && <p className="rp-hint">How: {line.hint}</p>}

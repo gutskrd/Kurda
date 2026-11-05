@@ -199,6 +199,25 @@ describe('recording one person’s lines', () => {
     expect(screen.getByRole('navigation', { name: 'Lines' })).toHaveTextContent('Ez li malê me.');
   });
 
+  it('leaves out the Means row for a line with no meaning, and quotes a one-letter one so it reads as a word', async () => {
+    const user = userEvent.setup();
+    const ez = line({ id: 'lesson|ez', seq: 1, text: 'ez', meaning: 'I' });
+    const blank = line({ id: 'lesson|xalo', seq: 2, text: 'xalo', meaning: '   ' });
+    const none = line({ id: 'lesson|silav', seq: 3, text: 'silav' });
+    show('xezo', on('GET', /^\/admin\/recording\/people\/xezo\?/, json(page(XEZAL, [ez, blank, none]))));
+    const here = await screen.findByRole('article', { name: 'ez' });
+    expect(within(here).getByText('Means')).toBeInTheDocument();
+    const means = within(here).getByText('I');
+    expect(means.tagName).toBe('Q');
+    expect(means).toHaveAttribute('lang', 'en');
+    for (const next of ['xalo', 'silav']) {
+      await user.keyboard('{ArrowRight}');
+      const empty = await screen.findByRole('article', { name: next });
+      expect(within(empty).queryByText('Means')).not.toBeInTheDocument();
+      expect(empty.querySelector('.rp-means')).toBeNull();
+    }
+  });
+
   it('records, stops, hears it back and keeps it, filed as the studio files the line, then brings up the next', async () => {
     const user = userEvent.setup();
     const api = show(
