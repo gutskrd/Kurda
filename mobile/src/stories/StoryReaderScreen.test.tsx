@@ -115,7 +115,9 @@ describe('StoryReaderScreen', () => {
     testAuth.client = routes({}, { ...NANE_GERM, author: 'Hevalo', source: 'Written for Hevalo', audioCoverage: 'partial' });
     renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Nanê Germ' })).toBeTruthy();
-    expect(screen.getByText('A1 · Beginner')).toBeTruthy();
+    // the level by its plain name, with no CEFR letter beside it
+    expect(screen.getByText('Starter')).toBeTruthy();
+    expect(screen.queryByText(/\bA1\b/)).toBeNull();
     expect(await screen.findByText('Everyday life')).toBeTruthy();
     expect(screen.getByText('40 words')).toBeTruthy();
     expect(screen.getByText('Partly narrated')).toBeTruthy();

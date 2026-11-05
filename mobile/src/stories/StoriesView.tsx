@@ -2,19 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } fr
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import {
-  CEFR_LEVELS,
-  STORY_DIALECTS,
-  categoryName,
-  levelOfCefr,
-  type CefrLevel,
-  type StoryCategory,
-  type StoryDialect,
-  type StoryGameSummary,
-  type StoryLibrary,
-  type StoryListItem,
-  type StoryQuery,
-} from '@kurda/shared';
+import { categoryName, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -22,6 +10,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
+import { HeaderButton } from '../navigation/HeaderButton';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { JoinCodeSheet } from '../play/JoinByCode';
@@ -36,7 +25,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { activeGames, getLibrary, listStories, searchStories, setBookmark } from './api';
 import { StoryCover } from './covers';
-import { DIALECT_NAME, MODE_KEY, categoryLabel } from './labels';
+import { MODE_KEY, categoryLabel, levelName } from './labels';
+import { LibraryFilterChips, LibraryFilterSheet, NO_FILTER, activeParts, filterButtonLabel, isFiltering, isPlainFilter, libraryQuery, type LibraryFilter } from './LibraryFilter';
 import { useStoryPrefs } from './prefs';
 import { SetupSheet } from './SetupSheet';
 import { storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
@@ -49,40 +39,6 @@ import { COLUMN, Note, Pill } from './ui';
 export function defaultDialect(locale: string, remembered: StoryDialect | null): StoryDialect {
   if (locale === 'ckb') return 'sorani';
   return remembered ?? 'kurmanci';
-}
-
-/** The chips over the library: each narrows the list, and any of them turns the shelves into one paged list. */
-export interface LibraryFilter {
-  level: CefrLevel | null;
-  dialect: StoryDialect | null;
-  narrated: boolean;
-  category: string | null;
-  /** "All stories": the paged list with nothing narrowing it */
-  all: boolean;
-}
-
-export const NO_FILTER: LibraryFilter = { level: null, dialect: null, narrated: false, category: null, all: false };
-
-/** A page of 24, as the server's default; a phone shows two or three to a row, so a page is eight rows or more. */
-export const PAGE = 24;
-
-/** Whether anything typed or chosen narrows the library into a search. */
-export function isFiltering(q: string, filter: LibraryFilter): boolean {
-  return q.trim() !== '' || filter.level !== null || filter.dialect !== null || filter.narrated || filter.category !== null || filter.all;
-}
-
-/** The query GET /stories is asked, for what was typed and chosen, from `offset` on. */
-export function libraryQuery(q: string, filter: LibraryFilter, offset = 0): StoryQuery {
-  const level = filter.level ? levelOfCefr(filter.level) : null;
-  return {
-    q: q.trim() || undefined,
-    category: filter.category ?? undefined,
-    level: level ?? undefined,
-    dialect: filter.dialect ?? undefined,
-    audio: filter.narrated || undefined,
-    limit: PAGE,
-    offset: offset || undefined,
-  };
 }
 
 /** A story's row in every list it is in, with `me` changed: a bookmark flips everywhere at once. */
@@ -100,14 +56,16 @@ const SEARCH_DEBOUNCE_MS = 300;
  * Signed in, the shelf opens on how the reading is going — stories finished
  * out of all published, the mean score on the checks — then the stories to go
  * back to, the editors' picks, the newest, the categories, and the ones
- * bookmarked. Anything typed in the search, or any chip, turns the shelves
- * into one paged list of what matches, with "More" at its foot and "Clear
- * filters" at its head. A guest sees the same shelves without the personal
- * rows, since the server keeps none for them.
+ * bookmarked. Anything typed in the search, or anything chosen in the sort
+ * and filter sheet behind the funnel beside it (stories/LibraryFilter.tsx),
+ * turns the shelves into one paged list of what matches, with "More" at its
+ * foot; a chip under the search says each thing that is on. A guest sees the
+ * same shelves without the personal rows, since the server keeps none for
+ * them.
  *
  * Each story is a card with its cover (the editor's picture, or a kilim in
- * its category's colours), its title and a line of its summary, its CEFR
- * level, category and minutes, a headphones mark when it is read aloud, a
+ * its category's colours), its title and a line of its summary, its level
+ * by its plain name, category and minutes, a headphones mark when it is read aloud, a
  * bookmark toggle that answers at once and asks the server after, and a
  * hairline of how far it has been read. Tapping a card opens the story's
  * overview (StoryReaderScreen).
@@ -133,6 +91,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
   const [active, setActive] = useState<StoryGameSummary[]>([]);
   const [q, setQ] = useState('');
   const [filter, setFilter] = useState<LibraryFilter>(NO_FILTER);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [results, setResults] = useState<{ stories: StoryListItem[]; total: number } | null>(null);
   const [resultsError, setResultsError] = useState<ApiError | null>(null);
   const [searching, setSearching] = useState(false);
@@ -257,26 +216,13 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
     </View>
   );
 
-  const chips = (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={[styles.chips, { flexDirection: dir.row }]} keyboardShouldPersistTaps="handled">
-      {/* a category chosen from the shelves leads the row, lit, and a tap lets it go without clearing the rest */}
-      {filter.category ? (
-        <FilterChip
-          icon="tag"
-          label={categoryLabel(filter.category, categories, locale) ?? filter.category}
-          on
-          onPress={() => setFilter({ ...filter, category: null, all: false })}
-        />
-      ) : null}
-      <FilterChip icon="headphones" label={t('stories.library.narrated')} on={filter.narrated} onPress={() => setFilter({ ...filter, narrated: !filter.narrated, all: false })} />
-      {STORY_DIALECTS.map((d) => (
-        <FilterChip key={d} label={DIALECT_NAME[d]} on={filter.dialect === d} onPress={() => setFilter({ ...filter, dialect: filter.dialect === d ? null : d, all: false })} />
-      ))}
-      {CEFR_LEVELS.map((c) => (
-        <FilterChip key={c} label={c} on={filter.level === c} onPress={() => setFilter({ ...filter, level: filter.level === c ? null : c, all: false })} />
-      ))}
-    </ScrollView>
-  );
+  // what is on, for the chips under the search and the funnel's name
+  const parts = activeParts(filter, t, library, locale);
+  /** Back to the shelves: the search emptied and nothing chosen. */
+  const startOver = (): void => {
+    setQ('');
+    setFilter(NO_FILTER);
+  };
 
   let body: ReactNode;
   if (filtering) {
@@ -287,17 +233,12 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header" accessibilityLiveRegion="polite">
             {results && !searching ? t(count === 1 ? 'stories.library.found.one' : 'stories.library.found', { count: formatNumber(count, locale) }) : t('common.loading')}
           </Text>
-          <Pressable
-            onPress={() => {
-              setQ('');
-              setFilter(NO_FILTER);
-            }}
-            accessibilityRole="button"
-            style={styles.clear}
-            hitSlop={8}
-          >
-            <Text style={[styles.clearText, { color: colors.primary }]}>{t('stories.library.clearFilters')}</Text>
-          </Pressable>
+          {/* with two chips or more, their "Clear all" already says this */}
+          {parts.length < 2 ? (
+            <Pressable onPress={startOver} accessibilityRole="button" style={styles.clear} hitSlop={8}>
+              <Text style={[styles.clearText, { color: colors.primary }]}>{t('stories.library.clearFilters')}</Text>
+            </Pressable>
+          ) : null}
         </View>
         {searching && !results ? (
           <GridSkeleton cardWidth={cardWidth} count={columns * 2} />
@@ -359,11 +300,11 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
               {t('stories.library.categories')}
             </Text>
             <View style={[styles.categories, { flexDirection: dir.row }]}>
-              <FilterChip label={t('stories.library.all')} on={false} onPress={() => setFilter({ ...NO_FILTER, all: true })} count={library.total} />
+              <ShelfChip label={t('stories.library.all')} onPress={() => setFilter({ ...NO_FILTER, all: true })} count={library.total} />
               {library.categories
                 .filter((c) => c.count > 0)
                 .map((c) => (
-                  <FilterChip key={c.slug} label={categoryName(c, locale)} count={c.count} on={false} onPress={() => setFilter({ ...NO_FILTER, category: c.slug })} />
+                  <ShelfChip key={c.slug} label={categoryName(c, locale)} count={c.count} onPress={() => setFilter({ ...NO_FILTER, category: c.slug })} />
                 ))}
             </View>
           </View>
@@ -399,26 +340,40 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <View style={[styles.search, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>
-          <Icon name="search" size={18} color={colors.textSecondary} />
-          <TextInput
-            value={q}
-            onChangeText={setQ}
-            placeholder={t('stories.library.search')}
-            placeholderTextColor={colors.textSecondary}
-            accessibilityLabel={t('stories.library.search')}
-            autoCorrect={false}
-            autoCapitalize="none"
-            returnKeyType="search"
-            style={[styles.searchInput, dir.text, { color: colors.textPrimary }]}
+        <View style={[styles.searchRow, { flexDirection: dir.row }]}>
+          <View style={[styles.search, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>
+            <Icon name="search" size={18} color={colors.textSecondary} />
+            <TextInput
+              value={q}
+              onChangeText={setQ}
+              placeholder={t('stories.library.search')}
+              placeholderTextColor={colors.textSecondary}
+              accessibilityLabel={t('stories.library.search')}
+              autoCorrect={false}
+              autoCapitalize="none"
+              returnKeyType="search"
+              style={[styles.searchInput, dir.text, { color: colors.textPrimary }]}
+            />
+            {q ? (
+              <Pressable onPress={() => setQ('')} accessibilityRole="button" accessibilityLabel={t('stories.library.clearSearch')} hitSlop={8} style={styles.searchClear}>
+                <Icon name="clear-fill" size={18} color={colors.textSecondary} />
+              </Pressable>
+            ) : null}
+          </View>
+          {/* sorting and narrowing is one button beside the search, filled while anything is on */}
+          <HeaderButton
+            icon={isPlainFilter(filter) ? 'filter' : 'filter-fill'}
+            label={filterButtonLabel(parts, t)}
+            onPress={() => setSheetOpen(true)}
+            testID="stories-filter"
           />
-          {q ? (
-            <Pressable onPress={() => setQ('')} accessibilityRole="button" accessibilityLabel={t('stories.library.clearSearch')} hitSlop={8} style={styles.searchClear}>
-              <Icon name="clear-fill" size={18} color={colors.textSecondary} />
-            </Pressable>
-          ) : null}
         </View>
-        {chips}
+        <LibraryFilterChips
+          parts={parts}
+          onOpen={() => setSheetOpen(true)}
+          onUndo={(undo) => setFilter({ ...filter, ...undo })}
+          onClearAll={() => setFilter({ ...NO_FILTER })}
+        />
         {notice ? <Note tone="danger" icon="alert">{notice}</Note> : null}
         {body}
       </ScrollView>
@@ -437,12 +392,21 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
       ) : null}
       {/* a game's code opens it, whichever of the games it turns out to be */}
       {joinOpen ? <JoinCodeSheet onClose={() => setJoinOpen(false)} /> : null}
+      <LibraryFilterSheet
+        visible={sheetOpen}
+        value={filter}
+        q={q}
+        library={library}
+        shownTotal={filtering && results && !searching ? results.total : null}
+        onApply={setFilter}
+        onClose={() => setSheetOpen(false)}
+      />
     </>
   );
 }
 
-/** One chip of the filter row: a toggle that reads as pressed, with a count where there is one. */
-function FilterChip({ label, on, onPress, icon, count }: { label: string; on: boolean; onPress: () => void; icon?: 'headphones' | 'tag'; count?: number }): React.JSX.Element {
+/** A chip on the Categories shelf: a way into that shelf, with how many stories it holds. */
+function ShelfChip({ label, onPress, count }: { label: string; onPress: () => void; count: number }): React.JSX.Element {
   const { colors } = useTheme();
   const { locale } = useI18n();
   return (
@@ -452,17 +416,13 @@ function FilterChip({ label, on, onPress, icon, count }: { label: string; on: bo
         onPress();
       }}
       accessibilityRole="button"
-      accessibilityState={{ selected: on }}
-      accessibilityLabel={count !== undefined ? `${label}, ${formatNumber(count, locale)}` : label}
-      style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+      accessibilityLabel={`${label}, ${formatNumber(count, locale)}`}
+      style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
     >
-      {icon ? <Icon name={icon} size={14} color={on ? colors.textOnPrimary : colors.textPrimary} /> : null}
-      <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
+      <Text style={[styles.chipText, { color: colors.textPrimary }]} numberOfLines={1}>
         {label}
       </Text>
-      {count !== undefined ? (
-        <Text style={[styles.chipCount, { color: on ? colors.textOnPrimary : colors.textSecondary }]}>{formatNumber(count, locale)}</Text>
-      ) : null}
+      <Text style={[styles.chipCount, { color: colors.textSecondary }]}>{formatNumber(count, locale)}</Text>
     </Pressable>
   );
 }
@@ -591,7 +551,8 @@ export function StoryCard({
   const category = categoryLabel(story.category, categories, locale);
   const narrated = story.audioCoverage === 'full' ? t('stories.library.narrated') : story.audioCoverage === 'partial' ? t('stories.library.partlyNarrated') : null;
   const share = story.me?.finishedAt ? 1 : (story.me?.share ?? 0);
-  const facts = [story.cefr, category, minutes, narrated, story.me?.finishedAt ? t('stories.library.finished') : share > 0 ? t('stories.library.progress', { percent: Math.round(share * 100) }) : null]
+  const level = levelName(story.level, t);
+  const facts = [level, category, minutes, narrated, story.me?.finishedAt ? t('stories.library.finished') : share > 0 ? t('stories.library.progress', { percent: Math.round(share * 100) }) : null]
     .filter((f): f is string => !!f)
     .join(', ');
   const bookmarked = story.me?.bookmarked ?? false;
@@ -622,7 +583,7 @@ export function StoryCard({
           </Text>
         ) : null}
         <View style={[styles.facts, storyRowStyle(story.dialect), { flexDirection: dir.row }]}>
-          <Pill label={story.cefr} tone="gold" />
+          <Pill label={level} tone="gold" />
           <Text style={[styles.factText, { color: colors.textSecondary }]} numberOfLines={1}>
             {[category, minutes].filter(Boolean).join(' · ')}
           </Text>
@@ -702,11 +663,10 @@ const styles = StyleSheet.create({
   sections: { gap: spacing.lg },
   section: { gap: spacing.sm },
   heading: { ...sectionLabel },
-  search: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md },
+  searchRow: { alignItems: 'center', gap: spacing.xs },
+  search: { flex: 1, alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md },
   searchInput: { flex: 1, minHeight: MIN_TOUCH_TARGET, fontSize: typography.sizes.md },
   searchClear: { minWidth: 28, minHeight: 28, alignItems: 'center', justifyContent: 'center' },
-  // the chips row sits a little closer to the search than the sections below do
-  chips: { gap: spacing.sm, paddingRight: layout.gutter, marginTop: -spacing.sm },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

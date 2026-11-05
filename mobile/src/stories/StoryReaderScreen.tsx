@@ -36,7 +36,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { activeGames, createGame, getCategories, getStory, saveProgress, saveWord, savedWords, setBookmark, type ProgressInput } from './api';
 import { StoryCover } from './covers';
-import { DIALECT_NAME, TRADITION_KEY, categoryLabel, cefrLabel, narrationLabel } from './labels';
+import { DIALECT_NAME, TRADITION_KEY, categoryLabel, levelName, narrationLabel } from './labels';
 import { narrationItems, narrationLine, narrationTrack } from './narration';
 import { TEXT_SCALES, useStoryPrefs, type TextScale } from './prefs';
 import { createErrorMessage, SetupSheet } from './SetupSheet';
@@ -535,7 +535,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
               {story.title}
             </Text>
             <View style={[styles.pills, storyRowStyle(story.dialect)]}>
-              <Pill label={cefrLabel(story.cefr, t)} tone="gold" />
+              <Pill label={levelName(story.level, t)} tone="gold" />
               {category ? <Pill icon="tag" label={category} /> : null}
               <Pill label={DIALECT_NAME[story.dialect]} />
               <Pill label={t('stories.aboutMinutes', { count: story.readingMinutes })} />

@@ -1,13 +1,15 @@
 import {
   categoryName,
   lengthMinutes,
-  type CefrLevel,
+  levelHintKey,
+  levelNameKey,
   type GameAccess,
   type StoryAudioCoverage,
   type StoryCategory,
   type StoryDialect,
   type StoryGameMode,
   type StoryLength,
+  type StoryLevel,
   type StoryTradition,
   type TextDuring,
   type TimerSeconds,
@@ -47,20 +49,17 @@ export const ACCESS_KEY: Record<GameAccess, TranslationKey> = {
 };
 
 /**
- * What each CEFR letter means, in words, beside the letter: a learner who
- * knows their level knows it as "A2"; one who does not knows "Elementary".
+ * A level by its plain name ("Beginner"), never the CEFR letter, which says
+ * nothing to someone who never studied a language in a classroom; and the
+ * line that says what reading at it is like. The keys and their order are
+ * shared with the website (`levelNameKey`).
  */
-export const CEFR_NAME_KEY: Record<CefrLevel, TranslationKey> = {
-  A1: 'stories.cefr.A1',
-  A2: 'stories.cefr.A2',
-  B1: 'stories.cefr.B1',
-  B2: 'stories.cefr.B2',
-  C1: 'stories.cefr.C1',
-};
+export function levelName(level: StoryLevel, t: Translate): string {
+  return t(levelNameKey(level));
+}
 
-/** "A2 · Elementary". */
-export function cefrLabel(cefr: CefrLevel, t: Translate): string {
-  return `${cefr} · ${t(CEFR_NAME_KEY[cefr])}`;
+export function levelHint(level: StoryLevel, t: Translate): string {
+  return t(levelHintKey(level));
 }
 
 /** Where a story comes from, which the reader is told: never an original presented as folklore. */

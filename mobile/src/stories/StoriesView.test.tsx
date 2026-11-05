@@ -8,7 +8,8 @@ import { navigation } from '../play/testing/navigation';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { resetPrefsCache } from './prefs';
-import { NO_FILTER, StoriesView, defaultDialect, isFiltering, libraryQuery } from './StoriesView';
+import { NO_FILTER, isFiltering, libraryQuery } from './LibraryFilter';
+import { StoriesView, defaultDialect } from './StoriesView';
 import { StoriesScreen } from './StoriesScreen';
 
 // jsdom has no matchMedia, and react-native-web reads the colour scheme and
@@ -118,15 +119,21 @@ describe('the library’s helpers', () => {
     expect(isFiltering('nan', NO_FILTER)).toBe(true);
     expect(isFiltering('', { ...NO_FILTER, narrated: true })).toBe(true);
     expect(isFiltering('', { ...NO_FILTER, all: true })).toBe(true);
-    expect(libraryQuery(' nan ', { ...NO_FILTER, level: 'B1', dialect: 'sorani', narrated: true, category: 'fable' })).toEqual({
+    expect(isFiltering('', { ...NO_FILTER, sort: 'newest' })).toBe(true);
+    expect(isFiltering('', { ...NO_FILTER, length: 'long' })).toBe(true);
+    expect(libraryQuery(' nan ', { ...NO_FILTER, level: 3, dialect: 'sorani', length: 'short', narrated: true, category: 'fable', sort: 'title' })).toEqual({
       q: 'nan',
       category: 'fable',
       level: 3,
       dialect: 'sorani',
+      length: 'short',
       audio: true,
+      sort: 'title',
       limit: 24,
       offset: undefined,
     });
+    // the list's own order is left out, so its question is the one it always was
+    expect(libraryQuery('', { ...NO_FILTER, level: 1 }).sort).toBeUndefined();
     expect(libraryQuery('', { ...NO_FILTER, all: true }, 24)).toMatchObject({ limit: 24, offset: 24 });
   });
 
@@ -153,7 +160,9 @@ describe('StoriesView', () => {
     // a card reads its title in the story's language and shows its facts in the app's
     const cards = screen.getAllByRole('button', { name: 'Bajar' });
     expect(cards[0]!.getAttribute('lang')).toBe('ku');
-    expect(within(cards[0]!).getByText('A2')).toBeTruthy();
+    // its level by a plain name, never the CEFR letter
+    expect(within(cards[0]!).getByText('Beginner')).toBeTruthy();
+    expect(within(cards[0]!).queryByText('A2')).toBeNull();
     expect(within(cards[0]!).getByText('Village life · ~2 min')).toBeTruthy();
     fireEvent.click(cards[0]!);
     expect(navigation.navigate).toHaveBeenCalledWith('StoryReader', { slug: 'bajar' });
@@ -194,37 +203,130 @@ describe('StoriesView', () => {
     expect(await screen.findByRole('heading', { name: 'Featured' })).toBeTruthy();
   });
 
-  it('filters by level, variety, narration and category, each a chip', async () => {
-    const felt: HapticEvent[] = [];
-    const stop = onHaptic((event) => felt.push(event));
+  /** The sheet's radio groups by name, and what each choice in one is called. */
+  const sheet = () => screen.getByTestId('stories-filter-sheet');
+  const group = (name: string) => within(sheet()).getByRole('radiogroup', { name });
+  const names = (radios: HTMLElement) => within(radios).getAllByRole('radio').map((r) => r.getAttribute('aria-label'));
+  const counts = (c: ReturnType<typeof client>) => c.calls.filter((call) => call.path.includes('limit=1&') || call.path.endsWith('limit=1')).map((call) => call.path);
+  const lists = (c: ReturnType<typeof client>) => c.calls.filter((call) => call.path.includes('limit=24')).map((call) => call.path);
+
+  it('puts sorting and filtering behind one funnel beside the search, every choice in plain words', async () => {
+    const c = client({}, library({ levels: [{ level: 1, count: 2 }, { level: 2, count: 1 }] }));
+    testAuth.client = c;
+    renderWithProviders(<StoriesView />);
+    await screen.findByRole('heading', { name: 'Featured' });
+    // no row of bare level letters over the shelves any more
+    expect(screen.queryByRole('button', { name: 'A2' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Narrated' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
+
+    expect(names(group('Sort by'))).toEqual(['Easiest first', 'Newest', 'A to Z']);
+    // only the levels that have a story, each by a plain name with what it means
+    expect(names(group('Level'))).toEqual(['Any level', 'Starter, First words and short sentences', 'Beginner, Everyday sentences and short stories']);
+    expect(names(group('Kurdish'))).toEqual(['Either', 'Kurmancî, Northern Kurdish · Latin letters', 'Soranî, Central Kurdish · Arabic script']);
+    expect(names(group('Length'))).toEqual(['Any length', 'Short, 1–2 min', 'Medium, 3–5 min', 'Long, 5–8 min']);
+    expect(within(sheet()).getByRole('switch', { name: 'Read aloud' })).toBeTruthy();
+    expect(names(group('Category'))).toEqual(['Any category', 'Animal fables, 1', 'Village life, 1', 'Everyday life, 1']);
+    expect(sheet().textContent).not.toMatch(/\b[ABC][12]\b/);
+    // the whole library's count is known without asking
+    expect(within(sheet()).getByRole('button', { name: 'Show 3 stories' })).toBeTruthy();
+    expect(counts(c)).toEqual([]);
+  });
+
+  it('is a draft until Show N stories, whose number the server is asked for once the choices settle', async () => {
     const c = client({
-      'GET /stories?level=2&limit=24': ok({ stories: [BAJAR], total: 1 }),
-      'GET /stories?level=2&dialect=sorani&limit=24': ok({ stories: [], total: 0 }),
-      'GET /stories?audio=1&limit=24': ok({ stories: [BAJAR], total: 1 }),
-      'GET /stories?category=fable&limit=24': ok({ stories: [BAZAR], total: 1 }),
+      'GET /stories?level=2&length=long&limit=1': ok({ stories: [BAJAR], total: 1 }),
+      'GET /stories?level=2&length=long&sort=newest&limit=24': ok({ stories: [BAJAR], total: 1 }),
     });
     testAuth.client = c;
     renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Featured' });
-    fireEvent.click(screen.getByRole('button', { name: 'A2' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
+    fireEvent.click(within(group('Level')).getByRole('radio', { name: 'Beginner, Everyday sentences and short stories' }));
+    fireEvent.click(within(group('Length')).getByRole('radio', { name: 'Long, 5–8 min' }));
+    expect(await within(sheet()).findByRole('button', { name: 'Show 1 story' })).toBeTruthy();
+    // one question for the settled choices, not one per tap; the order changes no count; no list yet
+    fireEvent.click(within(group('Sort by')).getByRole('radio', { name: 'Newest' }));
+    expect(counts(c)).toEqual(['/stories?level=2&length=long&limit=1']);
+    expect(lists(c)).toEqual([]);
+    expect(screen.getByRole('heading', { name: 'Featured' })).toBeTruthy();
+
+    fireEvent.click(within(sheet()).getByRole('button', { name: 'Show 1 story' }));
     expect(await screen.findByText('1 story found')).toBeTruthy();
-    expect(felt).toEqual(['select']);
-    fireEvent.click(screen.getByRole('button', { name: 'Soranî' }));
-    expect(await screen.findByText('No stories match. Try another filter.')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(lists(c)).toEqual(['/stories?level=2&length=long&sort=newest&limit=24']);
+    // the funnel says what is on, and a chip under the search says each part
+    expect(screen.getByRole('button', { name: 'Sort and filter — Newest, Beginner, Long' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Newest' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Beginner' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Long' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Clear all' })).toBeTruthy();
+  });
+
+  it('says so on its button when nothing would match', async () => {
+    testAuth.client = client({ 'GET /stories?dialect=sorani&length=long&limit=1': ok({ stories: [], total: 0 }) });
+    renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Featured' });
-    fireEvent.click(screen.getByRole('button', { name: 'Narrated' }));
-    expect(await screen.findByText('1 story found')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
+    fireEvent.click(within(group('Kurdish')).getByRole('radio', { name: 'Soranî, Central Kurdish · Arabic script' }));
+    fireEvent.click(within(group('Length')).getByRole('radio', { name: 'Long, 5–8 min' }));
+    expect(await within(sheet()).findByRole('button', { name: 'No stories match' })).toBeTruthy();
+  });
+
+  it('leaves the library as it was when the sheet is closed another way, and Reset puts the choices back', async () => {
+    const c = client({ 'GET /stories?audio=1&limit=1': ok({ stories: [BAJAR], total: 1 }) });
+    testAuth.client = c;
+    renderWithProviders(<StoriesView />);
+    await screen.findByRole('heading', { name: 'Featured' });
+    fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
+    const reset = () => within(sheet()).getByRole('button', { name: 'Reset' }).getAttribute('aria-disabled') === 'true';
+    expect(reset()).toBe(true);
+    fireEvent.click(within(sheet()).getByRole('switch', { name: 'Read aloud' }));
+    expect(reset()).toBe(false);
+    fireEvent.click(within(sheet()).getByRole('button', { name: 'Reset' }));
+    expect(reset()).toBe(true);
+    fireEvent.click(within(group('Level')).getByRole('radio', { name: 'Starter, First words and short sentences' }));
+    fireEvent.click(within(sheet()).getByRole('button', { name: 'Close' }));
+    // closed without Show: nothing was asked for, and the sheet opens again on what the library shows
+    expect(lists(c)).toEqual([]);
+    expect(screen.getByRole('button', { name: 'Sort and filter' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
+    await waitFor(() => expect(group('Level').querySelector('[aria-checked="true"]')?.getAttribute('aria-label')).toBe('Any level'));
+  });
+
+  it('opens a category from the shelf, and lets each part go from its chip, or all of them at once', async () => {
+    const felt: HapticEvent[] = [];
+    const stop = onHaptic((event) => felt.push(event));
+    const c = client({
+      'GET /stories?category=fable&limit=24': ok({ stories: [BAZAR], total: 1 }),
+      'GET /stories?category=fable&dialect=sorani&limit=1': ok({ stories: [BAZAR], total: 1 }),
+      'GET /stories?category=fable&dialect=sorani&limit=24': ok({ stories: [BAZAR], total: 1 }),
+    });
+    testAuth.client = c;
+    renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Featured' });
     // a category from the shelves' own chips, with its count
     fireEvent.click(screen.getByRole('button', { name: 'Animal fables, 1' }));
+    expect(felt).toEqual(['select']);
     expect(await screen.findByRole('button', { name: 'بازاڕ' })).toBeTruthy();
     expect(screen.getByText('1 story found')).toBeTruthy();
-    // the category leads the chips, lit, and lets go on its own
-    const chosen = screen.getByRole('button', { name: 'Animal fables' });
-    expect(chosen.getAttribute('aria-selected')).toBe('true');
-    fireEvent.click(chosen);
+    expect(screen.getByRole('button', { name: 'Sort and filter — Animal fables' })).toBeTruthy();
+
+    // a chip opens the sheet on what is shown
+    fireEvent.click(screen.getByRole('button', { name: 'Animal fables' }));
+    expect(group('Category').querySelector('[aria-checked="true"]')?.getAttribute('aria-label')).toBe('Animal fables, 1');
+    fireEvent.click(within(group('Kurdish')).getByRole('radio', { name: 'Soranî, Central Kurdish · Arabic script' }));
+    fireEvent.click(await within(sheet()).findByRole('button', { name: 'Show 1 story' }));
+    await waitFor(() => expect(lists(c).at(-1)).toBe('/stories?category=fable&dialect=sorani&limit=24'));
+
+    // each part's ✕ lets just that part go
+    fireEvent.click(screen.getByRole('button', { name: 'Remove Soranî' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sort and filter — Animal fables' })).toBeTruthy());
+    expect(screen.queryByRole('button', { name: 'Clear all' })).toBeNull();
+    // and with two on, Clear all lets both go
+    fireEvent.click(screen.getByRole('button', { name: 'Animal fables' }));
+    fireEvent.click(within(group('Kurdish')).getByRole('radio', { name: 'Soranî, Central Kurdish · Arabic script' }));
+    fireEvent.click(await within(sheet()).findByRole('button', { name: 'Show 1 story' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Clear all' }));
     expect(await screen.findByRole('heading', { name: 'Featured' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Animal fables' })).toBeNull();
     stop();
