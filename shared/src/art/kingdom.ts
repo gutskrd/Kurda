@@ -1,8 +1,10 @@
 /**
- * Kurdish Kingdom's village, Sêvan, drawn by code: an isometric village on
- * three terraces stepping down a mountainside to a lake, under the Zagros,
+ * The Village ("kingdom" in code), Sêvan, drawn by code: an isometric village
+ * on three terraces stepping down a mountainside to a lake, under the Zagros,
  * its six buildings each at its own level — a staked-out plot, a stage being
- * built in scaffolding, then five stages, each richer than the last.
+ * built in scaffolding, then five stages, each richer than the last — in a
+ * whole valley that fills in as the village's total level rises (valley.ts,
+ * from games/kingdom/growth.ts).
  *
  * The look is a painted board game's: every object has a heavy dark-brown
  * outline and is cel-shaded in flat planes of its own colour, lit from the
@@ -13,13 +15,17 @@
  * with its samovar, low stools and a kilim on the bench; a kanî with its
  * carved basin; a bazaar stall under a striped awning; a school with its
  * bell; apples and pomegranates in the orchard; poplars; beehives; kilims
- * hung out to air. No flag of any country, and no people: the village's life
- * is its animals, laid over the scene by `kingdomLife` (life.ts).
+ * hung out to air. No flag of any country, and no people drawn into the
+ * scene: the village's life (its animals, the deer, and the course's own Hamo
+ * and Xezal by the tea house and the school) is laid over it by `kingdomLife`
+ * (life.ts).
  *
  * What comes from here:
- * - `kingdomSceneSvg`: the whole village on its `KINGDOM_SCENE` canvas. The
- *   canvas is wider and taller than the village itself (`KINGDOM_FRAME`), so
- *   an app can fill a screen of any shape with it and keep the frame in view.
+ * - `kingdomTiles`: the whole world on its `KINGDOM_SCENE` canvas, several
+ *   times the village's size, cut into a grid of tiles (`KINGDOM_TILE`), so
+ *   an app that pans and zooms about it draws only the tiles near its view.
+ * - `kingdomSceneSvg`: the same world as one picture, or with `framed` only
+ *   the village's heart (`KINGDOM_FRAME`), for a picture of it on its own.
  * - `KINGDOM_PLOTS`: where each building stands on the canvas — the box a
  *   tap on it covers, and the spot under it where the app sets its level
  *   badge and progress bar (in the app's own type, never baked in here).
@@ -41,7 +47,7 @@ import * as P from './kingdom/props.js';
 import { VALLEY, valleyGround, valleyThings, valleyWoods } from './kingdom/valley.js';
 import { markupExtent, overlaps, type Extent } from './kingdom/bounds.js';
 import { villageHas, type VillageFeature } from '../games/kingdom/growth.js';
-import { KINGDOM_SPRITES, SPRITE_BOX, kingdomSpriteSvg, lifeOf, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite } from './kingdom/life.js';
+import { KINGDOM_SPRITES, SPRITE_BOX, kingdomActorReach, kingdomSpriteSvg, lifeOf, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite } from './kingdom/life.js';
 
 /** The canvas the world is drawn on, in its own units: the whole valley, several times the village's size. */
 export const KINGDOM_SCENE = { width: VALLEY.x1 - VALLEY.x0, height: VALLEY.y1 - VALLEY.y0 } as const;
@@ -343,7 +349,7 @@ function world(o: KingdomSceneOptions): Placed[] {
   drawn.push(...paths(pal, seeded('kingdom-paths')).map((part) => ({ depth: part.depth, svg: part.svg() })));
   drawn.push(...scenery(pal, seeded('kingdom-scenery'), levels, moving));
   drawn.push(...valleyThings(pal, seeded('kingdom-valley'), has, moving));
-  drawn.push(...valleyWoods(pal, seeded('kingdom-woods')));
+  drawn.push(...valleyWoods(pal, seeded('kingdom-woods'), moving));
   for (const b of KINGDOM_BUILDINGS) {
     if (b === o.without) continue;
     const level = levels[b];
@@ -499,7 +505,7 @@ function inPlot(b: KingdomBuilding, x: number, y: number, z: number): { x: numbe
  */
 export function kingdomLife(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>): KingdomActor[] {
   const checked = Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, levelOf(levels, b)])) as Record<KingdomBuilding, KingdomLevel>;
-  return lifeOf(checked, kingdomPoint, inPlot, KINGDOM_SWAYING);
+  return lifeOf(checked, kingdomPoint, inPlot, KINGDOM_SWAYING, KINGDOM_ORIGIN);
 }
 
-export { KINGDOM_SPRITES, SPRITE_BOX as KINGDOM_SPRITE_BOX, kingdomSpriteSvg, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite };
+export { KINGDOM_SPRITES, SPRITE_BOX as KINGDOM_SPRITE_BOX, kingdomActorReach, kingdomSpriteSvg, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite };

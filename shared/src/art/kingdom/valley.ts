@@ -19,7 +19,7 @@
  * the scene can sort them among the buildings and cut them into tiles.
  */
 import type { VillageFeature } from '../../games/kingdom/growth.js';
-import { n, wholePath, wholeUnits, type Pt } from '../svg.js';
+import { n, seeded, wholePath, wholeUnits, type Pt } from '../svg.js';
 import { INK, Part, disc, iso, oval, poly, wpoly, type Drawn, type Palette } from './pen.js';
 import { HORIZON, TERRACES, WATER_Z, meadow, mountains, terrace } from './land.js';
 import * as F from './farm.js';
@@ -382,46 +382,51 @@ export function valleyGround(pal: Palette, rand: Rand, moving: boolean): Drawn[]
   return out;
 }
 
-/** The woods closing in at the right, the bottom and the left of the world, sorted among the floor's own things. */
-export function valleyWoods(pal: Palette, rand: Rand): Drawn[] {
+/** The woods closing in at the right, the bottom and the left of the world, sorted among the floor's own things; the groves' trees too, unless an app sways them itself. */
+export function valleyWoods(pal: Palette, rand: Rand, moving = false): Drawn[] {
   const near = (sy: number): number => ON_FLOOR + sy * 2;
   const roadGap: Pt[][] = [[[880, 880], [1000, 920], [1000, 1040], [880, 1040], [820, 960]]];
-  return [
+  const out: Drawn[] = [
     ...forest(pal, rand, [[860, -40], [1000, -40], [1000, 1040], [860, 1040], [900, 600], [880, 300]], { gap: 42, row: 26, size: 62, round: 0.25, depth: near, avoid: roadGap }),
     ...forest(pal, rand, [[-1000, 890], [-600, 910], [-250, 880], [0, 800], [200, 930], [500, 940], [860, 910], [860, 1060], [-1000, 1060]], { gap: 46, row: 26, size: 62, round: 0.55, depth: near, avoid: roadGap }),
     ...forest(pal, rand, [[-1000, 60], [-930, 70], [-900, 300], [-930, 560], [-900, 820], [-1000, 840]], { gap: 42, row: 26, size: 58, round: 0.4, depth: near }),
-    // groves standing out on the floor, so its open grass is never bare
-    ...grove(pal, rand, [720, 180], 5, near),
-    ...grove(pal, rand, [800, 470], 4, near),
-    ...grove(pal, rand, [780, 720], 5, near),
-    ...grove(pal, rand, [150, 740], 4, near),
-    ...grove(pal, rand, [350, 110], 3, near),
-    ...grove(pal, rand, [470, 620], 3, near),
-    ...grove(pal, rand, [-560, 300], 3, near, true),
+    islet(pal, ISLET, near),
   ];
-}
-
-/** A small grove on the floor about a screen point: round trees and a pine or two, a few rocks at their feet (or, `island`, a rocky islet in the lake with its trees). */
-function grove(pal: Palette, rand: Rand, [gx, gy]: Pt, count: number, depth: (sy: number) => number, island = false): Drawn[] {
-  const out: Drawn[] = [];
-  if (island) {
-    const p = new Part(0);
-    const top = smooth([[gx - 70, gy], [gx - 30, gy - 22], [gx + 40, gy - 20], [gx + 76, gy + 4], [gx + 30, gy + 22], [gx - 40, gy + 20]]);
-    const cliff = smooth([[gx - 70, gy], [gx - 40, gy + 20], [gx + 30, gy + 22], [gx + 76, gy + 4], [gx + 74, gy + 16], [gx + 30, gy + 34], [gx - 42, gy + 32], [gx - 68, gy + 12]]);
-    p.sil(top + cliff).fill(cliff, pal.rock.left).fill(top, pal.grass.top);
-    p.line(`M${n(gx - 80)} ${n(gy + 18)}q${n(80)} ${n(30)} ${n(160)} ${n(-6)}`, 2.6, pal.foam);
-    out.push({ depth: depth(gy - 30), svg: p.svg() });
-  }
-  const trees: F.StandTree[] = [];
-  for (let i = 0; i < count; i++) {
-    const a = (i / count) * Math.PI * 2 + rand();
-    const r = i === 0 ? 0 : 22 + rand() * 18;
-    trees.push({ x: gx + Math.cos(a) * r * 1.4, y: gy + Math.sin(a) * r * 0.6, h: 44 + rand() * 22, kind: rand() < 0.3 ? 'pine' : 'round' });
-  }
-  trees.sort((a, b) => a.y - b.y);
-  for (const t of trees) out.push({ depth: depth(t.y), svg: F.stand(pal, [t], 0).svg() });
+  if (!moving) for (const t of GROVE_TREES) out.push({ depth: near(t.y), svg: F.stand(pal, [{ ...t, kind: 'round' }], 0).svg() });
   return out;
 }
+
+/** The rocky islet out in the lake, a screen point at its middle (its trees are among the groves'). */
+const ISLET: Pt = [-560, 300];
+
+function islet(pal: Palette, [gx, gy]: Pt, depth: (sy: number) => number): Drawn {
+  const p = new Part(0);
+  const top = smooth([[gx - 70, gy], [gx - 30, gy - 22], [gx + 40, gy - 20], [gx + 76, gy + 4], [gx + 30, gy + 22], [gx - 40, gy + 20]]);
+  const cliff = smooth([[gx - 70, gy], [gx - 40, gy + 20], [gx + 30, gy + 22], [gx + 76, gy + 4], [gx + 74, gy + 16], [gx + 30, gy + 34], [gx - 42, gy + 32], [gx - 68, gy + 12]]);
+  p.sil(top + cliff).fill(cliff, pal.rock.left).fill(top, pal.grass.top);
+  p.line(`M${n(gx - 80)} ${n(gy + 18)}q${n(80)} ${n(30)} ${n(160)} ${n(-6)}`, 2.6, pal.foam);
+  return { depth: depth(gy - 30), svg: p.svg() };
+}
+
+/**
+ * The groves standing out on the floor so its open grass is never bare, and
+ * the islet's trees: round-crowned trees about a few points, each one where
+ * it stands on the screen (its foot) and how tall. The same every time, so
+ * the scene and the life that sways them agree.
+ */
+export const GROVE_TREES: readonly { x: number; y: number; h: number }[] = (() => {
+  const rand = seeded('kingdom-groves');
+  const out: { x: number; y: number; h: number }[] = [];
+  const spots: [number, number, number][] = [[720, 180, 5], [800, 470, 4], [780, 720, 5], [150, 740, 4], [350, 110, 3], [470, 620, 3], [ISLET[0], ISLET[1] - 4, 3]];
+  for (const [gx, gy, count] of spots) {
+    for (let i = 0; i < count; i++) {
+      const a = (i / count) * Math.PI * 2 + rand();
+      const r = i === 0 ? 0 : (gx === ISLET[0] ? 14 : 22) + rand() * 18;
+      out.push({ x: gx + Math.cos(a) * r * 1.4, y: gy + Math.sin(a) * r * 0.6, h: 44 + rand() * 22 });
+    }
+  }
+  return out.sort((a, b) => a.y - b.y);
+})();
 
 // ───────────────────────────────────────────────────────────── the farm
 
@@ -468,6 +473,14 @@ export const HIVES: readonly (readonly [number, number])[] = [
   [930, 560],
 ];
 export const LAUNDRY = { x: 360, y: -60, len: 40 } as const;
+export const DOVECOTE = [330, 40] as const;
+/** The poplars planted along the road towards the town, which sway. */
+export const ROAD_POPLARS: readonly (readonly [number, number])[] = [
+  [800, 452],
+  [860, 452],
+  [920, 452],
+  [980, 452],
+];
 export const KILIMS: readonly (readonly [number, number, number])[] = [
   [700, 600, 26],
   [440, -50, 24],
@@ -540,8 +553,8 @@ export function valleyThings(pal: Palette, rand: Rand, has: (f: VillageFeature) 
   if (has('jars')) add(P.jar(pal, 455, 306, z, 1.2), P.jar(pal, 460, 314, z, 1), P.jar(pal, 940, 248, z, 1.1, pal.copper));
   if (has('benches')) add(F.bench(pal, 520, 312, z, 18), F.bench(pal, 690, 300, z, 18), F.bench(pal, 560, 590, z, 16, 'y'));
   if (has('lanterns')) for (const [x, y] of LANTERNS) add(F.lanternPost(pal, x, y, z));
-  if (has('dovecote')) add(F.dovecote(pal, 330, 40, z));
-  if (has('poplars')) for (const x of [800, 860, 920, 980]) add(P.poplar(pal, x, 452, z, 56, 11));
+  if (has('dovecote')) add(F.dovecote(pal, DOVECOTE[0], DOVECOTE[1], z));
+  if (has('poplars') && !moving) for (const [x, y] of ROAD_POPLARS) add(P.poplar(pal, x, y, z, 56, 11));
   if (has('flowers')) for (const [x, y] of [[480, 120], [720, 160], [540, 330], [880, 620], [400, 60], [650, 560], [300, 10]] as const) add(F.flowers(pal, x, y, z, 9, rand, 10));
   if (has('signs')) add(F.signpost(pal, 456, 352, z, 'left', 'right'));
   if (has('festival')) add(F.bunting(pal, [460, 324, z + 20], [600, 324, z + 20]), F.bunting(pal, [600, 324, z + 20], [748, 324, z + 20]));
