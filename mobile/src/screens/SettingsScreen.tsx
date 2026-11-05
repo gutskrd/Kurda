@@ -1,11 +1,15 @@
 import { Fragment, useState, type ReactNode } from 'react';
 import { foldForSearch } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
-import { layout, spacing } from '../theme/tokens';
+import { useDirection } from '../reports/direction';
+import { BottomSheet } from '../theme/BottomSheet';
+import { ClayButton } from '../theme/glass';
+import { layout, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { PREFERENCE_LABEL } from '../theme/appearance';
 import { useI18n } from '../i18n/I18nContext';
@@ -49,8 +53,9 @@ interface Entry {
 export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client, logout, deleteAccount, isGuest } = useAuth();
   const navigation = useNavigation<RootNavigation>();
-  const { preference } = useTheme();
+  const { preference, colors } = useTheme();
   const { t, locale } = useI18n();
+  const dir = useDirection();
   const [keyboard] = useKeyboardPrefs();
   const account = useMyAccount();
   const attention = useSettingsAttention();
@@ -102,7 +107,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
    * back has to be clear.
    */
   const confirmDelete = () => {
-    Alert.alert(t('settings.delete.confirmTitle'), t('settings.delete.warning'), [
+    // a guest has no grace period: nobody could sign in to it again, so the server closes it at once
+    Alert.alert(t('settings.delete.confirmTitle'), isGuest ? t('settings.delete.guestWarning') : t('settings.delete.warning'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('settings.delete.confirm'),
@@ -110,11 +116,27 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         onPress: () => {
           void deleteAccount().then((result) => {
             if (!result.ok) Alert.alert(t('settings.delete.failed'), result.message);
-            else Alert.alert(t('settings.delete.scheduledTitle'), t('settings.delete.scheduledBody', { days: result.graceDays }));
+            else if (result.graceDays > 0) Alert.alert(t('settings.delete.scheduledTitle'), t('settings.delete.scheduledBody', { days: result.graceDays }));
+            else Alert.alert(t('settings.delete.guestDone'));
           });
         },
       },
     ]);
+  };
+
+  /*
+   * A guest has no email and no password, so logging out is the end of the
+   * account and of everything learned on it. It asks first, and the first
+   * answer it offers is the one that keeps the progress: making the account.
+   */
+  const [guestLeaving, setGuestLeaving] = useState(false);
+  const askedLogout = () => {
+    if (!isGuest) {
+      void logout();
+      return;
+    }
+    haptic('select');
+    setGuestLeaving(true);
   };
 
   const page = (key: SettingsPageKey) => () => navigation.navigate('SettingsPage', { page: key });
@@ -330,15 +352,15 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         {
           key: 'logout',
           terms: [t('profile.logout')],
-          row: <SettingsRow icon="sign-out" title={t('profile.logout')} opens={false} onPress={() => void logout()} />,
+          row: <SettingsRow icon="sign-out" title={t('profile.logout')} opens={false} onPress={askedLogout} />,
         },
         {
           key: 'delete',
           terms: [t('settings.delete.title')],
           row: <SettingsRow icon="trash" title={t('settings.delete.title')} destructive opens={false} onPress={confirmDelete} />,
         },
-        // a guest signs out and nothing more: no other devices, no data to ask for, no account of their own to delete
-      ].filter((entry) => !isGuest || entry.key === 'logout'),
+        // a guest has no other devices and no data to ask for, but can always leave, and take the account with them
+      ].filter((entry) => !isGuest || entry.key === 'logout' || entry.key === 'delete'),
     },
   ];
 
@@ -362,22 +384,50 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     : offered;
 
   return (
-    <SettingsPage title={t('settings.title')} onExit={onExit}>
-      <View style={styles.search}>
-        <SearchField value={query} onChangeText={setQuery} label={t('settings.search')} />
-      </View>
-      {shown.map((section, i) => (
-        <SettingsSection key={section.key} title={section.title} first={i === 0}>
-          {section.entries.map((entry) => (
-            <Fragment key={entry.key}>{entry.row}</Fragment>
-          ))}
-        </SettingsSection>
-      ))}
-      {shown.length === 0 ? <SettingsNote>{t('settings.search.none', { query: query.trim() })}</SettingsNote> : null}
-    </SettingsPage>
+    <>
+      <SettingsPage title={t('settings.title')} onExit={onExit}>
+        <View style={styles.search}>
+          <SearchField value={query} onChangeText={setQuery} label={t('settings.search')} />
+        </View>
+        {shown.map((section, i) => (
+          <SettingsSection key={section.key} title={section.title} first={i === 0}>
+            {section.entries.map((entry) => (
+              <Fragment key={entry.key}>{entry.row}</Fragment>
+            ))}
+          </SettingsSection>
+        ))}
+        {shown.length === 0 ? <SettingsNote>{t('settings.search.none', { query: query.trim() })}</SettingsNote> : null}
+      </SettingsPage>
+
+      <BottomSheet visible={guestLeaving} onClose={() => setGuestLeaving(false)} title={t('guest.logout.title')} testID="guest-logout">
+        <Text style={[styles.sheetBody, dir.text, { color: colors.textSecondary }]}>{t('guest.logout.body')}</Text>
+        <View style={styles.sheetActions}>
+          <ClayButton
+            label={t('guest.createAccount')}
+            tone="primary"
+            size="large"
+            onPress={() => {
+              setGuestLeaving(false);
+              navigation.navigate('ClaimAccount');
+            }}
+          />
+          <ClayButton
+            label={t('guest.logout.anyway')}
+            tone="danger"
+            variant="outline"
+            onPress={() => {
+              setGuestLeaving(false);
+              void logout();
+            }}
+          />
+        </View>
+      </BottomSheet>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   search: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
+  sheetBody: { fontSize: typography.sizes.md, lineHeight: 22 },
+  sheetActions: { gap: spacing.sm, marginTop: spacing.sm },
 });
