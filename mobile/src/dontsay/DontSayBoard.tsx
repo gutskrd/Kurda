@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
   ending: { alignSelf: 'stretch', gap: spacing.md },
   scores: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
   score: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: 14, borderRadius: radii.pill },
-  swatch: { width: 12, height: 12, borderRadius: 6 },
+  swatch: { width: 12, height: 12, borderRadius: radii.pill },
   scoreName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   scoreN: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   status: { gap: spacing.xs },

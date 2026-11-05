@@ -145,7 +145,7 @@ const styles = StyleSheet.create({
   heading: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   team: { borderWidth: 1.5, borderRadius: radii.md, padding: spacing.sm, gap: spacing.xs },
   teamHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  swatch: { width: 14, height: 14, borderRadius: 7 },
+  swatch: { width: 14, height: 14, borderRadius: radii.pill },
   teamName: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   count: { fontSize: typography.sizes.sm },
   empty: { fontSize: typography.sizes.sm },

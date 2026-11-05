@@ -8,7 +8,7 @@ import { JoinCodeCard } from '../play/JoinByCode';
 import { ClayButton, GlassCard } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { usePartyOffer, type PartyGame } from './offer';
 
 /** A variety is called by its own name in every language, the way a language is. */
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
   steps: { alignSelf: 'stretch', gap: spacing.sm },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
-  stepN: { width: 26, height: 26, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  stepN: { width: 26, height: 26, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   stepNText: { color: '#2a1d05', fontWeight: typography.weights.bold },
   stepText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 22 },
 });
