@@ -386,7 +386,7 @@ export class GameContentAdminService {
     return this.tx(async (client) => {
       const res = await client.query<{ id: string }>(
         `INSERT INTO game_content (kind, dialect, level, payload, source, origin, created_by, updated_by)
-         SELECT $1, $2, d.level, d.payload, 'admin', d.origin, $4, $4
+         SELECT $1::text, $2::text, d.level, d.payload, 'admin', d.origin, $4::uuid, $4::uuid
            FROM jsonb_to_recordset($3::jsonb) AS d(level smallint, payload jsonb, origin text)
          ON CONFLICT (kind, dialect, origin) WHERE origin IS NOT NULL DO NOTHING
          RETURNING id`,
