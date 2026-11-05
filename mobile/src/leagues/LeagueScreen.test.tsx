@@ -110,7 +110,7 @@ describe('the league page', () => {
     await screen.findByRole('heading', { name: 'Çem League' });
     const count = () => client.calls.filter((c) => c.path === '/me/league').length;
     const before = count();
-    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
     await waitFor(() => expect(count()).toBe(before + 1));
   });
 });

@@ -108,7 +108,7 @@ describe('friend requests, as friendship tickets', () => {
     await screen.findByText('Rojîn wants to be friends');
     const count = () => client.calls.filter((c) => c.method === 'GET' && c.path === '/friends/requests').length;
     const before = count();
-    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
     await waitFor(() => expect(count()).toBe(before + 1));
   });
 });

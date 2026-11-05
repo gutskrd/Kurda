@@ -62,7 +62,7 @@ describe('discovering groups', () => {
     await screen.findByText('Hevalên Kurmancî');
     const count = (path: string) => client.calls.filter((c) => c.path === path).length;
     const before = [count('/groups'), count('/me/groups')];
-    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
     await waitFor(() => expect([count('/groups'), count('/me/groups')]).toEqual([before[0]! + 1, before[1]! + 1]));
   });
 
@@ -191,7 +191,7 @@ describe('a group’s own page', () => {
     await screen.findByRole('heading', { name: 'Hevalên Kurmancî' });
     const count = () => client.calls.filter((c) => c.path === '/groups/g1').length;
     const before = count();
-    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
     await waitFor(() => expect(count()).toBe(before + 1));
   });
 

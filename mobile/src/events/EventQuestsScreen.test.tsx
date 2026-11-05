@@ -150,7 +150,7 @@ describe('event quests', () => {
     await screen.findByText('Newroz');
     const count = () => client.calls.filter((c) => c.path === '/events/newroz/quests').length;
     const before = count();
-    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
     await waitFor(() => expect(count()).toBe(before + 1));
   });
 });

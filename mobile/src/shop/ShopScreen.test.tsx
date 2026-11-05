@@ -84,7 +84,7 @@ describe('the Shop, by kind', () => {
     await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
     const count = (path: string) => client.calls.filter((c) => c.method === 'GET' && c.path === path).length;
     const before = [count('/shop'), count('/me/wallet')];
-    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
     await waitFor(() => expect([count('/shop'), count('/me/wallet')]).toEqual([before[0]! + 1, before[1]! + 1]));
   });
 

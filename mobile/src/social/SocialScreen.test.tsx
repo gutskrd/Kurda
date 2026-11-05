@@ -74,7 +74,7 @@ describe('Friends', () => {
     await screen.findByText('Rojîn wants to be friends');
     const count = (path: string) => client.calls.filter((c) => c.method === 'GET' && c.path === path).length;
     const before = ['/friends', '/friends/requests', '/friends/requests/outgoing'].map(count);
-    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
     await waitFor(() => expect(['/friends', '/friends/requests', '/friends/requests/outgoing'].map(count)).toEqual(before.map((n) => n + 1)));
   });
 });

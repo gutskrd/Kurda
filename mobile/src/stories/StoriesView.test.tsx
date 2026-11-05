@@ -160,7 +160,7 @@ describe('StoriesView', () => {
     await screen.findByLabelText(/Your progress\. 1 of 3 stories read/);
     const count = (path: string) => c.calls.filter((call) => call.path === path).length;
     const before = [count('/stories/library'), count('/story-games/active')];
-    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
     await waitFor(() => expect([count('/stories/library'), count('/story-games/active')]).toEqual([before[0]! + 1, before[1]! + 1]));
   });
 

@@ -56,7 +56,7 @@ const RANKS: MyRanks = {
 /** Waits for the screen to be up, pulls, and expects `path` to have been asked once more. */
 async function pullReads(client: ReturnType<typeof fakeClient>, path: string): Promise<void> {
   const count = () => client.calls.filter((c) => c.method === 'GET' && c.path === path).length;
-  const pull = await screen.findByRole('button', { name: 'Pull to refresh' });
+  const pull = await screen.findByTestId('pull-to-refresh');
   const before = count();
   expect(before).toBeGreaterThan(0);
   fireEvent.click(pull);
