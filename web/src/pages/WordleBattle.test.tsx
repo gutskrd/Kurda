@@ -32,6 +32,7 @@ const lobby = {
   createdBy: 'me',
   isHost: true,
   access: 'friends',
+  code: 'ABC234',
   endsAt: null,
   nextLobbyId: null,
   players: [seat(1, { userId: 'me', isMe: true, isHost: true })],
@@ -62,13 +63,26 @@ function signedIn(route: (url: string, init?: RequestInit) => Response | undefin
 }
 
 describe('WordleBattle', () => {
-  it('shows the lobby with an invite link, start gated on a second player', async () => {
+  it('shows the lobby with its join code on a ticket, and no link, start gated on a second player', async () => {
     signedIn((url) => (url.includes('/wordle/battles/b1') ? jsonResponse(200, lobby) : undefined));
     renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
-    expect(await screen.findByText(/invite link/i)).toBeInTheDocument();
-    expect(screen.getByText(/\/app\/games\/peyvok-battle\?id=b1/)).toBeInTheDocument();
+    const ticket = await screen.findByRole('group', { name: 'Join code' });
+    expect(within(ticket).getByRole('button', { name: 'Copy the join code A B C 2 3 4' })).toBeInTheDocument();
+    expect(within(ticket).getByRole('button', { name: 'Invite friends' })).toBeInTheDocument();
+    // the invite link and its Copy link are gone: nothing on the page builds one
+    expect(screen.queryByText(/invite link/i)).toBeNull();
+    expect(screen.queryByText(/\/app\/games\/peyvok-battle\?id=/)).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Copy link' })).toBeNull();
     expect(await screen.findByRole('button', { name: /waiting for a second player/i })).toBeInTheDocument();
+  });
+
+  it('shows no ticket once the battle has no code, and keeps Invite friends', async () => {
+    signedIn((url) => (url.includes('/wordle/battles/b1') ? jsonResponse(200, { ...lobby, code: null }) : undefined));
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
+
+    expect(await screen.findByRole('button', { name: 'Invite friends' })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Join code' })).toBeNull();
   });
 
   it('submits a guess in an active battle', async () => {
@@ -253,6 +267,7 @@ describe('WordleBattle', () => {
     await userEvent.click(await screen.findByRole('radio', { name: 'Hard' }));
     await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
     await waitFor(() => expect(created).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard', rated: false } }));
-    expect(await screen.findByText(/\/app\/games\/peyvok-battle\?id=b9/)).toBeInTheDocument();
+    // its lobby, with the code to hand out
+    expect(await screen.findByRole('button', { name: 'Copy the join code A B C 2 3 4' })).toBeInTheDocument();
   });
 });

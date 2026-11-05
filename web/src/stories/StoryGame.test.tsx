@@ -52,8 +52,9 @@ describe('the lobby', () => {
             }),
     });
     game();
-    expect(await screen.findByRole('img', { name: 'Join code: A B C 2 3 4' })).toHaveTextContent('ABC 234');
-    expect(screen.getByText('Friends can join with this code.')).toBeInTheDocument();
+    // the code on its ticket, read out one character at a time, and where a friend types it
+    expect(await screen.findByRole('button', { name: 'Copy the join code A B C 2 3 4' })).toHaveTextContent('ABC234');
+    expect(screen.getByText('Friends open Games → Join with a code and type it in.')).toBeInTheDocument();
     // a stranger to you is a seat, never a name
     expect(screen.getByText('Player 2')).toBeInTheDocument();
     expect(screen.getByText('You')).toBeInTheDocument();
@@ -121,7 +122,7 @@ describe('the lobby', () => {
       'GET /story-games/g-1/story': story,
     });
     game();
-    await screen.findByRole('img', { name: /Join code/ });
+    await screen.findByRole('button', { name: /Copy the join code/ });
     await waitFor(() => expect(calls.some((c) => c.path === '/story-games/g-1?v=4')).toBe(true));
     // the next version arrives: the reading starts, and the poll asks for what comes after it
     act(() => poll.release(gameView({ version: 5, status: 'reading', code: 'ABC234' })));
@@ -137,7 +138,7 @@ describe('the lobby', () => {
       'POST /story-games/g-1/extra-time': gameView({ extraTime: true, version: 2 }),
     });
     game();
-    await screen.findByRole('img', { name: /Join code/ });
+    await screen.findByRole('button', { name: /Copy the join code/ });
     await waitFor(() => expect(calls.filter((c) => c.path.endsWith('/extra-time')).map((c) => c.body)).toEqual([{ on: true }]));
   });
 
@@ -147,7 +148,7 @@ describe('the lobby', () => {
       'GET /story-games/g-1': (c: Call) => (c.path.includes('?v=') ? poll.answer(c) : gameView({ extraTime: false })),
     });
     game();
-    await screen.findByRole('img', { name: /Join code/ });
+    await screen.findByRole('button', { name: /Copy the join code/ });
     expect(calls.some((c) => c.path.endsWith('/extra-time'))).toBe(false);
   });
 
@@ -162,7 +163,7 @@ describe('the lobby', () => {
       },
     });
     game();
-    await screen.findByRole('img', { name: /Join code/ });
+    await screen.findByRole('button', { name: /Copy the join code/ });
     await new Promise((r) => setTimeout(r, 1_300));
     // without a floor this would be hundreds of requests
     expect(asked.length).toBeGreaterThanOrEqual(2);

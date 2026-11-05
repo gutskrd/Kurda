@@ -143,6 +143,39 @@ describe('Games hub', () => {
   });
 });
 
+describe('Join with a code, on the Games hub', () => {
+  it('is a card at the top of the page that opens the code boxes', async () => {
+    signIn();
+    renderApp(<Games />, ['/app/games']);
+    const card = await screen.findByRole('button', { name: /^Join with a code/ });
+    expect(card).toHaveTextContent('Got a code from a friend? Type it in and you’re in their game.');
+    // ahead of the games themselves, where somebody holding a code looks first
+    const firstGame = screen.getByRole('heading', { name: 'Peyvok' });
+    expect(card.compareDocumentPosition(firstGame) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // the session lands before the sheet is opened, so it shows the boxes and not the gate
+    await screen.findAllByRole('button', { name: /^play$/i });
+    await userEvent.click(card);
+    const sheet = await screen.findByRole('dialog', { name: 'Join with a code' });
+    expect(within(sheet).getByLabelText('Join with a code')).toBeInTheDocument();
+    expect(within(sheet).getByRole('button', { name: 'Join' })).toBeInTheDocument();
+  });
+
+  it('asks a visitor for an account the way every game does', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
+    renderApp(<Games />, ['/app/games']);
+    await userEvent.click(await screen.findByRole('button', { name: /^Join with a code/ }));
+    const sheet = await screen.findByRole('dialog', { name: 'Join with a code' });
+    expect(within(sheet).queryByLabelText('Join with a code')).toBeNull();
+    expect(within(sheet).getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register');
+  });
+
+  it('opens by itself on the way back from signing in', async () => {
+    signIn();
+    renderApp(<Games />, ['/app/games?join=1']);
+    expect(await screen.findByRole('dialog', { name: 'Join with a code' })).toBeInTheDocument();
+  });
+});
+
 describe('TopNav brand', () => {
   it('sends a signed-in user to the app, not the marketing site', async () => {
     signIn();

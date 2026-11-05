@@ -2735,47 +2735,7 @@ a.mkp-activity-row:hover {
   font-size: 1.6rem;
 }
 
-/* ---- Wordle Battle (invite + opponents) -------------------------------- */
-.battle-invite {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  justify-content: center;
-  padding: 12px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  max-width: 100%;
-}
-.battle-invite-label {
-  font-size: 0.78rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--ink-3);
-}
-.battle-invite-url {
-  font-size: 0.82rem;
-  color: var(--ink-2);
-  max-width: 260px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  /* one tap/click selects the whole link rather than part of a truncated one */
-  user-select: all;
-}
-
-@media (max-width: 560px) {
-  /* Truncating an invite link makes it useless — the point is to read or copy
-     it. On a phone there is no room for one line, so let it wrap instead. */
-  .battle-invite-url {
-    max-width: 100%;
-    overflow: visible;
-    white-space: normal;
-    overflow-wrap: anywhere;
-    text-align: center;
-  }
-}
+/* ---- Peyvok Battle (opponents) ---------------------------------------- */
 .wordle-battle-play {
   display: flex;
   flex-direction: column;

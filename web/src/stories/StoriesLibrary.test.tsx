@@ -177,21 +177,21 @@ describe('the library', () => {
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 
-  it('keeps the way into a game with friends: an unfinished game, a code, an invite link', async () => {
+  it('keeps the way into a game with friends: an unfinished game, and the code boxes that join any game', async () => {
     const { calls } = fakeApi({
       'GET /stories/library': libraryFixture(),
       'GET /story-games/active': {
         games: [{ id: 'g9', mode: 'solo', status: 'question', storyId: 'a', storyTitle: 'Qelema Şîn', dialect: 'kurmanci', currentIndex: 1, total: 5 }],
       },
-      'POST /story-games/join': gameView({ id: 'g7' }),
+      'POST /play/join': { game: 'stories', lobbyId: 'g7' },
     });
     library();
     const card = (await screen.findByText(/Question 2 of 5/)).closest('a')!;
     expect(card).toHaveAttribute('href', '/app/games/stories/play/g9');
+    // the sixth character joins on its own, through the one join every game shares
     await userEvent.type(screen.getByLabelText('Join with a code'), 'abc-234');
-    await userEvent.click(screen.getByRole('button', { name: 'Join' }));
     expect(await screen.findByText('the game page')).toBeInTheDocument();
-    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ code: 'ABC234', extraTime: false });
+    expect(calls.find((c) => c.path === '/play/join')?.body).toEqual({ code: 'ABC234' });
   });
 
   it('follows an invite link straight into its game', async () => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type RefObject } from 'react';
 import { celebrationEndMs, celebrationPlan } from '@kurda/shared';
 import { haptic } from './haptics';
 
@@ -7,7 +7,8 @@ import { haptic } from './haptics';
  * tokens themselves (durations, curves, the press) are CSS custom properties
  * in styles/tokens.css, and the movements are in styles/motion.css; what is
  * here is the timing a component has to know about — when a celebration has
- * finished, how far a number has counted, whether a list is still arriving.
+ * finished, how far a number has counted, whether a list is still arriving,
+ * whether something is in front of the reader at all.
  */
 
 /** The reader asked their device for less motion: everything becomes a fade, or simply the end. */
@@ -117,4 +118,36 @@ export function useArrival(ready: boolean): boolean {
     return () => window.clearTimeout(id);
   }, [ready]);
   return arriving;
+}
+
+/**
+ * Whether an element is in front of the reader: its tab is the one being
+ * looked at and the element is on the screen. A loop that is only decoration
+ * (a code ticket's glint) runs only while this is true, as a speaking
+ * character rests when it is not in front — a light crossing a ticket in a
+ * background tab, or scrolled away under the fold, is work nobody sees.
+ * Without an IntersectionObserver (an old browser, a test) the element counts
+ * as on the screen.
+ */
+export function useInFront(ref: RefObject<Element | null>): boolean {
+  const [visible, setVisible] = useState(() => typeof document === 'undefined' || document.visibilityState !== 'hidden');
+  const [onScreen, setOnScreen] = useState(true);
+  useEffect(() => {
+    const onVisibility = (): void => setVisible(document.visibilityState !== 'hidden');
+    document.addEventListener('visibilitychange', onVisibility);
+    const el = ref.current;
+    const watcher =
+      el && typeof IntersectionObserver === 'function'
+        ? new IntersectionObserver((entries) => {
+            const last = entries[entries.length - 1];
+            if (last) setOnScreen(last.isIntersecting);
+          })
+        : null;
+    if (el) watcher?.observe(el);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      watcher?.disconnect();
+    };
+  }, [ref]);
+  return visible && onScreen;
 }

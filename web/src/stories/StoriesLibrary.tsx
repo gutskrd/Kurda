@@ -8,9 +8,6 @@ import {
   categoryName,
   isStoryDialect,
   levelOfCefr,
-  normalizeJoinCode,
-  parseInvite,
-  invitePath,
   storyQueryString,
   storyTextDirection,
   type CefrLevel,
@@ -41,6 +38,7 @@ import { CEFR_WORD_KEY, categoryNames } from './labels';
 import { defaultVariety, rememberedExtraTime } from './prefs';
 import { MODE_KEY, SetupSheet } from './SetupSheet';
 import { StoryCard } from './StoryCard';
+import { JoinCodeForm } from '../play/JoinCode';
 
 /** How many stories a filtered page brings, and how many more each "More" adds. */
 export const PAGE = 24;
@@ -601,43 +599,15 @@ function UnfinishedGames({ games }: { games: StoryGameSummary[] }): React.JSX.El
 
 /**
  * Playing with others, at the foot of the library: set up a game on a story
- * of the variety in view, or join a friend's game with its code. A link
- * pasted in works too — it is tried first, so a whole invite link is as good
- * as the code in it. The catalogue the sheet picks from is asked for only
- * once the sheet opens.
+ * of the variety in view, or join a friend's game with its code — the play
+ * layer's code boxes (play/JoinCode.tsx), which join any game, a battle or a
+ * match as well as a story, and still open an old invite link pasted in.
+ * The catalogue the sheet picks from is asked for only once the sheet opens.
  */
 function PlayRow({ dialect }: { dialect: StoryDialect }): React.JSX.Element {
   const t = useT();
-  const navigate = useNavigate();
-  const { client } = useAuth();
-  const [code, setCode] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [setup, setSetup] = useState(false);
   const { stories } = useStoryList(dialect, setup);
-
-  async function join(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    setError(null);
-    const invite = parseInvite(code);
-    if (invite && invite.type !== 'stories') {
-      navigate(invitePath(invite));
-      return;
-    }
-    const normalized = invite ? null : normalizeJoinCode(code);
-    if (!invite && !normalized) {
-      setError(t('stories.join.invalid'));
-      return;
-    }
-    setBusy(true);
-    const res = await client.post<StoryGameView>('/story-games/join', {
-      ...(invite ? { id: invite.id } : { code: normalized }),
-      extraTime: rememberedExtraTime(),
-    });
-    setBusy(false);
-    if (res.ok) navigate(gamePath(res.data.id));
-    else setError(storyError(res.error, t));
-  }
 
   return (
     <section className="story-play" aria-labelledby="story-play-title">
@@ -647,36 +617,9 @@ function PlayRow({ dialect }: { dialect: StoryDialect }): React.JSX.Element {
       <Button variant="secondary" onClick={() => setSetup(true)}>
         {t('stories.playFriends')}
       </Button>
-      <form className="story-join" onSubmit={(e) => void join(e)} noValidate>
-        <label htmlFor="story-join-code" className="story-join-label">
-          {t('stories.join.label')}
-        </label>
-        <div className="story-join-row">
-          <input
-            id="story-join-code"
-            className="input story-join-input"
-            dir="ltr"
-            value={code}
-            onChange={(e) => setCode(e.target.value)}
-            placeholder={t('stories.join.placeholder')}
-            autoCapitalize="characters"
-            autoComplete="off"
-            autoCorrect="off"
-            spellCheck={false}
-            enterKeyHint="go"
-            aria-describedby={error ? 'story-join-error' : undefined}
-            aria-invalid={error ? true : undefined}
-          />
-          <Button type="submit" disabled={busy || code.trim() === ''}>
-            {busy ? t('games.joining') : t('stories.join.go')}
-          </Button>
-        </div>
-        {error && (
-          <p id="story-join-error" className="story-join-error" role="alert">
-            {error}
-          </p>
-        )}
-      </form>
+      <div className="story-join">
+        <JoinCodeForm inline />
+      </div>
       {setup && stories && <SetupSheet open onClose={() => setSetup(false)} dialect={dialect} initialMode="duo" catalogue={stories} />}
     </section>
   );
