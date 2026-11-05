@@ -22,6 +22,14 @@ import { INK, Part, arched, disc, iso, onLeft, onRight, oval, panel, poly, polyl
 import * as P from './props.js';
 import type { Rand } from './props.js';
 
+/**
+ * How thick a flat earth roof is on its slab: a deep one, overhanging the
+ * walls a good way, so every house has the heft of a building rather than a
+ * box; what stands on a roof (a second storey, cushions, the cat) stands on
+ * its top.
+ */
+export const SLAB = 3.4;
+
 /** Each building's patch of ground, along x and along y. */
 export const PLOT_SIZE: Readonly<Record<KingdomBuilding, { w: number; d: number }>> = {
   houses: { w: 80, d: 76 },
@@ -159,19 +167,19 @@ export function house(pal: Palette, x: number, y: number, z: number, w: number, 
     const v = h - 1.3;
     for (let u = 3; u < w - 1.5; u += 4.6) {
       const [bx, by] = left(u, v);
-      ends += disc(bx, by, 1.05);
+      ends += disc(bx, by, 1.3);
     }
     for (let u = 3; u < d - 1.5; u += 4.6) {
       const [bx, by] = right(u, v);
-      ends += disc(bx, by, 1.05);
+      ends += disc(bx, by, 1.3);
     }
     p.fill(ends, pal.beam, ' stroke-width="0.7"');
   }
   // the roof slab, a little over the walls all round
-  const e = 1.6;
-  p.box(x - e, y - e, z + h, w + 2 * e, d + 2 * e, 2.6, pal.roof);
+  const e = 2.2;
+  p.box(x - e, y - e, z + h, w + 2 * e, d + 2 * e, SLAB, pal.roof);
   if (o.grassy) {
-    const [gx, gy] = iso(x + w * 0.3, y + d * 0.6, z + h + 2.6);
+    const [gx, gy] = iso(x + w * 0.3, y + d * 0.6, z + h + SLAB);
     p.flat(oval(gx, gy, w * 0.3, d * 0.12), pal.grass.left);
   }
   if (o.spout !== undefined) {
@@ -182,7 +190,7 @@ export function house(pal: Palette, x: number, y: number, z: number, w: number, 
     const [rx, ry] = o.roller;
     const cx = x + rx * w;
     const cy = y + ry * d;
-    const [a, b] = iso(cx, cy, z + h + 2.6);
+    const [a, b] = iso(cx, cy, z + h + SLAB);
     // a stone cylinder lying along x: its round end towards us
     p.sil(`M${n(a - 5)} ${n(b - 5.2)}L${n(a + 3)} ${n(b - 9.2)}L${n(a + 3)} ${n(b - 3.6)}L${n(a - 5)} ${n(b + 0.4)}Z` + disc(a - 5, b - 2.4, 2.8));
     p.fill(`M${n(a - 5)} ${n(b - 5.2)}L${n(a + 3)} ${n(b - 9.2)}L${n(a + 3)} ${n(b - 3.6)}L${n(a - 5)} ${n(b + 0.4)}Z`, pal.stoneGrey.right);
@@ -190,8 +198,8 @@ export function house(pal: Palette, x: number, y: number, z: number, w: number, 
   }
   if (o.chimney) {
     const [cxs, cys] = o.chimney;
-    p.box(x + cxs * w - 2.4, y + cys * d - 2.4, z + h + 2.6, 4.8, 4.8, 6.4, pal.stoneGrey);
-    const [mx, my] = iso(x + cxs * w, y + cys * d, z + h + 9);
+    p.box(x + cxs * w - 2.4, y + cys * d - 2.4, z + h + SLAB, 4.8, 4.8, 6.4, pal.stoneGrey);
+    const [mx, my] = iso(x + cxs * w, y + cys * d, z + h + SLAB + 6.4);
     p.flat(oval(mx, my, 2.4, 1.2), '#3a2318');
   }
   return p;
@@ -242,7 +250,7 @@ const houses: Painter = (pal, rand) => [
     bounds: [56, 4, 0, 22, 24, 19],
     draw: (b) => [
       house(pal, 56, 4, 0, 22, 24, 19, { wall: pal.plaster, door: { side: 'left', at: 0.5, arch: true }, windows: [{ side: 'right', at: 0.35 }, { side: 'right', at: 0.75 }], chimney: [0.7, 0.3] }, rand, b),
-      ...(b < 1 ? [] : [P.washingLine(pal, 39, 47, 22.6, 19, rand)]),
+      ...(b < 1 ? [] : [P.washingLine(pal, 39, 47, 20 + SLAB, 19, rand)]),
     ],
   },
   {
@@ -257,8 +265,8 @@ const houses: Painter = (pal, rand) => [
     from: 5,
     bounds: [8, 8, 37, 20, 18, 15],
     draw: (b) => [
-      house(pal, 8, 8, 39.6, 18, 16, 15, { wall: pal.plaster, windows: [{ side: 'left', at: 0.5 }, { side: 'right', at: 0.5 }], chimney: [0.3, 0.6], grassy: true }, rand, b),
-      ...(b < 1 ? [] : [P.fruitTree(pal, 30, 74, 0, 8, rand, { kind: 'pomegranate', fruit: 5 }), peppers(pal, 6, 54, 18.6)]),
+      house(pal, 8, 8, 20 + 17 + SLAB, 18, 16, 15, { wall: pal.plaster, windows: [{ side: 'left', at: 0.5 }, { side: 'right', at: 0.5 }], chimney: [0.3, 0.6], grassy: true }, rand, b),
+      ...(b < 1 ? [] : [P.fruitTree(pal, 30, 74, 0, 8, rand, { kind: 'pomegranate', fruit: 5 }), peppers(pal, 6, 54, 16 + SLAB)]),
     ],
   },
 ];
@@ -340,9 +348,9 @@ const school: Painter = (pal, rand) => [
   { from: 4, bounds: [16, 50, 0, 40, 8, 14], draw: (b) => (b < 1 ? [] : porch(pal, 16, 50, 0, 40, 8, 13)) },
   {
     from: 5,
-    bounds: [24, 26, 21.6, 24, 20, 14],
+    bounds: [24, 26, 19 + SLAB, 24, 20, 14],
     draw: (b) => [
-      house(pal, 26, 26, 21.6, 22, 18, 13, { wall: pal.plaster, windows: [{ side: 'left', at: 0.3 }, { side: 'left', at: 0.75 }, { side: 'right', at: 0.5 }], roller: [0.7, 0.4] }, rand, b),
+      house(pal, 26, 26, 19 + SLAB, 22, 18, 13, { wall: pal.plaster, windows: [{ side: 'left', at: 0.3 }, { side: 'left', at: 0.75 }, { side: 'right', at: 0.5 }], roller: [0.7, 0.4] }, rand, b),
       ...(b < 1 ? [] : [P.fruitTree(pal, 66, 10, 0, 10, rand, { fruit: 4 }), P.bannerPole(pal, 6, 8, 0, 30)]),
     ],
   },
@@ -430,7 +438,7 @@ const teahouse: Painter = (pal, rand) => [
     draw: (b) =>
       b < 1
         ? []
-        : [roofTerrace(pal, 6, 4, 21.6, rand), P.bannerPole(pal, 72, 4, 0, 30), P.geraniums(pal, 4, 38, 0, 3, rand, 'y'), P.jar(pal, 70, 64, 0, 1.2)],
+        : [roofTerrace(pal, 6, 4, 19 + SLAB, rand), P.bannerPole(pal, 72, 4, 0, 30), P.geraniums(pal, 4, 38, 0, 3, rand, 'y'), P.jar(pal, 70, 64, 0, 1.2)],
   },
 ];
 

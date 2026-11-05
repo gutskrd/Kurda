@@ -44,6 +44,7 @@ import * as P from './props.js';
 import { WATER_Z } from './land.js';
 import { CREATURES, CREATURE_BOX, type CreatureSprite } from './creatures.js';
 import { millWheel } from './farm.js';
+import { SLAB } from './buildings.js';
 import { BOAT, CAMP, DOVECOTE, FIELDS, FLOOR_Z, GROVE_TREES, HIVES, KILIMS, LAUNDRY, MILL, PENS, ROAD_POPLARS, STREAM, WATERFALL } from './valley.js';
 import { laundryCloths } from './farm.js';
 
@@ -900,11 +901,11 @@ function henAndChicks(id: string, a: { x: number; y: number }, b: { x: number; y
 /** Where, in each building's own units, its chimneys stand (the top of each), and the level each is built at. */
 export const CHIMNEYS: Readonly<Record<KingdomBuilding, readonly { from: KingdomLevel; at: readonly [number, number, number] }[]>> = {
   houses: [
-    { from: 3, at: [71.4, 11.2, 29] },
-    { from: 5, at: [13.4, 17.6, 64] },
+    { from: 3, at: [71.4, 11.2, 29.8] },
+    { from: 5, at: [13.4, 17.6, 65.6] },
   ],
-  school: [{ from: 3, at: [29, 9.2, 31.6] }],
-  teahouse: [{ from: 2, at: [31.9, 13, 29] }],
+  school: [{ from: 3, at: [29, 9.2, 32.4] }],
+  teahouse: [{ from: 2, at: [31.9, 13, 29.8] }],
   spring: [],
   market: [],
   orchard: [],
@@ -913,7 +914,7 @@ export const CHIMNEYS: Readonly<Record<KingdomBuilding, readonly { from: Kingdom
 /** Where the life sits that belongs to buildings, in each building's own units: the spring's water, the hives' bees, the cat's roof, where the people stand. */
 const SPRING_WATER = { pool: [30, 32, 0.4], basin: [31, 29, 6], spout: [31, 21, 9.6] } as const;
 const HIVE = [82, 14, 10] as const;
-const ROOF_CAT = [44, 58, 22.6] as const;
+const ROOF_CAT = [44, 58, 20 + SLAB] as const;
 const BY_TEAHOUSE = [62, 66, 0] as const;
 const BY_SCHOOL = [64, 70, 0] as const;
 
