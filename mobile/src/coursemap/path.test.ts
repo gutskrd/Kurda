@@ -73,7 +73,7 @@ describe('what a stop says', () => {
       ]),
       { due: 4 },
     );
-    const said = path.units[0]!.stops.map((p) => say(stopLabel(p.stop, 1)));
+    const said = path.units[0]!.stops.map((p) => say(stopLabel(p.stop, { number: 1, title: 'Basics' })));
     expect(said).toEqual([
       'Silav, done, and strong, 2 of 2 lessons done',
       'Review, words ready: 4',
@@ -85,7 +85,7 @@ describe('what a stop says', () => {
 
   it('says a skill with no lessons yet without counting them', () => {
     const path = lessonPath(map('c', [skill({ lessons: [], state: 'decayed' })]));
-    expect(say(stopLabel(path.units[0]!.stops[0]!.stop, 1))).toBe('Silav, done, ready for a refresh');
+    expect(say(stopLabel(path.units[0]!.stops[0]!.stop, { number: 1, title: 'Basics' }))).toBe('Silav, done, ready for a refresh');
   });
 
   it('has every word of the path in all nine languages', () => {

@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Animated, Dimensions, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { Animated, Dimensions, Easing, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import {
   PATH_GEOMETRY,
+  PATH_MOTION,
   PATH_RETURN,
+  hostBox,
   lean,
   lessonPath,
   mascotSpot,
   pathChanges,
+  pathLand,
   pathSnapshot,
   type PathChanges,
   type PathSnapshot,
@@ -16,6 +18,7 @@ import {
   type PathUnit,
   type PlacedStop,
 } from '@kurda/shared';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { formatNumber } from '../i18n/format';
@@ -32,6 +35,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { JumpSheet } from './JumpSheet';
 import { REST, TONES, stopLabel, type ToneColors } from './path';
 import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
+import { LearnerToken, PathHostView, UnitLand } from './PathWorld';
 import { SkillNodeView, type StopChange } from './SkillNodeView';
 import { StopSheet } from './StopSheet';
 import { UnitGuide } from './UnitGuide';
@@ -51,6 +55,9 @@ type Unit = PathUnit<SkillNode>;
  * changed (shared `pathChanges`) rather than only the new state.
  */
 const LAST_DRAWN = new Map<string, PathSnapshot>();
+
+/** The units whose stops have risen into place already, by course, while the app runs: each rises once. */
+const RISEN = new Set<string>();
 
 const NO_STOPS: ReadonlySet<string> = new Set();
 
@@ -77,13 +84,25 @@ interface Return {
  * `PathUnit.jump`): its first stop offers it, "Jump here?", and opens a sheet
  * (JumpSheet) that starts the test (JumpTestScreen).
  *
- * Hevalo stands beside the current skill (PathMascot). Coming back from a
- * lesson, the path moves before it settles (shared `PATH_RETURN`): the ring
- * fills on, a finished skill pops, an opened one trades its padlock for its
- * number, and then the bubble, the page and Hevalo move on to the skill to do
- * now — where he cheers. Until then the focus stays where the learner was, so
- * the page is still there when the path starts to move. Under Reduce Motion
- * none of it plays: the path is drawn as it now is.
+ * Each unit's stops stand on a land of their own (shared `pathLand`): its
+ * ground edge to edge, its stepping stones, its landmark beside the route, and
+ * one of the course's people by its last stop (PathWorld). The learner's own
+ * picture stands on the stop to do now, and Hevalo beside it (PathMascot).
+ * A unit with grammar notes opens with its guide, an open book on the path;
+ * every unit ends at its chest. The screen says which units are near the
+ * screen (`near`: drawn in full), which can be seen (`seen`: their stops rise
+ * into place the first time), and which is in view (`inView`: the one that
+ * moves); without them the units round the stop to do now are drawn and
+ * nothing waits.
+ *
+ * Coming back from a lesson, the path moves before it settles (shared
+ * `PATH_RETURN`): the ring fills on, a finished skill pops, an opened one
+ * trades its padlock for its number, a unit's chest earned wobbles and
+ * bursts open, and then the bubble, the page, the learner (with a hop) and
+ * Hevalo move on to the skill to do now — where he cheers. Until then the
+ * focus stays where the learner was, so the page is still there when the
+ * path starts to move. Under Reduce Motion none of it plays: the path is
+ * drawn as it now is.
  */
 export interface PathFocus {
   key: string;
@@ -106,28 +125,48 @@ export interface UnitPlace {
   number: number;
   title: string;
   tone: ToneColors;
+  /** skills finished, of `total`, and whether the learner is in it now: what the rail of units shows */
+  done: number;
+  total: number;
+  here: boolean;
   /** open the unit's guide; absent when it has none */
   openGuide?: () => void;
 }
 
-export function LessonPath({
+export const LessonPath = memo(function LessonPath({
   map,
   due,
   onFocus,
   onUnits,
+  near,
+  seen,
+  inView,
+  dialect = null,
+  onOpenRail,
 }: {
   map: CourseMap;
   due: number;
   onFocus: (focus: PathFocus | null) => void;
   /** where each unit lies, once laid out, for a pinned banner */
   onUnits?: (units: UnitPlace[]) => void;
+  /** the units near the screen, drawn in full; without it, those round the stop to do now */
+  near?: ReadonlySet<string>;
+  /** the units that can be seen, whose stops rise into place the first time; null before the screen has measured them */
+  seen?: ReadonlySet<string> | null;
+  /** the unit in the middle of the screen: the one that moves */
+  inView?: string | null;
+  /** the course's Kurdish, for the words its people say */
+  dialect?: string | null;
+  /** open the rail of every unit, from a unit banner's map button */
+  onOpenRail?: () => void;
 }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { scheme } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
   const reduce = useReducedMotion();
-  const path = useMemo(() => lessonPath(map, { due, offerJumps: true }), [map, due]);
+  const live = useMotionAlive();
+  const path = useMemo(() => lessonPath(map, { due, offerJumps: true, guides: true }), [map, due]);
   const courseId = map.course.id;
 
   /*
@@ -205,6 +244,9 @@ export function LessonPath({
         number: unit.number,
         title: unit.title,
         tone: TONES[scheme][unit.tone],
+        done: unit.done,
+        total: unit.total,
+        here: unit.stops.some((p) => p.stop.key === path.current),
         openGuide:
           unit.guide.length > 0 ? () => setGuide({ title: t('coursemap.path.guideFor', { unit: unit.title }), skills: unit.guide }) : undefined,
       });
@@ -222,17 +264,86 @@ export function LessonPath({
   };
 
   // what each stop shows of the return: one object per stop for the whole return, so each plays it once
-  const stopChanges = useMemo(() => (back ? changesByStop(back) : {}), [back]);
+  const stopChanges = useMemo(() => (back ? changesByStop(back, path.units) : {}), [back, path.units]);
   // the line into the skill to do now has been walked only since the lesson: it fills in as the path moves on to it
   const freshTrail = useMemo(() => (back && back.was !== null && back.changes.current ? new Set([back.changes.current]) : NO_STOPS), [back]);
   // Hevalo by the current skill — by the one before it until the path has moved on — when the screen leaves him room
-  const mascotAt = path.current && width + 2 * layout.gutter >= MASCOT_MIN_WIDTH ? (waiting ? back.was : path.current) : null;
+  const mascotAt = path.current && width >= MASCOT_MIN_WIDTH ? (waiting ? back.was : path.current) : null;
   const cheer = moved !== null && moved === back && (back.changes.finished.length > 0 || back.changes.opened.length > 0);
+  // the learner stands where Hevalo does; once the path has moved on they hop there from the stop they finished
+  const tokenAt = path.current ? (waiting ? back.was : path.current) : null;
+  const hopFrom = moved !== null && moved === back && back.was !== null && back.changes.current !== null ? back.was : null;
+  const unitOfCurrent = path.units.find((u) => u.stops.some((p) => p.stop.key === path.current))?.unitId ?? null;
+
+  // the units drawn in full: those the screen says are near, or, before it says, those round the stop to do now
+  const focusIndex = Math.max(
+    0,
+    path.units.findIndex((u) => u.stops.some((p) => p.stop.key === focusKey)),
+  );
+  const drawn = useMemo(
+    () => near ?? new Set(path.units.filter((_, i) => i === 0 || Math.abs(i - focusIndex) <= 1).map((u) => u.unitId)),
+    [near, path.units, focusIndex],
+  );
+  const moving = (unitId: string): boolean => live && (inView === undefined || inView === unitId);
+
+  // the stop to do now bobs, and the learner on it, while its unit is in view
+  const bob = useRef(new Animated.Value(0)).current;
+  const bobbing = live && !waiting && unitOfCurrent !== null && (inView === undefined || inView === unitOfCurrent);
+  useEffect(() => {
+    if (!bobbing) {
+      bob.setValue(0);
+      return;
+    }
+    const half = PATH_MOTION.bobMs / 2;
+    const run = Animated.loop(
+      Animated.sequence([
+        Animated.timing(bob, { toValue: -PATH_MOTION.bob, duration: half, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
+        Animated.timing(bob, { toValue: 0, duration: half, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
+      ]),
+    );
+    run.start();
+    return () => {
+      run.stop();
+      bob.setValue(0);
+    };
+  }, [bobbing, bob]);
+
+  // the first time a unit can be seen, its stops rise into place one after another; until then they wait under the ground
+  const rises = useRef<Record<string, Animated.Value>>({}).current;
+  const riseOf = (unit: Unit): Animated.Value | null => {
+    if (reduce || seen === undefined) return null;
+    return (rises[unit.unitId] ??= new Animated.Value(RISEN.has(`${courseId}:${unit.unitId}`) ? 1 : 0));
+  };
+  useEffect(() => {
+    if (reduce || !seen) return;
+    for (const unit of path.units) {
+      const mark = `${courseId}:${unit.unitId}`;
+      if (!seen.has(unit.unitId) || RISEN.has(mark)) continue;
+      RISEN.add(mark);
+      const value = (rises[unit.unitId] ??= new Animated.Value(0));
+      Animated.timing(value, {
+        toValue: 1,
+        duration: PATH_MOTION.riseMs + PATH_MOTION.riseEach * unit.stops.length,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [seen, reduce, path.units, courseId, rises]);
 
   return (
     <View style={styles.units}>
       {path.units.map((unit, i) => {
         const tone = TONES[scheme][unit.tone];
+        const land = pathLand(i);
+        const full = drawn.has(unit.unitId);
+        const rise = riseOf(unit);
+        const riseTotal = PATH_MOTION.riseMs + PATH_MOTION.riseEach * unit.stops.length;
+        const mascotHere = unit.stops.find((p) => p.stop.key === mascotAt);
+        const host = full && width > 0 ? hostBox(unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y })), width, mascotHere ? { key: mascotHere.stop.key, x: mascotHere.x, y: mascotHere.y } : null) : null;
+        const tokenHere = unit.stops.find((p) => p.stop.key === tokenAt) ?? null;
+        const fromHere = hopFrom ? (unit.stops.find((p) => p.stop.key === hopFrom) ?? null) : null;
+        const last = unit.stops[unit.stops.length - 1];
+        const cx = (x: number): number => width / 2 + sign * x;
         return (
           <View
             key={unit.unitId}
@@ -245,10 +356,11 @@ export function LessonPath({
             }}
           >
             {i > 0 ? <UnitDivider number={unit.number} total={path.units.length} /> : null}
-            <Banner unit={unit} tone={tone} onGuide={() => setGuide({ title: t('coursemap.path.guideFor', { unit: unit.title }), skills: unit.guide })} />
+            <Banner unit={unit} tone={tone} onRail={onOpenRail} />
             {unit.stops.length > 0 ? (
               <View
                 style={[styles.path, { height: unit.height }]}
+                testID="lp-land"
                 onLayout={(e: LayoutChangeEvent) => {
                   pathTop.current[unit.unitId] = e.nativeEvent.layout.y;
                   setWidth(e.nativeEvent.layout.width);
@@ -258,32 +370,67 @@ export function LessonPath({
               >
                 {width > 0 ? (
                   <>
-                    <Trail unit={unit} width={width} sign={sign} walked={tone.fill} ahead={REST[scheme].line} fresh={freshTrail} />
-                    {unit.stops.map((placed, i) => (
-                      <PathStopView
-                        key={placed.stop.key}
-                        placed={placed}
-                        unit={unit}
-                        tone={tone}
-                        left={width / 2 + sign * placed.x - NODE / 2}
-                        change={stopChanges[placed.stop.key] ?? null}
-                        jump={unit.jump && i === 0}
-                        onOpen={() => (unit.jump && i === 0 ? setJumpTo(unit) : setOpen({ stop: placed.stop, unit }))}
-                        onStart={lesson}
+                    <UnitLand unit={unit} land={land} width={width} sign={sign} near={full} live={moving(unit.unitId)} fresh={freshTrail} />
+                    {host && last ? (
+                      <PathHostView
+                        host={land.host}
+                        box={host.box}
+                        left={cx(host.box.x) - host.box.w / 2}
+                        flip={cx(host.box.x) > cx(last.x)}
+                        live={moving(unit.unitId)}
+                        praise={unit.done > 0 || unit.unitId === unitOfCurrent}
+                        dialect={dialect}
                       />
-                    ))}
+                    ) : null}
+                    {unit.stops.map((placed, k) => {
+                      const jumpHere = unit.jumpKey === placed.stop.key;
+                      const from = (k * PATH_MOTION.riseEach) / riseTotal;
+                      const to = Math.min(1, (k * PATH_MOTION.riseEach + PATH_MOTION.riseMs) / riseTotal);
+                      return (
+                        <PathStopView
+                          key={placed.stop.key}
+                          placed={placed}
+                          unit={unit}
+                          tone={tone}
+                          left={cx(placed.x) - NODE / 2}
+                          change={stopChanges[placed.stop.key] ?? null}
+                          jump={jumpHere}
+                          near={full}
+                          bob={placed.stop.key === tokenAt && !waiting ? bob : null}
+                          bobbing={bobbing && placed.stop.key === path.current}
+                          rise={rise ? rise.interpolate({ inputRange: [0, from, to, 1], outputRange: [0, 0, 1, 1] }) : null}
+                          onOpen={() => {
+                            const stop = placed.stop;
+                            if (stop.kind === 'guide') setGuide({ title: t('coursemap.path.guideFor', { unit: unit.title }), skills: stop.skills });
+                            else if (jumpHere) setJumpTo(unit);
+                            else setOpen({ stop, unit });
+                          }}
+                          onStart={lesson}
+                        />
+                      );
+                    })}
+                    {tokenHere ? (
+                      <LearnerToken
+                        // a new place is a new arrival: the hop plays from where they were
+                        key={tokenHere.stop.key}
+                        at={{ x: cx(tokenHere.x), y: tokenHere.y }}
+                        from={hopFrom ? (fromHere ? { x: cx(fromHere.x), y: fromHere.y } : { x: cx(tokenHere.x), y: tokenHere.y - 2 * PATH_GEOMETRY.step }) : null}
+                        tone={tone}
+                        bob={waiting ? null : bob}
+                      />
+                    ) : null}
                     {unit.stops
                       .filter((placed) => placed.stop.key === mascotAt)
                       .map((placed) => {
                         const spot = mascotSpot(placed);
-                        const x = width / 2 + sign * spot.x;
+                        const x = cx(spot.x);
                         return (
                           // a new place is a new arrival: he arrives there, and cheers when there is something to cheer
                           <PathMascot
                             key={placed.stop.key}
                             x={x}
                             stopY={placed.y}
-                            flip={x > width / 2 + sign * placed.x}
+                            flip={x > cx(placed.x)}
                             cheer={cheer}
                             onPress={() => setOpen({ stop: placed.stop, unit })}
                           />
@@ -320,16 +467,21 @@ export function LessonPath({
       />
     </View>
   );
-}
+});
 
 /** Each stop's part in a return, by its key: only the stops it touches. */
-function changesByStop({ changes, was }: Return): Record<string, StopChange> {
+function changesByStop({ changes, was }: Return, units: readonly Unit[]): Record<string, StopChange> {
   const out: Record<string, StopChange> = {};
   const at = (key: string): StopChange => (out[key] ??= {});
   for (const ring of changes.ring) at(ring.key).ringFrom = ring.from;
   for (const key of changes.finished) at(key).finishing = true;
   for (const key of changes.opened) at(key).opening = true;
   if (changes.current && was !== null) at(changes.current).arriving = true;
+  // a unit whose last skills were just finished: the lesson earned its chest
+  for (const unit of units) {
+    const end = unit.stops[unit.stops.length - 1]?.stop;
+    if (end?.kind === 'trophy' && end.earned && unit.stops.some((p) => changes.finished.includes(p.stop.key))) at(end.key).unlocking = true;
+  }
   return out;
 }
 
@@ -345,6 +497,10 @@ function PathStopView({
   left,
   change,
   jump,
+  near,
+  bob,
+  bobbing,
+  rise,
   onOpen,
   onStart,
 }: {
@@ -354,12 +510,16 @@ function PathStopView({
   left: number;
   change: StopChange | null;
   jump: boolean;
+  near: boolean;
+  bob: Animated.Value | null;
+  bobbing: boolean;
+  rise: Animated.AnimatedInterpolation<number> | null;
   onOpen: () => void;
   onStart: (lessonId: string) => void;
 }): React.JSX.Element {
   const { t, locale } = useI18n();
   const { stop, y } = placed;
-  const { words, state } = stopLabel(stop, unit.number);
+  const { words, state } = stopLabel(stop, unit);
   const label = jump
     ? t('coursemap.jump.label', { n: formatNumber(unit.number, locale) })
     : t(words.key, { ...words.params, ...(state ? { state: t(state) } : {}) });
@@ -371,10 +531,15 @@ function PathStopView({
       left={left}
       top={y - NODE / 2}
       tone={tone}
+      unitTone={unit.tone}
       label={label}
       callout={current ? { text: word, label: `${word}: ${current.skill.title}` } : undefined}
       change={change}
       jump={jump ? { text: t('coursemap.jump.bubble') } : undefined}
+      near={near}
+      bob={bob}
+      bobbing={bobbing}
+      rise={rise}
       onPress={onOpen}
       onStart={current?.launch ? () => onStart(current.launch!) : undefined}
     />
@@ -408,36 +573,39 @@ function UnitDivider({ number, total }: { number: number; total: number }): Reac
  * between them. Its number and name are one heading, read as one ("Unit 2,
  * Family & Food"), as the pinned header reads it once the banner has gone up.
  */
-function Banner({ unit, tone, onGuide }: { unit: Unit; tone: ToneColors; onGuide: () => void }): React.JSX.Element {
+function Banner({ unit, tone, onRail }: { unit: Unit; tone: ToneColors; onRail?: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
+  const { scheme } = useTheme();
   return (
-    <View style={[styles.bannerLip, { backgroundColor: tone.lip }]}>
+    <View style={[styles.bannerLip, { backgroundColor: tone.lip, borderColor: OUTLINE[scheme] }]}>
       <View style={[styles.banner, { backgroundColor: tone.fill }]}>
-        <View accessible accessibilityRole="header" accessibilityLabel={unitHeading(t('coursemap.path.unit', { n: unit.number }), unit.title)}>
-          <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{t('coursemap.path.unit', { n: unit.number })}</Text>
-          <Text style={[styles.bannerTitle, dir.text, { color: tone.ink }]}>{unit.title}</Text>
-        </View>
-        {unit.topics.length > 0 ? <Text style={[styles.topics, dir.text, { color: tone.ink }]}>{unit.topics.join(' · ')}</Text> : null}
-        <View style={[styles.bannerFoot, { flexDirection: dir.row }]}>
-          <Text style={[styles.count, { color: tone.ink }]}>{t('coursemap.path.unitDone', { done: unit.done, total: unit.total })}</Text>
-          {unit.guide.length > 0 ? (
+        <View style={[styles.bannerHead, { flexDirection: dir.row }]}>
+          <View style={styles.bannerWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(t('coursemap.path.unit', { n: unit.number }), unit.title)}>
+            <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{t('coursemap.path.unit', { n: unit.number })}</Text>
+            <Text style={[styles.bannerTitle, dir.text, { color: tone.ink }]}>{unit.title}</Text>
+          </View>
+          {onRail ? (
             <Pressable
-              onPress={onGuide}
+              onPress={onRail}
               accessibilityRole="button"
-              accessibilityLabel={t('coursemap.path.guideFor', { unit: unit.title })}
-              testID="lp-unit-guide"
-              style={({ pressed }) => [styles.guide, { flexDirection: dir.row, backgroundColor: `${tone.ink}1F`, opacity: pressed ? 0.75 : 1 }]}
+              accessibilityLabel={t('learn.map.title')}
+              testID="lp-unit-rail"
+              style={({ pressed }) => [styles.railButton, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? 0.75 : 1 }]}
             >
-              <Icon name="book" size={18} color={tone.ink} />
-              <Text style={[styles.guideText, { color: tone.ink }]}>{t('coursemap.path.guide')}</Text>
+              <Icon name="flag" size={20} color={tone.ink} />
             </Pressable>
           ) : null}
         </View>
+        {unit.topics.length > 0 ? <Text style={[styles.topics, dir.text, { color: tone.ink }]}>{unit.topics.join(' · ')}</Text> : null}
+        <Text style={[styles.count, styles.countLine, dir.text, { color: tone.ink }]}>{t('coursemap.path.unitDone', { done: unit.done, total: unit.total })}</Text>
       </View>
     </View>
   );
 }
+
+/** The one ink the banners are outlined in, as the stops and the land are (shared art/path-land.ts). */
+const OUTLINE = { light: '#3b2a20', dark: '#130e12' } as const;
 
 /** "Unit 2, Family & Food": a unit's number and name, said as one heading. */
 function unitHeading(number: string, title: string): string {
@@ -456,7 +624,7 @@ function unitHeading(number: string, title: string): string {
  * opacity alone, on the native driver). Under Reduce Motion it simply
  * appears, and simply changes.
  */
-export function PinnedUnit({ unit }: { unit: UnitPlace }): React.JSX.Element {
+export function PinnedUnit({ unit, onRail }: { unit: UnitPlace; onRail?: () => void }): React.JSX.Element {
   const reduce = useReducedMotion();
   const arrive = useEnter(!reduce, 0, duration.base);
   const dropIn = { opacity: arrive, transform: [{ translateY: arrive.interpolate({ inputRange: [0, 1], outputRange: [-PIN_DROP, 0] }) }] };
@@ -490,7 +658,7 @@ export function PinnedUnit({ unit }: { unit: UnitPlace }): React.JSX.Element {
         </View>
       ) : null}
       <Animated.View style={{ opacity: fade }}>
-        <PinFace unit={unit} />
+        <PinFace unit={unit} onRail={onRail} />
       </Animated.View>
     </Animated.View>
   );
@@ -499,7 +667,7 @@ export function PinnedUnit({ unit }: { unit: UnitPlace }): React.JSX.Element {
 /** How far the pinned unit settles down as it arrives. */
 const PIN_DROP = 6;
 
-function PinFace({ unit }: { unit: UnitPlace }): React.JSX.Element {
+function PinFace({ unit, onRail }: { unit: UnitPlace; onRail?: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   const { tone } = unit;
@@ -525,71 +693,20 @@ function PinFace({ unit }: { unit: UnitPlace }): React.JSX.Element {
             <Icon name="book" size={18} color={tone.ink} />
           </Pressable>
         ) : null}
+        {onRail ? (
+          <Pressable
+            onPress={onRail}
+            accessibilityRole="button"
+            accessibilityLabel={t('learn.map.title')}
+            style={({ pressed }) => [styles.pinGuide, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? 0.75 : 1 }]}
+          >
+            <Icon name="flag" size={18} color={tone.ink} />
+          </Pressable>
+        ) : null}
       </View>
     </View>
   );
 }
-
-/**
- * The line between stops: a gentle S from one centre to the next, drawn as
- * round dots — the stretch already walked in the unit's colour, the rest grey.
- * A stretch walked only since the last lesson (`fresh`, by the stop it leads
- * to) is drawn grey still, and its colour fades in over it as the path moves
- * on (`PATH_RETURN`): the trail fills as the next stop opens.
- */
-function Trail({
-  unit,
-  width,
-  sign,
-  walked,
-  ahead,
-  fresh,
-}: {
-  unit: Unit;
-  width: number;
-  sign: number;
-  walked: string;
-  ahead: string;
-  fresh: ReadonlySet<string>;
-}): React.JSX.Element {
-  const lines: Record<'walked' | 'ahead' | 'fresh', string[]> = { walked: [], ahead: [], fresh: [] };
-  const cx = (x: number) => width / 2 + sign * x;
-  unit.stops.forEach((p, i) => {
-    const before = unit.stops[i - 1];
-    if (!before || !p.trail) return;
-    const bend = STEP / 2;
-    const d = `M ${cx(before.x)} ${before.y} C ${cx(before.x)} ${before.y + bend}, ${cx(p.x)} ${p.y - bend}, ${cx(p.x)} ${p.y}`;
-    if (p.trail === 'walked' && fresh.has(p.stop.key)) {
-      lines.fresh.push(d);
-      lines.ahead.push(d);
-    } else lines[p.trail].push(d);
-  });
-  return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Svg width={width} height={unit.height}>
-        <Path d={lines.ahead.join(' ')} stroke={ahead} strokeWidth={7} strokeLinecap="round" strokeDasharray={[0.01, 15]} fill="none" />
-        <Path d={lines.walked.join(' ')} stroke={walked} strokeWidth={7} strokeLinecap="round" strokeDasharray={[0.01, 15]} fill="none" />
-      </Svg>
-      {lines.fresh.length > 0 ? <FreshTrail d={lines.fresh.join(' ')} width={width} height={unit.height} colour={walked} /> : null}
-    </View>
-  );
-}
-
-/** The stretch walked since the lesson, in the unit's colour, fading in over the grey as the opened stop takes its number. */
-function FreshTrail({ d, width, height, colour }: { d: string; width: number; height: number; colour: string }): React.JSX.Element {
-  const p = useEnter(true, TRAIL_AT_MS, TRAIL_MS);
-  return (
-    <Animated.View style={[StyleSheet.absoluteFill, { opacity: p }]}>
-      <Svg width={width} height={height}>
-        <Path d={d} stroke={colour} strokeWidth={7} strokeLinecap="round" strokeDasharray={[0.01, 15]} fill="none" />
-      </Svg>
-    </Animated.View>
-  );
-}
-
-/** When the fresh trail starts to fill (as the finished stop's pop lands) and how long it takes (full as the bubble arrives). */
-const TRAIL_AT_MS = PATH_RETURN.finishAtMs + PATH_RETURN.popMs / 2;
-const TRAIL_MS = PATH_RETURN.bubbleAtMs - TRAIL_AT_MS;
 
 /**
  * The path while the course loads: a unit's banner and its first stops, on
@@ -638,14 +755,19 @@ const BANNER_TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLin
 const styles = StyleSheet.create({
   stopSkeleton: { position: 'absolute' },
   topicsSkeleton: { marginTop: 2 },
-  units: { gap: spacing.lg },
+  units: { gap: spacing.sm },
   unit: { gap: 0 },
   divider: { alignItems: 'center', gap: spacing.sm + 4, paddingHorizontal: spacing.xs, marginBottom: spacing.md },
   hairline: { flex: 1, height: StyleSheet.hairlineWidth },
   dividerText: { ...sectionLabel },
-  path: { position: 'relative' },
-  bannerLip: { borderRadius: radii.xl, paddingBottom: BANNER_LIP },
-  banner: { borderRadius: radii.xl, paddingVertical: spacing.md + 4, paddingHorizontal: spacing.lg, gap: 2 },
+  // edge to edge: the land runs under the page's gutters to the screen's sides, and a little under the banner above it
+  path: { position: 'relative', marginHorizontal: -layout.gutter, marginTop: -spacing.md },
+  bannerLip: { borderRadius: radii.xl, paddingBottom: BANNER_LIP, borderWidth: 2, zIndex: 2 },
+  banner: { borderRadius: radii.xl - 2, paddingVertical: spacing.md + 2, paddingHorizontal: spacing.lg, gap: 2 },
+  bannerHead: { alignItems: 'flex-start', gap: spacing.sm },
+  bannerWords: { flex: 1 },
+  countLine: { marginTop: spacing.xs },
+  railButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', marginEnd: -spacing.sm },
   eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.86 },
   bannerTitle: { ...display(typography.sizes.lg) },
   topics: { fontSize: typography.sizes.sm, opacity: 0.9, marginTop: 2 },

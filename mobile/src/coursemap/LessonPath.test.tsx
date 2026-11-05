@@ -204,7 +204,7 @@ describe('the lesson path', () => {
    * for, and where it ends.
    */
   it('cross-fades the pinned header into the next unit, and changes it at once under Reduce Motion', async () => {
-    const first: UnitPlace = { unitId: 'u1', top: 0, bannerBottom: 120, bottom: 600, number: 1, title: 'Basics', tone: TONES.dark.meadow };
+    const first: UnitPlace = { unitId: 'u1', top: 0, bannerBottom: 120, bottom: 600, number: 1, title: 'Basics', tone: TONES.dark.meadow, done: 2, total: 2, here: false };
     const second: UnitPlace = { ...first, unitId: 'u2', number: 2, title: 'Family & Food', tone: TONES.dark.river };
     const fades = vi.spyOn(Animated, 'timing');
     const turn = async () => {

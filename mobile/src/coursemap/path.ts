@@ -7,7 +7,7 @@
  *
  * Pure, so it is tested without a screen.
  */
-import { lessonPath, type PathStop, type UnitTone } from '@kurda/shared';
+import { lessonPath, type PathStop, type PathStopLook, type UnitTone } from '@kurda/shared';
 import type { ColorScheme } from '../theme/appearance';
 import type { TranslationKey } from '../i18n/translations';
 import { STATE_LABEL, type CourseEntry } from './node';
@@ -99,10 +99,13 @@ function stateWord(stop: Extract<PathStop<SkillNode>, { kind: 'skill' }>): Trans
 /**
  * The whole of a stop, in words, for its button: "Family, you are here, 2 of
  * 4 lessons done". The state word is a key of its own, for the caller to look
- * up and pass in as `state`.
+ * up and pass in as `state`. A unit's guide is named for its unit, as its
+ * banner's button was before it stood on the path.
  */
-export function stopLabel(stop: PathStop<SkillNode>, unitNumber: number): { words: Words; state?: TranslationKey } {
+export function stopLabel(stop: PathStop<SkillNode>, unit: { number: number; title: string }): { words: Words; state?: TranslationKey } {
+  const unitNumber = unit.number;
   if (stop.kind === 'review') return { words: { key: 'coursemap.path.reviewLabel', params: { count: stop.due } } };
+  if (stop.kind === 'guide') return { words: { key: 'coursemap.path.guideFor', params: { unit: unit.title } } };
   if (stop.kind === 'trophy') {
     return {
       words: { key: 'coursemap.path.trophyLabel', params: { n: unitNumber } },
@@ -113,6 +116,21 @@ export function stopLabel(stop: PathStop<SkillNode>, unitNumber: number): { word
   return stop.lessonsTotal > 0
     ? { words: { key: 'coursemap.path.label', params: { title: stop.skill.title, done: stop.lessonsDone, total: stop.lessonsTotal } }, state }
     : { words: { key: 'coursemap.path.labelShort', params: { title: stop.skill.title } }, state };
+}
+
+/**
+ * How a stop is drawn (shared `pathStopSvg`): a skill by how it stands, the
+ * guide as its open book (grey until its unit is begun), review as an open
+ * stop, a unit's end as its chest — open once earned — and the first skill of
+ * a unit that can be jumped to as the gate the jump goes through.
+ */
+export function stopLook(stop: PathStop<SkillNode>, jump = false): PathStopLook {
+  if (jump) return 'jump';
+  if (stop.kind === 'review') return 'review';
+  if (stop.kind === 'guide') return stop.open ? 'guide' : 'guideLocked';
+  if (stop.kind === 'trophy') return stop.earned ? 'chestOpen' : 'chest';
+  if (stop.state === 'done') return stop.finish === 'strong' ? 'strong' : stop.finish === 'refresh' ? 'refresh' : 'done';
+  return stop.state;
 }
 
 /**

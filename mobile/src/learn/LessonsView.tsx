@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type Ref } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   Pressable,
@@ -23,6 +23,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
+import { UnitRailSheet } from '../coursemap/PathWorld';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
@@ -59,7 +60,10 @@ import { rememberCourseDialect } from './courseDialect';
  * (LearnBar), where it stays in sight while the path scrolls.
  *
  * The path is one course at a time, with a switch between courses when there
- * are several. When it first appears it scrolls to the current skill, and a
+ * are several. It is told which of its units are near the screen, which can
+ * be seen and which is in the middle of it, so it draws and moves only those;
+ * and a unit banner's map button opens the rail of every unit, a tap on one
+ * scrolling there. When it first appears it scrolls to the current skill, and a
  * button brings that back once it has been scrolled away. A course whose map
  * could not be loaded stays in the switch, saying so, with a way to try again.
  *
@@ -248,6 +252,36 @@ export function LessonsView({
    * that comes up under it — and turns into the next unit as that banner goes
    * under (PinnedUnit), until the path ends.
    */
+  /*
+   * Which units are near the screen (drawn in full: one screen either way),
+   * which can be seen (their stops rise the first time), and which is in the
+   * middle (the one that moves). Each is a set that changes only when a unit
+   * comes or goes, so the path is drawn again then and not on every scroll.
+   */
+  const placed = pathTopOnPage !== null && units.length > 0 && viewport > 0;
+  const top = placed ? scrollY - pathTopOnPage : 0;
+  const within = (from: number, to: number): string =>
+    units
+      .filter((u) => u.top < to && u.bottom > from)
+      .map((u) => u.unitId)
+      .join(',');
+  const nearKey = placed ? within(top - viewport, top + 2 * viewport) : null;
+  const seenKey = placed ? within(top, top + viewport - tabBarInset) : null;
+  const middle = top + (viewport - tabBarInset) / 2;
+  const inView = placed ? (units.find((u) => u.top <= middle && u.bottom > middle)?.unitId ?? null) : undefined;
+  const nearUnits = useMemo(() => (nearKey === null ? undefined : new Set(nearKey.split(','))), [nearKey]);
+  const seenUnits = useMemo(() => (seenKey === null ? null : new Set(seenKey.split(','))), [seenKey]);
+  const [rail, setRail] = useState(false);
+  const openRail = useCallback(() => setRail(true), []);
+  const toUnit = (unitId: string): void => {
+    setRail(false);
+    const unit = units.find((u) => u.unitId === unitId);
+    if (unit && pathTopOnPage !== null) {
+      touched.current = true;
+      scroller.current?.scrollTo({ y: Math.max(0, pathTopOnPage + unit.top - spacing.sm), animated: !reduceMotion });
+    }
+  };
+
   const lastUnit = units[units.length - 1];
   const pinned =
     pathTopOnPage === null || !lastUnit || scrollY >= pathTopOnPage + lastUnit.bottom - PIN_CLEAR
@@ -349,7 +383,18 @@ export function LessonsView({
             ) : null}
             {entry?.map && dueSettled ? (
               <View onLayout={(e: LayoutChangeEvent) => setPathInCourse(e.nativeEvent.layout.y)}>
-                <LessonPath key={entry.course.id} map={entry.map} due={due ?? 0} onFocus={onFocus} onUnits={setUnits} />
+                <LessonPath
+                  key={entry.course.id}
+                  map={entry.map}
+                  due={due ?? 0}
+                  onFocus={onFocus}
+                  onUnits={setUnits}
+                  near={nearUnits}
+                  seen={seenUnits}
+                  inView={inView}
+                  dialect={dialect}
+                  onOpenRail={openRail}
+                />
               </View>
             ) : entry?.map ? (
               // the path waits for the review count, which places review on it
@@ -382,7 +427,7 @@ export function LessonsView({
       {pinned ? (
         // on the page's own colour, so nothing scrolling under it shows round its edges
         <View style={[styles.pinned, { backgroundColor: colors.background }]} pointerEvents="box-none">
-          <PinnedUnit unit={pinned} />
+          <PinnedUnit unit={pinned} onRail={openRail} />
         </View>
       ) : null}
 
@@ -399,6 +444,13 @@ export function LessonsView({
           </Pressable>
         </View>
       ) : null}
+
+      <UnitRailSheet
+        open={rail}
+        units={units.map((u) => ({ unitId: u.unitId, number: u.number, title: u.title, tone: u.tone, done: u.done, total: u.total, here: u.here }))}
+        onClose={() => setRail(false)}
+        onPick={toUnit}
+      />
 
       <KeptStreakSheet
         streak={kept.shown}
