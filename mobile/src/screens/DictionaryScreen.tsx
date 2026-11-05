@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { heldRow } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
+import { describeError, isMaintenance } from '../api/errors';
 import { EntryDetail } from '../dictionary/EntryDetail';
 import { SourceLine } from '../dictionary/SourceLine';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -91,8 +92,16 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   }
 
   const removeSaved = (entryId: string) => {
+    const at = saved.findIndex((w) => w.entryId === entryId);
+    const word = saved[at];
+    if (!word) return;
     setSaved((s) => s.filter((w) => w.entryId !== entryId));
-    void client.delete(`/dictionary/entries/${entryId}/save`);
+    void client.delete(`/dictionary/entries/${entryId}/save`).then((res) => {
+      if (res.ok) return;
+      // it did not take: the word goes back in its place and why is said, as the entry's own bookmark does
+      setSaved((s) => (s.some((w) => w.entryId === entryId) ? s : [...s.slice(0, at), word, ...s.slice(at)]));
+      if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
+    });
   };
 
   const results = result?.results ?? [];
