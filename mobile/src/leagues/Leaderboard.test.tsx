@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { LeagueView } from '@kurda/shared';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -169,5 +169,15 @@ describe('the board switch', () => {
     expect(screen.getByRole('radio', { name: 'Zêr' }).getAttribute('aria-checked')).toBe('false');
     fireEvent.click(screen.getByRole('radio', { name: 'Weekly XP' }));
     expect(onChange).toHaveBeenCalledWith('weekly_xp');
+  });
+
+  // "XP-ya heftane" in a third of a 360-point phone: a second line, never "XP-ya h…"
+  it('lets a long board name take a second line rather than cutting it short', () => {
+    renderWithProviders(<BoardSwitch value="weekly_xp" onChange={() => undefined} />);
+    for (const name of ['Weekly XP', 'Zêr', 'Gems']) {
+      const label = within(screen.getByRole('radio', { name })).getByText(name);
+      expect(getComputedStyle(label).whiteSpace).not.toBe('nowrap');
+      expect(getComputedStyle(label).textAlign).toBe('center');
+    }
   });
 });
