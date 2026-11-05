@@ -197,14 +197,10 @@
                     "voice": "hamo",
                     "prompt": "Ask the driver like Hamo: “Is it snowing on the mountain?”",
                     "accepted": [
-                      "Li çiya berf dibare?",
-                      "Li çiya berf dibare",
-                      "Berf li çiya dibare?",
-                      "Berf li çiya dibare",
                       "Li çiyê berf dibare?",
-                      "Li çiyê berf dibare",
                       "Berf li çiyê dibare?",
-                      "Berf li çiyê dibare"
+                      "Li çiya berf dibare?",
+                      "Berf li çiya dibare?"
                     ]
                   }
                 },
@@ -1874,12 +1870,15 @@
                   "position": 5,
                   "type": "translate",
                   "payload": {
-                    "say": "Ji bîr meke: sibe Newroz e!",
+                    "say": "Ji bîr meke: Newroz nêzîk e!",
                     "voice": "xezo",
                     "prompt": "Xezal ties a string round her finger. What does she tell Hamo?",
                     "accepted": [
-                      "Don’t forget: tomorrow is Newroz!",
-                      "Do not forget: tomorrow is Newroz!"
+                      "Don’t forget: Newroz is near!",
+                      "Do not forget: Newroz is near!",
+                      "Don’t forget: Newroz is close!",
+                      "Don’t forget: Newroz is coming soon!",
+                      "Don’t forget, Newroz is nearly here!"
                     ]
                   }
                 },
@@ -2420,12 +2419,12 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Nazê malê bi gulan dixemilîne.",
+                    "say": "Nazê malê bi kulîlkan dixemilîne.",
                     "voice": "hamo",
-                    "prompt": "The house smells of roses. What is Nazê doing?",
+                    "prompt": "The house smells of spring flowers. What is Nazê doing?",
                     "options": [
-                      "Nazê is decorating the house with roses.",
-                      "Nazê is selling roses at the house.",
+                      "Nazê is decorating the house with flowers.",
+                      "Nazê is selling flowers at the house.",
                       "Nazê is cleaning the house."
                     ],
                     "correctIndex": 0
@@ -2817,7 +2816,7 @@
                       },
                       {
                         "speaker": 2,
-                        "text": "Binêrin! Li ser girê çirayek heye!",
+                        "text": "Binêrin! Li ser gir çirayek heye!",
                         "en": "Look! There’s a lamp on the hill!"
                       },
                       {
@@ -2836,7 +2835,7 @@
                         "en": "Hevalo, go to sleep. Tomorrow is Newroz."
                       }
                     ],
-                    "prompt": "Li ser girê çi heye?",
+                    "prompt": "Li ser gir çi heye?",
                     "options": [
                       "Stêrkek.",
                       "Agirek.",
@@ -2921,7 +2920,7 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Di vê bêdengiyê de çirayek li ser girê ye.",
+                    "say": "Di vê bêdengiyê de çirayek li ser gir e.",
                     "voice": "hevalo",
                     "prompt": "Hevalo can’t sleep. He whispers to you. What does he say?",
                     "accepted": [
@@ -3095,7 +3094,7 @@
                   "position": 6,
                   "type": "translate",
                   "payload": {
-                    "say": "Xelk li ser girê ye û dûman spî ye.",
+                    "say": "Xelk li ser gir e û dûman spî ye.",
                     "voice": "xezo",
                     "prompt": "Xezal describes the hill on the phone to her mother. What does she say?",
                     "accepted": [
@@ -3268,7 +3267,7 @@
                   "payload": {
                     "say": "Ya we jî pîroz be!",
                     "voice": "hamo",
-                    "prompt": "The neighbours call out “Newroz pîroz be!” across the fire. How does Hamo answer them?",
+                    "prompt": "The neighbours call out “Newroza we pîroz be!” across the fire. How does Hamo answer them?",
                     "options": [
                       "Bless your hands!",
                       "See you next year!",
@@ -3511,7 +3510,7 @@
                   "type": "conversation",
                   "payload": {
                     "id": "roadu07s4l3a",
-                    "title": "Kevirê li ser girê",
+                    "title": "Kevirê li ser gir",
                     "speakers": [
                       {
                         "name": "Hamo",

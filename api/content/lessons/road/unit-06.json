@@ -1058,7 +1058,7 @@
                       "Wait, wait! Don’t sit!"
                     ],
                     "correctIndex": 1,
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -1073,7 +1073,7 @@
                       "Hamo, come here!"
                     ],
                     "correctIndex": 2,
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -1142,7 +1142,7 @@
                       "Here you are some tea",
                       "Go ahead have some tea"
                     ],
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -1169,7 +1169,7 @@
                       "Rabe! Rûne! Here wir!",
                       "Rabe! Rûne! Here wir"
                     ],
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -1267,7 +1267,7 @@
                       "Hamo rabe û derkeve",
                       "Hamo rabe derkeve"
                     ],
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -1277,9 +1277,9 @@
                     "say": "Werin hundir, mal mala we ye!",
                     "prompt": "What else does Gulîstan say as everyone squeezes in?",
                     "accepted": [
+                      "Come in, make yourselves at home!",
                       "Come in, the house is your house!",
                       "Come in, our home is your home!",
-                      "Come in, make yourselves at home!",
                       "Come in, the house is your house",
                       "Come in, our home is your home",
                       "Come in, make yourselves at home",
@@ -1287,7 +1287,7 @@
                       "Come in our home is your home",
                       "Come in make yourselves at home"
                     ],
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 }
               ]
@@ -1310,7 +1310,7 @@
                       "Give, give!"
                     ],
                     "correctIndex": 1,
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -1329,7 +1329,7 @@
                       "Drink the tea it's still hot",
                       "Drink your tea it is still hot"
                     ],
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -1434,7 +1434,7 @@
                       "Bisekine, çay hîn germ e",
                       "Bisekine çay hîn germ e"
                     ],
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -1511,7 +1511,7 @@
                       "Don’t drink the tea!"
                     ],
                     "correctIndex": 0,
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -2066,7 +2066,7 @@
                   "position": 14,
                   "type": "translate",
                   "payload": {
-                    "prompt": "Tell Hamo: “Don’t worry, at Newroz we find it!”",
+                    "prompt": "Tell Hamo: “Don’t worry, at Newroz we’ll find it!”",
                     "accepted": [
                       "Xem meke, li Newrozê em peyda dikin!",
                       "Xem meke, em li Newrozê peyda dikin!",
@@ -2277,9 +2277,9 @@
                   "position": 11,
                   "type": "speaking",
                   "payload": {
-                    "prompt": "Gulîstan says it to everyone at the table. Say it: “You must eat.”",
+                    "prompt": "Gulîstan pushes the bread towards her big brother. Say it for her: “You must eat.”",
                     "reference": "Divê tu bixwî.",
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -2375,7 +2375,7 @@
                       "Who can help me?"
                     ],
                     "correctIndex": 2,
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -2472,7 +2472,7 @@
                       "Maybe tomorrow."
                     ],
                     "correctIndex": 1,
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 },
                 {
@@ -2562,7 +2562,7 @@
                   "type": "speaking",
                   "payload": {
                     "voice": "xezo",
-                    "prompt": "Say it for Xezal: “I am asking Mum. Maybe she will give permission.”",
+                    "prompt": "Say it for Xezal: “I am asking Mum. Maybe she will give permission.” (diya xwe: my own mum)",
                     "reference": "Ez ji diya xwe dipirsim. Dibe ku ew destûrê bide."
                   }
                 },
@@ -2578,7 +2578,7 @@
                       "Erê, tu dikarî."
                     ],
                     "correctIndex": 0,
-                    "voice": "hamo"
+                    "voice": "xezo"
                   }
                 }
               ]
@@ -3465,7 +3465,7 @@
                   "position": 4,
                   "type": "multiple_choice",
                   "payload": {
-                    "prompt": "Hamo writes his own name on the form. Which is right?",
+                    "prompt": "Hamo writes his own name on the form. When the owner is the one doing the action, Kurdish says xwe, “one’s own”. Which is right?",
                     "options": [
                       "Ez navê min dinivîsim.",
                       "Ez navê xwe dinivîsim.",
@@ -3588,9 +3588,9 @@
                     "say": "Çiqas xweş e! Ez gelek spasdar im.",
                     "prompt": "Hamo looks at his front-row tickets. What does he say?",
                     "accepted": [
+                      "How nice! I am very grateful.",
                       "How nice! I am very thankful.",
                       "How lovely! I'm very grateful.",
-                      "How nice! I am very grateful.",
                       "How nice! I am very thankful",
                       "How lovely! I'm very grateful",
                       "How nice! I am very grateful"
@@ -4106,18 +4106,16 @@
                   "position": 9,
                   "type": "translate",
                   "payload": {
-                    "say": "Geşteke xweş!",
+                    "say": "Geşta we xweş be!",
                     "voice": "xezo",
                     "prompt": "Gulîstan hugs everyone at the door. What does she say?",
                     "accepted": [
                       "Have a good trip!",
                       "Have a nice trip!",
                       "Safe travels!",
-                      "A good journey!",
-                      "Have a good trip",
-                      "Have a nice trip",
-                      "Safe travels",
-                      "A good journey"
+                      "Have a good journey!",
+                      "Enjoy your trip!",
+                      "I hope you have a good trip!"
                     ]
                   }
                 },
@@ -4167,8 +4165,8 @@
                     "voice": "hamo",
                     "prompt": "Hamo sets the clock again. What does he say?",
                     "accepted": [
-                      "Tomorrow early in the morning we leave.",
                       "We leave early tomorrow morning.",
+                      "Tomorrow early in the morning we leave.",
                       "We're leaving early tomorrow morning.",
                       "Tomorrow early in the morning we leave",
                       "We leave early tomorrow morning",

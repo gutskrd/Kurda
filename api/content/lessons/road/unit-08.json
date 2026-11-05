@@ -556,8 +556,8 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Lê dengê te ji gundê din jî tê!",
-                        "en": "But your voice can be heard from the next village!"
+                        "text": "Lê dengê te heta gundê din diçe!",
+                        "en": "But your voice carries all the way to the next village!"
                       },
                       {
                         "speaker": 1,
@@ -707,11 +707,11 @@
                   "position": 13,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Lê dengê te ji gundê din jî tê!",
+                    "say": "Lê dengê te heta gundê din diçe!",
                     "voice": "xezo",
                     "prompt": "Xezal laughs with her shoulders. What does she say?",
                     "options": [
-                      "But your voice can be heard from the next village!",
+                      "But your voice carries all the way to the next village!",
                       "But your voice is very weak!",
                       "But the village can’t hear you!"
                     ],
@@ -824,7 +824,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Baş e. Doktor ji bajar tê vir, û ez ji dermanxaneyê derman dikirim.",
+                        "text": "Baş e. Doktor ji bajêr tê vir, û ez ji dermanxaneyê derman dikirim.",
                         "en": "All right. The doctor is coming here from town, and I’ll buy medicine at the pharmacy."
                       },
                       {
@@ -939,7 +939,7 @@
                   "position": 10,
                   "type": "translate",
                   "payload": {
-                    "say": "Doktor ji bajar tê vir.",
+                    "say": "Doktor ji bajêr tê vir.",
                     "voice": "xezo",
                     "prompt": "Hamo asks if he has to go anywhere. What does Xezal tell him?",
                     "accepted": [
