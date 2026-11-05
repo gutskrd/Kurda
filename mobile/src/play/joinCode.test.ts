@@ -2,10 +2,45 @@ import { describe, expect, it } from 'vitest';
 import { formatJoinCode, PLAY_GAMES } from '@kurda/shared';
 import { contrastRatio } from '../a11y/contrast';
 import { DARK, LIGHT } from '../theme/palette';
-import { codePath, codeTone, shareMessage, spelledCode } from './joinCode';
+import { codePath, codeTone, joinCodeError, shareMessage, spelledCode, typedCode } from './joinCode';
 
 // the keys, with what was put into them, so a test reads what a person would be told
 const t = (key: string, vars?: Record<string, string | number>) => (vars ? `${key} ${JSON.stringify(vars)}` : key);
+
+describe('typedCode', () => {
+  it('upper-cases what is typed and keeps it to six', () => {
+    expect(typedCode('a')).toBe('A');
+    expect(typedCode('abc2')).toBe('ABC2');
+    expect(typedCode('abc2345')).toBe('ABC234');
+  });
+
+  it('reads a code pasted with spaces, dashes or in lower case', () => {
+    expect(typedCode('ABC 234')).toBe('ABC234');
+    expect(typedCode('abc-234')).toBe('ABC234');
+    expect(typedCode(' ab c2 34 ')).toBe('ABC234');
+  });
+
+  it('reads the digits an Arabic or a Soranî keyboard types', () => {
+    expect(typedCode('abc٢٣٤')).toBe('ABC234');
+    expect(typedCode('abc۲۳۴')).toBe('ABC234');
+  });
+
+  it('drops what a code cannot contain, the look-alikes among them', () => {
+    expect(typedCode('A0O1IL')).toBe('A');
+    expect(typedCode('AB!C')).toBe('ABC');
+    expect(typedCode('ê')).toBe('');
+  });
+
+  it('takes the code out of a whole message pasted in, not the first capitals of it', () => {
+    expect(typedCode('Play Peyvok Battle with me on Hevalo! Open Games → Join with a code and type ABC 234')).toBe('ABC234');
+    expect(typedCode('لە Hevalo لەگەڵم یاری بکە! یارییەکان ← بە کۆد بەشداربە بکەرەوە و XYZ 789 بنووسە')).toBe('XYZ789');
+    expect(typedCode('Hevalo’da benimle oyna! ABC-234 yaz')).toBe('ABC234');
+  });
+
+  it('does not grow past six when a seventh character is typed onto a whole code', () => {
+    expect(typedCode('ABC2345')).toBe('ABC234');
+  });
+});
 
 describe('the words round a code', () => {
   it('spells a code out for a screen reader', () => {
@@ -24,6 +59,22 @@ describe('the words round a code', () => {
     expect(story).toContain('play.code.shareStory');
     expect(story).toContain('"title":"Nanê Germ"');
     expect(`${game}${story}`).not.toMatch(/https?:|\/app\/games/);
+  });
+});
+
+describe('joinCodeError', () => {
+  const error = (over: Record<string, unknown>) => ({ kind: 'client' as const, message: '', status: 400, ...over });
+
+  it('says what each refusal means, and what to do next', () => {
+    expect(joinCodeError(error({ status: 404, code: 'GAME_NOT_FOUND' }), t as never)).toBe('play.join.notFound');
+    expect(joinCodeError(error({ status: 409, code: 'GAME_FULL' }), t as never)).toBe('stories.join.full');
+    expect(joinCodeError(error({ status: 409, code: 'GAME_STARTED' }), t as never)).toBe('stories.join.started');
+    expect(joinCodeError(error({ kind: 'rate_limited', status: 429, retryAfterSec: 41 }), t as never)).toBe('play.join.tooMany');
+  });
+
+  it('leaves anything else to the app’s usual words', () => {
+    expect(joinCodeError(error({ kind: 'network', status: 0 }), t as never)).toBe('error.offline');
+    expect(joinCodeError(error({ kind: 'server', status: 500 }), t as never)).toBe('error.server');
   });
 });
 

@@ -8,7 +8,7 @@ import { navigation } from '../play/testing/navigation';
 import { onHaptic } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { resetPrefsCache } from './prefs';
-import { NO_FILTER, StoriesView, defaultDialect, isFiltering, joinErrorMessage, libraryQuery } from './StoriesView';
+import { NO_FILTER, StoriesView, defaultDialect, isFiltering, libraryQuery } from './StoriesView';
 import { StoriesScreen } from './StoriesScreen';
 
 // jsdom has no matchMedia, and react-native-web reads the colour scheme and
@@ -97,12 +97,12 @@ function client(extra: Parameters<typeof fakeClient>[0] = {}, lib: StoryLibrary 
 
 async function openJoin(): Promise<void> {
   fireEvent.click(screen.getByRole('button', { name: 'Join with a code' }));
-  await screen.findByLabelText('Join with a code or a link');
+  await screen.findByLabelText('Join code');
 }
 
+/** Typed or pasted into the one field under the six boxes; the sixth character sends it. */
 function typeCode(value: string): void {
-  fireEvent.change(screen.getByLabelText('Join with a code or a link'), { target: { value } });
-  fireEvent.click(screen.getByRole('button', { name: 'Join' }));
+  fireEvent.change(screen.getByLabelText('Join code'), { target: { value } });
 }
 
 describe('the library’s helpers', () => {
@@ -130,11 +130,6 @@ describe('the library’s helpers', () => {
     expect(libraryQuery('', { ...NO_FILTER, all: true }, 24)).toMatchObject({ limit: 24, offset: 24 });
   });
 
-  it('says what a refusal to join means', () => {
-    const t = (k: string) => k;
-    expect(joinErrorMessage({ kind: 'client', status: 404, code: 'GAME_NOT_FOUND', message: '' }, t as never)).toBe('stories.join.notFound');
-    expect(joinErrorMessage({ kind: 'client', status: 409, code: 'GAME_FULL', message: '' }, t as never)).toBe('stories.join.full');
-  });
 });
 
 describe('StoriesView', () => {
@@ -275,18 +270,19 @@ describe('StoriesView', () => {
     await waitFor(() => expect(c.calls.filter((call) => call.path === '/stories/library').length).toBe(2));
   });
 
-  it('joins a game by its code, however it was typed, and says what is wrong with one that cannot be a code', async () => {
-    const c = client({ 'POST /story-games/join': ok({ id: 'g9' }) });
+  it('joins any game by its code, however it was typed, in the same boxes as the Games hub', async () => {
+    const c = client({ 'POST /play/join': ok({ game: 'stories', lobbyId: 'g9' }) });
     testAuth.client = c;
     renderWithProviders(<StoriesView />);
     await screen.findByRole('heading', { name: 'Featured' });
     await openJoin();
+    // too short to be a code, and nothing a code cannot hold: nothing is asked yet
     typeCode('AB1');
-    expect(await screen.findByText('Codes are six letters and numbers, like ABC 234.')).toBeTruthy();
-    expect(c.calls.some((call) => call.path === '/story-games/join')).toBe(false);
+    expect((screen.getByLabelText('Join code') as HTMLInputElement).value).toBe('AB');
+    expect(c.calls.some((call) => call.path === '/play/join')).toBe(false);
     typeCode('abc-234');
     await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: 'g9' }));
-    expect(c.calls.find((call) => call.path === '/story-games/join')?.body).toEqual({ code: 'ABC234' });
+    expect(c.calls.find((call) => call.path === '/play/join')?.body).toEqual({ code: 'ABC234' });
   });
 
   it('takes a pasted invite link to any game straight to that game', async () => {

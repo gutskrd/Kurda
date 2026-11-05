@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { parseInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
@@ -21,6 +20,7 @@ import { RankResultPanel } from '../ranks/RankResultPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
 import { LobbyShare } from '../play/CodeTicket';
+import { JoinCodeCard } from '../play/JoinByCode';
 import { RematchPanel } from '../play/RematchPanel';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import {
@@ -66,8 +66,9 @@ const TICK_MS = 200;
  * are poll-safe and the realtime scoreboard "layers onto these endpoints" — so
  * the socket can arrive later without this screen changing.
  *
- * `id` is optional: without one the screen creates or joins, with one it is
- * that room. That is what lets an invite link open straight into a match.
+ * `id` is optional: without one the screen creates a room (or joins one by its
+ * code), with one it is that room. That is what lets a code, an invite or an
+ * old invite link open straight into a match.
  */
 export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -92,14 +93,13 @@ export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExi
   );
 }
 
-/** Pick a dialect and open a room — or step into one somebody sent you. */
+/** Pick a dialect and open a room — or join one with the code a friend gave you. */
 function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const [dialect, setDialect] = useState<Dialect>('kurmanci');
   const [rated, setRated] = useRatedChoice('rhyme-match');
-  const [link, setLink] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -110,14 +110,6 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
     setBusy(false);
     if (res.ok) onEnter(res.data.id);
     else setError(res.error.code === 'EMPTY_LEXICON' ? t('games.emptyPool') : describeError(res.error, t));
-  };
-
-  /* A pasted invite link or the bare id inside it — people send both. */
-  const enter = (): void => {
-    const typed = link.trim();
-    const parsed = parseInvite(typed);
-    if (parsed) onEnter(parsed.id);
-    else if (typed) onEnter(typed);
   };
 
   return (
@@ -148,21 +140,8 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       </GlassCard>
 
-      <GlassCard style={styles.card}>
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.inviteLink')}</Text>
-        <TextInput
-          value={link}
-          onChangeText={setLink}
-          autoCapitalize="none"
-          autoCorrect={false}
-          accessibilityLabel={t('games.inviteLink')}
-          style={[
-            styles.input,
-            { backgroundColor: colors.controlTrack, color: colors.textPrimary },
-          ]}
-        />
-        <ClayButton label={t('games.rhymeMatch.join')} tone="neutral" onPress={enter} style={styles.stretch} />
-      </GlassCard>
+      {/* a match somebody else made: its code opens it, whichever game it turns out to be */}
+      <JoinCodeCard />
     </>
   );
 }

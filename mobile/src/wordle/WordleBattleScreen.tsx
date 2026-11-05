@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { parseInvite } from '@kurda/shared';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
@@ -8,7 +7,6 @@ import type { ApiError } from '../api/types';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -20,6 +18,7 @@ import { RankResultPanel } from '../ranks/RankResultPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
 import { LobbyShare } from '../play/CodeTicket';
+import { JoinCodeCard } from '../play/JoinByCode';
 import { RematchPanel } from '../play/RematchPanel';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
@@ -56,8 +55,8 @@ const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
  * screen changing.
  *
  * `id` is optional so the screen is both halves of the feature: without one it
- * creates or joins, with one it is that room. That is what lets an invite link
- * open straight into a match.
+ * creates a room (or joins one by its code), with one it is that room. That is
+ * what lets a code, an invite or an old invite link open straight into a match.
  */
 export function WordleBattleScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -82,14 +81,13 @@ export function WordleBattleScreen({ id: initialId, onExit }: { id?: string; onE
   );
 }
 
-/** Pick a difficulty and open a room — or step into one somebody sent you. */
+/** Pick a difficulty and open a room — or join one with the code a friend gave you. */
 function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [rated, setRated] = useRatedChoice('wordle-battle');
-  const [link, setLink] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -100,14 +98,6 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
     setBusy(false);
     if (res.ok) onEnter(res.data.id);
     else setError(res.error.code === 'EMPTY_POOL' ? t('games.emptyPool') : describeError(res.error, t));
-  };
-
-  /* A pasted invite link or the bare id inside it — people send both. */
-  const enter = (): void => {
-    const typed = link.trim();
-    const parsed = parseInvite(typed);
-    if (parsed) onEnter(parsed.id);
-    else if (typed) onEnter(typed);
   };
 
   return (
@@ -137,21 +127,8 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
       </GlassCard>
 
-      <GlassCard style={styles.card}>
-        <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.inviteLink')}</Text>
-        <TextInput
-          value={link}
-          onChangeText={setLink}
-          autoCapitalize="none"
-          autoCorrect={false}
-          accessibilityLabel={t('games.inviteLink')}
-          style={[
-            styles.input,
-            { backgroundColor: colors.controlTrack, color: colors.textPrimary },
-          ]}
-        />
-        <ClayButton label={t('games.battle.join')} tone="neutral" onPress={enter} style={styles.stretch} />
-      </GlassCard>
+      {/* a battle somebody else made: its code opens it, whichever game it turns out to be */}
+      <JoinCodeCard />
     </>
   );
 }
@@ -490,15 +467,6 @@ const styles = StyleSheet.create({
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
-  label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
-  input: {
-    minHeight: MIN_TOUCH_TARGET,
-    alignSelf: 'stretch',
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: typography.sizes.md,
-  },
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   waiting: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   loading: { marginTop: spacing.xxl },

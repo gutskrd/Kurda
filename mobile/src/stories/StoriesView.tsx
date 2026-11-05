@@ -7,8 +7,6 @@ import {
   STORY_DIALECTS,
   categoryName,
   levelOfCefr,
-  normalizeJoinCode,
-  parseInvite,
   type CefrLevel,
   type StoryCategory,
   type StoryDialect,
@@ -18,7 +16,7 @@ import {
   type StoryQuery,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { describeError, type Translate } from '../api/errors';
+import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
@@ -26,7 +24,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
-import { lobbyRoute } from '../play/routes';
+import { JoinCodeSheet } from '../play/JoinByCode';
 import { useDirection } from '../reports/direction';
 import { useListEntrance } from '../theme/animate';
 import { display, sectionLabel } from '../theme/fonts';
@@ -36,13 +34,13 @@ import { PressableScale, Rise } from '../theme/MotionParts';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { activeGames, getLibrary, joinGame, listStories, searchStories, setBookmark } from './api';
+import { activeGames, getLibrary, listStories, searchStories, setBookmark } from './api';
 import { StoryCover } from './covers';
 import { DIALECT_NAME, MODE_KEY, categoryLabel } from './labels';
 import { useStoryPrefs } from './prefs';
 import { SetupSheet } from './SetupSheet';
 import { storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
-import { COLUMN, Note, Pill, Sheet } from './ui';
+import { COLUMN, Note, Pill } from './ui';
 
 /**
  * Which variety a game is set up in: Soranî when the interface is Soranî,
@@ -51,20 +49,6 @@ import { COLUMN, Note, Pill, Sheet } from './ui';
 export function defaultDialect(locale: string, remembered: StoryDialect | null): StoryDialect {
   if (locale === 'ckb') return 'sorani';
   return remembered ?? 'kurmanci';
-}
-
-/** What a refusal to join by code means. */
-export function joinErrorMessage(error: ApiError, t: Translate): string {
-  switch (error.code) {
-    case 'GAME_NOT_FOUND':
-      return t('stories.join.notFound');
-    case 'GAME_STARTED':
-      return t('stories.join.started');
-    case 'GAME_FULL':
-      return t('stories.join.full');
-    default:
-      return describeError(error, t);
-  }
 }
 
 /** The chips over the library: each narrows the list, and any of them turns the shelves into one paged list. */
@@ -129,7 +113,8 @@ const SEARCH_DEBOUNCE_MS = 300;
  * overview (StoryReaderScreen).
  *
  * At the foot, the two ways into a game with other people on a story — set
- * one up, or join one with a code or a link a friend sent — which used to be
+ * one up, or join one with the code a friend gave you (the same boxes as on
+ * the Games hub, since a code now opens any of the games) — which used to be
  * the hub's whole reason; they are the games' social half and stay here, under
  * the reading.
  */
@@ -155,9 +140,6 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
   const [notice, setNotice] = useState<string | null>(null);
   const [setupOpen, setSetupOpen] = useState<StoryListItem[] | null>(null);
   const [joinOpen, setJoinOpen] = useState(false);
-  const [code, setCode] = useState('');
-  const [joinError, setJoinError] = useState<string | null>(null);
-  const [joining, setJoining] = useState(false);
 
   const filtering = isFiltering(q, filter);
   const personal = !isGuest;
@@ -251,35 +233,6 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
   };
 
   const open = (story: StoryListItem): void => navigation.navigate('StoryReader', { slug: story.slug });
-
-  /** A pasted link first (any game's), then a code. */
-  const join = async (): Promise<void> => {
-    const typed = code.trim();
-    if (!typed || joining) return;
-    setJoinError(null);
-    const invite = parseInvite(typed);
-    if (invite) {
-      const route = lobbyRoute(invite.type, invite.id);
-      setJoinOpen(false);
-      navigation.navigate(route.name, route.params as never);
-      return;
-    }
-    const normalized = normalizeJoinCode(typed);
-    if (!normalized) {
-      setJoinError(t('stories.join.badCode'));
-      return;
-    }
-    setJoining(true);
-    const res = await joinGame(client, { code: normalized }, prefs.extraTime);
-    setJoining(false);
-    if (!res.ok) {
-      setJoinError(joinErrorMessage(res.error, t));
-      return;
-    }
-    setCode('');
-    setJoinOpen(false);
-    navigation.navigate('StoryGame', { id: res.data.id });
-  };
 
   /** The setup sheet wants one variety's stories; they are fetched as it opens, so the pick list is whole. */
   const setupDialect = defaultDialect(locale, prefs.dialect);
@@ -430,7 +383,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
             </Text>
             <View style={styles.actions}>
               <ClayButton label={t('stories.together.setup')} icon="user-plus" tone="primary" disabled={library.total === 0} onPress={openSetup} />
-              <ClayButton label={t('stories.join.open')} icon="link" onPress={() => setJoinOpen(true)} />
+              <ClayButton label={t('stories.join.open')} icon="ticket" onPress={() => setJoinOpen(true)} />
             </View>
           </View>
         ) : null}
@@ -482,39 +435,8 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           }}
         />
       ) : null}
-      {joinOpen ? (
-        <Sheet
-          title={t('stories.join.label')}
-          onClose={() => setJoinOpen(false)}
-          footer={<ClayButton label={t('stories.join.button')} tone="primary" size="large" busy={joining} onPress={() => void join()} />}
-        >
-          <Text style={[styles.joinBody, { color: colors.textSecondary }]}>{t('stories.join.hint')}</Text>
-          <TextInput
-            value={code}
-            onChangeText={(v) => {
-              setCode(v);
-              setJoinError(null);
-            }}
-            onSubmitEditing={() => void join()}
-            placeholder={t('stories.join.placeholder')}
-            placeholderTextColor={colors.textSecondary}
-            accessibilityLabel={t('stories.join.label')}
-            autoFocus
-            autoCapitalize="characters"
-            autoCorrect={false}
-            autoComplete="off"
-            spellCheck={false}
-            textContentType="none"
-            returnKeyType="go"
-            style={[styles.codeInput, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-          />
-          {joinError ? (
-            <Text style={[styles.joinError, { color: colors.danger }]} accessibilityLiveRegion="polite">
-              {joinError}
-            </Text>
-          ) : null}
-        </Sheet>
-      ) : null}
+      {/* a game's code opens it, whichever of the games it turns out to be */}
+      {joinOpen ? <JoinCodeSheet onClose={() => setJoinOpen(false)} /> : null}
     </>
   );
 }
@@ -842,15 +764,4 @@ const styles = StyleSheet.create({
   continueText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   // stacked: side by side, "Play with friends" wraps onto two lines in most languages
   actions: { gap: spacing.sm },
-  joinBody: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  codeInput: {
-    minHeight: MIN_TOUCH_TARGET,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    fontSize: typography.sizes.lg,
-    letterSpacing: 2,
-    writingDirection: 'ltr',
-    textAlign: 'left',
-  },
-  joinError: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 });

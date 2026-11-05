@@ -20,6 +20,7 @@ import { getMyRanks } from '../ranks/api';
 import { daysLeftText, seasonTitle } from '../ranks/format';
 import { acceptInvite, listInvites } from '../play/api';
 import { applyInviteEvent, liveInvites } from '../play/invites';
+import { JoinCodeCard } from '../play/JoinByCode';
 import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
 import { useUserEvents } from '../realtime/useUserEvents';
@@ -63,7 +64,8 @@ const MODE_LABEL: Record<Mode, TranslationKey> = {
  * At the top, small, the way into the rankings and the league — there for the
  * people who look for them, out of the way of the people who only came to
  * play. Then any game a friend has asked you into, because an invite runs out
- * and the games will still be here. Then the games themselves, as a grid of
+ * and the games will still be here, and the way into a game a friend told you
+ * the code of — the other half of being asked. Then the games themselves, as a grid of
  * cards that each say what the game is and whether it is played alone or with
  * friends; a game is one tap from here, two from anywhere.
  */
@@ -206,6 +208,9 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           })}
         </View>
       ) : null}
+
+      {/* a code a friend read out or sent opens their game, whichever of the games it is */}
+      <JoinCodeCard />
 
       <View style={styles.section}>
         <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">

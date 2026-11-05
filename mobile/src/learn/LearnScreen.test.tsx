@@ -234,6 +234,15 @@ describe('Learn', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('League');
   });
 
+  it('offers Join with a code above the games, which opens the six boxes', async () => {
+    client();
+    renderWithProviders(<LearnScreen view="games" />);
+    const entry = await screen.findByTestId('join-with-code');
+    expect(entry.getAttribute('aria-label')).toBe('Join with a code. Got a code from a friend? Type it in to jump into their game.');
+    fireEvent.click(entry);
+    expect(await screen.findByLabelText('Join code')).toBeTruthy();
+  });
+
   /*
    * A freeze spent by itself overnight is said once, on the next visit: what
    * happened, the freezes held, how the next is earned, and the next lesson.

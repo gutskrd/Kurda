@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { act, cleanup, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -61,4 +61,11 @@ describe('RhymeMatchScreen', () => {
     expect(document.body.textContent).not.toMatch(/\/app\/games/);
   });
 
+  it('offers Join with a code where a match is set up, in place of a field for a link', async () => {
+    testAuth.client = fakeClient();
+    renderWithProviders(<RhymeMatchScreen onExit={() => undefined} />);
+    expect(screen.queryByText('Invite link')).toBeNull();
+    fireEvent.click(screen.getByTestId('join-with-code'));
+    expect(await screen.findByLabelText('Join code')).toBeTruthy();
+  });
 });

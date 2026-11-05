@@ -93,11 +93,11 @@ export type RootStackParamList = {
   /** What is limited on your account and why, with "Ask for a review" (reports/AccountStandingScreen). */
   AccountStanding: undefined;
   Wordle: undefined;
-  /** An id when an invite link opened it; nothing when you came to make one. */
+  /** An id when a join code, an invite or an old invite link opened it; nothing when you came to make one. */
   WordleBattle: { id?: string } | undefined;
   Rhyme: undefined;
   Race: undefined;
-  /** An id when an invite link opened it; nothing when you came to make one. */
+  /** An id when a join code, an invite or an old invite link opened it; nothing when you came to make one. */
   RhymeMatch: { id?: string } | undefined;
   /** An id when an invite link opened it (`/app/games/stories?id=…`): it hands over to that game. */
   Stories: { id?: string } | undefined;
