@@ -83,7 +83,7 @@ describe('Edit Profile page', () => {
     const locked = await screen.findByRole('radio', { name: /Avatar default-02 \(Premium — locked\)/ });
     expect(locked).toHaveAttribute('aria-disabled', 'true');
     await userEvent.click(locked);
-    expect(await screen.findByText(/Premium feature/i)).toBeInTheDocument();
+    expect(await screen.findByText(/only for Premium members/i)).toBeInTheDocument();
     expect(calls.some((c) => c.url.includes('/me/cosmetics/avatar'))).toBe(false);
   });
 
