@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { lastLetterRules, type LastLetterState } from '@kurda/shared';
+import { LAST_LETTER_SOLO_DAILY_XP_CAP, LAST_LETTER_SOLO_XP_CAP, lastLetterRules, type LastLetterState } from '@kurda/shared';
 import { checkWord, hevaloWord, lastLetterModule, soloWordRefs } from './last-letter.js';
 
 interface Entry {
@@ -142,15 +142,21 @@ describe('what a game against Hevalo pays', () => {
     expect(refs[13]).toBe('last-letter:u1:kmr:sêv:2026-10-23');
   });
 
-  it('pays two for each new word, and nothing for one paid for in the last fortnight', async () => {
-    const paidBefore = new Set(['last-letter:u1:kmr:lêv:2026-11-01']);
-    const awarded: string[] = [];
-    const db = {
-      query: async (_sql: string, params: unknown[]) => {
+  /** A ledger with these refs paid before and this much paid against Hevalo today. */
+  const ledger = (paidBefore: ReadonlySet<string>, today = 0) =>
+    ({
+      query: async (sql: string, params: unknown[]) => {
+        if (sql.includes('FOR NO KEY UPDATE')) return { rows: [{}], rowCount: 1 };
+        if (sql.includes('SUM(amount)')) return { rows: [{ xp: today }], rowCount: 1 };
         const hit = (params[0] as string[]).some((r) => paidBefore.has(r));
         return { rows: hit ? [{}] : [], rowCount: hit ? 1 : 0 };
       },
-    } as never;
+    }) as never;
+
+  it('pays two for each new word, and nothing for one paid for in the last fortnight', async () => {
+    const paidBefore = new Set(['last-letter:u1:kmr:lêv:2026-11-01']);
+    const awarded: string[] = [];
+    const db = ledger(paidBefore);
     const state = { chain: [{ seat: 1, word: 'mal' }, { seat: 2, word: 'lal' }, { seat: 1, word: 'lêv' }, { seat: 1, word: 'vexwarin' }] } as LastLetterState;
     const paid = await lastLetterModule.payAgainstHevalo!(db, {
       lobbyId: 'l',
@@ -165,5 +171,29 @@ describe('what a game against Hevalo pays', () => {
     }, state);
     expect(paid).toBe(4);
     expect(awarded).toEqual(['last-letter:u1:kmr:mal:2026-11-05', 'last-letter:u1:kmr:vexwarin:2026-11-05']);
+  });
+
+  it('pays no more than the day’s cap over every game, however quickly one follows another', async () => {
+    const words = Array.from({ length: 10 }, (_, i) => ({ seat: 1, word: `peyv${String.fromCharCode(97 + i)}` }));
+    const state = { chain: words } as LastLetterState;
+    const pay = async (today: number) => {
+      const awarded: number[] = [];
+      const paid = await lastLetterModule.payAgainstHevalo!(ledger(new Set(), today), {
+        lobbyId: 'l',
+        userId: 'u1',
+        seat: 1,
+        dialect: 'kmr',
+        now: new Date('2026-11-05T10:00:00Z'),
+        award: async (a) => {
+          awarded.push(a.amount);
+          return a.amount;
+        },
+      }, state);
+      return { paid, awarded };
+    };
+    // a game's own cap first, then whatever is left of the day's
+    expect((await pay(0)).paid).toBe(LAST_LETTER_SOLO_XP_CAP);
+    expect((await pay(LAST_LETTER_SOLO_DAILY_XP_CAP - 6)).paid).toBe(6);
+    expect(await pay(LAST_LETTER_SOLO_DAILY_XP_CAP)).toEqual({ paid: 0, awarded: [] });
   });
 });

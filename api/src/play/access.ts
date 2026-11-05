@@ -74,6 +74,41 @@ export async function canJoin(executor: Executor, check: JoinCheck): Promise<boo
   return r.friends || r.in_group;
 }
 
+/**
+ * The players `viewerId` may not exchange free text with in a game where
+ * players write to each other (a clue, a guess, a made-up meaning): anyone
+ * with a block either way, and — when either of the two is a minor, or
+ * somebody whose age nobody knows — anyone who is not their accepted friend.
+ * The one rule both ways round, so what one may not be shown of the other's
+ * the other may not be shown of theirs. A friends lobby can hold the host's
+ * friends who are strangers to each other; this is what keeps a child among
+ * them from writing to, or reading, a stranger.
+ */
+export async function textApart(executor: Executor, viewerId: string, otherIds: readonly string[]): Promise<Set<string>> {
+  const others = [...new Set(otherIds)].filter((id) => id !== viewerId);
+  if (others.length === 0) return new Set();
+  const res = await executor.query<{ id: string }>(
+    `SELECT o.id FROM users v JOIN users o ON o.id = ANY($2::uuid[]) AND o.deleted_at IS NULL
+      WHERE v.id = $1
+        AND (EXISTS (SELECT 1 FROM blocks b
+                      WHERE (b.blocker_id = v.id AND b.blocked_id = o.id) OR (b.blocker_id = o.id AND b.blocked_id = v.id))
+             OR ((${notKnownAdultSql('v')} OR ${notKnownAdultSql('o')}) AND NOT ${areFriendsSql('v.id', 'o.id')}))`,
+    [viewerId, others],
+  );
+  return new Set(res.rows.map((r) => r.id));
+}
+
+/**
+ * Whether `joinerId` may sit down with these members in a game where players
+ * write to each other: nobody among them is someone they may not exchange
+ * text with (`textApart`). The join rule asks this as well as `canJoin` for
+ * such a game, so a minor is never seated with anyone who is not their
+ * friend, and nobody is seated with a minor who is not theirs.
+ */
+export async function maySitTogether(executor: Executor, joinerId: string, memberIds: readonly string[]): Promise<boolean> {
+  return (await textApart(executor, joinerId, memberIds)).size === 0;
+}
+
 /** Whether someone may open a game to every adult with the link: a known adult right now. */
 export async function mayHostOpen(executor: Executor, userId: string): Promise<boolean> {
   const res = await executor.query<{ adult: boolean }>(

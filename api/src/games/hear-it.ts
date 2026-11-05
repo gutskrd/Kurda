@@ -26,6 +26,13 @@
  * item is done. Replays are counted by the app, by `HEAR_REPLAYS`: hearing a
  * clip again pays nothing and gives nothing away, so the server does not
  * meter it beyond the route's rate limit.
+ *
+ * A round costs little to make, however large the dictionary grows: the pool
+ * (texts, words, sentences, meanings, and the words and sentences bucketed by
+ * length) is worked out once per variety and kept (`TrustedSources.derived`),
+ * each item draws from one seeded generator (games/draw.ts), and the
+ * look-alikes are looked for among at most LOOK_ALIKE_CANDIDATES of the
+ * nearest lengths rather than across the whole pool.
  */
 import { randomBytes } from 'node:crypto';
 import type pg from 'pg';
@@ -55,7 +62,7 @@ import {
   type Meanings,
   type SpeakerId,
 } from '@kurda/shared';
-import { seededShuffle } from '../content/exercises.js';
+import { drawFor, type Draw } from './draw.js';
 import { freshestFirst, seenFor, type SeenItem } from './seen.js';
 import { itemKey, type HumanRecording, type TrustedSources } from './sources.js';
 import type { RoundAsk, SoloEngine, StoredItem } from './solo.js';
@@ -86,6 +93,12 @@ export interface HearText {
   variants: Variant[];
 }
 
+/** Entries by their length (letters for a word, words for a sentence): where look-alikes are looked for. */
+export type LengthBuckets = ReadonlyMap<number, ReadonlyArray<readonly [key: string, shown: string]>>;
+
+/** Look-alikes are chosen among at most this many entries of the nearest lengths: enough to find close ones, few enough to be quick. */
+export const LOOK_ALIKE_CANDIDATES = 400;
+
 /** What the wrong options are drawn from, and the texts with the rungs each can stand on. */
 export interface HearPool {
   texts: Array<HearText & { stages: HearStage[] }>;
@@ -95,6 +108,11 @@ export interface HearPool {
   sentences: Map<string, string>;
   /** approved phrases' meanings, by the phrase's strict key */
   meanings: Map<string, Partial<Meanings>>;
+  /** the words by how many letters they have, and the sentences by how many words */
+  wordsByLength: LengthBuckets;
+  sentencesByLength: LengthBuckets;
+  /** the meanings once each, to draw from */
+  meaningList: ReadonlyArray<Partial<Meanings>>;
 }
 
 /** An item as a round keeps it, answer and all. */
@@ -184,16 +202,50 @@ function sharedLetters(a: string, b: string): number {
   return n;
 }
 
+/** Entries bucketed by length, `length` saying how long each key is (pure, for the tests). */
+export function lengthBuckets(entries: ReadonlyMap<string, string>, length: (key: string) => number): LengthBuckets {
+  const out = new Map<number, Array<readonly [string, string]>>();
+  for (const [key, shown] of entries) {
+    const n = length(key);
+    const bucket = out.get(n);
+    if (bucket) bucket.push([key, shown]);
+    else out.set(n, [[key, shown]]);
+  }
+  return out;
+}
+
+const letters = (key: string): number => [...key].length;
+const wordCount = (key: string): number => key.split(' ').length;
+
+/**
+ * Up to `cap` entries of the lengths nearest `length`, nearest first: a
+ * length's bucket whole while it fits, a random part of the one that does not
+ * (pure, for the tests). Never further than `maxDelta` from it.
+ */
+export function nearestEntries(buckets: LengthBuckets, length: number, cap: number, draw: Draw, maxDelta = Infinity, keep: (key: string) => boolean = () => true): Array<readonly [string, string]> {
+  const lengths = [...buckets.keys()].filter((l) => Math.abs(l - length) <= maxDelta).sort((a, b) => Math.abs(a - length) - Math.abs(b - length) || a - b);
+  const out: Array<readonly [string, string]> = [];
+  for (const l of lengths) {
+    for (const entry of draw.order(buckets.get(l) ?? [])) {
+      if (out.length >= cap) return out;
+      if (keep(entry[0])) out.push(entry);
+    }
+  }
+  return out;
+}
+
 /**
  * The approved words that look most like `target`: fewest letters changed,
  * then most letters in common, then closest in length; never the word itself
- * (pure, for the tests). `words` maps each word's strict key to how it is shown.
+ * (pure, for the tests). They are looked for among the words nearest it in
+ * length (`nearestEntries`): a word many letters longer is never the closest.
  */
-export function lookAlikeWords(target: string, words: ReadonlyMap<string, string>, n: number, seed: string, dialect: GameDialect): string[] {
+export function lookAlikeWords(target: string, words: LengthBuckets, n: number, seed: string, dialect: GameDialect): string[] {
   const t = foldForDialect(target, dialect);
   const tl = [...t];
-  return seededShuffle([...words.entries()], `${seed}:alike`)
-    .filter(([key]) => key !== t && !key.includes(' '))
+  const draw = drawFor(`${seed}:alike`);
+  return draw
+    .shuffle(nearestEntries(words, tl.length, LOOK_ALIKE_CANDIDATES, draw, Infinity, (key) => key !== t && !key.includes(' ')))
     .map(([key, shown]) => {
       const k = [...key];
       return { shown, d: editDistance(tl, k), s: sharedLetters(t, key), l: Math.abs(k.length - tl.length) };
@@ -206,14 +258,16 @@ export function lookAlikeWords(target: string, words: ReadonlyMap<string, string
 /**
  * The approved sentences that look most like `target`: fewest words changed,
  * then fewest letters, within three words of its length; never the sentence
- * itself (pure, for the tests).
+ * itself (pure, for the tests). Looked for among the sentences nearest it in
+ * length, at most LOOK_ALIKE_CANDIDATES of them.
  */
-export function lookAlikeSentences(target: string, sentences: ReadonlyMap<string, string>, n: number, seed: string, dialect: GameDialect): string[] {
+export function lookAlikeSentences(target: string, sentences: LengthBuckets, n: number, seed: string, dialect: GameDialect): string[] {
   const t = foldForDialect(target, dialect);
   const tw = t.split(' ');
-  // words first, over the whole pool; letters only among the closest, where they decide
-  const byWords = seededShuffle([...sentences.entries()], `${seed}:alike`)
-    .filter(([key]) => key !== t && Math.abs(key.split(' ').length - tw.length) <= 3)
+  const draw = drawFor(`${seed}:alike`);
+  // words first, over the nearest; letters only among the closest, where they decide
+  const byWords = draw
+    .shuffle(nearestEntries(sentences, tw.length, LOOK_ALIKE_CANDIDATES, draw, 3, (key) => key !== t))
     .map(([key, shown]) => ({ key, shown, w: editDistance(tw, key.split(' ')) }))
     .sort((a, b) => a.w - b.w)
     .slice(0, Math.max(n * 6, 24));
@@ -227,26 +281,30 @@ export function lookAlikeSentences(target: string, sentences: ReadonlyMap<string
 /** A meaning as two are told apart: its English, without case or the full stop. */
 const meaningKey = (m: Partial<Meanings>): string => (m.en ?? '').trim().toLowerCase().replace(/[\s.!?…]+$/u, '');
 
+/** Meanings looked at, at most, for the ones about as long as the right one, before any length will do. */
+const MEANINGS_LOOKED_AT = 600;
+
 /**
  * Meanings of other approved phrases to pick among: none the same as the
  * right one, each once, phrases about as long as the right one's first
- * (pure, for the tests).
+ * (pure, for the tests). Drawn one at a time in a random order, so a large
+ * pool is not shuffled whole for three of them.
  */
-export function meaningChoices(target: Partial<Meanings>, meanings: ReadonlyMap<string, Partial<Meanings>>, n: number, seed: string): Array<Partial<Meanings>> {
+export function meaningChoices(target: Partial<Meanings>, meanings: ReadonlyArray<Partial<Meanings>>, n: number, seed: string): Array<Partial<Meanings>> {
   const own = meaningKey(target);
   const length = own.split(/\s+/).length;
   const seen = new Set([own]);
-  const out: Array<Partial<Meanings>> = [];
-  const pool = seededShuffle([...meanings.values()], `${seed}:meanings`);
-  const add = (m: Partial<Meanings>, near: boolean) => {
+  const near: Array<Partial<Meanings>> = [];
+  const far: Array<Partial<Meanings>> = [];
+  let looked = 0;
+  for (const m of drawFor(`${seed}:meanings`).order(meanings)) {
     const key = meaningKey(m);
-    if (out.length >= n || key === '' || seen.has(key) || (near && Math.abs(key.split(/\s+/).length - length) > 2)) return;
+    if (key === '' || seen.has(key)) continue;
     seen.add(key);
-    out.push(m);
-  };
-  for (const m of pool) add(m, true);
-  for (const m of pool) add(m, false);
-  return out;
+    (Math.abs(key.split(/\s+/).length - length) <= 2 ? near : far).push(m);
+    if (near.length >= n || (++looked >= MEANINGS_LOOKED_AT && near.length + far.length >= n)) break;
+  }
+  return [...near, ...far].slice(0, n);
 }
 
 /** An option as it is shown: no closing punctuation (it would tell the recording's text from a lesson's), words in lower case and sentences with a capital in Kurmancî. */
@@ -283,14 +341,7 @@ export function planRound(
 ): Array<{ text: HearText; stage: HearStage }> | null {
   const chosen = new Set<string>();
   const out: Array<{ text: HearText; stage: HearStage }> = [];
-  const fresh = (stage: HearStage) =>
-    freshestFirst(
-      seededShuffle(
-        texts.filter((t) => t.stages.includes(stage) && !chosen.has(t.key)),
-        `${seed}:${stage}`,
-      ),
-      seen,
-    );
+  const fresh = (stage: HearStage) => freshestFirst(drawFor(`${seed}:${stage}`).shuffle(texts.filter((t) => t.stages.includes(stage) && !chosen.has(t.key))), seen);
   const take = (stage: HearStage, n: number) => {
     for (const t of fresh(stage)) {
       if (n <= 0 || out.length >= SOLO_ROUND_ITEMS) return;
@@ -314,9 +365,14 @@ export class HearItGame implements SoloEngine<HearItem, HearItItemView, HearItAn
   /**
    * The recordings of a variety, by text, with the rungs each can stand on,
    * and the approved words, sentences and meanings the wrong options come
-   * from (all read from the cached pools, so a round costs no reading).
+   * from (all read from the cached pools, so a round costs no reading), worked
+   * out once and kept while the pools stand (`derived`).
    */
-  async pool(dialect: GameDialect): Promise<HearPool> {
+  pool(dialect: GameDialect): Promise<HearPool> {
+    return this.sources.derived('hear-it:pool', dialect, () => this.readPool(dialect));
+  }
+
+  private async readPool(dialect: GameDialect): Promise<HearPool> {
     const [recordings, sentences, conversations, vocabulary, stories] = await Promise.all([
       this.sources.recordings(dialect),
       this.sources.lessonSentences(dialect),
@@ -367,7 +423,13 @@ export class HearItGame implements SoloEngine<HearItem, HearItItemView, HearItAn
     }
 
     const pool = { words, sentences: sentencePool, meanings };
-    return { ...pool, texts: texts.map((t) => ({ ...t, stages: stagesFor(t, pool) })).filter((t) => t.stages.length > 0) };
+    return {
+      ...pool,
+      wordsByLength: lengthBuckets(words, letters),
+      sentencesByLength: lengthBuckets(sentencePool, wordCount),
+      meaningList: [...meanings.values()],
+      texts: texts.map((t) => ({ ...t, stages: stagesFor(t, pool) })).filter((t) => t.stages.length > 0),
+    };
   }
 
   /**
@@ -399,14 +461,14 @@ export class HearItGame implements SoloEngine<HearItem, HearItItemView, HearItAn
       if (stage === 'word' || stage === 'sentence') {
         const others =
           stage === 'word'
-            ? lookAlikeWords(text.text, pool.words, HEAR_OPTIONS - 1, salt, ask.dialect)
-            : lookAlikeSentences(text.text, pool.sentences, HEAR_OPTIONS - 1, salt, ask.dialect);
+            ? lookAlikeWords(text.text, pool.wordsByLength, HEAR_OPTIONS - 1, salt, ask.dialect)
+            : lookAlikeSentences(text.text, pool.sentencesByLength, HEAR_OPTIONS - 1, salt, ask.dialect);
         const right = shownOption(text.text, stage, ask.dialect);
-        options = seededShuffle([right, ...others.map((o) => shownOption(o, stage, ask.dialect))], `${salt}:options`);
+        options = drawFor(`${salt}:options`).shuffle([right, ...others.map((o) => shownOption(o, stage, ask.dialect))]);
         answer = options.indexOf(right);
       } else if (stage === 'phrase') {
         const right = text.meanings!;
-        meaningOptions = seededShuffle([right, ...meaningChoices(right, pool.meanings, HEAR_OPTIONS - 1, salt)], `${salt}:options`);
+        meaningOptions = drawFor(`${salt}:options`).shuffle([right, ...meaningChoices(right, pool.meaningList, HEAR_OPTIONS - 1, salt)]);
         answer = meaningOptions.indexOf(right);
       }
       return {

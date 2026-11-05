@@ -9,6 +9,7 @@ import type { RoomBus } from '../realtime/bus.js';
 import type { XpService } from '../xp/service.js';
 import type { RankService } from '../ranks/service.js';
 import type { LobbyChange } from '../play/types.js';
+import type { FriendService } from '../friends/service.js';
 import { StoryGameNotifier } from '../story-games/notifier.js';
 import type { FreeTextDeps } from './free-text.js';
 import { GenericLobbyAdapter } from './adapter.js';
@@ -47,6 +48,8 @@ export interface MultiplayerRouteDeps {
   freeText?: Omit<FreeTextDeps, 'db'>;
   /** the play layer's `play_changed` */
   onChange: (game: MultiGame, lobbyId: string, opts?: LobbyChange) => void;
+  /** where blocks are made: a block parts the pair in the games they share */
+  friends?: Pick<FriendService, 'onBlocked'>;
 }
 
 /** How often the housekeeping runs, and how soon after boot it first does. */
@@ -84,6 +87,8 @@ export function registerMultiplayerRoutes(app: FastifyInstance, deps: Multiplaye
     cache: app.cache,
   });
   app.decorate('multiplayer', mp);
+  // a block parts the pair in the lobbies and the games of free text they share — after it commits
+  deps.friends?.onBlocked((blocker, blocked) => mp.onBlock(blocker, blocked));
   // waiting polls are answered before Fastify waits for requests in flight
   app.addHook('preClose', async () => mp.close());
 

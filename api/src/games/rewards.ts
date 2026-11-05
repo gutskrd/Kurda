@@ -8,8 +8,10 @@
  *   pays nothing — read from `game_seen` here, at the finish, under a lock per
  *   learner and game, so two rounds finishing together cannot both pay for it;
  * - the round is learning — XP, the streak, the daily goal — only when at
- *   least half of it was answered right (`roundCountsAsLearning`); a round
- *   tapped through pays nothing at all, as an empty practice session does;
+ *   least half of it was answered right on the first try
+ *   (`roundCountsAsLearning`): a second try comes after a hint that rules an
+ *   option out, so a round tapped through at random pays nothing at all, as
+ *   an empty practice session does;
  * - the XP goes to the game's own source, which is one of the API's game
  *   sources (GAME_XP_SOURCES), so the league's daily cap on game XP applies;
  *   its ref is `${sessionId}:${userId}`, unique to the learner, so XpService
@@ -22,7 +24,7 @@
  * round finished at 23:59 is learning on the day it was played.
  */
 import type pg from 'pg';
-import { GAME_REPEAT_XP_DAYS, answerXp, roundCountsAsLearning, type SoloResults } from '@kurda/shared';
+import { GAME_REPEAT_XP_DAYS, answerXp, roundCountsAsLearning, roundLearningNeeds, type SoloResults } from '@kurda/shared';
 import type { XpService } from '../xp/service.js';
 import type { StreakService } from '../streaks/service.js';
 import type { DailyGoalService } from '../goals/service.js';
@@ -58,6 +60,29 @@ export interface RoundToPay {
 }
 
 /**
+ * What a round covered, into `game_seen`: every item tried, and when it was
+ * last answered right. A finished round records it here. A round given up
+ * for a new one is recorded the same way, in the one statement that gives it
+ * up (games/solo.ts `replaceOpen`), so the corrections it showed send its
+ * items behind the ones never met, as a finished round's do.
+ */
+export async function recordSeen(client: Pick<pg.PoolClient, 'query'>, userId: string, game: string, items: readonly Pick<ItemOutcome, 'key' | 'answered' | 'correct'>[], now: Date): Promise<void> {
+  const covered = items.filter((i) => i.answered);
+  if (covered.length === 0) return;
+  await client.query(
+    `INSERT INTO game_seen (user_id, game, item_key, attempts, correct, last_seen_at, last_correct_at)
+     SELECT $1::uuid, $2::text, s.key, 1, CASE WHEN s.correct THEN 1 ELSE 0 END, $4::timestamptz, CASE WHEN s.correct THEN $4::timestamptz END
+       FROM jsonb_to_recordset($3::jsonb) AS s(key text, correct boolean)
+     ON CONFLICT (user_id, game, item_key) DO UPDATE SET
+       attempts = game_seen.attempts + 1,
+       correct = game_seen.correct + EXCLUDED.correct,
+       last_seen_at = EXCLUDED.last_seen_at,
+       last_correct_at = COALESCE(EXCLUDED.last_correct_at, game_seen.last_correct_at)`,
+    [userId, game, JSON.stringify(covered.map((i) => ({ key: i.key, correct: i.correct }))), now],
+  );
+}
+
+/**
  * Pay a finished round and record what it was seen to cover. Returns the
  * results as the learner is shown them.
  */
@@ -77,7 +102,7 @@ export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: R
   const correct = items.filter((i) => i.correct).length;
   const firstTry = items.filter((i) => i.correct && i.firstTry).length;
   const total = items.length;
-  const learning = roundCountsAsLearning(correct, total);
+  const learning = roundCountsAsLearning(firstTry, total);
   const shown = items.map((i) => {
     const repeat = recent.has(i.key);
     return { index: i.index, correct: i.correct, firstTry: i.correct && i.firstTry, repeat, xp: learning ? answerXp(i.level, { correct: i.correct, firstTry: i.firstTry, repeat }) : 0 };
@@ -97,22 +122,9 @@ export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: R
   }
 
   // what the round covered, for the next round's choice and the next repeat check
-  const covered = items.filter((i) => i.answered);
-  if (covered.length > 0) {
-    await client.query(
-      `INSERT INTO game_seen (user_id, game, item_key, attempts, correct, last_seen_at, last_correct_at)
-       SELECT $1::uuid, $2::text, s.key, 1, CASE WHEN s.correct THEN 1 ELSE 0 END, $4::timestamptz, CASE WHEN s.correct THEN $4::timestamptz END
-         FROM jsonb_to_recordset($3::jsonb) AS s(key text, correct boolean)
-       ON CONFLICT (user_id, game, item_key) DO UPDATE SET
-         attempts = game_seen.attempts + 1,
-         correct = game_seen.correct + EXCLUDED.correct,
-         last_seen_at = EXCLUDED.last_seen_at,
-         last_correct_at = COALESCE(EXCLUDED.last_correct_at, game_seen.last_correct_at)`,
-      [userId, game, JSON.stringify(covered.map((i) => ({ key: i.key, correct: i.correct }))), now],
-    );
-  }
+  await recordSeen(client, userId, game, items, now);
 
-  const results: SoloResults = { correct, total, firstTry, xp, learningCounted: learning, needed: Math.max(1, Math.ceil(total / 2)), items: shown, streak };
+  const results: SoloResults = { correct, total, firstTry, xp, learningCounted: learning, needed: roundLearningNeeds(total), items: shown, streak };
   // what the costs took, only for a game that has them, and only from a round that was paying
   if (round.deduct !== undefined) results.deducted = learning ? deducted : 0;
   return results;

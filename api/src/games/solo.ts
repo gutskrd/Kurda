@@ -8,6 +8,7 @@
  *   POST /games/solo/sessions/:id/answers  one try at one item: right or not, a hint or the correction
  *   POST /games/solo/sessions/:id/finish   pay it (once), record the learning, say how it went
  *   POST /games/solo/sessions/:id/hints    spend a hint, for a game whose rounds have them (Kurdish Detective)
+ *   POST /games/solo/sessions/:id/begin    { index }: what an item shows while it is studied gives way to what it is answered with (The Memory Thief)
  *
  * A game plugs in an engine (`SoloEngine`): how a round is made from its
  * approved pool, what an item looks like to the player, how a try is graded,
@@ -20,6 +21,18 @@
  * number, so a try sent twice (a retry after a dropped connection) is answered
  * the same twice and counted once; the finish claims the round with one
  * UPDATE, so it pays once however often it is asked for.
+ *
+ * A learner has at most one open round of a game in a variety. A new one
+ * replaces the round left open, which is given up: it takes no more answers
+ * (it is expired at once), it pays nothing, and what it covered is recorded
+ * in `game_seen` as a finished round's is — so the corrections a round showed
+ * cannot be read, the round dropped, and the same items played again first
+ * as if never met. (Kurdish Detective also carries the hints spent on a case
+ * into the next round of that case: detective.ts.)
+ *
+ * A game's item view never carries anything worked out from its answer: no
+ * key hashed from the sentence, no stable id of the identity behind a tile.
+ * What an item is known by is its place in the round.
  */
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
@@ -65,8 +78,8 @@ export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correct
   answer: z.ZodType<Answer>;
   /** a round's items and what it decided about the round as a whole; null when there is not enough approved content */
   build(ask: RoundAsk, db: Pick<pg.Pool, 'query'>): Promise<{ items: Item[]; meta: Record<string, unknown> } | null>;
-  /** an item as the player is sent it: never its answer */
-  view(item: Item, index: number): View;
+  /** an item as the player is sent it: never its answer, nor anything worked out from it; `meta` is what the round decided so far */
+  view(item: Item, index: number, meta: Record<string, unknown>): View;
   grade(item: Item, answer: Answer, dialect: GameDialect): boolean;
   /** after a wrong try with one left */
   hint(item: Item, answer: Answer, dialect: GameDialect): Hint;
@@ -82,6 +95,15 @@ export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correct
   board?(items: Item[], meta: Record<string, unknown>, states: SoloItemState[]): unknown;
   /** XP the round's own costs take off what its answers earned, at the finish (Kurdish Detective's hints) */
   deduction?(meta: Record<string, unknown>): number;
+  /**
+   * For a game whose items are studied before they are answered (The Memory
+   * Thief): the player is ready to answer this item, and what it shows while
+   * it is studied gives way, for good, to what it is answered with. The
+   * round's new `meta`, or null when the item had already begun. An answer
+   * begins its item too, so a try is never judged on an item whose study is
+   * still on show.
+   */
+  begin?(round: { items: Item[]; meta: Record<string, unknown> }, index: number): Record<string, unknown> | null;
   /** what a request for a hint may ask for, for a game whose rounds have hints to spend */
   hintAsk?: z.ZodType<unknown>;
   /**
@@ -91,7 +113,7 @@ export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correct
    */
   spendHint?(round: { items: Item[]; meta: Record<string, unknown>; states: SoloItemState[] }, ask: unknown): Record<string, unknown>;
   /** after the round is paid, inside the same transaction (Build a Kurdish Sentence moves its ladder) */
-  finished?(client: pg.PoolClient, round: { userId: string; dialect: GameDialect; meta: Record<string, unknown>; results: SoloResults }): Promise<void>;
+  finished?(client: pg.PoolClient, round: { userId: string; dialect: GameDialect; meta: Record<string, unknown>; items: readonly Item[]; results: SoloResults }): Promise<void>;
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -162,6 +184,36 @@ export class SoloService {
     return engine;
   }
 
+  /**
+   * Give up every round of this game and variety the learner left open: each
+   * is expired now and marked given up, and the items it covered go into
+   * `game_seen` as a finished round's do (`recordSeen`: tried, and when last
+   * answered right). One statement, so it costs a round no more than one
+   * trip; the UPDATE's row locks make two at once give a round up once.
+   */
+  private async replaceOpen(db: Pick<pg.Pool, 'query'>, userId: string, game: LearnGameId, dialect: GameDialect): Promise<void> {
+    await db.query(
+      `WITH gone AS (
+         UPDATE game_sessions SET expires_at = now(), meta = meta || '{"abandoned": true}'::jsonb
+          WHERE user_id = $1 AND game = $2 AND dialect = $3 AND finished_at IS NULL AND expires_at > now()
+          RETURNING id, items
+       ), tried AS (
+         SELECT g.items -> a.item_index::int ->> 'key' AS key, bool_or(a.correct) AS correct
+           FROM gone g JOIN game_session_answers a ON a.session_id = g.id
+          GROUP BY 1
+       )
+       INSERT INTO game_seen (user_id, game, item_key, attempts, correct, last_seen_at, last_correct_at)
+       SELECT $1::uuid, $2::text, t.key, 1, CASE WHEN t.correct THEN 1 ELSE 0 END, now(), CASE WHEN t.correct THEN now() END
+         FROM tried t WHERE t.key IS NOT NULL
+       ON CONFLICT (user_id, game, item_key) DO UPDATE SET
+         attempts = game_seen.attempts + 1,
+         correct = game_seen.correct + EXCLUDED.correct,
+         last_seen_at = EXCLUDED.last_seen_at,
+         last_correct_at = COALESCE(EXCLUDED.last_correct_at, game_seen.last_correct_at)`,
+      [userId, game, dialect],
+    );
+  }
+
   private async tx<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
     const client = await this.pool.connect();
     try {
@@ -177,28 +229,43 @@ export class SoloService {
     }
   }
 
-  /** A new round of a game, in a variety, at a difficulty. 409 NOT_ENOUGH_CONTENT when there is too little approved content. */
+  /**
+   * A new round of a game, in a variety, at a difficulty, in place of any
+   * round of it left open (`replaceOpen`). 409 NOT_ENOUGH_CONTENT when there
+   * is too little approved content.
+   *
+   * The round left open is given up before the new one is built, so what it
+   * covered already counts as seen; the build runs outside any transaction
+   * (it reads the pools on connections of its own), and the insert gives up
+   * again whatever round a request racing this one opened meanwhile.
+   */
   async create(userId: string, game: LearnGameId, dialect: GameDialect, difficulty: GameDifficulty): Promise<SoloSessionView<unknown>> {
     const engine = this.engine(game);
     if (!learnGame(game).dialects.includes(dialect)) throw new AppError('BAD_REQUEST', 400, 'this game is not played in that variety');
+    await this.replaceOpen(this.pool, userId, game, dialect);
     const id = randomUUID();
     const round = await engine.build({ userId, dialect, difficulty, seed: id }, this.pool);
     if (!round || round.items.length === 0) {
       throw new AppError('NOT_ENOUGH_CONTENT', 409, 'there is not enough approved content for this game at this difficulty yet');
     }
-    const res = await this.pool.query<{ expires_at: Date }>(
-      `INSERT INTO game_sessions (id, user_id, game, dialect, difficulty, items, meta, total_count, expires_at)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, now() + make_interval(hours => $9))
-       RETURNING expires_at`,
-      [id, userId, game, dialect, difficulty, JSON.stringify(round.items), JSON.stringify(round.meta), round.items.length, SOLO_SESSION_HOURS],
-    );
+    const res = await this.tx(async (client) => {
+      // one new round at a time per learner, game and variety: a request racing this one waits here, and gives this round up in turn
+      await client.query(`SELECT pg_advisory_xact_lock(hashtextextended('game-round:' || $1 || ':' || $2 || ':' || $3, 0))`, [userId, game, dialect]);
+      await this.replaceOpen(client, userId, game, dialect);
+      return client.query<{ expires_at: Date }>(
+        `INSERT INTO game_sessions (id, user_id, game, dialect, difficulty, items, meta, total_count, expires_at)
+         VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7::jsonb, $8, now() + make_interval(hours => $9))
+         RETURNING expires_at`,
+        [id, userId, game, dialect, difficulty, JSON.stringify(round.items), JSON.stringify(round.meta), round.items.length, SOLO_SESSION_HOURS],
+      );
+    });
     const states = statesOf(round.items.length, []);
     return {
       id,
       game,
       dialect,
       difficulty,
-      items: round.items.map((item, i) => engine.view(item, i)),
+      items: round.items.map((item, i) => engine.view(item, i, round.meta)),
       states,
       maxAttempts: SOLO_MAX_ATTEMPTS,
       finished: false,
@@ -237,7 +304,7 @@ export class SoloService {
       game: row.game,
       dialect: row.dialect,
       difficulty: row.difficulty,
-      items: row.items.map((item, i) => engine.view(item, i)),
+      items: row.items.map((item, i) => engine.view(item, i, row.meta)),
       states,
       maxAttempts: SOLO_MAX_ATTEMPTS,
       finished: row.finished_at !== null,
@@ -275,6 +342,9 @@ export class SoloService {
       const parsed = engine.answer.safeParse(raw);
       if (!parsed.success) throw new AppError('BAD_REQUEST', 400, 'that answer is not one this game takes');
       const tries = (await this.answersOf(client, row.id)).filter((a) => a.item_index === index);
+      // an answer ends the item's study for good, as asking for its gaps does
+      const begun = engine.begin?.({ items: row.items, meta: row.meta }, index) ?? null;
+      if (begun) await client.query(`UPDATE game_sessions SET meta = $2::jsonb WHERE id = $1`, [row.id, JSON.stringify(begun)]);
 
       const respond = (n: number, correct: boolean, last: unknown): SoloAnswerResult<unknown, unknown> => {
         const firstTry = correct && n === 1;
@@ -315,6 +385,27 @@ export class SoloService {
         );
       }
       return respond(n, correct, parsed.data);
+    });
+  }
+
+  /**
+   * The player is ready to answer an item that is studied first: its study
+   * gives way to what it is answered with, for good (The Memory Thief's
+   * passage, then its gaps). Answered with the item as it now is; asking
+   * again answers the same.
+   */
+  async begin(id: string, userId: string, index: number): Promise<{ item: unknown }> {
+    return this.tx(async (client) => {
+      const row = await this.load(client, id, userId, true);
+      const engine = this.engine(row.game);
+      if (!engine.begin) throw new AppError('NO_STUDY', 409, 'this game’s items are not studied first');
+      if (row.finished_at) throw new AppError('GAME_SESSION_FINISHED', 409, 'this round is finished');
+      if (row.expired) throw new AppError('GAME_SESSION_EXPIRED', 410, 'this round has expired; start a new one');
+      const item = row.items[index];
+      if (!item) throw new AppError('ITEM_NOT_IN_SESSION', 404, 'no such item in this round');
+      const meta = engine.begin({ items: row.items, meta: row.meta }, index);
+      if (meta) await client.query(`UPDATE game_sessions SET meta = $2::jsonb WHERE id = $1`, [row.id, JSON.stringify(meta)]);
+      return { item: engine.view(item, index, meta ?? row.meta) };
     });
   }
 
@@ -363,7 +454,7 @@ export class SoloService {
       const source = learnGame(row.game).xpSources[0]!;
       const deduct = engine.deduction?.(row.meta);
       const results = await payRound(client, this.deps, { sessionId: row.id, userId, game: row.game, source, items, now, deduct });
-      await engine.finished?.(client, { userId, dialect: row.dialect, meta: row.meta, results });
+      await engine.finished?.(client, { userId, dialect: row.dialect, meta: row.meta, items: row.items, results });
       await client.query(
         `UPDATE game_sessions SET finished_at = $2, results = $3::jsonb, xp_awarded = $4, learning_counted = $5 WHERE id = $1`,
         [row.id, now, JSON.stringify(results), results.xp, results.learningCounted],

@@ -6,9 +6,21 @@
  * the other variety's script is left out.
  */
 import { describe, expect, it } from 'vitest';
-import { LEARN_GAME_XP_SOURCES } from '@kurda/shared';
+import { LEARN_GAME_XP_SOURCES, conversationLineKey, lessonAudioKey } from '@kurda/shared';
 import { GAME_XP_SOURCES, isGameSource, isLearningSource } from '../xp/rules.js';
-import { conversationOf, isAlphabetSoundKey, meaningOfPrompt, pairsOf, sentenceKey, sentencesOf, wordsOfExercise } from './sources.js';
+import {
+  DERIVED_TTL_MS,
+  TrustedSources,
+  bustGamePools,
+  conversationOf,
+  isAlphabetSoundKey,
+  meaningOfPrompt,
+  pairsOf,
+  publishedRecordingTexts,
+  sentenceKey,
+  sentencesOf,
+  wordsOfExercise,
+} from './sources.js';
 
 describe('meaningOfPrompt', () => {
   it('takes the quoted English out of a prompt that sets a scene', () => {
@@ -164,5 +176,76 @@ describe('the learning games’ XP', () => {
       expect(isGameSource(source)).toBe(true);
       expect(isLearningSource(source)).toBe(false);
     }
+  });
+});
+
+describe('the recordings a game may play', () => {
+  const lessons = [
+    { type: 'translate', payload: { prompt: 'In Kurdish: “Good morning.”', accepted: ['Rojbaş!'] } },
+    { type: 'match_pairs', payload: { pairs: [{ left: 'sêv', right: 'apple' }] } },
+    {
+      type: 'conversation',
+      payload: {
+        id: 'conv456def',
+        speakers: [{ character: 'hamo' }, { character: 'xezo' }],
+        lines: [
+          { speaker: 0, text: 'Silav!', en: 'Hello!' },
+          { speaker: 1, text: 'Tu çawa yî?', en: 'How are you?' },
+        ],
+        prompt: 'Who says hello first?',
+        options: ['Hamo', 'Xezo'],
+        correctIndex: 0,
+      },
+    },
+  ];
+  const published = publishedRecordingTexts(lessons, ['Pisîk li malê ye. Ew radize.']);
+
+  it('are of texts published lessons and approved stories say, keyed as the studio files them', () => {
+    expect(published.get(lessonAudioKey('Rojbaş!'))).toBe('Rojbaş!');
+    expect(published.get(lessonAudioKey('sêv'))).toBe('sêv');
+    expect(published.get(conversationLineKey('conv456def', 1, 'Tu çawa yî?'))).toBe('Tu çawa yî?');
+    expect(published.get(lessonAudioKey('Ew radize.'))).toBe('Ew radize.');
+  });
+
+  it('are never of a draft’s text, a corrected text’s old spelling, or a conversation line filed as plain text', () => {
+    expect(published.has(lessonAudioKey('Şev baş!'))).toBe(false);
+    expect(published.has(lessonAudioKey('Rojbash!'))).toBe(false);
+    expect(published.has(lessonAudioKey('Tu çawa yî?'))).toBe(false);
+  });
+});
+
+describe('what a game works out from the pools', () => {
+  const memoryCache = () => {
+    const kv = new Map<string, unknown>();
+    return {
+      get: async <T>(domain: string, id: string) => (kv.get(`${domain}:${id}`) as T | undefined) ?? null,
+      set: async (domain: string, id: string, value: unknown) => {
+        kv.set(`${domain}:${id}`, value);
+      },
+    };
+  };
+
+  it('is built once while the pools stand, again once a publish bumps them or it grows old', async () => {
+    const cache = memoryCache();
+    let now = 1_000;
+    const sources = new TrustedSources({ query: async () => ({ rows: [] }) } as never, cache as never, () => now);
+    let builds = 0;
+    const build = async () => ++builds;
+    expect(await sources.derived('hear-it:pool', 'kmr', build)).toBe(1);
+    expect(await sources.derived('hear-it:pool', 'kmr', build)).toBe(1);
+    // another variety is its own
+    expect(await sources.derived('hear-it:pool', 'ckb', build)).toBe(2);
+    await bustGamePools(cache as never);
+    expect(await sources.derived('hear-it:pool', 'kmr', build)).toBe(3);
+    now += DERIVED_TTL_MS;
+    expect(await sources.derived('hear-it:pool', 'kmr', build)).toBe(4);
+  });
+
+  it('is built every time where there is no cache to follow', async () => {
+    const sources = new TrustedSources({ query: async () => ({ rows: [] }) } as never, null);
+    let builds = 0;
+    await sources.derived('x', 'kmr', async () => ++builds);
+    await sources.derived('x', 'kmr', async () => ++builds);
+    expect(builds).toBe(2);
   });
 });

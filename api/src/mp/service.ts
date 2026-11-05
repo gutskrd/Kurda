@@ -3,6 +3,7 @@ import {
   LOBBY_IDLE_MINUTES,
   MAX_HOSTED_GAMES,
   MIN_HUMANS_FOR_PLACEMENT_XP,
+  gameCounted,
   limitDetails,
   paidPlacementXp,
   type InviteSummary,
@@ -17,7 +18,7 @@ import {
 import { AppError } from '../plugins/errors.js';
 import { lockPersonFor } from '../limits/limits.js';
 import type { PublicUrl } from '../cosmetics/access.js';
-import { canJoin, identities, mayHostOpen } from '../play/access.js';
+import { canJoin, identities, mayHostOpen, maySitTogether, textApart } from '../play/access.js';
 import { gameNotFound, openGamesAdultsOnly, parseSettings, setRatedError } from '../play/errors.js';
 import { seatId, tallySeries } from '../play/lobby.js';
 import type { JoinOutcome, LobbyChange, LobbyFacts, LobbyPhase, Series } from '../play/types.js';
@@ -165,7 +166,18 @@ export interface MoveAnswer {
  *   transaction that ends it, so nothing depends on anyone reading the result.
  * - Nothing waits on a pool connection while holding one: the free-text gate
  *   runs before the game's transaction, the dictionary lookups inside it on its
- *   own client.
+ *   own client. And the gate runs only for a member whose move it may be: who
+ *   is asking, and whether it is their turn, is read first, cheaply and outside
+ *   the lock (the rules judge again under it), so nobody's text reaches the
+ *   chat pipeline, its classifier or its offense ladder for a move that would
+ *   be refused anyway.
+ * - A game that ends without counting (`counted` in its rules: called off,
+ *   too few left) pays no placement and is closed for Game Ranks as void.
+ * - Free text is never exchanged between two players who may not
+ *   (`textApart`: a block, or a minor and someone not their friend): such a
+ *   pair is never seated together in a game that takes it, what one writes is
+ *   left out of the other's view, and a block made during a game takes the
+ *   blocked player out of it (`onBlock`).
  */
 export class MultiplayerService {
   readonly presence: Presence;
@@ -478,14 +490,17 @@ export class MultiplayerService {
    */
   async move(lobbyId: string, userId: string, body: unknown): Promise<MoveAnswer> {
     if (!UUID_RE.test(lobbyId)) throw gameNotFound();
-    const head = await this.pool.query<{ game: MultiGame }>(`SELECT game FROM game_lobbies WHERE id = $1`, [lobbyId]);
-    if (!head.rows[0]) throw gameNotFound();
-    const m = moduleOf(head.rows[0].game);
+    const head = await this.pool.query<LobbyRow>(`SELECT * FROM game_lobbies WHERE id = $1`, [lobbyId]);
+    const lobby = head.rows[0];
+    if (!lobby) throw gameNotFound();
+    const m = moduleOf(lobby.game);
     const parsed = m.moveSchema.safeParse(body);
     if (!parsed.success) throw new AppError('BAD_MOVE', 400, 'not a move this game takes');
     const typed = m.freeText ? m.freeText.textOf(parsed.data) : null;
     // a game that takes free text is not played anywhere the chat pipeline is not
     if (typed !== null && !this.deps.freeText) throw new AppError('UNAVAILABLE', 503, 'this game cannot take text here');
+    // who is asking, and whether the move is theirs to make, before the text goes anywhere
+    if (typed !== null) await this.mayType(lobby, userId);
     // free text passes the chat pipeline before the game's lock is taken, and before anyone sees it
     const text =
       typed !== null && m.freeText && this.deps.freeText
@@ -530,6 +545,27 @@ export class MultiplayerService {
     });
     if (refusal) throw refusal;
     return { view: await this.view(lobbyId, userId), outcome };
+  }
+
+  /**
+   * Before a move's text passes the free-text gate: the mover is a member
+   * still in a game under way, and it is their move — read without the lock,
+   * so it costs one query, and judged on the state as it stands unless
+   * something is due on it (a turn run out, a seat to pass over), which only
+   * the lock may settle and which may make it their move. The same refusals
+   * the move would meet under the lock, said before anyone reads the text.
+   */
+  private async mayType(lobby: LobbyRow, userId: string): Promise<void> {
+    const players = await this.loadPlayers(this.pool, lobby.id);
+    const me = players.find((p) => p.user_id === userId && !p.removed);
+    if (!me) throw gameNotFound();
+    if (lobby.status !== 'active' || !lobby.state || me.left_at !== null) throw new AppError('NOT_ACTIVE', 409, 'this game is not under way');
+    const rules = moduleOf(lobby.game).rules;
+    const now = Date.now();
+    const waitSince = (lobby.wait_since ?? lobby.started_at ?? new Date(now)).getTime();
+    if (dueStep(rules, lobby.state, this.engineSeats(lobby, players), now, waitSince) !== null) return;
+    const may = rules.mayMove ? rules.mayMove(lobby.state, me.seat) : rules.waitingFor(lobby.state).includes(me.seat);
+    if (!may) throw new AppError('NOT_YOUR_TURN', 409, 'it is not your turn');
   }
 
   // -------------------------------------------------------------------------
@@ -730,7 +766,7 @@ export class MultiplayerService {
         chatGroupId: t.lobby.chat_group_id,
         removed: false,
       });
-      if (!allowed) throw gameNotFound();
+      if (!allowed || (moduleOf(t.lobby.game).freeText && !(await maySitTogether(t.client, other.user_id!, [host.user_id!])))) throw gameNotFound();
       const row = await t.client.query<LobbyRow>(
         `INSERT INTO game_lobbies (game, host_id, mode, dialect, settings, min_players, max_players, teams, access, chat_group_id,
                                    rematch_of, rated, seats_issued)
@@ -913,6 +949,51 @@ export class MultiplayerService {
     return { cleared: cleared.rowCount ?? 0, deleted: deleted.rowCount ?? 0 };
   }
 
+  /**
+   * A block was made (after it committed): the pair are parted in every lobby
+   * and game they share. In a lobby the one who goes is the blocked player
+   * (the blocker, when the blocked player hosts it): the join rule would not
+   * have let them in together. In a game under way that takes free text, the
+   * blocked player is taken out of it — gone from the table, as a leave is,
+   * but neither rated nor paid for it, since it was not their choice — so the
+   * two stop seeing each other's text and stop playing together; the rules go
+   * on without them (`drop`). A game without free text plays on.
+   */
+  async onBlock(blockerId: string, blockedId: string): Promise<void> {
+    const shared = await this.pool.query<{ id: string }>(
+      `SELECT l.id FROM game_lobbies l
+        WHERE l.status IN ('lobby', 'active')
+          AND EXISTS (SELECT 1 FROM game_lobby_players p WHERE p.lobby_id = l.id AND p.user_id = $1 AND NOT p.removed AND p.left_at IS NULL)
+          AND EXISTS (SELECT 1 FROM game_lobby_players p WHERE p.lobby_id = l.id AND p.user_id = $2 AND NOT p.removed AND p.left_at IS NULL)
+        ORDER BY l.id`,
+      [blockerId, blockedId],
+    );
+    for (const { id } of shared.rows) {
+      await this.run(id, async (t) => {
+        const seated = (userId: string) => t.players.find((p) => p.user_id === userId && !p.removed && p.left_at === null);
+        if (!seated(blockerId) || !seated(blockedId)) return;
+        if (t.lobby.status === 'lobby') {
+          const goes = t.lobby.host_id === blockedId ? blockerId : blockedId;
+          await t.client.query(`DELETE FROM game_lobby_players WHERE lobby_id = $1 AND user_id = $2`, [id, goes]);
+          t.also.push(goes);
+          await this.reload(t);
+          await this.bump(t, 'status = status', [], { card: true });
+          return;
+        }
+        const m = moduleOf(t.lobby.game);
+        if (t.lobby.status !== 'active' || !t.lobby.state || !m.freeText) return;
+        const out = seated(blockedId)!;
+        // taken out, as the host takes a player out of a lobby: no place, no pay, no rating, and nothing more of the game to see
+        await t.client.query(`UPDATE game_lobby_players SET left_at = $3, removed = true WHERE lobby_id = $1 AND seat = $2`, [id, out.seat, t.now]);
+        t.also.push(blockedId);
+        await this.reload(t);
+        await this.recordMove(t, out.seat, blockedId, 'leave', null, { reason: 'block' });
+        await this.saveState(t, m.rules.drop(t.lobby.state, out.seat, t.now.getTime()), { card: true });
+        await this.settle(t);
+      }).catch((err) => this.log.warn({ err, lobbyId: id }, 'could not part a blocked pair in a multiplayer game'));
+    }
+  }
+
   /** An account closing: out of every lobby and game it is in, through the normal leave. */
   async leaveAll(userId: string): Promise<void> {
     const live = await this.pool.query<{ lobby_id: string }>(
@@ -1022,7 +1103,10 @@ export class MultiplayerService {
    * The end, in the transaction that reached it: each seat's place and score,
    * placement XP (only with at least two people who played to the end, less
    * against the same people again today), what a game against Hevalo pays, and
-   * Game Ranks for a game that counted.
+   * Game Ranks. A game its rules say did not count (`counted`: called off,
+   * too few left, the impostor gone) shows its places but pays no placement
+   * and is closed for Game Ranks as void: everyone still seated would
+   * otherwise share first place for a game nobody finished.
    */
   private async finish(t: Tx, m: AnyGameModule): Promise<void> {
     const placed = m.rules.places(t.lobby.state);
@@ -1032,7 +1116,11 @@ export class MultiplayerService {
     await this.reload(t);
     const award = (input: { userId: string; source: string; amount: number; refId: string }) => this.xp.award(input, t.client);
     const people = this.people(t.players);
-    if (t.lobby.mode === 'group') {
+    // called off, or too few left to go on: a game nobody played out pays no placement and rates nobody
+    const counted = gameCounted(m.rules, t.lobby.state);
+    if (t.lobby.mode === 'group' && !counted) {
+      await this.ranks.closeUncounted(t.client, t.lobby.game, t.lobby.id);
+    } else if (t.lobby.mode === 'group') {
       // played to the end: still in it, and made at least one move of their own
       const active = people.filter((p) => p.left_at === null && p.moves > 0);
       if (active.length >= MIN_HUMANS_FOR_PLACEMENT_XP) {
@@ -1254,15 +1342,24 @@ export class MultiplayerService {
     return counts.sort((a, b) => a.n - b.n || a.team - b.team)[0]?.team ?? 1;
   }
 
+  /**
+   * The join rule (`canJoin`), and for a game where players write to each
+   * other, that the joiner may exchange text with everyone at the table
+   * (`maySitTogether`): a minor sits only with their friends, and nobody sits
+   * with a minor who is not theirs. Refused the same way as any other no.
+   */
   private async mayJoin(db: Executor, lobby: LobbyRow, players: readonly PlayerRow[], userId: string): Promise<boolean> {
-    return canJoin(db, {
+    const memberIds = this.people(players).map((p) => p.user_id!);
+    const allowed = await canJoin(db, {
       joinerId: userId,
       hostId: lobby.host_id,
       access: lobby.access,
-      memberIds: this.people(players).map((p) => p.user_id!),
+      memberIds,
       chatGroupId: lobby.chat_group_id,
       removed: players.some((p) => p.user_id === userId && p.removed),
     });
+    if (!allowed || !moduleOf(lobby.game).freeText) return allowed;
+    return maySitTogether(db, userId, memberIds);
   }
 
   private phaseOf(lobby: LobbyRow): LobbyPhase {
@@ -1325,6 +1422,16 @@ export class MultiplayerService {
       lobby.access,
       this.publicUrl,
     );
+    // in a game of free text, what the seats this viewer may not exchange text with wrote is left out of their view
+    const apart =
+      m.freeText && lobby.state
+        ? await textApart(
+            this.pool,
+            viewerId,
+            players.filter((p) => p.user_id !== null && p.user_id !== viewerId).map((p) => p.user_id!),
+          )
+        : new Set<string>();
+    const hidden = players.filter((p) => p.user_id !== null && apart.has(p.user_id)).map((p) => p.seat);
     const engine = this.engineSeats(lobby, players);
     const controller = lobby.status === 'lobby' ? lobby.host_id : controllerOf(lobby.host_id, engine);
     const seats: MultiSeat[] = listed.map((p) => {
@@ -1378,7 +1485,7 @@ export class MultiplayerService {
             .map((p) => ({ seat: p.seat, place: p.place!, score: p.score ?? 0, xpAwarded: p.user_id ? p.xp_awarded : null }))
         : null,
       // nothing of the game before it starts; after, only what this seat may see
-      board: lobby.state ? m.rules.viewFor(lobby.state, mine && !mine.removed ? mine.seat : null) : null,
+      board: lobby.state ? m.rules.viewFor(lobby.state, mine && !mine.removed ? mine.seat : null, hidden) : null,
     };
   }
 

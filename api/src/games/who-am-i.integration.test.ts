@@ -32,6 +32,9 @@ interface StoredItem {
   tiles: Array<{ id: string }>;
 }
 
+/** What the player knows the identity's own tile by: its place among the round's tiles. */
+const handleOf = (item: StoredItem): string => String.fromCharCode(97 + item.tiles.findIndex((t) => t.id === item.identity.id));
+
 describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked words (integration)', () => {
   const config = loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
@@ -173,6 +176,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
 
       const kept = await stored(session.id);
       const first = kept[0]!;
+      // a tile is known by its place in the round, never by the identity behind it
+      expect(items[0]!.tiles.map((t) => t.id)).toEqual(first.tiles.map((_, i) => String.fromCharCode(97 + i)));
+      for (const t of first.tiles) expect(made.body).not.toContain(t.id);
       const q = first.questions[0]!;
       const ask = (token: string, index: number, question: string) => call('POST', `/games/who-am-i/sessions/${session.id}/ask`, token, { index, question });
       const asked = await ask(learner, 0, q.id);
@@ -186,11 +192,11 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
       // a round come back to shows what was asked
       expect((await call('GET', `/games/solo/sessions/${session.id}`, learner)).json().items[0].asked).toHaveLength(1);
 
-      const wrong = first.tiles.find((t) => t.id !== first.identity.id)!;
+      const wrong = items[0]!.tiles.find((t) => t.id !== handleOf(first))!;
       const miss = (await call('POST', `/games/solo/sessions/${session.id}/answers`, learner, { index: 0, answer: { guess: wrong.id }, attempt: 1 })).json();
       expect(miss).toMatchObject({ correct: false, done: false, hint: { notThis: wrong.id }, correction: null });
-      const hit = (await call('POST', `/games/solo/sessions/${session.id}/answers`, learner, { index: 0, answer: { guess: first.identity.id }, attempt: 2 })).json();
-      expect(hit).toMatchObject({ correct: true, done: true, correction: { id: first.identity.id, category: 'animal' } });
+      const hit = (await call('POST', `/games/solo/sessions/${session.id}/answers`, learner, { index: 0, answer: { guess: handleOf(first) }, attempt: 2 })).json();
+      expect(hit).toMatchObject({ correct: true, done: true, correction: { id: handleOf(first), category: 'animal' } });
       // done: no more questions about it
       expect((await ask(learner, 0, first.questions[1]!.id)).statusCode).toBe(409);
     });
@@ -199,7 +205,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
       const session = (await call('POST', '/games/solo/sessions', learner, { game: 'who-am-i', dialect: 'kmr', difficulty: 'beginner' })).json();
       const kept = await stored(session.id);
       for (const [index, item] of kept.entries()) {
-        await call('POST', `/games/solo/sessions/${session.id}/answers`, learner, { index, answer: { guess: item.identity.id }, attempt: 1 });
+        await call('POST', `/games/solo/sessions/${session.id}/answers`, learner, { index, answer: { guess: handleOf(item) }, attempt: 1 });
       }
       const results = (await call('POST', `/games/solo/sessions/${session.id}/finish`, learner)).json();
       expect(results).toMatchObject({ correct: kept.length, firstTry: kept.length, learningCounted: true });

@@ -44,7 +44,8 @@ import {
   type SpokenAudio,
   type WhatWouldYouSayItemView,
 } from '@kurda/shared';
-import { checkAnswer, seededShuffle } from '../content/exercises.js';
+import { checkAnswer } from '../content/exercises.js';
+import { drawFor } from './draw.js';
 import { freshestFirst, seenFor } from './seen.js';
 import { spokenAudio, spokenKeys } from './spoken.js';
 import type { PublishedContent, TrustedSources } from './sources.js';
@@ -100,7 +101,7 @@ export class WhatWouldYouSayGame implements SoloEngine<ScenarioItem, WhatWouldYo
     const [rows, seen] = await Promise.all([this.sources.content('scenario', ask.dialect), seenFor(db, ask.userId, WHAT_WOULD_YOU_SAY)]);
     const pool = rows.filter((r) => levels.includes(r.level));
     if (pool.length < SOLO_ROUND_ITEMS) return null;
-    const round = freshestFirst(seededShuffle(pool, `${ask.seed}:scenes`), seen).slice(0, SOLO_ROUND_ITEMS);
+    const round = freshestFirst(drawFor(`${ask.seed}:scenes`).shuffle(pool), seen).slice(0, SOLO_ROUND_ITEMS);
 
     // the line heard and the real reply, recorded or not, in one query for the round
     const audio = await spokenAudio(
@@ -138,11 +139,10 @@ export class WhatWouldYouSayGame implements SoloEngine<ScenarioItem, WhatWouldYo
       others,
     };
     if (!buildsFromTiles(ask.difficulty, p.reply.ku)) {
-      const wrong = seededShuffle(
-        others.map((_, j) => j),
-        `${ask.seed}:${i}:others`,
-      ).slice(0, SCENARIO_CHOICES[ask.difficulty] - 1);
-      return { ...base, mode: 'choose', shown: seededShuffle([-1, ...wrong], `${ask.seed}:${i}:shown`), tiles: [] };
+      const wrong = drawFor(`${ask.seed}:${i}:others`)
+        .shuffle(others.map((_, j) => j))
+        .slice(0, SCENARIO_CHOICES[ask.difficulty] - 1);
+      return { ...base, mode: 'choose', shown: drawFor(`${ask.seed}:${i}:shown`).shuffle([-1, ...wrong]), tiles: [] };
     }
     // the reply's words, spelled the way the pool writes them most plainly, and a few words of the lines that do not fit
     const words = gameWords(p.reply.ku).map((w) => spelling.get(foldForDialect(w, ask.dialect)) ?? w);
@@ -150,7 +150,7 @@ export class WhatWouldYouSayGame implements SoloEngine<ScenarioItem, WhatWouldYo
     const decoys: string[] = [];
     const want = Math.max(0, Math.min(SCENARIO_DECOYS, MAX_TILES - words.length));
     const from = others.flatMap((o) => gameWords(o.ku)).map((w) => spelling.get(foldForDialect(w, ask.dialect)) ?? w);
-    for (const w of seededShuffle(from, `${ask.seed}:${i}:decoys`)) {
+    for (const w of drawFor(`${ask.seed}:${i}:decoys`).order(from)) {
       if (decoys.length >= want) break;
       const strict = foldForDialect(w, ask.dialect);
       const lenient = foldForDialect(w, ask.dialect, true);
@@ -159,7 +159,7 @@ export class WhatWouldYouSayGame implements SoloEngine<ScenarioItem, WhatWouldYo
       taken.add(lenient);
       decoys.push(w);
     }
-    let tiles = seededShuffle([...words, ...decoys], `${ask.seed}:${i}:bank`);
+    let tiles = drawFor(`${ask.seed}:${i}:bank`).shuffle([...words, ...decoys]);
     // never hand the reply over already in order
     const places = tiles.map((t, j) => (decoys.includes(t) ? -1 : j)).filter((j) => j >= 0);
     if (places.length > 1 && places.every((at, j) => tiles[at] === words[j])) {

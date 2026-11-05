@@ -22,6 +22,14 @@
  * passage is right when every gap is; a wrong first try is told which gaps
  * are still wrong, never the words; once a passage is done every word comes
  * back with what it means.
+ *
+ * A passage is sent whole while it is studied and with its gaps once the
+ * player asks for them (`begin`, or a first answer), never both at once —
+ * comparing the two would give the vanished words away — and a round come
+ * back to after that is not shown the passage again. Nothing in the view is
+ * worked out from the passage (no key hashed from its text). The pool is
+ * worked out once per variety and kept, and decoys are drawn one at a time
+ * from one seeded generator per passage (games/draw.ts).
  */
 import type pg from 'pg';
 import { z } from 'zod';
@@ -52,7 +60,8 @@ import {
   type MemoryWhy,
   type SpeakerId,
 } from '@kurda/shared';
-import { gradingKey, seededShuffle } from '../content/exercises.js';
+import { gradingKey } from '../content/exercises.js';
+import { drawFor } from './draw.js';
 import { freshestFirst, seenFor } from './seen.js';
 import { itemKey, type TrustedSources } from './sources.js';
 import type { RoundAsk, SoloEngine, StoredItem } from './solo.js';
@@ -203,10 +212,9 @@ export function chooseHidden(
   const words = wordsOf(lines, dialect);
   const at = (c: Candidate) => words.get(foldForDialect(c.term, dialect))?.at ?? [];
   const ranked = (['glossary', 'vocabulary'] as const).flatMap((from) =>
-    seededShuffle(
-      candidates.filter((c) => c.from === from),
-      `${seed}:${from}`,
-    ).sort((a, b) => at(a).length - at(b).length),
+    drawFor(`${seed}:${from}`)
+      .shuffle(candidates.filter((c) => c.from === from))
+      .sort((a, b) => at(a).length - at(b).length),
   );
   const chosen: Candidate[] = [];
   const near = (c: Candidate) => at(c).some((i) => chosen.some((d) => at(d).some((j) => Math.abs(i - j) <= 1)));
@@ -263,10 +271,15 @@ const fits = (lines: readonly string[]): boolean => {
   return n >= MEMORY_PASSAGE_WORDS.min && n <= MEMORY_PASSAGE_WORDS.max;
 };
 
+/** Words looked at, at most, for decoys close in length to the vanished ones, before any length will do. */
+const DECOYS_LOOKED_AT = 800;
+
 /**
  * Decoy tiles for a passage: other approved words, none the passage holds,
  * none the same as a vanished word even by the lenient key, close in length
- * to the vanished words, each once (pure, for the tests).
+ * to the vanished words, each once (pure, for the tests). Drawn one at a time
+ * in a random order, so a passage looks at a few hundred words at most, not
+ * every word the variety has.
  */
 export function chooseDecoys(
   hidden: readonly string[],
@@ -288,9 +301,15 @@ export function chooseDecoys(
     lenient.add(foldForDialect(w, dialect, true));
     out.push(w);
   };
-  const shuffled = seededShuffle(words, `${seed}:decoys`);
-  for (const w of shuffled) if (near(w)) add(w);
-  for (const w of shuffled) add(w);
+  // near ones first, among the first few hundred drawn; anything that fits after
+  const far: string[] = [];
+  let looked = 0;
+  for (const w of drawFor(`${seed}:decoys`).order(words)) {
+    if (near(w)) add(w);
+    else far.push(w);
+    if (out.length >= n || (++looked >= DECOYS_LOOKED_AT && out.length + far.length >= n * 4)) break;
+  }
+  for (const w of far) add(w);
   return out;
 }
 
@@ -317,8 +336,12 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
     return (await this.read(dialect)).passages;
   }
 
-  /** The pool, and every approved word a decoy may be: the words taught, and every passage's words worth taking. */
-  private async read(dialect: GameDialect): Promise<{ passages: PoolPassage[]; words: string[] }> {
+  /** The pool, and every approved word a decoy may be: the words taught, and every passage's words worth taking; worked out once and kept. */
+  private read(dialect: GameDialect): Promise<{ passages: PoolPassage[]; words: string[] }> {
+    return this.sources.derived('memory-thief:pool', dialect, () => this.readPool(dialect));
+  }
+
+  private async readPool(dialect: GameDialect): Promise<{ passages: PoolPassage[]; words: string[] }> {
     const [rows, stories, conversations, vocabulary] = await Promise.all([
       this.sources.content('passage', dialect),
       this.sources.storyPassages(dialect),
@@ -390,7 +413,7 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
     const [{ passages: pool, words: decoyWords }, seen] = await Promise.all([this.read(ask.dialect), seenFor(db, ask.userId, MEMORY_THIEF)]);
     const eligible = pool.filter((p) => MemoryThiefGame.playable(p, ask.difficulty));
     if (eligible.length < MEMORY_ROUND_PASSAGES) return null;
-    const ordered = freshestFirst(seededShuffle(eligible, `${ask.seed}:pick`), seen);
+    const ordered = freshestFirst(drawFor(`${ask.seed}:pick`).shuffle(eligible), seen);
     const round: PoolPassage[] = [];
     const per = new Map<string, number>();
     for (const p of ordered) {
@@ -404,7 +427,18 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
     round.sort((a, b) => a.level - b.level);
 
     const items = round.map((p, i) => this.item(p, i, ask, decoyWords, seen.get(p.key)?.recent === true));
-    return { items, meta: { mode: memoryAnswerMode(ask.difficulty) } };
+    return { items, meta: { mode: memoryAnswerMode(ask.difficulty), begun: [] } };
+  }
+
+  /** The passages whose study has given way to their gaps. */
+  private static begun(meta: Record<string, unknown>): number[] {
+    return Array.isArray(meta.begun) ? meta.begun.filter((n): n is number => typeof n === 'number') : [];
+  }
+
+  begin(round: { items: MemoryItem[]; meta: Record<string, unknown> }, index: number): Record<string, unknown> | null {
+    const begun = MemoryThiefGame.begun(round.meta);
+    if (begun.includes(index) || !round.items[index]) return null;
+    return { ...round.meta, begun: [...begun, index].sort((a, b) => a - b) };
   }
 
   private item(p: PoolPassage, i: number, ask: RoundAsk, decoyWords: readonly string[], repeat: boolean): MemoryItem {
@@ -431,24 +465,26 @@ export class MemoryThiefGame implements SoloEngine<MemoryItem, MemoryThiefItemVi
         dialect,
       ),
       hidden: hidden.map((h, n) => ({ term: h.term, tile: tiles[n]!, meanings: h.meanings, from: h.from })),
-      tiles: mode === 'tiles' ? seededShuffle([...tiles, ...decoys], `${ask.seed}:${i}:tiles`) : null,
+      tiles: mode === 'tiles' ? drawFor(`${ask.seed}:${i}:tiles`).shuffle([...tiles, ...decoys]) : null,
       studySeconds: studySeconds(words, difficulty),
       why: hidden.some((h) => h.from === 'glossary') ? 'glossary' : 'vocabulary',
     };
   }
 
-  view(item: MemoryItem, index: number): MemoryThiefItemView {
+  /** While it is studied, the passage whole and nothing of its gaps; once begun, its gaps and tiles and never the passage again. */
+  view(item: MemoryItem, index: number, meta: Record<string, unknown>): MemoryThiefItemView {
+    const restore = MemoryThiefGame.begun(meta).includes(index);
     return {
       index,
-      key: item.key,
+      phase: restore ? 'restore' : 'study',
       kind: item.kind,
       title: item.title,
-      parts: item.parts,
-      text: item.text,
+      text: restore ? null : item.text,
+      parts: restore ? item.parts : null,
       speakers: item.speakers,
       gaps: item.hidden.length,
       studySeconds: item.studySeconds,
-      tiles: item.tiles,
+      tiles: restore ? item.tiles : null,
       level: item.level as GameLevel,
     };
   }

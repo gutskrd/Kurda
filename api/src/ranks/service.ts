@@ -338,6 +338,19 @@ export class RankService {
   // the finish
 
   /**
+   * A finished game that did not count (called off, too few left: its rules'
+   * `counted`): closed as void without rating anyone, so it reads as settled
+   * rather than waiting for ever. In the transaction that finished it; does
+   * nothing for a game already settled or voided.
+   */
+  async closeUncounted(client: Executor, game: RankedGame, gameRef: string): Promise<void> {
+    await client.query(
+      `UPDATE rated_games SET applied_at = $3, outcome = 'void' WHERE game = $1 AND game_ref = $2 AND applied_at IS NULL AND voided_at IS NULL`,
+      [game, gameRef, this.now()],
+    );
+  }
+
+  /**
    * Apply a finished game's ratings, in the transaction that finished it.
    * `places` is the game's own result (1 = first, equal places tie) for
    * everyone still in it; a player who left is last whatever it says, and one

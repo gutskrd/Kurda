@@ -415,6 +415,45 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
       expect((await call('POST', `/games/solo/sessions/${id}/hints`, learner, {})).statusCode).toBe(409);
     });
 
+    it('carries the hints spent on a case in a round given up into the next round of it', async () => {
+      const { token: sleuth, id: sleuthId } = await register('wsSleuth');
+      // every other published case met lately, so this one is dealt
+      await pool.query(
+        `INSERT INTO game_seen (user_id, game, item_key, attempts, correct, last_seen_at, last_correct_at)
+         SELECT $1, 'detective', 'gc:' || id || ':accuse', 1, 1, now(), now() FROM game_content
+          WHERE kind = 'case_file' AND status = 'published' AND id <> $2
+         ON CONFLICT (user_id, game, item_key) DO NOTHING`,
+        [sleuthId, caseId],
+      );
+      const first = (await call('POST', '/games/solo/sessions', sleuth, { game: 'detective', dialect: 'kmr', difficulty: 'beginner' })).json();
+      expect((await call('POST', `/games/solo/sessions/${first.id}/hints`, sleuth, { evidence: 'where' })).statusCode).toBe(200);
+
+      // given up for a new round: the old one takes nothing more, and the new one starts with the hint spent and the card read
+      const second = (await call('POST', '/games/solo/sessions', sleuth, { game: 'detective', dialect: 'kmr', difficulty: 'beginner' })).json();
+      expect((await call('GET', `/games/solo/sessions/${first.id}`, sleuth)).json().expired).toBe(true);
+      expect((await call('POST', `/games/solo/sessions/${first.id}/hints`, sleuth, {})).statusCode).toBe(410);
+      const items = (await pool.query<{ items: Array<{ key: string; shown?: number[]; correctIndex?: number; suspects?: string[] }> }>(
+        `SELECT items FROM game_sessions WHERE id = $1`,
+        [second.id],
+      )).rows[0]!.items;
+      expect(items[0]!.key).toBe(`gc:${caseId}:step:0`);
+      expect(second.board).toMatchObject({ hintsUsed: 1, hintsLeft: DETECTIVE_HINTS - 1 });
+      expect(second.board.evidence.find((e: { id: string }) => e.id === 'where').meanings.en).toBeTruthy();
+
+      // played through right: the carried hint is taken off what it pays
+      for (let i = 0; i < 2; i++) {
+        await call('POST', `/games/solo/sessions/${second.id}/answers`, sleuth, { index: i, answer: { choice: items[i]!.shown!.indexOf(items[i]!.correctIndex!) } });
+      }
+      await call('POST', `/games/solo/sessions/${second.id}/answers`, sleuth, { index: 2, answer: { choice: items[2]!.suspects!.indexOf('xezo') } });
+      const done = (await call('POST', `/games/solo/sessions/${second.id}/finish`, sleuth)).json();
+      expect(done).toMatchObject({ correct: 3, learningCounted: true, deducted: 1, xp: 5 });
+
+      // a round after one that was finished starts with nothing spent
+      await pool.query(`UPDATE game_seen SET last_seen_at = now() - interval '30 days' WHERE user_id = $1 AND item_key = $2`, [sleuthId, `gc:${caseId}:accuse`]);
+      const third = (await call('POST', '/games/solo/sessions', sleuth, { game: 'detective', dialect: 'kmr', difficulty: 'beginner' })).json();
+      expect(third.board).toMatchObject({ hintsUsed: 0 });
+    });
+
     it('seeds a starter case once, as an unreviewed draft made of the course’s own lines', async () => {
       const c1 = conversation(1, conversationIds[1]!);
       const file = path.join(scratch, 'detective.json');

@@ -46,6 +46,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('learning games (integration)', () 
   let learner = '';
   let learnerId = '';
   let other = '';
+  let otherId = '';
   let editor = '';
   let legacyAdmin = '';
   let net = 0;
@@ -142,7 +143,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('learning games (integration)', () 
     await bustAvailability(app.cache);
 
     ({ token: learner, id: learnerId } = await register('gmLearner'));
-    ({ token: other } = await register('gmOther'));
+    ({ token: other, id: otherId } = await register('gmOther'));
     ({ token: editor } = await register('gmEditor', '{content_editor}'));
     ({ token: legacyAdmin } = await register('gmAdmin', '{admin}'));
   });
@@ -320,6 +321,34 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('learning games (integration)', () 
       const results = (await call('POST', `/games/solo/sessions/${id}/finish`, other)).json();
       expect(results).toMatchObject({ correct: 3, total: 8, xp: 0, learningCounted: false, needed: 4, streak: null });
       expect((await pool.query(`SELECT 1 FROM xp_ledger WHERE ref_id LIKE $1`, [`${id}:%`])).rowCount).toBe(0);
+    });
+
+    it('keeps one round open: a new one gives the open one up, and records what it covered as seen', async () => {
+      const { id: left } = (await play(other, 'kmr')).json();
+      const items = await stored(left);
+      // the first item answered wrong twice, its correction read
+      await answer(other, left, 0, wrongOrder(items[0]!, 'kmr'));
+      await answer(other, left, 0, wrongOrder(items[0]!, 'kmr'));
+      const { id: next } = (await play(other, 'kmr')).json();
+      expect((await call('GET', '/games/solo/open?game=build-sentence&dialect=kmr', other)).json().id).toBe(next);
+      // the round left behind takes nothing more and pays nothing
+      expect((await call('GET', `/games/solo/sessions/${left}`, other)).json()).toMatchObject({ expired: true, finished: false });
+      expect((await answer(other, left, 1, rightOrder(items[1]!, 'kmr'))).statusCode).toBe(410);
+      expect((await call('POST', `/games/solo/sessions/${left}/finish`, other)).statusCode).toBe(410);
+      const seen = await pool.query(`SELECT correct, last_correct_at FROM game_seen WHERE user_id = $1 AND game = 'build-sentence' AND item_key = $2`, [otherId, items[0]!.key]);
+      expect(seen.rows).toEqual([{ correct: 0, last_correct_at: null }]);
+      // so the corrected item comes after the ones never met, not first again
+      const fresh = await stored(next);
+      expect(fresh.findIndex((i) => i.key === items[0]!.key)).toBe(-1);
+      expect((await pool.query(`SELECT count(*)::int AS n FROM game_sessions WHERE user_id = $1 AND game = 'build-sentence' AND finished_at IS NULL AND expires_at > now()`, [otherId])).rows[0].n).toBe(1);
+    });
+
+    it('starts at most a few rounds a minute', async () => {
+      const { token: hurried } = await register('gHurried');
+      const codes: number[] = [];
+      for (let i = 0; i < 21; i++) codes.push((await play(hurried, 'kmr')).statusCode);
+      expect(codes.slice(0, 20).every((c) => c === 201)).toBe(true);
+      expect(codes[20]).toBe(429);
     });
 
     it('refuses a difficulty with too little approved content', async () => {

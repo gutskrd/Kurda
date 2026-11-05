@@ -18,7 +18,15 @@
  * the stories' glossaries, the row's own glosses).
  *
  * A round with six or more right on the first try on the learner's own rung
- * opens the next rung (`game_progress`).
+ * opens the next rung (`game_progress`): a round holds six of the rung's own
+ * sentences, and the warm-ups below it do not count towards it.
+ *
+ * The item a player is sent carries the meaning and the tiles, never anything
+ * worked out from the sentence (a key hashed from it would let the tiles be
+ * tried in every order until one hashed the same). The pool is worked out
+ * once per variety and kept (`TrustedSources.derived`), and an item's decoys
+ * are drawn one at a time from one seeded generator (games/draw.ts), so
+ * making a round does not shuffle every word the variety has.
  */
 import type pg from 'pg';
 import { z } from 'zod';
@@ -32,6 +40,7 @@ import {
   foldForDialect,
   gameWords,
   roundRung,
+  rungFirstTries,
   rungStep,
   sentenceShape,
   stepAfterRound,
@@ -44,8 +53,10 @@ import {
   type SentenceItemView,
   type SentenceLadderView,
   type SentenceRung,
+  type SoloResults,
 } from '@kurda/shared';
-import { checkAnswer, gradingKey, seededShuffle } from '../content/exercises.js';
+import { checkAnswer, gradingKey } from '../content/exercises.js';
+import { drawFor } from './draw.js';
 import { freshestFirst, seenFor } from './seen.js';
 import { sentenceKey, type TrustedSources } from './sources.js';
 import type { RoundAsk, SoloEngine, StoredItem } from './solo.js';
@@ -79,8 +90,8 @@ export interface SentenceItem extends StoredItem {
   glosses: Array<Partial<Meanings> | null>;
 }
 
-/** The sentences a round on a rung is mostly made of; the rest warm up from the rungs below. */
-const FOCUS = 5;
+/** The sentences a round on a rung is mostly made of — enough to step up on (STEP_UP_FIRST_TRY); the rest warm up from the rungs below. */
+const FOCUS = 6;
 
 const answerSchema: z.ZodType<SentenceAnswer> = z.object({ order: z.array(z.number().int().min(0).max(MAX_TILES - 1)).min(1).max(MAX_TILES) });
 
@@ -103,6 +114,19 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
    * its orders, meanings and glosses to it rather than being a second item).
    */
   async pool(dialect: GameDialect): Promise<PoolSentence[]> {
+    return (await this.read(dialect)).sentences;
+  }
+
+  /** The pool, every word's one spelling and the words' meanings, worked out once and kept while the pools stand. */
+  private read(dialect: GameDialect): Promise<{ sentences: PoolSentence[]; spelling: Map<string, string>; decoyWords: string[]; lexicon: Map<string, Partial<Meanings>> }> {
+    return this.sources.derived('build-sentence:pool', dialect, async () => {
+      const [sentences, lexicon] = await Promise.all([this.readSentences(dialect), this.lexicon(dialect)]);
+      const spelling = this.spellings(sentences, dialect);
+      return { sentences, spelling, decoyWords: [...spelling.values()], lexicon };
+    });
+  }
+
+  private async readSentences(dialect: GameDialect): Promise<PoolSentence[]> {
     const [lessons, rows] = await Promise.all([this.sources.lessonSentences(dialect), this.sources.content('sentence', dialect)]);
     const byKey = new Map<string, PoolSentence>();
     for (const s of lessons) {
@@ -159,11 +183,10 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
   }
 
   async build(ask: RoundAsk, db: Pick<pg.Pool, 'query'>): Promise<{ items: SentenceItem[]; meta: Record<string, unknown> } | null> {
-    const [pool, step, seen, lexicon] = await Promise.all([
-      this.pool(ask.dialect),
+    const [{ sentences: pool, spelling, decoyWords, lexicon }, step, seen] = await Promise.all([
+      this.read(ask.dialect),
       this.step(db, ask.userId, ask.dialect),
       seenFor(db, ask.userId, BUILD_SENTENCE),
-      this.lexicon(ask.dialect),
     ]);
     const rungs = DIFFICULTY_RUNGS[ask.difficulty];
     const inDifficulty = pool.filter((s) => rungs.includes(s.rung));
@@ -172,7 +195,7 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
     const target =
       roundRung(ask.difficulty, step, (r) => count(r) >= FOCUS) ?? [...rungs].sort((a, b) => count(b) - count(a) || rungStep(a) - rungStep(b))[0]!;
 
-    const fresh = (list: PoolSentence[], salt: string) => freshestFirst(seededShuffle(list, `${ask.seed}:${salt}`), seen);
+    const fresh = (list: PoolSentence[], salt: string) => freshestFirst(drawFor(`${ask.seed}:${salt}`).shuffle(list), seen);
     const focus = fresh(inDifficulty.filter((s) => s.rung === target), 'focus').slice(0, FOCUS);
     const chosen = new Set(focus.map((s) => s.key));
     // warm-ups from the rungs below first, then anything else at this difficulty
@@ -189,14 +212,14 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
     // a round climbs: the warm-ups first, the rung it is played on after
     round.sort((a, b) => rungStep(a.rung) - rungStep(b.rung));
 
-    const spelling = this.spellings(pool, ask.dialect);
-    const decoyWords = [...spelling.values()];
     const items = round.map((s, i): SentenceItem => {
+      const draw = drawFor(`${ask.seed}:${i}`);
       const words = gameWords(s.ku).map((w) => spelling.get(foldForDialect(w, ask.dialect)) ?? w);
       const taken = new Set(s.accepted.flatMap((a) => gameWords(a)).flatMap((w) => [foldForDialect(w, ask.dialect), foldForDialect(w, ask.dialect, true)]));
       const want = Math.max(0, Math.min(DECOYS[ask.difficulty], MAX_TILES - words.length));
       const decoys: string[] = [];
-      for (const w of seededShuffle(decoyWords, `${ask.seed}:${i}:decoys`)) {
+      // drawn one at a time: an item takes a few of the variety's words, never shuffles them all
+      for (const w of draw.order(decoyWords)) {
         if (decoys.length >= want) break;
         const strict = foldForDialect(w, ask.dialect);
         const lenient = foldForDialect(w, ask.dialect, true);
@@ -205,7 +228,7 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
         taken.add(lenient);
         decoys.push(w);
       }
-      let tiles = seededShuffle([...words, ...decoys], `${ask.seed}:${i}:bank`);
+      let tiles = draw.shuffle([...words, ...decoys]);
       // never hand the answer over already in order
       const places = tiles.map((t, j) => (decoys.includes(t) ? -1 : j)).filter((j) => j >= 0);
       if (places.length > 1 && places.every((p, j) => tiles[p] === words[j])) {
@@ -268,7 +291,7 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
   }
 
   view(item: SentenceItem, index: number): SentenceItemView {
-    return { index, key: item.key, meaning: item.meaning, tiles: item.tiles, rung: item.rung, level: item.level as GameLevel };
+    return { index, meaning: item.meaning, tiles: item.tiles, rung: item.rung, level: item.level as GameLevel };
   }
 
   grade(item: SentenceItem, answer: SentenceAnswer): boolean {
@@ -296,15 +319,19 @@ export class BuildSentenceGame implements SoloEngine<SentenceItem, SentenceItemV
     return item.rung;
   }
 
-  /** A round passed well on the learner's rung, or above it, opens the next one. */
+  /** A round passed well on the learner's rung, or above it, opens the next one: judged on that rung's own sentences. */
   async finished(
     client: pg.PoolClient,
-    round: { userId: string; dialect: GameDialect; meta: Record<string, unknown>; results: { firstTry: number } },
+    round: { userId: string; dialect: GameDialect; meta: Record<string, unknown>; items: readonly SentenceItem[]; results: SoloResults },
   ): Promise<void> {
     const played = round.meta.rung;
     if (typeof played !== 'string' || !(SENTENCE_RUNGS as readonly string[]).includes(played)) return;
+    const own = rungFirstTries(
+      round.results.items.map((r) => ({ rung: round.items[r.index]?.rung ?? 'short', firstTry: r.firstTry })),
+      played as SentenceRung,
+    );
     const before = await this.step(client, round.userId, round.dialect);
-    const after = stepAfterRound(before, played as SentenceRung, round.results.firstTry);
+    const after = stepAfterRound(before, played as SentenceRung, own);
     if (after === before) return;
     await client.query(
       `INSERT INTO game_progress (user_id, game, dialect, step) VALUES ($1, $2, $3, $4)

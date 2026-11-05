@@ -6,6 +6,7 @@ import {
   LAST_LETTER_MIN_DICTIONARY_WORDS,
   LAST_LETTER_MIN_HEVALO_WORDS,
   LAST_LETTER_MIN_PLAYERS,
+  LAST_LETTER_SOLO_DAILY_XP_CAP,
   LAST_LETTER_SOLO_REPEAT_DAYS,
   LAST_LETTER_SOLO_XP_CAP,
   LAST_LETTER_SOLO_XP_PER_WORD,
@@ -224,16 +225,31 @@ export const lastLetterModule: GameModule<LastLetterState, LastLetterMove, LastL
 
   /**
    * Against Hevalo: LAST_LETTER_SOLO_XP_PER_WORD for each word the person got
-   * into the chain, at most LAST_LETTER_SOLO_XP_CAP a game, and nothing for a
-   * word they were paid for in the last LAST_LETTER_SOLO_REPEAT_DAYS days — the
-   * same word every evening is not learning. Each word is its own ledger row,
-   * keyed by the person, the word and the day, so paying twice is impossible.
+   * into the chain, at most LAST_LETTER_SOLO_XP_CAP a game and
+   * LAST_LETTER_SOLO_DAILY_XP_CAP a day (UTC) over every game against Hevalo,
+   * and nothing for a word they were paid for in the last
+   * LAST_LETTER_SOLO_REPEAT_DAYS days — the same word every evening is not
+   * learning. Each word is its own ledger row, keyed by the person, the word
+   * and the day, so paying twice is impossible. The day's cap is what makes the
+   * game's cap mean anything: starting the next game ends this one and pays
+   * it, so games can follow each other as fast as words can be typed. The
+   * person's row is locked first (as every award locks it), so two games
+   * finishing at once count the day one after the other.
    */
   async payAgainstHevalo(db, game, state) {
     const words = [...new Set(state.chain.filter((w) => w.seat === game.seat).map((w) => w.word))];
+    if (words.length === 0) return 0;
+    await db.query(`SELECT 1 FROM users WHERE id = $1 FOR NO KEY UPDATE`, [game.userId]);
+    const today = await db.query<{ xp: number }>(
+      `SELECT COALESCE(SUM(amount), 0)::int AS xp FROM xp_ledger
+        WHERE user_id = $1 AND source = 'game_last_letter_solo' AND amount > 0
+          AND created_at >= date_trunc('day', $2::timestamptz AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'`,
+      [game.userId, game.now],
+    );
+    const cap = Math.min(LAST_LETTER_SOLO_XP_CAP, Math.max(0, LAST_LETTER_SOLO_DAILY_XP_CAP - (today.rows[0]?.xp ?? 0)));
     let paid = 0;
     for (const key of words) {
-      if (paid + LAST_LETTER_SOLO_XP_PER_WORD > LAST_LETTER_SOLO_XP_CAP) break;
+      if (paid + LAST_LETTER_SOLO_XP_PER_WORD > cap) break;
       const refs = soloWordRefs(game.userId, game.dialect, key, game.now);
       const before = await db.query(`SELECT 1 FROM xp_ledger WHERE source = 'game_last_letter_solo' AND ref_id = ANY($1::text[]) LIMIT 1`, [refs]);
       if (before.rowCount) continue;

@@ -8,8 +8,13 @@
  *     lines with the English beside them, and the word pairs they teach;
  *   - published stories (published means approved: the table checks it), by
  *     paragraph, with the glossary terms each paragraph holds;
- *   - people's recordings (`lesson_audio`, `alphabet_audio`, `dict_audio`),
- *     never the synthesised clips the apps ship;
+ *   - people's recordings, never the synthesised clips the apps ship: of
+ *     `lesson_audio` only those filed under a text published content says
+ *     now (a published lesson's, a published conversation's line, an approved
+ *     story's sentence) — the studio records drafts too, and a text corrected
+ *     since keeps its old recording — shown with the text as it is published;
+ *     the alphabet's words; and the pronunciations of dictionary entries an
+ *     admin curated for the games (`in_games`);
  *   - `game_content` rows that are published, and so approved.
  * Drafts, lessons in review, unpublished stories and unapproved rows are never
  * read here, so no game can reach them.
@@ -29,7 +34,10 @@
  * made from the cached pool, and the pool is read from Postgres at most once
  * per variety in that time, however many rounds are played. A change in the
  * admin panel shows within those minutes (game content also bumps the cache
- * itself: `bustGamePools`).
+ * itself: `bustGamePools`). What a game works out from the pools — its maps
+ * of words and meanings, its decoy buckets — is kept in this process too
+ * (`derived`), under the same generation, so a round is made from them
+ * without building them again.
  */
 import { createHash, randomBytes } from 'node:crypto';
 import type pg from 'pg';
@@ -37,11 +45,15 @@ import {
   SENTENCE_WORDS,
   alphabetClipText,
   checkGameContent,
+  conversationClips,
   conversationLineKey,
   fitsDialect,
   foldForDialect,
   gameWords,
+  lessonAudioKey,
+  lessonAudioTargets,
   scenarioLevel,
+  storyAudioSentences,
   storyParagraphs,
   storySpelling,
   toDialect,
@@ -60,6 +72,8 @@ type Executor = Pick<pg.Pool, 'query'>;
 
 /** How long a pool is kept, in seconds. */
 export const POOL_TTL_SECONDS = 300;
+/** How long what a game works out from the pools is kept in this process: a fraction of a pool's life, so it follows the pools closely. */
+export const DERIVED_TTL_MS = 60_000;
 const CACHE_DOMAIN = 'games-pool';
 /** The pools' generation: bumping it retires every cached pool at once. */
 const GENERATION_ID = 'generation';
@@ -334,12 +348,38 @@ export function conversationLinesOf(row: Pick<ExerciseRow, 'id' | 'type' | 'payl
   return out;
 }
 
+/**
+ * The recordings a game may play, by the `lesson_audio` key each is filed
+ * under, with the text as published content writes it now (pure, for the
+ * tests): every text a live published lesson asks to be heard
+ * (`lessonAudioTargets`), every line of its conversations (by the line's own
+ * key, `conversationClips`), and every sentence of an approved published
+ * story (`storyAudioSentences`) — the same keys the recording studio files
+ * them under. A recording under any other key is of a draft, of a story in
+ * review or rejected, or of a text corrected since.
+ */
+export function publishedRecordingTexts(exercises: ReadonlyArray<Pick<ExerciseRow, 'type' | 'payload'>>, paragraphs: readonly string[]): Map<string, string> {
+  const out = new Map<string, string>();
+  const add = (key: string, text: string): void => {
+    if (key !== '' && !out.has(key)) out.set(key, text);
+  };
+  for (const row of exercises) {
+    if (row.type === 'conversation') for (const clip of conversationClips(row.payload)) add(clip.key, clip.text);
+    else for (const text of lessonAudioTargets(row.type, row.payload)) add(lessonAudioKey(text), text);
+  }
+  for (const paragraph of paragraphs) for (const sentence of storyAudioSentences(paragraph)) add(lessonAudioKey(sentence), sentence);
+  return out;
+}
+
 // ---------- the readers ----------
 
 export class TrustedSources {
+  private readonly memo = new Map<string, { at: number; value: Promise<unknown> }>();
+
   constructor(
     private readonly db: Executor,
     private readonly cache: Cache | null = null,
+    private readonly clock: () => number = Date.now,
   ) {}
 
   /** A pool through the cache, under the current generation. */
@@ -350,11 +390,36 @@ export class TrustedSources {
   }
 
   /**
-   * The exercises of every live published lesson in a course of this variety:
-   * the newest published version at each place in a skill. A draft or a
-   * lesson in review is never among them, nor a version replaced.
+   * Something a game works out from the pools (`name` says which game and
+   * what), kept in this process for DERIVED_TTL_MS under the pools'
+   * generation, so a publish retires it on every instance at once. Rounds
+   * made together share one build. Without a cache there is no generation to
+   * follow, and it is built every time.
    */
-  private async publishedExercises(dialect: GameDialect, types: readonly string[]): Promise<ExerciseRow[]> {
+  async derived<T>(name: string, dialect: GameDialect, build: () => Promise<T>): Promise<T> {
+    if (!this.cache) return build();
+    const generation = (await this.cache.get<string>(CACHE_DOMAIN, GENERATION_ID)) ?? '0';
+    const key = `${generation}:${name}:${dialect}`;
+    const now = this.clock();
+    const hit = this.memo.get(key);
+    if (hit && now - hit.at < DERIVED_TTL_MS) return hit.value as Promise<T>;
+    for (const [k, v] of this.memo) if (now - v.at >= DERIVED_TTL_MS) this.memo.delete(k);
+    const value = build();
+    this.memo.set(key, { at: now, value });
+    // a build that failed is not kept: the next round tries again
+    value.catch(() => {
+      if (this.memo.get(key)?.value === value) this.memo.delete(key);
+    });
+    return value;
+  }
+
+  /**
+   * The exercises of every live published lesson in a course of this variety:
+   * the newest published version at each place in a skill, of these types (or
+   * of every type, for null). A draft or a lesson in review is never among
+   * them, nor a version replaced.
+   */
+  private async publishedExercises(dialect: GameDialect, types: readonly string[] | null): Promise<ExerciseRow[]> {
     const res = await this.db.query<ExerciseRow>(
       `WITH live AS (
          SELECT DISTINCT ON (l.skill_id, l.position) l.id, c.dialect
@@ -367,7 +432,7 @@ export class TrustedSources {
        )
        SELECT e.id, e.type, e.payload, live.dialect
          FROM live JOIN exercises e ON e.lesson_id = live.id
-        WHERE e.type = ANY($1::text[])
+        WHERE $1::text[] IS NULL OR e.type = ANY($1::text[])
         ORDER BY live.id, e.position`,
       [types],
     );
@@ -467,27 +532,41 @@ export class TrustedSources {
 
   /**
    * People's recordings with the Kurdish they say, in this variety's script:
-   * lesson and story sentences, the alphabet's words, the dictionary's
-   * pronunciations. The synthesised clips the apps ship are never rows here.
+   * the published lessons' and approved stories' texts (each with the text as
+   * published, `publishedRecordingTexts`: a recording of anything else is
+   * left out), the alphabet's words, and the pronunciations of the curated
+   * dictionary entries of this variety. The synthesised clips the apps ship
+   * are never rows here.
    */
   recordings(dialect: GameDialect): Promise<HumanRecording[]> {
-    return this.pooled('recordings', dialect, async () => {
-      const [lesson, alphabet, dictionary] = await Promise.all([
+    return this.pooled('published-recordings', dialect, async () => {
+      const [lesson, alphabet, dictionary, exercises, stories] = await Promise.all([
         this.db.query<{ key: string; text: string; url: string; speaker: SpeakerId | null; recorded_by: string | null }>(
           `SELECT key, text, url, speaker, recorded_by FROM lesson_audio ORDER BY key`,
         ),
         this.db.query<{ key: string; url: string; speaker: SpeakerId | null; updated_by: string | null }>(
           `SELECT key, url, speaker, updated_by FROM alphabet_audio ORDER BY key`,
         ),
-        this.db.query<{ id: string; headword: string; url: string; speaker: SpeakerId | null; dialect: string }>(
-          `SELECT a.id, e.headword, a.audio_url AS url, a.speaker, a.dialect
+        this.db.query<{ id: string; headword: string; url: string; speaker: SpeakerId | null; dialect: string; entry_dialect: string }>(
+          `SELECT a.id, e.headword, a.audio_url AS url, a.speaker, a.dialect, e.dialect AS entry_dialect
              FROM dict_audio a JOIN dict_entries e ON e.id = a.entry_id
+            WHERE e.in_games
             ORDER BY e.headword, a.id`,
         ),
+        this.publishedExercises(dialect, null),
+        this.storyPassages(dialect),
       ]);
+      const published = publishedRecordingTexts(
+        exercises,
+        stories.map((p) => p.text),
+      );
       const out: HumanRecording[] = [];
       for (const r of lesson.rows) {
-        if (fitsDialect(r.text, dialect)) out.push({ key: `rec:lesson:${r.key}`, source: 'lesson', text: r.text, url: r.url, speaker: r.speaker, recordedBy: r.recorded_by });
+        // a recording is played only of a text published content says now, and shown as it says it
+        const text = published.get(r.key);
+        if (text !== undefined && fitsDialect(text, dialect)) {
+          out.push({ key: `rec:lesson:${r.key}`, source: 'lesson', text, url: r.url, speaker: r.speaker, recordedBy: r.recorded_by });
+        }
       }
       for (const r of alphabet.rows) {
         // a letter's sound is said as a syllable ("ba" for b), which is no word of either variety: only the example words are
@@ -496,7 +575,7 @@ export class TrustedSources {
         if (text && fitsDialect(text, dialect)) out.push({ key: `rec:alphabet:${r.key}`, source: 'alphabet', text, url: r.url, speaker: r.speaker, recordedBy: r.updated_by });
       }
       for (const r of dictionary.rows) {
-        if (toDialect(r.dialect) === dialect && fitsDialect(r.headword, dialect)) {
+        if (toDialect(r.dialect) === dialect && toDialect(r.entry_dialect) === dialect && fitsDialect(r.headword, dialect)) {
           out.push({ key: `rec:dict:${r.id}`, source: 'dictionary', text: r.headword, url: r.url, speaker: r.speaker, recordedBy: null });
         }
       }

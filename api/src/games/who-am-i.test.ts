@@ -55,7 +55,9 @@ describe('a round', () => {
     expect(round.items).toHaveLength(WHO_AM_I_ROUND_ITEMS);
     const item = round.items[0]!;
     const view = game.view(item, 0);
-    expect(view.tiles.map((t) => t.id)).toContain(item.identity.id);
+    // tiles are known by their place in the round, never by the identity behind them
+    expect(view.tiles.map((t) => t.id)).toEqual(['a', 'b', 'c', 'd']);
+    for (const t of item.tiles) expect(JSON.stringify(view)).not.toContain(t.id);
     expect(view.tiles).toHaveLength(4);
     // a beginner sees what the tiles mean
     expect(view.tiles[0]!.meanings).not.toBeNull();
@@ -70,11 +72,23 @@ describe('a round', () => {
   it('judges a guess by the tile, says which tile it was not, and names the identity once done', async () => {
     const round = (await game.build({ userId: 'u1', dialect: 'kmr', difficulty: 'beginner', seed: 'seed' }, noneSeen))!;
     const item = round.items[0]!;
-    const other = item.tiles.find((t) => t.id !== item.identity.id)!;
-    expect(game.grade(item, { guess: item.identity.id })).toBe(true);
-    expect(game.grade(item, { guess: other.id })).toBe(false);
-    expect(game.hint(item, { guess: other.id })).toEqual({ notThis: other.id });
-    expect(game.correction(item)).toEqual({ id: item.identity.id, word: item.identity.word, meanings: item.identity.meanings, category: 'animal' });
+    const view = game.view(item, 0);
+    const right = view.tiles[item.tiles.findIndex((t) => t.id === item.identity.id)]!.id;
+    const other = view.tiles.find((t) => t.id !== right)!.id;
+    expect(game.grade(item, { guess: right })).toBe(true);
+    expect(game.grade(item, { guess: other })).toBe(false);
+    // the identity's own id is no guess at all
+    expect(game.grade(item, { guess: item.identity.id })).toBe(false);
+    expect(game.hint(item, { guess: other })).toEqual({ notThis: other });
+    expect(game.correction(item)).toEqual({ id: right, word: item.identity.word, meanings: item.identity.meanings, category: 'animal' });
+  });
+
+  it('names the kind of thing only when every tile is that kind', async () => {
+    const round = (await game.build({ userId: 'u1', dialect: 'kmr', difficulty: 'beginner', seed: 'seed' }, noneSeen))!;
+    const item = round.items[0]!;
+    expect(game.view(item, 0).category).toBe(item.identity.category);
+    const mixed = { ...item, tiles: item.tiles.map((t, i) => (i === 0 && t.id !== item.identity.id ? { ...t, category: 'object' } : i === 1 && t.id !== item.identity.id ? { ...t, category: 'object' } : t)) };
+    expect(game.view(mixed, 0).category).toBeNull();
   });
 
   it('makes no round at a difficulty without enough identities', async () => {

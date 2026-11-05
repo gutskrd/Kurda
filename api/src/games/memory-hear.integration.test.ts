@@ -35,6 +35,7 @@ import {
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
+import { DictionaryRepository } from '../dictionary/repository.js';
 import { XpService } from '../xp/service.js';
 import { activate } from '../test/activate.js';
 import { poolQuiet, queriesDuring } from '../test/query-count.js';
@@ -84,6 +85,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
   const courseIds: string[] = [];
   const storyIds: string[] = [];
   const audioKeys: string[] = [];
+  const entryIds: string[] = [];
   const alphabetKeys: string[] = [];
   // the bucket: a recording's bytes by its object key
   const objects = new Map<string, Buffer>();
@@ -237,7 +239,19 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
         { left: 'malê', right: 'home' },
       ],
     });
+    // the sixteen words this suite records, and its lines as translations too: a game plays a recording only of what a published lesson says
+    for (let p = 0; p < 2; p++) {
+      await repo.addExercise(lesson, 3 + p, 'match_pairs', {
+        pairs: Array.from({ length: 8 }, (_, j) => ({ left: `${tag}${letters(p * 8 + j)}`, right: `word ${p * 8 + j}` })),
+      });
+    }
+    for (let i = 0; i < LINES.length; i++) {
+      await repo.addExercise(lesson, 5 + i, 'translate', { prompt: `In Kurdish: “${LINES[i]![1]}”`, accepted: [LINES[i]![0]] });
+    }
     await repo.publishLesson(lesson);
+    // a draft lesson's text, recorded before it was published: never played
+    const draft = await repo.createLesson(skill, 2, 'D', 'Draft');
+    await repo.addExercise(draft, 1, 'match_pairs', { pairs: [{ left: `${tag}draftword`, right: 'draft' }, { left: `${tag}draftother`, right: 'other' }] });
 
     // two published stories (beginner and advanced) and a draft no game may read
     await story(1, [0, 1, 2, 3, 4, 5, 6, 7].map((i) => paragraph(i, 'Roj germ e.')), 'published');
@@ -248,6 +262,17 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
     for (let i = 0; i < 16; i++) await record(lessonAudioKey(`${tag}${letters(i)}`), `${tag}${letters(i)}`, i % 2 ? 'hamo' : 'xezo', i);
     for (let i = 0; i < LINES.length; i++) await record(lessonAudioKey(LINES[i]![0]), LINES[i]![0], 'hevalo', 100 + i);
     await record(conversationLineKey(CONVERSATION, 1, LINES[1]![0]), LINES[1]![0], 'xezo', 200);
+    // a draft lesson's word and a draft story's sentence, both recorded: neither is ever played
+    await record(lessonAudioKey(`${tag}draftword`), `${tag}draftword`, 'hamo', 400);
+    await record(lessonAudioKey(`Ev ${tag}draftonly ye.`), `Ev ${tag}draftonly ye.`, 'hamo', 401);
+    // the dictionary's pronunciations: an entry an admin curated is played, one only imported is not
+    const dictionary = new DictionaryRepository(pool);
+    for (const [word, curated] of [[`${tag}dictcurated`, true], [`${tag}dictimported`, false]] as const) {
+      const entry = await dictionary.createEntry(word);
+      entryIds.push(entry);
+      await pool.query(`UPDATE dict_entries SET in_games = $2 WHERE id = $1`, [entry, curated]);
+      await pool.query(`INSERT INTO dict_audio (entry_id, audio_url) VALUES ($1, $2)`, [entry, `https://cdn.test/dict/${word}.wav`]);
+    }
     // and a letter's sound, which is a syllable and no word
     for (const key of ['kmr:sound:x', 'kmr:word:x']) {
       const media = `alphabet-audio/${tag}-${key}.wav`;
@@ -271,6 +296,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
     await pool.query(`DELETE FROM courses WHERE id = ANY($1::uuid[])`, [courseIds]);
     await pool.query(`DELETE FROM stories WHERE id = ANY($1::uuid[])`, [storyIds]);
     await pool.query(`DELETE FROM lesson_audio WHERE key = ANY($1)`, [audioKeys]);
+    if (entryIds.length) await pool.query(`DELETE FROM dict_entries WHERE id = ANY($1::uuid[])`, [entryIds]);
     if (alphabetKeys.length) await pool.query(`DELETE FROM alphabet_audio WHERE key = ANY($1)`, [alphabetKeys]);
     const client = await pool.connect();
     try {
@@ -303,22 +329,33 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
   });
 
   describe('a round of The Memory Thief', () => {
-    it('is made of published passages only, sent without the words that vanish', async () => {
+    it('is made of published passages only: the passage to study, then its gaps, never both', async () => {
       const res = await play(learner, 'memory-thief');
       expect(res.statusCode, res.body).toBe(201);
       const view = res.json();
       expect(view.items).toHaveLength(MEMORY_ROUND_PASSAGES);
       const items = await stored<MemoryStored>(view.id);
-      view.items.forEach((v: Record<string, unknown>, i: number) => {
-        expect(Object.keys(v).sort()).toEqual(['gaps', 'index', 'key', 'kind', 'level', 'parts', 'speakers', 'studySeconds', 'text', 'tiles', 'title']);
+      for (const [i, v] of (view.items as Array<Record<string, unknown>>).entries()) {
+        // while it is studied: the passage whole, nothing of its gaps, and no key worked out from it
+        expect(Object.keys(v).sort()).toEqual(['gaps', 'index', 'kind', 'level', 'parts', 'phase', 'speakers', 'studySeconds', 'text', 'tiles', 'title']);
+        expect(v).toMatchObject({ phase: 'study', parts: null, tiles: null });
         expect(String(v.text)).not.toContain('draftonly');
         expect(textScript(String(v.text))).toBe('latin');
+        // once begun: the gaps and the tiles, and the passage never again
+        const begun = await call('POST', `/games/solo/sessions/${view.id}/begin`, learner, { index: i });
+        expect(begun.statusCode, begun.body).toBe(200);
+        const r = begun.json().item;
+        expect(r).toMatchObject({ phase: 'restore', text: null });
         // the passage with its gaps never has a vanished word left in its text
         const hidden = new Set(items[i]!.hidden.map((h) => foldForDialect(h.term, 'kmr')));
-        const left = (v.parts as Array<{ text?: string }>).flatMap((p) => (p.text ? gameWords(p.text) : [])).map((w) => foldForDialect(w, 'kmr'));
+        const left = (r.parts as Array<{ text?: string }>).flatMap((p) => (p.text ? gameWords(p.text) : [])).map((w) => foldForDialect(w, 'kmr'));
         expect(left.filter((w) => hidden.has(w))).toEqual([]);
-        expect(v.tiles).toEqual(items[i]!.tiles);
-      });
+        expect(r.tiles).toEqual(items[i]!.tiles);
+      }
+      // a round come back to is not shown the passages again
+      const again = (await call('GET', `/games/solo/sessions/${view.id}`, learner)).json();
+      expect(again.items.every((v: { phase: string; text: unknown }) => v.phase === 'restore' && v.text === null)).toBe(true);
+      expect((await call('POST', `/games/solo/sessions/${view.id}/begin`, learner, { index: 99 })).statusCode).toBe(404);
       // a lesson's conversation is a passage too
       const services = learnGameServices(app, { xp: new XpService(app.db) });
       const passages = await services.memory.pool('kmr');
@@ -329,7 +366,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
     it('nudges a wrong first try by gap, then corrects with every word’s meaning', async () => {
       const { id } = (await play(learner, 'memory-thief')).json();
       const items = await stored<MemoryStored>(id);
+      // an answer begins its passage too: from then on it is sent with its gaps
       const first = await answer(learner, id, 0, swapped(items[0]!), 1);
+      expect((await call('GET', `/games/solo/sessions/${id}`, learner)).json().items[0]).toMatchObject({ phase: 'restore', text: null });
       expect(first.statusCode, first.body).toBe(200);
       expect(first.json()).toMatchObject({ correct: false, done: false, correction: null });
       expect(first.json().hint.wrong).toEqual(expect.arrayContaining([0, 1]));
@@ -388,6 +427,16 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
       const services = learnGameServices(app, { xp: new XpService(app.db) });
       const { texts } = await services.hearing.pool('kmr');
       expect(texts.some((t) => t.variants.some((v) => v.ref.id === 'kmr:sound:x'))).toBe(false);
+      // nor is a recording of a draft's text, nor the pronunciation of an entry nobody curated
+      expect(texts.some((t) => t.text.includes('draftword') || t.text.includes('draftonly'))).toBe(false);
+      expect(texts.some((t) => t.text === `${tag}dictimported`)).toBe(false);
+      expect(texts.some((t) => t.text === `${tag}dictcurated`)).toBe(true);
+      // and what is counted for the game's availability is what can be played
+      const recordings = await services.sources.recordings('kmr');
+      expect(recordings.some((r) => r.text.includes('draftword') || r.text.includes('draftonly') || r.text === `${tag}dictimported`)).toBe(false);
+      // the pronunciations live elsewhere: out of the pools again before a round's clips are read
+      await pool.query(`DELETE FROM dict_entries WHERE id = ANY($1::uuid[])`, [entryIds.splice(0)]);
+      await bustGamePools(app.cache);
       const said = alphabetClipText('kmr:word:x');
       if (said && alphabetKeys.includes('kmr:word:x')) expect(texts.some((t) => t.variants.some((v) => v.ref.id === 'kmr:word:x'))).toBe(true);
     });

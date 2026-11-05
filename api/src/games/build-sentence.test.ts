@@ -5,7 +5,7 @@
  * order, nudges before it corrects, and moves the ladder.
  */
 import { describe, expect, it } from 'vitest';
-import { DIFFICULTY_RUNGS, SOLO_ROUND_ITEMS, gameWords, type GameDialect } from '@kurda/shared';
+import { DIFFICULTY_RUNGS, SOLO_ROUND_ITEMS, STEP_UP_FIRST_TRY, gameWords, type GameDialect } from '@kurda/shared';
 import { BuildSentenceGame, type SentenceItem } from './build-sentence.js';
 import type { TrustedSources, LessonSentence, VocabularyWord } from './sources.js';
 import { sentenceKey } from './sources.js';
@@ -16,13 +16,14 @@ function lesson(ku: string, en: string, orders: string[] = [ku]): LessonSentence
 
 // approved-looking sentences for the shapes; a test only, never shown to anyone
 const SHORT = ['Ev dîwar e.', 'Ban kevn e.', 'Pencere mezin e.', 'Ev pirtûk e.', 'Ew mamoste ye.', 'Av sar e.', 'Nan germ e.', 'Ev derî ye.', 'Ew xanî ye.', 'Çay xweş e.'];
-const QUESTIONS = ['Tu çawa yî?', 'Ev çi ye?', 'Tu kî yî?', 'Ew li ku ye?', 'Tu birçî yî?'];
+const QUESTIONS = ['Tu çawa yî?', 'Ev çi ye?', 'Tu kî yî?', 'Ew li ku ye?', 'Tu birçî yî?', 'Tu çi dixwazî?'];
 
 function fakeSources(sentences: LessonSentence[], words: VocabularyWord[] = []): TrustedSources {
   return {
     lessonSentences: async () => sentences,
     content: async () => [],
     vocabulary: async () => words,
+    derived: async <T>(_name: string, _dialect: GameDialect, build: () => Promise<T>) => build(),
   } as unknown as TrustedSources;
 }
 
@@ -61,7 +62,7 @@ describe('a round', () => {
     const round = await game.build(ask(), stepDb(2));
     expect(round!.meta.rung).toBe('question');
     const questions = round!.items.filter((i) => i.rung === 'question');
-    expect(questions.length).toBeGreaterThanOrEqual(5);
+    expect(questions.length).toBeGreaterThanOrEqual(STEP_UP_FIRST_TRY);
     // a round climbs: warm-ups first
     expect(round!.items[0]!.rung).toBe('short');
   });
@@ -89,11 +90,12 @@ describe('a round', () => {
     }
   });
 
-  it('sends the player the meaning and the tiles, never the sentence', async () => {
+  it('sends the player the meaning and the tiles, never the sentence nor a key worked out from it', async () => {
     const round = await game.build(ask(), emptyDb);
     const view = game.view(round!.items[0]!, 0);
-    expect(Object.keys(view).sort()).toEqual(['index', 'key', 'level', 'meaning', 'rung', 'tiles']);
+    expect(Object.keys(view).sort()).toEqual(['index', 'level', 'meaning', 'rung', 'tiles']);
     expect(JSON.stringify(view)).not.toContain(round!.items[0]!.ku);
+    expect(JSON.stringify(view)).not.toContain(round!.items[0]!.key.split(':').at(-1)!);
   });
 });
 
@@ -137,6 +139,12 @@ describe('grading a line', () => {
 });
 
 describe('the ladder after a round', () => {
+  /** A round's items on these rungs, the first `right` of them right on the first try. */
+  const round = (rungs: Array<SentenceItem['rung']>, right: (i: number) => boolean) => ({
+    items: rungs.map((rung) => ({ rung }) as SentenceItem),
+    results: { correct: 0, total: rungs.length, firstTry: 0, xp: 0, learningCounted: true, needed: 4, streak: null, items: rungs.map((_, index) => ({ index, correct: right(index), firstTry: right(index), xp: 0, repeat: false })) },
+  });
+
   it('opens the next rung after a good round on the learner’s own rung', async () => {
     const writes: unknown[][] = [];
     const client = {
@@ -146,10 +154,29 @@ describe('the ladder after a round', () => {
       },
     } as never;
     const game = new BuildSentenceGame(fakeSources([]));
-    await game.finished(client, { userId: 'u1', dialect: 'kmr', meta: { rung: 'short' }, results: { firstTry: 7 } });
+    const short = Array.from({ length: 8 }, () => 'short' as const);
+    await game.finished(client, { userId: 'u1', dialect: 'kmr', meta: { rung: 'short' }, ...round(short, (i) => i < 7) });
     expect(writes).toEqual([['u1', 'build-sentence', 'kmr', 2]]);
     writes.length = 0;
-    await game.finished(client, { userId: 'u1', dialect: 'kmr', meta: { rung: 'short' }, results: { firstTry: 3 } });
+    await game.finished(client, { userId: 'u1', dialect: 'kmr', meta: { rung: 'short' }, ...round(short, (i) => i < 3) });
     expect(writes).toEqual([]);
   });
+
+  it('counts only the rung’s own first tries, never the warm-ups below it', async () => {
+    const writes: unknown[][] = [];
+    const client = {
+      query: async (sql: string, params: unknown[]) => {
+        if (sql.startsWith('INSERT INTO game_progress')) writes.push(params);
+        return { rows: sql.includes('SELECT step') ? [{ step: 2 }] : [] };
+      },
+    } as never;
+    const game = new BuildSentenceGame(fakeSources([]));
+    // two warm-ups and six on the rung: every warm-up right, five of the six
+    const rungs: Array<SentenceItem['rung']> = ['short', 'short', 'question', 'question', 'question', 'question', 'question', 'question'];
+    await game.finished(client, { userId: 'u1', dialect: 'kmr', meta: { rung: 'question' }, ...round(rungs, (i) => i !== 7) });
+    expect(writes).toEqual([]);
+    await game.finished(client, { userId: 'u1', dialect: 'kmr', meta: { rung: 'question' }, ...round(rungs, () => true) });
+    expect(writes).toEqual([['u1', 'build-sentence', 'kmr', 3]]);
+  });
 });
+

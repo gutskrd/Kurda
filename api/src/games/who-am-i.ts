@@ -24,6 +24,12 @@
  * The questions asked are kept on the item itself in the session's `items`,
  * under the session's lock, so a question asked twice is answered once and a
  * round come back to shows what was asked.
+ *
+ * A tile is known to the player by its place in the round's own order
+ * (`tileHandle`: a, b, c…), never by the id of the identity behind it, and
+ * the card names what kind of thing it is only when every tile is that kind
+ * (`sharedCategory`): nothing the item carries tells one tile from another
+ * but its word.
  */
 import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';
@@ -36,6 +42,7 @@ import {
   answerFor,
   dealWhoAmI,
   isWhoAmIFact,
+  sharedCategory,
   type GameDialect,
   type GameDifficulty,
   type WhoAmIAnswer,
@@ -49,7 +56,7 @@ import {
 } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
-import { seededShuffle } from '../content/exercises.js';
+import { drawFor } from './draw.js';
 import { freshestFirst, seenFor } from './seen.js';
 import type { TrustedSources } from './sources.js';
 import type { RoundAsk, SoloEngine, StoredItem } from './solo.js';
@@ -59,7 +66,7 @@ export const WHO_AM_I = 'who-am-i' as const;
 /** A hidden identity as a round keeps it: the identity and its facts stay here. */
 export interface WhoAmIItem extends StoredItem {
   identity: Pick<WhoAmIIdentity, 'id' | 'word' | 'meanings' | 'category' | 'facts'>;
-  tiles: Array<{ id: string; word: string; meanings: WhoAmIIdentity['meanings'] }>;
+  tiles: Array<{ id: string; word: string; meanings: WhoAmIIdentity['meanings']; category?: string }>;
   questions: Array<{ id: string; ku: string; meanings: WhoAmIIdentity['meanings']; fact: string }>;
   /** a beginner sees what each tile means */
   showMeanings: boolean;
@@ -91,6 +98,22 @@ export function identitiesAt(identities: readonly WhoAmIIdentity[], difficulty: 
 }
 
 const answerSchema: z.ZodType<WhoAmIAnswer> = z.object({ guess: z.string().min(1).max(80) });
+
+/** What the player knows a tile by: its place among the round's tiles, which are shuffled for the round. */
+export function tileHandle(place: number): string {
+  return place < 26 ? String.fromCharCode(97 + place) : `t${place}`;
+}
+
+/** The identity behind a tile the player named, or null for none of them. */
+function tileOf(item: Pick<WhoAmIItem, 'tiles'>, handle: string): WhoAmIItem['tiles'][number] | null {
+  const place = item.tiles.findIndex((_, i) => tileHandle(i) === handle);
+  return place < 0 ? null : item.tiles[place]!;
+}
+
+/** The handle of the identity's own tile. */
+function answerHandle(item: Pick<WhoAmIItem, 'tiles' | 'identity'>): string {
+  return tileHandle(item.tiles.findIndex((t) => t.id === item.identity.id));
+}
 const askParams = z.object({ id: z.uuid() });
 const askBody = z.object({ index: z.number().int().min(0).max(WHO_AM_I_ROUND_ITEMS * 4), question: z.string().min(1).max(80) });
 
@@ -104,7 +127,7 @@ export class WhoAmIGame implements SoloEngine<WhoAmIItem, WhoAmIItemView, WhoAmI
     const [{ identities, templates }, seen] = await Promise.all([whoAmIPool(this.sources, ask.dialect), seenFor(db, ask.userId, WHO_AM_I)]);
     const here = identitiesAt(identities, ask.difficulty);
     if (here.length < WHO_AM_I_ROUND_ITEMS) return null;
-    const targets = freshestFirst(seededShuffle(here, `${ask.seed}:targets`), seen);
+    const targets = freshestFirst(drawFor(`${ask.seed}:targets`).shuffle(here), seen);
     const want = WHO_AM_I_CANDIDATES[ask.difficulty];
     const items: WhoAmIItem[] = [];
     for (const target of targets) {
@@ -130,15 +153,15 @@ export class WhoAmIGame implements SoloEngine<WhoAmIItem, WhoAmIItemView, WhoAmI
   view(item: WhoAmIItem, index: number): WhoAmIItemView {
     return {
       index,
-      category: item.identity.category,
-      tiles: item.tiles.map((t) => ({ id: t.id, word: t.word, meanings: item.showMeanings ? t.meanings : null })),
+      category: sharedCategory(item.identity.category, item.tiles),
+      tiles: item.tiles.map((t, i) => ({ id: tileHandle(i), word: t.word, meanings: item.showMeanings ? t.meanings : null })),
       questions: item.questions.map((q) => ({ id: q.id, ku: q.ku, meanings: q.meanings })),
       asked: item.asked ?? [],
     };
   }
 
   grade(item: WhoAmIItem, answer: WhoAmIAnswer): boolean {
-    return answer.guess === item.identity.id;
+    return tileOf(item, answer.guess)?.id === item.identity.id;
   }
 
   hint(_item: WhoAmIItem, answer: WhoAmIAnswer): WhoAmIHint {
@@ -146,7 +169,7 @@ export class WhoAmIGame implements SoloEngine<WhoAmIItem, WhoAmIItemView, WhoAmI
   }
 
   correction(item: WhoAmIItem): WhoAmICorrection {
-    return { id: item.identity.id, word: item.identity.word, meanings: item.identity.meanings, category: item.identity.category };
+    return { id: answerHandle(item), word: item.identity.word, meanings: item.identity.meanings, category: item.identity.category };
   }
 
   why(): string | null {

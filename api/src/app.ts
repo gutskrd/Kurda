@@ -855,6 +855,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       ranks,
       freeText: { moderation, trust, aiMod },
       onChange: (game, id, o) => playEvents.changed(game, id, o),
+      friends,
     });
 
     // shop + gifts: a gift is bought in the shop or from a chat's gift button,

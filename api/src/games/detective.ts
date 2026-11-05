@@ -17,6 +17,13 @@
  * DETECTIVE_HINT_XP off what the case pays at the finish (`deduction`). An
  * overheard remark plays in the voice it was recorded in (games/spoken.ts).
  *
+ * Hints are not free for a round given up. A round of a case left unfinished
+ * (replaced by a new round, or expired) keeps what its hints showed, and the
+ * next round of the same case within GAME_REPEAT_XP_DAYS starts with them
+ * spent (`carriedHints`): the cards it translated already translated, the
+ * hints it read already read, and their cost taken off that round's pay — so
+ * a case cannot be opened up with hints, dropped, and played again for free.
+ *
  * A wrong first try is answered with the cards to read again, never the
  * answer; once an item is done, the right answer and the cards it rests on
  * with what they mean, and for the accusation the culprit and the solution,
@@ -28,6 +35,7 @@ import {
   DETECTIVE_HINTS,
   DETECTIVE_HINT_XP,
   DIFFICULTY_LEVELS,
+  GAME_REPEAT_XP_DAYS,
   accusationEvidence,
   suspectPortrait,
   type DetectiveAnswer,
@@ -40,7 +48,7 @@ import {
   type NotebookEntry,
   type SoloItemState,
 } from '@kurda/shared';
-import { seededShuffle } from '../content/exercises.js';
+import { drawFor } from './draw.js';
 import { AppError } from '../plugins/errors.js';
 import { freshestFirst, seenFor } from './seen.js';
 import { spokenAudio, spokenKeys } from './spoken.js';
@@ -94,6 +102,29 @@ function metaOf(meta: Record<string, unknown>): CaseMeta | null {
   return m.board && m.spent ? (m as CaseMeta) : null;
 }
 
+/**
+ * The hints already spent on this case in the learner's last round of it,
+ * when that round was left unfinished (given up for another, or expired)
+ * within the repeat window: what the next round of the case starts with.
+ * Nothing when the last round of it was finished — its hints were paid for.
+ */
+export async function carriedHints(db: Pick<pg.Pool, 'query'>, userId: string, dialect: string, caseId: string): Promise<CaseMeta['spent'] | null> {
+  const res = await db.query<{ spent: CaseMeta['spent'] | null; finished: boolean }>(
+    `SELECT meta->'spent' AS spent, finished_at IS NOT NULL AS finished FROM game_sessions
+      WHERE user_id = $1 AND game = $2 AND dialect = $3 AND meta->>'caseId' = $4
+        AND created_at > now() - make_interval(days => $5)
+      ORDER BY created_at DESC LIMIT 1`,
+    [userId, DETECTIVE, dialect, caseId, GAME_REPEAT_XP_DAYS],
+  );
+  const last = res.rows[0];
+  if (!last || last.finished || !last.spent || typeof last.spent.used !== 'number') return null;
+  return {
+    used: Math.min(DETECTIVE_HINTS, Math.max(0, last.spent.used)),
+    read: Math.max(0, Number(last.spent.read) || 0),
+    translated: Array.isArray(last.spent.translated) ? last.spent.translated.filter((t): t is string => typeof t === 'string') : [],
+  };
+}
+
 /** A step's deduction, as the notebook keeps it. */
 function entryOf(item: StepItem): NotebookEntry {
   return { step: item.step, prompt: item.prompt, answer: item.options[item.correctIndex]!, evidence: item.evidence.map((e) => e.id) };
@@ -111,14 +142,17 @@ export class DetectiveGame implements SoloEngine<CaseItem, DetectiveItemView, De
     const [rows, seen] = await Promise.all([this.sources.content('case_file', ask.dialect), seenFor(db, ask.userId, DETECTIVE)]);
     // a case is met when its accusation was: never met first, then the longest ago
     const cases = rows.filter((r) => levels.includes(r.level)).map((row) => ({ key: `${row.key}:accuse`, row }));
-    const picked = freshestFirst(seededShuffle(cases, `${ask.seed}:case`), seen)[0];
+    const picked = freshestFirst(drawFor(`${ask.seed}:case`).shuffle(cases), seen)[0];
     if (!picked) return null;
     const { row } = picked;
     const c = row.payload;
-    const audio = await spokenAudio(
-      db,
-      c.evidence.map((e) => ({ keys: spokenKeys(e.recording, e.ku), text: e.ku, speaker: e.speaker ?? null })),
-    );
+    const [audio, carried] = await Promise.all([
+      spokenAudio(
+        db,
+        c.evidence.map((e) => ({ keys: spokenKeys(e.recording, e.ku), text: e.ku, speaker: e.speaker ?? null })),
+      ),
+      carriedHints(db, ask.userId, ask.dialect, row.id),
+    ]);
     const meanings = new Map(c.evidence.map((e) => [e.id, e.meanings]));
     const found = (ids: readonly string[]): Found[] => ids.map((id) => ({ id, meanings: meanings.get(id)! }));
 
@@ -132,10 +166,7 @@ export class DetectiveGame implements SoloEngine<CaseItem, DetectiveItemView, De
         step,
         prompt: s.prompt,
         options: s.options,
-        shown: seededShuffle(
-          s.options.map((_, i) => i),
-          `${ask.seed}:${step}:options`,
-        ),
+        shown: drawFor(`${ask.seed}:${step}:options`).shuffle(s.options.map((_, i) => i)),
         correctIndex: s.correctIndex,
         evidence: found(s.evidence),
       };
@@ -170,7 +201,10 @@ export class DetectiveGame implements SoloEngine<CaseItem, DetectiveItemView, De
         level: row.level as GameLevel,
         written: c.hints,
       },
-      spent: { used: 0, read: 0, translated: [] },
+      // what a round of this case given up showed with its hints, already spent here
+      spent: carried
+        ? { used: carried.used, read: Math.min(carried.read, c.hints.length), translated: carried.translated.filter((id) => c.evidence.some((e) => e.id === id)) }
+        : { used: 0, read: 0, translated: [] },
     };
     return { items: [...steps, accuse], meta: meta as unknown as Record<string, unknown> };
   }

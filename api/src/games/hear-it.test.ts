@@ -9,8 +9,10 @@ import { describe, expect, it } from 'vitest';
 import { HEAR_OPTIONS, HEAR_REPLAYS, SOLO_ROUND_ITEMS, textScript, type GameDialect, type HearStage } from '@kurda/shared';
 import {
   HearItGame,
+  LOOK_ALIKE_CANDIDATES,
   editDistance,
   groupRecordings,
+  lengthBuckets,
   lookAlikeSentences,
   lookAlikeWords,
   meaningChoices,
@@ -65,7 +67,8 @@ describe('recordings by what they say', () => {
 });
 
 describe('the look-alikes', () => {
-  const words = new Map(['bar', 'bêr', 'dar', 'ber', 'kevir', 'mal', 'baran', 'bajar'].map((w) => [w, w]));
+  const letters = (k: string) => [...k].length;
+  const words = lengthBuckets(new Map(['bar', 'bêr', 'dar', 'ber', 'kevir', 'mal', 'baran', 'bajar'].map((w) => [w, w])), letters);
 
   it('measure how far two spellings are', () => {
     expect(editDistance([...'bar'], [...'dar'])).toBe(1);
@@ -81,9 +84,23 @@ describe('the look-alikes', () => {
     expect(lookAlikeWords('bar', words, 3, 'seed', 'kmr')).toEqual(alike);
   });
 
+  it('look among a bounded few of the nearest lengths, however large the pool', () => {
+    // a pool of tens of thousands of words: the closest are still found, from the target's own length outwards
+    const big = new Map<string, string>();
+    for (let i = 0; i < 30_000; i++) big.set(`w${i.toString(36).padStart(6, 'a')}xx`, `w${i}`);
+    for (const w of ['bêr', 'dar', 'ber']) big.set(w, w);
+    const buckets = lengthBuckets(big, letters);
+    const started = performance.now();
+    const alike = lookAlikeWords('bar', buckets, 3, 'seed', 'kmr');
+    expect(performance.now() - started).toBeLessThan(200);
+    expect(alike.sort()).toEqual(['ber', 'bêr', 'dar']);
+    expect(LOOK_ALIKE_CANDIDATES).toBeLessThan(big.size);
+  });
+
   it('are the approved sentences closest word by word', () => {
-    const sentences = new Map(
-      ['Ez diçim malê.', 'Ez diçim bajêr.', 'Tu diçî malê.', 'Ew pirtûkê dixwîne û çayê vedixwe.', 'Ez naçim malê.'].map((s) => [s.toLowerCase().replace('.', ''), s]),
+    const sentences = lengthBuckets(
+      new Map(['Ez diçim malê.', 'Ez diçim bajêr.', 'Tu diçî malê.', 'Ew pirtûkê dixwîne û çayê vedixwe.', 'Ez naçim malê.'].map((s) => [s.toLowerCase().replace('.', ''), s])),
+      (k) => k.split(' ').length,
     );
     const alike = lookAlikeSentences('Ez diçim malê', sentences, 3, 'seed', 'kmr');
     expect(alike).toEqual(expect.arrayContaining(['Ez diçim bajêr.', 'Tu diçî malê.', 'Ez naçim malê.']));
@@ -91,14 +108,7 @@ describe('the look-alikes', () => {
   });
 
   it('are other phrases’ meanings, each once, none the same as the right one', () => {
-    const meanings = new Map([
-      ['a b', { en: 'Good morning.' }],
-      ['c d', { en: 'good morning' }],
-      ['e f', { en: 'Good night.' }],
-      ['g h', { en: 'See you soon.' }],
-      ['i j', { en: 'See you soon' }],
-      ['k l', { en: 'Thank you very much.' }],
-    ]);
+    const meanings = [{ en: 'Good morning.' }, { en: 'good morning' }, { en: 'Good night.' }, { en: 'See you soon.' }, { en: 'See you soon' }, { en: 'Thank you very much.' }];
     const choices = meaningChoices({ en: 'Good morning.' }, meanings, 3, 'seed');
     expect(choices.map((m) => m.en!.toLowerCase().replace('.', ''))).toEqual(expect.arrayContaining(['good night', 'see you soon', 'thank you very much']));
     expect(choices).toHaveLength(3);
@@ -186,6 +196,7 @@ function fakeSources(dialect: GameDialect): TrustedSources {
     conversations: async (): Promise<ConversationPair[]> => [],
     vocabulary: async () => vocabulary,
     storyPassages: async () => [],
+    derived: async <T>(_name: string, _dialect: GameDialect, build: () => Promise<T>) => build(),
   } as unknown as TrustedSources;
 }
 

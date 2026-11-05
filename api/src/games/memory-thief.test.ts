@@ -185,6 +185,7 @@ function fakeSources(dialect: GameDialect): TrustedSources {
     storyPassages: async (d: GameDialect) => (d === dialect ? stories : []),
     conversationTexts: async (d: GameDialect) => (d === 'kmr' && dialect === 'kmr' ? [conversation] : []),
     vocabulary: async (d: GameDialect) => (d === 'kmr' ? vocabulary : []),
+    derived: async <T>(_name: string, _dialect: GameDialect, build: () => Promise<T>) => build(),
   } as unknown as TrustedSources;
 }
 
@@ -225,12 +226,23 @@ describe('a round of The Memory Thief', () => {
     for (const item of intermediate.items) expect(item.level).toBe(3);
   });
 
-  it('sends the passage and the tiles, never which tile fills which gap', async () => {
+  it('sends the passage while it is studied, and its gaps and tiles once begun, never both and never a key', async () => {
     const round = (await game.build(ask('beginner'), emptyDb))!;
-    const view = game.view(round.items[0]!, 0);
-    expect(Object.keys(view).sort()).toEqual(['gaps', 'index', 'key', 'kind', 'level', 'parts', 'speakers', 'studySeconds', 'text', 'tiles', 'title']);
-    expect(JSON.stringify(view.parts)).not.toMatch(new RegExp(round.items[0]!.hidden.map((h) => h.term).join('|')));
-    expect(view.studySeconds).toBeGreaterThanOrEqual(20);
+    const study = game.view(round.items[0]!, 0, round.meta);
+    expect(Object.keys(study).sort()).toEqual(['gaps', 'index', 'kind', 'level', 'parts', 'phase', 'speakers', 'studySeconds', 'text', 'tiles', 'title']);
+    expect(study).toMatchObject({ phase: 'study', parts: null, tiles: null });
+    expect(study.text).toBe(round.items[0]!.text);
+    expect(study.studySeconds).toBeGreaterThanOrEqual(20);
+
+    const begun = game.begin({ items: round.items, meta: round.meta }, 0)!;
+    const restore = game.view(round.items[0]!, 0, begun);
+    expect(restore).toMatchObject({ phase: 'restore', text: null });
+    expect(restore.tiles).toEqual(round.items[0]!.tiles);
+    expect(JSON.stringify(restore.parts)).not.toMatch(new RegExp(round.items[0]!.hidden.map((h) => h.term).join('|')));
+    // the others are still studied, and beginning again changes nothing
+    expect(game.view(round.items[1]!, 1, begun).phase).toBe('study');
+    expect(game.begin({ items: round.items, meta: begun }, 0)).toBeNull();
+    expect(JSON.stringify(restore)).not.toContain(round.items[0]!.key.split(':').at(-1)!);
   });
 
   it('never mixes the varieties: a Soranî round is Soranî through and through', async () => {

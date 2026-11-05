@@ -6,11 +6,12 @@
  *   GET  /games/availability?dialect=kmr|ckb          which games have enough approved content, per level (no account needed)
  *   GET  /games/build-sentence/ladder?dialect=         the ladder, how far this learner has climbed, a round to come back to
  *   GET  /games/solo/open?game=&dialect=               the round of a game left unfinished, if any
- *   POST /games/solo/sessions                          { game, dialect, difficulty }: a new round, without its answers
+ *   POST /games/solo/sessions                          { game, dialect, difficulty }: a new round, without its answers, in place of the one left open (20 a minute)
  *   GET  /games/solo/sessions/:id                      a round as it stands
  *   POST /games/solo/sessions/:id/answers              { index, answer, attempt? }: one try, checked here
  *   POST /games/solo/sessions/:id/finish               pay it once and say how it went
  *   POST /games/solo/sessions/:id/hints                { evidence? }: spend a hint (Kurdish Detective), answered with the board
+ *   POST /games/solo/sessions/:id/begin                { index }: an item's study gives way to its gaps (The Memory Thief), answered with the item
  *   GET  /games/solo/sessions/:id/clips/:clip          a round's recording by its opaque handle (no token: the address is the permission)
  *   POST /games/who-am-i/sessions/:id/ask              { index, question }: Who Am I?'s answer from the identity's facts
  *
@@ -115,6 +116,14 @@ const vocabularyQuery = z.object({
   limit: z.coerce.number().int().min(1).max(100).optional(),
 });
 const hintBody = z.object({ evidence: z.string().max(40).optional() });
+const beginBody = z.object({ index: z.number().int().min(0).max(SOLO_ROUND_ITEMS * 4) });
+/**
+ * Rounds a learner may start in a minute: a fifth of what any other route
+ * allows. Making one reads the pools the game draws from and lays out every
+ * item, so it is the one solo call with a cost worth a limit of its own, and
+ * nobody plays a round in three seconds.
+ */
+const ROUNDS_PER_MINUTE = 20;
 const linesQuery = z.object({ dialect: z.enum(GAME_DIALECTS), q: z.preprocess(absentIfEmpty, z.string().max(80).optional()) });
 
 function context(req: FastifyRequest): { adminId: string; requestId: string } {
@@ -199,10 +208,14 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
     return { id: await solo.open(req.user!.id, q.game, q.dialect) };
   });
 
-  app.post('/games/solo/sessions', { schema: { body: createBody }, preHandler: requireAuth }, async (req, reply) => {
-    const b = req.body as z.infer<typeof createBody>;
-    return reply.code(201).send(await solo.create(req.user!.id, b.game, b.dialect, b.difficulty));
-  });
+  app.post(
+    '/games/solo/sessions',
+    { schema: { body: createBody }, config: { rateLimit: { max: ROUNDS_PER_MINUTE, windowMs: 60_000 } }, preHandler: requireAuth },
+    async (req, reply) => {
+      const b = req.body as z.infer<typeof createBody>;
+      return reply.code(201).send(await solo.create(req.user!.id, b.game, b.dialect, b.difficulty));
+    },
+  );
 
   app.get('/games/solo/sessions/:id', { schema: { params: idParam }, preHandler: requireAuth }, async (req) =>
     solo.view((req.params as z.infer<typeof idParam>).id, req.user!.id),
@@ -215,6 +228,10 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
 
   app.post('/games/solo/sessions/:id/hints', { schema: { params: idParam, body: hintBody }, preHandler: requireAuth }, async (req) =>
     solo.hint((req.params as z.infer<typeof idParam>).id, req.user!.id, req.body),
+  );
+
+  app.post('/games/solo/sessions/:id/begin', { schema: { params: idParam, body: beginBody }, preHandler: requireAuth }, async (req) =>
+    solo.begin((req.params as z.infer<typeof idParam>).id, req.user!.id, (req.body as z.infer<typeof beginBody>).index),
   );
 
   app.post(

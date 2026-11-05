@@ -269,6 +269,15 @@ export function setShuffleKey(key: string): void {
 }
 
 /**
+ * A secret digest of a seed, under the same server key as the shuffles: what
+ * a round's random draws start from (games/draw.ts), one hash per draw rather
+ * than one per element. The label keeps it apart from every shuffle's.
+ */
+export function keyedDigest(seed: string): Buffer {
+  return createHmac('sha256', shuffleKey).update(`game-draw:${seed}`).digest();
+}
+
+/**
  * Deterministic shuffle by a seed, so a resumed session sees the same order.
  * Where an item lands depends on its place in `items` and the seed, never on
  * what it is: two lists as long as each other are shuffled alike.
