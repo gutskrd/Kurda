@@ -132,7 +132,10 @@ describe('when a notification came, in the reader\'s words', () => {
 
 describe('what a notification is, and who it is from', () => {
   it('draws each kind the server sends with its own glyph, a reward in gold', () => {
-    expect(noticeKind({ category: 'games', data: { kind: 'play_invite' } })).toEqual({ icon: 'play', reward: false });
+    // an invite is a ticket, in its game's colour when the data names the game
+    expect(noticeKind({ category: 'games', data: { kind: 'play_invite' } })).toEqual({ icon: 'ticket', reward: false });
+    expect(noticeKind({ category: 'games', data: { kind: 'play_invite', game: 'rhyme-match' } })).toEqual({ icon: 'ticket', reward: false, game: 'rhyme-match' });
+    expect(noticeKind({ category: 'games', data: { kind: 'play_invite', game: 'chess' } })).toEqual({ icon: 'ticket', reward: false });
     expect(noticeKind({ category: 'friends', data: { kind: 'gift' } })).toEqual({ icon: 'gift', reward: true });
     expect(noticeKind({ category: 'progress', data: { kind: 'badge' } })).toEqual({ icon: 'medal', reward: true });
     expect(noticeKind({ category: 'moderation', data: { kind: 'caring_message' } })).toEqual({ icon: 'lifebuoy', reward: false });

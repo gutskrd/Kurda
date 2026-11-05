@@ -50,7 +50,7 @@ export function MessageContent({
   }
   // a game card, or an old invite link in a text
   const game = gameCardOf(message);
-  if (game) return <GameMessage game={game} mine={mine} onReport={onReport} />;
+  if (game) return <GameMessage game={game} mine={mine} from={mine ? undefined : senderName || undefined} onReport={onReport} />;
   if (message.kind === 'game') return <GameFallback onReport={onReport} />;
   return <TextBody body={message.body ?? ''} mine={mine} />;
 }
@@ -75,14 +75,16 @@ export function hasControls(message: ChatMessage): boolean {
   return isCardMessage(message);
 }
 
-/** A game in the thread: any words sent with an old invite link in their own bubble, then the live card. */
+/** A game in the thread: any words sent with an old invite link in their own bubble, then the live card, saying who posted it. */
 function GameMessage({
   game,
   mine,
+  from,
   onReport,
 }: {
   game: NonNullable<ReturnType<typeof gameCardOf>>;
   mine: boolean;
+  from?: string;
   onReport?: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -93,7 +95,7 @@ function GameMessage({
           <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{game.rest}</Text>
         </View>
       ) : null}
-      <ChatGameCard game={game.game} lobbyId={game.lobbyId} onReport={onReport} />
+      <ChatGameCard game={game.game} lobbyId={game.lobbyId} from={from} onReport={onReport} />
     </View>
   );
 }

@@ -237,6 +237,8 @@ export type TranslationKey =
   | 'play.card.join'
   | 'play.card.enter'
   | 'play.card.label'
+  | 'play.card.from'
+  | 'play.card.joined'
   | 'play.chat.button'
   | 'play.chat.preview'
   | 'play.code.copy'
@@ -3086,6 +3088,8 @@ const en: Catalog = {
   'play.card.join': 'Join',
   'play.card.enter': 'Open',
   'play.card.label': 'Game card: {game}. {state}',
+  'play.card.from': 'From {name}',
+  'play.card.joined': 'You’re in',
   'play.chat.button': 'Start a game',
   'play.chat.preview': '🎮 Game invite',
   'play.code.copy': 'Copy code',
@@ -5923,6 +5927,8 @@ const ku: Catalog = {
   'play.card.join': 'Tevlî bibe',
   'play.card.enter': 'Veke',
   'play.card.label': 'Karta lîstikê: {game}. {state}',
+  'play.card.from': 'Ji {name}',
+  'play.card.joined': 'Tu tevlî bûyî',
   'play.chat.button': 'Lîstikekê dest pê bike',
   'play.chat.preview': '🎮 Vexwendina lîstikê',
   'play.code.copy': 'Kodê kopî bike',
@@ -8759,6 +8765,8 @@ const de: Catalog = {
   'play.card.join': 'Beitreten',
   'play.card.enter': 'Öffnen',
   'play.card.label': 'Spielkarte: {game}. {state}',
+  'play.card.from': 'Von {name}',
+  'play.card.joined': 'Du bist dabei',
   'play.chat.button': 'Ein Spiel starten',
   'play.chat.preview': '🎮 Spieleinladung',
   'play.code.copy': 'Code kopieren',
@@ -11595,6 +11603,8 @@ const es: Catalog = {
   'play.card.join': 'Unirse',
   'play.card.enter': 'Abrir',
   'play.card.label': 'Tarjeta de juego: {game}. {state}',
+  'play.card.from': 'De {name}',
+  'play.card.joined': 'Estás dentro',
   'play.chat.button': 'Empezar una partida',
   'play.chat.preview': '🎮 Invitación a jugar',
   'play.code.copy': 'Copiar código',
@@ -14431,6 +14441,8 @@ const tr: Catalog = {
   'play.card.join': 'Katıl',
   'play.card.enter': 'Aç',
   'play.card.label': 'Oyun kartı: {game}. {state}',
+  'play.card.from': 'Gönderen: {name}',
+  'play.card.joined': 'Katıldın',
   'play.chat.button': 'Bir oyun başlat',
   'play.chat.preview': '🎮 Oyun daveti',
   'play.code.copy': 'Kodu kopyala',
@@ -17267,6 +17279,8 @@ const ar: Catalog = {
   'play.card.join': 'انضم',
   'play.card.enter': 'افتح',
   'play.card.label': 'بطاقة لعبة: {game}. {state}',
+  'play.card.from': 'من {name}',
+  'play.card.joined': 'انضممت',
   'play.chat.button': 'ابدأ لعبة',
   'play.chat.preview': '🎮 دعوة للعب',
   'play.code.copy': 'انسخ الرمز',
@@ -20103,6 +20117,8 @@ const fr: Catalog = {
   'play.card.join': 'Rejoindre',
   'play.card.enter': 'Ouvrir',
   'play.card.label': 'Carte de jeu : {game}. {state}',
+  'play.card.from': 'De la part de {name}',
+  'play.card.joined': 'Tu participes',
   'play.chat.button': 'Lancer une partie',
   'play.chat.preview': '🎮 Invitation à jouer',
   'play.code.copy': 'Copier le code',
@@ -22939,6 +22955,8 @@ const nl: Catalog = {
   'play.card.join': 'Meedoen',
   'play.card.enter': 'Openen',
   'play.card.label': 'Spelkaart: {game}. {state}',
+  'play.card.from': 'Van {name}',
+  'play.card.joined': 'Je doet mee',
   'play.chat.button': 'Een spel starten',
   'play.chat.preview': '🎮 Speluitnodiging',
   'play.code.copy': 'Code kopiëren',
@@ -25776,6 +25794,8 @@ const ckb: Catalog = {
   'play.card.join': 'بەشداربە',
   'play.card.enter': 'بیکەرەوە',
   'play.card.label': 'کارتی یاری: {game}. {state}',
+  'play.card.from': 'لە {name}ەوە',
+  'play.card.joined': 'بەشداربوویت',
   'play.chat.button': 'یارییەک دەست پێبکە',
   'play.chat.preview': '🎮 بانگهێشتی یاری',
   'play.code.copy': 'کۆدەکە کۆپی بکە',
