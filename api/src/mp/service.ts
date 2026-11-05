@@ -208,6 +208,8 @@ export class MultiplayerService {
     const m = moduleOf(game);
     const choices = parseSettings(m.lobbySchema, raw);
     if (choices.access === 'open' && !(await mayHostOpen(this.pool, hostId))) throw openGamesAdultsOnly();
+    // a game is made only where it is offered: a word chain on a dictionary too small to know people's words is no game
+    if (!(await this.availability(game, choices.dialect)).group) throw new AppError('GAME_UNAVAILABLE', 404, 'this game is not offered in this dialect yet');
     const rated =
       choices.rated ?? (await this.ranks.defaultRated(this.pool, hostId, game, { fromChat: opts.fromChat, access: choices.access }));
     const { id, closed } = await this.tx(async (client) => {

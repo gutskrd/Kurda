@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  beginsWith,
   firstLetter,
   lastLetter,
+  lastLetterSlip,
   letterDirection,
-  wordKey,
   type LastLetterBoard,
   type LastLetterOutcome,
   type LastLetterStrikeReason,
@@ -41,21 +40,13 @@ export function langOf(dialect: LetterDialect): string {
   return dialect === 'ckb' ? 'ckb' : 'ku';
 }
 
-/**
- * What the composer says before a word is sent — the slips the client can see
- * for itself, so they cost no strike: not one word in the game's letters, the
- * wrong first letter, a word already in the chain. Null when it looks fine
- * (the dictionary is still the server's to ask).
- */
+/** What the word box says about a slip it can see before a word is sent (shared `lastLetterSlip`). */
 export function precheck(board: LastLetterBoard, typed: string): { key: MessageKey; letter?: string } | null {
-  if (!typed.trim()) return null;
-  const key = wordKey(board.dialect, typed);
-  if (key === null) return { key: 'games.lastLetter.hintScript' };
-  if (board.required && !beginsWith(board.dialect, key, board.required)) {
-    return { key: 'games.lastLetter.hintLetter', letter: board.requiredSpellings.join(' / ') || board.required };
-  }
-  if (board.chain.some((w) => w.word === key)) return { key: 'games.lastLetter.hintUsed' };
-  return null;
+  const slip = lastLetterSlip(board, typed);
+  if (!slip) return null;
+  if (slip.kind === 'script') return { key: 'games.lastLetter.hintScript' };
+  if (slip.kind === 'letter') return { key: 'games.lastLetter.hintLetter', letter: slip.letter };
+  return { key: 'games.lastLetter.hintUsed' };
 }
 
 /**

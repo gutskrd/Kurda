@@ -38,6 +38,7 @@ import { RatedChoice } from '../ranks/Rated';
 import { useRatedChoice } from '../ranks/ratedPrefs';
 import { restrictionOf } from '../reports/sendErrors';
 import { SearchField } from '../theme/SearchField';
+import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
@@ -131,6 +132,9 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const [game, setGame] = useState<PlayGame>(fixedGame ?? 'stories');
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [dialect, setDialect] = useState<StoryDialect>(locale === 'ckb' ? 'sorani' : (prefs.dialect ?? 'kurmanci'));
+  // The Last Letter, in the dialects whose dictionary can check players' words (asked only where it could be offered)
+  const letterDialects = offeredDialects(useLastLetterAvailability(target.kind !== 'lobby'), 'group');
+  const offeredGames = PLAY_GAMES.filter((g) => g !== 'last-letter' || letterDialects.length > 0 || fixedGame === 'last-letter');
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [story, setStory] = useState<SetupState>(() => initialSetup({ mode: 'duo', dialect, length: 'short' }));
   const [friends, setFriends] = useState<FriendSummary[] | null>(null);
@@ -232,6 +236,11 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const settings = (): Record<string, unknown> => {
     if (game === 'wordle-battle') return { difficulty, rated };
     if (game === 'rhyme-match') return { dialect, rated };
+    if (game === 'last-letter') {
+      // a Last Letter lobby is in one dialect the dictionary can check: the chosen one if it is offered
+      const wanted = dialect === 'sorani' ? 'ckb' : 'kmr';
+      return { dialect: letterDialects.includes(wanted) || letterDialects.length === 0 ? wanted : letterDialects[0], rated };
+    }
     return { ...inviteSettings({ ...story, dialect }), rated };
   };
 
@@ -371,7 +380,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
             <View style={styles.field}>
               <SectionLabel>{t('play.sheet.game')}</SectionLabel>
               <View accessibilityRole="radiogroup" accessibilityLabel={t('play.sheet.game')} style={styles.games}>
-                {PLAY_GAMES.map((g) => {
+                {offeredGames.map((g) => {
                   const on = g === game;
                   return (
                     <Pressable

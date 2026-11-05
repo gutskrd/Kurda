@@ -101,6 +101,7 @@ const GAME_COLOUR: Record<PlayGame, 'success' | 'gold' | 'primary'> = {
   'wordle-battle': 'success',
   'rhyme-match': 'gold',
   stories: 'primary',
+  'last-letter': 'primary',
 };
 
 export function gameColour(colors: Palette, game: PlayGame): string {

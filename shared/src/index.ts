@@ -697,3 +697,4 @@ export * from './games/multi/rules.js';
 export * from './games/multi/view.js';
 export * from './games/last-letter/rules.js';
 export * from './games/last-letter/learn.js';
+export * from './games/last-letter/slip.js';
