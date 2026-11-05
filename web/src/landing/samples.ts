@@ -73,3 +73,17 @@ export const PEOPLE = {
 
 /** A profile background from the shop — night on the high pastures. */
 export const PROFILE_BACKGROUND = '/cosmetics/backgrounds/made-02-seva-zozanan.webp';
+
+/** The first unit of the Kurmanji Road, by the name its band on the path shows. */
+export const PATH_UNIT = 'Silav';
+
+/**
+ * Three of the starter stories (`api/content/stories/kurmanci.json`), with
+ * their levels, for the library on the phone; the covers are from the shared
+ * list an editor picks a story's cover from, and the first is the one being read.
+ */
+export const STORIES: ReadonlyArray<{ title: string; level: string; minutes: number; cover: string; read: number }> = [
+  { title: 'Rêya Gund', level: 'A2', minutes: 4, cover: 'bihar', read: 0.45 },
+  { title: 'Barana Newrozê', level: 'A2', minutes: 4, cover: 'agire-newroze', read: 0 },
+  { title: 'Rovî û Hirç', level: 'B1', minutes: 5, cover: 'daristana-seve', read: 0 },
+];

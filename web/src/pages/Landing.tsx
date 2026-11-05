@@ -6,12 +6,10 @@ import { warmApi } from '../lib/warmup';
 import { usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import {
-  BattleMock,
   FriendsBoardMock,
   InviteMock,
   Ku,
   LeagueChipMock,
-  LessonMock,
   PostMock,
   ProgressMock,
   RaceMini,
@@ -21,6 +19,8 @@ import {
   WordCardMock,
   WordleMini,
 } from '../landing/mocks';
+import { Phone3D, PhoneShowcase, type PhoneScreen } from '../landing/Phone3D';
+import { BattleScreen, LessonScreen, PathScreen, StoriesScreen } from '../landing/screens';
 import { HEVAL, HOW_ARE_YOU, KURDISH_LETTERS } from '../landing/samples';
 import { HOME_FAQ } from '../landing/faq';
 import { FaqList } from '../components/FaqList';
@@ -245,6 +245,12 @@ export function Landing(): React.JSX.Element {
   const revealRoot = useReveal();
   const gamesRef = useRef<HTMLElement>(null);
   const stories = useStoriesAvailable(useNearScreen(gamesRef));
+  // the phone in the hero shows the app in turn: the path you learn on, a game with a friend, the stories
+  const heroScreens: PhoneScreen[] = [
+    { id: 'path', label: t('learn.view.lessons'), screen: <PathScreen /> },
+    { id: 'battle', label: t('games.battle.name'), screen: <BattleScreen /> },
+    { id: 'stories', label: t('learn.view.stories'), screen: <StoriesScreen /> },
+  ];
   // warm the API early so sign-in later doesn't pay the cold-start penalty
   useEffect(() => {
     warmApi();
@@ -280,7 +286,7 @@ export function Landing(): React.JSX.Element {
 
           <div className="lp-hero-visual">
             <div className="lp-glow" aria-hidden />
-            <BattleMock />
+            <PhoneShowcase screens={heroScreens} label={t('landing.screens.label')} />
             <LeagueChipMock />
           </div>
         </div>
@@ -350,7 +356,9 @@ export function Landing(): React.JSX.Element {
       <section id="learn" className="lp-section lp-section--split" aria-labelledby="lp-learn">
         <div className="container lp-split">
           <div className="lp-split-visual lp-reveal">
-            <LessonMock />
+            <Phone3D pose="right">
+              <LessonScreen />
+            </Phone3D>
           </div>
           <div className="lp-split-copy">
             <SectionHead id="lp-learn" kicker="landing.learn.kicker" title="landing.learn.title" lead="landing.learn.lead">

@@ -1,19 +1,16 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
-import { CheckIcon, CloseIcon, CoinIcon, CommentIcon, HeadphonesIcon, HeartIcon, MicIcon, PlayIcon, WaveformIcon } from '../components/icons';
+import { CheckIcon, CoinIcon, CommentIcon, HeadphonesIcon, HeartIcon, MicIcon, PlayIcon, WaveformIcon } from '../components/icons';
 import { ProfileCard } from '../ui/ProfileCard';
 import { LeagueLadder } from '../ui/LeagueLadder';
 import { leagueName } from '../ranks/names';
 import { RankList, RankRow } from '../ui/RankRow';
-import { PlayerChip } from '../ui/PlayerChip';
 import { InviteCardBody } from '../ui/InviteCardBody';
 import { useAvatarSrc } from '../art/overrides';
 import {
   BATTLE_GUESSES,
   HEVAL,
   KURDISH_LETTERS,
-  LESSON,
   PEOPLE,
   POEM,
   PROFILE_BACKGROUND,
@@ -95,60 +92,6 @@ export function TileRow({ word, marks, row = 0 }: { word: string; marks: Readonl
         </span>
       ))}
     </div>
-  );
-}
-
-const EMPTY_ROW: ReadonlyArray<Mark> = ['empty', 'empty', 'empty', 'empty', 'empty'];
-
-/**
- * The hero: a Peyvok Battle against a friend, solved on `heval`.
- *
- * This is the product's whole argument in one screen — a Kurdish word, a game,
- * and somebody you know on the other side of it.
- */
-export function BattleMock(): React.JSX.Element {
-  const t = useT();
-  return (
-    <Mock label={t('landing.mock.battleLabel')} className="lp-phone">
-      <div className="lp-phone-screen">
-        <div className="lp-phone-bar">
-          <span className="lp-phone-title">{t('games.battle.name')}</span>
-          <span className="lp-live" aria-hidden />
-        </div>
-
-        <div className="players">
-          <PlayerChip
-            name={t('games.you')}
-            status={t('games.battle.solvedIn', { count: 3 })}
-            avatarUrl={PEOPLE.you.avatar}
-            done
-          />
-          <PlayerChip
-            name={PEOPLE.rojin.name}
-            status={t('games.battle.lettersProgress', { done: 3, total: 5 })}
-            avatarUrl={PEOPLE.rojin.avatar}
-            progress={0.6}
-          />
-        </div>
-
-        <div className="lp-board">
-          {BATTLE_GUESSES.map((g, r) => (
-            <TileRow key={g.word} word={g.word} marks={g.marks} row={r} />
-          ))}
-          {[0, 1, 2].map((r) => (
-            <TileRow key={`empty-${r}`} word="" marks={EMPTY_ROW} />
-          ))}
-        </div>
-
-        <div className="lp-result">
-          <span>
-            <Ku className="lp-result-word">{HEVAL}</Ku>
-            <span className="lp-result-gloss">{t('landing.gloss.heval')}</span>
-          </span>
-          <span className="lp-xp">+18 {t('rankings.unit.xp')}</span>
-        </div>
-      </div>
-    </Mock>
   );
 }
 
@@ -315,66 +258,6 @@ export function StoriesMini(): React.JSX.Element {
         </span>
       </span>
     </div>
-  );
-}
-
-/* ---- a lesson ------------------------------------------------------------- */
-
-const LESSON_OPTIONS: ReadonlyArray<{ key: MessageKey; right?: boolean }> = [
-  { key: 'landing.gloss.whatDay', right: true },
-  { key: 'landing.gloss.whatTime' },
-  { key: 'landing.gloss.whereYesterday' },
-];
-
-/**
- * One exercise from the lesson player: a sentence, a hint on the new word in
- * it, three meanings to choose from, and the answer marked right.
- */
-export function LessonMock(): React.JSX.Element {
-  const t = useT();
-  return (
-    <Mock label={t('landing.mock.lessonLabel')} className="lp-phone lp-phone--lesson">
-      <div className="lp-phone-screen">
-        <div className="lp-lesson-top">
-          <CloseIcon size={18} />
-          <span className="lp-progress" aria-hidden>
-            <span style={{ width: '66%' }} />
-          </span>
-          <Ku className="lp-lesson-skill">{LESSON.skill}</Ku>
-        </div>
-
-        <span className="lp-lesson-prompt">{t('landing.mock.lessonPrompt')}</span>
-        <p className="lp-lesson-sentence" lang="ku">
-          {LESSON.sentence.map((w, i) =>
-            i === LESSON.hint ? (
-              <span key={w} className="lp-hinted">
-                {w}
-                <span className="lp-hint">{t('landing.gloss.roj')}</span>
-              </span>
-            ) : (
-              <span key={w}>{w}</span>
-            ),
-          )}
-        </p>
-
-        <div className="lp-lesson-options">
-          {LESSON_OPTIONS.map((o) => (
-            <span key={o.key} className={`lp-option lp-option--lg${o.right ? ' is-right' : ''}`}>
-              {t(o.key)}
-              {o.right && <CheckIcon size={16} />}
-            </span>
-          ))}
-        </div>
-
-        <div className="lp-feedback">
-          <span className="lp-feedback-text">
-            <CheckIcon size={16} />
-            {t('landing.mock.correct')}
-          </span>
-          <span className="lp-fake-btn">{t('landing.mock.continue')}</span>
-        </div>
-      </div>
-    </Mock>
   );
 }
 

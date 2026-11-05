@@ -88,7 +88,7 @@
 }
 /* Arabic script is joined, and tracking pulls the joins apart — so on a
    right-to-left page the type keeps its natural spacing. */
-[dir='rtl'] :is(.lp-display, .lp-h2, .lp-kicker, .lp-chip, .lp-float-kicker, .lp-lesson-prompt, .lp-step-n) {
+[dir='rtl'] :is(.lp-display, .lp-h2, .lp-kicker, .lp-chip, .lp-float-kicker, .ps-lesson-prompt, .lp-step-n) {
   letter-spacing: normal;
 }
 
@@ -196,54 +196,6 @@
   pointer-events: none;
 }
 
-/* ---- the phone ----------------------------------------------------------- */
-.lp-phone {
-  position: relative;
-  width: min(100%, 318px);
-  padding: 9px;
-  border-radius: 44px;
-  background: linear-gradient(160deg, #22262c, #0f1115 55%, #1a1d22);
-  border: 1px solid var(--border);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.14),
-    0 50px 110px rgba(0, 0, 0, 0.6),
-    0 12px 30px rgba(0, 0, 0, 0.45);
-}
-.lp-phone-screen {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-height: 560px;
-  padding: 46px 16px 18px;
-  border-radius: 36px;
-  background: var(--app-bg);
-  overflow: hidden;
-}
-/* the island at the top of a modern phone: one detail, so the frame reads as a
-   phone without anybody drawing a status bar's worth of fake numbers */
-.lp-phone-screen::before {
-  content: '';
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  width: 84px;
-  height: 22px;
-  border-radius: 999px;
-  background: #000;
-  transform: translateX(-50%);
-}
-.lp-phone-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.lp-phone-title {
-  font-family: var(--font-display);
-  font-size: 1.12rem;
-  font-weight: 600;
-}
 .lp-live {
   width: 7px;
   height: 7px;
@@ -254,9 +206,6 @@
 }
 
 /* ---- Wordle tiles, in the game's own colours ----------------------------- */
-.lp-phone .players {
-  grid-template-columns: 1fr 1fr;
-}
 .lp-board {
   display: grid;
   gap: 6px;
@@ -264,7 +213,7 @@
 }
 
 /* the hero's guesses turn over one tile at a time, once, as the game does */
-.lp-phone .lp-tile:not(.lp-tile--empty) {
+.ps-battle .lp-tile:not(.lp-tile--empty) {
   animation: lp-flip 0.5s cubic-bezier(0.3, 0.7, 0.3, 1) both;
   animation-delay: calc(var(--i, 0) * 70ms + 350ms);
 }
@@ -352,13 +301,6 @@
     top: auto;
     bottom: 26%;
     padding: 10px 13px;
-  }
-  .lp-phone {
-    width: min(100%, 300px);
-  }
-  /* on a phone the picture of one is only as tall as what is in it */
-  .lp-phone-screen {
-    min-height: 0;
   }
   .lp-step-visual {
     height: auto;
@@ -500,28 +442,7 @@
   border-bottom: 1px solid var(--border);
 }
 
-/* the lesson */
-.lp-phone--lesson .lp-phone-screen {
-  gap: 18px;
-}
-.lp-lesson-top {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--ink-3);
-}
-.lp-lesson-skill {
-  font-size: 0.86rem;
-  color: var(--ink-3);
-}
-.lp-lesson-prompt {
-  margin-top: 10px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
+/* the lesson's sentence, on the phone in the learn section (landing/screens.tsx) */
 .lp-lesson-sentence {
   display: flex;
   flex-wrap: wrap;
@@ -561,30 +482,6 @@
   border-top-color: var(--primary);
   transform: translateX(-50%);
 }
-.lp-lesson-options {
-  display: grid;
-  gap: 8px;
-}
-.lp-feedback {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: auto;
-  padding: 10px 10px 10px 14px;
-  border: 1px solid color-mix(in srgb, var(--success) 45%, transparent);
-  border-radius: 16px;
-  background: var(--success-soft);
-}
-.lp-feedback-text {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
-  font-weight: 650;
-  color: var(--success);
-}
-
 /* ---- see it, hear it, say it, use it ------------------------------------- */
 .lp-speak {
   list-style: none;
@@ -1205,7 +1102,7 @@
  * delays alone, which would hold each tile invisible for its delay first.
  */
 @media (prefers-reduced-motion: reduce) {
-  .lp-phone .lp-tile:not(.lp-tile--empty),
+  .ps-battle .lp-tile:not(.lp-tile--empty),
   .lp-float,
   .lp-live {
     animation: none;
