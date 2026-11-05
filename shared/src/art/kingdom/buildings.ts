@@ -18,7 +18,7 @@
  */
 import type { KingdomBuilding, KingdomLevel } from '../../games/kingdom/buildings.js';
 import { n, seeded, type Pt } from '../svg.js';
-import { INK, Part, arched, disc, iso, onLeft, onRight, oval, panel, poly, polyline, rim, seg, wpoly, type Palette, type Tri } from './pen.js';
+import { DAY, INK, Part, arched, disc, iso, onLeft, onRight, oval, panel, poly, polyline, rim, seg, wpoly, type Palette, type Tri } from './pen.js';
 import * as P from './props.js';
 import type { Rand } from './props.js';
 
@@ -129,6 +129,9 @@ function doorOn(p: Part, pal: Palette, at: (u: number, v: number) => Pt, u: numb
  * `built` below 1 leaves the walls standing that far up with no roof yet,
  * the room open to the sky.
  */
+/** While `buildingDoors` measures a stage: each finished house's door height and its wall's height to the eave, in its own units. */
+let measured: { door: number; eave: number }[] | null = null;
+
 export function house(pal: Palette, x: number, y: number, z: number, w: number, d: number, h: number, o: HouseOptions, rand: Rand, built = 1): Part {
   const p = new Part(x + w / 2 + y + d / 2);
   const wall = o.wall ?? pal.stone;
@@ -145,6 +148,7 @@ export function house(pal: Palette, x: number, y: number, z: number, w: number, 
     const len = o.door.side === 'left' ? w : d;
     const at = o.door.side === 'left' ? left : right;
     doorOn(p, pal, at, o.door.at * len - dw / 2, dw, dh, o.door.arch ?? false, o.door.tone ?? pal.door, o.door.side);
+    if (!raised) measured?.push({ door: dh, eave: h });
   }
   for (const win of o.windows ?? []) {
     const ww = win.w ?? Math.min(5, w * 0.2);
@@ -745,6 +749,21 @@ export function buildingParts(building: KingdomBuilding, level: KingdomLevel, pa
     for (const part of out.slice(-(work.length + raisedIn.length * 2))) part.tag = 'scaffold';
   }
   return out;
+}
+
+/**
+ * The doors a building has at a stage, each as tall as it is drawn and the
+ * height of its house's wall up to the eave, in the building's own units: the
+ * measure the village's people and its deer are sized against.
+ */
+export function buildingDoors(building: KingdomBuilding, level: KingdomLevel): { door: number; eave: number }[] {
+  measured = [];
+  try {
+    buildingParts(building, level, DAY);
+    return measured;
+  } finally {
+    measured = null;
+  }
 }
 
 /** How tall each building stands at its fullest, for framing it on its own. */

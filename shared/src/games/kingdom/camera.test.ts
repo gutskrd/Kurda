@@ -7,7 +7,7 @@ const phone: Stage = { w: 390, h: 780, top: 76, bottom: 200 };
 const desk: Stage = { w: 845, h: 672, top: 76, bottom: 220 };
 
 describe('the village’s camera', () => {
-  it('opens on the village’s heart, near enough that every building is at least 110 pixels across on a phone', () => {
+  it('opens on the village’s heart, near enough that every building is at least 130 pixels across on a phone', () => {
     const c = openingCamera(phone);
     for (const b of KINGDOM_BUILDINGS) expect(KINGDOM_PLOTS[b].box.w * c.s, b).toBeGreaterThanOrEqual(OPENING_MIN_BUILDING);
     expect(Math.abs(c.x - HEART.x)).toBeLessThan(1);

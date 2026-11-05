@@ -704,6 +704,26 @@ export function gate(pal: Palette, x: number, y: number, z: number, span: number
 
 export { arched };
 
+/**
+ * A waymark: a little pile of three flat stones by a track, each smaller than
+ * the one under it, in the cairn's own stone, half sunk in the grass, so the
+ * way up to the cairn is marked as shepherds mark it. Its foot at (x, y, z).
+ */
+export function waymark(pal: Palette, x: number, y: number, z: number, rand: Rand, k = 1): Part {
+  const tones = cairnTones(pal);
+  const p = new Part(depthOf(x, y));
+  const [cx, cy] = iso(x, y, z);
+  const marks: StoneMarks = { lit: [], under: [], end: [], outline: [], cracks: [] };
+  const s = (v: number): number => v * k;
+  // [left, bottom, width, height]
+  for (const [l, b, w, h] of [[-4.4, 0, 8.6, 3.2], [-3, 3, 6, 2.8], [-1.6, 5.6, 3.6, 2.6]] as const) cairnStone(p, marks, cx + s(l), cy - s(b), s(w), s(h), tones, rand, { round: s(1), top: s(0.4) });
+  p.flat(marks.lit.join(''), tones.stone.top).flat(marks.under.join(''), tones.under).flat(marks.end.join(''), tones.stone.right);
+  p.line(marks.outline.join(''));
+  // the grass up round its foot
+  p.line(`M${n(cx - s(5))} ${n(cy + s(0.4))}l${n(-s(0.6))} ${n(-s(2))}M${n(cx + s(4.6))} ${n(cy + s(0.4))}l${n(s(0.5))} ${n(-s(2.2))}M${n(cx + s(3.4))} ${n(cy + s(0.6))}l0 ${n(-s(1.8))}`, 1.4).line(`M${n(cx - s(5))} ${n(cy + s(0.4))}l${n(-s(0.6))} ${n(-s(2))}M${n(cx + s(4.6))} ${n(cy + s(0.4))}l${n(s(0.5))} ${n(-s(2.2))}M${n(cx + s(3.4))} ${n(cy + s(0.6))}l0 ${n(-s(1.8))}`, 0.7, pal.leaf.left);
+  return p;
+}
+
 // ───────────────────────────────────────────────────────────── the cairn
 
 /**
@@ -826,50 +846,58 @@ const noRocks = (): { face: string[]; top: string[]; side: string[]; sil: string
  * Returned back to front: the knoll with the rocks behind the cairn, the
  * cairn, and the rocks in front of it, each its own part so the scene can
  * sort them among its other things.
+ *
+ * With `outcrop`, the same stones stand instead on a shelf of rock breaking
+ * out of a green hillside, as the village has it: no knoll of its own, the
+ * grass growing up round the rocks' feet so the outcrop is part of the hill.
  */
-export function cairn(pal: Palette, x: number, y: number, z: number, rand: Rand, k = 1): Part[] {
+export function cairn(pal: Palette, x: number, y: number, z: number, rand: Rand, k = 1, o: { outcrop?: boolean } = {}): Part[] {
   const tones = cairnTones(pal);
   const s = (v: number): number => v * k;
   const out: Part[] = [];
   const [cx, cy] = iso(x, y, z);
 
   // the knoll: a broad mound of golden grass, its crown a little left of middle, its right side in shade
-  const rx = s(25);
+  // an outcrop stands broader and higher than the knoll, so the cairn stands up on it out of the hill
+  const rx = s(o.outcrop ? 30 : 25);
   const ry = s(8.5);
-  const rise = s(9);
+  const rise = s(o.outcrop ? 15 : 9);
   const crown: Pt = [cx - s(1), cy - ry * 0.35 - rise];
   const knoll = new Part(depthOf(x, y) - 1);
-  const dome =
-    `M${n(cx - rx)} ${n(cy)}C${n(cx - rx * 0.92)} ${n(cy - rise * 0.9)} ${n(cx - rx * 0.55)} ${n(crown[1] - s(0.6))} ${n(crown[0] - s(4))} ${n(crown[1])}` +
-    `L${n(crown[0] + s(5))} ${n(crown[1] + s(0.3))}C${n(cx + rx * 0.55)} ${n(crown[1] + s(0.4))} ${n(cx + rx * 0.95)} ${n(cy - rise * 0.8)} ${n(cx + rx)} ${n(cy)}` +
-    `A${n(rx)} ${n(ry)} 0 0 1 ${n(cx - rx)} ${n(cy)}Z`;
-  knoll.sil(dome).flat(dome, tones.grass.left);
-  // the shade down its right side, and the sun on its crown and left shoulder
-  knoll.flat(
-    `M${n(crown[0] + s(6))} ${n(crown[1] + s(0.4))}C${n(cx + rx * 0.55)} ${n(crown[1] + s(0.5))} ${n(cx + rx * 0.95)} ${n(cy - rise * 0.8)} ${n(cx + rx)} ${n(cy)}` +
-      `A${n(rx)} ${n(ry)} 0 0 1 ${n(cx + rx * 0.2)} ${n(cy + ry * 0.98)}C${n(cx + rx * 0.35)} ${n(cy - rise * 0.2)} ${n(cx + rx * 0.3)} ${n(crown[1] + s(4))} ${n(crown[0] + s(6))} ${n(crown[1] + s(0.4))}Z`,
-    tones.grass.right,
-  );
-  knoll.flat(
-    `M${n(cx - rx * 0.86)} ${n(cy - rise * 0.55)}C${n(cx - rx * 0.7)} ${n(crown[1] + s(1))} ${n(crown[0] - s(6))} ${n(crown[1] + s(0.2))} ${n(crown[0] + s(2))} ${n(crown[1] + s(0.6))}` +
-      `C${n(crown[0] - s(4))} ${n(crown[1] + s(3.4))} ${n(cx - rx * 0.6)} ${n(cy - rise * 0.35)} ${n(cx - rx * 0.86)} ${n(cy - rise * 0.55)}Z`,
-    tones.grass.top,
-  );
-  // strokes of the dry grass, swept by the wind
-  let stalks = '';
-  for (let i = 0; i < 16; i++) {
-    const a = rand() * Math.PI * 2;
-    const r = 0.25 + rand() * 0.65;
-    const sx = cx + Math.cos(a) * rx * r;
-    const sy = cy + Math.sin(a) * ry * r - rise * (1 - r) * 0.9;
-    stalks += `M${n(sx)} ${n(sy)}q${n(s(0.8))} ${n(-s(1.2))} ${n(s(2.2))} ${n(-s(1.6))}`;
+  if (o.outcrop) outcrop(pal, knoll, cx, cy, crown, rx, ry, rise, s, rand);
+  else {
+    const dome =
+      `M${n(cx - rx)} ${n(cy)}C${n(cx - rx * 0.92)} ${n(cy - rise * 0.9)} ${n(cx - rx * 0.55)} ${n(crown[1] - s(0.6))} ${n(crown[0] - s(4))} ${n(crown[1])}` +
+      `L${n(crown[0] + s(5))} ${n(crown[1] + s(0.3))}C${n(cx + rx * 0.55)} ${n(crown[1] + s(0.4))} ${n(cx + rx * 0.95)} ${n(cy - rise * 0.8)} ${n(cx + rx)} ${n(cy)}` +
+      `A${n(rx)} ${n(ry)} 0 0 1 ${n(cx - rx)} ${n(cy)}Z`;
+    knoll.sil(dome).flat(dome, tones.grass.left);
+    // the shade down its right side, and the sun on its crown and left shoulder
+    knoll.flat(
+      `M${n(crown[0] + s(6))} ${n(crown[1] + s(0.4))}C${n(cx + rx * 0.55)} ${n(crown[1] + s(0.5))} ${n(cx + rx * 0.95)} ${n(cy - rise * 0.8)} ${n(cx + rx)} ${n(cy)}` +
+        `A${n(rx)} ${n(ry)} 0 0 1 ${n(cx + rx * 0.2)} ${n(cy + ry * 0.98)}C${n(cx + rx * 0.35)} ${n(cy - rise * 0.2)} ${n(cx + rx * 0.3)} ${n(crown[1] + s(4))} ${n(crown[0] + s(6))} ${n(crown[1] + s(0.4))}Z`,
+      tones.grass.right,
+    );
+    knoll.flat(
+      `M${n(cx - rx * 0.86)} ${n(cy - rise * 0.55)}C${n(cx - rx * 0.7)} ${n(crown[1] + s(1))} ${n(crown[0] - s(6))} ${n(crown[1] + s(0.2))} ${n(crown[0] + s(2))} ${n(crown[1] + s(0.6))}` +
+        `C${n(crown[0] - s(4))} ${n(crown[1] + s(3.4))} ${n(cx - rx * 0.6)} ${n(cy - rise * 0.35)} ${n(cx - rx * 0.86)} ${n(cy - rise * 0.55)}Z`,
+      tones.grass.top,
+    );
+    // strokes of the dry grass, swept by the wind
+    let stalks = '';
+    for (let i = 0; i < 16; i++) {
+      const a = rand() * Math.PI * 2;
+      const r = 0.25 + rand() * 0.65;
+      const sx = cx + Math.cos(a) * rx * r;
+      const sy = cy + Math.sin(a) * ry * r - rise * (1 - r) * 0.9;
+      stalks += `M${n(sx)} ${n(sy)}q${n(s(0.8))} ${n(-s(1.2))} ${n(s(2.2))} ${n(-s(1.6))}`;
+    }
+    knoll.line(stalks, 0.7, tones.straw);
+    // the rocks behind the cairn, breaking through the knoll's shoulders
+    const behind = noRocks();
+    boulder(behind, cx - s(18.5), cy - rise * 0.35, s(9), s(5.5), rand);
+    boulder(behind, cx + s(18), cy - rise * 0.4, s(11), s(7), rand);
+    rocksOn(knoll, behind, tones.boulder);
   }
-  knoll.line(stalks, 0.7, tones.straw);
-  // the rocks behind the cairn, breaking through the knoll's shoulders
-  const behind = noRocks();
-  boulder(behind, cx - s(18.5), cy - rise * 0.35, s(9), s(5.5), rand);
-  boulder(behind, cx + s(18), cy - rise * 0.4, s(11), s(7), rand);
-  rocksOn(knoll, behind, tones.boulder);
   out.push(knoll);
 
   // the cairn on the crown, measured off the picture: its widest slab thirty across, the whole of it thirty-three high
@@ -916,4 +944,48 @@ export function cairn(pal: Palette, x: number, y: number, z: number, rand: Rand,
   front.flat(pebbles, tones.boulder.right);
   out.push(front);
   return out;
+}
+
+/**
+ * The cairn's ground as an outcrop: the rocks behind it on the hill's
+ * shoulders, a broad shelf of rock under it, its top lit and its right face
+ * in shade, moss on its cool side, and tufts of the hill's grass round its
+ * feet. It draws from the cairn's scatter exactly as the knoll would, so the
+ * stones above come out the same.
+ */
+function outcrop(pal: Palette, p: Part, cx: number, cy: number, crown: Pt, rx: number, ry: number, rise: number, s: (v: number) => number, rand: Rand): void {
+  const tones = cairnTones(pal);
+  // where the knoll's stalks would go, its scatter taken the same way: here, tufts of grass round the outcrop's foot
+  let tufts = '';
+  for (let i = 0; i < 16; i++) {
+    const a = rand() * Math.PI * 2;
+    const r = rand();
+    const tx = cx + Math.cos(a) * rx * (0.62 + r * 0.3);
+    const ty = cy + Math.abs(Math.sin(a)) * ry * (0.3 + r * 0.4) - s(0.4);
+    tufts += `M${n(tx - s(1.6))} ${n(ty)}l${n(-s(0.5))} ${n(-s(2.2))}M${n(tx)} ${n(ty)}l0 ${n(-s(3))}M${n(tx + s(1.6))} ${n(ty)}l${n(s(0.6))} ${n(-s(2))}`;
+  }
+  // the rocks behind, on the hill's shoulders, as the knoll has them
+  const behind = noRocks();
+  boulder(behind, cx - s(18.5), cy - rise * 0.35, s(9), s(5.5), rand);
+  boulder(behind, cx + s(18), cy - rise * 0.4, s(11), s(7), rand);
+  rocksOn(p, behind, tones.boulder);
+  // the shelf the cairn stands on: a broad block of the hill's rock, its top flat
+  const t = tones.boulder;
+  const L: Pt = [cx - rx * 0.78, cy + s(0.6)];
+  const back: Pt = [crown[0] - s(14), crown[1] + s(0.6)];
+  const ridge: Pt = [crown[0] + s(12), crown[1] - s(0.2)];
+  const R: Pt = [cx + rx * 0.8, cy - s(0.4)];
+  const toe: Pt = [cx + s(3), cy + ry * 0.55];
+  const lip: Pt = [crown[0] + s(9.5), crown[1] + s(3.4)];
+  const lipL: Pt = [crown[0] - s(11.5), crown[1] + s(3.8)];
+  const shelf = poly([L, [cx - rx * 0.66, cy - rise * 0.55], back, ridge, [cx + rx * 0.62, cy - rise * 0.6], R, toe]);
+  p.sil(shelf).fill(shelf, t.left);
+  p.fill(poly([back, ridge, lip, lipL]), t.top, ' stroke-width="0.8"');
+  p.flat(poly([ridge, [cx + rx * 0.62, cy - rise * 0.6], R, toe, [cx + s(1), cy + s(1.6)], lip]), t.right);
+  // a ledge and a crack across its face, and moss on its cool left side
+  p.line(`M${n(cx - rx * 0.6)} ${n(cy - rise * 0.3)}q${n(s(6))} ${n(-s(1.2))} ${n(s(12))} ${n(s(0.4))}M${n(cx + s(4))} ${n(lip[1] + s(0.6))}l${n(s(1.2))} ${n(s(3.4))}l${n(s(1.6))} ${n(s(1.2))}`, 0.6);
+  const moss = `M${n(cx - rx * 0.7)} ${n(cy - s(0.2))}q${n(s(1))} ${n(-s(3.6))} ${n(s(5))} ${n(-s(4.4))}q${n(s(2))} ${n(s(1.6))} ${n(s(1.4))} ${n(s(4.6))}Z`;
+  p.flat(moss + disc(lipL[0] + s(2.4), lipL[1] - s(0.6), s(1.1)), pal.leaf.left);
+  // the hill's grass growing up round its feet, so it sits in the hill rather than on it
+  p.line(tufts, 1.5).line(tufts, 0.8, pal.leaf.left);
 }

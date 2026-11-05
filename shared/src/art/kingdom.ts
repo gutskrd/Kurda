@@ -41,13 +41,13 @@
 import { KINGDOM_BUILDINGS, type KingdomBuilding, type KingdomLevel } from '../games/kingdom/buildings.js';
 import { CANVAS, checkSize, escapeXml, n, n2, prefixFor, seeded } from './svg.js';
 import { DAY, DUSK, Part, inked, iso, sorted, type Drawn, type Palette } from './kingdom/pen.js';
-import { BUILDING_TOP, PLOT_SIZE, buildingParts } from './kingdom/buildings.js';
+import { BUILDING_TOP, PLOT_SIZE, buildingDoors, buildingParts } from './kingdom/buildings.js';
 import { TERRACES, WATER_Z, depthAt, groundAt, paths, terraceAt } from './kingdom/land.js';
 import * as P from './kingdom/props.js';
-import { VALLEY, valleyGround, valleyThings, valleyWoods } from './kingdom/valley.js';
+import { CAIRN, VALLEY, valleyGround, valleyThings, valleyWoods, waterAt } from './kingdom/valley.js';
 import { markupExtent, overlaps, type Extent } from './kingdom/bounds.js';
 import { villageHas, type VillageFeature } from '../games/kingdom/growth.js';
-import { KINGDOM_SPRITES, SPRITE_BOX, kingdomActorReach, kingdomSpriteSvg, lifeOf, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite } from './kingdom/life.js';
+import { KINGDOM_ANIMAL_HEIGHT, KINGDOM_FIGURE_HEIGHT, KINGDOM_SPRITES, SPRITE_BOX, kingdomActorReach, kingdomSpriteSvg, lifeOf, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite, type KingdomTap } from './kingdom/life.js';
 
 /** The canvas the world is drawn on, in its own units: the whole valley, several times the village's size. */
 export const KINGDOM_SCENE = { width: VALLEY.x1 - VALLEY.x0, height: VALLEY.y1 - VALLEY.y0 } as const;
@@ -89,6 +89,11 @@ export interface KingdomPlot {
 }
 
 /** A point in the world on the canvas. */
+/** Whether a point on the canvas is out on the open lake (for an app to ring the water where it is touched). */
+export function kingdomWaterAt(x: number, y: number): boolean {
+  return waterAt(x - KINGDOM_ORIGIN.x, y - KINGDOM_ORIGIN.y);
+}
+
 export function kingdomPoint(x: number, y: number, z: number): { x: number; y: number } {
   const [sx, sy] = iso(x, y, z);
   return { x: KINGDOM_ORIGIN.x + sx, y: KINGDOM_ORIGIN.y + sy };
@@ -170,13 +175,8 @@ export const KINGDOM_SWAYING = {
   ],
 } as const;
 
-/**
- * Where the cairn stands on the hill behind the village, in world units: on
- * the crest of the foothill the trail comes over from the pass, so it stands
- * against the far range, above the goats' grazing and the poplars' tops.
- */
-export const KINGDOM_CAIRN = [-40, -100] as const;
-const CAIRN_SCALE = 1.35;
+/** Where the shepherds' cairn stands, in world units: on its outcrop at the top of the track up to their camp. */
+export const KINGDOM_CAIRN = CAIRN;
 
 /** The hand-placed scenery round the buildings: trees, rocks, the cairn, the tenûr, the gate, the haystack, the boat, the stream. */
 function scenery(pal: Palette, rand: P.Rand, levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, moving: boolean): Drawn[] {
@@ -191,8 +191,6 @@ function scenery(pal: Palette, rand: P.Rand, levels: Readonly<Record<KingdomBuil
   put((a, b, c) => P.walnut(pal, a, b, c, 18, rand), -18, 4, BUILDING_SCALE, 48);
   put((a, b, c) => P.rock(pal, a, b, c, 7, rand), 132, -20, BUILDING_SCALE, 48);
   put((a, b, c) => P.bush(pal, a, b, c, 6, rand, 3), 98, -16, BUILDING_SCALE, 48);
-  // on the crest the trail comes over, against the sky: the shepherds' cairn on its knoll of dry grass (its own scatter, so nothing else moves)
-  put((a, b, c) => P.cairn(pal, a, b, c, seeded('kingdom-cairn'), CAIRN_SCALE), ...KINGDOM_CAIRN, 1, 48);
   // the upper terrace: a signpost at the top of the path, a bench and flowers along its front
   put((a, b, c) => P.sign(pal, a, b, c, 'arrow'), 124, 2);
   put((a, b, c) => P.bush(pal, a, b, c, 5, rand, 4), 220, 106);
@@ -510,4 +508,4 @@ export function kingdomLife(levels: Readonly<Record<KingdomBuilding, KingdomLeve
   return lifeOf(checked, kingdomPoint, inPlot, KINGDOM_SWAYING, KINGDOM_ORIGIN);
 }
 
-export { KINGDOM_SPRITES, SPRITE_BOX as KINGDOM_SPRITE_BOX, kingdomActorReach, kingdomSpriteSvg, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite };
+export { KINGDOM_ANIMAL_HEIGHT, KINGDOM_FIGURE_HEIGHT, KINGDOM_SPRITES, SPRITE_BOX as KINGDOM_SPRITE_BOX, buildingDoors as kingdomBuildingDoors, kingdomActorReach, kingdomSpriteSvg, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite, type KingdomTap };

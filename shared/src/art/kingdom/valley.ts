@@ -20,7 +20,7 @@
  */
 import type { VillageFeature } from '../../games/kingdom/growth.js';
 import { n, seeded, wholePath, wholeUnits, type Pt } from '../svg.js';
-import { INK, Part, disc, iso, oval, poly, wpoly, type Drawn, type Palette } from './pen.js';
+import { FIGURE_HEIGHT, INK, Part, disc, iso, oval, poly, wpoly, type Drawn, type Palette } from './pen.js';
 import { HORIZON, TERRACES, WATER_Z, meadow, mountains, terrace } from './land.js';
 import * as F from './farm.js';
 import * as P from './props.js';
@@ -121,6 +121,11 @@ function inside(pts: readonly Pt[], [x, y]: Pt): boolean {
   return hit;
 }
 
+/** Whether a screen point (from the world's origin) is out on the open lake, where a touch would ring the water. */
+export function waterAt(sx: number, sy: number): boolean {
+  return inside(LAKE, [sx, sy]);
+}
+
 /** A smooth closed shape through screen points: each corner rounded into the next. */
 function smooth(pts: readonly Pt[], closed = true): string {
   const mid = (a: Pt, b: Pt): Pt => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
@@ -157,6 +162,8 @@ export const TRACK: readonly (readonly [number, number])[] = [
   [575, -40],
   [420, -40],
   [420, -110],
+  [420, -200],
+  [362, -248],
 ];
 
 /** A strip of beaten earth along world points on the floor (the first stretch on the lowest terrace), its worn edge darker. */
@@ -451,6 +458,21 @@ export const PENS = {
 /** The shepherds' camp: their tent, its fire, and where their own few sheep graze. */
 export const CAMP = { tent: [360, -170] as const, fire: [372, -120] as const };
 
+/**
+ * The shepherds' cairn, on an outcrop at the top of the track up to their
+ * camp, where the way goes on into the high pastures: about half again a
+ * person's height (its stones stand thirty-three and a half of their own
+ * units); and the little waymarks along the track below it.
+ */
+export const CAIRN = [352, -262] as const;
+const CAIRN_SCALE = (FIGURE_HEIGHT * 1.5) / 33.6;
+const WAYMARKS: readonly (readonly [number, number])[] = [
+  [586, 140],
+  [586, -14],
+  [470, -50],
+  [428, -170],
+];
+
 /** The mill by the stream, the dock on the lake, the boat at its end, the threshing floor and the orchard's rows, in world units. */
 export const MILL = [958, 230] as const;
 export const DOCK = { x: 536, y: 470, len: 96 } as const;
@@ -518,6 +540,10 @@ export function valleyThings(pal: Palette, rand: Rand, has: (f: VillageFeature) 
     out.push({ depth: ON_FLOOR + CAMP.fire[0] + CAMP.fire[1] + 1, svg: F.flame(pal, fx, fy - 1) });
   }
   add(P.rock(pal, 470, -150, z, 8, rand), P.rock(pal, 300, -100, z, 6, rand), P.bush(pal, 480, -120, z, 7, rand, 3));
+  // the cairn on its outcrop above the camp (its own scatter, so nothing else moves), and the waymarks up the track to it
+  add(...P.cairn(pal, CAIRN[0], CAIRN[1], z, seeded('kingdom-cairn'), CAIRN_SCALE, { outcrop: true }));
+  const marks = seeded('kingdom-waymarks');
+  for (const [x, y] of WAYMARKS) add(P.waymark(pal, x, y, z, marks, 1.1));
   if (has('loom')) add(...F.loom(pal, 420, -80, z, 30, 22));
   // the fields
   for (const f of FIELDS) {

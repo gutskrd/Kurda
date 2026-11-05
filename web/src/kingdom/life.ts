@@ -21,6 +21,9 @@ import { KINGDOM_SCENE, kingdomActorReach, type KingdomActor, type KingdomFrame,
  */
 
 type Pose = Omit<KingdomFrame, 't'>;
+
+/** The least a tap target reaches across, in canvas units (about a thumb's width at the opening zoom). */
+const HIT = 26;
 const PROPS = ['x', 'y', 'r', 'sx', 'sy', 'o'] as const;
 
 const num = (v: number): string => String(Math.round(v * 1000) / 1000);
@@ -84,7 +87,9 @@ export function lifeMarkup(actors: readonly KingdomActor[], sprite: (s: KingdomS
         style += `;animation:${name} ${Math.round(n.motion.period)}ms linear calc(var(--kg-age,0ms) * -1) infinite`;
       }
     }
-    const inner = (n.sprite ? `<span class="kg-s">${sprite(n.sprite)}</span>` : '') + (n.children ?? []).map((c) => node(c, { w, h }, false)).join('');
+    // what a tap answers is small at the village's scale, so its target reaches a little round it, unseen, to be big enough for a thumb
+    const pad = tap ? `<span class="kg-hit" style="inset:${num(-Math.max(3, (HIT - h) / 2))}px ${num(-Math.max(3, (HIT - w) / 2))}px"></span>` : '';
+    const inner = pad + (n.sprite ? `<span class="kg-s">${sprite(n.sprite)}</span>` : '') + (n.children ?? []).map((c) => node(c, { w, h }, false)).join('');
     return `<span class="kg-n"${n.role ? ` data-role="${n.role}"` : ''} style="${style}">${inner}</span>`;
   };
   const canvas = { w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };

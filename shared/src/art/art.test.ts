@@ -27,7 +27,7 @@ import {
 import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import { KINGDOM_CAIRN, KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingSvg, kingdomPoint, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, kingdomTiles, type KingdomFrame, type KingdomNode } from './kingdom.js';
+import { BUILDING_SCALE, KINGDOM_ANIMAL_HEIGHT, KINGDOM_CAIRN, KINGDOM_FIGURE_HEIGHT, KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingDoors, kingdomBuildingSvg, kingdomPoint, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, kingdomTiles, type KingdomFrame, type KingdomNode } from './kingdom.js';
 import {
   PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
@@ -1167,17 +1167,19 @@ describe('the kingdom’s village', () => {
     expect(kingdomSceneSvg({ levels: some, without: 'market' }).length).toBeLessThan(kingdomSceneSvg({ levels: some }).length);
   });
 
-  it('stands the shepherds’ cairn on the crest behind the village, against the sky, by day and at dusk', () => {
+  it('stands the shepherds’ cairn on an outcrop at the top of the camp’s track, grown into the hill, by day and at dusk', () => {
     const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
-    // its knoll of dry grass is the only gold of its kind in the village
-    expect(kingdomSceneSvg({ levels: some })).toContain('#e2a334');
-    expect(kingdomSceneSvg({ levels: some, dark: true })).toContain('#c98f3c');
-    // on the hill behind the terraces, and inside the frame every screen keeps in view, head and all
-    const foot = kingdomPoint(KINGDOM_CAIRN[0], KINGDOM_CAIRN[1], 48);
-    expect(foot.x).toBeGreaterThan(KINGDOM_FRAME.x + 40);
-    expect(foot.x).toBeLessThan(KINGDOM_FRAME.x + KINGDOM_FRAME.w - 40);
-    expect(foot.y - 60).toBeGreaterThan(KINGDOM_FRAME.y);
-    for (const b of KINGDOM_BUILDINGS) expect(foot.y, b).toBeLessThan(KINGDOM_PLOTS[b].box.y + KINGDOM_PLOTS[b].box.h);
+    // its stones as the lesson path draws them, but no knoll of golden grass: the outcrop's rock and the hill's own green round it
+    for (const dark of [false, true]) {
+      const svg = kingdomSceneSvg({ levels: some, dark });
+      expect(svg).toContain(dark ? '#877b7e' : '#978b81');
+      expect(svg).not.toContain(dark ? '#c98f3c' : '#e2a334');
+    }
+    // at the top of the track, inside the world
+    const foot = kingdomPoint(KINGDOM_CAIRN[0], KINGDOM_CAIRN[1], 0);
+    expect(foot.x).toBeGreaterThan(40);
+    expect(foot.x).toBeLessThan(KINGDOM_SCENE.width - 40);
+    expect(foot.y - 40).toBeGreaterThan(0);
   });
 
   it('puts every building, its tap and its badge inside the frame an app keeps in view, and no two taps on one spot', () => {
@@ -1227,18 +1229,27 @@ describe('the kingdom’s village', () => {
     const valley = ['sheep0', 'foldgoat0', 'coophen0', 'coophen0chick0', 'millwheel', 'boat', 'cow', 'donkey', 'pigeons', 'gust0'];
     for (const id of valley) expect(ids(all(0)), id).not.toContain(id);
     expect(ids(all(5))).toEqual(expect.arrayContaining(valley));
-    // the deer and the people answer a tap; nothing else does
-    expect(kingdomLife(all(5)).filter((a) => a.tap).map((a) => [a.id, a.tap])).toEqual(expect.arrayContaining([['hevalo', 'deer'], ['hamo', 'person'], ['xezo', 'person']]));
-    expect(kingdomLife(all(5)).filter((a) => a.tap)).toHaveLength(3);
+    // the deer, the people and the animals answer a tap, each in its own way
+    const taps = Object.fromEntries(kingdomLife(all(5)).filter((a) => a.tap).map((a) => [a.id, a.tap]));
+    expect(taps).toMatchObject({ hevalo: 'deer', hamo: 'person', xezo: 'person', campsheep0: 'hop', goat0: 'hop', coophen0: 'flutter', cow: 'turn', donkey: 'turn', dog: 'wag' });
     const full = kingdomLife(all(5));
     expect(new Set(full.map((a) => a.id)).size).toBe(full.length);
-    // an animal's legs swing while it walks: its strides turn its legs about the hip and back
+    // an animal's legs swing while it walks, turning about the hip and back, and stand square while it stands
     const legs = (node: KingdomNode): KingdomNode[] => [...(node.sprite?.startsWith('leg') ? [node] : []), ...(node.children ?? []).flatMap(legs)];
     for (const id of ['campsheep0', 'cow', 'donkey', 'dog', 'goat0']) {
-      const four = legs(full.find((a) => a.id === id)!);
-      expect(four, id).toHaveLength(4);
-      for (const leg of four) expect(Math.max(...leg.motion!.frames.map((f) => Math.abs(f.r))), id).toBeGreaterThan(10);
+      const all = legs(full.find((a) => a.id === id)!);
+      expect(all, id).toHaveLength(8);
+      expect(all.filter((leg) => leg.motion && Math.max(...leg.motion.frames.map((f) => Math.abs(f.r))) > 10), id).toHaveLength(4);
     }
+    // a hen walks on two legs, and scratches with one
+    const parts = (node: KingdomNode): KingdomNode[] => [node, ...(node.children ?? []).flatMap(parts)];
+    const hen = parts(full.find((a) => a.id === 'hen0')!);
+    const henLegs = hen.filter((p) => p.sprite === 'henLeg');
+    expect(henLegs).toHaveLength(2);
+    expect(henLegs.filter((leg) => leg.motion!.frames.some((f) => f.r < -30))).toHaveLength(1);
+    // she pecks with her head and flutters with her wing, which a tap moves too
+    expect(hen.find((p) => p.role === 'head')!.motion!.frames.some((f) => f.r > 30)).toBe(true);
+    expect(hen.find((p) => p.role === 'wing')!.motion!.frames.some((f) => f.r > 40)).toBe(true);
     // the chicks follow their hen
     expect(full.filter((a) => a.id.startsWith('coophen0chick')).length).toBeGreaterThan(0);
     const check = (node: KingdomNode, where: string, inClip = false): void => {
@@ -1286,6 +1297,30 @@ describe('the kingdom’s village', () => {
         if (!/^(deer|hamo|xezo)/.test(sprite)) flatColour(svg);
       }
     }
+  });
+
+  it('stands its people a little taller than a door and well under an eave, Hevalo as tall as they are, and the animals to scale with them', () => {
+    // every finished house the buildings draw, at every stage, measured in the canvas's units
+    const doors = KINGDOM_BUILDINGS.flatMap((b) => ([0, 1, 2, 3, 4, 5] as const).flatMap((l) => kingdomBuildingDoors(b, l))).map((d) => ({ door: d.door * BUILDING_SCALE, eave: d.eave * BUILDING_SCALE }));
+    expect(doors.length).toBeGreaterThan(5);
+    for (const { door, eave } of doors) {
+      expect(KINGDOM_FIGURE_HEIGHT).toBeGreaterThan(door * 1.05);
+      expect(KINGDOM_FIGURE_HEIGHT).toBeLessThan(eave * 0.85);
+    }
+    // each figure's box is the figure's height, its drawing filling it
+    const life = kingdomLife(all(5));
+    for (const id of ['hevalo', 'hamo', 'xezo']) {
+      const a = life.find((x) => x.id === id)!;
+      expect(a.box.h, id).toBeGreaterThan(KINGDOM_FIGURE_HEIGHT * 0.9);
+      expect(a.box.h, id).toBeLessThan(KINGDOM_FIGURE_HEIGHT * 1.1);
+    }
+    // a donkey to its ears or a cow to her horns stands under a person, a sheep or a dog to their waist, a hen to their knee
+    const h = KINGDOM_ANIMAL_HEIGHT;
+    expect(h.donkey).toBeLessThan(KINGDOM_FIGURE_HEIGHT);
+    expect(h.cow).toBeLessThan(h.donkey);
+    expect(Math.max(h.sheep, h.goat, h.dog)).toBeLessThan(KINGDOM_FIGURE_HEIGHT * 0.7);
+    expect(h.hen).toBeLessThan(KINGDOM_FIGURE_HEIGHT * 0.45);
+    expect(h.chick).toBeLessThan(h.hen * 0.6);
   });
 
   it('cuts the world into tiles that lie side by side as the whole of it, each light enough to draw on a phone', () => {

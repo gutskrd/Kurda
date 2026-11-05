@@ -13,6 +13,8 @@ export * as villageCamera from './camera.js';
 export type { Camera as VillageCamera, Stage as VillageStage } from './camera.js';
 export {
   BUILDING_SCALE,
+  KINGDOM_ANIMAL_HEIGHT,
+  KINGDOM_FIGURE_HEIGHT,
   KINGDOM_FRAME,
   KINGDOM_ORIGIN,
   KINGDOM_PLOTS,
@@ -21,6 +23,7 @@ export {
   KINGDOM_SPRITE_BOX,
   KINGDOM_TILE,
   kingdomActorReach,
+  kingdomBuildingDoors,
   kingdomBuildingSvg,
   kingdomLife,
   kingdomPlotBox,
@@ -29,6 +32,7 @@ export {
   kingdomSpriteSvg,
   kingdomTiles,
   kingdomTotal,
+  kingdomWaterAt,
   type KingdomActor,
   type KingdomTile,
   type KingdomBuildingOptions,
@@ -40,4 +44,5 @@ export {
   type KingdomPlotOptions,
   type KingdomSceneOptions,
   type KingdomSprite,
+  type KingdomTap,
 } from '../../art/kingdom.js';

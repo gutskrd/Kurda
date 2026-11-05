@@ -39,7 +39,7 @@ import type { KingdomBuilding, KingdomLevel } from '../../games/kingdom/building
 import { villageFlock, villageHas, type VillageFeature } from '../../games/kingdom/growth.js';
 import { characterArt } from '../../characters/index.js';
 import { n, type Pt } from '../svg.js';
-import { DAY, DUSK, INK, Part, disc, inked, iso, oval, type Palette } from './pen.js';
+import { DAY, DUSK, FIGURE_HEIGHT, INK, Part, disc, inked, iso, oval, type Palette } from './pen.js';
 import * as P from './props.js';
 import { WATER_Z } from './land.js';
 import { CREATURES, CREATURE_BOX, type CreatureSprite } from './creatures.js';
@@ -99,7 +99,6 @@ export type KingdomSprite =
   | 'banner'
   | 'sheepHead'
   | 'goatHead'
-  | 'hen'
   | 'shadow'
   | 'bees'
   | 'butterfly'
@@ -120,8 +119,11 @@ export interface KingdomNode {
   still: Omit<KingdomFrame, 't'>;
   /** what shows inside its box only (the waterfall's streaks inside the fall) */
   clip?: boolean;
-  /** a layer an app shows when the actor is tapped (the deer's happy eyes), hidden otherwise */
-  role?: 'happy';
+  /**
+   * what an app moves when the actor is tapped: the layer it shows (the
+   * deer's happy eyes, hidden otherwise), or the head, wing or tail it turns
+   */
+  role?: 'happy' | 'head' | 'wing' | 'tail';
   children?: KingdomNode[];
 }
 
@@ -133,9 +135,16 @@ export interface KingdomActor extends KingdomNode {
   id: string;
   kind: KingdomLifeKind;
   building?: KingdomBuilding;
-  /** something a tap answers: the deer hops for joy, a person says a word of praise */
-  tap?: 'deer' | 'person';
+  /** what a tap makes it do (an app may pad its target beyond its box) */
+  tap?: KingdomTap;
 }
+
+/**
+ * What a tap makes an actor do: the deer hops for joy, a person waves or nods,
+ * a sheep or a goat hops, a hen flutters up in a puff of feathers, the cow or
+ * the donkey turns its head, the dog wags, a tree rustles and lets a leaf go.
+ */
+export type KingdomTap = 'deer' | 'person' | 'hop' | 'flutter' | 'turn' | 'wag' | 'rustle';
 
 // ───────────────────────────────────────────────────────────── motion
 
@@ -213,10 +222,9 @@ export const SPRITE_BOX: Readonly<Record<KingdomSprite, Box>> = {
   banner: { x: 0.6, y: 2.4, w: 8.2, h: 22.6 },
   sheepHead: { x: -14, y: -18, w: 32, h: 20 },
   goatHead: { x: -14, y: -24, w: 32, h: 26 },
-  hen: { x: -7, y: -12, w: 14, h: 13 },
   shadow: { x: -10, y: -3, w: 20, h: 6 },
   bees: { x: -8, y: -6, w: 16, h: 12 },
-  butterfly: { x: -5, y: -4, w: 10, h: 8 },
+  butterfly: { x: -6.5, y: -6, w: 13, h: 10 },
   dust: { x: -34, y: -26, w: 68, h: 30 },
   sparkle: { x: -5, y: -5, w: 10, h: 10 },
   ...CREATURE_BOX,
@@ -281,20 +289,6 @@ function goatHead(pal: Palette): string {
   p.sil(horns + head + ear).fill(horns, '#c9b79c').fill(ear, '#3a2c26').fill(head, pal.dusk ? '#3b2e29' : '#47362f');
   p.flat('M12.4 -17.6q2 1.4 2.6 4.4q-1 0.6 -1.6 0q-0.2 -2.4 -1 -4.4Z', '#efe6d6');
   p.flat(disc(11, -16.2, 0.8), '#f6d36b').flat(disc(11.1, -16.2, 0.4), INK);
-  return p.svg();
-}
-
-/** A hen (facing right): plump and russet, her tail up, a red comb, yellow legs. */
-function hen(pal: Palette): string {
-  const p = new Part(0);
-  p.line('M-1.4 -3v3M1.4 -3v3', 1.1, '#e0a52e');
-  const tail = 'M-4.6 -6.4l-2.2 -4.6l2.6 1.2l0.6 -2.2l1.6 3.2Z';
-  const body = 'M-4.6 -6.4q0 -4 4.2 -4.6q2.6 -0.4 3.4 -2.6q0.6 -1.6 2.4 -1.2q1.8 0.6 1.4 2.8l-0.6 1.8q1.4 4.2 -1.6 6.8q-3.4 2.4 -7 0.6q-2.4 -1.2 -2.2 -3.6Z';
-  const comb = 'M4.2 -14.6q0.4 -1.8 1.6 -1q0.4 -1.2 1.4 -0.4q0.8 0.6 -0.2 1.6Z';
-  p.sil(tail + body + comb);
-  p.fill(tail, pal.dusk ? '#7a3d24' : '#8a4424').fill(body, pal.dusk ? '#b0613a' : '#c8703f').fill(comb, '#e2392f');
-  p.flat('M-3 -6q2.6 -2.2 6.4 -1.4q-1 3.2 -4.4 3.2q-1.6 -0.4 -2 -1.8Z', pal.dusk ? '#8e4a2a' : '#a2532d');
-  p.fill('M7.8 -12.6l2 0.8l-2 0.6Z', '#f2b632', ' stroke-width="0.6"').flat(disc(6.2, -12.8, 0.55), INK).flat('M7 -11.2q0.8 1.6 -0.2 2.2q-0.8 -1 0.2 -2.2Z', '#e2392f');
   return p.svg();
 }
 
@@ -393,7 +387,6 @@ const DRAW: Readonly<Record<KingdomSprite, (pal: Palette) => string>> = {
   banner: (pal) => scenerySprite('banner', pal),
   sheepHead,
   goatHead,
-  hen,
   shadow: () => shadowSprite(),
   bees: () => bees(),
   butterfly,
@@ -454,13 +447,17 @@ function layer(sprite: KingdomSprite, parent: { w: number; h: number }, origin: 
 
 const stillOf = (m: KingdomMotion, t: number): Omit<KingdomFrame, 't'> => poseAt(m.frames, t);
 
+/** What an animal does while it stands at a stop: grazes head-down, chews its cud, sniffs the ground, sits, looks about, pecks and scratches (a hen), or flutters up. */
+type Idle = 'graze' | 'chew' | 'sniff' | 'sit' | 'look' | 'peck' | 'flutter';
+
 /** A waypoint for a walker: where, and how long it stays there, and what it does while it stays. */
 interface Stop {
   at: readonly [number, number, number];
   /** milliseconds spent here */
   wait?: number;
-  /** grazing (head down) or looking about (head up) while waiting */
+  /** grazing (head down) while waiting; the same as `idle: 'graze'` */
   graze?: boolean;
+  idle?: Idle;
 }
 
 /** How far a leg swings either way from the hip in a stride, in degrees. */
@@ -469,25 +466,35 @@ const STRIDE = 24;
 /**
  * The keys of a walk round a loop of stops at `speed` canvas units a second,
  * back to the first: where it is (x, y from the first stop), which way it
- * faces (sx ±1 for an animal seen from the side), when its head is down, the
- * bob of its gait, and the swing of one diagonal pair of its legs (the other
- * pair swings the opposite way). Its legs are still while it stands.
+ * faces (sx ±1 for an animal seen from the side), what its head does, the
+ * bob of its gait, the swing of one diagonal pair of its legs (the other pair
+ * swings the opposite way), and when it sits. Every stretch of walking
+ * starts and ends gently, at half pace, so nothing slides into or out of a
+ * stop; a change of way is a quick turn on the spot; its legs move only
+ * while it walks, a step for every stride's worth of ground.
  */
-function walk(to: ToCanvas, stops: readonly Stop[], speed: number): { period: number; path: Key[]; face: Key[]; head: Key[]; gait: Key[]; legs: Key[] } {
+function walk(
+  to: ToCanvas,
+  stops: readonly Stop[],
+  speed: number,
+  stride = 6,
+  bob = 0.8,
+): { period: number; path: Key[]; face: Key[]; head: Key[]; gait: Key[]; legs: Key[]; scratch: Key[]; wing: Key[]; rise: Key[]; sit: Key[]; moving: Key[]; step: number } {
   const pts = stops.map((s) => to(...s.at));
   let total = 0;
-  const marks: { t0: number; t1: number; kind: 'wait' | 'move'; i: number; dir: number; graze: boolean }[] = [];
+  const marks: { t0: number; t1: number; kind: 'wait' | 'move'; i: number; dir: number; idle: Idle | undefined; d: number }[] = [];
   for (let i = 0; i < stops.length; i++) {
     const wait = stops[i]!.wait ?? 0;
     if (wait > 0) {
-      marks.push({ t0: total, t1: total + wait, kind: 'wait', i, dir: 0, graze: stops[i]!.graze === true });
+      marks.push({ t0: total, t1: total + wait, kind: 'wait', i, dir: 0, idle: stops[i]!.idle ?? (stops[i]!.graze ? 'graze' : undefined), d: 0 });
       total += wait;
     }
     const j = (i + 1) % stops.length;
     const d = Math.hypot(pts[j]!.x - pts[i]!.x, pts[j]!.y - pts[i]!.y);
-    const dur = (d / speed) * 1000;
+    // a gentle start and stop make a stretch a third longer than at full pace
+    const dur = ((d / speed) * 1000 * 4) / 3;
     if (dur > 0) {
-      marks.push({ t0: total, t1: total + dur, kind: 'move', i, dir: Math.sign(pts[j]!.x - pts[i]!.x) || 1, graze: false });
+      marks.push({ t0: total, t1: total + dur, kind: 'move', i, dir: Math.sign(pts[j]!.x - pts[i]!.x) || 1, idle: undefined, d });
       total += dur;
     }
   }
@@ -497,100 +504,188 @@ function walk(to: ToCanvas, stops: readonly Stop[], speed: number): { period: nu
   const head: Key[] = [];
   const gait: Key[] = [];
   const legs: Key[] = [];
-  const eps = 0.0005;
+  const scratch: Key[] = [];
+  const wing: Key[] = [{ t: 0, r: 0 }];
+  const rise: Key[] = [{ t: 0, y: 0 }];
+  const moving: Key[] = [];
+  const sit: Key[] = [{ t: 0, o: 0 }];
+  // a turn about on the spot takes a fifth of a second
+  const turn = Math.min(0.02, 200 / total);
   let facing = marks.find((m) => m.kind === 'move')?.dir ?? 1;
   for (const m of marks) {
     const a = m.t0 / total;
     const b = m.t1 / total;
     const from = pts[m.i]!;
     const to2 = m.kind === 'move' ? pts[(m.i + 1) % pts.length]! : from;
-    path.push({ t: a, x: from.x - base.x, y: from.y - base.y }, { t: b, x: to2.x - base.x, y: to2.y - base.y });
+    const at = (f: number): Key => ({ x: from.x - base.x + (to2.x - from.x) * f, y: from.y - base.y + (to2.y - from.y) * f, t: 0 });
+    if (m.kind === 'move') {
+      // the first and last fifth of the time cover a tenth of the ground each: easing in and out
+      path.push({ ...at(0), t: a }, { ...at(0.1), t: a + (b - a) * 0.2 }, { ...at(0.9), t: a + (b - a) * 0.8 }, { ...at(1), t: b });
+    } else path.push({ ...at(0), t: a }, { ...at(0), t: b });
     if (m.kind === 'move' && m.dir !== facing) {
-      face.push({ t: Math.max(0, a - eps), sx: facing }, { t: a, sx: m.dir });
+      face.push({ t: Math.max(0, a - turn), sx: facing }, { t: a, sx: m.dir });
       facing = m.dir;
     }
-    // the head goes down to graze a moment after stopping, and comes up a moment before moving on
-    const lift = Math.min(0.6, (m.t1 - m.t0) / 4000) * (1000 / total);
-    if (m.graze) head.push({ t: a, r: 0 }, { t: a + lift, r: 34 }, { t: b - lift, r: 34 }, { t: b, r: 0 });
-    else head.push({ t: a, r: 0 }, { t: b, r: 0 });
+    const ms = m.t1 - m.t0;
+    const lift = Math.min(0.6, ms / 4000) * (1000 / total);
+    const beats = (every: number, low: number, high: number): void => {
+      const n = Math.max(2, Math.floor(ms / every));
+      head.push({ t: a, r: 0 });
+      for (let i = 1; i < n; i++) head.push({ t: a + ((b - a) * i) / n, r: i % 2 ? high : low });
+      head.push({ t: b, r: 0 });
+    };
+    if (m.idle === 'graze') head.push({ t: a, r: 0 }, { t: a + lift, r: 34 }, { t: b - lift, r: 34 }, { t: b, r: 0 });
+    else if (m.idle === 'chew') beats(520, 1, 5);
+    else if (m.idle === 'sniff') beats(360, 18, 26);
+    else if (m.idle === 'look') head.push({ t: a, r: 0 }, { t: a + lift, r: -8 }, { t: (a + b) / 2, r: -8 }, { t: (a + b) / 2 + lift, r: 6 }, { t: b - lift, r: 6 }, { t: b, r: 0 });
+    else if (m.idle === 'peck') {
+      // a scratch of one foot back over the ground, twice, then a look down and a double peck, over and over
+      const slots = Math.max(1, Math.floor(ms / 1300));
+      const q = 110 / total;
+      head.push({ t: a, r: 0 });
+      scratch.push({ t: a, r: 0 });
+      for (let i = 0; i < slots; i++) {
+        const s0 = a + ((b - a) * i) / slots + q;
+        scratch.push({ t: s0, r: 0 }, { t: s0 + q, r: -38 }, { t: s0 + 2 * q, r: 4 }, { t: s0 + 3 * q, r: -38 }, { t: s0 + 4 * q, r: 0 });
+        const p0 = s0 + 6 * q;
+        head.push({ t: p0, r: 0 }, { t: p0 + q, r: 44 }, { t: p0 + 2 * q, r: 10 }, { t: p0 + 3 * q, r: 46 }, { t: p0 + 4.4 * q, r: 0 });
+      }
+      head.push({ t: b, r: 0 });
+      scratch.push({ t: b, r: 0 });
+    } else head.push({ t: a, r: 0 }, { t: b, r: 0 });
+    if (m.idle === 'flutter') {
+      // up off the ground with two beats of her wings, and down again
+      const q = 120 / total;
+      const f0 = a + (b - a) * 0.3;
+      wing.push({ t: f0, r: 0 }, { t: f0 + q, r: 62 }, { t: f0 + 2 * q, r: 8 }, { t: f0 + 3 * q, r: 62 }, { t: f0 + 4 * q, r: 8 }, { t: f0 + 5 * q, r: 0 });
+      rise.push({ t: f0, y: 0 }, { t: f0 + 2 * q, y: -3.2 }, { t: f0 + 4 * q, y: -1.6 }, { t: f0 + 5 * q, y: 0 });
+    }
+    // sitting: down a moment after stopping, up a moment before moving on
+    if (m.idle === 'sit') sit.push({ t: a, o: 0 }, { t: a + lift, o: 1 }, { t: b - lift, o: 1 }, { t: b, o: 0 });
+    // walking or standing, switched in a moment at each end of a stretch
+    const e = Math.min(0.0004, (b - a) / 4);
+    moving.push({ t: a + e, o: m.kind === 'move' ? 1 : 0 }, { t: b - e, o: m.kind === 'move' ? 1 : 0 });
     if (m.kind === 'move') {
-      const steps = 2 * Math.max(1, Math.round((m.t1 - m.t0) / 640));
+      const steps = 2 * Math.max(1, Math.round(m.d / stride / 2));
       for (let s = 0; s <= steps; s++) {
         const t = a + ((b - a) * s) / steps;
-        gait.push({ t, y: s % 2 ? -0.8 : 0 });
+        gait.push({ t, y: s % 2 ? -bob : 0 });
         legs.push({ t, r: s === 0 || s === steps ? 0 : s % 2 ? STRIDE : -STRIDE });
       }
+      scratch.push(...legs.slice(-steps - 1));
     } else {
       gait.push({ t: a, y: 0 }, { t: b, y: 0 });
       legs.push({ t: a, r: 0 }, { t: b, r: 0 });
+      if (m.idle !== 'peck') scratch.push({ t: a, r: 0 }, { t: b, r: 0 });
     }
   }
   const first = marks.find((m) => m.kind === 'move')?.dir ?? 1;
   face.unshift({ t: 0, sx: first });
   face.push({ t: 1, sx: first });
-  return { period: total, path, face, head, gait, legs };
+  sit.push({ t: 1, o: 0 });
+  wing.push({ t: 1, r: 0 });
+  rise.push({ t: 1, y: 0 });
+  moving.unshift({ t: 0, o: moving[0]!.o });
+  moving.push({ t: 1, o: moving[0]!.o });
+  // how long one step takes at full pace, in milliseconds
+  const step = (stride / speed) * 1000;
+  return { period: total, path, face, head, gait, legs, scratch, wing, rise, sit, moving, step };
 }
 
-/** The parts of each four-legged animal: body, head and tail sprites (one box), its legs, and where its hips, neck and tail root are in that box's units. */
+/**
+ * The parts of each four-legged animal: body, head and tail sprites (one
+ * box), its legs, where its hips, neck and tail root are in that box's units,
+ * how tall it stands in its own units (to the top of its head, horns or ears),
+ * how tall it stands in the world, and what a tap makes it do.
+ */
 const RIGS = {
-  sheep: { body: 'fleece', head: 'sheepHead', tail: undefined, leg: 'legDark', hips: [[-8, -4], [5, -4], [-4.6, -4], [8.4, -4]], neck: [8, -10], tailRoot: undefined },
-  goat: { body: 'goatBody', head: 'goatHead', tail: undefined, leg: 'legDark', hips: [[-8, -6.5], [5.4, -6.5], [-5, -6.5], [8.4, -6.5]], neck: [8, -16], tailRoot: undefined },
-  cow: { body: 'cow', head: 'cowHead', tail: 'cowTail', leg: 'legLight', hips: [[-13, -10.5], [7.6, -10.5], [-9, -10.5], [11.6, -10.5]], neck: [10, -20], tailRoot: [-16, -19] },
-  donkey: { body: 'donkey', head: 'donkeyHead', tail: undefined, leg: 'legGrey', hips: [[-11, -12.5], [6.6, -12.5], [-7, -12.5], [10.6, -12.5]], neck: [7, -22], tailRoot: undefined },
-  dog: { body: 'dogWalk', head: 'dogHead', tail: undefined, leg: 'legLight', hips: [[-7, -9.5], [5.4, -9.5], [-4, -9.5], [8.4, -9.5]], neck: [7, -14], tailRoot: undefined },
-} as const satisfies Record<string, { body: KingdomSprite; head: KingdomSprite; tail: KingdomSprite | undefined; leg: KingdomSprite; hips: readonly (readonly [number, number])[]; neck: Pt; tailRoot: Pt | undefined }>;
+  sheep: { body: 'fleece', head: 'sheepHead', tail: undefined, leg: 'legDark', hips: [[-8, -4], [5, -4], [-4.6, -4], [8.4, -4]], neck: [8, -10], tailRoot: undefined, tall: 17.5, height: 9.5, tap: 'hop' },
+  goat: { body: 'goatBody', head: 'goatHead', tail: undefined, leg: 'legDark', hips: [[-8, -6.5], [5.4, -6.5], [-5, -6.5], [8.4, -6.5]], neck: [8, -16], tailRoot: undefined, tall: 24.4, height: 10, tap: 'hop' },
+  cow: { body: 'cow', head: 'cowHead', tail: 'cowTail', leg: 'legLight', hips: [[-13, -10.5], [7.6, -10.5], [-9, -10.5], [11.6, -10.5]], neck: [10, -20], tailRoot: [-16, -19], tall: 29, height: 13, tap: 'turn' },
+  donkey: { body: 'donkey', head: 'donkeyHead', tail: undefined, leg: 'legGrey', hips: [[-11, -12.5], [6.6, -12.5], [-7, -12.5], [10.6, -12.5]], neck: [7, -22], tailRoot: undefined, tall: 36.8, height: 14, tap: 'turn' },
+  dog: { body: 'dogWalk', head: 'dogHead', tail: undefined, leg: 'legLight', hips: [[-7, -9.5], [5.4, -9.5], [-4, -9.5], [8.4, -9.5]], neck: [7, -14], tailRoot: undefined, tall: 23.8, height: 7.5, tap: 'wag' },
+} as const satisfies Record<string, { body: KingdomSprite; head: KingdomSprite; tail: KingdomSprite | undefined; leg: KingdomSprite; hips: readonly (readonly [number, number])[]; neck: Pt; tailRoot: Pt | undefined; tall: number; height: number; tap: KingdomTap }>;
 type Species = keyof typeof RIGS;
+
+/** How tall a person stands in the world, in canvas units (see FIGURE_HEIGHT); Hevalo, a red deer, is about a person's height to the tips of his antlers. */
+export const KINGDOM_FIGURE_HEIGHT = FIGURE_HEIGHT;
+
+/** How tall each animal stands in the world, in canvas units, against a person. */
+export const KINGDOM_ANIMAL_HEIGHT: Readonly<Record<Species | 'hen' | 'chick', number>> = { sheep: RIGS.sheep.height, goat: RIGS.goat.height, cow: RIGS.cow.height, donkey: RIGS.donkey.height, dog: RIGS.dog.height, hen: 6, chick: 3 };
 
 /**
  * A four-legged animal seen from the side, walking a loop of stops: a
  * shadow, then the animal turning to face its way, bobbing in its gait, its
- * legs swinging in diagonal pairs from the hip while it walks, its head going
- * down to graze where it stops, and the cow's tail swishing all the while.
+ * legs swinging in diagonal pairs from the hip while it walks, its head doing
+ * what it does at each stop (grazing, chewing, sniffing), the dog sitting
+ * down at some, and the cow's tail swishing all the while. `size` scales it
+ * from a grown one (a lamb is smaller).
  */
-function animal(id: string, to: ToCanvas, species: Species, stops: readonly Stop[], speed: number, phase: number, k = 1, building?: KingdomBuilding): KingdomActor {
+function animal(id: string, to: ToCanvas, species: Species, stops: readonly Stop[], speed: number, phase: number, size = 1, building?: KingdomBuilding): KingdomActor {
   const rig = RIGS[species];
-  const w = walk(to, stops, speed);
+  const k = (rig.height / rig.tall) * size;
+  // a step covers the ground a foot sweeps as its leg swings through the stride, so the feet never slide
+  const w = walk(to, stops, speed, 2 * Math.sin((STRIDE * Math.PI) / 180) * (-rig.hips[0][1] + 0.8) * k, Math.min(0.8, rig.height * size * 0.06));
   const start = to(...stops[0]!.at);
   const box = boxAt(rig.body, start, k);
   const b = SPRITE_BOX[rig.body];
   const flip = loop(w.period, w.face, phase);
-  const stride = loop(w.period, w.legs, phase);
-  const counter = loop(
-    w.period,
-    w.legs.map((key) => ({ ...key, r: -(key.r ?? 0) })),
-    phase,
-  );
+  // the legs swing in a loop of two steps of their own, shown while it walks; a set standing square shows while it stands
+  // (so a long walk is a few frames, not one for every step)
+  const cycle = Math.max(240, Math.round(w.step * 2));
+  const swingKeys: Key[] = [{ t: 0, r: 0 }, { t: 0.25, r: STRIDE }, { t: 0.5, r: 0 }, { t: 0.75, r: -STRIDE }, { t: 1, r: 0 }];
   const lb = SPRITE_BOX[rig.leg];
-  const legs: KingdomNode[] = rig.hips.map(([hx, hy], i) => ({
+  const leg = (hx: number, hy: number, motion?: KingdomMotion): KingdomNode => ({
     sprite: rig.leg,
     box: { x: (hx - b.x) * k - (lb.w * k) / 2, y: (hy - b.y) * k, w: lb.w * k, h: (-hy + 0.8) * k },
     origin: [0.5, 0] as Pt,
-    // the far hind leg and the near foreleg step together, then the other two
-    motion: i === 0 || i === 3 ? stride : counter,
+    motion,
     still: REST,
-  }));
+  });
+  const full0 = { x: 0, y: 0, w: box.w, h: box.h };
+  const walking = loop(w.period, w.moving, phase);
+  const standing = loop(
+    w.period,
+    w.moving.map((key) => ({ t: key.t, o: 1 - (key.o ?? 0) })),
+    phase,
+  );
+  const legs: KingdomNode[] = [
+    // the far hind leg and the near foreleg step together, then the other two
+    { box: full0, origin: [0.5, 1], motion: walking, still: { ...REST, o: 0 }, children: rig.hips.map(([hx, hy], i) => leg(hx, hy, loop(cycle, swingKeys, i === 0 || i === 3 ? 0 : 0.5))) },
+    { box: full0, origin: [0.5, 1], motion: standing, still: REST, children: rig.hips.map(([hx, hy]) => leg(hx, hy)) },
+  ];
   const share = ([x, y]: Pt): Pt => [(x - b.x) / b.w, (y - b.y) / b.h];
   const parts: KingdomNode[] = [...legs];
-  if (rig.tail && rig.tailRoot) parts.push(layer(rig.tail, box, share(rig.tailRoot), loop(2400, swing(16), phase)));
+  if (rig.tail && rig.tailRoot) parts.push(layer(rig.tail, box, share(rig.tailRoot), loop(2400 + phase * 900, swing(16), phase)));
   parts.push({ sprite: rig.body, box: { x: 0, y: 0, w: box.w, h: box.h }, origin: anchor(rig.body), still: REST });
-  parts.push(layer(rig.head, box, share(rig.neck), loop(w.period, w.head, phase), { ...REST, r: stops[0]!.graze ? 34 : 0 }));
+  parts.push({ ...layer(rig.head, box, share(rig.neck), loop(w.period, w.head, phase), { ...REST, r: stops[0]!.graze || stops[0]!.idle === 'graze' ? 34 : 0 }), role: 'head' });
+  const full = { x: 0, y: 0, w: box.w, h: box.h };
+  const sits = stops.some((s) => s.idle === 'sit');
+  const sitting = loop(w.period, w.sit, phase);
+  const up = loop(
+    w.period,
+    w.sit.map((key) => ({ ...key, o: 1 - (key.o ?? 0) })),
+    phase,
+  );
+  const body: KingdomNode = { box: full, origin: anchor(rig.body), motion: loop(w.period, w.gait, phase), still: REST, children: parts };
+  const shown: KingdomNode[] = sits
+    ? [
+        { box: full, origin: anchor(rig.body), motion: up, still: REST, children: [body] },
+        { sprite: 'dogSit', box: full, origin: anchor(rig.body), motion: sitting, still: { ...REST, o: 0 } },
+      ]
+    : [body];
   return {
     id,
     kind: 'animal',
+    tap: rig.tap,
     building,
     box,
     origin: anchor(rig.body),
     motion: loop(w.period, w.path, phase),
     still: REST,
     children: [
-      { sprite: 'shadow', box: { x: box.w * 0.5 - 10 * k, y: box.h - 4 * k, w: 20 * k, h: 5 * k }, origin: [0.5, 0.5], still: REST },
-      {
-        box: { x: 0, y: 0, w: box.w, h: box.h },
-        origin: anchor(rig.body),
-        motion: flip,
-        still: { ...REST, sx: flip.frames[0]!.sx },
-        children: [{ box: { x: 0, y: 0, w: box.w, h: box.h }, origin: anchor(rig.body), motion: loop(w.period, w.gait, phase), still: REST, children: parts }],
-      },
+      { sprite: 'shadow', box: { x: box.w * 0.5 - 10 * k, y: (0.6 - b.y) * k - 2.5 * k, w: 20 * k, h: 5 * k }, origin: [0.5, 0.5], still: REST },
+      { box: full, origin: anchor(rig.body), motion: flip, still: { ...REST, sx: flip.frames[0]!.sx }, children: shown },
     ],
   };
 }
@@ -600,16 +695,16 @@ function smokeFrom(id: string, at: { x: number; y: number }, building?: KingdomB
   const keys: Key[] = [
     { t: 0, x: 0, y: 0, sx: 0.5, sy: 0.5, o: 0 },
     { t: 0.12, o: 0.9 },
-    { t: 0.45, x: -3, y: -12, sx: 0.9, sy: 0.9 },
+    { t: 0.45, x: -2.4, y: -10, sx: 0.9, sy: 0.9 },
     { t: 0.8, o: 0.5 },
-    { t: 1, x: 5, y: -28, sx: 1.5, sy: 1.5, o: 0 },
+    { t: 1, x: 4, y: -24, sx: 1.5, sy: 1.5, o: 0 },
   ];
   return [0, 0.5].map((p, i) => ({
     id: `${id}${i}`,
     kind: 'smoke' as const,
     building,
     sprite: 'smoke' as const,
-    box: boxAt('smoke', at),
+    box: boxAt('smoke', at, 0.75),
     origin: anchor('smoke'),
     motion: loop(4800, keys, (phase + p) % 1),
     still: i === 0 ? { ...REST, x: -2, y: -8, sx: 0.8, sy: 0.8, o: 0.8 } : { ...REST, o: 0 },
@@ -650,7 +745,9 @@ function fall(id: string, from: { x: number; y: number }, length: number, buildi
 
 /** Something swaying in the wind about a point: a poplar from its foot, cloth from where it hangs. */
 function sway(id: string, sprite: KingdomSprite, at: { x: number; y: number }, k: number, amp: number, period: number, phase: number, origin: Pt, kind: KingdomLifeKind = 'sway'): KingdomActor {
-  return { id, kind, sprite, box: boxAt(sprite, at, k), origin, motion: loop(period, swing(amp), phase), still: REST };
+  // a tree answers a tap with a rustle
+  const tap: KingdomTap | undefined = sprite === 'tree' || sprite === 'poplar' ? 'rustle' : undefined;
+  return { id, kind, sprite, box: boxAt(sprite, at, k), origin, motion: loop(period, swing(amp), phase), still: REST, ...(tap ? { tap } : {}) };
 }
 
 /** A blink: open eyes shown all the loop but a moment near its end, when the shut ones show instead. */
@@ -704,7 +801,8 @@ function hevalo(to: ToCanvas): KingdomActor {
     { at: [114, 108, 48] },
   ];
   const pts = route.map((s) => to(...s.at));
-  const speed = 15;
+  // a stroll, in canvas units a second: a little under a person's height
+  const speed = 9;
   let total = 0;
   const times: { t0: number; t1: number; i: number }[] = [];
   for (let i = 0; i < route.length; i++) {
@@ -728,8 +826,8 @@ function hevalo(to: ToCanvas): KingdomActor {
     gait.push({ t: T(t0), y: 0, r: 0 }, { t: T(t1), y: 0, r: 0 });
     const nextT = k + 1 < times.length ? times[k + 1]!.t0 : total;
     const q = pts[(i + 1) % pts.length]!;
-    const steps = Math.max(2, Math.round((nextT - t1) / 340));
-    for (let s = 1; s < steps; s++) gait.push({ t: T(t1 + ((nextT - t1) * s) / steps), y: s % 2 ? -1 : 0, r: s % 2 ? 1.6 : -1.6 });
+    const steps = Math.max(2, Math.round((nextT - t1) / 300));
+    for (let s = 1; s < steps; s++) gait.push({ t: T(t1 + ((nextT - t1) * s) / steps), y: s % 2 ? -0.5 : 0, r: s % 2 ? 2.4 : -2.4 });
     // walking, his head tips the way he goes (and stays level going straight up or down the path)
     const dx = q.x - p.x;
     const tilt = Math.abs(dx) < 4 ? 0 : Math.sign(dx) * 5;
@@ -754,8 +852,8 @@ function hevalo(to: ToCanvas): KingdomActor {
   earKeys.push({ t: 1, r: 0 });
   headKeys.sort((a, b) => a.t - b.t);
   earKeys.sort((a, b) => a.t - b.t);
-  // he stands in the canvas about 54 units tall, a little taller than a door, the village's own deer
-  const tall = 54;
+  // he stands a person's height to the tips of his antlers
+  const tall = KINGDOM_FIGURE_HEIGHT;
   const k = tall / DEER.box.h;
   const w = DEER.box.w * k;
   const box = { x: base.x - w / 2, y: base.y - tall, w, h: tall };
@@ -772,7 +870,7 @@ function hevalo(to: ToCanvas): KingdomActor {
     motion,
     still: poseAt(motion.frames, restAt),
     children: [
-      { sprite: 'shadow', box: { x: w / 2 - 8, y: tall - 3.2, w: 16, h: 4.4 }, origin: [0.5, 0.5], still: REST },
+      { sprite: 'shadow', box: { x: w / 2 - 4.4, y: tall - 1.6, w: 8.8, h: 2.6 }, origin: [0.5, 0.5], still: REST },
       {
         box: full,
         origin: [0.5, 1],
@@ -803,7 +901,7 @@ function hevalo(to: ToCanvas): KingdomActor {
 /** One of the course's people standing by a building: a breath now and then, a blink, and a word of praise for a tap. */
 function standing(id: 'hamo' | 'xezo', at: { x: number; y: number }, building: KingdomBuilding, period: number): KingdomActor {
   const art = id === 'hamo' ? HAMO : XEZO;
-  const tall = 60;
+  const tall = KINGDOM_FIGURE_HEIGHT;
   const k = tall / art.box.h;
   const w = art.box.w * k;
   const full = { x: 0, y: 0, w, h: tall };
@@ -818,7 +916,7 @@ function standing(id: 'hamo' | 'xezo', at: { x: number; y: number }, building: K
     motion: loop(period, [{ t: 0, sy: 1 }, { t: 0.4, sy: 1.014 }, { t: 0.8, sy: 1 }, { t: 1, sy: 1 }]),
     still: REST,
     children: [
-      { sprite: 'shadow', box: { x: w / 2 - 10, y: tall - 3, w: 20, h: 5 }, origin: [0.5, 0.5], still: REST },
+      { sprite: 'shadow', box: { x: w / 2 - 5, y: tall - 1.6, w: 10, h: 2.8 }, origin: [0.5, 0.5], still: REST },
       { sprite: body, box: full, origin: [0.5, 1], still: REST },
       { sprite: eyes, box: full, origin: [0.5, 1], motion: blink(period * 1.3, false), still: REST },
       { sprite: shut, box: full, origin: [0.5, 1], motion: blink(period * 1.3, true), still: { ...REST, o: 0 } },
@@ -827,75 +925,154 @@ function standing(id: 'hamo' | 'xezo', at: { x: number; y: number }, building: K
   };
 }
 
-/** A hen pecking about a patch between two spots, and the chicks that trail after her a step behind. */
-function henAndChicks(id: string, a: { x: number; y: number }, b: { x: number; y: number }, phase: number, chicks: number, building?: KingdomBuilding): KingdomActor[] {
-  const dir = Math.sign(b.x - a.x) || 1;
-  const peck: Key[] = [
-    { t: 0, r: 0 },
-    { t: 0.08, r: 28 },
-    { t: 0.13, r: 0 },
-    { t: 0.18, r: 30 },
-    { t: 0.23, r: 0 },
-    { t: 0.32, r: 0, x: 0, y: 0 },
-    { t: 0.46, x: b.x - a.x, y: b.y - a.y },
-    { t: 0.55, r: 0 },
-    { t: 0.6, r: 28 },
-    { t: 0.65, r: 0 },
-    { t: 0.7, r: 26 },
-    { t: 0.75, r: 0 },
-    { t: 0.82, x: b.x - a.x, y: b.y - a.y },
-    { t: 0.96, x: 0, y: 0 },
-    { t: 1, r: 0, x: 0, y: 0 },
+/** Where the hen's parts join, in her sprites' units: her hips, the foot of her neck, her wing's shoulder; and how tall she stands in them, comb to toes. */
+const HEN = { hips: [[-1.4, -1.8], [1.2, -1.6]] as const, neck: [3.2, -8.6] as Pt, shoulder: [2.6, -7.4] as Pt, tall: 17 };
+const CHICK_TALL = 7.4;
+
+/**
+ * A hen about a yard, and the chicks that hurry after her: she walks from
+ * spot to spot on her two legs, and at each she scratches the ground back
+ * with one foot and pecks at what she turned up; at one spot she flutters up
+ * with a beat of her wings. Each chick runs her way a moment after her, a
+ * little behind, hopping as it goes, and dips its head when she pecks.
+ */
+function henAndChicks(id: string, to: ToCanvas, stops: readonly Stop[], phase: number, chicks: number, building?: KingdomBuilding, speed = 3.4): KingdomActor[] {
+  const k = KINGDOM_ANIMAL_HEIGHT.hen / HEN.tall;
+  const w = walk(to, stops, speed, 1.6, 0.4);
+  const start = to(...stops[0]!.at);
+  const box = boxAt('henBody', start, k);
+  const b = SPRITE_BOX.henBody;
+  const full = { x: 0, y: 0, w: box.w, h: box.h };
+  const share = ([x, y]: Pt): Pt => [(x - b.x) / b.w, (y - b.y) / b.h];
+  const lb = SPRITE_BOX.henLeg;
+  const flip = loop(w.period, w.face, phase);
+  const legs: KingdomNode[] = HEN.hips.map(([hx, hy], i) => ({
+    sprite: 'henLeg' as const,
+    box: { x: (hx - b.x + lb.x) * k, y: (hy - b.y + lb.y) * k, w: lb.w * k, h: lb.h * k },
+    origin: anchor('henLeg'),
+    // the near leg walks and scratches; the far one walks the other way
+    motion: i === 1 ? loop(w.period, w.scratch, phase) : loop(w.period, w.legs.map((key) => ({ ...key, r: -(key.r ?? 0) })), phase),
+    still: REST,
+  }));
+  const parts: KingdomNode[] = [
+    ...legs,
+    { sprite: 'henBody', box: full, origin: anchor('henBody'), still: REST },
+    { ...layer('henWing', full, share(HEN.shoulder), loop(w.period, w.wing, phase), REST), role: 'wing' },
+    { ...layer('henHead', full, share(HEN.neck), loop(w.period, w.head, phase), { ...REST, r: 30 }), role: 'head' },
   ];
-  const faceKeys: Key[] = [{ t: 0, sx: dir }, { t: 0.819, sx: dir }, { t: 0.82, sx: -dir }, { t: 0.959, sx: -dir }, { t: 0.96, sx: dir }, { t: 1, sx: dir }];
-  const box = boxAt('hen', a, 1.05);
   const out: KingdomActor[] = [
     {
       id,
       kind: 'animal',
+      tap: 'flutter',
       building,
       box,
-      origin: anchor('hen'),
-      motion: loop(6000, peck.map(({ r: _r, ...k }) => k), phase),
+      origin: anchor('henBody'),
+      motion: loop(w.period, w.path, phase),
       still: REST,
       children: [
-        { sprite: 'shadow', box: { x: box.w / 2 - 5, y: box.h - 2.4, w: 10, h: 3 }, origin: [0.5, 0.5], still: REST },
+        { sprite: 'shadow', box: { x: box.w / 2 - 9.6 * k, y: box.h - 5.4 * k, w: 19.2 * k, h: 5.8 * k }, origin: [0.5, 0.5], still: REST },
         {
-          box: { x: 0, y: 0, w: box.w, h: box.h },
-          origin: anchor('hen'),
-          motion: loop(6000, faceKeys, phase),
-          still: { ...REST, sx: dir },
-          children: [{ sprite: 'hen', box: { x: 0, y: 0, w: box.w, h: box.h }, origin: [0.5, 0.95], motion: loop(6000, peck.map((k) => ({ t: k.t, ...(k.r !== undefined ? { r: k.r } : {}) })), phase), still: { ...REST, r: 26 } }],
+          box: full,
+          origin: anchor('henBody'),
+          motion: flip,
+          still: { ...REST, sx: flip.frames[0]!.sx },
+          children: [
+            // her flutter lifts her on a node of its own, so her chicks hop only with her steps
+            { box: full, origin: anchor('henBody'), motion: loop(w.period, w.rise, phase), still: REST, children: [{ box: full, origin: anchor('henBody'), motion: loop(w.period, w.gait, phase), still: REST, children: parts }] },
+          ],
         },
       ],
     },
   ];
-  // each chick runs the hen's way a little after her, a little behind her, and hops as it goes
+  // each chick runs her way a little after her and a little behind, hopping as it goes, and dips its head as she pecks
+  const ck = KINGDOM_ANIMAL_HEIGHT.chick / CHICK_TALL;
+  const dir = w.face[0]!.sx ?? 1;
   for (let c = 0; c < chicks; c++) {
-    const lag = 0.035 * (c + 1);
-    const off = { x: -dir * (6 + c * 4), y: 2 + (c % 2) * 3 };
-    const at = { x: a.x + off.x, y: a.y + off.y };
-    const cbox = boxAt('chick', at, 1.1);
+    const lag = (380 + c * 260) / w.period;
+    const p = (phase - lag + 1) % 1;
+    const at = { x: start.x - dir * (3.2 + c * 2.4), y: start.y + 1.2 + (c % 2) * 1.8 };
+    const cbox = boxAt('chick', at, ck);
+    const cfull = { x: 0, y: 0, w: cbox.w, h: cbox.h };
+    const hop = w.gait.map((key) => ({ t: key.t, y: (key.y ?? 0) * 1.9 }));
+    const dip = w.head.map((key) => ({ t: key.t, r: (key.r ?? 0) * 0.5 }));
+    const cflip = loop(w.period, w.face, p);
     out.push({
       id: `${id}chick${c}`,
       kind: 'animal',
       building,
       box: cbox,
       origin: anchor('chick'),
-      motion: loop(6000, peck.map(({ r: _r, ...k }) => k), (phase - lag + 1) % 1),
+      motion: loop(w.period, w.path, p),
       still: REST,
       children: [
+        { sprite: 'shadow', box: { x: cbox.w / 2 - 2, y: cbox.h - 1.6, w: 4, h: 1.6 }, origin: [0.5, 0.5], still: REST },
         {
-          box: { x: 0, y: 0, w: cbox.w, h: cbox.h },
+          box: cfull,
           origin: anchor('chick'),
-          motion: loop(6000, faceKeys, (phase - lag + 1) % 1),
-          still: { ...REST, sx: dir },
-          children: [{ sprite: 'chick', box: { x: 0, y: 0, w: cbox.w, h: cbox.h }, origin: [0.5, 1], motion: loop(520, [{ t: 0, y: 0 }, { t: 0.5, y: -0.9 }, { t: 1, y: 0 }], c * 0.3), still: REST }],
+          motion: cflip,
+          still: { ...REST, sx: cflip.frames[0]!.sx },
+          children: [{ box: cfull, origin: [0.5, 1], motion: loop(w.period, hop, p), still: REST, children: [{ sprite: 'chick', box: cfull, origin: [0.6, 0.9], motion: loop(w.period, dip, p), still: REST }] }],
         },
       ],
     });
   }
   return out;
+}
+
+/** Pigeons wheeling round the dovecote: a few birds on one circuit, a little apart, each beating its wings in its own time. */
+function pigeons(id: string, at: { x: number; y: number }): KingdomActor {
+  const k = 0.5;
+  const pb = SPRITE_BOX.pigeon;
+  const pw = { w: pb.w * k, h: pb.h * k };
+  const span = 60;
+  const box = { x: at.x - span / 2, y: at.y - 40, w: span, h: 40 };
+  // the circuit: out and round in a flattened ring, each bird facing the way it flies
+  const ring = (p: number): KingdomMotion =>
+    loop(
+      8000,
+      Array.from({ length: 13 }, (_, i) => {
+        const a = (i / 12) * Math.PI * 2;
+        return { t: i / 12, x: Math.round(Math.cos(a) * 22 * 10) / 10, y: Math.round(Math.sin(a) * 9 * 10) / 10 };
+      }),
+      p,
+    );
+  const facing = (p: number): KingdomMotion => loop(8000, [{ t: 0, sx: -1 }, { t: 0.49, sx: -1 }, { t: 0.51, sx: 1 }, { t: 0.98, sx: 1 }, { t: 1, sx: -1 }], p);
+  return {
+    id,
+    kind: 'sky',
+    box,
+    origin: [0.5, 0.5],
+    still: REST,
+    children: [0, 0.12, 0.27].map((p, i) => {
+      const f = facing(p);
+      const self = { x: span / 2 - pw.w / 2, y: 18 - i * 4, w: pw.w, h: pw.h };
+      return {
+        box: self,
+        origin: [0.5, 0.5] as Pt,
+        motion: ring(p),
+        still: { ...REST, x: [-14, 4, 16][i]!, y: [-2, 4, -5][i]! },
+        children: [
+          {
+            box: { x: 0, y: 0, w: pw.w, h: pw.h },
+            origin: [0.5, 0.5] as Pt,
+            motion: f,
+            still: { ...REST, sx: f.frames[0]!.sx },
+            children: [
+              { sprite: 'pigeon' as const, box: { x: 0, y: 0, w: pw.w, h: pw.h }, origin: anchor('pigeon'), still: REST },
+              {
+                sprite: 'pigeonWing' as const,
+                box: { x: 0, y: 0, w: pw.w, h: pw.h },
+                origin: [(0.2 - pb.x) / pb.w, (-0.7 - pb.y) / pb.h] as Pt,
+                motion: loop(300 + i * 40, [{ t: 0, sy: 1 }, { t: 0.5, sy: -0.7 }, { t: 1, sy: 1 }], i * 0.3),
+                still: REST,
+              },
+            ],
+          },
+        ],
+      };
+    }),
+  };
 }
 
 /** Where, in each building's own units, its chimneys stand (the top of each), and the level each is built at. */
@@ -982,18 +1159,7 @@ export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, 
       children: [{ sprite: 'birds', box: { x: 0, y: 0, w: 32 * 1.1, h: 14 * 1.1 }, origin: [0.5, 0.5], motion: flap, still: REST }],
     });
   });
-  if (has('dovecote')) {
-    const at = to(DOVECOTE[0], DOVECOTE[1], F0 + 40);
-    ground.push({
-      id: 'pigeons',
-      kind: 'sky',
-      box: boxAt('birds', at, 0.8),
-      origin: [0.5, 0.5],
-      motion: loop(7000, [{ t: 0, x: 0, y: -10 }, { t: 0.25, x: 40, y: -24 }, { t: 0.5, x: 0, y: -40 }, { t: 0.75, x: -40, y: -24 }, { t: 1, x: 0, y: -10 }]),
-      still: { ...REST, y: -20 },
-      children: [{ sprite: 'birds', box: { x: 0, y: 0, w: 32 * 0.8, h: 14 * 0.8 }, origin: [0.5, 0.5], motion: loop(420, [{ t: 0, sy: 1 }, { t: 0.5, sy: -0.4 }, { t: 1, sy: 1 }]), still: REST }],
-    });
-  }
+  if (has('dovecote')) ground.push(pigeons('pigeons', to(DOVECOTE[0], DOVECOTE[1], F0 + 30)));
 
   // the lake: light shimmering across it, a fish leaping now and then, rings where it lands
   const shimmer: [number, number][] = [[-700, 160], [-420, 120], [-250, 260], [-760, 420], [-480, 480], [-300, 600], [-620, 660], [-120, 470], [-820, 760]];
@@ -1020,9 +1186,9 @@ export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, 
       { t: 0.92, o: 0 },
       { t: 1, x: 0, y: 0, r: -40, o: 0 },
     ];
-    ground.push({ id: `fish${i}`, kind: 'water', sprite: 'fish', box: boxAt('fish', at, 1.3), origin: [0.5, 0.5], motion: loop(period, jump, i * 0.3), still: { ...REST, o: 0 } });
+    ground.push({ id: `fish${i}`, kind: 'water', sprite: 'fish', box: boxAt('fish', at, 0.55), origin: [0.5, 0.5], motion: loop(period, jump.map((key) => ({ ...key, x: key.x === undefined ? undefined : key.x * 0.5, y: key.y === undefined ? undefined : key.y * 0.6 })), i * 0.3), still: { ...REST, o: 0 } });
     const splash: Key[] = [{ t: 0, sx: 0.2, sy: 0.2, o: 0 }, { t: 0.905, sx: 0.2, sy: 0.2, o: 0 }, { t: 0.92, o: 1 }, { t: 1, sx: 1.2, sy: 1.2, o: 0 }];
-    ground.push({ id: `splash${i}`, kind: 'water', sprite: 'ripple', box: boxAt('ripple', { x: at.x + 18 * 1.3, y: at.y + 2 }, 1.1), origin: [0.5, 0.5], motion: loop(period, splash, i * 0.3), still: { ...REST, o: 0 } });
+    ground.push({ id: `splash${i}`, kind: 'water', sprite: 'ripple', box: boxAt('ripple', { x: at.x + 9, y: at.y + 1 }, 0.6), origin: [0.5, 0.5], motion: loop(period, splash, i * 0.3), still: { ...REST, o: 0 } });
   });
 
   // the waterfall: its streaks falling down it, its foam heaving at the foot, rings spreading from it
@@ -1157,32 +1323,31 @@ export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, 
     [{ at: [480, -120, F0], wait: 6000, graze: true }, { at: [506, -108, F0], wait: 5000, graze: true }],
     [{ at: [522, -90, F0], wait: 7000, graze: true }, { at: [500, -80, F0], wait: 2600 }, { at: [532, -70, F0], wait: 5200, graze: true }],
   ];
-  campSheep.slice(0, flock.campSheep).forEach((stops, i) => ground.push(animal(`campsheep${i}`, to, 'sheep', stops, 5.5, i * 0.4, 1.05)));
-  ground.push(animal('goat0', to, 'goat', [{ at: [10, -40, 48], wait: 5200, graze: true }, { at: [26, -34, 48], wait: 3600 }, { at: [40, -36, 60], wait: 4200, graze: true }, { at: [22, -46, 54], wait: 2000 }], 6, 0.1, 0.72));
-  ground.push(animal('goat1', to, 'goat', [{ at: [86, -74, 48], wait: 6400, graze: true }, { at: [98, -70, 62], wait: 2600 }, { at: [80, -84, 56], wait: 3000, graze: true }], 5, 0.6, 0.66));
-  ground.push(...henAndChicks('hen0', to(244, 98, 34), to(258, 104, 34), 0, 0));
-  ground.push(...henAndChicks('hen1', to(268, 104, 34), to(278, 92, 34), 0.33, 0));
+  campSheep.slice(0, flock.campSheep).forEach((stops, i) => ground.push(animal(`campsheep${i}`, to, 'sheep', stops, 3.6 + rand() * 0.8, (i * 0.4 + rand() * 0.2) % 1, i === 1 ? 0.8 : 1)));
+  ground.push(animal('goat0', to, 'goat', [{ at: [10, -40, 48], wait: 5200, graze: true }, { at: [26, -34, 48], wait: 3600, idle: 'look' }, { at: [40, -36, 60], wait: 4200, graze: true }, { at: [22, -46, 54], wait: 2000, idle: 'chew' }], 4.4, 0.1));
+  ground.push(animal('goat1', to, 'goat', [{ at: [86, -74, 48], wait: 6400, graze: true }, { at: [98, -70, 62], wait: 2600, idle: 'look' }, { at: [80, -84, 56], wait: 3000, graze: true }], 4, 0.6, 0.8));
+  ground.push(...henAndChicks('hen0', to, [{ at: [236, 94, 34], wait: 3800, idle: 'peck' }, { at: [248, 98, 34], wait: 3000, idle: 'peck' }, { at: [242, 86, 34], wait: 2600, idle: 'flutter' }], 0, 0));
+  ground.push(...henAndChicks('hen1', to, [{ at: [250, 80, 34], wait: 4200, idle: 'peck' }, { at: [255, 86, 34], wait: 3400, idle: 'peck' }], 0.33, 0));
   ground.push(
     animal(
       'dog',
       to,
       'dog',
       [
-        { at: [330, 336, 0], wait: 2400 },
+        { at: [330, 336, 0], wait: 3400, idle: 'sit' },
         { at: [452, 336, F0] },
+        { at: [575, 336, F0], wait: 1600, idle: 'sniff' },
+        { at: [575, 120, F0], wait: 4200, idle: 'sit' },
         { at: [575, 336, F0] },
-        { at: [575, 120, F0], wait: 3000 },
-        { at: [575, 336, F0] },
-        { at: [760, 336, F0] },
+        { at: [760, 336, F0], wait: 1800, idle: 'sniff' },
         { at: [760, 470, F0] },
-        { at: [900, 470, F0], wait: 2600 },
+        { at: [900, 470, F0], wait: 3000, idle: 'sit' },
         { at: [760, 470, F0] },
         { at: [760, 336, F0] },
         { at: [452, 336, F0] },
       ],
-      26,
+      13,
       0.15,
-      1.05,
     ),
   );
 
@@ -1191,36 +1356,46 @@ export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, 
   for (let i = 0; i < flock.sheep; i++) {
     const a = inPen(sheepfold, i, flock.sheep, rand);
     const b = inPen(sheepfold, (i + 1) % flock.sheep, flock.sheep, rand);
-    ground.push(animal(`sheep${i}`, to, 'sheep', [{ at: [a[0], a[1], F0], wait: 5000 + i * 900, graze: true }, { at: [b[0], b[1], F0], wait: 4000, graze: i % 2 === 0 }], 5, (i * 0.29) % 1, 1.05));
+    const idle: Idle = i % 3 === 1 ? 'chew' : i % 3 === 2 ? 'look' : 'graze';
+    ground.push(animal(`sheep${i}`, to, 'sheep', [{ at: [a[0], a[1], F0], wait: 4200 + rand() * 3000, graze: true }, { at: [b[0], b[1], F0], wait: 3000 + rand() * 2400, idle }], 3.4 + rand(), (i * 0.29 + rand() * 0.1) % 1, i % 4 === 3 ? 0.75 : 1));
   }
   for (let i = 0; i < flock.goats; i++) {
     const a = inPen(goatfold, i, flock.goats, rand);
-    const stops: Stop[] = i === 0 ? [{ at: [a[0], a[1], F0], wait: 4000, graze: true }, { at: [goatfold.x + 40, goatfold.y + 30, F0 + 9], wait: 5200 }] : [{ at: [a[0], a[1], F0], wait: 5000, graze: true }, { at: [a[0] + 12, a[1] - 6, F0], wait: 3000 }];
-    ground.push(animal(`foldgoat${i}`, to, 'goat', stops, 6, (i * 0.41) % 1, 0.8));
+    const stops: Stop[] =
+      i === 0
+        ? [{ at: [a[0], a[1], F0], wait: 4000, graze: true }, { at: [goatfold.x + 40, goatfold.y + 30, F0 + 9], wait: 5200, idle: 'look' }]
+        : [{ at: [a[0], a[1], F0], wait: 4000 + rand() * 2400, graze: true }, { at: [a[0] + 12, a[1] - 6, F0], wait: 2400 + rand() * 1600, idle: 'chew' }];
+    ground.push(animal(`foldgoat${i}`, to, 'goat', stops, 4 + rand(), (i * 0.41) % 1, i % 3 === 2 ? 0.75 : 1));
   }
   for (let i = 0; i < flock.hens; i++) {
-    const a = to(coop.x + 6 + i * 11, coop.y + 6 + (i % 2) * 8, F0);
-    const b = to(coop.x + 14 + i * 9, coop.y + 14 - (i % 2) * 6, F0);
-    ground.push(...henAndChicks(`coophen${i}`, a, b, (i * 0.27) % 1, i === 0 ? flock.chicks : 0));
+    const a: [number, number, number] = [coop.x + 8 + i * 9, coop.y + 8 + (i % 2) * 7, F0];
+    const b: [number, number, number] = [coop.x + 18 + i * 7, coop.y + 15 - (i % 2) * 5, F0];
+    const c: [number, number, number] = [coop.x + 12 + i * 8, coop.y + 20 - (i % 3) * 3, F0];
+    const stops: Stop[] = [
+      { at: a, wait: 2600 + rand() * 2000, idle: 'peck' },
+      { at: b, wait: 2400 + rand() * 1800, idle: i % 2 ? 'peck' : 'flutter' },
+      { at: c, wait: 2000 + rand() * 1600, idle: 'peck' },
+    ];
+    ground.push(...henAndChicks(`coophen${i}`, to, stops, (i * 0.27 + rand() * 0.1) % 1, i === 0 ? flock.chicks : 0, undefined, 3 + rand()));
   }
-  if (flock.cows > 0) ground.push(animal('cow', to, 'cow', [{ at: [paddock.x + 30, paddock.y + 22, F0], wait: 7000, graze: true }, { at: [paddock.x + 64, paddock.y + 30, F0], wait: 6000, graze: true }], 4.5, 0.2, 1.1));
-  if (flock.donkeys > 0) ground.push(animal('donkey', to, 'donkey', [{ at: [paddock.x + 90, paddock.y + 16, F0], wait: 5200 }, { at: [paddock.x + 76, paddock.y + 34, F0], wait: 6400, graze: true }], 5, 0.55, 1.05));
+  if (flock.cows > 0) ground.push(animal('cow', to, 'cow', [{ at: [paddock.x + 30, paddock.y + 22, F0], wait: 7000, graze: true }, { at: [paddock.x + 64, paddock.y + 30, F0], wait: 6000, idle: 'chew' }], 3, 0.2));
+  if (flock.donkeys > 0) ground.push(animal('donkey', to, 'donkey', [{ at: [paddock.x + 90, paddock.y + 16, F0], wait: 5200, idle: 'look' }, { at: [paddock.x + 76, paddock.y + 34, F0], wait: 6400, graze: true }], 3.4, 0.55));
 
   // the cat asleep on the first house's roof, breathing slowly
   if (levels.houses >= 1) {
     const at = inPlot('houses', ...ROOF_CAT);
-    ground.push({ id: 'cat', kind: 'animal', building: 'houses', sprite: 'catSleep', box: boxAt('catSleep', at, 1.15), origin: [0.5, 1], motion: loop(3200, [{ t: 0, sy: 1 }, { t: 0.5, sy: 1.08 }, { t: 1, sy: 1 }]), still: REST });
+    ground.push({ id: 'cat', kind: 'animal', building: 'houses', sprite: 'catSleep', box: boxAt('catSleep', at, 0.42), origin: [0.5, 1], motion: loop(3200, [{ t: 0, sy: 1 }, { t: 0.5, sy: 1.08 }, { t: 1, sy: 1 }]), still: REST });
   }
   // bees about the orchard's first hive, and about the valley's hives
   const beesAt = (id: string, at: { x: number; y: number }, building?: KingdomBuilding): KingdomActor => ({
     id,
     kind: 'animal',
     building,
-    box: boxAt('bees', { x: at.x, y: at.y - 8 }, 1.1),
+    box: boxAt('bees', { x: at.x, y: at.y - 5 }, 0.55),
     origin: [0.5, 0.5],
-    motion: loop(5200, [{ t: 0, x: 0, y: 0 }, { t: 0.25, x: 6, y: -4 }, { t: 0.5, x: 0, y: -7 }, { t: 0.75, x: -6, y: -3 }, { t: 1, x: 0, y: 0 }]),
+    motion: loop(5200, [{ t: 0, x: 0, y: 0 }, { t: 0.25, x: 4, y: -3 }, { t: 0.5, x: 0, y: -5 }, { t: 0.75, x: -4, y: -2 }, { t: 1, x: 0, y: 0 }]),
     still: REST,
-    children: [{ sprite: 'bees', box: { x: 0, y: 0, w: 16 * 1.1, h: 12 * 1.1 }, origin: [0.5, 0.5], motion: loop(1800, [{ t: 0, r: 0 }, { t: 0.5, r: 180 }, { t: 1, r: 360 }]), still: REST }],
+    children: [{ sprite: 'bees', box: { x: 0, y: 0, w: 16 * 0.55, h: 12 * 0.55 }, origin: [0.5, 0.5], motion: loop(1800, [{ t: 0, r: 0 }, { t: 0.5, r: 180 }, { t: 1, r: 360 }]), still: REST }],
   });
   if (levels.orchard >= 3) ground.push(beesAt('bees', inPlot('orchard', ...HIVE), 'orchard'));
   if (has('hives')) HIVES.forEach(([x, y], i) => i % 2 === 0 && ground.push(beesAt(`hivebees${i}`, to(x, y, F0 + 12))));
@@ -1237,11 +1412,11 @@ export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, 
     ground.push({
       id: `butterfly${i}`,
       kind: 'animal',
-      box: boxAt('butterfly', to(x, y, z), 1.2),
+      box: boxAt('butterfly', to(x, y, z), 0.5),
       origin: [0.5, 0.5],
       motion: loop(9000 + i * 800, [{ t: 0, x: 0, y: 0 }, { t: 0.2, x: 14, y: -8 }, { t: 0.4, x: 22, y: 4 }, { t: 0.55, x: 8, y: 10 }, { t: 0.75, x: -10, y: 2 }, { t: 0.9, x: -6, y: -8 }, { t: 1, x: 0, y: 0 }], p),
       still: REST,
-      children: [{ sprite: 'butterfly', box: { x: 0, y: 0, w: 12, h: 9.6 }, origin: [0.5, 0.5], motion: wing, still: REST }],
+      children: [{ sprite: 'butterfly', box: { x: 0, y: 0, w: 13 * 0.5, h: 10 * 0.5 }, origin: [0.5, 0.5], motion: wing, still: REST }],
     });
   });
 

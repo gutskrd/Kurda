@@ -17,6 +17,7 @@ import {
   kingdomRising,
   kingdomSpriteSvg,
   kingdomTiles,
+  kingdomWaterAt,
   praiseWords,
   villageCamera,
   villageProgress,
@@ -25,6 +26,7 @@ import {
   type KingdomLevel,
   type KingdomPlace,
   type KingdomSprite,
+  type KingdomTap,
   type KingdomUpgrade,
   type KingdomView,
   type VillageCamera,
@@ -323,7 +325,8 @@ function Village(props: VillageProps): React.JSX.Element {
   const [near, setNear] = useState(() => visibleRect(camRef.current, stage));
   const [lifeNear, setLifeNear] = useState(() => visibleRect(camRef.current, stage, 0.15));
   const [bouncing, setBouncing] = useState<KingdomBuilding | null>(null);
-  const [happy, setHappy] = useState<string | null>(null);
+  const [reacting, setReacting] = useState<{ id: string; tap: KingdomTap } | null>(null);
+  const [bits, setBits] = useState<{ key: number; kind: 'feathers' | 'leaf' | 'ripple'; x: number; y: number }[]>([]);
   const [said, setSaid] = useState<{ id: string; word: string; x: number; y: number } | null>(null);
   const [coins, setCoins] = useState<{ from: { x: number; y: number }; to: { x: number; y: number } } | null>(null);
   const [bumped, setBumped] = useState(false);
@@ -471,27 +474,44 @@ function Village(props: VillageProps): React.JSX.Element {
   );
   const goTo = useCallback((b: KingdomBuilding) => flyTo(cameraOn(KINGDOM_PLOTS[b].box, stageRef.current, camRef.current.s), () => openBuilding(b)), [flyTo, openBuilding]);
 
-  /** Something in the world tapped: a building, the deer, or one of the people. */
+  /**
+   * Something in the world tapped: a building opens; the deer hops and smiles;
+   * a person says a word of praise; an animal or a tree answers in its own way
+   * (a sheep hops, a hen flutters up in a puff of feathers, the cow turns her
+   * head, the dog wags, a tree rustles and lets a leaf go); and open water
+   * rings where it was touched. With less motion asked for, only the words.
+   */
   const tapAt = useCallback(
     (target: EventTarget | null, px: number, py: number) => {
       const el = target instanceof Element ? target : null;
       const actor = el?.closest<HTMLElement>('[data-actor]');
-      if (actor?.dataset.tap === 'deer') {
-        setHappy(actor.dataset.actor ?? null);
-        window.setTimeout(() => setHappy(null), 1400);
-        return;
-      }
-      if (actor?.dataset.tap === 'person') {
-        const words = praiseWords(null);
-        const at = canvasAt(camRef.current, stageRef.current, px, py);
-        setSaid({ id: actor.dataset.actor!, word: words[Math.floor(now() / 1000) % words.length]!, x: at.x, y: at.y - 34 });
-        window.setTimeout(() => setSaid(null), 2200);
+      const at = canvasAt(camRef.current, stageRef.current, px, py);
+      const bit = (kind: 'feathers' | 'leaf' | 'ripple', x: number, y: number, ms: number): void => {
+        const key = now();
+        setBits((list) => [...list, { key, kind, x, y }]);
+        window.setTimeout(() => setBits((list) => list.filter((b) => b.key !== key)), ms);
+      };
+      const tap = actor?.dataset.tap as KingdomTap | undefined;
+      if (actor && tap) {
+        const id = actor.dataset.actor!;
+        if (tap === 'person') {
+          const words = praiseWords(null);
+          setSaid({ id, word: words[Math.floor(now() / 1000) % words.length]!, x: at.x, y: at.y - 14 });
+          window.setTimeout(() => setSaid(null), 2200);
+        }
+        if (still) return;
+        navigator.vibrate?.(8);
+        setReacting({ id, tap });
+        window.setTimeout(() => setReacting((r) => (r?.id === id ? null : r)), tap === 'deer' ? 1400 : 900);
+        if (tap === 'flutter') bit('feathers', at.x, at.y, 900);
+        if (tap === 'rustle') bit('leaf', at.x, at.y - 10, 2200);
         return;
       }
       const building = el?.closest<HTMLElement>('[data-building]')?.dataset.building as KingdomBuilding | undefined;
       if (building) openBuilding(building);
+      else if (!still && kingdomWaterAt(at.x, at.y)) bit('ripple', at.x, at.y, 1200);
     },
-    [openBuilding],
+    [openBuilding, still],
   );
 
   // the gestures: a drag pans (with a glide after a flick), two fingers pinch, a wheel or a trackpad zooms or pans, a double tap zooms in
@@ -660,7 +680,7 @@ function Village(props: VillageProps): React.JSX.Element {
               {laid.map((a) => (
                 <span
                   key={a.id}
-                  className={`kg-a${happy === a.id ? ' is-happy' : ''}`}
+                  className={`kg-a${reacting?.id === a.id ? ` is-${reacting.tap === 'deer' ? 'happy' : reacting.tap}` : ''}`}
                   data-actor={a.id}
                   data-tap={a.tap}
                   style={{ '--kg-age': `${ages.current.get(a.id) ?? 0}ms` } as CSSProperties}
@@ -684,6 +704,11 @@ function Village(props: VillageProps): React.JSX.Element {
                 </div>
               );
             })}
+            {bits.map((b) => (
+              <span key={b.key} className={`kingdom-bit is-${b.kind}`} style={{ left: b.x, top: b.y }} aria-hidden="true">
+                {b.kind === 'feathers' && [0, 1, 2, 3, 4].map((i) => <i key={i} />)}
+              </span>
+            ))}
             {said && (
               <span className="kingdom-bubble" style={{ left: said.x, top: said.y }} aria-live="polite">
                 {said.word}

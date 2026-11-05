@@ -112,6 +112,10 @@
 .kingdom-page.is-paused .kg-n {
   animation-play-state: paused;
 }
+/* what a tap answers reaches a little round it, unseen */
+.kg-hit {
+  position: absolute;
+}
 /* the deer tapped: a hop, and his eyes smile */
 .kg-a.is-happy {
   animation: kg-hop 700ms cubic-bezier(0.3, 1.5, 0.5, 1);
@@ -120,19 +124,221 @@
   opacity: 1 !important;
   animation: none !important;
 }
+/* a sheep or a goat hops; the dog wriggles with its wag; a hen flutters up, her wing beating */
+.kg-a.is-hop {
+  animation: kg-hop 600ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.kg-a.is-wag {
+  animation: kg-wag 700ms ease-in-out;
+}
+.kg-a.is-flutter {
+  animation: kg-flutter 800ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.kg-a.is-flutter [data-role='wing'] > .kg-s,
+.kg-a.is-turn [data-role='head'] > .kg-s {
+  transform-origin: inherit;
+}
+.kg-a.is-flutter [data-role='wing'] > .kg-s {
+  animation: kg-flap 130ms ease-in-out 6 alternate;
+}
+/* the cow or the donkey turns its head to look */
+.kg-a.is-turn [data-role='head'] > .kg-s {
+  animation: kg-look 900ms ease-in-out;
+}
+/* a tree shakes its crown */
+.kg-a.is-rustle > .kg-n > .kg-s {
+  transform-origin: 50% 100%;
+  animation: kg-rustle 700ms ease-out;
+}
 @keyframes kg-hop {
   0%,
   100% {
     translate: 0 0;
   }
   35% {
-    translate: 0 -9px;
+    translate: 0 -5px;
   }
   60% {
     translate: 0 0;
   }
   75% {
-    translate: 0 -3px;
+    translate: 0 -1.6px;
+  }
+}
+@keyframes kg-wag {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  15%,
+  45%,
+  75% {
+    translate: -0.8px -1px;
+  }
+  30%,
+  60%,
+  90% {
+    translate: 0.8px 0;
+  }
+}
+@keyframes kg-flutter {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  40% {
+    translate: 0 -6px;
+  }
+  70% {
+    translate: 0 -1px;
+  }
+}
+@keyframes kg-flap {
+  to {
+    rotate: 60deg;
+  }
+}
+@keyframes kg-look {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  30%,
+  70% {
+    rotate: -24deg;
+  }
+}
+@keyframes kg-rustle {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: 3deg;
+  }
+  45% {
+    rotate: -2.4deg;
+  }
+  70% {
+    rotate: 1.2deg;
+  }
+}
+/* what a tap leaves: a puff of feathers, a leaf falling, a ring on the water */
+.kingdom-bit {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.kingdom-bit.is-feathers > i {
+  position: absolute;
+  left: -1.2px;
+  top: -0.7px;
+  width: 2.4px;
+  height: 1.4px;
+  border: 0.5px solid var(--kg-ink);
+  border-radius: 50%;
+  background: var(--kg-cream);
+  animation: kg-feather 900ms ease-out forwards;
+}
+.kingdom-bit.is-feathers > i:nth-child(1) {
+  --dx: -7px;
+  --dy: -6px;
+}
+.kingdom-bit.is-feathers > i:nth-child(2) {
+  --dx: 6px;
+  --dy: -8px;
+}
+.kingdom-bit.is-feathers > i:nth-child(3) {
+  --dx: -3px;
+  --dy: -10px;
+}
+.kingdom-bit.is-feathers > i:nth-child(4) {
+  --dx: 8px;
+  --dy: -3px;
+  background: #c8703f;
+}
+.kingdom-bit.is-feathers > i:nth-child(5) {
+  --dx: -8px;
+  --dy: -2px;
+  background: #c8703f;
+}
+@keyframes kg-feather {
+  0% {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  60% {
+    opacity: 1;
+    translate: var(--dx) var(--dy);
+  }
+  100% {
+    opacity: 0;
+    translate: var(--dx) calc(var(--dy) + 5px);
+    rotate: 140deg;
+  }
+}
+.kingdom-bit.is-leaf::before {
+  content: '';
+  position: absolute;
+  width: 3.2px;
+  height: 2px;
+  border: 0.5px solid var(--kg-ink);
+  border-radius: 0 100%;
+  background: #6fae3e;
+  animation: kg-leaf 2200ms ease-in forwards;
+}
+@keyframes kg-leaf {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  10% {
+    opacity: 1;
+  }
+  35% {
+    translate: 4px 6px;
+    rotate: 60deg;
+  }
+  65% {
+    translate: -2px 12px;
+    rotate: -30deg;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 3px 18px;
+    rotate: 40deg;
+  }
+}
+.kingdom-bit.is-ripple::before,
+.kingdom-bit.is-ripple::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: -3px;
+  width: 16px;
+  height: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  animation: kg-ring 1200ms ease-out forwards;
+}
+.kingdom-bit.is-ripple::after {
+  animation-delay: 250ms;
+  opacity: 0;
+}
+@keyframes kg-ring {
+  0% {
+    opacity: 1;
+    scale: 0.2;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.4;
   }
 }
 
@@ -204,16 +410,17 @@
 /* a person's word of praise, in a bubble over them */
 .kingdom-bubble {
   position: absolute;
-  padding: 4px 12px 5px;
-  border: 2.5px solid var(--kg-ink);
-  border-radius: 14px;
+  padding: 1.6px 5px 2px;
+  border: 1.2px solid var(--kg-ink);
+  border-radius: 6px;
   background: var(--kg-cream);
   color: var(--kg-ink);
-  font-size: 15px;
+  font-size: 8.5px;
   font-weight: 800;
   white-space: nowrap;
   translate: -50% -100%;
-  scale: var(--kg-inv);
+  /* in the village's own units, so it is in scale with the person who says it, and never smaller than can be read */
+  scale: max(1, calc(var(--kg-inv) * 0.8));
   transform-origin: 50% 100%;
   animation: kg-say 2200ms ease-out forwards;
   pointer-events: none;
@@ -222,11 +429,11 @@
   content: '';
   position: absolute;
   left: 50%;
-  bottom: -8px;
-  width: 12px;
-  height: 12px;
-  border-right: 2.5px solid var(--kg-ink);
-  border-bottom: 2.5px solid var(--kg-ink);
+  bottom: -3.4px;
+  width: 5px;
+  height: 5px;
+  border-right: 1.2px solid var(--kg-ink);
+  border-bottom: 1.2px solid var(--kg-ink);
   background: var(--kg-cream);
   translate: -50% 0;
   rotate: 45deg;

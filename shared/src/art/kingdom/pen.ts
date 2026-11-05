@@ -25,6 +25,14 @@ export const INK = '#4a2a1a';
 export const LINE = 1.1;
 export const OUTLINE = 2.8;
 
+/**
+ * How tall a person stands in the village, in canvas units: a little taller
+ * than the tallest door its houses draw and well under the lowest eave (the
+ * art tests hold every stage to it). Everything that lives there is sized
+ * against it.
+ */
+export const FIGURE_HEIGHT = 16;
+
 /** One form's three flat tones: its top in the light, its face turned down-left, its face turned down-right in shade. */
 export interface Tri {
   top: string;

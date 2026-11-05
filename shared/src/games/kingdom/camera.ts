@@ -34,7 +34,7 @@ export interface Stage {
 const WORLD = { w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };
 
 /** On a 390-wide phone at the opening zoom, the narrowest building's box is at least this many pixels across. */
-export const OPENING_MIN_BUILDING = 110;
+export const OPENING_MIN_BUILDING = 130;
 
 /** The narrowest building's tap box, in canvas units. */
 const NARROWEST = Math.min(...KINGDOM_BUILDINGS.map((b) => KINGDOM_PLOTS[b].box.w));

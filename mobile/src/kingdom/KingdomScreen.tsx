@@ -20,6 +20,7 @@ import {
   kingdomRising,
   kingdomSpriteSvg,
   kingdomTiles,
+  kingdomWaterAt,
   praiseWords,
   villageCamera,
   villageProgress,
@@ -32,6 +33,7 @@ import {
   type KingdomNode,
   type KingdomPlace,
   type KingdomSprite,
+  type KingdomTap,
   type KingdomUpgrade,
   type KingdomView,
   type VillageCamera,
@@ -82,6 +84,8 @@ const GOLD_LIGHT = '#ffe16a';
 /** The game's own skin over the scene: the drawing's ink and cream, the same by day and at dusk. */
 const INK = '#4a2a1a';
 const CREAM = '#fff7e6';
+/** The least a tap target in the village reaches across, in canvas units (about a thumb's width at the opening zoom). */
+const HIT = 26;
 const CREAM_2 = '#f6e8cc';
 const CREAM_EDGE = '#e7d3ae';
 const SAFFRON = '#ffd36b';
@@ -315,9 +319,10 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
     // the camera is read once, as the raise starts, so only a new raise starts this again
   }, [isRaising, currentKey]);
 
-  // ─── taps: a building bounces, then its card opens; the deer is happy; a person says a word of praise
+  // ─── taps: a building bounces, then its card opens; the deer is happy; a person says a word of praise; an animal or a tree answers
   const [bouncing, setBouncing] = useState<KingdomBuilding | null>(null);
-  const [happy, setHappy] = useState<string | null>(null);
+  const [reacting, setReacting] = useState<{ id: string; tap: KingdomTap } | null>(null);
+  const [bits, setBits] = useState<{ key: number; kind: 'feathers' | 'leaf' | 'ripple'; x: number; y: number }[]>([]);
   const [said, setSaid] = useState<{ word: string; x: number; y: number } | null>(null);
   const actors = useMemo(() => kingdomLife(levels), [levels]);
   const openBuilding = useCallback(
@@ -339,29 +344,46 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
   const tapAt = useCallback(
     (px: number, py: number) => {
       const at = canvasAt(camRef.current, stageRef.current, px, py);
-      // the deer and the people first (they stand in front), where they are at this moment of their loops
-      for (const a of actors) {
-        if (!a.tap) continue;
+      const bit = (kind: 'feathers' | 'leaf' | 'ripple', x: number, y: number, ms: number): void => {
+        const key = Date.now() + Math.random();
+        setBits((list) => [...list, { key, kind, x, y }]);
+        setTimeout(() => setBits((list) => list.filter((b) => b.key !== key)), ms);
+      };
+      // what stands where it was tapped, at this moment of its loop, its target reaching a little round it to be big enough for a thumb
+      const hits = (a: KingdomActor): boolean => {
         const pose = a.motion && !reduce ? poseNow(a.motion) : a.still;
-        const box = { x: a.box.x + pose.x, y: a.box.y + pose.y, w: a.box.w, h: a.box.h };
-        if (at.x >= box.x - 6 && at.x <= box.x + box.w + 6 && at.y >= box.y && at.y <= box.y + box.h) {
-          haptic('tap');
-          if (a.tap === 'deer') {
-            setHappy(a.id);
-            setTimeout(() => setHappy(null), 1400);
-          } else {
-            const words = praiseWords(null);
-            setSaid({ word: words[Math.floor(Date.now() / 1000) % words.length]!, x: box.x + box.w / 2, y: box.y - 6 });
-            setTimeout(() => setSaid(null), 2200);
-          }
-          return;
+        const padX = Math.max(3, (HIT - a.box.w) / 2);
+        const padY = Math.max(3, (HIT - a.box.h) / 2);
+        const x = a.box.x + pose.x;
+        const y = a.box.y + pose.y;
+        return at.x >= x - padX && at.x <= x + a.box.w + padX && at.y >= y - padY && at.y <= y + a.box.h + padY;
+      };
+      const answer = (a: KingdomActor, tap: KingdomTap): void => {
+        if (tap === 'person') {
+          const words = praiseWords(null);
+          const pose = a.motion && !reduce ? poseNow(a.motion) : a.still;
+          setSaid({ word: words[Math.floor(Date.now() / 1000) % words.length]!, x: a.box.x + pose.x + a.box.w / 2, y: a.box.y + pose.y - 2 });
+          setTimeout(() => setSaid(null), 2200);
         }
-      }
+        if (reduce) return;
+        haptic('tap');
+        setReacting({ id: a.id, tap });
+        setTimeout(() => setReacting((r) => (r?.id === a.id ? null : r)), tap === 'deer' ? 1400 : 900);
+        if (tap === 'flutter') bit('feathers', at.x, at.y, 900);
+        if (tap === 'rustle') bit('leaf', at.x, at.y - 10, 2200);
+      };
+      // the people and the animals first, front to back; then a building; then a tree (which may stand in front of one); then the water
+      const front = [...actors].reverse();
+      const living = front.find((a) => a.tap && a.tap !== 'rustle' && hits(a));
+      if (living) return answer(living, living.tap!);
       const hit = KINGDOM_BUILDINGS.find((b) => {
         const box = KINGDOM_PLOTS[b].box;
         return at.x >= box.x && at.x <= box.x + box.w && at.y >= box.y && at.y <= box.y + box.h;
       });
-      if (hit) openBuilding(hit);
+      if (hit) return openBuilding(hit);
+      const tree = front.find((a) => a.tap === 'rustle' && hits(a));
+      if (tree) return answer(tree, 'rustle');
+      if (!reduce && kingdomWaterAt(at.x, at.y)) bit('ripple', at.x, at.y, 1200);
     },
     [actors, openBuilding, reduce],
   );
@@ -454,6 +476,8 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
   // ─── what is drawn: the tiles and the life near the view, at the scale the world was last drawn at
   const tiles = useMemo(() => kingdomTiles({ levels, rising, dark, moving: true, without: isRaising ? current?.building : undefined }), [levels, rising, dark, isRaising, current]);
   const r = drawnAt;
+  // a word bubble in scale with the person who says it (about half their height), and never smaller than can be read
+  const bubble = Math.max(8.5 * r, 11) / 15;
   const total = kingdomLevelCount(KINGDOM_BUILDINGS.map((id) => ({ level: levels[id] })));
   const pending = new Set(queue.map((u) => u.building));
   const openView = view.buildings.find((b) => b.id === open) ?? null;
@@ -482,7 +506,10 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
                   </View>
                 ) : null,
               )}
-              <KingdomLife actors={actors} near={near} dark={dark} scale={r} still={reduce} active={focused && appActive} happy={happy} />
+              <KingdomLife actors={actors} near={near} dark={dark} scale={r} still={reduce} active={focused && appActive} reacting={reacting} />
+              {bits.map((b) => (
+                <Bit key={b.key} kind={b.kind} x={b.x * r} y={b.y * r} scale={r} />
+              ))}
               {isRaising && current ? <Raise upgrade={current} dark={dark} scale={r} /> : null}
               {bouncing ? <Bounce building={bouncing} level={levels[bouncing]} rising={rising.includes(bouncing)} dark={dark} scale={r} /> : null}
               {view.buildings.map((b) => {
@@ -502,8 +529,8 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
                 );
               })}
               {said ? (
-                <View style={[styles.bubble, { left: said.x * r - 60, top: said.y * r - 40 }]} pointerEvents="none">
-                  <Text style={styles.bubbleText}>{said.word}</Text>
+                <View style={[styles.bubble, { left: said.x * r - 60 * bubble, top: said.y * r - 40 * bubble, width: 120 * bubble }]} pointerEvents="none">
+                  <Text style={[styles.bubbleText, { fontSize: 15 * bubble, paddingHorizontal: 12 * bubble, paddingVertical: 4 * bubble, borderWidth: 2.5 * bubble }]}>{said.word}</Text>
                 </View>
               ) : null}
             </View>
@@ -779,34 +806,124 @@ function spritesFor(dark: boolean): Record<KingdomSprite, string> {
  * at its still pose), and held where it is while the screen is out of sight
  * or the app is in the background. The deer, tapped, hops with smiling eyes.
  */
-function KingdomLife({ actors, near, dark, scale, still, active, happy }: { actors: readonly KingdomActor[]; near: { x: number; y: number; w: number; h: number }; dark: boolean; scale: number; still: boolean; active: boolean; happy: string | null }): React.JSX.Element {
+function KingdomLife({ actors, near, dark, scale, still, active, reacting }: { actors: readonly KingdomActor[]; near: { x: number; y: number; w: number; h: number }; dark: boolean; scale: number; still: boolean; active: boolean; reacting: { id: string; tap: KingdomTap } | null }): React.JSX.Element {
   const sprites = spritesFor(dark);
   const laid = useMemo(() => actors.filter((a) => overlaps(kingdomActorReach(a), near)), [actors, near]);
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="kingdom-life">
-      {laid.map((a) => (
-        <Hop key={a.id} on={happy === a.id}>
-          <LifeNode node={a} k={scale} still={still} active={active} sprites={sprites} happy={happy === a.id} />
-        </Hop>
-      ))}
+      {laid.map((a) => {
+        const tap = reacting?.id === a.id ? reacting.tap : null;
+        return (
+          <Reaction key={a.id} tap={tap} scale={scale}>
+            {(turn) => <LifeNode node={a} k={scale} still={still} active={active} sprites={sprites} happy={tap === 'deer'} turn={turn} />}
+          </Reaction>
+        );
+      })}
     </View>
   );
 }
 
-/** A happy hop for an actor tapped. */
-function Hop({ on, children }: { on: boolean; children: React.ReactNode }): React.JSX.Element {
+/**
+ * What a tap makes an actor do, laid round it: the deer and the sheep hop, a
+ * hen flutters up, the dog wriggles, a tree shakes; and the turn its head or
+ * its wing takes (the cow looking round, the hen's wing beating), handed to
+ * the actor to add to that part's own loop.
+ */
+function Reaction({ tap, scale, children }: { tap: KingdomTap | null; scale: number; children: (turn: { role: 'head' | 'wing'; value: Animated.AnimatedInterpolation<string> } | null) => React.ReactNode }): React.JSX.Element {
   const y = useRef(new Animated.Value(0)).current;
+  const x = useRef(new Animated.Value(0)).current;
+  const part = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    if (!on) return;
-    Animated.sequence([Animated.timing(y, { toValue: -10, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: true }), Animated.spring(y, { toValue: 0, friction: 3, useNativeDriver: true })]).start();
-  }, [on, y]);
-  return <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: y }] }]}>{children}</Animated.View>;
+    if (!tap) return;
+    const k = scale;
+    const to = (v: Animated.Value, value: number, duration: number): Animated.CompositeAnimation => Animated.timing(v, { toValue: value, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: true });
+    if (tap === 'deer' || tap === 'hop' || tap === 'flutter') {
+      Animated.sequence([Animated.timing(y, { toValue: (tap === 'flutter' ? -6 : -5) * k, duration: 180, easing: Easing.out(Easing.quad), useNativeDriver: true }), Animated.spring(y, { toValue: 0, friction: 3, useNativeDriver: true })]).start();
+    }
+    if (tap === 'wag' || tap === 'rustle') Animated.sequence([0.8, -0.8, 0.8, -0.8, 0.5, 0].map((v) => to(x, v * k, 100))).start();
+    if (tap === 'flutter') Animated.sequence([0, 1, 0, 1, 0, 1, 0].map((v) => to(part, v, 120))).start();
+    if (tap === 'turn') Animated.sequence([to(part, 1, 260), Animated.delay(380), to(part, 0, 260)]).start();
+  }, [tap, scale, x, y, part]);
+  const turn = tap === 'turn' ? { role: 'head' as const, value: part.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-24deg'] }) } : tap === 'flutter' ? { role: 'wing' as const, value: part.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '60deg'] }) } : null;
+  return <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: x }, { translateY: y }] }]}>{children(turn)}</Animated.View>;
+}
+
+/** What a tap leaves behind it for a moment: a puff of feathers, a leaf falling, a ring on the water. */
+function Bit({ kind, x, y, scale }: { kind: 'feathers' | 'leaf' | 'ripple'; x: number; y: number; scale: number }): React.JSX.Element {
+  const t = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(t, { toValue: 1, duration: kind === 'leaf' ? 2200 : kind === 'ripple' ? 1200 : 900, easing: Easing.out(Easing.quad), useNativeDriver: true }).start();
+  }, [kind, t]);
+  const k = scale;
+  if (kind === 'ripple') {
+    return (
+      <Animated.View
+        pointerEvents="none"
+        style={[styles.node, styles.ring, { left: x - 8 * k, top: y - 3 * k, width: 16 * k, height: 6 * k, borderWidth: k, opacity: t.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), transform: [{ scale: t.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1.4] }) }] }]}
+      />
+    );
+  }
+  if (kind === 'leaf') {
+    return (
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.node,
+          styles.leaf,
+          {
+            left: x,
+            top: y,
+            width: 3.2 * k,
+            height: 2 * k,
+            borderWidth: 0.5 * k,
+            opacity: t.interpolate({ inputRange: [0, 0.1, 0.9, 1], outputRange: [0, 1, 1, 0] }),
+            transform: [
+              { translateX: t.interpolate({ inputRange: [0, 0.35, 0.65, 1], outputRange: [0, 4 * k, -2 * k, 3 * k] }) },
+              { translateY: t.interpolate({ inputRange: [0, 1], outputRange: [0, 18 * k] }) },
+              { rotate: t.interpolate({ inputRange: [0, 0.35, 0.65, 1], outputRange: ['0deg', '60deg', '-30deg', '40deg'] }) },
+            ],
+          },
+        ]}
+      />
+    );
+  }
+  const out: [number, number, string][] = [[-7, -6, CREAM], [6, -8, CREAM], [-3, -10, CREAM], [8, -3, '#c8703f'], [-8, -2, '#c8703f']];
+  return (
+    <>
+      {out.map(([dx, dy, colour], i) => (
+        <Animated.View
+          key={i}
+          pointerEvents="none"
+          style={[
+            styles.node,
+            styles.feather,
+            {
+              left: x - 1.2 * k,
+              top: y - 0.7 * k,
+              width: 2.4 * k,
+              height: 1.4 * k,
+              borderWidth: 0.5 * k,
+              backgroundColor: colour,
+              opacity: t.interpolate({ inputRange: [0, 0.6, 1], outputRange: [1, 1, 0] }),
+              transform: [
+                { translateX: t.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, dx * k, dx * k] }) },
+                { translateY: t.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, dy * k, (dy + 5) * k] }) },
+                { rotate: t.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '140deg'] }) },
+              ],
+            },
+          ]}
+        />
+      ))}
+    </>
+  );
 }
 
 type Pose = Omit<KingdomFrame, 't'>;
 type PoseKey = keyof Pose;
 
-const LifeNode = memo(function LifeNode({ node, k, still, active, sprites, happy }: { node: KingdomNode; k: number; still: boolean; active: boolean; sprites: Record<KingdomSprite, string>; happy: boolean }): React.JSX.Element {
+type Turn = { role: 'head' | 'wing'; value: Animated.AnimatedInterpolation<string> } | null;
+
+const LifeNode = memo(function LifeNode({ node, k, still, active, sprites, happy, turn }: { node: KingdomNode; k: number; still: boolean; active: boolean; sprites: Record<KingdomSprite, string>; happy: boolean; turn: Turn }): React.JSX.Element {
   const value = useRef(new Animated.Value(0)).current;
   const motion = still || (happy && node.role === 'happy') ? undefined : node.motion;
   useEffect(() => {
@@ -845,6 +962,8 @@ const LifeNode = memo(function LifeNode({ node, k, still, active, sprites, happy
     else if (motion.frames[0]!.sy !== 1) transform.push({ scaleY: motion.frames[0]!.sy });
     return { opacity: changes('o') ? track('o') : motion.frames[0]!.o, transform };
   }, [motion, node.still, node.role, happy, k, value]);
+  // a tap's turn of the head or the wing, on top of the part's own loop
+  const turned = turn && node.role === turn.role ? { ...(moving as { opacity: unknown; transform: unknown[] }), transform: [...(moving as { transform: unknown[] }).transform, { rotate: turn.value }] } : moving;
   const { box, origin } = node;
   return (
     <Animated.View
@@ -852,11 +971,11 @@ const LifeNode = memo(function LifeNode({ node, k, still, active, sprites, happy
         styles.node,
         { left: box.x * k, top: box.y * k, width: box.w * k, height: box.h * k, transformOrigin: `${origin[0] * 100}% ${origin[1] * 100}%` },
         node.clip ? { overflow: 'hidden' } : null,
-        moving as object,
+        turned as object,
       ]}
     >
       {node.sprite ? <SvgXml xml={sprites[node.sprite]} width={box.w * k} height={box.h * k} /> : null}
-      {node.children?.map((c, i) => <LifeNode key={i} node={c} k={k} still={still} active={active} sprites={sprites} happy={happy} />)}
+      {node.children?.map((c, i) => <LifeNode key={i} node={c} k={k} still={still} active={active} sprites={sprites} happy={happy} turn={turn} />)}
     </Animated.View>
   );
 });
@@ -1056,7 +1175,10 @@ const styles = StyleSheet.create({
   badgeText: { color: INK, fontSize: 13, fontWeight: typography.weights.bold },
   badgeBar: { width: 44, height: 8, borderRadius: radii.pill, borderWidth: 1.5, borderColor: INK, backgroundColor: CREAM_EDGE, overflow: 'hidden' },
   badgeFill: { position: 'absolute', top: 0, bottom: 0, backgroundColor: GOLD },
-  bubble: { position: 'absolute', width: 120, alignItems: 'center' },
+  bubble: { position: 'absolute', alignItems: 'center' },
+  ring: { borderColor: 'rgba(255,255,255,0.9)', borderRadius: radii.pill },
+  leaf: { borderColor: INK, backgroundColor: '#6fae3e', borderTopLeftRadius: radii.pill, borderBottomRightRadius: radii.pill },
+  feather: { borderColor: INK, borderRadius: radii.pill },
   bubbleText: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: radii.md, borderWidth: 2.5, borderColor: INK, backgroundColor: CREAM, color: INK, fontSize: 15, fontWeight: '800', overflow: 'hidden' },
   tray: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 10, borderTopWidth: 3, borderColor: INK, backgroundColor: CREAM_2 },
   srOnly: { position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' },
