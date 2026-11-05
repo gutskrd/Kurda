@@ -2665,7 +2665,7 @@ export const nl: Catalogue = {
   'landing.progress.customize': 'Aanpassen',
   'landing.progress.customizeBody': 'Geef het uit aan achtergronden en iconen voor je profiel, of aan een cadeau voor een vriend.',
   'landing.progress.play': 'Spelen',
-  'landing.progress.playBody': 'Elke week een nieuwe competitie, van Brons helemaal tot Diamant.',
+  'landing.progress.playBody': 'Elke week een nieuwe competitie, van Dilop, de druppel, helemaal tot Okyanûs, de oceaan.',
   'landing.community.title': 'Lees wat mensen hier in het Koerdisch schrijven.',
   'landing.community.lead': 'Verhalen, gedichten en foto’s van mensen die op Hevalo Koerdisch leren en spreken, sommige ook voorgelezen. Je kunt ze lezen zonder account.',
   'landing.community.cta': 'Naar de community',

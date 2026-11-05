@@ -2665,7 +2665,7 @@ export const de: Catalogue = {
   'landing.progress.customize': 'Gestalten',
   'landing.progress.customizeBody': 'Gib sie für Hintergründe und Symbole für dein Profil aus — oder für ein Geschenk an einen Freund.',
   'landing.progress.play': 'Spielen',
-  'landing.progress.playBody': 'Jede Woche eine neue Liga, von Bronze bis hinauf zu Diamant.',
+  'landing.progress.playBody': 'Jede Woche eine neue Liga, von Dilop, dem Tropfen, bis hinauf zu Okyanûs, dem Ozean.',
   'landing.community.title': 'Lies, was die Leute hier auf Kurdisch schreiben.',
   'landing.community.lead': 'Geschichten, Gedichte und Bilder von Menschen, die auf Hevalo Kurdisch lernen und sprechen, manche davon vorgelesen. Lesen kannst du sie auch ohne Konto.',
   'landing.community.cta': 'Zur Community',

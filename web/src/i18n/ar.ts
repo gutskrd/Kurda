@@ -2659,7 +2659,7 @@ export const ar: Catalogue = {
   'landing.progress.customize': 'خصّص',
   'landing.progress.customizeBody': 'أنفقها على خلفيات وأيقونات لملفك الشخصي، أو على هدية لصديق.',
   'landing.progress.play': 'العب',
-  'landing.progress.playBody': 'دوري جديد كل أسبوع، من البرونز وصولًا إلى الألماس.',
+  'landing.progress.playBody': 'دوري جديد كل أسبوع، من Dilop، القطرة، وصولًا إلى Okyanûs، المحيط.',
   'landing.community.title': 'اقرأ ما يكتبه الناس هنا بالكردية.',
   'landing.community.lead': 'قصص وقصائد وصور من أناس يتعلّمون الكردية ويتحدّثونها على Hevalo، وبعضها مقروء بصوت عالٍ. يمكنك قراءتها من دون حساب.',
   'landing.community.cta': 'اقرأ المجتمع',

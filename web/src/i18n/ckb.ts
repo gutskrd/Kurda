@@ -2671,7 +2671,7 @@ export const ckb: Catalogue = {
   'landing.progress.customize': 'بیڕازێنەوە',
   'landing.progress.customizeBody': 'بۆ پاشبنەما و ئایکۆنی پرۆفایلەکەت خەرجی بکە، یان بۆ دیارییەک بۆ هاوڕێیەک.',
   'landing.progress.play': 'یاری بکە',
-  'landing.progress.playBody': 'هەموو هەفتەیەک خولێکی نوێ، لە بڕۆنزەوە تا ئەڵماس.',
+  'landing.progress.playBody': 'هەموو هەفتەیەک خولێکی نوێ، لە دڵۆپەوە تا ئۆقیانووس.',
   'landing.community.title': 'ئەوە بخوێنەوە کە خەڵکی ئێرە بە کوردی دەینووسن.',
   'landing.community.lead': 'چیرۆک، شیعر و وێنەی ئەو کەسانەی لە Hevalo فێری کوردی دەبن و بە کوردی قسە دەکەن، هەندێکیان بە دەنگی بەرز خوێندراونەتەوە. دەتوانیت بێ هەژمار بیانخوێنیتەوە.',
   'landing.community.cta': 'کۆمەڵگا بخوێنەوە',

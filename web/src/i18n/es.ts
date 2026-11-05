@@ -2663,7 +2663,7 @@ export const es: Catalogue = {
   'landing.progress.customize': 'Personaliza',
   'landing.progress.customizeBody': 'Gástalo en fondos e iconos para tu perfil, o en un regalo para un amigo.',
   'landing.progress.play': 'Juega',
-  'landing.progress.playBody': 'Una liga nueva cada semana, desde Bronce hasta Diamante.',
+  'landing.progress.playBody': 'Una liga nueva cada semana, desde Dilop, la gota, hasta Okyanûs, el océano.',
   'landing.community.title': 'Lee lo que la gente de aquí escribe en kurdo.',
   'landing.community.lead': 'Historias, poemas e imágenes de personas que aprenden y hablan kurdo en Hevalo, algunas leídas en voz alta. Puedes leerlas sin cuenta.',
   'landing.community.cta': 'Leer la comunidad',

@@ -2764,7 +2764,7 @@ export const en = {
   'landing.progress.customize': 'Customize',
   'landing.progress.customizeBody': 'Spend it on backgrounds and icons for your profile, or on a gift for a friend.',
   'landing.progress.play': 'Play',
-  'landing.progress.playBody': 'A new league every week, from Bronze all the way to Diamond.',
+  'landing.progress.playBody': 'A new league every week, from Dilop, the drop, all the way to Okyanûs, the ocean.',
   'landing.community.title': 'Read what people here write in Kurdish.',
   'landing.community.lead': 'Stories, poems and pictures from people learning and speaking Kurdish on Hevalo, some of them read aloud. You can read them without an account.',
   'landing.community.cta': 'Read the community',

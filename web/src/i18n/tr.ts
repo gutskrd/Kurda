@@ -2660,7 +2660,7 @@ export const tr: Catalogue = {
   'landing.progress.customize': 'Özelleştir',
   'landing.progress.customizeBody': 'Onu profilin için arka planlara ve simgelere ya da bir arkadaşına hediyeye harca.',
   'landing.progress.play': 'Oyna',
-  'landing.progress.playBody': 'Her hafta yeni bir lig; Bronz’dan Elmas’a kadar.',
+  'landing.progress.playBody': 'Her hafta yeni bir lig; damla Dilop’tan okyanus Okyanûs’a kadar.',
   'landing.community.title': 'Buradakilerin Kürtçe yazdıklarını oku.',
   'landing.community.lead': 'Hevalo’da Kürtçe öğrenen ve konuşan insanlardan hikâyeler, şiirler ve fotoğraflar; bazıları sesli okunmuş. Hesap açmadan da okuyabilirsin.',
   'landing.community.cta': 'Topluluğu oku',

@@ -2670,7 +2670,7 @@ export const ku: Catalogue = {
   'landing.progress.customize': 'Bixemilîne',
   'landing.progress.customizeBody': 'Wî ji bo paşxane û îkonên profîla xwe xerc bike, an jî ji bo diyariyekê ji hevalekî re.',
   'landing.progress.play': 'Bilîze',
-  'landing.progress.playBody': 'Her hefte lîgeke nû, ji Bronzê heta Elmasê.',
+  'landing.progress.playBody': 'Her hefte lîgeke nû, ji Dilopê heta Okyanûsê.',
   'landing.community.title': 'Tiştên ku kesên li vir bi kurdî dinivîsin bixwîne.',
   'landing.community.lead': 'Çîrok, helbest û wêneyên kesên ku li Hevalo fêrî kurdî dibin û bi kurdî diaxivin, hin ji wan bi deng hatine xwendin. Tu dikarî wan bê hesab jî bixwînî.',
   'landing.community.cta': 'Civakê bixwîne',
