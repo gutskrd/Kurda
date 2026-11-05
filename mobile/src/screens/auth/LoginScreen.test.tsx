@@ -59,13 +59,13 @@ describe('signing in', () => {
     renderLogin();
     expect(screen.getByText(en['guide.email.question'])).toBeTruthy();
     expect(screen.getByTestId('speech-bubble').textContent).toBe(en['guide.login.email.says']);
-    await signIn('rojda@icloud.com');
-    await waitFor(() => expect(auth.login).toHaveBeenCalledWith('rojda@icloud.com', 'not-the-one-1'));
+    await signIn('rojda@example.com');
+    await waitFor(() => expect(auth.login).toHaveBeenCalledWith('rojda@example.com', 'not-the-one-1'));
   });
 
   it('starts at the password when a screen sent the address along', async () => {
-    renderLogin({ email: 'rojda@icloud.com' });
-    expect((screen.getByTestId('email') as HTMLInputElement).value).toBe('rojda@icloud.com');
+    renderLogin({ email: 'rojda@example.com' });
+    expect((screen.getByTestId('email') as HTMLInputElement).value).toBe('rojda@example.com');
     await press(en['common.continue']);
     expect(await screen.findByText(en['guide.password.question'])).toBeTruthy();
   });
@@ -88,26 +88,26 @@ describe('signing in', () => {
     const message = 'There have been several failed sign-in attempts. For your safety, wait a few minutes and try again, or reset your password.';
     auth.login.mockResolvedValue({ message, code: 'CAPTCHA_REQUIRED' });
     const navigation = renderLogin();
-    await signIn('rojda@icloud.com');
+    await signIn('rojda@example.com');
     const notice = await screen.findByTestId('login-held-back');
     expect(notice.textContent).toContain(message);
     await act(async () => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('ForgotPassword', { email: 'rojda@icloud.com' });
+    expect(navigation.navigate).toHaveBeenLastCalledWith('ForgotPassword', { email: 'rojda@example.com' });
   });
 
   it('does the same for a lock, which says how long', async () => {
     const message = 'There have been several failed sign-in attempts. For your safety, wait about 15 minutes and try again, or reset your password.';
     auth.login.mockResolvedValue({ message, code: 'LOCKED' });
     renderLogin();
-    await signIn('rojda@icloud.com');
+    await signIn('rojda@example.com');
     expect((await screen.findByTestId('login-held-back')).textContent).toContain(message);
   });
 
   it('says a wrong password under the field, with Hevalo’s doubt, and no notice', async () => {
     auth.login.mockResolvedValue({ message: 'That email or password isn’t right.', code: 'INVALID_CREDENTIALS' });
     renderLogin();
-    await signIn('rojda@icloud.com');
+    await signIn('rojda@example.com');
     expect((await screen.findByTestId('step-error')).textContent).toBe('That email or password isn’t right.');
     expect(screen.getByTestId('speech-bubble').textContent).toBe(en['guide.login.wrong.says']);
     expect(screen.queryByTestId('login-held-back')).toBeNull();
@@ -117,10 +117,10 @@ describe('signing in', () => {
     const navigation = renderLogin();
     fireEvent.click(screen.getByRole('button', { name: `${en['auth.login.noAccount']} ${en['auth.login.createAccount']}` }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Register');
-    fireEvent.change(screen.getByTestId('email'), { target: { value: 'rojda@icloud.com' } });
+    fireEvent.change(screen.getByTestId('email'), { target: { value: 'rojda@example.com' } });
     await press(en['common.continue']);
     await turned();
     fireEvent.click(await screen.findByRole('button', { name: en['auth.login.forgot'] }));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('ForgotPassword', { email: 'rojda@icloud.com' });
+    expect(navigation.navigate).toHaveBeenLastCalledWith('ForgotPassword', { email: 'rojda@example.com' });
   });
 });

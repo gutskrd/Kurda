@@ -84,10 +84,10 @@ describe('signing up', () => {
     renderRegister();
     expect(screen.getByText(en['guide.register.name.question'])).toBeTruthy();
     expect(screen.getByTestId('speech-bubble').textContent).toBe(en['guide.register.name.says']);
-    await signUp('rojda@icloud.com');
+    await signUp('rojda@example.com');
     await waitFor(() => expect(auth.register).toHaveBeenCalledTimes(1));
     expect(auth.register).toHaveBeenCalledWith({
-      email: 'rojda@icloud.com',
+      email: 'rojda@example.com',
       username: 'rojda_k',
       password: 'berbang2026',
       locale: 'en',
@@ -149,25 +149,25 @@ describe('signing up', () => {
   it('offers Log in and Reset password, carrying the address, when the address may already have an account', async () => {
     auth.register.mockResolvedValue({ message: 'unable to register', code: 'REGISTRATION_FAILED' });
     const navigation = renderRegister();
-    await signUp('Name.Surname+tag@me.com');
+    await signUp('Name.Surname+tag@example.com');
 
     const notice = await screen.findByTestId('register-may-have-account');
     expect(notice.textContent).toContain('We couldn’t create an account with these details. If you already have one, log in or reset your password.');
     expect(notice.textContent).not.toMatch(/already (registered|in use|exists)/i);
     // the address went to the server as typed, capitals and plus tag and all
-    expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ email: 'Name.Surname+tag@me.com', birthMonth: 3 }));
+    expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ email: 'Name.Surname+tag@example.com', birthMonth: 3 }));
 
     await act(async () => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('Login', { email: 'Name.Surname+tag@me.com' });
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Login', { email: 'Name.Surname+tag@example.com' });
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('ForgotPassword', { email: 'Name.Surname+tag@me.com' });
+    expect(navigation.navigate).toHaveBeenLastCalledWith('ForgotPassword', { email: 'Name.Surname+tag@example.com' });
   });
 
   it('goes back to the name when it is taken, with the server’s words and Hevalo’s gentle line', async () => {
     auth.register.mockResolvedValue({ message: 'That username is already taken.', code: 'USERNAME_TAKEN' });
     renderRegister();
-    await signUp('name@icloud.com');
+    await signUp('name@example.com');
     expect(await screen.findByText('That username is already taken.')).toBeTruthy();
     expect(screen.getByText(en['guide.register.name.question'])).toBeTruthy();
     expect(screen.getByTestId('speech-bubble').textContent).toBe(en['guide.register.name.taken']);
@@ -181,7 +181,7 @@ describe('signing up', () => {
     const message = 'This password has shown up in a data leak, so it isn’t safe. Choose a different one.';
     auth.register.mockResolvedValue({ message, code: 'PASSWORD_BREACHED' });
     renderRegister();
-    await signUp('name@icloud.com');
+    await signUp('name@example.com');
     expect(await screen.findByText(message)).toBeTruthy();
     expect(screen.getByText(en['guide.register.password.question'])).toBeTruthy();
     await turned();
@@ -191,7 +191,7 @@ describe('signing up', () => {
   it('says any other refusal under the last step, without the account notice', async () => {
     auth.register.mockResolvedValue({ message: 'Too many accounts from this network.', code: 'SIGNUP_BLOCKED' });
     renderRegister();
-    await signUp('name@icloud.com');
+    await signUp('name@example.com');
     expect(await screen.findByText('Too many accounts from this network.')).toBeTruthy();
     expect(screen.queryByTestId('register-may-have-account')).toBeNull();
   });
@@ -199,7 +199,7 @@ describe('signing up', () => {
   it('leaves a sign-up for somebody under 13 to the explanation, with no form to try again on', async () => {
     auth.register.mockResolvedValue({ message: 'accounts are for people aged 13 and over', code: 'UNDER_MINIMUM_AGE' });
     renderRegister();
-    await signUp('name@icloud.com', { age: 9 });
+    await signUp('name@example.com', { age: 9 });
     // the age they slid to is the one sent, for the server to refuse
     await waitFor(() => expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ birthYear: birthYearFrom(9, 3), birthMonth: 3 })));
     await waitFor(() => expect(auth.stopForAge).toHaveBeenCalledWith('refused'));

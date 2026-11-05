@@ -77,11 +77,11 @@ describe.skipIf(!DATABASE_URL)('signing up with any mail provider (integration)'
   });
 
   it.each([
-    ['a plus tag', `rojda+hevalo_${suffix}@icloud.com`],
-    ['dots', `first.last.${suffix}@gmail.com`],
-    ['capitals', `Rojda_${suffix}@iCloud.com`],
-    ['an apostrophe', `o'brien.${suffix}@gmail.com`],
-    ['digits, hyphens and underscores', `dil-an_99.${suffix}@outlook.com`],
+    ['a plus tag', `rojda+hevalo_${suffix}@example.com`],
+    ['dots', `first.last.${suffix}@example.com`],
+    ['capitals', `Rojda_${suffix}@Example.com`],
+    ['an apostrophe', `o'brien.${suffix}@example.com`],
+    ['digits, hyphens and underscores', `dil-an_99.${suffix}@example.com`],
     ['an Apple relay address', `abc123xyz${suffix}@privaterelay.appleid.com`],
     ['a subdomain under a country domain', `heval.${suffix}@mail.example.co.uk`],
   ])('%s', async (_, email) => {
@@ -91,21 +91,21 @@ describe.skipIf(!DATABASE_URL)('signing up with any mail provider (integration)'
   });
 
   it('an address with a space around it, stored without one', async () => {
-    const res = await register(`  spaced_${suffix}@yahoo.com `);
+    const res = await register(`  spaced_${suffix}@example.com `);
     expect(res.statusCode, res.body).toBe(201);
-    expect(res.json().user.email).toBe(`spaced_${suffix}@yahoo.com`);
+    expect(res.json().user.email).toBe(`spaced_${suffix}@example.com`);
   });
 
   it('one address in another letter case is the same account', async () => {
-    const first = await register(`case_${suffix}@icloud.com`);
+    const first = await register(`case_${suffix}@example.com`);
     expect(first.statusCode, first.body).toBe(201);
 
-    const again = await register(`Case_${suffix}@iCloud.COM`);
+    const again = await register(`Case_${suffix}@Example.COM`);
     expect(again.statusCode).toBe(409);
     expect(again.json().code).toBe('REGISTRATION_FAILED');
 
     // and signs in however it is typed
-    for (const typed of [`case_${suffix}@icloud.com`, `CASE_${suffix}@ICLOUD.COM`, ` Case_${suffix}@iCloud.com `]) {
+    for (const typed of [`case_${suffix}@example.com`, `CASE_${suffix}@EXAMPLE.COM`, ` Case_${suffix}@Example.com `]) {
       const res = await login(typed);
       expect(res.statusCode, `${typed}: ${res.body}`).toBe(200);
       expect(res.json().user.id).toBe(first.json().user.id);
@@ -113,9 +113,9 @@ describe.skipIf(!DATABASE_URL)('signing up with any mail provider (integration)'
   });
 
   it('an address that was signed up with capitals signs in in lower case', async () => {
-    const first = await register(`Shiler_${suffix}@Me.com`);
+    const first = await register(`Shiler_${suffix}@Example.com`);
     expect(first.statusCode, first.body).toBe(201);
-    const res = await login(`shiler_${suffix}@me.com`);
+    const res = await login(`shiler_${suffix}@example.com`);
     expect(res.statusCode, res.body).toBe(200);
     expect(res.json().user.id).toBe(first.json().user.id);
   });
@@ -133,7 +133,7 @@ describe.skipIf(!DATABASE_URL)('signing up with any mail provider (integration)'
   });
 
   it('nor one that only resembles a provider with a line break in it', async () => {
-    const res = await register(`x_${suffix}@icloud.com\r\nBcc: everyone@example.com`);
+    const res = await register(`x_${suffix}@example.com\r\nBcc: everyone@example.com`);
     expect(res.statusCode).toBe(400);
     expect(res.json().code).toBe('VALIDATION_ERROR');
   });

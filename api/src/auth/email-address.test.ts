@@ -9,19 +9,19 @@ const accepts = (email: string) => emailAddress.safeParse(email).success;
 
 describe('email addresses the forms accept', () => {
   it.each(PROVIDER_DOMAINS)('an address at %s', (domain) => {
-    expect(accepts(`rojda.heval@${domain}`)).toBe(true);
+    expect(accepts(`fixture.address@${domain}`)).toBe(true);
   });
 
   it.each([
-    ['a plus tag', 'name+tag@icloud.com'],
-    ['dots', 'first.last@gmail.com'],
-    ['capitals', 'Name@iCloud.com'],
-    ['all capitals', 'ROJDA@GMAIL.COM'],
-    ['digits, hyphens and underscores', 'dil-an_99@outlook.com'],
+    ['a plus tag', 'name+tag@example.com'],
+    ['dots', 'first.last@example.com'],
+    ['capitals', 'Name@Example.com'],
+    ['all capitals', 'ROJDA@EXAMPLE.COM'],
+    ['digits, hyphens and underscores', 'dil-an_99@example.com'],
     ['a subdomain', 'x@mail.example.co.uk'],
     ['a long top-level domain', 'me@studio.photography'],
     ['an Apple relay address', 'abc123xyz@privaterelay.appleid.com'],
-    ['an apostrophe', "o'brien@gmail.com"],
+    ['an apostrophe', "o'brien@example.com"],
     ['an internationalised domain in ASCII', 'rojda@xn--80ak6aa92e.com'],
     ['an internationalised top-level domain in ASCII', 'rojda@example.xn--p1ai'],
   ])('%s', (_, email) => {
@@ -29,29 +29,29 @@ describe('email addresses the forms accept', () => {
   });
 
   it('drops the space a keyboard or password manager puts around an address', () => {
-    expect(emailAddress.parse(' name@icloud.com ')).toBe('name@icloud.com');
-    expect(emailAddress.parse('name@icloud.com\t')).toBe('name@icloud.com');
+    expect(emailAddress.parse(' name@example.com ')).toBe('name@example.com');
+    expect(emailAddress.parse('name@example.com\t')).toBe('name@example.com');
   });
 
   it('keeps the letter case as typed: the column compares without it', () => {
-    expect(emailAddress.parse('Name@iCloud.com')).toBe('Name@iCloud.com');
+    expect(emailAddress.parse('Name@Example.com')).toBe('Name@Example.com');
   });
 
   it.each([
-    ['a space inside', 'na me@icloud.com'],
-    ['a line break carrying a header', 'name@icloud.com\r\nBcc: everyone@example.com'],
-    ['a line break alone', 'name\n@icloud.com'],
-    ['a null character', 'name\u0000@icloud.com'],
-    ['a quoted local part', '"name"@icloud.com'],
-    ['angle brackets', '<name@icloud.com>'],
-    ['a display name', 'Rojda <name@icloud.com>'],
-    ['two addresses', 'a@icloud.com,b@icloud.com'],
-    ['a leading dot', '.name@icloud.com'],
-    ['two dots in a row', 'na..me@icloud.com'],
+    ['a space inside', 'na me@example.com'],
+    ['a line break carrying a header', 'name@example.com\r\nBcc: everyone@example.com'],
+    ['a line break alone', 'name\n@example.com'],
+    ['a null character', 'name\u0000@example.com'],
+    ['a quoted local part', '"name"@example.com'],
+    ['angle brackets', '<name@example.com>'],
+    ['a display name', 'Rojda <name@example.com>'],
+    ['two addresses', 'a@example.com,b@example.com'],
+    ['a leading dot', '.name@example.com'],
+    ['two dots in a row', 'na..me@example.com'],
     ['no top-level domain', 'name@localhost'],
     ['no domain', 'name@'],
-    ['no @', 'name.icloud.com'],
-    ['a trailing dot', 'name@icloud.com.'],
+    ['no @', 'name.example.com'],
+    ['a trailing dot', 'name@example.com.'],
     ['an address longer than mail allows', `${'a'.repeat(64)}@${'b'.repeat(190)}.com`],
   ])('refuses %s', (_, email) => {
     expect(accepts(email)).toBe(false);
@@ -59,23 +59,23 @@ describe('email addresses the forms accept', () => {
 
   it('is what sign-up, sign-in and the reset form use', () => {
     const signUp = {
-      email: ' Name+hevalo@iCloud.com ',
+      email: ' Name+hevalo@Example.com ',
       username: 'rojda',
       password: 'a-strong-password1',
       acceptTerms: true,
       birthYear: 1990,
       birthMonth: 6,
     };
-    expect(registerBodySchema.parse(signUp).email).toBe('Name+hevalo@iCloud.com');
-    expect(loginBodySchema.parse({ email: 'name@icloud.com ', password: 'x' }).email).toBe('name@icloud.com');
-    expect(passwordResetRequestBodySchema.parse({ email: ' name@me.com' }).email).toBe('name@me.com');
+    expect(registerBodySchema.parse(signUp).email).toBe('Name+hevalo@Example.com');
+    expect(loginBodySchema.parse({ email: 'name@example.com ', password: 'x' }).email).toBe('name@example.com');
+    expect(passwordResetRequestBodySchema.parse({ email: ' name@example.com' }).email).toBe('name@example.com');
   });
 });
 
 describe('disposable-domain matching', () => {
   it.each(PROVIDER_DOMAINS)('never flags %s', (domain) => {
-    expect(isDisposableEmail(`rojda@${domain}`)).toBe(false);
-    expect(isDisposableEmail(`Rojda@${domain.toUpperCase()}`)).toBe(false);
+    expect(isDisposableEmail(`fixture@${domain}`)).toBe(false);
+    expect(isDisposableEmail(`Fixture@${domain.toUpperCase()}`)).toBe(false);
   });
 
   it.each(DISPOSABLE_DOMAINS_SAMPLE)('flags %s, a subdomain of it, in any case', (domain) => {
@@ -99,18 +99,18 @@ describe('banned-address matching', () => {
   it('keeps every provider apart: one ban never covers an address elsewhere', () => {
     // googlemail.com is gmail.com under its old name, the one deliberate fold
     const others = PROVIDER_DOMAINS.filter((d) => d !== 'googlemail.com');
-    const forms = others.map((d) => normalizeEmailForRegistry(`rojda.heval@${d}`));
+    const forms = others.map((d) => normalizeEmailForRegistry(`fixture.address@${d}`));
     expect(new Set(forms).size).toBe(others.length);
-    expect(normalizeEmailForRegistry('rojda.heval@googlemail.com')).toBe(normalizeEmailForRegistry('rojdaheval@gmail.com'));
+    expect(normalizeEmailForRegistry('fixture.address@googlemail.com')).toBe(normalizeEmailForRegistry('fixtureaddress@gmail.com'));
     // Apple's three domains are one inbox to Apple but three addresses here
-    expect(normalizeEmailForRegistry('rojda@icloud.com')).not.toBe(normalizeEmailForRegistry('rojda@me.com'));
+    expect(normalizeEmailForRegistry('fixture@icloud.com')).not.toBe(normalizeEmailForRegistry('fixture@me.com'));
   });
 
   it('folds only what delivers to the same inbox', () => {
-    expect(normalizeEmailForRegistry('Name+tag@iCloud.com')).toBe('name@icloud.com');
+    expect(normalizeEmailForRegistry('Name+tag@Example.com')).toBe('name@example.com');
     expect(normalizeEmailForRegistry('N.a.m.e+x@googlemail.com')).toBe('name@gmail.com');
     // dots are part of the name everywhere but Gmail
-    expect(normalizeEmailForRegistry('first.last@icloud.com')).not.toBe(normalizeEmailForRegistry('firstlast@icloud.com'));
-    expect(normalizeEmailForRegistry('first.last@outlook.com')).toBe('first.last@outlook.com');
+    expect(normalizeEmailForRegistry('first.last@example.com')).not.toBe(normalizeEmailForRegistry('firstlast@example.com'));
+    expect(normalizeEmailForRegistry('first.last@example.com')).toBe('first.last@example.com');
   });
 });

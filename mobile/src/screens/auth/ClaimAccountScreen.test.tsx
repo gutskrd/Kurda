@@ -90,10 +90,10 @@ describe('claiming the guest account', () => {
     renderClaim();
     expect((screen.getByTestId('username') as HTMLInputElement).value).toBe('heval4821930');
     expect(screen.getByTestId('speech-bubble').textContent).toBe('You’ve been heval4821930 so far. Keep it, or pick a new one.');
-    await claim('rojda@icloud.com');
+    await claim('rojda@example.com');
     await waitFor(() => expect(auth.claimAccount).toHaveBeenCalledTimes(1));
     expect(auth.claimAccount).toHaveBeenCalledWith({
-      email: 'rojda@icloud.com',
+      email: 'rojda@example.com',
       password: 'berbang2026',
       locale: 'en',
       birthMonth: 3,
@@ -104,26 +104,26 @@ describe('claiming the guest account', () => {
   it('sends a new name when one was chosen', async () => {
     auth.claimAccount.mockResolvedValue(null);
     renderClaim();
-    await claim('rojda@icloud.com', { name: 'rojda_k' });
+    await claim('rojda@example.com', { name: 'rojda_k' });
     await waitFor(() => expect(auth.claimAccount).toHaveBeenCalledWith(expect.objectContaining({ username: 'rojda_k' })));
   });
 
   it('offers Sign in and Reset password, carrying the address, when the address may already have an account', async () => {
     auth.claimAccount.mockResolvedValue({ message: 'unable to register', code: 'REGISTRATION_FAILED' });
     const handlers = renderClaim();
-    await claim('rojda@icloud.com');
+    await claim('rojda@example.com');
     const notice = await screen.findByTestId('claim-may-have-account');
     expect(notice.textContent).toContain(en['error.code.registrationFailed']);
     await act(async () => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
-    expect(handlers.onSignIn).toHaveBeenCalledWith('rojda@icloud.com');
+    expect(handlers.onSignIn).toHaveBeenCalledWith('rojda@example.com');
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
-    expect(handlers.onForgotPassword).toHaveBeenCalledWith('rojda@icloud.com');
+    expect(handlers.onForgotPassword).toHaveBeenCalledWith('rojda@example.com');
   });
 
   it('waits on the age until the ruler is moved, choosing none for the guest', async () => {
     renderClaim();
-    await toAge('rojda@icloud.com');
+    await toAge('rojda@example.com');
     expect(screen.getByTestId('age-ruler-number').textContent).toBe('–');
     await press(en['common.continue']);
     expect(screen.getByTestId('step-error').textContent).toBe(en['guide.register.age.required']);
@@ -137,7 +137,7 @@ describe('claiming the guest account', () => {
   it('ends the guest session and leaves the explanation when the guest is under 13', async () => {
     auth.claimAccount.mockResolvedValue({ message: 'accounts are for people aged 13 and over', code: 'UNDER_MINIMUM_AGE' });
     renderClaim();
-    await claim('rojda@icloud.com', { age: 11 });
+    await claim('rojda@example.com', { age: 11 });
     await waitFor(() => expect(auth.claimAccount).toHaveBeenCalledWith(expect.objectContaining({ birthYear: birthYearFrom(11, 3), birthMonth: 3 })));
     await waitFor(() => expect(auth.stopForAge).toHaveBeenCalledWith('refused'));
     expect(auth.logout).toHaveBeenCalledTimes(1);

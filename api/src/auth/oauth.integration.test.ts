@@ -71,7 +71,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   it('creates a new account on first Google sign-in', async () => {
     const token = await makeToken('google', {
       sub: `g-new-${suffix}`,
-      email: `şêrîn_${suffix}@gmail.com`,
+      email: `şêrîn_${suffix}@example.com`,
       emailVerified: true,
       name: 'Şêrîn Amed',
     });
@@ -95,7 +95,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   it('second sign-in with the same provider account logs into the same user', async () => {
     const token = await makeToken('google', {
       sub: `g-new-${suffix}`,
-      email: `şêrîn_${suffix}@gmail.com`,
+      email: `şêrîn_${suffix}@example.com`,
       emailVerified: true,
     });
     const result = await service.signIn('google', token);
@@ -103,7 +103,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   });
 
   it('links to an existing password account only when our email is verified', async () => {
-    const email = `linked_${suffix}@gmail.com`;
+    const email = `linked_${suffix}@example.com`;
     const created = await pool.query(
       `INSERT INTO users (email, username, password_hash, email_verified_at)
        VALUES ($1, $2, $3, now()) RETURNING id`,
@@ -116,7 +116,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   });
 
   it('refuses to link when our account email is unverified (takeover guard)', async () => {
-    const email = `unverified_${suffix}@gmail.com`;
+    const email = `unverified_${suffix}@example.com`;
     await pool.query(
       `INSERT INTO users (email, username, password_hash) VALUES ($1, $2, $3)`,
       [email, `unver_${suffix}`.slice(0, 30), await hashPassword('a-strong-password1')],
@@ -128,7 +128,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   });
 
   it('answers an address the provider has not confirmed, which an account already has, without a second account', async () => {
-    const email = `taken_${suffix}@gmail.com`;
+    const email = `taken_${suffix}@example.com`;
     await pool.query(
       `INSERT INTO users (email, username, password_hash, email_verified_at) VALUES ($1, $2, $3, now())`,
       [email, `taken_${suffix}`.slice(0, 30), await hashPassword('a-strong-password1')],
@@ -168,7 +168,7 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
   it('disabled linked accounts cannot sign in', async () => {
     const token = await makeToken('google', {
       sub: `g-banned-${suffix}`,
-      email: `banned_${suffix}@gmail.com`,
+      email: `banned_${suffix}@example.com`,
       emailVerified: true,
     });
     const first = await service.signIn('google', token);
