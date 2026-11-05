@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -13,8 +14,22 @@ beforeEach(() => {
 });
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   localStorage.clear();
 });
+
+/** A device set to Reduce Motion. */
+function stillDevice(): void {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('prefers-reduced-motion'),
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+}
+
+const tray = () => document.querySelector('.admit-tray');
+const tickets = () => [...document.querySelectorAll('.admit-tray .admit')];
 
 const friend = (userId: string, username: string, extra: Record<string, unknown> = {}) => ({
   userId,
@@ -226,5 +241,95 @@ describe('InviteSheet', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Create game' }));
     await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=new-1'));
     expect(outer).not.toHaveBeenCalled();
+  });
+
+  it('writes out a ticket for each friend picked, in the game’s colour', async () => {
+    api();
+    open({ kind: 'new', game: 'rhyme-match' }, true);
+    expect(tray()).toBeNull();
+    await userEvent.click(await screen.findByRole('checkbox', { name: /Berfin/ }));
+    await userEvent.click(screen.getByRole('checkbox', { name: /Zana/ }));
+    expect(tickets().map((t) => t.textContent)).toEqual(['Berfin', 'Zana']);
+    expect(tickets()[0]).toHaveClass('ticket', 'ticket--rhyme-match');
+    // a picture of the ticked boxes, which a screen reader already has
+    expect(tray()).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByRole('checkbox', { name: /Berfin/ }).closest('label')?.querySelector('.invite-friend-ticket')).not.toBeNull();
+    await userEvent.click(screen.getByRole('checkbox', { name: /Berfin/ }));
+    expect(tickets().map((t) => t.textContent)).toEqual(['Zana']);
+  });
+
+  it('sends the tickets flying, says who they went to, and then opens the lobby', async () => {
+    const { calls } = api();
+    open({ kind: 'new', friend: { userId: 'u2', name: 'Rojda' } });
+    const sheet = await screen.findByRole('dialog', { name: 'Play with Rojda' });
+    await userEvent.click(await within(sheet).findByRole('checkbox', { name: /Berfin/ }));
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Create and invite (2)' }));
+
+    expect(tickets().every((t) => t.classList.contains('is-flying'))).toBe(true);
+    const sent = await within(sheet).findByRole('status');
+    expect(sent).toHaveTextContent('Tickets sent');
+    expect(sent).toHaveTextContent('Rojda and Berfin');
+    expect(posted(calls, '/play/lobbies')).toMatchObject({ invite: ['u2', 'u1'] });
+    // the moment first, then the lobby
+    expect(where()).toBe('/app/games');
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=new-1'));
+  });
+
+  it('says a single ticket went to that friend, and closes when asking into a lobby', async () => {
+    api({ 'POST /play/invites': { ok: true, invited: 1 } });
+    const done = vi.fn();
+    renderPlay(<InviteSheet open onClose={done} target={{ kind: 'lobby', game: 'wordle-battle', lobbyId: 'b1', room: 3 }} />);
+    await userEvent.click(await screen.findByRole('checkbox', { name: /Zana/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send invites' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Ticket sent to Zana');
+    expect(done).not.toHaveBeenCalled();
+    await waitFor(() => expect(done).toHaveBeenCalled());
+  });
+
+  it('brings the tickets back when the invites are refused, with the reason', async () => {
+    api({ 'POST /play/invites': new Response(JSON.stringify({ code: 'GAME_FULL', message: 'full' }), { status: 409 }) });
+    renderPlay(<InviteSheet open onClose={() => undefined} target={{ kind: 'lobby', game: 'wordle-battle', lobbyId: 'b1', room: 3 }} />);
+    await userEvent.click(await screen.findByRole('checkbox', { name: /Zana/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send invites' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('This game is full.');
+    expect(tickets()[0]).toHaveClass('is-back');
+    expect(tray()).toHaveClass('is-refused');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+  });
+
+  it('pins one ticket to the group it posts the game in', async () => {
+    api();
+    open({ kind: 'group', groupId: 'g1', groupName: 'Hevalên Kurmancî' });
+    await screen.findByRole('dialog', { name: 'Play in Hevalên Kurmancî' });
+    expect(tickets().map((t) => t.textContent)).toEqual(['Hevalên Kurmancî']);
+    await userEvent.click(screen.getByRole('button', { name: 'Post to the group' }));
+    expect(await screen.findByRole('status')).toHaveTextContent('Posted in Hevalên Kurmancî');
+    expect(document.querySelector('.admit-pin')).not.toBeNull();
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=new-1'));
+  });
+
+  it('sends nothing flying under Reduce Motion, and still says the tickets went', async () => {
+    stillDevice();
+    api();
+    open({ kind: 'new', friend: { userId: 'u2', name: 'Rojda' } });
+    const sheet = await screen.findByRole('dialog', { name: 'Play with Rojda' });
+    await userEvent.click(await within(sheet).findByRole('button', { name: 'Create and invite (1)' }));
+    expect(document.querySelector('.is-flying')).toBeNull();
+    expect(await within(sheet).findByRole('status')).toHaveTextContent('Ticket sent to Rojda');
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=new-1'));
+  });
+
+  it('still opens the lobby when the sheet is closed during the moment after sending', async () => {
+    api();
+    function Closable(): React.JSX.Element {
+      const [shown, setShown] = useState(true);
+      return <InviteSheet open={shown} onClose={() => setShown(false)} target={{ kind: 'new', friend: { userId: 'u2', name: 'Rojda' } }} />;
+    }
+    renderPlay(<Closable />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Create and invite (1)' }));
+    await screen.findByRole('status');
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(where()).toBe('/app/games/peyvok-battle?id=new-1');
   });
 });

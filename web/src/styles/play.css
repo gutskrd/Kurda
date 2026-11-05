@@ -124,6 +124,136 @@
   color: var(--ink-2);
 }
 
+/* a friend ticked has a ticket by their name, in the game's colour (the fieldset carries it) */
+.invite-friend-ticket {
+  display: inline-grid;
+  place-items: center;
+  margin-inline-start: auto;
+  color: var(--t-ink, var(--ink));
+}
+
+/* ---- the tickets being handed over (play/InviteTickets.tsx) ----------------------- */
+/*
+ * A hand of tickets above Send, one per friend picked: side by side while
+ * they fit, and overlapping like a fanned hand of cards once they do not, so
+ * seven still sit on one line of a phone. The newest is on top. Each tilts a
+ * little more the further it is from the middle (`--tilt`, set by the
+ * component). How they are written out, fly and come back is in motion.css.
+ */
+.admit-tray {
+  container-type: inline-size;
+  display: flex;
+  justify-content: center;
+  margin: 0 0 12px;
+  padding: 6px 0 0;
+  list-style: none;
+}
+.admit-slot {
+  --admit-w: 132px;
+  position: relative;
+  flex: none;
+  width: var(--admit-w);
+}
+.admit-slot + .admit-slot {
+  margin-inline-start: clamp(-104px, (100cqw - var(--n) * var(--admit-w)) / (var(--n) - 1), 8px);
+}
+.admit {
+  --stub-w: 40px;
+  --notch: 6px;
+  --t-r: var(--r-md);
+  transform: rotate(var(--tilt, 0deg));
+  transform-origin: 50% 220%;
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+.admit-stub .friend-avatar {
+  width: 26px;
+  height: 26px;
+}
+.admit-main {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 4px 10px;
+}
+.admit-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-caption);
+  font-weight: 650;
+}
+/* the specks where a ticket lands: at its friend's face */
+.admit-slot > .ticket-burst {
+  left: calc(50% + var(--fly-x, 0px));
+  top: calc(50% + var(--fly-y, 0px));
+  --burst-delay: calc(var(--i, 0) * 80ms + 470ms);
+}
+/* a game posted in a group: one ticket, pinned to it */
+.admit.is-group .admit-main {
+  padding-inline-end: 22px;
+}
+.admit-pin {
+  position: absolute;
+  top: -6px;
+  inset-inline-end: 9px;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--t-accent);
+  box-shadow: inset -2px -3px 0 color-mix(in srgb, var(--t-accent) 62%, var(--app-bg));
+}
+/* the moment after sending: the tickets fanned, and who they went to */
+.invite-sheet.is-sent {
+  min-height: 240px;
+  place-content: center;
+}
+.admit-sent {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  padding: 8px 0 4px;
+  text-align: center;
+}
+.admit-fan {
+  position: relative;
+  width: 100%;
+  height: 118px;
+}
+.admit-dealt {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  width: 132px;
+  margin-left: -66px;
+  transform: translateX(var(--x, 0px)) rotate(var(--tilt, 0deg));
+  transform-origin: 50% 260%;
+}
+/* the fan turns the tickets; each ticket keeps still inside it */
+.admit-dealt .admit {
+  transform: none;
+}
+.admit-fan > .ticket-burst {
+  left: 50%;
+  top: 24%;
+  --burst-delay: 420ms;
+}
+.admit-sent-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 600;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+.admit-sent-names {
+  margin: 0;
+  max-width: 36ch;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  text-wrap: balance;
+}
+
 /* ---- the invite banner ------------------------------------------------------------ */
 /*
  * Under the navigation, in the middle: where an invite is seen without taking

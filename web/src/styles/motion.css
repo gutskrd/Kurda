@@ -788,6 +788,83 @@
   animation: ticket-burst 420ms var(--ease-out) var(--burst-delay, 0ms) both;
 }
 
+/*
+ * Handing tickets over (play/InviteTickets.tsx): a friend's ticket is written
+ * out as they are picked — it slides up into the hand with a turn, and their
+ * name follows it in; Send tears each off and throws it to its friend's face
+ * in the list, one after another, shrinking as it goes, with specks where it
+ * lands; a refusal brings them back, and the hand shakes once. After sending,
+ * the tickets are dealt into a fan, a group's pinned.
+ */
+@keyframes admit-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) rotate(calc(var(--tilt, 0deg) - 8deg)) scale(0.8);
+  }
+  60% {
+    opacity: 1;
+  }
+}
+@keyframes admit-write {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--t-out, -1) * 6px));
+  }
+}
+@keyframes admit-fly {
+  18% {
+    opacity: 1;
+    transform: translateY(-8px) rotate(calc(var(--tilt, 0deg) + var(--t-out, -1) * 8deg)) scale(1.04);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--fly-x, 0px), var(--fly-y, -120px)) rotate(calc(var(--tilt, 0deg) + var(--t-out, -1) * -12deg)) scale(0.3);
+  }
+}
+@keyframes admit-back {
+  from {
+    opacity: 0;
+    transform: translate(var(--fly-x, 0px), var(--fly-y, -120px)) scale(0.3);
+  }
+}
+@keyframes admit-deal {
+  from {
+    opacity: 0;
+    transform: translateY(-36px) rotate(0deg) scale(0.9);
+  }
+}
+@keyframes pin-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(1.5);
+  }
+}
+.admit {
+  animation: admit-in 420ms var(--ease-spring) backwards;
+}
+.admit .admit-name {
+  animation: admit-write 300ms var(--ease-out) 140ms backwards;
+}
+.admit.is-flying {
+  animation: admit-fly 560ms cubic-bezier(0.45, 0, 0.3, 1) calc(var(--i, 0) * 80ms) forwards;
+}
+.admit.is-back {
+  animation: admit-back 380ms var(--ease-spring) backwards;
+}
+.admit-tray.is-refused {
+  animation: answer-shake 300ms ease-in-out 380ms;
+}
+.admit-dealt {
+  animation: admit-deal 460ms var(--ease-spring) calc(var(--i, 0) * 70ms) backwards;
+}
+.admit-dealt .admit,
+.admit-dealt .admit-name {
+  animation: none;
+}
+.admit-pin {
+  animation: pin-in 360ms var(--ease-spring) 300ms backwards;
+}
+
 /* ---- typing a code in ----------------------------------------------------------- */
 /*
  * Typing a code (play/JoinCode.tsx): each character pops into its box (a

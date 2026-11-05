@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -20,12 +20,15 @@ import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { prefersReducedMotion } from '../lib/motion';
+import type { UserSummary } from '../lib/types';
 import { dialectName } from '../learn/map';
 import { useStoriesAvailable, useStoryList } from '../stories/catalogue';
 import { defaultVariety } from '../stories/prefs';
 import { LENGTH_KEY, MODE_KEY, minutesLabel, type ChosenStory } from '../stories/SetupSheet';
 import { ChipRadio } from './ChipRadio';
 import { FriendPicker } from './FriendPicker';
+import { AdmitTray, SENT_MS, TicketsSent, flightMs, type Admit } from './InviteTickets';
 import { GAME_NAME_KEY, lobbyPath, playError, rememberFriends } from './playApi';
 import { usePlayInvites } from './PlayProvider';
 import { RatedChoice, useRatedChoice } from '../ranks/rated';
@@ -49,6 +52,8 @@ const DIFFICULTY_KEY = {
   hard: 'games.difficulty.hard',
 } as const;
 
+const wait = (ms: number): Promise<void> => new Promise((resolve) => window.setTimeout(resolve, ms));
+
 /** The sheet's own heading, from what it was opened for. */
 function useTitle(target: InviteTarget): string {
   const t = useT();
@@ -70,6 +75,11 @@ function useTitle(target: InviteTarget): string {
  *
  * Drawn over the page through a portal: the chat's game button sits inside
  * the composer's form, and a form inside a form is not a form.
+ *
+ * Asking is handing tickets over (play/InviteTickets.tsx): each friend picked
+ * gets a ticket above the button, Send sends them flying to their friends,
+ * and the sheet says "Tickets sent" for a moment before it closes or opens
+ * the lobby. A refusal brings them back.
  */
 export function InviteSheet({
   open,
@@ -138,6 +148,23 @@ export function InviteForm({
   const [friends, setFriends] = useState<string[]>(target.kind === 'new' && target.friend ? [target.friend.userId] : []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // the tickets: in the hand, flying to the friends, or sent; and how many times a hand was refused
+  const [phase, setPhase] = useState<'hand' | 'flying' | 'sent'>('hand');
+  const [refusals, setRefusals] = useState(0);
+  const [still] = useState(prefersReducedMotion);
+  // who the friends are, for their tickets: the picker's list, and whoever the sheet was opened for
+  const [known, setKnown] = useState<readonly UserSummary[]>([]);
+  const form = useRef<HTMLFormElement>(null);
+  // what follows the moment after sending (the sheet closing, the lobby opening), done once even if the sheet is closed first
+  const after = useRef<(() => void) | null>(null);
+  useEffect(
+    () => () => {
+      const next = after.current;
+      after.current = null;
+      next?.();
+    },
+    [],
+  );
   // Rated or Friendly (Game Ranks): the host's last choice for this game, else
   // Friendly — every game made here is among friends or in a chat
   const [rated, setRated] = useRatedChoice(game, false);
@@ -191,35 +218,66 @@ export function InviteForm({
     }
   }
 
+  const groupName = target.kind === 'group' ? target.groupName : null;
+  const admits: Admit[] =
+    target.kind === 'group'
+      ? []
+      : friends.map((id) => {
+          const f = known.find((k) => k.userId === id);
+          const name = f ? f.displayName || f.username : target.kind === 'new' && target.friend?.userId === id ? target.friend.name : '';
+          return { id, name, avatarUrl: f?.avatarUrl ?? null };
+        });
+  const handing = groupName !== null || admits.length > 0;
+
+  /**
+   * Sends the invites (or makes the game), with the tickets on their way
+   * while the server answers. They land before anything else happens: a
+   * refusal brings them back, and a yes has its moment, after which the sheet
+   * closes and a new game's lobby opens.
+   */
   async function submit(): Promise<void> {
     setBusy(true);
     setError(null);
-    if (target.kind === 'lobby') {
-      const res = await client.post<{ ok: true; invited: number }>('/play/invites', {
-        game: target.game,
-        lobbyId: target.lobbyId,
-        userIds: friends,
-      });
-      setBusy(false);
-      if (!res.ok) return setError(playError(res.error, t));
-      rememberFriends(friends);
-      refresh();
-      onDone?.();
+    const flight = still || groupName !== null ? 0 : flightMs(admits.length);
+    if (flight > 0) setPhase('flying');
+    const began = Date.now();
+    const res =
+      target.kind === 'lobby'
+        ? await client.post<{ game?: PlayGame; lobbyId?: string; invited: number }>('/play/invites', {
+            game: target.game,
+            lobbyId: target.lobbyId,
+            userIds: friends,
+          })
+        : await client.post<{ game?: PlayGame; lobbyId?: string; invited: number }>('/play/lobbies', {
+            game,
+            settings: settings(),
+            // every friend asked gets the game's card in your conversation with
+            // them, so an invite from a DM lands in that DM like any other
+            ...(target.kind === 'group' ? { chat: { groupId: target.groupId } } : friends.length > 0 ? { invite: friends } : {}),
+          });
+    const left = flight - (Date.now() - began);
+    if (left > 0) await wait(left);
+    setBusy(false);
+    if (!res.ok) {
+      setPhase('hand');
+      if (flight > 0) setRefusals((n) => n + 1);
+      setError(playError(res.error, t));
       return;
     }
-    const res = await client.post<{ game: PlayGame; lobbyId: string; invited: number }>('/play/lobbies', {
-      game,
-      settings: settings(),
-      // every friend asked gets the game's card in your conversation with
-      // them, so an invite from a DM lands in that DM like any other
-      ...(target.kind === 'group' ? { chat: { groupId: target.groupId } } : friends.length > 0 ? { invite: friends } : {}),
-    });
-    setBusy(false);
-    if (!res.ok) return setError(playError(res.error, t));
     rememberFriends(friends);
     refresh();
-    onDone?.();
-    navigate(lobbyPath(res.data.game, res.data.lobbyId));
+    const made = res.data;
+    const next = (): void => {
+      onDone?.();
+      if (target.kind !== 'lobby' && made.game && made.lobbyId) navigate(lobbyPath(made.game, made.lobbyId));
+    };
+    if (!handing) return next();
+    setPhase('sent');
+    after.current = next;
+    await wait(SENT_MS);
+    const pending = after.current;
+    after.current = null;
+    pending?.();
   }
 
   const submitLabel =
@@ -232,8 +290,17 @@ export function InviteForm({
           : t('play.invite.create');
   const storyDir = fixedStory ? storyTextDirection(fixedStory.dialect) : null;
 
+  if (phase === 'sent') {
+    return (
+      <div className="invite-sheet is-sent">
+        <TicketsSent game={game} people={admits} group={groupName} />
+      </div>
+    );
+  }
+
   return (
     <form
+      ref={form}
       className="invite-sheet"
       onSubmit={(e) => {
         e.preventDefault();
@@ -352,7 +419,14 @@ export function InviteForm({
       {target.kind === 'group' ? (
         <p className="story-setup-note">{t('play.invite.groupNote')}</p>
       ) : (
-        <FriendPicker selected={friends} onChange={setFriends} max={max} exclude={target.kind === 'lobby' ? target.exclude : undefined} />
+        <FriendPicker
+          selected={friends}
+          onChange={setFriends}
+          max={max}
+          exclude={target.kind === 'lobby' ? target.exclude : undefined}
+          tone={game}
+          onFriends={setKnown}
+        />
       )}
 
       {error && (
@@ -361,6 +435,7 @@ export function InviteForm({
         </p>
       )}
       <div className="story-setup-submit">
+        <AdmitTray game={game} people={admits} group={groupName} flying={phase === 'flying'} back={refusals} scope={form} />
         <Button
           type="submit"
           size="lg"
