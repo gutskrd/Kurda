@@ -44,6 +44,8 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
  */
 
 export interface SoloRound<Item, H, C> {
+  /** the round's id: what a game's clips are played from (`hearItClipPath`) */
+  sessionId: string;
   item: Item;
   index: number;
   total: number;
@@ -67,6 +69,8 @@ interface Props<Item, H, C> {
   onFinished?: (results: SoloResults) => void;
   resultsExtra?: ReactNode;
   onExit: () => void;
+  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts */
+  roundItems?: number;
 }
 
 const DIFFICULTY_KEY: Record<GameDifficulty, TranslationKey> = {
@@ -122,6 +126,7 @@ export function SoloGameShell<Item, H, C>({
   resultsExtra,
   onExit,
   tone,
+  roundItems,
 }: Props<Item, H, C> & { tone: string }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -270,7 +275,7 @@ export function SoloGameShell<Item, H, C>({
             {t('games.solo.progress', { n: index + 1, total: session.items.length })}
           </Text>
         </View>
-        {renderRound({ item, index, total: session.items.length, state, result, busy, submit })}
+        {renderRound({ sessionId: session.id, item, index, total: session.items.length, state, result, busy, submit })}
         {verdict ? (
           <View
             accessibilityLiveRegion="polite"
@@ -330,7 +335,7 @@ export function SoloGameShell<Item, H, C>({
             );
           })}
         </View>
-        {chosen ? <Text style={muted}>{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen]) })}</Text> : null}
+        {chosen ? <Text style={muted}>{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen], roundItems) })}</Text> : null}
         <TileButton label={t('games.solo.start')} onPress={() => void start()} busy={busy} disabled={!chosen} />
         {difficulties !== null && offered.length === 0 ? <Text style={muted}>{t('games.solo.notEnough')}</Text> : null}
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}

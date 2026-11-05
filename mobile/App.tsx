@@ -107,6 +107,8 @@ import { LastLetterScreen } from './src/lastletter/LastLetterScreen';
 import { RaceScreen } from './src/race/RaceScreen';
 import { BuildSentenceScreen } from './src/games/BuildSentenceScreen';
 import { KingdomScreen } from './src/kingdom/KingdomScreen';
+import { MemoryThiefScreen } from './src/games/MemoryThiefScreen';
+import { HearItScreen } from './src/games/HearItScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
@@ -592,6 +594,12 @@ function SignedInRoot() {
       {/* a guest's learning builds the village too; only its Zêr waits for an account (the server decides) */}
       <RootStack.Screen name="Kingdom" options={{ presentation: 'card' }}>
         {({ navigation }) => <KingdomScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="MemoryThief" options={{ presentation: 'card' }}>
+        {({ navigation }) => <MemoryThiefScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="HearIt" options={{ presentation: 'card' }}>
+        {({ navigation }) => <HearItScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* the library is reading, which a guest may do; the games behind it keep their own wall */}
       <RootStack.Screen name="Stories" options={{ presentation: 'card' }}>
