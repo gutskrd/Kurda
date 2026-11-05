@@ -10,6 +10,8 @@ import { inTransaction } from '../moderation/tx.js';
 import { handOnGroups } from '../groups/service.js';
 import type { StoryGamesService } from '../story-games/service.js';
 import { standaloneStoryGames } from '../story-games/standalone.js';
+import type { MultiplayerService } from '../mp/service.js';
+import { standaloneMultiplayer } from '../mp/standalone.js';
 import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import { exportPosts } from './posts-export.js';
 import { exportProgress } from './progress-export.js';
@@ -30,6 +32,8 @@ export interface GdprDeps {
    * nobody (the worker passes one that tells the API instances, over Redis).
    */
   storyGames?: Pick<StoryGamesService, 'leaveAll'>;
+  /** The same for the multiplayer learning games (api/src/mp). */
+  multiplayer?: Pick<MultiplayerService, 'leaveAll'>;
   /**
    * Revokes at Apple what Sign in with Apple issued for an account that is
    * closing for good (auth/apple-tokens.ts). Null or absent where Apple's key
@@ -40,12 +44,14 @@ export interface GdprDeps {
 
 export class GdprService {
   private readonly storyGames: Pick<StoryGamesService, 'leaveAll'>;
+  private readonly multiplayer: Pick<MultiplayerService, 'leaveAll'>;
 
   constructor(
     private readonly pool: pg.Pool,
     private readonly deps: GdprDeps = {},
   ) {
     this.storyGames = deps.storyGames ?? standaloneStoryGames(pool, { log: deps.log });
+    this.multiplayer = deps.multiplayer ?? standaloneMultiplayer(pool, { log: deps.log });
   }
 
   /** Starts the 14-day grace period; logging in again cancels it. */
@@ -192,6 +198,10 @@ export class GdprService {
   private async leaveStoryGames(userId: string): Promise<void> {
     await this.storyGames.leaveAll(userId).catch((err) => {
       this.deps.log?.warn({ err, userId }, 'could not take a closing account out of its story games');
+    });
+    // and the multiplayer learning games, the same way
+    await this.multiplayer.leaveAll(userId).catch((err) => {
+      this.deps.log?.warn({ err, userId }, 'could not take a closing account out of its multiplayer games');
     });
   }
 
@@ -379,6 +389,16 @@ export class GdprService {
         WHERE p.user_id = $1 ORDER BY g.created_at DESC LIMIT 1000`,
       [userId],
     );
+    // their multiplayer learning games, as they played them, with what they
+    // typed in each — nothing about the other players
+    const multiplayerGames = await this.pool.query(
+      `SELECT l.game, l.mode, l.dialect, l.status, l.started_at, l.finished_at, p.seat, p.place, p.score, p.xp_awarded,
+              COALESCE((SELECT json_agg(json_build_object('text', m.text, 'at', m.created_at) ORDER BY m.seq)
+                          FROM game_moves m WHERE m.lobby_id = l.id AND m.user_id = $1 AND m.text IS NOT NULL), '[]'::json) AS typed
+         FROM game_lobby_players p JOIN game_lobbies l ON l.id = p.lobby_id
+        WHERE p.user_id = $1 ORDER BY l.created_at DESC LIMIT 1000`,
+      [userId],
+    );
     // when they were asked for a rating, and their answers as they gave them;
     // the inbox's status and staff notes are the team's working state, not
     // something they told us
@@ -432,6 +452,7 @@ export class GdprService {
       securityEmails: notices.rows,
       oauthIdentities: identities.rows,
       storyGames: storyGames.rows,
+      multiplayerGames: multiplayerGames.rows,
       appFeedback: { ...prompts.rows[0], answers: feedback.rows },
       gameRanks: ranks,
       supportEmails: support.rows,
@@ -603,6 +624,12 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`UPDATE story_games SET host_id = NULL WHERE host_id = $1`);
   await q(`DELETE FROM story_game_answers WHERE user_id = $1`);
   await q(`DELETE FROM story_game_players WHERE user_id = $1`);
+  // the multiplayer learning games, the same way: their name off the lobbies
+  // they hosted, what they typed off every move (the move itself stays, for
+  // the others' game), then their seats
+  await q(`UPDATE game_lobbies SET host_id = NULL WHERE host_id = $1`);
+  await q(`UPDATE game_moves SET user_id = NULL, text = NULL WHERE user_id = $1`);
+  await q(`DELETE FROM game_lobby_players WHERE user_id = $1`);
   // their shelf and where they were in each story: a reading record is theirs alone
   await q(`DELETE FROM story_bookmarks WHERE user_id = $1`);
   await q(`DELETE FROM story_reading WHERE user_id = $1`);

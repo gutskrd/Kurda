@@ -26,6 +26,7 @@ import type { Notification } from '../push/service.js';
 import { areFriendsSql } from '../users/age.js';
 import { canJoin } from './access.js';
 import { gameNotFound } from './errors.js';
+import { MULTI_GAME_TITLES } from '../mp/titles.js';
 import type { PlayEvents } from './events.js';
 import type { LobbyFacts, PlayAdapter } from './types.js';
 
@@ -52,6 +53,7 @@ const GAME_NAMES: Record<PlayGame, string> = {
   'wordle-battle': 'Peyvok Battle',
   'rhyme-match': 'Rhyme Match',
   stories: 'a story quiz',
+  ...MULTI_GAME_TITLES,
 };
 
 /** Every invite the host may have waiting is waiting: answers, or invites running out, make room. */
@@ -412,10 +414,12 @@ export class PlayService {
   async joinByCode(userId: string, input: string): Promise<JoinedByCode> {
     const code = normalizeJoinCode(input);
     if (!code) throw gameNotFound();
+    // the multiplayer learning games share one table, which names its game
     const found = await this.pool.query<{ game: PlayGame; id: string }>(
       `SELECT 'wordle-battle' AS game, id FROM wordle_battles WHERE code = $1
        UNION ALL SELECT 'rhyme-match', id FROM rhyme_matches WHERE code = $1
        UNION ALL SELECT 'stories', id FROM story_games WHERE code = $1
+       UNION ALL SELECT game, id FROM game_lobbies WHERE code = $1
        LIMIT 1`,
       [code],
     );

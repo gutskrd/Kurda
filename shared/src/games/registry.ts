@@ -163,7 +163,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     sources: ['dictionary', 'vocabulary'],
     contentKinds: [],
     minimum: 200,
-    xpSources: ['game_last_letter', 'game_last_letter_place'],
+    xpSources: ['last_letter', 'last_letter_solo'],
     dialects: GAME_DIALECTS,
     glyph: 'text-t',
     tone: 'saffron',

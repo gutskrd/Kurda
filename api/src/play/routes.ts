@@ -52,6 +52,8 @@ export interface PlayRouteDeps {
   stories?: StoryGamesPort;
   /** Game Ranks, shared with the games' own routes (one set of rank events) */
   ranks?: RankService;
+  /** the multiplayer learning games, one adapter each over the generic engine (mp/routes.ts) */
+  multiplayer?: readonly PlayAdapter[];
 }
 
 /**
@@ -88,6 +90,8 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
     // those, as Peyvok Battle and Rhyme Match do.
     deps.stories.onChange((id) => deps.events.changed('stories', id));
   }
+  // every multiplayer learning game: its engine tells the play layer of its own changes (mp/service.ts)
+  adapters.push(...(deps.multiplayer ?? []));
   const play = new PlayService(app.db, {
     adapters,
     events: deps.events,

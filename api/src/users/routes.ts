@@ -419,6 +419,8 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     // the story games' own service, read when called (registered after these
     // routes): leaving through it wakes the other players' polls at once
     storyGames: { leaveAll: (userId) => app.storyGames.leaveAll(userId) },
+    // and the multiplayer learning games' (api/src/mp), the same way
+    multiplayer: { leaveAll: (userId) => app.multiplayer.leaveAll(userId) },
     // closing a child's account at once revokes their Sign in with Apple too
     apple: appleTokens(config, app.db, { log: app.log }),
   });

@@ -103,6 +103,7 @@ import { registerRhymeMatchRoutes } from './game/rhyme-match-routes.js';
 import { registerStoryGameRoutes } from './story-games/routes.js';
 import { PlayEvents } from './play/events.js';
 import { registerPlayRoutes } from './play/routes.js';
+import { registerMultiplayerRoutes } from './mp/routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
@@ -838,6 +839,16 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // story games (Stories, which replaced the ranked quiz): Postgres is the
     // game; long-polls are woken across instances over the room bus
     const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: badges, friends, ranks });
+    // the multiplayer learning games (The Last Letter first): one engine and one
+    // set of tables for all of them, long-polls woken over the room bus, free
+    // text through the chat pipeline, and `play_changed` for every change
+    const multiplayer = registerMultiplayerRoutes(app, {
+      bus,
+      xp: xpService,
+      ranks,
+      freeText: { moderation, trust, aiMod },
+      onChange: (game, id, o) => playEvents.changed(game, id, o),
+    });
 
     // shop + gifts: a gift is bought in the shop or from a chat's gift button,
     // and arrives as a message in the chat either way, so it needs both chats
@@ -886,6 +897,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       groupChat,
       stories: storyGames,
       ranks,
+      multiplayer,
     });
 
     // the social rail's single read — everything it shows, in one answer, so a

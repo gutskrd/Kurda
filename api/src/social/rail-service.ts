@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { resolveSections } from './profile-activity.js';
 import { levelInfo, resolveAvatarUrl, type LevelInfo, type PublicUrl } from '../cosmetics/access.js';
 import { unseenGiftsSql } from '../shop/service.js';
+import { multiTitleSql } from '../mp/titles.js';
 
 /**
  * What is happening with your people, in one read.
@@ -52,7 +53,8 @@ interface ActivityRow {
  *
  * One UNION rather than a query per mode: the rail needs at most one line per
  * friend, and picking the newest across five tables is a job for the database
- * rather than five round trips and a sort in JavaScript.
+ * rather than five round trips and a sort in JavaScript. Every multiplayer
+ * learning game is one branch: they share the generic engine's tables.
  */
 const LIVE_GAMES_SQL = `
   SELECT DISTINCT ON (user_id) user_id, game, started_at FROM (
@@ -83,6 +85,12 @@ const LIVE_GAMES_SQL = `
       JOIN rhyme_matches m ON m.id = p.match_id
      WHERE p.user_id = ANY($1) AND m.finished_at IS NULL AND NOT p.removed AND p.left_at IS NULL
        AND COALESCE(m.started_at, m.created_at) > now() - ($2 || ' minutes')::interval
+    UNION ALL
+    SELECT p.user_id, ${multiTitleSql('l.game')}, COALESCE(l.started_at, l.created_at)
+      FROM game_lobby_players p
+      JOIN game_lobbies l ON l.id = p.lobby_id
+     WHERE p.user_id = ANY($1) AND l.finished_at IS NULL AND NOT p.removed AND p.left_at IS NULL
+       AND COALESCE(l.started_at, l.created_at) > now() - ($2 || ' minutes')::interval
   ) AS live
   ORDER BY user_id, started_at DESC`;
 
