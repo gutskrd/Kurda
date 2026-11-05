@@ -514,104 +514,42 @@
     width: 100%;
     justify-content: flex-end;
   }
+  .invite-banner:not(.is-chip) {
+    --stub-w: 44px;
+  }
 }
 
 /* ---- a lobby's join code, as a ticket (play/CodeTicket.tsx) --------------------- */
 /*
- * Two halves of one ticket, the stub with the code and the body with what to
- * do with it, torn along a perforation with a notch bitten out at each end of
- * it. The colour is the game's own, taken from the palette and the same as on
- * the phone (mobile/src/play/joinCode.ts): Peyvok Battle in the green of a
- * right letter, Rhyme Match in the sun's gold, a story game in the ink of the
- * page it is read on. The tiles stand on a lip like the course's answer
+ * The ticket stood on end (ui/Ticket.tsx, styles/ticket.css): the stub with
+ * the code on top, the body with what to do with it below the tear, in the
+ * game's own colour. The tiles stand on a lip like the course's answer
  * tiles. How it moves is in motion.css.
  */
 .code-ticket {
-  --code-accent: var(--primary);
-  --code-ink: var(--primary);
-  --code-edge: color-mix(in srgb, var(--code-accent) 36%, var(--border));
-  --code-fill: color-mix(in srgb, var(--code-accent) 7%, var(--surface-solid));
+  --code-accent: var(--t-accent);
+  --code-ink: var(--t-ink);
+  /* one paper both sides of the tear: the code is what stands out, not the stub */
+  --t-stub-fill: var(--t-fill);
+  --t-r: var(--r-xl);
   --notch: 11px;
   --tile: clamp(40px, 11.5vw, 56px);
-  position: relative;
-  display: grid;
   width: 100%;
   max-width: 560px;
   margin-inline: auto;
   text-align: center;
 }
-.code-ticket--wordle-battle {
-  --code-accent: var(--success);
-  --code-ink: var(--success);
-}
-.code-ticket--rhyme-match {
-  --code-accent: var(--gold);
-  --code-ink: var(--gold-ink);
-}
 .code-ticket-stub,
 .code-ticket-body {
-  position: relative;
   display: grid;
   justify-items: center;
   gap: var(--space-3);
-  border: 1px solid var(--code-edge);
-  background: var(--code-fill);
 }
-/* a notch at each end of the tear: two quarter circles from each half, where they meet */
 .code-ticket-stub {
   padding: var(--space-5) var(--space-4);
-  border-bottom: 0;
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
-  -webkit-mask:
-    radial-gradient(circle var(--notch) at 0 100%, transparent 98%, #000) 0 0 / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% 100%, transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
-  mask:
-    radial-gradient(circle var(--notch) at 0 100%, transparent 98%, #000) 0 0 / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% 100%, transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
 }
 .code-ticket-body {
   padding: var(--space-4) var(--space-4) var(--space-5);
-  border-top: 2px dashed color-mix(in srgb, var(--code-accent) 42%, transparent);
-  border-radius: 0 0 var(--r-xl) var(--r-xl);
-  -webkit-mask:
-    radial-gradient(circle var(--notch) at 0 0, transparent 98%, #000) 0 0 / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% 0, transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
-  mask:
-    radial-gradient(circle var(--notch) at 0 0, transparent 98%, #000) 0 0 / 51% 100% no-repeat,
-    radial-gradient(circle var(--notch) at 100% 0, transparent 98%, #000) 100% 0 / 51% 100% no-repeat;
-}
-/*
- * The notches' own edge: a ring the size of the bite at each end of the tear.
- * The mask keeps only the quarter of it inside each half, so the edge of the
- * ticket runs on round the notch instead of stopping at it.
- */
-.code-ticket-stub::before,
-.code-ticket-stub::after,
-.code-ticket-body::before,
-.code-ticket-body::after {
-  content: '';
-  position: absolute;
-  width: calc(var(--notch) * 2 + 2px);
-  height: calc(var(--notch) * 2 + 2px);
-  border: 1px solid var(--code-edge);
-  border-radius: 50%;
-  pointer-events: none;
-}
-.code-ticket-stub::before,
-.code-ticket-stub::after {
-  bottom: calc(-1px - var(--notch));
-}
-.code-ticket-body::before,
-.code-ticket-body::after {
-  top: calc(-3px - var(--notch));
-}
-.code-ticket-stub::before,
-.code-ticket-body::before {
-  left: calc(-2px - var(--notch));
-}
-.code-ticket-stub::after,
-.code-ticket-body::after {
-  right: calc(-2px - var(--notch));
 }
 .code-ticket-label {
   display: inline-flex;
