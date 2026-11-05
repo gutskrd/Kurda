@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { APP_LOCALES } from '@kurda/shared';
+import { APP_LOCALES, STORY_LEVELS, levelHintKey, levelNameKey } from '@kurda/shared';
 import { LOCALES, LOCALE_LABEL, TRANSLATIONS } from './translations.js';
 
 describe('translation catalogs', () => {
@@ -108,5 +108,24 @@ describe('translation catalogs', () => {
     }
     expect(TRANSLATIONS.ku['rankings.board.gewher']).toBe('Gewher');
     expect(TRANSLATIONS.ckb['rankings.board.gewher']).toBe('گەوهەر');
+  });
+
+  /**
+   * A level is shown by a plain name wherever it appears (`levelNameKey`):
+   * five different names, each with a line saying what reading at it is like,
+   * and never the bare CEFR letter. The website's catalogue is held to the
+   * same names, so the two apps read as one ladder — the fourth level was
+   * spelled two ways in Kurmancî before.
+   */
+  it('names the five levels plainly, each differently, and never by a CEFR letter', () => {
+    for (const locale of LOCALES) {
+      const names = STORY_LEVELS.map((l) => TRANSLATIONS[locale][levelNameKey(l)]);
+      const hints = STORY_LEVELS.map((l) => TRANSLATIONS[locale][levelHintKey(l)]);
+      expect(new Set(names).size, locale).toBe(5);
+      expect(new Set(hints).size, locale).toBe(5);
+      for (const text of [...names, ...hints]) expect(text, locale).not.toMatch(/\b[ABC][12]\b/);
+    }
+    expect(STORY_LEVELS.map((l) => TRANSLATIONS.en[levelNameKey(l)])).toEqual(['Starter', 'Beginner', 'Intermediate', 'Confident', 'Advanced']);
+    expect(STORY_LEVELS.map((l) => TRANSLATIONS.ku[levelNameKey(l)])).toEqual(['Destpêk', 'Bingehîn', 'Navîn', 'Jêhatî', 'Pêşketî']);
   });
 });
