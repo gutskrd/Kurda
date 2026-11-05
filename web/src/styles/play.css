@@ -520,14 +520,15 @@
 /*
  * Two halves of one ticket, the stub with the code and the body with what to
  * do with it, torn along a perforation with a notch bitten out at each end of
- * it. The colour is the game's own, taken from the palette: Peyvok Battle in
- * the green of a right letter, Rhyme Match in the blue, a story game in the
- * sun's gold. The tiles stand on a lip like the course's answer tiles. How it
- * moves is in motion.css.
+ * it. The colour is the game's own, taken from the palette and the same as on
+ * the phone (mobile/src/play/joinCode.ts): Peyvok Battle in the green of a
+ * right letter, Rhyme Match in the sun's gold, a story game in the ink of the
+ * page it is read on. The tiles stand on a lip like the course's answer
+ * tiles. How it moves is in motion.css.
  */
 .code-ticket {
-  --code-accent: var(--gold);
-  --code-ink: var(--gold-ink);
+  --code-accent: var(--primary);
+  --code-ink: var(--primary);
   --code-edge: color-mix(in srgb, var(--code-accent) 36%, var(--border));
   --code-fill: color-mix(in srgb, var(--code-accent) 7%, var(--surface-solid));
   --notch: 11px;
@@ -544,8 +545,8 @@
   --code-ink: var(--success);
 }
 .code-ticket--rhyme-match {
-  --code-accent: var(--gems);
-  --code-ink: var(--gems);
+  --code-accent: var(--gold);
+  --code-ink: var(--gold-ink);
 }
 .code-ticket-stub,
 .code-ticket-body {
