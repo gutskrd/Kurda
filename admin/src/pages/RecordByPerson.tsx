@@ -268,9 +268,9 @@ function PeopleGrid({ title, people, mineToo = false }: { title?: string; people
 
 const STATUS_LABEL: Record<StatusFilter, string> = { todo: 'To do', done: 'Done', all: 'All' };
 const SOURCE_OPTIONS: ReadonlyArray<{ value: SourceFilter; label: string }> = [
-  { value: 'all', label: 'Published and drafts' },
-  { value: 'published', label: 'Published only' },
-  { value: 'draft', label: 'Drafts only' },
+  { value: 'all', label: 'Everything' },
+  { value: 'published', label: 'Published' },
+  { value: 'draft', label: 'Drafts' },
 ];
 const STATUS_TONE: Record<string, Tone> = { published: 'ok', in_review: 'info', draft: 'warn' };
 const STATUS_NAME: Record<string, string> = { published: 'Published', in_review: 'In review', draft: 'Draft' };
@@ -438,9 +438,10 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
         }
         subtitle={leftText(person)}
         meta={<ProgressRing done={person.done} total={person.total} size={44} />}
-        actions={<ScriptMenu person={person} lines={lines} />}
+        actions={wide ? <ScriptMenu person={person} lines={lines} /> : undefined}
       />
-      {filterBar}
+      {/* on a phone the filters and the script live with the list, so the line to say is the first thing on screen */}
+      {wide && filterBar}
       {!wide && (
         <Tabs
           className="rp-view"
@@ -454,7 +455,17 @@ function PersonScript({ voice }: { voice: string }): React.JSX.Element {
         />
       )}
       <div className={`rp-flow${wide ? ' is-wide' : ''}`}>
-        {(wide || view === 'list') && <div className="rp-list-pane">{list}</div>}
+        {(wide || view === 'list') && (
+          <div className="rp-list-pane">
+            {!wide && filterBar}
+            {list}
+            {!wide && (
+              <div className="rp-list-foot">
+                <ScriptMenu person={person} lines={lines} />
+              </div>
+            )}
+          </div>
+        )}
         {(wide || view === 'record') && (
           <div className="rp-stage-pane">
             {finished && (
@@ -663,7 +674,12 @@ function TakeStage({
         <p id="rp-say" className="rp-say" lang={script.lang} dir={script.dir}>
           {line.text}
         </p>
-        {line.meaning && <p className="rp-means">{line.meaning}</p>}
+        {line.meaning && (
+          <p className="rp-means">
+            <span className="rp-label">Means</span>
+            <span lang="en">{line.meaning}</span>
+          </p>
+        )}
         {line.hint && <p className="rp-hint">How: {line.hint}</p>}
       </div>
 

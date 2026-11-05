@@ -58,7 +58,7 @@
 .rp-row-draft { font-size: 11px; color: var(--warn); }
 
 /* the line being recorded: big and clear, what it means, the line before it */
-.rp-stage { display: grid; gap: 12px; padding: 20px; }
+.rp-stage { --rp-pad: 20px; display: grid; gap: 12px; padding: var(--rp-pad); }
 .rp-stage-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .rp-count { font-size: 13px; color: var(--text-dim); font-variant-numeric: tabular-nums; margin-inline-end: auto; }
 .rp-place { margin: 0; font-size: 13px; color: var(--text-2); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
@@ -71,7 +71,9 @@
 .rp-say-block { display: grid; gap: 6px; padding: 14px 0 6px; }
 .rp-as { font-size: 12px; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; color: var(--info); }
 .rp-say { margin: 0; font-size: clamp(30px, 5vw, 46px); font-weight: 650; line-height: 1.18; letter-spacing: -0.01em; overflow-wrap: anywhere; }
-.rp-means { margin: 0; font-size: 17px; color: var(--text-2); }
+.rp-means { margin: 0; font-size: 17px; color: var(--text-2); display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px; }
+.rp-label { font-size: 11.5px; font-weight: 650; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
+.rp-list-foot { margin-top: 12px; }
 .rp-hint { margin: 0; font-size: 13px; color: var(--text-dim); }
 .rp-saved { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--separator); }
 .rp-saved audio { width: 100%; height: 40px; }
@@ -90,10 +92,16 @@
 .rp-file { margin: 0; font-size: 13px; }
 .rp-file .link { display: inline-flex; align-items: center; gap: 6px; }
 
+/* on a phone the button that matters stays under the thumb while the line scrolls */
+@media (max-width: 999px) {
+  .rp-controls {
+    position: sticky; bottom: 0; z-index: 2;
+    margin: 0 calc(-1 * var(--rp-pad)); padding: 10px var(--rp-pad) calc(10px + env(safe-area-inset-bottom));
+    background: var(--surface-strong); border-top: 1px solid var(--separator);
+  }
+}
 @media (max-width: 560px) {
-  .rp-stage { padding: 16px; }
-  .rp-person-head { grid-template-columns: auto 1fr; }
-  .rp-person-head .rp-ring { grid-column: 2; justify-self: start; }
+  .rp-stage { --rp-pad: 16px; }
   .rp-selects { grid-template-columns: 1fr 1fr; }
 }
 @media (prefers-reduced-motion: reduce) {

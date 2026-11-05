@@ -288,7 +288,7 @@ function TeamRole({ user: u, onChanged }: { user: UserDetail; onChanged: () => v
   return (
     <Section
       title="Lessons and recording"
-      description="Someone who records their part of a conversation, or writes lessons, needs the content editor role: the lessons, the stories and the audio studio, and nothing about people or money."
+      description="Someone who writes lessons, or records in the audio studio, needs the content editor role: the lessons, the stories and the audio studio, and nothing about people or money. Someone who only lends a voice needs less: see Voice recording below."
       actions={
         has ? (
           <Button variant="danger" busy={busy} onClick={() => void change(false)}>
