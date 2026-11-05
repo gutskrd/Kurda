@@ -3,7 +3,10 @@
  * English a translation asks for, which sentences an exercise teaches and in
  * which orders, a conversation as line pairs and whole, the alphabet's letter
  * sounds told from its words, and the rule that a sentence in
- * the other variety's script is left out.
+ * the other variety's script is left out. Then which recordings a game may
+ * play and what each one's own item says it means, what a lesson attests its
+ * words mean (exactly as written, never a look-alike), and the pools' own
+ * memo, which follows the cache's generation.
  */
 import { describe, expect, it } from 'vitest';
 import { LEARN_GAME_XP_SOURCES, conversationLineKey, lessonAudioKey } from '@kurda/shared';
