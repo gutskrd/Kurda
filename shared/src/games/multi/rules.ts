@@ -64,6 +64,19 @@ export interface GameRules<State, Move, Settings, View, Outcome = unknown> {
   apply(state: State, seat: number, move: Move, now: number): ApplyResult<State, Outcome>;
   /** The seats the game is waiting on now; empty when it waits on nobody. */
   waitingFor(state: State): number[];
+  /**
+   * Whether a seat may move now. Left out, only the seats waited on may: a
+   * game where others may move too without being waited on (guessers while a
+   * describer's clock runs) says so here, and only the seats waited on are
+   * timed out.
+   */
+  mayMove?(state: State, seat: number): boolean;
+  /**
+   * Why these seats cannot start the game as they stand (teams too small, say),
+   * as a short reason the apps word; null when they can. Left out, any seats
+   * the lobby's player count allows can start.
+   */
+  startProblem?(seats: readonly RulesSeat[]): string | null;
   /** When the present wait ends by itself (a turn's time running out), epoch ms; null when it never does. */
   dueAt(state: State): number | null;
   /** These seats ran out of time, or are away and are passed over: what follows. */

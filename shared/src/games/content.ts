@@ -232,6 +232,8 @@ function build() {
     category: slug,
     /** what the impostor is told instead of the word: the category in Kurdish, with its meaning */
     hint: z.strictObject({ ku: kurdish(80), meanings }),
+    /** other forms of the word a clue may not say either (plurals, the ezafe); the game hears common endings by itself */
+    forms: z.array(kurdish(60)).max(12).default([]),
   });
   const tabooCard = z
     .strictObject({
@@ -354,6 +356,7 @@ export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload)
       const p = payload as WordCardContent;
       add('word', p.word);
       add('hint.ku', p.hint.ku);
+      (p.forms ?? []).forEach((f, i) => add(`forms.${i}`, f));
       break;
     }
     case 'taboo_card': {
