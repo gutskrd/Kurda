@@ -287,6 +287,36 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     }
   });
 
+  it('the export carries their story shelf, where they got to in each story, and the words they saved', async () => {
+    const user = await makeUser('exportshelf');
+    const other = await makeUser('exportshelfother');
+    const story = await insertStory(pool, { slug: `gdpr-shelf-${Date.now().toString(36)}` });
+    const entry = await pool.query<{ id: string }>(
+      `INSERT INTO dict_entries (headword, headword_normalized, dialect) VALUES ($1, $1, 'kurmanji') RETURNING id`,
+      [`bazar${suffix}`],
+    );
+    const entryId = entry.rows[0]!.id;
+    try {
+      await pool.query(`INSERT INTO story_bookmarks (user_id, story_id) VALUES ($1, $3), ($2, $3)`, [user.id, other.id, story.id]);
+      await pool.query(
+        `INSERT INTO story_reading (user_id, story_id, paragraph, share, finished_at) VALUES ($1, $3, 3, 1, now()), ($2, $3, 1, 0.25, NULL)`,
+        [user.id, other.id, story.id],
+      );
+      await pool.query(`INSERT INTO saved_words (user_id, entry_id) VALUES ($1, $2)`, [user.id, entryId]);
+
+      const doc = await new GdprService(pool).buildExport(user.id);
+      const progress = doc.progress as Record<string, Array<Record<string, unknown>>>;
+      expect(progress.storyBookmarks).toEqual([{ slug: story.slug, title: story.title, created_at: expect.any(Date) }]);
+      expect(progress.storyReading).toEqual([
+        { slug: story.slug, title: story.title, paragraph: 3, share: 1, finished_at: expect.any(Date), updated_at: expect.any(Date) },
+      ]);
+      expect(progress.savedWords).toEqual([{ headword: `bazar${suffix}`, dialect: 'kurmanji', saved_at: expect.any(Date) }]);
+    } finally {
+      await pool.query(`DELETE FROM dict_entries WHERE id = $1`, [entryId]);
+      await deleteStories(pool, [story.id]);
+    }
+  });
+
   it('the export carries their Game Ranks: ratings, every change with its reason, seasons', async () => {
     const user = await makeUser('exportranks');
     await pool.query(

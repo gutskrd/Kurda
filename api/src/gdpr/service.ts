@@ -435,7 +435,7 @@ export class GdprService {
       appFeedback: { ...prompts.rows[0], answers: feedback.rows },
       gameRanks: ranks,
       supportEmails: support.rows,
-      // XP, leagues, streaks and badges (gdpr/progress-export.ts)
+      // XP, leagues, streaks, badges, the story shelf and the saved words (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
     };
   }
