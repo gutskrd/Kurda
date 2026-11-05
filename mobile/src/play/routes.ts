@@ -14,6 +14,8 @@ export type LobbyRoute =
   | { name: 'RhymeMatch'; params: RootStackParamList['RhymeMatch'] }
   | { name: 'StoryGame'; params: RootStackParamList['StoryGame'] }
   | { name: 'LastLetter'; params: RootStackParamList['LastLetter'] }
+  | { name: 'Impostor'; params: RootStackParamList['Impostor'] }
+  | { name: 'DontSay'; params: RootStackParamList['DontSay'] }
   | { name: 'Bluff'; params: RootStackParamList['Bluff'] }
   | { name: 'WhoAmI'; params: RootStackParamList['WhoAmI'] };
 
@@ -27,6 +29,10 @@ export function lobbyRoute(game: PlayGame, id: string): LobbyRoute {
       return { name: 'StoryGame', params: { id } };
     case 'last-letter':
       return { name: 'LastLetter', params: { id } };
+    case 'impostor':
+      return { name: 'Impostor', params: { id } };
+    case 'dont-say':
+      return { name: 'DontSay', params: { id } };
     case 'bluff':
       return { name: 'Bluff', params: { id } };
     case 'who-am-i':

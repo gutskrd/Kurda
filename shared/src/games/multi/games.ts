@@ -9,7 +9,7 @@
  * database's own lists), not a change to every map.
  */
 
-export const MULTI_GAMES = ['last-letter', 'bluff', 'who-am-i'] as const;
+export const MULTI_GAMES = ['last-letter', 'impostor', 'dont-say', 'bluff', 'who-am-i'] as const;
 export type MultiGame = (typeof MULTI_GAMES)[number];
 
 export function isMultiGame(v: unknown): v is MultiGame {
@@ -19,6 +19,8 @@ export function isMultiGame(v: unknown): v is MultiGame {
 /** The address segment of each game's page (`/app/games/<segment>`), as players know the game. */
 export const MULTI_GAME_SEGMENT: Readonly<Record<MultiGame, string>> = {
   'last-letter': 'last-letter',
+  impostor: 'impostor',
+  'dont-say': 'dont-say',
   bluff: 'bluff',
   'who-am-i': 'who-am-i',
 };

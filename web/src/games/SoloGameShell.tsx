@@ -40,6 +40,8 @@ import { dialectName } from '../learn/map';
 
 /** What a game's board is handed for the item in front of the player. */
 export interface SoloRound<Item, H, C> {
+  /** the round's id: what a game's clips are played from (`hearItClipPath`), and Who Am I?'s questions are asked of */
+  sessionId: string;
   item: Item;
   index: number;
   total: number;
@@ -49,8 +51,6 @@ export interface SoloRound<Item, H, C> {
   busy: boolean;
   /** send one try; the result comes back through `result` */
   submit: (answer: unknown) => Promise<void>;
-  /** the round's id, for a game with calls of its own about an item (Who Am I?'s questions) */
-  sessionId: string;
 }
 
 interface Props<Item, H, C> {
@@ -74,7 +74,7 @@ interface Props<Item, H, C> {
   onFinished?: (results: SoloResults) => void;
   /** more for the results screen: a rung opened */
   resultsExtra?: React.ReactNode;
-  /** items in a round, when the game's rounds are not the usual length (for "up to N XP") */
+  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts */
   roundItems?: number;
 }
 
@@ -281,7 +281,7 @@ export function SoloGameShell<Item, H, C>({
           </span>
         </header>
 
-        {renderRound({ item, index, total: session.items.length, state, result, busy, submit, sessionId: session.id })}
+        {renderRound({ sessionId: session.id, item, index, total: session.items.length, state, result, busy, submit })}
 
         <div className={`solo-feedback${result ? ` is-${result.correct ? 'right' : result.done ? 'missed' : 'again'}` : ''}`} aria-live="polite">
           {result && (

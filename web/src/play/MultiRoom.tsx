@@ -16,6 +16,7 @@ import { CodeTicket } from './CodeTicket';
 import { LeaveLobby, LobbyRoster, RoomUnavailable } from './GameRoom';
 import { InviteFriendsButton, InvitedList } from './LobbyInvites';
 import { RematchPanel } from './RematchPanel';
+import { TeamPicker } from './TeamPicker';
 import { playError } from './playApi';
 import { useQuietInvites } from './quietInvites';
 import type { GameViewHandle } from './useGameView';
@@ -52,6 +53,10 @@ export interface GameRoomProps<Board> {
   ending?: (view: MultiView<Board>) => ReactNode;
   /** a place's score, in the game's own words ("Words: 12") */
   scoreOf: (result: MultiResult, view: MultiView<Board>) => string;
+  /** why the lobby cannot start as it stands (a team too small), in the reader's words; null when it can */
+  startProblem?: (view: MultiView<Board>) => string | null;
+  /** what a team game says about its teams, inside the team picker */
+  teamNote?: (view: MultiView<Board>) => ReactNode;
 }
 
 /**
@@ -68,7 +73,19 @@ export interface GameRoomProps<Board> {
  * Everything here works from the one view every game answers (`MultiView`),
  * kept current by `useGameView`.
  */
-export function GameRoom<Board>({ game, id, room, newPath, newLabel, lobbyNote, playing, ending, scoreOf }: GameRoomProps<Board>): React.JSX.Element {
+export function GameRoom<Board>({
+  game,
+  id,
+  room,
+  newPath,
+  newLabel,
+  lobbyNote,
+  playing,
+  ending,
+  scoreOf,
+  startProblem,
+  teamNote,
+}: GameRoomProps<Board>): React.JSX.Element {
   const t = useT();
   const navigate = useNavigate();
   const myAvatar = useRail().data.you?.avatarUrl ?? null;
@@ -104,6 +121,8 @@ export function GameRoom<Board>({ game, id, room, newPath, newLabel, lobbyNote, 
   const room_ = Math.max(0, view.maxPlayers - present.length);
 
   if (view.status === 'lobby') {
+    const short = present.length < view.minPlayers;
+    const problem = short ? null : (startProblem?.(view) ?? null);
     return (
       <div className="match-lobby match-room mp-room">
         <CodeTicket
@@ -113,7 +132,21 @@ export function GameRoom<Board>({ game, id, room, newPath, newLabel, lobbyNote, 
           invite={view.isHost ? <InviteFriendsButton game={game} lobbyId={id} room={room_} /> : undefined}
         />
         {lobbyNote?.(view)}
-        <LobbyRoster players={view.players} max={view.maxPlayers} canRemove={view.isHost} onRemove={(seat) => control('remove', { seat })} game={game} gameId={id} />
+        {view.teams > 0 && view.me !== null ? (
+          <TeamPicker
+            players={view.players}
+            teams={view.teams}
+            max={view.maxPlayers}
+            isHost={view.isHost}
+            game={game}
+            gameId={id}
+            note={teamNote?.(view)}
+            onTeam={(seat, team) => control('team', { seat, team })}
+            onRemove={(seat) => control('remove', { seat })}
+          />
+        ) : (
+          <LobbyRoster players={view.players} max={view.maxPlayers} canRemove={view.isHost} onRemove={(seat) => control('remove', { seat })} game={game} gameId={id} />
+        )}
         <LobbyRated
           game={game}
           lobbyId={id}
@@ -134,9 +167,16 @@ export function GameRoom<Board>({ game, id, room, newPath, newLabel, lobbyNote, 
             {busy ? t('games.joining') : t('play.room.join')}
           </Button>
         ) : view.isHost ? (
-          <Button size="lg" disabled={busy || present.length < view.minPlayers} onClick={() => void control('start')}>
-            {present.length < view.minPlayers ? t('play.room.waiting') : busy ? t('games.starting') : t('play.room.start')}
-          </Button>
+          <>
+            {problem && (
+              <p className="mp-start-problem" role="status">
+                {problem}
+              </p>
+            )}
+            <Button size="lg" disabled={busy || short || problem !== null} onClick={() => void control('start')}>
+              {short ? t('play.room.waiting') : busy ? t('games.starting') : t('play.room.start')}
+            </Button>
+          </>
         ) : (
           <p className="muted">{t('play.room.waitingHost')}</p>
         )}

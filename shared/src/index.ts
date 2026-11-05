@@ -701,3 +701,11 @@ export * from './games/last-letter/slip.js';
 
 // Kurdish Kingdom: the village that grows from real learning, its buildings, thresholds and view
 export * from './games/kingdom/index.js';
+/**
+ * The party games where players write their own Kurdish: what a clue or a
+ * guess may be, and Kurdish Impostor's and Don't Say the Word!'s rules.
+ */
+export * from './games/clues.js';
+export * from './games/multi/order.js';
+export * from './games/impostor/rules.js';
+export * from './games/dont-say/rules.js';

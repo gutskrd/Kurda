@@ -56,25 +56,33 @@ export interface GameModule<State = unknown, Move = unknown, Settings = unknown,
   /**
    * The game takes free text from players (a clue, a guess, a definition):
    * the text of a move goes through the chat pipeline's gate before anything
-   * else sees it (free-text.ts), capped at `maxLength`. A move that carries no
-   * text (a vote) says null, and passes no gate.
+   * else sees it (free-text.ts), capped at `maxLength`. A move with nothing
+   * typed (a vote, a skip) gives null and passes no gate.
    */
   readonly freeText?: { maxLength: number; textOf: (raw: Raw) => string | null };
   /** played against Hevalo by one person: what the computer seat is */
   readonly solo?: { bot: 'hevalo' };
   /** the XP source placement is paid from (registered in GAME_XP_SOURCES) */
   readonly xpSource: string;
+  /**
+   * Whether these choices can be played now (a difficulty with enough approved
+   * content, say), asked when the lobby is made; left out, any choices the
+   * schema takes can. `availability` answers for the dialect as a whole.
+   */
+  offers?(db: Executor, choices: LobbyChoices<Settings>): Promise<boolean>;
+  /**
+   * What the game is dealt from approved content when it starts — a card, a
+   * deck — handed to the rules' `init` inside the settings and kept in the
+   * state only, never in the lobby's stored settings or any view. Inside the
+   * start's transaction; a game that cannot be dealt refuses to start. The
+   * seats starting are in `ctx`, for a game that deals each its own (the Who
+   * Am I? race).
+   */
+  deal?(db: Executor, settings: Settings, ctx: { dialect: LetterDialect; seed: string; seats: readonly RulesSeat[] }): Promise<Settings>;
   /** what the invite banner and the chat card say about a lobby, besides Rated */
   summary(dialect: LetterDialect, settings: Settings): InviteSummary;
   /** the settings anyone in the lobby may see */
   publicSettings(settings: Settings): unknown;
-  /**
-   * What the rules start with that only the server can look up — the cards
-   * dealt from approved content — added to the lobby's settings for `init`,
-   * inside the transaction that starts the game. The lobby's own settings are
-   * not changed: what was dealt lives in the game's state alone.
-   */
-  deal?(db: Executor, lobby: { dialect: LetterDialect; settings: Settings; seed: string }, seats: readonly RulesSeat[]): Promise<Settings>;
   /** a move as the rules take it: the lookups the rules cannot do, inside the game's transaction */
   prepare(db: Executor, state: State, seat: number, move: RawMove<Raw>): Promise<PreparedMove<Move>>;
   /** Hevalo's move for a computer seat whose turn has come, or null for "could not think of one" */

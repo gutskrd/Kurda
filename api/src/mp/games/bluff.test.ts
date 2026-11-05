@@ -39,21 +39,22 @@ describe('a card as a game plays it', () => {
 
 describe('the deal', () => {
   const db = cards(Array.from({ length: 12 }, (_, i) => card(i, { en: `meaning ${i}` })));
-  const lobby = (seed: string) => ({ dialect: 'kmr' as const, settings: { dialect: 'kmr' as const, language: 'en' as const, rounds: 5 as const, writeSeconds: 60 as const }, seed });
+  const settings = { dialect: 'kmr' as const, language: 'en' as const, rounds: 5 as const, writeSeconds: 60 as const };
+  const ctx = (seed: string) => ({ dialect: 'kmr' as const, seed, seats: [] });
 
   it('deals as many words as the rounds, drawn from the seed, the same every time', async () => {
-    const a = await bluffModule.deal!(db, lobby('s1'), []);
+    const a = await bluffModule.deal!(db, settings, ctx('s1'));
     expect(a.deck).toHaveLength(5);
-    expect((await bluffModule.deal!(db, lobby('s1'), [])).deck).toEqual(a.deck);
-    expect((await bluffModule.deal!(db, lobby('s2'), [])).deck).not.toEqual(a.deck);
+    expect((await bluffModule.deal!(db, settings, ctx('s1'))).deck).toEqual(a.deck);
+    expect((await bluffModule.deal!(db, settings, ctx('s2'))).deck).not.toEqual(a.deck);
   });
 
   it('refuses to start with no card to deal', async () => {
-    await expect(bluffModule.deal!(cards([]), lobby('s1'), [])).rejects.toMatchObject({ code: 'NOT_ENOUGH_CONTENT', statusCode: 409 });
+    await expect(bluffModule.deal!(cards([]), settings, ctx('s1'))).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE', statusCode: 409 });
   });
 
   it('keeps the deck out of what the lobby shows', async () => {
-    const dealt = await bluffModule.deal!(db, lobby('s1'), []);
+    const dealt = await bluffModule.deal!(db, settings, ctx('s1'));
     expect(bluffModule.publicSettings(dealt)).toEqual({ dialect: 'kmr', language: 'en', rounds: 5, writeSeconds: 60 });
     const state = bluffRules.init(dealt, [1, 2, 3].map((seat) => ({ seat, team: null, bot: null })), { now: 0, seed: 's1' });
     expect(JSON.stringify(bluffRules.viewFor(state, 1))).not.toContain('meaning ');
@@ -104,5 +105,12 @@ describe('where it is offered', () => {
       ],
     });
     expect((await bluffModule.availability!(cards([card(1, { en: 'x' })]), 'kmr')).group).toBe(false);
+  });
+
+  it('makes a lobby only in a language enough cards have', async () => {
+    const many = cards(Array.from({ length: 24 }, (_, i) => card(i, i < 12 ? { en: 'x', de: 'y' } : { en: 'x' })));
+    const choices = (language: 'de' | 'fr') => ({ dialect: 'kmr' as const, maxPlayers: 8, access: 'friends' as const, settings: { dialect: 'kmr' as const, language, rounds: 5 as const, writeSeconds: 90 as const } });
+    expect(await bluffModule.offers!(many, choices('de'))).toBe(true);
+    expect(await bluffModule.offers!(many, choices('fr'))).toBe(false);
   });
 });

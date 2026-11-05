@@ -1,0 +1,91 @@
+/*
+ * The teams of a team game's lobby (play/TeamPicker.tsx): a column per team
+ * in its tone from the path's palette (`--u-fill`, `--u-text`), named as well
+ * as coloured. Side by side from a tablet's width, one above the other on a
+ * phone. Every control is at least 44 px tall.
+ */
+.team-picker {
+  display: grid;
+  gap: var(--space-3);
+}
+.team-columns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space-3);
+}
+.team-col {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  border: 1px solid color-mix(in srgb, var(--u-fill) 55%, var(--border));
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--u-fill) 10%, transparent);
+}
+.team-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  color: var(--u-text);
+}
+.team-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--u-fill);
+  flex: none;
+}
+.team-count {
+  margin-inline-start: auto;
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+}
+.team-empty {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.team-members {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.team-member {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 48px;
+}
+.team-member.is-me .team-member-name {
+  color: var(--u-text);
+}
+.team-member-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+.team-move,
+.team-join {
+  min-height: 44px;
+}
+.team-move {
+  min-width: 44px;
+  padding-inline: 10px;
+  color: var(--u-text);
+}
+.team-member .sg-remove {
+  flex: none;
+}
+.team-join {
+  justify-self: start;
+}

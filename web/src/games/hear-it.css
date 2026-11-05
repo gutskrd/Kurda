@@ -1,0 +1,391 @@
+/*
+ * Hear It, Find It (games/HearIt.tsx): its card's picture, and its stage — a
+ * small radio with a speaker grille, one big play key and sound-wave bars
+ * that move while a voice plays, a gentle counter of the replays left, the
+ * choices that light up, the typed answer's marks, and what was said.
+ *
+ * The game wears its tone (`lp-tone-meadow`, learn/path.css). Only transform
+ * and opacity move; under prefers-reduced-motion the bars stand still at a
+ * middle height and the colours alone say what is playing and what was taken.
+ */
+
+/* ---- the card's picture: a radio ---------------------------------------------------- */
+.lg-mini-radio {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  align-items: center;
+  gap: 12px 16px;
+  width: min(100%, 220px);
+  padding: 16px;
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--u-fill, var(--success)) 12%, var(--surface-solid));
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--u-lip, var(--border-strong)) 45%, transparent);
+}
+.lg-mini-grille {
+  grid-column: 1 / -1;
+  height: 16px;
+  border-radius: var(--r-sm);
+  background-image: radial-gradient(circle, var(--ink-4) 1.6px, transparent 2px);
+  background-size: 9px 9px;
+}
+.lg-mini-key {
+  width: 38px;
+  height: 38px;
+  border-radius: var(--r-pill);
+  background: var(--u-fill, var(--success));
+}
+.lg-mini-wave {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 32px;
+}
+.lg-mini-bar {
+  width: 5px;
+  border-radius: var(--r-pill);
+  background: var(--u-fill, var(--success));
+  opacity: 0.8;
+}
+
+/* ---- the intro: the ladder -------------------------------------------------------------- */
+.hi-ladder {
+  display: grid;
+  gap: var(--space-2);
+}
+.hi-ladder-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+.hi-rungs {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hi-rung {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+}
+.hi-rung-n {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--r-pill);
+  background: var(--u-fill);
+  color: var(--u-ink);
+  font-size: var(--text-secondary);
+  font-weight: 700;
+}
+.hi-rung-name {
+  font-weight: 600;
+}
+.hi-rung-meta {
+  padding: 0 var(--space-2);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+
+/* ---- the stage: the radio ------------------------------------------------------------- */
+.hi-board {
+  display: grid;
+  gap: var(--space-4);
+}
+.hi-kicker {
+  margin: 0;
+  color: var(--u-text, var(--ink-3));
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+.hi-radio {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5) var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: color-mix(in srgb, var(--u-fill) 9%, var(--surface-solid));
+  box-shadow: 0 6px 0 color-mix(in srgb, var(--u-lip) 35%, transparent);
+}
+.hi-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+.hi-grille {
+  flex: 1 1 120px;
+  height: 20px;
+  border-radius: var(--r-sm);
+  background-image: radial-gradient(circle, var(--ink-4) 1.8px, transparent 2.2px);
+  background-size: 10px 10px;
+}
+.hi-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.hi-tag {
+  padding: 2px var(--space-3);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.hi-tag.is-new {
+  background: var(--u-fill);
+  color: var(--u-ink);
+}
+.hi-dial {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+.hi-play {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--u-fill);
+  color: var(--u-ink);
+  box-shadow: 0 4px 0 var(--u-lip);
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.hi-play:active:not(:disabled) {
+  transform: translateY(3px);
+}
+.hi-play:disabled {
+  opacity: 0.45;
+  cursor: default;
+  box-shadow: none;
+}
+.hi-play:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+/* the sound: bars at rest, that rise and fall out of step while a voice plays */
+.hi-wave {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  height: 56px;
+}
+.hi-bar {
+  flex: 1;
+  max-width: 8px;
+  height: 100%;
+  border-radius: var(--r-pill);
+  background: var(--u-fill);
+  opacity: 0.45;
+  transform: scaleY(0.16);
+  transition: transform var(--dur) var(--ease-out), opacity var(--dur) var(--ease-out);
+}
+.hi-radio.is-playing .hi-bar {
+  opacity: 0.95;
+  animation: hi-voice 760ms ease-in-out infinite alternate;
+  animation-delay: calc(var(--bar-i) * -97ms);
+}
+@keyframes hi-voice {
+  0% {
+    transform: scaleY(0.2);
+  }
+  45% {
+    transform: scaleY(0.85);
+  }
+  100% {
+    transform: scaleY(0.45);
+  }
+}
+.hi-count {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.hi-dots {
+  display: inline-flex;
+  gap: 6px;
+}
+.hi-dot {
+  width: 10px;
+  height: 10px;
+  border: 2px solid var(--u-fill);
+  border-radius: var(--r-pill);
+}
+.hi-dot.is-left {
+  background: var(--u-fill);
+}
+
+/* ---- the choices: they light up when one is taken --------------------------------------- */
+.hi-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+  gap: var(--space-3);
+}
+.hi-choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--bg);
+  box-shadow: 0 3px 0 var(--border-strong);
+  color: var(--ink);
+  font-size: 1.1rem;
+  text-align: start;
+  cursor: pointer;
+  transition: transform var(--dur-fast) var(--ease-out), background-color var(--dur) var(--ease-out), border-color var(--dur) var(--ease-out);
+}
+.hi-choice:hover:not(:disabled) {
+  border-color: var(--u-fill);
+}
+.hi-choice:active:not(:disabled) {
+  transform: translateY(2px);
+}
+.hi-choice:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+.hi-choice.is-lit {
+  border-color: var(--u-fill);
+  background: color-mix(in srgb, var(--u-fill) 22%, transparent);
+  box-shadow: 0 3px 0 var(--u-lip), 0 0 0 4px color-mix(in srgb, var(--u-fill) 25%, transparent);
+}
+.hi-choice.is-right {
+  border-color: var(--u-fill);
+  background: var(--u-fill);
+  box-shadow: 0 3px 0 var(--u-lip);
+  color: var(--u-ink);
+}
+.hi-choice.is-wrong {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  box-shadow: none;
+}
+.hi-choice.is-struck {
+  opacity: 0.5;
+  box-shadow: none;
+  cursor: default;
+}
+.hi-choice.is-struck .hi-choice-text {
+  text-decoration: line-through;
+}
+.hi-choice.is-dim {
+  opacity: 0.55;
+  box-shadow: none;
+}
+.hi-choice:disabled {
+  cursor: default;
+}
+
+/* ---- typed: the field, and which words stand right after a wrong try ---------------------- */
+.hi-typed {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+}
+.hi-typed .lesson-answer {
+  width: 100%;
+}
+.hi-marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hi-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-pill);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.hi-mark.is-right {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.hi-hint {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+
+/* ---- what was said ---------------------------------------------------------------------- */
+.hi-said {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--u-fill);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.hi-said-label {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 650;
+}
+.hi-said-text {
+  margin: 0;
+  color: var(--u-text);
+  font-size: 1.35rem;
+  font-weight: 650;
+  line-height: 1.35;
+}
+.hi-said-meaning {
+  margin: 0;
+  color: var(--ink-2);
+}
+.hi-said-note {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+
+@media (max-width: 420px) {
+  .hi-radio {
+    padding: var(--space-4);
+  }
+  .hi-dial {
+    gap: var(--space-4);
+  }
+  .hi-play {
+    width: 64px;
+    height: 64px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hi-radio.is-playing .hi-bar {
+    animation: none;
+    transform: scaleY(0.6);
+  }
+}

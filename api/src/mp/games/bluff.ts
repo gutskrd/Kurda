@@ -153,16 +153,22 @@ export const bluffModule: GameModule<BluffState, BluffMove, BluffSettings, Bluff
     return { dialect: settings.dialect, language: settings.language, rounds: settings.rounds, writeSeconds: settings.writeSeconds };
   },
 
-  async deal(db, lobby) {
-    const cards = await bluffCards(db, lobby.dialect, lobby.settings.language);
+  /** A lobby is made only in a language enough of the dialect's cards have a real meaning in. */
+  async offers(db, choices) {
+    const { total, byLanguage } = await bluffCounts(db, choices.dialect);
+    return bluffOffer(total, byLanguage).languages.some((l) => l.language === choices.settings.language);
+  },
+
+  async deal(db, settings, { dialect, seed }) {
+    const cards = await bluffCards(db, dialect, settings.language);
     const deck = cards
-      .map((c) => ({ c, k: seededUnit(lobby.seed, `deck:${c.id}`) }))
+      .map((c) => ({ c, k: seededUnit(seed, `deck:${c.id}`) }))
       .sort((a, b) => a.k - b.k)
-      .slice(0, lobby.settings.rounds)
+      .slice(0, settings.rounds)
       .map((x) => x.c);
     // a game with no word to play is refused at the start, not begun and ended at once
-    if (deck.length === 0) throw new AppError('NOT_ENOUGH_CONTENT', 409, 'there are no approved cards with a meaning in this language yet');
-    return { ...lobby.settings, deck };
+    if (deck.length === 0) throw new AppError('GAME_UNAVAILABLE', 409, 'there are no approved cards with a meaning in this language yet');
+    return { ...settings, deck };
   },
 
   async prepare(_db, _state, _seat, { raw, text }) {

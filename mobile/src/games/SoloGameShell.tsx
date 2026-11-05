@@ -44,6 +44,8 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
  */
 
 export interface SoloRound<Item, H, C> {
+  /** the round's id: what a game's clips are played from (`hearItClipPath`) */
+  sessionId: string;
   item: Item;
   index: number;
   total: number;
@@ -51,8 +53,6 @@ export interface SoloRound<Item, H, C> {
   result: SoloAnswerResult<H, C> | null;
   busy: boolean;
   submit: (answer: unknown) => Promise<void>;
-  /** the round's id, for a game with calls of its own about an item (Who Am I?'s questions) */
-  sessionId: string;
 }
 
 interface Props<Item, H, C> {
@@ -69,7 +69,7 @@ interface Props<Item, H, C> {
   onFinished?: (results: SoloResults) => void;
   resultsExtra?: ReactNode;
   onExit: () => void;
-  /** items in a round, when the game's rounds are not the usual length (for "up to N XP") */
+  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts */
   roundItems?: number;
 }
 
@@ -275,7 +275,7 @@ export function SoloGameShell<Item, H, C>({
             {t('games.solo.progress', { n: index + 1, total: session.items.length })}
           </Text>
         </View>
-        {renderRound({ item, index, total: session.items.length, state, result, busy, submit, sessionId: session.id })}
+        {renderRound({ sessionId: session.id, item, index, total: session.items.length, state, result, busy, submit })}
         {verdict ? (
           <View
             accessibilityLiveRegion="polite"

@@ -10,7 +10,12 @@
  *   GET  /games/solo/sessions/:id                      a round as it stands
  *   POST /games/solo/sessions/:id/answers              { index, answer, attempt? }: one try, checked here
  *   POST /games/solo/sessions/:id/finish               pay it once and say how it went
+ *   GET  /games/solo/sessions/:id/clips/:clip          a round's recording by its opaque handle (no token: the address is the permission)
  *   POST /games/who-am-i/sessions/:id/ask              { index, question }: Who Am I?'s answer from the identity's facts
+ *
+ * The games played alone: Build a Kurdish Sentence, The Memory Thief and
+ * Hear It, Find It, each an engine registered with the solo round, and each
+ * counting its own availability where rows alone do not say it.
  *
  * For the people who edit lessons and stories (content.edit), and who publish
  * them (content.publish), behind the admin 2FA gate like every staff route:
@@ -23,7 +28,8 @@
  *   POST   /admin/game-content/:id/(publish|unpublish|archive)  { lockVersion }   (content.publish)
  *   POST   /admin/game-content/:id/review               { approved, note?, lockVersion }   (content.publish)
  *   DELETE /admin/game-content/:id?lockVersion=
- *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories', dialect, limit? }: drafts from approved content
+ *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories' | 'vocabulary', dialect, limit? }: drafts from approved content
+ *   GET    /admin/game-content/vocabulary?dialect&q&limit   published vocabulary, for a card editor to pick its Kurdish from
  *   GET    /admin/game-content/words?dialect&q&from      approved words to make a card of (word-cards.ts)
  *   POST   /admin/game-content/from-word                { kind, dialect, ref, level, … }: a Bluff card or an identity as a draft, its Kurdish copied
  */
@@ -48,8 +54,13 @@ import { XpService } from '../xp/service.js';
 import { StreakService } from '../streaks/service.js';
 import { DailyGoalService } from '../goals/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
+import type { AppConfig } from '../config/env.js';
+import { RecordingFiles, type RecordingFileOptions } from '../speakers/recording-file.js';
 import { TrustedSources } from './sources.js';
 import { BuildSentenceGame } from './build-sentence.js';
+import { MemoryThiefGame } from './memory-thief.js';
+import { HearItGame } from './hear-it.js';
+import { registerGameClipRoute } from './clips.js';
 import { GameAvailabilityService } from './availability.js';
 import { SoloService } from './solo.js';
 import { GameContentAdminService } from './content-admin.js';
@@ -88,7 +99,16 @@ const createContentBody = z.object({
 const updateContentBody = lockBody.extend({ level: z.number().int().min(1).max(5), payload: z.unknown() });
 const reviewBody = lockBody.extend({ approved: z.boolean(), note: z.string().max(GAME_CONTENT_REVIEW_NOTE_MAX).nullish() });
 const deleteQuery = z.object({ lockVersion: z.coerce.number().int().min(0) });
-const importBody = z.object({ from: z.enum(['lessons', 'stories']), dialect: z.enum(GAME_DIALECTS), limit: z.number().int().min(1).max(2000).optional() });
+const importBody = z.object({
+  from: z.enum(['lessons', 'stories', 'vocabulary']),
+  dialect: z.enum(GAME_DIALECTS),
+  limit: z.number().int().min(1).max(2000).optional(),
+});
+const vocabularyQuery = z.object({
+  dialect: z.enum(GAME_DIALECTS),
+  q: z.preprocess(absentIfEmpty, z.string().max(60).optional()),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});
 
 function context(req: FastifyRequest): { adminId: string; requestId: string } {
   return { adminId: req.user!.id, requestId: req.id };
@@ -97,6 +117,10 @@ function context(req: FastifyRequest): { adminId: string; requestId: string } {
 export interface LearnGameDeps {
   xp: XpService;
   milestones?: MilestoneRecorder;
+  /** where a dictionary pronunciation may be fetched from, for a round's clips */
+  config?: Pick<AppConfig, 'CDN_BASE_URL'>;
+  /** test seams for reading a recording from another site */
+  recordingFiles?: RecordingFileOptions;
 }
 
 /** Everything the learning games need, made once, for the routes and for the tests. */
@@ -104,7 +128,12 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
   const cache = app.hasDecorator('cache') ? app.cache : null;
   const sources = new TrustedSources(app.db, cache);
   const sentences = new BuildSentenceGame(sources);
-  const availability = new GameAvailabilityService(app.db, sources, sentences, cache);
+  const memory = new MemoryThiefGame(sources);
+  const hearing = new HearItGame(sources);
+  const availability = new GameAvailabilityService(app.db, sources, sentences, cache, {
+    'memory-thief': { count: async (dialect) => ({ levels: await memory.levels(dialect) }) },
+    'hear-it': { count: (dialect) => hearing.availability(dialect) },
+  });
   const solo = new SoloService(app.db, {
     xp: deps.xp,
     streaks: new StreakService(app.db),
@@ -113,10 +142,12 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
     log: app.log,
   });
   solo.register(sentences);
+  solo.register(memory);
+  solo.register(hearing);
   const whoAmI = new WhoAmIGame(sources);
   solo.register(whoAmI);
   const content = new GameContentAdminService(app.db, sources, availability, cache);
-  return { sources, sentences, availability, solo, content, whoAmI };
+  return { sources, sentences, memory, hearing, availability, solo, content, whoAmI };
 }
 
 export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDeps): ReturnType<typeof learnGameServices> {
@@ -150,6 +181,9 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
     const [ladder, open] = await Promise.all([sentences.ladder(app.db, req.user!.id, dialect), solo.open(req.user!.id, 'build-sentence', dialect)]);
     return { ...ladder, open };
   });
+
+  // a round's recordings, by the opaque handle each item carries (games/clips.ts): no token, the address is the permission
+  registerGameClipRoute(app, new RecordingFiles(app.db, app.storage, deps.config ?? {}, deps.recordingFiles));
 
   app.get('/games/solo/open', { schema: { querystring: openQuery }, preHandler: requireAuth }, async (req) => {
     const q = req.query as z.infer<typeof openQuery>;
@@ -185,6 +219,11 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
   });
 
   app.get('/admin/game-content/readiness', { preHandler: canEdit }, async () => content.readiness());
+
+  app.get('/admin/game-content/vocabulary', { schema: { querystring: vocabularyQuery }, preHandler: canEdit }, async (req) => {
+    const q = req.query as z.infer<typeof vocabularyQuery>;
+    return content.vocabulary(q.dialect, q.q, q.limit);
+  });
 
   app.get('/admin/game-content/:id', { schema: { params: idParam }, preHandler: canEdit }, async (req, reply) => {
     const row = await content.get((req.params as z.infer<typeof idParam>).id);
@@ -228,6 +267,7 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
 
   app.post('/admin/game-content/import', { schema: { body: importBody }, preHandler: canEdit }, async (req) => {
     const b = req.body as z.infer<typeof importBody>;
+    if (b.from === 'vocabulary') return content.importStarterWordCards(b.dialect, context(req), b.limit);
     return b.from === 'lessons'
       ? content.importLessonSentences(b.dialect, context(req), b.limit)
       : content.importStoryPassages(b.dialect, context(req), b.limit);

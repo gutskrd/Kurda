@@ -232,6 +232,8 @@ function build() {
     category: slug,
     /** what the impostor is told instead of the word: the category in Kurdish, with its meaning */
     hint: z.strictObject({ ku: kurdish(80), meanings }),
+    /** other forms of the word a clue may not say either (plurals, the ezafe); the game hears common endings by itself */
+    forms: z.array(kurdish(60)).max(12).default([]),
   });
   const tabooCard = z
     .strictObject({
@@ -360,6 +362,7 @@ export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload)
       const p = payload as WordCardContent;
       add('word', p.word);
       add('hint.ku', p.hint.ku);
+      (p.forms ?? []).forEach((f, i) => add(`forms.${i}`, f));
       break;
     }
     case 'taboo_card': {
@@ -486,28 +489,48 @@ export function meaningIn(meanings: Partial<Meanings> | null | undefined, locale
 /** An opaque handle to a recording for one round: the address it plays from never says what it says. */
 export type ClipHandle = string;
 
-/** Hear It, Find It: one clip, and what is asked about it. The text behind the clip is never sent. */
+/**
+ * Hear It, Find It: one clip, and what is asked about it (games/hear-it). The
+ * text behind the clip is never sent: the clip is a handle for this round
+ * only, played from `hearItClipPath`.
+ */
 export interface HearItItemView {
   index: number;
   stage: 'word' | 'phrase' | 'sentence' | 'type';
   clip: ClipHandle;
   /** replays left after the first play */
   replays: number;
-  /** written forms (word, sentence) or meanings (phrase) to pick from; null when it is typed */
+  /** written forms to pick from (word, sentence); null on the other rungs */
   options: string[] | null;
+  /** meanings to pick from (phrase), each by interface language; null on the other rungs */
+  meanings: Array<Partial<Meanings>> | null;
+  /** the character the recording is shown with, when one was chosen */
+  speaker: SpeakerId | null;
+  /** this text was heard before in another voice, and this is a different one */
+  newVoice: boolean;
+  level: GameLevel;
 }
 
-/** The Memory Thief: the passage to study, then the same passage with its key words gone. */
+/** The Memory Thief: the passage to study, then the same passage with its key words gone (games/memory-thief). */
 export interface MemoryThiefItemView {
   index: number;
+  /** stable for the passage, wherever it was read */
+  key: string;
+  /** a story's paragraph, or lines of a lesson's conversation */
+  kind: 'story' | 'conversation';
   title: string | null;
-  /** the passage in parts: text, or a gap numbered from 0 */
-  parts: Array<{ text: string } | { gap: number }>;
-  /** the passage whole, for the study phase */
+  /** the passage in parts: text, a gap numbered from 0, or where a conversation's next line starts */
+  parts: Array<{ text: string } | { gap: number } | { line: number }>;
+  /** the passage whole, for the study phase: a conversation's lines one per line of text */
   text: string;
+  /** who says each line of `text` (a story's one line: null) */
+  speakers: Array<SpeakerId | null>;
+  /** how many words vanish */
+  gaps: number;
   studySeconds: number;
-  /** tiles to pick the vanished words from (beginner), or null to type them */
+  /** tiles to pick the vanished words from (beginner, intermediate), or null to type them (advanced) */
   tiles: string[] | null;
+  level: GameLevel;
 }
 
 /** What Would You Say?: the scene, the line heard, and the replies to choose from or build. */

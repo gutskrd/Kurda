@@ -17,6 +17,7 @@ import { InviteSheet } from './InviteSheet';
 import { LobbyPeople } from './lobby';
 import { useQuietInvites } from './quietInvites';
 import { RematchPanel } from './RematchPanel';
+import { TeamPicker } from './TeamPicker';
 import type { GameViewHandle } from './useGameView';
 
 /** "You", Hevalo, a friend's name, or "Player 3": how a seat of a multiplayer learning game is named. */
@@ -42,6 +43,10 @@ export interface GameRoomProps<Board> {
   /** the game's own word on how it ended */
   ending?: (view: MultiView<Board>) => ReactNode;
   scoreOf: (result: MultiResult, view: MultiView<Board>) => string;
+  /** why the lobby cannot start as it stands (a team too small), in the reader's words; null when it can */
+  startProblem?: (view: MultiView<Board>) => string | null;
+  /** what a team game says about its teams, inside the team picker */
+  teamNote?: (view: MultiView<Board>) => ReactNode;
 }
 
 /**
@@ -52,7 +57,20 @@ export interface GameRoomProps<Board> {
  * after the game its places, what it did to your rank, and Play again. The
  * game draws only its own staging.
  */
-export function GameRoom<Board>({ game, id, room, onNew, onOpen, newLabel, lobbyNote, playing, ending, scoreOf }: GameRoomProps<Board>): React.JSX.Element {
+export function GameRoom<Board>({
+  game,
+  id,
+  room,
+  onNew,
+  onOpen,
+  newLabel,
+  lobbyNote,
+  playing,
+  ending,
+  scoreOf,
+  startProblem,
+  teamNote,
+}: GameRoomProps<Board>): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const [busy, setBusy] = useState(false);
@@ -117,6 +135,8 @@ export function GameRoom<Board>({ game, id, room, onNew, onOpen, newLabel, lobby
   const present = view.players.filter((p) => !p.gone);
 
   if (view.status === 'lobby') {
+    const enough = present.length >= view.minPlayers;
+    const problem = enough ? (startProblem?.(view) ?? null) : null;
     return (
       <>
         {view.me !== null ? (
@@ -131,7 +151,17 @@ export function GameRoom<Board>({ game, id, room, onNew, onOpen, newLabel, lobby
         <GlassCard style={styles.card}>
           {lobbyNote?.(view)}
           <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.lobbyWaiting', { count: present.length })}</Text>
-          {view.me !== null ? (
+          {view.me !== null && view.teams > 0 ? (
+            <TeamPicker
+              players={view.players}
+              teams={view.teams}
+              isHost={view.isHost}
+              game={game}
+              lobbyId={id}
+              note={teamNote?.(view)}
+              onTeam={(seat, team) => control('team', { seat, team })}
+            />
+          ) : view.me !== null ? (
             <LobbyPeople game={game} lobbyId={id} players={view.players.map((p) => ({ ...p, name: p.isMe ? p.name : p.bot ? t('play.room.hevalo') : p.name }))} isHost={view.isHost} />
           ) : null}
           {view.me !== null ? (
@@ -142,17 +172,21 @@ export function GameRoom<Board>({ game, id, room, onNew, onOpen, newLabel, lobby
           {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
           {view.me === null ? (
             <ClayButton label={busy ? t('games.joining') : t('play.room.join')} tone="primary" busy={busy} onPress={() => void control('join')} style={styles.stretch} />
-          ) : view.isHost && present.length >= view.minPlayers ? (
-            <ClayButton
-              label={busy ? t('games.starting') : t('play.room.start')}
-              tone="primary"
-              busy={busy}
-              onPress={() => {
-                haptic('tap');
-                void control('start');
-              }}
-              style={styles.stretch}
-            />
+          ) : view.isHost && enough ? (
+            <>
+              {problem ? <Text style={[styles.waiting, { color: colors.textSecondary }]}>{problem}</Text> : null}
+              <ClayButton
+                label={busy ? t('games.starting') : t('play.room.start')}
+                tone="primary"
+                busy={busy}
+                disabled={problem !== null}
+                onPress={() => {
+                  haptic('tap');
+                  void control('start');
+                }}
+                style={styles.stretch}
+              />
+            </>
           ) : (
             <Text style={[styles.waiting, { color: colors.textSecondary }]}>{view.isHost ? t('play.room.waiting') : t('play.room.waitingHost')}</Text>
           )}

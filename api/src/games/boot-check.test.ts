@@ -23,6 +23,14 @@ describe('the learning games’ routes', () => {
       expect(play.statusCode).toBe(401);
       const bad = await app.inject({ method: 'GET', url: '/games/availability?dialect=kurmanji' });
       expect(bad.statusCode).toBe(400);
+      // a round's clip is asked for by its handle, and nothing that is not one is looked up
+      expect(routes).toContain(':clip');
+      const clip = await app.inject({ method: 'GET', url: '/games/solo/sessions/00000000-0000-4000-8000-000000000001/clips/not%20a%20handle' });
+      expect(clip.statusCode).toBe(400);
+      for (const game of ['memory-thief', 'hear-it']) {
+        const res = await app.inject({ method: 'POST', url: '/games/solo/sessions', payload: { game, dialect: 'kmr', difficulty: 'beginner' } });
+        expect(res.statusCode, game).toBe(401);
+      }
     } finally {
       await app.close();
     }

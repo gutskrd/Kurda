@@ -100,23 +100,28 @@ export const whoAmIRaceModule: GameModule<WhoAmIRaceState, WhoAmIRaceMove, WhoAm
     return { dialect: settings.dialect, minutes: settings.minutes, difficulty: settings.difficulty };
   },
 
+  /** A race is made only at a difficulty the dialect's identities fill. */
+  async offers(db, choices) {
+    return (await raceDifficulties(db, choices.dialect)).includes(choices.settings.difficulty);
+  },
+
   /**
    * A hidden identity for every seat, each a different one while the pool
    * has enough, drawn with the game's seed. When even one seat cannot be
-   * dealt an identity, the start is refused (409 NOT_ENOUGH_CONTENT) and the
-   * lobby stays as it was.
+   * dealt an identity, the start is refused (409 GAME_UNAVAILABLE, as the
+   * party games refuse it) and the lobby stays as it was.
    */
-  async deal(db, lobby, seats) {
-    const { identities, templates } = await whoAmIPool(new TrustedSources(db), lobby.dialect);
-    const here = identitiesAt(identities, lobby.settings.difficulty);
-    const order = here.map((i) => ({ i, k: seededUnit(lobby.seed, `target:${i.id}`) })).sort((a, b) => a.k - b.k).map((x) => x.i);
-    const want = WHO_AM_I_CANDIDATES[lobby.settings.difficulty];
+  async deal(db, settings, { dialect, seed, seats }) {
+    const { identities, templates } = await whoAmIPool(new TrustedSources(db), dialect);
+    const here = identitiesAt(identities, settings.difficulty);
+    const order = here.map((i) => ({ i, k: seededUnit(seed, `target:${i.id}`) })).sort((a, b) => a.k - b.k).map((x) => x.i);
+    const want = WHO_AM_I_CANDIDATES[settings.difficulty];
     const deals: Array<{ seat: number; deal: WhoAmIDeal }> = [];
     const used = new Set<string>();
     for (const s of seats) {
       const fresh = order.filter((i) => !used.has(i.id));
       for (const target of [...fresh, ...order]) {
-        const deal = dealWhoAmI(target, identities, templates, { seed: lobby.seed, salt: `seat:${s.seat}`, want });
+        const deal = dealWhoAmI(target, identities, templates, { seed, salt: `seat:${s.seat}`, want });
         if (!deal) continue;
         used.add(target.id);
         deals.push({ seat: s.seat, deal });
@@ -124,8 +129,8 @@ export const whoAmIRaceModule: GameModule<WhoAmIRaceState, WhoAmIRaceMove, WhoAm
       }
     }
     // a race somebody could not be dealt into is refused at the start, not begun without them
-    if (deals.length < seats.length) throw new AppError('NOT_ENOUGH_CONTENT', 409, 'there are not enough approved identities at this difficulty yet');
-    return { ...lobby.settings, deals };
+    if (deals.length < seats.length) throw new AppError('GAME_UNAVAILABLE', 409, 'there are not enough approved identities at this difficulty yet');
+    return { ...settings, deals };
   },
 
   async prepare(_db, _state, _seat, { raw }) {

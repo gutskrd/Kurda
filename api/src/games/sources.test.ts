@@ -1,13 +1,14 @@
 /**
  * Reading approved lessons for the learning games, without a database: which
  * English a translation asks for, which sentences an exercise teaches and in
- * which orders, a conversation as line pairs, and the rule that a sentence in
+ * which orders, a conversation as line pairs and whole, the alphabet's letter
+ * sounds told from its words, and the rule that a sentence in
  * the other variety's script is left out.
  */
 import { describe, expect, it } from 'vitest';
 import { LEARN_GAME_XP_SOURCES } from '@kurda/shared';
 import { GAME_XP_SOURCES, isGameSource, isLearningSource } from '../xp/rules.js';
-import { meaningOfPrompt, pairsOf, sentenceKey, sentencesOf, wordsOfExercise } from './sources.js';
+import { conversationOf, isAlphabetSoundKey, meaningOfPrompt, pairsOf, sentenceKey, sentencesOf, wordsOfExercise } from './sources.js';
 
 describe('meaningOfPrompt', () => {
   it('takes the quoted English out of a prompt that sets a scene', () => {
@@ -113,6 +114,38 @@ describe('pairsOf and wordsOfExercise', () => {
       ['Tu çawa yî?', 'Baş im.'],
     ]);
     expect(pairs[0]!.line.speaker).toBe('hamo');
+  });
+
+  it('reads a whole conversation, each line with who says it and what it means', () => {
+    const row = (lines: Array<{ speaker: number; text: string; en?: string }>) => ({
+      id: '00000000-0000-4000-8000-000000000004',
+      type: 'conversation',
+      payload: { id: 'conv789ghi', title: 'Silav', speakers: [{ character: 'hamo' }, { character: 'xezo' }], lines, prompt: 'Who?', options: ['Hamo', 'Xezo'], correctIndex: 0 },
+    });
+    const text = conversationOf(
+      row([
+        { speaker: 0, text: 'Silav!', en: 'Hello!' },
+        { speaker: 1, text: 'Tu çawa yî?' },
+        { speaker: 0, text: 'Baş im.', en: 'Well.' },
+      ]),
+      'kmr',
+    )!;
+    expect(text.title).toBe('Silav');
+    expect(text.lines).toEqual([
+      { ku: 'Silav!', en: 'Hello!', speaker: 'hamo' },
+      { ku: 'Tu çawa yî?', en: null, speaker: 'xezo' },
+      { ku: 'Baş im.', en: 'Well.', speaker: 'hamo' },
+    ]);
+    // a line in the other variety's script keeps the whole conversation out
+    expect(conversationOf(row([{ speaker: 0, text: 'Silav!' }, { speaker: 1, text: 'سڵاو' }]), 'kmr')).toBeNull();
+    expect(conversationOf({ ...row([]), type: 'translate' }, 'kmr')).toBeNull();
+  });
+
+  it('tells a letter’s sound from a word among the alphabet’s recordings', () => {
+    expect(isAlphabetSoundKey('kmr:sound:c')).toBe(true);
+    expect(isAlphabetSoundKey('ckb:sound:ڵ')).toBe(true);
+    expect(isAlphabetSoundKey('kmr:word:c')).toBe(false);
+    expect(isAlphabetSoundKey('pair:bar')).toBe(false);
   });
 
   it('reads the single words a match-pairs item teaches', () => {

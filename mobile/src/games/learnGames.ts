@@ -17,7 +17,7 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
  */
 
 /** The screens the learning games open on (root stack routes). */
-export type LearnGameRoute = 'BuildSentence' | 'LastLetter' | 'Bluff' | 'WhoAmI';
+export type LearnGameRoute = 'BuildSentence' | 'MemoryThief' | 'HearIt' | 'LastLetter' | 'Impostor' | 'DontSay' | 'Bluff' | 'WhoAmI';
 
 export interface PhoneGame {
   route: LearnGameRoute;
@@ -28,7 +28,12 @@ export interface PhoneGame {
 
 export const PHONE_LEARN_GAMES: Partial<Record<LearnGameId, PhoneGame>> = {
   'build-sentence': { route: 'BuildSentence', name: 'games.sentence.name', line: 'games.card.sentence' },
+  'memory-thief': { route: 'MemoryThief', name: 'games.memory.name', line: 'games.card.memory' },
+  'hear-it': { route: 'HearIt', name: 'games.hear.name', line: 'games.card.hear' },
   'last-letter': { route: LAST_LETTER_CARD.route, name: LAST_LETTER_CARD.nameKey, line: LAST_LETTER_CARD.lineKey },
+  // the party games are listed where /games/availability finds enough approved cards for the learner's Kurdish
+  impostor: { route: 'Impostor', name: 'games.impostor.name', line: 'games.invite.blurb.impostor' },
+  'dont-say': { route: 'DontSay', name: 'games.dontSay.name', line: 'games.invite.blurb.dontSay' },
   bluff: { route: 'Bluff', name: 'games.bluff.name', line: 'games.bluff.blurb' },
   'who-am-i': { route: 'WhoAmI', name: 'games.whoAmI.name', line: 'games.whoAmI.blurb' },
 };
@@ -49,6 +54,22 @@ export function useAvailability(dialect: GameDialect): GamesAvailability | null 
     };
   }, [client, dialect]);
   return availability;
+}
+
+/** A round of a game this learner left unfinished in a variety, to offer first; null when there is none (or until it answers). */
+export function useOpenRound(game: LearnGameId, dialect: GameDialect): string | null {
+  const { client } = useAuth();
+  const [open, setOpen] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    void client.get<{ id: string | null }>(`/games/solo/open?game=${game}&dialect=${dialect}`).then((res) => {
+      if (live && res.ok) setOpen(res.data.id);
+    });
+    return () => {
+      live = false;
+    };
+  }, [client, game, dialect]);
+  return open;
 }
 
 /** The learning games to list for this learner now, in the learner's own Kurdish. */

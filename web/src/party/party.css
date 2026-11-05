@@ -1,0 +1,115 @@
+/*
+ * What the party games' pages share on the website (party/PartyPage.tsx): the
+ * start's three steps and its "with friends" panel, the lobby's settings line,
+ * and the timer bar that empties as a wait runs out. Flat planes from the
+ * palette; under Reduce Motion the bar jumps rather than glides.
+ */
+.party-start {
+  display: grid;
+  gap: var(--space-4);
+}
+.party-how,
+.party-way {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+}
+.party-way-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.party-steps {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.party-step {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+}
+.party-step-n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-weight: 700;
+}
+.party-not-offered {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  text-align: center;
+}
+.party-lobby-note {
+  margin: 0;
+}
+
+.party-timer {
+  position: relative;
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--separator);
+  overflow: hidden;
+}
+.party-timer-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--primary);
+  transform-origin: left center;
+  transition: transform 1s linear;
+}
+:dir(rtl) .party-timer-fill {
+  transform-origin: right center;
+}
+.party-timer.is-low .party-timer-fill {
+  background: var(--danger);
+}
+
+/* a box a clue or a guess is typed in */
+.party-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: center;
+}
+.party-input {
+  min-height: 48px;
+  font-size: 18px;
+}
+.party-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--danger);
+}
+.mp-start-problem {
+  margin: 0;
+  color: var(--ink-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .party-timer-fill {
+    transition: none;
+  }
+}
+
+/* on a phone the box takes the whole width, and its button sits under it */
+@media (max-width: 420px) {
+  .party-compose {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .party-compose .btn {
+    width: 100%;
+    min-height: 44px;
+  }
+}

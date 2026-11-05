@@ -20,6 +20,7 @@ import {
   type GameAvailability,
   type GameContentKind,
   type GameDialect,
+  type GameDifficulty,
   type GameLevel,
   type GamesAvailability,
   type LearnGameId,
@@ -59,12 +60,24 @@ const UNLEVELLED: ReadonlySet<LearnGameId> = new Set(['hear-it', 'last-letter', 
 /** Question templates Who Am I? needs before an identity is any use. */
 const WHO_AM_I_TEMPLATES = WHO_AM_I_MIN_TEMPLATES;
 
+/**
+ * A game's own count, when what it can be played with is more than rows or
+ * readers counted as they are: The Memory Thief counts the passages that hold
+ * enough words to take, Hear It, Find It the recordings each rung can ask
+ * about. `difficulties`, when given, are the game's own word on which
+ * difficulties a round can be made at; otherwise they follow from the levels.
+ */
+export interface GameCounter {
+  count(dialect: GameDialect): Promise<{ levels: Levels; difficulties?: GameDifficulty[] }>;
+}
+
 export class GameAvailabilityService {
   constructor(
     private readonly db: Pick<pg.Pool, 'query'>,
     private readonly sources: TrustedSources,
     private readonly sentences: BuildSentenceGame,
     private readonly cache: Cache | null = null,
+    private readonly counters: Partial<Record<LearnGameId, GameCounter>> = {},
   ) {}
 
   async forDialect(dialect: GameDialect): Promise<GamesAvailability> {
@@ -86,6 +99,9 @@ export class GameAvailabilityService {
       this.db.query<{ n: number }>(`SELECT count(*)::int AS n FROM dict_entries WHERE in_games AND dialect = $1`, [courseSpelling(dialect)]),
       bluffCounts(this.db, dialect),
     ]);
+    const own = new Map(
+      await Promise.all(Object.entries(this.counters).map(async ([id, counter]) => [id, await counter!.count(dialect)] as const)),
+    );
     const byKind = new Map<string, Levels>();
     for (const r of rows.rows) {
       const levels = byKind.get(r.kind) ?? zero();
@@ -123,9 +139,10 @@ export class GameAvailabilityService {
     };
 
     const games: GameAvailability[] = LEARN_GAMES.filter((g) => g.dialects.includes(dialect)).map((g) => {
-      const levels = levelsOf(g.id);
+      const counted = own.get(g.id);
+      const levels = counted?.levels ?? levelsOf(g.id);
       const levelled = !UNLEVELLED.has(g.id);
-      const difficulties = availableDifficulties(levels, g.minimum, levelled);
+      const difficulties = counted?.difficulties ?? availableDifficulties(levels, g.minimum, levelled);
       return { id: g.id, levels, levelled, minimum: g.minimum, difficulties, available: difficulties.length > 0 };
     });
     return { dialect, games };

@@ -11,6 +11,8 @@ export const GAME_NAME_KEY: Record<PlayGame, TranslationKey> = {
   'rhyme-match': 'games.rhymeMatch.name',
   stories: 'stories.title',
   'last-letter': 'games.lastLetter.name',
+  impostor: 'games.impostor.name',
+  'dont-say': 'games.dontSay.name',
   bluff: 'games.bluff.name',
   'who-am-i': 'games.whoAmI.name',
 };
@@ -20,6 +22,8 @@ export const GAME_ICON: Record<PlayGame, IconName> = {
   'rhyme-match': 'speaker',
   stories: 'story',
   'last-letter': 'link',
+  impostor: 'people',
+  'dont-say': 'block',
   bluff: 'quotes',
   'who-am-i': 'question',
 };

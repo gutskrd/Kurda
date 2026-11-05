@@ -3,14 +3,12 @@
  * (api/src/mp), and Who Am I? gets its first question templates, as drafts.
  *
  * - The lists of games the database keeps take the two new ones: the
- *   generic lobbies' own (`game_lobbies.game`), and every list migration
- *   multiplayer-learning-games widened for the play layer — invites, rematch
- *   offers, the chats' game cards and the Game Ranks tables. Each list is
- *   written out whole, with the party games built beside these on the same
- *   engine (Kurdish Impostor, Don't Say the Word!) included, so whichever of
- *   their migrations runs last leaves every game in. As before, the wider
- *   checks are added NOT VALID: every row already there passes them, and
- *   nothing is scanned while this runs.
+ *   generic lobbies' own (`game_lobbies.game`), and every list the play layer
+ *   keeps — invites, rematch offers, the chats' game cards and the Game Ranks
+ *   tables. Each list is widened from what it holds when this runs, rather
+ *   than written out again in full, so games other migrations added beside
+ *   this one stay in. As before, the wider checks are added NOT VALID: every
+ *   row already there passes them, and nothing is scanned while this runs.
  * - Who Am I? asks yes/no questions from approved `question_template` rows.
  *   A small set per variety is seeded here as drafts written for the app
  *   (`source = 'starter'`, unreviewed), one per fact an identity's table can
@@ -20,18 +18,12 @@
  *   Seeded once, here: one an editor deletes stays deleted.
  */
 
-/** Every game that has lobbies (shared PLAY_GAMES; a test compares the two). */
-const PLAY_GAMES = ['wordle-battle', 'rhyme-match', 'stories', 'last-letter', 'impostor', 'dont-say', 'bluff', 'who-am-i'];
-/** The games the generic engine runs (shared MULTI_GAMES). */
-const MULTI_GAMES = ['last-letter', 'impostor', 'dont-say', 'bluff', 'who-am-i'];
-/** This migration's own, taken out again on the way down. */
-const MINE = ['bluff', 'who-am-i'];
+/** This migration's games, put into each list on the way up and taken out again on the way down. */
+const NEW_GAMES = ['bluff', 'who-am-i'];
 
-const list = (games) => `(${games.map((g) => `'${g}'`).join(',')})`;
-const without = (games) => games.filter((g) => !MINE.includes(g));
-
-/** The tables whose `game` column is checked against the list, with the check's name. */
+/** The tables whose `game` column is checked against a list, with the check's name. */
 const GAME_CHECKS = [
+  ['game_lobbies', 'game_lobbies_game_check'],
   ['play_invites', 'play_invites_game_check'],
   ['play_rematches', 'play_rematches_game_check'],
   ['game_ratings', 'game_ratings_game_check'],
@@ -43,9 +35,39 @@ const GAME_CHECKS = [
   ['rank_season_results', 'rank_season_results_game_check'],
 ];
 
+/** The chat tables, whose `kind` check names the games a game card may be for. */
+const MESSAGE_TABLES = ['dm_messages', 'group_messages'];
+
+const list = (games) => `(${games.map((g) => `'${g}'`).join(',')})`;
+const literals = (text) => [...text.matchAll(/'([a-z][a-z0-9-]*)'/g)].map((m) => m[1]);
+const union = (a, b) => [...new Set([...a, ...b])];
+const without = (a, b) => a.filter((g) => !b.includes(g));
+
 const kindCheck = (games) => `(kind = 'text' AND body IS NOT NULL)
            OR (kind = 'gift' AND gift_batch_id IS NOT NULL)
            OR (kind = 'game' AND game IN ${list(games)} AND game_lobby_id IS NOT NULL)`;
+
+async function definition(pgm, table, name) {
+  const res = await pgm.db.query(
+    `SELECT pg_get_constraintdef(c.oid) AS def FROM pg_constraint c WHERE c.conrelid = to_regclass($1) AND c.conname = $2`,
+    [table, name],
+  );
+  if (!res.rows[0]) throw new Error(`no check ${name} on ${table}`);
+  return res.rows[0].def;
+}
+
+/** The games a `game IN (...)` check names now. */
+async function gamesIn(pgm, table, name) {
+  return literals(await definition(pgm, table, name));
+}
+
+/** The games a chat table's game card may name now: the list inside its `kind = 'game'` branch. */
+async function cardGames(pgm, table) {
+  const def = await definition(pgm, table, `${table}_kind_check`);
+  const inside = def.match(/game\s*=\s*ANY\s*\(\s*\(?ARRAY\[([^\]]*)\]/i) ?? def.match(/game\s+IN\s*\(([^)]*)\)/i);
+  if (!inside) throw new Error(`cannot read the games in ${table}_kind_check`);
+  return literals(inside[1]);
+}
 
 /** What each question means, in the interface languages that are not Kurdish (the Kurdish is the row's own). */
 const MEANINGS = {
@@ -158,16 +180,16 @@ const STARTERS = [
   ['ckb', 'works-outdoors', 'ئایا لە دەرەوە کار دەکات؟', 'لە دەرەوە for “outdoors”.'],
 ];
 
-export const up = (pgm) => {
-  pgm.sql(`ALTER TABLE game_lobbies DROP CONSTRAINT IF EXISTS game_lobbies_game_check`);
-  pgm.sql(`ALTER TABLE game_lobbies ADD CONSTRAINT game_lobbies_game_check CHECK (game IN ${list(MULTI_GAMES)}) NOT VALID`);
+export const up = async (pgm) => {
   for (const [table, name] of GAME_CHECKS) {
-    pgm.sql(`ALTER TABLE ${table} DROP CONSTRAINT IF EXISTS ${name}`);
-    pgm.sql(`ALTER TABLE ${table} ADD CONSTRAINT ${name} CHECK (game IN ${list(PLAY_GAMES)}) NOT VALID`);
+    const games = union(await gamesIn(pgm, table, name), NEW_GAMES);
+    pgm.sql(`ALTER TABLE ${table} DROP CONSTRAINT ${name}`);
+    pgm.sql(`ALTER TABLE ${table} ADD CONSTRAINT ${name} CHECK (game IN ${list(games)}) NOT VALID`);
   }
-  for (const table of ['dm_messages', 'group_messages']) {
-    pgm.sql(`ALTER TABLE ${table} DROP CONSTRAINT IF EXISTS ${table}_kind_check`);
-    pgm.sql(`ALTER TABLE ${table} ADD CONSTRAINT ${table}_kind_check CHECK (${kindCheck(PLAY_GAMES)}) NOT VALID`);
+  for (const table of MESSAGE_TABLES) {
+    const games = union(await cardGames(pgm, table), NEW_GAMES);
+    pgm.sql(`ALTER TABLE ${table} DROP CONSTRAINT ${table}_kind_check`);
+    pgm.sql(`ALTER TABLE ${table} ADD CONSTRAINT ${table}_kind_check CHECK (${kindCheck(games)}) NOT VALID`);
   }
 
   const rows = STARTERS.map(([dialect, fact, ku, doubt]) => ({
@@ -182,21 +204,21 @@ export const up = (pgm) => {
   );
 };
 
-export const down = (pgm) => {
+export const down = async (pgm) => {
   // the starters nobody has touched since; one an editor worked on is theirs now
   pgm.sql(`DELETE FROM game_content WHERE kind = 'question_template' AND source = 'starter' AND status = 'draft' AND review_status = 'unreviewed' AND lock_version = 0`);
-  const theirs = list(MINE);
-  for (const table of ['dm_messages', 'group_messages']) {
-    pgm.sql(`DELETE FROM ${table} WHERE kind = 'game' AND game IN ${theirs}`);
+  const gone = list(NEW_GAMES);
+  for (const table of MESSAGE_TABLES) {
+    const games = without(await cardGames(pgm, table), NEW_GAMES);
+    pgm.sql(`DELETE FROM ${table} WHERE kind = 'game' AND game IN ${gone}`);
     pgm.sql(`ALTER TABLE ${table} DROP CONSTRAINT ${table}_kind_check`);
-    pgm.sql(`ALTER TABLE ${table} ADD CONSTRAINT ${table}_kind_check CHECK (${kindCheck(without(PLAY_GAMES))}) NOT VALID`);
+    pgm.sql(`ALTER TABLE ${table} ADD CONSTRAINT ${table}_kind_check CHECK (${kindCheck(games)}) NOT VALID`);
   }
-  for (const [table, name] of GAME_CHECKS) {
-    pgm.sql(`DELETE FROM ${table} WHERE game IN ${theirs}`);
+  // the lobbies last: deleting them takes their seats, moves and invites with them
+  for (const [table, name] of [...GAME_CHECKS.slice(1), GAME_CHECKS[0]]) {
+    const games = without(await gamesIn(pgm, table, name), NEW_GAMES);
+    pgm.sql(`DELETE FROM ${table} WHERE game IN ${gone}`);
     pgm.sql(`ALTER TABLE ${table} DROP CONSTRAINT ${name}`);
-    pgm.sql(`ALTER TABLE ${table} ADD CONSTRAINT ${name} CHECK (game IN ${list(without(PLAY_GAMES))}) NOT VALID`);
+    pgm.sql(`ALTER TABLE ${table} ADD CONSTRAINT ${name} CHECK (game IN ${list(games)}) NOT VALID`);
   }
-  pgm.sql(`DELETE FROM game_lobbies WHERE game IN ${theirs}`);
-  pgm.sql(`ALTER TABLE game_lobbies DROP CONSTRAINT game_lobbies_game_check`);
-  pgm.sql(`ALTER TABLE game_lobbies ADD CONSTRAINT game_lobbies_game_check CHECK (game IN ${list(without(MULTI_GAMES))}) NOT VALID`);
 };

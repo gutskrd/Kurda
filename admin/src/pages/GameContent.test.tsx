@@ -2,7 +2,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdminGameContent, GameContentReadiness } from '@kurda/shared';
 import { fakeApi, json, on } from '../test/fetch';
-import { button, click, render, settle, text, type } from '../test/dom';
+import { button, choose, click, render, settle, text, type } from '../test/dom';
 import { withKit } from '../test/render';
 import { GameContent } from './GameContent';
 
@@ -151,5 +151,76 @@ describe('one row', () => {
     const page = await open(`#/game-content/${ID}`);
     await type(page.querySelector('input[lang="ku"]'), 'Ev mala min e.');
     expect(text(page)).toContain('once saved, it needs approving again');
+  });
+});
+
+describe('the party games’ cards', () => {
+  // stand-in Kurdish for the fixtures, never shown to a learner
+  const vocabulary = {
+    words: [
+      { key: 'w:kmr:1', ku: 'pisîk', meanings: { en: 'cat', de: 'Katze' } },
+      { key: 'w:kmr:2', ku: 'mişk', meanings: { en: 'mouse' } },
+      { key: 'w:kmr:3', ku: 'şîr', meanings: { en: 'milk' } },
+      { key: 'w:kmr:4', ku: 'nerm', meanings: { en: 'soft' } },
+    ],
+    total: 4,
+  };
+  const category = row({
+    id: '7d1f0f6a-3b9a-4c55-8f0b-0c3c0bde0002',
+    kind: 'word_category',
+    game: 'impostor',
+    payload: { slug: 'animals', ku: 'heywan', meanings: { en: 'animal' } },
+    headline: 'heywan',
+    source: 'starter',
+  });
+
+  it('makes a word card by picking its word from published vocabulary and its category from the list', async () => {
+    const api = fakeApi(
+      on('GET', /^\/admin\/game-content\/vocabulary\?/, json(vocabulary)),
+      on('GET', /kind=word_category/, json({ rows: [category], total: 1 })),
+      on('POST', '/admin/game-content', (call) => json(row({ kind: 'word_card', game: 'impostor', payload: call.body as never, headline: 'pisîk' }), 201)),
+    );
+    const page = await open('#/game-content/new?kind=word_card');
+    await click(button(page, /^pisîk/));
+    expect(page.querySelector('.gc-picked [lang="ku"]')?.textContent).toBe('pisîk');
+    expect((page.querySelector('.gc-meanings input') as HTMLInputElement).value).toBe('cat');
+    await choose(page.querySelector('select[aria-label="Category"]'), 'animals');
+    expect(text(page)).toContain('The impostor is shown: heywan (animal)');
+    expect(text(page)).toContain('Ready to save.');
+    await click(button(page, 'Save draft'));
+    const created = api.calls.find((c) => c.method === 'POST' && c.path === '/admin/game-content')!;
+    expect(created.body).toMatchObject({
+      kind: 'word_card',
+      dialect: 'kmr',
+      payload: { word: 'pisîk', meanings: { en: 'cat', de: 'Katze' }, category: 'animals', hint: { ku: 'heywan', meanings: { en: 'animal' } }, forms: [] },
+    });
+    // no Kurdish was typed: every Kurdish field is a picked word
+    expect(page.querySelector('input[lang="ku"]')).toBeNull();
+  });
+
+  it('makes a forbidden-word card from picked words, three to five of them', async () => {
+    fakeApi(on('GET', /^\/admin\/game-content\/vocabulary\?/, json(vocabulary)));
+    const page = await open('#/game-content/new?kind=taboo_card');
+    await click(button(page, /^pisîk/));
+    expect(text(page)).toContain('to fix before it can be saved');
+    for (const w of [/^mişk/, /^şîr/, /^nerm/]) {
+      await click(button(page, 'Add a forbidden word'));
+      await click(button(page, w));
+    }
+    expect(text(page)).toContain('Ready to save.');
+    // a word already on the card is not offered again
+    await click(button(page, 'Add a forbidden word'));
+    expect(button(page, /^pisîk —/)).toBeNull();
+  });
+
+  it('imports Kurdish Impostor’s starter word cards as drafts from published vocabulary', async () => {
+    const api = fakeApi(
+      on('GET', /^\/admin\/game-content\?/, json({ rows: [], total: 0 })),
+      on('POST', '/admin/game-content/import', json({ created: 9, skipped: 0 })),
+    );
+    const page = await open('#/game-content');
+    await click(button(page, 'Starter word cards from vocabulary (Kurmancî)'));
+    expect(api.calls.find((c) => c.method === 'POST')!.body).toEqual({ from: 'vocabulary', dialect: 'kmr' });
+    expect(text(document.body)).toContain('Imported 9 new drafts from published vocabulary (Kurmancî)');
   });
 });

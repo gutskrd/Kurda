@@ -8,6 +8,8 @@ export * from './dialect.js';
 export * from './content.js';
 export * from './solo.js';
 export * from './build-sentence/ladder.js';
+export * from './memory-thief/rules.js';
+export * from './hear-it/rules.js';
 export * from './bluff/rules.js';
 export * from './who-am-i/index.js';
 export * from './word-cards.js';

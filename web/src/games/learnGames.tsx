@@ -9,6 +9,9 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
 // the path's colours: a game's card wears one of its tones (`lp-tone-*`)
 import '../learn/path.css';
 import './games.css';
+// the learning games' own cards are drawn by their own stylesheets
+import './memory-thief.css';
+import './hear-it.css';
 import './party-minis.css';
 
 /**
@@ -67,6 +70,31 @@ function ChainMini(): React.JSX.Element {
   );
 }
 
+/** A page with ruled lines of text, one word lifting off it and a glowing gap where it was: The Memory Thief. */
+function MemoryMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--memory" aria-hidden>
+      <span className="lg-mini-page">
+        <span className="lg-mini-row">
+          <span className="lg-mini-ink" style={{ width: 54 }} />
+          <span className="lg-mini-ink" style={{ width: 30 }} />
+          <span className="lg-mini-gap" style={{ width: 40 }} />
+        </span>
+        <span className="lg-mini-row">
+          <span className="lg-mini-ink" style={{ width: 36 }} />
+          <span className="lg-mini-gap" style={{ width: 46 }} />
+          <span className="lg-mini-ink" style={{ width: 50 }} />
+        </span>
+        <span className="lg-mini-row">
+          <span className="lg-mini-ink" style={{ width: 62 }} />
+          <span className="lg-mini-ink" style={{ width: 28 }} />
+        </span>
+        <span className="lg-mini-lift" style={{ width: 40 }} />
+      </span>
+    </div>
+  );
+}
+
 /** Note cards fanned on a table with a token on one: Kurdish Bluff, without words. */
 function BluffMini(): React.JSX.Element {
   return (
@@ -84,7 +112,7 @@ function BluffMini(): React.JSX.Element {
 function WhoAmIMini(): React.JSX.Element {
   return (
     <div className="lg-mini lg-mini--whoami" aria-hidden>
-      <span className="lg-mini-card">?</span>
+      <span className="lg-mini-forehead">?</span>
       <span className="lg-mini-line">
         <span className="lg-mini-stamp is-yes" />
         <span className="lg-mini-stamp" />
@@ -93,9 +121,64 @@ function WhoAmIMini(): React.JSX.Element {
   );
 }
 
+/** A small radio: a grille, a play key and the bars of a voice: Hear It, Find It. */
+function HearMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--hear" aria-hidden>
+      <span className="lg-mini-radio">
+        <span className="lg-mini-grille" />
+        <span className="lg-mini-key" />
+        <span className="lg-mini-wave">
+          {[10, 18, 28, 16, 24, 12, 20].map((h, i) => (
+            <span key={i} className="lg-mini-bar" style={{ height: h }} />
+          ))}
+        </span>
+      </span>
+    </div>
+  );
+}
+
+/** Seats along a table with one of them lit: Kurdish Impostor, without words. */
+function TableMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--table" aria-hidden>
+      <span className="lg-mini-seats">
+        <span className="lg-mini-seat" />
+        <span className="lg-mini-seat is-lit" />
+        <span className="lg-mini-seat" />
+      </span>
+      <span className="lg-mini-tile is-on" style={{ width: 96 }} />
+      <span className="lg-mini-seats">
+        <span className="lg-mini-seat" />
+        <span className="lg-mini-seat" />
+      </span>
+    </div>
+  );
+}
+
+/** A card with its words struck through, and a buzzer: Don't Say the Word!, without words. */
+function CardMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--card" aria-hidden>
+      <span className="lg-mini-card">
+        <span className="lg-mini-tile is-on" style={{ width: 54 }} />
+        <span className="lg-mini-strike" style={{ width: 40 }} />
+        <span className="lg-mini-strike" style={{ width: 48 }} />
+        <span className="lg-mini-strike" style={{ width: 34 }} />
+      </span>
+      <span className="lg-mini-buzzer" />
+    </div>
+  );
+}
+
 export const WEB_LEARN_GAMES: Partial<Record<LearnGameId, WebGame>> = {
   'build-sentence': { href: '/app/games/build-sentence', nameKey: 'games.sentence.name', bodyKey: 'games.sentence.body', modes: ['solo'], Visual: SentenceMini },
+  'memory-thief': { href: '/app/games/memory-thief', nameKey: 'games.memory.name', bodyKey: 'games.memory.body', modes: ['solo'], Visual: MemoryMini },
+  'hear-it': { href: '/app/games/hear-it', nameKey: 'games.hear.name', bodyKey: 'games.hear.body', modes: ['solo'], Visual: HearMini },
   'last-letter': { href: LAST_LETTER_CARD.href, nameKey: LAST_LETTER_CARD.nameKey, bodyKey: LAST_LETTER_CARD.blurbKey, modes: ['online', 'solo'], Visual: ChainMini },
+  // the party games are listed where /games/availability finds enough approved cards for the learner's variety
+  impostor: { href: '/app/games/impostor', nameKey: 'games.impostor.name', bodyKey: 'games.invite.blurb.impostor', modes: ['online'], Visual: TableMini },
+  'dont-say': { href: '/app/games/dont-say', nameKey: 'games.dontSay.name', bodyKey: 'games.invite.blurb.dontSay', modes: ['online'], Visual: CardMini },
   bluff: { href: '/app/games/bluff', nameKey: 'games.bluff.name', bodyKey: 'games.bluff.blurb', modes: ['online'], Visual: BluffMini },
   'who-am-i': { href: '/app/games/who-am-i', nameKey: 'games.whoAmI.name', bodyKey: 'games.whoAmI.blurb', modes: ['solo', 'online'], Visual: WhoAmIMini },
 };
@@ -122,6 +205,22 @@ export function useAvailability(dialect: GameDialect): GamesAvailability | null 
     };
   }, [client, dialect]);
   return availability;
+}
+
+/** A round of a game this learner left unfinished in a variety, to offer first; null when there is none (or until it answers). */
+export function useOpenRound(game: LearnGameId, dialect: GameDialect): string | null {
+  const { client } = useAuth();
+  const [open, setOpen] = useState<string | null>(null);
+  useEffect(() => {
+    let live = true;
+    void client.get<{ id: string | null }>(`/games/solo/open?game=${game}&dialect=${dialect}`).then((res) => {
+      if (live && res.ok) setOpen(res.data.id);
+    });
+    return () => {
+      live = false;
+    };
+  }, [client, game, dialect]);
+  return open;
 }
 
 /** The learning games to list for this learner now. */
