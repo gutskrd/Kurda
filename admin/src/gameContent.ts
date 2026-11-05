@@ -10,7 +10,8 @@
  *   POST   /admin/game-content/:id/{submit|publish|unpublish|archive}   { lockVersion }
  *   POST   /admin/game-content/:id/review     { approved, note?, lockVersion }
  *   DELETE /admin/game-content/:id?lockVersion=
- *   POST   /admin/game-content/import         { from: 'lessons' | 'stories', dialect }: drafts from approved content
+ *   POST   /admin/game-content/import         { from: 'lessons' | 'stories' | 'vocabulary', dialect }: drafts from approved content
+ *   GET    /admin/game-content/vocabulary?dialect&q&limit   published vocabulary, for a card's words to be picked from
  *
  * The rules are the stories': every change names the version it was made on
  * (409 STALE when someone else changed it first), publishing needs a
@@ -119,7 +120,7 @@ export function blankPayload(kind: GameContentKind): Record<string, unknown> {
     case 'word_category':
       return { slug: '', ku: '', meanings };
     case 'word_card':
-      return { word: '', meanings, category: '', hint: { ku: '', meanings } };
+      return { word: '', meanings, category: '', hint: { ku: '', meanings }, forms: [] };
     case 'taboo_card':
       return { target: '', meanings, forbidden: ['', '', ''], forms: [] };
     case 'bluff_card':
@@ -176,5 +177,25 @@ export const reviewGameContent = (id: string, approved: boolean, note: string | 
 export const deleteGameContent = (id: string, lockVersion: number): Promise<{ id: string; deleted: true }> =>
   api(`${at(id)}?lockVersion=${lockVersion}`, { method: 'DELETE' });
 
-export const importGameContent = (from: 'lessons' | 'stories', dialect: GameDialect): Promise<{ created: number; skipped: number }> =>
+export type GameContentImport = 'lessons' | 'stories' | 'vocabulary';
+
+export const importGameContent = (from: GameContentImport, dialect: GameDialect): Promise<{ created: number; skipped: number }> =>
   api(`${BASE}/import`, { method: 'POST', body: { from, dialect } });
+
+/** A published word a card's Kurdish can be picked from (api/src/games/sources.ts `VocabularyWord`). */
+export interface VocabularyPick {
+  key: string;
+  ku: string;
+  meanings: Partial<Record<string, string>>;
+}
+
+/** Published vocabulary of a variety, by its Kurdish or by what it means. */
+export const searchVocabulary = (dialect: GameDialect, q: string): Promise<{ words: VocabularyPick[]; total: number }> => {
+  const p = new URLSearchParams({ dialect, limit: '20' });
+  if (q.trim()) p.set('q', q.trim());
+  return api(`${BASE}/vocabulary?${p.toString()}`);
+};
+
+/** The categories of a variety the word cards can be filed under (every one, whatever its state: the card is reviewed itself). */
+export const listWordCategories = (dialect: GameDialect): Promise<{ rows: AdminGameContent[]; total: number }> =>
+  api(`${BASE}?kind=word_category&dialect=${dialect}&limit=100`);

@@ -660,3 +660,9 @@ button.cv-line-main {
 @media (max-width: 720px) {
   .gc-ready { display: block; overflow-x: auto; }
 }
+/* the card editors' vocabulary picker (GameCardFields.tsx) */
+.gc-picker { display: grid; gap: 6px; }
+.gc-picks { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.gc-pick { min-height: 36px; padding: 4px 10px; border: 1px solid var(--separator); border-radius: 999px; background: transparent; color: inherit; cursor: pointer; }
+.gc-pick:hover { background: var(--hover, rgba(127, 127, 127, 0.12)); }
+.gc-picked { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }

@@ -37,6 +37,8 @@ export const GAME_NAME: Readonly<Record<RankedGame, string>> = {
   'rhyme-match': 'Rhyme Match',
   stories: 'Stories',
   'last-letter': 'The Last Letter',
+  impostor: 'Kurdish Impostor',
+  'dont-say': 'Don’t Say the Word!',
 };
 
 /** "Çiya (Mountain)" */

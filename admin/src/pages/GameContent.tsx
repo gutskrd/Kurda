@@ -35,7 +35,9 @@ import {
   saveGameContent,
   type GameContentAction,
   type GameContentFilter,
+  type GameContentImport,
 } from '../gameContent';
+import { TabooCardFields, WordCardFields } from './GameCardFields';
 import {
   Badge,
   Banner,
@@ -71,8 +73,11 @@ import {
  *
  * Learners only ever meet a row that is published, and only an approved row
  * can be published. The importers copy approved Kurdish (published lessons'
- * sentences, published stories' paragraphs) into drafts, so nothing is typed
- * again; each draft still goes through review before a game may show it.
+ * sentences, published stories' paragraphs, published vocabulary sorted into
+ * starter categories for Kurdish Impostor) into drafts, so nothing is typed
+ * again; the word and forbidden-word cards are made by picking their words
+ * from published vocabulary (GameCardFields.tsx). Each draft still goes
+ * through review before a game may show it.
  */
 export function GameContent(): React.JSX.Element {
   const route = useRoute();
@@ -91,7 +96,7 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' }): React.JSX.Elem
   const [importing, setImporting] = useState(false);
   const [newKind, setNewKind] = useState<GameContentKind>('sentence');
 
-  const runImport = async (from: 'lessons' | 'stories', dialect: GameDialect): Promise<void> => {
+  const runImport = async (from: GameContentImport, dialect: GameDialect): Promise<void> => {
     setImporting(true);
     try {
       const res = await importGameContent(from, dialect);
@@ -138,7 +143,7 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' }): React.JSX.Elem
         <>
           <Section
             title="Import from approved content"
-            description="Makes drafts from what is already published, without typing the Kurdish again: lessons’ sentences with their English and accepted orders, stories’ paragraphs with their glossary words to hide. Each draft still needs review. Running an import twice adds nothing new."
+            description="Makes drafts from what is already published, without typing the Kurdish again: lessons’ sentences with their English and accepted orders, stories’ paragraphs with their glossary words to hide, and Kurdish Impostor’s word cards — published words sorted into starter categories by their meaning, whose category names wait for a native speaker. Each draft still needs review. Running an import twice adds nothing new."
           >
             <div className="row">
               {GAME_DIALECTS.map((d) => (
@@ -148,6 +153,9 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' }): React.JSX.Elem
                   </Button>
                   <Button icon="upload" busy={importing} onClick={() => void runImport('stories', d)}>
                     Passages from stories ({GAME_DIALECT_NAME[d]})
+                  </Button>
+                  <Button icon="upload" busy={importing} onClick={() => void runImport('vocabulary', d)}>
+                    Starter word cards from vocabulary ({GAME_DIALECT_NAME[d]})
                   </Button>
                 </span>
               ))}
@@ -703,6 +711,10 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
           <SentenceFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
         ) : kind === 'passage' ? (
           <PassageFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
+        ) : kind === 'word_card' ? (
+          <WordCardFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} Meanings={MeaningsFields} />
+        ) : kind === 'taboo_card' ? (
+          <TabooCardFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} Meanings={MeaningsFields} />
         ) : (
           <JsonFields key={`${kind}:${row?.lockVersion ?? 'new'}`} payload={payload} onChange={setPayload} readOnly={!editable} />
         )}
