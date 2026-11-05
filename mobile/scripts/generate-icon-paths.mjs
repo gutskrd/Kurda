@@ -137,6 +137,8 @@ const MAP = {
   timer: { glyph: 'Timer', note: 'a question with a clock, and extra time' },
   'user-plus': { glyph: 'UserPlus', note: 'invite a friend to play' },
   crown: { glyph: 'Crown', note: 'the host of a game' },
+  ticket: { glyph: 'Ticket', note: 'a game’s join code, and the way in with one' },
+  copy: { glyph: 'Copy', note: 'copy a join code' },
 
   // --- Game Ranks, leagues and badges (contract 4) ---
   mountains: { glyph: 'Mountains', note: 'Game Ranks: the climb from Deşt to Lûtke' },
