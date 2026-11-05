@@ -100,9 +100,9 @@ describe('scenes', () => {
     await settle();
     expect(api.calls.some((c) => c.path.startsWith('/admin/game-content/lines?dialect=kmr'))).toBe(true);
     expect(text(page)).toContain('Otobûs diçe, zû were!');
-    await click(page.querySelectorAll<HTMLButtonElement>('.gc-picker-list button')[0]!);
+    await click(page.querySelectorAll<HTMLButtonElement>('.gc-line-picker-list button')[0]!);
     expect(text(page)).toContain('Otobûs diçe, zû were!');
-    expect(page.querySelector('.gc-picker')).toBeNull();
+    expect(page.querySelector('.gc-line-picker')).toBeNull();
     expect((page.querySelector('button[aria-label="Remove wrong reply 1"]') as HTMLButtonElement).disabled).toBe(false);
     expect(text(page)).toContain('Ready to save.');
   });
@@ -122,7 +122,7 @@ describe('case files', () => {
     expect(text(page)).toContain('Add a card from a published line');
     await click(button(page, 'Add a card from a published line'));
     await settle();
-    await click(page.querySelectorAll<HTMLButtonElement>('.gc-picker-list button')[1]!);
+    await click(page.querySelectorAll<HTMLButtonElement>('.gc-line-picker-list button')[1]!);
     expect(text(page)).toContain('Baran îro ne li malê ye.');
     expect(api.calls.filter((c) => c.method === 'POST')).toHaveLength(0);
     // the new card carries the line's English to start from

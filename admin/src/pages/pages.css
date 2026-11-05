@@ -673,6 +673,6 @@ button.cv-line-main {
 .gc-card.row { display: flex; flex-wrap: wrap; align-items: center; }
 .gc-proof { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 6px 0 0; border: 0; }
 .gc-proof legend { padding: 0; color: var(--text-dim); font-size: 12px; }
-.gc-picker { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--separator); border-radius: 10px; }
-.gc-picker-list { display: grid; gap: 6px; max-height: 360px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
-.gc-picker-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--separator); }
+.gc-line-picker { display: grid; gap: 10px; padding: 12px; border: 1px solid var(--separator); border-radius: 10px; }
+.gc-line-picker-list { display: grid; gap: 6px; max-height: 360px; margin: 0; padding: 0; overflow-y: auto; list-style: none; }
+.gc-line-picker-list li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 0; border-top: 1px solid var(--separator); }

@@ -87,7 +87,7 @@ export function LinePicker({ dialect, onPick, label = 'Pick a published line', o
   const found = useLoad(() => publishedLines(dialect, q), [dialect, q]);
   const script = dialectDirection(dialect);
   return (
-    <div className="gc-picker" role="group" aria-label={label}>
+    <div className="gc-line-picker" role="group" aria-label={label}>
       <div className="row">
         <div className="search-box">
           <Icon name="search" size={16} />
@@ -104,7 +104,7 @@ export function LinePicker({ dialect, onPick, label = 'Pick a published line', o
       ) : found.data.lines.length === 0 ? (
         <p className="subtle">No published line matches.</p>
       ) : (
-        <ul className="gc-picker-list">
+        <ul className="gc-line-picker-list">
           {found.data.lines.map((line, i) => (
             <li key={`${line.origin.type}:${line.origin.ref}:${i}`}>
               <span className="gc-line">
