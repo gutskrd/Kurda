@@ -102,6 +102,8 @@ const GAME_COLOUR: Record<PlayGame, 'success' | 'gold' | 'primary'> = {
   'rhyme-match': 'gold',
   stories: 'primary',
   'last-letter': 'primary',
+  bluff: 'success',
+  'who-am-i': 'gold',
 };
 
 export function gameColour(colors: Palette, game: PlayGame): string {

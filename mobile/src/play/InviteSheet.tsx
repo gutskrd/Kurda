@@ -39,6 +39,8 @@ import { useRatedChoice } from '../ranks/ratedPrefs';
 import { restrictionOf } from '../reports/sendErrors';
 import { SearchField } from '../theme/SearchField';
 import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
+import { groupDialects, useMpAvailability } from '../games/mpAvailability';
+import { BluffChoices, RaceChoices } from '../games/partyChoices';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
@@ -134,7 +136,14 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const [dialect, setDialect] = useState<StoryDialect>(locale === 'ckb' ? 'sorani' : (prefs.dialect ?? 'kurmanci'));
   // The Last Letter, in the dialects whose dictionary can check players' words (asked only where it could be offered)
   const letterDialects = offeredDialects(useLastLetterAvailability(target.kind !== 'lobby'), 'group');
-  const offeredGames = PLAY_GAMES.filter((g) => g !== 'last-letter' || letterDialects.length > 0 || fixedGame === 'last-letter');
+  // Kurdish Bluff and the Who Am I? race, where their content lets them be played
+  const bluffOffers = useMpAvailability('bluff', target.kind !== 'lobby');
+  const raceOffers = useMpAvailability('who-am-i', target.kind !== 'lobby');
+  const offered = (g: PlayGame): boolean =>
+    g === 'last-letter' ? letterDialects.length > 0 : g === 'bluff' ? groupDialects(bluffOffers).length > 0 : g === 'who-am-i' ? groupDialects(raceOffers).length > 0 : true;
+  const offeredGames = PLAY_GAMES.filter((g) => offered(g) || fixedGame === g);
+  // their choices, handed up by their own fields; null when the game cannot be made in the Kurdish chosen
+  const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [story, setStory] = useState<SetupState>(() => initialSetup({ mode: 'duo', dialect, length: 'short' }));
   const [friends, setFriends] = useState<FriendSummary[] | null>(null);
@@ -241,6 +250,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
       const wanted = dialect === 'sorani' ? 'ckb' : 'kmr';
       return { dialect: letterDialects.includes(wanted) || letterDialects.length === 0 ? wanted : letterDialects[0], rated };
     }
+    if (game === 'bluff' || game === 'who-am-i') return { ...(partySettings ?? {}), rated };
     return { ...inviteSettings({ ...story, dialect }), rated };
   };
 
@@ -305,6 +315,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const needsFriend = target.kind === 'lobby' || target.kind === 'new' || target.kind === 'dm';
   const disabled = needsFriend && picked.length === 0;
   const storyDisabled = game === 'stories' && target.kind !== 'lobby' && stories.length === 0;
+  const partyDisabled = (game === 'bluff' || game === 'who-am-i') && target.kind !== 'lobby' && partySettings === null;
 
   const friendRow = (f: FriendSummary) => {
     const locked = f.userId === lockedId;
@@ -368,7 +379,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
             tone="primary"
             size="large"
             busy={busy}
-            disabled={disabled || storyDisabled}
+            disabled={disabled || storyDisabled || partyDisabled}
             onPress={() => void submit()}
           />
         </>
@@ -431,6 +442,9 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
               />
             </View>
           )}
+
+          {game === 'bluff' ? <BluffChoices offers={bluffOffers ?? []} dialect={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} /> : null}
+          {game === 'who-am-i' ? <RaceChoices offers={raceOffers ?? []} dialect={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} /> : null}
 
           <View style={styles.field}>
             <SectionLabel>{t('ranks.gameType')}</SectionLabel>

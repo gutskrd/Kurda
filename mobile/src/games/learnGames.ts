@@ -17,7 +17,7 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
  */
 
 /** The screens the learning games open on (root stack routes). */
-export type LearnGameRoute = 'BuildSentence' | 'LastLetter';
+export type LearnGameRoute = 'BuildSentence' | 'LastLetter' | 'Bluff' | 'WhoAmI';
 
 export interface PhoneGame {
   route: LearnGameRoute;
@@ -29,6 +29,8 @@ export interface PhoneGame {
 export const PHONE_LEARN_GAMES: Partial<Record<LearnGameId, PhoneGame>> = {
   'build-sentence': { route: 'BuildSentence', name: 'games.sentence.name', line: 'games.card.sentence' },
   'last-letter': { route: LAST_LETTER_CARD.route, name: LAST_LETTER_CARD.nameKey, line: LAST_LETTER_CARD.lineKey },
+  bluff: { route: 'Bluff', name: 'games.bluff.name', line: 'games.bluff.blurb' },
+  'who-am-i': { route: 'WhoAmI', name: 'games.whoAmI.name', line: 'games.whoAmI.blurb' },
 };
 
 const PLAYABLE = Object.keys(PHONE_LEARN_GAMES) as LearnGameId[];

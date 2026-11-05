@@ -106,6 +106,8 @@ import { RhymeMatchScreen } from './src/rhyme/RhymeMatchScreen';
 import { LastLetterScreen } from './src/lastletter/LastLetterScreen';
 import { RaceScreen } from './src/race/RaceScreen';
 import { BuildSentenceScreen } from './src/games/BuildSentenceScreen';
+import { BluffScreen } from './src/bluff/BluffScreen';
+import { WhoAmIScreen } from './src/whoami/WhoAmIScreen';
 import { KingdomScreen } from './src/kingdom/KingdomScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
@@ -177,6 +179,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
       LastLetter: inviteRoutePath('last-letter'),
+      Bluff: inviteRoutePath('bluff'),
+      WhoAmI: inviteRoutePath('who-am-i'),
       // `/app/games/stories?id=…` is a game to join; without an id it is the library
       Stories: inviteRoutePath('stories'),
       // a story's address; the website's `/app/learn/stories/:slug` is rewritten to it (navigation/tabs.ts)
@@ -577,6 +581,17 @@ function SignedInRoot() {
             <LastLetterScreen id={route.params?.id} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
+      </RootStack.Screen>
+      <RootStack.Screen name="Bluff" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <GuestWall reason="play" onBack={() => navigation.goBack()}>
+            <BluffScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      {/* Who Am I? alone is learning, which a guest may do; its race keeps the play wall inside (whoami/WhoAmIScreen) */}
+      <RootStack.Screen name="WhoAmI" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Race" options={{ presentation: 'card' }}>
         {({ navigation }) => (

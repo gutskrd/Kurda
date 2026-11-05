@@ -11,6 +11,8 @@ export const GAME_NAME_KEY: Record<PlayGame, TranslationKey> = {
   'rhyme-match': 'games.rhymeMatch.name',
   stories: 'stories.title',
   'last-letter': 'games.lastLetter.name',
+  bluff: 'games.bluff.name',
+  'who-am-i': 'games.whoAmI.name',
 };
 
 export const GAME_ICON: Record<PlayGame, IconName> = {
@@ -18,6 +20,8 @@ export const GAME_ICON: Record<PlayGame, IconName> = {
   'rhyme-match': 'speaker',
   stories: 'story',
   'last-letter': 'link',
+  bluff: 'quotes',
+  'who-am-i': 'question',
 };
 
 const DIFFICULTY_KEY: Record<string, TranslationKey> = {

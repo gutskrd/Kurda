@@ -89,7 +89,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
     ...GAME_CARDS,
     ...learnGames.flatMap((g): GameCard[] => {
       const phone = PHONE_LEARN_GAMES[g.id];
-      return phone ? [{ key: g.id, route: phone.route, icon: g.glyph, name: phone.name, line: phone.line, mode: g.mode === 'solo' ? 'solo' : 'both' }] : [];
+      return phone ? [{ key: g.id, route: phone.route, icon: g.glyph, name: phone.name, line: phone.line, mode: g.mode === 'solo' ? 'solo' : g.mode === 'multi' ? 'friends' : 'both' }] : [];
     }),
   ];
 
