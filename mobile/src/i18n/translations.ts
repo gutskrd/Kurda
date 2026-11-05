@@ -1354,6 +1354,7 @@ export type TranslationKey =
   | 'username.saving'
   | 'username.saved'
   | 'username.updateFailed'
+  | 'username.cooldown'
   | 'username.alreadyYours'
   | 'username.looksGood'
   | 'username.rule.tooShort'
@@ -3642,6 +3643,7 @@ const en: Catalog = {
   'username.saving': 'Saving…',
   'username.saved': 'Saved ✓',
   'username.updateFailed': 'Couldn’t update your username. Please try again.',
+  'username.cooldown': 'You can change your username again on {date}.',
   'username.alreadyYours': 'That’s already your username.',
   'username.looksGood': 'Looks good — tap Save to check availability.',
   'username.rule.tooShort': 'At least {min} characters.',
@@ -6498,6 +6500,7 @@ const ku: Catalog = {
   'username.saving': 'Tê tomarkirin…',
   'username.saved': 'Hate tomarkirin ✓',
   'username.updateFailed': 'Navê te yê bikarhêner nehate nûkirin. Ji kerema xwe dîsa biceribîne.',
+  'username.cooldown': 'Tu dikarî navê xwe yê bikarhêner di {date} de dîsa biguherînî.',
   'username.alreadyYours': 'Ew jixwe navê te yê bikarhêner e.',
   'username.looksGood': 'Baş xuya dike — ji bo kontrolkirina hebûnê Tomar bitikîne.',
   'username.rule.tooShort': 'Herî kêm {min} tîp.',
@@ -9353,6 +9356,7 @@ const de: Catalog = {
   'username.saving': 'Wird gespeichert…',
   'username.saved': 'Gespeichert ✓',
   'username.updateFailed': 'Dein Benutzername konnte nicht geändert werden. Bitte versuche es erneut.',
+  'username.cooldown': 'Du kannst deinen Benutzernamen am {date} wieder ändern.',
   'username.alreadyYours': 'Das ist bereits dein Benutzername.',
   'username.looksGood': 'Sieht gut aus — tippe auf Speichern, um die Verfügbarkeit zu prüfen.',
   'username.rule.tooShort': 'Mindestens {min} Zeichen.',
@@ -12208,6 +12212,7 @@ const es: Catalog = {
   'username.saving': 'Guardando…',
   'username.saved': 'Guardado ✓',
   'username.updateFailed': 'No se pudo actualizar tu nombre de usuario. Inténtalo de nuevo.',
+  'username.cooldown': 'Podrás volver a cambiar tu nombre de usuario el {date}.',
   'username.alreadyYours': 'Ese ya es tu nombre de usuario.',
   'username.looksGood': 'Tiene buena pinta: pulsa Guardar para comprobar si está libre.',
   'username.rule.tooShort': 'Al menos {min} caracteres.',
@@ -15063,6 +15068,7 @@ const tr: Catalog = {
   'username.saving': 'Kaydediliyor…',
   'username.saved': 'Kaydedildi ✓',
   'username.updateFailed': 'Kullanıcı adın güncellenemedi. Lütfen tekrar deneyin.',
+  'username.cooldown': 'Kullanıcı adını {date} tarihinde yeniden değiştirebilirsin.',
   'username.alreadyYours': 'Bu zaten senin kullanıcı adın.',
   'username.looksGood': 'İyi görünüyor — uygunluğu kontrol etmek için Kaydet’e dokun.',
   'username.rule.tooShort': 'En az {min} karakter.',
@@ -17918,6 +17924,7 @@ const ar: Catalog = {
   'username.saving': 'جارٍ الحفظ…',
   'username.saved': 'تم الحفظ ✓',
   'username.updateFailed': 'تعذّر تحديث اسم المستخدم. يُرجى المحاولة مرة أخرى.',
+  'username.cooldown': 'يمكنك تغيير اسم المستخدم مرة أخرى في {date}.',
   'username.alreadyYours': 'هذا بالفعل اسم المستخدم الخاص بك.',
   'username.looksGood': 'يبدو جيدًا — اضغط حفظ للتحقق من توفّره.',
   'username.rule.tooShort': '{min} أحرف على الأقل.',
@@ -20773,6 +20780,7 @@ const fr: Catalog = {
   'username.saving': 'Enregistrement…',
   'username.saved': 'Enregistré ✓',
   'username.updateFailed': 'Ton nom d’utilisateur n’a pas pu être mis à jour. Réessaie.',
+  'username.cooldown': 'Tu pourras de nouveau changer ton nom d’utilisateur le {date}.',
   'username.alreadyYours': 'C’est déjà ton nom d’utilisateur.',
   'username.looksGood': 'Ça a l’air bon — appuie sur Enregistrer pour vérifier la disponibilité.',
   'username.rule.tooShort': 'Au moins {min} caractères.',
@@ -23628,6 +23636,7 @@ const nl: Catalog = {
   'username.saving': 'Opslaan…',
   'username.saved': 'Opgeslagen ✓',
   'username.updateFailed': 'Je gebruikersnaam kon niet worden bijgewerkt. Probeer het opnieuw.',
+  'username.cooldown': 'Je kunt je gebruikersnaam op {date} weer wijzigen.',
   'username.alreadyYours': 'Dat is al je gebruikersnaam.',
   'username.looksGood': 'Ziet er goed uit — tik op Opslaan om te kijken of hij vrij is.',
   'username.rule.tooShort': 'Minstens {min} tekens.',
@@ -26484,6 +26493,7 @@ const ckb: Catalog = {
   'username.saving': 'پاشەکەوت دەکرێت…',
   'username.saved': 'پاشەکەوت کرا ✓',
   'username.updateFailed': 'نەتوانرا ناوی بەکارهێنەرەکەت نوێ بکرێتەوە. تکایە دووبارە هەوڵ بدەوە.',
+  'username.cooldown': 'دەتوانیت لە {date} دا دووبارە ناوی بەکارهێنەرەکەت بگۆڕیت.',
   'username.alreadyYours': 'ئەمە پێشتر ناوی بەکارهێنەرەکەتە.',
   'username.looksGood': 'باش دیارە — لە پاشەکەوت بدە بۆ پشکنینی بەردەستبوونی.',
   'username.rule.tooShort': 'لانیکەم {min} پیت.',
