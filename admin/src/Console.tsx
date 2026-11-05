@@ -30,6 +30,7 @@ import { Pictures } from './pages/Pictures';
 import { Security } from './pages/Security';
 import { Games } from './pages/Games';
 import { AudioStudio } from './pages/AudioStudio';
+import { RecordByPerson } from './pages/RecordByPerson';
 import { Shop } from './pages/Shop';
 import { Stories } from './pages/Stories';
 import { Dashboard } from './pages/Dashboard';
@@ -49,6 +50,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   dashboard: () => <Dashboard />,
   analytics: () => <Analytics />,
   audio: () => <AudioStudio />,
+  record: (route) => <RecordByPerson voice={route.rest[0] ?? null} />,
   users: () => <Users />,
   email: () => <Email />,
   moderation: () => <Moderation />,

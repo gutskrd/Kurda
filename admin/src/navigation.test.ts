@@ -7,6 +7,7 @@ const LEGACY: SessionAccess = { staffRoles: ['admin'], capabilities: ['moderatio
 const SUPPORT: SessionAccess = { staffRoles: ['support'], capabilities: ['users.view', 'economy.view'] };
 const FOUNDER: SessionAccess = { staffRoles: ['founder'], capabilities: [] };
 const OWNER: SessionAccess = { staffRoles: ['admin', 'superadmin'], capabilities: ['moderation.act', 'users.view', 'users.moderate', 'content.edit'] };
+const VOICE_ACTOR: SessionAccess = { staffRoles: ['voice_actor'], capabilities: [], voices: ['xezo'] };
 
 const ids = (s: SessionAccess): string[] => visibleNav(s).map((n) => n.id);
 
@@ -20,6 +21,7 @@ describe('who sees which page — what the API allows, not a guess', () => {
   it('a content editor sees recording, lessons, stories and the games, and nothing about people', () => {
     expect(ids(EDITOR)).toEqual([
       'dashboard',
+      'record-people',
       'record-letters',
       'record-lessons',
       'record-conversations',
@@ -72,6 +74,20 @@ describe('who sees which page — what the API allows, not a guess', () => {
     expect(landingRoute(FOUNDER)).toBe('dashboard');
   });
 
+  it('opens recording by person first in its group, and to a voice actor nothing else of the console', () => {
+    expect(NAV.filter((n) => n.group === 'record')[0]!.id).toBe('record-people');
+    expect(ids(VOICE_ACTOR)).toEqual(['dashboard', 'record-people', 'security']);
+    for (const page of ['audio', 'lessons', 'stories', 'users', 'game-content']) expect(mayOpenPage(page, VOICE_ACTOR)).toBe(false);
+  });
+
+  it('starts someone who lends a voice on their own lines', () => {
+    expect(landingRoute(VOICE_ACTOR)).toBe('record/xezo');
+    expect(landingRoute({ ...EDITOR, voices: ['hamo', 'narrator-kmr'] })).toBe('record');
+    // a voice with no role that opens the page is no way in
+    expect(landingRoute({ ...MODERATOR, voices: ['hamo'] })).toBe('dashboard');
+    expect(landingRoute({ ...EDITOR, voices: [] })).toBe('dashboard');
+  });
+
   it('opens nothing it does not know', () => {
     expect(mayOpenPage('nowhere', OWNER)).toBe(false);
     expect(canOpen({ anyone: true }, { staffRoles: [], capabilities: [] })).toBe(true);
@@ -111,7 +127,8 @@ describe('addresses', () => {
 describe('finding a page', () => {
   it('finds a page by its name, its group or the words people use for it', () => {
     const all = visibleNav(OWNER);
-    expect(searchNav(all, 'record').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-conversations', 'record-stories', 'record-dictionary', 'record-characters']);
+    expect(searchNav(all, 'record').map((n) => n.id)).toEqual(['record-people', 'record-letters', 'record-lessons', 'record-conversations', 'record-stories', 'record-dictionary', 'record-characters']);
+    expect(searchNav(all, 'voice actor').map((n) => n.id)).toEqual(['record-people']);
     expect(searchNav(all, 'pronunciation').map((n) => n.id)).toEqual(['record-dictionary']);
     expect(searchNav(all, 'lip sync').map((n) => n.id)).toEqual(['record-characters']);
     expect(searchNav(all, 'microphone').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-conversations', 'record-stories']);

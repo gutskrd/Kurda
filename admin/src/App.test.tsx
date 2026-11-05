@@ -109,6 +109,7 @@ describe('the admin’s navigation', () => {
     const nav = screen.getAllByRole('navigation', { name: 'Admin pages' })[0]!;
     const group = within(nav).getByRole('list', { name: 'Record audio' });
     expect(within(group).getAllByRole('link').map((a) => a.textContent)).toEqual([
+      'Record by person',
       'Record the alphabet and words',
       'Record lesson sentences',
       'Record conversations',
