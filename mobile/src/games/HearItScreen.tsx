@@ -258,7 +258,8 @@ function HearBoard({ round, dialect }: { round: Round; dialect: GameDialect }): 
             style={[styles.input, { color: colors.textPrimary, borderColor: colors.controlTrack }]}
           />
           {marks && marks.length > 0 ? (
-            <View style={[styles.marks, { flexDirection: dir.row }]} accessibilityLabel={t('games.hear.hintTyped')}>
+            // one mark per typed word, running the way the words run
+            <View style={[styles.marks, { flexDirection: rtl ? 'row-reverse' : 'row' }]} accessibilityLabel={t('games.hear.hintTyped')}>
               {marks.map((ok, i) => (
                 <View
                   key={i}

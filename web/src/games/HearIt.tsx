@@ -237,7 +237,8 @@ function HearBoard({ round, dialect }: { round: Round; dialect: GameDialect }): 
             }}
           />
           {right && right.length > 0 && (
-            <ol className="hi-marks" aria-label={t('games.hear.hintTyped')}>
+            // one mark per typed word, running the way the words run
+            <ol className="hi-marks" aria-label={t('games.hear.hintTyped')} dir={script.dir}>
               {right.map((ok, i) => (
                 <li key={i} className={`hi-mark${ok ? ' is-right' : ''}`}>
                   {ok ? <CheckIcon size={14} /> : <CloseIcon size={14} />}

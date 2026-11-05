@@ -228,7 +228,7 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
           {n + 1}
         </span>
         <span className="mt-gap-word" aria-hidden>
-          {shown || ' '}
+          {shown || '\u00a0'}
         </span>
       </button>
     );

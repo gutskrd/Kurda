@@ -203,28 +203,33 @@
   position: relative;
   display: inline-flex;
   align-items: baseline;
-  gap: 4px;
+  gap: 3px;
   min-width: 4.5em;
-  min-height: 44px;
   margin: 0 2px;
-  padding: 0 10px;
+  padding: 0 8px;
   border: 0;
   border-bottom: 2px dashed var(--u-fill);
-  border-radius: 10px 10px 3px 3px;
+  border-radius: 8px 8px 3px 3px;
   background: color-mix(in srgb, var(--u-fill) 12%, transparent);
   color: inherit;
   font: inherit;
-  line-height: 1.9;
+  line-height: 1.5;
   vertical-align: baseline;
   cursor: pointer;
   animation: mt-arrive var(--dur-slow) var(--ease-out) both;
   animation-delay: calc(var(--ink-i, 0) * 90ms);
 }
+/* the finger's target is taller than the gap it shows — 44 points and more — so the page keeps its lines */
+.mt-gap::after {
+  content: '';
+  position: absolute;
+  inset: -8px -2px;
+}
 .mt-gap::before {
   content: '';
   position: absolute;
-  inset: -4px;
-  border-radius: 12px;
+  inset: -3px;
+  border-radius: 10px;
   background: color-mix(in srgb, var(--u-fill) 20%, transparent);
   opacity: 0.2;
   pointer-events: none;
@@ -275,7 +280,7 @@
 }
 .mt-gap-n {
   align-self: flex-start;
-  margin-top: 6px;
+  margin-top: 4px;
   color: var(--u-text, var(--ink-3));
   font-family: var(--font-sans);
   font-size: 0.65rem;
