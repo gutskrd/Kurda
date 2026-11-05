@@ -42,9 +42,13 @@ const GO_KEY: Readonly<Record<KingdomPlace, MessageKey>> = {
   stories: 'kingdom.go.stories',
 };
 
-export const buildingNameKey = (b: KingdomBuilding): MessageKey => `kingdom.name.${b}` as MessageKey;
-const growsKey = (b: KingdomBuilding): MessageKey => `kingdom.grows.${b}` as MessageKey;
-const countKey = (b: KingdomBuilding): MessageKey => `kingdom.count.${b}` as MessageKey;
+// written out key by key, so the catalogue check sees each one read and a renamed key fails to compile
+const NAME_KEY: Record<KingdomBuilding, MessageKey> = { houses: 'kingdom.name.houses', school: 'kingdom.name.school', teahouse: 'kingdom.name.teahouse', spring: 'kingdom.name.spring', market: 'kingdom.name.market', orchard: 'kingdom.name.orchard' };
+const GROWS_KEY: Record<KingdomBuilding, MessageKey> = { houses: 'kingdom.grows.houses', school: 'kingdom.grows.school', teahouse: 'kingdom.grows.teahouse', spring: 'kingdom.grows.spring', market: 'kingdom.grows.market', orchard: 'kingdom.grows.orchard' };
+const COUNT_KEY: Record<KingdomBuilding, MessageKey> = { houses: 'kingdom.count.houses', school: 'kingdom.count.school', teahouse: 'kingdom.count.teahouse', spring: 'kingdom.count.spring', market: 'kingdom.count.market', orchard: 'kingdom.count.orchard' };
+export const buildingNameKey = (b: KingdomBuilding): MessageKey => NAME_KEY[b];
+const growsKey = (b: KingdomBuilding): MessageKey => GROWS_KEY[b];
+const countKey = (b: KingdomBuilding): MessageKey => COUNT_KEY[b];
 
 /** Whether the page is drawn dark (theme/theme.ts puts the scheme on the root element), followed as it changes. */
 function useDarkScheme(): boolean {
