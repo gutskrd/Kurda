@@ -38,6 +38,8 @@ const LastLetter = lazy(() => import('./lastletter/LastLetter').then((m) => ({ d
 const Rhyme = lazy(() => import('./pages/Rhyme').then((m) => ({ default: m.Rhyme })));
 const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })));
 const BuildSentence = lazy(() => import('./games/BuildSentence').then((m) => ({ default: m.BuildSentence })));
+const Bluff = lazy(() => import('./bluff/Bluff').then((m) => ({ default: m.Bluff })));
+const WhoAmI = lazy(() => import('./whoami/WhoAmI').then((m) => ({ default: m.WhoAmI })));
 const StoriesLibrary = lazy(() => import('./stories/StoriesLibrary').then((m) => ({ default: m.StoriesLibrary })));
 const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ default: m.StoryReader })));
 const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
@@ -307,6 +309,9 @@ export function AppRoutes(): React.JSX.Element {
           path="games/last-letter"
           element={<RequireAccount what="gate.what.playOthers"><LastLetter /></RequireAccount>}
         />
+        <Route path="games/bluff" element={<RequireAccount what="gate.what.playOthers"><Bluff /></RequireAccount>} />
+        {/* Who Am I?: a round alone, or a race with friends */}
+        <Route path="games/who-am-i" element={<RequireAccount what="gate.what.play"><WhoAmI /></RequireAccount>} />
         <Route path="rankings" element={<Rankings />} />
         <Route path="leagues" element={<Navigate to="/app/rankings" replace />} />
         <Route path="badges" element={<RequireAccount what="gate.what.profile"><BadgesPage /></RequireAccount>} />

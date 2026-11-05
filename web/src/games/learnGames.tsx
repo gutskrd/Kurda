@@ -9,6 +9,7 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
 // the path's colours: a game's card wears one of its tones (`lp-tone-*`)
 import '../learn/path.css';
 import './games.css';
+import './party-minis.css';
 
 /**
  * The learning games on the website: which of the shared registry's games
@@ -66,9 +67,37 @@ function ChainMini(): React.JSX.Element {
   );
 }
 
+/** Note cards fanned on a table with a token on one: Kurdish Bluff, without words. */
+function BluffMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--bluff" aria-hidden>
+      <span className="lg-mini-note" style={{ transform: 'rotate(-7deg)' }} />
+      <span className="lg-mini-note is-on" style={{ transform: 'rotate(2deg)' }}>
+        <span className="lg-mini-token" />
+      </span>
+      <span className="lg-mini-note" style={{ transform: 'rotate(8deg)' }} />
+    </div>
+  );
+}
+
+/** A card with a question mark held up, and two answers stamped below: Who Am I?, without words. */
+function WhoAmIMini(): React.JSX.Element {
+  return (
+    <div className="lg-mini lg-mini--whoami" aria-hidden>
+      <span className="lg-mini-card">?</span>
+      <span className="lg-mini-line">
+        <span className="lg-mini-stamp is-yes" />
+        <span className="lg-mini-stamp" />
+      </span>
+    </div>
+  );
+}
+
 export const WEB_LEARN_GAMES: Partial<Record<LearnGameId, WebGame>> = {
   'build-sentence': { href: '/app/games/build-sentence', nameKey: 'games.sentence.name', bodyKey: 'games.sentence.body', modes: ['solo'], Visual: SentenceMini },
   'last-letter': { href: LAST_LETTER_CARD.href, nameKey: LAST_LETTER_CARD.nameKey, bodyKey: LAST_LETTER_CARD.blurbKey, modes: ['online', 'solo'], Visual: ChainMini },
+  bluff: { href: '/app/games/bluff', nameKey: 'games.bluff.name', bodyKey: 'games.bluff.blurb', modes: ['online'], Visual: BluffMini },
+  'who-am-i': { href: '/app/games/who-am-i', nameKey: 'games.whoAmI.name', bodyKey: 'games.whoAmI.blurb', modes: ['solo', 'online'], Visual: WhoAmIMini },
 };
 
 const PLAYABLE = Object.keys(WEB_LEARN_GAMES) as LearnGameId[];

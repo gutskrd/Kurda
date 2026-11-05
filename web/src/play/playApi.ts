@@ -50,6 +50,8 @@ const JOIN: Record<PlayGame, (lobbyId: string) => { path: string; body?: unknown
   stories: (id) => ({ path: '/story-games/join', body: { id, extraTime: rememberedExtraTime() } }),
   // every multiplayer learning game joins through the one engine's route
   'last-letter': (id) => ({ path: `/mp/last-letter/${encodeURIComponent(id)}/join` }),
+  bluff: (id) => ({ path: `/mp/bluff/${encodeURIComponent(id)}/join` }),
+  'who-am-i': (id) => ({ path: `/mp/who-am-i/${encodeURIComponent(id)}/join` }),
 };
 
 /**

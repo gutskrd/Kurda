@@ -37,6 +37,8 @@ const SHARE_KEY: Record<PlayGame, MessageKey> = {
   'rhyme-match': 'play.code.shareRhymeMatch',
   stories: 'play.code.shareStories',
   'last-letter': 'play.code.shareLastLetter',
+  bluff: 'games.bluff.share',
+  'who-am-i': 'games.whoAmI.share',
 };
 
 /** How long Copy wears its tick, and how long a note stays up. */

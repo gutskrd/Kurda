@@ -17,7 +17,8 @@ export const FOREHEAD = { x: 0.5, y: 0.4, width: 0.42 } as const;
 
 /** Hevalo's head and shoulders as a one-colour silhouette, `width` wide (the picture is square). */
 export function deerSilhouetteSvg(colour: string, width = 240, title = 'Hevalo'): string {
-  const safe = /^#[0-9a-fA-F]{3,8}$|^[a-z]+$/.test(colour) ? colour : '#000000';
+  // a hex colour or a keyword (currentColor lets a page colour it by theme); anything else is not a colour
+  const safe = /^#[0-9a-fA-F]{3,8}$|^[a-zA-Z]+$/.test(colour) ? colour : '#000000';
   return characterSvg('hevalo', { crop: 'bust', width, title, idPrefix: 'whoami' })
     .replace(/<defs>[\s\S]*?<\/defs>/g, '')
     .replace(/ clip-path="[^"]*"/g, '')
