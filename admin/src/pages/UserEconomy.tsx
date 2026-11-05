@@ -34,7 +34,11 @@ const CURRENCY: Readonly<Record<string, string>> = { zer: 'Zêr', gems: 'Gems' }
 const LEDGER_REASON: Readonly<Record<string, string>> = {
   admin_adjustment: 'Changed by an admin',
   shop_purchase: 'Shop purchase',
-  shop_return: 'Shop return',
+  // from before purchases were final: the ledger keeps every row it ever had
+  shop_return: 'Shop return (no longer offered)',
+  daily_quest: 'Daily quest chest',
+  event_quest: 'Event quest reward',
+  iap_refund: 'Taken back after a store refund',
   iap_purchase: 'Bought in the app store',
   gift: 'Gift',
   daily_reward: 'Daily reward',

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ratioLabel } from '../format';
 import { api } from '../api';
 import { Bars } from './Analytics';
+import { LedgerCheck } from './LedgerCheck';
 import { Badge, Button, EmptyState, ErrorState, Loading, PageHeader, Section, Stat, Table, Tabs, errorLine, useLoad, useToast, type Column } from '../ui';
 
 type Currency = 'zer' | 'gems';
@@ -28,8 +29,8 @@ const CURRENCY_LABEL: Record<Currency, string> = { zer: 'Zêr', gems: 'Gems' };
 
 /**
  * The economy (KUR-074): how much of each currency is out there, how much
- * came in (faucets) and went out (sinks) each day, and whether the balance is
- * drifting from its target.
+ * came in (faucets) and went out (sinks) each day, whether the balance is
+ * drifting from its target, and whether every balance still equals its ledger.
  */
 export function Economy(): React.JSX.Element {
   const toast = useToast();
@@ -131,6 +132,8 @@ export function Economy(): React.JSX.Element {
               <Table caption={`${name} day by day`} columns={columns} rows={[...points].reverse()} rowKey={(p) => p.day} layout="scroll" />
             </Section>
           )}
+
+          <LedgerCheck />
         </>
       )}
     </div>

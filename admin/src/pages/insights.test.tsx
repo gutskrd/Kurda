@@ -170,6 +170,42 @@ describe('Economy', () => {
     await waitFor(() => expect(calls.some((c) => c.path === '/admin/economy/supply?currency=gems&days=30')).toBe(true));
   });
 
+  it('checks every balance against its ledger when asked, and lists any that differ', async () => {
+    const user = userEvent.setup();
+    let mismatched = false;
+    const { calls } = fakeApi(
+      on('GET', /^\/admin\/economy\/supply/, json({ points: [] })),
+      on('GET', /^\/admin\/economy\/drift/, json({ currency: 'zer', windowDays: 7, faucet: 0, sink: 0, ratio: 1, target: 1, drifting: false })),
+      on('GET', /^\/admin\/economy\/reconcile/, () =>
+        json(
+          mismatched
+            ? {
+                checkedAt: '2026-11-05T00:00:00.000Z',
+                checked: 40,
+                mismatched: 1,
+                mismatches: [{ userId: '11111111-2222-3333-4444-555555555555', currency: 'gems', balance: 105, ledgerSum: 100 }],
+              }
+            : { checkedAt: '2026-11-05T00:00:00.000Z', checked: 40, mismatched: 0, mismatches: [] },
+        ),
+      ),
+    );
+    renderUi(<Economy />);
+    await screen.findByText('Healthy');
+    // it reads the whole ledger, so it waits to be asked
+    expect(calls.some((c) => c.path.startsWith('/admin/economy/reconcile'))).toBe(false);
+
+    await user.click(screen.getByRole('button', { name: 'Check now' }));
+    expect(await screen.findByText(/Every balance equals its ledger — 40 checked/)).toBeInTheDocument();
+
+    mismatched = true;
+    await user.click(screen.getByRole('button', { name: 'Check now' }));
+    const table = await screen.findByRole('table', { name: 'Balances that differ from their ledger' });
+    expect(within(table).getByText('+5')).toBeInTheDocument();
+    expect(within(table).getByRole('link', { name: 'User 11111111' })).toHaveAttribute('href', '#/users/11111111-2222-3333-4444-555555555555');
+    // and nothing was written: the check only reads
+    expect(calls.filter((c) => c.method !== 'GET')).toEqual([]);
+  });
+
   it('says a role that cannot see the economy is refused, not that nothing is there', async () => {
     fakeApi(on('GET', /^\/admin\/economy\//, failure(403, 'FORBIDDEN', 'insufficient permissions')));
     renderUi(<Economy />);
