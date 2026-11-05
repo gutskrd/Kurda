@@ -10,7 +10,7 @@ import {
   stepAfterRound,
 } from './build-sentence/ladder.js';
 import { GAME_DIFFICULTIES, DIFFICULTY_LEVELS, answerXp, availableDifficulties, roundCountsAsLearning, roundXpCeiling } from './solo.js';
-import { LEARN_GAMES, LEARN_GAME_XP_SOURCES, LEARN_GAME_IDS, learnGame } from './registry.js';
+import { LEARN_GAMES, LEARN_GAME_XP_SOURCES, LEARN_GAME_IDS, learnGame, listedLearnGames } from './registry.js';
 
 describe('the ladder', () => {
   it('puts a sentence on the rung its shape says', () => {
@@ -112,6 +112,13 @@ describe('the registry', () => {
     for (const s of LEARN_GAME_XP_SOURCES) expect(s).toMatch(/^game_[a-z_]+$/);
     expect(learnGame('build-sentence').minimum).toBe(30);
     expect(learnGame('kingdom').xpSources).toEqual([]);
+  });
+
+  it('lists only the games an app can open that are available, in the registry’s order', () => {
+    const availability = { games: [{ id: 'hear-it', available: true }, { id: 'build-sentence', available: true }, { id: 'detective', available: false }, { id: 'kingdom', available: true }] };
+    expect(listedLearnGames(availability, ['build-sentence', 'hear-it', 'detective', 'kingdom']).map((g) => g.id)).toEqual(['build-sentence', 'hear-it']);
+    expect(listedLearnGames(availability, ['build-sentence']).map((g) => g.id)).toEqual(['build-sentence']);
+    expect(listedLearnGames(null, ['build-sentence'])).toEqual([]);
   });
 
   it('asks free text only of games played with others', () => {

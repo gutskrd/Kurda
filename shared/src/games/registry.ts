@@ -249,6 +249,20 @@ export function soloGames(): LearnGame[] {
   return LEARN_GAMES.filter((g) => g.mode === 'solo' || g.mode === 'both');
 }
 
+/**
+ * The games an app lists in Learn, in the registry's order: those it has a
+ * screen for (`playable`) that are available in the learner's variety now.
+ * Before the availability has arrived (null) nothing new is listed, so a game
+ * never appears and then vanishes; the village is never a game in the list.
+ */
+export function listedLearnGames(
+  availability: { games: ReadonlyArray<{ id: string; available: boolean }> } | null | undefined,
+  playable: readonly LearnGameId[],
+): LearnGame[] {
+  const open = new Set((availability?.games ?? []).filter((g) => g.available).map((g) => g.id));
+  return LEARN_GAMES.filter((g) => g.mode !== 'meta' && playable.includes(g.id) && open.has(g.id));
+}
+
 /** The game a kind of content belongs to (each kind belongs to exactly one). */
 export function gameOfKind(kind: GameContentKind): LearnGame | null {
   return LEARN_GAMES.find((g) => g.contentKinds.includes(kind)) ?? null;

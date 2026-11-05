@@ -10,6 +10,7 @@ import { RanksSection } from '../ranks/RanksSection';
 import { LearnHeader } from '../learn/LearnHeader';
 import { ChevronIcon, TrophyIcon } from '../components/icons';
 import { JoinCodeEntry } from '../play/JoinCode';
+import { LearnGameTile, useListedLearnGames } from '../games/learnGames';
 
 /**
  * A game, before it has words.
@@ -96,6 +97,8 @@ export function Games(): React.JSX.Element {
   const signedIn = status === 'signedIn';
   const [chooser, setChooser] = useState<GameCard | null>(null);
   const t = useT();
+  // the learning games (games/learnGames.tsx): each one only once it has enough approved content in the learner's Kurdish
+  const learnGames = useListedLearnGames();
 
   return (
     <div className="container game-page">
@@ -177,6 +180,9 @@ export function Games(): React.JSX.Element {
             </article>
           );
         })}
+        {learnGames.map((g) => (
+          <LearnGameTile key={g.id} game={g} signedIn={signedIn} />
+        ))}
       </div>
 
       {/* your rank in each game played against people, and the season (signed in only) */}
