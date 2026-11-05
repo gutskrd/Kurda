@@ -105,8 +105,8 @@ describe('ChatScreen', () => {
     renderWithProviders(<ChatScreen userId="u2" username="rojda" openGift="g1" onExit={() => undefined} />);
     // from the banner: the unwrap starts as soon as the thread is here
     expect(await screen.findByText('From rojda')).toBeTruthy();
-    // its buttons are out of reach until the gift is shown, so skip to it first
-    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    // a test's animations end as they start, so the moment has played and the gift is shown, with its buttons
+    // (skipping it part-way is the unwrap's own test, gifts/gifts.test.tsx)
     fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Send a gift' }));
