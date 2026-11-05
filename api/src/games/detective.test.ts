@@ -10,7 +10,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { DETECTIVE_HINTS, DETECTIVE_HINT_XP, checkGameContent, type CaseFileContent, type SoloItemState } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { DetectiveGame, type CaseItem } from './detective.js';
+import { DetectiveGame, carriedHints, type CaseItem } from './detective.js';
 import { resolveStarterCase, type StarterCase, type StoredConversation } from './starters.js';
 import type { PublishedContent, TrustedSources } from './sources.js';
 
@@ -172,5 +172,32 @@ describe('the starter case', () => {
     const starter = file.cases[0]!;
     const resolved = resolveStarterCase({ ...starter, evidence: [{ ...starter.evidence[0]!, line: { conversation: 'nowhere', en: 'Nothing.' } }] }, conversations);
     expect(resolved).toEqual({ ok: false, missing: ['nowhere: Nothing.'] });
+  });
+});
+
+describe('hints spent on a round given up', () => {
+  const game = new DetectiveGame(sources([published(2)]));
+  /** A database whose last round of the case was left unfinished with these hints spent, or finished. */
+  const lastRound = (spent: unknown, finished: boolean) =>
+    ({
+      query: async (sql: string) => (sql.includes("meta->'spent'") ? { rows: [{ spent, finished }] } : { rows: [] }),
+    }) as never;
+
+  it('carry into the next round of the case: its cards translated, its hints read, their cost taken', async () => {
+    const round = (await game.build(ask(), lastRound({ used: 2, read: 1, translated: ['away', 'gone-from-the-case'] }, false)))!;
+    const board = game.board(round.items, round.meta, states(3))!;
+    expect(board).toMatchObject({ hintsUsed: 2, hintsLeft: DETECTIVE_HINTS - 2, hints: [en('Who has a moustache?')] });
+    expect(board.evidence.find((e) => e.id === 'away')!.meanings).toEqual(en('Baran is not at home today.'));
+    expect(game.deduction(round.meta)).toBe(2 * DETECTIVE_HINT_XP);
+  });
+
+  it('do not carry from a round that was finished, which paid for them', async () => {
+    const round = (await game.build(ask(), lastRound({ used: 2, read: 1, translated: ['away'] }, true)))!;
+    expect(game.board(round.items, round.meta, states(3))!.hintsUsed).toBe(0);
+  });
+
+  it('are read with care: never more than the case has', async () => {
+    expect(await carriedHints(lastRound({ used: 99, read: -3, translated: 'away' }, false), 'u1', 'kmr', 'case1')).toEqual({ used: DETECTIVE_HINTS, read: 0, translated: [] });
+    expect(await carriedHints(lastRound(null, false), 'u1', 'kmr', 'case1')).toBeNull();
   });
 });

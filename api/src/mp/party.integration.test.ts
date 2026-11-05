@@ -6,7 +6,11 @@
  * guess through the chat pipeline's gate and then the game's own checks, the
  * teams chosen in the lobby, places and placement XP, reports by seat with
  * what was typed, where each game is offered, and the admin's vocabulary
- * picker and starter word cards.
+ * picker and starter word cards. And what keeps the games fair and safe: a
+ * game called off pays nobody, nobody's text reaches the gate for a move that
+ * is not theirs, a minor is never seated with someone who is not their friend,
+ * a block made during a game parts the pair, and a report must name the
+ * lobby's own game.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -48,7 +52,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
   const courseIds: string[] = [];
   let ip = 0;
 
-  const register = async (name: string, roles = '{}'): Promise<User> => {
+  const register = async (name: string, roles = '{}', age = 30): Promise<User> => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -57,7 +61,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
         username: `pg_${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
-        ...bornYearsAgo(30),
+        ...bornYearsAgo(age),
       },
       remoteAddress: `10.152.${Math.floor(ip / 200)}.${(ip++ % 200) + 1}`,
     });
@@ -243,6 +247,11 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       expect(says.body).toMatchObject({ code: 'MOVE_REFUSED', details: { reason: 'says-word' } });
       expect((await move(speaker, 'گیانلەبەر')).body.details).toMatchObject({ reason: 'script' });
       expect((await move(other, 'heywanek')).body.code).toBe('NOT_YOUR_TURN');
+      // the turn is checked before the text goes anywhere: out of turn, even a word the filter refuses is only not your turn
+      expect((await move(other, 'qûn')).body.code).toBe('NOT_YOUR_TURN');
+      // and someone not in the game is told it does not exist, whatever they typed
+      const outsider = await register('imclueout');
+      expect((await move(outsider, 'qûn')).status).toBe(404);
       // nothing refused was kept, or shown
       const before = await pool.query(`SELECT count(*)::int AS n FROM game_moves WHERE lobby_id = $1`, [id]);
 
@@ -328,7 +337,87 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       } finally {
         log.stop();
       }
-      expect(log.count, log.statements.join('\n')).toBeLessThanOrEqual(6);
+      // the lobby, its seats, the names, and whose text this viewer may not be shown
+      expect(log.count, log.statements.join('\n')).toBeLessThanOrEqual(7);
+    });
+
+    it('pays nobody and rates nobody for a game called off with too few left', async () => {
+      const { id, people } = await table('impostor', 'imvoid', 3);
+      const bySeat = await seats(id, people);
+      let s = await state<ImpostorState>(id);
+      for (let i = 0; i < 2; i++) {
+        expect((await call(bySeat.get(s.turn!.seat)!, 'POST', `/mp/impostor/${id}/moves`, { clue: CLUES[i] })).status).toBe(200);
+        s = await state<ImpostorState>(id);
+      }
+      // whoever leaves, three less one is too few, or the impostor gone: either way nobody played it out
+      const leaver = bySeat.get(s.turn!.seat)!;
+      expect((await call(leaver, 'POST', `/mp/impostor/${id}/leave`)).status).toBe(200);
+      const stayer = [...bySeat.values()].find((u) => u !== leaver)!;
+      const done = (await call(stayer, 'GET', `/mp/impostor/${id}`)).body as ImpostorView;
+      expect(done.status).toBe('finished');
+      expect(['too-few', 'impostor-left']).toContain(done.board!.endedBy);
+      const xp = await pool.query(`SELECT count(*)::int AS n FROM xp_ledger WHERE ref_id LIKE $1`, [`mp:${id}:%`]);
+      expect(xp.rows[0].n).toBe(0);
+      expect(done.results!.every((r) => !r.xpAwarded)).toBe(true);
+      const rated = await pool.query<{ applied_at: Date | null; outcome: string | null }>(`SELECT applied_at, outcome FROM rated_games WHERE game = 'impostor' AND game_ref = $1`, [id]);
+      for (const r of rated.rows) expect(r).toMatchObject({ outcome: 'void', applied_at: expect.any(Date) });
+      expect((await pool.query(`SELECT 1 FROM rating_events WHERE game = 'impostor' AND game_ref = $1 AND kind = 'game'`, [id])).rowCount).toBe(0);
+    });
+
+    it('seats a minor only with their friends, either way round', async () => {
+      const host = await register('imkidhost');
+      const child = await register('imkid', '{}', 15);
+      const stranger = await register('imkidstr');
+      const third = await register('imkidthird');
+      for (const u of [child, stranger, third]) await befriend(pool, host.id, u.id);
+      const made = await call(host, 'POST', '/play/lobbies', { game: 'impostor', settings: { dialect: 'kmr', difficulty: 'beginner' } });
+      const id = made.body.lobbyId as string;
+      expect((await call(child, 'POST', `/mp/impostor/${id}/join`)).status).toBe(200);
+      // the host's friend, but a stranger to the child at the table
+      expect((await call(stranger, 'POST', `/mp/impostor/${id}/join`)).status).toBe(404);
+      expect((await call(stranger, 'GET', `/mp/impostor/${id}`)).status).toBe(404);
+      await befriend(pool, stranger.id, child.id);
+      expect((await call(stranger, 'POST', `/mp/impostor/${id}/join`)).status).toBe(200);
+      // the other way round: a child is not seated among strangers either
+      const lobby2 = (await call(third, 'POST', '/play/lobbies', { game: 'impostor', settings: { dialect: 'kmr', difficulty: 'beginner' } })).body.lobbyId as string;
+      const thirdsFriend = await register('imkidtf');
+      await befriend(pool, third.id, thirdsFriend.id);
+      await befriend(pool, third.id, child.id);
+      expect((await call(thirdsFriend, 'POST', `/mp/impostor/${lobby2}/join`)).status).toBe(200);
+      expect((await call(child, 'POST', `/mp/impostor/${lobby2}/join`)).status).toBe(404);
+    });
+
+    it('takes a blocked player out of a game of free text, and hides their clues from the one who blocked them', async () => {
+      const { id, people } = await table('impostor', 'imblk', 4);
+      const bySeat = await seats(id, people);
+      let s = await state<ImpostorState>(id);
+      const spoke = s.turn!.seat;
+      expect((await call(bySeat.get(spoke)!, 'POST', `/mp/impostor/${id}/moves`, { clue: CLUES[0] })).status).toBe(200);
+      s = await state<ImpostorState>(id);
+      const blocker = [...bySeat.entries()].find(([seat]) => seat !== spoke)!;
+      const bystander = [...bySeat.entries()].find(([seat]) => seat !== spoke && seat !== blocker[0])!;
+      expect((await call(blocker[1], 'POST', `/friends/${bySeat.get(spoke)!.id}/block`)).status).toBe(200);
+      // the blocked player is out of it: the game is nothing more to them
+      expect((await call(bySeat.get(spoke)!, 'GET', `/mp/impostor/${id}`)).status).toBe(404);
+      const seated = await pool.query<{ removed: boolean; left: boolean }>(`SELECT removed, left_at IS NOT NULL AS left FROM game_lobby_players WHERE lobby_id = $1 AND seat = $2`, [id, spoke]);
+      expect(seated.rows[0]).toEqual({ removed: true, left: true });
+      // the one who blocked them no longer reads what they wrote; everyone else still does
+      const mine = (await call(blocker[1], 'GET', `/mp/impostor/${id}`)).body as ImpostorView;
+      expect(mine.board!.clues.filter((c) => c.seat === spoke).every((c) => c.text === null)).toBe(true);
+      const theirs = (await call(bystander[1], 'GET', `/mp/impostor/${id}`)).body as ImpostorView;
+      expect(theirs.board!.clues.find((c) => c.seat === spoke)?.text).toBe(CLUES[0]);
+      // and nobody is paid or rated for a seat taken out
+      expect((await pool.query(`SELECT 1 FROM rated_leaves WHERE game = 'impostor' AND game_ref = $1`, [id])).rowCount).toBe(0);
+    });
+
+    it('takes a report by seat only under the lobby’s own game', async () => {
+      const { id, people } = await table('impostor', 'imrepg', 3);
+      const bySeat = await seats(id, people);
+      const reporter = [...bySeat.values()][0]!;
+      const seat = [...bySeat.keys()].find((x) => bySeat.get(x) !== reporter)!;
+      const wrong = await call(reporter, 'POST', '/reports', { targetType: 'game_player', targetId: id, game: 'dont-say', seat, category: 'other' });
+      expect(wrong.status).toBe(404);
+      expect((await call(reporter, 'POST', '/reports', { targetType: 'game_player', targetId: id, game: 'impostor', seat, category: 'other' })).status).toBe(201);
     });
   });
 

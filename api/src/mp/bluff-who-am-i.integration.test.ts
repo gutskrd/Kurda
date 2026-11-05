@@ -294,7 +294,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Bluff and the Who Am I? ra
       } finally {
         log.stop();
       }
-      expect(log.count, log.statements.join('\n')).toBeLessThanOrEqual(6);
+      // the lobby, its seats, the names, and whose fakes this viewer may not be shown
+      expect(log.count, log.statements.join('\n')).toBeLessThanOrEqual(7);
     });
   });
 
