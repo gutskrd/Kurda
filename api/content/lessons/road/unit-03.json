@@ -146,8 +146,7 @@
                     "prompt": "Hevalo pokes his nose out of the window. What does Hamo say about it?",
                     "accepted": [
                       "The window is big",
-                      "The window is large",
-                      "The window is very big"
+                      "The window is large"
                     ],
                     "voice": "hamo"
                   }
@@ -594,8 +593,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Na, na. Rê hêsan e, Xezo. Ez rast im!",
-                        "en": "No, no. The way is easy, Xezo. I am right!"
+                        "text": "Na, na. Rê hêsan e, Xezo. Ez ne şaş im!",
+                        "en": "No, no. The way is easy, Xezo. I am not wrong!"
                       },
                       {
                         "speaker": 1,
@@ -735,7 +734,7 @@
                   "payload": {
                     "prompt": "Hamo points the wrong way again and says “Rê ew e!”. What would you answer?",
                     "options": [
-                      "Na, Hamo, ew rê şaş e.",
+                      "Na, xalo, ew rê şaş e.",
                       "Erê, rê ew e.",
                       "Bi xêr hatî!"
                     ],
@@ -1167,8 +1166,7 @@
                     "say": "Kulîlk zer e.",
                     "prompt": "Hevalo sniffs a flower by the wall. What does Hamo say about it?",
                     "accepted": [
-                      "The flower is yellow",
-                      "The flowers are yellow"
+                      "The flower is yellow"
                     ],
                     "voice": "hamo"
                   }
@@ -2313,7 +2311,7 @@
                         "right": "among the trees"
                       },
                       {
-                        "left": "li cem Dapîr",
+                        "left": "li cem dapîrê",
                         "right": "at Grandma’s"
                       },
                       {
@@ -2588,7 +2586,7 @@
                       },
                       {
                         "speaker": 0,
-                        "text": "Li bin keviran tune… li pişt darê jî tune.",
+                        "text": "Li bin keviran tiştek tune… li pişt darê jî tune.",
                         "en": "Nothing under the stones… nothing behind the tree either."
                       },
                       {
@@ -2628,8 +2626,7 @@
                     "say": "Kanî kûr e.",
                     "prompt": "Hevalo leans over the water. What does Xezal warn him?",
                     "accepted": [
-                      "The spring is deep",
-                      "The spring is very deep"
+                      "The spring is deep"
                     ],
                     "voice": "xezo"
                   }
@@ -2653,10 +2650,10 @@
                   "payload": {
                     "prompt": "Xezal lifts stone after stone: “There is nothing under the stones.”",
                     "accepted": [
-                      "Li bin keviran tune.",
-                      "Li bin keviran tune",
                       "Li bin keviran tiştek tune.",
-                      "Li bin keviran tiştek tune"
+                      "Li bin keviran tiştek tune",
+                      "Li bin keviran tune.",
+                      "Li bin keviran tune"
                     ],
                     "voice": "xezo"
                   }
@@ -2740,9 +2737,9 @@
                   "payload": {
                     "prompt": "Xezal sighs: nothing under the stones, nothing behind the tree. Hamo whistles innocently. What would you say to him?",
                     "options": [
-                      "Hamo, tu birçî yî!",
-                      "Hamo, bi xatirê te!",
-                      "Hamo, nexşe ya te ye!"
+                      "Xalo, tu birçî yî!",
+                      "Xalo, bi xatirê te!",
+                      "Xalo, nexşe ya te ye!"
                     ],
                     "correctIndex": 2
                   }

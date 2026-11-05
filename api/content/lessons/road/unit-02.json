@@ -605,7 +605,7 @@
                       {
                         "speaker": 1,
                         "text": "Xezo, ji kerema xwe… ev wêne!",
-                        "en": "Xezo, please… that photo!"
+                        "en": "Xezo, please… this photo!"
                       }
                     ],
                     "prompt": "Who is the young man without a moustache in the old photo?",
@@ -903,7 +903,7 @@
                       {
                         "speaker": 1,
                         "text": "Xalo, xalo! Bozo ne li vir e!",
-                        "en": "Uncle, uncle! Bozo is not here! (Baran has just burst in)"
+                        "en": "Uncle, uncle! Bozo is not here! (Baran has burst in with the news)"
                       },
                       {
                         "speaker": 0,
@@ -3630,7 +3630,7 @@
                   "type": "conversation",
                   "payload": {
                     "id": "roadu02s4l3a",
-                    "title": "Kî çi heye?",
+                    "title": "Kê çi heye?",
                     "speakers": [
                       {
                         "name": "Hamo",
@@ -4028,7 +4028,8 @@
                     "prompt": "Xezal unfolds the paper. Write what she says: “It is not a letter, it is a map!”",
                     "accepted": [
                       "Ew ne name ye, ew nexşe ye!",
-                      "Ew ne name ye, ew nexşe ye"
+                      "Ew ne name ye, ew nexşe ye",
+                      "Ne name ye, nexşe ye!"
                     ],
                     "voice": "xezo"
                   }
