@@ -134,4 +134,13 @@ describe('RematchPanel', () => {
     await screen.findByRole('button', { name: 'Rematch' });
     expect(screen.queryByText('1–0')).toBeNull();
   });
+
+  it('holds an offer out as a ticket, and still asks someone else in through the invite sheet', async () => {
+    testAuth.client = fakeClient({ 'GET /play/rhyme-match/m1/rematch': ok(pair({ offeredByMe: true })), 'DELETE /play/rhyme-match/m1/rematch': ok(pair()) });
+    const onInviteOthers = vi.fn();
+    renderWithProviders(<RematchPanel game="rhyme-match" lobbyId="m1" other="Rojda" onOpen={() => undefined} onInviteOthers={onInviteOthers} />);
+    expect(await screen.findByText('Waiting for Rojda to say yes…')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Invite someone else' }));
+    expect(onInviteOthers).toHaveBeenCalled();
+  });
 });

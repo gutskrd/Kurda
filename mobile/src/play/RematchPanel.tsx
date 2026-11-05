@@ -5,11 +5,14 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { useRealtimeReconnect } from '../realtime/RealtimeProvider';
 import { useUserEvents } from '../realtime/useUserEvents';
+import { useDirection } from '../reports/direction';
 import { ClayButton } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { declineRematch, offerRematch, rematchState } from './api';
+import { Ticket } from './Ticket';
 
 /**
  * What the panel shows, from the server's RematchState (contract §B1 "Play
@@ -53,6 +56,11 @@ export function rematchView(state: RematchState, isHost = false): RematchView {
  * "Player 2"). A pair game the two both asked for opens straight away; the
  * host's new round opens for the host, and the others choose to join it.
  * Leaving the results with an offer standing takes the offer back.
+ *
+ * An offer is a ticket like any other invite (Ticket.tsx): the one you hold
+ * out waits in outline, with a light crossing it now and then, and the one
+ * the other player holds out to you is filled in the game's colour. Asking
+ * someone else in hands out tickets through the invite sheet.
  */
 export function RematchPanel({
   game,
@@ -75,6 +83,7 @@ export function RematchPanel({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const [state, setState] = useState<RematchState | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -163,6 +172,22 @@ export function RematchPanel({
     </Text>
   );
 
+  // an offer as a ticket: held out by you and waiting, or held out to you
+  const offerTicket = (text: string, waiting: boolean) => (
+    <Ticket
+      tone={game}
+      size="mini"
+      outlined={waiting}
+      shimmer={waiting}
+      stub={(ink) => <Icon name="repost" size={18} color={ink.ink} />}
+      bodyStyle={styles.offer}
+    >
+      <Text style={[styles.offerText, dir.text, { color: colors.textPrimary }]} accessibilityLiveRegion="polite">
+        {text}
+      </Text>
+    </Ticket>
+  );
+
   const series = state?.series;
   return (
     <View style={styles.wrap}>
@@ -178,14 +203,14 @@ export function RematchPanel({
       ) : null}
       {view.kind === 'pair-waiting' ? (
         <>
-          {line(t('play.rematch.waiting', { name: other }))}
+          {offerTicket(t('play.rematch.waiting', { name: other }), true)}
           <ClayButton label={t('play.rematch.withdraw')} variant="outline" busy={busy} onPress={() => void run(() => declineRematch(client, game, lobbyId))} />
         </>
       ) : null}
       {view.kind === 'pair-asked' ? (
         <>
-          {line(t('play.rematch.asked', { name: other }))}
-          <View style={styles.row}>
+          {offerTicket(t('play.rematch.asked', { name: other }), false)}
+          <View style={[styles.row, { flexDirection: dir.row }]}>
             <ClayButton label={t('play.rematch.accept')} tone="primary" busy={busy} onPress={() => void run(() => offerRematch(client, game, lobbyId))} style={styles.grow} />
             <ClayButton label={t('play.rematch.noThanks')} busy={busy} onPress={() => void run(() => declineRematch(client, game, lobbyId))} style={styles.grow} />
           </View>
@@ -205,7 +230,7 @@ export function RematchPanel({
       {view.kind === 'next' ? (
         <ClayButton label={t('play.rematch.openNext')} tone="primary" size="large" onPress={() => onOpen(view.lobbyId)} />
       ) : null}
-      {onInviteOthers ? <ClayButton label={t('play.rematch.inviteOthers')} icon="user-plus" variant="outline" onPress={onInviteOthers} /> : null}
+      {onInviteOthers ? <ClayButton label={t('play.rematch.inviteOthers')} icon="ticket" variant="outline" onPress={onInviteOthers} /> : null}
       {error ? <Text style={[styles.line, { color: colors.danger }]}>{error}</Text> : null}
     </View>
   );
@@ -213,7 +238,9 @@ export function RematchPanel({
 
 const styles = StyleSheet.create({
   wrap: { gap: spacing.sm, alignSelf: 'stretch' },
-  row: { flexDirection: 'row', gap: spacing.sm },
+  row: { gap: spacing.sm },
+  offer: { justifyContent: 'center', minHeight: 48 },
+  offerText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   grow: { flex: 1 },
   line: { fontSize: typography.sizes.md, textAlign: 'center' },
   series: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
