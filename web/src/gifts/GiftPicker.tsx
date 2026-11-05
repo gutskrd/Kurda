@@ -387,6 +387,9 @@ function PickerFlow({
                   {picked.currency === 'gems' ? <GemIcon size={14} /> : <CoinIcon size={14} />} {fmt(cost(picked))}
                 </strong>
                 {pickedHidden && <span className="gift-confirm-hidden">{t('gift.picker.pickHidden')}</span>}
+                {/* said by the button that spends: a gift, like any purchase, is final
+                    (in the same small, quiet line as the note above it) */}
+                <span className="gift-confirm-hidden">{t('shop.giftFinal')}</span>
               </span>
               {!affordable(picked) && <span className="gift-confirm-short">{t('gift.error.funds')}</span>}
               <Button onClick={() => void send()} disabled={busy || !affordable(picked)}>
