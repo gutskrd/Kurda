@@ -156,7 +156,7 @@ export function hostBox(stops: readonly WorldStop[], width: number, mascotAt: Wo
 export const PATH_CAIRN_GROUNDS: readonly PathGround[] = ['stubble', 'valley', 'alpine'];
 
 /** The cairn's box at its largest and its smallest (its height; it is a little narrower than tall), its width to height, and the air kept round it. */
-export const PATH_CAIRN = { size: 124, min: 78, aspect: 0.8, air: 8 } as const;
+export const PATH_CAIRN = { size: 120, min: 76, aspect: 0.92, air: 8 } as const;
 
 /**
  * Where the cairn stands in a unit: in the open beside the path, as large as

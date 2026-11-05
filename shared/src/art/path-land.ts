@@ -348,11 +348,11 @@ export function pathLandSvg(opts: PathLandOptions): string {
 
 /**
  * The cairn as the village draws it (art/kingdom/props.ts), one stone figure
- * for the two places, fitted to its box: at its own size it reaches 55 above
- * the knoll's middle and 15 below it, and 28 either side. Its lines keep the
+ * for the two places, fitted to its box: at its own size it reaches 47 above
+ * the knoll's middle and 10 below it, and 26 either side. Its lines keep the
  * village's weight at any size, which is the path's weight too.
  */
-const CAIRN_ART = { above: 55, below: 15 } as const;
+const CAIRN_ART = { above: 47, below: 10 } as const;
 function cairnOn(box: PathBox, X: (x: number) => number, dark: boolean): string {
   const parts = cairn(dark ? VILLAGE_DUSK : DAY, 0, 0, 0, seeded('path-cairn'));
   const k = box.h / (CAIRN_ART.above + CAIRN_ART.below);

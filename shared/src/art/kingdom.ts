@@ -163,7 +163,7 @@ export const KINGDOM_SWAYING = {
  * against the far range, above the goats' grazing and the poplars' tops.
  */
 export const KINGDOM_CAIRN = [-40, -100] as const;
-const CAIRN_SCALE = 0.9;
+const CAIRN_SCALE = 1.35;
 
 /** The hand-placed scenery round the buildings: trees, rocks, the cairn, the tenûr, the gate, the haystack, the boat, the stream. */
 function scenery(pal: Palette, rand: P.Rand, levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, moving: boolean): Drawn[] {

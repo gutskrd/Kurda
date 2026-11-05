@@ -1169,8 +1169,8 @@ describe('the kingdom’s village', () => {
   it('stands the shepherds’ cairn on the crest behind the village, against the sky, by day and at dusk', () => {
     const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
     // its knoll of dry grass is the only gold of its kind in the village
-    expect(kingdomSceneSvg({ levels: some })).toContain('#e8ae3c');
-    expect(kingdomSceneSvg({ levels: some, dark: true })).toContain('#cf9443');
+    expect(kingdomSceneSvg({ levels: some })).toContain('#e2a334');
+    expect(kingdomSceneSvg({ levels: some, dark: true })).toContain('#c98f3c');
     // on the hill behind the terraces, and inside the frame every screen keeps in view, head and all
     const foot = kingdomPoint(KINGDOM_CAIRN[0], KINGDOM_CAIRN[1], 48);
     expect(foot.x).toBeGreaterThan(KINGDOM_FRAME.x + 40);
@@ -1366,15 +1366,15 @@ describe('the lesson path’s world', () => {
         const day = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, seed: 'u' });
         const dusk = pathLandSvg({ ground: land.ground, width, height: unit.height, stops, stones, dark: true, seed: 'u' });
         const has = PATH_CAIRN_GROUNDS.includes(land.ground);
-        expect(day.includes('#e8ae3c'), `${land.ground} ${width}`).toBe(has);
-        expect(dusk.includes('#cf9443'), `${land.ground} ${width} dusk`).toBe(has);
+        expect(day.includes('#e2a334'), `${land.ground} ${width}`).toBe(has);
+        expect(dusk.includes('#c98f3c'), `${land.ground} ${width} dusk`).toBe(has);
         if (!has) continue;
         // fitted to its box, which lies inside the land, out of the river where one runs across it
         const streams = land.ground === 'valley' || land.ground === 'alpine';
         const stream = (stops[1]!.y + stops[2]!.y) / 2 + 6;
         const box = cairnBox(stops, width, streams ? [{ x: 0, y: stream - 26, w: 2 * width, h: 52 }] : [])!;
         const scale = Number(/scale\(([\d.]+)\)/.exec(day)![1]);
-        expect(scale * 70).toBeCloseTo(box.h, 0);
+        expect(scale * 57).toBeCloseTo(box.h, 0);
         expect(box.y).toBeGreaterThanOrEqual(0);
         expect(box.y + box.h).toBeLessThanOrEqual(unit.height);
         if (streams) expect(box.y >= stream + 26 || box.y + box.h <= stream - 26, land.ground).toBe(true);

@@ -707,140 +707,213 @@ export { arched };
 // ───────────────────────────────────────────────────────────── the cairn
 
 /**
- * The stones a cairn is built of: weathered grey, warmer in the shade, and the
- * blue-grey boulders of the knoll it stands on, as the owner's picture has them.
+ * The cairn's colours, as the owner's picture has them: weathered grey stone,
+ * lighter where the sky falls on it and going warm brown underneath; a knoll
+ * of dry golden grass; and big blue-grey rocks breaking through it.
  */
-function cairnTones(pal: Palette): { stone: Tri; boulder: Tri; grass: Tri; lichen: readonly string[] } {
+function cairnTones(pal: Palette): { stone: Tri; under: string; boulder: Tri; grass: Tri; straw: string; lichen: string } {
   return pal.dusk
     ? {
-        stone: { top: '#c9c0b8', left: '#a59b93', right: '#776c69' },
-        boulder: { top: '#a9b4c9', left: '#8794ad', right: '#66728c' },
-        grass: { top: '#e5b35c', left: '#cf9443', right: '#a8722f' },
-        lichen: ['#e9b44c', '#b9bfa4'],
+        stone: { top: '#aaa0a2', left: '#877b7e', right: '#685a5c' },
+        under: '#58423f',
+        boulder: { top: '#a3afc6', left: '#8290aa', right: '#636f8b' },
+        grass: { top: '#dcae55', left: '#c98f3c', right: '#a26a2b' },
+        straw: '#8a5a26',
+        lichen: '#d9d4cf',
       }
     : {
-        stone: { top: '#ddd5c9', left: '#b8ad9f', right: '#877a6c' },
-        boulder: { top: '#c7d3e0', left: '#9fb2c6', right: '#7489a3' },
-        grass: { top: '#f6cf62', left: '#e8ae3c', right: '#c08427' },
-        lichen: ['#f0b43c', '#d6dcc2'],
+        stone: { top: '#bdb4aa', left: '#978b81', right: '#74665d' },
+        under: '#6a5046',
+        boulder: { top: '#c3d2e0', left: '#9cb1c6', right: '#7489a2' },
+        grass: { top: '#f3c552', left: '#e2a334', right: '#bf7d22' },
+        straw: '#a8681c',
+        lichen: '#f2efe8',
       };
 }
 
 /**
- * One stone of a cairn, seen face on: a rough slab whose corners are nudged a
- * little by hand, its top lit, its face in the middle tone and its right end
- * turned from the light. Screen units, its foot's left end at (l, b).
+ * One stone of the cairn, seen face on: a rough slab with softened corners,
+ * its top catching the light, its face in the stone's own grey, going warm
+ * brown along its underside and down its right end, away from the light.
+ * Screen units; its foot's left end at (l, b).
  */
-function cairnStone(p: Part, l: number, b: number, w: number, h: number, top: number, t: Tri, rand: Rand, tilt = 0): void {
-  const j = (k: number): number => (rand() - 0.5) * k;
-  const bl: Pt = [l + j(0.6), b];
-  const br: Pt = [l + w + j(0.6), b - tilt];
-  const tr: Pt = [l + w + j(0.8), b - h - tilt + j(0.6)];
-  const tl: Pt = [l + j(0.8), b - h + j(0.6)];
-  const backR: Pt = [tr[0] - 0.4, tr[1] - top];
-  const backL: Pt = [tl[0] + 0.4, tl[1] - top];
-  p.sil(poly([bl, br, tr, backR, backL, tl]));
-  p.fill(poly([bl, br, tr, tl]), t.left);
-  // the end turned from the light: a band down the right of the face, its edge not quite straight
-  const k = 0.22 + rand() * 0.06;
-  const sb: Pt = [br[0] - (br[0] - bl[0]) * k, br[1] + (bl[1] - br[1]) * k];
-  const st: Pt = [tr[0] - (tr[0] - tl[0]) * k, tr[1] + (tl[1] - tr[1]) * k];
-  p.flat(`M${n(st[0])} ${n(st[1])}Q${n((st[0] + sb[0]) / 2 + 0.7)} ${n((st[1] + sb[1]) / 2)} ${n(sb[0])} ${n(sb[1])}L${n(br[0])} ${n(br[1])}L${n(tr[0])} ${n(tr[1])}Z`, t.right);
-  p.line(`M${n(bl[0])} ${n(bl[1])}L${n(br[0])} ${n(br[1])}L${n(tr[0])} ${n(tr[1])}L${n(tl[0])} ${n(tl[1])}Z`);
-  p.fill(poly([tl, tr, backR, backL]), t.top);
+/** The patches of light and shade, the outlines and the cracks of all the cairn's stones, each kind laid down as one path once every face is in place. */
+interface StoneMarks {
+  lit: string[];
+  under: string[];
+  end: string[];
+  outline: string[];
+  cracks: string[];
 }
 
-/** A crack and a few flecks of lichen on a stone's face. */
-function weather(p: Part, l: number, b: number, w: number, h: number, tones: { lichen: readonly string[] }, rand: Rand): void {
-  const u = l + w * (0.2 + rand() * 0.45);
-  p.line(`M${n(u)} ${n(b - h * 0.92)}L${n(u + w * 0.05)} ${n(b - h * 0.45)}l${n(1.1)} ${n(1.2)}`, 0.6);
-  tones.lichen.forEach((colour, i) => {
-    let d = '';
-    for (let k = 0; k < 3 - i * 2; k++) d += disc(l + w * (0.08 + rand() * 0.6), b - h * (0.2 + rand() * 0.6), 0.5 + rand() * 0.35);
-    p.flat(d, colour);
-  });
+function cairnStone(p: Part, marks: StoneMarks, l: number, b: number, w: number, h: number, tones: ReturnType<typeof cairnTones>, rand: Rand, o: { tilt?: number; top?: number; round?: number } = {}): void {
+  const t = tones.stone;
+  const j = (k: number): number => (rand() - 0.5) * k;
+  const tilt = o.tilt ?? 0;
+  const top = o.top ?? 0;
+  const r = Math.min(o.round ?? 1.1, h * 0.32, w * 0.2);
+  // the four corners, nudged by hand; the top edge bows a little
+  const bl: Pt = [l + j(0.5), b + j(0.3)];
+  const br: Pt = [l + w + j(0.5), b - tilt + j(0.3)];
+  const tr: Pt = [l + w + j(0.6), b - h - tilt + j(0.5)];
+  const tl: Pt = [l + j(0.6), b - h + j(0.5)];
+  const bow = j(0.8) - 0.3;
+  const outline =
+    `M${n(bl[0] + r)} ${n(bl[1])}L${n(br[0] - r)} ${n(br[1])}Q${n(br[0])} ${n(br[1])} ${n(br[0])} ${n(br[1] - r)}` +
+    `L${n(tr[0])} ${n(tr[1] + r)}Q${n(tr[0])} ${n(tr[1])} ${n(tr[0] - r)} ${n(tr[1])}` +
+    `Q${n((tl[0] + tr[0]) / 2)} ${n((tl[1] + tr[1]) / 2 + bow)} ${n(tl[0] + r)} ${n(tl[1])}` +
+    `Q${n(tl[0])} ${n(tl[1])} ${n(tl[0])} ${n(tl[1] + r)}L${n(bl[0])} ${n(bl[1] - r)}Q${n(bl[0])} ${n(bl[1])} ${n(bl[0] + r)} ${n(bl[1])}Z`;
+  // the top seen a little from above: a lit band behind the face
+  if (top > 0) {
+    const back = `M${n(tl[0] + r)} ${n(tl[1])}L${n(tl[0] + r * 0.6)} ${n(tl[1] - top)}L${n(tr[0] - r * 0.6)} ${n(tr[1] - top)}L${n(tr[0] - r)} ${n(tr[1])}Z`;
+    p.sil(back).fill(back, t.top);
+  }
+  p.sil(outline).fill(outline, t.left);
+  // the light across its upper face, the warm shade along its underside and down its far end
+  const lit = 0.32 + rand() * 0.08;
+  marks.lit.push(
+    `M${n(tl[0] + r * 0.4)} ${n(tl[1] + 0.5)}L${n(tr[0] - r * 0.5)} ${n(tr[1] + 0.5)}L${n(tr[0] - w * 0.2)} ${n(tr[1] + h * lit)}Q${n(l + w * 0.45)} ${n(b - h * (1 - lit) + j(0.6))} ${n(tl[0] + 0.5)} ${n(tl[1] + h * lit * 1.2)}Z`,
+  );
+  const under = 0.3 + rand() * 0.1;
+  marks.under.push(
+    `M${n(bl[0] + r * 0.3)} ${n(bl[1] - h * under)}Q${n(l + w * 0.5)} ${n(b - h * under - 0.8 + j(0.8))} ${n(br[0] - w * 0.16)} ${n(br[1] - h * (under + 0.1))}` +
+      `L${n(tr[0] - w * 0.12)} ${n(tr[1] + h * 0.35)}L${n(tr[0] - 0.4)} ${n(tr[1] + r)}L${n(br[0] - 0.4)} ${n(br[1] - r)}L${n(bl[0] + r)} ${n(bl[1] - 0.4)}Z`,
+  );
+  marks.end.push(`M${n(tr[0] - w * 0.12)} ${n(tr[1] + h * 0.35)}L${n(tr[0] - 0.4)} ${n(tr[1] + r)}L${n(br[0] - 0.4)} ${n(br[1] - r)}L${n(br[0] - w * 0.16)} ${n(br[1] - h * 0.2)}Z`);
+  marks.outline.push(outline);
+  // a crack down from its top edge
+  const cx = l + w * (0.2 + rand() * 0.6);
+  marks.cracks.push(`M${n(cx)} ${n(b - h * 0.95)}l${n(0.3 + j(0.6))} ${n(h * 0.3)}l${n(0.8)} ${n(h * 0.12)}`);
 }
 
 /**
- * A stone cairn of the high pastures standing on a knoll of dry golden grass,
- * blue-grey boulders breaking through it: two standing stones for legs, a
- * long slab across them, two small stones, a longer slab for arms, and a
- * head stone with a hole worn through it — the waymark shepherds stack where
- * a mountain path needs one. Its foot (the knoll's middle) at (x, y, z); `k`
- * scales the whole of it. Built facing down-left, into the light.
+ * A big blue-grey rock breaking through the knoll: angular, faceted, its
+ * upper face lit, its right face in shade, as the owner's picture has them.
+ * Its foot's middle at (cx, cy); w across, h tall.
+ */
+function boulder(rocks: { face: string[]; top: string[]; side: string[]; sil: string[] }, cx: number, cy: number, w: number, h: number, rand: Rand): void {
+  const j = (k: number): number => (rand() - 0.5) * k;
+  const peak: Pt = [cx - w * (0.05 + rand() * 0.15), cy - h];
+  const left: Pt = [cx - w * 0.5, cy + j(0.4)];
+  const shoulder: Pt = [cx - w * 0.38 + j(0.6), cy - h * (0.55 + j(0.2))];
+  const ridge: Pt = [cx + w * (0.18 + j(0.1)), cy - h * (0.7 + j(0.15))];
+  const right: Pt = [cx + w * 0.5, cy + j(0.4)];
+  const foot: Pt = [cx + w * 0.08, cy + h * 0.08];
+  const shape = poly([left, shoulder, peak, ridge, right, foot]);
+  rocks.sil.push(shape);
+  rocks.face.push(shape);
+  rocks.top.push(poly([shoulder, peak, ridge, [cx + w * 0.02, cy - h * 0.42]]));
+  rocks.side.push(poly([ridge, right, foot, [cx + w * 0.02, cy - h * 0.42]]));
+}
+
+/** Rocks laid down together: their outline, their faces, then their lit tops and shaded sides, one path each. */
+function rocksOn(p: Part, rocks: { face: string[]; top: string[]; side: string[]; sil: string[] }, t: Tri): void {
+  p.sil(rocks.sil.join('')).fill(rocks.face.join(''), t.left).fill(rocks.top.join(''), t.top).fill(rocks.side.join(''), t.right);
+}
+
+const noRocks = (): { face: string[]; top: string[]; side: string[]; sil: string[] } => ({ face: [], top: [], side: [], sil: [] });
+
+/**
+ * A stone cairn standing on a knoll of dry golden grass, blue-grey rocks
+ * breaking through the knoll, as in the owner's picture: two broad standing
+ * stones for legs, the right one shorter and made up with a flat stone on
+ * it; a thick slab across them, the widest of all; two small stones; a
+ * narrower slab for the arms; and a small square head stone with a hole worn
+ * through it high up. The waymark shepherds stack where a mountain path
+ * needs one. Its foot (the knoll's middle) at (x, y, z); `k` scales the whole
+ * of it. Built face on, the light from the upper left.
  *
- * Returned back to front: the knoll, the boulders behind the cairn, the
- * cairn, and the boulders in front of it, each its own part so the scene can
+ * Returned back to front: the knoll with the rocks behind the cairn, the
+ * cairn, and the rocks in front of it, each its own part so the scene can
  * sort them among its other things.
  */
 export function cairn(pal: Palette, x: number, y: number, z: number, rand: Rand, k = 1): Part[] {
   const tones = cairnTones(pal);
   const s = (v: number): number => v * k;
   const out: Part[] = [];
-
-  // the knoll: a low dome of golden grass, its right side in shade, a lit patch at its top left
-  const knollR = s(19);
-  const knollH = s(7);
-  const knoll = new Part(depthOf(x, y) - 1);
   const [cx, cy] = iso(x, y, z);
-  const [rx, ry] = rim(knollR);
-  const dome = `M${n(cx - rx)} ${n(cy)}C${n(cx - rx * 0.95)} ${n(cy - knollH * 1.15)} ${n(cx - rx * 0.4)} ${n(cy - ry - knollH)} ${n(cx + rx * 0.05)} ${n(cy - ry - knollH)}C${n(cx + rx * 0.55)} ${n(cy - ry - knollH)} ${n(cx + rx)} ${n(cy - knollH * 0.9)} ${n(cx + rx)} ${n(cy)}A${n(rx)} ${n(ry)} 0 0 1 ${n(cx - rx)} ${n(cy)}Z`;
+
+  // the knoll: a broad mound of golden grass, its crown a little left of middle, its right side in shade
+  const rx = s(25);
+  const ry = s(8.5);
+  const rise = s(9);
+  const crown: Pt = [cx - s(1), cy - ry * 0.35 - rise];
+  const knoll = new Part(depthOf(x, y) - 1);
+  const dome =
+    `M${n(cx - rx)} ${n(cy)}C${n(cx - rx * 0.92)} ${n(cy - rise * 0.9)} ${n(cx - rx * 0.55)} ${n(crown[1] - s(0.6))} ${n(crown[0] - s(4))} ${n(crown[1])}` +
+    `L${n(crown[0] + s(5))} ${n(crown[1] + s(0.3))}C${n(cx + rx * 0.55)} ${n(crown[1] + s(0.4))} ${n(cx + rx * 0.95)} ${n(cy - rise * 0.8)} ${n(cx + rx)} ${n(cy)}` +
+    `A${n(rx)} ${n(ry)} 0 0 1 ${n(cx - rx)} ${n(cy)}Z`;
   knoll.sil(dome).flat(dome, tones.grass.left);
+  // the shade down its right side, and the sun on its crown and left shoulder
   knoll.flat(
-    `M${n(cx + rx * 0.15)} ${n(cy - ry - knollH * 0.98)}C${n(cx + rx * 0.6)} ${n(cy - ry - knollH * 0.9)} ${n(cx + rx)} ${n(cy - knollH * 0.9)} ${n(cx + rx)} ${n(cy)}A${n(rx)} ${n(ry)} 0 0 1 ${n(cx + rx * 0.25)} ${n(cy + ry * 0.97)}C${n(cx + rx * 0.45)} ${n(cy - knollH * 0.2)} ${n(cx + rx * 0.4)} ${n(cy - ry - knollH * 0.4)} ${n(cx + rx * 0.15)} ${n(cy - ry - knollH * 0.98)}Z`,
+    `M${n(crown[0] + s(6))} ${n(crown[1] + s(0.4))}C${n(cx + rx * 0.55)} ${n(crown[1] + s(0.5))} ${n(cx + rx * 0.95)} ${n(cy - rise * 0.8)} ${n(cx + rx)} ${n(cy)}` +
+      `A${n(rx)} ${n(ry)} 0 0 1 ${n(cx + rx * 0.2)} ${n(cy + ry * 0.98)}C${n(cx + rx * 0.35)} ${n(cy - rise * 0.2)} ${n(cx + rx * 0.3)} ${n(crown[1] + s(4))} ${n(crown[0] + s(6))} ${n(crown[1] + s(0.4))}Z`,
     tones.grass.right,
   );
-  knoll.flat(oval(cx - rx * 0.42, cy - ry * 0.55 - knollH * 0.75, rx * 0.34, ry * 0.42), tones.grass.top);
-  // stalks of the dry grass, in its own shade
+  knoll.flat(
+    `M${n(cx - rx * 0.86)} ${n(cy - rise * 0.55)}C${n(cx - rx * 0.7)} ${n(crown[1] + s(1))} ${n(crown[0] - s(6))} ${n(crown[1] + s(0.2))} ${n(crown[0] + s(2))} ${n(crown[1] + s(0.6))}` +
+      `C${n(crown[0] - s(4))} ${n(crown[1] + s(3.4))} ${n(cx - rx * 0.6)} ${n(cy - rise * 0.35)} ${n(cx - rx * 0.86)} ${n(cy - rise * 0.55)}Z`,
+    tones.grass.top,
+  );
+  // strokes of the dry grass, swept by the wind
   let stalks = '';
-  for (let i = 0; i < 9; i++) {
-    const a = (i / 9) * Math.PI * 2 + rand() * 0.4;
-    const r = 0.45 + rand() * 0.45;
+  for (let i = 0; i < 16; i++) {
+    const a = rand() * Math.PI * 2;
+    const r = 0.25 + rand() * 0.65;
     const sx = cx + Math.cos(a) * rx * r;
-    const sy = cy + Math.sin(a) * ry * r - knollH * (1 - r * 0.7);
-    stalks += `M${n(sx - s(1.4))} ${n(sy)}l${n(-s(0.4))} ${n(-s(2.2))}M${n(sx)} ${n(sy)}l0 ${n(-s(2.8))}M${n(sx + s(1.4))} ${n(sy)}l${n(s(0.5))} ${n(-s(2))}`;
+    const sy = cy + Math.sin(a) * ry * r - rise * (1 - r) * 0.9;
+    stalks += `M${n(sx)} ${n(sy)}q${n(s(0.8))} ${n(-s(1.2))} ${n(s(2.2))} ${n(-s(1.6))}`;
   }
-  knoll.line(stalks, 0.7, tones.grass.right);
+  knoll.line(stalks, 0.7, tones.straw);
+  // the rocks behind the cairn, breaking through the knoll's shoulders
+  const behind = noRocks();
+  boulder(behind, cx - s(18.5), cy - rise * 0.35, s(9), s(5.5), rand);
+  boulder(behind, cx + s(18), cy - rise * 0.4, s(11), s(7), rand);
+  rocksOn(knoll, behind, tones.boulder);
   out.push(knoll);
 
-  // boulders breaking through the knoll: two behind the cairn's feet, two in front
-  const boulder = (bx: number, by: number, size: number, ahead: boolean): Part => {
-    const b = rock(pal, x + s(bx), y + s(by), z + knollH * 0.4, s(size), rand, tones.boulder);
-    b.depth = depthOf(x, y) + (ahead ? 1 : -0.5);
-    return b;
-  };
-  out.push(boulder(-15, -4, 3.6, false), boulder(9, -10, 2.8, false));
-
-  // the cairn on the knoll's crown, built face on: each stone sits a little back on the one below
+  // the cairn on the crown, measured off the picture: its widest slab thirty across, the whole of it thirty-three high
   const c = new Part(depthOf(x, y));
-  const t = tones.stone;
-  const foot = cy - knollH - ry * 0.35;
-  // the figure a little larger than the knoll's own scale, so it stands proud of it
-  const X = (u: number): number => cx + s(u) * 1.15;
-  const Y = (v: number): number => foot - s(v) * 1.15;
-  const S = (v: number): number => s(v) * 1.15;
-  const lift = s(1.6);
-  // [left, bottom, width, height, tilt]: legs, the slab across them, two small stones, the arms, the head
-  const stones: readonly (readonly [number, number, number, number, number])[] = [
-    [-10, 0, 6.4, 13, 0],
-    [3.6, 0.4, 6.6, 12.4, 0],
-    [-14, 12.4, 28, 5.8, 0.5],
-    [-8.6, 18.2, 5, 4.6, 0],
-    [3.8, 18.4, 5, 4.4, 0],
-    [-16.5, 22.6, 33, 4.8, -0.7],
-    [-3.8, 27.2, 7.6, 7.8, 0],
+  const foot = crown[1] + s(1.2);
+  const X = (u: number): number => cx + s(u);
+  const Y = (v: number): number => foot - s(v);
+  const S = s;
+  // [left, bottom, width, height, options]
+  const stones: readonly (readonly [number, number, number, number, { tilt?: number; top?: number; round?: number }])[] = [
+    [-13.6, 0, 10.8, 14.6, { round: 1.6 }], // the left leg, the taller
+    [2.4, 0.9, 11.4, 9.7, { round: 1.4 }], // the right leg, shorter
+    [2.6, 10.5, 9.6, 4, { round: 1, tilt: -0.2 }], // the flat stone that makes it up
+    [-15, 14.4, 30, 7.2, { round: 2.2, top: 0.6, tilt: 0.3 }], // the thick slab across them
+    [-9.2, 21.3, 6.4, 4, { round: 1.2 }], // two small stones, sky between them
+    [1.4, 21.2, 7.8, 4.1, { round: 1.2 }],
+    [-12.2, 25, 25.8, 3.9, { round: 1.6, top: 0.6, tilt: -0.3 }], // the arms, narrower than the slab below
+    [-2.6, 28.8, 6.2, 4.8, { round: 1 }], // the head
   ];
-  for (const [l, v, w, h, tilt] of stones) cairnStone(c, X(l), Y(v), S(w), S(h), lift, t, rand, S(tilt));
-  weather(c, X(-14), Y(12.4), S(28), S(5.8), tones, rand);
-  weather(c, X(-16.5), Y(22.6), S(33), S(4.8), tones, rand);
-  weather(c, X(-10), Y(0), S(6.4), S(13), tones, rand);
-  // the hole worn through the head: dark inside, its lower rim catching the light
-  const hx = X(0);
-  const hy = Y(27.2 + 4.3);
-  c.fill(oval(hx, hy, S(1.7), S(1.8)), pal.dusk ? '#2c2430' : '#3d3330', ' stroke-width="0.8"');
-  c.line(`M${n(hx - S(1.5))} ${n(hy + S(0.6))}Q${n(hx)} ${n(hy + S(2.2))} ${n(hx + S(1.5))} ${n(hy + S(0.6))}`, 0.7, t.top);
+  const marks: StoneMarks = { lit: [], under: [], end: [], outline: [], cracks: [] };
+  for (const [l, v, w, h, o] of stones) cairnStone(c, marks, X(l), Y(v), S(w), S(h), tones, rand, { ...o, tilt: S(o.tilt ?? 0), top: S(o.top ?? 0), round: S(o.round ?? 1.1) });
+  c.flat(marks.lit.join(''), tones.stone.top).flat(marks.under.join(''), tones.under).flat(marks.end.join(''), tones.stone.right);
+  c.line(marks.outline.join('')).line(marks.cracks.join(''), 0.55);
+  // the hole worn through the head, high up: dark inside, its lower rim catching the light
+  const hx = X(0.5);
+  const hy = Y(31.6);
+  c.fill(oval(hx, hy, S(1.15), S(1.2)), pal.dusk ? '#2c2430' : '#3d3330', ' stroke-width="0.8"');
+  c.line(`M${n(hx - S(1))} ${n(hy + S(0.4))}Q${n(hx)} ${n(hy + S(1.5))} ${n(hx + S(1))} ${n(hy + S(0.4))}`, 0.6, tones.stone.top);
+  // white lichen low on the left leg, as in the picture
+  let lichen = '';
+  for (let i = 0; i < 6; i++) lichen += disc(X(-11.5 + rand() * 4), Y(1.2 + rand() * 4.5), S(0.3 + rand() * 0.3));
+  c.flat(lichen, tones.lichen);
   out.push(c);
 
-  out.push(boulder(-4, 11, 3.2, true), boulder(10, 6, 2.4, true));
+  // the rocks in front, half buried in the grass
+  const front = new Part(depthOf(x, y) + 1);
+  const ahead = noRocks();
+  boulder(ahead, cx - s(7), cy + s(2.5), s(14), s(7), rand);
+  boulder(ahead, cx + s(15), cy - s(0.5), s(9), s(5.5), rand);
+  boulder(ahead, cx - s(20), cy - s(0.8), s(5.5), s(3.2), rand);
+  rocksOn(front, ahead, tones.boulder);
+  let pebbles = '';
+  for (const [u, v, r] of [[3, 4.5, 0.8], [7, 3, 0.6], [-14, 4, 0.7], [11, 5.5, 0.55]] as const) pebbles += oval(cx + s(u), cy + s(v), s(r * 1.3), s(r));
+  front.flat(pebbles, tones.boulder.right);
+  out.push(front);
   return out;
 }
