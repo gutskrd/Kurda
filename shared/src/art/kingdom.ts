@@ -393,8 +393,10 @@ export function kingdomSceneSvg(o: KingdomSceneOptions): string {
 
 /** How the world is cut into tiles: a grid of this size on the canvas, each a picture of its own. */
 export const KINGDOM_TILE = { w: 400, h: 345 } as const;
+/** How far each tile reaches past its neighbour, in canvas units. */
+export const KINGDOM_TILE_OVERLAP = 2;
 
-/** One tile of the world: where it sits on the canvas, and its picture (which reaches one unit past its right and bottom edges, so neighbours overlap and never show a seam). */
+/** One tile of the world: where it sits on the canvas, and its picture (which reaches `KINGDOM_TILE_OVERLAP` units past its right and bottom edges, so neighbours overlap and never show a seam, whatever the scale and the screen's rounding). */
 export interface KingdomTile {
   x: number;
   y: number;
@@ -414,8 +416,8 @@ export function kingdomTiles(o: Omit<KingdomSceneOptions, 'framed' | 'width' | '
   const out: KingdomTile[] = [];
   for (let y = 0; y < KINGDOM_SCENE.height; y += KINGDOM_TILE.h) {
     for (let x = 0; x < KINGDOM_SCENE.width; x += KINGDOM_TILE.w) {
-      const w = Math.min(KINGDOM_TILE.w, KINGDOM_SCENE.width - x) + 1;
-      const h = Math.min(KINGDOM_TILE.h, KINGDOM_SCENE.height - y) + 1;
+      const w = Math.min(KINGDOM_TILE.w, KINGDOM_SCENE.width - x) + KINGDOM_TILE_OVERLAP;
+      const h = Math.min(KINGDOM_TILE.h, KINGDOM_SCENE.height - y) + KINGDOM_TILE_OVERLAP;
       const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="${x} ${y} ${w} ${h}" aria-hidden="true">${within(pieces, { x, y, w, h })}</svg>`;
       out.push({ x, y, w, h, svg });
     }

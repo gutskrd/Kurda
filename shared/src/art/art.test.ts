@@ -1292,8 +1292,8 @@ describe('the kingdom’s village', () => {
     const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
     for (const levels of [all(0), some, all(5)]) {
       const tiles = kingdomTiles({ levels, moving: true });
-      // they cover the canvas, each reaching a unit past its own edge so neighbours overlap and never show a seam
-      expect(tiles.reduce((sum, t) => sum + (t.w - 1) * (t.h - 1), 0)).toBe(KINGDOM_SCENE.width * KINGDOM_SCENE.height);
+      // they cover the canvas, each reaching two units past its own edge so neighbours overlap and never show a seam
+      expect(tiles.reduce((sum, t) => sum + (t.w - 2) * (t.h - 2), 0)).toBe(KINGDOM_SCENE.width * KINGDOM_SCENE.height);
       for (const tile of tiles) {
         const root = parse(tile.svg);
         expect(root.attrs.viewBox).toBe(`${tile.x} ${tile.y} ${tile.w} ${tile.h}`);
