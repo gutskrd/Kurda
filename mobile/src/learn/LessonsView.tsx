@@ -51,7 +51,9 @@ import { rememberCourseDialect } from './courseDialect';
  * quests slim under them (a chest waiting shows there), and then the
  * course as a lesson path — on the first screen, not under a stack of cards —
  * for anyone who wants to choose for themselves. The week's league and the
- * day's extras come after the path, under "More for today". Continuing a
+ * day's extras come after the path, under "More for today". A review left
+ * part-way through is offered under the card, to be picked up where it
+ * stopped (`ContinueReview`). Continuing a
  * lesson is one tap from here — from the card, or from the "Continue" over
  * the current skill on the path. How today is going sits in the bar above
  * (LearnBar), where it stays in sight while the path scrolls.
@@ -86,6 +88,8 @@ export function LessonsView({
   const reduceMotion = useReducedMotion();
   const tabBarInset = useTabBarInset();
   const [due, setDue] = useState<number | null>(null);
+  // a review left part-way through, to pick up where it stopped rather than start another beside it
+  const [openReview, setOpenReview] = useState<string | null>(null);
   // the review count places review on the path, so the path waits for it (or for its failure) once
   const [dueSettled, setDueSettled] = useState(false);
   const [courses, setCourses] = useState<CourseEntry[] | null>(null);
@@ -99,9 +103,12 @@ export function LessonsView({
     useCallback(() => {
       let active = true;
       setFailed(false);
-      void client.get<{ due: number }>('/practice/due').then((res) => {
+      void client.get<{ due: number; open?: string | null }>('/practice/due').then((res) => {
         if (!active) return;
-        if (res.ok) setDue(res.data.due);
+        if (res.ok) {
+          setDue(res.data.due);
+          setOpenReview(res.data.open ?? null);
+        }
         setDueSettled(true);
       });
       void (async () => {
@@ -275,6 +282,7 @@ export function LessonsView({
         <View style={styles.header}>
           <ReminderNudge hold={kept.pending} />
           {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
+          {openReview ? <ContinueReview onPress={() => navigation.navigate('Practice', { sessionId: openReview })} /> : null}
           <View style={styles.tools}>
             {/* practice's hub, with what review has due on its face */}
             <ToolTile
@@ -463,6 +471,28 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
 }
 
 /**
+ * A review left part-way through (GET /practice/due's `open`), offered as the
+ * website's Learn page offers it: Continue opens that session where it
+ * stopped, with the answers given so far, instead of a new review that would
+ * leave the first unfinished. Its button is the quieter outline: the card
+ * above already has the screen's one solid button.
+ */
+function ContinueReview({ onPress }: { onPress: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  return (
+    <View style={[styles.reviewOpen, { backgroundColor: colors.surface }]} testID="learn-review-open">
+      <View style={[styles.reviewOpenRow, { flexDirection: dir.row }]}>
+        <Icon name="review" size={24} color={colors.textPrimary} />
+        <Text style={[styles.reviewOpenText, dir.text, { color: colors.textPrimary }]}>{t('practice.open.body')}</Text>
+      </View>
+      <ClayButton label={t('practice.open.continue')} tone="primary" variant="outline" onPress={onPress} />
+    </View>
+  );
+}
+
+/**
  * The card while the course loads, line for line: where, the lesson's name,
  * the bar, how far, the button — each at the card's own sizes, so the card
  * that arrives is the one that was already there.
@@ -574,6 +604,10 @@ const styles = StyleSheet.create({
   bar: { height: 6, borderRadius: radii.pill, overflow: 'hidden', alignSelf: 'stretch' },
   barFill: { height: 6, borderRadius: radii.pill },
   barFillEnd: { alignSelf: 'flex-end' },
+
+  reviewOpen: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
+  reviewOpenRow: { alignItems: 'center', gap: spacing.sm + 4 },
+  reviewOpenText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
 
   // the four two by two: the path is what this screen is for, and the tools sit above it, small
   tools: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

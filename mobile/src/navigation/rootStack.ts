@@ -40,9 +40,11 @@ export type RootStackParamList = {
   /**
    * A practice session, started at once. `exerciseIds`: practise these (a
    * lesson's mistakes, "Practise these now") rather than what is due; `mode`:
-   * another kind of practice from the hub, with `unitId` for a unit's review.
+   * another kind of practice from the hub, with `unitId` for a unit's review;
+   * `sessionId`: a review left part-way through, opened again where it
+   * stopped (Learn's Continue review).
    */
-  Practice: { exerciseIds?: string[]; mode?: PracticeMode; unitId?: string } | undefined;
+  Practice: { exerciseIds?: string[]; mode?: PracticeMode; unitId?: string; sessionId?: string } | undefined;
   /** Practice's hub: the one thing most worth doing now, and every other kind of practice (practice/PracticeHubScreen). */
   PracticeHub: undefined;
   /** The short test that jumps ahead on the path to `unitId` (coursemap/JumpTestScreen) */

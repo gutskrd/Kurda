@@ -362,6 +362,7 @@ function SignedInRoot() {
             exerciseIds={route.params?.exerciseIds}
             mode={route.params?.mode}
             unitId={route.params?.unitId}
+            sessionId={route.params?.sessionId}
             onExit={() => navigation.goBack()}
           />
         )}

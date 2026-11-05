@@ -1546,6 +1546,8 @@ export type TranslationKey =
   | 'practice.hub.noneTitle'
   | 'practice.hub.noneBody'
   | 'practice.hub.toLessons'
+  | 'practice.open.body'
+  | 'practice.open.continue'
   | 'practice.hub.mistakes'
   | 'practice.hub.mistakesCount'
   | 'practice.hub.mistakesOne'
@@ -4005,6 +4007,8 @@ const en: Catalog = {
   'practice.hub.noneTitle': 'Practice starts with a lesson',
   'practice.hub.noneBody': 'Finish a lesson, and what you learned comes back here to practise.',
   'practice.hub.toLessons': 'Go to lessons',
+  'practice.open.body': 'You left a review part-way through. Your answers so far are saved.',
+  'practice.open.continue': 'Continue review',
   'practice.hub.mistakes': 'Mistakes',
   'practice.hub.mistakesCount': '{count} to put right',
   'practice.hub.mistakesOne': '1 to put right',
@@ -7009,6 +7013,8 @@ const ku: Catalog = {
   'practice.hub.noneTitle': 'Temrîn bi dersekê dest pê dike',
   'practice.hub.noneBody': 'Dersekê biqedîne, û tiştê ku te hîn kir li vir ji bo temrînê vedigere.',
   'practice.hub.toLessons': 'Here dersan',
+  'practice.open.body': 'Te dubarekirinek di nîvî de hiştiye. Bersivên te yên heta niha tomarkirî ne.',
+  'practice.open.continue': 'Dubarekirinê bidomîne',
   'practice.hub.mistakes': 'Şaşî',
   'practice.hub.mistakesCount': '{count} ji bo rastkirinê',
   'practice.hub.mistakesOne': '1 ji bo rastkirinê',
@@ -10012,6 +10018,8 @@ const de: Catalog = {
   'practice.hub.noneTitle': 'Üben beginnt mit einer Lektion',
   'practice.hub.noneBody': 'Schließ eine Lektion ab, dann kommt das Gelernte hier zum Üben zurück.',
   'practice.hub.toLessons': 'Zu den Lektionen',
+  'practice.open.body': 'Du hast eine Wiederholung mittendrin verlassen. Deine bisherigen Antworten sind gespeichert.',
+  'practice.open.continue': 'Wiederholung fortsetzen',
   'practice.hub.mistakes': 'Fehler',
   'practice.hub.mistakesCount': '{count} zum Ausbessern',
   'practice.hub.mistakesOne': '1 zum Ausbessern',
@@ -13015,6 +13023,8 @@ const es: Catalog = {
   'practice.hub.noneTitle': 'La práctica empieza con una lección',
   'practice.hub.noneBody': 'Termina una lección y lo que aprendiste volverá aquí para practicarlo.',
   'practice.hub.toLessons': 'Ir a las lecciones',
+  'practice.open.body': 'Dejaste un repaso a medias. Tus respuestas hasta ahora están guardadas.',
+  'practice.open.continue': 'Seguir con el repaso',
   'practice.hub.mistakes': 'Errores',
   'practice.hub.mistakesCount': '{count} por corregir',
   'practice.hub.mistakesOne': '1 por corregir',
@@ -16018,6 +16028,8 @@ const tr: Catalog = {
   'practice.hub.noneTitle': 'Alıştırma bir dersle başlar',
   'practice.hub.noneBody': 'Bir ders bitir; öğrendiklerin alıştırma için buraya gelir.',
   'practice.hub.toLessons': 'Derslere git',
+  'practice.open.body': 'Bir tekrarı yarıda bıraktın. Şimdiye kadarki yanıtların kayıtlı.',
+  'practice.open.continue': 'Tekrara devam et',
   'practice.hub.mistakes': 'Hatalar',
   'practice.hub.mistakesCount': 'Düzeltilecek {count} hata',
   'practice.hub.mistakesOne': 'Düzeltilecek 1 hata',
@@ -19021,6 +19033,8 @@ const ar: Catalog = {
   'practice.hub.noneTitle': 'التمرين يبدأ بدرس',
   'practice.hub.noneBody': 'أنهِ درسًا، وسيعود ما تعلّمته إلى هنا لتتمرّن عليه.',
   'practice.hub.toLessons': 'إلى الدروس',
+  'practice.open.body': 'تركت مراجعة في منتصفها. إجاباتك حتى الآن محفوظة.',
+  'practice.open.continue': 'تابِع المراجعة',
   'practice.hub.mistakes': 'الأخطاء',
   'practice.hub.mistakesCount': '{count} للتصحيح',
   'practice.hub.mistakesOne': 'خطأ واحد للتصحيح',
@@ -22024,6 +22038,8 @@ const fr: Catalog = {
   'practice.hub.noneTitle': 'L’entraînement commence par une leçon',
   'practice.hub.noneBody': 'Termine une leçon, et ce que tu as appris reviendra ici pour t’entraîner.',
   'practice.hub.toLessons': 'Aller aux leçons',
+  'practice.open.body': 'Tu as laissé une révision en cours. Tes réponses jusqu’ici sont enregistrées.',
+  'practice.open.continue': 'Reprendre la révision',
   'practice.hub.mistakes': 'Erreurs',
   'practice.hub.mistakesCount': '{count} à corriger',
   'practice.hub.mistakesOne': '1 à corriger',
@@ -25027,6 +25043,8 @@ const nl: Catalog = {
   'practice.hub.noneTitle': 'Oefenen begint met een les',
   'practice.hub.noneBody': 'Rond een les af, dan komt wat je leerde hier terug om te oefenen.',
   'practice.hub.toLessons': 'Naar de lessen',
+  'practice.open.body': 'Je bent halverwege een herhaling gestopt. Je antwoorden tot nu toe zijn bewaard.',
+  'practice.open.continue': 'Verder met herhalen',
   'practice.hub.mistakes': 'Fouten',
   'practice.hub.mistakesCount': '{count} om te verbeteren',
   'practice.hub.mistakesOne': '1 om te verbeteren',
@@ -28031,6 +28049,8 @@ const ckb: Catalog = {
   'practice.hub.noneTitle': 'ڕاهێنان بە وانەیەک دەست پێ دەکات',
   'practice.hub.noneBody': 'وانەیەک تەواو بکە، ئەوەی فێری بوویت دەگەڕێتەوە ئێرە بۆ ڕاهێنان.',
   'practice.hub.toLessons': 'بڕۆ بۆ وانەکان',
+  'practice.open.body': 'پێداچوونەوەیەکت لە نیوەدا جێهێشتووە. وەڵامەکانت تا ئێستا پاشەکەوت کراون.',
+  'practice.open.continue': 'درێژە بە پێداچوونەوە بدە',
   'practice.hub.mistakes': 'هەڵەکان',
   'practice.hub.mistakesCount': '{count} بۆ ڕاستکردنەوە',
   'practice.hub.mistakesOne': '1 بۆ ڕاستکردنەوە',

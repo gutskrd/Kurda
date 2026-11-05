@@ -61,6 +61,27 @@ describe('practice', () => {
     expect(onExit).toHaveBeenCalledTimes(1);
   });
 
+  // Learn's Continue review: the session left part-way, read back with its answers, and never a new one started
+  it('picks up a review left part-way through where it stopped', async () => {
+    const client = fakeClient({
+      'GET /practice/sessions/p9': ok({
+        sessionId: 'p9',
+        completed: false,
+        exercises: [
+          { id: 'mc1', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'] },
+          { id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'] },
+        ],
+        answered: { mc1: { verdict: 'correct', accepted: true } },
+      }),
+      'GET /me': ok({ user: {} }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<PracticeScreen navigation={navigation} sessionId="p9" onExit={() => undefined} />);
+    expect(await screen.findByText('Bread?')).toBeTruthy();
+    expect(screen.queryByText('Water?')).toBeNull();
+    expect(client.calls.some((c) => c.path === '/practice/session')).toBe(false);
+  });
+
   it('practises what is due when it is given nothing', async () => {
     const client = fakeClient({ 'POST /practice/session': session, 'GET /me': ok({ user: {} }) });
     testAuth.client = client;

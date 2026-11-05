@@ -87,14 +87,14 @@ const LIBRARY = {
   me: { finished: 0, total: 1, averageScore: null },
 };
 
-function client(streak: Record<string, unknown> = STREAK) {
+function client(streak: Record<string, unknown> = STREAK, due: { due: number; available: number; open: string | null } = { due: 8, available: 20, open: null }) {
   testAuth.client = fakeClient({
     'GET /courses': ok({ courses: [{ id: 'c1', slug: 'kmr', title: 'Kurmancî', dialect: 'kmr' }] }),
     'GET /courses/c1/map': ok(MAP),
     'GET /me/daily-goal': ok({ goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false }),
     'GET /me': ok({ user: { streak } }),
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
-    'GET /practice/due': ok({ due: 8, available: 20, open: null }),
+    'GET /practice/due': ok(due),
     'GET /stories/library': ok(LIBRARY),
     'GET /story-games/active': ok({ games: [] }),
     'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
@@ -164,6 +164,25 @@ describe('Learn', () => {
     expect(screen.queryByRole('button', { name: /^Alphabet,/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Letters and words, Letters, colours, numbers, days, months' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Words');
+  });
+
+  /*
+   * A review left part-way through is picked up where it stopped, as the
+   * website offers it: its own session, not a new one beside it.
+   */
+  it('offers a review left part-way through, and opens that one where it stopped', async () => {
+    client(STREAK, { due: 8, available: 20, open: 'p9' });
+    renderWithProviders(<LearnScreen />);
+    expect(await screen.findByText('You left a review part-way through. Your answers so far are saved.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue review' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Practice', { sessionId: 'p9' });
+  });
+
+  it('offers no review to continue when none was left part-way', async () => {
+    client();
+    renderWithProviders(<LearnScreen />);
+    await screen.findByRole('button', { name: 'Practice, 8 words due' });
+    expect(screen.queryByRole('button', { name: 'Continue review' })).toBeNull();
   });
 
   /*
