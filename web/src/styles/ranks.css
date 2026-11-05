@@ -170,15 +170,16 @@
   padding: 2px 8px 2px 6px;
   font-size: 0.72rem;
 }
+/* the scheme's own gold and green, so the word stays readable on a light page and on a tinted ticket alike */
 .rated-badge.is-rated {
-  color: #ffe6a6;
-  border-color: rgba(240, 194, 74, 0.42);
-  background: linear-gradient(135deg, rgba(240, 194, 74, 0.2), rgba(197, 82, 255, 0.12));
+  color: var(--gold-ink);
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+  background: var(--gold-soft);
 }
 .rated-badge.is-friendly {
-  color: #b9f3dc;
-  border-color: rgba(134, 226, 190, 0.34);
-  background: rgba(87, 205, 160, 0.12);
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+  background: var(--success-soft);
 }
 .match-rated,
 .invite-rated {
@@ -281,7 +282,7 @@
 }
 .rated-option.is-friendly.is-on .rated-option-icon {
   background: rgba(87, 205, 160, 0.2);
-  color: #b9f3dc;
+  color: var(--success);
 }
 .rated-option.is-on .rated-option-hint {
   color: var(--ink-2);
