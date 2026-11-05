@@ -41,7 +41,7 @@ import { CosmeticsService } from './cosmetics/service.js';
 import { registerCosmeticsRoutes } from './cosmetics/routes.js';
 import { IapService } from './iap/service.js';
 import { registerIapRoutes } from './iap/routes.js';
-import { assertProductionVerifier, createReceiptVerifier } from './iap/verifier.js';
+import { assertProductionVerifier, createReceiptVerifier, purchasesOff } from './iap/verifier.js';
 import { FraudService } from './fraud/service.js';
 import { registerFraudRoutes } from './fraud/routes.js';
 import { EconomyService } from './economy/service.js';
@@ -604,11 +604,14 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerFraudRoutes(app, fraudService);
     // a stub verifier in production stops the boot here (iap/verifier.ts)
     const receiptVerifier = assertProductionVerifier(config, createReceiptVerifier(config));
-    if (config.NODE_ENV === 'production' && config.IAP_PURCHASES_OFF === 'true') {
+    if (config.NODE_ENV === 'production' && purchasesOff(config)) {
       app.log.warn(
         'IAP has no store credentials (IAP_PURCHASES_OFF=true): purchases are REFUSED ' +
           'with 503 IAP_UNAVAILABLE. Configure the Apple/Google verifiers before selling anything.',
       );
+      if (config.IAP_ALLOW_STUB === 'true') {
+        app.log.warn('IAP_ALLOW_STUB is the old name for IAP_PURCHASES_OFF and is read as it: rename it in the dashboard.');
+      }
     }
     registerIapRoutes(
       app,

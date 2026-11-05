@@ -154,14 +154,13 @@ const envSchema = z.object({
   /** Shared secret guarding IAP refund webhooks; disabled when unset (KUR-072). */
   IAP_WEBHOOK_SECRET: z.string().optional(),
   /**
-   * A name from before IAP_PURCHASES_OFF, kept only so it can be refused.
-   *
-   * It read as "allow the stub receipt verifier", and under NODE_ENV=production
-   * it never did — it booted a verifier that refuses everything — but a flag
-   * whose name says the forgeable verifier is on is one mistake away from a
-   * change that makes it so. In production it is refused at boot (loadConfig);
-   * anywhere else it changes nothing, since the stub is what development and
-   * tests use anyway.
+   * The older name for IAP_PURCHASES_OFF, still read so a deploy whose
+   * dashboard has it keeps booting. It read as "allow the stub receipt
+   * verifier", but it only ever switches store purchases off: in production it
+   * selects the verifier that refuses every receipt (iap/verifier.ts), and the
+   * stub is stopped at boot whatever asks for it. Refusing to start over the
+   * old name would only leave the previous release running, without the fixes
+   * that came with this one.
    */
   IAP_ALLOW_STUB: z.enum(['true', 'false']).default('false'),
   /**
@@ -360,14 +359,6 @@ export function loadConfig(env: Record<string, string | undefined> = process.env
       problems.push('  JWT_SECRET: required in production');
     } else if (env.JWT_SECRET === DEV_JWT_SECRET) {
       problems.push('  JWT_SECRET: the built-in development secret must not be used in production');
-    }
-    // The stub receipt verifier believes whatever a receipt says about itself,
-    // so it may never be reachable here — not even by a flag that, today, only
-    // happens to select the refusing verifier (iap/verifier.ts).
-    if (config.IAP_ALLOW_STUB === 'true') {
-      problems.push(
-        '  IAP_ALLOW_STUB: the test receipt verifier is never allowed in production — set IAP_PURCHASES_OFF=true to run without store credentials',
-      );
     }
     if (config.CORS_ORIGINS.split(',').some((o) => o.trim() === '*')) {
       problems.push("  CORS_ORIGINS: wildcard '*' is not allowed in production — use an explicit origin allowlist");

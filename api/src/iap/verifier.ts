@@ -65,9 +65,9 @@ export class StubReceiptVerifier implements ReceiptVerifier {
  *
  * It refuses every receipt, which is the only safe thing an unverified
  * environment can do. IAP_PURCHASES_OFF exists so such a deploy can *boot* —
- * that is all it buys. (Its older name, IAP_ALLOW_STUB, once handed out the
- * stub to satisfy it, and is now refused in production outright.) That was the
- * wrong shape: the stub answers `valid: true` to any
+ * that is all it buys. (Its older name, IAP_ALLOW_STUB, is read the same way:
+ * it once handed out the stub to satisfy it, and now selects only this.) That
+ * was the wrong shape: the stub answers `valid: true` to any
  * JSON carrying a transactionId, and every field it reports comes from the
  * token, so the caller also chooses `environment: 'production'` and walks
  * through the sandbox check on the way past. The only thing standing between
@@ -82,6 +82,11 @@ export class UnavailableReceiptVerifier implements ReceiptVerifier {
       'purchases are not available on this deployment yet',
     );
   }
+}
+
+/** Store purchases are switched off: the flag, or its older name, which means the same and nothing more. */
+export function purchasesOff(config: AppConfig): boolean {
+  return config.IAP_PURCHASES_OFF === 'true' || config.IAP_ALLOW_STUB === 'true';
 }
 
 /**
@@ -101,7 +106,7 @@ export function createReceiptVerifier(config: AppConfig): ReceiptVerifier {
   // here when APPLE/GOOGLE store credentials land — follow-up, needs live
   // store accounts to integration-test. Until then dev/test use the stub.
   if (config.NODE_ENV === 'production') {
-    if (config.IAP_PURCHASES_OFF !== 'true') {
+    if (!purchasesOff(config)) {
       throw new Error(
         'IAP: no production receipt verifier configured (store credentials required). ' +
           'Set IAP_PURCHASES_OFF=true to boot with store purchases switched off.',

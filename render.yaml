@@ -114,9 +114,9 @@ services:
       # environment can give. Remove the flag once the store credentials land.
       - key: IAP_PURCHASES_OFF
         value: "true"
-      # The old name for the flag above. Production refuses to start while it
-      # is "true" (the test receipt verifier is never allowed there), so it is
-      # set to "false" here rather than left to linger in the dashboard.
+      # The old name for the flag above. It is still read as "purchases off"
+      # (never as the test receipt verifier, which production stops at boot),
+      # and set to "false" here so the new name is the one that says so.
       - key: IAP_ALLOW_STUB
         value: "false"
       # Media storage for profile photos (KUR-177/180). S3-compatible; Cloudflare

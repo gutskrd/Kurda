@@ -382,9 +382,10 @@ shutdown (drain in-flight work, close pool/Redis, run `onClose`).
 - **`IAP_PURCHASES_OFF`** — `true` boots a deploy that has no App Store / Play
   credentials with every receipt refused (503 `IAP_UNAVAILABLE`); the API logs a
   loud warning while it is on. Remove it once real verifiers are wired.
-  **`IAP_ALLOW_STUB`** (its old name) is refused at boot in production when
-  `true`: the test receipt verifier, which believes whatever a receipt says, can
-  never run there.
+  **`IAP_ALLOW_STUB`** (its old name) is read the same way, with a warning to
+  rename it: it switches purchases off and nothing more. The test receipt
+  verifier, which believes whatever a receipt says, stops a production boot
+  whatever selects it.
 - **External-service credentials** (only where the feature is enabled) —
   `RESEND_API_KEY`/`SMTP_*` (see [email-delivery](email-delivery.md)),
   `GOOGLE_CLIENT_IDS`/`APPLE_CLIENT_IDS` (see [google-signin](google-signin.md)),

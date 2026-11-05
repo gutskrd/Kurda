@@ -53,11 +53,12 @@ describe('createReceiptVerifier', () => {
     expect(() => createReceiptVerifier(cfg({ ...PROD, IAP_PURCHASES_OFF: 'false' }))).toThrow(/no production receipt verifier/);
   });
 
-  it('refuses to start production with the stub-named flag, whatever else is set', () => {
-    expect(() => cfg({ ...PROD, IAP_ALLOW_STUB: 'true' })).toThrow(/IAP_ALLOW_STUB: the test receipt verifier is never allowed in production/);
-    expect(() => cfg({ ...PROD, IAP_ALLOW_STUB: 'true', IAP_PURCHASES_OFF: 'true' })).toThrow(/IAP_ALLOW_STUB/);
-    // false is not a request for anything, and boots
-    expect(() => cfg({ ...PROD, IAP_ALLOW_STUB: 'false', IAP_PURCHASES_OFF: 'true' })).not.toThrow();
+  it('reads the stub-named flag in production as purchases off, never as the stub', () => {
+    // the old name boots, and what it gets is the verifier that refuses every receipt
+    expect(createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'true' }))).toBeInstanceOf(UnavailableReceiptVerifier);
+    expect(createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'true', IAP_PURCHASES_OFF: 'true' }))).toBeInstanceOf(UnavailableReceiptVerifier);
+    // false is not a request for anything: without the new flag either, production still refuses to start
+    expect(() => createReceiptVerifier(cfg({ ...PROD, IAP_ALLOW_STUB: 'false' }))).toThrow(/IAP_PURCHASES_OFF=true/);
     // outside production the stub is what runs anyway, and the flag changes nothing
     expect(createReceiptVerifier(cfg({ NODE_ENV: 'development', IAP_ALLOW_STUB: 'true' }))).toBeInstanceOf(StubReceiptVerifier);
   });
