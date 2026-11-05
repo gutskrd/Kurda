@@ -33,8 +33,8 @@ const village = (over: Partial<KingdomView> = {}): KingdomView => ({
   ...over,
 });
 
-function serve(view: KingdomView) {
-  const client = fakeClient({ 'GET /kingdom': ok(view), 'POST /kingdom/seen': ok({ seen: true }) });
+function serve(view: KingdomView, zer?: number) {
+  const client = fakeClient({ 'GET /kingdom': ok(view), 'POST /kingdom/seen': ok({ seen: true }), ...(zer === undefined ? {} : { 'GET /me/wallet': ok({ balances: { zer, gems: 0 } }) }) });
   testAuth.client = client;
   return client;
 }
@@ -48,6 +48,19 @@ describe('the village on the phone', () => {
     expect(screen.getByTestId('kingdom-plot-houses').getAttribute('aria-label')).toBe(`${en['kingdom.name.houses']}, Level 1 of 5`);
     expect(screen.getByTestId('kingdom-plot-teahouse').getAttribute('aria-label')).toBe(`${en['kingdom.name.teahouse']}, ${en['kingdom.empty']}`);
     expect(screen.queryByTestId('kingdom-intro')).toBeNull();
+  });
+
+  it('shows a chunky top bar with the learner’s Zêr and how many of the thirty levels stand, and a badge under every building', async () => {
+    serve(village(), 1240);
+    renderWithProviders(<KingdomScreen onExit={() => undefined} />);
+    expect((await screen.findByTestId('kingdom-zer')).getAttribute('aria-label')).toBe('1,240 Zêr');
+    // houses, school, spring and orchard at level 1
+    expect(screen.getByTestId('kingdom-levels').getAttribute('aria-label')).toBe('4 of 30 building levels');
+    expect(within(screen.getByTestId('kingdom-plot-houses')).getByText('Lv 1')).toBeTruthy();
+    expect(within(screen.getByTestId('kingdom-plot-teahouse')).getByText('Lv 0')).toBeTruthy();
+    // the village's life is laid over the scene, hidden from screen readers
+    expect(screen.getByTestId('kingdom-life')).toBeTruthy();
+    expect(screen.getByText(en['kingdom.list'])).toBeTruthy();
   });
 
   it('opens a building’s sheet and goes from it to the part of Learn that grows it', async () => {
@@ -88,7 +101,11 @@ describe('the village on the phone', () => {
     const stop = onHaptic((e) => felt.push(e));
     const client = serve(village({ celebrate: [{ building: 'spring', level: 1, zer: 20, reachedAt: '2026-11-05T10:00:00.000Z' }] }));
     renderWithProviders(<KingdomScreen onExit={() => undefined} />);
-    expect(await screen.findByText(`${en['kingdom.name.spring']} · level 1`)).toBeTruthy();
+    // it goes up in the scene first, felt as it lands, and is celebrated after
+    expect(await screen.findByTestId('kingdom-raise')).toBeTruthy();
+    expect(screen.queryByText(`${en['kingdom.name.spring']} · level 1`)).toBeNull();
+    expect(await screen.findByText(`${en['kingdom.name.spring']} · level 1`, undefined, { timeout: 4000 })).toBeTruthy();
+    expect(screen.queryByTestId('kingdom-raise')).toBeNull();
     expect(screen.getByText('+20 Zêr')).toBeTruthy();
     await waitFor(() => expect(felt).toContain('celebrate'), { timeout: 3000 });
     fireEvent.click(screen.getByText(en['kingdom.celebrate.done']));
