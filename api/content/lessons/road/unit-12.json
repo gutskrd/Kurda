@@ -90,7 +90,7 @@
                   "position": 4,
                   "type": "translate",
                   "payload": {
-                    "say": "Wê ji karikên xwe re digot: “Gur derewker e. Derî ji kesî re venekin!”",
+                    "say": "Wê ji karikên xwe re digot: “Gur derewker e. Derî ji kesî re vemekin!”",
                     "prompt": "And before she went, what did she always tell her kids?",
                     "accepted": [
                       "She used to tell her kids: “The wolf is a liar. Don’t open the door to anyone!”",
@@ -119,10 +119,10 @@
                   "payload": {
                     "prompt": "Say the mother goat’s rule in Kurdish: “If someone knocks at the door, don’t open it.”",
                     "accepted": [
-                      "Heke kesek li derî bixe, derî venekin.",
-                      "Heke kesek li derî bixe, derî venekin",
-                      "Heke kesek li derî bixe, venekin.",
-                      "Heke kesek li derî bixe, venekin"
+                      "Heke kesek li derî bixe, derî vemekin.",
+                      "Heke kesek li derî bixe, derî vemekin",
+                      "Heke kesek li derî bixe, vemekin.",
+                      "Heke kesek li derî bixe, vemekin"
                     ],
                     "voice": "hamo"
                   }
@@ -160,7 +160,7 @@
                   "position": 9,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Eger deng nerm be jî, derî venekin.",
+                    "say": "Eger deng nerm be jî, derî vemekin.",
                     "voice": "hamo",
                     "prompt": "One more warning. What does it mean?",
                     "options": [
@@ -175,12 +175,12 @@
                   "position": 10,
                   "type": "writing",
                   "payload": {
-                    "prompt": "Complete the mother goat’s warning: “… kesek li derî bixe, derî venekin.” (If someone knocks…)",
+                    "prompt": "Complete the mother goat’s warning: “… kesek li derî bixe, derî vemekin.” (If someone knocks…)",
                     "accepted": [
-                      "Heke kesek li derî bixe, derî venekin.",
-                      "Heke kesek li derî bixe, derî venekin",
-                      "Eger kesek li derî bixe, derî venekin.",
-                      "Eger kesek li derî bixe, derî venekin"
+                      "Heke kesek li derî bixe, derî vemekin.",
+                      "Heke kesek li derî bixe, derî vemekin",
+                      "Eger kesek li derî bixe, derî vemekin.",
+                      "Eger kesek li derî bixe, derî vemekin"
                     ],
                     "voice": "hamo"
                   }
@@ -487,7 +487,7 @@
             {
               "key": "u12s1l3",
               "position": 3,
-              "titleKu": "Derî venekin!",
+              "titleKu": "Derî vemekin!",
               "titleEn": "Don’t open the door!",
               "exercises": [
                 {
@@ -884,7 +884,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Wateya çîrokê ev e: aqil ne bi salan e, bi serî ye.",
-                    "prompt": "Dapîr gives the tale its proverb. What does it mean?",
+                    "prompt": "Dapîr puts the lesson of the tale in her own words. What does she say?",
                     "accepted": [
                       "The meaning of the tale is this: good sense is not in the years, it is in the head.",
                       "The meaning of the tale is this: good sense is not in the years, it is in the head",
@@ -926,7 +926,7 @@
                   "payload": {
                     "prompt": "Which sentence means “Tales have a great influence on children”?",
                     "options": [
-                      "Çîrok bandoreke mezin li zarokan dike.",
+                      "Çîrok bandorek mezin li zarokan dikin.",
                       "Çîrok bandoreke mezin li zarokan dikin.",
                       "Çîrok bandoreke mezin ji zarokan dikin."
                     ],
@@ -2938,7 +2938,7 @@
                   "position": 6,
                   "type": "listening",
                   "payload": {
-                    "prompt": "Hevalo climbs onto the cushions. Type what he says.",
+                    "prompt": "Hevalo climbs onto the cushions with a proverb he has just made up himself. Type what he says.",
                     "accepted": [
                       "Sêvek her roj, doktor ji derî dûr!",
                       "Sêvek her roj, doktor ji derî dûr"
@@ -3614,11 +3614,11 @@
                   "position": 15,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Dahol bi hêz lêdide, û dilê Hamo jî bi wê re lêdide.",
+                    "say": "Daholê bi hêz lêdixin, û dilê Hamo jî bi wê re lêdide.",
                     "voice": "xezo",
                     "prompt": "Hamo’s face is red and shining. What does Xezal say about him?",
                     "options": [
-                      "The drum beats hard, and Hamo’s heart beats with it.",
+                      "They beat the drum hard, and Hamo’s heart beats with it.",
                       "The drum is too loud, and Hamo is tired.",
                       "The drum stops, and Hamo sits down."
                     ],
@@ -3652,7 +3652,7 @@
                   "position": 1,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ez ji we hemûyan re minetdar im.",
+                    "say": "Ez ji we hemûyan minetdar im.",
                     "voice": "xezo",
                     "prompt": "The last evening. Xezal stands up in front of the whole family. How does she begin?",
                     "options": [
@@ -3910,13 +3910,13 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Bîra te ye, xalo? Hevalê me yê nû li vir, li ber vî dergehî, hat.",
-                        "en": "Do you remember, uncle? Our new friend arrived here, at this gate."
+                        "text": "Tê bîra te, xalo? Rojekê Hevalo mêvanek anî ber vî dergehî.",
+                        "en": "Do you remember, uncle? One day Hevalo brought a guest to this gate."
                       },
                       {
                         "speaker": 0,
-                        "text": "Erê. Û niha bi kurdî diaxive!",
-                        "en": "Yes. And now our friend speaks Kurdish!"
+                        "text": "Erê. Û niha ew mêvan bi kurdî diaxive!",
+                        "en": "Yes. And now that guest speaks Kurdish!"
                       },
                       {
                         "speaker": 1,
@@ -3950,8 +3950,8 @@
                       },
                       {
                         "speaker": 1,
-                        "text": "Oxir be, Hevalo. Heta Newrozê!",
-                        "en": "Good luck, Hevalo. See you at Newroz!"
+                        "text": "Bi xatirê te, Hevalo. Heta Newrozê!",
+                        "en": "Goodbye, Hevalo. See you at Newroz!"
                       },
                       {
                         "speaker": 0,
@@ -4396,8 +4396,8 @@
                       },
                       {
                         "speaker": 2,
-                        "text": "Hevalê me yê nû jî?",
-                        "en": "Our new friend too?"
+                        "text": "Û kesê ku Hevalo anî ber dergeh?",
+                        "en": "And the one Hevalo brought to the gate?"
                       },
                       {
                         "speaker": 0,
@@ -4406,8 +4406,8 @@
                       },
                       {
                         "speaker": 2,
-                        "text": "Pîroz be, hevalê me! Ev ne dawî ye, ev destpêk e.",
-                        "en": "Congratulations, our friend! This is not the end; this is the beginning."
+                        "text": "Pîroz be! Ev ne dawî ye, ev destpêk e.",
+                        "en": "Congratulations! This is not the end; this is the beginning."
                       }
                     ],
                     "prompt": "Kê şitil çandiye?",
@@ -4426,9 +4426,7 @@
                     "prompt": "Say it in Kurdish: “The sapling will become a big tree.”",
                     "accepted": [
                       "Şitil dê bibe dareke mezin.",
-                      "Şitil dê bibe dareke mezin",
-                      "Şitil ê bibe dareke mezin.",
-                      "Şitil ê bibe dareke mezin"
+                      "Şitil dê bibe dareke mezin"
                     ],
                     "voice": "hamo"
                   }
@@ -4513,11 +4511,11 @@
                   "position": 16,
                   "type": "multiple_choice",
                   "payload": {
-                    "say": "Ev dawiya vê rêyê ye, û destpêka rêya te. Rêya te vekirî be, hevalê min!",
+                    "say": "Ev dawiya vê rêyê ye, û destpêka rêya te. Tu êdî ji me yî. Rêya te vekirî be!",
                     "voice": "hamo",
                     "prompt": "Hamo lifts the near end of his moustache, the way he does when he is pleased with you. What does he say?",
                     "options": [
-                      "This is the end of this road, and the beginning of yours. Safe journey, my friend!",
+                      "This is the end of this road, and the beginning of yours. You are one of us now. Safe journey!",
                       "This is the end of the road. Goodbye for ever, my friend!",
                       "This is the beginning of the road. Come back tomorrow, my friend!"
                     ],
