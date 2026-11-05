@@ -191,6 +191,7 @@ export {
   type PathUnit,
   type PathUnitInput,
   type PlacedStop,
+  type GuideStop,
   type ReviewStop,
   type SkillStop,
   type StopState,
@@ -198,6 +199,29 @@ export {
   type UnitTone,
   unitTone,
 } from './lesson-path.js';
+/** The land the lesson path runs through: each unit's landscape, landmark and host, and where they stand. */
+export {
+  PATH_GROUNDS,
+  PATH_LANDMARKS,
+  PATH_LANDS,
+  PATH_MOTION,
+  PATH_SCENERY,
+  PATH_TRAIL,
+  hopAt,
+  hostBox,
+  landClear,
+  landmarkBox,
+  mascotBox,
+  pathLand,
+  trailStones,
+  type PathBox,
+  type PathGround,
+  type PathHost,
+  type PathLand,
+  type PathLandmark,
+  type TrailStone,
+  type WorldStop,
+} from './path-world.js';
 /** Practice as a hub: its kinds of session, what each draws on, and what the hub shows. */
 export { PRACTICE_MODES, PRACTICE_MODE_TYPES, type PracticeHub, type PracticeHubUnit, type PracticeMode } from './practice.js';
 export {
