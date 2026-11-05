@@ -435,8 +435,7 @@ function Village(props: VillageProps): React.JSX.Element {
       }, RAISE_MS),
     );
     return () => timers.forEach((id) => window.clearTimeout(id));
-    // the camera and the counter are read once, as the raise starts
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // the camera and the counter are read once, as the raise starts, so only a new raise starts this again
   }, [isRaising, currentKey]);
 
   /** A building tapped, in the world or on its card: it squashes and bounces, then its card opens. */

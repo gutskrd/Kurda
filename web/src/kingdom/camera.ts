@@ -67,7 +67,8 @@ export function clampCamera(c: Camera, v: Stage): Camera {
   const x1 = WORLD.w - v.w / 2 / s;
   const y0 = mid / s;
   const y1 = WORLD.h - (v.h - mid) / s;
-  return { s, x: x0 > x1 ? WORLD.w / 2 : Math.min(x1, Math.max(x0, c.x)), y: y0 > y1 ? WORLD.h / 2 : Math.min(y1, Math.max(y0, c.y)) };
+  // at the farthest zoom the two limits meet (and rounding can cross them): the one place left is between them
+  return { s, x: x0 > x1 ? (x0 + x1) / 2 : Math.min(x1, Math.max(x0, c.x)), y: y0 > y1 ? (y0 + y1) / 2 : Math.min(y1, Math.max(y0, c.y)) };
 }
 
 /** Where the world's top left sits on the stage, in CSS pixels, and its scale: the transform the page gives the world. */
