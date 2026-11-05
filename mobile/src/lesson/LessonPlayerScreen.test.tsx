@@ -105,6 +105,16 @@ describe('a lesson that cannot reach the server', () => {
     expect(onExit).not.toHaveBeenCalled();
   });
 
+  // a full-screen modal with no header: while the lesson is on its way, the ✕ is the way out
+  it('can be closed while it is still loading', async () => {
+    testAuth.client = fakeClient({ ...standing, 'GET /lessons/l1/session': () => new Promise<ApiResult<never>>(() => undefined) });
+    const onExit = vi.fn();
+    renderWithProviders(<LessonPlayerScreen lessonId="l1" onExit={onExit} />);
+    expect(screen.getByLabelText('Loading…')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
+
   it('offers to load a lesson again when it did not load', async () => {
     testAuth.client = fakeClient({ ...standing, 'GET /lessons/l1/session': inTurn(serverDown, ok(view)) });
     renderWithProviders(<LessonPlayerScreen lessonId="l1" onExit={() => undefined} />);

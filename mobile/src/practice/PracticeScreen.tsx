@@ -2,17 +2,16 @@ import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { PracticeMode } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
+import { SessionLoading, SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
 import type { Exercise, SessionView } from '../lesson/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import type { ApiError } from '../api/types';
 import { describeError, isRetryable } from '../api/errors';
-import { radii, spacing, typography } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { useI18n } from '../i18n/I18nContext';
 
 /** A practice session's endpoints; a test to jump ahead is answered through them too. */
@@ -84,17 +83,7 @@ export function PracticeScreen({
       </Centered>
     );
   }
-  if (!start) {
-    return (
-      <GradientBackground>
-        <View style={styles.loading}>
-          <Skeleton width="55%" height={22} />
-          <SkeletonLines count={3} />
-          <Skeleton height={140} radius={radii.lg} />
-        </View>
-      </GradientBackground>
-    );
-  }
+  if (!start) return <SessionLoading onExit={onExit} />;
 
   // nothing due → nudge toward the next new lesson; nothing of another kind → back to the hub's other kinds
   if (start.empty || !start.sessionId || !start.exercises?.length) {
@@ -158,7 +147,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.xl,
   },
-  loading: { flex: 1, gap: spacing.lg, padding: spacing.xl, paddingTop: spacing.xxl },
   title: { ...display(typography.sizes.xl), textAlign: 'center' },
   detail: { fontSize: typography.sizes.md, textAlign: 'center' },
 });

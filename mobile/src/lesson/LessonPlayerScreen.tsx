@@ -136,18 +136,40 @@ export function LessonPlayerScreen({
       </GradientBackground>
     );
   }
-  if (!loaded) {
-    return (
-      <GradientBackground>
-        <View style={styles.loading}>
-          <Skeleton width="55%" height={22} />
-          <SkeletonLines count={3} />
-          <Skeleton height={140} radius={radii.lg} />
-        </View>
-      </GradientBackground>
-    );
-  }
+  if (!loaded) return <SessionLoading onExit={onExit} />;
   return <SessionPlayer view={loaded.view} memory={loaded.memory} paths={LESSON_PATHS} onExit={onExit} offerReminders courseId={courseId} {...waysOn} />;
+}
+
+/**
+ * A lesson or a practice session on its way: the exercise's shape in grey,
+ * and the ✕ where the player will have it. Both open as full-screen modals
+ * with no header of their own, so without it the only way out of a slow load
+ * was to wait for the request to give up.
+ */
+export function SessionLoading({ onExit }: { onExit: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const topInset = useScreenTopInset();
+  const dir = useDirection();
+  return (
+    <GradientBackground>
+      <View style={[styles.header, { flexDirection: dir.row, paddingTop: topInset }]}>
+        <Pressable
+          onPress={onExit}
+          accessibilityRole="button"
+          accessibilityLabel={t('common.close')}
+          style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
+        >
+          <Icon name="close" size={26} color={colors.textSecondary} />
+        </Pressable>
+      </View>
+      <View style={styles.loading}>
+        <Skeleton width="55%" height={22} />
+        <SkeletonLines count={3} />
+        <Skeleton height={140} radius={radii.lg} />
+      </View>
+    </GradientBackground>
+  );
 }
 
 /** How long "No more listening in this lesson" stays, with its Undo. */
@@ -856,7 +878,8 @@ async function readStanding(client: ApiClient, guest = false): Promise<{ standin
 const styles = StyleSheet.create({
   screen: { flex: 1 },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.md, padding: spacing.xl },
-  loading: { flex: 1, gap: spacing.lg, padding: spacing.xl, paddingTop: spacing.xxl },
+  // under the ✕, where the player's exercise will start
+  loading: { flex: 1, gap: spacing.lg, padding: spacing.lg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

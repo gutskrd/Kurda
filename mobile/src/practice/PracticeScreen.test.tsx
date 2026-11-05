@@ -12,10 +12,11 @@ vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
 vi.mock('../lesson/useRecorder', () => import('../lesson/useRecorder.native'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import type { ApiResult } from '../api/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { PracticeScreen } from './PracticeScreen';
 
@@ -48,6 +49,16 @@ describe('practice', () => {
     renderWithProviders(<PracticeScreen navigation={navigation} mode="listen" onExit={() => undefined} />);
     expect(await screen.findByText('Nothing to practise here right now')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+  });
+
+  // a full-screen modal with no header: while the session is on its way, the ✕ is the way out
+  it('can be closed while it is still starting', () => {
+    testAuth.client = fakeClient({ 'POST /practice/session': () => new Promise<ApiResult<never>>(() => undefined) });
+    const onExit = vi.fn();
+    renderWithProviders(<PracticeScreen navigation={navigation} onExit={onExit} />);
+    expect(screen.getByLabelText('Loading…')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
   });
 
   it('practises what is due when it is given nothing', async () => {
