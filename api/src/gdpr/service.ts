@@ -637,6 +637,9 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM game_sessions WHERE user_id = $1`);
   await q(`DELETE FROM game_seen WHERE user_id = $1`);
   await q(`DELETE FROM game_progress WHERE user_id = $1`);
+  // the voices they recorded for the course, and their name off the links they made for others
+  await q(`DELETE FROM recording_voices WHERE user_id = $1`);
+  await q(`UPDATE recording_voices SET linked_by = NULL WHERE linked_by = $1`);
   // their Game Ranks: ratings, history, leaves, choices, seasons (ranks/gdpr.ts)
   await eraseRanks(executor, userId);
 

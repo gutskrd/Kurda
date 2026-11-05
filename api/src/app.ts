@@ -141,6 +141,7 @@ import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
 import { registerAlphabetAudioRoutes } from './alphabet/routes.js';
 import { registerLessonAudioRoutes } from './lessonaudio/routes.js';
+import { registerRecordingRoutes } from './recording/routes.js';
 import { registerRecordingVoiceRoutes } from './speakers/routes.js';
 import type { RecordingFileOptions } from './speakers/recording-file.js';
 import { StoriesService } from './stories/service.js';
@@ -700,6 +701,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerLessonAudioRoutes(app, config);
     // and who says each of those recordings, chosen or changed after it was made
     registerRecordingVoiceRoutes(app, config, options.recordingFiles);
+    // and everything each voice has to say, person by person, for the "Record by person" page; the Road's
+    // lessons still only in its files are listed too, except under test, where nothing is seeded either
+    registerRecordingRoutes(app, { withRoadFiles: config.NODE_ENV !== 'test' });
     // Stories, which replaced the ranked quiz: reading for everyone, writing in
     // the admin panel, and the starter stories seeded once each as drafts for a
     // native speaker to publish. Not under test, where they would be stories no

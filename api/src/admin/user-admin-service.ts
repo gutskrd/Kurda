@@ -2,10 +2,11 @@ import type pg from 'pg';
 import { InsufficientFundsError, WalletService, type Currency } from '../wallet/service.js';
 import type { AdminUserModeration, AgeBadge, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
 import { banState, type BanState } from './moderation.js';
-import { PRIVILEGED_ROLES } from './roles.js';
+import { PRIVILEGED_ROLES, VOICE_ACTOR_ROLE } from './roles.js';
 
-/** The one role a superadmin gives from a person's page (`setContentEditor`). */
+/** The roles a superadmin gives from a person's page (`setContentEditor`, `setVoiceActor`). */
 export const CONTENT_EDITOR = 'content_editor';
+export const VOICE_ACTOR = VOICE_ACTOR_ROLE;
 
 export type RoleResult = { ok: true; roles: string[]; changed: boolean } | { ok: false; code: 'NOT_FOUND' | 'USER_BANNED' | 'EMAIL_UNVERIFIED' };
 import { minorSql } from '../users/age.js';
@@ -496,6 +497,20 @@ export class UserAdminService {
    * transaction, so there is never a grant without its record.
    */
   async setContentEditor(adminId: string, userId: string, on: boolean, reason: string): Promise<RoleResult> {
+    return this.setRole(CONTENT_EDITOR, adminId, userId, on, reason);
+  }
+
+  /**
+   * Give someone the voice actor role, or take it away: the "Record by
+   * person" page and the lines of the voices linked to them, and nothing else
+   * in the console (recording/access.ts). Given and taken under the same rules
+   * as the content editor's, into the same history.
+   */
+  async setVoiceActor(adminId: string, userId: string, on: boolean, reason: string): Promise<RoleResult> {
+    return this.setRole(VOICE_ACTOR, adminId, userId, on, reason);
+  }
+
+  private async setRole(role: string, adminId: string, userId: string, on: boolean, reason: string): Promise<RoleResult> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -509,26 +524,26 @@ export class UserAdminService {
         await client.query('ROLLBACK');
         return { ok: false, code: 'NOT_FOUND' };
       }
-      const has = user.roles.includes(CONTENT_EDITOR);
+      const has = user.roles.includes(role);
       if (on && !has && (user.banned || !user.verified)) {
         await client.query('ROLLBACK');
         return { ok: false, code: user.banned ? 'USER_BANNED' : 'EMAIL_UNVERIFIED' };
       }
       if (on !== has) {
-        const roles = on ? [...user.roles, CONTENT_EDITOR] : user.roles.filter((r) => r !== CONTENT_EDITOR);
+        const roles = on ? [...user.roles, role] : user.roles.filter((r) => r !== role);
         await client.query(`UPDATE users SET roles = $2 WHERE id = $1`, [userId, roles]);
         await client.query(`INSERT INTO admin_actions (target_user_id, admin_id, action, reason, meta) VALUES ($1, $2, $3, $4, $5::jsonb)`, [
           userId,
           adminId,
           on ? 'role_grant' : 'role_revoke',
           reason,
-          JSON.stringify({ role: CONTENT_EDITOR, before: user.roles, after: roles }),
+          JSON.stringify({ role, before: user.roles, after: roles }),
         ]);
       }
       await client.query('COMMIT');
       return {
         ok: true,
-        roles: on === has ? user.roles : on ? [...user.roles, CONTENT_EDITOR] : user.roles.filter((r) => r !== CONTENT_EDITOR),
+        roles: on === has ? user.roles : on ? [...user.roles, role] : user.roles.filter((r) => r !== role),
         changed: on !== has,
       };
     } catch (err) {

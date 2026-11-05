@@ -33,6 +33,11 @@
  * volume and sends a short mono WAV; the server checks it is one, and no
  * longer than a sentence needs. The text travels in the query string, as the
  * alphabet's key does, because it holds characters awkward in a path.
+ *
+ * The PUT alone is also open to the voice actor role, for the "Record by
+ * person" page: such an account may store a take only of a line of the voices
+ * linked to it (recording/access.ts). Listing, removing and the studio's other
+ * routes stay the content roles'.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
@@ -59,6 +64,7 @@ import { LessonAudioService } from './service.js';
 import { lessonsPlaying } from './publish-guard.js';
 import { bustStoryLists } from '../stories/service.js';
 import { fitLipsync, lipsyncSummary, voiceFromQuery } from '../speakers/voice.js';
+import { RECORDING_ROLES, assertMayRecord } from '../recording/access.js';
 
 const KIND = 'lesson-audio';
 
@@ -109,6 +115,8 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
   const audit = new AuditService(app.db);
   const service = new LessonAudioService(app.db);
   const canRecord = requireRoles(...LESSON_AUDIO_ROLES);
+  // a take may also come from the "Record by person" page, whose voice actors record their own lines (recording/access.ts)
+  const canTake = requireRoles(...RECORDING_ROLES);
 
   registerAudioParser(app, base.maxUploadBytes);
 
@@ -139,10 +147,11 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
         rateLimit: { max: 600, windowMs: 60 * 60_000, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      preHandler: canRecord,
+      preHandler: canTake,
     },
     async (req, reply) => {
       const { text, key, line } = textFrom(req.query);
+      await assertMayRecord(app, req, 'lesson', key);
       const voice = voiceFromQuery(req.query);
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
