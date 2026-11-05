@@ -9,6 +9,10 @@ import type { ApiResult } from '../lib/types';
 export const VIEW_BACKOFF_MS = [1_000, 2_000, 5_000] as const;
 /** The least time between two long-polls that brought nothing new. */
 export const VIEW_POLL_FLOOR_MS = 1_000;
+/** The least time between any two long-polls: a server answering at once over and over is never asked in a tight loop. */
+export const VIEW_POLL_MIN_GAP_MS = 250;
+/** How long the connection may be down before the long-poll takes over: one opening right away never starts one. */
+export const LONG_POLL_GRACE_MS = 1_500;
 /** A read when nothing has said anything for this long, while connected: a safety net, not how news arrives. */
 export const VIEW_SAFETY_MS = 20_000;
 /** How long after a deadline the game is asked about, so the server has settled it. */
@@ -188,6 +192,7 @@ export function useGameView<Board, Outcome = unknown>(
     const { signal } = controller;
     void (async () => {
       let failures = 0;
+      await sleep(LONG_POLL_GRACE_MS, signal);
       while (!signal.aborted) {
         const current = viewRef.current;
         if (!current || !live(current.status)) return;
@@ -202,8 +207,9 @@ export function useGameView<Board, Outcome = unknown>(
         }
         failures = 0;
         const fresh = viewRef.current;
-        const gap = VIEW_POLL_FLOOR_MS - (Date.now() - asked);
-        if ((!fresh || fresh.version <= current.version) && gap > 0) await sleep(gap, signal);
+        const moved = fresh !== null && fresh.version > current.version;
+        const gap = (moved ? VIEW_POLL_MIN_GAP_MS : VIEW_POLL_FLOOR_MS) - (Date.now() - asked);
+        if (gap > 0) await sleep(gap, signal);
       }
     })();
     return () => controller.abort();
