@@ -203,7 +203,7 @@ describe('CODE_COPY', () => {
    */
   it('words an address that may already have an account without confirming it', () => {
     const said = describeError(err({ kind: 'client', status: 409, code: 'REGISTRATION_FAILED', message: 'unable to register with these details' }), t);
-    expect(said).toBe('We couldn’t create an account with these details. If you already have one, log in or reset your password.');
+    expect(said).toBe('We couldn’t create an account with these details. If you already have one, sign in or reset your password.');
     expect(said).not.toMatch(/already (registered|in use|exists)/i);
   });
 

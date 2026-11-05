@@ -143,7 +143,7 @@ describe('claiming the guest account', () => {
     const notice = await screen.findByTestId('claim-may-have-account');
     expect(notice.textContent).toContain(en['error.code.registrationFailed']);
     await act(async () => undefined);
-    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(handlers.onSignIn).toHaveBeenCalledWith('rojda@example.com');
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
     expect(handlers.onForgotPassword).toHaveBeenCalledWith('rojda@example.com');

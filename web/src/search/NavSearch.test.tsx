@@ -286,7 +286,7 @@ describe('NavSearch', () => {
     await userEvent.type(field(), 'roj');
     const dictionary = screen.getByRole('option', { name: /Open the dictionary/ });
     expect(dictionary).toHaveAttribute('href', '/dictionary/');
-    expect(screen.getByRole('option', { name: 'Log in to find people' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('option', { name: 'Sign in to find people' })).toHaveAttribute('href', '/login');
     await new Promise((r) => setTimeout(r, 350));
     expect(searches(asked, '/users/search')).toHaveLength(0);
     expect(searches(asked, '/dictionary/search')).toHaveLength(0);

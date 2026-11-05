@@ -1469,7 +1469,7 @@ export const ckb: Catalogue = {
   'auth.forgot.sent': 'ئەگەر هەژمارێک بۆ {email} هەبێت، بەستەری ڕێکخستنەوەی وشەی نهێنی لە ڕێگادایە.',
   'auth.forgot.backToSignIn': 'گەڕانەوە بۆ چوونەژوورەوە',
   'auth.forgot.remembered': 'بیرت کەوتەوە؟',
-  'auth.signIn': 'بچۆ ژوورەوە',
+  'auth.signIn': 'چوونەژوورەوە',
   'auth.sending': 'دەنێردرێت…',
   'review.title': 'پێداچوونەوە',
   'review.due': 'ئێستا کاتیەتی: {count}',

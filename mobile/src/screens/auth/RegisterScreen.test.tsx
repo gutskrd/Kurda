@@ -146,19 +146,19 @@ describe('signing up', () => {
    * registered. It reads as what it may be, with the two ways on, and still
    * never says the address exists.
    */
-  it('offers Log in and Reset password, carrying the address, when the address may already have an account', async () => {
+  it('offers Sign in and Reset password, carrying the address, when the address may already have an account', async () => {
     auth.register.mockResolvedValue({ message: 'unable to register', code: 'REGISTRATION_FAILED' });
     const navigation = renderRegister();
     await signUp('Name.Surname+tag@example.com');
 
     const notice = await screen.findByTestId('register-may-have-account');
-    expect(notice.textContent).toContain('We couldn’t create an account with these details. If you already have one, log in or reset your password.');
+    expect(notice.textContent).toContain('We couldn’t create an account with these details. If you already have one, sign in or reset your password.');
     expect(notice.textContent).not.toMatch(/already (registered|in use|exists)/i);
     // the address went to the server as typed, capitals and plus tag and all
     expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ email: 'Name.Surname+tag@example.com', birthMonth: 3 }));
 
     await act(async () => undefined);
-    fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Login', { email: 'Name.Surname+tag@example.com' });
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('ForgotPassword', { email: 'Name.Surname+tag@example.com' });

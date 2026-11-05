@@ -28,7 +28,7 @@ describe('Login', () => {
     renderLogin();
     expect(screen.getByLabelText('Email')).toBeInTheDocument();
     expect(screen.getByLabelText('Password')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /log in/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^sign in$/i })).toBeInTheDocument();
   });
 
   /**
@@ -45,7 +45,7 @@ describe('Login', () => {
     renderLogin();
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
     await userEvent.type(screen.getByLabelText('Password'), 'wrongpass');
-    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(en['error.code.invalidCredentials']);
@@ -65,7 +65,7 @@ describe('Login', () => {
     renderLogin();
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
     await userEvent.type(screen.getByLabelText('Password'), 'rightpass');
-    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
 
     await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument(), MOVES_ON);
   });
@@ -88,7 +88,7 @@ describe('Login', () => {
     renderLogin();
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
     await userEvent.type(screen.getByLabelText('Password'), 'rightpass1');
-    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
     await screen.findByText('App home', {}, MOVES_ON);
 
     const [url, init] = fetchMock.mock.calls.find(([u]) => String(u).endsWith('/auth/login'))!;
@@ -110,7 +110,7 @@ describe('Login', () => {
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
     await userEvent.type(screen.getByLabelText('Password'), 'rightpass1');
     await userEvent.click(screen.getByRole('checkbox'));
-    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
     await screen.findByText('App home', {}, MOVES_ON);
 
     const [, init] = fetchMock.mock.calls.find(([u]) => String(u).endsWith('/auth/login'))!;
@@ -131,7 +131,7 @@ describe('Login', () => {
     renderLogin();
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
     await userEvent.type(screen.getByLabelText('Password'), 'wrongpass1');
-    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent(en['error.code.captchaRequired']);
@@ -153,7 +153,7 @@ describe('Login', () => {
     renderLogin();
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
     await userEvent.type(screen.getByLabelText('Password'), 'wrongpass1');
-    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
 
     const alert = await screen.findByRole('alert');
     expect(alert).toHaveTextContent('wait about 15 minutes');

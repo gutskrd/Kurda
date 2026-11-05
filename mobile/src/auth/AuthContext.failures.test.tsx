@@ -61,7 +61,7 @@ describe('signing in with Apple or Google', () => {
 
   it('says what to do when the address has an account that is not confirmed yet', async () => {
     const said = await refusedWith(409, { code: 'LINK_REQUIRES_VERIFIED_EMAIL', message: 'an account with this email exists but is not verified' });
-    expect(said).toBe('This email already has an account that isn’t confirmed yet. Log in with your password and confirm the email first, then you can sign in this way too.');
+    expect(said).toBe('This email already has an account that isn’t confirmed yet. Sign in with your password and confirm the email first, then you can use this way of signing in too.');
   });
 
   it('never passes the server’s English through, whatever the refusal', async () => {

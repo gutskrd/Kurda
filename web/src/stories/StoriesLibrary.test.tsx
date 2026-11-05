@@ -166,7 +166,7 @@ describe('the library', () => {
     expect(screen.queryByRole('region', { name: 'Continue reading' })).toBeNull();
     expect(screen.queryByRole('button', { name: /Bookmark/ })).toBeNull();
     expect(screen.getByText(/Reading is free\. Sign in/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
     expect(screen.queryByLabelText('Join with a code')).toBeNull();
   });
 

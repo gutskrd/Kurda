@@ -188,6 +188,6 @@ describe('the sheet', () => {
     const sheet = await screen.findByRole('dialog', { name: 'Join with a code' });
     expect(within(sheet).queryByLabelText('Join with a code')).toBeNull();
     expect(within(sheet).getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register');
-    expect(within(sheet).getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(within(sheet).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
   });
 });

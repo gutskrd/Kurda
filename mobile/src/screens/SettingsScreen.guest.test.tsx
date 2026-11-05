@@ -44,7 +44,7 @@ describe('Settings for a guest', () => {
    * account changes; at the end, logging out and deleting stay, and the rest
    * — other devices, a copy of the data — goes with the account it needs.
    */
-  it('offers to create the account in place of the account rows, and keeps Log out and Delete account at the end', () => {
+  it('offers to create the account in place of the account rows, and keeps Sign out and Delete account at the end', () => {
     const client = fakeClient();
     testAuth.client = client;
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
@@ -55,7 +55,7 @@ describe('Settings for a guest', () => {
     expect(screen.queryByRole('button', { name: 'Sign out everywhere' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Request data export' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Delete account' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Log out' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Sign out' })).toBeTruthy();
     // a guest’s standing is not asked for: the route is refused to one
     expect(client.calls.map((c) => c.path)).not.toContain('/me/standing');
   });
@@ -81,9 +81,9 @@ describe('Settings for a guest', () => {
   it('asks before logging out, and offers to create the account instead', async () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     const sheet = await screen.findByTestId('guest-logout');
-    expect(within(sheet).getByText('Log out and lose your progress?')).toBeTruthy();
+    expect(within(sheet).getByText('Sign out and lose your progress?')).toBeTruthy();
     expect(logout).not.toHaveBeenCalled();
     fireEvent.click(within(sheet).getByRole('button', { name: 'Create my account' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('ClaimAccount');
@@ -93,9 +93,9 @@ describe('Settings for a guest', () => {
   it('logs out only when the guest chooses to lose the progress', async () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     const sheet = await screen.findByTestId('guest-logout');
-    fireEvent.click(within(sheet).getByRole('button', { name: 'Log out anyway' }));
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Sign out anyway' }));
     expect(logout).toHaveBeenCalledTimes(1);
   });
 
@@ -103,7 +103,7 @@ describe('Settings for a guest', () => {
     testAuth.user = FULL;
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Log out' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
     expect(logout).toHaveBeenCalledTimes(1);
     expect(screen.queryByTestId('guest-logout')).toBeNull();
   });

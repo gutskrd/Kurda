@@ -327,7 +327,7 @@ describe('the sign-up, sign-in and confirmation refusals', () => {
     const said = describeError(refused, t);
     expect(said).toBe(en['error.code.registrationFailed']);
     // the two ways on are named, and nothing confirms the address is registered
-    expect(said).toMatch(/log in/i);
+    expect(said).toMatch(/sign in/i);
     expect(said).toMatch(/reset your password/i);
     expect(said).not.toMatch(/already (registered|in use|taken)/i);
     expect(describeError(refused, translator(fr))).toBe(fr['error.code.registrationFailed']);
