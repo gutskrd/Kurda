@@ -26,6 +26,8 @@ import { APP_LOCALE_CODES, type AppLocale } from '../locales.js';
 import { SPEAKERS, type SpeakerId } from '../lipsync/speakers.js';
 import { fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
 import type { GamesAvailability } from './solo.js';
+// the village's buildings are Kurdish Kingdom's own list; a building name row names one of them
+import { KINGDOM_BUILDINGS } from './kingdom/buildings.js';
 
 // ---------- the kinds, and the workflow every row goes through ----------
 
@@ -102,10 +104,6 @@ export const GAME_SLUG_PATTERN = /^[a-z0-9-]{2,40}$/;
 /** The rooms a scene can be set in, for its card's picture; the words are the apps'. */
 export const SCENE_PLACES = ['home', 'street', 'market', 'shop', 'school', 'cafe', 'bus', 'doctor', 'phone', 'village', 'party', 'work'] as const;
 export type ScenePlace = (typeof SCENE_PLACES)[number];
-
-/** The buildings of the village, in the order they are drawn. */
-export const KINGDOM_BUILDINGS = ['houses', 'school', 'teahouse', 'spring', 'market', 'orchard'] as const;
-export type KingdomBuilding = (typeof KINGDOM_BUILDINGS)[number];
 
 /** What a detective's evidence card is: a written message, a statement, talk overheard (with its recording), a note. */
 export const EVIDENCE_KINDS = ['message', 'statement', 'overheard', 'note'] as const;
