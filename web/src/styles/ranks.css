@@ -1467,15 +1467,15 @@
   white-space: nowrap;
 }
 /*
- * On a phone, three equal thirds left a label about 65px between its icon and
- * the segment's edge, and most languages' first board is longer than that:
- * "XP-ya heftane" was cut to "XP-ya h…", and so were the weekly board in
- * eight of the nine languages and the gems in three. So down here each
- * segment takes the room its own words need, the short Zêr giving the long
- * weekly board what it does not use, with the padding and the gap a step
- * tighter; and a label that still does not fit goes onto a second line
+ * On a phone, three equal thirds left a label 63 to 73px between its icon and
+ * the segment's edge, and the weekly board's name is longer than that in
+ * every language but English at 390px, and in all nine at 360px ("XP-ya
+ * heftane" was cut to "XP-ya h…"); the gems were cut in three. So down here
+ * each segment takes the room its own words need, the short Zêr giving the
+ * long weekly board what it does not use, with the padding and the gap a
+ * step tighter; and a label that still does not fit goes onto a second line
  * rather than losing its end. The floor is the longest word, so a word is
- * never cut; the longest in any of the nine fits at 360px.
+ * never cut; at 360px every one of the nine fits on one line.
  */
 @media (max-width: 560px) {
   .rank-by {
