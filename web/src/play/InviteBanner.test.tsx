@@ -14,6 +14,16 @@ afterEach(() => {
 
 const lists = (inv = [incoming()]) => ({ incoming: inv, outgoing: [] });
 
+/** A device set to Reduce Motion (and a wide screen). */
+function stillDevice(): void {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: query.includes('prefers-reduced-motion'),
+    media: query,
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+  }));
+}
+
 describe('InviteBanner', () => {
   it('says who asked, to what, and how it is set — as a status, without taking the focus', async () => {
     fakeApi({ 'GET /play/invites': lists() });
@@ -227,5 +237,61 @@ describe('InviteBanner', () => {
     answer = lists();
     realtime.emit({ type: 'play_invite', invite: incoming() });
     expect(await screen.findByText('Rojda invited you to Peyvok Battle')).toBeInTheDocument();
+  });
+
+  it('arrives as a ticket in the game’s colour, the game’s mark on its stub', async () => {
+    fakeApi({ 'GET /play/invites': lists([incoming({ game: 'rhyme-match', summary: { dialect: 'sorani' } })]) });
+    renderPlay(<InviteBanner />);
+    const banner = await screen.findByRole('status');
+    expect(banner).toHaveClass('ticket', 'ticket--rhyme-match', 'invite-banner');
+    expect(banner.querySelector('.ticket-stub .ticket-glyph')).not.toBeNull();
+  });
+
+  it('tears the stub off along the perforation, then opens the lobby', async () => {
+    fakeApi({ 'GET /play/invites': lists(), 'POST /play/invites/i1/accept': { game: 'wordle-battle', lobbyId: 'b1' } });
+    renderPlay(<InviteBanner />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Join' }));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveClass('is-torn'));
+    // the lobby waits for the tear
+    expect(where()).toBe('/app/games');
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=b1'));
+  });
+
+  it('folds the ticket away for Not now', async () => {
+    fakeApi({ 'GET /play/invites': lists(), 'POST /play/invites/i1/decline': { ok: true } });
+    renderPlay(<InviteBanner />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Not now' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Later' }));
+    expect(screen.getByRole('status')).toHaveClass('is-leaving');
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+  });
+
+  it('opens the lobby at once under Reduce Motion: no tear, no fold', async () => {
+    stillDevice();
+    fakeApi({ 'GET /play/invites': lists(), 'POST /play/invites/i1/accept': { game: 'wordle-battle', lobbyId: 'b1' } });
+    renderPlay(<InviteBanner />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Join' }));
+    // well inside the time a tear takes
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=b1'), { timeout: 250 });
+    expect(document.querySelector('.is-torn')).toBeNull();
+  });
+
+  it('stacks the invites waiting behind the last one, each edge in its own game’s colour', async () => {
+    fakeApi({
+      'GET /play/invites': lists([
+        incoming({ id: 'a' }),
+        incoming({ id: 'b' }),
+        incoming({ id: 'c', game: 'rhyme-match', summary: { dialect: 'sorani' } }),
+        incoming({ id: 'd', game: 'stories', summary: {} }),
+      ]),
+    });
+    renderPlay(<InviteBanner />);
+    const shown = await screen.findAllByRole('status');
+    expect(shown).toHaveLength(2);
+    const fan = [...document.querySelectorAll('.invite-fan')];
+    expect(fan.map((f) => f.classList.contains('ticket--rhyme-match') || f.classList.contains('ticket--stories'))).toEqual([true, true]);
+    // the edges are a picture of the count, which is said in words
+    expect(fan.every((f) => f.getAttribute('aria-hidden') === 'true')).toBe(true);
+    expect(within(shown[1]!).getByText('+2 more')).toBeInTheDocument();
   });
 });

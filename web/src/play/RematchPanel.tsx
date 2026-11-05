@@ -3,7 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import type { PlayGame, RematchState } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
+import { TicketIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { prefersReducedMotion, useInFront } from '../lib/motion';
+import { TicketBody, TicketGlyph, TicketStub, ticketClass } from '../ui/Ticket';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { InviteSheet } from './InviteSheet';
@@ -30,6 +33,12 @@ const leaving = new Map<string, ReturnType<typeof setTimeout>>();
  * game they did not choose.
  *
  * "Invite someone else" opens the invite sheet for a new game.
+ *
+ * In the same ticket language as every invite (ui/Ticket.tsx): an offer from
+ * the other player is handed over as a ticket in the game's colour, with its
+ * answers on it; your own offer waits as a ticket in outline, a faint light
+ * crossing it while it is in front; inviting someone else carries the ticket
+ * glyph.
  */
 export function RematchPanel({
   game,
@@ -51,6 +60,9 @@ export function RematchPanel({
   const [error, setError] = useState<string | null>(null);
   const [inviting, setInviting] = useState(false);
   const pair = useRef(false);
+  const panel = useRef<HTMLDivElement>(null);
+  const inFront = useInFront(panel);
+  const [still] = useState(prefersReducedMotion);
   const key = `${game}:${lobbyId}`;
 
   const read = useCallback(async () => {
@@ -126,14 +138,26 @@ export function RematchPanel({
 
   const someoneElse = (
     <Button variant="secondary" onClick={() => setInviting(true)}>
+      <TicketIcon size={18} />
       {t('play.rematch.someoneElse')}
     </Button>
+  );
+  /** An offer, as a ticket: the other player's handed over, or yours waiting for them. */
+  const ticket = (content: React.ReactNode, waiting = false): React.ReactNode => (
+    <div className={ticketClass(game, 'row', `rematch-ticket${waiting ? ' is-outlined' : ''}${waiting && inFront && !still ? ' is-awake' : ''}`)}>
+      <TicketStub className="rematch-stub">
+        <TicketGlyph game={game} />
+      </TicketStub>
+      <TicketBody className="rematch-main" shine={waiting}>
+        {content}
+      </TicketBody>
+    </div>
   );
 
   let body: React.ReactNode = null;
   if (state?.kind === 'pair') {
     if (state.offeredByOther && !state.offeredByMe) {
-      body = (
+      body = ticket(
         <>
           <p className="rematch-line">{t('play.rematch.wants', { name: otherName })}</p>
           <div className="rematch-actions">
@@ -144,10 +168,10 @@ export function RematchPanel({
               {t('play.rematch.noThanks')}
             </Button>
           </div>
-        </>
+        </>,
       );
     } else if (state.offeredByMe && !state.nextLobbyId) {
-      body = (
+      body = ticket(
         <>
           <p className="rematch-line">{t('play.rematch.waiting', { name: otherName })}</p>
           <div className="rematch-actions">
@@ -155,7 +179,8 @@ export function RematchPanel({
               {t('play.rematch.takeBack')}
             </Button>
           </div>
-        </>
+        </>,
+        true,
       );
     } else if (state.otherDeclined) {
       body = (
@@ -207,7 +232,7 @@ export function RematchPanel({
 
   const series = state?.kind === 'pair' ? state.series : null;
   return (
-    <div className="rematch" aria-live="polite">
+    <div className="rematch" ref={panel} aria-live="polite">
       {series && series.me + series.other + series.draws >= 2 && (
         <p className="rematch-series">
           {t('play.rematch.series', { me: series.me, other: series.other, name: otherName })}

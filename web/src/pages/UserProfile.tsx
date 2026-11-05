@@ -9,6 +9,7 @@ import { UserActions } from '../profile/UserActions';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { ProfileProgress } from '../profile/ProfileProgress';
 import { PlayWithButton } from '../play/PlayButtons';
+import { AddFriendButton } from '../social/FriendTickets';
 import { countryName } from '../lib/countries';
 import { ErrorState } from '../components/states';
 import { FullProfileSkeleton } from '../components/skeletons';
@@ -108,7 +109,11 @@ export function UserProfile(): React.JSX.Element {
   );
 }
 
-/** Message + friend-request controls for another user (drives off friendStatus). */
+/**
+ * Message + friend-request controls for another user (drives off friendStatus).
+ * Asking them is handing over a ticket (social/FriendTickets.tsx), and the
+ * same button takes the request back.
+ */
 function FriendActions({ userId, username, status }: { userId: string; username: string; status: FriendStatus }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
@@ -118,14 +123,6 @@ function FriendActions({ userId, username, status }: { userId: string; username:
   // why a request or an answer did not go through — a full friend list says so (lib/limits.ts)
   const [err, setErr] = useState<string | null>(null);
 
-  async function add(): Promise<void> {
-    setBusy(true);
-    setErr(null);
-    const res = await client.post('/friends/requests', { userId });
-    setBusy(false);
-    if (res.ok) setState('pending_out');
-    else setErr(describeError(res.error, t));
-  }
   async function accept(): Promise<void> {
     setBusy(true);
     setErr(null);
@@ -147,8 +144,9 @@ function FriendActions({ userId, username, status }: { userId: string; username:
       {state === 'friends' && message}
       {/* a game with this friend: the invite sheet, with them already chosen */}
       {state === 'friends' && <PlayWithButton userId={userId} name={username} />}
-      {state === 'none' && <Button size="sm" onClick={() => void add()} disabled={busy}>{busy ? t('profile.sending') : t('profile.addFriend')}</Button>}
-      {state === 'pending_out' && <Button size="sm" disabled>{t('profile.requestSent')}</Button>}
+      {(state === 'none' || state === 'pending_out') && (
+        <AddFriendButton userId={userId} name={username} status={state} onStatus={setState} onError={setErr} />
+      )}
       {state === 'pending_in' && (
         <>
           <Button size="sm" onClick={() => void accept()} disabled={busy}>{busy ? t('profile.accepting') : t('profile.acceptRequest')}</Button>

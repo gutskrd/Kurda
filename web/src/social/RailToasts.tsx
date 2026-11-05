@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { Avatar } from '../components/Avatar';
-import { BellIcon, CloseIcon, GameIcon, UserIcon } from '../components/icons';
+import { BellIcon, CloseIcon, GameIcon, TicketIcon } from '../components/icons';
 import type { Arrival } from './useSocialRail';
 import { useT } from '../i18n/I18nProvider';
 
@@ -65,8 +65,9 @@ function Toast({
           ) : (
             <BellIcon size={18} />
           )}
-          <span className="rail-toast-kind" aria-hidden>
-            {arrival.kind === 'challenge' ? <GameIcon size={11} /> : arrival.kind === 'request' ? <UserIcon size={11} /> : null}
+          {/* a friend request is a ticket, in a heart's colour, as it is everywhere (ui/Ticket.tsx) */}
+          <span className={`rail-toast-kind${arrival.kind === 'request' ? ' ticket--friend is-ticket' : ''}`} aria-hidden>
+            {arrival.kind === 'challenge' ? <GameIcon size={11} /> : arrival.kind === 'request' ? <TicketIcon size={11} /> : null}
           </span>
         </span>
         <span className="rail-toast-text">

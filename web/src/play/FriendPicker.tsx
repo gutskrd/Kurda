@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import type { PlayGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
+import { TicketIcon } from '../components/icons';
 import { SearchField } from '../components/SearchField';
 import { useT } from '../i18n/I18nProvider';
 import type { UserSummary } from '../lib/types';
@@ -14,19 +16,27 @@ const FRIENDS_LIMIT = 500;
  * Choosing friends to ask: a search over your friends, the ones you asked
  * recently on this device first, and who is online now (a dot, and the word
  * for a screen reader). Checkboxes, so choosing several is ordinary; when only
- * one may be asked (a game for two), choosing another swaps them.
+ * one may be asked (a game for two), choosing another swaps them. A friend
+ * ticked has a ticket by their name, in the game's colour: theirs is being
+ * written out (play/InviteTickets.tsx).
  */
 export function FriendPicker({
   selected,
   onChange,
   max,
   exclude = [],
+  tone,
+  onFriends,
 }: {
   selected: readonly string[];
   onChange: (next: string[]) => void;
   max: number;
   /** already in the game, or already asked */
   exclude?: readonly string[];
+  /** the game being asked to, whose colour a friend's ticket is */
+  tone?: PlayGame;
+  /** the friends, once they are known, so whoever shows the tickets can name them */
+  onFriends?: (friends: UserSummary[]) => void;
 }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
@@ -40,12 +50,15 @@ export function FriendPicker({
   useEffect(() => {
     let alive = true;
     void client.get<{ friends: UserSummary[] }>(`/friends?limit=${FRIENDS_LIMIT}`).then((r) => {
-      if (alive) setFriends(r.ok ? (r.data.friends ?? []) : []);
+      if (!alive) return;
+      const list = r.ok ? (r.data.friends ?? []) : [];
+      setFriends(list);
+      onFriends?.(list);
     });
     return () => {
       alive = false;
     };
-  }, [client]);
+  }, [client]); // the list once; who is told about it may change without asking again
 
   const visible = useMemo(() => {
     const needle = q.trim().toLocaleLowerCase();
@@ -82,7 +95,7 @@ export function FriendPicker({
 
   const recentCount = visible.filter((f) => recent.includes(f.userId)).length;
   return (
-    <fieldset className="invite-friends">
+    <fieldset className={`invite-friends${tone ? ` ticket--${tone}` : ''}`}>
       <legend className="chip-radio-legend">{t('play.invite.friends')}</legend>
       <SearchField
         icon
@@ -104,7 +117,7 @@ export function FriendPicker({
               <li key={f.userId}>
                 {i === 0 && recentCount > 0 && !q && <span className="invite-group">{t('play.invite.recent')}</span>}
                 {i === recentCount && recentCount > 0 && !q && <span className="invite-group">{t('play.invite.all')}</span>}
-                <label className={`invite-friend${on ? ' is-on' : ''}${full ? ' is-full' : ''}`}>
+                <label className={`invite-friend${on ? ' is-on' : ''}${full ? ' is-full' : ''}`} data-friend={f.userId}>
                   <input type="checkbox" checked={on} disabled={full} onChange={() => toggle(f.userId)} />
                   <Avatar url={f.avatarUrl} online={f.online} glyphSize={18} />
                   <span className="invite-friend-text">
@@ -114,6 +127,11 @@ export function FriendPicker({
                       {f.online && <span className="sr-only"> · {t('play.invite.online')}</span>}
                     </span>
                   </span>
+                  {on && (
+                    <span className="invite-friend-ticket" aria-hidden="true">
+                      <TicketIcon size={18} />
+                    </span>
+                  )}
                 </label>
               </li>
             );

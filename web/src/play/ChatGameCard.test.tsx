@@ -82,6 +82,62 @@ describe('ChatGameCard', () => {
   });
 });
 
+describe('ChatGameCard as a ticket', () => {
+  const stampOf = () => document.querySelector('.ticket-stamp');
+
+  it('is a ticket in the game’s colour while it can be joined, with no stamp', async () => {
+    fakeApi({ [CARD]: card() });
+    renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
+    const ticket = await screen.findByRole('group', { name: 'Peyvok Battle invite' });
+    await screen.findByText('2 of 4 joined');
+    expect(ticket).toHaveClass('ticket', 'ticket--wordle-battle');
+    expect(stampOf()).toBeNull();
+  });
+
+  it('is stamped for someone already in it', async () => {
+    fakeApi({ [CARD]: card({ isMember: true, canJoin: false }) });
+    renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
+    expect(await screen.findByText('You’re in')).toHaveClass('ticket-stamp', 'is-success');
+    // already in when the conversation was opened: stamped, not landing
+    expect(stampOf()).not.toHaveClass('is-fresh');
+    expect(screen.getByText('2 of 4 joined')).toBeInTheDocument();
+  });
+
+  it('is grey and punched once the game is over, its ending stamped', async () => {
+    fakeApi({ [CARD]: card({ status: 'cancelled', canJoin: false }) });
+    renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
+    expect(await screen.findByText('Called off')).toHaveClass('ticket-stamp', 'is-muted');
+    const ticket = screen.getByRole('group');
+    expect(ticket).toHaveClass('ticket--muted', 'is-punched');
+    expect(ticket.querySelector('.chat-game-status')).toBeNull();
+  });
+
+  it('is grey and punched when gone, and says so in words', async () => {
+    fakeApi({ [CARD]: card({ status: 'unavailable', canJoin: false, players: 0, maxPlayers: 0, summary: {} }) });
+    renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
+    await screen.findByText('No longer available');
+    expect(screen.getByRole('group')).toHaveClass('ticket--muted', 'is-punched');
+    expect(stampOf()).toBeNull();
+  });
+
+  it('lands the stamp when the reader is in while they watch', async () => {
+    let state = card();
+    const { calls } = fakeApi({ [CARD]: () => state, 'GET /play/invites': { incoming: [], outgoing: [] } });
+    const { realtime } = renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
+    await screen.findByText('2 of 4 joined');
+    await signedInAndListening(calls);
+    state = card({ isMember: true, canJoin: false, players: 3 });
+    realtime.emit({ type: 'play_changed', game: 'wordle-battle', lobbyId: 'b1' });
+    expect(await screen.findByText('You’re in')).toHaveClass('is-fresh');
+  });
+
+  it('says whose invite it is to a screen reader', async () => {
+    fakeApi({ [CARD]: card() });
+    renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" from={{ id: 'u9', name: 'Rojîn' }} />);
+    expect(await screen.findByRole('group', { name: 'Game invite from Rojîn: Peyvok Battle' })).toBeInTheDocument();
+  });
+});
+
 describe('gameCardBody', () => {
   it('draws a game message as its card and leaves anything else to the text', () => {
     expect(gameCardBody({ kind: 'game', game: { game: 'stories', lobbyId: 's1' } })).not.toBeUndefined();

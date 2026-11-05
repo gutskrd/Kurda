@@ -507,6 +507,8 @@ export const en = {
   'friends.removeWho': 'Remove {name} as a friend',
   'friends.block': 'Block',
   'friends.blockWho': 'Block {name}',
+  'friends.stamp': 'Friends',
+  'friends.nowFriends': 'You and {name} are friends now',
 
   // ---- saved ---------------------------------------------------------------
   'saved.title': 'Saved',
@@ -2301,6 +2303,11 @@ export const en = {
   'play.invited.cancelWho': 'Cancel the invite to {name}',
   'play.invited.again': 'Invite again',
   'play.invited.againWho': 'Invite {name} again',
+  'play.ticket.from': 'Game invite from {name}: {game}',
+  'play.ticket.joined': 'You’re in',
+  'play.ticket.sentOne': 'Ticket sent to {name}',
+  'play.ticket.sentMany': 'Tickets sent',
+  'play.ticket.posted': 'Posted in {name}',
   'play.code.label': 'Join code',
   'play.code.copySpelled': 'Copy the join code {code}',
   'play.code.copy': 'Copy code',

@@ -19,6 +19,7 @@ import { ProfileCardSkeleton } from '../components/skeletons';
 import { GiftedNote } from './cosmetic-parts';
 import { ProfileCard } from '../ui/ProfileCard';
 import { UserActions } from './UserActions';
+import { AddFriendButton } from '../social/FriendTickets';
 import { useT } from '../i18n/I18nProvider';
 import { toLeagueTier } from '@kurda/shared';
 import { leagueName } from '../ranks/names';
@@ -197,6 +198,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     ) : (
       <OtherActions
         userId={other.userId}
+        name={other.displayName || other.username}
         status={other.friendStatus}
         onMessage={() => {
           closeProfile();
@@ -288,10 +290,12 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
 /** Friend + message actions for another user, driven by the friend status. */
 function OtherActions({
   userId,
+  name,
   status,
   onMessage,
 }: {
   userId: string;
+  name: string;
   status: FriendStatus;
   onMessage: () => void;
 }): React.JSX.Element {
@@ -301,15 +305,6 @@ function OtherActions({
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
-  // a full list, or too many requests out, says which and what makes room (lib/limits.ts)
-  async function addFriend(): Promise<void> {
-    setBusy(true);
-    setErr(null);
-    const res = await client.post('/friends/requests', { userId });
-    setBusy(false);
-    if (res.ok) setState('pending_out');
-    else setErr(describeError(res.error, t));
-  }
   async function accept(): Promise<void> {
     setBusy(true);
     setErr(null);
@@ -328,15 +323,9 @@ function OtherActions({
   return (
     <div style={{ display: 'grid', gap: 8 }}>
       {state === 'friends' && message}
-      {state === 'none' && (
-        <Button size="sm" block onClick={addFriend} disabled={busy}>
-          {busy ? t('profile.sending') : t('profile.addFriend')}
-        </Button>
-      )}
-      {state === 'pending_out' && (
-        <Button size="sm" block disabled>
-          {t('profile.requestSent')}
-        </Button>
+      {/* asking is handing over a ticket, and the same button takes it back; a full list, or too many out, says why (lib/limits.ts) */}
+      {(state === 'none' || state === 'pending_out') && (
+        <AddFriendButton userId={userId} name={name} status={state} onStatus={setState} onError={setErr} block />
       )}
       {state === 'pending_in' && (
         <>

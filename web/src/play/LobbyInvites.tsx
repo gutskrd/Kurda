@@ -1,11 +1,13 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { OutgoingInviteState, PlayGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
-import { InviteIcon } from '../components/icons';
+import { InviteIcon, TicketIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { prefersReducedMotion, useInFront } from '../lib/motion';
+import { TicketBody, TicketStamp, TicketStub, ticketClass, useFreshStamp } from '../ui/Ticket';
 import { InviteSheet } from './InviteSheet';
 import { playError } from './playApi';
 import { usePlayInvites } from './PlayProvider';
@@ -66,6 +68,13 @@ function stateKey(i: OutgoingInviteState): MessageKey {
  * where they are — asked (with Cancel), in, "can't play right now", "would
  * rather play something else", or out of time (with Invite again). It follows
  * the friends' answers as they come, and says each change politely.
+ *
+ * Each friend is a small ticket (ui/Ticket.tsx), their face on its stub. One
+ * still waiting is drawn in outline, with a faint light crossing it now and
+ * then while the list is in front; one who came in is filled in, in the
+ * game's colour, and stamped "Joined" — the stamp landing as it happens; an
+ * answer of no, or an invite that ran out or was taken back, is grey, with the
+ * reason in words.
  */
 export function InvitedList({
   game,
@@ -85,6 +94,9 @@ export function InvitedList({
   const invited = useInvited(game, lobbyId);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const ref = useRef<HTMLElement>(null);
+  const inFront = useInFront(ref);
+  const [still] = useState(prefersReducedMotion);
   if (invited.length === 0) return null;
   const Heading = headingLevel === 2 ? 'h2' : 'h3';
 
@@ -107,41 +119,22 @@ export function InvitedList({
   }
 
   return (
-    <section className="lobby-invited" aria-labelledby={`invited-${lobbyId}`}>
+    <section className="lobby-invited" ref={ref} aria-labelledby={`invited-${lobbyId}`}>
       <Heading className="sg-panel-title" id={`invited-${lobbyId}`}>
         {t('play.invited.title')}
       </Heading>
       <ul className="lobby-invited-list" aria-live="polite">
         {invited.map((i) => (
-          <li key={i.inviteId} className={`lobby-invited-row is-${i.status}`}>
-            <Avatar url={i.avatarUrl} glyphSize={16} />
-            <span className="lobby-invited-text">
-              <span className="lobby-invited-name">{i.name}</span>
-              <span className="lobby-invited-state">{t(stateKey(i))}</span>
-            </span>
-            {i.status === 'pending' && (
-              <button
-                type="button"
-                className="btn btn-ghost btn-sm"
-                disabled={busy === i.inviteId}
-                onClick={() => void cancel(i)}
-                aria-label={t('play.invited.cancelWho', { name: i.name })}
-              >
-                {t('common.cancel')}
-              </button>
-            )}
-            {i.status === 'expired' && room > 0 && (
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                disabled={busy === i.inviteId}
-                onClick={() => void again(i)}
-                aria-label={t('play.invited.againWho', { name: i.name })}
-              >
-                {t('play.invited.again')}
-              </button>
-            )}
-          </li>
+          <InvitedRow
+            key={i.inviteId}
+            invitee={i}
+            game={game}
+            awake={inFront && !still}
+            busy={busy === i.inviteId}
+            room={room}
+            onCancel={() => void cancel(i)}
+            onAgain={() => void again(i)}
+          />
         ))}
       </ul>
       {notice && (
@@ -150,5 +143,73 @@ export function InvitedList({
         </p>
       )}
     </section>
+  );
+}
+
+/** One friend asked into the lobby, as a small ticket with their face on the stub. */
+function InvitedRow({
+  invitee: i,
+  game,
+  awake,
+  busy,
+  room,
+  onCancel,
+  onAgain,
+}: {
+  invitee: OutgoingInviteState;
+  game: PlayGame;
+  /** the list is in front of the reader, so a waiting ticket may have its light */
+  awake: boolean;
+  busy: boolean;
+  room: number;
+  onCancel: () => void;
+  onAgain: () => void;
+}): React.JSX.Element {
+  const t = useT();
+  const waiting = i.status === 'pending';
+  const joined = i.status === 'accepted';
+  const fresh = useFreshStamp(joined ? 'joined' : null);
+  const look = `lobby-invited-row is-${i.status}${waiting ? ' is-outlined' : ''}${waiting && awake ? ' is-awake' : ''}`;
+  return (
+    <li className={ticketClass(waiting || joined ? game : 'muted', 'row', look)}>
+      <TicketStub className="lobby-invited-stub">
+        <Avatar url={i.avatarUrl} glyphSize={16} />
+      </TicketStub>
+      <TicketBody className="lobby-invited-main" shine={waiting}>
+        <span className="lobby-invited-text">
+          <span className="lobby-invited-name">{i.name}</span>
+          {/* in: the stamp is the word */}
+          {!joined && <span className="lobby-invited-state">{t(stateKey(i))}</span>}
+        </span>
+        {joined && (
+          <TicketStamp tone="success" fresh={fresh} className="lobby-invited-stamp">
+            {t(stateKey(i))}
+          </TicketStamp>
+        )}
+        {waiting && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-sm"
+            disabled={busy}
+            onClick={onCancel}
+            aria-label={t('play.invited.cancelWho', { name: i.name })}
+          >
+            {t('common.cancel')}
+          </button>
+        )}
+        {i.status === 'expired' && room > 0 && (
+          <button
+            type="button"
+            className="btn btn-secondary btn-sm"
+            disabled={busy}
+            onClick={onAgain}
+            aria-label={t('play.invited.againWho', { name: i.name })}
+          >
+            <TicketIcon size={16} />
+            {t('play.invited.again')}
+          </button>
+        )}
+      </TicketBody>
+    </li>
   );
 }

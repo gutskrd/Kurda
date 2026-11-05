@@ -3,13 +3,13 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { useApiGet } from '../lib/useApi';
+import { AddFriendButton } from '../social/FriendTickets';
 import type { SuggestedFriend, UserSummary } from '../lib/types';
 import type { SearchResult } from '../dictionary/types';
 import { useDebouncedValue } from '../dictionary/useDebouncedValue';
 import { EntryView } from '../dictionary/EntryView';
 import { SourceLine } from '../dictionary/SourceLine';
 import { Avatar } from '../components/Avatar';
-import { Button } from '../components/Button';
 import { EmptyState, ErrorState } from '../components/states';
 import { ListRowsSkeleton } from '../components/skeletons';
 import { ChevronIcon, CloseIcon, DictionaryIcon, SearchIcon, TrophyIcon, UsersIcon } from '../components/icons';
@@ -393,23 +393,18 @@ function Explore({
   );
 }
 
-/** People you may know, with the one action that matters here. */
+/**
+ * People you may know, with the one action that matters here: Add, which
+ * hands them a ticket and leaves "Requested" — itself a way to take the
+ * request back (social/FriendTickets.tsx).
+ */
 function Suggestions(): React.JSX.Element | null {
-  const { client } = useAuth();
   const t = useT();
   const suggestions = useApiGet<{ suggestions: SuggestedFriend[] }>('/friends/suggestions');
-  const [requested, setRequested] = useState<Set<string>>(new Set());
   // a request that did not go — a full friend list, too many out — says why (lib/limits.ts)
   const [err, setErr] = useState<string | null>(null);
   const list = suggestions.data?.suggestions ?? [];
   if (suggestions.loading || list.length === 0) return null;
-
-  async function add(userId: string): Promise<void> {
-    setErr(null);
-    const res = await client.post('/friends/requests', { userId });
-    if (res.ok) setRequested((prev) => new Set(prev).add(userId));
-    else setErr(describeError(res.error, t));
-  }
 
   return (
     <section className="search-section" aria-labelledby="search-suggested">
@@ -433,17 +428,16 @@ function Suggestions(): React.JSX.Element | null {
             user={u}
             meta={t('friends.mutual', { count: u.mutualCount })}
             action={
-              requested.has(u.userId) ? (
-                <Button size="sm" variant="secondary" disabled>
-                  {t('friends.requested')}
-                </Button>
-              ) : (
-                // a row's action is a secondary pill: a column of white buttons
-                // down a list would outshout everything else on the page
-                <Button size="sm" variant="secondary" onClick={() => void add(u.userId)}>
-                  {t('friends.add')}
-                </Button>
-              )
+              // a row's action is a secondary pill: a column of white buttons
+              // down a list would outshout everything else on the page
+              <AddFriendButton
+                userId={u.userId}
+                name={u.displayName || u.username}
+                status="none"
+                label={t('friends.add')}
+                variant="secondary"
+                onError={setErr}
+              />
             }
           />
         ))}

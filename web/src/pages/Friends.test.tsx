@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Friends } from './Friends';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -232,5 +232,48 @@ describe('Friends', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Accept' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('They already have 500 friends, the most anyone can have.');
+  });
+
+  it('shows each request as a friendship ticket, which Accept stamps and then lets go', async () => {
+    let incoming = [{ userId: 'u3', username: 'rojda', displayName: 'Rojda', avatarUrl: null }];
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (init?.method === 'POST' && url.includes('/friends/requests/u3/accept')) {
+        incoming = [];
+        return jsonResponse(200, { ok: true });
+      }
+      if (url.includes('/friends/requests/outgoing')) return jsonResponse(200, { requests: [] });
+      if (url.includes('/friends/requests')) return jsonResponse(200, { requests: incoming });
+      if (url.includes('/friends')) return jsonResponse(200, { friends: [] });
+      return jsonResponse(200, {});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<Friends />);
+
+    const ticket = await screen.findByRole('group', { name: 'Rojda wants to be friends' });
+    expect(ticket).toHaveClass('ticket', 'ticket--friend');
+    await userEvent.click(within(ticket).getByRole('button', { name: 'Accept' }));
+    // the stub torn, the stamp on, and said aloud
+    expect(await within(ticket).findByText('Friends')).toHaveClass('ticket-stamp');
+    expect(ticket).toHaveClass('is-torn');
+    expect(within(ticket).getByRole('status')).toHaveTextContent('You and Rojda are friends now');
+    // then the request leaves the list
+    await waitFor(() => expect(screen.queryByRole('group', { name: 'Rojda wants to be friends' })).not.toBeInTheDocument());
+  });
+
+  it('folds a declined request away', async () => {
+    const fetchMock = routedFetch({
+      '/friends/requests/outgoing': { requests: [] },
+      '/friends/requests': { requests: [{ userId: 'u3', username: 'rojda' }] },
+      '/friends': { friends: [] },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<Friends />);
+
+    const ticket = await screen.findByRole('group', { name: 'rojda wants to be friends' });
+    await userEvent.click(within(ticket).getByRole('button', { name: 'Decline' }));
+    expect(ticket).toHaveClass('is-leaving');
+    await waitFor(() =>
+      expect(fetchMock.mock.calls.some(([url, init]) => String(url).includes('/friends/requests/u3/decline') && init?.method === 'POST')).toBe(true),
+    );
   });
 });

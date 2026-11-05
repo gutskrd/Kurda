@@ -120,7 +120,9 @@ describe('Search', () => {
     expect(screen.getByText('Baran')).toBeInTheDocument();
     expect(screen.getByText('Mutual friends: 2')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
-    expect(await screen.findByRole('button', { name: /requested/i })).toBeDisabled();
+    // handed over: what is left is Requested, with its ticket, and a screen reader hears it went
+    expect(await screen.findByRole('button', { name: 'Cancel your request to Baran' })).toHaveTextContent('Requested');
+    expect(screen.getByText('Request sent')).toHaveAttribute('role', 'status');
     expect(posts).toContainEqual({ path: '/friends/requests', body: { userId: 'u5' } });
     expect(screen.getByRole('link', { name: 'Your friends' })).toHaveAttribute('href', '/app/friends');
   });
@@ -190,5 +192,21 @@ describe('Search', () => {
     show();
     expect(await screen.findByText('You need an account for this')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register');
+  });
+
+  it('takes a suggestion’s request back from Requested, on the second press, and offers Add again', async () => {
+    signIn();
+    serve({ '/friends/suggestions': { suggestions: [{ userId: 'u5', username: 'baran', displayName: 'Baran', mutualCount: 2 }] } });
+    const fetch = globalThis.fetch as ReturnType<typeof vi.fn>;
+    show();
+
+    await userEvent.click(await screen.findByRole('button', { name: /^add$/i }));
+    const requested = await screen.findByRole('button', { name: 'Cancel your request to Baran' });
+    await userEvent.click(requested);
+    // armed, not fired
+    expect(fetch.mock.calls.some(([, init]) => init?.method === 'DELETE')).toBe(false);
+    await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    expect(await screen.findByRole('button', { name: /^add$/i })).toBeEnabled();
+    expect(fetch.mock.calls.some(([url, init]) => String(url).endsWith('/friends/requests/u5') && init?.method === 'DELETE')).toBe(true);
   });
 });

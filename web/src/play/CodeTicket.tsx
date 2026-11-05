@@ -5,12 +5,15 @@ import { CheckIcon, CopyIcon, ShareIcon, TicketIcon } from '../components/icons'
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { prefersReducedMotion, useInFront } from '../lib/motion';
+import { TicketBody, TicketStub, ticketClass } from '../ui/Ticket';
 import { GAME_NAME_KEY } from './playApi';
 
 /**
  * A lobby's join code, as a ticket: one component for every game's lobby
  * (Peyvok Battle, Rhyme Match, a story game), so the way to ask somebody in
- * looks and works the same in all three.
+ * looks and works the same in all three. It is the app's one ticket
+ * (ui/Ticket.tsx) stood on end, so it reads as one of a family with every
+ * invite a friend is handed.
  *
  * Codes took the place of invite links. A link only works where it can be
  * tapped; a code can be read out across a room, typed on another phone or
@@ -119,11 +122,11 @@ export function CodeTicket({
   return (
     <div
       ref={ref}
-      className={`code-ticket code-ticket--${game}${inFront && !still ? ' is-awake' : ''}`}
+      className={ticketClass(game, 'column', `code-ticket code-ticket--${game}${inFront && !still ? ' is-awake' : ''}`)}
       role="group"
       aria-labelledby={labelId}
     >
-      <div className="code-ticket-stub">
+      <TicketStub className="code-ticket-stub">
         <span className="code-ticket-label" id={labelId}>
           <TicketIcon size={16} />
           {t('play.code.label')}
@@ -148,8 +151,8 @@ export function CodeTicket({
             ))}
           </span>
         </button>
-      </div>
-      <div className="code-ticket-body">
+      </TicketStub>
+      <TicketBody className="code-ticket-body">
         <div className="code-ticket-actions">
           <button type="button" className={`btn btn-secondary btn-sm code-ticket-copy${ticked ? ' is-done' : ''}`} onClick={() => void copy()}>
             <span className="code-ticket-copy-icon" aria-hidden="true">
@@ -174,7 +177,7 @@ export function CodeTicket({
           {invite}
         </div>
         <p className="code-ticket-hint">{access === 'open' ? t('play.code.hintOpen') : t('play.code.hint')}</p>
-      </div>
+      </TicketBody>
       {/* the toast: said to a screen reader as it appears, and gone again on its own */}
       <p className="code-ticket-notes" role="status">
         {note && (

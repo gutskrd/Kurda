@@ -19,6 +19,8 @@ import './styles/words.css';
 import './styles/learn.css';
 import './styles/marketing.css';
 import './styles/stories.css';
+// a ticket: the shape every invitation takes (ui/Ticket.tsx)
+import './styles/ticket.css';
 // playing with friends: invites, the banner, game cards, playing again
 import './styles/play.css';
 // gifts in chat, reporting, account standing

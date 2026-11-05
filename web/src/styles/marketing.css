@@ -383,6 +383,8 @@
 /* a message bubble: the corner nearest its sender is the sharp one */
 .lp-invitemock .invite-card {
   width: 100%;
+}
+.lp-invitemock .invite-card > .ticket-stub > .ticket-paper {
   border-start-start-radius: 4px;
 }
 .lp-boardmock {

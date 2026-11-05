@@ -6,6 +6,7 @@ import { LeagueLadder } from '../ui/LeagueLadder';
 import { leagueName } from '../ranks/names';
 import { RankList, RankRow } from '../ui/RankRow';
 import { InviteCardBody } from '../ui/InviteCardBody';
+import { ticketClass } from '../ui/Ticket';
 import { useAvatarSrc } from '../art/overrides';
 import {
   BATTLE_GUESSES,
@@ -136,8 +137,9 @@ export function InviteMock(): React.JSX.Element {
         <Face src={PEOPLE.rojin.avatar} size={28} />
         <span>{PEOPLE.rojin.name}</span>
       </div>
-      <div className="invite-card">
+      <div className={ticketClass('wordle-battle', 'row', 'invite-card')}>
         <InviteCardBody
+          type="wordle-battle"
           game={t('games.battle.name')}
           blurb={t('games.invite.blurb.battle')}
           action={t('games.battle.join')}
