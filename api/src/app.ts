@@ -659,7 +659,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres when they
     // are read and a few minutes old, not on a timer (leaderboards/service.ts)
-    const leaderboards = new LeaderboardService(app.db, app.redis);
+    const leaderboards = new LeaderboardService(app.db, app.redis, {
+      publicUrl: (key) => (app.storage ? app.storage.publicUrl(key) : null),
+    });
     registerLeaderboardRoutes(app, leaderboards);
 
     registerMediaRoutes(app, config);
