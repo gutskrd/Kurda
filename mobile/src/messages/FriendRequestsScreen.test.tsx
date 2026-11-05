@@ -65,3 +65,38 @@ describe('friend requests', () => {
     expect(await screen.findByRole('button', { name: 'Accept friend request from rojin' })).toBeTruthy();
   });
 });
+
+describe('friend requests, as friendship tickets', () => {
+  it('shows who wants to be friends, and stamps an accepted one "Friends" before it leaves', async () => {
+    let posted = '';
+    open({
+      'GET /friends/requests': ok({ requests: [{ userId: 'u3', username: 'rojin', displayName: 'Rojîn' }] }),
+      'POST /friends/requests/u3/accept': () => {
+        posted = 'accept';
+        return ok({ ok: true });
+      },
+    });
+    expect(await screen.findByText('Rojîn wants to be friends')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Accept friend request from rojin' }));
+    // the same answer, through the same route as ever
+    expect(screen.getByText('Friends')).toBeTruthy();
+    await waitFor(() => expect(posted).toBe('accept'));
+    // a screen reader hears it
+    expect(await screen.findByText('You and Rojîn are friends now')).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText('Rojîn wants to be friends')).toBeNull());
+  });
+
+  it('declines through the same route, and under Reduce Motion the ticket is gone at once', async () => {
+    let posted = '';
+    open({
+      'GET /friends/requests': ok({ requests: [{ userId: 'u4', username: 'baran' }] }),
+      'POST /friends/requests/u4/decline': () => {
+        posted = 'decline';
+        return ok({ ok: true });
+      },
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Decline friend request from baran' }));
+    expect(screen.queryByRole('button', { name: 'baran' })).toBeNull();
+    await waitFor(() => expect(posted).toBe('decline'));
+  });
+});

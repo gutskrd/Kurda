@@ -22,6 +22,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { TicketBadge } from '../play/Ticket';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { bucket, type RailFriend, type SocialRailData } from './rail';
@@ -212,7 +213,13 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                     accessibilityRole="button"
                     accessibilityLabel={t('rail.wantsToBeFriendsWith', { name: r.displayName ?? r.username })}
                   >
-                    <InitialsAvatar name={r.username} id={r.userId} size={34} />
+                    {/* a friend request is a ticket, as an invite to play is: its glyph on the face's corner */}
+                    <View>
+                      <InitialsAvatar name={r.username} id={r.userId} size={34} />
+                      <View style={styles.ticketBadge}>
+                        <TicketBadge tone="friend" size={16} ring={colors.background} />
+                      </View>
+                    </View>
                     <View style={styles.rowMain}>
                       <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{r.username}</Text>
                       <Text style={[styles.detail, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -296,6 +303,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
 
 const styles = StyleSheet.create({
   panel: { position: 'absolute', top: 0, bottom: 0, right: 0 },
+  ticketBadge: { position: 'absolute', right: -5, bottom: -4 },
   head: {
     flexDirection: 'row',
     alignItems: 'center',

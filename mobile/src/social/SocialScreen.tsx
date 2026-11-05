@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -23,12 +24,19 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { EmptyState } from '../theme/EmptyState';
 import { mutualText, undoAction } from './format';
 import { SearchField } from '../theme/SearchField';
+import { useAnnouncer } from '../stories/ui';
+import { ACCEPTED_HOLD_MS, DECLINE_FOLD_MS, FriendRequestTicket, TicketSlip, type RequestAnswer } from './FriendTicket';
 
 interface UserRow {
   userId: string;
   username: string;
   displayName?: string | null;
 }
+
+/** How long a suggestion says "Requested", its ticket handed over, before it moves to the requests you sent. */
+const ASKED_HOLD_MS = 900;
+
+const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
 
 /** Someone you may know, and the reason to think so. */
 interface Suggestion extends UserRow {
@@ -61,6 +69,12 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const [failed, setFailed] = useState(false);
   // the list's place is held until the first answer, rather than "search to start" showing to somebody with friends
   const [settled, setSettled] = useState(false);
+  const reduce = useReducedMotion();
+  const { announce, region } = useAnnouncer();
+  /** requests answered here: stamped "Friends" or folding away, until the lists come back without them */
+  const [answers, setAnswers] = useState<Record<string, RequestAnswer>>({});
+  /** suggestions just asked: their button says "Requested" for a moment before they move to the sent list */
+  const [asked, setAsked] = useState<ReadonlySet<string>>(new Set());
 
   const loadLists = useCallback(() => {
     void client.get<{ friends: UserRow[] }>('/friends').then((r) => {
@@ -114,13 +128,28 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     [client],
   );
 
+  /**
+   * Answer a request on its ticket: stamped "Friends" for a moment, or folded
+   * away, and then the lists are asked again — which also brings back one
+   * whose answer did not get through.
+   */
   const respond = useCallback(
-    async (userId: string, accept: boolean) => {
+    (u: UserRow, accept: boolean) => {
       if (accept) haptic('tap');
-      await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
-      loadLists();
+      if (accept) announce(t('friends.nowFriends', { name: u.displayName ?? u.username }));
+      setAnswers((a) => ({ ...a, [u.userId]: accept ? 'accepted' : 'declined' }));
+      const hold = accept ? ACCEPTED_HOLD_MS : reduce ? 0 : DECLINE_FOLD_MS;
+      void Promise.all([client.post(`/friends/requests/${u.userId}/${accept ? 'accept' : 'decline'}`), wait(hold)]).then(() => {
+        setRequests((list) => list.filter((r) => r.userId !== u.userId));
+        setAnswers((a) => {
+          const rest = { ...a };
+          delete rest[u.userId];
+          return rest;
+        });
+        loadLists();
+      });
     },
-    [client, loadLists],
+    [client, loadLists, reduce, announce, t],
   );
 
   /* the same words the profile uses to withdraw the same request */
@@ -144,21 +173,25 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   /**
    * Ask, and take them off the list of people to ask.
    *
-   * Dropped locally rather than by refetching: they have just moved from
-   * "suggested" to "requested", the suggestion query is the expensive one, and
-   * a row that stays put after a tap reads as a tap that did not register.
+   * The button answers at once — it hands a small ticket over and says
+   * "Requested" — and the row leaves a moment later, rather than by
+   * refetching: they have just moved from "suggested" to "requested", the
+   * suggestion query is the expensive one, and a row that stays put as it was
+   * after a tap reads as a tap that did not register.
    */
   const addFriend = useCallback(
     (userId: string) => {
-      setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
       haptic('tap');
-      void client.post('/friends/requests', { userId }).then((res) => {
+      announce(t('friends.requestSent'));
+      setAsked((prev) => new Set(prev).add(userId));
+      void Promise.all([client.post('/friends/requests', { userId }), wait(reduce ? 0 : ASKED_HOLD_MS)]).then(([res]) => {
+        setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
         // a request that did not go — a full friend list, too many out — says why (limits/limitCopy.ts)
         if (!res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
         loadLists();
       });
     },
-    [client, loadLists, t],
+    [client, loadLists, t, reduce, announce],
   );
 
   const openProfile = (userId: string) => navigation.navigate('UserProfile', { userId });
@@ -251,31 +284,21 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             ListHeaderComponent={
               <View>
                 {requests.length > 0 ? (
-                  <View>
+                  <View style={styles.tickets}>
                     {section('friends.requests')}
-                    {requests.map((u) =>
-                      row(
-                        u,
-                        <View style={styles.actions}>
-                          <PressableScale
-                            onPress={() => respond(u.userId, true)}
-                            style={[styles.accept, { backgroundColor: colors.primary }]}
-                            accessibilityRole="button"
-                            accessibilityLabel={t('friends.acceptFrom', { username: u.username })}
-                          >
-                            <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.accept')}</Text>
-                          </PressableScale>
-                          <Pressable
-                            onPress={() => respond(u.userId, false)}
-                            hitSlop={8}
-                            accessibilityRole="button"
-                            accessibilityLabel={t('friends.declineFrom', { username: u.username })}
-                          >
-                            <Text style={[styles.decline, { color: colors.danger }]}>✕</Text>
-                          </Pressable>
-                        </View>,
-                      ),
-                    )}
+                    {requests.map((u) => (
+                      <FriendRequestTicket
+                        key={u.userId}
+                        compact
+                        person={u}
+                        answer={answers[u.userId] ?? null}
+                        onOpen={() => openProfile(u.userId)}
+                        onAccept={() => respond(u, true)}
+                        onDecline={() => respond(u, false)}
+                        acceptLabel={t('friends.acceptFrom', { username: u.username })}
+                        declineLabel={t('friends.declineFrom', { username: u.username })}
+                      />
+                    ))}
                   </View>
                 ) : null}
                 {sent.length > 0 ? (
@@ -308,26 +331,36 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
               suggestions.length > 0 ? (
                 <View>
                   {section('friends.suggestions')}
-                  {suggestions.map((s) =>
-                    row(
+                  {suggestions.map((s) => {
+                    const requested = asked.has(s.userId);
+                    return row(
                       s,
-                      <PressableScale
-                        onPress={() => addFriend(s.userId)}
-                        style={[styles.accept, { backgroundColor: colors.primary }]}
-                        accessibilityRole="button"
-                        accessibilityLabel={t('friends.add')}
-                      >
-                        <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.add')}</Text>
-                      </PressableScale>,
+                      <TicketSlip sent={requested}>
+                        <PressableScale
+                          onPress={() => addFriend(s.userId)}
+                          disabled={requested}
+                          hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 36)}
+                          style={[styles.accept, styles.add, { backgroundColor: requested ? colors.controlTrack : colors.primary }]}
+                          accessibilityRole="button"
+                          accessibilityLabel={requested ? t('friends.requested') : t('friends.add')}
+                          accessibilityState={{ disabled: requested }}
+                        >
+                          {requested ? <Icon name="ticket" size={14} color={colors.textPrimary} /> : null}
+                          <Text style={[styles.acceptText, { color: requested ? colors.textPrimary : colors.textOnPrimary }]}>
+                            {requested ? t('friends.requested') : t('friends.add')}
+                          </Text>
+                        </PressableScale>
+                      </TicketSlip>,
                       mutualText(t, s.mutualCount),
-                    ),
-                  )}
+                    );
+                  })}
                 </View>
               ) : null
             }
           />
         )}
       </View>
+      {region}
     </GradientBackground>
   );
 }
@@ -364,10 +397,10 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1 },
   username: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   display: { fontSize: typography.sizes.sm },
-  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   accept: { paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radii.sm },
+  add: { minHeight: 36, flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  tickets: { gap: spacing.xs },
   acceptText: { fontWeight: typography.weights.bold, fontSize: typography.sizes.sm },
-  decline: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   cancel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   empty: { textAlign: 'center', marginTop: spacing.xl },
 });

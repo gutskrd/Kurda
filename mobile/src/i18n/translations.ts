@@ -2113,6 +2113,8 @@ export type TranslationKey =
   | 'friends.mutual'
   | 'friends.mutualOne'
   | 'friends.add'
+  | 'friends.requestSent'
+  | 'friends.nowFriends'
   | 'favorites.title'
   | 'favorites.none'
   | 'favorites.change'
@@ -4414,6 +4416,8 @@ const en: Catalog = {
   'friends.mutual': '{count} mutual friends',
   'friends.mutualOne': '1 mutual friend',
   'friends.add': 'Add',
+  'friends.requestSent': 'Request sent',
+  'friends.nowFriends': 'You and {name} are friends now',
   'favorites.title': 'Favorites',
   'favorites.none': 'None',
   'favorites.change': 'Change',
@@ -7252,6 +7256,8 @@ const ku: Catalog = {
   'friends.mutual': '{count} hevalên hevpar',
   'friends.mutualOne': '1 hevalê hevpar',
   'friends.add': 'Zêde bike',
+  'friends.requestSent': 'Daxwaz hat şandin',
+  'friends.nowFriends': 'Tu û {name} niha heval in',
   'favorites.title': 'Bijare',
   'favorites.none': 'Tune',
   'favorites.change': 'Biguherîne',
@@ -10090,6 +10096,8 @@ const de: Catalog = {
   'friends.mutual': '{count} gemeinsame Freunde',
   'friends.mutualOne': '1 gemeinsamer Freund',
   'friends.add': 'Hinzufügen',
+  'friends.requestSent': 'Anfrage gesendet',
+  'friends.nowFriends': 'Du und {name} seid jetzt befreundet',
   'favorites.title': 'Favoriten',
   'favorites.none': 'Keins',
   'favorites.change': 'Ändern',
@@ -12928,6 +12936,8 @@ const es: Catalog = {
   'friends.mutual': '{count} amigos en común',
   'friends.mutualOne': '1 amigo en común',
   'friends.add': 'Añadir',
+  'friends.requestSent': 'Solicitud enviada',
+  'friends.nowFriends': '{name} ya es tu amigo',
   'favorites.title': 'Favoritos',
   'favorites.none': 'Ninguno',
   'favorites.change': 'Cambiar',
@@ -15766,6 +15776,8 @@ const tr: Catalog = {
   'friends.mutual': '{count} ortak arkadaş',
   'friends.mutualOne': '1 ortak arkadaş',
   'friends.add': 'Ekle',
+  'friends.requestSent': 'İstek gönderildi',
+  'friends.nowFriends': '{name} ile artık arkadaşsınız',
   'favorites.title': 'Favoriler',
   'favorites.none': 'Yok',
   'favorites.change': 'Değiştir',
@@ -18604,6 +18616,8 @@ const ar: Catalog = {
   'friends.mutual': '{count} أصدقاء مشتركون',
   'friends.mutualOne': 'صديق مشترك واحد',
   'friends.add': 'إضافة',
+  'friends.requestSent': 'أُرسل الطلب',
+  'friends.nowFriends': 'أنت و{name} صديقان الآن',
   'favorites.title': 'المفضلة',
   'favorites.none': 'لا شيء',
   'favorites.change': 'تغيير',
@@ -21442,6 +21456,8 @@ const fr: Catalog = {
   'friends.mutual': '{count} amis en commun',
   'friends.mutualOne': '1 ami en commun',
   'friends.add': 'Ajouter',
+  'friends.requestSent': 'Demande envoyée',
+  'friends.nowFriends': '{name} et toi êtes maintenant amis',
   'favorites.title': 'Favoris',
   'favorites.none': 'Aucun',
   'favorites.change': 'Changer',
@@ -24280,6 +24296,8 @@ const nl: Catalog = {
   'friends.mutual': '{count} gemeenschappelijke vrienden',
   'friends.mutualOne': '1 gemeenschappelijke vriend',
   'friends.add': 'Toevoegen',
+  'friends.requestSent': 'Verzoek verstuurd',
+  'friends.nowFriends': 'Jij en {name} zijn nu vrienden',
   'favorites.title': 'Favorieten',
   'favorites.none': 'Geen',
   'favorites.change': 'Wijzigen',
@@ -27119,6 +27137,8 @@ const ckb: Catalog = {
   'friends.mutual': '{count} هاوڕێی هاوبەش',
   'friends.mutualOne': '1 هاوڕێی هاوبەش',
   'friends.add': 'زیادکردن',
+  'friends.requestSent': 'داواکاری نێردرا',
+  'friends.nowFriends': 'ئێستا تۆ و {name} هاوڕێن',
   'favorites.title': 'دڵخوازەکان',
   'favorites.none': 'هیچ',
   'favorites.change': 'بگۆڕە',

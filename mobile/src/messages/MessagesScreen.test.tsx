@@ -135,8 +135,12 @@ describe('Friend requests', () => {
     renderWithProviders(<FriendRequestsScreen onExit={() => undefined} />);
     // each Accept says whose request it is, since there is one on every row
     fireEvent.click(await screen.findByRole('button', { name: 'Accept friend request from dilan' }));
+    // answered at once: the ticket is stamped, and nothing on it can be pressed again …
+    expect(screen.queryByRole('button', { name: 'Accept friend request from dilan' })).toBeNull();
+    expect(screen.getByText('Friends')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.method === 'POST' && c.path === '/friends/requests/u-dilan/accept')).toBe(true));
-    expect(screen.queryByRole('button', { name: 'dilan, Dilan' })).toBeNull();
+    // … and it leaves the list a moment later
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'dilan, Dilan' })).toBeNull());
     expect(screen.getByRole('button', { name: 'baran' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Decline friend request from baran' })).toBeTruthy();
   });
