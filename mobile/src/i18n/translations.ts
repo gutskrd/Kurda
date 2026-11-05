@@ -979,6 +979,8 @@ export type TranslationKey =
   | 'guide.age.yearsOld'
   | 'guide.age.prompt'
   | 'guide.age.unset'
+  | 'guide.age.tenOlder'
+  | 'guide.age.tenYounger'
   | 'guide.password.weak'
   | 'guide.password.fair'
   | 'guide.password.good'
@@ -3268,6 +3270,8 @@ const en: Catalog = {
   'guide.age.yearsOld': 'years old',
   'guide.age.prompt': 'Slide to your age',
   'guide.age.unset': 'not chosen yet',
+  'guide.age.tenOlder': 'Ten years older',
+  'guide.age.tenYounger': 'Ten years younger',
   'guide.password.weak': 'Weak',
   'guide.password.fair': 'Fair',
   'guide.password.good': 'Good',
@@ -6112,6 +6116,8 @@ const ku: Catalog = {
   'guide.age.yearsOld': 'salî',
   'guide.age.prompt': 'Bikişîne heta temenê xwe',
   'guide.age.unset': 'hê nehatiye hilbijartin',
+  'guide.age.tenOlder': 'Deh salan mezintir',
+  'guide.age.tenYounger': 'Deh salan biçûktir',
   'guide.password.weak': 'Lawaz',
   'guide.password.fair': 'Nîvçe',
   'guide.password.good': 'Baş',
@@ -8955,6 +8961,8 @@ const de: Catalog = {
   'guide.age.yearsOld': 'Jahre alt',
   'guide.age.prompt': 'Schieb das Lineal auf dein Alter',
   'guide.age.unset': 'noch nicht gewählt',
+  'guide.age.tenOlder': 'Zehn Jahre älter',
+  'guide.age.tenYounger': 'Zehn Jahre jünger',
   'guide.password.weak': 'Schwach',
   'guide.password.fair': 'Mittel',
   'guide.password.good': 'Gut',
@@ -11798,6 +11806,8 @@ const es: Catalog = {
   'guide.age.yearsOld': 'años',
   'guide.age.prompt': 'Desliza la regla hasta tu edad',
   'guide.age.unset': 'sin elegir todavía',
+  'guide.age.tenOlder': 'Diez años más',
+  'guide.age.tenYounger': 'Diez años menos',
   'guide.password.weak': 'Débil',
   'guide.password.fair': 'Regular',
   'guide.password.good': 'Buena',
@@ -14641,6 +14651,8 @@ const tr: Catalog = {
   'guide.age.yearsOld': 'yaşında',
   'guide.age.prompt': 'Cetveli yaşına kaydır',
   'guide.age.unset': 'henüz seçilmedi',
+  'guide.age.tenOlder': 'On yaş büyük',
+  'guide.age.tenYounger': 'On yaş küçük',
   'guide.password.weak': 'Zayıf',
   'guide.password.fair': 'Orta',
   'guide.password.good': 'İyi',
@@ -17484,6 +17496,8 @@ const ar: Catalog = {
   'guide.age.yearsOld': 'سنة',
   'guide.age.prompt': 'اسحب المسطرة إلى عمرك',
   'guide.age.unset': 'لم يُحدَّد بعد',
+  'guide.age.tenOlder': 'أكبر بعشر سنوات',
+  'guide.age.tenYounger': 'أصغر بعشر سنوات',
   'guide.password.weak': 'ضعيفة',
   'guide.password.fair': 'متوسطة',
   'guide.password.good': 'جيدة',
@@ -20327,6 +20341,8 @@ const fr: Catalog = {
   'guide.age.yearsOld': 'ans',
   'guide.age.prompt': 'Fais glisser la règle jusqu’à ton âge',
   'guide.age.unset': 'pas encore choisi',
+  'guide.age.tenOlder': 'Dix ans de plus',
+  'guide.age.tenYounger': 'Dix ans de moins',
   'guide.password.weak': 'Faible',
   'guide.password.fair': 'Moyen',
   'guide.password.good': 'Bon',
@@ -23170,6 +23186,8 @@ const nl: Catalog = {
   'guide.age.yearsOld': 'jaar',
   'guide.age.prompt': 'Schuif de liniaal naar je leeftijd',
   'guide.age.unset': 'nog niet gekozen',
+  'guide.age.tenOlder': 'Tien jaar ouder',
+  'guide.age.tenYounger': 'Tien jaar jonger',
   'guide.password.weak': 'Zwak',
   'guide.password.fair': 'Matig',
   'guide.password.good': 'Goed',
@@ -26014,6 +26032,8 @@ const ckb: Catalog = {
   'guide.age.yearsOld': 'ساڵ',
   'guide.age.prompt': 'ڕایبکێشە بۆ سەر تەمەنی خۆت',
   'guide.age.unset': 'هێشتا هەڵنەبژێردراوە',
+  'guide.age.tenOlder': 'دە ساڵ گەورەتر',
+  'guide.age.tenYounger': 'دە ساڵ بچووکتر',
   'guide.password.weak': 'لاواز',
   'guide.password.fair': 'مامناوەند',
   'guide.password.good': 'باش',

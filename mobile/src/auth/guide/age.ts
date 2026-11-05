@@ -57,8 +57,8 @@ export function chosenAtOffset(x: number, current: number | null, range: { min: 
 }
 
 /** One year older or younger, for a screen reader's swipe, kept within the range. */
-export function stepAge(age: number, action: 'increment' | 'decrement', range: { min: number; max: number }): number {
-  const next = action === 'increment' ? age + 1 : age - 1;
+export function stepAge(age: number, action: 'increment' | 'decrement', range: { min: number; max: number }, by = 1): number {
+  const next = action === 'increment' ? age + by : age - by;
   return Math.max(range.min, Math.min(range.max, next));
 }
 

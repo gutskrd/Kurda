@@ -42,10 +42,20 @@ const NO_NUMBER = '–';
  * To a screen reader it is one adjustable control: it says the age, and a
  * swipe up or down moves it a year (`increment`, `decrement`), scrolling the
  * ruler there; with no age chosen it says so, and the first swipe starts from
- * the resting year. The years it offers run from one to the earliest the server
+ * the resting year. Two more actions move it ten years at a time, since the
+ * ruler now starts at its young end and a year a swipe from there is a long
+ * way to most people's age. The years it offers run from one to the earliest the server
  * takes (guide/age.ts), the young ones too, since leaving them out would say
  * which to pick.
  */
+/** What each of the control's actions does to the age: a year a swipe, or ten from the actions menu. */
+const ACTION_STEP: Record<string, { action: 'increment' | 'decrement'; by: number } | undefined> = {
+  increment: { action: 'increment', by: 1 },
+  decrement: { action: 'decrement', by: 1 },
+  tenOlder: { action: 'increment', by: 10 },
+  tenYounger: { action: 'decrement', by: 10 },
+};
+
 export function AgeRuler({
   value,
   onChange,
@@ -88,8 +98,9 @@ export function AgeRuler({
 
   const adjust = (e: AccessibilityActionEvent): void => {
     const name = e.nativeEvent.actionName;
-    if (name !== 'increment' && name !== 'decrement') return;
-    const next = stepAge(shown.current ?? range.min, name, range);
+    const move = ACTION_STEP[name];
+    if (!move) return;
+    const next = stepAge(shown.current ?? range.min, move.action, range, move.by);
     if (next === shown.current) return;
     shown.current = next;
     scroller.current?.scrollTo({ x: offsetForAge(next, range.min), animated: true });
@@ -108,7 +119,12 @@ export function AgeRuler({
       aria-valuemax={range.max}
       aria-valuenow={value ?? undefined}
       aria-valuetext={spoken}
-      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      accessibilityActions={[
+        { name: 'increment' },
+        { name: 'decrement' },
+        { name: 'tenOlder', label: t('guide.age.tenOlder') },
+        { name: 'tenYounger', label: t('guide.age.tenYounger') },
+      ]}
       onAccessibilityAction={adjust}
       style={styles.root}
       testID={testID}

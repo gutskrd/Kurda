@@ -51,6 +51,10 @@ describe('the age ruler’s arithmetic', () => {
     expect(stepAge(20, 'decrement', range)).toBe(19);
     expect(stepAge(range.min, 'decrement', range)).toBe(range.min);
     expect(stepAge(range.max, 'increment', range)).toBe(range.max);
+    // the ten-year actions a screen reader offers, held inside the range like a single step
+    expect(stepAge(1, 'increment', range, 10)).toBe(11);
+    expect(stepAge(range.max - 3, 'increment', range, 10)).toBe(range.max);
+    expect(stepAge(5, 'decrement', range, 10)).toBe(range.min);
   });
 
   it('counts the birth year back from this year, one more when the birthday is still to come', () => {
