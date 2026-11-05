@@ -3278,7 +3278,7 @@
           "titleKu": "Ez hatime",
           "titleEn": "I have come",
           "grammar": "the present perfect: past stem + -ime, -iyî, -iye, -ine after a consonant (ez hatime, ew hatiye), -me, -yî, -ye, -ne after a vowel (ez çûme, ew çûye); with transitive verbs min … kiriye, me … dîtiye",
-          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te qet Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car** never · **qet** ever / never · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
+          "grammarMd": "For what **has happened** (and still matters), add the copula-like endings to the past stem:\n\n- after a consonant: *ez hatime, tu hatiyî, ew hatiye, em hatine* (I have come …)\n- after a vowel: *ez çûme, tu çûyî, ew çûye, em çûne* (I have gone …)\n- verbs in -în: *ez fikirîme, ew fikiriye* (I have thought …)\n\nTransitive verbs keep the ergative: *Min biryar daye.* I have decided. · *Te qet Hewlêr dîtiye?* Have you ever seen Hewlêr? · *Me sêv xwarine.* We have eaten (the) apples.\n\nUseful with it: **tu car** never · **qet** ever / never · **heta niha** until now · **hê** / **hîn** still, yet: *Ez hê neçûme.* I have not gone yet.\n\nNot: *ne-* before the stem: *Min nedîtiye.* I haven’t seen it.",
           "lessons": [
             {
               "key": "u11s2l1",
@@ -3515,7 +3515,7 @@
           "titleKu": "Şengê û Pengê",
           "titleEn": "Şengê and Pengê",
           "grammar": "conditions with heke / eger + the subjunctive (heke tu derî vekî, gur tê hundir), and the subjunctive of “to be”: bim, bî, be, bin (heke tu birçî bî)",
-          "grammarMd": "To say **if**, use **heke** (or **eger**) with the subjunctive:\n\n- *Heke tu derî vekî, gur tê hundir.* If you open the door, the wolf comes in.\n- *Heke baran bibare, em ê li malê bimînin.* If it rains, we will stay at home.\n- *Eger tu bixwazî, ez ê alîkariya te bikim.* If you want, I will help you.\n\nWith “to be” the subjunctive is **bim, bî, be, bin**:\n\n- *Heke tu birçî bî, were bixwe.* If you are hungry, come and eat.\n- *Heke ew ne dayika me be, em derî venakin.* If she is not our mother, we won’t open the door.\n\nThe second half is often the present or the future: *… em naçin* / *… em ê neçin*.",
+          "grammarMd": "To say **if**, use **heke** (or **eger**) with the subjunctive:\n\n- *Heke tu derî vekî, gur tê hundir.* If you open the door, the wolf comes in.\n- *Heke baran bibare, em ê li malê bimînin.* If it rains, we will stay at home.\n- *Eger tu bixwazî, ez ê alîkariya te bikim.* If you want, I will help you.\n\nWith “to be” the subjunctive is **bim, bî, be, bin**:\n\n- *Heke tu birçî bî, were bixwe.* If you are hungry, come and eat.\n- *Heke ew ne dayika me be, em derî venakin.* If she is not our mother, we won’t open the door.\n\nThe second half is often the present or the future: *… em naçin* / *… em ê neçin*.\n\nA verb with a preverb puts **me-** after it for *don’t*: *veke!* open! → *Derî vemeke!* Don’t open the door! — while *Em ê derî venekin* is the future, *we won’t open the door*.",
           "lessons": [
             {
               "key": "u12s1l1",
@@ -3747,7 +3747,7 @@
           "titleKu": "Rêya te vekirî be!",
           "titleEn": "May your road be open!",
           "grammar": "everything together: present, past, future and wishes in one farewell (… pîroz be, … vekirî be, … sax be)",
-          "grammarMd": "A farewell uses every tense you know:\n\n- the past: *Tu salekê li vir mayî û tu bûyî endamê malbatê.* You stayed here a year and became one of the family.\n- the present perfect: *Tu gelek tiştan fêr bûyî.* You have learned a lot.\n- the future: *Em ê bêriya te bikin.* We will miss you.\n- the subjunctive and wishes: *Rêya te vekirî be!* May your road be open! · *Xwedê ji te razî be!* God be pleased with you (thank you)! · *Bi silametî biçî û werî!* Go and come back safely!\n\nAnd the answer to a goodbye: *Bi xatirê we!* — *Oxir be!* Good luck!\n\nHeta dîtinê — until we meet again.",
+          "grammarMd": "A farewell uses every tense you know:\n\n- the past: *Tu salekê li vir mayî û tu bûyî endamê malbatê.* You stayed here a year and became one of the family.\n- the present perfect: *Xezalê şitilek çandiye.* Xezal has planted a sapling (the past would be *Xezalê şitilek çand*).\n- the future: *Em ê bêriya te bikin.* We will miss you.\n- the subjunctive and wishes: *Rêya te vekirî be!* May your road be open! · *Xwedê ji te razî be!* God be pleased with you (thank you)! · *Bi silametî biçî û werî!* Go and come back safely!\n\nAnd the answer to a goodbye: *Bi xatirê we!* — *Oxir be!* Good luck!\n\nHeta dîtinê — until we meet again.",
           "lessons": [
             {
               "key": "u12s4l1",

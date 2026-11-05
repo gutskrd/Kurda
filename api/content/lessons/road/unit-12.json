@@ -15,7 +15,7 @@
           "position": 1,
           "titleKu": "Şengê û Pengê",
           "titleEn": "Şengê and Pengê",
-          "grammarMd": "To say **if**, use **heke** (or **eger**) with the subjunctive:\n\n- *Heke tu derî vekî, gur tê hundir.* If you open the door, the wolf comes in.\n- *Heke baran bibare, em ê li malê bimînin.* If it rains, we will stay at home.\n- *Eger tu bixwazî, ez ê alîkariya te bikim.* If you want, I will help you.\n\nWith “to be” the subjunctive is **bim, bî, be, bin**:\n\n- *Heke tu birçî bî, were bixwe.* If you are hungry, come and eat.\n- *Heke ew ne dayika me be, em derî venakin.* If she is not our mother, we won’t open the door.\n\nThe second half is often the present or the future: *… em naçin* / *… em ê neçin*.",
+          "grammarMd": "To say **if**, use **heke** (or **eger**) with the subjunctive:\n\n- *Heke tu derî vekî, gur tê hundir.* If you open the door, the wolf comes in.\n- *Heke baran bibare, em ê li malê bimînin.* If it rains, we will stay at home.\n- *Eger tu bixwazî, ez ê alîkariya te bikim.* If you want, I will help you.\n\nWith “to be” the subjunctive is **bim, bî, be, bin**:\n\n- *Heke tu birçî bî, were bixwe.* If you are hungry, come and eat.\n- *Heke ew ne dayika me be, em derî venakin.* If she is not our mother, we won’t open the door.\n\nThe second half is often the present or the future: *… em naçin* / *… em ê neçin*.\n\nA verb with a preverb puts **me-** after it for *don’t*: *veke!* open! → *Derî vemeke!* Don’t open the door! — while *Em ê derî venekin* is the future, *we won’t open the door*.",
           "lessons": [
             {
               "key": "u12s1l1",
@@ -29,7 +29,7 @@
                   "payload": {
                     "say": "Hebû tunebû, bizineke spî hebû û du karikên wê hebûn: Şengê û Pengê.",
                     "voice": "hamo",
-                    "prompt": "The first night by the stove. How does Hamo’s tale begin?",
+                    "prompt": "The first night by the stove. How does Hamo’s tale begin? “Hebû tunebû, bizineke spî hebû û du karikên wê hebûn: Şengê û Pengê.”",
                     "options": [
                       "Once upon a time there was a white goat, and she had two kids: Şengê and Pengê.",
                       "Once upon a time there was a white wolf, and he had two cubs: Şengê and Pengê.",
@@ -77,7 +77,7 @@
                   "payload": {
                     "say": "Her sibeh bizin diçû zozanan.",
                     "voice": "hamo",
-                    "prompt": "Where did the mother goat go?",
+                    "prompt": "Where did the mother goat go? “Her sibeh bizin diçû zozanan.”",
                     "options": [
                       "Every morning the goat went up to the summer pastures.",
                       "Every evening the goat went to the market.",
@@ -91,7 +91,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Wê ji karikên xwe re digot: “Gur derewker e. Derî ji kesî re vemekin!”",
-                    "prompt": "And before she went, what did she always tell her kids?",
+                    "prompt": "And before she went, what did she always tell her kids? «Wê ji karikên xwe re digot: “Gur derewker e. Derî ji kesî re vemekin!”»",
                     "accepted": [
                       "She used to tell her kids: “The wolf is a liar. Don’t open the door to anyone!”",
                       "She always told her kids: “The wolf is a liar. Don’t open the door to anybody!”",
@@ -144,7 +144,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Gur derewker e. Eger hûn derî vekin, ew ê we bixwe!",
-                    "prompt": "Hamo goes on in the mother’s voice. What does she warn them?",
+                    "prompt": "Hamo goes on in the mother’s voice. What does she warn them? “Gur derewker e. Eger hûn derî vekin, ew ê we bixwe!”",
                     "accepted": [
                       "The wolf is a liar. If you open the door, he will eat you!",
                       "The wolf is a liar. If you open the door, he will eat you",
@@ -162,7 +162,7 @@
                   "payload": {
                     "say": "Eger deng nerm be jî, derî vemekin.",
                     "voice": "hamo",
-                    "prompt": "One more warning. What does it mean?",
+                    "prompt": "One more warning. What does it mean? “Eger deng nerm be jî, derî vemekin.”",
                     "options": [
                       "Even if the voice is soft, don’t open the door.",
                       "If the voice is soft, open the door.",
@@ -213,7 +213,7 @@
                   "payload": {
                     "say": "Hêvî dipirse: “Gur dê wan bixapîne?”",
                     "voice": "xezo",
-                    "prompt": "Hêvî pulls the blanket up to her nose. Xezal tells you what she whispers.",
+                    "prompt": "Hêvî pulls the blanket up to her nose. Xezal tells you what she whispers. «Hêvî dipirse: “Gur dê wan bixapîne?”»",
                     "options": [
                       "“Will the wolf trick them?”",
                       "“Will the wolf help them?”",
@@ -242,7 +242,7 @@
                   "payload": {
                     "say": "Rojekê, dema ku bizin li zozanan bû, gur hat ber derî…",
                     "voice": "hamo",
-                    "prompt": "Then Hamo lowers his voice to a whisper. What happens?",
+                    "prompt": "Then Hamo lowers his voice to a whisper. What happens? “Rojekê, dema ku bizin li zozanan bû, gur hat ber derî…”",
                     "options": [
                       "One day, while the goat was up on the pastures, the wolf came to the door…",
                       "One day, while the goat was at home, the shepherd came to the door…",
@@ -265,7 +265,7 @@
                   "payload": {
                     "say": "Şengê, Pengê, derî vekin! Ez dayika we me.",
                     "voice": "hamo",
-                    "prompt": "The wolf is at the door. Hamo sings it in a soft, sweet voice. What does the wolf sing?",
+                    "prompt": "The wolf is at the door. Hamo sings it in a soft, sweet voice. What does the wolf sing? “Şengê, Pengê, derî vekin! Ez dayika we me.”",
                     "options": [
                       "Şengê, Pengê, close the door! I am the wolf.",
                       "Şengê, Pengê, open the door! I am your mother.",
@@ -280,7 +280,7 @@
                   "payload": {
                     "say": "Heke ew derî vekin, çi dê bibe?",
                     "voice": "hamo",
-                    "prompt": "Hamo stops the tale and looks round at the children. What does he ask?",
+                    "prompt": "Hamo stops the tale and looks round at the children. What does he ask? “Heke ew derî vekin, çi dê bibe?”",
                     "options": [
                       "If they open the door, what will happen?",
                       "Why did they open the door?",
@@ -328,7 +328,7 @@
                   "payload": {
                     "say": "Hêvî dibêje: “Heke ew ne dayika wan be, gur dê wan bixwe!”",
                     "voice": "xezo",
-                    "prompt": "Hêvî knows the answer at once. Xezal says it again for you. What is it?",
+                    "prompt": "Hêvî knows the answer at once. Xezal says it again for you. What is it? «Hêvî dibêje: “Heke ew ne dayika wan be, gur dê wan bixwe!”»",
                     "options": [
                       "If she isn’t their mother, the wolf will eat them!",
                       "If she is their mother, they will eat the wolf!",
@@ -381,7 +381,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev dekeke gur e!",
-                    "prompt": "Pengê whispers to Şengê. What does she say?",
+                    "prompt": "Pengê whispers to Şengê. What does she say? “Ev dekeke gur e!”",
                     "accepted": [
                       "This is a wolf’s trick!",
                       "This is a wolf’s trick",
@@ -412,7 +412,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Şengê jî pê hesiya: “Lingê xwe nîşanî me bide!”",
-                    "prompt": "Şengê has noticed too, and calls through the door. What does she say?",
+                    "prompt": "Şengê has noticed too, and calls through the door. What does she say? «Şengê jî pê hesiya: “Lingê xwe nîşanî me bide!”»",
                     "accepted": [
                       "Şengê noticed too: “Show us your foot!”",
                       "Şengê realised too: “Show us your foot!”",
@@ -439,7 +439,7 @@
                   "payload": {
                     "say": "Aqil û zîrekiya karikan ji dekên gur bihêztir in.",
                     "voice": "hamo",
-                    "prompt": "Hamo explains what the tale is about. What does he say?",
+                    "prompt": "Hamo explains what the tale is about. What does he say? “Aqil û zîrekiya karikan ji dekên gur bihêztir in.”",
                     "options": [
                       "The kids’ good sense and cleverness are stronger than the wolf’s tricks.",
                       "The wolf’s tricks are stronger than the kids’ cleverness.",
@@ -610,7 +610,7 @@
                   "payload": {
                     "say": "Rola min dayik e, û rola gur ji bo Hevalo ye!",
                     "voice": "xezo",
-                    "prompt": "Xezal hands out the parts. What does she say?",
+                    "prompt": "Xezal hands out the parts. What does she say? “Rola min dayik e, û rola gur ji bo Hevalo ye!”",
                     "options": [
                       "My part is the mother, and the wolf’s part is for Hevalo!",
                       "My part is the wolf, and the mother’s part is for Hevalo!",
@@ -624,7 +624,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez? Gur? Lê ez pir dilovan im!",
-                    "prompt": "Hevalo’s ears go flat. What does he say?",
+                    "prompt": "Hevalo’s ears go flat. What does he say? “Ez? Gur? Lê ez pir dilovan im!”",
                     "accepted": [
                       "Me? The wolf? But I’m very kind!",
                       "Me? The wolf? But I’m very kind",
@@ -666,7 +666,7 @@
                   "payload": {
                     "say": "Lepê xwe nîşanî wan bide, gurê delal.",
                     "voice": "hamo",
-                    "prompt": "At the door, Hamo whispers stage directions. What does he say?",
+                    "prompt": "At the door, Hamo whispers stage directions. What does he say? “Lepê xwe nîşanî wan bide, gurê delal.”",
                     "options": [
                       "Show them your paw, dear wolf.",
                       "Give them an apple, dear wolf.",
@@ -705,7 +705,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev ne lepê gur e, Hevalo. Ev lingê pezkûviyekî ye!",
-                    "prompt": "Xezal looks at what Hevalo pushes under the door. What does she say?",
+                    "prompt": "Xezal looks at what Hevalo pushes under the door. What does she say? “Ev ne lepê gur e, Hevalo. Ev lingê pezkûviyekî ye!”",
                     "accepted": [
                       "That’s not a wolf’s paw, Hevalo. That’s a deer’s foot!",
                       "That’s not a wolf’s paw, Hevalo. That’s a deer’s foot",
@@ -822,7 +822,7 @@
                   "payload": {
                     "say": "Gur çû, û Şengê û Pengê li malê sax man.",
                     "voice": "hamo",
-                    "prompt": "The end of the tale. What happened?",
+                    "prompt": "The end of the tale. What happened? “Gur çû, û Şengê û Pengê li malê sax man.”",
                     "options": [
                       "The wolf left, and Şengê and Pengê stayed safe and sound at home.",
                       "The wolf stayed, and Şengê and Pengê ran away.",
@@ -837,7 +837,7 @@
                   "payload": {
                     "say": "Wateya vê çîrokê çi ye?",
                     "voice": "hamo",
-                    "prompt": "Dapîr puts down her tea. She has a question for the children, and Hamo says it again for you. What is it?",
+                    "prompt": "Dapîr puts down her tea. She has a question for the children, and Hamo says it again for you. What is it? “Wateya vê çîrokê çi ye?”",
                     "options": [
                       "What is the meaning of this tale?",
                       "Who told you this tale?",
@@ -884,7 +884,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Wateya çîrokê ev e: aqil ne bi salan e, bi serî ye.",
-                    "prompt": "Dapîr puts the lesson of the tale in her own words. What does she say?",
+                    "prompt": "Dapîr puts the lesson of the tale in her own words. What does she say? “Wateya çîrokê ev e: aqil ne bi salan e, bi serî ye.”",
                     "accepted": [
                       "The meaning of the tale is this: good sense is not in the years, it is in the head.",
                       "The meaning of the tale is this: good sense is not in the years, it is in the head",
@@ -939,7 +939,7 @@
                   "payload": {
                     "say": "Çîroka Şengê û Pengê bandoreke mezin li Hêviyê kir: ew êdî ji guran natirse!",
                     "voice": "hamo",
-                    "prompt": "And Hêvî? What has the tale done for her?",
+                    "prompt": "And Hêvî? What has the tale done for her? “Çîroka Şengê û Pengê bandoreke mezin li Hêviyê kir: ew êdî ji guran natirse!”",
                     "options": [
                       "The tale had a big effect on Hêvî: she is no longer afraid of wolves!",
                       "The tale had a big effect on Hêvî: now she is afraid of goats!",
@@ -965,7 +965,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hebû tunebû, li welatekî dûr padîşahek û pîrekeke aqilmend hebûn…",
-                    "prompt": "Hamo begins another one. How?",
+                    "prompt": "Hamo begins another one. How? “Hebû tunebû, li welatekî dûr padîşahek û pîrekeke aqilmend hebûn…”",
                     "accepted": [
                       "Once upon a time, in a faraway land, there were a king and a wise old woman…",
                       "Once upon a time, in a faraway land, there were a king and a wise old woman",
@@ -1106,7 +1106,7 @@
                   "payload": {
                     "say": "Li ber derî kalek û keça wî hene.",
                     "voice": "hamo",
-                    "prompt": "Who is standing in the snow?",
+                    "prompt": "Who is standing in the snow? “Li ber derî kalek û keça wî hene.”",
                     "options": [
                       "An old woman and her son.",
                       "An old man and his daughter.",
@@ -1121,7 +1121,7 @@
                   "payload": {
                     "say": "Bi xêr hatin! Werin hundir!",
                     "voice": "hamo",
-                    "prompt": "Hamo does not ask who they are. What does he say?",
+                    "prompt": "Hamo does not ask who they are. What does he say? “Bi xêr hatin! Werin hundir!”",
                     "options": [
                       "Welcome! Come in!",
                       "Goodbye! Go home!",
@@ -1235,7 +1235,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ji bo Hamo, ew kî bin jî, mêvan in.",
-                    "prompt": "Xezal explains her uncle to you. What does she say?",
+                    "prompt": "Xezal explains her uncle to you. What does she say? “Ji bo Hamo, ew kî bin jî, mêvan in.”",
                     "accepted": [
                       "For Hamo, whoever they are, they are guests.",
                       "For Hamo, whoever they are, they are guests",
@@ -1289,7 +1289,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Kal dibêje: “Mala te ava!” Û xalo dibêje: “Ser çavan! Mala min mala we ye.”",
-                    "prompt": "Xezal tells you what was said. What was it?",
+                    "prompt": "Xezal tells you what was said. What was it? «Kal dibêje: “Mala te ava!” Û xalo dibêje: “Ser çavan! Mala min mala we ye.”»",
                     "accepted": [
                       "The old man says: “Thank you!” And uncle says: “With pleasure! My home is your home.”",
                       "The old man says: “May your house prosper!” And uncle says: “With pleasure! My home is your home.”",
@@ -1316,7 +1316,7 @@
                   "payload": {
                     "say": "Kurd mêvanperwer in, û mêvandariya wan li hemû dinyayê navdar e.",
                     "voice": "hamo",
-                    "prompt": "Hamo is proud of his people. What does he say?",
+                    "prompt": "Hamo is proud of his people. What does he say? “Kurd mêvanperwer in, û mêvandariya wan li hemû dinyayê navdar e.”",
                     "options": [
                       "Kurds are hospitable, and their hospitality is famous all over the world.",
                       "Kurds are hospitable, but nobody knows it.",
@@ -1379,7 +1379,7 @@
                   "payload": {
                     "say": "Kal tiştekî dirêj bi xwe re aniye. Ew çi ye?",
                     "voice": "hamo",
-                    "prompt": "Hamo has noticed something. What does he wonder?",
+                    "prompt": "Hamo has noticed something. What does he wonder? “Kal tiştekî dirêj bi xwe re aniye. Ew çi ye?”",
                     "options": [
                       "The old man has brought something long with him. What is it?",
                       "The old man has lost something long. Where is it?",
@@ -1402,7 +1402,7 @@
                   "payload": {
                     "say": "Kal me agahdar dike ku ew ji Wanê tên.",
                     "voice": "xezo",
-                    "prompt": "Over dinner everyone talks at once, and Xezal passes on what each one says. What does the old man tell them?",
+                    "prompt": "Over dinner everyone talks at once, and Xezal passes on what each one says. What does the old man tell them? “Kal me agahdar dike ku ew ji Wanê tên.”",
                     "options": [
                       "The old man tells us that they come from Wan.",
                       "The old man tells us that they are going to Wan.",
@@ -1417,7 +1417,7 @@
                   "payload": {
                     "say": "Dapîrê pirsî ka ew birçî ne.",
                     "voice": "xezo",
-                    "prompt": "Then Xezal passes on Dapîr’s question. What did Dapîr ask?",
+                    "prompt": "Then Xezal passes on Dapîr’s question. What did Dapîr ask? “Dapîrê pirsî ka ew birçî ne.”",
                     "options": [
                       "Grandma asked whether they were hungry.",
                       "Grandma said that she was hungry.",
@@ -1464,7 +1464,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Wî got ku rê ji ber berfê girtî ye.",
-                    "prompt": "Xezal reports what the old man said about the road. What did he say?",
+                    "prompt": "Xezal reports what the old man said about the road. What did he say? “Wî got ku rê ji ber berfê girtî ye.”",
                     "accepted": [
                       "He said that the road is closed because of the snow.",
                       "He said that the road is closed because of the snow",
@@ -1530,7 +1530,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Baran gilî dike ku kes guhdariya wî nake.",
-                    "prompt": "And Baran? What is his problem tonight?",
+                    "prompt": "And Baran? What is his problem tonight? “Baran gilî dike ku kes guhdariya wî nake.”",
                     "accepted": [
                       "Baran complains that nobody is listening to him.",
                       "Baran complains that nobody is listening to him",
@@ -1560,7 +1560,7 @@
                   "payload": {
                     "say": "Gelo ev gotegot rast e?",
                     "voice": "xezo",
-                    "prompt": "Xezal looks at the old man for a long time. What does she say to herself?",
+                    "prompt": "Xezal looks at the old man for a long time. What does she say to herself? “Gelo ev gotegot rast e?”",
                     "options": [
                       "I wonder if this rumour is true.",
                       "This rumour is certainly not true.",
@@ -1608,7 +1608,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Gelo kê çi got? Ez êdî nizanim!",
-                    "prompt": "Xezal gives up and laughs. What does she say?",
+                    "prompt": "Xezal gives up and laughs. What does she say? “Gelo kê çi got? Ez êdî nizanim!”",
                     "accepted": [
                       "I wonder who said what? I don’t know any more!",
                       "I wonder who said what? I don’t know any more",
@@ -1626,7 +1626,7 @@
                   "payload": {
                     "say": "Xezo, tu wergêreke baş î, lê niha bixwe!",
                     "voice": "hamo",
-                    "prompt": "Hamo pushes a plate towards her. What does he say?",
+                    "prompt": "Hamo pushes a plate towards her. What does he say? “Xezo, tu wergêreke baş î, lê niha bixwe!”",
                     "options": [
                       "Xezo, you are a good translator, but now eat!",
                       "Xezo, you are a good cook, so make the food!",
@@ -1768,7 +1768,7 @@
                   "payload": {
                     "say": "Dengê wî hemû malê tije dike.",
                     "voice": "hamo",
-                    "prompt": "The old man begins to sing. What does Hamo say?",
+                    "prompt": "The old man begins to sing. What does Hamo say? “Dengê wî hemû malê tije dike.”",
                     "options": [
                       "His voice fills the whole house.",
                       "His voice is very quiet.",
@@ -1782,7 +1782,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Keça wî jî stranbêj e, û pir dengxweş e.",
-                    "prompt": "Then his daughter joins in. What does Xezal whisper?",
+                    "prompt": "Then his daughter joins in. What does Xezal whisper? “Keça wî jî stranbêj e, û pir dengxweş e.”",
                     "accepted": [
                       "His daughter is a singer too, and she has a lovely voice.",
                       "His daughter is a singer too, and she has a lovely voice",
@@ -1848,7 +1848,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Tembûra wî ji dara gûzê ye.",
-                    "prompt": "Baran wants to touch the instrument. Hamo tells him about it. What does he say?",
+                    "prompt": "Baran wants to touch the instrument. Hamo tells him about it. What does he say? “Tembûra wî ji dara gûzê ye.”",
                     "accepted": [
                       "His tembûr is made of walnut wood.",
                       "His tembûr is made of walnut wood",
@@ -1912,7 +1912,7 @@
                   "payload": {
                     "say": "Bavê min bilûr lêdixist, û wî stran digot.",
                     "voice": "hamo",
-                    "prompt": "Hamo remembers his father. What does he say?",
+                    "prompt": "Hamo remembers his father. What does he say? “Bavê min bilûr lêdixist, û wî stran digot.”",
                     "options": [
                       "My father played the flute, and he sang.",
                       "My father sold flutes, and he danced.",
@@ -1927,7 +1927,7 @@
                   "payload": {
                     "say": "Dengbêj dibêje ku stranek li ser bilûra bavê min heye.",
                     "voice": "hamo",
-                    "prompt": "Before they all go to sleep, Hamo tells you something. What?",
+                    "prompt": "Before they all go to sleep, Hamo tells you something. What? “Dengbêj dibêje ku stranek li ser bilûra bavê min heye.”",
                     "options": [
                       "The dengbêj says there is a song about my father’s flute.",
                       "The dengbêj says he has my father’s flute.",
@@ -1950,7 +1950,7 @@
                   "payload": {
                     "say": "Sibehê mêvan çûn, lê stranek ma.",
                     "voice": "hamo",
-                    "prompt": "The next morning. What has happened?",
+                    "prompt": "The next morning. What has happened? “Sibehê mêvan çûn, lê stranek ma.”",
                     "options": [
                       "In the morning the guests had gone, but a song stayed behind.",
                       "In the morning the guests were still asleep.",
@@ -2074,7 +2074,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Min stran bi telefonê tomar kir.",
-                    "prompt": "Xezal holds up her phone. What does she tell you?",
+                    "prompt": "Xezal holds up her phone. What does she tell you? “Min stran bi telefonê tomar kir.”",
                     "accepted": [
                       "I recorded the song on the phone.",
                       "I recorded the song on the phone",
@@ -2140,7 +2140,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Dapîr vê strana kevneşopî ji zarokatiya xwe bi bîr tîne.",
-                    "prompt": "Dapîr closes her eyes while the recording plays. What does Hamo tell you?",
+                    "prompt": "Dapîr closes her eyes while the recording plays. What does Hamo tell you? “Dapîr vê strana kevneşopî ji zarokatiya xwe bi bîr tîne.”",
                     "accepted": [
                       "Grandma remembers this traditional song from her childhood.",
                       "Grandma remembers this traditional song from her childhood",
@@ -2179,7 +2179,7 @@
                   "payload": {
                     "say": "Keça kal got ku ew ê Newrozê dîsa bên.",
                     "voice": "xezo",
-                    "prompt": "Xezal remembers what the old man’s daughter said at the door. What was it?",
+                    "prompt": "Xezal remembers what the old man’s daughter said at the door. What was it? “Keça kal got ku ew ê Newrozê dîsa bên.”",
                     "options": [
                       "The old man’s daughter said that they would come again at Newroz.",
                       "The old man’s daughter said that they would never come back.",
@@ -2206,7 +2206,7 @@
                   "payload": {
                     "say": "Keçikek ji kon derdikeve, û heyv jî guhdarî dike.",
                     "voice": "hamo",
-                    "prompt": "The next line of the kilam. What does it mean?",
+                    "prompt": "The next line of the kilam. What does it mean? “Keçikek ji kon derdikeve, û heyv jî guhdarî dike.”",
                     "options": [
                       "A girl comes out of the tent, and the moon is listening too.",
                       "A girl goes into the tent, and the moon goes down.",
@@ -2221,7 +2221,7 @@
                   "payload": {
                     "say": "Ev keçik tu yî, dapîr?",
                     "voice": "xezo",
-                    "prompt": "Xezal looks at her grandmother, and Dapîr smiles. What did Xezal ask?",
+                    "prompt": "Xezal looks at her grandmother, and Dapîr smiles. What did Xezal ask? “Ev keçik tu yî, dapîr?”",
                     "options": [
                       "Is this girl you, Grandma?",
                       "Is this girl Hêvî, Grandma?",
@@ -2252,7 +2252,7 @@
                   "payload": {
                     "say": "Şeva duyem: çîroka rovî û hirçê.",
                     "voice": "hamo",
-                    "prompt": "The next night, by the stove again. What is tonight’s tale?",
+                    "prompt": "The next night, by the stove again. What is tonight’s tale? “Şeva duyem: çîroka rovî û hirçê.”",
                     "options": [
                       "The second night: the tale of the fox and the bear.",
                       "The second night: the tale of the wolf and the kids.",
@@ -2267,7 +2267,7 @@
                   "payload": {
                     "say": "Rovî û hirç hevalên hev bûn, û zeviyeke wan a hevpar hebû.",
                     "voice": "hamo",
-                    "prompt": "How does it begin?",
+                    "prompt": "How does it begin? “Rovî û hirç hevalên hev bûn, û zeviyeke wan a hevpar hebû.”",
                     "options": [
                       "The fox and the bear were friends, and they had a field together.",
                       "The fox and the bear were enemies, and each had a field.",
@@ -2314,7 +2314,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Rovî got: “Em ê berhemê bi dadî parve bikin.”",
-                    "prompt": "The fox makes the bear a promise. What is it?",
+                    "prompt": "The fox makes the bear a promise. What is it? «Rovî got: “Em ê berhemê bi dadî parve bikin.”»",
                     "accepted": [
                       "The fox said: “We will share the harvest fairly.”",
                       "The fox said: “We’ll share the harvest fairly.”",
@@ -2329,7 +2329,7 @@
                   "payload": {
                     "say": "Tu kîjan dixwazî: yên li ser erdê, an yên di bin erdê de?",
                     "voice": "hamo",
-                    "prompt": "Then the fox asks a question, in a very sweet voice. What is it?",
+                    "prompt": "Then the fox asks a question, in a very sweet voice. What is it? “Tu kîjan dixwazî: yên li ser erdê, an yên di bin erdê de?”",
                     "options": [
                       "Which do you want: the ones above the ground, or the ones under the ground?",
                       "Do you want to plant above the ground or under it?",
@@ -2430,7 +2430,7 @@
                   "payload": {
                     "say": "Pel tal û bêtam bûn.",
                     "voice": "hamo",
-                    "prompt": "What did the bear think of his harvest?",
+                    "prompt": "What did the bear think of his harvest? “Pel tal û bêtam bûn.”",
                     "options": [
                       "The leaves were bitter and tasteless.",
                       "The leaves were sweet and tasty.",
@@ -2456,7 +2456,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Vê carê simbil li ser bûn, û ji hirçê re tenê rehên bêtam man.",
-                    "prompt": "And the second year? What happened?",
+                    "prompt": "And the second year? What happened? “Vê carê simbil li ser bûn, û ji hirçê re tenê rehên bêtam man.”",
                     "accepted": [
                       "This time the ears of wheat were on top, and only tasteless roots were left for the bear.",
                       "This time the ears of wheat were on top, and only tasteless roots were left for the bear",
@@ -2541,7 +2541,7 @@
                   "payload": {
                     "say": "Dapîr dibêje: “Zimanê şîrîn mar ji qulê derdixe.”",
                     "voice": "hamo",
-                    "prompt": "Dapîr answers the fox’s tale with a proverb. Hamo says it again for you. What does it mean?",
+                    "prompt": "Dapîr answers the fox’s tale with a proverb. Hamo says it again for you. What does it mean? «Dapîr dibêje: “Zimanê şîrîn mar ji qulê derdixe.”»",
                     "options": [
                       "Grandma says: “A sweet tongue brings the snake out of its hole.”",
                       "Grandma says: “A snake has a sweet tongue.”",
@@ -2588,7 +2588,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Mêvan mêvanê Xwedê ye.",
-                    "prompt": "Hamo remembers last night’s guests, and Dapîr nods. What does she say?",
+                    "prompt": "Hamo remembers last night’s guests, and Dapîr nods. What does she say? “Mêvan mêvanê Xwedê ye.”",
                     "accepted": [
                       "The guest is God’s guest.",
                       "The guest is God’s guest",
@@ -2654,7 +2654,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Çiya çiqas bilind be jî, rê di ser re heye.",
-                    "prompt": "Dapîr looks at Xezal when she says this one. What does it mean?",
+                    "prompt": "Dapîr looks at Xezal when she says this one. What does it mean? “Çiya çiqas bilind be jî, rê di ser re heye.”",
                     "accepted": [
                       "However high the mountain, there is a way over it.",
                       "However high the mountain, there is a way over it",
@@ -2672,7 +2672,7 @@
                   "payload": {
                     "say": "Ev ji bo Xezalê ye: Hewlêr çiqas dûr be jî, rê heye.",
                     "voice": "hamo",
-                    "prompt": "Hamo turns the proverb into one for his niece. What does he say?",
+                    "prompt": "Hamo turns the proverb into one for his niece. What does he say? “Ev ji bo Xezalê ye: Hewlêr çiqas dûr be jî, rê heye.”",
                     "options": [
                       "This one is for Xezal: however far Hewlêr is, there is a road.",
                       "This one is for Xezal: Hewlêr is too far, there is no road.",
@@ -2720,7 +2720,7 @@
                   "payload": {
                     "say": "Gotinên pêşiyan ji ku tên, dapîr?",
                     "voice": "xezo",
-                    "prompt": "Xezal asks her grandmother a question. What is it?",
+                    "prompt": "Xezal asks her grandmother a question. What is it? “Gotinên pêşiyan ji ku tên, dapîr?”",
                     "options": [
                       "Where do proverbs come from, Grandma?",
                       "How many proverbs do you know, Grandma?",
@@ -2735,7 +2735,7 @@
                   "payload": {
                     "say": "Dapîr dibêje: “Ji bav û kalan.”",
                     "voice": "hamo",
-                    "prompt": "What is Dapîr’s answer?",
+                    "prompt": "What is Dapîr’s answer? «Dapîr dibêje: “Ji bav û kalan.”»",
                     "options": [
                       "Grandma says: “From our forefathers.”",
                       "Grandma says: “From the market.”",
@@ -2749,7 +2749,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Şev dirêj e, û kes ranaze.",
-                    "prompt": "Tale, proverb, tale, proverb… What time is it now?",
+                    "prompt": "Tale, proverb, tale, proverb… What time is it now? “Şev dirêj e, û kes ranaze.”",
                     "accepted": [
                       "The night is long, and nobody goes to bed.",
                       "The night is long, and nobody goes to bed",
@@ -2894,7 +2894,7 @@
                   "payload": {
                     "say": "Ev pêşbirk bêdawî ye!",
                     "voice": "xezo",
-                    "prompt": "Xezal throws up her hands. What does she say?",
+                    "prompt": "Xezal throws up her hands. What does she say? “Ev pêşbirk bêdawî ye!”",
                     "options": [
                       "This contest is endless!",
                       "This contest is over!",
@@ -2908,7 +2908,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Dapîr jineke zana ye; ew her gav gotina dawî dibêje.",
-                    "prompt": "Hamo explains why his mother always wins. What does he say?",
+                    "prompt": "Hamo explains why his mother always wins. What does he say? “Dapîr jineke zana ye; ew her gav gotina dawî dibêje.”",
                     "accepted": [
                       "Grandma is a wise woman; she always has the last word.",
                       "Grandma is a wise woman; she always has the last word",
@@ -2976,7 +2976,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Pirsgirêka Xezalê ev e: Dapîr her gav bi ser dikeve.",
-                    "prompt": "Hamo sums up the contest. What does he say?",
+                    "prompt": "Hamo sums up the contest. What does he say? “Pirsgirêka Xezalê ev e: Dapîr her gav bi ser dikeve.”",
                     "accepted": [
                       "Xezal’s problem is this: Grandma always wins.",
                       "Xezal’s problem is this: Grandma always wins",
@@ -3003,7 +3003,7 @@
                   "payload": {
                     "say": "Çareseriya min: ez ê gotinên nû fêr bibim!",
                     "voice": "xezo",
-                    "prompt": "Xezal is not giving up. What does she say?",
+                    "prompt": "Xezal is not giving up. What does she say? “Çareseriya min: ez ê gotinên nû fêr bibim!”",
                     "options": [
                       "My solution: I will learn new sayings!",
                       "My solution: I will stop playing!",
@@ -3057,7 +3057,7 @@
                   "payload": {
                     "say": "Dapîr ji nişka ve dibêje: “Malika dawî! Ez dizanim ew li ku ye!”",
                     "voice": "hamo",
-                    "prompt": "Then, in the middle of the laughter, Dapîr sits up. Hamo tells you what she said. What was it?",
+                    "prompt": "Then, in the middle of the laughter, Dapîr sits up. Hamo tells you what she said. What was it? «Dapîr ji nişka ve dibêje: “Malika dawî! Ez dizanim ew li ku ye!”»",
                     "options": [
                       "Grandma suddenly says: “The last verse! I know where it is!”",
                       "Grandma suddenly says: “The last apple! I know who ate it!”",
@@ -3080,7 +3080,7 @@
                   "payload": {
                     "say": "Dapîr dibêje: “Li pişta nameya Newrozê binêrin!”",
                     "voice": "hamo",
-                    "prompt": "Dapîr remembers. What does she tell them?",
+                    "prompt": "Dapîr remembers. What does she tell them? «Dapîr dibêje: “Li pişta nameya Newrozê binêrin!”»",
                     "options": [
                       "Grandma says: “Look on the back of the Newroz note!”",
                       "Grandma says: “Look under the Newroz stone!”",
@@ -3214,7 +3214,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev tîpên bavê min in.",
-                    "prompt": "Hamo’s finger follows the faded letters. What does he say?",
+                    "prompt": "Hamo’s finger follows the faded letters. What does he say? “Ev tîpên bavê min in.”",
                     "accepted": [
                       "This is my father’s handwriting.",
                       "This is my father’s handwriting",
@@ -3256,7 +3256,7 @@
                   "payload": {
                     "say": "Dar mezin dibe, stran dimîne.",
                     "voice": "hamo",
-                    "prompt": "The verse ends with a line nobody in the room will forget. What does it mean?",
+                    "prompt": "The verse ends with a line nobody in the room will forget. What does it mean? “Dar mezin dibe, stran dimîne.”",
                     "options": [
                       "The tree grows, the song remains.",
                       "The tree is old, the song is new.",
@@ -3295,7 +3295,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev ne çîroka dêw û mîran e; ev çîroka bav û kalên me ye.",
-                    "prompt": "Hamo puts the note down on his knee. What does he say?",
+                    "prompt": "Hamo puts the note down on his knee. What does he say? “Ev ne çîroka dêw û mîran e; ev çîroka bav û kalên me ye.”",
                     "accepted": [
                       "This isn’t a tale of giants and princes; this is the story of our forefathers.",
                       "This isn’t a tale of giants and princes; this is the story of our forefathers",
@@ -3313,7 +3313,7 @@
                   "payload": {
                     "say": "Di çîrokan de dêw û mîr hene; di jiyanê de bapîr û dapîr hene.",
                     "voice": "hamo",
-                    "prompt": "Baran asks if this is a fairy tale. What does Hamo answer?",
+                    "prompt": "Baran asks if this is a fairy tale. What does Hamo answer? “Di çîrokan de dêw û mîr hene; di jiyanê de bapîr û dapîr hene.”",
                     "options": [
                       "In tales there are giants and princes; in life there are grandfathers and grandmothers.",
                       "In tales there are kings; in life there are none.",
@@ -3363,7 +3363,7 @@
                   "payload": {
                     "say": "Îro stran bêkêmasî ye.",
                     "voice": "hamo",
-                    "prompt": "Dapîr hums the whole song, all the way to the end. What does Hamo say?",
+                    "prompt": "Dapîr hums the whole song, all the way to the end. What does Hamo say? “Îro stran bêkêmasî ye.”",
                     "options": [
                       "Today the song is complete.",
                       "Today the song is lost.",
@@ -3378,7 +3378,7 @@
                   "payload": {
                     "say": "Û xalo… ez dizanim ez ê çi biçînim.",
                     "voice": "xezo",
-                    "prompt": "Xezal has gone very quiet. Then she says something. What?",
+                    "prompt": "Xezal has gone very quiet. Then she says something. What? “Û xalo… ez dizanim ez ê çi biçînim.”",
                     "options": [
                       "And uncle… I know what I am going to plant.",
                       "And uncle… I don’t know what to sing.",
@@ -3395,7 +3395,7 @@
           "position": 4,
           "titleKu": "Rêya te vekirî be!",
           "titleEn": "May your road be open!",
-          "grammarMd": "A farewell uses every tense you know:\n\n- the past: *Tu salekê li vir mayî û tu bûyî endamê malbatê.* You stayed here a year and became one of the family.\n- the present perfect: *Tu gelek tiştan fêr bûyî.* You have learned a lot.\n- the future: *Em ê bêriya te bikin.* We will miss you.\n- the subjunctive and wishes: *Rêya te vekirî be!* May your road be open! · *Xwedê ji te razî be!* God be pleased with you (thank you)! · *Bi silametî biçî û werî!* Go and come back safely!\n\nAnd the answer to a goodbye: *Bi xatirê we!* — *Oxir be!* Good luck!\n\nHeta dîtinê — until we meet again.",
+          "grammarMd": "A farewell uses every tense you know:\n\n- the past: *Tu salekê li vir mayî û tu bûyî endamê malbatê.* You stayed here a year and became one of the family.\n- the present perfect: *Xezalê şitilek çandiye.* Xezal has planted a sapling (the past would be *Xezalê şitilek çand*).\n- the future: *Em ê bêriya te bikin.* We will miss you.\n- the subjunctive and wishes: *Rêya te vekirî be!* May your road be open! · *Xwedê ji te razî be!* God be pleased with you (thank you)! · *Bi silametî biçî û werî!* Go and come back safely!\n\nAnd the answer to a goodbye: *Bi xatirê we!* — *Oxir be!* Good luck!\n\nHeta dîtinê — until we meet again.",
           "lessons": [
             {
               "key": "u12s4l1",
@@ -3409,7 +3409,7 @@
                   "payload": {
                     "say": "Bihar hat, û li meydanê şahiyeke mezin heye.",
                     "voice": "hamo",
-                    "prompt": "Spring again in Sêvan. What is happening in the square?",
+                    "prompt": "Spring again in Sêvan. What is happening in the square? “Bihar hat, û li meydanê şahiyeke mezin heye.”",
                     "options": [
                       "Spring has come, and there is a big celebration in the square.",
                       "Spring has come, and there is a market in the square.",
@@ -3424,7 +3424,7 @@
                   "payload": {
                     "say": "Dengê daholê û zirneyê tê, û jin tilîlî dikin.",
                     "voice": "hamo",
-                    "prompt": "What can you hear?",
+                    "prompt": "What can you hear? “Dengê daholê û zirneyê tê, û jin tilîlî dikin.”",
                     "options": [
                       "You can hear the big drum and the zurna, and the women are ululating.",
                       "You can hear the rain on the roofs, and the hens.",
@@ -3471,7 +3471,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ev şahiya xatirxwestinê ye, ji bo Xezalê.",
-                    "prompt": "Hamo tells you what the party is for. What does he say?",
+                    "prompt": "Hamo tells you what the party is for. What does he say? “Ev şahiya xatirxwestinê ye, ji bo Xezalê.”",
                     "accepted": [
                       "This is the farewell celebration, for Xezal.",
                       "This is the farewell celebration, for Xezal",
@@ -3525,7 +3525,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hamo serçopî ye, û her kes li pey wî ye.",
-                    "prompt": "Who is at the head of the line?",
+                    "prompt": "Who is at the head of the line? “Hamo serçopî ye, û her kes li pey wî ye.”",
                     "accepted": [
                       "Hamo leads the govend, and everyone is behind him.",
                       "Hamo leads the govend, and everyone is behind him",
@@ -3564,7 +3564,7 @@
                   "payload": {
                     "say": "Dibêjin ku Bozo jî direqise!",
                     "voice": "xezo",
-                    "prompt": "Xezal shouts something in your ear. What is it?",
+                    "prompt": "Xezal shouts something in your ear. What is it? “Dibêjin ku Bozo jî direqise!”",
                     "options": [
                       "They say Bozo is dancing too!",
                       "They say Bozo has run away again!",
@@ -3616,7 +3616,7 @@
                   "payload": {
                     "say": "Daholê bi hêz lêdixin, û dilê Hamo jî bi wê re lêdide.",
                     "voice": "xezo",
-                    "prompt": "Hamo’s face is red and shining. What does Xezal say about him?",
+                    "prompt": "Hamo’s face is red and shining. What does Xezal say about him? “Daholê bi hêz lêdixin, û dilê Hamo jî bi wê re lêdide.”",
                     "options": [
                       "They beat the drum hard, and Hamo’s heart beats with it.",
                       "The drum is too loud, and Hamo is tired.",
@@ -3631,7 +3631,7 @@
                   "payload": {
                     "say": "Kêfxweşî di dilê min de ye… lê sibe ez diçim.",
                     "voice": "xezo",
-                    "prompt": "Late at night Xezal sits down beside you. What does she say?",
+                    "prompt": "Late at night Xezal sits down beside you. What does she say? “Kêfxweşî di dilê min de ye… lê sibe ez diçim.”",
                     "options": [
                       "Happiness is in my heart… but tomorrow I am leaving.",
                       "Happiness is in my heart… and tomorrow I am staying.",
@@ -3654,7 +3654,7 @@
                   "payload": {
                     "say": "Ez ji we hemûyan minetdar im.",
                     "voice": "xezo",
-                    "prompt": "The last evening. Xezal stands up in front of the whole family. How does she begin?",
+                    "prompt": "The last evening. Xezal stands up in front of the whole family. How does she begin? “Ez ji we hemûyan minetdar im.”",
                     "options": [
                       "I am grateful to you all.",
                       "I am angry with you all.",
@@ -3701,7 +3701,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez minetdar im: spas ji bo her çîrokê, ji bo her qedeha çayê.",
-                    "prompt": "What is she grateful for?",
+                    "prompt": "What is she grateful for? “Ez minetdar im: spas ji bo her çîrokê, ji bo her qedeha çayê.”",
                     "accepted": [
                       "I am grateful: thank you for every tale, for every glass of tea.",
                       "I am grateful: thank you for every tale, for every glass of tea",
@@ -3769,7 +3769,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Baran, ez ê li benda gotara te ya din bim.",
-                    "prompt": "Then to Baran. What does she say?",
+                    "prompt": "Then to Baran. What does she say? “Baran, ez ê li benda gotara te ya din bim.”",
                     "accepted": [
                       "Baran, I will be waiting for your next talk.",
                       "Baran, I will be waiting for your next talk",
@@ -3787,7 +3787,7 @@
                   "payload": {
                     "say": "Hêvî, pisîka spî? Belkî Newroza bê!",
                     "voice": "xezo",
-                    "prompt": "And Hêvî holds up a drawing of a white cat. What does Xezal say?",
+                    "prompt": "And Hêvî holds up a drawing of a white cat. What does Xezal say? “Hêvî, pisîka spî? Belkî Newroza bê!”",
                     "options": [
                       "Hêvî, the white cat? Maybe next Newroz!",
                       "Hêvî, the white goat? Maybe tomorrow!",
@@ -3835,7 +3835,7 @@
                   "payload": {
                     "say": "Bes e, Xezo. Ez dizanim. Heta dîtinê, ne bi xatirê te.",
                     "voice": "hamo",
-                    "prompt": "She cannot finish. Hamo finishes for her. What does he say?",
+                    "prompt": "She cannot finish. Hamo finishes for her. What does he say? “Bes e, Xezo. Ez dizanim. Heta dîtinê, ne bi xatirê te.”",
                     "options": [
                       "Enough, Xezo. I know. It is “see you”, not “goodbye”.",
                       "Enough, Xezo. Go to bed. It is late.",
@@ -3849,7 +3849,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Hevaltî û hezkirin ji dûriyê bihêztir in.",
-                    "prompt": "Hamo says one more thing, to everyone. What is it?",
+                    "prompt": "Hamo says one more thing, to everyone. What is it? “Hevaltî û hezkirin ji dûriyê bihêztir in.”",
                     "accepted": [
                       "Friendship and love are stronger than distance.",
                       "Friendship and love are stronger than distance",
@@ -4007,7 +4007,7 @@
                   "payload": {
                     "say": "Rêya te vekirî be, Xezo.",
                     "voice": "hamo",
-                    "prompt": "At the blue gate Hamo holds his niece’s hands. What does he say?",
+                    "prompt": "At the blue gate Hamo holds his niece’s hands. What does he say? “Rêya te vekirî be, Xezo.”",
                     "options": [
                       "May your road be open, Xezo.",
                       "The road is closed, Xezo.",
@@ -4021,7 +4021,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Xalo, simbêlê xwe biparêze!",
-                    "prompt": "Xezal’s last words to her uncle make him laugh. What are they?",
+                    "prompt": "Xezal’s last words to her uncle make him laugh. What are they? “Xalo, simbêlê xwe biparêze!”",
                     "accepted": [
                       "Uncle, take care of your moustache!",
                       "Uncle, take care of your moustache",
@@ -4089,7 +4089,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Li vir, li ber vî dergehî, rêya te jî dest pê kir.",
-                    "prompt": "Hamo turns to you. What does he say?",
+                    "prompt": "Hamo turns to you. What does he say? “Li vir, li ber vî dergehî, rêya te jî dest pê kir.”",
                     "accepted": [
                       "Here, at this gate, your road began too.",
                       "Here, at this gate, your road began too",
@@ -4220,7 +4220,7 @@
                   "payload": {
                     "say": "Kartek ji Hewlêrê hatiye!",
                     "voice": "hamo",
-                    "prompt": "A week later Baran runs up the lane waving something. What is it?",
+                    "prompt": "A week later Baran runs up the lane waving something. What is it? “Kartek ji Hewlêrê hatiye!”",
                     "options": [
                       "A card has come from Hewlêr!",
                       "A parcel has come from Amed!",
@@ -4235,7 +4235,7 @@
                   "payload": {
                     "say": "Hamo kartê bi serbilindî dixwîne.",
                     "voice": "hamo",
-                    "prompt": "Everyone gathers round. What does Hamo do?",
+                    "prompt": "Everyone gathers round. What does Hamo do? “Hamo kartê bi serbilindî dixwîne.”",
                     "options": [
                       "Hamo reads the card proudly.",
                       "Hamo hides the card in his pocket.",
@@ -4294,7 +4294,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ez fêrî bajêr bûme, lê ez hê bêriya sobeya me dikim.",
-                    "prompt": "The card goes on. What does Xezal write?",
+                    "prompt": "The card goes on. What does Xezal write? “Ez fêrî bajêr bûme, lê ez hê bêriya sobeya me dikim.”",
                     "accepted": [
                       "I have got used to the city, but I still miss our stove.",
                       "I have got used to the city, but I still miss our stove",
@@ -4311,7 +4311,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Zarok her roj bi kurdî stranan dibêjin; ev çanda me ye.",
-                    "prompt": "And her pupils? What does she write about them?",
+                    "prompt": "And her pupils? What does she write about them? “Zarok her roj bi kurdî stranan dibêjin; ev çanda me ye.”",
                     "accepted": [
                       "Every day the children sing songs in Kurdish; this is our culture.",
                       "Every day the children sing songs in Kurdish; this is our culture",
@@ -4329,7 +4329,7 @@
                   "payload": {
                     "say": "Li bin dara sêvê ya kevn binêre: min ji bo Hevalo şitilek çandiye.",
                     "voice": "hamo",
-                    "prompt": "The card ends with a surprise. What is it?",
+                    "prompt": "The card ends with a surprise. What is it? “Li bin dara sêvê ya kevn binêre: min ji bo Hevalo şitilek çandiye.”",
                     "options": [
                       "Look under the old apple tree: I have planted a sapling for Hevalo.",
                       "Look under the old apple tree: I have hidden an apple for Hevalo.",
@@ -4461,7 +4461,7 @@
                   "type": "translate",
                   "payload": {
                     "say": "Ziman dilê çandê ye.",
-                    "prompt": "Hamo pins the card on the wall, next to Baran’s certificate. What does he say?",
+                    "prompt": "Hamo pins the card on the wall, next to Baran’s certificate. What does he say? “Ziman dilê çandê ye.”",
                     "accepted": [
                       "Language is the heart of culture.",
                       "Language is the heart of culture",
@@ -4513,7 +4513,7 @@
                   "payload": {
                     "say": "Ev dawiya vê rêyê ye, û destpêka rêya te. Tu êdî ji me yî. Rêya te vekirî be!",
                     "voice": "hamo",
-                    "prompt": "Hamo lifts the near end of his moustache, the way he does when he is pleased with you. What does he say?",
+                    "prompt": "Hamo lifts the near end of his moustache, the way he does when he is pleased with you. What does he say? “Ev dawiya vê rêyê ye, û destpêka rêya te. Tu êdî ji me yî. Rêya te vekirî be!”",
                     "options": [
                       "This is the end of this road, and the beginning of yours. You are one of us now. Safe journey!",
                       "This is the end of the road. Goodbye for ever, my friend!",
