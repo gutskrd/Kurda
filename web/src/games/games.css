@@ -540,3 +540,19 @@
     transform: none;
   }
 }
+
+/* The Last Letter's card: the chain sits on no ruled line, and each link is the lit letter one word passes to the next */
+.lg-mini--chain .lg-mini-line {
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.lg-mini-link {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--u-fill, var(--border-strong));
+}

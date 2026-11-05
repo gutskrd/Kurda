@@ -3,6 +3,7 @@ import { listedLearnGames, type GameDialect, type GamesAvailability, type LearnG
 import { useAuth } from '../auth/AuthContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useCourseDialect } from '../learn/courseDialect';
+import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '../lastletter/learnCard';
 
 /**
  * The learning games on the phone: which of the shared registry's games this
@@ -16,7 +17,7 @@ import { useCourseDialect } from '../learn/courseDialect';
  */
 
 /** The screens the learning games open on (root stack routes). */
-export type LearnGameRoute = 'BuildSentence';
+export type LearnGameRoute = 'BuildSentence' | 'LastLetter';
 
 export interface PhoneGame {
   route: LearnGameRoute;
@@ -27,6 +28,7 @@ export interface PhoneGame {
 
 export const PHONE_LEARN_GAMES: Partial<Record<LearnGameId, PhoneGame>> = {
   'build-sentence': { route: 'BuildSentence', name: 'games.sentence.name', line: 'games.card.sentence' },
+  'last-letter': { route: LAST_LETTER_CARD.route, name: LAST_LETTER_CARD.nameKey, line: LAST_LETTER_CARD.lineKey },
 };
 
 const PLAYABLE = Object.keys(PHONE_LEARN_GAMES) as LearnGameId[];
@@ -50,5 +52,10 @@ export function useAvailability(dialect: GameDialect): GamesAvailability | null 
 /** The learning games to list for this learner now, in the learner's own Kurdish. */
 export function useListedLearnGames(): LearnGame[] {
   const dialect = useCourseDialect();
-  return listedLearnGames(useAvailability(dialect), PLAYABLE);
+  const availability = useAvailability(dialect);
+  // The Last Letter is offered where its dictionary can check words (its own answer, from the multiplayer games' API)
+  const chain = useLastLetterAvailability();
+  const offered = [...offeredDialects(chain, 'group'), ...offeredDialects(chain, 'solo')].includes(dialect);
+  const merged = availability && { ...availability, games: [...(availability.games ?? []).filter((g) => g.id !== 'last-letter'), { id: 'last-letter', available: offered }] };
+  return listedLearnGames(merged, PLAYABLE);
 }

@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { SentenceItemView, SentenceLadderView, SoloSessionView } from '@kurda/shared';
+import { LAST_LETTER_LEARN_ENTRY, type SentenceItemView, type SentenceLadderView, type SoloSessionView } from '@kurda/shared';
 import { BuildSentence, difficultyForStep } from './BuildSentence';
 import { Games } from '../pages/Games';
+import { forgetLastLetterAvailability } from '../lastletter/availability';
 import { jsonResponse, renderApp } from '../test/utils';
 
 afterEach(() => {
@@ -55,7 +56,7 @@ interface Answer {
 }
 
 /** A server for one round: the answers it is sent are recorded, and answered from `grade`. */
-function server(round: SoloSessionView<SentenceItemView>, grade: (a: Answer) => unknown, results: unknown, availability = true) {
+function server(round: SoloSessionView<SentenceItemView>, grade: (a: Answer) => unknown, results: unknown, availability = true, chain = false) {
   const sent: Answer[] = [];
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
@@ -64,6 +65,7 @@ function server(round: SoloSessionView<SentenceItemView>, grade: (a: Answer) => 
       if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'ada@example.com', emailVerified: true } });
       if (url.includes('/games/availability'))
         return jsonResponse(200, { dialect: round.dialect, games: [{ id: 'build-sentence', available: availability, difficulties: availability ? ['beginner'] : [], levels: {}, levelled: true, minimum: 30 }] });
+      if (url.includes('/mp/last-letter/availability')) return jsonResponse(200, { dialects: [{ dialect: 'kmr', group: chain, solo: false }] });
       if (url.includes('/games/build-sentence/ladder')) return jsonResponse(200, { ...ladder, dialect: round.dialect });
       if (url.endsWith('/games/solo/sessions')) return jsonResponse(201, round);
       if (url.includes('/answers')) {
@@ -202,5 +204,19 @@ describe('Learn’s games list', () => {
     await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/games/availability'))).toBe(true));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeNull();
+  });
+
+  it('lists The Last Letter where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
+    forgetLastLetterAvailability();
+    server(session('kmr', [['a']]), () => ({}), {}, true, true);
+    renderApp(<Games />, ['/app/games']);
+    const card = (await screen.findByRole('heading', { name: 'The Last Letter' })).closest('article')!;
+    expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', LAST_LETTER_LEARN_ENTRY.path);
+    cleanup();
+    forgetLastLetterAvailability();
+    server(session('kmr', [['a']]), () => ({}), {}, true, false);
+    renderApp(<Games />, ['/app/games']);
+    expect(await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'The Last Letter' })).toBeNull();
   });
 });

@@ -17,6 +17,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 import { GamesView } from '../learn/GamesView';
+import { forgetLastLetterAvailability } from '../lastletter/availability';
 import { BuildSentenceScreen, difficultyForStep } from './BuildSentenceScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -199,5 +200,27 @@ describe('the games list', () => {
     await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByTestId('game-build-sentence')).toBeNull();
+  });
+
+  it('lists The Last Letter where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
+    forgetLastLetterAvailability();
+    testAuth.client = fakeClient({
+      ...base,
+      'GET /games/availability?dialect=kmr': availability('kmr'),
+      'GET /mp/last-letter/availability': ok({ dialects: [{ dialect: 'kmr', group: true, solo: false }] }),
+    });
+    renderWithProviders(<GamesView />);
+    fireEvent.click(await screen.findByTestId('game-last-letter'));
+    expect(navigation.navigate).toHaveBeenCalledWith('LastLetter');
+    cleanup();
+    forgetLastLetterAvailability();
+    testAuth.client = fakeClient({
+      ...base,
+      'GET /games/availability?dialect=kmr': availability('kmr'),
+      'GET /mp/last-letter/availability': ok({ dialects: [{ dialect: 'kmr', group: false, solo: false }] }),
+    });
+    renderWithProviders(<GamesView />);
+    expect(await screen.findByTestId('game-build-sentence')).toBeTruthy();
+    expect(screen.queryByTestId('game-last-letter')).toBeNull();
   });
 });
