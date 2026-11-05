@@ -1938,6 +1938,15 @@ export const en = {
   'rankings.empty.globalBody': 'Once learners start earning points, the leaderboard will fill up here.',
   'rankings.unit.xp': 'XP',
   'rankings.youMarker': 'you',
+  'rankings.rankBy': 'Rank by',
+  'rankings.board.zer': 'Zêr',
+  'rankings.board.gewher': 'Gems',
+  'rankings.board.zerBlurb': 'The learners holding the most Zêr right now.',
+  'rankings.board.gewherBlurb': 'The learners holding the most gems right now.',
+  'rankings.topOnly': 'The top {count}, from most to least.',
+  'rankings.notInTop': 'Not in the top {count} yet.',
+  'rankings.empty.balanceGlobalBody': 'Once learners start collecting, the leaderboard will fill up here.',
+  'rankings.empty.balanceCountryBody': 'Nobody from your country is on this board yet.',
 
   // ---- comments, the daily reward, the library and the blocklist -----
   'comments.title': 'Comments',

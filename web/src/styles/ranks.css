@@ -1426,6 +1426,91 @@
     min-height: 44px;
   }
 }
+/*
+ * What the leaderboard ranks — Weekly XP, Zêr, Gewher — drawn as the tabs
+ * above it are, a size down, since it changes what the whole board is. Real
+ * radios under the segments (ui/BoardSwitch), stretched over each one, so the
+ * arrow keys move the choice and the whole segment is the target. Nothing in
+ * it moves: the chosen segment is simply drawn chosen.
+ */
+.rank-by {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+  min-width: 0;
+  margin: 0 0 12px;
+  padding: 3px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.rank-by-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+.rank-by-btn > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rank-by-btn.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+@media (hover: hover) {
+  .rank-by-btn:not(.is-active):hover {
+    color: var(--ink);
+  }
+}
+.rank-by-btn input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.rank-by-btn:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.rank-by-xp {
+  flex: none;
+  color: var(--gold-ink);
+}
+@media (pointer: coarse) {
+  .rank-by-btn {
+    min-height: 40px;
+  }
+}
+/* a Zêr or Gewher amount on a board: the currency's picture, then the number */
+.rank-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+/* your place on a board that stops before it reaches you, said under your row */
+.rank-standing-note {
+  margin: 6px 0 0;
+  padding-inline: 12px;
+  font-size: 0.85rem;
+}
 .rankings-blurb {
   margin: 0 0 14px;
 }

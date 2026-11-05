@@ -148,6 +148,21 @@ describe('the catalogues', () => {
       }
     });
   });
+  /**
+   * The leaderboards rank Zêr and Gewher by the names the purse and the shop
+   * already give them in each language; a board that called the gem something
+   * else would read as a third currency.
+   */
+  it('name the currencies on the leaderboards as the shop does', () => {
+    for (const [code, catalogue] of Object.entries({ en, ...CATALOGUES })) {
+      expect(catalogue['rankings.board.gewher'], code).toBe(catalogue['shop.gems']);
+      expect(catalogue['rankings.board.zer'], code).toBe('Zêr');
+      expect(catalogue['rankings.board.zerBlurb'], code).toContain('Zêr');
+    }
+    expect(ku['rankings.board.gewher']).toBe('Gewher');
+    expect(ckb['rankings.board.gewher']).toBe('گەوهەر');
+  });
+
   it('offer a native name for every language on the list', () => {
     for (const l of APP_LOCALES) {
       expect(l.nativeName.length, l.code).toBeGreaterThan(0);
