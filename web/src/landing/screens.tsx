@@ -158,7 +158,7 @@ export function PathScreen(): React.JSX.Element {
           </span>
         ))}
         <span className="ps-mascot">
-          <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={112} decorative />
+          <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={112} decorative still />
         </span>
       </span>
       <TabBar />

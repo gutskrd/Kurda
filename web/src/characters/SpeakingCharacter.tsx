@@ -234,6 +234,13 @@ export interface SpeakingCharacterProps {
   /** never speaks, whatever the element plays: it listens while another character says its line */
   quiet?: boolean;
   /**
+   * Holds still between words, as it does for a reader who asked for less
+   * motion: no breath, drift, glances or habits. For a drawing set inside a
+   * turned 3D phone, where a browser draws moving content at a lower
+   * resolution and the deer would show its pixels.
+   */
+  still?: boolean;
+  /**
    * a click or a tap on the character: it greets you, and then this (say it again, usually). Quick ones in a row get more: the
    * second a giggle, the third a start and a laugh (shared `tapActs`)
    */
@@ -282,6 +289,7 @@ export function SpeakingCharacter({
   gaze = null,
   mirrored = false,
   quiet = false,
+  still = false,
   onPress,
   className,
 }: SpeakingCharacterProps): React.JSX.Element {
@@ -328,7 +336,7 @@ export function SpeakingCharacter({
     const steady: CharacterPoint | null = gazeX === null || gazeY === null ? null : { x: gazeX, y: gazeY };
     const lean = steady ? leanToward(steady) : 0;
 
-    const reduced = { now: prefersReducedMotion() };
+    const reduced = { now: still || prefersReducedMotion() };
     const query = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
 
     // ---- what an act holds, over what speech and the blinks say ----
@@ -624,7 +632,7 @@ export function SpeakingCharacter({
     };
 
     const onMotion = (): void => {
-      reduced.now = query?.matches === true;
+      reduced.now = still || query?.matches === true;
       alive();
       startHabits();
     };
@@ -702,7 +710,7 @@ export function SpeakingCharacter({
       query?.removeEventListener?.('change', onMotion);
       play.current = () => undefined;
     };
-  }, [markup, art, frame, crop, src, text, voice, decorative, resting, quiet, gazeX, gazeY, speaker]);
+  }, [markup, art, frame, crop, src, text, voice, decorative, resting, quiet, still, gazeX, gazeY, speaker]);
 
   // a reaction plays when it is given, and each time it changes, as this character plays it; the deer pricks up his ears on arriving
   const arrived = useRef(false);

@@ -9,6 +9,12 @@
  * the band shows on the side turned away and the glass catches the light on
  * the side turned toward it.
  *
+ * Where the browser can draw it, a modelled body (phoneGl.ts) replaces the
+ * slabs: a canvas behind the stack, posed by script in step with the screen.
+ * `.is-modelled` hands the body over to it: the slabs, the buttons and the
+ * CSS rim step aside, the CSS float and the turn's transition stop (the
+ * script poses both now), and only the screen is left in the HTML.
+ *
  * The screens use the app's own tokens, so the phone shows the app in the
  * theme the page is in, and the path's unit colours are the ones both apps
  * give saffron (mobile/src/coursemap/path.ts, learn/path.css).
@@ -26,6 +32,8 @@
   --pose-z: 1.2deg;
   /* the titanium: a band that is darker at its ends and catches the light along its middle */
   --metal: linear-gradient(90deg, #2a2c30, #6b6f76 18%, #9a9ea6 30%, #4a4d53 50%, #8e9299 72%, #5b5f66 86%, #26282c);
+  /* the modelled body's metal: a warm natural aluminium that sits with the app's sun gold */
+  --p3d-tone: #c8c2b8;
   --rim: linear-gradient(140deg, #b9bdc4 0%, #6d7178 18%, #2b2d31 42%, #4d5056 62%, #a7abb2 84%, #5e6168 100%);
   position: relative;
   width: var(--w);
@@ -255,6 +263,48 @@
 }
 [dir='rtl'] .p3d--right .p3d-glare {
   transform: none;
+}
+
+/* ---- the modelled body ------------------------------------------------------ */
+.p3d-model {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.p3d.is-modelled .p3d-model {
+  opacity: 1;
+}
+.p3d-slab,
+.p3d-btn {
+  transition: opacity 0.5s ease;
+}
+.p3d.is-modelled .p3d-slab,
+.p3d.is-modelled .p3d-btn {
+  opacity: 0;
+}
+/* the model draws the rim and the black glass; the screen stays where it was, inside them */
+.p3d.is-modelled .p3d-face {
+  background: none;
+  box-shadow: none;
+}
+.p3d.is-modelled .p3d-face::before {
+  opacity: 0;
+}
+/* the modelled glass has a current phone's thin border: the screen reaches nearer its edge */
+.p3d.is-modelled .p3d-screen {
+  inset: 9px;
+  border-radius: calc(var(--r) - 9px);
+}
+.p3d.is-modelled .p3d-float {
+  animation: none;
+}
+.p3d.is-modelled .p3d-rig {
+  transition: none;
 }
 
 /* the shadow on the ground, under where the phone stands */
