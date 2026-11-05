@@ -6,6 +6,7 @@ import {
   learnGame,
   whoAmIPoints,
   type GameDialect,
+  type GameDifficulty,
   type MultiMoveAnswer,
   type MultiView,
   type SoloResults,
@@ -31,7 +32,8 @@ import { useServerClock } from '../stories/useStoryGame';
 import { SoloGameShell, type SoloRound } from '../games/SoloGameShell';
 import { useAvailability, useGameDialect } from '../games/learnGames';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
-import type { RaceOffer } from '../games/partyChoices';
+import { DIFFICULTY_KEY, type RaceOffer } from '../games/partyChoices';
+import { dialectName } from '../learn/map';
 import { ForeheadCard, GuessTiles, QuestionDeck } from './WhoAmIStage';
 import './whoami.css';
 
@@ -245,6 +247,16 @@ function RaceRoom({ id }: { id: string }): React.JSX.Element {
       room={room}
       newPath={PATH}
       newLabel={t('games.whoAmI.name')}
+      lobbyNote={(v) => {
+        const s = v.settings as { difficulty?: GameDifficulty; minutes?: number };
+        return (
+          <p className="wa-lobby-note muted">
+            <span lang={v.dialect === 'ckb' ? 'ckb' : 'ku'}>{dialectName(v.dialect === 'ckb' ? 'sorani' : 'kurmanci')}</span>
+            {s.difficulty ? ` · ${t(DIFFICULTY_KEY[s.difficulty])}` : null}
+            {s.minutes ? ` · ${t('games.whoAmI.minutesCount', { count: s.minutes })}` : null}
+          </p>
+        );
+      }}
       playing={(v) => <RaceBoard view={v} skew={room.skew} move={room.move} />}
       ending={(v) => {
         const reveal = v.board?.reveal ?? [];

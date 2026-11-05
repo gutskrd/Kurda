@@ -38,6 +38,9 @@
   margin: 0;
   font-size: var(--text-section);
 }
+.wa-lobby-note {
+  margin: 0;
+}
 .wa-not-offered {
   display: grid;
   justify-items: center;
