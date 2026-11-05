@@ -27,7 +27,8 @@
  *   POST   /admin/game-content/:id/(publish|unpublish|archive)  { lockVersion }   (content.publish)
  *   POST   /admin/game-content/:id/review               { approved, note?, lockVersion }   (content.publish)
  *   DELETE /admin/game-content/:id?lockVersion=
- *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories', dialect, limit? }: drafts from approved content
+ *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories' | 'vocabulary', dialect, limit? }: drafts from approved content
+ *   GET    /admin/game-content/vocabulary?dialect&q&limit   published vocabulary, for a card editor to pick its Kurdish from
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
@@ -93,7 +94,16 @@ const createContentBody = z.object({
 const updateContentBody = lockBody.extend({ level: z.number().int().min(1).max(5), payload: z.unknown() });
 const reviewBody = lockBody.extend({ approved: z.boolean(), note: z.string().max(GAME_CONTENT_REVIEW_NOTE_MAX).nullish() });
 const deleteQuery = z.object({ lockVersion: z.coerce.number().int().min(0) });
-const importBody = z.object({ from: z.enum(['lessons', 'stories']), dialect: z.enum(GAME_DIALECTS), limit: z.number().int().min(1).max(2000).optional() });
+const importBody = z.object({
+  from: z.enum(['lessons', 'stories', 'vocabulary']),
+  dialect: z.enum(GAME_DIALECTS),
+  limit: z.number().int().min(1).max(2000).optional(),
+});
+const vocabularyQuery = z.object({
+  dialect: z.enum(GAME_DIALECTS),
+  q: z.preprocess(absentIfEmpty, z.string().max(60).optional()),
+  limit: z.coerce.number().int().min(1).max(100).optional(),
+});
 
 function context(req: FastifyRequest): { adminId: string; requestId: string } {
   return { adminId: req.user!.id, requestId: req.id };
@@ -200,6 +210,11 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
 
   app.get('/admin/game-content/readiness', { preHandler: canEdit }, async () => content.readiness());
 
+  app.get('/admin/game-content/vocabulary', { schema: { querystring: vocabularyQuery }, preHandler: canEdit }, async (req) => {
+    const q = req.query as z.infer<typeof vocabularyQuery>;
+    return content.vocabulary(q.dialect, q.q, q.limit);
+  });
+
   app.get('/admin/game-content/:id', { schema: { params: idParam }, preHandler: canEdit }, async (req, reply) => {
     const row = await content.get((req.params as z.infer<typeof idParam>).id);
     if (!row) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such content' });
@@ -242,6 +257,7 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
 
   app.post('/admin/game-content/import', { schema: { body: importBody }, preHandler: canEdit }, async (req) => {
     const b = req.body as z.infer<typeof importBody>;
+    if (b.from === 'vocabulary') return content.importStarterWordCards(b.dialect, context(req), b.limit);
     return b.from === 'lessons'
       ? content.importLessonSentences(b.dialect, context(req), b.limit)
       : content.importStoryPassages(b.dialect, context(req), b.limit);

@@ -19,8 +19,16 @@
  * The importers make drafts from what is already approved, so no Kurdish is
  * typed again: published lessons' sentences become `sentence` rows, published
  * stories' paragraphs `passage` rows (their glossary terms the words to hide).
- * An import run twice adds nothing: each row remembers where it came from
- * (`origin`, unique per kind and variety).
+ * The starter word cards for Kurdish Impostor are published vocabulary sorted
+ * into a short list of categories by each word's English meaning
+ * (word-categories.ts): the word and its meaning are copied, and the category's
+ * name — the one new Kurdish, the impostor's hint — makes them starter drafts
+ * for native review. An import run twice adds nothing: each row remembers
+ * where it came from (`origin`, unique per kind and variety).
+ *
+ * The word and forbidden-word cards' editors pick their Kurdish from the same
+ * published vocabulary (`vocabulary`), so a card is made by choosing words,
+ * not by typing them.
  *
  * Reviewing, publishing, unpublishing, archiving, deleting and importing are
  * audited, the row before and after, beside the automatic audit of every
@@ -33,6 +41,7 @@ import {
   PASSAGE_HIDDEN,
   checkGameContent,
   contentHeadline,
+  foldForDialect,
   gameOfKind,
   sentenceShape,
   type AdminGameContent,
@@ -51,7 +60,8 @@ import type { Cache } from '../cache/cache.js';
 import { escapeLike } from '../db/like.js';
 import { AppError } from '../plugins/errors.js';
 import { bustAvailability, type GameAvailabilityService } from './availability.js';
-import { bustGamePools, type TrustedSources } from './sources.js';
+import { bustGamePools, type TrustedSources, type VocabularyWord } from './sources.js';
+import { STARTER_CATEGORIES, starterCategoryOf } from './word-categories.js';
 
 /** A row as the admin panel lists and edits it (@kurda/shared `AdminGameContent`). */
 export type GameContentRow = AdminGameContent;
@@ -374,23 +384,28 @@ export class GameContentAdminService {
     });
   }
 
-  /** Drafts made of approved Kurdish, written in one statement each; a row that came from the same place before is skipped. */
+  /**
+   * Drafts made of approved Kurdish, written in one statement each; a row that
+   * came from the same place before is skipped. A row that carries new Kurdish
+   * beside the approved (a starter category's name) is a 'starter' draft.
+   */
   private async insertDrafts(
     kind: GameContentKind,
     dialect: GameDialect,
     drafts: Array<{ level: number; payload: GameContentPayload; origin: string }>,
     ctx: ActionContext,
     what: string,
+    source: GameContentSource = 'admin',
   ): Promise<ImportResult> {
     if (drafts.length === 0) return { created: 0, skipped: 0 };
     return this.tx(async (client) => {
       const res = await client.query<{ id: string }>(
         `INSERT INTO game_content (kind, dialect, level, payload, source, origin, created_by, updated_by)
-         SELECT $1::text, $2::text, d.level, d.payload, 'admin', d.origin, $4::uuid, $4::uuid
+         SELECT $1::text, $2::text, d.level, d.payload, $5::text, d.origin, $4::uuid, $4::uuid
            FROM jsonb_to_recordset($3::jsonb) AS d(level smallint, payload jsonb, origin text)
          ON CONFLICT (kind, dialect, origin) WHERE origin IS NOT NULL DO NOTHING
          RETURNING id`,
-        [kind, dialect, JSON.stringify(drafts), ctx.adminId],
+        [kind, dialect, JSON.stringify(drafts), ctx.adminId, source],
       );
       const created = res.rowCount ?? 0;
       await this.audit.record(client, {
@@ -440,6 +455,66 @@ export class GameContentAdminService {
       if (checked.ok) drafts.push({ level: Math.min(5, Math.max(1, p.level)), payload: checked.payload, origin: `story:${p.storyId}:${p.paragraph}` });
     }
     return this.insertDrafts('passage', dialect, drafts, ctx, 'published stories');
+  }
+
+  /**
+   * Published vocabulary of a variety (lessons' word pairs and stories'
+   * glossary words), for a card editor to pick its Kurdish from: by its
+   * Kurdish (folded as the games fold it) or by what it means, in the
+   * dictionary's order.
+   */
+  async vocabulary(dialect: GameDialect, q?: string, limit = 30): Promise<{ words: VocabularyWord[]; total: number }> {
+    const all = await this.sources.vocabulary(dialect);
+    const needle = q?.trim() ?? '';
+    const folded = needle ? foldForDialect(needle, dialect, true) : '';
+    const lower = needle.toLowerCase();
+    const found = needle
+      ? all.filter(
+          (w) =>
+            (folded !== '' && foldForDialect(w.ku, dialect, true).includes(folded)) ||
+            Object.values(w.meanings).some((m) => typeof m === 'string' && m.toLowerCase().includes(lower)),
+        )
+      : all;
+    const sorted = [...found].sort((a, b) => a.ku.localeCompare(b.ku, dialect === 'ckb' ? 'ckb' : 'ku'));
+    return { words: sorted.slice(0, Math.min(ADMIN_LIST_MAX, Math.max(1, limit))), total: found.length };
+  }
+
+  /**
+   * Kurdish Impostor's starter cards: each published word whose English
+   * meaning puts it in a starter category becomes a word card draft — its
+   * word and meaning copied, the category's name as the impostor's hint — and
+   * each category used becomes a category draft. All of them are 'starter'
+   * drafts: the category names wait for a native speaker, and every card for
+   * a reviewer, before a game can show them. Filed at level 1; the reviewer
+   * moves a card that belongs higher.
+   */
+  async importStarterWordCards(dialect: GameDialect, ctx: ActionContext, limit = 500): Promise<ImportResult> {
+    const cards: Array<{ level: number; payload: GameContentPayload; origin: string }> = [];
+    const used = new Set<string>();
+    for (const w of await this.sources.vocabulary(dialect)) {
+      if (cards.length >= limit) break;
+      const en = w.meanings.en?.trim();
+      const category = starterCategoryOf(en);
+      if (!en || !category) continue;
+      const payload = {
+        word: w.ku,
+        meanings: { ...w.meanings, en } as Meanings,
+        category: category.slug,
+        hint: { ku: category.name[dialect], meanings: category.meanings },
+        forms: [],
+      };
+      const checked = checkGameContent('word_card', dialect, payload);
+      if (!checked.ok) continue;
+      cards.push({ level: 1, payload: checked.payload, origin: `vocabulary:${w.key}` });
+      used.add(category.slug);
+    }
+    const categories = STARTER_CATEGORIES.filter((c) => used.has(c.slug)).flatMap((c) => {
+      const checked = checkGameContent('word_category', dialect, { slug: c.slug, ku: c.name[dialect], meanings: c.meanings });
+      return checked.ok ? [{ level: 1, payload: checked.payload, origin: `starter-category:${c.slug}` }] : [];
+    });
+    const a = await this.insertDrafts('word_category', dialect, categories, ctx, 'starter categories', 'starter');
+    const b = await this.insertDrafts('word_card', dialect, cards, ctx, 'published vocabulary', 'starter');
+    return { created: a.created + b.created, skipped: a.skipped + b.skipped };
   }
 
   /** Readiness: what each game can be played with now, per variety, and every row's state. */

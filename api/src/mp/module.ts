@@ -56,13 +56,27 @@ export interface GameModule<State = unknown, Move = unknown, Settings = unknown,
   /**
    * The game takes free text from players (a clue, a guess, a definition):
    * the text of a move goes through the chat pipeline's gate before anything
-   * else sees it (free-text.ts), capped at `maxLength`.
+   * else sees it (free-text.ts), capped at `maxLength`. A move with nothing
+   * typed (a vote, a skip) gives null and passes no gate.
    */
-  readonly freeText?: { maxLength: number; textOf: (raw: Raw) => string };
+  readonly freeText?: { maxLength: number; textOf: (raw: Raw) => string | null };
   /** played against Hevalo by one person: what the computer seat is */
   readonly solo?: { bot: 'hevalo' };
   /** the XP source placement is paid from (registered in GAME_XP_SOURCES) */
   readonly xpSource: string;
+  /**
+   * Whether these choices can be played now (a difficulty with enough approved
+   * content, say), asked when the lobby is made; left out, any choices the
+   * schema takes can. `availability` answers for the dialect as a whole.
+   */
+  offers?(db: Executor, choices: LobbyChoices<Settings>): Promise<boolean>;
+  /**
+   * What the game is dealt from approved content when it starts — a card, a
+   * deck — handed to the rules' `init` inside the settings and kept in the
+   * state only, never in the lobby's stored settings or any view. Inside the
+   * start's transaction; a game that cannot be dealt refuses to start.
+   */
+  deal?(db: Executor, settings: Settings, ctx: { dialect: LetterDialect; seed: string }): Promise<Settings>;
   /** what the invite banner and the chat card say about a lobby, besides Rated */
   summary(dialect: LetterDialect, settings: Settings): InviteSummary;
   /** the settings anyone in the lobby may see */

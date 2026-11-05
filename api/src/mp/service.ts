@@ -210,6 +210,7 @@ export class MultiplayerService {
     if (choices.access === 'open' && !(await mayHostOpen(this.pool, hostId))) throw openGamesAdultsOnly();
     // a game is made only where it is offered: a word chain on a dictionary too small to know people's words is no game
     if (!(await this.availability(game, choices.dialect)).group) throw new AppError('GAME_UNAVAILABLE', 404, 'this game is not offered in this dialect yet');
+    if (m.offers && !(await m.offers(this.pool, choices))) throw new AppError('GAME_UNAVAILABLE', 404, 'this game is not offered with these choices yet');
     const rated =
       choices.rated ?? (await this.ranks.defaultRated(this.pool, hostId, game, { fromChat: opts.fromChat, access: choices.access }));
     const { id, closed } = await this.tx(async (client) => {
@@ -389,11 +390,11 @@ export class MultiplayerService {
     return this.view(lobbyId, hostId);
   }
 
-  /** The host puts a seat on a team, in the lobby of a team game. */
-  async setTeam(lobbyId: string, hostId: string, seat: number, team: number): Promise<MultiView> {
+  /** A seat goes to a team, in the lobby of a team game: the host may put anyone on one, a player only themselves. */
+  async setTeam(lobbyId: string, userId: string, seat: number, team: number): Promise<MultiView> {
     await this.inLobby(lobbyId, async (t) => {
-      this.member(t, hostId);
-      if (t.lobby.host_id !== hostId) throw new AppError('NOT_HOST', 403, 'only the host can do this');
+      const me = this.member(t, userId);
+      if (t.lobby.host_id !== userId && me.seat !== seat) throw new AppError('NOT_HOST', 403, 'only the host can do this');
       if (t.lobby.status !== 'lobby') throw new AppError('GAME_STARTED', 409, 'only in the lobby');
       if (t.lobby.teams === 0 || team < 1 || team > t.lobby.teams) throw new AppError('BAD_TEAM', 400, 'no such team');
       const target = t.players.find((p) => p.seat === seat && !p.removed);
@@ -402,7 +403,7 @@ export class MultiplayerService {
       await this.reload(t);
       await this.bump(t, 'status = status');
     });
-    return this.view(lobbyId, hostId);
+    return this.view(lobbyId, userId);
   }
 
   /** Rated or Friendly, in the lobby only, by the host (the play layer's toggle). */
@@ -428,6 +429,11 @@ export class MultiplayerService {
       if (t.lobby.status !== 'lobby' || this.idle(t)) throw new AppError('GAME_STARTED', 409, 'this game has already started');
       const present = this.people(t.players).filter((p) => p.left_at === null);
       if (present.length < t.lobby.min_players) throw new AppError('NEED_PLAYERS', 409, `at least ${t.lobby.min_players} players`);
+      // the game's own word on the seats as they stand (a team game's teams too small); teams left empty are filled at the start
+      const problem = moduleOf(t.lobby.game).rules.startProblem?.(
+        present.map((p) => ({ seat: p.seat, team: p.team ?? (t.lobby.teams > 0 ? this.smallestTeam(t) : null), bot: p.bot })),
+      );
+      if (problem) throw new AppError('CANNOT_START', 409, 'the seats cannot start this game as they stand', { reason: problem });
       await this.begin(t);
     });
     return this.view(lobbyId, userId);
@@ -454,7 +460,9 @@ export class MultiplayerService {
         t.lobby.rated,
       );
     }
-    const state = m.rules.init(t.lobby.settings, seats, { now: t.now.getTime(), seed: t.lobby.seed });
+    // what the game is dealt from approved content goes to the rules alone: never into the lobby's stored settings
+    const settings = m.deal ? await m.deal(t.client, t.lobby.settings, { dialect: t.lobby.dialect, seed: t.lobby.seed }) : t.lobby.settings;
+    const state = m.rules.init(settings, seats, { now: t.now.getTime(), seed: t.lobby.seed });
     await this.bump(t, `status = 'active', started_at = $3, rated_state = $4`, [t.now, decision], { card: true });
     await this.saveState(t, state, { card: true });
   }
@@ -475,12 +483,13 @@ export class MultiplayerService {
     const m = moduleOf(head.rows[0].game);
     const parsed = m.moveSchema.safeParse(body);
     if (!parsed.success) throw new AppError('BAD_MOVE', 400, 'not a move this game takes');
+    const typed = m.freeText ? m.freeText.textOf(parsed.data) : null;
     // a game that takes free text is not played anywhere the chat pipeline is not
-    if (m.freeText && !this.deps.freeText) throw new AppError('UNAVAILABLE', 503, 'this game cannot take text here');
+    if (typed !== null && !this.deps.freeText) throw new AppError('UNAVAILABLE', 503, 'this game cannot take text here');
     // free text passes the chat pipeline before the game's lock is taken, and before anyone sees it
     const text =
-      m.freeText && this.deps.freeText
-        ? await gateFreeText({ db: this.pool, ...this.deps.freeText }, userId, m.freeText.textOf(parsed.data), {
+      typed !== null && m.freeText && this.deps.freeText
+        ? await gateFreeText({ db: this.pool, ...this.deps.freeText }, userId, typed, {
             maxLength: m.freeText.maxLength,
             contentRef: `${m.game}:${lobbyId}`,
           })
@@ -497,7 +506,8 @@ export class MultiplayerService {
         return;
       }
       const rules = m.rules;
-      if (!rules.waitingFor(t.lobby.state).includes(me.seat)) {
+      const may = rules.mayMove ? rules.mayMove(t.lobby.state, me.seat) : rules.waitingFor(t.lobby.state).includes(me.seat);
+      if (!may) {
         refusal = new AppError('NOT_YOUR_TURN', 409, 'it is not your turn');
         return;
       }
