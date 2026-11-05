@@ -4,12 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import {
   DEFAULT_QUESTION_COUNT,
   DEFAULT_TIMER,
+  LAST_LETTER_DEFAULT_TURN_SECONDS,
+  LAST_LETTER_TURN_SECONDS,
   MAX_INVITEES_PER_REQUEST,
   QUESTION_COUNTS_BY_LENGTH,
   STORY_LENGTHS,
   TIMER_PRESETS,
   isAllowedQuestionCount,
   storyTextDirection,
+  type LastLetterTurnSeconds,
+  type LetterDialect,
   type PlayGame,
   type QuestionCount,
   type StoryLength,
@@ -32,6 +36,7 @@ import { AdmitTray, SENT_MS, TicketsSent, flightMs, type Admit } from './InviteT
 import { GAME_NAME_KEY, lobbyPath, playError, rememberFriends } from './playApi';
 import { usePlayInvites } from './PlayProvider';
 import { RatedChoice, useRatedChoice } from '../ranks/rated';
+import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
 
 /** What the sheet is opened for. */
 export type InviteTarget =
@@ -129,6 +134,11 @@ export function InviteForm({
   const title = useTitle(target);
   // Stories is offered once a story is published (asked only when it could be offered)
   const storiesOpen = useStoriesAvailable(!(lockGame || target.kind === 'lobby')) !== 'none';
+  // The Last Letter, in the dialects whose dictionary can check players' words
+  const lastLetterDialects = offeredDialects(
+    useLastLetterAvailability(target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === 'last-letter'))),
+    'group',
+  );
   const fixedStory = target.kind === 'new' ? (target.story ?? null) : null;
   const gameFixed = lockGame || target.kind === 'lobby';
 
@@ -185,7 +195,20 @@ export function InviteForm({
     if (!timerTouched) setTimer(DEFAULT_TIMER[mode]);
   }, [mode]); // the mode alone: a timer set by hand stays as set
 
-  const games: PlayGame[] = ['wordle-battle', 'rhyme-match', ...(storiesOpen || game === 'stories' ? (['stories'] as const) : [])];
+  const games: PlayGame[] = [
+    'wordle-battle',
+    'rhyme-match',
+    ...(storiesOpen || game === 'stories' ? (['stories'] as const) : []),
+    ...(lastLetterDialects.length > 0 || game === 'last-letter' ? (['last-letter'] as const) : []),
+  ];
+  const [turnSeconds, setTurnSeconds] = useState<LastLetterTurnSeconds>(LAST_LETTER_DEFAULT_TURN_SECONDS);
+  // a Last Letter lobby is in one dialect the dictionary can check: the chosen one if it is offered
+  const letterDialect: LetterDialect =
+    lastLetterDialects.length > 0 && !lastLetterDialects.includes(dialect === 'sorani' ? 'ckb' : 'kmr')
+      ? lastLetterDialects[0]!
+      : dialect === 'sorani'
+        ? 'ckb'
+        : 'kmr';
   const max =
     target.kind === 'lobby'
       ? Math.max(0, Math.min(MAX_INVITEES_PER_REQUEST, target.room))
@@ -205,6 +228,8 @@ export function InviteForm({
         return { difficulty, rated };
       case 'rhyme-match':
         return { dialect, rated };
+      case 'last-letter':
+        return { dialect: letterDialect, turnSeconds, rated };
       case 'stories':
         return {
           mode,
@@ -337,6 +362,25 @@ export function InviteForm({
           onChange={setDialect}
           options={(['kurmanci', 'sorani'] as const).map((d) => ({ value: d, label: dialectName(d) }))}
         />
+      )}
+
+      {target.kind !== 'lobby' && game === 'last-letter' && (
+        <>
+          {lastLetterDialects.length > 1 && (
+            <ChipRadio
+              label={t('games.dialect')}
+              value={letterDialect}
+              onChange={(d) => setDialect(d === 'ckb' ? 'sorani' : 'kurmanci')}
+              options={lastLetterDialects.map((d) => ({ value: d, label: dialectName(d === 'ckb' ? 'sorani' : 'kurmanci') }))}
+            />
+          )}
+          <ChipRadio
+            label={t('games.lastLetter.turnTime')}
+            value={turnSeconds}
+            onChange={setTurnSeconds}
+            options={LAST_LETTER_TURN_SECONDS.map((sec) => ({ value: sec, label: t('games.lastLetter.seconds', { count: sec }) }))}
+          />
+        </>
       )}
 
       {target.kind !== 'lobby' && game === 'stories' && (

@@ -65,7 +65,7 @@ export const LAST_LETTER_LEARN_ENTRY = {
   minContent: { dictionaryWords: LAST_LETTER_MIN_DICTIONARY_WORDS, hevaloWords: LAST_LETTER_MIN_HEVALO_WORDS },
   xpSources: LAST_LETTER_XP_SOURCES,
   icon: 'last-letter',
-  colour: 'gold',
+  colour: 'primary',
   /** the game's page in both apps' address space */
   path: '/app/games/last-letter',
   availabilityPath: '/mp/last-letter/availability',

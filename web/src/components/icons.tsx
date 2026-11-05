@@ -54,6 +54,7 @@ import { Moon } from '@phosphor-icons/react/dist/icons/Moon';
 import { PenNib } from '@phosphor-icons/react/dist/icons/PenNib';
 import { Plus } from '@phosphor-icons/react/dist/icons/Plus';
 import { SquaresFour } from '@phosphor-icons/react/dist/icons/SquaresFour';
+import { Link as LinkGlyph } from '@phosphor-icons/react/dist/icons/Link';
 import { Sun } from '@phosphor-icons/react/dist/icons/Sun';
 import { TextAa } from '@phosphor-icons/react/dist/icons/TextAa';
 import { Trash } from '@phosphor-icons/react/dist/icons/Trash';
@@ -189,6 +190,8 @@ export const FlameIcon = named(Flame, 22);
 /** Zêr: a gold coin with Hevalo's deer carved into it. */
 export const CoinIcon = currency(coinSvg, 22);
 export const TilesIcon = named(SquaresFour, 22);
+/** Two links of a chain: The Last Letter, a chain of words each holding on to the one before. */
+export const ChainIcon = named(LinkGlyph, 22);
 export const WaveformIcon = named(Waveform, 22);
 /* the landing page's pictures of a lesson: a clip to play, a word to say */
 export const PlayIcon = named(Play, 22, 'fill');

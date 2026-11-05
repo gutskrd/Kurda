@@ -48,6 +48,8 @@ const JOIN: Record<PlayGame, (lobbyId: string) => { path: string; body?: unknown
   'rhyme-match': (id) => ({ path: `/rhyme/matches/${encodeURIComponent(id)}/join` }),
   // a story game takes your remembered Extra time with you
   stories: (id) => ({ path: '/story-games/join', body: { id, extraTime: rememberedExtraTime() } }),
+  // every multiplayer learning game joins through the one engine's route
+  'last-letter': (id) => ({ path: `/mp/last-letter/${encodeURIComponent(id)}/join` }),
 };
 
 /**

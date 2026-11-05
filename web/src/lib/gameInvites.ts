@@ -31,10 +31,12 @@ export const INVITE_NAME_KEY: Record<GameInviteType, MessageKey> = {
   'wordle-battle': 'games.battle.name',
   'rhyme-match': 'games.rhymeMatch.name',
   stories: 'games.stories.name',
+  'last-letter': 'games.lastLetter.name',
 };
 
 export const INVITE_BLURB_KEY: Record<GameInviteType, MessageKey> = {
   'wordle-battle': 'games.invite.blurb.battle',
   'rhyme-match': 'games.invite.blurb.rhymeMatch',
   stories: 'games.invite.blurb.stories',
+  'last-letter': 'games.invite.blurb.lastLetter',
 };

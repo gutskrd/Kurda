@@ -36,6 +36,7 @@ const SHARE_KEY: Record<PlayGame, MessageKey> = {
   'wordle-battle': 'play.code.shareBattle',
   'rhyme-match': 'play.code.shareRhymeMatch',
   stories: 'play.code.shareStories',
+  'last-letter': 'play.code.shareLastLetter',
 };
 
 /** How long Copy wears its tick, and how long a note stays up. */
