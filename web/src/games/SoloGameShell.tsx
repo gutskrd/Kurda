@@ -38,8 +38,6 @@ import { dialectName } from '../learn/map';
  * done. The shell draws the verdict, the explanation and the way on.
  */
 
-export type SoloAnswer<H, C> = SoloAnswerResult<H, C>;
-
 /** What a game's board is handed for the item in front of the player. */
 export interface SoloRound<Item, H, C> {
   item: Item;
@@ -47,7 +45,7 @@ export interface SoloRound<Item, H, C> {
   total: number;
   state: SoloItemState;
   /** the last answer to this item, while it is on screen */
-  result: SoloAnswer<H, C> | null;
+  result: SoloAnswerResult<H, C> | null;
   busy: boolean;
   /** send one try; the result comes back through `result` */
   submit: (answer: unknown) => Promise<void>;
@@ -110,7 +108,7 @@ export function SoloGameShell<Item, H, C>({
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
   const [session, setSession] = useState<SoloSessionView<Item> | null>(null);
   const [index, setIndex] = useState(0);
-  const [result, setResult] = useState<SoloAnswer<H, C> | null>(null);
+  const [result, setResult] = useState<SoloAnswerResult<H, C> | null>(null);
   const [results, setResults] = useState<SoloResults | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -182,7 +180,7 @@ export function SoloGameShell<Item, H, C>({
       if (!session || busy) return;
       const state = session.states[index]!;
       setBusy(true);
-      const res = await client.post<SoloAnswer<H, C>>(`/games/solo/sessions/${session.id}/answers`, { index, answer, attempt: state.attempts + 1 });
+      const res = await client.post<SoloAnswerResult<H, C>>(`/games/solo/sessions/${session.id}/answers`, { index, answer, attempt: state.attempts + 1 });
       setBusy(false);
       if (!res.ok) return fail(res.error.code, describeError(res.error, t));
       const r = res.data;
