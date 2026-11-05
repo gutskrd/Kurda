@@ -282,6 +282,7 @@ function MakeCard({ word, kind, onMade }: { word: GameWordCandidate; kind: WordC
 export function WordPicker({ kind, dialect: fixed }: { kind: WordCardKind; dialect?: GameDialect }): React.JSX.Element {
   const [dialect, setDialect] = useState<GameDialect>(fixed ?? 'kmr');
   const [query, setQuery] = useState('');
+  // an identity is always a word the lessons teach; a Bluff card may be a curated dictionary entry too
   const [from, setFrom] = useState<GameWordSource | 'all'>(kind === 'identity' ? 'vocabulary' : 'all');
   const [open, setOpen] = useState<string | null>(null);
   const q = useDebounced(query, 300);
@@ -311,11 +312,13 @@ export function WordPicker({ kind, dialect: fixed }: { kind: WordCardKind; diale
             ))}
           </select>
         )}
-        <select aria-label="Where from" value={from} onChange={(e) => setFrom(e.target.value as GameWordSource | 'all')}>
-          <option value="all">Lessons and dictionary</option>
-          <option value="vocabulary">{WORD_SOURCE_NAME.vocabulary}</option>
-          <option value="dictionary">{WORD_SOURCE_NAME.dictionary}</option>
-        </select>
+        {kind === 'bluff_card' && (
+          <select aria-label="Where from" value={from} onChange={(e) => setFrom(e.target.value as GameWordSource | 'all')}>
+            <option value="all">Lessons and dictionary</option>
+            <option value="vocabulary">{WORD_SOURCE_NAME.vocabulary}</option>
+            <option value="dictionary">{WORD_SOURCE_NAME.dictionary}</option>
+          </select>
+        )}
       </div>
       {list.error ? <Banner tone="bad">{errorLine(list.error, 'the words')}</Banner> : null}
       {list.loading && !list.data ? <p className="subtle">Looking…</p> : null}

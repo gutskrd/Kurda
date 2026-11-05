@@ -264,6 +264,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
       expect(listed.find((w) => w.ref === bear.ref)!.made).toEqual({ identity: made.json().id });
     });
 
+    it('makes identities only of words the lessons teach', async () => {
+      const club = words.find((w) => w.word === `${tag}gurz`)!;
+      const facts = { alive: false, animal: false, 'four-legs': false, 'can-fly': false };
+      const res = await call('POST', '/admin/game-content/from-word', editor, { kind: 'identity', dialect: 'kmr', ref: club.ref, level: 2, category: 'object', facts });
+      expect(res.statusCode).toBe(422);
+    });
+
     it('refuses a word that is not approved', async () => {
       const res = await call('POST', '/admin/game-content/from-word', editor, { kind: 'bluff_card', dialect: 'kmr', ref: 'dict:00000000-0000-4000-8000-000000000000', level: 4 });
       expect(res.statusCode).toBe(404);

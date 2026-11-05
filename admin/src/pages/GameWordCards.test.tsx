@@ -93,7 +93,9 @@ describe('cards from approved words', () => {
     const api = fakeApi(on('GET', /^\/admin\/game-content\/words\?/, json({ words })), on('POST', '/admin/game-content/from-word', json(row({ kind: 'identity' }), 201)));
     const page = await open('#/game-content/words');
     const identities = page.querySelectorAll('section')[page.querySelectorAll('section').length - 1]!;
-    await click(button(identities.querySelector('.gc-word')!, 'Use this word'));
+    // the identities' list asks for the lessons' words alone
+    expect(api.calls.filter((c) => c.path.includes('/words?')).some((c) => c.path.includes('from=vocabulary'))).toBe(true);
+    await click(button(identities.querySelectorAll('.gc-word')[1]!, 'Use this word'));
     const make = button(identities, 'Make an identity') as HTMLButtonElement;
     expect(make.disabled).toBe(true);
     await choose(Array.from(identities.querySelectorAll('select')).find((s) => s.querySelector('option[value="animal"]'))!, 'animal');

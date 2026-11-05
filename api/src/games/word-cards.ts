@@ -9,7 +9,8 @@
  * teach (with the English the lesson pairs them with, and a published
  * lesson's sentence that uses them as the example), and dictionary entries an
  * admin curated for the games (`in_games`), with their first sense and its
- * example. The Kurdish is copied from there into the draft by the server —
+ * example. A Bluff card may be either; an identity is always a word the
+ * lessons teach. The Kurdish is copied from there into the draft by the server —
  * the word, its Kurdish definition where the dictionary has one, the example
  * — so nobody types it again; the editor adds what is not Kurdish. Each row
  * remembers the word it was made of (`origin`), so a word is one card of a
@@ -221,6 +222,10 @@ export function registerGameWordRoutes(app: FastifyInstance, sources: TrustedSou
   app.post('/admin/game-content/from-word', { schema: { body: fromWordBody }, preHandler: canEdit }, async (req, reply): Promise<AdminGameContent> => {
     const b = req.body as z.infer<typeof fromWordBody>;
     if (b.kind === 'identity' && !b.category) throw new AppError('INVALID', 422, 'an identity needs its category', { errors: [{ path: 'category', message: 'choose one' }] });
+    // an identity is a word the lessons teach: a player meets it again in them, with the meaning they give it
+    if (b.kind === 'identity' && !b.ref.startsWith('vocab:')) {
+      throw new AppError('INVALID', 422, 'an identity is a word from published lessons', { errors: [{ path: 'ref', message: 'pick a word published lessons teach' }] });
+    }
     const word = await cards.word(b.dialect, b.ref);
     if (!word) throw new AppError('NOT_FOUND', 404, 'that word is not in published lessons or the curated dictionary of this variety');
     const checked = checkGameContent(b.kind, b.dialect, cards.payloadFor(b.kind, word, { category: b.category, facts: b.facts }));
