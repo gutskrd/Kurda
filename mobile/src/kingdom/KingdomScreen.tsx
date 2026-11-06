@@ -842,7 +842,7 @@ function KingdomLife({ actors, near, dark, scale, still, active, reacting }: { a
  * its wing takes (the cow looking round, the hen's wing beating), handed to
  * the actor to add to that part's own loop.
  */
-function Reaction({ tap, scale, children }: { tap: KingdomTap | null; scale: number; children: (turn: { role: 'head' | 'wing'; value: Animated.AnimatedInterpolation<string> } | null) => React.ReactNode }): React.JSX.Element {
+function Reaction({ tap, scale, children }: { tap: KingdomTap | null; scale: number; children: (turn: Turn) => React.ReactNode }): React.JSX.Element {
   const y = useRef(new Animated.Value(0)).current;
   const x = useRef(new Animated.Value(0)).current;
   const part = useRef(new Animated.Value(0)).current;
@@ -856,8 +856,16 @@ function Reaction({ tap, scale, children }: { tap: KingdomTap | null; scale: num
     if (tap === 'wag' || tap === 'rustle') Animated.sequence([0.8, -0.8, 0.8, -0.8, 0.5, 0].map((v) => to(x, v * k, 100))).start();
     if (tap === 'flutter') Animated.sequence([0, 1, 0, 1, 0, 1, 0].map((v) => to(part, v, 120))).start();
     if (tap === 'turn') Animated.sequence([to(part, 1, 260), Animated.delay(380), to(part, 0, 260)]).start();
+    if (tap === 'wave') Animated.sequence([to(part, 1, 180), to(part, 0.7, 160), to(part, 1, 160), to(part, 0.7, 160), to(part, 0, 220)]).start();
   }, [tap, scale, x, y, part]);
-  const turn = tap === 'turn' ? { role: 'head' as const, value: part.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-24deg'] }) } : tap === 'flutter' ? { role: 'wing' as const, value: part.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '60deg'] }) } : null;
+  const turn =
+    tap === 'turn'
+      ? { role: 'head' as const, value: part.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-24deg'] }) }
+      : tap === 'flutter'
+        ? { role: 'wing' as const, value: part.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '60deg'] }) }
+        : tap === 'wave'
+          ? { role: 'arm' as const, value: part.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-150deg'] }) }
+          : null;
   return <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateX: x }, { translateY: y }] }]}>{children(turn)}</Animated.View>;
 }
 
@@ -934,7 +942,7 @@ function Bit({ kind, x, y, scale }: { kind: 'feathers' | 'leaf' | 'ripple'; x: n
 type Pose = Omit<KingdomFrame, 't'>;
 type PoseKey = keyof Pose;
 
-type Turn = { role: 'head' | 'wing'; value: Animated.AnimatedInterpolation<string> } | null;
+type Turn = { role: 'head' | 'wing' | 'arm'; value: Animated.AnimatedInterpolation<string> } | null;
 
 const LifeNode = memo(function LifeNode({ node, k, still, active, sprites, happy, turn }: { node: KingdomNode; k: number; still: boolean; active: boolean; sprites: Record<KingdomSprite, string>; happy: boolean; turn: Turn }): React.JSX.Element {
   const value = useRef(new Animated.Value(0)).current;

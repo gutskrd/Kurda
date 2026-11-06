@@ -141,6 +141,48 @@
 .kg-a.is-flutter [data-role='wing'] > .kg-s {
   animation: kg-flap 130ms ease-in-out 6 alternate;
 }
+/* a villager nods and waves */
+.kg-a.is-wave [data-role='head'] > .kg-s,
+.kg-a.is-wave [data-role='arm'] > .kg-s {
+  transform-origin: inherit;
+}
+.kg-a.is-wave [data-role='head'] > .kg-s {
+  animation: kg-nod 800ms ease-in-out;
+}
+.kg-a.is-wave [data-role='arm'] > .kg-s {
+  animation: kg-wave 900ms ease-in-out;
+}
+@keyframes kg-nod {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  25%,
+  65% {
+    rotate: 12deg;
+  }
+  45% {
+    rotate: 0deg;
+  }
+}
+@keyframes kg-wave {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: -150deg;
+  }
+  40% {
+    rotate: -120deg;
+  }
+  60% {
+    rotate: -150deg;
+  }
+  80% {
+    rotate: -120deg;
+  }
+}
 /* the cow or the donkey turns its head to look */
 .kg-a.is-turn [data-role='head'] > .kg-s {
   animation: kg-look 900ms ease-in-out;

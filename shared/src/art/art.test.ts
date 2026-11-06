@@ -1323,6 +1323,27 @@ describe('the kingdom’s village', () => {
     expect(h.chick).toBeLessThan(h.hen * 0.6);
   });
 
+  it('brings its people to their chores as the village grows, each a person’s height (a child less), nodding and waving when tapped', () => {
+    const people = ['shepherd', 'baker', 'farmer', 'boy', 'girl', 'carrier', 'elder', 'rider', 'weaver'];
+    const at = (village: number): string[] => kingdomLife(all(0), village).map((a) => a.id).filter((id) => people.includes(id));
+    expect(at(1)).toEqual(['shepherd']);
+    expect(at(4).sort()).toEqual(['baker', 'farmer', 'shepherd']);
+    expect(at(25).sort()).toEqual([...people].sort());
+    expect(at(7).sort()).toEqual(['baker', 'boy', 'farmer', 'girl', 'shepherd']);
+    const full = kingdomLife(all(5));
+    for (const id of people.filter((p) => p !== 'rider')) {
+      const a = full.find((x) => x.id === id)!;
+      expect(a.tap, id).toBe('wave');
+      // the box reaches a little past the person, for their tools
+      const tall = (a.box.h * 33) / 37;
+      expect(tall, id).toBeCloseTo(id === 'boy' || id === 'girl' ? KINGDOM_FIGURE_HEIGHT * 0.66 : KINGDOM_FIGURE_HEIGHT, 1);
+    }
+    // the rider sits his donkey
+    const parts = (node: KingdomNode): KingdomNode[] => [node, ...(node.children ?? []).flatMap(parts)];
+    expect(parts(full.find((a) => a.id === 'rider')!).some((p) => p.sprite === 'riderSeat')).toBe(true);
+    expect(() => kingdomLife(all(0), 26)).toThrow(RangeError);
+  });
+
   it('cuts the world into tiles that lie side by side as the whole of it, each light enough to draw on a phone', () => {
     const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
     for (const levels of [all(0), some, all(5)]) {
