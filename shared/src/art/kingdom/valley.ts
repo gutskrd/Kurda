@@ -692,8 +692,13 @@ export function valleyThings(pal: Palette, rand: Rand, has: (f: VillageFeature) 
     out.push({ depth: ON_FLOOR + CAMP.fire[0] + CAMP.fire[1] + 1, svg: F.flame(pal, fx, fy - 1) });
   }
   add(P.rock(pal, 470, -150, z, 8, rand), P.rock(pal, 300, -100, z, 6, rand), P.bush(pal, 480, -120, z, 7, rand, 3));
-  // the cairn on its outcrop above the camp (its own scatter, so nothing else moves), and the waymarks up the track to it
-  add(...P.cairn(pal, CAIRN[0], CAIRN[1], z, seeded('kingdom-cairn'), CAIRN_SCALE, { outcrop: true }));
+  // the cairn on its outcrop above the camp (its own scatter, so nothing else moves), and the waymarks up the track to it.
+  // It is drawn at its own size and shrunk whole, its ink with it: at a person and a half high, the village's full-weight
+  // outline would close the gaps between its small stones, and the stones the owner asked for are the point of it.
+  const [kx, ky] = iso(CAIRN[0], CAIRN[1], z);
+  for (const part of P.cairn(pal, 0, 0, 0, seeded('kingdom-cairn'), 1, { outcrop: true })) {
+    out.push({ depth: ON_FLOOR + CAIRN[0] + CAIRN[1] + part.depth, svg: `<g transform="translate(${n(kx)} ${n(ky)}) scale(${CAIRN_SCALE.toFixed(4)})">${part.svg()}</g>`, casts: 'floor' });
+  }
   const marks = seeded('kingdom-waymarks');
   for (const [x, y] of WAYMARKS) add(P.waymark(pal, x, y, z, marks, 1.1));
   if (has('loom')) add(...F.loom(pal, 420, -80, z, 30, 22));
