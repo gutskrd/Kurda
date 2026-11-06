@@ -108,6 +108,48 @@ function Tile({ tile, r }: { tile: KingdomTile; r: number }): React.JSX.Element 
   );
 }
 
+/**
+ * The Zêr a new level paid, flying from the building up to the counter: a
+ * few coins one after another, each on a curve up and over, shrinking a
+ * little as it lands.
+ */
+function Coins({ from, to }: { from: { x: number; y: number }; to: { x: number; y: number } }): React.JSX.Element {
+  const flights = useRef(Array.from({ length: 6 }, () => new Animated.Value(0))).current;
+  useEffect(() => {
+    Animated.stagger(
+      90,
+      flights.map((v) => Animated.timing(v, { toValue: 1, duration: 620, easing: Easing.inOut(Easing.quad), useNativeDriver: true })),
+    ).start();
+  }, [flights]);
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none" testID="kingdom-coins">
+      {flights.map((v, i) => {
+        const lift = 60 + i * 8;
+        return (
+          <Animated.View
+            key={i}
+            style={[
+              styles.coin,
+              {
+                left: from.x - 11,
+                top: from.y - 11,
+                opacity: v.interpolate({ inputRange: [0, 0.05, 0.9, 1], outputRange: [0, 1, 1, 0] }),
+                transform: [
+                  { translateX: v.interpolate({ inputRange: [0, 1], outputRange: [0, to.x - from.x] }) },
+                  { translateY: v.interpolate({ inputRange: [0, 0.45, 1], outputRange: [0, Math.min(0, to.y - from.y) / 2 - lift, to.y - from.y] }) },
+                  { scale: v.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0.6, 1.15, 0.7] }) },
+                ],
+              },
+            ]}
+          >
+            <Icon name="coin" size={22} />
+          </Animated.View>
+        );
+      })}
+    </View>
+  );
+}
+
 /** How long a new village level's banner and sparkle stay once what it brings has appeared. */
 const LEVEL_UP_MS = 2800;
 /** The least a tap target in the village reaches across, in canvas units (about a thumb's width at the opening zoom). */
@@ -329,18 +371,35 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
   }, [stage, place, settle]);
   useEffect(() => () => stopMotion(), [stopMotion]);
 
-  // ─── each new level goes up in the scene first, the camera flown to it, felt as it lands; then its celebration opens
+  // ─── each new level goes up in the scene first, the camera flown to it, felt as it lands, the Zêr it paid flying up to the
+  // counter; then its celebration opens
+  const [coins, setCoins] = useState<{ from: { x: number; y: number }; to: { x: number; y: number } } | null>(null);
   useEffect(() => {
     if (!isRaising || !currentKey || !current) return;
     setTicked(false);
-    flyTo(cameraOn(KINGDOM_PLOTS[current.building].box, stageRef.current, camRef.current.s));
+    const goal = clampCamera(cameraOn(KINGDOM_PLOTS[current.building].box, stageRef.current, camRef.current.s), stageRef.current);
+    flyTo(goal);
     const land = setTimeout(() => haptic('celebrate'), LAND_MS);
     const tick = setTimeout(() => setTicked(true), TICK_MS);
-    const done = setTimeout(() => setRaised((r) => new Set(r).add(currentKey)), RAISE_MS);
+    const done = setTimeout(() => {
+      setCoins(null);
+      setRaised((r) => new Set(r).add(currentKey));
+    }, RAISE_MS);
+    const fly =
+      current.zer > 0
+        ? setTimeout(() => {
+            const tf = transformOf(goal, stageRef.current);
+            const box = KINGDOM_PLOTS[current.building].box;
+            // from the building's roof to the Zêr counter at the end of the bar
+            const end = dir.row === 'row-reverse' ? 60 : stageRef.current.w - 60;
+            setCoins({ from: { x: tf.tx + (box.x + box.w / 2) * tf.s, y: tf.ty + (box.y + box.h * 0.4) * tf.s }, to: { x: end, y: insets.top + 30 } });
+          }, LAND_MS)
+        : null;
     return () => {
       clearTimeout(land);
       clearTimeout(tick);
       clearTimeout(done);
+      if (fly) clearTimeout(fly);
     };
     // the camera is read once, as the raise starts, so only a new raise starts this again
   }, [isRaising, currentKey]);
@@ -631,6 +690,7 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
           </ScrollView>
         </View>
 
+        {coins ? <Coins from={coins.from} to={coins.to} /> : null}
         {levelUp ? <LevelUp level={levelUp.level} unlocks={levelUp.unlocks} top={insets.top + 78} /> : null}
 
         {introShown && view.intro ? (
@@ -1220,6 +1280,7 @@ const styles = StyleSheet.create({
   bubbleText: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: radii.md, borderWidth: 2.5, borderColor: INK, backgroundColor: CREAM, color: INK, fontSize: 15, fontWeight: '800', overflow: 'hidden' },
   tray: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 10, borderTopWidth: 3, borderColor: INK, backgroundColor: WOOD },
   sun: { backgroundColor: 'rgba(255,186,92,0.08)' },
+  coin: { position: 'absolute', width: 22, height: 22 },
   srOnly: { position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' },
   cards: { gap: 10, paddingHorizontal: 12 },
   card: { width: 214, gap: 4, paddingHorizontal: 10, paddingTop: 6, paddingBottom: 9, borderRadius: radii.lg, borderWidth: 2.5, borderBottomWidth: 4, borderColor: INK, backgroundColor: CREAM },

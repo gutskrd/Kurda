@@ -148,6 +148,8 @@ describe('the village on the phone', () => {
     expect(await screen.findByTestId('kingdom-raise')).toBeTruthy();
     expect(screen.getByTestId('kingdom-row-spring').getAttribute('aria-label')).toBe(`${en['kingdom.name.spring']}, ${en['kingdom.tray.ready']}`);
     expect(screen.queryByText(`${en['kingdom.name.spring']} · level 1`)).toBeNull();
+    // the Zêr it paid flies up to the counter as it lands
+    expect(await screen.findByTestId('kingdom-coins', undefined, { timeout: 3000 })).toBeTruthy();
     expect(await screen.findByText(`${en['kingdom.name.spring']} · level 1`, undefined, { timeout: 5000 })).toBeTruthy();
     expect(screen.queryByTestId('kingdom-raise')).toBeNull();
     expect(screen.getByText('+20 Zêr')).toBeTruthy();
