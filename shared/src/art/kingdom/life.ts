@@ -39,7 +39,7 @@ import type { KingdomBuilding, KingdomLevel } from '../../games/kingdom/building
 import { villageFlock, villageHas, type VillageFeature } from '../../games/kingdom/growth.js';
 import { characterArt } from '../../characters/index.js';
 import { n, type Pt } from '../svg.js';
-import { DAY, DUSK, FIGURE_HEIGHT, INK, Part, disc, inked, iso, oval, type Palette } from './pen.js';
+import { DAY, DUSK, FIGURE_HEIGHT, INK, Part, SHADOW, disc, inked, iso, oval, type Palette } from './pen.js';
 import * as P from './props.js';
 import { WATER_Z } from './land.js';
 import { CREATURES, CREATURE_BOX, type CreatureSprite } from './creatures.js';
@@ -105,6 +105,7 @@ export type KingdomSprite =
   | 'butterfly'
   | 'dust'
   | 'sparkle'
+  | 'fireflies'
   | CreatureSprite
   | VillagerSprite
   | FigureSprite;
@@ -225,11 +226,12 @@ export const SPRITE_BOX: Readonly<Record<KingdomSprite, Box>> = {
   banner: { x: 0.6, y: 2.4, w: 8.2, h: 22.6 },
   sheepHead: { x: -14, y: -18, w: 32, h: 20 },
   goatHead: { x: -14, y: -24, w: 32, h: 26 },
-  shadow: { x: -10, y: -3, w: 20, h: 6 },
+  shadow: { x: -10, y: -3, w: 22, h: 6 },
   bees: { x: -8, y: -6, w: 16, h: 12 },
   butterfly: { x: -6.5, y: -6, w: 13, h: 10 },
   dust: { x: -34, y: -26, w: 68, h: 30 },
   sparkle: { x: -5, y: -5, w: 10, h: 10 },
+  fireflies: { x: -14, y: -9, w: 28, h: 18 },
   ...CREATURE_BOX,
   ...VILLAGER_SPRITE_BOX,
   ...(Object.fromEntries(FIGURE_SPRITES.map((s) => [s, { x: 0, y: 0, w: 0, h: 0 }])) as Record<FigureSprite, Box>),
@@ -351,9 +353,9 @@ function ripple(pal: Palette): string {
   return `<path d="${oval(0, 0, 8, 3)}" fill="none" stroke="${pal.foam}" stroke-width="1.2"/>`;
 }
 
-/** A soft flat shadow on the ground under an animal. */
+/** A soft flat shadow on the ground under an animal or a person, falling a little to the right like every shadow in the village, and as dark. */
 function shadowSprite(): string {
-  return `<path d="${oval(0, 0, 9, 2.4)}" fill="${INK}" fill-opacity="0.22" stroke="none"/>`;
+  return `<path d="${oval(1.8, 0.2, 9, 2.4)}" fill="${SHADOW.colour}" fill-opacity="${SHADOW.opacity + 0.06}" stroke="none"/>`;
 }
 
 /** The dust an upgrade raises: a low bank of beige puffs. */
@@ -366,6 +368,13 @@ function dust(pal: Palette): string {
 /** A four-pointed sparkle in saffron with a white heart. */
 function sparkle(pal: Palette): string {
   return `<path d="M0 -5Q0.6 -0.6 5 0Q0.6 0.6 0 5Q-0.6 0.6 -5 0Q-0.6 -0.6 0 -5Z" fill="${pal.saffron.top}" stroke="${INK}" stroke-width="0.6"/><path d="${disc(0, 0, 1.2)}" fill="#ffffff" stroke="none"/>`;
+}
+
+/** Fireflies over the meadow at dusk: a few warm specks, each with a soft ring of its own light; by day, nothing. */
+function fireflies(pal: Palette): string {
+  if (!pal.dusk) return '';
+  const at: [number, number][] = [[-10, -4], [-3, 3], [5, -6], [11, 2], [1, -1]];
+  return `<path d="${at.map(([x, y]) => disc(x, y, 2.4)).join('')}" fill="#ffe27a" fill-opacity="0.28" stroke="none"/><path d="${at.map(([x, y]) => disc(x, y, 0.9)).join('')}" fill="#fff4b0" stroke="none"/>`;
 }
 
 /** Scenery sprites are drawn as the scene draws them, a quarter larger than their own units. */
@@ -396,6 +405,7 @@ const DRAW: Readonly<Record<KingdomSprite, (pal: Palette) => string>> = {
   butterfly,
   dust,
   sparkle,
+  fireflies,
   ...CREATURES,
   ...VILLAGER_LAYERS,
   deerBody: () => DEER.layers.deerBody,
@@ -1268,7 +1278,7 @@ export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, 
     const period = 150000 - i * 21000;
     const drift: Key[] = [{ t: 0, x: 0, o: 0 }, { t: 0.04, o: 1 }, { t: 0.96, o: 1 }, { t: 1, x: run, o: 0 }];
     sky.push({ id: `cloud${i}`, kind: 'sky', sprite: 'cloud', box: boxAt('cloud', { x, y }, k), origin: [0.5, 0.5], motion: loop(period, drift, p), still: { ...REST, x: 420 + i * 380 } });
-    shadows.push({ id: `cloudshade${i}`, kind: 'sky', sprite: 'cloudShadow', box: boxAt('cloudShadow', { x: x - 60, y: y + 420 + i * 160 }, k * 1.6), origin: [0.5, 0.5], motion: loop(period, drift, p), still: { ...REST, x: 420 + i * 380 } });
+    shadows.push({ id: `cloudshade${i}`, kind: 'sky', sprite: 'cloudShadow', box: boxAt('cloudShadow', { x: x - 60, y: y + 420 + i * 160 }, k * 2.6), origin: [0.5, 0.5], motion: loop(period, drift, p), still: { ...REST, x: 420 + i * 380 } });
   });
   const flap = loop(560, [{ t: 0, sy: 1 }, { t: 0.5, sy: -0.5 }, { t: 1, sy: 1 }]);
   [[300, 230, 0.2], [900, 120, 0.7]].forEach(([x, y, p], i) => {
@@ -1283,6 +1293,18 @@ export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, 
     });
   });
   if (has('dovecote')) ground.push(pigeons('pigeons', to(DOVECOTE[0], DOVECOTE[1], F0 + 30)));
+
+  // fireflies over the meadows, which only show at dusk: each swarm drifting about its patch, each speck blinking in its own time
+  [[560, 260], [320, 470], [860, 360], [140, 640], [470, 120]].forEach(([sx, sy], i) => {
+    ground.push({
+      id: `fireflies${i}`,
+      kind: 'sky',
+      box: boxAt('fireflies', S(sx!, sy! - 14)),
+      origin: [0.5, 0.5],
+      motion: loop(7000 + i * 900, [{ t: 0, x: 0, y: 0, o: 0.4 }, { t: 0.25, x: 10, y: -6, o: 1 }, { t: 0.5, x: 4, y: -12, o: 0.5 }, { t: 0.75, x: -8, y: -4, o: 1 }, { t: 1, x: 0, y: 0, o: 0.4 }], (i * 0.37) % 1),
+      still: REST,
+    });
+  });
 
   // the lake: light shimmering across it, a fish leaping now and then, rings where it lands
   const shimmer: [number, number][] = [[-700, 160], [-420, 120], [-250, 260], [-760, 420], [-480, 480], [-300, 600], [-620, 660], [-120, 470], [-820, 760]];

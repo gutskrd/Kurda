@@ -23,7 +23,7 @@ const WINDOW = (() => {
   // as wide as the village's frame allows, so several of its buildings are in the band, never past it (nothing is drawn there)
   const w = KINGDOM_FRAME.w;
   const h = Math.round(w * 0.58);
-  return `${KINGDOM_FRAME.x} ${Math.round((y0 + y1) / 2 - h / 2)} ${w} ${h}`;
+  return { x: KINGDOM_FRAME.x, y: Math.round((y0 + y1) / 2 - h / 2), w, h };
 })();
 
 /**
@@ -36,9 +36,10 @@ export function KingdomTile(): React.JSX.Element {
   const t = useT();
   const picture = useMemo(
     () => ({
-      __html: kingdomSceneSvg({ levels: SAMPLE, framed: true, width: 300, title: t('kingdom.title'), idPrefix: 'kgtile' })
+      // only the band is drawn, so the picture carries only what shows in it
+      __html: kingdomSceneSvg({ levels: SAMPLE, window: WINDOW, width: 300, title: t('kingdom.title'), idPrefix: 'kgtile' })
         .replace(/ width="[\d.]+" height="[\d.]+"/, '')
-        .replace(/viewBox="[^"]*"/, `viewBox="${WINDOW}" preserveAspectRatio="xMidYMid slice"`),
+        .replace(/viewBox="[^"]*"/, `viewBox="${WINDOW.x} ${WINDOW.y} ${WINDOW.w} ${WINDOW.h}" preserveAspectRatio="xMidYMid slice"`),
     }),
     [t],
   );

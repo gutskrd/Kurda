@@ -34,6 +34,7 @@ import {
   type KingdomPlace,
   type KingdomSprite,
   type KingdomTap,
+  type KingdomTile,
   type KingdomUpgrade,
   type KingdomView,
   type VillageCamera,
@@ -86,6 +87,27 @@ const GOLD_LIGHT = '#ffe16a';
 /** The game's own skin over the scene: the drawing's ink and cream, the same by day and at dusk. */
 const INK = '#4a2a1a';
 const CREAM = '#fff7e6';
+/** The tray's shelf of warm wood. */
+const WOOD = '#b97a45';
+/**
+ * One tile of the world, laid on whole points: its left and top edges rounded
+ * down and its right and bottom edges up, so it always reaches at least as
+ * far as its picture and, with the two units every tile reaches past its
+ * neighbour, two tiles can never leave a hairline between them, whatever the
+ * scale.
+ */
+function Tile({ tile, r }: { tile: KingdomTile; r: number }): React.JSX.Element {
+  const left = Math.floor(tile.x * r);
+  const top = Math.floor(tile.y * r);
+  const w = Math.ceil((tile.x + tile.w) * r) - left;
+  const h = Math.ceil((tile.y + tile.h) * r) - top;
+  return (
+    <View style={[styles.node, { left, top, width: w, height: h }]} pointerEvents="none">
+      <SvgXml xml={tile.svg} width={w} height={h} />
+    </View>
+  );
+}
+
 /** How long a new village level's banner and sparkle stay once what it brings has appeared. */
 const LEVEL_UP_MS = 2800;
 /** The least a tap target in the village reaches across, in canvas units (about a thumb's width at the opening zoom). */
@@ -527,9 +549,7 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
             <View style={[styles.drawn, { width: KINGDOM_SCENE.width * r, height: KINGDOM_SCENE.height * r, transform: [{ scale: 1 / r }] }]}>
               {tiles.map((tile) =>
                 overlaps(tile, near) ? (
-                  <View key={`${tile.x},${tile.y}`} style={[styles.node, { left: tile.x * r, top: tile.y * r, width: tile.w * r, height: tile.h * r }]} pointerEvents="none">
-                    <SvgXml xml={tile.svg} width={tile.w * r} height={tile.h * r} />
-                  </View>
+                  <Tile key={`${tile.x},${tile.y}`} tile={tile} r={r} />
                 ) : null,
               )}
               <KingdomLife actors={actors} near={near} dark={dark} scale={r} still={reduce} active={focused && appActive} reacting={reacting} />
@@ -563,6 +583,8 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
             </View>
           </Animated.View>
         </View>
+
+        {!dark ? <View style={[StyleSheet.absoluteFill, styles.sun]} pointerEvents="none" /> : null}
 
         <View style={[styles.hud, { top: insets.top + 10, flexDirection: dir.row }]}>
           {back}
@@ -1196,7 +1218,8 @@ const styles = StyleSheet.create({
   leaf: { borderColor: INK, backgroundColor: '#6fae3e', borderTopLeftRadius: radii.pill, borderBottomRightRadius: radii.pill },
   feather: { borderColor: INK, borderRadius: radii.pill },
   bubbleText: { paddingHorizontal: 12, paddingVertical: 4, borderRadius: radii.md, borderWidth: 2.5, borderColor: INK, backgroundColor: CREAM, color: INK, fontSize: 15, fontWeight: '800', overflow: 'hidden' },
-  tray: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 10, borderTopWidth: 3, borderColor: INK, backgroundColor: CREAM_2 },
+  tray: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingTop: 10, borderTopWidth: 3, borderColor: INK, backgroundColor: WOOD },
+  sun: { backgroundColor: 'rgba(255,186,92,0.08)' },
   srOnly: { position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' },
   cards: { gap: 10, paddingHorizontal: 12 },
   card: { width: 214, gap: 4, paddingHorizontal: 10, paddingTop: 6, paddingBottom: 9, borderRadius: radii.lg, borderWidth: 2.5, borderBottomWidth: 4, borderColor: INK, backgroundColor: CREAM },

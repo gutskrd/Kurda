@@ -121,6 +121,104 @@ function inside(pts: readonly Pt[], [x, y]: Pt): boolean {
   return hit;
 }
 
+/** Wildflower meadows on the floor: where each is (screen units from the world's origin) and how far it spreads. */
+const MEADOWS: readonly (readonly [number, number, number])[] = [
+  [560, 260, 70],
+  [320, 470, 60],
+  [860, 360, 80],
+  [140, 640, 70],
+  [640, 760, 90],
+  [470, 120, 55],
+  [960, 640, 60],
+];
+
+/**
+ * The floor's grass worked over so no stretch of it is bare: tufts in two
+ * greens, specks of flowers (pink, orange, lavender, white and yellow, thick
+ * in the wildflower meadows), and stones half sunk in the grass. Gathered
+ * into a few paths for each tile they fall in, so a tile takes only its own
+ * and a phone draws them as a handful of shapes. Laid on the floor under
+ * everything that stands there (roads, fields and folds cover their share).
+ */
+function groundTexture(pal: Palette, rand: Rand): Drawn[] {
+  type Cell = { dark: string; light: string; specks: string; flowers: Record<string, string>; stones: string; tops: string };
+  const cells = new Map<string, Cell>();
+  // the tile grid, from the canvas's own corner (the origin's offset is the world's, the same for every tile); nothing is laid
+  // within a few units of a tile's edge, so each cell's paths stay inside its own tile and no tile carries a neighbour's
+  const cell = (x: number, y: number): Cell | null => {
+    const cx = x + 1000;
+    const cy = y + 340;
+    const fx = cx - Math.floor(cx / 400) * 400;
+    const fy = cy - Math.floor(cy / 345) * 345;
+    if (fx < 8 || fx > 392 || fy < 8 || fy > 337) return null;
+    const key = `${Math.floor(cx / 400)},${Math.floor(cy / 345)}`;
+    let c = cells.get(key);
+    if (!c) cells.set(key, (c = { dark: '', light: '', specks: '', flowers: {}, stones: '', tops: '' }));
+    return c;
+  };
+  const flowerColours = pal.dusk ? ['#d77fa0', '#d99045', '#a48bd0', '#e9e4ee', '#e3c254'] : ['#f28bb0', '#f5a142', '#b79be6', '#ffffff', '#ffd84a'];
+  const onGrass = (at: Pt): boolean => inside(FLOOR, at) && !inside(LAKE, at);
+  // tufts everywhere, a few hundred, darker and lighter
+  for (let i = 0; i < 900; i++) {
+    const at: Pt = [-900 + rand() * 1900, -60 + rand() * 1090];
+    if (!onGrass(at)) continue;
+    const [x, y] = at;
+    const s = 0.8 + rand() * 0.5;
+    const d = `M${n(x - 2.4 * s)} ${n(y)}l${n(-0.8 * s)} ${n(-3 * s)}M${n(x)} ${n(y)}l${n(0.2 * s)} ${n(-4 * s)}M${n(x + 2.4 * s)} ${n(y)}l${n(0.9 * s)} ${n(-2.8 * s)}`;
+    const c = cell(x, y);
+    const dark = rand() < 0.55;
+    if (!c) continue;
+    if (dark) c.dark += d;
+    else c.light += d;
+  }
+  // flowers: a light scatter over all the grass, and the meadows thick with them
+  // each a round dab, its ink first under all of them and then its colour: a few characters a flower
+  const flower = (x: number, y: number): void => {
+    const colour = flowerColours[Math.floor(rand() * flowerColours.length)]!;
+    const c = cell(x, y);
+    if (!c) return;
+    const dab = `M${n(x)} ${n(y)}h0`;
+    c.specks += dab;
+    c.flowers[colour] = (c.flowers[colour] ?? '') + dab;
+  };
+  for (let i = 0; i < 200; i++) {
+    const at: Pt = [-900 + rand() * 1900, -60 + rand() * 1090];
+    if (onGrass(at)) for (let j = 0; j < 3; j++) flower(at[0] + (rand() - 0.5) * 9, at[1] + (rand() - 0.5) * 4);
+  }
+  for (const [mx, my, r] of MEADOWS) {
+    for (let i = 0; i < r * 1.3; i++) {
+      const a = rand() * Math.PI * 2;
+      const d = Math.sqrt(rand()) * r;
+      const at: Pt = [mx + Math.cos(a) * d * 1.6, my + Math.sin(a) * d * 0.7];
+      if (onGrass(at)) flower(at[0], at[1]);
+    }
+  }
+  // stones half sunk in the grass, their tops catching the light
+  for (let i = 0; i < 70; i++) {
+    const at: Pt = [-900 + rand() * 1900, -60 + rand() * 1090];
+    if (!onGrass(at)) continue;
+    const [x, y] = at;
+    const w = 2.4 + rand() * 2.6;
+    const c = cell(x, y);
+    if (!c) continue;
+    c.stones += `M${n(x - w)} ${n(y)}q${n(w * 0.2)} ${n(-w * 0.8)} ${n(w)} ${n(-w * 0.8)}q${n(w * 0.8)} 0 ${n(w)} ${n(w * 0.8)}Z`;
+    c.tops += oval(x - w * 0.2, y - w * 0.5, w * 0.45, w * 0.18);
+  }
+  const out: Drawn[] = [];
+  const darkTuft = pal.tuft;
+  const lightTuft = pal.dusk ? '#9bbd63' : '#b9e07a';
+  for (const c of cells.values()) {
+    let svg = '';
+    if (c.dark) svg += `<path d="${c.dark}" fill="none" stroke="${darkTuft}" stroke-width="1.3" stroke-linecap="round"/>`;
+    if (c.light) svg += `<path d="${c.light}" fill="none" stroke="${lightTuft}" stroke-width="1.3" stroke-linecap="round"/>`;
+    if (c.specks) svg += `<path d="${c.specks}" fill="none" stroke="${INK}" stroke-width="3.4" stroke-linecap="round"/>`;
+    for (const [colour, d] of Object.entries(c.flowers)) svg += `<path d="${d}" fill="none" stroke="${colour}" stroke-width="2.3" stroke-linecap="round"/>`;
+    if (c.stones) svg += `<path d="${c.stones}" fill="${pal.rock.left}" stroke="${INK}" stroke-width="0.9"/><path d="${c.tops}" fill="${pal.rock.top}" stroke="none"/>`;
+    if (svg) out.push({ depth: DEPTH.floor + 1, svg });
+  }
+  return out;
+}
+
 /** Whether a screen point (from the world's origin) is out on the open lake, where a touch would ring the water. */
 export function waterAt(sx: number, sy: number): boolean {
   return inside(LAKE, [sx, sy]);
@@ -363,6 +461,7 @@ export function valleyGround(pal: Palette, rand: Rand, moving: boolean): Drawn[]
   }
   floor.flat(patches, pal.meadow, ' fill-opacity="0.7"');
   out.push({ depth: DEPTH.floor, svg: floor.svg() });
+  out.push(...groundTexture(pal, seeded('kingdom-texture')));
   const beach: Pt[] = [...SHORE.map(([x, y]): Pt => [x + 4, y - 2]), ...[...SHORE].reverse().map(([x, y], i): Pt => [x + 30 + (i % 2) * 6, y - 26 + (i % 3) * 3])];
   const bank: Pt[] = [...SHORE, ...[...SHORE].reverse().map(([x, y]): Pt => [x - 4, y + 12])];
   out.push({ depth: DEPTH.beach, svg: new Part(0).fill(smooth(bank), pal.sand.right).fill(smooth(beach), pal.sand.top).line(smooth(SHORE.map(([x, y]): Pt => [x - 4, y + 13]), false), 2.6, pal.foam).svg() });
@@ -373,6 +472,8 @@ export function valleyGround(pal: Palette, rand: Rand, moving: boolean): Drawn[]
   // the cliffs and the waterfall, and the forests behind: on the cliffs, up the slopes either side of the cairn's hill
   out.push(...cliffs(pal, rand, moving));
   const ridge = (sy: number): number => DEPTH.woodsBehind + sy;
+  // a band of haze over the far mountains and the foot of the woods behind, so the village stands out sunlit in front of them
+  out.push({ depth: DEPTH.woodsBehind + 40000, svg: `<rect x="${x0}" y="${HORIZON - 150}" width="${x1 - x0}" height="140" fill="${pal.skyLow}" fill-opacity="${pal.dusk ? 0.16 : 0.32}" stroke="none"/>` });
   out.push(
     ...forest(pal, rand, [[-1000, -340], [-560, -270], [-380, -180], [-330, -60], [-380, -40], [-520, -100], [-700, -112], [-1000, -142]], { gap: 40, row: 24, size: 60, round: 0.08, depth: ridge }),
     ...forest(pal, rand, [[250, -60], [360, -210], [560, -260], [760, -290], [1000, -320], [1000, -30], [250, -30]], { gap: 40, row: 24, size: 62, round: 0.1, depth: ridge }),
@@ -566,8 +667,11 @@ export const LANTERNS: readonly (readonly [number, number])[] = [
 
 /** Things on the floor, sorted with the lowest terrace's. */
 function placed(parts: readonly Part[]): Drawn[] {
-  return parts.map((p) => ({ depth: ON_FLOOR + p.depth, svg: p.svg() }));
+  return parts.map((p) => ({ depth: ON_FLOOR + p.depth, svg: p.svg(), casts: 'floor' as const }));
 }
+
+/** Where the valley floor's shadows go among its things: under every one of them. */
+export const FLOOR_SHADOWS = ON_FLOOR - 1;
 
 /**
  * Everything on the floor at this point in the village's growth: the camp

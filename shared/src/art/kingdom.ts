@@ -40,11 +40,11 @@
  */
 import { KINGDOM_BUILDINGS, type KingdomBuilding, type KingdomLevel } from '../games/kingdom/buildings.js';
 import { CANVAS, checkSize, escapeXml, n, n2, prefixFor, seeded } from './svg.js';
-import { DAY, DUSK, Part, inked, iso, sorted, type Drawn, type Palette } from './kingdom/pen.js';
+import { DAY, DUSK, Part, SHADOW, castShadow, inked, iso, sorted, type Drawn, type Palette } from './kingdom/pen.js';
 import { BUILDING_TOP, PLOT_SIZE, buildingDoors, buildingParts } from './kingdom/buildings.js';
 import { TERRACES, WATER_Z, depthAt, groundAt, paths, terraceAt } from './kingdom/land.js';
 import * as P from './kingdom/props.js';
-import { CAIRN, FEATURE_AT, FLOOR_Z, VALLEY, valleyGround, valleyThings, valleyWoods, waterAt } from './kingdom/valley.js';
+import { CAIRN, FEATURE_AT, FLOOR_SHADOWS, FLOOR_Z, GROVE_TREES, VALLEY, valleyGround, valleyThings, valleyWoods, waterAt } from './kingdom/valley.js';
 import { markupExtent, overlaps, type Extent } from './kingdom/bounds.js';
 import { VILLAGE_MAX_LEVEL, villageHas, villageLevelAt, type VillageFeature } from '../games/kingdom/growth.js';
 import { KINGDOM_ANIMAL_HEIGHT, KINGDOM_FIGURE_HEIGHT, KINGDOM_SPRITES, SPRITE_BOX, kingdomActorReach, kingdomSpriteSvg, lifeOf, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite, type KingdomTap } from './kingdom/life.js';
@@ -189,7 +189,7 @@ function scenery(pal: Palette, rand: P.Rand, levels: Readonly<Record<KingdomBuil
   const out: Drawn[] = [];
   const put = (make: (x: number, y: number, z: number) => Part | Part[], x: number, y: number, k = BUILDING_SCALE, z = groundAt(x, y)): void => {
     const made = make(x, y, z);
-    for (const part of Array.isArray(made) ? made : [made]) out.push(grown(part, x, y, z, k, terraceAt(x, y) < 0 && z > 0 ? part.depth - 2000 : undefined));
+    for (const part of Array.isArray(made) ? made : [made]) out.push({ ...grown(part, x, y, z, k, terraceAt(x, y) < 0 && z > 0 ? part.depth - 2000 : undefined), casts: 'own' });
   };
   // on the hill behind, by the trail from the pass: poplars, an old walnut, rocks where the goats climb
   if (!moving) for (const [x, y, z, tall, wide] of KINGDOM_SWAYING.poplars) put((a, b, c) => P.poplar(pal, a, b, c, tall, wide), x, y, 1, z);
@@ -308,6 +308,8 @@ export interface KingdomSceneOptions {
   moving?: boolean;
   /** only the frame the village stands in, not the whole canvas: for a picture of the village on its own, such as a tile */
   framed?: boolean;
+  /** only this window onto the canvas (it wins over `framed`), and only what is drawn in it: a band for a small picture, much lighter than the whole */
+  window?: { x: number; y: number; w: number; h: number };
   /** how wide it is drawn, in pixels; its height follows */
   width?: number;
   /** for a dark screen: the village at dusk, its windows lit */
@@ -340,6 +342,38 @@ function villageOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, vill
   return village;
 }
 
+/**
+ * Every shadow in the world, all one colour and falling one way: each
+ * building's and each thing's on a terrace just under it, the valley
+ * floor's gathered into one path for each tile they fall in, and the
+ * groves' trees'.
+ */
+function shadowsOf(drawn: readonly Drawn[]): Drawn[] {
+  const out: Drawn[] = [];
+  const floor = new Map<string, string>();
+  const onFloor = (d: string, at: { x: number; y: number }): void => {
+    const key = `${Math.floor((at.x + KINGDOM_ORIGIN.x) / KINGDOM_TILE.w)},${Math.floor((at.y + KINGDOM_ORIGIN.y) / KINGDOM_TILE.h)}`;
+    floor.set(key, (floor.get(key) ?? '') + d);
+  };
+  const fill = `fill="${SHADOW.colour}" fill-opacity="${SHADOW.opacity}" stroke="none"`;
+  for (const piece of drawn) {
+    if (!piece.casts) continue;
+    const e = markupExtent(piece.svg);
+    const d = e && castShadow(e);
+    if (!e || !d) continue;
+    if (piece.casts === 'own') out.push({ depth: piece.depth - 0.5, svg: `<path d="${d}" ${fill}/>` });
+    else onFloor(d, { x: (e.x0 + e.x1) / 2, y: e.y1 });
+  }
+  // the groves' trees (which sway over the scene when an app draws them moving, their feet staying where they are)
+  for (const t of GROVE_TREES) {
+    const w = (48 * t.h) / 58;
+    const d = castShadow({ x0: t.x - w / 2, y0: t.y - t.h, x1: t.x + w / 2, y1: t.y });
+    if (d) onFloor(d, t);
+  }
+  for (const [, d] of floor) out.push({ depth: FLOOR_SHADOWS, svg: `<path d="${d}" ${fill}/>` });
+  return out;
+}
+
 /** One piece of the world, its depth among the rest, and the box it covers on the canvas. */
 interface Placed extends Drawn {
   at: Extent;
@@ -370,8 +404,9 @@ function world(o: KingdomSceneOptions): Placed[] {
   for (const b of KINGDOM_BUILDINGS) {
     if (b === o.without) continue;
     const level = levels[b];
-    drawn.push({ depth: buildingDepth(b), svg: placedBuilding(b, level, pal, rising.has(b) && level < 5) });
+    drawn.push({ depth: buildingDepth(b), svg: placedBuilding(b, level, pal, rising.has(b) && level < 5), casts: 'own' });
   }
+  drawn.push(...shadowsOf(drawn));
   const out: Placed[] = [];
   for (const [d] of drawn.map((p, i) => [p, i] as const).sort((a, b) => a[0].depth - b[0].depth || a[1] - b[1])) {
     const e = markupExtent(d.svg);
@@ -393,7 +428,7 @@ function within(pieces: readonly Placed[], box: { x: number; y: number; w: numbe
 
 /** The whole world (or, `framed`, the village's heart alone), each building at its level, as one picture. */
 export function kingdomSceneSvg(o: KingdomSceneOptions): string {
-  const view = o.framed ? KINGDOM_FRAME : { x: 0, y: 0, w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height };
+  const view = o.window ?? (o.framed ? KINGDOM_FRAME : { x: 0, y: 0, w: KINGDOM_SCENE.width, h: KINGDOM_SCENE.height });
   const width = checkSize(o.width, view.w);
   const height = (width * view.h) / view.w;
   const levels = Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, levelOf(o.levels, b)])) as Record<KingdomBuilding, KingdomLevel>;

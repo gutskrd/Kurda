@@ -178,6 +178,33 @@ export class Part {
 export interface Drawn {
   depth: number;
   svg: string;
+  /**
+   * Whether it stands up from the ground and casts a shadow there: 'own' its
+   * shadow drawn just under it (a building, a thing on a terrace), 'floor'
+   * gathered with the valley floor's others into one path a tile.
+   */
+  casts?: 'own' | 'floor';
+}
+
+/** The one colour every shadow in the village is: the ink, thinly. */
+export const SHADOW = { colour: INK, opacity: 0.14 } as const;
+
+/**
+ * The shadow something standing casts, from the box it is drawn in (screen
+ * units, its foot at the bottom middle): the light comes from the upper
+ * left, so the shadow falls from its foot away to the right, longer the
+ * taller it stands. Null for something lying flat (a field, a fold's fence).
+ */
+export function castShadow(e: { x0: number; y0: number; x1: number; y1: number }): string | null {
+  const w = e.x1 - e.x0;
+  const h = e.y1 - e.y0;
+  // too small to matter (a crop's single plant, a pebble) or lying flat
+  if (w <= 0 || h < 13 || h < w * 0.42) return null;
+  const fx = (e.x0 + e.x1) / 2;
+  const fy = e.y1;
+  const rx = Math.min(w * 0.4 + h * 0.26, 140);
+  const ry = Math.max(2, Math.min(w * 0.13 + h * 0.05, 26));
+  return oval(fx + h * 0.24, fy - ry * 0.35, rx, ry);
 }
 
 /** Parts sorted back to front (a stable sort, so ties keep the order they were made in) and written out. */

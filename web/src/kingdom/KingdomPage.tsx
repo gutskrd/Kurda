@@ -755,6 +755,8 @@ function Village(props: VillageProps): React.JSX.Element {
           </div>
         </div>
 
+        {!dark && <div className="kingdom-sun" aria-hidden="true" />}
+
         <header className="kingdom-hud" ref={setHudEl}>
           {props.backLink}
           <LevelBadge standing={standing} shown={village} bump={levelUp?.popped === true || (ticked && isRaising)} onOpen={() => setLevelsOpen(true)} />
