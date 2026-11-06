@@ -498,8 +498,42 @@
 .kingdom-level {
   position: relative;
   display: flex;
-  flex: none;
+  flex: 0 1 auto;
   align-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--kg-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.kingdom-level:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-md);
+}
+/* the bar to the next village level, and what that level brings, on a cream board the badge overlaps */
+.kingdom-level-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  max-width: 200px;
+  margin-inline-start: -12px;
+  padding: 5px 12px 6px 18px;
+  border: 2.5px solid var(--kg-ink);
+  border-bottom-width: 4px;
+  border-radius: var(--r-md);
+  background: var(--kg-cream);
+}
+.kingdom-level-next {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .kingdom-level-badge {
   position: relative;
@@ -520,10 +554,11 @@
 }
 .kingdom-level-bar {
   position: relative;
-  width: 92px;
-  height: 20px;
-  margin-inline-start: -10px;
+  width: 100%;
+  min-width: 84px;
+  height: 11px;
   overflow: hidden;
+  border-width: 1.5px;
   border-radius: var(--r-pill);
   background: var(--kg-cream-edge);
 }
@@ -1054,5 +1089,210 @@
 @media (min-width: 1000px) {
   .game-tile--kingdom {
     grid-column: span 7;
+  }
+}
+
+/* the village's levels: how it earns them, then each level and what it brings, those reached ticked, the next lit, the rest in silhouette */
+.kingdom-levels {
+  display: grid;
+  gap: 14px;
+}
+.kingdom-levels-how {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.kingdom-levels-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kingdom-levels-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 2px solid var(--kg-cream-edge);
+  border-radius: var(--r-md);
+  background: var(--kg-cream);
+  color: var(--kg-ink);
+}
+.kingdom-levels-row.is-next {
+  border-color: var(--kg-ink);
+  border-bottom-width: 4px;
+  background: var(--kg-saffron);
+}
+.kingdom-levels-row.is-later {
+  background: var(--kg-cream-2);
+}
+.kingdom-levels-n {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--kg-ink);
+  border-radius: 10px;
+  background: var(--kg-cream);
+  font-size: 15px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.kingdom-levels-row.is-reached .kingdom-levels-n {
+  background: var(--kg-green);
+  color: #fff;
+}
+.kingdom-levels-what {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.kingdom-levels-level {
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.75;
+}
+.kingdom-levels-unlock {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.kingdom-levels-silhouette {
+  display: flex;
+  gap: 6px;
+  padding-block: 3px;
+}
+.kingdom-levels-silhouette > span {
+  width: 54px;
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: var(--kg-ink);
+  opacity: 0.28;
+}
+
+/* a new village level: its banner over the village, and the sparkle where what it brought appears */
+.kingdom-levelup {
+  position: absolute;
+  inset-block-start: 84px;
+  inset-inline: 0;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  margin-inline: auto;
+  padding: 10px 22px 12px;
+  border: 3px solid var(--kg-ink);
+  border-bottom-width: 5px;
+  border-radius: var(--r-lg);
+  background: var(--kg-cream);
+  color: var(--kg-ink);
+  text-align: center;
+  pointer-events: none;
+  animation: kg-banner 600ms cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+.kingdom-levelup-kicker {
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0.75;
+}
+.kingdom-levelup-title {
+  font-size: 24px;
+  font-weight: 900;
+}
+.kingdom-levelup-new {
+  font-size: 15px;
+  font-weight: 800;
+}
+@keyframes kg-banner {
+  from {
+    opacity: 0;
+    scale: 0.6;
+    translate: 0 -12px;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+.kingdom-sparkles {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.kingdom-sparkles::before {
+  content: '';
+  position: absolute;
+  left: -26px;
+  top: -16px;
+  width: 52px;
+  height: 32px;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  animation: kg-pop 900ms ease-out forwards;
+}
+.kingdom-sparkles > i {
+  position: absolute;
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  animation: kg-sparkle 1400ms ease-out forwards;
+}
+.kingdom-sparkles > i > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.kingdom-sparkles > i:nth-child(1) { --dx: -26px; --dy: -22px; }
+.kingdom-sparkles > i:nth-child(2) { --dx: 24px; --dy: -26px; animation-delay: 80ms; }
+.kingdom-sparkles > i:nth-child(3) { --dx: 34px; --dy: -4px; animation-delay: 160ms; }
+.kingdom-sparkles > i:nth-child(4) { --dx: -36px; --dy: 2px; animation-delay: 120ms; }
+.kingdom-sparkles > i:nth-child(5) { --dx: -12px; --dy: -36px; animation-delay: 220ms; }
+.kingdom-sparkles > i:nth-child(6) { --dx: 12px; --dy: -40px; animation-delay: 40ms; }
+.kingdom-sparkles > i:nth-child(7) { --dx: 20px; --dy: 12px; animation-delay: 260ms; }
+.kingdom-sparkles > i:nth-child(8) { --dx: -22px; --dy: 14px; animation-delay: 300ms; }
+@keyframes kg-sparkle {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+    scale: 0.3;
+    rotate: 0deg;
+  }
+  25% {
+    opacity: 1;
+    scale: 1.3;
+  }
+  100% {
+    opacity: 0;
+    translate: var(--dx) var(--dy);
+    scale: 0.6;
+    rotate: 120deg;
+  }
+}
+@keyframes kg-pop {
+  0% {
+    opacity: 1;
+    scale: 0.2;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kingdom-levelup,
+  .kingdom-sparkles,
+  .kingdom-sparkles > i,
+  .kingdom-sparkles::before {
+    animation: none !important;
+  }
+  .kingdom-sparkles {
+    display: none;
   }
 }

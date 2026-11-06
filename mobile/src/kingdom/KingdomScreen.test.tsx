@@ -22,7 +22,10 @@ beforeEach(() => {
   resetHaptics();
   navigation.navigate.mockClear();
 });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  localStorage.clear();
+});
 
 const en = TRANSLATIONS.en;
 const counts = { houses: 14, school: 5, teahouse: 0, spring: 9, market: 1, orchard: 4 };
@@ -54,12 +57,34 @@ describe('the village on the phone', () => {
     expect(screen.queryByTestId('kingdom-intro')).toBeNull();
   });
 
+  it('lists every village level from its badge, those reached ticked and the rest still to come', async () => {
+    serve(village(), 0);
+    renderWithProviders(<KingdomScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByTestId('kingdom-levels'));
+    const list = await screen.findByTestId('kingdom-level-list');
+    expect(within(list).getByText(en['kingdom.village.how'])).toBeTruthy();
+    expect(screen.getByTestId('kingdom-level-6-reached')).toBeTruthy();
+    expect(within(screen.getByTestId('kingdom-level-7-next')).getByText('Chicks · Children at play')).toBeTruthy();
+    expect(screen.getByTestId('kingdom-level-25-later').getAttribute('aria-label')).toContain(en['kingdom.village.locked']);
+  });
+
+  it('celebrates a new village level once on this device, and never replays old ones on a new device', async () => {
+    localStorage.setItem('village.seen.me', '4');
+    serve(village(), 0);
+    renderWithProviders(<KingdomScreen onExit={() => undefined} />);
+    const banner = await screen.findByTestId('kingdom-levelup');
+    expect(within(banner).getByText('Village level 6')).toBeTruthy();
+    expect(within(banner).getByText('New: Haystacks · Chickpeas')).toBeTruthy();
+  });
+
   it('shows a chunky top bar with the village’s level and the learner’s Zêr, and a badge under every building', async () => {
     serve(village(), 1240);
     renderWithProviders(<KingdomScreen onExit={() => undefined} />);
     expect((await screen.findByTestId('kingdom-zer')).getAttribute('aria-label')).toBe('1,240 Zêr');
-    // houses, school, spring and orchard at level 1
-    expect(screen.getByTestId('kingdom-levels').getAttribute('aria-label')).toBe('4 of 30 building levels');
+    // four buildings at level 1 and the market half-way to it: the village at level 6, chicks and children next
+    const badge = screen.getByTestId('kingdom-levels');
+    expect(badge.getAttribute('aria-label')).toContain('Village level 6');
+    expect(within(badge).getByText('Next: Chicks')).toBeTruthy();
     expect(within(screen.getByTestId('kingdom-plot-houses')).getByText('Lv 1')).toBeTruthy();
     expect(within(screen.getByTestId('kingdom-plot-teahouse')).getByText('Lv 0')).toBeTruthy();
     // the village's life is laid over the world, hidden from screen readers; the tray is the list

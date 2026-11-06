@@ -1122,11 +1122,10 @@ function scatter(seed: number): () => number {
  * (an app lays them in this order). `to` places world points on the canvas;
  * `inPlot` places a building's own points.
  */
-export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, to: ToCanvas, inPlot: InPlot, swaying: { poplars: readonly (readonly number[])[]; kilim: readonly number[]; banners: readonly (readonly number[])[] }, origin: { x: number; y: number }): KingdomActor[] {
-  const total = (Object.values(levels) as number[]).reduce((a, b) => a + b, 0);
-  const has = (f: VillageFeature): boolean => villageHas(total, f);
-  const flock = villageFlock(total);
-  const rand = scatter(total * 7919 + 17);
+export function lifeOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, village: number, to: ToCanvas, inPlot: InPlot, swaying: { poplars: readonly (readonly number[])[]; kilim: readonly number[]; banners: readonly (readonly number[])[] }, origin: { x: number; y: number }): KingdomActor[] {
+  const has = (f: VillageFeature): boolean => villageHas(village, f);
+  const flock = villageFlock(village);
+  const rand = scatter(village * 7919 + 17);
   const S = (sx: number, sy: number): { x: number; y: number } => ({ x: origin.x + sx, y: origin.y + sy });
   const F0 = FLOOR_Z;
   const ground: KingdomActor[] = [];

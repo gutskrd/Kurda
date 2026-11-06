@@ -5,13 +5,12 @@ import { useIsFocused, useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   KINGDOM_BUILDINGS,
-  KINGDOM_LEVEL_TOTAL,
   KINGDOM_PLOTS,
   KINGDOM_SCENE,
   KINGDOM_SPRITES,
   kingdomActorReach,
   kingdomBuildingSvg,
-  kingdomLevelCount,
+  kingdomFeatureAt,
   kingdomLevels,
   kingdomLife,
   kingdomPlotBox,
@@ -22,8 +21,9 @@ import {
   kingdomTiles,
   kingdomWaterAt,
   praiseWords,
+  VILLAGE_LEVELS,
   villageCamera,
-  villageProgress,
+  villageStanding,
   type KingdomActor,
   type KingdomBuilding,
   type KingdomBuildingView,
@@ -37,6 +37,7 @@ import {
   type KingdomUpgrade,
   type KingdomView,
   type VillageCamera,
+  type VillageFeature,
   type VillageStage,
 } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -49,6 +50,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { Celebration } from '../ranks/Celebration';
 import { FLECKS } from '../ranks/motion';
 import { useDirection } from '../reports/direction';
+import { LevelBadge, LevelList, LevelUp, Sparkles, useVillageSeen } from './VillageLevel';
 import { BottomSheet } from '../theme/BottomSheet';
 import { sectionLabel } from '../theme/fonts';
 import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
@@ -84,6 +86,8 @@ const GOLD_LIGHT = '#ffe16a';
 /** The game's own skin over the scene: the drawing's ink and cream, the same by day and at dusk. */
 const INK = '#4a2a1a';
 const CREAM = '#fff7e6';
+/** How long a new village level's banner and sparkle stay once what it brings has appeared. */
+const LEVEL_UP_MS = 2800;
 /** The least a tap target in the village reaches across, in canvas units (about a thumb's width at the opening zoom). */
 const HIT = 26;
 const CREAM_2 = '#f6e8cc';
@@ -189,7 +193,7 @@ export function KingdomScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
 
 /** The game itself, once the village has been read: the stage, its world and camera, the bar, the tray, the sheet and the celebration. */
 function Village({ view, zer, back }: { view: KingdomView; zer: number | null; back: React.ReactNode }): React.JSX.Element {
-  const { client } = useAuth();
+  const { client, user } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
@@ -324,7 +328,30 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
   const [reacting, setReacting] = useState<{ id: string; tap: KingdomTap } | null>(null);
   const [bits, setBits] = useState<{ key: number; kind: 'feathers' | 'leaf' | 'ripple'; x: number; y: number }[]>([]);
   const [said, setSaid] = useState<{ word: string; x: number; y: number } | null>(null);
-  const actors = useMemo(() => kingdomLife(levels), [levels]);
+  // the village's own level, the last one this device showed, and a new one being shown: the camera goes to what it brings, which appears with a sparkle
+  const standing = useMemo(() => villageStanding(view.buildings, levels), [view.buildings, levels]);
+  const { seen, markSeen } = useVillageSeen(user?.id ?? null, standing.level);
+  const [levelUp, setLevelUp] = useState<{ level: number; unlocks: readonly VillageFeature[]; at: { x: number; y: number }; popped: boolean } | null>(null);
+  const [levelsOpen, setLevelsOpen] = useState(false);
+  const village = levelUp?.popped ? levelUp.level : Math.min(seen ?? standing.level, standing.level);
+  const actors = useMemo(() => kingdomLife(levels, village), [levels, village]);
+  // once every building's new level has been celebrated, a new village level: its banner, the camera to what it brings, and that appearing with a sparkle
+  const ready = queue.length === 0 && !introShown && seen !== null;
+  useEffect(() => {
+    if (!ready || levelUp || seen === null || seen >= standing.level) return;
+    const top = VILLAGE_LEVELS[standing.level - 1]!;
+    const at = kingdomFeatureAt(top.unlocks[0]!);
+    setLevelUp({ level: top.level, unlocks: top.unlocks, at, popped: false });
+    const pop = (): void => {
+      setLevelUp((l) => (l ? { ...l, popped: true } : l));
+      haptic('celebrate');
+      setTimeout(() => {
+        markSeen(top.level);
+        setLevelUp(null);
+      }, LEVEL_UP_MS);
+    };
+    flyTo(cameraOn({ x: at.x - 70, y: at.y - 60, w: 140, h: 100 }, stageRef.current, camRef.current.s), pop, 1300);
+  }, [ready, levelUp, seen, standing.level, flyTo, markSeen]);
   const openBuilding = useCallback(
     (b: KingdomBuilding) => {
       haptic('tap');
@@ -474,11 +501,10 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
   const recentre = (): void => flyTo(openingCamera(stageRef.current));
 
   // ─── what is drawn: the tiles and the life near the view, at the scale the world was last drawn at
-  const tiles = useMemo(() => kingdomTiles({ levels, rising, dark, moving: true, without: isRaising ? current?.building : undefined }), [levels, rising, dark, isRaising, current]);
+  const tiles = useMemo(() => kingdomTiles({ levels, village, rising, dark, moving: true, without: isRaising ? current?.building : undefined }), [levels, village, rising, dark, isRaising, current]);
   const r = drawnAt;
   // a word bubble in scale with the person who says it (about half their height), and never smaller than can be read
   const bubble = Math.max(8.5 * r, 11) / 15;
-  const total = kingdomLevelCount(KINGDOM_BUILDINGS.map((id) => ({ level: levels[id] })));
   const pending = new Set(queue.map((u) => u.building));
   const openView = view.buildings.find((b) => b.id === open) ?? null;
   const rtl = dir.row === 'row-reverse';
@@ -528,6 +554,7 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
                   />
                 );
               })}
+              {levelUp?.popped && !reduce ? <Sparkles x={levelUp.at.x * r} y={levelUp.at.y * r} k={r} /> : null}
               {said ? (
                 <View style={[styles.bubble, { left: said.x * r - 60 * bubble, top: said.y * r - 40 * bubble, width: 120 * bubble }]} pointerEvents="none">
                   <Text style={[styles.bubbleText, { fontSize: 15 * bubble, paddingHorizontal: 12 * bubble, paddingVertical: 4 * bubble, borderWidth: 2.5 * bubble }]}>{said.word}</Text>
@@ -539,12 +566,7 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
 
         <View style={[styles.hud, { top: insets.top + 10, flexDirection: dir.row }]}>
           {back}
-          <View style={[styles.level, { flexDirection: dir.row }]} accessible accessibilityRole="image" accessibilityLabel={t('kingdom.hud.levels', { count: number(total), total: number(KINGDOM_LEVEL_TOTAL) })} testID="kingdom-levels">
-            <LevelBadge text={number(total)} bounce={ticked && isRaising && !reduce} />
-            <View style={styles.levelBar}>
-              <View style={[styles.levelFill, { width: `${Math.round((total >= KINGDOM_LEVEL_TOTAL ? 1 : villageProgress(view.buildings)) * 100)}%` }, rtl ? { right: 0 } : { left: 0 }]} />
-            </View>
-          </View>
+          <LevelBadge standing={standing} shown={village} bump={!reduce && (levelUp?.popped === true || (ticked && isRaising))} onOpen={() => setLevelsOpen(true)} />
           <Text style={styles.hudTitle} accessibilityRole="header">
             {t('kingdom.title')}
           </Text>
@@ -587,6 +609,8 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
           </ScrollView>
         </View>
 
+        {levelUp ? <LevelUp level={levelUp.level} unlocks={levelUp.unlocks} top={insets.top + 78} /> : null}
+
         {introShown && view.intro ? (
           <View style={[styles.intro, { bottom: trayH + 8 }]} testID="kingdom-intro">
             <Text style={[styles.introText, dir.text]}>{t('kingdom.intro')}</Text>
@@ -599,6 +623,10 @@ function Village({ view, zer, back }: { view: KingdomView; zer: number | null; b
           </View>
         ) : null}
       </View>
+
+      <BottomSheet visible={levelsOpen} onClose={() => setLevelsOpen(false)} title={t('kingdom.village.title')} testID="kingdom-levels-sheet">
+        <LevelList level={village} textColor={colors.textSecondary} />
+      </BottomSheet>
 
       <BottomSheet visible={openView !== null} onClose={() => setOpen(null)} title={openView ? t(buildingNameKey(openView.id)) : undefined} testID="kingdom-sheet">
         {openView ? (
@@ -696,21 +724,6 @@ function RoundButton({ label, onPress, children, testID }: { label: string; onPr
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={label} testID={testID} style={({ pressed }) => [styles.round, pressed && styles.roundPressed]} hitSlop={4}>
       {children}
     </Pressable>
-  );
-}
-
-/** The village's level in the top bar: a saffron badge that bounces as it ticks over. */
-function LevelBadge({ text, bounce }: { text: string; bounce: boolean }): React.JSX.Element {
-  const pop = useRef(new Animated.Value(1)).current;
-  useEffect(() => {
-    if (!bounce) return;
-    pop.setValue(1);
-    Animated.sequence([Animated.timing(pop, { toValue: 1.4, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: true }), Animated.spring(pop, { toValue: 1, friction: 4, useNativeDriver: true })]).start();
-  }, [bounce, pop]);
-  return (
-    <Animated.View style={[styles.levelBadge, { transform: [{ rotate: '-4deg' }, { scale: pop }] }]}>
-      <Text style={styles.levelText}>{text}</Text>
-    </Animated.View>
   );
 }
 
@@ -1147,11 +1160,6 @@ const styles = StyleSheet.create({
   },
   // the title is said, not shown: the bar's room goes to the level and the Zêr
   hudTitle: { position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' },
-  level: { alignItems: 'center' },
-  levelBadge: { zIndex: 1, width: 50, height: 50, alignItems: 'center', justifyContent: 'center', borderRadius: radii.lg, borderWidth: 3, borderBottomWidth: 5, borderColor: INK, backgroundColor: SAFFRON },
-  levelText: { color: INK, fontSize: 21, fontWeight: '900', fontVariant: ['tabular-nums'] },
-  levelBar: { width: 72, height: 20, marginStart: -10, borderRadius: radii.pill, borderWidth: 2.5, borderBottomWidth: 4, borderColor: INK, backgroundColor: CREAM_EDGE, overflow: 'hidden' },
-  levelFill: { position: 'absolute', top: 0, bottom: 0, backgroundColor: GOLD },
   chip: {
     height: 40,
     alignItems: 'center',

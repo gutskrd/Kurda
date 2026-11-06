@@ -20,8 +20,11 @@ import {
   villageFlock,
   villageGrowth,
   villageHas,
-  villageNext,
-  villageProgress,
+  villageLevelAt,
+  villageStanding,
+  villageXp,
+  VILLAGE_LEVELS,
+  VILLAGE_MAX_LEVEL,
   type KingdomCounts,
   type KingdomRecorded,
 } from './index.js';
@@ -135,52 +138,71 @@ describe('the village as it is drawn', () => {
   });
 });
 
-describe('how the valley fills in as the village grows', () => {
-  it('starts as a camp and two dug plots, and gains one thing with every level up to a feast at thirty', () => {
-    expect(villageGrowth(0)).toEqual(['camp', 'plots']);
-    expect(villageGrowth(KINGDOM_LEVEL_TOTAL)).toEqual([...VILLAGE_FEATURES]);
-    // listed in the order they come, and every total from 1 to 30 brings exactly one
+describe('the village’s own level, and how the valley fills in as it rises', () => {
+  it('starts every village at level 1 with its camp, its plots and a shepherd, and brings something new with every level after', () => {
+    expect(villageGrowth(1)).toEqual(['camp', 'plots', 'shepherd']);
+    expect(villageGrowth(VILLAGE_MAX_LEVEL)).toEqual([...VILLAGE_FEATURES]);
+    // listed in the order they come, every piece at one level, and every level from the second on brings at least one
     const at = VILLAGE_FEATURES.map((f) => VILLAGE_GROWTH[f]);
     expect([...at].sort((a, b) => a - b)).toEqual(at);
-    for (let t = 1; t <= KINGDOM_LEVEL_TOTAL; t++) expect(at.filter((x) => x === t), `total ${t}`).toHaveLength(1);
+    for (let l = 1; l <= VILLAGE_MAX_LEVEL; l++) expect(at.filter((x) => x === l).length, `level ${l}`).toBeGreaterThan(0);
+    expect(VILLAGE_LEVELS.map((l) => l.level)).toEqual(Array.from({ length: VILLAGE_MAX_LEVEL }, (_, i) => i + 1));
   });
 
-  it('only ever adds as the total rises, and reads any number it is handed as a total from 0 to 30', () => {
-    for (let t = 0; t < KINGDOM_LEVEL_TOTAL; t++) {
-      const now = villageGrowth(t);
-      const next = villageGrowth(t + 1);
-      expect(now.every((f) => next.includes(f)), `total ${t}`).toBe(true);
-      expect(next.length, `total ${t}`).toBe(now.length + 1);
-      expect(villageNext(t)?.at, `total ${t}`).toBe(t + 1);
+  it('climbs a rising curve from nothing to every building finished, each step a little longer than the last', () => {
+    const xp = VILLAGE_LEVELS.map((l) => l.xp);
+    expect(xp[0]).toBe(0);
+    expect(xp[xp.length - 1]).toBe(KINGDOM_LEVEL_TOTAL);
+    // the second level is less than one building level away, so it comes on the first day
+    expect(xp[1]).toBeLessThan(1);
+    for (let i = 2; i < xp.length; i++) expect(xp[i]! - xp[i - 1]!, `level ${i + 1}`).toBeGreaterThanOrEqual(xp[i - 1]! - xp[i - 2]! - 0.011);
+    expect(xp[xp.length - 1]! - xp[xp.length - 2]!).toBeGreaterThan((xp[2]! - xp[1]!) * 1.5);
+  });
+
+  it('counts every building’s level in full and its way to the next, so the first lesson already moves the bar', () => {
+    expect(villageXp(kingdomBuildings(zero, NO_KINGDOM_LEVELS))).toBe(0);
+    expect(villageStanding(kingdomBuildings(zero, NO_KINGDOM_LEVELS))).toMatchObject({ level: 1, share: 0 });
+    // one lesson passed: a quarter of the school's way, a few listening and conversation answers right, the first day
+    const first = kingdomBuildings({ ...zero, school: 1, spring: 3, market: 1, orchard: 1 }, NO_KINGDOM_LEVELS);
+    const one = villageStanding(first);
+    expect(one.xp).toBeCloseTo(0.25 + 3 / 8 + 0.5 + 1 / 3, 5);
+    expect(one.level).toBe(2);
+    expect(one.next?.unlocks).toEqual(['hens']);
+    // a level recorded on the server counts in full even when its count has since shrunk
+    const kept = villageXp(kingdomBuildings({ ...zero, teahouse: 0 }, { ...NO_KINGDOM_LEVELS, teahouse: 3 }));
+    expect(kept).toBe(3);
+    const done = kingdomBuildings({ houses: 9999, school: 999, teahouse: 99, spring: 999, market: 999, orchard: 999 }, NO_KINGDOM_LEVELS);
+    expect(villageStanding(done)).toMatchObject({ level: VILLAGE_MAX_LEVEL, xp: 30, share: 1, next: null });
+  });
+
+  it('only ever adds as the level rises, and reads any number it is handed as a level from the first to the last', () => {
+    for (let l = 1; l < VILLAGE_MAX_LEVEL; l++) {
+      const now = villageGrowth(l);
+      const next = villageGrowth(l + 1);
+      expect(now.every((f) => next.includes(f)), `level ${l}`).toBe(true);
+      expect(next.length, `level ${l}`).toBeGreaterThan(now.length);
+      expect(villageLevelAt(VILLAGE_LEVELS[l]!.xp)).toBe(l + 1);
+      expect(villageLevelAt(VILLAGE_LEVELS[l]!.xp - 0.01)).toBe(l);
     }
-    expect(villageNext(KINGDOM_LEVEL_TOTAL)).toBeNull();
-    expect(villageGrowth(-4)).toEqual(villageGrowth(0));
-    expect(villageGrowth(99)).toEqual(villageGrowth(30));
-    expect(villageGrowth(Number.NaN)).toEqual(villageGrowth(0));
-    expect(villageGrowth(14.9)).toEqual(villageGrowth(14));
-    expect(villageHas(13, 'dock')).toBe(true);
-    expect(villageHas(12, 'dock')).toBe(false);
+    expect(villageGrowth(-4)).toEqual(villageGrowth(1));
+    expect(villageGrowth(99)).toEqual(villageGrowth(VILLAGE_MAX_LEVEL));
+    expect(villageGrowth(Number.NaN)).toEqual(villageGrowth(1));
+    expect(villageGrowth(11.9)).toEqual(villageGrowth(11));
+    expect(villageHas(12, 'dock')).toBe(true);
+    expect(villageHas(11, 'dock')).toBe(false);
+    expect(villageLevelAt(Number.NaN)).toBe(1);
   });
 
   it('keeps a growing flock that never shrinks as the village grows', () => {
-    expect(villageFlock(0)).toEqual({ campSheep: 2, sheep: 0, goats: 0, hens: 0, chicks: 0, cows: 0, donkeys: 0 });
-    const full = villageFlock(30);
+    expect(villageFlock(1)).toEqual({ campSheep: 2, sheep: 0, goats: 0, hens: 0, chicks: 0, cows: 0, donkeys: 0 });
+    const full = villageFlock(VILLAGE_MAX_LEVEL);
     expect(full.sheep).toBeGreaterThanOrEqual(4);
     expect(full.cows).toBe(1);
     expect(full.donkeys).toBe(1);
-    for (let t = 0; t < KINGDOM_LEVEL_TOTAL; t++) {
+    for (let t = 1; t < VILLAGE_MAX_LEVEL; t++) {
       const a = villageFlock(t);
       const b = villageFlock(t + 1);
       for (const k of Object.keys(a) as (keyof typeof a)[]) expect(b[k], `${k} at ${t + 1}`).toBeGreaterThanOrEqual(a[k]);
     }
-  });
-
-  it('fills the village’s bar as far as the building nearest its next level has come, and full once all six are finished', () => {
-    // the houses are 19 of 38 on their way from level 1 to level 2, the furthest of the six
-    const buildings = kingdomBuildings({ houses: 31, school: 5, teahouse: 0, spring: 9, market: 1, orchard: 4 }, NO_KINGDOM_LEVELS);
-    expect(villageProgress(buildings)).toBeCloseTo(0.5, 5);
-    const done = kingdomBuildings({ houses: 9999, school: 999, teahouse: 99, spring: 999, market: 999, orchard: 999 }, NO_KINGDOM_LEVELS);
-    expect(villageProgress(done)).toBe(1);
-    expect(villageProgress(kingdomBuildings(zero, NO_KINGDOM_LEVELS))).toBe(0);
   });
 });

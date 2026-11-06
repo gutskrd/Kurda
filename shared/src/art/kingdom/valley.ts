@@ -455,6 +455,54 @@ export const PENS = {
   camp: { x: 330, y: -180, w: 150, d: 100 },
 } as const;
 
+/**
+ * Where each thing the village gains stands, in world units, and whether it
+ * stands up in the village (on its terraces) or down on the valley's floor:
+ * where the camera goes to show it when it arrives.
+ */
+export const FEATURE_AT: Readonly<Record<VillageFeature, readonly [number, number, 'village' | 'floor']>> = {
+  camp: [360, -170, 'floor'],
+  plots: [515, 183, 'floor'],
+  shepherd: [500, -100, 'floor'],
+  wheat: [515, 183, 'floor'],
+  baker: [236, 70, 'village'],
+  hens: [492, 270, 'floor'],
+  sheepfold: [612, 403, 'floor'],
+  farmer: [515, 183, 'floor'],
+  laundry: [380, -60, 'floor'],
+  haystack: [700, 450, 'floor'],
+  chickpeas: [515, 65, 'floor'],
+  chicks: [492, 277, 'floor'],
+  children: [470, 300, 'floor'],
+  goatfold: [711, 403, 'floor'],
+  signs: [456, 352, 'floor'],
+  waterCarrier: [262, 300, 'village'],
+  mill: [958, 230, 'floor'],
+  tomatoes: [640, 183, 'floor'],
+  benches: [520, 312, 'floor'],
+  dock: [536, 518, 'floor'],
+  cow: [660, 507, 'floor'],
+  boat: [516, 556, 'floor'],
+  elder: [150, 196, 'village'],
+  lanterns: [600, 324, 'floor'],
+  hives: [930, 540, 'floor'],
+  onions: [640, 65, 'floor'],
+  threshing: [745, 70, 'floor'],
+  donkey: [690, 500, 'floor'],
+  rider: [650, 336, 'floor'],
+  orchardRows: [850, 540, 'floor'],
+  kilims: [700, 600, 'floor'],
+  jars: [455, 306, 'floor'],
+  flowers: [540, 330, 'floor'],
+  poplars: [860, 452, 'floor'],
+  bigFlock: [612, 403, 'floor'],
+  bridge: [984, 463, 'floor'],
+  dovecote: [330, 40, 'floor'],
+  loom: [420, -80, 'floor'],
+  weaver: [420, -80, 'floor'],
+  festival: [600, 324, 'floor'],
+};
+
 /** The shepherds' camp: their tent, its fire, and where their own few sheep graze. */
 export const CAMP = { tent: [360, -170] as const, fire: [372, -120] as const };
 

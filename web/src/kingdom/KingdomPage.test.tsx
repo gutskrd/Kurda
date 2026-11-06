@@ -54,19 +54,54 @@ describe('The Village on the website', () => {
     expect(screen.queryByText(en['kingdom.intro'])).not.toBeInTheDocument();
   });
 
-  it('shows each building’s level on a badge in the world, and the village’s level of thirty in the top bar', async () => {
+  it('shows each building’s level on a badge in the world, and the village’s own level, its bar and what comes next in the top bar', async () => {
     serve(village());
     const { container } = renderApp(<KingdomPage />);
     await screen.findByRole('heading', { name: en['kingdom.title'], level: 1 });
     expect(container.querySelector('[data-building="houses"]')).toHaveTextContent('Lv 1');
     expect(container.querySelector('[data-building="teahouse"]')).toHaveTextContent('Lv 0');
-    // houses, school, spring and orchard at level 1
-    expect(screen.getByRole('img', { name: '4 of 30 building levels' })).toHaveTextContent('4');
+    // four buildings at level 1 and the market half-way to it: the village at level 6, chicks and children next
+    const badge = screen.getByTestId('kingdom-level');
+    expect(badge).toHaveTextContent('6');
+    expect(badge).toHaveTextContent('Next: Chicks');
+    expect(badge).toHaveAccessibleName(expect.stringContaining('Village level 6'));
     // the world is drawn in tiles, and its life is laid over it, hidden from screen readers; Hevalo is the app's own drawing of him
     expect(container.querySelectorAll('.kingdom-tile').length).toBeGreaterThan(0);
     const life = container.querySelector('.kingdom-life');
     expect(life).toHaveAttribute('aria-hidden', 'true');
     expect(life?.innerHTML).toContain('kgdeer-');
+  });
+
+  it('opens every village level from its badge: those reached ticked, the next one named, the rest still to come', async () => {
+    serve(village());
+    renderApp(<KingdomPage />);
+    await userEvent.click(await screen.findByTestId('kingdom-level'));
+    const sheet = await screen.findByRole('dialog', { name: en['kingdom.village.title'] });
+    expect(within(sheet).getByText(en['kingdom.village.how'])).toBeInTheDocument();
+    const rows = sheet.querySelectorAll('.kingdom-levels-row');
+    expect(rows).toHaveLength(25);
+    expect(sheet.querySelectorAll('.kingdom-levels-row.is-reached')).toHaveLength(6);
+    expect(sheet.querySelector('.kingdom-levels-row.is-next')).toHaveTextContent('Chicks · Children at play');
+    expect(within(sheet).getAllByLabelText(en['kingdom.village.locked'])).toHaveLength(18);
+  });
+
+  it('celebrates a new village level once on this device, and never replays old ones on a new device', async () => {
+    reduceMotion();
+    // a device that has never shown the village: nothing to celebrate, and the level now kept
+    serve(village());
+    const first = renderApp(<KingdomPage />);
+    await screen.findByTestId('kingdom-level');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(localStorage.getItem('kurda.village.seen.guest')).toBe('6');
+    first.unmount();
+    // one that last showed level 4: the new level's banner, and what it brought
+    localStorage.setItem('kurda.village.seen.guest', '4');
+    serve(village());
+    renderApp(<KingdomPage />);
+    const banner = await screen.findByRole('status');
+    expect(banner).toHaveTextContent('Village level 6');
+    expect(banner).toHaveTextContent('New: Haystacks · Chickpeas');
+    await waitFor(() => expect(localStorage.getItem('kurda.village.seen.guest')).toBe('6'), { timeout: 4000 });
   });
 
   it('gives each card what grows its building in plain words and the way into that part of Learn', async () => {

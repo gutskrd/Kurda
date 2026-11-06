@@ -25,6 +25,7 @@ export {
   kingdomActorReach,
   kingdomBuildingDoors,
   kingdomBuildingSvg,
+  kingdomFeatureAt,
   kingdomLife,
   kingdomPlotBox,
   kingdomPlotSvg,

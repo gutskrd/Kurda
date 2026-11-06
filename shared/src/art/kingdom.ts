@@ -44,9 +44,9 @@ import { DAY, DUSK, Part, inked, iso, sorted, type Drawn, type Palette } from '.
 import { BUILDING_TOP, PLOT_SIZE, buildingDoors, buildingParts } from './kingdom/buildings.js';
 import { TERRACES, WATER_Z, depthAt, groundAt, paths, terraceAt } from './kingdom/land.js';
 import * as P from './kingdom/props.js';
-import { CAIRN, VALLEY, valleyGround, valleyThings, valleyWoods, waterAt } from './kingdom/valley.js';
+import { CAIRN, FEATURE_AT, FLOOR_Z, VALLEY, valleyGround, valleyThings, valleyWoods, waterAt } from './kingdom/valley.js';
 import { markupExtent, overlaps, type Extent } from './kingdom/bounds.js';
-import { villageHas, type VillageFeature } from '../games/kingdom/growth.js';
+import { VILLAGE_MAX_LEVEL, villageHas, villageLevelAt, type VillageFeature } from '../games/kingdom/growth.js';
 import { KINGDOM_ANIMAL_HEIGHT, KINGDOM_FIGURE_HEIGHT, KINGDOM_SPRITES, SPRITE_BOX, kingdomActorReach, kingdomSpriteSvg, lifeOf, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite, type KingdomTap } from './kingdom/life.js';
 
 /** The canvas the world is drawn on, in its own units: the whole valley, several times the village's size. */
@@ -89,6 +89,12 @@ export interface KingdomPlot {
 }
 
 /** A point in the world on the canvas. */
+/** Where on the canvas a thing the village gains stands, for the camera to go and show it as it arrives. */
+export function kingdomFeatureAt(feature: VillageFeature): { x: number; y: number } {
+  const [x, y, on] = FEATURE_AT[feature];
+  return kingdomPoint(x, y, on === 'village' ? groundAt(x, y) : FLOOR_Z);
+}
+
 /** Whether a point on the canvas is out on the open lake (for an app to ring the water where it is touched). */
 export function kingdomWaterAt(x: number, y: number): boolean {
   return waterAt(x - KINGDOM_ORIGIN.x, y - KINGDOM_ORIGIN.y);
@@ -306,6 +312,12 @@ export interface KingdomSceneOptions {
   width?: number;
   /** for a dark screen: the village at dusk, its windows lit */
   dark?: boolean;
+  /**
+   * The village's own level, which says how far the valley round the
+   * buildings has filled in (`villageStanding`); without it, the level their
+   * levels alone reach.
+   */
+  village?: number;
   title?: string;
   idPrefix?: string;
 }
@@ -316,9 +328,16 @@ function levelOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, b: Kin
   return l;
 }
 
-/** The total of the levels shown, which says how far the valley round them has filled in. */
+/** The total of the levels shown. */
 export function kingdomTotal(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>): number {
   return KINGDOM_BUILDINGS.reduce((sum, b) => sum + levels[b], 0);
+}
+
+/** The village level the valley is drawn at: the one given, or the one the buildings' levels alone reach. */
+function villageOf(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, village: number | undefined): number {
+  if (village === undefined) return villageLevelAt(kingdomTotal(levels));
+  if (!Number.isInteger(village) || village < 1 || village > VILLAGE_MAX_LEVEL) throw new RangeError(`art: no village level ${String(village)}`);
+  return village;
 }
 
 /** One piece of the world, its depth among the rest, and the box it covers on the canvas. */
@@ -337,12 +356,12 @@ function world(o: KingdomSceneOptions): Placed[] {
   const levels = Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, levelOf(o.levels, b)])) as Record<KingdomBuilding, KingdomLevel>;
   const rising = new Set(o.rising ?? []);
   const moving = o.moving === true;
-  const key = `${KINGDOM_BUILDINGS.map((b) => `${levels[b]}${rising.has(b) ? 'r' : ''}`).join('')}|${o.dark === true}|${o.without ?? ''}|${moving}`;
+  const village = villageOf(levels, o.village);
+  const key = `${KINGDOM_BUILDINGS.map((b) => `${levels[b]}${rising.has(b) ? 'r' : ''}`).join('')}|${village}|${o.dark === true}|${o.without ?? ''}|${moving}`;
   const kept = WORLDS.get(key);
   if (kept) return kept;
   const pal = o.dark ? DUSK : DAY;
-  const total = kingdomTotal(levels);
-  const has = (f: VillageFeature): boolean => villageHas(total, f);
+  const has = (f: VillageFeature): boolean => villageHas(village, f);
   const drawn: Drawn[] = valleyGround(pal, seeded('kingdom-land'), moving);
   drawn.push(...paths(pal, seeded('kingdom-paths')).map((part) => ({ depth: part.depth, svg: part.svg() })));
   drawn.push(...scenery(pal, seeded('kingdom-scenery'), levels, moving));
@@ -379,7 +398,7 @@ export function kingdomSceneSvg(o: KingdomSceneOptions): string {
   const height = (width * view.h) / view.w;
   const levels = Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, levelOf(o.levels, b)])) as Record<KingdomBuilding, KingdomLevel>;
   const rising = new Set(o.rising ?? []);
-  const key = KINGDOM_BUILDINGS.map((b) => `${levels[b]}${rising.has(b) ? 'r' : ''}`).join('');
+  const key = `${KINGDOM_BUILDINGS.map((b) => `${levels[b]}${rising.has(b) ? 'r' : ''}`).join('')}v${villageOf(levels, o.village)}`;
   const p = prefixFor(o.idPrefix, 'kingdom', key, o.dark === true, o.without ?? '', o.moving === true);
   const t = `${p}t`;
   return (
@@ -503,9 +522,9 @@ function inPlot(b: KingdomBuilding, x: number, y: number, z: number): { x: numbe
  * the canvas: the apps lay each actor's nodes over a scene drawn with
  * `moving: true`, and play each node's frames (or show its still pose).
  */
-export function kingdomLife(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>): KingdomActor[] {
+export function kingdomLife(levels: Readonly<Record<KingdomBuilding, KingdomLevel>>, village?: number): KingdomActor[] {
   const checked = Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, levelOf(levels, b)])) as Record<KingdomBuilding, KingdomLevel>;
-  return lifeOf(checked, kingdomPoint, inPlot, KINGDOM_SWAYING, KINGDOM_ORIGIN);
+  return lifeOf(checked, villageOf(checked, village), kingdomPoint, inPlot, KINGDOM_SWAYING, KINGDOM_ORIGIN);
 }
 
 export { KINGDOM_ANIMAL_HEIGHT, KINGDOM_FIGURE_HEIGHT, KINGDOM_SPRITES, SPRITE_BOX as KINGDOM_SPRITE_BOX, buildingDoors as kingdomBuildingDoors, kingdomActorReach, kingdomSpriteSvg, type KingdomActor, type KingdomFrame, type KingdomLifeKind, type KingdomMotion, type KingdomNode, type KingdomSprite, type KingdomTap };

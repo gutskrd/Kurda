@@ -2,13 +2,11 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, typ
 import { Link } from 'react-router-dom';
 import {
   BURST,
-  KINGDOM_BUILDINGS,
-  KINGDOM_LEVEL_TOTAL,
   KINGDOM_PLOTS,
   KINGDOM_SCENE,
   KINGDOM_SPRITES,
   kingdomBuildingSvg,
-  kingdomLevelCount,
+  kingdomFeatureAt,
   kingdomLevels,
   kingdomLife,
   kingdomPlotBox,
@@ -19,8 +17,9 @@ import {
   kingdomTiles,
   kingdomWaterAt,
   praiseWords,
+  VILLAGE_LEVELS,
   villageCamera,
-  villageProgress,
+  villageStanding,
   type KingdomBuilding,
   type KingdomBuildingView,
   type KingdomLevel,
@@ -30,6 +29,7 @@ import {
   type KingdomUpgrade,
   type KingdomView,
   type VillageCamera,
+  type VillageFeature,
   type VillageStage,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
@@ -45,6 +45,7 @@ import { Celebration } from '../ranks/Celebration';
 import { prefersReducedMotion } from '../lib/motion';
 import { useRail } from '../social/RailProvider';
 import { lifeMarkup } from './life';
+import { LevelBadge, LevelSheet, LevelUp, useVillageSeen } from './VillageLevel';
 import './kingdom.css';
 
 // the camera's steps (shared with the phone)
@@ -80,6 +81,11 @@ const COINS_MS = 2100;
 /** How long a tapped building squashes and bounces before its card opens, and how long the camera takes to fly to one. */
 const BOUNCE_MS = 420;
 const FLY_MS = 650;
+/** How long a new village level's banner and sparkle stay once what it brings has appeared. */
+const LEVEL_UP_MS = 2800;
+/** The sparkle a new village level's arrival throws, made once. */
+const sparkle = { __html: kingdomSpriteSvg('sparkle') };
+
 /** A press that moves less than this, in CSS pixels, is a tap rather than a drag. */
 const TAP_SLOP = 8;
 
@@ -172,7 +178,7 @@ const now = (): number => (typeof performance !== 'undefined' ? performance.now(
  * the one sentence on how the village grows.
  */
 export function KingdomPage(): React.JSX.Element {
-  const { client } = useAuth();
+  const { client, user } = useAuth();
   const t = useT();
   const [view, setView] = useState<KingdomView | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -257,6 +263,7 @@ export function KingdomPage(): React.JSX.Element {
 
   return (
     <Village
+      user={user?.id ?? null}
       view={view}
       levels={levels}
       rising={rising}
@@ -281,6 +288,8 @@ export function KingdomPage(): React.JSX.Element {
 }
 
 interface VillageProps {
+  /** who is learning, so the last village level shown is kept for them on this device */
+  user: string | null;
   view: KingdomView;
   levels: Record<KingdomBuilding, KingdomLevel>;
   rising: KingdomBuilding[];
@@ -328,6 +337,12 @@ function Village(props: VillageProps): React.JSX.Element {
   const [reacting, setReacting] = useState<{ id: string; tap: KingdomTap } | null>(null);
   const [bits, setBits] = useState<{ key: number; kind: 'feathers' | 'leaf' | 'ripple'; x: number; y: number }[]>([]);
   const [said, setSaid] = useState<{ id: string; word: string; x: number; y: number } | null>(null);
+  // the village's own level, the last one this device showed, and a new one being shown: the camera goes to what it brings, which appears with a sparkle
+  const standing = useMemo(() => villageStanding(view.buildings, levels), [view.buildings, levels]);
+  const { seen, markSeen } = useVillageSeen(props.user, standing.level);
+  const [levelUp, setLevelUp] = useState<{ level: number; unlocks: readonly VillageFeature[]; at: { x: number; y: number }; popped: boolean } | null>(null);
+  const [levelsOpen, setLevelsOpen] = useState(false);
+  const village = levelUp?.popped ? levelUp.level : Math.min(seen, standing.level);
   const [coins, setCoins] = useState<{ from: { x: number; y: number }; to: { x: number; y: number } } | null>(null);
   const [bumped, setBumped] = useState(false);
   const flying = useRef<number | null>(null);
@@ -410,7 +425,7 @@ function Village(props: VillageProps): React.JSX.Element {
   useEffect(() => () => stopMotion(), [stopMotion]);
 
   // the world's tiles, made again only when what they show changes; each set of image sources belongs to the effect that made it, which lets it go
-  const tileArt = useMemo(() => kingdomTiles({ levels, rising, dark, moving: true, without: isRaising ? current?.building : undefined }), [levels, rising, dark, isRaising, current]);
+  const tileArt = useMemo(() => kingdomTiles({ levels, village, rising, dark, moving: true, without: isRaising ? current?.building : undefined }), [levels, village, rising, dark, isRaising, current]);
   const [tiles, setTiles] = useState<{ x: number; y: number; w: number; h: number; url: string }[]>([]);
   useEffect(() => {
     const made = tileArt.map((tile) => ({ x: tile.x, y: tile.y, w: tile.w, h: tile.h, url: pictureUrl(tile.svg) }));
@@ -421,12 +436,29 @@ function Village(props: VillageProps): React.JSX.Element {
   // the life, made again only when the levels change; laid only where it is near the view
   const life = useMemo(() => {
     const sprites = new Map<KingdomSprite, string>(KINGDOM_SPRITES.map((s) => [s, kingdomSpriteSvg(s, { dark })]));
-    return lifeMarkup(kingdomLife(levels), (s) => sprites.get(s) ?? '');
-  }, [levels, dark]);
+    return lifeMarkup(kingdomLife(levels, village), (s) => sprites.get(s) ?? '');
+  }, [levels, village, dark]);
   const ages = useRef(new Map<string, number>());
   const laid = life.actors.filter((a) => overlaps(a.reach, lifeNear));
   for (const a of laid) if (!ages.current.has(a.id)) ages.current.set(a.id, Math.round(now() - PAGE_START));
   for (const id of [...ages.current.keys()]) if (!laid.some((a) => a.id === id)) ages.current.delete(id);
+
+  // once every building's new level has been celebrated, a new village level: its banner, the camera to what it brings, and that appearing with a sparkle
+  const ready = queue.length === 0 && props.intro === null;
+  useEffect(() => {
+    if (!ready || levelUp || seen >= standing.level) return;
+    const top = VILLAGE_LEVELS[standing.level - 1]!;
+    const at = kingdomFeatureAt(top.unlocks[0]!);
+    setLevelUp({ level: top.level, unlocks: top.unlocks, at, popped: false });
+    const pop = (): void => {
+      setLevelUp((l) => (l ? { ...l, popped: true } : l));
+      window.setTimeout(() => {
+        markSeen(top.level);
+        setLevelUp(null);
+      }, LEVEL_UP_MS);
+    };
+    flyTo(cameraOn({ x: at.x - 70, y: at.y - 60, w: 140, h: 100 }, stageRef.current, camRef.current.s), pop, 1300);
+  }, [ready, levelUp, seen, standing.level, flyTo, markSeen]);
 
   // each new level goes up in the scene first, the camera flown to it, then its celebration opens
   const currentKey = current ? `${current.building}:${current.level}` : null;
@@ -661,7 +693,6 @@ function Village(props: VillageProps): React.JSX.Element {
     e.preventDefault();
   };
 
-  const total = kingdomLevelCount(KINGDOM_BUILDINGS.map((id) => ({ level: levels[id] })));
   const badgeLevel = (b: KingdomBuildingView): number => (isRaising && current?.building === b.id ? (ticked ? current.level : current.level - 1) : levels[b.id]);
   const pending = new Set(queue.map((u) => u.building));
   const openView = view.buildings.find((b) => b.id === open) ?? null;
@@ -709,6 +740,13 @@ function Village(props: VillageProps): React.JSX.Element {
                 {b.kind === 'feathers' && [0, 1, 2, 3, 4].map((i) => <i key={i} />)}
               </span>
             ))}
+            {levelUp?.popped && (
+              <span className="kingdom-sparkles" style={{ left: levelUp.at.x, top: levelUp.at.y }} aria-hidden="true">
+                {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+                  <i key={i} dangerouslySetInnerHTML={sparkle} />
+                ))}
+              </span>
+            )}
             {said && (
               <span className="kingdom-bubble" style={{ left: said.x, top: said.y }} aria-live="polite">
                 {said.word}
@@ -719,14 +757,7 @@ function Village(props: VillageProps): React.JSX.Element {
 
         <header className="kingdom-hud" ref={setHudEl}>
           {props.backLink}
-          <span className="kingdom-level" role="img" aria-label={t('kingdom.hud.levels', { count: number(total), total: number(KINGDOM_LEVEL_TOTAL) })} data-testid="kingdom-level">
-            <span className={`kingdom-level-badge${ticked && isRaising ? ' is-ticked' : ''}`} aria-hidden="true">
-              {number(total)}
-            </span>
-            <span className="kingdom-level-bar" aria-hidden="true">
-              <span style={{ width: `${Math.round((total >= KINGDOM_LEVEL_TOTAL ? 1 : villageProgress(view.buildings)) * 100)}%` }} />
-            </span>
-          </span>
+          <LevelBadge standing={standing} shown={village} bump={levelUp?.popped === true || (ticked && isRaising)} onOpen={() => setLevelsOpen(true)} />
           <h1 id="kingdom-title" className="kingdom-hud-title">
             {t('kingdom.title')}
           </h1>
@@ -772,8 +803,13 @@ function Village(props: VillageProps): React.JSX.Element {
         </section>
 
         {coins && <Coins from={coins.from} to={coins.to} />}
+        {levelUp && <LevelUp level={levelUp.level} unlocks={levelUp.unlocks} />}
         {props.intro && <KingdomIntro intro={props.intro} onDone={props.onIntroDone} style={{ bottom: stage.bottom + 8 }} />}
       </section>
+
+      <Sheet open={levelsOpen} onClose={() => setLevelsOpen(false)} label={t('kingdom.village.title')} className="kingdom-sheet">
+        <LevelSheet level={village} />
+      </Sheet>
 
       <Sheet open={openView !== null} onClose={() => setOpen(null)} label={openView ? t(buildingNameKey(openView.id)) : t('kingdom.title')} className="kingdom-sheet">
         {openView && <BuildingSheet building={openView} dark={dark} rising={rising.includes(openView.id)} />}
