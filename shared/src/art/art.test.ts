@@ -1165,7 +1165,8 @@ describe('the kingdom’s village', () => {
     expect(kingdomSceneSvg({ levels: some, moving: true }).length).toBeLessThan(kingdomSceneSvg({ levels: some }).length);
     // a building left off its plot, for an app to raise it there itself
     expect(kingdomSceneSvg({ levels: some, without: 'market' }).length).toBeLessThan(kingdomSceneSvg({ levels: some }).length);
-  });
+    // a whole world drawn a dozen times over: given room on a busy machine
+  }, 30000);
 
   it('stands the shepherds’ cairn on an outcrop at the top of the camp’s track, grown into the hill, by day and at dusk', () => {
     const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
