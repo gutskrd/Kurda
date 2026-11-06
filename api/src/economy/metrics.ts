@@ -9,11 +9,16 @@
 export const EXCLUDED_REASONS = new Set(['admin_adjustment', 'migration', 'backfill']);
 
 /**
- * Reason codes that give spent currency back. A refund creates nothing — it
+ * Reason codes that gave spent currency back. A refund creates nothing — it
  * undoes a sink that was already counted — so it is counted as negative
- * spending, never as a faucet. Otherwise a wave of returns (a replaced shop
- * item handed back, shop/returns.ts) would look like inflation and could set
- * off the drift alert, while the purchases it undoes stayed counted as sinks.
+ * spending, never as a faucet; otherwise the refunds would look like inflation
+ * and could set off the drift alert, while the purchases they undid stayed
+ * counted as sinks.
+ *
+ * Nothing writes these any more: purchases are final, and the one path that
+ * gave currency back (returning a shop item whose art was replaced) is gone.
+ * The code stays so the rows it wrote, which the append-only ledger keeps,
+ * are still counted the way they always were when a day is re-aggregated.
  */
 export const REFUND_REASONS = new Set(['shop_return']);
 

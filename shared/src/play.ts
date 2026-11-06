@@ -16,13 +16,32 @@
  * and the limits.
  */
 import type { GameAccess } from './stories.js';
+import { MULTI_GAMES } from './games/multi/games.js';
 
-/** The online games you can invite friends to. */
-export const PLAY_GAMES = ['wordle-battle', 'rhyme-match', 'stories'] as const;
+/**
+ * The online games you can invite friends to: the three with engines of their
+ * own, then every game the generic multiplayer engine runs (`MULTI_GAMES`),
+ * so a new learning game joins invites, codes, cards and rematches by being
+ * added there.
+ */
+export const PLAY_GAMES = ['wordle-battle', 'rhyme-match', 'stories', ...MULTI_GAMES] as const;
 export type PlayGame = (typeof PLAY_GAMES)[number];
 
+/**
+ * `POST /play/join {code}`: the game a code joined, and its lobby, for the app
+ * to open. Every lobby of every game has a code (`normalizeJoinCode` reads what
+ * was typed; `formatJoinCode` shows it as "ABC 234"), and a code is cleared as
+ * soon as its game can no longer be joined. Refusals are 404 GAME_NOT_FOUND for
+ * a code that is not open to the caller, 409 GAME_FULL, and 409 GAME_STARTED
+ * for a story game whose questions began.
+ */
+export interface JoinedByCode {
+  game: PlayGame;
+  lobbyId: string;
+}
+
 export function isPlayGame(v: unknown): v is PlayGame {
-  return v === 'wordle-battle' || v === 'rhyme-match' || v === 'stories';
+  return (PLAY_GAMES as readonly unknown[]).includes(v);
 }
 
 export type { GameAccess };

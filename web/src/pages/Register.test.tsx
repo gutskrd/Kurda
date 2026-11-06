@@ -159,7 +159,7 @@ describe('Register', () => {
    * says what can be done instead, and offers both, rather than "Something
    * went wrong".
    */
-  it('offers to log in or reset the password when the details cannot make an account', async () => {
+  it('offers to sign in or reset the password when the details cannot make an account', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(async () =>

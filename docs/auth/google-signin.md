@@ -14,8 +14,8 @@ complete; enabling it needs Google Cloud OAuth credentials and a native rebuild
    first use). Google's `email_verified` carries over, so a verified Google
    account skips the email-code gate.
 
-Until the client IDs are set, the "Continue with Google" button falls back to a
-"coming soon" notice instead of a broken flow.
+A build without the client ids simply does not offer Google: the "Continue with
+Google" button is only shown when the ids that platform needs are in the build.
 
 ## 1. Create OAuth clients (Google Cloud Console)
 
@@ -28,25 +28,49 @@ Under **APIs & Services → Credentials**, create OAuth client IDs:
 
 ## 2. App configuration (mobile)
 
-Provide the client IDs as environment variables (Expo inlines `EXPO_PUBLIC_*`):
+The client ids are never committed. They are read from the build environment,
+and the phone build needs two of them:
+
+| Variable | Value | Needed for |
+| --- | --- | --- |
+| `EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID` | the **Web** client id | Google on Android and iOS |
+| `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` | the **iOS** client id | Google on iOS |
+
+Each value is the whole id as Google shows it, ending in
+`.apps.googleusercontent.com`. Expo inlines `EXPO_PUBLIC_*` variables into the
+app, so they are not secrets; store them with plain-text or sensitive
+visibility, not secret.
+
+Set both in the EAS environment of every build profile that should offer Google
+(`production` for store builds, and `preview` if internal builds should have it
+too), then start a new build. A JavaScript-only reload is not enough, because
+the iOS id also changes the native project.
+
+Nothing has to be added to `mobile/app.json` by hand. `mobile/app.config.ts`
+extends it, and when `EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID` is set it adds the
+`@react-native-google-signin/google-signin` config plugin with the iOS URL
+scheme, which is the iOS client id reversed:
 
 ```
-EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=<web-client-id>.apps.googleusercontent.com
-EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID=<ios-client-id>.apps.googleusercontent.com
+<ios-client-id>.apps.googleusercontent.com  →  com.googleusercontent.apps.<ios-client-id>
 ```
 
-Add the config plugin to `mobile/app.json` under `expo.plugins` so the native
-build gets the iOS URL scheme (the **reversed** iOS client id):
+What each combination gives:
 
-```json
-[
-  "@react-native-google-signin/google-signin",
-  { "iosUrlScheme": "com.googleusercontent.apps.<ios-client-id>" }
-]
-```
+- **Neither id:** no Google button anywhere; email, Apple (iOS) and guest only.
+- **Web id only:** Google on Android; hidden on iOS, because the build has no
+  URL scheme for Google to return to.
+- **Both ids:** Google on Android and iOS.
+- **An iOS id that is not shaped like a client id:** the build stops with an
+  error naming the variable, rather than producing an app that hides Google.
 
-Then rebuild the dev client (a native module was added, so a JS-only reload is
-not enough):
+Android needs no build setting beyond the web id: Google matches its Android
+client by the package name and the SHA-1 of the signing certificate, so add the
+certificate the store build is signed with (from the EAS credentials, and the
+app signing key from the Play Console once the app is there).
+
+For a local development build, put the same two lines in `mobile/.env` (not
+committed) and rebuild the dev client:
 
 ```bash
 npx expo prebuild

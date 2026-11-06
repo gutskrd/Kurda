@@ -19,6 +19,8 @@ export function registerFraudRoutes(app: FastifyInstance, fraud: FraudService): 
     '/admin/fraud/reviews/:id/resolve',
     {
       schema: { params: z.object({ id: z.uuid() }), body: resolveBody },
+      // clearing a review grants the Gems it held: an economy write like any other
+      config: { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
       preHandler: requireRoles('admin'),
     },
     async (req) => {

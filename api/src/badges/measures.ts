@@ -430,6 +430,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
        ${withFriend('rhyme_match_players', 'rhyme_matches', 'match_id')}
        UNION ALL
        ${withFriend('story_game_players', 'story_games', 'game_id')}
+       UNION ALL
+       ${withFriend('game_lobby_players', 'game_lobbies', 'lobby_id')}
      ) x`,
   ),
   // the same, for a game that was a rematch (the battle tables' `rematch_of`: a
@@ -439,6 +441,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
        ${withFriend('wordle_battle_players', 'wordle_battles', 'battle_id', 'AND g.rematch_of IS NOT NULL')}
        UNION ALL
        ${withFriend('rhyme_match_players', 'rhyme_matches', 'match_id', 'AND g.rematch_of IS NOT NULL')}
+       UNION ALL
+       ${withFriend('game_lobby_players', 'game_lobbies', 'lobby_id', 'AND g.rematch_of IS NOT NULL')}
      ) x`,
   ),
   // a text written to a friend, once for each friend a day (only friends can be written to, chat/service.ts)
@@ -456,7 +460,9 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
      + (SELECT count(*) FROM rhyme_matches m WHERE m.created_by = $1 AND m.status = 'finished'
          AND (SELECT count(*) FROM rhyme_match_players p WHERE p.match_id = m.id AND NOT p.removed) >= 2)
      + (SELECT count(*) FROM story_games g WHERE g.host_id = $1 AND g.status = 'finished'
-         AND (SELECT count(*) FROM story_game_players p WHERE p.game_id = g.id AND NOT p.removed) >= 2) AS n`,
+         AND (SELECT count(*) FROM story_game_players p WHERE p.game_id = g.id AND NOT p.removed) >= 2)
+     + (SELECT count(*) FROM game_lobbies l WHERE l.host_id = $1 AND l.status = 'finished' AND l.mode = 'group'
+         AND (SELECT count(*) FROM game_lobby_players p WHERE p.lobby_id = l.id AND NOT p.removed AND p.user_id IS NOT NULL) >= 2) AS n`,
   ),
 
   // ---- events: a learning day in a week around the date, each year (UTC)

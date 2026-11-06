@@ -6,9 +6,13 @@
  * answer pops when it was right and shakes once when it was not; a bar slides
  * to its new value; a list's first screenful rises in once as it arrives; a
  * sheet or a dialog springs up while the scrim fades; a heart pops with a tiny
- * burst; a speaking character rises into its tile; and something earned is
- * celebrated (ranks/Celebration.tsx). Nothing
- * loops but a loading shimmer, and nothing moves while it is being read.
+ * burst; a speaking character rises into its tile; a join code's tiles drop
+ * onto their ticket and the boxes a code is typed into answer each key; an
+ * invitation is handed over as a ticket — it swings in, tears, folds away,
+ * flies to a friend, gets stamped; and something earned is celebrated
+ * (ranks/Celebration.tsx). Nothing loops but a loading shimmer, a typing
+ * caret and a ticket's slow glint or light (only while it is in front), and
+ * nothing moves while it is being read.
  *
  * Only transform and opacity are animated. Under prefers-reduced-motion,
  * base.css takes every duration to nothing, so each of these lands at its end
@@ -581,6 +585,436 @@
   }
 }
 
+/* ---- a lobby's join code ------------------------------------------------------ */
+/*
+ * A lobby's ticket (play/CodeTicket.tsx). Its tiles drop onto it one after
+ * another the first time it is shown, turning down into place with a little
+ * overshoot. While it is in front (`is-awake`: on the screen, its tab the one
+ * being looked at) a light crosses them every seven seconds, faint and quick;
+ * the class comes off as soon as it is not, and the light stops. A press on
+ * the code sinks the tiles onto their lip, as an answer tile sinks.
+ */
+@keyframes code-tile-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) rotateX(75deg);
+  }
+  35% {
+    opacity: 1;
+  }
+}
+.code-tile {
+  transform-origin: 50% 100%;
+  animation: code-tile-in 540ms var(--ease-spring) calc(90ms + var(--i, 0) * 60ms) backwards;
+  transition:
+    transform var(--dur) var(--ease-spring),
+    box-shadow var(--dur) var(--ease-spring),
+    border-color var(--dur-fast) ease;
+}
+.code-ticket-code:active .code-tile {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--code-accent) 50%, var(--app-bg));
+  transition-duration: 60ms;
+}
+@keyframes code-glint {
+  0%,
+  84% {
+    opacity: 0;
+    transform: translateX(-110%);
+  }
+  86% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(110%);
+  }
+}
+.code-ticket.is-awake .code-tile::after {
+  animation: code-glint 7s cubic-bezier(0.45, 0, 0.25, 1) calc(1.4s + var(--i, 0) * 70ms) infinite;
+}
+/* Copy becomes a tick: the copy glyph shrinks away as the tick springs in, with six sparks */
+.code-ticket-copy-icon > svg {
+  transition:
+    opacity var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
+}
+.code-ticket-burst {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 50%;
+  color: var(--success);
+  box-shadow:
+    0 -13px 0 currentColor,
+    11px -6px 0 currentColor,
+    11px 6px 0 currentColor,
+    0 13px 0 currentColor,
+    -11px 6px 0 currentColor,
+    -11px -6px 0 currentColor;
+  pointer-events: none;
+  animation: like-burst var(--dur-slow) var(--ease-out) both;
+}
+/* the toast rises in, stays, and fades by itself */
+@keyframes note-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 14px) scale(0.96);
+  }
+}
+@keyframes note-out {
+  to {
+    opacity: 0;
+    transform: translate(-50%, 6px);
+  }
+}
+.code-ticket-note {
+  animation:
+    note-in var(--dur-slow) var(--ease-spring) both,
+    note-out var(--dur) var(--ease-out) 2500ms forwards;
+}
+
+/* ---- tickets ------------------------------------------------------------------ */
+/*
+ * How a ticket moves (ui/Ticket.tsx). An invite swings in as it arrives,
+ * hung from its top edge, and settles; Join tears the stub off along the
+ * perforation, and it drops away to the start side while the body gives a
+ * little; Not now folds the ticket over and away; a stamp lands with a small
+ * thump; a ticket waiting on somebody has a faint light cross it now and then,
+ * only while it is in front (`is-awake`). Under Reduce Motion each of these
+ * is simply its end, and the scripts that wait for a tear or a flight do not
+ * wait.
+ */
+@keyframes ticket-swing-in {
+  from {
+    opacity: 0;
+    transform: translateY(-16px) rotate(calc(var(--t-out, -1) * 3deg));
+  }
+  45% {
+    opacity: 1;
+    transform: translateY(2px) rotate(calc(var(--t-out, -1) * -1.2deg));
+  }
+  75% {
+    transform: translateY(0) rotate(calc(var(--t-out, -1) * 0.5deg));
+  }
+}
+@keyframes ticket-tear {
+  25% {
+    opacity: 1;
+    transform: translate(calc(var(--t-out) * 2px), 1px) rotate(calc(var(--t-out) * 4deg));
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(var(--t-out) * 18px), 26px) rotate(calc(var(--t-out) * 20deg));
+  }
+}
+@keyframes ticket-jolt {
+  30% {
+    transform: translateX(calc(var(--t-out) * -4px));
+  }
+}
+@keyframes ticket-fold {
+  to {
+    opacity: 0;
+    transform: perspective(600px) rotateX(78deg) translateY(-6px);
+  }
+}
+@keyframes stamp-thump {
+  from {
+    opacity: 0;
+    transform: rotate(var(--stamp-tilt)) scale(1.9);
+  }
+  55% {
+    opacity: 1;
+    transform: rotate(var(--stamp-tilt)) scale(0.9);
+  }
+}
+@keyframes ticket-shine {
+  0%,
+  72% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  74% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(100%);
+  }
+}
+.invite-banner {
+  animation: ticket-swing-in 600ms var(--ease-out) both;
+}
+.ticket.is-torn > .ticket-stub {
+  transform-origin: 100% 100%;
+  animation: ticket-tear 440ms cubic-bezier(0.5, 0, 0.75, 0) forwards;
+}
+[dir='rtl'] .ticket.is-torn > .ticket-stub {
+  transform-origin: 0 100%;
+}
+.ticket.is-torn > .ticket-body {
+  animation: ticket-jolt 260ms var(--ease-out);
+}
+.ticket.is-leaving {
+  transform-origin: 50% 0;
+  animation: ticket-fold 300ms var(--ease-out) forwards;
+  pointer-events: none;
+}
+.ticket-stamp.is-fresh {
+  animation: stamp-thump 460ms var(--ease-spring) both;
+}
+.ticket.is-awake .ticket-shine {
+  animation: ticket-shine 4.8s ease-in-out infinite;
+}
+/* unseen until its moment (a burst waits for its ticket to land), then thrown out once */
+@keyframes ticket-burst {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  12% {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.15);
+  }
+}
+.ticket-burst.is-on {
+  animation: ticket-burst 420ms var(--ease-out) var(--burst-delay, 0ms) both;
+}
+
+/*
+ * Handing tickets over (play/InviteTickets.tsx): a friend's ticket is written
+ * out as they are picked — it slides up into the hand with a turn, and their
+ * name follows it in; Send tears each off and throws it to its friend's face
+ * in the list, one after another, shrinking as it goes, with specks where it
+ * lands; a refusal brings them back, and the hand shakes once. After sending,
+ * the tickets are dealt into a fan, a group's pinned.
+ */
+@keyframes admit-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px) rotate(calc(var(--tilt, 0deg) - 8deg)) scale(0.8);
+  }
+  60% {
+    opacity: 1;
+  }
+}
+@keyframes admit-write {
+  from {
+    opacity: 0;
+    transform: translateX(calc(var(--t-out, -1) * 6px));
+  }
+}
+@keyframes admit-fly {
+  18% {
+    opacity: 1;
+    transform: translateY(-8px) rotate(calc(var(--tilt, 0deg) + var(--t-out, -1) * 8deg)) scale(1.04);
+  }
+  to {
+    opacity: 0;
+    transform: translate(var(--fly-x, 0px), var(--fly-y, -120px)) rotate(calc(var(--tilt, 0deg) + var(--t-out, -1) * -12deg)) scale(0.3);
+  }
+}
+@keyframes admit-back {
+  from {
+    opacity: 0;
+    transform: translate(var(--fly-x, 0px), var(--fly-y, -120px)) scale(0.3);
+  }
+}
+@keyframes admit-deal {
+  from {
+    opacity: 0;
+    transform: translateY(-36px) rotate(0deg) scale(0.9);
+  }
+}
+@keyframes pin-in {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(1.5);
+  }
+}
+.admit {
+  animation: admit-in 420ms var(--ease-spring) backwards;
+}
+.admit .admit-name {
+  animation: admit-write 300ms var(--ease-out) 140ms backwards;
+}
+.admit.is-flying {
+  animation: admit-fly 560ms cubic-bezier(0.45, 0, 0.3, 1) calc(var(--i, 0) * 80ms) forwards;
+}
+.admit.is-back {
+  animation: admit-back 380ms var(--ease-spring) backwards;
+}
+.admit-tray.is-refused {
+  animation: answer-shake 300ms ease-in-out 380ms;
+}
+.admit-dealt {
+  animation: admit-deal 460ms var(--ease-spring) calc(var(--i, 0) * 70ms) backwards;
+}
+.admit-dealt .admit,
+.admit-dealt .admit-name {
+  animation: none;
+}
+.admit-pin {
+  animation: pin-in 360ms var(--ease-spring) 300ms backwards;
+}
+
+/*
+ * A friendship (social/FriendTickets.tsx): Add turns into a small ticket that
+ * lifts off the button and slips away to the person asked, and Requested's
+ * own ticket pops on; taking the request back brings the ticket home. An
+ * accepted request has its stub torn off (as Join's is) and its "Friends"
+ * stamp lands with a burst; a declined one folds away.
+ */
+@keyframes ask-away {
+  from {
+    opacity: 1;
+    transform: scale(0.6);
+  }
+  25% {
+    opacity: 1;
+    transform: translateY(-6px) rotate(calc(var(--t-out) * 4deg)) scale(1.08);
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(var(--t-out) * -64px), -40px) rotate(calc(var(--t-out) * -18deg)) scale(0.8);
+  }
+}
+@keyframes ask-back {
+  from {
+    opacity: 0;
+    transform: translate(calc(var(--t-out) * -64px), -40px) rotate(calc(var(--t-out) * -18deg)) scale(0.8);
+  }
+  70% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes ask-glyph {
+  from {
+    transform: scale(0.3) rotate(-20deg);
+  }
+}
+.friend-ask-ticket.is-away {
+  animation: ask-away 640ms var(--ease-out) forwards;
+}
+.friend-ask-ticket.is-back {
+  animation: ask-back 520ms var(--ease-out) forwards;
+}
+.friend-ask-sent.is-fresh > svg {
+  animation: ask-glyph 420ms var(--ease-spring) 260ms backwards;
+}
+
+/* ---- typing a code in ----------------------------------------------------------- */
+/*
+ * Typing a code (play/JoinCode.tsx): each character pops into its box (a
+ * pasted code pops in left to right), the caret blinks in the box being
+ * filled; while it is checked a wave runs along the boxes; getting in turns
+ * them over to green one after another, the colour changing as each is edge
+ * on; a refusal shakes them once.
+ */
+@keyframes code-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.14);
+  }
+}
+.code-box-char.is-fresh {
+  animation: code-pop var(--dur-slow) var(--ease-spring) calc(var(--n, 0) * 35ms) backwards;
+}
+@keyframes caret-blink {
+  0%,
+  50% {
+    opacity: 1;
+  }
+  51%,
+  100% {
+    opacity: 0;
+  }
+}
+.code-box-caret {
+  animation: caret-blink 1.06s steps(1) infinite;
+}
+.code-box {
+  transition:
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease,
+    box-shadow var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+@keyframes code-wave {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+  }
+  25% {
+    transform: translateY(-5px);
+  }
+}
+@keyframes code-shimmer {
+  from {
+    transform: translateX(-100%);
+  }
+  60%,
+  to {
+    transform: translateX(100%);
+  }
+}
+.code-entry.is-joining .code-box {
+  animation: code-wave 1s var(--ease-out) calc(var(--i, 0) * 90ms) infinite;
+}
+.code-entry.is-joining .code-box::after {
+  animation: code-shimmer 1s ease-in-out calc(var(--i, 0) * 90ms) infinite;
+}
+@keyframes code-flip {
+  50% {
+    transform: rotateX(90deg);
+  }
+}
+.code-entry.is-joined .code-box {
+  animation: code-flip 440ms var(--ease-out) calc(var(--i, 0) * 75ms) backwards;
+  transition-delay: calc(var(--i, 0) * 75ms + 220ms);
+}
+.code-entry.is-error .code-boxes {
+  animation: answer-shake 300ms ease-in-out;
+}
+/* the sheet's ticket swings in as the sheet rises, and the hub's tilts on its card, upright under a hover */
+@keyframes ticket-in {
+  from {
+    opacity: 0;
+    transform: rotate(-24deg) scale(0.6);
+  }
+}
+.code-sheet-head .ticket-art {
+  animation: ticket-in 520ms var(--ease-spring) 80ms backwards;
+}
+.join-code-card-art {
+  transform: rotate(-5deg);
+  transition: transform var(--dur-slow) var(--ease-spring);
+}
+.join-code-card:hover .join-code-card-art {
+  transform: rotate(0deg) scale(1.06);
+}
+.join-code-card:active {
+  transform: scale(var(--press-scale));
+  transition-duration: 80ms;
+}
+
 /* ---- still ------------------------------------------------------------------- */
 @media (prefers-reduced-motion: reduce) {
   .celebrate-ring,
@@ -609,6 +1043,61 @@
   /* a pair's mark stays put for as long as its colour does */
   .tile-mark.is-right,
   .tile-mark.is-wrong {
+    animation: none;
+  }
+}
+/*
+ * Typing a code, still: the characters are simply there, nothing shakes,
+ * flips or waves, the caret stays lit, and the colours change at once (no
+ * box waits for the one before it). `is-still` is the same choice, read once
+ * by the code boxes, which also leave out the flecks.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .code-box,
+  .code-boxes,
+  .code-box-char,
+  .code-box-caret,
+  .code-sheet-head .ticket-art {
+    animation: none !important;
+    transition-delay: 0s !important;
+  }
+  .code-box::after,
+  .code-entry-burst {
+    display: none;
+  }
+  .join-code-card:active {
+    transform: none;
+  }
+}
+.code-entry.is-still :is(.code-box, .code-boxes, .code-box-char, .code-box-caret) {
+  animation: none !important;
+  transition-delay: 0s !important;
+}
+.code-entry.is-still .code-box::after {
+  display: none;
+}
+/* a lobby's ticket, still: its tiles are there at once, and nothing glints or sparks */
+@media (prefers-reduced-motion: reduce) {
+  .code-tile {
+    animation: none !important;
+  }
+  .code-tile::after,
+  .code-ticket-burst {
+    display: none;
+  }
+  .code-ticket-code:active .code-tile {
+    transform: none;
+  }
+}
+/* tickets, still: nothing swings, tears, folds, shakes, flies or bursts — the state and the stamp are the answer */
+@media (prefers-reduced-motion: reduce) {
+  .ticket-burst,
+  .ticket-shine,
+  .friend-ask-ticket {
+    display: none;
+  }
+  .ticket.is-torn > .ticket-stub,
+  .ticket.is-leaving {
     animation: none;
   }
 }

@@ -94,6 +94,8 @@ export interface RhymeMatchState {
   access: GameAccess;
   /** Rated or Friendly (Game Ranks), shown before anyone joins; decided at the start */
   rated: RatedState;
+  /** the code a friend types to join, while it is a lobby that can still be joined; null after */
+  code: string | null;
   /** the rematch or next round, once there is one */
   nextLobbyId: string | null;
   /** everyone in it, by seat, as this viewer may see them */
@@ -442,6 +444,7 @@ export class RhymeMatchService {
       createdBy: hostRef(match, rows.rows, userId),
       isHost: match.created_by === userId,
       access: match.access,
+      code: match.status === 'lobby' && !lobbyIdle(match, this.now()) ? match.code : null,
       rated: ratedStateOf(match),
       nextLobbyId: match.next_lobby_id,
       players,

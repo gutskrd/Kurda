@@ -18,7 +18,9 @@
  * characters (ç, ḧ, the colons) that are awkward in a path segment.
  *
  * Gated to the content roles: this is editing what learners hear, the same
- * kind of work as editing a lesson.
+ * kind of work as editing a lesson. The PUT alone is also open to the voice
+ * actor role, for a narrator recording the words and letters linked to their
+ * account from the "Record by person" page (recording/access.ts).
  */
 import type { FastifyInstance } from 'fastify';
 import {
@@ -38,6 +40,7 @@ import { registerAudioParser, storeAudioMedia } from '../media/audioMedia.js';
 import { audioLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { readWav } from './wav.js';
+import { RECORDING_ROLES, assertMayRecord } from '../recording/access.js';
 import {
   fitLipsync,
   lipsyncSummary,
@@ -83,6 +86,8 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
   const usage = new MediaUsageService(app.db, app.redis ?? null);
   const audit = new AuditService(app.db);
   const canRecord = requireRoles(...ALPHABET_AUDIO_ROLES);
+  // a take may also come from the "Record by person" page, whose voice actors record their own lines (recording/access.ts)
+  const canTake = requireRoles(...RECORDING_ROLES);
 
   registerAudioParser(app, base.maxUploadBytes);
 
@@ -133,10 +138,11 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
         rateLimit: { max: 120, windowMs: 60 * 60_000, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      preHandler: canRecord,
+      preHandler: canTake,
     },
     async (req, reply) => {
       const key = keyFrom(req.query);
+      await assertMayRecord(app, req, 'alphabet', key);
       const voice = voiceFromQuery(req.query);
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;

@@ -120,11 +120,37 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
       expect(await row(slug('a'))).toMatchObject({ title: 'Sernavê nû', lock_version: 1, source: 'starter' });
     });
 
+    /*
+     * An approval is of the text that was read. A file that replaces the text
+     * of an approved draft takes the approval with it, as an edit in the panel
+     * does, so the new text cannot be published without a review.
+     */
+    it('takes the approval off a draft whose content it replaces, and leaves it on one it leaves alone', async () => {
+      await importStories(pool, { stories: [testStory(slug('approved')), testStory(slug('approvedsame'))] });
+      await pool.query(
+        `UPDATE stories SET review_status = 'approved', reviewed_by = $2, reviewed_at = now(), review_note = 'Read twice.' WHERE slug = ANY($1)`,
+        [[slug('approved'), slug('approvedsame')], editorId],
+      );
+      const res = await importStories(pool, { stories: [testStory(slug('approved'), { title: 'Sernavekî nû' }), testStory(slug('approvedsame'))] });
+      expect(res.stories.map((st) => st.outcome)).toEqual(['updated', 'unchanged']);
+
+      const review = async (sl: string) =>
+        (await pool.query(`SELECT id, lock_version, review_status, reviewed_by, reviewed_at, review_note FROM stories WHERE slug = $1`, [sl])).rows[0];
+      const replaced = await review(slug('approved'));
+      expect(replaced).toMatchObject({ review_status: 'unreviewed', reviewed_by: null, reviewed_at: null, review_note: null });
+      expect(await review(slug('approvedsame'))).toMatchObject({ review_status: 'approved', reviewed_by: editorId, review_note: 'Read twice.' });
+      // and the new text cannot go out unread
+      const admin = new StoryAdminService(pool);
+      await expect(admin.transition(replaced.id, 'publish', { adminId: editorId, lockVersion: replaced.lock_version })).rejects.toMatchObject({
+        code: 'NOT_REVIEWED',
+      });
+    });
+
     it('never overwrites a story in review, published or archived', async () => {
       const admin = new StoryAdminService(pool);
       await importStories(pool, { stories: [testStory(slug('review')), testStory(slug('live')), testStory(slug('old'))] });
       await admin.transition((await row(slug('review'))).id, 'submit', { adminId: null as never, lockVersion: 0 });
-      await pool.query(`UPDATE stories SET status = 'published', published_at = now() WHERE slug = $1`, [slug('live')]);
+      await pool.query(`UPDATE stories SET status = 'published', review_status = 'approved', published_at = now() WHERE slug = $1`, [slug('live')]);
       await pool.query(`UPDATE stories SET status = 'archived' WHERE slug = $1`, [slug('old')]);
 
       const res = await importStories(pool, {
@@ -190,13 +216,34 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
         { slug: slug('a'), outcome: 'unchanged', published: true },
       ]);
       for (const sl of [slug('pub'), slug('a')]) {
-        const published = await pool.query(`SELECT id, status, published_by, published_at FROM stories WHERE slug = $1`, [sl]);
-        expect(published.rows[0]).toMatchObject({ status: 'published', published_by: editorId, published_at: expect.any(Date) });
-        // audited as a publish in the panel is, with the story the editor put live
-        const audit = await pool.query(`SELECT admin_id, action, reason, before, after FROM admin_audit_log WHERE target_id = $1`, [
-          published.rows[0].id,
-        ]);
+        const published = await pool.query(
+          `SELECT id, status, published_by, published_at, review_status, reviewed_by, review_note FROM stories WHERE slug = $1`,
+          [sl],
+        );
+        // the editor named has read the file: the import records their approval, which the publish requires
+        expect(published.rows[0]).toMatchObject({
+          status: 'published',
+          published_by: editorId,
+          published_at: expect.any(Date),
+          review_status: 'approved',
+          reviewed_by: editorId,
+          review_note: 'approved by the stories:import command',
+        });
+        // audited as a review and a publish in the panel are, with the story the editor put live
+        const audit = await pool.query(
+          // both rows come from one transaction, so they share a timestamp: the lock version each began from puts them in order
+          `SELECT admin_id, action, reason, before, after FROM admin_audit_log WHERE target_id = $1
+            ORDER BY created_at, (before->>'lockVersion')::int, id`,
+          [published.rows[0].id],
+        );
         expect(audit.rows).toEqual([
+          {
+            admin_id: editorId,
+            action: 'story.review',
+            reason: 'published by the stories:import command',
+            before: expect.objectContaining({ reviewStatus: 'unreviewed' }),
+            after: expect.objectContaining({ reviewStatus: 'approved' }),
+          },
           {
             admin_id: editorId,
             action: 'story.publish',
@@ -205,7 +252,7 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
             after: expect.objectContaining({ status: 'published', body: testStory('x').body, questions: expect.any(Array) }),
           },
         ]);
-        expect(audit.rows[0].after.questions).toHaveLength(6);
+        expect(audit.rows[1].after.questions).toHaveLength(6);
       }
     });
 
@@ -215,7 +262,7 @@ describe.skipIf(!DATABASE_URL)('story import (integration)', () => {
         if (redis.status !== 'ready') await new Promise((ready) => redis.once('ready', ready));
         const cache = new Cache(redis);
         const hub = new StoriesService(pool, cache);
-        const listed = async () => (await hub.list({ dialect: 'kurmanci', length: 'short', level: 3 })).map((st) => st.slug);
+        const listed = async () => (await hub.list({ dialect: 'kurmanci', length: 'short', level: 3 })).stories.map((st) => st.slug);
         await bustStoryLists(cache);
         expect(await listed()).not.toContain(slug('hub'));
 

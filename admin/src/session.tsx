@@ -9,6 +9,8 @@ import type { SessionAccess } from './navigation';
 export interface AdminSession extends SessionAccess {
   /** the RBAC roles (superadmin, content_editor, moderator, support) */
   roles: string[];
+  /** the voices this account records; none from an API older than the people page */
+  voices?: string[];
   needsEnrollment: boolean;
   needsVerification: boolean;
 }
@@ -21,7 +23,7 @@ export function SessionProvider({ value, children }: { value: AdminSession; chil
 
 /** The session; outside the gate (a test of one page) it is an empty one, which can open nothing gated. */
 export function useSession(): AdminSession {
-  return useContext(SessionContext) ?? { roles: [], staffRoles: [], capabilities: [], needsEnrollment: false, needsVerification: false };
+  return useContext(SessionContext) ?? { roles: [], staffRoles: [], capabilities: [], voices: [], needsEnrollment: false, needsVerification: false };
 }
 
 /** The API answer, with what an older API leaves out filled in from what it does say. */
@@ -32,5 +34,6 @@ export function sessionFrom(raw: Partial<AdminSession> & { roles: string[] }): A
     needsVerification: !!raw.needsVerification,
     capabilities: raw.capabilities ?? [],
     staffRoles: raw.staffRoles ?? raw.roles,
+    voices: raw.voices ?? [],
   };
 }

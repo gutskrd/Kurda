@@ -251,7 +251,7 @@ describe('the suspension screen', () => {
     );
     await userEvent.type(screen.getByLabelText('Email'), 'b@x.test');
     await userEvent.type(screen.getByLabelText('Password'), 'secret-password');
-    await userEvent.click(screen.getByRole('button', { name: 'Log in' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     expect(await screen.findByRole('heading', { name: 'Your account is permanently suspended' })).toBeInTheDocument();
     expect(await screen.findByText('Slurs against another dialect.')).toBeInTheDocument();
   });

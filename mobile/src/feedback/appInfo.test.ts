@@ -1,10 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import { requestStoreReview } from './storeReview';
-import { APP_VERSION, appPlatform, rateUrl } from './appInfo';
+import { APP_VERSION, appPlatform, nativeBuildNumber, rateUrl } from './appInfo';
 
 describe('appInfo', () => {
   it('reads the version the build was made from', () => {
     expect(APP_VERSION).toMatch(/^\d+\.\d+\.\d+/);
+  });
+
+  it('reads the build number from the binary, and has none where there is no binary', () => {
+    expect(nativeBuildNumber({ ExpoApplication: { nativeBuildVersion: '42' } })).toBe('42');
+    expect(nativeBuildNumber({ ExpoApplication: { nativeBuildVersion: ' ' } })).toBeNull();
+    expect(nativeBuildNumber({})).toBeNull();
+    // a test, like the web preview, has no native modules at all
+    expect(nativeBuildNumber()).toBeNull();
   });
 
   it('names the platform as the API does', () => {

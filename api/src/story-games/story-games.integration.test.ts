@@ -735,6 +735,68 @@ describe.skipIf(!DATABASE_URL)('story games (integration)', () => {
       expect((await call(stranger, 'GET', `/story-games/${v.id}/story`)).statusCode).toBe(404);
     });
 
+    /*
+     * A game keeps its own copy of the text, but not of the translations or
+     * of who wrote the story: those are read from the story as it is now. A
+     * story taken back to draft can carry edits nobody has reviewed, so while
+     * it is not published and approved they are left out.
+     */
+    it('serves the translations and the attribution only while the story is published and approved', async () => {
+      const me = await signUp('rtr');
+      const s = await story('rtr1');
+      const english = ['Rojîn and Azad go to the market.', 'An old woman sits by a shop.', 'Azad is hungry.', 'In the evening they go home.'].join('\n\n');
+      await pool.query(
+        `UPDATE stories SET translations = $2, author = 'Gelêrî', story_source = 'Çîrokên bazarê',
+                source_url = 'https://stories.example/bazar', attribution_note = 'Ji nû ve hatiye gotin.' WHERE id = $1`,
+        [s.id, JSON.stringify({ en: english })],
+      );
+      const v = (
+        await call(me, 'POST', '/story-games', {
+          mode: 'solo',
+          storyId: s.id,
+          questionCount: 3,
+          timerSeconds: 0,
+          textDuring: 'visible',
+          access: 'friends',
+          skipReading: true,
+        })
+      ).json() as StoryGameView;
+      const live = await call(me, 'GET', `/story-games/${v.id}/story`);
+      expect(live.headers['cache-control']).toBe('private, max-age=3600');
+      expect(live.json().translations.en).toHaveLength(4);
+      expect(live.json()).toMatchObject({
+        author: 'Gelêrî',
+        source: 'Çîrokên bazarê',
+        sourceUrl: 'https://stories.example/bazar',
+        attributionNote: 'Ji nû ve hatiye gotin.',
+      });
+
+      // back to draft, where an editor gives it a translation and an author nobody has reviewed
+      await pool.query(
+        `UPDATE stories SET status = 'draft', review_status = 'unreviewed', reviewed_by = NULL, reviewed_at = NULL,
+                translations = $2, author = 'Kesekî din' WHERE id = $1`,
+        [s.id, JSON.stringify({ en: english.replace('market', 'bazaar'), de: english })],
+      );
+      const draft = await call(me, 'GET', `/story-games/${v.id}/story`);
+      expect(draft.statusCode).toBe(200);
+      expect(draft.json()).toMatchObject({ id: s.id, translations: {}, author: null, source: null, sourceUrl: null, attributionNote: null });
+      // the game's own copy of the text is still there to play on
+      expect(draft.json().paragraphs[0]).toContain('Rojîn û Azad');
+
+      // archived: still nothing beside the text
+      await pool.query(`UPDATE stories SET status = 'archived' WHERE id = $1`, [s.id]);
+      expect((await call(me, 'GET', `/story-games/${v.id}/story`)).json()).toMatchObject({ translations: {}, author: null });
+
+      // reviewed and published again: what was approved is served
+      await pool.query(`UPDATE stories SET status = 'published', review_status = 'approved', reviewed_at = now(), published_at = now() WHERE id = $1`, [
+        s.id,
+      ]);
+      const again = (await call(me, 'GET', `/story-games/${v.id}/story`)).json();
+      expect(again.translations.en[0]).toBe('Rojîn and Azad go to the bazaar.');
+      expect(again.translations.de).toHaveLength(4);
+      expect(again.author).toBe('Kesekî din');
+    });
+
     it('in the lobby serves the story as it is now, uncached; once started, the game’s copy, cached', async () => {
       const host = await signUp('lch');
       const mate = await signUp('lcm');

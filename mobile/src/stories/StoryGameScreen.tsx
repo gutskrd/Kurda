@@ -6,6 +6,8 @@ import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useQuietInvites } from '../play/quietInvites';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useHardwareBack } from '../navigation/hardwareBack';
+import { askLeaveGame } from '../play/backOut';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { display } from '../theme/fonts';
@@ -31,6 +33,10 @@ import { useStoryGame } from './useStoryGame';
  * One live region for the whole game (Android and the web; iOS is told
  * directly), so what is announced — a locked answer, ten seconds left, a
  * verdict — is said once and never moves the reader's place.
+ *
+ * iOS is kept from swiping a game away (App.tsx); Android's back, the button
+ * or the edge swipe, asks "Leave this game?" while the story is being read
+ * and answered, and goes back as the header does once it is answered.
  */
 export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -40,7 +46,9 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
   const view = game.view;
   const story = useGameStory(id, !!view && view.status !== 'lobby');
   // an invite waits while the story is being read and answered (the banner would sit over the timer)
-  useQuietInvites(!!view && !game.gone && (view.status === 'reading' || view.status === 'question' || view.status === 'reveal'));
+  const playing = !!view && !game.gone && (view.status === 'reading' || view.status === 'question' || view.status === 'reveal');
+  useQuietInvites(playing);
+  useHardwareBack(playing ? () => askLeaveGame(t, onExit) : null);
   useStoryFinish(id, game.gone ? null : view);
   const { announce, region } = useAnnouncer();
   const [gloss, setGloss] = useState<StoryGlossEntry | null>(null);
@@ -90,7 +98,8 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
         view={view}
         story={story}
         onOpenGame={(next) => navigation.replace('StoryGame', { id: next })}
-        onRead={() => navigation.navigate('StoryReader', { slug: view.settings.storySlug })}
+        // back to the reader this game was opened from when it is still under it, else a reader for the story
+        onRead={(slug) => navigation.popTo('StoryReader', { slug })}
         onBack={toStories}
       />
     );

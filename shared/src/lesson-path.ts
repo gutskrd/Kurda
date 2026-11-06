@@ -121,6 +121,20 @@ export interface ReviewStop {
   due: number;
 }
 
+/**
+ * A unit's guide, as the stop that opens it: its grammar notes, read before
+ * its first skill. Only a client that draws it asks for it (`guides`), and
+ * only a unit with notes has one. `open` once the unit has been begun — its
+ * first skill is open or done — so the line into the unit is walked from
+ * there.
+ */
+export interface GuideStop<S extends PathSkill> {
+  kind: 'guide';
+  key: string;
+  skills: S[];
+  open: boolean;
+}
+
 /** The end of a unit: earned when every skill in it is done. */
 export interface TrophyStop {
   kind: 'trophy';
@@ -130,7 +144,7 @@ export interface TrophyStop {
   unitNumber: number;
 }
 
-export type PathStop<S extends PathSkill> = SkillStop<S> | ReviewStop | TrophyStop;
+export type PathStop<S extends PathSkill> = SkillStop<S> | ReviewStop | GuideStop<S> | TrophyStop;
 
 /** A stop and where it sits. */
 export interface PlacedStop<S extends PathSkill> {
@@ -151,13 +165,21 @@ export interface PlacedStop<S extends PathSkill> {
   trail: 'walked' | 'ahead' | null;
 }
 
-/** The unit colours, in the order units take them; the apps hold the colour values. */
-export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose'] as const;
+/** The unit colours the apps know; the apps hold the colour values. */
+export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose', 'saffron'] as const;
 export type UnitTone = (typeof UNIT_TONES)[number];
+
+/**
+ * The order units take their colours in: the warm ones only, earth, sun,
+ * field and pomegranate, so a path reads as the land it teaches and never
+ * cold. The blue and the violet stay named for what still wears them (a
+ * streak's ice) and are not dealt to units.
+ */
+export const UNIT_TONE_ORDER: readonly UnitTone[] = ['clay', 'saffron', 'meadow', 'rose', 'pine'];
 
 /** The colour of a course's unit, by its place in the course from 0. */
 export function unitTone(index: number): UnitTone {
-  return UNIT_TONES[index % UNIT_TONES.length]!;
+  return UNIT_TONE_ORDER[index % UNIT_TONE_ORDER.length]!;
 }
 
 export interface PathUnit<S extends PathSkill> {
@@ -168,10 +190,12 @@ export interface PathUnit<S extends PathSkill> {
   tone: UnitTone;
   /**
    * The learner may test out to here (`jumpPlan`): a unit after the one they
-   * are in, whose first skill is still closed. Its first stop is where the
-   * offer is made.
+   * are in, whose first skill is still closed. Its first skill's stop is where
+   * the offer is made (`jumpKey`).
    */
   jump: boolean;
+  /** the stop that offers the jump: the unit's first skill, when `jump` */
+  jumpKey: string | null;
   stops: PlacedStop<S>[];
   /** the height the unit's path needs, in points */
   height: number;
@@ -203,11 +227,12 @@ export interface LessonPath<S extends PathSkill> {
  * The path's measurements, in points, shared so both apps space it alike.
  * `node` is a stop's button; `step` the distance between two stops'
  * centres; `sway` how far a stop leans off the middle; `lift` the extra room
- * above the current skill for the "Start" bubble over it (and above a unit's
- * first stop for "Jump here?"); `pad` the room above the first stop and below
- * the last.
+ * above the current skill for the learner standing on it and the "Start" flag
+ * over them (and above a unit's first skill for "Jump here?"); `pad` the room
+ * above the first stop and below the last, which the unit's landmark stands in
+ * at the top (path-world.ts).
  */
-export const PATH_GEOMETRY = { node: 72, step: 104, sway: 72, lift: 56, pad: 60 } as const;
+export const PATH_GEOMETRY = { node: 72, step: 104, sway: 72, lift: 64, pad: 92 } as const;
 
 /**
  * Where a stop leans, by its place in its unit: middle, toward the start of
@@ -257,7 +282,7 @@ function unfinished(skill: PathSkill): boolean {
  */
 export function lessonPath<S extends PathSkill>(
   map: PathMapInput<S>,
-  { due = 0, offerJumps = false }: { due?: number; offerJumps?: boolean } = {},
+  { due = 0, offerJumps = false, guides = false }: { due?: number; offerJumps?: boolean; guides?: boolean } = {},
 ): LessonPath<S> {
   const { currentSkill, lastDone, here } = whereIs(map);
   // review sits before the skill to do now, or after the last one done
@@ -269,6 +294,12 @@ export function lessonPath<S extends PathSkill>(
   let total = 0;
   const units: PathUnit<S>[] = map.units.map((unit, u) => {
     const stops: PathStop<S>[] = [];
+    // a unit with grammar notes opens with its guide, for a client that draws it
+    const notes = unit.skills.filter((s) => s.hasGrammar);
+    if (guides && notes.length > 0) {
+      const first = unit.skills[0]!;
+      stops.push({ kind: 'guide', key: `g:${unit.unitId}`, skills: notes, open: first.state !== 'locked' });
+    }
     unit.skills.forEach((skill, i) => {
       if (reviewBefore === skill) stops.push({ kind: 'review', key: 'review', due });
       const lessons = skill.lessons ?? [];
@@ -296,19 +327,21 @@ export function lessonPath<S extends PathSkill>(
       stops.push({ kind: 'trophy', key: `t:${unit.unitId}`, earned: unitDone === unit.skills.length, unitNumber: u + 1 });
     }
     const jump = offerJumps && u > here && opensOnJump(unit.skills[0]);
-    const { placed, height } = place(stops, jump);
+    const jumpKey = jump ? `s:${unit.skills[0]!.skillId}` : null;
+    const { placed, height } = place(stops, jumpKey);
     return {
       unitId: unit.unitId,
       title: unit.title,
       number: u + 1,
       tone: unitTone(u),
       jump,
+      jumpKey,
       stops: placed,
       height,
       done: unitDone,
       total: unit.skills.length,
       topics: unit.skills.map((s) => s.title),
-      guide: unit.skills.filter((s) => s.hasGrammar),
+      guide: notes,
     };
   });
 
@@ -379,23 +412,24 @@ export function jumpPlan<S extends PathSkill>(map: PathMapInput<S>, unitId: stri
   return { position: map.units.flatMap((u) => u.skills).indexOf(first) + 1, skipped };
 }
 
-/** Reached: a stop the learner has got to — done, current, the review beside them, a trophy earned. */
+/** Reached: a stop the learner has got to — done, current, the review beside them, a begun unit's guide, a trophy earned. */
 function reached<S extends PathSkill>(stop: PathStop<S>): boolean {
   if (stop.kind === 'review') return true;
+  if (stop.kind === 'guide') return stop.open;
   if (stop.kind === 'trophy') return stop.earned;
   return stop.state === 'done' || stop.state === 'current';
 }
 
 /**
  * Down the page, a step apart, leaning in turn; the current skill gets room
- * above it for its bubble, and so does the first stop of a unit that can be
- * jumped to, for its own.
+ * above it for its bubble, and so does the first skill of a unit that can be
+ * jumped to (`jumpKey`), for its own.
  */
-function place<S extends PathSkill>(stops: PathStop<S>[], jump: boolean): { placed: PlacedStop<S>[]; height: number } {
+function place<S extends PathSkill>(stops: PathStop<S>[], jumpKey: string | null): { placed: PlacedStop<S>[]; height: number } {
   const { step, sway, lift, pad } = PATH_GEOMETRY;
   let y = pad;
   const placed = stops.map((stop, i): PlacedStop<S> => {
-    const raised = (stop.kind === 'skill' && stop.state === 'current') || (jump && i === 0);
+    const raised = (stop.kind === 'skill' && stop.state === 'current') || stop.key === jumpKey;
     if (i > 0) y += step;
     if (raised) y += lift;
     const before = stops[i - 1];

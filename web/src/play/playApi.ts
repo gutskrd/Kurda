@@ -48,6 +48,12 @@ const JOIN: Record<PlayGame, (lobbyId: string) => { path: string; body?: unknown
   'rhyme-match': (id) => ({ path: `/rhyme/matches/${encodeURIComponent(id)}/join` }),
   // a story game takes your remembered Extra time with you
   stories: (id) => ({ path: '/story-games/join', body: { id, extraTime: rememberedExtraTime() } }),
+  // every multiplayer learning game joins through the one engine's route
+  'last-letter': (id) => ({ path: `/mp/last-letter/${encodeURIComponent(id)}/join` }),
+  impostor: (id) => ({ path: `/mp/impostor/${encodeURIComponent(id)}/join` }),
+  'dont-say': (id) => ({ path: `/mp/dont-say/${encodeURIComponent(id)}/join` }),
+  bluff: (id) => ({ path: `/mp/bluff/${encodeURIComponent(id)}/join` }),
+  'who-am-i': (id) => ({ path: `/mp/who-am-i/${encodeURIComponent(id)}/join` }),
 };
 
 /**
@@ -79,6 +85,7 @@ const PLAY_ERROR_KEY: Record<string, MessageKey> = {
   EMPTY_LEXICON: 'games.emptyPool',
   OPEN_GAMES_ADULTS_ONLY: 'stories.error.openNotAllowed',
   NOT_HOST: 'play.error.notHost',
+  CANNOT_START: 'play.teams.uneven',
   NOT_A_MEMBER: 'play.error.notMember',
   // CHAT_MUTED and MUTED are said by describeError (reports/restriction.ts), with the time
   NOT_FRIENDS: 'chat.error.notFriends',

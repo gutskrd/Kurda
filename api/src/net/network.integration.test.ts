@@ -263,7 +263,7 @@ describe.skipIf(!DATABASE_URL)('networks and the accounts on them (integration)'
   describe('sign-up risk by network', () => {
     const risk = () => new RiskService(pool);
     const signup = async (ip: string) => {
-      const r = await risk().assessSignup({ email: `r${++seq}_${suffix}@gmail.com`, ip, deviceId: `rdev-${suffix}-${seq}` });
+      const r = await risk().assessSignup({ email: `r${++seq}_${suffix}@example.com`, ip, deviceId: `rdev-${suffix}-${seq}` });
       decisionIds.push(r.decisionId);
       return r;
     };

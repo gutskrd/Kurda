@@ -34,6 +34,8 @@ const createBody = z.object({
 const inviteBody = z.object({ game, lobbyId: z.uuid(), userIds });
 // the reason is optional, and so is the body: a bare POST is a plain "not now"
 const declineBody = z.object({ reason: z.enum(DECLINE_REASONS).optional() }).nullish();
+/** a code as typed or pasted: spaces, dashes and Arabic-script digits are read by `normalizeJoinCode` */
+const joinBody = z.object({ code: z.string().min(1).max(32) });
 
 export interface PlayRouteDeps {
   events: PlayEvents;
@@ -50,6 +52,8 @@ export interface PlayRouteDeps {
   stories?: StoryGamesPort;
   /** Game Ranks, shared with the games' own routes (one set of rank events) */
   ranks?: RankService;
+  /** the multiplayer learning games, one adapter each over the generic engine (mp/routes.ts) */
+  multiplayer?: readonly PlayAdapter[];
 }
 
 /**
@@ -86,6 +90,8 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
     // those, as Peyvok Battle and Rhyme Match do.
     deps.stories.onChange((id) => deps.events.changed('stories', id));
   }
+  // every multiplayer learning game: its engine tells the play layer of its own changes (mp/service.ts)
+  adapters.push(...(deps.multiplayer ?? []));
   const play = new PlayService(app.db, {
     adapters,
     events: deps.events,
@@ -118,6 +124,17 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
       const { invited } = await play.invite(req.user!.id, body.game, body.lobbyId, body.userIds);
       return { ok: true, invited };
     },
+  );
+
+  /**
+   * Join any game by the code a friend read out or sent: the game and lobby
+   * joined, for the client to open. Ten tries a minute, as for story games'
+   * own join, so codes cannot be walked through.
+   */
+  app.post(
+    '/play/join',
+    { schema: { body: joinBody }, config: { rateLimit: { max: 10, windowMs: 60_000 } }, preHandler: [requireAccount, requireBirthMonth] },
+    async (req) => play.joinByCode(req.user!.id, (req.body as z.infer<typeof joinBody>).code),
   );
 
   /** The banners to show, and your list of answers to your own invites. */

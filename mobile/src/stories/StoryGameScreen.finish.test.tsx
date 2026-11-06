@@ -38,6 +38,7 @@ const finished = (place: number, mode: StoryGameView['mode'] = 'group', gone = f
     mode,
     players: [me(gone), player({ seat: 2 }), player({ seat: 3 })],
     results: {
+    storySlug: 'nane-germ',
       standings: [standing({ seat: 1, isMe: true, place }), standing({ seat: 2, place: 2 }), standing({ seat: 3, place: 3 })],
       me: { place, score: 300, correct: 3, answered: 5, total: 5, xp: 10, learningCounted: true },
       review: [],

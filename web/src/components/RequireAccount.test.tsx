@@ -62,7 +62,7 @@ describe('RequireAccount', () => {
     renderApp(<RequireAccount what="gate.what.savePosts">{inside}</RequireAccount>, ['/app/saved']);
 
     expect(await screen.findByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register');
-    expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
     expect(screen.getByRole('link', { name: 'Back to Community' })).toHaveAttribute('href', '/app/civak');
   });
 

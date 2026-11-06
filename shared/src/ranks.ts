@@ -17,6 +17,7 @@
  * meaning; every app translates them (ckb included) — [native-speaker review].
  */
 import type { PlayGame } from './play.js';
+import { MULTI_GAMES } from './games/multi/games.js';
 
 // ---------------------------------------------------------------------------
 // which games have a rank
@@ -25,8 +26,10 @@ import type { PlayGame } from './play.js';
 /**
  * The games with opponents. Duo and group Stories share the Stories rating;
  * Typing Race and the solo games have nobody to rank against, so no rank.
+ * Every multiplayer learning game has one (a game against Hevalo plays as
+ * friendly: there is nobody to rank against).
  */
-export const RANKED_GAMES = ['wordle-battle', 'rhyme-match', 'stories'] as const satisfies readonly PlayGame[];
+export const RANKED_GAMES = ['wordle-battle', 'rhyme-match', 'stories', ...MULTI_GAMES] as const satisfies readonly PlayGame[];
 export type RankedGame = (typeof RANKED_GAMES)[number];
 
 export function isRankedGame(v: unknown): v is RankedGame {

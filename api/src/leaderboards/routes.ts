@@ -8,7 +8,8 @@ import { isBoardScope, isBoardType } from './rank.js';
 /**
  * Leaderboards (KUR-063): one page of a board plus the caller's own rank.
  *
- * `scope` picks who the board covers — everyone, your friends, or your country —
+ * `:type` is what is ranked — `weekly_xp`, or the Zêr (`zer`) and Gewher
+ * (`gewher`) each person holds now (rank.ts). `scope` picks who the board covers — everyone, your friends, or your country —
  * and the caller's rank is always computed within that same board, so the number
  * beside your name means what the list around it means.
  */
@@ -38,10 +39,18 @@ export function registerLeaderboardRoutes(app: FastifyInstance, boards: Leaderbo
     },
   );
 
-  /** Admin/ops: rebuild the sorted sets from Postgres (cache is not truth). */
+  /**
+   * Admin/ops: rebuild the sorted sets from Postgres (cache is not truth). Every
+   * board, one after another, with how many each lists; the console reads the
+   * weekly count it has always shown and the others ride along.
+   */
   app.post(
     '/admin/leaderboards/rebuild',
     { config: { skipValidation: true }, preHandler: requireRoles('admin') },
-    async () => ({ weekly_xp: await boards.rebuild('weekly_xp') }),
+    async () => ({
+      weekly_xp: await boards.rebuild('weekly_xp'),
+      zer: await boards.rebuild('zer'),
+      gewher: await boards.rebuild('gewher'),
+    }),
   );
 }

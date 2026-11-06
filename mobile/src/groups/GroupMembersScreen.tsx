@@ -26,6 +26,7 @@ import { GroupAvatar } from './GroupAvatar';
 import { BanSheet } from './BanSheet';
 import { useClearChat } from './clearing';
 import { groupError } from './groupError';
+import { usePullRefresh } from '../net/usePullRefresh';
 import {
   deleteGroup,
   groupDetail,
@@ -82,14 +83,22 @@ export function GroupMembersScreen({
   const [reporting, setReporting] = useState(false);
   const [banning, setBanning] = useState<GroupMember | null>(null);
 
-  const load = useCallback(() => {
-    void groupDetail(client, groupId).then((res) => {
-      if (res.ok) setDetail(res.data);
-      else setError(describeError(res.error, t));
-    });
-  }, [client, groupId, t]);
+  const load = useCallback(
+    () =>
+      groupDetail(client, groupId).then((res) => {
+        if (res.ok) setDetail(res.data);
+        else setError(describeError(res.error, t));
+      }),
+    [client, groupId, t],
+  );
 
-  useFocusEffect(load);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+  // pulled down, the group and its members are read again
+  const pull = usePullRefresh(load);
 
   const act = async (key: string, run: () => Promise<{ ok: boolean; error?: ApiError }>): Promise<boolean> => {
     setBusy(key);
@@ -98,7 +107,7 @@ export function GroupMembersScreen({
     setBusy(null);
     if (res.ok) {
       haptic('correct');
-      load();
+      void load();
       return true;
     }
     haptic('wrong');
@@ -199,7 +208,7 @@ export function GroupMembersScreen({
             <InfoSkeleton />
           )
         ) : (
-          <ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}>
+          <ScrollView contentContainerStyle={styles.page} showsVerticalScrollIndicator={false} refreshControl={pull}>
             <View style={styles.head}>
               <GroupAvatar name={detail.name} id={detail.id} size={HEAD_AVATAR} photoUrl={detail.photoUrl} />
               <Text style={[styles.title, dir.free, styles.centred, { color: colors.textPrimary }]} accessibilityRole="header">
@@ -280,7 +289,7 @@ export function GroupMembersScreen({
           onClose={() => setBanning(null)}
           onBanned={() => {
             setBanning(null);
-            load();
+            void load();
           }}
         />
       </View>

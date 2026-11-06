@@ -2,10 +2,11 @@ import type pg from 'pg';
 import { InsufficientFundsError, WalletService, type Currency } from '../wallet/service.js';
 import type { AdminUserModeration, AgeBadge, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
 import { banState, type BanState } from './moderation.js';
-import { PRIVILEGED_ROLES } from './roles.js';
+import { PRIVILEGED_ROLES, VOICE_ACTOR_ROLE } from './roles.js';
 
-/** The one role a superadmin gives from a person's page (`setContentEditor`). */
+/** The roles a superadmin gives from a person's page (`setContentEditor`, `setVoiceActor`). */
 export const CONTENT_EDITOR = 'content_editor';
+export const VOICE_ACTOR = VOICE_ACTOR_ROLE;
 
 export type RoleResult = { ok: true; roles: string[]; changed: boolean } | { ok: false; code: 'NOT_FOUND' | 'USER_BANNED' | 'EMAIL_UNVERIFIED' };
 import { minorSql } from '../users/age.js';
@@ -81,8 +82,8 @@ const LEGACY_STATEMENT = {
   permanent_ban: DEFAULT_STATEMENTS.permanent_ban,
 } as const;
 
-type ActionOk = { ok: true; balance?: number };
-type ActionResult = ActionOk | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' };
+type ActionOk = { ok: true; balance?: number; duplicate?: boolean };
+type ActionResult = ActionOk | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' | 'SELF_ADJUST' };
 
 /**
  * Admin user lookup + moderation (KUR-101). Bans bump `token_version` so every
@@ -380,13 +381,37 @@ export class UserAdminService {
     }
   }
 
-  /** Ledger-backed wallet adjustment (positive = credit, negative = debit). */
-  async adjustWallet(adminId: string, userId: string, currency: Currency, amount: number, reason: string): Promise<ActionResult> {
+  /**
+   * Ledger-backed wallet adjustment (positive = credit, negative = debit).
+   *
+   * Never to the admin's own wallet: a grant mints currency, and minting it for
+   * yourself is the one change nobody else gets to see before it lands. And
+   * once per `requestKey`, filed under the admin who sent it, so a double
+   * click or a retried request credits once: the repeat answers `duplicate`
+   * with the balance as it is, and adds nothing to the audit log.
+   */
+  async adjustWallet(
+    adminId: string,
+    userId: string,
+    currency: Currency,
+    amount: number,
+    reason: string,
+    requestKey?: string,
+  ): Promise<ActionResult> {
     if (amount === 0) return { ok: false, code: 'NOT_FOUND' };
+    if (adminId === userId) return { ok: false, code: 'SELF_ADJUST' };
     if (!(await this.exists(userId))) return { ok: false, code: 'NOT_FOUND' };
-    const op = { userId, currency, amount: Math.abs(amount), reason: 'admin_adjustment', refId: `admin:${adminId}` };
+    const op = {
+      userId,
+      currency,
+      amount: Math.abs(amount),
+      reason: 'admin_adjustment',
+      refId: `admin:${adminId}`,
+      ...(requestKey ? { idempotencyKey: `admin-adjust:${adminId}:${requestKey}` } : {}),
+    };
     try {
       const result = amount > 0 ? await this.wallet.credit(op) : await this.wallet.debit(op);
+      if (result.duplicate) return { ok: true, balance: result.balance, duplicate: true };
       await this.record(adminId, userId, 'wallet_adjust', reason, { currency, amount });
       return { ok: true, balance: result.balance };
     } catch (err) {
@@ -472,6 +497,20 @@ export class UserAdminService {
    * transaction, so there is never a grant without its record.
    */
   async setContentEditor(adminId: string, userId: string, on: boolean, reason: string): Promise<RoleResult> {
+    return this.setRole(CONTENT_EDITOR, adminId, userId, on, reason);
+  }
+
+  /**
+   * Give someone the voice actor role, or take it away: the "Record by
+   * person" page and the lines of the voices linked to them, and nothing else
+   * in the console (recording/access.ts). Given and taken under the same rules
+   * as the content editor's, into the same history.
+   */
+  async setVoiceActor(adminId: string, userId: string, on: boolean, reason: string): Promise<RoleResult> {
+    return this.setRole(VOICE_ACTOR, adminId, userId, on, reason);
+  }
+
+  private async setRole(role: string, adminId: string, userId: string, on: boolean, reason: string): Promise<RoleResult> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -485,26 +524,26 @@ export class UserAdminService {
         await client.query('ROLLBACK');
         return { ok: false, code: 'NOT_FOUND' };
       }
-      const has = user.roles.includes(CONTENT_EDITOR);
+      const has = user.roles.includes(role);
       if (on && !has && (user.banned || !user.verified)) {
         await client.query('ROLLBACK');
         return { ok: false, code: user.banned ? 'USER_BANNED' : 'EMAIL_UNVERIFIED' };
       }
       if (on !== has) {
-        const roles = on ? [...user.roles, CONTENT_EDITOR] : user.roles.filter((r) => r !== CONTENT_EDITOR);
+        const roles = on ? [...user.roles, role] : user.roles.filter((r) => r !== role);
         await client.query(`UPDATE users SET roles = $2 WHERE id = $1`, [userId, roles]);
         await client.query(`INSERT INTO admin_actions (target_user_id, admin_id, action, reason, meta) VALUES ($1, $2, $3, $4, $5::jsonb)`, [
           userId,
           adminId,
           on ? 'role_grant' : 'role_revoke',
           reason,
-          JSON.stringify({ role: CONTENT_EDITOR, before: user.roles, after: roles }),
+          JSON.stringify({ role, before: user.roles, after: roles }),
         ]);
       }
       await client.query('COMMIT');
       return {
         ok: true,
-        roles: on === has ? user.roles : on ? [...user.roles, CONTENT_EDITOR] : user.roles.filter((r) => r !== CONTENT_EDITOR),
+        roles: on === has ? user.roles : on ? [...user.roles, role] : user.roles.filter((r) => r !== role),
         changed: on !== has,
       };
     } catch (err) {

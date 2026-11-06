@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type RefObject } from 'react';
 import { ApiError } from './api';
 import { ClipError, prepare, type Clip } from './audioClip';
-import { allowMicHowTo, micPermission, micPlatform, micProblem, startCapture, type Capture } from './micCapture';
+import { allowMicHowTo, micPermission, micPlatform, micProblem, startCapture, type Capture, type MicPlatform } from './micCapture';
 import { useDialogs } from './ui/Dialog';
 import { Icon } from './ui/icons';
 
@@ -12,7 +12,7 @@ export interface SavedClip {
   updatedAt: string | null;
 }
 
-type Phase =
+export type TakePhase =
   | { name: 'idle' }
   | { name: 'starting' }
   | { name: 'recording'; started: number }
@@ -20,49 +20,43 @@ type Phase =
   | { name: 'ready'; clip: Clip }
   | { name: 'saving'; clip: Clip };
 
+/** One take in the making, as `useTake` keeps it. */
+export interface TakeState {
+  phase: TakePhase;
+  problem: string | null;
+  setProblem: (problem: string | null) => void;
+  /** the microphone is turned off for this site */
+  blocked: boolean;
+  /** the input level while recording, 0–1 */
+  level: number;
+  /** how long the take has run, in seconds */
+  seconds: number;
+  /** starting, trimming or saving: no other step can be taken */
+  busy: boolean;
+  platform: MicPlatform;
+  /** the player of the take being judged */
+  preview: RefObject<HTMLAudioElement | null>;
+  record: () => Promise<void>;
+  stop: () => Promise<void>;
+  /** take a file instead of the microphone */
+  takeFile: (file: File) => Promise<void>;
+  /** hand the ready take to `store`; a throw (an ApiError, ideally) keeps the take and says why */
+  save: (store: (wav: Uint8Array) => Promise<void>) => Promise<void>;
+  /** play the take being judged again */
+  listen: () => void;
+}
+
 /**
- * Record → stop → hear it back → save, or take a file instead: the one
- * recorder the audio studio has, for a letter and for a lesson sentence alike.
- *
- * Every take goes through the same pipeline (audioClip.ts): trimmed, levelled
- * and encoded as a short mono WAV before the editor hears it, so what they
- * approve is exactly what is saved. The microphone side (micCapture.ts) works
- * the same on a laptop, an Android phone and an iPhone. The parent does the
- * upload; this only hands it the WAV.
- *
- * With `shortcuts`, R records and stops, Space plays the take back, Enter
- * saves and the arrows move between items — none of them while the editor is
- * typing in a field. Only one recorder on a page should have them.
+ * Record → stop → hear it back → keep, or take a file instead: the steps of
+ * one take, for every recorder in the console (ClipRecorder below, and the
+ * person-by-person page's own). Every take goes through the same pipeline
+ * (audioClip.ts): trimmed, levelled and encoded as a short mono WAV before
+ * the editor hears it, so what they approve is exactly what is saved. The
+ * microphone side (micCapture.ts) works the same on a laptop, an Android
+ * phone and an iPhone, and is let go of when the recorder goes.
  */
-export function ClipRecorder({
-  say,
-  maxSeconds,
-  what,
-  recording,
-  onSave,
-  onRemove,
-  removePrompt,
-  onPrev,
-  onNext,
-  shortcuts = false,
-}: {
-  /** the text being recorded, as the editor sees it */
-  say: string;
-  maxSeconds: number;
-  /** how errors name the thing to say: "one letter or one word", "one sentence" */
-  what: string;
-  recording: SavedClip | null;
-  /** store the WAV; throw (an ApiError, ideally) to keep the take and say why */
-  onSave: (wav: Uint8Array) => Promise<void>;
-  /** remove the saved recording, once the editor has confirmed `removePrompt` */
-  onRemove?: () => Promise<void>;
-  removePrompt: string;
-  onPrev?: () => void;
-  onNext?: () => void;
-  shortcuts?: boolean;
-}): React.JSX.Element {
-  const dialogs = useDialogs();
-  const [phase, setPhase] = useState<Phase>({ name: 'idle' });
+export function useTake(maxSeconds: number, what: string): TakeState {
+  const [phase, setPhase] = useState<TakePhase>({ name: 'idle' });
   const [problem, setProblem] = useState<string | null>(null);
   const [blocked, setBlocked] = useState(false);
   const [level, setLevel] = useState(0);
@@ -71,7 +65,6 @@ export function ClipRecorder({
   const frame = useRef(0);
   const stopTimer = useRef<number | null>(null);
   const preview = useRef<HTMLAudioElement>(null);
-  const fileInput = useRef<HTMLInputElement>(null);
   // a raw take may start and end with silence; it is trimmed to maxSeconds afterwards,
   // and a file over 30 s is refused before it is decoded
   const maxTakeMs = Math.min(maxSeconds * 2, 28) * 1000;
@@ -162,17 +155,17 @@ export function ClipRecorder({
     }
   };
 
-  const upload = async (file: File): Promise<void> => {
+  const takeFile = async (file: File): Promise<void> => {
     setProblem(null);
     await process(await file.arrayBuffer());
   };
 
-  const save = async (): Promise<void> => {
+  const save = async (store: (wav: Uint8Array) => Promise<void>): Promise<void> => {
     if (phase.name !== 'ready') return;
     const ready = phase.clip;
     setPhase({ name: 'saving', clip: ready });
     try {
-      await onSave(ready.wav);
+      await store(ready.wav);
       // the parent usually moves on to the next item, which mounts a fresh
       // recorder; when it stays here (nothing left to record), show the saved one
       setPhase({ name: 'idle' });
@@ -181,6 +174,67 @@ export function ClipRecorder({
       setPhase({ name: 'ready', clip: ready });
     }
   };
+
+  return {
+    phase,
+    problem,
+    setProblem,
+    blocked,
+    level,
+    seconds: Math.min(elapsed, maxTakeMs) / 1000,
+    busy: phase.name === 'working' || phase.name === 'saving' || phase.name === 'starting',
+    platform,
+    preview,
+    record,
+    stop,
+    takeFile,
+    save,
+    listen: () => void preview.current?.play().catch(() => undefined),
+  };
+}
+
+/**
+ * Record → stop → hear it back → save, or take a file instead: the one
+ * recorder the audio studio has, for a letter and for a lesson sentence alike
+ * (the steps are `useTake`'s). The parent does the upload; this only hands it
+ * the WAV.
+ *
+ * With `shortcuts`, R records and stops, Space plays the take back, Enter
+ * saves and the arrows move between items — none of them while the editor is
+ * typing in a field. Only one recorder on a page should have them.
+ */
+export function ClipRecorder({
+  say,
+  maxSeconds,
+  what,
+  recording,
+  onSave,
+  onRemove,
+  removePrompt,
+  onPrev,
+  onNext,
+  shortcuts = false,
+}: {
+  /** the text being recorded, as the editor sees it */
+  say: string;
+  maxSeconds: number;
+  /** how errors name the thing to say: "one letter or one word", "one sentence" */
+  what: string;
+  recording: SavedClip | null;
+  /** store the WAV; throw (an ApiError, ideally) to keep the take and say why */
+  onSave: (wav: Uint8Array) => Promise<void>;
+  /** remove the saved recording, once the editor has confirmed `removePrompt` */
+  onRemove?: () => Promise<void>;
+  removePrompt: string;
+  onPrev?: () => void;
+  onNext?: () => void;
+  shortcuts?: boolean;
+}): React.JSX.Element {
+  const dialogs = useDialogs();
+  const take = useTake(maxSeconds, what);
+  const { phase, problem, setProblem, blocked, level, seconds, busy, platform, preview, record, stop } = take;
+  const fileInput = useRef<HTMLInputElement>(null);
+  const save = (): Promise<void> => take.save(onSave);
 
   const remove = async (): Promise<void> => {
     if (!recording || !onRemove) return;
@@ -219,9 +273,6 @@ export function ClipRecorder({
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   });
-
-  const seconds = Math.min(elapsed, maxTakeMs) / 1000;
-  const busy = phase.name === 'working' || phase.name === 'saving' || phase.name === 'starting';
 
   return (
     <div className="rec" role="group" aria-label={`Record “${say}”`}>
@@ -311,7 +362,7 @@ export function ClipRecorder({
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 e.target.value = '';
-                if (f) void upload(f);
+                if (f) void take.takeFile(f);
               }}
             />
           </>

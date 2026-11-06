@@ -118,7 +118,8 @@ describe('SocialRail', () => {
     ]);
     show();
 
-    const request = (await screen.findByText('Wants to be friends')).closest<HTMLElement>('.rail-card')!;
+    const request = await screen.findByRole('group', { name: 'berfin wants to be friends' });
+    expect(request).toHaveClass('ticket--friend');
     await userEvent.click(within(request).getByRole('button', { name: 'Decline' }));
 
     await waitFor(() => expect(posts).toContain('POST /friends/requests/8/decline'));

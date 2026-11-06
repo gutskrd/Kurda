@@ -5,7 +5,7 @@ describe('isLoadTestUser', () => {
   it('flags reserved-domain accounts only', () => {
     expect(isLoadTestUser(`vu-1@${LOADTEST_EMAIL_DOMAIN}`)).toBe(true);
     expect(isLoadTestUser(`ROJDA@${LOADTEST_EMAIL_DOMAIN.toUpperCase()}`)).toBe(true); // case-insensitive
-    expect(isLoadTestUser('rojda@gmail.com')).toBe(false);
+    expect(isLoadTestUser('rojda@example.com')).toBe(false);
     expect(isLoadTestUser('someone@loadtest.kurda.invalid.evil.com')).toBe(false); // not a suffix match on the domain
   });
 

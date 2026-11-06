@@ -1,4 +1,4 @@
-import type { DeclineReason, InviteLists, LobbyCard, PlayGame, RematchState } from '@kurda/shared';
+import type { DeclineReason, InviteLists, JoinedByCode, LobbyCard, PlayGame, RematchState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
@@ -45,6 +45,14 @@ export const listInvites = (client: ApiClient): Promise<ApiResult<InviteLists>> 
 
 export const acceptInvite = (client: ApiClient, inviteId: string): Promise<ApiResult<{ game: PlayGame; lobbyId: string }>> =>
   client.post(`/play/invites/${inviteId}/accept`);
+
+/**
+ * Join any of the games by the code a friend gave you, however it was typed:
+ * the game and the lobby joined, for the app to open. 404 GAME_NOT_FOUND for
+ * a code with no open game behind it (or one this person may not join),
+ * 409 GAME_FULL, 409 GAME_STARTED, and 429 after ten tries in a minute.
+ */
+export const joinByCode = (client: ApiClient, code: string): Promise<ApiResult<JoinedByCode>> => client.post('/play/join', { code });
 
 export const declineInvite = (client: ApiClient, inviteId: string, reason?: DeclineReason): Promise<ApiResult<{ ok: true }>> =>
   client.post(`/play/invites/${inviteId}/decline`, reason ? { reason } : {});

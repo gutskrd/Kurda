@@ -1,4 +1,4 @@
-import type { FriendlyReason, RankedGame, RatedState } from '@kurda/shared';
+import { MULTI_GAMES, type FriendlyReason, type MultiGame, type RankedGame, type RatedState } from '@kurda/shared';
 import type { Executor } from './store.js';
 
 /**
@@ -13,11 +13,20 @@ interface GameTables {
   host: string;
 }
 
+/** Every multiplayer learning game keeps its lobbies in the one pair of tables the generic engine runs on (api/src/mp). */
+const MULTI_TABLES: GameTables = { table: 'game_lobbies', players: 'game_lobby_players', fk: 'lobby_id', host: 'host_id' };
+
 export const RANKED_TABLES: Readonly<Record<RankedGame, GameTables>> = {
   'wordle-battle': { table: 'wordle_battles', players: 'wordle_battle_players', fk: 'battle_id', host: 'created_by' },
   'rhyme-match': { table: 'rhyme_matches', players: 'rhyme_match_players', fk: 'match_id', host: 'created_by' },
   stories: { table: 'story_games', players: 'story_game_players', fk: 'game_id', host: 'host_id' },
+  ...(Object.fromEntries(MULTI_GAMES.map((g) => [g, MULTI_TABLES])) as Record<MultiGame, GameTables>),
 };
+
+/** A game whose lobbies live in the generic engine's tables, where a game against Hevalo is `mode = 'solo'`. */
+function isMulti(game: RankedGame): boolean {
+  return (MULTI_GAMES as readonly string[]).includes(game);
+}
 
 /**
  * A ranked game's tables. The name is checked against the map itself, not only
@@ -68,13 +77,14 @@ export interface LobbyView {
 export async function loadLobby(db: Executor, game: RankedGame, id: string): Promise<LobbyView | null> {
   const t = tablesOf(game);
   const row = await db.query<{ rated: boolean; rated_state: string | null; solo: boolean }>(
-    `SELECT rated, rated_state, ${game === 'stories' ? `mode = 'solo'` : 'false'} AS solo FROM ${t.table} WHERE id = $1`,
+    `SELECT rated, rated_state, ${game === 'stories' || isMulti(game) ? `mode = 'solo'` : 'false'} AS solo FROM ${t.table} WHERE id = $1`,
     [id],
   );
   const g = row.rows[0];
   if (!g) return null;
   const seats = await db.query<{ user_id: string; seat: number }>(
-    `SELECT user_id, seat FROM ${t.players} WHERE ${t.fk} = $1 AND NOT removed AND left_at IS NULL ORDER BY seat`,
+    // people only: a computer seat (Hevalo) has no rating
+    `SELECT user_id, seat FROM ${t.players} WHERE ${t.fk} = $1 AND NOT removed AND left_at IS NULL AND user_id IS NOT NULL ORDER BY seat`,
     [id],
   );
   return {

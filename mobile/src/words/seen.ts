@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { WORD_SET_IDS, wordSet, type AlphabetScript, type WordSetId } from '@kurda/shared';
-import { parseSeen, useSeen } from '../alphabet/seen';
+import { LATIN_LETTERS, SORANI_LETTERS, WORD_SET_IDS, wordSet, type AlphabetScript, type WordSetId } from '@kurda/shared';
+import { SEEN_KEY, parseSeen, useSeen } from '../alphabet/seen';
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 
 /**
@@ -39,4 +39,30 @@ export function useSeenCounts(store: DeviceStore = deviceStore): Partial<Record<
     }, [store]),
   );
   return counts;
+}
+
+/** How many of `script`'s letters were opened in the alphabet, from what it stored: ids it no longer has do not count. */
+export function countLetters(script: AlphabetScript, raw: string | null): number {
+  const opened = new Set(parseSeen(raw)[script]);
+  return (script === 'ckb' ? SORANI_LETTERS : LATIN_LETTERS).filter((l) => opened.has(l.id)).length;
+}
+
+/** The letters' card: how many of the alphabet's letters were opened, read again whenever the list comes back into view. */
+export function useLettersSeen(script: AlphabetScript, store: DeviceStore = deviceStore): { seen: number; total: number } {
+  const [seen, setSeen] = useState(0);
+  useFocusEffect(
+    useCallback(() => {
+      let live = true;
+      void store
+        .get(SEEN_KEY)
+        .catch(() => null)
+        .then((raw) => {
+          if (live) setSeen(countLetters(script, raw));
+        });
+      return () => {
+        live = false;
+      };
+    }, [store, script]),
+  );
+  return { seen, total: (script === 'ckb' ? SORANI_LETTERS : LATIN_LETTERS).length };
 }

@@ -73,6 +73,8 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   LOGIN_VERIFICATION_REQUIRED: 'error.code.loginCheck',
   INVALID_OAUTH_TOKEN: 'error.code.oauthFailed',
   OAUTH_NOT_CONFIGURED: 'error.code.oauthUnavailable',
+  // Apple or Google names an address whose account here has not confirmed it yet: the password first
+  LINK_REQUIRES_VERIFIED_EMAIL: 'error.code.oauthLinkUnverified',
   // a session that has run out, however the server put it
   UNAUTHORIZED: 'error.sessionExpired',
   INVALID_REFRESH: 'error.sessionExpired',
@@ -196,6 +198,19 @@ export function describeError(error: ApiError, t: Translate): string {
     default:
       return error.message || t('error.generic');
   }
+}
+
+/**
+ * The sentence `describeError` gives, unless that would be the server's own
+ * words passed through — English, and sometimes not words at all ("request
+ * failed (409)" from a route whose refusals have no code) — when the caller's
+ * own sentence for this failure is said instead. For the screens where the
+ * reader must never see anything but their own language: signing in, a
+ * username, a reward.
+ */
+export function describeErrorOr(error: ApiError, t: Translate, fallback: TranslationKey): string {
+  const said = describeError(error, t);
+  return said === error.message ? t(fallback) : said;
 }
 
 /**

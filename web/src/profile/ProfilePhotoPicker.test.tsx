@@ -98,7 +98,7 @@ describe('ProfilePhotoPicker', () => {
     await pick();
     await userEvent.click(screen.getByRole('button', { name: 'Use this picture' }));
 
-    expect(await screen.findByRole('status')).toHaveTextContent(/storage isn’t configured/i);
+    expect(await screen.findByRole('status')).toHaveTextContent(/can’t be uploaded right now/i);
     expect(onChanged).not.toHaveBeenCalled();
   });
 

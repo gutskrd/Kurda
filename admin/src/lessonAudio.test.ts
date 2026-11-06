@@ -2,9 +2,12 @@ import { describe, expect, it } from 'vitest';
 import {
   addPhrase,
   counts,
+  courseKey,
+  coursesOf,
   describeUsage,
   displayOrder,
   group,
+  inCourse,
   inScope,
   isStoryUsage,
   lessonGroupId,
@@ -13,7 +16,13 @@ import {
   neighbour,
   nextMissing,
   progress,
+  recordingPlan,
+  scriptHref,
   scriptOf,
+  voiceCounts,
+  voiceOf,
+  voiceScript,
+  matchesVoice,
   withRecording,
   withoutRecording,
   type Item,
@@ -286,5 +295,92 @@ describe('the two sides of the studio, and one lesson or story', () => {
     expect(inScope(onlyLesson, 'lessons', 's9:1')).toBeNull();
     expect(inScope(both, 'stories', 'st1:0')?.usedIn).toEqual([story]);
     expect(inScope(loose, 'lessons', 's1:1')).toBeNull();
+  });
+});
+
+describe('the recording plan', () => {
+  const basics = usage();
+  const road = (lesson: number, title = `Road ${lesson}`): Usage =>
+    usage({ courseId: 'c-road', courseSlug: 'kurmanji-road', courseTitle: 'The Kurmanji Road', unitId: 'r-u1', skillId: 'r-s1', lessonPosition: lesson, lessonId: `r-l${lesson}`, lessonTitle: title });
+  const items = [
+    item('Silav', { usedIn: [basics, road(1)], plannedSpeaker: 'hamo' }),
+    item('Bi xêr hatî', { usedIn: [road(1)], plannedSpeaker: 'hamo', ...recorded, speaker: 'hamo' }),
+    item('Ez Xezal im', { usedIn: [road(2)], plannedSpeaker: 'xezo' }),
+    item('Sêv', { usedIn: [road(2)], plannedSpeaker: 'hevalo', ...recorded, speaker: 'hevalo' }),
+    // planned for Hamo, though Xezal made the take
+    item('Spas', { usedIn: [road(3)], plannedSpeaker: 'hamo', ...recorded, speaker: 'xezo' }),
+    // nothing plans it: once recorded, it is whoever was heard
+    item('Erê', { usedIn: [basics], ...recorded, speaker: 'xezo' }),
+    item('Na', { usedIn: [basics] }),
+    item('Newroz pîroz be', { ...recorded, speaker: 'hamo', usedIn: [], unused: true }),
+  ];
+
+  it('says whose line each is: the plan’s, else who was heard, and no one’s when no lesson uses it', () => {
+    expect(items.map((i) => [i.text, voiceOf(i)])).toEqual([
+      ['Silav', 'hamo'],
+      ['Bi xêr hatî', 'hamo'],
+      ['Ez Xezal im', 'xezo'],
+      ['Sêv', 'hevalo'],
+      ['Spas', 'hamo'],
+      ['Erê', 'xezo'],
+      ['Na', null],
+      ['Newroz pîroz be', null],
+    ]);
+    expect(items.filter((i) => matchesVoice(i, 'hamo')).map((i) => i.text)).toEqual(['Silav', 'Bi xêr hatî', 'Spas']);
+    expect(items.filter((i) => matchesVoice(i, 'all'))).toHaveLength(items.length);
+  });
+
+  it('counts what is left to record for each character, and in all', () => {
+    expect(voiceCounts(items)).toEqual({ all: 3, hamo: 1, xezo: 1, hevalo: 0 });
+  });
+
+  it('narrows to one course by its slug, keeping only the uses there', () => {
+    expect(coursesOf(items)).toEqual([
+      { slug: 'c1', title: 'Kurmanji for Beginners' },
+      { slug: 'kurmanji-road', title: 'The Kurmanji Road' },
+    ]);
+    const silav = inCourse(items[0]!, 'kurmanji-road')!;
+    expect(silav.usedIn).toEqual([road(1)]);
+    // filed under its first use in that course
+    expect(group([silav]).courses[0]!.title).toBe('The Kurmanji Road');
+    expect(inCourse(items[6]!, 'kurmanji-road')).toBeNull();
+    expect(inCourse(items[7]!, 'kurmanji-road')).toBeNull();
+    expect(inCourse(items[0]!, null)).toBe(items[0]);
+    // an API from before the slug: the course id stands in
+    expect(courseKey({ courseId: 'c9' })).toBe('c9');
+  });
+
+  it('gives each course’s characters recorded / total, Hamo first, and what nobody is planned for', () => {
+    expect(recordingPlan(items)).toEqual([
+      {
+        slug: 'c1',
+        title: 'Kurmanji for Beginners',
+        lines: [
+          { voice: 'hamo', recorded: 0, total: 1 },
+          { voice: 'xezo', recorded: 1, total: 1 },
+          { voice: 'hevalo', recorded: 0, total: 0 },
+          { voice: null, recorded: 0, total: 1 },
+        ],
+      },
+      {
+        slug: 'kurmanji-road',
+        title: 'The Kurmanji Road',
+        lines: [
+          { voice: 'hamo', recorded: 2, total: 3 },
+          { voice: 'xezo', recorded: 0, total: 1 },
+          { voice: 'hevalo', recorded: 1, total: 1 },
+        ],
+      },
+    ]);
+    // a course nothing in which is planned for anyone has no plan
+    expect(recordingPlan([items[6]!])).toEqual([]);
+  });
+
+  it('lists a character’s script in course order, recorded or not', () => {
+    const road1 = items.flatMap((i) => inCourse(i, 'kurmanji-road') ?? []);
+    expect(voiceScript(road1, 'hamo').map((i) => i.text)).toEqual(['Silav', 'Bi xêr hatî', 'Spas']);
+    expect(voiceScript(road1, 'xezo').map((i) => i.text)).toEqual(['Ez Xezal im']);
+    expect(scriptHref('hamo', 'kurmanji-road')).toBe('#/audio/lessons?voice=hamo&course=kurmanji-road');
+    expect(scriptHref('xezo', null)).toBe('#/audio/lessons?voice=xezo');
   });
 });

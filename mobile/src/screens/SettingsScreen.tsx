@@ -1,11 +1,15 @@
 import { Fragment, useState, type ReactNode } from 'react';
 import { foldForSearch } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
+import { describeError, isMaintenance } from '../api/errors';
+import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
-import { layout, spacing } from '../theme/tokens';
+import { useDirection } from '../reports/direction';
+import { BottomSheet } from '../theme/BottomSheet';
+import { ClayButton } from '../theme/glass';
+import { layout, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { PREFERENCE_LABEL } from '../theme/appearance';
 import { useI18n } from '../i18n/I18nContext';
@@ -15,11 +19,12 @@ import { ACCENT_LABEL } from '../keyboard/KeyboardSettings';
 import { useKeyboardPrefs } from '../keyboard/prefs';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
 import { SearchField } from '../theme/SearchField';
-import { LEGAL_URLS, SUPPORT_EMAIL, openLegal } from '../legal/links';
+import { LEGAL_URLS, SUPPORT_EMAIL, contactSupport, openLegal } from '../legal/links';
 import { useMyAccount } from '../settings/account';
 import { useSettingsAttention } from '../settings/attention';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 import { SettingsNote, SettingsPage, SettingsRow, SettingsSection, useOnOff } from '../settings/list';
+import { VersionLine } from '../settings/VersionLine';
 
 /** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
 export const COPYRIGHT_URL = LEGAL_URLS.copyright;
@@ -41,7 +46,8 @@ interface Entry {
  * you; then help and the fine print; and at the very end, apart from the rest,
  * the rows that sign you out or delete the account, so nobody reaches them
  * while looking for something else. Every choice with more than one answer is
- * a page of its own, where each answer says what it means.
+ * a page of its own, where each answer says what it means. Under it all, in
+ * one quiet line, the version and build, which is what support asks first.
  *
  * The search at the top finds a row by its name, its value, or the name of
  * anything on the page behind it ("accent" finds Keyboard and accents).
@@ -49,8 +55,9 @@ interface Entry {
 export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client, logout, deleteAccount, isGuest } = useAuth();
   const navigation = useNavigation<RootNavigation>();
-  const { preference } = useTheme();
+  const { preference, colors } = useTheme();
   const { t, locale } = useI18n();
+  const dir = useDirection();
   const [keyboard] = useKeyboardPrefs();
   const account = useMyAccount();
   const attention = useSettingsAttention();
@@ -65,14 +72,29 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
    * token there is — so this device's session dies with the rest. Signing out
    * locally afterwards is not tidying up; it is the only way the app and the
    * server still agree about what just happened.
+   *
+   * And only afterwards. When the server did not take it, nothing was signed
+   * out anywhere, and signing this phone out regardless would leave the person
+   * believing the other devices were out too.
    */
+  const endEverySession = async () => {
+    const res = await client.delete('/me/sessions');
+    if (res.ok) {
+      await logout();
+      return;
+    }
+    // Hevalo offline for a while is said by the screen over the app, not by an alert on top of it
+    if (isMaintenance(res.error)) return;
+    haptic('error');
+    Alert.alert(t('settings.sessions.signOutFailed'), describeError(res.error, t));
+  };
   const signOutEverywhere = () => {
     Alert.alert(t('settings.sessions.signOutEverywhere'), t('settings.sessions.help'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('settings.sessions.signOutEverywhere'),
         style: 'destructive',
-        onPress: () => void client.delete('/me/sessions').then(() => logout()),
+        onPress: () => void endEverySession(),
       },
     ]);
   };
@@ -94,21 +116,44 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     });
   };
 
-  // Apple-required in-app account deletion (KUR-275). Server keeps a 14-day
-  // grace window — signing back in cancels it — so we warn, then sign out.
+  /*
+   * Apple-required in-app account deletion (KUR-275). The server keeps the
+   * account for a grace period and signing back in cancels it, so we warn,
+   * sign out, and then say it again over the welcome screen: leaving without
+   * a word read as the app having crashed, and it is the one moment the way
+   * back has to be clear.
+   */
   const confirmDelete = () => {
-    Alert.alert(t('settings.delete.confirmTitle'), t('settings.delete.warning'), [
+    // a guest has no grace period: nobody could sign in to it again, so the server closes it at once
+    Alert.alert(t('settings.delete.confirmTitle'), isGuest ? t('settings.delete.guestWarning') : t('settings.delete.warning'), [
       { text: t('common.cancel'), style: 'cancel' },
       {
         text: t('settings.delete.confirm'),
         style: 'destructive',
         onPress: () => {
-          void deleteAccount().then((err) => {
-            if (err) Alert.alert(t('settings.delete.failed'), err);
+          void deleteAccount().then((result) => {
+            if (!result.ok) Alert.alert(t('settings.delete.failed'), result.message);
+            else if (result.graceDays > 0) Alert.alert(t('settings.delete.scheduledTitle'), t('settings.delete.scheduledBody', { days: result.graceDays }));
+            else Alert.alert(t('settings.delete.guestDone'));
           });
         },
       },
     ]);
+  };
+
+  /*
+   * A guest has no email and no password, so logging out is the end of the
+   * account and of everything learned on it. It asks first, and the first
+   * answer it offers is the one that keeps the progress: making the account.
+   */
+  const [guestLeaving, setGuestLeaving] = useState(false);
+  const askedLogout = () => {
+    if (!isGuest) {
+      void logout();
+      return;
+    }
+    haptic('select');
+    setGuestLeaving(true);
   };
 
   const page = (key: SettingsPageKey) => () => navigation.navigate('SettingsPage', { page: key });
@@ -258,15 +303,27 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           row: <FeedbackSettingsRows />,
         },
         {
+          // the answers first: most questions have been asked before, and the answer is quicker than an email
+          key: 'faq',
+          terms: [t('settings.faq')],
+          row: <SettingsRow icon="question" title={t('settings.faq')} opens={false} onPress={() => openLegal('faq')} />,
+        },
+        {
+          // the mail app, or the address copied when there is none to open
           key: 'support',
           terms: [t('settings.support'), SUPPORT_EMAIL],
-          row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} opens={false} onPress={() => openLegal('support')} />,
+          row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} opens={false} onPress={() => void contactSupport(t)} />,
         },
         {
           // the website's pages the app answers to, each opened on hevalo.app so there is one copy of each
           key: 'teaching',
           terms: [t('settings.teaching')],
           row: <SettingsRow icon="book" title={t('settings.teaching')} opens={false} onPress={() => openLegal('teaching')} />,
+        },
+        {
+          key: 'aboutPage',
+          terms: [t('settings.about')],
+          row: <SettingsRow icon="globe" title={t('settings.about')} opens={false} onPress={() => openLegal('about')} />,
         },
         {
           key: 'terms',
@@ -324,15 +381,15 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         {
           key: 'logout',
           terms: [t('profile.logout')],
-          row: <SettingsRow icon="sign-out" title={t('profile.logout')} opens={false} onPress={() => void logout()} />,
+          row: <SettingsRow icon="sign-out" title={t('profile.logout')} opens={false} onPress={askedLogout} />,
         },
         {
           key: 'delete',
           terms: [t('settings.delete.title')],
           row: <SettingsRow icon="trash" title={t('settings.delete.title')} destructive opens={false} onPress={confirmDelete} />,
         },
-        // a guest signs out and nothing more: no other devices, no data to ask for, no account of their own to delete
-      ].filter((entry) => !isGuest || entry.key === 'logout'),
+        // a guest has no other devices and no data to ask for, but can always leave, and take the account with them
+      ].filter((entry) => !isGuest || entry.key === 'logout' || entry.key === 'delete'),
     },
   ];
 
@@ -356,22 +413,51 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
     : offered;
 
   return (
-    <SettingsPage title={t('settings.title')} onExit={onExit}>
-      <View style={styles.search}>
-        <SearchField value={query} onChangeText={setQuery} label={t('settings.search')} />
-      </View>
-      {shown.map((section, i) => (
-        <SettingsSection key={section.key} title={section.title} first={i === 0}>
-          {section.entries.map((entry) => (
-            <Fragment key={entry.key}>{entry.row}</Fragment>
-          ))}
-        </SettingsSection>
-      ))}
-      {shown.length === 0 ? <SettingsNote>{t('settings.search.none', { query: query.trim() })}</SettingsNote> : null}
-    </SettingsPage>
+    <>
+      <SettingsPage title={t('settings.title')} onExit={onExit}>
+        <View style={styles.search}>
+          <SearchField value={query} onChangeText={setQuery} label={t('settings.search')} />
+        </View>
+        {shown.map((section, i) => (
+          <SettingsSection key={section.key} title={section.title} first={i === 0}>
+            {section.entries.map((entry) => (
+              <Fragment key={entry.key}>{entry.row}</Fragment>
+            ))}
+          </SettingsSection>
+        ))}
+        {shown.length === 0 ? <SettingsNote>{t('settings.search.none', { query: query.trim() })}</SettingsNote> : null}
+        <VersionLine />
+      </SettingsPage>
+
+      <BottomSheet visible={guestLeaving} onClose={() => setGuestLeaving(false)} title={t('guest.logout.title')} testID="guest-logout">
+        <Text style={[styles.sheetBody, dir.text, { color: colors.textSecondary }]}>{t('guest.logout.body')}</Text>
+        <View style={styles.sheetActions}>
+          <ClayButton
+            label={t('guest.createAccount')}
+            tone="primary"
+            size="large"
+            onPress={() => {
+              setGuestLeaving(false);
+              navigation.navigate('ClaimAccount');
+            }}
+          />
+          <ClayButton
+            label={t('guest.logout.anyway')}
+            tone="danger"
+            variant="outline"
+            onPress={() => {
+              setGuestLeaving(false);
+              void logout();
+            }}
+          />
+        </View>
+      </BottomSheet>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   search: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
+  sheetBody: { fontSize: typography.sizes.md, lineHeight: 22 },
+  sheetActions: { gap: spacing.sm, marginTop: spacing.sm },
 });

@@ -1,4 +1,4 @@
-import { buildInviteUrl, type RatedState } from '@kurda/shared';
+import type { RatedState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
@@ -18,7 +18,8 @@ export interface ScoreEntry {
 
 export interface MatchState {
   id: string;
-  status: 'lobby' | 'active' | 'finished';
+  /** `cancelled`: the host left the lobby, which calls the match off for everyone */
+  status: 'lobby' | 'active' | 'finished' | 'cancelled';
   dialect: Dialect;
   /** revealed once the match starts — the lobby must not give it away early */
   prompt: string | null;
@@ -28,6 +29,12 @@ export interface MatchState {
   /** the viewer's own id when they host, else the host's `seat:N` */
   createdBy: string;
   isHost?: boolean;
+  /**
+   * The six characters a friend types to join (Games → Join with a code), while
+   * the match can still be joined; null once it has started, finished or been
+   * called off. Older servers leave it out.
+   */
+  code?: string | null;
   /** the rematch or next round, once there is one */
   nextLobbyId?: string | null;
   /** everyone in it, by seat, named as this viewer may see them */
@@ -88,6 +95,14 @@ export const joinMatch = (client: ApiClient, id: string): Promise<ApiResult<Matc
 export const startMatch = (client: ApiClient, id: string): Promise<ApiResult<MatchState>> =>
   client.post(`/rhyme/matches/${id}/start`);
 
+/** Leave: out of the lobby (the host leaving calls it off for everyone), or out of a match under way, your score standing. */
+export const leaveMatch = (client: ApiClient, id: string): Promise<ApiResult<{ ok: true }>> =>
+  client.post(`/rhyme/matches/${id}/leave`);
+
+/** The host takes a player out of the lobby, by seat; they cannot join it again. */
+export const removeFromMatch = (client: ApiClient, id: string, seat: number): Promise<ApiResult<MatchState>> =>
+  client.post(`/rhyme/matches/${id}/remove`, { seat });
+
 export const submitRhyme = (
   client: ApiClient,
   id: string,
@@ -101,11 +116,3 @@ export const getMatch = (client: ApiClient, id: string): Promise<ApiResult<Match
 /** 409s until the match is over — the prompt and everyone's words are in here. */
 export const getMatchResults = (client: ApiClient, id: string): Promise<ApiResult<MatchResults>> =>
   client.get(`/rhyme/matches/${id}/results`);
-
-/**
- * The link a friend follows to join, built by the same code the browser uses.
- *
- * An invite has to be readable in whichever app it is opened in, so the shape
- * of this URL is not this app's to decide — it lives in @kurda/shared.
- */
-export const inviteUrl = (id: string): string => buildInviteUrl('rhyme-match', id);

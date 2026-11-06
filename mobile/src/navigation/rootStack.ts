@@ -40,9 +40,11 @@ export type RootStackParamList = {
   /**
    * A practice session, started at once. `exerciseIds`: practise these (a
    * lesson's mistakes, "Practise these now") rather than what is due; `mode`:
-   * another kind of practice from the hub, with `unitId` for a unit's review.
+   * another kind of practice from the hub, with `unitId` for a unit's review;
+   * `sessionId`: a review left part-way through, opened again where it
+   * stopped (Learn's Continue review).
    */
-  Practice: { exerciseIds?: string[]; mode?: PracticeMode; unitId?: string } | undefined;
+  Practice: { exerciseIds?: string[]; mode?: PracticeMode; unitId?: string; sessionId?: string } | undefined;
   /** Practice's hub: the one thing most worth doing now, and every other kind of practice (practice/PracticeHubScreen). */
   PracticeHub: undefined;
   /** The short test that jumps ahead on the path to `unitId` (coursemap/JumpTestScreen) */
@@ -93,12 +95,34 @@ export type RootStackParamList = {
   /** What is limited on your account and why, with "Ask for a review" (reports/AccountStandingScreen). */
   AccountStanding: undefined;
   Wordle: undefined;
-  /** An id when an invite link opened it; nothing when you came to make one. */
+  /** An id when a join code, an invite or an old invite link opened it; nothing when you came to make one. */
   WordleBattle: { id?: string } | undefined;
   Rhyme: undefined;
   Race: undefined;
-  /** An id when an invite link opened it; nothing when you came to make one. */
+  /** Build a Kurdish Sentence, the first of the learning games (games/BuildSentenceScreen) */
+  BuildSentence: undefined;
+  /** The Village ("kingdom" in code): the learner's village, built by their learning (kingdom/KingdomScreen) */
+  Kingdom: undefined;
+  /** The Memory Thief (games/MemoryThiefScreen) */
+  MemoryThief: undefined;
+  /** Hear It, Find It (games/HearItScreen) */
+  HearIt: undefined;
+  /** What Would You Say? (games/WhatWouldYouSayScreen) */
+  WhatWouldYouSay: undefined;
+  /** Kurdish Detective (games/DetectiveScreen) */
+  Detective: undefined;
+  /** An id when a join code, an invite or an old invite link opened it; nothing when you came to make one. */
   RhymeMatch: { id?: string } | undefined;
+  /** The Last Letter: an id for a room (a code, an invite, a card); nothing for the start, with friends or against Hevalo. */
+  LastLetter: { id?: string } | undefined;
+  /** Kurdish Impostor: an id for a room (a code, an invite, a card); nothing for the start. */
+  Impostor: { id?: string } | undefined;
+  /** Don't Say the Word!: an id for a room; nothing for the start. */
+  DontSay: { id?: string } | undefined;
+  /** Kurdish Bluff: an id for a room (a code, an invite, a card); nothing for the start (bluff/BluffScreen) */
+  Bluff: { id?: string } | undefined;
+  /** Who Am I?: an id for a race's room; nothing for the start, alone or a race (whoami/WhoAmIScreen) */
+  WhoAmI: { id?: string } | undefined;
   /** An id when an invite link opened it (`/app/games/stories?id=…`): it hands over to that game. */
   Stories: { id?: string } | undefined;
   StoryReader: { slug: string };
@@ -106,7 +130,6 @@ export type RootStackParamList = {
   StoryGame: { id: string };
   Memes: undefined;
   MemeDetail: { postId: string };
-  PostPicture: undefined;
   Tags: undefined;
   ChangeUsername: undefined;
   /** Settings → Security: the current password, then the new one twice (security/ChangePasswordScreen) */
@@ -134,7 +157,6 @@ export type RootStackParamList = {
   Saved: undefined;
   EditProfile: undefined;
   LibraryPost: { postId: string };
-  LibraryCompose: undefined;
   /**
    * The post composer (composer/ComposeScreen): a new post, or `postId` to edit
    * one of yours. `pickPictures` opens the photo library at once, `meme` makes

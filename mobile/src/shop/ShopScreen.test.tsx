@@ -8,6 +8,8 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { Alert } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -77,6 +79,15 @@ const rowNames = (): string[] =>
 const search = (text: string) => fireEvent.change(screen.getByLabelText('Search the shop'), { target: { value: text } });
 
 describe('the Shop, by kind', () => {
+  it('reads the catalogue and the purse again when pulled down', async () => {
+    const client = open();
+    await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
+    const count = (path: string) => client.calls.filter((c) => c.method === 'GET' && c.path === path).length;
+    const before = [count('/shop'), count('/me/wallet')];
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
+    await waitFor(() => expect([count('/shop'), count('/me/wallet')]).toEqual([before[0]! + 1, before[1]! + 1]));
+  });
+
   it('files every item under its kind, in the shared order, with a translated title and a count', async () => {
     open();
     await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
@@ -180,6 +191,8 @@ describe('the Shop, by kind', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Gola Şîn,/ }));
     expect(screen.getByText('Send as a gift')).toBeTruthy();
     expect(screen.getByText('400 Zêr')).toBeTruthy();
+    // beside Buy, before anything is spent: a purchase is final
+    expect(screen.getByText('Every purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.')).toBeTruthy();
     const felt: HapticEvent[] = [];
     resetHaptics();
     const stop = onHaptic((e) => felt.push(e));
@@ -195,8 +208,46 @@ describe('the Shop, by kind', () => {
     const client = open(CATALOGUE, { zer: 2000, gems: 0 });
     fireEvent.click(await screen.findByRole('button', { name: /^Îstîkan,/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
-    expect(Alert.alert).toHaveBeenCalledWith('Confirm purchase', 'Spend 900 Zêr on Îstîkan?', expect.any(Array));
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Confirm purchase',
+      'Spend 900 Zêr on Îstîkan?\n\nEvery purchase is final: once it’s yours, it stays yours and can’t be returned. Take your time if you’re not sure.',
+      expect.any(Array),
+    );
     expect(client.calls.some((c) => c.path === '/shop/purchase')).toBe(false);
+  });
+
+  it('asks first before spending gems, however few', async () => {
+    const client = open();
+    fireEvent.click(await screen.findByRole('button', { name: /^Berbang,/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
+    expect(Alert.alert).toHaveBeenCalledWith('Confirm purchase', expect.stringContaining('Every purchase is final'), expect.any(Array));
+    expect(client.calls.some((c) => c.path === '/shop/purchase')).toBe(false);
+  });
+
+  it('says nothing about finality for a free item, which costs nothing', async () => {
+    open();
+    fireEvent.click(await screen.findByRole('button', { name: /^Hevalo,/ }));
+    expect(screen.getByRole('button', { name: 'Get it free' })).toBeTruthy();
+    expect(screen.queryByText(/Every purchase is final/)).toBeNull();
+  });
+
+  it('has no Return control: not for refreshed items, not for anything', async () => {
+    const client = fakeClient({
+      'GET /shop': ok({ items: CATALOGUE }),
+      'GET /me/wallet': ok({ balances: { zer: 550, gems: 12 } }),
+      'GET /me/inventory': ok({
+        items: [{ sku: 'bg-background-01', name: 'Şev', category: 'background', quantity: 1, premiumOnly: false, assetUrl: null }],
+        refreshedItems: ['bg-background-01'],
+      }),
+      'GET /me/gifts': ok({ gifts: [], unseen: 0 }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<ShopScreen onExit={() => undefined} onEarnMore={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
+    expect(screen.queryByRole('button', { name: /^Return/ })).toBeNull();
+    expect(screen.queryByText('Return')).toBeNull();
+    expect(screen.queryByText(/return them/)).toBeNull();
+    expect(client.calls.some((c) => c.path.endsWith('/return'))).toBe(false);
   });
 
   it('clears every filter at once, and offers it when nothing matches', async () => {

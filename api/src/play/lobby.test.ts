@@ -15,6 +15,7 @@ const row = (over: Partial<LobbyRow> = {}): LobbyRow => ({
   next_lobby_id: null,
   rematch_of: null,
   updated_at: minutesAgo(1),
+  code: 'ABC234',
   ...over,
 });
 const seat = (user_id: string, n: number, over: Partial<SeatRow> = {}): SeatRow => ({ user_id, seat: n, left_at: null, removed: false, ...over });

@@ -44,6 +44,7 @@ function wav(seed: number): Buffer {
 
 interface Usage {
   courseId: string;
+  courseSlug: string;
   courseTitle: string;
   unitId: string;
   unitTitle: string;
@@ -110,6 +111,10 @@ describe.skipIf(!DATABASE_URL)('story sentences in the audio studio (integration
     ids[name] = res.json().id;
     let lockVersion = res.json().lockVersion as number;
     if (status !== 'draft') {
+      // publishing needs an editor's approval first, as it does in the panel
+      const approved = await call('POST', `/admin/stories/${ids[name]}/review`, { approved: true, lockVersion });
+      expect(approved.statusCode, approved.body).toBe(200);
+      lockVersion = approved.json().lockVersion;
       const published = await call('POST', `/admin/stories/${ids[name]}/publish`, { lockVersion });
       expect(published.statusCode).toBe(200);
       lockVersion = published.json().lockVersion;
@@ -181,6 +186,7 @@ describe.skipIf(!DATABASE_URL)('story sentences in the audio studio (integration
     expect(item(items, T.one)!.usedIn).toEqual([
       {
         courseId: 'stories:kurmanci',
+        courseSlug: 'stories:kurmanci',
         courseTitle: 'Stories — Kurmancî',
         unitId: ids.draft,
         unitTitle: `Title draft ${s}`,

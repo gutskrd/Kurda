@@ -52,7 +52,7 @@ describe.skipIf(!DATABASE_URL)('signup anti-bot (integration)', () => {
   });
 
   it('rejects missing CAPTCHA identically when Turnstile is configured', async () => {
-    const res = await register(guardedApp, { email: `human_${suffix}@gmail.com` }, '10.14.0.2');
+    const res = await register(guardedApp, { email: `human_${suffix}@example.com` }, '10.14.0.2');
     expect(res.statusCode).toBe(400);
     expect(res.json().code).toBe('SIGNUP_REJECTED');
 
@@ -65,7 +65,7 @@ describe.skipIf(!DATABASE_URL)('signup anti-bot (integration)', () => {
   it('normal signup still works without CAPTCHA configured', async () => {
     const res = await register(
       openApp,
-      { email: `fine_${suffix}@gmail.com`, username: `fine_${suffix}`.slice(0, 30) },
+      { email: `fine_${suffix}@example.com`, username: `fine_${suffix}`.slice(0, 30) },
       '10.14.0.4',
     );
     expect(res.statusCode).toBe(201);
@@ -75,7 +75,7 @@ describe.skipIf(!DATABASE_URL)('signup anti-bot (integration)', () => {
     const res = await guardedApp.inject({
       method: 'POST',
       url: '/auth/request-password-reset',
-      payload: { email: `whoever_${suffix}@gmail.com` },
+      payload: { email: `whoever_${suffix}@example.com` },
       remoteAddress: '10.14.0.5',
     });
     expect(res.statusCode).toBe(200);

@@ -95,7 +95,7 @@ describe('Settings', () => {
     const alert = vi.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
     const buttons = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label'));
-    expect(buttons.slice(-3)).toEqual(['Sign out everywhere', 'Log out', 'Delete account']);
+    expect(buttons.slice(-3)).toEqual(['Sign out everywhere', 'Sign out', 'Delete account']);
     fireEvent.click(screen.getByRole('button', { name: 'Delete account' }));
     expect(alert).toHaveBeenCalledWith('Delete account?', expect.any(String), expect.any(Array));
   });

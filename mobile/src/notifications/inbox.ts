@@ -159,11 +159,21 @@ export function noticeTime(iso: string, t: Translate, locale: string, now: numbe
  * names, then the category the reader can switch off in settings — so a kind
  * the app has not met yet still gets the picture of its category rather than
  * a blank.
+ *
+ * An invite to play is a ticket, as it is everywhere else in the app
+ * (play/Ticket.tsx): the ticket glyph, in its game's colour.
  */
-export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): { icon: IconName; reward: boolean } {
+export interface NoticeKind {
+  icon: IconName;
+  reward: boolean;
+  /** an invite's game, whose colour its ticket is drawn in */
+  game?: PlayGame;
+}
+
+export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): NoticeKind {
   switch (item.data.kind) {
     case 'play_invite':
-      return { icon: 'play', reward: false };
+      return isPlayGame(item.data.game) ? { icon: 'ticket', reward: false, game: item.data.game } : { icon: 'ticket', reward: false };
     case 'gift':
       return { icon: 'gift', reward: true };
     case 'badge':

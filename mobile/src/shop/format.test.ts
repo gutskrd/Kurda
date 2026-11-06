@@ -95,9 +95,12 @@ describe('canGift', () => {
 });
 
 describe('needsConfirmation', () => {
-  it('asks only for Zêr purchases above the threshold', () => {
+  it('asks for Zêr purchases above the threshold, and for anything priced in gems', () => {
     expect(needsConfirmation(item({ currency: 'zer', price: CONFIRM_THRESHOLD_ZER + 1 }))).toBe(true);
     expect(needsConfirmation(item({ currency: 'zer', price: CONFIRM_THRESHOLD_ZER }))).toBe(false);
-    expect(needsConfirmation(item({ currency: 'gems', price: 100_000 }))).toBe(false);
+    expect(needsConfirmation(item({ currency: 'gems', price: 100_000 }))).toBe(true);
+    expect(needsConfirmation(item({ currency: 'gems', price: 1 }))).toBe(true);
+    // nothing is spent on a free item, so there is nothing to be sure about
+    expect(needsConfirmation(item({ currency: 'gems', price: 0 }))).toBe(false);
   });
 });

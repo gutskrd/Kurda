@@ -112,8 +112,13 @@ services:
       # them; purchases are REFUSED with 503 IAP_UNAVAILABLE until a real
       # verifier is wired, which is the only safe answer an unverified
       # environment can give. Remove the flag once the store credentials land.
-      - key: IAP_ALLOW_STUB
+      - key: IAP_PURCHASES_OFF
         value: "true"
+      # The old name for the flag above. It is still read as "purchases off"
+      # (never as the test receipt verifier, which production stops at boot),
+      # and set to "false" here so the new name is the one that says so.
+      - key: IAP_ALLOW_STUB
+        value: "false"
       # Media storage for profile photos (KUR-177/180). S3-compatible; Cloudflare
       # R2 recommended. Set these in the Render dashboard (secrets), then redeploy.
       # Until they're set the API returns 503 MEDIA_UNAVAILABLE for uploads. See

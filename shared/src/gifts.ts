@@ -57,6 +57,17 @@ export const GIFTS_PER_DAY = 10;
 export const GIFTS_PER_FRIEND_PER_DAY = 3;
 
 /**
+ * Gifts one person may be given in a day, from everyone together.
+ *
+ * The caps above are the sender's, so they bound what one account can give,
+ * not what one account can be given: ten fresh accounts sending three each is
+ * thirty a day into the same inventory. A gift is an item, never currency, so
+ * this is no way to mint Zêr — but a farm of throwaway accounts feeding one
+ * main account is exactly the pattern a present should not become.
+ */
+export const GIFTS_RECEIVED_PER_DAY = 10;
+
+/**
  * Between two people who are not both known adults, a friendship must be this
  * old before a gift can pass between them — the "add, gift, groom" pattern is
  * the one this blocks.

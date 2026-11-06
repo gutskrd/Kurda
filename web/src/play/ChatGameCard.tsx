@@ -7,6 +7,7 @@ import type { MessageKey } from '../i18n/en';
 import type { ChatExtras } from '../lib/types';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
+import { TicketBody, TicketGlyph, TicketStamp, TicketStub, ticketClass, useFreshStamp } from '../ui/Ticket';
 import { GAME_NAME_KEY, joinLobby, lobbyPath, playError, summaryParts } from './playApi';
 import { RatedBadge } from '../ranks/rated';
 
@@ -29,10 +30,23 @@ const STATUS_KEY: Record<Exclude<LobbyCard['status'], 'open'>, MessageKey> = {
  * The card asks for its state when it is shown, whenever the server says the
  * game changed, and when the tab comes back; it does not poll, since a long
  * conversation can hold many of them.
+ *
+ * It is a ticket (ui/Ticket.tsx): the game's mark on a stub in its colour,
+ * and where it stands as a stamp. Once you are in, "Joined" is stamped across
+ * it — landing with a small thump when it happens while you watch. A game
+ * that finished or was called off is grey, its stub punched and the outcome
+ * stamped; one that is gone is grey and punched, and says so.
  */
-export function ChatGameCard({ game, lobbyId }: ChatGameRef): React.JSX.Element {
+export function ChatGameCard({
+  game,
+  lobbyId,
+  from,
+}: ChatGameRef & {
+  /** who posted it, so a screen reader hears whose invite it is */
+  from?: { id: string; name: string } | null;
+}): React.JSX.Element {
   const t = useT();
-  const { client } = useAuth();
+  const { client, user } = useAuth();
   const navigate = useNavigate();
   const [card, setCard] = useState<LobbyCard | null>(null);
   const [busy, setBusy] = useState(false);
@@ -81,40 +95,61 @@ export function ChatGameCard({ game, lobbyId }: ChatGameRef): React.JSX.Element 
       ? t('play.card.joined', { count: card.players, max: card.maxPlayers })
       : t(STATUS_KEY[card.status]);
   const live = card && (card.status === 'open' || card.status === 'full' || card.status === 'started');
+  const spent = card?.status === 'finished' || card?.status === 'cancelled' || card?.status === 'unavailable';
+  // the stamp: in, or how it ended; a game that is simply gone says so in words instead
+  const stamp = card?.isMember && live ? 'joined' : card?.status === 'finished' || card?.status === 'cancelled' ? card.status : null;
+  const fresh = useFreshStamp(stamp, card !== null);
+  const label =
+    from && from.id !== user?.id ? t('play.ticket.from', { name: from.name, game: name }) : t('games.invite.preview', { game: name });
 
   return (
-    <div className={`invite-card chat-game-card is-${card?.status ?? 'loading'}`} role="group" aria-label={t('games.invite.preview', { game: name })}>
-      <span className="invite-eyebrow">{t('games.invite.eyebrow')}</span>
-      <span className="invite-title">{name}</span>
-      {/* Rated or Friendly, before anyone joins (Game Ranks) */}
-      {card && typeof card.summary.rated === 'boolean' && <RatedBadge rated={card.summary.rated} size="sm" className="invite-rated" />}
-      {parts.length > 0 && (
-        <span className="invite-blurb">
-          {parts.map((p, i) => (
-            <span key={i}>
-              {i > 0 && ' · '}
-              <span lang={p.lang} dir={p.dir}>
-                {p.text}
+    <div
+      className={ticketClass(spent ? 'muted' : game, 'row', `invite-card chat-game-card is-${card?.status ?? 'loading'}${spent ? ' is-punched' : ''}`)}
+      role="group"
+      aria-label={label}
+    >
+      <TicketStub className="invite-stub">
+        <TicketGlyph game={game} />
+      </TicketStub>
+      <TicketBody className="invite-main">
+        {stamp && (
+          <TicketStamp key={stamp} className="invite-stamp" tone={stamp === 'joined' ? 'success' : 'muted'} fresh={fresh}>
+            {stamp === 'joined' ? t('play.ticket.joined') : t(STATUS_KEY[stamp])}
+          </TicketStamp>
+        )}
+        <span className="invite-eyebrow">{t('games.invite.eyebrow')}</span>
+        <span className="invite-title">{name}</span>
+        {/* Rated or Friendly, before anyone joins (Game Ranks) */}
+        {card && typeof card.summary.rated === 'boolean' && <RatedBadge rated={card.summary.rated} size="sm" className="invite-rated" />}
+        {parts.length > 0 && (
+          <span className="invite-blurb">
+            {parts.map((p, i) => (
+              <span key={i}>
+                {i > 0 && ' · '}
+                <span lang={p.lang} dir={p.dir}>
+                  {p.text}
+                </span>
               </span>
-            </span>
-          ))}
-        </span>
-      )}
-      <span className="chat-game-status">{status}</span>
-      {error && (
-        <span className="chat-game-error" role="status">
-          {error}
-        </span>
-      )}
-      {card?.isMember && live ? (
-        <Link to={lobbyPath(game, lobbyId)} className="invite-action chat-game-action">
-          {t('play.card.open')}
-        </Link>
-      ) : card?.canJoin ? (
-        <button type="button" className="invite-action chat-game-action" disabled={busy} onClick={() => void join()}>
-          {busy ? t('games.joining') : t('play.card.join')}
-        </button>
-      ) : null}
+            ))}
+          </span>
+        )}
+        {/* a stamped ending is its own status line */}
+        {!(stamp && stamp !== 'joined') && <span className="chat-game-status">{status}</span>}
+        {error && (
+          <span className="chat-game-error" role="status">
+            {error}
+          </span>
+        )}
+        {card?.isMember && live ? (
+          <Link to={lobbyPath(game, lobbyId)} className="invite-action chat-game-action">
+            {t('play.card.open')}
+          </Link>
+        ) : card?.canJoin ? (
+          <button type="button" className="invite-action chat-game-action" disabled={busy} onClick={() => void join()}>
+            {busy ? t('games.joining') : t('play.card.join')}
+          </button>
+        ) : null}
+      </TicketBody>
     </div>
   );
 }
@@ -124,6 +159,8 @@ export function ChatGameCard({ game, lobbyId }: ChatGameRef): React.JSX.Element 
  * card for a message that is one, nothing (draw it as text) otherwise. A
  * thread that draws other kinds too tries theirs first and falls back to this.
  */
-export function gameCardBody(m: ChatExtras): React.ReactNode | undefined {
-  return m.kind === 'game' && m.game ? <ChatGameCard game={m.game.game} lobbyId={m.game.lobbyId} /> : undefined;
+export function gameCardBody(m: ChatExtras & { senderId?: string; username?: string }): React.ReactNode | undefined {
+  if (m.kind !== 'game' || !m.game) return undefined;
+  const from = m.senderId && m.username ? { id: m.senderId, name: m.username } : null;
+  return <ChatGameCard game={m.game.game} lobbyId={m.game.lobbyId} from={from} />;
 }

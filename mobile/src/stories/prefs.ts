@@ -31,8 +31,15 @@ const KEY = 'hevalo_stories_prefs_v1';
 export const TEXT_SCALES = [1, 1.15, 1.3, 1.5] as const;
 export type TextScale = (typeof TEXT_SCALES)[number];
 
-export const NARRATION_RATES = [1, 0.75] as const;
+/** The player's speeds, in the order its chip cycles through them: slower, as spoken, a little faster. */
+export const NARRATION_RATES = [0.75, 1, 1.25] as const;
 export type NarrationRate = (typeof NARRATION_RATES)[number];
+
+/** The speed after `rate` on the chip: 0.75× → 1× → 1.25× → 0.75×. */
+export function nextRate(rate: NarrationRate): NarrationRate {
+  const at = NARRATION_RATES.indexOf(rate);
+  return NARRATION_RATES[(at + 1) % NARRATION_RATES.length] ?? 1;
+}
 
 export interface SoloQuizPrefs {
   /** per length, since the counts on offer differ */

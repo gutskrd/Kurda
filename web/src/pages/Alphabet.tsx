@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import '@fontsource-variable/vazirmatn';
 import {
   LATIN_LETTERS,
@@ -27,6 +27,8 @@ import type { MessageKey } from '../i18n/en';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { publishedDictionary } from '../layouts/navLinks';
 import { isSynthesised, latinSound, latinWord, play, soraniSound, soraniWord, spokenAlphabet, useRecordings } from '../alphabet/audio';
+import { useScript } from '../alphabet/script';
+import { useSeen } from '../alphabet/seen';
 import { CharacterStage, STAGE } from '../characters/CharacterStage';
 import type { SpokenClip } from '../characters/clips';
 import { Practice } from '../alphabet/Practice';
@@ -105,51 +107,6 @@ function KurdishWord({ word, letter }: { word: string; letter: string }): React.
       {word.slice(at + letter.length)}
     </span>
   );
-}
-
-/**
- * Which letters this reader has opened, per alphabet — in this browser only,
- * never sent anywhere. Seeing the ticks add up is the small, honest kind of
- * progress that keeps someone going (and storage that fails just means no ticks).
- */
-const SEEN_KEY = 'hevalo_alphabet_seen';
-
-function readSeen(): Record<Script, string[]> {
-  try {
-    const raw = JSON.parse(localStorage.getItem(SEEN_KEY) ?? '{}') as Partial<Record<Script, unknown>>;
-    const list = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
-    return { kmr: list(raw.kmr), ckb: list(raw.ckb) };
-  } catch {
-    return { kmr: [], ckb: [] };
-  }
-}
-
-function useSeen(script: Script): [Set<string>, (id: string) => void] {
-  const [all, setAll] = useState(readSeen);
-  const mark = (id: string): void =>
-    setAll((prev) => {
-      if (prev[script].includes(id)) return prev;
-      const next = { ...prev, [script]: [...prev[script], id] };
-      try {
-        localStorage.setItem(SEEN_KEY, JSON.stringify(next));
-      } catch {
-        // private mode or full storage: the ticks just do not persist
-      }
-      return next;
-    });
-  return [useMemo(() => new Set(all[script]), [all, script]), mark];
-}
-
-function useScript(locale: AppLocale): [Script, (s: Script) => void] {
-  const [params, setParams] = useSearchParams();
-  const asked = params.get('script');
-  const script: Script = asked === 'ckb' || asked === 'kmr' ? asked : locale === 'ckb' ? 'ckb' : 'kmr';
-  const set = (s: Script): void => {
-    const next = new URLSearchParams(params);
-    next.set('script', s);
-    setParams(next, { replace: true });
-  };
-  return [script, set];
 }
 
 export function Alphabet(): React.JSX.Element {
@@ -328,6 +285,10 @@ export function Alphabet(): React.JSX.Element {
               {t('alphabet.next.title')}
             </h2>
             <div className="ab-next-links">
+              {/* the words that come after the letters: colours, numbers, days and months (pages/Words.tsx) */}
+              <Link className="btn btn-secondary" to={`/app/learn/words?script=${script}`}>
+                {t('words.fromAlphabet')}
+              </Link>
               <a className="btn btn-secondary" href={dictionary}>
                 {t('alphabet.next.dictionary')}
               </a>

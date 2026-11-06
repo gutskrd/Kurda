@@ -19,6 +19,8 @@ no frosted glass, every colour drawn, every corner on the shared scale).
 - Foliage, fire, water and cloth are painterly and flat, never rendered or
   photographic. Kilim and carpet patterns follow real Kurdish weaving motifs.
 - No humans in backgrounds. No third-party imagery or brand references.
+  The one exception (owner's request, November 2026): The Village draws its
+  own villagers at their chores, in the village's outlined style and scale.
 - Icons follow the Phosphor glyph vocabulary; tests check the set.
 
 ## The deer and the characters

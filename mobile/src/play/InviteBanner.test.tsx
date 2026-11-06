@@ -9,6 +9,9 @@ import { RealtimeProvider } from '../realtime/RealtimeProvider';
 import { FakeSocket } from '../realtime/testing/fakeSocket';
 import { InviteBanner, rootIsTabs } from './InviteBanner';
 import { useQuietInvites } from './quietInvites';
+import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
+import { onHaptic, resetHaptics } from '../feedback/haptics';
+import type { HapticEvent } from '../feedback/hapticPacing';
 
 vi.mock('react-native', () => import('./testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -264,5 +267,93 @@ describe('InviteBanner', () => {
     // before the navigator has a state, the first screen is the tabs
     expect(rootIsTabs({ getRootState: () => undefined })).toBe(true);
     expect(rootIsTabs({})).toBe(true);
+  });
+});
+
+describe('InviteBanner, as a ticket', () => {
+  let felt: HapticEvent[] = [];
+  let stopFeeling: () => void = () => undefined;
+  beforeEach(() => {
+    navigation.navigate.mockClear();
+    resetHaptics();
+    felt = [];
+    stopFeeling = onHaptic((event) => felt.push(event));
+  });
+  afterEach(() => {
+    stopFeeling();
+    cleanup();
+    patchReactNativeWeb({ reduceMotion: true });
+  });
+  const tick = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+  // the banner asks the system about Reduce Motion as it appears: the answer is in before anybody taps
+  const ready = async (name: string) => {
+    await screen.findByRole('button', { name });
+    await tick();
+    return screen.getByRole('button', { name });
+  };
+
+  it('carries the game on its stub and who it is from on the paper', async () => {
+    testAuth.client = fakeClient({ 'GET /play/invites': ok({ incoming: [{ ...invite, game: 'rhyme-match', summary: {} }], outgoing: [] }) });
+    renderWithProviders(<InviteBanner />);
+    expect(await screen.findByText('Rojda invited you to Rhyme Match')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Join Rojda’s game' })).toBeTruthy();
+  });
+
+  it('tears the stub off before the lobby opens, and the hand feels it', async () => {
+    patchReactNativeWeb({ reduceMotion: false });
+    const client = fakeClient({
+      'GET /play/invites': ok({ incoming: [invite], outgoing: [] }),
+      'POST /play/invites/inv-1/accept': ok({ game: 'wordle-battle', lobbyId: 'lobby-1' }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<InviteBanner />);
+    fireEvent.click(await ready('Join Rojda’s game'));
+    await tick();
+    // taken up: felt at once, and the lobby opens once the stub is off
+    expect(client.calls.some((c) => c.path === '/play/invites/inv-1/accept')).toBe(true);
+    expect(felt).toEqual(['tap']);
+    expect(navigation.navigate).not.toHaveBeenCalled();
+    await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'lobby-1' }));
+    expect(screen.queryByText('Rojda invited you to Peyvok Battle')).toBeNull();
+  });
+
+  it('folds a "not now" away, having told the host only the preset reason', async () => {
+    patchReactNativeWeb({ reduceMotion: false });
+    const client = fakeClient({
+      'GET /play/invites': ok({ incoming: [invite], outgoing: [] }),
+      'POST /play/invites/inv-1/decline': ok({ ok: true }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<InviteBanner />);
+    fireEvent.click(await ready('Not now'));
+    fireEvent.click(screen.getByRole('button', { name: 'Later' }));
+    await tick();
+    expect(client.calls.find((c) => c.path === '/play/invites/inv-1/decline')?.body).toEqual({ reason: 'later' });
+    // still folding away …
+    expect(screen.getByText('Rojda invited you to Peyvok Battle')).toBeTruthy();
+    // … and then gone
+    await waitFor(() => expect(screen.queryByText('Rojda invited you to Peyvok Battle')).toBeNull());
+  });
+
+  it('under Reduce Motion, opens the lobby as soon as the invite is taken up, with no tearing first', async () => {
+    patchReactNativeWeb({ reduceMotion: true });
+    testAuth.client = fakeClient({
+      'GET /play/invites': ok({ incoming: [invite], outgoing: [] }),
+      'POST /play/invites/inv-1/accept': ok({ game: 'wordle-battle', lobbyId: 'lobby-1' }),
+    });
+    renderWithProviders(<InviteBanner />);
+    fireEvent.click(await ready('Join Rojda’s game'));
+    await tick();
+    expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'lobby-1' });
+  });
+
+  it('fans the next invites out behind the first, and counts them', async () => {
+    const second: IncomingInvite = { ...invite, id: 'inv-2', game: 'stories', from: { name: 'Azad', avatarUrl: null } };
+    const third: IncomingInvite = { ...invite, id: 'inv-3', game: 'rhyme-match', from: { name: 'Sipan', avatarUrl: null } };
+    testAuth.client = fakeClient({ 'GET /play/invites': ok({ incoming: [invite, second, third], outgoing: [] }) });
+    renderWithProviders(<InviteBanner />);
+    expect(await screen.findByText('More invites waiting: 2')).toBeTruthy();
+    // only the one in front can be answered from here
+    expect(screen.getAllByRole('button', { name: /^Join / })).toHaveLength(1);
   });
 });

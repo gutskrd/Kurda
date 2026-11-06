@@ -26,7 +26,7 @@ export const EMAIL_MAX = 254;
  * managers put a space after a suggested address, and that is the same address,
  * not a malformed one. Spaces inside it are still refused.
  *
- * Case is kept as typed. `users.email` is citext, so `Name@iCloud.com` and
- * `name@icloud.com` are one account for sign-up, sign-in and every lookup.
+ * Case is kept as typed. `users.email` is citext, so `Name@Example.com` and
+ * `name@example.com` are one account for sign-up, sign-in and every lookup.
  */
 export const emailAddress = z.string().trim().max(EMAIL_MAX).pipe(z.email({ pattern: EMAIL_PATTERN }));

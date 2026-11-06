@@ -1,0 +1,607 @@
+/*
+ * The learning games (games/*.tsx): their cards in Learn's Games group, the
+ * solo round's shell, and Build a Kurdish Sentence's stage.
+ *
+ * Each game wears one of the path's tones (`lp-tone-*`, learn/path.css), so
+ * its card, its ladder and its settled line are the same colour, and the gold
+ * stays for what is earned. Only transform and opacity move; base.css stills
+ * every animation under prefers-reduced-motion, and the tiles' flight checks
+ * it in script (BuildSentence.tsx).
+ */
+
+/* ---- the card's picture: tiles on a line and a tray, no words ---------------- */
+@media (min-width: 1000px) {
+  .game-tile--build-sentence {
+    grid-column: span 7;
+  }
+}
+.lg-mini {
+  display: grid;
+  gap: 18px;
+  justify-items: center;
+  width: min(100%, 300px);
+}
+.lg-mini-line,
+.lg-mini-tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+}
+.lg-mini-line {
+  min-height: 34px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--u-fill, var(--border-strong));
+}
+.lg-mini-tile,
+.lg-mini-ghost {
+  height: 26px;
+  border-radius: 9px;
+}
+.lg-mini-tile {
+  border: 2px solid var(--border-strong);
+  background: var(--bg);
+  box-shadow: 0 3px 0 var(--border-strong);
+}
+.lg-mini-tile.is-on {
+  border-color: var(--u-fill, var(--border-strong));
+  box-shadow: 0 3px 0 var(--u-lip, var(--border-strong));
+}
+.lg-mini-tile.is-lifted {
+  transform: translateY(-6px) rotate(-3deg);
+  box-shadow: 0 9px 14px rgba(0, 0, 0, 0.35);
+}
+.lg-mini-ghost {
+  background: var(--surface-2);
+}
+
+/* ---- the shell ------------------------------------------------------------------ */
+.solo-page {
+  max-width: var(--container-narrow);
+  padding-top: var(--space-4);
+  padding-bottom: var(--space-8);
+}
+.solo {
+  display: grid;
+  gap: var(--space-5);
+}
+.solo-title {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  line-height: 1.15;
+}
+.solo-title:focus {
+  outline: none;
+}
+.solo-blurb {
+  color: var(--ink-2);
+  font-size: var(--text-body);
+}
+.solo-variety,
+.solo-muted {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.solo-continue {
+  justify-self: start;
+}
+.solo-difficulty {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.solo-difficulty legend {
+  margin-bottom: var(--space-2);
+  font-weight: 600;
+}
+.solo-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.solo-chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.solo-chip input {
+  position: absolute;
+  opacity: 0;
+  inset: 0;
+  margin: 0;
+  cursor: inherit;
+}
+.solo-chip.is-on {
+  border-color: var(--u-fill, var(--ink));
+  background: var(--surface-2);
+  font-weight: 600;
+}
+.solo-chip.is-off {
+  color: var(--ink-4);
+  border-style: dashed;
+  cursor: default;
+}
+.solo-chip:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.solo > .btn-lg {
+  justify-self: start;
+}
+
+/* where you are in a round: a stone per item, the one you are on raised */
+.solo-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+.solo-exit {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+}
+.solo-exit:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.solo-stones {
+  display: flex;
+  flex: 1;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.solo-stone {
+  flex: 1;
+  height: 8px;
+  max-width: 48px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  transition: transform var(--dur) var(--ease-out), background var(--dur) var(--ease-out);
+}
+.solo-stone.is-here {
+  transform: scaleY(1.5);
+  background: var(--ink-3);
+}
+.solo-stone.is-first {
+  background: var(--u-fill, var(--success));
+}
+.solo-stone.is-right {
+  background: color-mix(in srgb, var(--u-fill, var(--success)) 55%, transparent);
+}
+.solo-stone.is-missed {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--surface-3);
+}
+.solo-count {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+
+/* after each answer: the verdict, the explanation, the way on — kept in place so nothing above it moves */
+.solo-feedback {
+  display: grid;
+  gap: var(--space-3);
+  min-height: 3rem;
+  padding: var(--space-4);
+  border-radius: var(--r-lg);
+}
+.solo-feedback:empty {
+  padding: 0;
+}
+.solo-feedback.is-right {
+  background: var(--success-soft);
+}
+.solo-feedback.is-again {
+  background: var(--surface-2);
+}
+.solo-feedback.is-missed {
+  background: var(--danger-soft);
+}
+.solo-feedback .btn {
+  justify-self: start;
+}
+.solo-verdict {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 650;
+}
+.solo-why {
+  color: var(--ink-2);
+}
+
+/* the results: what happened, plainly */
+.solo-score {
+  font-family: var(--font-display);
+  font-size: var(--text-title-lg);
+}
+.solo-stones--results {
+  max-width: 420px;
+}
+.solo-facts {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.solo-xp {
+  color: var(--gold-ink);
+  font-weight: 650;
+}
+.solo-honest {
+  color: var(--ink-2);
+}
+.solo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+/* ---- Build a Kurdish Sentence ----------------------------------------------------- */
+.bs-board {
+  display: grid;
+  gap: var(--space-5);
+}
+.bs-meaning {
+  display: grid;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--u-fill);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.bs-kicker {
+  color: var(--u-text, var(--ink-3));
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+.bs-meaning-text {
+  font-size: 1.3rem;
+  line-height: 1.35;
+}
+
+/* the line the sentence is laid on: a rule that fills with the colour when it is right */
+.bs-line {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  min-height: 72px;
+  padding: 6px 2px 12px;
+}
+.bs-line::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--border-strong);
+}
+.bs-line::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 0;
+  bottom: 0;
+  z-index: 1;
+  width: 100%;
+  height: 3px;
+  border-radius: var(--r-pill);
+  background: var(--u-fill);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+.bs-line[dir='rtl']::before {
+  transform-origin: right;
+}
+.bs-line.is-settled::before {
+  animation: bs-fill var(--dur-slow) var(--ease-out) forwards;
+}
+.bs-line.is-settled .bs-tile {
+  animation: bs-settle var(--dur-slow) var(--ease-spring) both;
+  animation-delay: calc(var(--settle-i, 0) * 40ms);
+}
+@keyframes bs-fill {
+  to {
+    transform: scaleX(1);
+  }
+}
+/* each tile sinks onto the line and comes to rest, one after another */
+@keyframes bs-settle {
+  0% {
+    transform: translateY(0);
+  }
+  45% {
+    transform: translateY(4px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+.bs-tile {
+  font-size: 1.15rem;
+}
+.bs-line[dir='rtl'] .bs-tile,
+.bs-tray[dir='rtl'] .bs-tile {
+  font-size: 1.3rem;
+}
+/* a tile lifts off the tray under the finger or the pointer, and snaps where it lands */
+@media (hover: hover) {
+  .bs-tile--tray:hover:not(:disabled) {
+    transform: translateY(-3px);
+    box-shadow: 0 calc(var(--lip) + 3px) 0 var(--tile-lip), 0 10px 18px rgba(0, 0, 0, 0.25);
+  }
+}
+.bs-tile--tray:active:not(:disabled) {
+  transform: translateY(-5px) scale(1.04);
+  box-shadow: 0 calc(var(--lip) + 5px) 0 var(--tile-lip), 0 14px 22px rgba(0, 0, 0, 0.3);
+}
+.bs-tile.is-astray {
+  animation: bs-nudge 420ms var(--ease-out);
+  text-decoration: underline wavy;
+  text-underline-offset: 6px;
+}
+@keyframes bs-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-4px);
+  }
+  60% {
+    transform: translateX(3px);
+  }
+}
+.bs-gap-mark {
+  align-self: stretch;
+  width: 3px;
+  margin-bottom: 4px;
+  border-radius: var(--r-pill);
+  background: var(--danger);
+}
+.bs-hint {
+  margin-top: calc(-1 * var(--space-3));
+  color: var(--ink-2);
+}
+
+/* the tray: every tile keeps its place, a ghost standing in for one on the line */
+.bs-tray {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.bs-ghost {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 8px 16px;
+  margin-bottom: 4px;
+  border-radius: 14px;
+  background: var(--surface-2);
+  color: transparent;
+  font-size: 1.15rem;
+}
+.bs-actions {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+.bs-keys {
+  color: var(--ink-4);
+  font-size: var(--text-caption);
+}
+@media (pointer: coarse) {
+  .bs-keys {
+    display: none;
+  }
+}
+
+/* the right way round: each word with what it means under it */
+.bs-answer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  list-style: none;
+  animation: bs-arrive var(--dur-slow) var(--ease-out);
+}
+@keyframes bs-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.bs-gloss {
+  display: grid;
+  gap: 2px;
+  text-align: center;
+}
+.bs-gloss-word {
+  font-size: 1.2rem;
+  font-weight: 650;
+  color: var(--u-text, var(--ink));
+}
+.bs-gloss-meaning {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+
+/* ---- the ladder: rungs from the bottom up, the opened ones in colour -------------- */
+.bs-ladder {
+  display: grid;
+  gap: var(--space-3);
+}
+.bs-ladder-title {
+  font-size: var(--text-secondary);
+  font-weight: 650;
+  color: var(--ink-3);
+}
+.bs-rungs {
+  position: relative;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* the rail the rungs hang on */
+.bs-rungs::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 19px;
+  top: 20px;
+  bottom: 20px;
+  width: 3px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+.bs-rung {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+}
+.bs-rung-step {
+  z-index: 1;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-pill);
+  background: var(--locked);
+  color: var(--locked-mark);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.bs-rung.is-open .bs-rung-step {
+  background: var(--u-fill);
+  color: var(--u-ink);
+  box-shadow: 0 3px 0 var(--u-lip);
+}
+.bs-rung.is-here .bs-rung-step {
+  outline: 3px solid color-mix(in srgb, var(--u-fill) 45%, transparent);
+  outline-offset: 3px;
+}
+.bs-rung-text {
+  display: grid;
+}
+.bs-rung-name {
+  font-weight: 600;
+}
+.bs-rung.is-locked .bs-rung-name {
+  color: var(--ink-3);
+}
+.bs-rung-meta {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.bs-rung.is-here .bs-rung-meta {
+  color: var(--u-text);
+  font-weight: 650;
+}
+.bs-opened {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-weight: 650;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bs-tile--tray:hover:not(:disabled),
+  .bs-tile--tray:active:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* The Last Letter's card: the chain sits on no ruled line, and each link is the lit letter one word passes to the next */
+.lg-mini--chain .lg-mini-line {
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 4px;
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+.lg-mini-link {
+  width: 10px;
+  height: 10px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--u-fill, var(--border-strong));
+}
+
+/* Kurdish Impostor's card: seats along a table, one of them lit where the clue is being given */
+.lg-mini--table {
+  gap: 10px;
+}
+.lg-mini-seats {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+}
+.lg-mini-seat {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--bg);
+}
+.lg-mini-seat.is-lit {
+  border-color: var(--u-fill, var(--border-strong));
+  background: var(--u-fill, var(--border-strong));
+}
+
+/* Don't Say the Word!'s card: a card of struck-through words, and the buzzer beside it */
+.lg-mini--card {
+  grid-auto-flow: column;
+  align-items: end;
+  gap: 18px;
+}
+.lg-mini-card {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 2px solid var(--u-fill, var(--border-strong));
+  background: var(--bg);
+}
+.lg-mini-strike {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--u-lip, var(--border-strong));
+}
+.lg-mini-buzzer {
+  width: 34px;
+  height: 18px;
+  border-radius: 34px 34px 4px 4px;
+  background: var(--u-fill, var(--border-strong));
+  box-shadow: 0 4px 0 var(--u-lip, var(--border-strong));
+}

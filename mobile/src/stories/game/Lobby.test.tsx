@@ -7,7 +7,8 @@ import { fakeClient, ok, testAuth } from '../../reports/testing/auth';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { resetPrefsCache } from '../prefs';
 import { gameView, player } from '../testing/views';
-import { Lobby, playerName, spelledCode } from './Lobby';
+import { spelledCode } from '../../play/joinCode';
+import { Lobby, playerName } from './Lobby';
 
 vi.mock('react-native', () => import('../../play/testing/native'));
 vi.mock('react-native-svg', () => import('../../reports/testing/svg'));
@@ -78,14 +79,22 @@ describe('Lobby', () => {
     expect(screen.getByText('Report Player 3')).toBeTruthy();
   });
 
-  it('shares a message with both the link and the code', async () => {
+  it('shares the story, the code and where to type it — and no link', async () => {
     testAuth.client = fakeClient(routes());
     const share = vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
     renderWithProviders(<Lobby view={lobby()} apply={() => null} onLeft={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     const message = (share.mock.calls[0]?.[0] as { message: string }).message;
-    expect(message).toContain('ABC 234');
-    expect(message).toContain('/app/games/stories?id=g1');
+    expect(message).toBe('Play “Nanê Germ” with me on Hevalo! Open Games → Join with a code and type ABC 234');
+    expect(message).not.toMatch(/https?:|\/app\/games/);
+  });
+
+  it('shows no ticket once the game has no code', async () => {
+    testAuth.client = fakeClient(routes());
+    renderWithProviders(<Lobby view={lobby({ code: null })} apply={() => null} onLeft={() => undefined} />);
+    await act(async () => undefined);
+    expect(screen.queryByText('Join code')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Share' })).toBeNull();
   });
 
   it('lets the host start only with enough players, and says why not', async () => {
@@ -130,7 +139,7 @@ describe('Lobby', () => {
     await waitFor(() => expect(onLeft).toHaveBeenCalled());
   });
 
-  it('offers a guest the link to share, but not the host-only Invite friends', () => {
+  it('offers a guest the code to share, but not the host-only Invite friends', () => {
     testAuth.client = fakeClient(routes());
     const guest = lobby({
       mode: 'group',
@@ -160,7 +169,7 @@ describe('Lobby', () => {
     });
     testAuth.client = fakeClient({
       ...routes(),
-      'GET /stories?dialect=kurmanci': ok({ stories: [item('s1', 'Nanê Germ'), item('s9', 'Bajar')] }),
+      'GET /stories?dialect=kurmanci&limit=50': ok({ stories: [item('s1', 'Nanê Germ'), item('s9', 'Bajar')] }),
     });
     renderWithProviders(<Lobby view={lobby()} apply={() => null} onLeft={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Change settings' }));

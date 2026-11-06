@@ -1,41 +1,47 @@
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { AppState, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, AppState, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { PracticeHub, PracticeHubUnit, PracticeMode } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useFontScale } from '../a11y/useFontScale';
+import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import type { RootNavigation } from '../navigation/rootStack';
-import { TONES } from '../coursemap/path';
+import { REST, TONES } from '../coursemap/path';
 import { haptic, refreshFelt } from '../feedback/haptics';
 import { micRefused } from '../recording/useMicRecorder';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
+import { useListEntrance, usePop } from '../theme/animate';
 import { BottomSheet } from '../theme/BottomSheet';
 import { ClayButton, GradientBackground } from '../theme/glass';
-import { Icon, type IconName } from '../theme/Icon';
-import { PressableScale } from '../theme/MotionParts';
+import { Icon } from '../theme/Icon';
+import { PressableScale, Rise } from '../theme/MotionParts';
 import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { heroOf, hubRows, type Hero, type HubRow, type Line } from './hub';
+import { ROW_TONES, heroOf, heroTone, hubRows, practiceXpRange, type Hero, type HubRow, type Line } from './hub';
 
 /**
  * Practice's hub: the one thing most worth doing now, and every other kind of
  * practice a tap away.
  *
- * At the top, a card with one button: the words due for review, with how many;
- * with none due, the unit finished last, to go back over; with nothing to go
- * back over, the hardest words again; and before any lesson, the way to the
- * lessons. Under it, a row for each other kind — mistakes, words, listening,
- * speaking, a unit of your choice — each a big target with one line under its
- * name. A kind with nothing in it stays in the list, dimmed, and says what
- * would put something there, so nothing disappears without a word.
+ * At the top, a card in colour with one button: the words due for review,
+ * with how many; with none due, the unit finished last, to go back over; with
+ * nothing to go back over, the hardest words again; and before any lesson,
+ * the way to the lessons. Hamo stands at its end, glad to see you, and the
+ * button says what a session pays. Under it, a row for each other kind —
+ * mistakes, words, listening, speaking, a unit of your choice — its name and
+ * one line, with a big badge in its own colour at the end that pops under the
+ * finger. The card and the rows rise in one after another as the hub arrives
+ * (`useListEntrance`), and simply stand there on a later visit. A kind with
+ * nothing in it stays in the list, dimmed, and says what would put something
+ * there, so nothing disappears without a word.
  *
  * It reads the hub in one request (GET /practice/hub), again each time the
  * screen comes back into view — after a session, the counts have moved — and
@@ -83,15 +89,25 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
     void load().finally(() => setRefreshing(false));
   }, [load]);
 
-  const start = (mode: PracticeMode, unitId?: string) => navigation.navigate('Practice', unitId ? { mode, unitId } : { mode });
+  const start = useCallback(
+    (mode: PracticeMode, unitId?: string) => navigation.navigate('Practice', unitId ? { mode, unitId } : { mode }),
+    [navigation],
+  );
 
-  const press = (row: HubRow) => {
-    if (!row.action) return;
-    haptic('select');
-    if (row.action.kind === 'start') start(row.action.mode);
-    else if (row.action.kind === 'pick') setPicking(true);
-    else void Linking.openSettings().catch(() => undefined);
-  };
+  // one row object per kind for as long as the hub stands, so the rows (memoised) are drawn again only when it changes
+  const rows = useMemo(() => (hub ? hubRows(hub, { micRefused: refused }) : []), [hub, refused]);
+  const entering = useListEntrance(hub !== null);
+
+  const press = useCallback(
+    (row: HubRow) => {
+      if (!row.action) return;
+      haptic('select');
+      if (row.action.kind === 'start') start(row.action.mode);
+      else if (row.action.kind === 'pick') setPicking(true);
+      else void Linking.openSettings().catch(() => undefined);
+    },
+    [start],
+  );
 
   const say = (line: Line) => t(line.key, line.count === undefined ? undefined : { count: formatNumber(line.count, locale) });
 
@@ -106,17 +122,22 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
               showsVerticalScrollIndicator={false}
               refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
             >
-              <HeroCard
-                hero={heroOf(hub)}
-                onStart={start}
-                onLessons={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
-              />
+              <Rise delay={entering(0)}>
+                <HeroCard
+                  hero={heroOf(hub)}
+                  onStart={start}
+                  onLessons={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+                />
+              </Rise>
               <Text style={[sectionLabel, styles.section, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
                 {t('practice.hub.list')}
               </Text>
               <View style={styles.rows}>
-                {hubRows(hub, { micRefused: refused }).map((row) => (
-                  <PracticeRow key={row.key} row={row} detail={say(row.detail)} onPress={() => press(row)} />
+                {rows.map((row, i) => (
+                  // the card at the top is the first to arrive; each row follows a beat after the one above
+                  <Rise key={row.key} delay={entering(i + 1)}>
+                    <PracticeRow row={row} detail={say(row.detail)} onPress={press} />
+                  </Rise>
                 ))}
               </View>
             </ScrollView>
@@ -139,7 +160,13 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
   );
 }
 
-/** The card at the top: what it is, how much, and one button. */
+/**
+ * The card at the top, in the colour of what it offers (hub.ts `heroTone`):
+ * what it is, how much, Hamo at its end, and one button that says what a
+ * session pays. Hamo cheers as the card arrives and greets a tap; the words
+ * beside him say everything he would, so a screen reader passes him by. The
+ * button pops once the card has settled: the way in, offered.
+ */
 function HeroCard({
   hero,
   onStart,
@@ -149,10 +176,10 @@ function HeroCard({
   onStart: (mode: PracticeMode, unitId?: string) => void;
   onLessons: () => void;
 }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
+  const { scheme } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
-  const tone = hero.kind === 'unit' ? TONES[scheme][hero.unit.tone] : null;
+  const tone = TONES[scheme][heroTone(hero)];
   const eyebrow = hero.kind === 'unit' ? t('practice.hub.unitReview', { n: formatNumber(hero.unit.number, locale) }) : hero.kind === 'none' ? null : t('learn.tools.review');
   const title =
     hero.kind === 'due'
@@ -167,53 +194,70 @@ function HeroCard({
   const body = t(
     hero.kind === 'due' ? 'practice.hub.dueBody' : hero.kind === 'unit' ? 'practice.hub.unitBody' : hero.kind === 'weak' ? 'practice.hub.weakBody' : 'practice.hub.noneBody',
   );
-  const icon: IconName = hero.kind === 'unit' ? 'trophy' : hero.kind === 'none' ? 'book' : 'review';
   const go = () => {
     if (hero.kind === 'none') onLessons();
     else if (hero.kind === 'unit') onStart('unit', hero.unit.unitId);
     else onStart('review');
   };
   const label = hero.kind === 'none' ? t('practice.hub.toLessons') : t('practice.hub.start');
+  // what a session pays, on the button; the way to the lessons pays nothing of its own
+  const xp = hero.kind === 'none' ? null : practiceXpRange();
+  const pays = xp ? t('practice.hub.xp', { min: formatNumber(xp.min, locale), max: formatNumber(xp.max, locale) }) : null;
+  const spoken = hero.kind === 'none' ? label : `${label}, ${title}, ${pays}`;
+
+  const pop = usePop();
+  useEffect(() => {
+    const id = setTimeout(pop.run, BUTTON_POP_AT_MS);
+    return () => clearTimeout(id);
+  }, [pop.run]);
 
   return (
-    <View style={[styles.hero, { backgroundColor: colors.surface }]} testID="practice-hero">
+    <View style={[styles.hero, { backgroundColor: tone.fill }]} testID="practice-hero">
       <View style={[styles.heroTop, { flexDirection: dir.row }]}>
         <View style={styles.heroWords}>
           {eyebrow ? (
-            <Text style={[styles.eyebrow, dir.text, { color: tone ? tone.text : colors.goldText }]} numberOfLines={1}>
+            <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]} numberOfLines={1}>
               {eyebrow}
             </Text>
           ) : null}
-          <Text style={[styles.heroTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
+          <Text style={[styles.heroTitle, dir.text, { color: tone.ink }]} accessibilityRole="header">
             {title}
           </Text>
-          <Text style={[styles.heroBody, dir.text, { color: colors.textSecondary }]}>{body}</Text>
+          <Text style={[styles.heroBody, dir.text, { color: tone.ink }]}>{body}</Text>
         </View>
-        <View
-          style={[styles.heroIcon, { backgroundColor: tone ? tone.fill : colors.controlTrack }]}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <Icon name={icon} size={28} color={tone ? tone.ink : colors.textPrimary} />
+        <View style={styles.heroCharacter} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <SpeakingCharacter speaker="hamo" player={null} playing={false} crop="half" height={CHARACTER_HEIGHT} flip={!dir.rtl} reaction="cheer" onPress={() => undefined} />
         </View>
       </View>
-      <ClayButton label={label} accessibilityLabel={hero.kind === 'none' ? label : `${label}, ${title}`} tone="primary" size="large" onPress={go} />
+      <Animated.View style={{ transform: [{ scale: pop.scale }] }}>
+        <ClayButton label={label} badge={pays ?? undefined} accessibilityLabel={spoken} tone="primary" size="large" onPress={go} />
+      </Animated.View>
     </View>
   );
 }
 
-/** One kind of practice: its icon, its name and one line, a chevron when it can be started. */
-function PracticeRow({ row, detail, onPress }: { row: HubRow; detail: string; onPress: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
+/**
+ * One kind of practice: its name and one line, and at the end a big badge in
+ * its own colour with its glyph, which pops under the finger — the row
+ * answers before the next screen does. A kind with nothing in it is dimmed,
+ * its badge in grey. Memoised: the hub's rows are drawn again only when the
+ * hub changes, not as the screen's own state does.
+ */
+const PracticeRow = memo(function PracticeRow({ row, detail, onPress }: { row: HubRow; detail: string; onPress: (row: HubRow) => void }): React.JSX.Element {
+  const { colors, scheme } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
   const scale = useFontScale({ max: 1.6 });
   const off = row.action === null;
   const title = t(row.title);
-  const glyph = Math.round(24 * scale);
+  const glyph = Math.round(26 * scale);
+  const tone = TONES[scheme][ROW_TONES[row.key]];
+  const rest = REST[scheme];
+  const pop = usePop();
   return (
     <PressableScale
-      onPress={onPress}
+      onPress={() => onPress(row)}
+      onPressIn={off ? undefined : pop.run}
       disabled={off}
       accessibilityRole="button"
       accessibilityLabel={`${title}, ${detail}`}
@@ -222,17 +266,21 @@ function PracticeRow({ row, detail, onPress }: { row: HubRow; detail: string; on
       style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.surface }]}
       testID={`practice-row-${row.key}`}
     >
-      <View style={[styles.rowIcon, { width: glyph + 20, height: glyph + 20, backgroundColor: colors.controlTrack }]}>
-        <Icon name={row.icon} size={glyph} color={off ? colors.textSecondary : colors.textPrimary} />
-      </View>
       <View style={styles.rowWords}>
         <Text style={[styles.rowTitle, dir.text, { color: off ? colors.textSecondary : colors.textPrimary }]}>{title}</Text>
         <Text style={[styles.rowDetail, dir.text, { color: row.waiting ? colors.goldText : colors.textSecondary }]}>{detail}</Text>
       </View>
-      {off ? null : <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} />}
+      <Animated.View
+        style={[
+          styles.rowBadge,
+          { width: glyph + BADGE_ROOM, height: glyph + BADGE_ROOM, backgroundColor: off ? rest.fill : tone.fill, transform: [{ scale: pop.scale }] },
+        ]}
+      >
+        <Icon name={row.icon} size={glyph} color={off ? rest.ink : tone.ink} />
+      </Animated.View>
     </PressableScale>
   );
-}
+});
 
 /** The units finished, each in its own colour with its number, the latest first: tap one to review it. */
 function UnitPicker({
@@ -305,26 +353,33 @@ function HubSkeleton(): React.JSX.Element {
   );
 }
 
-/** the card at its usual size: a line, a two-line title, a line, and the large button */
-const HERO_HEIGHT = 196;
+/** Hamo on the card, head to waist: as tall as its words, not taller than the card wants to be. */
+const CHARACTER_HEIGHT = 116;
+/** The card at its usual size: Hamo beside its words, and the large button */
+const HERO_HEIGHT = 222;
 /** a row at its usual size */
-const ROW_HEIGHT = 72;
+const ROW_HEIGHT = 76;
+/** Room round a badge's glyph: the badge is a tile, not an icon. */
+const BADGE_ROOM = 30;
+/** When the button pops, once the card has risen in. */
+const BUTTON_POP_AT_MS = 520;
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, paddingBottom: spacing.xxl, gap: spacing.sm },
 
   hero: { borderRadius: radii.lg, padding: spacing.md + 4, gap: spacing.md },
-  heroTop: { alignItems: 'flex-start', gap: spacing.md },
-  heroWords: { flex: 1, gap: spacing.xs },
+  heroTop: { alignItems: 'flex-end', gap: spacing.sm },
+  heroWords: { flex: 1, gap: spacing.xs, alignSelf: 'center' },
   eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   heroTitle: { ...display(typography.sizes.lg) },
-  heroBody: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  heroIcon: { width: 56, height: 56, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  heroBody: { fontSize: typography.sizes.sm, lineHeight: 20, opacity: 0.9 },
+  // he stands at the card's foot, waist at its padding, so the button sits under his hands
+  heroCharacter: { marginBottom: -(spacing.md + 4) + spacing.xs },
 
   section: { marginTop: spacing.lg, marginBottom: spacing.xs },
   rows: { gap: spacing.sm },
-  row: { minHeight: ROW_HEIGHT, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm + 4, alignItems: 'center', gap: spacing.md },
-  rowIcon: { borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
+  row: { minHeight: ROW_HEIGHT, borderRadius: radii.lg, paddingStart: spacing.md + 4, paddingEnd: spacing.sm + 2, paddingVertical: spacing.sm + 2, alignItems: 'center', gap: spacing.md },
+  rowBadge: { borderRadius: radii.lg, alignItems: 'center', justifyContent: 'center' },
   rowWords: { flex: 1, gap: 2 },
   rowTitle: { fontSize: typography.ios.row, fontWeight: typography.weights.semibold },
   rowDetail: { fontSize: typography.sizes.sm },

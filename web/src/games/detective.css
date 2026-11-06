@@ -1,0 +1,435 @@
+/*
+ * Kurdish Detective (games/Detective.tsx): its card's picture, and the case
+ * board — the case file, the suspects' portraits, the evidence pinned up in
+ * rows, the question in hand, the hints and the notebook — with the
+ * accusation and the solution at the end.
+ *
+ * On a wide screen the board takes the larger column and the question, the
+ * hints and the notebook stand beside it; on a phone the question comes
+ * first, then the board, then the hints and the notebook. The
+ * cards are set at a slight slant, as pinned paper is, but nothing moves:
+ * a card to read again is marked by its border and a ring, not by motion.
+ * Logical properties throughout, so a right-to-left page turns round whole.
+ */
+
+/* ---- the card's picture: three cards pinned at a slant ------------------------- */
+.dt-mini {
+  grid-auto-flow: column;
+  gap: 12px;
+  width: min(100%, 260px);
+}
+.dt-mini-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  width: 64px;
+  height: 72px;
+  padding: 18px 8px 8px;
+  border: 2px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--u-fill, var(--ink-3));
+}
+.dt-mini-card:nth-child(1) {
+  transform: rotate(-4deg);
+}
+.dt-mini-card:nth-child(3) {
+  transform: rotate(3deg);
+}
+.dt-mini-card.is-on {
+  border-color: var(--u-fill, var(--border-strong));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--u-fill, var(--border)) 35%, transparent);
+}
+.dt-mini-card svg {
+  position: absolute;
+  top: 2px;
+  inset-inline-start: calc(50% - 7px);
+}
+.dt-mini-line {
+  display: block;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+.dt-mini-line.is-short {
+  width: 60%;
+}
+
+/* ---- the page ------------------------------------------------------------------- */
+.solo-page.dt-page {
+  max-width: 1120px;
+}
+.dt-case {
+  display: grid;
+  gap: var(--space-4);
+}
+.dt-file {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border);
+  border-inline-start: 4px solid var(--u-fill);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.dt-title {
+  font-family: var(--font-display);
+  font-size: var(--text-section, 1.3rem);
+}
+.dt-intro {
+  color: var(--ink-2);
+}
+.dt-layout {
+  display: grid;
+  gap: var(--space-4);
+  align-items: start;
+}
+/* on a wide screen the board takes the left column, the question, the hints and the notebook stand beside it */
+@media (min-width: 960px) {
+  .dt-layout {
+    grid-template-columns: minmax(0, 3fr) minmax(300px, 2fr);
+    grid-template-rows: auto auto auto 1fr;
+    grid-template-areas:
+      'board question'
+      'board hints'
+      'board notebook'
+      'board .';
+  }
+  .dt-layout > .dt-board {
+    grid-area: board;
+  }
+  .dt-layout > .dt-question {
+    grid-area: question;
+  }
+  .dt-layout > .dt-hints {
+    grid-area: hints;
+  }
+  .dt-layout > .dt-notebook {
+    grid-area: notebook;
+  }
+}
+.dt-muted {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+
+/* the board: a cork-coloured field the suspects and the cards are pinned to */
+.dt-board {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--u-fill) 12%, var(--surface-2));
+}
+.dt-board-title {
+  font-family: var(--font-sans);
+  font-size: var(--text-body);
+  font-weight: 650;
+}
+.dt-section {
+  color: var(--u-text, var(--ink-3));
+  font-size: var(--text-caption);
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+.dt-suspects {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dt-suspect {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: var(--space-3);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  text-align: center;
+}
+.dt-suspect-name {
+  font-weight: 650;
+}
+.dt-suspect-about {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.dt-portrait {
+  position: relative;
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--u-fill) 30%, var(--surface));
+}
+.dt-portrait svg {
+  width: 100%;
+  height: 100%;
+}
+.dt-portrait--plain {
+  color: var(--ink-3);
+}
+.dt-initial {
+  position: absolute;
+  inset-block-end: 6%;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--ink-2);
+}
+
+/* the evidence: paper cards with a pin, each at its own slight slant */
+.dt-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.dt-card {
+  position: relative;
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-4) var(--space-4);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg);
+  transform: rotate(var(--tilt, 0deg));
+}
+.dt-card--note {
+  background: color-mix(in srgb, var(--gold-ink) 10%, var(--bg));
+}
+.dt-card--overheard {
+  border-style: dashed;
+}
+.dt-card.is-look {
+  border-color: var(--u-fill);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--u-fill) 35%, transparent);
+}
+.dt-pin {
+  position: absolute;
+  top: -10px;
+  inset-inline-start: calc(50% - 9px);
+  color: var(--danger);
+}
+.dt-card-kind {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 650;
+}
+.dt-card-from {
+  font-weight: 500;
+}
+.dt-card-ku {
+  font-size: 1.1rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.dt-card .lesson-play {
+  justify-self: start;
+}
+.dt-card-meaning {
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--border);
+  color: var(--ink-2);
+}
+.dt-card-unknown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-top: var(--space-2);
+  border-top: 1px dashed var(--border);
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.dt-translate {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+}
+.dt-translate:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.dt-translate:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.dt-translate:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* the question in hand, the accusation and the solution */
+.dt-question,
+.dt-hints,
+.dt-notebook {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.dt-question .btn,
+.dt-hints .btn {
+  justify-self: start;
+}
+.dt-step-count {
+  color: var(--u-text, var(--ink-3));
+  font-size: var(--text-caption);
+  font-weight: 650;
+}
+.dt-question-title,
+.dt-hints-title,
+.dt-notebook-title {
+  font-family: var(--font-sans);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-body);
+  font-weight: 650;
+}
+.dt-question-title {
+  font-size: 1.15rem;
+}
+.dt-options {
+  display: grid;
+  gap: var(--space-2);
+}
+.dt-option,
+.dt-accuse {
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 2px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.dt-option:hover:not(:disabled),
+.dt-accuse:hover:not(:disabled) {
+  background: var(--surface-2);
+}
+.dt-option:focus-visible,
+.dt-accuse:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.dt-option.is-picked,
+.dt-accuse.is-picked {
+  border-color: var(--u-fill);
+  background: color-mix(in srgb, var(--u-fill) 18%, var(--bg));
+}
+.dt-option.is-right,
+.dt-accuse.is-right {
+  border-color: var(--success);
+  background: var(--success-soft);
+}
+.dt-option.is-wrong,
+.dt-accuse.is-wrong {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+}
+.dt-option.is-dim,
+.dt-accuse.is-dim {
+  opacity: 0.6;
+}
+.dt-accused {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: var(--space-2);
+}
+.dt-accuse {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  font-weight: 650;
+}
+.dt-look,
+.dt-noted {
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+.dt-solution {
+  display: grid;
+  gap: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+.dt-solution-title {
+  font-weight: 650;
+}
+.dt-culprit {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-weight: 650;
+}
+
+/* hints and the notebook */
+.dt-hint {
+  padding: var(--space-2) var(--space-3);
+  border-inline-start: 3px solid var(--gold-ink);
+  background: var(--surface-2);
+  border-radius: var(--r-sm);
+}
+.dt-notes,
+.dt-walk {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding-inline-start: 1.25rem;
+}
+.dt-note,
+.dt-walk li {
+  display: grid;
+  gap: 2px;
+}
+.dt-note-q {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.dt-note-a {
+  font-weight: 600;
+}
+.dt-deducted {
+  color: var(--ink-2);
+}
+
+@media (max-width: 480px) {
+  .dt-cards {
+    grid-template-columns: 1fr;
+  }
+  .dt-suspects {
+    grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  }
+}
+
+/* its card in Learn's Games: half the row on a wide screen */
+@media (min-width: 1000px) {
+  .game-tile--detective {
+    grid-column: span 6;
+  }
+}

@@ -9,6 +9,7 @@ import {
   type GameInviteType,
 } from '../lib/gameInvites';
 import { InviteCardBody } from '../ui/InviteCardBody';
+import { ticketClass } from '../ui/Ticket';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
@@ -44,11 +45,17 @@ const ACTION_KEY: Record<GameInviteType, MessageKey> = {
   'wordle-battle': 'games.battle.join',
   'rhyme-match': 'games.rhymeMatch.join',
   stories: 'games.stories.join',
+  'last-letter': 'games.lastLetter.join',
+  impostor: 'games.impostor.join',
+  'dont-say': 'games.dontSay.join',
+  bluff: 'games.bluff.join',
+  'who-am-i': 'games.whoAmI.join',
 };
 
 /**
  * A rich preview for a game lobby — the card the front page shows arriving in a
- * chat, drawn by the same `InviteCardBody`, so the two cannot disagree.
+ * chat, drawn by the same `InviteCardBody`, so the two cannot disagree. Like
+ * every invite it is a ticket in its game's colour (ui/Ticket.tsx).
  *
  * The whole card is the link, so the tap target is the card rather than a small
  * button — which matters most on a phone, where this sits inside a bubble. The
@@ -61,8 +68,8 @@ export function GameInviteCard({ invite }: { invite: GameInvite }): React.JSX.El
   const t = useT();
   const label = t(INVITE_NAME_KEY[invite.type]);
   return (
-    <Link to={invitePath(invite)} className="invite-card" aria-label={t('games.invite.join', { game: label })}>
-      <InviteCardBody game={label} blurb={t(INVITE_BLURB_KEY[invite.type])} action={t(ACTION_KEY[invite.type])} />
+    <Link to={invitePath(invite)} className={ticketClass(invite.type, 'row', 'invite-card')} aria-label={t('games.invite.join', { game: label })}>
+      <InviteCardBody type={invite.type} game={label} blurb={t(INVITE_BLURB_KEY[invite.type])} action={t(ACTION_KEY[invite.type])} />
     </Link>
   );
 }

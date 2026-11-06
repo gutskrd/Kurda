@@ -36,7 +36,8 @@ export function RankRow({
   zone,
   lazy = false,
 }: {
-  rank: number;
+  /** null for your own row on a board that stops before it reaches you: a dash, and no made-up place */
+  rank: number | null;
   name: string;
   /** already formatted, unit and all */
   score: ReactNode;
@@ -63,8 +64,8 @@ export function RankRow({
     </>
   );
   return (
-    <li className={`rank-row${me ? ' rank-me' : ''}${zone ? ` is-${zone}` : ''}${rank <= 3 ? ' is-podium' : ''}`}>
-      <span className="rank-pos">{rank}</span>
+    <li className={`rank-row${me ? ' rank-me' : ''}${zone ? ` is-${zone}` : ''}${rank !== null && rank <= 3 ? ' is-podium' : ''}`}>
+      <span className="rank-pos">{rank ?? '–'}</span>
       {face !== undefined ? (
         <span className="rank-face" aria-hidden="true">
           {face}

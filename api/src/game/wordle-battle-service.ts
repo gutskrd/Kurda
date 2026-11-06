@@ -118,6 +118,8 @@ export interface BattleState {
   access: GameAccess;
   /** Rated or Friendly (Game Ranks), shown before anyone joins; decided at the start */
   rated: RatedState;
+  /** the code a friend types to join, while it is a lobby that can still be joined; null after */
+  code: string | null;
   /** when an active battle ends on its own */
   endsAt: string | null;
   /** the rematch or next round, once there is one */
@@ -530,6 +532,7 @@ export class WordleBattleService {
       createdBy: hostRef(battle, rows.rows, userId),
       isHost: battle.created_by === userId,
       access: battle.access,
+      code: battle.status === 'lobby' && !lobbyIdle(battle, this.now()) ? battle.code : null,
       rated: ratedStateOf(battle),
       endsAt: battle.status === 'active' && battle.ends_at ? battle.ends_at.toISOString() : null,
       nextLobbyId: battle.next_lobby_id,

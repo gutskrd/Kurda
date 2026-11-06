@@ -228,7 +228,7 @@ describe('TopNav', () => {
     const { container } = show();
     const bar = within(container.querySelector<HTMLElement>('.nav-actions')!);
 
-    expect(bar.getByRole('link', { name: 'Log in' })).toBeInTheDocument();
+    expect(bar.getByRole('link', { name: 'Sign in' })).toBeInTheDocument();
     expect(bar.getByRole('link', { name: 'Get started' })).toBeInTheDocument();
     // nothing to spend and nowhere to spend it until there is an account
     expect(screen.queryByTitle('Your Zêr and gems')).not.toBeInTheDocument();
@@ -360,7 +360,7 @@ describe('TopNav', () => {
     expect(front.getByRole('link', { name: 'Get started' })).toHaveClass('nav-desktop-only');
     await userEvent.click(menuButton());
     const extras = within(document.querySelector<HTMLElement>('.nav-mobile-actions')!);
-    expect(extras.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
+    expect(extras.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/login');
     expect(extras.getByRole('link', { name: 'Get started' })).toHaveAttribute('href', '/register');
   });
 

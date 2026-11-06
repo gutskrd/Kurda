@@ -34,14 +34,14 @@ import { registerShopRoutes } from './shop/routes.js';
 import { registerShopAdminRoutes } from './shop/admin-routes.js';
 import { ArtOverrideService } from './art/overrides.js';
 import { registerArtRoutes } from './art/routes.js';
-import { ItemReturns } from './shop/returns.js';
+import { RefreshedNotices } from './shop/refreshed.js';
 import { GiftService } from './gifts/service.js';
 import { registerGiftRoutes } from './gifts/routes.js';
 import { CosmeticsService } from './cosmetics/service.js';
 import { registerCosmeticsRoutes } from './cosmetics/routes.js';
 import { IapService } from './iap/service.js';
 import { registerIapRoutes } from './iap/routes.js';
-import { createReceiptVerifier } from './iap/verifier.js';
+import { assertProductionVerifier, createReceiptVerifier, purchasesOff } from './iap/verifier.js';
 import { FraudService } from './fraud/service.js';
 import { registerFraudRoutes } from './fraud/routes.js';
 import { EconomyService } from './economy/service.js';
@@ -62,6 +62,8 @@ import { DailyRewardService } from './rewards/service.js';
 import { registerDailyRewardRoutes } from './rewards/routes.js';
 import { DailyQuestService } from './quests/service.js';
 import { registerDailyQuestRoutes } from './quests/routes.js';
+import { registerKingdomRoutes } from './kingdom/routes.js';
+import { KingdomService } from './kingdom/service.js';
 import { GemService } from './gems/service.js';
 import { registerGemRoutes } from './gems/routes.js';
 import { createProgression } from './badges/progression.js';
@@ -94,6 +96,7 @@ import { ModerationService } from './moderation/service.js';
 import { registerModerationRoutes } from './moderation/routes.js';
 import { registerReviewRoutes } from './review/routes.js';
 import { registerPracticeRoutes } from './practice/routes.js';
+import { registerLearnGameRoutes } from './games/routes.js';
 import { registerWordleRoutes } from './game/wordle-routes.js';
 import { registerWordleBattleRoutes } from './game/wordle-battle-routes.js';
 import { registerRhymeRoutes } from './game/rhyme-routes.js';
@@ -102,6 +105,7 @@ import { registerRhymeMatchRoutes } from './game/rhyme-match-routes.js';
 import { registerStoryGameRoutes } from './story-games/routes.js';
 import { PlayEvents } from './play/events.js';
 import { registerPlayRoutes } from './play/routes.js';
+import { registerMultiplayerRoutes } from './mp/routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
@@ -137,6 +141,7 @@ import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
 import { registerAlphabetAudioRoutes } from './alphabet/routes.js';
 import { registerLessonAudioRoutes } from './lessonaudio/routes.js';
+import { registerRecordingRoutes } from './recording/routes.js';
 import { registerRecordingVoiceRoutes } from './speakers/routes.js';
 import type { RecordingFileOptions } from './speakers/recording-file.js';
 import { StoriesService } from './stories/service.js';
@@ -161,6 +166,8 @@ import { StreakReminderService } from './notifications/streak-reminder-service.j
 import { makePushSendJob, pushRecorded } from './jobs/push-jobs.js';
 import { ContentAdminService } from './content/admin-service.js';
 import { seedStarterLessons } from './content/starter-lessons.js';
+import { seedRoadLessons } from './content/road-seed.js';
+import { seedStarterGameContent } from './games/starters.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
 import { UserAdminService } from './admin/user-admin-service.js';
 import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
@@ -182,6 +189,7 @@ import { EmailService } from './email/service.js';
 import { createEmailProvider } from './email/provider.js';
 import pino from 'pino';
 import { LOG_REDACT } from './observability/redact.js';
+import { registerClientErrorRoutes } from './observability/client-errors.js';
 import { createWorker } from './jobs/worker.js';
 import {
   ROLLUP_INTERVAL_MS,
@@ -600,12 +608,16 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // payment fraud (KUR-073): holds suspicious purchases for admin review
     const fraudService = new FraudService(app.db, new WalletService(app.db));
     registerFraudRoutes(app, fraudService);
-    const receiptVerifier = createReceiptVerifier(config);
-    if (config.NODE_ENV === 'production' && config.IAP_ALLOW_STUB === 'true') {
+    // a stub verifier in production stops the boot here (iap/verifier.ts)
+    const receiptVerifier = assertProductionVerifier(config, createReceiptVerifier(config));
+    if (config.NODE_ENV === 'production' && purchasesOff(config)) {
       app.log.warn(
-        'IAP has no store credentials (IAP_ALLOW_STUB=true): purchases are REFUSED ' +
+        'IAP has no store credentials (IAP_PURCHASES_OFF=true): purchases are REFUSED ' +
           'with 503 IAP_UNAVAILABLE. Configure the Apple/Google verifiers before selling anything.',
       );
+      if (config.IAP_ALLOW_STUB === 'true') {
+        app.log.warn('IAP_ALLOW_STUB is the old name for IAP_PURCHASES_OFF and is read as it: rename it in the dashboard.');
+      }
     }
     registerIapRoutes(
       app,
@@ -629,8 +641,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     // today's three quests, moved by finished lessons and practice, each paying a chest of Zêr
     registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
+    // The Village ("kingdom" in code): the village that grows only from real learning, each new level recorded and paid for once
+    registerKingdomRoutes(app, new KingdomService(app.db, new WalletService(app.db), { cache: app.cache, log: app.log }));
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService, badges);
+    // the learning games (Build a Kurdish Sentence and the games after it): approved content only,
+    // rounds made and checked here, paid by performance; and their content's review in the admin panel
+    registerLearnGameRoutes(app, { xp: xpService, milestones: badges, config, recordingFiles: options.recordingFiles });
     registerWordleRoutes(app, { xp: xpService, milestones: badges });
     // `play_changed` after every change to a lobby (play/events.ts), so clients
     // stop polling. The gateway it speaks through is set up further down, so it
@@ -657,7 +674,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres when they
     // are read and a few minutes old, not on a timer (leaderboards/service.ts)
-    const leaderboards = new LeaderboardService(app.db, app.redis);
+    const leaderboards = new LeaderboardService(app.db, app.redis, {
+      publicUrl: (key) => (app.storage ? app.storage.publicUrl(key) : null),
+    });
     registerLeaderboardRoutes(app, leaderboards);
 
     registerMediaRoutes(app, config);
@@ -682,6 +701,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerLessonAudioRoutes(app, config);
     // and who says each of those recordings, chosen or changed after it was made
     registerRecordingVoiceRoutes(app, config, options.recordingFiles);
+    // and everything each voice has to say, person by person, for the "Record by person" page; the Road's
+    // lessons still only in its files are listed too, except under test, where nothing is seeded either
+    registerRecordingRoutes(app, { withRoadFiles: config.NODE_ENV !== 'test' });
     // Stories, which replaced the ranked quiz: reading for everyone, writing in
     // the admin panel, and the starter stories seeded once each as drafts for a
     // native speaker to publish. Not under test, where they would be stories no
@@ -695,10 +717,14 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     }
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
     registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp!);
-    // and the starter lessons, seeded once each as drafts for the team to record and publish
+    // and the starter lessons, seeded once each as drafts for the team to record and publish, then the
+    // Kurmanji Road's, each once as a draft at its place in its own course (content/road-seed.ts)
     if (config.NODE_ENV !== 'test') {
       app.addHook('onReady', async () => {
         await seedStarterLessons(app.db, app.log);
+        await seedRoadLessons(app.db, app.log);
+        // and the learning games' starters, drafts made of the Road's own lines once those are there (games/starters.ts)
+        await seedStarterGameContent(app.db, app.log);
       });
     }
     // the push and notification services set up with the leagues, above
@@ -824,6 +850,17 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // story games (Stories, which replaced the ranked quiz): Postgres is the
     // game; long-polls are woken across instances over the room bus
     const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: badges, friends, ranks });
+    // the multiplayer learning games (The Last Letter first): one engine and one
+    // set of tables for all of them, long-polls woken over the room bus, free
+    // text through the chat pipeline, and `play_changed` for every change
+    const multiplayer = registerMultiplayerRoutes(app, {
+      bus,
+      xp: xpService,
+      ranks,
+      freeText: { moderation, trust, aiMod },
+      onChange: (game, id, o) => playEvents.changed(game, id, o),
+      friends,
+    });
 
     // shop + gifts: a gift is bought in the shop or from a chat's gift button,
     // and arrives as a message in the chat either way, so it needs both chats
@@ -849,8 +886,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     registerShopRoutes(app, shop, {
       gifts,
-      // owners of items whose art was replaced: the notice, and returns
-      returns: new ItemReturns(app.db, new WalletService(app.db)),
+      // owners of items whose art was replaced: the one-time notice (they keep the item)
+      refreshed: new RefreshedNotices(app.db),
     });
     // the admin's art uploads, partial edits, and delete-or-retire
     registerShopAdminRoutes(app, shop, config);
@@ -872,6 +909,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       groupChat,
       stories: storyGames,
       ranks,
+      multiplayer,
     });
 
     // the social rail's single read — everything it shows, in one answer, so a
@@ -883,6 +921,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService, achievements);
     registerTournamentRoutes(app, tournaments);
   }
+
+  // crash reports from the apps, into the log; needs neither the database nor a signed-in caller
+  registerClientErrorRoutes(app);
 
   // Render's health check asks this every few seconds for as long as the service
   // runs, near twenty thousand times a day, and each one wrote two info lines

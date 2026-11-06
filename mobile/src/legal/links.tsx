@@ -1,19 +1,23 @@
-import { Linking, StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
+import { Alert, Linking, StyleSheet, Text, type StyleProp, type TextStyle } from 'react-native';
 import { useI18n } from '../i18n/I18nContext';
+import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
 import { typography } from '../theme/tokens';
 
 /**
  * The pages on hevalo.app the app points to rather than repeating: the rules
- * for using Hevalo, what happens to your data, and how it teaches. One copy
- * of each, kept on the website, so the app and the site can never say two
- * different things.
+ * for using Hevalo, what happens to your data, how it teaches, the answers to
+ * what people ask, and who makes it. One copy of each, kept on the website,
+ * so the app and the site can never say two different things.
  */
 export const LEGAL_URLS = {
   terms: 'https://hevalo.app/terms',
   privacy: 'https://hevalo.app/privacy',
   copyright: 'https://hevalo.app/copyright',
   teaching: 'https://hevalo.app/how-hevalo-teaches',
+  faq: 'https://hevalo.app/faq',
+  about: 'https://hevalo.app/about',
 } as const;
 
 /** Where a person writes to when something is wrong: answered by a person. */
@@ -23,6 +27,32 @@ export const SUPPORT_EMAIL = 'support@hevalo.app';
 export function openLegal(to: keyof typeof LEGAL_URLS | 'support'): void {
   const url = to === 'support' ? `mailto:${SUPPORT_EMAIL}` : LEGAL_URLS[to];
   void Linking.openURL(url).catch(() => undefined);
+}
+
+/**
+ * Write to support: the mail app, opened with the address filled in.
+ *
+ * A phone with no mail app to open (none installed, or none signed in) made
+ * the row do nothing at all, which reads as a broken button on the one row a
+ * person reaches for when something already is broken. So then the address is
+ * copied, and the person is told so and where to paste it. If even the copy
+ * fails, they are told the address to write to.
+ */
+export async function contactSupport(t: (key: TranslationKey, vars?: Record<string, string | number>) => string): Promise<void> {
+  try {
+    await Linking.openURL(`mailto:${SUPPORT_EMAIL}`);
+    return;
+  } catch {
+    // no mail app answered; the address is the next best thing
+  }
+  let copied = false;
+  try {
+    copied = await Clipboard.setStringAsync(SUPPORT_EMAIL);
+  } catch {
+    copied = false;
+  }
+  const body: TranslationKey = copied ? 'settings.support.noMail.copied' : 'settings.support.noMail.address';
+  Alert.alert(t('settings.support.noMail.title'), t(body, { email: SUPPORT_EMAIL }));
 }
 
 // placeholders that cannot appear in a translation, to find where each link goes

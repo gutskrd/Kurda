@@ -16,16 +16,17 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { listStories } from '../stories/api';
 import { getMyRanks } from '../ranks/api';
 import { daysLeftText, seasonTitle } from '../ranks/format';
 import { acceptInvite, listInvites } from '../play/api';
 import { applyInviteEvent, liveInvites } from '../play/invites';
+import { JoinCodeCard } from '../play/JoinByCode';
 import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
 import { useUserEvents } from '../realtime/useUserEvents';
+import { PHONE_LEARN_GAMES, useListedLearnGames, type LearnGameRoute } from '../games/learnGames';
 
-type GameRoute = 'Stories' | 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race';
+type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race' | LearnGameRoute | 'Kingdom';
 type Mode = 'solo' | 'friends' | 'both';
 
 interface GameCard {
@@ -39,17 +40,19 @@ interface GameCard {
 }
 
 /**
- * The games, in the order they are offered: Stories first (it is the one that
- * is most like learning), then each game alone and then its version against a
- * friend, then the race.
+ * The games, in the order they are offered: each game alone and then its
+ * version against a friend, then the race. Stories are not among them any
+ * more: reading is Learn's own middle group, and a story's quiz starts from
+ * the story.
  */
 export const GAME_CARDS: readonly GameCard[] = [
-  { key: 'stories', route: 'Stories', icon: 'story', name: 'stories.title', line: 'games.card.stories', mode: 'both' },
   { key: 'wordle', route: 'Wordle', icon: 'grid', name: 'games.wordle.name', line: 'games.card.wordle', mode: 'solo' },
   { key: 'battle', route: 'WordleBattle', icon: 'people', name: 'games.battle.name', line: 'games.card.battle', mode: 'friends' },
   { key: 'rhyme', route: 'Rhyme', icon: 'speaker', name: 'games.rhyme.name', line: 'games.card.rhyme', mode: 'solo' },
   { key: 'rhymeMatch', route: 'RhymeMatch', icon: 'people', name: 'games.rhymeMatch.name', line: 'games.card.rhymeMatch', mode: 'friends' },
   { key: 'race', route: 'Race', icon: 'bolt', name: 'games.race.name', line: 'games.card.race', mode: 'solo' },
+  // the learner's own village, grown by what they learn everywhere else (kingdom/KingdomScreen)
+  { key: 'kingdom', route: 'Kingdom', icon: 'home', name: 'kingdom.title', line: 'kingdom.card', mode: 'solo' },
 ];
 
 const MODE_LABEL: Record<Mode, TranslationKey> = {
@@ -59,12 +62,13 @@ const MODE_LABEL: Record<Mode, TranslationKey> = {
 };
 
 /**
- * Learn's second half: the games.
+ * Learn's third group: the games.
  *
  * At the top, small, the way into the rankings and the league — there for the
  * people who look for them, out of the way of the people who only came to
  * play. Then any game a friend has asked you into, because an invite runs out
- * and the games will still be here. Then the games themselves, as a grid of
+ * and the games will still be here, and the way into a game a friend told you
+ * the code of — the other half of being asked. Then the games themselves, as a grid of
  * cards that each say what the game is and whether it is played alone or with
  * friends; a game is one tap from here, two from anywhere.
  */
@@ -75,23 +79,23 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const { t, locale } = useI18n();
   const dir = useDirection();
   const tabBarInset = useTabBarInset();
-  /**
-   * Whether any story is published yet. Until one is, the card says "Coming
-   * soon" and opens nothing — a hub with an empty list is a promise the screen
-   * cannot keep. Asked again on each visit; the list is cached on the server.
-   */
-  const [hasStories, setHasStories] = useState<boolean | null>(null);
   const [ranks, setRanks] = useState<MyRanks | null>(null);
   // the season's line under Ranks is held in grey until its answer, so the word above it does not jump
   const [ranksSettled, setRanksSettled] = useState(false);
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
+  // the learning games (games/learnGames.ts), each listed once it has enough approved content in the learner's Kurdish
+  const learnGames = useListedLearnGames();
+  const cards: GameCard[] = [
+    ...GAME_CARDS,
+    ...learnGames.flatMap((g): GameCard[] => {
+      const phone = PHONE_LEARN_GAMES[g.id];
+      return phone ? [{ key: g.id, route: phone.route, icon: g.glyph, name: phone.name, line: phone.line, mode: g.mode === 'solo' ? 'solo' : g.mode === 'multi' ? 'friends' : 'both' }] : [];
+    }),
+  ];
 
   useFocusEffect(
     useCallback(() => {
       let live = true;
-      void listStories(client).then((res) => {
-        if (live && res.ok) setHasStories(res.data.stories.length > 0);
-      });
       // a guest holds no rank and is sent no invites, and the server refuses both questions
       if (isGuest) {
         setRanksSettled(true);
@@ -217,29 +221,28 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         </View>
       ) : null}
 
+      {/* a code a friend read out or sent opens their game, whichever of the games it is */}
+      <JoinCodeCard />
+
       <View style={styles.section}>
         <Text style={[styles.heading, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
           {t('nav.games')}
         </Text>
         <View style={[styles.grid, { flexDirection: dir.row }]}>
-          {GAME_CARDS.map((card) => {
-            const soon = card.key === 'stories' && hasStories === false;
+          {cards.map((card) => {
             const name = t(card.name);
-            const mode = soon ? t('stories.card.soon') : t(MODE_LABEL[card.mode]);
+            const mode = t(MODE_LABEL[card.mode]);
             return (
               <PressableScale
                 key={card.key}
-                disabled={soon}
                 onPress={() => navigation.navigate(card.route)}
                 accessibilityRole="button"
-                accessibilityState={{ disabled: soon }}
                 accessibilityLabel={`${name}, ${mode}. ${t(card.line)}`}
                 testID={`game-${card.key}`}
                 style={[
                   styles.card,
                   {
                     backgroundColor: colors.surface,
-                    opacity: soon ? 0.55 : 1,
                     alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start',
                   },
                 ]}

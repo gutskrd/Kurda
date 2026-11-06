@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { BURST, type ChestOpening, type ChestTier } from '@kurda/shared';
+import { BURST, CHEST_HOP_LAND, CHEST_HOP_MS, celebrationPlan, type ChestOpening, type ChestTier } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { CloseIcon, CoinIcon, SparkleIcon } from '../components/icons';
 import { wrapTab } from '../components/Sheet';
@@ -27,8 +27,17 @@ const TIER: Record<ChestTier, MessageKey> = {
   epic: 'quests.tier.epic',
 };
 
-/** The celebration's colours for each tier (ranks.css `tone-*`): gold, blue, violet. */
-const TONE: Record<ChestTier, string> = { common: 'zer', rare: 'ciya', epic: 'lutke' };
+/** The celebration's colours for each tier (ranks.css `tone-*`), all warm as the chests are: gold, the star's pale gold, copper. */
+const TONE: Record<ChestTier, string> = { common: 'zer', rare: 'sterk', epic: 'sifir' };
+/** How far the rays out of the open chest reach, against the drawing's own: across most of the screen. */
+const RAYS_REACH = 2.4;
+/**
+ * The celebration is timed from the chest's landing out of its hop (shared
+ * CHEST_HOP, played by quests.css), not from its first frame: the flecks are
+ * thrown and it is over as if it had begun this much later. The stylesheet
+ * moves the ring and the words by the same amount.
+ */
+const LAND_DELAY_MS = CHEST_HOP_MS * CHEST_HOP_LAND - celebrationPlan(false).hapticAtMs;
 
 type Phase = 'closed' | 'opening' | 'open' | 'gone';
 
@@ -170,7 +179,7 @@ export function ChestScreen({
             aria-disabled={phase !== 'closed'}
           >
             <span className="chest-float">
-              <Chest tier={chest.chest} open={phase === 'gone'} size={208} />
+              <Chest tier={chest.chest} open={phase === 'gone'} shine={phase === 'closed'} size={208} />
               <span className="chest-sparkles" aria-hidden="true">
                 {[0, 1, 2, 3].map((i) => (
                   <span key={i} className={`chest-sparkle s${i}`}>
@@ -208,21 +217,34 @@ export function ChestScreen({
   );
 }
 
-/** The lid pops, the tier's colours are thrown out and "+N Zêr" lands: the app's one celebration, felt once. */
+/**
+ * The chest hops — a crouch, a spring up with the lid bursting open at the
+ * top, a landing — and as it lands light bursts out of it in rays that keep
+ * turning, the tier's colours are thrown out, what it held rises out of it
+ * as a tile with its count ("× 40") and "+N Zêr" lands: the app's one
+ * celebration, felt once.
+ */
 function Opened({ tier, amount }: { tier: ChestTier; amount: number }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
-  const moment = useCelebrationMoment();
+  const moment = useCelebrationMoment(LAND_DELAY_MS);
+  const number = new Intl.NumberFormat(locale).format(amount);
   return (
     <div className={`celebrate chest-opened tone-${TONE[tier]} ${moment.playing ? 'is-playing' : 'is-done'}`} onClick={moment.playing ? moment.skip : undefined}>
-      <CelebrationArt flecks={BURST.tier} seed={amount * 7 + tier.length} reach={170}>
-        <Chest tier={tier} open size={208} className="is-popping" />
+      <CelebrationArt flecks={BURST.tier} seed={amount * 7 + tier.length} reach={170} delayMs={LAND_DELAY_MS}>
+        <span className="chest-open-stage">
+          <span className="chest-tile" aria-hidden="true">
+            <CoinIcon size={36} weight="fill" />
+            <span dir="ltr">{`× ${number}`}</span>
+          </span>
+          <Chest tier={tier} open popping reach={RAYS_REACH} size={208} />
+        </span>
       </CelebrationArt>
       <p className="celebrate-details chest-reward">
         <span className="chest-coin" aria-hidden="true">
           <CoinIcon size={30} weight="fill" />
         </span>
-        <span dir="ltr">{t('quests.reward', { amount: new Intl.NumberFormat(locale).format(amount) })}</span>
+        <span dir="ltr">{t('quests.reward', { amount: number })}</span>
       </p>
     </div>
   );

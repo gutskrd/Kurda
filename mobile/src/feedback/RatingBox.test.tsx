@@ -19,7 +19,8 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { RatingBox } from './RatingBox';
-import { GameFeedbackHost } from './GameFeedbackHost';
+import { APP_FEEDBACK_DELAY_MS } from '@kurda/shared';
+import { GameFeedbackHost, STORE_PROMPT_DELAY_MS } from './GameFeedbackHost';
 import { FeedbackSettingsRows } from './FeedbackSettings';
 import { leftResults, reportGameFinished, setRatingBoxInset, useRatingBoxInset } from './gameFinished';
 import { FeedbackSession } from './session';
@@ -179,18 +180,45 @@ describe('Send feedback from Settings', () => {
   });
 });
 
+/*
+ * The host asks the server, then waits on the clock: the box a moment into
+ * the results, the store's prompt a little later. These tests move the clock
+ * rather than sleep through it, so a busy machine cannot stretch a wait past
+ * the test's own time, and "never opens" is checked well past the moment it
+ * would have, not after a guess at how long is long enough.
+ */
 describe('GameFeedbackHost', () => {
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+  });
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+  });
+  /** A game ends, and the server's answer (a promise, not on the clock) comes back. */
+  const finished = async (finish: Parameters<typeof reportGameFinished>[0]) => {
+    act(() => reportGameFinished(finish));
+    await act(async () => undefined);
+  };
+  const after = (ms: number) =>
+    act(() => {
+      vi.advanceTimersByTime(ms);
+    });
+
   it('opens the box a moment after the first finished game, over the results', async () => {
     testAuth.client = fakeClient({ [STATE]: ok({ shouldPrompt: true, storeReviewEligible: false }) });
     const session = new FeedbackSession();
     renderWithProviders(<GameFeedbackHost session={session} />);
-    act(() => reportGameFinished({ moment: 'won' }));
+    await finished({ moment: 'won' });
+    after(APP_FEEDBACK_DELAY_MS - 1);
     expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
-    expect(await screen.findByText('How are you enjoying Hevalo?', undefined, { timeout: 3000 })).toBeTruthy();
+    after(1);
+    expect(screen.getByText('How are you enjoying Hevalo?')).toBeTruthy();
     expect(session.boxShown).toBe(true);
     // a second game this session does not open it again
-    act(() => reportGameFinished({ moment: 'won' }));
-    await waitFor(() => expect(screen.getAllByText('How are you enjoying Hevalo?')).toHaveLength(1));
+    await finished({ moment: 'won' });
+    after(APP_FEEDBACK_DELAY_MS);
+    expect(screen.getAllByText('How are you enjoying Hevalo?')).toHaveLength(1);
   });
 
   it('closes when the player leaves the results, and never opens on a screen they already left', async () => {
@@ -216,8 +244,9 @@ describe('GameFeedbackHost', () => {
         <GameFeedbackHost session={session} />
       </NavigationContainerRefContext.Provider>,
     );
-    act(() => reportGameFinished({ moment: 'won' }));
-    expect(await screen.findByText('How are you enjoying Hevalo?', undefined, { timeout: 3000 })).toBeTruthy();
+    await finished({ moment: 'won' });
+    after(APP_FEEDBACK_DELAY_MS);
+    expect(screen.getByText('How are you enjoying Hevalo?')).toBeTruthy();
     go('play-tab');
     expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
     // unanswered, so the server is not told; this session does not offer it again
@@ -234,7 +263,8 @@ describe('GameFeedbackHost', () => {
     );
     act(() => reportGameFinished({ moment: 'won' }));
     go('home');
-    await new Promise((r) => setTimeout(r, 1500));
+    await act(async () => undefined);
+    after(APP_FEEDBACK_DELAY_MS * 2);
     expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
     expect(later.boxShown).toBe(false);
   });
@@ -250,8 +280,9 @@ describe('GameFeedbackHost', () => {
         <GameFeedbackHost session={new FeedbackSession()} />
       </>,
     );
-    act(() => reportGameFinished({ moment: 'other' }));
-    expect(await screen.findByText('How are you enjoying Hevalo?', undefined, { timeout: 3000 })).toBeTruthy();
+    await finished({ moment: 'other' });
+    after(APP_FEEDBACK_DELAY_MS);
+    expect(screen.getByText('How are you enjoying Hevalo?')).toBeTruthy();
     // the results make room for the box while it is there (its height comes from its layout)
     act(() => setRatingBoxInset(240));
     expect(screen.getByTestId('room').textContent).toBe('240');
@@ -265,9 +296,9 @@ describe('GameFeedbackHost', () => {
     testAuth.client = client;
     const session = new FeedbackSession();
     renderWithProviders(<GameFeedbackHost session={session} />);
-    act(() => reportGameFinished({ moment: 'other', gaveUp: true }));
-    await waitFor(() => expect(client.calls).toHaveLength(1));
-    await new Promise((r) => setTimeout(r, 1500));
+    await finished({ moment: 'other', gaveUp: true });
+    expect(client.calls).toHaveLength(1);
+    after(APP_FEEDBACK_DELAY_MS * 2);
     expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
     expect(session.boxShown).toBe(false);
   });
@@ -283,9 +314,14 @@ describe('GameFeedbackHost', () => {
       testAuth.client = client;
       const session = new FeedbackSession();
       renderWithProviders(<GameFeedbackHost session={session} />);
-      act(() => reportGameFinished({ moment: 'won' }));
-      await waitFor(() => expect(requestStoreReview).toHaveBeenCalledOnce(), { timeout: 3000 });
-      await waitFor(() => expect(client.calls.map((c) => c.path)).toContain('/me/store-review/prompted'));
+      await finished({ moment: 'won' });
+      after(STORE_PROMPT_DELAY_MS - 1);
+      expect(requestStoreReview).not.toHaveBeenCalled();
+      after(1);
+      expect(requestStoreReview).toHaveBeenCalledOnce();
+      // the system says it asked (a promise), and the server is told
+      await act(async () => undefined);
+      expect(client.calls.map((c) => c.path)).toContain('/me/store-review/prompted');
       expect(client.calls.find((c) => c.path === '/me/store-review/prompted')?.body).toEqual({ appVersion: APP_VERSION });
       // and never the box in the same session
       expect(session.storeAsked).toBe(true);

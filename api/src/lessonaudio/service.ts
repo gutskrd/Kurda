@@ -3,11 +3,13 @@ import {
   LESSON_AUDIO_TEXT_MAX,
   conversationClips,
   conversationLineKey,
+  isSpeakerId,
   lessonAudioKey,
   lessonAudioTargets,
   normalizeKurdish,
   storyAudioSentences,
   storyParagraphs,
+  storySentences,
   type ConversationPayload,
   type LipsyncData,
   type SpeakerId,
@@ -20,6 +22,8 @@ import { playsRecordingOf } from './publish-guard.js';
 /** One lesson that uses a text, and how. */
 export interface LessonAudioUsage {
   courseId: string;
+  /** what the studio's course filter names it by (`?course=kurmanji-road`); a story's is its courseId */
+  courseSlug: string;
   courseTitle: string;
   unitId: string;
   unitTitle: string;
@@ -54,6 +58,15 @@ export interface LessonAudioItem {
   updatedAt: string | null;
   /** who is shown saying it, or null for no character (and for no recording) */
   speaker: SpeakerId | null;
+  /**
+   * Who is to record it (`plannedSpeaker`): a conversation line's character,
+   * else the `voice` of the first exercise in course order that names one —
+   * so a sentence the road plans for Hamo is his, even when an older lesson
+   * used it first without saying whose it is. Null when nothing plans it:
+   * a story's sentence, an unused recording, a lesson written before voices.
+   * The recording's own `speaker` is who was heard; this is who was meant.
+   */
+  plannedSpeaker: SpeakerId | null;
   /** it has a mouth timeline; PATCH /admin/audio/lesson sets one for a recording made without */
   hasLipsync: boolean;
   /** the stored timeline (null for none), only when the list is asked for it (`withLipsync`) */
@@ -78,6 +91,7 @@ export interface LessonAudioList {
 
 interface ExerciseRow {
   course_id: string;
+  course_slug: string;
   course_title: string;
   unit_id: string;
   unit_title: string;
@@ -117,6 +131,61 @@ interface RecordingRow {
   lipsync: LipsyncData | null;
 }
 
+/** One sentence of a story as the editor's audio section lists it: where it is, what is said, and its recording if any. */
+export interface StorySentenceAudio {
+  /** index into storyParagraphs(body) */
+  paragraph: number;
+  /** index into storySentences(paragraph), which is what the reader highlights */
+  sentence: number;
+  text: string;
+  /** its recording key, the one the studio's PUT /admin/lesson-audio?text= files it under */
+  key: string;
+  recorded: boolean;
+  url?: string;
+  durationMs?: number;
+  speaker?: SpeakerId | null;
+  updatedAt?: string;
+}
+
+export interface StoryAudio {
+  sentences: StorySentenceAudio[];
+  recorded: number;
+  total: number;
+}
+
+/**
+ * A story's recordable sentences in reading order with their recordings, for
+ * the editor's audio section: the same cut the reader plays and the studio
+ * lists (`storyAudioSentences`), the same sentences left out (one no
+ * recording can hold is the editor's to split), and one query for the
+ * recordings — the whole studio listing walks every lesson, which one story's
+ * editor has no use for.
+ */
+export async function storySentenceRecordings(db: Pick<pg.Pool, 'query'>, body: string): Promise<StoryAudio> {
+  const sentences: StorySentenceAudio[] = [];
+  storyParagraphs(body).forEach((paragraph, p) => {
+    const recordable = new Set(storyAudioSentences(paragraph));
+    storySentences(paragraph).forEach((text, i) => {
+      if (!recordable.has(text) || normalizeKurdish(text).length > LESSON_AUDIO_TEXT_MAX) return;
+      sentences.push({ paragraph: p, sentence: i, text, key: lessonAudioKey(text), recorded: false });
+    });
+  });
+  const keys = [...new Set(sentences.map((s) => s.key))];
+  if (keys.length > 0) {
+    const res = await db.query<{ key: string; url: string; duration_ms: number; speaker: SpeakerId | null; updated_at: Date }>(
+      `SELECT key, url, duration_ms, speaker, updated_at FROM lesson_audio WHERE key = ANY($1::text[])`,
+      [keys],
+    );
+    const byKey = new Map(res.rows.map((r) => [r.key, r]));
+    for (const s of sentences) {
+      const r = byKey.get(s.key);
+      if (!r) continue;
+      Object.assign(s, { recorded: true, url: r.url, durationMs: r.duration_ms, speaker: r.speaker, updatedAt: r.updated_at.toISOString() });
+    }
+  }
+  return { sentences, recorded: sentences.filter((s) => s.recorded).length, total: sentences.length };
+}
+
 /** A text a lesson or story needs, before anything is known of its recording. */
 function unrecorded(key: string, text: string): LessonAudioItem {
   return {
@@ -127,10 +196,17 @@ function unrecorded(key: string, text: string): LessonAudioItem {
     durationMs: null,
     updatedAt: null,
     speaker: null,
+    plannedSpeaker: null,
     hasLipsync: false,
     usedIn: [],
     unused: false,
   };
+}
+
+/** The character an exercise's payload plans its Kurdish for, if it names one. */
+function plannedVoice(payload: unknown): SpeakerId | null {
+  const voice = typeof payload === 'object' && payload !== null ? (payload as { voice?: unknown }).voice : undefined;
+  return isSpeakerId(voice) ? voice : null;
 }
 
 /** Whether a listening payload has no clip of its own, and plays the text keyed `key` instead. */
@@ -155,7 +231,9 @@ export class LessonAudioService {
    * text either of them uses is needed; a recording neither uses is unused.
    *
    * Rows come in course order, newest version first within a slot, so the
-   * first usage of a text is where it first appears in the course.
+   * first usage of a text is where it first appears in the course, and the
+   * first `voice` met for it is who it is planned for (`plannedSpeaker`): the
+   * draft's, where an editor has changed it there.
    *
    * Then the stories: every sentence the reader can play (storyAudioSentences)
    * of every story that is not archived, drafts included for the same reason
@@ -180,7 +258,7 @@ export class LessonAudioService {
            (SELECT DISTINCT ON (skill_id, position) id FROM lessons
             WHERE status = 'published' ORDER BY skill_id, position, version DESC)
          )
-         SELECT c.id course_id, c.title_en course_title, u.id unit_id, u.title_en unit_title,
+         SELECT c.id course_id, c.slug course_slug, c.title_en course_title, u.id unit_id, u.title_en unit_title,
                 s.id skill_id, s.title_en skill_title,
                 l.id lesson_id, l.position lesson_position, l.title_en lesson_title, l.status, l.version,
                 e.type, e.payload
@@ -216,6 +294,7 @@ export class LessonAudioService {
               line: { conversation: (row.payload as ConversationPayload).id, part: c.part, name: c.name, character: c.character },
             }))
           : lessonAudioTargets(row.type, row.payload).map((text) => ({ text, key: lessonAudioKey(text), line: undefined }));
+      const voice = row.type === 'conversation' ? null : plannedVoice(row.payload);
       for (const { text, key, line } of clips) {
         let item = items.get(key);
         if (!item) {
@@ -223,11 +302,14 @@ export class LessonAudioService {
           if (line) item.line = line;
           items.set(key, item);
         }
+        // rows come in course order: the first use that plans a voice decides it
+        item.plannedSpeaker ??= line ? line.character : voice;
         const slot = `${key}\u0000${row.skill_id}\u0000${row.lesson_position}`;
         let usage = usageBySlot.get(slot);
         if (!usage) {
           usage = {
             courseId: row.course_id,
+            courseSlug: row.course_slug,
             courseTitle: row.course_title,
             unitId: row.unit_id,
             unitTitle: row.unit_title,
@@ -253,6 +335,7 @@ export class LessonAudioService {
     for (const story of stories.rows) {
       const usage: LessonAudioUsage = {
         courseId: `stories:${story.dialect}`,
+        courseSlug: `stories:${story.dialect}`,
         courseTitle: STORY_COURSE_TITLE[story.dialect],
         unitId: story.id,
         unitTitle: story.title,
@@ -302,7 +385,7 @@ export class LessonAudioService {
         Object.assign(found, recording);
         recorded += 1;
       } else {
-        unused.push({ key: r.key, text: r.text, ...recording, usedIn: [], unused: true });
+        unused.push({ key: r.key, text: r.text, ...recording, plannedSpeaker: null, usedIn: [], unused: true });
       }
     }
     unused.sort((a, b) => a.text.localeCompare(b.text));

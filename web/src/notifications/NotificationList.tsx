@@ -14,9 +14,11 @@ import {
   PersonGlyph,
   RemovePersonIcon,
   SafetyIcon,
+  TicketIcon,
   TrophyIcon,
   UsersIcon,
 } from '../components/icons';
+import { isPlayGame } from '@kurda/shared';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { socialNotification, type NoteView } from '../reports/notifications';
@@ -76,6 +78,8 @@ const GROUP_LABEL: Record<NoteGroupKey, MessageKey> = {
 };
 
 const KIND_ICON: Record<NoteKind, (p: { size?: number }) => React.JSX.Element> = {
+  invite: TicketIcon,
+  friendRequest: TicketIcon,
   game: GameIcon,
   gift: GiftIcon,
   badge: MedalIcon,
@@ -224,12 +228,12 @@ function NoteRow({
     title
   );
   // the one thing to do about it, where there is one; the whole row goes there
-  const act = to && kind === 'game' ? t('play.banner.join') : to && kind === 'gift' ? t('gift.open') : null;
+  const act = to && (kind === 'invite' || kind === 'game') ? t('play.banner.join') : to && kind === 'gift' ? t('gift.open') : null;
   const linked = Boolean(to || href);
 
   return (
     <li className={`note-row${unread ? ' is-unread' : ''}${linked ? ' is-linked' : ''}`}>
-      <NoteFace kind={kind} actor={actor} />
+      <NoteFace kind={kind} actor={actor} tone={noteTone(note, kind)} />
       <div className="note-main">
         <p className="note-text">
           {to ? (
@@ -270,17 +274,25 @@ function NoteRow({
   );
 }
 
+/** An invitation's colour, as its ticket wears it: the game's for a game invite, a heart's for a friend request. */
+function noteTone(note: RailNotification, kind: NoteKind): string | null {
+  if (kind === 'friendRequest') return 'friend';
+  if (kind === 'invite' && isPlayGame(note.data?.game)) return note.data.game;
+  return null;
+}
+
 /** The face of whoever it is from with the kind on its corner, or the kind alone for news from Hevalo. */
-function NoteFace({ kind, actor }: { kind: NoteKind; actor: Actor | null }): React.JSX.Element {
+function NoteFace({ kind, actor, tone }: { kind: NoteKind; actor: Actor | null; tone: string | null }): React.JSX.Element {
   const Glyph = KIND_ICON[kind];
   const face = useAvatarSrc(actor?.avatarUrl);
+  const toned = tone ? ` is-ticket ticket--${tone}` : '';
   if (actor) {
     return (
       <span className="note-face" aria-hidden="true">
         <span className="note-avatar">
           {face ? <img src={face} alt="" loading="lazy" /> : <PersonGlyph size={22} />}
         </span>
-        <span className="note-badge">
+        <span className={`note-badge${toned}`}>
           <Glyph size={12} />
         </span>
       </span>
@@ -288,7 +300,7 @@ function NoteFace({ kind, actor }: { kind: NoteKind; actor: Actor | null }): Rea
   }
   return (
     <span className="note-face" aria-hidden="true">
-      <span className="note-avatar note-tile">
+      <span className={`note-avatar note-tile${toned}`}>
         <Glyph size={20} />
       </span>
     </span>

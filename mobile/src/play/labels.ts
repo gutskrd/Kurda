@@ -10,12 +10,22 @@ export const GAME_NAME_KEY: Record<PlayGame, TranslationKey> = {
   'wordle-battle': 'games.battle.name',
   'rhyme-match': 'games.rhymeMatch.name',
   stories: 'stories.title',
+  'last-letter': 'games.lastLetter.name',
+  impostor: 'games.impostor.name',
+  'dont-say': 'games.dontSay.name',
+  bluff: 'games.bluff.name',
+  'who-am-i': 'games.whoAmI.name',
 };
 
 export const GAME_ICON: Record<PlayGame, IconName> = {
   'wordle-battle': 'grid',
   'rhyme-match': 'speaker',
   stories: 'story',
+  'last-letter': 'link',
+  impostor: 'people',
+  'dont-say': 'block',
+  bluff: 'quotes',
+  'who-am-i': 'question',
 };
 
 const DIFFICULTY_KEY: Record<string, TranslationKey> = {

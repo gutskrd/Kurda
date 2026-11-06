@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import type { WalletService } from '../wallet/service.js';
+import { assertEconomyNotHeld } from '../economy/standing.js';
 import type { EventDef } from './window.js';
 import {
   claimBlock,
@@ -167,6 +168,8 @@ export class QuestService {
     const prog = evaluateQuest(def, metric);
     const block = claimBlock(prog.complete, Date.parse(event.endsAt), this.now().getTime());
     if (block) return { ok: false, code: block };
+    // a confirmed bot or a payment-fraud hold is paid nothing (economy/standing.ts)
+    await assertEconomyNotHeld(this.pool, userId, 'rewards');
 
     const client = await this.pool.connect();
     try {

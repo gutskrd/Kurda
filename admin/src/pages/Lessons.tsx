@@ -41,22 +41,30 @@ const FILTERS: ReadonlyArray<{ key: StatusFilter; label: string }> = [
  * Lessons: every lesson of every course by its title, and the steps from
  * draft to published (KUR-100). #/lessons is the list, #/lessons/<id> one
  * lesson. The page used to open a lesson by its pasted UUID and create one
- * from a pasted skill UUID; nothing listed either.
+ * from a pasted skill UUID; nothing listed either. `?course=<slug>` opens the
+ * list on one course's lessons — the road's, say, which are a course of their
+ * own beside the older lessons.
  */
 export function Lessons(): React.JSX.Element {
   const route = useRoute();
   const id = route.rest[0];
   if (id) return <LessonEditor key={id} id={id} />;
-  return <LessonListPage initialStatus={route.query.get('status')} />;
+  return <LessonListPage initialStatus={route.query.get('status')} initialCourse={route.query.get('course')} />;
 }
 
-function LessonListPage({ initialStatus }: { initialStatus: string | null }): React.JSX.Element {
+function LessonListPage({ initialStatus, initialCourse }: { initialStatus: string | null; initialCourse: string | null }): React.JSX.Element {
   const [status, setStatus] = useState<StatusFilter>(FILTERS.some((f) => f.key === initialStatus) ? (initialStatus as StatusFilter) : 'current');
+  const [course, setCourse] = useState(initialCourse ?? '');
   const [q, setQ] = useState('');
   const query = useDebounced(q.trim(), 250);
   const [creating, setCreating] = useState(false);
-  // everything at once (a few hundred rows at most): the tabs count by status, the search asks the server
-  const list = useLoad(() => api<LessonList>(`/admin/content/lessons?status=all${query ? `&q=${encodeURIComponent(query)}` : ''}`), [query]);
+  // everything at once (a few hundred rows at most): the tabs count by status; the course and the search ask the server
+  const list = useLoad(
+    () => api<LessonList>(`/admin/content/lessons?status=all${course ? `&course=${encodeURIComponent(course)}` : ''}${query ? `&q=${encodeURIComponent(query)}` : ''}`),
+    [query, course],
+  );
+  const courses = list.data?.courses ?? [];
+  const courseTitle = courses.find((c) => c.slug === course)?.title;
 
   const all = list.data?.lessons ?? null;
   // the server sends at most 500 rows (LESSON_LIST_MAX); past that, the list and its counts
@@ -144,10 +152,35 @@ function LessonListPage({ initialStatus }: { initialStatus: string | null }): Re
             : undefined
         }
         actions={
-          <div className="search-box">
-            <Icon name="search" size={16} />
-            <input type="search" aria-label="Search lessons" placeholder="Title, skill, unit or id" value={q} onChange={(e) => setQ(e.target.value)} />
-          </div>
+          <>
+            {(courses.length > 1 || course) && (
+              <>
+                <label className="sr-only" htmlFor="lessons-course">
+                  Course
+                </label>
+                <select id="lessons-course" value={course} onChange={(e) => setCourse(e.target.value)}>
+                  <option value="">Every course</option>
+                  {courses.map((c) => (
+                    <option key={c.slug} value={c.slug}>
+                      {c.title}
+                    </option>
+                  ))}
+                  {/* a course the address names that the list does not know (yet) is still the one chosen */}
+                  {course && !courses.some((c) => c.slug === course) && <option value={course}>{course}</option>}
+                </select>
+              </>
+            )}
+            {course && (
+              <a className="button-link" href={`#/audio/lessons?course=${encodeURIComponent(course)}`} aria-label={`Recording plan for ${courseTitle ?? course}`}>
+                <Icon name="mic" />
+                Recording plan
+              </a>
+            )}
+            <div className="search-box">
+              <Icon name="search" size={16} />
+              <input type="search" aria-label="Search lessons" placeholder="Title, skill, unit or id" value={q} onChange={(e) => setQ(e.target.value)} />
+            </div>
+          </>
         }
       >
         <Table
@@ -161,7 +194,15 @@ function LessonListPage({ initialStatus }: { initialStatus: string | null }): Re
           what="lessons"
           // five columns and two buttons: on a tablet the titles wrapped a word to a line, so cards there
           wide="medium"
-          empty={query ? 'No lesson matches that search.' : status === 'current' ? 'No lessons yet. Create the first with “New lesson”.' : `No lesson is ${STATUS_NAME[status as ContentStatus].toLowerCase()}.`}
+          empty={
+            query
+              ? 'No lesson matches that search.'
+              : course && status === 'current'
+                ? `${courseTitle ?? 'This course'} has no lessons yet.`
+                : status === 'current'
+                  ? 'No lessons yet. Create the first with “New lesson”.'
+                  : `No lesson${course ? ` in ${courseTitle ?? 'this course'}` : ''} is ${STATUS_NAME[status as ContentStatus].toLowerCase()}.`
+          }
           actions={(l) => (
             <>
               <a className="button-link" href={`#/lessons/${l.id}`} aria-label={`Open “${l.titleEn}”`}>

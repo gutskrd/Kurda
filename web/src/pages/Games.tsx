@@ -5,11 +5,13 @@ import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthProvider';
-import { RaceMini, RhymeMini, StoriesMini, WordleMini } from '../landing/mocks';
-import { useStoriesAvailable } from '../stories/catalogue';
+import { RaceMini, RhymeMini, WordleMini } from '../landing/mocks';
 import { RanksSection } from '../ranks/RanksSection';
 import { LearnHeader } from '../learn/LearnHeader';
 import { ChevronIcon, TrophyIcon } from '../components/icons';
+import { JoinCodeEntry } from '../play/JoinCode';
+import { LearnGameTile, useListedLearnGames } from '../games/learnGames';
+import { KingdomTile } from '../kingdom/KingdomEntry';
 
 /**
  * A game, before it has words.
@@ -22,24 +24,17 @@ interface GameMode {
   labelKey: MessageKey;
   blurbKey: MessageKey;
   href: string;
-  /** open without an account (reading a story) */
-  open?: boolean;
 }
 
 interface GameCard {
   /** the tile's shape in the grid, shared with the front page */
-  id: 'wordle' | 'rhyme' | 'race' | 'stories';
+  id: 'wordle' | 'rhyme' | 'race';
   /** a small picture of the game being played — the front page's, decorative */
   visual: React.JSX.Element;
   nameKey: MessageKey;
   bodyKey: MessageKey;
   /** how this game can be played; one box per game, the mode is chosen on click */
   modes: GameMode[];
-  /**
-   * The game's own page is where its modes are chosen (Stories: read one, then
-   * quiz yourself or play with friends), so the tile opens it rather than asking.
-   */
-  hub?: string;
 }
 
 /** One box per game — the mode (solo / online / …) is chosen after clicking. */
@@ -77,22 +72,10 @@ const GAMES: GameCard[] = [
       },
     ],
   },
-  {
-    id: 'stories',
-    visual: <StoriesMini />,
-    nameKey: 'games.stories.name',
-    bodyKey: 'games.stories.body',
-    hub: '/app/games/stories',
-    modes: [
-      { labelKey: 'games.stories.read', blurbKey: 'games.stories.body', href: '/app/games/stories', open: true },
-      { labelKey: 'stories.quizYourself', blurbKey: 'games.stories.body', href: '/app/games/stories' },
-      { labelKey: 'games.stories.withFriends', blurbKey: 'games.stories.body', href: '/app/games/stories' },
-    ],
-  },
 ];
 
 /**
- * Learn, on its Games half (/app/games). Every game is one box; clicking it asks how you want to play
+ * Learn, on its Games group (/app/games). Every game is one box; clicking it asks how you want to play
  * (solo vs online) instead of scattering each mode across its own card. All
  * games are server-authoritative — the client never scores itself.
  *
@@ -101,18 +84,22 @@ const GAMES: GameCard[] = [
  * asks who is playing). This page used to offer guests the solo modes, and a
  * guest who took the offer got an error instead of a game. Now a guest sees
  * every game, every mode marked as needing an account, and the way to make one.
- * The one exception is reading a story, which is open to everyone; its quiz
- * is not.
  *
- * Stories replaced the ranked quiz. Until a story is published there is
- * nothing behind its card, so the card says "Coming soon" and opens nothing.
+ * A friend's game is joined from here too, by the code they read out or sent
+ * ("Join with a code", play/JoinCode.tsx): one way in for every online game,
+ * at the top of the page where somebody holding a code looks first.
+ *
+ * The stories, which replaced the ranked quiz here, have a group of their own
+ * now (Learn → Stories, stories/StoriesLibrary.tsx): reading is not a game,
+ * and the questions after a story are reached from the story.
  */
 export function Games(): React.JSX.Element {
   const { status } = useAuth();
   const signedIn = status === 'signedIn';
   const [chooser, setChooser] = useState<GameCard | null>(null);
   const t = useT();
-  const stories = useStoriesAvailable();
+  // the learning games (games/learnGames.tsx): each one only once it has enough approved content in the learner's Kurdish
+  const learnGames = useListedLearnGames();
 
   return (
     <div className="container game-page">
@@ -133,30 +120,25 @@ export function Games(): React.JSX.Element {
         <ChevronIcon size={16} className="games-rankings-go" />
       </Link>
 
+      {/* a friend's code, into their game: any of the three online games */}
+      <JoinCodeEntry />
+
       {/* the front page's tiles, with the real ways in: the same pictures, the same grid */}
       <h2 className="sr-only">{t('games.title')}</h2>
       <div className="game-grid">
         {GAMES.map((g) => {
-          const comingSoon = g.id === 'stories' && stories === 'none';
-          // nothing is playable without an account (see the note above), and
-          // nothing at all before there is something to play
-          const playable = comingSoon ? [] : signedIn ? g.modes : g.modes.filter((m) => m.open);
+          // nothing is playable without an account (see the note above)
+          const playable = signedIn ? g.modes : [];
           const single = playable.length === 1 ? playable[0] : undefined;
           /*
-           * A badge only when it tells you something: that the game is not
-           * here yet, or what a visitor can do without an account. "Playable"
-           * on every card of a signed-in player said nothing the Play button
-           * did not, in the gold that is kept for what is earned.
+           * A badge only when it tells you something: what a visitor can do
+           * without an account. "Playable" on every card of a signed-in player
+           * said nothing the Play button did not, in the gold that is kept for
+           * what is earned.
            */
-          const badge = comingSoon
-            ? t('stories.comingSoon')
-            : signedIn
-              ? null
-              : playable.length > 0
-                ? t('games.stories.readFree')
-                : t('games.signInToPlay');
-          // each mode its own way in, when each has its own page (Stories chooses on its own)
-          const direct = !g.hub && playable.length > 1;
+          const badge = signedIn ? null : t('games.signInToPlay');
+          // each mode its own way in, when each has its own page
+          const direct = playable.length > 1;
           return (
             <article className={`game-tile game-tile--${g.id}`} key={g.nameKey}>
               <div className="game-tile-visual">{g.visual}</div>
@@ -168,7 +150,7 @@ export function Games(): React.JSX.Element {
                 <p>{t(g.bodyKey)}</p>
                 <ul className="game-tags">
                   {g.modes.map((m) => {
-                    const locked = !signedIn && !m.open;
+                    const locked = !signedIn;
                     return (
                       <li key={m.labelKey} className={locked ? 'is-locked' : direct ? 'is-link' : undefined}>
                         {/* straight into the game: Learn opens on Games for somebody who plays,
@@ -186,11 +168,7 @@ export function Games(): React.JSX.Element {
                   })}
                 </ul>
                 {playable.length > 0 &&
-                  (g.hub ? (
-                    <Link to={g.hub} className="btn btn-primary btn-sm">
-                      {signedIn ? t('games.play') : t('games.stories.read')}
-                    </Link>
-                  ) : single ? (
+                  (single ? (
                     <Link to={single.href} className="btn btn-primary btn-sm">
                       {t('games.play')}
                     </Link>
@@ -203,6 +181,11 @@ export function Games(): React.JSX.Element {
             </article>
           );
         })}
+        {learnGames.map((g) => (
+          <LearnGameTile key={g.id} game={g} signedIn={signedIn} />
+        ))}
+        {/* The Village: the learner's own village, so only for someone signed in */}
+        {signedIn && <KingdomTile />}
       </div>
 
       {/* your rank in each game played against people, and the season (signed in only) */}

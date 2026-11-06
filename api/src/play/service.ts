@@ -5,12 +5,14 @@ import {
   MAX_INVITEES_PER_REQUEST,
   MAX_PENDING_PLAY_INVITES,
   REMATCH_OFFER_SECONDS,
+  normalizeJoinCode,
   type ChatGameRef,
   type DeclineReason,
   type IncomingInvite,
   type InviteLists,
   type InviteStatus,
   type InviteSummary,
+  type JoinedByCode,
   type LobbyCard,
   type OutgoingInviteState,
   type PlayGame,
@@ -24,6 +26,7 @@ import type { Notification } from '../push/service.js';
 import { areFriendsSql } from '../users/age.js';
 import { canJoin } from './access.js';
 import { gameNotFound } from './errors.js';
+import { MULTI_GAME_TITLES } from '../mp/titles.js';
 import type { PlayEvents } from './events.js';
 import type { LobbyFacts, PlayAdapter } from './types.js';
 
@@ -50,6 +53,7 @@ const GAME_NAMES: Record<PlayGame, string> = {
   'wordle-battle': 'Peyvok Battle',
   'rhyme-match': 'Rhyme Match',
   stories: 'a story quiz',
+  ...MULTI_GAME_TITLES,
 };
 
 /** Every invite the host may have waiting is waiting: answers, or invites running out, make room. */
@@ -393,6 +397,36 @@ export class PlayService {
       return answer;
     }
     await this.closeInvite(row, 'expired');
+    if (outcome === 'started') throw new AppError('GAME_STARTED', 409, 'this game has already started');
+    if (outcome === 'full') throw new AppError('GAME_FULL', 409, 'this game is full');
+    throw gameNotFound();
+  }
+
+  /**
+   * `POST /play/join {code}`: the code a friend was told, for any of the games.
+   * A code names one open lobby across all three (migration game-join-codes),
+   * and joining it is that game's own join, so the join rule decides exactly as
+   * for an invite: every refusal, and a code nobody is using, is the same 404,
+   * which says nothing about who is in the game. A code is cleared once its
+   * game starts, so a late code is a 404 too; 409 is only for a story game
+   * whose questions began while its code was still being read out, or a full one.
+   */
+  async joinByCode(userId: string, input: string): Promise<JoinedByCode> {
+    const code = normalizeJoinCode(input);
+    if (!code) throw gameNotFound();
+    // the multiplayer learning games share one table, which names its game
+    const found = await this.pool.query<{ game: PlayGame; id: string }>(
+      `SELECT 'wordle-battle' AS game, id FROM wordle_battles WHERE code = $1
+       UNION ALL SELECT 'rhyme-match', id FROM rhyme_matches WHERE code = $1
+       UNION ALL SELECT 'stories', id FROM story_games WHERE code = $1
+       UNION ALL SELECT game, id FROM game_lobbies WHERE code = $1
+       LIMIT 1`,
+      [code],
+    );
+    const row = found.rows[0];
+    if (!row) throw gameNotFound();
+    const outcome = await this.adapter(row.game).join(userId, row.id);
+    if (outcome === 'joined' || outcome === 'already') return { game: row.game, lobbyId: row.id };
     if (outcome === 'started') throw new AppError('GAME_STARTED', 409, 'this game has already started');
     if (outcome === 'full') throw new AppError('GAME_FULL', 409, 'this game is full');
     throw gameNotFound();

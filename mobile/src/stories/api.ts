@@ -1,48 +1,82 @@
-import type {
-  GameAccess,
-  QuestionCount,
-  StoryDetail,
-  StoryDialect,
-  StoryGameMode,
-  StoryGameSummary,
-  StoryGameView,
-  StoryLength,
-  StoryLevel,
-  StoryListItem,
-  StoryProgress,
-  TextDuring,
-  TimerSeconds,
+import {
+  storyQueryString,
+  type GameAccess,
+  type QuestionCount,
+  type StoryDetail,
+  type StoryDialect,
+  type StoryGameMode,
+  type StoryGameSummary,
+  type StoryGameView,
+  type StoryLevel,
+  type StoryLibrary,
+  type StoryListItem,
+  type StoryMe,
+  type StoryProgress,
+  type StoryCategory,
+  type StoryQuery,
+  type TextDuring,
+  type TimerSeconds,
 } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
 /**
- * Stories over the API (contract §A3/§A4). The shapes are @kurda/shared's,
- * the same ones the API builds and the browser reads; nothing is redefined
- * here.
+ * Stories over the API (contract §A3/§A4, and the library of §C). The shapes
+ * are @kurda/shared's, the same ones the API builds and the browser reads;
+ * nothing is redefined here.
  *
- * Reading needs no account (`/stories`); every game route does, and anyone
- * who is not a member of a game gets the same 404 as for a game that does not
- * exist.
+ * Reading needs no account (`/stories`, `/stories/library`); a bookmark and
+ * a reading position need a signed-in session (a guest's counts, as it does
+ * for a saved word); every game route needs an account, and anyone who is
+ * not a member of a game gets the same 404 as for a game that does not exist.
  */
+
+/** The library's front page: the editors' picks, the newest, the categories, and the caller's own rows. */
+export const getLibrary = (client: ApiClient): Promise<ApiResult<StoryLibrary>> => client.get('/stories/library');
+
+/** The paginated list, filtered: what the library's search and chips read. */
+export const searchStories = (client: ApiClient, query: StoryQuery): Promise<ApiResult<{ stories: StoryListItem[]; total: number }>> =>
+  client.get(`/stories${storyQueryString(query)}`);
 
 export interface StoryFilter {
   dialect?: StoryDialect;
-  length?: StoryLength;
   level?: StoryLevel;
 }
 
-export function listStories(client: ApiClient, filter: StoryFilter = {}): Promise<ApiResult<{ stories: StoryListItem[] }>> {
-  const q = new URLSearchParams();
-  if (filter.dialect) q.set('dialect', filter.dialect);
-  if (filter.length) q.set('length', filter.length);
-  if (filter.level) q.set('level', String(filter.level));
-  const qs = q.toString();
-  return client.get(`/stories${qs ? `?${qs}` : ''}`);
+/** One variety's stories for a game's setup (the list is paged; a variety has far fewer than a page). */
+export function listStories(client: ApiClient, filter: StoryFilter = {}): Promise<ApiResult<{ stories: StoryListItem[]; total: number }>> {
+  return searchStories(client, { dialect: filter.dialect, level: filter.level, limit: 50 });
 }
 
 export const getStory = (client: ApiClient, slugOrId: string): Promise<ApiResult<StoryDetail>> =>
   client.get(`/stories/${encodeURIComponent(slugOrId)}`);
+
+/** Every category by name, for a story that carries only its category's slug. */
+export const getCategories = (client: ApiClient): Promise<ApiResult<{ categories: StoryCategory[] }>> => client.get('/stories/categories');
+
+/** On or off the caller's shelf. */
+export const setBookmark = (client: ApiClient, id: string, on: boolean): Promise<ApiResult<{ bookmarked: boolean }>> =>
+  on ? client.put(`/stories/${id}/bookmark`) : client.delete(`/stories/${id}/bookmark`);
+
+export interface ProgressInput {
+  /** the paragraph being read, 0-based */
+  paragraph: number;
+  /** how far through the text, 0–1 */
+  share: number;
+  /** the last paragraph was reached; the server remembers the first time for good */
+  finished?: boolean;
+}
+
+/** Where the caller is in a story: the server keeps the latest, and says what it knows of them on it. */
+export const saveProgress = (client: ApiClient, id: string, input: ProgressInput): Promise<ApiResult<{ me: StoryMe }>> =>
+  client.put(`/stories/${id}/progress`, input);
+
+/** A glossary word that is a dictionary headword, saved to (or taken off) the caller's vocabulary. */
+export const saveWord = (client: ApiClient, entryId: string, on: boolean): Promise<ApiResult<unknown>> =>
+  on ? client.put(`/dictionary/entries/${entryId}/save`) : client.delete(`/dictionary/entries/${entryId}/save`);
+
+/** The words already in the reader's vocabulary (the dictionary's list), so Save can say Saved where one already is. */
+export const savedWords = (client: ApiClient): Promise<ApiResult<{ words: { entryId: string }[] }>> => client.get('/me/saved-words');
 
 export const activeGames = (client: ApiClient): Promise<ApiResult<{ games: StoryGameSummary[] }>> =>
   client.get('/story-games/active');
@@ -58,7 +92,7 @@ export interface CreateGameInput {
   mode: StoryGameMode;
   storyId?: string;
   dialect?: StoryDialect;
-  length?: StoryLength;
+  length?: StoryDetail['length'];
   level?: StoryLevel;
   questionCount: QuestionCount;
   timerSeconds: TimerSeconds;

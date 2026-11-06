@@ -5,8 +5,10 @@ import { hasCapability } from './roles.js';
 import { requireAdmin, requireCapability } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { expiryFrom, normalizeReason } from './moderation.js';
-import { CONTENT_EDITOR, USER_FILTERS, USERS_PAGE_MAX, type UserFilter } from './user-admin-service.js';
-import type { UserAdminService } from './user-admin-service.js';
+import { CONTENT_EDITOR, USER_FILTERS, USERS_PAGE_MAX, VOICE_ACTOR, type UserFilter } from './user-admin-service.js';
+import type { RoleResult, UserAdminService } from './user-admin-service.js';
+import { VOICES_PER_ACCOUNT_MAX, setVoices, voicesOf } from '../recording/links.js';
+import { VOICE_ID } from '../recording/script.js';
 
 const idParam = z.object({ id: z.uuid() });
 const reasonBody = z.object({ reason: z.string() });
@@ -22,17 +24,29 @@ const walletBody = z.object({
   reason: z.string(),
   currency: z.enum(['zer', 'gems']),
   amount: z.number().int().min(-WALLET_ADJUST_MAX).max(WALLET_ADJUST_MAX),
+  /** the console's key for this one change, so a double click or a retry moves the money once */
+  idempotencyKey: z.string().min(8).max(120).optional(),
 });
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
 const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
 const editorBody = z.object({ on: z.boolean(), reason: z.string() });
+const voicesBody = z.object({ voices: z.array(z.string().regex(VOICE_ID)).max(VOICES_PER_ACCOUNT_MAX), reason: z.string() });
 
 type ActionResult =
-  | { ok: true; balance?: number }
-  | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' };
+  | { ok: true; balance?: number; duplicate?: boolean }
+  | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' | 'SELF_ADJUST' };
 
 function sendResult(reply: FastifyReply, res: ActionResult) {
-  if (res.ok) return reply.send({ ok: true, ...(res.balance !== undefined ? { balance: res.balance } : {}) });
+  if (res.ok) {
+    return reply.send({
+      ok: true,
+      ...(res.balance !== undefined ? { balance: res.balance } : {}),
+      ...(res.duplicate ? { duplicate: true } : {}),
+    });
+  }
+  if (res.code === 'SELF_ADJUST') {
+    return reply.code(403).send({ code: res.code, message: 'an admin cannot change their own balance; another superadmin can' });
+  }
   if (res.code === 'NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such user' });
   if (res.code === 'ITEM_NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such shop item' });
   if (res.code === 'NOT_OWNED') return reply.code(409).send({ code: res.code, message: 'the user does not own that item' });
@@ -127,6 +141,23 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
     },
   );
 
+  /** The answer to a role change, the same for each role a person's page gives. */
+  const roleReply = async (reply: FastifyReply, target: string, role: string, on: boolean, res: RoleResult) => {
+    if (res.ok) {
+      if (res.changed) {
+        await app.securityLog.record(on ? 'access.role_granted' : 'access.role_revoked', {
+          userId: target,
+          staff: true,
+          details: { roles: [role], by: 'a superadmin' },
+        });
+      }
+      return { ok: true, roles: res.roles };
+    }
+    if (res.code === 'NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such user' });
+    if (res.code === 'USER_BANNED') return reply.code(409).send({ code: res.code, message: 'a banned account cannot be given a staff role' });
+    return reply.code(409).send({ code: res.code, message: 'the account has not confirmed its email address yet' });
+  };
+
   /**
    * Give or take away the content editor role (UserAdminService.setContentEditor):
    * how someone joins the team that writes and records lessons — the person a
@@ -142,22 +173,46 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
       const reason = normalizeReason(b.reason);
       if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
       const target = (req.params as z.infer<typeof idParam>).id;
-      const res = await users.setContentEditor(req.user!.id, target, b.on, reason);
-      if (res.ok) {
-        if (res.changed) {
-          await app.securityLog.record(b.on ? 'access.role_granted' : 'access.role_revoked', {
-            userId: target,
-            staff: true,
-            details: { roles: [CONTENT_EDITOR], by: 'a superadmin' },
-          });
-        }
-        return { ok: true, roles: res.roles };
-      }
-      if (res.code === 'NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such user' });
-      if (res.code === 'USER_BANNED') return reply.code(409).send({ code: res.code, message: 'a banned account cannot be given a staff role' });
-      return reply.code(409).send({ code: res.code, message: 'the account has not confirmed its email address yet' });
+      return roleReply(reply, target, CONTENT_EDITOR, b.on, await users.setContentEditor(req.user!.id, target, b.on, reason));
     },
   );
+
+  /**
+   * Give or take away the voice actor role (UserAdminService.setVoiceActor):
+   * someone who lends a voice records their own lines from the "Record by
+   * person" page and can open nothing else in the console. Like the content
+   * editor's, a superadmin's alone, with 2FA, into the person's history.
+   */
+  app.put(
+    '/admin/users/:id/voice-actor',
+    { schema: { params: idParam, body: editorBody }, preHandler: canAdjustEconomy },
+    async (req, reply) => {
+      const b = req.body as z.infer<typeof editorBody>;
+      const reason = normalizeReason(b.reason);
+      if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
+      const target = (req.params as z.infer<typeof idParam>).id;
+      return roleReply(reply, target, VOICE_ACTOR, b.on, await users.setVoiceActor(req.user!.id, target, b.on, reason));
+    },
+  );
+
+  /**
+   * The voices a person records (recording/links.ts): read and set by a
+   * superadmin from the person's page. Setting them asks for a reason, which
+   * the audit log keeps with the change (every write under /admin is logged).
+   */
+  app.get('/admin/users/:id/voices', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: canAdjustEconomy }, async (req) => {
+    return { voices: await voicesOf(app.db, (req.params as z.infer<typeof idParam>).id) };
+  });
+
+  app.put('/admin/users/:id/voices', { schema: { params: idParam, body: voicesBody }, preHandler: canAdjustEconomy }, async (req, reply) => {
+    const b = req.body as z.infer<typeof voicesBody>;
+    if (!normalizeReason(b.reason)) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
+    const res = await setVoices(app.db, req.user!.id, (req.params as z.infer<typeof idParam>).id, b.voices);
+    if (res.ok) return { voices: res.after, changed: res.changed };
+    if (res.code === 'NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such user' });
+    if (res.code === 'USER_BANNED') return reply.code(409).send({ code: res.code, message: 'a banned account cannot be given a voice to record' });
+    return reply.code(400).send({ code: res.code, message: 'that is not a voice anyone records' });
+  });
 
   /** Take an item back (also un-equips it). */
   app.delete(
@@ -171,11 +226,18 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
     },
   );
 
-  app.post('/admin/users/:id/wallet', { schema: { params: idParam, body: walletBody }, preHandler: canAdjustEconomy }, async (req, reply) => {
-    const b = req.body as z.infer<typeof walletBody>;
-    const reason = normalizeReason(b.reason);
-    if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
-    if (b.amount === 0) return reply.code(400).send({ code: 'INVALID_AMOUNT', message: 'amount must be non-zero' });
-    return sendResult(reply, await users.adjustWallet(req.user!.id, (req.params as z.infer<typeof idParam>).id, b.currency, b.amount, reason));
-  });
+  // minting is rare work: a burst of these is a slip or a script, not an admin
+  const walletLimit = { rateLimit: { max: 20, windowMs: 60_000, per: 'user-or-ip' as const } };
+  app.post(
+    '/admin/users/:id/wallet',
+    { schema: { params: idParam, body: walletBody }, config: walletLimit, preHandler: canAdjustEconomy },
+    async (req, reply) => {
+      const b = req.body as z.infer<typeof walletBody>;
+      const reason = normalizeReason(b.reason);
+      if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
+      if (b.amount === 0) return reply.code(400).send({ code: 'INVALID_AMOUNT', message: 'amount must be non-zero' });
+      const userId = (req.params as z.infer<typeof idParam>).id;
+      return sendResult(reply, await users.adjustWallet(req.user!.id, userId, b.currency, b.amount, reason, b.idempotencyKey));
+    },
+  );
 }

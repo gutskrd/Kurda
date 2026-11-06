@@ -2,16 +2,18 @@ import { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useSta
 import { Link } from 'react-router-dom';
 import {
   PATH_GEOMETRY,
-  PATH_MASCOT,
   PATH_RETURN,
+  hostBox,
   lessonPath,
   lessonXpRange,
   localeDir,
   mascotSpot,
   pathChanges,
+  pathLand,
   pathSnapshot,
   type PathChanges,
   type PathSnapshot,
+  type PathStopLook,
   type PathUnit,
   type PlacedStop,
   type SkillStop,
@@ -23,20 +25,21 @@ import { useApiGet } from '../lib/useApi';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { LinkButton } from '../components/Button';
 import { Sheet } from '../components/Sheet';
-import { ArrowIcon, BookIcon, CheckIcon, LockIcon, RepostIcon, StarIcon, TrophyIcon } from '../components/icons';
+import { ArrowIcon, BookIcon, CheckIcon, FlagIcon, LockIcon, RepostIcon, StarIcon } from '../components/icons';
 import { ErrorState } from '../components/states';
 import { CourseMapSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { GrammarNote } from './GrammarNote';
 import { courseProgress, lessonStates } from './map';
+import { LearnerToken, PathHost, SideLights, StopArt, UnitLand, UnitRail, useDarkPage, useUnitsOnScreen, useWidth, type RailUnit } from './PathWorld';
 import type { CourseMap as Map, CourseSummary, PracticeDue, SkillNode } from './types';
 import './path.css';
 
 type Stop = PlacedStop<SkillNode>['stop'];
 type Unit = PathUnit<SkillNode>;
 
-const { node: NODE, step: STEP } = PATH_GEOMETRY;
+const { node: NODE } = PATH_GEOMETRY;
 
 /** How a skill stands, in words — said after its name to a screen reader. */
 function stateKey(stop: SkillStop<SkillNode>): MessageKey {
@@ -50,55 +53,17 @@ const lessonHref = (lessonId: string, courseId: string): string =>
   `/app/learn/lesson/${lessonId}?course=${encodeURIComponent(courseId)}`;
 
 /**
- * The line between two stops: a gentle S from one centre to the next, drawn
- * as round dots. Points are measured from the middle of the path, which is
- * where the line's own drawing sits; a right-to-left page mirrors the whole
- * drawing at once (path.css).
+ * The glyph on a stop: what it is, by shape as well as colour. The guide's
+ * book and the unit's chest are drawn whole (`StopArt`), and the learner
+ * stands on the stop to do now: those carry no glyph.
  */
-function Trail({ unit }: { unit: Unit }): React.JSX.Element {
-  const walked: string[] = [];
-  const ahead: string[] = [];
-  unit.stops.forEach((p, i) => {
-    const before = unit.stops[i - 1];
-    if (!before || !p.trail) return;
-    const bend = STEP / 2;
-    const d = `M ${before.x} ${before.y} C ${before.x} ${before.y + bend}, ${p.x} ${p.y - bend}, ${p.x} ${p.y}`;
-    (p.trail === 'walked' ? walked : ahead).push(d);
-  });
-  return (
-    <svg className="lp-trail" width="1" height={unit.height} aria-hidden="true" focusable="false">
-      <path className="lp-trail-ahead" d={ahead.join(' ')} />
-      <path className="lp-trail-walked" d={walked.join(' ')} />
-    </svg>
-  );
-}
-
-/**
- * How far into the current skill: a ring round it, filling as its lessons are
- * done. Coming back from a lesson it fills from where it was (`moving`): drawn
- * at the share it had, then at the new one, which the stylesheet slides to.
- */
-function Ring({ share, moving = false }: { share: number; moving?: boolean }): React.JSX.Element {
-  const r = NODE / 2 + 9;
-  const c = 2 * Math.PI * r;
-  const size = 2 * r + 8;
-  const s = Math.max(0, Math.min(1, share));
-  return (
-    <svg className="lp-ring" width={size} height={size} viewBox={`${-size / 2} ${-size / 2} ${size} ${size}`} aria-hidden="true" focusable="false">
-      <circle className="lp-ring-track" r={r} />
-      {/* as a style, not an attribute, so the stylesheet's transition carries it from one share to the next */}
-      {(s > 0 || moving) && <circle className={`lp-ring-fill${moving ? ' is-moving' : ''}`} r={r} style={{ strokeDasharray: `${c * s} ${c}` }} />}
-    </svg>
-  );
-}
-
-/** The glyph on a stop: what it is, by shape as well as colour. */
-function Glyph({ stop }: { stop: Stop }): React.JSX.Element {
-  if (stop.kind === 'review') return <RepostIcon size={30} weight="bold" />;
-  if (stop.kind === 'trophy') return <TrophyIcon size={32} weight={stop.earned ? 'fill' : 'regular'} />;
-  if (stop.state === 'locked') return <LockIcon size={28} weight="bold" />;
+function Glyph({ stop }: { stop: Stop }): React.JSX.Element | null {
+  if (stop.kind === 'review') return <RepostIcon size={28} weight="bold" />;
+  if (stop.kind === 'trophy' || stop.kind === 'guide') return null;
+  if (stop.state === 'current') return null;
+  if (stop.state === 'locked') return <LockIcon size={26} weight="bold" />;
   if (stop.state === 'done') {
-    if (stop.finish === 'strong') return <StarIcon size={32} weight="fill" />;
+    if (stop.finish === 'strong') return <StarIcon size={30} weight="fill" />;
     // still done — the check stays — with a small sign that a review would help
     if (stop.finish === 'refresh') {
       return (
@@ -117,8 +82,18 @@ function Glyph({ stop }: { stop: Stop }): React.JSX.Element {
 
 function stopClass(stop: Stop): string {
   if (stop.kind === 'review') return 'is-review';
+  if (stop.kind === 'guide') return `is-guide${stop.open ? '' : ' is-closed'}`;
   if (stop.kind === 'trophy') return `is-trophy${stop.earned ? ' is-earned' : ''}`;
   return `is-${stop.state}${stop.finish ? ` is-${stop.finish}` : ''}`;
+}
+
+/** How a stop is drawn (shared `pathStopSvg`): a skill by how it stands, the guide as its book, review as an open stop, a unit's end as its chest. */
+function stopLook(stop: Stop): PathStopLook {
+  if (stop.kind === 'review') return 'review';
+  if (stop.kind === 'guide') return stop.open ? 'guide' : 'guideLocked';
+  if (stop.kind === 'trophy') return stop.earned ? 'chestOpen' : 'chest';
+  if (stop.state === 'done') return stop.finish === 'strong' ? 'strong' : stop.finish === 'refresh' ? 'refresh' : 'done';
+  return stop.state;
 }
 
 /**
@@ -181,6 +156,9 @@ function StopCard({
       </>
     );
   }
+
+  // the guide opens the unit's notes, never this card
+  if (stop.kind === 'guide') return <></>;
 
   const { skill } = stop;
   const states = lessonStates(skill);
@@ -286,6 +264,7 @@ function useStopLabel(): (stop: Stop, unit: Unit) => string {
   const t = useT();
   return (stop, unit) => {
     if (stop.kind === 'review') return t('coursemap.review.label', { count: stop.due });
+    if (stop.kind === 'guide') return t('coursemap.guideFor', { unit: unit.title });
     if (stop.kind === 'trophy') {
       return t('coursemap.trophy.label', { n: unit.number, state: t(stop.earned ? 'coursemap.trophy.earned' : 'coursemap.trophy.ahead') });
     }
@@ -357,6 +336,8 @@ function GuideSheet({ guide, onClose }: { guide: { skills: SkillNode[]; label: s
  */
 const snapshotKey = (courseId: string): string => `hevalo:path:${courseId}`;
 
+const NO_STOPS: ReadonlySet<string> = new Set();
+
 function readSnapshot(courseId: string): PathSnapshot | null {
   try {
     const raw = sessionStorage.getItem(snapshotKey(courseId));
@@ -411,13 +392,19 @@ function useReturnStep(ret: PathReturn | null): number | null {
  * screen reader; he is a picture, and is left out of the reading order. Not on
  * the narrowest screens, where he would crowd the path.
  */
-function PathMascot({ x, y, cheer, onPress }: { x: number; y: number; cheer: boolean; onPress: () => void }): React.JSX.Element {
+function PathMascot({ x, y, flip, cheer, onPress }: { x: number; y: number; flip: boolean; cheer: boolean; onPress: () => void }): React.JSX.Element {
   return (
     <li className="lp-mascot" aria-hidden="true" style={{ top: y, '--mx': `${x}px` } as React.CSSProperties}>
-      <SpeakingCharacter speaker="hevalo" audio={null} crop="bust" size={PATH_MASCOT.size} decorative reaction={cheer ? 'cheer' : null} onPress={onPress} />
+      <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={MASCOT_SIZE} decorative mirrored={flip} reaction={cheer ? 'cheer' : null} onPress={onPress} />
     </li>
   );
 }
+
+/** Hevalo drawn whole beside the path, as tall as the course's people stand (PathWorld). */
+const MASCOT_SIZE = 132;
+
+/** The units whose stops have risen into place already, by course, while the tab is open: each rises once. */
+const RISEN = new Set<string>();
 
 /**
  * A course's lesson path: on the course's own page (pages/CourseMap.tsx, with
@@ -453,6 +440,8 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
   const courses = useApiGet<{ courses: CourseSummary[] }>('/courses');
   const stopLabel = useStopLabel();
   const popId = useId();
+  const dark = useDarkPage();
+  const [railOpen, setRailOpen] = useState(false);
 
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [guide, setGuide] = useState<{ skills: SkillNode[]; label: string } | null>(null);
@@ -462,7 +451,25 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
 
   // the review count decides where review sits, so the path waits for it (or its failure) once
   const dueSettled = due.data !== null || due.error !== null;
-  const path = useMemo(() => (data && dueSettled ? lessonPath(data, { due: due.data?.due ?? 0 }) : null), [data, dueSettled, due.data]);
+  const path = useMemo(() => (data && dueSettled ? lessonPath(data, { due: due.data?.due ?? 0, guides: true }) : null), [data, dueSettled, due.data]);
+  const width = useWidth(pathRef, path !== null);
+  const screen = useUnitsOnScreen(pathRef, path?.units ?? []);
+  // each unit rises the first time it can be seen, and only then; units not seen yet wait under the ground
+  const [risen, setRisen] = useState<ReadonlySet<string>>(() => new Set(RISEN));
+  // those that rose on an earlier visit are simply there: only a rise seen now plays
+  const [risenBefore] = useState<ReadonlySet<string>>(() => new Set(RISEN));
+  useEffect(() => {
+    if (!screen.seen || reduceMotion) return;
+    let more = false;
+    for (const id of screen.seen) {
+      const mark = `${courseId}:${id}`;
+      if (!RISEN.has(mark)) {
+        RISEN.add(mark);
+        more = true;
+      }
+    }
+    if (more) setRisen(new Set(RISEN));
+  }, [screen.seen, reduceMotion, courseId]);
 
   // what changed since the path was last drawn here: read once, as it is first drawn
   const returned = useRef<{ ret: PathReturn | null } | null>(null);
@@ -578,6 +585,37 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
   const progress = courseProgress(data);
   const list = courses.data?.courses ?? [];
   const current = path.current;
+  const dialect = list.find((c) => c.id === courseId)?.dialect ?? null;
+  // the learner stands on the skill to do now — on the one before it until the return has moved on — and hops across
+  const was = playing ? ret.from : null;
+  const tokenAt = current ? (playing && step! < 4 && was ? was : current) : null;
+  const hopping = playing && step! >= 4 && was !== null && current !== null && was !== current;
+  const placedOf = (key: string | null): { unitId: string; x: number; y: number } | null => {
+    for (const u of path.units) {
+      const p = u.stops.find((s) => s.stop.key === key);
+      if (p) return { unitId: u.unitId, x: p.x, y: p.y };
+    }
+    return null;
+  };
+  const tokenPlace = placedOf(tokenAt);
+  const fromPlace = hopping ? placedOf(was) : null;
+  const sign = rtl ? -1 : 1;
+  const hop =
+    hopping && tokenPlace
+      ? fromPlace && fromPlace.unitId === tokenPlace.unitId
+        ? { dx: sign * (fromPlace.x - tokenPlace.x), dy: fromPlace.y - tokenPlace.y }
+        : { dx: 0, dy: -2 * PATH_GEOMETRY.step }
+      : null;
+  // the stretch of trail walked since the lesson fills in as the path moves on
+  const fresh: ReadonlySet<string> = playing && step! < 4 && ret.changes.current && was ? new Set([ret.changes.current]) : NO_STOPS;
+  const unitOfCurrent = placedOf(current)?.unitId ?? null;
+  const rail: RailUnit[] = path.units.map((u) => ({ unitId: u.unitId, number: u.number, title: u.title, tone: u.tone, done: u.done, total: u.total, here: u.unitId === unitOfCurrent }));
+  const toUnit = (unitId: string): void => {
+    setRailOpen(false);
+    const section = pathRef.current?.querySelector<HTMLElement>(`[data-unit="${unitId}"]`);
+    section?.scrollIntoView?.({ block: 'start', behavior: reduceMotion ? 'auto' : 'smooth' });
+    section?.querySelector<HTMLElement>('.lp-node')?.focus({ preventScroll: true });
+  };
 
   /** A stop as it is drawn now: during the return, a finished or opened one is drawn as it was until its moment. */
   const shown = (stop: Stop): Stop => {
@@ -625,12 +663,27 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
         </div>
       )}
 
+      <div className="lp-world">
+        <UnitRail units={rail} onPick={toUnit} />
       <div className={`lp-map${playing ? ' is-returning' : ''}`} ref={pathRef} onKeyDown={onPathKey}>
-        {path.units.map((unit) => {
-          const here = unit.stops.find((p) => p.stop.key === current);
+        {path.units.map((unit, index) => {
+          const land = pathLand(index);
+          const near = !screen.near || screen.near.has(unit.unitId);
+          const seen = !screen.seen || screen.seen.has(unit.unitId);
+          const waiting = !reduceMotion && screen.seen !== null && !risen.has(`${courseId}:${unit.unitId}`);
+          const rising = !reduceMotion && risen.has(`${courseId}:${unit.unitId}`) && !risenBefore.has(`${courseId}:${unit.unitId}`);
+          const mascotAt = playing && step! < 4 && was ? was : current;
+          const here = unit.stops.find((p) => p.stop.key === mascotAt);
           const spot = here ? mascotSpot(here) : null;
+          const last = unit.stops[unit.stops.length - 1];
+          const host = near && width > 0 ? hostBox(unit.stops.map((p) => ({ key: p.stop.key, x: p.x, y: p.y })), width, here ? { key: here.stop.key, x: here.x, y: here.y } : null) : null;
           return (
-            <section key={unit.unitId} className={`lp-unit lp-tone-${unit.tone}`} aria-labelledby={`lp-unit-${unit.unitId}`}>
+            <section
+              key={unit.unitId}
+              data-unit={unit.unitId}
+              className={`lp-unit lp-tone-${unit.tone}${seen ? ' is-seen' : ''}${waiting ? ' is-waiting' : ''}${rising ? ' is-rising' : ''}`}
+              aria-labelledby={`lp-unit-${unit.unitId}`}
+            >
               <header className="lp-banner">
                 <div className="lp-banner-text">
                   <p className="lp-banner-eyebrow">{t('coursemap.unit', { n: unit.number })}</p>
@@ -641,37 +694,46 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
                 </div>
                 <div className="lp-banner-side">
                   <span className="lp-banner-count">{t('coursemap.unitDone', { done: unit.done, total: unit.total })}</span>
-                  {unit.guide.length > 0 && (
-                    <button
-                      type="button"
-                      className="lp-unit-guide"
-                      onClick={() => setGuide({ skills: unit.guide, label: t('coursemap.guideFor', { unit: unit.title }) })}
-                    >
-                      <BookIcon size={18} />
-                      {t('coursemap.guide')}
-                    </button>
-                  )}
+                  {/* the rail of units, where the page has no room for it beside the path */}
+                  <button type="button" className="lp-unit-rail" aria-label={t('learn.openMap')} onClick={() => setRailOpen(true)}>
+                    <FlagIcon size={20} />
+                  </button>
                 </div>
               </header>
 
               {unit.stops.length > 0 && (
                 <ol className="lp-path" style={{ height: unit.height }}>
-                  <Trail unit={unit} />
-                  {spot && current && <PathMascot x={spot.x} y={spot.y} cheer={cheer} onPress={() => setOpenKey(current)} />}
-                  {unit.stops.map(({ stop: real, x, y }) => {
+                  <UnitLand unit={unit} land={land} width={width} rtl={rtl} dark={dark} near={near} fresh={fresh} />
+                  {host && last && (
+                    <PathHost
+                      host={land.host}
+                      box={host.box}
+                      flip={sign * host.box.x > sign * last.x}
+                      speak={seen && (unit.done > 0 || unit.unitId === unitOfCurrent)}
+                      dialect={dialect}
+                    />
+                  )}
+                  {spot && here && (
+                    <PathMascot x={spot.x} y={spot.y} flip={sign * spot.x > sign * here.x} cheer={cheer} onPress={() => current && setOpenKey(current)} />
+                  )}
+                  {unit.stops.map(({ stop: real, x, y }, k) => {
                     const stop = shown(real);
                     const open = openKey === stop.key;
                     const isCurrent = stop.kind === 'skill' && stop.state === 'current';
-                    const moving = playing ? ret.changes.ring.find((r) => r.key === stop.key) : undefined;
                     const finishing = playing && step! >= 2 && ret.changes.finished.includes(stop.key);
                     const opening = playing && step! >= 3 && ret.changes.opened.includes(stop.key);
+                    // a chest earned by the lesson: shut and wobbling as the skill pops, bursting open as the next one opens
+                    const earnedNow = real.kind === 'trophy' && real.earned && playing && unit.stops.some((p) => ret.changes.finished.includes(p.stop.key));
+                    const wobbling = earnedNow && step! >= 2 && step! < 3;
+                    const unlocking = earnedNow && step! >= 3;
+                    const look = earnedNow && step! < 3 ? 'chest' : stopLook(stop);
                     // the bubble waits for its moment on the way back, then arrives at the new stop
                     const bubble = isCurrent && (!playing || step! >= 4);
                     return (
                       <li
                         key={stop.key}
-                        className={`lp-stop${open ? ' is-open' : ''}`}
-                        style={{ top: y - NODE / 2, '--x': `${x}px` } as React.CSSProperties}
+                        className={`lp-stop${open ? ' is-open' : ''}${isCurrent && !playing ? ' is-here' : ''}`}
+                        style={{ top: y - NODE / 2, '--x': `${x}px`, '--i': k } as React.CSSProperties}
                       >
                         {bubble && stop.kind === 'skill' && stop.launch && (
                           <Link
@@ -685,20 +747,24 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
                         )}
                         <button
                           type="button"
-                          className={`lp-node ${stopClass(stop)}${finishing ? ' is-finishing' : ''}${opening ? ' is-opening' : ''}`}
+                          className={`lp-node ${stopClass(stop)}${finishing ? ' is-finishing' : ''}${opening ? ' is-opening' : ''}${wobbling ? ' is-wobbling' : ''}${unlocking ? ' is-unlocking' : ''}${near ? ' is-drawn' : ''}`}
                           data-stop={stop.key}
                           aria-label={stopLabel(stop, unit)}
-                          aria-expanded={open}
+                          aria-expanded={stop.kind === 'guide' ? undefined : open}
                           aria-controls={open ? popId : undefined}
-                          onClick={() => setOpenKey(open ? null : stop.key)}
+                          onClick={() =>
+                            stop.kind === 'guide'
+                              ? setGuide({ skills: stop.skills, label: t('coursemap.guideFor', { unit: unit.title }) })
+                              : setOpenKey(open ? null : stop.key)
+                          }
                         >
-                          {moving && step! < 2 ? (
-                            <Ring share={step === 0 ? moving.from : moving.to} moving />
-                          ) : (
-                            isCurrent && stop.kind === 'skill' && <Ring share={stop.lessonsTotal > 0 ? stop.lessonsDone / stop.lessonsTotal : 0} />
-                          )}
+                          {isCurrent && <span className="lp-glow" aria-hidden="true" />}
                           <span className="lp-node-face">
-                            <Glyph stop={stop} />
+                            <StopArt look={look} tone={unit.tone} dark={dark} near={near} />
+                            {isCurrent && stop.kind === 'skill' && <SideLights done={stop.lessonsDone} total={stop.lessonsTotal} />}
+                            <span className="lp-node-glyph">
+                              <Glyph stop={stop} />
+                            </span>
                           </span>
                         </button>
                         {open && (
@@ -721,12 +787,21 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
                       </li>
                     );
                   })}
+                  {tokenPlace && tokenPlace.unitId === unit.unitId && (
+                    <LearnerToken key={tokenAt} x={tokenPlace.x} y={tokenPlace.y} hop={hop} />
+                  )}
                 </ol>
               )}
             </section>
           );
         })}
       </div>
+      </div>
+
+      <Sheet open={railOpen} onClose={() => setRailOpen(false)} label={t('learn.openMap')} className="lp-rail-sheet">
+        <h2 className="lp-guide-title">{t('learn.openMap')}</h2>
+        <UnitRail units={rail} onPick={toUnit} />
+      </Sheet>
 
       {/* not while a card is open: it would sit over the card's own button */}
       {away && path.focus && !openKey && (

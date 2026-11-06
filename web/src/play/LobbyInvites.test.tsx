@@ -3,10 +3,11 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { fakeApi, type Call } from '../stories/testing';
 import { InviteFriendsButton, InvitedList } from './LobbyInvites';
-import { asked, renderPlay } from './testing';
+import { asked, renderPlay, signedInAndListening } from './testing';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   localStorage.clear();
 });
 
@@ -37,6 +38,48 @@ describe('InvitedList', () => {
     expect(row('Baran')).toHaveTextContent('The invite ran out');
     // the list follows the answers as they come, and says each one politely
     expect(list).toHaveAttribute('aria-live', 'polite');
+  });
+
+  it('draws each friend as a small ticket: waiting in outline, in with a stamp, no in grey', async () => {
+    fakeApi({
+      'GET /play/invites': outgoing([
+        asked({ inviteId: 'a', name: 'Rojda', status: 'pending' }),
+        asked({ inviteId: 'b', name: 'Zana', status: 'accepted' }),
+        asked({ inviteId: 'c', name: 'Berfin', status: 'declined', declineReason: 'later' }),
+      ]),
+    });
+    renderPlay(<InvitedList game="wordle-battle" lobbyId="b1" room={3} />);
+    const list = await screen.findByRole('list');
+    const row = (name: string) => within(list).getByText(name).closest('li')!;
+    expect(row('Rojda')).toHaveClass('ticket', 'ticket--wordle-battle', 'is-outlined', 'is-awake');
+    expect(row('Rojda').querySelector('.ticket-shine')).not.toBeNull();
+    expect(within(row('Zana')).getByText('Joined')).toHaveClass('ticket-stamp', 'is-success');
+    expect(row('Zana')).not.toHaveClass('is-outlined');
+    expect(row('Berfin')).toHaveClass('ticket--muted');
+  });
+
+  it('lands the stamp when a friend comes in while the host watches', async () => {
+    let answer = outgoing([asked({ inviteId: 'a', name: 'Rojda', status: 'pending' })]);
+    const { calls } = fakeApi({ 'GET /play/invites': () => answer });
+    const { realtime } = renderPlay(<InvitedList game="wordle-battle" lobbyId="b1" room={3} />);
+    await screen.findByText('Waiting for an answer');
+    await signedInAndListening(calls);
+    answer = outgoing([asked({ inviteId: 'a', name: 'Rojda', status: 'accepted' })]);
+    realtime.emit({ type: 'play_invite_update', inviteId: 'a' });
+    expect(await screen.findByText('Joined')).toHaveClass('is-fresh');
+  });
+
+  it('keeps the light off under Reduce Motion', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('prefers-reduced-motion'),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    fakeApi({ 'GET /play/invites': outgoing([asked({ name: 'Rojda', status: 'pending' })]) });
+    renderPlay(<InvitedList game="wordle-battle" lobbyId="b1" room={3} />);
+    const name = await screen.findByText('Rojda');
+    expect(name.closest('li')).not.toHaveClass('is-awake');
   });
 
   it('takes back an invite still waiting, and asks again one that ran out', async () => {

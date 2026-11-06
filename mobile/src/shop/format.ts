@@ -98,9 +98,14 @@ export function canAfford(item: ShopItem, balances: Balances): boolean {
   return withinBalance(item, balances);
 }
 
-/** High-value Zêr purchases require a confirmation step. */
+/**
+ * Purchases that ask once more before the money moves: dear Zêr ones, and
+ * anything priced in gems, which are the scarcer currency. Every purchase is
+ * final, so the question repeats that (ShopScreen's confirmation).
+ */
 export function needsConfirmation(item: ShopItem): boolean {
-  return item.currency === 'zer' && item.price > CONFIRM_THRESHOLD_ZER;
+  if (item.price <= 0) return false;
+  return item.currency === 'gems' || item.price > CONFIRM_THRESHOLD_ZER;
 }
 
 /**

@@ -16,6 +16,12 @@ export interface NotifierOptions {
   maxPerUser?: number;
   /** how long a game's last version is remembered after its last waiter */
   forgetAfterMs?: number;
+  /**
+   * The bus rooms this notifier speaks in (never `user:`). Story games keep the
+   * default; the multiplayer learning games (api/src/mp) wait on their own
+   * lobbies' versions through a notifier of their own with another prefix.
+   */
+  roomPrefix?: string;
 }
 
 interface Waiter {
@@ -78,6 +84,7 @@ export class StoryGameNotifier {
   private readonly maxPerUserGame: number;
   private readonly maxPerUser: number;
   private readonly forgetAfterMs: number;
+  private readonly roomPrefix: string;
   private seq = 0;
   private closing = false;
 
@@ -90,6 +97,7 @@ export class StoryGameNotifier {
     this.maxPerUserGame = opts.maxPerUserGame ?? 2;
     this.maxPerUser = opts.maxPerUser ?? 4;
     this.forgetAfterMs = opts.forgetAfterMs ?? 60_000;
+    this.roomPrefix = opts.roomPrefix ?? STORY_GAME_ROOM_PREFIX;
     this.bus?.onEvent((roomId, event) => this.fromBus(roomId, event));
   }
 
@@ -182,7 +190,7 @@ export class StoryGameNotifier {
     }
     if (this.bus) {
       void this.bus
-        .publish(`${STORY_GAME_ROOM_PREFIX}${gameId}`, { type: STORY_GAME_CHANGED, version })
+        .publish(`${this.roomPrefix}${gameId}`, { type: STORY_GAME_CHANGED, version })
         .catch((err) => this.log.warn({ err, gameId }, 'story game change publish failed'));
     }
   }
@@ -198,10 +206,10 @@ export class StoryGameNotifier {
   }
 
   private fromBus(roomId: string, event: RoomEvent): void {
-    if (!roomId.startsWith(STORY_GAME_ROOM_PREFIX) || event.type !== STORY_GAME_CHANGED) return;
+    if (!roomId.startsWith(this.roomPrefix) || event.type !== STORY_GAME_CHANGED) return;
     const version = event.version;
     if (typeof version !== 'number' || !Number.isInteger(version)) return;
-    this.heard(roomId.slice(STORY_GAME_ROOM_PREFIX.length), version);
+    this.heard(roomId.slice(this.roomPrefix.length), version);
   }
 
   private heard(gameId: string, version: number): void {

@@ -9,7 +9,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { GIFTS_PER_DAY, GIFTS_PER_FRIEND_PER_DAY } from '@kurda/shared';
+import { GIFTS_PER_DAY, GIFTS_PER_FRIEND_PER_DAY, GIFTS_RECEIVED_PER_DAY } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { WalletService } from '../wallet/service.js';
@@ -852,6 +852,93 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
         { userId: friends[2]!.id, reason: 'daily_limit' },
         { userId: friends[3]!.id, reason: 'daily_limit' },
       ]);
+    });
+
+    it(`lets one person be given ${GIFTS_RECEIVED_PER_DAY} gifts in 24 hours, from everyone together`, async () => {
+      // a farm of fresh accounts, each well inside its own caps, feeding one main account
+      const main = await signUp('farmmain');
+      const farm: Account[] = [];
+      for (let i = 0; i < Math.ceil(GIFTS_RECEIVED_PER_DAY / GIFTS_PER_FRIEND_PER_DAY) + 1; i++) {
+        const f = await signUp(`farm${i}`);
+        await befriend(f, main);
+        await fund(f);
+        farm.push(f);
+      }
+      let given = 0;
+      for (const f of farm) {
+        for (let i = 0; i < GIFTS_PER_FRIEND_PER_DAY; i++) {
+          const res = await giftDm(f, main, POWER);
+          expect(res.statusCode).toBe(200);
+          given += res.json().sent.length;
+        }
+      }
+      expect(given).toBe(GIFTS_RECEIVED_PER_DAY);
+      expect((await owns(main, POWER))!.quantity).toBe(GIFTS_RECEIVED_PER_DAY);
+
+      // whoever tries next is told the day is full, and pays nothing
+      const late = farm.at(-1)!;
+      const before = await zer(late);
+      const over = await call('POST', '/shop/gift', late, { sku: POWER, toUserId: main.id, idempotencyKey: key() });
+      expect(over.statusCode).toBe(429);
+      expect(over.json().code).toBe('GIFT_DAILY_LIMIT');
+      expect(await zer(late)).toBe(before);
+    });
+
+    it('holds the count under concurrent senders: never more than the cap reaches one person', async () => {
+      const main = await signUp('rushmain');
+      const senders: Account[] = [];
+      for (let i = 0; i < GIFTS_RECEIVED_PER_DAY + 4; i++) {
+        const f = await signUp(`rush${i}`);
+        await befriend(f, main);
+        await fund(f);
+        senders.push(f);
+      }
+      const answers = await Promise.all(senders.map((f) => giftDm(f, main, POWER)));
+      expect(answers.every((a) => a.statusCode === 200)).toBe(true);
+      const sent = answers.reduce((n, a) => n + a.json().sent.length, 0);
+      expect(sent).toBe(GIFTS_RECEIVED_PER_DAY);
+      expect((await owns(main, POWER))!.quantity).toBe(GIFTS_RECEIVED_PER_DAY);
+      // only the senders whose gift went were charged
+      const charged = await pool.query<{ n: number }>(
+        `SELECT count(*)::int n FROM wallet_ledger WHERE user_id = ANY($1::uuid[]) AND reason = 'gift'`,
+        [senders.map((f) => f.id)],
+      );
+      expect(charged.rows[0]!.n).toBe(GIFTS_RECEIVED_PER_DAY);
+    });
+  });
+
+  describe('accounts paused from moving value', () => {
+    it('refuses a gift from an account on a payment-fraud hold, and from a confirmed bot, and charges nothing', async () => {
+      const held = await signUp('heldgiver');
+      const bot = await signUp('botgiver');
+      const friend = await signUp('heldfriend');
+      for (const a of [held, bot]) {
+        await befriend(a, friend);
+        await fund(a);
+      }
+      await pool.query(`INSERT INTO account_holds (user_id, reason) VALUES ($1, 'VELOCITY')`, [held.id]);
+      await pool.query(
+        `INSERT INTO bot_scores (user_id, score, tier, flagged, status) VALUES ($1, 0.99, 'flagged', true, 'confirmed')`,
+        [bot.id],
+      );
+      for (const a of [held, bot]) {
+        const before = await zer(a);
+        const res = await giftDm(a, friend, POWER);
+        expect(res.statusCode).toBe(403);
+        expect(res.json().code).toBe('GIFTS_PAUSED');
+        const shop = await call('POST', '/shop/gift', a, { sku: POWER, toUserId: friend.id, idempotencyKey: key() });
+        expect(shop.statusCode).toBe(403);
+        expect(await zer(a)).toBe(before);
+      }
+      expect(await owns(friend, POWER)).toBeNull();
+    });
+
+    it('refuses a gift to yourself', async () => {
+      const solo = await signUp('selfgift');
+      await fund(solo);
+      const res = await giftDm(solo, solo, POWER);
+      expect(res.statusCode).toBe(400);
+      expect(res.json().code).toBe('GIFT_TO_SELF');
     });
   });
 

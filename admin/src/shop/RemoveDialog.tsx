@@ -34,7 +34,8 @@ function whyKept(u: ItemUsage): string {
   if (u.owners > 0) return `${ownersText(u.owners)}, so it can’t be deleted.`;
   if (u.equipped > 0) return `${people(u.equipped)} ${u.equipped === 1 ? 'is' : 'are'} wearing it, so it can’t be deleted.`;
   if (u.gifts > 0) return `It was given as a gift ${u.gifts === 1 ? 'once' : `${u.gifts.toLocaleString()} times`}, and deleting it would take the gift out of those chats.`;
-  if (u.refunds > 0) return 'Refunds were recorded for it when its art was replaced, so it is kept with them.';
+  // history from the art refresh: who owned it then is kept with it (nothing is paid back; purchases are final)
+  if (u.refunds > 0) return 'Its owners were recorded when its art was replaced, so it is kept with that record.';
   return 'It is part of the art that ships with the app, so it is kept as a retired item rather than deleted — that way a re-seed of the catalogue can’t bring it back.';
 }
 

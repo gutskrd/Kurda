@@ -67,7 +67,7 @@ function Card({
   onLesson: (lessonId: string) => void;
   onReview: () => void;
   onTips: (skill: SkillNode) => void;
-}): React.JSX.Element {
+}): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
@@ -101,6 +101,9 @@ function Card({
       </>
     );
   }
+
+  // the guide opens the unit's notes, never this card
+  if (stop.kind === 'guide') return null;
 
   const { skill } = stop;
   const lessons = skill.lessons ?? [];

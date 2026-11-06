@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type Ref } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   Pressable,
@@ -23,6 +23,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
+import { UnitRailSheet } from '../coursemap/PathWorld';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
@@ -51,13 +52,18 @@ import { rememberCourseDialect } from './courseDialect';
  * quests slim under them (a chest waiting shows there), and then the
  * course as a lesson path — on the first screen, not under a stack of cards —
  * for anyone who wants to choose for themselves. The week's league and the
- * day's extras come after the path, under "More for today". Continuing a
+ * day's extras come after the path, under "More for today". A review left
+ * part-way through is offered under the card, to be picked up where it
+ * stopped (`ContinueReview`). Continuing a
  * lesson is one tap from here — from the card, or from the "Continue" over
  * the current skill on the path. How today is going sits in the bar above
  * (LearnBar), where it stays in sight while the path scrolls.
  *
  * The path is one course at a time, with a switch between courses when there
- * are several. When it first appears it scrolls to the current skill, and a
+ * are several. It is told which of its units are near the screen, which can
+ * be seen and which is in the middle of it, so it draws and moves only those;
+ * and a unit banner's map button opens the rail of every unit, a tap on one
+ * scrolling there. When it first appears it scrolls to the current skill, and a
  * button brings that back once it has been scrolled away. A course whose map
  * could not be loaded stays in the switch, saying so, with a way to try again.
  *
@@ -86,6 +92,8 @@ export function LessonsView({
   const reduceMotion = useReducedMotion();
   const tabBarInset = useTabBarInset();
   const [due, setDue] = useState<number | null>(null);
+  // a review left part-way through, to pick up where it stopped rather than start another beside it
+  const [openReview, setOpenReview] = useState<string | null>(null);
   // the review count places review on the path, so the path waits for it (or for its failure) once
   const [dueSettled, setDueSettled] = useState(false);
   const [courses, setCourses] = useState<CourseEntry[] | null>(null);
@@ -99,9 +107,12 @@ export function LessonsView({
     useCallback(() => {
       let active = true;
       setFailed(false);
-      void client.get<{ due: number }>('/practice/due').then((res) => {
+      void client.get<{ due: number; open?: string | null }>('/practice/due').then((res) => {
         if (!active) return;
-        if (res.ok) setDue(res.data.due);
+        if (res.ok) {
+          setDue(res.data.due);
+          setOpenReview(res.data.open ?? null);
+        }
         setDueSettled(true);
       });
       void (async () => {
@@ -241,6 +252,36 @@ export function LessonsView({
    * that comes up under it — and turns into the next unit as that banner goes
    * under (PinnedUnit), until the path ends.
    */
+  /*
+   * Which units are near the screen (drawn in full: one screen either way),
+   * which can be seen (their stops rise the first time), and which is in the
+   * middle (the one that moves). Each is a set that changes only when a unit
+   * comes or goes, so the path is drawn again then and not on every scroll.
+   */
+  const placed = pathTopOnPage !== null && units.length > 0 && viewport > 0;
+  const top = placed ? scrollY - pathTopOnPage : 0;
+  const within = (from: number, to: number): string =>
+    units
+      .filter((u) => u.top < to && u.bottom > from)
+      .map((u) => u.unitId)
+      .join(',');
+  const nearKey = placed ? within(top - viewport, top + 2 * viewport) : null;
+  const seenKey = placed ? within(top, top + viewport - tabBarInset) : null;
+  const middle = top + (viewport - tabBarInset) / 2;
+  const inView = placed ? (units.find((u) => u.top <= middle && u.bottom > middle)?.unitId ?? null) : undefined;
+  const nearUnits = useMemo(() => (nearKey === null ? undefined : new Set(nearKey.split(','))), [nearKey]);
+  const seenUnits = useMemo(() => (seenKey === null ? null : new Set(seenKey.split(','))), [seenKey]);
+  const [rail, setRail] = useState(false);
+  const openRail = useCallback(() => setRail(true), []);
+  const toUnit = (unitId: string): void => {
+    setRail(false);
+    const unit = units.find((u) => u.unitId === unitId);
+    if (unit && pathTopOnPage !== null) {
+      touched.current = true;
+      scroller.current?.scrollTo({ y: Math.max(0, pathTopOnPage + unit.top - spacing.sm), animated: !reduceMotion });
+    }
+  };
+
   const lastUnit = units[units.length - 1];
   const pinned =
     pathTopOnPage === null || !lastUnit || scrollY >= pathTopOnPage + lastUnit.bottom - PIN_CLEAR
@@ -275,6 +316,7 @@ export function LessonsView({
         <View style={styles.header}>
           <ReminderNudge hold={kept.pending} />
           {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
+          {openReview ? <ContinueReview onPress={() => navigation.navigate('Practice', { sessionId: openReview })} /> : null}
           <View style={styles.tools}>
             {/* practice's hub, with what review has due on its face */}
             <ToolTile
@@ -293,16 +335,9 @@ export function LessonsView({
               onPress={() => navigation.navigate('PracticeHub')}
             />
             <ToolTile icon="text" title={t('nav.dictionary')} detail={t('learn.tools.dictionaryHint')} onPress={() => navigation.navigate('Dictionary')} />
-            {/* the letters every course is written in, shown rather than drawn as an icon */}
+            {/* the letters and the first words after them, one way in (WordsScreen): the letters shown rather than drawn as an icon */}
             <ToolTile
               letters={locale === 'ckb' ? SORANI_TEASER : LATIN_TEASER}
-              title={t('nav.alphabet')}
-              detail={t('learn.tools.alphabetHint')}
-              onPress={() => navigation.navigate('Alphabet')}
-            />
-            {/* the words to know next to the letters: a few numbers, in the reader's own digits */}
-            <ToolTile
-              letters={locale === 'ckb' || locale === 'ar' ? EASTERN_TEASER : WESTERN_TEASER}
               title={t('words.title')}
               detail={t('words.toolHint')}
               onPress={() => navigation.navigate('Words')}
@@ -348,7 +383,18 @@ export function LessonsView({
             ) : null}
             {entry?.map && dueSettled ? (
               <View onLayout={(e: LayoutChangeEvent) => setPathInCourse(e.nativeEvent.layout.y)}>
-                <LessonPath key={entry.course.id} map={entry.map} due={due ?? 0} onFocus={onFocus} onUnits={setUnits} />
+                <LessonPath
+                  key={entry.course.id}
+                  map={entry.map}
+                  due={due ?? 0}
+                  onFocus={onFocus}
+                  onUnits={setUnits}
+                  near={nearUnits}
+                  seen={seenUnits}
+                  inView={inView}
+                  dialect={dialect}
+                  onOpenRail={openRail}
+                />
               </View>
             ) : entry?.map ? (
               // the path waits for the review count, which places review on it
@@ -381,7 +427,7 @@ export function LessonsView({
       {pinned ? (
         // on the page's own colour, so nothing scrolling under it shows round its edges
         <View style={[styles.pinned, { backgroundColor: colors.background }]} pointerEvents="box-none">
-          <PinnedUnit unit={pinned} />
+          <PinnedUnit unit={pinned} onRail={openRail} />
         </View>
       ) : null}
 
@@ -398,6 +444,13 @@ export function LessonsView({
           </Pressable>
         </View>
       ) : null}
+
+      <UnitRailSheet
+        open={rail}
+        units={units.map((u) => ({ unitId: u.unitId, number: u.number, title: u.title, tone: u.tone, done: u.done, total: u.total, here: u.here }))}
+        onClose={() => setRail(false)}
+        onPick={toUnit}
+      />
 
       <KeptStreakSheet
         streak={kept.shown}
@@ -470,6 +523,28 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
 }
 
 /**
+ * A review left part-way through (GET /practice/due's `open`), offered as the
+ * website's Learn page offers it: Continue opens that session where it
+ * stopped, with the answers given so far, instead of a new review that would
+ * leave the first unfinished. Its button is the quieter outline: the card
+ * above already has the screen's one solid button.
+ */
+function ContinueReview({ onPress }: { onPress: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  return (
+    <View style={[styles.reviewOpen, { backgroundColor: colors.surface }]} testID="learn-review-open">
+      <View style={[styles.reviewOpenRow, { flexDirection: dir.row }]}>
+        <Icon name="review" size={24} color={colors.textPrimary} />
+        <Text style={[styles.reviewOpenText, dir.text, { color: colors.textPrimary }]}>{t('practice.open.body')}</Text>
+      </View>
+      <ClayButton label={t('practice.open.continue')} tone="primary" variant="outline" onPress={onPress} />
+    </View>
+  );
+}
+
+/**
  * The card while the course loads, line for line: where, the lesson's name,
  * the bar, how far, the button — each at the card's own sizes, so the card
  * that arrives is the one that was already there.
@@ -513,8 +588,6 @@ const LARGE_BUTTON = 50;
 /** A few letters of each alphabet, in place of an icon: the alphabet's tile shows what it holds. */
 const LATIN_TEASER = { text: 'Aa Çç Êê', rtl: false } as const;
 const SORANI_TEASER = { text: 'ئ ب پ چ', rtl: true } as const;
-const WESTERN_TEASER = { text: '1 2 3', rtl: false } as const;
-const EASTERN_TEASER = { text: '١ ٢ ٣', rtl: true } as const;
 
 function ToolTile({
   icon,
@@ -583,6 +656,10 @@ const styles = StyleSheet.create({
   bar: { height: 6, borderRadius: radii.pill, overflow: 'hidden', alignSelf: 'stretch' },
   barFill: { height: 6, borderRadius: radii.pill },
   barFillEnd: { alignSelf: 'flex-end' },
+
+  reviewOpen: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
+  reviewOpenRow: { alignItems: 'center', gap: spacing.sm + 4 },
+  reviewOpenText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
 
   // the four two by two: the path is what this screen is for, and the tools sit above it, small
   tools: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },

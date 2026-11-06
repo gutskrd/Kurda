@@ -1,0 +1,43 @@
+/*
+ * The buy confirmation (web/src/shop/BuyConfirm.tsx): the item, its price in
+ * the gold of Zêr, and the plain note that a purchase is final.
+ */
+.buy-confirm-title {
+  /* clear of the modal's ×, which sits top right in either direction */
+  margin: 0 40px 10px 0;
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--ink);
+}
+.buy-confirm-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  color: var(--gold-ink);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.buy-confirm-note {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.93rem;
+  line-height: 1.5;
+}
+.buy-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+@media (max-width: 480px) {
+  .buy-confirm-actions {
+    width: 100%;
+  }
+  .buy-confirm-actions > * {
+    flex: 1 1 auto;
+  }
+}

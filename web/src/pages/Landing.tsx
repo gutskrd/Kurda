@@ -6,22 +6,21 @@ import { warmApi } from '../lib/warmup';
 import { usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import {
-  BattleMock,
   FriendsBoardMock,
   InviteMock,
   Ku,
   LeagueChipMock,
-  LessonMock,
   PostMock,
   ProgressMock,
   RaceMini,
   RhymeMini,
-  SpeakVisual,
   StoriesMini,
   WordCardMock,
   WordleMini,
 } from '../landing/mocks';
-import { HEVAL, HOW_ARE_YOU, KURDISH_LETTERS } from '../landing/samples';
+import { Phone3D, PhoneShowcase, type PhoneScreen } from '../landing/Phone3D';
+import { BattleScreen, LessonScreen, PathScreen, StoriesScreen } from '../landing/screens';
+import { HEVAL, HOW_ARE_YOU } from '../landing/samples';
 import { HOME_FAQ } from '../landing/faq';
 import { FaqList } from '../components/FaqList';
 import { useStoriesAvailable } from '../stories/catalogue';
@@ -29,23 +28,28 @@ import { useStoriesAvailable } from '../stories/catalogue';
 /*
  * The front door.
  *
- * It used to be a headline, six identical cards and a call to action — a page
- * that could have belonged to any product, and that never once showed this one.
- * It is now built around a single idea, "Learn Kurdish. Play together.", and
- * every section is there to make one part of that idea visible: a game against
- * a friend, the lesson behind it, the voice in it, the progress after it, and
- * the people it is for.
+ * It is built around one idea, "Learn Kurdish. Play together.", and read by
+ * someone deciding in a minute whether this is for them. So it goes in the
+ * order that person's questions come in: what is it (the hero, with the app
+ * itself on the phone), is it for me (the section for those who grew up
+ * hearing Kurdish, straight after), what do I do with friends, what are the
+ * games, what is a lesson like, why it works, what keeps me coming back, who
+ * else is here, and the plain answers to what is left.
  *
- * Two rules hold it together.
+ * Three rules hold it together.
  *
  * Show, don't list. Every section that can show the product does, with the
- * pictures in `landing/mocks.tsx` — drawn in the app's own words and colours.
+ * pictures in `landing/mocks.tsx`, drawn in the app's own words and colours.
  *
- * Never promise what is not there. Games, friends, leagues, Zêr, the
- * dictionary and the community work in the browser today; lessons live in the
- * phone app, which is not in the stores yet, and the page says so wherever
- * lessons come up. Nothing here counts users, quotes reviews or claims a
- * credential — there is nothing true of that kind to say yet.
+ * Say it the way a person would. No labels over the headings, no slogans
+ * that turn on "not this but that", no rows of three; each heading says one
+ * concrete thing and the sentence under it backs it up.
+ *
+ * Never promise what is not there. Lessons, games, friends, leagues, Zêr,
+ * the dictionary and the community work in the browser today; the phone apps
+ * are not in the stores yet, and the page says so. Nothing here counts users,
+ * quotes reviews or claims a credential: there is nothing true of that kind
+ * to say yet.
  */
 
 /**
@@ -85,7 +89,7 @@ function useReveal(): React.RefObject<HTMLDivElement | null> {
   return ref;
 }
 
-/** A section's opening: what it is about, the claim, and a sentence of support. */
+/** A section's opening: the claim, a sentence of support, and a question over it where one helps the reader find themselves. */
 function SectionHead({
   id,
   kicker,
@@ -95,7 +99,7 @@ function SectionHead({
   children,
 }: {
   id: string;
-  kicker: MessageKey;
+  kicker?: MessageKey;
   title: MessageKey;
   lead?: MessageKey;
   center?: boolean;
@@ -104,7 +108,7 @@ function SectionHead({
   const t = useT();
   return (
     <header className={`lp-head lp-reveal${center ? ' lp-head--center' : ''}`}>
-      <p className="lp-kicker">{t(kicker)}</p>
+      {kicker && <p className="lp-kicker">{t(kicker)}</p>}
       {children}
       <h2 id={id} className="lp-h2">
         {t(title)}
@@ -165,7 +169,7 @@ const GAMES: ReadonlyArray<{
     id: 'stories',
     name: 'games.stories.name',
     body: 'landing.play.stories',
-    href: '/app/games/stories',
+    href: '/app/learn/stories',
     tags: ['landing.play.tag.read', 'landing.play.tag.solo', 'landing.play.tag.friend'],
     visual: <StoriesMini />,
   },
@@ -199,16 +203,10 @@ function useNearScreen(ref: React.RefObject<HTMLElement | null>): boolean {
 
 const LEARN_POINTS: MessageKey[] = [
   'landing.learn.point1',
+  'landing.learn.hear',
   'landing.learn.point2',
   'landing.learn.point3',
   'landing.learn.point4',
-];
-
-const SPEAK: ReadonlyArray<{ step: 'see' | 'hear' | 'say' | 'use'; title: MessageKey; body: MessageKey }> = [
-  { step: 'see', title: 'landing.speak.see', body: 'landing.speak.seeBody' },
-  { step: 'hear', title: 'landing.speak.hear', body: 'landing.speak.hearBody' },
-  { step: 'say', title: 'landing.speak.say', body: 'landing.speak.sayBody' },
-  { step: 'use', title: 'landing.speak.use', body: 'landing.speak.useBody' },
 ];
 
 /**
@@ -232,19 +230,18 @@ const LOOP: ReadonlyArray<{ title: MessageKey; body: MessageKey }> = [
   { title: 'landing.progress.play', body: 'landing.progress.playBody' },
 ];
 
-const KURDISH_FIRST: ReadonlyArray<{ title: MessageKey; body: MessageKey }> = [
-  { title: 'landing.kurdish.kurmanji', body: 'landing.kurdish.kurmanjiBody' },
-  { title: 'landing.kurdish.words', body: 'landing.kurdish.wordsBody' },
-  { title: 'landing.kurdish.interface', body: 'landing.kurdish.interfaceBody' },
-  { title: 'landing.kurdish.varieties', body: 'landing.kurdish.varietiesBody' },
-];
-
 export function Landing(): React.JSX.Element {
   const t = useT();
   usePageMeta(t('meta.home.title'), t('app.description'));
   const revealRoot = useReveal();
   const gamesRef = useRef<HTMLElement>(null);
   const stories = useStoriesAvailable(useNearScreen(gamesRef));
+  // the phone in the hero shows the app in turn: the path you learn on, a game with a friend, the stories
+  const heroScreens: PhoneScreen[] = [
+    { id: 'path', label: t('learn.view.lessons'), screen: <PathScreen /> },
+    { id: 'battle', label: t('games.battle.name'), screen: <BattleScreen /> },
+    { id: 'stories', label: t('learn.view.stories'), screen: <StoriesScreen /> },
+  ];
   // warm the API early so sign-in later doesn't pay the cold-start penalty
   useEffect(() => {
     warmApi();
@@ -256,7 +253,6 @@ export function Landing(): React.JSX.Element {
       <section className="lp-hero" aria-labelledby="lp-hero-title">
         <div className="container lp-hero-grid">
           <div className="lp-hero-copy">
-            <p className="lp-kicker lp-kicker--pill">{t('landing.hero.kicker')}</p>
             {/*
               Two sentences, so two keys — each one translates on its own and
               keeps its own word order. The second is set softer, which is a
@@ -280,8 +276,23 @@ export function Landing(): React.JSX.Element {
 
           <div className="lp-hero-visual">
             <div className="lp-glow" aria-hidden />
-            <BattleMock />
+            <PhoneShowcase screens={heroScreens} label={t('landing.screens.label')} />
             <LeagueChipMock />
+          </div>
+        </div>
+      </section>
+
+      {/* ---- is it for me: those who grew up hearing it ------------------- */}
+      <section className="lp-section lp-heritage" aria-labelledby="lp-heritage">
+        <div className="container container-narrow">
+          <figure className="lp-phrase lp-reveal" aria-hidden>
+            <Ku className="lp-phrase-ku">{HOW_ARE_YOU}</Ku>
+            <figcaption>{t('landing.gloss.howAreYou')}</figcaption>
+          </figure>
+          <SectionHead id="lp-heritage" kicker="landing.heritage.kicker" title="landing.heritage.title" center />
+          <div className="lp-prose lp-reveal">
+            <p>{t('landing.heritage.body1')}</p>
+            <p>{t('landing.heritage.body2')}</p>
           </div>
         </div>
       </section>
@@ -289,12 +300,7 @@ export function Landing(): React.JSX.Element {
       {/* ---- together: the social loop ------------------------------------ */}
       <section className="lp-section" aria-labelledby="lp-together">
         <div className="container">
-          <SectionHead
-            id="lp-together"
-            kicker="landing.together.kicker"
-            title="landing.together.title"
-            lead="landing.together.lead"
-          />
+          <SectionHead id="lp-together" title="landing.together.title" lead="landing.together.lead" />
           <ol className="lp-steps">
             {TOGETHER.map((s, i) => (
               <li className="lp-step lp-reveal" key={s.title}>
@@ -313,7 +319,7 @@ export function Landing(): React.JSX.Element {
       {/* ---- play ----------------------------------------------------------- */}
       <section id="games" className="lp-section" aria-labelledby="lp-play" ref={gamesRef}>
         <div className="container">
-          <SectionHead id="lp-play" kicker="landing.play.kicker" title="landing.play.title" lead="landing.play.lead" />
+          <SectionHead id="lp-play" title="landing.play.title" lead="landing.play.lead" />
           <div className="game-grid">
             {GAMES.map((g) => (
               <article className={`game-tile game-tile--${g.id} lp-reveal`} key={g.id}>
@@ -350,10 +356,12 @@ export function Landing(): React.JSX.Element {
       <section id="learn" className="lp-section lp-section--split" aria-labelledby="lp-learn">
         <div className="container lp-split">
           <div className="lp-split-visual lp-reveal">
-            <LessonMock />
+            <Phone3D pose="right">
+              <LessonScreen />
+            </Phone3D>
           </div>
           <div className="lp-split-copy">
-            <SectionHead id="lp-learn" kicker="landing.learn.kicker" title="landing.learn.title" lead="landing.learn.lead">
+            <SectionHead id="lp-learn" title="landing.learn.title" lead="landing.learn.lead">
               <p className="lp-status">{t('landing.status.app')}</p>
             </SectionHead>
             <ul className="lp-points">
@@ -369,27 +377,10 @@ export function Landing(): React.JSX.Element {
         </div>
       </section>
 
-      {/* ---- speak ---------------------------------------------------------- */}
-      <section className="lp-section" aria-labelledby="lp-speak">
-        <div className="container">
-          <SectionHead id="lp-speak" kicker="landing.speak.kicker" title="landing.speak.title" lead="landing.speak.lead" />
-          <ol className="lp-speak">
-            {SPEAK.map((s) => (
-              <li className="lp-speak-step lp-reveal" key={s.step}>
-                <SpeakVisual step={s.step} />
-                <h3 className="lp-h3">{t(s.title)}</h3>
-                <p className="lp-body">{t(s.body)}</p>
-              </li>
-            ))}
-          </ol>
-          <p className="lp-footnote">{t('landing.speak.note')}</p>
-        </div>
-      </section>
-
       {/* ---- how it teaches ------------------------------------------------- */}
       <section id="how-it-teaches" className="lp-section" aria-labelledby="lp-science">
         <div className="container">
-          <SectionHead id="lp-science" kicker="teach.kicker" title="landing.science.title" lead="landing.science.lead" />
+          <SectionHead id="lp-science" title="landing.science.title" lead="landing.science.lead" />
           <div className="lp-columns">
             {SCIENCE.map((p) => (
               <div className="lp-column lp-principle lp-reveal" key={p.id}>
@@ -415,12 +406,7 @@ export function Landing(): React.JSX.Element {
       <section className="lp-section lp-section--split" aria-labelledby="lp-progress">
         <div className="container lp-split lp-split--reverse">
           <div className="lp-split-copy">
-            <SectionHead
-              id="lp-progress"
-              kicker="landing.progress.kicker"
-              title="landing.progress.title"
-              lead="landing.progress.lead"
-            />
+            <SectionHead id="lp-progress" title="landing.progress.title" lead="landing.progress.lead" />
             <ol className="lp-loop">
               {LOOP.map((s) => (
                 <li key={s.title}>
@@ -443,12 +429,7 @@ export function Landing(): React.JSX.Element {
             <PostMock />
           </div>
           <div className="lp-split-copy">
-            <SectionHead
-              id="lp-community"
-              kicker="landing.community.kicker"
-              title="landing.community.title"
-              lead="landing.community.lead"
-            />
+            <SectionHead id="lp-community" title="landing.community.title" lead="landing.community.lead" />
             <div className="lp-actions">
               <LinkButton to="/app" variant="secondary">
                 {t('landing.community.cta')}
@@ -458,46 +439,11 @@ export function Landing(): React.JSX.Element {
         </div>
       </section>
 
-      {/* ---- heritage ------------------------------------------------------- */}
-      <section className="lp-section lp-heritage" aria-labelledby="lp-heritage">
-        <div className="container container-narrow">
-          <figure className="lp-phrase lp-reveal" aria-hidden>
-            <Ku className="lp-phrase-ku">{HOW_ARE_YOU}</Ku>
-            <figcaption>{t('landing.gloss.howAreYou')}</figcaption>
-          </figure>
-          <SectionHead id="lp-heritage" kicker="landing.heritage.kicker" title="landing.heritage.title" center />
-          <div className="lp-prose lp-reveal">
-            <p>{t('landing.heritage.body1')}</p>
-            <p>{t('landing.heritage.body2')}</p>
-          </div>
-        </div>
-      </section>
-
-      {/* ---- kurdish first -------------------------------------------------- */}
-      <section className="lp-section" aria-labelledby="lp-kurdish">
-        <div className="container">
-          <div className="lp-letters lp-reveal" aria-hidden lang="ku">
-            {KURDISH_LETTERS.map((l) => (
-              <span key={l}>{l}</span>
-            ))}
-          </div>
-          <SectionHead id="lp-kurdish" kicker="landing.kurdish.kicker" title="landing.kurdish.title" />
-          <div className="lp-columns">
-            {KURDISH_FIRST.map((c) => (
-              <div className="lp-column lp-reveal" key={c.title}>
-                <h3 className="lp-h3">{t(c.title)}</h3>
-                <p className="lp-body">{t(c.body)}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ---- questions ------------------------------------------------------ */}
       <section id="faq" className="lp-section" aria-labelledby="lp-faq">
         <div className="container lp-faq-grid">
           <div>
-            <SectionHead id="lp-faq" kicker="faq.kicker" title="faq.title" lead="faq.lead" />
+            <SectionHead id="lp-faq" title="faq.title" lead="faq.lead" />
             <Link to="/faq" className="doc-link lp-faq-all">
               {t('faq.all')}
             </Link>

@@ -6,7 +6,7 @@ import { SpeakerPicker, bustUrl, speakerName, useSpeakerChange } from '../ui/Spe
 import { SpeakingPreview } from '../ui/SpeakingPreview';
 import type { Speaker } from '../voice';
 import { dictionaryPage, type DictionaryFilter } from '../voiceBatch';
-import { usePlayer, type Player } from './LessonAudio';
+import { usePlayer, type Player } from './SentenceStudio';
 
 type Show = 'all' | 'noSpeaker' | 'noTimeline';
 

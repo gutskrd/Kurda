@@ -3,6 +3,10 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollVie
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { HevaloWindow } from '../../characters/HevaloWindow';
+import { useReducedMotion } from '../../a11y/useReducedMotion';
+import { SpeechBubble } from '../../auth/guide/HevaloGuide';
+import { useScreenFocus } from '../../auth/guide/focus';
+import { useSpokenLine } from '../../auth/guide/speech';
 import { useListEntrance } from '../../theme/animate';
 import { GlassCard, GradientBackground } from '../../theme/glass';
 import { BreathingIcon, Icon, type IconName } from '../../theme/Icon';
@@ -30,6 +34,7 @@ export function AuthScreenShell({
   children,
   onBack,
   hero,
+  says,
 }: {
   title: string;
   /** the line under the title — the browser's auth-head has always had one */
@@ -38,10 +43,16 @@ export function AuthScreenShell({
   onBack?: () => void;
   /** what stands over the title: a breathing glyph, or Hevalo himself at a village window (the sign-in choice) */
   hero?: IconName | 'hevalo';
+  /** what Hevalo says from the window, in a bubble under it, his mouth moving with the words */
+  says?: string;
 }) {
   const { colors } = useTheme();
   // the head rises in a row at a time, as a list's rows do; a screen's own buttons may follow on (AUTH_HEAD_ROWS)
   const entering = useListEntrance(true);
+  // his greeting is said once the window is there, while the screen is in front, and never under Reduce Motion
+  const reduce = useReducedMotion();
+  const focused = useScreenFocus();
+  const speech = useSpokenLine(hero === 'hevalo' && says ? says : null, !reduce && focused);
   /**
    * A hero makes the head a centred composition.
    *
@@ -106,7 +117,9 @@ export function AuthScreenShell({
               is who should greet somebody choosing how to come in.
             */
             <Rise delay={entering(1)} style={styles.hero}>
-              <HevaloWindow size={WINDOW_HEIGHT} />
+              <HevaloWindow size={WINDOW_HEIGHT} speech={speech} text={says ?? null} />
+              {/* and says hello, in a bubble under the sill: the words are his, the window stays decorative */}
+              {says ? <SpeechBubble text={says} tail="top" tone="inset" style={styles.heroBubble} /> : null}
             </Rise>
           ) : hero ? (
             <Rise delay={entering(1)} style={styles.hero}>
@@ -279,6 +292,7 @@ const styles = StyleSheet.create({
   brand: { ...display(typography.sizes.xxl), textAlign: 'center' },
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
   hero: { alignSelf: 'center', alignItems: 'center', marginBottom: spacing.md },
+  heroBubble: { marginTop: spacing.md, maxWidth: 260 },
   title: { ...display(typography.sizes.lg) },
   centred: { textAlign: 'center' },
   titleAlone: { marginBottom: spacing.md },

@@ -1,0 +1,350 @@
+/*
+ * Who Am I?'s staging (whoami/WhoAmIStage.tsx): Hevalo's silhouette in the
+ * game's meadow tone with the hidden word's card on his forehead, a deck of
+ * Kurdish questions whose answers are stamped on them, and the tiles to guess
+ * from. Flat planes; the card turns over and a stamp lands, and under Reduce
+ * Motion both simply appear.
+ */
+.wa-page {
+  --wa-ink: var(--u-text);
+  --wa-shadow: var(--u-lip);
+  --wa-paper: #fbf6e9;
+  --wa-paper-ink: #2a2a33;
+  --wa-yes: #2e7a52;
+  --wa-no: #a9532f;
+}
+
+.wa-start {
+  display: grid;
+  gap: var(--space-4, 16px);
+}
+.wa-start-stage {
+  max-width: 220px;
+  justify-self: center;
+}
+.wa-way {
+  display: grid;
+  gap: var(--space-2, 8px);
+  padding: var(--space-4, 16px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+}
+.wa-way .btn {
+  justify-self: start;
+}
+.wa-way-title,
+.wa-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.wa-lobby-note {
+  margin: 0;
+}
+.wa-not-offered {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3, 12px);
+  text-align: center;
+}
+
+.wa-board {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4, 16px);
+  min-width: 0;
+}
+@media (min-width: 900px) {
+  .wa-board {
+    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
+    align-items: start;
+  }
+  .wa-board > .wa-stage,
+  .wa-board > .wa-worth,
+  .wa-board > .wa-race-head {
+    grid-column: 1;
+  }
+  .wa-board > .wa-deck,
+  .wa-board > .wa-guess,
+  .wa-board > .wa-others,
+  .wa-board > .field-error {
+    grid-column: 2;
+  }
+  .wa-board > .wa-deck {
+    grid-row: span 3;
+  }
+}
+
+/* the silhouette and the card on its forehead */
+.wa-stage {
+  position: relative;
+  margin: 0 auto;
+  width: min(100%, 260px);
+  aspect-ratio: 1;
+  color: var(--wa-shadow);
+}
+.wa-silhouette svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.wa-card {
+  position: absolute;
+  transform: translate(-50%, -50%) rotate(-2deg);
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  min-height: 56px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--wa-paper);
+  color: var(--wa-paper-ink);
+  text-align: center;
+  box-shadow: 0 0 0 3px var(--u-fill);
+}
+/* the picture is the same either way round: the card is placed from its left in either direction */
+.wa-card.is-turned {
+  animation: wa-turn 520ms var(--ease-emphasis) both;
+}
+.wa-card-mark {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}
+.wa-card-kind {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: #5b5b66;
+}
+.wa-card-word {
+  font-size: 20px;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.wa-card-meaning {
+  font-size: var(--text-caption);
+  color: #5b5b66;
+}
+.wa-worth {
+  margin: 0;
+  text-align: center;
+  font-weight: 700;
+  color: var(--wa-ink);
+}
+.wa-total {
+  font-size: var(--text-section);
+  font-weight: 800;
+  color: var(--wa-ink);
+}
+
+/* the deck of questions */
+.wa-deck,
+.wa-guess,
+.wa-others {
+  display: grid;
+  gap: var(--space-2, 8px);
+  min-width: 0;
+}
+.wa-hint {
+  margin: 0;
+}
+.wa-questions {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wa-q {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-solid);
+}
+.wa-q.is-asked {
+  background: color-mix(in srgb, var(--u-fill) 14%, var(--surface-solid));
+}
+.wa-q-text {
+  flex: 1;
+  display: grid;
+  gap: 2px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: var(--r-sm, 8px);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: start;
+  cursor: pointer;
+}
+.wa-q-text:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.wa-q-meaning {
+  font-size: var(--text-caption);
+  font-weight: 500;
+  color: var(--ink-3, var(--ink));
+}
+.wa-stamp {
+  flex: none;
+  min-width: 64px;
+  padding: 4px 10px;
+  border: 3px solid currentColor;
+  border-radius: 8px;
+  font-weight: 900;
+  font-size: 17px;
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(-8deg);
+  animation: wa-stamp 360ms var(--ease-emphasis) both;
+}
+.wa-stamp.is-yes {
+  color: var(--wa-yes);
+}
+.wa-stamp.is-no {
+  color: var(--wa-no);
+}
+
+/* the tiles */
+.wa-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr));
+  gap: 8px;
+}
+.wa-tile {
+  display: grid;
+  gap: 2px;
+  min-height: 56px;
+  padding: 8px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-solid);
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.wa-tile:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.wa-tile.is-picked {
+  border-color: var(--u-fill);
+  box-shadow: inset 0 0 0 2px var(--u-fill);
+}
+.wa-tile.is-crossed {
+  opacity: 0.5;
+  text-decoration: line-through;
+  cursor: default;
+}
+.wa-tile.is-right {
+  border-color: var(--wa-yes);
+  box-shadow: inset 0 0 0 2px var(--wa-yes);
+}
+.wa-tile-word {
+  font-size: 18px;
+  font-weight: 700;
+}
+.wa-tile-meaning {
+  font-size: var(--text-caption);
+  color: var(--ink-3, var(--ink));
+}
+.wa-guess > .btn {
+  justify-self: start;
+}
+
+/* the race */
+.wa-race-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  align-items: center;
+}
+.wa-clock {
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  border: 1px solid var(--border);
+  font-weight: 700;
+}
+.wa-first {
+  font-weight: 800;
+  color: var(--wa-ink);
+}
+.wa-others ul,
+.wa-reveal ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wa-others li,
+.wa-reveal li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-solid);
+}
+.wa-others li.is-out {
+  opacity: 0.6;
+}
+.wa-other-name,
+.wa-reveal-name {
+  font-weight: 700;
+}
+.wa-reveal-word {
+  font-weight: 800;
+  font-size: 18px;
+}
+.wa-chip {
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  background: var(--wa-yes);
+  color: #fff;
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+.wa-chip.is-out {
+  background: var(--wa-no);
+}
+
+@keyframes wa-turn {
+  from {
+    opacity: 0.3;
+    transform: translate(-50%, -50%) perspective(600px) rotateY(90deg);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(-2deg);
+  }
+}
+@keyframes wa-stamp {
+  0% {
+    opacity: 0;
+    transform: rotate(-8deg) scale(1.6);
+  }
+  100% {
+    opacity: 1;
+    transform: rotate(-8deg) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .wa-card.is-turned,
+  .wa-stamp {
+    animation: none;
+  }
+}

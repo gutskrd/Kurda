@@ -1,0 +1,3999 @@
+{
+  "course": {
+    "slug": "kurmanji-road",
+    "dialect": "kurmanji",
+    "titleKu": "Rêya Kurmancî",
+    "titleEn": "The Kurmanji Road"
+  },
+  "units": [
+    {
+      "position": 3,
+      "titleKu": "Mal û gund",
+      "titleEn": "House and village",
+      "skills": [
+        {
+          "position": 1,
+          "titleKu": "Ev mala me ye",
+          "titleEn": "This is our house",
+          "grammarMd": "**ev** means *this, these* and **ew** *that, those* — when they are the subject:\n\n- *Ev ode ye.* This is a room. · *Ew derî şîn e.* That door is blue.\n\nAfter a preposition (li, ji, di … de, bi) they change, and so does the noun:\n\n- masculine: **vî / wî** + **-î**: *li vî gundî* in this village · *ji wî gundî* from that village\n- feminine: **vê / wê** + **-ê**: *li vê odeyê* in this room · *ji wê malê* from that house\n- plural: **van / wan** + **-an**: *li van gundan* in these villages\n\nThis changed form is the **oblique**. You already know it from *ji Amedê* and *li malê*.",
+          "lessons": [
+            {
+              "key": "u03s1l1",
+              "position": 1,
+              "titleKu": "Ode û derî",
+              "titleEn": "Rooms and doors",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev ode ye.",
+                    "prompt": "Hamo opens the first door with a deep bow, as if you were a visiting governor. What does he say? “Ev ode ye.”",
+                    "options": [
+                      "This is a room.",
+                      "This is a door.",
+                      "That is a window."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ew jî derî ye.",
+                    "prompt": "Hamo points grandly across the hall. Listen: what is over there? “Ew jî derî ye.”",
+                    "options": [
+                      "And that is a wall.",
+                      "And that is a door.",
+                      "And that is a room."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "ode",
+                        "right": "room"
+                      },
+                      {
+                        "left": "derî",
+                        "right": "door"
+                      },
+                      {
+                        "left": "pencere",
+                        "right": "window"
+                      },
+                      {
+                        "left": "dîwar",
+                        "right": "wall"
+                      },
+                      {
+                        "left": "ban",
+                        "right": "roof"
+                      },
+                      {
+                        "left": "xanî",
+                        "right": "house, building"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xanî mezin e.",
+                    "prompt": "Hamo spreads his arms wide in the hall. What is he so proud of? “Xanî mezin e.”",
+                    "options": [
+                      "The house is big.",
+                      "The house is old.",
+                      "The house is small."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo taps the wall with his knuckles. Which sentence says “This is a wall.”?",
+                    "options": [
+                      "Ev dîwar ye.",
+                      "Ev dîwar e.",
+                      "Ev dîwar im."
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Your turn to be the guide. Say: “This is a wall.”",
+                    "accepted": [
+                      "Ev dîwar e.",
+                      "Ev dîwar e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo throws open the shutters and the sun pours in. Type what you hear.",
+                    "accepted": [
+                      "Ev pencere ye.",
+                      "Ev pencere ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Pencere mezin e.",
+                    "prompt": "Hevalo pokes his nose out of the window. What does Hamo say about it? “Pencere mezin e.”",
+                    "accepted": [
+                      "The window is big",
+                      "The window is large"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ban kevn e, lê xweş e.",
+                    "prompt": "Hamo looks up at the roof beams and smiles. What does he say? “Ban kevn e, lê xweş e.”",
+                    "options": [
+                      "The roof is new and nice.",
+                      "The wall is old, but nice.",
+                      "The roof is old, but nice."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Xezal what Hamo just said about the roof: “The roof is old.”",
+                    "accepted": [
+                      "Ban kevn e.",
+                      "Ban kevn e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev xaniyê me ye.",
+                    "prompt": "Back at the blue gate, Hamo sums up the tour. What does he say? “Ev xaniyê me ye.”",
+                    "options": [
+                      "This is your house.",
+                      "This is our house.",
+                      "That is their house."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “This is our house.”",
+                    "accepted": [
+                      "Ev xaniyê me ye.",
+                      "Ev xaniyê me ye",
+                      "Ev mala me ye.",
+                      "Ev mala me ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo is very proud of his new door. Type what you hear.",
+                    "accepted": [
+                      "Derî nû ye, lê pencere kevn e.",
+                      "Derî nû ye, lê pencere kevn e",
+                      "Derî nû ye lê pencere kevn e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Now give the tour with Hamo’s ceremony: “This is a room. And that is a door.”",
+                    "reference": "Ev ode ye. Ew jî derî ye.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo points at the window right beside him and asks “Ev çi ye?”. What do you answer?",
+                    "options": [
+                      "Ev derî ye.",
+                      "Ez pencere me.",
+                      "Ev pencere ye."
+                    ],
+                    "correctIndex": 2
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s1l2",
+              "position": 2,
+              "titleKu": "Li vê odeyê",
+              "titleEn": "In this room",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li vê odeyê mirîşkek heye!",
+                    "prompt": "Hamo opens the next door and jumps back. What has he found? “Li vê odeyê mirîşkek heye!”",
+                    "options": [
+                      "There is a hen in that house!",
+                      "There is a hen in this room!",
+                      "There is no hen in this room!"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "metbex",
+                        "right": "kitchen"
+                      },
+                      {
+                        "left": "serşok",
+                        "right": "bathroom"
+                      },
+                      {
+                        "left": "mase",
+                        "right": "table"
+                      },
+                      {
+                        "left": "kursî",
+                        "right": "chair"
+                      },
+                      {
+                        "left": "li vê odeyê",
+                        "right": "in this room"
+                      },
+                      {
+                        "left": "ji wê malê",
+                        "right": "from that house"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "“In this kitchen” — which one is right? (metbex is feminine)",
+                    "options": [
+                      "li vê metbexê",
+                      "li vî metbexî",
+                      "li ev metbex"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Pêlava Hamo li serşokê ye.",
+                    "prompt": "Hevalo trots out of the bathroom with something in his mouth. Listen: what was in there? “Pêlava Hamo li serşokê ye.”",
+                    "options": [
+                      "Hamo’s hat is in the bathroom.",
+                      "Hamo’s shoe is in the bathroom.",
+                      "Hamo’s shoe is in the kitchen."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hamo can’t find a chair. Tell him: “The chair is in this room.”",
+                    "accepted": [
+                      "Kursî li vê odeyê ye.",
+                      "Kursî li vê odeyê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "“In that village” — which one is right? (gund is masculine)",
+                    "options": [
+                      "li wî gundî",
+                      "li wê gundê",
+                      "li wan gundî"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo waves at the view from the window. Type what you hear.",
+                    "accepted": [
+                      "Li vî gundî gelek mal hene.",
+                      "Li vî gundî gelek mal hene"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo is chasing the hen. Write the whole sentence with the missing word: “Mirîşk li … metbexê ye.” (The hen is in this kitchen.)",
+                    "accepted": [
+                      "Mirîşk li vê metbexê ye.",
+                      "Mirîşk li vê metbexê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev mase kevn e, lê xweşik e.",
+                    "prompt": "Hamo strokes the kitchen table. What does he say? “Ev mase kevn e, lê xweşik e.”",
+                    "options": [
+                      "This table is old, but beautiful.",
+                      "This chair is old, but beautiful.",
+                      "That table is new and beautiful."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “There is a table and two chairs in this room.”",
+                    "accepted": [
+                      "Li vê odeyê maseyek û du kursî hene.",
+                      "Li vê odeyê maseyek û du kursî hene",
+                      "Maseyek û du kursî li vê odeyê hene.",
+                      "Maseyek û du kursî li vê odeyê hene"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ev kursî ji wê malê ye.",
+                    "prompt": "One chair does not match the others. Hamo laughs. What does he explain? “Ev kursî ji wê malê ye.”",
+                    "accepted": [
+                      "This chair is from that house",
+                      "This chair comes from that house",
+                      "This chair is from that home"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li van odeyan gelek pencere hene.",
+                    "prompt": "Listen. What does Hamo say about the upstairs rooms? “Li van odeyan gelek pencere hene.”",
+                    "options": [
+                      "There are many windows in these rooms.",
+                      "There is one window in this room.",
+                      "There are many doors in those rooms."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal turns the map round and round — it has been upside down all morning. Type what she says.",
+                    "accepted": [
+                      "Nexşe ne rast e, xalo!",
+                      "Nexşe ne rast e, xalo",
+                      "Nexşe ne rast e xalo"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Ask Hamo: “Where is the bathroom?”",
+                    "accepted": [
+                      "Serşok li ku ye?",
+                      "Serşok li ku ye",
+                      "Serşok li ku derê ye?",
+                      "Serşok li ku derê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Call out to the whole house: “There is a hen in this kitchen!”",
+                    "reference": "Li vê metbexê mirîşkek heye!",
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s1l3",
+              "position": 3,
+              "titleKu": "Nexşeya kevn",
+              "titleEn": "The old map",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Nîşan li derve ye.",
+                    "prompt": "Xezal taps the X on the map. Listen: where is it? “Nîşan li derve ye.”",
+                    "options": [
+                      "The mark is inside.",
+                      "The mark is on the door.",
+                      "The mark is outside."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Nîşan ne li hundir e.",
+                    "prompt": "Xezal shakes her head at the house. What does she say? “Nîşan ne li hundir e.”",
+                    "options": [
+                      "The mark is not inside.",
+                      "The mark is not outside.",
+                      "The map is not inside."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "li derve",
+                        "right": "outside"
+                      },
+                      {
+                        "left": "li hundir",
+                        "right": "inside"
+                      },
+                      {
+                        "left": "rê",
+                        "right": "road, way"
+                      },
+                      {
+                        "left": "nîşan",
+                        "right": "mark, sign"
+                      },
+                      {
+                        "left": "belkî",
+                        "right": "maybe"
+                      },
+                      {
+                        "left": "hêsan",
+                        "right": "easy"
+                      }
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu03s1l3a",
+                    "title": "Nexşeya kevn",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, ev nexşe ye. Mala te li vir e.",
+                        "en": "Uncle, this is the map. Your house is here."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Belê, belê. Ew mala min e.",
+                        "en": "Yes, yes. That is my house."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Û ev nîşan li derve ye, ne li hundir.",
+                        "en": "And this mark is outside, not inside."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Li derve? Belkî ew li wir e.",
+                        "en": "Outside? Maybe it is over there."
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Li wir sêv hene!",
+                        "en": "There are apples over there!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, ew rê şaş e! Nîşan li vir e.",
+                        "en": "Uncle, that way is wrong! The mark is here."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Na, na. Rê hêsan e, Xezo. Ez ne şaş im!",
+                        "en": "No, no. The way is easy, Xezo. I am not wrong!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xezo, ji kerema xwe… ez xalê te me!",
+                        "en": "Xezo, please… I am your uncle!"
+                      }
+                    ],
+                    "prompt": "Where is the mark on the map?",
+                    "options": [
+                      "Inside the house",
+                      "Over by the apple trees, where Hamo points",
+                      "Outside the house"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Belkî ew li wir e.",
+                    "prompt": "Hamo points — very innocently — towards the apple trees. What does he say? “Belkî ew li wir e.”",
+                    "options": [
+                      "Maybe it is over there.",
+                      "It is not over there.",
+                      "Of course it is here."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Xezal, firmly: “The mark is outside, not inside.”",
+                    "accepted": [
+                      "Nîşan li derve ye, ne li hundir.",
+                      "Nîşan li derve ye, ne li hundir",
+                      "Nîşan li derve ye, ne li hundir e.",
+                      "Nîşan li derve ye, ne li hundir e",
+                      "Nîşan li derve ye ne li hundir"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal grabs her uncle’s sleeve. Type what she says.",
+                    "accepted": [
+                      "Xalo, ew rê şaş e!",
+                      "Xalo, ew rê şaş e",
+                      "Xalo ew rê şaş e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Rê hêsan e.",
+                    "prompt": "Hamo waves the worry away. What does he say? “Rê hêsan e.”",
+                    "accepted": [
+                      "The way is easy",
+                      "The road is easy",
+                      "It is an easy way",
+                      "It's an easy way"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “The way is easy.”?",
+                    "options": [
+                      "Rê hêsan ye.",
+                      "Rê hêsan e.",
+                      "Rê hêsan in."
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Xezal asks you where the X is. Write the whole answer: “Ew li … ye.” (It is outside.)",
+                    "accepted": [
+                      "Ew li derve ye.",
+                      "Ew li derve ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hevalo is sniffing around the kitchen. Tell him: “The apples are not inside.”",
+                    "accepted": [
+                      "Sêv ne li hundir in.",
+                      "Sêv ne li hundir in"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal runs her finger across the map. Type what she says.",
+                    "accepted": [
+                      "Mal li vir e, nîşan li wir e.",
+                      "Mal li vir e, nîşan li wir e",
+                      "Mal li vir e nîşan li wir e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Wonder aloud with Xezal: “Maybe the mark is outside.”",
+                    "reference": "Belkî nîşan li derve ye.",
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo points the wrong way again and says “Rê ew e!”. What would you answer?",
+                    "options": [
+                      "Na, xalo, ew rê şaş e.",
+                      "Erê, rê ew e.",
+                      "Bi xêr hatî!"
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s1l4",
+              "position": 4,
+              "titleKu": "Mala Hamo",
+              "titleEn": "Hamo’s house",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Nanê tenûrê germ e.",
+                    "prompt": "In the yard Hamo breaks a loaf fresh from the clay oven. What does he say? “Nanê tenûrê germ e.”",
+                    "options": [
+                      "The oven bread is hot.",
+                      "The oven bread is cold.",
+                      "The tea is hot."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "bêhn",
+                        "right": "smell"
+                      },
+                      {
+                        "left": "nivîn",
+                        "right": "bedding"
+                      },
+                      {
+                        "left": "tenûr",
+                        "right": "clay bread oven"
+                      },
+                      {
+                        "left": "ronî",
+                        "right": "light"
+                      },
+                      {
+                        "left": "tarî",
+                        "right": "dark"
+                      },
+                      {
+                        "left": "kîjan",
+                        "right": "which"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev ode tarî ye. Ronî tune.",
+                    "prompt": "Hamo opens the storeroom door. Listen: what is it like inside? “Ev ode tarî ye. Ronî tune.”",
+                    "options": [
+                      "It is bright: there is a lot of light.",
+                      "It is cold: there is no bread.",
+                      "It is dark: there is no light."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hamo shows you where you will sleep: “The guests’ bedding is in this room.”",
+                    "accepted": [
+                      "Nivînên mêvanan li vê odeyê ne.",
+                      "Nivînên mêvanan li vê odeyê ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Odeya te kîjan e?",
+                    "prompt": "Hamo turns to you on the stairs. What is he asking? “Odeya te kîjan e?”",
+                    "accepted": [
+                      "Which is your room",
+                      "Which one is your room",
+                      "Which room is yours"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which question asks “Which is my bed?”",
+                    "options": [
+                      "Nivîna min kî ye?",
+                      "Nivîna min çi ye?",
+                      "Nivîna min kîjan e?"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo checks every lamp in the house. Type what you hear.",
+                    "accepted": [
+                      "Ronî li metbexê heye, lê serşok tarî ye.",
+                      "Ronî li metbexê heye, lê serşok tarî ye",
+                      "Ronî li metbexê heye lê serşok tarî ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo asks which room is dark. Write the whole answer: “Odeya Hêviyê … ye.” (Hêvî’s room is dark.)",
+                    "accepted": [
+                      "Odeya Hêviyê tarî ye.",
+                      "Odeya Hêviyê tarî ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu03s1l4a",
+                    "title": "Nîşana nû",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Metbex, serşok, odeya mêvanan… Hemû li nexşeyê ne.",
+                        "en": "Kitchen, bathroom, guest room… They are all on the map."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Spas, xalo. Mal hêsan e, lê nîşan li derve ye.",
+                        "en": "Thanks, uncle. The house is easy, but the mark is outside."
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Bêhnek heye… Li pencereyê nîşanek heye!",
+                        "en": "There is a smell… There is a mark on the window!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Nîşanek? Kîjan pencere?",
+                        "en": "A mark? Which window?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ev pencere! Û ev nîşan nû ye!",
+                        "en": "This window! And this mark is new!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Nû ye? Ne ya min e!",
+                        "en": "New? It is not mine!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ne ya min e, ne ya te ye… Ya kê ye?",
+                        "en": "Not mine, not yours… Whose is it?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Belkî ya Bozo ye!",
+                        "en": "Maybe it is Bozo’s!"
+                      }
+                    ],
+                    "prompt": "What does Hevalo find on the window?",
+                    "options": [
+                      "An apple",
+                      "Hamo’s glasses",
+                      "A second mark, and it is new"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev nîşan nû ye!",
+                    "prompt": "Xezal leans in close to the windowsill. What does she whisper? “Ev nîşan nû ye!”",
+                    "options": [
+                      "This mark is new!",
+                      "This mark is old!",
+                      "This map is new!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Ask Xezal: “Which window?”",
+                    "accepted": [
+                      "Kîjan pencere?",
+                      "Kîjan pencere"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Bêhna nanê tenûrê xweş e.",
+                    "prompt": "Hevalo lifts his nose by the oven. What does Hamo say? “Bêhna nanê tenûrê xweş e.”",
+                    "accepted": [
+                      "The smell of oven bread is nice",
+                      "The smell of the oven bread is nice",
+                      "Oven bread smells nice",
+                      "The bread from the oven smells nice",
+                      "The smell of tenûr bread is lovely"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal stares at the fresh X. Type what she says.",
+                    "accepted": [
+                      "Ne ya min e, ne ya te ye… Ya kê ye?",
+                      "Ne ya min e, ne ya te ye… Ya kê ye",
+                      "Ne ya min e ne ya te ye… Ya kê ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Ask Hamo on the stairs: “Which one is my room?”",
+                    "reference": "Odeya min kîjan e?",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo grins under his moustache: “Belkî ya Bozo ye!” What does he mean?",
+                    "options": [
+                      "It is certainly Bozo’s!",
+                      "Bozo is in the kitchen!",
+                      "Maybe it is Bozo’s!"
+                    ],
+                    "correctIndex": 2
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "titleKu": "Rengên gund",
+          "titleEn": "The village’s colours",
+          "grammarMd": "An adjective comes **after** its noun, joined by the same ezafe you know from *navê min*:\n\n- *derî* + *şîn* → **deriyê şîn** the blue door\n- *mal* + *spî* → **mala spî** the white house\n- *sêv* + *sor* → **sêvên sor** (the) red apples\n\nWith **a**: *deriyekî şîn* a blue door · *maleke spî* a white house.\n\nAs a description after the copula there is no ezafe: *Derî şîn e.* The door is blue. · *Sêv sor in.* The apples are red.\n\nThe colours: *sor* red · *şîn* blue · *kesk* green · *zer* yellow · *reş* black · *spî* white · *qehweyî* brown · *gewr* grey.",
+          "lessons": [
+            {
+              "key": "u03s2l1",
+              "position": 1,
+              "titleKu": "Sor û şîn",
+              "titleEn": "Red and blue",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sêv sor in.",
+                    "prompt": "Hamo holds up two apples from his orchard. What does he say? “Sêv sor in.”",
+                    "options": [
+                      "The apples are green.",
+                      "The apples are red.",
+                      "The apples are yellow."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Derî şîn e.",
+                    "prompt": "Hamo points at his gate. Listen: what colour is it? “Derî şîn e.”",
+                    "options": [
+                      "The gate is green.",
+                      "The gate is black.",
+                      "The gate is blue."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "reng",
+                        "right": "colour"
+                      },
+                      {
+                        "left": "sor",
+                        "right": "red"
+                      },
+                      {
+                        "left": "şîn",
+                        "right": "blue"
+                      },
+                      {
+                        "left": "kesk",
+                        "right": "green"
+                      },
+                      {
+                        "left": "zer",
+                        "right": "yellow"
+                      },
+                      {
+                        "left": "reş",
+                        "right": "black"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Simbêlê min reş e!",
+                    "prompt": "Hamo lifts the near end of his moustache, very pleased. What does he say? “Simbêlê min reş e!”",
+                    "options": [
+                      "My moustache is white!",
+                      "My moustache is black!",
+                      "Your moustache is black!"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bizina Dapîr Şemsê spî ye.",
+                    "prompt": "A goat with a long white beard wanders past. What does Hamo tell you? “Bizina Dapîr Şemsê spî ye.”",
+                    "options": [
+                      "Grandma Şemsê’s goat is black.",
+                      "Grandma Şemsê’s cow is white.",
+                      "Grandma Şemsê’s goat is white."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “The gate is blue.”",
+                    "accepted": [
+                      "Derî şîn e.",
+                      "Derî şîn e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo walks you down a row of trees. Type what you hear.",
+                    "accepted": [
+                      "Dar kesk e, sêv sor e.",
+                      "Dar kesk e, sêv sor e",
+                      "Dar kesk e sêv sor e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Kulîlk zer e.",
+                    "prompt": "Hevalo sniffs a flower by the wall. What does Hamo say about it? “Kulîlk zer e.”",
+                    "accepted": [
+                      "The flower is yellow"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo asks “Simbêlê min çi reng e?”. What do you answer?",
+                    "options": [
+                      "Ew reş e.",
+                      "Ew spî ye.",
+                      "Ew reş ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hamo about the goat: “The goat is white.”",
+                    "accepted": [
+                      "Bizin spî ye.",
+                      "Bizin spî ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence with the colour: “Rengê derî … e.” (The colour of the gate is blue.)",
+                    "accepted": [
+                      "Rengê derî şîn e.",
+                      "Rengê derî şîn e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo holds up a leaf and a flower, one in each hand. Type his question.",
+                    "accepted": [
+                      "Ev çi reng e?",
+                      "Ev çi reng e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Be Hamo for a moment and boast: “My moustache is black!”",
+                    "reference": "Simbêlê min reş e!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dar kesk in, kulîlk zer in.",
+                    "prompt": "Hamo sweeps his arm over the orchard. Listen: what does he say? “Dar kesk in, kulîlk zer in.”",
+                    "options": [
+                      "The trees are yellow, the flowers are green.",
+                      "The trees are green, the apples are red.",
+                      "The trees are green, the flowers are yellow."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s2l2",
+              "position": 2,
+              "titleKu": "Deriyê şîn",
+              "titleEn": "The blue door",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Deriyê şîn li ku ye?",
+                    "prompt": "Xezal reads the next clue on the map and looks up. What does she ask? “Deriyê şîn li ku ye?”",
+                    "options": [
+                      "Where is the white wall?",
+                      "Is the door blue?",
+                      "Where is the blue door?"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "qehweyî",
+                        "right": "brown"
+                      },
+                      {
+                        "left": "gewr",
+                        "right": "grey"
+                      },
+                      {
+                        "left": "porteqalî",
+                        "right": "orange"
+                      },
+                      {
+                        "left": "mor",
+                        "right": "purple"
+                      },
+                      {
+                        "left": "pembe",
+                        "right": "pink"
+                      },
+                      {
+                        "left": "çav",
+                        "right": "eye"
+                      }
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo kerekî gewr e.",
+                    "prompt": "Xezal pats the donkey’s neck. Listen: what is Bozo? “Bozo kerekî gewr e.”",
+                    "options": [
+                      "Bozo is a brown donkey.",
+                      "Bozo is a grey donkey.",
+                      "Bozo is a grey horse."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “the purple door”?",
+                    "options": [
+                      "derî mor e",
+                      "mor deriyê",
+                      "deriyê mor"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Read the clue aloud with Xezal: “a blue door and a white wall”",
+                    "accepted": [
+                      "Deriyekî şîn û dîwarekî spî"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo looks at his niece fondly. Type what he says.",
+                    "accepted": [
+                      "Çavên Xezalê qehweyî ne.",
+                      "Çavên Xezalê qehweyî ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Kirasê Hêviyê pembe ye.",
+                    "prompt": "Little Hêvî twirls in front of you. What does Hamo say? “Kirasê Hêviyê pembe ye.”",
+                    "accepted": [
+                      "Hêvî’s dress is pink",
+                      "Hêvî's dress is pink",
+                      "Hevi's dress is pink",
+                      "Hêvî's shirt is pink"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal wants to say “a white house”. Which is right?",
+                    "options": [
+                      "maleke spî",
+                      "malekî spî",
+                      "mala spî e"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Xezal is wearing her favourite colour. Write the whole sentence: “Kirasê Xezalê … e.” (Xezal’s dress is purple.)",
+                    "accepted": [
+                      "Kirasê Xezalê mor e.",
+                      "Kirasê Xezalê mor e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “The orange flowers are beautiful.”",
+                    "accepted": [
+                      "Kulîlkên porteqalî xweşik in.",
+                      "Kulîlkên porteqalî xweşik in"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li gund sê deriyên şîn hene!",
+                    "prompt": "Xezal counts on her fingers, and her face falls. Why? “Li gund sê deriyên şîn hene!”",
+                    "options": [
+                      "There are three blue doors in the village!",
+                      "There is one blue door in the village!",
+                      "There are three white walls in the village!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal runs from door to door. Type what she says.",
+                    "accepted": [
+                      "Ev deriyê şîn e! Na… ev jî şîn e!",
+                      "Ev deriyê şîn e! Na… ev jî şîn e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Xezal about the cat on the wall: “That is a grey cat.”",
+                    "accepted": [
+                      "Ew pisîkeke gewr e.",
+                      "Ew pisîkeke gewr e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Say the clue the way Xezal does, slowly: “A blue door and a white wall.”",
+                    "reference": "Deriyekî şîn û dîwarekî spî.",
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo asks you “Çavên te çi reng in?”. Which answer is right for brown eyes?",
+                    "options": [
+                      "Çavên min qehweyî in.",
+                      "Çavên min qehweyî ne.",
+                      "Çavê min qehweyî ne."
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Kumê Bozo porteqalî ye, ne pembe!",
+                    "prompt": "Hevalo says something about Bozo’s hat, and Xezal corrects him. What does she say? “Kumê Bozo porteqalî ye, ne pembe!”",
+                    "options": [
+                      "Bozo’s hat is pink, not orange!",
+                      "Bozo’s hat is purple, not pink!",
+                      "Bozo’s hat is orange, not pink!"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "xezo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s2l3",
+              "position": 3,
+              "titleKu": "Sêva sor, sêva kesk",
+              "titleEn": "Red apple, green apple",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sêva sor şîrîn e.",
+                    "prompt": "Hamo bites into a red apple and closes his eyes. What does he say? “Sêva sor şîrîn e.”",
+                    "options": [
+                      "The red apple is sweet.",
+                      "The red apple is sour.",
+                      "The green apple is sweet."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sêva kesk tirş e, lê xweş e!",
+                    "prompt": "Xezal crunches a green one. What does she say? “Sêva kesk tirş e, lê xweş e!”",
+                    "options": [
+                      "The green apple is sweet and tasty!",
+                      "The green apple is sour, but tasty!",
+                      "The red apple is sour, but tasty!"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "pel",
+                        "right": "leaf"
+                      },
+                      {
+                        "left": "fêkî",
+                        "right": "fruit"
+                      },
+                      {
+                        "left": "tirî",
+                        "right": "grapes"
+                      },
+                      {
+                        "left": "gûz",
+                        "right": "walnut"
+                      },
+                      {
+                        "left": "tirş",
+                        "right": "sour"
+                      },
+                      {
+                        "left": "şîrîn",
+                        "right": "sweet"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu03s2l3a",
+                    "title": "Sor an kesk?",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Sêva sor fêkiyekî baş e. Ew şîrîn e!",
+                        "en": "The red apple is a good fruit. It is sweet!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Na, xalo! Sêva kesk baş e. Ew hinek tirş e.",
+                        "en": "No, uncle! The green apple is good. It is a little sour."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Tirş? Sêva tirş ne xweş e!",
+                        "en": "Sour? A sour apple is not nice!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Tu şaş î, xalo. Tirş xweş e!",
+                        "en": "You are wrong, uncle. Sour is nice!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo! Kîjan sêv baş e?",
+                        "en": "Hevalo! Which apple is good?"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Sêveke sor… sêveke kesk… Herdu jî xweş in!",
+                        "en": "A red apple… a green apple… Both are tasty!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Hevalo! Sêvên me!",
+                        "en": "Hevalo! Our apples!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo zîrek e! Herdu jî baş in.",
+                        "en": "Hevalo is clever! Both are good."
+                      }
+                    ],
+                    "prompt": "How does Hevalo settle the argument?",
+                    "options": [
+                      "He tries one of each and likes both",
+                      "He picks the red apple",
+                      "He picks the green apple"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ew hinek tirş e.",
+                    "prompt": "Xezal offers you a slice of green apple. What does she warn you? “Ew hinek tirş e.”",
+                    "accepted": [
+                      "It is a little sour",
+                      "It is a bit sour",
+                      "It is slightly sour",
+                      "It is somewhat sour",
+                      "It's a little sour",
+                      "It's a bit sour",
+                      "It's slightly sour",
+                      "It's somewhat sour"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “The grapes are sweet.”?",
+                    "options": [
+                      "Tirî şîrîn ye.",
+                      "Tirî şîrîn im.",
+                      "Tirî şîrîn e."
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo has more to say on the matter. Type what you hear.",
+                    "accepted": [
+                      "Gûz û tirî jî fêkî ne.",
+                      "Gûz û tirî jî fêkî ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hamo insists: “The red apple is sweet!”",
+                    "accepted": [
+                      "Sêva sor şîrîn e!",
+                      "Sêva sor şîrîn e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Xezal answers: “The green apple is sour, but nice.”",
+                    "accepted": [
+                      "Sêva kesk tirş e, lê xweş e.",
+                      "Sêva kesk tirş e, lê xweş e",
+                      "Sêva kesk tirş e lê xweş e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li vê darê nîşanek heye!",
+                    "prompt": "Hevalo stops chewing and stares up into a tree. What does he say? “Li vê darê nîşanek heye!”",
+                    "options": [
+                      "There is a mark on this tree!",
+                      "There is an apple on this tree!",
+                      "There is no mark on this tree."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Pelên darê … in.” (The leaves of the tree are green.)",
+                    "accepted": [
+                      "Pelên darê kesk in.",
+                      "Pelên darê kesk in"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal climbs up to look. Type what she says.",
+                    "accepted": [
+                      "Nîşaneke zer li vê darê heye.",
+                      "Nîşaneke zer li vê darê heye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Settle it the Hevalo way: “Both are tasty!”",
+                    "reference": "Herdu jî xweş in!",
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo offers you a red apple and a green one: “Kîjan sêv?” What would you answer?",
+                    "options": [
+                      "Sêva sor, bi xatirê te.",
+                      "Sêva sor, ji kerema xwe.",
+                      "Sêv sor, ji kerema xwe."
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Pelên gûzê mezin in.",
+                    "prompt": "Hamo picks a big leaf up off the ground. What does he say? “Pelên gûzê mezin in.”",
+                    "options": [
+                      "Walnut leaves are small.",
+                      "Apple leaves are big.",
+                      "Walnut leaves are big."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s2l4",
+              "position": 4,
+              "titleKu": "Gundê rengîn",
+              "titleEn": "The colourful village",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Gundê me rengîn e.",
+                    "prompt": "From the top of the lane Hamo looks down over Sêvan. What does he say? “Gundê me rengîn e.”",
+                    "options": [
+                      "Our village is small.",
+                      "Our village is colourful.",
+                      "Our village is far."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "rengîn",
+                        "right": "colourful"
+                      },
+                      {
+                        "left": "por",
+                        "right": "hair"
+                      },
+                      {
+                        "left": "asman",
+                        "right": "sky"
+                      },
+                      {
+                        "left": "ewr",
+                        "right": "cloud"
+                      },
+                      {
+                        "left": "zêr",
+                        "right": "gold"
+                      },
+                      {
+                        "left": "rind",
+                        "right": "nice, pretty"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Asman şîn e, ewr spî ne.",
+                    "prompt": "Hevalo lies on his back in the grass. Listen: what does Hamo say about the sky? “Asman şîn e, ewr spî ne.”",
+                    "options": [
+                      "The sky is blue, the clouds are white.",
+                      "The sky is grey, the clouds are white.",
+                      "The sky is blue, the clouds are grey."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “Hêvî’s hair is black.”",
+                    "accepted": [
+                      "Porê Hêviyê reş e.",
+                      "Porê Hêviyê reş e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ev ne zêr e, ev sêveke zer e!",
+                    "prompt": "Hevalo finds something shiny in the grass. Hamo laughs. What does he say? “Ev ne zêr e, ev sêveke zer e!”",
+                    "accepted": [
+                      "This is not gold, this is a yellow apple",
+                      "It is not gold, it is a yellow apple",
+                      "That is not gold, that is a yellow apple",
+                      "This isn't gold, this is a yellow apple",
+                      "It isn't gold, it's a yellow apple",
+                      "It's not gold, it's a yellow apple",
+                      "That isn't gold, that's a yellow apple",
+                      "That's not gold, that's a yellow apple"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “a pretty girl”?",
+                    "options": [
+                      "keçeke rind",
+                      "keçekî rind",
+                      "keça rind e"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal follows the colours on the map to the end. Type what she says.",
+                    "accepted": [
+                      "Nîşan li dara gûzê ye!",
+                      "Nîşan li dara gûzê ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Belkî li wir zêr heye!",
+                    "prompt": "Hamo winks at you as Xezal runs ahead to the walnut tree. What does he say? “Belkî li wir zêr heye!”",
+                    "options": [
+                      "There is no gold there.",
+                      "Maybe there are apples there!",
+                      "Maybe there is gold there!"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu03s2l4a",
+                    "title": "Ya kê ye?",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, ew nîşana nû li pencereyê ya kê ye?",
+                        "en": "Uncle, whose is that new mark on the window?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ne ya min e, Xezo. Rast e!",
+                        "en": "It is not mine, Xezo. It is true!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Belkî ya Baran e?",
+                        "en": "Maybe it is Baran’s?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Na, Baran îro ne li malê ye.",
+                        "en": "No, Baran is not at home today."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hêvî? Hêvî, tu pir kêfxweş î…",
+                        "en": "Hêvî? Hêvî, you look very pleased…"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Hêvî? Ew biçûk e, ew zarok e!",
+                        "en": "Hêvî? She is little, she is a child!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Zarok e, lê zîrek e!",
+                        "en": "A child, yes, but a clever one!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Belê… ew keçeke zîrek e.",
+                        "en": "Yes… she is a clever girl."
+                      }
+                    ],
+                    "prompt": "Who does Xezal suspect at the end?",
+                    "options": [
+                      "Hêvî",
+                      "Baran",
+                      "Hamo"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hêvî: “Your dress is very pretty.”",
+                    "accepted": [
+                      "Kirasê te gelek rind e.",
+                      "Kirasê te gelek rind e",
+                      "Kirasê te pir rind e.",
+                      "Kirasê te pir rind e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Asman … e, lê ewr gewr in.” (The sky is blue, but the clouds are grey.)",
+                    "accepted": [
+                      "Asman şîn e, lê ewr gewr in.",
+                      "Asman şîn e, lê ewr gewr in",
+                      "Asman şîn e lê ewr gewr in"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo hears Xezal whisper “pîr” and protests. Type what he says.",
+                    "accepted": [
+                      "Porê Hamo reş e, ne spî!",
+                      "Porê Hamo reş e, ne spî",
+                      "Porê Hamo reş e ne spî"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Say it with Hamo’s pride: “Our village is colourful and the sky is blue.”",
+                    "reference": "Gundê me rengîn e û asman şîn e.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hêvî giggles behind her hands and will not look at anyone. What is Xezal thinking?",
+                    "options": [
+                      "Belkî nîşan ya Bozo ye!",
+                      "Belkî nîşan ya Hamo ye!",
+                      "Belkî nîşan ya Hêviyê ye!"
+                    ],
+                    "correctIndex": 2
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "titleKu": "Li ku ye?",
+          "titleEn": "Where is it?",
+          "grammarMd": "**li** (at, in) combines with a word for the place:\n\n- **li ser** on · **li bin** under · **li ber** in front of · **li pişt** behind · **li kêleka** next to · **li cem** at someone’s place\n\n*Berçavk li ser serê te ye!* The glasses are on your head!\n\n**di … de** wraps around the noun for *inside*: *di sindoqê de* in the box · *di metbexê de* in the kitchen. **di nav … de** is *among, in the middle of*: *di nav daran de* among the trees.\n\nThe noun after them takes the oblique: feminine **-ê** (*li bin darê* under the tree), plural **-an** (*li ser keviran*); a masculine noun usually stays as it is (*li ser kevir*, *li ber derî*).",
+          "lessons": [
+            {
+              "key": "u03s3l1",
+              "position": 1,
+              "titleKu": "Li ser û li bin",
+              "titleEn": "On and under",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Berçavka min li ku ye?",
+                    "prompt": "Hamo pats all his pockets, one after another. What is he asking? “Berçavka min li ku ye?”",
+                    "options": [
+                      "Where is my moustache?",
+                      "Where is my map?",
+                      "Where are my glasses?"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ne li ser maseyê ye.",
+                    "prompt": "Xezal checks the table. What does Hamo say? “Ne li ser maseyê ye.”",
+                    "options": [
+                      "They are not on the table.",
+                      "They are not under the table.",
+                      "They are on the table."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "li ser",
+                        "right": "on"
+                      },
+                      {
+                        "left": "li bin",
+                        "right": "under"
+                      },
+                      {
+                        "left": "li ber",
+                        "right": "in front of"
+                      },
+                      {
+                        "left": "li pişt",
+                        "right": "behind"
+                      },
+                      {
+                        "left": "berçavk",
+                        "right": "glasses"
+                      },
+                      {
+                        "left": "ser",
+                        "right": "head"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ne li bin nivînê ye.",
+                    "prompt": "Hevalo crawls out from under the bed. Listen: what does Hamo say? “Ne li bin nivînê ye.”",
+                    "options": [
+                      "They are not on the bed.",
+                      "They are under the bed.",
+                      "They are not under the bed."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “behind the door”?",
+                    "options": [
+                      "li pişt derî",
+                      "li ber derî",
+                      "li ser derî"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "You look behind the door. Tell Hamo: “They are not behind the door.”",
+                    "accepted": [
+                      "Ne li pişt derî ye.",
+                      "Ne li pişt derî ye",
+                      "Berçavk ne li pişt derî ye.",
+                      "Berçavk ne li pişt derî ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal can’t stop giggling. Type what she says.",
+                    "accepted": [
+                      "Berçavk li ser serê te ye, xalo!",
+                      "Berçavk li ser serê te ye, xalo",
+                      "Berçavk li ser serê te ye xalo"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Pisîk li ber derî ye.",
+                    "prompt": "Hamo opens the front door and nearly trips. What does he say? “Pisîk li ber derî ye.”",
+                    "accepted": [
+                      "The cat is in front of the door",
+                      "The cat is at the door",
+                      "There is a cat in front of the door",
+                      "There's a cat in front of the door"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “The dog is under the table.”",
+                    "accepted": [
+                      "Kûçik li bin maseyê ye.",
+                      "Kûçik li bin maseyê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sêv li ser serê Hevalo ye.",
+                    "prompt": "Listen. Where is the apple now? “Sêv li ser serê Hevalo ye.”",
+                    "options": [
+                      "Under Hevalo’s bed",
+                      "Behind Hevalo",
+                      "On Hevalo’s head"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Berçavk li … serê te ye.” (The glasses are on your head.)",
+                    "accepted": [
+                      "Berçavk li ser serê te ye.",
+                      "Berçavk li ser serê te ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Şêro, Hamo’s dog, is playing hide and seek. Type what you hear.",
+                    "accepted": [
+                      "Şêro li pişt dîwar e.",
+                      "Şêro li pişt dîwar e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Laugh at yourself like Hamo: “My glasses are on my head!”",
+                    "reference": "Berçavka min li ser serê min e!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal asks “Berçavka te li ku ye?”. Hamo touches his head. What does he answer?",
+                    "options": [
+                      "Li ser serê min e!",
+                      "Li bin serê min e!",
+                      "Li pişt serê min e!"
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s3l2",
+              "position": 2,
+              "titleKu": "Di sindoqê de",
+              "titleEn": "In the box",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Nexşe di sindoqê de ye.",
+                    "prompt": "Xezal asks where the map was kept all these years. What does Hamo say? “Nexşe di sindoqê de ye.”",
+                    "options": [
+                      "The map is in the box.",
+                      "The map is on the box.",
+                      "The map is next to the box."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Di nav keviran de, li kêleka kaniyê.",
+                    "prompt": "Hamo reads the last clue, in the corner of the map. Where should you look? “Di nav keviran de, li kêleka kaniyê.”",
+                    "options": [
+                      "Under the stones, in the spring.",
+                      "Among the stones, next to the spring.",
+                      "On the stones, behind the spring."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "di sindoqê de",
+                        "right": "in the box"
+                      },
+                      {
+                        "left": "di nav daran de",
+                        "right": "among the trees"
+                      },
+                      {
+                        "left": "li cem dapîrê",
+                        "right": "at Grandma’s"
+                      },
+                      {
+                        "left": "li kêleka kaniyê",
+                        "right": "next to the spring"
+                      },
+                      {
+                        "left": "kevir",
+                        "right": "stone"
+                      },
+                      {
+                        "left": "kanî",
+                        "right": "spring (of water)"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “in the kitchen”?",
+                    "options": [
+                      "di metbexê de",
+                      "di metbexê",
+                      "li metbexê de"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hevalo is looking for breakfast. Tell him: “The bread is in the basket.”",
+                    "accepted": [
+                      "Nan di seleyê de ye.",
+                      "Nan di seleyê de ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo points down the valley. Type what you hear.",
+                    "accepted": [
+                      "Kanî li kêleka dara gûzê ye.",
+                      "Kanî li kêleka dara gûzê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Bozo li cem Dapîr Şemsê ye.",
+                    "prompt": "Xezal wonders where the donkey is. What does Hamo say? “Bozo li cem Dapîr Şemsê ye.”",
+                    "accepted": [
+                      "Bozo is at Grandma Şemsê’s",
+                      "Bozo is at Grandma Şemsê's",
+                      "Bozo is with Grandma Şemsê",
+                      "Bozo is at Grandma Şemsê's place",
+                      "Bozo is at Grandma's",
+                      "Bozo is with Grandma"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Sêv … seleyê de ne.” (The apples are in the basket.)",
+                    "accepted": [
+                      "Sêv di seleyê de ne.",
+                      "Sêv di seleyê de ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hevalo asks hopefully: “Is there an apple among the stones?”",
+                    "accepted": [
+                      "Di nav keviran de sêv heye?",
+                      "Di nav keviran de sêv heye",
+                      "Di nav keviran de sêvek heye?",
+                      "Di nav keviran de sêvek heye"
+                    ],
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Kevirekî mezin li kêleka kaniyê heye.",
+                    "prompt": "Listen. What is next to the spring? “Kevirekî mezin li kêleka kaniyê heye.”",
+                    "options": [
+                      "A big stone",
+                      "A big tree",
+                      "A small house"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo tells a neighbour who is staying with him. Type what you hear.",
+                    "accepted": [
+                      "Xezal li cem me ye.",
+                      "Xezal li cem me ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "“Among the trees” — which one is right?",
+                    "options": [
+                      "di nav dar de",
+                      "li nav daran",
+                      "di nav daran de"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Read the clue aloud: “Among the stones, next to the spring.”",
+                    "reference": "Di nav keviran de, li kêleka kaniyê.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo swears he has never seen this map. But the clue is in a child’s hand, and Xezal is staring at him. What does the writing suggest?",
+                    "options": [
+                      "It is Xezal’s map",
+                      "It is Hamo’s map, from when he was little",
+                      "It is Hevalo’s map"
+                    ],
+                    "correctIndex": 1
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s3l3",
+              "position": 3,
+              "titleKu": "Li bin dara gûzê",
+              "titleEn": "Under the walnut tree",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Çiya bilind e, çem kûr e.",
+                    "prompt": "From the walnut tree you can see the whole valley. What does Hamo say? “Çiya bilind e, çem kûr e.”",
+                    "options": [
+                      "The mountain is low, the river is deep.",
+                      "The mountain is high, the river is deep.",
+                      "The mountain is high, the river is long."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "erd",
+                        "right": "ground, earth"
+                      },
+                      {
+                        "left": "çem",
+                        "right": "river"
+                      },
+                      {
+                        "left": "çiya",
+                        "right": "mountain"
+                      },
+                      {
+                        "left": "kûr",
+                        "right": "deep"
+                      },
+                      {
+                        "left": "bilind",
+                        "right": "high, tall"
+                      },
+                      {
+                        "left": "nizm",
+                        "right": "low"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dîwarê kaniyê nizm e.",
+                    "prompt": "Xezal sits on the edge of the spring. Listen: what is it like? “Dîwarê kaniyê nizm e.”",
+                    "options": [
+                      "The wall of the spring is low.",
+                      "The wall of the spring is high.",
+                      "The water of the spring is deep."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu03s3l3a",
+                    "title": "Li bin dara gûzê",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, dara gûzê ev e. Kanî jî li vir e.",
+                        "en": "Uncle, this is the walnut tree. And the spring is here."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Dara gûzê? Kîjan dara gûzê?",
+                        "en": "The walnut tree? Which walnut tree?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Xalo! Ev nexşeya te ye!",
+                        "en": "Uncle! This is your map!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Nexşeya min? Na, na. Ez ne zarok im!",
+                        "en": "My map? No, no. I am not a child!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Li bin keviran tiştek tune… li pişt darê jî tune.",
+                        "en": "Nothing under the stones… nothing behind the tree either."
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Di erdê de tiştek heye!",
+                        "en": "There is something in the ground!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Çi ye, Hevalo? Zêr e?",
+                        "en": "What is it, Hevalo? Is it gold?"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Na… ev sêva min e.",
+                        "en": "No… this is my apple."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Sêveke kevn! Ya Hevalo ye!",
+                        "en": "An old apple! It is Hevalo’s!"
+                      }
+                    ],
+                    "prompt": "What does Hevalo dig up?",
+                    "options": [
+                      "Gold",
+                      "One of his own old apples",
+                      "The treasure box"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Kanî kûr e.",
+                    "prompt": "Hevalo leans over the water. What does Xezal warn him? “Kanî kûr e.”",
+                    "accepted": [
+                      "The spring is deep"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “a high mountain”?",
+                    "options": [
+                      "çiyayekî bilind",
+                      "çiyayeke bilind",
+                      "çiya bilind e"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Xezal lifts stone after stone: “There is nothing under the stones.”",
+                    "accepted": [
+                      "Li bin keviran tiştek tune.",
+                      "Li bin keviran tiştek tune",
+                      "Li bin keviran tune.",
+                      "Li bin keviran tune"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hevalo digs with his little hooves. Type what he says.",
+                    "accepted": [
+                      "Di erdê de tiştek heye!",
+                      "Di erdê de tiştek heye"
+                    ],
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Çiyayên Sêvanê … in.” (The mountains of Sêvan are high.)",
+                    "accepted": [
+                      "Çiyayên Sêvanê bilind in.",
+                      "Çiyayên Sêvanê bilind in"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “The tree is high, but the wall is low.”",
+                    "accepted": [
+                      "Dar bilind e, lê dîwar nizm e.",
+                      "Dar bilind e, lê dîwar nizm e",
+                      "Dar bilind e lê dîwar nizm e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sêveke kevn! Ya Hevalo ye!",
+                    "prompt": "Hamo laughs so hard his moustache shakes. What does he say? “Sêveke kevn! Ya Hevalo ye!”",
+                    "options": [
+                      "A new apple! It is Hamo’s!",
+                      "Old gold! It is Hevalo’s!",
+                      "An old apple! It is Hevalo’s!"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo shows you the valley from the spring. Type what you hear.",
+                    "accepted": [
+                      "Çem li pişt gund e.",
+                      "Çem li pişt gund e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Describe the valley like Hamo: “The mountain is high, the river is deep.”",
+                    "reference": "Çiya bilind e, çem kûr e.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal sighs: nothing under the stones, nothing behind the tree. Hamo whistles innocently. What would you say to him?",
+                    "options": [
+                      "Xalo, tu birçî yî!",
+                      "Xalo, bi xatirê te!",
+                      "Xalo, nexşe ya te ye!"
+                    ],
+                    "correctIndex": 2
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s3l4",
+              "position": 4,
+              "titleKu": "Xezîne!",
+              "titleEn": "Treasure!",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li bin kevir qutiyek heye!",
+                    "prompt": "Xezal lifts a big flat stone and gasps. What does she say? “Li bin kevir qutiyek heye!”",
+                    "options": [
+                      "There is a stone under the tin!",
+                      "There is no tin under the stone.",
+                      "There is a tin under the stone!"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "xezîne",
+                        "right": "treasure"
+                      },
+                      {
+                        "left": "qutî",
+                        "right": "tin, small box"
+                      },
+                      {
+                        "left": "gog",
+                        "right": "marble"
+                      },
+                      {
+                        "left": "nîv",
+                        "right": "half"
+                      },
+                      {
+                        "left": "veşartî",
+                        "right": "hidden"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Di qutiyê de gog û nîvê wêneyekî hene.",
+                    "prompt": "Hevalo noses the tin open. Listen: what is inside? “Di qutiyê de gog û nîvê wêneyekî hene.”",
+                    "options": [
+                      "Gold and a whole photo",
+                      "Marbles and half of a photo",
+                      "Apples and a map"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu03s3l4a",
+                    "title": "Xezîne!",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo! Xezîneyeke veşartî! Gog û wêneyekî kevn.",
+                        "en": "Uncle! A hidden treasure! Marbles and an old photo."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê… ev xezîneya min e.",
+                        "en": "Yes… this is my treasure."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ya te? Di vî wêneyî de kî ye?",
+                        "en": "Yours? Who is in this photo?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ev ez im, ev jî Gulîstan e. Em zarok in.",
+                        "en": "This is me, and this is Gulîstan. We are children."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Diya min? Lê ev tenê nîv e!",
+                        "en": "My mother? But this is only one half!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê. Nîvek li cem min e, nîvek li cem wê ye.",
+                        "en": "Yes. One half is with me, one half is with her."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Li cem diya min? Li Amedê?",
+                        "en": "With my mother? In Amed?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê, li cem wê ye. Li Amedê.",
+                        "en": "Yes, it is with her. In Amed."
+                      }
+                    ],
+                    "prompt": "Where is the other half of the photo?",
+                    "options": [
+                      "Under the stone",
+                      "In Hamo’s old box",
+                      "With Gulîstan, in Amed"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Xezîne li vir veşartî ye.",
+                    "prompt": "Hamo admits it at last. What does he say? “Xezîne li vir veşartî ye.”",
+                    "accepted": [
+                      "The treasure is hidden here",
+                      "The treasure is hidden in this place"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “This is half of an old photo.”",
+                    "accepted": [
+                      "Ev nîvê wêneyekî kevn e.",
+                      "Ev nîvê wêneyekî kevn e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo points at the two children in the photo. Type what he says.",
+                    "accepted": [
+                      "Ev ez im, ev jî Gulîstan e.",
+                      "Ev ez im, ev jî Gulîstan e",
+                      "Ev ez im ev jî Gulîstan e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “in the tin”?",
+                    "options": [
+                      "di qutiyê de",
+                      "di qutî de",
+                      "li qutiyê de"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “… di qutiyê de ne.” (The marbles are in the tin.)",
+                    "accepted": [
+                      "Gog di qutiyê de ne.",
+                      "Gog di qutiyê de ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Nîvê vî wêneyî li cem wê ye. Li Amedê.",
+                    "prompt": "Xezal asks about the missing half. What does Hamo answer? “Nîvê vî wêneyî li cem wê ye. Li Amedê.”",
+                    "accepted": [
+                      "Half of this photo is with her. In Amed",
+                      "The other half of this photo is with her, in Amed",
+                      "Half of the photo is with her. In Amed",
+                      "The other half is with her, in Amed",
+                      "Half of this photo is at her place. In Amed"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Xezal, amazed: “My mother is in this photo!”",
+                    "accepted": [
+                      "Diya min di vî wêneyî de ye!",
+                      "Diya min di vî wêneyî de ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hevalo rolls the marbles about with his nose. Type what Xezal says.",
+                    "accepted": [
+                      "Gogên şîn û kesk di qutiyê de ne.",
+                      "Gogên şîn û kesk di qutiyê de ne"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Confess with Hamo: “This is my treasure, and Gulîstan’s.”",
+                    "reference": "Ev xezîneya min û Gulîstanê ye.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal holds up the half photo: “Nîvek li vir e, nîvek li Amedê.” What does she mean?",
+                    "options": [
+                      "One half is here, one half is in Amed.",
+                      "Both halves are here.",
+                      "One half is in Amed, the other is lost."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "titleKu": "Gundê me",
+          "titleEn": "Our village",
+          "grammarMd": "A Kurdish plural often looks like the singular: *Du mal hene.* There are two houses. · *Sêv sor in.* The apples are red.\n\nYou see the plural in the endings:\n\n- with the ezafe: **-ên**: *malên spî* the white houses · *zarokên gund* the village children\n- after a preposition: **-an**: *li gundan* in the villages · *ji zarokan re* for the children\n\nCounting words: *gelek mal* many houses · *çend dar* a few trees · *hemû zarok* all the children · *her roj* every day (her takes the singular).\n\n**kes** is a person; with a negative it means nobody: *Kes li malê tune.* There is nobody at home.",
+          "lessons": [
+            {
+              "key": "u03s4l1",
+              "position": 1,
+              "titleKu": "Dibistan û dikan",
+              "titleEn": "School and shop",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev dibistana gund e.",
+                    "prompt": "Hamo stops at a building with a big yard full of children. What does he say? “Ev dibistana gund e.”",
+                    "options": [
+                      "This is the village school.",
+                      "This is the village shop.",
+                      "This is the village mill."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dikana Ferhad biçûk e, lê xweş e.",
+                    "prompt": "Next, a tiny shop with a blue door. Listen: what does Hamo say? “Dikana Ferhad biçûk e, lê xweş e.”",
+                    "options": [
+                      "Ferhad’s shop is big and nice.",
+                      "Ferhad’s shop is small, but nice.",
+                      "Ferhad’s house is small, but nice."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "dibistan",
+                        "right": "school"
+                      },
+                      {
+                        "left": "dikan",
+                        "right": "shop"
+                      },
+                      {
+                        "left": "zevî",
+                        "right": "field"
+                      },
+                      {
+                        "left": "meydan",
+                        "right": "square"
+                      },
+                      {
+                        "left": "aş",
+                        "right": "mill"
+                      },
+                      {
+                        "left": "rez",
+                        "right": "vineyard"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Aşê kevn li kêleka çem e.",
+                    "prompt": "You hear water turning a wooden wheel. What does Hamo say? “Aşê kevn li kêleka çem e.”",
+                    "options": [
+                      "The old mill is next to the river.",
+                      "The old mill is behind the school.",
+                      "The new mill is next to the spring."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “The square is in front of the school.”",
+                    "accepted": [
+                      "Meydan li ber dibistanê ye.",
+                      "Meydan li ber dibistanê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo points up at the vines climbing the slope. Type what you hear.",
+                    "accepted": [
+                      "Rez li ser çiyê ne.",
+                      "Rez li ser çiyê ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Zeviyên me li pişt aş in.",
+                    "prompt": "Hamo waves towards the green land past the mill. What does he say? “Zeviyên me li pişt aş in.”",
+                    "accepted": [
+                      "Our fields are behind the mill"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “Ferhad’s shop”?",
+                    "options": [
+                      "dikanê Ferhad",
+                      "dikana Ferhad",
+                      "Ferhad dikan"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Dibistan li kêleka … ye.” (The school is next to the square.)",
+                    "accepted": [
+                      "Dibistan li kêleka meydanê ye.",
+                      "Dibistan li kêleka meydanê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Xezal: “The vineyard is big, but the field is small.”",
+                    "accepted": [
+                      "Rez mezin e, lê zevî biçûk e.",
+                      "Rez mezin e, lê zevî biçûk e",
+                      "Rez mezin e lê zevî biçûk e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo counts on his fingers. Type what he says.",
+                    "accepted": [
+                      "Li gund dikanek û aşek hene.",
+                      "Li gund dikanek û aşek hene"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Show Xezal around like Hamo: “This is the village school.”",
+                    "reference": "Ev dibistana gund e.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Meydana gund li ku ye?",
+                    "prompt": "A visitor stops Hamo in the lane. What is she asking? “Meydana gund li ku ye?”",
+                    "options": [
+                      "Where is the village square?",
+                      "Where is the village school?",
+                      "Is the village square big?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo asks you “Dikana Ferhad li ku ye?”. What do you answer?",
+                    "options": [
+                      "Ew Ferhad e.",
+                      "Li kêleka meydanê ye.",
+                      "Dikan biçûk e."
+                    ],
+                    "correctIndex": 1
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s4l2",
+              "position": 2,
+              "titleKu": "Gelek mal, çend dar",
+              "titleEn": "Many houses, a few trees",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li gundê me gelek mal hene.",
+                    "prompt": "Up on the flat roof, Hamo starts to count the village. What does he say? “Li gundê me gelek mal hene.”",
+                    "options": [
+                      "There are few houses in our village.",
+                      "There are many houses in our village.",
+                      "There is one house in our village."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "kes",
+                        "right": "person, anyone"
+                      },
+                      {
+                        "left": "mirov",
+                        "right": "person, people"
+                      },
+                      {
+                        "left": "hindik",
+                        "right": "few, a little"
+                      },
+                      {
+                        "left": "her",
+                        "right": "every"
+                      },
+                      {
+                        "left": "şivan",
+                        "right": "shepherd"
+                      },
+                      {
+                        "left": "çend dar",
+                        "right": "a few trees"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li gund tenê şivanek heye.",
+                    "prompt": "Hamo shades his eyes and looks up at the hills. Listen: how many shepherds are there? “Li gund tenê şivanek heye.”",
+                    "options": [
+                      "Only one shepherd",
+                      "Many shepherds",
+                      "No shepherd at all"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Mirîşk gelek in, mirov hindik in!",
+                    "prompt": "Hamo looks down at the yards and sighs. What does he say? “Mirîşk gelek in, mirov hindik in!”",
+                    "options": [
+                      "The people are many, the hens are few!",
+                      "The hens are many, the people are few!",
+                      "The hens are few, the sheep are many!"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “There is nobody at the school.”",
+                    "accepted": [
+                      "Kes li dibistanê tune.",
+                      "Kes li dibistanê tune",
+                      "Li dibistanê kes tune.",
+                      "Li dibistanê kes tune"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo points down the lane. Type what you hear.",
+                    "accepted": [
+                      "Li ber her malê darek heye.",
+                      "Li ber her malê darek heye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Şivan li çiyê ye, bi pez re.",
+                    "prompt": "Xezal asks where the shepherd is. What does Hamo say? “Şivan li çiyê ye, bi pez re.”",
+                    "accepted": [
+                      "The shepherd is on the mountain, with the sheep",
+                      "The shepherd is on the mountain with the flock",
+                      "The shepherd is in the mountains with the sheep",
+                      "The shepherd is in the mountains with the flock"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "“Every house” — which one is right?",
+                    "options": [
+                      "her malan",
+                      "her malên",
+                      "her mal"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “… li malê tune.” (There is nobody at home.)",
+                    "accepted": [
+                      "Kes li malê tune.",
+                      "Kes li malê tune"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hevalo: “There are a few trees, but many hens.”",
+                    "accepted": [
+                      "Çend dar hene, lê gelek mirîşk hene.",
+                      "Çend dar hene, lê gelek mirîşk hene",
+                      "Çend dar hene lê gelek mirîşk hene"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Mirovên gund baş in.",
+                    "prompt": "Hamo smiles at the people in the lanes below. What does he say? “Mirovên gund baş in.”",
+                    "options": [
+                      "The village people are few.",
+                      "The village houses are good.",
+                      "The village people are good."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo is proud of his village. Type what he says.",
+                    "accepted": [
+                      "Li gund mirov hindik in, lê her kes cîran e.",
+                      "Li gund mirov hindik in, lê her kes cîran e",
+                      "Li gund mirov hindik in lê her kes cîran e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Hamo knocks on Ferhad’s door, but nobody answers. Say: “There is nobody at home.”",
+                    "reference": "Kes li malê tune.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo boasts about all the trees on the hill. Xezal counts only a few. What does she say?",
+                    "options": [
+                      "Xalo, gelek dar hene!",
+                      "Xalo, kes tune!",
+                      "Xalo, tenê çend dar hene!"
+                    ],
+                    "correctIndex": 2
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s4l3",
+              "position": 3,
+              "titleKu": "Li meydana gund",
+              "titleEn": "In the village square",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Meydan paqij û bêdeng e.",
+                    "prompt": "Early afternoon in the square. Listen: what is it like? “Meydan paqij û bêdeng e.”",
+                    "options": [
+                      "The square is dirty and loud.",
+                      "The square is clean and full.",
+                      "The square is clean and quiet."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "bazar",
+                        "right": "market"
+                      },
+                      {
+                        "left": "dirêj",
+                        "right": "long"
+                      },
+                      {
+                        "left": "kin",
+                        "right": "short"
+                      },
+                      {
+                        "left": "paqij",
+                        "right": "clean"
+                      },
+                      {
+                        "left": "qirêj",
+                        "right": "dirty"
+                      },
+                      {
+                        "left": "bêdeng",
+                        "right": "quiet"
+                      }
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu03s4l3a",
+                    "title": "Li meydana gund",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, hemû cîran li meydanê ne!",
+                        "en": "Uncle, all the neighbours are in the square!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê, Xezo. Li gund mêvanek heye!",
+                        "en": "Yes, Xezo. There is a guest in the village!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ev mêvan ji welatekî dûr e.",
+                        "en": "This guest is from a faraway country."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ferhad jî li vir e. Ew pir kêfxweş e!",
+                        "en": "Ferhad is here too. He is very happy!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Çi heye, xalo?",
+                        "en": "What is going on, uncle?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Sibe li bajêr bazar e!",
+                        "en": "Tomorrow there is a market in the town!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bazar? Rêya bajêr dirêj e, lê bazar xweş e!",
+                        "en": "The market? The road to town is long, but the market is fun!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê. Sibe hemû gund li bazarê ye.",
+                        "en": "Yes. Tomorrow the whole village is at the market."
+                      }
+                    ],
+                    "prompt": "What is Ferhad’s news?",
+                    "options": [
+                      "Tomorrow there is a wedding in the village",
+                      "Tomorrow there is a market in the town",
+                      "The road to the town is closed"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Sibe li bajêr bazar e!",
+                    "prompt": "Ferhad has big news, and Hamo passes it on. What is it? “Sibe li bajêr bazar e!”",
+                    "accepted": [
+                      "Tomorrow there is a market in the town",
+                      "There is a market in town tomorrow",
+                      "Tomorrow is market day in the town",
+                      "Tomorrow there is a market in the city",
+                      "Tomorrow is market day in town",
+                      "Tomorrow there's a market in the town",
+                      "There's a market in town tomorrow",
+                      "Tomorrow there's a market in the city"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “the long road”?",
+                    "options": [
+                      "rêya dirêj",
+                      "rêyê dirêj",
+                      "rê dirêj e"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hevalo has been rolling in the dust. Tell him: “Hevalo, you are dirty!”",
+                    "accepted": [
+                      "Hevalo, tu qirêj î!",
+                      "Hevalo, tu qirêj î",
+                      "Hevalo tu qirêj î"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal whispers about her uncle. Type what she says.",
+                    "accepted": [
+                      "Simbêlê Hamo dirêj e, lê porê wî kin e.",
+                      "Simbêlê Hamo dirêj e, lê porê wî kin e",
+                      "Simbêlê Hamo dirêj e lê porê wî kin e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Îro gund bêdeng e.",
+                    "prompt": "Xezal looks around the empty lanes. Listen: what does she say? “Îro gund bêdeng e.”",
+                    "options": [
+                      "The village is quiet today.",
+                      "The village is clean today.",
+                      "The village is noisy today."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Meydan … e.” (The square is clean.)",
+                    "accepted": [
+                      "Meydan paqij e.",
+                      "Meydan paqij e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hamo: “The road to the market is long.”",
+                    "accepted": [
+                      "Rêya bazarê dirêj e.",
+                      "Rêya bazarê dirêj e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Pêlavên te qirêj in, xalo!",
+                    "prompt": "Xezal looks at Hamo’s feet. Market day is tomorrow. What does she say? “Pêlavên te qirêj in, xalo!”",
+                    "accepted": [
+                      "Your shoes are dirty, uncle",
+                      "Uncle, your shoes are dirty"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal compares the two roads. Type what she says.",
+                    "accepted": [
+                      "Rêya gund kin e, rêya bajêr dirêj e.",
+                      "Rêya gund kin e, rêya bajêr dirêj e",
+                      "Rêya gund kin e rêya bajêr dirêj e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "A neighbour asks Xezal about you: “Ev mêvan kî ye?” What could Xezal answer?",
+                    "options": [
+                      "Ew bazar e.",
+                      "Ew qirêj e.",
+                      "Ew mêvan e, ji welatekî dûr."
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo asks you: “Tu jî sibe li bazarê yî?” What would you answer?",
+                    "options": [
+                      "Erê, bêguman!",
+                      "Bi xêr hatî!",
+                      "Na, ew qirêj e."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u03s4l4",
+              "position": 4,
+              "titleKu": "Sibe bazar e",
+              "titleEn": "Tomorrow is market day",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev lîsteya bazarê ye.",
+                    "prompt": "Hamo unrolls a long sheet of paper, written in enormous letters. What does he say? “Ev lîsteya bazarê ye.”",
+                    "options": [
+                      "This is the market list.",
+                      "This is the village map.",
+                      "This is the school list."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "lîste",
+                        "right": "list"
+                      },
+                      {
+                        "left": "roj",
+                        "right": "day"
+                      },
+                      {
+                        "left": "sibeh",
+                        "right": "morning"
+                      },
+                      {
+                        "left": "hefte",
+                        "right": "week"
+                      },
+                      {
+                        "left": "dawî",
+                        "right": "end"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li ser lîsteyê nan, çay, şekir û penîr hene.",
+                    "prompt": "Hamo reads his list aloud. What is on it? “Li ser lîsteyê nan, çay, şekir û penîr hene.”",
+                    "options": [
+                      "Bread, apples, sugar and meat",
+                      "Tea, eggs, sugar and cheese",
+                      "Bread, tea, sugar and cheese"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Li dawiya lîsteyê deh sêv hene!",
+                    "prompt": "Xezal reads the bottom of the list and bursts out laughing. Why? “Li dawiya lîsteyê deh sêv hene!”",
+                    "accepted": [
+                      "At the end of the list there are ten apples",
+                      "There are ten apples at the end of the list",
+                      "At the bottom of the list there are ten apples",
+                      "There are ten apples at the bottom of the list"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bazar sibehê ye an êvarê?",
+                    "prompt": "Xezal asks Hamo about tomorrow. What does she want to know? “Bazar sibehê ye an êvarê?”",
+                    "options": [
+                      "Is the market big or small?",
+                      "Is the market in the morning or in the evening?",
+                      "Is the market far or near?"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu03s4l4a",
+                    "title": "Lîsteya Hamo",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Sibe roja bazarê ye! Lîste li vir e.",
+                        "en": "Tomorrow is market day! The list is here."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, lîste gelek dirêj e!",
+                        "en": "Uncle, the list is very long!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bazar tenê roja dawî ya hefteyê ye!",
+                        "en": "The market is only on the last day of the week!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û li dawiyê… sêv, sêv, sêv? Hevalo!",
+                        "en": "And at the end… apples, apples, apples? Hevalo!"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Sêv baş in! Sêv xweş in!",
+                        "en": "Apples are good! Apples are tasty!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baş e, baş e. Lê Bozo li ku ye?",
+                        "en": "Fine, fine. But where is Bozo?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bozo li hewşê ye. Ew bê kumê xwe aciz e!",
+                        "en": "Bozo is in the yard. He is cross without his hat!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Kumê wî li ser serê Hêviyê ye!",
+                        "en": "His hat is on Hêvî’s head!"
+                      }
+                    ],
+                    "prompt": "Why is Bozo cross?",
+                    "options": [
+                      "He is hungry",
+                      "He does not like the market",
+                      "He does not have his hat"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Remind everyone: “The market is at the end of the week.”",
+                    "accepted": [
+                      "Bazar li dawiya hefteyê ye.",
+                      "Bazar li dawiya hefteyê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Before dawn Hamo goes out to greet his donkey. Type what he says.",
+                    "accepted": [
+                      "Sibeh baş, Bozo! Tu çawa yî?",
+                      "Sibeh baş, Bozo! Tu çawa yî",
+                      "Sibeh baş Bozo! Tu çawa yî"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “the last day of the week”?",
+                    "options": [
+                      "rojê dawî yê hefteyê",
+                      "roja dawî hefte",
+                      "roja dawî ya hefteyê"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Her … bazar heye.” (There is a market every week.)",
+                    "accepted": [
+                      "Her hefte bazar heye.",
+                      "Her hefte bazar heye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Bozo bê kumê xwe aciz e.",
+                    "prompt": "Bozo won’t move a hoof. What does Xezal explain? “Bozo bê kumê xwe aciz e.”",
+                    "accepted": [
+                      "Bozo is annoyed without his hat",
+                      "Without his hat Bozo is annoyed",
+                      "Bozo is cross without his hat",
+                      "Bozo is upset without his hat",
+                      "Bozo is grumpy without his hat"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hamo: “The list is very long!”",
+                    "accepted": [
+                      "Lîste gelek dirêj e!",
+                      "Lîste gelek dirêj e",
+                      "Lîste pir dirêj e!",
+                      "Lîste pir dirêj e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo finds the missing hat. Type what he says.",
+                    "accepted": [
+                      "Kumê Bozo li ser serê Hêviyê ye!",
+                      "Kumê Bozo li ser serê Hêviyê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Get everyone excited: “Tomorrow is market day!”",
+                    "reference": "Sibe roja bazarê ye!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Night falls on Sêvan. Bozo has his hat back, Hamo has his list, and the list has ten apples on it. What comes tomorrow?",
+                    "options": [
+                      "Roja dibistanê",
+                      "Roja Newrozê",
+                      "Roja bazarê"
+                    ],
+                    "correctIndex": 2
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -9,6 +9,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
 import { activate } from '../test/activate.js';
+import { unitTone } from '@kurda/shared';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -178,7 +179,7 @@ describe.skipIf(!DATABASE_URL)('practice hub and modes (integration)', () => {
       speak: true,
       words: true,
       skipSpeaking: false,
-      units: [{ unitId: unit.one, title: 'Greetings', number: 1, tone: 'meadow' }],
+      units: [{ unitId: unit.one, title: 'Greetings', number: 1, tone: unitTone(0) }],
     });
   });
 
@@ -222,8 +223,8 @@ describe.skipIf(!DATABASE_URL)('practice hub and modes (integration)', () => {
 
     await play('learner', lesson.three);
     expect((await hub('learner')).units).toEqual([
-      { unitId: unit.two, title: 'Food', number: 2, tone: 'river' },
-      { unitId: unit.one, title: 'Greetings', number: 1, tone: 'meadow' },
+      { unitId: unit.two, title: 'Food', number: 2, tone: unitTone(1) },
+      { unitId: unit.one, title: 'Greetings', number: 1, tone: unitTone(0) },
     ]);
     // and it is still not the stranger's
     expect((await as('stranger', 'POST', '/practice/session', { mode: 'unit', unitId: unit.two })).statusCode).toBe(403);

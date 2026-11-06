@@ -8,7 +8,7 @@ import { ErrorState, Loading } from '../components/states';
 import { ArrowIcon } from '../components/icons';
 import { describeError } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
-import { STORIES_HUB } from './api';
+import { STORIES_LIBRARY } from './api';
 import { GameLobby } from './GameLobby';
 import { GameQuestion, GameReading, GameReveal } from './GamePlay';
 import { GameResults } from './GameResults';
@@ -54,7 +54,7 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
 
   async function leave(): Promise<void> {
     await game.act('/leave');
-    navigate(STORIES_HUB);
+    navigate(STORIES_LIBRARY);
   }
 
   return (
@@ -78,12 +78,7 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
           {view.status === 'cancelled' ? (
             <GameEnded title={t('stories.game.cancelledTitle')} body={t('stories.game.cancelled')} />
           ) : view.status === 'lobby' ? (
-            <GameLobby
-              view={view}
-              act={game.act}
-              announce={announce}
-              {...lobbyInvites(view)}
-            />
+            <GameLobby view={view} act={game.act} {...lobbyInvites(view)} />
           ) : view.status === 'reading' ? (
             <GameReading view={view} story={story} act={game.act} skew={game.skew} announce={announce} />
           ) : view.status === 'question' ? (
@@ -124,7 +119,8 @@ function lobbyInvites(view: StoryGameView): { invite?: React.ReactNode; invited?
 
 /**
  * Playing again from the results: a duo's rematch both ask for, a group's
- * next round the host opens (play/RematchPanel). Solo has its own Try again.
+ * next round the host opens (play/RematchPanel). A solo check is taken again
+ * from the story itself, where its best score and what a repeat pays are shown.
  */
 function PlayAgain({ view }: { view: StoryGameView }): React.JSX.Element | null {
   const t = useT();
@@ -150,7 +146,7 @@ function GameHead({ view, onLeave }: { view: StoryGameView; onLeave: () => Promi
   return (
     <header className="sg-head">
       <div className="sg-head-text">
-        <Link to={STORIES_HUB} className="back-link sg-back">
+        <Link to={STORIES_LIBRARY} className="back-link sg-back">
           <ArrowIcon size={16} />
           {t('stories.reader.back')}
         </Link>
@@ -189,7 +185,7 @@ function GameEnded({ title, body }: { title: string; body: string }): React.JSX.
       </h2>
       <p>{body}</p>
       <div className="sg-ended-actions">
-        <Link to={STORIES_HUB} className="btn btn-secondary">
+        <Link to={STORIES_LIBRARY} className="btn btn-secondary">
           {t('stories.backToStories')}
         </Link>
       </div>

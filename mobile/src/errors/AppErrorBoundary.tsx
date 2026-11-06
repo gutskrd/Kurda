@@ -1,4 +1,4 @@
-import { Component, type ReactNode } from 'react';
+import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,6 +7,7 @@ import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { useI18n } from '../i18n/I18nContext';
+import { reportRenderError } from './crashReporting';
 
 /**
  * A render that throws unmounts the entire React tree — that is React's design,
@@ -24,6 +25,15 @@ export class AppErrorBoundary extends Component<{ children: ReactNode }, { error
 
   static getDerivedStateFromError(error: Error): { error: Error } {
     return { error };
+  }
+
+  /*
+   * The crash screen tells the person; this tells the owner. The component
+   * stack is the part worth having: React does not put it in the error, and
+   * it says which screen and which part of it was rendering.
+   */
+  componentDidCatch(error: Error, info: ErrorInfo): void {
+    reportRenderError(error, info.componentStack);
   }
 
   private retry = () => this.setState({ error: null });

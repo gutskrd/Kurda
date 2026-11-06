@@ -1,0 +1,533 @@
+/* ---- words to know: the colours, the numbers, the days and the months ------- */
+/*
+ * The words after the letters, taught the alphabet's way (alphabet.css): a
+ * grid of tiles to scan, the word you picked open beside it, and a round to
+ * check yourself with. Each set's tile is drawn to fit what it holds — a
+ * colour fills its tile, a number shows its digits, a day its meaning, a
+ * month its season's tint — and the sound sits in the tile's corner as a
+ * button of its own, so a word can be heard without being opened. Gold stays
+ * "notice this": the number inside a day's name, and today.
+ */
+
+/* ---- the sets, each a card -------------------------------------------------- */
+.wd-sets {
+  display: grid;
+  gap: 12px;
+  max-width: var(--container-narrow);
+}
+.wd-set {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  background: var(--surface);
+  box-shadow: var(--glass-rim);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.wd-set:hover {
+  border-color: var(--border-strong);
+  background: var(--bg);
+  color: var(--ink);
+  text-decoration: none;
+}
+.wd-set-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+.wd-set-title {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+.wd-set-name {
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  color: var(--gold-ink);
+}
+.wd-set-body {
+  color: var(--ink-3);
+  font-size: 0.92rem;
+}
+.wd-set-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.wd-set-progress.is-done {
+  color: var(--success);
+  font-weight: 600;
+}
+.wd-set-progress .ab-progress-track {
+  flex: 0 0 72px;
+}
+.wd-set-chevron {
+  flex: none;
+  color: var(--ink-3);
+}
+[dir='rtl'] .wd-set-chevron {
+  transform: scaleX(-1);
+}
+
+/* a picture of what a set holds (shared wordSetSvg): a palette, an abacus, the sun, a calendar */
+.wd-teaser {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.wd-teaser svg {
+  display: block;
+}
+
+/* ---- a set's page ------------------------------------------------------------ */
+.wd-back {
+  text-decoration: none;
+}
+.wd-back:hover {
+  text-decoration: underline;
+}
+.wd-group {
+  display: grid;
+}
+.wd-group .ab-group-body {
+  margin-top: 4px;
+}
+.wd-grid {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+/* three colours or months across a phone, four numbers, two days — the phone's grid */
+.wd-grid--colours {
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+}
+.wd-grid--numbers {
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+}
+.wd-grid--days {
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+.wd-grid--months {
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+}
+
+/* ---- a word's tile ------------------------------------------------------------ */
+.wd-tile {
+  position: relative;
+  display: grid;
+  min-height: 76px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+}
+.wd-tile:hover {
+  border-color: var(--border-strong);
+}
+.wd-tile.is-on {
+  border-color: var(--ink);
+}
+.wd-tile-open {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  width: 100%;
+  min-height: inherit;
+  padding: 10px 8px;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+}
+.wd-tile-open:active {
+  transform: scale(var(--press-scale));
+}
+/* the sound, in the corner the script's line ends at: a button of its own */
+.wd-tile > .ab-sound {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+}
+/* a word you have opened keeps a small tick where the script's line starts */
+.wd-tile.is-seen > .wd-tile-open::before {
+  content: '✓';
+  position: absolute;
+  top: 7px;
+  inset-inline-start: 9px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+/* a colour fills its tile; the name sits on an opaque label so it reads on white, on yellow and on black */
+.wd-tile--colours {
+  min-height: 96px;
+  background: var(--swatch);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.wd-tile--colours .wd-tile-open {
+  align-content: end;
+  padding: 8px 6px 6px;
+}
+.wd-tile--colours > .ab-sound {
+  background: var(--surface-solid);
+  color: var(--ink);
+}
+.wd-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  padding: 5px 10px;
+  border-radius: 8px;
+  background: var(--surface-solid);
+  color: var(--ink);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+.wd-chip.is-seen::after {
+  content: '✓';
+  font-size: 0.66rem;
+  font-weight: 700;
+  color: var(--success);
+}
+
+/* a number: its digits, and the word under them. The digits start under the corner's band, so a wide number never runs under the play button. */
+.wd-tile--numbers .wd-tile-open {
+  padding-top: 34px;
+}
+.wd-digits {
+  font-family: var(--font-display);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+  color: var(--ink);
+}
+.wd-digits small {
+  margin-inline-start: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.55em;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.wd-digits--tile {
+  font-size: 1.7rem;
+}
+.wd-digits--card {
+  font-size: 3.4rem;
+}
+.wd-digits--option {
+  font-size: 1.8rem;
+}
+.wd-digits--prompt {
+  font-size: 3rem;
+}
+.wd-tile-word {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.wd-tile-meaning {
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+
+/* a day: its name with the number inside it marked, and today's says so */
+.wd-tile--days {
+  min-height: 84px;
+  gap: 4px;
+}
+.wd-day-name {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.2;
+}
+.wd-day-name.ab-ar,
+.wd-relative-day.ab-ar,
+.wd-word-text.ab-ar,
+.wd-month-name.ab-ar,
+.wd-season-word.ab-ar,
+.wd-card-meaning.ab-ar,
+.wd-set-name.ab-ar,
+.wd-face-meaning.ab-ar {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+}
+.wd-day-name.ab-ar {
+  font-size: 1.3rem;
+  line-height: 1.5;
+}
+.wd-day-name mark,
+.wd-word-text mark,
+.wd-relative-day mark {
+  background: transparent;
+  color: var(--gold-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.wd-today {
+  padding: 1px 8px;
+  border-radius: var(--r-pill);
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+/* a month: its number, its name, and its season's tint over the tile */
+.wd-tile--months {
+  overflow: hidden;
+}
+.wd-tile--months::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--tint);
+  pointer-events: none;
+}
+.wd-month-number {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.wd-month-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  line-height: 1.25;
+}
+.wd-month-name.ab-ar {
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+.wd-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: -14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.wd-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: var(--r-pill);
+  font-size: 0.85rem;
+}
+.wd-legend-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.wd-legend-word {
+  font-weight: 600;
+}
+.wd-legend-gloss {
+  color: var(--ink-3);
+  font-size: 0.78rem;
+}
+
+/* ---- the open word ------------------------------------------------------------- */
+.wd-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wd-card-head-word {
+  margin: 0;
+  min-width: 0;
+  font-size: inherit;
+  font-weight: inherit;
+}
+.wd-card-head-shown {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+.ab-stage-letter .wd-card-head-shown {
+  justify-items: center;
+}
+.wd-word {
+  display: inline-grid;
+  gap: 2px;
+}
+.wd-word-text {
+  font-family: var(--font-display);
+  line-height: 1.2;
+}
+.wd-word-text.ab-ar {
+  line-height: 1.5;
+}
+.wd-latin {
+  font-size: 0.9rem;
+  color: var(--ink-3);
+}
+.wd-said--head .wd-word-text {
+  font-size: 2.6rem;
+}
+.wd-said--partner .wd-word-text {
+  font-size: 1.9rem;
+}
+.wd-swatch {
+  display: inline-block;
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.wd-card-meaning {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1.3;
+}
+.wd-card-phrase .wd-word-text {
+  font-size: 1.4rem;
+}
+.wd-gloss {
+  font-size: 0.92rem;
+  color: var(--ink-3);
+}
+.wd-card-partner {
+  font-family: var(--font-display);
+  font-size: 1.9rem;
+  line-height: 1.2;
+}
+.wd-make {
+  display: grid;
+  gap: 6px;
+}
+.wd-make-input {
+  width: 100%;
+  max-width: 220px;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--input-border);
+  border-radius: var(--r-md);
+  background: var(--input-bg);
+  color: var(--ink);
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+}
+.wd-make-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--ink-3);
+}
+.wd-make-out {
+  margin: 0;
+  min-height: 1.6rem;
+}
+.wd-made .wd-word-text {
+  font-size: 1.4rem;
+}
+.wd-relatives {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wd-relative {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.wd-relative-when {
+  display: grid;
+}
+.wd-relative-word {
+  font-weight: 600;
+}
+.wd-relative.is-today .wd-relative-word {
+  color: var(--gold-ink);
+}
+.wd-relative-gloss {
+  font-size: 0.76rem;
+  color: var(--ink-3);
+}
+.wd-relative-day {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+}
+.wd-relative-day.ab-ar {
+  font-size: 1.2rem;
+}
+.wd-season {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.wd-season-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+}
+.wd-season-word {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+}
+.wd-season-word.ab-ar {
+  font-size: 1.2rem;
+}
+
+/* ---- check yourself ------------------------------------------------------------ */
+.wd-q-prompt {
+  justify-content: center;
+}
+.wd-face--prompt .wd-word-text,
+.wd-face--prompt.wd-word-text {
+  font-size: 2.2rem;
+}
+.wd-face--option .wd-word-text,
+.wd-face--option.wd-word-text {
+  font-size: 1.15rem;
+}
+.wd-face-meaning {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  line-height: 1.3;
+  text-align: center;
+}
+.wd-face-meaning.wd-face--prompt {
+  font-size: 1.6rem;
+}
+.wd-option {
+  padding: 10px 6px;
+}
+.wd-explain-word .wd-word-text {
+  font-size: 1.3rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wd-tile,
+  .wd-tile-open,
+  .wd-set {
+    transition: none;
+  }
+  .wd-tile-open:active {
+    transform: none;
+  }
+}

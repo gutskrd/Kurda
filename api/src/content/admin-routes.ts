@@ -20,6 +20,7 @@ const createBody = z.object({
 
 const listQuery = z.object({
   status: z.enum(['draft', 'in_review', 'published', 'archived', 'all'] as const satisfies ReadonlyArray<ContentStatus | 'all'>).optional(),
+  course: z.string().regex(/^[a-z0-9-]{2,64}$/).optional(),
   q: z.string().max(200).optional(),
   limit: z.coerce.number().int().min(1).max(LESSON_LIST_MAX).optional(),
 });
@@ -50,18 +51,20 @@ export function registerContentAdminRoutes(
   const guardNoValidation = { config: { skipValidation: true }, preHandler: guard.preHandler };
 
   /**
-   * The lessons, one row per slot (its newest version), and the skills a new
-   * one can go in — so the panel lists lessons by title instead of asking for
-   * a pasted id. `status` filters on the newest version (`all` includes
-   * archived slots, which are left out otherwise); `q` matches titles or an id.
+   * The lessons, one row per slot (its newest version), the skills a new one
+   * can go in, and the courses — so the panel lists lessons by title instead
+   * of asking for a pasted id. `status` filters on the newest version (`all`
+   * includes archived slots, which are left out otherwise); `course` keeps one
+   * course's lessons, by its slug; `q` matches titles or an id.
    */
   app.get('/admin/content/lessons', { schema: { querystring: listQuery }, preHandler: guard.preHandler }, async (req) => {
     const q = req.query as z.infer<typeof listQuery>;
-    const [list, skills] = await Promise.all([
-      content.listLessons({ status: q.status, q: q.q, limit: q.limit }),
+    const [list, skills, courses] = await Promise.all([
+      content.listLessons({ status: q.status, course: q.course, q: q.q, limit: q.limit }),
       content.skillOptions(),
+      content.courseOptions(),
     ]);
-    return { ...list, skills };
+    return { ...list, skills, courses };
   });
 
   app.post('/admin/content/lessons', { schema: { body: createBody }, preHandler: guard.preHandler }, async (req, reply) => {

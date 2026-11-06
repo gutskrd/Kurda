@@ -43,7 +43,7 @@ describe('LobbyInvites', () => {
           invitee({ inviteId: 'i1', userId: 'u1', name: 'Rojda' }),
           invitee({ inviteId: 'i2', userId: 'u2', name: 'Azad', status: 'declined', declineReason: 'not_this_game' }),
           invitee({ inviteId: 'i3', userId: 'u3', name: 'Sipan', status: 'expired' }),
-          // joined: already in the players list; taken back: nobody's business
+          // joined: stamped on its ticket; taken back: nobody's business
           invitee({ inviteId: 'i4', userId: 'u4', name: 'Berfîn', status: 'accepted' }),
           invitee({ inviteId: 'i5', userId: 'u5', name: 'Dilan', status: 'cancelled' }),
         ]),
@@ -53,7 +53,8 @@ describe('LobbyInvites', () => {
     expect(await screen.findByText('Waiting for an answer')).toBeTruthy();
     expect(screen.getByText('Would rather play something else')).toBeTruthy();
     expect(screen.getByText('Invite expired')).toBeTruthy();
-    expect(screen.queryByText('Berfîn')).toBeNull();
+    expect(screen.getByText('Berfîn')).toBeTruthy();
+    expect(screen.getByText('Joined')).toBeTruthy();
     expect(screen.queryByText('Dilan')).toBeNull();
     expect(screen.queryByText('Elsewhere')).toBeNull();
     // "not now" is not asked again from here
@@ -77,21 +78,49 @@ describe('LobbyInvites', () => {
   });
 });
 
+describe('LobbyInvites, as tickets', () => {
+  afterEach(cleanup);
+
+  it('drops a Joined stamp on a friend’s ticket as they come in, in place of Cancel', async () => {
+    let status: OutgoingInviteState['status'] = 'pending';
+    testAuth.client = fakeClient({ 'GET /play/invites': () => ok(lists([invitee({ inviteId: 'i1', userId: 'u1', name: 'Rojda', status })])) });
+    const view = renderWithProviders(<LobbyInvites game="stories" lobbyId="g1" refreshKey={0} />);
+    expect(await screen.findByText('Waiting for an answer')).toBeTruthy();
+    expect(screen.queryByText('Joined')).toBeNull();
+    status = 'accepted';
+    view.rerender(<LobbyInvites game="stories" lobbyId="g1" refreshKey={1} />);
+    expect(await screen.findByText('Joined')).toBeTruthy();
+    expect(screen.queryByText('Waiting for an answer')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Cancel: Rojda' })).toBeNull();
+  });
+
+  it('keeps the reason under the name of a ticket that was turned down or ran out', async () => {
+    testAuth.client = fakeClient({
+      'GET /play/invites': ok(
+        lists([
+          invitee({ inviteId: 'i2', userId: 'u2', name: 'Azad', status: 'declined', declineReason: 'later' }),
+          invitee({ inviteId: 'i3', userId: 'u3', name: 'Sipan', status: 'expired' }),
+        ]),
+      ),
+    });
+    renderWithProviders(<LobbyInvites game="stories" lobbyId="g1" />);
+    expect(await screen.findByText('Can’t play right now')).toBeTruthy();
+    expect(screen.getByText('Invite expired')).toBeTruthy();
+    expect(screen.queryByText('Joined')).toBeNull();
+  });
+});
+
 describe('LobbyPeople', () => {
   afterEach(cleanup);
 
   const host = { seat: 1, name: 'Rojda', avatarUrl: null, isMe: false, isHost: true };
   const me = { seat: 2, name: 'Azad', avatarUrl: null, isMe: true, isHost: false };
 
-  it('offers Invite friends to the host only, since the server takes invites from no one else', async () => {
+  it('lists the players by name, and leaves Invite friends to the code’s ticket', async () => {
     testAuth.client = fakeClient({ 'GET /play/invites': ok(lists([])) });
-    renderWithProviders(<LobbyPeople game="wordle-battle" lobbyId="g1" players={[host, me]} isHost={false} maxPlayers={4} />);
+    renderWithProviders(<LobbyPeople game="wordle-battle" lobbyId="g1" players={[{ ...host, isMe: true }, { ...me, isMe: false }]} isHost />);
     expect(screen.getByText('You')).toBeTruthy();
+    expect(screen.getByText('Azad')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Invite friends' })).toBeNull();
-    cleanup();
-    renderWithProviders(
-      <LobbyPeople game="wordle-battle" lobbyId="g1" players={[{ ...host, isMe: true }, { ...me, isMe: false }]} isHost maxPlayers={4} />,
-    );
-    expect(screen.getByRole('button', { name: 'Invite friends' })).toBeTruthy();
   });
 });

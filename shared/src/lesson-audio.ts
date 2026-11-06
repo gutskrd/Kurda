@@ -111,16 +111,20 @@ function firstOf(v: unknown): unknown {
  * payload (so a client can look one up by the text it shows), one per key.
  *
  *   any type                     `say`, when the author set one — always first
- *   translate, writing           the first accepted answer
+ *   translate                    the first accepted answer, only when there is no `say`
+ *   writing                      the first accepted answer
  *   listening                    the first accepted transcription: the clip itself
  *   speaking                     the reference, the model to imitate
  *   match_pairs                  every left-hand card
  *   multiple_choice              only `say`: its Kurdish may be in the prompt or
  *                                among the options, and only the author knows which
  *
- * Translate and writing are authored English → Kurdish; an item going the
- * other way should name its Kurdish with `say`. Anything malformed yields
- * nothing rather than throwing: this runs over stored content.
+ * A translation is authored English → Kurdish, and its first accepted answer
+ * is the Kurdish to hear. One going the other way names its Kurdish with
+ * `say`, and then its answers are English: asking for a recording of one
+ * would put an English sentence in the studio for a Kurdish speaker to read
+ * out, so a translation with `say` wants `say` alone. Anything malformed
+ * yields nothing rather than throwing: this runs over stored content.
  */
 export function lessonAudioTargets(type: string, payload: unknown): string[] {
   const p = isRecord(payload) ? payload : {};
@@ -137,6 +141,8 @@ export function lessonAudioTargets(type: string, payload: unknown): string[] {
   add(p.say);
   switch (type) {
     case 'translate':
+      if (!sayable(p.say)) add(firstOf(p.accepted));
+      break;
     case 'writing':
     case 'listening':
       add(firstOf(p.accepted));
@@ -151,11 +157,32 @@ export function lessonAudioTargets(type: string, payload: unknown): string[] {
   return out;
 }
 
+/** a letter, a mark or a digit — or the ZWNJ, which sits inside a Soranî word */
+const WORD = String.raw`[\p{L}\p{M}\p{N}\u200c]`;
+
+/**
+ * Whether `text` stands as whole words in what `prompt` shows, once both are
+ * keyed the way recordings are (`lessonAudioKey`). The API plays a multiple-
+ * choice or translate item's model before the answer only when its Kurdish is
+ * on screen like this (lessonaudio/delivery.ts); the road's check asks the
+ * same of every item whose Kurdish is in `say`, so none is left with nothing
+ * to read or hear.
+ */
+export function shownInPrompt(prompt: unknown, text: string): boolean {
+  if (typeof prompt !== 'string') return false;
+  const key = lessonAudioKey(text);
+  if (key === '') return false;
+  const escaped = key.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+  return new RegExp(`(?<!${WORD})${escaped}(?!${WORD})`, 'u').test(lessonAudioKey(prompt));
+}
+
 /**
  * The one text a learner should hear as the model for an exercise: `say` when
  * set, else the first accepted answer (translate, writing, listening) or the
  * reference (speaking). Match-pairs has none — each card has its own — and so
- * has a multiple-choice item without `say`.
+ * has a multiple-choice item without `say`. Always the first of
+ * `lessonAudioTargets`, where an item has a model: a translation with `say`
+ * is never modelled by its English answer, which nobody records.
  */
 export function primaryAudioTarget(type: string, payload: unknown): string | null {
   const p = isRecord(payload) ? payload : {};

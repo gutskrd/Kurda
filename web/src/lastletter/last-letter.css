@@ -1,0 +1,331 @@
+/*
+ * The Last Letter's staging (lastletter/Board.tsx): a ring around the next
+ * letter, the chain of word cards with each link lit, the players' strike
+ * marks, and the word box. Flat planes from the palette, no shadows or
+ * gradients. Under Reduce Motion nothing slides or shakes; colour alone says
+ * what happened.
+ */
+.ll-page {
+  --ll-link: var(--gold-ink);
+  --ll-link-soft: var(--gold-soft);
+}
+
+.ll-start {
+  display: grid;
+  gap: var(--space-4, 16px);
+}
+.ll-way {
+  display: grid;
+  gap: var(--space-2, 8px);
+  padding: var(--space-4, 16px);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+}
+.ll-way-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.ll-not-offered {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3, 12px);
+  text-align: center;
+}
+.ll-lobby-note {
+  margin: 0;
+}
+
+.ll-board {
+  display: grid;
+  /* a track that never grows to fit the chain: the chain scrolls inside it instead */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4, 16px);
+  min-width: 0;
+}
+.ll-board > * {
+  min-width: 0;
+}
+.mp-room {
+  min-width: 0;
+}
+
+/* the turn: the ring with the letter in it, and whose turn it is */
+.ll-turn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4, 16px);
+}
+.ll-turn-text {
+  min-width: 0;
+}
+.ll-whose {
+  margin: 0;
+  font-size: var(--text-section);
+  font-weight: 700;
+}
+.ll-whose.is-mine {
+  color: var(--primary);
+}
+.ll-starts {
+  margin: 2px 0 0;
+}
+.ll-spellings {
+  font-weight: 700;
+  color: var(--ll-link);
+}
+.ll-ring {
+  position: relative;
+  flex: none;
+  width: 80px;
+  height: 80px;
+}
+.ll-ring svg {
+  display: block;
+}
+.ll-ring-track,
+.ll-ring-time {
+  fill: none;
+  stroke-width: 6;
+}
+.ll-ring-track {
+  stroke: var(--separator);
+}
+.ll-ring-time {
+  stroke: var(--primary);
+  stroke-linecap: round;
+  transition: stroke-dashoffset 1s linear, stroke var(--dur) var(--ease-out);
+}
+.ll-ring.is-low .ll-ring-time {
+  stroke: var(--danger);
+}
+.ll-ring-inner {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+}
+.ll-letter {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--ll-link);
+}
+.ll-letter.is-any {
+  font-size: 22px;
+  color: var(--ink-3, var(--ink));
+}
+
+/* the chain: cards in a row, the link letters lit */
+.ll-chain.is-empty {
+  padding: var(--space-4, 16px);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-lg);
+  text-align: center;
+}
+.ll-chain.is-empty p {
+  margin: 0;
+}
+.ll-cards {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 4px 2px 10px;
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-x: contain;
+}
+.ll-cards:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.ll-card {
+  position: relative;
+  flex: none;
+  display: grid;
+  gap: 2px;
+  min-width: 96px;
+  max-width: 180px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-solid);
+  scroll-snap-align: end;
+  animation: ll-arrive var(--dur-slow) var(--ease-emphasis) both;
+}
+.ll-card + .ll-card::before {
+  /* the link between two cards: the last letter of one holding the first of the next */
+  content: '';
+  position: absolute;
+  inset-inline-start: -11px;
+  top: 50%;
+  width: 10px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--ll-link);
+}
+.ll-card.is-mine {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+}
+.ll-word {
+  font-size: 20px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.ll-first,
+.ll-last {
+  color: var(--ll-link);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+.ll-meaning {
+  font-size: var(--text-caption);
+  color: var(--ink-3, var(--ink));
+}
+.ll-by {
+  font-size: var(--text-caption);
+  color: var(--ink-3, var(--ink));
+}
+
+/* the players: three strike marks each */
+.ll-seats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.ll-seat {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+}
+.ll-seat.is-turn {
+  border-color: var(--primary);
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.ll-seat.is-out {
+  opacity: 0.55;
+}
+.ll-seat.is-struck {
+  border-color: var(--danger);
+  animation: ll-buzz 420ms var(--ease-out);
+}
+.ll-seat-name {
+  font-weight: 600;
+}
+.ll-strikes {
+  display: inline-flex;
+  gap: 4px;
+}
+.ll-strike {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1.5px solid var(--danger);
+}
+.ll-strike.is-on {
+  background: var(--danger);
+}
+.ll-tag {
+  font-size: var(--text-caption);
+  color: var(--ink-3, var(--ink));
+}
+.ll-tag.is-away {
+  font-style: italic;
+}
+.ll-announce {
+  margin: 0;
+  color: var(--danger);
+  font-weight: 600;
+}
+
+/* the word box */
+.ll-compose {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+.ll-input {
+  min-height: 48px;
+  font-size: 20px;
+}
+.ll-hint {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--danger);
+}
+
+.mp-standin {
+  margin: 0;
+  color: var(--ink-3, var(--ink));
+}
+/* the results' heading takes the focus for screen readers (it is not a stop for the keyboard): no ring for that */
+.mp-room .match-verdict[tabindex='-1']:focus {
+  outline: none;
+}
+.mp-leave {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@keyframes ll-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes ll-buzz {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-4px);
+  }
+  40% {
+    transform: translateX(4px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ll-card,
+  .ll-seat.is-struck {
+    animation: none;
+  }
+  .ll-ring-time {
+    transition: none;
+  }
+}
+.ll-board.is-still .ll-card,
+.ll-board.is-still .ll-seat.is-struck {
+  animation: none;
+}
+
+@media (max-width: 420px) {
+  .ll-turn {
+    gap: var(--space-3, 12px);
+  }
+  .ll-word {
+    font-size: 18px;
+  }
+}

@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, Share, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   MAX_PLAYERS,
   MIN_PLAYERS_TO_START,
-  buildInviteUrl,
-  formatJoinCode,
   type StoryGamePlayer,
   type StoryGameView,
   type StoryListItem,
@@ -21,7 +19,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { display } from '../../theme/fonts';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useI18n } from '../../i18n/I18nContext';
-import { InviteSheet } from '../../play/InviteSheet';
+import { LobbyShare } from '../../play/CodeTicket';
 import { LobbyInvites } from '../../play/LobbyInvites';
 import { PlayerReportButton } from '../../reports/PlayerReportButton';
 import { leaveGame, listStories, removePlayer, startGame, updateSettings } from '../api';
@@ -40,17 +38,12 @@ export function playerName(p: Pick<StoryGamePlayer, 'name' | 'seat' | 'isMe'>, t
   return p.name ?? t('stories.player', { seat: p.seat });
 }
 
-/** "A B C 2 3 4", so a screen reader spells the code instead of reading it as a word. */
-export function spelledCode(code: string): string {
-  return code.split('').join(' ');
-}
-
 /**
- * The lobby of a duo or group game (contract §A1 "Lobby"): the join code
- * (and a link — the share sheet sends both), friends to invite and where each
- * invite stands, the players by seat, and the settings. The host can change
- * the settings, take a player out and start once enough people are in;
- * everyone else waits for the host, or leaves.
+ * The lobby of a duo or group game (contract §A1 "Lobby"): the join code on
+ * its ticket (play/CodeTicket, the same as every game's lobby) with friends to
+ * invite beside it, where each invite stands, the players by seat, and the
+ * settings. The host can change the settings, take a player out and start once
+ * enough people are in; everyone else waits for the host, or leaves.
  */
 export function Lobby({
   view,
@@ -67,7 +60,6 @@ export function Lobby({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const [inviting, setInviting] = useState(false);
   const [editing, setEditing] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -75,7 +67,6 @@ export function Lobby({
   const active = view.players.filter((p) => !p.gone && !p.away).length;
   const needed = MIN_PLAYERS_TO_START[view.mode];
   const canStart = view.isHost && active >= needed;
-  const link = buildInviteUrl('stories', view.id);
 
   const run = async (key: string, work: () => Promise<ApiResult<StoryGameView>>): Promise<void> => {
     setBusy(key);
@@ -83,13 +74,6 @@ export function Lobby({
     const err = apply(await work());
     setBusy(null);
     if (err) setError(err.code === 'NOT_ENOUGH_PLAYERS' ? t('stories.lobby.needMore') : describeError(err, t));
-  };
-
-  const share = (): void => {
-    const message = view.code
-      ? t('stories.lobby.shareText', { title: s.storyTitle, code: formatJoinCode(view.code), link })
-      : t('stories.lobby.shareTextNoCode', { title: s.storyTitle, link });
-    void Share.share({ message }).catch(() => undefined);
   };
 
   const remove = (p: StoryGamePlayer): void => {
@@ -151,29 +135,16 @@ export function Lobby({
         onChanged={() => refresh?.()}
       />
 
-      {view.code ? (
-        <Card style={styles.card}>
-          <SectionLabel>{t('stories.lobby.code')}</SectionLabel>
-          <Text
-            selectable
-            style={[styles.code, { color: colors.primary }]}
-            accessibilityLabel={t('stories.lobby.codeSpelled', { code: spelledCode(view.code) })}
-          >
-            {formatJoinCode(view.code)}
-          </Text>
-          <Text style={[styles.codeHint, { color: colors.textSecondary }]}>
-            {s.access === 'open' ? t('stories.lobby.codeOpen') : t('stories.lobby.codeFriends')}
-          </Text>
-          {/* only the host may invite friends in (the server refuses anyone else); everyone may share */}
-          {view.isHost && active < MAX_PLAYERS[view.mode] ? (
-            <ClayButton label={t('stories.lobby.invite')} icon="user-plus" tone="primary" onPress={() => setInviting(true)} />
-          ) : null}
-          <ClayButton label={t('share.title')} icon="share" onPress={share} />
-          <Text selectable style={[styles.link, { color: colors.textSecondary }]} accessibilityLabel={t('games.inviteLink')}>
-            {link}
-          </Text>
-        </Card>
-      ) : null}
+      {/* only the host may invite friends in (the server refuses anyone else); everyone may share the code */}
+      <LobbyShare
+        game="stories"
+        lobbyId={view.id}
+        code={view.code}
+        canInvite={view.isHost && active < MAX_PLAYERS[view.mode]}
+        mode={view.mode === 'duo' ? 'duo' : 'group'}
+        note={s.access === 'open' ? t('stories.lobby.codeOpen') : t('stories.lobby.codeFriends')}
+        storyTitle={s.storyTitle}
+      />
 
       <Card style={styles.card}>
         <SectionLabel>{t('stories.lobby.players', { count: active, max: MAX_PLAYERS[view.mode] })}</SectionLabel>
@@ -252,9 +223,6 @@ export function Lobby({
         onPress={leave}
       />
 
-      {inviting ? (
-        <InviteSheet target={{ kind: 'lobby', game: 'stories', lobbyId: view.id, mode: view.mode === 'duo' ? 'duo' : 'group' }} onClose={() => setInviting(false)} />
-      ) : null}
       {editing ? <SettingsSheet view={view} apply={apply} onClose={() => setEditing(false)} /> : null}
     </>
   );
@@ -339,9 +307,6 @@ const styles = StyleSheet.create({
   card: { gap: spacing.sm },
   title: { ...display(typography.sizes.lg) },
   settings: { fontSize: typography.sizes.sm, lineHeight: 20 },
-  code: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, letterSpacing: 4, textAlign: 'center', writingDirection: 'ltr' },
-  codeHint: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  link: { fontSize: typography.sizes.xs, textAlign: 'center', writingDirection: 'ltr' },
   player: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
   playerMain: { flex: 1, gap: 2 },
   playerName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

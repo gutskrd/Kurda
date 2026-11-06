@@ -32,9 +32,9 @@ describe('pseudonyms', () => {
 describe('banned-address normalising', () => {
   it('sees through the cheap ways to make "a new address"', () => {
     expect(normalizeEmailForRegistry('  Rojda+again@Example.com ')).toBe('rojda@example.com');
-    expect(normalizeEmailForRegistry('ro.j.da+x@googlemail.com')).toBe('rojda@gmail.com');
+    expect(normalizeEmailForRegistry('fix.tu.re+x@googlemail.com')).toBe('fixture@gmail.com');
     expect(normalizeEmailForRegistry('ro.jda@example.com')).toBe('ro.jda@example.com'); // dots matter elsewhere
-    expect(emailRegistryHash('Rojda+2@gmail.com')).toBe(emailRegistryHash('r.o.j.d.a@gmail.com'));
+    expect(emailRegistryHash('Fixture+2@gmail.com')).toBe(emailRegistryHash('f.i.x.t.u.r.e@gmail.com'));
   });
 });
 

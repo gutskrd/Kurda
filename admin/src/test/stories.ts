@@ -4,9 +4,35 @@
  * the right answer in different places, evidence on each, a glossary whose
  * words are in the text), and list rows to go with it.
  */
+import type { StoryCategory } from '@kurda/shared';
 import type { AdminStory, AdminStorySummary } from '../stories';
 
 export const STORY_ID = '0b5c1a52-6c1e-4f43-9a37-2a1f6b6a9d01';
+
+/** The library's categories, as GET /admin/story-categories lists them (in position order). */
+export const CATEGORIES: StoryCategory[] = [
+  { slug: 'fable', name: { en: 'Animal fables', ku: 'Çîrokên heywanan' }, position: 1 },
+  { slug: 'legend', name: { en: 'Legends and history', ku: 'Efsane û dîrok' }, position: 2 },
+  { slug: 'family', name: { en: 'Family', ku: 'Malbat' }, position: 3 },
+  { slug: 'everyday', name: { en: 'Everyday life', ku: 'Jiyana rojane' }, position: 6 },
+];
+
+/** The fixture story's twelve sentences with their recordings: the first recorded, the rest not. */
+export function audioFixture(body: string = BODY, recorded = 1): AdminStory['audio'] {
+  const sentences: AdminStory['audio']['sentences'] = [];
+  body.split('\n\n').forEach((paragraph, p) => {
+    paragraph.split(/(?<=\.)\s+/).forEach((text, i) => {
+      const n = sentences.length;
+      const key = `s${n}`;
+      sentences.push(
+        n < recorded
+          ? { paragraph: p, sentence: i, text, key, recorded: true, url: `https://cdn.test/${key}.wav`, durationMs: 1800, speaker: 'hevalo', updatedAt: '2026-10-02T09:00:00.000Z' }
+          : { paragraph: p, sentence: i, text, key, recorded: false },
+      );
+    });
+  });
+  return { sentences, recorded: Math.min(recorded, sentences.length), total: sentences.length };
+}
 
 export const BODY = [
   'Rojîn deh salî ye. Ew li gundekî biçûk dijî. Gundê wê li ber çiyayekî bilind e. Her sibe Rojîn bi birayê xwe re diçe dibistanê.',
@@ -19,7 +45,9 @@ export function storyFixture(over: Partial<AdminStory> = {}): AdminStory {
     id: STORY_ID,
     slug: 'reya-dibistane',
     dialect: 'kurmanci',
+    language: 'ku',
     level: 1,
+    cefr: 'A1',
     title: 'Rêya Dibistanê',
     summary: 'Rojîn her sibe diçe dibistanê.',
     body: BODY,
@@ -101,8 +129,17 @@ export function storyFixture(over: Partial<AdminStory> = {}): AdminStory {
         evidenceSentence: null,
       },
     ],
+    category: 'everyday',
+    tradition: 'original',
+    author: null,
+    source: null,
+    sourceUrl: null,
+    attributionNote: null,
+    translations: {},
+    cover: null,
+    readingMinutesOverride: null,
     status: 'draft',
-    source: 'admin',
+    origin: 'admin',
     wordCount: 72,
     length: 'short',
     readingMinutes: 2,
@@ -110,6 +147,16 @@ export function storyFixture(over: Partial<AdminStory> = {}): AdminStory {
     publishedAt: null,
     createdAt: '2026-10-01T09:00:00.000Z',
     updatedAt: '2026-10-02T09:00:00.000Z',
+    featured: false,
+    featuredAt: null,
+    reviewStatus: 'unreviewed',
+    reviewedBy: null,
+    reviewedAt: null,
+    reviewNote: null,
+    translationGroup: null,
+    versions: [],
+    glossaryMatches: [],
+    audio: { sentences: [], recorded: 0, total: 0 },
     problems: { errors: [], warnings: [] },
     ...over,
   };
@@ -120,16 +167,24 @@ export function summaryOf(story: AdminStory, over: Partial<AdminStorySummary> = 
     id: story.id,
     slug: story.slug,
     dialect: story.dialect,
+    language: story.language,
     level: story.level,
+    cefr: story.cefr,
     title: story.title,
     status: story.status,
-    source: story.source,
+    origin: story.origin,
     wordCount: story.wordCount,
     length: story.length,
     questionCount: story.questions.length,
     lockVersion: story.lockVersion,
     publishedAt: story.publishedAt,
     updatedAt: story.updatedAt,
+    category: story.category,
+    tradition: story.tradition,
+    reviewStatus: story.reviewStatus,
+    featured: story.featured,
+    audio: 'none',
+    translationGroup: story.translationGroup,
     problems: { errors: story.problems.errors.length, warnings: story.problems.warnings.length },
     ...over,
   };

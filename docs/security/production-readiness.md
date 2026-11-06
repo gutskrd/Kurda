@@ -379,9 +379,13 @@ shutdown (drain in-flight work, close pool/Redis, run `onClose`).
   to the API+worker only. Managed Redis must require **auth** (credentials in
   `REDIS_URL`). The compose stack binds both to `127.0.0.1` locally, but a managed
   provider's network config is yours to lock down.
-- **`IAP_ALLOW_STUB`** — leave unset (or `false`) on any store-facing deploy; it
-  enables the dev stub receipt verifier. The API logs a loud warning when it is
-  `true` in production.
+- **`IAP_PURCHASES_OFF`** — `true` boots a deploy that has no App Store / Play
+  credentials with every receipt refused (503 `IAP_UNAVAILABLE`); the API logs a
+  loud warning while it is on. Remove it once real verifiers are wired.
+  **`IAP_ALLOW_STUB`** (its old name) is read the same way, with a warning to
+  rename it: it switches purchases off and nothing more. The test receipt
+  verifier, which believes whatever a receipt says, stops a production boot
+  whatever selects it.
 - **External-service credentials** (only where the feature is enabled) —
   `RESEND_API_KEY`/`SMTP_*` (see [email-delivery](email-delivery.md)),
   `GOOGLE_CLIENT_IDS`/`APPLE_CLIENT_IDS` (see [google-signin](google-signin.md)),

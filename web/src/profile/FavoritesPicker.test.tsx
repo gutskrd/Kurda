@@ -45,7 +45,7 @@ describe('FavoritesPicker', () => {
     );
     renderApp(<FavoritesPicker me={me} onChanged={() => {}} />, ['/app/profile']);
 
-    const poemRow = screen.getByText('Favorite poem').closest('.fav-kind') as HTMLElement;
+    const poemRow = screen.getByText('Favourite poem').closest('.fav-kind') as HTMLElement;
     expect(within(poemRow).getByText('None')).toBeInTheDocument();
     await userEvent.click(within(poemRow).getByRole('button', { name: 'Change' }));
 
@@ -71,7 +71,7 @@ describe('FavoritesPicker', () => {
     );
     renderApp(<FavoritesPicker me={me} onChanged={() => {}} />, ['/app/profile']);
 
-    const storyRow = screen.getByText('Favorite story').closest('.fav-kind') as HTMLElement;
+    const storyRow = screen.getByText('Favourite story').closest('.fav-kind') as HTMLElement;
     expect(within(storyRow).getByText('Old Tale')).toBeInTheDocument();
     await userEvent.click(within(storyRow).getByRole('button', { name: 'Remove' }));
 

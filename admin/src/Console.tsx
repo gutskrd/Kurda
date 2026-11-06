@@ -30,6 +30,7 @@ import { Pictures } from './pages/Pictures';
 import { Security } from './pages/Security';
 import { Games } from './pages/Games';
 import { AudioStudio } from './pages/AudioStudio';
+import { RecordByPerson } from './pages/RecordByPerson';
 import { Shop } from './pages/Shop';
 import { Stories } from './pages/Stories';
 import { Dashboard } from './pages/Dashboard';
@@ -38,6 +39,7 @@ import { Seasons } from './pages/Seasons';
 import { Leagues } from './pages/Leagues';
 import { Badges } from './pages/Badges';
 import { Email } from './pages/Email';
+import { GameContent } from './pages/GameContent';
 
 /**
  * Each page by its key (navigation.ts has who may open it and where it sits
@@ -48,6 +50,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   dashboard: () => <Dashboard />,
   analytics: () => <Analytics />,
   audio: () => <AudioStudio />,
+  record: (route) => <RecordByPerson voice={route.rest[0] ?? null} />,
   users: () => <Users />,
   email: () => <Email />,
   moderation: () => <Moderation />,
@@ -65,6 +68,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   wordle: () => <Games section="wordle" />,
   rhyme: () => <Games section="rhyme" />,
   race: () => <Games section="race" />,
+  'game-content': () => <GameContent />,
   ranks: () => <Ranks />,
   seasons: () => <Seasons />,
   leagues: () => <Leagues />,

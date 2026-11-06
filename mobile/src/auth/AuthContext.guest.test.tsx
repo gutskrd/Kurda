@@ -136,6 +136,40 @@ describe('trying Hevalo as a guest', () => {
     expect(result.current.isGuest).toBe(true);
   });
 
+  /*
+   * Apple or Google claims the guest only when the sign-in carries the
+   * guest's session, and the server does not renew one that ran out on that
+   * route — it just makes a second account. So the session is renewed first,
+   * and the sign-in goes with the fresh token.
+   */
+  it('signs a guest in with Google on a renewed session, so the server claims the guest', async () => {
+    const seen: Array<{ url: string; token: string | null }> = [];
+    // the guest's first token runs out once the session has started
+    let expired = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init: RequestInit) => {
+        const token = ((init.headers ?? {}) as Record<string, string>).authorization?.replace('Bearer ', '') ?? null;
+        seen.push({ url, token });
+        if (url.endsWith('/auth/guest')) return json(201, GUEST);
+        if (url.endsWith('/auth/refresh')) return json(200, { accessToken: 'guest-acc-2', refreshToken: 'guest-ref-2' });
+        if (expired && token === 'guest-acc') return json(401, { code: 'UNAUTHORIZED', message: 'token expired' });
+        if (url.endsWith('/auth/oauth')) return json(201, { user: CLAIMED.user, tokens: { accessToken: 'acc', refreshToken: 'ref' } });
+        return json(200, { user: GUEST.user });
+      }),
+    );
+    const { result } = await startAsGuest([]);
+    expired = true;
+    await act(async () => {
+      expect(await result.current.oauthSignIn('google', 'google-id-token')).toBeNull();
+    });
+    const at = (path: string) => seen.findIndex((s) => s.url.endsWith(path));
+    expect(at('/auth/refresh')).toBeGreaterThan(-1);
+    expect(at('/auth/refresh')).toBeLessThan(at('/auth/oauth'));
+    expect(seen[at('/auth/oauth')]?.token).toBe('guest-acc-2');
+    expect(result.current.isGuest).toBe(false);
+  });
+
   it('tells the account gate when the server refuses the guest something only an account may do', async () => {
     const calls = stubFetch((url) => {
       if (url.endsWith('/auth/guest')) return json(201, GUEST);

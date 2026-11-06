@@ -57,12 +57,29 @@ export function questTitle(q: QuestView, t: Translate): string {
   return q.titleEn ?? t(DEFAULT_TITLE[q.type]);
 }
 
-/** e.g. "🪙 200 · 💎 30" — empty string when there is no reward. */
-export function rewardLabel(reward: QuestReward): string {
-  const parts: string[] = [];
-  if (reward.zer && reward.zer > 0) parts.push(`🪙 ${reward.zer}`);
-  if (reward.gems && reward.gems > 0) parts.push(`💎 ${reward.gems}`);
-  return parts.join(' · ');
+export type RewardCurrency = 'zer' | 'gems';
+
+/**
+ * What a quest pays, currency by currency — Zêr, then gems — for the row to
+ * draw with the app's own coin and gem, as the shop and the gift sheet do.
+ * Empty when it pays nothing.
+ */
+export function rewardParts(reward: QuestReward): Array<{ currency: RewardCurrency; amount: number }> {
+  const parts: Array<{ currency: RewardCurrency; amount: number }> = [];
+  if (reward.zer && reward.zer > 0) parts.push({ currency: 'zer', amount: reward.zer });
+  if (reward.gems && reward.gems > 0) parts.push({ currency: 'gems', amount: reward.gems });
+  return parts;
+}
+
+/**
+ * The reward in words, for a screen reader, which says nothing for a drawn
+ * coin: "+200 Zêr, +30 Gems", in the words the chest and the league use for
+ * what they pay. `count` formats each amount for the reader's language.
+ */
+export function rewardSpoken(reward: QuestReward, t: Translate, count: (n: number) => string = String): string {
+  return rewardParts(reward)
+    .map((p) => (p.currency === 'zer' ? t('quests.chest.reward', { amount: count(p.amount) }) : t('leagues.gems', { count: count(p.amount) })))
+    .join(', ');
 }
 
 export function claimState(q: QuestView): ClaimState {

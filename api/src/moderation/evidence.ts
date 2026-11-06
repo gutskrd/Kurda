@@ -1,4 +1,4 @@
-import type { EvidenceMessage, EvidenceSnapshot, ReportTargetType, ReportableGame } from '@kurda/shared';
+import { MULTI_GAMES, isMultiGame, type EvidenceMessage, type EvidenceSnapshot, type ReportTargetType, type ReportableGame } from '@kurda/shared';
 import { writtenForSql } from '../users/age.js';
 import type { Executor } from './tx.js';
 
@@ -489,6 +489,39 @@ registerGameSeats('stories', async (db, gameId) => {
   return { status: g.rows[0].status, players: p.rows.map((r) => ({ seat: Number(r.seat), userId: r.user_id })) };
 });
 
+/**
+ * The multiplayer learning games share the generic engine's seats
+ * (`game_lobby_players.seat`, given once and never reused in a game). A
+ * computer seat has nobody to report. What the reported player typed in the
+ * game is frozen with the report (`extra.typed`): a report about a game is
+ * judged on what was written in it, and the game clears its own copy a month
+ * after it ends.
+ */
+const multiSeats =
+  (game: string): GameSeatsReader =>
+  async (db, gameId) => {
+    // the lobby must be of the game the report names: one filed under another game's name is not found, not stored under the wrong one
+    const g = await db.query<{ status: string }>(`SELECT status FROM game_lobbies WHERE id = $1 AND game = $2`, [gameId, game]);
+    if (!g.rows[0]) return null;
+    const p = await db.query<{ seat: number; user_id: string }>(
+      `SELECT seat, user_id FROM game_lobby_players WHERE lobby_id = $1 AND user_id IS NOT NULL ORDER BY seat`,
+      [gameId],
+    );
+    return { status: g.rows[0].status, players: p.rows.map((r) => ({ seat: Number(r.seat), userId: r.user_id })) };
+  };
+for (const game of MULTI_GAMES) registerGameSeats(game, multiSeats(game));
+
+/** What a reported player typed in a multiplayer learning game, in order (the last 50 moves with text). */
+async function typedInGame(db: Executor, gameId: string, seat: number): Promise<Array<{ text: string; at: string }>> {
+  const r = await db.query<{ text: string; created_at: Date }>(
+    `SELECT text, created_at FROM (
+       SELECT text, created_at, seq FROM game_moves WHERE lobby_id = $1 AND seat = $2 AND text IS NOT NULL ORDER BY seq DESC LIMIT 50
+     ) m ORDER BY seq`,
+    [gameId, seat],
+  );
+  return r.rows.map((x) => ({ text: x.text, at: x.created_at.toISOString() }));
+}
+
 const resolveGamePlayer: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId) || !ctx.game || ctx.seat === undefined) return { refused: 'not_found' };
   const reader = gameSeatReaders.get(ctx.game);
@@ -509,6 +542,7 @@ const resolveGamePlayer: Resolver = async (db, targetId, ctx) => {
   );
   const nameOf = new Map(names.rows.map((r) => [r.id, r.username]));
   const storedId = `${ctx.game}:${targetId}:${ctx.seat}`;
+  const typed = isMultiGame(ctx.game) ? await typedInGame(db, targetId, ctx.seat) : null;
   return {
     targetId: storedId,
     subjectUserId: target.userId,
@@ -522,6 +556,7 @@ const resolveGamePlayer: Resolver = async (db, targetId, ctx) => {
         seat: ctx.seat,
         players: seats.players.map((p) => ({ seat: p.seat, userId: p.userId, username: nameOf.get(p.userId) ?? null })),
       },
+      ...(typed ? { extra: { typed } } : {}),
     },
   };
 };

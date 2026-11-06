@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { conversationLineKey, isSpeakerId, lessonAudioKey, primaryAudioTarget, type RecordingVoice, type SpeakerId } from '@kurda/shared';
+import { conversationLineKey, isSpeakerId, lessonAudioKey, primaryAudioTarget, shownInPrompt, type RecordingVoice, type SpeakerId } from '@kurda/shared';
 import type { ExerciseType } from '../content/repository.js';
 import { voiceColumns, voiceOf, type VoiceRow } from '../speakers/voice.js';
 
@@ -87,16 +87,6 @@ function keysOf(texts: unknown): string[] {
   return Array.isArray(texts) ? texts.map(keyOf).filter((k): k is string => k !== null) : [];
 }
 
-/** a letter, a mark or a digit — or the ZWNJ, which sits inside a Soranî word */
-const WORD = String.raw`[\p{L}\p{M}\p{N}‌]`;
-
-/** Whether `key` stands as whole words in what the prompt shows, once keyed the same way. */
-function shownIn(prompt: unknown, key: string): boolean {
-  if (typeof prompt !== 'string') return false;
-  const escaped = key.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
-  return new RegExp(`(?<!${WORD})${escaped}(?!${WORD})`, 'u').test(lessonAudioKey(prompt));
-}
-
 /**
  * Whether the model may be played before the learner answers.
  *
@@ -116,10 +106,10 @@ function modelBeforeAnswer(type: ExerciseType, p: Record<string, unknown>, prima
     case 'speaking':
       return true;
     case 'multiple_choice':
-      return shownIn(p.prompt, primary) && !keysOf(p.options).includes(primary);
+      return shownInPrompt(p.prompt, primary) && !keysOf(p.options).includes(primary);
     case 'translate':
     case 'writing':
-      return shownIn(p.prompt, primary) && !keysOf(p.accepted).includes(primary);
+      return shownInPrompt(p.prompt, primary) && !keysOf(p.accepted).includes(primary);
     default:
       return false;
   }

@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AppState, Animated, Easing, StyleSheet, View, type ImageSourcePropType } from 'react-native';
+import { Animated, Easing, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
 import {
   FIRE_CINDER_FADE,
@@ -42,6 +42,7 @@ import KINDLING from '../../assets/fire/kindling.webp';
 import NEWROZ from '../../assets/fire/newroz.webp';
 import SPARK from '../../assets/fire/spark.webp';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useScreenAwake } from '../a11y/useMotionAlive';
 import { useTheme } from './ThemeProvider';
 
 /**
@@ -189,14 +190,9 @@ interface Paint {
 /** A spark's colour: the Newroz fire's gold for a gold one, the fire's own for the rest; null when nothing rises. */
 const sparkColour = (e: FireEmber, colours: FireColours): string | null => (e.gold ? colours.gold : null) ?? colours.ember;
 
-/** Awake while the app is in front: a fire in the background has nobody to burn for. */
+/** Awake while the app is in front and its screen is the one in view: a fire on a tab behind another has nobody to burn for. */
 function useAwake(): boolean {
-  const [awake, setAwake] = useState(AppState.currentState !== 'background');
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => setAwake(state !== 'background'));
-    return () => sub.remove();
-  }, []);
-  return awake;
+  return useScreenAwake();
 }
 
 /**

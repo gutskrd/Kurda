@@ -34,7 +34,11 @@ const CURRENCY: Readonly<Record<string, string>> = { zer: 'Zêr', gems: 'Gems' }
 const LEDGER_REASON: Readonly<Record<string, string>> = {
   admin_adjustment: 'Changed by an admin',
   shop_purchase: 'Shop purchase',
-  shop_return: 'Shop return',
+  // from before purchases were final: the ledger keeps every row it ever had
+  shop_return: 'Shop return (no longer offered)',
+  daily_quest: 'Daily quest chest',
+  event_quest: 'Event quest reward',
+  iap_refund: 'Taken back after a store refund',
   iap_purchase: 'Bought in the app store',
   gift: 'Gift',
   daily_reward: 'Daily reward',
@@ -141,7 +145,11 @@ function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => v
     if (!yes) return;
     setBusy(true);
     try {
-      const res = await api<{ balance?: number }>(`/admin/users/${user.id}/wallet`, { method: 'POST', body: { currency, amount: value, reason: reason.trim() } });
+      // one key per confirmed change: a double click or a retry moves the money once
+      const res = await api<{ balance?: number }>(`/admin/users/${user.id}/wallet`, {
+        method: 'POST',
+        body: { currency, amount: value, reason: reason.trim(), idempotencyKey: crypto.randomUUID() },
+      });
       toast.success(
         `${value > 0 ? 'Added' : 'Took away'} ${Math.abs(value).toLocaleString()} ${CURRENCY[currency]}${res.balance !== undefined ? `. New balance: ${res.balance.toLocaleString()}.` : '.'}`,
       );

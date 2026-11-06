@@ -90,6 +90,7 @@ import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { useReducedMotion } from './src/a11y/useReducedMotion';
 import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
+import { noteScreen } from './src/errors/crashReporting';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { SettingsPageScreen } from './src/settings/SettingsPageScreen';
@@ -102,7 +103,18 @@ import { WordleScreen } from './src/wordle/WordleScreen';
 import { WordleBattleScreen } from './src/wordle/WordleBattleScreen';
 import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
 import { RhymeMatchScreen } from './src/rhyme/RhymeMatchScreen';
+import { LastLetterScreen } from './src/lastletter/LastLetterScreen';
+import { ImpostorScreen } from './src/impostor/ImpostorScreen';
+import { DontSayScreen } from './src/dontsay/DontSayScreen';
 import { RaceScreen } from './src/race/RaceScreen';
+import { BuildSentenceScreen } from './src/games/BuildSentenceScreen';
+import { BluffScreen } from './src/bluff/BluffScreen';
+import { WhoAmIScreen } from './src/whoami/WhoAmIScreen';
+import { KingdomScreen } from './src/kingdom/KingdomScreen';
+import { MemoryThiefScreen } from './src/games/MemoryThiefScreen';
+import { HearItScreen } from './src/games/HearItScreen';
+import { WhatWouldYouSayScreen } from './src/games/WhatWouldYouSayScreen';
+import { DetectiveScreen } from './src/games/DetectiveScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
@@ -112,7 +124,7 @@ import { DevicesScreen } from './src/security/DevicesScreen';
 import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
 import { ComposeScreen } from './src/composer/ComposeScreen';
-import { StoriesHubScreen } from './src/stories/StoriesHubScreen';
+import { StoriesScreen } from './src/stories/StoriesScreen';
 import { StoryReaderScreen } from './src/stories/StoryReaderScreen';
 import { StoryGameScreen } from './src/stories/StoryGameScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
@@ -172,8 +184,14 @@ const linking: LinkingOptions<RootStackParamList> = {
       WordSet: 'app/words/:set',
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
-      // `/app/games/stories?id=…` is a game to join; without an id it is the hub
+      LastLetter: inviteRoutePath('last-letter'),
+      Impostor: inviteRoutePath('impostor'),
+      DontSay: inviteRoutePath('dont-say'),
+      Bluff: inviteRoutePath('bluff'),
+      WhoAmI: inviteRoutePath('who-am-i'),
+      // `/app/games/stories?id=…` is a game to join; without an id it is the library
       Stories: inviteRoutePath('stories'),
+      // a story's address; the website's `/app/learn/stories/:slug` is rewritten to it (navigation/tabs.ts)
       StoryReader: 'app/games/stories/:slug',
       // a shared post: the address the website gives a written one and a picture
       LibraryPost: 'app/library/:postId',
@@ -357,6 +375,7 @@ function SignedInRoot() {
             exerciseIds={route.params?.exerciseIds}
             mode={route.params?.mode}
             unitId={route.params?.unitId}
+            sessionId={route.params?.sessionId}
             onExit={() => navigation.goBack()}
           />
         )}
@@ -564,6 +583,38 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
+      <RootStack.Screen name="LastLetter" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <GuestWall reason="play" onBack={() => navigation.goBack()}>
+            <LastLetterScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="Impostor" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <GuestWall reason="play" onBack={() => navigation.goBack()}>
+            <ImpostorScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="DontSay" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <GuestWall reason="play" onBack={() => navigation.goBack()}>
+            <DontSayScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="Bluff" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => (
+          <GuestWall reason="play" onBack={() => navigation.goBack()}>
+            <BluffScreen id={route.params?.id} onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      {/* Who Am I? alone is learning, which a guest may do; its race keeps the play wall inside (whoami/WhoAmIScreen) */}
+      <RootStack.Screen name="WhoAmI" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
       <RootStack.Screen name="Race" options={{ presentation: 'card' }}>
         {({ navigation }) => (
           <GuestWall reason="play" onBack={() => navigation.goBack()}>
@@ -571,12 +622,29 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
+      {/* a learning game is learning, as a lesson is: a guest plays it too (api/src/games) */}
+      <RootStack.Screen name="BuildSentence" options={{ presentation: 'card' }}>
+        {({ navigation }) => <BuildSentenceScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      {/* a guest's learning builds the village too; only its Zêr waits for an account (the server decides) */}
+      <RootStack.Screen name="Kingdom" options={{ presentation: 'card' }}>
+        {({ navigation }) => <KingdomScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="MemoryThief" options={{ presentation: 'card' }}>
+        {({ navigation }) => <MemoryThiefScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="HearIt" options={{ presentation: 'card' }}>
+        {({ navigation }) => <HearItScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="WhatWouldYouSay" options={{ presentation: 'card' }}>
+        {({ navigation }) => <WhatWouldYouSayScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Detective" options={{ presentation: 'card' }}>
+        {({ navigation }) => <DetectiveScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      {/* the library is reading, which a guest may do; the games behind it keep their own wall */}
       <RootStack.Screen name="Stories" options={{ presentation: 'card' }}>
-        {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <StoriesHubScreen id={route.params?.id} onExit={() => navigation.goBack()} />
-          </GuestWall>
-        )}
+        {({ route, navigation }) => <StoriesScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="StoryReader" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}
@@ -595,8 +663,7 @@ function SignedInRoot() {
       {/*
         Writing a post — words, pictures or both — and editing one. Full screen
         and without the swipe-down: the composer asks before it lets go of
-        something written. PostPicture and LibraryCompose are the two old ways
-        in, kept as names so anything still pointing at them lands here.
+        something written.
       */}
       <RootStack.Screen name="Compose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
         {({ route, navigation }) => (
@@ -607,13 +674,6 @@ function SignedInRoot() {
               asMeme={route.params?.meme}
               onExit={() => navigation.goBack()}
             />
-          </GuestWall>
-        )}
-      </RootStack.Screen>
-      <RootStack.Screen name="PostPicture" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
-        {({ navigation }) => (
-          <GuestWall reason="post" onBack={() => navigation.goBack()}>
-            <ComposeScreen onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
@@ -700,13 +760,6 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="LibraryPost" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
-      </RootStack.Screen>
-      <RootStack.Screen name="LibraryCompose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
-        {({ navigation }) => (
-          <GuestWall reason="post" onBack={() => navigation.goBack()}>
-            <ComposeScreen onExit={() => navigation.goBack()} />
-          </GuestWall>
-        )}
       </RootStack.Screen>
       {/*
         A guest's two ways to an account, over the app: the sign-up form that
@@ -853,6 +906,8 @@ function ThemedNavigation() {
       ),
     [navigation],
   );
+  // which screen is open, for a crash report to say where it happened: the route's name only, never its params
+  const onScreen = () => noteScreen(navigation.getCurrentRoute()?.name);
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
     ...base,
@@ -866,7 +921,7 @@ function ThemedNavigation() {
     },
   };
   return (
-    <NavigationContainer key={opened.round} ref={navigation} initialState={opened.state} linking={linking} theme={navTheme}>
+    <NavigationContainer key={opened.round} ref={navigation} initialState={opened.state} linking={linking} theme={navTheme} onReady={onScreen} onStateChange={onScreen}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <View style={{ flex: 1 }}>
         {/*

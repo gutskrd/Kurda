@@ -3,6 +3,7 @@ import { CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, SPEAKERS, conversationSpe
 import { EXERCISE_TYPES, TYPE_HINT, TYPE_NAME, blankPayload, type Exercise, type ExerciseType, type Issue, type Payload } from '../lessons';
 import { toPreview } from '../preview';
 import { Checkbox, Field, Icon } from '../ui';
+import { VOICE_ORDER, voiceName } from '../voicePlan';
 
 const str = (v: unknown): string => (typeof v === 'string' ? v : '');
 const strings = (v: unknown): string[] => (Array.isArray(v) ? v.map(str) : []);
@@ -143,7 +144,11 @@ export function ExerciseCard({
         {(exercise.type === 'translate' || exercise.type === 'writing' || exercise.type === 'listening') && (
           <TextList
             label={exercise.type === 'listening' ? 'Accepted transcriptions' : 'Accepted answers'}
-            hint="The first is shown as the correction, and is the one recorded in the audio studio."
+            hint={
+              exercise.type === 'translate'
+                ? 'The first is shown as the correction. The audio studio records it when it is the Kurdish; with “Say” set, the Kurdish is that, and the answers are not recorded.'
+                : 'The first is shown as the correction, and is the one recorded in the audio studio.'
+            }
             values={strings(p.accepted)}
             max={12}
             maxLength={exercise.type === 'writing' ? 500 : 300}
@@ -216,6 +221,28 @@ export function ExerciseCard({
             max: 300,
             hint: 'The Kurdish a learner should hear for this item when it is not one of the answers — a multiple-choice item’s Kurdish, say. The audio studio asks for a recording of it.',
           })}
+
+        {exercise.type !== 'conversation' && (
+          <Field
+            label="Recorded by"
+            hint="Who records this item’s Kurdish. The audio studio lists it among that character’s lines, and opens the recorder on them."
+            error={problem(issues, 'voice')}
+          >
+            <select
+              id={at('voice')}
+              value={isSpeakerId(p.voice) ? p.voice : ''}
+              disabled={readOnly}
+              onChange={(e) => set({ voice: isSpeakerId(e.target.value) ? e.target.value : undefined })}
+            >
+              {VOICE_ORDER.map((who) => (
+                <option key={who} value={who}>
+                  {voiceName(who)}
+                </option>
+              ))}
+              <option value="">None</option>
+            </select>
+          </Field>
+        )}
 
         {general.length > 0 && (
           <ul className="ex-problems">

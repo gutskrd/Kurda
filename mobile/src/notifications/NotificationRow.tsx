@@ -9,9 +9,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { splitName, type NoticeActor } from './inbox';
+import { ticketTone } from '../play/Ticket';
+import { splitName, type NoticeActor, type NoticeKind } from './inbox';
 import { NOTICE, NOTICE_ROW_HEIGHT } from './rowMetrics';
-import type { IconName } from '../theme/icon-paths';
 
 export interface NoticeRowProps {
   title: string;
@@ -19,7 +19,7 @@ export interface NoticeRowProps {
   time: string;
   unread: boolean;
   actor: NoticeActor | null;
-  kind: { icon: IconName; reward: boolean };
+  kind: NoticeKind;
   /** what a screen reader hears for the whole row */
   label: string;
   onPress: () => void;
@@ -100,15 +100,21 @@ const ACTION_HEIGHT = 32;
 /**
  * The picture: the person it is from, with what they did in a small badge on
  * the corner — or, when it is from Hevalo or from nobody the data names, the
- * kind itself, large, on a neutral disc.
+ * kind itself, large, on a neutral disc. An invite's badge is its ticket, in
+ * its game's colour, filled the way the ticket's stub is.
  */
-function Picture({ actor, kind, ring, mirrored }: { actor: NoticeActor | null; kind: { icon: IconName; reward: boolean }; ring: string; mirrored: boolean }): React.JSX.Element {
+function Picture({ actor, kind, ring, mirrored }: { actor: NoticeActor | null; kind: NoticeKind; ring: string; mirrored: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const tint = kind.reward ? colors.goldText : colors.textPrimary;
+  const stub = kind.game ? ticketTone(colors, kind.game) : null;
   if (!actor) {
     return (
-      <View style={[styles.tile, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Icon name={kind.icon} size={22} color={tint} />
+      <View
+        style={[styles.tile, { backgroundColor: stub ? stub.face : colors.controlTrack }]}
+        accessibilityElementsHidden
+        importantForAccessibility="no-hide-descendants"
+      >
+        <Icon name={kind.icon} size={22} color={stub ? stub.ink : tint} />
       </View>
     );
   }
@@ -116,8 +122,8 @@ function Picture({ actor, kind, ring, mirrored }: { actor: NoticeActor | null; k
     <View style={styles.picture} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <InitialsAvatar name={actor.name} id={actor.id} size={NOTICE.avatar} photoUrl={actor.photoUrl} />
       {/* ringed in whatever the row is drawn on, so it reads as sitting on the picture rather than cut into it */}
-      <View style={[styles.badge, mirrored ? styles.badgeLeft : styles.badgeRight, { backgroundColor: colors.primary, borderColor: ring }]}>
-        <Icon name={kind.icon} size={11} color={colors.textOnPrimary} />
+      <View style={[styles.badge, mirrored ? styles.badgeLeft : styles.badgeRight, { backgroundColor: stub ? stub.face : colors.primary, borderColor: ring }]}>
+        <Icon name={kind.icon} size={11} color={stub ? stub.ink : colors.textOnPrimary} />
       </View>
     </View>
   );

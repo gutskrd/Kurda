@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey, lessonAudioTargets, primaryAudioTarget } from './lesson-audio.js';
+import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey, lessonAudioTargets, primaryAudioTarget, shownInPrompt } from './lesson-audio.js';
 
 // explicit code points, so precomposed and decomposed are unambiguous
 const E_CIRC_DECOMPOSED = 'e' + String.fromCharCode(0x302);
@@ -105,12 +105,23 @@ describe('lessonAudioTargets', () => {
   });
 
   it('puts `say` first, on any type', () => {
-    expect(lessonAudioTargets('translate', { prompt: 'x', accepted: ['Spas dikim'], say: 'Spas' })).toEqual(['Spas', 'Spas dikim']);
+    expect(lessonAudioTargets('writing', { prompt: 'x', accepted: ['Spas dikim'], say: 'Spas' })).toEqual(['Spas', 'Spas dikim']);
+    expect(lessonAudioTargets('listening', { accepted: ['Ez baş im'], say: 'Tu çawa yî?' })).toEqual(['Tu çawa yî?', 'Ez baş im']);
     expect(lessonAudioTargets('match_pairs', { pairs: [{ left: 'av', right: 'water' }, { left: 'nan', right: 'bread' }], say: 'Av û nan' })).toEqual([
       'Av û nan',
       'av',
       'nan',
     ]);
+  });
+
+  it('asks only for the Kurdish of a Kurdish → English translation, never its English answer', () => {
+    const payload = { say: 'Ez ji Amedê me.', prompt: 'Translate into English', accepted: ['I am from Amed.', 'I’m from Amed'] };
+    expect(lessonAudioTargets('translate', payload)).toEqual(['Ez ji Amedê me.']);
+    expect(primaryAudioTarget('translate', payload)).toBe('Ez ji Amedê me.');
+    // English → Kurdish, with no `say`: the Kurdish answer is what is heard
+    expect(lessonAudioTargets('translate', { prompt: 'I am from Amed.', accepted: ['Ez ji Amedê me.', 'Ez ji Amedê me'] })).toEqual(['Ez ji Amedê me.']);
+    // a `say` with nothing in it names no Kurdish, so the answer is still the one
+    expect(lessonAudioTargets('translate', { say: ' ? ', prompt: 'x', accepted: ['Spas'] })).toEqual(['Spas']);
   });
 
   it('lists a text once even when it appears twice, keeping the first spelling', () => {
@@ -174,5 +185,19 @@ describe('primaryAudioTarget', () => {
   it('ignores a `say` with nothing in it', () => {
     expect(primaryAudioTarget('translate', { prompt: 'x', accepted: ['Spas'], say: ' ? ' })).toBe('Spas');
     expect(primaryAudioTarget('speaking', {})).toBeNull();
+  });
+});
+
+describe('shownInPrompt', () => {
+  it('finds a Kurdish sentence quoted in a prompt, whatever its quotes, case and final stop', () => {
+    expect(shownInPrompt('Hamo scratches his head. What does he say? “Nayê bîra min.”', 'Nayê bîra min.')).toBe(true);
+    expect(shownInPrompt('What does Xezal whisper? «Hêvî dipirse: “Gur dê wan bixapîne?”»', 'Hêvî dipirse: “Gur dê wan bixapîne?”')).toBe(true);
+    expect(shownInPrompt('Hamo opens the gate: "silav!" What does it mean?', 'Silav!')).toBe(true);
+  });
+
+  it('wants whole words: a sentence the prompt only paraphrases, or a word inside a longer one, is not shown', () => {
+    expect(shownInPrompt('Hamo scratches his head. What does he say?', 'Nayê bîra min.')).toBe(false);
+    expect(shownInPrompt('Which word is “Silavek”?', 'Silav')).toBe(false);
+    expect(shownInPrompt(undefined, 'Silav')).toBe(false);
   });
 });

@@ -4,6 +4,7 @@ import { requireAuth, requireRoles, markPrivileged } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { capabilitiesFor, hasCapability, isAdmin, isAdminRole, PRIVILEGED_ROLES, type AdminRole, type Capability } from './roles.js';
 import type { AdminTotpService } from './totp-service.js';
+import { voicesOf } from '../recording/links.js';
 
 const codeBody = z.object({ code: z.string().regex(/^\d{6}$/) });
 
@@ -123,6 +124,17 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
        * Empty until 2FA is done, like the capabilities.
        */
       staffRoles: cleared ? req.user!.roles.filter((r) => PRIVILEGED_ROLES.includes(r)) : [],
+      /**
+       * The voices this account records (recording/links.ts), so the console
+       * opens on that person's own lines. A read that fails leaves none: the
+       * console must still open without them.
+       */
+      voices: cleared
+        ? await voicesOf(app.db, req.user!.id).catch((err: unknown) => {
+            req.log.warn({ err }, 'could not read the voices linked to this account');
+            return [];
+          })
+        : [],
     };
   });
 

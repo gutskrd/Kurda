@@ -37,7 +37,7 @@ describe.skipIf(!DATABASE_URL)('risk service (integration)', () => {
   it('logs a low-risk signup as proceed with its signals', async () => {
     const svc = new RiskService(pool, { redis });
     const { assessment, signals } = await track(
-      svc.assessSignup({ email: `ok_${suffix}@gmail.com`, ip: `10.20.0.1`, deviceId: `devA_${suffix}` }),
+      svc.assessSignup({ email: `ok_${suffix}@example.com`, ip: `10.20.0.1`, deviceId: `devA_${suffix}` }),
     );
     expect(assessment.band).toBe('low');
     expect(assessment.action).toBe('proceed');
@@ -58,7 +58,7 @@ describe.skipIf(!DATABASE_URL)('risk service (integration)', () => {
     let last;
     for (let i = 0; i < MAX_ACCOUNTS_PER_DEVICE + 1; i++) {
       last = await track(
-        svc.assessSignup({ email: `c${i}_${suffix}@gmail.com`, ip: `10.20.1.${i}`, deviceId: device }),
+        svc.assessSignup({ email: `c${i}_${suffix}@example.com`, ip: `10.20.1.${i}`, deviceId: device }),
       );
     }
     // the (cap+1)-th signup from the same device is blocked regardless of score
@@ -76,7 +76,7 @@ describe.skipIf(!DATABASE_URL)('risk service (integration)', () => {
     let last;
     for (let i = 0; i < 12; i++) {
       last = await track(
-        shared.assessSignup({ email: `s${i}_${suffix}@gmail.com`, ip, deviceId: `shared${i}_${suffix}` }),
+        shared.assessSignup({ email: `s${i}_${suffix}@example.com`, ip, deviceId: `shared${i}_${suffix}` }),
       );
     }
     // 12 accounts from one shared IP: under the 50 shared cap, and IP volume is
@@ -90,7 +90,7 @@ describe.skipIf(!DATABASE_URL)('risk service (integration)', () => {
     const device = `gooddev_${suffix}`;
 
     // first signup from the device, attached to a verified user
-    const first = await track(svc.assessSignup({ email: `g_${suffix}@gmail.com`, ip: `10.20.3.1`, deviceId: device }));
+    const first = await track(svc.assessSignup({ email: `g_${suffix}@example.com`, ip: `10.20.3.1`, deviceId: device }));
     const u = await pool.query<{ id: string }>(
       `INSERT INTO users (email, username, email_verified_at)
        VALUES ($1, $2, now()) RETURNING id`,
@@ -110,7 +110,7 @@ describe.skipIf(!DATABASE_URL)('risk service (integration)', () => {
       ipReputation: new StaticIpReputationProvider({ reputation: 'malicious', sharedNetwork: false }),
     });
     const { assessment, signals } = await track(
-      badIp.assessLogin({ email: `x_${suffix}@gmail.com`, ip: `10.20.4.1`, deviceId: `mdev_${suffix}` }),
+      badIp.assessLogin({ email: `x_${suffix}@example.com`, ip: `10.20.4.1`, deviceId: `mdev_${suffix}` }),
     );
     expect(signals.ipReputation).toBe('malicious');
     expect(assessment.band).toBe('medium'); // IP alone → solvable step-up, not a block
@@ -136,7 +136,7 @@ describe.skipIf(!DATABASE_URL)('risk service (integration)', () => {
       ipReputation: { lookup: async () => { throw new Error('provider down'); } },
     });
     const { assessment, signals } = await track(
-      flaky.assessSignup({ email: `f_${suffix}@gmail.com`, ip: `10.20.5.1`, deviceId: `fdev_${suffix}` }),
+      flaky.assessSignup({ email: `f_${suffix}@example.com`, ip: `10.20.5.1`, deviceId: `fdev_${suffix}` }),
     );
     expect(signals.ipReputation).toBe('clean'); // neutral fallback, no hard block
     expect(assessment.action).toBe('proceed');

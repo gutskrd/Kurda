@@ -1,3 +1,4 @@
+import type { MultiGame } from '@kurda/shared';
 import { useEffect, useRef } from 'react';
 
 /**
@@ -17,7 +18,7 @@ import { useEffect, useRef } from 'react';
  */
 
 /** Every game a player can finish. */
-export type FinishedGameKind = 'wordle' | 'wordle-battle' | 'rhyme' | 'rhyme-match' | 'race' | 'stories';
+export type FinishedGameKind = 'wordle' | 'wordle-battle' | 'rhyme' | 'rhyme-match' | 'race' | 'stories' | MultiGame;
 
 export interface GameFinished {
   game: FinishedGameKind;

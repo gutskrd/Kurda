@@ -17,6 +17,8 @@ import { GAME_ICON, GAME_NAME_KEY, summaryParts } from './labels';
 import { RatedPill } from '../ranks/Rated';
 import { lobbyRoute } from './routes';
 import { useReportAction } from '../reports/reportAction';
+import { useDirection } from '../reports/direction';
+import { Ticket, TicketStamp, useChangedSinceMount } from './Ticket';
 
 /** A card's state in words: "Open · 2 of 4 joined", "Under way", … */
 export function cardStateText(card: LobbyCard, t: Translate): string {
@@ -34,6 +36,25 @@ export function cardStateText(card: LobbyCard, t: Translate): string {
     case 'unavailable':
       return t('play.card.unavailable');
   }
+}
+
+/**
+ * The stamp a card's ticket wears: "You're in" once the viewer is in a game that
+ * is still on, the word for it once a game is over, and nothing while it is
+ * simply open. A game that is over is spent — its stub greyed and punched —
+ * and so is one this viewer may not see, which looks the same as gone.
+ */
+export function cardStamp(card: LobbyCard | null): { key: 'play.card.joined' | 'play.card.finished' | 'play.card.cancelled'; tone: 'success' | 'muted' } | null {
+  if (!card) return null;
+  if (card.status === 'finished') return { key: 'play.card.finished', tone: 'muted' };
+  if (card.status === 'cancelled') return { key: 'play.card.cancelled', tone: 'muted' };
+  if (card.isMember && card.status !== 'unavailable') return { key: 'play.card.joined', tone: 'success' };
+  return null;
+}
+
+/** Whether a card's ticket is spent: the game is over, called off, or not this viewer's to see. */
+export function cardSpent(card: LobbyCard | null): boolean {
+  return card !== null && (card.status === 'finished' || card.status === 'cancelled' || card.status === 'unavailable');
 }
 
 /**
@@ -90,6 +111,13 @@ export function gameCardOf(message: {
  * A card the viewer may not see reads "This game isn't available", the same
  * as a game that is gone: it never says whose it was or why.
  *
+ * It is a ticket (Ticket.tsx): the game's colour and glyph on the stub, the
+ * game, who posted it and where it stands on the paper. Where it stands is a
+ * stamp once there is one to give — "You're in" lands with a small thump the
+ * moment the viewer is in, and a game that is over is greyed, punched and
+ * stamped with how it ended. A stamp already there when the chat opens is
+ * simply there.
+ *
  * `onReport` (someone else's message): the card takes the touch, so the
  * row's press-and-hold never fires there; a long press on the card reports
  * the message instead, and Report is among its screen-reader actions — on
@@ -99,16 +127,20 @@ export function ChatGameCard({
   game,
   lobbyId,
   onReport,
+  from,
 }: {
   game: PlayGame;
   lobbyId: string;
   /** report the message the card came in; undefined for your own */
   onReport?: () => void;
+  /** who posted it, for someone else's card */
+  from?: string;
 }): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const report = useReportAction(onReport);
   const [card, setCard] = useState<LobbyCard | null>(null);
 
@@ -139,28 +171,43 @@ export function ChatGameCard({
   const offer = cardAction(card);
   const action = offer ? (offer.kind === 'enter' ? t('play.card.enter') : t('play.card.join')) : null;
 
+  const stamp = cardStamp(card);
+  const spent = cardSpent(card);
+  // a stamp that arrives while the chat is open lands; one there as the card's state first arrived does not
+  const landed = useChangedSinceMount(stamp?.key ?? null, card !== null);
+  // the state in words, unless the stamp already says it
+  const stateLine = card && !(stamp && stamp.tone === 'muted') ? state : null;
+
+  const mirror = dir.row === 'row-reverse';
   // the card's own words and its Join: drawn the same whether or not it can be reported
   const content = (
     <>
-      <View style={styles.head}>
-        <View style={[styles.icon, { backgroundColor: colors.controlTrack }]}>
-          <Icon name={GAME_ICON[game]} size={20} color={colors.primary} />
-        </View>
-        <View style={styles.text}>
-          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
-            {name}
+      <View style={styles.text}>
+        <Text style={[styles.name, dir.text, { color: spent ? colors.textSecondary : colors.textPrimary }]} numberOfLines={1}>
+          {name}
+        </Text>
+        {from ? (
+          <Text style={[styles.details, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
+            {t('play.card.from', { name: from })}
           </Text>
-          {details ? (
-            <Text style={[styles.details, { color: colors.textSecondary }]} numberOfLines={2}>
-              {details}
-            </Text>
-          ) : null}
-          {/* Rated or Friendly, before anyone joins */}
-          {card?.summary.rated !== undefined ? <RatedPill rated={card.summary.rated} small style={styles.rated} /> : null}
-        </View>
+        ) : null}
+        {details ? (
+          <Text style={[styles.details, dir.free, { color: colors.textSecondary }]} numberOfLines={2}>
+            {details}
+          </Text>
+        ) : null}
+        {/* Rated or Friendly, before anyone joins */}
+        {card?.summary.rated !== undefined ? <RatedPill rated={card.summary.rated} small style={[styles.rated, mirror && styles.endSelf]} /> : null}
       </View>
       {card ? (
-        <Text style={[styles.state, { color: card.status === 'open' ? colors.success : colors.textSecondary }]}>{state}</Text>
+        stateLine || stamp ? (
+          <View style={[styles.stateRow, { flexDirection: dir.row }]}>
+            {stateLine ? (
+              <Text style={[styles.state, dir.text, { color: card.status === 'open' ? colors.success : colors.textSecondary }]}>{stateLine}</Text>
+            ) : null}
+            {stamp ? <TicketStamp key={stamp.key} label={t(stamp.key)} tone={stamp.tone} land={landed} /> : null}
+          </View>
+        ) : null
       ) : (
         <ActivityIndicator color={colors.primary} />
       )}
@@ -182,36 +229,47 @@ export function ChatGameCard({
       ) : null}
     </>
   );
-  const cardStyle = [styles.card, { backgroundColor: colors.glassFill }];
-  const label = t('play.card.label', { game: name, state });
+  const ticket = (
+    <Ticket
+      tone={game}
+      muted={spent}
+      punched={spent}
+      stub={(ink) => <Icon name={GAME_ICON[game]} size={22} color={ink.ink} />}
+      bodyStyle={styles.body}
+    >
+      {content}
+    </Ticket>
+  );
+  const label = [from ? t('play.card.from', { name: from }) : null, t('play.card.label', { game: name, state })].filter(Boolean).join('. ');
   // someone else's card reports its message on a long press; your own is a plain surface, not a control
   return onReport ? (
     <PressableScale
       onLongPress={onReport}
       delayLongPress={350}
-      style={cardStyle}
+      style={styles.card}
       accessible={!action}
       accessibilityLabel={label}
       {...(action ? {} : report)}
     >
-      {content}
+      {ticket}
     </PressableScale>
   ) : (
-    <View style={cardStyle} accessible={!action} accessibilityLabel={label}>
-      {content}
+    <View style={styles.card} accessible={!action} accessibilityLabel={label}>
+      {ticket}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { width: 250, maxWidth: '100%', borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
-  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  icon: { width: 36, height: 36, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  text: { flex: 1 },
+  card: { width: 280, maxWidth: '100%' },
+  body: { gap: spacing.sm },
+  text: { gap: 1 },
+  stateRow: { alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: spacing.sm },
+  endSelf: { alignSelf: 'flex-end' },
   rated: { marginTop: 4 },
   name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   details: { fontSize: typography.sizes.xs },
-  state: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  state: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   button: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
   quiet: { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth },
   buttonText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },

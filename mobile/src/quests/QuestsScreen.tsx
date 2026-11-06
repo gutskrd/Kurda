@@ -1,21 +1,22 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { justDone, nextChest, questRows, waitingRows, withOpened, type QuestDay, type QuestRow, type QuestStep } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
-import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
 import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
-import { Icon } from '../theme/Icon';
 import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
+import { CHEST_RATIO } from './ChestArt';
 import { ChestScreen } from './ChestScreen';
+import { MonthlyQuests } from './MonthlyQuests';
 import { QuestRows } from './QuestRows';
 
 /**
@@ -28,12 +29,15 @@ import { QuestRows } from './QuestRows';
  * gold edge. With a chest to open the main button is "Open chest", and
  * "Later" leaves it waiting on Learn; without one, "Continue" goes on.
  *
- * From Learn (`place: 'learn'`) it is the quests as they stand, with a way
- * back and "Open chest" while one waits.
+ * From Learn (`place: 'learn'`) it is the quests as they stand, each bar
+ * filling to where it is as the list opens, with a way back and "Open chest"
+ * while one waits.
  *
  * Under today's three, in either place, "Earlier" lists the quests of the
  * last week that were done and whose chests were never opened: a chest is
- * not lost at midnight.
+ * not lost at midnight. The month's tally (MonthlyQuests) heads the list
+ * from Learn, where the list is the whole screen, and closes it after a
+ * lesson, where the day's own rows are the news.
  *
  * "Open chest" opens each chest waiting, one after another (ChestScreen):
  * Continue on one goes to the next, and after the last back to where the
@@ -44,7 +48,7 @@ import { QuestRows } from './QuestRows';
 export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 'learn'; steps?: QuestStep[]; onDone: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t, locale } = useI18n();
+  const { t } = useI18n();
   const dir = useDirection();
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
@@ -66,6 +70,14 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
       live = false;
     };
   }, [client, attempt]);
+  // from Learn, pulled down, the day's quests are read again; a failure keeps the list that is there
+  const pull = usePullRefresh(() =>
+    client.get<QuestDay>('/me/quests').then((res) => {
+      if (!res.ok) return;
+      setDay(res.data);
+      setStatus('ready');
+    }),
+  );
 
   const rows = useMemo(() => withOpened(questRows(day, place === 'lesson' ? steps : []), opened), [day, steps, place, opened]);
   const earlier = useMemo(() => withOpened(waitingRows(day), opened), [day, opened]);
@@ -75,6 +87,11 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
   const shown = status === 'loading' ? null : rows;
   const finishedNow = place === 'lesson' && (shown ?? []).some(justDone);
   const waiting = nextChest(all);
+  // from Learn the bars fill from empty the first time the list is shown; back from a chest, they are simply where they are
+  const listSeen = useRef(false);
+  useEffect(() => {
+    if (shown) listSeen.current = true;
+  }, [shown]);
 
   useEffect(() => {
     if (finishedNow) AccessibilityInfo.announceForAccessibility?.(t('quests.justDone'));
@@ -96,6 +113,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
 
   if (chest) return <ChestScreen key={chest.id} questId={chest.id} tier={chest.chest} onDone={chestDone} />;
 
+  const month = day ? <MonthlyQuests day={day} cheer={waiting !== null} /> : null;
   const body =
     status === 'failed' && place === 'learn' ? (
       <ErrorRetry onRetry={() => setAttempt((n) => n + 1)} />
@@ -105,7 +123,8 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
       <EmptyState title={t('quests.empty')} />
     ) : (
       <>
-        <QuestRows rows={shown} play={place === 'lesson'} />
+        {place === 'learn' ? month : null}
+        <QuestRows rows={shown} play={place === 'lesson'} arrive={place === 'learn' && !listSeen.current} />
         {earlier.length > 0 ? (
           <>
             <Text style={[styles.earlier, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
@@ -114,14 +133,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
             <QuestRows rows={earlier} />
           </>
         ) : null}
-        {day ? (
-          <View style={[styles.month, { flexDirection: dir.row, borderColor: colors.separator }]}>
-            <Icon name="calendar" size={20} color={colors.goldText} />
-            <Text style={[styles.monthText, dir.text, { color: colors.textPrimary }]}>
-              {t('quests.month', { count: formatNumber(day.monthDone, locale) })}
-            </Text>
-          </View>
-        ) : null}
+        {place === 'lesson' ? month : null}
       </>
     );
 
@@ -143,7 +155,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
       <GradientBackground>
         <View style={styles.screen} testID="quests-screen">
           <ScreenHeader title={t('quests.title')} leading="close" backLabel={t('common.close')} onBack={onDone} />
-          <ScrollView style={styles.screen} contentContainerStyle={[styles.column, styles.learnColumn]}>
+          <ScrollView style={styles.screen} contentContainerStyle={[styles.column, styles.learnColumn]} refreshControl={pull}>
             {body}
           </ScrollView>
           {actions ? <View style={[styles.bar, { paddingBottom: bottom }]}>{actions}</View> : null}
@@ -178,7 +190,7 @@ function RowsSkeleton(): React.JSX.Element {
 }
 
 /** A row: its words (17pt on a 22pt line), the bar under them, and the padding round both. */
-const ROW_HEIGHT = 22 + spacing.sm + 46 * (100 / 120) + spacing.md + spacing.sm + 2;
+const ROW_HEIGHT = 22 + spacing.sm + 46 * CHEST_RATIO + spacing.md + spacing.sm + 2;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
@@ -187,8 +199,6 @@ const styles = StyleSheet.create({
   learnColumn: { paddingTop: spacing.md, paddingBottom: spacing.xl },
   kicker: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
   title: { ...display(typography.sizes.xxl), textAlign: 'center', marginBottom: spacing.sm },
-  month: { alignItems: 'center', gap: spacing.sm + 4, borderWidth: 1.5, borderRadius: radii.lg, padding: spacing.md },
-  monthText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   earlier: { ...sectionLabel, marginTop: spacing.sm },
   skeletons: { gap: spacing.sm + 4 },
   bar: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.xs },

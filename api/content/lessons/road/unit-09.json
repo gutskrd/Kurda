@@ -1,0 +1,3997 @@
+{
+  "course": {
+    "slug": "kurmanji-road",
+    "dialect": "kurmanji",
+    "titleKu": "Rêya Kurmancî",
+    "titleEn": "The Kurmanji Road"
+  },
+  "units": [
+    {
+      "position": 9,
+      "titleKu": "Duh",
+      "titleEn": "Yesterday",
+      "skills": [
+        {
+          "position": 1,
+          "titleKu": "Duh çi bû?",
+          "titleEn": "What happened yesterday?",
+          "grammarMd": "Verbs that take no object (go, come, sit, sleep…) make their past from the **past stem** with the personal endings:\n\n| | çûn (go) | hatin (come) |\n|---|---|---|\n| ez | çûm | hatim |\n| tu | çûyî | hatî |\n| ew | çû | hat |\n| em, hûn, ew | çûn | hatin |\n\nThe past stem is usually the dictionary form without **-n**: *çûn → çû*, *rabûn → rabû*, *ketin → ket*; many verbs in -în end in -iya (*revîn → reviya*, *tirsîn → tirsiya*), and a few are short (*mayîn → ma*).\n\n**Not** is **ne-** in front: *Ez neçûm.* I didn’t go. · *Ew nehat.* He didn’t come.\n\n*Duh çi bû?* What happened yesterday? · *Ez duh çûm bazarê.* I went to the market yesterday.",
+          "lessons": [
+            {
+              "key": "u09s1l1",
+              "position": 1,
+              "titleKu": "Ez çûm",
+              "titleEn": "I went",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Çi bû?",
+                    "voice": "hamo",
+                    "prompt": "Breakfast in Sêvan. Baran stares at his plate and says nothing, so Hamo puts down his tea glass: “Çi bû?” What is he asking?",
+                    "options": [
+                      "What happened?",
+                      "Who came?",
+                      "Where did you go?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Duh ez çûm çem.",
+                    "voice": "hamo",
+                    "prompt": "Baran takes a deep breath and begins his story. Listen: what did he do yesterday? “Duh ez çûm çem.”",
+                    "options": [
+                      "He went to the river.",
+                      "He came back from the river.",
+                      "He is going to the river."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "çûm",
+                        "right": "I went"
+                      },
+                      {
+                        "left": "hat",
+                        "right": "he came, she came"
+                      },
+                      {
+                        "left": "bû",
+                        "right": "was"
+                      },
+                      {
+                        "left": "Çi bû?",
+                        "right": "What happened?"
+                      },
+                      {
+                        "left": "berê",
+                        "right": "before, in the old days"
+                      },
+                      {
+                        "left": "par",
+                        "right": "last year"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xezal duh ji Amedê hat.",
+                    "voice": "hamo",
+                    "prompt": "Hamo tells you who else is at the table this morning. What does he say? “Xezal duh ji Amedê hat.”",
+                    "options": [
+                      "Xezal came from Amed yesterday.",
+                      "Xezal went to Amed yesterday.",
+                      "Xezal comes from Amed every day."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Par Baran heşt salî bû.",
+                    "voice": "hamo",
+                    "prompt": "Hamo ruffles Baran’s hair: his boy is growing up fast. What does he say? “Par Baran heşt salî bû.”",
+                    "accepted": [
+                      "Last year Baran was eight.",
+                      "Last year Baran was eight",
+                      "Baran was eight last year.",
+                      "Baran was eight last year",
+                      "Last year Baran was eight years old.",
+                      "Last year Baran was eight years old",
+                      "Baran was eight years old last year.",
+                      "Baran was eight years old last year"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Baran starts again, a little louder. Put his first words together: “Yesterday I went to the river.”",
+                    "accepted": [
+                      "Duh ez çûm çem.",
+                      "Duh ez çûm çem",
+                      "Ez duh çûm çem.",
+                      "Ez duh çûm çem"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo leans towards his son, very gently. Type what he asks.",
+                    "accepted": [
+                      "Tu duh li ku bûyî?",
+                      "Tu duh li ku bûyî"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hevalo tilts his head. Which sentence says “We went to Wan last year”?",
+                    "options": [
+                      "Par em çûn Wanê.",
+                      "Par em çûm Wanê.",
+                      "Par em diçin Wanê."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Hamo asks Xezal when she arrived. Complete her answer for “I came yesterday evening”: “Ez duh êvarê …”",
+                    "accepted": [
+                      "Ez duh êvarê hatim.",
+                      "Ez duh êvarê hatim",
+                      "Duh êvarê ez hatim.",
+                      "Duh êvarê ez hatim"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo looks at the donkey in the yard and smiles. Say: “Before, Bozo was small.”",
+                    "accepted": [
+                      "Berê Bozo biçûk bû.",
+                      "Berê Bozo biçûk bû",
+                      "Bozo berê biçûk bû.",
+                      "Bozo berê biçûk bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ez neçûm dibistanê, ez li malê bûm.",
+                    "voice": "hamo",
+                    "prompt": "Baran explains where he was not. What does he mean? “Ez neçûm dibistanê, ez li malê bûm.”",
+                    "accepted": [
+                      "I didn’t go to school, I was at home.",
+                      "I didn’t go to school, I was at home",
+                      "I did not go to school, I was at home.",
+                      "I did not go to school, I was at home",
+                      "I didn’t go to school; I was at home.",
+                      "I didn’t go to school; I was at home",
+                      "I didn't go to school, I was at home.",
+                      "I didn't go to school, I was at home"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Your turn to ask Baran, the way Hamo does: “What happened? Where were you?”",
+                    "reference": "Çi bû? Tu li ku bûyî?"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu kengî hatî?",
+                    "voice": "hamo",
+                    "prompt": "Hamo asks Xezal: “Tu kengî hatî?” Which answer is right?",
+                    "options": [
+                      "Ez duh hatim.",
+                      "Ez duh hat.",
+                      "Ez duh hatin."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo looks round the warm kitchen. Type what he says.",
+                    "accepted": [
+                      "Berê ev mal biçûk bû.",
+                      "Berê ev mal biçûk bû"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s1l2",
+              "position": 2,
+              "titleKu": "Bozo reviya",
+              "titleEn": "Bozo ran away",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo ji nişka ve reviya.",
+                    "voice": "hamo",
+                    "prompt": "Baran goes on with his story. What did Bozo do? “Bozo ji nişka ve reviya.”",
+                    "options": [
+                      "Suddenly Bozo ran away.",
+                      "Suddenly Bozo fell asleep.",
+                      "Bozo came home quickly."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li ser zinaran bizinek bû.",
+                    "voice": "hamo",
+                    "prompt": "Why did he run? Baran points up at the cliffs. What was there? “Li ser zinaran bizinek bû.”",
+                    "options": [
+                      "There was a goat on the cliffs.",
+                      "There was a donkey under the cliffs.",
+                      "There was a goat in the river."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ez li dû wî çûm, lê ez li ser keviran ketim.",
+                    "voice": "hamo",
+                    "prompt": "Baran rubs his knee as he remembers. What happened? “Ez li dû wî çûm, lê ez li ser keviran ketim.”",
+                    "accepted": [
+                      "I went after him, but I fell on the stones.",
+                      "I went after him, but I fell on the stones",
+                      "I followed him, but I fell on the stones.",
+                      "I followed him, but I fell on the stones",
+                      "I went after him but I fell on the stones.",
+                      "I went after him but I fell on the stones",
+                      "I followed him but fell on the stones.",
+                      "I followed him but fell on the stones"
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Say the heart of Baran’s story in two words: “Bozo ran away.”",
+                    "accepted": [
+                      "Bozo reviya.",
+                      "Bozo reviya"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Baran fell. Which sentence says “I fell”?",
+                    "options": [
+                      "Ez ketim.",
+                      "Ez ket.",
+                      "Ez ketin."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo nods slowly: he knows that valley. Type what he says.",
+                    "accepted": [
+                      "Gelî kûr û dirêj bû.",
+                      "Gelî kûr û dirêj bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Bozo was gone and Baran was on his own. Complete: “Ez tenê …” (I was left alone.)",
+                    "accepted": [
+                      "Ez tenê mam.",
+                      "Ez tenê mam"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo her gav direve!",
+                    "voice": "hamo",
+                    "prompt": "Nazê sighs, and Hamo laughs into his moustache. What does he say? “Bozo her gav direve!”",
+                    "options": [
+                      "Bozo always runs away!",
+                      "Bozo never runs away!",
+                      "Bozo ran away once."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Put it together: “We reached the cliffs in the evening.”",
+                    "accepted": [
+                      "Em êvarê gihîştin zinaran.",
+                      "Em êvarê gihîştin zinaran",
+                      "Êvarê em gihîştin zinaran.",
+                      "Êvarê em gihîştin zinaran"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo asks Baran how far he got. Which question is right for “Did you reach the valley?”",
+                    "options": [
+                      "Tu gihîştî gelî?",
+                      "Tu gihîştim gelî?",
+                      "Tu digihîjî gelî?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Tell it like Baran, sadly: “Bozo ran away and I was left alone.”",
+                    "reference": "Bozo reviya û ez tenê mam."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Bozo nereviya, ew çû cem bizinê!",
+                    "voice": "hamo",
+                    "prompt": "Hamo always takes his donkey’s side. What does he say? “Bozo nereviya, ew çû cem bizinê!”",
+                    "accepted": [
+                      "Bozo didn’t run away, he went to the goat!",
+                      "Bozo didn’t run away, he went to the goat",
+                      "Bozo did not run away, he went to the goat!",
+                      "Bozo did not run away, he went to the goat",
+                      "Bozo didn't run away, he went to the goat!",
+                      "Bozo didn't run away, he went to the goat",
+                      "Bozo didn’t run away; he went to the goat!",
+                      "Bozo didn’t run away; he went to the goat"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Baran finishes this part of the story. Type what you hear.",
+                    "accepted": [
+                      "Bozo li ser zinaran ma, ez di gelî de mam.",
+                      "Bozo li ser zinaran ma, ez di gelî de mam"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Then Baran slipped. Say: “Then I fell into the water.”",
+                    "accepted": [
+                      "Paşê ez ketim avê.",
+                      "Paşê ez ketim avê"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu kengî gihîştî malê?",
+                    "voice": "xezo",
+                    "prompt": "Xezal has a question for Baran. What does she want to know? “Tu kengî gihîştî malê?”",
+                    "options": [
+                      "When did you get home?",
+                      "When are you going home?",
+                      "Why did you go home?"
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s1l3",
+              "position": 3,
+              "titleKu": "Duh li çem",
+              "titleEn": "Yesterday at the river",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu li ku rûniştî?",
+                    "voice": "xezo",
+                    "prompt": "Xezal sits down next to Baran, very serious, like a judge. What does she ask him first? “Tu li ku rûniştî?”",
+                    "options": [
+                      "Where did you sit down?",
+                      "Where did you sleep?",
+                      "When did you get up?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu li wir razayî?",
+                    "voice": "xezo",
+                    "prompt": "Xezal raises one eyebrow. What does she ask now? “Tu li wir razayî?”",
+                    "options": [
+                      "Did you sleep there?",
+                      "Did you sit there?",
+                      "Were you afraid there?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu tirsiyayî?",
+                    "voice": "xezo",
+                    "prompt": "Then, softly, she asks one more thing. What? “Tu tirsiyayî?”",
+                    "options": [
+                      "Were you afraid?",
+                      "Were you tired?",
+                      "Did you get up?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu09s1l3a",
+                    "title": "Baran şerm dike",
+                    "speakers": [
+                      {
+                        "name": "Xezal",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Baran, rast bibêje. Bozo reviya û tu jî winda bûyî?",
+                        "en": "Baran, tell the truth. Bozo ran away and you got lost too?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Baran şerm dike. Ew dibêje: «Erê, ez winda bûm.»",
+                        "en": "Baran is embarrassed. He says: “Yes, I got lost.”"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Paşê çi bû? Tu li ku rûniştî?",
+                        "en": "Then what happened? Where did you sit down?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew li bin dara gûzê rûnişt, ji bo ku bifikire.",
+                        "en": "He sat down under the walnut tree, to think."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bifikire? Baran, tu li wir razayî!",
+                        "en": "To think? Baran, you fell asleep there!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Baran dibêje ku ew tenê hinekî raza.",
+                        "en": "Baran says he only slept a little."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Tu kengî rabûyî? Tu tirsiyayî?",
+                        "en": "When did you get up? Were you afraid?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew di tarîtiyê de rabû. Ew dibêje ku ew netirsiya.",
+                        "en": "He got up in the dark. He says he wasn’t afraid."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Netirsiya? Xalo, çavên wî hîn mezin in!",
+                        "en": "Not afraid? Uncle, his eyes are still huge!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Belê, ew hinekî tirsiya. Ez jî tirsiyam!",
+                        "en": "All right, he was a little afraid. So was I!"
+                      }
+                    ],
+                    "prompt": "Baran li ku raza?",
+                    "options": [
+                      "Li bin dara gûzê.",
+                      "Li ser zinaran.",
+                      "Li malê, di nivînê de."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ew di tarîtiyê de rabû.",
+                    "voice": "hamo",
+                    "prompt": "Hamo tells Xezal what Baran whispered to him. What does it mean? “Ew di tarîtiyê de rabû.”",
+                    "accepted": [
+                      "He got up in the dark.",
+                      "He got up in the dark",
+                      "He got up in the darkness.",
+                      "He got up in the darkness",
+                      "In the dark he got up.",
+                      "In the dark he got up"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal makes Baran say it properly. Put together: “I sat down under the walnut tree.”",
+                    "accepted": [
+                      "Ez li bin dara gûzê rûniştim.",
+                      "Ez li bin dara gûzê rûniştim",
+                      "Li bin dara gûzê ez rûniştim.",
+                      "Li bin dara gûzê ez rûniştim"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence is right about Baran: “He slept.”?",
+                    "options": [
+                      "Ew raza.",
+                      "Ew razam.",
+                      "Ew radize."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal laughs with her shoulders and repeats Hamo’s words. Type what she says.",
+                    "accepted": [
+                      "Baran tenê hinekî raza.",
+                      "Baran tenê hinekî raza"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal asks Baran when he got up. Write her question: “Tu kengî …?”",
+                    "accepted": [
+                      "Tu kengî rabûyî?",
+                      "Tu kengî rabûyî"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Gelî tarî bû û ez tirsiyam.",
+                    "voice": "xezo",
+                    "prompt": "Xezal repeats, word for word, what Baran admitted to her in a whisper. What did he say? “Gelî tarî bû û ez tirsiyam.”",
+                    "options": [
+                      "“The valley was dark and I was afraid.”",
+                      "“The valley was dark but I wasn’t afraid.”",
+                      "“The valley was bright and I slept.”"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Be Baran and own up: “I sat down under the tree and I fell asleep.”",
+                    "reference": "Ez li bin darê rûniştim û ez razam."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal asks the question nobody else dares to. Put it together: “Were you afraid in the darkness?”",
+                    "accepted": [
+                      "Tu di tarîtiyê de tirsiyayî?",
+                      "Tu di tarîtiyê de tirsiyayî",
+                      "Di tarîtiyê de tu tirsiyayî?",
+                      "Di tarîtiyê de tu tirsiyayî"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu duh li ku razayî?",
+                    "voice": "xezo",
+                    "prompt": "Xezal turns to you: “Tu duh li ku razayî?” What could you answer?",
+                    "options": [
+                      "Ez li mala Hamo razam.",
+                      "Ez li mala Hamo raza.",
+                      "Ez li mala Hamo radizim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo shakes his head. Type what he says.",
+                    "accepted": [
+                      "Tarî ket û Baran hîn li bin darê bû.",
+                      "Tarî ket û Baran hîn li bin darê bû"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s1l4",
+              "position": 4,
+              "titleKu": "Bi stêrkan",
+              "titleEn": "By the stars",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Baran bi stêrkan vegeriya malê.",
+                    "voice": "hamo",
+                    "prompt": "How did Baran find his way home in the dark? Hamo tells you, very proud. “Baran bi stêrkan vegeriya malê.”",
+                    "options": [
+                      "He came back home by the stars.",
+                      "He came back home with Bozo.",
+                      "He stayed in the valley till morning."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo bi tena serê xwe vegeriya.",
+                    "voice": "hamo",
+                    "prompt": "And Bozo? Hamo strokes his moustache. “Bozo bi tena serê xwe vegeriya.”",
+                    "options": [
+                      "Bozo came back all on his own.",
+                      "Bozo came back with Baran.",
+                      "Bozo didn’t come back."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu09s1l4a",
+                    "title": "Pûnga Dapîrê",
+                    "speakers": [
+                      {
+                        "name": "Xezal",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, Baran çawa vegeriya malê?",
+                        "en": "Uncle, how did Baran get back home?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bi stêrkan. Ew wek şivanan vegeriya!",
+                        "en": "By the stars. He came back like a shepherd!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Û Bozo? Ew li ku bû?",
+                        "en": "And Bozo? Where was he?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bozo bi tena serê xwe vegeriya, berî Baran!",
+                        "en": "Bozo came back all on his own, before Baran!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bi tena serê xwe? Paşê ew çû ku derê?",
+                        "en": "All on his own? Then where did he go?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew ket baxçeyê Dapîrê. Ji pûngê tiştek nema!",
+                        "en": "He got into Grandma’s garden. Nothing is left of the mint!"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Pûng? Ez ji pûngê hez dikim, lê ji sêvan bêtir!",
+                        "en": "Mint? I like mint, but apples more!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo! Xalo, Baran dibêje ku li gelî dûman ji konekî derket.",
+                        "en": "Hevalo! Uncle, Baran says smoke came out of a tent in the valley."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Konek? Li wir kes tune…",
+                        "en": "A tent? Nobody is there…"
+                      }
+                    ],
+                    "prompt": "Bozo çû ku derê?",
+                    "options": [
+                      "Ew ket baxçeyê Dapîrê.",
+                      "Ew çû konekî.",
+                      "Ew li gelî ma."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ji pûnga Dapîrê tiştek nema.",
+                    "voice": "hamo",
+                    "prompt": "Nazê shows you what is left of Dapîr’s garden. What does Hamo say? “Ji pûnga Dapîrê tiştek nema.”",
+                    "accepted": [
+                      "Nothing was left of Grandma’s mint.",
+                      "Nothing was left of Grandma’s mint",
+                      "Nothing is left of Grandma’s mint.",
+                      "Nothing is left of Grandma’s mint",
+                      "There’s nothing left of Grandma’s mint.",
+                      "There’s nothing left of Grandma’s mint",
+                      "Nothing was left of Dapîr’s mint.",
+                      "Nothing was left of Dapîr’s mint",
+                      "Nothing was left of Grandma's mint.",
+                      "Nothing was left of Grandma's mint",
+                      "Nothing is left of Grandma's mint.",
+                      "Nothing is left of Grandma's mint"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Tell the truth about the donkey: “Bozo got into Grandma’s garden.”",
+                    "accepted": [
+                      "Bozo ket baxçeyê Dapîrê.",
+                      "Bozo ket baxçeyê Dapîrê",
+                      "Bozo ket baxçeyê dapîrê.",
+                      "Bozo ket baxçeyê dapîrê"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Baran remembers something strange in the valley, and Hamo says it again. Type what you hear.",
+                    "accepted": [
+                      "Dûman ji konekî derket.",
+                      "Dûman ji konekî derket"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “We came out of the house”?",
+                    "options": [
+                      "Em ji malê derketin.",
+                      "Em ji malê derketim.",
+                      "Em ji malê derdikevin."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo asks Baran how he found the way. Answer for him: “I came back by the stars.” — “Ez bi stêrkan …”",
+                    "accepted": [
+                      "Ez bi stêrkan vegeriyam.",
+                      "Ez bi stêrkan vegeriyam"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Tell Xezal the most annoying part: “Bozo came back home all on his own.”",
+                    "reference": "Bozo bi tena serê xwe vegeriya malê."
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo looks at the map of the valley. Say: “There is a tent in the valley.”",
+                    "accepted": [
+                      "Li gelî konek heye.",
+                      "Li gelî konek heye",
+                      "Konek li gelî heye.",
+                      "Konek li gelî heye",
+                      "Di gelî de konek heye.",
+                      "Di gelî de konek heye",
+                      "Konek di gelî de heye.",
+                      "Konek di gelî de heye"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li wir qet kes tune.",
+                    "voice": "hamo",
+                    "prompt": "Hamo frowns out of the window. What does he say about that place? “Li wir qet kes tune.”",
+                    "options": [
+                      "Nobody is ever there.",
+                      "Everyone is there.",
+                      "Someone is always there."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Grandma has found her garden. Type what Hamo says.",
+                    "accepted": [
+                      "Dapîr ji ber pûnga xwe gelek hêrs bû.",
+                      "Dapîr ji ber pûnga xwe gelek hêrs bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo, tu çima ketî baxçe?",
+                    "voice": "hamo",
+                    "prompt": "Hamo scolds his donkey. What does he ask him? “Bozo, tu çima ketî baxçe?”",
+                    "options": [
+                      "Bozo, why did you go into the garden?",
+                      "Bozo, when did you come back?",
+                      "Bozo, why are you in the river?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ev kon yê kê ye?",
+                    "voice": "hamo",
+                    "prompt": "Hamo wonders aloud, half to himself. What does he wonder? “Ev kon yê kê ye?”",
+                    "accepted": [
+                      "Whose tent is this?",
+                      "Whose tent is this",
+                      "Whose tent is it?",
+                      "Whose tent is it",
+                      "Whose is this tent?",
+                      "Whose is this tent"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Night falls over Sêvan. Hamo says it once more, very quietly. Type what you hear.",
+                    "accepted": [
+                      "Li wir kes tune, lê dûman ji kon derket…",
+                      "Li wir kes tune, lê dûman ji kon derket"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "titleKu": "Berê",
+          "titleEn": "In the old days",
+          "grammarMd": "Words that put a story in the past:\n\n- *duh* yesterday · *pêr* the day before yesterday · *par* last year · *berê* before, in the old days\n- *hefteya borî* last week · *sala borî* last year · *wê demê* at that time\n- *sê roj berê* or *berî sê rojan* three days ago · *berî sî salan* thirty years ago\n\n**dema ku** (or just **dema**) joins two things that happened at the same time: *Dema ku ez zarok bûm, em li zozanan bûn.* When I was a child, we were on the summer pastures.\n\n**hebû** is the past of *heye*: *Gurek hebû.* There was a wolf. · *Hespekî me hebû.* We had a horse.",
+          "lessons": [
+            {
+              "key": "u09s2l1",
+              "position": 1,
+              "titleKu": "Dema ez zarok bûm",
+              "titleEn": "When I was a child",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dema ku ez zarok bûm, em her havîn li zozanan bûn.",
+                    "voice": "hamo",
+                    "prompt": "Hamo sits back and strokes his moustache. Nazê quietly pours more tea: this will take a while. What does he say? “Dema ku ez zarok bûm, em her havîn li zozanan bûn.”",
+                    "options": [
+                      "When I was a child, we spent every summer on the pastures.",
+                      "When I was a child, we went to Amed every summer.",
+                      "When I am old, we will live on the summer pastures."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "pêr",
+                        "right": "the day before yesterday"
+                      },
+                      {
+                        "left": "hefteya borî",
+                        "right": "last week"
+                      },
+                      {
+                        "left": "dema ku",
+                        "right": "when (… happened)"
+                      },
+                      {
+                        "left": "jiya",
+                        "right": "(he, she) lived"
+                      },
+                      {
+                        "left": "zemanê berê",
+                        "right": "the old days"
+                      },
+                      {
+                        "left": "mamoste",
+                        "right": "teacher"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Pêr Xezal ji Amedê hat.",
+                    "voice": "hamo",
+                    "prompt": "Hamo counts on his fingers. When did Xezal arrive? “Pêr Xezal ji Amedê hat.”",
+                    "options": [
+                      "The day before yesterday.",
+                      "Yesterday.",
+                      "Last week."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Di zemanê berê de jiyan hêsan nebû.",
+                    "voice": "hamo",
+                    "prompt": "For a moment Hamo grows serious. What does he say? “Di zemanê berê de jiyan hêsan nebû.”",
+                    "accepted": [
+                      "In the old days life wasn’t easy.",
+                      "In the old days life wasn’t easy",
+                      "In the old days, life was not easy.",
+                      "In the old days, life was not easy",
+                      "Life wasn’t easy in the old days.",
+                      "Life wasn’t easy in the old days",
+                      "Life was not easy in the old days.",
+                      "Life was not easy in the old days",
+                      "In the old days life wasn't easy.",
+                      "In the old days life wasn't easy",
+                      "Life wasn't easy in the old days.",
+                      "Life wasn't easy in the old days"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo points at an old photo on the wall. Say: “My grandfather lived in this village.”",
+                    "accepted": [
+                      "Bapîrê min li vî gundî jiya.",
+                      "Bapîrê min li vî gundî jiya"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo remembers his very first school. Type what he says.",
+                    "accepted": [
+                      "Mamosteyê me ji Amedê hat.",
+                      "Mamosteyê me ji Amedê hat"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence means “Last week the weather was cold”?",
+                    "options": [
+                      "Hefteya borî hewa sar bû.",
+                      "Hefteya bê hewa sar bû.",
+                      "Hefteya borî hewa sar e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo tells you where he has always lived. Complete: “Ez li Sêvanê …” (I live in Sêvan.)",
+                    "accepted": [
+                      "Ez li Sêvanê dijîm.",
+                      "Ez li Sêvanê dijîm"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dema ku ez ciwan bûm, simbêlên min hîn dirêjtir bûn.",
+                    "voice": "hamo",
+                    "prompt": "Hamo lifts the near end of his moustache. What does he claim? “Dema ku ez ciwan bûm, simbêlên min hîn dirêjtir bûn.”",
+                    "options": [
+                      "When I was young, my moustache was even longer.",
+                      "When I was young, I had no moustache.",
+                      "When I am old, my moustache will be longer."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Tell Hamo where you were: “We were in Amed the day before yesterday.”",
+                    "accepted": [
+                      "Pêr em li Amedê bûn.",
+                      "Pêr em li Amedê bûn",
+                      "Em pêr li Amedê bûn.",
+                      "Em pêr li Amedê bûn"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Tell Hamo about yourself, the way he tells it: “When I was a child, I lived in a village.”",
+                    "reference": "Dema ku ez zarok bûm, ez li gund jiyam."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal tells you about a visitor. Type what she says.",
+                    "accepted": [
+                      "Hefteya borî mamosteya Baran hat mala me.",
+                      "Hefteya borî mamosteya Baran hat mala me"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hûn li ku dijîn?",
+                    "voice": "hamo",
+                    "prompt": "Hamo asks you a question: “Hûn li ku dijîn?” Which answer fits?",
+                    "options": [
+                      "Em li bajêr dijîn.",
+                      "Em li bajêr jiya.",
+                      "Em li bajêr dijî."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Pêr Hevalo dîsa ket baxçe.",
+                    "voice": "hamo",
+                    "prompt": "Who else is in trouble? Hamo tells on someone. “Pêr Hevalo dîsa ket baxçe.”",
+                    "accepted": [
+                      "The day before yesterday Hevalo got into the garden again.",
+                      "The day before yesterday Hevalo got into the garden again",
+                      "Hevalo got into the orchard again the day before yesterday.",
+                      "Hevalo got into the orchard again the day before yesterday",
+                      "The day before yesterday Hevalo went into the orchard again.",
+                      "The day before yesterday Hevalo went into the orchard again",
+                      "The day before yesterday, Hevalo got into the garden again.",
+                      "The day before yesterday, Hevalo got into the garden again"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "One more thing about the old days. Say: “In the old days, the school was far.”",
+                    "accepted": [
+                      "Di zemanê berê de dibistan dûr bû.",
+                      "Di zemanê berê de dibistan dûr bû",
+                      "Di zemanê berê de, dibistan dûr bû.",
+                      "Di zemanê berê de, dibistan dûr bû",
+                      "Berê dibistan dûr bû.",
+                      "Berê dibistan dûr bû",
+                      "Dibistan berê dûr bû.",
+                      "Dibistan berê dûr bû"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s2l2",
+              "position": 2,
+              "titleKu": "Xezal çû zanîngehê",
+              "titleEn": "Xezal went to university",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Roja yekem ez ketim poleke şaş!",
+                    "voice": "xezo",
+                    "prompt": "Xezal covers her face and giggles. What happened on her first day in Amed? “Roja yekem ez ketim poleke şaş!”",
+                    "options": [
+                      "On the first day she walked into the wrong class!",
+                      "On the first day she was late for class.",
+                      "On the first day she didn’t go to class."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez ji hemû azmûnan derbas bûm.",
+                    "voice": "xezo",
+                    "prompt": "Then comes her proudest news. What does she say? “Ez ji hemû azmûnan derbas bûm.”",
+                    "options": [
+                      "I passed all the exams.",
+                      "I failed all the exams.",
+                      "I finished one exam."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Dersa min di saet nehan de dest pê dike.",
+                    "voice": "xezo",
+                    "prompt": "Xezal tells you about her mornings in the city. What does she say? “Dersa min di saet nehan de dest pê dike.”",
+                    "accepted": [
+                      "My class starts at nine o’clock.",
+                      "My class starts at nine o’clock",
+                      "My lesson starts at nine o’clock.",
+                      "My lesson starts at nine o’clock",
+                      "My class starts at nine.",
+                      "My class starts at nine",
+                      "My lesson begins at nine.",
+                      "My lesson begins at nine",
+                      "My class begins at nine o’clock.",
+                      "My class begins at nine o’clock",
+                      "My class starts at nine o'clock.",
+                      "My class starts at nine o'clock"
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "The bell rings. Say: “The lesson ended.”",
+                    "accepted": [
+                      "Ders qediya.",
+                      "Ders qediya"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "“The exams are over!” Which sentence says it?",
+                    "options": [
+                      "Azmûn qediyan.",
+                      "Azmûn qediyam.",
+                      "Azmûn diqedin."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo is proud of his niece and tells the whole table. Type what he says.",
+                    "accepted": [
+                      "Xezal xwendekareke serkeftî ye.",
+                      "Xezal xwendekareke serkeftî ye"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Complete Xezal’s sentence: “Ez ji hemû azmûnan derbas …” (I passed all the exams.)",
+                    "accepted": [
+                      "Ez ji hemû azmûnan derbas bûm.",
+                      "Ez ji hemû azmûnan derbas bûm"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Di pola me de sî xwendekar bûn.",
+                    "voice": "xezo",
+                    "prompt": "How big was Xezal’s class at the university? “Di pola me de sî xwendekar bûn.”",
+                    "options": [
+                      "Thirty students.",
+                      "Thirteen students.",
+                      "Three students."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Baran wants to know about the city school. Ask: “When does the lesson start?”",
+                    "accepted": [
+                      "Ders kengî dest pê dike?",
+                      "Ders kengî dest pê dike"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Tell Xezal’s funniest story yourself: “On the first day I walked into the wrong class.”",
+                    "reference": "Roja yekem ez ketim poleke şaş."
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal laughs at herself. Type what she says.",
+                    "accepted": [
+                      "Ez hefteyekê li bajêr winda bûm.",
+                      "Ez hefteyekê li bajêr winda bûm"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ders qediya û em derketin.",
+                    "voice": "xezo",
+                    "prompt": "What happened at the end of Xezal’s first day? “Ders qediya û em derketin.”",
+                    "options": [
+                      "The lesson ended and we went out.",
+                      "The lesson started and we went in.",
+                      "The lesson ended and we stayed."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Tu xwendekareke serkeftî yî, Xezo.",
+                    "voice": "hamo",
+                    "prompt": "Hamo lifts the end of his moustache, very pleased. What does he tell her? “Tu xwendekareke serkeftî yî, Xezo.”",
+                    "accepted": [
+                      "You are a successful student, Xezo.",
+                      "You are a successful student, Xezo",
+                      "You’re a successful student, Xezo.",
+                      "You’re a successful student, Xezo",
+                      "You're a successful student, Xezo.",
+                      "You're a successful student, Xezo",
+                      "You are a successful student, Xezo!"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Now tell Xezal about your own exam: “I was successful in the exam.”",
+                    "accepted": [
+                      "Ez di azmûnê de serkeftî bûm.",
+                      "Ez di azmûnê de serkeftî bûm"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Your class starts at ten. Which sentence says it?",
+                    "options": [
+                      "Dersa min di saet dehan de dest pê dike.",
+                      "Dersa min di saet dehan de diqede.",
+                      "Dersa min di saet dehan de dest pê dikim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu ji azmûnê derbas bûyî?",
+                    "voice": "hamo",
+                    "prompt": "Hamo has one more question for Xezal. What does he ask? “Tu ji azmûnê derbas bûyî?”",
+                    "options": [
+                      "Did you pass the exam?",
+                      "Did you start the exam?",
+                      "Did you go to the exam?"
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s2l3",
+              "position": 3,
+              "titleKu": "Hamo û gur",
+              "titleEn": "Hamo and the wolf",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hingê ji daristanê gurek derket!",
+                    "voice": "hamo",
+                    "prompt": "Hamo lowers his voice. Everyone leans in. What came out of the forest? “Hingê ji daristanê gurek derket!”",
+                    "options": [
+                      "A wolf.",
+                      "A bear.",
+                      "A fox."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li dora min tarîtî bû.",
+                    "voice": "hamo",
+                    "prompt": "Hamo sets the scene first. What does he say? “Li dora min tarîtî bû.”",
+                    "options": [
+                      "All around me it was dark.",
+                      "There was light all around me.",
+                      "There was a wolf next to me."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu09s2l3a",
+                    "title": "Hamo û gur",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezal",
+                        "character": "xezo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Dema ku ez neh salî bûm, ez bi tena serê xwe li zozanan bûm.",
+                        "en": "When I was nine, I was on the pastures all on my own."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bi tena serê xwe? Xalo, tu wê demê biçûk bûyî!",
+                        "en": "On your own? Uncle, you were little then!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Şev bû. Li dora min tarîtî bû. Hingê ji daristanê gurek derket!",
+                        "en": "It was night. All around me it was dark. Then a wolf came out of the forest!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Gurek? Çiqas mezin bû?",
+                        "en": "A wolf? How big was it?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Wek hespekî mezin bû!",
+                        "en": "It was as big as a horse!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Wek hespekî? Sala borî ew wek kerekî bû!",
+                        "en": "As a horse? Last year it was as big as a donkey!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Na, na. Belkî ew ne gur bû, ew hirç bû!",
+                        "en": "No, no. Maybe it wasn’t a wolf, it was a bear!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Hirç? Dapîr dibêje ku ew kûçikê şivan bû.",
+                        "en": "A bear? Grandma says it was the shepherd’s dog."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Dapîr wê şevê ne li wir bû!",
+                        "en": "Grandma wasn’t there that night!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Belkî ew rovî bû, xalo.",
+                        "en": "Maybe it was a fox, uncle."
+                      }
+                    ],
+                    "prompt": "Dapîr çi dibêje?",
+                    "options": [
+                      "Ew kûçikê şivan bû.",
+                      "Ew hirçeke mezin bû.",
+                      "Ew gurekî wek hespekî bû."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Gur wek hespekî mezin bû.",
+                    "voice": "hamo",
+                    "prompt": "Hamo spreads his arms as wide as they go. What does he claim? “Gur wek hespekî mezin bû.”",
+                    "accepted": [
+                      "The wolf was as big as a horse.",
+                      "The wolf was as big as a horse",
+                      "The wolf was big like a horse.",
+                      "The wolf was big like a horse",
+                      "The wolf was like a big horse.",
+                      "The wolf was like a big horse"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo changes the story a little. Say: “Maybe it was a bear.”",
+                    "accepted": [
+                      "Belkî ew hirç bû.",
+                      "Belkî ew hirç bû",
+                      "Belkî hirç bû.",
+                      "Belkî hirç bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal teases: the animal gets smaller every time Grandma hears the story. Which word is “fox”?",
+                    "options": [
+                      "rovî",
+                      "gur",
+                      "hirç"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal whispers Grandma’s version to you. Type what she says.",
+                    "accepted": [
+                      "Dapîr dibêje ku ew kûçikê şivan bû.",
+                      "Dapîr dibêje ku ew kûçikê şivan bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Finish Hamo’s sentence: “Hingê ez neh salî …” (At that time I was nine.)",
+                    "accepted": [
+                      "Hingê ez neh salî bûm.",
+                      "Hingê ez neh salî bûm"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Tell the scary part yourself: “A wolf came out of the forest.”",
+                    "accepted": [
+                      "Gurek ji daristanê derket.",
+                      "Gurek ji daristanê derket",
+                      "Ji daristanê gurek derket.",
+                      "Ji daristanê gurek derket"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Belkî ew rovî bû, xalo.",
+                    "voice": "xezo",
+                    "prompt": "Xezal winks at you. What does she suggest? “Belkî ew rovî bû, xalo.”",
+                    "options": [
+                      "Maybe it was a fox, uncle.",
+                      "Maybe it was a bear, uncle.",
+                      "It was a wolf, uncle."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Tell it like Hamo, slowly and spookily: “All around me was forest.”",
+                    "reference": "Li dora min daristan bû."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hirç li daristanan dijîn.",
+                    "voice": "hamo",
+                    "prompt": "Baran asks where bears live. What does Hamo answer? “Hirç li daristanan dijîn.”",
+                    "accepted": [
+                      "Bears live in forests.",
+                      "Bears live in forests",
+                      "Bears live in the forests.",
+                      "Bears live in the forests",
+                      "Bears live in the forest.",
+                      "Bears live in the forest"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu ji guran ditirsî?",
+                    "voice": "hamo",
+                    "prompt": "Hamo turns to you with a twinkle: “Tu ji guran ditirsî?” What do you answer?",
+                    "options": [
+                      "Erê, ez ji guran ditirsim!",
+                      "Erê, ez ji guran ditirse!",
+                      "Erê, ez guran ditirsim!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo insists, talking about himself like a hero in a tale. Type what he says.",
+                    "accepted": [
+                      "Wê şevê Hamo qet netirsiya.",
+                      "Wê şevê Hamo qet netirsiya"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s2l4",
+              "position": 4,
+              "titleKu": "Çîroka rast",
+              "titleEn": "The true story",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Peyamek ji Bişar hat.",
+                    "voice": "hamo",
+                    "prompt": "A boy on a donkey comes down the lane with news from the summer pastures. What does Hamo announce? “Peyamek ji Bişar hat.”",
+                    "options": [
+                      "A message has come from Bişar.",
+                      "Bişar has come from the pastures.",
+                      "A message has gone to Bişar."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Peyam ji kê ye?",
+                    "voice": "hevalo",
+                    "prompt": "Hevalo trots up, curious. What does he ask? “Peyam ji kê ye?”",
+                    "options": [
+                      "Who is the message from?",
+                      "Where is the message?",
+                      "Who is the message for?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "peyam",
+                        "right": "message"
+                      },
+                      {
+                        "left": "heywan",
+                        "right": "animal"
+                      },
+                      {
+                        "left": "kûvî",
+                        "right": "wild"
+                      },
+                      {
+                        "left": "xezal",
+                        "right": "gazelle"
+                      },
+                      {
+                        "left": "pezkûvî",
+                        "right": "deer"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Heywanekî kûvî her şev tê ber konê Bişar.",
+                    "voice": "hamo",
+                    "prompt": "Hamo reads the message out. What does Bişar write? “Heywanekî kûvî her şev tê ber konê Bişar.”",
+                    "accepted": [
+                      "A wild animal comes to Bişar’s tent every night.",
+                      "A wild animal comes to Bişar’s tent every night",
+                      "Every night a wild animal comes to Bişar’s tent.",
+                      "Every night a wild animal comes to Bişar’s tent",
+                      "A wild animal comes to Bişar's tent every night.",
+                      "A wild animal comes to Bişar's tent every night",
+                      "Every night a wild animal comes to Bişar's tent.",
+                      "Every night a wild animal comes to Bişar's tent",
+                      "A wild animal comes in front of Bişar’s tent every night.",
+                      "A wild animal comes in front of Bişar’s tent every night"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "What does the creature look like? Type the next line of the message.",
+                    "accepted": [
+                      "Ew wek pezkûviyekî ye, lê ji mirovan direve.",
+                      "Ew wek pezkûviyekî ye, lê ji mirovan direve"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Pezkûvî? Ez jî pezkûvî me!",
+                    "voice": "hevalo",
+                    "prompt": "Hevalo’s ears shoot straight up. What does he say? “Pezkûvî? Ez jî pezkûvî me!”",
+                    "options": [
+                      "A deer? I’m a deer too!",
+                      "A deer? I’m afraid of deer!",
+                      "A wolf? I’m not a wolf!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo has a guess. Say: “Maybe it is a gazelle.”",
+                    "accepted": [
+                      "Belkî ew xezal e.",
+                      "Belkî ew xezal e",
+                      "Belkî ew xezalek e.",
+                      "Belkî ew xezalek e"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xezal? Ez Xezal im!",
+                    "voice": "xezo",
+                    "prompt": "Xezal hears her own name and folds her arms. What does she say? “Xezal? Ez Xezal im!”",
+                    "options": [
+                      "A gazelle? I’m Xezal!",
+                      "A gazelle? I’m not wild!",
+                      "Xezal? Where is she?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hevalo",
+                    "prompt": "Hevalo wants to leave this minute. Complete his question: “Em ê kengî biçin …?” (When will we go to the summer pastures?)",
+                    "accepted": [
+                      "Em ê kengî biçin zozanan?",
+                      "Em ê kengî biçin zozanan"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “Wild animals live on the mountain”?",
+                    "options": [
+                      "Heywanên kûvî li çiyê dijîn.",
+                      "Heywanên kûvî li çiyê dijî.",
+                      "Heywanekî kûvî li çiyê dijîn."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo laughs at the look on Hevalo’s face. Type what he says.",
+                    "accepted": [
+                      "Guhên Hevalo ji nişka ve rabûn.",
+                      "Guhên Hevalo ji nişka ve rabûn"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Run and tell Nazê the news: “A wild animal comes to Bişar’s tent.”",
+                    "reference": "Heywanekî kûvî tê ber konê Bişar."
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hevalo pezkûviyekî ciwan e, lê ew ne kûvî ye.",
+                    "voice": "hamo",
+                    "prompt": "Hamo explains the difference to Baran. What does he say? “Hevalo pezkûviyekî ciwan e, lê ew ne kûvî ye.”",
+                    "accepted": [
+                      "Hevalo is a young deer, but he isn’t wild.",
+                      "Hevalo is a young deer, but he isn’t wild",
+                      "Hevalo is a young deer, but he is not wild.",
+                      "Hevalo is a young deer, but he is not wild",
+                      "Hevalo is a young deer but he isn't wild.",
+                      "Hevalo is a young deer but he isn't wild",
+                      "Hevalo is a young deer, but he’s not wild.",
+                      "Hevalo is a young deer, but he’s not wild"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez dixwazim wî heywanî bibînim!",
+                    "voice": "hevalo",
+                    "prompt": "Hevalo can’t keep still. What does he say? “Ez dixwazim wî heywanî bibînim!”",
+                    "options": [
+                      "I want to see that animal!",
+                      "I don’t want to see that animal!",
+                      "I saw that animal!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal tells Dapîr how the news arrived. Type what she says.",
+                    "accepted": [
+                      "Kurek bi peyamê re ji zozanan hat.",
+                      "Kurek bi peyamê re ji zozanan hat"
+                    ]
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Kî dizane? Belkî ew heywan li benda Hevalo ye…",
+                    "voice": "hamo",
+                    "prompt": "Hamo winks at you. What does he say? “Kî dizane? Belkî ew heywan li benda Hevalo ye…”",
+                    "options": [
+                      "Who knows? Maybe that animal is waiting for Hevalo…",
+                      "Who knows? Maybe that animal is afraid of Hevalo…",
+                      "Nobody knows where Hevalo is…"
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "titleKu": "Pêşî, paşê",
+          "titleEn": "First, then",
+          "grammarMd": "To tell what happened in order:\n\n- **pêşî** first · **paşê / piştre** then, afterwards · **di dawiyê de** in the end\n- **piştî ku** + past: *Piştî ku em gihîştin, em li qehwexaneyê rûniştin.* After we arrived, we sat in the tea house.\n- **berî ku** + subjunctive: *Berî ku ez razim, ez dixwînim.* Before I go to sleep, I read.\n\nMore pasts: *ez geriyam* I walked around · *ew meşiya* she walked · *em kenîn* we laughed · *ew sekinî* he stopped · *çivîk firiya* the bird flew.\n\nA day in a few words: *Pêşî ez rabûm. Paşê ez çûm baxçe. Di dawiyê de ez vegeriyam malê.*",
+          "lessons": [
+            {
+              "key": "u09s3l1",
+              "position": 1,
+              "titleKu": "Piştî ku em gihîştin",
+              "titleEn": "After we arrived",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Pêşî em zû rabûn.",
+                    "voice": "hamo",
+                    "prompt": "Hamo teaches Baran how to tell a story properly, starting with the first thing that happened. What does he say? “Pêşî em zû rabûn.”",
+                    "options": [
+                      "First, we got up early.",
+                      "In the end, we got up early.",
+                      "First, we went to bed early."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "piştî ku",
+                        "right": "after (… happened)"
+                      },
+                      {
+                        "left": "berî ku",
+                        "right": "before (… happens)"
+                      },
+                      {
+                        "left": "di dawiyê de",
+                        "right": "in the end"
+                      },
+                      {
+                        "left": "piştî demekê",
+                        "right": "after a while"
+                      },
+                      {
+                        "left": "rêwîtî",
+                        "right": "journey"
+                      },
+                      {
+                        "left": "yekser",
+                        "right": "at once, straight away"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Piştî ku em gihîştin bazarê, em li qehwexaneyê rûniştin.",
+                    "voice": "hamo",
+                    "prompt": "His example is the best day of his life: the day Bozo came to the family. What happened at the market? “Piştî ku em gihîştin bazarê, em li qehwexaneyê rûniştin.”",
+                    "options": [
+                      "They sat in the tea house.",
+                      "They went straight home.",
+                      "They looked for Bozo."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Kerekî gewr yekser hat cem min.",
+                    "voice": "hamo",
+                    "prompt": "And then the hero of the story appears. What happened? “Kerekî gewr yekser hat cem min.”",
+                    "options": [
+                      "A grey donkey came straight to me.",
+                      "A grey donkey ran away from me.",
+                      "A grey horse came to me after a while."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Piştî demekê, ew li dû min hat.",
+                    "voice": "hamo",
+                    "prompt": "Hamo smiles at the memory. What does he say? “Piştî demekê, ew li dû min hat.”",
+                    "accepted": [
+                      "After a while, he followed me.",
+                      "After a while, he followed me",
+                      "After a while he followed me.",
+                      "After a while he followed me",
+                      "After a while, he came after me.",
+                      "After a while, he came after me",
+                      "After a while he came after me.",
+                      "After a while he came after me"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo gets to the happy ending. Say: “In the end, we went back home together.”",
+                    "accepted": [
+                      "Di dawiyê de em bi hev re vegeriyan malê.",
+                      "Di dawiyê de em bi hev re vegeriyan malê",
+                      "Di dawiyê de, em bi hev re vegeriyan malê.",
+                      "Di dawiyê de, em bi hev re vegeriyan malê"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo sighs happily. Type what he says about the trip home.",
+                    "accepted": [
+                      "Rêwîtiya me dirêj bû.",
+                      "Rêwîtiya me dirêj bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "“Before we went back, Bozo ran away!” Which sentence says it?",
+                    "options": [
+                      "Berî ku em vegerin, Bozo reviya.",
+                      "Berî ku em vegeriyan, Bozo reviya.",
+                      "Piştî ku em vegerin, Bozo reviya."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo’s golden rule. Complete: “Berî ku tu …, çaya xwe vexwe!” (Before you go, drink your tea!)",
+                    "accepted": [
+                      "Berî ku tu biçî, çaya xwe vexwe!",
+                      "Berî ku tu biçî, çaya xwe vexwe"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Put it in order: “After we arrived, we sat down.”",
+                    "accepted": [
+                      "Piştî ku em gihîştin, em rûniştin.",
+                      "Piştî ku em gihîştin, em rûniştin"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Now Baran tries. Tell his day in order: “First I got up, then I went to the market, in the end I came back.”",
+                    "reference": "Pêşî ez rabûm, paşê ez çûm bazarê, di dawiyê de ez vegeriyam."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Rêwîtiya ji bazarê heta malê sê saet bû.",
+                    "voice": "hamo",
+                    "prompt": "How long was the walk home with the new donkey? “Rêwîtiya ji bazarê heta malê sê saet bû.”",
+                    "accepted": [
+                      "The journey from the market to the house was three hours.",
+                      "The journey from the market to the house was three hours",
+                      "The journey from the market to home took three hours.",
+                      "The journey from the market to home took three hours",
+                      "The trip from the market home took three hours.",
+                      "The trip from the market home took three hours",
+                      "The journey home from the market was three hours.",
+                      "The journey home from the market was three hours"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Baran tells you what he does every night. Type what you hear.",
+                    "accepted": [
+                      "Berî ku ez razim, ez çîrokek dixwînim.",
+                      "Berî ku ez razim, ez çîrokek dixwînim"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo yekser reviya?",
+                    "voice": "xezo",
+                    "prompt": "Xezal asks: “Bozo yekser reviya?” What is the right answer?",
+                    "options": [
+                      "Na, piştî demekê ew reviya.",
+                      "Na, piştî demekê ew direve.",
+                      "Na, piştî demekê ez reviya."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s3l2",
+              "position": 2,
+              "titleKu": "Em meşiyan",
+              "titleEn": "We walked",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Baran meşiya, meşiya, meşiya…",
+                    "voice": "hamo",
+                    "prompt": "Hamo retells Baran’s day, and it turns into an epic. How does it start? “Baran meşiya, meşiya, meşiya…”",
+                    "options": [
+                      "Baran walked, and walked, and walked…",
+                      "Baran ran, and ran, and ran…",
+                      "Baran slept, and slept, and slept…"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ew di gelî de geriya.",
+                    "voice": "hamo",
+                    "prompt": "What did the young hero do next? “Ew di gelî de geriya.”",
+                    "options": [
+                      "He wandered around in the valley.",
+                      "He waited in the valley.",
+                      "He worked in the valley."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Li ber zinarekî ew sekinî.",
+                    "voice": "hamo",
+                    "prompt": "Hamo stops in his chair for effect. What does he say? “Li ber zinarekî ew sekinî.”",
+                    "accepted": [
+                      "He stopped in front of a cliff.",
+                      "He stopped in front of a cliff",
+                      "He stopped in front of a big rock.",
+                      "He stopped in front of a big rock",
+                      "In front of a big rock he stopped.",
+                      "In front of a big rock he stopped",
+                      "He stopped in front of a rock.",
+                      "He stopped in front of a rock"
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Baran adds a detail. Say: “We walked as far as the village.”",
+                    "accepted": [
+                      "Em heta gund meşiyan.",
+                      "Em heta gund meşiyan"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “I laughed”?",
+                    "options": [
+                      "Ez kenîm.",
+                      "Ez kenî.",
+                      "Ez dikenim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Baran giggles at this part. Type what Hamo says.",
+                    "accepted": [
+                      "Ew geriya, sekinî û bi tirsa xwe kenî.",
+                      "Ew geriya, sekinî û bi tirsa xwe kenî"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Nazê teases her husband: he did no work yesterday. Complete: “Hamo duh …” (Hamo didn’t work yesterday.)",
+                    "accepted": [
+                      "Hamo duh nexebitî.",
+                      "Hamo duh nexebitî"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Çivîkek di ser serê wî re firiya.",
+                    "voice": "hamo",
+                    "prompt": "Every epic needs a sign from the sky. What happened above Baran’s head? “Çivîkek di ser serê wî re firiya.”",
+                    "options": [
+                      "A bird flew over his head.",
+                      "A bird sat on his head.",
+                      "A bird sang in the tree."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Be fair to Nazê. Say: “Nazê worked all day.”",
+                    "accepted": [
+                      "Nazê hemû rojê xebitî.",
+                      "Nazê hemû rojê xebitî",
+                      "Nazê hemû roj xebitî.",
+                      "Nazê hemû roj xebitî"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "geriya",
+                        "right": "wandered around"
+                      },
+                      {
+                        "left": "meşiya",
+                        "right": "walked"
+                      },
+                      {
+                        "left": "kenî",
+                        "right": "laughed"
+                      },
+                      {
+                        "left": "sekinî",
+                        "right": "stopped"
+                      },
+                      {
+                        "left": "xebitî",
+                        "right": "worked"
+                      },
+                      {
+                        "left": "firiya",
+                        "right": "flew"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "The end of Hamo’s epic. Say it with feeling: “Like a shepherd, he slept under the stars.”",
+                    "reference": "Wek şivanekî, ew di bin stêrkan de raza."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hamo nexebitî, ew tenê kenî.",
+                    "voice": "hamo",
+                    "prompt": "Nazê has the last word. What does she say about her husband? “Hamo nexebitî, ew tenê kenî.”",
+                    "accepted": [
+                      "Hamo didn’t work, he just laughed.",
+                      "Hamo didn’t work, he just laughed",
+                      "Hamo did not work, he only laughed.",
+                      "Hamo did not work, he only laughed",
+                      "Hamo didn't work, he just laughed.",
+                      "Hamo didn't work, he just laughed",
+                      "Hamo didn’t work; he only laughed.",
+                      "Hamo didn’t work; he only laughed"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Outside the window, the birds take off. Type what Hamo says.",
+                    "accepted": [
+                      "Çivîk ji darê firiyan.",
+                      "Çivîk ji darê firiyan"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Ask Baran: “Did you wander around in the valley?”",
+                    "accepted": [
+                      "Tu di gelî de geriyayî?",
+                      "Tu di gelî de geriyayî"
+                    ]
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "“We walked as far as the house.” Which sentence says it?",
+                    "options": [
+                      "Em heta malê meşiyan.",
+                      "Em heta malê meşiyam.",
+                      "Em heta malê dimeşin."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s3l3",
+              "position": 3,
+              "titleKu": "Rojeke dirêj",
+              "titleEn": "A long day",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sê têjikên pisîka Hêviyê çêbûn!",
+                    "voice": "hamo",
+                    "prompt": "Hêvî bursts into the kitchen with the news of the day, and Hamo repeats it for you. What happened? “Sê têjikên pisîka Hêviyê çêbûn!”",
+                    "options": [
+                      "Hêvî’s cat had three kittens!",
+                      "Hêvî found three kittens in the garden!",
+                      "Three cats came to Hêvî’s house!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez her gav bêhnfireh im.",
+                    "voice": "hamo",
+                    "prompt": "Hamo is proud of one thing (after his moustache). What is it? “Ez her gav bêhnfireh im.”",
+                    "options": [
+                      "I am always patient.",
+                      "I am always impatient.",
+                      "I am always late."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu09s3l3a",
+                    "title": "Duh çi bû?",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezal",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Baş e! Duh çi bû? Pêşî tu, Xezo.",
+                        "en": "Right! What happened yesterday? You first, Xezo."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Otobûsa min du saet dereng ma. Ez gelek bêtaqet bûm!",
+                        "en": "My bus was two hours late. I was so impatient!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Du saet? Ez qet bêtaqet nabim. Ez her gav bêhnfireh im.",
+                        "en": "Two hours? I never get impatient. I am always patient."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê, xalo, tu bêhnfireh î, ji ber ku tu tenê rûdinî!",
+                        "en": "Yes, uncle, you’re patient because all you do is sit!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baş e, baş e. Dapîr çû mala cîranan û heta şevê li wir ma.",
+                        "en": "All right, all right. Grandma went to the neighbours and stayed there till night."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û pisîka Hêviyê? Sê têjikên wê çêbûn!",
+                        "en": "And Hêvî’s cat? She had three kittens!"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Sê têjik? Ez dikarim wan bibînim?",
+                        "en": "Three kittens? Can I see them?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Paşê, Hevalo. Xalo, niha dora te ye. Hûrgiliyan bibêje!",
+                        "en": "Later, Hevalo. Uncle, now it’s your turn. Tell us every detail!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Pêşî ez rûniştim. Paşê ez hinekî din rûniştim.",
+                        "en": "First I sat down. Then I sat a little longer."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û di dawiyê de?",
+                        "en": "And in the end?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Di dawiyê de ez razam. Rojeke dirêj bû!",
+                        "en": "In the end I slept. It was a long day!"
+                      }
+                    ],
+                    "prompt": "Hamo duh xebitî?",
+                    "options": [
+                      "Na, ew tenê rûnişt û raza.",
+                      "Erê, ew hemû roj xebitî.",
+                      "Na, ew çû mala cîranan."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Otobûsa Xezalê du saet dereng ma.",
+                    "voice": "hamo",
+                    "prompt": "Why was Xezal grumpy when she arrived? “Otobûsa Xezalê du saet dereng ma.”",
+                    "accepted": [
+                      "Xezal’s bus was two hours late.",
+                      "Xezal’s bus was two hours late",
+                      "Xezal's bus was two hours late.",
+                      "Xezal's bus was two hours late",
+                      "Xezal’s bus was late by two hours.",
+                      "Xezal’s bus was late by two hours"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal remembers the bus stop. Say: “I was very impatient.”",
+                    "accepted": [
+                      "Ez gelek bêtaqet bûm.",
+                      "Ez gelek bêtaqet bûm",
+                      "Ez pir bêtaqet bûm.",
+                      "Ez pir bêtaqet bûm"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Where was Grandma all evening? Type what Hamo says.",
+                    "accepted": [
+                      "Dapîr heta şevê li mala cîranan ma.",
+                      "Dapîr heta şevê li mala cîranan ma"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "“The kittens were born yesterday.” Which sentence says it?",
+                    "options": [
+                      "Têjik duh çêbûn.",
+                      "Têjik duh çêbûm.",
+                      "Têjik sibe çêbûn."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal wants every little thing. Write her order: “Tell the details!”",
+                    "accepted": [
+                      "Hûrgiliyan bibêje!",
+                      "Hûrgiliyan bibêje"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Xalo, tu bêhnfireh î, ji ber ku tu tenê rûdinî!",
+                    "voice": "xezo",
+                    "prompt": "Xezal teases her uncle. What does she say? “Xalo, tu bêhnfireh î, ji ber ku tu tenê rûdinî!”",
+                    "accepted": [
+                      "Uncle, you are patient because you just sit!",
+                      "Uncle, you are patient because you just sit",
+                      "Uncle, you’re patient because you only sit!",
+                      "Uncle, you’re patient because you only sit",
+                      "Uncle, you're patient because you just sit!",
+                      "Uncle, you're patient because you just sit",
+                      "Uncle, you are patient because all you do is sit!",
+                      "Uncle, you are patient because all you do is sit"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Tell your own yesterday the Hamo way: “First I sat down, then I slept.”",
+                    "reference": "Pêşî ez rûniştim, paşê ez razam."
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hevalo wants to play with the kittens, and Hamo holds him back. Type what he says.",
+                    "accepted": [
+                      "Têjik hîn gelek biçûk in.",
+                      "Têjik hîn gelek biçûk in"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Duh çi bû? Hûrgiliyan bibêje!",
+                    "voice": "xezo",
+                    "prompt": "Now Xezal turns to you: “Duh çi bû? Hûrgiliyan bibêje!” What could you answer?",
+                    "options": [
+                      "Ez çûm bazarê û paşê vegeriyam malê.",
+                      "Ez diçim bazarê û paşê vedigerim malê.",
+                      "Ez çû bazarê û paşê vegeriya malê."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hêvî counts on her fingers. Say: “Three kittens were born.”",
+                    "accepted": [
+                      "Sê têjik çêbûn.",
+                      "Sê têjik çêbûn"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Rojeke dirêj bû, û ez bêtaqet nebûm!",
+                    "voice": "hamo",
+                    "prompt": "Hamo stretches and yawns, very pleased with himself. What does he say? “Rojeke dirêj bû, û ez bêtaqet nebûm!”",
+                    "accepted": [
+                      "It was a long day, and I wasn’t impatient!",
+                      "It was a long day, and I wasn’t impatient",
+                      "It was a long day and I was not impatient!",
+                      "It was a long day and I was not impatient",
+                      "It was a long day, and I wasn't impatient!",
+                      "It was a long day, and I wasn't impatient",
+                      "It was a long day, and I didn’t get impatient!",
+                      "It was a long day, and I didn’t get impatient"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s3l4",
+              "position": 4,
+              "titleKu": "Em ê biçin zozanan!",
+              "titleEn": "We’ll go to the zozan!",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Biryara min ev e: em ê biçin zozanan!",
+                    "voice": "hamo",
+                    "prompt": "After dinner Hamo stands up and clears his throat. What has he decided? “Biryara min ev e: em ê biçin zozanan!”",
+                    "options": [
+                      "My decision is this: we will go to the summer pastures!",
+                      "My decision is this: we will stay in the village!",
+                      "My decision is this: Bozo will go to the pastures alone!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Berê em koçer bûn.",
+                    "voice": "hamo",
+                    "prompt": "Dapîr nods slowly. Hamo tells you why this matters to the family. “Berê em koçer bûn.”",
+                    "options": [
+                      "In the old days we were nomads.",
+                      "In the old days we were shepherds in the city.",
+                      "One day we will be nomads."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu09s3l4a",
+                    "title": "Biryara Hamo",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezal",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Guhdarî bikin! Biryara min ev e.",
+                        "en": "Listen, everyone! Here is my decision."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Biryareke nû? Xalo, ez ditirsim!",
+                        "en": "A new decision? Uncle, I’m scared!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Vê havînê em ê hemû bar bikin û biçin zozanan!",
+                        "en": "This summer we will all pack up and go to the summer pastures!"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Zozan? Ez ê bibim rêberê we!",
+                        "en": "The pastures? I’ll be your guide!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Wek koçeran? Bi hespan û keran?",
+                        "en": "Like nomads? With horses and donkeys?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê! Berê em jî koçer bûn. Werîsekî dirêj bîne, Xezo.",
+                        "en": "Yes! In the old days we were nomads too. Bring a long rope, Xezo."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Werîs ji bo çi ye?",
+                        "en": "What’s the rope for?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ji bo barê Bozo. Bozo! Em diçin zozanan!",
+                        "en": "For Bozo’s load. Bozo! We’re going to the pastures!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo… Bozo dîsa reviya!",
+                        "en": "Uncle… Bozo has run away again!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bozo, were! Ez henek dikim!",
+                        "en": "Bozo, come back! I’m joking!"
+                      }
+                    ],
+                    "prompt": "Kî dê bibe rêberê malbatê?",
+                    "options": [
+                      "Hevalo.",
+                      "Bozo.",
+                      "Xezal."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Em ê hemû bar bikin.",
+                    "voice": "hamo",
+                    "prompt": "Hamo spreads his arms wide. What does he announce? “Em ê hemû bar bikin.”",
+                    "accepted": [
+                      "We will all move.",
+                      "We will all move",
+                      "We’ll all move.",
+                      "We’ll all move",
+                      "We will all move house.",
+                      "We will all move house",
+                      "We will all migrate.",
+                      "We will all migrate",
+                      "We'll all move.",
+                      "We'll all move",
+                      "We will all pack up and move.",
+                      "We will all pack up and move"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo needs something for the load. Say: “Bring a long rope!”",
+                    "accepted": [
+                      "Werîsekî dirêj bîne!",
+                      "Werîsekî dirêj bîne"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Who will show the way? Type what Hamo says.",
+                    "accepted": [
+                      "Hevalo dê bibe rêberê me.",
+                      "Hevalo dê bibe rêberê me"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “We will move this summer”?",
+                    "options": [
+                      "Em ê vê havînê bar bikin.",
+                      "Em ê vê havînê bar dikin.",
+                      "Em ê vê havînê bar bikim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal looks at the rope and frowns. Complete her question: “Werîs ji bo … ye?” (What is the rope for?)",
+                    "accepted": [
+                      "Werîs ji bo çi ye?",
+                      "Werîs ji bo çi ye"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Bişar rêberekî baş e; ew hemû rêyan dizane.",
+                    "voice": "hamo",
+                    "prompt": "Hamo has another guide in mind for the high pastures. What does he say? “Bişar rêberekî baş e; ew hemû rêyan dizane.”",
+                    "accepted": [
+                      "Bişar is a good guide; he knows all the roads.",
+                      "Bişar is a good guide; he knows all the roads",
+                      "Bişar is a good guide, he knows all the ways.",
+                      "Bişar is a good guide, he knows all the ways",
+                      "Bişar is a good guide. He knows all the paths.",
+                      "Bişar is a good guide. He knows all the paths",
+                      "Bişar is a good guide; he knows every road.",
+                      "Bişar is a good guide; he knows every road"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Say Hamo’s big news yourself: “My decision is this: this summer we will go to the summer pastures!”",
+                    "reference": "Biryara min ev e: vê havînê em ê biçin zozanan!"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo points at the old photo again. Say: “In the old days, my grandfather was a nomad.”",
+                    "accepted": [
+                      "Berê bapîrê min koçer bû.",
+                      "Berê bapîrê min koçer bû",
+                      "Bapîrê min berê koçer bû.",
+                      "Bapîrê min berê koçer bû",
+                      "Di zemanê berê de bapîrê min koçer bû.",
+                      "Di zemanê berê de bapîrê min koçer bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Nazê has a list ready already. Type what Hamo reads out.",
+                    "accepted": [
+                      "Berî ku em biçin, divê em hemû tiştan amade bikin.",
+                      "Berî ku em biçin, divê em hemû tiştan amade bikin"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo, em diçin zozanan!",
+                    "voice": "hamo",
+                    "prompt": "Hamo calls out to the yard: “Bozo, em diçin zozanan!” What happens next?",
+                    "options": [
+                      "Bozo runs away again.",
+                      "Bozo comes to Hamo at once.",
+                      "Bozo falls asleep."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xalo… Bozo dîsa reviya!",
+                    "voice": "xezo",
+                    "prompt": "The yard is empty. Xezal looks at her uncle. What does she say? “Xalo… Bozo dîsa reviya!”",
+                    "options": [
+                      "Uncle… Bozo ran away again!",
+                      "Uncle… Bozo came back again!",
+                      "Uncle… Bozo is asleep again!"
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "titleKu": "Wê rojê",
+          "titleEn": "That day",
+          "grammarMd": "Every Kurdish tale starts in the past with **hebû** — *Hebû tunebû…* Once upon a time (there was, there wasn’t).\n\n- *Kerekî me hebû.* We had a donkey.\n- *Li gund dibistan tunebû.* There was no school in the village.\n\nChain the events with **û** and **paşê**: *Ez rabûm, derketim û ber bi çiyê ve meşiyam.* I got up, went out and walked towards the mountain.\n\nThe negative past puts **ne-** before the verb: *Bozo nehat.* Bozo didn’t come. · *Em neçûn.* We didn’t go. · *Ew dereng nema.* She didn’t stay late.\n\nWith a compound verb the ne- goes on the verb part: *Ez siwar nebûm.* I didn’t ride.",
+          "lessons": [
+            {
+              "key": "u09s4l1",
+              "position": 1,
+              "titleKu": "Ez neçûm",
+              "titleEn": "I didn’t go",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dema ku diya min neh salî bû, li gund dibistan tunebû.",
+                    "voice": "hamo",
+                    "prompt": "Dapîr is packing her old saddlebags, and Hamo tells you about her childhood. What does he say? “Dema ku diya min neh salî bû, li gund dibistan tunebû.”",
+                    "options": [
+                      "When my mother was nine, there was no school in the village.",
+                      "When my mother was nine, she went to school in the city.",
+                      "When my mother was nineteen, there was a school in the village."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "voice": "hamo",
+                    "pairs": [
+                      {
+                        "left": "hilat",
+                        "right": "rose (the sun)"
+                      },
+                      {
+                        "left": "daketin",
+                        "right": "to go down, to get off"
+                      },
+                      {
+                        "left": "hilkişiya",
+                        "right": "climbed"
+                      },
+                      {
+                        "left": "siwar bû",
+                        "right": "got on, rode"
+                      },
+                      {
+                        "left": "peya bû",
+                        "right": "got off (a horse)"
+                      },
+                      {
+                        "left": "hebû",
+                        "right": "there was; (he, she) had"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hespekî wê hebû.",
+                    "voice": "hamo",
+                    "prompt": "What did young Şemsê have, that every child in Sêvan envied? “Hespekî wê hebû.”",
+                    "options": [
+                      "She had a horse.",
+                      "She had a donkey.",
+                      "She had a school."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ew hemû havînê ji hespê peya nebû!",
+                    "voice": "hamo",
+                    "prompt": "Hamo shakes his head in wonder. What does he say about his mother? “Ew hemû havînê ji hespê peya nebû!”",
+                    "accepted": [
+                      "She didn’t get off the horse all summer!",
+                      "She didn’t get off the horse all summer",
+                      "She did not get off the horse all summer!",
+                      "She did not get off the horse all summer",
+                      "All summer she didn’t get off the horse!",
+                      "All summer she didn’t get off the horse",
+                      "She didn't get off the horse all summer!",
+                      "She didn't get off the horse all summer",
+                      "She didn’t get off her horse all summer!",
+                      "She didn’t get off her horse all summer"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "On the pastures the day starts early. Say: “The sun rose.”",
+                    "accepted": [
+                      "Roj hilat.",
+                      "Roj hilat"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo remembers the old road to the pastures. Type what he says.",
+                    "accepted": [
+                      "Em hilkişiyan çiyê û paşê daketin.",
+                      "Em hilkişiyan çiyê û paşê daketin"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “There were no cars in the village”?",
+                    "options": [
+                      "Li gund erebe tunebûn.",
+                      "Li gund erebe hebûn.",
+                      "Li gund erebe tune."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Dapîr says she never got lost, not once. Complete her words: “Ez qet winda …”",
+                    "accepted": [
+                      "Ez qet winda nebûm.",
+                      "Ez qet winda nebûm"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Picture young Şemsê. Say: “Grandma got on the horse.”",
+                    "accepted": [
+                      "Dapîr siwarî hespê bû.",
+                      "Dapîr siwarî hespê bû",
+                      "Dapîr li hespê siwar bû.",
+                      "Dapîr li hespê siwar bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Roj zû hiltê.",
+                    "voice": "hamo",
+                    "prompt": "Why do people on the pastures get up so early? “Roj zû hiltê.”",
+                    "options": [
+                      "The sun rises early.",
+                      "The sun sets early.",
+                      "The moon rises early."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Pretend you have ridden Dapîr’s horse round the yard: “I got on the horse and then I got off.”",
+                    "reference": "Ez siwarî hespê bûm û paşê peya bûm."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo remembers who arrived by bus. Type what he says.",
+                    "accepted": [
+                      "Xezal ji otobûsê daket.",
+                      "Xezal ji otobûsê daket"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hebû tunebû, keçeke biçûk hebû…",
+                    "voice": "hamo",
+                    "prompt": "Dapîr starts a tale the old way, and Hamo repeats the first words for you. What do they mean? “Hebû tunebû, keçeke biçûk hebû…”",
+                    "accepted": [
+                      "Once upon a time there was a little girl…",
+                      "Once upon a time there was a little girl",
+                      "Once upon a time, there was a little girl.",
+                      "Once upon a time, there was a little girl",
+                      "There was once a little girl…",
+                      "There was once a little girl"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hûn hilkişiyan çiyê?",
+                    "voice": "hamo",
+                    "prompt": "Hamo asks you and Xezal: “Hûn hilkişiyan çiyê?” What do you answer?",
+                    "options": [
+                      "Erê, em hilkişiyan.",
+                      "Erê, em hilkişiyam.",
+                      "Erê, em hildikişin."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s4l2",
+              "position": 2,
+              "titleKu": "Hamo dereng ma",
+              "titleEn": "Hamo was late",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Cara dawî ez rojeke tevahî dereng mam.",
+                    "voice": "hamo",
+                    "prompt": "Hamo wants to show how organised the family will be this year. Then he confesses something. What? “Cara dawî ez rojeke tevahî dereng mam.”",
+                    "options": [
+                      "Last time I was a whole day late.",
+                      "Last time I was an hour late.",
+                      "Last time I came a day early."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ji ber xeletiyê ez çûm gundekî din.",
+                    "voice": "hamo",
+                    "prompt": "How did that happen? Hamo explains with great dignity. “Ji ber xeletiyê ez çûm gundekî din.”",
+                    "options": [
+                      "By mistake I went to another village.",
+                      "On purpose I went to another village.",
+                      "By mistake I went to another city."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ev ne xeletiya min bû!",
+                    "voice": "hamo",
+                    "prompt": "Nazê raises an eyebrow. Hamo protests. “Ev ne xeletiya min bû!”",
+                    "accepted": [
+                      "It wasn’t my mistake!",
+                      "It wasn’t my mistake",
+                      "This wasn’t my mistake!",
+                      "This wasn’t my mistake",
+                      "It was not my mistake!",
+                      "It was not my mistake",
+                      "That wasn’t my mistake!",
+                      "That wasn’t my mistake",
+                      "It wasn't my mistake!",
+                      "It wasn't my mistake",
+                      "That wasn't my mistake!",
+                      "That wasn't my mistake"
+                    ]
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Nazê has one word for this summer. Say: “Be careful!”",
+                    "accepted": [
+                      "Hişyar be!",
+                      "Hişyar be"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “I got completely lost”?",
+                    "options": [
+                      "Ez bi tevahî winda bûm.",
+                      "Ez bi tevahî winda bû.",
+                      "Ez bi tevahî winda dibim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Nazê sets the rule for this year, and Hamo repeats it after her. Type what he says.",
+                    "accepted": [
+                      "Divê em vê carê hişyar bin.",
+                      "Divê em vê carê hişyar bin"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo insists it was an accident. Complete: “Ez ji ber … çûm gundekî din.” (By mistake I went to another village.)",
+                    "accepted": [
+                      "Ez ji ber xeletiyê çûm gundekî din.",
+                      "Ez ji ber xeletiyê çûm gundekî din",
+                      "Ji ber xeletiyê ez çûm gundekî din.",
+                      "Ji ber xeletiyê ez çûm gundekî din"
+                    ]
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Em ê tevî Dapîrê biçin.",
+                    "voice": "hamo",
+                    "prompt": "Who is coming to the pastures this year? “Em ê tevî Dapîrê biçin.”",
+                    "options": [
+                      "We will go with Grandma.",
+                      "We will go without Grandma.",
+                      "Grandma will go before us."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Nazê has heard this story before. Say: “It was a big mistake.”",
+                    "accepted": [
+                      "Xeletiyeke mezin bû.",
+                      "Xeletiyeke mezin bû",
+                      "Ew xeletiyeke mezin bû.",
+                      "Ew xeletiyeke mezin bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hamo tevî kerê xwe çû, lê bê nexşe.",
+                    "voice": "xezo",
+                    "prompt": "Xezal tells you the real story behind the mistake. What does she say? “Hamo tevî kerê xwe çû, lê bê nexşe.”",
+                    "accepted": [
+                      "Hamo went with his donkey, but without a map.",
+                      "Hamo went with his donkey, but without a map",
+                      "Hamo went with his donkey but without a map.",
+                      "Hamo went with his donkey but without a map",
+                      "Hamo went with his donkey, but with no map.",
+                      "Hamo went with his donkey, but with no map"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Defend yourself like Hamo: “It wasn’t my mistake, I am completely innocent!”",
+                    "reference": "Ev ne xeletiya min bû, ez bi tevahî bêguneh im!"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Hamo knows who will keep the family on time. Type what he says.",
+                    "accepted": [
+                      "Xezal her gav hişyar e.",
+                      "Xezal her gav hişyar e"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu jî tevî me têyî?",
+                    "voice": "hamo",
+                    "prompt": "Hamo turns to you: “Tu jî tevî me têyî?” What could you answer?",
+                    "options": [
+                      "Erê, ez jî tevî we têm.",
+                      "Erê, ez jî tevî we tê.",
+                      "Erê, ez jî tevî we hatim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal sums up last year’s trip. Say: “Because of a mistake we got completely lost.”",
+                    "accepted": [
+                      "Ji ber xeletiyê em bi tevahî winda bûn.",
+                      "Ji ber xeletiyê em bi tevahî winda bûn",
+                      "Em ji ber xeletiyê bi tevahî winda bûn.",
+                      "Em ji ber xeletiyê bi tevahî winda bûn"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s4l3",
+              "position": 3,
+              "titleKu": "Bozo dîsa reviya",
+              "titleEn": "Bozo ran away again",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez gazî Bozo dikim, lê ew nayê.",
+                    "voice": "xezo",
+                    "prompt": "Up the valley, Xezal turns to you, out of breath. What does she say? “Ez gazî Bozo dikim, lê ew nayê.”",
+                    "options": [
+                      "I’m calling Bozo, but he isn’t coming.",
+                      "I’m looking for Bozo, but I can’t see him.",
+                      "I called Bozo and he came."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li vir şopên wî hene!",
+                    "voice": "hevalo",
+                    "prompt": "Hevalo has his nose to the ground. What has he found? “Li vir şopên wî hene!”",
+                    "options": [
+                      "His tracks are here!",
+                      "His apples are here!",
+                      "He is here!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu09s4l3a",
+                    "title": "Li ber kaniyê",
+                    "speakers": [
+                      {
+                        "name": "Xezal",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Bozo! Bozo! Xalo, ez gazî wî dikim, lê ew nayê.",
+                        "en": "Bozo! Bozo! Uncle, I’m calling him, but he isn’t coming."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew qet bersivê nade. Hevalo, tu şopan dibînî?",
+                        "en": "He never answers. Hevalo, can you see any tracks?"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Erê! Şopên wî ber bi kaniyê ve diçin.",
+                        "en": "Yes! His tracks go towards the spring."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ber bi kaniyê ve? Werin!",
+                        "en": "Towards the spring? Come on!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bisekinin! Binêrin, li ber kaniyê!",
+                        "en": "Wait! Look, by the spring!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bozo li wir e… û kera Ferhad jî bi wî re ye!",
+                        "en": "Bozo is there… and Ferhad’s donkey is with him!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Li çavên wî binêre! Bozo evîndar e.",
+                        "en": "Look at his eyes! Bozo is in love."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Evîn! Lê kera Ferhad şermok e, ew li erdê dinêre.",
+                        "en": "Love! But Ferhad’s donkey is shy, she’s looking at the ground."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Wek Nazê, berî sî salan!",
+                        "en": "Like Nazê, thirty years ago!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Xalo! Ez ê vê ji Nazê re bibêjim!",
+                        "en": "Uncle! I’m telling Nazê you said that!"
+                      }
+                    ],
+                    "prompt": "Bozo li ku bû?",
+                    "options": [
+                      "Li ber kaniyê, bi kera Ferhad re.",
+                      "Li ser zinaran, bi bizinê re.",
+                      "Li malê, di baxçe de."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Bozo evîndar e!",
+                    "voice": "xezo",
+                    "prompt": "Xezal can’t stop giggling. Why? “Bozo evîndar e!”",
+                    "accepted": [
+                      "Bozo is in love!",
+                      "Bozo is in love",
+                      "Bozo’s in love!",
+                      "Bozo’s in love",
+                      "Bozo's in love!",
+                      "Bozo's in love"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Look at the lady donkey: a she-donkey takes the feminine ending, kera, where Bozo is kerê. Say: “Ferhad’s donkey is shy.”",
+                    "accepted": [
+                      "Kera Ferhad şermok e.",
+                      "Kera Ferhad şermok e"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal follows Hevalo’s nose. Type what she says.",
+                    "accepted": [
+                      "Şopên Bozo ber bi kaniyê ve diçin.",
+                      "Şopên Bozo ber bi kaniyê ve diçin"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "How do you tell someone “Call Baran!”?",
+                    "options": [
+                      "Gazî Baran bike!",
+                      "Gazî Baran dikim.",
+                      "Baran gazî bike!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Xezal teases her uncle about love. Complete: “… xweş e, xalo!” (Love is beautiful, uncle!)",
+                    "accepted": [
+                      "Evîn xweş e, xalo!",
+                      "Evîn xweş e, xalo"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Kera Ferhad şermok e, ew li erdê dinêre.",
+                    "voice": "xezo",
+                    "prompt": "And the lady donkey? What does Xezal say about her? “Kera Ferhad şermok e, ew li erdê dinêre.”",
+                    "options": [
+                      "Ferhad’s donkey is shy; she looks at the ground.",
+                      "Ferhad’s donkey is brave; she looks at Bozo.",
+                      "Ferhad’s donkey is angry; she runs away."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Wek Nazê, berî sî salan!",
+                    "voice": "hamo",
+                    "prompt": "Hamo smiles a slow, soft smile. What does he say? “Wek Nazê, berî sî salan!”",
+                    "accepted": [
+                      "Like Nazê, thirty years ago!",
+                      "Like Nazê, thirty years ago",
+                      "Just like Nazê, thirty years ago!",
+                      "Just like Nazê, thirty years ago"
+                    ]
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Tell Nazê the news when you get home: “Bozo is in love, and Ferhad’s donkey is shy.”",
+                    "reference": "Bozo evîndar e, û kera Ferhad şermok e."
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "xezo",
+                    "prompt": "Tell how they found him: “Hevalo followed the tracks.”",
+                    "accepted": [
+                      "Hevalo li dû şopan çû.",
+                      "Hevalo li dû şopan çû"
+                    ]
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu çima şermok î?",
+                    "voice": "xezo",
+                    "prompt": "Xezal teases you too: “Tu çima şermok î?” What could you answer?",
+                    "options": [
+                      "Ez ne şermok im!",
+                      "Ez ne şermok e!",
+                      "Ez ne şermok in!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Bozo û kera Ferhad: evîneke nû!",
+                    "voice": "xezo",
+                    "prompt": "Xezal announces it like the evening news. What does she say? “Bozo û kera Ferhad: evîneke nû!”",
+                    "accepted": [
+                      "Bozo and Ferhad’s donkey: a new love!",
+                      "Bozo and Ferhad’s donkey: a new love",
+                      "Bozo and Ferhad's donkey: a new love!",
+                      "Bozo and Ferhad's donkey: a new love",
+                      "Bozo and Ferhad’s donkey, a new love!",
+                      "Bozo and Ferhad’s donkey, a new love"
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u09s4l4",
+              "position": 4,
+              "titleKu": "Berê û niha",
+              "titleEn": "Then and now",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dema ku Dapîr keçik bû, ew bi diya xwe re çû zozanan.",
+                    "voice": "hamo",
+                    "prompt": "The evening before they leave, Dapîr remembers, and Hamo tells you what she says. “Dema ku Dapîr keçik bû, ew bi diya xwe re çû zozanan.”",
+                    "options": [
+                      "When Grandma was a girl, she went to the summer pastures with her mother.",
+                      "When Grandma was a girl, she lived in the city with her mother.",
+                      "When Grandma was old, she went to the pastures with her daughter."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li zozanan dawet hebûn.",
+                    "voice": "hamo",
+                    "prompt": "What happened up there in the summers of the old days? “Li zozanan dawet hebûn.”",
+                    "options": [
+                      "There were weddings on the summer pastures.",
+                      "There were no weddings on the pastures.",
+                      "There was a school on the summer pastures."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu09s4l4a",
+                    "title": "Berê û niha",
+                    "speakers": [
+                      {
+                        "name": "Xezal",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Dapîr dibêje ku dema ew keçik bû, ew bi diya xwe re çû zozanan.",
+                        "en": "Grandma says that when she was a girl, she went to the pastures with her mother."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Erê. Li wir dawet hebûn, û xort û keçik tevlî govendê bûn.",
+                        "en": "Yes. There were weddings there, and the young men and girls joined the dance."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Û bapîr? Ew jî li wir bû?",
+                        "en": "And Grandpa? Was he there too?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew xortekî ciwan bû. Lê ev çîrokeke din e…",
+                        "en": "He was a handsome young man. But that’s another story…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Xalo! Bibêje!",
+                        "en": "Uncle! Tell me!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Paşê. Berbang e, em diçin!",
+                        "en": "Later. It’s dawn, we’re off!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Binêre, li ser rê gelek pez hene!",
+                        "en": "Look, there are lots of sheep on the path!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û şivanek li dû wan tê. Ez wî nas dikim!",
+                        "en": "And a shepherd is coming behind them. I know him!"
+                      }
+                    ],
+                    "prompt": "Kî bi pez re tê?",
+                    "options": [
+                      "Şivanek.",
+                      "Zavayek.",
+                      "Bozo."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Zava xortekî ji gundekî din bû.",
+                    "voice": "hamo",
+                    "prompt": "Hamo remembers one wedding in particular. What does he say? “Zava xortekî ji gundekî din bû.”",
+                    "accepted": [
+                      "The bridegroom was a young man from another village.",
+                      "The bridegroom was a young man from another village",
+                      "The groom was a young man from another village.",
+                      "The groom was a young man from another village",
+                      "The bridegroom was a lad from another village.",
+                      "The bridegroom was a lad from another village"
+                    ]
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Everyone yawns. Say: “We got up at dawn.”",
+                    "accepted": [
+                      "Em di berbangê de rabûn.",
+                      "Em di berbangê de rabûn",
+                      "Di berbangê de em rabûn.",
+                      "Di berbangê de em rabûn"
+                    ]
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Type what Hamo says about the weddings of the old days.",
+                    "accepted": [
+                      "Xort û keçik tevlî govendê bûn.",
+                      "Xort û keçik tevlî govendê bûn"
+                    ]
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “The young men and the girls danced”?",
+                    "options": [
+                      "Xort û keçik reqisîn.",
+                      "Xort û keçik reqisîm.",
+                      "Xort û keçik direqisin."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Dapîr smiles: she was a girl then. Complete her words: “Wê demê ez … bûm.”",
+                    "accepted": [
+                      "Wê demê ez keçik bûm.",
+                      "Wê demê ez keçik bûm"
+                    ]
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Di berbangê de stêrk hîn li asman bûn.",
+                    "voice": "hamo",
+                    "prompt": "Very early next morning, Hamo looks up. What does he say? “Di berbangê de stêrk hîn li asman bûn.”",
+                    "accepted": [
+                      "At dawn the stars were still in the sky.",
+                      "At dawn the stars were still in the sky",
+                      "At dawn, the stars were still in the sky.",
+                      "At dawn, the stars were still in the sky",
+                      "The stars were still in the sky at dawn.",
+                      "The stars were still in the sky at dawn"
+                    ]
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "speaking",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Say what Dapîr remembers best: “At the wedding the groom was handsome, and everyone danced.”",
+                    "reference": "Di dawetê de zava ciwan bû, û hemû kes reqisîn."
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Xezal wants to hear about her grandfather. Say: “Grandpa was a handsome young man.”",
+                    "accepted": [
+                      "Bapîr xortekî ciwan bû.",
+                      "Bapîr xortekî ciwan bû",
+                      "Bapîr xortekî xweşik bû.",
+                      "Bapîr xortekî xweşik bû"
+                    ]
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Baran, tu jî dixwazî bibî zava?",
+                    "voice": "xezo",
+                    "prompt": "Xezal teases Baran: “Baran, tu jî dixwazî bibî zava?” What could he answer?",
+                    "options": [
+                      "Na! Ez hîn biçûk im!",
+                      "Na! Ez hîn biçûk bûm!",
+                      "Na! Ez hîn biçûk e!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "voice": "hamo",
+                    "prompt": "Halfway up the mountain, everyone stops. Type what Hamo says.",
+                    "accepted": [
+                      "Li ser rê gelek pez hene.",
+                      "Li ser rê gelek pez hene"
+                    ]
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Şivanek li dû wan tê… Ez wî nas dikim!",
+                    "voice": "hamo",
+                    "prompt": "A shepherd walks behind the flock. Hamo shades his eyes. What does he say? “Şivanek li dû wan tê… Ez wî nas dikim!”",
+                    "options": [
+                      "A shepherd is coming behind them… I know him!",
+                      "A shepherd is coming behind them… I don’t know him!",
+                      "A wolf is coming behind them… I’m afraid!"
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

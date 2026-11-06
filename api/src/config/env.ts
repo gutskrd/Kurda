@@ -154,14 +154,22 @@ const envSchema = z.object({
   /** Shared secret guarding IAP refund webhooks; disabled when unset (KUR-072). */
   IAP_WEBHOOK_SECRET: z.string().optional(),
   /**
-   * Permit the dev/test STUB receipt verifier even under NODE_ENV=production
-   * (KUR-072). For dev/testing deploys that have no App Store / Play Store
-   * credentials yet — it lets the API boot without a real verifier. NEVER set
-   * this on a store-facing deployment: the stub does not cryptographically
-   * verify receipts, so real purchases could be forged. Default 'false' keeps
-   * production a hard error until a real verifier + credentials are wired.
+   * The older name for IAP_PURCHASES_OFF, still read so a deploy whose
+   * dashboard has it keeps booting. It read as "allow the stub receipt
+   * verifier", but it only ever switches store purchases off: in production it
+   * selects the verifier that refuses every receipt (iap/verifier.ts), and the
+   * stub is stopped at boot whatever asks for it. Refusing to start over the
+   * old name would only leave the previous release running, without the fixes
+   * that came with this one.
    */
   IAP_ALLOW_STUB: z.enum(['true', 'false']).default('false'),
+  /**
+   * Run without store purchases: every receipt is refused with 503
+   * IAP_UNAVAILABLE (KUR-072). What a production deploy without App Store /
+   * Play Store credentials sets so it can boot; without it (and without real
+   * verifiers) production refuses to start. Never selects the stub.
+   */
+  IAP_PURCHASES_OFF: z.enum(['true', 'false']).default('false'),
   /** Shared secret guarding email bounce/complaint webhooks; disabled when unset (KUR-098). */
   EMAIL_WEBHOOK_SECRET: z.string().optional(),
   /**

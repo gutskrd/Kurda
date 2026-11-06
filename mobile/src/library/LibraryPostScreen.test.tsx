@@ -124,9 +124,11 @@ describe('a comment’s author', () => {
     const name = await screen.findByRole('button', { name: 'azad — open profile' });
     expect(name.textContent).toBe('azad');
     // their own picture beside the name, not a monogram from the first letters of an id
-    // (the picture is hidden from a screen reader, which is given the name instead)
-    const photo = screen.getByRole('img', { name: 'azad avatar', hidden: true });
-    expect(photo.textContent).toBe('');
+    // (the picture is hidden from a screen reader, which is given the name instead; react-native-web
+    // draws it as a box and, once it is loading, the browser's own image inside, both under that name)
+    const photos = screen.getAllByRole('img', { name: 'azad avatar', hidden: true });
+    expect(photos.map((p) => p.textContent)).toEqual(photos.map(() => ''));
+    expect(photos.some((p) => p.getAttribute('src') === azad.avatarUrl)).toBe(true);
     expect(screen.queryByText('U-')).toBeNull();
     expect(screen.getByText('5m ago')).toBeTruthy();
     fireEvent.click(name);

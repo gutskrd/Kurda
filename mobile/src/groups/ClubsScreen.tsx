@@ -21,6 +21,7 @@ import { SearchField } from '../shop/ItemFilters';
 import { limitText } from '../limits/limitCopy';
 import { createGroup, discoverGroups, joinGroup, myGroups, type Group } from './api';
 import { GroupAvatar } from './GroupAvatar';
+import { usePullRefresh } from '../net/usePullRefresh';
 
 type Privacy = 'open' | 'invite';
 const PRIVACIES: readonly Privacy[] = ['open', 'invite'];
@@ -67,7 +68,7 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   const [query, setQuery] = useState('');
 
   const load = useCallback(() => {
-    void discoverGroups(client).then((r) => {
+    const found = discoverGroups(client).then((r) => {
       if (r.ok) setAll(r.data.groups);
       else {
         setAll([]);
@@ -75,14 +76,20 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
       }
     });
     // which of them the reader is already in, for a server that does not say so itself
-    void myGroups(client).then((r) => {
+    const mine = myGroups(client).then((r) => {
       if (!r.ok) return;
       setMineIds(new Set(r.data.groups.map((g) => g.id)));
       setLimits(groupLimits(r.data.groups));
     });
+    return Promise.all([found, mine]);
   }, [client, t]);
 
-  useFocusEffect(load);
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+  const pull = usePullRefresh(load);
 
   const join = async (group: Found) => {
     if (joining) return;
@@ -126,6 +133,7 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
           keyExtractor={(g) => g.id}
           keyboardShouldPersistTaps="handled"
           contentContainerStyle={styles.list}
+          refreshControl={pull}
           ListHeaderComponent={
             <View style={styles.top}>
               {(all?.length ?? 0) > 0 ? <SearchField value={query} onChange={setQuery} label={t('groups.search')} /> : null}
@@ -170,7 +178,7 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
           onClose={() => setComposing(false)}
           onCreated={(id, name) => {
             setComposing(false);
-            load();
+            void load();
             navigation.navigate('GroupThread', { groupId: id, name });
           }}
         />

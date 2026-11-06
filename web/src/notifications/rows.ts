@@ -3,16 +3,18 @@ import type { RailNotification } from '../social/useSocialRail';
 /**
  * What a notification is about, as one of a few kinds, each drawn with its own
  * glyph: on the corner of the face of whoever it is from, or on its own where
- * it is from Hevalo.
+ * it is from Hevalo. An invitation — to a game, or to be friends — wears the
+ * ticket every invitation is (ui/Ticket.tsx), a game's in that game's colour.
  *
  * The data's `kind` says it most exactly; a notification without one (a streak
  * reminder, news) is placed by the category it was filed under, and anything
  * else is a plain notice rather than a guess.
  */
-export type NoteKind = 'game' | 'gift' | 'badge' | 'league' | 'streak' | 'safety' | 'care' | 'friends' | 'group' | 'groupOut' | 'groupBan' | 'groupAsk' | 'notice';
+export type NoteKind = 'invite' | 'friendRequest' | 'game' | 'gift' | 'badge' | 'league' | 'streak' | 'safety' | 'care' | 'friends' | 'group' | 'groupOut' | 'groupBan' | 'groupAsk' | 'notice';
 
 const BY_DATA: Record<string, NoteKind> = {
-  play_invite: 'game',
+  play_invite: 'invite',
+  friend_request: 'friendRequest',
   gift: 'gift',
   badge: 'badge',
   league_safe: 'league',

@@ -12,7 +12,12 @@ import type { RootStackParamList } from '../navigation/rootStack';
 export type LobbyRoute =
   | { name: 'WordleBattle'; params: RootStackParamList['WordleBattle'] }
   | { name: 'RhymeMatch'; params: RootStackParamList['RhymeMatch'] }
-  | { name: 'StoryGame'; params: RootStackParamList['StoryGame'] };
+  | { name: 'StoryGame'; params: RootStackParamList['StoryGame'] }
+  | { name: 'LastLetter'; params: RootStackParamList['LastLetter'] }
+  | { name: 'Impostor'; params: RootStackParamList['Impostor'] }
+  | { name: 'DontSay'; params: RootStackParamList['DontSay'] }
+  | { name: 'Bluff'; params: RootStackParamList['Bluff'] }
+  | { name: 'WhoAmI'; params: RootStackParamList['WhoAmI'] };
 
 export function lobbyRoute(game: PlayGame, id: string): LobbyRoute {
   switch (game) {
@@ -22,5 +27,15 @@ export function lobbyRoute(game: PlayGame, id: string): LobbyRoute {
       return { name: 'RhymeMatch', params: { id } };
     case 'stories':
       return { name: 'StoryGame', params: { id } };
+    case 'last-letter':
+      return { name: 'LastLetter', params: { id } };
+    case 'impostor':
+      return { name: 'Impostor', params: { id } };
+    case 'dont-say':
+      return { name: 'DontSay', params: { id } };
+    case 'bluff':
+      return { name: 'Bluff', params: { id } };
+    case 'who-am-i':
+      return { name: 'WhoAmI', params: { id } };
   }
 }

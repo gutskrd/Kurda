@@ -19,6 +19,7 @@ import { haptic } from '../feedback/haptics';
 import { describeError, isMaintenance } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
@@ -43,7 +44,6 @@ import {
 import { useI18n } from '../i18n/I18nContext';
 import { GiftSheet } from './GiftSheet';
 import { ReceivedGifts } from './ReceivedGifts';
-import { RefreshedItems } from './RefreshedItems';
 import { EmptyState } from '../theme/EmptyState';
 import type { RootNavigation } from '../navigation/rootStack';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
@@ -66,8 +66,11 @@ const GUTTER = spacing.lg;
  * browser shows them, each with a count and its picture. Above the list, a
  * search over names and meanings ("istikan" finds Îstîkan, "tea" finds it
  * too), one kind at a time, an order, and "Within my Zêr". What arrived for you
- * (refreshed items to return, gifts) stays above the catalogue; the search and
- * the kinds stay at the top of the screen once you scroll past it.
+ * (gifts) stays above the catalogue; the search and the kinds stay at the top
+ * of the screen once you scroll past it.
+ *
+ * Every purchase is final, and the item's sheet says so beside Buy; the dear
+ * ones, and anything bought with gems, ask once more, saying it again.
  */
 export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnMore: () => void }) {
   const { client } = useAuth();
@@ -94,7 +97,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const navigation = useNavigation<RootNavigation>();
 
   const load = useCallback(() => {
-    void Promise.all([
+    return Promise.all([
       client.get<{ items: ShopItem[] }>('/shop'),
       client.get<{ balances: Balances }>('/me/wallet'),
     ]).then(([cat, wallet]) => {
@@ -105,7 +108,13 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     });
   }, [client]);
 
-  useFocusEffect(useCallback(() => load(), [load]));
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+  // pulled down, the catalogue and the purse are read again
+  const pull = usePullRefresh(load);
 
   const buy = useCallback(
     async (item: ShopItem) => {
@@ -120,11 +129,11 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         // it is yours: felt as it lands, as a failure to buy it is
         haptic('tap');
         setSelected(null);
-        load();
+        void load();
         Alert.alert(t('shop.purchased'), t('shop.itemIsYours', { name: item.name }));
       } else if (res.error.code === 'PRICE_CHANGED') {
         setSelected(null);
-        load(); // pull fresh prices
+        void load(); // pull fresh prices
         Alert.alert(t('shop.priceChanged'), t('shop.priceChangedBody'));
       } else if (!isMaintenance(res.error)) {
         // the purchase did not happen and nothing else will make it: felt as an error
@@ -141,7 +150,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       if (needsConfirmation(item)) {
         Alert.alert(
           t('shop.confirmPurchase'),
-          t('shop.spendOn', { price: item.price, currency: currencyLabel(item.currency), name: item.name }),
+          `${t('shop.spendOn', { price: item.price, currency: currencyLabel(item.currency), name: item.name })}\n\n${t('shop.finalNote')}`,
           [
             { text: t('common.cancel'), style: 'cancel' },
             { text: t('shop.buy'), onPress: () => void buy(item) },
@@ -237,6 +246,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
             contentContainerStyle={styles.content}
+            refreshControl={pull}
             scrollEventThrottle={16}
             onScroll={(e) => {
               scrollY.current = e.nativeEvent.contentOffset.y;
@@ -244,8 +254,6 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             }}
           >
             <View style={[styles.inbox, styles.column]} onLayout={(e) => setInboxHeight(e.nativeEvent.layout.height)}>
-              {/* items you own whose art was redrawn, and a way to hand them back */}
-              <RefreshedItems onReturned={(currency, balance) => setBalances((b) => ({ ...b, [currency]: balance }))} />
               <ReceivedGifts />
             </View>
 
@@ -524,6 +532,8 @@ function ItemDetail({
             onPress={() => onBuy(item)}
             style={styles.stretch}
           />
+          {/* said where the money is spent: nothing bought can be handed back */}
+          {item.price > 0 ? <Text style={[styles.finalNote, { color: colors.textSecondary }]}>{t('shop.finalNote')}</Text> : null}
           {/*
            * Buying it for somebody else costs the same and lands the same, so
            * it sits beside Buy rather than behind a menu — quieter, because
@@ -606,4 +616,5 @@ const styles = StyleSheet.create({
   giftText: { fontSize: 15, fontWeight: typography.weights.semibold },
   insufficient: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm },
   insufficientText: { textAlign: 'center', fontSize: typography.sizes.sm },
+  finalNote: { textAlign: 'center', fontSize: typography.sizes.sm, lineHeight: 20 },
 });

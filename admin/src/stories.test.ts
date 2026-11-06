@@ -8,34 +8,42 @@ import {
   validateStory,
 } from '@kurda/shared';
 import {
+  DEFAULT_FILTER,
   autoSlug,
   availableActions,
   bankLabel,
   blankForm,
   blankQuestion,
+  categoryLabel,
+  cefrLabel,
+  contentChanged,
   describePath,
   draftFromForm,
   editorReducer,
   evidenceText,
   fieldIdsFor,
-  filterStories,
   formFromStory,
   glossLocalesLeft,
   glossPlaces,
   isDirty,
   isEditable,
+  isFiltered,
+  levelOptions,
+  listParams,
   liveChecks,
   looksRandomSlug,
   needsNativeReview,
   problemLabel,
   problemsAt,
   publishedCoverage,
-  statusCounts,
+  readListFilter,
   textFacts,
+  traditionLine,
+  translationChecks,
   type EditorAction,
   type StoryForm,
 } from './stories';
-import { BODY, storyFixture, summaryOf } from './test/stories';
+import { BODY, CATEGORIES, storyFixture, summaryOf } from './test/stories';
 
 const fixed = (): number => 0.5;
 
@@ -98,6 +106,111 @@ describe('the form and the request', () => {
     const saved = storyFixture({ questions: [...storyFixture().questions, { ...storyFixture().questions[0]!, id: 'q7' }] });
     const after = formFromStory(saved, { previous: before });
     expect(after.questions.map((q) => q.key)).toEqual(before.questions.map((q) => q.key));
+  });
+
+  it('carries the library fields as typed and sends them trimmed, a blank one as nothing', () => {
+    const form = edit(
+      formFromStory(storyFixture()),
+      { type: 'lib/category', value: 'fable' },
+      { type: 'lib/tradition', value: 'adapted' },
+      { type: 'lib/text', field: 'author', value: '  Çîroka gelêrî ' },
+      { type: 'lib/text', field: 'source', value: '   ' },
+      { type: 'lib/text', field: 'sourceUrl', value: 'https://example.org/tale ' },
+      { type: 'lib/text', field: 'attributionNote', value: 'Oral versions differ.' },
+      { type: 'lib/cover', value: 'gola-sin' },
+      { type: 'lib/minutes', value: 3 },
+    );
+    expect(form.library.author).toBe('  Çîroka gelêrî ');
+    expect(draftFromForm(form)).toMatchObject({
+      language: 'ku',
+      category: 'fable',
+      tradition: 'adapted',
+      author: 'Çîroka gelêrî',
+      source: null,
+      sourceUrl: 'https://example.org/tale',
+      attributionNote: 'Oral versions differ.',
+      cover: 'gola-sin',
+      readingMinutes: 3,
+    });
+    // a category, a cover or a reading time taken away is null, not an empty string
+    const cleared = edit(form, { type: 'lib/category', value: null }, { type: 'lib/cover', value: null }, { type: 'lib/minutes', value: null });
+    expect(draftFromForm(cleared)).toMatchObject({ category: null, cover: null, readingMinutes: null });
+    // what was loaded comes back the same, so nothing counts as unsaved
+    expect(isDirty(formFromStory(storyFixture()), formFromStory(storyFixture()))).toBe(false);
+  });
+
+  it('sends a translation tidied like the text, and none for a language left empty', () => {
+    const loaded = formFromStory(storyFixture());
+    const form = edit(
+      loaded,
+      { type: 'translation', locale: 'en', value: '\r\nRojîn is ten.\r\n\r\nThe road is long.\r\n\r\nTheir teacher is Şîlan.\r\n' },
+      { type: 'translation', locale: 'de', value: '   ' },
+    );
+    expect(draftFromForm(form).translations).toEqual({ en: 'Rojîn is ten.\n\nThe road is long.\n\nTheir teacher is Şîlan.' });
+    expect(isDirty(form, loaded)).toBe(true);
+    expect(isDirty(edit(loaded, { type: 'translation', locale: 'de', value: '  ' }), loaded)).toBe(false);
+  });
+
+  it('checks each translation’s paragraphs against the text’s, as it is typed', () => {
+    const form = edit(formFromStory(storyFixture()), { type: 'translation', locale: 'en', value: 'One.\n\nTwo.\n\nThree.' }, { type: 'translation', locale: 'de', value: 'Eins.\n\nZwei.' });
+    const checks = translationChecks(form);
+    expect(checks.map((c) => c.locale)).toEqual(['en', 'ku', 'ckb', 'nl', 'de', 'es', 'fr', 'tr', 'ar']);
+    expect(checks.find((c) => c.locale === 'en')).toMatchObject({ paragraphs: 3, expected: 3, state: 'ok' });
+    expect(checks.find((c) => c.locale === 'de')).toMatchObject({ paragraphs: 2, expected: 3, state: 'mismatch' });
+    expect(checks.find((c) => c.locale === 'fr')).toMatchObject({ paragraphs: 0, state: 'empty' });
+    // the mismatch is what the server refuses too
+    expect(codes(liveChecks(form).blocking)).toEqual(['TRANSLATION_PARAGRAPHS@translations.de']);
+    expect(describePath('translations.de')).toBe('Translation (German)');
+  });
+
+  it('sends which story this is a version of only when that changed, and drops it once taken back', () => {
+    const loaded = formFromStory(storyFixture());
+    expect('sameStoryAs' in draftFromForm(loaded)).toBe(false);
+    const linked = edit(loaded, { type: 'link', sameStoryAs: '0b5c1a52-6c1e-4f43-9a37-2a1f6b6a9d03' });
+    expect(draftFromForm(linked).sameStoryAs).toBe('0b5c1a52-6c1e-4f43-9a37-2a1f6b6a9d03');
+    expect(isDirty(linked, loaded)).toBe(true);
+    const unlinked = edit(loaded, { type: 'link', sameStoryAs: null });
+    expect(draftFromForm(unlinked).sameStoryAs).toBeNull();
+    const kept = edit(unlinked, { type: 'link', sameStoryAs: undefined });
+    expect('sameStoryAs' in draftFromForm(kept)).toBe(false);
+    expect(isDirty(kept, loaded)).toBe(false);
+    // a save loads the story afresh, with no change pending
+    expect('sameStoryAs' in formFromStory(storyFixture(), { previous: linked })).toBe(false);
+  });
+
+  it('tells edits a reviewer would have to read again from edits to the filing', () => {
+    const loaded = formFromStory(storyFixture({ reviewStatus: 'approved' }));
+    expect(contentChanged(edit(loaded, { type: 'lib/category', value: 'fable' }, { type: 'lib/text', field: 'author', value: 'Someone' }), loaded)).toBe(false);
+    expect(contentChanged(edit(loaded, { type: 'text', field: 'summary', value: 'Changed.' }), loaded)).toBe(true);
+    expect(contentChanged(edit(loaded, { type: 'translation', locale: 'en', value: 'A.\n\nB.\n\nC.' }), loaded)).toBe(true);
+    expect(contentChanged(edit(loaded, { type: 'q/correct', index: 0, option: 1 }), loaded)).toBe(true);
+    // whitespace the API trims is no change
+    expect(contentChanged(edit(loaded, { type: 'text', field: 'title', value: 'Rêya Dibistanê ' }), loaded)).toBe(false);
+  });
+});
+
+describe('the names', () => {
+  it('names a level by its CEFR letter and word, and keeps a stored level outside the scale', () => {
+    expect(cefrLabel(1)).toBe('A1 — Beginner');
+    expect(cefrLabel(2, ' · ')).toBe('A2 · Elementary');
+    expect(cefrLabel(5)).toBe('C1 — Advanced');
+    expect(cefrLabel(7)).toBe('Level 7');
+    expect(levelOptions(3).map((o) => o.level)).toEqual([1, 2, 3, 4, 5]);
+    expect(levelOptions(7).map((o) => o.label)).toEqual(['A1 — Beginner', 'A2 — Elementary', 'B1 — Intermediate', 'B2 — Upper intermediate', 'C1 — Advanced', 'Level 7']);
+  });
+
+  it('names a category in English, or by its slug until the list is there', () => {
+    expect(categoryLabel(CATEGORIES, 'fable')).toBe('Animal fables');
+    expect(categoryLabel(CATEGORIES, 'gone')).toBe('gone');
+    expect(categoryLabel(undefined, 'fable')).toBe('fable');
+    expect(categoryLabel(CATEGORIES, null)).toBeNull();
+  });
+
+  it('tells the reader where a story comes from in one line', () => {
+    expect(traditionLine('traditional')).toBe('Traditional tale');
+    expect(traditionLine('adapted')).toBe('Traditional tale, retold for learners');
+    expect(traditionLine('original')).toBe('Written for learners');
+    expect(traditionLine('anything else')).toBe('Written for learners');
   });
 });
 
@@ -349,7 +462,8 @@ describe('the live checks', () => {
     // a new story with only a title: no text yet is fine in a draft
     const started = edit(blankForm('kurmanci', fixed), { type: 'text', field: 'title', value: 'Qelema Şîn' });
     expect(liveChecks(started).blocking).toEqual([]);
-    expect(codes(liveChecks(started).beforePublish)).toEqual(['BODY_EMPTY@body']);
+    // a new story is filed under no category yet, and that too waits until it is published
+    expect(codes(liveChecks(started).beforePublish)).toEqual(['CATEGORY_MISSING@category', 'BODY_EMPTY@body']);
     // a text between the lengths (144 words: past short, short of medium) likewise
     const between = edit(formFromStory(storyFixture()), { type: 'text', field: 'body', value: `${BODY}\n\n${BODY}` });
     expect(liveChecks(between).blocking).toEqual([]);
@@ -475,10 +589,10 @@ describe('status', () => {
   });
 
   it('marks a starter story until someone has published it', () => {
-    expect(needsNativeReview({ source: 'starter', publishedAt: null })).toBe(true);
+    expect(needsNativeReview({ origin: 'starter', publishedAt: null })).toBe(true);
     // unpublished again after a review, it has been read once already
-    expect(needsNativeReview({ source: 'starter', publishedAt: '2026-10-05T10:00:00.000Z' })).toBe(false);
-    expect(needsNativeReview({ source: 'admin', publishedAt: null })).toBe(false);
+    expect(needsNativeReview({ origin: 'starter', publishedAt: '2026-10-05T10:00:00.000Z' })).toBe(false);
+    expect(needsNativeReview({ origin: 'admin', publishedAt: null })).toBe(false);
   });
 });
 
@@ -486,25 +600,36 @@ describe('the list', () => {
   const base = storyFixture();
   const list = [
     summaryOf(base, { id: '1', title: 'Rêya Dibistanê', status: 'published', publishedAt: '2026-10-05T10:00:00.000Z' }),
-    summaryOf(base, { id: '2', title: 'Şorbeya Nîskê', slug: 'sorbeya-niske', length: 'medium', status: 'draft', source: 'starter', questionCount: 8, problems: { errors: 1, warnings: 2 } }),
+    summaryOf(base, { id: '2', title: 'Şorbeya Nîskê', slug: 'sorbeya-niske', length: 'medium', status: 'draft', origin: 'starter', questionCount: 8, problems: { errors: 1, warnings: 2 } }),
     summaryOf(base, { id: '3', title: 'کلیلی ماڵەوە', slug: 'ckb-the-house-key', dialect: 'sorani', status: 'in_review', problems: { errors: 0, warnings: 1 } }),
     summaryOf(base, { id: '4', title: 'Rovî û Hirç', slug: 'rovi-u-hirc', length: null, status: 'archived' }),
     summaryOf(base, { id: '5', title: 'Barana Newrozê', slug: 'barana-newroze', length: 'long', status: 'published', dialect: 'kurmanci' }),
   ];
 
-  it('filters by status, variety and a search that ignores the Hawar marks', () => {
-    const ids = (f: Parameters<typeof filterStories>[1]) => filterStories(list, f).map((s) => s.id);
-    expect(ids({ status: 'all', dialect: 'all', query: '' })).toEqual(['1', '2', '3', '4', '5']);
-    expect(ids({ status: 'published', dialect: 'all', query: '' })).toEqual(['1', '5']);
-    expect(ids({ status: 'all', dialect: 'sorani', query: '' })).toEqual(['3']);
-    expect(ids({ status: 'all', dialect: 'all', query: 'sorbeya' })).toEqual(['2']);
-    expect(ids({ status: 'all', dialect: 'all', query: 'house' })).toEqual(['3']);
-    expect(ids({ status: 'draft', dialect: 'all', query: 'newroz' })).toEqual([]);
+  it('asks the server for only what narrows the list, and for the page', () => {
+    expect(listParams(DEFAULT_FILTER)).toBe('limit=50');
+    expect(listParams({ ...DEFAULT_FILTER, status: 'published', query: '  şorbe  ' }, 2)).toBe('q=%C5%9Forbe&status=published&limit=50&offset=100');
+    expect(listParams({ ...DEFAULT_FILTER, dialect: 'sorani', level: 3, category: 'fable', review: 'unreviewed', featured: true })).toBe(
+      'dialect=sorani&level=3&category=fable&review=unreviewed&featured=1&limit=50',
+    );
+    expect(isFiltered(DEFAULT_FILTER)).toBe(false);
+    expect(isFiltered({ ...DEFAULT_FILTER, featured: true })).toBe(true);
+    expect(isFiltered({ ...DEFAULT_FILTER, query: '  ' })).toBe(false);
   });
 
-  it('counts every status within a variety', () => {
-    expect(statusCounts(list)).toEqual({ all: 5, draft: 1, in_review: 1, published: 2, archived: 1 });
-    expect(statusCounts(list, 'sorani')).toEqual({ all: 1, draft: 0, in_review: 1, published: 0, archived: 0 });
+  it('reads a remembered filter back with every part checked', () => {
+    expect(readListFilter(null)).toEqual(DEFAULT_FILTER);
+    expect(readListFilter({ status: 'draft', dialect: 'sorani', level: 2, category: 'fable', review: 'approved', featured: true, query: 'x', page: 3 })).toEqual({
+      status: 'draft',
+      dialect: 'sorani',
+      level: 2,
+      category: 'fable',
+      review: 'approved',
+      featured: true,
+      query: 'x',
+    });
+    // a stale or hand-edited one asks for nothing the server would refuse
+    expect(readListFilter({ status: 'gone', dialect: 'latin', level: 9, category: '', review: 'maybe', featured: 'yes', query: 3 })).toEqual(DEFAULT_FILTER);
   });
 
   it('counts what learners can play, per variety and length', () => {

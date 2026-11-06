@@ -11,6 +11,37 @@ export { badgeSvg, badgeShineSvg, badgeShines, SMALL_BADGE, type BadgeOptions, t
 export { rankEmblemSvg, placementEmblemSvg, PLACEMENT_GAMES, SMALL_EMBLEM, type PlacementEmblemOptions, type RankEmblemOptions } from './ranks.js';
 export { leagueEmblemSvg, SMALL_LEAGUE, type LeagueEmblemOptions } from './leagues.js';
 export { coinSvg, gemSvg, CURRENCY_CANVAS, type CurrencyOptions } from './currency.js';
+export { wordSetSvg, type WordSetArtOptions, type WordsCardId } from './word-sets.js';
+export { TICKET_ART_BOX, TICKET_ART_OUTLINE, TICKET_ART_PERFORATION, TICKET_ART_STUB, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
+export {
+  CHEST_BOX,
+  CHEST_FOOT,
+  CHEST_HOP,
+  CHEST_HOP_LAND,
+  CHEST_HOP_LID,
+  CHEST_HOP_LIGHT,
+  CHEST_HOP_MS,
+  CHEST_HOP_SHADOW,
+  CHEST_HOP_SPARKLE,
+  CHEST_LAYERS,
+  CHEST_SMALL,
+  CHEST_TINTS,
+  CHEST_TINY,
+  CHEST_VIEW,
+  chestDrawing,
+  chestGlint,
+  chestHopAt,
+  chestLayerSvg,
+  chestSvg,
+  type ChestBox,
+  type ChestDrawing,
+  type ChestHopCurve,
+  type ChestHopFrame,
+  type ChestLayer,
+  type ChestLayerId,
+  type ChestOptions,
+  type ChestSvgOptions,
+} from './chest.js';
 export {
   seasonFrameSvg,
   seasonFrameShineSvg,
@@ -20,3 +51,23 @@ export {
   type SeasonFrameOptions,
   type SeasonFrameShineOptions,
 } from './frames.js';
+export {
+  PATH_LANDMARK_LOOP,
+  PATH_STOP_ART,
+  PATH_STOP_LOOKS,
+  PATH_STOP_TONES,
+  pathGroundColour,
+  pathLandSvg,
+  pathLandmarkSvg,
+  pathLoopSvg,
+  pathStonesSvg,
+  pathStopSvg,
+  type PathLandOptions,
+  type PathLandmarkOptions,
+  type PathLoop,
+  type PathLoopKind,
+  type PathLoopOptions,
+  type PathStonesOptions,
+  type PathStopLook,
+  type PathStopOptions,
+} from './path-land.js';

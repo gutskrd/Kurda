@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { AccessibilityInfo, findNodeHandle, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, findNodeHandle, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { DeclineReason, IncomingInvite } from '@kurda/shared';
@@ -8,21 +8,29 @@ import { useAuth } from '../auth/AuthContext';
 import { describeError, type Translate } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useReducedMotion } from '../a11y/useReducedMotion';
+import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { TAB_BAR_HEIGHT } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { useDirection } from '../reports/direction';
 import { useRealtimeReconnect } from '../realtime/RealtimeProvider';
 import { useUserEvents } from '../realtime/useUserEvents';
+import { springTo, timing } from '../theme/animate';
 import { Icon } from '../theme/Icon';
+import { duration } from '../theme/motion';
+import { blend } from '../theme/tileTones';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
+import { useAnnouncer } from '../stories/ui';
 import { acceptInvite, declineInvite, listInvites } from './api';
 import { applyInviteEvent, liveInvites, nextExpiry } from './invites';
-import { GAME_NAME_KEY, summaryParts } from './labels';
+import { GAME_ICON, GAME_NAME_KEY, summaryParts } from './labels';
 import { RatedPill } from '../ranks/Rated';
 import { useInvitesQuieted } from './quietInvites';
 import { lobbyRoute } from './routes';
+import { TEAR_MS, Ticket, TicketBadge, ticketTone } from './Ticket';
 
 /**
  * "Rojda invited you to Peyvok Battle · Hard" — [Join] [Not now ▾] (contract
@@ -44,6 +52,13 @@ import { lobbyRoute } from './routes';
  *
  * "Not now" offers the two preset reasons and nothing typed: the host only
  * ever hears "can't play right now" or "would rather play something else".
+ *
+ * The invite is a ticket (Ticket.tsx) handed to you: the game's colour and
+ * glyph on its stub, who it is from on the paper. It arrives from below with
+ * a slight swing; Join tears the stub off along the perforation and then
+ * opens the lobby; a "not now" folds it away. With more invites waiting, the
+ * next ones peek out behind it as a small fan. Under Reduce Motion it is
+ * simply there, and goes, with no travel.
  */
 export function InviteBanner(): React.JSX.Element | null {
   const { client, isGuest } = useAuth();
@@ -78,6 +93,10 @@ export function InviteBanner(): React.JSX.Element | null {
     }, []),
   );
 
+  // answered at once (a reload must not put it back), and gone once its ticket has torn or folded away
+  const answer = useCallback((id: string) => {
+    answered.current.add(id);
+  }, []);
   const remove = useCallback((id: string) => {
     answered.current.add(id);
     setInvites((list) => list.filter((i) => i.id !== id));
@@ -116,7 +135,18 @@ export function InviteBanner(): React.JSX.Element | null {
    */
   const bottom = onTabs ? insets.bottom + TAB_BAR_HEIGHT + spacing.sm : insets.bottom + spacing.md;
   // keyed by the invite: a new invite at the front starts open, whatever was done with the last one
-  return <InviteCard key={invite.id} invite={invite} headline={headline} count={shown.length} bottom={bottom} onGone={remove} />;
+  return (
+    <InviteCard
+      key={invite.id}
+      invite={invite}
+      headline={headline}
+      count={shown.length}
+      behind={shown.slice(1, 3)}
+      bottom={bottom}
+      onAnswer={answer}
+      onGone={remove}
+    />
+  );
 }
 
 interface RootStateSource {
@@ -147,23 +177,36 @@ export function rootIsTabs(navigation: RootStateSource): boolean {
   return state.routes[state.index ?? 0]?.name === 'Tabs';
 }
 
+/** How long a "not now" takes to fold the ticket away. */
+const FOLD_MS = duration.base + 60;
+
 function InviteCard({
   invite,
   headline,
   count,
+  behind,
   bottom,
+  onAnswer,
   onGone,
 }: {
   invite: IncomingInvite;
   headline: string;
   count: number;
+  /** the next invites waiting, peeking out behind this one */
+  behind: IncomingInvite[];
   bottom: number;
+  onAnswer: (id: string) => void;
   onGone: (id: string) => void;
 }): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors, scheme } = useTheme();
   const { t, rtl } = useI18n();
+  const reduce = useReducedMotion();
+  const { announce, region } = useAnnouncer();
+  // rows start on the side a line starts from, as the ticket's stub does
+  const flow = useDirection();
+  const row = { flexDirection: flow.row };
   /*
    * The interface's direction, set rather than guessed: "Azad invited you to …"
    * in Soranî starts with a Latin name, and a guess from its first letter
@@ -175,7 +218,30 @@ function InviteCard({
   /** why Join did not work: the game is gone (the invite goes too), or a passing failure to try again */
   const [failure, setFailure] = useState<{ dead: boolean; message: string } | null>(null);
   const [hidden, setHidden] = useState(false);
+  const [torn, setTorn] = useState(false);
   const laterRef = useRef<View>(null);
+
+  // what is left to do once the ticket has torn or folded away; nothing is left waiting after it is gone
+  const timers = useRef<ReturnType<typeof setTimeout>[]>([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const after = (ms: number, then: () => void): void => {
+    if (ms <= 0) then();
+    else timers.current.push(setTimeout(then, ms));
+  };
+
+  // it arrives from below the way a ticket is held out: a little turned, settling with a swing
+  const arrive = useRef(new Animated.Value(reduce ? 1 : 0)).current;
+  useEffect(() => {
+    if (reduce) {
+      arrive.setValue(1);
+      return;
+    }
+    const run = springTo(arrive, 1, 'bouncy');
+    run.start();
+    return () => run.stop();
+    // once, as it is handed over
+  }, []);
+  const fold = useRef(new Animated.Value(0)).current;
 
   // an invite whose game is gone stays long enough to be read, then goes
   const dead = failure?.dead ?? false;
@@ -206,16 +272,27 @@ function InviteCard({
       setFailure(joinFailure(res.error, t));
       return;
     }
-    onGone(invite.id);
+    // in: the stub comes off in the hand, and then the lobby opens
+    onAnswer(invite.id);
+    haptic('tap');
+    announce(t('play.card.joined'));
+    setTorn(true);
     const route = lobbyRoute(res.data.game, res.data.lobbyId);
-    navigation.navigate(route.name, route.params as never);
+    after(reduce ? 0 : TEAR_MS + 40, () => {
+      onGone(invite.id);
+      navigation.navigate(route.name, route.params as never);
+    });
   };
 
   const decline = (reason: DeclineReason): void => {
-    onGone(invite.id);
+    onAnswer(invite.id);
     void declineInvite(client, invite.id, reason);
+    if (!reduce) timing(fold, 1, FOLD_MS, { easing: Easing.in(Easing.quad) }).start();
+    after(reduce ? 0 : FOLD_MS, () => onGone(invite.id));
   };
 
+  // a shadow does not show on a near-black screen: there the ticket is lifted by a lighter paper
+  const paper = scheme === 'dark' ? colors.surfaceRaised : colors.surface;
   const lifted = scheme === 'dark' ? { backgroundColor: colors.controlTrack } : null;
 
   if (hidden) {
@@ -229,8 +306,13 @@ function InviteCard({
             accessibilityHint={t('play.banner.show')}
             style={[styles.pill, styles.lift, { backgroundColor: colors.background, shadowColor: colors.softShadow }]}
           >
-            <View style={[styles.pillInner, lifted]}>
-              <InitialsAvatar name={invite.from.name} id={invite.from.name} size={28} photoUrl={invite.from.avatarUrl} />
+            <View style={[styles.pillInner, row, lifted]}>
+              <View>
+                <InitialsAvatar name={invite.from.name} id={invite.from.name} size={28} photoUrl={invite.from.avatarUrl} />
+                <View style={[styles.pillBadge, rtl ? styles.pillBadgeLeft : styles.pillBadgeRight]}>
+                  <TicketBadge tone={invite.game} size={16} ring={colors.background} />
+                </View>
+              </View>
               <Text style={[styles.pillText, { color: colors.textPrimary }, dir]} numberOfLines={1}>
                 {count > 1 ? t('play.banner.pillMany', { count }) : t('play.banner.pill')}
               </Text>
@@ -242,86 +324,137 @@ function InviteCard({
     );
   }
 
+  const swing = flow.row === 'row-reverse' ? 1 : -1;
+  const arriving = {
+    opacity: arrive.interpolate({ inputRange: [0, 0.35, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' }),
+    transform: [
+      { translateY: arrive.interpolate({ inputRange: [0, 1], outputRange: [64, 0] }) },
+      { rotate: arrive.interpolate({ inputRange: [0, 1], outputRange: [`${5 * swing}deg`, '0deg'] }) },
+    ],
+  };
+  // folded down and away, like a ticket put back in a pocket
+  const folding = {
+    opacity: fold.interpolate({ inputRange: [0, 0.7, 1], outputRange: [1, 0.6, 0] }),
+    transform: [
+      { perspective: 700 },
+      { translateY: fold.interpolate({ inputRange: [0, 1], outputRange: [0, 36] }) },
+      { rotateX: fold.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '72deg'] }) },
+    ],
+  };
+
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom }]}>
-      <View
-        style={[styles.column, styles.banner, styles.lift, { backgroundColor: colors.background, shadowColor: colors.softShadow }]}
-        accessibilityLiveRegion="polite"
-      >
-        {/* a shadow does not show on a near-black screen: there the banner is lifted by a lighter fill */}
-        <View style={[styles.inner, lifted]}>
-          <View style={styles.head}>
-            <InitialsAvatar name={invite.from.name} id={invite.from.name} size={40} photoUrl={invite.from.avatarUrl} />
-            <View style={styles.text}>
-              <Text style={[styles.headline, { color: colors.textPrimary }, dir]}>{headline}</Text>
-              {details ? (
-                <Text style={[styles.details, { color: colors.textSecondary }, dir]} numberOfLines={2}>
-                  {details}
-                </Text>
-              ) : null}
-              {/* Rated or Friendly, before you say yes */}
-              {invite.summary.rated !== undefined ? <RatedPill rated={invite.summary.rated} small /> : null}
-            </View>
-            {/* folds it away without answering: the host hears nothing */}
-            <Pressable onPress={() => setHidden(true)} accessibilityRole="button" accessibilityLabel={t('play.banner.hide')} style={styles.hide}>
-              <Icon name="chevron-down" size={18} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-          {failure?.dead ? (
-            <Text style={[styles.details, { color: colors.danger }, dir]}>{failure.message}</Text>
-          ) : (
-            <>
-              <View style={styles.actions}>
-                <PressableScale
-                  onPress={() => void join()}
-                  disabled={busy}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name })}
-                  accessibilityState={{ busy }}
-                  style={[styles.button, { backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }]}
-                >
-                  <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
-                </PressableScale>
-                {/* opens the two reasons under it and closes them again; Join stays where it was */}
-                <PressableScale
-                  onPress={() => setReasons((open) => !open)}
-                  accessibilityRole="button"
-                  accessibilityState={{ expanded: reasons }}
-                  style={[styles.button, { backgroundColor: colors.controlTrack }]}
-                >
-                  <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notNow')}</Text>
-                  <Icon name="chevron-down" size={14} color={colors.textSecondary} style={reasons ? styles.up : undefined} />
-                </PressableScale>
+      <Animated.View style={[styles.column, arriving]}>
+        <Animated.View style={folding}>
+          {/* the invites after this one, fanned out behind it: their own colours on their stubs */}
+          {[...behind].reverse().map((b) => {
+            // the furthest back first, so the nearer one lies over it
+            const i = behind.indexOf(b);
+            return (
+              <View
+                key={b.id}
+                style={[
+                  styles.behind,
+                  {
+                    top: -8 * (i + 1),
+                    left: spacing.sm * (i + 1),
+                    right: spacing.sm * (i + 1),
+                    backgroundColor: blend(colors.textPrimary, paper, (scheme === 'dark' ? 0.08 : 0.07) + 0.04 * i),
+                    transform: [{ rotate: `${(i % 2 === 0 ? -1.4 : 1.2) * swing}deg` }],
+                  },
+                ]}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                aria-hidden
+              >
+                <View style={[styles.behindStub, flow.row === 'row-reverse' ? styles.behindStubRight : styles.behindStubLeft, { backgroundColor: ticketTone(colors, b.game).face }]} />
               </View>
-              {reasons ? (
-                <View style={styles.actions}>
+            );
+          })}
+          <Ticket
+            tone={invite.game}
+            torn={torn}
+            lifted
+            paper={paper}
+            stub={(ink) => <Icon name={GAME_ICON[invite.game]} size={26} color={ink.ink} />}
+            bodyStyle={styles.inner}
+            accessibilityLiveRegion="polite"
+          >
+            <View style={[styles.head, row]}>
+              <InitialsAvatar name={invite.from.name} id={invite.from.name} size={40} photoUrl={invite.from.avatarUrl} />
+              <View style={styles.text}>
+                <Text style={[styles.headline, { color: colors.textPrimary }, dir]}>{headline}</Text>
+                {details ? (
+                  <Text style={[styles.details, { color: colors.textSecondary }, dir]} numberOfLines={2}>
+                    {details}
+                  </Text>
+                ) : null}
+                {/* Rated or Friendly, before you say yes */}
+                {invite.summary.rated !== undefined ? <RatedPill rated={invite.summary.rated} small style={flow.row === 'row-reverse' ? styles.endSelf : undefined} /> : null}
+              </View>
+              {/* folds it away without answering: the host hears nothing */}
+              <Pressable onPress={() => setHidden(true)} accessibilityRole="button" accessibilityLabel={t('play.banner.hide')} style={[styles.hide, flow.row === 'row-reverse' ? styles.hideLeft : styles.hideRight]}>
+                <Icon name="chevron-down" size={18} color={colors.textSecondary} />
+              </Pressable>
+            </View>
+            {failure?.dead ? (
+              <Text style={[styles.details, { color: colors.danger }, dir]}>{failure.message}</Text>
+            ) : (
+              <>
+                <View style={[styles.actions, row]}>
                   <PressableScale
-                    ref={laterRef}
-                    onPress={() => decline('later')}
+                    onPress={() => void join()}
+                    disabled={busy || torn}
                     accessibilityRole="button"
-                    style={[styles.button, styles.reason, { borderColor: colors.separator }]}
+                    accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name })}
+                    accessibilityState={{ busy }}
+                    style={[styles.button, { backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }]}
                   >
-                    <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.later')}</Text>
+                    <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
                   </PressableScale>
+                  {/* opens the two reasons under it and closes them again; Join stays where it was */}
                   <PressableScale
-                    onPress={() => decline('not_this_game')}
+                    onPress={() => setReasons((open) => !open)}
+                    disabled={torn}
                     accessibilityRole="button"
-                    style={[styles.button, styles.reason, { borderColor: colors.separator }]}
+                    accessibilityState={{ expanded: reasons }}
+                    style={[styles.button, { backgroundColor: colors.controlTrack }]}
                   >
-                    <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notThisGame')}</Text>
+                    <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notNow')}</Text>
+                    <Icon name="chevron-down" size={14} color={colors.textSecondary} style={reasons ? styles.up : undefined} />
                   </PressableScale>
                 </View>
-              ) : null}
-              {failure ? (
-                <Text style={[styles.details, { color: colors.danger }, dir]} accessibilityLiveRegion="polite">
-                  {failure.message}
-                </Text>
-              ) : null}
-            </>
-          )}
-          {count > 1 ? <Text style={[styles.more, { color: colors.textSecondary }]}>{t('play.banner.more', { count: count - 1 })}</Text> : null}
-        </View>
-      </View>
+                {reasons ? (
+                  <View style={[styles.actions, row]}>
+                    <PressableScale
+                      ref={laterRef}
+                      onPress={() => decline('later')}
+                      accessibilityRole="button"
+                      style={[styles.button, styles.reason, { borderColor: colors.separator }]}
+                    >
+                      <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.later')}</Text>
+                    </PressableScale>
+                    <PressableScale
+                      onPress={() => decline('not_this_game')}
+                      accessibilityRole="button"
+                      style={[styles.button, styles.reason, { borderColor: colors.separator }]}
+                    >
+                      <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notThisGame')}</Text>
+                    </PressableScale>
+                  </View>
+                ) : null}
+                {failure ? (
+                  <Text style={[styles.details, { color: colors.danger }, dir]} accessibilityLiveRegion="polite">
+                    {failure.message}
+                  </Text>
+                ) : null}
+              </>
+            )}
+            {count > 1 ? <Text style={[styles.more, { color: colors.textSecondary }]}>{t('play.banner.more', { count: count - 1 })}</Text> : null}
+          </Ticket>
+        </Animated.View>
+      </Animated.View>
+      {region}
     </View>
   );
 }
@@ -350,10 +483,14 @@ const styles = StyleSheet.create({
     shadowRadius: 18,
     elevation: 8,
   },
-  banner: { borderRadius: radii.lg },
+  // the next invites' tickets: only their top edge and stub show above this one
+  behind: { position: 'absolute', height: 48, borderRadius: radii.lg, overflow: 'hidden' },
+  behindStub: { position: 'absolute', top: 0, bottom: 0, width: 60 },
+  endSelf: { alignSelf: 'flex-end' },
+  behindStubLeft: { left: 0 },
+  behindStubRight: { right: 0 },
   pill: { borderRadius: radii.pill, maxWidth: '100%' },
   pillInner: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     minHeight: MIN_TOUCH_TARGET,
@@ -361,15 +498,20 @@ const styles = StyleSheet.create({
     paddingStart: spacing.sm,
     paddingEnd: spacing.md,
   },
+  pillBadge: { position: 'absolute', bottom: -4 },
+  pillBadgeRight: { right: -6 },
+  pillBadgeLeft: { left: -6 },
   pillText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, flexShrink: 1 },
   up: { transform: [{ rotate: '180deg' }] },
-  hide: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginEnd: -spacing.sm },
-  inner: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
-  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  hide: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
+  hideRight: { marginRight: -spacing.sm },
+  hideLeft: { marginLeft: -spacing.sm },
+  inner: { gap: spacing.sm },
+  head: { alignItems: 'center', gap: spacing.md },
   text: { flex: 1, gap: 2 },
   headline: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   details: { fontSize: typography.sizes.sm },
-  actions: { flexDirection: 'row', gap: spacing.sm },
+  actions: { gap: spacing.sm },
   button: {
     flex: 1,
     flexDirection: 'row',

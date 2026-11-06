@@ -18,6 +18,8 @@
  *   Stories (duo and group games) — the game finished with them in it, not
  *                                   left or taken out by the host; a solo
  *                                   quiz is a game too
+ *   Multiplayer learning games    — the same, from the generic engine's
+ *                                   tables; a game against Hevalo counts
  *
  * Each source is one SELECT of (user_id, finished_at), so a new game is one
  * line here — on a table with an index that starts with user_id, because this
@@ -38,6 +40,9 @@ export const FINISHED_GAME_SOURCES: readonly string[] = [
   `SELECT p.user_id, g.finished_at FROM story_game_players p
      JOIN story_games g ON g.id = p.game_id
     WHERE g.status = 'finished' AND g.finished_at IS NOT NULL AND p.left_at IS NULL AND NOT p.removed`,
+  `SELECT p.user_id, l.finished_at FROM game_lobby_players p
+     JOIN game_lobbies l ON l.id = p.lobby_id
+    WHERE l.status = 'finished' AND l.finished_at IS NOT NULL AND p.left_at IS NULL AND NOT p.removed AND p.user_id IS NOT NULL`,
 ];
 
 export interface FinishedGames {

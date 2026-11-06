@@ -12,7 +12,7 @@ describe('validateEmail', () => {
    * None of them may be turned away on the phone before the server sees them.
    */
   it('accepts iCloud, plus-tagged, private relay and capitalised addresses', () => {
-    for (const address of ['name@icloud.com', 'Name.Surname+tag@me.com', 'x@privaterelay.appleid.com', 'ROJDA@ICLOUD.COM', 'a.b-c_d@mac.com']) {
+    for (const address of ['name@example.com', 'Name.Surname+tag@example.com', 'x@privaterelay.appleid.com', 'ROJDA@EXAMPLE.COM', 'a.b-c_d@mail.example.com']) {
       expect(validateEmail(address), address).toBeNull();
     }
   });

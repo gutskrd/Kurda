@@ -1,0 +1,937 @@
+/*
+ * The 3D phone on the front page (Phone3D.tsx) and the app's screens on it
+ * (screens.tsx).
+ *
+ * The phone is a stack: twelve thin rounded slabs one behind the other make
+ * its metal band, the face in front carries the rim, the black glass and the
+ * screen, and two pairs of buttons sit on its sides at half its depth. The
+ * whole stack turns as one (`--pose-*`, plus `--tilt-*` from the pointer), so
+ * the band shows on the side turned away and the glass catches the light on
+ * the side turned toward it.
+ *
+ * Where the browser can draw it, a modelled body (phoneGl.ts) replaces the
+ * slabs: a canvas behind the stack, posed by script in step with the screen.
+ * `.is-modelled` hands the body over to it: the slabs, the buttons and the
+ * CSS rim step aside, the CSS float and the turn's transition stop (the
+ * script poses both now), and only the screen is left in the HTML.
+ *
+ * The screens use the app's own tokens, so the phone shows the app in the
+ * theme the page is in, and the path's unit colours are the ones both apps
+ * give saffron (mobile/src/coursemap/path.ts, learn/path.css).
+ */
+
+.p3d {
+  --w: 300px;
+  --h: calc(var(--w) * 2.06);
+  --r: calc(var(--w) * 0.175);
+  --depth: 14px;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  --pose-x: 5deg;
+  --pose-y: -20deg;
+  --pose-z: 1.2deg;
+  /* the titanium: a band that is darker at its ends and catches the light along its middle */
+  --metal: linear-gradient(90deg, #2a2c30, #6b6f76 18%, #9a9ea6 30%, #4a4d53 50%, #8e9299 72%, #5b5f66 86%, #26282c);
+  /* the modelled body's metal: a warm natural aluminium that sits with the app's sun gold */
+  --p3d-tone: #c8c2b8;
+  --rim: linear-gradient(140deg, #b9bdc4 0%, #6d7178 18%, #2b2d31 42%, #4d5056 62%, #a7abb2 84%, #5e6168 100%);
+  position: relative;
+  width: var(--w);
+  height: var(--h);
+  perspective: 1700px;
+  perspective-origin: 50% 40%;
+}
+.p3d--right {
+  --pose-y: 20deg;
+  --pose-z: -1.2deg;
+}
+[dir='rtl'] .p3d--left {
+  --pose-y: 20deg;
+  --pose-z: -1.2deg;
+}
+[dir='rtl'] .p3d--right {
+  --pose-y: -20deg;
+  --pose-z: 1.2deg;
+}
+
+.p3d-float {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  animation: p3d-float 7s ease-in-out infinite alternate;
+}
+/* off the screen, or in a tab nobody is looking at: the float waits where it is */
+.p3d.is-resting .p3d-float {
+  animation-play-state: paused;
+}
+@keyframes p3d-float {
+  from {
+    transform: translateY(0) rotateZ(0deg);
+  }
+  to {
+    transform: translateY(-12px) rotateZ(-0.6deg);
+  }
+}
+
+.p3d-rig {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateX(calc(var(--pose-x) + var(--tilt-x))) rotateY(calc(var(--pose-y) + var(--tilt-y))) rotateZ(var(--pose-z));
+  transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+/* the band: each slab a little further back, the last one the back plate */
+.p3d-slab {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r);
+  background: var(--metal);
+  transform: translateZ(calc(var(--slab) * var(--depth) / -12));
+}
+.p3d-slab:last-of-type {
+  background: #1b1c1f;
+}
+
+.p3d-btn {
+  position: absolute;
+  width: 5px;
+  border-radius: 3px;
+  background: linear-gradient(90deg, #3b3e43, #a5a9b0 50%, #3b3e43);
+  transform: translateZ(calc(var(--depth) / -2));
+}
+.p3d-btn--action {
+  left: -3px;
+  top: 16%;
+  height: 4.5%;
+}
+.p3d-btn--up {
+  left: -3px;
+  top: 24%;
+  height: 8.5%;
+}
+.p3d-btn--down {
+  left: -3px;
+  top: 34.5%;
+  height: 8.5%;
+}
+.p3d-btn--side {
+  right: -3px;
+  top: 27%;
+  height: 13%;
+}
+
+/* the face: the rim, then the black glass, then the screen inside it */
+.p3d-face {
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r);
+  background: var(--rim);
+  transform: translateZ(0.5px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+.p3d-face::before {
+  content: '';
+  position: absolute;
+  inset: 3.5px;
+  border-radius: calc(var(--r) - 3.5px);
+  background: #050506;
+}
+.p3d-screen {
+  position: absolute;
+  inset: 11px;
+  border-radius: calc(var(--r) - 11px);
+  background: var(--app-bg);
+  color: var(--ink);
+  overflow: hidden;
+  isolation: isolate;
+}
+.p3d-content {
+  position: absolute;
+  inset: 40px 0 0;
+}
+.p3d-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  z-index: 3;
+  width: 31%;
+  height: 25px;
+  border-radius: 999px;
+  background: #000;
+  transform: translateX(-50%);
+}
+.p3d-status {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+  padding: 2px 22px 0 30px;
+  font-size: 13px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  direction: ltr;
+}
+.p3d-icons {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.p3d-signal {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 1.5px;
+  height: 10px;
+}
+.p3d-signal i {
+  width: 3px;
+  border-radius: 1px;
+  background: currentColor;
+}
+.p3d-signal i:nth-child(1) {
+  height: 4px;
+}
+.p3d-signal i:nth-child(2) {
+  height: 6px;
+}
+.p3d-signal i:nth-child(3) {
+  height: 8px;
+}
+.p3d-signal i:nth-child(4) {
+  height: 10px;
+}
+.p3d-wifi {
+  width: 14px;
+  height: 10px;
+  background: currentColor;
+  clip-path: polygon(50% 100%, 0 28%, 18% 10%, 50% 0, 82% 10%, 100% 28%);
+  border-radius: 2px;
+}
+.p3d-battery {
+  position: relative;
+  width: 22px;
+  height: 11px;
+  padding: 1.5px;
+  border: 1.2px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 3.5px;
+}
+.p3d-battery::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: -3.5px;
+  width: 1.8px;
+  height: 4px;
+  border-radius: 0 1px 1px 0;
+  background: color-mix(in srgb, currentColor 45%, transparent);
+}
+.p3d-battery i {
+  display: block;
+  width: 80%;
+  height: 100%;
+  border-radius: 1.5px;
+  background: currentColor;
+}
+.p3d-home {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  z-index: 3;
+  width: 38%;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--ink);
+  opacity: 0.55;
+  transform: translateX(-50%);
+}
+/* the glass catching the light: brightest at the corner turned toward the room */
+.p3d-glare {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  border-radius: inherit;
+  background: linear-gradient(118deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.06) 22%, rgba(255, 255, 255, 0) 38%, rgba(255, 255, 255, 0) 78%, rgba(255, 255, 255, 0.05) 100%);
+  pointer-events: none;
+}
+.p3d--right .p3d-glare,
+[dir='rtl'] .p3d--left .p3d-glare {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .p3d--right .p3d-glare {
+  transform: none;
+}
+
+/* ---- the modelled body ------------------------------------------------------ */
+.p3d-model {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.5s ease;
+}
+.p3d.is-modelled .p3d-model {
+  opacity: 1;
+}
+.p3d-slab,
+.p3d-btn {
+  transition: opacity 0.5s ease;
+}
+.p3d.is-modelled .p3d-slab,
+.p3d.is-modelled .p3d-btn {
+  opacity: 0;
+}
+/* the model draws the rim and the black glass; the screen stays where it was, inside them */
+.p3d.is-modelled .p3d-face {
+  background: none;
+  box-shadow: none;
+}
+.p3d.is-modelled .p3d-face::before {
+  opacity: 0;
+}
+/* the modelled glass has a current phone's thin border: the screen reaches nearer its edge */
+.p3d.is-modelled .p3d-screen {
+  inset: 9px;
+  border-radius: calc(var(--r) - 9px);
+}
+.p3d.is-modelled .p3d-float {
+  animation: none;
+}
+.p3d.is-modelled .p3d-rig {
+  transition: none;
+}
+
+/* the shadow on the ground, under where the phone stands */
+.p3d-shadow {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: -34px;
+  height: 46px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0));
+  filter: blur(8px);
+  pointer-events: none;
+}
+:root[data-theme='light'] .p3d-shadow {
+  background: radial-gradient(closest-side, rgba(40, 30, 10, 0.28), rgba(40, 30, 10, 0));
+}
+
+/* ---- the hero: several screens, and the tabs that pick one ---------------- */
+.p3d-showcase {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 48px;
+}
+.p3d-deck {
+  position: absolute;
+  inset: 0;
+}
+.p3d-card {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: translateX(22px) scale(0.985);
+  transition:
+    opacity 0.45s ease,
+    transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.p3d-card.is-leaving {
+  transform: translateX(-22px) scale(0.985);
+}
+.p3d-card.is-shown {
+  opacity: 1;
+  transform: none;
+}
+[dir='rtl'] .p3d-card {
+  transform: translateX(-22px) scale(0.985);
+}
+[dir='rtl'] .p3d-card.is-leaving {
+  transform: translateX(22px) scale(0.985);
+}
+[dir='rtl'] .p3d-card.is-shown {
+  transform: none;
+}
+
+.p3d-tabs {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+}
+.p3d-tab {
+  position: relative;
+  min-height: 36px;
+  padding: 7px 15px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-3);
+  font: inherit;
+  font-size: 0.84rem;
+  font-weight: 650;
+  cursor: pointer;
+  overflow: hidden;
+  transition:
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+.p3d-tab:hover {
+  color: var(--ink);
+}
+.p3d-tab.is-on {
+  background: var(--ink);
+  color: var(--app-bg);
+}
+.p3d-tab:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* ---- the app's screens ------------------------------------------------------- */
+.ps {
+  --u-fill: #f0c060;
+  --u-lip: #b88a2a;
+  --u-ink: #2a1d05;
+  --u-text: #f3ca74;
+  --ps-rest: #262a31;
+  --ps-rest-lip: #1a1d22;
+  --ps-rest-ink: #9a9ca1;
+  --ps-line: rgba(255, 255, 255, 0.2);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  height: 100%;
+  padding: 6px 14px 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: start;
+}
+:root[data-theme='light'] .ps {
+  --u-fill: #9a6508;
+  --u-lip: #6f4806;
+  --u-ink: #ffffff;
+  --u-text: #8a5a07;
+  --ps-rest: #e4e4e1;
+  --ps-rest-lip: #c9c9c5;
+  --ps-rest-ink: #74767c;
+  --ps-line: rgba(17, 17, 17, 0.18);
+}
+
+.ps-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ps-title {
+  font-family: var(--font-display);
+  font-size: 25px;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.ps-stats {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ps-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.ps-goal,
+.ps-progress-ring {
+  transform: rotate(-90deg);
+}
+.ps-goal-track {
+  fill: none;
+  stroke: var(--surface-3);
+  stroke-width: 3;
+}
+.ps-goal-fill {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+.ps-seg {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--surface-2);
+}
+.ps-seg span {
+  overflow: hidden;
+  padding: 6px 2px;
+  border-radius: 999px;
+  color: var(--ink-3);
+  font-size: 11.5px;
+  font-weight: 600;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ps-seg .is-on {
+  background: var(--surface-solid);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+/* the path */
+.ps-unit {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 10px 9px 13px;
+  border-radius: 16px;
+  background: var(--u-fill);
+  color: var(--u-ink);
+  box-shadow: 0 4px 0 var(--u-lip);
+}
+.ps-unit-text {
+  display: grid;
+}
+.ps-unit-n {
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.ps-unit-title {
+  font-family: var(--font-sans);
+  font-size: 17px;
+  font-weight: 750;
+}
+.ps-unit-guide {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--u-ink) 16%, transparent);
+}
+.ps-path {
+  position: relative;
+  flex: none;
+  margin-top: 6px;
+}
+.ps-trail {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  overflow: visible;
+}
+.ps-trail path {
+  fill: none;
+  stroke: var(--ps-line);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-dasharray: 0.1 11;
+}
+.ps-stop {
+  position: absolute;
+  top: var(--y);
+  left: calc(50% + var(--x));
+  transform: translate(-50%, -50%);
+}
+/* a right-to-left reader's path winds the other way, as the app's does */
+[dir='rtl'] .ps-stop {
+  left: calc(50% - var(--x));
+}
+[dir='rtl'] .ps-trail {
+  transform: scaleX(-1);
+}
+.ps-node {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: var(--ps-rest);
+  color: var(--ps-rest-ink);
+  box-shadow: 0 4px 0 var(--ps-rest-lip);
+}
+.ps-stop.is-done .ps-node,
+.ps-stop.is-current .ps-node {
+  background: var(--u-fill);
+  color: var(--u-ink);
+  box-shadow: 0 4px 0 var(--u-lip);
+}
+.ps-num {
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+.ps-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-90deg);
+}
+.ps-ring-track {
+  fill: none;
+  stroke: var(--ps-rest);
+  stroke-width: 5;
+}
+.ps-ring-fill {
+  fill: none;
+  stroke: var(--u-fill);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+.ps-bubble {
+  position: absolute;
+  bottom: calc(100% + 17px);
+  left: 50%;
+  z-index: 2;
+  padding: 5px 10px;
+  border: 2px solid var(--u-fill);
+  border-radius: 10px;
+  background: var(--surface-solid);
+  color: var(--u-text);
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(-50%);
+  animation: ps-bob 2.4s ease-in-out infinite alternate;
+}
+.ps-bubble::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  border: 6px solid transparent;
+  border-top-color: var(--u-fill);
+  transform: translateX(-50%);
+}
+@keyframes ps-bob {
+  to {
+    transform: translate(-50%, -4px);
+  }
+}
+.p3d.is-resting .ps-bubble {
+  animation-play-state: paused;
+}
+.ps-mascot {
+  position: absolute;
+  top: 92px;
+  inset-inline-end: 0;
+  pointer-events: none;
+}
+
+/* the tab bar along the bottom */
+.ps-tabbar {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  height: 60px;
+  padding-bottom: 14px;
+  border-top: 1px solid var(--border);
+  background: var(--surface-solid);
+  color: var(--ink);
+}
+.ps-tab-on {
+  display: grid;
+  place-items: center;
+  padding: 4px 15px;
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+.ps-face {
+  display: block;
+  border-radius: 50%;
+}
+
+/* the battle */
+.ps-battle {
+  gap: 12px;
+}
+.ps-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 2px;
+}
+.ps-bar-title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 650;
+}
+.ps-battle .players {
+  grid-template-columns: 1fr 1fr;
+}
+.ps-battle .lp-result {
+  margin-bottom: 26px;
+}
+
+/* the stories */
+.ps-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--ink-3);
+  font-size: 11.5px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.ps-progress {
+  position: relative;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: var(--surface-solid);
+}
+.ps-progress-pct {
+  position: absolute;
+  inset-inline-start: 12px;
+  width: 46px;
+  font-size: 11px;
+  font-weight: 750;
+  text-align: center;
+}
+.ps-progress-text {
+  display: grid;
+  gap: 2px;
+  color: var(--ink-3);
+  font-size: 11px;
+}
+.ps-progress-title {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+}
+.ps-shelf {
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-size: 9.5px;
+  font-weight: 750;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ps-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ps-story {
+  display: grid;
+  gap: 5px;
+  padding: 6px 6px 8px;
+  border-radius: 14px;
+  background: var(--surface-solid);
+}
+.ps-cover {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.ps-story.is-wide .ps-cover {
+  aspect-ratio: 2.2 / 1;
+}
+.ps-cover img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.ps-mark {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  color: #111111;
+}
+.ps-read {
+  position: absolute;
+  bottom: 0;
+  inset-inline-start: 0;
+  height: 3px;
+  background: var(--gold);
+}
+.ps-story-title {
+  padding-inline: 2px;
+  overflow: hidden;
+  font-size: 14px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ps-story-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-inline: 2px;
+  color: var(--ink-3);
+  font-size: 10.5px;
+}
+.ps-level {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-weight: 750;
+}
+
+/* the lesson */
+.ps-lesson {
+  gap: 14px;
+}
+.ps-lesson-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink-3);
+}
+.ps-lesson-bar {
+  flex: 1;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--surface-3);
+}
+.ps-lesson-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--success);
+}
+.ps-lesson-skill {
+  font-size: 12px;
+}
+.ps-lesson-prompt {
+  margin-top: 6px;
+  color: var(--ink-3);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.ps-lesson .lp-lesson-sentence {
+  margin-top: 18px;
+  font-size: 30px;
+}
+.ps-options {
+  display: grid;
+  gap: 9px;
+}
+.ps-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 11px 14px;
+  border: 2px solid var(--border-strong);
+  border-radius: 14px;
+  background: var(--surface-solid);
+  box-shadow: 0 3px 0 var(--border-strong);
+  font-size: 13px;
+  font-weight: 600;
+}
+.ps-option.is-right {
+  border-color: var(--success);
+  background: var(--success-soft);
+  color: var(--success);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--success) 65%, #000000);
+}
+.ps-feedback {
+  display: grid;
+  gap: 10px;
+  margin: auto -14px 0;
+  padding: 14px 14px 26px;
+  border-top: 1px solid color-mix(in srgb, var(--success) 35%, transparent);
+  background: var(--success-soft);
+}
+.ps-feedback-text {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--success);
+  font-size: 15px;
+  font-weight: 750;
+}
+.ps-feedback-btn {
+  display: block;
+  padding: 11px;
+  border-radius: 14px;
+  background: var(--success);
+  /* the page's own ground colour: dark on the light green of the dark theme, light on the deep green of the light one */
+  color: var(--app-bg);
+  font-weight: 750;
+  text-align: center;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--success) 65%, #000000);
+}
+
+/* on a phone's own screen the phone in the page is a little smaller */
+@media (max-width: 560px) {
+  .p3d {
+    --w: min(272px, 74vw);
+  }
+  .p3d-showcase {
+    gap: 40px;
+  }
+}
+
+/* Reduce Motion: the phone stands still, turned; screens change at once */
+@media (prefers-reduced-motion: reduce) {
+  .p3d-float,
+  .ps-bubble {
+    animation: none;
+  }
+  .p3d-rig,
+  .p3d-card,
+  .p3d-tab {
+    transition: none;
+  }
+  .p3d-card,
+  .p3d-card.is-leaving,
+  [dir='rtl'] .p3d-card,
+  [dir='rtl'] .p3d-card.is-leaving {
+    transform: none;
+  }
+}

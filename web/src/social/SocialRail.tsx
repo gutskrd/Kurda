@@ -10,6 +10,7 @@ import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 import type { RailFriend, SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
+import { RequestTicket } from './FriendTickets';
 import { useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from '../groups/GroupAvatar';
 
@@ -319,35 +320,15 @@ function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: D
   );
 }
 
+/** A friend request waiting on you, as a friendship ticket (social/FriendTickets.tsx). */
 function RequestCard({ who, onActed }: { who: RailFriend; onActed: () => void }): React.JSX.Element {
   const { client } = useAuth();
-  const t = useT();
-  const [busy, setBusy] = useState(false);
-
-  async function respond(accept: boolean): Promise<void> {
-    setBusy(true);
-    await client.post(`/friends/requests/${who.userId}/${accept ? 'accept' : 'decline'}`);
-    setBusy(false);
-    onActed();
-  }
-
   return (
-    <div className="rail-card rail-card-in">
-      <span className="rail-avatar">
-        <Avatar url={who.avatarUrl} glyphSize={16} />
-      </span>
-      <span className="rail-row-text">
-        <span className="rail-row-name">{who.displayName || who.username}</span>
-        <span className="rail-row-sub">{t('rail.wantsToBeFriends')}</span>
-      </span>
-      <span className="rail-card-actions">
-        <button type="button" className="rail-act is-yes" disabled={busy} onClick={() => void respond(true)}>
-          {t('friends.accept')}
-        </button>
-        <button type="button" className="rail-act" disabled={busy} onClick={() => void respond(false)}>
-          {t('rail.decline')}
-        </button>
-      </span>
-    </div>
+    <RequestTicket
+      person={who}
+      compact
+      onAnswer={async (accept) => (await client.post(`/friends/requests/${who.userId}/${accept ? 'accept' : 'decline'}`)).ok}
+      onSettled={onActed}
+    />
   );
 }

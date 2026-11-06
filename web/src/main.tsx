@@ -10,13 +10,18 @@ import './styles/ui.css';
 import './styles/layout.css';
 import './styles/pages.css';
 import './styles/feed.css';
+import './styles/filter.css';
 import './styles/rail.css';
 import './styles/editor.css';
 import './styles/product.css';
 import './styles/alphabet.css';
+// the words after the letters: colours, numbers, days and months
+import './styles/words.css';
 import './styles/learn.css';
 import './styles/marketing.css';
 import './styles/stories.css';
+// a ticket: the shape every invitation takes (ui/Ticket.tsx)
+import './styles/ticket.css';
 // playing with friends: invites, the banner, game cards, playing again
 import './styles/play.css';
 // gifts in chat, reporting, account standing

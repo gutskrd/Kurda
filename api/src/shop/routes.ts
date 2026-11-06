@@ -6,7 +6,7 @@ import { cosmeticAssetUrl } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
 import { SENSITIVE_PRICE } from '../admin/config-service.js';
 import type { ShopService } from './service.js';
-import type { ItemReturns } from './returns.js';
+import type { RefreshedNotices } from './refreshed.js';
 import type { GiftService, SkipReason } from '../gifts/service.js';
 
 const itemBody = z.object({
@@ -57,11 +57,17 @@ const SHOP_GIFT_REFUSALS: Readonly<Record<SkipReason, () => AppError>> = {
   daily_limit: () => new AppError('GIFT_DAILY_LIMIT', 429, 'that is all the gifts for today'),
 };
 
-/** Shop catalog + purchase + gifting + inventory (KUR-071). */
+/**
+ * Shop catalog + purchase + gifting + inventory (KUR-071).
+ *
+ * Every purchase is final. There is no route that hands an item back for
+ * currency, and nothing in the inventory says what one would be worth: the
+ * owner of an item whose art was replaced is told once, and keeps it.
+ */
 export function registerShopRoutes(
   app: FastifyInstance,
   shop: ShopService,
-  deps: { gifts: GiftService; returns?: ItemReturns },
+  deps: { gifts: GiftService; refreshed?: RefreshedNotices },
 ): void {
   /**
    * Admin: create/update a catalog item.
@@ -230,52 +236,29 @@ export function registerShopRoutes(
   }));
 
   /**
-   * The caller's owned items, incl. a resolved cosmetic `assetUrl`.
-   *
-   * Items whose art was replaced also say what returning them gives back
-   * (`refund`, null when nothing would), and `refreshedItems` lists the ones
-   * the caller has not been told about yet — see shared/src/cosmetics.ts.
+   * The caller's owned items, incl. a resolved cosmetic `assetUrl`, and
+   * `refreshedItems`: the items whose art was replaced that the caller has not
+   * been told about yet — see shared/src/cosmetics.ts.
    */
   app.get('/me/inventory', { preHandler: requireAuth }, async (req) => {
     const userId = req.user!.id;
-    const [items, refunds, refreshedItems] = await Promise.all([
-      shop.inventory(userId),
-      deps.returns?.refunds(userId),
-      deps.returns?.unnoticed(userId),
-    ]);
+    const [items, refreshedItems] = await Promise.all([shop.inventory(userId), deps.refreshed?.unnoticed(userId)]);
     return {
       items: items.map((i) => ({
         ...i,
         assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
-        refund: refunds?.get(i.sku) ?? null,
       })),
       refreshedItems: refreshedItems ?? [],
     };
   });
 
-  const returns = deps.returns;
-  if (returns) {
+  const refreshed = deps.refreshed;
+  if (refreshed) {
     /** The one-time "we refreshed your items" notice has been shown. */
     app.post(
       '/me/inventory/refreshed/seen',
       { config: { skipValidation: true }, preHandler: requireAccount },
-      async (req) => ({ seen: await returns.markNoticed(req.user!.id) }),
-    );
-
-    /**
-     * Return an item whose art was replaced, for what was paid for it. Only
-     * the replaced items, only by an owner who bought one, and only once — a
-     * repeat answers `duplicate: true` and pays nothing.
-     */
-    app.post(
-      '/shop/items/:sku/return',
-      {
-        // no body: the item is in the path, and the refund was settled when its art changed
-        schema: { params: z.object({ sku: z.string().min(1).max(80) }) },
-        config: { skipValidation: true, rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
-        preHandler: requireAccount,
-      },
-      async (req) => returns.returnItem(req.user!.id, (req.params as { sku: string }).sku),
+      async (req) => ({ seen: await refreshed.markNoticed(req.user!.id) }),
     );
   }
 }

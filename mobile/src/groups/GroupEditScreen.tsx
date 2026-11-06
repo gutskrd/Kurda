@@ -157,7 +157,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
                 <GroupAvatar name={trimmed || detail.name} id={detail.id} size={PHOTO} photoUrl={photoUrl} />
                 {uploading ? (
                   <View style={[styles.uploading, { backgroundColor: colors.scrim }]}>
-                    <ActivityIndicator color="#FFFFFF" />
+                    <ActivityIndicator color={colors.textOnScrim} />
                   </View>
                 ) : (
                   <View style={[styles.camera, { backgroundColor: colors.textPrimary, borderColor: colors.background }]}>

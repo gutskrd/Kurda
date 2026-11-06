@@ -37,7 +37,12 @@ export function registerQuestRoutes(app: FastifyInstance, quests: QuestService):
   /** Claim one quest's reward (idempotent). */
   app.post(
     '/events/:key/quests/:questId/claim',
-    { schema: { params: claimParams }, config: { skipValidation: true }, preHandler: requireAuth },
+    {
+      schema: { params: claimParams },
+      // a claim moves currency: as tight as the daily reward's and the chests'
+      config: { skipValidation: true, rateLimit: { max: 10, windowMs: 60_000, per: 'user-or-ip' as const } },
+      preHandler: requireAuth,
+    },
     async (req, reply) => {
       const { key, questId } = req.params as z.infer<typeof claimParams>;
       const result = await quests.claim(req.user!.id, key, questId);

@@ -27,14 +27,26 @@ export const LEGACY_ADMIN_ROLE = 'admin';
 export const RANK_TOOL_ROLES = [LEGACY_ADMIN_ROLE, 'superadmin'] as const;
 
 /**
+ * Someone who lends a voice to the course and does nothing else in the
+ * console: the "Record by person" page and the uploads it makes, for the
+ * voices a superadmin has linked to the account (api/src/recording). It is
+ * deliberately not one of ADMIN_ROLES: those grant capabilities, and
+ * `requireAdmin` with no role list lets any of them in, so a voice actor
+ * there would reach more than recording. It grants no capability at all;
+ * only the routes that name it in their role list open to it.
+ */
+export const VOICE_ACTOR_ROLE = 'voice_actor';
+
+/**
  * Every role that can reach anything under /admin, and so must clear 2FA.
  *
- * 'founder' is here because it curates the tag catalog through /admin/tags. The
- * rule is deliberately "anything under /admin", with no exceptions — a role that
- * could reach staff surface without 2FA would be the hole the gate exists to
- * close, and exceptions are exactly what gets forgotten.
+ * 'founder' is here because it curates the tag catalog through /admin/tags,
+ * and the voice actor because it records through /admin/recording and the
+ * upload routes. The rule is deliberately "anything under /admin", with no
+ * exceptions — a role that could reach staff surface without 2FA would be the
+ * hole the gate exists to close, and exceptions are exactly what gets forgotten.
  */
-export const PRIVILEGED_ROLES: readonly string[] = [...ADMIN_ROLES, LEGACY_ADMIN_ROLE, 'founder'];
+export const PRIVILEGED_ROLES: readonly string[] = [...ADMIN_ROLES, LEGACY_ADMIN_ROLE, 'founder', VOICE_ACTOR_ROLE];
 
 /** True if the user can reach admin surface at all (RBAC role or the legacy one). */
 export function isPrivileged(roles: readonly string[]): boolean {

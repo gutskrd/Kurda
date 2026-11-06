@@ -1,0 +1,4122 @@
+{
+  "course": {
+    "slug": "kurmanji-road",
+    "dialect": "kurmanji",
+    "titleKu": "Rêya Kurmancî",
+    "titleEn": "The Kurmanji Road"
+  },
+  "units": [
+    {
+      "position": 2,
+      "titleKu": "Malbat",
+      "titleEn": "Family",
+      "skills": [
+        {
+          "position": 1,
+          "titleKu": "Malbata Hamo",
+          "titleEn": "Hamo’s family",
+          "grammarMd": "In Kurmancî the owner comes **after** the thing, joined by a small ending, the **ezafe**:\n\n- masculine words take **-ê**: *bavê min* my father · *birayê te* your brother · *simbêlê Hamo* Hamo’s moustache\n- feminine words take **-a**: *xwişka min* my sister · *malbata me* our family · *jina wî* his wife\n\n**dê** (mother) is irregular: *diya min* my mother, and you call her *Dayê!*\n\nThe pronouns after the ezafe are the “object” ones: **min, te, wî** (his), **wê** (her), **me, we, wan**.\n\nEvery noun is masculine or feminine, and the ending tells you which: learn *sêva min* and *nanê min* together with the words.",
+          "lessons": [
+            {
+              "key": "u02s1l1",
+              "position": 1,
+              "titleKu": "Bav û dê",
+              "titleEn": "Father and mother",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev bavê min e.",
+                    "prompt": "In the guest room Hamo stops at a wall of old photos and taps one: “Ev bavê min e.” Who is in the photo?",
+                    "options": [
+                      "Hamo’s father",
+                      "Hamo’s brother",
+                      "Hamo’s son"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "bav",
+                        "right": "father"
+                      },
+                      {
+                        "left": "dê",
+                        "right": "mother"
+                      },
+                      {
+                        "left": "bira",
+                        "right": "brother"
+                      },
+                      {
+                        "left": "xwişk",
+                        "right": "sister"
+                      },
+                      {
+                        "left": "wêne",
+                        "right": "photo, picture"
+                      },
+                      {
+                        "left": "ev",
+                        "right": "this"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev diya min e.",
+                    "prompt": "The next photo shows a woman with a kind face and a white headscarf. “Ev diya min e.” Who is she?",
+                    "options": [
+                      "Hamo’s mother",
+                      "Hamo’s sister",
+                      "Hamo’s wife"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev xwişka min e, Gulîstan.",
+                    "prompt": "Hamo points at a girl with long plaits: “Ev xwişka min e, Gulîstan.” Who is Gulîstan?",
+                    "options": [
+                      "Hamo’s sister",
+                      "Hamo’s mother",
+                      "Hamo’s niece"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Gulîstan diya min e!",
+                    "prompt": "Xezal leans in close and smiles: “Gulîstan diya min e!” Who is Gulîstan to Xezal?",
+                    "options": [
+                      "Her mother",
+                      "Her sister",
+                      "Her aunt"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Bav (father) is masculine, so it takes -ê. Which is right?",
+                    "options": [
+                      "Ev bavê min e.",
+                      "Ev bava min e.",
+                      "Ev bav min e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xwişk (sister) is feminine, so it takes -a. Which is right?",
+                    "options": [
+                      "Ev xwişka min e.",
+                      "Ev xwişkê min e.",
+                      "Ev xwişk min e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo takes the photo down and wipes the glass with his sleeve. Type what he says.",
+                    "accepted": [
+                      "Ev wêneyê bavê min e.",
+                      "Ev wêneyê bavê min e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Point at the photo of the woman in the headscarf and tell Hevalo: “This is Hamo’s mother.”",
+                    "accepted": [
+                      "Ev diya Hamo ye.",
+                      "Ev diya Hamo ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ez birayê Gulîstanê me.",
+                    "prompt": "Hamo puts his finger on the girl with the plaits. What does he say, in English? “Ez birayê Gulîstanê me.”",
+                    "accepted": [
+                      "I am Gulîstan’s brother.",
+                      "I am the brother of Gulîstan.",
+                      "I’m Gulîstan’s brother.",
+                      "I’m the brother of Gulîstan."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Xezal points at her uncle. Write what she says: “Hamo is my mother’s brother.”",
+                    "accepted": [
+                      "Hamo birayê diya min e.",
+                      "Hamo birayê diya min e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal holds up a photo of the whole family at Newroz. Type what she says.",
+                    "accepted": [
+                      "Ev wêne xweşik e!",
+                      "Ev wêne xweşik e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Point at the man with the grand moustache and ask Hamo: “Ev bavê te ye?” (Is this your father?)",
+                    "reference": "Ev bavê te ye?",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xalo, birayê te li ku ye?",
+                    "prompt": "Xezal looks all along the wall: “Xalo, birayê te li ku ye?” What does she ask?",
+                    "options": [
+                      "Where is your brother?",
+                      "Where is your father?",
+                      "Who is your sister?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo laughs. Type his answer.",
+                    "accepted": [
+                      "Birayê min? Ez û Gulîstan, tenê!",
+                      "Birayê min? Ez û Gulîstan, tenê"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hevalo points his nose at the woman in the headscarf: “Ew kî ye?” What does Hamo answer?",
+                    "options": [
+                      "Ew diya min e.",
+                      "Ew bavê min e.",
+                      "Ew diyê min e."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s1l2",
+              "position": 2,
+              "titleKu": "Jina min Nazê ye",
+              "titleEn": "My wife is Nazê",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev jina min e, Nazê.",
+                    "prompt": "A woman comes out of the kitchen with a tray of warm bread. Hamo beams: “Ev jina min e, Nazê.” Who is Nazê?",
+                    "options": [
+                      "Hamo’s wife",
+                      "Hamo’s sister",
+                      "Hamo’s mother"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "simbêl",
+                        "right": "moustache"
+                      },
+                      {
+                        "left": "wî",
+                        "right": "his; him"
+                      },
+                      {
+                        "left": "wê",
+                        "right": "her"
+                      },
+                      {
+                        "left": "nan",
+                        "right": "bread"
+                      },
+                      {
+                        "left": "dapîr",
+                        "right": "grandmother"
+                      },
+                      {
+                        "left": "bapîr",
+                        "right": "grandfather"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev xalê min e… û simbêlê wî!",
+                    "prompt": "Xezal giggles and points at her uncle: “Ev xalê min e… û simbêlê wî!” What does she say?",
+                    "options": [
+                      "This is my uncle… and his moustache!",
+                      "This is my uncle… and his bread!",
+                      "This is my father… and his moustache!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev nanê Nazê ye.",
+                    "prompt": "Hamo breaks a warm loaf and the smell fills the yard: “Ev nanê Nazê ye.” Whose bread is it?",
+                    "options": [
+                      "Nazê’s",
+                      "Dapîr’s",
+                      "Xezal’s"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "The bread is Nazê’s. Which sentence says “This is her bread”?",
+                    "options": [
+                      "Ev nanê wê ye.",
+                      "Ev nanê wî ye.",
+                      "Ev nana wê ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "An old woman with a stick comes slowly through the gate, and Xezal runs to her. Type what she shouts.",
+                    "accepted": [
+                      "Dapîr! Dapîra min li vir e!",
+                      "Dapîr! Dapîra min li vir e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hamo introduces his wife. How does he say “This is my wife”?",
+                    "accepted": [
+                      "Ev jina min e.",
+                      "Ev jina min e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ew diya min e û dapîra Xezalê ye.",
+                    "prompt": "Dapîr Şemsê leans on her stick, and on everyone. Hamo explains. What does he say, in English? “Ew diya min e û dapîra Xezalê ye.”",
+                    "accepted": [
+                      "She is my mother and Xezal’s grandmother.",
+                      "She is my mother and Xezal’s grandma.",
+                      "She is my mum and Xezal’s grandmother.",
+                      "She is my mother, and Xezal’s grandmother.",
+                      "She’s my mother and Xezal’s grandmother.",
+                      "She’s my mother and Xezal’s grandma.",
+                      "She’s my mum and Xezal’s grandmother.",
+                      "She’s my mother, and Xezal’s grandmother."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Xezal finds a photo of a man with an even grander moustache. Write what she says: “This is my grandfather.”",
+                    "accepted": [
+                      "Ev bapîrê min e.",
+                      "Ev bapîrê min e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo looks fondly at his father’s photo. Type what he says.",
+                    "accepted": [
+                      "Simbêlê bavê min jî xweşik e.",
+                      "Simbêlê bavê min jî xweşik e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Nan û çay, fermo!",
+                    "prompt": "Hamo sets down the tray. What does he say, in English? “Nan û çay, fermo!”",
+                    "accepted": [
+                      "Bread and tea, help yourself!",
+                      "Bread and tea, here you are!",
+                      "Here you are, bread and tea!",
+                      "Bread and tea, please help yourselves!"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "A neighbour’s little boy points at the man with the big moustache and asks Xezal: “Ew kî ye?” What does she answer?",
+                    "options": [
+                      "Ew xalê min e.",
+                      "Ew bapîrê min e.",
+                      "Ew xala min e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Tell Xezal what you think of Nazê’s bread: “Nanê wê gelek xweş e!” (Her bread is very tasty!)",
+                    "reference": "Nanê wê gelek xweş e!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev simbêlê min e, û ev simbêlê bavê min e.",
+                    "prompt": "Hamo holds his father’s photo next to his face: “Ev simbêlê min e, û ev simbêlê bavê min e.” What is he comparing?",
+                    "options": [
+                      "His moustache and his father’s",
+                      "His bread and Nazê’s",
+                      "His photo and Xezal’s"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hevalo who the old woman with the stick is: “She is Xezal’s grandmother.”",
+                    "accepted": [
+                      "Ew dapîra Xezalê ye.",
+                      "Ew dapîra Xezalê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s1l3",
+              "position": 3,
+              "titleKu": "Wêneyê kevn",
+              "titleEn": "The old photo",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev wêne kevn e.",
+                    "prompt": "Behind the other photos Xezal finds one with yellowed corners: “Ev wêne kevn e.” What does she say?",
+                    "options": [
+                      "This photo is old.",
+                      "This photo is new.",
+                      "This photo is beautiful."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "kevn",
+                        "right": "old (of things)"
+                      },
+                      {
+                        "left": "nû",
+                        "right": "new"
+                      },
+                      {
+                        "left": "ciwan",
+                        "right": "young"
+                      },
+                      {
+                        "left": "pîr",
+                        "right": "old (of people)"
+                      },
+                      {
+                        "left": "bê",
+                        "right": "without"
+                      },
+                      {
+                        "left": "bi rastî",
+                        "right": "really"
+                      }
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu02s1l3a",
+                    "title": "Wêneyê kevn",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, ev wêne kevn e. Ev kî ye?",
+                        "en": "Uncle, this photo is old. Who is this?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ev? Ev… mêvanek e.",
+                        "en": "This? This is… a guest."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Mêvanek? Ew ciwan e, û bê simbêl e!",
+                        "en": "A guest? He is young, and he has no moustache!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Belê, belê… mêvanekî ciwan.",
+                        "en": "Yes, yes… a young guest."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Xalo… ev tu yî? Bi rastî?",
+                        "en": "Uncle… is this you? Really?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Naxêr! Ez… erê. Ez im.",
+                        "en": "No! I… yes. It is me."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Tu bê simbêl? Xalo, tu pir ciwan î!",
+                        "en": "You, without a moustache? Uncle, you are so young!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew wêne kevn e, Xezo. Niha ez pîr im.",
+                        "en": "That photo is old, Xezo. Now I am old."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Naxêr, tu ne pîr î! Lê simbêlê te nû ye!",
+                        "en": "No, you are not old! But your moustache is new!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xezo, ji kerema xwe… ev wêne!",
+                        "en": "Xezo, please… this photo!"
+                      }
+                    ],
+                    "prompt": "Who is the young man without a moustache in the old photo?",
+                    "options": [
+                      "Hamo",
+                      "Hamo’s father",
+                      "A guest"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu pir ciwan î!",
+                    "prompt": "Xezal holds the photo next to her uncle’s red face: “Tu pir ciwan î!” What does she say?",
+                    "options": [
+                      "You are so young!",
+                      "You are so old!",
+                      "You are so new!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Kevn is “old” for things, pîr for people. Which sentence is right?",
+                    "options": [
+                      "Dapîr pîr e, wêne kevn e.",
+                      "Dapîr kevn e, wêne pîr e.",
+                      "Dapîr nû ye, wêne kevn e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo sighs and strokes his moustache. Type what he says.",
+                    "accepted": [
+                      "Ew wêne kevn e. Niha ez pîr im.",
+                      "Ew wêne kevn e. Niha ez pîr im"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Xezal stares at the photo. How does she say “He is without a moustache!”?",
+                    "accepted": [
+                      "Ew bê simbêl e!",
+                      "Ew bê simbêl e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ev tu yî? Bi rastî?",
+                    "prompt": "Xezal looks from the photo to her uncle and back. What does she ask, in English? “Ev tu yî? Bi rastî?”",
+                    "accepted": [
+                      "Is this you? Really?",
+                      "Is that you? Really?",
+                      "This is you? Really?",
+                      "Is this you? Seriously?",
+                      "Is that you? Seriously?"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo looks at you sadly. Cheer him up. Write: “You are not old, uncle!”",
+                    "accepted": [
+                      "Tu ne pîr î, xalo!",
+                      "Xalo, tu ne pîr î!",
+                      "Tu ne pîr î, xalo",
+                      "Xalo, tu ne pîr î"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Dapîr laughs until she cries, and Xezal teases her uncle. Type what she says.",
+                    "accepted": [
+                      "Simbêlê te nû ye!",
+                      "Simbêlê te nû ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ez ne pîr im! Ez ciwan im, simbêlê min jî ciwan e!",
+                    "prompt": "Hamo sits up very straight. What does he say, in English? “Ez ne pîr im! Ez ciwan im, simbêlê min jî ciwan e!”",
+                    "accepted": [
+                      "I am not old! I am young, and my moustache is young too!",
+                      "I am not old! I am young, my moustache is young too!",
+                      "I am not old! I am young, and so is my moustache!",
+                      "I am not old! I am young and my moustache is young too!",
+                      "I’m not old! I’m young, and my moustache is young too!",
+                      "I’m not old! I’m young, my moustache is young too!",
+                      "I’m not old! I’m young, and so is my moustache!",
+                      "I’m not old! I’m young and my moustache is young too!"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Hamo is red to the tips of his ears. Be kind: “Bi rastî? Ev wêne pir xweşik e!” (Really? This photo is very beautiful!)",
+                    "reference": "Bi rastî? Ev wêne pir xweşik e!",
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo asks you in a small voice: “Ez pîr im?” What do you kindly answer?",
+                    "options": [
+                      "Naxêr, tu ciwan î!",
+                      "Erê, tu pir pîr î!",
+                      "Naxêr, tu kevn î!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hamo puts a new photo of himself, moustache and all, in front of the old one. Say: “This photo is new.”",
+                    "accepted": [
+                      "Ev wêne nû ye.",
+                      "Ev wêne nû ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s1l4",
+              "position": 4,
+              "titleKu": "Malbata me",
+              "titleEn": "Our family",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev malbata me ye.",
+                    "prompt": "Hamo spreads his arms at the whole family round the tray: “Ev malbata me ye.” What does he say?",
+                    "options": [
+                      "This is our family.",
+                      "This is your family.",
+                      "This is their family."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "me",
+                        "right": "our; us"
+                      },
+                      {
+                        "left": "we",
+                        "right": "your (more than one)"
+                      },
+                      {
+                        "left": "wan",
+                        "right": "their; them"
+                      },
+                      {
+                        "left": "mam",
+                        "right": "uncle (father’s brother)"
+                      },
+                      {
+                        "left": "met",
+                        "right": "aunt (father’s sister)"
+                      },
+                      {
+                        "left": "xaltîk",
+                        "right": "aunt (mother’s sister)"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Mamê min li Amedê ye.",
+                    "prompt": "Xezal tells Dapîr about her father’s side: “Mamê min li Amedê ye.” Who is in Amed?",
+                    "options": [
+                      "Her father’s brother",
+                      "Her mother’s brother",
+                      "Her father"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Gulîstan is Hamo’s sister. So for Hamo’s children, Baran and Hêvî, she is their father’s sister. Which is right?",
+                    "options": [
+                      "Gulîstan meta wan e.",
+                      "Gulîstan xaltîka wan e.",
+                      "Gulîstan mamê wan e."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu02s1l4a",
+                    "title": "Malbata me",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xezo, ji kerema xwe… ev wêne tenê ji me re ye.",
+                        "en": "Xezo, please… this photo is just for us."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ji me re? Ji malbata me re?",
+                        "en": "For us? For our family?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Belê. Ne ji Ferhad re, ne ji cîranan re!",
+                        "en": "Yes. Not for Ferhad, not for the neighbours!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Baş e, xalo. Lê… Hevalo? Wêne li ku ye?",
+                        "en": "All right, uncle. But… Hevalo? Where is the photo?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo! Ew wêne ne sêv e!",
+                        "en": "Hevalo! That photo is not an apple!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bibore, xalo! Hevalo birçî ye…",
+                        "en": "Sorry, uncle! Hevalo is hungry…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo, Hevalo… Baş e, ew wêne ji te re ye!",
+                        "en": "Hevalo, Hevalo… All right, that photo is for you!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, xalo! Bozo ne li vir e!",
+                        "en": "Uncle, uncle! Bozo is not here! (Baran has burst in with the news)"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bozo? Bozo ne li malê ye?!",
+                        "en": "Bozo? Bozo is not at home?!"
+                      }
+                    ],
+                    "prompt": "Why does Hamo shout “Ew wêne ne sêv e!”?",
+                    "options": [
+                      "Hevalo is chewing the photo.",
+                      "Hevalo wants an apple.",
+                      "The photo shows an apple tree."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo whispers so that Ferhad, over the wall, cannot hear. Type what he says.",
+                    "accepted": [
+                      "Ev wêne tenê ji me re ye.",
+                      "Ev wêne tenê ji me re ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Ask Xezal where her father’s brother is: “Where is your uncle?”",
+                    "accepted": [
+                      "Mamê te li ku ye?",
+                      "Mamê te li ku derê ye?",
+                      "Mamê te li ku ye",
+                      "Mamê te li ku derê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Mala wan li Amedê ye, mala me li Sêvanê ye.",
+                    "prompt": "Hamo tells you where Xezal’s family lives. What does he say, in English? “Mala wan li Amedê ye, mala me li Sêvanê ye.”",
+                    "accepted": [
+                      "Their house is in Amed, our house is in Sêvan.",
+                      "Their home is in Amed, our home is in Sêvan.",
+                      "Their house is in Amed and our house is in Sêvan.",
+                      "Their house is in Amed, and ours is in Sêvan.",
+                      "Their home is in Amed, and ours is in Sêvan."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "You are talking to Xezal and her mother at once. Ask them: “Where is your house?”",
+                    "accepted": [
+                      "Mala we li ku ye?",
+                      "Mala we li ku derê ye?",
+                      "Mala we li ku ye",
+                      "Mala we li ku derê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xaltîk? Na, tenê xalê min!",
+                    "prompt": "Dapîr asks Xezal if she has a xaltîk, a mother’s sister. Xezal laughs: “Xaltîk? Na, tenê xalê min!” What does she mean?",
+                    "options": [
+                      "Her mother has no sister, only her brother Hamo.",
+                      "Her aunt is in Amed.",
+                      "Her aunt is Hamo’s wife."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal counts her family in Amed on her fingers. Type what she says.",
+                    "accepted": [
+                      "Meta min û mamê min li Amedê ne.",
+                      "Meta min û mamê min li Amedê ne"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Tell the whole family round the tray: “Malbata we pir xweş e!” (Your family is so lovely!)",
+                    "reference": "Malbata we pir xweş e!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hevalo who Gulîstan is for Baran: “She is his aunt.” (his father’s sister)",
+                    "accepted": [
+                      "Ew meta wî ye.",
+                      "Ew meta wî ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo ne li malê ye?!",
+                    "prompt": "Baran bursts in, out of breath. Hamo jumps up: “Bozo ne li malê ye?!” What has happened?",
+                    "options": [
+                      "Bozo the donkey is gone!",
+                      "Bozo the donkey is hungry.",
+                      "Bozo the donkey is in the photo."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "titleKu": "Ya min, ya te",
+          "titleEn": "Mine and yours",
+          "grammarMd": "For **plural** owners and things the ezafe is **-ên**: *birayên min* my brothers · *zarokên me* our children.\n\nAfter a **vowel**, a **y** slips in: *birayê min* my brother · *xwarziya min* my niece · *wêneyên me* our photos.\n\nThe ezafe can also stand alone, meaning “the one of”:\n\n- *Ev pêlav ya min e.* This shoe is mine. (**ya** for a feminine thing)\n- *Ev kum yê te ye.* This cap is yours. (**yê** for a masculine thing)\n- *Ev pirtûk yên wan in.* These books are theirs. (**yên** for plural)\n\nTo ask whose: *Ev ya kê ye?* Whose is this?",
+          "lessons": [
+            {
+              "key": "u02s2l1",
+              "position": 1,
+              "titleKu": "Bozo li ku ye?",
+              "titleEn": "Where is Bozo?",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo li hewşê ye!",
+                    "prompt": "Hevalo lifts his nose, sniffs, and trots off. A moment later he calls: “Bozo li hewşê ye!” Where is Bozo?",
+                    "options": [
+                      "In the yard",
+                      "In the house",
+                      "In the city"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "kulîlk",
+                        "right": "flower"
+                      },
+                      {
+                        "left": "dar",
+                        "right": "tree"
+                      },
+                      {
+                        "left": "hewş",
+                        "right": "yard"
+                      },
+                      {
+                        "left": "biçûk",
+                        "right": "small"
+                      },
+                      {
+                        "left": "mezin",
+                        "right": "big"
+                      },
+                      {
+                        "left": "ya min",
+                        "right": "mine"
+                      }
+                    ],
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo! Ev kulîlk ne yên te ne!",
+                    "prompt": "Bozo is eating Dapîr’s roses one by one. Hevalo stamps a hoof: “Bozo! Ev kulîlk ne yên te ne!” What does he say?",
+                    "options": [
+                      "These flowers are not yours!",
+                      "These flowers are very small!",
+                      "These flowers are for you!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Kulîlk (flower) is feminine. Which says “This flower is Dapîr’s”?",
+                    "options": [
+                      "Ev kulîlk ya dapîrê ye.",
+                      "Ev kulîlk yê dapîrê ye.",
+                      "Ev kulîlk yên dapîrê ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dar mezin e, kulîlk biçûk e.",
+                    "prompt": "Hevalo shows you round the yard: “Dar mezin e, kulîlk biçûk e.” What does he say?",
+                    "options": [
+                      "The tree is big, the flower is small.",
+                      "The tree is small, the flower is big.",
+                      "The tree is old, the flower is new."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hevalo stands under the apple tree with his chin up. Type what he says.",
+                    "accepted": [
+                      "Ev dar ya min e!",
+                      "Ev dar ya min e"
+                    ],
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Bozo whose roses they are: “These flowers are Dapîr’s!”",
+                    "accepted": [
+                      "Ev kulîlk yên dapîrê ne!",
+                      "Ev kulîlkên dapîrê ne!",
+                      "Ev kulîlk yên dapîrê ne",
+                      "Ev kulîlkên dapîrê ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hewşa me biçûk e, lê baxçe mezin e.",
+                    "prompt": "Hamo comes running and looks round. What does he say, in English? “Hewşa me biçûk e, lê baxçe mezin e.”",
+                    "accepted": [
+                      "Our yard is small, but the orchard is big.",
+                      "Our courtyard is small, but the orchard is big.",
+                      "Our yard is small, but the garden is big.",
+                      "Our yard is little, but the orchard is big."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Dapîr’s flowers are tiny but lovely. Write: “The flowers are small, but they are beautiful.”",
+                    "accepted": [
+                      "Kulîlk biçûk in, lê ew xweşik in.",
+                      "Kulîlk biçûk in, lê xweşik in.",
+                      "Kulîlk biçûk in, lê ew xweşik in",
+                      "Kulîlk biçûk in, lê xweşik in"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo shakes his head at the donkey. Type what he says.",
+                    "accepted": [
+                      "Bozo kêfxweş e, lê dapîr ne kêfxweş e!",
+                      "Bozo kêfxweş e, lê dapîr ne kêfxweş e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev kulîlka biçûk ya Hêviyê ye.",
+                    "prompt": "Hamo picks up one tiny flower that Bozo missed: “Ev kulîlka biçûk ya Hêviyê ye.” Whose is it?",
+                    "options": [
+                      "Hêvî’s",
+                      "Dapîr’s",
+                      "Bozo’s"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Run and tell Hamo: “Bozo li hewşê ye, li kulîlkên dapîrê!” (Bozo is in the yard, in Grandma’s flowers!)",
+                    "reference": "Bozo li hewşê ye, li kulîlkên dapîrê!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Show Hevalo round: “The tree is big and the yard is small.”",
+                    "accepted": [
+                      "Dar mezin e û hewş biçûk e.",
+                      "Dar mezin e, hewş biçûk e.",
+                      "Dar mezin e û hewş biçûk e",
+                      "Dar mezin e, hewş biçûk e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Dapîr frowns at the flower bed; Bozo chews happily. Which sentence is true?",
+                    "options": [
+                      "Bozo kêfxweş e, dapîr aciz e.",
+                      "Bozo aciz e, dapîr kêfxweş e.",
+                      "Bozo û dapîr kêfxweş in."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s2l2",
+              "position": 2,
+              "titleKu": "Kurê min, keça min",
+              "titleEn": "My son, my daughter",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev Baran e, kurê min.",
+                    "prompt": "Hamo puts a hand on a boy’s shoulder: “Ev Baran e, kurê min.” Who is Baran?",
+                    "options": [
+                      "Hamo’s son",
+                      "Hamo’s brother",
+                      "Hamo’s friend"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "pismam",
+                        "right": "cousin (father’s brother’s son)"
+                      },
+                      {
+                        "left": "dotmet",
+                        "right": "cousin (father’s sister’s daughter)"
+                      },
+                      {
+                        "left": "kurxal",
+                        "right": "cousin (mother’s brother’s son)"
+                      },
+                      {
+                        "left": "nevî",
+                        "right": "grandchild"
+                      },
+                      {
+                        "left": "zîrek",
+                        "right": "clever"
+                      },
+                      {
+                        "left": "qelem",
+                        "right": "pencil"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Belê, belê, tu kurê mezin î!",
+                    "prompt": "Baran puffs out his chest in front of you. Hamo laughs: “Belê, belê, tu kurê mezin î!” What does he say?",
+                    "options": [
+                      "Yes, yes, you are the big boy!",
+                      "Yes, yes, you are the little boy!",
+                      "Yes, yes, you are my brother!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev jî Hêvî ye, keça min a delal.",
+                    "prompt": "A little girl peeps out from behind Dapîr and hides again. Hamo: “Ev jî Hêvî ye, keça min a delal.” Who is Hêvî?",
+                    "options": [
+                      "Hamo’s lovely daughter",
+                      "Hamo’s clever niece",
+                      "Hamo’s little sister"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Baran is the son of Xezal’s xal (her mother’s brother). What is he to Xezal?",
+                    "options": [
+                      "Ew kurxalê Xezalê ye.",
+                      "Ew pismamê Xezalê ye.",
+                      "Ew dotmeta Xezalê ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal explains who is whose cousin, slowly. Type what you hear.",
+                    "accepted": [
+                      "Baran kurxalê min e, ez dotmeta wî me.",
+                      "Baran kurxalê min e, ez dotmeta wî me"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Baran can already read. Tell Hevalo: “Baran is clever.”",
+                    "accepted": [
+                      "Baran zîrek e.",
+                      "Baran zîrek e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Baran, Hêvî û Xezal neviyên dapîrê ne.",
+                    "prompt": "Dapîr gathers all three children round her. What does Hamo say, in English? “Baran, Hêvî û Xezal neviyên dapîrê ne.”",
+                    "accepted": [
+                      "Baran, Hêvî and Xezal are Grandma’s grandchildren.",
+                      "Baran, Hêvî, and Xezal are Grandma’s grandchildren.",
+                      "Baran, Hêvî and Xezal are their grandmother’s grandchildren.",
+                      "Baran, Hêvî and Xezal are Dapîr’s grandchildren."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Dapîr hugs Hêvî. Write what Hamo says: “Hêvî is Grandma’s grandchild.”",
+                    "accepted": [
+                      "Hêvî neviya dapîrê ye.",
+                      "Hêvî neviya dapîrê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev qelema Baran e.",
+                    "prompt": "Baran shows you a pencil chewed at one end (not by Hevalo, for once): “Ev qelema Baran e,” says Hamo. What is it?",
+                    "options": [
+                      "Baran’s pencil",
+                      "Baran’s photo",
+                      "Baran’s flower"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo ruffles Baran’s hair. Type what he says.",
+                    "accepted": [
+                      "Qelema wî biçûk e, lê ew pir zîrek e.",
+                      "Qelema wî biçûk e, lê ew pir zîrek e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hêvî delal e, Baran zîrek e.",
+                    "prompt": "Hamo is a proud father. What does he say, in English? “Hêvî delal e, Baran zîrek e.”",
+                    "accepted": [
+                      "Hêvî is lovely, Baran is clever.",
+                      "Hêvî is sweet, Baran is clever.",
+                      "Hêvî is lovely and Baran is clever.",
+                      "Hêvî is a dear, Baran is clever."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Crouch down and say hello to shy Hêvî: “Silav, Hêvî! Tu pir delal î.” (Hello, Hêvî! You are very sweet.)",
+                    "reference": "Silav, Hêvî! Tu pir delal î.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Help Xezal finish her explanation: “I am Baran’s cousin.”",
+                    "accepted": [
+                      "Ez dotmeta Baran im.",
+                      "Ez dotmeta Baran im"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hevalo is lost: “Xezal, Baran kî ye?” Which is Xezal’s right answer?",
+                    "options": [
+                      "Ew kurxalê min e.",
+                      "Ew dotmeta min e.",
+                      "Ew pismamê min e."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s2l3",
+              "position": 3,
+              "titleKu": "Ya kê ye?",
+              "titleEn": "Whose is it?",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev pêlav ya kê ye?",
+                    "prompt": "There is a mountain of shoes at the door. Xezal holds one up: “Ev pêlav ya kê ye?” What does she ask?",
+                    "options": [
+                      "Whose shoe is this?",
+                      "Where is this shoe?",
+                      "Is this shoe new?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "kê",
+                        "right": "whose; whom"
+                      },
+                      {
+                        "left": "pêlav",
+                        "right": "shoe"
+                      },
+                      {
+                        "left": "çente",
+                        "right": "bag"
+                      },
+                      {
+                        "left": "pirtûk",
+                        "right": "book"
+                      },
+                      {
+                        "left": "kiras",
+                        "right": "shirt; dress"
+                      },
+                      {
+                        "left": "kum",
+                        "right": "cap, hat"
+                      }
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu02s2l3a",
+                    "title": "Ya kê ye?",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Ev pêlavên mezin yên kê ne?",
+                        "en": "Whose are these big shoes?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Yên min in, bêguman!",
+                        "en": "Mine, of course!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Û ev pêlavên biçûk?",
+                        "en": "And these little shoes?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew yên Hêviyê ne.",
+                        "en": "Those are Hêvî’s."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ev kum yê kê ye? Kumê Baran e?",
+                        "en": "Whose is this cap? Is it Baran’s cap?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Naxêr, ew kumê min ê kevn e!",
+                        "en": "No, it is my old cap!"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Û yên min? Pêlavên min li ku ne?",
+                        "en": "And mine? Where are my shoes?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo, tu bê pêlav î!",
+                        "en": "Hevalo, you have no shoes at all!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Hevalo, ev çente yê te ye?",
+                        "en": "Hevalo, is this bag yours?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Naxêr, xalo! Ew çenteyê min e, û pirtûkên min jî!",
+                        "en": "No, uncle! That is my bag, and my books too!"
+                      }
+                    ],
+                    "prompt": "Which shoes are Hevalo’s?",
+                    "options": [
+                      "None — a deer has no shoes.",
+                      "The biggest pair",
+                      "The tiniest pair"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Kum (cap) is masculine. Which question is right?",
+                    "options": [
+                      "Ev kum yê kê ye?",
+                      "Ev kum ya kê ye?",
+                      "Ev kum yên kê ne?"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev pirtûk ya Baran e.",
+                    "prompt": "Hamo picks up a schoolbook with a chewed corner: “Ev pirtûk ya Baran e.” Whose is the book?",
+                    "options": [
+                      "Baran’s",
+                      "Hêvî’s",
+                      "Xezal’s"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal notices something about her uncle. Type what she says.",
+                    "accepted": [
+                      "Xalo, kirasê te nû ye!",
+                      "Xalo, kirasê te nû ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Xezal holds up a huge pair of shoes. Ask: “Whose are these?”",
+                    "accepted": [
+                      "Ev yên kê ne?",
+                      "Ev pêlav yên kê ne?",
+                      "Ev yên kê ne",
+                      "Ev pêlav yên kê ne"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ev çente yê min e, û ev kiras jî yê min e.",
+                    "prompt": "Xezal pulls her things out of the pile. What does she say, in English? “Ev çente yê min e, û ev kiras jî yê min e.”",
+                    "accepted": [
+                      "This bag is mine, and this dress is mine too.",
+                      "This bag is mine, and this shirt is mine too.",
+                      "This is my bag, and this is my dress too.",
+                      "This bag is mine and this dress is mine too.",
+                      "This bag is mine, and this dress is also mine."
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo points at his enormous shoes. Write what he says: “These shoes are mine.”",
+                    "accepted": [
+                      "Ev pêlav yên min in.",
+                      "Ev pêlavên min in.",
+                      "Ev pêlav yên min in",
+                      "Ev pêlavên min in"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo looks under the bench. Type what he asks.",
+                    "accepted": [
+                      "Kumê min ê kevn li ku ye?",
+                      "Kumê min ê kevn li ku ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Pirtûka Baran li vir e, lê çenteyê wî li ku ye?",
+                    "prompt": "Xezal is still sorting. What does she say, in English? “Pirtûka Baran li vir e, lê çenteyê wî li ku ye?”",
+                    "accepted": [
+                      "Baran’s book is here, but where is his bag?",
+                      "Baran’s book is here, but where is his schoolbag?",
+                      "Baran’s book is here, but where’s his bag?",
+                      "Baran’s book is here, but where’s his schoolbag?"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "You find one lonely shoe under the bench. Hold it up and ask everyone: “Ev pêlav ya kê ye?” (Whose shoe is this?)",
+                    "reference": "Ev pêlav ya kê ye?",
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal holds up Hamo’s huge cap: “Ev kum yê kê ye?” What does Hamo answer?",
+                    "options": [
+                      "Yê min e!",
+                      "Ya min e!",
+                      "Yên min in!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Xezal teases the deer. Help her: “Hevalo, you have no shoes!” (you are without shoes)",
+                    "accepted": [
+                      "Hevalo, tu bê pêlav î!",
+                      "Hevalo, tu bê pêlav î"
+                    ],
+                    "voice": "xezo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s2l4",
+              "position": 4,
+              "titleKu": "Dapîr Şemsê",
+              "titleEn": "Grandma Şemsê",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dapîr dilê malê ye.",
+                    "prompt": "Dapîr Şemsê settles on the best cushion and everyone gathers round. Hamo whispers to you: “Dapîr dilê malê ye.” What does he mean?",
+                    "options": [
+                      "Grandma is the heart of the house.",
+                      "Grandma is the guest of the house.",
+                      "Grandma is in the house."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "dil",
+                        "right": "heart"
+                      },
+                      {
+                        "left": "diyarî",
+                        "right": "present, gift"
+                      },
+                      {
+                        "left": "ji bo",
+                        "right": "for"
+                      },
+                      {
+                        "left": "kal",
+                        "right": "old man; grandpa"
+                      },
+                      {
+                        "left": "bûk",
+                        "right": "daughter-in-law; bride"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Nazê bûka dapîrê ye.",
+                    "prompt": "Nazê brings Dapîr her tea first. Hamo explains: “Nazê bûka dapîrê ye.” Who is Nazê to Dapîr?",
+                    "options": [
+                      "Her daughter-in-law",
+                      "Her daughter",
+                      "Her sister"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Dapîr pats the cushion beside her and asks you: “Malbata te li ku ye?” What does she want to know?",
+                    "options": [
+                      "Where your family is",
+                      "What your name is",
+                      "Whether you are hungry"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu02s2l4a",
+                    "title": "Diyarî",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, ev diyarî ji bo kê ye?",
+                        "en": "Uncle, who is this present for?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ji bo mêvan e. Dilê dapîrê mezin e.",
+                        "en": "It is for our guest. Grandma has a big heart."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ji bo mêvan? Û ji bo min?",
+                        "en": "For the guest? And for me?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xezo, tu ne mêvan î, tu nevî yî!",
+                        "en": "Xezo, you are not a guest, you are a grandchild!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Lê ez neviyeke delal im!",
+                        "en": "But I am a lovely grandchild!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bêguman, delal î… lê diyarî ji bo mêvan e.",
+                        "en": "Of course you are lovely… but the present is for the guest."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baş e. Mêvan, diyariya te li vir e!",
+                        "en": "All right. Guest, your present is here!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ne niha, Xezo, ne niha!",
+                        "en": "Not now, Xezo, not now!"
+                      }
+                    ],
+                    "prompt": "Why is the present not for Xezal?",
+                    "options": [
+                      "It is for the guest, and she is a grandchild.",
+                      "She is not lovely.",
+                      "She is from Amed."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo nods at the bundle beside Dapîr and smiles at you. Type what he says.",
+                    "accepted": [
+                      "Ev diyarî ji bo te ye.",
+                      "Ev diyarî ji bo te ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Nazê hands you a glass. Tell Xezal: “The tea is for Grandma.”",
+                    "accepted": [
+                      "Çay ji bo dapîrê ye.",
+                      "Çay ji bo dapîrê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ev wêneyê kalê me ye, bavê Hamo.",
+                    "prompt": "Xezal shows Dapîr the photo wall. What does she say, in English? “Ev wêneyê kalê me ye, bavê Hamo.”",
+                    "accepted": [
+                      "This is a photo of our grandfather, Hamo’s father.",
+                      "This is our grandfather’s photo, Hamo’s father.",
+                      "This is a picture of our grandfather, Hamo’s father.",
+                      "This is a photo of our grandpa, Hamo’s father."
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Nazê is Dapîr’s daughter-in-law, and a very good one. Write: “Nazê is a good daughter-in-law.”",
+                    "accepted": [
+                      "Nazê bûkeke baş e.",
+                      "Nazê bûkeke baş e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Dapîr’s present is for you. Which sentence says so?",
+                    "options": [
+                      "Diyarî ji bo te ye.",
+                      "Diyarî ji bo min e.",
+                      "Diyarî ji te ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal kisses her grandmother’s hand. Type what she says.",
+                    "accepted": [
+                      "Dapîr, dilê te pir mezin e!",
+                      "Dapîr, dilê te pir mezin e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Thank Dapîr for her kindness: “Spas, dapîr! Dilê te mezin e.” (Thank you, Grandma! You have a big heart.)",
+                    "reference": "Spas, dapîr! Dilê te mezin e.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Kalo, roj baş! Tu çawa yî?",
+                    "prompt": "An old man with a stick passes the gate, and Hamo calls out warmly, as Kurds greet any old man. What does he say, in English? “Kalo, roj baş! Tu çawa yî?”",
+                    "accepted": [
+                      "Grandpa, good day! How are you?",
+                      "Good day, grandpa! How are you?",
+                      "Good day, old man! How are you?",
+                      "Grandad, good day! How are you?"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Dapîr asks you: “Malbata te çawa ye?” Which answer fits?",
+                    "options": [
+                      "Malbata min baş e, spas.",
+                      "Malbata min li vir e.",
+                      "Navê min Hamo ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Diyarî ji bo te ye… lê ne niha!",
+                    "prompt": "Dapîr holds the bundle tight and starts counting on her fingers, very, very slowly. Hamo laughs: “Diyarî ji bo te ye… lê ne niha!” When do you get the present?",
+                    "options": [
+                      "Not yet — Dapîr is counting first.",
+                      "Right now",
+                      "Never"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "titleKu": "Jimar ji 1 heta 20",
+          "titleEn": "Numbers 1–20",
+          "grammarMd": "The number comes **before** the noun, and the noun stays as it is: *sê sêv* three apples · *du bira* two brothers.\n\n1 yek · 2 du · 3 sê · 4 çar · 5 pênc · 6 şeş · 7 heft · 8 heşt · 9 neh · 10 deh\n\nThe teens build on deh: *yazdeh, diwanzdeh, sêzdeh … nozdeh*, and 20 is *bîst*.\n\nAsk **çend?** for how many: *Çend sêv hene?* How many apples are there?\n\nAge uses **salî** (years old): *Tu çend salî yî?* How old are you? · *Ez neh salî me.* I am nine. · *Hêvî şeş salî ye.* Hêvî is six.",
+          "lessons": [
+            {
+              "key": "u02s3l1",
+              "position": 1,
+              "titleKu": "Yek, du, sê",
+              "titleEn": "One, two, three",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Yek, du, sê!",
+                    "prompt": "In the yard, Dapîr and little Hêvî are counting the hens. Hamo counts along: “Yek, du, sê!” What is he saying?",
+                    "options": [
+                      "One, two, three!",
+                      "Two, three, four!",
+                      "One, two, five!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "yek",
+                        "right": "one"
+                      },
+                      {
+                        "left": "du",
+                        "right": "two"
+                      },
+                      {
+                        "left": "sê",
+                        "right": "three"
+                      },
+                      {
+                        "left": "çar",
+                        "right": "four"
+                      },
+                      {
+                        "left": "pênc",
+                        "right": "five"
+                      },
+                      {
+                        "left": "çend",
+                        "right": "how many"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Mirîşk çend in?",
+                    "prompt": "Hamo leans on the gate and asks: “Mirîşk çend in?” What does he want to know?",
+                    "options": [
+                      "How many hens there are",
+                      "Where the hens are",
+                      "How the hens are"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sê mirîşk li vir in, du mirîşk li wir in.",
+                    "prompt": "Hamo helps: “Sê mirîşk li vir in, du mirîşk li wir in.” How many hens are there in all?",
+                    "options": [
+                      "five",
+                      "three",
+                      "two"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "The number goes before the noun, and the noun stays as it is. Which is right?",
+                    "options": [
+                      "çar mirîşk",
+                      "mirîşk çar",
+                      "çar mirîşkên"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo counts slowly for Hêvî. Type what you hear.",
+                    "accepted": [
+                      "Yek, du, sê, çar, pênc!",
+                      "Yek, du, sê, çar, pênc"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hêvî points at the hens by the wall. Tell her: “Three hens!”",
+                    "accepted": [
+                      "Sê mirîşk!",
+                      "Sê mirîşk"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Du sêv ji bo Hevalo, yek sêv ji bo Bozo.",
+                    "prompt": "Hamo shares out apples from his pockets. What does he say, in English? “Du sêv ji bo Hevalo, yek sêv ji bo Bozo.”",
+                    "accepted": [
+                      "Two apples for Hevalo, one apple for Bozo.",
+                      "Two apples for Hevalo and one apple for Bozo.",
+                      "Two apples for Hevalo, one for Bozo.",
+                      "Two apples for Hevalo and one for Bozo."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "The hens finally stand still. Answer Hamo’s question “Mirîşk çend in?”: “They are five.”",
+                    "accepted": [
+                      "Ew pênc in.",
+                      "Pênc in.",
+                      "Pênc mirîşk in.",
+                      "Ew pênc in",
+                      "Pênc in",
+                      "Pênc mirîşk in"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal does not agree with Dapîr’s number. Type what she says.",
+                    "accepted": [
+                      "Dapîr, ew çar in, ne pênc!",
+                      "Dapîr, ew çar in, ne pênc"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Çar mirîşk û pisîkek li hewşê ne.",
+                    "prompt": "Hamo looks round the yard. What does he say, in English? “Çar mirîşk û pisîkek li hewşê ne.”",
+                    "accepted": [
+                      "Four hens and a cat are in the yard.",
+                      "There are four hens and a cat in the yard.",
+                      "Four hens and one cat are in the yard.",
+                      "There are four hens and one cat in the yard."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Count the hens for Dapîr, nice and slowly: “Yek, du, sê, çar, pênc! Pênc mirîşk!” (One, two, three, four, five! Five hens!)",
+                    "reference": "Yek, du, sê, çar, pênc! Pênc mirîşk!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hêvî holds up three fingers and whispers to you: “Çend?” What do you answer?",
+                    "options": [
+                      "Sê.",
+                      "Du.",
+                      "Çar."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Yek, du… na, sê… na, çar!",
+                    "prompt": "Xezal joins in, but the hens will not stand still: “Yek, du… na, sê… na, çar!” How many does she count in the end?",
+                    "options": [
+                      "four",
+                      "three",
+                      "two"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hamo comes back from the orchard with his hands full. Ask him: “How many apples?”",
+                    "accepted": [
+                      "Çend sêv?",
+                      "Çend sêv"
+                    ],
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s3l2",
+              "position": 2,
+              "titleKu": "Heft sêv",
+              "titleEn": "Seven apples",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Şeş, heft, heşt…",
+                    "prompt": "Hamo is counting apples into a basket for Dapîr: “Şeş, heft, heşt…” Which numbers are these?",
+                    "options": [
+                      "six, seven, eight",
+                      "seven, eight, nine",
+                      "five, six, seven"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "şeş",
+                        "right": "six"
+                      },
+                      {
+                        "left": "heft",
+                        "right": "seven"
+                      },
+                      {
+                        "left": "heşt",
+                        "right": "eight"
+                      },
+                      {
+                        "left": "neh",
+                        "right": "nine"
+                      },
+                      {
+                        "left": "deh",
+                        "right": "ten"
+                      },
+                      {
+                        "left": "sele",
+                        "right": "basket"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Deh sêv ji bo dapîrê.",
+                    "prompt": "He wants a nice round number for his mother: “Deh sêv ji bo dapîrê.” How many apples?",
+                    "options": [
+                      "ten",
+                      "nine",
+                      "two"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Neh? Na, heşt… Hevalo!",
+                    "prompt": "Hamo counts again and frowns: “Neh? Na, heşt… Hevalo!” What is happening to the apples?",
+                    "options": [
+                      "There is one fewer every time.",
+                      "There is one more every time.",
+                      "They are all rotten."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Sele (basket) is feminine and ends in a vowel. Which is right?",
+                    "options": [
+                      "seleya dapîrê",
+                      "seleyê dapîrê",
+                      "sela dapîrê"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo starts again from six, very carefully. Type what you hear.",
+                    "accepted": [
+                      "Şeş, heft, heşt, neh, deh!",
+                      "Şeş, heft, heşt, neh, deh"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hamo how many apples you can see in the basket: “Seven apples!”",
+                    "accepted": [
+                      "Heft sêv!",
+                      "Heft sêv"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hevalo, sêv çend in?",
+                    "prompt": "Hamo turns slowly to the deer. What does he ask, in English? “Hevalo, sêv çend in?”",
+                    "accepted": [
+                      "Hevalo, how many apples are there?",
+                      "Hevalo, how many apples?",
+                      "Hevalo, how many apples are left?"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo counts nine apples, then looks at the deer and counts again. Write: “Nine apples… no, eight!”",
+                    "accepted": [
+                      "Neh sêv… na, heşt!",
+                      "Neh sêv, na, heşt!",
+                      "Neh sêv… na, heşt",
+                      "Neh sêv, na, heşt"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez? Na, na… ez ne birçî me.",
+                    "prompt": "Hevalo looks up at the sky, very innocent: “Ez? Na, na… ez ne birçî me.” What does he say?",
+                    "options": [
+                      "He is not hungry.",
+                      "He is very hungry.",
+                      "He is tired."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal peeps into the basket. Type what she says.",
+                    "accepted": [
+                      "Seleya dapîrê biçûk e, lê sêv mezin in.",
+                      "Seleya dapîrê biçûk e, lê sêv mezin in"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Neh sêv li vir in, lê yek li ku ye?",
+                    "prompt": "Hamo strokes his moustache, thinking hard. What does he say, in English? “Neh sêv li vir in, lê yek li ku ye?”",
+                    "accepted": [
+                      "Nine apples are here, but where is one?",
+                      "There are nine apples here, but where is the other one?",
+                      "Nine apples are here, but where is the other one?",
+                      "There are nine apples here, but where is one?",
+                      "Here are nine apples, but where is the tenth?",
+                      "Nine apples are here, but where’s one?",
+                      "There are nine apples here, but where’s the other one?",
+                      "Nine apples are here, but where’s the other one?",
+                      "There are nine apples here, but where’s one?",
+                      "Here are nine apples, but where’s the tenth?"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Count the apples into the basket for Hamo: “Şeş, heft, heşt, neh, deh! Deh sêv!” (Six, seven, eight, nine, ten! Ten apples!)",
+                    "reference": "Şeş, heft, heşt, neh, deh! Deh sêv!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo asks “Sêv çend in?”. You count seven. What do you answer?",
+                    "options": [
+                      "Heft in.",
+                      "Heşt in.",
+                      "Şeş in."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Xezal who the basket is for: “The basket is for Grandma.”",
+                    "accepted": [
+                      "Sele ji bo dapîrê ye.",
+                      "Sele ji bo dapîrê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s3l3",
+              "position": 3,
+              "titleKu": "Tu çend salî yî?",
+              "titleEn": "How old are you?",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu çend salî yî?",
+                    "prompt": "Round the dinner table, Hamo asks Baran: “Tu çend salî yî?” What is he asking?",
+                    "options": [
+                      "How old are you?",
+                      "How many apples are there?",
+                      "How are you?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "sal",
+                        "right": "year"
+                      },
+                      {
+                        "left": "salî",
+                        "right": "years old"
+                      },
+                      {
+                        "left": "yazdeh",
+                        "right": "eleven"
+                      },
+                      {
+                        "left": "diwanzdeh",
+                        "right": "twelve"
+                      },
+                      {
+                        "left": "nozdeh",
+                        "right": "nineteen"
+                      },
+                      {
+                        "left": "bîst",
+                        "right": "twenty"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Baran neh salî ye, Hêvî şeş salî ye.",
+                    "prompt": "Hamo answers for his children: “Baran neh salî ye, Hêvî şeş salî ye.” How old is Hêvî?",
+                    "options": [
+                      "six",
+                      "nine",
+                      "seven"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu02s3l3a",
+                    "title": "Tu çend salî yî?",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xezo, tu çend salî yî?",
+                        "en": "Xezo, how old are you?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ez nozdeh salî me, xalo.",
+                        "en": "I am nineteen, uncle."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Nozdeh? Bi rastî? Xezo, tu mezin î!",
+                        "en": "Nineteen? Really? Xezo, you are grown up!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û tu, xalo? Tu çend salî yî?",
+                        "en": "And you, uncle? How old are you?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ez? Ez… ciwan im!",
+                        "en": "Me? I am… young!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û dapîr? Dapîr çend salî ye?",
+                        "en": "And Grandma? How old is Grandma?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Dapîr bîst salî ye!",
+                        "en": "Grandma is twenty!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Bîst? Xalo, ew ne rast e!",
+                        "en": "Twenty? Uncle, that is not true!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Xezo, ji kerema xwe… dapîr bîst salî ye!",
+                        "en": "Xezo, please… Grandma is twenty!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Baş e, baş e. Dapîr bîst salî ye.",
+                        "en": "All right, all right. Grandma is twenty."
+                      }
+                    ],
+                    "prompt": "How old does Dapîr say she is?",
+                    "options": [
+                      "Twenty",
+                      "Nineteen",
+                      "Twelve"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal is 19. Which sentence is right?",
+                    "options": [
+                      "Ez nozdeh salî me.",
+                      "Ez nozdeh salî im.",
+                      "Ez nozdeh sal im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Baran wants the animals counted too. Hamo answers. Type what you hear.",
+                    "accepted": [
+                      "Şêro yazdeh salî ye, Bozo diwanzdeh salî ye.",
+                      "Şêro yazdeh salî ye, Bozo diwanzdeh salî ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Baran is nine. Say it for him: “I am nine years old.”",
+                    "accepted": [
+                      "Ez neh salî me.",
+                      "Ez neh salî me"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Pisîka min yazdeh salî ye.",
+                    "prompt": "Xezal tells Baran about her cat at home in Amed. What does she say, in English? “Pisîka min yazdeh salî ye.”",
+                    "accepted": [
+                      "My cat is eleven years old.",
+                      "My cat is eleven."
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo asks Hêvî how old she is, and she hides her face. Write it for her: “I am six years old.”",
+                    "accepted": [
+                      "Ez şeş salî me.",
+                      "Ez şeş salî me"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal cannot help herself. Type what she whispers.",
+                    "accepted": [
+                      "Bîst sal? Dapîr, bi rastî?",
+                      "Bîst sal? Dapîr, bi rastî"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Bozo diwanzdeh salî ye, lê ew ne pîr e!",
+                    "prompt": "Hamo pats the donkey’s neck. What does he say, in English? “Bozo diwanzdeh salî ye, lê ew ne pîr e!”",
+                    "accepted": [
+                      "Bozo is twelve years old, but he is not old!",
+                      "Bozo is twelve, but he is not old!",
+                      "Bozo is twelve years old but he is not old!",
+                      "Bozo is twelve years old, but he’s not old!",
+                      "Bozo is twelve, but he’s not old!",
+                      "Bozo is twelve years old but he’s not old!"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Your turn: ask Baran how old he is: “Tu çend salî yî?” (How old are you?)",
+                    "reference": "Tu çend salî yî?",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hêvî asks you shyly: “Tu çend salî yî?” Which answer is built the right way?",
+                    "options": [
+                      "Ez bîst salî me.",
+                      "Ez bîst sêv im.",
+                      "Ez bîst im salî."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Dapîr says she is twenty. Look amazed: “Twenty years! Really?”",
+                    "accepted": [
+                      "Bîst sal! Bi rastî?",
+                      "Bîst sal? Bi rastî?",
+                      "Bîst sal! Bi rastî",
+                      "Bîst sal? Bi rastî"
+                    ],
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s3l4",
+              "position": 4,
+              "titleKu": "Ji yekê heta bîstê",
+              "titleEn": "From one to twenty",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sêzdeh, çardeh, panzdeh…",
+                    "prompt": "Dapîr has started counting, very slowly. Hamo whispers the numbers to you: “Sêzdeh, çardeh, panzdeh…” Which numbers are they?",
+                    "options": [
+                      "thirteen, fourteen, fifteen",
+                      "three, four, five",
+                      "twelve, thirteen, fourteen"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "sêzdeh",
+                        "right": "thirteen"
+                      },
+                      {
+                        "left": "çardeh",
+                        "right": "fourteen"
+                      },
+                      {
+                        "left": "panzdeh",
+                        "right": "fifteen"
+                      },
+                      {
+                        "left": "şanzdeh",
+                        "right": "sixteen"
+                      },
+                      {
+                        "left": "hivdeh",
+                        "right": "seventeen"
+                      },
+                      {
+                        "left": "hejdeh",
+                        "right": "eighteen"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ji yekê heta bîstê!",
+                    "prompt": "Hamo explains why it takes so long: “Ji yekê heta bîstê!” How far is Dapîr counting?",
+                    "options": [
+                      "From one to twenty",
+                      "From one to ten",
+                      "From ten to twenty"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "At last Dapîr gets near the end, and Hamo counts with her. Type what you hear.",
+                    "accepted": [
+                      "Şanzdeh, hivdeh, hejdeh, nozdeh, bîst!",
+                      "Şanzdeh, hivdeh, hejdeh, nozdeh, bîst"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu02s3l4a",
+                    "title": "Sindoqa dapîrê",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Hejdeh, nozdeh, bîst! Dapîr, fermo!",
+                        "en": "Eighteen, nineteen, twenty! Grandma, go ahead!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ev çi ye? Gore ne?",
+                        "en": "What is it? Are those socks?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Belê, du gore… na, çar gore!",
+                        "en": "Yes, two socks… no, four socks!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Çar gore? Ji bo kê ne?",
+                        "en": "Four socks? Who are they for?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ji bo Hevalo! Hevalo, ev gore yên te ne.",
+                        "en": "For Hevalo! Hevalo, these socks are yours."
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Yên min? Spas, dapîr! Ez gelek kêfxweş im!",
+                        "en": "Mine? Thank you, Grandma! I am so happy!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, û ev çi ye? Ew kevn e…",
+                        "en": "Uncle, and what is this? It is old…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ev? Bi rastî… ev ne ya min e.",
+                        "en": "This? Really… this is not mine."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ne ya te ye? Ya kê ye?",
+                        "en": "Not yours? Whose is it?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ya kê ye…? Sibe, Xezo, sibe.",
+                        "en": "Whose…? Tomorrow, Xezo, tomorrow."
+                      }
+                    ],
+                    "prompt": "Who are the four socks for?",
+                    "options": [
+                      "Hevalo",
+                      "Hamo",
+                      "Xezal"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Fourteen is “çardeh”. Which word is fifteen?",
+                    "options": [
+                      "panzdeh",
+                      "pênc",
+                      "şanzdeh"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Xezal sighs at how slowly Dapîr counts. Say it with her: “From one to twenty!”",
+                    "accepted": [
+                      "Ji yekê heta bîstê!",
+                      "Ji yekê heta bîstê"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ji yekê heta bîstê? Dapîr, ji kerema xwe!",
+                    "prompt": "Xezal is hopping from foot to foot. What does she say, in English? “Ji yekê heta bîstê? Dapîr, ji kerema xwe!”",
+                    "accepted": [
+                      "From one to twenty? Grandma, please!",
+                      "From one to twenty? Please, Grandma!",
+                      "One to twenty? Grandma, please!"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Xezal asks “Gore çend in?”. Write the answer: “Four socks, for Hevalo!”",
+                    "accepted": [
+                      "Çar gore, ji bo Hevalo!",
+                      "Çar gore ji bo Hevalo!",
+                      "Çar gore, ji bo Hevalo",
+                      "Çar gore ji bo Hevalo"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal tries to hurry her grandmother along. Type what she says.",
+                    "accepted": [
+                      "Panzdeh, şanzdeh, hivdeh… dapîr, zû!",
+                      "Panzdeh, şanzdeh, hivdeh… dapîr, zû"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xezal nozdeh salî ye, Baran neh, Hêvî şeş.",
+                    "prompt": "Hamo lines up the grandchildren while Dapîr counts: “Xezal nozdeh salî ye, Baran neh, Hêvî şeş.” Who is the youngest?",
+                    "options": [
+                      "Hêvî",
+                      "Baran",
+                      "Xezal"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Help Dapîr along: count from eleven to fifteen: “Yazdeh, diwanzdeh, sêzdeh, çardeh, panzdeh!”",
+                    "reference": "Yazdeh, diwanzdeh, sêzdeh, çardeh, panzdeh!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo holds up the knitted socks, each one exactly deer-sized. Type what he says.",
+                    "accepted": [
+                      "Ev gore ji bo Hevalo ne.",
+                      "Ev gore ji bo Hevalo ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Goreyên Hevalo biçûk in, û pir xweşik in!",
+                    "prompt": "Xezal helps the deer try them on. What does she say, in English? “Goreyên Hevalo biçûk in, û pir xweşik in!”",
+                    "accepted": [
+                      "Hevalo’s socks are small, and very pretty!",
+                      "Hevalo’s socks are small and very pretty!",
+                      "Hevalo’s socks are small, and very beautiful!",
+                      "Hevalo’s socks are little and very pretty!",
+                      "Hevalo’s socks are small and really pretty!"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev çi ye? Ew ya kê ye?",
+                    "prompt": "At the very bottom of the chest Xezal finds something small, iron and very old. Nobody knows it: “Ev çi ye? Ew ya kê ye?” What does she ask?",
+                    "options": [
+                      "What is this? Whose is it?",
+                      "What is this? Is it new?",
+                      "Where is it? Who is it?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "titleKu": "Heye û tune",
+          "titleEn": "Having",
+          "grammarMd": "Kurmancî says “I have” as “of me there is”: **… min heye**.\n\n- *Birayekî min heye.* I have a brother.\n- *Du xwişkên min hene.* I have two sisters. (**hene** for more than one)\n- *Pisîka min tune.* I don’t have a cat.\n\n**-ek** means *a, one*: *sêvek* an apple. Joined to the owner it becomes **-ekî** for a masculine word and **-eke** for a feminine one: *kurekî min* a son of mine · *xwişkeke te* a sister of yours.\n\n**heye** also means *there is*: *Li baxçe sêv hene.* There are apples in the orchard.",
+          "lessons": [
+            {
+              "key": "u02s4l1",
+              "position": 1,
+              "titleKu": "Birayekî min heye",
+              "titleEn": "I have a brother",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xwişkeke min heye.",
+                    "prompt": "Hamo leans back on his cushion and tells you about his family: “Xwişkeke min heye.” What does he say?",
+                    "options": [
+                      "I have a sister.",
+                      "I have a brother.",
+                      "I have a daughter."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "heye",
+                        "right": "there is; has"
+                      },
+                      {
+                        "left": "hene",
+                        "right": "there are; has (more than one)"
+                      },
+                      {
+                        "left": "tune",
+                        "right": "there isn’t; doesn’t have"
+                      },
+                      {
+                        "left": "hesp",
+                        "right": "horse"
+                      },
+                      {
+                        "left": "çêlek",
+                        "right": "cow"
+                      },
+                      {
+                        "left": "pez",
+                        "right": "sheep (the flock)"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Birayekî min tune.",
+                    "prompt": "Then he shrugs: “Birayekî min tune.” What does he say?",
+                    "options": [
+                      "I don’t have a brother.",
+                      "I have a brother.",
+                      "My brother is not here."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Lê hespekî min heye!",
+                    "prompt": "But he brightens at once: “Lê hespekî min heye!” What does he have?",
+                    "options": [
+                      "A horse",
+                      "A cow",
+                      "No horse"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo has two cows. Which is right?",
+                    "options": [
+                      "Du çêlekên min hene.",
+                      "Du çêlekên min heye.",
+                      "Du çêlek min hene."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "And that is not all, says Hamo. Type what he adds.",
+                    "accepted": [
+                      "Pezê min jî heye.",
+                      "Pezê min jî heye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "How does Hamo say “I have a horse”?",
+                    "accepted": [
+                      "Hespekî min heye.",
+                      "Hespekî min heye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Xwişkeke min heye: diya Xezalê.",
+                    "prompt": "Hamo smiles at his niece. What does he say, in English? “Xwişkeke min heye: diya Xezalê.”",
+                    "accepted": [
+                      "I have a sister: Xezal’s mother.",
+                      "I have one sister: Xezal’s mother.",
+                      "I have a sister, Xezal’s mother."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo has no brother. Write what he says: “I don’t have a brother.”",
+                    "accepted": [
+                      "Birayekî min tune.",
+                      "Birayê min tune.",
+                      "Birayekî min tune",
+                      "Birayê min tune"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal wants to see the horse. Type what she asks.",
+                    "accepted": [
+                      "Xalo, hespê te li ku ye?",
+                      "Xalo, hespê te li ku ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li gund hesp, çêlek û pez hene.",
+                    "prompt": "Hamo waves at the hills: “Li gund hesp, çêlek û pez hene.” What does he say?",
+                    "options": [
+                      "In the village there are horses, cows and sheep.",
+                      "In the village there is no horse.",
+                      "In the city there are horses and cows."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Ask Hamo, amazed: “Hespekî te heye? Bi rastî?” (You have a horse? Really?)",
+                    "reference": "Hespekî te heye? Bi rastî?",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Pisîkeke Xezalê heye, lê kûçikê wê tune.",
+                    "prompt": "Hamo tells you about his niece’s life in the city. What does he say, in English? “Pisîkeke Xezalê heye, lê kûçikê wê tune.”",
+                    "accepted": [
+                      "Xezal has a cat, but she doesn’t have a dog.",
+                      "Xezal has a cat, but she has no dog.",
+                      "Xezal has a cat, but no dog.",
+                      "Xezal has a cat but no dog."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo asks you: “Hespekî te heye?” You don’t have one. What do you answer?",
+                    "options": [
+                      "Naxêr, hespekî min tune.",
+                      "Erê, hespekî min tune.",
+                      "Naxêr, hespekî min heye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Xezal about the flock on the hill: “Hamo has sheep.”",
+                    "accepted": [
+                      "Pezê Hamo heye.",
+                      "Pezê Hamo heye"
+                    ],
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s4l2",
+              "position": 2,
+              "titleKu": "Pisîkeke min heye",
+              "titleEn": "I have a cat",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Pisîkeke min heye. Navê wê Gewrê ye.",
+                    "prompt": "Xezal takes out her phone and shows everyone a photo: “Pisîkeke min heye. Navê wê Gewrê ye.” What does she have?",
+                    "options": [
+                      "A cat called Gewrê",
+                      "A dog called Gewrê",
+                      "A goat called Gewrê"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "bizin",
+                        "right": "goat"
+                      },
+                      {
+                        "left": "berx",
+                        "right": "lamb"
+                      },
+                      {
+                        "left": "mih",
+                        "right": "ewe"
+                      },
+                      {
+                        "left": "telefon",
+                        "right": "phone"
+                      },
+                      {
+                        "left": "erebe",
+                        "right": "car"
+                      },
+                      {
+                        "left": "pere",
+                        "right": "money"
+                      }
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Kerekî me heye: Bozo!",
+                    "prompt": "Baran tops it at once, and Hamo laughs and says it again for you: “Kerekî me heye: Bozo!” What does the family have?",
+                    "options": [
+                      "A donkey: Bozo!",
+                      "A dog: Bozo!",
+                      "No donkey"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Bizin (goat) is feminine. Which is right?",
+                    "options": [
+                      "Bizineke me heye.",
+                      "Bizinekî me heye.",
+                      "Bizineke me hene."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal pats all her pockets. Type what she asks.",
+                    "accepted": [
+                      "Telefona min li ku ye?",
+                      "Telefona min li ku ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Xezal takes the bus everywhere. Help her say: “I don’t have a car.”",
+                    "accepted": [
+                      "Erebeyeke min tune.",
+                      "Erebeya min tune.",
+                      "Erebeyeke min tune",
+                      "Erebeya min tune"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Miheke me û du berxên wê hene.",
+                    "prompt": "Hamo shows you the stable. What does he say, in English? “Miheke me û du berxên wê hene.”",
+                    "accepted": [
+                      "We have a ewe and her two lambs.",
+                      "We have one ewe and her two lambs.",
+                      "We have a ewe and its two lambs.",
+                      "We have a ewe with two lambs."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Xezal laughs at her empty purse. Write what she says: “I don’t have any money!”",
+                    "accepted": [
+                      "Pereyê min tune!",
+                      "Pereyên min tune!",
+                      "Pereyê min tune",
+                      "Pereyên min tune"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo looks over the orchard wall and sighs. Type what he says.",
+                    "accepted": [
+                      "Bizin û berx li baxçe ne.",
+                      "Bizin û berx li baxçe ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Telefoneke min heye, lê pereyê min tune!",
+                    "prompt": "Xezal shrugs and grins. What does she say, in English? “Telefoneke min heye, lê pereyê min tune!”",
+                    "accepted": [
+                      "I have a phone, but I don’t have any money!",
+                      "I have a phone, but no money!",
+                      "I have a phone but I have no money!",
+                      "I have a phone, but I have no money!"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Gewrê li Amedê ye, li mala me.",
+                    "prompt": "Hevalo asks where the cat is. Xezal: “Gewrê li Amedê ye, li mala me.” Where is Gewrê?",
+                    "options": [
+                      "In Amed, at her home",
+                      "In Sêvan, in the yard",
+                      "In the car"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Look at Gewrê’s photo and tell Xezal: “Pisîka te pir xweşik e!” (Your cat is very beautiful!)",
+                    "reference": "Pisîka te pir xweşik e!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Baran asks you: “Telefoneke te heye?” You have one. What do you answer?",
+                    "options": [
+                      "Belê, telefoneke min heye.",
+                      "Belê, telefonekî min heye.",
+                      "Naxêr, telefoneke min heye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hamo’s car is older than Xezal. Say: “Hamo’s car is old.”",
+                    "accepted": [
+                      "Erebeya Hamo kevn e.",
+                      "Erebeya Hamo kevn e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Berx biçûk e, mih mezin e.",
+                    "prompt": "In the stable a tiny lamb leans on its mother. Hamo: “Berx biçûk e, mih mezin e.” What does he say?",
+                    "options": [
+                      "The lamb is small, the ewe is big.",
+                      "The lamb is big, the ewe is small.",
+                      "The goat is small, the ewe is big."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s4l3",
+              "position": 3,
+              "titleKu": "Kê çi heye?",
+              "titleEn": "Who has what?",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Şîv li vir e! Fermo!",
+                    "prompt": "Nazê spreads the cloth on the floor and Hamo calls everyone: “Şîv li vir e! Fermo!” What does he say?",
+                    "options": [
+                      "Dinner is here! Come and eat!",
+                      "Breakfast is here!",
+                      "The guests are here!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "xwarin",
+                        "right": "food"
+                      },
+                      {
+                        "left": "şîv",
+                        "right": "dinner"
+                      },
+                      {
+                        "left": "penîr",
+                        "right": "cheese"
+                      },
+                      {
+                        "left": "hêk",
+                        "right": "egg"
+                      },
+                      {
+                        "left": "goşt",
+                        "right": "meat"
+                      },
+                      {
+                        "left": "mast",
+                        "right": "yoghurt"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Nan heye, penîr heye, mast heye…",
+                    "prompt": "Hamo looks over the dinner cloth, very satisfied: “Nan heye, penîr heye, mast heye…” What does he see?",
+                    "options": [
+                      "Bread, cheese and yoghurt",
+                      "No bread and no cheese",
+                      "Meat, eggs and tea"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu02s4l3a",
+                    "title": "Kê çi heye?",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Penîrê min heye, lê goştê min tune.",
+                        "en": "I have cheese, but I have no meat."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Mastê min heye, lê hêkeke min tune.",
+                        "en": "I have yoghurt, but I don’t have an egg."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Fermo, Xezo, hêkek!",
+                        "en": "Here, Xezo, an egg!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Spas, xalo! Niha hêkeke min heye.",
+                        "en": "Thanks, uncle! Now I have an egg."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo, û tu?",
+                        "en": "Hevalo, and you?"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Sêveke min tune!",
+                        "en": "I don’t have an apple!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Fermo, Hevalo, sêvek!",
+                        "en": "Here, Hevalo, an apple!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Fermo, Hevalo! Ji min jî sêvek.",
+                        "en": "Here, Hevalo! One from me too."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ji Baran, ji Hêviyê, ji dapîrê… niha şeş sêvên wî hene!",
+                        "en": "From Baran, from Hêvî, from Grandma… now he has six apples!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Şeş sêv û xwarin jî! Hevalo, tu pir birçî yî!",
+                        "en": "Six apples and dinner too! Hevalo, you are very hungry!"
+                      }
+                    ],
+                    "prompt": "How many apples does Hevalo have at the end of the game?",
+                    "options": [
+                      "Six",
+                      "One",
+                      "None"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hêk (egg) is feminine. Xezal has no egg. Which is right?",
+                    "options": [
+                      "Hêkeke min tune.",
+                      "Hêkekî min tune.",
+                      "Hêkeke min tune ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo starts the game: one thing he has and one he doesn’t. Type what he says.",
+                    "accepted": [
+                      "Penîrê min heye, lê goştê min tune.",
+                      "Penîrê min heye, lê goştê min tune"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Your turn in the game. Say: “I have bread, but I don’t have cheese.”",
+                    "accepted": [
+                      "Nanê min heye, lê penîrê min tune.",
+                      "Nanê min heye, lê penîrê min tune"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Xwarina Nazê pir xweş e!",
+                    "prompt": "Hamo wipes his moustache, very happy. What does he say, in English? “Xwarina Nazê pir xweş e!”",
+                    "accepted": [
+                      "Nazê’s food is very tasty!",
+                      "Nazê’s cooking is very good!",
+                      "Nazê’s food is delicious!",
+                      "Nazê’s food is really tasty!",
+                      "Nazê’s food is very good!"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo looks over the cloth again. Write: “There is no meat, but there is cheese.”",
+                    "accepted": [
+                      "Goşt tune, lê penîr heye.",
+                      "Goşt tune, lê penîr heye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal holds up the egg Hamo gave her. Type what she says.",
+                    "accepted": [
+                      "Niha hêkeke min heye, spas!",
+                      "Niha hêkeke min heye, spas"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ji kerema xwe, hinek mast û nan.",
+                    "prompt": "Hamo asks Xezal across the cloth: “Ji kerema xwe, hinek mast û nan.” What does he want?",
+                    "options": [
+                      "Some yoghurt and bread",
+                      "Some cheese and bread",
+                      "No yoghurt, thanks"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Thank Hamo and Nazê for the dinner: “Şîv gelek xweş e, spas!” (The dinner is very tasty, thanks!)",
+                    "reference": "Şîv gelek xweş e, spas!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Goşt tune? Baş e, hêk û penîr hene.",
+                    "prompt": "Hevalo asks for meat (to be polite). Hamo answers. What does he say, in English? “Goşt tune? Baş e, hêk û penîr hene.”",
+                    "accepted": [
+                      "No meat? Fine, there are eggs and cheese.",
+                      "There is no meat? All right, there are eggs and cheese.",
+                      "No meat? OK, there are eggs and cheese.",
+                      "No meat? Fine, we have eggs and cheese.",
+                      "There’s no meat? All right, there are eggs and cheese."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo offers you the dish: “Goşt?” You don’t eat meat. What do you say, politely?",
+                    "options": [
+                      "Naxêr, spas. Penîr, ji kerema xwe.",
+                      "Belê, goşt tune.",
+                      "Bibore, goşt heye."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u02s4l4",
+              "position": 4,
+              "titleKu": "Sindoqa kevn",
+              "titleEn": "The old box",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev kilîta sindoqê ye!",
+                    "prompt": "Hamo turns Dapîr’s old key over in his hand, and his eyes light up: “Ev kilîta sindoqê ye!” What is it?",
+                    "options": [
+                      "The key of the box",
+                      "A new key",
+                      "The box of the key"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "sindoq",
+                        "right": "box, chest"
+                      },
+                      {
+                        "left": "kilît",
+                        "right": "key"
+                      },
+                      {
+                        "left": "name",
+                        "right": "letter"
+                      },
+                      {
+                        "left": "nexşe",
+                        "right": "map"
+                      },
+                      {
+                        "left": "tişt",
+                        "right": "thing"
+                      },
+                      {
+                        "left": "hin",
+                        "right": "some"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu02s4l4a",
+                    "title": "Sindoqa kevn",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, kilît… û sindoq! Zû, zû!",
+                        "en": "Uncle, the key… and the box! Quick, quick!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Baş e, baş e. Fermo… kilît, sindoq…",
+                        "en": "All right, all right. Here we go… the key, the box…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ev çi ye? Hin tiştên kevn!",
+                        "en": "What is this? Some old things!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ev… ev tiştê min e! Ji bo simbêl!",
+                        "en": "This… this thing is mine! It is for a moustache!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Bi rastî? Tiştekî ji bo simbêl!",
+                        "en": "Really? A thing for a moustache!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û ev çi ye? Name ye?",
+                        "en": "And what is this? Is it a letter?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Naxêr, ew ne name ye… ew nexşe ye!",
+                        "en": "No, it is not a letter… it is a map!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Nexşeya Sêvanê ye! Ev gund e, ev baxçe ye…",
+                        "en": "It is a map of Sêvan! This is the village, this is the orchard…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Û ev çi ye, li vir? Nexşe ya kê ye?",
+                        "en": "And what is this, here? Whose map is it?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ya kê ye…? Ev ne ya min e.",
+                        "en": "Whose…? It is not mine."
+                      }
+                    ],
+                    "prompt": "What is folded at the bottom of the box?",
+                    "options": [
+                      "A map of the village",
+                      "A letter from Amed",
+                      "A photo of Hamo"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Nexşe (map) is feminine and ends in a vowel. Which is right?",
+                    "options": [
+                      "nexşeya gund",
+                      "nexşeyê gund",
+                      "nexşea gund"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo lifts out his very first moustache comb, delighted. Type what he says.",
+                    "accepted": [
+                      "Ev tiştê min ê kevn e!",
+                      "Ev tiştê min ê kevn e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Point at the dusty box and tell Hevalo: “This box is old.”",
+                    "accepted": [
+                      "Ev sindoq kevn e.",
+                      "Ev sindoq kevn e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hin tişt kevn in, hin tişt nû ne.",
+                    "prompt": "Hamo looks through everything in the box. What does he say, in English? “Hin tişt kevn in, hin tişt nû ne.”",
+                    "accepted": [
+                      "Some things are old, some things are new.",
+                      "Some things are old, and some are new.",
+                      "Some things are old, some are new.",
+                      "Some of the things are old, some are new."
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Xezal unfolds the paper. Write what she says: “It is not a letter, it is a map!”",
+                    "accepted": [
+                      "Ew ne name ye, ew nexşe ye!",
+                      "Ew ne name ye, ew nexşe ye",
+                      "Ne name ye, nexşe ye!"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal puts her finger on the map. Type what she says.",
+                    "accepted": [
+                      "Nexşeya Sêvanê ye, û ev baxçe ye!",
+                      "Nexşeya Sêvanê ye, û ev baxçe ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Kilît ya dapîrê ye, lê sindoq ya kê ye?",
+                    "prompt": "Xezal looks from the key to the box. What does she ask, in English? “Kilît ya dapîrê ye, lê sindoq ya kê ye?”",
+                    "accepted": [
+                      "The key is Grandma’s, but whose is the box?",
+                      "The key is Grandma’s, but whose box is it?",
+                      "The key belongs to Grandma, but whose is the box?"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dapîr bîst salî ye, û sindoq jî bîst salî ye!",
+                    "prompt": "Hamo blows the dust off the box and winks at his mother: “Dapîr bîst salî ye, û sindoq jî bîst salî ye!” What is the joke?",
+                    "options": [
+                      "The box is just as “young” as Dapîr.",
+                      "The box is new.",
+                      "Dapîr is in the box."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Show Baran what you found: “Ev çi ye? Ev nexşeya gund e!” (What is this? This is a map of the village!)",
+                    "reference": "Ev çi ye? Ev nexşeya gund e!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hevalo noses the paper: “Ev name ye?” What do you answer?",
+                    "options": [
+                      "Naxêr, ew nexşe ye.",
+                      "Belê, ew nexşe ye.",
+                      "Naxêr, ew name ye."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Nexşe ya kê ye?",
+                    "prompt": "On the map, in a child’s hand, someone has drawn a big X in the orchard. Xezal looks round at everyone: “Nexşe ya kê ye?” What does she ask?",
+                    "options": [
+                      "Whose map is it?",
+                      "Where is the map?",
+                      "Is the map new?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

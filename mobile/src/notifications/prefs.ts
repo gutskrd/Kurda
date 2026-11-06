@@ -33,6 +33,7 @@ export interface NotificationPrefs {
   quietEndMin: number | null;
 }
 
+// half an hour, which is what the steppers' spoken names say ("start half an hour earlier")
 const STEP = 30;
 
 /** "HH:MM" for a minute-of-day. */

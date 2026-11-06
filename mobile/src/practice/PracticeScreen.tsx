@@ -1,18 +1,17 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { PracticeMode } from '@kurda/shared';
+import type { PracticeMode, RecordedAnswer } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
+import { SessionLoading, SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
 import type { Exercise, SessionView } from '../lesson/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import type { ApiError } from '../api/types';
 import { describeError, isRetryable } from '../api/errors';
-import { radii, spacing, typography } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { useI18n } from '../i18n/I18nContext';
 
 /** A practice session's endpoints; a test to jump ahead is answered through them too. */
@@ -25,6 +24,9 @@ export const PRACTICE_PATHS: SessionPaths = {
 interface PracticeStart {
   sessionId?: string;
   exercises?: Exercise[];
+  /** what a session opened again already has answered (GET /practice/sessions/:id) */
+  answered?: Record<string, RecordedAnswer>;
+  completed?: boolean;
   empty?: boolean;
   suggestion?: { lessonId: string; title: string } | null;
 }
@@ -34,6 +36,11 @@ interface PracticeStart {
  * or over `exerciseIds`, a finished lesson's mistakes ("Practise these now"),
  * which the server builds a session from instead, or over another kind of
  * practice the hub started (`mode`, and `unitId` for a unit's review).
+ *
+ * With `sessionId` it is a review left part-way through (Learn's "Continue
+ * review", from GET /practice/due's `open`), opened again where it stopped:
+ * the session is read back with what was already answered rather than a new
+ * one started beside it, which would leave the first unfinished for good.
  */
 export function PracticeScreen({
   navigation,
@@ -41,12 +48,15 @@ export function PracticeScreen({
   exerciseIds,
   mode,
   unitId,
+  sessionId,
 }: {
   navigation: RootNavigation;
   onExit: () => void;
   exerciseIds?: string[];
   mode?: PracticeMode;
   unitId?: string;
+  /** an unfinished review to pick up, in place of starting one */
+  sessionId?: string;
 }) {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -62,7 +72,10 @@ export function PracticeScreen({
     setError(null);
     setStart(null);
     const body = chosen ? { exerciseIds: chosen.split(',') } : mode ? { mode, ...(unitId ? { unitId } : {}) } : undefined;
-    void client.post<PracticeStart>('/practice/session', body).then((res) => {
+    const opened = sessionId
+      ? client.get<PracticeStart>(`/practice/sessions/${encodeURIComponent(sessionId)}`)
+      : client.post<PracticeStart>('/practice/session', body);
+    void opened.then((res) => {
       if (!active) return;
       if (res.ok) setStart(res.data);
       else setError(res.error);
@@ -70,7 +83,7 @@ export function PracticeScreen({
     return () => {
       active = false;
     };
-  }, [client, reloadKey, chosen, mode, unitId]);
+  }, [client, reloadKey, chosen, mode, unitId, sessionId]);
 
   if (error) {
     const message = describeError(error, t);
@@ -84,17 +97,7 @@ export function PracticeScreen({
       </Centered>
     );
   }
-  if (!start) {
-    return (
-      <GradientBackground>
-        <View style={styles.loading}>
-          <Skeleton width="55%" height={22} />
-          <SkeletonLines count={3} />
-          <Skeleton height={140} radius={radii.lg} />
-        </View>
-      </GradientBackground>
-    );
-  }
+  if (!start) return <SessionLoading onExit={onExit} />;
 
   // nothing due → nudge toward the next new lesson; nothing of another kind → back to the hub's other kinds
   if (start.empty || !start.sessionId || !start.exercises?.length) {
@@ -121,9 +124,10 @@ export function PracticeScreen({
     sessionId: start.sessionId,
     lessonId: '',
     expiresAt: '2999-01-01T00:00:00Z',
-    completed: false,
+    completed: start.completed === true,
     exercises: start.exercises.map((ex, i) => ({ ...ex, position: i + 1 })),
-    answered: {},
+    // a review opened again carries what was answered, and the player goes on from there
+    answered: start.answered ?? {},
   };
   return (
     <SessionPlayer
@@ -158,7 +162,6 @@ const styles = StyleSheet.create({
     gap: spacing.md,
     padding: spacing.xl,
   },
-  loading: { flex: 1, gap: spacing.lg, padding: spacing.xl, paddingTop: spacing.xxl },
   title: { ...display(typography.sizes.xl), textAlign: 'center' },
   detail: { fontSize: typography.sizes.md, textAlign: 'center' },
 });

@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { EngagementService, type EngagementKind } from './engagement-service.js';
+import { multiTitleSql } from '../mp/titles.js';
 
 /**
  * What a profile shows besides the person themselves: what they have posted and
@@ -250,6 +251,12 @@ export class ProfileActivityService {
                 b.guess_count::text || ' guesses', b.finished_at
            FROM wordle_battle_players b
           WHERE b.user_id = $1 AND b.finished_at IS NOT NULL
+         UNION ALL
+         SELECT p.lobby_id::text, ${multiTitleSql('l.game')},
+                CASE WHEN p.place = 1 THEN 'won' ELSE NULL END,
+                CASE WHEN l.mode = 'solo' THEN 'against Hevalo' ELSE 'place ' || p.place::text END, l.finished_at
+           FROM game_lobby_players p JOIN game_lobbies l ON l.id = p.lobby_id
+          WHERE p.user_id = $1 AND NOT p.removed AND l.status = 'finished' AND p.place IS NOT NULL
        ) AS played
        ORDER BY at DESC
        LIMIT $2 OFFSET $3`,

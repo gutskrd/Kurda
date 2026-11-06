@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, render, screen } from '@testing-library/react';
-import { encodeLipsync, visemeAt, voiceTimeline, type LipsyncTimeline, type RecordingVoice } from '@kurda/shared';
+import { ACTS, encodeLipsync, visemeAt, voiceTimeline, type LipsyncTimeline, type RecordingVoice } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { SpeakingCharacter, type SpeakingCharacterProps } from './SpeakingCharacter';
 
@@ -98,7 +98,8 @@ describe('SpeakingCharacter', () => {
   it('draws every mouth and both eyes once, showing the resting mouth and open eyes', () => {
     const { root } = face(new FakeMedia());
     expect(root.querySelectorAll('svg')).toHaveLength(1);
-    expect(root.querySelectorAll('[data-mouth]')).toHaveLength(10);
+    // the ten visemes and the two expressions, the grin and the tongue
+    expect(root.querySelectorAll('[data-mouth]')).toHaveLength(12);
     expect(mouth(root)).toBe('rest');
     expect(root.querySelector('[data-eyes="open"]')).not.toHaveAttribute('visibility');
     expect(root.querySelector('[data-eyes="closed"]')).toHaveAttribute('visibility', 'hidden');
@@ -366,6 +367,63 @@ describe('SpeakingCharacter', () => {
     expect(again).toHaveBeenCalledTimes(1);
     await act(() => new Promise((r) => setTimeout(r, 400)));
     expect(root.querySelector('[data-eyes="happy"]')).not.toHaveAttribute('visibility');
+  });
+
+  it('giggles at a second quick click, and at a third starts and then laughs', async () => {
+    const again = vi.fn();
+    const { root } = face(new FakeMedia(), { onPress: again });
+    act(() => root.click());
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    act(() => root.click());
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    expect(root.querySelector('[data-eyes="happy"]')).not.toHaveAttribute('visibility');
+    expect(mouth(root)).toBe('grin');
+    act(() => root.click());
+    await act(() => new Promise((r) => setTimeout(r, 300)));
+    expect(root.querySelector('[data-eyes="wide"]')).not.toHaveAttribute('visibility');
+    expect(root.querySelector('[data-brows="raised"]')).not.toHaveAttribute('visibility');
+    expect(mouth(root)).toBe('o');
+    await act(() => new Promise((r) => setTimeout(r, ACTS.surprised.ms + 100)));
+    // Hamo's chuckle
+    expect(root.querySelector('[data-eyes="happy"]')).not.toHaveAttribute('visibility');
+    expect(again).toHaveBeenCalledTimes(3);
+  });
+
+  it('draws every way the eyes and the brows can be, the cheeks, the loose hair and the moustache’s near end as groups of their own', () => {
+    const hamo = face(new FakeMedia()).root;
+    for (const state of ['open', 'half', 'closed', 'happy', 'wink', 'wide']) expect(hamo.querySelector(`[data-eyes="${state}"]`), state).not.toBeNull();
+    for (const state of ['neutral', 'raised', 'one', 'knit']) expect(hamo.querySelector(`[data-brows="${state}"]`), state).not.toBeNull();
+    expect([...hamo.querySelectorAll('[data-brows]')].filter((g) => !g.hasAttribute('visibility')).map((g) => g.getAttribute('data-brows'))).toEqual(['neutral']);
+    expect(hamo.querySelectorAll('[data-mouth]')).toHaveLength(12);
+    expect(hamo.querySelector('[data-sc="lift"]')).not.toBeNull();
+    expect(hamo.querySelector('[data-sc="wiggle"]')).not.toBeNull();
+    expect(hamo.querySelector('[data-cheeks]')).toBeNull();
+    const xezo = face(new FakeMedia(), { speaker: 'xezo', voice: { speaker: 'xezo' } }).root;
+    expect(xezo.querySelector('[data-sc="hair"]')).not.toBeNull();
+    expect(xezo.querySelector('[data-cheeks="blush"]')).toHaveAttribute('visibility', 'hidden');
+    expect(xezo.querySelector('[data-sc="lift"]')).toBeNull();
+  });
+
+  it('winks when asked: one eye shut in a smile, a grin, and Xezo’s blush', async () => {
+    const { root } = face(new FakeMedia(), { speaker: 'xezo', voice: { speaker: 'xezo' }, reaction: 'wink' });
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    expect(root.querySelector('[data-eyes="wink"]')).not.toHaveAttribute('visibility');
+    expect(root.querySelector('[data-cheeks="blush"]')).not.toHaveAttribute('visibility');
+    expect(mouth(root)).toBe('grin');
+  });
+
+  it('meets a miss its own way: Hamo with one brow raised, Xezo with a pout that passes', async () => {
+    const hamo = face(new FakeMedia(), { reaction: 'hmm' }).root;
+    await act(() => new Promise((r) => setTimeout(r, 700)));
+    expect(hamo.querySelector('[data-brows="one"]')).not.toHaveAttribute('visibility');
+    expect(hamo.querySelector('[data-brows="neutral"]')).toHaveAttribute('visibility', 'hidden');
+    const xezo = face(new FakeMedia(), { speaker: 'xezo', voice: { speaker: 'xezo' }, reaction: 'hmm' }).root;
+    await act(() => new Promise((r) => setTimeout(r, 700)));
+    expect(xezo.querySelector('[data-brows="knit"]')).not.toHaveAttribute('visibility');
+    expect(mouth(xezo)).toBe('u');
+    await act(() => new Promise((r) => setTimeout(r, ACTS.hmm.ms)));
+    expect(xezo.querySelector('[data-brows="neutral"]')).not.toHaveAttribute('visibility');
+    expect(mouth(xezo)).toBe('rest');
   });
 });
 

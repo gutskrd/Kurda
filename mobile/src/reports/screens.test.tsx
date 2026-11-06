@@ -9,6 +9,8 @@ vi.mock('@react-native-community/netinfo', () => import('./testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('./testing/auth'));
 const navigate = vi.fn();
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }) }));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { AppState } from 'react-native';
 import type { AccountStanding, MyReport, StandingSanction } from '@kurda/shared';
@@ -70,6 +72,17 @@ const standing = (over: Partial<AccountStanding>): AccountStanding => ({
 });
 
 describe('MyReportsScreen', () => {
+  it('reads the reports again when pulled down: an outcome may have come since', async () => {
+    const client = fakeClient({ 'GET /me/reports': ok({ reports: [report({ id: 'b', status: 'open' })] }) });
+    testAuth.client = client;
+    renderWithProviders(<MyReportsScreen onExit={() => undefined} />);
+    await screen.findByText('Waiting for review');
+    const count = () => client.calls.filter((c) => c.path === '/me/reports').length;
+    const before = count();
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
+    await waitFor(() => expect(count()).toBe(before + 1));
+  });
+
   it('lists each report with what became of it, never what the sanction was', async () => {
     testAuth.client = fakeClient({
       'GET /me/reports': ok({
@@ -162,11 +175,11 @@ describe('WarningDialog', () => {
     });
     testAuth.client = client;
     renderWithProviders(<WarningDialog />);
-    expect(await screen.findByText('A note from Hevalo')).toBeTruthy();
+    expect(await screen.findByText('A warning about your account')).toBeTruthy();
     expect(screen.getByText('This is a warning about one of our rules: Scam or spam. A warning doesn’t limit anything on your account.')).toBeTruthy();
     expect(screen.getByText('Please stop posting links.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'I understand' }));
-    await waitFor(() => expect(screen.queryByText('A note from Hevalo')).toBeNull());
+    await waitFor(() => expect(screen.queryByText('A warning about your account')).toBeNull());
     expect(client.calls.find((c) => c.path === '/me/standing/ack')?.body).toEqual({ ids: ['w1'] });
   });
 
@@ -175,7 +188,7 @@ describe('WarningDialog', () => {
     testAuth.client = client;
     renderWithProviders(<WarningDialog />);
     await waitFor(() => expect(client.calls.length).toBe(1));
-    expect(screen.queryByText('A note from Hevalo')).toBeNull();
+    expect(screen.queryByText('A warning about your account')).toBeNull();
   });
 
   it('asks again when the app comes back to the front, and shows a warning given meanwhile', async () => {
@@ -192,9 +205,9 @@ describe('WarningDialog', () => {
     testAuth.client = client;
     renderWithProviders(<WarningDialog />);
     await waitFor(() => expect(client.calls.length).toBe(1));
-    expect(screen.queryByText('A note from Hevalo')).toBeNull();
+    expect(screen.queryByText('A warning about your account')).toBeNull();
     act(() => listeners.forEach((cb) => cb('active')));
-    expect(await screen.findByText('A note from Hevalo')).toBeTruthy();
+    expect(await screen.findByText('A warning about your account')).toBeTruthy();
     spy.mockRestore();
   });
 });

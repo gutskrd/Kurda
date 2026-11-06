@@ -27,6 +27,7 @@ import { BookOpen } from '@phosphor-icons/react/dist/icons/BookOpen';
 import { BookOpenText } from '@phosphor-icons/react/dist/icons/BookOpenText';
 import { Bell } from '@phosphor-icons/react/dist/icons/Bell';
 import { BookmarkSimple } from '@phosphor-icons/react/dist/icons/BookmarkSimple';
+import { CalendarBlank } from '@phosphor-icons/react/dist/icons/CalendarBlank';
 import { CaretRight } from '@phosphor-icons/react/dist/icons/CaretRight';
 import { ChatCircle } from '@phosphor-icons/react/dist/icons/ChatCircle';
 import { Eye } from '@phosphor-icons/react/dist/icons/Eye';
@@ -37,6 +38,9 @@ import { Newspaper } from '@phosphor-icons/react/dist/icons/Newspaper';
 import { Storefront } from '@phosphor-icons/react/dist/icons/Storefront';
 import { DotsThree } from '@phosphor-icons/react/dist/icons/DotsThree';
 import { Prohibit } from '@phosphor-icons/react/dist/icons/Prohibit';
+import { Detective } from '@phosphor-icons/react/dist/icons/Detective';
+import { ChatCircleSlash } from '@phosphor-icons/react/dist/icons/ChatCircleSlash';
+import { ArrowsLeftRight } from '@phosphor-icons/react/dist/icons/ArrowsLeftRight';
 import { Flag } from '@phosphor-icons/react/dist/icons/Flag';
 import { SignOut } from '@phosphor-icons/react/dist/icons/SignOut';
 import { Gear } from '@phosphor-icons/react/dist/icons/Gear';
@@ -53,6 +57,7 @@ import { Moon } from '@phosphor-icons/react/dist/icons/Moon';
 import { PenNib } from '@phosphor-icons/react/dist/icons/PenNib';
 import { Plus } from '@phosphor-icons/react/dist/icons/Plus';
 import { SquaresFour } from '@phosphor-icons/react/dist/icons/SquaresFour';
+import { Link as LinkGlyph } from '@phosphor-icons/react/dist/icons/Link';
 import { Sun } from '@phosphor-icons/react/dist/icons/Sun';
 import { TextAa } from '@phosphor-icons/react/dist/icons/TextAa';
 import { Trash } from '@phosphor-icons/react/dist/icons/Trash';
@@ -104,6 +109,22 @@ import { ArrowsDownUp } from '@phosphor-icons/react/dist/icons/ArrowsDownUp';
 import { Funnel } from '@phosphor-icons/react/dist/icons/Funnel';
 // starting a conversation
 import { NotePencil } from '@phosphor-icons/react/dist/icons/NotePencil';
+// What Would You Say?'s places, and Kurdish Detective's board
+import { Signpost } from '@phosphor-icons/react/dist/icons/Signpost';
+import { Basket } from '@phosphor-icons/react/dist/icons/Basket';
+import { ChalkboardTeacher } from '@phosphor-icons/react/dist/icons/ChalkboardTeacher';
+import { Coffee } from '@phosphor-icons/react/dist/icons/Coffee';
+import { Bus } from '@phosphor-icons/react/dist/icons/Bus';
+import { Stethoscope } from '@phosphor-icons/react/dist/icons/Stethoscope';
+import { Confetti } from '@phosphor-icons/react/dist/icons/Confetti';
+import { Briefcase } from '@phosphor-icons/react/dist/icons/Briefcase';
+import { PushPin } from '@phosphor-icons/react/dist/icons/PushPin';
+import { Notebook } from '@phosphor-icons/react/dist/icons/Notebook';
+import { Ear } from '@phosphor-icons/react/dist/icons/Ear';
+import { Note } from '@phosphor-icons/react/dist/icons/Note';
+import { ChatText } from '@phosphor-icons/react/dist/icons/ChatText';
+import { Lightbulb } from '@phosphor-icons/react/dist/icons/Lightbulb';
+import { Gavel } from '@phosphor-icons/react/dist/icons/Gavel';
 // signed-in devices, by kind
 import { DeviceMobile } from '@phosphor-icons/react/dist/icons/DeviceMobile';
 import { DeviceTablet } from '@phosphor-icons/react/dist/icons/DeviceTablet';
@@ -118,7 +139,9 @@ import { EnvelopeSimple } from '@phosphor-icons/react/dist/icons/EnvelopeSimple'
 import { Scales } from '@phosphor-icons/react/dist/icons/Scales';
 import { Copyright } from '@phosphor-icons/react/dist/icons/Copyright';
 import { Question } from '@phosphor-icons/react/dist/icons/Question';
+import { Quotes } from '@phosphor-icons/react/dist/icons/Quotes';
 import { Key } from '@phosphor-icons/react/dist/icons/Key';
+import { Ticket } from '@phosphor-icons/react/dist/icons/Ticket';
 import { UserCircle } from '@phosphor-icons/react/dist/icons/UserCircle';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 import { useMemo } from 'react';
@@ -187,6 +210,14 @@ export const FlameIcon = named(Flame, 22);
 /** Zêr: a gold coin with Hevalo's deer carved into it. */
 export const CoinIcon = currency(coinSvg, 22);
 export const TilesIcon = named(SquaresFour, 22);
+/** Two links of a chain: The Last Letter, a chain of words each holding on to the one before. */
+export const ChainIcon = named(LinkGlyph, 22);
+/** Someone in disguise: Kurdish Impostor, where one player at the table only pretends to know the word. */
+export const ImpostorIcon = named(Detective, 22);
+/** A speech bubble struck through: Don't Say the Word!, where some words may not be said. */
+export const DontSayIcon = named(ChatCircleSlash, 22);
+/** Across to the other side: a player moved to the other team. */
+export const SwapIcon = named(ArrowsLeftRight, 18);
 export const WaveformIcon = named(Waveform, 22);
 /* the landing page's pictures of a lesson: a clip to play, a word to say */
 export const PlayIcon = named(Play, 22, 'fill');
@@ -237,6 +268,8 @@ export const TextIcon = named(TextAa, 22);
  * `BookOpen`, which Learn already uses for lessons.
  */
 export const DictionaryIcon = named(BookOpenText, 22);
+/** the days of the week, among the words to know */
+export const CalendarIcon = named(CalendarBlank, 22);
 /** Throw something away — always behind a confirm. */
 export const TrashIcon = named(Trash, 22);
 /** Add something — it makes no claim about what. */
@@ -272,6 +305,8 @@ export const InviteIcon = named(UserPlus, 22);
 // taking someone out of a group
 export const RemovePersonIcon = named(UserMinus, 22);
 export const CopyIcon = named(Copy, 20);
+/** a lobby's join code: what a friend is handed to get in */
+export const TicketIcon = named(Ticket, 20);
 export const CaretDownIcon = named(CaretDown, 16);
 
 /* Game Ranks, leagues and badges (contract 4): a rated game climbs, a friendly
@@ -301,10 +336,35 @@ export const FrameIcon = named(FrameCorners, 22);
 export const SearchIcon = named(MagnifyingGlass, 18);
 /** The order a list is in: what the sort select carries in place of its word on a phone. */
 export const SortIcon = named(ArrowsDownUp, 18);
-/** The wall's filter: drawn in line while it shows everything, filled in while it is narrowed. */
-export const FeedFilterIcon = named(Funnel, 20);
+/** A sort and filter panel's funnel (the wall, the stories library): drawn in line while nothing is narrowed, filled in while something is. */
+export const FunnelIcon = named(Funnel, 20);
 /** a new conversation: a note being written, beside the list of them */
 export const NewMessageIcon = named(NotePencil, 22);
+
+/* What Would You Say?: where a scene is set, one glyph per place (shared
+   SCENE_PLACES; home, shop and phone are the House, Storefront and phone
+   above, and the village the mountains Rated is drawn with, in outline) */
+export const StreetIcon = named(Signpost, 22);
+export const MarketIcon = named(Basket, 22);
+export const SchoolIcon = named(ChalkboardTeacher, 22);
+export const CafeIcon = named(Coffee, 22);
+export const BusIcon = named(Bus, 22);
+export const DoctorIcon = named(Stethoscope, 22);
+export const VillageIcon = named(Mountains, 22);
+export const PartyIcon = named(Confetti, 22);
+export const WorkIcon = named(Briefcase, 22);
+
+/* Kurdish Detective: a card pinned to the board, the notebook, what a card is
+   (overheard, a note, a statement; a message is the envelope above), a hint
+   bought, the accusation, and the game itself */
+export const PinIcon = named(PushPin, 20, 'fill');
+export const NotebookIcon = named(Notebook, 22);
+export const OverheardIcon = named(Ear, 18);
+export const NoteIcon = named(Note, 18);
+export const StatementIcon = named(ChatText, 18);
+export const HintIcon = named(Lightbulb, 20);
+export const AccuseIcon = named(Gavel, 22);
+export const DetectiveIcon = named(Detective, 22);
 
 /* A signed-in device in Settings, by what its name says it is; the pair of
    screens for one that says nothing */
@@ -323,6 +383,8 @@ export const MailIcon = named(EnvelopeSimple, 22);
 export const RulesIcon = named(Scales, 22);
 export const CopyrightIcon = named(Copyright, 22);
 export const HelpIcon = named(Question, 22);
+/** Kurdish Bluff: a meaning in quotes, real or made up. */
+export const QuotesIcon = named(Quotes, 22);
 export const KeyIcon = named(Key, 22);
 export const ProfileIcon = named(UserCircle, 22);
 /** The account's standing: the same shield as a tier's, drawn in outline at a row's size. */

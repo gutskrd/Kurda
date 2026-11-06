@@ -1,13 +1,16 @@
 /**
- * What a game lobby is called, in the browser's catalogue.
+ * What a game lobby is called, in the browser's catalogue, and the invite
+ * links from before join codes.
  *
- * The link shape itself moved to `@kurda/shared` so the phone builds and parses
- * exactly the same URL — an invite made in one app has to be readable in the
- * other, and a copy that drifts by one query parameter breaks that silently.
- * What stayed is the part that is a `MessageKey`, which is web's own type.
+ * Games are shared by their code now (play/CodeTicket.tsx); nothing here
+ * builds a link to send any more. Links already sent in chats, emails and
+ * pushes still have to open their lobby, so reading them stays: the shape
+ * lives in `@kurda/shared`, where the phone reads exactly the same URL — a
+ * copy that drifts by one query parameter breaks that silently. What stayed
+ * here is the part that is a `MessageKey`, which is web's own type.
  */
 import type { MessageKey } from '../i18n/en';
-import { buildInviteUrl as buildUrl, type GameInviteType } from '@kurda/shared';
+import type { GameInviteType } from '@kurda/shared';
 
 export {
   invitePath,
@@ -28,17 +31,20 @@ export const INVITE_NAME_KEY: Record<GameInviteType, MessageKey> = {
   'wordle-battle': 'games.battle.name',
   'rhyme-match': 'games.rhymeMatch.name',
   stories: 'games.stories.name',
+  'last-letter': 'games.lastLetter.name',
+  impostor: 'games.impostor.name',
+  'dont-say': 'games.dontSay.name',
+  bluff: 'games.bluff.name',
+  'who-am-i': 'games.whoAmI.name',
 };
 
 export const INVITE_BLURB_KEY: Record<GameInviteType, MessageKey> = {
   'wordle-battle': 'games.invite.blurb.battle',
   'rhyme-match': 'games.invite.blurb.rhymeMatch',
   stories: 'games.invite.blurb.stories',
+  'last-letter': 'games.invite.blurb.lastLetter',
+  impostor: 'games.invite.blurb.impostor',
+  'dont-say': 'games.invite.blurb.dontSay',
+  bluff: 'games.bluff.blurb',
+  'who-am-i': 'games.whoAmI.blurb',
 };
-
-/** An absolute, shareable URL — this deploy's origin, so a preview links to itself. */
-export function buildInviteUrl(type: GameInviteType, id: string): string {
-  const origin =
-    typeof window !== 'undefined' && window.location?.origin ? window.location.origin : 'https://hevalo.app';
-  return buildUrl(type, id, origin);
-}

@@ -14,24 +14,30 @@
  * machine, with no images, fonts, filters or links; gradient and clip ids
  * carry a prefix so several characters can share a page.
  */
-import { VISEMES, type Viseme } from '../lipsync/visemes.js';
 import { escapeXml, n, prefixFor } from '../art/svg.js';
-import type { CharacterBox, CharacterArt, CharacterId, EyeState } from './types.js';
-import { CHARACTER_IDS, CHARACTER_NAMES } from './types.js';
+import type { BrowState, CharacterBox, CharacterArt, CharacterId, EyeState, MouthShape } from './types.js';
+import { BROW_STATES, CHARACTER_IDS, CHARACTER_NAMES, EYE_STATES, MOUTH_SHAPES } from './types.js';
 import { drawHevalo } from './hevalo.js';
 import { drawHamo } from './hamo.js';
 import { drawXezo } from './xezo.js';
 
 export {
+  BROW_STATES,
   CHARACTER_IDS,
   CHARACTER_NAMES,
+  EXPRESSION_MOUTHS,
+  EYE_STATES,
+  MOUTH_SHAPES,
   isCharacterId,
+  type BrowState,
   type CharacterBox,
   type CharacterArt,
   type CharacterId,
   type CharacterPoint,
   type CharacterRig,
+  type ExpressionMouth,
   type EyeState,
+  type MouthShape,
   type RigPart,
   type RigPupil,
 } from './types.js';
@@ -39,9 +45,13 @@ export {
   ACTS,
   BLINK_STEPS,
   BREATH,
+  CHARACTER_HABITS,
+  CHARACTER_REACTIONS,
   HABITS,
   RESTING,
   SWAY,
+  TAP_RUN_MS,
+  actFor,
   between,
   easeInOut,
   eyesMiddle,
@@ -49,11 +59,17 @@ export {
   hasRig,
   keySteps,
   lookToward,
+  pickAct,
   pupilShift,
+  reactionAct,
   sampleHold,
   sampleKeys,
+  tapActs,
   type Act,
   type ActName,
+  type CharacterReaction,
+  type CheekState,
+  type Habit,
   type Hold,
   type Keys,
 } from './life.js';
@@ -92,8 +108,6 @@ const DRAW: Record<CharacterId, (prefix: string) => CharacterArt> = {
   hamo: drawHamo,
   xezo: drawXezo,
 };
-
-const EYE_STATES: readonly EyeState[] = ['open', 'half', 'closed', 'happy'];
 
 /** Hevalo is the app's own mascot, so he speaks unless someone has chosen another. */
 export const DEFAULT_CHARACTER: CharacterId = 'hevalo';
@@ -161,10 +175,38 @@ export function eyesFor(art: CharacterArt, state: EyeState): string {
   return art.eyes[state];
 }
 
+/** What a face wears beyond its eyes and its mouth: how the brows sit, and whether the cheeks blush. */
+export interface FaceOptions {
+  brows?: BrowState;
+  blush?: boolean;
+}
+
+/**
+ * The head to draw a face on: whole, with its brows at rest and any loose
+ * hair, unless `moving` — then without them, for a player that draws those
+ * as layers of their own (`faceLayers`).
+ */
+export function headFor(art: CharacterArt, moving: boolean): string {
+  return moving && art.brows ? art.brows.bare : art.head;
+}
+
+/**
+ * The layers of a face that a player moves or swaps, over `headFor(art, true)`
+ * and the eyes: the loose hair, the brows as they sit, and the cheeks if they
+ * blush. A character drawn without one of them draws nothing for it.
+ */
+export function faceLayers(art: CharacterArt, face: FaceOptions = {}): string {
+  return (art.hair?.art ?? '') + (art.brows?.states[face.brows ?? 'neutral'] ?? '') + (face.blush && art.cheeks ? art.cheeks.blush : '');
+}
+
 export interface CharacterSvgOptions {
   /** the mouth shape to show; at rest by default */
-  mouth?: Viseme;
+  mouth?: MouthShape;
   eyes?: EyeState;
+  /** how the brows sit; at rest by default */
+  brows?: BrowState;
+  /** the cheeks blushing, on a character drawn with a blush */
+  blush?: boolean;
   /** the whole figure, head to waist, head and shoulders, or head and neck */
   crop?: CharacterCrop;
   /** how wide the drawing is shown, in pixels; by default the crop's own width in drawing units */
@@ -176,28 +218,36 @@ export interface CharacterSvgOptions {
 
 const box = (b: CharacterBox): string => `${n(b.x)} ${n(b.y)} ${n(b.w)} ${n(b.h)}`;
 
-/** The group the head is drawn in: turned by `nod` degrees about the neck for a small nod. */
-export function headGroup(art: CharacterArt, mouth: Viseme = 'rest', eyes: EyeState = 'open', nod = 0): string {
+/**
+ * The group the head is drawn in: turned by `nod` degrees about the neck for
+ * a small nod. With a `face` given, the brows and the cheeks are drawn as the
+ * face asks, as layers over the bare head; without one, the head is drawn
+ * whole, exactly as it always was.
+ */
+export function headGroup(art: CharacterArt, mouth: MouthShape = 'rest', eyes: EyeState = 'open', nod = 0, face?: FaceOptions): string {
   const turn = nod === 0 ? '' : ` transform="rotate(${n(nod)} ${n(art.headPivot.x)} ${n(art.headPivot.y)})"`;
-  return `<g${turn}>${art.head}${eyesFor(art, eyes)}${art.mouths[mouth]}${art.overlay}</g>`;
+  const head = face ? headFor(art, true) + eyesFor(art, eyes) + faceLayers(art, face) : art.head + eyesFor(art, eyes);
+  return `<g${turn}>${head}${art.mouths[mouth]}${art.overlay}</g>`;
 }
 
 /** A complete, standalone SVG of a character. */
 export function characterSvg(id: CharacterId, options: CharacterSvgOptions = {}): string {
   const { mouth = 'rest', eyes = 'open', crop = 'full' } = options;
-  if (!VISEMES.includes(mouth)) throw new RangeError(`characters: no mouth shape called ${String(mouth)}`);
-  if (!EYE_STATES.includes(eyes)) throw new RangeError(`characters: eyes are open, half, closed or happy, not ${String(eyes)}`);
+  if (!MOUTH_SHAPES.includes(mouth)) throw new RangeError(`characters: no mouth shape called ${String(mouth)}`);
+  if (!EYE_STATES.includes(eyes)) throw new RangeError(`characters: eyes are ${EYE_STATES.join(', ')}, not ${String(eyes)}`);
+  if (options.brows !== undefined && !BROW_STATES.includes(options.brows)) throw new RangeError(`characters: brows are ${BROW_STATES.join(', ')}, not ${String(options.brows)}`);
   const art = characterArt(id, options.idPrefix);
   const frame = cropBox(art, crop);
   const width = options.width ?? frame.w;
   if (!Number.isFinite(width) || width <= 0) throw new RangeError(`characters: width must be a positive number, got ${String(options.width)}`);
   const height = (width * frame.h) / frame.w;
   const t = `${prefixFor(options.idPrefix ?? `hv${id}`)}-title`;
+  const face = options.brows !== undefined || options.blush !== undefined ? { brows: options.brows, blush: options.blush } : undefined;
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${n(width)}" height="${n(height)}" viewBox="${box(frame)}" role="img" aria-labelledby="${t}">` +
     `<title id="${t}">${escapeXml(options.title ?? art.name)}</title>` +
     cropBody(art, crop) +
-    headGroup(art, mouth, eyes) +
+    headGroup(art, mouth, eyes, 0, face) +
     '</svg>'
   );
 }

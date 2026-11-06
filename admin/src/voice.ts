@@ -121,9 +121,14 @@ export async function makeTimeline(
   }
 }
 
-/** `&speaker=…&lipsync=…` for an upload's query string, after the text or key. */
-export function voiceQuery(speaker: Speaker, lipsync: LipsyncData | null): string {
-  const who = `&speaker=${speaker ?? 'none'}`;
+/**
+ * `&speaker=…&lipsync=…` for an upload's query string, after the text or key.
+ * With the speaker `undefined` it is left out, and the server keeps whoever
+ * the old take was said by (none, for a first take): a narrator's take, which
+ * no character of its own says, changes nobody an editor chose.
+ */
+export function voiceQuery(speaker: Speaker | undefined, lipsync: LipsyncData | null): string {
+  const who = speaker === undefined ? '' : `&speaker=${speaker ?? 'none'}`;
   return lipsync ? `${who}&lipsync=${encodeURIComponent(JSON.stringify(lipsync))}` : who;
 }
 
@@ -144,7 +149,7 @@ const TIMELINE_REFUSED: ReadonlySet<string> = new Set(['INVALID_LIPSYNC', 'LIPSY
 export async function uploadWithVoice<T>(
   path: string,
   wav: Uint8Array,
-  voice: { speaker: Speaker; text: string; script?: LipsyncScript },
+  voice: { speaker: Speaker | undefined; text: string; script?: LipsyncScript },
 ): Promise<T> {
   const made = await makeTimeline(wav.slice().buffer, voice.text, { script: voice.script, durationMs: wavDurationMs(wav) });
   const send = (lipsync: LipsyncData | null): Promise<T> => apiUpload<T>(`${path}${voiceQuery(voice.speaker, lipsync)}`, wav, 'audio/wav');

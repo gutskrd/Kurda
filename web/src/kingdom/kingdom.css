@@ -1,0 +1,1393 @@
+/*
+ * The Village ("kingdom" in code): a game's home filling the screen. The
+ * stage is a window onto a world much larger than it, which the page moves as
+ * a whole (a transform written by the camera) and lays out at one CSS pixel
+ * per canvas unit; everything on the canvas is placed in those units. Over
+ * the world: a chunky top bar, round camera buttons, and a tray of building
+ * cards along the bottom.
+ *
+ * The game's own skin — the cream boards with their dark-brown edge, the
+ * saffron level badge — is the drawing's ink and cream, the same by day and
+ * at dusk.
+ */
+
+.kingdom-page {
+  --kg-ink: #4a2a1a;
+  --kg-cream: #fff7e6;
+  --kg-cream-2: #f6e8cc;
+  --kg-cream-edge: #e7d3ae;
+  --kg-gold: #f2b632;
+  --kg-saffron: #ffd36b;
+  --kg-green: #3fa45b;
+  --kg-wood: #b97a45;
+  --kg-wood-lit: #d89a5f;
+  display: block;
+}
+
+/* the stage: as tall as the window allows under the app's bar */
+.kingdom-stage {
+  position: relative;
+  height: calc(100dvh - var(--nav-h) - 64px);
+  min-height: 520px;
+  max-height: 1000px;
+  overflow: hidden;
+  border-radius: var(--r-xl);
+  background: #4fb5e2;
+  isolation: isolate;
+  user-select: none;
+  -webkit-user-select: none;
+}
+.kingdom-stage.is-loading {
+  background: var(--surface-2);
+}
+@media (max-width: 640px) {
+  /* a phone's whole width, edge to edge, as a game's home */
+  .kingdom-stage {
+    margin-block-start: -32px;
+    margin-inline: -16px;
+    border-radius: 0;
+    height: calc(100dvh - var(--nav-h));
+  }
+}
+
+/* the window onto the world: it takes every drag, pinch and wheel itself, so the page never scrolls through it */
+.kingdom-viewport {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: grab;
+}
+.kingdom-viewport:active {
+  cursor: grabbing;
+}
+.kingdom-viewport:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: -3px;
+}
+.kingdom-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  --kg-inv: 1;
+}
+/* while a gesture lasts the world moves on the compositor as one picture; when it settles it is drawn sharp at its new scale */
+.kingdom-world.is-moving {
+  will-change: transform;
+}
+.kingdom-tile {
+  position: absolute;
+  display: block;
+  max-width: none;
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+.kingdom-life,
+.kingdom-raise,
+.kingdom-bounce {
+  position: absolute;
+  pointer-events: none;
+}
+.kingdom-life {
+  inset: 0;
+}
+
+/* the life over the drawing: each actor in a wrapper of its own, its nodes moved by their own keyframes (life.ts) */
+.kg-a {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.kg-n {
+  position: absolute;
+  display: block;
+}
+.kg-s,
+.kg-s > svg {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.kingdom-page.is-paused .kg-n {
+  animation-play-state: paused;
+}
+/* what a tap answers reaches a little round it, unseen */
+.kg-hit {
+  position: absolute;
+}
+/* the deer tapped: a hop, and his eyes smile */
+.kg-a.is-happy {
+  animation: kg-hop 700ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.kg-a.is-happy [data-role='happy'] {
+  opacity: 1 !important;
+  animation: none !important;
+}
+/* a sheep or a goat hops; the dog wriggles with its wag; a hen flutters up, her wing beating */
+.kg-a.is-hop {
+  animation: kg-hop 600ms cubic-bezier(0.3, 1.5, 0.5, 1);
+}
+.kg-a.is-wag {
+  animation: kg-wag 700ms ease-in-out;
+}
+.kg-a.is-flutter {
+  animation: kg-flutter 800ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+.kg-a.is-flutter [data-role='wing'] > .kg-s,
+.kg-a.is-turn [data-role='head'] > .kg-s {
+  transform-origin: inherit;
+}
+.kg-a.is-flutter [data-role='wing'] > .kg-s {
+  animation: kg-flap 130ms ease-in-out 6 alternate;
+}
+/* a villager nods and waves */
+.kg-a.is-wave [data-role='head'] > .kg-s,
+.kg-a.is-wave [data-role='arm'] > .kg-s {
+  transform-origin: inherit;
+}
+.kg-a.is-wave [data-role='head'] > .kg-s {
+  animation: kg-nod 800ms ease-in-out;
+}
+.kg-a.is-wave [data-role='arm'] > .kg-s {
+  animation: kg-wave 900ms ease-in-out;
+}
+@keyframes kg-nod {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  25%,
+  65% {
+    rotate: 12deg;
+  }
+  45% {
+    rotate: 0deg;
+  }
+}
+@keyframes kg-wave {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: -150deg;
+  }
+  40% {
+    rotate: -120deg;
+  }
+  60% {
+    rotate: -150deg;
+  }
+  80% {
+    rotate: -120deg;
+  }
+}
+/* the cow or the donkey turns its head to look */
+.kg-a.is-turn [data-role='head'] > .kg-s {
+  animation: kg-look 900ms ease-in-out;
+}
+/* a tree shakes its crown */
+.kg-a.is-rustle > .kg-n > .kg-s {
+  transform-origin: 50% 100%;
+  animation: kg-rustle 700ms ease-out;
+}
+@keyframes kg-hop {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  35% {
+    translate: 0 -5px;
+  }
+  60% {
+    translate: 0 0;
+  }
+  75% {
+    translate: 0 -1.6px;
+  }
+}
+@keyframes kg-wag {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  15%,
+  45%,
+  75% {
+    translate: -0.8px -1px;
+  }
+  30%,
+  60%,
+  90% {
+    translate: 0.8px 0;
+  }
+}
+@keyframes kg-flutter {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  40% {
+    translate: 0 -6px;
+  }
+  70% {
+    translate: 0 -1px;
+  }
+}
+@keyframes kg-flap {
+  to {
+    rotate: 60deg;
+  }
+}
+@keyframes kg-look {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  30%,
+  70% {
+    rotate: -24deg;
+  }
+}
+@keyframes kg-rustle {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: 3deg;
+  }
+  45% {
+    rotate: -2.4deg;
+  }
+  70% {
+    rotate: 1.2deg;
+  }
+}
+/* what a tap leaves: a puff of feathers, a leaf falling, a ring on the water */
+.kingdom-bit {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.kingdom-bit.is-feathers > i {
+  position: absolute;
+  left: -1.2px;
+  top: -0.7px;
+  width: 2.4px;
+  height: 1.4px;
+  border: 0.5px solid var(--kg-ink);
+  border-radius: 50%;
+  background: var(--kg-cream);
+  animation: kg-feather 900ms ease-out forwards;
+}
+.kingdom-bit.is-feathers > i:nth-child(1) {
+  --dx: -7px;
+  --dy: -6px;
+}
+.kingdom-bit.is-feathers > i:nth-child(2) {
+  --dx: 6px;
+  --dy: -8px;
+}
+.kingdom-bit.is-feathers > i:nth-child(3) {
+  --dx: -3px;
+  --dy: -10px;
+}
+.kingdom-bit.is-feathers > i:nth-child(4) {
+  --dx: 8px;
+  --dy: -3px;
+  background: #c8703f;
+}
+.kingdom-bit.is-feathers > i:nth-child(5) {
+  --dx: -8px;
+  --dy: -2px;
+  background: #c8703f;
+}
+@keyframes kg-feather {
+  0% {
+    opacity: 1;
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  60% {
+    opacity: 1;
+    translate: var(--dx) var(--dy);
+  }
+  100% {
+    opacity: 0;
+    translate: var(--dx) calc(var(--dy) + 5px);
+    rotate: 140deg;
+  }
+}
+.kingdom-bit.is-leaf::before {
+  content: '';
+  position: absolute;
+  width: 3.2px;
+  height: 2px;
+  border: 0.5px solid var(--kg-ink);
+  border-radius: 0 100%;
+  background: #6fae3e;
+  animation: kg-leaf 2200ms ease-in forwards;
+}
+@keyframes kg-leaf {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+    rotate: 0deg;
+  }
+  10% {
+    opacity: 1;
+  }
+  35% {
+    translate: 4px 6px;
+    rotate: 60deg;
+  }
+  65% {
+    translate: -2px 12px;
+    rotate: -30deg;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    translate: 3px 18px;
+    rotate: 40deg;
+  }
+}
+.kingdom-bit.is-ripple::before,
+.kingdom-bit.is-ripple::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: -3px;
+  width: 16px;
+  height: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  animation: kg-ring 1200ms ease-out forwards;
+}
+.kingdom-bit.is-ripple::after {
+  animation-delay: 250ms;
+  opacity: 0;
+}
+@keyframes kg-ring {
+  0% {
+    opacity: 1;
+    scale: 0.2;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.4;
+  }
+}
+
+/* a building to tap: no box of its own */
+.kingdom-plot {
+  position: absolute;
+  cursor: pointer;
+}
+.kingdom-plot:hover .kingdom-badge {
+  translate: -50% -2px;
+}
+
+/* the level badge under a building and the thin bar to its next level, the same size on the screen at any zoom */
+.kingdom-badge {
+  position: absolute;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  translate: -50% 0;
+  scale: var(--kg-inv);
+  transform-origin: 50% 0;
+  transition: translate var(--dur-fast, 160ms) ease;
+  pointer-events: none;
+}
+.kingdom-badge-level {
+  padding: 1px 9px 2px;
+  border: 2px solid var(--kg-ink);
+  border-bottom-width: 3px;
+  border-radius: var(--r-pill);
+  background: var(--kg-cream);
+  color: var(--kg-ink);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+.kingdom-badge-bar {
+  position: relative;
+  width: 44px;
+  height: 8px;
+  overflow: hidden;
+  border: 1.5px solid var(--kg-ink);
+  border-radius: var(--r-pill);
+  background: var(--kg-cream-edge);
+}
+.kingdom-badge-bar > span,
+.kingdom-level-bar > span {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  background: var(--kg-gold);
+}
+.kingdom-badge.is-ticked .kingdom-badge-level,
+.kingdom-level-badge.is-ticked {
+  animation: kg-tick 420ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes kg-tick {
+  0% {
+    scale: 1;
+  }
+  40% {
+    scale: 1.4;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+/* a person's word of praise, in a bubble over them */
+.kingdom-bubble {
+  position: absolute;
+  padding: 1.6px 5px 2px;
+  border: 1.2px solid var(--kg-ink);
+  border-radius: 6px;
+  background: var(--kg-cream);
+  color: var(--kg-ink);
+  font-size: 8.5px;
+  font-weight: 800;
+  white-space: nowrap;
+  translate: -50% -100%;
+  /* in the village's own units, so it is in scale with the person who says it, and never smaller than can be read */
+  scale: max(1, calc(var(--kg-inv) * 0.8));
+  transform-origin: 50% 100%;
+  animation: kg-say 2200ms ease-out forwards;
+  pointer-events: none;
+}
+.kingdom-bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -3.4px;
+  width: 5px;
+  height: 5px;
+  border-right: 1.2px solid var(--kg-ink);
+  border-bottom: 1.2px solid var(--kg-ink);
+  background: var(--kg-cream);
+  translate: -50% 0;
+  rotate: 45deg;
+}
+@keyframes kg-say {
+  0% {
+    opacity: 0;
+    translate: -50% -80%;
+  }
+  12%,
+  85% {
+    opacity: 1;
+    translate: -50% -100%;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* the top bar: the way back, the village's level and its bar, the title, the Zêr */
+.kingdom-hud {
+  position: absolute;
+  inset-block-start: 12px;
+  inset-inline: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: none;
+}
+.kingdom-hud > * {
+  pointer-events: auto;
+}
+.kingdom-back,
+.kingdom-hud-title,
+.kingdom-chip,
+.kingdom-level-bar,
+.kingdom-round {
+  border: 2.5px solid var(--kg-ink);
+  border-bottom-width: 4px;
+  background: var(--kg-cream);
+  color: var(--kg-ink);
+}
+.kingdom-back {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-pill);
+}
+.kingdom-back svg {
+  transform: rotate(180deg);
+}
+[dir='rtl'] .kingdom-back svg {
+  transform: none;
+}
+.kingdom-back:focus-visible,
+.kingdom-round:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+.kingdom-level {
+  position: relative;
+  display: flex;
+  flex: 0 1 auto;
+  align-items: center;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--kg-ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.kingdom-level:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: var(--r-md);
+}
+/* the bar to the next village level, and what that level brings, on a cream board the badge overlaps */
+.kingdom-level-text {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  max-width: 200px;
+  margin-inline-start: -12px;
+  padding: 5px 12px 6px 18px;
+  border: 2.5px solid var(--kg-ink);
+  border-bottom-width: 4px;
+  border-radius: var(--r-md);
+  background: var(--kg-cream);
+}
+.kingdom-level-next {
+  overflow: hidden;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kingdom-level-badge {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 50px;
+  height: 50px;
+  border: 3px solid var(--kg-ink);
+  border-bottom-width: 5px;
+  border-radius: 16px;
+  background: var(--kg-saffron);
+  color: var(--kg-ink);
+  font-size: 21px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  rotate: -4deg;
+}
+.kingdom-level-bar {
+  position: relative;
+  width: 100%;
+  min-width: 84px;
+  height: 11px;
+  overflow: hidden;
+  border-width: 1.5px;
+  border-radius: var(--r-pill);
+  background: var(--kg-cream-edge);
+}
+.kingdom-hud-title {
+  min-width: 0;
+  margin: 0;
+  padding: 7px 14px 8px;
+  overflow: hidden;
+  border-radius: var(--r-md);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.kingdom-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 40px;
+  margin-inline-start: auto;
+  padding: 0 12px 0 8px;
+  border-radius: var(--r-pill);
+  font-size: 17px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.kingdom-chip.is-bumped {
+  animation: kg-tick 420ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+/* on a phone the bar keeps the way back, the level and the Zêr; the title stays for screen readers, out of sight */
+@media (max-width: 640px) {
+  .kingdom-hud-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+  .kingdom-level-bar {
+    width: 72px;
+  }
+}
+
+/* round camera buttons at the side, over the tray */
+.kingdom-controls {
+  position: absolute;
+  inset-inline-end: 12px;
+  display: grid;
+  gap: 8px;
+}
+.kingdom-round {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+}
+.kingdom-round:active {
+  border-bottom-width: 2.5px;
+  translate: 0 1.5px;
+}
+
+/* the tray: one card for each building, in a row that scrolls sideways; it is the list a screen reader reads */
+/* the tray: a shelf of warm wood along the bottom, its top edge catching the light, the cards on it cream */
+.kingdom-tray {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: 0;
+  padding: 10px 0 12px;
+  border-top: 3px solid var(--kg-ink);
+  background: var(--kg-wood);
+  box-shadow: inset 0 3px 0 var(--kg-wood-lit);
+}
+/* a short window keeps the tray to the cards' heads and bars, so the village keeps most of the height */
+@media (min-width: 641px) and (max-height: 760px) {
+  .kingdom-card-grows {
+    display: none;
+  }
+  .kingdom-tray {
+    padding-block: 6px 8px;
+  }
+}
+/* the warm light of a summer morning over the village, laid flat over the world (by day only) */
+.kingdom-sun {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 186, 92, 0.08);
+  pointer-events: none;
+}
+.kingdom-cards {
+  display: flex;
+  gap: 10px;
+  margin: 0;
+  padding: 2px 12px 4px;
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.kingdom-cards::-webkit-scrollbar {
+  display: none;
+}
+.kingdom-cards > li {
+  flex: none;
+  scroll-snap-align: start;
+}
+.kingdom-card {
+  display: grid;
+  gap: 4px;
+  width: 224px;
+  padding: 6px 10px 9px;
+  border: 2.5px solid var(--kg-ink);
+  border-bottom-width: 4px;
+  border-radius: 16px;
+  background: var(--kg-cream);
+  color: var(--kg-ink);
+}
+.kingdom-card.is-ready {
+  box-shadow: 0 0 0 3px var(--kg-gold);
+}
+.kingdom-card-face {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.kingdom-card-face:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+  border-radius: 10px;
+}
+.kingdom-card-art {
+  flex: none;
+  width: 64px;
+  height: 64px;
+}
+.kingdom-card-art svg {
+  width: 64px;
+  height: 64px;
+}
+.kingdom-card-art svg {
+  display: block;
+}
+.kingdom-card-head {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.kingdom-card-name {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.15;
+}
+.kingdom-card-state {
+  justify-self: start;
+  padding: 1px 8px 2px;
+  border: 2px solid var(--kg-ink);
+  border-radius: var(--r-pill);
+  background: var(--kg-cream-2);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.kingdom-card.is-ready .kingdom-card-state {
+  background: var(--kg-saffron);
+}
+.kingdom-card.is-done .kingdom-card-state {
+  background: var(--kg-green);
+  color: #fff;
+}
+.kingdom-card .kingdom-bar {
+  height: 8px;
+  border: 1.5px solid var(--kg-ink);
+  background: var(--kg-cream-edge);
+}
+.kingdom-card .kingdom-bar > span {
+  background: var(--kg-gold);
+}
+.kingdom-card-next,
+.kingdom-card-grows {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.3;
+}
+.kingdom-card-next {
+  font-weight: 700;
+}
+.kingdom-card-grows {
+  display: -webkit-box;
+  min-height: 2.6em;
+  overflow: hidden;
+  opacity: 0.82;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+/* the way into Learn, in the game's own skin: a chunky green button with the drawing's ink round it */
+.kingdom-card .kingdom-card-go {
+  justify-self: stretch;
+  min-height: 34px;
+  margin-top: 2px;
+  border: 2.5px solid var(--kg-ink);
+  border-bottom-width: 4px;
+  border-radius: 12px;
+  background: var(--kg-green);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+}
+.kingdom-card .kingdom-card-go:hover {
+  filter: brightness(1.06);
+}
+.kingdom-card .kingdom-card-go:active {
+  border-bottom-width: 2.5px;
+  translate: 0 1.5px;
+}
+
+/* the first visit's one sentence, on a card above the tray */
+.kingdom-intro {
+  position: absolute;
+  inset-inline: 12px;
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  max-width: 520px;
+  margin-inline: auto;
+  padding: var(--space-3) var(--space-4);
+  border: 2.5px solid var(--kg-ink);
+  border-bottom-width: 4px;
+  border-radius: var(--r-lg);
+  background: var(--kg-cream);
+  color: var(--kg-ink);
+}
+.kingdom-intro p {
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: 1.45;
+}
+.kingdom-intro .kingdom-intro-built {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--text-secondary);
+}
+
+.kingdom-zer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--gold-ink);
+  font-weight: 600;
+}
+
+.kingdom-bar {
+  position: relative;
+  display: block;
+  height: 6px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.kingdom-bar > span {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: var(--gold);
+}
+
+/* a building's sheet */
+.kingdom-sheet-body {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: center;
+  text-align: center;
+  padding-bottom: var(--space-2);
+}
+.kingdom-sheet-body p {
+  margin: 0;
+  max-width: 34em;
+  color: var(--ink-2);
+}
+.kingdom-sheet-body .kingdom-bar {
+  width: min(100%, 320px);
+  margin-top: var(--space-1);
+}
+.kingdom-sheet-art svg {
+  display: block;
+}
+.kingdom-sheet-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.kingdom-sheet-body .kingdom-sheet-level {
+  color: var(--ink-3);
+}
+.kingdom-sheet-heading {
+  margin: var(--space-3) 0 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.kingdom-sheet-body .kingdom-sheet-next {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.kingdom-sheet-go {
+  margin-top: var(--space-3);
+  min-width: 220px;
+}
+
+.kingdom-celebrate-art svg {
+  display: block;
+}
+
+/* a tapped building squashes wide, stretches tall and settles; never smaller than itself, so the one under it stays hidden */
+.kingdom-bounce > svg,
+.kingdom-raise > span > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.kingdom-bounce {
+  transform-origin: 50% 82%;
+  animation: kg-bounce 420ms ease-out forwards;
+}
+@keyframes kg-bounce {
+  0% {
+    scale: 1 1;
+  }
+  28% {
+    scale: 1.14 1;
+  }
+  55% {
+    scale: 1 1.12;
+  }
+  78% {
+    scale: 1.04 1;
+  }
+  100% {
+    scale: 1 1;
+  }
+}
+
+/*
+ * A building going up (RAISE_MS in KingdomPage.tsx, 2.4s): the camera flies
+ * to it, the stage being built shakes, dust rises at 0.6s, the scaffolding
+ * drops at 0.8s, the old stage goes at 1.05s as the new one drops in from
+ * above and lands with a squash and a stretch, sparkles fly off it from
+ * 1.35s, and the Zêr flies to the counter from 1.45s.
+ */
+.kingdom-raise > span {
+  position: absolute;
+  inset: 0;
+}
+.kingdom-raise-old {
+  transform-origin: 50% 80%;
+  animation:
+    kg-shake 700ms ease-in-out 150ms,
+    kg-gone 200ms ease-in 1050ms forwards;
+}
+.kingdom-raise-scaffold {
+  transform-origin: 50% 80%;
+  animation:
+    kg-shake 700ms ease-in-out 150ms,
+    kg-drop 500ms ease-in 800ms forwards;
+}
+.kingdom-raise-next {
+  opacity: 0;
+  transform-origin: 50% 82%;
+  animation: kg-drop-in 900ms ease-out 1050ms forwards;
+}
+.kingdom-raise-dust {
+  opacity: 0;
+  inset: auto 4% 4% 4% !important;
+  height: 38%;
+  transform-origin: 50% 100%;
+  animation: kg-dust 1100ms ease-out 600ms forwards;
+}
+.kingdom-raise-spark {
+  opacity: 0;
+  inset: auto auto 40% 46% !important;
+  width: 9%;
+  aspect-ratio: 1;
+  animation: kg-spark 760ms ease-out forwards;
+}
+@keyframes kg-shake {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  20% {
+    rotate: -1.6deg;
+  }
+  45% {
+    rotate: 1.4deg;
+  }
+  70% {
+    rotate: -0.9deg;
+  }
+}
+@keyframes kg-drop {
+  0% {
+    translate: 0 0;
+    opacity: 1;
+  }
+  100% {
+    translate: 0 18%;
+    opacity: 0;
+  }
+}
+@keyframes kg-gone {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes kg-drop-in {
+  0% {
+    opacity: 1;
+    translate: 0 -38%;
+    scale: 0.92 1.08;
+  }
+  30% {
+    translate: 0 0;
+    scale: 1.16 0.78;
+  }
+  50% {
+    scale: 0.94 1.1;
+  }
+  70% {
+    scale: 1.04 0.97;
+  }
+  85% {
+    scale: 0.99 1.01;
+  }
+  100% {
+    opacity: 1;
+    translate: 0 0;
+    scale: 1 1;
+  }
+}
+@keyframes kg-dust {
+  0% {
+    opacity: 0;
+    scale: 0.4 0.4;
+  }
+  25% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.3 1.2;
+    translate: 0 -14%;
+  }
+}
+@keyframes kg-spark {
+  0% {
+    opacity: 0;
+    scale: 0.3;
+    translate: 0 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    scale: 1;
+    translate: var(--dx) var(--dy);
+  }
+}
+
+/* the Zêr flying from the building to the counter */
+.kingdom-coins {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+.kingdom-coin {
+  position: absolute;
+  display: grid;
+  opacity: 0;
+  translate: -50% -50%;
+  animation: kg-coin 640ms cubic-bezier(0.5, 0, 0.8, 0.4) forwards;
+  filter: none;
+}
+@keyframes kg-coin {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.6);
+  }
+  15% {
+    opacity: 1;
+    transform: translate(0, -24px) scale(1.15);
+  }
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) scale(0.8);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kg-n,
+  .kg-a,
+  .kingdom-raise *,
+  .kingdom-bounce,
+  .kingdom-coin,
+  .kingdom-badge,
+  .kingdom-badge-level,
+  .kingdom-level-badge,
+  .kingdom-chip,
+  .kingdom-bubble {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* the tile among Learn's games: a band across the village as its picture, exactly as tall as every other game's, beside the race on a wide page */
+.kingdom-tile-visual {
+  display: block;
+  height: 196px;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.kingdom-tile-visual svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+@media (min-width: 1000px) {
+  .game-tile--kingdom {
+    grid-column: span 7;
+  }
+}
+
+/* the village's levels: how it earns them, then each level and what it brings, those reached ticked, the next lit, the rest in silhouette */
+.kingdom-levels {
+  display: grid;
+  gap: 14px;
+}
+.kingdom-levels-how {
+  margin: 0;
+  color: var(--text-2);
+  font-size: 15px;
+  line-height: 1.45;
+}
+.kingdom-levels-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.kingdom-levels-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border: 2px solid var(--kg-cream-edge);
+  border-radius: var(--r-md);
+  background: var(--kg-cream);
+  color: var(--kg-ink);
+}
+.kingdom-levels-row.is-next {
+  border-color: var(--kg-ink);
+  border-bottom-width: 4px;
+  background: var(--kg-saffron);
+}
+.kingdom-levels-row.is-later {
+  background: var(--kg-cream-2);
+}
+.kingdom-levels-n {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--kg-ink);
+  border-radius: 10px;
+  background: var(--kg-cream);
+  font-size: 15px;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+.kingdom-levels-row.is-reached .kingdom-levels-n {
+  background: var(--kg-green);
+  color: #fff;
+}
+.kingdom-levels-what {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.kingdom-levels-level {
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.75;
+}
+.kingdom-levels-unlock {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.3;
+}
+.kingdom-levels-silhouette {
+  display: flex;
+  gap: 6px;
+  padding-block: 3px;
+}
+.kingdom-levels-silhouette > span {
+  width: 54px;
+  height: 12px;
+  border-radius: var(--r-pill);
+  background: var(--kg-ink);
+  opacity: 0.28;
+}
+
+/* a new village level: its banner over the village, and the sparkle where what it brought appears */
+.kingdom-levelup {
+  position: absolute;
+  inset-block-start: 84px;
+  inset-inline: 0;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  margin-inline: auto;
+  padding: 10px 22px 12px;
+  border: 3px solid var(--kg-ink);
+  border-bottom-width: 5px;
+  border-radius: var(--r-lg);
+  background: var(--kg-cream);
+  color: var(--kg-ink);
+  text-align: center;
+  pointer-events: none;
+  animation: kg-banner 600ms cubic-bezier(0.3, 1.5, 0.5, 1) both;
+}
+.kingdom-levelup-kicker {
+  font-size: 13px;
+  font-weight: 800;
+  opacity: 0.75;
+}
+.kingdom-levelup-title {
+  font-size: 24px;
+  font-weight: 900;
+}
+.kingdom-levelup-new {
+  font-size: 15px;
+  font-weight: 800;
+}
+@keyframes kg-banner {
+  from {
+    opacity: 0;
+    scale: 0.6;
+    translate: 0 -12px;
+  }
+  to {
+    opacity: 1;
+    scale: 1;
+    translate: 0 0;
+  }
+}
+.kingdom-sparkles {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.kingdom-sparkles::before {
+  content: '';
+  position: absolute;
+  left: -40px;
+  top: -24px;
+  width: 80px;
+  height: 48px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  animation: kg-pop 900ms ease-out forwards;
+}
+.kingdom-sparkles > i {
+  position: absolute;
+  left: -7px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  animation: kg-sparkle 1400ms ease-out forwards;
+}
+.kingdom-sparkles > i > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.kingdom-sparkles > i:nth-child(1) {
+  --dx: -38px;
+  --dy: -32px;
+}
+.kingdom-sparkles > i:nth-child(2) {
+  --dx: 36px;
+  --dy: -38px;
+  animation-delay: 80ms;
+}
+.kingdom-sparkles > i:nth-child(3) {
+  --dx: 50px;
+  --dy: -6px;
+  animation-delay: 160ms;
+}
+.kingdom-sparkles > i:nth-child(4) {
+  --dx: -52px;
+  --dy: 3px;
+  animation-delay: 120ms;
+}
+.kingdom-sparkles > i:nth-child(5) {
+  --dx: -18px;
+  --dy: -52px;
+  animation-delay: 220ms;
+}
+.kingdom-sparkles > i:nth-child(6) {
+  --dx: 18px;
+  --dy: -58px;
+  animation-delay: 40ms;
+}
+.kingdom-sparkles > i:nth-child(7) {
+  --dx: 30px;
+  --dy: 18px;
+  animation-delay: 260ms;
+}
+.kingdom-sparkles > i:nth-child(8) {
+  --dx: -32px;
+  --dy: 20px;
+  animation-delay: 300ms;
+}
+@keyframes kg-sparkle {
+  0% {
+    opacity: 0;
+    translate: 0 0;
+    scale: 0.3;
+    rotate: 0deg;
+  }
+  25% {
+    opacity: 1;
+    scale: 1.3;
+  }
+  100% {
+    opacity: 0;
+    translate: var(--dx) var(--dy);
+    scale: 0.6;
+    rotate: 120deg;
+  }
+}
+@keyframes kg-pop {
+  0% {
+    opacity: 1;
+    scale: 0.2;
+  }
+  100% {
+    opacity: 0;
+    scale: 1.6;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kingdom-levelup,
+  .kingdom-sparkles,
+  .kingdom-sparkles > i,
+  .kingdom-sparkles::before {
+    animation: none !important;
+  }
+  .kingdom-sparkles {
+    display: none;
+  }
+}

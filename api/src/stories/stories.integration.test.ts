@@ -65,7 +65,11 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
   async function story(name: string, over: Partial<TestStory> & { length?: 'short' | 'medium' | 'long' } = {}, publish = true) {
     const { slug: storySlug, ...content } = testStory(slug(name), over);
     const created = await admin.create({ ...storyInputFrom(content as never), slug: storySlug }, { adminId: editorId });
-    if (publish) await admin.transition(created.id, 'publish', { adminId: editorId, lockVersion: created.lockVersion });
+    if (publish) {
+      // publishing waits for a reviewer's approval, as in the panel
+      const approved = await admin.review(created.id, { approved: true }, { adminId: editorId, lockVersion: created.lockVersion });
+      await admin.transition(created.id, 'publish', { adminId: editorId, lockVersion: approved.lockVersion });
+    }
     ids[name] = created.id;
     return created.id;
   }
@@ -147,12 +151,23 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
         title: `C ${s}`,
         summary: 'Kurteya çîrokê.',
         dialect: 'kurmanci',
+        language: 'ku',
         level: 1,
+        cefr: 'A1',
         length: 'short',
         wordCount: 82,
         readingMinutes: 2,
         fullyNarrated: false,
+        audioCoverage: 'none',
+        category: 'folktale',
+        tradition: 'original',
+        author: null,
+        featured: false,
+        cover: null,
+        publishedAt: expect.any(String),
       });
+      // nobody is signed in: no personal record on any of them
+      expect(stories.some((st) => 'me' in st)).toBe(false);
       // never the questions, nor anything else of the story
       expect(JSON.stringify(stories)).not.toContain('Pirs 1');
     });
@@ -164,9 +179,47 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
       expect((await list('?dialect=kurmanci&length=long&level=1')).map((st) => st.slug)).toEqual([slug('long-l1')]);
       const signedIn = await get('/stories?dialect=sorani', learner);
       expect(ours(signedIn.json().stories).map((st) => st.slug)).toEqual([slug('sorani')]);
-      for (const bad of ['?dialect=zazaki', '?length=tiny', '?level=4', '?level=x']) {
+      // signed in, every story carries the reader's own record, empty so far
+      expect(ours(signedIn.json().stories)[0]!.me).toEqual({
+        bookmarked: false,
+        paragraph: 0,
+        share: 0,
+        finishedAt: null,
+        bestCorrect: null,
+        total: null,
+        attemptsToday: 0,
+      });
+      for (const bad of ['?dialect=zazaki', '?length=tiny', '?level=6', '?level=x', '?sort=random', '?category=Animal%20fables']) {
         expect((await get(`/stories${bad}`)).statusCode).toBe(400);
       }
+    });
+
+    it('searches titles and summaries, keeps to narrated stories, sorts, and pages', async () => {
+      const total = (await get('/stories')).json().total as number;
+      expect(total).toBeGreaterThanOrEqual(5);
+      // a search by a word of the title; the summary counts too; LIKE wildcards mean themselves
+      expect((await list(`?q=${encodeURIComponent(`B ${s}`)}`)).map((st) => st.slug)).toEqual([slug('long-l1')]);
+      expect((await list('?q=kurteya')).length).toBeGreaterThanOrEqual(5);
+      expect(await list('?q=%')).toEqual([]);
+      // only fully narrated stories: none yet
+      expect(await list('?audio=1')).toEqual([]);
+      expect((await list('?audio=0')).length).toBeGreaterThanOrEqual(5);
+      // by title, and newest first
+      const byTitle = await list('?sort=title');
+      expect(byTitle.map((st) => st.title)).toEqual([...byTitle.map((st) => st.title)].sort());
+      const newest = (await get('/stories?sort=newest')).json().stories as StoryListItem[];
+      const dates = newest.map((st) => st.publishedAt!);
+      expect(dates).toEqual([...dates].sort().reverse());
+      // pages: the total stays the same, and the pages do not overlap
+      const first = (await get('/stories?limit=2')).json();
+      const second = (await get('/stories?limit=2&offset=2')).json();
+      expect(first.stories).toHaveLength(2);
+      expect(first.total).toBe(total);
+      expect(second.total).toBe(total);
+      expect(first.stories.map((st: StoryListItem) => st.id)).not.toEqual(second.stories.map((st: StoryListItem) => st.id));
+      // more than the most a page holds is capped, not refused
+      expect((await get('/stories?limit=500')).statusCode).toBe(200);
+      expect((await get('/stories?limit=0')).statusCode).toBe(400);
     });
 
     it.skipIf(!process.env.REDIS_URL)('is served from the cache until a publish empties it', async () => {
@@ -198,11 +251,25 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
       });
       expect(story.paragraphs).toHaveLength(3);
       expect(story.paragraphs[0]).toMatch(/^Rojîn deh salî ye\./);
+      expect(story).toMatchObject({
+        translations: {},
+        source: null,
+        sourceUrl: null,
+        attributionNote: null,
+        versions: [],
+        narration: null,
+        category: 'folktale',
+        cefr: 'A1',
+      });
       expect(story).not.toHaveProperty('questions');
       expect(story).not.toHaveProperty('body');
+      expect(story).not.toHaveProperty('me');
 
+      // signed in, the same story with the reader's own record
       const byId = await get(`/stories/${ids['short-b']}`, learner);
-      expect(byId.json()).toEqual(story);
+      const { me, ...rest } = byId.json();
+      expect(rest).toEqual(story);
+      expect(me).toMatchObject({ bookmarked: false, paragraph: 0, share: 0, finishedAt: null });
     });
 
     it('is 404 for anything not published, and for what cannot be a slug', async () => {

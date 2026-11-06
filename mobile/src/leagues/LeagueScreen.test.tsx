@@ -16,6 +16,8 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 
 type Button = { text: string; style?: string; onPress?: () => void };
 
@@ -69,6 +71,8 @@ describe('the league page', () => {
     renderWithProviders(<LeagueScreen onExit={() => undefined} />);
     expect(await screen.findByText('Your week starts with a lesson')).toBeTruthy();
     expect(screen.getByRole('img', { name: 'Hevalo is resting' })).toBeTruthy();
+    // and his own word on it
+    expect(screen.getByText('Do a lesson and I’ll wake up — then we take our place at this week’s table.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Start a lesson' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
   });
@@ -97,5 +101,16 @@ describe('the league page', () => {
     await act(async () => buttons[1]!.onPress?.());
     expect(client.calls.find((c) => c.method === 'PATCH')).toEqual({ method: 'PATCH', path: '/me', body: { leaguesEnabled: false } });
     await waitFor(() => expect(screen.getByRole('button', { name: 'Join the leagues' })).toBeTruthy());
+  });
+
+  it('reads the week again when pulled down', async () => {
+    const client = fakeClient({ 'GET /me/league': ok(week()) });
+    testAuth.client = client;
+    renderWithProviders(<LeagueScreen onExit={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Çem League' });
+    const count = () => client.calls.filter((c) => c.path === '/me/league').length;
+    const before = count();
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
+    await waitFor(() => expect(count()).toBe(before + 1));
   });
 });

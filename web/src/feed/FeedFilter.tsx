@@ -1,4 +1,3 @@
-import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import {
   DEFAULT_FEED_PERIOD,
   DEFAULT_FEED_SORT,
@@ -8,11 +7,10 @@ import {
   type FeedPeriod,
   type FeedSort,
 } from '@kurda/shared';
-import { Button } from '../components/Button';
-import { CheckIcon, CloseIcon, FeedFilterIcon, SortIcon } from '../components/icons';
+import { FilterChip, FilterOption, FilterPill, FilterRadios, FilterSection, FilterSheet, useFilterSheet } from '../components/FilterSheet';
+import { FunnelIcon, SortIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { keepInView } from '../reports/keepInView';
 import { SECTIONS, type FeedSection } from './postKinds';
 
 /** How the wall is shown: in what order, from how far back, and which of it. */
@@ -102,108 +100,19 @@ function activeParts(t: T, value: FeedFilterValue): string[] {
  * the order, one for the kinds — each opening the panel again and each with a
  * ✕ that undoes just that part.
  *
- * On a wide screen the panel drops from the funnel; on a phone it rises from
- * the bottom edge as a sheet. It is a modal dialog either way: the keyboard
- * stays inside it, each list of choices is a radio group the arrow keys move
- * through, and closing it puts the keyboard back where it came from.
+ * The panel, its keyboard and where it opens are components/FilterSheet.tsx,
+ * which the stories library is built from as well.
  */
 export function FeedFilter({ value, onChange }: { value: FeedFilterValue; onChange: (next: FeedFilterValue) => void }): React.JSX.Element {
   const t = useT();
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<FeedFilterValue>(value);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const sortChipRef = useRef<HTMLButtonElement>(null);
-  const kindChipRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  // what opened the panel, so the keyboard goes back there when it closes
-  const opener = useRef<HTMLElement | null>(null);
-  const refocus = useRef(false);
-  const id = useId();
-  const titleId = `${id}-title`;
+  const sheet = useFilterSheet({ value, onChange, normalise: normalised, same });
+  const { id, draft, setDraft } = sheet;
 
   const kindText = filterLabel(t, value);
   const sortText = sortLabel(t, normalised(value));
   const parts = activeParts(t, value);
   const filled = parts.length > 0;
   const buttonLabel = filled ? t('feed.sortFilter.buttonOn', { what: parts.join(', ') }) : t('feed.sortFilter.button');
-
-  const show = (from: HTMLElement | null): void => {
-    if (open) {
-      close(true);
-      return;
-    }
-    opener.current = from;
-    setDraft(normalised(value));
-    setOpen(true);
-  };
-  function close(back: boolean): void {
-    refocus.current = back;
-    setOpen(false);
-  }
-  const apply = (): void => {
-    const next = normalised(draft);
-    // the chip that opened it may be about to go, so the funnel is where the keyboard lands
-    opener.current = null;
-    close(true);
-    if (!same(next, value)) onChange(next);
-  };
-  const undo = (part: Partial<FeedFilterValue>): void => {
-    opener.current = null;
-    refocus.current = true;
-    onChange(normalised({ ...value, ...part }));
-  };
-
-  // after the render that closed the panel or cleared a part: the chip may be gone by then
-  useEffect(() => {
-    if (open || !refocus.current) return;
-    refocus.current = false;
-    (opener.current?.isConnected ? opener.current : buttonRef.current)?.focus();
-  });
-
-  // as a popover beside a narrow window's edge the panel is nudged back inside; as a sheet it is already
-  useLayoutEffect(() => {
-    const panel = panelRef.current;
-    if (open && panel && getComputedStyle(panel).position !== 'fixed') keepInView(panel);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    // the keyboard starts on the order chosen now, the first thing in the panel
-    panelRef.current?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]')?.focus();
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.key !== 'Escape') return;
-      e.stopPropagation();
-      close(true);
-    };
-    // a press anywhere else closes it, the scrim behind the sheet included; the funnel and the chips toggle it themselves
-    const onDown = (e: PointerEvent): void => {
-      const target = e.target as Node;
-      for (const el of [panelRef.current, buttonRef.current, sortChipRef.current, kindChipRef.current]) if (el?.contains(target)) return;
-      close(false);
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onDown);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onDown);
-    };
-  }, [open]);
-
-  /** The keyboard stays in the panel: Tab from the last control comes round to the first, and back. */
-  const trap = (e: React.KeyboardEvent): void => {
-    if (e.key !== 'Tab') return;
-    const focusable = [...(panelRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]):not([tabindex="-1"])') ?? [])];
-    if (focusable.length === 0) return;
-    const first = focusable[0]!;
-    const last = focusable[focusable.length - 1]!;
-    if (e.shiftKey && document.activeElement === first) {
-      e.preventDefault();
-      last.focus();
-    } else if (!e.shiftKey && document.activeElement === last) {
-      e.preventDefault();
-      first.focus();
-    }
-  };
 
   const ranks = sortRanks(draft.sort);
   const isKind = (section: FeedSection, kind: string | null): boolean => draft.section === section && draft.kind === kind;
@@ -214,248 +123,77 @@ export function FeedFilter({ value, onChange }: { value: FeedFilterValue; onChan
       {(sortText || kindText) && (
         <span className="ffilter-chips">
           {sortText && (
-            <Chip
-              ref={sortChipRef}
+            <FilterChip
+              control={sheet}
               icon={<SortIcon size={15} />}
               label={sortText}
-              open={open}
-              panelId={id}
               clearLabel={t('feed.sort.clear')}
-              onOpen={() => show(sortChipRef.current)}
-              onClear={() => undo({ sort: DEFAULT_FEED_SORT, period: DEFAULT_FEED_PERIOD })}
+              onClear={() => sheet.undo({ ...value, sort: DEFAULT_FEED_SORT, period: DEFAULT_FEED_PERIOD })}
             />
           )}
           {kindText && (
-            <Chip
-              ref={kindChipRef}
-              icon={<FeedFilterIcon size={15} weight="fill" />}
+            <FilterChip
+              control={sheet}
+              icon={<FunnelIcon size={15} weight="fill" />}
               label={kindText}
-              open={open}
-              panelId={id}
               clearLabel={t('civak.filter.clear')}
-              onOpen={() => show(kindChipRef.current)}
-              onClear={() => undo({ section: 'all', kind: null })}
+              onClear={() => sheet.undo({ ...value, section: 'all', kind: null })}
             />
           )}
         </span>
       )}
 
-      <span className={`ffilter${open ? ' is-open' : ''}`}>
-        <button
-          ref={buttonRef}
-          type="button"
-          className={`ffilter-btn${filled ? ' is-on' : ''}`}
-          aria-haspopup="dialog"
-          aria-expanded={open}
-          aria-controls={open ? id : undefined}
-          aria-label={buttonLabel}
-          title={buttonLabel}
-          onClick={() => show(buttonRef.current)}
-        >
-          <FeedFilterIcon size={20} weight={filled ? 'fill' : 'regular'} />
-        </button>
-
-        {open && (
-          <>
-            {/* behind the sheet on a phone; nothing on a wider screen, where the panel is a popover */}
-            <span className="ffilter-scrim" aria-hidden="true" />
-            <div className="ffilter-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} id={id} ref={panelRef} onKeyDown={trap}>
-              <span className="ffilter-grip" aria-hidden="true" />
-              <div className="ffilter-head">
-                <h2 id={titleId} className="ffilter-title">
-                  {t('feed.sortFilter.title')}
-                </h2>
-                <button type="button" className="ffilter-close" aria-label={t('common.close')} title={t('common.close')} onClick={() => close(true)}>
-                  <CloseIcon size={18} />
-                </button>
-              </div>
-
-              <div className="ffilter-body">
-                <Section title={t('feed.sort.title')} id={`${id}-sort`}>
-                  <Radios label={`${id}-sort`} axis="vertical">
-                    {FEED_SORTS.map((s) => (
-                      <Option
-                        key={s}
-                        on={draft.sort === s}
-                        label={t(SORT_LABEL[s])}
-                        hint={SORT_HINT[s] ? t(SORT_HINT[s]!) : undefined}
-                        onChoose={() => setDraft((d) => ({ ...d, sort: s }))}
-                      />
-                    ))}
-                  </Radios>
-                </Section>
-
-                {ranks && (
-                  <Section title={t('feed.period.title')} id={`${id}-period`}>
-                    <Radios label={`${id}-period`} axis="horizontal" className="ffilter-periods">
-                      {FEED_PERIODS.map((p) => (
-                        <button
-                          key={p}
-                          type="button"
-                          role="radio"
-                          aria-checked={draft.period === p}
-                          tabIndex={draft.period === p ? 0 : -1}
-                          className={`ffilter-period${draft.period === p ? ' is-on' : ''}`}
-                          onClick={() => setDraft((d) => ({ ...d, period: p }))}
-                        >
-                          {t(PERIOD_LABEL[p])}
-                        </button>
-                      ))}
-                    </Radios>
-                  </Section>
-                )}
-
-                <Section title={t('civak.filter.title')} id={`${id}-show`}>
-                  <Radios label={`${id}-show`} axis="vertical">
-                    <Option on={isKind('all', null)} label={t('civak.filter.everything')} onChoose={pick('all', null)} />
-                    {SECTIONS.filter((x) => x.key !== 'all').map((s) => (
-                      <div key={s.key} className="ffilter-group" role="group" aria-labelledby={`${id}-${s.key}`}>
-                        <span id={`${id}-${s.key}`} className="ffilter-heading">
-                          {t(s.labelKey)}
-                        </span>
-                        <Option on={isKind(s.key, null)} label={t(ALL_OF[s.key] ?? s.labelKey)} onChoose={pick(s.key, null)} />
-                        {s.kinds.map((k) => (
-                          <Option key={k.key} on={isKind(s.key, k.key)} label={t(k.labelKey)} onChoose={pick(s.key, k.key)} />
-                        ))}
-                      </div>
-                    ))}
-                  </Radios>
-                </Section>
-              </div>
-
-              <div className="ffilter-foot">
-                <Button type="button" variant="ghost" size="sm" disabled={isDefaultFilter(draft)} onClick={() => setDraft(DEFAULT_FILTER)}>
-                  {t('feed.sortFilter.reset')}
-                </Button>
-                <Button type="button" onClick={apply}>
-                  {t('feed.sortFilter.apply')}
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-      </span>
-    </>
-  );
-}
-
-function Section({ title, id, children }: { title: string; id: string; children: React.ReactNode }): React.JSX.Element {
-  return (
-    <section className="ffilter-section">
-      <h3 id={id} className="ffilter-section-title">
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-/**
- * A radio group the arrow keys move through, choosing as they go — down and
- * up in a list; along the row, the way the page reads, in a row of chips.
- * Only the chosen one is a Tab stop, so Tab goes from group to group.
- */
-function Radios({
-  label,
-  axis,
-  className,
-  children,
-}: {
-  label: string;
-  axis: 'vertical' | 'horizontal';
-  className?: string;
-  children: React.ReactNode;
-}): React.JSX.Element {
-  const ref = useRef<HTMLDivElement>(null);
-  const onKey = (e: React.KeyboardEvent): void => {
-    const radios = [...(ref.current?.querySelectorAll<HTMLElement>('[role="radio"]') ?? [])];
-    const at = radios.indexOf(document.activeElement as HTMLElement);
-    if (at < 0) return;
-    const rtl = getComputedStyle(ref.current!).direction === 'rtl';
-    const forward = axis === 'vertical' ? 'ArrowDown' : rtl ? 'ArrowLeft' : 'ArrowRight';
-    const back = axis === 'vertical' ? 'ArrowUp' : rtl ? 'ArrowRight' : 'ArrowLeft';
-    const to: Partial<Record<string, number>> = { [forward]: at + 1, [back]: at - 1, Home: 0, End: radios.length - 1 };
-    // a list also answers left and right, and a row up and down, the same way
-    if (axis === 'vertical') Object.assign(to, { ArrowRight: rtl ? at - 1 : at + 1, ArrowLeft: rtl ? at + 1 : at - 1 });
-    else Object.assign(to, { ArrowDown: at + 1, ArrowUp: at - 1 });
-    const next = to[e.key];
-    if (next === undefined) return;
-    e.preventDefault();
-    const target = radios[(next + radios.length) % radios.length];
-    target?.focus();
-    target?.click();
-  };
-  return (
-    <div ref={ref} role="radiogroup" aria-labelledby={label} className={`ffilter-radios is-${axis}${className ? ` ${className}` : ''}`} onKeyDown={onKey}>
-      {children}
-    </div>
-  );
-}
-
-/** One choice in a list: its name, and a line under it saying what it means where that is not obvious. */
-function Option({ on, label, hint, onChoose }: { on: boolean; label: string; hint?: string; onChoose: () => void }): React.JSX.Element {
-  const hintId = useId();
-  return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={on}
-      aria-label={hint ? label : undefined}
-      aria-describedby={hint ? hintId : undefined}
-      tabIndex={on ? 0 : -1}
-      className={`ffilter-item${on ? ' is-on' : ''}`}
-      onClick={onChoose}
-    >
-      <span className="ffilter-item-text">
-        <span>{label}</span>
-        {hint && (
-          <span id={hintId} className="ffilter-item-hint">
-            {hint}
-          </span>
-        )}
-      </span>
-      {on && <CheckIcon size={18} />}
-    </button>
-  );
-}
-
-/** A part of how the wall is shown, while it differs from the plain wall: opens the panel, and its ✕ undoes just that part. */
-function Chip({
-  ref,
-  icon,
-  label,
-  open,
-  panelId,
-  clearLabel,
-  onOpen,
-  onClear,
-}: {
-  ref: React.Ref<HTMLButtonElement>;
-  icon: React.ReactNode;
-  label: string;
-  open: boolean;
-  panelId: string;
-  clearLabel: string;
-  onOpen: () => void;
-  onClear: () => void;
-}): React.JSX.Element {
-  return (
-    <span className="ffilter-chip">
-      <button
-        ref={ref}
-        type="button"
-        className="ffilter-chip-main"
-        aria-haspopup="dialog"
-        aria-expanded={open}
-        aria-controls={open ? panelId : undefined}
-        onClick={onOpen}
+      <FilterSheet
+        control={sheet}
+        label={buttonLabel}
+        filled={filled}
+        title={t('feed.sortFilter.title')}
+        resetLabel={t('feed.sortFilter.reset')}
+        resetDisabled={isDefaultFilter(draft)}
+        onReset={() => setDraft(DEFAULT_FILTER)}
+        applyLabel={t('feed.sortFilter.apply')}
       >
-        {icon}
-        <span className="ffilter-chip-text">{label}</span>
-      </button>
-      <button type="button" className="ffilter-chip-clear" aria-label={clearLabel} title={clearLabel} onClick={onClear}>
-        <CloseIcon size={14} weight="bold" />
-      </button>
-    </span>
+        <FilterSection title={t('feed.sort.title')} id={`${id}-sort`}>
+          <FilterRadios label={`${id}-sort`} axis="vertical">
+            {FEED_SORTS.map((s) => (
+              <FilterOption
+                key={s}
+                on={draft.sort === s}
+                label={t(SORT_LABEL[s])}
+                hint={SORT_HINT[s] ? t(SORT_HINT[s]!) : undefined}
+                onChoose={() => setDraft((d) => ({ ...d, sort: s }))}
+              />
+            ))}
+          </FilterRadios>
+        </FilterSection>
+
+        {ranks && (
+          <FilterSection title={t('feed.period.title')} id={`${id}-period`}>
+            <FilterRadios label={`${id}-period`} axis="horizontal" className="ffilter-periods">
+              {FEED_PERIODS.map((p) => (
+                <FilterPill key={p} on={draft.period === p} label={t(PERIOD_LABEL[p])} onChoose={() => setDraft((d) => ({ ...d, period: p }))} />
+              ))}
+            </FilterRadios>
+          </FilterSection>
+        )}
+
+        <FilterSection title={t('civak.filter.title')} id={`${id}-show`}>
+          <FilterRadios label={`${id}-show`} axis="vertical">
+            <FilterOption on={isKind('all', null)} label={t('civak.filter.everything')} onChoose={pick('all', null)} />
+            {SECTIONS.filter((x) => x.key !== 'all').map((s) => (
+              <div key={s.key} className="ffilter-group" role="group" aria-labelledby={`${id}-${s.key}`}>
+                <span id={`${id}-${s.key}`} className="ffilter-heading">
+                  {t(s.labelKey)}
+                </span>
+                <FilterOption on={isKind(s.key, null)} label={t(ALL_OF[s.key] ?? s.labelKey)} onChoose={pick(s.key, null)} />
+                {s.kinds.map((k) => (
+                  <FilterOption key={k.key} on={isKind(s.key, k.key)} label={t(k.labelKey)} onChoose={pick(s.key, k.key)} />
+                ))}
+              </div>
+            ))}
+          </FilterRadios>
+        </FilterSection>
+      </FilterSheet>
+    </>
   );
 }

@@ -1,5 +1,5 @@
 import { lazy } from 'react';
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { arrivalHeld } from './auth/arrival';
 import { MarketingLayout } from './layouts/MarketingLayout';
@@ -34,13 +34,24 @@ const Saved = lazy(() => import('./pages/Saved').then((m) => ({ default: m.Saved
 const DimenPost = lazy(() => import('./pages/DimenPost').then((m) => ({ default: m.DimenPost })));
 const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games })));
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
+const LastLetter = lazy(() => import('./lastletter/LastLetter').then((m) => ({ default: m.LastLetter })));
+const Impostor = lazy(() => import('./impostor/Impostor').then((m) => ({ default: m.Impostor })));
+const DontSay = lazy(() => import('./dontsay/DontSay').then((m) => ({ default: m.DontSay })));
 const Rhyme = lazy(() => import('./pages/Rhyme').then((m) => ({ default: m.Rhyme })));
 const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })));
-const StoriesHub = lazy(() => import('./stories/StoriesHub').then((m) => ({ default: m.StoriesHub })));
+const BuildSentence = lazy(() => import('./games/BuildSentence').then((m) => ({ default: m.BuildSentence })));
+const MemoryThief = lazy(() => import('./games/MemoryThief').then((m) => ({ default: m.MemoryThief })));
+const HearIt = lazy(() => import('./games/HearIt').then((m) => ({ default: m.HearIt })));
+const WhatWouldYouSay = lazy(() => import('./games/WhatWouldYouSay').then((m) => ({ default: m.WhatWouldYouSay })));
+const Detective = lazy(() => import('./games/Detective').then((m) => ({ default: m.Detective })));
+const Bluff = lazy(() => import('./bluff/Bluff').then((m) => ({ default: m.Bluff })));
+const WhoAmI = lazy(() => import('./whoami/WhoAmI').then((m) => ({ default: m.WhoAmI })));
+const StoriesLibrary = lazy(() => import('./stories/StoriesLibrary').then((m) => ({ default: m.StoriesLibrary })));
 const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ default: m.StoryReader })));
 const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
 const WordleBattle = lazy(() => import('./pages/WordleBattle').then((m) => ({ default: m.WordleBattle })));
 const RhymeMatch = lazy(() => import('./pages/RhymeMatch').then((m) => ({ default: m.RhymeMatch })));
+const KingdomPage = lazy(() => import('./kingdom/KingdomPage').then((m) => ({ default: m.KingdomPage })));
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
 const Register = lazy(() => import('./pages/Register').then((m) => ({ default: m.Register })));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
@@ -53,6 +64,8 @@ const Review = lazy(() => import('./pages/Review').then((m) => ({ default: m.Rev
 const NextLesson = lazy(() => import('./pages/NextLesson').then((m) => ({ default: m.NextLesson })));
 const Dictionary = lazy(() => import('./pages/Dictionary').then((m) => ({ default: m.Dictionary })));
 const Alphabet = lazy(() => import('./pages/Alphabet').then((m) => ({ default: m.Alphabet })));
+const Words = lazy(() => import('./pages/Words').then((m) => ({ default: m.Words })));
+const WordSet = lazy(() => import('./pages/WordSet').then((m) => ({ default: m.WordSet })));
 const Rankings = lazy(() => import('./pages/Rankings').then((m) => ({ default: m.Rankings })));
 // Game Ranks, leagues and badges (contract 4): the badge collection and the season
 const BadgesPage = lazy(() => import('./badges/BadgesPage').then((m) => ({ default: m.BadgesPage })));
@@ -122,6 +135,18 @@ function CivakMoved(): React.JSX.Element {
 function PeyvokMoved({ to }: { to: string }): React.JSX.Element {
   const { search } = useLocation();
   return <Navigate to={{ pathname: to, search }} replace />;
+}
+
+/**
+ * The stories' old addresses, from when they were a game: the list and a
+ * story now live under Learn's Stories group. An invite link already sent
+ * (`?id=`) comes along, and so does a story's slug. The game itself stays
+ * where it was (`games/stories/play/:gameId`), so nothing below moves it.
+ */
+function StoriesMoved(): React.JSX.Element {
+  const { search } = useLocation();
+  const { slug } = useParams();
+  return <Navigate to={{ pathname: slug ? `/app/learn/stories/${encodeURIComponent(slug)}` : '/app/learn/stories', search }} replace />;
 }
 
 /**
@@ -216,10 +241,16 @@ export function AppRoutes(): React.JSX.Element {
         }
       >
         <Route index element={<Civak />} />
-        {/* Learn's Lessons half. Open to read: a visitor gets the alphabet, the
+        {/* Learn's Lessons group. Open to read: a visitor gets the alphabet, the
             dictionary and the games, and is asked for an account where the
             courses would be (see pages/Learn.tsx) */}
         <Route path="learn" element={<Learn />} />
+        {/* Learn's Stories group: the library, and a story to read under it
+            (stories/StoriesLibrary.tsx, StoryReader.tsx). Open to everyone; a
+            bookmark, a place kept in a story and the check after it ask for an
+            account themselves */}
+        <Route path="learn/stories" element={<StoriesLibrary />} />
+        <Route path="learn/stories/:slug" element={<StoryReader />} />
         {/* the learning loop: a course's map, and the lesson a new account
             starts with (see pages/NextLesson.tsx); the lesson itself and a
             review are above, on a screen of their own */}
@@ -228,6 +259,10 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="dictionary" element={<RequireAccount what="gate.what.course"><Dictionary /></RequireAccount>} />
         {/* the first thing a beginner needs, and open to everyone — see pages/Alphabet.tsx */}
         <Route path="alphabet" element={<Alphabet />} />
+        {/* the words after the letters — colours, numbers, days, months — open to
+            everyone too, each set on a page of its own (pages/Words.tsx, WordSet.tsx) */}
+        <Route path="learn/words" element={<Words />} />
+        <Route path="learn/words/:set" element={<WordSet />} />
         {/* one route for both kinds: a post knows which it is */}
         <Route path="library/:id" element={<LibraryPostPage />} />
         <Route path="civak" element={<CivakMoved />} />
@@ -238,7 +273,7 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="poems" element={<Navigate to="/app/civak?section=gotin&kind=helbest" replace />} />
         <Route path="dimen" element={<Navigate to="/app/civak?section=dimen" replace />} />
         <Route path="dimen/:id" element={<DimenPost />} />
-        {/* Learn's Games half, at the address the games always had */}
+        {/* Learn's Games group, at the address the games always had */}
         <Route path="games" element={<Games />} />
         {/* the phone's old names for two places, so a shared link still lands */}
         <Route path="play" element={<Navigate to="/app/games" replace />} />
@@ -250,11 +285,22 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="games/wordle" element={<PeyvokMoved to="/app/games/peyvok" />} />
         <Route path="games/rhyme" element={<RequireAccount what="gate.what.play"><Rhyme /></RequireAccount>} />
         <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
-        {/* Stories replaced the ranked quiz: its old address leads there. The
-            list and a story are open to read; a quiz on one needs an account */}
-        <Route path="games/quiz" element={<Navigate to="/app/games/stories" replace />} />
-        <Route path="games/stories" element={<StoriesHub />} />
-        <Route path="games/stories/:slug" element={<StoryReader />} />
+        {/* the learning games, each a round made and scored on the server like the others */}
+        <Route path="games/build-sentence" element={<RequireAccount what="gate.what.play"><BuildSentence /></RequireAccount>} />
+        {/* The Village (called Kurdish Kingdom in code): the village the learner's own learning builds; its old address still leads there */}
+        <Route path="games/village" element={<RequireAccount what="gate.what.play"><KingdomPage /></RequireAccount>} />
+        <Route path="games/kingdom" element={<Navigate to="/app/games/village" replace />} />
+        <Route path="games/memory-thief" element={<RequireAccount what="gate.what.play"><MemoryThief /></RequireAccount>} />
+        <Route path="games/hear-it" element={<RequireAccount what="gate.what.play"><HearIt /></RequireAccount>} />
+        <Route path="games/what-would-you-say" element={<RequireAccount what="gate.what.play"><WhatWouldYouSay /></RequireAccount>} />
+        <Route path="games/detective" element={<RequireAccount what="gate.what.play"><Detective /></RequireAccount>} />
+        {/* Stories replaced the ranked quiz, then moved from the games to Learn's
+            own Stories group: both old addresses lead there (an invite's `?id=`
+            and a story's slug kept). A game on a story stays here: a quiz on one
+            needs an account */}
+        <Route path="games/quiz" element={<Navigate to="/app/learn/stories" replace />} />
+        <Route path="games/stories" element={<StoriesMoved />} />
+        <Route path="games/stories/:slug" element={<StoriesMoved />} />
         <Route
           path="games/stories/play/:gameId"
           element={<RequireAccount what="gate.what.play"><StoryGame /></RequireAccount>}
@@ -269,6 +315,22 @@ export function AppRoutes(): React.JSX.Element {
           path="games/rhyme-match"
           element={<RequireAccount what="gate.what.playOthers"><RhymeMatch /></RequireAccount>}
         />
+        {/* the multiplayer learning games, with friends or against Hevalo */}
+        <Route
+          path="games/last-letter"
+          element={<RequireAccount what="gate.what.playOthers"><LastLetter /></RequireAccount>}
+        />
+        <Route
+          path="games/impostor"
+          element={<RequireAccount what="gate.what.playOthers"><Impostor /></RequireAccount>}
+        />
+        <Route
+          path="games/dont-say"
+          element={<RequireAccount what="gate.what.playOthers"><DontSay /></RequireAccount>}
+        />
+        <Route path="games/bluff" element={<RequireAccount what="gate.what.playOthers"><Bluff /></RequireAccount>} />
+        {/* Who Am I?: a round alone, or a race with friends */}
+        <Route path="games/who-am-i" element={<RequireAccount what="gate.what.play"><WhoAmI /></RequireAccount>} />
         <Route path="rankings" element={<Rankings />} />
         <Route path="leagues" element={<Navigate to="/app/rankings" replace />} />
         <Route path="badges" element={<RequireAccount what="gate.what.profile"><BadgesPage /></RequireAccount>} />

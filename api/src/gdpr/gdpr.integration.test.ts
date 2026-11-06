@@ -242,6 +242,9 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
       for (const id of [finished, lobby]) {
         await pool.query(`INSERT INTO story_game_players (game_id, user_id, seat, score) VALUES ($1, $2, 1, 200)`, [id, user.id]);
       }
+      // their shelf and their place in the story go too
+      await pool.query(`INSERT INTO story_bookmarks (user_id, story_id) VALUES ($1, $2)`, [user.id, story.id]);
+      await pool.query(`INSERT INTO story_reading (user_id, story_id, paragraph, share) VALUES ($1, $2, 2, 0.5)`, [user.id, story.id]);
       await pool.query(
         `UPDATE users SET deletion_requested_at = now() - interval '${DELETION_GRACE_DAYS + 1} days' WHERE id = $1`,
         [user.id],
@@ -252,6 +255,8 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
       expect((await pool.query(`SELECT host_id FROM story_games WHERE id = $1`, [finished])).rows).toEqual([{ host_id: null }]);
       const seat = await pool.query(`SELECT 1 FROM story_game_players WHERE game_id = $1 AND user_id = $2`, [finished, user.id]);
       expect(seat.rowCount).toBe(0);
+      expect((await pool.query(`SELECT 1 FROM story_bookmarks WHERE user_id = $1`, [user.id])).rowCount).toBe(0);
+      expect((await pool.query(`SELECT 1 FROM story_reading WHERE user_id = $1`, [user.id])).rowCount).toBe(0);
     } finally {
       await deleteStories(pool, [story.id]);
     }
@@ -278,6 +283,36 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
       ]);
       expect(JSON.stringify(doc.storyGames)).not.toContain(other.id);
     } finally {
+      await deleteStories(pool, [story.id]);
+    }
+  });
+
+  it('the export carries their story shelf, where they got to in each story, and the words they saved', async () => {
+    const user = await makeUser('exportshelf');
+    const other = await makeUser('exportshelfother');
+    const story = await insertStory(pool, { slug: `gdpr-shelf-${Date.now().toString(36)}` });
+    const entry = await pool.query<{ id: string }>(
+      `INSERT INTO dict_entries (headword, headword_normalized, dialect) VALUES ($1, $1, 'kurmanji') RETURNING id`,
+      [`bazar${suffix}`],
+    );
+    const entryId = entry.rows[0]!.id;
+    try {
+      await pool.query(`INSERT INTO story_bookmarks (user_id, story_id) VALUES ($1, $3), ($2, $3)`, [user.id, other.id, story.id]);
+      await pool.query(
+        `INSERT INTO story_reading (user_id, story_id, paragraph, share, finished_at) VALUES ($1, $3, 3, 1, now()), ($2, $3, 1, 0.25, NULL)`,
+        [user.id, other.id, story.id],
+      );
+      await pool.query(`INSERT INTO saved_words (user_id, entry_id) VALUES ($1, $2)`, [user.id, entryId]);
+
+      const doc = await new GdprService(pool).buildExport(user.id);
+      const progress = doc.progress as Record<string, Array<Record<string, unknown>>>;
+      expect(progress.storyBookmarks).toEqual([{ slug: story.slug, title: story.title, created_at: expect.any(Date) }]);
+      expect(progress.storyReading).toEqual([
+        { slug: story.slug, title: story.title, paragraph: 3, share: 1, finished_at: expect.any(Date), updated_at: expect.any(Date) },
+      ]);
+      expect(progress.savedWords).toEqual([{ headword: `bazar${suffix}`, dialect: 'kurmanji', saved_at: expect.any(Date) }]);
+    } finally {
+      await pool.query(`DELETE FROM dict_entries WHERE id = $1`, [entryId]);
       await deleteStories(pool, [story.id]);
     }
   });

@@ -1,0 +1,12 @@
+/* ---- Cards from approved words (GameWordCards.tsx): the word picker, and an identity's facts table ---- */
+.gc-words { display: grid; gap: 10px; margin: 12px 0 0; padding: 0; list-style: none; }
+.gc-word { display: grid; gap: 6px; padding: 12px; border: 1px solid var(--separator); border-radius: 12px; }
+.gc-word-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 10px; }
+.gc-word-ku { font-size: 18px; font-weight: 700; }
+.gc-word .subtle { margin: 0; }
+.gc-make { display: grid; gap: 10px; padding-top: 6px; border-top: 1px dashed var(--separator); }
+.gc-facts { width: 100%; max-width: 560px; border-collapse: collapse; font-size: 13px; }
+.gc-facts caption { text-align: start; color: var(--text-dim); font-size: 12px; padding-bottom: 6px; }
+.gc-facts th, .gc-facts td { padding: 4px 6px; text-align: start; border-top: 1px solid var(--separator); font-weight: 400; }
+.gc-facts thead th { border-top: none; color: var(--text-dim); font-size: 12px; }
+.gc-facts select { min-height: 36px; }

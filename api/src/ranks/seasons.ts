@@ -23,6 +23,7 @@ import {
 import { WalletService } from '../wallet/service.js';
 import { RankEvents } from './events.js';
 import { lockGameRatings, rollSeason, stateOf, type RatingRow } from './store.js';
+import { economyBlockedSql } from '../economy/standing.js';
 
 export interface RankSeasonsDeps {
   wallet?: WalletService;
@@ -201,8 +202,7 @@ export class RankSeasons {
       `SELECT r.user_id, u.username, r.game, r.peak_tier
          FROM rank_season_results r JOIN users u ON u.id = r.user_id
         WHERE r.season_id = $1 AND r.rated_games >= $2 AND r.peak_tier IS NOT NULL
-          AND u.deleted_at IS NULL
-          AND NOT (u.banned_at IS NOT NULL AND (u.banned_until IS NULL OR u.banned_until > now()))
+          AND NOT ${economyBlockedSql('u')}
           AND NOT EXISTS (SELECT 1 FROM rank_season_rewards w WHERE w.user_id = r.user_id AND w.season_id = r.season_id)
         ORDER BY r.user_id, r.game`,
       [seasonId, SEASON_REWARD_MIN_GAMES],
@@ -239,8 +239,7 @@ export class RankSeasons {
       `SELECT r.user_id, u.username, r.game, r.peak_points
          FROM game_ratings r JOIN users u ON u.id = r.user_id
         WHERE r.season_id = $1 AND r.season_games >= $2 AND r.placement_done
-          AND u.deleted_at IS NULL
-          AND NOT (u.banned_at IS NOT NULL AND (u.banned_until IS NULL OR u.banned_until > now()))
+          AND NOT ${economyBlockedSql('u')}
           AND NOT EXISTS (SELECT 1 FROM rank_season_rewards w WHERE w.user_id = r.user_id AND w.season_id = r.season_id)
         ORDER BY r.user_id, r.game`,
       [seasonId, SEASON_REWARD_MIN_GAMES],

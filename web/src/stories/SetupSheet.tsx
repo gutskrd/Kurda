@@ -29,6 +29,7 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { ChipRadio } from '../play/ChipRadio';
 import { createGame, gamePath, storyError } from './api';
+import { levelName } from './labels';
 import { rememberSolo, rememberedExtraTime, rememberedSolo, soloCountFor } from './prefs';
 
 export const MODE_KEY: Record<StoryGameMode, MessageKey> = {
@@ -242,7 +243,7 @@ export function SetupSheet({
                 onChange={setLevel}
                 options={[
                   { value: 'any' as const, label: t('stories.level.all') },
-                  ...levels.map((lv) => ({ value: lv, label: t('stories.level.n', { level: lv }) })),
+                  ...levels.map((lv) => ({ value: lv, label: levelName(lv, t) })),
                 ]}
               />
             )}

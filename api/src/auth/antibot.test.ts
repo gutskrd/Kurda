@@ -14,8 +14,8 @@ describe('isDisposableEmail', () => {
     expect(isDisposableEmail('bot@mail.mailinator.com')).toBe(true);
   });
 
-  it('allows normal providers', () => {
-    expect(isDisposableEmail('rojda@gmail.com')).toBe(false);
+  it('allows ordinary domains', () => {
+    expect(isDisposableEmail('rojda@example.com')).toBe(false);
     expect(isDisposableEmail('şêrîn@kurda.app')).toBe(false);
     // similar-looking but different domain must not match
     expect(isDisposableEmail('a@notmailinator.com')).toBe(false);

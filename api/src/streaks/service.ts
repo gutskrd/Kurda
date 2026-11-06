@@ -238,7 +238,8 @@ export class StreakService {
    * timezone, with half its items answered that day: `countsAsLearning`), and
    * the day the last freeze kept when it falls in them. One statement, over the
    * learner's own sessions; a practice session paid XP exactly when it was
-   * learning (a test to jump ahead never is).
+   * learning (a test to jump ahead never is); a learning game's round was
+   * learning when at least half of it was right (`learning_counted`).
    */
   async recent(userId: string, timeZone: string, now: Date = new Date()): Promise<{ today: string; recent: RecentDay[] }> {
     const tz = safeTimeZone(timeZone);
@@ -253,6 +254,10 @@ export class StreakService {
        SELECT (ps.completed_at AT TIME ZONE $2)::date::text, 'learned'
          FROM practice_sessions ps
         WHERE ps.user_id = $1 AND ps.completed_at >= (($3::date - $4::int)::timestamp AT TIME ZONE $2) AND ps.xp_awarded > 0
+       UNION
+       SELECT (gs.finished_at AT TIME ZONE $2)::date::text, 'learned'
+         FROM game_sessions gs
+        WHERE gs.user_id = $1 AND gs.finished_at >= (($3::date - $4::int)::timestamp AT TIME ZONE $2) AND gs.learning_counted
        UNION
        SELECT freeze_used_on::text, 'frozen'
          FROM user_streaks

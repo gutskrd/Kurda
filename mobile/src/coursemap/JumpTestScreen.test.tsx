@@ -12,16 +12,21 @@ vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
 vi.mock('../lesson/useRecorder', () => import('../lesson/useRecorder.native'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { onHaptic } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
 import { JumpTestScreen } from './JumpTestScreen';
+import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
 
 patchReactNativeWeb({ reduceMotion: true });
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  resetHardwareBack();
+});
 
 const test = (triesLeft: number) =>
   ok({
@@ -119,5 +124,28 @@ describe('the test that jumps ahead', { timeout: 15_000 }, () => {
     expect(screen.getByText('Each unit’s test can be tried 3 times a day. Keep learning, or try again tomorrow.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Keep learning' }));
     expect(onPath).toHaveBeenCalled();
+  });
+
+  // Android's back is the test's ✕ too: a test opened again with an answer in it asks before it goes
+  it('asks before Android’s back leaves a test part-way through', async () => {
+    serve(
+      ok({
+        sessionId: 'p1',
+        exercises: [
+          { id: 'mc', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'] },
+          { id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'] },
+        ],
+        answered: { mc: { verdict: 'correct', accepted: true } },
+        jump: { unitId: 'u3', unitNumber: 3, unitTitle: 'Out and about', mistakesAllowed: 2, triesLeft: 2 },
+      }),
+    );
+    const onExit = vi.fn();
+    renderWithProviders(<JumpTestScreen courseId="c1" unitId="u3" onExit={onExit} onPath={() => undefined} onAgain={() => undefined} />);
+    await screen.findByText('Bread?');
+    act(() => {
+      pressBack();
+    });
+    expect(await screen.findByText('Leave for now?')).toBeTruthy();
+    expect(onExit).not.toHaveBeenCalled();
   });
 });

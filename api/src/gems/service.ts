@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { WalletService } from '../wallet/service.js';
+import { isEconomyBlocked } from '../economy/standing.js';
 
 /** Safety guardrail: max Gems any one user can earn in a UTC day, across rules. */
 export const DEFAULT_GLOBAL_DAILY_CAP = 200;
@@ -15,7 +16,7 @@ export interface GemRule {
 export interface GrantResult {
   granted: number;
   /** why the full amount wasn't granted, when it wasn't. */
-  cappedBy: 'none' | 'no_rule' | 'duplicate' | 'cooldown' | 'rule_cap' | 'global_cap';
+  cappedBy: 'none' | 'no_rule' | 'duplicate' | 'cooldown' | 'rule_cap' | 'global_cap' | 'restricted';
 }
 
 const REASON = (key: string): string => `gem_earn:${key}`;
@@ -26,6 +27,13 @@ const REASON = (key: string): string => `gem_earn:${key}`;
  * grant is idempotent per `(rule, refId)` so a re-triggered achievement or data
  * backfill can't double-pay, and a per-user global daily cap bounds total
  * earning. Grants land in the append-only wallet ledger.
+ *
+ * The ledger's idempotency keys are unique across everyone, so a `refId` must
+ * name the person as well as the event (`${achievementId}:${userId}`), or the
+ * first person paid for an event would be the only one ever paid for it. And
+ * nobody the economy does not pay (economy/standing.ts — a closed or banned
+ * account, a confirmed bot, a shadow-flagged cheater, a payment-fraud hold) is
+ * granted anything: these grants are never asked for, so the refusal is silent.
  */
 export class GemService {
   constructor(
@@ -89,6 +97,11 @@ export class GemService {
         `SELECT 1 FROM wallet_balances WHERE user_id = $1 AND currency = 'gems' FOR UPDATE`,
         [userId],
       );
+
+      if (await isEconomyBlocked(client, userId)) {
+        await client.query('COMMIT');
+        return { granted: 0, cappedBy: 'restricted' };
+      }
 
       // cooldown: has this rule paid out recently?
       if (rule.cooldown_seconds > 0) {

@@ -428,8 +428,8 @@ export class ShopService {
           reason: 'shop_purchase',
           refId: sku,
           // Filed under the buyer. Ledger keys are unique across everyone, and
-          // the server pays under its own (`daily:<user>:<day>`, a return's
-          // refund …): a key taken from the request as it came could claim one
+          // the server pays under its own (`daily:<user>:<day>`, a quest's
+          // chest …): a key taken from the request as it came could claim one
           // of those, or another member's, first — and that payment would then
           // be skipped as already made.
           idempotencyKey: `purchase:${userId}:${idempotencyKey}`,

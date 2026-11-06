@@ -18,6 +18,7 @@ import { LESSON_AUDIO_TEXT_MAX } from './lesson-audio.js';
 import { normalizeKurdish } from './kurdish-text.js';
 import { isAppLocale } from './locales.js';
 import {
+  CEFR_LEVELS,
   GLOSSARY_MAX,
   GLOSS_MEANING_MAX,
   GLOSS_TERM_MAX,
@@ -28,23 +29,36 @@ import {
   QUESTION_EXPLANATION_MAX,
   QUESTION_OPTION_MAX,
   QUESTION_PROMPT_MAX,
+  STORY_ATTRIBUTION_NOTE_MAX,
+  STORY_AUTHOR_MAX,
   STORY_BODY_MAX,
+  STORY_CATEGORY_SLUG_PATTERN,
+  STORY_COVER_MAX,
   STORY_LENGTHS,
+  STORY_LEVELS,
+  STORY_READING_MINUTES_MAX,
   STORY_SENTENCE_SOFT_MAX,
+  STORY_SOURCE_MAX,
+  STORY_SOURCE_URL_MAX,
   STORY_SUMMARY_MAX,
   STORY_TITLE_MAX,
+  STORY_TRANSLATION_MAX,
   STORY_WORD_BANDS,
   countStoryWords,
   glossSpans,
   isQuestionKind,
   isStoryDialect,
+  isStoryLanguage,
   isStoryLevel,
+  isStoryTradition,
   storyLengthFor,
   storyParagraphs,
   storySentences,
   type StoryDialect,
   type StoryGlossEntry,
+  type StoryLanguage,
   type StoryLength,
+  type StoryTradition,
 } from './stories.js';
 
 /** A slug: lower-case Latin letters, digits and dashes, as the stories table checks it. */
@@ -106,8 +120,50 @@ export interface StoryQuestionInput {
   evidenceSentence: number | null;
 }
 
+/**
+ * What places a story in the library and says where it comes from, apart
+ * from its text and questions: the fields this wave added to StoryInput, as
+ * one piece so an editor that does not show them yet can carry them through
+ * a save unchanged (`emptyStoryLibraryInput` is a new story's).
+ */
+export interface StoryLibraryInput {
+  /** a StoryLanguage; 'ku' when left out */
+  language?: string;
+  /** a StoryCategory slug; required to publish */
+  category: string | null;
+  /** a StoryTradition; checked, since stored or imported data may carry anything */
+  tradition: string;
+  author: string | null;
+  /** the collection, teller, region or publication it comes from */
+  source: string | null;
+  /** https only */
+  sourceUrl: string | null;
+  attributionNote: string | null;
+  /** full translations by interface language, each with the body's paragraphs, blank-line separated */
+  translations: Record<string, string>;
+  /** the key of a shared background picture, drawn as the cover */
+  cover: string | null;
+  /** the editor's reading time, standing in for the estimate */
+  readingMinutes: number | null;
+}
+
+export function emptyStoryLibraryInput(): StoryLibraryInput {
+  return {
+    language: 'ku',
+    category: null,
+    tradition: 'original',
+    author: null,
+    source: null,
+    sourceUrl: null,
+    attributionNote: null,
+    translations: {},
+    cover: null,
+    readingMinutes: null,
+  };
+}
+
 /** A story as an editor writes it: everything `validateStory` looks at. */
-export interface StoryInput {
+export interface StoryInput extends StoryLibraryInput {
   dialect: StoryDialect;
   level: number;
   title: string;
@@ -115,6 +171,16 @@ export interface StoryInput {
   body: string;
   glossary: StoryGlossEntry[];
   questions: StoryQuestionInput[];
+}
+
+/** The language a story is in, read from its input: 'ku' unless it says otherwise. */
+export function storyLanguageOf(story: Pick<StoryLibraryInput, 'language'>): StoryLanguage {
+  return isStoryLanguage(story.language) ? story.language : 'ku';
+}
+
+/** The tradition a story claims, read from its input: 'original' unless it says a valid other. */
+export function storyTraditionOf(story: Pick<StoryLibraryInput, 'tradition'>): StoryTradition {
+  return isStoryTradition(story.tradition) ? story.tradition : 'original';
 }
 
 export interface StoryProblem {
@@ -140,7 +206,7 @@ export interface StoryValidation {
 export type StoryValidationStage = 'draft' | 'publish';
 
 /** Problems a draft may have and a submitted or published story may not. */
-const UNFINISHED_IN_DRAFT = new Set(['BODY_EMPTY', 'WORD_COUNT_OUTSIDE_BANDS', 'BANK_TOO_SMALL']);
+const UNFINISHED_IN_DRAFT = new Set(['BODY_EMPTY', 'WORD_COUNT_OUTSIDE_BANDS', 'BANK_TOO_SMALL', 'CATEGORY_MISSING']);
 
 /**
  * Abbreviations that end in a full stop. The reader and the audio studio cut a
@@ -172,6 +238,16 @@ function blank(v: string | null | undefined): boolean {
   return v === null || v === undefined || v.trim() === '';
 }
 
+/** A web address a browser would open over https: parsed, not pattern-matched, so "https://" alone is refused too. */
+function isHttpsUrl(v: string): boolean {
+  try {
+    const url = new URL(v);
+    return url.protocol === 'https:' && url.hostname !== '';
+  } catch {
+    return false;
+  }
+}
+
 function sameOption(v: string): string {
   return v.normalize('NFC').trim().replace(/\s+/g, ' ').toLowerCase();
 }
@@ -187,14 +263,23 @@ function sameOption(v: string): string {
  * sentence too long to ever be recorded (LESSON_AUDIO_TEXT_MAX).
  *
  * Errors only from 'publish' (warnings in a draft): no text yet, a word count
- * between the length bands, fewer questions than MIN_QUESTION_BANK.
+ * between the length bands, fewer questions than MIN_QUESTION_BANK, no
+ * category to file it under.
+ *
+ * The library fields: a language, a tradition and a category slug of the
+ * known shapes, the attribution within its limits, a source address that is
+ * https, a reading time between one minute and two hours, and a translation
+ * in an interface language with exactly the body's paragraphs — the reader
+ * shows them side by side, so a translation one paragraph short would sit
+ * beside the wrong Kurdish.
  *
  * Warnings: a sentence that may not fit one 15-second recording, a sentence
  * ending in an abbreviation, a numbered list (both cut sentences in the wrong
  * place), an explanation past one line, no gist question, one kind asked too
  * often, the right answer always in the same place, an option much longer
  * than the others (a guessable tell), a question with no evidence to show at
- * the reveal or no English for the beginners who see it by default.
+ * the reveal or no English for the beginners who see it by default, and a
+ * traditional or adapted story that names no source.
  */
 export function validateStory(story: StoryInput, stage: StoryValidationStage = 'publish'): StoryValidation {
   const errors: StoryProblem[] = [];
@@ -208,7 +293,10 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
 
   const dialectOk = isStoryDialect(story.dialect);
   if (!dialectOk) error('DIALECT', 'dialect', 'choose Kurmancî or Soranî');
-  if (!isStoryLevel(story.level)) error('LEVEL', 'level', 'choose level 1, 2 or 3');
+  if (!isStoryLevel(story.level)) {
+    error('LEVEL', 'level', `choose a level from 1 (${CEFR_LEVELS[0]}) to ${STORY_LEVELS.length} (${CEFR_LEVELS[CEFR_LEVELS.length - 1]})`);
+  }
+  if (story.language !== undefined && !isStoryLanguage(story.language)) error('LANGUAGE', 'language', 'stories are written in Kurdish (ku)');
 
   if (blank(story.title)) error('TITLE_EMPTY', 'title', 'give the story a title');
   else if (story.title.trim().length > STORY_TITLE_MAX) {
@@ -216,6 +304,35 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
   }
   if (story.summary !== null && story.summary.trim().length > STORY_SUMMARY_MAX) {
     error('SUMMARY_TOO_LONG', 'summary', `keep the summary to ${STORY_SUMMARY_MAX} characters`);
+  }
+
+  // ── the library fields ────────────────────────────────────────────────────
+  if (blank(story.category)) error('CATEGORY_MISSING', 'category', 'file the story under a category');
+  else if (!STORY_CATEGORY_SLUG_PATTERN.test(story.category!.trim())) {
+    error('CATEGORY', 'category', 'a category is named by its slug: lower-case letters, digits and dashes');
+  }
+  const traditionOk = isStoryTradition(story.tradition);
+  if (!traditionOk) error('TRADITION', 'tradition', 'say whether the story is traditional, adapted or original');
+  for (const [field, value, max] of [
+    ['author', story.author, STORY_AUTHOR_MAX],
+    ['source', story.source, STORY_SOURCE_MAX],
+    ['sourceUrl', story.sourceUrl, STORY_SOURCE_URL_MAX],
+    ['attributionNote', story.attributionNote, STORY_ATTRIBUTION_NOTE_MAX],
+    ['cover', story.cover, STORY_COVER_MAX],
+  ] as const) {
+    if (value !== null && value !== undefined && value.trim().length > max) {
+      error(`${field.replace(/[A-Z]/g, (c) => `_${c}`).toUpperCase()}_TOO_LONG`, field, `keep it to ${max} characters`);
+    }
+  }
+  if (!blank(story.sourceUrl) && !isHttpsUrl(story.sourceUrl!.trim())) {
+    error('SOURCE_URL', 'sourceUrl', 'the source address must start with https://');
+  }
+  if (traditionOk && story.tradition !== 'original' && blank(story.source)) {
+    warn('SOURCE_MISSING', 'source', 'a traditional or adapted story should name where it comes from');
+  }
+  const minutes = story.readingMinutes;
+  if (minutes !== null && minutes !== undefined && (!Number.isInteger(minutes) || minutes < 1 || minutes > STORY_READING_MINUTES_MAX)) {
+    error('READING_MINUTES', 'readingMinutes', `a reading time is a whole number of minutes, 1 to ${STORY_READING_MINUTES_MAX}`);
   }
 
   // ── the text ──────────────────────────────────────────────────────────────
@@ -240,6 +357,28 @@ export function validateStory(story: StoryInput, stage: StoryValidationStage = '
           : words > near.max && near.length === 'long'
             ? `${words} words is too many: the longest length is ${band}`
             : `${words} words is between the lengths: the nearest is ${band}`,
+      );
+    }
+  }
+
+  // ── the translations ──────────────────────────────────────────────────────
+  for (const [locale, text] of Object.entries(story.translations ?? {})) {
+    const path = `translations.${locale}`;
+    if (!isAppLocale(locale)) {
+      error('TRANSLATION_LOCALE', path, `“${locale}” is not a language the app is offered in`);
+      continue;
+    }
+    if (typeof text !== 'string') {
+      error('TRANSLATION_PARAGRAPHS', path, 'a translation is the whole text, with the same paragraphs');
+      continue;
+    }
+    if (text.length > STORY_TRANSLATION_MAX) error('TRANSLATION_TOO_LONG', path, `keep a translation to ${STORY_TRANSLATION_MAX} characters`);
+    const n = storyParagraphs(text).length;
+    if (n !== paragraphs.length) {
+      error(
+        'TRANSLATION_PARAGRAPHS',
+        path,
+        `the translation has ${n} paragraph${n === 1 ? '' : 's'} and the text ${paragraphs.length}: they are shown side by side, so separate them the same way`,
       );
     }
   }

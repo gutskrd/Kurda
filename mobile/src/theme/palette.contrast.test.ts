@@ -42,6 +42,13 @@ for (const p of [LIGHT, DARK]) {
       expect(p.switchOn).not.toBe(p.success);
     });
 
+    // a spinner over a photo being uploaded is a graphic, so 3:1, over the page and over even a white photo
+    it('what sits on the scrim clears 3:1, whatever is under the scrim', () => {
+      for (const behind of [p.background, '#FFFFFF', '#000000']) {
+        expect(contrastRatio(p.textOnScrim, over(p.scrim, behind)), behind).toBeGreaterThanOrEqual(AA_LARGE);
+      }
+    });
+
     it('primary text on the background meets AA (4.5:1)', () => {
       expect(contrastRatio(p.textPrimary, p.background)).toBeGreaterThanOrEqual(AA_NORMAL);
     });

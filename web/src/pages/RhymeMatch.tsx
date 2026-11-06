@@ -10,19 +10,19 @@ import { useRail } from '../social/RailProvider';
 import { PlayerChip } from '../ui/PlayerChip';
 import { RankList, RankRow } from '../ui/RankRow';
 import { useTypeOnly } from '../components/typeOnly';
-import { buildInviteUrl } from '../lib/gameInvites';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { InviteForm } from '../play/InviteSheet';
 import { InviteFriendsButton, InvitedList } from '../play/LobbyInvites';
+import { CodeTicket } from '../play/CodeTicket';
 import { LeaveLobby, LobbyRoster, RoomUnavailable, seatName, type RoomGone, type SeatPlayer } from '../play/GameRoom';
 import { RematchPanel } from '../play/RematchPanel';
 import { useLobbyUpdates } from '../play/usePlay';
 import { playError } from '../play/playApi';
 import { useQuietInvites } from '../play/quietInvites';
 import { PlayerReport } from '../reports/PlayerReport';
-import type { RatedState } from '@kurda/shared';
+import type { GameAccess, RatedState } from '@kurda/shared';
 import { LobbyRated, RatedBadge, shownRated } from '../ranks/rated';
 import { RankResult } from '../ranks/RankResult';
 import { haptic } from '../lib/haptics';
@@ -50,6 +50,10 @@ interface MatchState {
   maxPlayers: number;
   createdBy: string;
   isHost: boolean;
+  /** who may join: the host's friends, or any adult with the code */
+  access?: GameAccess;
+  /** the code a friend types to join, while the lobby can still be joined; null after */
+  code?: string | null;
   /** Rated or Friendly (Game Ranks), shown before anyone joins; decided at the start */
   rated?: RatedState;
   /** everyone in it, by seat, as this viewer may see them */
@@ -81,7 +85,7 @@ const REJECT_KEY: Record<string, MessageKey> = {
   profane: 'games.rhyme.reject.profane',
 };
 
-/** Rhyme Match (KUR-299): head-to-head timed rhyming. Create → share → play. */
+/** Rhyme Match (KUR-299): head-to-head timed rhyming. Create → invite, or hand out the code → play. */
 export function RhymeMatch(): React.JSX.Element {
   const [params] = useSearchParams();
   const t = useT();
@@ -128,7 +132,6 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   const [word, setWord] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [remaining, setRemaining] = useState(0);
   const [found, setFound] = useState<Array<{ word: string; quality: RhymeResult['quality']; points: number }>>([]);
   const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly(t('games.rhyme.noPasting'));
@@ -212,16 +215,6 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     }
   }
 
-  async function copyLink(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(buildInviteUrl('rhyme-match', id));
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setNotice(t('games.copyFailed'));
-    }
-  }
-
   async function join(): Promise<void> {
     setBusy(true);
     const res = await client.post<MatchState>(`/rhyme/matches/${id}/join`);
@@ -263,12 +256,13 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   if (match.status === 'lobby') {
     return (
       <div className="match-lobby match-room">
-        <div className="battle-invite">
-          <span className="battle-invite-label">{t('games.inviteLink')}</span>
-          <code className="battle-invite-url">{buildInviteUrl('rhyme-match', id)}</code>
-          <Button size="sm" onClick={() => void copyLink()}>{copied ? t('games.copied') : t('games.copyLink')}</Button>
-          {match.isHost && <InviteFriendsButton game="rhyme-match" lobbyId={id} room={room} />}
-        </div>
+        {/* the code anyone can be told, and Invite friends for the friends already here */}
+        <CodeTicket
+          game="rhyme-match"
+          code={match.code}
+          access={match.access}
+          invite={match.isHost ? <InviteFriendsButton game="rhyme-match" lobbyId={id} room={room} /> : undefined}
+        />
         <LobbyRoster players={match.players} max={match.maxPlayers} canRemove={match.isHost} onRemove={remove} game="rhyme-match" gameId={id} />
         {/* Rated or Friendly: everyone sees it before joining, the host changes it here */}
         <LobbyRated

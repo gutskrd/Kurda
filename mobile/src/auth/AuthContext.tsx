@@ -3,7 +3,7 @@ import { ApiClient } from '../api/client';
 import { useHeartbeat } from './useHeartbeat';
 import { defaultApiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
-import { describeError, isMaintenance } from '../api/errors';
+import { describeError, describeErrorOr, isMaintenance } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import type { Locale } from '../i18n/translations';
 import { createDeviceIdStore, createTokenStorage } from './storage';
@@ -56,6 +56,13 @@ export interface AuthFailure {
 }
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
+
+/**
+ * What asking to delete the account came to. A full account is kept for
+ * `graceDays` (the server's DELETE /me says how many), and signing in again
+ * before then keeps it; a guest is closed at once, so its `graceDays` is 0.
+ */
+export type AccountDeletion = { ok: true; graceDays: number } | { ok: false; message: string };
 
 /** What Sign in with Apple gives the app besides the identity token. */
 export interface AppleSignInExtras {
@@ -170,14 +177,21 @@ interface AuthContextValue {
   verifyEmailCode(code: string): Promise<string | null>;
   /** Ask the server to email a fresh verification code. */
   resendVerificationCode(): Promise<string | null>;
-  requestPasswordReset(email: string): Promise<void>;
+  /**
+   * Ask for a reset link. The server answers the same whether or not the
+   * address has an account, so the only failures are its not answering at all
+   * (offline, a fault, too many requests). Resolves to that failure in words,
+   * or null once the request was taken.
+   */
+  requestPasswordReset(email: string): Promise<string | null>;
   logout(): Promise<void>;
   /**
    * Start account deletion (KUR-275). Schedules a grace-period delete server-side
    * (DELETE /me) and signs out locally; logging back in before it elapses cancels
-   * it. Resolves to an error message, or null on success.
+   * it. Resolves to how long the grace period is, so the screen can say it, or
+   * to why it failed.
    */
-  deleteAccount(): Promise<string | null>;
+  deleteAccount(): Promise<AccountDeletion>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -361,6 +375,15 @@ export function AuthProvider({
       }
     },
     oauthSignIn: async (provider, idToken, apple) => {
+      /*
+       * Signed in as a guest, the sign-in claims the guest's own account and
+       * keeps what was learned (api/src/auth/oauth.ts) — but only when it
+       * carries the guest's session. On this route an access token that has
+       * run out is not refused and renewed, just not read, so the sign-in
+       * made a second account and left the progress behind. Asking for the
+       * account first renews a token that ran out.
+       */
+      if (user?.guest === true) await client.get('/me');
       const extras =
         provider === 'apple'
           ? {
@@ -375,11 +398,12 @@ export function AuthProvider({
           setSuspension(suspended);
           return describeError(res.error, t);
         }
-        // Append the server's own error code (e.g. OAUTH_NOT_CONFIGURED,
-        // INVALID_OAUTH_TOKEN) when present — it names the actual cause, which
-        // the friendly copy alone hides for 5xx/401 responses.
-        const friendly = describeError(res.error, t);
-        return res.error.code ? `${friendly} (${res.error.code})` : friendly;
+        // Only the reader's own language: the codes that name a cause
+        // (OAUTH_NOT_CONFIGURED, INVALID_OAUTH_TOKEN, an address waiting to
+        // be confirmed) each have their sentence, and anything else is the
+        // plain "couldn't confirm that sign-in", never the server's English
+        // or its code in brackets.
+        return describeErrorOr(res.error, t, 'error.code.oauthFailed');
       }
       await applyAuth(res.data);
       return null;
@@ -396,7 +420,8 @@ export function AuthProvider({
       return null;
     },
     requestPasswordReset: async (email) => {
-      await client.post('/auth/request-password-reset', { email });
+      const res = await client.post('/auth/request-password-reset', { email });
+      return res.ok ? null : describeError(res.error, t);
     },
     logout: async () => {
       // end the session on the server too, not only on this phone
@@ -407,11 +432,11 @@ export function AuthProvider({
     },
     deleteAccount: async () => {
       const res = await client.delete<{ deletionScheduled: boolean; graceDays: number }>('/me');
-      if (!res.ok) return describeError(res.error, t);
+      if (!res.ok) return { ok: false, message: describeError(res.error, t) };
       await storage.clear();
       setUser(null);
       setStatus('signedOut');
-      return null;
+      return { ok: true, graceDays: res.data.deletionScheduled ? res.data.graceDays : 0 };
     },
   };
 

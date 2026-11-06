@@ -1,5 +1,5 @@
-import { describe, it, expect } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { afterEach, describe, it, expect, vi } from 'vitest';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Landing } from './Landing';
 
@@ -9,6 +9,10 @@ const show = () =>
       <Landing />
     </MemoryRouter>,
   );
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('Landing', () => {
   it('says what Hevalo is in its heading, and offers both ways in', () => {
@@ -29,7 +33,7 @@ describe('Landing', () => {
       ['Peyvok', '/app/games/peyvok'],
       ['Rhyming Words', '/app/games/rhyme'],
       ['Typing Race', '/app/games/race'],
-      ['Stories', '/app/games/stories'],
+      ['Stories', '/app/learn/stories'],
     ]) {
       expect(screen.getByRole('link', { name }), name).toHaveAttribute('href', href);
     }
@@ -62,5 +66,42 @@ describe('Landing', () => {
       expect(picture).toHaveAccessibleName();
       expect(picture.querySelector('a, button, input')).toBeNull();
     }
+  });
+
+  /** The phone in the hero shows the app's own screens; one is there for a reader at a time, and the tabs under it pick one. */
+  it('shows one screen of the app at a time on the hero phone, and lets the tabs under it pick another', () => {
+    show();
+    const tabs = screen.getByRole('group', { name: 'Screens from the Hevalo app' });
+    expect(within(tabs).getByRole('button', { name: 'Lessons' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('img', { name: /the learning path in the hevalo app/i })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /a peyvok battle in hevalo/i })).toBeNull();
+
+    fireEvent.click(within(tabs).getByRole('button', { name: 'Peyvok Battle' }));
+    expect(within(tabs).getByRole('button', { name: 'Peyvok Battle' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('img', { name: /a peyvok battle in hevalo/i })).toBeInTheDocument();
+    expect(screen.queryByRole('img', { name: /the learning path in the hevalo app/i })).toBeNull();
+  });
+
+  it('moves the hero phone on to the next screen by itself, and stays on the one someone picks', () => {
+    vi.useFakeTimers();
+    show();
+    const tabs = screen.getByRole('group', { name: 'Screens from the Hevalo app' });
+    act(() => {
+      vi.advanceTimersByTime(5300);
+    });
+    expect(within(tabs).getByRole('button', { name: 'Peyvok Battle' })).toHaveAttribute('aria-pressed', 'true');
+
+    fireEvent.click(within(tabs).getByRole('button', { name: 'Stories' }));
+    act(() => {
+      vi.advanceTimersByTime(20000);
+    });
+    expect(within(tabs).getByRole('button', { name: 'Stories' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('img', { name: /the story library in the hevalo app/i })).toBeInTheDocument();
+  });
+
+  it('shows a lesson on the phone in the learn section', () => {
+    show();
+    const learn = document.getElementById('learn')!;
+    expect(within(learn).getByRole('img', { name: /a lesson exercise/i })).toBeInTheDocument();
   });
 });

@@ -6,5 +6,5 @@
     "noUncheckedIndexedAccess": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["App.tsx", "index.ts", "images.d.ts", "src"]
+  "include": ["App.tsx", "app.config.ts", "index.ts", "images.d.ts", "src"]
 }

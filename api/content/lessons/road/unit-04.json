@@ -1,0 +1,4212 @@
+{
+  "course": {
+    "slug": "kurmanji-road",
+    "dialect": "kurmanji",
+    "titleKu": "Rêya Kurmancî",
+    "titleEn": "The Kurmanji Road"
+  },
+  "units": [
+    {
+      "position": 4,
+      "titleKu": "Bazar",
+      "titleEn": "The market",
+      "skills": [
+        {
+          "position": 1,
+          "titleKu": "Ez diçim bazarê",
+          "titleEn": "I am going to the market",
+          "grammarMd": "The present tense is **di-** + the verb’s present stem + a personal ending:\n\n| | çûn (go) | kirin (do) |\n|---|---|---|\n| ez | diçim | dikim |\n| tu | diçî | dikî |\n| ew | diçe | dike |\n| em, hûn, ew | diçin | dikin |\n\nThe stem is often not what the dictionary form suggests, so learn the **ez** form with each verb: *dîtin → dibînim* (see), *gotin → dibêjim* (say), *dan → didim* (give), *zanîn → dizanim* (know).\n\n**hatin** (come) has no di-: *ez têm, tu têyî, ew tê, em tên*.\n\nA place you go to takes -ê and needs no preposition: *Ez diçim bazarê.* I am going to the market.",
+          "lessons": [
+            {
+              "key": "u04s1l1",
+              "position": 1,
+              "titleKu": "Em diçin",
+              "titleEn": "We are going",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Em diçin bazarê!",
+                    "prompt": "Bozo, in his hat, sets off down the hill with the empty baskets. What does Hamo call out? “Em diçin bazarê!”",
+                    "options": [
+                      "We are coming from the market!",
+                      "We are going to the market!",
+                      "We are at the market!"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xezal jî tê.",
+                    "prompt": "Hamo looks back up the lane. Listen: who is coming? “Xezal jî tê.”",
+                    "options": [
+                      "Xezal is going home.",
+                      "Xezal is not here.",
+                      "Xezal is coming too."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "ez diçim",
+                        "right": "I am going"
+                      },
+                      {
+                        "left": "tu têyî",
+                        "right": "you are coming"
+                      },
+                      {
+                        "left": "ew dike",
+                        "right": "he or she does"
+                      },
+                      {
+                        "left": "em diçin",
+                        "right": "we are going"
+                      },
+                      {
+                        "left": "bi hev re",
+                        "right": "together"
+                      },
+                      {
+                        "left": "ber bi bajêr ve",
+                        "right": "towards the town"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “I am going.”?",
+                    "options": [
+                      "Ez diçe.",
+                      "Ez diçim.",
+                      "Ez diçî."
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hevalo çi dike?",
+                    "prompt": "Hevalo has vanished again — probably into an orchard. What does Hamo ask? “Hevalo çi dike?”",
+                    "accepted": [
+                      "What is Hevalo doing",
+                      "What does Hevalo do",
+                      "What is Hevalo up to",
+                      "What's Hevalo doing",
+                      "What's Hevalo up to"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “I am going to the market.”",
+                    "accepted": [
+                      "Ez diçim bazarê.",
+                      "Ez diçim bazarê"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo takes your arm at the gate. Type what he says.",
+                    "accepted": [
+                      "Em bi hev re diçin.",
+                      "Em bi hev re diçin"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu jî têyî?",
+                    "prompt": "Hamo turns to you with the baskets. What is he asking? “Tu jî têyî?”",
+                    "options": [
+                      "Are you going home?",
+                      "Are you hungry too?",
+                      "Are you coming too?"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Answer Hamo with the whole sentence: “Erê, ez jî …!” (Yes, I am coming too!)",
+                    "accepted": [
+                      "Erê, ez jî têm!",
+                      "Erê, ez jî têm",
+                      "Erê ez jî têm"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Xezal: “We are going towards the town.”",
+                    "accepted": [
+                      "Em ber bi bajêr ve diçin.",
+                      "Em ber bi bajêr ve diçin"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hûn çi dikin?",
+                    "prompt": "Ferhad calls down from his roof as you all pass, and Hamo repeats it for you. What is the question? “Hûn çi dikin?”",
+                    "options": [
+                      "Where are you going?",
+                      "What do you want?",
+                      "What are you doing?"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo answers Ferhad. Type what he says.",
+                    "accepted": [
+                      "Em diçin bazarê, ber bi bajêr ve.",
+                      "Em diçin bazarê, ber bi bajêr ve",
+                      "Em diçin bazarê ber bi bajêr ve"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hevalo hops past you. Ask him: “Where are you going?”",
+                    "accepted": [
+                      "Tu diçî ku derê?",
+                      "Tu diçî ku derê",
+                      "Tu ku derê diçî?",
+                      "Tu ku derê diçî",
+                      "Tu diçî ku?",
+                      "Tu diçî ku"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Say it with everyone, ears up like Hevalo’s: “We are going to the market together!”",
+                    "reference": "Em bi hev re diçin bazarê!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hevalo asks “Bozo jî tê?”. Bozo is plodding right behind you with the baskets. What do you answer?",
+                    "options": [
+                      "Erê, ew jî tê.",
+                      "Erê, ez jî têm.",
+                      "Na, ew diçe malê."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s1l2",
+              "position": 2,
+              "titleKu": "Ez dibînim",
+              "titleEn": "I see",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez çemê Sêvanê dibînim.",
+                    "prompt": "Halfway down the hill, Hamo stops and shades his eyes. What does he say? “Ez çemê Sêvanê dibînim.”",
+                    "options": [
+                      "I can hear the river of Sêvan.",
+                      "I know the river of Sêvan.",
+                      "I can see the river of Sêvan."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "dibînim",
+                        "right": "I see"
+                      },
+                      {
+                        "left": "dibêjim",
+                        "right": "I say"
+                      },
+                      {
+                        "left": "dizanim",
+                        "right": "I know"
+                      },
+                      {
+                        "left": "dinêrim",
+                        "right": "I look"
+                      },
+                      {
+                        "left": "diaxivim",
+                        "right": "I speak"
+                      },
+                      {
+                        "left": "deng",
+                        "right": "voice, sound"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo li kulîlkan dinêre.",
+                    "prompt": "Bozo has stopped again. Listen: what is he doing? “Bozo li kulîlkan dinêre.”",
+                    "options": [
+                      "Bozo is eating the flowers.",
+                      "Bozo is looking at the flowers.",
+                      "Bozo is looking at the river."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “She knows.”?",
+                    "options": [
+                      "Ew dizanim.",
+                      "Ew zane.",
+                      "Ew dizane."
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Dengê Hamo bilind e, ew gelek diaxive!",
+                    "prompt": "Xezal rolls her eyes and whispers to you. What does she say? “Dengê Hamo bilind e, ew gelek diaxive!”",
+                    "accepted": [
+                      "Hamo’s voice is loud, he talks a lot",
+                      "Hamo's voice is loud, he talks a lot",
+                      "Hamo's voice is loud and he talks a lot",
+                      "Hamo's voice is loud, he speaks a lot",
+                      "Hamo has a loud voice and he talks a lot"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Ask Xezal: “What do you see?”",
+                    "accepted": [
+                      "Tu çi dibînî?",
+                      "Tu çi dibînî"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo describes the view. Type what he says.",
+                    "accepted": [
+                      "Ez çiyayekî bilind û gundekî biçûk dibînim.",
+                      "Ez çiyayekî bilind û gundekî biçûk dibînim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo asks “Tu kurdî dizanî?”. Write the whole answer: “Erê, ez hinek kurdî ….” (Yes, I know a little Kurdish.)",
+                    "accepted": [
+                      "Erê, ez hinek kurdî dizanim.",
+                      "Erê, ez hinek kurdî dizanim",
+                      "Erê ez hinek kurdî dizanim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hamo dibêje: ev çem kûr e.",
+                    "prompt": "Xezal translates Hamo for Hevalo. Listen: what does Hamo say about the river? “Hamo dibêje: ev çem kûr e.”",
+                    "options": [
+                      "Hamo says the river is long.",
+                      "Hamo says the river is deep.",
+                      "Hamo says the river is cold."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “Bozo is looking at the flowers.”",
+                    "accepted": [
+                      "Bozo li kulîlkan dinêre.",
+                      "Bozo li kulîlkan dinêre"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Dengê çem xweş e.",
+                    "prompt": "Listen: what does Hamo like so much? “Dengê çem xweş e.”",
+                    "options": [
+                      "The sound of the river",
+                      "The colour of the river",
+                      "The water of the river"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Em bi kurdî diaxivin.",
+                    "prompt": "A woman with a basket of eggs greets you on the road. What does Hamo tell her proudly? “Em bi kurdî diaxivin.”",
+                    "accepted": [
+                      "We speak Kurdish",
+                      "We are speaking Kurdish",
+                      "We're speaking Kurdish"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo bends down to his donkey. Type what he says.",
+                    "accepted": [
+                      "Tu çi dibêjî, Bozo?",
+                      "Tu çi dibêjî, Bozo",
+                      "Tu çi dibêjî Bozo"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Tell the woman with the eggs about yourself: “I know a little Kurdish.”",
+                    "reference": "Ez hinek kurdî dizanim.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo asks Bozo something, and Bozo just looks at a flower. Which sentence fits?",
+                    "options": [
+                      "Bozo gelek diaxive.",
+                      "Bozo li kulîlkê dinêre û bêdeng e.",
+                      "Bozo dibêje: «Erê!»"
+                    ],
+                    "correctIndex": 1
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s1l3",
+              "position": 3,
+              "titleKu": "Bazar mezin e",
+              "titleEn": "The market is big",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev firoşkar penîr difiroşe.",
+                    "prompt": "Hamo nods at a stall stacked with white rounds. What does he tell you? “Ev firoşkar penîr difiroşe.”",
+                    "options": [
+                      "This seller sells cheese.",
+                      "This seller buys cheese.",
+                      "This seller makes bread."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "firoşkar",
+                        "right": "seller"
+                      },
+                      {
+                        "left": "dikirim",
+                        "right": "I buy"
+                      },
+                      {
+                        "left": "difiroşim",
+                        "right": "I sell"
+                      },
+                      {
+                        "left": "didim",
+                        "right": "I give"
+                      },
+                      {
+                        "left": "digerim",
+                        "right": "I walk around"
+                      },
+                      {
+                        "left": "li sêvan digerim",
+                        "right": "I am looking for apples"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Mîrza fêkî difiroşe.",
+                    "prompt": "Hamo spots an old friend behind a mountain of fruit. Listen: what does Mîrza sell? “Mîrza fêkî difiroşe.”",
+                    "options": [
+                      "Cheese",
+                      "Bread",
+                      "Fruit"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu04s1l3a",
+                    "title": "Bazar mezin e",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Bazar mezin e! Dengê bazarê xweş e.",
+                        "en": "The market is big! The sound of the market is lovely."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, kî çi difiroşe?",
+                        "en": "Uncle, who sells what?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ev firoşkar hêk difiroşe, ew firoşkar goşt difiroşe.",
+                        "en": "This seller sells eggs, that seller sells meat."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Û Mîrza fêkî difiroşe! Mîrza, birayê min!",
+                        "en": "And Mîrza sells fruit! Mîrza, my brother!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Hevalo, tu li çi digerî?",
+                        "en": "Hevalo, what are you looking for?"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Ez tenê li sêvan dinêrim!",
+                        "en": "I am only looking at the apples!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Tenê dinêrî? Baş e…",
+                        "en": "Only looking? All right…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ez ji Mîrza sêv dikirim. Ez pere didim!",
+                        "en": "I am buying apples from Mîrza. I am paying!"
+                      }
+                    ],
+                    "prompt": "What does Hevalo say he is doing?",
+                    "options": [
+                      "Only looking at the apples",
+                      "Buying apples",
+                      "Selling apples"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ez tenê li sêvan dinêrim!",
+                    "prompt": "Hevalo’s nose is deep in Mîrza’s apple crate. What does he say? “Ez tenê li sêvan dinêrim!”",
+                    "accepted": [
+                      "I am only looking at the apples",
+                      "I am just looking at the apples",
+                      "I am only looking at apples",
+                      "I'm only looking at the apples",
+                      "I'm just looking at the apples",
+                      "I'm only looking at apples"
+                    ],
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “We are buying bread.”?",
+                    "options": [
+                      "Em nan dikirim.",
+                      "Em nan dikire.",
+                      "Em nan dikirin."
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “Mîrza sells fruit.”",
+                    "accepted": [
+                      "Mîrza fêkî difiroşe.",
+                      "Mîrza fêkî difiroşe"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo walks you along the stalls. Type what he says.",
+                    "accepted": [
+                      "Ev jin hêk difiroşe, ew mêr goşt difiroşe.",
+                      "Ev jin hêk difiroşe, ew mêr goşt difiroşe",
+                      "Ev jin hêk difiroşe ew mêr goşt difiroşe"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Xezal asks what you are doing at the book stall. Write the whole answer: “Ez li pirtûkan ….” (I am looking for books.)",
+                    "accepted": [
+                      "Ez li pirtûkan digerim.",
+                      "Ez li pirtûkan digerim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hamo pere dide, Mîrza sêv dide.",
+                    "prompt": "You watch the two old friends at the stall. What happens? “Hamo pere dide, Mîrza sêv dide.”",
+                    "accepted": [
+                      "Hamo gives money, Mîrza gives apples",
+                      "Hamo gives the money, Mîrza gives the apples",
+                      "Hamo gives money and Mîrza gives apples",
+                      "Hamo pays and Mîrza gives apples"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu çi dikirî?",
+                    "prompt": "A seller calls out to you, and Hamo repeats it slowly. What is the question? “Tu çi dikirî?”",
+                    "options": [
+                      "What are you selling?",
+                      "What are you buying?",
+                      "What are you doing?"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell the seller: “I am buying cheese and bread.”",
+                    "accepted": [
+                      "Ez penîr û nan dikirim.",
+                      "Ez penîr û nan dikirim",
+                      "Ez nan û penîr dikirim.",
+                      "Ez nan û penîr dikirim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo throws his arms round Mîrza like a long-lost brother. Type what he says.",
+                    "accepted": [
+                      "Mîrza, birayê min!",
+                      "Mîrza, birayê min",
+                      "Mîrza birayê min"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Ask Hamo the way Xezal does: “Who sells what?”",
+                    "reference": "Kî çi difiroşe?",
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Mîrza looks at Hevalo, nose-deep in his apples, then at Hamo. What would Hamo say?",
+                    "options": [
+                      "Ew sêv difiroşe.",
+                      "Ew ji Amedê tê.",
+                      "Ew hevalê me ye. Ew tenê dinêre!"
+                    ],
+                    "correctIndex": 2
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s1l4",
+              "position": 4,
+              "titleKu": "Deynê kevn",
+              "titleEn": "The old debt",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Mîrza hîn li bazarê dixebite.",
+                    "prompt": "Over glasses of tea, Hamo tells you about his old friend. What does he say? “Mîrza hîn li bazarê dixebite.”",
+                    "options": [
+                      "Mîrza no longer works at the market.",
+                      "Mîrza still works at the market.",
+                      "Mîrza still lives in the village."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "deyn",
+                        "right": "debt"
+                      },
+                      {
+                        "left": "zebeş",
+                        "right": "watermelon"
+                      },
+                      {
+                        "left": "hez dikim",
+                        "right": "I like"
+                      },
+                      {
+                        "left": "dixebitim",
+                        "right": "I work"
+                      },
+                      {
+                        "left": "hîn",
+                        "right": "still, yet"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez ji çaya Mîrza hez dikim.",
+                    "prompt": "Hamo sips and sighs happily. What does he say? “Ez ji çaya Mîrza hez dikim.”",
+                    "options": [
+                      "I love Mîrza’s tea.",
+                      "I make Mîrza’s tea.",
+                      "I want Mîrza’s tea."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu04s1l4a",
+                    "title": "Deynê kevn",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Ez û Mîrza heval in. Ew hîn li vir dixebite!",
+                        "en": "Mîrza and I are friends. He still works here!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, Mîrza tiştekî dibêje…",
+                        "en": "Uncle, Mîrza is saying something…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Çi dibêje?",
+                        "en": "What is he saying?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew dibêje: «Hamo, deynê min li ser te ye!»",
+                        "en": "He says: “Hamo, you owe me!”"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Deyn? Kîjan deyn?",
+                        "en": "A debt? What debt?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ji bo zebeşekî. Zebeşekî mezin!",
+                        "en": "For a watermelon. A big watermelon!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Zebeş?! Ew zebeş bîst salî ye!",
+                        "en": "A watermelon?! That watermelon is twenty years old!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Lê deyn hîn deyn e, xalo!",
+                        "en": "But a debt is still a debt, uncle!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baş e, baş e. Ez pere didim!",
+                        "en": "Fine, fine. I am paying!"
+                      }
+                    ],
+                    "prompt": "What does Mîrza say Hamo owes him for?",
+                    "options": [
+                      "A copper teapot",
+                      "A watermelon from twenty years ago",
+                      "Some apples, today"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ew zebeş bîst salî ye!",
+                    "prompt": "Hamo’s moustache quivers with outrage. What does he protest? “Ew zebeş bîst salî ye!”",
+                    "accepted": [
+                      "That watermelon is twenty years old",
+                      "That melon is twenty years old",
+                      "The watermelon is twenty years old"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “I like watermelon.”",
+                    "accepted": [
+                      "Ez ji zebeş hez dikim.",
+                      "Ez ji zebeş hez dikim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal does her best Mîrza voice. Type what she says.",
+                    "accepted": [
+                      "Deynê min li ser te ye, Hamo!",
+                      "Deynê min li ser te ye, Hamo",
+                      "Deynê min li ser te ye Hamo"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “Hevalo likes apples.”?",
+                    "options": [
+                      "Hevalo sêvan hez dike.",
+                      "Hevalo ji sêvan hez dikim.",
+                      "Hevalo ji sêvan hez dike."
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo asks where Mîrza works. Write the whole answer: “Ew li bazarê ….” (He works at the market.)",
+                    "accepted": [
+                      "Ew li bazarê dixebite.",
+                      "Ew li bazarê dixebite"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Tu hîn li Amedê yî?",
+                    "prompt": "Mîrza asks about Xezal, and Hamo passes the question on to her. What is it? “Tu hîn li Amedê yî?”",
+                    "accepted": [
+                      "Are you still in Amed",
+                      "Are you still living in Amed",
+                      "Do you still live in Amed"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Mîrza about your mornings: “We work in the orchard.”",
+                    "accepted": [
+                      "Em li baxçe dixebitin.",
+                      "Em li baxçe dixebitin"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hamo hîn ji zebeşan hez dike!",
+                    "prompt": "Xezal grins at you behind Hamo’s back. What does she whisper? “Hamo hîn ji zebeşan hez dike!”",
+                    "options": [
+                      "Hamo still loves watermelons!",
+                      "Hamo no longer likes watermelons!",
+                      "Hamo still sells watermelons!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal says it like an old proverb. Type what she says.",
+                    "accepted": [
+                      "Deyn hîn deyn e.",
+                      "Deyn hîn deyn e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Give in like Hamo, with a big sigh: “Fine, fine. I am paying!”",
+                    "reference": "Baş e, baş e. Ez pere didim!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Niha em li lîsteyê dinêrin!",
+                    "prompt": "The old debt is paid at last. Hamo pulls out his enormous list. What does he say? “Niha em li lîsteyê dinêrin!”",
+                    "options": [
+                      "Now we look at the list!",
+                      "Now we go home!",
+                      "Now we drink tea!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 2,
+          "titleKu": "Çi dixwazî?",
+          "titleEn": "What do you want?",
+          "grammarMd": "Four verbs you will use every day:\n\n- **xwestin** want: *ez dixwazim, tu dixwazî, ew dixwaze, em dixwazin*\n- **xwarin** eat: *ez dixwim, tu dixwî, ew dixwe, em dixwin*\n- **vexwarin** drink: *ez vedixwim, tu vedixwî, ew vedixwe* — the **ve-** stays in front of di-\n- **karîn** can: *ez dikarim, tu dikarî, ew dikare*\n\nThe object comes before the verb: *Ez nan dixwim.* I am eating bread. · *Tu çay vedixwî?* Are you drinking tea? · *Hevalo sêv dixwaze.* Hevalo wants an apple.\n\n**ji … hez dikim** is “I like”: *Ez ji penîr hez dikim.* I like cheese.",
+          "lessons": [
+            {
+              "key": "u04s2l1",
+              "position": 1,
+              "titleKu": "Ez dixwazim",
+              "titleEn": "I want",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez bacansor dixwazim.",
+                    "prompt": "At the vegetable stall Hamo reads from his list. What does he say? “Ez bacansor dixwazim.”",
+                    "options": [
+                      "I want potatoes.",
+                      "I want onions.",
+                      "I want tomatoes."
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "bacansor",
+                        "right": "tomato"
+                      },
+                      {
+                        "left": "kartol",
+                        "right": "potato"
+                      },
+                      {
+                        "left": "pîvaz",
+                        "right": "onion"
+                      },
+                      {
+                        "left": "dixwazim",
+                        "right": "I want"
+                      },
+                      {
+                        "left": "dixwim",
+                        "right": "I eat"
+                      },
+                      {
+                        "left": "vedixwim",
+                        "right": "I drink"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Kartol û pîvaz jî dixwazim.",
+                    "prompt": "Hamo goes on down his list. Listen: what else does he want? “Kartol û pîvaz jî dixwazim.”",
+                    "options": [
+                      "Tomatoes and apples too.",
+                      "Potatoes and onions too.",
+                      "Potatoes and tomatoes too."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “He wants an apple.”?",
+                    "options": [
+                      "Ew sêvek dixwazim.",
+                      "Ew sêvek dixwazî.",
+                      "Ew sêvek dixwaze."
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hevalo sêv dixwaze.",
+                    "prompt": "Hevalo tugs at Hamo’s sleeve. What does Hamo tell the seller? “Hevalo sêv dixwaze.”",
+                    "accepted": [
+                      "Hevalo wants an apple",
+                      "Hevalo wants apples",
+                      "Hevalo wants some apples"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “I want tomatoes and onions.”",
+                    "accepted": [
+                      "Ez bacansor û pîvaz dixwazim.",
+                      "Ez bacansor û pîvaz dixwazim",
+                      "Ez pîvaz û bacansor dixwazim.",
+                      "Ez pîvaz û bacansor dixwazim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "The seller pours everyone a glass. Type what Hamo says.",
+                    "accepted": [
+                      "Em çay vedixwin.",
+                      "Em çay vedixwin"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu çi dixwî?",
+                    "prompt": "Hamo sees Hevalo chewing. What does he ask? “Tu çi dixwî?”",
+                    "options": [
+                      "What are you eating?",
+                      "What do you want?",
+                      "What are you drinking?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Answer Hamo with the whole sentence: “Ez … dixwim.” (I am eating bread.)",
+                    "accepted": [
+                      "Ez nan dixwim.",
+                      "Ez nan dixwim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Xezal av vedixwe.",
+                    "prompt": "It is hot at the market. Listen: what is Xezal doing? “Xezal av vedixwe.”",
+                    "accepted": [
+                      "Xezal is drinking water",
+                      "Xezal drinks water"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “We drink tea.”?",
+                    "options": [
+                      "Em çay vedixwin.",
+                      "Em çay dixwin.",
+                      "Em çay vedixwim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell the seller: “We want potatoes.”",
+                    "accepted": [
+                      "Em kartol dixwazin.",
+                      "Em kartol dixwazin"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo admires the stall. Type what he says.",
+                    "accepted": [
+                      "Bacansor sor in, pîvaz spî ne.",
+                      "Bacansor sor in, pîvaz spî ne",
+                      "Bacansor sor in pîvaz spî ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Read Hamo’s list to the seller: “I want tomatoes, potatoes and onions.”",
+                    "reference": "Ez bacansor, kartol û pîvaz dixwazim.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "The seller asks you “Tu çi dixwazî?”. What do you answer?",
+                    "options": [
+                      "Ez kartol dixwaze.",
+                      "Ez kartol dixwazim.",
+                      "Ez kartol im."
+                    ],
+                    "correctIndex": 1
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s2l2",
+              "position": 2,
+              "titleKu": "Ez dikarim!",
+              "titleEn": "I can!",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xalo, ez dikarim!",
+                    "prompt": "Hamo looks at the pile of bags. Xezal rolls up her sleeves. What does she say? “Xalo, ez dikarim!”",
+                    "options": [
+                      "Uncle, I can do it!",
+                      "Uncle, I can’t!",
+                      "Uncle, I want it!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "hinar",
+                        "right": "pomegranate"
+                      },
+                      {
+                        "left": "xiyar",
+                        "right": "cucumber"
+                      },
+                      {
+                        "left": "hingiv",
+                        "right": "honey"
+                      },
+                      {
+                        "left": "şîr",
+                        "right": "milk"
+                      },
+                      {
+                        "left": "rûn",
+                        "right": "butter, oil"
+                      },
+                      {
+                        "left": "dikarim",
+                        "right": "I can"
+                      }
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Tu dikarî? Baş e!",
+                    "prompt": "Hamo strokes his moustache. Listen: what does he say? “Tu dikarî? Baş e!”",
+                    "options": [
+                      "You want it? Good!",
+                      "You know? Good!",
+                      "You can? Good!"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “She can.”?",
+                    "options": [
+                      "Ew dikare.",
+                      "Ew dikarim.",
+                      "Ew karî."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hingivê vê firoşkarê baş e.",
+                    "prompt": "Xezal tastes from a jar and nods. What does she say? “Hingivê vê firoşkarê baş e.”",
+                    "accepted": [
+                      "This seller’s honey is good",
+                      "This seller's honey is good",
+                      "The honey of this seller is good",
+                      "This woman's honey is good"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hamo: “I want honey, milk and butter.”",
+                    "accepted": [
+                      "Ez hingiv, şîr û rûn dixwazim.",
+                      "Ez hingiv, şîr û rûn dixwazim",
+                      "Ez hingiv şîr û rûn dixwazim"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal walks along the fruit stall. Type what she says.",
+                    "accepted": [
+                      "Hinar şîrîn in, xiyar kesk in.",
+                      "Hinar şîrîn in, xiyar kesk in",
+                      "Hinar şîrîn in xiyar kesk in"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hevalo jî dikare?",
+                    "prompt": "Hevalo offers to carry the honey jar. What does Xezal ask? “Hevalo jî dikare?”",
+                    "options": [
+                      "Does Hevalo want it too?",
+                      "Can Hevalo do it too?",
+                      "Is Hevalo coming too?"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Hamo asks “Tu dikarî?”. Write the whole answer: “Erê, ez …!” (Yes, I can!)",
+                    "accepted": [
+                      "Erê, ez dikarim!",
+                      "Erê, ez dikarim",
+                      "Erê ez dikarim"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ez rûn û şîr dikirim.",
+                    "prompt": "Xezal shows you her shopping. What does she say? “Ez rûn û şîr dikirim.”",
+                    "accepted": [
+                      "I am buying butter and milk",
+                      "I buy butter and milk",
+                      "I am buying oil and milk",
+                      "I am buying milk and butter",
+                      "I'm buying butter and milk",
+                      "I'm buying oil and milk",
+                      "I'm buying milk and butter"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “Xezal can, and I can too.”",
+                    "accepted": [
+                      "Xezal dikare, ez jî dikarim.",
+                      "Xezal dikare, ez jî dikarim",
+                      "Xezal dikare ez jî dikarim"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “Hamo eats cucumber with yoghurt.”?",
+                    "options": [
+                      "Hamo xiyar bi mast re dixwim.",
+                      "Hamo xiyar bi mast re vedixwe.",
+                      "Hamo xiyar bi mast re dixwe."
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal spots a basket of red pomegranates. Type what she says.",
+                    "accepted": [
+                      "Ez hinar dixwazim, xalo!",
+                      "Ez hinar dixwazim, xalo",
+                      "Ez hinar dixwazim xalo"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Say it with Xezal’s confidence: “Uncle, I can! I am clever!”",
+                    "reference": "Xalo, ez dikarim! Ez zîrek im!",
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal has five bags, the honey and the pomegranates in her arms. Hamo asks “Tu dikarî?”. What does she answer, a little out of breath?",
+                    "options": [
+                      "Erê… ez dixwim!",
+                      "Erê… ez vedixwim!",
+                      "Erê… ez dikarim!"
+                    ],
+                    "correctIndex": 2
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s2l3",
+              "position": 3,
+              "titleKu": "Li cem Mîrza",
+              "titleEn": "At Mîrza’s stall",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Kîloyek penîr, ji kerema xwe.",
+                    "prompt": "At Mîrza’s stall Hamo starts his order. What does he ask for? “Kîloyek penîr, ji kerema xwe.”",
+                    "options": [
+                      "Two kilos of cheese, please.",
+                      "A kilo of cheese, please.",
+                      "A kilo of honey, please."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "kîlo",
+                        "right": "kilo"
+                      },
+                      {
+                        "left": "teze",
+                        "right": "fresh"
+                      },
+                      {
+                        "left": "zeytûn",
+                        "right": "olive"
+                      },
+                      {
+                        "left": "birinc",
+                        "right": "rice"
+                      },
+                      {
+                        "left": "xwê",
+                        "right": "salt"
+                      },
+                      {
+                        "left": "masî",
+                        "right": "fish"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Zeytûn teze ne?",
+                    "prompt": "Hamo peers into a barrel. What does he ask Mîrza? “Zeytûn teze ne?”",
+                    "options": [
+                      "Are the olives fresh?",
+                      "Are the olives cheap?",
+                      "Are the olives green?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu04s2l3a",
+                    "title": "Li cem Mîrza",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Mîrza, kîloyek penîr û hinek hingiv, ji kerema xwe.",
+                        "en": "Mîrza, a kilo of cheese and some honey, please."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Û zeytûn jî, xalo. Zeytûn teze ne!",
+                        "en": "And olives too, uncle. The olives are fresh!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baş e. Nîv kîlo zeytûn jî.",
+                        "en": "All right. Half a kilo of olives too."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, ez hinar jî dixwazim!",
+                        "en": "Uncle, I want pomegranates too!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hinar? Baş e, du kîlo hinar.",
+                        "en": "Pomegranates? All right, two kilos of pomegranates."
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Û ez… ez tiştekî dixwazim…",
+                        "en": "And I… I want something…"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Em dizanin, Hevalo. Tu sêv dixwazî!",
+                        "en": "We know, Hevalo. You want apples!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Mîrza, spas. Çaya te jî xweş e!",
+                        "en": "Thank you, Mîrza. Your tea is lovely too!"
+                      }
+                    ],
+                    "prompt": "What does Hevalo want?",
+                    "options": [
+                      "Pomegranates",
+                      "Apples, of course",
+                      "Olives"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Masî teze ye?",
+                    "prompt": "Hamo looks at a tray of fish from the river. What does he ask? “Masî teze ye?”",
+                    "accepted": [
+                      "Is the fish fresh",
+                      "Is this fish fresh",
+                      "Are the fish fresh"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “half a kilo of rice”?",
+                    "options": [
+                      "nîv kîlo birinc",
+                      "nîvê kîlo birinc",
+                      "kîlo nîv birinc"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “A kilo of rice and some salt, please.”",
+                    "accepted": [
+                      "Kîloyek birinc û hinek xwê, ji kerema xwe.",
+                      "Kîloyek birinc û hinek xwê, ji kerema xwe",
+                      "Kîloyek birinc û hinek xwê ji kerema xwe"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo tastes an olive and closes his eyes. Type what he says.",
+                    "accepted": [
+                      "Zeytûnên Mîrza teze û xweş in.",
+                      "Zeytûnên Mîrza teze û xweş in"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Ez … zeytûn dixwazim.” (I want a kilo of olives.)",
+                    "accepted": [
+                      "Ez kîloyek zeytûn dixwazim.",
+                      "Ez kîloyek zeytûn dixwazim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xwê li ku ye?",
+                    "prompt": "Mîrza is hunting under his counter. Hamo asks for him. What is missing? “Xwê li ku ye?”",
+                    "options": [
+                      "The rice",
+                      "The salt",
+                      "The fish"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Mîrza: “We want fresh fish.”",
+                    "accepted": [
+                      "Em masiyê teze dixwazin.",
+                      "Em masiyê teze dixwazin",
+                      "Em masiyekî teze dixwazin.",
+                      "Em masiyekî teze dixwazin"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal already knows the answer. Type what she asks.",
+                    "accepted": [
+                      "Hevalo, tu jî sêv dixwazî?",
+                      "Hevalo, tu jî sêv dixwazî",
+                      "Hevalo tu jî sêv dixwazî"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ev birinc ji Mêrdînê ye.",
+                    "prompt": "Mîrza is proud of his rice. Hamo tells you where it comes from. What does he say? “Ev birinc ji Mêrdînê ye.”",
+                    "accepted": [
+                      "This rice is from Mêrdîn",
+                      "This rice comes from Mêrdîn",
+                      "This rice is from Merdin",
+                      "This rice is from Mardin"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Order at Mîrza’s stall like Hamo: “A kilo of cheese, please.”",
+                    "reference": "Kîloyek penîr, ji kerema xwe.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Mîrza holds up the honey jar and raises an eyebrow: “Hingiv jî?” What would you answer?",
+                    "options": [
+                      "Erê, nîv kîlo, ji kerema xwe.",
+                      "Erê, ez têm.",
+                      "Na, ez ji Amedê me."
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s2l4",
+              "position": 4,
+              "titleKu": "Çi dixwî?",
+              "titleEn": "What are you eating?",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Em nan û penîr dixwin, çay vedixwin.",
+                    "prompt": "Lunch on a bench at the edge of the market. Listen: what is everyone having? “Em nan û penîr dixwin, çay vedixwin.”",
+                    "options": [
+                      "Rice and fish, and water to drink",
+                      "Bread and honey, and milk to drink",
+                      "Bread and cheese, and tea to drink"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "têr",
+                        "right": "full (after eating)"
+                      },
+                      {
+                        "left": "tî",
+                        "right": "thirsty"
+                      },
+                      {
+                        "left": "qedeh",
+                        "right": "glass"
+                      },
+                      {
+                        "left": "fîncan",
+                        "right": "cup"
+                      },
+                      {
+                        "left": "kevçî",
+                        "right": "spoon"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez tî me. Qedehek av, ji kerema xwe.",
+                    "prompt": "Xezal fans herself in the heat. What does she say? “Ez tî me. Qedehek av, ji kerema xwe.”",
+                    "options": [
+                      "I’m hungry. Some bread, please.",
+                      "I’m thirsty. A glass of water, please.",
+                      "I’m full. No more water, please."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu04s2l4a",
+                    "title": "Nan û penîr",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Fermo, nan û penîr. Fîncanek çay jî.",
+                        "en": "Here you are, bread and cheese. And a cup of tea."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Spas, xalo! Kevçiyek jî, ji kerema xwe.",
+                        "en": "Thanks, uncle! A spoon too, please."
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo, tu jî nan dixwî?",
+                        "en": "Hevalo, are you having some bread too?"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Na, spas. Ez têr im.",
+                        "en": "No, thanks. I am full."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Têr? Hevalo têr e?!",
+                        "en": "Full? Hevalo is full?!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ev ne baş e… Hevalo her roj birçî ye!",
+                        "en": "This is not good… Hevalo is hungry every day!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ev çi deng e? Ev Mîrza ye!",
+                        "en": "What is that noise? It is Mîrza!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew dibêje: «Sêvên min li ku ne?!»",
+                        "en": "He is shouting: “Where are my apples?!”"
+                      }
+                    ],
+                    "prompt": "Why is it strange that Hevalo is full?",
+                    "options": [
+                      "Hevalo does not like bread",
+                      "Hevalo has no cup",
+                      "Hevalo is hungry every day"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hamo offers you more bread. Say: “I am full, thanks.”",
+                    "accepted": [
+                      "Ez têr im, spas.",
+                      "Ez têr im, spas",
+                      "Ez têr im spas"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “a cup of tea”?",
+                    "options": [
+                      "fîncanek çayek",
+                      "fîncanek çay",
+                      "çay fîncanek"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo stirs sugar into his tea. Type what he says.",
+                    "accepted": [
+                      "Kevçî di fîncanê de ye.",
+                      "Kevçî di fîncanê de ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Xezal is thirsty. Write the whole sentence: “Ez … me.” (I am thirsty.)",
+                    "accepted": [
+                      "Ez tî me.",
+                      "Ez tî me"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Qedehek av û fîncanek çay, ji kerema xwe.",
+                    "prompt": "Hamo orders for the table. What does he ask for? “Qedehek av û fîncanek çay, ji kerema xwe.”",
+                    "accepted": [
+                      "A glass of water and a cup of tea, please",
+                      "One glass of water and one cup of tea, please"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hevalo têr e. Ev ne baş e…",
+                    "prompt": "Hamo strokes his moustache and frowns at the deer. What does he say? “Hevalo têr e. Ev ne baş e…”",
+                    "options": [
+                      "Hevalo is hungry. This is good…",
+                      "Hevalo is thirsty. This is not good…",
+                      "Hevalo is full. This is not good…"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Ask Hevalo: “Are you thirsty?”",
+                    "accepted": [
+                      "Tu tî yî?",
+                      "Tu tî yî"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal shares out the lunch. Type what she says.",
+                    "accepted": [
+                      "Ez nan dixwim, tu çay vedixwî.",
+                      "Ez nan dixwim, tu çay vedixwî",
+                      "Ez nan dixwim tu çay vedixwî"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which sentence says “Hamo drinks his tea with sugar.”?",
+                    "options": [
+                      "Hamo çaya xwe bi şekir dixwe.",
+                      "Hamo çaya xwe bi şekir vedixwim.",
+                      "Hamo çaya xwe bi şekir vedixwe."
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Thank Hamo after lunch: “I am full, thanks. The food is very good!”",
+                    "reference": "Ez têr im, spas. Xwarin gelek xweş e!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sêvên min li ku ne?!",
+                    "prompt": "A shout from the stalls: Mîrza, with both hands in the air. Hamo repeats it for you. What is Mîrza shouting? “Sêvên min li ku ne?!”",
+                    "options": [
+                      "Who wants my apples?!",
+                      "Where are my apples?!",
+                      "My apples are cheap!"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 3,
+          "titleKu": "Bi çend e?",
+          "titleEn": "How much is it?",
+          "grammarMd": "The tens: *bîst* 20 · *sî* 30 · *çil* 40 · *pêncî* 50 · *şêst* 60 · *heftê* 70 · *heştê* 80 · *not* 90 · *sed* 100 · *hezar* 1000.\n\nJoin the parts with **û**, biggest first: *bîst û yek* 21 · *sed û pêncî* 150 · *du sed û heştê û pênc* 285 · *hezar û du sed* 1200.\n\nFor prices use **bi** (for): *Ev bi çend e?* How much is this? · *Kîloyek bi pêncî ye.* It is fifty a kilo. · *Ez vê bi sî dikirim.* I’ll buy it for thirty.\n\n*biha* expensive · *erzan* cheap · *Pir biha ye!* It is too expensive!",
+          "lessons": [
+            {
+              "key": "u04s3l1",
+              "position": 1,
+              "titleKu": "Sî, çil, pêncî",
+              "titleEn": "Thirty, forty, fifty",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sêvên te li bin maseyê ne, Mîrza!",
+                    "prompt": "Hamo hurries to Mîrza’s stall and looks around. What does he find? “Sêvên te li bin maseyê ne, Mîrza!”",
+                    "options": [
+                      "Mîrza’s apples are under the table.",
+                      "Mîrza’s apples are in Hevalo’s mouth.",
+                      "Mîrza’s apples are gone."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "sî",
+                        "right": "30"
+                      },
+                      {
+                        "left": "çil",
+                        "right": "40"
+                      },
+                      {
+                        "left": "pêncî",
+                        "right": "50"
+                      },
+                      {
+                        "left": "şêst",
+                        "right": "60"
+                      },
+                      {
+                        "left": "heftê",
+                        "right": "70"
+                      },
+                      {
+                        "left": "heştê",
+                        "right": "80"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Penîr bi çend e?",
+                    "prompt": "Hamo points at a round of cheese. What is he asking? “Penîr bi çend e?”",
+                    "options": [
+                      "How many cheeses are there?",
+                      "Is the cheese fresh?",
+                      "How much is the cheese?"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Pêncî?! Na, na, na!",
+                    "prompt": "The seller answers, and Hamo clutches his moustache. What does he say? “Pêncî?! Na, na, na!”",
+                    "options": [
+                      "Fifty?! No, no, no!",
+                      "Fifteen?! No, no, no!",
+                      "Five?! No, no, no!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "A seller calls out her price, and Hamo repeats it in disbelief. Type what he says.",
+                    "accepted": [
+                      "Hingiv bi heştê ye.",
+                      "Hingiv bi heştê ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which number is “heftê û pênc”?",
+                    "options": [
+                      "57",
+                      "70",
+                      "75"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “How much is the honey?”",
+                    "accepted": [
+                      "Hingiv bi çend e?",
+                      "Hingiv bi çend e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Kîloyek sêv bi sî ye.",
+                    "prompt": "Mîrza tells you his apple price. What is it? “Kîloyek sêv bi sî ye.”",
+                    "accepted": [
+                      "A kilo of apples is thirty",
+                      "One kilo of apples is thirty",
+                      "Apples are thirty a kilo",
+                      "A kilo of apples costs thirty"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the price in words: “Zeytûn bi … e.” (The olives are sixty.)",
+                    "accepted": [
+                      "Zeytûn bi şêst e.",
+                      "Zeytûn bi şêst e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo reads three price boards in a row. Type what he says.",
+                    "accepted": [
+                      "Çil, pêncî, şêst… Ev bazar e an zêr e?!",
+                      "Çil, pêncî, şêst… Ev bazar e an zêr e",
+                      "Çil pêncî şêst… Ev bazar e an zêr e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo hears “heştê” and gasps. Which number is it?",
+                    "options": [
+                      "18",
+                      "80",
+                      "70"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Ask the seller: “How much are the pomegranates?”",
+                    "accepted": [
+                      "Hinar bi çend in?",
+                      "Hinar bi çend in",
+                      "Hinar bi çend e?",
+                      "Hinar bi çend e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Point at the honey and ask like a local: “How much is it?”",
+                    "reference": "Bi çend e?",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bacansor bi sî û pênc e.",
+                    "prompt": "Listen: how much are the tomatoes? “Bacansor bi sî û pênc e.”",
+                    "options": [
+                      "53",
+                      "35",
+                      "25"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "The seller says “Çay bi heftê ye.” What does Hamo answer, shocked as ever?",
+                    "options": [
+                      "Heftê? Baş e, spas!",
+                      "Çay? Ez ne tî me.",
+                      "Heftê?! Na, na, na!"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hamo the price of the bread: “The bread is forty.”",
+                    "accepted": [
+                      "Nan bi çil e.",
+                      "Nan bi çil e"
+                    ],
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s3l2",
+              "position": 2,
+              "titleKu": "Sed û hezar",
+              "titleEn": "A hundred and a thousand",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hemû bi hev re hezar û sed e.",
+                    "prompt": "Xezal taps away at her phone, then looks up. What does she announce? “Hemû bi hev re hezar û sed e.”",
+                    "options": [
+                      "All together it is one hundred and ten.",
+                      "All together it is one thousand one hundred.",
+                      "All together it is one thousand and ten."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "not",
+                        "right": "90"
+                      },
+                      {
+                        "left": "sed",
+                        "right": "100"
+                      },
+                      {
+                        "left": "hezar",
+                        "right": "1000"
+                      },
+                      {
+                        "left": "biha",
+                        "right": "expensive"
+                      },
+                      {
+                        "left": "erzan",
+                        "right": "cheap"
+                      },
+                      {
+                        "left": "nirx",
+                        "right": "price"
+                      }
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hezar?! Ez nexweş im!",
+                    "prompt": "Hamo sways and sinks into Bozo’s baskets. What does he moan? “Hezar?! Ez nexweş im!”",
+                    "options": [
+                      "A thousand?! I feel ill!",
+                      "A hundred?! I feel ill!",
+                      "A thousand?! I am hungry!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "How do you say 150?",
+                    "options": [
+                      "pêncî û sed",
+                      "sed û pêncî",
+                      "sed û pênc"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hingiv biha ye, lê kartol erzan in.",
+                    "prompt": "Xezal reads through the list. What does she say? “Hingiv biha ye, lê kartol erzan in.”",
+                    "accepted": [
+                      "Honey is expensive, but potatoes are cheap",
+                      "The honey is expensive, but the potatoes are cheap"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “It is very expensive!”",
+                    "accepted": [
+                      "Pir biha ye!",
+                      "Pir biha ye",
+                      "Gelek biha ye!",
+                      "Gelek biha ye",
+                      "Ew pir biha ye!",
+                      "Ew pir biha ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal checks the cheese on her list. Type what she says.",
+                    "accepted": [
+                      "Nirxê penîr not e.",
+                      "Nirxê penîr not e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which number is “not û pênc”?",
+                    "options": [
+                      "59",
+                      "90",
+                      "95"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence in words: “Hemû bi … e.” (All of it comes to a thousand.)",
+                    "accepted": [
+                      "Hemû bi hezar e.",
+                      "Hemû bi hezar e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Li bazarê sêv erzan in.",
+                    "prompt": "Hevalo is very interested in this piece of news. What does Xezal say? “Li bazarê sêv erzan in.”",
+                    "accepted": [
+                      "Apples are cheap at the market",
+                      "At the market apples are cheap",
+                      "The apples at the market are cheap",
+                      "At the market the apples are cheap"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Nirxê hingiv sed û heştê ye.",
+                    "prompt": "Listen: how much is the honey? “Nirxê hingiv sed û heştê ye.”",
+                    "options": [
+                      "108",
+                      "80",
+                      "180"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Hamo: “It is not expensive, it is cheap!”",
+                    "accepted": [
+                      "Ne biha ye, erzan e!",
+                      "Ne biha ye, erzan e",
+                      "Ew ne biha ye, erzan e!",
+                      "Ew ne biha ye, erzan e",
+                      "Ne biha ye erzan e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal leans over the baskets where her uncle is lying. Type what she says.",
+                    "accepted": [
+                      "Xalo, tu baş î? Ev tenê hezar e!",
+                      "Xalo, tu baş î? Ev tenê hezar e",
+                      "Xalo tu baş î? Ev tenê hezar e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Complain about the prices like Hamo: “It is too expensive!”",
+                    "reference": "Pir biha ye!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "A seller asks “Sed û pêncî” for a small bag of walnuts. What would Hamo answer?",
+                    "options": [
+                      "Pir biha ye! Bi sed.",
+                      "Pir erzan e! Bi du sed.",
+                      "Spas, ez têr im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which number is “du sed û pêncî”?",
+                    "options": [
+                      "205",
+                      "250",
+                      "150"
+                    ],
+                    "correctIndex": 1
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s3l3",
+              "position": 3,
+              "titleKu": "Bazarkirin",
+              "titleEn": "Haggling",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev çaydank bi çend e, Mîrza?",
+                    "prompt": "Hamo lifts a shining copper teapot from Mîrza’s stall. What does he ask? “Ev çaydank bi çend e, Mîrza?”",
+                    "options": [
+                      "Is this teapot yours, Mîrza?",
+                      "How old is this teapot, Mîrza?",
+                      "How much is this teapot, Mîrza?"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "çaydank",
+                        "right": "teapot"
+                      },
+                      {
+                        "left": "kêm",
+                        "right": "less, too little"
+                      },
+                      {
+                        "left": "bes",
+                        "right": "enough"
+                      },
+                      {
+                        "left": "temam",
+                        "right": "OK"
+                      },
+                      {
+                        "left": "mixabin",
+                        "right": "unfortunately"
+                      },
+                      {
+                        "left": "zêde",
+                        "right": "too much"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu04s3l3a",
+                    "title": "Bazarkirin",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Mîrza, ev çaydank bi çend e?",
+                        "en": "Mîrza, how much is this teapot?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew dibêje: «Bi sed û pêncî.»",
+                        "en": "He says: “A hundred and fifty.”"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Sed û pêncî? Zêde ye! Bi sed.",
+                        "en": "A hundred and fifty? That is too much! A hundred."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew dibêje: «Na, mixabin. Ev kêm e.»",
+                        "en": "He says: “No, sorry. That is too little.”"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Sed û deh? Ji kerema xwe, Mîrza!",
+                        "en": "A hundred and ten? Please, Mîrza!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, bes e. Ez dikarim!",
+                        "en": "Uncle, that is enough. I can do this!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Mîrza, ev çaydank kevn e. Bi heştê?",
+                        "en": "Mîrza, this teapot is old. Eighty?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Heştê?! Xezo!",
+                        "en": "Eighty?! Xezo!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Ew dibêje: «Temam, temam! Bi heştê.»",
+                        "en": "He says: “OK, OK! Eighty.”"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Xezo… tu pir zîrek î!",
+                        "en": "Xezo… you are very clever!"
+                      }
+                    ],
+                    "prompt": "How much does the teapot cost in the end?",
+                    "options": [
+                      "A hundred",
+                      "Eighty",
+                      "A hundred and fifty"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Zêde ye! Bi sed.",
+                    "prompt": "Hamo shakes his head at Mîrza’s price. What does he say? “Zêde ye! Bi sed.”",
+                    "accepted": [
+                      "It is too much! For a hundred",
+                      "That is too much! A hundred",
+                      "Too much! For a hundred",
+                      "Too much! A hundred",
+                      "It's too much! For a hundred",
+                      "That's too much! A hundred"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Na, mixabin. Ev kêm e.",
+                    "prompt": "Xezal passes on Mîrza’s answer. What does he say? “Na, mixabin. Ev kêm e.”",
+                    "options": [
+                      "No, sorry. That is too little.",
+                      "Yes, fine. That is enough.",
+                      "No, sorry. That is too much."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Agree with Mîrza: “OK, for eighty!”",
+                    "accepted": [
+                      "Temam, bi heştê!",
+                      "Temam, bi heştê",
+                      "Temam bi heştê"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal steps in front of her uncle. Type what she says.",
+                    "accepted": [
+                      "Xalo, bes e. Ez dikarim!",
+                      "Xalo, bes e. Ez dikarim",
+                      "Xalo bes e. Ez dikarim"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "The seller wants far too much. Which sentence says so?",
+                    "options": [
+                      "Ev zêde ye!",
+                      "Ev kêm e!",
+                      "Ev temam e!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “… e, spas.” (That is enough, thanks.)",
+                    "accepted": [
+                      "Bes e, spas.",
+                      "Bes e, spas",
+                      "Bes e spas"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Mixabin, li vê dikanê çaydank tune.",
+                    "prompt": "Hamo tries the shop next door first. What does he tell you? “Mixabin, li vê dikanê çaydank tune.”",
+                    "accepted": [
+                      "Unfortunately, there are no teapots in this shop",
+                      "Unfortunately there is no teapot in this shop",
+                      "Sadly, there are no teapots in this shop",
+                      "Unfortunately this shop has no teapots",
+                      "Unfortunately there's no teapot in this shop"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Haggle like Hamo: “A hundred and fifty is too much!”",
+                    "accepted": [
+                      "Sed û pêncî zêde ye!",
+                      "Sed û pêncî zêde ye"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Mîrza throws up his hands and laughs. Xezal repeats his words for you. Type them.",
+                    "accepted": [
+                      "Temam, temam! Bi heştê.",
+                      "Temam, temam! Bi heştê",
+                      "Temam temam! Bi heştê"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Xezo, tu pir zîrek î!",
+                    "prompt": "Hamo carries the teapot away, beaming. What does he tell his niece? “Xezo, tu pir zîrek î!”",
+                    "options": [
+                      "Xezo, you are very cheeky!",
+                      "Xezo, you are very tired!",
+                      "Xezo, you are very clever!"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Be Hamo at the stall: “A hundred and fifty? That is too much!”",
+                    "reference": "Sed û pêncî? Zêde ye!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Hamo offers “Bi sed!”, and Mîrza shakes his head. What could Mîrza say?",
+                    "options": [
+                      "Erê, ev zêde ye.",
+                      "Na, mixabin. Ev kêm e.",
+                      "Bes e, spas."
+                    ],
+                    "correctIndex": 1
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s3l4",
+              "position": 4,
+              "titleKu": "Hesab",
+              "titleEn": "The bill",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Mîrza, hesab çend e?",
+                    "prompt": "Hamo pulls out his purse at Mîrza’s stall. What does he ask? “Mîrza, hesab çend e?”",
+                    "options": [
+                      "Mîrza, how much is the bill?",
+                      "Mîrza, how much is the teapot?",
+                      "Mîrza, where is the bill?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "hesab",
+                        "right": "bill"
+                      },
+                      {
+                        "left": "dîsa",
+                        "right": "again"
+                      },
+                      {
+                        "left": "paşê",
+                        "right": "then, later"
+                      },
+                      {
+                        "left": "pêşî",
+                        "right": "first"
+                      },
+                      {
+                        "left": "hejmar",
+                        "right": "number"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Pêşî penîr, paşê hingiv, paşê çaydank.",
+                    "prompt": "Hamo goes down the bill line by line. Listen: in what order? “Pêşî penîr, paşê hingiv, paşê çaydank.”",
+                    "options": [
+                      "First the honey, then the cheese, then the teapot",
+                      "First the teapot, then the cheese, then the honey",
+                      "First the cheese, then the honey, then the teapot"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hamo dîsa li pereyan dinêre.",
+                    "prompt": "Mîrza has given Hamo his change. Xezal giggles. What is Hamo doing? “Hamo dîsa li pereyan dinêre.”",
+                    "accepted": [
+                      "Hamo is looking at the money again",
+                      "Hamo looks at the money again",
+                      "Hamo is checking the money again"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “First tea, then the bill.”",
+                    "accepted": [
+                      "Pêşî çay, paşê hesab.",
+                      "Pêşî çay, paşê hesab",
+                      "Pêşî çay paşê hesab"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo counts his change for the third time. Type what he says.",
+                    "accepted": [
+                      "Yek, du, sê… Hesab rast e!",
+                      "Yek, du, sê… Hesab rast e",
+                      "Yek du sê… Hesab rast e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu04s3l4a",
+                    "title": "Hesab",
+                    "speakers": [
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Hesab sed û not e. Fermo, Mîrza.",
+                        "en": "The bill is a hundred and ninety. Here you are, Mîrza."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, tu dîsa li pereyan dinêrî?",
+                        "en": "Uncle, are you looking at the money again?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê. Pêşî ez dinêrim, paşê ez dizanim.",
+                        "en": "Yes. First I look, then I know."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo, hejmar rast e!",
+                        "en": "Uncle, the number is right!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Baş e. Paşê em diçin malê.",
+                        "en": "Good. Then we go home."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Xalo! Mîrza li sindoqa sêvan dinêre…",
+                        "en": "Uncle! Mîrza is looking at the apple crate…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Çi heye? Sindoq…",
+                        "en": "What is it? The crate…"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Di sindoqê de sêv tune!",
+                        "en": "There are no apples in the crate!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Dîsa?! Sêvên Mîrza dîsa li ku ne?!",
+                        "en": "Again?! Where are Mîrza’s apples this time?!"
+                      }
+                    ],
+                    "prompt": "What does Mîrza find at the end?",
+                    "options": [
+                      "His apple crate is empty",
+                      "Hamo has paid too little",
+                      "His teapot is gone"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one means “first … then …”?",
+                    "options": [
+                      "paşê … pêşî …",
+                      "pêşî … paşê …",
+                      "dîsa … dîsa …"
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Hamo … li pereyan dinêre.” (Hamo is looking at the money again.)",
+                    "accepted": [
+                      "Hamo dîsa li pereyan dinêre.",
+                      "Hamo dîsa li pereyan dinêre"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hejmara telefona te çi ye?",
+                    "prompt": "Mîrza wants to send Xezal a photo of the teapot. Hamo asks her for him. What is the question? “Hejmara telefona te çi ye?”",
+                    "accepted": [
+                      "What is your phone number",
+                      "What is your telephone number",
+                      "What number is your phone",
+                      "What's your phone number",
+                      "What's your telephone number"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Mîrza: “The bill is right.”",
+                    "accepted": [
+                      "Hesab rast e.",
+                      "Hesab rast e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo has a plan for the afternoon. Type what he says.",
+                    "accepted": [
+                      "Pêşî em çay vedixwin, paşê em diçin malê.",
+                      "Pêşî em çay vedixwin, paşê em diçin malê",
+                      "Pêşî em çay vedixwin paşê em diçin malê"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Di sindoqê de sêv tune!",
+                    "prompt": "Mîrza has gone pale. Xezal looks into his crate. What does she say? “Di sindoqê de sêv tune!”",
+                    "options": [
+                      "There are no apples in the crate!",
+                      "There are many apples in the crate!",
+                      "There is no money in the crate!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Gasp with Hamo: “Again?! Where are Mîrza’s apples this time?!”",
+                    "reference": "Dîsa?! Sêvên Mîrza dîsa li ku ne?!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Slowly, everyone turns to look at the one friend whose belly is very, very round. Who is it?",
+                    "options": [
+                      "Bozo",
+                      "Xezal",
+                      "Hevalo"
+                    ],
+                    "correctIndex": 2
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "position": 4,
+          "titleKu": "Na, naxwazim",
+          "titleEn": "No, I don’t want to",
+          "grammarMd": "To say *not*, put **na-** where **di-** was:\n\n- *Ez diçim → Ez naçim.* I am not going.\n- *Ew dixwe → Ew naxwe.* He isn’t eating.\n- *Tu têyî → Tu nayî.* You aren’t coming. (hatin: *nayêm, nayî, nayê, nayên*)\n- *vedixwim → venaxwim* — ve- stays in front.\n\nTwo verbs take **ni-**: *nizanim* I don’t know · *nikarim* I can’t.\n\nWith the copula use **ne**: *Ez ne birçî me.* I am not hungry.\n\n**qet** is *(not) at all, never*: *Ez qet nizanim!* I have no idea!",
+          "lessons": [
+            {
+              "key": "u04s4l1",
+              "position": 1,
+              "titleKu": "Ez nizanim",
+              "titleEn": "I don’t know",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ez nizanim! Ez qet nizanim!",
+                    "prompt": "Mîrza asks Hevalo about the apples. Hevalo answers — very, very quickly. What does he say? “Ez nizanim! Ez qet nizanim!”",
+                    "options": [
+                      "I know! I know everything!",
+                      "I don’t know! I have no idea at all!",
+                      "I don’t want any! Not at all!"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "nizanim",
+                        "right": "I don’t know"
+                      },
+                      {
+                        "left": "naxwim",
+                        "right": "I am not eating"
+                      },
+                      {
+                        "left": "qet",
+                        "right": "not at all, never"
+                      },
+                      {
+                        "left": "rastî",
+                        "right": "truth"
+                      },
+                      {
+                        "left": "derew",
+                        "right": "lie"
+                      },
+                      {
+                        "left": "sûc",
+                        "right": "fault"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo tiştekî nabêje.",
+                    "prompt": "Mîrza turns to the donkey. Bozo looks the other way. What does Hamo say? “Bozo tiştekî nabêje.”",
+                    "options": [
+                      "Bozo says nothing.",
+                      "Bozo knows nothing.",
+                      "Bozo eats nothing."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “I don’t know.”?",
+                    "options": [
+                      "Ez nazanim.",
+                      "Ez nizanim.",
+                      "Ez ne dizanim."
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ne sûcê min e!",
+                    "prompt": "Hevalo’s ears go flat. What does he say? “Ne sûcê min e!”",
+                    "accepted": [
+                      "It is not my fault",
+                      "That is not my fault",
+                      "It isn't my fault",
+                      "It's not my fault",
+                      "That isn't my fault",
+                      "That's not my fault"
+                    ],
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Bozo plants his hooves and will not move. Say it for him: “I am not going!”",
+                    "accepted": [
+                      "Ez naçim!",
+                      "Ez naçim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal crouches down in front of the deer. Type what she says.",
+                    "accepted": [
+                      "Rastî çi ye, Hevalo?",
+                      "Rastî çi ye, Hevalo",
+                      "Rastî çi ye Hevalo"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “He isn’t eating.”?",
+                    "options": [
+                      "Ew dixwe.",
+                      "Ew naxwim.",
+                      "Ew naxwe."
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ez derew nakim!",
+                    "prompt": "Hevalo puts a hoof on his heart. What does he say? “Ez derew nakim!”",
+                    "accepted": [
+                      "I am not lying",
+                      "I do not lie",
+                      "I am not telling lies",
+                      "I do not tell lies",
+                      "I'm not lying",
+                      "I don't lie",
+                      "I'm not telling lies",
+                      "I don't tell lies"
+                    ],
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Tell Mîrza: “Hevalo doesn’t know.”",
+                    "accepted": [
+                      "Hevalo nizane.",
+                      "Hevalo nizane"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write Hevalo’s whole answer: “Na, ez … nizanim!” (No, I don’t know at all!)",
+                    "accepted": [
+                      "Na, ez qet nizanim!",
+                      "Na, ez qet nizanim",
+                      "Na ez qet nizanim"
+                    ],
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Mîrza asks the whole market. Hamo sums up the answers. Type what he says.",
+                    "accepted": [
+                      "Kes nizane sêv li ku ne.",
+                      "Kes nizane sêv li ku ne"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Ev rastî ye an derew e?",
+                    "prompt": "Xezal narrows her eyes at Hevalo. What does she ask? “Ev rastî ye an derew e?”",
+                    "options": [
+                      "Is this the apple or the crate?",
+                      "Is this the truth or a lie?",
+                      "Is this your fault or mine?"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Say it the way Hevalo does — very, very fast: “I don’t know! I have no idea at all!”",
+                    "reference": "Ez nizanim! Ez qet nizanim!",
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Mîrza asks Hamo “Tu dizanî?”. Hamo really has no idea. What does he answer?",
+                    "options": [
+                      "Na, ez nizanim.",
+                      "Na, ez dizanim.",
+                      "Erê, ez nizanim."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Sûcê kê ye?",
+                    "prompt": "Mîrza throws up his hands, and Hamo asks the question for everyone. What is it? “Sûcê kê ye?”",
+                    "options": [
+                      "Whose apples are they?",
+                      "Whose fault is it?",
+                      "Who is lying?"
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s4l2",
+              "position": 2,
+              "titleKu": "Ez ne birçî me",
+              "titleEn": "I’m not hungry",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hevalo, tu birçî yî?",
+                    "prompt": "Xezal begins her questioning like a real detective. What does she ask first? “Hevalo, tu birçî yî?”",
+                    "options": [
+                      "Hevalo, are you tired?",
+                      "Hevalo, are you thirsty?",
+                      "Hevalo, are you hungry?"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Na, ez ne birçî me.",
+                    "prompt": "Hevalo answers, looking up at the sky. What does he say? “Na, ez ne birçî me.”",
+                    "options": [
+                      "No, I’m not hungry.",
+                      "Yes, I’m very hungry.",
+                      "No, I’m not thirsty."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "zik",
+                        "right": "belly"
+                      },
+                      {
+                        "left": "tije",
+                        "right": "full"
+                      },
+                      {
+                        "left": "vala",
+                        "right": "empty"
+                      },
+                      {
+                        "left": "çima",
+                        "right": "why"
+                      },
+                      {
+                        "left": "hê na",
+                        "right": "not yet"
+                      },
+                      {
+                        "left": "jixwe",
+                        "right": "of course, anyway"
+                      }
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Çima zikê te tije ye?",
+                    "prompt": "Xezal points at Hevalo’s very round belly. What does she ask? “Çima zikê te tije ye?”",
+                    "accepted": [
+                      "Why is your belly full",
+                      "Why is your tummy full",
+                      "Why is your stomach full"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “I am not hungry.”?",
+                    "options": [
+                      "Ez ne birçî me.",
+                      "Ez na birçî me.",
+                      "Ez ne birçî im."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “The crate is empty.”",
+                    "accepted": [
+                      "Sindoq vala ye.",
+                      "Sindoq vala ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal leans closer to the suspect. Type what she says.",
+                    "accepted": [
+                      "Devê te sor e, Hevalo. Çima?",
+                      "Devê te sor e, Hevalo. Çima",
+                      "Devê te sor e Hevalo. Çima"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Jixwe, Hevalo her roj birçî ye!",
+                    "prompt": "Hamo cannot help laughing. What does he say? “Jixwe, Hevalo her roj birçî ye!”",
+                    "options": [
+                      "Of course, Hevalo is hungry every day!",
+                      "Of course, Hevalo is never hungry!",
+                      "Of course, Hevalo eats once a day!"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write Xezal’s whole question: “… tu têr î?” (Why are you full?)",
+                    "accepted": [
+                      "Çima tu têr î?",
+                      "Çima tu têr î",
+                      "Tu çima têr î?",
+                      "Tu çima têr î"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Hê na!",
+                    "prompt": "Xezal asks “Tu têr î?”, and Hevalo answers with his mouth full. What does he say? “Hê na!”",
+                    "accepted": [
+                      "Not yet",
+                      "No, not yet"
+                    ],
+                    "voice": "hevalo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Ask Hevalo: “Why is your mouth red?”",
+                    "accepted": [
+                      "Çima devê te sor e?",
+                      "Çima devê te sor e",
+                      "Devê te çima sor e?",
+                      "Devê te çima sor e"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal makes her case to Hamo. Type what she says.",
+                    "accepted": [
+                      "Sindoqa Mîrza vala ye, lê zikê Hevalo tije ye!",
+                      "Sindoqa Mîrza vala ye, lê zikê Hevalo tije ye",
+                      "Sindoqa Mîrza vala ye lê zikê Hevalo tije ye"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which question asks “Why aren’t you eating?”",
+                    "options": [
+                      "Tu çima naxwim?",
+                      "Tu çima dixwî?",
+                      "Tu çima naxwî?"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Question the suspect yourself: “Why is your belly full?”",
+                    "reference": "Çima zikê te tije ye?",
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal: “Tu birçî yî?” Hevalo: “Na.” Xezal: “Tu têr î?” Which answer gives Hevalo away?",
+                    "options": [
+                      "Erê, jixwe!",
+                      "Hê na!",
+                      "Ez tî me."
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 16,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Li ser devê te çi heye?",
+                    "prompt": "Xezal spots something on the suspect’s mouth. What does she ask? “Li ser devê te çi heye?”",
+                    "options": [
+                      "What is in your belly?",
+                      "Why is your mouth open?",
+                      "What is that on your mouth?"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "xezo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s4l3",
+              "position": 3,
+              "titleKu": "Sêv li ku ne?",
+              "titleEn": "Where are the apples?",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Pirsa min ev e: sêv li ku ne?",
+                    "prompt": "The whole market gathers round. Xezal, the lawyer, begins. What does she say? “Pirsa min ev e: sêv li ku ne?”",
+                    "options": [
+                      "My question is this: where are the apples?",
+                      "My answer is this: the apples are here.",
+                      "My question is this: who are you?"
+                    ],
+                    "correctIndex": 0,
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "pirs",
+                        "right": "question"
+                      },
+                      {
+                        "left": "bersiv",
+                        "right": "answer"
+                      },
+                      {
+                        "left": "henek",
+                        "right": "joke"
+                      },
+                      {
+                        "left": "bawer dikim",
+                        "right": "I believe"
+                      },
+                      {
+                        "left": "dikenim",
+                        "right": "I laugh"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu04s4l3a",
+                    "title": "Sêv li ku ne?",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Hevalo, pirsa min ev e: tu sêv dixwî?",
+                        "en": "Hevalo, my question is this: do you eat apples?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Na! Ez sêv naxwim. Qet!",
+                        "en": "No! I do not eat apples. Never!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ez bawer nakim. Bersiva te derew e!",
+                        "en": "I do not believe it. Your answer is a lie!"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Xezo, ev henek e? Hevalo derew nake!",
+                        "en": "Xezo, is this a joke? Hevalo does not lie!"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, li ser devê wî çi heye?",
+                        "en": "Uncle, what is that on his mouth?"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Sêv! Li ser devê wî sêv heye!",
+                        "en": "Apple! There is apple on his mouth!"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Ez dikenim… Mîrza jî dikene!",
+                        "en": "I am laughing… and Mîrza is laughing too!"
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Mîrza, ez pereyê sêvan didim!",
+                        "en": "Mîrza, I will pay for the apples!"
+                      }
+                    ],
+                    "prompt": "What gives Hevalo away?",
+                    "options": [
+                      "His belly is empty",
+                      "Bozo tells everyone",
+                      "There is apple on his mouth"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Ez bawer nakim!",
+                    "prompt": "Xezal folds her arms. What does she say? “Ez bawer nakim!”",
+                    "accepted": [
+                      "I don’t believe it",
+                      "I do not believe it",
+                      "I don’t believe you",
+                      "I do not believe you",
+                      "I don't believe it",
+                      "I don't believe you"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “They are laughing.”?",
+                    "options": [
+                      "Ew dikene.",
+                      "Ew dikenin.",
+                      "Ew dikenim."
+                    ],
+                    "correctIndex": 1
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "In Kurdish: “This is not a joke!”",
+                    "accepted": [
+                      "Ev ne henek e!",
+                      "Ev ne henek e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal turns to the accused. Type what she says.",
+                    "accepted": [
+                      "Bersiva te çi ye, Hevalo?",
+                      "Bersiva te çi ye, Hevalo",
+                      "Bersiva te çi ye Hevalo"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Hamo dikene û pere dide.",
+                    "prompt": "Listen. How does the trial end? “Hamo dikene û pere dide.”",
+                    "options": [
+                      "Hamo shouts and goes home.",
+                      "Hamo laughs and pays.",
+                      "Hamo laughs and eats an apple."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Ez ji te … dikim.” (I believe you.)",
+                    "accepted": [
+                      "Ez ji te bawer dikim.",
+                      "Ez ji te bawer dikim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Pirsa te baş e, lê bersiva min tune.",
+                    "prompt": "The next witness is Bozo. Hamo answers for him, grinning. What does he say? “Pirsa te baş e, lê bersiva min tune.”",
+                    "accepted": [
+                      "Your question is good, but I have no answer",
+                      "Your question is good, but I don’t have an answer",
+                      "It is a good question, but I have no answer",
+                      "Good question, but I have no answer",
+                      "It's a good question, but I have no answer"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Hamo is shaking with laughter. Tell him: “I am not laughing!”",
+                    "accepted": [
+                      "Ez nakenim!",
+                      "Ez nakenim"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal whispers to you while Hamo tells one of his stories. Type what she says.",
+                    "accepted": [
+                      "Henekên Hamo xweş in, lê dirêj in.",
+                      "Henekên Hamo xweş in, lê dirêj in",
+                      "Henekên Hamo xweş in lê dirêj in"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Xezal asks the crowd “Hûn ji Hevalo bawer dikin?”. Everyone has seen the apple on his mouth. What do they answer?",
+                    "options": [
+                      "Na, em bawer nakin!",
+                      "Erê, em bawer dikin!",
+                      "Em nizanin, em birçî ne!"
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Laugh along with Hamo: “I am laughing, and Mîrza is laughing too!”",
+                    "reference": "Ez dikenim, Mîrza jî dikene!",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Mîrza, ez pereyê sêvan didim!",
+                    "prompt": "Hamo wipes his eyes and reaches for his purse. What does he say? “Mîrza, ez pereyê sêvan didim!”",
+                    "options": [
+                      "Mîrza, give me the apples!",
+                      "Mîrza, sell me more apples!",
+                      "Mîrza, I will pay for the apples!"
+                    ],
+                    "correctIndex": 2,
+                    "voice": "hamo"
+                  }
+                }
+              ]
+            },
+            {
+              "key": "u04s4l4",
+              "position": 4,
+              "titleKu": "Vegera malê",
+              "titleEn": "Back home",
+              "exercises": [
+                {
+                  "position": 1,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Em vedigerin malê.",
+                    "prompt": "The sun is going down over the market. Hamo picks up the last bag. What does he say? “Em vedigerin malê.”",
+                    "options": [
+                      "We are staying at the market.",
+                      "We are going back home.",
+                      "We are going to Amed."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 2,
+                  "type": "match_pairs",
+                  "payload": {
+                    "pairs": [
+                      {
+                        "left": "vedigerim",
+                        "right": "I go back"
+                      },
+                      {
+                        "left": "bar",
+                        "right": "load"
+                      },
+                      {
+                        "left": "giran",
+                        "right": "heavy"
+                      },
+                      {
+                        "left": "sivik",
+                        "right": "light (not heavy)"
+                      },
+                      {
+                        "left": "bi lez",
+                        "right": "quickly"
+                      }
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 3,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Barê Bozo giran e.",
+                    "prompt": "Bozo groans under the baskets. Listen: what does Hamo say? “Barê Bozo giran e.”",
+                    "options": [
+                      "Bozo’s load is heavy.",
+                      "Bozo’s load is light.",
+                      "Bozo’s hat is heavy."
+                    ],
+                    "correctIndex": 0,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 4,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Barê Hevalo sivik e: tenê sêvek!",
+                    "prompt": "Hevalo trots along, carrying almost nothing. What does Xezal say? “Barê Hevalo sivik e: tenê sêvek!”",
+                    "accepted": [
+                      "Hevalo’s load is light: just one apple",
+                      "Hevalo's load is light: only one apple",
+                      "Hevalo's load is light, just an apple",
+                      "Hevalo's load is light: only an apple"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 5,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Bozo looks at you sadly. Tell him: “The load is not heavy!”",
+                    "accepted": [
+                      "Bar ne giran e!",
+                      "Bar ne giran e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 6,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Which one is right for “Xezal is going back to Amed.”?",
+                    "options": [
+                      "Xezal vedigere Amedê.",
+                      "Xezal vedigerim Amedê.",
+                      "Xezal digere Amedê."
+                    ],
+                    "correctIndex": 0
+                  }
+                },
+                {
+                  "position": 7,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Hamo pats Bozo’s neck on the way up the hill. Type what he says.",
+                    "accepted": [
+                      "Bar giran e, lê dil sivik e.",
+                      "Bar giran e, lê dil sivik e",
+                      "Bar giran e lê dil sivik e"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 8,
+                  "type": "conversation",
+                  "payload": {
+                    "id": "roadu04s4l4a",
+                    "title": "Vegera malê",
+                    "speakers": [
+                      {
+                        "name": "Xezo",
+                        "character": "xezo"
+                      },
+                      {
+                        "name": "Hamo",
+                        "character": "hamo"
+                      },
+                      {
+                        "name": "Hevalo",
+                        "character": "hevalo"
+                      }
+                    ],
+                    "lines": [
+                      {
+                        "speaker": 0,
+                        "text": "Xalo, telefona min! Diya min e.",
+                        "en": "Uncle, my phone! It is my mother."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Gulîstan? Ew çawa ye?",
+                        "en": "Gulîstan? How is she?"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Ew baş e. Lê ez di dawiya hefteyê de vedigerim Amedê.",
+                        "en": "She is well. But I am going back to Amed at the end of the week."
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Zû ye, Xezo! Mixabin…",
+                        "en": "That is soon, Xezo! What a pity…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Lê xalo, diya min dibêje: hûn hemû jî tên!",
+                        "en": "But uncle, my mother says you are all coming too!"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Em? Hemû? Ez, Nazê, zarok, Dapîr…",
+                        "en": "Us? All of us? Me, Nazê, the children, Grandma…"
+                      },
+                      {
+                        "speaker": 0,
+                        "text": "Erê! Û Hevalo jî.",
+                        "en": "Yes! And Hevalo too."
+                      },
+                      {
+                        "speaker": 2,
+                        "text": "Li Amedê sêv hene?",
+                        "en": "Are there apples in Amed?"
+                      },
+                      {
+                        "speaker": 1,
+                        "text": "Em diçin Amedê! Û nîvê wêneyê min li wir e…",
+                        "en": "We are going to Amed! And the other half of my photo is there…"
+                      }
+                    ],
+                    "prompt": "What does Xezal’s mother want?",
+                    "options": [
+                      "Xezal to stay in the village",
+                      "Hamo to send her apples",
+                      "The whole family to come to Amed"
+                    ],
+                    "correctIndex": 2
+                  }
+                },
+                {
+                  "position": 9,
+                  "type": "writing",
+                  "payload": {
+                    "prompt": "Write the whole sentence: “Em … vedigerin malê.” (We are going back home quickly.)",
+                    "accepted": [
+                      "Em bi lez vedigerin malê.",
+                      "Em bi lez vedigerin malê"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 10,
+                  "type": "translate",
+                  "payload": {
+                    "say": "Diya min dibêje: hûn hemû jî tên!",
+                    "prompt": "Xezal puts down her phone, beaming. What news does she have? “Diya min dibêje: hûn hemû jî tên!”",
+                    "accepted": [
+                      "My mother says you are all coming too",
+                      "My mother says: you are all coming too",
+                      "My mum says you are all coming too",
+                      "My mother says all of you are coming too",
+                      "My mother says you're all coming too",
+                      "My mother says: you're all coming too",
+                      "My mum says you're all coming too"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 11,
+                  "type": "translate",
+                  "payload": {
+                    "prompt": "Ask Xezal: “Are you going back to Amed?”",
+                    "accepted": [
+                      "Tu vedigerî Amedê?",
+                      "Tu vedigerî Amedê"
+                    ],
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 12,
+                  "type": "listening",
+                  "payload": {
+                    "prompt": "Xezal tells Hamo on the way home. Type what she says.",
+                    "accepted": [
+                      "Ez di dawiya hefteyê de vedigerim Amedê.",
+                      "Ez di dawiya hefteyê de vedigerim Amedê"
+                    ],
+                    "voice": "xezo"
+                  }
+                },
+                {
+                  "position": 13,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "say": "Bozo bi lez naçe; barê wî giran e.",
+                    "prompt": "Hevalo asks why Bozo is so slow. What does Hamo say? “Bozo bi lez naçe; barê wî giran e.”",
+                    "options": [
+                      "Bozo is going fast; his load is light.",
+                      "Bozo isn’t going fast; his load is heavy.",
+                      "Bozo isn’t going home; he is tired."
+                    ],
+                    "correctIndex": 1,
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 14,
+                  "type": "speaking",
+                  "payload": {
+                    "prompt": "Say Hamo’s little saying as you climb the hill: “The load is heavy, but the heart is light.”",
+                    "reference": "Bar giran e, lê dil sivik e.",
+                    "voice": "hamo"
+                  }
+                },
+                {
+                  "position": 15,
+                  "type": "multiple_choice",
+                  "payload": {
+                    "prompt": "Night falls on Sêvan. A whole family is going to the city, and half a photo is waiting there. Where does the road go next?",
+                    "options": [
+                      "Ber bi Amedê ve!",
+                      "Ber bi bazarê ve!",
+                      "Ber bi çiyê ve!"
+                    ],
+                    "correctIndex": 0
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

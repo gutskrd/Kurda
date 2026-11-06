@@ -92,7 +92,7 @@ export {
 /** A right answer's praise, in the course's own Kurdish: content, kept beside the player rather than in the translations. */
 export { PRAISE, praiseFor, praiseWords } from './praise.js';
 /** What a lesson pays, for the server's XP rules and the "+10–20 XP" a stop's card shows. */
-export { ACCURACY_BONUS_XP, BASE_LESSON_XP, REPEAT_XP_FACTOR, lessonXpRange } from './xp.js';
+export { ACCURACY_BONUS_XP, BASE_LESSON_XP, PAID_STORY_REPEATS_PER_DAY, REPEAT_XP_FACTOR, lessonXpRange } from './xp.js';
 /** How often a buzz may be felt, on the phone and on a touch screen alike. */
 export { HAPTIC_EVENTS, PACING, createPacer, type HapticEvent, type Pacer, type PacingRules } from './haptics.js';
 /** Apple's springs, the rubber band past an edge, and where a flick comes to rest: what the phone's sheets and menus move by. */
@@ -166,6 +166,7 @@ export {
   PATH_RETURN,
   PATH_JUMP,
   UNIT_TONES,
+  UNIT_TONE_ORDER,
   jumpMistakesAllowed,
   jumpPassed,
   jumpPlan,
@@ -190,6 +191,7 @@ export {
   type PathUnit,
   type PathUnitInput,
   type PlacedStop,
+  type GuideStop,
   type ReviewStop,
   type SkillStop,
   type StopState,
@@ -197,6 +199,29 @@ export {
   type UnitTone,
   unitTone,
 } from './lesson-path.js';
+/** The land the lesson path runs through: each unit's landscape, landmark and host, and where they stand. */
+export {
+  PATH_GROUNDS,
+  PATH_LANDMARKS,
+  PATH_LANDS,
+  PATH_MOTION,
+  PATH_SCENERY,
+  PATH_TRAIL,
+  hopAt,
+  hostBox,
+  landClear,
+  landmarkBox,
+  mascotBox,
+  pathLand,
+  trailStones,
+  type PathBox,
+  type PathGround,
+  type PathHost,
+  type PathLand,
+  type PathLandmark,
+  type TrailStone,
+  type WorldStop,
+} from './path-world.js';
 /** Practice as a hub: its kinds of session, what each draws on, and what the hub shows. */
 export { PRACTICE_MODES, PRACTICE_MODE_TYPES, type PracticeHub, type PracticeHubUnit, type PracticeMode } from './practice.js';
 export {
@@ -290,18 +315,10 @@ export {
   type TagRow,
 } from './tags.js';
 /**
- * Refreshed shop items: the one-time notice and returning an item for what was
- * paid, after the shop's art was replaced.
+ * Refreshed shop items: the one-time notice that the shop's art was replaced.
+ * The items stay their owners'; nothing bought is ever handed back.
  */
-export {
-  ITEM_RETURN_ERRORS,
-  shouldShowRefreshNotice,
-  type ItemRefund,
-  type ItemReturnError,
-  type RefreshedInventory,
-  type RefundCurrency,
-  type ReturnItemResult,
-} from './cosmetics.js';
+export { shouldShowRefreshNotice, type RefreshedInventory } from './cosmetics.js';
 
 /**
  * Writing a post — words and up to four pictures in one box: the limits, what
@@ -433,6 +450,7 @@ export {
   lessonAudioKey,
   lessonAudioTargets,
   primaryAudioTarget,
+  shownInPrompt,
 } from './lesson-audio.js';
 /** Conversations in lessons: their shape, limits, and the keys each part's recordings are filed under. */
 export * from './conversation.js';
@@ -463,6 +481,8 @@ export {
 export * from './stories.js';
 /** What a story must be before it is saved or published, one copy for the API, the importer and the editor. */
 export * from './story-authoring.js';
+/** The pictures a story can wear as its cover: the shop's backgrounds, keyed as `stories.cover` stores them. */
+export * from './story-covers.js';
 
 /**
  * Inviting friends to any online game and playing again (play), gifts that
@@ -471,6 +491,13 @@ export * from './story-authoring.js';
  */
 export * from './play.js';
 export * from './gifts.js';
+
+/**
+ * The learning games (Build a Kurdish Sentence and the games after it): the
+ * one registry, the two varieties as 'kmr' | 'ckb' with their script rules,
+ * the schemas of the games' own content and the shapes a round is sent in.
+ */
+export * from './games/index.js';
 
 /**
  * Shop items by kind — the categories, the search, the filters and the orders
@@ -491,6 +518,13 @@ export * from './typing.js';
  * never tied to the stars, and the admin's feedback inbox.
  */
 export * from './feedback.js';
+
+/**
+ * Crash reports from the apps: what one may carry, the limits the phone trims
+ * to and the server holds it to, and how its text is cleaned of anything that
+ * could name somebody.
+ */
+export * from './client-errors.js';
 
 /**
  * Hevalo the deer holding up a board: the board, its forelegs and where the
@@ -553,6 +587,60 @@ export {
   gemSvg,
   CURRENCY_CANVAS,
   type CurrencyOptions,
+  wordSetSvg,
+  type WordSetArtOptions,
+  type WordsCardId,
+  TICKET_ART_BOX,
+  TICKET_ART_OUTLINE,
+  TICKET_ART_PERFORATION,
+  TICKET_ART_STUB,
+  TICKET_ART_TEAR,
+  TICKET_ART_TILES,
+  CHEST_BOX,
+  CHEST_FOOT,
+  CHEST_HOP,
+  CHEST_HOP_LAND,
+  CHEST_HOP_LID,
+  CHEST_HOP_LIGHT,
+  CHEST_HOP_MS,
+  CHEST_HOP_SHADOW,
+  CHEST_HOP_SPARKLE,
+  CHEST_LAYERS,
+  CHEST_SMALL,
+  CHEST_TINTS,
+  CHEST_TINY,
+  CHEST_VIEW,
+  chestDrawing,
+  chestGlint,
+  chestHopAt,
+  chestLayerSvg,
+  chestSvg,
+  type ChestBox,
+  type ChestDrawing,
+  type ChestHopCurve,
+  type ChestHopFrame,
+  type ChestLayer,
+  type ChestLayerId,
+  type ChestOptions,
+  type ChestSvgOptions,
+  PATH_LANDMARK_LOOP,
+  PATH_STOP_ART,
+  PATH_STOP_LOOKS,
+  PATH_STOP_TONES,
+  pathGroundColour,
+  pathLandSvg,
+  pathLandmarkSvg,
+  pathLoopSvg,
+  pathStonesSvg,
+  pathStopSvg,
+  type PathLandOptions,
+  type PathLandmarkOptions,
+  type PathLoop,
+  type PathLoopKind,
+  type PathLoopOptions,
+  type PathStonesOptions,
+  type PathStopLook,
+  type PathStopOptions,
   BADGES as ART_BADGES,
   BADGE_KEYS as ART_BADGE_KEYS,
   BADGE_FAMILIES as ART_BADGE_FAMILIES,
@@ -640,3 +728,26 @@ export * from './art-slots.js';
 export * from './scanner-paths.js';
 // taking Hevalo offline for a while from the admin, and what people see meanwhile
 export * from './maintenance.js';
+/**
+ * The multiplayer learning games: the dialect letter rules the word games
+ * share, the generic engine's contract and the room every game is drawn in,
+ * and The Last Letter's rules and Learn entry.
+ */
+export * from './games/letters.js';
+export * from './games/multi/games.js';
+export * from './games/multi/rules.js';
+export * from './games/multi/view.js';
+export * from './games/last-letter/rules.js';
+export * from './games/last-letter/learn.js';
+export * from './games/last-letter/slip.js';
+
+// The Village ("kingdom" in code): the village that grows from real learning, its buildings, thresholds and view
+export * from './games/kingdom/index.js';
+/**
+ * The party games where players write their own Kurdish: what a clue or a
+ * guess may be, and Kurdish Impostor's and Don't Say the Word!'s rules.
+ */
+export * from './games/clues.js';
+export * from './games/multi/order.js';
+export * from './games/impostor/rules.js';
+export * from './games/dont-say/rules.js';

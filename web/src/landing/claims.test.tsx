@@ -49,24 +49,25 @@ describe('what the front page promises', () => {
   });
 
   /**
-   * The Speak section's footnote once carried the hedge for the whole section
-   * ("part of the lessons in the Hevalo app, coming soon"). A footnote can be
-   * rewritten without anyone rereading the steps above it, so each line that
-   * names listening or speaking carries its own.
+   * The front page once had a section of its own for hearing and saying
+   * Kurdish, whose footnote carried the hedge for the whole of it; a footnote
+   * can be rewritten without anyone rereading the lines above it. Those lines
+   * now sit with the lessons, and each one that names listening or speaking
+   * carries its own hedge.
    */
-  it('promises speaking only in the lessons that have it, line by line', () => {
+  it('promises listening and speaking only in the lessons that have them, line by line', () => {
     renderApp(<Landing />);
-    const speak = screen.getByRole('region', { name: en['landing.speak.title'] });
-    expect(speak.textContent).not.toMatch(/hevalo has you listen and speak/i);
-    expect(within(speak).getByText(/in lessons with speaking exercises, say it/i)).toBeInTheDocument();
-    expect(within(speak).getByText(/^in lessons that have them, speaking exercises have you say the word/i)).toBeInTheDocument();
+    const learn = document.getElementById('learn')!;
+    const lines = Array.from(learn.querySelectorAll('li')).filter((li) => /listen|speak/i.test(li.textContent ?? ''));
+    expect(lines.length).toBeGreaterThanOrEqual(2);
+    for (const li of lines) expect(li.textContent).toMatch(/in lessons (that have them|with speaking exercises)/i);
   });
 
   it('names no listening or speaking exercise on the front page without saying which lessons have them', () => {
     const lines = Object.entries(en).filter(
       ([k, v]) => k.startsWith('landing.') && /(listening|speaking) exercises|listen and speak/i.test(v),
     );
-    expect(lines.length).toBeGreaterThanOrEqual(4);
+    expect(lines.length).toBeGreaterThanOrEqual(3);
     for (const [k, v] of lines) expect(v, k).toMatch(/in lessons (that have them|with speaking exercises)|coming soon/i);
   });
 });

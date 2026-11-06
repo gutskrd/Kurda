@@ -3,7 +3,7 @@ import { Animated, Easing, StyleSheet, View, type DimensionValue, type StyleProp
 import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing } from './tokens';
 import { useTheme } from './ThemeProvider';
-import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useI18n } from '../i18n/I18nContext';
 
 /**
@@ -63,7 +63,7 @@ export function Skeleton({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors, scheme } = useTheme();
-  const reduce = useReducedMotion();
+  const alive = useMotionAlive();
   const [w, setW] = useState(0);
   /*
    * Grey only once the wait is long enough to notice. An answer that comes
@@ -77,10 +77,11 @@ export function Skeleton({
     return () => clearTimeout(id);
   }, []);
 
+  // a skeleton on a tab behind another, or in a backgrounded app, does not keep the one sweep running
   useEffect(() => {
-    if (reduce) return;
+    if (!alive) return;
     return watchSweep();
-  }, [reduce]);
+  }, [alive]);
 
   const band = Math.max(24, w * 0.6);
   // rests off the far edge for the last part of each pass, so it reads as one sweep rather than a band bouncing
@@ -98,7 +99,7 @@ export function Skeleton({
         style,
       ]}
     >
-      {!reduce && w > 0 ? (
+      {!!alive && w > 0 ? (
         <Animated.View pointerEvents="none" style={[styles.band, { width: band, transform: [{ translateX }] }]}>
           <LinearGradient colors={['transparent', light, 'transparent']} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
         </Animated.View>

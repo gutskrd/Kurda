@@ -486,7 +486,7 @@ function WhatStep({
           </View>
         ) : null}
         <Text style={[styles.limits, styles.center, { color: colors.textSecondary }]}>
-          {t('gift.picker.limits', { perDay: GIFTS_PER_DAY, perFriend: GIFTS_PER_FRIEND_PER_DAY })}
+          {t('gift.picker.limits', { perDay: GIFTS_PER_DAY, perFriend: GIFTS_PER_FRIEND_PER_DAY })} {t('shop.giftFinal')}
         </Text>
         <ClayButton
           label={

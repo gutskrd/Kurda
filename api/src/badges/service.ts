@@ -2,6 +2,7 @@ import type pg from 'pg';
 import {
   BADGES,
   BADGE_FAMILIES,
+  MULTI_GAMES,
   RARITY_MIN_ACTIVE_USERS,
   SHOWCASE_SIZE,
   badgeDef,
@@ -109,11 +110,15 @@ interface BadgeRow {
   seen_tier: number;
 }
 
-/** Games the play layer reports as finished, mapped to their tables (play/events.ts names). */
+/**
+ * Games the play layer reports as finished, mapped to their tables (play/events.ts
+ * names); every multiplayer learning game shares the generic engine's.
+ */
 const PLAY_GAMES: Record<string, { players: string; key: string }> = {
   'wordle-battle': { players: 'wordle_battle_players', key: 'battle_id' },
   'rhyme-match': { players: 'rhyme_match_players', key: 'match_id' },
   stories: { players: 'story_game_players', key: 'game_id' },
+  ...Object.fromEntries(MULTI_GAMES.map((g) => [g, { players: 'game_lobby_players', key: 'lobby_id' }])),
 };
 
 /**
@@ -186,8 +191,9 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     if (this.recentGames.has(key)) return;
     this.recentGames.set(key, at);
     // table and column names come from the fixed map above, never from input
+    // people only: a computer seat (Hevalo) earns no badges
     const players = await this.pool.query<{ user_id: string }>(
-      `SELECT user_id FROM ${table.players} WHERE ${table.key} = $1 AND NOT removed`,
+      `SELECT user_id FROM ${table.players} WHERE ${table.key} = $1 AND NOT removed AND user_id IS NOT NULL`,
       [lobbyId],
     );
     for (const p of players.rows) {

@@ -56,10 +56,10 @@ services:
       # Required in production; override in a .env for real deploys (like the
       # postgres password above, this local default is not a real secret).
       JWT_SECRET: ${JWT_SECRET:-local-compose-jwt-secret-change-me-min-32-chars}
-      # No App/Play store credentials in this local stack: use the stub IAP
-      # verifier so buildApp() boots (the app's documented dev escape hatch).
-      # NEVER set this on a store-facing deployment.
-      IAP_ALLOW_STUB: ${IAP_ALLOW_STUB:-true}
+      # No App/Play store credentials in this local stack: boot with store
+      # purchases switched off (every receipt refused with 503). This stack runs
+      # as production, which never allows the test receipt verifier.
+      IAP_PURCHASES_OFF: ${IAP_PURCHASES_OFF:-true}
       # Sign in with Apple (KUR-276): native token audience = the app bundle id
       APPLE_CLIENT_IDS: app.hevalo.mobile
       # Transactional email (KUR-098): put real values in a .env beside this file.

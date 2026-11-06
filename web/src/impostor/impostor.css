@@ -1,0 +1,413 @@
+/*
+ * Kurdish Impostor's staging (impostor/Board.tsx): a table with the players
+ * seated in a row along each side, the speaker in a pool of light, the
+ * viewer's card on the tabletop, the clues round by round, and at the reveal
+ * every seat's card turning over. Flat planes from the palette: the light is
+ * a disc of the gold's soft tint, never a gradient. Under Reduce Motion the
+ * light does not pulse and the cards are shown face up at once.
+ */
+.imp-page {
+  --imp-felt: color-mix(in srgb, var(--gold) 9%, var(--surface-solid));
+  --imp-light: var(--gold-soft);
+}
+
+.imp-board,
+.imp-reveal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  min-width: 0;
+}
+.imp-board > *,
+.imp-reveal > * {
+  min-width: 0;
+}
+
+.imp-status p {
+  margin: 0;
+}
+.imp-phase {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.imp-whose {
+  font-size: var(--text-section);
+  font-weight: 700;
+}
+.imp-whose.is-mine {
+  color: var(--gold-ink);
+}
+.imp-caught {
+  margin-top: var(--space-1) !important;
+  font-weight: 600;
+  color: var(--danger);
+}
+
+/* the table: seats along the top and bottom of a long tabletop */
+.imp-table {
+  display: grid;
+  gap: var(--space-2);
+}
+.imp-seats {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.imp-seat {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  flex: 1 1 0;
+  max-width: 120px;
+  min-width: 0;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-1);
+  text-align: center;
+}
+.imp-seat::before {
+  /* the pool of light under the one speaking */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--r-lg);
+  background: var(--imp-light);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+}
+.imp-seat.is-speaking::before {
+  opacity: 1;
+  transform: none;
+}
+.imp-seat > * {
+  position: relative;
+}
+.imp-seat-disc {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--surface-solid);
+  font-weight: 700;
+}
+.imp-seat.is-me .imp-seat-disc {
+  border-color: var(--primary);
+}
+.imp-seat.is-speaking .imp-seat-disc {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: #2a1d05;
+}
+.imp-seat.is-gone {
+  opacity: 0.5;
+}
+.imp-seat-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: var(--text-secondary);
+}
+.imp-seat-tag {
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+}
+.imp-seat.is-speaking .imp-seat-tag {
+  color: var(--gold-ink);
+  font-weight: 600;
+}
+.imp-seat.has-voted .imp-seat-tag {
+  color: var(--success);
+}
+.imp-table-top {
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  border-radius: 999px / 60%;
+  border: 1px solid var(--border);
+  background: var(--imp-felt);
+}
+
+/* the viewer's card */
+.imp-card {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: min(100%, 280px);
+  padding: var(--space-4);
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-solid);
+  text-align: center;
+}
+.imp-card.is-impostor {
+  border-color: var(--danger);
+}
+.imp-card p {
+  margin: 0;
+}
+.imp-card-label {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.imp-card-hint {
+  font-weight: 600;
+}
+.imp-card-word {
+  margin-top: var(--space-2) !important;
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.imp-card-word.is-impostor {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 22px;
+  color: var(--danger);
+}
+.imp-card-meaning {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+
+/* the clues */
+.imp-section-title {
+  font-family: var(--font-sans);
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-body);
+}
+.imp-rounds {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+.imp-round-title {
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+}
+.imp-clue-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.imp-clue {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface);
+  animation: imp-arrive var(--dur-slow) var(--ease-emphasis) both;
+}
+.imp-clue.is-mine {
+  background: var(--surface-2);
+}
+.imp-clue.is-impostor {
+  outline: 1.5px solid var(--danger);
+}
+.imp-clue-by {
+  flex: none;
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+  min-width: 64px;
+}
+.imp-clue-text {
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.imp-clue-text.is-none {
+  font-size: var(--text-secondary);
+  font-weight: 400;
+  font-style: italic;
+  color: var(--ink-3);
+}
+
+/* the vote and the guess */
+.imp-vote,
+.imp-guess {
+  display: grid;
+  gap: var(--space-2);
+}
+.imp-vote p {
+  margin: 0;
+}
+.imp-vote-options,
+.imp-guess-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-2);
+}
+.imp-vote-options .btn,
+.imp-guess-option {
+  min-height: 48px;
+}
+.imp-guess-option {
+  font-size: 20px;
+  font-weight: 700;
+}
+.imp-vote-cast {
+  font-weight: 600;
+}
+
+/* the reveal: every seat's card turns over */
+.imp-reveal-cards {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  perspective: 800px;
+}
+.imp-flip {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  width: 92px;
+}
+.imp-flip-inner {
+  position: relative;
+  display: block;
+  width: 84px;
+  height: 108px;
+  transform-style: preserve-3d;
+  transition: transform var(--dur-progress) var(--ease-emphasis);
+  transition-delay: calc(var(--i, 0) * 90ms);
+}
+.imp-flip.is-turned .imp-flip-inner {
+  transform: rotateY(180deg);
+}
+.imp-flip-back,
+.imp-flip-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: var(--r-md);
+  border: 1px solid var(--border-strong);
+  backface-visibility: hidden;
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+  overflow-wrap: break-word;
+}
+.imp-flip-back {
+  background: color-mix(in srgb, var(--gold) 22%, var(--surface-solid));
+  color: var(--gold-ink);
+  font-size: 28px;
+}
+.imp-flip-back::after {
+  content: '?';
+}
+.imp-flip-face {
+  transform: rotateY(180deg);
+  background: var(--surface-solid);
+}
+.imp-flip.is-impostor .imp-flip-face {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.imp-flip-name {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+}
+.imp-reveal-word {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: var(--space-4);
+  border-radius: var(--r-lg);
+  background: var(--imp-felt);
+  text-align: center;
+}
+.imp-reveal-word p,
+.imp-reveal-who {
+  margin: 0;
+}
+.imp-reveal-who {
+  font-weight: 700;
+  text-align: center;
+}
+.imp-votes {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@keyframes imp-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .imp-seat::before,
+  .imp-flip-inner {
+    transition: none;
+  }
+  .imp-clue {
+    animation: none;
+  }
+}
+.imp-board.is-still .imp-seat::before,
+.imp-reveal.is-still .imp-flip-inner {
+  transition: none;
+}
+.imp-board.is-still .imp-clue,
+.imp-reveal.is-still .imp-clue {
+  animation: none;
+}
+
+@media (max-width: 420px) {
+  .imp-seats {
+    gap: 2px;
+  }
+  .imp-seat-disc {
+    width: 34px;
+    height: 34px;
+  }
+  .imp-card-word {
+    font-size: 26px;
+  }
+  .imp-flip {
+    width: 76px;
+  }
+  .imp-flip-inner {
+    width: 70px;
+    height: 92px;
+  }
+}

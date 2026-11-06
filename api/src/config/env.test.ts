@@ -99,7 +99,7 @@ describe('loadConfig', () => {
       loadConfig({
         NODE_ENV: 'production',
         JWT_SECRET: 'local-compose-jwt-secret-change-me-min-32-chars',
-        IAP_ALLOW_STUB: 'true',
+        IAP_PURCHASES_OFF: 'true',
       }),
     ).not.toThrow();
   });

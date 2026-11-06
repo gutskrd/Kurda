@@ -18,6 +18,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { AsyncBoundary } from '../net/AsyncBoundary';
+import { usePullRefresh } from '../net/usePullRefresh';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { GlassCard, GradientBackground, Segmented } from '../theme/glass';
@@ -58,14 +59,20 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
   }, [initial]);
 
   const load = useCallback(() => {
-    void getMyRanks(client).then((res) => {
+    return getMyRanks(client).then((res) => {
       if (res.ok) {
         setRanks(res.data);
         setError(null);
       } else setError(res.error);
     });
   }, [client]);
-  useFocusEffect(useCallback(() => load(), [load]));
+  useFocusEffect(
+    useCallback(() => {
+      void load();
+    }, [load]),
+  );
+  // pulled down, the ranks are read again
+  const pull = usePullRefresh(load);
 
   const card = ranks?.ranks.find((r) => r.game === game) ?? null;
 
@@ -78,7 +85,7 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
       <AsyncBoundary loading={!ranks && !error} error={!ranks ? error : null} onRetry={load} skeleton={<RanksSkeleton />}>
         {() =>
           ranks && card ? (
-            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+            <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={pull}>
               <Hero card={card} />
               <Pressable
                 onPress={() => navigation.navigate('Season')}

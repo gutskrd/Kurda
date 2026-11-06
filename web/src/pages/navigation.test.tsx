@@ -7,8 +7,9 @@ import { renderApp, jsonResponse } from '../test/utils';
 
 /*
  * The five places as the real route table draws them, and the old addresses
- * that have to keep landing: /app/games on Learn's Games half, the phone's
- * old Play and Inbox, the Friends page, and Search, which is new.
+ * that have to keep landing: /app/games on Learn's Games group, the stories'
+ * old game addresses on Learn's Stories group, the phone's old Play and
+ * Inbox, the Friends page, and Search, which is new.
  */
 
 afterEach(() => {
@@ -34,6 +35,7 @@ function serve(): void {
       if (path === '/friends') return jsonResponse(200, { friends: [] });
       if (path.startsWith('/friends/requests')) return jsonResponse(200, { requests: [] });
       if (path === '/feed') return jsonResponse(200, { items: [] });
+      if (path === '/stories/library') return jsonResponse(200, { featured: [], recent: [], continue: [], bookmarks: [], categories: [], total: 0 });
       return jsonResponse(200, {});
     }),
   );
@@ -56,16 +58,45 @@ const visit = (at: string) =>
 const where = () => screen.getByTestId('where').textContent;
 
 describe('the five places', () => {
-  it('opens Learn on its Lessons half, with the switch to Games', async () => {
+  it('opens Learn on its Lessons group, with the switch to Stories and Games', async () => {
     signIn();
     serve();
     visit('/app/learn');
     const lessons = await screen.findByRole('link', { name: 'Lessons' });
     expect(lessons).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Stories' })).toHaveAttribute('href', '/app/learn/stories');
     expect(screen.getByRole('link', { name: 'Games' })).toHaveAttribute('href', '/app/games');
   });
 
-  it('keeps /app/games working: it is Learn, on its Games half', async () => {
+  it('opens the stories as Learn’s own group, with the Learn tab lit', async () => {
+    signIn();
+    serve();
+    visit('/app/learn/stories');
+    expect(await screen.findByRole('link', { name: 'Stories' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('heading', { level: 1, name: 'Learn' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Learn' })).toHaveAttribute('aria-current', 'page');
+    expect(localStorage.getItem('hevalo_learn_view')).toBe('stories');
+  });
+
+  it('sends the stories’ old game addresses to Learn, keeping an invite and a slug', async () => {
+    signIn();
+    serve();
+    const list = visit('/app/games/stories?id=g5');
+    await waitFor(() => expect(where()).toBe('/app/learn/stories?id=g5'));
+    list.unmount();
+    const story = visit('/app/games/stories/senge-u-penge');
+    await waitFor(() => expect(where()).toBe('/app/learn/stories/senge-u-penge'));
+    story.unmount();
+    // the ranked quiz's address, from before the stories, lands on them too
+    const quiz = visit('/app/games/quiz');
+    await waitFor(() => expect(where()).toBe('/app/learn/stories'));
+    quiz.unmount();
+    // the game itself keeps its address
+    visit('/app/games/stories/play/g1');
+    await waitFor(() => expect(where()).toBe('/app/games/stories/play/g1'));
+  });
+
+  it('keeps /app/games working: it is Learn, on its Games group', async () => {
     signIn();
     serve();
     visit('/app/games');
@@ -77,7 +108,7 @@ describe('the five places', () => {
     expect(where()).toBe('/app/games');
   });
 
-  it('switches halves without leaving Learn, and remembers the half', async () => {
+  it('switches groups without leaving Learn, and remembers the group', async () => {
     signIn();
     serve();
     visit('/app/learn');
@@ -138,10 +169,28 @@ describe('the five places', () => {
     serve();
     visit('/app/learn');
     expect(await screen.findByRole('heading', { level: 1, name: 'Learn' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /The Kurdish alphabet/ })).toHaveAttribute('href', '/app/alphabet');
+    // the letters and the words after them, one tile, open too
+    expect(screen.queryByRole('link', { name: /The Kurdish alphabet/ })).toBeNull();
+    expect(screen.getByRole('link', { name: /Letters and words/ })).toHaveAttribute('href', '/app/learn/words');
+    expect(screen.getByRole('link', { name: /Letters and words/ })).toHaveTextContent('Letters, colours, numbers, days, months');
     // the published dictionary, which needs no account
     expect(screen.getByRole('link', { name: /Dictionary/ })).toHaveAttribute('href', '/dictionary/');
     expect(screen.getByRole('link', { name: 'Create an account' })).toHaveAttribute('href', '/register');
+  });
+
+  it('opens the letters and words, and a set, at their addresses inside Learn', async () => {
+    serve();
+    const sets = visit('/app/learn/words');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Letters and words' })).toBeInTheDocument();
+    // Learn stays lit: the page is one of its tools
+    expect(screen.getByRole('link', { name: 'Learn' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: /^Months, / })).toHaveAttribute('href', '/app/learn/words/months?script=kmr');
+    sets.unmount();
+
+    visit('/app/learn/words/months?script=ckb');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Months' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Soranî', selected: true })).toBeInTheDocument();
+    expect(where()).toBe('/app/learn/words/months?script=ckb');
   });
 
   it('shows a visitor on Search where words and people are', async () => {

@@ -2,7 +2,21 @@ import { describe, expect, it } from 'vitest';
 import type { LeagueStandingRow, LeagueWeekResult } from '@kurda/shared';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
-import { goalFraction, knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, weekLeftText, zoneRules } from './format';
+import {
+  ceremonyFor,
+  ceremonyLine,
+  goalFraction,
+  knownTier,
+  lastWeekLine,
+  leagueLabel,
+  leagueMeaning,
+  leagueName,
+  moveUpRule,
+  tableItems,
+  weekEndText,
+  weekLeftText,
+  zoneRules,
+} from './format';
 
 const t = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.en[key], vars);
 const tKu = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.ku[key], vars);
@@ -129,5 +143,61 @@ describe('lastWeekLine', () => {
 
   it('speaks of the goal alone in personal mode', () => {
     expect(lastWeekLine(t, { ...base, mode: 'personal', tier: null, tierAfter: null, outcome: null })).toBe('You met your goal with 410 XP.');
+  });
+});
+
+describe('the ceremony', () => {
+  const base: LeagueWeekResult = {
+    weekKey: '2026-10-26',
+    mode: 'league',
+    tier: 'kani',
+    tierAfter: 'cem',
+    outcome: 'promoted',
+    rank: 15,
+    groupSize: 20,
+    weeklyXp: 300,
+    goalXp: 150,
+    goalMet: true,
+    trophy: false,
+    gems: 10,
+  };
+
+  it('stages every week that was raced, and knows which way it went', () => {
+    expect(ceremonyFor(base)).toEqual({ kind: 'promoted', from: 'kani', now: 'cem' });
+    expect(ceremonyFor({ ...base, tier: 'gol', tierAfter: 'cem', outcome: 'demoted' })).toEqual({ kind: 'demoted', from: 'gol', now: 'cem' });
+    expect(ceremonyFor({ ...base, tier: 'cem', outcome: 'stayed' })).toEqual({ kind: 'stayed', from: 'cem', now: 'cem' });
+    expect(ceremonyFor({ ...base, tier: 'okyanus', tierAfter: 'okyanus', outcome: 'stayed', trophy: true })).toEqual({ kind: 'trophy', from: 'okyanus', now: 'okyanus' });
+  });
+
+  it('has no stage for a personal week, a week not raced, or a tier it does not know', () => {
+    expect(ceremonyFor(null)).toBeNull();
+    expect(ceremonyFor({ ...base, mode: 'personal', tier: null, tierAfter: null, outcome: null })).toBeNull();
+    expect(ceremonyFor({ ...base, outcome: null })).toBeNull();
+    expect(ceremonyFor({ ...base, tier: 'bronze' as never })).toBeNull();
+  });
+
+  it('puts the place in the line, and says a move down as a fresh start — never as a fall', () => {
+    expect(ceremonyLine(t, base, ceremonyFor(base)!)).toBe('You finished #15 last week and moved up to Çem.');
+    const stayed = { ...base, tier: 'cem' as const, outcome: 'stayed' as const };
+    expect(ceremonyLine(t, stayed, ceremonyFor(stayed)!)).toBe('You finished #15 last week and stay in Çem.');
+    const down = { ...base, tier: 'gol' as const, outcome: 'demoted' as const };
+    expect(ceremonyLine(t, down, ceremonyFor(down)!)).toBe('You finished #15 last week. This week is a fresh start in Çem.');
+    expect(ceremonyLine(t, down, ceremonyFor(down)!)).not.toMatch(/down|lost|dropped/i);
+    const trophy = { ...base, tier: 'okyanus' as const, tierAfter: 'okyanus' as const, outcome: 'stayed' as const, trophy: true, rank: 1 };
+    expect(ceremonyLine(t, trophy, ceremonyFor(trophy)!)).toBe('You finished #1 last week: top three in Okyanûs, a Pêla week.');
+    // in Kurdish too, with the Kurdish name of the league
+    expect(ceremonyLine(tKu, base, ceremonyFor(base)!)).toBe('Hefteya borî tu bûyî #15 û derketî Çem.');
+    expect(ceremonyLine(tCkb, base, ceremonyFor(base)!)).toBe('هەفتەی ڕابردوو #15 بوویت و سەرکەوتیت بۆ چەم.');
+  });
+
+  it('falls back to last week’s plain line when the place is not known', () => {
+    const unplaced = { ...base, rank: null, groupSize: null };
+    expect(ceremonyLine(t, unplaced, ceremonyFor(unplaced)!)).toBe('You moved up to Çem.');
+  });
+
+  it('ends on the one rule for moving up, or the trophy’s at the top, and on nothing when there are no places yet', () => {
+    expect(moveUpRule(t, { tier: 'cem', promoteCount: 5, goalXp: 150 })).toBe('The top 5 with 150 XP or more move up.');
+    expect(moveUpRule(t, { tier: 'okyanus', promoteCount: 0, goalXp: 150 })).toMatch(/Pêla/);
+    expect(moveUpRule(t, { tier: 'cem', promoteCount: 0, goalXp: 150 })).toBeNull();
   });
 });

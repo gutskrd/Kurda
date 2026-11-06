@@ -4,8 +4,8 @@
  *
  * Deleting is the delicate one. A `shop_items` row is pointed at by what
  * people own (`user_entitlements`), the gifts they were given (`gifts`), the
- * refunds owed for replaced art (`cosmetic_refreshes`), and what they are
- * wearing (`users.equipped_*`). The first three cascade and the last is set
+ * record of its owners when its art was replaced (`cosmetic_refreshes`, kept
+ * as history), and what they are wearing (`users.equipped_*`). The first three cascade and the last is set
  * to null, so deleting an item somebody has would take it from them — and
  * with it, what they paid for and the gift a friend sent. So an item is
  * deleted only when nothing points at it; otherwise it is retired: off sale,
@@ -56,7 +56,7 @@ export interface ItemUsage {
   equipped: number;
   /** gifts of it, opened or not */
   gifts: number;
-  /** refunds recorded for it when its art was replaced */
+  /** records kept for it from when its art was replaced (the field keeps its old name for the admin console) */
   refunds: number;
   /** part of the art set the shop ships with */
   builtIn: boolean;

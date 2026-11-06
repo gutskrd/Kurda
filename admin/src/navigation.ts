@@ -32,6 +32,8 @@ export interface SessionAccess {
   /** every staff role, the legacy `admin` and `founder` included */
   staffRoles: readonly string[];
   capabilities: readonly string[];
+  /** the voices this account records (Hamo, a narrator…): the console opens on them */
+  voices?: readonly string[];
 }
 
 /** A page's guard, as its API routes have it. */
@@ -47,6 +49,8 @@ export function canOpen(access: Access, session: SessionAccess): boolean {
 // route's guard is a change to one line here.
 const LEGACY_ADMIN = { roles: ['admin'] } as const; // requireRoles('admin'): analytics, economy, events, flags, jobs…
 const RECORDERS = { roles: ['superadmin', 'content_editor', 'admin'] } as const; // ALPHABET_AUDIO_ROLES / LESSON_AUDIO_ROLES
+// RECORDING_ROLES (api/src/recording/access.ts): the studio's, and the voice actor, who records their own lines and opens nothing else
+const VOICES = { roles: ['superadmin', 'content_editor', 'admin', 'voice_actor'] } as const;
 const STORY_EDITORS = { roles: ['superadmin', 'content_editor', 'admin'] } as const; // STORY_EDITOR_ROLES
 const GAME_EDITORS = { roles: ['admin', 'superadmin', 'content_editor'] } as const; // game-content-routes, race-routes
 const LESSON_EDITORS = { roles: ['superadmin', 'content_editor'] } as const; // requireAdmin(totp, 'superadmin', 'content_editor')
@@ -101,7 +105,9 @@ export const NAV: readonly NavEntry[] = [
   { id: 'dashboard', label: 'Dashboard', group: 'overview', icon: 'home', page: 'dashboard', access: { anyone: true }, keywords: 'home start summary' },
   { id: 'analytics', label: 'Analytics', group: 'overview', icon: 'chart', page: 'analytics', access: LEGACY_ADMIN, keywords: 'dau mau retention funnel' },
 
-  // the owner could not find where to record: it gets a group of its own, near the top, in plain words
+  // the owner could not find where to record: it gets a group of its own, near the top, in plain words,
+  // opening on each person's own lines — what they have to say, in order — before the studio's sides
+  { id: 'record-people', label: 'Record by person', group: 'record', icon: 'users', page: 'record', access: VOICES, keywords: 'voice actor people hamo xezo xezal hevalo narrator script lines to record dashboard' },
   { id: 'record-letters', label: 'Record the alphabet and words', group: 'record', icon: 'letters', page: 'audio', sub: 'letters', access: RECORDERS, keywords: 'audio studio letters alphabet words colours numbers days months voice microphone' },
   { id: 'record-lessons', label: 'Record lesson sentences', group: 'record', icon: 'mic', page: 'audio', sub: 'lessons', access: RECORDERS, keywords: 'audio studio words sentences voice microphone' },
   { id: 'record-conversations', label: 'Record conversations', group: 'record', icon: 'chat', page: 'audio', sub: 'conversations', access: RECORDERS, keywords: 'audio studio dialogue conversation parts people voices together microphone' },
@@ -129,6 +135,8 @@ export const NAV: readonly NavEntry[] = [
   { id: 'wordle', label: 'Peyvok', group: 'games', icon: 'grid', page: 'wordle', access: GAME_EDITORS, keywords: 'coverage word game' },
   { id: 'rhyme', label: 'Rhyme', group: 'games', icon: 'rhyme', page: 'rhyme', access: GAME_EDITORS, keywords: 'rhymes base words' },
   { id: 'race', label: 'Race texts', group: 'games', icon: 'keyboard', page: 'race', access: GAME_EDITORS, keywords: 'typing race' },
+  // the learning games' own content, behind the capability its API routes ask for (api/src/games/routes.ts)
+  { id: 'game-content', label: 'Learning game content', title: 'Game content', group: 'games', icon: 'list', page: 'game-content', access: { capability: 'content.edit' }, keywords: 'learning games sentences passages scenarios cards review readiness import build a sentence' },
 
   { id: 'ranks', label: 'Game ranks', group: 'ranks', icon: 'mountain', page: 'ranks', access: RANK_TOOLS, keywords: 'rating tiers top players suspicious pairs void reset' },
   { id: 'seasons', label: 'Seasons', group: 'ranks', icon: 'trophy', page: 'seasons', access: RANK_TOOLS, keywords: 'season rewards frames gems end close' },
@@ -216,8 +224,14 @@ export function isKnownPage(page: string): boolean {
   return page in PAGE_ACCESS;
 }
 
-/** Where a session starts: the first page in the nav it can open. */
+/**
+ * Where a session starts: someone who lends a voice, on their own lines (one
+ * voice's script, or their voices first among everyone's); anyone else on the
+ * first page in the nav they can open.
+ */
 export function landingRoute(session: SessionAccess): string {
+  const voices = session.voices ?? [];
+  if (voices.length > 0 && mayOpenPage('record', session)) return voices.length === 1 ? `record/${encodeURIComponent(voices[0]!)}` : 'record';
   const first = visibleNav(session)[0] ?? NAV[0]!;
   return first.sub ? `${first.page}/${first.sub}` : first.page;
 }
@@ -247,4 +261,5 @@ export const ROLE_NAME: Readonly<Record<string, string>> = {
   support: 'Support',
   admin: 'Admin',
   founder: 'Founder',
+  voice_actor: 'Voice actor',
 };

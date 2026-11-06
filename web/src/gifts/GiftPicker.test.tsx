@@ -69,6 +69,8 @@ describe('GiftPicker in a direct message', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
     expect(screen.getByText('Sunset over Amed for rojda')).toBeInTheDocument();
+    // by the button that spends: a gift is as final as any purchase
+    expect(screen.getByText('Gifts are final too: once it’s sent, it’s theirs to keep.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Send gift' }));
 
     const sent = calls.find((c) => c.url.endsWith('/gifts'))!;

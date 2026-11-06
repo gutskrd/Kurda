@@ -36,7 +36,7 @@ export interface Palette {
   background: string;
   gradient: readonly [string, string, string];
 
-  // glassmorphism / liquid glass — three blur tiers so we can go stronger on
+  // frosted glass — three blur tiers so we can go stronger on
   // floating surfaces (nav, modals, sheets) and lighter on flat, scrolled content
   // (cards, rows) where heavy blur costs performance and hurts readability.
   glassFill: string; // translucent tint painted over the blur
@@ -60,6 +60,12 @@ export interface Palette {
    * is where the second one would have been written again, slightly different.
    */
   scrim: string;
+  /**
+   * What sits on the scrim: a spinner over a photo while it uploads. The
+   * scrim is dark in both schemes, so this is light in both, where
+   * `textOnPrimary` turns dark with the dark scheme and would vanish there.
+   */
+  textOnScrim: string;
 
   separator: string;
 
@@ -176,6 +182,7 @@ export const LIGHT: Palette = {
   glassBorder: 'rgba(255,255,255,0.45)',
 
   scrim: 'rgba(0,0,0,0.45)',
+  textOnScrim: '#FFFFFF',
   separator: 'rgba(20,20,20,0.07)',
 
 
@@ -223,6 +230,7 @@ export const DARK: Palette = {
   glassBorder: 'rgba(255,255,255,0.14)',
 
   scrim: 'rgba(0,0,0,0.6)',
+  textOnScrim: '#FFFFFF',
   separator: 'rgba(255,255,255,0.08)',
 
 

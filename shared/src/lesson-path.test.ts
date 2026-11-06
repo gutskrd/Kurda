@@ -3,7 +3,7 @@ import {
   PATH_GEOMETRY,
   PATH_JUMP,
   PATH_MASCOT,
-  UNIT_TONES,
+  UNIT_TONE_ORDER,
   jumpMistakesAllowed,
   jumpPassed,
   jumpPlan,
@@ -154,12 +154,12 @@ describe('lessonPath — the way it winds', () => {
 
 describe('lessonPath — units', () => {
   it('numbers units, gives each a colour in turn, and says what each covers', () => {
-    const units = Array.from({ length: UNIT_TONES.length + 1 }, (_, i) => [skill(`s${i}`, 'locked', 0, 2, { hasGrammar: i === 0 })]);
+    const units = Array.from({ length: UNIT_TONE_ORDER.length + 1 }, (_, i) => [skill(`s${i}`, 'locked', 0, 2, { hasGrammar: i === 0 })]);
     const path = lessonPath(map(...units));
     expect(path.units.map((u) => u.number)).toEqual(units.map((_, i) => i + 1));
-    expect(path.units[0]!.tone).toBe(UNIT_TONES[0]);
+    expect(path.units[0]!.tone).toBe(UNIT_TONE_ORDER[0]);
     // the colours come round again rather than running out
-    expect(path.units[UNIT_TONES.length]!.tone).toBe(UNIT_TONES[0]);
+    expect(path.units[UNIT_TONE_ORDER.length]!.tone).toBe(UNIT_TONE_ORDER[0]);
     expect(path.units[0]!.topics).toEqual(['Skill s0']);
     expect(path.units[0]!.guide.map((s) => s.skillId)).toEqual(['s0']);
     expect(path.units[1]!.guide).toEqual([]);
@@ -315,5 +315,39 @@ describe('mascotSpot', () => {
     expect(mascotSpot({ x: 0, y: 200 })).toEqual({ x: across, y: 200 - size / 2 });
     expect(mascotSpot({ x: PATH_GEOMETRY.sway, y: 100 })).toEqual({ x: -away, y: 100 - size / 2 });
     expect(mascotSpot({ x: -PATH_GEOMETRY.sway, y: 100 })).toEqual({ x: away, y: 100 - size / 2 });
+  });
+});
+
+describe('a unit’s guide on the path', () => {
+  const grammar = { hasGrammar: true };
+  const course = () =>
+    map([skill('a', 'completed', 2, 2, grammar), skill('b', 'unlocked')], [skill('c', 'locked', 0, 2, grammar), skill('d', 'locked')], [skill('e', 'locked')]);
+
+  it('opens a unit with notes with its guide, for a client that draws it, and no other', () => {
+    expect(stopKeys(lessonPath(course()))).not.toContain('g:u1');
+    const path = lessonPath(course(), { guides: true });
+    expect(path.units.map((u) => u.stops[0]!.stop.key)).toEqual(['g:u1', 'g:u2', 's:e']);
+    const guide = path.units[0]!.stops[0]!.stop;
+    expect(guide).toMatchObject({ kind: 'guide', open: true });
+    expect(guide.kind === 'guide' && guide.skills.map((s) => s.skillId)).toEqual(['a']);
+    // a unit not begun has its guide too, closed: the line into it is still ahead
+    expect(path.units[1]!.stops[0]!.stop).toMatchObject({ kind: 'guide', open: false });
+    expect(path.units[1]!.stops[1]!.trail).toBe('ahead');
+    expect(path.units[0]!.stops[1]!.trail).toBe('walked');
+  });
+
+  it('makes the jump offer on the unit’s first skill, after its guide, with room above it for its bubble', () => {
+    const { pad, step, lift } = PATH_GEOMETRY;
+    const path = lessonPath(course(), { guides: true, offerJumps: true });
+    expect(path.units[1]!.jumpKey).toBe('s:c');
+    expect(path.units[1]!.stops[0]!.y).toBe(pad);
+    expect(path.units[1]!.stops[1]!.y).toBe(pad + step + lift);
+    expect(path.units[0]!.jumpKey).toBeNull();
+  });
+
+  it('leaves the snapshot, the changes and the lesson to open next to the skills alone', () => {
+    const path = lessonPath(course(), { guides: true });
+    expect(Object.keys(pathSnapshot(path))).toEqual(['s:a', 's:b', 's:c', 's:d', 's:e']);
+    expect(nextLaunch(course())).toEqual({ lessonId: 'b-1', title: 'Lesson b-1' });
   });
 });

@@ -7,7 +7,7 @@
  *
  * Pure, so it is tested without a screen.
  */
-import { lessonPath, type PathStop, type UnitTone } from '@kurda/shared';
+import { lessonPath, type PathStop, type PathStopLook, type UnitTone } from '@kurda/shared';
 import type { ColorScheme } from '../theme/appearance';
 import type { TranslationKey } from '../i18n/translations';
 import { STATE_LABEL, type CourseEntry } from './node';
@@ -39,6 +39,7 @@ export const TONES: Record<ColorScheme, Record<UnitTone, ToneColors>> = {
     dusk: { fill: '#b9aaf0', lip: '#8273bd', ink: '#18122e', text: '#c4b7f4' },
     pine: { fill: '#bcd283', lip: '#849a4f', ink: '#1a220a', text: '#c6da94' },
     rose: { fill: '#eda0bf', lip: '#b56a8a', ink: '#2b0f1b', text: '#f1b1ca' },
+    saffron: { fill: '#f0c060', lip: '#b88a2a', ink: '#2a1d05', text: '#f3ca74' },
   },
   light: {
     meadow: { fill: '#2e7a52', lip: '#1f5739', ink: '#ffffff', text: '#256843' },
@@ -47,6 +48,7 @@ export const TONES: Record<ColorScheme, Record<UnitTone, ToneColors>> = {
     dusk: { fill: '#6551a6', lip: '#493a7d', ink: '#ffffff', text: '#57459a' },
     pine: { fill: '#56692b', lip: '#3e4c1e', ink: '#ffffff', text: '#4b5c25' },
     rose: { fill: '#a3446b', lip: '#78304e', ink: '#ffffff', text: '#8f3b5d' },
+    saffron: { fill: '#9a6508', lip: '#6f4806', ink: '#ffffff', text: '#8a5a07' },
   },
 };
 
@@ -54,6 +56,16 @@ export const TONES: Record<ColorScheme, Record<UnitTone, ToneColors>> = {
 export const REST: Record<ColorScheme, { fill: string; lip: string; ink: string; line: string }> = {
   dark: { fill: '#262a31', lip: '#1a1d22', ink: '#9a9ca1', line: 'rgba(255,255,255,0.2)' },
   light: { fill: '#e4e4e1', lip: '#c9c9c5', ink: '#74767c', line: 'rgba(17,17,17,0.18)' },
+};
+
+/**
+ * The glyph on a stop's drawn face where the face is not the unit's colour:
+ * on an open stop's parchment (deep by day, the unit's ink by evening, when
+ * the parchment stays light) and on a closed one's field stone.
+ */
+export const FACE_INK: Record<ColorScheme, { paper: (tone: ToneColors) => string; stone: string }> = {
+  light: { paper: (tone) => tone.text, stone: '#6a6252' },
+  dark: { paper: (tone) => tone.ink, stone: '#e2e3e8' },
 };
 
 /** The sun's gold under an earned trophy, and the glyph on it. */
@@ -97,10 +109,13 @@ function stateWord(stop: Extract<PathStop<SkillNode>, { kind: 'skill' }>): Trans
 /**
  * The whole of a stop, in words, for its button: "Family, you are here, 2 of
  * 4 lessons done". The state word is a key of its own, for the caller to look
- * up and pass in as `state`.
+ * up and pass in as `state`. A unit's guide is named for its unit, as its
+ * banner's button was before it stood on the path.
  */
-export function stopLabel(stop: PathStop<SkillNode>, unitNumber: number): { words: Words; state?: TranslationKey } {
+export function stopLabel(stop: PathStop<SkillNode>, unit: { number: number; title: string }): { words: Words; state?: TranslationKey } {
+  const unitNumber = unit.number;
   if (stop.kind === 'review') return { words: { key: 'coursemap.path.reviewLabel', params: { count: stop.due } } };
+  if (stop.kind === 'guide') return { words: { key: 'coursemap.path.guideFor', params: { unit: unit.title } } };
   if (stop.kind === 'trophy') {
     return {
       words: { key: 'coursemap.path.trophyLabel', params: { n: unitNumber } },
@@ -111,6 +126,21 @@ export function stopLabel(stop: PathStop<SkillNode>, unitNumber: number): { word
   return stop.lessonsTotal > 0
     ? { words: { key: 'coursemap.path.label', params: { title: stop.skill.title, done: stop.lessonsDone, total: stop.lessonsTotal } }, state }
     : { words: { key: 'coursemap.path.labelShort', params: { title: stop.skill.title } }, state };
+}
+
+/**
+ * How a stop is drawn (shared `pathStopSvg`): a skill by how it stands, the
+ * guide as its open book (grey until its unit is begun), review as an open
+ * stop, a unit's end as its chest — open once earned — and the first skill of
+ * a unit that can be jumped to as the gate the jump goes through.
+ */
+export function stopLook(stop: PathStop<SkillNode>, jump = false): PathStopLook {
+  if (jump) return 'jump';
+  if (stop.kind === 'review') return 'review';
+  if (stop.kind === 'guide') return stop.open ? 'guide' : 'guideLocked';
+  if (stop.kind === 'trophy') return stop.earned ? 'chestOpen' : 'chest';
+  if (stop.state === 'done') return stop.finish === 'strong' ? 'strong' : stop.finish === 'refresh' ? 'refresh' : 'done';
+  return stop.state;
 }
 
 /**

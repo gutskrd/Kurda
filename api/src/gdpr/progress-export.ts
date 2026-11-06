@@ -4,8 +4,15 @@ import type pg from 'pg';
  * A learner's progress, for their data export (contract 4 §B2): every XP they
  * earned and what of it counted, their league tier and every league week,
  * their streaks, their badges and showcase, the old achievements, the rated
- * games the ranked badges were counted from, and the league seasons archived
- * before Game Ranks.
+ * games the ranked badges were counted from, the league seasons archived
+ * before Game Ranks, the stories they kept on their shelf and how far they
+ * read each one, the dictionary words they saved, their rounds of the
+ * learning games with how far up each ladder they climbed, and the levels
+ * buildings in The Village reached.
+ *
+ * A story or a word is named by what they saw (its slug and title, its
+ * headword and dialect) rather than by the row ids that join them, which
+ * would mean nothing to them.
  *
  * Only their own rows, and nothing about anyone else in their groups or games.
  * The ratings themselves, every change with its reason and the Game Ranks
@@ -51,6 +58,28 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
     // the quarterly league archive the old season job wrote (its job is gone, the history stays theirs)
     leagueSeasons: await q(
       `SELECT season_key, peak_tier, final_rating, reward_gems, created_at FROM seasons WHERE user_id = $1 ORDER BY season_key`,
+    ),
+    storyBookmarks: await q(
+      `SELECT s.slug, s.title, b.created_at FROM story_bookmarks b JOIN stories s ON s.id = b.story_id WHERE b.user_id = $1 ORDER BY b.created_at`,
+    ),
+    // where they got to in each story: the paragraph, how far through it that is, and when they first finished it
+    storyReading: await q(
+      `SELECT s.slug, s.title, r.paragraph, r.share, r.finished_at, r.updated_at
+         FROM story_reading r JOIN stories s ON s.id = r.story_id WHERE r.user_id = $1 ORDER BY r.updated_at`,
+    ),
+    savedWords: await q(
+      `SELECT e.headword, e.dialect, w.saved_at FROM saved_words w JOIN dict_entries e ON e.id = w.entry_id WHERE w.user_id = $1 ORDER BY w.saved_at`,
+    ),
+    // the learning games: each round as it went (not its items' answers, which are the content's), and how far up each ladder
+    learningGames: await q(
+      `SELECT game, dialect, difficulty, total_count, correct_count, first_try_count, xp_awarded, learning_counted, created_at, finished_at
+         FROM game_sessions WHERE user_id = $1 ORDER BY created_at`,
+    ),
+    learningGameProgress: await q(`SELECT game, dialect, step, updated_at FROM game_progress WHERE user_id = $1 ORDER BY game, dialect`),
+    // the village their learning built: when it was founded, and each level reached, when it was shown and the Zêr it paid
+    kingdomVillage: (await q(`SELECT founded_at, intro_seen_at FROM kingdom_villages WHERE user_id = $1`))[0] ?? null,
+    kingdomLevels: await q(
+      `SELECT building, level, reached_at, seen_at, zer FROM kingdom_levels WHERE user_id = $1 ORDER BY reached_at, building, level`,
     ),
   };
 }

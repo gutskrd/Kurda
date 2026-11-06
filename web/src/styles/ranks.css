@@ -170,15 +170,16 @@
   padding: 2px 8px 2px 6px;
   font-size: 0.72rem;
 }
+/* the scheme's own gold and green, so the word stays readable on a light page and on a tinted ticket alike */
 .rated-badge.is-rated {
-  color: #ffe6a6;
-  border-color: rgba(240, 194, 74, 0.42);
-  background: linear-gradient(135deg, rgba(240, 194, 74, 0.2), rgba(197, 82, 255, 0.12));
+  color: var(--gold-ink);
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+  background: var(--gold-soft);
 }
 .rated-badge.is-friendly {
-  color: #b9f3dc;
-  border-color: rgba(134, 226, 190, 0.34);
-  background: rgba(87, 205, 160, 0.12);
+  color: var(--success);
+  border-color: color-mix(in srgb, var(--success) 35%, transparent);
+  background: var(--success-soft);
 }
 .match-rated,
 .invite-rated {
@@ -281,7 +282,7 @@
 }
 .rated-option.is-friendly.is-on .rated-option-icon {
   background: rgba(87, 205, 160, 0.2);
-  color: #b9f3dc;
+  color: var(--success);
 }
 .rated-option.is-on .rated-option-hint {
   color: var(--ink-2);
@@ -1405,10 +1406,10 @@
   color: var(--ink-3);
   font: inherit;
   font-weight: 650;
+  line-height: 1.15;
   cursor: pointer;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  /* a name too long for half a phone takes a second line rather than losing its end */
+  overflow-wrap: break-word;
 }
 .rankings-tab.is-active {
   background: var(--surface);
@@ -1424,6 +1425,116 @@
   .rankings-tab {
     min-height: 44px;
   }
+}
+/*
+ * What the leaderboard ranks — Weekly XP, Zêr, Gewher — drawn as the tabs
+ * above it are, a size down, since it changes what the whole board is. Real
+ * radios under the segments (ui/BoardSwitch), stretched over each one, so the
+ * arrow keys move the choice and the whole segment is the target. Nothing in
+ * it moves: the chosen segment is simply drawn chosen.
+ */
+.rank-by {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 3px;
+  min-width: 0;
+  margin: 0 0 12px;
+  padding: 3px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.rank-by-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  user-select: none;
+}
+.rank-by-btn > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/*
+ * On a phone, three equal thirds left a label 63 to 73px between its icon and
+ * the segment's edge, and the weekly board's name is longer than that in
+ * every language but English at 390px, and in all nine at 360px ("XP-ya
+ * heftane" was cut to "XP-ya h…"); the gems were cut in three. So down here
+ * each segment takes the room its own words need, the short Zêr giving the
+ * long weekly board what it does not use, with the padding and the gap a
+ * step tighter; and a label that still does not fit goes onto a second line
+ * rather than losing its end. The floor is the longest word, so a word is
+ * never cut; at 360px every one of the nine fits on one line.
+ */
+@media (max-width: 560px) {
+  .rank-by {
+    grid-template-columns: repeat(3, minmax(min-content, auto));
+  }
+  .rank-by-btn {
+    gap: 4px;
+    padding: 4px 8px;
+  }
+  .rank-by-btn > span:last-child {
+    white-space: normal;
+    text-align: center;
+    line-height: 1.15;
+  }
+}
+.rank-by-btn.is-active {
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+@media (hover: hover) {
+  .rank-by-btn:not(.is-active):hover {
+    color: var(--ink);
+  }
+}
+.rank-by-btn input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.rank-by-btn:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.rank-by-xp {
+  flex: none;
+  color: var(--gold-ink);
+}
+@media (pointer: coarse) {
+  .rank-by-btn {
+    min-height: 40px;
+  }
+}
+/* a Zêr or Gewher amount on a board: the currency's picture, then the number */
+.rank-amount {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 600;
+}
+/* your place on a board that stops before it reaches you, said under your row */
+.rank-standing-note {
+  margin: 6px 0 0;
+  padding-inline: 12px;
+  font-size: 0.85rem;
 }
 .rankings-blurb {
   margin: 0 0 14px;

@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { VISEMES } from '../lipsync/visemes.js';
 import {
   ACTS,
+  BROW_STATES,
+  CHARACTER_HABITS,
   CHARACTER_IDS,
+  CHARACTER_REACTIONS,
+  EYE_STATES,
+  MOUTH_SHAPES,
+  TAP_RUN_MS,
+  actFor,
   between,
   characterArt,
   cropBox,
@@ -11,50 +17,168 @@ import {
   glanceTarget,
   keySteps,
   lookToward,
+  pickAct,
   pupilShift,
+  reactionAct,
   sampleHold,
   sampleKeys,
+  tapActs,
+  type Act,
+  type ActName,
   type Keys,
 } from './index.js';
 
-const TRACKS = ['earLeft', 'earRight', 'sniff', 'rise', 'stretch', 'tilt'] as const;
+const TRACKS = ['earLeft', 'earRight', 'sniff', 'rise', 'stretch', 'tilt', 'wiggle', 'lift', 'hair'] as const;
+
+/** Every track of an act runs from its start to its end, in order, and comes back to rest; every hold is a span inside it of a state that is drawn. */
+function wellMade(act: Act): void {
+  expect(act.ms).toBeGreaterThan(0);
+  for (const track of TRACKS) {
+    const keys = act[track];
+    if (!keys) continue;
+    expect(keys[0]?.[0], `${track} starts`).toBe(0);
+    expect(keys[keys.length - 1]?.[0], `${track} ends`).toBe(1);
+    for (let i = 1; i < keys.length; i++) expect(keys[i]![0], track).toBeGreaterThanOrEqual(keys[i - 1]![0]);
+    // where it ends is where it rests, so nothing is left tilted or in the air
+    const rest = track === 'sniff' || track === 'stretch' ? 1 : 0;
+    expect(keys[keys.length - 1]?.[1], `${track} rests`).toBe(rest);
+    expect(keys[0]?.[1] === rest || track.startsWith('ear'), `${track} begins at rest`).toBe(true);
+  }
+  for (const [from, to] of [...(act.eyes ?? []), ...(act.mouth ?? []), ...(act.brows ?? []), ...(act.cheeks ?? [])]) {
+    expect(from).toBeGreaterThanOrEqual(0);
+    expect(to).toBeLessThanOrEqual(1);
+    expect(to).toBeGreaterThan(from);
+  }
+  for (const [, , v] of act.mouth ?? []) expect(MOUTH_SHAPES).toContain(v);
+  for (const [, , v] of act.eyes ?? []) expect(EYE_STATES).toContain(v);
+  for (const [, , v] of act.brows ?? []) expect(BROW_STATES).toContain(v);
+  for (const [, , v] of act.cheeks ?? []) expect(v).toBe('blush');
+}
 
 describe('the acts', () => {
   for (const [name, act] of Object.entries(ACTS)) {
     it(`${name}: every track runs from the start of the act to its end, in order, and comes back to rest`, () => {
-      expect(act.ms).toBeGreaterThan(0);
-      for (const track of TRACKS) {
-        const keys = act[track];
-        if (!keys) continue;
-        expect(keys[0]?.[0], `${track} starts`).toBe(0);
-        expect(keys[keys.length - 1]?.[0], `${track} ends`).toBe(1);
-        for (let i = 1; i < keys.length; i++) expect(keys[i]![0], track).toBeGreaterThanOrEqual(keys[i - 1]![0]);
-        // where it ends is where it rests, so nothing is left tilted or in the air
-        const rest = track === 'sniff' || track === 'stretch' ? 1 : 0;
-        expect(keys[keys.length - 1]?.[1], `${track} rests`).toBe(rest);
-        expect(keys[0]?.[1] === rest || track.startsWith('ear'), `${track} begins at rest`).toBe(true);
-      }
-      for (const [from, to] of [...(act.eyes ?? []), ...(act.mouth ?? [])]) {
-        expect(from).toBeGreaterThanOrEqual(0);
-        expect(to).toBeLessThanOrEqual(1);
-        expect(to).toBeGreaterThan(from);
-      }
-      for (const [, , v] of act.mouth ?? []) expect(VISEMES).toContain(v);
+      wellMade(act);
     });
   }
 
-  it('never rises more than a small hop, nor tilts the head far', () => {
-    for (const act of Object.values(ACTS)) {
-      for (const [, v] of act.rise ?? []) expect(v).toBeLessThanOrEqual(0.08);
-      for (const [, v] of act.tilt ?? []) expect(Math.abs(v)).toBeLessThanOrEqual(10);
-      for (const [, v] of act.stretch ?? []) expect(Math.abs(v - 1)).toBeLessThanOrEqual(0.061);
+  it('never rises more than a small hop, nor tilts the head far, nor rocks, lifts or swings anything much', () => {
+    for (const id of CHARACTER_IDS) {
+      for (const name of Object.keys(ACTS) as ActName[]) {
+        const act = actFor(id, name);
+        for (const [, v] of act.rise ?? []) expect(v).toBeLessThanOrEqual(0.08);
+        for (const [, v] of act.tilt ?? []) expect(Math.abs(v)).toBeLessThanOrEqual(10);
+        for (const [, v] of act.stretch ?? []) expect(Math.abs(v - 1)).toBeLessThanOrEqual(0.061);
+        for (const [, v] of act.wiggle ?? []) expect(Math.abs(v)).toBeLessThanOrEqual(4);
+        // the near end of the moustache lifts a degree or two, no more
+        for (const [, v] of act.lift ?? []) expect(Math.abs(v)).toBeLessThanOrEqual(2.5);
+        for (const [, v] of act.hair ?? []) expect(Math.abs(v)).toBeLessThanOrEqual(12);
+      }
     }
   });
 
-  it('greets and cheers with smiling eyes, and meets a miss with no sad face', () => {
+  it('greets and cheers with smiling eyes, and meets a miss with no sad face, whoever it is', () => {
     expect(ACTS.greet.eyes?.some(([, , e]) => e === 'happy')).toBe(true);
     expect(ACTS.cheer.eyes?.some(([, , e]) => e === 'happy')).toBe(true);
-    expect(ACTS.hmm.eyes?.every(([, , e]) => e === 'half' || e === 'closed')).toBe(true);
+    expect(ACTS.cheer.mouth?.some(([, , m]) => m === 'grin')).toBe(true);
+    for (const id of CHARACTER_IDS) {
+      expect(actFor(id, 'hmm').eyes?.every(([, , e]) => e === 'half' || e === 'closed')).toBe(true);
+      expect(actFor(id, 'cheer').eyes?.some(([, , e]) => e === 'happy' || e === 'wink')).toBe(true);
+    }
+  });
+
+  it('winks with one eye, starts with wide eyes and brows up and a round mouth, laughs with smiling eyes, pouts with knitted brows', () => {
+    expect(ACTS.wink.eyes?.some(([, , e]) => e === 'wink')).toBe(true);
+    expect(ACTS.wink.mouth?.some(([, , m]) => m === 'grin')).toBe(true);
+    expect(ACTS.surprised.eyes?.some(([, , e]) => e === 'wide')).toBe(true);
+    expect(ACTS.surprised.brows?.some(([, , b]) => b === 'raised')).toBe(true);
+    expect(ACTS.surprised.mouth?.some(([, , m]) => m === 'o')).toBe(true);
+    for (const laugh of ['giggle', 'chuckle'] as const) {
+      expect(ACTS[laugh].eyes?.every(([, , e]) => e === 'happy')).toBe(true);
+      expect(ACTS[laugh].mouth?.some(([, , m]) => m === 'grin')).toBe(true);
+      expect(ACTS[laugh].stretch).toBeDefined();
+    }
+    expect(ACTS.giggle.wiggle).toBeDefined();
+    expect(ACTS.chuckle.lift).toBeDefined();
+    expect(ACTS.pout.brows?.some(([, , b]) => b === 'knit')).toBe(true);
+    expect(ACTS.pout.mouth?.some(([, , m]) => m === 'u')).toBe(true);
+    expect(ACTS.tongue.mouth?.some(([, , m]) => m === 'tongue')).toBe(true);
+    // the habits: a small lift of the moustache, a swing of the hair
+    expect(ACTS.preen.lift).toBeDefined();
+    expect(ACTS.tuck.hair).toBeDefined();
+    expect(ACTS.tuck.tilt).toBeDefined();
+  });
+
+  it('lets each character play an act its own way, with the shared act underneath', () => {
+    for (const id of CHARACTER_IDS) {
+      for (const name of Object.keys(ACTS) as ActName[]) {
+        const own = actFor(id, name);
+        wellMade(own);
+        expect(own.ms).toBe(ACTS[name].ms);
+      }
+    }
+    // a miss: Hamo raises one brow, Xezo pouts, the deer keeps the curious tilt as it is
+    expect(actFor('hamo', 'hmm').brows?.some(([, , b]) => b === 'one')).toBe(true);
+    expect(actFor('xezo', 'hmm').brows?.some(([, , b]) => b === 'knit')).toBe(true);
+    expect(actFor('xezo', 'hmm').mouth?.some(([, , m]) => m === 'u')).toBe(true);
+    expect(actFor('hevalo', 'hmm')).toBe(ACTS.hmm);
+    // a cheer: Hamo's brows up and his moustache lifted at the end, Xezo's wink and blush
+    expect(actFor('hamo', 'cheer').brows?.some(([, , b]) => b === 'raised')).toBe(true);
+    expect(actFor('hamo', 'cheer').lift?.some(([, v]) => v > 0)).toBe(true);
+    expect(actFor('xezo', 'cheer').eyes?.some(([, , e]) => e === 'wink')).toBe(true);
+    expect(actFor('xezo', 'cheer').cheeks?.length).toBe(1);
+    // what is shared stays: the same hops for everyone
+    for (const id of CHARACTER_IDS) expect(actFor(id, 'cheer').rise).toBe(ACTS.cheer.rise);
+    expect(actFor('hevalo', 'greet')).toBe(ACTS.greet);
+  });
+
+  it('plays a reaction as the character it is for: only Hamo chuckles, only Xezo pouts', () => {
+    for (const reaction of CHARACTER_REACTIONS) for (const id of CHARACTER_IDS) expect(ACTS[reactionAct(id, reaction)]).toBeDefined();
+    expect(reactionAct('hamo', 'chuckle')).toBe('chuckle');
+    expect(reactionAct('xezo', 'chuckle')).toBe('giggle');
+    expect(reactionAct('hevalo', 'chuckle')).toBe('giggle');
+    expect(reactionAct('xezo', 'pout')).toBe('pout');
+    expect(reactionAct('hamo', 'pout')).toBe('hmm');
+    expect(reactionAct('hevalo', 'pout')).toBe('hmm');
+    for (const id of CHARACTER_IDS) {
+      expect(reactionAct(id, 'cheer')).toBe('cheer');
+      expect(reactionAct(id, 'hmm')).toBe('hmm');
+      expect(reactionAct(id, 'tongue')).toBe('tongue');
+    }
+  });
+
+  it('answers a run of quick taps with a greeting, a giggle, then a start and a laugh, and begins again', () => {
+    expect(TAP_RUN_MS).toBeGreaterThan(1000);
+    expect(TAP_RUN_MS).toBeLessThan(3000);
+    for (const id of CHARACTER_IDS) {
+      expect(tapActs(id, 1)).toEqual(['greet']);
+      expect(tapActs(id, 2)).toEqual(['giggle']);
+      expect(tapActs(id, 3)).toEqual(['surprised', id === 'hamo' ? 'chuckle' : 'giggle']);
+      expect(tapActs(id, 4)).toEqual(['greet']);
+      expect(tapActs(id, 0)).toEqual(['greet']);
+    }
+  });
+
+  it('gives each character habits of its own, none of them busy', () => {
+    for (const id of CHARACTER_IDS) {
+      const habits = CHARACTER_HABITS[id];
+      expect(habits.length).toBeGreaterThan(0);
+      for (const habit of habits) {
+        expect(habit.acts.length).toBeGreaterThan(0);
+        for (const act of habit.acts) expect(ACTS[act]).toBeDefined();
+        expect(habit.every[0]).toBeGreaterThanOrEqual(5000);
+        expect(habit.every[1]).toBeGreaterThan(habit.every[0]);
+        expect(habit.acts).toContain(pickAct(habit, () => 0));
+        expect(habit.acts).toContain(pickAct(habit, () => 0.999));
+      }
+    }
+    const acts = (id: (typeof CHARACTER_IDS)[number]): ActName[] => CHARACTER_HABITS[id].flatMap((h) => [...h.acts]);
+    expect(acts('hevalo')).toEqual(expect.arrayContaining(['twitchLeft', 'twitchRight', 'sniff', 'tongue']));
+    expect(acts('hamo')).toEqual(['preen']);
+    expect(acts('xezo')).toEqual(['tuck']);
+    // the deer's tongue is rare
+    const tongue = CHARACTER_HABITS.hevalo.find((h) => h.acts.includes('tongue'))!;
+    expect(tongue.every[0]).toBeGreaterThan(30000);
   });
 });
 

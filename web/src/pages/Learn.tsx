@@ -165,7 +165,8 @@ function TodayStrip(): React.JSX.Element {
 }
 
 /**
- * Practice tools: review, the alphabet and the dictionary, side by side.
+ * Practice tools: review, the alphabet, the words to know and the dictionary,
+ * side by side.
  *
  * Tools, not courses — each is something to reach for between lessons — so
  * they share a row rather than each taking a card of the page's full width.
@@ -194,13 +195,13 @@ function Tools({ signedIn }: { signedIn: boolean }): React.JSX.Element {
       </h2>
       <div className={`learn-tools${signedIn ? '' : ' is-guest'}`}>
         {signedIn && <ReviewEntry />}
-        {/* before any course, the letters it is written in */}
-        <Link to="/app/alphabet" className="learn-tool learn-tool-link ab-start">
-          <span className="ab-start-letters" lang="ku" aria-hidden="true">
+        {/* the letters every course is written in, and the first words after them: one way in (pages/Words.tsx) */}
+        <Link to="/app/learn/words" className="learn-tool learn-tool-link">
+          <span className="learn-tool-letters" lang="ku" aria-hidden="true">
             {ALPHABET_TEASER}
           </span>
-          <span className="learn-tool-title ab-start-title">{t('alphabet.title')}</span>
-          <span className="learn-tool-body ab-start-body">{t('alphabet.link')}</span>
+          <span className="learn-tool-title">{t('words.title')}</span>
+          <span className="learn-tool-body">{t('words.toolHint')}</span>
         </Link>
         {dictionary}
       </div>

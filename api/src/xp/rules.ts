@@ -15,12 +15,20 @@
  * Days here are UTC days, the same clock as the league week, so a day never
  * straddles two weeks.
  */
-import { ACCURACY_BONUS_XP, BASE_LESSON_XP, REPEAT_XP_FACTOR } from '@kurda/shared';
+import { ACCURACY_BONUS_XP, BASE_LESSON_XP, LEARN_GAME_XP_SOURCES, REPEAT_XP_FACTOR } from '@kurda/shared';
 
 /** Learning: these join the week's league and build streaks (see `isLearningSource`). */
 export const LEARNING_XP_SOURCES = ['lesson_complete', 'practice_complete', 'story'] as const;
-/** Games: rated or friendly, solo or not — all of them share one daily league cap. */
-export const GAME_XP_SOURCES = ['wordle', 'wordle_battle', 'rhyme', 'rhyme_match', 'race'] as const;
+/**
+ * Games: rated or friendly, solo or not — all of them share one daily league
+ * cap. The learning games' sources come from their registry
+ * (`LEARN_GAME_XP_SOURCES` in @kurda/shared), so a game added there is under
+ * the cap the day it is added: a source missing from this list would escape
+ * it. A solo learning round still counts for the streak and the daily goal
+ * when at least half of it was right (games/rewards.ts), but its XP is game
+ * XP here.
+ */
+export const GAME_XP_SOURCES: readonly string[] = ['wordle', 'wordle_battle', 'rhyme', 'rhyme_match', 'race', ...LEARN_GAME_XP_SOURCES];
 
 /**
  * What a lesson pays — the base, the accuracy bonus on top of it, and the

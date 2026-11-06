@@ -1,10 +1,7 @@
-import { randomInt } from 'node:crypto';
 import type pg from 'pg';
 import {
   ANSWER_GRACE_MS,
   DEFAULT_QUESTION_COUNT,
-  JOIN_CODE_ALPHABET,
-  JOIN_CODE_LENGTH,
   MAX_HOSTED_GAMES,
   MAX_PLAYERS,
   MIN_PLAYERS_TO_START,
@@ -18,6 +15,7 @@ import {
   readingSoftCapSeconds,
   storyAudioSentences,
   storyParagraphs,
+  cefrOf,
   type GameAccess,
   type InviteSummary,
   type LobbyCard,
@@ -29,14 +27,17 @@ import {
   type StoryGameStatus,
   type StoryGameSummary,
   type StoryGameView,
+  type StoryGlossEntry,
+  type StoryLanguage,
   type StoryLength,
   type StoryLevel,
   type StoryProgress,
+  type StoryTradition,
   type TextDuring,
   type TimerSeconds,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { sentenceRecordings } from '../stories/service.js';
+import { PUBLISHED_SQL, audioCoverage, glossaryForReader, narrationOf, sentenceRecordings } from '../stories/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import { areFriendsSql } from '../users/age.js';
 import { XpService } from '../xp/service.js';
@@ -377,15 +378,15 @@ export class StoryGamesService {
 
     let row: GameRow | undefined;
     for (let attempt = 0; !row; attempt++) {
-      const code = solo ? null : newJoinCode();
       await client.query('SAVEPOINT story_code');
       try {
+        // the code comes from new_game_code(), which no game of any kind is using (migration game-join-codes)
         const res = await client.query<GameRow>(
           `INSERT INTO story_games (code, mode, host_id, story_id, dialect, level, length, question_count,
                                     timer_seconds, text_during, access, chat_group_id, rated)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
+           VALUES (CASE WHEN $1::boolean THEN new_game_code() END, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) RETURNING *`,
           [
-            code,
+            !solo,
             input.mode,
             hostId,
             story.id,
@@ -622,6 +623,14 @@ export class StoryGamesService {
    * not take the text away mid-game); before that, and after the copy is
    * cleared, the story as published. Recordings are looked up now.
    *
+   * The translations and the attribution are never copied into the game, so
+   * they are read from the story as it is now, and only while it is published
+   * and approved. A story that went back to draft or was archived may carry
+   * a translation or a source nobody has reviewed yet, and those must not
+   * reach a game's members any more than the story's own list would show
+   * them: the frozen text is served without its translations, and with no
+   * author or source, until the story is published again.
+   *
    * `frozen` says which it was: only the game's own copy stays the same at
    * this address. In the lobby the host can still pick another story, and the
    * address would not change with it.
@@ -634,55 +643,82 @@ export class StoryGamesService {
       dialect: StoryDialect;
       level: StoryLevel;
       length: StoryLength;
+      language: StoryLanguage;
+      category: string | null;
+      tradition: StoryTradition;
+      author: string | null;
+      story_source: string | null;
+      source_url: string | null;
+      attribution_note: string | null;
+      translations: Record<string, string>;
+      cover: string | null;
+      featured: boolean;
+      reading_minutes: number | null;
+      published_at: Date | null;
+      live: boolean;
     }>(
-      `SELECT g.story_id, g.story_snapshot, g.dialect, g.level, g.length
+      `SELECT g.story_id, g.story_snapshot, g.dialect, g.level, g.length,
+              s.language, s.category, s.tradition, s.author, s.story_source, s.source_url, s.attribution_note, s.translations,
+              s.cover, s.featured, s.reading_minutes, s.published_at, (${PUBLISHED_SQL}) AS live
          FROM story_games g JOIN story_game_players p ON p.game_id = g.id AND p.user_id = $2 AND NOT p.removed
+         JOIN stories s ON s.id = g.story_id
         WHERE g.id = $1`,
       [gameId, userId],
     );
     const row = res.rows[0];
     if (!row) throw notFound();
-    let detail: Omit<StoryDetail, 'audio' | 'fullyNarrated'>;
+    // the text as the game copied it, or the live story before a copy is made (the lobby); how it is filed is read
+    // from the story itself either way, since that is not content and a game never freezes it
+    let text: { id: string; slug: string; title: string; summary: string | null; wordCount: number; paragraphs: string[]; glossary: StoryGlossEntry[] };
     if (row.story_snapshot) {
       const s = row.story_snapshot;
-      detail = {
-        id: row.story_id,
-        slug: s.slug,
-        title: s.title,
-        summary: s.summary ?? null,
-        dialect: row.dialect,
-        level: row.level,
-        length: row.length,
-        wordCount: s.wordCount,
-        readingMinutes: readingMinutes(row.dialect, s.wordCount),
-        paragraphs: s.paragraphs,
-        glossary: s.glossary,
-      };
+      text = { id: row.story_id, slug: s.slug, title: s.title, summary: s.summary ?? null, wordCount: s.wordCount, paragraphs: s.paragraphs, glossary: s.glossary };
     } else {
       const live = await this.stories.getPublishedForGame(row.story_id);
       if (!live) throw new AppError('STORY_UNAVAILABLE', 404, 'this story is being updated');
-      detail = {
-        id: live.id,
-        slug: live.slug,
-        title: live.title,
-        summary: live.summary ?? null,
-        dialect: live.dialect,
-        level: live.level,
-        length: live.length,
-        wordCount: live.wordCount,
-        readingMinutes: readingMinutes(live.dialect, live.wordCount),
-        paragraphs: storyParagraphs(live.body),
-        glossary: live.glossary,
-      };
+      text = { id: live.id, slug: live.slug, title: live.title, summary: live.summary ?? null, wordCount: live.wordCount, paragraphs: storyParagraphs(live.body), glossary: live.glossary };
     }
-    const keys = [...new Set(detail.paragraphs.flatMap((p) => storyAudioSentences(p)).map((s) => lessonAudioKey(s)))];
-    const { audio, voices } = await sentenceRecordings(this.pool, keys);
+    const keys = [...new Set(text.paragraphs.flatMap((p) => storyAudioSentences(p)).map((s) => lessonAudioKey(s)))];
+    const [{ audio, durations, voices }, glossary] = await Promise.all([
+      sentenceRecordings(this.pool, keys),
+      glossaryForReader(this.pool, row.dialect, text.glossary),
+    ]);
+    // a translation written for a text that has since changed shape would sit beside the wrong paragraphs: left out;
+    // and none at all while the story is not published and approved (see above)
+    const translations: Record<string, string[]> = {};
+    for (const [locale, t] of Object.entries(row.live ? (row.translations ?? {}) : {})) {
+      if (typeof t !== 'string') continue;
+      const paragraphs = storyParagraphs(t);
+      if (paragraphs.length === text.paragraphs.length) translations[locale] = paragraphs;
+    }
+    const recorded = keys.filter((k) => audio[k] !== undefined).length;
+    const coverage = audioCoverage(recorded, keys.length);
     return {
       story: {
-        ...detail,
+        ...text,
+        glossary,
+        dialect: row.dialect,
+        language: row.language,
+        level: row.level,
+        cefr: cefrOf(row.level),
+        length: row.length,
+        readingMinutes: row.reading_minutes ?? readingMinutes(row.dialect, text.wordCount),
+        fullyNarrated: coverage === 'full',
+        audioCoverage: coverage,
+        category: row.category,
+        tradition: row.tradition,
+        author: row.live ? row.author : null,
+        featured: row.featured,
+        cover: row.cover,
+        publishedAt: row.published_at?.toISOString() ?? null,
         audio,
         ...(Object.keys(voices).length > 0 ? { voices } : {}),
-        fullyNarrated: keys.length > 0 && keys.every((k) => audio[k] !== undefined),
+        translations,
+        source: row.live ? row.story_source : null,
+        sourceUrl: row.live ? row.source_url : null,
+        attributionNote: row.live ? row.attribution_note : null,
+        versions: [],
+        narration: narrationOf(text.paragraphs, audio, durations),
       },
       frozen: row.story_snapshot !== null,
     };
@@ -1927,11 +1963,4 @@ function awayKey(players: PhasePlayer[]): string {
     .map((p) => p.seat)
     .sort((a, b) => a - b)
     .join(',');
-}
-
-/** A join code: six characters from the look-alike-free alphabet, each drawn with the CSPRNG. */
-export function newJoinCode(): string {
-  let code = '';
-  for (let i = 0; i < JOIN_CODE_LENGTH; i++) code += JOIN_CODE_ALPHABET[randomInt(JOIN_CODE_ALPHABET.length)];
-  return code;
 }

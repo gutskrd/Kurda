@@ -8,6 +8,8 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 // a badge earned meanwhile waits on the chest's moment (badges/BadgeCelebrationHost.tsx)
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { QuestDay, QuestStep } from '@kurda/shared';
 import type { ApiResult } from '../api/types';
@@ -54,7 +56,8 @@ describe('the quests after a lesson', () => {
     expect((await screen.findAllByText('10 / 40')).length).toBeGreaterThan(0);
     await waitFor(() => expect(screen.getAllByText('25 / 40').length).toBeGreaterThan(0));
     expect(screen.getByLabelText('Earn 40 XP: 25 of 40')).toBeTruthy();
-    expect(screen.getByText('Quests done this month: 7')).toBeTruthy();
+    // the month's tally closes the list, its count climbing to where it stands
+    expect(await screen.findByText('Quests done this month: 7')).toBeTruthy();
     // nothing waits to be opened: on
     expect(screen.getByRole('button', { name: 'Continue' })).toBeTruthy();
   });
@@ -157,6 +160,49 @@ describe('a chest', () => {
 });
 
 describe('the quests from Learn', () => {
+  it('reads the day’s quests again when pulled down', async () => {
+    const client = fakeClient({ 'GET /me/quests': ok(day) });
+    testAuth.client = client;
+    renderWithProviders(<QuestsScreen place="learn" onDone={() => undefined} />);
+    expect(await screen.findByText('Quests done this month: 7')).toBeTruthy();
+    const count = () => client.calls.filter((c) => c.path === '/me/quests').length;
+    const before = count();
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
+    await waitFor(() => expect(count()).toBe(before + 1));
+  });
+
+  /*
+   * Opened from Learn, the list is the whole screen: the month heads it, its
+   * count climbing over a bar of what the month could hold so far (the 29th:
+   * three a day), each bar fills from empty to where it stands, and the chests
+   * that can be opened shake — only those, and not once they are open.
+   */
+  it('fill each bar from empty under the month’s tally, and shake only the chests that can be opened', async () => {
+    testAuth.client = fakeClient({
+      'GET /me/quests': ok(day),
+      'POST /me/quests/q%3Astreak/claim': opening('q:streak', 12, 1252),
+      'POST /me/quests/q%3Aperfect/claim': offline,
+    });
+    renderWithProviders(<QuestsScreen place="learn" onDone={() => undefined} />);
+    expect((await screen.findAllByText('0 / 40')).length).toBeGreaterThan(0);
+    expect(await screen.findByText('Quests done this month: 7')).toBeTruthy();
+    expect(screen.getByLabelText('7 of 87 so far this month')).toBeTruthy();
+    await waitFor(() => expect(screen.getAllByText('25 / 40').length).toBeGreaterThan(0));
+    expect(screen.getAllByTestId('quest-chest-shaking')).toHaveLength(2);
+
+    // the first chest opens and the next is offered; that one stays shut (offline), which ends the run and brings the list back
+    fireEvent.click(screen.getByRole('button', { name: 'Open chest' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open the chest' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('heading', { name: 'Epic chest' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Open the chest' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    expect(await screen.findByLabelText('Keep your streak going: 1 of 1, Chest opened')).toBeTruthy();
+    // back from the chests the bars are simply where they stand, and only the chest still waiting shakes
+    expect(screen.getAllByText('25 / 40').length).toBeGreaterThan(0);
+    expect(screen.getAllByTestId('quest-chest-shaking')).toHaveLength(1);
+  });
+
   it('say when they did not load and ask again, then list today’s quests with a chest to open and a way out', async () => {
     testAuth.client = fakeClient({ 'GET /me/quests': inTurn(offline, ok(day)) });
     const onDone = vi.fn();
