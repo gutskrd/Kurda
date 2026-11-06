@@ -1292,20 +1292,20 @@
 .kingdom-sparkles::before {
   content: '';
   position: absolute;
-  left: -26px;
-  top: -16px;
-  width: 52px;
-  height: 32px;
-  border: 2px solid #fff;
+  left: -40px;
+  top: -24px;
+  width: 80px;
+  height: 48px;
+  border: 3px solid #fff;
   border-radius: 50%;
   animation: kg-pop 900ms ease-out forwards;
 }
 .kingdom-sparkles > i {
   position: absolute;
-  left: -4px;
-  top: -4px;
-  width: 8px;
-  height: 8px;
+  left: -7px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
   animation: kg-sparkle 1400ms ease-out forwards;
 }
 .kingdom-sparkles > i > svg {
@@ -1313,14 +1313,45 @@
   width: 100%;
   height: 100%;
 }
-.kingdom-sparkles > i:nth-child(1) { --dx: -26px; --dy: -22px; }
-.kingdom-sparkles > i:nth-child(2) { --dx: 24px; --dy: -26px; animation-delay: 80ms; }
-.kingdom-sparkles > i:nth-child(3) { --dx: 34px; --dy: -4px; animation-delay: 160ms; }
-.kingdom-sparkles > i:nth-child(4) { --dx: -36px; --dy: 2px; animation-delay: 120ms; }
-.kingdom-sparkles > i:nth-child(5) { --dx: -12px; --dy: -36px; animation-delay: 220ms; }
-.kingdom-sparkles > i:nth-child(6) { --dx: 12px; --dy: -40px; animation-delay: 40ms; }
-.kingdom-sparkles > i:nth-child(7) { --dx: 20px; --dy: 12px; animation-delay: 260ms; }
-.kingdom-sparkles > i:nth-child(8) { --dx: -22px; --dy: 14px; animation-delay: 300ms; }
+.kingdom-sparkles > i:nth-child(1) {
+  --dx: -38px;
+  --dy: -32px;
+}
+.kingdom-sparkles > i:nth-child(2) {
+  --dx: 36px;
+  --dy: -38px;
+  animation-delay: 80ms;
+}
+.kingdom-sparkles > i:nth-child(3) {
+  --dx: 50px;
+  --dy: -6px;
+  animation-delay: 160ms;
+}
+.kingdom-sparkles > i:nth-child(4) {
+  --dx: -52px;
+  --dy: 3px;
+  animation-delay: 120ms;
+}
+.kingdom-sparkles > i:nth-child(5) {
+  --dx: -18px;
+  --dy: -52px;
+  animation-delay: 220ms;
+}
+.kingdom-sparkles > i:nth-child(6) {
+  --dx: 18px;
+  --dy: -58px;
+  animation-delay: 40ms;
+}
+.kingdom-sparkles > i:nth-child(7) {
+  --dx: 30px;
+  --dy: 18px;
+  animation-delay: 260ms;
+}
+.kingdom-sparkles > i:nth-child(8) {
+  --dx: -32px;
+  --dy: 20px;
+  animation-delay: 300ms;
+}
 @keyframes kg-sparkle {
   0% {
     opacity: 0;

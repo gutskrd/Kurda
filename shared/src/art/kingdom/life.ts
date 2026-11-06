@@ -374,7 +374,7 @@ function sparkle(pal: Palette): string {
 function fireflies(pal: Palette): string {
   if (!pal.dusk) return '';
   const at: [number, number][] = [[-10, -4], [-3, 3], [5, -6], [11, 2], [1, -1]];
-  return `<path d="${at.map(([x, y]) => disc(x, y, 2.4)).join('')}" fill="#ffe27a" fill-opacity="0.28" stroke="none"/><path d="${at.map(([x, y]) => disc(x, y, 0.9)).join('')}" fill="#fff4b0" stroke="none"/>`;
+  return `<path d="${at.map(([x, y]) => disc(x, y, 3.4)).join('')}" fill="#ffe27a" fill-opacity="0.4" stroke="none"/><path d="${at.map(([x, y]) => disc(x, y, 1.3)).join('')}" fill="#fffbe0" stroke="none"/>`;
 }
 
 /** Scenery sprites are drawn as the scene draws them, a quarter larger than their own units. */

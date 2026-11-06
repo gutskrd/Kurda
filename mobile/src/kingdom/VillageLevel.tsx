@@ -164,15 +164,17 @@ export function LevelUp({ level, unlocks, top }: { level: number; unlocks: reado
 
 const SPARKLE = kingdomSpriteSvg('sparkle');
 const BURST: readonly [number, number, number][] = [
-  [-26, -22, 0],
-  [24, -26, 80],
-  [34, -4, 160],
-  [-36, 2, 120],
-  [-12, -36, 220],
-  [12, -40, 40],
-  [20, 12, 260],
-  [-22, 14, 300],
+  [-38, -32, 0],
+  [36, -38, 80],
+  [50, -6, 160],
+  [-52, 3, 120],
+  [-18, -52, 220],
+  [18, -58, 40],
+  [30, 18, 260],
+  [-32, 20, 300],
 ];
+/** A sparkle's size, and the ring's, in canvas units. */
+const SPARK = 14;
 
 /** The sparkle where what a new level brought appears, and a ring popping out from it; `k` points to the canvas unit. */
 export function Sparkles({ x, y, k }: { x: number; y: number; k: number }): React.JSX.Element {
@@ -185,7 +187,7 @@ export function Sparkles({ x, y, k }: { x: number; y: number; k: number }): Reac
       <Animated.View
         style={[
           styles.ring,
-          { left: x - 26 * k, top: y - 16 * k, width: 52 * k, height: 32 * k, borderWidth: 2 * k, opacity: t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 0] }), transform: [{ scale: t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.2, 1.6, 1.6] }) }] },
+          { left: x - 40 * k, top: y - 24 * k, width: 80 * k, height: 48 * k, borderWidth: 3 * k, opacity: t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 0] }), transform: [{ scale: t.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0.2, 1.6, 1.6] }) }] },
         ]}
       />
       {BURST.map(([dx, dy, delay], i) => {
@@ -196,10 +198,10 @@ export function Sparkles({ x, y, k }: { x: number; y: number; k: number }): Reac
             key={i}
             style={{
               position: 'absolute',
-              left: x - 4 * k,
-              top: y - 4 * k,
-              width: 8 * k,
-              height: 8 * k,
+              left: x - (SPARK / 2) * k,
+              top: y - (SPARK / 2) * k,
+              width: SPARK * k,
+              height: SPARK * k,
               opacity: local.interpolate({ inputRange: [0, 0.01, 0.25, 1], outputRange: [0, 0.3, 1, 0] }),
               transform: [
                 { translateX: local.interpolate({ inputRange: [0, 1], outputRange: [0, dx * k] }) },
@@ -209,7 +211,7 @@ export function Sparkles({ x, y, k }: { x: number; y: number; k: number }): Reac
               ],
             }}
           >
-            <SvgXml xml={SPARKLE} width={8 * k} height={8 * k} />
+            <SvgXml xml={SPARKLE} width={SPARK * k} height={SPARK * k} />
           </Animated.View>
         );
       })}
