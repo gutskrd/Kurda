@@ -623,7 +623,14 @@ function Village(props: VillageProps): React.JSX.Element {
           lastTap = { at: 0, x: 0, y: 0 };
         } else {
           lastTap = { at: t1, ...p };
-          tapAt(start.target, p.x, p.y);
+          // what was tapped: someone standing there before the building whose plot they stand on (the plots lie over the life),
+          // and a building before a tree that stands in front of it
+          const stack = typeof document.elementsFromPoint === 'function' ? document.elementsFromPoint(e.clientX, e.clientY) : [];
+          const tapOf = (n: Element): string | null => n.closest('[data-actor]')?.getAttribute('data-tap') ?? null;
+          const living = stack.find((n) => { const tap = tapOf(n); return tap !== null && tap !== 'rustle'; });
+          const plot = stack.find((n) => n.closest('[data-building]'));
+          const tree = stack.find((n) => tapOf(n) === 'rustle');
+          tapAt(living ?? plot ?? tree ?? start.target, p.x, p.y);
         }
         start = null;
         return;
