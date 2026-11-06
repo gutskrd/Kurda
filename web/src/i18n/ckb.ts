@@ -3771,7 +3771,6 @@ export const ckb: Catalogue = {
   'kingdom.celebrate.next': 'دواتر',
   'kingdom.celebrate.done': 'گەڕانەوە بۆ گوند',
   'kingdom.lv': 'ئاست {level}',
-  'kingdom.hud.levels': '{count} لە {total} ئاستی بیناکان',
   'kingdom.list': 'بیناکانت',
   'kingdom.zoomIn': 'نزیک بکەرەوە',
   'kingdom.zoomOut': 'دوور بخەرەوە',

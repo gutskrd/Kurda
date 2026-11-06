@@ -3778,7 +3778,6 @@ export const ku: Catalogue = {
   'kingdom.celebrate.next': 'Ya din',
   'kingdom.celebrate.done': 'Vegere gund',
   'kingdom.lv': 'Ast {level}',
-  'kingdom.hud.levels': '{count} ji {total} astên avahiyan',
   'kingdom.list': 'Avahiyên te',
   'kingdom.zoomIn': 'Nêzîk bike',
   'kingdom.zoomOut': 'Dûr bike',

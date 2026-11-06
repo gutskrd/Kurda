@@ -10,7 +10,50 @@ import type { MessageKey } from '../i18n/en';
  * of the last level the learner was shown.
  */
 
-const unlockKey = (f: VillageFeature): MessageKey => `kingdom.unlock.${f}` as MessageKey;
+/** Each piece's name in the catalogues, spelled out so the catalogue checks can see every key is read. */
+const UNLOCK_KEY: Readonly<Record<VillageFeature, MessageKey>> = {
+  camp: 'kingdom.unlock.camp',
+  plots: 'kingdom.unlock.plots',
+  shepherd: 'kingdom.unlock.shepherd',
+  wheat: 'kingdom.unlock.wheat',
+  baker: 'kingdom.unlock.baker',
+  hens: 'kingdom.unlock.hens',
+  sheepfold: 'kingdom.unlock.sheepfold',
+  farmer: 'kingdom.unlock.farmer',
+  laundry: 'kingdom.unlock.laundry',
+  haystack: 'kingdom.unlock.haystack',
+  chickpeas: 'kingdom.unlock.chickpeas',
+  chicks: 'kingdom.unlock.chicks',
+  children: 'kingdom.unlock.children',
+  goatfold: 'kingdom.unlock.goatfold',
+  signs: 'kingdom.unlock.signs',
+  waterCarrier: 'kingdom.unlock.waterCarrier',
+  mill: 'kingdom.unlock.mill',
+  tomatoes: 'kingdom.unlock.tomatoes',
+  benches: 'kingdom.unlock.benches',
+  dock: 'kingdom.unlock.dock',
+  cow: 'kingdom.unlock.cow',
+  boat: 'kingdom.unlock.boat',
+  elder: 'kingdom.unlock.elder',
+  lanterns: 'kingdom.unlock.lanterns',
+  hives: 'kingdom.unlock.hives',
+  onions: 'kingdom.unlock.onions',
+  threshing: 'kingdom.unlock.threshing',
+  donkey: 'kingdom.unlock.donkey',
+  rider: 'kingdom.unlock.rider',
+  orchardRows: 'kingdom.unlock.orchardRows',
+  kilims: 'kingdom.unlock.kilims',
+  jars: 'kingdom.unlock.jars',
+  flowers: 'kingdom.unlock.flowers',
+  poplars: 'kingdom.unlock.poplars',
+  bigFlock: 'kingdom.unlock.bigFlock',
+  bridge: 'kingdom.unlock.bridge',
+  dovecote: 'kingdom.unlock.dovecote',
+  loom: 'kingdom.unlock.loom',
+  weaver: 'kingdom.unlock.weaver',
+  festival: 'kingdom.unlock.festival',
+};
+const unlockKey = (f: VillageFeature): MessageKey => UNLOCK_KEY[f];
 
 /** What a level brings, in words: its first piece (the one the camera goes to show), and the rest after it. */
 export function unlockText(t: ReturnType<typeof useT>, unlocks: readonly VillageFeature[]): string {

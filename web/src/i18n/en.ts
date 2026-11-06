@@ -3869,7 +3869,6 @@ export const en = {
   'kingdom.celebrate.next': 'Next',
   'kingdom.celebrate.done': 'Back to the village',
   'kingdom.lv': 'Lv {level}',
-  'kingdom.hud.levels': '{count} of {total} building levels',
   'kingdom.list': 'Your buildings',
   'kingdom.zoomIn': 'Zoom in',
   'kingdom.zoomOut': 'Zoom out',

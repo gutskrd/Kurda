@@ -3766,7 +3766,6 @@ export const ar: Catalogue = {
   'kingdom.celebrate.next': 'التالي',
   'kingdom.celebrate.done': 'العودة إلى القرية',
   'kingdom.lv': 'مستوى {level}',
-  'kingdom.hud.levels': '{count} من {total} من مستويات المباني',
   'kingdom.list': 'مبانيك',
   'kingdom.zoomIn': 'تكبير',
   'kingdom.zoomOut': 'تصغير',

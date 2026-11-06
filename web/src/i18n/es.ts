@@ -3771,7 +3771,6 @@ export const es: Catalogue = {
   'kingdom.celebrate.next': 'Siguiente',
   'kingdom.celebrate.done': 'Volver a la aldea',
   'kingdom.lv': 'Nv. {level}',
-  'kingdom.hud.levels': '{count} de {total} niveles de edificios',
   'kingdom.list': 'Tus edificios',
   'kingdom.zoomIn': 'Acercar',
   'kingdom.zoomOut': 'Alejar',

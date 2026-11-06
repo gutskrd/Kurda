@@ -3768,7 +3768,6 @@ export const tr: Catalogue = {
   'kingdom.celebrate.next': 'Sonraki',
   'kingdom.celebrate.done': 'Köye dön',
   'kingdom.lv': 'Sv. {level}',
-  'kingdom.hud.levels': '{total} bina seviyesinden {count}',
   'kingdom.list': 'Binaların',
   'kingdom.zoomIn': 'Yakınlaştır',
   'kingdom.zoomOut': 'Uzaklaştır',

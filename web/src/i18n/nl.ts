@@ -3773,7 +3773,6 @@ export const nl: Catalogue = {
   'kingdom.celebrate.next': 'Volgende',
   'kingdom.celebrate.done': 'Terug naar het dorp',
   'kingdom.lv': 'Niv. {level}',
-  'kingdom.hud.levels': '{count} van {total} gebouwniveaus',
   'kingdom.list': 'Je gebouwen',
   'kingdom.zoomIn': 'Inzoomen',
   'kingdom.zoomOut': 'Uitzoomen',

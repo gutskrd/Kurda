@@ -3773,7 +3773,6 @@ export const de: Catalogue = {
   'kingdom.celebrate.next': 'Weiter',
   'kingdom.celebrate.done': 'Zurück ins Dorf',
   'kingdom.lv': 'St. {level}',
-  'kingdom.hud.levels': '{count} von {total} Gebäudestufen',
   'kingdom.list': 'Deine Gebäude',
   'kingdom.zoomIn': 'Hineinzoomen',
   'kingdom.zoomOut': 'Herauszoomen',

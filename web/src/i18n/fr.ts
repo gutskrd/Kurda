@@ -3772,7 +3772,6 @@ export const fr: Catalogue = {
   'kingdom.celebrate.next': 'Suivant',
   'kingdom.celebrate.done': 'Retour au village',
   'kingdom.lv': 'Niv. {level}',
-  'kingdom.hud.levels': '{count} niveaux de bâtiments sur {total}',
   'kingdom.list': 'Tes bâtiments',
   'kingdom.zoomIn': 'Zoomer',
   'kingdom.zoomOut': 'Dézoomer',

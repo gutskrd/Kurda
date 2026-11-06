@@ -24,7 +24,50 @@ const GOLD = '#f2b632';
 const GREEN = '#3fa45b';
 
 type Translate = ReturnType<typeof useI18n>['t'];
-const unlockKey = (f: VillageFeature): TranslationKey => `kingdom.unlock.${f}` as TranslationKey;
+/** Each piece's name in the catalogues, spelled out so the catalogue checks can see every key is read. */
+const UNLOCK_KEY: Readonly<Record<VillageFeature, TranslationKey>> = {
+  camp: 'kingdom.unlock.camp',
+  plots: 'kingdom.unlock.plots',
+  shepherd: 'kingdom.unlock.shepherd',
+  wheat: 'kingdom.unlock.wheat',
+  baker: 'kingdom.unlock.baker',
+  hens: 'kingdom.unlock.hens',
+  sheepfold: 'kingdom.unlock.sheepfold',
+  farmer: 'kingdom.unlock.farmer',
+  laundry: 'kingdom.unlock.laundry',
+  haystack: 'kingdom.unlock.haystack',
+  chickpeas: 'kingdom.unlock.chickpeas',
+  chicks: 'kingdom.unlock.chicks',
+  children: 'kingdom.unlock.children',
+  goatfold: 'kingdom.unlock.goatfold',
+  signs: 'kingdom.unlock.signs',
+  waterCarrier: 'kingdom.unlock.waterCarrier',
+  mill: 'kingdom.unlock.mill',
+  tomatoes: 'kingdom.unlock.tomatoes',
+  benches: 'kingdom.unlock.benches',
+  dock: 'kingdom.unlock.dock',
+  cow: 'kingdom.unlock.cow',
+  boat: 'kingdom.unlock.boat',
+  elder: 'kingdom.unlock.elder',
+  lanterns: 'kingdom.unlock.lanterns',
+  hives: 'kingdom.unlock.hives',
+  onions: 'kingdom.unlock.onions',
+  threshing: 'kingdom.unlock.threshing',
+  donkey: 'kingdom.unlock.donkey',
+  rider: 'kingdom.unlock.rider',
+  orchardRows: 'kingdom.unlock.orchardRows',
+  kilims: 'kingdom.unlock.kilims',
+  jars: 'kingdom.unlock.jars',
+  flowers: 'kingdom.unlock.flowers',
+  poplars: 'kingdom.unlock.poplars',
+  bigFlock: 'kingdom.unlock.bigFlock',
+  bridge: 'kingdom.unlock.bridge',
+  dovecote: 'kingdom.unlock.dovecote',
+  loom: 'kingdom.unlock.loom',
+  weaver: 'kingdom.unlock.weaver',
+  festival: 'kingdom.unlock.festival',
+};
+const unlockKey = (f: VillageFeature): TranslationKey => UNLOCK_KEY[f];
 
 /** What a level brings, in words. */
 export function unlockText(t: Translate, unlocks: readonly VillageFeature[]): string {

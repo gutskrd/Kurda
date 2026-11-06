@@ -2912,7 +2912,6 @@ export type TranslationKey =
   | 'kingdom.celebrate.next'
   | 'kingdom.celebrate.done'
   | 'kingdom.lv'
-  | 'kingdom.hud.levels'
   | 'kingdom.list'
   | 'kingdom.zoomIn'
   | 'kingdom.zoomOut'
@@ -6324,7 +6323,6 @@ const en: Catalog = {
   'kingdom.celebrate.next': 'Next',
   'kingdom.celebrate.done': 'Back to the village',
   'kingdom.lv': 'Lv {level}',
-  'kingdom.hud.levels': '{count} of {total} building levels',
   'kingdom.list': 'Your buildings',
   'kingdom.zoomIn': 'Zoom in',
   'kingdom.zoomOut': 'Zoom out',
@@ -9735,7 +9733,6 @@ const ku: Catalog = {
   'kingdom.celebrate.next': 'Ya din',
   'kingdom.celebrate.done': 'Vegere gund',
   'kingdom.lv': 'Ast {level}',
-  'kingdom.hud.levels': '{count} ji {total} astên avahiyan',
   'kingdom.list': 'Avahiyên te',
   'kingdom.zoomIn': 'Nêzîk bike',
   'kingdom.zoomOut': 'Dûr bike',
@@ -13146,7 +13143,6 @@ const de: Catalog = {
   'kingdom.celebrate.next': 'Weiter',
   'kingdom.celebrate.done': 'Zurück ins Dorf',
   'kingdom.lv': 'St. {level}',
-  'kingdom.hud.levels': '{count} von {total} Gebäudestufen',
   'kingdom.list': 'Deine Gebäude',
   'kingdom.zoomIn': 'Hineinzoomen',
   'kingdom.zoomOut': 'Herauszoomen',
@@ -16557,7 +16553,6 @@ const es: Catalog = {
   'kingdom.celebrate.next': 'Siguiente',
   'kingdom.celebrate.done': 'Volver a la aldea',
   'kingdom.lv': 'Nv. {level}',
-  'kingdom.hud.levels': '{count} de {total} niveles de edificios',
   'kingdom.list': 'Tus edificios',
   'kingdom.zoomIn': 'Acercar',
   'kingdom.zoomOut': 'Alejar',
@@ -19968,7 +19963,6 @@ const tr: Catalog = {
   'kingdom.celebrate.next': 'Sonraki',
   'kingdom.celebrate.done': 'Köye dön',
   'kingdom.lv': 'Sv. {level}',
-  'kingdom.hud.levels': '{total} bina seviyesinden {count}',
   'kingdom.list': 'Binaların',
   'kingdom.zoomIn': 'Yakınlaştır',
   'kingdom.zoomOut': 'Uzaklaştır',
@@ -23379,7 +23373,6 @@ const ar: Catalog = {
   'kingdom.celebrate.next': 'التالي',
   'kingdom.celebrate.done': 'العودة إلى القرية',
   'kingdom.lv': 'مستوى {level}',
-  'kingdom.hud.levels': '{count} من {total} من مستويات المباني',
   'kingdom.list': 'مبانيك',
   'kingdom.zoomIn': 'تكبير',
   'kingdom.zoomOut': 'تصغير',
@@ -26790,7 +26783,6 @@ const fr: Catalog = {
   'kingdom.celebrate.next': 'Suivant',
   'kingdom.celebrate.done': 'Retour au village',
   'kingdom.lv': 'Niv. {level}',
-  'kingdom.hud.levels': '{count} niveaux de bâtiments sur {total}',
   'kingdom.list': 'Tes bâtiments',
   'kingdom.zoomIn': 'Zoomer',
   'kingdom.zoomOut': 'Dézoomer',
@@ -30201,7 +30193,6 @@ const nl: Catalog = {
   'kingdom.celebrate.next': 'Volgende',
   'kingdom.celebrate.done': 'Terug naar het dorp',
   'kingdom.lv': 'Niv. {level}',
-  'kingdom.hud.levels': '{count} van {total} gebouwniveaus',
   'kingdom.list': 'Je gebouwen',
   'kingdom.zoomIn': 'Inzoomen',
   'kingdom.zoomOut': 'Uitzoomen',
@@ -33613,7 +33604,6 @@ const ckb: Catalog = {
   'kingdom.celebrate.next': 'دواتر',
   'kingdom.celebrate.done': 'گەڕانەوە بۆ گوند',
   'kingdom.lv': 'ئاست {level}',
-  'kingdom.hud.levels': '{count} لە {total} ئاستی بیناکان',
   'kingdom.list': 'بیناکانت',
   'kingdom.zoomIn': 'نزیک بکەرەوە',
   'kingdom.zoomOut': 'دوور بخەرەوە',
