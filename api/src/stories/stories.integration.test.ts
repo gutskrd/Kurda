@@ -208,8 +208,11 @@ describe.skipIf(!DATABASE_URL)('stories (integration)', () => {
       const byTitle = await list('?sort=title');
       expect(byTitle.map((st) => st.title)).toEqual([...byTitle.map((st) => st.title)].sort());
       const newest = (await get('/stories?sort=newest')).json().stories as StoryListItem[];
-      const dates = newest.map((st) => st.publishedAt!);
-      expect(dates).toEqual([...dates].sort().reverse());
+      // newest first, and a story published straight into the table by another suite (no date) after every dated one
+      const dates = newest.map((st) => st.publishedAt ?? null);
+      const dated = dates.filter((d): d is string => d !== null);
+      expect(dated).toEqual([...dated].sort().reverse());
+      expect(dates.slice(dated.length).every((d) => d === null)).toBe(true);
       // pages: the total stays the same, and the pages do not overlap
       const first = (await get('/stories?limit=2')).json();
       const second = (await get('/stories?limit=2&offset=2')).json();

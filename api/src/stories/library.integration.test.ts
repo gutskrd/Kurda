@@ -147,8 +147,11 @@ describe.skipIf(!DATABASE_URL)('story library (integration)', () => {
       expect(lib.featured.length).toBeLessThanOrEqual(8);
       expect(ours(lib.recent).map((st) => st.slug).sort()).toEqual([slug('a'), slug('b'), slug('c'), slug('sorani-a')].sort());
       // recent is latest first, and never a draft
-      const published = lib.recent.map((st) => st.publishedAt!);
-      expect(published).toEqual([...published].sort().reverse());
+      // (a story other suites publish straight into the table has no date, and comes after every dated one)
+      const published = lib.recent.map((st) => st.publishedAt ?? null);
+      const dated = published.filter((d): d is string => d !== null);
+      expect(dated).toEqual([...dated].sort().reverse());
+      expect(published.slice(dated.length).every((d) => d === null)).toBe(true);
       expect(lib.recent.some((st) => st.slug === slug('draft'))).toBe(false);
       expect(lib.categories.map((c) => c.slug).slice(0, 8)).toEqual(['folktale', 'fable', 'legend', 'family', 'village', 'nature', 'everyday', 'celebrations']);
       expect(lib.categories.find((c) => c.slug === 'fable')!.count).toBeGreaterThanOrEqual(2);

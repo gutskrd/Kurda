@@ -426,13 +426,16 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
         'wordle_battle_players',
         'rhyme_match_players',
         'story_game_players',
+        'game_lobby_players',
       ]);
+      // whole, or kept to the rows that have a player (a seat Hevalo takes has none): a player's own rows are in either
       const indexed = await pool.query<{ table: string }>(
         `SELECT DISTINCT c.relname AS table
            FROM pg_index i
            JOIN pg_class c ON c.oid = i.indrelid
            JOIN pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = i.indkey[0]
-          WHERE c.relname = ANY($1) AND a.attname = 'user_id' AND i.indpred IS NULL`,
+          WHERE c.relname = ANY($1) AND a.attname = 'user_id'
+            AND (i.indpred IS NULL OR pg_get_expr(i.indpred, i.indrelid) = '(user_id IS NOT NULL)')`,
         [tables],
       );
       expect(indexed.rows.map((r) => r.table).sort()).toEqual([...tables].sort());

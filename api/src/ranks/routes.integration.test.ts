@@ -6,7 +6,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { dictionaryKey, letterKey } from '@kurda/shared';
+import { RANKED_GAMES, dictionaryKey, letterKey } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
@@ -72,7 +72,7 @@ describe.skipIf(!DATABASE_URL)('game ranks routes (integration)', () => {
   it('reads your ranks, the season and your preferences', async () => {
     const me = await call('host', 'GET', '/ranks/me');
     expect(me.statusCode).toBe(200);
-    expect(me.json().ranks.map((r: { game: string }) => r.game)).toEqual(['wordle-battle', 'rhyme-match', 'stories']);
+    expect(me.json().ranks.map((r: { game: string }) => r.game)).toEqual([...RANKED_GAMES]);
     expect(me.json().ranks[0]).toMatchObject({ points: 0, tier: null, placement: { played: 0, of: 5 } });
     expect((await call('host', 'GET', '/ranks/me/stories')).json()).toMatchObject({ game: 'stories' });
     expect((await call('host', 'GET', '/ranks/me/race')).statusCode).toBe(400);
@@ -148,7 +148,7 @@ describe.skipIf(!DATABASE_URL)('game ranks routes (integration)', () => {
     await pass2fa(app, users.admin!.token, '10.71.250.1');
     const get = (url: string) =>
       app.inject({ method: 'GET', url, headers: { authorization: `Bearer ${users.admin!.token}` }, remoteAddress: '10.71.250.1' });
-    expect((await get('/admin/ranks/spread')).json().games).toHaveLength(3);
+    expect((await get('/admin/ranks/spread')).json().games).toHaveLength(RANKED_GAMES.length);
     expect((await get('/admin/ranks/suspicious-pairs')).statusCode).toBe(200);
     expect((await get('/admin/ranks/top/wordle-battle')).statusCode).toBe(200);
     expect((await get('/admin/seasons')).json()).toHaveProperty('current');
@@ -159,7 +159,7 @@ describe.skipIf(!DATABASE_URL)('game ranks routes (integration)', () => {
     // a player's ranks and rated games, and a pair's games together: the host's battle with the mate
     const player = await get(`/admin/ranks/players/${users.host!.id}`);
     expect(player.statusCode).toBe(200);
-    expect(player.json().ranks.map((r: { game: string }) => r.game)).toEqual(['wordle-battle', 'rhyme-match', 'stories']);
+    expect(player.json().ranks.map((r: { game: string }) => r.game)).toEqual([...RANKED_GAMES]);
     expect(player.json().games).toEqual([expect.objectContaining({ game: 'wordle-battle', place: 1, voided: false })]);
     expect((await get('/admin/ranks/players/00000000-0000-4000-8000-000000000000')).statusCode).toBe(404);
     const pair = await get(`/admin/ranks/pairs/wordle-battle/${users.host!.id}/${users.mate!.id}`);

@@ -8,7 +8,7 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
-import { dictionaryKey, letterKey, pointsOf, seasonOf, type RankResult } from '@kurda/shared';
+import { RANKED_GAMES, dictionaryKey, letterKey, pointsOf, seasonOf, type RankResult } from '@kurda/shared';
 import { WordleBattleService } from '../game/wordle-battle-service.js';
 import { befriend } from '../test/social.js';
 import { deleteUsers, rankedUser } from '../test/ranks.js';
@@ -574,7 +574,8 @@ describe.skipIf(!DATABASE_URL)('game ranks (integration)', () => {
 
     it('shows how the active players spread over the tiers', async () => {
       const spread = await admin.spread();
-      expect(spread.map((s) => s.game)).toEqual(['wordle-battle', 'rhyme-match', 'stories']);
+      // every rated game, the multiplayer learning games after the first three
+      expect(spread.map((s) => s.game)).toEqual([...RANKED_GAMES]);
       for (const s of spread) expect(s.tiers.map((t) => t.tier)).toEqual(['dest', 'gir', 'zozan', 'ciya', 'lutke', 'sterk']);
     });
   });

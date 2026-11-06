@@ -236,7 +236,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Bluff and the Who Am I? ra
       const waiting = ((await call(b, 'GET', `/mp/bluff/${id}`)).body as View).board!;
       expect(waiting.reveal).toBeNull();
       expect(waiting.votedBy).toHaveLength(2);
-      expect(JSON.stringify(waiting)).not.toContain('"voters":[');
+      // who may vote is open, never who voted for what: no option carries its voters until the reveal
+      expect(waiting.voters).toEqual(expect.arrayContaining(waiting.votedBy));
+      expect(JSON.stringify(waiting.options ?? [])).not.toContain('voters');
       expect((await vote(b, door.id)).status).toBe(200);
 
       const reveal = ((await call(a, 'GET', `/mp/bluff/${id}`)).body as View).board!;

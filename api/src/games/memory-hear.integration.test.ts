@@ -42,6 +42,7 @@ import { poolQuiet, queriesDuring } from '../test/query-count.js';
 import { bustAvailability } from './availability.js';
 import { bustGamePools, itemKey } from './sources.js';
 import { learnGameServices } from './routes.js';
+import { removeCourses } from '../test/courses.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -294,7 +295,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
 
   afterAll(async () => {
     await poolQuiet(pool);
-    await pool.query(`DELETE FROM courses WHERE id = ANY($1::uuid[])`, [courseIds]);
+    await removeCourses(pool, courseIds);
     await pool.query(`DELETE FROM stories WHERE id = ANY($1::uuid[])`, [storyIds]);
     await pool.query(`DELETE FROM lesson_audio WHERE key = ANY($1)`, [audioKeys]);
     if (entryIds.length) await pool.query(`DELETE FROM dict_entries WHERE id = ANY($1::uuid[])`, [entryIds]);
@@ -356,7 +357,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
       // a round come back to is not shown the passages again
       const again = (await call('GET', `/games/solo/sessions/${view.id}`, learner)).json();
       expect(again.items.every((v: { phase: string; text: unknown }) => v.phase === 'restore' && v.text === null)).toBe(true);
-      expect((await call('POST', `/games/solo/sessions/${view.id}/begin`, learner, { index: 99 })).statusCode).toBe(404);
+      expect((await call('POST', `/games/solo/sessions/${view.id}/begin`, learner, { index: 20 })).statusCode).toBe(404);
       // a lesson's conversation is a passage too
       const services = learnGameServices(app, { xp: new XpService(app.db) });
       const passages = await services.memory.pool('kmr');

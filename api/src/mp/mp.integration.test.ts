@@ -208,7 +208,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     expect(ok.status).toBe(200);
     expect(ok.body.outcome).toEqual({ accepted: true, reason: null, strikes: 0, out: false });
     expect(ok.body.view.board.required).toBe('r');
-    expect(ok.body.view.board.chain).toEqual([{ n: 1, seat: expect.any(Number), word: 'qaxar', meaning: null }]);
+    // the word's short gloss from its curated entry, as the dictionary has it
+    expect(ok.body.view.board.chain).toEqual([{ n: 1, seat: expect.any(Number), word: 'qaxar', meaning: 'test word' }]);
 
     // the second player's slip: a made-up word beginning with the right letter
     const bad = await word(second, id, 'rzzzt');
@@ -220,8 +221,10 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     const kept = await pool.query(`SELECT text, kind FROM game_moves WHERE lobby_id = $1 ORDER BY seq`, [id]);
     expect(kept.rows.map((r) => r.text)).toEqual(['Qaxar', 'rzzzt']);
 
-    // out of turn, and a repeat
+    // out of turn, and a repeat (a word already in the chain that begins with the letter asked for)
     expect((await word(second, id, 'roqax')).status).toBe(409);
+    expect((await word(first, id, 'roqax')).body.outcome.accepted).toBe(true);
+    expect((await word(second, id, 'xazaq')).body.outcome.accepted).toBe(true);
     const repeat = await word(first, id, 'qaxar');
     expect(repeat.body.outcome.reason).toBe('used');
   });
@@ -256,11 +259,12 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     const [first, second] = await turnOf(id, host, guest);
     expect((await word(first, id, 'qaxar')).body.outcome.accepted).toBe(true);
     expect((await word(second, id, 'roqax')).body.outcome.accepted).toBe(true);
-    // the first player strikes out
-    for (let i = 0; i < 3; i++) {
+    // the first player strikes out: the turn passes after a strike as after a word, so the second keeps the chain going between
+    let next = 2;
+    for (let i = 0; i < 6 && (await view(host, id)).status === 'active'; i++) {
       const [now] = await turnOf(id, host, guest);
       if (now.id === first.id) await word(first, id, 'qqqqq');
-      else await word(second, id, CHAIN[2 + i]!);
+      else await word(second, id, CHAIN[next++]!);
     }
     await vi.waitFor(async () => expect((await view(host, id)).status).toBe('finished'));
     const done = await view(second, id);
@@ -377,7 +381,11 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     const after = await view(me, v.id);
     const hevaloSeat = after.players.find((p) => p.bot)!.seat;
     const hevaloWords = after.board!.chain.filter((w) => w.seat === hevaloSeat).map((w) => w.word);
-    for (const w of hevaloWords) expect([...CHAIN, ...[]].includes(w) || w.startsWith('zzq')).toBe(true);
+    // a curated word of the game's dialect (other suites curate words of their own in the same database, so any of those may come up)
+    for (const w of hevaloWords) {
+      const curated = await pool.query(`SELECT 1 FROM dict_entries WHERE dialect = 'kurmanji' AND in_games AND headword_folded = $1`, [dictionaryKey(w)]);
+      expect(curated.rowCount, w).toBeGreaterThan(0);
+    }
     // the person leaves: the game ends, and each of their words paid once
     await call(me, 'POST', `/mp/last-letter/${v.id}/leave`);
     await vi.waitFor(async () => expect((await view(me, v.id)).status).toBe('finished'));

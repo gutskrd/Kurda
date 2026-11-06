@@ -114,7 +114,8 @@ describe.skipIf(!DATABASE_URL)('wallet reconciliation and limits (integration)',
       headers: { authorization: `Bearer ${res.json().tokens.accessToken}` },
       remoteAddress: '10.214.0.1',
     });
-    expect(member.statusCode).toBe(403);
+    // the admin answers a member who is not staff as a route that is not there (admin/admin-gate)
+    expect(member.statusCode).toBe(404);
     expect((await app.inject({ method: 'GET', url: '/admin/economy/reconcile', remoteAddress: '10.214.0.2' })).statusCode).toBe(401);
   });
 
