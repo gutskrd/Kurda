@@ -69,7 +69,7 @@ export function PartyStart({
           {steps.map((key, i) => (
             <View key={key} style={styles.step}>
               <View style={[styles.stepN, { backgroundColor: colors.gold }]}>
-                <Text style={styles.stepNText}>{i + 1}</Text>
+                <Text style={[styles.stepNText, { color: colors.textOnGold }]}>{i + 1}</Text>
               </View>
               <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t(key)}</Text>
             </View>
@@ -99,6 +99,6 @@ const styles = StyleSheet.create({
   steps: { alignSelf: 'stretch', gap: spacing.sm },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   stepN: { width: 26, height: 26, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  stepNText: { color: '#2a1d05', fontWeight: typography.weights.bold },
+  stepNText: { fontWeight: typography.weights.bold },
   stepText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 22 },
 });

@@ -232,7 +232,7 @@ export function ClayButton({
         )}
         {badge ? (
           <View style={[styles.clayBadge, { backgroundColor: colors.gold }]}>
-            <Text style={[styles.clayBadgeText, { color: colors.textOnPrimary }]}>{badge}</Text>
+            <Text style={[styles.clayBadgeText, { color: colors.textOnGold }]}>{badge}</Text>
           </View>
         ) : null}
       </Animated.View>

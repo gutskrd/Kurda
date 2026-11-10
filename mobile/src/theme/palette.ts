@@ -31,6 +31,17 @@ export interface Palette {
   textPrimary: string;
   textSecondary: string;
   textOnPrimary: string;
+  /**
+   * What is written or drawn on a gold fill: a pill, a place on a podium, a
+   * letter that is in the word but in the wrong square.
+   *
+   * Not `textOnPrimary`, which is white by day, and white on the sun's gold
+   * is 2.1:1. This is the deep brown the course map already wrote on a gold
+   * trophy; two other screens had each mixed their own. It clears 4.5:1 on
+   * `gold` in both schemes, and is the same brown in both, because the gold
+   * is light in both.
+   */
+  textOnGold: string;
 
   // spatial background (a 3-stop gradient gives depth behind the glass)
   background: string;
@@ -170,6 +181,8 @@ export const LIGHT: Palette = {
   // pressed row
   textSecondary: '#5E6066',
   textOnPrimary: '#FFFFFF',
+  // 6.8:1 on the gold
+  textOnGold: '#3A2A00',
 
   // a near-white with the faintest warmth, so white cards lift off it
   background: '#F6F6F5',
@@ -221,6 +234,8 @@ export const DARK: Palette = {
   // 8:1 on the page and 6.9:1 on the raised surface
   textSecondary: '#A3A6AD',
   textOnPrimary: '#141414',
+  // 8.3:1 on the evening's paler gold
+  textOnGold: '#3A2A00',
 
   background: '#0B0D10',
   // neutral near-black spatial gradient (no colour tint)

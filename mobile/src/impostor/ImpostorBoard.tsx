@@ -131,7 +131,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
       >
         {lit ? <Animated.View style={[styles.light, { backgroundColor: colors.gold, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }) }]} /> : null}
         <View style={[styles.disc, { borderColor: lit ? colors.gold : p?.isMe ? colors.primary : colors.clayBorder, backgroundColor: lit ? colors.gold : colors.glassFill }]}>
-          <Text style={[styles.discText, { color: lit ? '#2a1d05' : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
+          <Text style={[styles.discText, { color: lit ? colors.textOnGold : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
         </View>
         <Text style={[styles.seatName, { color: colors.textPrimary }]} numberOfLines={1}>
           {name(s.seat)}

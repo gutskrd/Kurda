@@ -29,7 +29,7 @@ export function NewChip({ delayMs = 0, style }: { delayMs?: number; style?: Styl
   }, [reduce, scale, delayMs]);
   return (
     <Animated.View style={[styles.chip, { backgroundColor: colors.gold, transform: [{ scale }] }, style]} accessibilityRole="text" testID="badge-new">
-      <Text style={[styles.text, { color: colors.textOnPrimary }]}>{t('badges.new')}</Text>
+      <Text style={[styles.text, { color: colors.textOnGold }]}>{t('badges.new')}</Text>
     </Animated.View>
   );
 }

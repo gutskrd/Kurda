@@ -182,7 +182,7 @@ export function Results({
           {results.standings.map((s) => (
             <View key={s.seat} style={styles.standing}>
               <View style={[styles.place, { backgroundColor: s.place <= 3 ? colors.gold : colors.controlTrack }]}>
-                <Text style={[styles.placeText, { color: s.place <= 3 ? colors.textOnPrimary : colors.textPrimary }]}>{s.place}</Text>
+                <Text style={[styles.placeText, { color: s.place <= 3 ? colors.textOnGold : colors.textPrimary }]}>{s.place}</Text>
               </View>
               <Text style={[styles.standingName, { color: colors.textPrimary }, s.isMe && styles.bold]} numberOfLines={1}>
                 {nameOf(s, t)}

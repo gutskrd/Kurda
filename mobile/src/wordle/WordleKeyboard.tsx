@@ -5,7 +5,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { Icon } from '../theme/Icon';
 import { useKeyboardPrefs } from '../keyboard/prefs';
 import { DEL, ENTER, keyboardRows, keyFeedback, type Feedback } from './board';
-import { feedbackColor, feedbackWord } from './WordleBoard';
+import { feedbackColor, feedbackInk, feedbackWord } from './WordleBoard';
 
 /** The gap between keys; half of it on either side is still the key's to tap. */
 const GAP = 6;
@@ -83,7 +83,7 @@ export function WordleKeyboard({
                   ) : key === ENTER ? (
                     <Icon name="key-return" size={22} color={colors.textPrimary} />
                   ) : (
-                    <Text style={[styles.keyText, { color: fb ? colors.textOnPrimary : colors.textPrimary }]}>
+                    <Text style={[styles.keyText, { color: feedbackInk(fb ?? null, colors) }]}>
                       {key.toUpperCase()}
                     </Text>
                   )}

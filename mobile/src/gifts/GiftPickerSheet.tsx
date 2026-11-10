@@ -384,7 +384,7 @@ function WhatStep({
           <ItemArt category={item.category} path={item.assetUrl} width={wide ? undefined : 64} />
           {item.tier !== 'common' ? (
             <View style={[styles.tier, dir.row === 'row-reverse' ? styles.tierLeft : styles.tierRight, { backgroundColor: colors.gold }]}>
-              <Text style={[styles.tierText, { color: colors.textOnPrimary }]}>{t(TIER_LABEL[item.tier])}</Text>
+              <Text style={[styles.tierText, { color: colors.textOnGold }]}>{t(TIER_LABEL[item.tier])}</Text>
             </View>
           ) : null}
         </View>

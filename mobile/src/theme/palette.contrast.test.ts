@@ -94,6 +94,15 @@ for (const p of [LIGHT, DARK]) {
       expect(contrastRatio(p.goldText, p.surface)).toBeGreaterThanOrEqual(AA_NORMAL);
     });
 
+    /*
+     * A gold pill, a podium place, a letter in the wrong square: what is
+     * written on the gold is small text, so the full 4.5:1. White never was:
+     * on the day's gold it is 2.1:1.
+     */
+    it('what is written on a gold fill meets AA (4.5:1)', () => {
+      expect(contrastRatio(p.textOnGold, p.gold)).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
     it('the brand/primary colour on the background meets at least AA large (3:1)', () => {
       expect(contrastRatio(p.primary, p.background)).toBeGreaterThanOrEqual(AA_LARGE);
     });

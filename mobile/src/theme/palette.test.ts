@@ -13,6 +13,7 @@ const HEX_KEYS: (keyof Palette)[] = [
   'textPrimary',
   'textSecondary',
   'textOnPrimary',
+  'textOnGold',
   'background',
 ];
 

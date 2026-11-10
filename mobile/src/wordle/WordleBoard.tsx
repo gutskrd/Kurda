@@ -44,7 +44,7 @@ export function WordleBoard({
           <Text
             style={[
               styles.cellText,
-              { color: cell.feedback ? colors.textOnPrimary : colors.textPrimary, fontSize: cellSize * 0.42 },
+              { color: feedbackInk(cell.feedback, colors), fontSize: cellSize * 0.42 },
             ]}
           >
             {cell.letter.toUpperCase()}
@@ -73,6 +73,19 @@ export function feedbackColor(f: Feedback | null, colors: Palette): string {
   if (f === 'yellow') return colors.gold;
   if (f === 'gray') return colors.textSecondary;
   return 'transparent';
+}
+
+/**
+ * The colour a letter is written in on the fill `feedbackColor` gives it.
+ *
+ * A letter in the wrong square sits on the gold, and the white of a button's
+ * label is 2.1:1 there by day, so it takes the ink made for gold. Green and
+ * grey are dark enough by day, and light enough by evening, for the label
+ * colour; a letter not scored yet has no fill and is plain text.
+ */
+export function feedbackInk(f: Feedback | null, colors: Palette): string {
+  if (f === 'yellow') return colors.textOnGold;
+  return f ? colors.textOnPrimary : colors.textPrimary;
 }
 
 /**
