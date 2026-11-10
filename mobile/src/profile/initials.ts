@@ -4,18 +4,35 @@
  * the user's id, so a user with no photo always gets the same avatar with no
  * network round-trip. Kurdish Latin diacritics (ê î û ç ş) are preserved.
  */
+import { TONES } from '../coursemap/path';
 
-/** Monogram palette — every colour meets WCAG AA (≥4.5:1) against white text
- *  (asserted in initials.test.ts against the a11y contrast util). */
+const tone = TONES.light;
+
+/**
+ * The monogram's grounds: the course's own colours, as the lesson path paints
+ * a unit by day, so a face with no photo is in a colour the app already has.
+ *
+ * They were eight hues picked for this file alone. One was the exact red the
+ * app says "danger" in, so a person could look like an error, and one the
+ * green of a look the app no longer has. Each slot now holds the course tone
+ * nearest the hue it had, so nobody's avatar jumps to another family of
+ * colour; the path has seven tones and there are eight slots, and the eighth
+ * is the river's deeper edge, where a navy was.
+ *
+ * The deep, by-day fills in both schemes, because the monogram on them is
+ * white in both. Every one meets WCAG AA (4.5:1) against it, asserted in
+ * initials.test.ts. The order and the count are what map an id to a colour:
+ * changing either gives everybody a different one.
+ */
 export const AVATAR_COLORS = [
-  '#2D6A4F', // green (brand)
-  '#1B6E8C', // teal-blue
-  '#8E44AD', // purple
-  '#C0392B', // red
-  '#8A5A0B', // dark gold
-  '#2C3E50', // navy
-  '#147D6F', // teal
-  '#A83279', // magenta
+  tone.meadow.fill,
+  tone.river.fill,
+  tone.dusk.fill,
+  tone.clay.fill,
+  tone.saffron.fill,
+  tone.river.lip,
+  tone.pine.fill,
+  tone.rose.fill,
 ] as const;
 
 export const AVATAR_TEXT_COLOR = '#FFFFFF';
