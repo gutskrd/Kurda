@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { radii, typography } from '../theme/tokens';
+import { fontScaleCap, radii, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { Icon } from '../theme/Icon';
@@ -83,7 +83,8 @@ export function WordleKeyboard({
                   ) : key === ENTER ? (
                     <Icon name="key-return" size={22} color={colors.textPrimary} />
                   ) : (
-                    <Text style={[styles.keyText, { color: feedbackInk(fb ?? null, colors) }]}>
+                    // a key is as wide as a tenth of the row: its letter grows only as far as still fits it
+                    <Text style={[styles.keyText, { color: feedbackInk(fb ?? null, colors) }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
                       {key.toUpperCase()}
                     </Text>
                   )}

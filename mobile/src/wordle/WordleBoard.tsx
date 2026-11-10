@@ -1,5 +1,5 @@
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import { radii, spacing, typography } from '../theme/tokens';
+import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { Palette } from '../theme/palette';
@@ -41,11 +41,13 @@ export function WordleBoard({
             },
           ]}
         >
+          {/* the square is sized in points, so its letter grows only as far as still fits it */}
           <Text
             style={[
               styles.cellText,
               { color: feedbackInk(cell.feedback, colors), fontSize: cellSize * 0.42 },
             ]}
+            maxFontSizeMultiplier={fontScaleCap.fixedBox}
           >
             {cell.letter.toUpperCase()}
           </Text>

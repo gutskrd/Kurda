@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Animated, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { radii, spacing, typography } from './tokens';
+import { fontScaleCap, radii, spacing, typography } from './tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from './ThemeProvider';
 import { Icon, type IconName } from './Icon';
@@ -393,6 +393,8 @@ export function Segmented<T extends string>({
               numberOfLines={wrap ? 2 : 1}
               adjustsFontSizeToFit={wrap}
               minimumFontScale={wrap ? 0.8 : undefined}
+              // a segment is a share of the control's width: its label grows only as far as still fits one
+              maxFontSizeMultiplier={fontScaleCap.fixedBox}
             >
               {label}
             </Text>

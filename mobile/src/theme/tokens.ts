@@ -110,6 +110,26 @@ export const typography = {
 } as const;
 
 /**
+ * How far the reader's own text size may grow a piece of text, as a
+ * `maxFontSizeMultiplier`, where the text sits in something that cannot grow
+ * with it.
+ *
+ * Text follows the size set in the system's settings, and body text follows
+ * it all the way: a paragraph, a row, a button's label wrap and their boxes
+ * grow, so they are never capped. What is capped is the little that is drawn
+ * in a box sized in points, where a larger letter does not make the box
+ * larger, it only pushes the letter out of it. There was no rule for these:
+ * each screen that noticed wrote a number of its own, and the ones that did
+ * not noticed nothing until the largest sizes clipped them.
+ */
+export const fontScaleCap = {
+  /** a letter or a count in a box whose size is fixed: a tile, a key, a badge, one segment of a control */
+  fixedBox: 1.2,
+  /** a title kept to one line at a size that is already large */
+  heading: 1.3,
+} as const;
+
+/**
  * The page's own geometry.
  *
  * `gutter` is the space between a screen's edge and its content on a phone:

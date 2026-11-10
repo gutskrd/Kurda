@@ -15,7 +15,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
 import { display } from '../theme/fonts';
-import { layout, spacing, typography } from '../theme/tokens';
+import { fontScaleCap, layout, spacing, typography } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
 
 /** How long, in points of scrolling, the bar's title takes to fade in as the large one goes under it. */
@@ -114,6 +114,8 @@ export function LargeTitle({
             { color: colors.textPrimary, transform: [{ scale: grow }], transformOrigin: dir.row === 'row-reverse' ? 'right center' : 'left center' },
           ]}
           numberOfLines={1}
+          // one line at 34 points: grown without limit it is cut off with an ellipsis after a few letters
+          maxFontSizeMultiplier={fontScaleCap.heading}
           accessibilityRole="header"
         >
           {title}
@@ -157,6 +159,8 @@ export function TitleBar({ title, collapse, right }: { title: string; collapse: 
         <Animated.Text
           style={[styles.inline, { color: colors.textPrimary, opacity: shown, transform: [{ translateY: rise }] }]}
           numberOfLines={1}
+          // in a bar of a fixed height, between its two sides
+          maxFontSizeMultiplier={fontScaleCap.heading}
           aria-hidden
         >
           {title}
