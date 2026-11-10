@@ -610,6 +610,7 @@ export interface EvidenceSnapshot {
   group?: {
     id: string;
     name: string;
+    /** only on evidence frozen while a group could still be open: whether it was 'open' or 'invite' then */
     privacy?: string;
     /** who last changed the name or description, and who put up the picture — they answer for them, not only the owner */
     editedBy?: { id: string; username: string } | null;

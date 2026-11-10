@@ -26,7 +26,12 @@ import type { AiModerationService } from '../moderation/ai-service.js';
 const idParam = z.object({ id: z.uuid() });
 const memberParam = z.object({ id: z.uuid(), userId: z.uuid() });
 
-/** Groups / clubs (KUR-084). */
+/**
+ * Groups / clubs (KUR-084). Every group is private: these routes list a
+ * person's own groups and nobody else's, show a group to its members only
+ * (and to someone banned, its name and their standing), and let people in one
+ * way, an owner or admin adding a friend.
+ */
 export function registerGroupRoutes(
   app: FastifyInstance,
   groups: GroupService,
@@ -47,7 +52,11 @@ export function registerGroupRoutes(
     const verdict = await aiMod.moderate({ surface: 'profile', text, authorId, contentType: 'group', ...(contentRef ? { contentRef } : {}) });
     if (verdict.blocked) throw new AppError('GROUP_TEXT_REJECTED', 422, 'the text has words that are not allowed here');
   };
-  /** Create a group (creator becomes owner). */
+  /**
+   * Create a group (creator becomes owner): a name, and what it is about if
+   * they like. An app from before every group was private may still send
+   * `privacy`; the schema drops what it does not name, so it is ignored.
+   */
   app.post(
     '/groups',
     {
@@ -55,14 +64,13 @@ export function registerGroupRoutes(
         body: z.object({
           name: z.string().min(2).max(60),
           description: z.string().max(300).optional(),
-          privacy: z.enum(['open', 'invite']).optional(),
         }),
       },
       // a group's name and description are published text
       preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
     },
     async (req, reply) => {
-      const input = req.body as { name: string; description?: string; privacy?: 'open' | 'invite' };
+      const input = req.body as { name: string; description?: string };
       await screen(req.user!.id, undefined, input.name, input.description);
       if (trust) {
         // per-level cap (KUR-295): a new account can't spin up many groups fast
@@ -73,20 +81,22 @@ export function registerGroupRoutes(
             .send({ code: 'TRUST_VELOCITY', message: 'new accounts can create fewer groups — this lifts as your account ages' });
         }
       }
-      const created = await groups.create(
-        req.user!.id,
-        req.body as { name: string; description?: string; privacy?: 'open' | 'invite' },
-      );
+      const created = await groups.create(req.user!.id, { name: input.name, description: input.description });
       if (trust) await trust.recordAction(req.user!.id, 'group_create');
       return created;
     },
   );
 
-  /** Discover open groups + your own. */
-  app.get('/groups', { preHandler: requireAccount }, async (req) => ({ groups: await groups.discover(req.user!.id, 30, publicUrl) }));
+  // There are no groups to discover. Kept for apps that still ask on opening their old list; remove once none does.
+  app.get('/groups', { preHandler: requireAccount }, async () => ({ groups: [] }));
+  /** The caller's own groups: the only list of groups there is. */
   app.get('/me/groups', { preHandler: requireAccount }, async (req) => ({ groups: await groups.myGroups(req.user!.id, publicUrl) }));
 
-  /** Group detail with roster. */
+  /**
+   * A group with its roster, for a member. Someone banned from it gets its
+   * name, picture and standing only; anyone else 404 GROUP_NOT_FOUND, as for
+   * an id that is no group's (`GroupService.get`).
+   */
   app.get('/groups/:id', { schema: { params: idParam }, preHandler: requireAccount }, async (req) =>
     groups.get((req.params as { id: string }).id, req.user!.id, publicUrl),
   );
@@ -95,6 +105,10 @@ export function registerGroupRoutes(
    * Change the group's name or description, as its owner or an admin. Both are
    * published text, so the same gates as making a group, and a ceiling on how
    * often, so a name cannot be flipped back and forth to spam the members.
+   *
+   * `privacy` is no longer something a group has. An app from before may send
+   * it; it is accepted and changes nothing, even when it is all that was sent,
+   * and the answer is the group as it stands.
    */
   app.patch(
     '/groups/:id',
@@ -105,17 +119,22 @@ export function registerGroupRoutes(
           .object({
             name: z.string().min(GROUP_NAME_MIN).max(GROUP_NAME_MAX).optional(),
             description: z.string().max(GROUP_DESCRIPTION_MAX).nullable().optional(),
+            privacy: z.unknown().optional(),
           })
-          .refine((b) => b.name !== undefined || b.description !== undefined, { message: 'nothing to change' }),
+          .refine((b) => b.name !== undefined || b.description !== undefined || b.privacy !== undefined, { message: 'nothing to change' }),
       },
       config: { rateLimit: { max: 20, windowMs: 10 * 60_000, per: 'user-or-ip' as const } },
       preHandler: [requireAccount, requireBirthMonth, requireUnrestricted('post')],
     },
     async (req) => {
       const { id } = req.params as { id: string };
-      const body = req.body as { name?: string; description?: string | null };
-      await screen(req.user!.id, id, body.name, body.description);
-      return groups.update(req.user!.id, id, body);
+      const { name, description } = req.body as { name?: string; description?: string | null };
+      if (name === undefined && description === undefined) {
+        const group = await groups.get(id, req.user!.id, publicUrl);
+        return { name: group.name, description: group.description };
+      }
+      await screen(req.user!.id, id, name, description);
+      return groups.update(req.user!.id, id, { name, description });
     },
   );
 
@@ -170,9 +189,9 @@ export function registerGroupRoutes(
   /**
    * Out of the group's live chat as well as its member list. Reading the chat
    * checks membership every time, but a socket already in the room stayed there,
-   * and the invite that let it in lasted a week: whoever left or was removed
-   * went on receiving every message as it was sent, and could join again from
-   * a new connection. Read when called, as the gateway is set up after these
+   * and the grant that let it in lasted a week: whoever left or was removed
+   * went on receiving every message as it was sent, and could enter the room
+   * again from a new connection. Read when called, as the gateway is set up after these
    * routes; a missed revoke only leaves what was there before.
    */
   const leaveRoom = async (groupId: string, userIds: readonly string[]): Promise<void> => {
@@ -180,9 +199,9 @@ export function registerGroupRoutes(
     for (const userId of userIds) await app.realtime.revoke(groupRoom(groupId), userId).catch(() => undefined);
   };
 
-  app.post('/groups/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: [requireAccount, requireBirthMonth] }, async (req) => {
-    await groups.join(req.user!.id, (req.params as { id: string }).id);
-    return ok;
+  // Nobody joins a group by themselves. Kept so an app that still shows a Join button is told why; remove once none does.
+  app.post('/groups/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async () => {
+    throw new AppError('INVITE_ONLY', 403, 'this group is invite-only');
   });
   app.post('/groups/:id/leave', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAccount }, async (req) => {
     const { id } = req.params as { id: string };
@@ -190,6 +209,7 @@ export function registerGroupRoutes(
     await leaveRoom(id, [req.user!.id]);
     return ok;
   });
+  /** Add one of the caller's own friends, as the group's owner or an admin: the only way in. */
   app.post(
     '/groups/:id/invite',
     { schema: { params: idParam, body: z.object({ userId: z.uuid() }) }, preHandler: [requireAccount, requireBirthMonth] },

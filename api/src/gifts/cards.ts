@@ -17,9 +17,10 @@ import { shownToSql } from '../users/age.js';
  * each recipient is sent their own card besides (`gift_received`).
  *
  * `seesEveryone` is the group roster's rule (groups/service.ts `get`): a member
- * of an invite-only group sees every other member, someone they chose put them
- * there; anywhere else a name is shown only to whom `shownToSql` allows. In a
- * direct message both people are the pair, so it is true there.
+ * of a group sees every other member, someone they chose put them there;
+ * anywhere else a name is shown only to whom `shownToSql` allows (a sender or
+ * a recipient who has since left the group, say). In a direct message both
+ * people are the pair, so it is true there.
  */
 export interface CardViewer {
   id: string | null;

@@ -219,8 +219,8 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
 
     it('a group thread costs the same for two messages as for twelve, within its budget', async () => {
       const groups = new GroupService(pool);
-      const few = await groups.create(ids.me!, { name: `Few ${suffix}`.slice(0, 40), privacy: 'invite' });
-      const many = await groups.create(ids.me!, { name: `Many ${suffix}`.slice(0, 40), privacy: 'invite' });
+      const few = await groups.create(ids.me!, { name: `Few ${suffix}`.slice(0, 40) });
+      const many = await groups.create(ids.me!, { name: `Many ${suffix}`.slice(0, 40) });
       for (const [g, n] of [[few.id, 2], [many.id, 12]] as const) {
         for (let i = 0; i < n; i++) {
           await pool.query(`INSERT INTO group_messages (group_id, sender_id, body) VALUES ($1, $2, $3)`, [g, ids.me, `message ${i}`]);
@@ -239,7 +239,7 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
      */
     async function groupWith(name: string, members: string[], banned: string[]): Promise<string> {
       const groups = new GroupService(pool);
-      const { id } = await groups.create(ids.me!, { name: `${name} ${suffix}`.slice(0, 40), privacy: 'invite' });
+      const { id } = await groups.create(ids.me!, { name: `${name} ${suffix}`.slice(0, 40) });
       for (const tag of members) await groups.invite(ids.me!, id, ids[tag]!);
       for (const tag of banned) {
         await pool.query(`INSERT INTO group_bans (group_id, user_id, banned_by, reason) VALUES ($1, $2, $3, 'qb')`, [id, ids[tag], ids.me]);
@@ -259,12 +259,14 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
         owner.count,
         (await steady('GET', `/groups/${small}`, 'me')).count,
         (await steady('GET', `/groups/${big}`, 'f1')).count,
-        // and for someone banned from it, told where they stand
-        (await steady('GET', `/groups/${big}`, 'f2')).count,
       ];
-      expect(counts, shown(owner)).toEqual([owner.count, owner.count, owner.count, owner.count]);
+      expect(counts, shown(owner)).toEqual([owner.count, owner.count, owner.count]);
       // the session read, the group with where the viewer stands, and the roster
       expect(owner.count, shown(owner)).toBeLessThanOrEqual(3);
+      // someone banned from it is told where they stand and no roster is read for them
+      const banned = await steady('GET', `/groups/${big}`, 'f2');
+      expect(banned.body.members).toEqual([]);
+      expect(banned.count, shown(banned)).toBeLessThan(owner.count);
     });
 
     it('the bans and the requests to come back cost the same for one as for two, within their budgets', async () => {

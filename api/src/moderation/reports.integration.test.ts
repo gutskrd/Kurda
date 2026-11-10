@@ -18,6 +18,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { FriendService } from '../friends/service.js';
 import { GroupService } from '../groups/service.js';
+import { seatInGroup } from '../test/groups.js';
 import { bornYearsAgo } from '../test/age.js';
 import { seedPictureUpload } from '../test/media.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
@@ -260,10 +261,11 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     expect(d.subject!.id).toBe(author.id);
   });
 
-  it('reports a group message from inside the group, and a group', async () => {
+  it('reports a group message, and a group, from inside the group only', async () => {
     const groups = new GroupService(pool);
-    const g = await groups.create(author.id, { name: `Kom ${kit.suffix}`, privacy: 'open' });
-    await groups.join(reporter.id, g.id);
+    const g = await groups.create(author.id, { name: `Kom ${kit.suffix}` });
+    // a member who is nobody's friend here: this is about who may report, not how they came in
+    await seatInGroup(pool, g.id, reporter.id);
     const msg = (await call('POST', `/groups/${g.id}/chat`, author.token, { body: 'group message' })).json() as { id: string };
 
     expect((await report(stranger, { targetType: 'group_message', targetId: msg.id, category: 'spam' })).statusCode).toBe(404);
@@ -272,9 +274,16 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     const ev = (await detail(await caseOf((filed.json() as ReportReceipt).report.id))).reports[0]!.evidence;
     expect(ev).toMatchObject({ text: 'group message', group: { id: g.id } });
 
-    const grp = await report(stranger, { targetType: 'group', targetId: g.id, category: 'hate' });
+    // a group is its members' alone: a stranger with its id has nothing to report
+    expect((await report(stranger, { targetType: 'group', targetId: g.id, category: 'hate' })).statusCode).toBe(404);
+    const grp = await report(reporter, { targetType: 'group', targetId: g.id, category: 'hate' });
     expect(grp.statusCode).toBe(201);
-    expect((await detail(await caseOf((grp.json() as ReportReceipt).report.id))).subject!.id).toBe(author.id);
+    const filedGroup = await detail(await caseOf((grp.json() as ReportReceipt).report.id));
+    expect(filedGroup.subject!.id).toBe(author.id);
+    // the moderators are given the group as its members see it, and no word of a privacy it no longer has
+    const groupEvidence = filedGroup.reports.find((r) => r.evidence.targetType === 'group')!.evidence;
+    expect(groupEvidence).toMatchObject({ title: `Kom ${kit.suffix}`, group: { id: g.id, name: `Kom ${kit.suffix}` } });
+    expect(groupEvidence.group).not.toHaveProperty('privacy');
   });
 
   it('refuses what the reporter cannot see — a draft, removed content, a private group, a minor’s post — as not there', async () => {
@@ -299,8 +308,8 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     );
     notThere(await report(stranger, { targetType: 'library_comment', targetId: tombstone.rows[0]!.id, category: 'spam' }));
 
-    // an invite-only group, only from inside
-    const g = await new GroupService(pool).create(author.id, { name: `Hidden ${kit.suffix}`, privacy: 'invite' });
+    // a group, only from inside
+    const g = await new GroupService(pool).create(author.id, { name: `Hidden ${kit.suffix}` });
     notThere(await report(stranger, { targetType: 'group', targetId: g.id, category: 'hate' }), `Hidden ${kit.suffix}`);
     await pool.query(`INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`, [g.id, other.id]);
     const inside = await report(other, { targetType: 'group', targetId: g.id, category: 'hate' });

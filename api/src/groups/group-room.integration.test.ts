@@ -16,6 +16,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { GroupService } from './service.js';
+import { addFriendsToGroup } from '../test/groups.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -81,11 +82,11 @@ describe.skipIf(!DATABASE_URL)('a group room keeps only its members (integration
     return { ws, answer: await answer };
   }
 
-  /** An open group of `owner`'s, `members` in it, each having read its chat (which lets them into the room). */
-  async function openGroup(owner: { id: string; token: string }, members: Array<{ id: string; token: string }>): Promise<string> {
-    const { id } = await groups.create(owner.id, { name: `Kom ${s} ${++n}`, privacy: 'open' });
+  /** A group of `owner`'s, `members` added to it as the owner's friends, each having read its chat (which lets them into the room). */
+  async function groupOf(owner: { id: string; token: string }, members: Array<{ id: string; token: string }>): Promise<string> {
+    const { id } = await groups.create(owner.id, { name: `Kom ${s} ${++n}` });
     for (const m of members) {
-      await groups.join(m.id, id);
+      await addFriendsToGroup(pool, id, owner.id, m.id);
       expect((await call(m.token, 'GET', `/groups/${id}/chat`)).statusCode).toBe(200);
     }
     return id;
@@ -111,7 +112,7 @@ describe.skipIf(!DATABASE_URL)('a group room keeps only its members (integration
     const owner = await person('owner');
     const stays = await person('stays');
     const removed = await person('removed');
-    const gid = await openGroup(owner, [stays, removed]);
+    const gid = await groupOf(owner, [stays, removed]);
     const kept = await joinRoom(stays.token, gid);
     const gone = await joinRoom(removed.token, gid);
     expect([kept.answer.type, gone.answer.type]).toEqual(['joined', 'joined']);
@@ -139,7 +140,7 @@ describe.skipIf(!DATABASE_URL)('a group room keeps only its members (integration
   it('takes a member who left out of the room', async () => {
     const owner = await person('owner2');
     const leaver = await person('leaver');
-    const gid = await openGroup(owner, [leaver]);
+    const gid = await groupOf(owner, [leaver]);
     expect((await call(leaver.token, 'POST', `/groups/${gid}/leave`)).statusCode).toBe(200);
     expect((await joinRoom(leaver.token, gid)).answer).toMatchObject({ type: 'error', code: 'NOT_INVITED' });
   });
@@ -148,7 +149,7 @@ describe.skipIf(!DATABASE_URL)('a group room keeps only its members (integration
     const owner = await person('owner4');
     const stays = await person('stays4');
     const banned = await person('banned4');
-    const gid = await openGroup(owner, [stays, banned]);
+    const gid = await groupOf(owner, [stays, banned]);
     const kept = await joinRoom(stays.token, gid);
     const gone = await joinRoom(banned.token, gid);
     expect([kept.answer.type, gone.answer.type]).toEqual(['joined', 'joined']);
@@ -163,7 +164,7 @@ describe.skipIf(!DATABASE_URL)('a group room keeps only its members (integration
   it('clears every open view at once when an admin clears the chat for everyone', async () => {
     const owner = await person('owner5');
     const member = await person('member5');
-    const gid = await openGroup(owner, [member]);
+    const gid = await groupOf(owner, [member]);
     const open = await joinRoom(member.token, gid);
     const told = next(open.ws, (m) => m.type === 'event' && (m.event as WsMessage).type === 'group_chat_cleared');
     const res = await call(owner.token, 'POST', `/groups/${gid}/chat/clear`, { for: 'everyone' });
@@ -176,7 +177,7 @@ describe.skipIf(!DATABASE_URL)('a group room keeps only its members (integration
   it('takes everyone out of the room of a group that was deleted', async () => {
     const owner = await person('owner3');
     const member = await person('member3');
-    const gid = await openGroup(owner, [member]);
+    const gid = await groupOf(owner, [member]);
     expect((await call(owner.token, 'DELETE', `/groups/${gid}`)).statusCode).toBe(200);
     expect((await joinRoom(member.token, gid)).answer).toMatchObject({ type: 'error', code: 'NOT_INVITED' });
   });

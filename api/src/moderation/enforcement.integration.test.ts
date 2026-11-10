@@ -11,6 +11,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { FriendService } from '../friends/service.js';
 import { GroupService } from '../groups/service.js';
+import { addFriendsToGroup } from '../test/groups.js';
 import { seedPictureUpload } from '../test/media.js';
 import { moderationKit, type Person } from '../test/moderation-kit.js';
 import { OFFENSE_PERM } from './service.js';
@@ -47,8 +48,8 @@ describe.skipIf(!DATABASE_URL)('moderation enforcement (integration)', () => {
     await friends.request(muted.id, friend.id);
     await friends.respond(friend.id, muted.id, true);
     const groups = new GroupService(pool);
-    groupId = (await groups.create(friend.id, { name: `Kom ${kit.suffix}`, privacy: 'open' })).id;
-    await groups.join(muted.id, groupId);
+    groupId = (await groups.create(friend.id, { name: `Kom ${kit.suffix}` })).id;
+    await addFriendsToGroup(pool, groupId, friend.id, muted.id);
     postId = ((await post(friend)).json() as { id: string }).id;
   });
 

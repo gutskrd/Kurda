@@ -173,7 +173,6 @@ export class GiftService {
 
     // In a group the gift is a message in its channel: the sender must be able
     // to post there, and each recipient must be someone who reads it.
-    let groupPrivacy: string | null = null;
     const outsideGroup = new Set<string>();
     if (chat?.kind === 'group') {
       await this.deps.groupChat.assertCanPost(chat.groupId, fromId);
@@ -181,9 +180,6 @@ export class GiftService {
       toIds.forEach((to, i) => {
         if (!readers[i]) outsideGroup.add(to);
       });
-      groupPrivacy =
-        (await this.pool.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [chat.groupId])).rows[0]
-          ?.privacy ?? null;
     }
 
     const settled = await this.settle(input, toIds, outsideGroup, now);
@@ -194,7 +190,7 @@ export class GiftService {
     // their view of the message) may fail first and leave the friends never
     // told of a present that is theirs.
     if (settled.given.length > 0) {
-      await this.deliver(settled, input, groupPrivacy).catch((err) =>
+      await this.deliver(settled, input).catch((err) =>
         this.deps.log?.warn({ err, batchId: settled.batchId }, 'a gift was given but telling people failed'),
       );
       // the giving badge counts it from the gifts table; best-effort
@@ -202,7 +198,7 @@ export class GiftService {
     }
 
     const balance = await this.deps.wallet.balances(fromId);
-    const message = settled.posted ? await this.senderView(settled, input, groupPrivacy) : null;
+    const message = settled.posted ? await this.senderView(settled, input) : null;
 
     return {
       batchId: settled.batchId,
@@ -492,17 +488,11 @@ export class GiftService {
     return chat === 'group' ? { ...base, deleted: false } : { ...base, deliveredAt: null, readAt: null };
   }
 
-  private async senderView(
-    settled: Settled,
-    input: SendGiftInput,
-    groupPrivacy: string | null,
-  ): Promise<DmMessage | GroupMessage> {
+  private async senderView(settled: Settled, input: SendGiftInput): Promise<DmMessage | GroupMessage> {
     const inGroup = input.chat?.kind === 'group';
     const sender = await this.sender(input.fromId);
-    const card = await this.card(settled.batchId, {
-      id: input.fromId,
-      seesEveryone: !inGroup || groupPrivacy === 'invite',
-    });
+    // the sender posted it, so in a group they are a member, and members see one another
+    const card = await this.card(settled.batchId, { id: input.fromId, seesEveryone: true });
     return this.message(settled.posted!, input.fromId, sender, card, inGroup ? 'group' : 'dm');
   }
 
@@ -513,11 +503,10 @@ export class GiftService {
    * A group room is read by everyone in it at once, so the card published
    * there is no one's in particular (nobody is "me" on it); each recipient's
    * own card — theirs to open — comes with their `gift_received`. Names on the
-   * room's card are safe for every member: in an invite-only group members see
-   * one another, and in an open group a recipient has to be someone who may
-   * read its chat, which only a known adult may.
+   * room's card are safe for every member: a recipient has to be a member, and
+   * the members of a group see one another.
    */
-  private async deliver(settled: Settled, input: SendGiftInput, groupPrivacy: string | null): Promise<void> {
+  private async deliver(settled: Settled, input: SendGiftInput): Promise<void> {
     const { fromId, chat } = input;
     const { realtime, inbox } = this.deps;
     const sender = await this.sender(fromId);
@@ -525,7 +514,7 @@ export class GiftService {
     const inGroup = chat?.kind === 'group';
 
     if (settled.posted && chat?.kind === 'group') {
-      const roomCard = await this.card(settled.batchId, { id: null, seesEveryone: groupPrivacy === 'invite' });
+      const roomCard = await this.card(settled.batchId, { id: null, seesEveryone: true });
       const message = this.message(settled.posted, fromId, sender, roomCard, 'group');
       // a message in the channel like any other, so it is kept from the
       // members with a block between them and the sender, as a message is
@@ -543,7 +532,8 @@ export class GiftService {
     }
 
     for (const { toId, giftId } of settled.given) {
-      const card = await this.card(settled.batchId, { id: toId, seesEveryone: !inGroup || groupPrivacy === 'invite' });
+      // in a direct message the two are the pair; in a group every recipient is a member, and members see one another
+      const card = await this.card(settled.batchId, { id: toId, seesEveryone: true });
       if (!card) continue;
       if (settled.posted && !inGroup) {
         const message = this.message(settled.posted, fromId, sender, card, 'dm');
@@ -672,13 +662,11 @@ export class GiftService {
     return card;
   }
 
-  /** The roster rule for a card: everyone in a direct message, and to a member of an invite-only group. */
+  /** The roster rule for a card: everyone in a direct message, and to a member of the group it was posted in. */
   private async seesEveryone(where: Awaited<ReturnType<typeof batchChat>>, viewerId: string): Promise<boolean> {
     if (where?.kind !== 'group') return true;
     const r = await this.pool.query<{ sees: boolean }>(
-      `SELECT g.privacy = 'invite' AND EXISTS (
-                SELECT 1 FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2) AS sees
-         FROM groups g WHERE g.id = $1`,
+      `SELECT EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = $1 AND m.user_id = $2) AS sees`,
       [where.groupId, viewerId],
     );
     return r.rows[0]?.sees ?? false;
