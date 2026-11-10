@@ -19,7 +19,7 @@ export function WordleBoard({
 }: {
   board: BoardRow[];
   cellSize: number;
-  /** solo shakes the board on a rejected guess; a battle need not */
+  /** solo shakes the board on a rejected guess (`useShake`'s points sideways); a battle need not */
   shake?: Animated.Value;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -56,12 +56,7 @@ export function WordleBoard({
 
   if (!shake) return <View style={styles.board}>{rows}</View>;
   return (
-    <Animated.View
-      style={[
-        styles.board,
-        { transform: [{ translateX: shake.interpolate({ inputRange: [-1, 1], outputRange: [-8, 8] }) }] },
-      ]}
-    >
+    <Animated.View style={[styles.board, { transform: [{ translateX: shake }] }]}>
       {rows}
     </Animated.View>
   );
