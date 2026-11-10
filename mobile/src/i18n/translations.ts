@@ -513,10 +513,6 @@ export type TranslationKey =
   | 'games.whoAmI.share'
   // --- end Stories and playing with friends ---
   | 'age.label'
-  | 'age.month'
-  | 'age.year'
-  | 'age.help'
-  | 'age.required'
   | 'age.month.1'
   | 'age.month.2'
   | 'age.month.3'
@@ -529,11 +525,8 @@ export type TranslationKey =
   | 'age.month.10'
   | 'age.month.11'
   | 'age.month.12'
-  | 'age.prompt.title'
-  | 'age.prompt.body'
   | 'age.prompt.once'
   | 'age.prompt.save'
-  | 'age.prompt.saving'
   | 'age.stop.title'
   | 'age.stop.body'
   | 'age.stop.closed'
@@ -1193,6 +1186,9 @@ export type TranslationKey =
   | 'auth.verify.didntGetIt'
   | 'guide.verify.says'
   | 'guide.verify.changeSays'
+  | 'guide.reset.says'
+  | 'guide.reset.sent.question'
+  | 'guide.reset.sent.says'
   | 'auth.verify.change'
   | 'auth.verify.newAddress'
   | 'auth.verify.sendThere'
@@ -4072,6 +4068,9 @@ const en: Catalog = {
   'auth.verify.didntGetIt': 'Didn’t get it? Check your spam folder, then',
   'guide.verify.says': 'I sent a code to your email. Type it in and we’re off!',
   'guide.verify.changeSays': 'No problem. Where should I send it?',
+  'guide.reset.says': 'It happens to all of us. Where shall I send the link?',
+  'guide.reset.sent.question': 'Check your email',
+  'guide.reset.sent.says': 'Done! It can take a minute to arrive.',
   'auth.verify.change': 'Change it',
   'auth.verify.newAddress': 'New email address',
   'auth.verify.sendThere': 'Send the code there',
@@ -5327,10 +5326,6 @@ const en: Catalog = {
   'favorites.noStories': 'No published stories yet.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Month and year of birth',
-  'age.month': 'Month',
-  'age.year': 'Year',
-  'age.help': 'We ask everyone. Only the month and year are kept.',
-  'age.required': 'Choose the month and year you were born.',
   'age.month.1': 'January',
   'age.month.2': 'February',
   'age.month.3': 'March',
@@ -5343,11 +5338,8 @@ const en: Catalog = {
   'age.month.10': 'October',
   'age.month.11': 'November',
   'age.month.12': 'December',
-  'age.prompt.title': 'One question before you go on',
-  'age.prompt.body': 'When were you born? We ask everyone this once, and keep only the month and year.',
   'age.prompt.once': 'Check it before you save: it can’t be changed later.',
   'age.prompt.save': 'Save',
-  'age.prompt.saving': 'Saving…',
   'age.stop.title': 'Hevalo is for people aged 13 and over',
   'age.stop.body': 'We can’t make an account for you yet, and nothing you typed has been kept.',
   'age.stop.closed': 'Your account has been closed and your personal details removed.',
@@ -7506,6 +7498,9 @@ const ku: Catalog = {
   'auth.verify.didntGetIt': 'Nehat? Peldanka spamê kontrol bike, paşê',
   'guide.verify.says': 'Min kodek ji e-nameya te re şand. Wê binivîse û em dest pê bikin!',
   'guide.verify.changeSays': 'Ne pirsgirêk e. Ez bişînim ku derê?',
+  'guide.reset.says': 'Tê serê me hemûyan. Ez girêdanê bişînim ku derê?',
+  'guide.reset.sent.question': 'Li e-nameya xwe binêre',
+  'guide.reset.sent.says': 'Çêbû! Dibe ku xulekekê bigire heta ku bigihîje.',
   'auth.verify.change': 'Biguherîne',
   'auth.verify.newAddress': 'Navnîşana e-nameyê ya nû',
   'auth.verify.sendThere': 'Kodê bişîne wir',
@@ -8760,10 +8755,6 @@ const ku: Catalog = {
   'favorites.noStories': 'Hê çîrokên weşandî tune ne.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Meh û sala jidayikbûnê',
-  'age.month': 'Meh',
-  'age.year': 'Sal',
-  'age.help': 'Em vê ji her kesî dipirsin. Tenê meh û sal tên tomarkirin.',
-  'age.required': 'Meh û sala ku tu tê de ji dayik bûyî hilbijêre.',
   'age.month.1': 'Kanûna paşîn',
   'age.month.2': 'Sibat',
   'age.month.3': 'Adar',
@@ -8776,11 +8767,8 @@ const ku: Catalog = {
   'age.month.10': 'Çiriya pêşîn',
   'age.month.11': 'Çiriya paşîn',
   'age.month.12': 'Kanûna pêşîn',
-  'age.prompt.title': 'Berî ku tu bidomînî, pirsek',
-  'age.prompt.body': 'Tu kengî ji dayik bûyî? Em vê carekê ji her kesî dipirsin û tenê meh û salê tomar dikin.',
   'age.prompt.once': 'Berî tomarkirinê kontrol bike: paşê nayê guhertin.',
   'age.prompt.save': 'Tomar bike',
-  'age.prompt.saving': 'Tê tomarkirin…',
   'age.stop.title': 'Hevalo ji bo kesên 13 salî û mezintir e',
   'age.stop.body': 'Em hê nikarin hesabekî ji te re çêkin. Tiştê ku te nivîsî nehat tomarkirin.',
   'age.stop.closed': 'Hesabê te hate girtin û agahiyên te yên kesane hatin jêbirin.',
@@ -10939,6 +10927,9 @@ const de: Catalog = {
   'auth.verify.didntGetIt': 'Nicht angekommen? Schau im Spam-Ordner, dann',
   'guide.verify.says': 'Ich habe dir einen Code per E-Mail geschickt. Gib ihn ein und los geht’s!',
   'guide.verify.changeSays': 'Kein Problem. Wohin soll ich ihn schicken?',
+  'guide.reset.says': 'Das passiert uns allen. Wohin soll ich den Link schicken?',
+  'guide.reset.sent.question': 'Schau in dein Postfach',
+  'guide.reset.sent.says': 'Erledigt! Es kann eine Minute dauern, bis er ankommt.',
   'auth.verify.change': 'Ändern',
   'auth.verify.newAddress': 'Neue E-Mail-Adresse',
   'auth.verify.sendThere': 'Code dorthin senden',
@@ -12193,10 +12184,6 @@ const de: Catalog = {
   'favorites.noStories': 'Noch keine veröffentlichten Geschichten.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Geburtsmonat und -jahr',
-  'age.month': 'Monat',
-  'age.year': 'Jahr',
-  'age.help': 'Wir fragen alle danach. Gespeichert werden nur Monat und Jahr.',
-  'age.required': 'Wähle den Monat und das Jahr deiner Geburt.',
   'age.month.1': 'Januar',
   'age.month.2': 'Februar',
   'age.month.3': 'März',
@@ -12209,11 +12196,8 @@ const de: Catalog = {
   'age.month.10': 'Oktober',
   'age.month.11': 'November',
   'age.month.12': 'Dezember',
-  'age.prompt.title': 'Eine Frage, bevor es weitergeht',
-  'age.prompt.body': 'Wann bist du geboren? Wir fragen alle einmal danach und speichern nur Monat und Jahr.',
   'age.prompt.once': 'Prüfe es vor dem Speichern: Später lässt es sich nicht mehr ändern.',
   'age.prompt.save': 'Speichern',
-  'age.prompt.saving': 'Wird gespeichert…',
   'age.stop.title': 'Hevalo ist für Menschen ab 13 Jahren',
   'age.stop.body': 'Wir können noch kein Konto für dich anlegen, und nichts von dem, was du eingegeben hast, wurde gespeichert.',
   'age.stop.closed': 'Dein Konto wurde geschlossen und deine persönlichen Angaben wurden gelöscht.',
@@ -14372,6 +14356,9 @@ const es: Catalog = {
   'auth.verify.didntGetIt': '¿No te ha llegado? Mira en la carpeta de spam y luego',
   'guide.verify.says': 'Te he enviado un código por correo. Escríbelo y ¡empezamos!',
   'guide.verify.changeSays': 'No pasa nada. ¿Adónde te lo envío?',
+  'guide.reset.says': 'Nos pasa a todos. ¿Adónde te envío el enlace?',
+  'guide.reset.sent.question': 'Revisa tu correo',
+  'guide.reset.sent.says': '¡Hecho! Puede tardar un minuto en llegar.',
   'auth.verify.change': 'Cámbiala',
   'auth.verify.newAddress': 'Nueva dirección de correo',
   'auth.verify.sendThere': 'Enviar el código allí',
@@ -15626,10 +15613,6 @@ const es: Catalog = {
   'favorites.noStories': 'Todavía no hay relatos publicados.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Mes y año de nacimiento',
-  'age.month': 'Mes',
-  'age.year': 'Año',
-  'age.help': 'Se lo preguntamos a todo el mundo. Solo guardamos el mes y el año.',
-  'age.required': 'Elige el mes y el año en que naciste.',
   'age.month.1': 'Enero',
   'age.month.2': 'Febrero',
   'age.month.3': 'Marzo',
@@ -15642,11 +15625,8 @@ const es: Catalog = {
   'age.month.10': 'Octubre',
   'age.month.11': 'Noviembre',
   'age.month.12': 'Diciembre',
-  'age.prompt.title': 'Una pregunta antes de seguir',
-  'age.prompt.body': '¿Cuándo naciste? Se lo preguntamos una vez a todo el mundo y solo guardamos el mes y el año.',
   'age.prompt.once': 'Revísalo antes de guardar: después no se puede cambiar.',
   'age.prompt.save': 'Guardar',
-  'age.prompt.saving': 'Guardando…',
   'age.stop.title': 'Hevalo es para personas de 13 años o más',
   'age.stop.body': 'Todavía no podemos crearte una cuenta, y no hemos guardado nada de lo que escribiste.',
   'age.stop.closed': 'Tu cuenta se ha cerrado y tus datos personales se han eliminado.',
@@ -17805,6 +17785,9 @@ const tr: Catalog = {
   'auth.verify.didntGetIt': 'Gelmedi mi? Spam klasörüne bak, sonra',
   'guide.verify.says': 'E-postana bir kod gönderdim. Onu yaz, başlayalım!',
   'guide.verify.changeSays': 'Sorun değil. Nereye göndereyim?',
+  'guide.reset.says': 'Hepimizin başına gelir. Bağlantıyı nereye göndereyim?',
+  'guide.reset.sent.question': 'E-postanı kontrol et',
+  'guide.reset.sent.says': 'Tamam! Ulaşması bir dakika sürebilir.',
   'auth.verify.change': 'Değiştir',
   'auth.verify.newAddress': 'Yeni e-posta adresi',
   'auth.verify.sendThere': 'Kodu oraya gönder',
@@ -19059,10 +19042,6 @@ const tr: Catalog = {
   'favorites.noStories': 'Henüz yayımlanmış hikâye yok.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Doğum ayı ve yılı',
-  'age.month': 'Ay',
-  'age.year': 'Yıl',
-  'age.help': 'Bunu herkese soruyoruz. Yalnızca ay ve yıl saklanır.',
-  'age.required': 'Doğduğun ayı ve yılı seç.',
   'age.month.1': 'Ocak',
   'age.month.2': 'Şubat',
   'age.month.3': 'Mart',
@@ -19075,11 +19054,8 @@ const tr: Catalog = {
   'age.month.10': 'Ekim',
   'age.month.11': 'Kasım',
   'age.month.12': 'Aralık',
-  'age.prompt.title': 'Devam etmeden önce bir soru',
-  'age.prompt.body': 'Ne zaman doğdun? Bunu herkese bir kez soruyoruz ve yalnızca ayı ve yılı saklıyoruz.',
   'age.prompt.once': 'Kaydetmeden önce kontrol et: sonradan değiştirilemez.',
   'age.prompt.save': 'Kaydet',
-  'age.prompt.saving': 'Kaydediliyor…',
   'age.stop.title': 'Hevalo 13 yaş ve üzeri içindir',
   'age.stop.body': 'Henüz senin için bir hesap oluşturamıyoruz ve yazdığın hiçbir şey saklanmadı.',
   'age.stop.closed': 'Hesabın kapatıldı ve kişisel bilgilerin silindi.',
@@ -21238,6 +21214,9 @@ const ar: Catalog = {
   'auth.verify.didntGetIt': 'لم يصلك؟ تحقق من مجلد البريد المزعج، ثم',
   'guide.verify.says': 'أرسلتُ رمزًا إلى بريدك الإلكتروني. اكتبه هنا ولننطلق!',
   'guide.verify.changeSays': 'لا مشكلة. إلى أين أرسله؟',
+  'guide.reset.says': 'يحدث هذا لنا جميعًا. إلى أين أرسل الرابط؟',
+  'guide.reset.sent.question': 'تحقّق من بريدك',
+  'guide.reset.sent.says': 'تمّ! قد يستغرق وصوله دقيقة.',
   'auth.verify.change': 'غيّره',
   'auth.verify.newAddress': 'عنوان البريد الإلكتروني الجديد',
   'auth.verify.sendThere': 'أرسل الرمز إلى هناك',
@@ -22492,10 +22471,6 @@ const ar: Catalog = {
   'favorites.noStories': 'لا توجد قصص منشورة بعد.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'شهر وسنة الميلاد',
-  'age.month': 'الشهر',
-  'age.year': 'السنة',
-  'age.help': 'نسأل الجميع هذا السؤال. نحتفظ بالشهر والسنة فقط.',
-  'age.required': 'اختر الشهر والسنة اللذين وُلدت فيهما.',
   'age.month.1': 'يناير',
   'age.month.2': 'فبراير',
   'age.month.3': 'مارس',
@@ -22508,11 +22483,8 @@ const ar: Catalog = {
   'age.month.10': 'أكتوبر',
   'age.month.11': 'نوفمبر',
   'age.month.12': 'ديسمبر',
-  'age.prompt.title': 'سؤال واحد قبل أن تتابع',
-  'age.prompt.body': 'متى وُلدت؟ نسأل الجميع هذا مرة واحدة، ولا نحتفظ إلا بالشهر والسنة.',
   'age.prompt.once': 'تحقّق منه قبل الحفظ: لا يمكن تغييره لاحقًا.',
   'age.prompt.save': 'حفظ',
-  'age.prompt.saving': 'جارٍ الحفظ…',
   'age.stop.title': 'Hevalo مخصّص لمن بلغوا 13 عامًا فأكثر',
   'age.stop.body': 'لا يمكننا إنشاء حساب لك بعد، ولم نحتفظ بأي شيء مما كتبته.',
   'age.stop.closed': 'أُغلق حسابك وحُذفت بياناتك الشخصية.',
@@ -24671,6 +24643,9 @@ const fr: Catalog = {
   'auth.verify.didntGetIt': 'Tu ne l’as pas reçu ? Regarde dans les spams, puis',
   'guide.verify.says': 'Je t’ai envoyé un code par e-mail. Saisis-le et c’est parti !',
   'guide.verify.changeSays': 'Pas de souci. Où dois-je l’envoyer ?',
+  'guide.reset.says': 'Ça nous arrive à tous. Où dois-je envoyer le lien ?',
+  'guide.reset.sent.question': 'Regarde tes e-mails',
+  'guide.reset.sent.says': 'C’est fait ! Il peut mettre une minute à arriver.',
   'auth.verify.change': 'Modifier',
   'auth.verify.newAddress': 'Nouvelle adresse e-mail',
   'auth.verify.sendThere': 'Envoyer le code à cette adresse',
@@ -25925,10 +25900,6 @@ const fr: Catalog = {
   'favorites.noStories': 'Aucune histoire publiée pour l’instant.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Mois et année de naissance',
-  'age.month': 'Mois',
-  'age.year': 'Année',
-  'age.help': 'Nous posons la question à tout le monde. Seuls le mois et l’année sont conservés.',
-  'age.required': 'Choisis le mois et l’année de ta naissance.',
   'age.month.1': 'Janvier',
   'age.month.2': 'Février',
   'age.month.3': 'Mars',
@@ -25941,11 +25912,8 @@ const fr: Catalog = {
   'age.month.10': 'Octobre',
   'age.month.11': 'Novembre',
   'age.month.12': 'Décembre',
-  'age.prompt.title': 'Une question avant de continuer',
-  'age.prompt.body': 'Quelle est ta date de naissance ? Nous posons la question une fois à tout le monde et ne gardons que le mois et l’année.',
   'age.prompt.once': 'Vérifie avant d’enregistrer : ce ne sera plus modifiable ensuite.',
   'age.prompt.save': 'Enregistrer',
-  'age.prompt.saving': 'Enregistrement…',
   'age.stop.title': 'Hevalo est réservé aux personnes de 13 ans et plus',
   'age.stop.body': 'Nous ne pouvons pas encore te créer de compte, et rien de ce que tu as saisi n’a été conservé.',
   'age.stop.closed': 'Ton compte a été fermé et tes informations personnelles supprimées.',
@@ -28104,6 +28072,9 @@ const nl: Catalog = {
   'auth.verify.didntGetIt': 'Niet ontvangen? Kijk in je spammap en',
   'guide.verify.says': 'Ik heb je een code gemaild. Typ hem in en we kunnen beginnen!',
   'guide.verify.changeSays': 'Geen probleem. Waar moet ik hem heen sturen?',
+  'guide.reset.says': 'Dat overkomt ons allemaal. Waar moet ik de link heen sturen?',
+  'guide.reset.sent.question': 'Kijk in je mail',
+  'guide.reset.sent.says': 'Gelukt! Het kan een minuut duren voordat hij aankomt.',
   'auth.verify.change': 'Wijzig het',
   'auth.verify.newAddress': 'Nieuw e-mailadres',
   'auth.verify.sendThere': 'Stuur de code daarheen',
@@ -29358,10 +29329,6 @@ const nl: Catalog = {
   'favorites.noStories': 'Nog geen gepubliceerde verhalen.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'Geboortemaand en -jaar',
-  'age.month': 'Maand',
-  'age.year': 'Jaar',
-  'age.help': 'We vragen het iedereen. Alleen de maand en het jaar worden bewaard.',
-  'age.required': 'Kies de maand en het jaar waarin je geboren bent.',
   'age.month.1': 'Januari',
   'age.month.2': 'Februari',
   'age.month.3': 'Maart',
@@ -29374,11 +29341,8 @@ const nl: Catalog = {
   'age.month.10': 'Oktober',
   'age.month.11': 'November',
   'age.month.12': 'December',
-  'age.prompt.title': 'Eén vraag voordat je verdergaat',
-  'age.prompt.body': 'Wanneer ben je geboren? We vragen het iedereen één keer en bewaren alleen de maand en het jaar.',
   'age.prompt.once': 'Controleer het voordat je opslaat: je kunt het later niet meer wijzigen.',
   'age.prompt.save': 'Opslaan',
-  'age.prompt.saving': 'Opslaan…',
   'age.stop.title': 'Hevalo is voor mensen van 13 jaar en ouder',
   'age.stop.body': 'We kunnen nog geen account voor je maken, en niets van wat je hebt ingevuld is bewaard.',
   'age.stop.closed': 'Je account is gesloten en je persoonlijke gegevens zijn verwijderd.',
@@ -31538,6 +31502,9 @@ const ckb: Catalog = {
   'auth.verify.didntGetIt': 'نەگەیشت؟ فۆڵدەری سپام بپشکنە، پاشان',
   'guide.verify.says': 'کۆدێکم نارد بۆ ئیمەیڵەکەت. بینووسە با دەست پێ بکەین!',
   'guide.verify.changeSays': 'کێشە نییە. بۆ کوێی بنێرم؟',
+  'guide.reset.says': 'بەسەر هەموومان دێت. بەستەرەکە بۆ کوێ بنێرم؟',
+  'guide.reset.sent.question': 'سەیری ئیمەیڵەکەت بکە',
+  'guide.reset.sent.says': 'تەواو! لەوانەیە خولەکێک بخایەنێت تا بگات.',
   'auth.verify.change': 'بیگۆڕە',
   'auth.verify.newAddress': 'ناونیشانی ئیمەیڵی نوێ',
   'auth.verify.sendThere': 'کۆدەکە بنێرە بۆ ئەوێ',
@@ -32792,10 +32759,6 @@ const ckb: Catalog = {
   'favorites.noStories': 'هێشتا چیرۆکی بڵاوکراوە نییە.',
   // ---- age, minors, the daily reward, streaks and leagues ----
   'age.label': 'مانگ و ساڵی لەدایکبوون',
-  'age.month': 'مانگ',
-  'age.year': 'ساڵ',
-  'age.help': 'ئەمە لە هەموو کەسێک دەپرسین. تەنها مانگ و ساڵ هەڵدەگیرێن.',
-  'age.required': 'ئەو مانگ و ساڵە هەڵبژێرە کە تێیدا لەدایک بوویت.',
   'age.month.1': 'کانوونی دووەم',
   'age.month.2': 'شوبات',
   'age.month.3': 'ئازار',
@@ -32808,11 +32771,8 @@ const ckb: Catalog = {
   'age.month.10': 'تشرینی یەکەم',
   'age.month.11': 'تشرینی دووەم',
   'age.month.12': 'کانوونی یەکەم',
-  'age.prompt.title': 'پێش ئەوەی بەردەوام بیت، پرسیارێک',
-  'age.prompt.body': 'کەی لەدایک بوویت؟ ئەمە یەک جار لە هەموو کەسێک دەپرسین و تەنها مانگ و ساڵ هەڵدەگرین.',
   'age.prompt.once': 'پێش پاشەکەوتکردن بیپشکنە: دواتر ناگۆڕدرێت.',
   'age.prompt.save': 'پاشەکەوت بکە',
-  'age.prompt.saving': 'پاشەکەوت دەکرێت…',
   'age.stop.title': 'Hevalo بۆ کەسانی 13 ساڵ و سەرووترە',
   'age.stop.body': 'هێشتا ناتوانین هەژمارێکت بۆ دروست بکەین، و هیچ شتێک لەوەی نووسیت هەڵنەگیراوە.',
   'age.stop.closed': 'هەژمارەکەت داخرا و زانیارییە کەسییەکانت سڕانەوە.',

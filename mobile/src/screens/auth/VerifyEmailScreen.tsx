@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { UNCONFIRMED_SIGNUP_DAYS } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useAuth } from '../../auth/AuthContext';
 import { CodeBoxes } from '../../auth/guide/CodeBoxes';
 import { GuideField } from '../../auth/guide/GuideField';
 import { StepFlow, type FlowStep } from '../../auth/guide/StepFlow';
+import { WaysOut } from '../../auth/guide/WaysOut';
 import { useConfirmDelete } from '../../auth/useConfirmDelete';
 import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, validateEmail } from '../../auth/validators';
 import { haptic } from '../../feedback/haptics';
@@ -168,14 +169,12 @@ export function VerifyEmailScreen(): React.JSX.Element {
           {t('auth.verify.expiresIn15')} {t('auth.verify.keptFor', { days: UNCONFIRMED_SIGNUP_DAYS })}
         </Text>
         {/* the two ways out, side by side and quiet: this is not what the screen is for */}
-        <View style={[styles.ways, { flexDirection: dir.row }]}>
-          <Pressable onPress={() => void logout()} accessibilityRole="button" hitSlop={8} style={styles.way}>
-            <Text style={[styles.wayText, { color: colors.textSecondary }]}>{t('auth.verify.startOver')}</Text>
-          </Pressable>
-          <Pressable onPress={confirmDelete} accessibilityRole="button" hitSlop={8} style={styles.way} testID="delete-account">
-            <Text style={[styles.wayText, { color: colors.danger }]}>{t('settings.delete.title')}</Text>
-          </Pressable>
-        </View>
+        <WaysOut
+          ways={[
+            { label: t('auth.verify.startOver'), onPress: () => void logout() },
+            { label: t('settings.delete.title'), onPress: confirmDelete, danger: true, testID: 'delete-account' },
+          ]}
+        />
       </View>
     ),
   };
@@ -244,8 +243,4 @@ const styles = StyleSheet.create({
   resend: { fontSize: typography.sizes.sm, lineHeight: 22 },
   resendLink: { fontWeight: typography.weights.semibold },
   small: { fontSize: typography.sizes.xs, lineHeight: 18 },
-  // side by side where they fit; one under the other, close, where a longer language wraps them
-  ways: { flexWrap: 'wrap', columnGap: spacing.lg, rowGap: 0, marginTop: spacing.sm },
-  way: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  wayText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
 });

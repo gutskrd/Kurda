@@ -7,7 +7,7 @@ import { SpeechBubble } from '../../auth/guide/HevaloGuide';
 import { useScreenFocus } from '../../auth/guide/focus';
 import { useSpokenLine } from '../../auth/guide/speech';
 import { useListEntrance } from '../../theme/animate';
-import { ClayButton, GlassCard, GradientBackground } from '../../theme/glass';
+import { GlassCard, GradientBackground } from '../../theme/glass';
 import { BreathingIcon, Icon, type IconName } from '../../theme/Icon';
 import { Rise } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -238,21 +238,6 @@ const TEXT_CONTENT_TYPE = {
   none: undefined,
 } as const;
 
-/**
- * The one action of a form: the app's primary button, the same one sign-in
- * and register end each of their steps with.
- *
- * It was a button of its own: a gradient with a rim and a shadow under it,
- * and nothing happening under the finger. So the screens either side of
- * register (verify the email, a forgotten password, the date of birth) had a
- * button from an older app than the one the reader had just been pressing.
- * While it is busy the label gives way to a spinner and the press is taken
- * away, as before.
- */
-export function SubmitButton(props: { label: string; busy: boolean; onPress: () => void }) {
-  return <ClayButton label={props.label} tone="primary" size="large" busy={props.busy} onPress={props.onPress} style={styles.buttonWrap} testID="submit" />;
-}
-
 /** A link under a form. `destructive` is for the one that cannot be undone (deleting the account): the screen's one red. */
 export function LinkText(props: { label: string; onPress: () => void; destructive?: boolean }) {
   const { colors } = useTheme();
@@ -303,7 +288,6 @@ const styles = StyleSheet.create({
   affixStart: { left: spacing.sm },
   error: { fontSize: typography.sizes.xs, marginTop: spacing.xs },
   formError: { fontSize: typography.sizes.sm, marginBottom: spacing.md, textAlign: 'center' },
-  buttonWrap: { marginTop: spacing.sm },
   /**
    * A link is still something a finger has to land on.
    *
