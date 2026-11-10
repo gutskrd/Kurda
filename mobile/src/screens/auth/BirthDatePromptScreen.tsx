@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text } from 'react-native';
 import { useAuth } from '../../auth/AuthContext';
+import { useConfirmDelete } from '../../auth/useConfirmDelete';
 import { describeError } from '../../api/errors';
 import { BirthMonthFields } from '../../auth/BirthMonthFields';
 import { birthMonthOf, EMPTY_BIRTH_MONTH } from '../../auth/birthMonth';
@@ -25,6 +26,7 @@ import { AuthScreenShell, FormError, LinkText, SubmitButton } from './AuthForm';
  */
 export function BirthDatePromptScreen() {
   const { client, refreshUser, stopForAge, logout } = useAuth();
+  const confirmDelete = useConfirmDelete();
   const { colors } = useTheme();
   const { t } = useI18n();
   const [birth, setBirth] = useState(EMPTY_BIRTH_MONTH);
@@ -68,6 +70,8 @@ export function BirthDatePromptScreen() {
       <Text style={[styles.once, { color: colors.textSecondary }]}>{t('age.prompt.once')}</Text>
       <SubmitButton label={busy ? t('age.prompt.saving') : t('age.prompt.save')} busy={busy} onPress={save} />
       <LinkText label={t('profile.logout')} onPress={() => void logout()} />
+      {/* an account held here is still an account: it can be deleted without answering first */}
+      <LinkText label={t('settings.delete.title')} onPress={confirmDelete} destructive />
     </AuthScreenShell>
   );
 }

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../../auth/AuthContext';
+import { useConfirmDelete } from '../../auth/useConfirmDelete';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
@@ -20,6 +21,7 @@ const RESEND_COOLDOWN_SEC = 45;
  */
 export function VerifyEmailScreen() {
   const { user, verifyEmailCode, resendVerificationCode, logout } = useAuth();
+  const confirmDelete = useConfirmDelete();
   const { colors } = useTheme();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
@@ -115,6 +117,10 @@ export function VerifyEmailScreen() {
         </Pressable>
         <Pressable onPress={() => void logout()} accessibilityRole="button" style={styles.action}>
           <Text style={[styles.link, { color: colors.textSecondary }]}>{t('auth.verify.startOver')}</Text>
+        </Pressable>
+        {/* the account exists already, code or no code: it can be deleted from here, not only signed out of */}
+        <Pressable onPress={confirmDelete} accessibilityRole="button" style={styles.action} testID="delete-account">
+          <Text style={[styles.link, { color: colors.danger }]}>{t('settings.delete.title')}</Text>
         </Pressable>
       </View>
     </AuthScreenShell>

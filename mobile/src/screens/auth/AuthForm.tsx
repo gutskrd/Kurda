@@ -266,11 +266,12 @@ export function SubmitButton(props: { label: string; busy: boolean; onPress: () 
   );
 }
 
-export function LinkText(props: { label: string; onPress: () => void }) {
+/** A link under a form. `destructive` is for the one that cannot be undone (deleting the account): the screen's one red. */
+export function LinkText(props: { label: string; onPress: () => void; destructive?: boolean }) {
   const { colors } = useTheme();
   return (
     <Pressable onPress={props.onPress} accessibilityRole="button" style={styles.link}>
-      <Text style={[styles.linkText, { color: colors.primary }]}>{props.label}</Text>
+      <Text style={[styles.linkText, { color: props.destructive ? colors.danger : colors.primary }]}>{props.label}</Text>
     </Pressable>
   );
 }
