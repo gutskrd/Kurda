@@ -146,7 +146,12 @@ export interface GemGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
 }
 
-/** The Gem rule a perfect first completion pays out under (KUR-068). */
+/**
+ * The Gem rule a perfect first completion pays out under (KUR-068). Switched
+ * off since migration 1751000312000, so the grant is asked for and answered
+ * with nothing: free gems are rare now that they restore a streak. The asking
+ * stays, for an admin who switches the rule back on.
+ */
 export const PERFECT_LESSON_GEM_RULE = 'perfect_lesson';
 
 /**
@@ -443,7 +448,8 @@ export class LessonSessionService {
    * the session id in the ledger. Re-calling returns the same summary but
    * awards no further XP.
    *
-   * A perfect first completion pays perfect-lesson Gems, keyed on the learner
+   * A perfect first completion pays perfect-lesson Gems while that rule is on
+   * (it is off now, see `PERFECT_LESSON_GEM_RULE`), keyed on the learner
    * and the lesson's place rather than the session (`perfectLessonRef`): a
    * replay is never a first completion, so an easy lesson cannot be replayed
    * into the daily Gem cap, and a corrected version of a lesson is not a new
