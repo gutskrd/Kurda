@@ -115,16 +115,36 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     expect(result.user.id).toBe(created.rows[0].id);
   });
 
-  it('refuses to link when our account email is unverified (takeover guard)', async () => {
+  /*
+   * Whoever registered an address first and never confirmed it must not end
+   * up holding the account of the person a provider says owns it: the
+   * sign-in is never linked to that account. Nor does that account stand in
+   * the owner's way: it is ended, and the sign-in makes a new one.
+   */
+  it('never links to an account that did not confirm the address: that sign-up is ended and a new account made (takeover guard)', async () => {
     const email = `unverified_${suffix}@example.com`;
-    await pool.query(
-      `INSERT INTO users (email, username, password_hash) VALUES ($1, $2, $3)`,
+    const squatter = await pool.query<{ id: string }>(
+      `INSERT INTO users (email, username, password_hash) VALUES ($1, $2, $3) RETURNING id`,
       [email, `unver_${suffix}`.slice(0, 30), await hashPassword('a-strong-password1')],
     );
     const token = await makeToken('google', { sub: `g-unver-${suffix}`, email, emailVerified: true });
-    await expect(service.signIn('google', token)).rejects.toMatchObject({
-      code: 'LINK_REQUIRES_VERIFIED_EMAIL',
-    });
+    const result = await service.signIn('google', token);
+    expect(result.created).toBe(true);
+    expect(result.user.id).not.toBe(squatter.rows[0]!.id);
+    const linked = await pool.query<{ user_id: string }>(`SELECT user_id FROM oauth_identities WHERE provider = 'google' AND provider_user_id = $1`, [`g-unver-${suffix}`]);
+    expect(linked.rows.map((r) => r.user_id)).toEqual([result.user.id]);
+    const old = await pool.query<{ closed: boolean }>(`SELECT deleted_at IS NOT NULL AS closed FROM users WHERE id = $1`, [squatter.rows[0]!.id]);
+    expect(old.rows[0]?.closed).toBe(true);
+  });
+
+  it('leaves an unconfirmed account alone when it is more than a sign-up, and still does not link to it', async () => {
+    const email = `unverstaff_${suffix}@example.com`;
+    await pool.query(
+      `INSERT INTO users (email, username, password_hash, roles) VALUES ($1, $2, $3, '{moderator}')`,
+      [email, `unverst_${suffix}`.slice(0, 30), await hashPassword('a-strong-password1')],
+    );
+    const token = await makeToken('google', { sub: `g-unverst-${suffix}`, email, emailVerified: true });
+    await expect(service.signIn('google', token)).rejects.toMatchObject({ code: 'LINK_REQUIRES_VERIFIED_EMAIL' });
   });
 
   it('answers an address the provider has not confirmed, which an account already has, without a second account', async () => {
@@ -151,7 +171,8 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     expect(result.created).toBe(true);
     const row = await pool.query<{ email: string; email_verified_at: Date | null }>(`SELECT email, email_verified_at FROM users WHERE id = $1`, [result.user.id]);
     expect(row.rows[0]?.email).toBe(`google_g-unconfirmed-${suffix}@noemail.kurda.app`);
-    expect(row.rows[0]?.email_verified_at).toBeNull();
+    // nothing is left for it to confirm, so it is not held at the gate for a code that could never be sent
+    expect(row.rows[0]?.email_verified_at).not.toBeNull();
     // the address is still free for the person it belongs to
     const taken = await pool.query(`SELECT 1 FROM users WHERE lower(email) = lower($1)`, [email]);
     expect(taken.rowCount).toBe(0);

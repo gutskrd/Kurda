@@ -19,6 +19,8 @@ import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { isMinorRow } from '../users/age.js';
 import { consumeEmailToken, createEmailToken } from './email-tokens.js';
 import { createVerificationCode, verifyCode, type VerifyResult } from './verification-codes.js';
+import { allowVerificationEmail } from './pending-signups.js';
+import { GdprService } from '../gdpr/service.js';
 import { CAPTCHA_AFTER_FAILURES, LockoutService, type LockoutScope } from './lockout.js';
 import {
   ACCESS_TOKEN_TTL_SECONDS,
@@ -157,6 +159,8 @@ export class AuthService {
   private readonly lockouts: LockoutService;
   private readonly devices: KnownDevices;
   private readonly surge: LoginSurge;
+  /** ends an unconfirmed sign-up that holds an address somebody else is signing up with (auth/pending-signups.ts) */
+  private readonly accounts: GdprService;
 
   constructor(
     private readonly config: AppConfig,
@@ -167,6 +171,10 @@ export class AuthService {
     this.lockouts = new LockoutService(pool);
     this.devices = new KnownDevices(pool, config.JWT_SECRET);
     this.surge = new LoginSurge(deps.redis, deps.log);
+    const log = deps.log;
+    this.accounts = new GdprService(pool, {
+      log: log ? { info: (obj, msg) => log.info?.(obj, msg), warn: (obj, msg) => log.warn(obj, msg) } : undefined,
+    });
   }
 
   /** Whether sign-in can ask for a CAPTCHA at all (not in dev and tests, without a secret). */
@@ -202,6 +210,9 @@ export class AuthService {
     // a guest has no address to send it to (and nothing of these can happen to one)
     if (user.email === null) return;
     try {
+      // nor to an address nobody has shown to be theirs: it would be mail to a stranger about an account that can do nothing yet
+      const confirmed = await this.pool.query(`SELECT 1 FROM users WHERE id = $1 AND email_verified_at IS NOT NULL`, [user.id]);
+      if ((confirmed.rowCount ?? 0) === 0) return;
       if (daily) {
         const claimed = await this.pool.query(
           `INSERT INTO security_notices (user_id, kind) VALUES ($1, $2)
@@ -273,6 +284,12 @@ export class AuthService {
     // no address, no code: a guest's row has none until the account is claimed
     if (user.email === null) return null;
     try {
+      // a day's ceiling, for the account and for the address (auth/pending-signups.ts): past it nothing is sent,
+      // and the code already in the mailbox, if it has not run out, still works
+      if (!(await allowVerificationEmail(this.pool, user.id, user.email))) {
+        this.deps.log?.warn({ userId: user.id }, 'confirmation email not sent: the day’s ceiling for this account or address is reached');
+        return null;
+      }
       const code = await createVerificationCode(this.pool, user.id);
       if (this.deps.jobs) {
         await this.deps.jobs.enqueue(sendEmailJob, {
@@ -298,9 +315,11 @@ export class AuthService {
 
   /**
    * Re-issues a verification code for a signed-in, still-unverified user.
-   * No-ops silently if the account is already verified.
+   * No-ops silently if the account is already verified. False when the day's
+   * ceiling of confirmation emails is reached and nothing was sent, so the
+   * app can say so instead of promising a code that is not coming.
    */
-  async resendVerificationCode(userId: string): Promise<void> {
+  async resendVerificationCode(userId: string): Promise<boolean> {
     const res = await this.pool.query<{
       email: string | null;
       username: string;
@@ -311,13 +330,60 @@ export class AuthService {
       [userId],
     );
     const user = res.rows[0];
-    if (!user || user.email_verified_at) return;
-    await this.sendVerificationCode({
+    if (!user || user.email_verified_at) return true;
+    const code = await this.sendVerificationCode({
       id: userId,
       email: user.email,
       username: user.username,
       locale: user.locale,
     });
+    return code !== null;
+  }
+
+  /**
+   * Puts right the address of a sign-up that has not confirmed it yet, and
+   * sends the code there.
+   *
+   * A mistyped address is the commonest reason a sign-up is never confirmed,
+   * and the only way out was to start again, which found the username taken
+   * by the sign-up just abandoned. The account stays, with its name and its
+   * password; only the address changes, and with it the code: the one sent
+   * to the old address stops working.
+   *
+   * Only an account that has not confirmed (a confirmed address is changed
+   * in Settings, with its own proof). An address a confirmed account has is
+   * answered as sign-up answers it; one an unconfirmed sign-up holds is taken
+   * from it, as at sign-up. Returns whether a code went out, false when the
+   * day's ceiling stopped it.
+   */
+  async changePendingEmail(userId: string, email: string): Promise<{ user: PublicUser; sent: boolean }> {
+    const address = normalizeKurdish(email);
+    await this.accounts.releaseAddress(address, userId);
+    let updated: pg.QueryResult<UserRow>;
+    try {
+      updated = await this.pool.query<UserRow>(
+        `UPDATE users SET email = $2
+          WHERE id = $1 AND email_verified_at IS NULL AND NOT guest AND deleted_at IS NULL AND email IS NOT NULL
+          RETURNING *`,
+        [userId, address],
+      );
+    } catch (err) {
+      if ((err as { constraint?: string }).constraint === 'users_email_active_uniq') {
+        throw new AppError(
+          'REGISTRATION_FAILED',
+          409,
+          'unable to register with these details — if you already have an account, log in or reset your password',
+        );
+      }
+      throw err;
+    }
+    const user = updated.rows[0];
+    if (!user) throw new AppError('ALREADY_VERIFIED', 409, 'this account has already confirmed its address');
+    // the code sent to the old address must not confirm the new one
+    await this.pool.query(`DELETE FROM email_verification_codes WHERE user_id = $1`, [userId]);
+    await this.pool.query(`UPDATE email_tokens SET used_at = now() WHERE user_id = $1 AND purpose = 'verify_email' AND used_at IS NULL`, [userId]);
+    const code = await this.sendVerificationCode(user);
+    return { user: toPublicUser(user), sent: code !== null };
   }
 
   /**
@@ -427,7 +493,9 @@ export class AuthService {
     // token_version bump invalidates every outstanding access token;
     // revoking refresh tokens kills all sessions (KUR-016 semantics)
     const updated = await this.pool.query<{ email: string | null; username: string; locale: string }>(
-      `UPDATE users SET password_hash = $2, token_version = token_version + 1
+      // the link came out of the mailbox, which is what confirming an address is: it is not asked for a code as well
+      `UPDATE users SET password_hash = $2, token_version = token_version + 1,
+              email_verified_at = COALESCE(email_verified_at, now())
        WHERE id = $1 AND deleted_at IS NULL
        RETURNING email, username, locale`,
       [userId, passwordHash],
@@ -527,6 +595,8 @@ export class AuthService {
 
   async register(input: RegisterInput): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
     const passwordHash = await hashPassword(input.password);
+    // a sign-up that never confirmed this address does not keep it from whoever can (auth/pending-signups.ts)
+    await this.accounts.releaseAddress(normalizeKurdish(input.email));
     let user: UserRow;
     try {
       user = await this.users.create({
@@ -615,6 +685,8 @@ export class AuthService {
   ): Promise<UserRow> {
     const passwordHash = await hashPassword(input.password);
     const birth = { birth_year: input.birthYear, birth_month: input.birthMonth };
+    // as at sign-up: an address only ever held unconfirmed is free to whoever can confirm it
+    await this.accounts.releaseAddress(normalizeKurdish(input.email), userId);
     let claimed: pg.QueryResult<UserRow>;
     try {
       claimed = await this.pool.query<UserRow>(
@@ -625,7 +697,9 @@ export class AuthService {
                 consent_version = $8, consented_at = now(),
                 -- a minor's profile starts private, as at sign-up
                 profile_visibility = CASE WHEN $9 THEN 'friends' ELSE profile_visibility END,
-                guest = false, guest_device_hash = NULL, email_verified_at = NULL
+                guest = false, guest_device_hash = NULL, email_verified_at = NULL,
+                -- so that, never confirmed, the claim lapses and the learning is kept (gdpr endUnconfirmedSignup)
+                claimed_from_guest_at = now()
           WHERE id = $1 AND guest AND deleted_at IS NULL
           RETURNING *`,
         [

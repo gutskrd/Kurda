@@ -537,9 +537,39 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         rateLimit: { max: 4, windowMs: 3_600_000, per: 'user-or-ip' as const },
       },
     },
-    async (req) => {
-      await service.resendVerificationCode(req.user!.id);
+    async (req, reply) => {
+      const sent = await service.resendVerificationCode(req.user!.id);
+      // the day's ceiling of confirmation emails (auth/pending-signups.ts): said, not hidden behind "sent"
+      if (!sent) {
+        return reply.code(429).send({
+          code: 'VERIFICATION_EMAIL_LIMIT',
+          message: 'too many confirmation emails today — the last code still works until it runs out; try again tomorrow',
+        });
+      }
       return { sent: true };
+    },
+  );
+
+  /**
+   * A sign-up that has not confirmed its address puts the address right
+   * (a typo is the commonest reason a code never arrives) and is sent the
+   * code there. Checked as sign-up checks an address; counted against the
+   * same ceiling of confirmation emails as asking for the code again.
+   */
+  app.post(
+    '/auth/change-pending-email',
+    {
+      schema: { body: z.object({ email: emailAddress }) },
+      preHandler: requireAuth,
+      config: { rateLimit: { max: 4, windowMs: 3_600_000, per: 'user-or-ip' as const } },
+    },
+    async (req) => {
+      const { email } = req.body as { email: string };
+      if (req.user!.guest === true) throw new AppError('GUEST_ACCOUNT', 403, 'a guest has no address to change');
+      if (isDisposableEmail(email)) throw await rejected('throwaway email address');
+      if (await isBannedEmail(app.db, email)) throw await rejected('banned email address');
+      const changed = await service.changePendingEmail(req.user!.id, email);
+      return { user: changed.user, sent: changed.sent };
     },
   );
 

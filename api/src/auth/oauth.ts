@@ -11,6 +11,7 @@ import { isBannedEmail } from '../moderation/ban-registry.js';
 import { suspensionError } from '../moderation/suspension.js';
 import { signupRejected } from './rejections.js';
 import type { AppleTokens } from './apple-tokens.js';
+import { GdprService } from '../gdpr/service.js';
 
 export type OAuthProvider = 'google' | 'apple';
 
@@ -184,15 +185,26 @@ export class OAuthService {
         `SELECT * FROM users WHERE email = $1 AND deleted_at IS NULL`,
         [identity.email],
       );
-      const account = existing.rows[0];
-      if (account) {
-        if (!account.email_verified_at) {
+      let account = existing.rows[0];
+      if (account && !account.email_verified_at) {
+        // The provider has confirmed this address is the signer's; the
+        // account here never confirmed it. It is not linked (that would hand
+        // the account to whoever registered the address first), and it does
+        // not stand in the way either: a sign-up that never confirmed is
+        // ended (auth/pending-signups.ts) and this sign-in makes the account.
+        // One that is more than that — staff, or already tied to a provider —
+        // is left as it was, and answered as before.
+        const ended = await new GdprService(this.pool).endUnconfirmedSignup(account.id);
+        if (ended === 'kept') {
           throw new AppError(
             'LINK_REQUIRES_VERIFIED_EMAIL',
             409,
             'an account with this email exists but is not verified — log in with your password and verify your email first',
           );
         }
+        account = undefined;
+      }
+      if (account) {
         await this.refuseIfSuspended(account);
         await this.link(account.id, identity);
         const tokens = await issueTokenPair(this.config, this.pool, account, { deviceName, deviceId });
@@ -234,7 +246,7 @@ export class OAuthService {
     //     this identity has just become an account and the sign-up steps that
     //     follow one (the birth month question) are still to come
     if (guestId !== null) {
-      const claimed = await this.claimGuest(guestId, email, confirmedEmail !== null, name);
+      const claimed = await this.claimGuest(guestId, email, name);
       if (claimed) {
         await this.link(claimed.id, identity);
         const tokens = await issueTokenPair(this.config, this.pool, claimed, { deviceName, deviceId });
@@ -250,7 +262,12 @@ export class OAuthService {
         `INSERT INTO users (email, username, display_name, email_verified_at)
          VALUES ($1, $2, $3, $4)
          RETURNING *`,
-        [email, username, name, confirmedEmail ? new Date() : null],
+        // The provider vouches for who this is. With an address it confirmed,
+        // that is the address confirmed; with none, there is nothing to
+        // confirm, and an account left "unconfirmed" under the placeholder
+        // would be held at the gate (plugins/activation.ts) with no code it
+        // could ever be sent.
+        [email, username, name, new Date()],
       );
     } catch (err) {
       // An address the provider has not confirmed, which an account here
@@ -273,21 +290,22 @@ export class OAuthService {
   }
 
   /**
-   * The guest row takes the provider's address (confirmed when the provider
-   * says so; a provider-confirmed address is how every social sign-up is
-   * confirmed) and the shared name where it had none, and stops being a guest.
+   * The guest row takes the address the provider confirmed (or the
+   * placeholder when it confirmed none; either way there is nothing left for
+   * the account to confirm) and the shared name where it had none, and stops
+   * being a guest.
    * Null when the row is no longer a guest. An address already on another
    * account is answered as sign-up answers it, without saying whose it is.
    */
-  private async claimGuest(guestId: string, email: string, confirmed: boolean, name: string | null): Promise<UserRow | null> {
+  private async claimGuest(guestId: string, email: string, name: string | null): Promise<UserRow | null> {
     try {
       const claimed = await this.pool.query<UserRow>(
-        `UPDATE users SET email = $2, email_verified_at = CASE WHEN $3 THEN now() ELSE NULL END,
-                display_name = COALESCE(display_name, $4),
+        `UPDATE users SET email = $2, email_verified_at = now(),
+                display_name = COALESCE(display_name, $3),
                 guest = false, guest_device_hash = NULL
           WHERE id = $1 AND guest AND deleted_at IS NULL
           RETURNING *`,
-        [guestId, email, confirmed, name],
+        [guestId, email, name],
       );
       return claimed.rows[0] ?? null;
     } catch (err) {

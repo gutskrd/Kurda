@@ -99,6 +99,8 @@ describe.skipIf(!DATABASE_URL)('signing up with any mail provider (integration)'
   it('one address in another letter case is the same account', async () => {
     const first = await register(`case_${suffix}@example.com`);
     expect(first.statusCode, first.body).toBe(201);
+    // confirmed, so the address is this account's to keep (one never confirmed does not hold it)
+    await pool.query(`UPDATE users SET email_verified_at = now() WHERE id = $1`, [first.json().user.id]);
 
     const again = await register(`Case_${suffix}@Example.COM`);
     expect(again.statusCode).toBe(409);

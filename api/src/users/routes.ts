@@ -462,6 +462,14 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
       await gdpr.closeNow(req.user!.id, 'guest_left');
       return { deletionScheduled: false, deleted: true, graceDays: 0 };
     }
+    // A sign-up that never confirmed its address is closed at once too: the
+    // grace period is for coming back to something, and its notice would be
+    // mail to an address nobody showed to be theirs. A guest's claim that was
+    // never confirmed goes the same way here, learning and all: the person
+    // asked for the account to be deleted, not for the claim to lapse.
+    if (!req.user!.emailVerified && (await gdpr.endUnconfirmedSignup(req.user!.id, { keepLearning: false })) === 'closed') {
+      return { deletionScheduled: false, deleted: true, graceDays: 0 };
+    }
     await gdpr.requestDeletion(req.user!.id);
     return { deletionScheduled: true, graceDays: DELETION_GRACE_DAYS };
   });

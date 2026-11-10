@@ -19,6 +19,7 @@ import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 import { userHash } from '../moderation/pseudonym.js';
 import type { AppleTokens } from '../auth/apple-tokens.js';
 import { GUEST_IDLE_DAYS } from '../auth/guest.js';
+import { UNCONFIRMED_SIGNUP, UNCONFIRMED_SIGNUP_DAYS, forgetOldSends } from '../auth/pending-signups.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -153,7 +154,7 @@ export class GdprService {
    * notice and no way to sign in again, so the grace period would wait for
    * nothing.
    */
-  async closeNow(userId: string, reason: 'under_minimum_age' | 'guest_left' | 'guest_idle'): Promise<void> {
+  async closeNow(userId: string, reason: 'under_minimum_age' | 'guest_left' | 'guest_idle' | 'never_confirmed'): Promise<void> {
     await this.leaveStoryGames(userId);
     await this.revokeAppleSignIn(userId);
     const files = await this.eraseAndAnonymize(userId);
@@ -186,6 +187,85 @@ export class GdprService {
     );
     for (const row of due.rows) await this.closeNow(row.id, 'guest_idle');
     return due.rows.length;
+  }
+
+  /**
+   * Ends a sign-up whose address was never confirmed (auth/pending-signups.ts),
+   * and says what became of it.
+   *
+   * One made from nothing is closed at once, with no grace period and no
+   * notice: there is nothing on it to come back for, and a notice would be
+   * mail to an address nobody showed to be theirs. One a guest made by giving
+   * an address keeps everything that guest learned, so the claim lapses: the
+   * address, the password and the code go, and the row is a guest again, its
+   * sessions as they were. `keepLearning: false` closes that one too, for the
+   * person who asked for their account to be deleted.
+   *
+   * Checked again under the row's lock: an account confirmed, deleted or
+   * linked to a provider a moment ago is left alone ('kept').
+   */
+  async endUnconfirmedSignup(userId: string, opts: { keepLearning?: boolean } = {}): Promise<'closed' | 'lapsed' | 'kept'> {
+    const keepLearning = opts.keepLearning ?? true;
+    const lapsed = await inTransaction(this.pool, async (client) => {
+      const row = await client.query<{ claimed: boolean }>(
+        `SELECT u.claimed_from_guest_at IS NOT NULL AS claimed FROM users u WHERE u.id = $1 AND ${UNCONFIRMED_SIGNUP} FOR UPDATE OF u`,
+        [userId],
+      );
+      const found = row.rows[0];
+      if (!found) return 'kept' as const;
+      if (!found.claimed || !keepLearning) return 'close' as const;
+      await client.query(`DELETE FROM email_verification_codes WHERE user_id = $1`, [userId]);
+      await client.query(`UPDATE email_tokens SET used_at = now() WHERE user_id = $1 AND used_at IS NULL`, [userId]);
+      await client.query(
+        `UPDATE users SET guest = true, email = NULL, password_hash = NULL, email_verified_at = NULL, claimed_from_guest_at = NULL
+          WHERE id = $1`,
+        [userId],
+      );
+      return 'lapsed' as const;
+    });
+    if (lapsed === 'close') {
+      await this.closeNow(userId, 'never_confirmed');
+      return 'closed';
+    }
+    if (lapsed === 'lapsed') this.deps.log?.info({ userId }, 'an unconfirmed claim lapsed: the account is a guest again');
+    return lapsed;
+  }
+
+  /**
+   * Frees an address that an unconfirmed sign-up is holding, for whoever is
+   * about to sign up with it, claim an account under it or arrive from a
+   * provider that confirmed it. Nothing happens when the address is free, or
+   * is held by an account that confirmed it: that one keeps it, and the
+   * caller is refused by the unique index as before.
+   */
+  async releaseAddress(email: string, exceptUserId: string | null = null): Promise<void> {
+    const holder = await this.pool.query<{ id: string }>(
+      `SELECT u.id FROM users u WHERE u.email = $1 AND ($2::uuid IS NULL OR u.id <> $2::uuid) AND ${UNCONFIRMED_SIGNUP}`,
+      [email, exceptUserId],
+    );
+    const id = holder.rows[0]?.id;
+    if (id) await this.endUnconfirmedSignup(id);
+  }
+
+  /**
+   * Ends the sign-ups nobody confirmed within UNCONFIRMED_SIGNUP_DAYS
+   * (jobs/guest-jobs.ts), and forgets the counts of confirmation emails that
+   * are no longer counted over. Batched and idempotent, like the guests' purge
+   * it runs beside.
+   */
+  async purgeUnconfirmedSignups(now = new Date()): Promise<number> {
+    const cutoff = new Date(now.getTime() - UNCONFIRMED_SIGNUP_DAYS * 24 * 3_600_000);
+    const due = await this.pool.query<{ id: string }>(
+      `SELECT u.id FROM users u
+        WHERE COALESCE(u.claimed_from_guest_at, u.created_at) < $1 AND ${UNCONFIRMED_SIGNUP}
+        ORDER BY u.created_at
+        LIMIT 200`,
+      [cutoff],
+    );
+    let ended = 0;
+    for (const row of due.rows) if ((await this.endUnconfirmedSignup(row.id)) !== 'kept') ended++;
+    await forgetOldSends(this.pool);
+    return ended;
   }
 
   /**

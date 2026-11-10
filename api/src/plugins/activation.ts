@@ -30,6 +30,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
  *
  *   POST /auth/verify-email…            confirm the address
  *   POST /auth/resend-verification…     ask for another code
+ *   POST /auth/change-pending-email     put a mistyped address right
  *   POST /auth/login, /refresh, /oauth  sign in, and stay signed in while you do
  *   POST /auth/logout                   sign out
  *   POST /auth/register                 (no token yet, so the gate never fires)
@@ -73,6 +74,8 @@ const EXEMPT = new Set([
   'POST /auth/verify-email-code',
   'POST /auth/resend-verification',
   'POST /auth/resend-verification-code',
+  // putting a mistyped address right, which only an unconfirmed account can do
+  'POST /auth/change-pending-email',
   // a password can be forgotten before an address is confirmed
   'POST /auth/request-password-reset',
   'POST /auth/reset-password',
