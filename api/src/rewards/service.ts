@@ -1,4 +1,6 @@
 import type pg from 'pg';
+import { PLUS_DAILY_GEMS } from '@kurda/shared';
+import { isPremiumActive } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
 import { WalletService } from '../wallet/service.js';
 import { assertEconomyNotHeld } from '../economy/standing.js';
@@ -11,7 +13,12 @@ export interface ClaimResult {
   cycleDay: number;
   reward: number;
   balance: number;
+  /** gems a Hevalo+ member received with this claim; 0 for everyone else */
+  plusGems: number;
 }
+
+/** The ledger's reason for a Hevalo+ member's daily gems. */
+export const PLUS_DAILY_REASON = 'plus_daily';
 
 /**
  * Daily Zêr reward claims (KUR-067). Server-time only: the claim day is the
@@ -22,6 +29,11 @@ export interface ClaimResult {
  * A claim needs a lesson or practice session finished on that same local day —
  * the streak service's `last_learned_on`, written when a session completes.
  * A daily Peyvok win keeps a streak but does not count here.
+ *
+ * A Hevalo+ member receives `PLUS_DAILY_GEMS` gems with the claim: in the
+ * same transaction, once a day by a ledger key of its own, and under a reason
+ * of its own rather than a gem rule's, so it stands outside the daily cap on
+ * earned gems — it is part of what membership is, not something earned.
  */
 export class DailyRewardService {
   private readonly streaks: StreakService;
@@ -33,12 +45,13 @@ export class DailyRewardService {
     this.streaks = new StreakService(pool);
   }
 
-  private async timezone(userId: string): Promise<string> {
-    const row = await this.pool.query<{ timezone: string }>(
-      `SELECT timezone FROM users WHERE id = $1`,
+  /** The learner's time zone, and whether they are a Hevalo+ member at `now`. */
+  private async account(userId: string, now: Date): Promise<{ tz: string; plus: boolean }> {
+    const row = await this.pool.query<{ timezone: string; premium_until: Date | null }>(
+      `SELECT timezone, premium_until FROM users WHERE id = $1`,
       [userId],
     );
-    return row.rows[0]?.timezone ?? 'UTC';
+    return { tz: row.rows[0]?.timezone ?? 'UTC', plus: isPremiumActive(row.rows[0]?.premium_until ?? null, now) };
   }
 
   private async read(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<DailyRewardState> {
@@ -54,13 +67,16 @@ export class DailyRewardService {
     return (await this.streaks.lastLearnedOn(userId, executor)) === today;
   }
 
-  /** Cycle progress + next reward for the calendar UI. */
-  async status(userId: string, now: Date = new Date()): Promise<DailyRewardStatus & { cycleDay: number }> {
-    const tz = await this.timezone(userId);
+  /**
+   * Cycle progress + next reward for the calendar UI, and the gems a claim
+   * today adds for a Hevalo+ member (0 for everyone else).
+   */
+  async status(userId: string, now: Date = new Date()): Promise<DailyRewardStatus & { cycleDay: number; plusGems: number }> {
+    const { tz, plus } = await this.account(userId, now);
     const today = localDate(now, tz);
     const state = await this.read(this.pool, userId);
     const learned = await this.learnedOn(this.pool, userId, today);
-    return { ...statusFor(state, today, learned), cycleDay: state.cycleDay };
+    return { ...statusFor(state, today, learned), cycleDay: state.cycleDay, plusGems: plus ? PLUS_DAILY_GEMS : 0 };
   }
 
   /**
@@ -71,7 +87,7 @@ export class DailyRewardService {
    */
   async claim(userId: string, now: Date = new Date()): Promise<ClaimResult> {
     await assertEconomyNotHeld(this.pool, userId, 'rewards');
-    const tz = await this.timezone(userId);
+    const { tz, plus } = await this.account(userId, now);
     const today = localDate(now, tz);
     const client = await this.pool.connect();
     try {
@@ -98,12 +114,24 @@ export class DailyRewardService {
         reason: 'daily_reward',
         idempotencyKey: `daily:${userId}:${today}`,
       });
+      // a member's gems ride on the same claim: the day's lock above already makes this once a day, and the key says so to the ledger
+      let plusGems = 0;
+      if (plus) {
+        const gems = await this.wallet.creditWithin(client, {
+          userId,
+          currency: 'gems',
+          amount: PLUS_DAILY_GEMS,
+          reason: PLUS_DAILY_REASON,
+          idempotencyKey: `plus-daily:${userId}:${today}`,
+        });
+        if (!gems.duplicate) plusGems = PLUS_DAILY_GEMS;
+      }
       await client.query(
         `UPDATE daily_rewards SET cycle_day = $2, last_claim_on = $3, updated_at = now() WHERE user_id = $1`,
         [userId, status.claimableDay, today],
       );
       await client.query('COMMIT');
-      return { claimed: true, cycleDay: status.claimableDay, reward: status.reward, balance: credit.balance };
+      return { claimed: true, cycleDay: status.claimableDay, reward: status.reward, balance: credit.balance, plusGems };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;
