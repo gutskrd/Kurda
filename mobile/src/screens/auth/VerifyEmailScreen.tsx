@@ -135,6 +135,17 @@ export function VerifyEmailScreen() {
             testID="new-address"
           />
           <SubmitButton label={t('auth.verify.sendThere')} busy={busy} onPress={() => void onChangeAddress()} />
+          <Pressable
+            onPress={() => {
+              setChanging(false);
+              setAddress('');
+              setError(null);
+            }}
+            accessibilityRole="button"
+            style={styles.action}
+          >
+            <Text style={[styles.link, styles.centred, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
+          </Pressable>
         </View>
       ) : (
         <Pressable onPress={() => setChanging(true)} accessibilityRole="button" style={styles.action} testID="change-address">
@@ -145,26 +156,31 @@ export function VerifyEmailScreen() {
       <FormError message={error} />
       {notice ? <Text style={[styles.notice, { color: colors.success }]}>{notice}</Text> : null}
 
-      <TextInput
-        style={[
-          styles.codeInput,
-          { backgroundColor: colors.controlTrack, borderColor: error ? colors.danger : colors.glassBorder, color: colors.textPrimary },
-        ]}
-        value={code}
-        // `v`, not `t`: the translator is in scope, and shadowing it is a bug
-        // this codebase has already had to fix more than once
-        onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, CODE_LENGTH))}
-        keyboardType="number-pad"
-        maxLength={CODE_LENGTH}
-        textContentType="oneTimeCode"
-        autoComplete="one-time-code"
-        placeholder="000000"
-        placeholderTextColor={colors.textSecondary}
-        accessibilityLabel={t('auth.verify.codeLabel')}
-        testID="code"
-      />
+      {/* one thing at a time: while the address is being put right, the code for the old one is not asked for */}
+      {changing ? null : (
+        <>
+          <TextInput
+            style={[
+              styles.codeInput,
+              { backgroundColor: colors.controlTrack, borderColor: error ? colors.danger : colors.glassBorder, color: colors.textPrimary },
+            ]}
+            value={code}
+            // `v`, not `t`: the translator is in scope, and shadowing it is a bug
+            // this codebase has already had to fix more than once
+            onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, CODE_LENGTH))}
+            keyboardType="number-pad"
+            maxLength={CODE_LENGTH}
+            textContentType="oneTimeCode"
+            autoComplete="one-time-code"
+            placeholder="000000"
+            placeholderTextColor={colors.textSecondary}
+            accessibilityLabel={t('auth.verify.codeLabel')}
+            testID="code"
+          />
 
-      <SubmitButton label={t('auth.verify.submit')} busy={busy} onPress={onVerify} />
+          <SubmitButton label={t('auth.verify.submit')} busy={busy} onPress={onVerify} />
+        </>
+      )}
 
       <View style={styles.actions}>
         <Pressable onPress={onResend} disabled={cooldown > 0} accessibilityRole="button" style={styles.action}>
@@ -212,4 +228,5 @@ const styles = StyleSheet.create({
   // the 44pt rows carry their own separation; a gap on top of them is too much
   action: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm },
   link: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  centred: { textAlign: 'center' },
 });
