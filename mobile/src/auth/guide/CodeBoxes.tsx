@@ -169,6 +169,17 @@ const styles = StyleSheet.create({
   box: { height: BOX_HEIGHT, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
   digit: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   mark: { width: 2, height: 26, borderRadius: radii.pill },
-  // no ring of its own when it has the focus: the lit box is what shows where the typing goes
-  field: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, fontSize: typography.sizes.md, color: 'transparent', outlineWidth: 0 },
+  // no ring of its own when it has the focus: the lit box is what shows where the typing goes. In a browser the
+  // ring is drawn by its style, whatever its width, so the style is turned off there too (a phone has neither).
+  field: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    fontSize: typography.sizes.md,
+    color: 'transparent',
+    outlineWidth: 0,
+    ...({ outlineStyle: 'none' } as object),
+  },
 });

@@ -244,7 +244,8 @@ const styles = StyleSheet.create({
   resend: { fontSize: typography.sizes.sm, lineHeight: 22 },
   resendLink: { fontWeight: typography.weights.semibold },
   small: { fontSize: typography.sizes.xs, lineHeight: 18 },
-  ways: { flexWrap: 'wrap', gap: spacing.lg, marginTop: spacing.sm },
+  // side by side where they fit; one under the other, close, where a longer language wraps them
+  ways: { flexWrap: 'wrap', columnGap: spacing.lg, rowGap: 0, marginTop: spacing.sm },
   way: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   wayText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
 });
