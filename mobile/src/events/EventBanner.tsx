@@ -86,8 +86,8 @@ export function EventBanner() {
 // dark enough that even an all-white picture leaves both lines above 4.5:1
 const ON_PICTURE = '#FFFFFF';
 const UNDER_WORDS = 'rgba(0,0,0,0.6)';
-/** The theme's glyph, at the size the picture it replaced was set. */
-const GLYPH = 28;
+/** The glyph before the words: the theme's own, or a star for an event with no theme. */
+const GLYPH = 24;
 /** A banner with a picture is taller than the colour one, so the picture shows as more than a strip. */
 const PICTURED_HEIGHT = 112;
 
