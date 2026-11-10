@@ -133,6 +133,7 @@ export function ClayButton({
   disabled = false,
   accessibilityLabel,
   style,
+  testID,
 }: {
   label: string;
   onPress: () => void;
@@ -177,6 +178,8 @@ export function ClayButton({
   /** Nothing to press yet — a lesson with no answer typed, a purchase mid-flight. */
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** For a scripted walk of a screen, where the label changes with the language. */
+  testID?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const TONE: Record<ClayTone, string | null> = {
@@ -209,6 +212,7 @@ export function ClayButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ busy, disabled: off }}
+      testID={testID}
       style={({ pressed }) => [{ opacity: off ? 0.5 : pressed ? 0.92 : 1 }, style]}
     >
       <Animated.View
