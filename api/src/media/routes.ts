@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
@@ -56,8 +56,9 @@ export function registerMediaRoutes(app: FastifyInstance, config: AppConfig): vo
         },
         skipValidation: true, // the body is raw bytes, not JSON
       },
-      // a feature limit ("you can't upload pictures or voice") covers this too
-      preHandler: [requireAuth, requireUnrestricted('media')],
+      // a feature limit ("you can't upload pictures or voice") covers this too; and an account, not a guest:
+      // a file has to belong to somebody who can be asked about it
+      preHandler: [requireAccount, requireUnrestricted('media')],
     },
     async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
@@ -72,6 +73,7 @@ export function registerMediaRoutes(app: FastifyInstance, config: AppConfig): vo
         { pool: app.db, storage: app.storage, usage, limits, log: app.log },
         PRACTICE_KIND,
         raw,
+        req.user!.id,
       );
       if (!res.ok) {
         req.log.warn(

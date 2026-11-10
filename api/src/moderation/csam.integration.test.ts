@@ -354,6 +354,7 @@ describe.skipIf(!DATABASE_URL)('the CSAM action (integration)', () => {
       { pool, storage: storage.asStorage, usage: new MediaUsageService(pool, null), limits: audioLimits(config), log: { warn: () => {}, error: () => {} } },
       'voice-note',
       raw,
+      null,
     );
     expect(res).toMatchObject({ ok: false, code: 'MEDIA_REJECTED' });
     expect(storage.publicObjects.has(key)).toBe(false);

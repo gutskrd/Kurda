@@ -6,6 +6,18 @@ import { sniffAudioType } from './mimeSniff.js';
 import { exceedsUploadSize, opLimitReached, wouldExceedStorage, type AudioLimits } from './mediaLimits.js';
 import type { MediaUsageService } from './mediaUsage.js';
 
+/** The kinds an audio upload is stored under: a voice note for a post or a comment, and a speaking-practice recording. */
+export const AUDIO_KINDS = ['voice-note', 'speaking'] as const;
+
+/**
+ * How many audio files one account may upload in a day. A voice comment or a
+ * narration is a handful a day for the busiest author; without a count of its
+ * own the hourly rate limit alone let one account put gigabytes on the bucket
+ * between two sweeps, and the shared storage ceiling then paused everybody's
+ * pictures.
+ */
+export const AUDIO_DAILY_UPLOADS = 30;
+
 export type StoreAudioResult =
   | { ok: true; mediaId: string; url: string; contentType: string; reused: boolean }
   | { ok: false; status: number; code: string; message: string; reason: string };
@@ -62,8 +74,18 @@ export function registerAudioParser(app: FastifyInstance, maxUploadBytes: number
  * (fail-closed) → PUT → confirm. Content-addressed, so re-uploads are idempotent.
  * Audio isn't image-scanned (#294 is image-only); a report flow (#292-style) is the
  * moderation path for voice content.
+ *
+ * The file is kept under its uploader's name, so it is counted against them
+ * (`AUDIO_DAILY_UPLOADS`), goes with their account when that is deleted, and
+ * can be traced when it is reported. It used to belong to nobody. One that no
+ * post or comment ever points at is removed a day later (media/service.ts
+ * `cleanupOrphans`), where it used to stay on the public bucket for good.
+ *
+ * The course's own audio (a lesson line, a letter's name), which staff
+ * upload, is given no uploader (`null`): it belongs to the course, and must
+ * not go when the person who recorded it closes their account.
  */
-export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: Buffer): Promise<StoreAudioResult> {
+export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: Buffer, uploaderId: string | null): Promise<StoreAudioResult> {
   const { pool, storage, usage, limits, log } = deps;
 
   if (raw.length === 0) return reject(400, 'EMPTY_UPLOAD', 'no audio data', 'empty');
@@ -78,6 +100,18 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
   const sniffed = sniffAudioType(raw);
   if (!sniffed || !limits.allowedTypes.has(sniffed)) {
     return reject(415, 'INVALID_AUDIO', 'unsupported or non-audio file', 'invalid-type');
+  }
+
+  // a member's own recordings are counted; the course's audio, which staff upload by the hundred, is not
+  if (uploaderId !== null && (AUDIO_KINDS as readonly string[]).includes(kind)) {
+    const today = await pool.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM media_uploads
+        WHERE uploader_id = $1 AND kind = ANY($2::text[]) AND created_at > now() - interval '24 hours'`,
+      [uploaderId, [...AUDIO_KINDS]],
+    );
+    if ((today.rows[0]?.n ?? 0) >= AUDIO_DAILY_UPLOADS) {
+      return reject(429, 'MEDIA_DAILY_LIMIT_REACHED', 'too many recordings today; try again tomorrow', 'daily-limit');
+    }
   }
 
   const key = mediaKey(kind, createHash('sha256').update(raw).digest('hex'), sniffed);
@@ -101,10 +135,11 @@ export async function storeAudioMedia(deps: AudioMediaDeps, kind: string, raw: B
   }
 
   await pool.query(
-    `INSERT INTO media_uploads (key, content_type, content_length, kind)
-     VALUES ($1, $2, $3, $4)
-     ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length`,
-    [key, sniffed, raw.length, kind],
+    `INSERT INTO media_uploads (key, content_type, content_length, kind, uploader_id)
+     VALUES ($1, $2, $3, $4, $5)
+     ON CONFLICT (key) DO UPDATE SET content_length = EXCLUDED.content_length,
+       uploader_id = COALESCE(media_uploads.uploader_id, EXCLUDED.uploader_id)`,
+    [key, sniffed, raw.length, kind, uploaderId],
   );
   try {
     await storage.put(key, raw, sniffed);

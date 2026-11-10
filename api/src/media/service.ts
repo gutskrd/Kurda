@@ -1,7 +1,12 @@
 import type pg from 'pg';
 import type { MediaStorage } from './storage.js';
+import { AUDIO_KINDS } from './audioMedia.js';
 
 export const ORPHAN_AGE_HOURS = 24;
+
+/** No post and no comment has this upload (`m`) as its recording. True of every picture, which neither holds. */
+const UNPOSTED_AUDIO = `NOT EXISTS (SELECT 1 FROM library_posts l WHERE l.audio_media_id = m.key)
+          AND NOT EXISTS (SELECT 1 FROM library_comments c WHERE c.audio_media_id = m.key)`;
 
 /**
  * What happens to a stored object that nothing ended up referencing.
@@ -24,9 +29,23 @@ export class MediaService {
     private readonly storage: MediaStorage,
   ) {}
 
-  /** Deletes unconfirmed uploads older than the orphan window. */
+  /**
+   * Deletes unconfirmed uploads older than the orphan window.
+   *
+   * A recording is confirmed the moment it is stored (there is nothing to
+   * scan), so one that was made and never posted used to stay on the public
+   * bucket for good. Before the sweep, a recording past the window that no
+   * post and no comment points at is let go of, and is swept with the rest;
+   * one that something does point at is left exactly as it was.
+   */
   async cleanupOrphans(now = new Date()): Promise<number> {
     const cutoff = new Date(now.getTime() - ORPHAN_AGE_HOURS * 3_600_000);
+    await this.pool.query(
+      `UPDATE media_uploads m SET confirmed_at = NULL
+        WHERE m.confirmed_at IS NOT NULL AND m.kind = ANY($2::text[]) AND m.created_at < $1 AND NOT m.preserve_evidence
+          AND ${UNPOSTED_AUDIO}`,
+      [cutoff, [...AUDIO_KINDS]],
+    );
     const orphans = await this.pool.query<{ key: string }>(
       // a file kept as report evidence is never an orphan, whatever let go of it
       `SELECT key FROM media_uploads
@@ -63,9 +82,11 @@ export class MediaService {
     try {
       await client.query('BEGIN');
       const orphan = await client.query<{ quarantine_key: string | null }>(
-        `DELETE FROM media_uploads
-          WHERE key = $1 AND confirmed_at IS NULL AND created_at < $2 AND NOT preserve_evidence
-          RETURNING quarantine_key`,
+        // and never a recording a post or comment took up while this run was on its way to it
+        `DELETE FROM media_uploads m
+          WHERE m.key = $1 AND m.confirmed_at IS NULL AND m.created_at < $2 AND NOT m.preserve_evidence
+            AND ${UNPOSTED_AUDIO}
+          RETURNING m.quarantine_key`,
         [key, cutoff],
       );
       if (!orphan.rowCount) {

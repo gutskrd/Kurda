@@ -62,7 +62,7 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
   });
 
   it('stores valid audio as a confirmed object (mp3 + m4a)', async () => {
-    const a = await storeAudioMedia(deps(), KIND, mp3());
+    const a = await storeAudioMedia(deps(), KIND, mp3(), null);
     expect(a.ok).toBe(true);
     if (a.ok) {
       expect(a.mediaId).toMatch(/^voice-note\/.*\.mp3$/);
@@ -75,26 +75,26 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
       expect(row.rows[0]?.confirmed_at).not.toBeNull();
       expect(row.rows[0]?.content_type).toBe('audio/mpeg');
     }
-    const b = await storeAudioMedia(deps(), KIND, m4a());
+    const b = await storeAudioMedia(deps(), KIND, m4a(), null);
     expect(b.ok).toBe(true);
     if (b.ok) expect(b.mediaId).toMatch(/^voice-note\/.*\.m4a$/);
   });
 
   it('rejects non-audio and oversized uploads', async () => {
-    const notAudio = await storeAudioMedia(deps(), KIND, Buffer.from('this is not audio at all'));
+    const notAudio = await storeAudioMedia(deps(), KIND, Buffer.from('this is not audio at all'), null);
     expect(notAudio.ok).toBe(false);
     if (!notAudio.ok) expect(notAudio.reason).toBe('invalid-type');
 
     const tiny = { ...audioLimits(config), maxUploadBytes: 100 };
-    const oversize = await storeAudioMedia(deps({ limits: tiny }), KIND, mp3(8192));
+    const oversize = await storeAudioMedia(deps({ limits: tiny }), KIND, mp3(8192), null);
     expect(oversize.ok).toBe(false);
     if (!oversize.ok) expect(oversize.reason).toBe('oversize');
   });
 
   it('is idempotent for identical bytes', async () => {
     const buf = mp3(2048);
-    const a = await storeAudioMedia(deps(), KIND, buf);
-    const b = await storeAudioMedia(deps(), KIND, buf);
+    const a = await storeAudioMedia(deps(), KIND, buf, null);
+    const b = await storeAudioMedia(deps(), KIND, buf, null);
     expect(a.ok && b.ok).toBe(true);
     if (a.ok && b.ok) {
       expect(b.mediaId).toBe(a.mediaId);
@@ -103,7 +103,7 @@ describe.skipIf(!ready)('voice-note upload cost-safety (integration)', () => {
   });
 
   it('fails closed at the storage limit', async () => {
-    const res = await storeAudioMedia(deps({ limits: { ...audioLimits(config), storageLimitBytes: 1 } }), KIND, mp3());
+    const res = await storeAudioMedia(deps({ limits: { ...audioLimits(config), storageLimitBytes: 1 } }), KIND, mp3(), null);
     expect(res.ok).toBe(false);
     if (!res.ok) expect(res.reason).toBe('storage-limit');
   });
