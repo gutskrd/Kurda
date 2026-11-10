@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
-import { Animated, Pressable, View, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Pressable, View, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo, timing, useEnter, usePop, usePressScale, useShake } from './animate';
 import { ENTRANCE, duration } from './motion';
@@ -113,8 +113,18 @@ export function DrawnCheck({ size, color, delayMs = 60 }: { size: number; color:
   );
 }
 
-/** A menu or a small dialog's arrival: it grows from just under full size and fades in. A fade alone under Reduce Motion. */
-export function MenuIn({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
+/**
+ * A menu, a small dialog or a banner's arrival: it grows from just under full
+ * size and fades in. A fade alone under Reduce Motion.
+ *
+ * It is the view it stands in for, so it takes what that view was told about
+ * itself (a role, a live region) along with its style.
+ */
+export function MenuIn({
+  children,
+  style,
+  ...rest
+}: Pick<ViewProps, 'accessibilityRole' | 'accessibilityLiveRegion' | 'testID'> & { children: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const reduce = useReducedMotion();
   const p = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -124,7 +134,11 @@ export function MenuIn({ children, style }: { children: ReactNode; style?: Style
   }, [reduce, p]);
   const scale = reduce ? 1 : p.interpolate({ inputRange: [0, 1], outputRange: [0.94, 1] });
   const opacity = p.interpolate({ inputRange: [0, 0.6, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
-  return <Animated.View style={[style, { opacity, transform: [{ scale }] }]}>{children}</Animated.View>;
+  return (
+    <Animated.View {...rest} style={[style, { opacity, transform: [{ scale }] }]}>
+      {children}
+    </Animated.View>
+  );
 }
 
 /**
