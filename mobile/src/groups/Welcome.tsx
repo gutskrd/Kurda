@@ -52,7 +52,7 @@ export function CalmCard({
  * it. Then three greetings in the learner's own Kurdish, one tap to send —
  * not when the reader cannot post (`canGreet`), nor in a chat they only
  * cleared for themselves, where the others may be mid-conversation. The
- * owner or an admin of an invite-only group nobody else is in yet is offered
+ * owner or an admin of a group nobody else is in yet is offered
  * to add friends (`onAddFriends`).
  */
 export function WelcomeCard({

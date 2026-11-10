@@ -1191,7 +1191,7 @@ export const de: Catalogue = {
   'groups.requests.approveWho': '{name} annehmen',
   'groups.requests.declineWho': '{name} ablehnen',
   'groups.requests.approvedIn': '{name} ist wieder in der Gruppe.',
-  'groups.requests.approvedOut': '{name} ist nicht mehr gesperrt, konnte aber gerade nicht wieder hinzugefügt werden. Ein Admin, der mit {name} befreundet ist, kann das nachholen.',
+  'groups.requests.approvedOut': '{name} ist nicht mehr gesperrt, konnte aber gerade nicht wieder hinzugefügt werden. Ein befreundeter Admin kann das nachholen.',
   'groups.requests.declined': 'Du hast die Bitte von {name} abgelehnt.',
   'groups.requests.declineTitle': 'Bitte von {name} ablehnen?',
   'groups.requests.waitDay': '{name} kann in einem Tag wieder fragen.',
