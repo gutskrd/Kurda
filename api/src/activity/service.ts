@@ -128,8 +128,24 @@ export class ActivityService {
     }));
   }
 
-  /** Congratulate an event (idempotent); returns the new total. */
-  async congratulate(userId: string, eventId: string): Promise<number> {
+  /**
+   * Congratulate an event (idempotent); returns the new total, or null when
+   * the event is not one the caller is shown.
+   *
+   * Only an event from the caller's own feed: a friend's, whose profile is
+   * not closed, with no block between the two. An id is not a secret, and
+   * without this anybody who came by one (somebody blocked, somebody never
+   * met) could leave their name on it and read how many others had.
+   */
+  async congratulate(userId: string, eventId: string): Promise<number | null> {
+    const friends = await this.friends.friendIds(userId);
+    const shown = await this.pool.query(
+      `SELECT 1 FROM activity_events e JOIN users u ON u.id = e.actor_id
+        WHERE e.id = $1 AND e.actor_id = ANY($3::uuid[]) AND u.profile_visibility <> 'nobody'
+          AND ${notBlockedSql('e.actor_id', '$2::uuid')}`,
+      [eventId, userId, friends],
+    );
+    if ((shown.rowCount ?? 0) === 0) return null;
     await this.pool.query(
       `INSERT INTO activity_congrats (event_id, user_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [eventId, userId],

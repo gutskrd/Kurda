@@ -201,8 +201,27 @@ export class OAuthService {
     }
 
     // 3) brand-new account (Apple relay emails land here naturally)
-    const email =
-      identity.email ?? `${identity.provider}_${identity.providerUserId}@noemail.kurda.app`;
+    //
+    // An address the provider has not confirmed is not this person's to
+    // take: an account made under it would sit on somebody else's address,
+    // and when that person later claimed it by a password reset, the
+    // identity that made it would still sign in. So it is left out, as if
+    // the provider had sent none, and the account gets the placeholder.
+    const confirmedEmail = identity.emailVerified ? identity.email : null;
+    // ...unless an account here already has that address: then this is most
+    // likely its owner, and a second, empty account would only hide the first
+    // from them. They are answered as sign-up answers an address in use.
+    if (identity.email && !identity.emailVerified) {
+      const taken = await this.pool.query(`SELECT 1 FROM users WHERE lower(email) = lower($1) AND deleted_at IS NULL LIMIT 1`, [identity.email]);
+      if ((taken.rowCount ?? 0) > 0) {
+        throw new AppError(
+          'REGISTRATION_FAILED',
+          409,
+          'unable to register with these details — if you already have an account, log in or reset your password',
+        );
+      }
+    }
+    const email = confirmedEmail ?? `${identity.provider}_${identity.providerUserId}@noemail.kurda.app`;
     // a permanently banned address does not come back through a provider either
     if (await isBannedEmail(this.pool, email)) throw signupRejected();
     // Apple's identity token never carries a name: the app passes on the one
@@ -215,7 +234,7 @@ export class OAuthService {
     //     this identity has just become an account and the sign-up steps that
     //     follow one (the birth month question) are still to come
     if (guestId !== null) {
-      const claimed = await this.claimGuest(guestId, identity, email, name);
+      const claimed = await this.claimGuest(guestId, email, confirmedEmail !== null, name);
       if (claimed) {
         await this.link(claimed.id, identity);
         const tokens = await issueTokenPair(this.config, this.pool, claimed, { deviceName, deviceId });
@@ -224,17 +243,14 @@ export class OAuthService {
       // not a guest any more (claimed elsewhere a moment ago): a new account, as for anyone
     }
 
-    const username = await uniqueUsername(
-      this.pool,
-      name ?? identity.email?.split('@')[0] ?? 'learner',
-    );
+    const username = await uniqueUsername(this.pool, name ?? confirmedEmail?.split('@')[0] ?? 'learner');
     let created: pg.QueryResult<UserRow>;
     try {
       created = await this.pool.query<UserRow>(
         `INSERT INTO users (email, username, display_name, email_verified_at)
          VALUES ($1, $2, $3, $4)
          RETURNING *`,
-        [email, username, name, identity.emailVerified ? new Date() : null],
+        [email, username, name, confirmedEmail ? new Date() : null],
       );
     } catch (err) {
       // An address the provider has not confirmed, which an account here
@@ -263,7 +279,7 @@ export class OAuthService {
    * Null when the row is no longer a guest. An address already on another
    * account is answered as sign-up answers it, without saying whose it is.
    */
-  private async claimGuest(guestId: string, identity: ProviderIdentity, email: string, name: string | null): Promise<UserRow | null> {
+  private async claimGuest(guestId: string, email: string, confirmed: boolean, name: string | null): Promise<UserRow | null> {
     try {
       const claimed = await this.pool.query<UserRow>(
         `UPDATE users SET email = $2, email_verified_at = CASE WHEN $3 THEN now() ELSE NULL END,
@@ -271,7 +287,7 @@ export class OAuthService {
                 guest = false, guest_device_hash = NULL
           WHERE id = $1 AND guest AND deleted_at IS NULL
           RETURNING *`,
-        [guestId, email, identity.emailVerified, name],
+        [guestId, email, confirmed, name],
       );
       return claimed.rows[0] ?? null;
     } catch (err) {

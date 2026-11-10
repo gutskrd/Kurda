@@ -96,6 +96,47 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
     expect((await tokens.forUser(userA)).map((d) => d.token)).not.toContain(expo);
   });
 
+  /*
+   * A phone that is signed out, or whose session is ended from somewhere
+   * else, must stop being told what the account receives: the token follows
+   * the session it was registered under.
+   */
+  it('a phone stops receiving once its session is signed out, while a session carrying on keeps its phone', async () => {
+    const signIn = async (ip: string) => {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email: `pusha_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
+        remoteAddress: ip,
+      });
+      return res.json().tokens as { accessToken: string; refreshToken: string };
+    };
+    const phone = await signIn('10.94.0.11');
+    const other = await signIn('10.94.0.12');
+    const add = (access: string, token: string) =>
+      app.inject({ method: 'POST', url: '/me/devices', headers: { authorization: `Bearer ${access}` }, payload: { platform: 'ios', token } });
+    const mine = `ExponentPushToken[signedout${suffix}]`;
+    const theirs = `ExponentPushToken[stays${suffix}]`;
+    expect((await add(phone.accessToken, mine)).statusCode).toBe(201);
+    expect((await add(other.accessToken, theirs)).statusCode).toBe(201);
+
+    // the session carries on: its refresh token is exchanged for the next, and the phone is still listed
+    const turned = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken: other.refreshToken }, remoteAddress: '10.94.0.12' });
+    expect(turned.statusCode).toBe(200);
+    expect((await tokens.forUser(userA)).map((d) => d.token)).toEqual(expect.arrayContaining([mine, theirs]));
+
+    // signed out on the first phone: only that phone goes
+    const out = await app.inject({ method: 'POST', url: '/auth/logout', payload: { refreshToken: phone.refreshToken }, remoteAddress: '10.94.0.11' });
+    expect(out.statusCode).toBeLessThan(300);
+    const left = (await tokens.forUser(userA)).map((d) => d.token);
+    expect(left).not.toContain(mine);
+    expect(left).toContain(theirs);
+
+    // and every session ended (a ban, a password reset, "sign out everywhere"): none is left
+    await pool.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [userA]);
+    expect((await tokens.forUser(userA)).map((d) => d.token)).not.toContain(theirs);
+  });
+
   it('delivery sends to devices and prunes provider-rejected tokens', async () => {
     const good = `tok-b-good-${suffix}`;
     const bad = `tok-b-bad-${suffix}`;

@@ -39,14 +39,19 @@ export class DeviceTokenService {
    * insert, which keeps the newest tokens whatever runs beside it, locking
    * the ones it drops in id order so two registrations never wait on each
    * other (as auth/tokens.ts `endOldestSessions`).
+   *
+   * `familyId` is the session the phone is signed in under. The token follows
+   * it: when that session is signed out, revoked or expires, the database
+   * drops the token with it (migration `push-ends-with-its-session`), so a
+   * phone that is no longer signed in stops being told what the account gets.
    */
-  async register(userId: string, platform: PushPlatform, token: string): Promise<void> {
+  async register(userId: string, platform: PushPlatform, token: string, familyId: string | null = null): Promise<void> {
     await this.pool.query(
-      `INSERT INTO device_tokens (user_id, platform, token)
-       VALUES ($1, $2, $3)
+      `INSERT INTO device_tokens (user_id, platform, token, family_id)
+       VALUES ($1, $2, $3, $4)
        ON CONFLICT (token) DO UPDATE SET
-         user_id = EXCLUDED.user_id, platform = EXCLUDED.platform, last_seen_at = now()`,
-      [userId, platform, token],
+         user_id = EXCLUDED.user_id, platform = EXCLUDED.platform, family_id = EXCLUDED.family_id, last_seen_at = now()`,
+      [userId, platform, token, familyId],
     );
     await this.pool.query(
       `WITH doomed AS MATERIALIZED (

@@ -139,6 +139,25 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     expect(linked.rowCount).toBe(0);
   });
 
+  /*
+   * An address the provider has not confirmed is not the signer's to take: an
+   * account made under it would sit on somebody else's address, and would
+   * still open for whoever made it after its real owner claimed it.
+   */
+  it('makes the new account without an address the provider has not confirmed', async () => {
+    const email = `notmine_${suffix}@example.com`;
+    const token = await makeToken('google', { sub: `g-unconfirmed-${suffix}`, email, emailVerified: false });
+    const result = await service.signIn('google', token);
+    expect(result.created).toBe(true);
+    const row = await pool.query<{ email: string; email_verified_at: Date | null }>(`SELECT email, email_verified_at FROM users WHERE id = $1`, [result.user.id]);
+    expect(row.rows[0]?.email).toBe(`google_g-unconfirmed-${suffix}@noemail.kurda.app`);
+    expect(row.rows[0]?.email_verified_at).toBeNull();
+    // the address is still free for the person it belongs to
+    const taken = await pool.query(`SELECT 1 FROM users WHERE lower(email) = lower($1)`, [email]);
+    expect(taken.rowCount).toBe(0);
+    await pool.query(`DELETE FROM users WHERE id = $1`, [result.user.id]);
+  });
+
   it('rejects wrong audience, wrong issuer and expired tokens', async () => {
     const wrongAud = await makeToken('google', { sub: 'x', aud: 'evil-client' });
     const wrongIss = await makeToken('google', { sub: 'x', iss: 'https://evil.example' });
