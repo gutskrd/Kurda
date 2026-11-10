@@ -10,23 +10,18 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { BottomSheet } from '../theme/BottomSheet';
+import { SlideSwap } from '../theme/SlideSwap';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { useHardwareBack } from '../navigation/hardwareBack';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { encodeAnswer } from './answers';
-import { ConversationExercise } from './components/ConversationExercise';
+import { ExerciseSlide } from './components/ExerciseSlide';
 import { FeedbackFooter } from './components/FeedbackFooter';
 import { knownVoice, type CharacterReaction } from '../characters/SpeakingCharacter';
 import { conversationCast } from '../characters/ConversationStage';
 import { LessonResults } from './components/LessonResults';
-import { ListeningExercise } from './components/ListeningExercise';
-import { MatchPairsExercise } from './components/MatchPairsExercise';
-import { MultipleChoiceExercise } from './components/MultipleChoiceExercise';
 import { ProgressBar } from './components/ProgressBar';
 import { RunLabel, RunMoment } from './components/RunCount';
-import { SpeakingExercise } from './components/SpeakingExercise';
-import { WritingExercise } from './components/WritingExercise';
-import { TranslateExercise } from './components/TranslateExercise';
 import { emptyMatch, type MatchState } from './match';
 import { RUN_SHOWN_FROM, answerFeel, currentExercise, initPlayer, isReask, nextRun, progress, reduce, runMilestone, type Feedback, type PutAwayType } from './player';
 import { NO_MOMENTS, lessonMoments, type LessonMoments, type Standing, type StreakMark } from './moments';
@@ -301,12 +296,13 @@ export function SessionPlayer({
     });
   }, [client, isGuest]);
 
-  // auto-skip speaking exercises when the learner has opted out
+  // auto-skip speaking exercises when the learner has opted out. One that is
+  // about to be passed over is never drawn: it would open its microphone for
+  // a frame, and then be seen sliding away as if it had been asked.
+  const passedOver = ex?.type === 'speaking' && skipSpeaking && state.status === 'answering';
   useEffect(() => {
-    if (ex?.type === 'speaking' && skipSpeaking && state.status === 'answering') {
-      dispatch({ type: 'SKIP' });
-    }
-  }, [ex, skipSpeaking, state.status]);
+    if (passedOver) dispatch({ type: 'SKIP' });
+  }, [ex, passedOver]);
 
   // reset the input whenever a new exercise comes on screen
   useEffect(() => {
@@ -629,87 +625,37 @@ export function SessionPlayer({
       ) : null}
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        {ex?.type === 'multiple_choice' ? (
-          <MultipleChoiceExercise
-            exercise={ex}
-            choice={choice}
-            onSelect={setChoice}
-            disabled={state.status !== 'answering'}
-            feedback={state.feedback}
-          />
-        ) : null}
-        {ex?.type === 'conversation' ? (
-          // a fresh one for each step, so a conversation still playing stops
-          // rather than following into the next one
-          <ConversationExercise
-            key={state.index}
-            exercise={ex}
-            choice={choice}
-            onSelect={setChoice}
-            dialect={view.dialect}
-            disabled={state.status !== 'answering'}
-            feedback={state.feedback}
-          />
-        ) : null}
-        {ex?.type === 'translate' ? (
-          // a fresh one for each step, so the tiles laid for one are not left on the next one's line
-          <TranslateExercise
-            key={state.index}
-            exercise={ex}
-            text={text}
-            onChangeText={setText}
-            dialect={view.dialect}
-            verdict={verdict}
-            disabled={state.status !== 'answering'}
-          />
-        ) : null}
-        {ex?.type === 'listening' ? (
-          // a fresh one for each step, so each clip plays by itself as its exercise appears
-          <ListeningExercise
-            key={state.index}
-            exercise={ex}
-            text={text}
-            onChangeText={setText}
-            dialect={view.dialect}
-            verdict={verdict}
-            onSkip={() => dispatch({ type: 'SKIP' })}
-            disabled={state.status !== 'answering'}
-          />
-        ) : null}
-        {ex?.type === 'writing' ? (
-          <WritingExercise
-            exercise={ex}
-            text={text}
-            onChangeText={setText}
-            dialect={view.dialect}
-            verdict={verdict}
-            disabled={state.status !== 'answering'}
-          />
-        ) : null}
-        {ex?.type === 'speaking' ? (
-          // a fresh one for each step: two speaking exercises in a row would
-          // otherwise share one microphone, and the first one's take (or one
-          // still running when it was skipped) would follow into the second
-          <SpeakingExercise
-            key={state.index}
-            exercise={ex}
-            onSetRecorded={setRecorded}
-            selfRating={selfRating}
-            onRate={setSelfRating}
-            disabled={state.status !== 'answering'}
-          />
-        ) : null}
-        {ex?.type === 'match_pairs' ? (
-          // a fresh one for each step, so a card picked or a pair still flashing does not follow into the next
-          <MatchPairsExercise
-            key={state.index}
-            exercise={ex}
-            state={match}
-            onChange={setMatch}
-            disabled={state.status !== 'answering'}
-            verdict={verdict}
-          />
-        ) : null}
+        {/*
+          One question leaves and the next arrives, the way the intro's slides
+          and the steps of signing in turn, where an exercise used to be
+          replaced by the next between two frames. Only the exercise turns:
+          the bar above and the verdict's footer below stay where they are.
+          Each step is a slide of its own, held as it leaves rather than
+          drawn again, so it goes exactly as it stood (ExerciseSlide).
+        */}
+        <SlideSwap id={String(state.index)} direction="forward" mirrored={dir.rtl} held>
+          {ex && !passedOver ? (
+            <ExerciseSlide
+              exercise={ex}
+              dialect={view.dialect}
+              answering={state.status === 'answering'}
+              feedback={state.feedback}
+              verdict={verdict}
+              draft={{
+                choice,
+                onChoice: setChoice,
+                text,
+                onText: setText,
+                match,
+                onMatch: setMatch,
+                selfRating,
+                onRate: setSelfRating,
+                onRecorded: setRecorded,
+                onSkip: () => dispatch({ type: 'SKIP' }),
+              }}
+            />
+          ) : null}
+        </SlideSwap>
       </ScrollView>
 
         {stall ? (
