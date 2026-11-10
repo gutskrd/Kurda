@@ -17,6 +17,40 @@ describe('the art, inlined', () => {
     }
   });
 
+  /**
+   * A page draws itself again whenever anything on it changes (the season page
+   * does as the account arrives). A drawing that has not changed stays the
+   * node it was: put in again, its shine would start over, and whatever held
+   * on to it would be holding something no longer on the page.
+   */
+  it('leaves a drawing in place when the page around it is drawn again', () => {
+    const page = (note: string): React.JSX.Element => (
+      <>
+        <p>{note}</p>
+        <RankEmblem tier="ciya" season={{ name: 'havin', year: 2026 }} size={84} title="Çiya (Mountain), Havîn 2026" />
+        <SeasonFrame tier="sterk" size={64} title="Stêrk season frame">
+          <span />
+        </SeasonFrame>
+      </>
+    );
+    const { rerender, container } = render(page('first'));
+    const emblem = screen.getByRole('img', { name: 'Çiya (Mountain), Havîn 2026' });
+    const layers = [...container.querySelectorAll('svg')];
+    rerender(page('second'));
+    expect(screen.getByText('second')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Çiya (Mountain), Havîn 2026' })).toBe(emblem);
+    expect([...container.querySelectorAll('svg')]).toEqual(layers);
+    for (const layer of layers) expect(layer.isConnected).toBe(true);
+    // and one that did change is drawn as what it now is
+    rerender(
+      <>
+        <RankEmblem tier="ciya" season={{ name: 'payiz', year: 2026 }} size={84} title="Çiya (Mountain), Payîz 2026" />
+      </>,
+    );
+    expect(screen.getByRole('img', { name: 'Çiya (Mountain), Payîz 2026' })).toBeInTheDocument();
+    expect(emblem.isConnected).toBe(false);
+  });
+
   /** The drawing goes into the page as markup, so a title must only ever become text. */
   it('keeps a title as text, whatever it holds', () => {
     const title = '</title><img src="x" onerror="alert(1)"><script>alert(2)</script> & Çiya';

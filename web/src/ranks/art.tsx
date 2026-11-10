@@ -48,8 +48,19 @@ function useArtId(): string {
   return `a${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
 }
 
+/**
+ * The markup as React is handed it: the same object for as long as the
+ * drawing is the same. React compares what it is handed, not the markup in
+ * it, so a fresh object on every render had every emblem on the page torn out
+ * and parsed again whenever anything around it changed, its shine starting
+ * over each time.
+ */
+function useMarkup(svg: string): { __html: string } {
+  return useMemo(() => ({ __html: svg }), [svg]);
+}
+
 function Svg({ svg, className }: { svg: string; className?: string }): React.JSX.Element {
-  return <span className={className} dangerouslySetInnerHTML={{ __html: svg }} />;
+  return <span className={className} dangerouslySetInnerHTML={useMarkup(svg)} />;
 }
 
 /** An uploaded picture in a drawing's place, named as the drawing was. */
@@ -70,7 +81,7 @@ function Picture({ src, size, title, className }: { src: string; size: number; t
 
 /** A layer laid over a drawing: decorative, never read out. */
 function Shine({ svg, className }: { svg: string; className: string }): React.JSX.Element {
-  return <span className={className} aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg }} />;
+  return <span className={className} aria-hidden="true" dangerouslySetInnerHTML={useMarkup(svg)} />;
 }
 
 export function RankEmblem({
