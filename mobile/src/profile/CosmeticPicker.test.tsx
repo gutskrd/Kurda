@@ -77,7 +77,7 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     expect(screen.getByText('Îstîkan')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Îstîkan, equipped' })).toBeTruthy();
     // the switch that hides the icon without giving it up lives with the icons
-    expect(screen.getByRole('switch', { name: 'Show premium icon on my profile' })).toBeTruthy();
+    expect(screen.getByRole('switch', { name: 'Show the icon on my profile' })).toBeTruthy();
   });
 
   it('puts one on with a tap, and takes off the one you are wearing', async () => {

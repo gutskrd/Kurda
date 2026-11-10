@@ -1,4 +1,5 @@
 /** Streak display helpers (KUR-031). Pure so they can be unit-tested. */
+import type { StreakRepairOffer } from '@kurda/shared';
 
 export interface Streak {
   current: number;
@@ -14,6 +15,12 @@ export interface Streak {
   maxFreezes?: number;
   /** the missed day the last freeze spent covered, 'YYYY-MM-DD', or null; absent on older responses */
   freezeUsedOn?: string | null;
+  /**
+   * The streak that ended and can still be restored: how long it was, what
+   * that costs now, and when the offer ends. Null when there is nothing to
+   * restore; absent on older responses.
+   */
+  repair?: StreakRepairOffer | null;
 }
 
 /** What the server pays a freeze for, when it does not say (older responses). */

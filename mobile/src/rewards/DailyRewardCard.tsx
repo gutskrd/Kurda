@@ -6,8 +6,9 @@ import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
+import { Icon } from '../theme/Icon';
 import { useCountUp } from '../theme/animate';
-import { cellState, dailyAction, type DailyStatus } from './daily';
+import { cellState, dailyAction, plusGemsOf, type DailyClaim, type DailyStatus } from './daily';
 import { haptic } from '../feedback/haptics';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
@@ -18,6 +19,10 @@ import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
  * The reward is paid for learning: until a lesson or practice session has been
  * finished today, the card says so instead of offering a claim the server would
  * refuse. It sits on the Learn screen, above the lessons it is asking for.
+ *
+ * A Hevalo+ member's claim also brings a few gems. The card says so in one
+ * quiet line: under the button while the claim is there to take, and under the
+ * Zêr once it has been. Nobody else sees the line at all.
  */
 export function DailyRewardCard() {
   const { client } = useAuth();
@@ -25,7 +30,7 @@ export function DailyRewardCard() {
   const { t } = useI18n();
   const [status, setStatus] = useState<DailyStatus | null>(null);
   const [claiming, setClaiming] = useState(false);
-  const [justEarned, setJustEarned] = useState<number | null>(null);
+  const [justEarned, setJustEarned] = useState<DailyClaim | null>(null);
   // until the first answer, the card's place is held in grey; after a failed one it is given up
   const [settled, setSettled] = useState(false);
 
@@ -40,12 +45,12 @@ export function DailyRewardCard() {
 
   const claim = useCallback(async () => {
     setClaiming(true);
-    const res = await client.post<{ reward: number }>('/rewards/daily/claim');
+    const res = await client.post<DailyClaim>('/rewards/daily/claim');
     setClaiming(false);
     if (res.ok) {
       // the day's Zêr taken: a light knock as it counts up, nothing grander for something that comes every day
       haptic('tap');
-      setJustEarned(res.data.reward);
+      setJustEarned(res.data);
     }
     // refused (say, the status was stale and nothing was learned today yet):
     // read it again, so the card says what is needed instead
@@ -54,6 +59,8 @@ export function DailyRewardCard() {
 
   if (!status) return settled ? null : <DailyRewardSkeleton />;
   const action = dailyAction(status);
+  // what a claim adds for a member, before it; what this one added, after it
+  const plusGems = action === 'claim' ? plusGemsOf(status) : action === 'claimed' ? plusGemsOf(justEarned) : null;
 
   return (
     <View style={[styles.card, { backgroundColor: colors.surface }]}>
@@ -96,11 +103,17 @@ export function DailyRewardCard() {
         <Text style={[styles.done, { color: colors.textPrimary }]}>{t('daily.learnFirst', { amount: status.reward })}</Text>
       ) : (
         justEarned != null ? (
-          <ClaimedLine amount={justEarned} />
+          <ClaimedLine amount={justEarned.reward} />
         ) : (
           <Text style={[styles.done, { color: colors.textSecondary }]}>{t('rewards.comeBackTomorrow')}</Text>
         )
       )}
+      {plusGems !== null ? (
+        <View style={styles.plus} testID="daily-plus-gems">
+          <Icon name="gem" size={16} color={colors.textSecondary} />
+          <Text style={[styles.plusText, { color: colors.textSecondary }]}>{t('rewards.plusGems', { count: plusGems })}</Text>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -146,4 +159,6 @@ const styles = StyleSheet.create({
   cellDay: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   cellAmount: { fontSize: typography.sizes.xs },
   done: { textAlign: 'center', fontSize: typography.sizes.sm, paddingVertical: spacing.sm },
+  plus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },
+  plusText: { fontSize: typography.sizes.sm },
 });
