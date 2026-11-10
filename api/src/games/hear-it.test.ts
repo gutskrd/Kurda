@@ -254,7 +254,10 @@ describe('a round of Hear It, Find It', () => {
       expect(Object.keys(view).sort()).toEqual(['clip', 'index', 'level', 'meanings', 'newVoice', 'options', 'replays', 'speaker', 'stage']);
       const sent = JSON.stringify(view);
       expect(sent).not.toContain('media.test');
-      expect(sent).not.toContain(item.recording.id);
+      // the handle is random letters and digits, and a short id such as "w3" turns up in one by chance now and
+      // then: what must not be sent is the id as a value, so the handle is looked at on its own
+      expect(JSON.stringify({ ...view, clip: null })).not.toContain(item.recording.id);
+      expect(view.clip).not.toBe(item.recording.id);
       expect(view.clip).toMatch(/^[A-Za-z0-9_-]{22}$/);
       expect(view.replays).toBe(HEAR_REPLAYS.beginner);
     }
