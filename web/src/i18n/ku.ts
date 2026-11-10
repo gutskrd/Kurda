@@ -3192,6 +3192,7 @@ export const ku: Catalogue = {
   'profile.stat.daysLearned': 'Rojên fêrbûnê',
   'profile.stat.freezes': 'Cemidandina rêzê',
   'profile.freezeHint': 'Her {count} ders an temrînên ku tu diqedînî cemidandineke rêzê didin te. Cemidandinek rojeke winda vedigire. Tu dikarî tenê yekê li cem xwe bihêlî.',
+  'profile.freezeHintPlus': 'Her {count} ders an temrînên ku tu diqedînî cemidandineke rêzê didin te. Cemidandinek rojeke winda vedigire. Bi Hevalo+ tu dikarî {max} li cem xwe bihêlî.',
   'streak.repair.offer': 'Rêzeya te ya {count} rojan qediya. Heta dawiya roja {date} tu dikarî wê vegerînî.',
   'streak.repair.restoreFor': 'Bi {count} gewheran vegerîne',
   'streak.repair.restoreFree': 'Vegerîne, bi Hevalo+ belaş e',

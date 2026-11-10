@@ -548,6 +548,7 @@ export type TranslationKey =
   | 'profile.stat.daysLearned'
   | 'profile.stat.freezes'
   | 'profile.freezeHint'
+  | 'profile.freezeHintPlus'
   | 'settings.leagues.title'
   | 'settings.leagues.help'
   | 'settings.leagues.toggle'
@@ -5334,6 +5335,7 @@ const en: Catalog = {
   'profile.stat.daysLearned': 'Days learned',
   'profile.stat.freezes': 'Streak freezes',
   'profile.freezeHint': 'Every {count} lessons or practice sessions you finish earn a streak freeze. A freeze covers one missed day. You can hold one at a time.',
+  'profile.freezeHintPlus': 'Every {count} lessons or practice sessions you finish earn a streak freeze. A freeze covers one missed day. With Hevalo+ you can hold {max} at a time.',
   'settings.leagues.title': 'Weekly leagues',
   'settings.leagues.help': 'A league ranks you each week against up to 19 other learners by the XP you earn. It’s optional, and your progress counts the same either way.',
   'settings.leagues.toggle': 'Take part in weekly leagues',
@@ -8752,6 +8754,7 @@ const ku: Catalog = {
   'profile.stat.daysLearned': 'Rojên fêrbûnê',
   'profile.stat.freezes': 'Cemidandina rêzê',
   'profile.freezeHint': 'Her {count} ders an temrînên ku tu diqedînî cemidandineke rêzê didin te. Cemidandinek rojeke winda vedigire. Tu dikarî tenê yekê li cem xwe bihêlî.',
+  'profile.freezeHintPlus': 'Her {count} ders an temrînên ku tu diqedînî cemidandineke rêzê didin te. Cemidandinek rojeke winda vedigire. Bi Hevalo+ tu dikarî {max} li cem xwe bihêlî.',
   'settings.leagues.title': 'Lîgên heftane',
   'settings.leagues.help': 'Lîg her hefte te bi heta 19 fêrxwazên din re li gorî XP-ya te rêz dike. Ne mecbûrî ye; pêşketina te her wekî xwe tê hesibandin.',
   'settings.leagues.toggle': 'Beşdarî lîgên heftane bibe',
@@ -12170,6 +12173,7 @@ const de: Catalog = {
   'profile.stat.daysLearned': 'Lerntage',
   'profile.stat.freezes': 'Serien-Einfrierungen',
   'profile.freezeHint': 'Für je {count} abgeschlossene Lektionen oder Übungen bekommst du eine Serien-Einfrierung. Sie überbrückt einen verpassten Tag. Du kannst immer nur eine aufbewahren.',
+  'profile.freezeHintPlus': 'Für je {count} abgeschlossene Lektionen oder Übungen bekommst du eine Serien-Einfrierung. Sie überbrückt einen verpassten Tag. Mit Hevalo+ kannst du {max} aufbewahren.',
   'settings.leagues.title': 'Wöchentliche Ligen',
   'settings.leagues.help': 'Eine Liga ordnet dich jede Woche nach deinen XP unter bis zu 19 anderen Lernenden ein. Sie ist freiwillig, und dein Fortschritt zählt in beiden Fällen gleich.',
   'settings.leagues.toggle': 'An wöchentlichen Ligen teilnehmen',
@@ -15588,6 +15592,7 @@ const es: Catalog = {
   'profile.stat.daysLearned': 'Días de aprendizaje',
   'profile.stat.freezes': 'Congeladores de racha',
   'profile.freezeHint': 'Por cada {count} lecciones o prácticas que terminas, ganas un congelador de racha, que cubre un día perdido. Puedes guardar solo uno a la vez.',
+  'profile.freezeHintPlus': 'Por cada {count} lecciones o prácticas que terminas, ganas un congelador de racha, que cubre un día perdido. Con Hevalo+ puedes guardar {max} a la vez.',
   'settings.leagues.title': 'Ligas semanales',
   'settings.leagues.help': 'Una liga te clasifica cada semana junto a hasta 19 estudiantes más según los XP que ganas. Es opcional, y tu progreso cuenta igual en ambos casos.',
   'settings.leagues.toggle': 'Participar en las ligas semanales',
@@ -19006,6 +19011,7 @@ const tr: Catalog = {
   'profile.stat.daysLearned': 'Öğrenilen günler',
   'profile.stat.freezes': 'Seri dondurucular',
   'profile.freezeHint': 'Bitirdiğin her {count} ders ya da alıştırma sana bir seri dondurucu kazandırır. Bir dondurucu kaçırılan bir günü kapatır. Aynı anda yalnızca bir tane tutabilirsin.',
+  'profile.freezeHintPlus': 'Bitirdiğin her {count} ders ya da alıştırma sana bir seri dondurucu kazandırır. Bir dondurucu kaçırılan bir günü kapatır. Hevalo+ ile aynı anda {max} tane tutabilirsin.',
   'settings.leagues.title': 'Haftalık ligler',
   'settings.leagues.help': 'Lig, kazandığın XP’ye göre seni her hafta en fazla 19 öğrenciyle sıralar. İsteğe bağlıdır; ilerlemen her iki durumda da aynı sayılır.',
   'settings.leagues.toggle': 'Haftalık liglere katıl',
@@ -22424,6 +22430,7 @@ const ar: Catalog = {
   'profile.stat.daysLearned': 'أيام التعلّم',
   'profile.stat.freezes': 'تجميد التتابع',
   'profile.freezeHint': 'كل {count} دروس أو جلسات تمرين تكملها تمنحك تجميدًا للتتابع. يغطي التجميد يومًا واحدًا فائتًا. يمكنك الاحتفاظ بواحد فقط في كل مرة.',
+  'profile.freezeHintPlus': 'كل {count} دروس أو جلسات تمرين تكملها تمنحك تجميدًا للتتابع. يغطي التجميد يومًا واحدًا فائتًا. مع Hevalo+ يمكنك الاحتفاظ بـ{max} في كل مرة.',
   'settings.leagues.title': 'الدوريات الأسبوعية',
   'settings.leagues.help': 'يرتّبك الدوري كل أسبوع مع ما يصل إلى 19 متعلّمًا آخر حسب نقاط XP التي تكسبها. المشاركة اختيارية، ويُحتسب تقدّمك بالطريقة نفسها في الحالتين.',
   'settings.leagues.toggle': 'المشاركة في الدوريات الأسبوعية',
@@ -25842,6 +25849,7 @@ const fr: Catalog = {
   'profile.stat.daysLearned': 'Jours d’apprentissage',
   'profile.stat.freezes': 'Gels de série',
   'profile.freezeHint': 'Toutes les {count} leçons ou séances d’entraînement terminées, tu gagnes un gel de série. Un gel couvre un jour manqué. Tu peux en garder un seul à la fois.',
+  'profile.freezeHintPlus': 'Toutes les {count} leçons ou séances d’entraînement terminées, tu gagnes un gel de série. Un gel couvre un jour manqué. Avec Hevalo+, tu peux en garder {max} à la fois.',
   'settings.leagues.title': 'Ligues hebdomadaires',
   'settings.leagues.help': 'Une ligue te classe chaque semaine parmi 19 autres apprenants au plus, selon les XP que tu gagnes. Elle est facultative, et tes progrès comptent pareil dans les deux cas.',
   'settings.leagues.toggle': 'Participer aux ligues hebdomadaires',
@@ -29260,6 +29268,7 @@ const nl: Catalog = {
   'profile.stat.daysLearned': 'Leerdagen',
   'profile.stat.freezes': 'Reeksbevriezingen',
   'profile.freezeHint': 'Elke {count} afgeronde lessen of oefensessies leveren een reeksbevriezing op. Die dekt één gemiste dag. Je kunt er één tegelijk bewaren.',
+  'profile.freezeHintPlus': 'Elke {count} afgeronde lessen of oefensessies leveren een reeksbevriezing op. Die dekt één gemiste dag. Met Hevalo+ kun je er {max} tegelijk bewaren.',
   'settings.leagues.title': 'Wekelijkse competities',
   'settings.leagues.help': 'Een competitie zet je elke week tussen maximaal 19 andere leerlingen op volgorde van de XP die je verdient. Meedoen is vrijwillig, en je voortgang telt in beide gevallen hetzelfde.',
   'settings.leagues.toggle': 'Meedoen aan wekelijkse competities',
@@ -32679,6 +32688,7 @@ const ckb: Catalog = {
   'profile.stat.daysLearned': 'ڕۆژانی فێربوون',
   'profile.stat.freezes': 'بەستنی زنجیرە',
   'profile.freezeHint': 'هەر {count} وانە یان ڕاهێنان کە تەواوی دەکەیت، بەستنێکی زنجیرەت پێ دەدات. هەر بەستنێک ڕۆژێکی لەدەستچوو دادەپۆشێت. دەتوانیت تەنها یەکێک لای خۆت هەڵبگریت.',
+  'profile.freezeHintPlus': 'هەر {count} وانە یان ڕاهێنان کە تەواوی دەکەیت، بەستنێکی زنجیرەت پێ دەدات. هەر بەستنێک ڕۆژێکی لەدەستچوو دادەپۆشێت. لەگەڵ Hevalo+ دەتوانیت {max} لای خۆت هەڵبگریت.',
   'settings.leagues.title': 'لیگە هەفتانەکان',
   'settings.leagues.help': 'لیگ هەموو هەفتەیەک بەپێی ئەو XPیەی بەدەستی دەهێنیت، لەگەڵ تا 19 فێرخوازی تر ڕیزت دەکات. ناچاری نییە، و پێشکەوتنت هەر وەک خۆی دەژمێردرێت.',
   'settings.leagues.toggle': 'بەشداری لیگە هەفتانەکان بکە',

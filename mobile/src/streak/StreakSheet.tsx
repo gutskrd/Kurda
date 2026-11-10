@@ -19,6 +19,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { FIRE_STAGE_NAME } from './fireWords';
 import { learningStats, streakLabelKey, type Streak } from './format';
+import { freezeSlots } from './kept';
 import { gemsShort, repairLastDay, repairRefusal, type RepairResult } from './repair';
 
 /**
@@ -225,6 +226,8 @@ function StreakNumbers({ streak }: { streak: Streak }): React.JSX.Element {
   const { t, locale } = useI18n();
   const dir = useDirection();
   const stats = learningStats(streak);
+  // a Hevalo+ member has room for a second freeze, and the hint says how many rather than "one"
+  const room = freezeSlots(streak).max;
   const cells = [
     { label: t('profile.stat.longestStreak'), value: stats.longest },
     { label: t('profile.stat.daysLearned'), value: stats.daysLearned },
@@ -242,7 +245,11 @@ function StreakNumbers({ streak }: { streak: Streak }): React.JSX.Element {
           </View>
         ))}
       </View>
-      <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('profile.freezeHint', { count: stats.sessionsPerFreeze })}</Text>
+      <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>
+        {room > 1
+          ? t('profile.freezeHintPlus', { count: stats.sessionsPerFreeze, max: formatNumber(room, locale) })
+          : t('profile.freezeHint', { count: stats.sessionsPerFreeze })}
+      </Text>
     </>
   );
 }

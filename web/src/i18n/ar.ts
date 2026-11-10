@@ -3181,6 +3181,7 @@ export const ar: Catalogue = {
   'profile.stat.daysLearned': 'أيام التعلّم',
   'profile.stat.freezes': 'تجميد التتابع',
   'profile.freezeHint': 'كل {count} دروس أو جلسات تمرين تكملها تمنحك تجميدًا للتتابع. يغطي التجميد يومًا واحدًا فائتًا. يمكنك الاحتفاظ بواحد فقط في كل مرة.',
+  'profile.freezeHintPlus': 'كل {count} دروس أو جلسات تمرين تكملها تمنحك تجميدًا للتتابع. يغطي التجميد يومًا واحدًا فائتًا. مع Hevalo+ يمكنك الاحتفاظ بـ{max} في كل مرة.',
   'streak.repair.offer': 'انتهت سلسلتك التي دامت {count} يوم. يمكنك استعادتها حتى نهاية يوم {date}.',
   'streak.repair.restoreFor': 'استعدها مقابل {count} جوهرة',
   'streak.repair.restoreFree': 'استعدها، مجانًا مع Hevalo+',

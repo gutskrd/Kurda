@@ -3185,6 +3185,7 @@ export const ckb: Catalogue = {
   'profile.stat.daysLearned': 'ڕۆژانی فێربوون',
   'profile.stat.freezes': 'بەستنی زنجیرە',
   'profile.freezeHint': 'هەر {count} وانە یان ڕاهێنان کە تەواوی دەکەیت، بەستنێکی زنجیرەت پێ دەدات. هەر بەستنێک ڕۆژێکی لەدەستچوو دادەپۆشێت. دەتوانیت تەنها یەکێک لای خۆت هەڵبگریت.',
+  'profile.freezeHintPlus': 'هەر {count} وانە یان ڕاهێنان کە تەواوی دەکەیت، بەستنێکی زنجیرەت پێ دەدات. هەر بەستنێک ڕۆژێکی لەدەستچوو دادەپۆشێت. لەگەڵ Hevalo+ دەتوانیت {max} لای خۆت هەڵبگریت.',
   'streak.repair.offer': 'زنجیرەی {count} ڕۆژەکەت کۆتایی هات. تا کۆتایی ڕۆژی {date} دەتوانیت بیگەڕێنیتەوە.',
   'streak.repair.restoreFor': 'بە {count} گەوهەر بیگەڕێنەوە',
   'streak.repair.restoreFree': 'بیگەڕێنەوە، لەگەڵ Hevalo+ بەخۆڕاییە',

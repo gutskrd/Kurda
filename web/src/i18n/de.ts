@@ -3188,6 +3188,7 @@ export const de: Catalogue = {
   'profile.stat.daysLearned': 'Lerntage',
   'profile.stat.freezes': 'Serien-Einfrierungen',
   'profile.freezeHint': 'Für je {count} abgeschlossene Lektionen oder Übungen bekommst du eine Serien-Einfrierung. Sie überbrückt einen verpassten Tag. Du kannst immer nur eine aufbewahren.',
+  'profile.freezeHintPlus': 'Für je {count} abgeschlossene Lektionen oder Übungen bekommst du eine Serien-Einfrierung. Sie überbrückt einen verpassten Tag. Mit Hevalo+ kannst du {max} aufbewahren.',
   'streak.repair.offer': 'Deine Serie von {count} Tagen ist zu Ende. Bis einschließlich {date} kannst du sie zurückholen.',
   'streak.repair.restoreFor': 'Für {count} Edelsteine zurückholen',
   'streak.repair.restoreFree': 'Zurückholen, mit Hevalo+ kostenlos',

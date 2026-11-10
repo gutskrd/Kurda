@@ -98,7 +98,12 @@ function StreakDetail({ streak, onRestored }: { streak: StreakSummary; onRestore
           </div>
         ))}
       </dl>
-      <p className="streak-sheet-hint">{t('profile.freezeHint', { count: number(shown.sessionsPerFreeze ?? SESSIONS_PER_FREEZE) })}</p>
+      {/* a Hevalo+ member has room for a second freeze, and the hint says how many rather than "one" */}
+      <p className="streak-sheet-hint">
+        {(shown.maxFreezes ?? 1) > 1
+          ? t('profile.freezeHintPlus', { count: number(shown.sessionsPerFreeze ?? SESSIONS_PER_FREEZE), max: number(shown.maxFreezes ?? 1) })
+          : t('profile.freezeHint', { count: number(shown.sessionsPerFreeze ?? SESSIONS_PER_FREEZE) })}
+      </p>
       <FireLadder days={days} />
     </>
   );

@@ -3188,6 +3188,7 @@ export const nl: Catalogue = {
   'profile.stat.daysLearned': 'Leerdagen',
   'profile.stat.freezes': 'Reeksbevriezingen',
   'profile.freezeHint': 'Elke {count} afgeronde lessen of oefensessies leveren een reeksbevriezing op. Die dekt één gemiste dag. Je kunt er één tegelijk bewaren.',
+  'profile.freezeHintPlus': 'Elke {count} afgeronde lessen of oefensessies leveren een reeksbevriezing op. Die dekt één gemiste dag. Met Hevalo+ kun je er {max} tegelijk bewaren.',
   'streak.repair.offer': 'Je reeks van {count} dagen is afgelopen. Je kunt hem terughalen tot en met {date}.',
   'streak.repair.restoreFor': 'Terughalen voor {count} edelstenen',
   'streak.repair.restoreFree': 'Terughalen, gratis met Hevalo+',

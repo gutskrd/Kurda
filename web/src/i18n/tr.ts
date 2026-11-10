@@ -3183,6 +3183,7 @@ export const tr: Catalogue = {
   'profile.stat.daysLearned': 'Öğrenilen günler',
   'profile.stat.freezes': 'Seri dondurucular',
   'profile.freezeHint': 'Bitirdiğin her {count} ders ya da alıştırma sana bir seri dondurucu kazandırır. Bir dondurucu kaçırılan bir günü kapatır. Aynı anda yalnızca bir tane tutabilirsin.',
+  'profile.freezeHintPlus': 'Bitirdiğin her {count} ders ya da alıştırma sana bir seri dondurucu kazandırır. Bir dondurucu kaçırılan bir günü kapatır. Hevalo+ ile aynı anda {max} tane tutabilirsin.',
   'streak.repair.offer': '{count} günlük serin sona erdi. {date} gün sonuna kadar onu geri getirebilirsin.',
   'streak.repair.restoreFor': '{count} mücevherle geri getir',
   'streak.repair.restoreFree': 'Geri getir, Hevalo+ ile ücretsiz',

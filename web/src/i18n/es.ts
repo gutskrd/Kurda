@@ -3186,6 +3186,7 @@ export const es: Catalogue = {
   'profile.stat.daysLearned': 'Días de aprendizaje',
   'profile.stat.freezes': 'Congeladores de racha',
   'profile.freezeHint': 'Por cada {count} lecciones o prácticas que terminas, ganas un congelador de racha, que cubre un día perdido. Puedes guardar solo uno a la vez.',
+  'profile.freezeHintPlus': 'Por cada {count} lecciones o prácticas que terminas, ganas un congelador de racha, que cubre un día perdido. Con Hevalo+ puedes guardar {max} a la vez.',
   'streak.repair.offer': 'Tu racha de {count} días terminó. Puedes recuperarla hasta el final del {date}.',
   'streak.repair.restoreFor': 'Recuperar por {count} gemas',
   'streak.repair.restoreFree': 'Recuperar, gratis con Hevalo+',

@@ -3187,6 +3187,7 @@ export const fr: Catalogue = {
   'profile.stat.daysLearned': 'Jours d’apprentissage',
   'profile.stat.freezes': 'Gels de série',
   'profile.freezeHint': 'Toutes les {count} leçons ou séances d’entraînement terminées, tu gagnes un gel de série. Un gel couvre un jour manqué. Tu peux en garder un seul à la fois.',
+  'profile.freezeHintPlus': 'Toutes les {count} leçons ou séances d’entraînement terminées, tu gagnes un gel de série. Un gel couvre un jour manqué. Avec Hevalo+, tu peux en garder {max} à la fois.',
   'streak.repair.offer': 'Ta série de {count} jours s’est terminée. Tu peux la retrouver jusqu’à la fin du {date}.',
   'streak.repair.restoreFor': 'Retrouver pour {count} gemmes',
   'streak.repair.restoreFree': 'Retrouver, gratuit avec Hevalo+',

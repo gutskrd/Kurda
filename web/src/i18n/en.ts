@@ -3284,6 +3284,7 @@ export const en = {
   'profile.stat.daysLearned': 'Days learned',
   'profile.stat.freezes': 'Streak freezes',
   'profile.freezeHint': 'Every {count} lessons or practice sessions you finish earn a streak freeze. A freeze covers one missed day. You can hold one at a time.',
+  'profile.freezeHintPlus': 'Every {count} lessons or practice sessions you finish earn a streak freeze. A freeze covers one missed day. With Hevalo+ you can hold {max} at a time.',
   'streak.repair.offer': 'Your {count}-day streak ended. You can bring it back until the end of {date}.',
   'streak.repair.restoreFor': 'Restore for {count} gems',
   'streak.repair.restoreFree': 'Restore, free with Hevalo+',
