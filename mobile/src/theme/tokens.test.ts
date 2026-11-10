@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { colors, KURDISH_CHARSET, radii, spacing, typography } from './tokens';
+import * as tokens from './tokens';
+import { KURDISH_CHARSET, radii, spacing, typography } from './tokens';
 
 describe('design tokens', () => {
-  it('defines all colors as hex values', () => {
-    for (const [name, value] of Object.entries(colors)) {
-      expect(value, `color ${name}`).toMatch(/^#[0-9A-F]{6}$/i);
-    }
+  // colours belong to the palette, which has one set per scheme; a second set here would be a third
+  it('holds no colours of its own', () => {
+    expect(Object.keys(tokens)).not.toContain('colors');
   });
 
   it('spacing and radii scales are ascending', () => {

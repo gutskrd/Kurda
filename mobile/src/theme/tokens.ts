@@ -1,24 +1,13 @@
 /**
- * Design tokens — the single source of visual truth (KUR-011).
- * Components never hardcode colors/spacing; they import from here.
+ * Design tokens — the single source of visual truth (KUR-011) for everything
+ * that is not a colour: spacing, corners, type and the page's geometry.
+ * Components never hardcode those; they import from here.
+ *
+ * Colours live in `palette.ts`, one set per scheme, and reach a component
+ * through ThemeProvider. A green palette from before the app turned
+ * monochrome used to sit here as well, read by nothing but its own test, and
+ * was one autocomplete away from being painted on a screen.
  */
-
-export const colors = {
-  // Kurdish-inspired palette: green fields, golden sun
-  primary: '#2D6A4F',
-  primaryDark: '#1B4332',
-  accent: '#D4A017',
-  sun: '#EBA905',
-  danger: '#C0392B',
-  success: '#2E7D32',
-
-  background: '#FFFFFF',
-  surface: '#F4F6F5',
-  border: '#E0E5E2',
-  textPrimary: '#15241D',
-  textSecondary: '#5C6B63',
-  textOnPrimary: '#FFFFFF',
-} as const;
 
 export const spacing = {
   xs: 4,
