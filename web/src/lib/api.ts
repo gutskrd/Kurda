@@ -361,6 +361,7 @@ export class ApiClient {
  */
 export const CODE_COPY: Record<string, MessageKey> = {
   ACCOUNT_NOT_ACTIVATED: 'error.notActivated',
+  VERIFICATION_EMAIL_LIMIT: 'error.code.verificationEmailLimit',
   ACCOUNT_DISABLED: 'error.code.accountDisabled',
   CODE_EXPIRED: 'error.code.codeExpired',
   INVALID_CODE: 'error.code.invalidCode',

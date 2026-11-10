@@ -751,3 +751,4 @@ export * from './games/clues.js';
 export * from './games/multi/order.js';
 export * from './games/impostor/rules.js';
 export * from './games/dont-say/rules.js';
+export * from './pending-signup.js';

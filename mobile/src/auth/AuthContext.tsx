@@ -178,6 +178,13 @@ interface AuthContextValue {
   /** Ask the server to email a fresh verification code. */
   resendVerificationCode(): Promise<string | null>;
   /**
+   * Put right the address of a sign-up that has not confirmed it yet; the
+   * server sends the code there and the old one stops working. Resolves to
+   * what went wrong in words, or null once the address is changed and a code
+   * is on its way.
+   */
+  changePendingEmail(email: string): Promise<string | null>;
+  /**
    * Ask for a reset link. The server answers the same whether or not the
    * address has an account, so the only failures are its not answering at all
    * (offline, a fault, too many requests). Resolves to that failure in words,
@@ -418,6 +425,14 @@ export function AuthProvider({
       const res = await client.post<{ sent: boolean }>('/auth/resend-verification-code', {});
       if (!res.ok) return describeError(res.error, t);
       return null;
+    },
+    changePendingEmail: async (email) => {
+      const res = await client.post<{ user: { email: string }; sent: boolean }>('/auth/change-pending-email', { email });
+      if (!res.ok) return describeError(res.error, t);
+      const address = res.data.user.email;
+      setUser((prev) => (prev ? { ...prev, email: address } : prev));
+      // changed, but the day's ceiling of emails is reached: say so rather than promise a code
+      return res.data.sent ? null : t('error.code.verificationEmailLimit');
     },
     requestPasswordReset: async (email) => {
       const res = await client.post('/auth/request-password-reset', { email });

@@ -1,3 +1,4 @@
+import { UNCONFIRMED_SIGNUP_DAYS } from '@kurda/shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
@@ -52,6 +53,9 @@ export function VerifyEmail(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  // putting a mistyped address right: the field is there only once it is asked for
+  const [changing, setChanging] = useState(false);
+  const [address, setAddress] = useState('');
   /**
    * Where to go once confirmed: where the account was being made for — a
    * friend's game, a story's quiz (auth/afterSignup) — else the first lesson.
@@ -137,6 +141,36 @@ export function VerifyEmail(): React.JSX.Element {
     }
   }
 
+  /**
+   * A mistyped address is the commonest reason a code never comes. It is put
+   * right in place: the account, its name and its password stay, the code
+   * goes to the new address, and the one sent to the old address stops
+   * working. Starting over used to be the only way, and found the username
+   * taken by the sign-up just left behind.
+   */
+  async function changeAddress(e: React.FormEvent): Promise<void> {
+    e.preventDefault();
+    const next = address.trim();
+    if (!next) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const res = await client.post<{ sent: boolean }>('/auth/change-pending-email', { email: next });
+    setBusy(false);
+    if (!res.ok) {
+      setError(describeError(res.error, t));
+      return;
+    }
+    await refreshUser();
+    setCode('');
+    setAddress('');
+    setChanging(false);
+    // changed, but the day's ceiling of emails is reached: said rather than a code promised
+    if (res.data.sent) setNotice(t('auth.verify.changed'));
+    else setError(t('error.code.verificationEmailLimit'));
+    setCooldown(RESEND_COOLDOWN_SEC);
+  }
+
   return (
     <div className="auth-wrap">
       <AuthCard status={confirmed ? 'success' : busy ? 'busy' : error ? 'error' : 'idle'} word="bravo">
@@ -180,11 +214,44 @@ export function VerifyEmail(): React.JSX.Element {
           .
           <div style={{ marginTop: 12 }}>
             {t('auth.verify.wrongAddress')}{' '}
-            <button type="button" className="link-btn" onClick={() => void logout().then(() => navigate('/register'))}>
-              {t('auth.verify.startOver')}
+            <button type="button" className="link-btn" onClick={() => setChanging((on) => !on)} aria-expanded={changing}>
+              {t('auth.verify.change')}
             </button>
             .
           </div>
+          {changing && (
+            <form onSubmit={(e) => void changeAddress(e)} style={{ marginTop: 12 }}>
+              <div className="field">
+                <label className="field-label" htmlFor="verify-new-address">
+                  {t('auth.verify.newAddress')}
+                </label>
+                <input
+                  id="verify-new-address"
+                  className="input"
+                  type="email"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  autoComplete="email"
+                  autoCapitalize="none"
+                  spellCheck={false}
+                  autoFocus
+                  required
+                />
+              </div>
+              <Button type="submit" block disabled={busy || address.trim() === ''}>
+                {t('auth.verify.sendThere')}
+              </Button>
+            </form>
+          )}
+          <div style={{ marginTop: 12 }}>
+            <button type="button" className="link-btn" onClick={() => void logout().then(() => navigate('/register'))}>
+              {t('auth.verify.startOver')}
+            </button>
+          </div>
+          {/* how long this can wait, said once and plainly */}
+          <p className="muted" style={{ marginTop: 12, fontSize: '0.85rem' }}>
+            {t('auth.verify.keptFor', { days: UNCONFIRMED_SIGNUP_DAYS })}
+          </p>
         </div>
       </AuthCard>
     </div>

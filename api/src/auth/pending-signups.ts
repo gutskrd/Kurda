@@ -28,16 +28,10 @@
  */
 import { createHash } from 'node:crypto';
 import type pg from 'pg';
+import { UNCONFIRMED_SIGNUP_DAYS, VERIFICATION_EMAILS_PER_DAY } from '@kurda/shared';
 
-/** How long an unconfirmed sign-up is kept, from the day it was made (or the day a guest gave the address). */
-export const UNCONFIRMED_SIGNUP_DAYS = 7;
-
-/**
- * Confirmation emails in a day, for one address and for one account. Six is
- * the first code, a few asked for again and a mistyped address put right; the
- * hourly rate limit on asking again allowed ninety-six.
- */
-export const VERIFICATION_EMAILS_PER_DAY = 6;
+// how long one is kept and how many emails it may cause: said by the apps too, so they live in shared
+export { UNCONFIRMED_SIGNUP_DAYS, VERIFICATION_EMAILS_PER_DAY };
 
 /** How long the count of emails is kept: the day it is counted over, and a day's margin. */
 const SENDS_KEPT_HOURS = 48;

@@ -69,6 +69,7 @@ export const CODE_COPY: Record<string, TranslationKey> = {
    * stay as vague, and point at the two ways forward for whoever it is.
    */
   REGISTRATION_FAILED: 'error.code.registrationFailed',
+  VERIFICATION_EMAIL_LIMIT: 'error.code.verificationEmailLimit',
   // a sign-in the server wants to check before it lets it through
   LOGIN_VERIFICATION_REQUIRED: 'error.code.loginCheck',
   INVALID_OAUTH_TOKEN: 'error.code.oauthFailed',

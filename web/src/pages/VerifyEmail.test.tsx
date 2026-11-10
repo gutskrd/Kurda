@@ -223,4 +223,56 @@ describe('VerifyEmail', () => {
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(await screen.findByText(/sent a new code/i)).toBeInTheDocument();
   });
+
+  it('puts a mistyped address right without starting over, and says where the code went', async () => {
+    signedIn();
+    let address = 'ada@exmaple.com';
+    const changed: unknown[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/auth/change-pending-email')) {
+          const body = JSON.parse(String(init?.body)) as { email: string };
+          changed.push(body);
+          address = body.email;
+          return jsonResponse(200, { user: { email: address }, sent: true });
+        }
+        if (url.includes('/me')) return jsonResponse(200, { user: { ...user(false).user, email: address } });
+        return jsonResponse(200, {});
+      }),
+    );
+
+    renderApp(<VerifyEmail />, ['/verify-email']);
+    expect(await screen.findByText(/ada@exmaple\.com/)).toBeInTheDocument();
+    // how long an unconfirmed sign-up is kept is said on the screen
+    expect(screen.getByText(/isn’t confirmed within 7 days is removed/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Change it' }));
+    await userEvent.type(screen.getByLabelText('New email address'), 'ada@example.com');
+    await userEvent.click(screen.getByRole('button', { name: 'Send the code there' }));
+
+    await waitFor(() => expect(changed).toEqual([{ email: 'ada@example.com' }]));
+    expect(await screen.findByText('We sent a code to your new address.')).toBeInTheDocument();
+    // the screen now shows the address the code went to, and the field is put away
+    expect(await screen.findByText(/ada@example\.com/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('New email address')).toBeNull();
+  });
+
+  it('says so when no more confirmation emails can be sent today', async () => {
+    signedIn();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/auth/resend-verification-code')) {
+          return jsonResponse(429, { code: 'VERIFICATION_EMAIL_LIMIT', message: 'too many confirmation emails today' });
+        }
+        if (url.includes('/me')) return jsonResponse(200, user(false));
+        return jsonResponse(200, {});
+      }),
+    );
+
+    renderApp(<VerifyEmail />, ['/verify-email']);
+    await userEvent.click(await screen.findByRole('button', { name: /send a new code/i }));
+    expect(await screen.findByText(/Too many emails for today\. The last code still works/)).toBeInTheDocument();
+  });
 });
