@@ -86,13 +86,12 @@ function detail(over: Record<string, unknown> = {}): Record<string, unknown> {
     id: 'g1',
     name: 'Hevalên Amedê',
     description: null,
-    privacy: 'open',
     ownerId: 'u-owen',
     archivedAt: null,
     memberCount: 3,
     photoUrl: null,
     myRole,
-    standing: myRole ? { kind: 'member', role: myRole } : { kind: 'out' },
+    standing: { kind: 'member', role: myRole },
     members: [member('me', 'baran', (myRole as 'member') ?? 'member'), member('u-owen', 'owen', 'owner'), member('u-rojda', 'rojda', 'member')],
     ...over,
   };
@@ -115,6 +114,22 @@ const history = (messages: unknown[], cleared: unknown = { forEveryone: null, fo
   () => jsonResponse(200, { messages, cleared }),
 ];
 const group = (over: Record<string, unknown> = {}): Route => ['GET', /\/groups\/g1$/, () => jsonResponse(200, detail(over))];
+/** What the server answers anyone who is neither in the group nor banned from it, whether it exists or not. */
+const noSuchGroup = (): Response => jsonResponse(404, { code: 'GROUP_NOT_FOUND', message: 'no such group' });
+/** All it tells someone banned: the name, the picture, and where they stand. */
+const bannedDetail = (standing: Extract<GroupStanding, { kind: 'banned' }>): Record<string, unknown> =>
+  detail({ description: null, ownerId: null, memberCount: 0, members: [], myRole: null, standing });
+const friendsList: Route = [
+  'GET',
+  /\/friends\?limit=500$/,
+  () =>
+    jsonResponse(200, {
+      friends: [
+        { userId: 'u-rojda', username: 'rojda', displayName: 'Rojda', avatarUrl: null },
+        { userId: 'u-azad', username: 'azad', displayName: null, avatarUrl: null },
+      ],
+    }),
+];
 
 describe('an empty group chat', () => {
   it('welcomes with the group and greetings in Kurmanci, and a tap sends one', async () => {
@@ -182,21 +197,11 @@ describe('an empty group chat', () => {
     expect(screen.getByText('This is the start of Hevalên Amedê')).toBeInTheDocument();
   });
 
-  it('offers the owner of an invite-only group with nobody else in it to add friends', async () => {
+  it('offers the owner of a group with nobody else in it to add friends', async () => {
     const calls = stubApi([
       history([]),
-      group({ privacy: 'invite', myRole: 'owner', memberCount: 1, members: [member('me', 'baran', 'owner')] }),
-      [
-        'GET',
-        /\/friends\?limit=500$/,
-        () =>
-          jsonResponse(200, {
-            friends: [
-              { userId: 'u-rojda', username: 'rojda', displayName: 'Rojda', avatarUrl: null },
-              { userId: 'u-azad', username: 'azad', displayName: null, avatarUrl: null },
-            ],
-          }),
-      ],
+      group({ myRole: 'owner', memberCount: 1, members: [member('me', 'baran', 'owner')] }),
+      friendsList,
       ['POST', /\/groups\/g1\/invite$/, (c) => ((c.body as { userId: string }).userId === 'u-azad' ? jsonResponse(409, { code: 'MEMBER_BANNED', message: 'banned' }) : jsonResponse(200, { ok: true }))],
     ]);
     mount();
@@ -211,11 +216,25 @@ describe('an empty group chat', () => {
     expect(await sheet.findByText('azad is banned from this group. Unban them first.')).toBeInTheDocument();
   });
 
-  it('does not offer to add friends in an open group', async () => {
-    stubApi([history([]), group({ myRole: 'owner', memberCount: 1, members: [member('me', 'baran', 'owner')] })]);
+  it('does not offer a plain member to add friends', async () => {
+    stubApi([history([]), group({ myRole: 'member', memberCount: 1, members: [member('me', 'baran', 'member')] })]);
     mount();
     await screen.findByText('This is the start of Hevalên Amedê');
     expect(screen.queryByRole('button', { name: 'Add friends' })).not.toBeInTheDocument();
+  });
+
+  it('opens a group that was just made with the add-friends sheet up, and Done leaves you in its chat', async () => {
+    stubApi([history([]), group({ myRole: 'owner', memberCount: 1, members: [member('me', 'baran', 'owner')] }), friendsList]);
+    mount({ addFriends: true });
+
+    // nothing was pressed: the sheet is there by itself, with the friends listed
+    const sheet = within(await screen.findByRole('dialog', { name: 'Add friends' }));
+    expect(await sheet.findByRole('button', { name: 'Add Rojda' })).toBeInTheDocument();
+    await userEvent.click(sheet.getByRole('button', { name: 'Done' }));
+
+    expect(screen.queryByRole('dialog', { name: 'Add friends' })).not.toBeInTheDocument();
+    expect(screen.getByText('This is the start of Hevalên Amedê')).toBeInTheDocument();
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
   });
 });
 
@@ -333,39 +352,26 @@ describe('a group chat as it changes elsewhere', () => {
 });
 
 describe('a group from outside', () => {
-  const banned = (request: Extract<GroupStanding, { kind: 'banned' }>['request'], until: string | null = '2026-11-05T10:00:00.000Z') =>
-    group({ myRole: null, standing: { kind: 'banned', until, reason: 'Reklam', request } });
+  const banned = (request: Extract<GroupStanding, { kind: 'banned' }>['request'], until: string | null = '2026-11-05T10:00:00.000Z'): Route => [
+    'GET',
+    /\/groups\/g1$/,
+    () => jsonResponse(200, bannedDetail({ kind: 'banned', until, reason: 'Reklam', request })),
+  ];
   const notIn = () => jsonResponse(403, { code: 'NOT_A_MEMBER', message: 'you are not in this group' });
   const refused: Route = ['GET', /\/groups\/g1\/chat$/, notIn];
 
-  it('shows the ordinary Join to someone removed from an open group, and joins', async () => {
-    let joined = false;
-    const calls = stubApi([
-      ['GET', /\/groups\/g1\/chat$/, () => (joined ? jsonResponse(200, { messages: [], cleared: { forEveryone: null, forMe: null } }) : notIn())],
-      ['GET', /\/groups\/g1$/, () => jsonResponse(200, detail(joined ? {} : { myRole: null }))],
-      [
-        'POST',
-        /\/groups\/g1\/join$/,
-        () => {
-          joined = true;
-          return jsonResponse(200, { ok: true });
-        },
-      ],
-    ]);
+  it('tells someone who is not in it that there is no such group, and shows nothing of it', async () => {
+    const calls = stubApi([refused, ['GET', /\/groups\/g1$/, noSuchGroup]]);
     mount();
-    expect(await screen.findByText('Join to read the chat and say hello.')).toBeInTheDocument();
-    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Join' }));
-    expect(calls.some((c) => c.method === 'POST' && c.url.endsWith('/groups/g1/join'))).toBe(true);
-    expect(await screen.findByText('This is the start of Hevalên Amedê')).toBeInTheDocument();
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
-  });
 
-  it('tells someone outside an invite-only group that an admin can add them', async () => {
-    stubApi([refused, group({ myRole: null, privacy: 'invite' })]);
-    mount();
-    expect(await screen.findByText('This group is invite-only. An admin can add you.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Join' })).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Group not found' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to messages' })).toHaveAttribute('href', '/app/messages');
+    // no way in, no chat, and no page of the group to open
+    expect(screen.queryByRole('button', { name: /join/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Group info')).not.toBeInTheDocument();
+    expect(screen.queryByText(/members/)).not.toBeInTheDocument();
+    expect(calls.some((c) => c.url.endsWith('/join'))).toBe(false);
   });
 
   it('shows a banned person until when, the reason, and a way to ask with a note', async () => {
@@ -377,7 +383,11 @@ describe('a group from outside', () => {
     mount();
     expect(await screen.findByText(/^You’re banned from this group until .+\.$/)).toBeInTheDocument();
     expect(screen.getByText('Reklam')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Join' })).not.toBeInTheDocument();
+    // the group by name, and nothing else of it: no way in, no roster, no page to open
+    expect(screen.getByRole('heading', { name: 'Hevalên Amedê' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /join/i })).not.toBeInTheDocument();
+    expect(screen.queryByTitle('Group info')).not.toBeInTheDocument();
+    expect(screen.queryByText(/members/)).not.toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: 'Ask to come back' }));
     const sheet = within(await screen.findByRole('dialog', { name: 'Ask to come back' }));
@@ -433,7 +443,7 @@ describe('being taken out while the chat is open', () => {
     let removed = false;
     stubApi([
       history([message('m1', 'u-rojda', 'rojda', 'Silav hevalno')]),
-      ['GET', /\/groups\/g1$/, () => jsonResponse(200, detail(removed ? { myRole: null } : {}))],
+      ['GET', /\/groups\/g1$/, () => (removed ? noSuchGroup() : jsonResponse(200, detail()))],
       [
         'POST',
         /\/groups\/g1\/chat$/,
@@ -449,8 +459,10 @@ describe('being taken out while the chat is open', () => {
 
     const gone = await screen.findByRole('heading', { name: 'You’re no longer in this group' });
     await waitFor(() => expect(gone).toHaveFocus());
-    expect(screen.getByText('You can join again whenever you like.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Join' })).toBeInTheDocument();
+    // the group they were just in keeps its name; the way back is an admin's to give
+    expect(screen.getByRole('heading', { name: 'Hevalên Amedê' })).toBeInTheDocument();
+    expect(screen.getByText('An admin can add you again.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /join/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('textbox')).not.toBeInTheDocument();
     expect(screen.queryByText('Silav hevalno')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Chat options' })).not.toBeInTheDocument();
@@ -464,7 +476,7 @@ describe('being taken out while the chat is open', () => {
         /\/groups\/g1\/chat$/,
         () => (banned ? jsonResponse(403, { code: 'GROUP_BANNED', message: 'banned', details: { until: null } }) : jsonResponse(200, { messages: [message('m1', 'u-rojda', 'rojda', 'Silav')] })),
       ],
-      ['GET', /\/groups\/g1$/, () => jsonResponse(200, banned ? detail({ myRole: null, standing: { kind: 'banned', until: null, reason: null, request: { kind: 'can_ask' } } }) : detail())],
+      ['GET', /\/groups\/g1$/, () => jsonResponse(200, banned ? bannedDetail({ kind: 'banned', until: null, reason: null, request: { kind: 'can_ask' } }) : detail())],
       [
         'POST',
         /\/groups\/g1\/chat$/,
@@ -485,7 +497,8 @@ describe('being taken out while the chat is open', () => {
 
 describe('a notification about requests to come back', () => {
   it('opens the group on its own page', async () => {
-    stubApi([history([]), group({ myRole: 'owner' })]);
+    const waiting = { userId: 'u-berfin', username: 'berfin', avatarUrl: null, note: null, sentAt: '2026-10-28T10:00:00.000Z', declines: 0 };
+    stubApi([history([]), group({ myRole: 'owner', pendingRequests: 1 }), ['GET', /\/groups\/g1\/requests$/, () => jsonResponse(200, { requests: [waiting] })]]);
     mount({ openInfo: true });
     expect(await screen.findByRole('dialog', { name: 'Group info' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: /Requests to come back/ })).toBeInTheDocument();

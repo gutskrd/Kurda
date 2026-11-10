@@ -21,6 +21,11 @@ const BANNED_FOR: Record<string, MessageKey> = {
  * language from `data`, and opening the group (a request opens it on the
  * group's own page, where the requests are answered).
  *
+ * A group is private, so a line that leaves the reader out of it and not
+ * banned — removed, or let back without being put back in — opens their
+ * conversations instead: the group's own address would only tell them there
+ * is no such group. An admin has to add them again, and the line says so.
+ *
  * The server writes these in English too; that is what is shown when `data`
  * does not name the group, rather than half a sentence in each language.
  * Anything that is not about a group is null, for the next reader to try.
@@ -32,17 +37,16 @@ export function groupNotification(note: InboxNote, t: Translate, locale: string)
   const kind = data.kind;
   if (!groupId || typeof kind !== 'string' || !kind.startsWith('group_')) return null;
   const to = `/app/messages?group=${encodeURIComponent(groupId)}`;
+  // where a line goes when the reader is out of the group it is about
+  const mine = '/app/messages';
   const group = str(data.groupName);
-  const asWritten: NoteView = { title: note.title, body: note.body, to };
+  const letBackOnly = kind === 'group_request_approved' && (data.rejoined === false || data.rejoined === 'false');
+  const asWritten: NoteView = { title: note.title, body: note.body, to: kind === 'group_removed' || letBackOnly ? mine : to };
   if (!group) return asWritten;
 
   switch (kind) {
     case 'group_removed':
-      return {
-        title: t('notify.groupRemoved.title', { group }),
-        body: data.privacy === 'invite' ? t('notify.groupRemoved.invite') : t('notify.groupRemoved.open'),
-        to,
-      };
+      return { title: t('notify.groupRemoved.title', { group }), body: t('notify.groupRemoved.canBeAdded'), to: mine };
     case 'group_banned': {
       const length = typeof data.duration === 'string' ? BANNED_FOR[data.duration] : undefined;
       const reason = str(data.reason);
@@ -61,10 +65,8 @@ export function groupNotification(note: InboxNote, t: Translate, locale: string)
       };
     }
     case 'group_request_approved':
-      // let back but not put back: in an invite-only group only an admin can add them again, as the server's own words say
-      if (data.rejoined === false || data.rejoined === 'false') {
-        return data.privacy === 'invite' ? asWritten : { title: t('notify.groupApproved.out', { group }), body: null, to };
-      }
+      // let back but not put back: the ban is lifted, and an admin who is their friend can add them again
+      if (letBackOnly) return { title: t('notify.groupApproved.out', { group }), body: null, to: mine };
       return { title: t('notify.groupApproved.in', { group }), body: null, to };
     case 'group_request_declined': {
       const after = str(data.until);

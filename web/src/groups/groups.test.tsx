@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { GroupDetail } from '../lib/types';
 import { renderApp, jsonResponse } from '../test/utils';
-import { DiscoverGroups, groupMatches } from './DiscoverGroups';
+import { AddFriendsSheet } from './AddFriendsSheet';
 import { GroupInfo } from './GroupInfo';
 import { groupInitials } from './GroupAvatar';
 import { pictureBlob } from './GroupEdit';
@@ -40,60 +40,6 @@ function stubApi(routes: Array<[method: string, path: RegExp, answer: (call: Cal
   return calls;
 }
 
-const discovered = [
-  { id: 'g1', name: 'Hevalên Kurmancî', description: 'Em her êvar diaxivin', privacy: 'open', ownerId: 'u2', archivedAt: null, memberCount: 14, photoUrl: null, joined: true },
-  { id: 'g2', name: 'Klûba helbestê', description: 'Helbest û stran', privacy: 'open', ownerId: 'u3', archivedAt: null, memberCount: 6, photoUrl: 'https://cdn.test/g2.webp', joined: false },
-  { id: 'g3', name: 'Soranî ji bo destpêkeran', description: null, privacy: 'open', ownerId: 'u4', archivedAt: null, memberCount: 38, photoUrl: null, joined: false },
-];
-
-describe('finding a group', () => {
-  it('matches every word typed, in the name or what it is about, accents aside', () => {
-    expect(groupMatches(discovered[0]!, 'hevalen')).toBe(true);
-    expect(groupMatches(discovered[1]!, 'KLUBA stran')).toBe(true);
-    expect(groupMatches(discovered[1]!, 'klûba sorani')).toBe(false);
-    expect(groupMatches(discovered[2]!, '  ')).toBe(true);
-  });
-
-  it('lists each group with Join, or Open for one you are in, and narrows as you type', async () => {
-    stubApi([['GET', /\/groups$/, () => jsonResponse(200, { groups: discovered })]]);
-    renderApp(<DiscoverGroups mineIds={new Set()} onOpen={() => undefined} onJoined={() => undefined} onNew={() => undefined} />);
-
-    expect(await screen.findByRole('link', { name: 'Open: Hevalên Kurmancî' })).toHaveAttribute('href', '/app/messages?group=g1');
-    expect(screen.getByRole('button', { name: 'Join: Klûba helbestê' })).toBeInTheDocument();
-    expect(screen.getByText('38 members')).toBeInTheDocument();
-
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Search groups' }), 'helbest');
-    expect(screen.queryByText('Hevalên Kurmancî')).not.toBeInTheDocument();
-    expect(screen.getByText('Klûba helbestê')).toBeInTheDocument();
-
-    await userEvent.clear(screen.getByRole('searchbox', { name: 'Search groups' }));
-    await userEvent.type(screen.getByRole('searchbox', { name: 'Search groups' }), 'xyz');
-    expect(screen.getByText('No groups match “xyz”.')).toBeInTheDocument();
-  });
-
-  it('joins a group, which then says Open, and hands it back to open', async () => {
-    const calls = stubApi([
-      ['GET', /\/groups$/, () => jsonResponse(200, { groups: discovered })],
-      ['POST', /\/groups\/g2\/join$/, () => jsonResponse(200, { ok: true })],
-    ]);
-    const joined = vi.fn();
-    renderApp(<DiscoverGroups mineIds={new Set()} onOpen={() => undefined} onJoined={joined} onNew={() => undefined} />);
-
-    await userEvent.click(await screen.findByRole('button', { name: 'Join: Klûba helbestê' }));
-    expect(calls.some((c) => c.method === 'POST' && c.url.endsWith('/groups/g2/join'))).toBe(true);
-    expect(await screen.findByRole('link', { name: 'Open: Klûba helbestê' })).toBeInTheDocument();
-    expect(joined).toHaveBeenCalledWith(expect.objectContaining({ id: 'g2' }));
-  });
-
-  it('offers to start a group when there is none to find', async () => {
-    stubApi([['GET', /\/groups$/, () => jsonResponse(200, { groups: [] })]]);
-    const fresh = vi.fn();
-    renderApp(<DiscoverGroups mineIds={new Set()} onOpen={() => undefined} onJoined={() => undefined} onNew={fresh} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'New group' }));
-    expect(fresh).toHaveBeenCalled();
-  });
-});
-
 describe("a group's picture", () => {
   it('stands in with initials, the way the phone does', () => {
     expect(groupInitials('Hevalên Kurmancî')).toBe('HK');
@@ -112,7 +58,6 @@ const detailFor = (myRole: 'owner' | 'moderator' | 'member'): GroupDetail => ({
   id: 'g1',
   name: 'Test Group',
   description: 'A place to practise',
-  privacy: 'open',
   ownerId: myRole === 'owner' ? 'me' : 'u-owner',
   archivedAt: null,
   memberCount: 4,
@@ -142,7 +87,7 @@ describe("a group's page", () => {
     renderApp(<GroupInfo detail={detailFor('owner')} onChanged={async () => undefined} onLeft={() => undefined} />);
 
     expect(await screen.findByRole('heading', { name: 'Test Group' })).toBeInTheDocument();
-    expect(screen.getByText('Open group · 4 members')).toBeInTheDocument();
+    expect(screen.getByText('4 members')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Edit group' })).toBeInTheDocument();
     // nobody manages themselves
     expect(await menuOf('ada')).toBeNull();
@@ -183,7 +128,7 @@ describe("a group's page", () => {
     await userEvent.click(screen.getByRole('menuitem', { name: 'Remove from group' }));
     const ask = screen.getByRole('alertdialog', { name: 'Remove from group' });
     expect(within(ask).getByText('Remove zana from Test Group')).toBeInTheDocument();
-    expect(within(ask).getByText('zana can join again later.')).toBeInTheDocument();
+    expect(within(ask).getByText('zana can be added again later.')).toBeInTheDocument();
     await userEvent.click(within(ask).getByRole('button', { name: 'Cancel' }));
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
 
@@ -194,12 +139,48 @@ describe("a group's page", () => {
     expect(calls.find((c) => c.method === 'DELETE')?.url).toMatch(/\/groups\/g1\/members\/u-mem$/);
   });
 
-  it('says someone removed from an invite-only group can be added again', async () => {
+  it('says nothing of a group being open or invite-only, and offers no way to join one', async () => {
     stubApi([]);
-    renderApp(<GroupInfo detail={{ ...detailFor('owner'), privacy: 'invite' }} onChanged={async () => undefined} onLeft={() => undefined} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Options for zana' }));
-    await userEvent.click(screen.getByRole('menuitem', { name: 'Remove from group' }));
-    expect(within(screen.getByRole('alertdialog')).getByText('zana can be added again later.')).toBeInTheDocument();
+    renderApp(<GroupInfo detail={detailFor('member')} onChanged={async () => undefined} onLeft={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Test Group' });
+    expect(screen.queryByText(/open group|invite-only|privacy/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /join/i })).not.toBeInTheDocument();
+  });
+
+  it('reads in one order for the owner: members, add friends, requests, banned, edit, delete', async () => {
+    const waiting = { userId: 'u-berfin', username: 'berfin', avatarUrl: null, note: null, sentAt: '2026-10-28T10:00:00.000Z', declines: 0 };
+    stubApi([
+      ['GET', /\/groups\/g1\/requests$/, () => jsonResponse(200, { requests: [waiting] })],
+      ['GET', /\/groups\/g1\/bans$/, () => jsonResponse(200, { bans: [] })],
+    ]);
+    renderApp(<GroupInfo detail={{ ...detailFor('owner'), pendingRequests: 1 }} onChanged={async () => undefined} onLeft={() => undefined} />);
+    await screen.findByRole('button', { name: 'Approve berfin' });
+
+    const order = [
+      screen.getByRole('heading', { name: 'Members' }),
+      screen.getByRole('button', { name: 'Add friends' }),
+      screen.getByRole('button', { name: 'Options for zana' }),
+      screen.getByRole('heading', { name: /Requests to come back/ }),
+      screen.getByRole('heading', { name: 'Banned' }),
+      screen.getByRole('button', { name: 'Edit group' }),
+      screen.getByRole('button', { name: 'Delete group' }),
+    ];
+    for (let i = 1; i < order.length; i++) {
+      expect(order[i - 1]!.compareDocumentPosition(order[i]!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+  });
+
+  it('lets the owner and the admins add friends from the page, and nobody else', async () => {
+    stubApi([['GET', /\/friends\?limit=500$/, () => jsonResponse(200, { friends: [{ userId: 'u-roj', username: 'roj', displayName: 'Roj', avatarUrl: null }] })]]);
+    const { unmount } = renderApp(<GroupInfo detail={detailFor('moderator')} onChanged={async () => undefined} onLeft={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Add friends' }));
+    const sheet = within(await screen.findByRole('dialog', { name: 'Add friends' }));
+    expect(await sheet.findByRole('button', { name: 'Add Roj' })).toBeInTheDocument();
+    unmount();
+
+    renderApp(<GroupInfo detail={detailFor('member')} onChanged={async () => undefined} onLeft={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Test Group' });
+    expect(screen.queryByRole('button', { name: 'Add friends' })).not.toBeInTheDocument();
   });
 
   it('deletes the group only once the owner has read what it costs', async () => {
@@ -302,7 +283,7 @@ describe('banning a member', () => {
       ],
     ]);
     const sheet = within(screen.getByRole('dialog', { name: 'Ban zana' }));
-    expect(sheet.getByText('Removed members can join again. Banned members can’t, but they can ask you to let them back.')).toBeInTheDocument();
+    expect(sheet.getByText('Removed members can be added again. Banned members can’t, but they can ask you to let them back.')).toBeInTheDocument();
     const how = within(sheet.getByRole('group', { name: 'How long' }));
     expect(how.getAllByRole('radio').map((r) => r.closest('label')?.textContent)).toEqual(['1 day', '1 week', 'For good']);
     expect(how.getByRole('radio', { name: '1 day' })).toBeChecked();
@@ -364,11 +345,11 @@ describe('requests to come back, and who is banned', () => {
     expect(bans.getByText('Requests from them are stopped.')).toBeInTheDocument();
   });
 
-  it('says plainly when both lists are empty', async () => {
+  it('shows no requests section while nobody asks, and says plainly that nobody is banned', async () => {
     stubApi(lists([], []));
     renderApp(<GroupInfo detail={detailFor('moderator')} onChanged={async () => undefined} onLeft={() => undefined} />);
-    expect(await screen.findByText('No requests to come back.')).toBeInTheDocument();
     expect(await screen.findByText('Nobody is banned from this group.')).toBeInTheDocument();
+    expect(screen.queryByText(/Requests to come back/)).not.toBeInTheDocument();
   });
 
   it('shows neither list to a member, nor asks for them', async () => {
@@ -380,7 +361,7 @@ describe('requests to come back, and who is banned', () => {
     expect(calls.some((c) => /\/(requests|bans)$/.test(c.url))).toBe(false);
   });
 
-  it('approves a request, and says whether they are back in or only free to join again', async () => {
+  it('approves a request, and says whether they are back in or only free to be added again', async () => {
     let rejoined = true;
     const calls = stubApi([...lists([request], []), ['POST', /\/groups\/g1\/requests\/u-berfin\/approve$/, () => jsonResponse(200, { rejoined })]]);
     const changed = vi.fn(async () => undefined);
@@ -393,7 +374,7 @@ describe('requests to come back, and who is banned', () => {
 
     rejoined = false;
     await userEvent.click(screen.getByRole('button', { name: 'Approve berfin' }));
-    expect(await screen.findByText(/^berfin is no longer banned but couldn’t be added back just now\./)).toBeInTheDocument();
+    expect(await screen.findByText('berfin is no longer banned but couldn’t be added back just now. An admin who is their friend can add them again.')).toBeInTheDocument();
   });
 
   it('declines a request after saying how long they wait, and can stop their requests', async () => {
@@ -417,7 +398,7 @@ describe('requests to come back, and who is banned', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: 'Unban delal' }));
     const ask = within(screen.getByRole('alertdialog', { name: 'Unban delal?' }));
-    expect(ask.getByText('delal won’t be added back, but will be able to join again or be added.')).toBeInTheDocument();
+    expect(ask.getByText('delal won’t be added back, but an admin can add them again.')).toBeInTheDocument();
     await userEvent.click(ask.getByRole('button', { name: 'Cancel' }));
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
 
@@ -428,24 +409,44 @@ describe('requests to come back, and who is banned', () => {
   });
 });
 
-describe('a group you are banned from, in discovery', () => {
-  it('says Banned instead of Join, and opens the group where the ban is explained', async () => {
-    stubApi([['GET', /\/groups$/, () => jsonResponse(200, { groups: [{ ...discovered[1], banned: true }] })]]);
-    renderApp(<DiscoverGroups mineIds={new Set()} onOpen={() => undefined} onJoined={() => undefined} onNew={() => undefined} />);
-    expect(await screen.findByRole('link', { name: 'Banned: Klûba helbestê' })).toHaveAttribute('href', '/app/messages?group=g2');
-    expect(screen.queryByRole('button', { name: /Join/ })).not.toBeInTheDocument();
+describe('adding friends to a group', () => {
+  const friends = [
+    { userId: 'u-roj', username: 'roj', displayName: 'Roj', avatarUrl: null },
+    { userId: 'u-mem', username: 'zana', displayName: null, avatarUrl: null },
+  ];
+  const sheetFor = (onClose = () => undefined, onAdded = () => undefined): React.JSX.Element => (
+    <AddFriendsSheet open groupId="g1" groupName="Test Group" memberIds={new Set(['me', 'u-mem'])} onClose={onClose} onAdded={onAdded} />
+  );
+
+  it('lists the friends who are not in it yet, adds one in a tap, and has Done to go on to the chat', async () => {
+    const calls = stubApi([
+      ['GET', /\/friends\?limit=500$/, () => jsonResponse(200, { friends })],
+      ['POST', /\/groups\/g1\/invite$/, () => jsonResponse(200, { ok: true })],
+    ]);
+    const closed = vi.fn();
+    const added = vi.fn();
+    renderApp(sheetFor(closed, added));
+
+    const sheet = within(await screen.findByRole('dialog', { name: 'Add friends' }));
+    // zana is in the group already, so only Roj is offered
+    await userEvent.click(await sheet.findByRole('button', { name: 'Add Roj' }));
+    expect(await sheet.findByRole('button', { name: 'Roj is added' })).toBeDisabled();
+    expect(sheet.queryByText('zana')).not.toBeInTheDocument();
+    expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/groups/g1/invite'))?.body).toEqual({ userId: 'u-roj' });
+    expect(added).toHaveBeenCalled();
+
+    await userEvent.click(sheet.getByRole('button', { name: 'Done' }));
+    expect(closed).toHaveBeenCalled();
   });
 
-  it('turns Join into Banned when joining is refused for a ban', async () => {
-    stubApi([
-      ['GET', /\/groups$/, () => jsonResponse(200, { groups: discovered })],
-      ['POST', /\/groups\/g2\/join$/, () => jsonResponse(403, { code: 'GROUP_BANNED', message: 'banned', details: { until: null } })],
-    ]);
-    const joined = vi.fn();
-    renderApp(<DiscoverGroups mineIds={new Set()} onOpen={() => undefined} onJoined={joined} onNew={() => undefined} />);
-    await userEvent.click(await screen.findByRole('button', { name: 'Join: Klûba helbestê' }));
-    expect(await screen.findByRole('link', { name: 'Banned: Klûba helbestê' })).toBeInTheDocument();
-    expect(joined).not.toHaveBeenCalled();
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  it('tells someone with no friends yet so in a sentence, with the way to find people', async () => {
+    stubApi([['GET', /\/friends\?limit=500$/, () => jsonResponse(200, { friends: [] })]]);
+    renderApp(sheetFor());
+
+    const sheet = within(await screen.findByRole('dialog', { name: 'Add friends' }));
+    expect(await sheet.findByText(/You have no friends here yet\./)).toBeInTheDocument();
+    expect(sheet.getByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/search');
+    expect(sheet.queryByRole('list')).not.toBeInTheDocument();
+    expect(sheet.queryByRole('button', { name: 'Done' })).not.toBeInTheDocument();
   });
 });

@@ -4,17 +4,22 @@ import { describeError } from '../lib/api';
 import { useApiGet } from '../lib/useApi';
 import type { UserSummary } from '../lib/types';
 import { Avatar } from '../components/Avatar';
+import { Button, LinkButton } from '../components/Button';
 import { Sheet } from '../components/Sheet';
 import { ErrorState } from '../components/states';
 import { ConversationsSkeleton } from '../components/skeletons';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Adding friends to an invite-only group, as its owner or an admin: your
- * friends who are not in it yet, each with Add. Adding puts them straight in
- * (the server's rule: friends only, into an invite-only group), and the sheet
- * stays open for the next one. Someone banned from the group has to be
- * unbanned first, and is told so by name.
+ * Adding friends to a group, as its owner or an admin, which is the only way
+ * anyone gets into one: your friends who are not in it yet, each with Add.
+ * Adding puts them straight in (the server's rule: your own friends only),
+ * and the sheet stays open for the next one, with Done at its foot to go on
+ * to the chat. Someone banned from the group has to be unbanned first, and is
+ * told so by name.
+ *
+ * With no friends yet there is nobody to list, so it says so in a sentence
+ * and offers the way to find people, rather than an empty sheet.
  */
 export function AddFriendsSheet({
   open,
@@ -57,8 +62,9 @@ function AddFriends({
   const [adding, setAdding] = useState<string | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [said, setSaid] = useState<string | null>(null);
+  const all = data?.friends ?? [];
   // a friend added here stays listed, as Added, so the list does not jump under the pointer
-  const friends = (data?.friends ?? []).filter((f) => !memberIds.has(f.userId) || added.has(f.userId));
+  const friends = all.filter((f) => !memberIds.has(f.userId) || added.has(f.userId));
 
   async function add(f: UserSummary): Promise<void> {
     const name = f.displayName || f.username;
@@ -82,7 +88,7 @@ function AddFriends({
         <bdi>{groupName}</bdi>
       </p>
       <h2 className="report-heading">{t('groups.addFriends')}</h2>
-      <p className="report-intro">{t('groups.addFriends.intro')}</p>
+      {all.length > 0 && <p className="report-intro">{t('groups.addFriends.intro')}</p>}
       {problem && (
         <div className="msg msg-error" role="alert">
           {problem}
@@ -95,6 +101,13 @@ function AddFriends({
         <ConversationsSkeleton count={3} />
       ) : error ? (
         <ErrorState message={error} onRetry={reload} />
+      ) : all.length === 0 ? (
+        <div className="gadd-nobody">
+          <p>{t('groups.addFriends.noFriends')}</p>
+          <LinkButton to="/app/search" className="gadd-find">
+            {t('rail.findPeople')}
+          </LinkButton>
+        </div>
       ) : friends.length === 0 ? (
         <p className="ginfo-hint">{t('groups.addFriends.none')}</p>
       ) : (
@@ -115,7 +128,7 @@ function AddFriends({
                 </span>
                 <button
                   type="button"
-                  className={`gdisc-btn${isIn ? ' is-outline' : ''}`}
+                  className={`gadd-btn${isIn ? ' is-outline' : ''}`}
                   disabled={isIn || adding !== null}
                   aria-label={isIn ? t('groups.addFriends.addedWho', { name }) : t('groups.addFriends.addWho', { name })}
                   onClick={() => void add(f)}
@@ -126,6 +139,13 @@ function AddFriends({
             );
           })}
         </ul>
+      )}
+      {all.length > 0 && (
+        <div className="report-actions gadd-actions">
+          <Button type="button" onClick={onClose}>
+            {t('common.done')}
+          </Button>
+        </div>
       )}
     </Sheet>
   );

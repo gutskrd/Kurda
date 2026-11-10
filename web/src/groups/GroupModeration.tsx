@@ -82,7 +82,8 @@ function Who({ userId, username, avatarUrl, sub }: { userId: string; username: s
 /**
  * "Requests to come back": each with the person, their note, when they asked
  * and how often they were turned down before — what the decision needs — and
- * Approve and Decline. An empty list says so.
+ * Approve and Decline. The group's page shows it only while somebody asks, so
+ * it never has an empty list to explain.
  */
 export function RequestsSection({
   requests,
@@ -111,8 +112,6 @@ export function RequestsSection({
       </h3>
       {requests === null ? (
         error ? <p className="ginfo-hint">{error}</p> : <ListSkeleton />
-      ) : requests.length === 0 ? (
-        <p className="ginfo-hint">{t('groups.requests.none')}</p>
       ) : (
         <ul className="gmod-list">
           {requests.map((r) => {

@@ -284,11 +284,11 @@ describe('NotificationsBell', () => {
     expect(screen.getByText('Welcome to Çem League.')).toBeInTheDocument();
   });
 
-  it('says news about a group in the reader’s words, and opens the group', async () => {
+  it('says news about a group in the reader’s words, and opens the group for someone still in it or banned from it', async () => {
     signIn();
     const group = (id: string, data: Note) => ({ id, category: 'friends', title: 'x', body: 'x', createdAt: now(), readAt: null, data: { groupId: 'g1', groupName: 'Amed', ...data } });
     serve([
-      group('n1', { kind: 'group_removed', privacy: 'open' }),
+      group('n1', { kind: 'group_removed' }),
       group('n2', { kind: 'group_banned', duration: '7d', reason: null }),
       group('n3', { kind: 'group_request', count: 2 }),
       group('n4', { kind: 'group_request_approved', rejoined: true }),
@@ -296,8 +296,9 @@ describe('NotificationsBell', () => {
     ]);
     show();
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
-    expect(screen.getByRole('link', { name: 'You were removed from Amed' })).toHaveAttribute('href', '/app/messages?group=g1');
-    expect(screen.getByText('You can join again.')).toBeInTheDocument();
+    // removed, they are not shown the group any more: the line opens their conversations
+    expect(screen.getByRole('link', { name: 'You were removed from Amed' })).toHaveAttribute('href', '/app/messages');
+    expect(screen.getByText('An admin can add you again.')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'You were banned from Amed for a week' })).toHaveAttribute('href', '/app/messages?group=g1');
     expect(screen.getByRole('link', { name: '2 people asked to rejoin Amed' })).toHaveAttribute('href', '/app/messages?group=g1&info=requests');
     expect(screen.getByRole('link', { name: 'You’re back in Amed' })).toHaveAttribute('href', '/app/messages?group=g1');

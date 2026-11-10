@@ -220,19 +220,30 @@ describe('Messages', () => {
     await waitFor(() => expect(screen.getByText('zana is typing…')).toBeInTheDocument());
   });
 
-  it('creates a group from the Groups tab', async () => {
+  /** "New group" at the top of Messages: the first of them when an empty list offers it too. */
+  const pressNewGroup = async (): Promise<void> => {
+    await userEvent.click((await screen.findAllByRole('button', { name: 'New group' }))[0]!);
+  };
+
+  it('starts a group in one tap from Messages with only a name, then opens its chat with the add-friends sheet up', async () => {
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     const calls: Array<{ url: string; body: unknown }> = [];
+    const made = {
+      id: 'g-new', name: 'Kurmancî learners', description: null, ownerId: 'me', archivedAt: null, memberCount: 1, photoUrl: null,
+      myRole: 'owner', standing: { kind: 'member', role: 'owner' },
+      members: [{ userId: 'me', username: 'ada', avatarUrl: null, role: 'owner', joinedAt: '2026-01-01T00:00:00.000Z' }],
+    };
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init?: RequestInit) => {
-        if (url.includes('/groups') && !url.includes('/me/groups') && init?.method === 'POST') {
+        if (url.endsWith('/groups') && init?.method === 'POST') {
           calls.push({ url, body: init.body ? JSON.parse(init.body as string) : null });
           return jsonResponse(201, { id: 'g-new' });
         }
         if (url.includes('/me/groups')) return jsonResponse(200, { groups: [] });
+        if (url.includes('/friends?limit=500')) return jsonResponse(200, { friends: [{ userId: 'u-roj', username: 'roj', displayName: 'Roj', avatarUrl: null }] });
         if (url.includes('/groups/g-new/chat')) return jsonResponse(200, { messages: [] });
-        if (url.includes('/groups/g-new')) return jsonResponse(200, { id: 'g-new', name: 'Kurmancî learners', memberCount: 1 });
+        if (url.endsWith('/groups/g-new')) return jsonResponse(200, made);
         if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
         if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
         return jsonResponse(200, {});
@@ -241,23 +252,57 @@ describe('Messages', () => {
 
     renderApp(<Messages />, ['/app/messages']);
 
-    await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
-    await userEvent.click(await screen.findByRole('button', { name: /new group/i }));
-    await userEvent.type(screen.getByLabelText('Name'), 'Kurmancî learners');
-    await userEvent.click(screen.getByRole('button', { name: /create group/i }));
+    // one tap, on the list everyone lands on: no tab to find first
+    await pressNewGroup();
+    const form = within(screen.getByRole('dialog', { name: 'New group' }));
+    // a name is all it asks: nothing to choose about who may find or join it
+    expect(form.queryByText(/privacy|invite-only|anyone can/i)).not.toBeInTheDocument();
+    expect(form.queryByRole('button', { name: /^open$/i })).not.toBeInTheDocument();
+    expect(form.getByRole('button', { name: 'Create group' })).toBeDisabled();
+    await userEvent.type(form.getByLabelText('Name'), 'Kurmancî learners');
+    await userEvent.click(form.getByRole('button', { name: 'Create group' }));
 
-    const created = calls.find((c) => c.url.includes('/groups'));
-    expect(created?.body).toMatchObject({ name: 'Kurmancî learners', privacy: 'open' });
+    await waitFor(() => expect(calls).toHaveLength(1));
+    expect(calls[0]!.body).toEqual({ name: 'Kurmancî learners' });
+
+    // the group's chat opens with its add-friends sheet up, the friends listed, nothing pressed
+    const sheet = within(await screen.findByRole('dialog', { name: 'Add friends' }));
+    expect(await sheet.findByRole('button', { name: 'Add Roj' })).toBeInTheDocument();
+    await userEvent.click(sheet.getByRole('button', { name: 'Done' }));
+    expect(await screen.findByText('This is the start of Kurmancî learners')).toBeInTheDocument();
+  });
+
+  it('offers to start a group where there are none yet, and nowhere a way to find or join someone else’s', async () => {
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    const asked: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        asked.push(`${init?.method ?? 'GET'} ${url}`);
+        if (url.includes('/me/groups')) return jsonResponse(200, { groups: [] });
+        if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Messages />, ['/app/messages']);
+
+    await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
+    const empty = (await screen.findByRole('heading', { name: 'No groups yet' })).closest('.state') as HTMLElement;
+    expect(within(empty).getByText('Start a group and add your friends to chat together.')).toBeInTheDocument();
+    await userEvent.click(within(empty).getByRole('button', { name: 'New group' }));
+    expect(screen.getByRole('dialog', { name: 'New group' })).toBeInTheDocument();
+
+    expect(screen.queryByRole('button', { name: /discover|join/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('searchbox', { name: /search groups/i })).not.toBeInTheDocument();
+    // the list of everyone's groups is never asked for
+    expect(asked.some((a) => /^GET \S+\/groups$/.test(a) && !a.includes('/me/groups'))).toBe(false);
   });
 
   describe('the group limits', () => {
     const owned = (n: number) =>
       Array.from({ length: n }, (_, i) => ({
-        id: `o${i}`, name: `Mine ${i}`, description: null, privacy: 'open', ownerId: 'me', archivedAt: null, memberCount: 1, myRole: 'owner',
-      }));
-    const joined = (n: number) =>
-      Array.from({ length: n }, (_, i) => ({
-        id: `j${i}`, name: `Theirs ${i}`, description: null, privacy: 'open', ownerId: 'u9', archivedAt: null, memberCount: 3, myRole: 'member',
+        id: `o${i}`, name: `Mine ${i}`, description: null, ownerId: 'me', archivedAt: null, memberCount: 1, myRole: 'owner',
       }));
     const stub = (mine: unknown[], onCreate?: () => Response) => {
       localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
@@ -270,7 +315,6 @@ describe('Messages', () => {
             return onCreate ? onCreate() : jsonResponse(201, { id: 'g-new' });
           }
           if (url.includes('/me/groups')) return jsonResponse(200, { groups: mine });
-          if (url.endsWith('/groups')) return jsonResponse(200, { groups: [{ id: 'g2', name: 'Open Circle', description: null, privacy: 'open', ownerId: 'u9', archivedAt: null, memberCount: 4 }] });
           if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
           if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
           return jsonResponse(200, {});
@@ -283,7 +327,7 @@ describe('Messages', () => {
       const posts = stub(owned(10));
       renderApp(<Messages />, ['/app/messages']);
       await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
-      await userEvent.click(await screen.findByRole('button', { name: /new group/i }));
+      await pressNewGroup();
 
       expect(await screen.findByText(/You run 10 groups, the most one person can/)).toBeInTheDocument();
       await userEvent.type(screen.getByLabelText('Name'), 'One more');
@@ -295,42 +339,30 @@ describe('Messages', () => {
       stub([...owned(9), { ...owned(1)[0]!, id: 'old', archivedAt: '2026-01-01T00:00:00.000Z' }]);
       renderApp(<Messages />, ['/app/messages']);
       await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
-      await userEvent.click(await screen.findByRole('button', { name: /new group/i }));
+      await pressNewGroup();
       await userEvent.type(screen.getByLabelText('Name'), 'The tenth');
       expect(screen.getByRole('button', { name: /create group/i })).toBeEnabled();
       expect(screen.queryByText(/the most one person can/)).not.toBeInTheDocument();
-    });
-
-    it('waits on Join, and says why, once you are in as many groups as anyone may be', async () => {
-      stub(joined(50));
-      renderApp(<Messages />, ['/app/messages']);
-      await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
-      await userEvent.click(await screen.findByRole('button', { name: /discover/i }));
-
-      expect(await screen.findByRole('button', { name: 'Join: Open Circle' })).toBeDisabled();
-      expect(screen.getByText(/You’re in 50 groups, the most one person can be in/)).toBeInTheDocument();
     });
 
     it('says which limit the server reached when it refuses', async () => {
       stub([], () => jsonResponse(409, { code: 'LIMIT_REACHED', message: 'you can own at most 10 groups', details: { limit: 'groups_owned', max: 10 } }));
       renderApp(<Messages />, ['/app/messages']);
       await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
-      await userEvent.click(await screen.findByRole('button', { name: /new group/i }));
+      await pressNewGroup();
       await userEvent.type(screen.getByLabelText('Name'), 'Raced');
       await userEvent.click(screen.getByRole('button', { name: /create group/i }));
       expect(await screen.findByRole('alert')).toHaveTextContent(/You run 10 groups, the most one person can/);
     });
   });
 
-  it('shows groups I already belong to in Discover, marked as joined', async () => {
+  it('lists only the groups I am in, each opening its chat', async () => {
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
-    const mineG = { id: 'g1', name: 'My Club', description: null, privacy: 'open', ownerId: 'me', archivedAt: null, memberCount: 1, myRole: 'owner' };
-    const publicG = { id: 'g2', name: 'Open Circle', description: null, privacy: 'open', ownerId: 'u9', archivedAt: null, memberCount: 4 };
+    const mineG = { id: 'g1', name: 'My Club', description: null, ownerId: 'me', archivedAt: null, memberCount: 1, myRole: 'owner' };
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
         if (url.includes('/me/groups')) return jsonResponse(200, { groups: [mineG] });
-        if (url.endsWith('/groups') || url.includes('/groups?')) return jsonResponse(200, { groups: [mineG, publicG] });
         if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
         if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
         return jsonResponse(200, {});
@@ -339,20 +371,18 @@ describe('Messages', () => {
     renderApp(<Messages />, ['/app/messages']);
 
     await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
-    await userEvent.click(await screen.findByRole('button', { name: /discover/i }));
-
-    // my own group appears with Open (not Join), which goes to its thread
-    expect(await screen.findByRole('link', { name: 'Open: My Club' })).toHaveAttribute('href', '/app/messages?group=g1');
-    // a group I'm not in still offers Join
-    expect(screen.getByText('Open Circle')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Join: Open Circle' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: /My Club/ })).toHaveAttribute('href', '/app/messages?group=g1');
+    // how many are in it, and no word about who may come in
+    expect(screen.getByText('1 members')).toBeInTheDocument();
+    expect(screen.queryByText(/invite-only|open group/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /discover|join/i })).not.toBeInTheDocument();
   });
 
   it('lets a group owner promote a member to group admin', async () => {
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     const calls: Array<{ url: string; method: string; body: unknown }> = [];
     const detail = {
-      id: 'g1', name: 'Test Group', description: null, privacy: 'open', ownerId: 'me',
+      id: 'g1', name: 'Test Group', description: null, ownerId: 'me',
       archivedAt: null, memberCount: 2, myRole: 'owner',
       members: [
         { userId: 'me', username: 'ada', role: 'owner', joinedAt: '2026-01-01T00:00:00.000Z' },
@@ -390,7 +420,7 @@ describe('Messages', () => {
   function stubGroup(myRole: 'owner' | 'moderator' | 'member', calls: Array<{ url: string; method: string }>) {
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     const detail = {
-      id: 'g1', name: 'Test Group', description: null, privacy: 'open', ownerId: myRole === 'owner' ? 'me' : 'u9',
+      id: 'g1', name: 'Test Group', description: null, ownerId: myRole === 'owner' ? 'me' : 'u9',
       archivedAt: null, memberCount: 2, myRole,
       members: [
         { userId: 'me', username: 'ada', role: myRole, joinedAt: '2026-01-01T00:00:00.000Z' },
