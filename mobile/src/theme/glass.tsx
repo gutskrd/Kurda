@@ -444,7 +444,8 @@ export function GlassSelect<T extends string>({
         )}
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.selectBackdrop} onPress={() => setOpen(false)}>
+        {/* the palette's scrim, which is deeper by evening; a literal here dimmed the dark page too little */}
+        <Pressable style={[styles.selectBackdrop, { backgroundColor: colors.scrim }]} onPress={() => setOpen(false)}>
           <Pressable onPress={() => undefined} style={styles.selectMenuWrap}>
             {/* the menu grows in from just under its size as the scrim fades */}
             <MenuIn>
@@ -548,7 +549,7 @@ const styles = StyleSheet.create({
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
   segTextActive: { fontWeight: typography.weights.semibold },
   segTextWrap: { lineHeight: SEG_LINE, textAlign: 'center' },
-  selectBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
+  selectBackdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   selectMenuWrap: { alignSelf: 'stretch' },
   selectMenu: { alignSelf: 'stretch', gap: spacing.xs },
   selectMenuTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginBottom: spacing.xs },
