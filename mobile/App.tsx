@@ -75,7 +75,6 @@ import { unreadBadge } from './src/notifications/inbox';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
 import { GroupThreadScreen } from './src/groups/GroupThreadScreen';
-import { ClubsScreen } from './src/groups/ClubsScreen';
 import { GroupMembersScreen } from './src/groups/GroupMembersScreen';
 import { GroupEditScreen } from './src/groups/GroupEditScreen';
 import { GroupRequestsScreen } from './src/groups/GroupRequestsScreen';
@@ -243,7 +242,6 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
       titleKey: null,
       links: [
         { key: 'friends', labelKey: 'nav.friends', icon: 'people', onPress: () => require('friends') && navigation.navigate('Friends') },
-        { key: 'clubs', labelKey: 'groups.discover', icon: 'people', onPress: () => require('groups') && navigation.navigate('Clubs') },
       ],
     },
     {
@@ -509,13 +507,6 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Clubs" options={{ presentation: 'card' }}>
-        {({ navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
-            <ClubsScreen onExit={() => navigation.goBack()} />
-          </GuestWall>
-        )}
-      </RootStack.Screen>
       <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }} getId={groupThreadRouteId}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={() => navigation.goBack()}>
@@ -523,6 +514,8 @@ function SignedInRoot() {
               groupId={route.params.groupId}
               name={route.params.name}
               openGift={route.params.openGift}
+              addFriends={route.params.addFriends}
+              onFindPeople={() => navigation.navigate('Tabs', { screen: 'Search' })}
               onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
               onExit={() => navigation.goBack()}
               onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}

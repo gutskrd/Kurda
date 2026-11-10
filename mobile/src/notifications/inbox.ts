@@ -26,8 +26,8 @@ export type DeepLink =
   | { screen: 'Badges' }
   /** safe this week, moved up a league, a Pêla week: the league */
   | { screen: 'League' }
-  /** someone asked to come back to a group you run: its page, where the requests are */
-  | { screen: 'GroupMembers'; params: { groupId: string } }
+  /** someone asked to come back to a group you run: the requests themselves, waiting on an answer */
+  | { screen: 'GroupRequests'; params: { groupId: string } }
   // gifts, report outcomes and decisions on your account (reports/deepLinks.ts)
   | SocialDeepLink;
 
@@ -38,7 +38,13 @@ function str(v: unknown): string | null {
 /**
  * What a group tells someone about their place in it (api groups): removed,
  * banned, someone asking to come back (to its owner and admins), and the
- * answer to asking. Each carries the group's id, and opens the group.
+ * answer to asking. Each carries the group's id.
+ *
+ * A group is private, so a notice opens it only for someone it is still shown
+ * to: a member, or someone banned, who sees where they stand and can ask to
+ * come back. Removed, or let back without being put back in, the reader is
+ * out of it, and its screen would only say there is no such group — so those
+ * two open nothing, and the line itself says an admin can add them again.
  */
 const GROUP_NOTICES = ['group_removed', 'group_banned', 'group_request', 'group_request_approved', 'group_request_declined'] as const;
 
@@ -64,11 +70,14 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
     const lobbyId = str(data.lobbyId);
     return inviteId && lobbyId && isPlayGame(data.game) ? { screen: 'PlayInvite', params: { inviteId, game: data.game, lobbyId } } : null;
   }
-  // a group, about one's place in it: the requests on the group's page, anything else in the group itself
+  // a group, about one's place in it: the requests waiting on an answer, or the group itself while it is still shown to them
   if (isGroupNotice(data)) {
     const groupId = str(data.groupId);
     if (!groupId) return null;
-    return data.kind === 'group_request' ? { screen: 'GroupMembers', params: { groupId } } : { screen: 'GroupThread', params: { groupId, name: str(data.groupName) ?? '' } };
+    if (data.kind === 'group_request') return { screen: 'GroupRequests', params: { groupId } };
+    const letBackOnly = data.kind === 'group_request_approved' && (data.rejoined === false || data.rejoined === 'false');
+    if (data.kind === 'group_removed' || letBackOnly) return null;
+    return { screen: 'GroupThread', params: { groupId, name: str(data.groupName) ?? '' } };
   }
   // progress (contract 4): badges and the weekly league
   if (data.kind === 'badge') return { screen: 'Badges' };

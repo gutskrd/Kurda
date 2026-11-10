@@ -32,7 +32,6 @@ const detail = (over: Record<string, unknown> = {}) =>
     id: 'g1',
     name: 'Newroz club',
     description: null,
-    privacy: 'open',
     ownerId: 'u-owner',
     archivedAt: null,
     memberCount: 6,
@@ -45,11 +44,21 @@ const detail = (over: Record<string, unknown> = {}) =>
 
 const sent = (body: string) => ({ id: 'm-new', senderId: 'me', username: 'rojda', avatarUrl: null, body, createdAt: new Date().toISOString(), deleted: false });
 
-function open(routes: Record<string, unknown>) {
+function open(routes: Record<string, unknown>, props: { addFriends?: boolean; onFindPeople?: () => void } = {}) {
   const client = fakeClient({ 'POST /groups/g1/chat/read': ok({ ok: true }), 'GET /groups/g1': detail(), ...routes } as never);
   testAuth.client = client;
   testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
-  renderWithProviders(<GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />);
+  renderWithProviders(
+    <GroupThreadScreen
+      groupId="g1"
+      name="Newroz club"
+      addFriends={props.addFriends}
+      onExit={() => undefined}
+      onOpenMembers={() => undefined}
+      onLeft={() => undefined}
+      onFindPeople={props.onFindPeople ?? (() => undefined)}
+    />,
+  );
   return client;
 }
 
@@ -124,10 +133,9 @@ describe('an empty group chat', () => {
   });
 });
 
-describe('bringing friends into an invite-only group', () => {
+describe('bringing friends into a group', () => {
   const lonely = (myRole: string, over: Record<string, unknown> = {}) =>
     detail({
-      privacy: 'invite',
       memberCount: 1,
       myRole,
       members: [{ userId: 'me', username: 'rojda', avatarUrl: null, role: myRole, joinedAt: ago(HOUR) }],
@@ -161,14 +169,44 @@ describe('bringing friends into an invite-only group', () => {
     expect(await screen.findByText('berfin is banned from this group. Unban them first.')).toBeTruthy();
   });
 
-  it('is not offered in an open group, nor to a member who does not run the group', async () => {
-    open({ 'GET /groups/g1/chat': ok({ messages: [] }), 'GET /groups/g1': lonely('owner', { privacy: 'open' }) });
+  it('is not offered to a member who does not run the group', async () => {
+    open({ 'GET /groups/g1/chat': ok({ messages: [] }), 'GET /groups/g1': lonely('member') });
     await screen.findByText('This is the start of Newroz club');
     await waitFor(() => expect(testAuth.client.get).toHaveBeenCalledWith('/groups/g1'));
     expect(screen.queryByRole('button', { name: 'Add friends' })).toBeNull();
-    cleanup();
-    open({ 'GET /groups/g1/chat': ok({ messages: [] }), 'GET /groups/g1': lonely('member') });
-    await screen.findByText('This is the start of Newroz club');
-    expect(screen.queryByRole('button', { name: 'Add friends' })).toBeNull();
+  });
+
+  it('opens by itself on a group made a moment ago, with the friends listed, and Done leaves the chat that greets it', async () => {
+    const client = open(
+      { 'GET /groups/g1/chat': ok({ messages: [] }), 'GET /groups/g1': lonely('owner'), 'GET /friends?limit=500': friends, 'POST /groups/g1/invite': ok({ ok: true }) },
+      { addFriends: true },
+    );
+    // nothing was tapped: the sheet is up, the friends in it
+    const add = await screen.findByRole('button', { name: 'Add azad' });
+    expect(screen.getByRole('button', { name: 'Add berfin' })).toBeTruthy();
+    await act(async () => {
+      fireEvent.click(add);
+    });
+    expect(client.calls.find((c) => c.path === '/groups/g1/invite')?.body).toEqual({ userId: 'u2' });
+    const asked = () => client.calls.filter((c) => c.method === 'GET' && c.path === '/groups/g1').length;
+    const before = asked();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    });
+    // closing reads the group again, for whoever was added, and leaves its chat
+    await waitFor(() => expect(asked()).toBe(before + 1));
+    expect(screen.getByText('This is the start of Newroz club')).toBeTruthy();
+    expect(screen.getByLabelText('Message…')).toBeTruthy();
+  });
+
+  it('tells a new group’s owner with no friends yet so, with the way to find people, not an empty sheet', async () => {
+    const onFindPeople = vi.fn();
+    open(
+      { 'GET /groups/g1/chat': ok({ messages: [] }), 'GET /groups/g1': lonely('owner'), 'GET /friends?limit=500': ok({ friends: [] }) },
+      { addFriends: true, onFindPeople },
+    );
+    expect(await screen.findByText(/You have no friends here yet\./)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Find people' }));
+    expect(onFindPeople).toHaveBeenCalled();
   });
 });

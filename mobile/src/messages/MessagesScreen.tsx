@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { Animated, type FlatList, Pressable, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { groupLimits, type LimitDetails } from '@kurda/shared';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
@@ -26,6 +27,7 @@ import { useOpenSlide } from '../social/SocialSlide';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { TicketBadge } from '../play/Ticket';
 import { GroupAvatar } from '../groups/GroupAvatar';
+import { NewGroupSheet } from '../groups/NewGroupSheet';
 import { resolveDeepLink, type InboxItem } from '../notifications/inbox';
 import { messagePreview } from '../chat/preview';
 import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
@@ -63,6 +65,13 @@ interface RequestRow {
  * that checks on somebody's wellbeing is pinned above everything until it is
  * read: it is the kind of message that must never be missed.
  *
+ * A group starts here, in one tap: "New group" is a row at the head of the
+ * list (and the button of the empty states, which stand in for the row when
+ * there is nothing under it). It asks for a name; the group's chat then opens
+ * with the sheet for adding friends, since a group is private and its owner
+ * bringing friends in is the only way anyone else comes into it. There are
+ * no groups to find and none to join.
+ *
  * Notifications are not here any more. They are the bell on Home: what
  * arrived *about* you is not a conversation *with* anybody.
  */
@@ -89,6 +98,9 @@ export function MessagesScreen(): React.JSX.Element {
   const [refreshing, setRefreshing] = useState(false);
   // the conversations could not be read at all: say so and offer to try again, rather than "No messages yet"
   const [failed, setFailed] = useState(false);
+  // starting a group: the sheet, and the limit that would refuse one, counted from the reader's own groups as the server counts them
+  const [composing, setComposing] = useState(false);
+  const [createLimit, setCreateLimit] = useState<LimitDetails | null>(null);
 
   const listRef = useRef<FlatList<MessageRow>>(null);
   useScrollToTop(listRef);
@@ -112,6 +124,7 @@ export function MessagesScreen(): React.JSX.Element {
     setFailed(!c.ok);
     if (c.ok) setChats(c.data.conversations);
     setGroups(nextGroups);
+    if (g.ok) setCreateLimit(groupLimits(g.data.groups).create);
     if (r.ok) setRequests(r.data.requests);
     if (n.ok) {
       setCaringItems(n.data.notifications.filter((i) => !i.readAt && resolveDeepLink(i.data)?.screen === 'CaringMessage'));
@@ -169,8 +182,11 @@ export function MessagesScreen(): React.JSX.Element {
       : navigation.navigate('GroupThread', { groupId: row.group.id, name: row.group.name });
 
   const findFriends = () => navigation.navigate('Search');
+  const newGroup = () => setComposing(true);
   const nothingAtAll = chats !== null && chats.length === 0 && groups.length === 0;
   const typed = query.trim().length > 0;
+  // the row that starts a group: at the head of a list that has something in it (an empty one offers it as its button)
+  const offersNewGroup = chats !== null && !nothingAtAll && !typed && (filter === 'all' || (filter === 'groups' && groups.length > 0));
 
   const header = (
     <View style={styles.listHead}>
@@ -224,6 +240,26 @@ export function MessagesScreen(): React.JSX.Element {
           <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />
         </PressableScale>
       ) : null}
+
+      {offersNewGroup ? (
+        <PressableScale
+          onPress={newGroup}
+          accessibilityRole="button"
+          accessibilityLabel={t('groups.new')}
+          testID="messages-new-group"
+          style={[styles.requests, { backgroundColor: colors.surface, flexDirection: dir.row }]}
+        >
+          <View style={styles.faces}>
+            <View style={[styles.newGroupMark, { backgroundColor: colors.controlTrack }]}>
+              <Icon name="people" size={20} tone="primary" />
+            </View>
+          </View>
+          <Text style={[styles.rowName, styles.unreadName, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+            {t('groups.new')}
+          </Text>
+          <Icon name="plus" size={18} color={colors.textSecondary} />
+        </PressableScale>
+      ) : null}
     </View>
   );
 
@@ -237,13 +273,14 @@ export function MessagesScreen(): React.JSX.Element {
     ) : filter === 'unread' ? (
       <Text style={[styles.note, { color: colors.textSecondary }]}>{t('messages.noUnread')}</Text>
     ) : filter === 'groups' ? (
-      <EmptyState
-        title={t('groups.noGroupsYet')}
-        body={t('groups.noGroupsBody')}
-        action={{ label: t('groups.discover'), onPress: () => navigation.navigate('Clubs') }}
-      />
+      <EmptyState title={t('groups.noGroupsYet')} body={t('groups.noGroupsBody')} action={{ label: t('groups.new'), onPress: newGroup }} />
     ) : (
-      <EmptyState title={t('messages.empty')} body={t('messages.empty.body')} action={{ label: t('messages.findFriends'), onPress: findFriends }} />
+      <EmptyState
+        title={t('messages.empty')}
+        body={t('messages.empty.body')}
+        action={{ label: t('messages.findFriends'), onPress: findFriends }}
+        secondary={{ label: t('groups.new'), onPress: newGroup }}
+      />
     );
 
   /*
@@ -331,18 +368,6 @@ export function MessagesScreen(): React.JSX.Element {
           </>
         }
         ListEmptyComponent={empty}
-        ListFooterComponent={
-          filter === 'groups' && groups.length > 0 ? (
-            <Pressable
-              onPress={() => navigation.navigate('Clubs')}
-              accessibilityRole="button"
-              style={({ pressed }) => [styles.discover, { opacity: pressed ? 0.6 : 1, flexDirection: dir.row }]}
-            >
-              <Icon name="people" size={20} color={colors.textPrimary} />
-              <Text style={[styles.discoverText, { color: colors.textPrimary }]}>{t('groups.discover')}</Text>
-            </Pressable>
-          ) : null
-        }
         contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
@@ -350,6 +375,16 @@ export function MessagesScreen(): React.JSX.Element {
         showsVerticalScrollIndicator={false}
       />
       <CaringMessageDialog message={caring} onClose={() => setCaring(null)} />
+      <NewGroupSheet
+        open={composing}
+        limit={createLimit}
+        onClose={() => setComposing(false)}
+        onCreated={(id, name) => {
+          setComposing(false);
+          // on to its chat, where the sheet for adding friends opens by itself
+          navigation.navigate('GroupThread', { groupId: id, name, addFriends: true });
+        }}
+      />
     </GradientBackground>
   );
 }
@@ -482,8 +517,8 @@ const styles = StyleSheet.create({
   when: { fontSize: typography.sizes.xs },
   count: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   countText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  discover: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, marginTop: spacing.sm },
-  discoverText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  // "New group": a row shaped like the requests row above it, its mark where the faces are
+  newGroupMark: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 
   // a guest's tab: the offer, centred under the title with room above it
   guest: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: spacing.xl },

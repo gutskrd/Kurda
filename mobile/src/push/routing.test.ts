@@ -50,9 +50,14 @@ describe('pushTarget: each push the API sends opens somewhere sensible', () => {
     expect(await landing(data)).toEqual([['Chat', { userId: FRIEND, username: '', openGift: 'gf1' }]]);
   });
 
-  it('a group’s news about one’s place in it opens the group, and a request to come back its page', async () => {
+  it('a group’s news about one’s place in it opens the group, and a request to come back the requests', async () => {
     expect(await landing({ kind: 'group_banned', groupId: CLUB, category: 'friends' })).toEqual([['GroupThread', { groupId: CLUB, name: '' }]]);
-    expect(await landing({ kind: 'group_request', groupId: CLUB, category: 'friends' })).toEqual([['GroupMembers', { groupId: CLUB }]]);
+    expect(await landing({ kind: 'group_request', groupId: CLUB, category: 'friends' })).toEqual([['GroupRequests', { groupId: CLUB }]]);
+  });
+
+  it('news that leaves one out of a group opens the notification list, not a group that is no longer shown to them', async () => {
+    expect(await landing({ kind: 'group_removed', groupId: CLUB, category: 'friends' })).toEqual([['NotificationCenter', undefined]]);
+    expect(await landing({ kind: 'group_request_approved', rejoined: 'false', groupId: CLUB, category: 'friends' })).toEqual([['NotificationCenter', undefined]]);
   });
 
   it('a report outcome, or a decision on the account, opens where those are', async () => {

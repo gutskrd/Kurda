@@ -77,18 +77,17 @@ export function notificationText(item: Pick<InboxItem, 'title' | 'body' | 'data'
 
 /**
  * A group's news about one's place in it, in the reader's language, from what
- * the server puts in `data` beside its English line: the group's name and
- * whether it is open, how long a ban is and why, how many ask to come back,
- * whether the person is back in, and when they may ask again. Without the
- * group's name there is nothing to say it with, and the server's line stays.
+ * the server puts in `data` beside its English line: the group's name, how
+ * long a ban is and why, how many ask to come back, whether the person is
+ * back in, and when they may ask again. Without the group's name there is
+ * nothing to say it with, and the server's line stays.
  */
 function groupText(data: Record<string, unknown>, t: Translate, locale: string): { title: string; body: string } | null {
   const group = typeof data.groupName === 'string' && data.groupName ? data.groupName : null;
   if (!group || !isGroupNotice(data)) return null;
-  const invite = data.privacy === 'invite';
   switch (data.kind) {
     case 'group_removed':
-      return { title: t('notifications.group.removedTitle'), body: t(invite ? 'notifications.group.removedInvite' : 'notifications.group.removedOpen', { group }) };
+      return { title: t('notifications.group.removedTitle'), body: t('notifications.group.removed', { group }) };
     case 'group_banned': {
       const span = data.duration === '1d' ? 'notifications.group.bannedDay' : data.duration === '7d' ? 'notifications.group.bannedWeek' : data.duration === 'perm' ? 'notifications.group.bannedForGood' : null;
       if (!span) return null;
@@ -105,9 +104,9 @@ function groupText(data: Record<string, unknown>, t: Translate, locale: string):
       };
     }
     case 'group_request_approved': {
+      // let back but not put back in: nobody comes into a group by themselves, so an admin has to add them
       const back = data.rejoined === 'true' || data.rejoined === true;
-      const body = back ? 'notifications.group.approvedBack' : invite ? 'notifications.group.approvedAdd' : 'notifications.group.approvedJoin';
-      return { title: t('notifications.group.approvedTitle'), body: t(body, { group }) };
+      return { title: t('notifications.group.approvedTitle'), body: t(back ? 'notifications.group.approvedBack' : 'notifications.group.approvedAdd', { group }) };
     }
     default: {
       const until = typeof data.until === 'string' ? data.until : null;

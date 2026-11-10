@@ -51,12 +51,20 @@ describe('resolveDeepLink', () => {
 describe('a group’s notices about one’s place in it', () => {
   const group = '3c8d5b20-0000-4000-8000-000000000007';
 
-  it('opens the group itself, and a request to come back on the group’s page where the requests are', () => {
-    for (const kind of ['group_removed', 'group_banned', 'group_request_approved', 'group_request_declined']) {
+  it('opens the group for someone it is still shown to, and a request to come back on the requests themselves', () => {
+    // banned, or back in: the group's screen has something to say to them
+    for (const kind of ['group_banned', 'group_request_declined']) {
       expect(resolveDeepLink({ kind, groupId: group })).toEqual({ screen: 'GroupThread', params: { groupId: group, name: '' } });
     }
-    expect(resolveDeepLink({ kind: 'group_request', groupId: group })).toEqual({ screen: 'GroupMembers', params: { groupId: group } });
+    expect(resolveDeepLink({ kind: 'group_request_approved', rejoined: 'true', groupId: group })).toEqual({ screen: 'GroupThread', params: { groupId: group, name: '' } });
+    expect(resolveDeepLink({ kind: 'group_request', groupId: group })).toEqual({ screen: 'GroupRequests', params: { groupId: group } });
     expect(resolveDeepLink({ kind: 'group_banned' })).toBeNull();
+  });
+
+  it('opens nothing for someone a group has left out: its screen would only say there is no such group', () => {
+    expect(resolveDeepLink({ kind: 'group_removed', groupId: group })).toBeNull();
+    expect(resolveDeepLink({ kind: 'group_request_approved', rejoined: 'false', groupId: group })).toBeNull();
+    expect(resolveDeepLink({ kind: 'group_request_approved', rejoined: false, groupId: group })).toBeNull();
   });
 
   it('wears a picture of what happened', () => {

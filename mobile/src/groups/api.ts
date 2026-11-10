@@ -13,12 +13,15 @@ import type {
   Role,
 } from '@kurda/shared';
 
-/** A club the reader belongs to, with the role they hold in it. */
+/**
+ * A group the reader belongs to, with the role they hold in it. Every group
+ * is private: its members see it, and the only way in is to be added by its
+ * owner or an admin who is your friend.
+ */
 export interface Group {
   id: string;
   name: string;
   description: string | null;
-  privacy: 'open' | 'invite';
   ownerId: string | null;
   archivedAt: string | null;
   memberCount: number;
@@ -94,39 +97,26 @@ export function groupUnread(
   return client.get<{ unread: Array<{ groupId: string; unread: number }> }>('/me/groups/unread');
 }
 
-/**
- * Clubs anyone can find, newest first and capped by the server at thirty.
- *
- * Invite-only clubs appear here too — being discoverable and being joinable are
- * different things, and hiding them would make the club you were told about
- * simply not exist. One the reader is banned from may say so (`banned`);
- * joining it is refused either way (403 GROUP_BANNED).
- */
-export function discoverGroups(client: ApiClient): Promise<ApiResult<{ groups: Array<Group & { joined?: boolean; banned?: boolean }> }>> {
-  return client.get<{ groups: Array<Group & { joined?: boolean; banned?: boolean }> }>('/groups');
-}
-
-export function joinGroup(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {
-  return client.post<{ ok: true }>(`/groups/${groupId}/join`);
-}
-
 export function leaveGroup(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {
   return client.post<{ ok: true }>(`/groups/${groupId}/leave`);
 }
 
-export function createGroup(
-  client: ApiClient,
-  input: { name: string; description?: string; privacy?: 'open' | 'invite' },
-): Promise<ApiResult<{ id: string }>> {
+/** Start a group: a name is all it needs. Whoever makes it owns it, and adds their friends from its chat. */
+export function createGroup(client: ApiClient, input: { name: string; description?: string }): Promise<ApiResult<{ id: string }>> {
   return client.post<{ id: string }>('/groups', input);
 }
 
-/** A club's roster, with the reader's own role in it. */
+/**
+ * A group's roster, with the reader's own role in it. Only a member is given
+ * it whole. Someone banned gets the name, the picture and where they stand,
+ * with everything else empty; anyone else is answered 404 GROUP_NOT_FOUND, as
+ * for a group that does not exist.
+ */
 export interface GroupDetail extends Omit<Group, 'myRole'> {
   members: GroupMember[];
-  /** null when the reader is not a member — an open club is readable first */
+  /** null for someone banned, the only non-member who is answered at all */
   myRole: Role | null;
-  /** where the reader stands: a member, out and free to come in, or banned */
+  /** where the reader stands: a member, or banned */
   standing?: GroupStanding;
   /** requests to come back waiting on an answer, for the owner and admins */
   pendingRequests?: number;
@@ -178,8 +168,9 @@ export function clearGroupPhoto(client: ApiClient, groupId: string): Promise<Api
 }
 
 /**
- * Add a friend to an invite-only group, as its owner or an admin. Someone
- * banned from it is refused (409 MEMBER_BANNED) until they are unbanned.
+ * Add a friend to a group, as its owner or an admin: the only way anyone gets
+ * into one. Someone banned from it is refused (409 MEMBER_BANNED) until they
+ * are unbanned.
  */
 export function addToGroup(client: ApiClient, groupId: string, userId: string): Promise<ApiResult<{ ok: true }>> {
   return client.post<{ ok: true }>(`/groups/${groupId}/invite`, { userId });
@@ -197,7 +188,7 @@ export function banMember(
   return client.post<{ ban: GroupBan }>(`/groups/${groupId}/bans`, input);
 }
 
-/** Lift a ban. It does not add them back: they may join, or be added, again. */
+/** Lift a ban. It does not add them back: they may be added again. */
 export function unbanMember(client: ApiClient, groupId: string, userId: string): Promise<ApiResult<unknown>> {
   return client.delete<unknown>(`/groups/${groupId}/bans/${userId}`);
 }
