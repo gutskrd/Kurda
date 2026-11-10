@@ -78,7 +78,9 @@ export function SlideSwap({
     // the slide shown until now leaves, as it was last drawn, the way the reader is going
     const shift = (direction === 'forward' ? -1 : 1) * (mirrored ? -1 : 1) * LEAVE;
     const empty = last.current === null || last.current === undefined || last.current === false;
-    setTurn({ id, leaving: empty ? turn.leaving : { id: turn.id, node: last.current, shift } });
+    // nothing to send off: what was leaving goes on leaving, unless it is the very slide now coming back
+    const before = turn.leaving?.id === id ? null : turn.leaving;
+    setTurn({ id, leaving: empty ? before : { id: turn.id, node: last.current, shift } });
   }
   last.current = children;
   const leaving = turn.leaving;
@@ -107,8 +109,9 @@ export function SlideSwap({
 
 /**
  * One slide, arriving or leaving. It plays as it mounts, and a still never
- * changes its mind; a held slide changes it once, from arriving to leaving,
- * and goes out from wherever its arrival had got to.
+ * changes its mind. A held slide does: turned from arriving to leaving it
+ * goes out from wherever its arrival had got to, and gone back to while it
+ * is still leaving it comes back in from wherever that had got to.
  */
 function Pane({
   role,
@@ -125,20 +128,25 @@ function Pane({
 }): React.JSX.Element {
   const reduce = useReducedMotion();
   const p = useRef(new Animated.Value(role === 'in' && animate ? 0 : 1)).current;
+  // whether the slide is fully there: the first slide is from the start, and one that has begun to leave is not until it has come all the way back
+  const there = useRef(!(role === 'in' && animate));
 
   useEffect(() => {
     if (role === 'in') {
-      if (!animate) return;
+      if (there.current) return;
       const run = reduce ? timing(p, 1, duration.base) : springTo(p, 1, 'standard');
-      run.start();
+      run.start(({ finished }) => {
+        if (finished) there.current = true;
+      });
       return () => run.stop();
     }
+    there.current = false;
     const run = timing(p, 0, duration.base);
     run.start(({ finished }) => {
       if (finished) onDone?.();
     });
     return () => run.stop();
-    // as it mounts, and once more if a held slide is turned from arriving to leaving
+    // as it mounts, and again each time a held slide is turned: from arriving to leaving, or back
   }, [role]);
 
   const motion = reduce

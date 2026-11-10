@@ -136,6 +136,30 @@ describe('a slide giving way to the next', () => {
     expect(screen.getByRole('button', { name: 'second' })).toBeTruthy();
   });
 
+  it('takes a held slide back while it is still leaving, as it stood, and sends the other off', () => {
+    mounted.length = 0;
+    const first = (
+      <SlideSwap id="a" direction="back" held>
+        <Counter name="first" />
+      </SlideSwap>
+    );
+    const { rerender } = render(first);
+    fireEvent.click(screen.getByRole('button', { name: 'first' }));
+    rerender(
+      <SlideSwap id="b" direction="forward" held>
+        <Counter name="second" />
+      </SlideSwap>,
+    );
+    rerender(first);
+    // the same first slide, with its count, no longer leaving; the second goes out by the end side
+    expect(within(screen.getByTestId('slide-in')).getByText('first: 1')).toBeTruthy();
+    expect(within(screen.getByTestId('slide-out-end')).getByText('second: 0, leaving')).toBeTruthy();
+    expect(mounted).toEqual(['first', 'second']);
+    gone();
+    expect(screen.queryByText(/second/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'first' })).toBeTruthy();
+  });
+
   it('sends nothing off for a slide that showed nothing, and lets what was leaving go on leaving', () => {
     const { rerender } = render(
       <SlideSwap id="a" direction="forward" held>
