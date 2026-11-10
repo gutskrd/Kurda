@@ -12,6 +12,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
+import { SwipePager } from '../theme/SwipePager';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -33,6 +34,9 @@ import { useDirection } from '../reports/direction';
 import { knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, weekLeftText, zoneRules, type TableItem } from './format';
 
 type Tab = 'league' | 'board';
+
+/** The league's two pages, in the order the switch shows them. */
+const TABS: readonly Tab[] = ['league', 'board'];
 
 /**
  * Learning Leagues, rebuilt (contract 4 §L, §U).
@@ -100,7 +104,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
         <ScreenHeader title={t('leagues.screenTitle')} onBack={onExit} leading="close" />
         <View style={styles.tabs}>
           <Segmented<Tab>
-            options={['league', 'board']}
+            options={TABS}
             value={tab}
             onChange={setTab}
             labelOf={(k) => (k === 'league' ? t('profile.league') : t('rankings.leaderboard'))}
@@ -109,21 +113,30 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
         </View>
         {/* the week that closed: its ceremony, once, the first time the league is opened after */}
         <LeagueMoment league={league} />
-        {tab === 'league' ? (
-          <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={() => void loadLeague()} skeleton={<LeagueSkeleton />}>
-            {league ? (
-              <LeagueTab
-                league={league}
-                joining={joining}
-                onJoin={() => void setTakingPart(true)}
-                onLeave={() => void setTakingPart(false)}
-                refreshControl={pull}
-              />
-            ) : null}
-          </AsyncBoundary>
-        ) : (
-          <Leaderboard type={boardType} scope={scope} onType={setBoardType} onScope={setScope} />
-        )}
+        {/* the two lie side by side, so a swipe turns from the league to the leaderboard as well as a tap on its name */}
+        <SwipePager<Tab>
+          pages={TABS}
+          value={tab}
+          onChange={setTab}
+          testID="league-pages"
+          renderPage={(page) =>
+            page === 'league' ? (
+              <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={() => void loadLeague()} skeleton={<LeagueSkeleton />}>
+                {league ? (
+                  <LeagueTab
+                    league={league}
+                    joining={joining}
+                    onJoin={() => void setTakingPart(true)}
+                    onLeave={() => void setTakingPart(false)}
+                    refreshControl={pull}
+                  />
+                ) : null}
+              </AsyncBoundary>
+            ) : (
+              <Leaderboard type={boardType} scope={scope} onType={setBoardType} onScope={setScope} />
+            )
+          }
+        />
       </View>
     </GradientBackground>
   );
