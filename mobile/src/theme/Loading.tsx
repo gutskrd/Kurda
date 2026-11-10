@@ -32,5 +32,5 @@ export function Loading({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
-  return <ActivityIndicator size={size} color={colors.textSecondary} accessibilityLabel={label ?? t('common.loading')} style={style} testID="loading" />;
+  return <ActivityIndicator size={size} color={colors.textSecondary} accessibilityLabel={label ?? t('common.loading')} style={style} />;
 }
