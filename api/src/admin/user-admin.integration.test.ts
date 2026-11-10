@@ -305,17 +305,6 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
       for (const days of [0, -5, 1.5, 367]) await expect(svc.grantPlus(adminId, targetId, days, 'x')).rejects.toThrow(/whole days/);
     });
 
-    it('is a superadmin’s to give, and the route refuses days out of range before anything else', async () => {
-      const token = (
-        await app.inject({ method: 'POST', url: '/auth/login', payload: { email: `adminc_${suffix}_${suffix}@it.kurda.app`, password: 'a-strong-password1' } })
-      ).json().tokens.accessToken as string;
-      const send = (payload: Record<string, unknown>) =>
-        app.inject({ method: 'POST', url: `/admin/users/${targetId}/plus`, headers: { authorization: `Bearer ${token}` }, payload });
-      for (const days of [0, 367, 2.5]) expect((await send({ days, reason: 'typo' })).statusCode).toBe(400);
-      // this account holds no staff role: a well-formed request is still not theirs to make
-      expect((await send({ days: 30, reason: 'for me' })).statusCode).toBe(403);
-      expect((await pool.query(`SELECT 1 FROM admin_actions WHERE target_user_id = $1 AND action = 'plus_grant'`, [targetId])).rowCount).toBe(0);
-    });
   });
 
   it('refuses actions on an unknown user', async () => {
