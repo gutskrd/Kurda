@@ -176,6 +176,9 @@ describe('a streak that can be restored', () => {
     open(ended(paid));
     await userEvent.click(await screen.findByRole('button', { name: 'Restore for 50 gems' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('This streak can no longer be brought back.');
+    // nothing left to press that could only fail again
+    expect(screen.queryByRole('button', { name: /^Restore/ })).not.toBeInTheDocument();
+    expect(screen.queryByText(/^Your 12-day streak ended/)).not.toBeInTheDocument();
   });
 
   it('says the offer in Sorani, right to left', async () => {

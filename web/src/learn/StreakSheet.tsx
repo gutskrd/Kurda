@@ -137,8 +137,8 @@ const GONE = new Set(['NOTHING_TO_RESTORE', 'RESTORE_EXPIRED', 'STREAK_TOO_SHORT
  * pressed, and above it are the balance and one line on where gems come from.
  * Nothing is sold here. The server decides: the request carries nothing, and
  * a refusal is read for what it means — the balance read again if the gems
- * were short after all, a plain sentence if the streak can no longer be
- * restored.
+ * were short after all, and, if the streak can no longer be restored, a plain
+ * sentence in place of the offer, with no button left to press.
  */
 function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestored: (streak: StreakSummary) => void }): React.JSX.Element {
   const t = useT();
@@ -148,6 +148,7 @@ function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestor
   const [gems, setGems] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [gone, setGone] = useState(false);
   const shortId = useId();
 
   const readGems = useCallback(async (): Promise<void> => {
@@ -171,11 +172,21 @@ function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestor
       return;
     }
     if (res.error.code === 'INSUFFICIENT_FUNDS') await readGems();
-    else setProblem(res.error.code && GONE.has(res.error.code) ? t('streak.repair.gone') : describeError(res.error, t));
+    else if (res.error.code && GONE.has(res.error.code)) setGone(true);
+    else setProblem(describeError(res.error, t));
   }
 
   // short only once the balance is known; until then the button is live and the server answers
   const short = !offer.free && gems !== null && gems < offer.costGems;
+  if (gone) {
+    return (
+      <div className="streak-repair">
+        <p className="streak-repair-text" role="alert">
+          {t('streak.repair.gone')}
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="streak-repair">
       <p className="streak-repair-text">{t('streak.repair.offer', { count: number(offer.days), date: lastDay(offer.until, locale) })}</p>

@@ -105,7 +105,8 @@ function StreakHead({ streak }: { streak: Streak }): React.JSX.Element {
  *
  * The server decides: the request carries nothing, and a refusal is read for
  * what it means (`repairRefusal`) — the balance read again if the gems were
- * short after all, a plain sentence if the streak can no longer be restored.
+ * short after all, and, if the streak can no longer be restored, a plain
+ * sentence in place of the offer, with no button left to press.
  */
 function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestored: (streak: Streak) => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -115,6 +116,7 @@ function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestor
   const [gems, setGems] = useState<number | null>(null);
   const [busy, setBusy] = useState(false);
   const [problem, setProblem] = useState<string | null>(null);
+  const [gone, setGone] = useState(false);
 
   const readGems = useCallback(async () => {
     const res = await client.get<{ balances: { gems: number } }>('/me/wallet');
@@ -139,12 +141,22 @@ function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestor
     haptic('error');
     const why = repairRefusal(res.error.code);
     if (why === 'short') await readGems();
-    else setProblem(why === 'gone' ? t('streak.repair.gone') : describeError(res.error, t));
+    else if (why === 'gone') setGone(true);
+    else setProblem(describeError(res.error, t));
   }, [client, onRestored, readGems, t]);
 
   const lastDay = repairLastDay(offer);
   const short = gemsShort(offer, gems);
   const count = (n: number) => formatNumber(n, locale);
+  if (gone) {
+    return (
+      <View style={[styles.offer, { backgroundColor: colors.surface }]} testID="streak-repair">
+        <Text style={[styles.offerText, dir.text, { color: colors.textPrimary }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
+          {t('streak.repair.gone')}
+        </Text>
+      </View>
+    );
+  }
   return (
     <View style={[styles.offer, { backgroundColor: colors.surface }]} testID="streak-repair">
       <Text style={[styles.offerText, dir.text, { color: colors.textPrimary }]}>
