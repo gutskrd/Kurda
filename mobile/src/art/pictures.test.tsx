@@ -25,6 +25,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { EVENT_THEME_PACKS } from '../theme/eventThemes';
+import { ICON_PATHS } from '../theme/icon-paths';
 import { refreshArtOverrides, resetArtOverrides } from './overrides';
 
 patchReactNativeWeb();
@@ -199,12 +200,16 @@ describe('an event banner', () => {
     testAuth.client = fakeClient({ 'GET /events/active': ok({ events: [{ key: 'newroz-2026', name: 'Newroz', theme: 'newroz' }] }) });
   };
 
-  it('keeps the theme’s colour and emoji when the theme has no picture', async () => {
+  it('keeps the theme’s colour and glyph when the theme has no picture, with the words in the theme’s own ink', async () => {
     live();
     eventTheme.value = { pack: EVENT_THEME_PACKS.newroz, optedOut: false };
     const { container } = renderWithProviders(<EventBanner />);
     expect(await screen.findByRole('button', { name: 'Newroz — event quests' })).toBeTruthy();
-    expect(screen.getByText('🔥')).toBeTruthy();
+    // the flame, drawn from the app's icons in the ink that reads on Newroz's gold
+    const glyph = container.querySelector('svg path');
+    expect(glyph?.getAttribute('d')).toBe(ICON_PATHS.flame[0]);
+    expect(glyph?.getAttribute('fill')).toBe('#3A2A00');
+    expect(screen.getByText('Newroz').getAttribute('style')).toContain('color: rgb(58, 42, 0)');
     expect(container.querySelector('img')).toBeNull();
   });
 
@@ -215,7 +220,9 @@ describe('an event banner', () => {
     const { container } = renderWithProviders(<EventBanner />);
     expect(await screen.findByRole('button', { name: 'Newroz — event quests' })).toBeTruthy();
     expect(await picture(container)).toBe(`${CDN}/newroz.webp`);
-    expect(screen.queryByText('🔥')).toBeNull();
+    // the picture stands where the glyph did; the chevron is the one glyph left, in white
+    expect(container.querySelectorAll('svg')).toHaveLength(1);
+    expect(container.querySelector('svg path')?.getAttribute('fill')).toBe('#FFFFFF');
     expect(screen.getByText('Newroz').getAttribute('style')).toContain('color: rgb(255, 255, 255)');
     expect(screen.getByText('Quests & rewards — tap to play')).toBeTruthy();
   });
