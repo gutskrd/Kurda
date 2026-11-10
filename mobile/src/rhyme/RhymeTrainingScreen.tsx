@@ -152,7 +152,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
     }
   };
 
-  const qualityColor = (q: Quality): string => (q === 'perfect' ? colors.success : colors.gold);
+  const qualityColor = (q: Quality): string => (q === 'perfect' ? colors.success : colors.goldText);
 
   return (
     <GradientBackground>

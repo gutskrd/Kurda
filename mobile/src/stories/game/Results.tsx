@@ -129,7 +129,7 @@ export function Results({
               <Text style={[statCaption, { color: colors.textSecondary }]}>{t('stories.results.right')}</Text>
             </View>
             <View style={styles.stat} accessible accessibilityLabel={t('stories.results.xpLabel', { xp: me.xp })}>
-              <Text style={[statValue, { color: colors.gold }]}>+{me.xp}</Text>
+              <Text style={[statValue, { color: colors.goldText }]}>+{me.xp}</Text>
               <Text style={[statCaption, { color: colors.textSecondary }]}>XP</Text>
             </View>
           </View>

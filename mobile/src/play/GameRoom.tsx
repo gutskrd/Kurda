@@ -237,7 +237,7 @@ export function GameRoom<Board>({
                 {name(r.seat)}
               </Text>
               <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>{scoreOf(r, view)}</Text>
-              {r.xpAwarded ? <Text style={[styles.xp, { color: colors.gold }]}>+{r.xpAwarded} XP</Text> : null}
+              {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
               {p && !p.isMe && !p.bot ? <PlayerReportButton game={game} gameId={id} seat={r.seat} name={p.name} /> : null}
             </View>
           );

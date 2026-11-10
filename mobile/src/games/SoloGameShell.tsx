@@ -269,7 +269,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         <Text style={muted}>{t('games.solo.results.firstTry', { n: results.firstTry })}</Text>
         {results.learningCounted ? (
           <>
-            <Text style={[dir.text, styles.xp, { color: colors.gold }]}>{t('games.solo.results.xp', { xp: results.xp })}</Text>
+            <Text style={[dir.text, styles.xp, { color: colors.goldText }]}>{t('games.solo.results.xp', { xp: results.xp })}</Text>
             <Text style={muted}>{t('games.solo.results.streak')}</Text>
             {results.items.some((i) => i.correct && i.repeat) ? <Text style={muted}>{t('games.solo.results.repeat')}</Text> : null}
           </>

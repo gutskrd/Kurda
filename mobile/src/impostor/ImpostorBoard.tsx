@@ -136,7 +136,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
         <Text style={[styles.seatName, { color: colors.textPrimary }]} numberOfLines={1}>
           {name(s.seat)}
         </Text>
-        <Text style={[styles.seatTag, { color: lit ? colors.gold : voted.has(s.seat) ? colors.success : colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.seatTag, { color: lit ? colors.goldText : voted.has(s.seat) ? colors.success : colors.textSecondary }]} numberOfLines={1}>
           {tag}
         </Text>
       </View>
@@ -153,7 +153,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
               ? t('games.impostor.vote.phase')
               : t('games.impostor.guessPhase')}
         </Text>
-        <Text style={[styles.whose, { color: mine ? colors.gold : colors.textPrimary }]}>{status}</Text>
+        <Text style={[styles.whose, { color: mine ? colors.goldText : colors.textPrimary }]}>{status}</Text>
         {board.phase === 'guess' && board.accused ? (
           <Text style={[styles.caught, { color: colors.danger }]}>
             {board.accused.seat === view.me?.seat ? t('games.impostor.youCaught') : t('games.impostor.caught', { name: name(board.accused.seat) })}

@@ -118,7 +118,7 @@ export function Pill({
   accessibilityLabel?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const fg = tone === 'primary' ? colors.primary : tone === 'gold' ? colors.gold : tone === 'success' ? colors.success : colors.textSecondary;
+  const fg = tone === 'primary' ? colors.primary : tone === 'gold' ? colors.goldText : tone === 'success' ? colors.success : colors.textSecondary;
   const bg = tone === 'success' ? colors.successFill : colors.controlTrack;
   return (
     <View style={[styles.pill, { backgroundColor: bg }]} accessible accessibilityLabel={accessibilityLabel ?? label}>

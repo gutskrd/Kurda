@@ -411,7 +411,7 @@ function MatchRoom({
                   <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>
                     {t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
                   </Text>
-                  {r.xpAwarded ? <Text style={[styles.xp, { color: colors.gold }]}>+{r.xpAwarded} XP</Text> : null}
+                  {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
                   {/* anyone else in the game can be reported, by seat */}
                   {r.userId !== user?.id && r.seat !== undefined ? (
                     <PlayerReportButton game="rhyme-match" gameId={results.id} seat={r.seat} name={r.name ?? null} />
@@ -506,7 +506,7 @@ function MatchRoom({
             <View key={`${f.word}-${i}`} style={[styles.foundRow, { backgroundColor: colors.controlTrack }]}>
               <Text style={[styles.foundWord, { color: colors.textPrimary }]}>{f.word}</Text>
               <View style={styles.foundMeta}>
-                <Text style={[styles.foundQuality, { color: f.quality === 'perfect' ? colors.success : colors.gold }]}>
+                <Text style={[styles.foundQuality, { color: f.quality === 'perfect' ? colors.success : colors.goldText }]}>
                   {t(f.quality === 'perfect' ? 'games.rhyme.quality.perfect' : 'games.rhyme.quality.near')}
                 </Text>
                 <Text style={[styles.foundPoints, { color: colors.textSecondary }]}>+{f.points}</Text>

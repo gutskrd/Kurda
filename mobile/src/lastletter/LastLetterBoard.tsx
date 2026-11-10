@@ -126,7 +126,7 @@ export function LastLetterBoardView({
     <View style={styles.board}>
       <View style={styles.turn} accessibilityLiveRegion="polite">
         <TurnRing share={Math.min(1, remaining / total)} low={low} label={t('games.lastLetter.timeLeft', { count: seconds })}>
-          <Text style={[styles.letter, { color: board.required ? colors.gold : colors.textSecondary }]}>{board.requiredSpellings[0] ?? board.required ?? '✱'}</Text>
+          <Text style={[styles.letter, { color: board.required ? colors.goldText : colors.textSecondary }]}>{board.requiredSpellings[0] ?? board.required ?? '✱'}</Text>
         </TurnRing>
         <View style={styles.turnText}>
           <Text style={[styles.whose, { color: board.yourTurn ? colors.primary : colors.textPrimary }]}>
