@@ -5,6 +5,8 @@ import { preloadCatalogue } from '../i18n/catalogues';
 import { jsonResponse, renderApp } from '../test/utils';
 import { Terms } from './Terms';
 import { About } from './About';
+import { Privacy } from './Privacy';
+import { Footer } from '../components/Footer';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -28,10 +30,18 @@ describe('Terms', () => {
     signedOut();
     renderApp(<Terms />, ['/terms']);
     const provider = section('Who provides Hevalo');
-    for (const value of [PROVIDER.legalName, PROVIDER.address, PROVIDER.kvk, PROVIDER.vat]) {
+    for (const value of [PROVIDER.legalName, PROVIDER.address, PROVIDER.kvk]) {
       expect(within(provider).getByText(value)).toBeInTheDocument();
     }
     expect(within(provider).getByText(`trading as ${PROVIDER.tradingName}`)).toBeInTheDocument();
+    // the registered email and telephone, each as a link that opens it
+    expect(within(provider).getByRole('link', { name: PROVIDER.email })).toHaveAttribute('href', `mailto:${PROVIDER.email}`);
+    expect(within(provider).getByRole('link', { name: PROVIDER.phone })).toHaveAttribute('href', 'tel:+31638066158');
+    // the VAT line only once the btw-id is issued, never an empty one
+    if (PROVIDER.vat) expect(within(provider).getByText(PROVIDER.vat)).toBeInTheDocument();
+    else expect(within(provider).queryByText('VAT number')).toBeNull();
+    // nothing still waiting to be filled in
+    expect(provider.querySelector('[data-placeholder]')).toBeNull();
   });
 
   it('has the promise, the narrow licence, notices, repeat infringers, shop art, contacts and the law', () => {
@@ -68,5 +78,29 @@ describe('About', () => {
     expect(within(provider).getByText(PROVIDER.kvk)).toBeInTheDocument();
     expect(within(provider).getByText('For authorities')).toBeInTheDocument();
     expect(within(provider).getByRole('link', { name: 'Copyright' })).toHaveAttribute('href', '/copyright');
+  });
+});
+
+describe('Privacy', () => {
+  it('opens by naming who is responsible for the data and how to reach them', () => {
+    signedOut();
+    renderApp(<Privacy />, ['/privacy']);
+    const headings = screen.getAllByRole('heading', { level: 2 }).map((h) => h.textContent);
+    expect(headings[0]).toBe('Who is responsible');
+    const controller = section('Who is responsible');
+    expect(within(controller).getByText(/the “controller” under the GDPR/)).toBeInTheDocument();
+    for (const value of [PROVIDER.legalName, PROVIDER.address, PROVIDER.kvk]) {
+      expect(within(controller).getByText(value)).toBeInTheDocument();
+    }
+    expect(within(controller).getByRole('link', { name: PROVIDER.email })).toHaveAttribute('href', `mailto:${PROVIDER.email}`);
+  });
+});
+
+describe('Footer', () => {
+  it('carries the business and its KvK number on every public page, linked to the full details', () => {
+    signedOut();
+    renderApp(<Footer />, ['/']);
+    const imprint = screen.getByRole('link', { name: `${PROVIDER.legalName} · KvK ${PROVIDER.kvk}` });
+    expect(imprint).toHaveAttribute('href', '/about#provider');
   });
 });

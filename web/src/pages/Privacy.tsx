@@ -1,4 +1,6 @@
 import { DocPage, MadeBy, type DocSection } from '../components/DocPage';
+import { ProviderIdentityBlock } from '../copyright/ProviderDetails';
+import { useT } from '../i18n/I18nProvider';
 
 /*
  * What Hevalo keeps, in plain words.
@@ -10,6 +12,11 @@ import { DocPage, MadeBy, type DocSection } from '../components/DocPage';
  * export, the deletion and its 14-day grace are api/src/gdpr; asking again after
  * a material change is the consent version in api/src/gdpr/consent.ts. If one of
  * those changes, the sentence about it has to change with it.
+ *
+ * It opens with who is responsible, because the GDPR asks a privacy notice to
+ * name its controller and how to reach it before anything else: the registered
+ * business, its address and its KvK number, from the same record the Terms and
+ * About pages show, so the three can never disagree.
  */
 const SECTIONS: ReadonlyArray<DocSection> = [
   { title: 'privacy.collect.title', body: 'privacy.collect.body' },
@@ -22,6 +29,18 @@ const SECTIONS: ReadonlyArray<DocSection> = [
   { title: 'privacy.changes.title', body: 'privacy.changes.body' },
 ];
 
+function Controller(): React.JSX.Element {
+  const t = useT();
+  return (
+    <>
+      <p>{t('privacy.controller.body')}</p>
+      <ProviderIdentityBlock />
+    </>
+  );
+}
+
+const CONTROLLER: DocSection = { id: 'controller', title: 'privacy.controller.title', body: <Controller /> };
+
 export function Privacy(): React.JSX.Element {
   return (
     <DocPage
@@ -30,7 +49,7 @@ export function Privacy(): React.JSX.Element {
       lead="privacy.lead"
       metaTitle="meta.privacy.title"
       metaDescription="meta.privacy.description"
-      sections={SECTIONS}
+      sections={[CONTROLLER, ...SECTIONS]}
     >
       <MadeBy />
     </DocPage>

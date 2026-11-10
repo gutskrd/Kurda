@@ -35,7 +35,21 @@ export function Email({ address }: { address: string }): React.JSX.Element {
   );
 }
 
-/** Name, address, KvK, VAT, email (Art. 3:15d BW). */
+/** A telephone number, as a link that dials it. */
+function Phone({ number }: { number: string }): React.JSX.Element {
+  if (isProviderPlaceholder(number)) return <Value value={number} ltr />;
+  return (
+    <a className="doc-link" href={`tel:${number.replace(/[^+\d]/g, '')}`} dir="ltr">
+      {number}
+    </a>
+  );
+}
+
+/**
+ * Name, trade name, address, KvK, VAT, email and telephone (Art. 3:15d BW). The
+ * VAT line waits for the btw-id the Belastingdienst issues, rather than standing
+ * there empty.
+ */
 export function ProviderIdentityBlock(): React.JSX.Element {
   const t = useT();
   return (
@@ -53,13 +67,21 @@ export function ProviderIdentityBlock(): React.JSX.Element {
       <dd>
         <Value value={PROVIDER.kvk} ltr />
       </dd>
-      <dt>{t('provider.vat')}</dt>
-      <dd>
-        <Value value={PROVIDER.vat} ltr />
-      </dd>
+      {PROVIDER.vat ? (
+        <>
+          <dt>{t('provider.vat')}</dt>
+          <dd>
+            <Value value={PROVIDER.vat} ltr />
+          </dd>
+        </>
+      ) : null}
       <dt>{t('provider.email')}</dt>
       <dd>
         <Email address={PROVIDER.email} />
+      </dd>
+      <dt>{t('provider.phone')}</dt>
+      <dd>
+        <Phone number={PROVIDER.phone} />
       </dd>
     </dl>
   );
@@ -88,6 +110,12 @@ export function ContactPoints(): React.JSX.Element {
       </dd>
     </dl>
   );
+}
+
+/** Whether the DMCA designated agent is registered and filled in, so /copyright can name them. */
+export function dmcaAgentRegistered(): boolean {
+  const a = PROVIDER.dmcaAgent;
+  return ![a.name, a.address, a.email, a.phone].some(isProviderPlaceholder);
 }
 
 /** The DMCA designated agent, as registered with the US Copyright Office. */

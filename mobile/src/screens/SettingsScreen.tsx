@@ -1,5 +1,5 @@
 import { Fragment, useState, type ReactNode } from 'react';
-import { foldForSearch } from '@kurda/shared';
+import { PROVIDER, foldForSearch } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
@@ -352,6 +352,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           key: 'credits',
           terms: [t('settings.credits.title')],
           row: <SettingsRow icon="heart" title={t('settings.credits.title')} onPress={page('credits')} />,
+        },
+        {
+          // the business's registration, at the foot of the legal rows the way an imprint closes a page;
+          // the name, address and the rest are on the About page the row above opens
+          key: 'kvk',
+          terms: [t('settings.kvk'), PROVIDER.kvk],
+          row: <SettingsRow icon="place-work" title={t('settings.kvk')} value={PROVIDER.kvk} />,
         },
       ],
     },

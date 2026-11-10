@@ -619,6 +619,21 @@ button.nav-link {
   gap: 4px 20px;
   align-items: center;
 }
+/* the business and its KvK number: the copyright line's quiet ink, leading
+   to the full details on About */
+.footer-imprint {
+  color: var(--ink-3);
+}
+.footer-imprint:hover {
+  color: var(--ink);
+}
+@media (pointer: coarse) {
+  .footer-imprint {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
 
 /*
  * Who made this — an imprint, not an advertisement.

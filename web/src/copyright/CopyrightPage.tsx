@@ -4,7 +4,7 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { NoticeForm } from './NoticeForm';
 import { CounterNotices } from './CounterNotices';
-import { ContactPoints, DmcaAgent } from './ProviderDetails';
+import { ContactPoints, DmcaAgent, dmcaAgentRegistered } from './ProviderDetails';
 import './copyright.css';
 
 /** What happens to a notice, step by step — the same steps the API takes (api/src/copyright). */
@@ -73,16 +73,21 @@ export function CopyrightPage(): React.JSX.Element {
           title: 'copyright.repeat.title',
           body: 'copyright.repeat.body',
         },
-        {
-          id: 'agent',
-          title: 'copyright.agent.title',
-          body: (
-            <>
-              <p>{t('copyright.agent.lead')}</p>
-              <DmcaAgent />
-            </>
-          ),
-        },
+        // the US designated agent, once one is registered with the Copyright Office: never a section of placeholders
+        ...(dmcaAgentRegistered()
+          ? [
+              {
+                id: 'agent',
+                title: 'copyright.agent.title' as const,
+                body: (
+                  <>
+                    <p>{t('copyright.agent.lead')}</p>
+                    <DmcaAgent />
+                  </>
+                ),
+              },
+            ]
+          : []),
         {
           id: 'contact',
           title: 'copyright.contact.title',

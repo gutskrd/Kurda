@@ -1828,6 +1828,7 @@ export type TranslationKey =
   | 'settings.versionBuild'
   | 'settings.teaching'
   | 'settings.credits.title'
+  | 'settings.kvk'
   | 'settings.credits.lead'
   | 'settings.credits.fonts'
   | 'settings.credits.icons'
@@ -4693,6 +4694,7 @@ const en: Catalog = {
   'settings.versionBuild': 'Version {version} ({build})',
   'settings.teaching': 'How Hevalo teaches',
   'settings.credits.title': 'Credits & licences',
+  'settings.kvk': 'KvK number',
   'settings.credits.lead': 'Hevalo also uses other people’s work, under these licences:',
   'settings.credits.fonts': 'The Vazirmatn typeface, on hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
@@ -8104,6 +8106,7 @@ const ku: Catalog = {
   'settings.versionBuild': 'Guherto {version} ({build})',
   'settings.teaching': 'Hevalo çawa hîn dike',
   'settings.credits.title': 'Spas û lîsans',
+  'settings.kvk': 'Hejmara KvK-ê',
   'settings.credits.lead': 'Hevalo karê kesên din jî bi kar tîne, bi van lîsansan:',
   'settings.credits.fonts': 'Tîpa Vazirmatn, li ser hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
@@ -11514,6 +11517,7 @@ const de: Catalog = {
   'settings.versionBuild': 'Version {version} ({build})',
   'settings.teaching': 'Wie Hevalo lehrt',
   'settings.credits.title': 'Danksagungen und Lizenzen',
+  'settings.kvk': 'KvK-Nummer',
   'settings.credits.lead': 'Hevalo nutzt auch die Arbeit anderer, unter diesen Lizenzen:',
   'settings.credits.fonts': 'Die Schrift Vazirmatn, auf hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
@@ -14924,6 +14928,7 @@ const es: Catalog = {
   'settings.versionBuild': 'Versión {version} ({build})',
   'settings.teaching': 'Cómo enseña Hevalo',
   'settings.credits.title': 'Créditos y licencias',
+  'settings.kvk': 'Número KvK',
   'settings.credits.lead': 'Hevalo también usa el trabajo de otras personas, con estas licencias:',
   'settings.credits.fonts': 'La tipografía Vazirmatn, en hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
@@ -18334,6 +18339,7 @@ const tr: Catalog = {
   'settings.versionBuild': 'Sürüm {version} ({build})',
   'settings.teaching': 'Hevalo nasıl öğretir',
   'settings.credits.title': 'Teşekkürler ve lisanslar',
+  'settings.kvk': 'KvK numarası',
   'settings.credits.lead': 'Hevalo başkalarının emeğini de bu lisanslarla kullanıyor:',
   'settings.credits.fonts': 'Vazirmatn yazı tipi, hevalo.app’te — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
@@ -21744,6 +21750,7 @@ const ar: Catalog = {
   'settings.versionBuild': 'الإصدار {version} ({build})',
   'settings.teaching': 'كيف يعلّم Hevalo',
   'settings.credits.title': 'الشكر والتراخيص',
+  'settings.kvk': 'رقم السجل التجاري (KvK)',
   'settings.credits.lead': 'يستخدم Hevalo أيضًا أعمال آخرين، بموجب هذه التراخيص:',
   'settings.credits.fonts': 'خط Vazirmatn، على hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
@@ -25154,6 +25161,7 @@ const fr: Catalog = {
   'settings.versionBuild': 'Version {version} ({build})',
   'settings.teaching': 'Comment Hevalo enseigne',
   'settings.credits.title': 'Crédits et licences',
+  'settings.kvk': 'Numéro KvK',
   'settings.credits.lead': 'Hevalo utilise aussi le travail d’autres personnes, sous ces licences :',
   'settings.credits.fonts': 'La police Vazirmatn, sur hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
@@ -28564,6 +28572,7 @@ const nl: Catalog = {
   'settings.versionBuild': 'Versie {version} ({build})',
   'settings.teaching': 'Hoe Hevalo lesgeeft',
   'settings.credits.title': 'Met dank aan, en licenties',
+  'settings.kvk': 'KvK-nummer',
   'settings.credits.lead': 'Hevalo gebruikt ook werk van anderen, onder deze licenties:',
   'settings.credits.fonts': 'Het lettertype Vazirmatn, op hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
@@ -31975,6 +31984,7 @@ const ckb: Catalog = {
   'settings.versionBuild': 'وەشانی {version} ({build})',
   'settings.teaching': 'Hevalo چۆن فێر دەکات',
   'settings.credits.title': 'سوپاس و مۆڵەتەکان',
+  'settings.kvk': 'ژمارەی KvK',
   'settings.credits.lead': 'Hevalo کاری کەسانی تریش بەکاردەهێنێت، بەم مۆڵەتانە:',
   'settings.credits.fonts': 'فۆنتی Vazirmatn، لە hevalo.app — SIL Open Font License 1.1',
   'settings.credits.icons': 'Phosphor Icons — MIT License',
