@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   BURST,
@@ -14,6 +14,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
+import { CodeBoxes } from '../components/CodeBoxes';
 import { Sheet } from '../components/Sheet';
 import { useT } from '../i18n/I18nProvider';
 import { haptic } from '../lib/haptics';
@@ -27,13 +28,11 @@ import { joinPath, lobbyPath } from './playApi';
  * them (the Stories library). One way in for all three games, because one
  * code reaches any of them (`POST /play/join`).
  *
- * Six boxes, and behind them ONE real text field that does the work: paste,
- * autofill, an input method, a screen reader and an Arabic-script keyboard
- * all meet an ordinary input with a label, and the boxes only draw what it
- * holds (they are hidden from assistive technology). The field upper-cases
- * what is typed and drops what cannot be in a code; an old invite link pasted
- * into it still opens its lobby. The sixth character joins on its own, and
- * Join is there for whoever reaches for a button.
+ * Six boxes over one real text field (components/CodeBoxes.tsx, which the
+ * code that confirms an email address is typed into as well). The field
+ * upper-cases what is typed and drops what cannot be in a code; an old invite
+ * link pasted into it still opens its lobby. The sixth character joins on its
+ * own, and Join is there for whoever reaches for a button.
  *
  * Every state shows on the boxes: each character pops in, the box being
  * filled has a caret; joining runs a wave across them; getting in turns them
@@ -151,9 +150,6 @@ export function JoinCodeForm({
     if (next.length === JOIN_CODE_LENGTH && next !== code) void join(next);
   }
 
-  // the box being filled (the last one once all six are), which shows where the focus is; the caret only while there is room
-  const active = Math.min(code.length, JOIN_CODE_LENGTH - 1);
-  const caret = code.length < JOIN_CODE_LENGTH;
   const inputId = `${id}-code`;
   const messageId = `${id}-message`;
 
@@ -169,57 +165,25 @@ export function JoinCodeForm({
       <label htmlFor={inputId} className={labelHidden ? 'sr-only' : 'code-entry-label'}>
         {t('play.join.title')}
       </label>
-      {/* a code reads left to right in every language; the words around it follow the page */}
-      <div className="code-entry-field" dir="ltr">
-        <input
-          ref={inputRef}
-          id={inputId}
-          className="code-entry-input"
-          value={code}
-          onChange={(e) => change(e.target.value)}
-          // the boxes are filled from the left, so the caret always sits after the last character
-          onSelect={(e) => {
-            const el = e.currentTarget;
-            if (el.selectionStart !== el.value.length) el.setSelectionRange(el.value.length, el.value.length);
-          }}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          readOnly={busy}
-          autoCapitalize="characters"
-          autoComplete="off"
-          autoCorrect="off"
-          spellCheck={false}
-          enterKeyHint="go"
-          aria-invalid={phase === 'error' ? true : undefined}
-          aria-describedby={message ? messageId : undefined}
-        />
-        <span className="code-boxes" key={refusals} aria-hidden="true">
-          {Array.from({ length: JOIN_CODE_LENGTH }, (_, i) => {
-            const ch = code[i];
-            return (
-              <Fragment key={i}>
-                {i === JOIN_CODE_LENGTH / 2 && <span className="code-boxes-gap" />}
-                <span
-                  className={`code-box${ch ? ' is-filled' : ''}${i === active ? ' is-active' : ''}`}
-                  style={{ '--i': i } as CSSProperties}
-                >
-                  {ch && (
-                    <span
-                      key={ch}
-                      className={`code-box-char${i >= fresh ? ' is-fresh' : ''}`}
-                      style={{ '--n': Math.max(0, i - fresh) } as CSSProperties}
-                    >
-                      {ch}
-                    </span>
-                  )}
-                  {i === active && caret && <span className="code-box-caret" />}
-                </span>
-              </Fragment>
-            );
-          })}
-        </span>
+      <CodeBoxes
+        inputRef={inputRef}
+        id={inputId}
+        value={code}
+        length={JOIN_CODE_LENGTH}
+        fresh={fresh}
+        shakes={refusals}
+        onChange={(e) => change(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        readOnly={busy}
+        autoCapitalize="characters"
+        autoComplete="off"
+        enterKeyHint="go"
+        aria-invalid={phase === 'error' ? true : undefined}
+        aria-describedby={message ? messageId : undefined}
+      >
         {phase === 'joined' && !still && <JoinedBurst />}
-      </div>
+      </CodeBoxes>
       <div className="code-entry-foot">
         {/* the line is kept while empty, so a refusal does not move Join; the alert is only there with something to say */}
         <p className="code-entry-message">

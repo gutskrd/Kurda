@@ -85,44 +85,90 @@ describe('email verification gate', () => {
   });
 });
 
-describe('VerifyEmail', () => {
-  it('submits the 6-digit code to the API', async () => {
-    signedIn();
-    const calls: Array<{ url: string; body: unknown }> = [];
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string, init?: RequestInit) => {
-        if (url.includes('/auth/verify-email-code')) {
-          calls.push({ url, body: init?.body ? JSON.parse(init.body as string) : null });
-          return jsonResponse(200, { verified: true });
-        }
-        if (url.includes('/me')) return jsonResponse(200, user(false));
-        return jsonResponse(200, {});
-      }),
-    );
+/** The one field the code is typed into; the boxes only draw what it holds. */
+const field = (): Promise<HTMLInputElement> => screen.findByLabelText<HTMLInputElement>(/verification code/i);
+/** What the boxes show, left to right. */
+const boxes = (): string[] => [...document.querySelectorAll('.code-box')].map((b) => b.textContent ?? '');
 
+/** The API as the page meets it: what a code is answered with, and every code that was sent. */
+function api(answer: () => Response, account: () => unknown = () => user(false)): { sent: unknown[] } {
+  const sent: unknown[] = [];
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes('/auth/verify-email-code')) {
+        sent.push(init?.body ? JSON.parse(init.body as string) : null);
+        return answer();
+      }
+      if (url.includes('/me')) return jsonResponse(200, account());
+      return jsonResponse(200, {});
+    }),
+  );
+  return { sent };
+}
+
+const wrong = (): Response => jsonResponse(400, { code: 'INVALID_CODE', message: 'that code is not correct' });
+
+describe('VerifyEmail', () => {
+  it('draws the code a digit to a box, and sends it as the sixth one lands', async () => {
+    signedIn();
+    const { sent } = api(() => jsonResponse(200, { verified: true }));
     renderApp(<VerifyEmail />, ['/verify-email']);
 
-    await userEvent.type(await screen.findByLabelText(/verification code/i), '123456');
-    await userEvent.click(screen.getByRole('button', { name: /confirm email/i }));
+    const input = await field();
+    expect(input).toHaveAttribute('autocomplete', 'one-time-code');
+    expect(input).toHaveAttribute('inputmode', 'numeric');
+    await userEvent.type(input, '123');
+    expect(boxes()).toEqual(['1', '2', '3', '', '', '']);
+    expect(sent).toEqual([]);
 
-    await waitFor(() => expect(calls).toHaveLength(1));
-    expect(calls[0]?.body).toMatchObject({ code: '123456' });
+    await userEvent.type(input, '456');
+    await waitFor(() => expect(sent).toEqual([{ code: '123456' }]));
+    // the boxes turn green and the button says so, for the eye and for the ear
+    await waitFor(() => expect(document.querySelector('.code-entry')).toHaveClass('is-joined'));
+    expect(screen.getByRole('button', { name: 'Confirmed!' })).toBeDisabled();
+    expect(screen.getByRole('status')).toHaveTextContent('Confirmed!');
+  });
+
+  it('reads the digits an Arabic or a Soranî keyboard types, and a code pasted with its space', async () => {
+    signedIn();
+    const { sent } = api(wrong);
+    renderApp(<VerifyEmail />, ['/verify-email']);
+
+    await userEvent.type(await field(), '٤٨٢۹۱۳');
+    await waitFor(() => expect(sent).toEqual([{ code: '482913' }]));
+    await screen.findByRole('alert');
+
+    await userEvent.click(await field());
+    await userEvent.paste('Your code is 482 913');
+    await waitFor(() => expect(sent).toEqual([{ code: '482913' }, { code: '482913' }]));
+  });
+
+  it('says so when the button is pressed on a code that is not whole, and sends nothing', async () => {
+    signedIn();
+    const { sent } = api(wrong);
+    renderApp(<VerifyEmail />, ['/verify-email']);
+
+    await userEvent.type(await field(), '123');
+    await userEvent.click(screen.getByRole('button', { name: 'Confirm email' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Enter the 6-digit code from your email.');
+    expect(sent).toEqual([]);
+    // the typing goes on where it was
+    expect(await field()).toHaveFocus();
+    await userEvent.type(await field(), '4');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(boxes()).toEqual(['1', '2', '3', '4', '', '']);
   });
 
   it('sends a newly confirmed account to its first lesson, not the wall', async () => {
     signedIn();
     let verified = false;
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string) => {
-        if (url.includes('/auth/verify-email-code')) {
-          verified = true;
-          return jsonResponse(200, { verified: true });
-        }
-        if (url.includes('/me')) return jsonResponse(200, user(verified));
-        return jsonResponse(200, {});
-      }),
+    api(
+      () => {
+        verified = true;
+        return jsonResponse(200, { verified: true });
+      },
+      () => user(verified),
     );
 
     render(
@@ -139,8 +185,7 @@ describe('VerifyEmail', () => {
       </AuthProvider>,
     );
 
-    await userEvent.type(await screen.findByLabelText(/verification code/i), '123456');
-    await userEvent.click(screen.getByRole('button', { name: /confirm email/i }));
+    await userEvent.type(await field(), '123456');
 
     expect(await screen.findByText('Your first lesson', {}, MOVES_ON)).toBeInTheDocument();
     expect(screen.queryByText('The wall')).not.toBeInTheDocument();
@@ -150,16 +195,12 @@ describe('VerifyEmail', () => {
     signedIn();
     rememberAfterSignup('/app/games/peyvok-battle?id=b1');
     let verified = false;
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string) => {
-        if (url.includes('/auth/verify-email-code')) {
-          verified = true;
-          return jsonResponse(200, { verified: true });
-        }
-        if (url.includes('/me')) return jsonResponse(200, user(verified));
-        return jsonResponse(200, {});
-      }),
+    api(
+      () => {
+        verified = true;
+        return jsonResponse(200, { verified: true });
+      },
+      () => user(verified),
     );
 
     render(
@@ -176,30 +217,54 @@ describe('VerifyEmail', () => {
       </AuthProvider>,
     );
 
-    await userEvent.type(await screen.findByLabelText(/verification code/i), '123456');
-    await userEvent.click(screen.getByRole('button', { name: /confirm email/i }));
+    await userEvent.type(await field(), '123456');
 
     expect(await screen.findByText('The battle', {}, MOVES_ON)).toBeInTheDocument();
     expect(screen.queryByText('Your first lesson')).not.toBeInTheDocument();
   });
 
-  it('surfaces a wrong code and keeps the user on the screen', async () => {
+  it('says a wrong code is wrong under the boxes, empties them, and is ready for the next try', async () => {
+    signedIn();
+    const { sent } = api(wrong);
+    renderApp(<VerifyEmail />, ['/verify-email']);
+
+    const input = await field();
+    await userEvent.type(input, '000000');
+
+    const said = await screen.findByRole('alert');
+    expect(said).toHaveTextContent(/isn’t correct/i);
+    expect(document.querySelector('.code-entry')).toHaveClass('is-error');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    expect(input).toHaveAccessibleDescription(expect.stringMatching(/isn’t correct/i));
+    // typed again from the first box, without a click: the field kept the focus
+    expect(boxes()).toEqual(['', '', '', '', '', '']);
+    expect(input).toHaveFocus();
+
+    await userEvent.type(input, '1');
+    expect(screen.queryByRole('alert')).toBeNull();
+    expect(document.querySelector('.code-entry')).not.toHaveClass('is-error');
+    await userEvent.type(input, '23456');
+    await waitFor(() => expect(sent).toEqual([{ code: '000000' }, { code: '123456' }]));
+  });
+
+  it('says so over the form when an emailed link no longer works, until the code is typed instead', async () => {
     signedIn();
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
-        if (url.includes('/auth/verify-email-code'))
-          return jsonResponse(400, { code: 'INVALID_CODE', message: 'that code is not correct' });
+        if (url.includes('/auth/verify-email')) return jsonResponse(400, { code: 'INVALID_TOKEN', message: 'no such link' });
         if (url.includes('/me')) return jsonResponse(200, user(false));
         return jsonResponse(200, {});
       }),
     );
 
-    renderApp(<VerifyEmail />, ['/verify-email']);
-    await userEvent.type(await screen.findByLabelText(/verification code/i), '000000');
-    await userEvent.click(screen.getByRole('button', { name: /confirm email/i }));
-
-    expect(await screen.findByText(/isn’t correct/i)).toBeInTheDocument();
+    renderApp(<VerifyEmail />, ['/verify-email?token=gone']);
+    expect(await screen.findByRole('alert')).toHaveTextContent('That confirmation link is invalid or has expired — enter the code below instead.');
+    // it is said above the boxes it points to
+    const said = screen.getByRole('alert');
+    expect(said.compareDocumentPosition(await field()) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    await userEvent.type(await field(), '1');
+    expect(screen.queryByRole('alert')).toBeNull();
   });
 
   it('can send a new code', async () => {
@@ -222,6 +287,8 @@ describe('VerifyEmail', () => {
 
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(await screen.findByText(/sent a new code/i)).toBeInTheDocument();
+    // asking again waits a minute, and the link says how long is left
+    expect(screen.getByRole('button', { name: /send a new code \(\d+s\)/i })).toBeDisabled();
   });
 
   it('puts a mistyped address right without starting over, and says where the code went', async () => {
@@ -243,19 +310,34 @@ describe('VerifyEmail', () => {
     );
 
     renderApp(<VerifyEmail />, ['/verify-email']);
-    expect(await screen.findByText(/ada@exmaple\.com/)).toBeInTheDocument();
+    // the address is shown as it was typed, and it is the button that puts it right
+    const chip = await screen.findByRole('button', { name: 'ada@exmaple.com. Wrong address? Change it' });
     // how long an unconfirmed sign-up is kept is said on the screen
     expect(screen.getByText(/isn’t confirmed within 7 days is removed/)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Change it' }));
+    await userEvent.click(chip);
+    // one thing at a time: the code for the old address is not asked for meanwhile
+    expect(screen.queryByLabelText(/verification code/i)).toBeNull();
     await userEvent.type(screen.getByLabelText('New email address'), 'ada@example.com');
     await userEvent.click(screen.getByRole('button', { name: 'Send the code there' }));
 
     await waitFor(() => expect(changed).toEqual([{ email: 'ada@example.com' }]));
     expect(await screen.findByText('We sent a code to your new address.')).toBeInTheDocument();
-    // the screen now shows the address the code went to, and the field is put away
-    expect(await screen.findByText(/ada@example\.com/)).toBeInTheDocument();
+    // the screen now shows the address the code went to, and the boxes are back, ready
+    expect(await screen.findByRole('button', { name: 'ada@example.com. Wrong address? Change it' })).toBeInTheDocument();
     expect(screen.queryByLabelText('New email address')).toBeNull();
+    expect(await field()).toHaveFocus();
+  });
+
+  it('goes back to the code when changing the address is cancelled', async () => {
+    signedIn();
+    api(wrong);
+    renderApp(<VerifyEmail />, ['/verify-email']);
+
+    await userEvent.click(await screen.findByRole('button', { name: /Change it/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.queryByLabelText('New email address')).toBeNull();
+    expect(await field()).toBeInTheDocument();
   });
 
   it('says so when no more confirmation emails can be sent today', async () => {

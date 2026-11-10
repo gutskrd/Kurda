@@ -81,6 +81,16 @@ describe('confirming an address', () => {
     await waitFor(() => expect(session.verifyEmailCode).toHaveBeenCalledWith('482137'));
   });
 
+  it('reads the digits an Arabic or a Soranî keyboard types, and a code pasted with the sentence around it', async () => {
+    const session = unconfirmed({ verifyEmailCode: vi.fn(async () => 'That code isn’t right.') });
+    renderWithProviders(<VerifyEmailScreen />);
+    type('٤٨٢۱۳۷');
+    await waitFor(() => expect(session.verifyEmailCode).toHaveBeenCalledWith('482137'));
+    await screen.findByText('That code isn’t right.');
+    type('Your Hevalo code is 913 550');
+    await waitFor(() => expect(session.verifyEmailCode).toHaveBeenLastCalledWith('913550'));
+  });
+
   it('says a wrong code is wrong under the boxes, with Hevalo’s second look, and clears it to be typed again', async () => {
     const session = unconfirmed({ verifyEmailCode: vi.fn(async () => 'That code isn’t right.') });
     renderWithProviders(<VerifyEmailScreen />);

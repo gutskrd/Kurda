@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, TextInput, View } from 'react-native';
+import { codeDigits } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { springTo, timing } from '../../theme/animate';
 import { duration } from '../../theme/motion';
@@ -21,7 +22,9 @@ const BOX_HEIGHT = 60;
  * Underneath it is still one text field, laid over the boxes and invisible:
  * the phone offers the code from the email or the clipboard to a field, not
  * to six, a screen reader meets one control with one name, and a backspace
- * simply works. The boxes are only how it is drawn.
+ * simply works. The boxes are only how it is drawn. The field has no length
+ * of its own, so a code pasted as "482 913" is not cut short before it is
+ * read (shared `codeDigits` keeps the six digits meant).
  *
  * `onComplete` is told the moment the last digit lands, so the code can be
  * sent without reaching for the button. A code that was refused is shown in
@@ -62,7 +65,8 @@ export function CodeBoxes({
   const next = focused && digits.length < length ? digits.length : -1;
 
   const type = (text: string): void => {
-    const code = text.replace(/\D/g, '').slice(0, length);
+    // read as it was meant: the digits of an Arabic or a Soranî keyboard, a code pasted with its space or its sentence
+    const code = codeDigits(text, length);
     if (code === value) return;
     onChange(code);
     if (code.length === length && value.length < length) onComplete?.(code);
@@ -85,7 +89,6 @@ export function CodeBoxes({
         editable={!busy}
         keyboardType="number-pad"
         inputMode="numeric"
-        maxLength={length}
         textContentType="oneTimeCode"
         autoComplete="one-time-code"
         caretHidden

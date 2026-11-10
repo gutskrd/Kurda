@@ -160,9 +160,19 @@
     --cp-say-size: 0.85rem;
   }
 }
+/* a page with more under its form than a sign-in has (auth/AuthCard `compact`): he is smaller, the form higher */
+.auth-stage.is-compact {
+  --cp-w: 120px;
+}
+@media (max-width: 480px) {
+  .auth-stage.is-compact {
+    --cp-w: 108px;
+  }
+}
 /* a short window (a phone on its side) keeps the form in view */
 @media (max-height: 560px) {
-  .auth-stage {
+  .auth-stage,
+  .auth-stage.is-compact {
     --cp-w: 100px;
   }
 }
@@ -2799,14 +2809,94 @@ a.mkp-activity-row:hover {
 
 
 /* ---- email verification code ------------------------------------------- */
-.verify-code-input {
-  text-align: center;
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 0.45em;
-  /* the trailing letter-spacing would push the digits off-centre */
-  text-indent: 0.45em;
-  font-variant-numeric: tabular-nums;
+/*
+ * Confirming an address (pages/VerifyEmail.tsx): the address as a chip that
+ * is also the way to change it, the code in its boxes (auth/code-boxes.css),
+ * and under them, quietly, the way to another code and the way out.
+ */
+.verify-address {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  min-height: 40px;
+  margin-top: 14px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.16s ease;
+}
+.verify-address:hover {
+  border-color: var(--border-strong);
+}
+.verify-address bdi {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.verify-address svg {
+  flex: none;
+  color: var(--ink-3);
+}
+/*
+ * The code's boxes are a game code's boxes (styles/play.css), here as wide as
+ * the card's column: each takes an equal share of it, and the form's own
+ * parts follow at their usual width.
+ */
+.code-entry.verify-code {
+  justify-items: stretch;
+  gap: 0;
+}
+.verify-code .code-entry-field {
+  justify-items: stretch;
+}
+.verify-code .code-boxes {
+  width: 100%;
+}
+.verify-code .code-box {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+}
+/* the one line that speaks; its room is kept while it has nothing to say */
+.verify-said {
+  min-height: 1.45em;
+  margin: 10px 0 12px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+.verify-said.is-error {
+  color: var(--danger);
+}
+/* under a field, which keeps room below itself already */
+.field + .verify-said {
+  margin-top: -6px;
+}
+.verify-cancel {
+  display: block;
+  margin: 14px auto 0;
+  color: var(--ink-3);
+}
+.verify-foot {
+  margin-top: 18px;
+  font-size: 0.92rem;
+  color: var(--ink-3);
+}
+.verify-foot p + p {
+  margin-top: 6px;
+}
+.verify-small {
+  font-size: 0.8rem;
+}
+.verify-leave {
+  margin-top: 8px;
+  color: var(--ink-3);
 }
 
 /* ---- new-message banners (app-wide) ------------------------------------ */
