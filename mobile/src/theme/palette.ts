@@ -17,9 +17,17 @@ import type { ColorScheme } from './appearance';
 export interface Palette {
   scheme: ColorScheme;
 
-  // brand
+  /*
+   * The brand: one ink.
+   *
+   * There were three near-identical blacks here: this one, a slightly blacker
+   * "strong" one and a slightly greyer `accent`, with no rule for which a
+   * screen should reach for, so two buttons side by side could be two blacks.
+   * `primary` is the one that fills a button or tints a glyph, and
+   * `textPrimary` the one that writes. `accent` stays only until the daily
+   * reward card, the last thing that reads it, lets go of it.
+   */
   primary: string;
-  primaryStrong: string;
   accent: string;
   gold: string;
   danger: string;
@@ -168,7 +176,6 @@ export const LIGHT: Palette = {
   // the gold of the sun (rewards, streak, Zêr); danger and success stay
   // coloured for meaning and are never the only signal.
   primary: '#1A1A1A',
-  primaryStrong: '#000000',
   accent: '#333333',
   gold: '#EBA905',
   danger: '#C0392B',
@@ -222,7 +229,6 @@ export const DARK: Palette = {
   // Monochrome brand: near-white on a near-black app, with the sun's gold as
   // the one warm accent. Danger and success stay coloured for meaning.
   primary: '#FFFFFF',
-  primaryStrong: '#FFFFFF',
   accent: '#CFCFCF',
   gold: '#F0C24A',
   danger: '#FF9C90',

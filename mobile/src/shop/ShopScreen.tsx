@@ -221,7 +221,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 )}
               </View>
               <View style={styles.balanceChip}>
-                <Icon name="gem" size={18} color={colors.accent} />
+                <Icon name="gem" size={18} color={colors.primary} />
                 {loading ? (
                   <SkeletonText size={typography.sizes.md} width={20} />
                 ) : (
@@ -483,7 +483,7 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
         ) : (
           <>
             <Text style={[styles.price, { color: affordable ? colors.textPrimary : colors.textSecondary }]}>{item.price}</Text>
-            <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={16} color={item.currency === 'zer' ? colors.gold : colors.accent} />
+            <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={16} color={item.currency === 'zer' ? colors.gold : colors.primary} />
           </>
         )}
       </View>
@@ -520,7 +520,7 @@ function ItemDetail({
         {item.name}
       </Text>
       {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
-      <Text style={[styles.detailPrice, { color: item.price === 0 ? colors.success : colors.accent }]}>{priceWords(item, t)}</Text>
+      <Text style={[styles.detailPrice, { color: item.price === 0 ? colors.success : colors.textPrimary }]}>{priceWords(item, t)}</Text>
 
       {affordable ? (
         <>
@@ -559,7 +559,7 @@ function ItemDetail({
             {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.earnMoreGems')}
           </Text>
           {item.currency === 'zer' ? (
-            <ClayButton label={t('shop.earnZer')} tone="accent" onPress={onEarnMore} />
+            <ClayButton label={t('shop.earnZer')} tone="primary" onPress={onEarnMore} />
           ) : null}
         </View>
       )}

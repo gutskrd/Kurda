@@ -33,7 +33,7 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
     <View style={[styles.bar, { backgroundColor: colors.glassFill }]}>
       <PressableScale
         onPress={toggle}
-        style={[styles.button, { backgroundColor: colors.primaryStrong }]}
+        style={[styles.button, { backgroundColor: colors.primary }]}
         accessibilityRole="button"
         accessibilityLabel={status.playing ? t('recorder.pause') : t('recorder.play')}
         hitSlop={8}

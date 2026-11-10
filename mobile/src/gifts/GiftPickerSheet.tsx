@@ -393,7 +393,7 @@ function WhatStep({
           {item.name}
         </Text>
         <View style={[styles.priceRow, { flexDirection: dir.row }]}>
-          <Icon name={CURRENCY_ICON[item.currency]} size={14} color={item.currency === 'zer' ? colors.gold : colors.accent} />
+          <Icon name={CURRENCY_ICON[item.currency]} size={14} color={item.currency === 'zer' ? colors.gold : colors.primary} />
           <Text style={[styles.price, { color: colors.textPrimary }]}>{item.price}</Text>
         </View>
         {ownedLine ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
@@ -413,7 +413,7 @@ function WhatStep({
           <Text style={[styles.chipText, { color: colors.textPrimary }]}>{catalog.balance.zer}</Text>
         </View>
         <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
-          <Icon name="gem" size={14} color={colors.accent} />
+          <Icon name="gem" size={14} color={colors.primary} />
           <Text style={[styles.chipText, { color: colors.textPrimary }]}>{catalog.balance.gems}</Text>
         </View>
       </View>
@@ -481,7 +481,7 @@ function WhatStep({
             <Text style={[styles.selectedText, { color: colors.textPrimary }]} numberOfLines={1}>
               {t('gift.picker.selected', { name: picked.name })}
             </Text>
-            <Icon name={CURRENCY_ICON[picked.currency]} size={14} color={picked.currency === 'zer' ? colors.gold : colors.accent} />
+            <Icon name={CURRENCY_ICON[picked.currency]} size={14} color={picked.currency === 'zer' ? colors.gold : colors.primary} />
             <Text style={[styles.price, { color: colors.textPrimary }]}>{picked.price}</Text>
           </View>
         ) : null}

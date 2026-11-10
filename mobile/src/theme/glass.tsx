@@ -119,7 +119,7 @@ export function GlassRow({
 }
 
 /** What a button is for, and what colour that makes it. */
-export type ClayTone = 'neutral' | 'primary' | 'accent' | 'success' | 'danger';
+export type ClayTone = 'neutral' | 'primary' | 'success' | 'danger';
 
 export function ClayButton({
   label,
@@ -145,8 +145,9 @@ export function ClayButton({
   accessibilityLabel?: string;
   /**
    * Neutral unless the button means something: the brand for the action a
-   * screen is for, accent for a way to earn, success and danger for the two
-   * answers a lesson gives back.
+   * screen is for, success and danger for the two answers a lesson gives
+   * back. There was an accent tone for a way to earn, in a grey so close to
+   * the brand's ink that it read as the same button printed badly.
    */
   tone?: ClayTone;
   /**
@@ -185,7 +186,6 @@ export function ClayButton({
   const TONE: Record<ClayTone, string | null> = {
     neutral: null,
     primary: colors.primary,
-    accent: colors.accent,
     success: colors.success,
     danger: colors.danger,
   };

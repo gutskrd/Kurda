@@ -15,7 +15,7 @@ export function TagBadge({ label, tone = 'default' }: { label: string; tone?: 'm
       style={[
         styles.chip,
         {
-          backgroundColor: main ? colors.primaryStrong : colors.glassFill,
+          backgroundColor: main ? colors.primary : colors.glassFill,
           borderColor: main ? colors.primary : colors.glassBorder,
         },
       ]}

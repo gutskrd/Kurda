@@ -29,7 +29,7 @@ export function PlayWithButton({ friendId, name, compact = false }: { friendId: 
           <Icon name="play" size={20} color={colors.primary} />
         </Pressable>
       ) : (
-        <ClayButton label={t('games.play')} icon="play" tone="accent" variant="outline" size="large" onPress={() => setOpen(true)} />
+        <ClayButton label={t('games.play')} icon="play" tone="primary" variant="outline" size="large" onPress={() => setOpen(true)} />
       )}
       {open ? <InviteSheet target={{ kind: 'new', friendId }} onClose={() => setOpen(false)} /> : null}
     </>

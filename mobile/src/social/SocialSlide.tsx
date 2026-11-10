@@ -199,7 +199,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                     <InitialsAvatar name={c.username} id={c.userId} size={34} />
                     <View style={styles.rowMain}>
                       <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{c.username}</Text>
-                      <Text style={[styles.detail, { color: colors.accent }]} numberOfLines={1}>
+                      <Text style={[styles.detail, { color: colors.textPrimary }]} numberOfLines={1}>
                         {t('rail.wantsToPlay', { name: c.displayName ?? c.username })}
                       </Text>
                     </View>
