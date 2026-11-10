@@ -250,7 +250,14 @@ function VotePhase({ board, mySeat, move }: { board: BluffBoard; mySeat: number 
           </Pressable>
         );
       })}
-      {error ? <Text style={styles.error}>{error}</Text> : null}
+      {error ? (
+        // Straight on the felt, where the red the paper's errors are written in is 1.5:1.
+        // The table's own ink, with a mark and a heavier hand to say something went wrong.
+        <View style={styles.feltError} accessibilityRole="alert">
+          <Icon name="alert" size={16} color={ON_FELT} />
+          <Text style={styles.feltErrorText}>{error}</Text>
+        </View>
+      ) : null}
       <View
         style={styles.tray}
         accessible
@@ -371,7 +378,10 @@ const styles = StyleSheet.create({
   noteText: { fontSize: 19, lineHeight: 27, color: INK, fontStyle: 'italic' },
   noteMuted: { fontSize: typography.sizes.xs, color: SOFT_INK },
   input: { minHeight: 84, textAlignVertical: 'top', padding: 0, fontSize: 19, lineHeight: 27, color: INK, fontStyle: 'italic' },
+  // on the paper of a note, where this red is 6.1:1
   error: { color: '#b3261e', fontSize: typography.sizes.sm },
+  feltError: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  feltErrorText: { flexShrink: 1, color: ON_FELT, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   tiltLeft: { transform: [{ rotate: '-0.8deg' }] },
   tiltRight: { transform: [{ rotate: '0.7deg' }] },
   card: { minHeight: MIN_TOUCH_TARGET * 2, paddingLeft: 52 },
