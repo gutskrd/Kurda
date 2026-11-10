@@ -1,10 +1,17 @@
-import { fireLadder, fireLevel, fireSizeToFit, type FireLadderPlace } from '@kurda/shared';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { BURST, fireLadder, fireLevel, fireSizeToFit, type FireLadderPlace, type StreakRepairOffer } from '@kurda/shared';
+import { useAuth } from '../auth/AuthProvider';
+import { Button } from '../components/Button';
 import { Fire } from '../components/Fire';
-import { CheckIcon } from '../components/icons';
+import { CheckIcon, GemIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import type { StreakSummary } from '../lib/types';
+import { describeError } from '../lib/api';
+import { prefersReducedMotion, useCelebrationMoment } from '../lib/motion';
+import { playLessonSound } from '../lib/sounds';
+import type { StreakRepairResult, StreakSummary, WalletBalances } from '../lib/types';
+import { CelebrationArt } from '../ranks/Celebration';
 import { FIRE_STAGE_NAME } from './fireWords';
 import './streak.css';
 
@@ -20,35 +27,69 @@ const HEAD_FIRE = 48;
  * three numbers a missed day never takes away (the longest run, the days
  * learned in all, the freezes learning has earned) with what a freeze costs,
  * and the ladder of the fire's stages. `streak` null keeps it closed.
+ *
+ * While a streak that ended can still be restored (`streak.repair`), the sheet
+ * says so under the streak's words: which streak, the last day it can be
+ * brought back on, and one button with what that costs. It is said once, in
+ * plain words, here and nowhere else: no countdown, and nothing about what
+ * will be lost. `onRestored` hands the restored streak to the page.
  */
-export function StreakSheet({ streak, onClose }: { streak: StreakSummary | null; onClose: () => void }): React.JSX.Element {
+export function StreakSheet({
+  streak,
+  onClose,
+  onRestored,
+}: {
+  streak: StreakSummary | null;
+  onClose: () => void;
+  onRestored?: (streak: StreakSummary) => void;
+}): React.JSX.Element {
   const t = useT();
   return (
     <Sheet open={streak !== null} onClose={onClose} label={t('profile.stat.streak')} className="streak-sheet">
-      {streak && <StreakDetail streak={streak} />}
+      {streak && <StreakDetail streak={streak} onRestored={onRestored} />}
     </Sheet>
   );
 }
 
-function StreakDetail({ streak }: { streak: StreakSummary }): React.JSX.Element {
+/**
+ * What the open sheet shows. Mounted only while it is open, so what it
+ * remembers — that the streak was just restored — is forgotten when it closes.
+ */
+function StreakDetail({ streak, onRestored }: { streak: StreakSummary; onRestored?: (streak: StreakSummary) => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
-  const days = streak.current;
+  const [restored, setRestored] = useState<StreakSummary | null>(null);
+  const shown = restored ?? streak;
+  const offer = restored ? null : (streak.repair ?? null);
+  const days = shown.current;
   const level = fireLevel(days);
   const cells = [
-    { label: t('profile.stat.longestStreak'), value: streak.longest },
-    { label: t('profile.stat.daysLearned'), value: streak.daysLearned ?? 0 },
-    { label: t('profile.stat.freezes'), value: streak.freezes },
+    { label: t('profile.stat.longestStreak'), value: shown.longest },
+    { label: t('profile.stat.daysLearned'), value: shown.daysLearned ?? 0 },
+    { label: t('profile.stat.freezes'), value: shown.freezes },
   ];
   return (
     <>
-      <div className="streak-sheet-head">
-        <span className="streak-sheet-fire">
-          <Fire size={fireSizeToFit(level.stage, HEAD_FIRE, HEAD_FIRE)} level={level} framed />
-        </span>
-        <h2 className="streak-sheet-title">{days > 0 ? t('learn.today.streak', { count: number(days) }) : t('learn.today.noStreak')}</h2>
-      </div>
+      {restored ? (
+        <Restored streak={restored} />
+      ) : (
+        <div className="streak-sheet-head">
+          <span className="streak-sheet-fire">
+            <Fire size={fireSizeToFit(level.stage, HEAD_FIRE, HEAD_FIRE)} level={level} framed />
+          </span>
+          <h2 className="streak-sheet-title">{days > 0 ? t('learn.today.streak', { count: number(days) }) : t('learn.today.noStreak')}</h2>
+        </div>
+      )}
+      {offer && (
+        <RepairOffer
+          offer={offer}
+          onRestored={(next) => {
+            setRestored(next);
+            onRestored?.(next);
+          }}
+        />
+      )}
       <dl className="streak-sheet-stats">
         {cells.map((cell) => (
           <div key={cell.label} className="streak-sheet-stat">
@@ -57,9 +98,150 @@ function StreakDetail({ streak }: { streak: StreakSummary }): React.JSX.Element 
           </div>
         ))}
       </dl>
-      <p className="streak-sheet-hint">{t('profile.freezeHint', { count: number(streak.sessionsPerFreeze ?? SESSIONS_PER_FREEZE) })}</p>
+      <p className="streak-sheet-hint">{t('profile.freezeHint', { count: number(shown.sessionsPerFreeze ?? SESSIONS_PER_FREEZE) })}</p>
       <FireLadder days={days} />
     </>
+  );
+}
+
+/**
+ * The last day the streak can be restored on, named in full in the reader's
+ * language ("Thursday, 12 November"): a moment inside it, the minute before
+ * the offer ends. A day, not a countdown.
+ */
+function lastDay(until: string, locale: string): string {
+  const ends = Date.parse(until);
+  if (Number.isNaN(ends)) return '';
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long' };
+  try {
+    return new Intl.DateTimeFormat(locale, options).format(new Date(ends - 60_000));
+  } catch {
+    return new Intl.DateTimeFormat(undefined, options).format(new Date(ends - 60_000));
+  }
+}
+
+/** The refusals that mean this streak can no longer be restored at all. */
+const GONE = new Set(['NOTHING_TO_RESTORE', 'RESTORE_EXPIRED', 'STREAK_TOO_SHORT']);
+
+/**
+ * The offer to bring back the streak that ended: one sentence saying which
+ * streak and through which day, and one button with the price in gems — or
+ * that it is free, for a Hevalo+ member's restore of the month.
+ *
+ * When the gems are known to be short the button is there but cannot be
+ * pressed, and above it are the balance and one line on where gems come from.
+ * Nothing is sold here. The server decides: the request carries nothing, and
+ * a refusal is read for what it means — the balance read again if the gems
+ * were short after all, a plain sentence if the streak can no longer be
+ * restored.
+ */
+function RepairOffer({ offer, onRestored }: { offer: StreakRepairOffer; onRestored: (streak: StreakSummary) => void }): React.JSX.Element {
+  const t = useT();
+  const locale = useLocale();
+  const { client } = useAuth();
+  const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
+  const [gems, setGems] = useState<number | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [problem, setProblem] = useState<string | null>(null);
+  const shortId = useId();
+
+  const readGems = useCallback(async (): Promise<void> => {
+    const res = await client.get<{ balances: WalletBalances }>('/me/wallet');
+    // `ok` is about the status code, not the shape
+    if (res.ok && typeof res.data?.balances?.gems === 'number') setGems(res.data.balances.gems);
+  }, [client]);
+
+  // a free restore needs no balance; a priced one says it only when the gems are short
+  useEffect(() => {
+    if (!offer.free) void readGems();
+  }, [offer.free, readGems]);
+
+  async function restore(): Promise<void> {
+    setBusy(true);
+    setProblem(null);
+    const res = await client.post<StreakRepairResult>('/me/streak/repair');
+    setBusy(false);
+    if (res.ok) {
+      onRestored(res.data.streak);
+      return;
+    }
+    if (res.error.code === 'INSUFFICIENT_FUNDS') await readGems();
+    else setProblem(res.error.code && GONE.has(res.error.code) ? t('streak.repair.gone') : describeError(res.error, t));
+  }
+
+  // short only once the balance is known; until then the button is live and the server answers
+  const short = !offer.free && gems !== null && gems < offer.costGems;
+  return (
+    <div className="streak-repair">
+      <p className="streak-repair-text">{t('streak.repair.offer', { count: number(offer.days), date: lastDay(offer.until, locale) })}</p>
+      {short && gems !== null && (
+        <div className="streak-repair-short" id={shortId}>
+          <p className="streak-repair-gems">
+            <GemIcon size={18} />
+            {t('streak.repair.gems', { count: number(gems) })}
+          </p>
+          <p className="streak-sheet-hint">{t('streak.repair.gemsFrom')}</p>
+        </div>
+      )}
+      <Button size="lg" block onClick={() => void restore()} disabled={busy || short} aria-describedby={short ? shortId : undefined}>
+        {busy ? (
+          t('streak.repair.restoring')
+        ) : offer.free ? (
+          t('streak.repair.restoreFree')
+        ) : (
+          <>
+            <GemIcon size={20} />
+            {t('streak.repair.restoreFor', { count: number(offer.costGems) })}
+          </>
+        )}
+      </Button>
+      {problem && (
+        <p className="streak-repair-problem" role="alert">
+          {problem}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** The restored streak's fire: framed in a square this big inside the glow it arrives in. */
+const BACK_FIRE = 72;
+
+/**
+ * The streak, back: its fire arriving the way anything earned arrives here
+ * (`CelebrationArt` and `useCelebrationMoment` — the art springs in, a ring
+ * widens once, a few flecks, a buzz on a phone and the reward chime), then
+ * the words. For a reader who asked for less motion the fire simply fades in.
+ * The headline takes the focus the button had, so a screen reader says it.
+ */
+function Restored({ streak }: { streak: StreakSummary }): React.JSX.Element {
+  const t = useT();
+  const locale = useLocale();
+  const moment = useCelebrationMoment();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const level = fireLevel(streak.current);
+
+  useEffect(() => {
+    playLessonSound('reward');
+    heading.current?.focus();
+  }, []);
+
+  return (
+    // a click on it while it plays skips to the end
+    <div
+      className={`celebrate celebrate-inline streak-restored tone-zer ${moment.playing ? 'is-playing' : 'is-done'}`}
+      onClick={moment.playing ? moment.skip : undefined}
+    >
+      <CelebrationArt flecks={BURST.lesson} seed={streak.current * 17 + 3} reach={110} still={prefersReducedMotion()}>
+        <Fire size={fireSizeToFit(level.stage, BACK_FIRE, BACK_FIRE)} level={level} framed />
+      </CelebrationArt>
+      <div className="celebrate-details">
+        <h2 className="streak-sheet-title" tabIndex={-1} ref={heading}>
+          {t('streak.repair.restoredTitle', { count: new Intl.NumberFormat(locale).format(streak.current) })}
+        </h2>
+        <p className="streak-repair-text">{t('streak.repair.restoredBody')}</p>
+      </div>
+    </div>
   );
 }
 

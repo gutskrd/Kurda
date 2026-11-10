@@ -80,10 +80,10 @@ describe('Edit Profile page', () => {
     vi.stubGlobal('fetch', editFetch(calls, { ...meUser, premium: false }));
     renderApp(<ProfileEdit />, ['/app/profile/edit']);
 
-    const locked = await screen.findByRole('radio', { name: /Avatar default-02 \(Premium — locked\)/ });
+    const locked = await screen.findByRole('radio', { name: /Avatar default-02 \(Hevalo\+ — locked\)/ });
     expect(locked).toHaveAttribute('aria-disabled', 'true');
     await userEvent.click(locked);
-    expect(await screen.findByText(/only for Premium members/i)).toBeInTheDocument();
+    expect(await screen.findByText(/only for Hevalo\+ members/i)).toBeInTheDocument();
     expect(calls.some((c) => c.url.includes('/me/cosmetics/avatar'))).toBe(false);
   });
 

@@ -96,7 +96,7 @@ describe('ProfileModal', () => {
     expect((await screen.findByText('@zana')).previousSibling).toHaveTextContent('Zana K');
     expect(screen.getByText('Level 2')).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '50');
-    expect(screen.getByText('Premium')).toBeInTheDocument();
+    expect(screen.getByText('Hevalo+')).toBeInTheDocument();
     expect(screen.getByText('Online')).toBeInTheDocument();
     expect(screen.getByText('The River')).toBeInTheDocument();
     // the avatar uses the resolved avatarUrl (photo → default avatar server-side)

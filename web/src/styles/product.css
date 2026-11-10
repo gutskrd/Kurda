@@ -1079,6 +1079,12 @@ a.invite-card:hover {
   font-size: 0.86rem;
   color: var(--ink-2);
 }
+/* a member's gems with the day's Zêr: the same quiet line, with the gem before it */
+.zer-plus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
 
 /* ---- learn: the courses (the rest is in learn.css) ------------------------- */
 .course-card {

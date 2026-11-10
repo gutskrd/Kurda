@@ -62,6 +62,50 @@
   line-height: 1.45;
 }
 
+/* ---- a streak that ended, offered back: one sentence, one button ------------------ */
+.streak-repair {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--r-lg);
+  background: var(--surface-2);
+}
+.streak-repair-text {
+  margin: 0;
+  color: var(--ink);
+  line-height: 1.45;
+}
+.streak-repair-short {
+  display: grid;
+  gap: 4px;
+}
+.streak-repair-gems {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.streak-repair .btn {
+  gap: 8px;
+}
+.streak-repair-problem {
+  margin: 0;
+  color: var(--danger);
+  font-size: 0.86rem;
+}
+/* the streak, back: the celebration's own art, with the words centred under it */
+.streak-restored {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  text-align: center;
+}
+.streak-restored .streak-sheet-title:focus {
+  outline: none;
+}
+
 /* ---- the ladder: each stage a small fire, its name and its day -------------------- */
 .fire-ladder {
   display: grid;
