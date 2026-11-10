@@ -3,6 +3,12 @@
  * real Postgres: first completion (of a lesson, whichever version), revealed
  * mistakes, perfect-lesson Gems at most once per learner and lesson,
  * first-perfect, honest spacing on a replay, and speaking kept out of review.
+ *
+ * The perfect-lesson gem rule is switched off now (free gems are rare), so a
+ * perfect lesson pays none: the last test says so. The rule is still there
+ * for an admin to switch back on, and the code that pays it must then pay
+ * once per learner and lesson and never for a replay, so this suite switches
+ * it on for itself to go on covering that.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -11,6 +17,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from './repository.js';
 import { activate } from '../test/activate.js';
+import { switchOnGemRule } from '../test/gem-rules.js';
 import { GemService } from '../gems/service.js';
 import { WalletService } from '../wallet/service.js';
 import { lessonCompletionXp } from '../xp/service.js';
@@ -37,6 +44,8 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   const ex = { mc: '', tr: '', sp: '' };
   const players: Player[] = [];
   const suffix = Date.now().toString(36);
+  /** Switches the perfect-lesson rule off again, as it is outside this suite. */
+  let perfectRuleOff: () => Promise<void>;
 
   const authed = (player: Player, method: 'GET' | 'POST', url: string, payload?: unknown) =>
     app.inject({
@@ -47,7 +56,8 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
       remoteAddress: '10.31.0.1',
     });
 
-  async function register(name: string): Promise<Player> {
+  /** `from` is the address it registers from: sign-ups are limited to five a minute from one. */
+  async function register(name: string, from = '10.31.0.2'): Promise<Player> {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -59,7 +69,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
       birthYear: 1990,
       birthMonth: 6,
       },
-      remoteAddress: '10.31.0.2',
+      remoteAddress: from,
     });
     await activate(app, pool, reg);
     const player = { id: reg.json().user.id as string, token: reg.json().tokens.accessToken as string };
@@ -111,6 +121,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     repo = new ContentRepository(pool);
+    perfectRuleOff = await switchOnGemRule(pool, 'perfect_lesson');
 
     courseId = await repo.createCourse({ slug: `eng-${suffix}`, titleKu: 'K', titleEn: 'Engine' });
     const unitId = await repo.createUnit(courseId, 1, 'Y', 'Unit');
@@ -127,6 +138,7 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   });
 
   afterAll(async () => {
+    await perfectRuleOff();
     // XP and Gems were awarded → deleting the users cascades into append-only
     // ledgers, which only permit DELETE under the admin flag
     const client = await pool.connect();
@@ -330,6 +342,26 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
         [who],
       );
       expect(perfect.rows[0]!.progress).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  /**
+   * As it is for everyone now: the rule is off, so the same perfect first
+   * completion pays no Gems. Everything else it earns is unchanged — the XP,
+   * the first completion, the perfect lesson counted towards its badge.
+   */
+  it('a perfect first completion pays no Gems while the rule is switched off, as the migration left it', async () => {
+    await perfectRuleOff();
+    try {
+      const plain = await register('eng_off', '10.31.0.3');
+      const { results } = await play(plain, true);
+      expect(results).toMatchObject({ accuracy: 1, firstCompletion: true, xpAwarded: lessonCompletionXp(1, false) });
+      expect(await gemsEarned(plain.id, 'perfect_lesson')).toBe(0);
+      expect((await new WalletService(pool).balances(plain.id)).gems).toBe(0);
+      const page = await authed(plain, 'GET', '/me/badges');
+      expect(page.json().badges.find((b: { key: string }) => b.key === 'bekemasi').progress).toBe(1);
+    } finally {
+      perfectRuleOff = await switchOnGemRule(pool, 'perfect_lesson');
     }
   });
 });

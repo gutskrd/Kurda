@@ -70,6 +70,7 @@ describe.skipIf(!DATABASE_URL)('the economy under concurrent requests (integrati
   };
   const balances = async (who: TestLearner) => wallet.balances(who.id);
   const product = `gems_burst_${suffix}`;
+  const gemRule = `burst_${suffix}`;
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL, max: 30 });
@@ -79,6 +80,7 @@ describe.skipIf(!DATABASE_URL)('the economy under concurrent requests (integrati
   afterAll(async () => {
     await pool.query(`DELETE FROM shop_items WHERE sku = ANY($1)`, [skus]).catch(() => undefined);
     await pool.query(`DELETE FROM gem_packs WHERE product_id = $1`, [product]).catch(() => undefined);
+    await pool.query(`DELETE FROM gem_rules WHERE key = $1`, [gemRule]).catch(() => undefined);
     await removeLearners(pool, `ecc%${suffix}@it.kurda.app`);
     await pool.end();
   });
@@ -173,7 +175,9 @@ describe.skipIf(!DATABASE_URL)('the economy under concurrent requests (integrati
   it('grants a rule’s Gems once for one event', async () => {
     const gi = await learner('gems');
     const gems = new GemService(pool, wallet);
-    const results = await Promise.all(Array.from({ length: BURST }, () => gems.grant(gi.id, 'achievement_milestone', `burst:${gi.id}`)));
+    // a rule of this suite's own: which seeded rules are switched on is not what is under test
+    await gems.upsertRule({ key: gemRule, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
+    const results = await Promise.all(Array.from({ length: BURST }, () => gems.grant(gi.id, gemRule, `burst:${gi.id}`)));
     expect(results.filter((r) => r.granted > 0)).toHaveLength(1);
     expect(results.filter((r) => r.granted === 0).every((r) => r.cappedBy === 'duplicate')).toBe(true);
     expect((await balances(gi)).gems).toBe(results.find((r) => r.granted > 0)!.granted);
