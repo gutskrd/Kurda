@@ -4,10 +4,10 @@ import { humanize } from '../moderation';
 import { Badge, Button, FieldRow, FormActions, Section, Select, Table, TextInput, Time, errorLine, useDialogs, useLoad, useToast, type Column } from '../ui';
 
 /**
- * A person's money and things: balances, the ledger, what they own — and,
- * for a superadmin, a change to either.
+ * A person's money and things: balances, the ledger, what they own, whether
+ * they are a Hevalo+ member — and, for a superadmin, a change to any of them.
  *
- * Both changes go through the API, which moves money through the
+ * Every change goes through the API, which moves money through the
  * double-entry ledger (a balance is never edited directly) and keeps every
  * call in the audit log with the reason given.
  */
@@ -16,6 +16,7 @@ interface EconomyUser {
   id: string;
   username: string;
   balances: { zer: number; gems: number };
+  premiumUntil?: string | null;
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: string }>;
 }
 
@@ -45,6 +46,8 @@ const LEDGER_REASON: Readonly<Record<string, string>> = {
   quest_reward: 'Quest reward',
   tournament_reward: 'Tournament prize',
   season_reward: 'Season reward',
+  streak_repair: 'Streak restored',
+  plus_daily: 'Hevalo+ daily gems',
 };
 
 export function ledgerReason(reason: string): string {
@@ -84,6 +87,7 @@ export function WalletPanel({ user, canAdjust, onChanged }: { user: EconomyUser;
         </div>
       </Section>
       {canAdjust && <AdjustForm user={user} onChanged={onChanged} />}
+      <PlusSection user={user} canAdjust={canAdjust} onChanged={onChanged} />
       <Section title="Ledger" description="The latest 20 movements, newest first." flush>
         <Table caption="Ledger" columns={LEDGER_COLUMNS} rows={user.ledger} rowKey={(r) => `${r.createdAt}-${r.currency}-${r.amount}-${r.reason}`} empty="No movements yet." />
       </Section>
@@ -194,6 +198,107 @@ function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => v
           </Button>
         </FormActions>
       </form>
+    </Section>
+  );
+}
+
+/** The most days one grant may add, as the API allows. */
+export const PLUS_GRANT_MAX_DAYS = 366;
+
+/**
+ * Whether they are a Hevalo+ member and until when — and, for a superadmin,
+ * giving it for a number of days or adding days to what they have. This is
+ * how testers and reviewers get membership while it cannot be bought. What
+ * will happen is said back (the new end) and confirmed before anything is
+ * sent, and the reason goes to the audit log.
+ */
+function PlusSection({ user, canAdjust, onChanged }: { user: EconomyUser; canAdjust: boolean; onChanged: () => void }): React.JSX.Element {
+  const [days, setDays] = useState('');
+  const [reason, setReason] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [touched, setTouched] = useState(false);
+  const toast = useToast();
+  const dialogs = useDialogs();
+  const until = user.premiumUntil ? new Date(user.premiumUntil) : null;
+  const member = until !== null && until.getTime() > Date.now();
+  const value = Number(days);
+  const daysError = !days.trim()
+    ? 'Enter a number of days.'
+    : !Number.isInteger(value) || value < 1
+      ? 'A whole number of days, 1 or more.'
+      : value > PLUS_GRANT_MAX_DAYS
+        ? `At most ${PLUS_GRANT_MAX_DAYS} days at a time.`
+        : null;
+  const reasonError = reason.trim() ? null : 'Say why, for the audit log.';
+
+  async function submit(e: React.FormEvent): Promise<void> {
+    e.preventDefault();
+    setTouched(true);
+    if (daysError || reasonError) return;
+    // as the API counts: from the end they have while it is still to come, from now otherwise
+    const end = new Date((member ? until.getTime() : Date.now()) + value * 86_400_000);
+    const count = `${value.toLocaleString()} ${value === 1 ? 'day' : 'days'}`;
+    const yes = await dialogs.confirm({
+      title: member ? `Add ${count} of Hevalo+ for @${user.username}?` : `Give @${user.username} Hevalo+ for ${count}?`,
+      body: `They will be a member until ${end.toLocaleDateString(undefined, { dateStyle: 'long' })}.\nReason: ${reason.trim()}`,
+      confirmLabel: member ? `Add ${count}` : `Give ${count}`,
+    });
+    if (!yes) return;
+    setBusy(true);
+    try {
+      // one key per confirmed grant: a double click or a retry adds the days once
+      const res = await api<{ premiumUntil: string }>(`/admin/users/${user.id}/plus`, {
+        method: 'POST',
+        body: { days: value, reason: reason.trim(), idempotencyKey: crypto.randomUUID() },
+      });
+      toast.success(`Hevalo+ until ${new Date(res.premiumUntil).toLocaleDateString(undefined, { dateStyle: 'long' })}.`);
+      setDays('');
+      setReason('');
+      setTouched(false);
+      onChanged();
+    } catch (err) {
+      toast.error(errorLine(err, 'the economy'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section title="Hevalo+" description="Membership: five gems with each day’s reward, a second streak freeze, and one free streak restore a month.">
+      <p>
+        {member ? (
+          <>
+            <Badge tone="info">Member</Badge> until <Time value={user.premiumUntil!} mode="absolute" />
+          </>
+        ) : until ? (
+          <>
+            Not a member. Their membership ended <Time value={user.premiumUntil!} mode="absolute" />.
+          </>
+        ) : (
+          'Not a member.'
+        )}
+      </p>
+      {canAdjust && (
+        <form className="form" noValidate onSubmit={(e) => void submit(e)}>
+          <FieldRow>
+            <TextInput
+              label="Days of Hevalo+"
+              hint={member ? 'Added to the end of the membership they have.' : 'Counted from today.'}
+              inputMode="numeric"
+              value={days}
+              onChange={(e) => setDays(e.target.value)}
+              error={touched ? daysError : undefined}
+              required
+            />
+            <TextInput label="Why (for the audit log)" value={reason} onChange={(e) => setReason(e.target.value)} error={touched ? reasonError : undefined} required maxLength={500} />
+          </FieldRow>
+          <FormActions>
+            <Button type="submit" variant="primary" busy={busy}>
+              {member ? 'Add days' : 'Give Hevalo+'}
+            </Button>
+          </FormActions>
+        </form>
+      )}
     </Section>
   );
 }

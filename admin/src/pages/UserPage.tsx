@@ -61,6 +61,8 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   bannedUntil: string | null;
   mutedUntil: string | null;
   balances: { zer: number; gems: number };
+  /** when their Hevalo+ membership ends, past or to come; null if they never had it (absent from an older API) */
+  premiumUntil?: string | null;
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: string }>;
   sessions: Array<{ deviceName: string | null; createdAt: string; expiresAt: string }>;
   /** adminUsername: who did it, by name (absent from an older API; null when their account is gone) */
