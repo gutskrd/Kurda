@@ -10,10 +10,11 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
  * app has a screen for, and the words on each one's card in Learn's Games
  * group.
  *
- * The list is every game in the registry the phone can open (here). Those with
+ * The list is the games in the registry the phone can open (here) that have
  * enough approved content in the learner's Kurdish right now (GET
- * /games/availability) come first and open; the rest follow as "coming soon",
- * seen but not opened, until their content is published.
+ * /games/availability), so a game appears the day its content is published.
+ * The rest can follow them as "coming soon", seen but not opened; that is
+ * off on the phone (`listsUpcoming` below says why).
  */
 
 /** The screens the learning games open on (root stack routes). */
@@ -74,6 +75,24 @@ export function useOpenRound(game: LearnGameId, dialect: GameDialect): string | 
   return open;
 }
 
+/**
+ * Whether the phone lists a game that is still short of approved content.
+ *
+ * Off. An app in a store is reviewed as a finished thing, and a card that
+ * says "coming soon" and opens nothing is what a reviewer sends an app back
+ * for; a learner who installed it would find half the list closed. So on the
+ * phone a game appears the day its content is published, as it did before.
+ * The website, which nobody reviews as a build, lists them all. The cards
+ * still know how to say "coming soon" (learn/GamesView), for the day this is
+ * turned on.
+ */
+let listsUpcoming = false;
+
+/** Test seam: list the games that cannot be played yet, or stop. */
+export function setListsUpcomingGames(on: boolean): void {
+  listsUpcoming = on;
+}
+
 /** The learning games to list for this learner now, in the learner's own Kurdish, each with whether it can be played yet. */
 export function useListedLearnGames(): ListedLearnGame[] {
   const dialect = useCourseDialect();
@@ -86,5 +105,6 @@ export function useListedLearnGames(): ListedLearnGame[] {
     availability && chain !== null
       ? { ...availability, games: [...(availability.games ?? []).filter((g) => g.id !== 'last-letter'), { id: 'last-letter', available: offered }] }
       : null;
-  return listedLearnGames(merged, PLAYABLE);
+  const listed = listedLearnGames(merged, PLAYABLE);
+  return listsUpcoming ? listed : listed.filter((g) => g.ready);
 }
