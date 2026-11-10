@@ -4,7 +4,7 @@
  * mobile/src/auth/AuthContext.tsx) so the web app speaks the same protocol —
  * no new/duplicated backend logic.
  */
-import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge } from '@kurda/shared';
+import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge, StreakRepairOffer } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
@@ -75,6 +75,26 @@ export interface StreakSummary {
   /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
   freezeProgress?: number;
   sessionsPerFreeze?: number;
+  /** the most freezes that can be held at once: one, two for a Hevalo+ member */
+  maxFreezes?: number;
+  /**
+   * The streak that ended and can still be restored: how long it was, what
+   * that costs now, and when the offer ends. Null when there is nothing to
+   * restore; absent on older responses.
+   */
+  repair?: StreakRepairOffer | null;
+}
+
+/** What POST /me/streak/repair answers with. */
+export interface StreakRepairResult {
+  restored: boolean;
+  duplicate: boolean;
+  days: number;
+  costGems: number;
+  free: boolean;
+  /** the gem balance afterwards */
+  gems: number;
+  streak: StreakSummary;
 }
 
 /**
@@ -511,6 +531,8 @@ export interface DailyRewardStatus {
    * Absent on older responses, where canClaim alone decides.
    */
   learnedToday?: boolean;
+  /** gems a claim today adds for a Hevalo+ member; 0 or absent for everyone else */
+  plusGems?: number;
 }
 
 /** Result of POST /rewards/daily/claim. */
@@ -519,6 +541,8 @@ export interface ClaimResult {
   cycleDay: number;
   reward: number;
   balance: number;
+  /** gems a Hevalo+ member received with the claim; 0 or absent for everyone else */
+  plusGems?: number;
 }
 
 /** A community library post (story or poem) — the one public browse endpoint. */

@@ -129,7 +129,7 @@ describe('CosmeticCustomizer', () => {
     expect((buy?.body as { idempotencyKey: string }).idempotencyKey.length).toBeGreaterThanOrEqual(8);
   });
 
-  it('offers a free item to everyone, even with no Zêr, rather than marking it Premium', async () => {
+  it('offers a free item to everyone, even with no Zêr, rather than marking it Hevalo+', async () => {
     const calls: Array<{ url: string; body: unknown }> = [];
     vi.stubGlobal(
       'fetch',
@@ -155,7 +155,7 @@ describe('CosmeticCustomizer', () => {
     renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
 
     const freeTile = (await screen.findByText('Daybreak')).closest('figure')!;
-    expect(within(freeTile).queryByText('Premium')).not.toBeInTheDocument();
+    expect(within(freeTile).queryByText('Hevalo+')).not.toBeInTheDocument();
     const get = within(freeTile).getByRole('button', { name: 'Get it free' });
     expect(get).toBeEnabled();
     // a priced one still needs the Zêr
@@ -186,7 +186,7 @@ describe('CosmeticCustomizer', () => {
     renderApp(<CosmeticCustomizer me={withIcon} onChanged={() => {}} />, ['/app/profile']);
 
     await userEvent.click(await screen.findByRole('tab', { name: /Icons/ }));
-    const toggle = screen.getByRole('checkbox', { name: /show premium icon/i });
+    const toggle = screen.getByRole('checkbox', { name: /show the icon on my profile/i });
     expect(toggle).toBeChecked();
     await userEvent.click(toggle);
 
@@ -200,7 +200,7 @@ describe('CosmeticCustomizer', () => {
     renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
     await userEvent.click(await screen.findByRole('tab', { name: /Icons/ }));
     await screen.findByText('No icons available yet.');
-    expect(screen.queryByRole('checkbox', { name: /show premium icon/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /show the icon on my profile/i })).not.toBeInTheDocument();
   });
 
   it('files your cosmetics under tabs with counts, what you own first and badged', async () => {

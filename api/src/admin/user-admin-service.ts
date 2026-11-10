@@ -68,6 +68,8 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   bannedUntil: Date | null;
   mutedUntil: Date | null;
   balances: { zer: number; gems: number };
+  /** when their Hevalo+ membership ends; null if they have never had it, and in the past once it is over */
+  premiumUntil: Date | null;
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: Date }>;
   sessions: Array<{ deviceName: string | null; createdAt: Date; expiresAt: Date }>;
   /** the admin's username too, so the page names who did it (null when the account is gone) */
@@ -85,11 +87,16 @@ const LEGACY_STATEMENT = {
 type ActionOk = { ok: true; balance?: number; duplicate?: boolean };
 type ActionResult = ActionOk | { ok: false; code: 'NOT_FOUND' | 'INSUFFICIENT_FUNDS' | 'ITEM_NOT_FOUND' | 'NOT_OWNED' | 'SELF_ADJUST' };
 
+/** The most days of Hevalo+ one grant may add: a year, so a slip of the keyboard cannot give a decade. */
+export const PLUS_GRANT_MAX_DAYS = 366;
+export type PlusGrantResult = { ok: true; premiumUntil: Date; duplicate?: boolean } | { ok: false; code: 'NOT_FOUND' };
+
 /**
  * Admin user lookup + moderation (KUR-101). Bans bump `token_version` so every
  * live session dies on the next request (KUR-016), temp bans carry an expiry
  * that lapses on its own, and wallet changes go through the double-entry ledger
- * with the `admin_adjustment` reason — never a direct balance edit. Every action
+ * with the `admin_adjustment` reason — never a direct balance edit. Hevalo+
+ * membership is given or extended by days (`grantPlus`). Every action
  * is recorded in `admin_actions` with its mandatory reason.
  */
 /** A shop item a user owns, as shown in the admin panel. */
@@ -205,9 +212,9 @@ export class UserAdminService {
     const u = await this.pool.query<{
       id: string; username: string; email: string | null; display_name: string | null; roles: string[];
       created_at: Date; banned_at: Date | null; banned_until: Date | null; muted_until: Date | null;
-      age_known: boolean; minor: boolean;
+      age_known: boolean; minor: boolean; premium_until: Date | null;
     }>(
-      `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until,
+      `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until, premium_until,
               birth_year IS NOT NULL AS age_known, ${minorSql('users')} AS minor,
               CASE WHEN muted_until = 'infinity' THEN NULL ELSE muted_until END AS muted_until
        FROM users WHERE id = $1`,
@@ -248,6 +255,7 @@ export class UserAdminService {
       bannedUntil: user.banned_until,
       mutedUntil: user.muted_until,
       balances,
+      premiumUntil: user.premium_until,
       ledger: ledger.rows.map((r) => ({ currency: r.currency, amount: r.amount, reason: r.reason, createdAt: r.created_at })),
       sessions: sessions.rows.map((r) => ({ deviceName: r.device_name, createdAt: r.created_at, expiresAt: r.expires_at })),
       actions: actions.rows.map((r) => ({
@@ -417,6 +425,67 @@ export class UserAdminService {
     } catch (err) {
       if (err instanceof InsufficientFundsError) return { ok: false, code: 'INSUFFICIENT_FUNDS' };
       throw err;
+    }
+  }
+
+  /**
+   * Give someone Hevalo+ for a number of days, or add them to the membership
+   * they have: the new end is `days` after the later of now and the end they
+   * had, so extending never shortens and a membership that ran out starts
+   * again from today. It is how testers and reviewers are given membership
+   * while it cannot be bought.
+   *
+   * The change and its entry in the person's history (`plus_grant`, with the
+   * reason and the end before and after) are one transaction under the
+   * account's lock. Once per `requestKey`, filed under the admin who sent it,
+   * so a double click or a retried request adds the days once: the repeat
+   * answers `duplicate` with the end as it is. An admin may give it to their
+   * own account — the owner is often the only one there is, and has to be able
+   * to see what a member sees — and that, too, is in the history.
+   */
+  async grantPlus(adminId: string, userId: string, days: number, reason: string, requestKey?: string, now: Date = new Date()): Promise<PlusGrantResult> {
+    if (!Number.isInteger(days) || days < 1 || days > PLUS_GRANT_MAX_DAYS) {
+      throw new Error(`a Hevalo+ grant is 1 to ${PLUS_GRANT_MAX_DAYS} whole days, got ${days}`);
+    }
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const found = await client.query<{ premium_until: Date | null }>(
+        `SELECT premium_until FROM users WHERE id = $1 AND deleted_at IS NULL FOR UPDATE`,
+        [userId],
+      );
+      const user = found.rows[0];
+      if (!user) {
+        await client.query('ROLLBACK');
+        return { ok: false, code: 'NOT_FOUND' };
+      }
+      if (requestKey) {
+        const seen = await client.query(
+          `SELECT 1 FROM admin_actions
+            WHERE target_user_id = $1 AND admin_id = $2 AND action = 'plus_grant' AND meta->>'requestKey' = $3`,
+          [userId, adminId, requestKey],
+        );
+        if ((seen.rowCount ?? 0) > 0 && user.premium_until) {
+          await client.query('ROLLBACK');
+          return { ok: true, premiumUntil: user.premium_until, duplicate: true };
+        }
+      }
+      const from = user.premium_until && user.premium_until.getTime() > now.getTime() ? user.premium_until : now;
+      const until = new Date(from.getTime() + days * 86_400_000);
+      await client.query(`UPDATE users SET premium_until = $2 WHERE id = $1`, [userId, until]);
+      await client.query(`INSERT INTO admin_actions (target_user_id, admin_id, action, reason, meta) VALUES ($1, $2, 'plus_grant', $3, $4::jsonb)`, [
+        userId,
+        adminId,
+        reason,
+        JSON.stringify({ days, before: user.premium_until, after: until, ...(requestKey ? { requestKey } : {}) }),
+      ]);
+      await client.query('COMMIT');
+      return { ok: true, premiumUntil: until };
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
     }
   }
 

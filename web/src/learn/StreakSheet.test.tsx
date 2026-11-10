@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 // the fire as its props: how big it burns and whether it stands still, whoever draws it
 vi.mock('../components/Fire', () => import('../test/fireProbe'));
-import { render, screen, within } from '@testing-library/react';
+import { cleanup, render, screen, within } from '@testing-library/react';
 import { fireLadder, fireLevel, fireSizeToFit } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { preloadCatalogue } from '../i18n/catalogues';
@@ -76,6 +76,20 @@ describe('the streak sheet', () => {
     expect(screen.getAllByTestId('fire')[0]).toHaveAttribute('data-stage', 'cold');
     expect(rungs().every((r) => r.endsWith(', ahead'))).toBe(true);
     expect(within(ladder()).queryByText('Now')).not.toBeInTheDocument();
+  });
+
+  it('says a freeze can be held one at a time, and two for a Hevalo+ member', () => {
+    open(9);
+    expect(screen.getByText(/You can hold one at a time\.$/)).toBeInTheDocument();
+    cleanup();
+    render(
+      <I18nProvider>
+        <StreakSheet streak={{ ...streak(9), freezes: 2, maxFreezes: 2 }} onClose={() => undefined} />
+      </I18nProvider>,
+    );
+    expect(screen.getByText(/With Hevalo\+ you can hold 2 at a time\.$/)).toBeInTheDocument();
+    expect(screen.queryByText(/hold one at a time/)).not.toBeInTheDocument();
+    expect(screen.getByText('Streak freezes').nextElementSibling).toHaveTextContent('2');
   });
 
   it('burns the blaze at 120 days, with the Newroz fire still to come', () => {

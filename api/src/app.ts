@@ -60,6 +60,8 @@ import { registerWalletRoutes } from './wallet/routes.js';
 import { registerDailyGoalRoutes } from './goals/routes.js';
 import { DailyRewardService } from './rewards/service.js';
 import { registerDailyRewardRoutes } from './rewards/routes.js';
+import { StreakService } from './streaks/service.js';
+import { registerStreakRoutes } from './streaks/routes.js';
 import { DailyQuestService } from './quests/service.js';
 import { registerDailyQuestRoutes } from './quests/routes.js';
 import { registerKingdomRoutes } from './kingdom/routes.js';
@@ -639,6 +641,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerLessonRoutes(app, gemService, xpService, badges);
     registerDailyGoalRoutes(app);
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
+    // a streak that ended, restored for gems (or a Hevalo+ member's free one of the month)
+    registerStreakRoutes(app, new StreakService(app.db, new WalletService(app.db)));
     // today's three quests, moved by finished lessons and practice, each paying a chest of Zêr
     registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
     // The Village ("kingdom" in code): the village that grows only from real learning, each new level recorded and paid for once

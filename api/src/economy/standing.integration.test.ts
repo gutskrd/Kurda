@@ -26,6 +26,7 @@ describe.skipIf(!DATABASE_URL)('who the economy pays (integration)', () => {
   let wallet: WalletService;
   const suffix = Date.now().toString(36);
   const p: Record<string, TestLearner> = {};
+  const gemRule = `standing_${suffix}`;
 
   beforeAll(async () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
@@ -55,6 +56,7 @@ describe.skipIf(!DATABASE_URL)('who the economy pays (integration)', () => {
   });
 
   afterAll(async () => {
+    await pool.query(`DELETE FROM gem_rules WHERE key = $1`, [gemRule]);
     await removeLearners(pool, `est%${suffix}@it.kurda.app`);
     await pool.end();
   });
@@ -75,15 +77,18 @@ describe.skipIf(!DATABASE_URL)('who the economy pays (integration)', () => {
 
   it('grants no automatic Gems to a blocked account, silently, and pays everyone else', async () => {
     const gems = new GemService(pool, wallet);
+    // a rule of this suite's own, switched on: an account's standing is asked only once a rule would pay
+    await gems.upsertRule({ key: gemRule, amount: 15, dailyCap: null, cooldownSeconds: 0, active: true });
     for (const tag of ['cheat', 'bot', 'held', 'banned', 'closed']) {
       const who = p[tag]!;
-      expect(await gems.grant(who.id, 'achievement_milestone', `standing:${who.id}`), tag).toEqual({ granted: 0, cappedBy: 'restricted' });
+      expect(await gems.grant(who.id, gemRule, `standing:${who.id}`), tag).toEqual({ granted: 0, cappedBy: 'restricted' });
       expect((await wallet.balances(who.id)).gems, tag).toBe(0);
     }
     for (const tag of ['fine', 'suspect', 'lapsed']) {
       const who = p[tag]!;
-      const result = await gems.grant(who.id, 'achievement_milestone', `standing:${who.id}`);
-      expect(result.granted, tag).toBeGreaterThan(0);
+      const result = await gems.grant(who.id, gemRule, `standing:${who.id}`);
+      expect(result, tag).toEqual({ granted: 15, cappedBy: 'none' });
+      expect((await wallet.balances(who.id)).gems, tag).toBe(15);
     }
   });
 

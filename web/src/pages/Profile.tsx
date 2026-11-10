@@ -108,6 +108,7 @@ export function Profile(): React.JSX.Element {
       daysLearned: me.streak.daysLearned ?? 0,
       freezes: me.streak.freezes,
       sessionsPerFreeze: me.streak.sessionsPerFreeze ?? 5,
+      maxFreezes: me.streak.maxFreezes ?? 1,
     },
     bio: me.bio,
     favPoem: me.favoritePoem ?? null,

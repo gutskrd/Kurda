@@ -531,7 +531,7 @@ function AccountProfile() {
 
         {user?.id ? <ProfileActivity key={reloadKey} userId={user.id} own /> : null}
       </ScrollView>
-      <StreakSheet streak={streakOpen ? streak : null} onClose={() => setStreakOpen(false)} />
+      <StreakSheet streak={streakOpen ? streak : null} onClose={() => setStreakOpen(false)} onRestored={setStreak} />
     </GradientBackground>
   );
 }

@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ClaimResult, DailyRewardStatus, WalletBalances } from '../lib/types';
 import { Button } from './Button';
-import { CoinIcon } from './icons';
+import { CoinIcon, GemIcon } from './icons';
 import { useT } from '../i18n/I18nProvider';
 import { useCountUp } from '../lib/motion';
 
@@ -16,6 +16,10 @@ import { useCountUp } from '../lib/motion';
  * The reward is paid for learning: until a lesson or practice session has been
  * finished today, the tile says so and points at Learn rather than offering a
  * claim the server would refuse.
+ *
+ * A Hevalo+ member's claim also brings a few gems. The tile says so in one
+ * quiet line: what the claim adds while it is there to take, and what it added
+ * once it has been. Nobody else sees the line at all.
  */
 export function DailyReward(): React.JSX.Element | null {
   const t = useT();
@@ -25,6 +29,8 @@ export function DailyReward(): React.JSX.Element | null {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
+  // the gems this claim added for a member; null until a claim has been made here
+  const [plusClaimed, setPlusClaimed] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -59,6 +65,7 @@ export function DailyReward(): React.JSX.Element | null {
       setBalance(res.data.balance);
       setStatus((s) => (s ? { ...s, canClaim: false, alreadyClaimedToday: true } : s));
       setMsg(t('daily.claimed', { amount: res.data.reward }));
+      setPlusClaimed(res.data.plusGems ?? 0);
     } else {
       setMsg(describeError(res.error, t));
     }
@@ -70,6 +77,8 @@ export function DailyReward(): React.JSX.Element | null {
   const canClaim = status?.canClaim ?? false;
   // explicitly false only: an older server sends no learnedToday at all
   const learnFirst = status !== null && !status.alreadyClaimedToday && status.learnedToday === false;
+  // what a claim adds for a member, before it; what this one added, after it
+  const plusGems = canClaim ? (status?.plusGems ?? 0) : (plusClaimed ?? 0);
 
   return (
     <div className="zer-card">
@@ -106,6 +115,12 @@ export function DailyReward(): React.JSX.Element | null {
       {msg && (
         <div className="zer-msg" role="status">
           {msg}
+        </div>
+      )}
+      {plusGems > 0 && (
+        <div className="zer-msg zer-plus">
+          <GemIcon size={16} />
+          {t('daily.plusGems', { count: plusGems })}
         </div>
       )}
     </div>

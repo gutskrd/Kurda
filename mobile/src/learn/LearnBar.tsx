@@ -142,7 +142,15 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
         </Pressable>
       ) : null}
 
-      <StreakSheet streak={open === 'streak' ? streak : null} onClose={() => setOpen(null)} />
+      <StreakSheet
+        streak={open === 'streak' ? streak : null}
+        onClose={() => setOpen(null)}
+        // a streak restored in the sheet is the streak everywhere: the fire in the bar, and Learn's own moments
+        onRestored={(next) => {
+          setStreak(next);
+          onStreak?.(next);
+        }}
+      />
       <BottomSheet visible={open === 'goal'} onClose={() => setOpen(null)} title={t('learn.today.title')} icon="bolt">
         {goal ? (
           <View style={styles.sheetBody}>

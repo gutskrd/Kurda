@@ -17,6 +17,21 @@ export interface DailyStatus {
    * Absent on older responses, where `canClaim` alone decides.
    */
   learnedToday?: boolean;
+  /** gems a claim today adds for a Hevalo+ member; 0 or absent for everyone else */
+  plusGems?: number;
+}
+
+/** What POST /rewards/daily/claim answers with, as much of it as the card shows. */
+export interface DailyClaim {
+  reward: number;
+  /** gems a Hevalo+ member received with the claim; 0 or absent for everyone else */
+  plusGems?: number;
+}
+
+/** The gems to say beside the Zêr, or null when there are none to say. */
+export function plusGemsOf(from: { plusGems?: number } | null | undefined): number | null {
+  const gems = from?.plusGems ?? 0;
+  return gems > 0 ? gems : null;
 }
 
 /**

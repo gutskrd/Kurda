@@ -54,6 +54,49 @@ describe('the day’s Zêr', () => {
   });
 });
 
+describe('a Hevalo+ member’s gems with the day’s Zêr', () => {
+  it('says what the claim adds under the button, and what it added once it is taken', async () => {
+    let claimed = false;
+    testAuth.client = fakeClient({
+      'GET /rewards/daily': () => ok({ ...status(claimed), plusGems: 5 }),
+      'POST /rewards/daily/claim': () => {
+        claimed = true;
+        return ok({ reward: 15, plusGems: 5 });
+      },
+    });
+    renderWithProviders(<DailyRewardCard />);
+    const claim = await screen.findByRole('button', { name: 'Claim 15 Zêr' });
+    expect(screen.getByText('+5 gems with Hevalo+')).toBeTruthy();
+    fireEvent.click(claim);
+    expect(await screen.findByLabelText('+15 Zêr claimed!')).toBeTruthy();
+    expect(screen.getByText('+5 gems with Hevalo+')).toBeTruthy();
+  });
+
+  it('is not said to anyone else, before the claim or after it', async () => {
+    let claimed = false;
+    testAuth.client = fakeClient({
+      'GET /rewards/daily': () => ok({ ...status(claimed), plusGems: 0 }),
+      'POST /rewards/daily/claim': () => {
+        claimed = true;
+        return ok({ reward: 15, plusGems: 0 });
+      },
+    });
+    renderWithProviders(<DailyRewardCard />);
+    const claim = await screen.findByRole('button', { name: 'Claim 15 Zêr' });
+    expect(screen.queryByTestId('daily-plus-gems')).toBeNull();
+    fireEvent.click(claim);
+    expect(await screen.findByLabelText('+15 Zêr claimed!')).toBeTruthy();
+    expect(screen.queryByTestId('daily-plus-gems')).toBeNull();
+  });
+
+  it('is not said on a day already claimed, when the card is opened later', async () => {
+    testAuth.client = fakeClient({ 'GET /rewards/daily': () => ok({ ...status(true), plusGems: 5 }) });
+    renderWithProviders(<DailyRewardCard />);
+    await waitFor(() => expect(screen.queryAllByTestId('skeleton')).toHaveLength(0));
+    expect(screen.queryByTestId('daily-plus-gems')).toBeNull();
+  });
+});
+
 describe('the day’s Zêr while it loads', () => {
   /*
    * The card used to appear only once its answer came, pushing the word of

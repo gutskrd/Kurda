@@ -4,6 +4,10 @@
  * so it costs no accuracy and no XP — and earns no perfect-lesson Gems or
  * a perfect lesson for the Bêkêmasî badge either. Anything else left unanswered still counts as missed.
  * The same for a review's listening items.
+ *
+ * The perfect-lesson gem rule is switched off for everyone now; this suite
+ * switches it on for itself, because the Gems are one of the two ways it tells
+ * a lesson answered in full from one with something put off.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -13,6 +17,7 @@ import { loadConfig } from '../config/env.js';
 import { ContentRepository } from './repository.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
+import { switchOnGemRule } from '../test/gem-rules.js';
 import { lessonCompletionXp } from '../xp/service.js';
 import { PRACTICE_XP_FACTOR } from '../practice/service.js';
 
@@ -31,6 +36,8 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
   let courseId: string;
   let lessonId: string;
   const ex = { mc: '', tr: '', li: '', sp: '' };
+  /** Switches the perfect-lesson rule off again, as it is outside this suite. */
+  let perfectRuleOff: () => Promise<void>;
   const players: Player[] = [];
   const suffix = Date.now().toString(36);
 
@@ -106,6 +113,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     repo = new ContentRepository(pool);
+    perfectRuleOff = await switchOnGemRule(pool, 'perfect_lesson');
 
     courseId = await repo.createCourse({ slug: `skip-${suffix}`, titleKu: 'K', titleEn: 'Skip' });
     const unitId = await repo.createUnit(courseId, 1, 'Y', 'Unit');
@@ -123,6 +131,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
   });
 
   afterAll(async () => {
+    await perfectRuleOff();
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -169,6 +178,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     const learner = await register('skall');
     const results = await play(learner, [ex.mc, ex.tr, ex.li, ex.sp]);
     expect(results).toMatchObject({ correct: 4, total: 4, accuracy: 1, xpAwarded: lessonCompletionXp(1, false) });
+    // paid because this suite switched the rule on; switched off, as it is for everyone, nobody is
     expect(await gemsEarned(learner.id)).toBe(5);
     expect(await perfectLessons(learner)).toBe(1);
   });

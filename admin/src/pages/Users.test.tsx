@@ -362,6 +362,62 @@ describe('a person', () => {
     expect(screen.queryByRole('button', { name: 'Apply' })).not.toBeInTheDocument();
   });
 
+  it('gives Hevalo+ for a number of days, said back with its end before anything is sent', async () => {
+    const user = userEvent.setup();
+    const { calls } = show(
+      `${at}/wallet`,
+      OWNER,
+      detailRoute(person({ premiumUntil: null })),
+      on('POST', `/admin/users/${SUBJECT_ID}/plus`, json({ ok: true, premiumUntil: ahead(24 * 30) })),
+    );
+    expect(await screen.findByText('Not a member.')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Give Hevalo+' }));
+    expect(screen.getByText('Enter a number of days.')).toBeInTheDocument();
+    // more than the API takes at once: refused before anything is asked
+    await user.type(screen.getByLabelText(/^Days of Hevalo\+/), '400');
+    await user.type(screen.getByLabelText(/^Why/), 'Reviewer for the store listing');
+    await user.click(screen.getByRole('button', { name: 'Give Hevalo+' }));
+    expect(screen.getByText('At most 366 days at a time.')).toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await user.clear(screen.getByLabelText(/^Days of Hevalo\+/));
+    await user.type(screen.getByLabelText(/^Days of Hevalo\+/), '30');
+    await user.click(screen.getByRole('button', { name: 'Give Hevalo+' }));
+    const ask = await screen.findByRole('alertdialog', { name: 'Give @baran Hevalo+ for 30 days?' });
+    expect(ask).toHaveTextContent('They will be a member until');
+    expect(ask).toHaveTextContent('Reason: Reviewer for the store listing');
+    await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/plus`)).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: 'Give Hevalo+' }));
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Give 30 days' }));
+    await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/plus`)).toHaveLength(1));
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/plus`)[0]!.body).toEqual({ days: 30, reason: 'Reviewer for the store listing', idempotencyKey: expect.any(String) });
+    expect(await screen.findByText(/^Hevalo\+ until /)).toBeInTheDocument();
+  });
+
+  it('says when a member’s Hevalo+ ends and adds days to it', async () => {
+    const user = userEvent.setup();
+    const { calls } = show(
+      `${at}/wallet`,
+      OWNER,
+      detailRoute(person({ premiumUntil: ahead(24 * 10) })),
+      on('POST', `/admin/users/${SUBJECT_ID}/plus`, json({ ok: true, premiumUntil: ahead(24 * 17) })),
+    );
+    expect(await screen.findByText('Member')).toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^Days of Hevalo\+/), '7');
+    await user.type(screen.getByLabelText(/^Why/), 'One more week of testing');
+    await user.click(screen.getByRole('button', { name: 'Add days' }));
+    await user.click(within(await screen.findByRole('alertdialog', { name: 'Add 7 days of Hevalo+ for @baran?' })).getByRole('button', { name: 'Add 7 days' }));
+    await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/plus`)).toHaveLength(1));
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/plus`)[0]!.body).toMatchObject({ days: 7, reason: 'One more week of testing' });
+  });
+
+  it('shows a moderator whether they are a member without a way to give it, and one whose membership ended as not one', async () => {
+    show(`${at}/wallet`, MODERATOR, detailRoute(person({ premiumUntil: ago(24 * 3) })));
+    expect(await screen.findByText(/Not a member\. Their membership ended/)).toBeInTheDocument();
+    expect(screen.queryByLabelText(/^Days of Hevalo\+/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Give Hevalo+' })).not.toBeInTheDocument();
+  });
+
   it('lists what they own, and a superadmin takes an item back with a reason', async () => {
     const user = userEvent.setup();
     const { calls } = show(

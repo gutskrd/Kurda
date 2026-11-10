@@ -711,6 +711,7 @@ const HISTORY_ACTION: Readonly<Record<string, string>> = {
   wallet_adjust: 'Balance adjusted',
   item_grant: 'Item given',
   item_revoke: 'Item taken back',
+  plus_grant: 'Hevalo+ given',
 };
 
 /** One line of a case's (or a person's) history: what happened, in words. */

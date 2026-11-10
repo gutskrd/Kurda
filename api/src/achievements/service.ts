@@ -89,9 +89,11 @@ export class AchievementsService implements MilestoneRecorder {
   /**
    * Exactly-once award: the PK insert is the idempotency gate, so a data
    * backfill re-triggering the same achievement can never award twice. A newly
-   * earned milestone also grants Gems (KUR-068), idempotent per user and
+   * earned milestone also asks for Gems (KUR-068), idempotent per user and
    * achievement — the Gem idempotency key is global, so a key of the
    * achievement alone would have paid only the first person ever to earn it.
+   * That rule (`achievement_milestone`) is switched off since migration
+   * 1751000312000, so nothing is paid unless an admin switches it back on.
    */
   async award(userId: string, achievementId: string): Promise<AwardResult> {
     const def = achievementDef(achievementId);
