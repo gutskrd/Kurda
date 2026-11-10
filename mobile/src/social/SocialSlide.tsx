@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Dimensions,
   Easing,
@@ -27,6 +26,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { bucket, type RailFriend, type SocialRailData } from './rail';
 import { elapsed, lastSeen } from './time';
+import { Loading } from '../theme/Loading';
 
 const WIDTH_RATIO = 0.86;
 const DURATION = 220;
@@ -181,7 +181,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
         </View>
 
         {loading && data === null ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+          <Loading style={{ marginTop: spacing.lg }} />
         ) : (
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
             {/* what goes stale, first: a challenge is gone in two minutes */}

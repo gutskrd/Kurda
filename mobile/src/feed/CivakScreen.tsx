@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
@@ -37,6 +37,7 @@ import {
 import { onPostDeleted, samePost } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
 import { FilterChip, FilterChips } from '../theme/FilterSheet';
+import { Loading } from '../theme/Loading';
 
 const PAGE = 20;
 
@@ -269,7 +270,7 @@ export function CivakScreen(): React.JSX.Element {
             )
           }
           ListFooterComponent={
-            loadingMore ? <ActivityIndicator color={colors.textSecondary} style={{ marginVertical: spacing.md }} /> : null
+            loadingMore ? <Loading style={{ marginVertical: spacing.md }} /> : null
           }
         />
         <FeedFilterSheet visible={filtering} value={filter} onApply={choose} onClose={() => setFiltering(false)} />

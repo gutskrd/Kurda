@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { feedbackKind, nextLaunch, pairKey, praiseFor, practisableMistakes, typedHint, type ResumeMemory, type TypedHint } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -36,6 +36,7 @@ import type { TranslationKey } from '../i18n/translations';
 import { deviceStore } from '../keyboard/deviceStore';
 import { useQuietInvites } from '../play/quietInvites';
 import { useDirection } from '../reports/direction';
+import { Loading } from '../theme/Loading';
 
 /** Endpoint paths for a playable session — lessons and practice differ only here. */
 export interface SessionPaths {
@@ -533,7 +534,7 @@ export function SessionPlayer({
     return (
       <GradientBackground>
         <View style={styles.centered}>
-          <ActivityIndicator size="large" color={colors.primary} />
+          <Loading size="large" />
           <Text style={[styles.tallying, { color: colors.textSecondary }]}>{t('lesson.tallying')}</Text>
         </View>
       </GradientBackground>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SkeletonText } from '../theme/Skeleton';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
@@ -19,6 +19,7 @@ import { bodyPreview, postName, type LibraryPost, type PostType } from './types'
 import { onPostDeleted } from '../composer/postDeleted';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { Loading } from '../theme/Loading';
 
 const PAGE = 20;
 
@@ -169,7 +170,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                 action={{ label: t('library.emptyAction'), onPress: () => navigation.navigate('Compose') }}
               />
             }
-            ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
+            ListFooterComponent={loadingMore ? <Loading style={{ marginVertical: spacing.md }} /> : null}
           />
         </AsyncBoundary>
 

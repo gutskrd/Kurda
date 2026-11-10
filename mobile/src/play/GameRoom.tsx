@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import type { MultiGame, MultiResult, MultiSeat, MultiView } from '@kurda/shared';
 import { describeError, type Translate } from '../api/errors';
 import { haptic } from '../feedback/haptics';
@@ -20,6 +20,7 @@ import { RematchPanel } from './RematchPanel';
 import { TeamPicker } from './TeamPicker';
 import type { GameViewHandle } from './useGameView';
 import { Verdict } from './Verdict';
+import { Loading } from '../theme/Loading';
 
 /** "You", Hevalo, a friend's name, or "Player 3": how a seat of a multiplayer learning game is named. */
 export function multiSeatName(p: Pick<MultiSeat, 'seat' | 'name' | 'isMe' | 'bot'>, t: Translate): string {
@@ -127,7 +128,7 @@ export function GameRoom<Board>({
       </GlassCard>
     );
   }
-  if (!view) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+  if (!view) return <Loading style={styles.loading} />;
 
   const name = (seat: number): string => {
     const p = view.players.find((x) => x.seat === seat);

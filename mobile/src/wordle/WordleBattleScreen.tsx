@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
@@ -41,6 +41,7 @@ import {
   type BattleState,
   type Difficulty,
 } from './battleApi';
+import { Loading } from '../theme/Loading';
 
 const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
 
@@ -276,7 +277,7 @@ function BattleRoom({
       </GlassCard>
     );
   }
-  if (!battle) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+  if (!battle) return <Loading style={styles.loading} />;
 
   const playerCount = (battle.me ? 1 : 0) + battle.opponents.length;
 
@@ -394,7 +395,7 @@ function BattleRoom({
             </View>
           </>
         ) : (
-          <ActivityIndicator color={colors.primary} />
+          <Loading />
         )}
         {/* play again with the same people: a rematch for two, the host's next round for more */}
         <View style={styles.stretch}>

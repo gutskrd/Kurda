@@ -50,6 +50,7 @@ import { afterClear, clearedSince, clearedView, useClearChat, useClearedHere } f
 import { ClearedLine, WelcomeCard } from './Welcome';
 import { StandingCard } from './Standing';
 import { AddFriendsSheet } from './AddFriendsSheet';
+import { Loading } from '../theme/Loading';
 
 const MAX_LEN = 2000;
 
@@ -494,7 +495,7 @@ export function GroupThreadScreen({
                 }}
               />
             ) : (
-              <ActivityIndicator color={colors.textSecondary} accessibilityLabel={t('common.loading')} />
+              <Loading />
             )}
           </ScrollView>
         ) : messages.length === 0 ? (
@@ -521,7 +522,7 @@ export function GroupThreadScreen({
             // the top of the history: older messages on their way, or above all that is held, who cleared the chat
             ListFooterComponent={
               loadingOlder ? (
-                <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
+                <Loading style={{ marginVertical: spacing.md }} />
               ) : view.kind === 'everyone' ? (
                 <ClearedLine by={view.by} at={view.at} me={user?.username ?? ''} />
               ) : null

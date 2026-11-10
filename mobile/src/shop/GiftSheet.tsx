@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
@@ -15,6 +15,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { giftItem } from './gifts';
 import { SearchField } from '../theme/SearchField';
+import { Loading } from '../theme/Loading';
 
 interface Friend {
   userId: string;
@@ -104,7 +105,7 @@ export function GiftSheet({
       </Text>
 
       {friends === null ? (
-        <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
+        <Loading style={{ marginVertical: spacing.lg }} />
       ) : friends.length === 0 ? (
         <Text style={[styles.note, { color: colors.textSecondary }]}>{t('shop.noFriendsToGift')}</Text>
       ) : (
@@ -130,7 +131,7 @@ export function GiftSheet({
                 <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
                   {f.displayName || f.username}
                 </Text>
-                {busy === f.userId ? <ActivityIndicator color={colors.primary} /> : null}
+                {busy === f.userId ? <Loading /> : null}
               </Pressable>
             ))}
           </SheetScrollView>

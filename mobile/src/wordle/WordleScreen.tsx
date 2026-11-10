@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
   Pressable,
   ScrollView,
   Share,
@@ -35,6 +34,7 @@ import type { SearchResult } from '../dictionary/types';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
+import { Loading } from '../theme/Loading';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -255,7 +255,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
               <Segmented<Difficulty> options={DIFFICULTIES} value={difficulty} onChange={setDifficulty} labelOf={(d) => t(DIFFICULTY_KEY[d])} />
             </View>
             {starting ? (
-              <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+              <Loading style={{ marginTop: spacing.lg }} />
             ) : (
               <View style={styles.startActions}>
                 <ClayButton label={t('games.wordle.daily')} icon="star" tone="primary" onPress={() => start('daily')} style={{ alignSelf: 'stretch' }} />

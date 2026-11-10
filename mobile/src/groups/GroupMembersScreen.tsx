@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { canEditGroup, canManage, canModerateGroup, canSetRole, roleRank, type Role } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -37,6 +37,7 @@ import {
   type GroupDetail,
   type GroupMember,
 } from './api';
+import { Loading } from '../theme/Loading';
 
 /**
  * A group's own page (KUR-084): what it is, who is in it, and what you may do.
@@ -277,7 +278,7 @@ export function GroupMembersScreen({
                 )}
               </SettingsSection>
             ) : null}
-            {busy === 'leave' || busy === 'delete' ? <ActivityIndicator color={colors.textSecondary} style={styles.working} /> : null}
+            {busy === 'leave' || busy === 'delete' ? <Loading style={styles.working} /> : null}
           </ScrollView>
         )}
         {reporting ? (
@@ -333,7 +334,7 @@ function MemberRow({
         {role ? <Text style={[styles.memberRole, dir.text, { color: colors.textSecondary }]}>{role}</Text> : null}
       </View>
       {busy ? (
-        <ActivityIndicator color={colors.textSecondary} style={styles.more} />
+        <Loading style={styles.more} />
       ) : onMore ? (
         <Pressable onPress={onMore} hitSlop={4} accessibilityRole="button" accessibilityLabel={t('post.menu')} style={styles.more}>
           <Icon name="more" size={22} color={colors.textSecondary} />

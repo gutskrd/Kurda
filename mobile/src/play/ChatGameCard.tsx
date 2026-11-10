@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { inviteLinkPattern, parseInvite, type LobbyCard, type PlayGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -19,6 +19,7 @@ import { lobbyRoute } from './routes';
 import { useReportAction } from '../reports/reportAction';
 import { useDirection } from '../reports/direction';
 import { Ticket, TicketStamp, useChangedSinceMount } from './Ticket';
+import { Loading } from '../theme/Loading';
 
 /** A card's state in words: "Open · 2 of 4 joined", "Under way", … */
 export function cardStateText(card: LobbyCard, t: Translate): string {
@@ -209,7 +210,7 @@ export function ChatGameCard({
           </View>
         ) : null
       ) : (
-        <ActivityIndicator color={colors.primary} />
+        <Loading />
       )}
       {action ? (
         <PressableScale

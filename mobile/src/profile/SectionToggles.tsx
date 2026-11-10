@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { Toggle } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
+import { Loading } from '../theme/Loading';
 
 const COPY: Record<ProfileSection, { label: TranslationKey; hint: TranslationKey }> = {
   posts: { label: 'profile.tab.posts', hint: 'edit.sections.posts' },
@@ -70,7 +71,7 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
     return (
       <View style={styles.wrap}>
         <Text style={[styles.heading, { color: colors.textSecondary }]}>{t('edit.sections.title')}</Text>
-        <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
+        <Loading style={{ marginVertical: spacing.md }} />
       </View>
     );
   }

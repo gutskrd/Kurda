@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   DEFAULT_ITEM_FILTER,
   GIFTS_PER_DAY,
@@ -35,6 +35,7 @@ import { EmptyState } from '../theme/EmptyState';
 import { KIND_LABEL, kindWithCount, withinBalance } from '../shop/format';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from '../shop/ItemFilters';
 import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type SentGift } from './api';
+import { Loading } from '../theme/Loading';
 
 /** A friend a gift can go to. */
 export interface GiftFriend {
@@ -340,7 +341,7 @@ function WhatStep({
       </View>
     );
   }
-  if (!catalog) return <ActivityIndicator color={colors.primary} style={styles.spinner} />;
+  if (!catalog) return <Loading style={styles.spinner} />;
 
   const priceWords = (item: GiftCatalogItem): string => `${item.price} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
 

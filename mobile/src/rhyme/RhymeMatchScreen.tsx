@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
@@ -41,6 +41,7 @@ import {
   type RhymeQuality,
   type RhymeReject,
 } from './matchApi';
+import { Loading } from '../theme/Loading';
 
 const DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
 
@@ -303,7 +304,7 @@ function MatchRoom({
       </GlassCard>
     );
   }
-  if (!match) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+  if (!match) return <Loading style={styles.loading} />;
 
   const playerCount = match.scoreboard.length || (match.me ? 1 : 0);
   const seconds = Math.ceil(remaining / 1000);
@@ -420,7 +421,7 @@ function MatchRoom({
             </View>
           </>
         ) : (
-          <ActivityIndicator color={colors.primary} />
+          <Loading />
         )}
         {/* play again with the same people: a rematch for two, the host's next round for more */}
         <View style={styles.stretch}>

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -27,6 +27,7 @@ import {
   signOutSession,
   type DeviceSession,
 } from './api';
+import { Loading } from '../theme/Loading';
 
 /**
  * The measurements a device row and its placeholder share, so the grey rows
@@ -248,7 +249,7 @@ function DeviceRow({
       {/* the confirm that follows is where it is marked as destructive; the row stays calm */}
       <View style={styles.action}>
         {busy ? (
-          <ActivityIndicator color={colors.textSecondary} />
+          <Loading />
         ) : (
           <Pressable
             onPress={onSignOut}

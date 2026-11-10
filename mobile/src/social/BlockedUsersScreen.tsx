@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -12,6 +12,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { blockedUsers, unblockUser, type BlockedUser } from './blocks';
 import { EmptyState } from '../theme/EmptyState';
 import { usePullRefresh } from '../net/usePullRefresh';
+import { Loading } from '../theme/Loading';
 
 /** "3 Sep" / "3 Sep 2024" — the year only when it is not this one. */
 function when(iso: string): string {
@@ -107,7 +108,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
         <ScreenHeader title={t('settings.blocked.title')} onBack={onExit} />
 
         {list === null ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
+          <Loading style={{ marginTop: spacing.xl }} />
         ) : (
           <ScrollView contentContainerStyle={styles.list} refreshControl={pull}>
             <Text style={[styles.help, { color: colors.textSecondary }]}>{t('settings.blocked.help')}</Text>
@@ -136,7 +137,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                       </Text>
                     </View>
                     {busy === u.userId ? (
-                      <ActivityIndicator color={colors.primary} />
+                      <Loading />
                     ) : (
                       <Pressable onPress={() => unblock(u)} accessibilityRole="button" hitSlop={8}>
                         <Text style={[styles.action, { color: colors.primary }]}>{t('settings.blocked.unblock')}</Text>
