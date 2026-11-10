@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import type { IncomingInvite, MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon, type IconName } from '../theme/Icon';
@@ -211,6 +211,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   onPress={() => void join(invite)}
                   accessibilityRole="button"
                   accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name, game })}
+                  hitSlop={JOIN_SLOP}
                   style={[styles.joinButton, { backgroundColor: colors.primary }]}
                 >
                   <Text style={[styles.joinText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
@@ -277,6 +278,13 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   );
 }
 
+/**
+ * Join is drawn as tall as the avatar it shares a row with, and caught as a
+ * full fingertip: the slop above and below makes up the difference.
+ */
+const JOIN_HEIGHT = 36;
+const JOIN_SLOP = hitSlopFor(MIN_TOUCH_TARGET, JOIN_HEIGHT);
+
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, paddingTop: spacing.md, gap: spacing.lg },
   entries: { gap: layout.rowGap },
@@ -299,7 +307,7 @@ const styles = StyleSheet.create({
   heading: { ...sectionLabel },
   invite: { alignItems: 'center', gap: spacing.md - 4, borderRadius: radii.md, padding: spacing.md - 4 },
   inviteText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  joinButton: { minHeight: 36, paddingHorizontal: spacing.md, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  joinButton: { minHeight: JOIN_HEIGHT, paddingHorizontal: spacing.md, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   joinText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
 
   grid: { flexWrap: 'wrap', gap: layout.rowGap },

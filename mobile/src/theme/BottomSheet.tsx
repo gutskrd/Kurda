@@ -21,7 +21,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReducedMotion } from '../a11y/useReducedMotion';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -51,6 +51,13 @@ const SheetScrollContext = createContext<SheetScroll | null>(null);
 
 /** The grabber is drawn 17 points tall; its touch reaches a fingertip's 44. */
 const GRABBER_SLOP = { top: 14, bottom: 14 };
+/**
+ * The ✕ and the ‹ are drawn as small circles, and caught as a full fingertip:
+ * the slop is worked out from the circle rather than written beside it, where
+ * it had been 6 a side, which made 42 of the 44 a finger needs.
+ */
+const ROUND = 30;
+const ROUND_SLOP = hitSlopFor(ROUND, ROUND);
 
 /**
  * The ScrollView for content that can run longer than its sheet. The sheet
@@ -338,7 +345,7 @@ export function BottomSheet({
                 <Pressable
                   onPress={onBack}
                   style={({ pressed }) => [styles.round, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.6 : 1 }]}
-                  hitSlop={6}
+                  hitSlop={ROUND_SLOP}
                   accessibilityRole="button"
                   accessibilityLabel={t('common.back')}
                 >
@@ -367,7 +374,7 @@ export function BottomSheet({
                   styles.round,
                   { backgroundColor: colors.controlTrack, opacity: !dismissible ? 0.4 : pressed ? 0.6 : 1 },
                 ]}
-                hitSlop={6}
+                hitSlop={ROUND_SLOP}
                 accessibilityRole="button"
                 accessibilityLabel={t('social.close')}
                 accessibilityState={{ disabled: !dismissible }}
@@ -412,8 +419,8 @@ const styles = StyleSheet.create({
   },
   title: { flex: 1, fontSize: typography.ios.row, fontWeight: typography.weights.semibold },
   spacer: { flex: 1 },
-  // the ✕ and the ‹: 30pt circles, reaching 44 with their slop and the header's height
-  round: { width: 30, height: 30, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  // the ✕ and the ‹: small circles, reaching 44 with their slop
+  round: { width: ROUND, height: ROUND, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   // gives way under the 90% cap, so a ScrollView inside scrolls instead of being cut off
   content: { flexShrink: 1, paddingHorizontal: layout.gutter, gap: spacing.sm },
 });
