@@ -1,7 +1,7 @@
 import { useRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -185,6 +185,7 @@ export function NarrationBar({
           }}
           accessibilityRole="button"
           accessibilityLabel={t('stories.player.speed', { rate })}
+          hitSlop={RATE_SLOP}
           style={[styles.rate, { borderColor: onInk }]}
         >
           <Text style={[styles.rateText, { color: onInk }]}>{rateLabel(rate)}</Text>
@@ -201,6 +202,13 @@ export function NarrationBar({
   );
 }
 
+/**
+ * The speed is a small outlined pill beside controls a fingertip tall; it is
+ * caught at their height, with the slop making up what the outline leaves.
+ */
+const RATE_HEIGHT = 32;
+const RATE_SLOP = hitSlopFor(MIN_TOUCH_TARGET, RATE_HEIGHT);
+
 const styles = StyleSheet.create({
   bar: { borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.sm, gap: 2 },
   // the line is four points tall and a fingertip's height to touch
@@ -216,7 +224,7 @@ const styles = StyleSheet.create({
   play: { width: 48, height: 48, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   side: { flex: 1, minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.xs },
   speaker: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  rate: { minWidth: MIN_TOUCH_TARGET, minHeight: 32, borderRadius: radii.pill, borderWidth: 1, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center' },
+  rate: { minWidth: MIN_TOUCH_TARGET, minHeight: RATE_HEIGHT, borderRadius: radii.pill, borderWidth: 1, paddingHorizontal: spacing.sm, alignItems: 'center', justifyContent: 'center' },
   rateText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   note: { fontSize: typography.sizes.xs, opacity: 0.85, paddingTop: spacing.xs },
 });

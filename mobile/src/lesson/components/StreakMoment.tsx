@@ -21,7 +21,7 @@ import {
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useCelebrationHold } from '../../badges/BadgeCelebrationHost';
 import { HevaloWindow } from '../../characters/HevaloWindow';
-import { GOLD_INK, REST, TONES } from '../../coursemap/path';
+import { REST, TONES } from '../../coursemap/path';
 import { haptic } from '../../feedback/haptics';
 import { playSound } from '../../feedback/sounds';
 import { useI18n } from '../../i18n/I18nContext';
@@ -118,7 +118,7 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
   const { plan } = moment;
   const said = `${formatNumber(day, locale)} ${t(unitFor(day))}`;
   const grewWords = fire.grew ? t(FIRE_GREW[fire.grew]) : null;
-  const ink = scheme === 'dark' ? colors.gold : GOLD_INK;
+  const ink = scheme === 'dark' ? colors.gold : colors.textOnGold;
   // as big as the screen lets the biggest fire there is be, the same at every stage (a young one drawn closer), framed
   const size = Math.min(FLAME_MOST, fireSizeToFit('newroz', width - layout.gutter * 2, height - FLAME_WORDS)) * fire.zoom;
   const frame = fireFrame(fire.level.stage);
@@ -496,7 +496,7 @@ function DayCircle({ day, delayMs, travel, scheme }: { day: WeekDay; delayMs: nu
   const rest = REST[scheme];
   const look =
     day.state === 'learned'
-      ? { backgroundColor: colors.gold, borderColor: colors.gold, mark: GOLD_INK }
+      ? { backgroundColor: colors.gold, borderColor: colors.gold, mark: colors.textOnGold }
       : day.state === 'frozen'
         ? { backgroundColor: ice.fill, borderColor: ice.fill, mark: ice.ink }
         : day.state === 'today'

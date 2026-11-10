@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { Toggle } from '../theme/Toggle';
 import { countByCategory, itemCategory, matchesQuery, type ItemCategory } from '@kurda/shared';
@@ -23,6 +23,7 @@ import { KIND_LABEL, kindWithCount } from '../shop/format';
 import { ItemArt, KindChips, SearchField } from '../shop/ItemFilters';
 import { equip, inventory, setIconVisibility, type CosmeticSlot, type InventoryItem } from './cosmetics';
 import { InitialsAvatar } from './InitialsAvatar';
+import { Loading } from '../theme/Loading';
 
 type Kind = ItemCategory;
 
@@ -208,7 +209,7 @@ export function CosmeticPicker({
           )}
           {busy === item.sku ? (
             <View style={[StyleSheet.absoluteFill, styles.busy, { backgroundColor: colors.glassFill }]}>
-              <ActivityIndicator color={colors.primary} />
+              <Loading />
             </View>
           ) : null}
           {on ? (
@@ -239,7 +240,7 @@ export function CosmeticPicker({
       </Text>
 
       {items === null ? (
-        <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
+        <Loading style={{ marginVertical: spacing.md }} />
       ) : (
         <>
           <KindChips

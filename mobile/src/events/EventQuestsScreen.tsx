@@ -205,7 +205,7 @@ function QuestRow({ quest, busy, fresh, onClaim }: { quest: QuestView; busy: boo
           <View style={styles.reward} accessible accessibilityLabel={rewardSpoken(quest.reward, t, (n) => formatNumber(n, locale))}>
             {parts.map((p) => (
               <View key={p.currency} style={styles.rewardPart}>
-                <Icon name={p.currency === 'zer' ? 'coin' : 'gem'} size={16} color={p.currency === 'zer' ? colors.gold : colors.accent} />
+                <Icon name={p.currency === 'zer' ? 'coin' : 'gem'} size={16} color={p.currency === 'zer' ? colors.gold : colors.primary} />
                 <Text style={[styles.rewardText, { color: colors.textSecondary }]}>{formatNumber(p.amount, locale)}</Text>
               </View>
             ))}

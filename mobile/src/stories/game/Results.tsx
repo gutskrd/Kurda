@@ -129,7 +129,7 @@ export function Results({
               <Text style={[statCaption, { color: colors.textSecondary }]}>{t('stories.results.right')}</Text>
             </View>
             <View style={styles.stat} accessible accessibilityLabel={t('stories.results.xpLabel', { xp: me.xp })}>
-              <Text style={[statValue, { color: colors.gold }]}>+{me.xp}</Text>
+              <Text style={[statValue, { color: colors.goldText }]}>+{me.xp}</Text>
               <Text style={[statCaption, { color: colors.textSecondary }]}>XP</Text>
             </View>
           </View>
@@ -182,7 +182,7 @@ export function Results({
           {results.standings.map((s) => (
             <View key={s.seat} style={styles.standing}>
               <View style={[styles.place, { backgroundColor: s.place <= 3 ? colors.gold : colors.controlTrack }]}>
-                <Text style={[styles.placeText, { color: s.place <= 3 ? colors.textOnPrimary : colors.textPrimary }]}>{s.place}</Text>
+                <Text style={[styles.placeText, { color: s.place <= 3 ? colors.textOnGold : colors.textPrimary }]}>{s.place}</Text>
               </View>
               <Text style={[styles.standingName, { color: colors.textPrimary }, s.isMe && styles.bold]} numberOfLines={1}>
                 {nameOf(s, t)}

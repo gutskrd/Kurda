@@ -58,7 +58,7 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
               <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>{t('appearance.preview.dayStreak')}</Text>
             </GlassCard>
             <GlassCard style={styles.tile}>
-              <Text style={[styles.tileNum, { color: colors.gold }]}>1.2k</Text>
+              <Text style={[styles.tileNum, { color: colors.goldText }]}>1.2k</Text>
               <Text style={[styles.tileLabel, { color: colors.textSecondary }]}>XP</Text>
             </GlassCard>
           </View>

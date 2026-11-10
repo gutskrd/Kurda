@@ -1,5 +1,6 @@
 import type { ChatMessageKind } from '@kurda/shared';
 import type { Translate } from '../api/errors';
+import type { IconName } from '../theme/icon-paths';
 
 /**
  * The line a conversation list shows for its last message.
@@ -18,4 +19,16 @@ export function messagePreview(convo: { lastMessage: string; lastKind?: ChatMess
     default:
       return convo.lastMessage;
   }
+}
+
+/**
+ * The glyph a conversation list draws before that line, for a last message
+ * that was a card rather than words: the gift a gift's own card wears and the
+ * play mark a game's does. The catalogue's lines used to open with an emoji
+ * that said this; the words are plain now and the list draws the mark.
+ */
+export function previewIcon(kind: ChatMessageKind | undefined): IconName | null {
+  if (kind === 'gift') return 'gift';
+  if (kind === 'game') return 'play';
+  return null;
 }

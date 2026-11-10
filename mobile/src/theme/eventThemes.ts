@@ -1,10 +1,11 @@
 /**
  * Limited-time event theme packs (KUR-092) — pure, no React Native. Packs are
- * bundled with the app (colors + emoji, no remote assets), so applying one is
- * synchronous and there is never a flash of the default theme. A pack is keyed
+ * bundled with the app (colours and a glyph, no remote assets), so applying one
+ * is synchronous and there is never a flash of the default theme. A pack is keyed
  * by an event's `theme` string (KUR-089); the active event's pack dresses up the
  * app while the event runs and reverts to null the moment no event is live.
  */
+import type { IconName } from './icon-paths';
 
 export interface EventThemePack {
   /** Matches `event.theme`. */
@@ -12,12 +13,22 @@ export interface EventThemePack {
   label: string;
   /** Festive accent applied to highlighted surfaces. */
   accent: string;
-  /** Home-banner background (start, end). */
+  /** Home-banner background (start, end). The banner is filled with the first. */
   bannerColors: [string, string];
+  /**
+   * What is written and drawn on the banner's fill: the event's name, the
+   * line under it, the glyph and the chevron.
+   *
+   * Each pack names its own because no one ink suits them all: the label
+   * colour of a button is white by day, 1.8:1 on Newroz's gold, and near-black
+   * by evening, 2.1:1 on Yalda's violet. Held to 4.5:1 on the fill by
+   * `eventThemes.test.ts`.
+   */
+  ink: string;
   /** Streak-flame skin. */
   flame: string;
-  /** Banner emoji. */
-  emoji: string;
+  /** The glyph on the banner, from the app's own icons so it is drawn in the pack's ink. */
+  icon: IconName;
 }
 
 export const EVENT_THEME_PACKS: Record<string, EventThemePack> = {
@@ -26,16 +37,18 @@ export const EVENT_THEME_PACKS: Record<string, EventThemePack> = {
     label: 'Newroz',
     accent: '#E8B923', // Newroz gold/fire
     bannerColors: ['#E8B923', '#C81E4A'],
+    ink: '#3A2A00', // the deep brown the app writes on gold: 7.5:1
     flame: '🔥',
-    emoji: '🔥',
+    icon: 'flame',
   },
   yalda: {
     key: 'yalda',
     label: 'Yalda',
     accent: '#8E2DE2', // long-night violet
     bannerColors: ['#4A00E0', '#8E2DE2'],
+    ink: '#FFFFFF', // 8.9:1
     flame: '🕯️',
-    emoji: '🍉',
+    icon: 'moon',
   },
 };
 

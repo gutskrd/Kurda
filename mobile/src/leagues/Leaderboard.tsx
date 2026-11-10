@@ -190,7 +190,7 @@ export function BoardAmount({ type, amount }: { type: BoardType; amount: number 
   if (type === 'weekly_xp') return <Text style={[styles.score, { color: colors.textPrimary }]}>{t('leagues.xpCount', { xp: short })}</Text>;
   return (
     <View style={styles.amount}>
-      <Icon name={type === 'zer' ? 'coin' : 'gem'} size={16} color={type === 'zer' ? colors.gold : colors.accent} />
+      <Icon name={type === 'zer' ? 'coin' : 'gem'} size={16} color={type === 'zer' ? colors.gold : colors.primary} />
       <Text style={[styles.score, { color: colors.textPrimary }]}>{short}</Text>
     </View>
   );

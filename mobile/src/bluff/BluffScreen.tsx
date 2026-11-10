@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { dialectDirection, type BluffBoard, type BluffOutcome } from '@kurda/shared';
 import { leftResults } from '../feedback/gameFinished';
 import { useI18n } from '../i18n/I18nContext';
@@ -15,6 +15,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { languageName } from '../games/partyChoices';
 import { BluffTableView, RevealPhase } from './BluffTable';
+import { Loading } from '../theme/Loading';
 
 /** A dialect is called by its own name in every language, the way a language is. */
 const DIALECT_NAME = { kmr: 'Kurmancî', ckb: 'Soranî' } as const;
@@ -50,7 +51,7 @@ function Start(): React.JSX.Element {
   const { t } = useI18n();
   const offers = useMpAvailability('bluff');
   const [inviting, setInviting] = useState(false);
-  if (offers === null) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+  if (offers === null) return <Loading style={styles.loading} />;
   if (groupDialects(offers).length === 0) {
     return (
       <GlassCard style={styles.card}>

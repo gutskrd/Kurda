@@ -1,14 +1,13 @@
 import { useState, type ReactNode, type Ref } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { HevaloWindow } from '../../characters/HevaloWindow';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { SpeechBubble } from '../../auth/guide/HevaloGuide';
 import { useScreenFocus } from '../../auth/guide/focus';
 import { useSpokenLine } from '../../auth/guide/speech';
 import { useListEntrance } from '../../theme/animate';
-import { GlassCard, GradientBackground } from '../../theme/glass';
+import { ClayButton, GlassCard, GradientBackground } from '../../theme/glass';
 import { BreathingIcon, Icon, type IconName } from '../../theme/Icon';
 import { Rise } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -239,31 +238,19 @@ const TEXT_CONTENT_TYPE = {
   none: undefined,
 } as const;
 
+/**
+ * The one action of a form: the app's primary button, the same one sign-in
+ * and register end each of their steps with.
+ *
+ * It was a button of its own: a gradient with a rim and a shadow under it,
+ * and nothing happening under the finger. So the screens either side of
+ * register (verify the email, a forgotten password, the date of birth) had a
+ * button from an older app than the one the reader had just been pressing.
+ * While it is busy the label gives way to a spinner and the press is taken
+ * away, as before.
+ */
 export function SubmitButton(props: { label: string; busy: boolean; onPress: () => void }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      onPress={props.onPress}
-      disabled={props.busy}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: props.busy, busy: props.busy }}
-      testID="submit"
-      style={({ pressed }) => [styles.buttonWrap, { opacity: props.busy ? 0.7 : pressed ? 0.92 : 1 }]}
-    >
-      <LinearGradient
-        colors={[colors.primary, colors.primaryStrong]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[styles.button, { borderColor: colors.clayBorder, shadowColor: colors.softShadow }]}
-      >
-        {props.busy ? (
-          <ActivityIndicator color={colors.textOnPrimary} />
-        ) : (
-          <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{props.label}</Text>
-        )}
-      </LinearGradient>
-    </Pressable>
-  );
+  return <ClayButton label={props.label} tone="primary" size="large" busy={props.busy} onPress={props.onPress} style={styles.buttonWrap} testID="submit" />;
 }
 
 /** A link under a form. `destructive` is for the one that cannot be undone (deleting the account): the screen's one red. */
@@ -317,17 +304,6 @@ const styles = StyleSheet.create({
   error: { fontSize: typography.sizes.xs, marginTop: spacing.xs },
   formError: { fontSize: typography.sizes.sm, marginBottom: spacing.md, textAlign: 'center' },
   buttonWrap: { marginTop: spacing.sm },
-  button: {
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    elevation: 6,
-  },
-  buttonText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   /**
    * A link is still something a finger has to land on.
    *

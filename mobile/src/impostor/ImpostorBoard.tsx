@@ -131,12 +131,12 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
       >
         {lit ? <Animated.View style={[styles.light, { backgroundColor: colors.gold, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.22] }) }]} /> : null}
         <View style={[styles.disc, { borderColor: lit ? colors.gold : p?.isMe ? colors.primary : colors.clayBorder, backgroundColor: lit ? colors.gold : colors.glassFill }]}>
-          <Text style={[styles.discText, { color: lit ? '#2a1d05' : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
+          <Text style={[styles.discText, { color: lit ? colors.textOnGold : colors.textPrimary }]}>{name(s.seat).slice(0, 1).toUpperCase()}</Text>
         </View>
         <Text style={[styles.seatName, { color: colors.textPrimary }]} numberOfLines={1}>
           {name(s.seat)}
         </Text>
-        <Text style={[styles.seatTag, { color: lit ? colors.gold : voted.has(s.seat) ? colors.success : colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.seatTag, { color: lit ? colors.goldText : voted.has(s.seat) ? colors.success : colors.textSecondary }]} numberOfLines={1}>
           {tag}
         </Text>
       </View>
@@ -153,7 +153,7 @@ export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; sk
               ? t('games.impostor.vote.phase')
               : t('games.impostor.guessPhase')}
         </Text>
-        <Text style={[styles.whose, { color: mine ? colors.gold : colors.textPrimary }]}>{status}</Text>
+        <Text style={[styles.whose, { color: mine ? colors.goldText : colors.textPrimary }]}>{status}</Text>
         {board.phase === 'guess' && board.accused ? (
           <Text style={[styles.caught, { color: colors.danger }]}>
             {board.accused.seat === view.me?.seat ? t('games.impostor.youCaught') : t('games.impostor.caught', { name: name(board.accused.seat) })}

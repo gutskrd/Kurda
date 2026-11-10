@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
@@ -14,6 +14,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
+import { Loading } from '../theme/Loading';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane';
@@ -152,7 +153,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
     }
   };
 
-  const qualityColor = (q: Quality): string => (q === 'perfect' ? colors.success : colors.gold);
+  const qualityColor = (q: Quality): string => (q === 'perfect' ? colors.success : colors.goldText);
 
   return (
     <GradientBackground>
@@ -167,7 +168,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
               {t('games.rhyme.rules')}
             </Text>
             {starting ? (
-              <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+              <Loading style={{ marginTop: spacing.lg }} />
             ) : (
               <ClayButton label={t('games.rhyme.start')} icon="bolt" tone="primary" onPress={start} style={{ alignSelf: 'stretch', marginTop: spacing.lg }} />
             )}

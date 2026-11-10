@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
@@ -11,6 +11,7 @@ import { layout, spacing, typography } from '../theme/tokens';
 import { addToGroup } from './api';
 import { Pill } from './ClubsScreen';
 import { groupError } from './groupError';
+import { Loading } from '../theme/Loading';
 
 interface Friend {
   userId: string;
@@ -80,7 +81,7 @@ export function AddFriendsSheet({
     <BottomSheet visible={visible} onClose={onClose} title={t('groups.addFriends.title')} detents={['medium', 'large']} contentStyle={styles.sheet}>
       <SheetScrollView contentContainerStyle={styles.body}>
         {friends === null ? (
-          <ActivityIndicator color={colors.textSecondary} style={styles.loading} accessibilityLabel={t('common.loading')} />
+          <Loading style={styles.loading} />
         ) : shown.length === 0 ? (
           <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('groups.addFriends.empty')}</Text>
         ) : (

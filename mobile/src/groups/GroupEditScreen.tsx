@@ -17,6 +17,7 @@ import { uploadGroupPhoto } from '../profile/photoUpload';
 import { GroupAvatar } from './GroupAvatar';
 import { groupError } from './groupError';
 import { clearGroupPhoto, groupDetail, updateGroup, type GroupDetail } from './api';
+import { Loading } from '../theme/Loading';
 
 /**
  * Change how a group presents itself, as its owner or an admin: its picture,
@@ -143,7 +144,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
           error ? (
             <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
           ) : (
-            <ActivityIndicator color={colors.textSecondary} style={styles.loading} />
+            <Loading style={styles.loading} />
           )
         ) : (
           <ScrollView contentContainerStyle={styles.page} keyboardShouldPersistTaps="handled">

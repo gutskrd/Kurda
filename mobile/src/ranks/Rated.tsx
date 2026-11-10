@@ -12,9 +12,6 @@ import { useI18n } from '../i18n/I18nContext';
 import { getExpectedGains, setLobbyRated } from './api';
 import { friendlyReasonKey, rankName, signed } from './format';
 
-/** The ink a Rated pill is written in: dark on the gold, in either scheme. */
-const ON_GOLD = '#1A1405';
-
 /**
  * The Rated / Friendly badge (contract 4 §R2), shown before anyone joins: in
  * the invite banner, the game card, the lobby and the game's header. Rated
@@ -36,8 +33,8 @@ export function RatedPill({ rated, small = false, style }: { rated: boolean; sma
         style,
       ]}
     >
-      <Icon name={rated ? 'mountains' : 'handshake'} size={small ? 12 : 14} color={rated ? ON_GOLD : colors.textSecondary} />
-      <Text style={[styles.pillText, small && styles.pillTextSmall, { color: rated ? ON_GOLD : colors.textSecondary }]}>{label}</Text>
+      <Icon name={rated ? 'mountains' : 'handshake'} size={small ? 12 : 14} color={rated ? colors.textOnGold : colors.textSecondary} />
+      <Text style={[styles.pillText, small && styles.pillTextSmall, { color: rated ? colors.textOnGold : colors.textSecondary }]}>{label}</Text>
     </View>
   );
 }
@@ -76,10 +73,10 @@ export function RatedChoice({ value, onChange }: { value: boolean; onChange: (ra
             ]}
           >
             <View style={styles.tileHead}>
-              <Icon name={o.icon} size={18} color={on ? (o.rated ? ON_GOLD : colors.textOnPrimary) : colors.textPrimary} />
-              <Text style={[styles.tileTitle, { color: on ? (o.rated ? ON_GOLD : colors.textOnPrimary) : colors.textPrimary }]}>{o.title}</Text>
+              <Icon name={o.icon} size={18} color={on ? (o.rated ? colors.textOnGold : colors.textOnPrimary) : colors.textPrimary} />
+              <Text style={[styles.tileTitle, { color: on ? (o.rated ? colors.textOnGold : colors.textOnPrimary) : colors.textPrimary }]}>{o.title}</Text>
             </View>
-            <Text style={[styles.tileHint, { color: on ? (o.rated ? ON_GOLD : colors.textOnPrimary) : colors.textSecondary }]}>{o.hint}</Text>
+            <Text style={[styles.tileHint, { color: on ? (o.rated ? colors.textOnGold : colors.textOnPrimary) : colors.textSecondary }]}>{o.hint}</Text>
           </Pressable>
         );
       })}
@@ -175,7 +172,7 @@ export function LobbyRated({
         >
           <Text style={[styles.switchLabel, { color: colors.textPrimary }]}>{t('ranks.lobby.ratedSwitch')}</Text>
           <View style={[styles.track, { backgroundColor: isRated ? colors.gold : colors.glassBorder }]}>
-            <View style={[styles.knob, { backgroundColor: isRated ? ON_GOLD : colors.textOnPrimary, alignSelf: isRated ? 'flex-end' : 'flex-start' }]} />
+            <View style={[styles.knob, { backgroundColor: isRated ? colors.textOnGold : colors.textOnPrimary, alignSelf: isRated ? 'flex-end' : 'flex-start' }]} />
           </View>
         </Pressable>
       ) : (

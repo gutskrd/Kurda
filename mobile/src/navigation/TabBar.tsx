@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '../theme/Icon';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from '../theme/ThemeProvider';
-import { radii, spacing, typography } from '../theme/tokens';
+import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { unreadBadge } from '../notifications/inbox';
@@ -194,7 +194,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
                   style={[styles.badge, mirrored ? styles.badgeMirrored : null, { backgroundColor: colors.goldText, borderColor: colors.barFill }]}
                   pointerEvents="none"
                 >
-                  <Text style={[styles.badgeText, { color: colors.textOnPrimary }]} maxFontSizeMultiplier={1.2}>
+                  <Text style={[styles.badgeText, { color: colors.textOnPrimary }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
                     {badge}
                   </Text>
                 </View>

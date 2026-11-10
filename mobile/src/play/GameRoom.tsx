@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, StyleSheet, Text, View } from 'react-native';
 import type { MultiGame, MultiResult, MultiSeat, MultiView } from '@kurda/shared';
 import { describeError, type Translate } from '../api/errors';
 import { haptic } from '../feedback/haptics';
@@ -19,6 +19,8 @@ import { useQuietInvites } from './quietInvites';
 import { RematchPanel } from './RematchPanel';
 import { TeamPicker } from './TeamPicker';
 import type { GameViewHandle } from './useGameView';
+import { Verdict } from './Verdict';
+import { Loading } from '../theme/Loading';
 
 /** "You", Hevalo, a friend's name, or "Player 3": how a seat of a multiplayer learning game is named. */
 export function multiSeatName(p: Pick<MultiSeat, 'seat' | 'name' | 'isMe' | 'bot'>, t: Translate): string {
@@ -126,7 +128,7 @@ export function GameRoom<Board>({
       </GlassCard>
     );
   }
-  if (!view) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+  if (!view) return <Loading style={styles.loading} />;
 
   const name = (seat: number): string => {
     const p = view.players.find((x) => x.seat === seat);
@@ -222,9 +224,7 @@ export function GameRoom<Board>({
   const other = view.players.find((p) => !p.isMe && !p.bot);
   return (
     <GlassCard style={styles.card}>
-      <Text accessibilityRole="header" style={[styles.verdict, { color: colors.primary }]}>
-        {mine?.place === 1 ? t('games.youWon') : t('play.room.over')}
-      </Text>
+      <Verdict won={mine?.place === 1}>{mine?.place === 1 ? t('games.youWon') : t('play.room.over')}</Verdict>
       {view.mode === 'group' && view.rated.rated ? <RankResultPanel game={game} gameRef={id} /> : null}
       {ending?.(view)}
       <View style={styles.stretch} accessibilityLabel={t('play.room.results')}>
@@ -237,7 +237,7 @@ export function GameRoom<Board>({
                 {name(r.seat)}
               </Text>
               <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>{scoreOf(r, view)}</Text>
-              {r.xpAwarded ? <Text style={[styles.xp, { color: colors.gold }]}>+{r.xpAwarded} XP</Text> : null}
+              {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
               {p && !p.isMe && !p.bot ? <PlayerReportButton game={game} gameId={id} seat={r.seat} name={p.name} /> : null}
             </View>
           );
@@ -263,13 +263,13 @@ export function GameRoom<Board>({
 
 const styles = StyleSheet.create({
   card: { alignItems: 'center', gap: spacing.sm },
+  verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   loading: { marginTop: spacing.xl },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   note: { fontSize: typography.sizes.sm, textAlign: 'center' },
   waiting: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   error: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   scoreLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   rank: { width: 20, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   scoreName: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

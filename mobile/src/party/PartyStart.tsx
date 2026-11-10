@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { GameDialect } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -10,6 +10,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { usePartyOffer, type PartyGame } from './offer';
+import { Loading } from '../theme/Loading';
 
 /** A variety is called by its own name in every language, the way a language is. */
 export const PARTY_DIALECT_NAME: Record<GameDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
@@ -46,7 +47,7 @@ export function PartyStart({
   const { t } = useI18n();
   const offer = usePartyOffer(game);
   const [inviting, setInviting] = useState(false);
-  if (offer === null) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+  if (offer === null) return <Loading style={styles.loading} />;
   if (offer.length === 0) {
     return (
       <GlassCard style={styles.card}>
@@ -69,7 +70,7 @@ export function PartyStart({
           {steps.map((key, i) => (
             <View key={key} style={styles.step}>
               <View style={[styles.stepN, { backgroundColor: colors.gold }]}>
-                <Text style={styles.stepNText}>{i + 1}</Text>
+                <Text style={[styles.stepNText, { color: colors.textOnGold }]}>{i + 1}</Text>
               </View>
               <Text style={[styles.stepText, { color: colors.textPrimary }]}>{t(key)}</Text>
             </View>
@@ -99,6 +100,6 @@ const styles = StyleSheet.create({
   steps: { alignSelf: 'stretch', gap: spacing.sm },
   step: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   stepN: { width: 26, height: 26, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  stepNText: { color: '#2a1d05', fontWeight: typography.weights.bold },
+  stepNText: { fontWeight: typography.weights.bold },
   stepText: { flex: 1, fontSize: typography.sizes.md, lineHeight: 22 },
 });

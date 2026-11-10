@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SkeletonText } from '../theme/Skeleton';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
@@ -19,6 +19,7 @@ import { bodyPreview, postName, type LibraryPost, type PostType } from './types'
 import { onPostDeleted } from '../composer/postDeleted';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { Loading } from '../theme/Loading';
 
 const PAGE = 20;
 
@@ -117,9 +118,16 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
             {bodyPreview(item.body)}
           </Text>
+          {/* how many have read it and how many have answered: the app's own glyphs, in the caption's colour */}
           <View style={styles.cardFoot}>
-            <Text style={[styles.stat, { color: colors.textSecondary }]}>👁 {item.viewCount}</Text>
-            <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
+            <View style={styles.stat}>
+              <Icon name="eye" size={STAT_GLYPH} color={colors.textSecondary} />
+              <Text style={[styles.statText, { color: colors.textSecondary }]}>{item.viewCount}</Text>
+            </View>
+            <View style={styles.stat}>
+              <Icon name="chat" size={STAT_GLYPH} color={colors.textSecondary} />
+              <Text style={[styles.statText, { color: colors.textSecondary }]}>{item.commentCount}</Text>
+            </View>
           </View>
         </PressableScale>
       </Rise>
@@ -162,7 +170,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
                 action={{ label: t('library.emptyAction'), onPress: () => navigation.navigate('Compose') }}
               />
             }
-            ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
+            ListFooterComponent={loadingMore ? <Loading style={{ marginVertical: spacing.md }} /> : null}
           />
         </AsyncBoundary>
 
@@ -203,6 +211,9 @@ function LibrarySkeleton(): React.JSX.Element {
   );
 }
 
+/** The glyph beside a count, at the height of the caption it sits with. */
+const STAT_GLYPH = 15;
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: layout.gutter },
@@ -213,6 +224,7 @@ const styles = StyleSheet.create({
   cardTitle: { flex: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   preview: { fontSize: typography.sizes.md },
   cardFoot: { flexDirection: 'row', gap: spacing.lg, marginTop: spacing.xs },
-  stat: { fontSize: typography.sizes.sm },
+  stat: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  statText: { fontSize: typography.sizes.sm },
   fab: { position: 'absolute', right: spacing.lg, bottom: spacing.xl },
 });

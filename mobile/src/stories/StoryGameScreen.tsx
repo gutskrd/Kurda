@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { glossFor, type StoryGameView, type StoryGlossEntry } from '@kurda/shared';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -23,6 +23,7 @@ import { Reveal } from './game/Reveal';
 import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyTextProps, storyTextStyle } from './storyText';
 import { COLUMN, Note, Sheet, useAnnouncer } from './ui';
 import { useStoryGame } from './useStoryGame';
+import { Loading } from '../theme/Loading';
 
 /**
  * A story game, whatever mode and wherever it is (contract §A1): the lobby,
@@ -66,7 +67,7 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
       </>
     );
   } else if (!view) {
-    body = <ActivityIndicator color={colors.primary} style={styles.loading} accessibilityLabel={t('common.loading')} />;
+    body = <Loading style={styles.loading} />;
   } else if (view.status === 'cancelled') {
     body = (
       <>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   WHO_AM_I_GUESSES,
   WHO_AM_I_ROUND_ITEMS,
@@ -39,6 +39,7 @@ import { useAvailability } from '../games/learnGames';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { DIFFICULTY_KEY } from '../games/partyChoices';
 import { ForeheadCard, GuessTiles, QuestionDeck, WHO_AM_I_TONE } from './WhoAmIStage';
+import { Loading } from '../theme/Loading';
 
 type Round = SoloRound<WhoAmIItemView, WhoAmIHint, WhoAmICorrection>;
 
@@ -83,7 +84,7 @@ function Start({ onAlone }: { onAlone: () => void }): React.JSX.Element {
   const availability = useAvailability(dialect);
   const race = useMpAvailability('who-am-i', !isGuest);
   const [inviting, setInviting] = useState(false);
-  if (availability === null || (!isGuest && race === null)) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+  if (availability === null || (!isGuest && race === null)) return <Loading style={styles.loading} />;
   const solo = availability.games.find((g) => g.id === 'who-am-i')?.available ?? false;
   const together = !isGuest && groupDialects(race).length > 0;
   if (!solo && !together) {

@@ -5,7 +5,6 @@ const HEX = /^#[0-9a-f]{6}$/i;
 const CSS_COLOR = /^(#[0-9a-f]{6}|rgba?\()/i;
 const HEX_KEYS: (keyof Palette)[] = [
   'primary',
-  'primaryStrong',
   'accent',
   'gold',
   'danger',
@@ -13,6 +12,7 @@ const HEX_KEYS: (keyof Palette)[] = [
   'textPrimary',
   'textSecondary',
   'textOnPrimary',
+  'textOnGold',
   'background',
 ];
 
@@ -51,6 +51,14 @@ describe('palettes', () => {
    */
   it('gives the tab bar a solid fill', () => {
     for (const p of [LIGHT, DARK]) expect(p.barFill, p.scheme).toMatch(HEX);
+  });
+
+  /*
+   * One ink for the brand. A second, blacker one used to sit beside it, and
+   * nothing said which of the two a button should be filled with.
+   */
+  it('keeps one brand ink, with no stronger twin beside it', () => {
+    for (const p of [LIGHT, DARK]) expect(Object.keys(p), p.scheme).not.toContain('primaryStrong');
   });
 
   it('PALETTES maps each scheme to its own palette', () => {

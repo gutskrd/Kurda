@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
 import { justDone, type QuestRow } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
-import { GOLD_INK } from '../coursemap/path';
 import { haptic } from '../feedback/haptics';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
@@ -134,7 +133,7 @@ function Row({ row, play, arrive, delayMs }: { row: QuestRow; play: boolean; arr
           </Text>
           <Animated.View style={[styles.fill, { backgroundColor: colors.gold, opacity: width > 0 ? 1 : 0, transform: [{ translateX }] }]}>
             <Animated.View style={[styles.onFill, { width, transform: [{ translateX: held }] }]}>
-              <Text style={[styles.count, { color: GOLD_INK }]} maxFontSizeMultiplier={1.3}>
+              <Text style={[styles.count, { color: colors.textOnGold }]} maxFontSizeMultiplier={1.3}>
                 {counted}
               </Text>
             </Animated.View>

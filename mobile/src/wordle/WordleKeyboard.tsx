@@ -1,11 +1,11 @@
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { radii, typography } from '../theme/tokens';
+import { fontScaleCap, radii, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { Icon } from '../theme/Icon';
 import { useKeyboardPrefs } from '../keyboard/prefs';
 import { DEL, ENTER, keyboardRows, keyFeedback, type Feedback } from './board';
-import { feedbackColor, feedbackWord } from './WordleBoard';
+import { feedbackColor, feedbackInk, feedbackWord } from './WordleBoard';
 
 /** The gap between keys; half of it on either side is still the key's to tap. */
 const GAP = 6;
@@ -83,7 +83,8 @@ export function WordleKeyboard({
                   ) : key === ENTER ? (
                     <Icon name="key-return" size={22} color={colors.textPrimary} />
                   ) : (
-                    <Text style={[styles.keyText, { color: fb ? colors.textOnPrimary : colors.textPrimary }]}>
+                    // a key is as wide as a tenth of the row: its letter grows only as far as still fits it
+                    <Text style={[styles.keyText, { color: feedbackInk(fb ?? null, colors) }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
                       {key.toUpperCase()}
                     </Text>
                   )}

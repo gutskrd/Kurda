@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import {
-  ActivityIndicator,
   Animated,
   Dimensions,
   Easing,
@@ -27,6 +26,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { bucket, type RailFriend, type SocialRailData } from './rail';
 import { elapsed, lastSeen } from './time';
+import { Loading } from '../theme/Loading';
 
 const WIDTH_RATIO = 0.86;
 const DURATION = 220;
@@ -181,7 +181,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
         </View>
 
         {loading && data === null ? (
-          <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+          <Loading style={{ marginTop: spacing.lg }} />
         ) : (
           <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
             {/* what goes stale, first: a challenge is gone in two minutes */}
@@ -199,7 +199,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                     <InitialsAvatar name={c.username} id={c.userId} size={34} />
                     <View style={styles.rowMain}>
                       <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>{c.username}</Text>
-                      <Text style={[styles.detail, { color: colors.accent }]} numberOfLines={1}>
+                      <Text style={[styles.detail, { color: colors.textPrimary }]} numberOfLines={1}>
                         {t('rail.wantsToPlay', { name: c.displayName ?? c.username })}
                       </Text>
                     </View>

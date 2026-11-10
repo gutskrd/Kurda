@@ -19,6 +19,7 @@ import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { multiSeatName } from '../play/GameRoom';
+import { useShake } from '../theme/animate';
 import { ClayButton } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -76,7 +77,8 @@ export function LastLetterBoardView({
   const reduce = useReducedMotion();
   const board = view.board;
   const now = useServerNow(skew, view.status === 'active');
-  const shake = useRef(new Animated.Value(0)).current;
+  // the shake every wrong answer in the app has, which is still under Reduce Motion by itself
+  const { translateX: shake, run: runShake } = useShake();
   const [struck, setStruck] = useState<number | null>(null);
   const chain = useRef<ScrollView>(null);
   const lastStrike = board?.strikes.at(-1) ?? null;
@@ -92,15 +94,10 @@ export function LastLetterBoardView({
     seenStrike.current = strikeKey;
     if (lastStrike.seat === view.me?.seat) haptic('wrong');
     setStruck(lastStrike.seat);
-    if (!reduce) {
-      shake.setValue(0);
-      Animated.sequence(
-        [6, -6, 4, -3, 0].map((x) => Animated.timing(shake, { toValue: x, duration: 70, useNativeDriver: true })),
-      ).start();
-    }
+    runShake();
     const timer = setTimeout(() => setStruck(null), 700);
     return () => clearTimeout(timer);
-  }, [strikeKey, lastStrike, view.me?.seat, reduce, shake]);
+  }, [strikeKey, lastStrike, view.me?.seat, runShake]);
 
   useEffect(() => {
     if (!board) return;
@@ -126,7 +123,7 @@ export function LastLetterBoardView({
     <View style={styles.board}>
       <View style={styles.turn} accessibilityLiveRegion="polite">
         <TurnRing share={Math.min(1, remaining / total)} low={low} label={t('games.lastLetter.timeLeft', { count: seconds })}>
-          <Text style={[styles.letter, { color: board.required ? colors.gold : colors.textSecondary }]}>{board.requiredSpellings[0] ?? board.required ?? '✱'}</Text>
+          <Text style={[styles.letter, { color: board.required ? colors.goldText : colors.textSecondary }]}>{board.requiredSpellings[0] ?? board.required ?? '✱'}</Text>
         </TurnRing>
         <View style={styles.turnText}>
           <Text style={[styles.whose, { color: board.yourTurn ? colors.primary : colors.textPrimary }]}>

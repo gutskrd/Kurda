@@ -1,24 +1,13 @@
 /**
- * Design tokens — the single source of visual truth (KUR-011).
- * Components never hardcode colors/spacing; they import from here.
+ * Design tokens — the single source of visual truth (KUR-011) for everything
+ * that is not a colour: spacing, corners, type and the page's geometry.
+ * Components never hardcode those; they import from here.
+ *
+ * Colours live in `palette.ts`, one set per scheme, and reach a component
+ * through ThemeProvider. A green palette from before the app turned
+ * monochrome used to sit here as well, read by nothing but its own test, and
+ * was one autocomplete away from being painted on a screen.
  */
-
-export const colors = {
-  // Kurdish-inspired palette: green fields, golden sun
-  primary: '#2D6A4F',
-  primaryDark: '#1B4332',
-  accent: '#D4A017',
-  sun: '#EBA905',
-  danger: '#C0392B',
-  success: '#2E7D32',
-
-  background: '#FFFFFF',
-  surface: '#F4F6F5',
-  border: '#E0E5E2',
-  textPrimary: '#15241D',
-  textSecondary: '#5C6B63',
-  textOnPrimary: '#FFFFFF',
-} as const;
 
 export const spacing = {
   xs: 4,
@@ -118,6 +107,26 @@ export const typography = {
     semibold: '600',
     bold: '700',
   },
+} as const;
+
+/**
+ * How far the reader's own text size may grow a piece of text, as a
+ * `maxFontSizeMultiplier`, where the text sits in something that cannot grow
+ * with it.
+ *
+ * Text follows the size set in the system's settings, and body text follows
+ * it all the way: a paragraph, a row, a button's label wrap and their boxes
+ * grow, so they are never capped. What is capped is the little that is drawn
+ * in a box sized in points, where a larger letter does not make the box
+ * larger, it only pushes the letter out of it. There was no rule for these:
+ * each screen that noticed wrote a number of its own, and the ones that did
+ * not noticed nothing until the largest sizes clipped them.
+ */
+export const fontScaleCap = {
+  /** a letter or a count in a box whose size is fixed: a tile, a key, a badge, one segment of a control */
+  fixedBox: 1.2,
+  /** a title kept to one line at a size that is already large */
+  heading: 1.3,
 } as const;
 
 /**

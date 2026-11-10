@@ -27,7 +27,7 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { TicketBadge } from '../play/Ticket';
 import { GroupAvatar } from '../groups/GroupAvatar';
 import { resolveDeepLink, type InboxItem } from '../notifications/inbox';
-import { messagePreview } from '../chat/preview';
+import { messagePreview, previewIcon } from '../chat/preview';
 import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
 import type { Group } from '../groups/api';
 import {
@@ -375,6 +375,8 @@ function ConversationRow({
   const dir = useDirection();
   const unread = row.unread > 0;
   const line = row.kind === 'direct' ? preview(row.chat) : t('groups.memberCount', { count: row.group.memberCount });
+  // a gift or a game has no words of its own: its mark goes before the line that stands in for them
+  const mark = row.kind === 'direct' ? previewIcon(row.chat.lastKind) : null;
   const when = row.kind === 'direct' ? listTime(row.at, locale) : '';
   const label = unread ? t('messages.unreadLabel', { name: row.name, count: row.unread }) : row.name;
   return (
@@ -402,6 +404,7 @@ function ConversationRow({
           {when ? <Text style={[styles.when, { color: unread ? colors.textPrimary : colors.textSecondary }]}>{when}</Text> : null}
         </View>
         <View style={[styles.rowTop, { flexDirection: dir.row }]}>
+          {mark ? <Icon name={mark} size={14} color={unread ? colors.textPrimary : colors.textSecondary} /> : null}
           <Text
             style={[styles.rowPreview, dir.free, { color: unread ? colors.textPrimary : colors.textSecondary }]}
             numberOfLines={1}

@@ -1,5 +1,5 @@
 import { Animated, StyleSheet, Text, View } from 'react-native';
-import { radii, spacing, typography } from '../theme/tokens';
+import { fontScaleCap, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { Palette } from '../theme/palette';
@@ -19,7 +19,7 @@ export function WordleBoard({
 }: {
   board: BoardRow[];
   cellSize: number;
-  /** solo shakes the board on a rejected guess; a battle need not */
+  /** solo shakes the board on a rejected guess (`useShake`'s points sideways); a battle need not */
   shake?: Animated.Value;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -41,11 +41,13 @@ export function WordleBoard({
             },
           ]}
         >
+          {/* the square is sized in points, so its letter grows only as far as still fits it */}
           <Text
             style={[
               styles.cellText,
-              { color: cell.feedback ? colors.textOnPrimary : colors.textPrimary, fontSize: cellSize * 0.42 },
+              { color: feedbackInk(cell.feedback, colors), fontSize: cellSize * 0.42 },
             ]}
+            maxFontSizeMultiplier={fontScaleCap.fixedBox}
           >
             {cell.letter.toUpperCase()}
           </Text>
@@ -56,12 +58,7 @@ export function WordleBoard({
 
   if (!shake) return <View style={styles.board}>{rows}</View>;
   return (
-    <Animated.View
-      style={[
-        styles.board,
-        { transform: [{ translateX: shake.interpolate({ inputRange: [-1, 1], outputRange: [-8, 8] }) }] },
-      ]}
-    >
+    <Animated.View style={[styles.board, { transform: [{ translateX: shake }] }]}>
       {rows}
     </Animated.View>
   );
@@ -73,6 +70,19 @@ export function feedbackColor(f: Feedback | null, colors: Palette): string {
   if (f === 'yellow') return colors.gold;
   if (f === 'gray') return colors.textSecondary;
   return 'transparent';
+}
+
+/**
+ * The colour a letter is written in on the fill `feedbackColor` gives it.
+ *
+ * A letter in the wrong square sits on the gold, and the white of a button's
+ * label is 2.1:1 there by day, so it takes the ink made for gold. Green and
+ * grey are dark enough by day, and light enough by evening, for the label
+ * colour; a letter not scored yet has no fill and is plain text.
+ */
+export function feedbackInk(f: Feedback | null, colors: Palette): string {
+  if (f === 'yellow') return colors.textOnGold;
+  return f ? colors.textOnPrimary : colors.textPrimary;
 }
 
 /**

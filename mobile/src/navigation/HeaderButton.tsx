@@ -2,7 +2,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { radii, typography } from '../theme/tokens';
+import { fontScaleCap, radii, typography } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
 
 /**
@@ -62,7 +62,7 @@ export function HeaderButton({
       <Icon name={icon} size={24} color={colors.textPrimary} />
       {badge ? (
         <View style={[styles.badge, { backgroundColor: colors.goldText, borderColor: colors.background }]} pointerEvents="none">
-          <Text style={[styles.badgeText, { color: colors.textOnPrimary }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
+          <Text style={[styles.badgeText, { color: colors.textOnPrimary }]} numberOfLines={1} maxFontSizeMultiplier={fontScaleCap.fixedBox}>
             {badge}
           </Text>
         </View>
