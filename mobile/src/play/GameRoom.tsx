@@ -19,6 +19,7 @@ import { useQuietInvites } from './quietInvites';
 import { RematchPanel } from './RematchPanel';
 import { TeamPicker } from './TeamPicker';
 import type { GameViewHandle } from './useGameView';
+import { Verdict } from './Verdict';
 
 /** "You", Hevalo, a friend's name, or "Player 3": how a seat of a multiplayer learning game is named. */
 export function multiSeatName(p: Pick<MultiSeat, 'seat' | 'name' | 'isMe' | 'bot'>, t: Translate): string {
@@ -222,9 +223,7 @@ export function GameRoom<Board>({
   const other = view.players.find((p) => !p.isMe && !p.bot);
   return (
     <GlassCard style={styles.card}>
-      <Text accessibilityRole="header" style={[styles.verdict, { color: colors.primary }]}>
-        {mine?.place === 1 ? t('games.youWon') : t('play.room.over')}
-      </Text>
+      <Verdict won={mine?.place === 1}>{mine?.place === 1 ? t('games.youWon') : t('play.room.over')}</Verdict>
       {view.mode === 'group' && view.rated.rated ? <RankResultPanel game={game} gameRef={id} /> : null}
       {ending?.(view)}
       <View style={styles.stretch} accessibilityLabel={t('play.room.results')}>
@@ -263,13 +262,13 @@ export function GameRoom<Board>({
 
 const styles = StyleSheet.create({
   card: { alignItems: 'center', gap: spacing.sm },
+  verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   loading: { marginTop: spacing.xl },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
   note: { fontSize: typography.sizes.sm, textAlign: 'center' },
   waiting: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   error: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   scoreLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   rank: { width: 20, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   scoreName: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

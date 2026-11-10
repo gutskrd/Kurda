@@ -22,6 +22,7 @@ import { InviteSheet } from '../play/InviteSheet';
 import { LobbyShare } from '../play/CodeTicket';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { RematchPanel } from '../play/RematchPanel';
+import { Verdict } from '../play/Verdict';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
@@ -363,10 +364,7 @@ function BattleRoom({
     const mine = results?.ranking.find((r) => r.userId === user?.id);
     return (
       <GlassCard style={styles.card}>
-        {/* no trophy icon here: the winning verdict already carries one */}
-        <Text style={[styles.verdict, { color: colors.primary }]}>
-          {mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}
-        </Text>
+        <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}</Verdict>
         {/* what this game did to your rank, with its one plain reason — before the table */}
         {battle.rated?.rated ? <RankResultPanel game="wordle-battle" gameRef={id} /> : null}
         {results ? (
@@ -524,7 +522,6 @@ const styles = StyleSheet.create({
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   waiting: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   loading: { marginTop: spacing.xxl },
-  verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   scoreLine: {
     flexDirection: 'row',
     alignItems: 'center',

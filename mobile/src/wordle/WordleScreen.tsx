@@ -334,6 +334,8 @@ function ResultPanel({
   return (
     <View style={styles.result}>
       <GlassCard style={styles.resultCard}>
+        {/* the line used to open with a party popper; the spark is the app's own, in the colour of a right answer */}
+        {won ? <Icon name="sparkle" size={28} color={colors.success} style={styles.resultMark} /> : null}
         <Text style={[styles.resultTitle, { color: won ? colors.success : colors.danger }]}>
           {won ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
         </Text>
@@ -415,6 +417,7 @@ const styles = StyleSheet.create({
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   result: { gap: spacing.md, marginTop: spacing.md },
   resultCard: { gap: spacing.sm },
+  resultMark: { alignSelf: 'center' },
   resultTitle: { ...display(typography.sizes.xl), textAlign: 'center' },
   resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
   edu: { borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, marginTop: spacing.sm },

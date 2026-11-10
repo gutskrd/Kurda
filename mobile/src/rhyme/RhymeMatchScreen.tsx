@@ -24,6 +24,7 @@ import { InviteSheet } from '../play/InviteSheet';
 import { LobbyShare } from '../play/CodeTicket';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { RematchPanel } from '../play/RematchPanel';
+import { Verdict } from '../play/Verdict';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import {
   createMatch,
@@ -391,9 +392,7 @@ function MatchRoom({
     const mine = results?.ranking.find((r) => r.userId === user?.id);
     return (
       <GlassCard style={styles.card}>
-        <Text style={[styles.verdict, { color: colors.primary }]}>
-          {mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}
-        </Text>
+        <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</Verdict>
         {/* what this game did to your rank, with its one plain reason — before the table */}
         {match.rated?.rated ? <RankResultPanel game="rhyme-match" gameRef={id} /> : null}
         {results ? (
@@ -562,7 +561,6 @@ const styles = StyleSheet.create({
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   waiting: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   loading: { marginTop: spacing.xxl },
-  verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   scoreLine: {
     flexDirection: 'row',
     alignItems: 'center',

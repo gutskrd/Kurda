@@ -97,6 +97,8 @@ function CommentRow({
 
   const audio = !removed && c.audioUrl && renderAudio ? renderAudio(c.audioUrl) : null;
   const text = removed ? t('comments.removed') : (c.body ?? (c.audioMediaId || c.audioUrl ? t('comments.voice') : ''));
+  // only a recording, and nothing here to play it with: the words say so, with the speaker beside them
+  const voiceOnly = !removed && !c.body && Boolean(c.audioMediaId || c.audioUrl);
 
   return (
     <View style={[styles.comment, c.pending ? styles.pending : null]}>
@@ -124,7 +126,14 @@ function CommentRow({
         </View>
         {audio}
         {!audio || c.body ? (
-          <Text style={[styles.body, { color: removed ? colors.textSecondary : colors.textPrimary }]}>{text}</Text>
+          voiceOnly ? (
+            <View style={styles.voice}>
+              <Icon name="speaker" size={16} color={colors.textPrimary} />
+              <Text style={[styles.body, styles.voiceText, { color: colors.textPrimary }]}>{text}</Text>
+            </View>
+          ) : (
+            <Text style={[styles.body, { color: removed ? colors.textSecondary : colors.textPrimary }]}>{text}</Text>
+          )
         ) : null}
 
         {/* nothing to answer or take back until the server has it */}
@@ -307,6 +316,8 @@ const styles = StyleSheet.create({
   name: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   age: { fontSize: typography.sizes.xs },
   body: { fontSize: typography.sizes.md },
+  voice: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  voiceText: { flexShrink: 1 },
   actions: { flexDirection: 'row', gap: spacing.md, paddingTop: 2 },
   action: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
