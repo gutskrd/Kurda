@@ -405,6 +405,7 @@ export const ku: Catalogue = {
   'civak.kind.meme': 'Mîm',
   'games.title': 'Lîstik',
   'games.signInToPlay': 'Ji bo lîstinê têkeve',
+  'games.comingSoon': 'Di demeke nêzîk de',
   'games.chooseMode': 'Awayekî hilbijêre',
   'games.howToPlay': 'Tu dixwazî çawa bilîzî?',
   'games.playAndScore': 'Bilîze, û xalan berhev bike',

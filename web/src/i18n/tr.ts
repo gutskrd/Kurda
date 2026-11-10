@@ -398,6 +398,7 @@ export const tr: Catalogue = {
   'civak.kind.meme': 'Caps',
   'games.title': 'Oyunlar',
   'games.signInToPlay': 'Oynamak için giriş yap',
+  'games.comingSoon': 'Çok yakında',
   'games.chooseMode': 'Bir mod seç',
   'games.howToPlay': 'Nasıl oynamak istersin?',
   'games.playAndScore': 'Oyna ve puan topla',

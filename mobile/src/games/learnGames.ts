@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { listedLearnGames, type GameDialect, type GamesAvailability, type LearnGame, type LearnGameId } from '@kurda/shared';
+import { listedLearnGames, type GameDialect, type GamesAvailability, type LearnGameId, type ListedLearnGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useCourseDialect } from '../learn/courseDialect';
@@ -10,10 +10,10 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
  * app has a screen for, and the words on each one's card in Learn's Games
  * group.
  *
- * The list is the registry filtered by what the phone can open (here) and by
- * what has enough approved content in the learner's Kurdish right now (GET
- * /games/availability), so a game appears the day its content is published,
- * and never as "coming soon".
+ * The list is every game in the registry the phone can open (here). Those with
+ * enough approved content in the learner's Kurdish right now (GET
+ * /games/availability) come first and open; the rest follow as "coming soon",
+ * seen but not opened, until their content is published.
  */
 
 /** The screens the learning games open on (root stack routes). */
@@ -74,13 +74,17 @@ export function useOpenRound(game: LearnGameId, dialect: GameDialect): string | 
   return open;
 }
 
-/** The learning games to list for this learner now, in the learner's own Kurdish. */
-export function useListedLearnGames(): LearnGame[] {
+/** The learning games to list for this learner now, in the learner's own Kurdish, each with whether it can be played yet. */
+export function useListedLearnGames(): ListedLearnGame[] {
   const dialect = useCourseDialect();
   const availability = useAvailability(dialect);
   // The Last Letter is offered where its dictionary can check words (its own answer, from the multiplayer games' API)
   const chain = useLastLetterAvailability();
   const offered = [...offeredDialects(chain, 'group'), ...offeredDialects(chain, 'solo')].includes(dialect);
-  const merged = availability && { ...availability, games: [...(availability.games ?? []).filter((g) => g.id !== 'last-letter'), { id: 'last-letter', available: offered }] };
+  // both answers before anything is listed, so its card does not start as coming soon and then move
+  const merged =
+    availability && chain !== null
+      ? { ...availability, games: [...(availability.games ?? []).filter((g) => g.id !== 'last-letter'), { id: 'last-letter', available: offered }] }
+      : null;
   return listedLearnGames(merged, PLAYABLE);
 }

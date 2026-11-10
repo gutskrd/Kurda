@@ -2672,6 +2672,7 @@ export type TranslationKey =
   | 'games.mode.solo'
   | 'games.mode.friends'
   | 'games.mode.both'
+  | 'games.comingSoon'
   // --- the learning games: Build a Kurdish Sentence and the solo round ---
   | 'games.card.sentence'
   | 'games.sentence.name'
@@ -6084,6 +6085,7 @@ const en: Catalog = {
   'games.mode.solo': 'Solo',
   'games.mode.friends': 'With friends',
   'games.mode.both': 'Solo or with friends',
+  'games.comingSoon': 'Coming soon',
   // ---- the learning games: Build a Kurdish Sentence and the solo round ----
   'games.card.sentence': 'Put a real Kurdish sentence in order, from its meaning.',
   'games.sentence.name': 'Build a Kurdish Sentence',
@@ -9495,6 +9497,7 @@ const ku: Catalog = {
   'games.mode.solo': 'Bi tenê',
   'games.mode.friends': 'Bi hevalan re',
   'games.mode.both': 'Bi tenê an bi hevalan re',
+  'games.comingSoon': 'Di demeke nêzîk de',
   // ---- the learning games: Build a Kurdish Sentence and the solo round ----
   'games.card.sentence': 'Hevokeke rastîn a kurdî, ji wateya wê, bi rêz bike.',
   'games.sentence.name': 'Hevokeke kurdî ava bike',
@@ -12906,6 +12909,7 @@ const de: Catalog = {
   'games.mode.solo': 'Allein',
   'games.mode.friends': 'Mit Freunden',
   'games.mode.both': 'Allein oder mit Freunden',
+  'games.comingSoon': 'Bald verfügbar',
   // ---- the learning games: Build a Kurdish Sentence and the solo round ----
   'games.card.sentence': 'Bring einen echten kurdischen Satz anhand seiner Bedeutung in die richtige Reihenfolge.',
   'games.sentence.name': 'Bau einen kurdischen Satz',
@@ -16317,6 +16321,7 @@ const es: Catalog = {
   'games.mode.solo': 'En solitario',
   'games.mode.friends': 'Con amigos',
   'games.mode.both': 'Solo o con amigos',
+  'games.comingSoon': 'Muy pronto',
   // ---- the learning games: Build a Kurdish Sentence and the solo round ----
   'games.card.sentence': 'Ordena una frase kurda real a partir de su significado.',
   'games.sentence.name': 'Construye una frase en kurdo',
@@ -19728,6 +19733,7 @@ const tr: Catalog = {
   'games.mode.solo': 'Tek başına',
   'games.mode.friends': 'Arkadaşlarla',
   'games.mode.both': 'Tek başına ya da arkadaşlarla',
+  'games.comingSoon': 'Çok yakında',
   // ---- the learning games: Build a Kurdish Sentence and the solo round ----
   'games.card.sentence': 'Gerçek bir Kürtçe cümleyi anlamından yola çıkarak sıraya koy.',
   'games.sentence.name': 'Kürtçe bir cümle kur',
@@ -23139,6 +23145,7 @@ const ar: Catalog = {
   'games.mode.solo': 'منفرد',
   'games.mode.friends': 'مع الأصدقاء',
   'games.mode.both': 'منفرداً أو مع الأصدقاء',
+  'games.comingSoon': 'قريبًا',
   // ---- the learning games: Build a Kurdish Sentence and the solo round ----
   'games.card.sentence': 'رتّب جملة كردية حقيقية انطلاقًا من معناها.',
   'games.sentence.name': 'ركّب جملة كردية',
@@ -26550,6 +26557,7 @@ const fr: Catalog = {
   'games.mode.solo': 'En solo',
   'games.mode.friends': 'Entre amis',
   'games.mode.both': 'Seul ou entre amis',
+  'games.comingSoon': 'Bientôt',
   // ---- the learning games: Build a Kurdish Sentence and the solo round ----
   'games.card.sentence': 'Remets dans l’ordre une vraie phrase kurde, à partir de son sens.',
   'games.sentence.name': 'Construis une phrase kurde',
@@ -29961,6 +29969,7 @@ const nl: Catalog = {
   'games.mode.solo': 'Alleen',
   'games.mode.friends': 'Met vrienden',
   'games.mode.both': 'Alleen of met vrienden',
+  'games.comingSoon': 'Binnenkort',
   // ---- the learning games: Build a Kurdish Sentence and the solo round ----
   'games.card.sentence': 'Zet een echte Koerdische zin op volgorde, vanuit de betekenis.',
   'games.sentence.name': 'Bouw een Koerdische zin',
@@ -33373,6 +33382,7 @@ const ckb: Catalog = {
   'games.mode.solo': 'بە تەنیا',
   'games.mode.friends': 'لەگەڵ هاوڕێکان',
   'games.mode.both': 'بە تەنیا یان لەگەڵ هاوڕێکان',
+  'games.comingSoon': 'بەم زووانە',
   // ---- the learning games: Build a Kurdish Sentence and the solo round ----
   'games.card.sentence': 'ڕستەیەکی ڕاستەقینەی کوردی، لە واتاکەیەوە، ڕیز بکە.',
   'games.sentence.name': 'ڕستەیەکی کوردی دروست بکە',

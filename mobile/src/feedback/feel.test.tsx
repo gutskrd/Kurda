@@ -245,8 +245,12 @@ describe('an answer, as its verdict arrives', () => {
     await waitFor(() => expect(felt).toEqual(['select', 'correct']));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
-    fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
-    // two answers a test gives faster than a person can: the chimes' pacing is not what this is about
+    // both questions offer "av": the second one's, once it is the question asked, not the first one's on its way out
+    await screen.findByText('Bread?');
+    // two answers a test gives faster than a person can: the pacing of the buzzes and the chimes is not what this is
+    // about, and a tick within a moment of the last verdict's buzz is one the phone leaves out on purpose
+    resetHaptics();
+    fireEvent.click(screen.getByRole('radio', { name: 'av' }));
     resetSounds();
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     await waitFor(() => expect(felt).toEqual(['select', 'correct', 'select', 'wrong']));

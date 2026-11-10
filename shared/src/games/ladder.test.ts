@@ -12,6 +12,7 @@ import {
 } from './build-sentence/ladder.js';
 import { GAME_DIFFICULTIES, DIFFICULTY_LEVELS, answerXp, availableDifficulties, roundCountsAsLearning, roundLearningNeeds, roundXpCeiling } from './solo.js';
 import { LEARN_GAMES, LEARN_GAME_XP_SOURCES, LEARN_GAME_IDS, learnGame, listedLearnGames } from './registry.js';
+import type { LearnGameId } from './registry.js';
 
 describe('stepping up the ladder', () => {
   it('counts only the first tries on the rung the round was played on, not its warm-ups', () => {
@@ -144,10 +145,13 @@ describe('the registry', () => {
     expect(learnGame('kingdom').xpSources).toEqual([]);
   });
 
-  it('lists only the games an app can open that are available, in the registry’s order', () => {
-    const availability = { games: [{ id: 'hear-it', available: true }, { id: 'build-sentence', available: true }, { id: 'detective', available: false }, { id: 'kingdom', available: true }] };
-    expect(listedLearnGames(availability, ['build-sentence', 'hear-it', 'detective', 'kingdom']).map((g) => g.id)).toEqual(['build-sentence', 'hear-it']);
-    expect(listedLearnGames(availability, ['build-sentence']).map((g) => g.id)).toEqual(['build-sentence']);
+  it('lists every game an app can open, the ready ones first and the rest as coming soon, each in the registry’s order', () => {
+    const availability = { games: [{ id: 'hear-it', available: true }, { id: 'detective', available: false }, { id: 'kingdom', available: true }] };
+    const listed = (playable: LearnGameId[]) => listedLearnGames(availability, playable).map((g) => `${g.game.id}:${g.ready ? 'ready' : 'soon'}`);
+    // build-sentence has no answer at all, detective a "no": both are listed, after the ready one
+    expect(listed(['build-sentence', 'hear-it', 'detective', 'kingdom'])).toEqual(['hear-it:ready', 'build-sentence:soon', 'detective:soon']);
+    expect(listed(['build-sentence'])).toEqual(['build-sentence:soon']);
+    // nothing until the availability has arrived, so the cards do not reshuffle as it lands
     expect(listedLearnGames(null, ['build-sentence'])).toEqual([]);
   });
 

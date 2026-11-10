@@ -402,6 +402,7 @@ export const fr: Catalogue = {
   'civak.kind.meme': 'Mème',
   'games.title': 'Jeux',
   'games.signInToPlay': 'Connectez-vous pour jouer',
+  'games.comingSoon': 'Bientôt',
   'games.chooseMode': 'Choisissez un mode',
   'games.howToPlay': 'Comment voulez-vous jouer ?',
   'games.playAndScore': 'Jouez et marquez des points',

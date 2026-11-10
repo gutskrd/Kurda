@@ -435,6 +435,7 @@ export const en = {
   // ---- games ---------------------------------------------------------------
   'games.title': 'Games',
   'games.signInToPlay': 'Sign in to play',
+  'games.comingSoon': 'Coming soon',
   'games.chooseMode': 'Choose a mode',
   'games.howToPlay': 'How do you want to play?',
   'games.playAndScore': 'Play, and keep score',

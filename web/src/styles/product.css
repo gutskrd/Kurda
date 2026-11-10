@@ -600,6 +600,14 @@ a.invite-card:hover {
   .game-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
   }
+  /*
+   * Every tile after the first three is half a row, two to a row, so the
+   * grid holds together however many games are listed and in whatever order
+   * they come. `:where` keeps this at no weight, so a game's own span wins.
+   */
+  :where(.game-grid) > :where(.game-tile) {
+    grid-column: span 6;
+  }
   .game-tile--wordle,
   .game-tile--stories {
     grid-column: span 7;
@@ -607,6 +615,14 @@ a.invite-card:hover {
   .game-tile--rhyme,
   .game-tile--race {
     grid-column: span 5;
+  }
+  /* whichever game comes after the race takes the rest of its row */
+  .game-tile--race + .game-tile {
+    grid-column: span 7;
+  }
+  /* a tile left alone at the end of the list takes the whole row, rather than leaving half of it empty */
+  .game-grid > .game-tile:last-child:nth-child(odd):nth-child(n + 5) {
+    grid-column: 1 / -1;
   }
 }
 .game-tile {
@@ -663,6 +679,12 @@ a.invite-card:hover {
 .game-tile .btn {
   justify-self: start;
   margin-top: 8px;
+}
+/* a game still short of approved content: there to be seen, its picture
+   quieter than the ones that open, so the eye goes to what can be played */
+.game-tile.is-soon .game-tile-visual > * {
+  opacity: 0.5;
+  filter: saturate(0.6);
 }
 /* the name is the link and the whole tile is its target (front page) */
 .game-stretch::after {

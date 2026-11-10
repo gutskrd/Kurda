@@ -1137,7 +1137,7 @@
   }
 }
 
-/* the tile among Learn's games: a band across the village as its picture, exactly as tall as every other game's, beside the race on a wide page */
+/* the tile among Learn's games: a band across the village as its picture, exactly as tall as every other game's, laid out by the grid like the rest */
 .kingdom-tile-visual {
   display: block;
   height: 196px;
@@ -1149,11 +1149,6 @@
   display: block;
   width: 100%;
   height: 100%;
-}
-@media (min-width: 1000px) {
-  .game-tile--kingdom {
-    grid-column: span 7;
-  }
 }
 
 /* the village's levels: how it earns them, then each level and what it brings, those reached ticked, the next lit, the rest in silhouette */

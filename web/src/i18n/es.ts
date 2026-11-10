@@ -401,6 +401,7 @@ export const es: Catalogue = {
   'civak.kind.meme': 'Meme',
   'games.title': 'Juegos',
   'games.signInToPlay': 'Inicia sesión para jugar',
+  'games.comingSoon': 'Muy pronto',
   'games.chooseMode': 'Elige un modo',
   'games.howToPlay': '¿Cómo quieres jugar?',
   'games.playAndScore': 'Juega y suma puntos',

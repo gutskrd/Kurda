@@ -397,6 +397,7 @@ export const ar: Catalogue = {
   'civak.kind.meme': 'ميم',
   'games.title': 'الألعاب',
   'games.signInToPlay': 'سجّل الدخول للعب',
+  'games.comingSoon': 'قريبًا',
   'games.chooseMode': 'اختر طريقة اللعب',
   'games.howToPlay': 'كيف تريد أن تلعب؟',
   'games.playAndScore': 'العب واجمع النقاط',

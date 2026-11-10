@@ -403,6 +403,7 @@ export const nl: Catalogue = {
   'civak.kind.meme': 'Meme',
   'games.title': 'Spellen',
   'games.signInToPlay': 'Log in om te spelen',
+  'games.comingSoon': 'Binnenkort',
   'games.chooseMode': 'Kies een modus',
   'games.howToPlay': 'Hoe wil je spelen?',
   'games.playAndScore': 'Speel en houd de score bij',

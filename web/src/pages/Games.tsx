@@ -98,7 +98,7 @@ export function Games(): React.JSX.Element {
   const signedIn = status === 'signedIn';
   const [chooser, setChooser] = useState<GameCard | null>(null);
   const t = useT();
-  // the learning games (games/learnGames.tsx): each one only once it has enough approved content in the learner's Kurdish
+  // the learning games (games/learnGames.tsx): all of them, those without enough approved content yet as coming soon
   const learnGames = useListedLearnGames();
 
   return (
@@ -181,8 +181,8 @@ export function Games(): React.JSX.Element {
             </article>
           );
         })}
-        {learnGames.map((g) => (
-          <LearnGameTile key={g.id} game={g} signedIn={signedIn} />
+        {learnGames.map(({ game, ready }) => (
+          <LearnGameTile key={game.id} game={game} ready={ready} signedIn={signedIn} />
         ))}
         {/* The Village: the learner's own village, so only for someone signed in */}
         {signedIn && <KingdomTile />}

@@ -168,7 +168,7 @@ describe('What Would You Say?', () => {
 });
 
 describe('What Would You Say? in Learn’s games', () => {
-  it('has its card once it can be played, and none before', async () => {
+  it('has its way in once it can be played, and is shown as coming soon before', async () => {
     server(session('kmr', [scene()]), () => ({}));
     renderApp(<Games />, ['/app/games']);
     const card = (await screen.findByRole('heading', { name: 'What Would You Say?' })).closest('article')!;
@@ -177,6 +177,8 @@ describe('What Would You Say? in Learn’s games', () => {
     server(session('kmr', [scene()]), () => ({}), false);
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'What Would You Say?' })).toBeNull();
+    const soon = (await screen.findByRole('heading', { name: 'What Would You Say?' })).closest('article')!;
+    expect(within(soon).getByText('Coming soon')).toBeInTheDocument();
+    expect(within(soon).queryByRole('link', { name: 'Play' })).toBeNull();
   });
 });

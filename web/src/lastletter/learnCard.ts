@@ -1,9 +1,9 @@
 /**
  * The Last Letter as the website's Learn Games list shows it: the shared
  * registry entry (`LAST_LETTER_LEARN_ENTRY`) with what the website adds — its
- * catalogue keys, its page and its glyph — and whether to show it at all
+ * catalogue keys, its page and its glyph — and whether it opens
  * (`useLastLetterAvailability`: only where a dialect's dictionary is big
- * enough, with no "coming soon"). The list renders it as it renders every
+ * enough; elsewhere it is listed as coming soon). The list renders it as it renders every
  * other game's card.
  */
 import { LAST_LETTER_LEARN_ENTRY } from '@kurda/shared';

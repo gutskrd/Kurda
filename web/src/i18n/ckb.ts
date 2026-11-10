@@ -409,6 +409,7 @@ export const ckb: Catalogue = {
 
   'games.title': 'یاری',
   'games.signInToPlay': 'بچۆ ژوورەوە بۆ یاریکردن',
+  'games.comingSoon': 'بەم زووانە',
   'games.chooseMode': 'شێوازێک هەڵبژێرە',
   'games.howToPlay': 'دەتەوێت چۆن یاری بکەیت؟',
   'games.playAndScore': 'یاری بکە و خاڵ کۆبکەرەوە',
