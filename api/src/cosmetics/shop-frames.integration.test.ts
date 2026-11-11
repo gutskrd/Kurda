@@ -1,6 +1,6 @@
 /**
  * The shop's frames against real Postgres, through the routes the apps call:
- * the six frames migration 1751000431000 put on sale are listed with their
+ * the frames migration 1751000431000 put on sale are listed with their
  * pictures, bought with Zêr like any other piece, worn through the route a
  * season frame is worn through, and then sent with the wearer's profile — the
  * SKU and the picture to lay round the face. A frame that is not owned is
@@ -10,6 +10,9 @@
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
+import { readFileSync } from 'node:fs';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pg from 'pg';
 import { seasonFrameSku } from '@kurda/shared';
 import { buildApp } from '../app.js';
@@ -19,6 +22,8 @@ import { activate } from '../test/activate.js';
 import { canonicalPair } from '../friends/pair.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
+/** The frames the catalogue sells (api/content/cosmetics.json), which the migration put in the shop. */
+const CATALOGUE = (JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'content', 'cosmetics.json'), 'utf8')) as { frames: Array<{ sku: string; assetKey: string }> }).frames;
 const FRAME = 'frame-made-lale';
 const FRAME_ART = '/cosmetics/frames/made-01-lale.png';
 
@@ -63,16 +68,18 @@ describe.skipIf(!DATABASE_URL)('frames bought in the shop (integration)', () => 
     await app?.close();
   });
 
-  it('lists the six frames for sale, each with its picture and its price in Zêr, and no season frame among them', async () => {
+  it('lists every frame of the catalogue for sale, each with its picture and its price in Zêr, and no season frame among them', async () => {
     const res = await call('GET', '/shop', 'buyer');
     expect(res.statusCode).toBe(200);
     const frames = (res.json().items as Array<{ sku: string; category: string; currency: string; price: number; assetUrl: string | null; premiumOnly: boolean }>).filter((i) => i.category === 'frame');
-    expect(frames.map((f) => f.sku).sort()).toEqual(['frame-made-genim', 'frame-made-kilim', 'frame-made-lale', 'frame-made-newroz', 'frame-made-roj', 'frame-made-sev']);
+    expect(frames.map((f) => f.sku).sort()).toEqual(CATALOGUE.map((f) => f.sku).sort());
+    expect(frames.length).toBeGreaterThanOrEqual(21);
     for (const f of frames) {
       expect(f.currency).toBe('zer');
       expect(f.price).toBeGreaterThanOrEqual(1200);
       expect(f.premiumOnly).toBe(false);
-      expect(f.assetUrl).toMatch(/^\/cosmetics\/frames\/made-0\d-[a-z]+\.png$/);
+      expect(f.assetUrl).toBe(`/cosmetics/${CATALOGUE.find((c) => c.sku === f.sku)!.assetKey}`);
+      expect(f.assetUrl).toMatch(/^\/cosmetics\/frames\/made-\d\d-[a-z-]+\.png$/);
     }
   });
 

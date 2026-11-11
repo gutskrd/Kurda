@@ -1,62 +1,36 @@
 /**
- * The shop's frames: a ring to wear round a profile picture, painted as the
- * icons are (still.mjs, brush.mjs) and of the same Kurdish things — a wreath
- * of tulips, of wheat, a band of kilim, the sun's rays, the night sky, the
- * fire of Newroz — so that an icon and a frame bought in the same shop look
- * as if one hand made them.
+ * The shop's frames: a ring to wear round a profile picture, drawn as the
+ * icons are (still.mjs, brush.mjs). Here are the first of them, of Kurdish
+ * things — a wreath of tulips, of wheat, a band of kilim, the sun's rays, the
+ * night sky, the fire of Newroz — and the list of all of them: the wreaths
+ * of spring flowers (frames-garden.mjs), the ones with a living thing in them
+ * (frames-creatures.mjs), and the ones of light and metal (frames-light.mjs).
  *
- * Every frame is a square with nothing in its middle. The face shows through
- * a round opening two thirds of the square across, the share a season frame
- * leaves (shared SEASON_FRAME_INNER), so that both kinds are laid round a
- * face the same way and at the same size. Nothing is painted inside the
- * opening: an ornament may lean out of the ring as far as the square's edge,
- * never in over the face.
+ * Every frame is a square with its middle left for the face, which shows
+ * through a round opening two thirds of the square across, the share a
+ * season frame leaves (shared SEASON_FRAME_INNER), so that both kinds are
+ * laid round a face the same way and at the same size. An ornament may lean
+ * out of the ring as far as the square's edge. Only what sits on the ring —
+ * the fawn's head, the sleeping fox, a blossom — comes in over the edge of
+ * the picture, and never far enough to cover a face.
  *
  * A frame is seen at about a hundred pixels on a profile and at forty in a
  * list, so each is one clear ring of one clear colour first, and its detail
  * is for the shop tile.
  */
 import { crescent, softly, strokes, within } from './brush.mjs';
+import { CREATURES } from './frames-creatures.mjs';
+import { GARDEN } from './frames-garden.mjs';
+import { LIGHTS } from './frames-light.mjs';
 import { blade, linear, radial, spline } from './icons.mjs';
 import { n, pt } from './kit.mjs';
+import { BOX, C, INK, P, RI, polar, ring, round, star, tangent } from './ring.mjs';
 import { Still } from './still.mjs';
 
-const C = 256;
-/** The opening's radius: a third of the square. */
-export const FRAME_OPENING = 512 / 3;
-const RI = 171;
+export { FRAME_OPENING } from './ring.mjs';
 
-/** The point `r` out from the middle at `deg` (0 to the right, 90 down). */
-const P = (deg, r) => [C + Math.cos((deg * Math.PI) / 180) * r, C + Math.sin((deg * Math.PI) / 180) * r];
-
-/** A ring from `ro` in to `ri`, its middle a hole. */
-const ring = (ro, ri = RI) =>
-  `M${C - ro} ${C} A${ro} ${ro} 0 1 0 ${C + ro} ${C} A${ro} ${ro} 0 1 0 ${C - ro} ${C} Z M${C - ri} ${C} A${ri} ${ri} 0 1 1 ${C + ri} ${C} A${ri} ${ri} 0 1 1 ${C - ri} ${C} Z`;
-
-/** A circle's line at `r`, for a stroke. */
-const round = (r) => `M${C - r} ${C} A${r} ${r} 0 1 0 ${C + r} ${C} A${r} ${r} 0 1 0 ${C - r} ${C} Z`;
-
-/** A shape given in the ring's own terms — points as [degrees, radius] — as an outline. */
-const polar = (points) => `M${points.map(([a, r]) => pt(P(a, r))).join(' L')} Z`;
-
-/** A star of `points` points at (x, y), `r` to its tips and `inner` of that to its waist. */
-function star([x, y], r, points = 4, inner = 0.38, turn = -90) {
-  const out = [];
-  for (let i = 0; i < points * 2; i++) {
-    const a = ((turn + (i * 180) / points) * Math.PI) / 180;
-    const rr = i % 2 ? r * inner : r;
-    out.push([x + Math.cos(a) * rr, y + Math.sin(a) * rr]);
-  }
-  return `M${out.map(pt).join(' L')} Z`;
-}
-
-/** The way a ring's surface runs at (x, y): round it. */
-const tangent = (x, y) => (Math.atan2(y - C, x - C) * 180) / Math.PI + 90;
-
-const BOX = [0, 0, 512, 512];
-const INK = '#2a1712';
-
-export const FRAMES = [
+/** The frames of Kurdish things, the first that went on sale. */
+const FIRST = [
   {
     key: 'lale',
     ku: 'Xeleka Laleyan',
@@ -321,3 +295,6 @@ export const FRAMES = [
     },
   },
 ];
+
+/** Every frame, in the order the shop shows them: a file's number is its place here, so new ones go at the end. */
+export const FRAMES = [...FIRST, ...GARDEN, ...CREATURES, ...LIGHTS];

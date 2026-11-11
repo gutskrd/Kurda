@@ -54,9 +54,11 @@
  * and cut out of the dark, so that each lies over a profile picture with
  * nothing round it but its own light (cosmetic-art/still.mjs).
  * Frames (512×512 PNG, cosmetic-art/frames.mjs): rings to wear round a
- * profile picture, painted the same way and of the same things — tulips,
- * wheat, a kilim band, the sun's rays, the night sky, the Newroz fire — each
- * with nothing in its middle, where the face shows through.
+ * profile picture, drawn the same way — tulips, wheat, a kilim band, the
+ * sun's rays, the night sky, the Newroz fire; wreaths of spring flowers; a
+ * fawn, a sleeping fox, a snake, wings; stars, rainbow light, a clock's
+ * numerals, glowing signs, black scrollwork — each with its middle left
+ * for the face.
  * Stickers (512×512 WebP, here): the suns, a Kurdistan flag badge, the Hevalo
  * deer and a few words in a badge.
  *
