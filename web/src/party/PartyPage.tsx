@@ -101,13 +101,30 @@ export function PartyStart({
 }
 
 /** "Kurmancî · Beginner · 30 s": what a lobby is set to, above its roster. */
-export function PartyLobbyNote({ dialect, difficulty, extra }: { dialect: GameDialect; difficulty?: string; extra?: string }): React.JSX.Element {
+export function PartyLobbyNote({
+  dialect,
+  difficulty,
+  topic,
+  extra,
+}: {
+  dialect: GameDialect;
+  difficulty?: string;
+  /** what the lobby’s cards are about, in Kurdish (a category the host chose) */
+  topic?: string;
+  extra?: string;
+}): React.JSX.Element {
   const t = useT();
   const level = difficulty === 'beginner' || difficulty === 'intermediate' || difficulty === 'advanced' ? t(`games.solo.difficulty.${difficulty}`) : null;
   return (
     <p className="party-lobby-note muted">
       <span lang={dialect === 'ckb' ? 'ckb' : 'ku'}>{dialectName(dialect)}</span>
       {level ? ` · ${level}` : null}
+      {topic ? (
+        <>
+          {' · '}
+          <span lang={dialect === 'ckb' ? 'ckb' : 'ku'}>{topic}</span>
+        </>
+      ) : null}
       {extra ? ` · ${extra}` : null}
     </p>
   );

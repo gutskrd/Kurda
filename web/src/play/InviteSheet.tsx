@@ -12,7 +12,9 @@ import {
   QUESTION_COUNTS_BY_LENGTH,
   STORY_LENGTHS,
   TIMER_PRESETS,
+  dialectDirection,
   isAllowedQuestionCount,
+  meaningIn,
   storyTextDirection,
   type GameDifficulty,
   type ImpostorClueSeconds,
@@ -28,6 +30,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { categoriesAt, useImpostorCategories } from '../impostor/categories';
 import { prefersReducedMotion } from '../lib/motion';
 import type { UserSummary } from '../lib/types';
 import { dialectName } from '../learn/map';
@@ -240,6 +243,10 @@ export function InviteForm({
       : (partyHere.difficulties[0] ?? null)
     : null;
   const [clueSeconds, setClueSeconds] = useState<ImpostorClueSeconds>(IMPOSTOR_DEFAULT_CLUE_SECONDS);
+  // the word may come from one category: those with enough approved cards at the level chosen, or any
+  const impostorCategories = categoriesAt(useImpostorCategories(game === 'impostor' && target.kind !== 'lobby' ? (partyHere?.dialect ?? null) : null), difficultyNow);
+  const [category, setCategory] = useState('');
+  const categoryNow = impostorCategories.some((c) => c.slug === category) ? category : '';
   const [turnSeconds, setTurnSeconds] = useState<LastLetterTurnSeconds>(LAST_LETTER_DEFAULT_TURN_SECONDS);
   // a Last Letter lobby is in one dialect the dictionary can check: the chosen one if it is offered
   const letterDialect: LetterDialect =
@@ -272,7 +279,7 @@ export function InviteForm({
       case 'last-letter':
         return { dialect: letterDialect, turnSeconds, rated };
       case 'impostor':
-        return { dialect: partyHere?.dialect ?? wanted, difficulty: difficultyNow ?? 'beginner', clueSeconds, rated };
+        return { dialect: partyHere?.dialect ?? wanted, difficulty: difficultyNow ?? 'beginner', clueSeconds, category: categoryNow || null, rated };
       case 'dont-say':
         return { dialect: partyHere?.dialect ?? wanted, difficulty: difficultyNow ?? 'beginner', rated };
       case 'bluff':
@@ -447,6 +454,22 @@ export function InviteForm({
               value={difficultyNow}
               onChange={setPartyDifficulty}
               options={partyHere.difficulties.map((d) => ({ value: d, label: t(PARTY_LEVEL_KEY[d]) }))}
+            />
+          )}
+          {game === 'impostor' && impostorCategories.length > 0 && (
+            <ChipRadio
+              label={t('games.impostor.category')}
+              value={categoryNow}
+              onChange={setCategory}
+              options={[
+                { value: '', label: t('games.couch.anyCategory') },
+                ...impostorCategories.map((c) => ({
+                  value: c.slug,
+                  label: c.ku,
+                  hint: meaningIn(c.meanings, locale) ?? undefined,
+                  lang: dialectDirection(partyHere.dialect).lang,
+                })),
+              ]}
             />
           )}
           {game === 'impostor' && (

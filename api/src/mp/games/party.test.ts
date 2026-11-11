@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest';
 import { dontSayRules, impostorRules, type ImpostorSettings, type WordCardContent } from '@kurda/shared';
 import { dealFrom, impostorModule } from './impostor.js';
 import { dontSayModule } from './dont-say.js';
-import { meaningKeys, starterCategoryOf } from '../../games/word-categories.js';
+import { STARTER_CATEGORIES, meaningKeys, starterCategoryOf } from '../../games/word-categories.js';
 
 // stand-in Kurdish for the fixtures, never shown to a learner
 const card = (word: string, category: string, en = word): { payload: WordCardContent } => ({
@@ -35,10 +35,22 @@ function contentDb(rows: Array<{ kind: string; level: number; payload: unknown }
 describe('Kurdish Impostor on the server', () => {
   it('takes the presets a host may choose, and drops anything else sent', () => {
     const parsed = impostorModule.lobbySchema.parse({ dialect: 'ckb', difficulty: 'intermediate', clueSeconds: 45, deal: { card: { word: 'x' } } });
-    expect(parsed.settings).toEqual({ dialect: 'ckb', difficulty: 'intermediate', clueSeconds: 45 });
+    expect(parsed.settings).toEqual({ dialect: 'ckb', difficulty: 'intermediate', clueSeconds: 45, category: null });
     expect(impostorModule.lobbySchema.safeParse({ clueSeconds: 31 }).success).toBe(false);
     expect(impostorModule.lobbySchema.safeParse({ maxPlayers: 2 }).success).toBe(false);
-    expect(impostorModule.publicSettings(parsed.settings)).toEqual({ dialect: 'ckb', difficulty: 'intermediate', clueSeconds: 45 });
+    expect(impostorModule.publicSettings(parsed.settings)).toEqual({ dialect: 'ckb', difficulty: 'intermediate', clueSeconds: 45, category: null });
+  });
+
+  it('takes a category by its slug and a full minute for a clue, and nothing that is neither', () => {
+    const parsed = impostorModule.lobbySchema.parse({ category: 'animals', clueSeconds: 60 });
+    expect(parsed.settings).toMatchObject({ category: 'animals', clueSeconds: 60 });
+    expect(impostorModule.publicSettings(parsed.settings)).toMatchObject({ category: 'animals' });
+    expect(impostorModule.lobbySchema.parse({ category: null }).settings.category).toBeNull();
+    expect(impostorModule.lobbySchema.safeParse({ category: 'Not A Slug' }).success).toBe(false);
+    expect(impostorModule.lobbySchema.safeParse({ category: 7 }).success).toBe(false);
+    expect(impostorModule.lobbySchema.safeParse({ clueSeconds: 90 }).success).toBe(false);
+    // a lobby stored before categories has none: it reads as any
+    expect(impostorModule.publicSettings({ dialect: 'kmr', difficulty: 'beginner', clueSeconds: 30 })).toMatchObject({ category: null });
   });
 
   it('reads a move as a clue, a vote or a guess, and only a clue as text to gate', () => {
@@ -63,6 +75,19 @@ describe('Kurdish Impostor on the server', () => {
     expect(dealFrom(pool.slice(0, 3), 'kmr', 'seed-1')).toBeNull();
   });
 
+  it('draws the word from the category asked for, and deals nothing from one with too few cards', () => {
+    const pool = [card('pisîk', 'animals'), card('kûçik', 'animals'), card('hesp', 'animals'), card('ker', 'animals'), card('sêv', 'fruit'), card('nan', 'food')];
+    for (const seed of ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']) {
+      const deal = dealFrom(pool, 'kmr', seed, 'animals')!;
+      expect(['pisîk', 'kûçik', 'hesp', 'ker']).toContain(deal.card.word);
+      // with three more animals to choose among, the guess stays inside the category
+      expect(deal.decoys.every((d) => ['pisîk', 'kûçik', 'hesp', 'ker'].includes(d))).toBe(true);
+    }
+    expect(dealFrom(pool, 'kmr', 'a', 'fruit')).toBeNull();
+    expect(dealFrom(pool, 'kmr', 'a', 'nowhere')).toBeNull();
+    expect(dealFrom(pool, 'kmr', 'a', null)).not.toBeNull();
+  });
+
   it('offers a difficulty only with enough approved cards, and deals only from them', async () => {
     const rows = Array.from({ length: 12 }, (_, i) => ({ kind: 'word_card', level: 1, payload: card(`peyv${'abcdefghijkl'[i]}`, 'things').payload }));
     const db = contentDb(rows);
@@ -77,6 +102,24 @@ describe('Kurdish Impostor on the server', () => {
     const state = impostorRules.init(dealt, [1, 2, 3].map((seat) => ({ seat, team: null, bot: null })), { now: 0, seed: 's' });
     expect(state.card.word).toBe(dealt.deal!.card.word);
     await expect(impostorModule.deal!(contentDb(rows.slice(0, 5)), choices.settings, { dialect: 'kmr', seed: 's', seats: [] })).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE' });
+  });
+
+  it('offers a category only with enough approved cards at the lobby’s difficulty, and deals from it', async () => {
+    const things = Array.from({ length: 12 }, (_, i) => ({ kind: 'word_card', level: 1, payload: card(`peyv${'abcdefghijkl'[i]}`, 'things').payload }));
+    const animals = ['pisîk', 'kûçik', 'hesp', 'ker'].map((w) => ({ kind: 'word_card', level: 1, payload: card(w, 'animals').payload }));
+    // four fruits too, but for an advanced game: not a beginner’s category
+    const fruit = ['sêv', 'hirmî', 'tirî', 'xox'].map((w) => ({ kind: 'word_card', level: 5, payload: card(w, 'fruit').payload }));
+    const db = contentDb([...things, ...animals, ...fruit]);
+    const of = (category: string) => impostorModule.lobbySchema.parse({ dialect: 'kmr', difficulty: 'beginner', category });
+    expect(await impostorModule.offers!(db, of('animals'))).toBe(true);
+    expect(await impostorModule.offers!(db, of('fruit'))).toBe(false);
+    expect(await impostorModule.offers!(db, of('nowhere'))).toBe(false);
+    for (const seed of ['s', 't', 'u', 'v']) {
+      const dealt = (await impostorModule.deal!(db, of('animals').settings, { dialect: 'kmr', seed, seats: [] })) as ImpostorSettings;
+      expect(['pisîk', 'kûçik', 'hesp', 'ker']).toContain(dealt.deal!.card.word);
+    }
+    // the approved cards of a category can be withdrawn between making the lobby and starting it
+    await expect(impostorModule.deal!(contentDb(things), of('animals').settings, { dialect: 'kmr', seed: 's', seats: [] })).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE' });
   });
 });
 
@@ -114,7 +157,22 @@ describe('the starter categories', () => {
     expect(starterCategoryOf('cat')?.slug).toBe('animals');
     expect(starterCategoryOf('The apple')?.slug).toBe('fruit');
     expect(starterCategoryOf('police officer')?.slug).toBe('jobs');
+    expect(starterCategoryOf('a pencil')?.slug).toBe('school');
+    expect(starterCategoryOf('winter')?.slug).toBe('time');
+    expect(starterCategoryOf('the wedding')?.slug).toBe('celebrations');
     expect(starterCategoryOf('to run')).toBeNull();
     expect(starterCategoryOf(undefined)).toBeNull();
+  });
+
+  it('name each category once and file each meaning under one category only', () => {
+    const slugs = STARTER_CATEGORIES.map((c) => c.slug);
+    expect(new Set(slugs).size).toBe(slugs.length);
+    const words = STARTER_CATEGORIES.flatMap((c) => c.words);
+    expect(words.filter((w, i) => words.indexOf(w) !== i)).toEqual([]);
+    for (const c of STARTER_CATEGORIES) {
+      expect(c.name.kmr.trim()).not.toBe('');
+      expect(c.name.ckb.trim()).not.toBe('');
+      expect(Object.keys(c.meanings).sort()).toEqual(['ar', 'de', 'en', 'es', 'fr', 'nl', 'tr']);
+    }
   });
 });

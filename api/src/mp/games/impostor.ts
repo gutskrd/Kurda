@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   DIFFICULTY_LEVELS,
   GAME_DIFFICULTIES,
+  GAME_SLUG_PATTERN,
   IMPOSTOR_CLUE_LIMITS,
   IMPOSTOR_CLUE_SECONDS,
   IMPOSTOR_DEFAULT_CLUE_SECONDS,
@@ -52,6 +53,10 @@ type Executor = Pick<pg.Pool, 'query'>;
  * - Whether it is offered. A variety is offered at a difficulty once its
  *   approved word cards there reach the registry's minimum (`minimum`), the
  *   same count Learn's list makes (api/src/games/availability.ts).
+ * - The category. A host may ask for the word to come from one category; the
+ *   lobby is made only if that category has enough approved cards at the
+ *   lobby's difficulty for a word and the guess's other options, and the deal
+ *   then draws the word from it.
  */
 
 const MINIMUM = learnGame('impostor').minimum;
@@ -66,13 +71,14 @@ const lobbySchema = z
     dialect: z.enum(['kmr', 'ckb']).default('kmr'),
     difficulty: z.enum(GAME_DIFFICULTIES).default('beginner'),
     clueSeconds: clueSeconds.default(IMPOSTOR_DEFAULT_CLUE_SECONDS),
+    category: z.string().regex(GAME_SLUG_PATTERN).nullish(),
     maxPlayers: z.number().int().min(IMPOSTOR_MIN_PLAYERS).max(IMPOSTOR_MAX_PLAYERS).default(IMPOSTOR_MAX_PLAYERS),
     access: z.enum(['friends', 'open']).default('friends'),
     rated: z.boolean().optional(),
   })
   .transform(
     (s): LobbyChoices<ImpostorSettings> => ({
-      settings: { dialect: s.dialect, difficulty: s.difficulty, clueSeconds: s.clueSeconds },
+      settings: { dialect: s.dialect, difficulty: s.difficulty, clueSeconds: s.clueSeconds, category: s.category ?? null },
       dialect: s.dialect,
       maxPlayers: s.maxPlayers,
       access: s.access,
@@ -112,13 +118,21 @@ export async function approvedPool<K extends GameContentKind>(
 }
 
 /**
- * The deal from a pool, pure: one card drawn by the seed, and the other words
- * for the guess — the same category first, then any other approved word, never
- * one that folds to the same letters as the word itself.
+ * The deal from a pool, pure: one card drawn by the seed (from one category,
+ * when the lobby asked for one), and the other words for the guess — the same
+ * category first, then any other approved word, never one that folds to the
+ * same letters as the word itself.
  */
-export function dealFrom(pool: ReadonlyArray<Pick<PublishedContent<'word_card'>, 'payload'>>, dialect: GameDialect, seed: string): ImpostorDeal | null {
+export function dealFrom(
+  pool: ReadonlyArray<Pick<PublishedContent<'word_card'>, 'payload'>>,
+  dialect: GameDialect,
+  seed: string,
+  category: string | null = null,
+): ImpostorDeal | null {
   if (pool.length < IMPOSTOR_GUESS_OPTIONS) return null;
-  const chosen = pool[Math.floor(seededUnit(seed, 'card') * pool.length)]!.payload;
+  const from = category === null ? pool : pool.filter((r) => r.payload.category === category);
+  if (from.length < IMPOSTOR_GUESS_OPTIONS) return null;
+  const chosen = from[Math.floor(seededUnit(seed, 'card') * from.length)]!.payload;
   const key = (w: string) => foldForDialect(w, dialect, true);
   const others = pool.map((r) => r.payload).filter((p) => key(p.word) !== key(chosen.word));
   const same = seededOrder(seed, 'same', others.filter((p) => p.category === chosen.category));
@@ -152,7 +166,7 @@ export const impostorModule: GameModule<ImpostorState, ImpostorMove, ImpostorSet
   },
 
   publicSettings(settings) {
-    return { dialect: settings.dialect, difficulty: settings.difficulty, clueSeconds: settings.clueSeconds };
+    return { dialect: settings.dialect, difficulty: settings.difficulty, clueSeconds: settings.clueSeconds, category: settings.category ?? null };
   },
 
   async prepare(_db, _state, _seat, { raw, text }) {
@@ -163,12 +177,16 @@ export const impostorModule: GameModule<ImpostorState, ImpostorMove, ImpostorSet
 
   async offers(db, choices) {
     const levels = await approvedLevels(db, 'word_card', choices.dialect);
-    return availableDifficulties(levels, MINIMUM).includes(choices.settings.difficulty);
+    if (!availableDifficulties(levels, MINIMUM).includes(choices.settings.difficulty)) return false;
+    const category = choices.settings.category ?? null;
+    if (category === null) return true;
+    const pool = await approvedPool(db, 'word_card', choices.dialect, choices.settings.difficulty);
+    return pool.filter((row) => row.payload.category === category).length >= IMPOSTOR_GUESS_OPTIONS;
   },
 
   async deal(db, settings, { dialect, seed }) {
     const pool = await approvedPool(db, 'word_card', dialect, settings.difficulty);
-    const deal = pool.length >= MINIMUM ? dealFrom(pool, dialect, seed) : null;
+    const deal = pool.length >= MINIMUM ? dealFrom(pool, dialect, seed, settings.category ?? null) : null;
     if (!deal) throw new AppError('GAME_UNAVAILABLE', 409, 'there are not enough approved word cards for this game now');
     return { ...settings, deal };
   },

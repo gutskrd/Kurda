@@ -37,8 +37,8 @@ export const IMPOSTOR_MIN_PLAYERS = 3;
 export const IMPOSTOR_MAX_PLAYERS = 8;
 /** Each player gives this many clues: one a round. */
 export const IMPOSTOR_CLUE_ROUNDS = 2;
-/** The time a host may give a clue; the middle one is the default. */
-export const IMPOSTOR_CLUE_SECONDS = [20, 30, 45] as const;
+/** The time a host may give a clue: from quick to unhurried. */
+export const IMPOSTOR_CLUE_SECONDS = [20, 30, 45, 60] as const;
 export type ImpostorClueSeconds = (typeof IMPOSTOR_CLUE_SECONDS)[number];
 export const IMPOSTOR_DEFAULT_CLUE_SECONDS: ImpostorClueSeconds = 30;
 /** The first speaker reads their card first: their turn is this much longer. */
@@ -74,6 +74,8 @@ export interface ImpostorSettings {
   dialect: GameDialect;
   difficulty: GameDifficulty;
   clueSeconds: ImpostorClueSeconds;
+  /** the category the word is drawn from, by its slug; null or absent for any */
+  category?: string | null;
   /** dealt on the server at the start; never stored with the lobby, never in a view */
   deal?: ImpostorDeal;
 }

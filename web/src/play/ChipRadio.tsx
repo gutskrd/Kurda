@@ -5,6 +5,8 @@ export interface ChipOption<T extends string | number> {
   label: string;
   /** a second, quieter line ("~2 min") */
   hint?: string;
+  /** the language of the label, when it is not the page’s (a Kurdish word among choices in the reader’s language) */
+  lang?: string;
 }
 
 /**
@@ -51,7 +53,9 @@ export function ChipRadio<T extends string | number>({
               checked={o.value === value}
               onChange={() => onChange(o.value)}
             />
-            <span className="chip-radio-label">{o.label}</span>
+            <span className="chip-radio-label" lang={o.lang}>
+              {o.label}
+            </span>
             {o.hint && <span className="chip-radio-hint">{o.hint}</span>}
           </label>
         ))}

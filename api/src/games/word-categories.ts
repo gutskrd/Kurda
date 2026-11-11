@@ -109,6 +109,60 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
     meanings: { en: 'colour', de: 'Farbe', es: 'color', fr: 'couleur', nl: 'kleur', tr: 'renk', ar: 'لون' },
     words: ['red', 'blue', 'green', 'yellow', 'white', 'black', 'purple', 'pink', 'brown', 'grey', 'gray'],
   },
+  {
+    slug: 'school',
+    name: { kmr: 'dibistan', ckb: 'قوتابخانە' },
+    meanings: { en: 'school', de: 'Schule', es: 'escuela', fr: 'école', nl: 'school', tr: 'okul', ar: 'مدرسة' },
+    words: ['book', 'pen', 'pencil', 'notebook', 'lesson', 'class', 'classroom', 'student', 'pupil', 'blackboard', 'board', 'desk', 'bag', 'paper', 'homework', 'exam', 'ruler', 'eraser', 'question', 'answer', 'letter', 'page'],
+  },
+  {
+    slug: 'time',
+    name: { kmr: 'dem', ckb: 'کات' },
+    meanings: { en: 'time', de: 'Zeit', es: 'tiempo', fr: 'temps', nl: 'tijd', tr: 'zaman', ar: 'وقت' },
+    words: ['day', 'night', 'morning', 'evening', 'noon', 'afternoon', 'week', 'month', 'year', 'hour', 'minute', 'today', 'tomorrow', 'yesterday', 'spring', 'summer', 'autumn', 'winter', 'season', 'clock'],
+  },
+  {
+    slug: 'kitchen',
+    name: { kmr: 'aşxane', ckb: 'چێشتخانە' },
+    meanings: { en: 'kitchen', de: 'Küche', es: 'cocina', fr: 'cuisine', nl: 'keuken', tr: 'mutfak', ar: 'مطبخ' },
+    words: ['plate', 'spoon', 'fork', 'knife', 'glass', 'cup', 'pot', 'pan', 'kettle', 'teapot', 'bowl', 'tray', 'oven', 'stove', 'fridge', 'bottle', 'jug'],
+  },
+  {
+    slug: 'feelings',
+    name: { kmr: 'hest', ckb: 'هەست' },
+    meanings: { en: 'feeling', de: 'Gefühl', es: 'sentimiento', fr: 'sentiment', nl: 'gevoel', tr: 'duygu', ar: 'شعور' },
+    words: ['love', 'joy', 'fear', 'anger', 'hope', 'happiness', 'sadness', 'shame', 'longing', 'pain', 'laughter', 'smile', 'dream', 'peace', 'patience', 'courage'],
+  },
+  {
+    slug: 'play',
+    name: { kmr: 'lîstik', ckb: 'یاری' },
+    meanings: { en: 'game', de: 'Spiel', es: 'juego', fr: 'jeu', nl: 'spel', tr: 'oyun', ar: 'لعبة' },
+    words: ['ball', 'game', 'football', 'chess', 'toy', 'kite', 'swing', 'backgammon', 'dance', 'race', 'doll', 'puzzle'],
+  },
+  {
+    slug: 'music',
+    name: { kmr: 'muzîk', ckb: 'مۆسیقا' },
+    meanings: { en: 'music', de: 'Musik', es: 'música', fr: 'musique', nl: 'muziek', tr: 'müzik', ar: 'موسيقى' },
+    words: ['song', 'drum', 'flute', 'voice', 'music', 'saz', 'tambur', 'melody', 'instrument', 'violin', 'guitar'],
+  },
+  {
+    slug: 'celebrations',
+    name: { kmr: 'cejn', ckb: 'جەژن' },
+    meanings: { en: 'celebration', de: 'Fest', es: 'fiesta', fr: 'fête', nl: 'feest', tr: 'bayram', ar: 'عيد' },
+    words: ['wedding', 'newroz', 'feast', 'festival', 'gift', 'present', 'guest', 'birthday', 'holiday', 'party', 'fire', 'bride', 'groom'],
+  },
+  {
+    slug: 'tools',
+    name: { kmr: 'amûr', ckb: 'ئامێر' },
+    meanings: { en: 'tool', de: 'Werkzeug', es: 'herramienta', fr: 'outil', nl: 'gereedschap', tr: 'alet', ar: 'أداة' },
+    words: ['hammer', 'saw', 'axe', 'shovel', 'rope', 'ladder', 'needle', 'scissors', 'broom', 'lock', 'nail', 'bucket', 'basket', 'plough', 'sickle'],
+  },
+  {
+    slug: 'village',
+    name: { kmr: 'gund', ckb: 'گوند' },
+    meanings: { en: 'village', de: 'Dorf', es: 'pueblo', fr: 'village', nl: 'dorp', tr: 'köy', ar: 'قرية' },
+    words: ['village', 'well', 'mill', 'flock', 'barn', 'tent', 'harvest', 'wheat', 'garden', 'orchard', 'vineyard', 'fence', 'hay', 'pasture', 'neighbour', 'neighbor'],
+  },
 ];
 
 /**

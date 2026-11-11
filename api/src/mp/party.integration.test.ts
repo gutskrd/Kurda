@@ -15,7 +15,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import type { DontSayBoard, DontSayState, ImpostorBoard, ImpostorState, MultiView } from '@kurda/shared';
+import { IMPOSTOR_GUESS_OPTIONS, type DontSayBoard, type DontSayState, type ImpostorBoard, type ImpostorState, type MultiView } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
@@ -327,6 +327,37 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       const hard = await call(me, 'POST', '/play/lobbies', { game: 'impostor', settings: { dialect: 'kmr', difficulty: 'advanced' } });
       expect(hard.status).toBe(404);
       expect(hard.body.code).toBe('GAME_UNAVAILABLE');
+    });
+
+    it('draws the word from the category the host chose, and makes no lobby for a category without enough cards', async () => {
+      const chosen = `${tag}-kat`;
+      const lone = `${tag}-yek`;
+      const add = async (word: string, category: string): Promise<void> => {
+        await pool.query(`INSERT INTO game_content (kind, dialect, level, payload, status, review_status) VALUES ('word_card', 'kmr', 1, $1, 'published', 'approved')`, [
+          { word, meanings: { en: `${word} meaning` }, category, hint: { ku: `${tag}kom`, meanings: { en: 'a group of things' } }, forms: [] },
+        ]);
+      };
+      for (let i = 0; i < IMPOSTOR_GUESS_OPTIONS; i++) await add(`${tag}kat${letters(i)}`, chosen);
+      await add(`${tag}yekane`, lone);
+      await bustAvailability(app.cache);
+      await bustGamePools(app.cache);
+
+      const { id, host } = await table('impostor', 'imcat', 3, { category: chosen, clueSeconds: 60 });
+      const s = await state<ImpostorState>(id);
+      expect(s.card.word.startsWith(`${tag}kat`)).toBe(true);
+      expect(s.options.every((o) => o.startsWith(`${tag}kat`))).toBe(true);
+      expect(s.clueMs).toBe(60_000);
+      // the lobby says which category it plays in, by its slug; the word is still nobody's to read
+      const view = await call(host, 'GET', `/mp/impostor/${id}`);
+      expect((view.body as ImpostorView).settings).toMatchObject({ category: chosen, clueSeconds: 60 });
+
+      const me = await register('imcatno');
+      const few = await call(me, 'POST', '/play/lobbies', { game: 'impostor', settings: { dialect: 'kmr', difficulty: 'beginner', category: lone } });
+      expect(few.status).toBe(404);
+      expect(few.body.code).toBe('GAME_UNAVAILABLE');
+      // a category of another level’s cards is not this lobby’s to play in either
+      expect((await call(me, 'POST', '/play/lobbies', { game: 'impostor', settings: { dialect: 'kmr', difficulty: 'advanced', category: chosen } })).status).toBe(404);
+      expect((await call(me, 'POST', '/play/lobbies', { game: 'impostor', settings: { dialect: 'kmr', difficulty: 'beginner', category: 'Not A Slug' } })).status).toBe(400);
     });
 
     it('reads a game in a fixed number of statements', async () => {

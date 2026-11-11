@@ -318,17 +318,15 @@ function Setup({
         />
       )}
       {level.categories.length > 0 && (
-        <div lang={script.lang}>
-          <ChipRadio
-            label={t('games.impostor.category')}
-            value={chosenCategory}
-            onChange={setCategory}
-            options={[
-              { value: '', label: t('games.couch.anyCategory') },
-              ...level.categories.map((c) => ({ value: c.slug, label: c.ku, hint: meaningIn(c.meanings, locale) ?? undefined })),
-            ]}
-          />
-        </div>
+        <ChipRadio
+          label={t('games.impostor.category')}
+          value={chosenCategory}
+          onChange={setCategory}
+          options={[
+            { value: '', label: t('games.couch.anyCategory') },
+            ...level.categories.map((c) => ({ value: c.slug, label: c.ku, hint: meaningIn(c.meanings, locale) ?? undefined, lang: script.lang })),
+          ]}
+        />
       )}
       <ChipRadio label={t('games.couch.rounds')} value={settings.rounds} onChange={(v) => set('rounds', v)} options={COUCH_ROUNDS.map((n) => ({ value: n, label: String(n) }))} />
       <ChipRadio
