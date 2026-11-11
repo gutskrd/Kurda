@@ -150,6 +150,38 @@ export function couchNames(raw: readonly string[]): { ok: true; names: string[] 
   return { ok: true, names };
 }
 
+/** What a phone keeps from one evening to the next: who played, and how the game was set. Never a card, never a score. */
+export interface CouchKept {
+  names: string[];
+  settings: CouchSettings;
+}
+
+/**
+ * What a phone kept, read back: the names it finds, each as `couchName` would
+ * keep it, and every setting that is still one of the game's own, the rest as
+ * a new game has them. Anything that is not the shape it wrote is no memory at
+ * all, so a value another version or another hand left there cannot set up a
+ * game the rules do not have.
+ */
+export function couchKept(raw: unknown): CouchKept | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const { names, settings } = raw as { names?: unknown; settings?: unknown };
+  if (!Array.isArray(names) || !names.every((n): n is string => typeof n === 'string')) return null;
+  const s = (settings && typeof settings === 'object' ? settings : {}) as Record<keyof CouchSettings, unknown>;
+  const among = <T,>(choices: readonly T[], value: unknown, otherwise: T): T => (choices.includes(value as T) ? (value as T) : otherwise);
+  return {
+    names: names.slice(0, COUCH_MAX_PLAYERS).map(couchName),
+    settings: {
+      way: among(COUCH_WAYS, s.way, COUCH_DEFAULTS.way),
+      impostors: s.impostors === 2 ? 2 : 1,
+      rounds: among(COUCH_ROUNDS, s.rounds, COUCH_DEFAULTS.rounds),
+      clueSeconds: among(COUCH_CLUE_SECONDS, s.clueSeconds, COUCH_DEFAULTS.clueSeconds),
+      talkSeconds: among(COUCH_TALK_SECONDS, s.talkSeconds, COUCH_DEFAULTS.talkSeconds),
+      vote: among(COUCH_VOTES, s.vote, COUCH_DEFAULTS.vote),
+    },
+  };
+}
+
 /** The settings a room of this size and this card can be played with: what does not fit falls back to the plain game. */
 export function couchSettingsFor(players: number, card: Pick<CouchCard, 'twin'> | null, wanted: CouchSettings): CouchSettings {
   const settings = { ...wanted };

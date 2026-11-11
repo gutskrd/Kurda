@@ -6,6 +6,7 @@ import {
   couchCastVote,
   couchGuess,
   couchHand,
+  couchKept,
   couchName,
   couchNames,
   couchNextClue,
@@ -63,6 +64,25 @@ describe('the names', () => {
     expect(couchNames(['Azad', ' ', 'Ciwan'])).toEqual({ ok: false, reason: 'empty' });
     expect(couchNames(['Azad', 'azad', 'Ciwan'])).toEqual({ ok: false, reason: 'same' });
     expect(couchNames([' Azad ', 'Berfîn', 'Ciwan'])).toEqual({ ok: true, names: ['Azad', 'Berfîn', 'Ciwan'] });
+  });
+});
+
+describe('what a phone kept', () => {
+  it('comes back as the names and the settings it wrote', () => {
+    const settings = { way: 'odd', impostors: 2, rounds: 3, clueSeconds: 0, talkSeconds: 300, vote: 'open' } as const;
+    expect(couchKept({ names: ['Azad', 'Berfîn', 'Ciwan'], settings })).toEqual({ names: ['Azad', 'Berfîn', 'Ciwan'], settings });
+  });
+
+  it('keeps only settings the game has, and names as the game keeps them', () => {
+    const kept = couchKept({ names: ['  Azad\u202e  ', 'x'.repeat(40), 'Ciwan'], settings: { way: 'loud', impostors: 9, rounds: 12, clueSeconds: 7, talkSeconds: -1, vote: 'shout', extra: true }, cards: ['pisîk'] })!;
+    expect(kept.names).toEqual(['Azad', 'x'.repeat(COUCH_NAME_MAX), 'Ciwan']);
+    expect(kept.settings).toEqual(COUCH_DEFAULTS);
+    expect(Object.keys(kept)).toEqual(['names', 'settings']);
+    expect(couchKept({ names: Array.from({ length: 30 }, (_, i) => `p${i}`) })!.names).toHaveLength(COUCH_MAX_PLAYERS);
+  });
+
+  it('is nothing at all when it is not what a phone wrote', () => {
+    for (const raw of [null, undefined, 'names', 7, [], { names: 'Azad' }, { names: ['Azad', 3] }, { settings: COUCH_DEFAULTS }]) expect(couchKept(raw)).toBeNull();
   });
 });
 

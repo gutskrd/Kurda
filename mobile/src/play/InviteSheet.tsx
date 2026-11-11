@@ -8,6 +8,7 @@ import {
   IMPOSTOR_DEFAULT_CLUE_SECONDS,
   MAX_INVITEES_PER_REQUEST,
   PLAY_GAMES,
+  meaningIn,
   STORY_DIALECTS,
   type GameDialect,
   type GameDifficulty,
@@ -32,7 +33,7 @@ import { DIALECT_NAME } from '../stories/labels';
 import { StoryPresetFields, useCanHostOpen } from '../stories/SetupSheet';
 import { changeSetup, initialSetup, inviteSettings, type SetupState } from '../stories/setup';
 import { useStoryPrefs } from '../stories/prefs';
-import { Note, SectionLabel, Sheet } from '../stories/ui';
+import { ChoiceChips, Note, SectionLabel, Sheet } from '../stories/ui';
 import { createLobby, inviteFriends, listFriends, listInvites, type FriendSummary } from './api';
 import { GAME_ICON, GAME_NAME_KEY } from './labels';
 import { lobbyRoute } from './routes';
@@ -43,6 +44,7 @@ import { useRatedChoice } from '../ranks/ratedPrefs';
 import { restrictionOf } from '../reports/sendErrors';
 import { SearchField } from '../theme/SearchField';
 import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
+import { categoriesAt, useImpostorCategories } from '../impostor/categories';
 import { usePartyOffer } from '../party/offer';
 import { PARTY_LEVEL_KEY } from '../party/PartyStart';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
@@ -159,6 +161,8 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   );
   const [partyLevel, setPartyLevel] = useState<GameDifficulty>('beginner');
   const [clueSeconds, setClueSeconds] = useState<string>(String(IMPOSTOR_DEFAULT_CLUE_SECONDS));
+  // the category Impostor's word is drawn from: '' for any
+  const [category, setCategory] = useState('');
   // Bluff's and the race's choices, handed up by their own fields; null when the game cannot be made in the Kurdish chosen
   const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const [stories, setStories] = useState<StoryListItem[]>([]);
@@ -268,6 +272,17 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     return { dialect: here?.dialect ?? wanted, levels, level: levels.includes(partyLevel) ? partyLevel : (levels[0] ?? 'beginner') };
   };
 
+  // Impostor's word may come from one category: those with enough approved cards at the level chosen, or any
+  const impostorParty = game === 'impostor' && target.kind !== 'lobby' ? partyChoice() : null;
+  const impostorCategories = categoriesAt(useImpostorCategories(impostorParty && impostorOffer.length > 0 ? impostorParty.dialect : null), impostorParty?.level);
+  const categoryNow = impostorCategories.some((c) => c.slug === category) ? category : '';
+  const categoryLabel = (slug: string): string => {
+    const found = impostorCategories.find((c) => c.slug === slug);
+    if (!found) return t('games.couch.anyCategory');
+    const meaning = meaningIn(found.meanings, locale);
+    return meaning ? `${found.ku} · ${meaning}` : found.ku;
+  };
+
   const settings = (): Record<string, unknown> => {
     if (game === 'wordle-battle') return { difficulty, rated };
     if (game === 'rhyme-match') return { dialect, rated };
@@ -276,7 +291,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
       return {
         dialect: party.dialect,
         difficulty: party.level,
-        ...(game === 'impostor' ? { clueSeconds: Number(clueSeconds) } : {}),
+        ...(game === 'impostor' ? { clueSeconds: Number(clueSeconds), category: categoryNow || null } : {}),
         rated,
       };
     }
@@ -487,6 +502,18 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
                 value={partyChoice().level}
                 onChange={setPartyLevel}
                 labelOf={(d) => t(PARTY_LEVEL_KEY[d])}
+              />
+            </View>
+          ) : null}
+          {game === 'impostor' && impostorCategories.length > 0 ? (
+            <View style={styles.field}>
+              <SectionLabel>{t('games.impostor.category')}</SectionLabel>
+              <ChoiceChips<string>
+                label={t('games.impostor.category')}
+                options={['', ...impostorCategories.map((c) => c.slug)]}
+                value={categoryNow}
+                onChange={setCategory}
+                labelOf={categoryLabel}
               />
             </View>
           ) : null}

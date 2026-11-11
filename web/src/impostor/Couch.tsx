@@ -15,6 +15,7 @@ import {
   couchCastVote,
   couchGuess,
   couchHand,
+  couchKept,
   couchNames,
   couchNextClue,
   couchPoint,
@@ -31,6 +32,7 @@ import {
   meaningIn,
   type CouchCard,
   type CouchDeck,
+  type CouchKept,
   type CouchOffer,
   type CouchSettings,
   type CouchState,
@@ -85,30 +87,10 @@ const LEVEL_KEY: Record<GameDifficulty, MessageKey> = {
   advanced: 'games.solo.difficulty.advanced',
 };
 
-interface Kept {
-  names: string[];
-  settings: CouchSettings;
-}
-
 /** What this phone remembers from the last evening: the names and how the game was set. Anything else it finds, it ignores. */
-function readKept(): Kept | null {
+function readKept(): CouchKept | null {
   try {
-    const raw: unknown = JSON.parse(localStorage.getItem(KEPT) ?? 'null');
-    if (!raw || typeof raw !== 'object') return null;
-    const { names, settings } = raw as { names?: unknown; settings?: Partial<CouchSettings> };
-    if (!Array.isArray(names) || !names.every((n) => typeof n === 'string')) return null;
-    const s = settings ?? {};
-    return {
-      names: names.slice(0, COUCH_MAX_PLAYERS).map((n) => n.slice(0, COUCH_NAME_MAX)),
-      settings: {
-        way: COUCH_WAYS.includes(s.way as CouchSettings['way']) ? (s.way as CouchSettings['way']) : COUCH_DEFAULTS.way,
-        impostors: s.impostors === 2 ? 2 : 1,
-        rounds: COUCH_ROUNDS.includes(s.rounds as CouchSettings['rounds']) ? (s.rounds as CouchSettings['rounds']) : COUCH_DEFAULTS.rounds,
-        clueSeconds: COUCH_CLUE_SECONDS.includes(s.clueSeconds as CouchSettings['clueSeconds']) ? (s.clueSeconds as CouchSettings['clueSeconds']) : COUCH_DEFAULTS.clueSeconds,
-        talkSeconds: COUCH_TALK_SECONDS.includes(s.talkSeconds as CouchSettings['talkSeconds']) ? (s.talkSeconds as CouchSettings['talkSeconds']) : COUCH_DEFAULTS.talkSeconds,
-        vote: COUCH_VOTES.includes(s.vote as CouchSettings['vote']) ? (s.vote as CouchSettings['vote']) : COUCH_DEFAULTS.vote,
-      },
-    };
+    return couchKept(JSON.parse(localStorage.getItem(KEPT) ?? 'null'));
   } catch {
     return null;
   }
@@ -171,7 +153,7 @@ export function Couch(): React.JSX.Element {
     const deck = await fetchDeck(dialect, difficulty, category);
     if (!deck) return;
     try {
-      localStorage.setItem(KEPT, JSON.stringify({ names, settings } satisfies Kept));
+      localStorage.setItem(KEPT, JSON.stringify({ names, settings } satisfies CouchKept));
     } catch {
       // a phone that will not keep them only asks for the names again next time
     }
