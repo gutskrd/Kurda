@@ -1,7 +1,7 @@
 /**
  * The shop's icons: Kurdish things painted as they are — a ripe pomegranate,
  * a glass of tea on its saucer, a seal of red wax with the sun of the
- * Kurdish flag pressed into it, a saz, a buck come down to drink — painted by
+ * Kurdish flag pressed into it, a saz, a dove carrying a letter — painted by
  * hand rather than modelled: each one's colours laid in, its light and its
  * shadow laid over them as shapes of their own, brushed over and drawn in
  * (brush.mjs), and cut out of the dark, so that it lies over a profile
@@ -461,100 +461,67 @@ export const ICONS = [
     key: 'ask',
     ku: 'Ask',
     en: 'Deer',
-    // a fawn lying in the grass with its legs folded under it and its head up: big ears, big dark eyes, a small
-    // dark nose, its coat a warm fawn with the white spots a young deer has along its back, cream on its chest and
-    // muzzle and inside its ears, a white scut of a tail; drawn round with a dark brown line
+    // a fawn, drawn as a sticker is: standing, its body turned a little away and its big round head toward us,
+    // two dots for eyes set wide, a small dark nose, pink in its cheeks and its ears, a pair of short antlers
+    // with one tine each; a warm tan with cream on its muzzle and down its chest, the white spots of a young
+    // deer over its back, a scut of a tail held up, dark hooves; flat colour, and a thick brown line round
+    // every part of it
     still(rnd) {
-      const s = new Still(rnd);
-      const ink = '#3a2415';
-      const box = [0, 0, 512, 512];
-      const polar = ([x, y], deg, len) => [x + Math.cos((deg * Math.PI) / 180) * len, y + Math.sin((deg * Math.PI) / 180) * len];
-      const round = ([cx, cy], rx, ry, turn = 0) => {
-        const out = [];
-        const [c, si] = [Math.cos((turn * Math.PI) / 180), Math.sin((turn * Math.PI) / 180)];
-        for (let i = 0; i < 28; i++) {
-          const a = (i / 28) * Math.PI * 2;
-          out.push([cx + Math.cos(a) * rx * c - Math.sin(a) * ry * si, cy + Math.cos(a) * rx * si + Math.sin(a) * ry * c]);
-        }
-        return spline(out);
-      };
-      // lying: the barrel of the body, the haunch behind it, the chest, the neck up to the head
-      const barrel = round([232, 362], 142, 74, -4);
-      const haunch = round([142, 352], 82, 78);
-      const chest = round([318, 338], 66, 76, 12);
-      const neck = tube([[306, 330], [322, 280], [338, 226]], 96, 72);
-      const skull = round([340, 176], 66, 60);
-      const muzzle = round([388, 214], 36, 29, 14);
-      const earL = blade([300, 142], [226, 60], 70, { at: 0.5, point: 0.5, bend: -0.08 });
-      const earR = blade([376, 132], [440, 44], 68, { at: 0.5, point: 0.5, bend: 0.08 });
-      const earLin = blade([296, 132], [238, 72], 38, { at: 0.5, point: 0.6, bend: -0.08 });
-      const earRin = blade([382, 124], [430, 58], 36, { at: 0.5, point: 0.6, bend: 0.08 });
-      // the folded legs: the near foreleg tucked forward, the far one under it, the hind leg along the ground
-      const foreNear = tube([[318, 396], [362, 424], [412, 426]], 44, 30);
-      const foreFar = tube([[340, 388], [386, 398], [428, 396]], 36, 26);
-      const hind = tube([[130, 404], [186, 436], [250, 434]], 50, 30);
-      const tailD = round([70, 322], 26, 20, -30);
-      const coat = [haunch, barrel, chest, neck, skull, muzzle, foreNear, foreFar, hind];
-      const FAWN = ['#e3a868', '#cf8c4c', '#b0703a'];
+      const s = new Still(rnd).place([10, 4], 0.98);
+      const ink = '#4a2e1c';
+      const TAN = '#e3a76b';
+      const CREAM = '#fff1dc';
+      const outline = (d, fill, width = 7) => `<path d="${d}" fill="${fill}" stroke="${ink}" stroke-width="${width}" stroke-linejoin="round" stroke-linecap="round"/>`;
+      // a leg: short and round, from inside the body down to its hoof, a little narrower at the foot
+      const leg = (x, top) => `M${x - 20} ${top} L${x - 15} 432 Q${x - 15} 446 ${x - 4} 446 L${x + 4} 446 Q${x + 15} 446 ${x + 15} 432 L${x + 20} ${top} Z`;
+      const hoof = (x) => `M${x - 16} 422 L${x - 15} 432 Q${x - 15} 446 ${x - 4} 446 L${x + 4} 446 Q${x + 15} 446 ${x + 15} 432 L${x + 16} 422 Z`;
+      const body = spline([[212, 306], [244, 268], [304, 254], [366, 264], [400, 300], [398, 344], [352, 372], [276, 374], [224, 354]]);
+      const head = spline([[200, 118], [252, 132], [286, 182], [278, 236], [238, 268], [200, 276], [162, 268], [122, 236], [114, 182], [148, 132]]);
+      const tail = 'M392 284 Q418 262 440 236 Q452 262 432 286 Q416 302 396 300 Z';
+      const ear = (side) => blade([200 + side * 70, 156], [200 + side * 140, 112], 62, { at: 0.5, point: 0.35 });
+      const inner = (side) => blade([200 + side * 82, 150], [200 + side * 128, 120], 34, { at: 0.5, point: 0.35 });
+      // an antler: a short beam leaning out, and one tine off the outside of it, both round-ended
+      const antler = (side) => `M${200 + side * 32} 128 Q${200 + side * 34} 94 ${200 + side * 48} 60 M${200 + side * 38} 96 Q${200 + side * 56} 88 ${200 + side * 74} 72`;
       s.paint((cv) => {
-        const line = (d, w = 9) => `<path d="${d}" fill="${ink}" stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>`;
-        cv.add([tailD, earL, earR, ...coat].map((d) => line(d)).join(''));
-        // the tail, white; the far foreleg, in shadow; the ears behind the head
-        cv.add(`<path d="${tailD}" fill="#fff8ec"/>`);
-        cv.add(`<path d="${foreFar}" fill="${FAWN[2]}"/>`);
-        for (const [outer, inner] of [[earL, earLin], [earR, earRin]]) {
-          cv.add(`<path d="${outer}" fill="${FAWN[1]}"/>`);
-          crescent(cv, outer, [6, 8], { colour: FAWN[0], opacity: 0.8, soft: 6 });
-          cv.add(`<path d="${inner}" fill="#f7d7c0"/>`);
-          crescent(cv, inner, [5, 6], { colour: '#e9a98e', opacity: 0.7, soft: 5 });
-        }
+        // the far legs first, a shade darker; then the tail, and the body and its near legs as one shape, so
+        // that the line goes round all of it and none is drawn where a leg joins
+        for (const x of [268, 350]) cv.add(outline(leg(x, 330), '#cf9258') + `<path d="${hoof(x)}" fill="${ink}" stroke="${ink}" stroke-width="2"/>`);
+        cv.add(outline(tail, TAN));
+        cv.add('<path d="M404 290 Q424 272 440 244 Q446 264 430 282 Q418 294 404 296 Z" fill="#fffaf0"/>');
+        const whole = [body, leg(236, 330), leg(384, 326)];
+        cv.add(whole.map((d) => `<path d="${d}" fill="${ink}" stroke="${ink}" stroke-width="14" stroke-linejoin="round"/>`).join('') + whole.map((d) => `<path d="${d}" fill="${TAN}"/>`).join(''));
+        for (const x of [236, 384]) cv.add(`<path d="${hoof(x)}" fill="${ink}" stroke="${ink}" stroke-width="2"/>`);
+        cv.add(`<g clip-path="${within(cv, body)}">`);
+        // cream down its chest and under its belly; its back a little lighter where the light is on it
+        cv.add(`<ellipse cx="220" cy="326" rx="30" ry="44" fill="${CREAM}"/>`);
+        cv.add(`<ellipse cx="318" cy="262" rx="78" ry="22" fill="#f1bd84" fill-opacity="0.7" filter="${softly(cv, 8)}"/>`);
+        // the spots of a young deer, over its back and its haunch
+        for (const [x, y, r] of [[286, 280, 9], [316, 272, 10.5], [346, 282, 9], [372, 300, 8], [330, 302, 8.5], [300, 306, 7], [360, 326, 7]]) cv.add(`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${n(r * 0.82)}" fill="#fff6e4"/>`);
+        cv.add('</g>');
       });
+      // its head, over its shoulders: the antlers and the ears behind it
       s.paint((cv) => {
-        // the coat: warm fawn, lighter along the back where the light is, deeper under the belly and the chin
-        const fill = linear(cv, [[0, FAWN[0]], [0.55, FAWN[1]], [1, FAWN[2]]], 0, 250, 0, 450);
-        for (const d of [haunch, barrel, chest, hind, foreNear]) cv.add(`<path d="${d}" fill="${fill}"/>`);
-        cv.add(`<path d="${neck}" fill="${linear(cv, [[0, FAWN[0]], [1, FAWN[1]]], 280, 0, 370, 0)}"/>`);
-        // (the folds: where the haunch lies on the body and the legs lie under it)
-        cv.add(`<g clip-path="${within(cv, barrel)}"><path d="M196 298 Q224 352 196 428" fill="none" stroke="${FAWN[2]}" stroke-width="12" stroke-opacity="0.7" stroke-linecap="round" filter="${softly(cv, 5)}"/></g>`);
-        cv.add(`<ellipse cx="240" cy="428" rx="150" ry="16" fill="#8a5428" fill-opacity="0.55" filter="${softly(cv, 7)}" clip-path="${within(cv, barrel)}"/>`);
-        crescent(cv, haunch, [-10, -12], { colour: '#f0bd80', opacity: 0.7, soft: 12 });
-        crescent(cv, hind, [-3, -6], { colour: '#f0bd80', opacity: 0.6, soft: 5 });
-        crescent(cv, foreNear, [-3, -6], { colour: '#f0bd80', opacity: 0.6, soft: 5 });
-        // the cream of its chest, running up under the neck
-        cv.add(`<g clip-path="${within(cv, chest)}"><ellipse cx="352" cy="352" rx="40" ry="62" fill="#f8e6cb" filter="${softly(cv, 7)}"/></g>`);
-        cv.add(`<g clip-path="${within(cv, neck)}"><ellipse cx="356" cy="292" rx="24" ry="60" fill="#f8e6cb" fill-opacity="0.9" filter="${softly(cv, 8)}"/></g>`);
-        // the spots along its back and over the haunch, soft-edged, no two alike
-        const spots = [[120, 302, 11], [152, 290, 9], [186, 298, 10], [104, 336, 9], [140, 326, 8], [176, 322, 9], [214, 312, 9], [248, 304, 8], [226, 334, 7], [278, 314, 7], [122, 366, 8], [158, 354, 7], [262, 338, 6]];
-        cv.add(`<g clip-path="${within(cv, `${haunch} ${barrel}`)}">${spots.map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${n(r * 1.15)}" ry="${n(r * 0.9)}" fill="#fff6e6" fill-opacity="0.95" filter="${softly(cv, 1.2)}"/>`).join('')}</g>`);
-        strokes(cv, rnd, `${haunch} ${barrel} ${chest}`, box, { count: 900, colours: ['#f0c088', '#c88848', '#a86a36'], flow: () => 172, length: 12, width: 2, opacity: [0.06, 0.2] });
-        // the hooves, small and dark
-        for (const [x, y, turn] of [[414, 426, 0], [430, 396, -4], [252, 434, 0]]) cv.add(`<path d="${round([x, y], 16, 12, turn)}" fill="#3a2a22" stroke="${ink}" stroke-width="3"/><ellipse cx="${x - 3}" cy="${y - 5}" rx="7" ry="3" fill="#8a7468" fill-opacity="0.7"/>`);
-        // (where one part meets the next, a soft brown line, drawn in)
-        for (const d of [`M222 306 Q244 356 214 424`, `M290 296 Q270 340 290 396`, `M300 404 Q330 398 352 420`]) cv.add(`<path d="${d}" fill="none" stroke="${ink}" stroke-width="2.6" stroke-opacity="0.4" stroke-linecap="round"/>`);
-      });
-      // the head
-      s.paint((cv) => {
-        cv.add(`<path d="${skull}" fill="${linear(cv, [[0, FAWN[0]], [1, FAWN[1]]], 0, 120, 0, 240)}"/>`);
-        crescent(cv, skull, [-10, -12], { colour: '#f3c58c', opacity: 0.65, soft: 10 });
-        cv.add(`<path d="${muzzle}" fill="#f8e6cb"/>`);
-        // (the cream runs up from the muzzle between the eyes, and round each eye a paler ring)
-        cv.add(`<g clip-path="${within(cv, skull)}"><ellipse cx="372" cy="208" rx="40" ry="30" fill="#f8e6cb" filter="${softly(cv, 6)}"/><ellipse cx="322" cy="176" rx="20" ry="22" fill="#f6dcb8" fill-opacity="0.8" filter="${softly(cv, 5)}"/><ellipse cx="376" cy="170" rx="18" ry="20" fill="#f6dcb8" fill-opacity="0.8" filter="${softly(cv, 5)}"/></g>`);
-        // three small spots on the brow
-        for (const [x, y] of [[334, 130], [352, 124], [344, 142]]) cv.add(`<circle cx="${x}" cy="${y}" r="4.6" fill="#fff6e6" fill-opacity="0.9"/>`);
-        // the eyes: large, dark, each with the light in it, and lashes
-        for (const [x, y, rx, ry] of [[322, 178, 14, 17], [376, 172, 12.5, 16]]) {
-          cv.add(`<ellipse cx="${x}" cy="${y}" rx="${rx}" ry="${ry}" fill="#1e1410"/>`);
-          cv.add(`<ellipse cx="${x}" cy="${y + 3}" rx="${n(rx * 0.72)}" ry="${n(ry * 0.6)}" fill="#5a3418" fill-opacity="0.8"/>`);
-          cv.add(`<circle cx="${n(x - rx * 0.3)}" cy="${n(y - ry * 0.38)}" r="${n(rx * 0.36)}" fill="#ffffff"/><circle cx="${n(x + rx * 0.34)}" cy="${n(y + ry * 0.36)}" r="${n(rx * 0.16)}" fill="#ffffff" fill-opacity="0.85"/>`);
-          cv.add(`<path d="M${n(x - rx - 1)} ${n(y - ry * 0.62)} Q${x} ${n(y - ry - 6)} ${n(x + rx + 4)} ${n(y - ry * 0.7)}" fill="none" stroke="${ink}" stroke-width="2.6" stroke-linecap="round"/>`);
+        for (const side of [-1, 1]) {
+          cv.add(`<path d="${antler(side)}" fill="none" stroke="${ink}" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>`);
+          cv.add(`<path d="${antler(side)}" fill="none" stroke="#8a5e3c" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>`);
+          cv.add(`<path d="M${200 + side * 36} 112 Q${200 + side * 38} 92 ${200 + side * 46} 70" fill="none" stroke="#a87a52" stroke-width="4" stroke-linecap="round" stroke-opacity="0.8"/>`);
+          cv.add(outline(ear(side), TAN));
+          cv.add(`<path d="${inner(side)}" fill="#f7bdb4"/>`);
         }
-        // the nose and the small mouth under it; a touch of pink on the cheek
-        cv.add(`<path d="M394 198 Q410 194 420 202 Q416 216 406 218 Q394 214 394 198 Z" fill="#2c1c18"/>`);
-        cv.add(`<ellipse cx="404" cy="201" rx="6" ry="2.4" fill="#8a6a60" fill-opacity="0.8"/>`);
-        cv.add(`<path d="M406 218 Q404 228 392 230 M406 218 Q410 228 418 226" fill="none" stroke="${ink}" stroke-width="2.8" stroke-linecap="round"/>`);
-        cv.add(`<ellipse cx="346" cy="212" rx="14" ry="9" fill="#f59a84" fill-opacity="0.5" filter="${softly(cv, 4)}" clip-path="${within(cv, skull)}"/>`);
+        cv.add(outline(head, TAN));
+        cv.add(`<g clip-path="${within(cv, head)}">`);
+        // its muzzle, cream, coming up between the eyes a little; the light on its brow
+        cv.add(`<path d="${spline([[200, 196], [236, 214], [262, 250], [240, 290], [200, 296], [160, 290], [138, 250], [164, 214]])}" fill="${CREAM}"/>`);
+        cv.add(`<ellipse cx="200" cy="136" rx="62" ry="20" fill="#f1bd84" fill-opacity="0.75" filter="${softly(cv, 8)}"/>`);
+        // pink in its cheeks
+        cv.add(`<ellipse cx="140" cy="232" rx="18" ry="11" fill="#f6a8a0" fill-opacity="0.75" filter="${softly(cv, 3)}"/><ellipse cx="260" cy="232" rx="18" ry="11" fill="#f6a8a0" fill-opacity="0.75" filter="${softly(cv, 3)}"/>`);
+        cv.add('</g>');
+        // its eyes, two dots with a light in each; its nose, and a small mouth under it
+        for (const x of [160, 240]) cv.add(`<ellipse cx="${x}" cy="206" rx="10" ry="13" fill="#2a1a12"/><circle cx="${x - 3}" cy="201" r="3.6" fill="#ffffff"/><circle cx="${x + 3.4}" cy="211" r="1.8" fill="#ffffff" fill-opacity="0.85"/>`);
+        cv.add('<path d="M190 229 Q200 225 210 229 Q211 236 200 241 Q189 236 190 229 Z" fill="#3a2418"/><ellipse cx="197" cy="231" rx="3" ry="1.7" fill="#8a6a58"/>');
+        cv.add(`<path d="M200 241 L200 247 M190 250 Q195 254 200 247 Q205 254 210 250" fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`);
       });
-      return s.done({ finish: { paint: 1, grain: 0.012, contrast: 0.06, saturation: 1, ink: true } });
+      return s.done({ finish: { paint: 0, grain: 0.008, contrast: 0.04, saturation: 1.02 } });
     },
   },
   {
@@ -615,19 +582,18 @@ export const ICONS = [
     key: 'caydan',
     ku: 'Çay',
     en: 'Tea',
-    // a glass of tea on its saucer, after a painting of one: seen from a little above, so that the mouth of the
-    // glass is open and the tea lies in it below the rim; the glass wide at the lip, drawn in tight at the waist
-    // a third of the way down and round in the belly, on a thick foot; the tea dark red, in the bands a round
-    // glass makes of it, orange where the light lies on its surface and where it comes out at the foot; white
-    // lights down the glass; the saucer broad and white, painted round with long coral strokes and small gold
-    // sprigs; and a dark line round all of it, as the painting has
+    // a glass of tea on its saucer, seen from a little above, so the mouth of the glass is an open ring with the
+    // tea lying in it: the glass widest at the lip, drawn in slowly to a waist four tenths of the way down,
+    // swelling as slowly to a belly low on it and then quickly in to a small foot; the tea red, dark where the
+    // round glass turns it away from the light and orange on its surface; thin white lights down the glass; the
+    // saucer broad and white with a scalloped edge, painted round with long coral strokes and gold sprigs
     still(rnd) {
       const s = new Still(rnd);
       const X = 256;
       const ink = '#2a1712';
-      // the glass: its half-width down its height, measured off the painting (the widest line of the rim first,
-      // the waist at 232, the belly below it, the foot last)
-      const profile = [[85, 140], [108, 137], [130, 124], [152, 113], [175, 105], [197, 101], [220, 98], [232, 97.5], [244, 99], [254, 104], [265, 112], [277, 117.5], [300, 118.5], [332, 118], [354, 116.5], [376, 112], [399, 102], [411, 95], [422, 90], [436, 86]];
+      // the glass: its half-width down its height, the widest line of the lip first, the waist at 230, the
+      // belly at 348 and the foot last — measured, because a tea glass drawn by eye comes out a tumbler
+      const profile = [[85, 140], [107, 135], [120, 128.5], [134, 119.5], [148, 112], [161, 106], [175, 103], [189, 101], [203, 99.5], [216, 98.5], [230, 98], [244, 100], [260, 104], [282, 108.5], [304, 111.5], [326, 114], [348, 115], [369, 112.5], [391, 104], [413, 90], [429, 76], [438, 69]];
       const halfAt = (y) => {
         const i = Math.min(profile.length - 1, Math.max(1, profile.findIndex(([py]) => py >= y)));
         const [ya, wa] = profile[i - 1];
@@ -646,127 +612,137 @@ export const ICONS = [
         const across = lid ? `A${n(wt)} ${n(lid)} 0 0 0 ${n(X - wt)} ${n(yt)}` : '';
         return `${left} A${n(wb)} ${n(foot)} 0 0 0 ${n(X + wb)} ${n(yb)} L${right.slice(1)} ${across} Z`;
       };
-      const RIM = { y: 85, rx: 140, ry: 62 };
-      const outside = body(0, RIM.y, 436, RIM.ry, 14);
-      const mouth = `M${X - RIM.rx} ${RIM.y} A${RIM.rx} ${RIM.ry} 0 0 1 ${X + RIM.rx} ${RIM.y} A${RIM.rx} ${RIM.ry} 0 0 1 ${X - RIM.rx} ${RIM.y} Z`;
-      // the tea: its surface an ellipse below the rim, and everything in the glass under that, down to the foot
-      const LEVEL = 133;
-      const surfaceW = halfAt(LEVEL) - 6;
-      const tea = body(6, LEVEL, 424, 30, 11);
-      // the saucer: broad, seen from above, its edge in slow waves
-      const S = { x: 256, y: 378, rx: 222, ry: 118 };
+      const ring = (cx, cy, rx, ry) => `M${n(cx - rx)} ${n(cy)} A${n(rx)} ${n(ry)} 0 0 1 ${n(cx + rx)} ${n(cy)} A${n(rx)} ${n(ry)} 0 0 1 ${n(cx - rx)} ${n(cy)} Z`;
+      const RIM = { y: 85, rx: 140, ry: 61 };
+      const outside = body(0, RIM.y, 438, RIM.ry, 11);
+      const mouth = ring(X, RIM.y, RIM.rx, RIM.ry);
+      // the tea: its surface an ellipse lying in the mouth of the glass, toward its near side, and everything in
+      // the glass under that, down to the foot
+      const LEVEL = 121;
+      const SURFACE = { rx: 111, ry: 25 };
+      const tea = body(5, LEVEL, 428, SURFACE.ry, 9);
+      // the saucer: broad, seen from above, its edge scalloped
+      const S = { x: 256, y: 374, rx: 226, ry: 122 };
       const onPlate = (u, v) => [S.x + u * S.rx, S.y + v * S.ry];
       const edge = [];
-      for (let i = 0; i < 96; i++) {
-        const a = (i / 96) * Math.PI * 2;
-        const r = 1 + 0.009 * Math.cos(a * 8 + 0.6) + 0.004 * Math.cos(a * 3);
+      for (let i = 0; i < 120; i++) {
+        const a = (i / 120) * Math.PI * 2;
+        const r = 1 + 0.014 * Math.cos(a * 12 + 0.4);
         edge.push(onPlate(Math.cos(a) * r, Math.sin(a) * r));
       }
       const saucer = spline(edge);
       // (a shape on the plate, given as points round the plate's own circle, lies down with it)
       const laid = (points) => spline(points.map(([u, v]) => onPlate(u, v)));
       s.paint((cv) => {
-        // the line round it, and the thickness of the china at the front
-        cv.add(`<path d="${saucer}" fill="${ink}" transform="translate(0 7)"/>`);
-        cv.add(`<path d="${saucer}" fill="${linear(cv, [[0, '#f6f3ec'], [0.5, '#ebe6dc'], [1, '#cfc7bb']], 60, 270, 430, 500)}" stroke="${ink}" stroke-width="3.2"/>`);
+        // the thickness of the china at the front, and the plate
+        cv.add(`<path d="${saucer}" fill="#b9b0a4" transform="translate(0 6)"/>`);
+        cv.add(`<path d="${saucer}" fill="${linear(cv, [[0, '#fbf9f4'], [0.55, '#f1ede5'], [1, '#d9d2c6']], 60, 262, 430, 498)}"/>`);
         // the grey a white plate is painted with: under its far rim, and a turn of it round the well
-        crescent(cv, saucer, [-26, -16], { colour: '#8d8580', opacity: 0.4, soft: 16 });
-        cv.add(`<ellipse cx="${S.x}" cy="${S.y + 30}" rx="${n(S.rx * 0.6)}" ry="${n(S.ry * 0.56)}" fill="none" stroke="#a9a19a" stroke-width="7" stroke-opacity="0.45" filter="${softly(cv, 5)}" clip-path="${within(cv, saucer)}"/>`);
-        // the coral strokes round the rim, long and round-ended, each pointing at the middle; the gold sprigs between
-        for (let i = 0; i < 10; i++) {
-          const a = (i / 10) * Math.PI * 2 + 0.08;
+        crescent(cv, saucer, [-22, -14], { colour: '#8d8580', opacity: 0.32, soft: 16 });
+        cv.add(`<ellipse cx="${S.x}" cy="${S.y + 26}" rx="${n(S.rx * 0.58)}" ry="${n(S.ry * 0.54)}" fill="none" stroke="#a9a19a" stroke-width="7" stroke-opacity="0.4" filter="${softly(cv, 5)}" clip-path="${within(cv, saucer)}"/>`);
+        // the coral strokes round the rim, long and round-ended, each pointing at the middle; a gold sprig between
+        // each and the next
+        for (let i = 0; i < 8; i++) {
+          const a = (i / 8) * Math.PI * 2 + 0.2;
           const [ux, uy] = [Math.cos(a), Math.sin(a)];
           const [vx, vy] = [-uy, ux];
           const stroke = [];
           for (let k = 0; k < 20; k++) {
             const t = (k / 20) * Math.PI * 2;
-            // (a long oval, from a little past half way out nearly to the edge, fuller at its outer end)
-            const along = 0.75 + Math.cos(t) * 0.165;
-            const across = Math.sin(t) * (0.066 + 0.016 * Math.cos(t));
+            // (a long oval, from half way out nearly to the edge, fuller at its outer end)
+            const along = 0.73 + Math.cos(t) * 0.18;
+            const across = Math.sin(t) * (0.105 + 0.025 * Math.cos(t));
             stroke.push([ux * along + vx * across, uy * along + vy * across]);
           }
           const d = laid(stroke);
-          cv.add(`<path d="${d}" fill="#e0684a" stroke="#b9472e" stroke-width="1.4" stroke-opacity="0.7" clip-path="${within(cv, saucer)}"/>`);
-          crescent(cv, d, [-3, -3], { colour: '#f39a7c', opacity: 0.55, soft: 3 });
-          const b = a + Math.PI / 10;
-          const [gx, gy] = onPlate(Math.cos(b) * 0.8, Math.sin(b) * 0.8);
-          const near = 0.6 + 0.4 * Math.max(0, Math.sin(b));
-          for (const t of [-1, 0, 1]) cv.add(`<ellipse cx="${n(gx + t * 6 * near)}" cy="${n(gy - Math.abs(t) * 2.4)}" rx="${n(4.2 * near + 1)}" ry="${n(2 * near + 0.7)}" transform="rotate(${n(t * 42)} ${n(gx + t * 6 * near)} ${n(gy)})" fill="#a8822e"/>`);
-          cv.add(`<circle cx="${n(gx)}" cy="${n(gy + 3.6 * near)}" r="${n(1.8 * near + 0.6)}" fill="#6a4416"/>`);
+          cv.add(`<path d="${d}" fill="#e2664a" clip-path="${within(cv, saucer)}"/>`);
+          crescent(cv, d, [-3, -3], { colour: '#f4a184', opacity: 0.6, soft: 3 });
+          crescent(cv, d, [3, 3], { colour: '#b9432c', opacity: 0.45, soft: 3 });
+          const b = a + Math.PI / 8;
+          const [gx, gy] = onPlate(Math.cos(b) * 0.79, Math.sin(b) * 0.79);
+          const near = 0.62 + 0.38 * Math.max(0, Math.sin(b));
+          for (const t of [-1, 0, 1]) cv.add(`<ellipse cx="${n(gx + t * 8.5 * near)}" cy="${n(gy - Math.abs(t) * 3)}" rx="${n(6 * near + 1)}" ry="${n(2.7 * near + 0.7)}" transform="rotate(${n(t * 42)} ${n(gx + t * 8.5 * near)} ${n(gy)})" fill="#b08a30"/>`);
+          cv.add(`<circle cx="${n(gx)}" cy="${n(gy + 4.6 * near)}" r="${n(2.4 * near + 0.6)}" fill="#5a3a14"/>`);
         }
         // what the glass casts: grey to its right, and before its foot the light that has come through the tea
-        cv.add(`<ellipse cx="${X + 78}" cy="446" rx="92" ry="26" fill="#5a4a48" fill-opacity="0.5" filter="${softly(cv, 7)}" clip-path="${within(cv, saucer)}"/>`);
-        cv.add(`<ellipse cx="${X + 40}" cy="470" rx="46" ry="16" fill="#e8832e" fill-opacity="0.75" filter="${softly(cv, 6)}" clip-path="${within(cv, saucer)}"/>`);
-        cv.add(`<ellipse cx="${X}" cy="440" rx="94" ry="16" fill="#241210" fill-opacity="0.5" filter="${softly(cv, 4)}"/>`);
-        strokes(cv, rnd, saucer, [30, 256, 482, 500], { count: 620, colours: ['#fffdf6', '#d9d2c6', '#e9e3d8'], flow: () => 0, length: 14, width: 2.4, opacity: [0.05, 0.16] });
+        cv.add(`<ellipse cx="${X + 70}" cy="442" rx="84" ry="24" fill="#5a4a48" fill-opacity="0.45" filter="${softly(cv, 7)}" clip-path="${within(cv, saucer)}"/>`);
+        cv.add(`<ellipse cx="${X + 30}" cy="466" rx="48" ry="15" fill="#ea7a2a" fill-opacity="0.8" filter="${softly(cv, 6)}" clip-path="${within(cv, saucer)}"/>`);
+        cv.add(`<ellipse cx="${X}" cy="442" rx="76" ry="13" fill="#241210" fill-opacity="0.5" filter="${softly(cv, 4)}"/>`);
+        strokes(cv, rnd, saucer, [26, 250, 486, 500], { count: 520, colours: ['#fffdf6', '#d9d2c6', '#e9e3d8'], flow: () => 0, length: 14, width: 2.4, opacity: [0.04, 0.13] });
       });
-      // the glass above the tea, which is clear: its far wall grey, the room's lights lying on it white
+      // the glass above the tea, which is clear: its far wall a pale grey with the room's lights lying on it white
       s.paint((cv) => {
-        cv.add(`<path d="${outside}" fill="${linear(cv, [[0, '#a7a3a6'], [0.45, '#7f7a7e'], [1, '#9a9598']], X - 140, 0, X + 140, 0)}" fill-opacity="0.62"/>`);
+        cv.add(`<path d="${outside}" fill="${linear(cv, [[0, '#b4b0b6'], [0.4, '#d6d3d6'], [0.75, '#c2bec4'], [1, '#a29ea4']], X - 140, 0, X + 140, 0)}" fill-opacity="0.78"/>`);
         cv.add(`<g clip-path="${within(cv, mouth)}">`);
-        cv.add(`<path d="M${X + 20} 34 Q${X + 86} 36 ${X + 122} 74 Q${X + 96} 66 ${X + 70} 80 Q${X + 44} 52 ${X + 20} 34 Z" fill="#fff" fill-opacity="0.9" filter="${softly(cv, 1.6)}"/>`);
-        cv.add(`<path d="M${X - 128} 78 Q${X - 110} 44 ${X - 66} 32 Q${X - 96} 60 ${X - 104} 100 Z" fill="#fff" fill-opacity="0.55" filter="${softly(cv, 2)}"/>`);
-        cv.add(`<path d="M${X - 20} 26 Q${X + 4} 24 ${X + 30} 28" fill="none" stroke="#3c3836" stroke-width="5" stroke-opacity="0.4" filter="${softly(cv, 2)}"/>`);
+        cv.add(`<path d="M${X - 8} 30 Q${X + 78} 26 ${X + 128} 72 Q${X + 108} 96 ${X + 84} 92 Q${X + 60} 62 ${X + 26} 60 Q${X + 6} 48 ${X - 8} 30 Z" fill="#fff" fill-opacity="0.95" filter="${softly(cv, 1.4)}"/>`);
+        cv.add(`<path d="M${X - 130} 82 Q${X - 116} 48 ${X - 70} 34 Q${X - 92} 62 ${X - 98} 104 Z" fill="#fff" fill-opacity="0.6" filter="${softly(cv, 2)}"/>`);
+        cv.add(`<path d="M${X - 56} 30 Q${X - 30} 52 ${X - 26} 84" fill="none" stroke="#7d7880" stroke-width="16" stroke-opacity="0.35" filter="${softly(cv, 5)}"/>`);
         cv.add('</g>');
       });
       // the tea
       s.paint((cv) => {
-        cv.add(`<path d="${tea}" fill="${linear(cv, [[0, '#8a2210'], [0.2, '#6a160c'], [0.5, '#4a0c08'], [0.8, '#641408'], [1, '#8e2a12']], X - 118, 0, X + 118, 0)}"/>`);
+        cv.add(`<path d="${tea}" fill="${linear(cv, [[0, '#5e1208'], [0.18, '#98230e'], [0.5, '#7c1609'], [0.82, '#9e2810'], [1, '#541006']], X - 124, 0, X + 124, 0)}"/>`);
         cv.add(`<g clip-path="${within(cv, tea)}">`);
-        // the bands a round glass makes of it, each curved as the glass is round: bright under the lip, dark at
-        // the waist, red in the shoulder of the belly, dark across the middle of it, bright below, orange at the foot
-        const band = (y, depth, colour, opacity, soft) => {
-          const w = halfAt(y) + 6;
-          cv.add(`<path d="M${n(X - w)} ${n(y - 8)} Q${X} ${n(y + 16)} ${n(X + w)} ${n(y - 8)}" fill="none" stroke="${colour}" stroke-width="${depth}" stroke-opacity="${opacity}" filter="${softly(cv, soft)}"/>`);
+        // the turns a round glass makes of it: each a soft mass of dark or of light lying across it, curved as the
+        // glass is round and deepest at its middle, `reach` of the way out to either side, moved `off` to one side
+        const turn = (y, depth, colour, opacity, soft, reach = 1, off = 0) => {
+          const w = (halfAt(y) + 6) * reach;
+          const cx = X + off * halfAt(y);
+          const sag = w * 0.36;
+          cv.add(`<path d="M${n(cx - w)} ${n(y)} Q${n(cx)} ${n(y + sag + depth)} ${n(cx + w)} ${n(y)} Q${n(cx)} ${n(y + sag - depth)} ${n(cx - w)} ${n(y)} Z" fill="${colour}" fill-opacity="${opacity}" filter="${softly(cv, soft)}"/>`);
         };
-        band(170, 30, '#c8481a', 0.95, 5);
-        band(214, 44, '#3a0806', 0.8, 9);
-        band(262, 30, '#9a2a14', 0.75, 8);
-        band(312, 44, '#35070a', 0.78, 10);
-        band(368, 44, '#a83016', 0.85, 10);
-        band(410, 22, '#e07a2a', 0.85, 7);
-        // (the dark of the room in the waist, to the right, and the red light in the belly to the left)
-        cv.add(`<ellipse cx="${X + 34}" cy="226" rx="52" ry="20" fill="#2a0606" fill-opacity="0.6" filter="${softly(cv, 7)}"/>`);
-        cv.add(`<ellipse cx="${X - 62}" cy="350" rx="34" ry="50" fill="#c2401a" fill-opacity="0.45" filter="${softly(cv, 12)}"/>`);
+        turn(140, 30, '#d8602c', 0.95, 5);
+        turn(150, 26, '#3a0806', 0.6, 7, 0.55, 0.08);
+        turn(196, 52, '#260404', 0.82, 9, 0.9, -0.05);
+        turn(236, 26, '#cc4a1e', 0.6, 8, 0.42, -0.42);
+        turn(286, 46, '#2c0505', 0.8, 9, 0.92, 0.05);
+        turn(330, 40, '#bc2612', 0.9, 9);
+        turn(374, 30, '#c43c12', 0.85, 8);
+        turn(398, 18, '#e8802c', 0.9, 5, 0.78);
         cv.add('</g>');
-        strokes(cv, rnd, tea, [X - 126, 130, X + 126, 436], { count: 520, colours: ['#3e0a06', '#7c1c10', '#b83a16', '#d05a1c'], flow: () => 4, length: 30, width: 3, opacity: [0.05, 0.15] });
-        // its surface, seen through the mouth of the glass: orange where the light lies on it, its far edge brightest
+        // the glass turning away at either side, which darkens it there
+        rim(cv, tea, { colour: '#3a0806', width: 9, opacity: 0.45, soft: 5 });
+        strokes(cv, rnd, tea, [X - 126, 120, X + 126, 436], { count: 300, colours: ['#3e0a06', '#7c1c10', '#b83a16', '#d05a1c'], flow: () => 88, length: 34, width: 3.4, opacity: [0.04, 0.11] });
+        // its surface, seen through the mouth of the glass: orange where the light lies on it, brightest along its
+        // far edge, dark toward us where the lip stands over it
         cv.add(`<g clip-path="${within(cv, mouth)}">`);
-        cv.add(`<ellipse cx="${X}" cy="${LEVEL}" rx="${n(surfaceW)}" ry="30" fill="${linear(cv, [[0, '#d2561a'], [0.45, '#b23a10'], [1, '#8c260c']], 0, LEVEL - 30, 0, LEVEL + 20)}"/>`);
-        cv.add(`<path d="M${n(X - surfaceW + 8)} ${LEVEL - 6} A${n(surfaceW)} 30 0 0 1 ${n(X + surfaceW - 8)} ${LEVEL - 6}" fill="none" stroke="#f08a36" stroke-width="3" stroke-opacity="0.9"/>`);
-        cv.add(`<ellipse cx="${X + 30}" cy="${LEVEL + 2}" rx="52" ry="9" fill="#5a1208" fill-opacity="0.55" filter="${softly(cv, 4)}"/>`);
+        const top = ring(X, LEVEL, SURFACE.rx, SURFACE.ry);
+        cv.add(`<path d="${top}" fill="${linear(cv, [[0, '#e0661c'], [0.4, '#c44810'], [0.75, '#8c260c'], [1, '#5a1208']], 0, LEVEL - SURFACE.ry, 0, LEVEL + SURFACE.ry)}"/>`);
+        cv.add(`<path d="M${n(X - SURFACE.rx + 10)} ${LEVEL - 6} A${n(SURFACE.rx)} ${SURFACE.ry} 0 0 1 ${n(X + SURFACE.rx - 10)} ${LEVEL - 6}" fill="none" stroke="#f6a04a" stroke-width="2.6" stroke-opacity="0.95" stroke-linecap="round"/>`);
+        cv.add(`<ellipse cx="${X + 26}" cy="${LEVEL + 6}" rx="56" ry="8" fill="#4a0e06" fill-opacity="0.6" filter="${softly(cv, 3.5)}"/>`);
+        cv.add(`<path d="${top}" fill="none" stroke="${ink}" stroke-width="2.4" stroke-opacity="0.75"/>`);
         cv.add('</g>');
       });
       // the glass itself: the dark line round it, the lip, the white lights down it, and its thick foot
       s.paint((cv) => {
-        // the foot: thick glass, grey and dark, a light lying along it
-        const foot = body(0, 422, 436, 0, 14);
-        cv.add(`<path d="${foot}" fill="${linear(cv, [[0, '#8a8480'], [0.35, '#3c3432'], [0.7, '#6e6662'], [1, '#2e2624']], X - 90, 0, X + 90, 0)}" fill-opacity="0.92"/>`);
-        cv.add(`<path d="M${X - 70} 438 Q${X - 10} 452 ${X + 44} 444" fill="none" stroke="#f4efe8" stroke-width="4" stroke-opacity="0.7" stroke-linecap="round" filter="${softly(cv, 1.2)}"/>`);
-        cv.add(`<path d="M${X - 84} 424 Q${X} 440 ${X + 84} 424" fill="none" stroke="${ink}" stroke-width="2.4" stroke-opacity="0.7"/>`);
+        // the foot: thick glass, grey, a light lying along it
+        const foot = body(0, 424, 438, 0, 11);
+        cv.add(`<path d="${foot}" fill="${linear(cv, [[0, '#9a948f'], [0.3, '#4a403c'], [0.62, '#cfc8c0'], [1, '#3a302c']], X - 76, 0, X + 76, 0)}" fill-opacity="0.92"/>`);
+        cv.add(`<path d="M${X - 52} 441 Q${X - 6} 451 ${X + 34} 445" fill="none" stroke="#fbf7f0" stroke-width="3.6" stroke-opacity="0.8" stroke-linecap="round" filter="${softly(cv, 1)}"/>`);
+        cv.add(`<path d="M${X - 78} 425 Q${X} 438 ${X + 78} 425" fill="none" stroke="${ink}" stroke-width="2" stroke-opacity="0.6"/>`);
         // the line round the glass, and the paler turn of the glass inside it
-        cv.add(`<path d="${outside}" fill="none" stroke="#b9b4b2" stroke-width="10" stroke-opacity="0.22" clip-path="${within(cv, outside)}"/>`);
-        cv.add(`<path d="${outside}" fill="none" stroke="${ink}" stroke-width="4.2" stroke-linejoin="round"/>`);
-        // the lip: its near side dark, the light along it
-        cv.add(`<path d="M${X - RIM.rx} ${RIM.y} A${RIM.rx} ${RIM.ry} 0 0 0 ${X + RIM.rx} ${RIM.y}" fill="none" stroke="${ink}" stroke-width="4"/>`);
-        cv.add(`<path d="M${X - 118} 112 A${RIM.rx} ${RIM.ry} 0 0 0 ${X - 30} 143" fill="none" stroke="#fff" stroke-width="3.4" stroke-opacity="0.85" stroke-linecap="round"/>`);
+        cv.add(`<path d="${outside}" fill="none" stroke="#e8e2dc" stroke-width="8" stroke-opacity="0.2" clip-path="${within(cv, outside)}"/>`);
+        cv.add(`<path d="${outside}" fill="none" stroke="${ink}" stroke-width="3.6" stroke-linejoin="round"/>`);
+        // the lip: a dark line along its near side, and the light on it
+        cv.add(`<path d="M${X - RIM.rx} ${RIM.y} A${RIM.rx} ${RIM.ry} 0 0 0 ${X + RIM.rx} ${RIM.y}" fill="none" stroke="${ink}" stroke-width="3.4"/>`);
+        cv.add(`<path d="M${X - 122} 108 A${RIM.rx} ${RIM.ry} 0 0 0 ${X - 36} 142" fill="none" stroke="#fff" stroke-width="3" stroke-opacity="0.9" stroke-linecap="round"/>`);
         // the white lights down the glass, each keeping its place across it as the glass narrows and swells
         const light = (at, from, to, width, opacity) => {
           const points = [];
           for (let y = from; y <= to; y += 14) points.push([X + at * halfAt(y), y]);
-          cv.add(`<path d="${spline(points, false)}" fill="none" stroke="#fff" stroke-width="${width}" stroke-opacity="${opacity}" stroke-linecap="round" filter="${softly(cv, 0.8)}"/>`);
+          cv.add(`<path d="${spline(points, false)}" fill="none" stroke="#fff" stroke-width="${width}" stroke-opacity="${opacity}" stroke-linecap="round" filter="${softly(cv, 0.7)}"/>`);
         };
-        light(-0.82, 150, 250, 9, 0.8);
-        light(-0.6, 168, 352, 5, 0.8);
-        light(-0.2, 160, 300, 2.6, 0.75);
-        light(-0.07, 160, 316, 3.4, 0.7);
-        light(0.36, 172, 292, 2.6, 0.6);
-        light(0.84, 300, 388, 4, 0.45);
+        light(-0.8, 156, 262, 6, 0.75);
+        light(-0.62, 170, 356, 3, 0.7);
+        light(-0.22, 164, 330, 2, 0.65);
+        light(-0.1, 160, 300, 2.6, 0.6);
+        light(0.34, 170, 322, 2, 0.5);
+        light(0.84, 300, 392, 3, 0.4);
         // two drops of gold where the light comes through at the right
-        cv.add(`<path d="M${X + 50} 334 q5 10 0 22" fill="none" stroke="#f2b23a" stroke-width="4" stroke-linecap="round" stroke-opacity="0.9"/>`);
-        cv.add(`<path d="M${X + 86} 372 q4 8 0 16" fill="none" stroke="#f2b23a" stroke-width="3.4" stroke-linecap="round" stroke-opacity="0.8"/>`);
+        cv.add(`<path d="M${X + 52} 330 q4 9 0 20" fill="none" stroke="#f6b83a" stroke-width="3.6" stroke-linecap="round" stroke-opacity="0.9"/>`);
+        cv.add(`<path d="M${X + 80} 384 q3 7 0 14" fill="none" stroke="#f6b83a" stroke-width="3" stroke-linecap="round" stroke-opacity="0.8"/>`);
       });
-      return s.done({ finish: { paint: 2, grain: 0.012, contrast: 0.08, saturation: 1, ink: true } });
+      return s.done({ finish: { paint: 2, grain: 0.012, contrast: 0.08, saturation: 1.04, ink: true } });
     },
   },
   {
@@ -857,92 +833,79 @@ export const ICONS = [
     key: 'kevok',
     ku: 'Kevok',
     en: 'Dove',
-    // a white dove on the wing, drawn as a picture book draws one: plump and round-headed, a bright dark eye, a
-    // small orange beak with a sprig of olive in it, her wings up at the top of their beat, the feathers broad
-    // and round-ended, her tail spread behind her; white, shaded in a cool blue-grey, with a dark line round her
+    // a white dove carrying a letter, as a messenger: seen from the side on the wing, one smooth shape from her
+    // round head down her breast to a long tail, her near wing lifted at the top of its beat with its feathers
+    // in a scalloped edge and the far wing a grey sliver behind it; a small orange beak, a dot of an eye, and
+    // in the beak a cream envelope sealed with a red heart. White, warm under the breast and cool in the wing
     still(rnd) {
-      const s = new Still(rnd);
-      const ink = '#2b3140';
-      const box = [0, 0, 512, 512];
-      const polar = ([x, y], deg, len) => [x + Math.cos((deg * Math.PI) / 180) * len, y + Math.sin((deg * Math.PI) / 180) * len];
-      // a feather from `base` out along `deg`, drawn: its outline, and the two colours it is filled from
-      const feather = (base, deg, len, width, tone) => ({ d: blade(base, polar(base, deg, len), width, { at: 0.62, point: 0.12 }), base, tip: polar(base, deg, len), tone });
-      // the far wing, behind her, in shadow; the near wing, its long feathers and the short ones over their roots
-      const FAR = [304, 258];
-      const NEAR = [258, 270];
-      const far = [-52, -66, -80, -94, -108].map((a, i) => feather(FAR, a, [150, 172, 182, 176, 158][i], 56, ['#c3cee0', '#aab8d0']));
-      const long = [-96, -110, -124, -138, -152, -166].map((a, i) => feather(NEAR, a, [206, 222, 224, 210, 186, 152][i], 60, ['#ffffff', '#dfe6f1']));
-      const short = [-100, -116, -132, -148, -164].map((a, i) => feather(NEAR, a, [118, 124, 122, 112, 96][i], 56, ['#ffffff', '#e9eef6']));
-      const tail = [158, 172, 186, 200].map((a, i) => feather([162, 322], a, [124, 136, 132, 116][i], 54, ['#f6f8fb', '#d3dcea']));
-      // her body, round and full in the chest; her neck; her head
-      const round = ([cx, cy], rx, ry, turn = 0) => {
-        const out = [];
-        const [c, si] = [Math.cos((turn * Math.PI) / 180), Math.sin((turn * Math.PI) / 180)];
-        for (let i = 0; i < 28; i++) {
-          const a = (i / 28) * Math.PI * 2;
-          out.push([cx + Math.cos(a) * rx * c - Math.sin(a) * ry * si, cy + Math.cos(a) * rx * si + Math.sin(a) * ry * c]);
+      const s = new Still(rnd).place([-20, 6], 0.95);
+      const body = spline([[336, 184], [364, 168], [394, 182], [406, 210], [401, 236], [390, 266], [370, 300], [334, 332], [286, 350], [234, 356], [188, 362], [152, 370], [150, 356], [198, 328], [250, 294], [296, 258], [320, 218]]);
+      // the near wing: its leading edge from the shoulder up to the tip, then its feathers' ends, one round end
+      // after another, down and back to her side
+      const lead = [[306, 258], [292, 212], [262, 154], [226, 98], [184, 52]];
+      const ends = [[184, 52], [158, 94], [146, 138], [144, 184], [153, 228], [172, 266], [202, 296], [244, 312]];
+      // (round ends from point to point, each bowed `out` pixels to the outside of the wing)
+      const scallops = (points, out) => {
+        let d = '';
+        for (let i = 1; i < points.length; i++) {
+          const [ax, ay] = points[i - 1];
+          const [bx, by] = points[i];
+          const len = Math.hypot(bx - ax, by - ay);
+          d += ` Q${n((ax + bx) / 2 - ((by - ay) / len) * out)} ${n((ay + by) / 2 + ((bx - ax) / len) * out)} ${n(bx)} ${n(by)}`;
         }
-        return spline(out);
+        return d;
       };
-      const body = round([262, 312], 122, 72, -9);
-      const neck = round([336, 262], 50, 46, -30);
-      const head = round([362, 212], 53, 50);
-      const beak = `M408 197 Q432 202 446 216 Q430 226 408 229 Z`;
-      const mass = [body, neck, head];
-      const paintFeather = (cv, f, edge = true) => {
-        const [bx, by] = f.base;
-        const [tx, ty] = f.tip;
-        cv.add(`<path d="${f.d}" fill="${linear(cv, [[0, f.tone[1]], [0.55, f.tone[0]], [1, f.tone[0]]], bx, by, tx, ty)}"/>`);
-        // (its far edge in a little shadow, so that each lies on the next)
-        crescent(cv, f.d, [-5, 4], { colour: '#9fb0cc', opacity: 0.55, soft: 4 });
-        if (edge) cv.add(`<path d="${f.d}" fill="none" stroke="${ink}" stroke-width="2" stroke-opacity="0.5" stroke-linejoin="round"/>`);
-      };
+      const wing = `${spline(lead, false)}${scallops(ends, 17)} Q288 300 306 258 Z`;
+      const far = 'M318 246 Q322 140 262 50 Q238 70 224 96 L296 252 Z';
+      const tail = [
+        [[204, 350], [86, 432], 30],
+        [[200, 348], [62, 412], 34],
+        [[198, 344], [50, 388], 36],
+      ].map(([from, to, wide]) => blade(from, to, wide, { at: 0.62, point: 0.2 }));
+      const beak = 'M399 204 Q418 207 433 218 Q418 227 399 231 Q395 217 399 204 Z';
       s.paint((cv) => {
-        // the line round all of her: every part drawn dark and a little large, and then painted over
-        const line = (d, w = 9) => `<path d="${d}" fill="${ink}" stroke="${ink}" stroke-width="${w}" stroke-linejoin="round"/>`;
-        cv.add([...far, ...long, ...tail].map((f) => line(f.d)).join('') + mass.map((d) => line(d)).join('') + line(beak, 7));
-        for (const f of far) paintFeather(cv, f);
-        for (const f of tail) paintFeather(cv, f);
-        // the body: white, the blue-grey of its shadow under it and behind the wing
-        for (const d of mass) cv.add(`<path d="${d}" fill="#ffffff"/>`);
-        cv.add(`<g clip-path="${within(cv, body)}"><ellipse cx="250" cy="372" rx="150" ry="40" fill="#b9c6dc" fill-opacity="0.9" filter="${softly(cv, 14)}"/><ellipse cx="170" cy="318" rx="60" ry="46" fill="#c9d4e6" fill-opacity="0.8" filter="${softly(cv, 12)}"/></g>`);
-        cv.add(`<g clip-path="${within(cv, neck)}"><ellipse cx="352" cy="296" rx="52" ry="24" fill="#c3cfe2" fill-opacity="0.8" filter="${softly(cv, 9)}"/></g>`);
-        crescent(cv, head, [-10, -12], { colour: '#c3cfe2', opacity: 0.75, soft: 9 });
-        strokes(cv, rnd, body, box, { count: 260, colours: ['#ffffff', '#dfe6f1', '#c5d0e2'], flow: () => 170, length: 16, width: 3, opacity: [0.08, 0.22] });
-        // the breast feathers, a few soft scallops
-        for (const [x, y] of [[330, 318], [352, 300], [306, 338], [346, 336], [322, 296]]) cv.add(`<path d="M${x - 12} ${y - 4} Q${x} ${y + 9} ${x + 12} ${y - 4}" fill="none" stroke="#a9b8d1" stroke-width="2.4" stroke-linecap="round" stroke-opacity="0.75"/>`);
+        // the far wing, in shadow
+        cv.add(`<path d="${far}" fill="${linear(cv, [[0, '#a9b5cc'], [1, '#c8d0e0']], 310, 240, 262, 52)}"/>`);
+        // her body: white, warm where the breast turns under, cool behind the wing
+        cv.add(`<path d="${body}" fill="#fdfbf6"/>`);
+        crescent(cv, body, [-10, -16], { colour: '#f1bf9c', opacity: 0.6, soft: 13 });
+        cv.add(`<ellipse cx="238" cy="318" rx="70" ry="22" transform="rotate(-32 238 318)" fill="#c5cee0" fill-opacity="0.75" filter="${softly(cv, 9)}" clip-path="${within(cv, body)}"/>`);
+        strokes(cv, rnd, body, [140, 170, 410, 372], { count: 150, colours: ['#ffffff', '#f3e3d6', '#e3e8f0'], flow: () => -32, length: 18, width: 2.6, opacity: [0.08, 0.2] });
+        // the tail growing out of her, the lowest feather first, each lying on the one under it
+        tail.forEach((d, i) => {
+          cv.add(`<path d="${d}" fill="${['#e1e6ef', '#eff1f6', '#fdfbf6'][i]}"/>`);
+          crescent(cv, d, [3, -5], { colour: '#b9c3d6', opacity: 0.5, soft: 4 });
+        });
+        cv.add(`<ellipse cx="196" cy="352" rx="34" ry="13" transform="rotate(-24 196 352)" fill="#fdfbf6" filter="${softly(cv, 5)}" clip-path="${within(cv, `${tail[2]} ${body}`)}"/>`);
+      });
+      // the letter, and then her beak closed on its edge
+      s.paint((cv) => {
+        cv.add('<g transform="rotate(-12 424 218)">');
+        cv.add(`<rect x="422" y="186" width="94" height="64" rx="5" fill="${linear(cv, [[0, '#fff7e6'], [1, '#f1e2c4']], 422, 186, 516, 250)}"/>`);
+        cv.add('<path d="M424 250 L458 220 M514 250 L480 220" fill="none" stroke="#d9c6a2" stroke-width="2.2" stroke-linecap="round"/>');
+        cv.add('<path d="M424 188 L469 226 L514 188" fill="none" stroke="#cdb58a" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>');
+        // the seal: a heart
+        cv.add('<path d="M469 240 C455 229 452 219 459 214 C464 211 468 214 469 218 C470 214 474 211 479 214 C486 219 483 229 469 240 Z" fill="#e0483c"/>');
+        cv.add('<path d="M460 218 Q462 215 465 216" fill="none" stroke="#ffb0a4" stroke-width="2" stroke-linecap="round"/>');
+        cv.add('</g>');
+        cv.add(`<path d="${beak}" fill="${linear(cv, [[0, '#f8b84e'], [1, '#e88a26']], 400, 206, 430, 228)}"/>`);
+        cv.add('<path d="M400 218 Q417 217 431 218" fill="none" stroke="#a8561c" stroke-width="2" stroke-linecap="round"/>');
+        // her eye
+        cv.add('<circle cx="375" cy="206" r="7" fill="#1c1a24"/><circle cx="372.6" cy="203.4" r="2.3" fill="#ffffff"/>');
       });
       // the near wing over her back
       s.paint((cv) => {
-        for (const f of long) paintFeather(cv, f);
-        for (const f of short) paintFeather(cv, f);
-        // (the shoulder the feathers grow from, smooth, with its own small shadow on her back)
-        const shoulder = round([272, 262], 46, 30, -38);
-        cv.add(`<ellipse cx="262" cy="292" rx="62" ry="16" fill="#aebcd4" fill-opacity="0.6" filter="${softly(cv, 7)}" clip-path="${within(cv, body)}"/>`);
-        cv.add(`<path d="${shoulder}" fill="#ffffff"/>`);
-        crescent(cv, shoulder, [-6, -7], { colour: '#c9d4e6', opacity: 0.8, soft: 6 });
+        cv.add(`<path d="${wing}" fill="${linear(cv, [[0, '#f1f3f8'], [0.45, '#fdfbf6'], [1, '#ffffff']], 300, 270, 180, 70)}"/>`);
+        // cool where each feather lies under the next, and along the wing's own edge
+        rim(cv, wing, { colour: '#b4bfd6', width: 7, opacity: 0.45, soft: 4 });
+        cv.add(`<g clip-path="${within(cv, wing)}" fill="none" stroke-linecap="round">`);
+        // the long feathers, each a line in from where two ends meet; and the rows of short feathers over them
+        for (const [x, y] of ends.slice(1, -1)) cv.add(`<path d="M${n(x)} ${n(y)} L${n(x + (276 - x) * 0.3)} ${n(y + (170 - y) * 0.3)}" stroke="#b4bfd6" stroke-width="2.4" stroke-opacity="0.75"/>`);
+        cv.add(`<path d="M204 104${scallops([[204, 104], [190, 142], [187, 182], [195, 222], [213, 256], [242, 280]], 9)}" stroke="#bcc6da" stroke-width="2.4"/>`);
+        cv.add(`<path d="M232 140${scallops([[232, 140], [224, 174], [228, 208], [244, 238], [266, 258]], 7)}" stroke="#cbd3e2" stroke-width="2.2"/>`);
+        cv.add('</g>');
       });
-      // her face: the eye, the beak with the olive sprig in it, a touch of pink on the cheek; her feet tucked up
-      s.paint((cv) => {
-        // the sprig first, so that the beak closes on it
-        const stem = [[436, 216], [458, 208], [478, 190], [488, 166]];
-        cv.add(`<path d="${spline(stem, false)}" fill="none" stroke="#5c4a24" stroke-width="4" stroke-linecap="round"/>`);
-        for (const [at, deg, len] of [[[452, 210], -8, 44], [[462, 204], -112, 40], [[474, 194], -18, 42], [[482, 180], -128, 38], [[488, 166], -70, 44]]) {
-          const leaf = blade(at, polar(at, deg, len), 17, { at: 0.5, point: 0.7 });
-          cv.add(`<path d="${leaf}" fill="${linear(cv, [[0, '#547a34'], [1, '#86ad52']], at[0], at[1], ...polar(at, deg, len))}" stroke="#33501f" stroke-width="2" stroke-linejoin="round"/>`);
-        }
-        cv.add(`<path d="${beak}" fill="${linear(cv, [[0, '#f6b04a'], [1, '#e27f22']], 408, 198, 440, 226)}"/>`);
-        cv.add(`<path d="M408 214 Q428 213 444 216" fill="none" stroke="#a3501a" stroke-width="2.2" stroke-linecap="round"/>`);
-        cv.add(`<ellipse cx="350" cy="236" rx="15" ry="10" fill="#ff9d8e" fill-opacity="0.55" filter="${softly(cv, 4)}" clip-path="${within(cv, head)}"/>`);
-        cv.add(`<ellipse cx="378" cy="204" rx="11.5" ry="12.5" fill="#1c1a24"/>`);
-        cv.add(`<circle cx="374" cy="199" r="4.2" fill="#ffffff"/><circle cx="382" cy="209" r="2" fill="#ffffff" fill-opacity="0.8"/>`);
-        cv.add(`<path d="M364 192 Q374 184 388 190" fill="none" stroke="${ink}" stroke-width="2.6" stroke-linecap="round" stroke-opacity="0.75"/>`);
-        for (const [x, y] of [[236, 380], [262, 384]]) {
-          cv.add(`<path d="M${x} ${y - 6} q-16 6 -30 18 M${x} ${y - 6} q-8 12 -12 26 M${x} ${y - 6} q2 12 8 24" fill="none" stroke="${ink}" stroke-width="8" stroke-linecap="round"/>`);
-          cv.add(`<path d="M${x} ${y - 6} q-16 6 -30 18 M${x} ${y - 6} q-8 12 -12 26 M${x} ${y - 6} q2 12 8 24" fill="none" stroke="#f08a4a" stroke-width="4.4" stroke-linecap="round"/>`);
-        }
-      });
-      return s.done({ finish: { paint: 1, grain: 0.012, contrast: 0.06, saturation: 1, ink: true } });
+      return s.done({ finish: { paint: 1, grain: 0.01, contrast: 0.05, saturation: 1, ink: { colour: '#2b3140', width: 3.4 } } });
     },
   },
   {

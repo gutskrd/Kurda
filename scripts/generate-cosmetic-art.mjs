@@ -45,11 +45,12 @@
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): Kurdish things painted as
  * still lifes — a ripe pomegranate, a glass of tea on its saucer, a seal
- * of red wax with the flag's sun pressed into it, a saz, a fawn lying with
- * its legs folded, a sheaf of wheat tied with a bow, a white dove with an
- * olive sprig, the Newroz fire — painted by hand rather than modelled, their
- * light and shadow laid on as a painter lays them and brushed over
- * (cosmetic-art/brush.mjs), a dark line drawn round each as round a cut-out,
+ * of red wax with the flag's sun pressed into it, a saz, a sheaf of wheat
+ * tied with a bow, a white dove carrying a letter, the Newroz fire — painted
+ * by hand rather than modelled, their light and shadow laid on as a painter
+ * lays them and brushed over (cosmetic-art/brush.mjs), a dark line drawn
+ * round each as round a cut-out; and one drawn as a sticker is, a fawn in
+ * flat colour with a thick line round every part of it,
  * and cut out of the dark, so that each lies over a profile picture with
  * nothing round it but its own light (cosmetic-art/still.mjs).
  * Frames (512×512 PNG, cosmetic-art/frames.mjs): rings to wear round a
