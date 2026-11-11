@@ -446,14 +446,21 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
     it('reads a clip through the API by its handle, without a token, byte ranges and all', async () => {
       const { id } = (await play(learner, 'hear-it')).json();
       const items = await stored<HearStored>(id);
-      const path = hearItClipPath(id, items[0]!.clip);
+      // which recording a round opens with is drawn afresh each time, and it may be a lesson's, one of the
+      // alphabet's example words, or another suite's. The clip read here is the first whose file is kept in
+      // storage (a dictionary's pronunciation is fetched from its own host, which this suite does not stand in for)
+      const item = items.find((i) => i.recording.source !== 'dictionary') ?? items[0]!;
+      const path = hearItClipPath(id, item.clip);
       const whole = await call('GET', path, '');
       expect(whole.statusCode, whole.body).toBe(200);
       expect(whole.headers['content-type']).toBe('audio/wav');
       expect(whole.headers['accept-ranges']).toBe('bytes');
       expect(String(whole.headers['cache-control'])).toMatch(/^private/);
-      const media = (await pool.query<{ media_key: string }>(`SELECT media_key FROM lesson_audio WHERE key = $1`, [items[0]!.recording.id])).rows[0]!.media_key;
-      const file = objects.get(media) ?? OTHERS;
+      // its file is found the way the route finds it: in the table of the recording's own source
+      const table = item.recording.source === 'lesson' ? 'lesson_audio' : 'alphabet_audio';
+      const kept = await pool.query<{ media_key: string }>(`SELECT media_key FROM ${table} WHERE key = $1`, [item.recording.id]);
+      expect(kept.rows, `${item.recording.source} recording ${item.recording.id}`).toHaveLength(1);
+      const file = objects.get(kept.rows[0]!.media_key) ?? OTHERS;
       expect(whole.rawPayload.equals(file)).toBe(true);
 
       const start = await call('GET', path, '', undefined, { range: 'bytes=0-1' });
@@ -464,7 +471,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
 
       // a handle is this round's only, and nothing at all once the round has expired
       const { id: another } = (await play(learner, 'hear-it')).json();
-      expect((await call('GET', hearItClipPath(another, items[0]!.clip), '')).statusCode).toBe(404);
+      expect((await call('GET', hearItClipPath(another, item.clip), '')).statusCode).toBe(404);
       expect((await call('GET', hearItClipPath(id, 'A'.repeat(22)), '')).statusCode).toBe(404);
       await pool.query(`UPDATE game_sessions SET expires_at = now() - interval '1 second' WHERE id = $1`, [id]);
       expect((await call('GET', path, '')).statusCode).toBe(410);
