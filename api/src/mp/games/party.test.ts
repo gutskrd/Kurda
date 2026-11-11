@@ -4,7 +4,7 @@
  * deal never travels in anything a client sent.
  */
 import { describe, expect, it } from 'vitest';
-import { dontSayRules, impostorRules, type ImpostorSettings, type WordCardContent } from '@kurda/shared';
+import { IMPOSTOR_CATEGORY_PICTURES, dontSayRules, impostorRules, type ImpostorSettings, type WordCardContent } from '@kurda/shared';
 import { dealFrom, impostorModule } from './impostor.js';
 import { dontSayModule } from './dont-say.js';
 import { STARTER_CATEGORIES, meaningKeys, starterCategoryOf } from '../../games/word-categories.js';
@@ -205,6 +205,8 @@ describe('the starter categories', () => {
 
   it('are forty, wide enough that most of what a course teaches can become a card', () => {
     expect(STARTER_CATEGORIES).toHaveLength(40);
+    // each has a picture of its own for its tile (shared/src/art/impostor.ts)
+    expect(STARTER_CATEGORIES.map((c) => c.slug).filter((slug) => !IMPOSTOR_CATEGORY_PICTURES.includes(slug))).toEqual([]);
     expect(STARTER_CATEGORIES.reduce((n, c) => n + c.words.length + (c.verbs?.length ?? 0), 0)).toBeGreaterThan(1500);
     for (const c of STARTER_CATEGORIES) expect(c.words.length + (c.verbs?.length ?? 0), c.slug).toBeGreaterThanOrEqual(12);
   });

@@ -26,6 +26,16 @@ import {
 } from './index.js';
 import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
+import {
+  IMPOSTOR_CATEGORY_PICTURES,
+  IMPOSTOR_EMBLEMS_DRAWN,
+  IMPOSTOR_WAYS_DRAWN,
+  impostorCategorySvg,
+  impostorCategoryTone,
+  impostorEmblemSvg,
+  impostorWaySvg,
+  impostorWayTone,
+} from './impostor.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import { BUILDING_SCALE, KINGDOM_ANIMAL_HEIGHT, KINGDOM_CAIRN, KINGDOM_FIGURE_HEIGHT, KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingDoors, kingdomBuildingSvg, kingdomPoint, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, kingdomTiles, type KingdomFrame, type KingdomNode } from './kingdom.js';
 import {
@@ -901,6 +911,84 @@ describe('the word sets’ pictures', () => {
   it('counts the numbers on the abacus instead of writing them, one bead, then two, then three', () => {
     // each bead is three ellipses: its edge, its face and its spot of light
     expect((wordSetSvg({ set: 'numbers', size: 44 }).match(/<ellipse/g) ?? []).length).toBe(6 * 3);
+  });
+});
+
+describe('Kurdish Impostor’s pictures', () => {
+  // the starter categories (api/src/games/word-categories.ts): every one of them has a picture of its own
+  const STARTER = [
+    'animals', 'food', 'fruit', 'vegetables', 'drinks', 'family', 'body', 'clothes', 'home', 'jobs', 'nature', 'town', 'transport', 'colours',
+    'school', 'time', 'kitchen', 'feelings', 'play', 'music', 'celebrations', 'tools', 'village', 'numbers', 'weather', 'health', 'people',
+    'taste', 'stories', 'money', 'qualities', 'character', 'actions', 'culture', 'language', 'work', 'travel', 'things', 'sports', 'world',
+  ];
+
+  it('draws a valid, self-contained picture for every category, way to play and emblem, small and large', () => {
+    for (const size of [40, 56, 120]) {
+      for (const category of [null, ...IMPOSTOR_CATEGORY_PICTURES, 'a-category-an-editor-made']) checkSvg(impostorCategorySvg({ category, size }), size);
+      for (const way of IMPOSTOR_WAYS_DRAWN) checkSvg(impostorWaySvg({ way, size }), size);
+      for (const emblem of IMPOSTOR_EMBLEMS_DRAWN) checkSvg(impostorEmblemSvg({ emblem, size }), size);
+    }
+  });
+
+  it('has a picture of its own for each of the forty starter categories, and no two alike', () => {
+    expect([...IMPOSTOR_CATEGORY_PICTURES].sort()).toEqual([...STARTER].sort());
+    const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
+    const all = [null, ...IMPOSTOR_CATEGORY_PICTURES].map((category) => strip(impostorCategorySvg({ category })));
+    expect(new Set(all).size).toBe(all.length);
+    const ways = IMPOSTOR_WAYS_DRAWN.map((way) => strip(impostorWaySvg({ way })));
+    expect(new Set(ways).size).toBe(3);
+  });
+
+  it('gives a category nobody has drawn the label every category can wear, and any category the fan of cards', () => {
+    const strip = (svg: string): string => svg.replace(/ (id|aria-labelledby)="[^"]*"/g, '').replace(/url\(#[^)]*\)/g, 'url()');
+    const label = impostorCategorySvg({ category: 'made-later' });
+    expect(strip(impostorCategorySvg({ category: 'another-one' }))).toBe(strip(label));
+    expect(strip(label)).not.toBe(strip(impostorCategorySvg({ category: 'animals' })));
+    expect(strip(impostorCategorySvg({ category: null }))).not.toBe(strip(label));
+    // a slug that is a word of the language's own is no picture: only the listed ones are
+    expect(strip(impostorCategorySvg({ category: 'constructor' }))).toBe(strip(label));
+    expect(impostorCategoryTone('constructor')).toBe(impostorCategoryTone('made-later'));
+  });
+
+  it('is the same picture every time, labels itself, and never writes a word or a numeral', () => {
+    for (const category of [null, ...IMPOSTOR_CATEGORY_PICTURES]) {
+      const svg = impostorCategorySvg({ category });
+      expect(impostorCategorySvg({ category })).toBe(svg);
+      expect(svg).toMatch(/<title id="[^"]+">[^<]+<\/title>/);
+      expect(svg).not.toMatch(/<text/);
+    }
+    expect(impostorCategorySvg({ category: 'fruit', title: 'fêkî & <sêv>' })).toContain('fêkî &amp; &lt;sêv&gt;');
+    // the numbers are counted, one bead, two, three: each bead is three ellipses
+    expect((impostorCategorySvg({ category: 'numbers' }).match(/<ellipse/g) ?? []).length).toBe(6 * 3);
+  });
+
+  it('keeps ids apart between the pictures on one page, and uses a caller’s prefix', () => {
+    const seen = new Set<string>();
+    const all = [
+      ...[null, ...IMPOSTOR_CATEGORY_PICTURES].map((category) => impostorCategorySvg({ category })),
+      ...IMPOSTOR_WAYS_DRAWN.map((way) => impostorWaySvg({ way })),
+      ...IMPOSTOR_EMBLEMS_DRAWN.map((emblem) => impostorEmblemSvg({ emblem })),
+    ];
+    for (const svg of all) {
+      for (const [, id] of svg.matchAll(/ id="([^"]+)"/g)) {
+        expect(seen.has(id!), id).toBe(false);
+        seen.add(id!);
+      }
+    }
+    expect(impostorWaySvg({ way: 'odd', idPrefix: 'mine' })).toContain('id="minet"');
+  });
+
+  it('has a colour for every tile, and stays light enough to put a page of them on one screen', () => {
+    for (const category of [null, ...IMPOSTOR_CATEGORY_PICTURES, 'made-later']) expect(impostorCategoryTone(category)).toMatch(/^#[0-9a-f]{6}$/);
+    for (const way of IMPOSTOR_WAYS_DRAWN) expect(impostorWayTone(way)).toMatch(/^#[0-9a-f]{6}$/);
+    const heaviest = Math.max(...[null, ...IMPOSTOR_CATEGORY_PICTURES].map((category) => impostorCategorySvg({ category }).length));
+    expect(heaviest).toBeLessThan(6 * 1024);
+  });
+
+  it('refuses a way, an emblem or a size it cannot draw', () => {
+    expect(() => impostorWaySvg({ way: 'loud' as never })).toThrow(RangeError);
+    expect(() => impostorEmblemSvg({ emblem: 'crown' as never })).toThrow(RangeError);
+    expect(() => impostorCategorySvg({ category: 'fruit', size: 0 })).toThrow(RangeError);
   });
 });
 
