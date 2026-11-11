@@ -48,6 +48,7 @@ import { EmptyState } from '../theme/EmptyState';
 import type { RootNavigation } from '../navigation/rootStack';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftSentNote } from '../gifts/GiftSentNote';
+import { FrameArt } from './FrameArt';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from './ItemFilters';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
@@ -455,7 +456,11 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
     >
       {/* one column wide enough for a background, so every name starts at the same place */}
       <View style={styles.thumb}>
-        <ItemArt category={item.category} path={item.assetUrl} width={wide ? THUMB : ICON_THUMB} />
+        {itemCategory(item.category) === 'frame' && item.assetUrl ? (
+          <FrameArt path={item.assetUrl} width={FRAME_THUMB} />
+        ) : (
+          <ItemArt category={item.category} path={item.assetUrl} width={wide ? THUMB : ICON_THUMB} />
+        )}
       </View>
       <View style={styles.rowMain}>
         {/*
@@ -515,7 +520,11 @@ function ItemDetail({
   const artWidth = wide ? Math.min(Math.min(width, SHEET_MAX_WIDTH) - layout.gutter * 2, 400) : 128;
   return (
     <View style={styles.detail}>
-      <ItemArt category={item.category} path={item.assetUrl} width={artWidth} style={styles.preview} />
+      {itemCategory(item.category) === 'frame' && item.assetUrl ? (
+        <FrameArt path={item.assetUrl} width={160} style={styles.preview} />
+      ) : (
+        <ItemArt category={item.category} path={item.assetUrl} width={artWidth} style={styles.preview} />
+      )}
       <Text style={[styles.detailName, { color: colors.textPrimary }]} accessibilityRole="header">
         {item.name}
       </Text>
@@ -570,6 +579,8 @@ function ItemDetail({
 /** A background's thumbnail (16:9) and an icon's (square) — the column is the wider of the two. */
 const THUMB = 72;
 const ICON_THUMB = 52;
+/** A frame is shown round a face, which needs more room than an icon: as wide as its column allows. */
+const FRAME_THUMB = 68;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },

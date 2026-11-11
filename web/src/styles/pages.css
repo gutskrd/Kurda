@@ -1116,6 +1116,10 @@ button.feature {
   aspect-ratio: 1;
   max-width: 96px;
 }
+/* a frame is shown round a face, which needs a little more room than an icon does */
+.shop-thumb-frame {
+  max-width: 112px;
+}
 .shop-thumb img,
 .shop-thumb video {
   width: 100%;

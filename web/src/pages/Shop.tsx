@@ -29,6 +29,8 @@ import {
 } from '../shop/ItemBrowser';
 import { ItemGlyph } from '../shop/ItemGlyph';
 import { ItemPicture } from '../shop/ItemPicture';
+import { PictureFrame } from '../ranks/art';
+import { useAvatarSrc } from '../art/overrides';
 import { DEFAULT_SHOP_VIEW, shopViewFiltered, useShopView } from '../shop/useShopView';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -421,8 +423,24 @@ export function Shop(): React.JSX.Element {
   );
 }
 
-/** An item's picture, of whatever kind it is, or its kind's glyph when it has none (the Kurdish tag). */
+/**
+ * An item's picture, of whatever kind it is, or its kind's glyph when it has
+ * none (the Kurdish tag). A frame is shown the way it will be worn: round the
+ * shopper's own face, since a ring with nothing in it says little of how it
+ * will look.
+ */
 function TileArt({ assetUrl, category }: { assetUrl: string | null; category: string }): React.JSX.Element {
+  const { user } = useAuth();
+  const face = useAvatarSrc(user?.avatarUrl);
+  if (assetUrl && itemCategory(category) === 'frame') {
+    return (
+      <span className="cosmetic-frame" aria-hidden="true">
+        <PictureFrame src={assetUrl} size={104}>
+          {face ? <img src={face} alt="" /> : <span className="art-frame-blank" />}
+        </PictureFrame>
+      </span>
+    );
+  }
   return assetUrl ? (
     <ItemPicture src={assetUrl} />
   ) : (
