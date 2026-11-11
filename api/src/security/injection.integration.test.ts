@@ -41,7 +41,8 @@ const DATABASE_WORDS = /syntax error|violates|relation "|column "|invalid input 
  * What a response says, with the credentials it hands out taken from it. A
  * token is a few hundred random letters, digits, "-" and "_", and about one
  * sign-up in two hundred spells "pg_" somewhere in its own: that is chance,
- * not the database speaking, and it failed this suite about one run in ten.
+ * not the database speaking. This suite signs up a dozen times, so it failed
+ * on it roughly one run in fifteen.
  */
 const spoken = (body: string): string => body.replace(/"(accessToken|refreshToken)":"[^"]*"/g, '"$1":"(a token)"');
 
