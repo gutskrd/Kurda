@@ -24,9 +24,9 @@ export const PARTY_LEVEL_KEY = {
 
 /**
  * The start of a party game on the phone: how to play in three steps, a game
- * with friends (the invite sheet), another way to play where the game has one,
- * and a code from someone else — offered only in the varieties with enough
- * approved cards, and saying so plainly where there are none.
+ * with friends (the invite sheet), and a code from someone else — offered
+ * only in the varieties with enough approved cards, and saying so plainly
+ * where there are none.
  */
 export function PartyStart({
   game,
@@ -35,7 +35,6 @@ export function PartyStart({
   steps,
   blurbKey,
   notOfferedKey,
-  also,
 }: {
   game: PartyGame;
   icon: IconName;
@@ -43,8 +42,6 @@ export function PartyStart({
   steps: readonly TranslationKey[];
   blurbKey: TranslationKey;
   notOfferedKey: TranslationKey;
-  /** another way to play this game, shown under the game with friends (Impostor on one phone) */
-  also?: React.ReactNode;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -87,7 +84,6 @@ export function PartyStart({
         <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t(blurbKey)}</Text>
         <ClayButton label={t('games.party.withFriends')} icon="people" tone="primary" onPress={() => setInviting(true)} style={styles.stretch} />
       </GlassCard>
-      {also}
       {/* a game somebody else made: its code opens it, whichever game it turns out to be */}
       <JoinCodeCard />
       {inviting ? <InviteSheet target={{ kind: 'new', game }} onClose={() => setInviting(false)} /> : null}

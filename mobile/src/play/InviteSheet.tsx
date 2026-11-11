@@ -8,6 +8,8 @@ import {
   IMPOSTOR_DEFAULT_CLUE_SECONDS,
   MAX_INVITEES_PER_REQUEST,
   PLAY_GAMES,
+  impostorCategoriesInOrder,
+  impostorCategoryTone,
   meaningIn,
   STORY_DIALECTS,
   type GameDialect,
@@ -33,7 +35,7 @@ import { DIALECT_NAME } from '../stories/labels';
 import { StoryPresetFields, useCanHostOpen } from '../stories/SetupSheet';
 import { changeSetup, initialSetup, inviteSettings, type SetupState } from '../stories/setup';
 import { useStoryPrefs } from '../stories/prefs';
-import { ChoiceChips, Note, SectionLabel, Sheet } from '../stories/ui';
+import { Note, SectionLabel, Sheet } from '../stories/ui';
 import { createLobby, inviteFriends, listFriends, listInvites, type FriendSummary } from './api';
 import { GAME_ICON, GAME_NAME_KEY } from './labels';
 import { lobbyRoute } from './routes';
@@ -44,7 +46,9 @@ import { useRatedChoice } from '../ranks/ratedPrefs';
 import { restrictionOf } from '../reports/sendErrors';
 import { SearchField } from '../theme/SearchField';
 import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
+import { CategoryArt } from '../impostor/art';
 import { categoriesAt, useImpostorCategories } from '../impostor/categories';
+import { PictureTiles } from '../impostor/parts';
 import { usePartyOffer } from '../party/offer';
 import { PARTY_LEVEL_KEY } from '../party/PartyStart';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
@@ -276,13 +280,6 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const impostorParty = game === 'impostor' && target.kind !== 'lobby' ? partyChoice() : null;
   const impostorCategories = categoriesAt(useImpostorCategories(impostorParty && impostorOffer.length > 0 ? impostorParty.dialect : null), impostorParty?.level);
   const categoryNow = impostorCategories.some((c) => c.slug === category) ? category : '';
-  const categoryLabel = (slug: string): string => {
-    const found = impostorCategories.find((c) => c.slug === slug);
-    if (!found) return t('games.couch.anyCategory');
-    const meaning = meaningIn(found.meanings, locale);
-    return meaning ? `${found.ku} · ${meaning}` : found.ku;
-  };
-
   const settings = (): Record<string, unknown> => {
     if (game === 'wordle-battle') return { difficulty, rated };
     if (game === 'rhyme-match') return { dialect, rated };
@@ -508,12 +505,21 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
           {game === 'impostor' && impostorCategories.length > 0 ? (
             <View style={styles.field}>
               <SectionLabel>{t('games.impostor.category')}</SectionLabel>
-              <ChoiceChips<string>
+              <PictureTiles<string>
+                strip
                 label={t('games.impostor.category')}
-                options={['', ...impostorCategories.map((c) => c.slug)]}
                 value={categoryNow}
                 onChange={setCategory}
-                labelOf={categoryLabel}
+                options={[
+                  { value: '', label: t('games.couch.anyCategory'), art: <CategoryArt category={null} size={48} />, tone: impostorCategoryTone(null) },
+                  ...impostorCategoriesInOrder(impostorCategories).map((c) => ({
+                    value: c.slug,
+                    label: c.ku,
+                    hint: meaningIn(c.meanings, locale) ?? undefined,
+                    art: <CategoryArt category={c.slug} size={48} />,
+                    tone: impostorCategoryTone(c.slug),
+                  })),
+                ]}
               />
             </View>
           ) : null}

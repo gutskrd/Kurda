@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, AppState, Platform, Pressable, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { AccessibilityInfo, Animated, AppState, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as SecureStore from 'expo-secure-store';
 import {
   COUCH_CLUE_SECONDS,
@@ -29,6 +30,9 @@ import {
   couchToVote,
   couchTotals,
   couchVoter,
+  impostorCategoriesInOrder,
+  impostorCategoryTone,
+  impostorWayTone,
   meaningIn,
   type CouchCard,
   type CouchDeck,
@@ -55,7 +59,12 @@ import { Icon } from '../theme/Icon';
 import { Loading } from '../theme/Loading';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
+import { CategoryArt, EmblemArt, WayArt } from './art';
 import { kurdishStyle } from './ImpostorBoard';
+import type { CouchAsk } from './ImpostorStart';
+import { Cloth, GoldButton, PictureCards, PictureTiles, StepTitle } from './parts';
+import { TABLE } from './table';
+import { WAY_KEY, WAY_NOTE } from './ways';
 
 /**
  * Kurdish Impostor on one phone, passed round a room.
@@ -81,15 +90,16 @@ import { kurdishStyle } from './ImpostorBoard';
  *
  * A round played here earns nothing: the phone holds every card, so nothing it
  * could report about who won would be worth believing.
+ *
+ * The setup is three numbered steps a room can answer without reading
+ * anything twice (who is playing, which game, what about), the rules folded
+ * under them with the answers they already have, and Deal the cards pinned
+ * under the list where a thumb is. The round is played at the game's own
+ * table (table.ts): the pass screen, the clue and the talk on its night
+ * cloth, a card face down in the mask and face up on paper.
  */
 
 const KEPT = 'hevalo_couch_v1';
-const WAY_KEY: Record<CouchSettings['way'], TranslationKey> = { classic: 'games.couch.way.classic', blind: 'games.couch.way.blind', odd: 'games.couch.way.odd' };
-const WAY_NOTE: Record<CouchSettings['way'], TranslationKey> = {
-  classic: 'games.couch.way.classic.note',
-  blind: 'games.couch.way.blind.note',
-  odd: 'games.couch.way.odd.note',
-};
 const VOTE_KEY: Record<CouchSettings['vote'], TranslationKey> = { secret: 'games.couch.vote.secret', open: 'games.couch.vote.open' };
 const ANY = '';
 
@@ -171,7 +181,7 @@ interface Evening {
   totals: number[];
 }
 
-export function CouchGame({ onLeave }: { onLeave: () => void }): React.JSX.Element {
+export function CouchGame({ onLeave, ask }: { onLeave: () => void; ask?: CouchAsk }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const { client } = useAuth();
@@ -231,17 +241,21 @@ export function CouchGame({ onLeave }: { onLeave: () => void }): React.JSX.Eleme
   if (offers === null) return <Loading style={styles.loading} />;
   if (offers.length === 0) {
     return (
-      <Card style={styles.centered}>
-        <Icon name="people" size={40} tone="primary" />
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.impostor.notOffered')}</Text>
-      </Card>
+      <View style={styles.content}>
+        <Card style={styles.centered}>
+          <Icon name="people" size={40} tone="primary" />
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.impostor.notOffered')}</Text>
+        </Card>
+      </View>
     );
   }
-  if (!evening) return <Setup offers={offers} busy={busy} failed={failed} onStart={(...args) => void begin(...args)} />;
+  if (!evening) return <Setup offers={offers} busy={busy} failed={failed} ask={ask} onStart={(...args) => void begin(...args)} />;
   const play = (game: CouchState): void => setEvening({ ...evening, game });
   return (
-    <View style={styles.round}>
-      <Text style={[styles.count, { color: colors.textSecondary }]}>{t('games.couch.game', { n: evening.played })}</Text>
+    <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      <View style={[styles.countPill, { backgroundColor: colors.controlTrack }]}>
+        <Text style={[styles.count, { color: colors.textSecondary }]}>{t('games.couch.game', { n: evening.played })}</Text>
+      </View>
       <Round
         game={evening.game}
         totals={evening.totals}
@@ -252,7 +266,7 @@ export function CouchGame({ onLeave }: { onLeave: () => void }): React.JSX.Eleme
         onChange={() => setEvening(null)}
         onLeave={onLeave}
       />
-    </View>
+    </ScrollView>
   );
 }
 
@@ -262,21 +276,26 @@ function Setup({
   offers,
   busy,
   failed,
+  ask,
   onStart,
 }: {
   offers: readonly CouchOffer[];
   busy: boolean;
   failed: boolean;
+  /** a way to play or a category chosen on the start: it wins over what this phone remembers */
+  ask?: CouchAsk;
   onStart: (names: string[], settings: CouchSettings, dialect: GameDialect, difficulty: GameDifficulty, category: string | null) => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
+  const insets = useSafeAreaInsets();
   const [names, setNames] = useState<string[]>(() => Array.from({ length: COUCH_MIN_PLAYERS + 1 }, () => ''));
-  const [settings, setSettings] = useState<CouchSettings>(COUCH_DEFAULTS);
+  const [settings, setSettings] = useState<CouchSettings>(() => ({ ...COUCH_DEFAULTS, ...(ask?.way ? { way: ask.way } : {}) }));
   const [dialect, setDialect] = useState<GameDialect>(offers[0]!.dialect);
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
-  const [category, setCategory] = useState(ANY);
+  const [category, setCategory] = useState(ask?.category ?? ANY);
+  const [rulesOpen, setRulesOpen] = useState(false);
   const [slip, setSlip] = useState<TranslationKey | null>(null);
   // what the phone kept arrives a moment after the screen: it fills the form only if nobody has started typing
   const touched = useRef(false);
@@ -285,11 +304,12 @@ function Setup({
     void readKept().then((kept) => {
       if (!alive || !kept || touched.current) return;
       if (kept.names.length >= COUCH_MIN_PLAYERS) setNames(kept.names);
-      setSettings(kept.settings);
+      setSettings({ ...kept.settings, ...(ask?.way ? { way: ask.way } : {}) });
     });
     return () => {
       alive = false;
     };
+    // what was asked for on the way in is read once, as the phone's memory is
   }, []);
 
   const offer = offers.find((o) => o.dialect === dialect) ?? offers[0]!;
@@ -308,12 +328,9 @@ function Setup({
   const roomForTwo = names.length >= COUCH_TWO_IMPOSTORS_FROM;
   // an empty box takes the name on its placeholder: "Player 3"
   const named = names.map((n, i) => (n.trim() === '' ? t('games.couch.playerName', { n: i + 1 }) : n));
-  const categoryLabel = (slug: string): string => {
-    const found = level.categories.find((c) => c.slug === slug);
-    if (!found) return t('games.couch.anyCategory');
-    const meaning = meaningIn(found.meanings, locale);
-    return meaning ? `${found.ku} · ${meaning}` : found.ku;
-  };
+  const script = kurdishStyle(offer.dialect);
+  const clueNow = settings.clueSeconds === 0 ? t('games.couch.noClock') : t('games.party.seconds', { count: settings.clueSeconds });
+  const talkNow = settings.talkSeconds === 0 ? t('games.couch.noClock') : t('games.couch.minutes', { count: settings.talkSeconds / 60 });
 
   function start(): void {
     const checked = couchNames(named);
@@ -324,164 +341,202 @@ function Setup({
   }
 
   return (
-    <>
-      <Card style={styles.centered}>
-        <Icon name="device-phone" size={40} tone="primary" />
+    <View style={styles.screen}>
+      <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.couch.blurb')}</Text>
-      </Card>
 
-      <Card style={styles.form}>
-        <SectionLabel>{t('games.couch.players')}</SectionLabel>
-        <View style={styles.names}>
-          {names.map((name, i) => (
-          <View key={i} style={[styles.nameRow, { flexDirection: dir.row }]}>
-            <View style={[styles.nameN, { backgroundColor: colors.controlTrack }]}>
-              <Text style={[styles.nameNText, { color: colors.textSecondary }]}>{i + 1}</Text>
-            </View>
-            <TextInput
-              value={name}
-              onChangeText={(v) => rename(names.map((n, j) => (j === i ? v : n)))}
-              maxLength={COUCH_NAME_MAX}
-              placeholder={t('games.couch.playerName', { n: i + 1 })}
-              placeholderTextColor={colors.textSecondary}
-              accessibilityLabel={t('games.couch.playerName', { n: i + 1 })}
-              autoCorrect={false}
-              autoComplete="off"
-              returnKeyType="next"
-              style={[styles.nameInput, dir.text, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
-            />
-            {canRemove ? (
-              <Pressable
-                onPress={() => rename(names.filter((_, j) => j !== i))}
-                accessibilityRole="button"
-                accessibilityLabel={t('games.couch.removePlayer', { name: named[i]! })}
-                style={({ pressed }) => [styles.nameRemove, { opacity: pressed ? 0.6 : 1 }]}
-              >
-                <Icon name="close" size={18} color={colors.textSecondary} />
-              </Pressable>
-            ) : null}
+        <Card style={styles.form}>
+          <StepTitle n={1}>{t('games.couch.players')}</StepTitle>
+          <View style={styles.names}>
+            {names.map((name, i) => (
+              <View key={i} style={[styles.nameRow, { flexDirection: dir.row }]}>
+                <View style={styles.nameN}>
+                  <Text style={styles.nameNText}>{name.trim() === '' ? i + 1 : name.trim().slice(0, 1).toUpperCase()}</Text>
+                </View>
+                <TextInput
+                  value={name}
+                  onChangeText={(v) => rename(names.map((n, j) => (j === i ? v : n)))}
+                  maxLength={COUCH_NAME_MAX}
+                  placeholder={t('games.couch.playerName', { n: i + 1 })}
+                  placeholderTextColor={colors.textSecondary}
+                  accessibilityLabel={t('games.couch.playerName', { n: i + 1 })}
+                  autoCorrect={false}
+                  autoComplete="off"
+                  returnKeyType="next"
+                  style={[styles.nameInput, dir.text, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
+                />
+                {canRemove ? (
+                  <Pressable
+                    onPress={() => rename(names.filter((_, j) => j !== i))}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('games.couch.removePlayer', { name: named[i]! })}
+                    style={({ pressed }) => [styles.nameRemove, { opacity: pressed ? 0.6 : 1 }]}
+                  >
+                    <Icon name="close" size={18} color={colors.textSecondary} />
+                  </Pressable>
+                ) : null}
+              </View>
+            ))}
           </View>
-          ))}
-        </View>
-        {canAdd ? <ClayButton label={t('games.couch.addPlayer')} icon="plus" variant="outline" onPress={() => rename([...names, ''])} /> : null}
-        {slip ? (
-          <Text accessibilityLiveRegion="polite" accessibilityRole="alert" style={[styles.note, { color: colors.danger }]}>
-            {t(slip)}
-          </Text>
-        ) : null}
-      </Card>
+          {canAdd ? <ClayButton label={t('games.couch.addPlayer')} icon="plus" variant="outline" onPress={() => rename([...names, ''])} /> : null}
+          {slip ? (
+            <Text accessibilityLiveRegion="polite" accessibilityRole="alert" style={[styles.note, { color: colors.danger }]}>
+              {t(slip)}
+            </Text>
+          ) : null}
+        </Card>
 
-      <Card style={styles.form}>
-        <View style={styles.field}>
-          <SectionLabel>{t('games.couch.way')}</SectionLabel>
-          <Segmented<CouchSettings['way']>
-            groupLabel={t('games.couch.way')}
-            options={COUCH_WAYS}
+        <Card style={styles.form}>
+          <StepTitle n={2}>{t('games.couch.way')}</StepTitle>
+          <PictureCards<CouchSettings['way']>
+            label={t('games.couch.way')}
             value={settings.way}
             onChange={(v) => set('way', v)}
-            labelOf={(w) => t(WAY_KEY[w])}
-            wrap
+            options={COUCH_WAYS.map((w) => ({ value: w, label: t(WAY_KEY[w]), hint: t(WAY_NOTE[w]), art: <WayArt way={w} size={56} />, tone: impostorWayTone(w) }))}
           />
-          <Text style={[styles.note, { color: colors.textSecondary }]}>{t(WAY_NOTE[settings.way])}</Text>
-        </View>
-        {roomForTwo ? (
-          <View style={styles.field}>
-            <SectionLabel>{t('games.couch.impostors')}</SectionLabel>
-            <Segmented<string>
-              groupLabel={t('games.couch.impostors')}
-              options={['1', '2']}
-              value={String(settings.impostors)}
-              onChange={(v) => set('impostors', v === '2' ? 2 : 1)}
-              labelOf={(n) => n}
-            />
-          </View>
-        ) : null}
-        {offers.length > 1 ? (
-          <View style={styles.field}>
-            <SectionLabel>{t('stories.variety')}</SectionLabel>
-            <Segmented<GameDialect>
-              groupLabel={t('stories.variety')}
-              options={offers.map((o) => o.dialect)}
-              value={offer.dialect}
-              onChange={setDialect}
-              labelOf={(d) => PARTY_DIALECT_NAME[d]}
-            />
-          </View>
-        ) : null}
-        {offer.difficulties.length > 1 ? (
-          <View style={styles.field}>
-            <SectionLabel>{t('games.party.level')}</SectionLabel>
-            <Segmented<GameDifficulty>
-              groupLabel={t('games.party.level')}
-              options={offer.difficulties.map((d) => d.difficulty)}
-              value={level.difficulty}
-              onChange={setDifficulty}
-              labelOf={(d) => t(PARTY_LEVEL_KEY[d])}
-            />
-          </View>
-        ) : null}
-        {level.categories.length > 0 ? (
-          <View style={styles.field}>
-            <SectionLabel>{t('games.impostor.category')}</SectionLabel>
-            <ChoiceChips<string>
-              label={t('games.impostor.category')}
-              options={[ANY, ...level.categories.map((c) => c.slug)]}
-              value={chosenCategory}
-              onChange={setCategory}
-              labelOf={categoryLabel}
-            />
-          </View>
-        ) : null}
-      </Card>
+          {roomForTwo ? (
+            <View style={styles.field}>
+              <SectionLabel>{t('games.couch.impostors')}</SectionLabel>
+              <Segmented<string>
+                groupLabel={t('games.couch.impostors')}
+                options={['1', '2']}
+                value={String(settings.impostors)}
+                onChange={(v) => set('impostors', v === '2' ? 2 : 1)}
+                labelOf={(n) => n}
+              />
+            </View>
+          ) : null}
+        </Card>
 
-      <Card style={styles.form}>
-        <View style={styles.field}>
-          <SectionLabel>{t('games.couch.rounds')}</SectionLabel>
-          <Segmented<string>
-            groupLabel={t('games.couch.rounds')}
-            options={COUCH_ROUNDS.map(String)}
-            value={String(settings.rounds)}
-            onChange={(v) => set('rounds', Number(v) as CouchSettings['rounds'])}
-            labelOf={(n) => n}
-          />
-        </View>
-        <View style={styles.field}>
-          <SectionLabel>{t('games.impostor.clueTime')}</SectionLabel>
-          <ChoiceChips<string>
-            label={t('games.impostor.clueTime')}
-            options={COUCH_CLUE_SECONDS.map(String)}
-            value={String(settings.clueSeconds)}
-            onChange={(v) => set('clueSeconds', Number(v) as CouchSettings['clueSeconds'])}
-            labelOf={(s) => (s === '0' ? t('games.couch.noClock') : t('games.party.seconds', { count: Number(s) }))}
-          />
-        </View>
-        <View style={styles.field}>
-          <SectionLabel>{t('games.couch.talkTime')}</SectionLabel>
-          <ChoiceChips<string>
-            label={t('games.couch.talkTime')}
-            options={COUCH_TALK_SECONDS.map(String)}
-            value={String(settings.talkSeconds)}
-            onChange={(v) => set('talkSeconds', Number(v) as CouchSettings['talkSeconds'])}
-            labelOf={(s) => (s === '0' ? t('games.couch.noClock') : t('games.couch.minutes', { count: Number(s) / 60 }))}
-          />
-        </View>
-        <View style={styles.field}>
-          <SectionLabel>{t('games.impostor.vote.phase')}</SectionLabel>
-          <Segmented<CouchSettings['vote']>
-            groupLabel={t('games.impostor.vote.phase')}
-            options={COUCH_VOTES}
-            value={settings.vote}
-            onChange={(v) => set('vote', v)}
-            labelOf={(v) => t(VOTE_KEY[v])}
-            wrap
-          />
-        </View>
-      </Card>
+        <Card style={styles.form}>
+          <StepTitle n={3}>{t('games.impostor.category')}</StepTitle>
+          {offers.length > 1 ? (
+            <View style={styles.field}>
+              <SectionLabel>{t('stories.variety')}</SectionLabel>
+              <Segmented<GameDialect>
+                groupLabel={t('stories.variety')}
+                options={offers.map((o) => o.dialect)}
+                value={offer.dialect}
+                onChange={setDialect}
+                labelOf={(d) => PARTY_DIALECT_NAME[d]}
+              />
+            </View>
+          ) : null}
+          {offer.difficulties.length > 1 ? (
+            <View style={styles.field}>
+              <SectionLabel>{t('games.party.level')}</SectionLabel>
+              <Segmented<GameDifficulty>
+                groupLabel={t('games.party.level')}
+                options={offer.difficulties.map((d) => d.difficulty)}
+                value={level.difficulty}
+                onChange={setDifficulty}
+                labelOf={(d) => t(PARTY_LEVEL_KEY[d])}
+              />
+            </View>
+          ) : null}
+          {level.categories.length > 0 ? (
+            <View style={{ direction: script.writingDirection }}>
+              <PictureTiles<string>
+                label={t('games.impostor.category')}
+                value={chosenCategory}
+                onChange={setCategory}
+                first={12}
+                moreLabel={(count) => t('common.showMoreCount', { count })}
+                options={[
+                  { value: ANY, label: t('games.couch.anyCategory'), art: <CategoryArt category={null} size={48} />, tone: impostorCategoryTone(null) },
+                  ...impostorCategoriesInOrder(level.categories).map((c) => ({
+                    value: c.slug,
+                    label: c.ku,
+                    hint: meaningIn(c.meanings, locale) ?? undefined,
+                    art: <CategoryArt category={c.slug} size={48} />,
+                    tone: impostorCategoryTone(c.slug),
+                  })),
+                ]}
+              />
+            </View>
+          ) : null}
+        </Card>
 
-      {failed ? <Note tone="danger">{t('games.couch.failed')}</Note> : null}
-      <ClayButton label={t('games.couch.start')} tone="primary" size="large" busy={busy} onPress={start} />
-      <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('games.couch.noPay')}</Text>
-    </>
+        {/* the rules have sensible answers already: they wait folded, saying what they are set to */}
+        <Card style={styles.form}>
+          <Pressable
+            onPress={() => setRulesOpen((open) => !open)}
+            accessibilityRole="button"
+            accessibilityLabel={t('games.couch.rules')}
+            accessibilityState={{ expanded: rulesOpen }}
+            aria-expanded={rulesOpen}
+            style={[styles.rulesHead, { flexDirection: dir.row }]}
+          >
+            <Icon name="filter" size={18} color={colors.textPrimary} />
+            <Text style={[styles.rulesTitle, { color: colors.textPrimary }]}>{t('games.couch.rules')}</Text>
+            <View style={styles.rulesNow} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+              {[`× ${settings.rounds}`, clueNow, talkNow].map((now, i) => (
+                <View key={i} style={[styles.rulesChip, { backgroundColor: colors.controlTrack }]}>
+                  <Text style={[styles.rulesChipText, { color: colors.textSecondary }]} numberOfLines={1}>
+                    {now}
+                  </Text>
+                </View>
+              ))}
+            </View>
+            <View style={rulesOpen ? styles.turned : null}>
+              <Icon name="chevron-down" size={18} color={colors.textSecondary} />
+            </View>
+          </Pressable>
+          {rulesOpen ? (
+            <>
+              <View style={styles.field}>
+                <SectionLabel>{t('games.couch.rounds')}</SectionLabel>
+                <Segmented<string>
+                  groupLabel={t('games.couch.rounds')}
+                  options={COUCH_ROUNDS.map(String)}
+                  value={String(settings.rounds)}
+                  onChange={(v) => set('rounds', Number(v) as CouchSettings['rounds'])}
+                  labelOf={(n) => n}
+                />
+              </View>
+              <View style={styles.field}>
+                <SectionLabel>{t('games.impostor.clueTime')}</SectionLabel>
+                <ChoiceChips<string>
+                  label={t('games.impostor.clueTime')}
+                  options={COUCH_CLUE_SECONDS.map(String)}
+                  value={String(settings.clueSeconds)}
+                  onChange={(v) => set('clueSeconds', Number(v) as CouchSettings['clueSeconds'])}
+                  labelOf={(sec) => (sec === '0' ? t('games.couch.noClock') : t('games.party.seconds', { count: Number(sec) }))}
+                />
+              </View>
+              <View style={styles.field}>
+                <SectionLabel>{t('games.couch.talkTime')}</SectionLabel>
+                <ChoiceChips<string>
+                  label={t('games.couch.talkTime')}
+                  options={COUCH_TALK_SECONDS.map(String)}
+                  value={String(settings.talkSeconds)}
+                  onChange={(v) => set('talkSeconds', Number(v) as CouchSettings['talkSeconds'])}
+                  labelOf={(sec) => (sec === '0' ? t('games.couch.noClock') : t('games.couch.minutes', { count: Number(sec) / 60 }))}
+                />
+              </View>
+              <View style={styles.field}>
+                <SectionLabel>{t('games.impostor.vote.phase')}</SectionLabel>
+                <Segmented<CouchSettings['vote']>
+                  groupLabel={t('games.impostor.vote.phase')}
+                  options={COUCH_VOTES}
+                  value={settings.vote}
+                  onChange={(v) => set('vote', v)}
+                  labelOf={(v) => t(VOTE_KEY[v])}
+                  wrap
+                />
+              </View>
+            </>
+          ) : null}
+        </Card>
+      </ScrollView>
+
+      {/* Deal the cards: under the list, where a thumb is, whatever the list is scrolled to */}
+      <View style={[styles.go, { paddingBottom: insets.bottom + spacing.sm, borderTopColor: colors.separator, backgroundColor: colors.background }]}>
+        {failed ? <Note tone="danger">{t('games.couch.failed')}</Note> : null}
+        <GoldButton label={t('games.couch.start')} busy={busy} onPress={start} />
+        <Text style={[styles.goNote, { color: colors.textSecondary }]}>{t('games.couch.noPay')}</Text>
+      </View>
+    </View>
   );
 }
 
@@ -521,18 +576,19 @@ function Round({
 
 /** The screen between two players: nothing on it but whose turn it is to hold the phone. */
 function PassTo({ name, title, onMine }: { name: string; title?: string; onMine: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t } = useI18n();
   return (
-    <Card style={styles.pass}>
-      <Text accessibilityRole="header" style={[styles.passTitle, { color: colors.textPrimary }]}>
+    <Cloth style={styles.pass}>
+      <View style={styles.passHalo}>
+        <View style={styles.passDisc}>
+          <Text style={styles.passDiscText}>{name.slice(0, 1).toUpperCase()}</Text>
+        </View>
+      </View>
+      <Text accessibilityRole="header" style={styles.passTitle}>
         {title ?? t('games.couch.passTo', { name })}
       </Text>
-      <View style={[styles.passDisc, { backgroundColor: colors.gold }]}>
-        <Text style={[styles.passDiscText, { color: colors.textOnGold }]}>{name.slice(0, 1).toUpperCase()}</Text>
-      </View>
-      <ClayButton label={t('games.couch.iAm', { name })} tone="primary" size="large" onPress={onMine} style={styles.stretch} />
-    </Card>
+      <GoldButton label={t('games.couch.iAm', { name })} onPress={onMine} style={styles.stretch} />
+    </Cloth>
   );
 }
 
@@ -573,39 +629,49 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
   return (
     <>
       <Progress done={game.dealt} of={game.players.length} />
-      <View
-        accessible
-        accessibilityLabel={t('games.couch.cardOf', { name })}
-        style={[styles.card, { backgroundColor: shown ? colors.glassFill : colors.controlTrack, borderColor: impostor ? colors.danger : shown ? colors.gold : 'transparent' }]}
-      >
-        {!shown ? (
-          <Icon name="eye-off" size={48} color={colors.textSecondary} />
-        ) : (
-          <>
-            {hand.hint ? (
-              <>
-                <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>{t('games.impostor.category')}</Text>
-                <Text style={[styles.cardHint, { color: colors.textPrimary }]}>
-                  <Text style={{ writingDirection: script.writingDirection }}>{hand.hint.ku}</Text> · {meaningIn(hand.hint.meanings, locale)}
-                </Text>
-              </>
-            ) : null}
-            {hand.role === 'player' ? (
-              <>
-                <Text style={[styles.cardWord, { color: colors.textPrimary, writingDirection: script.writingDirection }]}>{hand.word}</Text>
-                <Text style={[styles.cardMeaning, { color: colors.textSecondary }]}>{meaningIn(hand.meanings, locale)}</Text>
-              </>
-            ) : (
-              <>
-                <View style={styles.impostorLine}>
-                  <Icon name="eye-off" size={22} color={colors.danger} />
-                  <Text style={[styles.impostorText, { color: colors.danger }]}>{t('games.impostor.youAreImpostor')}</Text>
+      <View style={styles.cardShadow}>
+        <View
+          accessible
+          accessibilityLabel={t('games.couch.cardOf', { name })}
+          style={[styles.card, { backgroundColor: !shown ? TABLE.night : impostor ? TABLE.night : TABLE.paper }]}
+        >
+          {!shown ? (
+            <View style={styles.cardBack}>
+              <EmblemArt emblem="mask" size={132} />
+            </View>
+          ) : (
+            <>
+              {hand.hint ? (
+                <View style={styles.cardTop}>
+                  <CategoryArt category={hand.hint.category ?? 'category'} size={40} />
+                  <View style={styles.cardTopText}>
+                    <Text style={[styles.cardLabel, { color: impostor ? TABLE.inkSoft : TABLE.paperSoft }]}>{t('games.impostor.category')}</Text>
+                    <Text style={[styles.cardHint, { color: impostor ? TABLE.ink : TABLE.paperInk }]}>
+                      <Text style={{ writingDirection: script.writingDirection }}>{hand.hint.ku}</Text>
+                      <Text style={{ color: impostor ? TABLE.inkSoft : TABLE.paperSoft }}> · {meaningIn(hand.hint.meanings, locale)}</Text>
+                    </Text>
+                  </View>
                 </View>
-                <Text style={[styles.cardMeaning, { color: colors.textSecondary }]}>{t('games.impostor.blendIn')}</Text>
-              </>
-            )}
-          </>
-        )}
+              ) : null}
+              <View style={styles.cardMain}>
+                {hand.role === 'player' ? (
+                  <>
+                    <Text style={[styles.cardWord, { color: TABLE.paperInk, writingDirection: script.writingDirection }]} adjustsFontSizeToFit numberOfLines={2}>
+                      {hand.word}
+                    </Text>
+                    <Text style={[styles.cardMeaning, { color: TABLE.paperSoft }]}>{meaningIn(hand.meanings, locale)}</Text>
+                  </>
+                ) : (
+                  <>
+                    <EmblemArt emblem="mask" size={72} />
+                    <Text style={styles.impostorText}>{t('games.impostor.youAreImpostor')}</Text>
+                    <Text style={[styles.cardMeaning, { color: TABLE.inkSoft }]}>{t('games.impostor.blendIn')}</Text>
+                  </>
+                )}
+              </View>
+            </>
+          )}
+        </View>
       </View>
       <Pressable
         onPressIn={reader ? undefined : show}
@@ -615,10 +681,10 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
         accessibilityRole="button"
         accessibilityLabel={t('games.couch.hold')}
         accessibilityState={{ selected: shown }}
-        style={[styles.hold, { backgroundColor: shown ? colors.gold : colors.primary }]}
+        style={[styles.hold, { backgroundColor: shown ? TABLE.gold : `${TABLE.gold}29`, borderColor: TABLE.gold }]}
       >
-        <Icon name="eye" size={22} color={shown ? colors.textOnGold : colors.textOnPrimary} />
-        <Text style={[styles.holdText, { color: shown ? colors.textOnGold : colors.textOnPrimary }]}>{t('games.couch.hold')}</Text>
+        <Icon name="eye" size={22} color={shown ? TABLE.goldInk : colors.goldText} />
+        <Text style={[styles.holdText, { color: shown ? TABLE.goldInk : colors.goldText }]}>{t('games.couch.hold')}</Text>
       </Pressable>
       <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('games.couch.holdNote')}</Text>
       <ClayButton label={t('games.couch.seen')} variant="outline" size="large" disabled={!seen || shown} onPress={onSeen} />
@@ -632,7 +698,7 @@ function Progress({ done, of }: { done: number; of: number }): React.JSX.Element
   return (
     <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {Array.from({ length: of }, (_, i) => (
-        <View key={i} style={[styles.dot, { backgroundColor: i < done ? colors.primary : i === done ? colors.gold : colors.controlTrack }]} />
+        <View key={i} style={[styles.dot, { backgroundColor: i < done ? TABLE.gold : i === done ? colors.textPrimary : colors.controlTrack }]} />
       ))}
     </View>
   );
@@ -640,7 +706,6 @@ function Progress({ done, of }: { done: number; of: number }): React.JSX.Element
 
 /** A clock for one moment of the round: it starts when the moment does, and says once that its time is up. */
 function Countdown({ seconds, onEnd }: { seconds: number; onEnd: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t } = useI18n();
   const [from] = useState(() => Date.now());
   const [now, setNow] = useState(from);
@@ -660,27 +725,26 @@ function Countdown({ seconds, onEnd }: { seconds: number; onEnd: () => void }): 
   const low = left <= 5;
   return (
     <View style={styles.clock}>
-      <Text style={[styles.clockLeft, { color: low ? colors.danger : colors.textPrimary }]} accessibilityElementsHidden importantForAccessibility="no">
+      <Text style={[styles.clockLeft, { color: low ? TABLE.low : TABLE.ink }]} accessibilityElementsHidden importantForAccessibility="no">
         {Math.floor(left / 60)}:{String(left % 60).padStart(2, '0')}
       </Text>
-      <PartyTimer share={Math.max(0, endsAt - now) / (seconds * 1000)} low={low} label={t('games.party.timeLeft', { count: left })} />
+      <PartyTimer share={Math.max(0, endsAt - now) / (seconds * 1000)} low={low} color={TABLE.gold} label={t('games.party.timeLeft', { count: left })} />
     </View>
   );
 }
 
 function Clues({ game, onNext, onVote }: { game: CouchState; onNext: () => void; onVote: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t } = useI18n();
   const speaker = couchSpeaker(game)!;
   const at = game.turn % game.order.length;
   return (
     <>
-      <Card style={styles.stage}>
-        <Text style={[styles.phase, { color: colors.textSecondary }]}>{t('games.impostor.round', { round: speaker.round, rounds: game.settings.rounds })}</Text>
-        <Text accessibilityLiveRegion="polite" accessibilityRole="header" style={[styles.speaker, { color: colors.textPrimary }]}>
+      <Cloth style={styles.stage}>
+        <Text style={[styles.phase, { color: TABLE.inkSoft }]}>{t('games.impostor.round', { round: speaker.round, rounds: game.settings.rounds })}</Text>
+        <Text accessibilityLiveRegion="polite" accessibilityRole="header" style={[styles.speaker, { color: TABLE.ink }]}>
           {t('games.couch.speaker', { name: game.players[speaker.seat]! })}
         </Text>
-        <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('games.couch.sayClue')}</Text>
+        <Text style={[styles.note, styles.center, { color: TABLE.inkSoft }]}>{t('games.couch.sayClue')}</Text>
         {game.settings.clueSeconds > 0 ? <Countdown key={game.turn} seconds={game.settings.clueSeconds} onEnd={onNext} /> : null}
         <View style={styles.order}>
           {game.order.map((seat, i) => (
@@ -689,15 +753,15 @@ function Clues({ game, onNext, onVote }: { game: CouchState; onNext: () => void;
               accessible
               accessibilityLabel={game.players[seat]}
               accessibilityState={{ selected: i === at }}
-              style={[styles.orderChip, { backgroundColor: i === at ? colors.gold : colors.controlTrack, opacity: i < at ? 0.5 : 1 }]}
+              style={[styles.orderChip, { backgroundColor: i === at ? TABLE.gold : TABLE.veil, opacity: i < at ? 0.5 : 1 }]}
             >
-              <Text style={[styles.orderText, { color: i === at ? colors.textOnGold : colors.textPrimary }]} numberOfLines={1}>
+              <Text style={[styles.orderText, { color: i === at ? TABLE.goldInk : TABLE.ink }]} numberOfLines={1}>
                 {game.players[seat]}
               </Text>
             </View>
           ))}
         </View>
-      </Card>
+      </Cloth>
       <ClayButton label={t('games.couch.next')} tone="primary" size="large" onPress={onNext} />
       <ClayButton label={t('games.couch.toVote')} variant="outline" onPress={onVote} />
     </>
@@ -705,17 +769,16 @@ function Clues({ game, onNext, onVote }: { game: CouchState; onNext: () => void;
 }
 
 function Talk({ game, onVote }: { game: CouchState; onVote: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <>
-      <Card style={styles.stage}>
-        <Text accessibilityRole="header" style={[styles.speaker, { color: colors.textPrimary }]}>
+      <Cloth style={styles.stage}>
+        <Text accessibilityRole="header" style={[styles.speaker, { color: TABLE.ink }]}>
           {t('games.couch.talk.title')}
         </Text>
-        <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('games.couch.talk.note')}</Text>
+        <Text style={[styles.note, styles.center, { color: TABLE.inkSoft }]}>{t('games.couch.talk.note')}</Text>
         <Countdown seconds={game.settings.talkSeconds} onEnd={onVote} />
-      </Card>
+      </Cloth>
       <ClayButton label={t('games.couch.toVote')} tone="primary" size="large" onPress={onVote} />
     </>
   );
@@ -884,10 +947,16 @@ function Reveal({
         })}
       </View>
 
-      <Card style={styles.stage}>
-        <Text style={[styles.cardLabel, { color: colors.textSecondary }]}>{t('games.impostor.reveal.title')}</Text>
-        <Text style={[styles.cardWord, { color: colors.textPrimary, writingDirection: script.writingDirection }]}>{reveal.word}</Text>
-        <Text style={[styles.cardMeaning, { color: colors.textSecondary }]}>{meaningIn(reveal.meanings, locale)}</Text>
+      <View style={styles.cardShadow}>
+        <View style={styles.paper}>
+          <Text style={[styles.cardLabel, { color: TABLE.paperSoft }]}>{t('games.impostor.reveal.title')}</Text>
+          <Text style={[styles.cardWord, { color: TABLE.paperInk, writingDirection: script.writingDirection }]} adjustsFontSizeToFit numberOfLines={2}>
+            {reveal.word}
+          </Text>
+          <Text style={[styles.cardMeaning, { color: TABLE.paperSoft }]}>{meaningIn(reveal.meanings, locale)}</Text>
+        </View>
+      </View>
+      <View style={styles.after}>
         <Text style={[styles.whoWas, { color: colors.textPrimary }]}>
           {who.length === 1 ? t('games.impostor.reveal.impostor', { name: who[0]! }) : t('games.couch.reveal.impostors', { names: listed(who, locale) })}
         </Text>
@@ -902,7 +971,7 @@ function Reveal({
             {t('games.impostor.guessedWith')} <Text style={{ writingDirection: script.writingDirection }}>{reveal.guessed}</Text>
           </Text>
         ) : null}
-      </Card>
+      </View>
 
       {reveal.votes.length > 0 ? (
         <Card style={styles.form}>
@@ -950,11 +1019,13 @@ function Reveal({
 }
 
 const styles = StyleSheet.create({
+  screen: { flex: 1 },
+  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   loading: { marginTop: spacing.xl },
   centered: { alignItems: 'center', gap: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
-  round: { gap: spacing.md },
-  count: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase', textAlign: 'center' },
+  countPill: { alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 4, borderRadius: radii.pill },
+  count: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase', textAlign: 'center' },
   form: { gap: spacing.md },
   names: { gap: spacing.sm },
   field: { gap: spacing.sm },
@@ -962,50 +1033,75 @@ const styles = StyleSheet.create({
   center: { textAlign: 'center' },
   stretch: { alignSelf: 'stretch' },
   nameRow: { alignItems: 'center', gap: spacing.sm },
-  nameN: { width: 28, height: 28, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  nameNText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  nameN: { width: 36, height: 36, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: `${TABLE.gold}29` },
+  nameNText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, color: TABLE.gold },
   // a text field is as wide as its text wants unless told it may be narrower: without that the row runs off the card
   nameInput: { flex: 1, minWidth: 0, minHeight: 48, fontSize: typography.sizes.md, borderRadius: radii.md, paddingHorizontal: 12 },
   nameRemove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
-  pass: { alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.md },
-  passTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
-  passDisc: { width: 96, height: 96, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  passDiscText: { fontSize: 44, fontWeight: typography.weights.bold },
+  rulesHead: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', gap: spacing.sm },
+  rulesTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  rulesNow: { flex: 1, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: 6 },
+  rulesChip: { paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },
+  rulesChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  turned: { transform: [{ rotate: '180deg' }] },
+  // the one divider on the screen: what scrolls ends here, and what is always in reach begins
+  go: { gap: spacing.sm, paddingTop: spacing.sm, paddingHorizontal: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth },
+  goNote: { fontSize: typography.sizes.xs, textAlign: 'center' },
+  pass: { alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.xl, paddingHorizontal: spacing.lg },
+  passHalo: { width: 140, height: 140, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: `${TABLE.gold}26` },
+  passDisc: { width: 108, height: 108, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: TABLE.gold },
+  passDiscText: { fontSize: 50, fontWeight: typography.weights.bold, color: TABLE.goldInk },
+  passTitle: { fontSize: typography.sizes.xl, lineHeight: 34, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.ink },
   dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  dot: { width: 8, height: 8, borderRadius: radii.pill },
-  card: {
+  dot: { width: 22, height: 6, borderRadius: radii.pill },
+  // the card lifts off the screen: its shadow is its own, round the shape it has
+  cardShadow: {
     alignSelf: 'center',
     width: '100%',
     maxWidth: 320,
-    minHeight: 220,
+    borderRadius: radii.xl,
+    shadowColor: TABLE.nightDeep,
+    shadowOpacity: 0.34,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 12 },
+    elevation: 8,
+  },
+  card: { minHeight: 360, padding: spacing.md, borderRadius: radii.xl, overflow: 'hidden' },
+  cardBack: { flex: 1, margin: 6, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: `${TABLE.gold}8c`, borderRadius: radii.lg },
+  cardTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  cardTopText: { flex: 1, gap: 2 },
+  cardMain: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 },
+  cardLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase' },
+  cardHint: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  cardWord: { fontSize: 44, fontWeight: typography.weights.bold, textAlign: 'center' },
+  cardMeaning: { fontSize: typography.sizes.md, textAlign: 'center' },
+  impostorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.goldSoft },
+  paper: { alignItems: 'center', gap: 4, paddingVertical: spacing.lg, paddingHorizontal: spacing.md, borderRadius: radii.xl, backgroundColor: TABLE.paper },
+  after: { alignItems: 'center', gap: spacing.xs },
+  hold: {
+    minHeight: 64,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
-    padding: spacing.lg,
+    gap: spacing.sm,
     borderWidth: 2,
-    borderRadius: radii.lg,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.md,
   },
-  cardLabel: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase', textAlign: 'center' },
-  cardHint: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  cardWord: { fontSize: 34, fontWeight: typography.weights.bold, marginTop: spacing.xs, textAlign: 'center' },
-  cardMeaning: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  impostorLine: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: spacing.xs },
-  impostorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  hold: { minHeight: 64, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, borderRadius: radii.lg, paddingHorizontal: spacing.md },
   holdText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  stage: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.xs },
+  stage: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg, paddingHorizontal: spacing.lg },
   list: { gap: spacing.xs },
-  phase: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
-  speaker: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  phase: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase' },
+  speaker: { fontSize: typography.sizes.xl, lineHeight: 34, fontWeight: typography.weights.bold, textAlign: 'center' },
   clock: { alignSelf: 'stretch', alignItems: 'stretch', gap: spacing.xs },
-  clockLeft: { fontSize: 44, fontWeight: typography.weights.bold, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  clockLeft: { fontSize: 56, fontWeight: typography.weights.bold, textAlign: 'center', fontVariant: ['tabular-nums'] },
   order: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.xs },
   orderChip: { maxWidth: 140, paddingHorizontal: 12, paddingVertical: 6, borderRadius: radii.pill },
   orderText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   choices: { gap: spacing.sm },
-  choice: { minHeight: 52, borderWidth: 1.5, borderRadius: radii.md, paddingHorizontal: spacing.md, justifyContent: 'center' },
+  choice: { minHeight: 56, borderWidth: 1.5, borderRadius: radii.md, paddingHorizontal: spacing.md, justifyContent: 'center' },
   choiceText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  choiceWord: { fontSize: 20, fontWeight: typography.weights.bold, textAlign: 'center' },
+  choiceWord: { fontSize: 22, fontWeight: typography.weights.bold, textAlign: 'center' },
   flips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   flipWrap: { width: 78, alignItems: 'center', gap: 4 },
   flip: { width: 72, height: 92, borderWidth: 1.5, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center', padding: 4 },
@@ -1014,7 +1110,7 @@ const styles = StyleSheet.create({
   // the tag is a longer word than most cards' own in several languages: a size down keeps it off the card's edge
   flipTag: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textAlign: 'center' },
   flipName: { fontSize: typography.sizes.xs },
-  whoWas: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center', marginTop: spacing.xs },
+  whoWas: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
   // the rows of the score sit against each other, a rule between them: the table reads as one thing
   score: { gap: 0 },
   scoreRow: { alignItems: 'center', gap: spacing.sm, minHeight: 40 },

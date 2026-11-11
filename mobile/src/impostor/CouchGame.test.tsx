@@ -84,10 +84,16 @@ const choose = (group: string, chip: string | RegExp): void => {
   fireEvent.click(within(screen.getByRole('radiogroup', { name: group })).getByRole('radio', { name: chip }));
 };
 
-/** The setup filled in with four names and whatever chips a test asks for, and the cards dealt. */
+/** The rules wait folded under the three steps: this unfolds them, once. */
+const openRules = (): void => {
+  if (screen.getByRole('button', { name: 'Rules' }).getAttribute('aria-expanded') !== 'true') press('Rules');
+};
+
+/** The setup filled in with four names and whatever choices a test asks for (the rules unfolded for them), and the cards dealt. */
 async function start(chips: Array<[group: string, chip: string | RegExp]> = []): Promise<void> {
   await screen.findByRole('button', { name: 'Deal the cards' });
   for (const [i, name] of NAMES.entries()) fireEvent.change(screen.getByLabelText(`Player ${i + 1}`), { target: { value: name } });
+  if (chips.length > 0) openRules();
   for (const [group, chip] of chips) choose(group, chip);
   press('Deal the cards');
 }
@@ -126,7 +132,7 @@ const NO_CLOCKS: Array<[string, string]> = [
 ];
 
 describe('the way in', () => {
-  it('is offered under the game with friends, opens the game for one phone, and the back arrow returns', async () => {
+  it('is the first thing to press on the start, opens the game for one phone, and the back arrow returns', async () => {
     testAuth.client = fakeClient({
       ...offered(),
       'GET /play/invites': ok({ incoming: [], outgoing: [] }),
@@ -134,12 +140,35 @@ describe('the way in', () => {
       'GET /games/availability?dialect=ckb': ok({ dialect: 'ckb', games: [] }),
     });
     renderWithProviders(<ImpostorScreen onExit={() => undefined} />);
-    expect(await screen.findByText('Sitting together? Pass one phone round the room: 3 to 10 players, and the clues are said out loud.')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'One word. One impostor. Who’s bluffing?' })).toBeTruthy();
+    // the game with friends is on the table too, but it is not the first thing asked
+    expect(screen.getByRole('button', { name: 'With friends' })).toBeTruthy();
     press('Play on this phone');
     expect(await screen.findByRole('button', { name: 'Deal the cards' })).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'On one phone' })).toBeTruthy();
+    expect(screen.getByText('Sitting together? Pass one phone round the room: 3 to 10 players, and the clues are said out loud.')).toBeTruthy();
     press('Back');
     expect(await screen.findByRole('button', { name: 'Play on this phone' })).toBeTruthy();
+  });
+
+  it('opens the setup with the way to play or the category that was pressed on the start', async () => {
+    testAuth.client = fakeClient({
+      ...offered(),
+      'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+      'GET /games/availability?dialect=kmr': ok({ dialect: 'kmr', games: [{ id: 'impostor', available: true, difficulties: ['beginner'], levels: {}, levelled: true, minimum: 12 }] }),
+      'GET /games/availability?dialect=ckb': ok({ dialect: 'ckb', games: [] }),
+    });
+    renderWithProviders(<ImpostorScreen onExit={() => undefined} />);
+    // each way to play is a card that says what the impostor is told
+    press(await screen.findByText('Odd word out').then(() => /^Odd word out\. Nobody is told who the impostor is/));
+    await screen.findByRole('button', { name: 'Deal the cards' });
+    expect(screen.getByRole('radio', { name: /^Odd word out/ }).getAttribute('aria-checked')).toBe('true');
+    press('Back');
+    // and each category a picture with its Kurdish name and what it means
+    press(await screen.findByRole('button', { name: 'xwarin · food' }).then(() => 'xwarin · food'));
+    await screen.findByRole('button', { name: 'Deal the cards' });
+    expect(within(screen.getByRole('radiogroup', { name: 'Category' })).getByRole('radio', { name: 'xwarin · food' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('radio', { name: /^Classic/ }).getAttribute('aria-checked')).toBe('true');
   });
 
   it('says plainly where no variety has the cards for it', async () => {
@@ -168,7 +197,7 @@ describe('the setup', () => {
   it('keeps the names and the settings on the phone for next time, and nothing else', async () => {
     testAuth.client = fakeClient(offered());
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
-    await start([['Kind of game', 'In the dark'], ...NO_CLOCKS]);
+    await start([['Kind of game', /^In the dark/], ...NO_CLOCKS]);
     await screen.findByText('Pass the phone to Azad');
     const kept = JSON.parse(localStorage.getItem('hevalo_couch_v1')!);
     expect(kept).toEqual({ names: NAMES, settings: { way: 'blind', impostors: 1, rounds: 2, clueSeconds: 0, talkSeconds: 0, vote: 'secret' } });
@@ -177,8 +206,8 @@ describe('the setup', () => {
     cleanup();
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
     await waitFor(() => expect((screen.getByLabelText('Player 1') as HTMLInputElement).value).toBe('Azad'));
-    // the kind of game chosen last time is chosen again: its note is the one under the choice
-    expect(screen.getByText('The impostor is told nothing at all.')).toBeTruthy();
+    // the kind of game chosen last time is chosen again
+    await waitFor(() => expect(screen.getByRole('radio', { name: /^In the dark/ }).getAttribute('aria-checked')).toBe('true'));
   });
 
   it('wants a name for everyone and no two alike, takes three to ten players, and a second impostor from six', async () => {
@@ -354,7 +383,7 @@ describe('a round', () => {
   it('gives the odd one out a card like anyone’s, with another word on it, and says both at the end', async () => {
     testAuth.client = fakeClient(offered());
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
-    await start([...NO_CLOCKS, ['Kind of game', 'Odd word out'], ['The vote', 'By pointing']]);
+    await start([...NO_CLOCKS, ['Kind of game', /^Odd word out/], ['The vote', 'By pointing']]);
     const cards = await dealRound();
     expect(cards.filter((c) => c.includes('impostor'))).toHaveLength(0);
     expect(cards.filter((c) => c.includes('pisîk'))).toHaveLength(3);

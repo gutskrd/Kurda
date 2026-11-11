@@ -1,23 +1,25 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import type { GameDialect, ImpostorBoard, ImpostorOutcome } from '@kurda/shared';
 import { leftResults } from '../feedback/gameFinished';
 import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { GameRoom } from '../play/GameRoom';
 import { useGameView } from '../play/useGameView';
-import { PARTY_DIALECT_NAME, PARTY_LEVEL_KEY, PartyStart } from '../party/PartyStart';
-import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { PARTY_DIALECT_NAME, PARTY_LEVEL_KEY } from '../party/PartyStart';
+import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import { categoriesAt, useImpostorCategories } from './categories';
 import { CouchGame } from './CouchGame';
 import { ImpostorBoardView, ImpostorReveal } from './ImpostorBoard';
+import { ImpostorStart, type CouchAsk } from './ImpostorStart';
 
 /**
- * Kurdish Impostor on the phone: without an id, the start (how to play, a game
- * with friends, a code), offered only where approved word cards are; with one,
- * the room (play/GameRoom.tsx) with the table inside. A code, an invite, a
+ * Kurdish Impostor on the phone: without an id, the start (ImpostorStart.tsx:
+ * the game in a line and one thing to press), offered only where approved
+ * word cards are; with one, the room (play/GameRoom.tsx) with the table
+ * inside. A code, an invite, a
  * card or the next round opens a room here as new params on the same screen.
  * From the start, "Play on this phone" opens the game for people in one room
  * (CouchGame.tsx); the back arrow there returns to the start.
@@ -25,50 +27,25 @@ import { ImpostorBoardView, ImpostorReveal } from './ImpostorBoard';
 export function ImpostorScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const [id, setId] = useState<string | null>(initialId ?? null);
-  const [couch, setCouch] = useState(false);
+  // the game on one phone, and what was chosen on the way into it (a way to play, a category)
+  const [couch, setCouch] = useState<CouchAsk | null>(null);
   useEffect(() => {
     if (initialId) setId(initialId);
   }, [initialId]);
-  const onOnePhone = couch && !id;
+  const onOnePhone = couch !== null && !id;
   useEffect(() => () => leftResults(), [id]);
   return (
     <GradientBackground>
-      <ScreenHeader title={t(onOnePhone ? 'games.couch.title' : 'games.impostor.name')} onBack={onOnePhone ? () => setCouch(false) : onExit} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        {id ? (
-          <Room key={id} id={id} onNew={() => setId(null)} onOpen={setId} />
-        ) : couch ? (
-          <CouchGame onLeave={() => setCouch(false)} />
-        ) : (
-          <PartyStart
-            game="impostor"
-            icon="people"
-            introKey="games.impostor.intro"
-            steps={['games.impostor.how.card', 'games.impostor.how.clues', 'games.impostor.how.vote']}
-            blurbKey="games.impostor.withFriendsBlurb"
-            notOfferedKey="games.impostor.notOffered"
-            also={<CouchWay onOpen={() => setCouch(true)} />}
-          />
-        )}
-      </ScrollView>
+      <ScreenHeader title={t(onOnePhone ? 'games.couch.title' : 'games.impostor.name')} onBack={onOnePhone ? () => setCouch(null) : onExit} />
+      {onOnePhone ? (
+        // the game on one phone scrolls itself, so its button can stay under the list
+        <CouchGame ask={couch} onLeave={() => setCouch(null)} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+          {id ? <Room key={id} id={id} onNew={() => setId(null)} onOpen={setId} /> : <ImpostorStart onCouch={(ask) => setCouch(ask ?? {})} />}
+        </ScrollView>
+      )}
     </GradientBackground>
-  );
-}
-
-/** The other way to play, for people sitting together: this one phone, passed round. */
-function CouchWay({ onOpen }: { onOpen: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  return (
-    <GlassCard style={styles.way}>
-      <Text accessibilityRole="header" style={[styles.wayTitle, { color: colors.textPrimary }]}>
-        {t('games.couch.title')}
-      </Text>
-      <Text style={[styles.wayBlurb, { color: colors.textSecondary }]}>{t('games.couch.blurb')}</Text>
-      <View style={styles.stretch}>
-        <ClayButton label={t('games.couch.open')} icon="device-phone" onPress={onOpen} />
-      </View>
-    </GlassCard>
   );
 }
 
@@ -119,8 +96,4 @@ function Room({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen: (i
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   note: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  way: { alignItems: 'center', gap: spacing.sm },
-  wayTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
-  wayBlurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
-  stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
 });
