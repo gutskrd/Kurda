@@ -44,6 +44,7 @@ export function PartyStart({
   blurbKey,
   notOfferedKey,
   Icon,
+  also,
 }: {
   game: PartyGame;
   introKey: MessageKey;
@@ -52,6 +53,8 @@ export function PartyStart({
   blurbKey: MessageKey;
   notOfferedKey: MessageKey;
   Icon: (p: { size?: number }) => React.JSX.Element;
+  /** another way to play the same game, shown under the first */
+  also?: React.ReactNode;
 }): React.JSX.Element {
   const t = useT();
   const offer = usePartyOffer(game);
@@ -92,6 +95,7 @@ export function PartyStart({
         <p className="muted">{t(blurbKey)}</p>
         <InviteForm target={{ kind: 'new', game }} lockGame heading={false} />
       </section>
+      {also}
     </div>
   );
 }

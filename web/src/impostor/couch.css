@@ -1,0 +1,286 @@
+/*
+ * Kurdish Impostor on one phone (impostor/Couch.tsx): a setup of chips, then
+ * one thing at a time, large, for a screen held at arm's length and passed
+ * round a room. The card and the reveal are the table game's own
+ * (impostor.css); what is here is the passing: the screen that shows only a
+ * name, the card that is face down until it is pressed, and the clock.
+ * Flat planes from the palette, as everywhere. Under Reduce Motion nothing
+ * pulses and the card does not turn; it is simply there or not.
+ */
+.couch,
+.couch-setup,
+.couch-deal,
+.couch-clues,
+.couch-talk,
+.couch-vote,
+.couch-pass {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  min-width: 0;
+}
+.couch p,
+.couch-setup p {
+  margin: 0;
+}
+.couch-count {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.couch-note {
+  font-size: var(--text-secondary);
+}
+
+/* the players' names */
+.couch-players {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.couch-names {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.couch-name {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+.couch-name-n {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+.couch-name-remove {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.couch-name-remove:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+
+/* how far round the room the phone has got */
+.couch-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.couch-dots li {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface-3);
+}
+.couch-dots li.is-done {
+  background: var(--gold);
+}
+.couch-dots li.is-now {
+  background: var(--ink);
+}
+
+/* between two players: a name and nothing else */
+.couch-pass {
+  justify-items: center;
+  padding: var(--space-8) var(--space-4);
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--gold) 9%, var(--surface-solid));
+  text-align: center;
+}
+.couch-pass-title {
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.couch-pass-disc {
+  display: grid;
+  place-items: center;
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #2a1d05;
+  font-size: 44px;
+  font-weight: 700;
+}
+
+/* the card: face down until its holder presses, and only while they press */
+/* two classes, so that this wins over the table's own card whichever sheet the page happens to load last */
+.imp-card.couch-card {
+  /* the table's card is a small one among seats; here it is the only thing on the screen, read at arm's length */
+  width: 100%;
+  min-height: 240px;
+  padding: var(--space-6) var(--space-4);
+  border-radius: var(--r-xl);
+  align-content: center;
+  justify-items: center;
+  text-align: center;
+  transition: transform var(--dur-fast) var(--ease-out);
+}
+.imp-card.couch-card .imp-card-word {
+  font-size: 40px;
+}
+.imp-card.couch-card .imp-card-word.is-impostor {
+  font-size: 26px;
+}
+.imp-card.couch-card .imp-card-meaning {
+  font-size: var(--text-body);
+}
+.imp-card.couch-card.is-back {
+  background: color-mix(in srgb, var(--gold) 22%, var(--surface-solid));
+  color: var(--gold-ink);
+}
+.couch-card-back {
+  display: grid;
+  place-items: center;
+  opacity: 0.9;
+}
+.couch-hold {
+  min-height: 72px;
+  padding: var(--space-4);
+  border: 2px solid var(--gold);
+  border-radius: var(--r-xl);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font: inherit;
+  font-size: var(--text-body);
+  font-weight: 700;
+  cursor: pointer;
+  /* a long press here shows the card: it must not also select text, open a menu or scroll the page */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
+}
+.couch-hold.is-held {
+  background: var(--gold);
+  color: #2a1d05;
+  transform: scale(0.98);
+}
+
+/* whose clue it is, and the clock */
+.couch-speaker {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.couch-clock {
+  display: grid;
+  gap: var(--space-2);
+}
+.couch-clock-left {
+  font-size: 56px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+}
+.couch-clock-left.is-low {
+  color: var(--danger);
+}
+.couch-order {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.couch-order li {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.couch-order li.is-done {
+  color: var(--ink-4);
+  text-decoration: line-through;
+}
+.couch-order li.is-now {
+  border-color: var(--gold);
+  background: var(--gold);
+  color: #2a1d05;
+}
+
+/* the evening's score */
+.couch-score {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.couch-score th,
+.couch-score td {
+  padding: 10px 8px;
+  border-bottom: 1px solid var(--separator);
+  text-align: start;
+}
+.couch-score thead th {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.couch-score td {
+  text-align: end;
+  width: 5.5em;
+}
+.couch-score tbody th {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.couch-score tr.is-impostor th {
+  color: var(--danger);
+}
+
+/* the way in, on the game's start page */
+.couch-way {
+  display: grid;
+  gap: var(--space-3);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .couch-card,
+  .couch-hold {
+    transition: none;
+  }
+  .couch-hold.is-held {
+    transform: none;
+  }
+}
