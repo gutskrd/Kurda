@@ -220,6 +220,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         online={online}
         level={level}
         frameSku={target.kind === 'me' ? null : (other?.frameSku ?? null)}
+        frameUrl={target.kind === 'me' ? null : (other?.frameUrl ?? null)}
       >
         <GiftedNote background={background} icon={icon} />
 

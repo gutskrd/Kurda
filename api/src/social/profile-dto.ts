@@ -1,6 +1,6 @@
 import type { LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
-import { resolveCosmetics, levelInfo, type LevelInfo, type ResolvedBackground, type ResolvedIcon } from '../cosmetics/access.js';
+import { cosmeticArtUrl, resolveCosmetics, levelInfo, type LevelInfo, type ResolvedBackground, type ResolvedIcon } from '../cosmetics/access.js';
 import type { PublicProfile } from './service.js';
 
 /** A safe public favorite (only id + title are exposed). */
@@ -39,8 +39,10 @@ export interface PublicProfileDto {
   league?: ProfileLeague | null;
   /** Game Ranks per game played (shared `ProfileRank`); "Resting" ones carry no tier for others */
   ranks?: ProfileRank[];
-  /** the season frame worn around the avatar (a SKU from the shared SEASON_FRAME_SKUS), or null */
+  /** the frame worn around the avatar: a season frame (shared SEASON_FRAME_SKUS) or one bought in the shop; null for none */
   frameSku?: string | null;
+  /** the picture of a frame from the shop, to lay round the avatar; null for a season frame, which the apps draw */
+  frameUrl?: string | null;
   achievements?: number;
   badges?: ShowcaseBadge[];
   favoritePoem?: FavoriteDto | null;
@@ -91,6 +93,7 @@ export function toPublicProfileDto(
     league: profile.league,
     ranks: profile.ranks,
     frameSku: profile.frameSku ?? null,
+    frameUrl: profile.frameAssetKey ? cosmeticArtUrl(profile.frameAssetKey, publicUrl) : null,
     achievements: profile.achievements,
     badges: profile.badges,
     favoritePoem: fav(profile.favoritePoem),

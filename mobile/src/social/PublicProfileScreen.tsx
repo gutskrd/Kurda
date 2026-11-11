@@ -18,7 +18,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
 import { knownTier, leagueName } from '../leagues/format';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
-import { SeasonFramed, frameTierOf } from '../ranks/art';
+import { Framed } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
 import { SEASON_FRAME_INNER, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { FavoriteRow } from '../profile/cosmetic-parts';
@@ -51,6 +51,8 @@ interface Profile {
   ranks?: ProfileRank[];
   /** the season frame they wear round their avatar */
   frameSku?: string | null;
+  /** the picture of a frame from the shop; a season frame is drawn from its SKU */
+  frameUrl?: string | null;
   /** badges earned (and the legacy tournament win) */
   achievements?: number;
   /** the three badges they chose to show */
@@ -199,17 +201,14 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             const labelKey = friendActionLabel(profile.friendStatus);
             return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
-          {frameTierOf(profile.frameSku) ? (
-            <SeasonFramed
-              tier={frameTierOf(profile.frameSku)!}
-              size={Math.round(96 / SEASON_FRAME_INNER)}
-              label={t('season.frameOf', { tier: t(TIER_NAME_KEY[frameTierOf(profile.frameSku)!]) })}
-            >
-              <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
-            </SeasonFramed>
-          ) : (
+          <Framed
+            sku={profile.frameSku}
+            url={profile.frameUrl}
+            size={Math.round(96 / SEASON_FRAME_INNER)}
+            label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}
+          >
             <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
-          )}
+          </Framed>
           <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
           {profile.displayName ? <Text style={[styles.display, { color: colors.textSecondary }]}>{profile.displayName}</Text> : null}
 

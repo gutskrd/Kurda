@@ -1774,7 +1774,7 @@ export const nl: Catalogue = {
   'shop.isYoursTag': '{name} is van jou. Je vindt hem onder Tags en badges in Profiel bewerken.',
   'shop.isYoursOther': '{name} is van jou.',
   'shop.onItsWay': '{name} is onderweg naar {to}.',
-  'shop.subtitle': 'Koop profielachtergronden, iconen en tags met Zêr — voor jezelf of als cadeau voor een vriend.',
+  'shop.subtitle': 'Koop profielachtergronden, iconen, randen en tags met Zêr — voor jezelf of als cadeau voor een vriend.',
   'shop.show': 'Toon',
   'shop.buy': 'Kopen',
   'shop.amountMore': 'nog {amount}',

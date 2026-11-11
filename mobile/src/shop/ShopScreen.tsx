@@ -61,10 +61,10 @@ const GUTTER = spacing.lg;
 /**
  * The shop, sorted by kind (KUR-070).
  *
- * Every item sits under its kind — Backgrounds, Icons, Tags, and "More" for
+ * Every item sits under its kind — Backgrounds, Icons, Frames, Tags, and "More" for
  * anything an admin files under a category of their own — in the order the
  * browser shows them, each with a count and its picture. Above the list, a
- * search over names and meanings ("istikan" finds Îstîkan, "tea" finds it
+ * search over names and meanings ("cay" finds Çay, "tea" finds it
  * too), one kind at a time, an order, and "Within my Zêr". What arrived for you
  * (gifts) stays above the catalogue; the search and the kinds stay at the top
  * of the screen once you scroll past it.

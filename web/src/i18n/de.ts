@@ -1774,7 +1774,7 @@ export const de: Catalogue = {
   'shop.isYoursTag': '{name} gehört dir. Du findest es unter „Tags & Abzeichen“ in „Profil bearbeiten“.',
   'shop.isYoursOther': '{name} gehört dir.',
   'shop.onItsWay': '{name} ist unterwegs zu {to}.',
-  'shop.subtitle': 'Kauf Profil-Hintergründe, Symbole und Tags mit Zêr — für dich selbst oder als Geschenk.',
+  'shop.subtitle': 'Kauf Profil-Hintergründe, Symbole, Rahmen und Tags mit Zêr — für dich selbst oder als Geschenk.',
   'shop.show': 'Zeigen',
   'shop.buy': 'Kaufen',
   'shop.amountMore': 'noch {amount}',

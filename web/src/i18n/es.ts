@@ -1772,7 +1772,7 @@ export const es: Catalogue = {
   'shop.isYoursTag': '{name} ya es tuyo. Lo encontrarás en Etiquetas e insignias, dentro de Editar perfil.',
   'shop.isYoursOther': '{name} ya es tuyo.',
   'shop.onItsWay': '{name} va camino de {to}.',
-  'shop.subtitle': 'Compra fondos de perfil, iconos y etiquetas con Zêr, para ti o como regalo para un amigo.',
+  'shop.subtitle': 'Compra fondos de perfil, iconos, marcos y etiquetas con Zêr, para ti o como regalo para un amigo.',
   'shop.show': 'Mostrar',
   'shop.buy': 'Comprar',
   'shop.amountMore': '{amount} más',

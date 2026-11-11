@@ -1,0 +1,53 @@
+/**
+ * Frames go on sale.
+ *
+ * A frame round a profile picture could only be won: the six season frames,
+ * one for each rank tier, given at a season's end and never sold
+ * (1751000170000). These six are for anybody: painted like the shop's icons
+ * and of the same things (scripts/cosmetic-art/frames.mjs), bought with Zêr,
+ * one to a person, and worn through the same `equipped_frame_sku` a season
+ * frame is. A frame shows only while it is owned (social/service.ts), so
+ * none is `premium_only`: there is no wearing one on a membership alone.
+ *
+ * On a row that already exists only the presentation is refreshed (name,
+ * description, art, order), the way the first catalogue seed treats an
+ * admin's price and availability. Down takes the frames off whoever wears
+ * them, out of what people own and out of the shop; what was paid for them
+ * is not handed back by a migration.
+ *
+ * The data is frozen here rather than read from api/content/cosmetics.json,
+ * because the manifest will move on and this migration must keep meaning what
+ * it meant (api/src/cosmetics/catalogue.test.ts checks the two agree today).
+ */
+
+/** [sku, name, description, assetKey, price, displayOrder] */
+export const FRAMES = [
+  ['frame-made-lale', 'Xeleka Laleyan', 'Tulip wreath', 'frames/made-01-lale.png', 1400, 0],
+  ['frame-made-genim', 'Xeleka Genim', 'Wheat wreath', 'frames/made-02-genim.png', 1200, 1],
+  ['frame-made-kilim', 'Xeleka Kilîmê', 'Kilim band', 'frames/made-03-kilim.png', 1600, 2],
+  ['frame-made-roj', 'Xeleka Rojê', 'Sun rays', 'frames/made-04-roj.png', 2000, 3],
+  ['frame-made-sev', 'Xeleka Şevê', 'Night sky', 'frames/made-05-sev.png', 1800, 4],
+  ['frame-made-newroz', 'Xeleka Newrozê', 'Newroz fire', 'frames/made-06-newroz.png', 2000, 5],
+];
+
+export const up = async (pgm) => {
+  for (const [sku, name, description, assetKey, price, displayOrder] of FRAMES) {
+    await pgm.db.query(
+      `INSERT INTO shop_items
+         (sku, name, description, category, currency, price, is_unique, active, in_stock,
+          asset_key, premium_only, display_order)
+       VALUES ($1,$2,$3,'frame','zer',$4,true,true,true,$5,false,$6)
+       ON CONFLICT (sku) DO UPDATE SET
+         name = EXCLUDED.name, description = EXCLUDED.description,
+         asset_key = EXCLUDED.asset_key, display_order = EXCLUDED.display_order`,
+      [sku, name, description, price, assetKey, displayOrder],
+    );
+  }
+};
+
+export const down = async (pgm) => {
+  const skus = FRAMES.map(([sku]) => sku);
+  await pgm.db.query(`UPDATE users SET equipped_frame_sku = NULL WHERE equipped_frame_sku = ANY($1)`, [skus]);
+  await pgm.db.query(`DELETE FROM user_entitlements WHERE sku = ANY($1)`, [skus]);
+  await pgm.db.query(`DELETE FROM shop_items WHERE sku = ANY($1)`, [skus]);
+};

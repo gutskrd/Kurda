@@ -1776,7 +1776,7 @@ export const ku: Catalogue = {
   'shop.isYoursTag': '{name} ya te ye. Tu dê wê di Guherandina Profîlê de, di bin Nîşan û taybetmendî de bibînî.',
   'shop.isYoursOther': '{name} ya te ye.',
   'shop.onItsWay': '{name} di rê de ye bo {to}.',
-  'shop.subtitle': 'Bi Zêr paşxaneyên profîlê, îkon û nîşanan bikire — ji bo xwe, an wek diyariyekê ji hevalekî re.',
+  'shop.subtitle': 'Bi Zêr paşxaneyên profîlê, îkon, çarçove û nîşanan bikire — ji bo xwe, an wek diyariyekê ji hevalekî re.',
   'shop.show': 'Nîşan bide',
   'shop.buy': 'Bikire',
   'shop.amountMore': '{amount} din',

@@ -1863,7 +1863,7 @@ export const en = {
   'shop.isYoursTag': '{name} is yours. You’ll find it under Tags & badges in Edit profile.',
   'shop.isYoursOther': '{name} is yours.',
   'shop.onItsWay': '{name} is on its way to {to}.',
-  'shop.subtitle': 'Buy profile backgrounds, icons and tags with Zêr — for yourself, or as a gift for a friend.',
+  'shop.subtitle': 'Buy profile backgrounds, icons, frames and tags with Zêr — for yourself, or as a gift for a friend.',
   'shop.show': 'Show',
   'shop.buy': 'Buy',
   'shop.amountMore': '{amount} more',

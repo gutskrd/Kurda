@@ -217,8 +217,10 @@ export interface PublicProfile extends ProfileCosmetics {
   league?: ProfileLeague | null;
   /** Game Ranks per game they play this season (contract 4); "Resting" ones carry no tier for others */
   ranks?: ProfileRank[];
-  /** the season frame worn round the avatar, or null */
+  /** the frame worn round the avatar: a season frame's SKU or a shop frame's; null for none */
   frameSku?: string | null;
+  /** the picture of a frame from the shop (a season frame has none: it is drawn from its SKU) */
+  frameUrl?: string | null;
   /** the three badges they show (a minor's only to friends) */
   badges?: ShowcaseBadge[];
   achievements?: number;

@@ -1773,7 +1773,7 @@ export const fr: Catalogue = {
   'shop.isYoursTag': '{name} est à toi. Tu le trouveras sous Étiquettes et badges, dans Modifier le profil.',
   'shop.isYoursOther': '{name} est à toi.',
   'shop.onItsWay': '{name} est en route pour {to}.',
-  'shop.subtitle': 'Achète des arrière-plans de profil, des icônes et des étiquettes avec des Zêr — pour toi, ou en cadeau.',
+  'shop.subtitle': 'Achète des arrière-plans de profil, des icônes, des cadres et des étiquettes avec des Zêr — pour toi, ou en cadeau.',
   'shop.show': 'Afficher',
   'shop.buy': 'Acheter',
   'shop.amountMore': '{amount} de plus',

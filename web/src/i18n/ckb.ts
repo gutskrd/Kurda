@@ -1780,7 +1780,7 @@ export const ckb: Catalogue = {
   'shop.isYoursTag': '{name} هی تۆیە. لە دەستکاری پرۆفایلدا، لە بەشی تاگ و نیشانەکان دەیدۆزیتەوە.',
   'shop.isYoursOther': '{name} هی تۆیە.',
   'shop.onItsWay': '{name} لە ڕێگادایە بۆ {to}.',
-  'shop.subtitle': 'بە Zêr پاشبنەمای پرۆفایل و ئایکۆن و تاگ بکڕە — بۆ خۆت، یان وەک دیارییەک بۆ هاوڕێیەک.',
+  'shop.subtitle': 'بە Zêr پاشبنەمای پرۆفایل و ئایکۆن و چوارچێوە و تاگ بکڕە — بۆ خۆت، یان وەک دیارییەک بۆ هاوڕێیەک.',
   'shop.show': 'پیشان بدە',
   'shop.buy': 'بکڕە',
   'shop.amountMore': '{amount} زیاتر',

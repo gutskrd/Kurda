@@ -20,7 +20,7 @@ import { act, cleanup, screen, waitFor } from '@testing-library/react';
 import { Text } from 'react-native';
 import { EventBanner } from '../events/EventBanner';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { BadgeMedal, LeagueEmblem, PlacementEmblem, RankEmblem, SeasonFramed } from '../ranks/art';
+import { BadgeMedal, Framed, LeagueEmblem, PlacementEmblem, RankEmblem, SeasonFramed } from '../ranks/art';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -175,6 +175,60 @@ describe('a season frame', () => {
     expect(screen.getByRole('img', { name: 'Lûtke season frame' }).getAttribute('style')).toContain('width: 96px');
     // the avatar is still there, in the middle
     expect(screen.getByText('RJ')).toBeTruthy();
+  });
+});
+
+/*
+ * A profile says which frame is worn by its SKU, and for a frame bought in the
+ * shop it sends the picture too. One component takes both and draws whichever
+ * it is, so no screen has to ask.
+ */
+describe('whatever frame is worn', () => {
+  const avatar = <Text>RJ</Text>;
+  const label = (tier: string): string => `${tier} season frame`;
+  const ART = '/cosmetics/frames/made-01-lale.png';
+
+  it('is the shop’s picture over the avatar, loaded from the website, and says nothing of its own to a screen reader', async () => {
+    const { container } = renderWithProviders(
+      <Framed sku="frame-made-lale" url={ART} size={96} label={label}>
+        {avatar}
+      </Framed>,
+    );
+    expect(await picture(container)).toBe(`https://hevalo.app${ART}`);
+    expect(drawings(container)).toBe(0);
+    // decoration: the profile around it already names the person
+    expect(screen.queryByRole('img', { name: /frame/ })).toBeNull();
+    expect(screen.getByText('RJ')).toBeTruthy();
+  });
+
+  it('is the season’s ring, drawn from the SKU, whatever picture comes with it', () => {
+    const { container } = renderWithProviders(
+      <Framed sku="frame_rank_lutke" url={ART} size={96} label={label}>
+        {avatar}
+      </Framed>,
+    );
+    expect(screen.getByRole('img', { name: 'lutke season frame' })).toBeTruthy();
+    expect(drawings(container)).toBe(2);
+    expect(container.querySelector('img')).toBeNull();
+  });
+
+  it('is the avatar alone with no frame, or with a shop frame whose picture did not come', () => {
+    const bare = renderWithProviders(
+      <Framed sku={null} size={96} label={label}>
+        {avatar}
+      </Framed>,
+    );
+    expect(screen.getByText('RJ')).toBeTruthy();
+    expect(bare.container.querySelector('img')).toBeNull();
+    expect(drawings(bare.container)).toBe(0);
+    cleanup();
+    const older = renderWithProviders(
+      <Framed sku="frame-made-lale" size={96} label={label}>
+        {avatar}
+      </Framed>,
+    );
+    expect(screen.getByText('RJ')).toBeTruthy();
+    expect(older.container.querySelector('img')).toBeNull();
   });
 });
 

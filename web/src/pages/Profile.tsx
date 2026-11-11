@@ -42,7 +42,7 @@ export function Profile(): React.JSX.Element {
 
   const [sections, setSections] = useState<ProfileSections | null>(null);
   // badges, ranks, league and frame: /me does not carry them, your public profile does
-  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku'> | null>(null);
+  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku' | 'frameUrl'> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -80,7 +80,7 @@ export function Profile(): React.JSX.Element {
       if (cancelled) return;
       if (p?.ok) {
         setSections(p.data.sections ?? null);
-        setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku });
+        setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl });
       }
       setLoading(false);
     })();
@@ -116,6 +116,7 @@ export function Profile(): React.JSX.Element {
     online: true, // viewing your own profile → you're online
     country: me.country ? { code: me.country, name: countryName(me.country, locale) ?? me.country } : null,
     frameSku: shown?.frameSku ?? null,
+    frameUrl: shown?.frameUrl ?? null,
   };
 
   return (

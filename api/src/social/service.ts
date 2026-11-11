@@ -76,8 +76,10 @@ export interface PublicProfile {
    * best this season and ever. Replaces the frozen all-time `rating`/`rank`.
    */
   ranks?: ProfileRank[];
-  /** the season frame they wear around their avatar (a SKU they own), or null */
+  /** the frame they wear around their avatar (a SKU they own: a season frame, or one bought in the shop), or null */
   frameSku?: string | null;
+  /** that frame's picture, when it is one of the shop's; a season frame has none and is drawn by the apps */
+  frameAssetKey?: string | null;
   /** badges earned (and the legacy tournament win) */
   achievements?: number;
   /** the three badges they chose to show; a minor's only to themselves and friends */
@@ -254,6 +256,7 @@ export class SocialService {
       streak: number;
       tier: string | null;
       frame_sku: string | null;
+      frame_asset: string | null;
       achievements: number;
       equipped_background_sku: string | null;
       bg_asset: string | null;
@@ -301,6 +304,10 @@ export class SocialService {
               CASE WHEN EXISTS (SELECT 1 FROM user_entitlements ef
                                  WHERE ef.user_id = u.id AND ef.sku = u.equipped_frame_sku)
                    THEN u.equipped_frame_sku END AS frame_sku,
+              -- and its picture, for a frame from the shop (a season frame has none)
+              CASE WHEN EXISTS (SELECT 1 FROM user_entitlements ef
+                                 WHERE ef.user_id = u.id AND ef.sku = u.equipped_frame_sku)
+                   THEN (SELECT fr.asset_key FROM shop_items fr WHERE fr.sku = u.equipped_frame_sku AND fr.category = 'frame') END AS frame_asset,
               -- badges earned, and the one old award no badge replaced (the tournament win)
               ((SELECT count(*)::int FROM user_badges ub WHERE ub.user_id = u.id AND ub.tier > 0)
                + (SELECT count(*)::int FROM user_achievements ua
@@ -430,6 +437,7 @@ export class SocialService {
       league: toLeagueTier(u.tier) ? { tier: toLeagueTier(u.tier)! } : null,
       ranks: await this.ranks.profileRanks(targetId, isSelf),
       frameSku: u.frame_sku,
+      frameAssetKey: u.frame_asset,
       achievements: u.achievements,
       // a minor's showcase only to themselves and their friends
       badges: await profileShowcase(this.pool, targetId, viewerId),

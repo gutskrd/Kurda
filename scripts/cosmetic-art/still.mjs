@@ -413,6 +413,33 @@ function finishStill(f, { contrast = 0.12, saturation = 1.05, warmth = 0.03, gra
 }
 
 /**
+ * The line round a thing, as a painter of cut-outs draws it last: the solid
+ * of what has been painted, grown by `width` pixels, laid dark under it, so
+ * that it shows only outside the thing's own edge. What is soft and
+ * half-there (a glow, a flame's haze, cloud) is not the thing and gets no
+ * line; the line fades out along it instead of cutting across it.
+ */
+function inkRound(f, { colour = '#2a1712', width = 3, opacity = 0.92 }) {
+  const count = f.w * f.h;
+  const solid = new Float32Array(count);
+  for (let i = 0; i < count; i++) solid[i] = clamp((f.px[i * 4 + 3] - 0.55) / 0.3, 0, 1);
+  const grown = blurField(solid, f.w, f.h, width * SS * 0.62);
+  const [r, g, b] = rgb(colour);
+  const p = f.px;
+  for (let i = 0; i < count; i++) {
+    // dark wherever the grown shape reaches, strongest hard against the thing
+    const line = clamp((grown[i] - 0.12) / 0.2, 0, 1) * opacity;
+    const a = p[i * 4 + 3];
+    const under = line * (1 - a);
+    if (under <= 0) continue;
+    p[i * 4] += r * under;
+    p[i * 4 + 1] += g * under;
+    p[i * 4 + 2] += b * under;
+    p[i * 4 + 3] = a + under;
+  }
+}
+
+/**
  * The painter's pass (a Kuwahara filter), on a picture with its
  * transparency: every pixel takes the colour of the calmest of the four
  * squares round it, `radius` across, so that what is smooth stays smooth,
@@ -521,6 +548,7 @@ export async function renderStill({ size, steps, light = {}, finish = {} }, seed
   }
   if (finish.paint) paintover(out, Math.round(finish.paint * SS));
   finishStill(out, finish, seed);
+  if (finish.ink) inkRound(out, finish.ink === true ? {} : finish.ink);
   const small = halve(out);
   const px = Buffer.alloc(size * size * 4);
   for (let i = 0; i < small.px.length; i += 4) {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { BadgeMedal, FrameOverlay, LeagueEmblem, PlacementEmblem, RankEmblem, SeasonFrame, frameTier } from './art';
+import { BadgeMedal, FrameOverlay, LeagueEmblem, PictureFrame, PlacementEmblem, RankEmblem, SeasonFrame, frameTier } from './art';
 
 describe('the art, inlined', () => {
   it('labels every drawing with the title it is given', () => {
@@ -135,5 +135,46 @@ describe('the art, inlined', () => {
     expect(container).toBeEmptyDOMElement();
     render(<FrameOverlay sku="frame_rank_zozan" face={84} title={(t) => `${t} frame`} />);
     expect(screen.getByRole('img', { name: 'zozan frame' })).toBeInTheDocument();
+  });
+});
+
+/*
+ * A frame from the shop is a picture with nothing in its middle (the profile
+ * sends its address with the SKU), where a season frame is drawn from its SKU.
+ * Both are laid round a face the same way, at the same size.
+ */
+describe('a frame from the shop', () => {
+  const ART = '/cosmetics/frames/made-01-lale.png';
+
+  it('is laid round a face from its picture, the face in the middle two thirds of it', () => {
+    const { container } = render(
+      <PictureFrame src={ART} size={90}>
+        <img src="/face.png" alt="" />
+      </PictureFrame>,
+    );
+    const frame = container.querySelector('.art-frame.is-made') as HTMLElement;
+    expect(frame.style.width).toBe('90px');
+    expect((frame.querySelector('.art-frame-face') as HTMLElement).style.width).toBe('60px');
+    const ring = frame.querySelector('img.art-frame-ring')!;
+    expect(ring).toHaveAttribute('src', ART);
+    // decoration: whatever it is on says what it is
+    expect(ring).toHaveAttribute('alt', '');
+  });
+
+  it('is the overlay on a profile when the profile sends its picture, and nothing when it does not', () => {
+    const title = (): string => 'season frame';
+    const worn = render(<FrameOverlay sku="frame-made-lale" url={ART} face={84} title={title} />);
+    const ring = worn.container.querySelector('.art-frame-overlay.is-made img.art-frame-ring')!;
+    expect(ring).toHaveAttribute('src', ART);
+    expect(worn.container.querySelector('svg')).toBeNull();
+    worn.unmount();
+    // an older server sends the SKU alone: nothing is drawn rather than a wrong ring
+    const bare = render(<FrameOverlay sku="frame-made-lale" face={84} title={title} />);
+    expect(bare.container.firstChild).toBeNull();
+    bare.unmount();
+    // and a season frame is still drawn from its SKU, whatever picture comes with it
+    const season = render(<FrameOverlay sku="frame_rank_gir" url={ART} face={84} title={title} />);
+    expect(season.container.querySelector('.art-frame-overlay.is-gir svg')).not.toBeNull();
+    expect(season.container.querySelector('img')).toBeNull();
   });
 });

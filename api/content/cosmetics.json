@@ -135,8 +135,8 @@
     },
     {
       "sku": "icon-made-caydan",
-      "name": "Îstîkan",
-      "description": "Tea glass",
+      "name": "Çay",
+      "description": "Tea",
       "assetKey": "icons/made-08-caydan.png",
       "price": 900,
       "premiumOnly": true,
@@ -228,8 +228,8 @@
     },
     {
       "sku": "icon-accessoire-icon-04",
-      "name": "Îstîkan",
-      "description": "Tea glass",
+      "name": "Çay",
+      "description": "Tea",
       "assetKey": "icons/made-08-caydan.png",
       "price": 800,
       "premiumOnly": true,
@@ -1209,6 +1209,62 @@
       "premiumOnly": true,
       "displayOrder": 52,
       "active": false
+    }
+  ],
+  "frames": [
+    {
+      "sku": "frame-made-lale",
+      "name": "Xeleka Laleyan",
+      "description": "Tulip wreath",
+      "assetKey": "frames/made-01-lale.png",
+      "price": 1400,
+      "premiumOnly": false,
+      "displayOrder": 0
+    },
+    {
+      "sku": "frame-made-genim",
+      "name": "Xeleka Genim",
+      "description": "Wheat wreath",
+      "assetKey": "frames/made-02-genim.png",
+      "price": 1200,
+      "premiumOnly": false,
+      "displayOrder": 1
+    },
+    {
+      "sku": "frame-made-kilim",
+      "name": "Xeleka Kilîmê",
+      "description": "Kilim band",
+      "assetKey": "frames/made-03-kilim.png",
+      "price": 1600,
+      "premiumOnly": false,
+      "displayOrder": 2
+    },
+    {
+      "sku": "frame-made-roj",
+      "name": "Xeleka Rojê",
+      "description": "Sun rays",
+      "assetKey": "frames/made-04-roj.png",
+      "price": 2000,
+      "premiumOnly": false,
+      "displayOrder": 3
+    },
+    {
+      "sku": "frame-made-sev",
+      "name": "Xeleka Şevê",
+      "description": "Night sky",
+      "assetKey": "frames/made-05-sev.png",
+      "price": 1800,
+      "premiumOnly": false,
+      "displayOrder": 4
+    },
+    {
+      "sku": "frame-made-newroz",
+      "name": "Xeleka Newrozê",
+      "description": "Newroz fire",
+      "assetKey": "frames/made-06-newroz.png",
+      "price": 2000,
+      "premiumOnly": false,
+      "displayOrder": 5
     }
   ]
 }

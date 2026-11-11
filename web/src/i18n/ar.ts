@@ -1768,7 +1768,7 @@ export const ar: Catalogue = {
   'shop.isYoursTag': '{name} أصبح لك. ستجده في «الوسوم والشارات» ضمن تعديل الملف الشخصي.',
   'shop.isYoursOther': '{name} أصبح لك.',
   'shop.onItsWay': '{name} في طريقه إلى {to}.',
-  'shop.subtitle': 'اشترِ خلفيات ملف شخصي وأيقونات ووسومًا بـ Zêr — لنفسك أو هدية لصديق.',
+  'shop.subtitle': 'اشترِ خلفيات ملف شخصي وأيقونات وإطارات ووسومًا بـ Zêr — لنفسك أو هدية لصديق.',
   'shop.show': 'إظهار',
   'shop.buy': 'اشترِ',
   'shop.amountMore': '{amount} إضافية',

@@ -24,6 +24,7 @@ import {
   type RankTier,
 } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { assetUrl } from '../api/env';
 import { useArtOverride } from '../art/overrides';
 import { useTheme } from '../theme/ThemeProvider';
 
@@ -355,6 +356,83 @@ export function SeasonFramed({
       ) : null}
     </View>
   );
+}
+
+/**
+ * An avatar inside a frame from the shop: the frame's picture (a ring painted
+ * with nothing in its middle) laid over the avatar at the outer `size`, the
+ * avatar at the inner diameter a season frame gives it. A picture that will
+ * not load leaves the avatar as it is, unframed, at the same place and size.
+ * The ring is decoration: whatever it is on (a profile, a tile) says whose
+ * it is and what it is called, so a screen reader is not told of it twice.
+ */
+export function PictureFramed({
+  url,
+  size,
+  children,
+  style,
+}: {
+  /** the site path the API sends (`/cosmetics/frames/…`) or a whole address */
+  url: string;
+  size: number;
+  /** the avatar, drawn at `framedAvatarSize(size)` */
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}): React.JSX.Element {
+  const uri = assetUrl(url);
+  const [broken, setBroken] = useState<string | null>(null);
+  const inner = framedAvatarSize(size);
+  return (
+    <View style={[{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}>
+      <View style={{ width: inner, height: inner }}>{children}</View>
+      {uri && uri !== broken ? (
+        <View {...HIDDEN} pointerEvents="none" style={StyleSheet.absoluteFill}>
+          <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="contain" onError={() => setBroken(uri)} accessibilityIgnoresInvertColors />
+        </View>
+      ) : null}
+    </View>
+  );
+}
+
+/**
+ * An avatar in whatever frame is worn: a season frame, drawn from its SKU; a
+ * frame from the shop, laid on from its picture; or no frame, and then the
+ * avatar alone at its own size, so a screen need not ask which it is.
+ * `label` names a season frame, by its tier, for a screen reader.
+ */
+export function Framed({
+  sku,
+  url,
+  size,
+  label,
+  children,
+  style,
+}: {
+  sku: string | null | undefined;
+  /** a shop frame's picture; a season frame has none */
+  url?: string | null;
+  /** the frame's outer size; the avatar inside is `framedAvatarSize(size)` */
+  size: number;
+  label: (tier: RankTier) => string;
+  children: ReactNode;
+  style?: StyleProp<ViewStyle>;
+}): React.JSX.Element {
+  const tier = frameTierOf(sku);
+  if (tier) {
+    return (
+      <SeasonFramed tier={tier} size={size} label={label(tier)} style={style}>
+        {children}
+      </SeasonFramed>
+    );
+  }
+  if (sku && url) {
+    return (
+      <PictureFramed url={url} size={size} style={style}>
+        {children}
+      </PictureFramed>
+    );
+  }
+  return <>{children}</>;
 }
 
 /** The avatar's diameter inside a frame of `size`. */

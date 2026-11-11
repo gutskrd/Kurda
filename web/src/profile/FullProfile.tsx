@@ -35,8 +35,9 @@ export interface FullProfileView {
   favStory?: FavoriteRef | null;
   online?: boolean;
   country?: { code: string; name: string } | null;
-  /** the season frame worn round the avatar */
+  /** the frame worn round the avatar, and its picture when it is one from the shop */
   frameSku?: string | null;
+  frameUrl?: string | null;
 }
 
 /**
@@ -88,6 +89,7 @@ export function FullProfile({
           online={online}
           level={view.levelInfo}
           frameSku={view.frameSku}
+          frameUrl={view.frameUrl}
           aside={headerAction}
           meta={
             <>

@@ -120,12 +120,28 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     expect(screen.getByRole('button', { name: 'Gir season frame' })).toBeTruthy();
   });
 
-  it('says how frames are earned when you have none, with the way to the season', async () => {
+  it('says how frames are earned when you have none, with the way to the season and to the shop that sells its own', async () => {
     open(BACKGROUNDS);
     fireEvent.click(await screen.findByRole('tab', { name: 'Frames, 0 items' }));
     expect(screen.getByText('No frames yet. When a season ends, everyone who played enough rated games gets a profile frame.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'See this season' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Season');
+    fireEvent.click(screen.getByRole('button', { name: 'Open the Shop' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Shop');
+  });
+
+  it('wears a frame bought in the shop, shown round your face under its own name', async () => {
+    const lale = owned('frame-made-lale', 'Xeleka Laleyan', 'frame', '/cosmetics/frames/made-01-lale.png');
+    const { client } = open([...BACKGROUNDS, ...FRAMES, lale]);
+    fireEvent.click(await screen.findByRole('tab', { name: 'Frames, 3 items' }));
+    // its own name, where a season frame is named for its tier
+    const tile = await screen.findByRole('button', { name: 'Xeleka Laleyan' });
+    expect(tile.querySelector('img')?.getAttribute('src')).toContain('/cosmetics/frames/made-01-lale.png');
+    await act(async () => {
+      fireEvent.click(tile);
+    });
+    expect(screen.getByRole('button', { name: 'Xeleka Laleyan, equipped' })).toBeTruthy();
+    expect(client.calls.find((c) => c.method === 'PUT')).toMatchObject({ path: '/me/cosmetics/frame', body: { sku: 'frame-made-lale' } });
   });
 
   it('shows the Kurdish tag as yours, with the way to where it is shown', async () => {

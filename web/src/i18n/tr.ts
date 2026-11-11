@@ -1769,7 +1769,7 @@ export const tr: Catalogue = {
   'shop.isYoursTag': '{name} artık senin. Onu Profili düzenle’de, Etiketler ve rozetler altında bulabilirsin.',
   'shop.isYoursOther': '{name} artık senin.',
   'shop.onItsWay': '{name}, {to} kişisine gönderiliyor.',
-  'shop.subtitle': 'Zêr ile profil arka planları, simgeler ve etiketler satın al — kendin için ya da bir arkadaşına hediye olarak.',
+  'shop.subtitle': 'Zêr ile profil arka planları, simgeler, çerçeveler ve etiketler satın al — kendin için ya da bir arkadaşına hediye olarak.',
   'shop.show': 'Göster',
   'shop.buy': 'Satın al',
   'shop.amountMore': '{amount} daha',

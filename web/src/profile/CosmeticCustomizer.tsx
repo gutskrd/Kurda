@@ -19,7 +19,7 @@ import {
 } from '../shop/ItemBrowser';
 import { ItemGlyph } from '../shop/ItemGlyph';
 import { ItemPicture } from '../shop/ItemPicture';
-import { SeasonFrame, frameTier } from '../ranks/art';
+import { PictureFrame, SeasonFrame, frameTier } from '../ranks/art';
 import { rankTierNamed } from '../ranks/names';
 import { useAvatarSrc } from '../art/overrides';
 
@@ -53,9 +53,10 @@ const EMPTY: Readonly<Record<Wearable, MessageKey>> = {
 
 /**
  * Owned and buyable, merged: what `/me/inventory` holds and what `/shop` sells,
- * owned first (a unique item the caller owns is not in `/shop` at all). Frames
- * are never on sale (the season hands them out) and the one tag on sale is
- * bought in the Shop, so those two kinds are what is owned.
+ * owned first (a unique item the caller owns is not in `/shop` at all). A
+ * season frame is never on sale (the season hands it out), so it is here only
+ * once owned; the shop's own frames are sold like a background or an icon.
+ * The one tag on sale is bought in the Shop, so tags are what is owned.
  */
 function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { description?: string | null }>): Tile[] {
   const map = new Map<string, Tile>();
@@ -76,7 +77,7 @@ function mergeTiles(shop: ShopItem[], inventory: Array<InventoryItem & { descrip
   }
   for (const it of shop) {
     const kind = itemCategory(it.category);
-    if ((kind !== 'background' && kind !== 'icon') || map.has(it.sku)) continue;
+    if ((kind !== 'background' && kind !== 'icon' && kind !== 'frame') || map.has(it.sku)) continue;
     map.set(it.sku, {
       sku: it.sku,
       name: it.name,
@@ -367,6 +368,13 @@ function CosmeticTile({
             <SeasonFrame tier={tier} size={88} title={tile.name}>
               {face ? <img src={face} alt="" /> : <span className="art-frame-blank" />}
             </SeasonFrame>
+          </span>
+        ) : tile.category === 'frame' && tile.assetUrl ? (
+          // one of the shop's frames, round your own face too
+          <span className="cosmetic-frame" aria-hidden="true">
+            <PictureFrame src={tile.assetUrl} size={88}>
+              {face ? <img src={face} alt="" /> : <span className="art-frame-blank" />}
+            </PictureFrame>
           </span>
         ) : tile.assetUrl ? (
           <ItemPicture src={tile.assetUrl} />

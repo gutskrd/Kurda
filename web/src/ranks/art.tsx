@@ -261,6 +261,24 @@ export function SeasonFrame({
   );
 }
 
+/**
+ * A frame from the shop round a face: its picture (a ring painted with
+ * nothing in its middle, scripts/cosmetic-art/frames.mjs) laid over the
+ * avatar at the size a season frame is, the face filling the same two thirds
+ * of it. Decorative here: the tile or the card it is on names it.
+ */
+export function PictureFrame({ src, size, children }: { src: string; size: number; children: React.ReactNode }): React.JSX.Element {
+  const inner = Math.round(size * SEASON_FRAME_INNER);
+  return (
+    <span className="art-frame is-made" style={{ width: size, height: size }}>
+      <span className="art-frame-face" style={{ width: inner, height: inner }}>
+        {children}
+      </span>
+      <Picture src={src} size={size} title="" className="art-frame-ring" />
+    </span>
+  );
+}
+
 /** The tier a season frame SKU is for (`frame_rank_gir`, `frame_rank_lutke_animated`), or null. */
 export function frameTier(sku: string | null | undefined): RankTier | null {
   if (!sku) return null;
@@ -269,13 +287,28 @@ export function frameTier(sku: string | null | undefined): RankTier | null {
 }
 
 /**
- * A season frame laid round an avatar that is already drawn (the profile
- * card's face): absolutely placed and centred on it, so the card's layout does
- * not move whether or not a frame is worn. Its size follows the face's in CSS
+ * A frame laid round an avatar that is already drawn (the profile card's
+ * face): absolutely placed and centred on it, so the card's layout does not
+ * move whether or not a frame is worn. Its size follows the face's in CSS
  * (the face is the ring's empty middle); `face` only picks the drawing's
  * detail, large or small.
+ *
+ * A season frame is drawn from its SKU. A frame bought in the shop is a
+ * picture, which the profile sends with the SKU (`url`); it is laid on the
+ * same way, and has no gleam of its own to turn.
  */
-export function FrameOverlay({ sku, face, title }: { sku: string | null | undefined; face: number; title: (tier: RankTier) => string }): React.JSX.Element | null {
+export function FrameOverlay({
+  sku,
+  url,
+  face,
+  title,
+}: {
+  sku: string | null | undefined;
+  /** the picture of a frame from the shop; a season frame has none */
+  url?: string | null;
+  face: number;
+  title: (tier: RankTier) => string;
+}): React.JSX.Element | null {
   const id = useArtId();
   const tier = frameTier(sku);
   const size = Math.round(face / SEASON_FRAME_INNER);
@@ -290,7 +323,14 @@ export function FrameOverlay({ sku, face, title }: { sku: string | null | undefi
     () => (tier && !picture && SEASON_FRAME_SHINE[tier] ? seasonFrameShineSvg({ tier, size, idPrefix: `${id}s` }) : null),
     [tier, picture, size, id],
   );
-  if (!tier) return null;
+  if (!tier) {
+    if (!sku || !url) return null;
+    return (
+      <span className="art-frame-overlay is-made">
+        <Picture src={url} size={size} title="" className="art-frame-ring" />
+      </span>
+    );
+  }
   if (picture) {
     return (
       <span className={`art-frame-overlay is-${tier}`}>
