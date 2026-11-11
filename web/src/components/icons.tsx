@@ -17,6 +17,7 @@
  * imports keep that at ~20s and change nothing about the built output.
  */
 import { ArrowRight } from '@phosphor-icons/react/dist/icons/ArrowRight';
+import { At } from '@phosphor-icons/react/dist/icons/At';
 import { ArrowUUpLeft } from '@phosphor-icons/react/dist/icons/ArrowUUpLeft';
 import { MagicWand } from '@phosphor-icons/react/dist/icons/MagicWand';
 import { SlidersHorizontal } from '@phosphor-icons/react/dist/icons/SlidersHorizontal';
@@ -389,6 +390,8 @@ export const HelpIcon = named(Question, 22);
 export const QuotesIcon = named(Quotes, 22);
 export const KeyIcon = named(Key, 22);
 export const ProfileIcon = named(UserCircle, 22);
+/** A username: the sign it is written after. */
+export const AtIcon = named(At, 22);
 /** The account's standing: the same shield as a tier's, drawn in outline at a row's size. */
 export const StandingIcon = named(ShieldCheck, 22);
 

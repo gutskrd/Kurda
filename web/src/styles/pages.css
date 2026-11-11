@@ -3963,6 +3963,39 @@ a.mkp-activity-row:hover {
   margin-top: var(--space-2);
 }
 
+/* the username card: the name as it stands, the names still kept for its owner, and the wait */
+.username-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0 0 16px;
+}
+.username-now dt {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.username-now dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.username-held {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.username-held li + li {
+  margin-top: 4px;
+}
+.username-wait {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--ink-2);
+}
+
 /* ---- who gave them what they are wearing --------------------------------- */
 
 /*

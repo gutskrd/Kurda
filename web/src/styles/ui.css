@@ -171,6 +171,11 @@
   font-size: 0.8rem;
   color: var(--danger);
 }
+/* and what is right with it, where the reader was waiting to be told (a username that is free) */
+.field-ok {
+  font-size: 0.8rem;
+  color: var(--success);
+}
 /* Hide the browser's own password reveal/clear control (Edge/IE ::-ms-reveal,
    ::-ms-clear) so it never doubles up with our custom show/hide eye button. */
 input[type='password']::-ms-reveal,

@@ -54,10 +54,13 @@ export const testAuth: {
   /** `guest: true` for a test of what a guest sees; the stand-in's `isGuest` follows it */
   user: { id: string; username: string; email: string; displayName: string | null; profilePhotoUrl: string | null; emailVerified: boolean; guest?: boolean };
   baseUrl: string;
+  /** reading the account again after something about it changed; a test can ask whether it was */
+  refreshUser: () => Promise<void>;
 } = {
   client: fakeClient(),
   user: { id: 'me', username: 'rojda', email: 'r@example.com', displayName: null, profilePhotoUrl: null, emailVerified: true },
   baseUrl: 'http://api.test',
+  refreshUser: vi.fn(async () => undefined),
 };
 
 export function useAuth() {
