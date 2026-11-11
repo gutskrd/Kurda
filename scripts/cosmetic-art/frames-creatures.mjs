@@ -121,7 +121,6 @@ export const CREATURES = [
         cv.add(shapes.map(([d]) => `<path d="${d}" fill="#ffffff" stroke="#ffffff" stroke-width="11" stroke-linejoin="round"/>`).join(''));
         cv.add(shapes.map(([d, fill]) => `<path d="${d}" fill="${fill}" stroke="${line}" stroke-width="2.4" stroke-linejoin="round"/>`).join(''));
       };
-      s.shadow((cv) => cv.add(`<path d="${ring(208, 194)}"/>`), { blur: 5, opacity: 0.18 });
       s.paint((cv) => {
         cv.add(`<path d="${ring(208, 194)}" fill="${linear(cv, [[0, '#fde6c0'], [0.5, '#f9cf9e'], [1, '#fbe0b4']], 90, 90, 420, 420)}" stroke="#d9a878" stroke-width="1.6"/>`);
         cv.add(`<path d="${round(204)}" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-opacity="0.8"/>`);

@@ -6,8 +6,9 @@
  * (1751000170000). These are for anybody: drawn by the generator as the
  * shop's icons are (scripts/cosmetic-art/frames.mjs) — rings of Kurdish
  * things, wreaths of spring flowers, a fawn, a fox, a snake, wings, stars
- * and light — bought with Zêr, one to a person, and worn through the same
- * `equipped_frame_sku` a season frame is. A frame shows only while it is owned (social/service.ts), so
+ * and light, made things, and dark ones of thorn and smoke — bought with
+ * Zêr, one to a person, and worn through the same `equipped_frame_sku` a
+ * season frame is. A frame shows only while it is owned (social/service.ts), so
  * none is `premium_only`: there is no wearing one on a membership alone.
  *
  * On a row that already exists only the presentation is refreshed (name,
@@ -44,6 +45,16 @@ export const FRAMES = [
   ['frame-made-dem', 'Xeleka Demê', 'Clock face', 'frames/made-19-dem.png', 1500, 18],
   ['frame-made-efsun', 'Xeleka Efsûnê', 'Enchanted ring', 'frames/made-20-efsun.png', 1800, 19],
   ['frame-made-res', 'Xeleka Reş', 'Black scrollwork', 'frames/made-21-res.png', 1700, 20],
+  ['frame-made-neqs', 'Xeleka Neqşê', 'Inlaid band', 'frames/made-22-neqs.png', 1500, 21],
+  ['frame-made-zerin', 'Pelên Zêrîn', 'Golden leaves', 'frames/made-23-zerin.png', 2000, 22],
+  ['frame-made-nisan', 'Nîşangeh', 'Crosshair', 'frames/made-24-nisan.png', 1300, 23],
+  ['frame-made-wene', 'Wêne', 'Instant photo', 'frames/made-25-wene.png', 1300, 24],
+  ['frame-made-dest', 'Xeleka Destan', 'Reaching hands', 'frames/made-26-dest.png', 2000, 25],
+  ['frame-made-tari', 'Xeleka Tarî', 'Black thorns', 'frames/made-27-tari.png', 1800, 26],
+  ['frame-made-ziv', 'Stiriyên Zîvîn', 'Silver thorns', 'frames/made-28-ziv.png', 1900, 27],
+  ['frame-made-stiri', 'Xeleka Stiriyan', 'Ring of thorns', 'frames/made-29-stiri.png', 1700, 28],
+  ['frame-made-dukel', 'Xeleka Dûkelê', 'Smoke ring', 'frames/made-30-dukel.png', 1600, 29],
+  ['frame-made-rojgirtin', 'Rojgirtin', 'Eclipse', 'frames/made-31-rojgirtin.png', 2000, 30],
 ];
 
 export const up = async (pgm) => {

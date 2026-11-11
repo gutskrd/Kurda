@@ -17,7 +17,7 @@ const rad = (deg) => (deg * Math.PI) / 180;
 const off = ([x, y], deg, len) => [x + Math.cos(rad(deg)) * len, y + Math.sin(rad(deg)) * len];
 
 /** A star of four points at `at`, `long` to its points along `turn` and `short` to the two across it, its sides drawn in toward the middle. */
-function sparkle(at, turn, long, short) {
+export function sparkle(at, turn, long, short) {
   const tips = [off(at, turn, long), off(at, turn + 90, short), off(at, turn + 180, long), off(at, turn + 270, short)];
   const waist = (i) => off(at, turn + 45 + i * 90, Math.min(long, short) * 0.2);
   return `M${pt(tips[0])} Q${pt(waist(0))} ${pt(tips[1])} Q${pt(waist(1))} ${pt(tips[2])} Q${pt(waist(2))} ${pt(tips[3])} Q${pt(waist(3))} ${pt(tips[0])} Z`;

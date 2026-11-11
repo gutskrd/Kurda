@@ -4,7 +4,8 @@
  * things — a wreath of tulips, of wheat, a band of kilim, the sun's rays, the
  * night sky, the fire of Newroz — and the list of all of them: the wreaths
  * of spring flowers (frames-garden.mjs), the ones with a living thing in them
- * (frames-creatures.mjs), and the ones of light and metal (frames-light.mjs).
+ * (frames-creatures.mjs), the ones of light and metal (frames-light.mjs), the
+ * made things (frames-made.mjs) and the dark ones (frames-dark.mjs).
  *
  * Every frame is a square with its middle left for the face, which shows
  * through a round opening two thirds of the square across, the share a
@@ -20,8 +21,10 @@
  */
 import { crescent, softly, strokes, within } from './brush.mjs';
 import { CREATURES } from './frames-creatures.mjs';
+import { DARK } from './frames-dark.mjs';
 import { GARDEN } from './frames-garden.mjs';
 import { LIGHTS } from './frames-light.mjs';
+import { MADE } from './frames-made.mjs';
 import { blade, linear, radial, spline } from './icons.mjs';
 import { n, pt } from './kit.mjs';
 import { BOX, C, INK, P, RI, polar, ring, round, star, tangent } from './ring.mjs';
@@ -297,4 +300,4 @@ const FIRST = [
 ];
 
 /** Every frame, in the order the shop shows them: a file's number is its place here, so new ones go at the end. */
-export const FRAMES = [...FIRST, ...GARDEN, ...CREATURES, ...LIGHTS];
+export const FRAMES = [...FIRST, ...GARDEN, ...CREATURES, ...LIGHTS, ...MADE, ...DARK];

@@ -92,7 +92,7 @@ function leaf(cv, at, len, turn, [dark, light], { wide = 0.42, bend = 0.1, line 
 }
 
 /** A strand of vine round the opening at `r`, wandering `sway` in and out `turns` times, as a line to stroke. */
-function strand(r, sway, turns, phase) {
+export function strand(r, sway, turns, phase) {
   const points = [];
   for (let a = 0; a < 360; a += 5) points.push(P(a, r + Math.sin(rad(a * turns + phase)) * sway));
   return spline(points);

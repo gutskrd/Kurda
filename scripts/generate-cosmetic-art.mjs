@@ -57,8 +57,9 @@
  * profile picture, drawn the same way — tulips, wheat, a kilim band, the
  * sun's rays, the night sky, the Newroz fire; wreaths of spring flowers; a
  * fawn, a sleeping fox, a snake, wings; stars, rainbow light, a clock's
- * numerals, glowing signs, black scrollwork — each with its middle left
- * for the face.
+ * numerals, glowing signs, black scrollwork; an inlaid band, gilt leaves, a
+ * sight's cross, a photograph; hands of stone, thorns, smoke, an eclipse —
+ * each with its middle left for the face.
  * Stickers (512×512 WebP, here): the suns, a Kurdistan flag badge, the Hevalo
  * deer and a few words in a badge.
  *
