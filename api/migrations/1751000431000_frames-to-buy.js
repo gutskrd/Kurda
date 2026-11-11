@@ -49,12 +49,11 @@ export const FRAMES = [
   ['frame-made-zerin', 'Pelên Zêrîn', 'Golden leaves', 'frames/made-23-zerin.png', 2000, 22],
   ['frame-made-nisan', 'Nîşangeh', 'Crosshair', 'frames/made-24-nisan.png', 1300, 23],
   ['frame-made-wene', 'Wêne', 'Instant photo', 'frames/made-25-wene.png', 1300, 24],
-  ['frame-made-dest', 'Xeleka Destan', 'Reaching hands', 'frames/made-26-dest.png', 2000, 25],
-  ['frame-made-tari', 'Xeleka Tarî', 'Black thorns', 'frames/made-27-tari.png', 1800, 26],
-  ['frame-made-ziv', 'Stiriyên Zîvîn', 'Silver thorns', 'frames/made-28-ziv.png', 1900, 27],
-  ['frame-made-stiri', 'Xeleka Stiriyan', 'Ring of thorns', 'frames/made-29-stiri.png', 1700, 28],
-  ['frame-made-dukel', 'Xeleka Dûkelê', 'Smoke ring', 'frames/made-30-dukel.png', 1600, 29],
-  ['frame-made-rojgirtin', 'Rojgirtin', 'Eclipse', 'frames/made-31-rojgirtin.png', 2000, 30],
+  ['frame-made-tari', 'Xeleka Tarî', 'Black thorns', 'frames/made-26-tari.png', 1800, 25],
+  ['frame-made-ziv', 'Stiriyên Zîvîn', 'Silver thorns', 'frames/made-27-ziv.png', 1900, 26],
+  ['frame-made-stiri', 'Xeleka Stiriyan', 'Ring of thorns', 'frames/made-28-stiri.png', 1700, 27],
+  ['frame-made-dukel', 'Xeleka Dûkelê', 'Smoke ring', 'frames/made-29-dukel.png', 1600, 28],
+  ['frame-made-rojgirtin', 'Rojgirtin', 'Eclipse', 'frames/made-30-rojgirtin.png', 2000, 29],
 ];
 
 export const up = async (pgm) => {

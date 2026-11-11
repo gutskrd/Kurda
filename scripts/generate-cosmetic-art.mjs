@@ -58,7 +58,7 @@
  * sun's rays, the night sky, the Newroz fire; wreaths of spring flowers; a
  * fawn, a sleeping fox, a snake, wings; stars, northern lights, a clock's
  * numerals, glowing signs, black scrollwork; an inlaid band, gilt leaves, a
- * sight's cross, a photograph; hands of stone, thorns, smoke, an eclipse —
+ * sight's cross, a photograph; thorns, smoke, an eclipse —
  * each with its middle left for the face.
  * Stickers (512×512 WebP, here): the suns, a Kurdistan flag badge, the Hevalo
  * deer and a few words in a badge.

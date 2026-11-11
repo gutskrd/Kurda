@@ -1,8 +1,7 @@
 /**
- * Frames for the dark hours (see frames.mjs): hands of stone reaching for one
- * another round the face, a black ring grown over with thorns, thorns of
- * bright metal, a ring plaited of thorn branches, a ring of smoke, and the
- * light that stands round the moon when it covers the sun.
+ * Frames for the dark hours (see frames.mjs): a black ring grown over with
+ * thorns, thorns of bright metal, a ring plaited of thorn branches, a ring of
+ * smoke, and the light that stands round the moon when it covers the sun.
  *
  * Black on a dark page is nothing, so each of these carries its own light: a
  * pale edge to every thorn, a line of red, the glint on metal.
@@ -19,88 +18,6 @@ const rad = (deg) => (deg * Math.PI) / 180;
 const off = ([x, y], deg, len) => [x + Math.cos(rad(deg)) * len, y + Math.sin(rad(deg)) * len];
 
 export const DARK = [
-  {
-    key: 'dest',
-    ku: 'Xeleka Destan',
-    en: 'Reaching hands',
-    // a ring of arms: eight hands of grey stone, in pairs, each pair reaching for the other and not quite
-    // touching — at the top, at the foot and at either side — their arms the ring itself, wound through with
-    // threads of dark red
-    still(rnd) {
-      const s = new Still(rnd);
-      const R = 196;
-      const ink = '#1c2030';
-      // a hand is drawn flat — `u` along it from the wrist, `v` across it — and then laid along the ring from
-      // `a0`, reaching the way `dir` says, so that it bends as the ring does
-      const lay = (a0, dir) => ([u, v]) => P(a0 + dir * (u / R) * (180 / Math.PI), R + v);
-      const hand = (a0, dir) => {
-        const on = lay(a0, dir);
-        const run = (points) => spline(points.map(on));
-        const limb = (points, w0, w1) => tube(points.map(on), w0, w1, 12);
-        // (a finger: from its knuckle, a little spread, bending at its middle joint)
-        const finger = (v0, len, wide, spread) => {
-          const mid = [36 + len * 0.55 * Math.cos(rad(spread)), v0 + len * 0.55 * Math.sin(rad(spread))];
-          const tip = [mid[0] + len * 0.5 * Math.cos(rad(spread * 2.2)), mid[1] + len * 0.5 * Math.sin(rad(spread * 2.2))];
-          return { d: limb([[30, v0], mid, tip], wide, wide * 0.42), mid: on(mid), knuckle: on([36, v0]) };
-        };
-        const arm = [];
-        for (let u = -72; u <= 2; u += 9.25) arm.push([u, -11 - (u / -72) * 2.5]);
-        for (let u = 2; u >= -72; u -= 9.25) arm.push([u, 11 + (u / -72) * 3]);
-        const fingers = [finger(-12.4, 30, 9.4, -7), finger(-4.2, 35, 9.8, -2), finger(4.2, 32, 9.4, 3), finger(12, 24, 8, 10)];
-        return {
-          arm: `M${arm.map(on).map(pt).join(' L')} Z`,
-          palm: run([[0, -11], [12, -14.5], [26, -16.5], [37, -16.5], [41, -8], [42, 0], [41, 8], [37, 16.5], [26, 16], [12, 13.5], [0, 11]]),
-          thumb: limb([[10, -12], [25, -27], [40, -35]], 11, 5),
-          fingers,
-          on,
-        };
-      };
-      const hands = [];
-      for (const m of [-90, 0, 90, 180]) {
-        hands.push(hand(m - 24, 1));
-        hands.push(hand(m + 24, -1));
-      }
-      s.paint((cv) => {
-        // the threads, under everything: dark red, wandering round the ring and out of it
-        const reds = ['#5a0e22', '#8a1830', '#b8243e', '#7a1428', '#c8304a'];
-        let threads = '';
-        for (let i = 0; i < 7; i++) threads += `<path d="${strand(194 + (i % 3) * 5, 9 + (i % 4) * 4, 4 + (i % 5), i * 57)}" fill="none" stroke="${reds[i % reds.length]}" stroke-width="${n(2.6 + (i % 3) * 1.2)}" stroke-linejoin="round"/>`;
-        for (let i = 0; i < 26; i++) {
-          const a = i * (360 / 26) + rnd() * 8;
-          const from = P(a, 204 + rnd() * 8);
-          threads += `<path d="M${pt(from)} Q${pt(P(a + 6, 226 + rnd() * 10))} ${pt(P(a + 12 + rnd() * 6, 214 + rnd() * 22))}" fill="none" stroke="${reds[i % reds.length]}" stroke-width="${n(1.8 + rnd() * 1.4)}" stroke-linecap="round"/>`;
-        }
-        cv.add(threads);
-      });
-      s.paint((cv) => {
-        // the arms and the hands: a dark line round each whole hand, then its stone
-        const parts = (h) => [h.arm, h.thumb, ...h.fingers.map((f) => f.d), h.palm];
-        cv.add(hands.map((h) => parts(h).map((d) => `<path d="${d}" fill="${ink}" stroke="${ink}" stroke-width="4.6" stroke-linejoin="round"/>`).join('')).join(''));
-        for (const h of hands) {
-          cv.add(`<path d="${h.arm}" fill="#77829a"/>`);
-          cv.add(`<path d="${h.thumb}" fill="#aab4c8"/>`);
-          cv.add(h.fingers.map((f) => `<path d="${f.d}" fill="#b6bfd0"/>`).join(''));
-          cv.add(`<path d="${h.palm}" fill="${linear(cv, [[0, '#8e99b0'], [1, '#b6bfd0']], ...h.on([0, 0]), ...h.on([42, 0]))}"/>`);
-          // the back of the hand: its tendons, its knuckles, the joints of the fingers, and the wrap on the arm
-          let marks = '';
-          for (const f of h.fingers) {
-            marks += `<path d="M${pt(h.on([8, 0]))} L${pt(f.knuckle)}" stroke="#6a7590" stroke-width="1.4" stroke-opacity="0.7"/>`;
-            marks += `<circle cx="${n(f.knuckle[0])}" cy="${n(f.knuckle[1])}" r="2.6" fill="#d6dce8" fill-opacity="0.8"/>`;
-            marks += `<circle cx="${n(f.mid[0])}" cy="${n(f.mid[1])}" r="1.8" fill="#6a7590" fill-opacity="0.8"/>`;
-          }
-          for (const u of [-14, -30, -46, -62]) marks += `<path d="M${pt(h.on([u, -12]))} L${pt(h.on([u + 9, 12]))}" stroke="#545e78" stroke-width="1.6" stroke-opacity="0.8"/>`;
-          cv.add(`<g stroke-linecap="round">${marks}</g>`);
-        }
-      });
-      s.paint((cv) => {
-        // a few threads over the arms, where they are bound
-        let over = '';
-        for (const m of [-45, 45, 135, 225]) for (const k of [-5, 0, 5]) over += `<path d="M${pt(P(m + k - 3, 180))} Q${pt(P(m + k, 196))} ${pt(P(m + k + 3, 213))}" fill="none" stroke="#a81e38" stroke-width="3.2" stroke-linecap="round"/>`;
-        cv.add(over);
-      });
-      return s.done({ finish: { paint: 0.6, grain: 0.012, contrast: 0.07, saturation: 1, ink: { colour: '#1c2030', width: 1.6 } } });
-    },
-  },
   {
     key: 'tari',
     ku: 'Xeleka Tarî',

@@ -1438,58 +1438,49 @@
       "displayOrder": 24
     },
     {
-      "sku": "frame-made-dest",
-      "name": "Xeleka Destan",
-      "description": "Reaching hands",
-      "assetKey": "frames/made-26-dest.png",
-      "price": 2000,
-      "premiumOnly": false,
-      "displayOrder": 25
-    },
-    {
       "sku": "frame-made-tari",
       "name": "Xeleka Tarî",
       "description": "Black thorns",
-      "assetKey": "frames/made-27-tari.png",
+      "assetKey": "frames/made-26-tari.png",
       "price": 1800,
       "premiumOnly": false,
-      "displayOrder": 26
+      "displayOrder": 25
     },
     {
       "sku": "frame-made-ziv",
       "name": "Stiriyên Zîvîn",
       "description": "Silver thorns",
-      "assetKey": "frames/made-28-ziv.png",
+      "assetKey": "frames/made-27-ziv.png",
       "price": 1900,
       "premiumOnly": false,
-      "displayOrder": 27
+      "displayOrder": 26
     },
     {
       "sku": "frame-made-stiri",
       "name": "Xeleka Stiriyan",
       "description": "Ring of thorns",
-      "assetKey": "frames/made-29-stiri.png",
+      "assetKey": "frames/made-28-stiri.png",
       "price": 1700,
       "premiumOnly": false,
-      "displayOrder": 28
+      "displayOrder": 27
     },
     {
       "sku": "frame-made-dukel",
       "name": "Xeleka Dûkelê",
       "description": "Smoke ring",
-      "assetKey": "frames/made-30-dukel.png",
+      "assetKey": "frames/made-29-dukel.png",
       "price": 1600,
       "premiumOnly": false,
-      "displayOrder": 29
+      "displayOrder": 28
     },
     {
       "sku": "frame-made-rojgirtin",
       "name": "Rojgirtin",
       "description": "Eclipse",
-      "assetKey": "frames/made-31-rojgirtin.png",
+      "assetKey": "frames/made-30-rojgirtin.png",
       "price": 2000,
       "premiumOnly": false,
-      "displayOrder": 30
+      "displayOrder": 29
     }
   ]
 }

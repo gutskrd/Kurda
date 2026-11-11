@@ -73,7 +73,7 @@ describe.skipIf(!DATABASE_URL)('frames bought in the shop (integration)', () => 
     expect(res.statusCode).toBe(200);
     const frames = (res.json().items as Array<{ sku: string; category: string; currency: string; price: number; assetUrl: string | null; premiumOnly: boolean }>).filter((i) => i.category === 'frame');
     expect(frames.map((f) => f.sku).sort()).toEqual(CATALOGUE.map((f) => f.sku).sort());
-    expect(frames.length).toBeGreaterThanOrEqual(31);
+    expect(frames.length).toBeGreaterThanOrEqual(30);
     for (const f of frames) {
       expect(f.currency).toBe('zer');
       expect(f.price).toBeGreaterThanOrEqual(1200);
