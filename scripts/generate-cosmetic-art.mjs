@@ -49,8 +49,8 @@
  * tied with a bow, a white dove carrying a letter, the Newroz fire — painted
  * by hand rather than modelled, their light and shadow laid on as a painter
  * lays them and brushed over (cosmetic-art/brush.mjs), a dark line drawn
- * round each as round a cut-out; and one drawn as a sticker is, a fawn in
- * flat colour with a thick line round every part of it,
+ * round each as round a cut-out; and one drawn soft, as with a pastel, a
+ * fawn sitting up with no line round it,
  * and cut out of the dark, so that each lies over a profile picture with
  * nothing round it but its own light (cosmetic-art/still.mjs).
  * Frames (512×512 PNG, cosmetic-art/frames.mjs): rings to wear round a

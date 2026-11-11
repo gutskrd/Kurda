@@ -1,6 +1,6 @@
 /**
- * Frames with a living thing in them (see frames.mjs): the fawn of the icons
- * curled into a ring, a fox asleep on one, the snake that holds its own tail,
+ * Frames with a living thing in them (see frames.mjs): a fawn curled into a
+ * ring, a fox asleep on one, the snake that holds its own tail,
  * and a pair of wings folded round the face, in white and in black.
  *
  * The fawn and the fox are drawn as stickers are, in flat colour with a line
@@ -59,7 +59,7 @@ export const CREATURES = [
     key: 'ask',
     ku: 'Xeleka Askê',
     en: 'Fawn',
-    // the fawn of the shop's icon curled into a ring: its head at the top looking out over the face, its short
+    // a fawn curled into a ring: its head at the top looking out over the face, its short
     // antlers and its ears, the ring its body, tan with a young deer's white spots along the lower half, and its
     // scut of a tail standing out at the lower right; drawn as a sticker, with a thick brown line
     still(rnd) {

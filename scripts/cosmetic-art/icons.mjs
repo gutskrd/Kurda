@@ -461,67 +461,85 @@ export const ICONS = [
     key: 'ask',
     ku: 'Ask',
     en: 'Deer',
-    // a fawn, drawn as a sticker is: standing, its body turned a little away and its big round head toward us,
-    // two dots for eyes set wide, a small dark nose, pink in its cheeks and its ears, a pair of short antlers
-    // with one tine each; a warm tan with cream on its muzzle and down its chest, the white spots of a young
-    // deer over its back, a scut of a tail held up, dark hooves; flat colour, and a thick brown line round
-    // every part of it
+    // a fawn sitting up and looking at us, drawn soft, as with a pastel on rough paper, and no line round it: a
+    // big round head, a pale face that comes up in two curves round the eyes, two dots for eyes and a small red
+    // nose, round ears, a pair of short brown antlers and a tuft between them; a small body with a pale front,
+    // its forefeet together before it and its hind feet out at either side, dark at the hoof, a stub of a tail
     still(rnd) {
-      const s = new Still(rnd).place([10, 4], 0.98);
-      const ink = '#4a2e1c';
-      const TAN = '#e3a76b';
-      const CREAM = '#fff1dc';
-      const outline = (d, fill, width = 7) => `<path d="${d}" fill="${fill}" stroke="${ink}" stroke-width="${width}" stroke-linejoin="round" stroke-linecap="round"/>`;
-      // a leg: short and round, from inside the body down to its hoof, a little narrower at the foot
-      const leg = (x, top) => `M${x - 20} ${top} L${x - 15} 432 Q${x - 15} 446 ${x - 4} 446 L${x + 4} 446 Q${x + 15} 446 ${x + 15} 432 L${x + 20} ${top} Z`;
-      const hoof = (x) => `M${x - 16} 422 L${x - 15} 432 Q${x - 15} 446 ${x - 4} 446 L${x + 4} 446 Q${x + 15} 446 ${x + 15} 432 L${x + 16} 422 Z`;
-      const body = spline([[212, 306], [244, 268], [304, 254], [366, 264], [400, 300], [398, 344], [352, 372], [276, 374], [224, 354]]);
-      const head = spline([[200, 118], [252, 132], [286, 182], [278, 236], [238, 268], [200, 276], [162, 268], [122, 236], [114, 182], [148, 132]]);
-      const tail = 'M392 284 Q418 262 440 236 Q452 262 432 286 Q416 302 396 300 Z';
-      const ear = (side) => blade([200 + side * 70, 156], [200 + side * 140, 112], 62, { at: 0.5, point: 0.35 });
-      const inner = (side) => blade([200 + side * 82, 150], [200 + side * 128, 120], 34, { at: 0.5, point: 0.35 });
-      // an antler: a short beam leaning out, and one tine off the outside of it, both round-ended
-      const antler = (side) => `M${200 + side * 32} 128 Q${200 + side * 34} 94 ${200 + side * 48} 60 M${200 + side * 38} 96 Q${200 + side * 56} 88 ${200 + side * 74} 72`;
-      s.paint((cv) => {
-        // the far legs first, a shade darker; then the tail, and the body and its near legs as one shape, so
-        // that the line goes round all of it and none is drawn where a leg joins
-        for (const x of [268, 350]) cv.add(outline(leg(x, 330), '#cf9258') + `<path d="${hoof(x)}" fill="${ink}" stroke="${ink}" stroke-width="2"/>`);
-        cv.add(outline(tail, TAN));
-        cv.add('<path d="M404 290 Q424 272 440 244 Q446 264 430 282 Q418 294 404 296 Z" fill="#fffaf0"/>');
-        const whole = [body, leg(236, 330), leg(384, 326)];
-        cv.add(whole.map((d) => `<path d="${d}" fill="${ink}" stroke="${ink}" stroke-width="14" stroke-linejoin="round"/>`).join('') + whole.map((d) => `<path d="${d}" fill="${TAN}"/>`).join(''));
-        for (const x of [236, 384]) cv.add(`<path d="${hoof(x)}" fill="${ink}" stroke="${ink}" stroke-width="2"/>`);
-        cv.add(`<g clip-path="${within(cv, body)}">`);
-        // cream down its chest and under its belly; its back a little lighter where the light is on it
-        cv.add(`<ellipse cx="220" cy="326" rx="30" ry="44" fill="${CREAM}"/>`);
-        cv.add(`<ellipse cx="318" cy="262" rx="78" ry="22" fill="#f1bd84" fill-opacity="0.7" filter="${softly(cv, 8)}"/>`);
-        // the spots of a young deer, over its back and its haunch
-        for (const [x, y, r] of [[286, 280, 9], [316, 272, 10.5], [346, 282, 9], [372, 300, 8], [330, 302, 8.5], [300, 306, 7], [360, 326, 7]]) cv.add(`<ellipse cx="${x}" cy="${y}" rx="${r}" ry="${n(r * 0.82)}" fill="#fff6e4"/>`);
-        cv.add('</g>');
-      });
-      // its head, over its shoulders: the antlers and the ears behind it
-      s.paint((cv) => {
-        for (const side of [-1, 1]) {
-          cv.add(`<path d="${antler(side)}" fill="none" stroke="${ink}" stroke-width="25" stroke-linecap="round" stroke-linejoin="round"/>`);
-          cv.add(`<path d="${antler(side)}" fill="none" stroke="#8a5e3c" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>`);
-          cv.add(`<path d="M${200 + side * 36} 112 Q${200 + side * 38} 92 ${200 + side * 46} 70" fill="none" stroke="#a87a52" stroke-width="4" stroke-linecap="round" stroke-opacity="0.8"/>`);
-          cv.add(outline(ear(side), TAN));
-          cv.add(`<path d="${inner(side)}" fill="#f7bdb4"/>`);
+      const s = new Still(rnd).place([0, -4], 1.02);
+      const TAN = '#e39a58';
+      const DEEP = '#cf8442';
+      const CREAM = '#fbe9bf';
+      const HOOF = '#a9683a';
+      const box = [60, 40, 452, 492];
+      // (a round shape, its radius a little uneven, as a hand draws one)
+      const blob = ([cx, cy], rx, ry, turn = 0, wobble = 0.03) => {
+        const out = [];
+        const [c, si] = [Math.cos((turn * Math.PI) / 180), Math.sin((turn * Math.PI) / 180)];
+        const phase = rnd() * 6;
+        for (let i = 0; i < 26; i++) {
+          const t = (i / 26) * Math.PI * 2;
+          const k = 1 + wobble * Math.sin(t * 3 + phase) + wobble * 0.6 * Math.sin(t * 5 + phase * 2);
+          out.push([cx + Math.cos(t) * rx * k * c - Math.sin(t) * ry * k * si, cy + Math.cos(t) * rx * k * si + Math.sin(t) * ry * k * c]);
         }
-        cv.add(outline(head, TAN));
-        cv.add(`<g clip-path="${within(cv, head)}">`);
-        // its muzzle, cream, coming up between the eyes a little; the light on its brow
-        cv.add(`<path d="${spline([[200, 196], [236, 214], [262, 250], [240, 290], [200, 296], [160, 290], [138, 250], [164, 214]])}" fill="${CREAM}"/>`);
-        cv.add(`<ellipse cx="200" cy="136" rx="62" ry="20" fill="#f1bd84" fill-opacity="0.75" filter="${softly(cv, 8)}"/>`);
-        // pink in its cheeks
-        cv.add(`<ellipse cx="140" cy="232" rx="18" ry="11" fill="#f6a8a0" fill-opacity="0.75" filter="${softly(cv, 3)}"/><ellipse cx="260" cy="232" rx="18" ry="11" fill="#f6a8a0" fill-opacity="0.75" filter="${softly(cv, 3)}"/>`);
-        cv.add('</g>');
-        // its eyes, two dots with a light in each; its nose, and a small mouth under it
-        for (const x of [160, 240]) cv.add(`<ellipse cx="${x}" cy="206" rx="10" ry="13" fill="#2a1a12"/><circle cx="${x - 3}" cy="201" r="3.6" fill="#ffffff"/><circle cx="${x + 3.4}" cy="211" r="1.8" fill="#ffffff" fill-opacity="0.85"/>`);
-        cv.add('<path d="M190 229 Q200 225 210 229 Q211 236 200 241 Q189 236 190 229 Z" fill="#3a2418"/><ellipse cx="197" cy="231" rx="3" ry="1.7" fill="#8a6a58"/>');
-        cv.add(`<path d="M200 241 L200 247 M190 250 Q195 254 200 247 Q205 254 210 250" fill="none" stroke="${ink}" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>`);
+        return spline(out);
+      };
+      // the pastel's edge: everything drawn through it is frayed a little, the way the stick drags on the paper
+      const frayed = (cv, tear = 6.5) => {
+        const f = cv.id('fray');
+        cv.def(`<filter id="${f}" x="-60%" y="-60%" width="220%" height="220%"><feTurbulence type="fractalNoise" baseFrequency="0.26" numOctaves="2" seed="${Math.floor(rnd() * 1000)}" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="${tear}" xChannelSelector="R" yChannelSelector="G"/><feGaussianBlur stdDeviation="0.9"/></filter>`);
+        return `url(#${f})`;
+      };
+      // a mass of colour laid in with the pastel: the shape, frayed, and the grain of the paper showing in it
+      const mass = (cv, d, fill, { light = '#fff3d8', dark = DEEP, grain = 150 } = {}) => {
+        cv.add(`<path d="${d}" fill="${fill}" filter="${frayed(cv)}"/>`);
+        specks(cv, rnd, d, box, { count: grain * 3, colours: [light], size: [0.8, 2.4], opacity: [0.08, 0.24] });
+        specks(cv, rnd, d, box, { count: grain * 2, colours: [dark], size: [0.8, 2.2], opacity: [0.06, 0.18] });
+      };
+      const head = blob([256, 214], 134, 112, 0, 0.025);
+      const body = blob([256, 392], 84, 78, 0, 0.03);
+      // its face: pale, coming up in a curve round each eye and dipping between them
+      const face = spline([[256, 196], [224, 174], [182, 186], [158, 230], [172, 278], [212, 302], [256, 307], [300, 302], [340, 278], [354, 230], [330, 186], [288, 174]]);
+      s.paint((cv) => {
+        // behind it: its tail, its hind feet, its antlers and its ears
+        mass(cv, blob([342, 402], 26, 17, -42), TAN, { grain: 30 });
+        mass(cv, blob([354, 392], 12, 8, -42), CREAM, { grain: 10, dark: '#e8c98a' });
+        for (const side of [-1, 1]) {
+          mass(cv, blob([256 + side * 84, 452], 40, 30, side * 8), TAN, { grain: 50 });
+          mass(cv, blob([256 + side * 90, 468], 34, 19, side * 6), HOOF, { grain: 30, light: '#d9a26a', dark: '#7a4622' });
+          // an antler: a short beam and one tine, both blunt
+          const antler = `M${256 + side * 60} 130 Q${256 + side * 60} 100 ${256 + side * 70} 76 M${256 + side * 62} 104 Q${256 + side * 80} 98 ${256 + side * 98} 82`;
+          cv.add(`<path d="${antler}" fill="none" stroke="#a5683a" stroke-width="23" stroke-linecap="round" stroke-linejoin="round" filter="${frayed(cv, 5)}"/>`);
+          cv.add(`<path d="M${256 + side * 57} 122 Q${256 + side * 58} 104 ${256 + side * 64} 90" fill="none" stroke="#c28a56" stroke-width="6" stroke-linecap="round" stroke-opacity="0.6" filter="${softly(cv, 2)}"/>`);
+          mass(cv, blob([256 + side * 132, 150], 50, 44, side * 28), TAN, { grain: 60 });
+          mass(cv, blob([256 + side * 134, 154], 30, 26, side * 28), CREAM, { grain: 24, dark: '#e8c98a' });
+        }
       });
-      return s.done({ finish: { paint: 0, grain: 0.008, contrast: 0.04, saturation: 1.02 } });
+      s.paint((cv) => {
+        // its body, pale down the front, and its forefeet together before it
+        mass(cv, body, TAN, { grain: 170 });
+        mass(cv, blob([256, 392], 42, 56, 0, 0.04), CREAM, { grain: 60, dark: '#e8c98a' });
+        for (const side of [-1, 1]) {
+          mass(cv, blob([256 + side * 30, 446], 28, 36), TAN, { grain: 46 });
+          mass(cv, blob([256 + side * 30, 470], 27, 17), HOOF, { grain: 26, light: '#d9a26a', dark: '#7a4622' });
+        }
+        // (the shade its head throws on it)
+        cv.add(`<ellipse cx="256" cy="330" rx="74" ry="20" fill="#b9682c" fill-opacity="0.3" filter="${softly(cv, 8)}" clip-path="${within(cv, body)}"/>`);
+      });
+      s.paint((cv) => {
+        // its head: the tuft on top first, then the head and the pale of its face
+        mass(cv, blob([246, 108], 20, 16, -20), TAN, { grain: 16 });
+        mass(cv, blob([270, 104], 16, 14, 20), TAN, { grain: 12 });
+        mass(cv, head, TAN, { grain: 300 });
+        cv.add(`<ellipse cx="256" cy="140" rx="84" ry="26" fill="#f4bb7a" fill-opacity="0.6" filter="${softly(cv, 9)}" clip-path="${within(cv, head)}"/>`);
+        cv.add(`<path d="M244 112 Q262 98 274 112 Q262 108 256 122" fill="none" stroke="${DEEP}" stroke-width="5" stroke-linecap="round" stroke-opacity="0.75" filter="${softly(cv, 1.2)}"/>`);
+        mass(cv, face, CREAM, { grain: 150, light: '#fffaf0', dark: '#ecce90' });
+        // its eyes, its nose, and a little pink in its cheeks
+        cv.add(`<g filter="${frayed(cv, 2.2)}"><ellipse cx="214" cy="246" rx="10" ry="11.5" fill="#3a2418"/><ellipse cx="298" cy="246" rx="10" ry="11.5" fill="#3a2418"/><ellipse cx="256" cy="258" rx="16" ry="11" fill="#cb4a30"/></g>`);
+        cv.add('<ellipse cx="251" cy="254.6" rx="5" ry="2.6" fill="#ef8a6a" fill-opacity="0.7"/>');
+        cv.add(`<ellipse cx="186" cy="270" rx="16" ry="9" fill="#f6a08c" fill-opacity="0.4" filter="${softly(cv, 4)}"/><ellipse cx="326" cy="270" rx="16" ry="9" fill="#f6a08c" fill-opacity="0.4" filter="${softly(cv, 4)}"/>`);
+      });
+      return s.done({ finish: { paint: 0, grain: 0.04, contrast: 0.03, saturation: 1 } });
     },
   },
   {
