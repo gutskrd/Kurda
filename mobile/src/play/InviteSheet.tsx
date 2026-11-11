@@ -52,7 +52,7 @@ import { PictureTiles } from '../impostor/parts';
 import { usePartyOffer } from '../party/offer';
 import { PARTY_LEVEL_KEY } from '../party/PartyStart';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
-import { BluffChoices, RaceChoices } from '../games/partyChoices';
+import { RaceChoices } from '../games/partyChoices';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
@@ -148,26 +148,22 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const [dialect, setDialect] = useState<StoryDialect>(locale === 'ckb' ? 'sorani' : (prefs.dialect ?? 'kurmanci'));
   // The Last Letter, in the dialects whose dictionary can check players' words (asked only where it could be offered)
   const letterDialects = offeredDialects(useLastLetterAvailability(target.kind !== 'lobby'), 'group');
-  // the party games, in the varieties and at the levels their approved cards allow
+  // Kurdish Impostor, in the varieties and at the levels its approved cards allow
   const impostorOffer = usePartyOffer('impostor', target.kind !== 'lobby') ?? [];
-  const dontSayOffer = usePartyOffer('dont-say', target.kind !== 'lobby') ?? [];
-  // Kurdish Bluff and the Who Am I? race, where their content lets them be played
-  const bluffOffers = useMpAvailability('bluff', target.kind !== 'lobby');
+  // the Who Am I? race, where its content lets it be played
   const raceOffers = useMpAvailability('who-am-i', target.kind !== 'lobby');
   const offeredGames = PLAY_GAMES.filter(
     (g) =>
       fixedGame === g ||
       ((g !== 'last-letter' || letterDialects.length > 0) &&
         (g !== 'impostor' || impostorOffer.length > 0) &&
-        (g !== 'dont-say' || dontSayOffer.length > 0) &&
-        (g !== 'bluff' || groupDialects(bluffOffers).length > 0) &&
         (g !== 'who-am-i' || groupDialects(raceOffers).length > 0)),
   );
   const [partyLevel, setPartyLevel] = useState<GameDifficulty>('beginner');
   const [clueSeconds, setClueSeconds] = useState<string>(String(IMPOSTOR_DEFAULT_CLUE_SECONDS));
   // the category Impostor's word is drawn from: '' for any
   const [category, setCategory] = useState('');
-  // Bluff's and the race's choices, handed up by their own fields; null when the game cannot be made in the Kurdish chosen
+  // the race's choices, handed up by its own fields; null when the game cannot be made in the Kurdish chosen
   const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [story, setStory] = useState<SetupState>(() => initialSetup({ mode: 'duo', dialect, length: 'short' }));
@@ -267,11 +263,10 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
     });
   };
 
-  /** A party game's lobby: a variety it is offered in (the chosen one when it is), at a level offered there. */
+  /** An Impostor lobby: a variety it is offered in (the chosen one when it is), at a level offered there. */
   const partyChoice = (): { dialect: GameDialect; levels: GameDifficulty[]; level: GameDifficulty } => {
-    const offer = game === 'impostor' ? impostorOffer : dontSayOffer;
     const wanted: GameDialect = dialect === 'sorani' ? 'ckb' : 'kmr';
-    const here = offer.find((o) => o.dialect === wanted) ?? offer[0];
+    const here = impostorOffer.find((o) => o.dialect === wanted) ?? impostorOffer[0];
     const levels = here?.difficulties ?? [];
     return { dialect: here?.dialect ?? wanted, levels, level: levels.includes(partyLevel) ? partyLevel : (levels[0] ?? 'beginner') };
   };
@@ -283,21 +278,16 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const settings = (): Record<string, unknown> => {
     if (game === 'wordle-battle') return { difficulty, rated };
     if (game === 'rhyme-match') return { dialect, rated };
-    if (game === 'impostor' || game === 'dont-say') {
+    if (game === 'impostor') {
       const party = partyChoice();
-      return {
-        dialect: party.dialect,
-        difficulty: party.level,
-        ...(game === 'impostor' ? { clueSeconds: Number(clueSeconds), category: categoryNow || null } : {}),
-        rated,
-      };
+      return { dialect: party.dialect, difficulty: party.level, clueSeconds: Number(clueSeconds), category: categoryNow || null, rated };
     }
     if (game === 'last-letter') {
       // a Last Letter lobby is in one dialect the dictionary can check: the chosen one if it is offered
       const wanted = dialect === 'sorani' ? 'ckb' : 'kmr';
       return { dialect: letterDialects.includes(wanted) || letterDialects.length === 0 ? wanted : letterDialects[0], rated };
     }
-    if (game === 'bluff' || game === 'who-am-i') return { ...(partySettings ?? {}), rated };
+    if (game === 'who-am-i') return { ...(partySettings ?? {}), rated };
     return { ...inviteSettings({ ...story, dialect }), rated };
   };
 
@@ -362,7 +352,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const needsFriend = target.kind === 'lobby' || target.kind === 'new' || target.kind === 'dm';
   const disabled = needsFriend && picked.length === 0;
   const storyDisabled = game === 'stories' && target.kind !== 'lobby' && stories.length === 0;
-  const partyDisabled = (game === 'bluff' || game === 'who-am-i') && target.kind !== 'lobby' && partySettings === null;
+  const partyDisabled = game === 'who-am-i' && target.kind !== 'lobby' && partySettings === null;
 
   const friendRow = (f: FriendSummary) => {
     const locked = f.userId === lockedId;
@@ -490,7 +480,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
             </View>
           )}
 
-          {(game === 'impostor' || game === 'dont-say') && partyChoice().levels.length > 0 ? (
+          {game === 'impostor' && partyChoice().levels.length > 0 ? (
             <View style={styles.field}>
               <SectionLabel>{t('games.party.level')}</SectionLabel>
               <Segmented<GameDifficulty>
@@ -535,7 +525,6 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
               />
             </View>
           ) : null}
-          {game === 'bluff' ? <BluffChoices offers={bluffOffers ?? []} dialect={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} /> : null}
           {game === 'who-am-i' ? <RaceChoices offers={raceOffers ?? []} dialect={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} /> : null}
 
           <View style={styles.field}>

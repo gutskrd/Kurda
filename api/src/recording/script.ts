@@ -86,12 +86,11 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 /** The learning games whose lines are spoken, in the order their lines are listed, and what the page calls each. */
-const GAME_KINDS = ['scenario', 'case_file', 'question_template', 'building_name'] as const;
+const GAME_KINDS = ['scenario', 'case_file', 'question_template'] as const;
 const GAME_NAME: Record<(typeof GAME_KINDS)[number], string> = {
   scenario: 'What Would You Say?',
   case_file: 'Kurdish Detective',
   question_template: 'Who Am I?',
-  building_name: 'The Village',
 };
 
 // ---------- what the service hands in ----------
@@ -679,11 +678,8 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
         const label = [GAME_NAME.case_file, title ? `case ‘${clip(title, 60)}’` : 'a case', `${str(e.kind) ?? 'evidence'} ${i + 1}`].join(' · ');
         say(e.ku, e.recording, isSpeakerId(e.speaker) ? e.speaker : null, label, { sure: en(e.meanings), cue: from ? `From ${from}.` : null });
       });
-    } else if (kind === 'question_template') {
-      say(p.ku, undefined, null, `${GAME_NAME.question_template} · a question (not played aloud in the game yet)`, { sure: en(p.meanings) });
     } else {
-      const building = str(p.building) ?? 'building';
-      say(p.ku, undefined, null, `${GAME_NAME.building_name} · the ${building} (not played aloud in the game yet)`, { sure: en(p.meanings) });
+      say(p.ku, undefined, null, `${GAME_NAME.question_template} · a question (not played aloud in the game yet)`, { sure: en(p.meanings) });
     }
   }
 }

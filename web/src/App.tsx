@@ -36,7 +36,6 @@ const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
 const LastLetter = lazy(() => import('./lastletter/LastLetter').then((m) => ({ default: m.LastLetter })));
 const Impostor = lazy(() => import('./impostor/Impostor').then((m) => ({ default: m.Impostor })));
-const DontSay = lazy(() => import('./dontsay/DontSay').then((m) => ({ default: m.DontSay })));
 const Rhyme = lazy(() => import('./pages/Rhyme').then((m) => ({ default: m.Rhyme })));
 const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })));
 const BuildSentence = lazy(() => import('./games/BuildSentence').then((m) => ({ default: m.BuildSentence })));
@@ -44,14 +43,12 @@ const MemoryThief = lazy(() => import('./games/MemoryThief').then((m) => ({ defa
 const HearIt = lazy(() => import('./games/HearIt').then((m) => ({ default: m.HearIt })));
 const WhatWouldYouSay = lazy(() => import('./games/WhatWouldYouSay').then((m) => ({ default: m.WhatWouldYouSay })));
 const Detective = lazy(() => import('./games/Detective').then((m) => ({ default: m.Detective })));
-const Bluff = lazy(() => import('./bluff/Bluff').then((m) => ({ default: m.Bluff })));
 const WhoAmI = lazy(() => import('./whoami/WhoAmI').then((m) => ({ default: m.WhoAmI })));
 const StoriesLibrary = lazy(() => import('./stories/StoriesLibrary').then((m) => ({ default: m.StoriesLibrary })));
 const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ default: m.StoryReader })));
 const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
 const WordleBattle = lazy(() => import('./pages/WordleBattle').then((m) => ({ default: m.WordleBattle })));
 const RhymeMatch = lazy(() => import('./pages/RhymeMatch').then((m) => ({ default: m.RhymeMatch })));
-const KingdomPage = lazy(() => import('./kingdom/KingdomPage').then((m) => ({ default: m.KingdomPage })));
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
 const Register = lazy(() => import('./pages/Register').then((m) => ({ default: m.Register })));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => ({ default: m.ForgotPassword })));
@@ -148,6 +145,24 @@ function StoriesMoved(): React.JSX.Element {
   const { slug } = useParams();
   return <Navigate to={{ pathname: slug ? `/app/learn/stories/${encodeURIComponent(slug)}` : '/app/learn/stories', search }} replace />;
 }
+
+/**
+ * The addresses Build a Kurdish Sentence and Hear It, Find It had while they
+ * were games: they are exercises of the lessons' practice now, under Learn.
+ * A round left open and offered again (`?…`) comes along.
+ */
+function ExerciseMoved({ to }: { to: string }): React.JSX.Element {
+  const { search } = useLocation();
+  return <Navigate to={{ pathname: to, search }} replace />;
+}
+
+/**
+ * Where Don't Say the Word!, Kurdish Bluff and The Village were, under /app.
+ * A game's lobby was its page with an `?id=`, so the page's own path is all
+ * there is to catch. The village had two addresses among the games; the bare
+ * ones are caught as well, for a link written down from memory.
+ */
+const RETIRED_GAME_PATHS = ['games/dont-say', 'games/bluff', 'games/village', 'games/kingdom', 'village', 'kingdom'] as const;
 
 /**
  * Every address the site answers, and what is drawn at each.
@@ -261,6 +276,14 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="alphabet" element={<Alphabet />} />
         {/* the words after the letters — colours, numbers, days, months — open to
             everyone too, each set on a page of its own (pages/Words.tsx, WordSet.tsx) */}
+        {/* the lessons' two exercises that were games once: Build a Kurdish Sentence
+            and Hear It, Find It. They are rounds made and checked on the server
+            against the learner, so they need an account as a lesson does; the
+            addresses they had among the games lead here, a round's `?…` kept */}
+        <Route path="learn/practice/build-sentence" element={<RequireAccount what="gate.what.course"><BuildSentence /></RequireAccount>} />
+        <Route path="learn/practice/hear-it" element={<RequireAccount what="gate.what.course"><HearIt /></RequireAccount>} />
+        <Route path="games/build-sentence" element={<ExerciseMoved to="/app/learn/practice/build-sentence" />} />
+        <Route path="games/hear-it" element={<ExerciseMoved to="/app/learn/practice/hear-it" />} />
         <Route path="learn/words" element={<Words />} />
         <Route path="learn/words/:set" element={<WordSet />} />
         {/* one route for both kinds: a post knows which it is */}
@@ -286,12 +309,7 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="games/rhyme" element={<RequireAccount what="gate.what.play"><Rhyme /></RequireAccount>} />
         <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
         {/* the learning games, each a round made and scored on the server like the others */}
-        <Route path="games/build-sentence" element={<RequireAccount what="gate.what.play"><BuildSentence /></RequireAccount>} />
-        {/* The Village (called Kurdish Kingdom in code): the village the learner's own learning builds; its old address still leads there */}
-        <Route path="games/village" element={<RequireAccount what="gate.what.play"><KingdomPage /></RequireAccount>} />
-        <Route path="games/kingdom" element={<Navigate to="/app/games/village" replace />} />
         <Route path="games/memory-thief" element={<RequireAccount what="gate.what.play"><MemoryThief /></RequireAccount>} />
-        <Route path="games/hear-it" element={<RequireAccount what="gate.what.play"><HearIt /></RequireAccount>} />
         <Route path="games/what-would-you-say" element={<RequireAccount what="gate.what.play"><WhatWouldYouSay /></RequireAccount>} />
         <Route path="games/detective" element={<RequireAccount what="gate.what.play"><Detective /></RequireAccount>} />
         {/* Stories replaced the ranked quiz, then moved from the games to Learn's
@@ -324,11 +342,12 @@ export function AppRoutes(): React.JSX.Element {
           path="games/impostor"
           element={<RequireAccount what="gate.what.playOthers"><Impostor /></RequireAccount>}
         />
-        <Route
-          path="games/dont-say"
-          element={<RequireAccount what="gate.what.playOthers"><DontSay /></RequireAccount>}
-        />
-        <Route path="games/bluff" element={<RequireAccount what="gate.what.playOthers"><Bluff /></RequireAccount>} />
+        {/* Don't Say the Word!, Kurdish Bluff and The Village are no longer part of
+            Hevalo: an old link, bookmark or invitation to one lands on the games
+            that are, rather than on "page not found" */}
+        {RETIRED_GAME_PATHS.map((path) => (
+          <Route key={path} path={path} element={<Navigate to="/app/games" replace />} />
+        ))}
         {/* Who Am I?: a round alone, or a race with friends */}
         <Route path="games/who-am-i" element={<RequireAccount what="gate.what.play"><WhoAmI /></RequireAccount>} />
         <Route path="rankings" element={<Rankings />} />

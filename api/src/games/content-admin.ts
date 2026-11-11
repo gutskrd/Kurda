@@ -40,6 +40,7 @@
 import type pg from 'pg';
 import {
   CHARACTER_NAMES,
+  GAME_CONTENT_KINDS,
   GAME_LEVELS,
   LEARN_GAMES,
   PASSAGE_HIDDEN,
@@ -135,6 +136,16 @@ interface Row {
 const COLUMNS = `c.id, c.kind, c.dialect, c.level, c.payload, c.status, c.review_status, c.reviewed_by, ru.username AS reviewer_username,
   c.reviewed_at, c.review_note, c.source, c.origin, c.lock_version, c.published_at, c.created_at, c.updated_at`;
 const FROM = `FROM game_content c LEFT JOIN users ru ON ru.id = c.reviewed_by`;
+/**
+ * `c.kind IN (…)`: the kinds a game is made of today, for every read of a
+ * stored row. The table also holds rows written for games that are no longer
+ * part of Hevalo (cards for Don't Say the Word! and Kurdish Bluff, the
+ * village's building names). They stay where they are; with this in its
+ * WHERE no list shows one and no id opens, changes or publishes one, so a
+ * kind without a schema is never handed to the checks. Literals from the
+ * shared list, never built from input.
+ */
+const KNOWN_KIND = `c.kind IN (${GAME_CONTENT_KINDS.map((k) => `'${k}'`).join(', ')})`;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function shape(row: Row): GameContentRow {
@@ -185,25 +196,16 @@ function levelOk(level: number): boolean {
 
 /**
  * A card made of a picked word (word-cards.ts) keeps the Kurdish it was
- * copied with: its word, a Kurdish definition and its example may be taken
- * out, never typed over. What is not Kurdish — meanings in the interface
- * languages, a fact, the level — stays the editor's to change.
+ * copied with: its word is never typed over. What is not Kurdish — meanings
+ * in the interface languages, a fact, the level — stays the editor's to
+ * change.
  */
 function retypedKurdish(row: Pick<Row, 'kind' | 'origin' | 'payload'>, next: GameContentPayload): GameContentIssue[] {
-  if (!row.origin || (row.kind !== 'bluff_card' && row.kind !== 'identity')) return [];
-  const before = row.payload as { word?: string; definitions?: Record<string, string>; example?: { ku?: string } };
-  const after = next as { word?: string; definitions?: Record<string, string>; example?: { ku?: string } };
-  const issues: GameContentIssue[] = [];
-  if (after.word !== before.word) issues.push({ path: 'word', message: 'this word was picked from approved content: make a card of another word instead of retyping it' });
-  for (const code of ['ku', 'ckb']) {
-    const was = before.definitions?.[code];
-    const now = after.definitions?.[code];
-    if (now !== undefined && now !== was) issues.push({ path: `definitions.${code}`, message: 'a Kurdish definition is copied from approved content, never typed' });
-  }
-  if (after.example?.ku !== undefined && after.example.ku !== before.example?.ku) {
-    issues.push({ path: 'example.ku', message: 'the example is copied from approved content, never typed' });
-  }
-  return issues;
+  if (!row.origin || row.kind !== 'identity') return [];
+  const before = row.payload as { word?: string };
+  const after = next as { word?: string };
+  if (after.word === before.word) return [];
+  return [{ path: 'word', message: 'this word was picked from approved content: make a card of another word instead of retyping it' }];
 }
 
 /** What one import added and what it found already there. */
@@ -261,7 +263,7 @@ export class GameContentAdminService {
     const q = filter.q?.trim();
     const res = await this.pool.query<Row & { total: number }>(
       `SELECT ${COLUMNS}, (count(*) OVER ())::int AS total ${FROM}
-        WHERE ($1::text[] IS NULL OR c.kind = ANY($1)) AND ($2::text IS NULL OR c.kind = $2)
+        WHERE ${KNOWN_KIND} AND ($1::text[] IS NULL OR c.kind = ANY($1)) AND ($2::text IS NULL OR c.kind = $2)
           AND ($3::text IS NULL OR c.dialect = $3) AND ($4::smallint IS NULL OR c.level = $4)
           AND ($5::text IS NULL OR c.status = $5) AND ($6::text IS NULL OR c.review_status = $6)
           AND ($7::text IS NULL OR c.source = $7) AND ($8::text IS NULL OR c.payload::text ILIKE $8)
@@ -285,7 +287,7 @@ export class GameContentAdminService {
 
   async get(id: string, db: Pick<pg.Pool, 'query'> = this.pool): Promise<GameContentRow | null> {
     if (!UUID_RE.test(id)) return null;
-    const res = await db.query<Row>(`SELECT ${COLUMNS} ${FROM} WHERE c.id = $1`, [id]);
+    const res = await db.query<Row>(`SELECT ${COLUMNS} ${FROM} WHERE c.id = $1 AND ${KNOWN_KIND}`, [id]);
     return res.rows[0] ? shape(res.rows[0]) : null;
   }
 
@@ -305,7 +307,7 @@ export class GameContentAdminService {
   private async lock(db: pg.PoolClient, id: string, lockVersion: number): Promise<Row> {
     if (!UUID_RE.test(id)) throw new AppError('NOT_FOUND', 404, 'no such content');
     const res = await db.query<Row>(
-      `SELECT c.*, NULL::text AS reviewer_username FROM game_content c WHERE c.id = $1 FOR UPDATE`,
+      `SELECT c.*, NULL::text AS reviewer_username FROM game_content c WHERE c.id = $1 AND ${KNOWN_KIND} FOR UPDATE`,
       [id],
     );
     const row = res.rows[0];
@@ -673,7 +675,8 @@ export class GameContentAdminService {
       this.availability.forDialect('kmr'),
       this.availability.forDialect('ckb'),
       this.pool.query<{ kind: GameContentKind; dialect: GameDialect; status: GameContentStatus; review_status: GameContentReview; n: number }>(
-        `SELECT kind, dialect, status, review_status, count(*)::int AS n FROM game_content GROUP BY 1, 2, 3, 4 ORDER BY 1, 2, 3, 4`,
+        `SELECT c.kind, c.dialect, c.status, c.review_status, count(*)::int AS n FROM game_content c
+          WHERE ${KNOWN_KIND} GROUP BY 1, 2, 3, 4 ORDER BY 1, 2, 3, 4`,
       ),
     ]);
     return {

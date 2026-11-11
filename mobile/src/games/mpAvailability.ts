@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import type { BluffLanguageCount, GameDifficulty, LetterDialect, MultiGame } from '@kurda/shared';
+import type { GameDifficulty, LetterDialect, MultiGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 
 /**
  * Where a multiplayer learning game is offered now (`GET /mp/:game/availability`),
- * on the phone, for the games that answer more than "with friends or not":
- * Kurdish Bluff names the languages its cards have real meanings in, the Who
- * Am I? race the difficulties its identities fill. Per dialect; a game is only
- * offered where it says so, with no "coming soon" anywhere.
+ * on the phone, for a game that answers more than "with friends or not": the
+ * Who Am I? race names the difficulties its identities fill. Per dialect; a
+ * game is only offered where it says so, with no "coming soon" anywhere.
  *
  * Read once while the app runs and shared by every screen that asks, as The
  * Last Letter's is (lastletter/availability.ts).
@@ -16,8 +15,6 @@ export interface MpDialectOffer {
   dialect: LetterDialect;
   group: boolean;
   solo: boolean;
-  /** Kurdish Bluff: the languages definitions may be written in */
-  languages?: BluffLanguageCount[];
   /** the Who Am I? race: the difficulties it can be played at */
   difficulties?: GameDifficulty[];
 }

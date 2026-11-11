@@ -31,7 +31,7 @@ import type { StoryGameNotifier } from '../story-games/notifier.js';
 import { awayAfter, controllerOf, dueStep, isAway, lobbyClosesAt, nextDue, type EngineSeat } from './engine.js';
 import { gateFreeText, type FreeTextDeps } from './free-text.js';
 import type { AnyGameModule } from './module.js';
-import { moduleOf } from './registry.js';
+import { moduleOf, playedGamesSql } from './registry.js';
 
 /** A long-poll waits at most this long for a change. */
 export const POLL_WAIT_MS = 20_000;
@@ -490,7 +490,7 @@ export class MultiplayerService {
    */
   async move(lobbyId: string, userId: string, body: unknown): Promise<MoveAnswer> {
     if (!UUID_RE.test(lobbyId)) throw gameNotFound();
-    const head = await this.pool.query<LobbyRow>(`SELECT * FROM game_lobbies WHERE id = $1`, [lobbyId]);
+    const head = await this.pool.query<LobbyRow>(`SELECT * FROM game_lobbies WHERE id = $1 AND ${playedGamesSql('game')}`, [lobbyId]);
     const lobby = head.rows[0];
     if (!lobby) throw gameNotFound();
     const m = moduleOf(lobby.game);
@@ -579,7 +579,7 @@ export class MultiplayerService {
    */
   async view(lobbyId: string, userId: string): Promise<MultiView> {
     if (!UUID_RE.test(lobbyId)) throw gameNotFound();
-    const l = await this.pool.query<LobbyRow>(`SELECT * FROM game_lobbies WHERE id = $1`, [lobbyId]);
+    const l = await this.pool.query<LobbyRow>(`SELECT * FROM game_lobbies WHERE id = $1 AND ${playedGamesSql('game')}`, [lobbyId]);
     const lobby = l.rows[0];
     if (!lobby) throw gameNotFound();
     const players = await this.loadPlayers(this.pool, lobbyId);
@@ -620,7 +620,7 @@ export class MultiplayerService {
       }>(
         `SELECT l.status, l.version, l.finished_at, l.due_at, p.removed, p.last_seen_at, p.joined_at, p.away
            FROM game_lobbies l LEFT JOIN game_lobby_players p ON p.lobby_id = l.id AND p.user_id = $2
-          WHERE l.id = $1`,
+          WHERE l.id = $1 AND ${playedGamesSql('l.game')}`,
         [lobbyId, userId],
       );
       const row = head.rows[0];
@@ -664,7 +664,7 @@ export class MultiplayerService {
 
   async facts(lobbyId: string): Promise<LobbyFacts | null> {
     if (!UUID_RE.test(lobbyId)) return null;
-    const l = await this.pool.query<LobbyRow>(`SELECT * FROM game_lobbies WHERE id = $1`, [lobbyId]);
+    const l = await this.pool.query<LobbyRow>(`SELECT * FROM game_lobbies WHERE id = $1 AND ${playedGamesSql('game')}`, [lobbyId]);
     const lobby = l.rows[0];
     if (!lobby || lobby.mode === 'solo') return null;
     return this.factsOf(lobby, await this.loadPlayers(this.pool, lobbyId));
@@ -695,7 +695,7 @@ export class MultiplayerService {
   async summary(lobbyId: string): Promise<InviteSummary | null> {
     if (!UUID_RE.test(lobbyId)) return null;
     const l = await this.pool.query<Pick<LobbyRow, 'game' | 'dialect' | 'settings' | 'rated'>>(
-      `SELECT game, dialect, settings, rated FROM game_lobbies WHERE id = $1`,
+      `SELECT game, dialect, settings, rated FROM game_lobbies WHERE id = $1 AND ${playedGamesSql('game')}`,
       [lobbyId],
     );
     const row = l.rows[0];
@@ -962,7 +962,7 @@ export class MultiplayerService {
   async onBlock(blockerId: string, blockedId: string): Promise<void> {
     const shared = await this.pool.query<{ id: string }>(
       `SELECT l.id FROM game_lobbies l
-        WHERE l.status IN ('lobby', 'active')
+        WHERE l.status IN ('lobby', 'active') AND ${playedGamesSql('l.game')}
           AND EXISTS (SELECT 1 FROM game_lobby_players p WHERE p.lobby_id = l.id AND p.user_id = $1 AND NOT p.removed AND p.left_at IS NULL)
           AND EXISTS (SELECT 1 FROM game_lobby_players p WHERE p.lobby_id = l.id AND p.user_id = $2 AND NOT p.removed AND p.left_at IS NULL)
         ORDER BY l.id`,
@@ -998,7 +998,7 @@ export class MultiplayerService {
   async leaveAll(userId: string): Promise<void> {
     const live = await this.pool.query<{ lobby_id: string }>(
       `SELECT p.lobby_id FROM game_lobby_players p JOIN game_lobbies l ON l.id = p.lobby_id
-        WHERE p.user_id = $1 AND NOT p.removed AND p.left_at IS NULL AND l.status IN ('lobby','active')`,
+        WHERE p.user_id = $1 AND NOT p.removed AND p.left_at IS NULL AND l.status IN ('lobby','active') AND ${playedGamesSql('l.game')}`,
       [userId],
     );
     for (const r of live.rows) {
@@ -1020,7 +1020,10 @@ export class MultiplayerService {
   }
 
   private async arm(lobbyId: string): Promise<void> {
-    const r = await this.pool.query<{ due_at: Date | null }>(`SELECT due_at FROM game_lobbies WHERE id = $1 AND status = 'active'`, [lobbyId]);
+    const r = await this.pool.query<{ due_at: Date | null }>(
+      `SELECT due_at FROM game_lobbies WHERE id = $1 AND status = 'active' AND ${playedGamesSql('game')}`,
+      [lobbyId],
+    );
     this.armAt(lobbyId, r.rows[0]?.due_at?.getTime() ?? null);
   }
 
@@ -1259,7 +1262,7 @@ export class MultiplayerService {
         client.release();
       }
       if (skipped) {
-        const exists = await this.pool.query(`SELECT 1 FROM game_lobbies WHERE id = $1`, [lobbyId]);
+        const exists = await this.pool.query(`SELECT 1 FROM game_lobbies WHERE id = $1 AND ${playedGamesSql('game')}`, [lobbyId]);
         if (exists.rowCount) return 'busy';
         this.armAt(lobbyId, null);
         return 'missing';
@@ -1267,8 +1270,16 @@ export class MultiplayerService {
     }
   }
 
+  /**
+   * The game, locked, with its players. A lobby of a game the engine no
+   * longer runs is not found here, as it is not found by any read: it is
+   * history, and nothing may act on it.
+   */
   private async lockWith(client: pg.PoolClient, lobbyId: string, skipLocked = false): Promise<Tx | null> {
-    const l = await client.query<LobbyRow>(`SELECT * FROM game_lobbies WHERE id = $1 FOR UPDATE${skipLocked ? ' SKIP LOCKED' : ''}`, [lobbyId]);
+    const l = await client.query<LobbyRow>(
+      `SELECT * FROM game_lobbies WHERE id = $1 AND ${playedGamesSql('game')} FOR UPDATE${skipLocked ? ' SKIP LOCKED' : ''}`,
+      [lobbyId],
+    );
     const lobby = l.rows[0];
     if (!lobby) return null;
     // the clock is read after the lock: a transaction that waited for it must not judge a deadline by the moment it began
@@ -1316,7 +1327,7 @@ export class MultiplayerService {
   }
 
   private async gameOf(lobbyId: string): Promise<MultiGame | null> {
-    const r = await this.pool.query<{ game: MultiGame }>(`SELECT game FROM game_lobbies WHERE id = $1`, [lobbyId]);
+    const r = await this.pool.query<{ game: MultiGame }>(`SELECT game FROM game_lobbies WHERE id = $1 AND ${playedGamesSql('game')}`, [lobbyId]);
     return r.rows[0]?.game ?? null;
   }
 

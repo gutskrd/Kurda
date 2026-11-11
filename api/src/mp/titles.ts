@@ -9,8 +9,6 @@ import type { MultiGame } from '@kurda/shared';
 export const MULTI_GAME_TITLES: Readonly<Record<MultiGame, string>> = {
   'last-letter': 'The Last Letter',
   impostor: 'Kurdish Impostor',
-  'dont-say': 'Don’t Say the Word!',
-  bluff: 'Kurdish Bluff',
   'who-am-i': 'Who Am I?',
 };
 

@@ -105,12 +105,9 @@ import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
 import { RhymeMatchScreen } from './src/rhyme/RhymeMatchScreen';
 import { LastLetterScreen } from './src/lastletter/LastLetterScreen';
 import { ImpostorScreen } from './src/impostor/ImpostorScreen';
-import { DontSayScreen } from './src/dontsay/DontSayScreen';
 import { RaceScreen } from './src/race/RaceScreen';
 import { BuildSentenceScreen } from './src/games/BuildSentenceScreen';
-import { BluffScreen } from './src/bluff/BluffScreen';
 import { WhoAmIScreen } from './src/whoami/WhoAmIScreen';
-import { KingdomScreen } from './src/kingdom/KingdomScreen';
 import { MemoryThiefScreen } from './src/games/MemoryThiefScreen';
 import { HearItScreen } from './src/games/HearItScreen';
 import { WhatWouldYouSayScreen } from './src/games/WhatWouldYouSayScreen';
@@ -177,6 +174,10 @@ const linking: LinkingOptions<RootStackParamList> = {
       Lesson: 'lesson/:lessonId',
       // practice opens on its hub, where every kind of it is one tap away
       PracticeHub: 'practice',
+      // the two exercises that were games once, at the lessons' own addresses (the website's too);
+      // their old `app/games/…` addresses are rewritten to these (navigation/tabs.ts)
+      BuildSentence: 'app/learn/practice/build-sentence',
+      HearIt: 'app/learn/practice/hear-it',
       // the website's alphabet, `?script=ckb` and all, opens the phone's
       Alphabet: 'app/alphabet',
       // the colours, numbers, days and months, and one set by its name: `app/words/colours?script=ckb`
@@ -186,8 +187,6 @@ const linking: LinkingOptions<RootStackParamList> = {
       RhymeMatch: inviteRoutePath('rhyme-match'),
       LastLetter: inviteRoutePath('last-letter'),
       Impostor: inviteRoutePath('impostor'),
-      DontSay: inviteRoutePath('dont-say'),
-      Bluff: inviteRoutePath('bluff'),
       WhoAmI: inviteRoutePath('who-am-i'),
       // `/app/games/stories?id=…` is a game to join; without an id it is the library
       Stories: inviteRoutePath('stories'),
@@ -592,20 +591,6 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="DontSay" options={{ presentation: 'card' }}>
-        {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <DontSayScreen id={route.params?.id} onExit={() => navigation.goBack()} />
-          </GuestWall>
-        )}
-      </RootStack.Screen>
-      <RootStack.Screen name="Bluff" options={{ presentation: 'card' }}>
-        {({ route, navigation }) => (
-          <GuestWall reason="play" onBack={() => navigation.goBack()}>
-            <BluffScreen id={route.params?.id} onExit={() => navigation.goBack()} />
-          </GuestWall>
-        )}
-      </RootStack.Screen>
       {/* Who Am I? alone is learning, which a guest may do; its race keeps the play wall inside (whoami/WhoAmIScreen) */}
       <RootStack.Screen name="WhoAmI" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
@@ -617,19 +602,20 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      {/* a learning game is learning, as a lesson is: a guest plays it too (api/src/games) */}
+      {/*
+        The lessons' two exercises (practice/exercises.ts), opened from the practice hub. Leaving one goes back
+        there; opened by a link, with nothing behind it, it leaves to the hub rather than nowhere. A guest does
+        them too, as a guest does a lesson.
+      */}
       <RootStack.Screen name="BuildSentence" options={{ presentation: 'card' }}>
-        {({ navigation }) => <BuildSentenceScreen onExit={() => navigation.goBack()} />}
-      </RootStack.Screen>
-      {/* a guest's learning builds the village too; only its Zêr waits for an account (the server decides) */}
-      <RootStack.Screen name="Kingdom" options={{ presentation: 'card' }}>
-        {({ navigation }) => <KingdomScreen onExit={() => navigation.goBack()} />}
-      </RootStack.Screen>
-      <RootStack.Screen name="MemoryThief" options={{ presentation: 'card' }}>
-        {({ navigation }) => <MemoryThiefScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <BuildSentenceScreen onExit={() => (navigation.canGoBack() ? navigation.goBack() : navigation.replace('PracticeHub'))} />}
       </RootStack.Screen>
       <RootStack.Screen name="HearIt" options={{ presentation: 'card' }}>
-        {({ navigation }) => <HearItScreen onExit={() => navigation.goBack()} />}
+        {({ navigation }) => <HearItScreen onExit={() => (navigation.canGoBack() ? navigation.goBack() : navigation.replace('PracticeHub'))} />}
+      </RootStack.Screen>
+      {/* a learning game is learning, as a lesson is: a guest plays it too (api/src/games) */}
+      <RootStack.Screen name="MemoryThief" options={{ presentation: 'card' }}>
+        {({ navigation }) => <MemoryThiefScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="WhatWouldYouSay" options={{ presentation: 'card' }}>
         {({ navigation }) => <WhatWouldYouSayScreen onExit={() => navigation.goBack()} />}

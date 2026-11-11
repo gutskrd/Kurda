@@ -8,6 +8,11 @@ import type { RootStackParamList } from '../navigation/rootStack';
  * card in a chat, a pasted link, a rematch — goes through here, so a game's
  * screen is named in one place. Each of these screens joins the lobby itself
  * when the person is allowed in and is not yet (the join rule is the server's).
+ *
+ * A game's name can come from something written long ago: a code, a card in
+ * an old chat, a notification. One that names a game Hevalo no longer has (or
+ * does not have yet, in this version) opens Learn's games rather than
+ * nothing, so the person lands among what can be played.
  */
 export type LobbyRoute =
   | { name: 'WordleBattle'; params: RootStackParamList['WordleBattle'] }
@@ -15,9 +20,11 @@ export type LobbyRoute =
   | { name: 'StoryGame'; params: RootStackParamList['StoryGame'] }
   | { name: 'LastLetter'; params: RootStackParamList['LastLetter'] }
   | { name: 'Impostor'; params: RootStackParamList['Impostor'] }
-  | { name: 'DontSay'; params: RootStackParamList['DontSay'] }
-  | { name: 'Bluff'; params: RootStackParamList['Bluff'] }
-  | { name: 'WhoAmI'; params: RootStackParamList['WhoAmI'] };
+  | { name: 'WhoAmI'; params: RootStackParamList['WhoAmI'] }
+  | { name: 'Tabs'; params: RootStackParamList['Tabs'] };
+
+/** Learn on its Games view: where a link to a game that is not here any more lands. */
+export const GAMES_LIST: LobbyRoute = { name: 'Tabs', params: { screen: 'Learn', params: { view: 'games' } } };
 
 export function lobbyRoute(game: PlayGame, id: string): LobbyRoute {
   switch (game) {
@@ -31,11 +38,10 @@ export function lobbyRoute(game: PlayGame, id: string): LobbyRoute {
       return { name: 'LastLetter', params: { id } };
     case 'impostor':
       return { name: 'Impostor', params: { id } };
-    case 'dont-say':
-      return { name: 'DontSay', params: { id } };
-    case 'bluff':
-      return { name: 'Bluff', params: { id } };
     case 'who-am-i':
       return { name: 'WhoAmI', params: { id } };
+    default:
+      // the types say every game is named above; what was stored before a game was retired says otherwise
+      return GAMES_LIST;
   }
 }
