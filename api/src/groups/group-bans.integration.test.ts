@@ -3,7 +3,8 @@
  * Postgres and through the routes the apps call (@kurda/shared
  * group-membership.ts): who may ban whom, how long a ban lasts and what
  * replaces it, that leaving just before a ban does not escape it, that a
- * removal leaves no ban, the join and add refused while banned, requests that
+ * removal leaves no ban, the add refused while banned, what a banned person
+ * is still shown of a group nobody else outside it can see, requests that
  * cannot be used to pester the admins, and the lines in everyone's
  * notifications.
  */
@@ -13,8 +14,9 @@ import pg from 'pg';
 import { MAX_GROUP_MEMBERSHIPS } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { block, befriend } from '../test/social.js';
+import { block } from '../test/social.js';
 import { bornYearsAgo } from '../test/age.js';
+import { addFriendsToGroup } from '../test/groups.js';
 import { GroupService } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -57,19 +59,15 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
   const call = (tag: string, method: 'GET' | 'POST' | 'DELETE', url: string, payload?: object) =>
     app.inject({ method, url, headers: { authorization: `Bearer ${token[tag]}` }, ...(payload ? { payload } : {}), remoteAddress: ip() });
 
-  /** A group of `owner`'s with an admin and members (open: they join; invite-only: the owner's friends, added). */
-  async function group(privacy: 'open' | 'invite', owner: string, admin: string | null, members: string[]): Promise<string> {
-    const { id: gid } = await groups.create(await person(owner), { name: `Ban ${suffix} ${++n}`, privacy });
-    for (const tag of [...(admin ? [admin] : []), ...members]) {
-      if (privacy === 'open') await groups.join(await person(tag), gid);
-      else {
-        await befriend(pool, id[owner]!, await person(tag));
-        await groups.invite(id[owner]!, gid, id[tag]!);
-      }
-    }
+  /** A group of `owner`'s with an admin and members: the owner's friends, added by the owner, as anyone comes into a group. */
+  async function group(owner: string, admin: string | null, members: string[]): Promise<string> {
+    const { id: gid } = await groups.create(await person(owner), { name: `Ban ${suffix} ${++n}` });
+    for (const tag of [...(admin ? [admin] : []), ...members]) await addFriendsToGroup(pool, gid, id[owner]!, await person(tag));
     if (admin) await groups.setRole(id[owner]!, gid, id[admin]!, 'moderator');
     return gid;
   }
+  /** The owner adds a friend: the one way in, and what a ban keeps shut. */
+  const add = (owner: string, gid: string, target: string) => call(owner, 'POST', `/groups/${gid}/invite`, { userId: id[target] });
 
   const ban = (actor: string, gid: string, target: string, body: object = {}) =>
     call(actor, 'POST', `/groups/${gid}/bans`, { userId: id[target], duration: '1d', ...body });
@@ -103,7 +101,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
 
   describe('banning', () => {
     it('lets the owner and admins ban only someone they outrank, never themselves or the owner', async () => {
-      const gid = await group('open', 'o1', 'a1', ['m1', 'm2', 'a2']);
+      const gid = await group('o1', 'a1', ['m1', 'm2', 'a2']);
       await groups.setRole(id.o1!, gid, id.a2!, 'moderator');
       expect((await ban('m1', gid, 'm2')).json().code).toBe('NOT_GROUP_ADMIN');
       expect((await ban('a1', gid, 'o1')).json().code).toBe('FORBIDDEN');
@@ -118,7 +116,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('answers the ban as the admins list it, and lists only the bans in force, newest first', async () => {
-      const gid = await group('open', 'o2', 'a3', ['m3', 'm4']);
+      const gid = await group('o2', 'a3', ['m3', 'm4']);
       const before = Date.now();
       const res = await ban('a3', gid, 'm3', { duration: '7d', reason: '  Spamming links​  ' });
       expect(res.statusCode).toBe(200);
@@ -136,7 +134,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('replaces a ban on someone banned already, keeping where their asking stands', async () => {
-      const gid = await group('open', 'o3', null, ['m5']);
+      const gid = await group('o3', null, ['m5']);
       await ban('o3', gid, 'm5', { duration: '1d', reason: 'first' });
       await groups.requestToRejoin(id.m5!, gid, null);
       await groups.decline(id.o3!, gid, id.m5!, false);
@@ -150,11 +148,11 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('still bans someone who left just before, if they posted in the group, and nobody else from outside it', async () => {
-      const gid = await group('open', 'o4', null, ['m6', 'm7']);
+      const gid = await group('o4', null, ['m6', 'm7']);
       expect((await call('m6', 'POST', `/groups/${gid}/chat`, { body: 'Ez diçim' })).statusCode).toBe(200);
       expect((await call('m6', 'POST', `/groups/${gid}/leave`)).statusCode).toBe(200);
       expect((await ban('o4', gid, 'm6')).statusCode).toBe(200);
-      expect((await call('m6', 'POST', `/groups/${gid}/join`)).json().code).toBe('GROUP_BANNED');
+      expect((await add('o4', gid, 'm6')).json().code).toBe('MEMBER_BANNED');
       // never in it, never posted: there is nobody to ban
       await person('stranger1');
       const none = await ban('o4', gid, 'stranger1');
@@ -162,7 +160,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('takes their messages out with them when asked to, and only theirs', async () => {
-      const gid = await group('open', 'o5', null, ['m8', 'm9']);
+      const gid = await group('o5', null, ['m8', 'm9']);
       for (const [tag, body] of [['m8', 'yek'], ['m9', 'du'], ['m8', 'sê']] as const) {
         expect((await call(tag, 'POST', `/groups/${gid}/chat`, { body })).statusCode).toBe(200);
       }
@@ -173,47 +171,73 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('keeps the banned out until the ban runs out, and then as if there had been none', async () => {
-      const gid = await group('open', 'o6', null, ['m10']);
+      const gid = await group('o6', null, ['m10']);
       await ban('o6', gid, 'm10');
-      const refused = await call('m10', 'POST', `/groups/${gid}/join`);
-      expect([refused.statusCode, refused.json().code]).toEqual([403, 'GROUP_BANNED']);
-      expect(Date.parse(refused.json().details.until)).toBeGreaterThan(Date.now());
-      // reading or writing the chat says why, so a thread left open can show it
-      expect((await call('m10', 'GET', `/groups/${gid}/chat`)).json().code).toBe('GROUP_BANNED');
+      // their friend the owner cannot add them past the ban
+      const refused = await add('o6', gid, 'm10');
+      expect([refused.statusCode, refused.json().code]).toEqual([409, 'MEMBER_BANNED']);
+      // reading or writing the chat says why, and until when, so a thread left open can show it
+      const closed = await call('m10', 'GET', `/groups/${gid}/chat`);
+      expect([closed.statusCode, closed.json().code]).toEqual([403, 'GROUP_BANNED']);
+      expect(Date.parse(closed.json().details.until)).toBeGreaterThan(Date.now());
       expect((await call('m10', 'POST', `/groups/${gid}/chat`, { body: 'hello?' })).json().code).toBe('GROUP_BANNED');
       expect(await standing('m10', gid)).toMatchObject({ kind: 'banned', reason: null, request: { kind: 'can_ask' } });
 
       await pool.query(`UPDATE group_bans SET until = now() - interval '1 minute' WHERE group_id = $1 AND user_id = $2`, [gid, id.m10]);
-      expect(await standing('m10', gid)).toEqual({ kind: 'out' });
-      expect((await call('m10', 'POST', `/groups/${gid}/join`)).statusCode).toBe(200);
+      // the ban has run out: they are out like anyone, so the group is no longer shown to them
+      expect((await call('m10', 'GET', `/groups/${gid}`)).json().code).toBe('GROUP_NOT_FOUND');
+      expect((await add('o6', gid, 'm10')).statusCode).toBe(200);
       // cleaned up as it was met
       expect((await pool.query(`SELECT 1 FROM group_bans WHERE group_id = $1 AND user_id = $2`, [gid, id.m10])).rowCount).toBe(0);
     });
 
-    it('shows Banned in place of Join among the open groups', async () => {
-      const gid = await group('open', 'o7', null, ['m11']);
-      await ban('o7', gid, 'm11');
-      // the route lists the thirty biggest; the service is asked for all of them
-      const found = (await groups.discover(id.m11!, 10_000)).find((g) => g.id === gid);
-      expect(found).toMatchObject({ joined: false, banned: true });
-      expect((await groups.discover(id.o7!, 10_000)).find((g) => g.id === gid)).toMatchObject({ joined: true, banned: false });
+    it('shows someone banned the group’s name and their standing through the route, and nothing else of it', async () => {
+      const gid = await group('o7', null, ['m11', 'm11b']);
+      await pool.query(`UPDATE groups SET description = 'Tenê ji bo endaman' WHERE id = $1`, [gid]);
+      await ban('o7', gid, 'm11', { reason: 'Reklam' });
+      const seen = await call('m11', 'GET', `/groups/${gid}`);
+      expect(seen.statusCode).toBe(200);
+      expect(seen.json()).toEqual({
+        id: gid,
+        name: expect.stringMatching(/^Ban /),
+        photoUrl: null,
+        description: null,
+        ownerId: null,
+        archivedAt: null,
+        memberCount: 0,
+        members: [],
+        myRole: null,
+        standing: { kind: 'banned', until: expect.any(String), reason: 'Reklam', request: { kind: 'can_ask' } },
+      });
+      // the rest of the group is as closed to them as to a stranger
+      expect((await call('m11', 'GET', `/groups/${gid}/chat`)).json().code).toBe('GROUP_BANNED');
+      expect((await call('m11', 'GET', `/groups/${gid}/bans`)).statusCode).toBe(403);
+      expect((await call('m11', 'GET', `/groups/${gid}/requests`)).statusCode).toBe(403);
+      expect((await call('m11', 'GET', '/me/groups')).json().groups.map((g: { id: string }) => g.id)).not.toContain(gid);
+      // no list of groups names it, to them or to its own owner, and nobody walks back in
+      expect((await call('m11', 'GET', '/groups')).json()).toEqual({ groups: [] });
+      expect((await call('o7', 'GET', '/groups')).json()).toEqual({ groups: [] });
+      const join = await call('m11', 'POST', `/groups/${gid}/join`);
+      expect([join.statusCode, join.json().code]).toEqual([403, 'INVITE_ONLY']);
+      expect(await isMember('m11', gid)).toBe(false);
     });
 
     it('tells them they were banned, for how long and why, and that they can ask to come back', async () => {
-      const gid = await group('open', 'o8', null, ['m12', 'm13']);
+      const gid = await group('o8', null, ['m12', 'm13']);
       await ban('o8', gid, 'm12', { duration: '7d', reason: 'Bê rêzî' });
       await ban('o8', gid, 'm13', { duration: 'perm' });
       const [week] = await notices('m12', 'group_banned');
       expect(week).toMatchObject({ category: 'friends', title: 'Banned from a group' });
       expect(week!.body).toMatch(/^You were banned from Ban .* for a week\. Reason: “Bê rêzî” You can ask to come back\.$/);
-      expect(week!.data).toMatchObject({ groupId: gid, duration: '7d', reason: 'Bê rêzî', privacy: 'open' });
+      expect(week!.data).toMatchObject({ groupId: gid, duration: '7d', reason: 'Bê rêzî' });
+      expect(week!.data).not.toHaveProperty('privacy');
       const [forGood] = await notices('m13', 'group_banned');
       expect(forGood!.body).toMatch(/for good\. You can ask to come back\.$/);
       expect(forGood!.data.until).toBeUndefined();
     });
 
     it('refuses a reason the chat would mask, or one too long', async () => {
-      const gid = await group('open', 'o9', null, ['m14']);
+      const gid = await group('o9', null, ['m14']);
       const rude = await ban('o9', gid, 'm14', { reason: 'fuck off' });
       expect([rude.statusCode, rude.json().code]).toEqual([422, 'GROUP_TEXT_REJECTED']);
       expect((await ban('o9', gid, 'm14', { reason: 'x'.repeat(201) })).statusCode).toBe(400);
@@ -222,33 +246,39 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
   });
 
   describe('removing and adding', () => {
-    it('leaves no ban after a removal: they can join again, and are told so', async () => {
-      const gid = await group('open', 'o10', null, ['m15']);
+    it('leaves no ban after a removal: they are out like anyone, can be added again, and are told so', async () => {
+      const gid = await group('o10', null, ['m15']);
       expect((await call('o10', 'DELETE', `/groups/${gid}/members/${id.m15}`)).statusCode).toBe(200);
-      expect(await standing('m15', gid)).toEqual({ kind: 'out' });
+      // removed is not banned: the group is simply not theirs to see any more
+      const out = await call('m15', 'GET', `/groups/${gid}`);
+      expect([out.statusCode, out.json().code]).toEqual([404, 'GROUP_NOT_FOUND']);
       const [line] = await notices('m15', 'group_removed');
-      expect(line!.body).toMatch(/^You were removed from Ban .*\. You can join again\.$/);
-      expect(line!.data).toMatchObject({ groupId: gid, privacy: 'open' });
-      expect((await call('m15', 'POST', `/groups/${gid}/join`)).statusCode).toBe(200);
+      expect(line!.body).toMatch(/^You were removed from Ban .*\. An admin can add you again\.$/);
+      expect(line!.data).toMatchObject({ groupId: gid });
+      expect(line!.data).not.toHaveProperty('privacy');
+      // nobody comes back by themselves, removed or not
+      expect((await call('m15', 'POST', `/groups/${gid}/join`)).json().code).toBe('INVITE_ONLY');
+      expect(await isMember('m15', gid)).toBe(false);
+      expect((await add('o10', gid, 'm15')).statusCode).toBe(200);
     });
 
-    it('lets an invite-only group add again someone removed, and not someone banned until the ban is lifted', async () => {
-      const gid = await group('invite', 'o11', null, ['m16', 'm17']);
+    it('adds again someone removed, and not someone banned until the ban is lifted', async () => {
+      const gid = await group('o11', null, ['m16', 'm17']);
       await call('o11', 'DELETE', `/groups/${gid}/members/${id.m16}`);
       expect((await notices('m16', 'group_removed'))[0]!.body).toMatch(/An admin can add you again\.$/);
-      expect((await call('o11', 'POST', `/groups/${gid}/invite`, { userId: id.m16 })).statusCode).toBe(200);
+      expect((await add('o11', gid, 'm16')).statusCode).toBe(200);
 
       await ban('o11', gid, 'm17');
-      const refused = await call('o11', 'POST', `/groups/${gid}/invite`, { userId: id.m17 });
+      const refused = await add('o11', gid, 'm17');
       expect([refused.statusCode, refused.json().code]).toEqual([409, 'MEMBER_BANNED']);
       expect((await call('o11', 'DELETE', `/groups/${gid}/bans/${id.m17}`)).statusCode).toBe(200);
       // lifting a ban does not add them back by itself
       expect(await isMember('m17', gid)).toBe(false);
-      expect((await call('o11', 'POST', `/groups/${gid}/invite`, { userId: id.m17 })).statusCode).toBe(200);
+      expect((await add('o11', gid, 'm17')).statusCode).toBe(200);
     });
 
     it('lets only the owner and admins lift a ban', async () => {
-      const gid = await group('open', 'o12', null, ['m18', 'm19']);
+      const gid = await group('o12', null, ['m18', 'm19']);
       await ban('o12', gid, 'm18');
       expect((await call('m19', 'DELETE', `/groups/${gid}/bans/${id.m18}`)).json().code).toBe('NOT_GROUP_ADMIN');
       expect((await standing('m18', gid)).kind).toBe('banned');
@@ -257,9 +287,13 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
 
   describe('asking to come back', () => {
     it('takes a request only from someone banned, one at a time, and shows it to the admins', async () => {
-      const gid = await group('open', 'o13', 'a4', ['m20', 'm21']);
+      const gid = await group('o13', 'a4', ['m20', 'm21']);
       const notBanned = await call('m20', 'POST', `/groups/${gid}/requests`, {});
       expect([notBanned.statusCode, notBanned.json().code]).toEqual([409, 'NOT_BANNED']);
+      // and to someone who is neither banned nor in it, there is no such group to ask
+      await person('stranger2');
+      const outside = await call('stranger2', 'POST', `/groups/${gid}/requests`, {});
+      expect([outside.statusCode, outside.json().code]).toEqual([404, 'GROUP_NOT_FOUND']);
       await ban('a4', gid, 'm20');
       const sent = await call('m20', 'POST', `/groups/${gid}/requests`, { note: ' Bibore, ez ê careke din wisa nekim. ' });
       expect(sent.statusCode).toBe(200);
@@ -280,7 +314,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('makes each request turned down wait longer: a day, a week, then a month', async () => {
-      const gid = await group('open', 'o14', null, ['m22']);
+      const gid = await group('o14', null, ['m22']);
       await ban('o14', gid, 'm22', { duration: 'perm' });
       const waits: number[] = [];
       for (let i = 0; i < 4; i++) {
@@ -310,7 +344,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('lets the admins stop the requests from someone', async () => {
-      const gid = await group('open', 'o15', null, ['m23']);
+      const gid = await group('o15', null, ['m23']);
       await ban('o15', gid, 'm23');
       await call('m23', 'POST', `/groups/${gid}/requests`, {});
       expect((await call('o15', 'POST', `/groups/${gid}/requests/${id.m23}/decline`, { stopRequests: true })).statusCode).toBe(200);
@@ -325,7 +359,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('lets a request be taken back without adding a wait', async () => {
-      const gid = await group('open', 'o16', null, ['m24']);
+      const gid = await group('o16', null, ['m24']);
       await ban('o16', gid, 'm24');
       await call('m24', 'POST', `/groups/${gid}/requests`, {});
       expect((await call('m24', 'DELETE', `/groups/${gid}/requests`)).statusCode).toBe(200);
@@ -335,7 +369,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('lets them back in when approved, and tells them', async () => {
-      const gid = await group('open', 'o17', null, ['m25']);
+      const gid = await group('o17', null, ['m25']);
       await ban('o17', gid, 'm25');
       await call('m25', 'POST', `/groups/${gid}/requests`, {});
       const approved = await call('o17', 'POST', `/groups/${gid}/requests/${id.m25}/approve`);
@@ -349,46 +383,51 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
     });
 
     it('lifts the ban but does not put them back when a rule keeps them out', async () => {
-      // an invite-only group is joined only through a friend who is its owner or an admin
-      const shut = await group('invite', 'o18', 'a5', ['m26']);
+      // someone comes into a group only through a friend who is its owner or an admin, and this admin is not theirs
+      const shut = await group('o18', 'a5', ['m26']);
       await ban('o18', shut, 'm26');
       await call('m26', 'POST', `/groups/${shut}/requests`, {});
       expect((await call('a5', 'POST', `/groups/${shut}/requests/${id.m26}/approve`)).json()).toEqual({ rejoined: false });
-      expect(await standing('m26', shut)).toEqual({ kind: 'out' });
-      expect((await notices('m26', 'group_request_approved'))[0]!.body).toMatch(/^An admin can add you to Ban .* again\.$/);
+      // no ban and no membership: out, like anyone
+      expect((await call('m26', 'GET', `/groups/${shut}`)).json().code).toBe('GROUP_NOT_FOUND');
+      expect((await pool.query(`SELECT 1 FROM group_bans WHERE group_id = $1 AND user_id = $2`, [shut, id.m26])).rowCount).toBe(0);
+      const [told] = await notices('m26', 'group_request_approved');
+      expect(told!.body).toMatch(/^An admin can add you to Ban .* again\.$/);
+      expect(told!.data).toMatchObject({ rejoined: 'false' });
+      expect(told!.data).not.toHaveProperty('privacy');
       // their friend the owner can add them now
-      expect((await call('o18', 'POST', `/groups/${shut}/invite`, { userId: id.m26 })).statusCode).toBe(200);
+      expect((await add('o18', shut, 'm26')).statusCode).toBe(200);
 
-      // their own group limit
-      const open = await group('open', 'o19', null, ['m27']);
-      await ban('o19', open, 'm27');
-      await call('m27', 'POST', `/groups/${open}/requests`, {});
+      // their own group limit, though the owner who lets them back is their friend
+      const full = await group('o19', null, ['m27']);
+      await ban('o19', full, 'm27');
+      await call('m27', 'POST', `/groups/${full}/requests`, {});
       const held = await pool.query<{ count: number }>(
         `SELECT count(*)::int AS count FROM group_members WHERE user_id = $1`, [id.m27],
       );
       const fill = await pool.query<{ id: string }>(
-        `INSERT INTO groups (name, privacy) SELECT 'Full ${suffix} ' || i, 'invite' FROM generate_series(1, $1::int) i RETURNING id`,
+        `INSERT INTO groups (name) SELECT 'Full ${suffix} ' || i FROM generate_series(1, $1::int) i RETURNING id`,
         [MAX_GROUP_MEMBERSHIPS - held.rows[0]!.count],
       );
       await pool.query(`INSERT INTO group_members (group_id, user_id) SELECT unnest($1::uuid[]), $2`, [fill.rows.map((r) => r.id), id.m27]);
-      expect((await call('o19', 'POST', `/groups/${open}/requests/${id.m27}/approve`)).json()).toEqual({ rejoined: false });
-      expect(await standing('m27', open)).toEqual({ kind: 'out' });
-      expect((await notices('m27', 'group_request_approved'))[0]!.body).toMatch(/^You can join Ban .* again\.$/);
+      expect((await call('o19', 'POST', `/groups/${full}/requests/${id.m27}/approve`)).json()).toEqual({ rejoined: false });
+      expect((await call('m27', 'GET', `/groups/${full}`)).json().code).toBe('GROUP_NOT_FOUND');
+      expect((await notices('m27', 'group_request_approved'))[0]!.body).toMatch(/^An admin can add you to Ban .* again\.$/);
     });
 
-    it('takes requests to an open group from known adults only', async () => {
-      const gid = await group('open', 'o20', null, []);
-      await person('teen1');
+    it('takes a request from someone banned whatever their age: the rule is the same for every account', async () => {
+      const gid = await group('o20', null, ['teen1']);
       await pool.query(`UPDATE users SET birth_year = $2, birth_month = $3 WHERE id = $1`, [id.teen1, bornYearsAgo(15).birthYear, bornYearsAgo(15).birthMonth]);
-      // a ban from before their age was known, as a past poster's would be
-      await pool.query(`INSERT INTO group_bans (group_id, user_id, banned_by) VALUES ($1, $2, $3)`, [gid, id.teen1, id.o20]);
-      const refused = await call('teen1', 'POST', `/groups/${gid}/requests`, { note: 'silav' });
-      expect([refused.statusCode, refused.json().code]).toEqual([403, 'OPEN_GROUPS_ADULTS_ONLY']);
-      expect((await pool.query(`SELECT 1 FROM group_rejoin_requests WHERE user_id = $1`, [id.teen1])).rowCount).toBe(0);
+      await ban('o20', gid, 'teen1');
+      const sent = await call('teen1', 'POST', `/groups/${gid}/requests`, { note: 'silav' });
+      expect([sent.statusCode, sent.json().request.kind]).toEqual([200, 'pending']);
+      // let back by the friend who had added them, they are a member again
+      expect((await call('o20', 'POST', `/groups/${gid}/requests/${id.teen1}/approve`)).json()).toEqual({ rejoined: true });
+      expect(await standing('teen1', gid)).toEqual({ kind: 'member', role: 'member' });
     });
 
     it('tells the owner and admins once a day per group while requests wait, and how many', async () => {
-      const gid = await group('open', 'o21', 'a6', ['m28', 'm29', 'm30', 'm31']);
+      const gid = await group('o21', 'a6', ['m28', 'm29', 'm30', 'm31']);
       for (const tag of ['m28', 'm29', 'm30', 'm31']) await ban('o21', gid, tag);
       await call('m28', 'POST', `/groups/${gid}/requests`, {});
       await call('m29', 'POST', `/groups/${gid}/requests`, {});
@@ -420,7 +459,7 @@ describe.skipIf(!DATABASE_URL)('group bans and requests to come back (integratio
       await person('roamer');
       const answers: number[] = [];
       for (let i = 0; i < 6; i++) {
-        const gid = await group('open', 'o22', null, ['roamer']);
+        const gid = await group('o22', null, ['roamer']);
         await ban('o22', gid, 'roamer');
         answers.push((await call('roamer', 'POST', `/groups/${gid}/requests`, {})).statusCode);
       }

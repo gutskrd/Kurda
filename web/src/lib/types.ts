@@ -423,23 +423,19 @@ export interface RhymeResult {
 
 export type GroupRole = 'owner' | 'moderator' | 'member';
 
-/** A group / club (KUR-084). */
+/**
+ * A group / club (KUR-084). Every group is private: its members see it, and
+ * the only way in is to be added by its owner or an admin who is your friend.
+ */
 export interface Group {
   id: string;
   name: string;
   description: string | null;
-  privacy: 'open' | 'invite';
   ownerId: string | null;
   archivedAt: string | null;
   memberCount: number;
   /** the group's own picture on the CDN; null (or absent, from an older server) shows its initials */
   photoUrl?: string | null;
-}
-
-/** A group as discovery lists it (GET /groups): whether the reader is already in it, or banned from it. */
-export interface DiscoverGroup extends Group {
-  joined?: boolean;
-  banned?: boolean;
 }
 
 /** A group in the caller's own list (GET /me/groups) — carries their role. */
@@ -457,10 +453,15 @@ export interface GroupMember {
   joinedAt: string;
 }
 
-/** Group detail with its roster and the caller's own role (GET /groups/:id). */
+/**
+ * Group detail with its roster and the caller's own role (GET /groups/:id).
+ * Only a member is given it whole. Someone banned gets the name, the picture
+ * and where they stand, with everything else empty; anyone else is answered
+ * 404, as for a group that does not exist.
+ */
 export interface GroupDetail extends Group {
   members: GroupMember[];
-  /** null when the caller is not a member */
+  /** null for someone banned, the only non-member who is answered at all */
   myRole: GroupRole | null;
   /** where the caller stands with it; an older server leaves it out, and `myRole` says as much */
   standing?: GroupStanding;

@@ -134,7 +134,7 @@ describe.skipIf(!DATABASE_URL)('game cards in chats (integration)', () => {
     const host = await makeUser();
     const friend = await makeUser();
     await befriend(pool, host, friend);
-    const gid = (await groups.create(host, { name: `Muted ${suffix}`, privacy: 'invite' })).id;
+    const gid = (await groups.create(host, { name: `Muted ${suffix}` })).id;
     groupIds.push(gid);
     const sanctions = new SanctionsService(pool);
     const applied = await inTransaction(pool, (client) =>
@@ -169,7 +169,7 @@ describe.skipIf(!DATABASE_URL)('game cards in chats (integration)', () => {
     const owner = await makeUser();
     const member = await makeUser();
     const outsider = await makeUser();
-    const gid = (await groups.create(owner, { name: `Cards ${suffix}`, privacy: 'invite' })).id;
+    const gid = (await groups.create(owner, { name: `Cards ${suffix}` })).id;
     groupIds.push(gid);
     await befriend(pool, owner, member);
     await groups.invite(owner, gid, member);

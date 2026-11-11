@@ -87,7 +87,6 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   UNDER_MINIMUM_AGE: 'error.code.underMinimumAge',
   INVALID_BIRTH_MONTH: 'error.code.invalidBirthMonth',
   BIRTH_DATE_ALREADY_SET: 'error.code.birthDateAlreadySet',
-  OPEN_GROUPS_ADULTS_ONLY: 'error.code.openGroupsAdultsOnly',
   VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
   LEARN_FIRST: 'error.code.learnFirst',
   // a guest at something only an account may do; the gate's sheet says it first, this is the words under it

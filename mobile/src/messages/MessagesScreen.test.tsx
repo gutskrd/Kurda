@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -28,12 +28,16 @@ const CHATS = [
   { userId: 'u-rojhat', username: 'rojhat', lastMessage: 'Baş e', lastAt: '2026-10-19T09:00:00Z', lastFromMe: true, unread: 0 },
 ];
 const GROUPS = [
-  { id: 'g1', name: 'Hevalên Kurmancî', description: null, privacy: 'open', ownerId: null, archivedAt: null, memberCount: 14, myRole: 'member' },
-  { id: 'g2', name: 'Klûba helbestê', description: null, privacy: 'open', ownerId: null, archivedAt: null, memberCount: 6, myRole: 'member' },
+  { id: 'g1', name: 'Hevalên Kurmancî', description: null, ownerId: null, archivedAt: null, memberCount: 14, myRole: 'member' },
+  { id: 'g2', name: 'Klûba helbestê', description: null, ownerId: null, archivedAt: null, memberCount: 6, myRole: 'member' },
 ];
 
-function open({ chats = CHATS, groups = GROUPS, requests = [{ userId: 'u-dilan', username: 'dilan', displayName: 'Dilan' }, { userId: 'u-baran', username: 'baran' }] } = {}) {
+function open(
+  { chats = CHATS, groups = GROUPS, requests = [{ userId: 'u-dilan', username: 'dilan', displayName: 'Dilan' }, { userId: 'u-baran', username: 'baran' }] } = {},
+  more: Parameters<typeof fakeClient>[0] = {},
+) {
   const client = fakeClient({
+    ...more,
     'GET /chat/conversations': ok({ conversations: chats }),
     'GET /me/groups': ok({ groups }),
     'GET /me/groups/unread': ok({ unread: [{ groupId: 'g1', unread: 3 }, { groupId: 'g2', unread: 0 }] }),
@@ -95,10 +99,60 @@ describe('Messages', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Groups' }));
     expect(rowNames()).toEqual(['group:g1', 'group:g2']);
     expect(screen.queryByTestId('messages-requests')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Discover groups' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Clubs');
     fireEvent.click(screen.getByRole('button', { name: 'All' }));
     expect(rowNames()).toHaveLength(4);
+  });
+
+  /* every group is private: the reader's own are all there are, and the server is asked for no others */
+  it('offers no groups to find or join, under any filter', async () => {
+    const client = open();
+    await screen.findByTestId('conversation-dm:u-azad');
+    for (const filter of ['All', 'Unread, 2', 'Groups']) {
+      fireEvent.click(screen.getByRole('button', { name: filter }));
+      expect(screen.queryByRole('button', { name: /discover|join/i })).toBeNull();
+      expect(screen.queryByText(/open group|invite-only/i)).toBeNull();
+    }
+    expect(client.calls.some((c) => c.path === '/groups')).toBe(false);
+    expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
+  it('starts a group in one tap from the list: a name is all it asks, and its chat opens on adding friends', async () => {
+    const client = open({}, { 'POST /groups': ok({ id: 'g-new' }) });
+    // one tap, at the head of the list everyone lands on
+    fireEvent.click(await screen.findByTestId('messages-new-group'));
+    // nothing to choose about who may find or join it
+    expect(screen.queryByText(/privacy|invite-only|anyone can|everyone/i)).toBeNull();
+    const create = screen.getByRole('button', { name: 'Create group' });
+    expect(create.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: '  Koma nû ' } });
+    expect(screen.getByRole('button', { name: 'Create group' }).getAttribute('aria-disabled')).not.toBe('true');
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Create group' }));
+    });
+    expect(client.calls.find((c) => c.method === 'POST' && c.path === '/groups')?.body).toEqual({ name: 'Koma nû' });
+    // on to its chat, told to open the sheet for adding friends by itself
+    expect(navigation.navigate).toHaveBeenCalledWith('GroupThread', { groupId: 'g-new', name: 'Koma nû', addFriends: true });
+  });
+
+  it('keeps New group out of the way of a search, and of the unread', async () => {
+    open();
+    await screen.findByTestId('messages-new-group');
+    fireEvent.click(screen.getByRole('button', { name: 'Unread, 2' }));
+    expect(screen.queryByTestId('messages-new-group')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Groups' }));
+    expect(screen.getByTestId('messages-new-group')).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Search messages'), { target: { value: 'kl' } });
+    expect(screen.queryByTestId('messages-new-group')).toBeNull();
+  });
+
+  it('offers New group where there are no groups yet, in place of an empty list', async () => {
+    open({ groups: [], requests: [] });
+    await screen.findByTestId('conversation-dm:u-azad');
+    fireEvent.click(screen.getByRole('button', { name: 'Groups' }));
+    expect(screen.getByText('No groups yet')).toBeTruthy();
+    expect(screen.getByText('Start a group and add your friends to chat together.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'New group' }));
+    expect(screen.getByLabelText('Name')).toBeTruthy();
   });
 
   it('filters what is loaded as you type, and says when nothing matches', async () => {
@@ -115,11 +169,15 @@ describe('Messages', () => {
     expect(rowNames()).toHaveLength(4);
   });
 
-  it('offers a way to find friends when there is nobody to talk to yet', async () => {
+  it('offers a way to find friends, and to start a group, when there is nobody to talk to yet', async () => {
     open({ chats: [], groups: [], requests: [] });
     fireEvent.click(await screen.findByRole('button', { name: 'Find friends' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Search');
     expect(screen.getByText('No messages yet')).toBeTruthy();
+    // the empty state carries New group itself, so the row above it is not drawn twice
+    expect(screen.queryByTestId('messages-new-group')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'New group' }));
+    expect(screen.getByLabelText('Name')).toBeTruthy();
   });
 
   it('starts a new conversation from the pencil in its header', async () => {

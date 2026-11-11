@@ -14,8 +14,8 @@ import type { Executor } from './tx.js';
  *
  * The resolvers also decide whether the reporter may report it at all: only
  * what they can see. A chat only from inside it (a stranger must not be able to
- * pull a private conversation into anyone's view), an invite-only group only by
- * a member, a post or comment only as the reader would find it — published,
+ * pull a private conversation into anyone's view), a group only by a member
+ * (every group is private), a post or comment only as the reader would find it — published,
  * not removed, and not a minor's written for their friends (users/age.ts
  * `writtenForSql`) — a game player only by someone in that game, and nobody
  * reports themselves. Anything else is "not found": an id is not a key to a
@@ -108,13 +108,13 @@ const resolveUser: Resolver = async (db, targetId, ctx) => {
 const resolveGroup: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
   const r = await db.query<{
-    id: string; name: string; description: string | null; privacy: string; owner_id: string | null;
+    id: string; name: string; description: string | null; owner_id: string | null;
     owner_username: string | null; created_at: Date; archived_at: Date | null; visible: boolean;
     photo_key: string | null; edited_by: string | null; editor_username: string | null; photo_set_by: string | null; photo_setter_username: string | null;
   }>(
-    `SELECT g.id, g.name, g.description, g.privacy, g.owner_id, o.username AS owner_username, g.created_at, g.archived_at,
+    `SELECT g.id, g.name, g.description, g.owner_id, o.username AS owner_username, g.created_at, g.archived_at,
             g.photo_key, g.edited_by, e.username AS editor_username, g.photo_set_by, p.username AS photo_setter_username,
-            (g.privacy = 'open' OR EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2::uuid)) AS visible
+            EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2::uuid) AS visible
        FROM groups g LEFT JOIN users o ON o.id = g.owner_id
                      LEFT JOIN users e ON e.id = g.edited_by
                      LEFT JOIN users p ON p.id = g.photo_set_by
@@ -125,7 +125,7 @@ const resolveGroup: Resolver = async (db, targetId, ctx) => {
   if (!g) return { refused: 'not_found' };
   const self = selfRefusal(ctx, g.owner_id);
   if (self) return self;
-  // an invite-only group, only from inside it
+  // a group is its members' alone: reported only from inside it
   if (!visibleTo(ctx, g.visible)) return { refused: 'not_found' };
   return {
     targetId: g.id,
@@ -143,7 +143,6 @@ const resolveGroup: Resolver = async (db, targetId, ctx) => {
       group: {
         id: g.id,
         name: g.name,
-        privacy: g.privacy,
         editedBy: g.edited_by && g.editor_username ? { id: g.edited_by, username: g.editor_username } : null,
         photoSetBy: g.photo_set_by && g.photo_setter_username ? { id: g.photo_set_by, username: g.photo_setter_username } : null,
       },
@@ -391,8 +390,8 @@ const resolveDmMessage: Resolver = async (db, targetId, ctx) => {
 
 const resolveGroupMessage: Resolver = async (db, targetId, ctx) => {
   if (!UUID_RE.test(targetId)) return { refused: 'not_found' };
-  const r = await db.query<{ id: string; group_id: string; sender_id: string; created_at: Date; name: string; privacy: string; deleted_at: Date | null }>(
-    `SELECT m.id, m.group_id, m.sender_id, m.created_at, g.name, g.privacy, m.deleted_at
+  const r = await db.query<{ id: string; group_id: string; sender_id: string; created_at: Date; name: string; deleted_at: Date | null }>(
+    `SELECT m.id, m.group_id, m.sender_id, m.created_at, g.name, m.deleted_at
        FROM group_messages m JOIN groups g ON g.id = m.group_id WHERE m.id = $1`,
     [targetId],
   );
@@ -415,7 +414,7 @@ const resolveGroupMessage: Resolver = async (db, targetId, ctx) => {
       text: reported?.body ?? null,
       createdAt: iso(m.created_at),
       status: m.deleted_at ? 'deleted' : 'visible',
-      group: { id: m.group_id, name: m.name, privacy: m.privacy },
+      group: { id: m.group_id, name: m.name },
       context: rows.map((x) => toEvidenceMessage(x, m.id)),
       extra: { kind: reported?.kind ?? 'text' },
     },

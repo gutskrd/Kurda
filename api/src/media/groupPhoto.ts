@@ -11,6 +11,10 @@ export type SetGroupPhotoResult =
   | { ok: false; status: number; code: string; message: string; reason: string };
 
 const refuse = (status: number, code: string, message: string): SetGroupPhotoResult => ({ ok: false, status, code, message, reason: code.toLowerCase() });
+const noSuchGroup = (): SetGroupPhotoResult => refuse(404, 'GROUP_NOT_FOUND', 'no such group');
+/** Why this person may not change the picture: not in the group, it does not exist for them; in it, they are not its owner or an admin. */
+const notAllowed = (role: string | null): SetGroupPhotoResult =>
+  role === null ? noSuchGroup() : refuse(403, 'NOT_GROUP_ADMIN', 'only the owner and admins can change the group');
 
 /**
  * Put up a group's picture: every guard a profile photo goes through
@@ -24,9 +28,10 @@ export async function setGroupPhoto(deps: ProfilePhotoDeps, groupId: string, act
   const { pool, storage, log } = deps;
   const current = await pool.query<{ photo_key: string | null; archived_at: Date | null }>(`SELECT photo_key, archived_at FROM groups WHERE id = $1`, [groupId]);
   const group = current.rows[0];
-  if (!group || group.archived_at) return refuse(404, 'GROUP_NOT_FOUND', 'no such group');
+  if (!group || group.archived_at) return noSuchGroup();
   // asked before any work is done, and again under the lock below
-  if (!canEditGroup(await roleIn(pool, groupId, actorId))) return refuse(403, 'NOT_GROUP_ADMIN', 'only the owner and admins can change the group');
+  const role = await roleIn(pool, groupId, actorId);
+  if (!canEditGroup(role)) return notAllowed(role);
 
   const stored = await storeScannedPhoto(deps, raw, GROUP_KIND, group.photo_key);
   if (!stored.ok) return stored;
@@ -53,11 +58,12 @@ export async function clearGroupPhoto(
     const group = g.rows[0];
     if (!group || group.archived_at) {
       await client.query('ROLLBACK');
-      return refuse(404, 'GROUP_NOT_FOUND', 'no such group');
+      return noSuchGroup();
     }
-    if (!canEditGroup(await roleIn(client, groupId, actorId))) {
+    const role = await roleIn(client, groupId, actorId);
+    if (!canEditGroup(role)) {
       await client.query('ROLLBACK');
-      return refuse(403, 'NOT_GROUP_ADMIN', 'only the owner and admins can change the group');
+      return notAllowed(role);
     }
     oldKey = group.photo_key;
     await client.query(`UPDATE groups SET photo_key = NULL, photo_set_by = $2 WHERE id = $1`, [groupId, actorId]);
@@ -94,11 +100,12 @@ async function swap(
     // removed, demoted or the group archived while the picture was being checked: the new object is left to the orphan job
     if (!group || group.archived_at) {
       await client.query('ROLLBACK');
-      return { ok: false, refusal: refuse(404, 'GROUP_NOT_FOUND', 'no such group') };
+      return { ok: false, refusal: noSuchGroup() };
     }
-    if (!canEditGroup(await roleIn(client, groupId, actorId))) {
+    const role = await roleIn(client, groupId, actorId);
+    if (!canEditGroup(role)) {
       await client.query('ROLLBACK');
-      return { ok: false, refusal: refuse(403, 'NOT_GROUP_ADMIN', 'only the owner and admins can change the group') };
+      return { ok: false, refusal: notAllowed(role) };
     }
     const oldKey = group.photo_key;
     await client.query(`UPDATE media_uploads SET confirmed_at = now() WHERE key = $1 AND confirmed_at IS NULL`, [newKey]);

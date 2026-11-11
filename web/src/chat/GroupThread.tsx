@@ -28,12 +28,12 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from '../groups/GroupAvatar';
 import { GroupInfo } from '../groups/GroupInfo';
 import { GroupAsk } from '../groups/GroupAsk';
-import { GroupOutside } from '../groups/GroupOutside';
+import { GroupMissing, GroupOutside } from '../groups/GroupOutside';
 import { ClearedLine, GroupWelcome, clearedWords } from '../groups/GroupWelcome';
 import { AddFriendsSheet } from '../groups/AddFriendsSheet';
 import { OptionsMenu } from '../groups/OptionsMenu';
 import { announceGroupsChanged } from '../groups/groupsChanged';
-import { isOutOfGroup, shownClear, sinceCleared, standingOf } from '../groups/standing';
+import { isGroupMissing, isOutOfGroup, shownClear, sinceCleared, standingOf } from '../groups/standing';
 
 /**
  * A group conversation, as a page or as a dock beside the social rail.
@@ -47,15 +47,20 @@ import { isOutOfGroup, shownClear, sinceCleared, standingOf } from '../groups/st
  * header's ⋯ clears the chat for you, and for the owner and admins for
  * everyone, each after a yes that says exactly what happens; a clear for
  * everyone, or a banned member's messages taken away, reaches every open
- * thread at once. Someone not in the group sees it from outside — Join, or
- * where a ban stands — and a reader taken out while the chat is open sees
- * that calmly in place of the chat at their next read or send.
+ * thread at once.
+ *
+ * A group is private, so its address shows a group only to its members.
+ * Someone banned sees where the ban stands and may ask to come back; a reader
+ * taken out while the chat is open sees that calmly in place of the chat at
+ * their next read or send; anyone else is told there is no such group here,
+ * which is all the server tells them.
  */
 export function GroupThread({
   groupId,
   className,
   onClose,
   openInfo = false,
+  addFriends = false,
 }: {
   groupId: string;
   /** extra class for the docked variant */
@@ -64,6 +69,8 @@ export function GroupThread({
   onClose?: () => void;
   /** open on the group's own page (a notification about requests to come back links there) */
   openInfo?: boolean;
+  /** open with the add-friends sheet up: the group was made a moment ago and has nobody else in it */
+  addFriends?: boolean;
 }): React.JSX.Element {
   const navigateAway = useNavigate();
   const { client, user } = useAuth();
@@ -74,6 +81,8 @@ export function GroupThread({
   const [detail, setDetail] = useState<GroupDetail | null>(null);
   /** the group has been asked for once, so an empty chat can say whose it is */
   const [detailTried, setDetailTried] = useState(false);
+  /** the server answered that there is no such group for this reader */
+  const [missing, setMissing] = useState(false);
   const [showInfo, setShowInfo] = useState(openInfo);
   const [messages, setMessages] = useState<GroupMessage[] | null>(null);
   const [cleared, setCleared] = useState<GroupChatCleared | null>(null);
@@ -91,7 +100,7 @@ export function GroupThread({
   const [clearing, setClearing] = useState<'me' | 'everyone' | null>(null);
   const [clearBusy, setClearBusy] = useState(false);
   const [clearErr, setClearErr] = useState<string | null>(null);
-  const [addingFriends, setAddingFriends] = useState(false);
+  const [addingFriends, setAddingFriends] = useState(addFriends);
   /** what just happened here, for a screen reader */
   const [said, setSaid] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -106,14 +115,22 @@ export function GroupThread({
   // join the live room for as long as this channel is open (ref-counted, cross-tab)
   useRealtimeRoom(`group:${groupId}`);
 
-  /** Group detail carries the roster + my role, which drives the members panel, and where the reader stands. */
+  /**
+   * Group detail carries the roster + my role, which drives the members panel,
+   * and where the reader stands. A "not found" is an answer too: the reader is
+   * not in the group (any more), and what was read of it before is all that is
+   * kept, for the name and picture of a group they were just taken out of.
+   */
   const loadDetail = useCallback(async () => {
     const r = await client.get<GroupDetail>(`/groups/${groupId}`);
     setDetailTried(true);
     if (r.ok) {
+      setMissing(false);
       setDetail(r.data);
       // an answer without a name keeps the one already shown
       if (r.data.name) setName(r.data.name);
+    } else if (isGroupMissing(r.error)) {
+      setMissing(true);
     }
   }, [client, groupId]);
 
@@ -187,8 +204,9 @@ export function GroupThread({
     }
   }, [client, groupId, refusedOut]);
 
-  const standing = detail ? standingOf(detail) : null;
-  const outside = gone || (standing !== null && standing.kind !== 'member');
+  const standing = detail && !missing ? standingOf(detail) : null;
+  const banned = standing?.kind === 'banned' ? standing : null;
+  const outside = gone || missing || banned !== null;
   // the poll has nothing to read for someone outside the group
   const outsideRef = useRef(outside);
   outsideRef.current = outside;
@@ -327,8 +345,8 @@ export function GroupThread({
   const shown = shownClear(cleared);
   // a send refused for a limit on the account, or a mute in this group: no greetings to tap
   const canPost = restrictionOf(sendErr) === null;
-  // an invite-only group's owner or admin, alone in it: nobody else can be in it unless they are added
-  const alone = detail !== null && detail.privacy === 'invite' && moderates && (memberCount ?? 0) <= 1;
+  // the owner or an admin, alone in the group: nobody else can be in it unless they are added
+  const alone = detail !== null && moderates && (memberCount ?? 0) <= 1;
 
   return (
     <div className={`chat-thread${className ? ` ${className}` : ''}`} ref={rootRef}>
@@ -339,18 +357,30 @@ export function GroupThread({
             <ArrowIcon size={18} />
           </Link>
         )}
-        {/* the group's picture and name open its page: who is in it, and for the owner and admins, changing it */}
-        <button type="button" className="ghead" aria-haspopup="dialog" title={t('groups.info')} onClick={() => setShowInfo(true)}>
-          <GroupAvatar id={groupId} name={name} photoUrl={detail?.photoUrl} size={36} />
-          <span className="ghead-text">
-            <span className="ghead-name" dir="auto" aria-current="page">
-              {name}
+        {outside ? (
+          // out of the group there is no page of it to open: its name, when the reader may know it, and nothing to press
+          <div className="ghead is-plain">
+            {!(missing && !gone) && <GroupAvatar id={groupId} name={name} photoUrl={detail?.photoUrl} size={36} />}
+            <span className="ghead-text">
+              <span className="ghead-name" dir="auto" aria-current="page">
+                {missing && !gone ? t('groups.title') : name}
+              </span>
             </span>
-            <span className="ghead-sub">
-              {typeof memberCount === 'number' ? t('groups.memberCount', { count: memberCount }) : t('groups.members')}
+          </div>
+        ) : (
+          // the group's picture and name open its page: who is in it, adding friends, and for the owner and admins, changing it
+          <button type="button" className="ghead" aria-haspopup="dialog" title={t('groups.info')} onClick={() => setShowInfo(true)}>
+            <GroupAvatar id={groupId} name={name} photoUrl={detail?.photoUrl} size={36} />
+            <span className="ghead-text">
+              <span className="ghead-name" dir="auto" aria-current="page">
+                {name}
+              </span>
+              <span className="ghead-sub">
+                {typeof memberCount === 'number' ? t('groups.memberCount', { count: memberCount }) : t('groups.members')}
+              </span>
             </span>
-          </span>
-        </button>
+          </button>
+        )}
         {detail && !outside && (
           <OptionsMenu
             className="ghead-menu"
@@ -370,10 +400,11 @@ export function GroupThread({
         )}
       </header>
 
-      <Modal open={showInfo} onClose={() => setShowInfo(false)} label={t('groups.info')}>
-        {detail?.members && (
+      <Modal open={showInfo && !outside} onClose={() => setShowInfo(false)} label={t('groups.info')}>
+        {detail?.members && !outside && (
           <GroupInfo
             detail={detail}
+            showRequests={openInfo}
             onChanged={loadDetail}
             // reloading the detail of a group you just left would only 403, so
             // leave it: a dock closes, a page goes back to the list
@@ -404,10 +435,12 @@ export function GroupThread({
       <div className="chat-messages" ref={scrollRef}>
         {messages === null || !detailTried ? (
           <ThreadSkeleton />
-        ) : outside && detail ? (
+        ) : missing && !gone ? (
+          <GroupMissing />
+        ) : outside ? (
           <GroupOutside
-            detail={{ ...detail, id: groupId, name, memberCount: memberCount ?? 0 }}
-            standing={standing && standing.kind !== 'member' ? standing : { kind: 'out' }}
+            group={{ id: groupId, name, photoUrl: detail?.photoUrl }}
+            banned={banned}
             gone={gone}
             onChanged={async () => {
               setGone(false);
@@ -494,9 +527,9 @@ export function GroupThread({
         />
       )}
       {gifts.overlays}
-      {detail && (
+      {detail && !outside && (
         <AddFriendsSheet
-          open={addingFriends}
+          open={addingFriends && moderates}
           groupId={groupId}
           groupName={name}
           memberIds={new Set((detail.members ?? []).map((m) => m.userId))}

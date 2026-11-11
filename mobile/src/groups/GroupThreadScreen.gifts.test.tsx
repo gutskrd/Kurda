@@ -58,7 +58,7 @@ describe('GroupThreadScreen gifts', () => {
     });
     testAuth.client = client;
     renderWithProviders(
-      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
+      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} onFindPeople={() => undefined} />,
     );
     fireEvent.click(await screen.findByRole('button', { name: 'Send a gift' }));
     fireEvent.click(await screen.findByRole('checkbox', { name: 'All my friends here' }));
@@ -101,7 +101,7 @@ describe('GroupThreadScreen header', () => {
   it('offers a member to report the group and to clear the chat for themselves', async () => {
     testAuth.client = thread('member');
     renderWithProviders(
-      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
+      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} onFindPeople={() => undefined} />,
     );
     const menu = await openMenu();
     expect(menu.map((b) => b.text)).toEqual(['Report group', 'Clear chat for me', 'Cancel']);
@@ -112,7 +112,7 @@ describe('GroupThreadScreen header', () => {
   it('does not offer its owner to report their own group, and lets them clear it for everyone', async () => {
     testAuth.client = thread('owner');
     renderWithProviders(
-      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
+      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} onFindPeople={() => undefined} />,
     );
     const menu = await openMenu();
     expect(menu.map((b) => b.text)).toEqual(['Clear chat for me', 'Clear chat for everyone', 'Cancel']);
@@ -162,7 +162,7 @@ describe('GroupThreadScreen reports', () => {
     const client = thread('member');
     testAuth.client = client;
     renderWithProviders(
-      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
+      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} onFindPeople={() => undefined} />,
     );
     await waitFor(() => expect(client.calls.some((c) => c.path === '/groups/g1')).toBe(true));
     await reportTheMessage();
@@ -173,7 +173,7 @@ describe('GroupThreadScreen reports', () => {
     const client = thread('owner');
     testAuth.client = client;
     renderWithProviders(
-      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
+      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} onFindPeople={() => undefined} />,
     );
     await waitFor(() => expect(client.calls.some((c) => c.path === '/groups/g1')).toBe(true));
     await reportTheMessage();

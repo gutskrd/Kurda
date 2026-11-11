@@ -2,19 +2,24 @@ import type { GroupChatCleared, GroupStanding, StoryDialect } from '@kurda/share
 import type { ApiError, GroupDetail } from '../lib/types';
 
 /**
- * Where the reader stands with a group: the server says; an older one that
- * does not is read from the reader's role (null: not in it). An answer that
- * says neither is no answer, and leaves the thread as it is.
+ * Where the reader stands with a group the server answered for: a member, or
+ * banned. The server says; an older one that does not is read from the
+ * reader's role. An answer that says neither is no answer, and leaves the
+ * thread as it is. (Anyone else is not answered at all: `isGroupMissing`.)
  */
 export function standingOf(detail: Pick<GroupDetail, 'standing' | 'myRole'>): GroupStanding | null {
   if (detail.standing) return detail.standing;
-  if (detail.myRole) return { kind: 'member', role: detail.myRole };
-  return detail.myRole === null ? { kind: 'out' } : null;
+  return detail.myRole ? { kind: 'member', role: detail.myRole } : null;
 }
 
 /** A read or a send refused because the reader is not in the group any more: removed, or banned. */
 export function isOutOfGroup(error: ApiError): boolean {
   return error.code === 'NOT_A_MEMBER' || error.code === 'GROUP_BANNED';
+}
+
+/** The group's own page refused as not found: deleted, or private and the reader is neither in it nor banned from it. */
+export function isGroupMissing(error: ApiError): boolean {
+  return error.code === 'GROUP_NOT_FOUND' || error.status === 404;
 }
 
 const time = (iso: string | null | undefined): number | null => {

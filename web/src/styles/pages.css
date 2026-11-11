@@ -1278,16 +1278,11 @@ button.feature {
   flex-direction: column;
   gap: 6px;
 }
-/* Direct / Groups switch + list actions */
+/* All / Unread / Groups switch */
 .chat-tabs {
   display: flex;
   gap: 6px;
   margin-bottom: 4px;
-}
-.chat-list-actions {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
 }
 /* sender name above a group message that isn't yours */
 .bubble-author {

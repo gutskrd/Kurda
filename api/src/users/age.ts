@@ -16,8 +16,8 @@ import { requireAuth } from '../plugins/auth.js';
  * record (one made through Google or Apple that has not answered yet, or one
  * from before we asked):
  *
- * - *is a minor* — known to be 13–17. What a person may do themselves (start an
- *   open group, choose the public web) is refused on this.
+ * - *is a minor* — known to be 13–17. What a person may do themselves (open a
+ *   game to strangers, choose the public web) is refused on this.
  * - *is not known to be an adult* — a minor, or nobody knows. What decides
  *   whether a stranger may find or reach somebody (search, suggestions, other
  *   people's friend lists, the boards, a friend request) uses this one: an

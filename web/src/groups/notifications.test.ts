@@ -8,13 +8,11 @@ const note = (data: Record<string, unknown>, title = 'Server title', body: strin
 const say = (data: Record<string, unknown>) => groupNotification(note({ groupId: 'g1', groupName: 'Hevalên Amedê', ...data }), t, 'en');
 
 describe('news about a group', () => {
-  it('tells someone removed that they can come back, the way the group allows', () => {
-    expect(say({ kind: 'group_removed', privacy: 'open' })).toEqual({
-      title: 'You were removed from Hevalên Amedê',
-      body: 'You can join again.',
-      to: '/app/messages?group=g1',
-    });
-    expect(say({ kind: 'group_removed', privacy: 'invite' })?.body).toBe('An admin can add you again.');
+  it('tells someone removed that an admin can add them again, and opens their conversations, not the group', () => {
+    const removed = { title: 'You were removed from Hevalên Amedê', body: 'An admin can add you again.', to: '/app/messages' };
+    expect(say({ kind: 'group_removed' })).toEqual(removed);
+    // a line written while groups could still be open reads the same now that none is
+    expect(say({ kind: 'group_removed', privacy: 'open' })).toEqual(removed);
   });
 
   it('tells someone banned for how long, why, and that they can ask', () => {
@@ -38,11 +36,11 @@ describe('news about a group', () => {
     expect(say({ kind: 'group_request', count: '1' })?.title).toBe('Someone asked to rejoin Hevalên Amedê');
   });
 
-  it('tells a requester they are back in, or free to join again', () => {
-    expect(say({ kind: 'group_request_approved', rejoined: 'true' })?.title).toBe('You’re back in Hevalên Amedê');
-    expect(say({ kind: 'group_request_approved', rejoined: 'false', privacy: 'open' })?.title).toBe('You can join Hevalên Amedê again');
-    // an invite-only group is joined only when an admin adds them: the server says so in its own words
-    expect(say({ kind: 'group_request_approved', rejoined: 'false', privacy: 'invite' })?.title).toBe('Server title');
+  it('tells a requester they are back in, or that an admin can add them again', () => {
+    expect(say({ kind: 'group_request_approved', rejoined: 'true' })).toMatchObject({ title: 'You’re back in Hevalên Amedê', to: '/app/messages?group=g1' });
+    // let back but not put back: they are not in it, so the line opens their conversations
+    expect(say({ kind: 'group_request_approved', rejoined: 'false' })).toEqual({ title: 'An admin can add you to Hevalên Amedê again', body: null, to: '/app/messages' });
+    expect(say({ kind: 'group_request_approved', rejoined: false, privacy: 'open' })?.title).toBe('An admin can add you to Hevalên Amedê again');
   });
 
   it('tells a requester turned down when they may ask again, or that they may not', () => {
@@ -54,6 +52,8 @@ describe('news about a group', () => {
 
   it('shows the server words, still opening the group, when the group is not named', () => {
     expect(groupNotification(note({ kind: 'group_banned', groupId: 'g1' }), t, 'en')).toEqual({ title: 'Server title', body: 'Server body', to: '/app/messages?group=g1' });
+    // but never the group itself for someone it has left out
+    expect(groupNotification(note({ kind: 'group_removed', groupId: 'g1' }), t, 'en')?.to).toBe('/app/messages');
   });
 
   it('leaves anything not about a group to the others', () => {

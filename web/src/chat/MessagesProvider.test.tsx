@@ -53,7 +53,7 @@ function setup(route: string, fetchImpl?: (url: string) => Promise<Response>) {
         (async (url: string) => {
           if (String(url).includes('/me/groups/unread')) return jsonResponse(200, { unread: [] });
           if (String(url).includes('/me/groups')) {
-            return jsonResponse(200, { groups: [{ id: 'g1', name: 'Hevalên Kurmancî', memberCount: 4, privacy: 'open', myRole: 'member' }] });
+            return jsonResponse(200, { groups: [{ id: 'g1', name: 'Hevalên Kurmancî', memberCount: 4, myRole: 'member' }] });
           }
           if (String(url).includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
           // must come after the /me/groups branches above — it is a prefix of them

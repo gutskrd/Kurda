@@ -75,8 +75,8 @@ export type RootStackParamList = {
   /** The friend requests waiting on you, opened from the row at the top of Messages. */
   FriendRequests: undefined;
   /** As Chat: `openGift` to unwrap at once; `name` may be '' and is then looked up. */
-  GroupThread: { groupId: string; name: string; openGift?: string };
-  Clubs: undefined;
+  /** `addFriends`: the group was made a moment ago, and opens with the sheet for adding friends up */
+  GroupThread: { groupId: string; name: string; openGift?: string; addFriends?: boolean };
   GroupMembers: { groupId: string };
   GroupEdit: { groupId: string };
   /** For a group's owner and admins: the requests to come back, and who is banned. */

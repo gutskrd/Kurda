@@ -4,8 +4,7 @@ import { AppError } from '../plugins/errors.js';
 import { assertUnrestricted } from '../moderation/restrictions.js';
 import { gameRef, type KindColumns } from '../chat/kinds.js';
 import { giftCards } from '../gifts/cards.js';
-import { openGroupsAdultsOnly, type GroupService } from './service.js';
-import { birthDateRequired, minorSql, writtenForSql } from '../users/age.js';
+import type { GroupService } from './service.js';
 import { canManage, canModerateGroup, isRole, type GroupChatCleared, type Role } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { notBlockedSql } from '../friends/blocked.js';
@@ -77,29 +76,28 @@ export class GroupChatService {
   ) {}
 
   /**
-   * Membership, and for anyone not known to be an adult an invite-only group.
-   * A minor is taken out of open groups when their age is recorded; one still
-   * in one (an older membership) can leave but can neither read nor write its
-   * chat. An account whose age is not on record yet is asked for it first.
+   * Membership: all a group's chat asks of its reader. Every member was put
+   * there by somebody they chose, whatever their age, so nothing else is.
    */
   private async requireMember(groupId: string, userId: string): Promise<Role> {
     return (await this.member(groupId, userId)).role;
   }
 
   /**
-   * `requireMember` in one read: the membership, the group's privacy and the
-   * member's age, whether they are muted in the group right now (which only
-   * posting asks), and what their view of the chat has had cleared (which
-   * only the history answers with). Someone not in the group is told
-   * GROUP_BANNED, with until when, when that is why — so a thread left open
-   * as they were banned can say so — and NOT_A_MEMBER otherwise.
+   * `requireMember` in one read: the membership, whether they are muted in
+   * the group right now (which only posting asks), and what their view of the
+   * chat has had cleared (which only the history answers with). Someone not
+   * in the group is told GROUP_BANNED, with until when, when that is why — so
+   * a thread left open as they were banned can say so — and NOT_A_MEMBER
+   * otherwise, which is also the answer for a group that does not exist: the
+   * chat tells a stranger no more than the group's own page does.
    */
   private async member(groupId: string, userId: string): Promise<{ role: Role; muted: boolean; username: string; cleared: GroupChatCleared }> {
     const r = await this.pool.query<{
-      role: string | null; privacy: string; minor: boolean; known: boolean; muted: boolean; username: string;
+      role: string | null; muted: boolean; username: string;
       banned: boolean; until: Date | null; group_cleared_at: Date | null; group_cleared_by: string | null; my_cleared_at: Date | null;
     }>(
-      `SELECT me.role, g.privacy, ${minorSql('u')} AS minor, u.birth_year IS NOT NULL AS known, u.username,
+      `SELECT me.role, u.username,
               EXISTS (SELECT 1 FROM group_mutes gm WHERE gm.group_id = g.id AND gm.user_id = u.id
                          AND (gm.muted_until IS NULL OR gm.muted_until > now())) AS muted,
               b.user_id IS NOT NULL AS banned, b.until,
@@ -116,10 +114,6 @@ export class GroupChatService {
     if (!row?.role || !isRole(row.role)) {
       if (row?.banned) throw new AppError('GROUP_BANNED', 403, 'you are banned from this group', { until: row.until ? row.until.toISOString() : null });
       throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
-    }
-    if (row.privacy === 'open') {
-      if (row.minor) throw openGroupsAdultsOnly();
-      if (!row.known) throw birthDateRequired();
     }
     const cleared: GroupChatCleared = {
       forEveryone: row.group_cleared_at ? { at: row.group_cleared_at.toISOString(), by: row.group_cleared_by } : null,
@@ -144,10 +138,7 @@ export class GroupChatService {
     }
   }
 
-  /**
-   * Whether this person may read the group's channel right now: a member, and
-   * in an open group a known adult. Who a gift in the channel can go to.
-   */
+  /** Whether this person may read the group's channel right now: a member. Who a gift in the channel can go to. */
   async canRead(groupId: string, userId: string): Promise<boolean> {
     try {
       await this.requireMember(groupId, userId);
@@ -161,18 +152,14 @@ export class GroupChatService {
   /** `canRead` for each of `userIds`, in their order, in one query (the recipients of a gift). */
   async canReadEach(groupId: string, userIds: readonly string[]): Promise<boolean[]> {
     if (userIds.length === 0) return [];
-    const r = await this.pool.query<{ n: number; role: string | null; privacy: string | null; minor: boolean | null; known: boolean | null }>(
-      `SELECT t.n::int AS n, m.role, g.privacy, ${minorSql('u')} AS minor, u.birth_year IS NOT NULL AS known
+    const r = await this.pool.query<{ n: number; role: string | null }>(
+      `SELECT t.n::int AS n, m.role
          FROM unnest($2::uuid[]) WITH ORDINALITY AS t(id, n)
-         LEFT JOIN group_members m ON m.group_id = $1 AND m.user_id = t.id
-         LEFT JOIN groups g ON g.id = m.group_id
-         LEFT JOIN users u ON u.id = m.user_id`,
+         LEFT JOIN group_members m ON m.group_id = $1 AND m.user_id = t.id`,
       [groupId, userIds],
     );
     const can = userIds.map(() => false);
-    for (const row of r.rows) {
-      can[row.n - 1] = row.role !== null && isRole(row.role) && (row.privacy !== 'open' || (!row.minor && row.known === true));
-    }
+    for (const row of r.rows) can[row.n - 1] = row.role !== null && isRole(row.role);
     return can;
   }
 
@@ -299,25 +286,20 @@ export class GroupChatService {
     const { cleared } = await this.member(groupId, userId);
     // grant this member access to the live room for the WS join
     await this.hub.invite(room(groupId), userId, ROOM_TTL).catch(() => undefined);
-    // An open group is strangers. Anything a minor said in one before their
-    // age was known (they are taken out when it is recorded) is shown to their
-    // friends only, as their posts are (users/age.ts `writtenForSql`); in an
-    // invite-only group everybody was put there by somebody they chose.
-    // Nothing from somebody with a block between them and the reader, in any
-    // group (friends/blocked.ts).
+    // Everybody in a group was put there by somebody they chose, so a member
+    // reads what every other member wrote, whatever their ages. Nothing from
+    // somebody with a block between them and the reader (friends/blocked.ts).
     const rows = await this.pool.query<
       KindColumns & {
         id: string; sender_id: string; username: string; profile_photo_key: string | null;
         selected_avatar_key: string | null; body: string | null; created_at: Date; deleted_at: Date | null;
-        privacy: string;
       }
     >(
       `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
-              m.body, m.created_at, m.deleted_at, m.kind, m.gift_batch_id, m.game, m.game_lobby_id, g.privacy
+              m.body, m.created_at, m.deleted_at, m.kind, m.gift_batch_id, m.game, m.game_lobby_id
          FROM group_messages m JOIN users u ON u.id = m.sender_id JOIN groups g ON g.id = m.group_id
          LEFT JOIN group_members me ON me.group_id = m.group_id AND me.user_id = $3
         WHERE m.group_id = $1 AND m.created_at > ${CLEARED_BEFORE}
-          AND (g.privacy <> 'open' OR ${writtenForSql('m.sender_id', '$3::uuid')})
           AND ${notBlockedSql('m.sender_id', '$3::uuid')}
           ${before ? 'AND m.created_at < $4::timestamptz' : ''}
         ORDER BY m.created_at DESC LIMIT $2`,
@@ -325,11 +307,11 @@ export class GroupChatService {
     );
     // The gifts on this page as this member sees them: their own to open, and
     // the other recipients named by the roster's rule — everyone, to a member
-    // of an invite-only group (the reader is one: checked above).
+    // of the group (the reader is one: checked above).
     const cards = await giftCards(
       this.pool,
       rows.rows.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id && !r.deleted_at ? [r.gift_batch_id] : [])),
-      { id: userId, seesEveryone: rows.rows[0]?.privacy === 'invite' },
+      { id: userId, seesEveryone: true },
       publicUrl,
     );
     const messages = rows.rows

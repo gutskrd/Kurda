@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { canModerateGroup, type GiftCard, type GiftTier, type GroupChatCleared, type GroupStanding } from '@kurda/shared';
+import { canModerateGroup, type GiftCard, type GiftTier, type GroupChatCleared } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
@@ -23,6 +23,7 @@ import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
+import { EmptyState } from '../theme/EmptyState';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { GroupAvatar } from './GroupAvatar';
@@ -48,7 +49,7 @@ import { mergeLatest, useCatchUp } from '../realtime/catchUp';
 import { showActions } from '../theme/actionSheet';
 import { afterClear, clearedSince, clearedView, useClearChat, useClearedHere } from './clearing';
 import { ClearedLine, WelcomeCard } from './Welcome';
-import { StandingCard } from './Standing';
+import { StandingCard, type Banned } from './Standing';
 import { AddFriendsSheet } from './AddFriendsSheet';
 import { Loading } from '../theme/Loading';
 
@@ -59,12 +60,15 @@ type Message = Omit<GroupMessage, 'body'> & ChatMessage;
 /** A refusal that means the reader is not in the group (any more): removed, banned, or never in it. */
 const isOutside = (error: ApiError): boolean => error.code === 'NOT_A_MEMBER' || error.code === 'GROUP_BANNED';
 
+/** The group's own page refused as not found: deleted, or private and the reader is neither in it nor banned from it. */
+const isMissing = (error: ApiError): boolean => error.code === 'GROUP_NOT_FOUND' || error.status === 404;
+
 /**
- * Where someone refused stands, when the group's page did not say: banned
- * (with until when, from the refusal) or simply out.
+ * The ban a refusal tells of, when the group's page did not say: until when,
+ * from the refusal itself. Null for any other refusal.
  */
-function standingFrom(error: ApiError): Exclude<GroupStanding, { kind: 'member' }> {
-  if (error.code !== 'GROUP_BANNED') return { kind: 'out' };
+function bannedFrom(error: ApiError): Banned | null {
+  if (error.code !== 'GROUP_BANNED') return null;
   const until = (error.details as { until?: unknown } | undefined)?.until;
   return { kind: 'banned', until: typeof until === 'string' ? until : null, reason: null, request: { kind: 'can_ask' } };
 }
@@ -92,26 +96,38 @@ function standingFrom(error: ApiError): Exclude<GroupStanding, { kind: 'member' 
  * as its owner or an admin, for everyone — and reports the group.
  *
  * An empty chat welcomes (Welcome.tsx); a chat an admin cleared says so at
- * the top of its history. Someone removed or banned while it is open finds,
- * at the next read or send, where they stand with the group in place of the
- * chat (Standing.tsx), never a raw error.
+ * the top of its history. A group made a moment ago opens with the sheet for
+ * adding friends up (`addFriends`), since nobody else is in it until its
+ * owner brings them.
+ *
+ * A group is private, so only its members see it here. Someone removed or
+ * banned while it is open finds, at the next read or send, where they stand
+ * in place of the chat (Standing.tsx), never a raw error; someone banned who
+ * opens it sees the same card. Anyone else is told there is no such group,
+ * which is all the server tells them.
  */
 export function GroupThreadScreen({
   groupId,
   name: nameParam,
   openGift,
+  addFriends = false,
   onExit,
   onOpenMembers,
   onLeft,
+  onFindPeople,
 }: {
   groupId: string;
   /** '' when the way in only knew the id: looked up */
   name: string;
   openGift?: string;
+  /** open with the add-friends sheet up: the group was made a moment ago */
+  addFriends?: boolean;
   onExit: () => void;
   onOpenMembers: () => void;
   /** left the group from a report's done screen */
   onLeft: () => void;
+  /** to where people are found, from the add-friends sheet of someone with no friends yet */
+  onFindPeople: () => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
@@ -134,11 +150,15 @@ export function GroupThreadScreen({
   const [cleared, setCleared] = useState<GroupChatCleared | null>(null);
   // a read or a send refused because the reader is not in the group; `left` when they were in it as this screen showed it
   const [outside, setOutside] = useState<{ left: boolean; error: ApiError } | null>(null);
+  // the group's own page answered that there is no such group for this reader
+  const [missing, setMissing] = useState(false);
   // false once the server said the reader may not post here (muted, restricted): the greetings go
   const [canPost, setCanPost] = useState(true);
-  const [addingFriends, setAddingFriends] = useState(false);
-  // asks for the history again: after joining from the card that stood in for it
+  const [addingFriends, setAddingFriends] = useState(addFriends);
+  // asks for the history again: when the reader turns out to be back in the group the card said they were out of
   const [reloadKey, setReloadKey] = useState(0);
+  const outsideNow = useRef(false);
+  outsideNow.current = outside !== null;
   const readOnce = useRef(false);
   const [friends, setFriends] = useState<GiftFriend[] | null>(null);
   const [picking, setPicking] = useState(false);
@@ -158,14 +178,30 @@ export function GroupThreadScreen({
    * The group's name, picture, roster and where the reader stands with it —
    * asked each time the thread comes back into view, so a rename made on its
    * info page shows here at once, and again when a refusal says the reader
-   * is out of it.
+   * is out of it. "Not found" is an answer too: what was read before is kept,
+   * for the name and picture of a group they were just taken out of.
    */
   const loadDetail = useCallback(() => {
     let active = true;
     void groupDetail(client, groupId).then((res) => {
-      if (!active || !res.ok) return;
+      if (!active) return;
+      if (!res.ok) {
+        if (isMissing(res.error)) {
+          setMissing(true);
+          // read as a member a moment ago, and now there is no such group for them: taken out (or the group is gone)
+          if (readOnce.current) setOutside((was) => was ?? { left: true, error: res.error });
+        }
+        return;
+      }
+      setMissing(false);
       setDetail(res.data);
       setName(res.data.name);
+      // a member again (added back, or a request approved) while the card stood in for the chat: the chat returns
+      if (res.data.myRole && outsideNow.current) {
+        setOutside(null);
+        setLoading(true);
+        setReloadKey((k) => k + 1);
+      }
     });
     return () => {
       active = false;
@@ -424,43 +460,49 @@ export function GroupThreadScreen({
   };
 
   const role = detail?.myRole ?? null;
-  const member = role !== null && !outside;
-  /** The ⋯ in the header: report the group (anyone but its owner), clear the chat (members; for everyone, its owner and admins). */
-  const menu = detail
+  const member = role !== null && !outside && !missing;
+  /** The ⋯ in the header, a member's: report the group (not its owner), clear the chat (for everyone, its owner and admins). */
+  const menu = member
     ? [
         ...(role !== 'owner' ? [{ label: t('groups.report'), onPress: () => setReporting({ target: { type: 'group' as const, groupId } }) }] : []),
-        ...(member ? [{ label: t('groups.clear.forMe'), destructive: true, onPress: () => clearChat('me') }] : []),
-        ...(member && canModerateGroup(role) ? [{ label: t('groups.clear.forEveryone'), destructive: true, onPress: () => clearChat('everyone') }] : []),
+        { label: t('groups.clear.forMe'), destructive: true, onPress: () => clearChat('me') },
+        ...(canModerateGroup(role) ? [{ label: t('groups.clear.forEveryone'), destructive: true, onPress: () => clearChat('everyone') }] : []),
       ]
     : [];
   const view = clearedView(cleared);
   const group = { id: groupId, name, photoUrl: detail?.photoUrl ?? null };
-  // where the reader stands, once the group's page says (or, from an older server, the refusal alone)
-  const standing = outside && detail ? (detail.standing && detail.standing.kind !== 'member' ? detail.standing : standingFrom(outside.error)) : null;
-  // the owner or an admin of an invite-only group nobody else has joined yet: the way to bring people in
-  const lonely = detail !== null && detail.privacy === 'invite' && canModerateGroup(role) && detail.memberCount <= 1;
+  // out of the group: banned, as its page says (or, before it has answered, the refusal alone)
+  const banned: Banned | null = !outside || missing ? null : detail?.standing?.kind === 'banned' ? detail.standing : bannedFrom(outside.error);
+  // there is no such group for this reader, and they were not in it a moment ago
+  const notFound = missing && !outside?.left;
+  // the owner or an admin with nobody else in the group yet: the welcome offers the way to bring people in
+  const staff = member && canModerateGroup(role);
+  const lonely = staff && detail !== null && detail.memberCount <= 1;
 
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenHeader
-          title={name}
-          titleAvatar={<GroupAvatar name={name} id={groupId} size={30} photoUrl={group.photoUrl} />}
-          onTitlePress={onOpenMembers}
-          titleHint={t('groups.info')}
+          title={notFound ? t('groups.missing.title') : name}
+          titleAvatar={notFound ? undefined : <GroupAvatar name={name} id={groupId} size={30} photoUrl={group.photoUrl} />}
+          // the group's page is its members': out of it, the name is only a name
+          onTitlePress={member ? onOpenMembers : undefined}
+          titleHint={member ? t('groups.info') : undefined}
           onBack={onExit}
           hairline
           right={
             <View style={styles.headerActions}>
-              <Pressable
-                onPress={onOpenMembers}
-                hitSlop={10}
-                accessibilityRole="button"
-                accessibilityLabel={t('groups.info')}
-                style={styles.headerBtn}
-              >
-                <Icon name="people" size={20} tone="primary" />
-              </Pressable>
+              {member ? (
+                <Pressable
+                  onPress={onOpenMembers}
+                  hitSlop={10}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('groups.info')}
+                  style={styles.headerBtn}
+                >
+                  <Icon name="people" size={20} tone="primary" />
+                </Pressable>
+              ) : null}
               {menu.length === 0 ? null : (
                 <Pressable
                   onPress={() => showActions({ title: name, actions: menu, cancel: t('common.cancel') })}
@@ -478,21 +520,19 @@ export function GroupThreadScreen({
 
         {loading ? (
           <ClubThreadSkeleton />
+        ) : notFound ? (
+          <ScrollView contentContainerStyle={styles.centred}>
+            <EmptyState title={t('groups.missing.title')} body={t('groups.missing.body')} action={{ label: t('groups.missing.back'), onPress: onExit }} />
+          </ScrollView>
         ) : outside ? (
           <ScrollView contentContainerStyle={styles.centred}>
-            {standing && detail ? (
+            {banned || missing ? (
               <StandingCard
-                group={{ ...group, privacy: detail.privacy }}
-                standing={standing}
+                group={group}
+                banned={banned}
                 left={outside.left}
                 onStanding={(next) => setDetail((d) => (d ? { ...d, standing: next } : d))}
                 onReload={loadDetail}
-                onJoined={() => {
-                  setOutside(null);
-                  setLoading(true);
-                  setReloadKey((k) => k + 1);
-                  loadDetail();
-                }}
               />
             ) : (
               <Loading />
@@ -557,7 +597,7 @@ export function GroupThreadScreen({
         <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} />
 
         {/* out of the group, there is nothing to send: the card says where they stand */}
-        {outside ? null : (
+        {outside || missing ? null : (
           <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
             <Pressable
               onPress={openPicker}
@@ -625,7 +665,7 @@ export function GroupThreadScreen({
         />
       ) : null}
 
-      {lonely ? (
+      {staff && detail ? (
         <AddFriendsSheet
           visible={addingFriends}
           groupId={groupId}
@@ -633,6 +673,10 @@ export function GroupThreadScreen({
           onClose={() => {
             setAddingFriends(false);
             loadDetail();
+          }}
+          onFindPeople={() => {
+            setAddingFriends(false);
+            onFindPeople();
           }}
         />
       ) : null}
@@ -643,7 +687,7 @@ export function GroupThreadScreen({
         name={reporting?.target.type === 'group' ? name : null}
         blockable={reporting?.senderId && reporting.senderId !== me ? { userId: reporting.senderId, name: reporting.sender ?? null } : null}
         // its owner cannot leave a club (the server says so in English): not offered
-        leavable={detail && role !== 'owner' ? { groupId, name } : null}
+        leavable={member && role !== 'owner' ? { groupId, name } : null}
         onClose={() => setReporting(null)}
         onLeftGroup={() => {
           setReporting(null);

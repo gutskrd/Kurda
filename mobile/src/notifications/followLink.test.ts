@@ -115,14 +115,16 @@ describe('a group’s news, in the reader’s language', () => {
     notificationText({ title: 'English', body: 'English line', data: { groupId: 'g1', groupName: 'Newroz', ...data } }, say, 'de');
 
   it('says what happened from what the server sends beside its English line', () => {
-    expect(news({ kind: 'group_removed', privacy: 'invite' })).toEqual({
-      title: 'Aus einer Gruppe entfernt',
-      body: 'Du wurdest aus Newroz entfernt. Ein Admin kann dich wieder hinzufügen.',
-    });
+    const removed = { title: 'Aus einer Gruppe entfernt', body: 'Du wurdest aus Newroz entfernt. Ein Admin kann dich wieder hinzufügen.' };
+    expect(news({ kind: 'group_removed' })).toEqual(removed);
+    // a line written while groups could still be open reads the same now that none is
+    expect(news({ kind: 'group_removed', privacy: 'open' })).toEqual(removed);
     expect(news({ kind: 'group_banned', duration: '7d', reason: 'Spam' }).body).toBe('Du wurdest für eine Woche aus Newroz gesperrt. Grund: Spam. Du kannst um Rückkehr bitten.');
     expect(news({ kind: 'group_request', count: '3' }).body).toBe('3 Personen möchten zurück in Newroz.');
     expect(news({ kind: 'group_request_approved', rejoined: 'true' }).body).toBe('Du bist wieder in Newroz.');
-    expect(news({ kind: 'group_request_approved', rejoined: 'false', privacy: 'open' }).body).toBe('Du kannst Newroz wieder beitreten.');
+    // let back but not put back in: nobody comes into a group by themselves
+    expect(news({ kind: 'group_request_approved', rejoined: 'false' }).body).toBe('Ein Admin kann dich wieder zu Newroz hinzufügen.');
+    expect(news({ kind: 'group_request_approved', rejoined: 'false', privacy: 'open' }).body).toBe('Ein Admin kann dich wieder zu Newroz hinzufügen.');
     expect(news({ kind: 'group_request_declined', closed: 'true' }).body).toBe(
       'Deine Bitte, zu Newroz zurückzukommen, wurde nicht angenommen. Die Admins nehmen für diese Gruppe keine Bitten mehr von dir an.',
     );
@@ -139,7 +141,9 @@ describe('a group’s news, in the reader’s language', () => {
     expect(news({ kind: 'group_banned', duration: 'forever' })).toEqual({ title: 'English', body: 'English line' });
   });
 
-  it('opens the group by its name', () => {
+  it('opens the group by its name, for someone it is still shown to', () => {
     expect(resolveDeepLink({ kind: 'group_banned', groupId: 'g1', groupName: 'Newroz' })).toEqual({ screen: 'GroupThread', params: { groupId: 'g1', name: 'Newroz' } });
+    // removed, they are out of it: the line is read where it is, and opens nothing that would only say "not found"
+    expect(resolveDeepLink({ kind: 'group_removed', groupId: 'g1', groupName: 'Newroz' })).toBeNull();
   });
 });

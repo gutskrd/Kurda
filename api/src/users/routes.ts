@@ -424,10 +424,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     // closing a child's account at once revokes their Sign in with Apple too
     apple: appleTokens(config, app.db, { log: app.log }),
   });
-  // read when it is called: the realtime gateway is set up after these routes
-  const birthMonths = new BirthMonthService(app.db, gdpr, {
-    revoke: (room, userId) => app.realtime.revoke(room, userId),
-  });
+  const birthMonths = new BirthMonthService(app.db, gdpr);
 
   /**
    * The one-time birth month answer, for an account that has none (Google and
