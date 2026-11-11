@@ -37,6 +37,24 @@ const PAYLOADS = [
 /** What the driver says when something reaches it that should not have. */
 const DATABASE_WORDS = /syntax error|violates|relation "|column "|invalid input syntax|invalid input value|invalid byte sequence|constraint|pg_|SQLSTATE/i;
 
+/**
+ * What a response says, with the credentials it hands out taken from it. A
+ * token is a few hundred random letters, digits, "-" and "_", and about one
+ * sign-up in two hundred spells "pg_" somewhere in its own: that is chance,
+ * not the database speaking, and it failed this suite about one run in ten.
+ */
+const spoken = (body: string): string => body.replace(/"(accessToken|refreshToken)":"[^"]*"/g, '"$1":"(a token)"');
+
+describe('what counts as the database speaking', () => {
+  it('is never a token’s own letters, and is still anything the driver says beside one', () => {
+    const tokens = '"tokens":{"accessToken":"eyJh.bGPg_x.Qpg_","refreshToken":"l2VDZA2_qR7NPG_TWWwuFkS67KUbO4zjCRlnCyjtumy4"}';
+    expect(`{${tokens}}`).toMatch(DATABASE_WORDS);
+    expect(spoken(`{${tokens}}`)).not.toMatch(DATABASE_WORDS);
+    expect(spoken(`{"message":"relation \\"pg_class\\" does not exist",${tokens}}`)).toMatch(DATABASE_WORDS);
+    expect(spoken(`{"message":"duplicate key value violates unique constraint",${tokens}}`)).toMatch(DATABASE_WORDS);
+  });
+});
+
 describe.skipIf(!DATABASE_URL)('hostile input (integration)', () => {
   const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
@@ -82,7 +100,7 @@ describe.skipIf(!DATABASE_URL)('hostile input (integration)', () => {
    */
   function harmless(res: { statusCode: number; body: string }, what: string, staff = false): void {
     expect(res.statusCode, `${what}: ${res.body.slice(0, 300)}`).toBeLessThan(500);
-    expect(res.body, what).not.toMatch(DATABASE_WORDS);
+    expect(spoken(res.body), what).not.toMatch(DATABASE_WORDS);
     if (!staff) expect(res.body.toLowerCase(), what).not.toContain(other.email);
   }
 
