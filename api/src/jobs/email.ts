@@ -15,6 +15,7 @@ const payloadSchema = z.object({
     'verify-email-code',
     'password-reset',
     'password-changed',
+    'username-changed',
     'oauth-no-password',
     'deletion-notice',
     'moderation-urgent',

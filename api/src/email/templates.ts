@@ -9,6 +9,7 @@ export const EMAIL_TEMPLATES = [
   'verify-email-code',
   'password-reset',
   'password-changed',
+  'username-changed',
   'oauth-no-password',
   'deletion-notice',
   'moderation-urgent',
@@ -87,6 +88,16 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     ku: {
       subject: 'Şîfreya te hate guhertin',
       text: 'Silav {username},\n\nŞîfreya te ya Hevalo nû hate guhertin.\n\nHeke ev tu bûyî, tiştek din ji bo kirinê nîne.\n\nHeke ne tu bûyî, tavilê şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre) û bi piştgiriyê re têkilî deyne.\n\n— Tîma Hevalo',
+    },
+  },
+  'username-changed': {
+    en: {
+      subject: 'Your username was changed',
+      text: 'Hello {username},\n\nThe username of your Hevalo account was just changed from {previous} to {username} ({time}).\n\nIf this was you, there is nothing else to do. Your old username is kept for you for {holdDays} days, so nobody else can take it, and you can change your username again after {cooldownDays} days.\n\nIf it wasn’t you, change your password now (Settings, then Password) and contact support.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Navê te yê bikarhêner hate guhertin',
+      text: 'Silav {username},\n\nNavê bikarhêner ê hesabê te yê Hevalo nû ji {previous} bû {username} ({time}).\n\nHeke ev tu bûyî, tiştek din ji bo kirinê nîne. Navê te yê berê {holdDays} rojan ji bo te tê parastin, da ku kesek din nikaribe wî bigire, û tu dikarî piştî {cooldownDays} rojan navê xwe dîsa biguherînî.\n\nHeke ne tu bûyî, tavilê şîfreya xwe biguherîne (Mîheng, paşê Şîfre) û bi piştgiriyê re têkilî deyne.\n\n— Tîma Hevalo',
     },
   },
   'oauth-no-password': {

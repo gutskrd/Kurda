@@ -363,6 +363,8 @@ export class GdprService {
        WHERE id = $1 AND deleted_at IS NULL`,
       [userId],
     );
+    // the names they used to have are theirs too, and no longer held for anybody
+    await executor.query(`DELETE FROM username_history WHERE user_id = $1`, [userId]);
     await executor.query(
       `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,
       [userId],
@@ -449,6 +451,10 @@ export class GdprService {
        FROM users WHERE id = $1`,
       [userId],
     );
+    const previousUsernames = await this.pool.query(
+      `SELECT username, changed_at, held_until FROM username_history WHERE user_id = $1 ORDER BY changed_at DESC LIMIT 200`,
+      [userId],
+    );
     const sessions = await this.pool.query(
       `SELECT device_name, created_at, expires_at, revoked_at
        FROM refresh_tokens WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100`,
@@ -525,6 +531,7 @@ export class GdprService {
       exportedAt: new Date().toISOString(),
       format: 'kurda-user-export/v1',
       user: user.rows[0] ?? null,
+      previousUsernames: previousUsernames.rows,
       posts,
       sessions: sessions.rows,
       signInDevices: devices.rows,

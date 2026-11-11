@@ -87,7 +87,8 @@ export class UsersRepository extends SoftDeleteRepository {
       const pgErr = err as PgError;
       if (pgErr.code === PG_UNIQUE_VIOLATION) {
         if (pgErr.constraint === 'users_email_active_uniq') throw new EmailTakenError();
-        if (pgErr.constraint === 'users_username_active_uniq') throw new UsernameTakenError();
+        // in use, or held for the account that had it (migration username-history): the same answer
+        if (pgErr.constraint === 'users_username_active_uniq' || pgErr.constraint === 'users_username_held') throw new UsernameTakenError();
       }
       if (pgErr.code === PG_CHECK_VIOLATION && pgErr.constraint === 'users_username_format') {
         throw new InvalidUsernameError();

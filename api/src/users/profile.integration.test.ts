@@ -138,81 +138,16 @@ describe.skipIf(!DATABASE_URL)('profile endpoints (integration)', () => {
     expect((await me('PATCH', { timezone: 'Europe/Berlin' })).statusCode).toBe(200);
   });
 
-  it('username change works once, then hits the 30-day cooldown', async () => {
-    const first = await me('PATCH', { username: `nû_${suffix}`.slice(0, 30) });
-    expect(first.statusCode).toBe(200);
-    expect(first.json().user.username).toBe(`nû_${suffix}`.slice(0, 30));
-
-    const second = await me('PATCH', { username: `dîsa_${suffix}`.slice(0, 30) });
-    expect(second.statusCode).toBe(429);
-    expect(second.json().code).toBe('USERNAME_CHANGE_COOLDOWN');
-  });
-
-  it('same-username patch is a no-op, not a cooldown violation', async () => {
+  it('does not change a username: that is done with the password, at POST /me/username', async () => {
+    const before = (await me('GET')).json().user.username as string;
     const res = await me('PATCH', { username: `nû_${suffix}`.slice(0, 30) });
-    expect(res.statusCode).toBe(200);
-  });
-
-  it('renaming to a taken username returns USERNAME_TAKEN', async () => {
-    await pool.query(`UPDATE users SET username_changed_at = NULL WHERE id = $1`, [userId]);
-    const other = await pool.query(
-      `INSERT INTO users (email, username) VALUES ($1, $2) RETURNING username`,
-      [`other_${suffix}@it.kurda.app`, `taken_${suffix}`.slice(0, 30)],
-    );
-    const res = await me('PATCH', { username: other.rows[0].username });
-    expect(res.statusCode).toBe(409);
-    expect(res.json().code).toBe('USERNAME_TAKEN');
-    await pool.query(`DELETE FROM users WHERE email = $1`, [`other_${suffix}@it.kurda.app`]);
-  });
-
-  it('rejects reserved names and invalid input with a specific reason', async () => {
-    await pool.query(`UPDATE users SET username_changed_at = NULL WHERE id = $1`, [userId]);
-    const reserved = await me('PATCH', { username: 'admin' });
-    expect(reserved.statusCode).toBe(400);
-    expect(reserved.json().code).toBe('INVALID_USERNAME');
-    expect(reserved.json().details.reason).toBe('reserved');
-
-    const bad = await me('PATCH', { username: 'bad name!' });
-    expect(bad.statusCode).toBe(400);
-    expect(bad.json().details.reason).toBe('invalid-chars');
-  });
-
-  it('requires auth to change the username', async () => {
-    const res = await me('PATCH', { username: `anon_${suffix}`.slice(0, 30) }, '');
-    expect(res.statusCode).toBe(401);
-  });
-
-  it('treats a case-only difference as a duplicate (citext) — not a new name', async () => {
-    await pool.query(`UPDATE users SET username_changed_at = NULL WHERE id = $1`, [userId]);
-    const taken = `Csd_${suffix}`.slice(0, 28);
-    await pool.query(`INSERT INTO users (email, username) VALUES ($1, $2)`, [`csd_${suffix}@it.kurda.app`, taken]);
-    const res = await me('PATCH', { username: taken.toLowerCase() }); // different case, same citext
-    expect(res.statusCode).toBe(409);
-    expect(res.json().code).toBe('USERNAME_TAKEN');
-    await pool.query(`DELETE FROM users WHERE email = $1`, [`csd_${suffix}@it.kurda.app`]);
-  });
-
-  it('serialises simultaneous claims of the same username to exactly one winner (race)', async () => {
-    const register = async (tag: string, ip: string): Promise<{ token: string; id: string }> => {
-      const r = await app.inject({
-        method: 'POST',
-        url: '/auth/register',
-        payload: { email: `${tag}_${suffix}@it.kurda.app`, username: `${tag}_${suffix}`.slice(0, 28), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
-        remoteAddress: ip,
-      });
-      await activate(app, pool, r);
-      return { token: r.json().tokens.accessToken as string, id: r.json().user.id as string };
-    };
-    const a = await register('rcx', '10.10.9.1');
-    const b = await register('rcy', '10.10.9.2');
-    await pool.query(`UPDATE users SET username_changed_at = NULL WHERE id = ANY($1)`, [[a.id, b.id]]);
-
-    const target = `race_${suffix}`.slice(0, 28);
-    const [ra, rb] = await Promise.all([me('PATCH', { username: target }, a.token), me('PATCH', { username: target }, b.token)]);
-    // exactly one 200 winner, one 409 USERNAME_TAKEN — the DB partial-unique index is the authority
-    expect([ra.statusCode, rb.statusCode].sort()).toEqual([200, 409]);
-    const held = await pool.query<{ c: number }>(`SELECT COUNT(*)::int AS c FROM users WHERE username = $1 AND deleted_at IS NULL`, [target]);
-    expect(held.rows[0]!.c).toBe(1);
-    await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [[a.id, b.id]]);
+    expect(res.statusCode).toBe(400);
+    expect(res.json().code).toBe('USERNAME_CHANGE_ELSEWHERE');
+    // and nothing sent with it is written either: the request is refused whole
+    const mixed = await me('PATCH', { username: `nû_${suffix}`.slice(0, 30), bio: 'changed along the way' });
+    expect(mixed.statusCode).toBe(400);
+    const after = (await me('GET')).json().user;
+    expect(after.username).toBe(before);
+    expect(after.bio).not.toBe('changed along the way');
   });
 });
