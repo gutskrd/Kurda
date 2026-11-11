@@ -1,6 +1,6 @@
 /**
- * Cards made from approved words, in the admin panel: Kurdish Bluff's cards
- * and Who Am I?'s identities are a word someone already approved — a word a
+ * Cards made from approved words, in the admin panel: Who Am I?'s
+ * identities are a word someone already approved — a word a
  * published lesson teaches (with the meaning the lesson gives it), or a
  * dictionary entry an admin curated for the games (with its senses and an
  * example) — picked, never typed. The API copies the Kurdish across; the
@@ -19,7 +19,7 @@ export const GAME_WORD_SOURCES = ['vocabulary', 'dictionary'] as const;
 export type GameWordSource = (typeof GAME_WORD_SOURCES)[number];
 
 /** The kinds of row made by picking a word. */
-export const WORD_CARD_KINDS = ['bluff_card', 'identity'] as const;
+export const WORD_CARD_KINDS = ['identity'] as const;
 export type WordCardKind = (typeof WORD_CARD_KINDS)[number];
 
 /** A word that can be made into a card, as the picker lists it. */

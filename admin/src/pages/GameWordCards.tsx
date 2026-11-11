@@ -14,16 +14,15 @@ import {
 import { go } from '../nav';
 import { GAME_DIALECT_NAME } from '../gameContent';
 import { WORD_SOURCE_NAME, listGameWords, makeCardFromWord } from '../gameWords';
-import { Badge, Banner, Button, Field, Icon, Note, Section, errorLine, useDebounced, useLoad, useToast } from '../ui';
+import { Badge, Banner, Button, Field, Icon, Section, errorLine, useDebounced, useLoad, useToast } from '../ui';
 import './game-words.css';
 
 /**
- * Kurdish Bluff's cards, Who Am I?'s identities and its questions, in the
- * admin's Game content page (pages/GameContent.tsx).
+ * Who Am I?'s identities and its questions, in the admin's Game content page
+ * (pages/GameContent.tsx).
  *
- * - `WordPicker`: approved words — taught by published lessons, or curated
- *   for the games in the dictionary — each with its approved meanings and an
- *   example, to make a Bluff card or an identity of. The server copies the
+ * - `WordPicker`: approved words taught by published lessons, each with its
+ *   approved meanings and an example, to make an identity of. The server copies the
  *   Kurdish across (api/src/games/word-cards.ts): nothing Kurdish is typed
  *   here, and each card is a draft until a reviewer approves it.
  * - The editors for those rows afterwards: the word and anything Kurdish read
@@ -120,41 +119,6 @@ function LanguageMeanings({
   );
 }
 
-/** A Bluff card: its word as picked, its real meaning in each language, and the example sentence it came with. */
-export function BluffCardFields({ payload, onChange, dialect, readOnly }: { payload: Payload; onChange: (p: Payload) => void; dialect: GameDialect; readOnly: boolean }): React.JSX.Element {
-  const script = dialectDirection(dialect);
-  const example = payload.example as { ku: string; meanings?: Record<string, string> } | undefined;
-  return (
-    <>
-      <Field label="The word" hint="Picked from approved content; make a card of another word rather than change it.">
-        <input value={String(payload.word ?? '')} readOnly lang={script.lang} dir={script.dir} />
-      </Field>
-      <Note>Its real meaning, in each language a game may be played in. A game offers a language once enough cards have a meaning in it.</Note>
-      <LanguageMeanings
-        label="Real meaning"
-        value={(payload.definitions as Record<string, string>) ?? {}}
-        onChange={(definitions) => onChange({ ...payload, definitions })}
-        readOnly={readOnly}
-        lockedKurdish
-      />
-      {example ? (
-        <>
-          <Field label="Example sentence" hint="Shown when the meaning is revealed; copied from the approved source.">
-            <input value={example.ku} readOnly lang={script.lang} dir={script.dir} />
-          </Field>
-          <LanguageMeanings
-            label="Example’s meaning"
-            value={example.meanings ?? {}}
-            onChange={(meanings) => onChange({ ...payload, example: { ...example, ...(Object.keys(meanings).length ? { meanings } : { meanings: undefined }) } })}
-            readOnly={readOnly}
-            lockedKurdish
-          />
-        </>
-      ) : null}
-    </>
-  );
-}
-
 /** An identity: its word as picked, what it means, what kind of thing it is, and its facts table. */
 export function IdentityFields({ payload, onChange, dialect, readOnly }: { payload: Payload; onChange: (p: Payload) => void; dialect: GameDialect; readOnly: boolean }): React.JSX.Element {
   const script = dialectDirection(dialect);
@@ -218,21 +182,21 @@ export function QuestionTemplateFields({ payload, onChange, dialect, readOnly }:
   );
 }
 
-/** One word of the picker, made into a card here: a Bluff card at once, an identity once its category and facts are given. */
+/** One word of the picker, made into an identity here, once its category and facts are given. */
 function MakeCard({ word, kind, onMade }: { word: GameWordCandidate; kind: WordCardKind; onMade: (id: string) => void }): React.JSX.Element {
   const toast = useToast();
-  const [level, setLevel] = useState(kind === 'bluff_card' ? 4 : 1);
+  const [level, setLevel] = useState(1);
   const [category, setCategory] = useState('');
   const [facts, setFacts] = useState<Facts>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const ready = kind === 'bluff_card' || (category !== '' && Object.keys(facts).length >= 4);
+  const ready = category !== '' && Object.keys(facts).length >= 4;
   const make = async (): Promise<void> => {
     setBusy(true);
     setError(null);
     try {
-      const row = await makeCardFromWord({ kind, dialect: word.dialect, ref: word.ref, level, ...(kind === 'identity' ? { category, facts } : {}) });
-      toast.success(kind === 'bluff_card' ? 'A Bluff card draft was made. It waits for review.' : 'An identity draft was made. It waits for review.');
+      const row = await makeCardFromWord({ kind, dialect: word.dialect, ref: word.ref, level, category, facts });
+      toast.success('An identity draft was made. It waits for review.');
       onMade(row.id);
     } catch (err) {
       setError(errorLine(err, 'the card'));
@@ -242,7 +206,7 @@ function MakeCard({ word, kind, onMade }: { word: GameWordCandidate; kind: WordC
   };
   return (
     <div className="gc-make">
-      <Field label="Level" hint={kind === 'bluff_card' ? 'Bluff wants words few learners know: an advanced level suits most.' : '1 is the first; beginners play levels 1–2.'}>
+      <Field label="Level" hint="1 is the first; beginners play levels 1–2.">
         <select value={level} onChange={(e) => setLevel(Number(e.target.value))}>
           {GAME_LEVELS.map((l) => (
             <option key={l} value={l}>
@@ -251,24 +215,20 @@ function MakeCard({ word, kind, onMade }: { word: GameWordCandidate; kind: WordC
           ))}
         </select>
       </Field>
-      {kind === 'identity' && (
-        <>
-          <Field label="What kind of thing it is" required>
-            <select value={category} onChange={(e) => setCategory(e.target.value)}>
-              <option value="">Choose…</option>
-              {WHO_AM_I_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {CATEGORY_NAME[c]}
-                </option>
-              ))}
-            </select>
-          </Field>
-          <FactsTable facts={facts} onChange={setFacts} readOnly={false} />
-        </>
-      )}
+      <Field label="What kind of thing it is" required>
+        <select value={category} onChange={(e) => setCategory(e.target.value)}>
+          <option value="">Choose…</option>
+          {WHO_AM_I_CATEGORIES.map((c) => (
+            <option key={c} value={c}>
+              {CATEGORY_NAME[c]}
+            </option>
+          ))}
+        </select>
+      </Field>
+      <FactsTable facts={facts} onChange={setFacts} readOnly={false} />
       {error && <p className="field-error">{error}</p>}
       <Button variant="primary" icon="plus" busy={busy} disabled={!ready} onClick={() => void make()}>
-        {kind === 'bluff_card' ? 'Make a Bluff card' : 'Make an identity'}
+        Make an identity
       </Button>
     </div>
   );
@@ -282,8 +242,8 @@ function MakeCard({ word, kind, onMade }: { word: GameWordCandidate; kind: WordC
 export function WordPicker({ kind, dialect: fixed }: { kind: WordCardKind; dialect?: GameDialect }): React.JSX.Element {
   const [dialect, setDialect] = useState<GameDialect>(fixed ?? 'kmr');
   const [query, setQuery] = useState('');
-  // an identity is always a word the lessons teach; a Bluff card may be a curated dictionary entry too
-  const [from, setFrom] = useState<GameWordSource | 'all'>(kind === 'identity' ? 'vocabulary' : 'all');
+  // an identity is always a word the lessons teach
+  const from: GameWordSource = 'vocabulary';
   const [open, setOpen] = useState<string | null>(null);
   const q = useDebounced(query, 300);
   const list = useLoad(() => listGameWords(dialect, q, from), [dialect, q, from]);
@@ -291,12 +251,8 @@ export function WordPicker({ kind, dialect: fixed }: { kind: WordCardKind; diale
   const words = useMemo(() => list.data?.words ?? [], [list.data]);
   return (
     <Section
-      title={kind === 'bluff_card' ? 'Make Bluff cards from approved words' : 'Make identities from approved words'}
-      description={
-        kind === 'bluff_card'
-          ? 'Pick a word few learners know, from published lessons or the curated dictionary: its approved meanings and an example come with it, and nothing Kurdish is typed. Each card is a draft until a reviewer approves it.'
-          : 'Pick an animal, a thing, a job, a food or a place from published lessons, say what kind it is and fill in its facts table. Nothing Kurdish is typed; each identity is a draft until a reviewer approves it.'
-      }
+      title="Make identities from approved words"
+      description="Pick an animal, a thing, a job, a food or a place from published lessons, say what kind it is and fill in its facts table. Nothing Kurdish is typed; each identity is a draft until a reviewer approves it."
     >
       <div className="table-tools">
         <div className="search-box">
@@ -310,13 +266,6 @@ export function WordPicker({ kind, dialect: fixed }: { kind: WordCardKind; diale
                 {GAME_DIALECT_NAME[d]}
               </option>
             ))}
-          </select>
-        )}
-        {kind === 'bluff_card' && (
-          <select aria-label="Where from" value={from} onChange={(e) => setFrom(e.target.value as GameWordSource | 'all')}>
-            <option value="all">Lessons and dictionary</option>
-            <option value="vocabulary">{WORD_SOURCE_NAME.vocabulary}</option>
-            <option value="dictionary">{WORD_SOURCE_NAME.dictionary}</option>
           </select>
         )}
       </div>
@@ -336,7 +285,7 @@ export function WordPicker({ kind, dialect: fixed }: { kind: WordCardKind; diale
                 <Badge>{WORD_SOURCE_NAME[w.source]}</Badge>
                 {made ? (
                   <a href={`#/game-content/${made}`}>
-                    <Badge tone="ok">{kind === 'bluff_card' ? 'Has a Bluff card' : 'Is an identity'}</Badge>
+                    <Badge tone="ok">Is an identity</Badge>
                   </a>
                 ) : null}
               </div>

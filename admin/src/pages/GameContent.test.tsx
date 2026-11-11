@@ -198,21 +198,6 @@ describe('the party games’ cards', () => {
     expect(page.querySelector('input[lang="ku"]')).toBeNull();
   });
 
-  it('makes a forbidden-word card from picked words, three to five of them', async () => {
-    fakeApi(on('GET', /^\/admin\/game-content\/vocabulary\?/, json(vocabulary)));
-    const page = await open('#/game-content/new?kind=taboo_card');
-    await click(button(page, /^pisîk/));
-    expect(text(page)).toContain('to fix before it can be saved');
-    for (const w of [/^mişk/, /^şîr/, /^nerm/]) {
-      await click(button(page, 'Add a forbidden word'));
-      await click(button(page, w));
-    }
-    expect(text(page)).toContain('Ready to save.');
-    // a word already on the card is not offered again
-    await click(button(page, 'Add a forbidden word'));
-    expect(button(page, /^pisîk —/)).toBeNull();
-  });
-
   it('imports Kurdish Impostor’s starter word cards as drafts from published vocabulary', async () => {
     const api = fakeApi(
       on('GET', /^\/admin\/game-content\?/, json({ rows: [], total: 0 })),

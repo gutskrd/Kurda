@@ -7,8 +7,8 @@ import { withKit } from '../test/render';
 import { GameContent } from './GameContent';
 
 /**
- * Bluff cards and Who Am I? identities made by picking approved words, and
- * the editors for them and for question templates: the Kurdish is copied by
+ * Who Am I? identities made by picking approved words, and the editors for
+ * them and for question templates: the Kurdish is copied by
  * the server and read only here, an identity needs its category and four
  * facts, and a question is new Kurdish that waits for a native speaker.
  */
@@ -18,25 +18,25 @@ const ID = '7d1f0f6a-3b9a-4c55-8f0b-0c3c0bde0002';
 // stand-in Kurdish for the fixtures, never shown to a learner
 const words: GameWordCandidate[] = [
   {
-    ref: 'dict:20000000-0000-4000-8000-000000000001',
-    source: 'dictionary',
+    ref: 'vocab:w:kmr:bbbbbbbbbbbbbbbbbbbbbbbb',
+    source: 'vocabulary',
     dialect: 'kmr',
     word: 'gurz',
     meanings: { en: 'a club, a mace', ku: 'çomaxekî giran' },
     example: { ku: 'Wî gurz hilda.', meanings: { en: 'He picked up the club.' } },
     made: {},
   },
-  { ref: 'vocab:w:kmr:aaaaaaaaaaaaaaaaaaaaaaaa', source: 'vocabulary', dialect: 'kmr', word: 'hirç', meanings: { en: 'bear' }, example: null, made: { bluff_card: ID } },
+  { ref: 'vocab:w:kmr:aaaaaaaaaaaaaaaaaaaaaaaa', source: 'vocabulary', dialect: 'kmr', word: 'hirç', meanings: { en: 'bear' }, example: null, made: { identity: ID } },
 ];
 
 function row(over: Partial<AdminGameContent> = {}): AdminGameContent {
   return {
     id: ID,
-    kind: 'bluff_card',
-    game: 'bluff',
+    kind: 'identity',
+    game: 'who-am-i',
     dialect: 'kmr',
-    level: 4,
-    payload: { word: 'gurz', definitions: { en: 'a club, a mace', ku: 'çomaxekî giran' }, example: { ku: 'Wî gurz hilda.', meanings: { en: 'He picked up the club.' } } },
+    level: 1,
+    payload: { word: 'gurz', meanings: { en: 'a club, a mace', ku: 'çomaxekî giran' }, category: 'object', facts: { alive: false, animal: false, 'can-fly': false, 'four-legs': false } },
     headline: 'gurz',
     status: 'draft',
     reviewStatus: 'unreviewed',
@@ -44,7 +44,7 @@ function row(over: Partial<AdminGameContent> = {}): AdminGameContent {
     reviewedAt: null,
     reviewNote: null,
     source: 'admin',
-    origin: 'dict:20000000-0000-4000-8000-000000000001',
+    origin: 'vocab:w:kmr:bbbbbbbbbbbbbbbbbbbbbbbb',
     lockVersion: 0,
     publishedAt: null,
     createdAt: '2026-11-01T10:00:00.000Z',
@@ -73,29 +73,29 @@ async function open(hash: string): Promise<HTMLElement> {
 }
 
 describe('cards from approved words', () => {
-  it('lists approved words with their meaning, an example and what was made of them, and makes a Bluff card of one without typing Kurdish', async () => {
-    const api = fakeApi(on('GET', /^\/admin\/game-content\/words\?/, json({ words })), on('POST', '/admin/game-content/from-word', json(row(), 201)));
+  it('lists approved words with their meaning, an example and what was made of them', async () => {
+    const api = fakeApi(on('GET', /^\/admin\/game-content\/words\?/, json({ words })));
     const page = await open('#/game-content/words');
     expect(page.querySelector('.gc-word-ku')?.getAttribute('lang')).toBe('ku');
     expect(text(page)).toContain('a club, a mace');
     expect(text(page)).toContain('Wî gurz hilda.');
-    expect(text(page)).toContain('Curated dictionary');
-    expect(text(page)).toContain('Has a Bluff card');
-    expect(api.calls.find((c) => c.path.includes('/words?'))!.path).toContain('dialect=kmr');
-
-    await click(button(page.querySelector('.gc-word')!, 'Use this word'));
-    await click(button(page, 'Make a Bluff card'));
-    expect(api.calls.find((c) => c.method === 'POST')!.body).toEqual({ kind: 'bluff_card', dialect: 'kmr', ref: words[0]!.ref, level: 4 });
-    expect(location.hash).toBe(`#/game-content/${ID}`);
+    expect(text(page)).toContain('Published lessons');
+    expect(text(page)).toContain('Is an identity');
+    // identities are made of the lessons' words alone, in the variety picked
+    const asked = api.calls.find((c) => c.path.includes('/words?'))!.path;
+    expect(asked).toContain('dialect=kmr');
+    expect(asked).toContain('from=vocabulary');
+    // the cards of the games that are gone are not offered
+    expect(text(page)).not.toContain('Bluff');
   });
 
   it('makes an identity only once it says what kind of thing it is and four facts', async () => {
-    const api = fakeApi(on('GET', /^\/admin\/game-content\/words\?/, json({ words })), on('POST', '/admin/game-content/from-word', json(row({ kind: 'identity' }), 201)));
+    const api = fakeApi(on('GET', /^\/admin\/game-content\/words\?/, json({ words })), on('POST', '/admin/game-content/from-word', json(row(), 201)));
     const page = await open('#/game-content/words');
     const identities = page.querySelectorAll('section')[page.querySelectorAll('section').length - 1]!;
     // the identities' list asks for the lessons' words alone
     expect(api.calls.filter((c) => c.path.includes('/words?')).some((c) => c.path.includes('from=vocabulary'))).toBe(true);
-    await click(button(identities.querySelectorAll('.gc-word')[1]!, 'Use this word'));
+    await click(button(identities.querySelectorAll('.gc-word')[0]!, 'Use this word'));
     const make = button(identities, 'Make an identity') as HTMLButtonElement;
     expect(make.disabled).toBe(true);
     await choose(Array.from(identities.querySelectorAll('select')).find((s) => s.querySelector('option[value="animal"]'))!, 'animal');
@@ -104,14 +104,16 @@ describe('cards from approved words', () => {
     await click(button(identities, 'Make an identity'));
     expect(api.calls.find((c) => c.method === 'POST')!.body).toMatchObject({
       kind: 'identity',
+      ref: words[0]!.ref,
       category: 'animal',
       facts: { alive: true, animal: true, 'can-fly': false, 'four-legs': true },
     });
+    expect(location.hash).toBe(`#/game-content/${ID}`);
   });
 });
 
 describe('the editors', () => {
-  it('keeps a Bluff card’s Kurdish read only, as it was copied, and lets its other meanings be written', async () => {
+  it('keeps an identity’s Kurdish read only, as it was copied, and lets its other meanings be written', async () => {
     fakeApi(on('GET', `/admin/game-content/${ID}`, json(row())));
     const page = await open(`#/game-content/${ID}`);
     const word = page.querySelector<HTMLInputElement>('input[lang="ku"][dir="ltr"]')!;

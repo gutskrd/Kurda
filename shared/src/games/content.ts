@@ -26,8 +26,6 @@ import { APP_LOCALE_CODES, type AppLocale } from '../locales.js';
 import { SPEAKERS, type RecordingVoice, type SpeakerId } from '../lipsync/speakers.js';
 import { fitsDialect, foldForDialect, gameWords, type GameDialect } from './dialect.js';
 import type { GamesAvailability } from './solo.js';
-// the village's buildings are The Village's own list ("kingdom" in code); a building name row names one of them
-import { KINGDOM_BUILDINGS } from './kingdom/buildings.js';
 
 // ---------- the kinds, and the workflow every row goes through ----------
 
@@ -39,11 +37,13 @@ import { KINGDOM_BUILDINGS } from './kingdom/buildings.js';
  *   case_file         — Kurdish Detective: suspects, evidence lines, deduction steps, the solution
  *   word_category     — Kurdish Impostor: a category's Kurdish name and its meaning
  *   word_card         — Kurdish Impostor: a word, its category and the impostor's hint
- *   taboo_card        — Don't Say the Word!: the word to describe and the words that may not be said
- *   bluff_card        — Kurdish Bluff: a word and its real meaning, per language
  *   identity          — Who Am I?: an identity and its yes/no facts
  *   question_template — Who Am I?: a yes/no question and the fact that answers it
- *   building_name     — The Village: a building's Kurdish name
+ *
+ * The database knows three kinds more (`taboo_card`, `bluff_card`,
+ * `building_name`), written for games that are no longer part of Hevalo.
+ * Their rows stay where they are and nothing reads them: every query that
+ * lists or deals content names the kinds it wants from this list.
  */
 export const GAME_CONTENT_KINDS = [
   'sentence',
@@ -52,11 +52,8 @@ export const GAME_CONTENT_KINDS = [
   'case_file',
   'word_category',
   'word_card',
-  'taboo_card',
-  'bluff_card',
   'identity',
   'question_template',
-  'building_name',
 ] as const;
 export type GameContentKind = (typeof GAME_CONTENT_KINDS)[number];
 
@@ -238,25 +235,6 @@ function build() {
     /** other forms of the word a clue may not say either (plurals, the ezafe); the game hears common endings by itself */
     forms: z.array(kurdish(60)).max(12).default([]),
   });
-  const tabooCard = z
-    .strictObject({
-      target: kurdish(60),
-      meanings,
-      forbidden: z.array(kurdish(60)).min(3).max(5),
-      /** other forms of the target and the forbidden words that are refused too (plurals, the ezafe) */
-      forms: z.array(kurdish(60)).max(16).default([]),
-    })
-    .refine((c) => !c.forbidden.some((f) => f.toLowerCase() === c.target.toLowerCase()), {
-      path: ['forbidden'],
-      message: 'the word to describe is forbidden already',
-    });
-  const bluffCard = z.strictObject({
-    word: kurdish(60),
-    /** its real meaning, in each language a reviewer read it in: a game's definitions are written in one of these */
-    definitions: someMeanings,
-    /** a sentence that uses it, from the same approved source, shown when the meaning is revealed */
-    example: z.strictObject({ ku: kurdish(240), meanings: someMeanings.optional() }).optional(),
-  });
   const identity = z.strictObject({
     word: kurdish(60),
     meanings,
@@ -265,7 +243,6 @@ function build() {
     facts: z.record(slug, z.boolean()).refine((f) => Object.keys(f).length >= 4, { message: 'give at least four facts' }),
   });
   const questionTemplate = z.strictObject({ ku: kurdish(160), meanings, fact: slug });
-  const buildingName = z.strictObject({ building: z.enum(KINGDOM_BUILDINGS), ku: kurdish(60), meanings });
 
   return {
     sentence,
@@ -274,11 +251,8 @@ function build() {
     case_file: caseFile,
     word_category: wordCategory,
     word_card: wordCard,
-    taboo_card: tabooCard,
-    bluff_card: bluffCard,
     identity,
     question_template: questionTemplate,
-    building_name: buildingName,
   } satisfies Record<GameContentKind, z.ZodType>;
 }
 
@@ -297,11 +271,8 @@ export type ScenarioContent = z.infer<Schemas['scenario']>;
 export type CaseFileContent = z.infer<Schemas['case_file']>;
 export type WordCategoryContent = z.infer<Schemas['word_category']>;
 export type WordCardContent = z.infer<Schemas['word_card']>;
-export type TabooCardContent = z.infer<Schemas['taboo_card']>;
-export type BluffCardContent = z.infer<Schemas['bluff_card']>;
 export type IdentityContent = z.infer<Schemas['identity']>;
 export type QuestionTemplateContent = z.infer<Schemas['question_template']>;
-export type BuildingNameContent = z.infer<Schemas['building_name']>;
 
 /** A payload of a kind, by its kind. */
 export interface GameContentByKind {
@@ -311,11 +282,8 @@ export interface GameContentByKind {
   case_file: CaseFileContent;
   word_category: WordCategoryContent;
   word_card: WordCardContent;
-  taboo_card: TabooCardContent;
-  bluff_card: BluffCardContent;
   identity: IdentityContent;
   question_template: QuestionTemplateContent;
-  building_name: BuildingNameContent;
 }
 export type GameContentPayload = GameContentByKind[GameContentKind];
 
@@ -368,27 +336,11 @@ export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload)
       (p.forms ?? []).forEach((f, i) => add(`forms.${i}`, f));
       break;
     }
-    case 'taboo_card': {
-      const p = payload as TabooCardContent;
-      add('target', p.target);
-      p.forbidden.forEach((f, i) => add(`forbidden.${i}`, f));
-      p.forms.forEach((f, i) => add(`forms.${i}`, f));
-      break;
-    }
-    case 'bluff_card': {
-      const p = payload as BluffCardContent;
-      add('word', p.word);
-      add('example.ku', p.example?.ku);
-      break;
-    }
     case 'identity':
       add('word', (payload as IdentityContent).word);
       break;
     case 'question_template':
       add('ku', (payload as QuestionTemplateContent).ku);
-      break;
-    case 'building_name':
-      add('ku', (payload as BuildingNameContent).ku);
       break;
   }
   return out;
@@ -466,16 +418,10 @@ export function contentHeadline(kind: GameContentKind, payload: GameContentPaylo
       return (payload as WordCategoryContent).ku;
     case 'word_card':
       return (payload as WordCardContent).word;
-    case 'taboo_card':
-      return (payload as TabooCardContent).target;
-    case 'bluff_card':
-      return (payload as BluffCardContent).word;
     case 'identity':
       return (payload as IdentityContent).word;
     case 'question_template':
       return (payload as QuestionTemplateContent).ku;
-    case 'building_name':
-      return (payload as BuildingNameContent).ku;
   }
 }
 

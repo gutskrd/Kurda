@@ -58,10 +58,7 @@ export const GAME_NAME: Record<LearnGameId, string> = {
   detective: 'Kurdish Detective',
   'last-letter': 'The Last Letter',
   impostor: 'Kurdish Impostor',
-  'dont-say': 'Don’t Say the Word!',
-  bluff: 'Kurdish Bluff',
   'who-am-i': 'Who Am I?',
-  kingdom: 'The Village',
 };
 
 export const KIND_NAME: Record<GameContentKind, string> = {
@@ -71,11 +68,8 @@ export const KIND_NAME: Record<GameContentKind, string> = {
   case_file: 'Case file',
   word_category: 'Word category',
   word_card: 'Word card',
-  taboo_card: 'Forbidden-words card',
-  bluff_card: 'Bluff card',
   identity: 'Identity',
   question_template: 'Question template',
-  building_name: 'Building name',
 };
 
 export const GAME_DIALECT_NAME: Record<GameDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
@@ -123,16 +117,10 @@ export function blankPayload(kind: GameContentKind): Record<string, unknown> {
       return { slug: '', ku: '', meanings };
     case 'word_card':
       return { word: '', meanings, category: '', hint: { ku: '', meanings }, forms: [] };
-    case 'taboo_card':
-      return { target: '', meanings, forbidden: ['', '', ''], forms: [] };
-    case 'bluff_card':
-      return { word: '', definitions: { en: '' } };
     case 'identity':
       return { word: '', meanings, category: '', facts: {} };
     case 'question_template':
       return { ku: '', meanings, fact: '' };
-    case 'building_name':
-      return { building: 'houses', ku: '', meanings };
   }
 }
 

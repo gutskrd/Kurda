@@ -1,5 +1,8 @@
 /**
- * The village's things, each a `Part` placed on the ground in world units:
+ * The things of the small mountain world the lesson path is drawn in, made
+ * for The Village (no longer part of Hevalo) and kept as the one library the
+ * path's own pieces come from; the path draws the cairn today. Each is a
+ * `Part` placed on the ground in world units:
  * its trees (apple, pomegranate, poplar, walnut, willow and the saplings),
  * and everything a mountain village leaves lying about — a log pile and a
  * stump with the axe in it, crates of apples, a cart, a sign on its post,

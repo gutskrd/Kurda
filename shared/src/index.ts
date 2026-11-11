@@ -757,15 +757,12 @@ export * from './games/last-letter/rules.js';
 export * from './games/last-letter/learn.js';
 export * from './games/last-letter/slip.js';
 
-// The Village ("kingdom" in code): the village that grows from real learning, its buildings, thresholds and view
-export * from './games/kingdom/index.js';
 /**
- * The party games where players write their own Kurdish: what a clue or a
- * guess may be, and Kurdish Impostor's and Don't Say the Word!'s rules.
+ * The games where players write their own Kurdish: what a clue or a guess
+ * may be, and Kurdish Impostor's rules.
  */
 export * from './games/clues.js';
 export * from './games/multi/order.js';
 export * from './games/impostor/rules.js';
 export * from './games/impostor/couch.js';
-export * from './games/dont-say/rules.js';
 export * from './pending-signup.js';

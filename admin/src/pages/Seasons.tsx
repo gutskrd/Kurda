@@ -34,7 +34,7 @@ import {
   type Column,
   type Tone,
 } from '../ui';
-import { GAME_NAME, rankTierName, seasonName, type SeasonList } from '../progress';
+import { rankTierName, seasonName, type SeasonList, gameName } from '../progress';
 import { RankEmblem, SeasonFrame } from './RankParts';
 
 /**
@@ -242,7 +242,7 @@ function rewardColumns(withWhen: boolean): ReadonlyArray<Column<AdminSeasonRewar
         </span>
       ),
     },
-    { key: 'game', header: 'In', cell: (r) => GAME_NAME[r.game] },
+    { key: 'game', header: 'In', cell: (r) => gameName(r.game) },
     { key: 'gems', header: 'Gems', align: 'end', cell: (r) => r.gems.toLocaleString() },
     { key: 'frame', header: 'Frame', cell: (r) => (r.frameSku ? <span className="mono">{r.frameSku}</span> : '—') },
     { key: 'title', header: 'Title', cell: (r) => r.title ?? <span className="subtle">None</span> },

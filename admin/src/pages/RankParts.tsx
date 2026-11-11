@@ -50,6 +50,7 @@ import {
   runState,
   signed,
   type LeagueRunStatus,
+  gameName,
 } from '../progress';
 
 // ---- the art ----------------------------------------------------------------------
@@ -277,7 +278,7 @@ export function PlayerGamesTable({ games, onVoided }: { games: AdminPlayerGame[]
   const voidGame = useVoidGame();
   const columns: ReadonlyArray<Column<AdminPlayerGame>> = [
     { key: 'when', header: 'When', card: 'title', cell: (g) => <Time value={g.at} /> },
-    { key: 'game', header: 'Game', cell: (g) => GAME_NAME[g.game] },
+    { key: 'game', header: 'Game', cell: (g) => gameName(g.game) },
     { key: 'place', header: 'Place', cell: (g) => `${placeText(g.place, g.players)}${g.left ? ' · left' : ''}` },
     {
       key: 'change',

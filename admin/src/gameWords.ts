@@ -1,8 +1,8 @@
 /**
  * Cards made from approved words (api/src/games/word-cards.ts), as the Game
- * content page uses them: Kurdish Bluff's cards and Who Am I?'s identities are
- * a word picked from published lessons or the curated dictionary, its Kurdish
- * copied across by the server and never typed here.
+ * content page uses them: Who Am I?'s identities are a word picked from
+ * published lessons, its Kurdish copied across by the server and never typed
+ * here.
  *
  *   GET  /admin/game-content/words?dialect&q&from&limit   { words }
  *   POST /admin/game-content/from-word                    { kind, dialect, ref, level, category?, facts? }: the new draft
