@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { jsonResponse } from '../test/utils';
 import { renderPlay } from '../play/testing';
@@ -104,15 +104,39 @@ async function dealRound(): Promise<string[]> {
 }
 
 describe('the way in', () => {
-  it('is offered beside the game with friends, and opens the game for one phone', async () => {
+  it('is the first thing to press on the start, and each way to play and category opens the setup with it chosen', async () => {
     serve({
       ...offered(),
       '/games/availability?dialect=kmr': { dialect: 'kmr', games: [{ id: 'impostor', available: true, difficulties: ['beginner'], levels: {}, levelled: true, minimum: 12 }] },
       '/games/availability?dialect=ckb': { dialect: 'ckb', games: [{ id: 'impostor', available: false, difficulties: [], levels: {}, levelled: true, minimum: 12 }] },
     });
     renderPlay(<Impostor />, { route: '/app/games/impostor' });
-    const way = await screen.findByRole('region', { name: 'On one phone' });
-    expect(within(way).getByRole('link', { name: 'Play on this phone' })).toHaveAttribute('href', '/app/games/impostor?couch=1');
+    const hero = await screen.findByRole('region', { name: 'One word. One impostor. Who’s bluffing?' });
+    expect(within(hero).getByRole('link', { name: 'Play on this phone' })).toHaveAttribute('href', '/app/games/impostor?couch=1');
+    // the game with friends is on the page too, one press away, but it is not the first thing asked
+    expect(within(hero).getByRole('link', { name: 'With friends' })).toHaveAttribute('href', '#party-friends');
+    const ways = screen.getByRole('region', { name: 'Three ways to play' });
+    expect(within(ways).getAllByRole('link').map((a) => a.getAttribute('href'))).toEqual([
+      '/app/games/impostor?couch=1&way=classic',
+      '/app/games/impostor?couch=1&way=blind',
+      '/app/games/impostor?couch=1&way=odd',
+    ]);
+    const categories = await screen.findByRole('region', { name: 'Categories' });
+    const animals = within(categories).getByRole('link', { name: /heywan/ });
+    expect(animals).toHaveAttribute('href', '/app/games/impostor?couch=1&category=animals');
+    expect(within(animals).getByText('heywan')).toHaveAttribute('lang', 'ku');
+  });
+
+  it('opens the setup with the way to play and the category the start page was left with', async () => {
+    serve(offered());
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1&way=odd&category=animals' });
+    expect(await screen.findByRole('radio', { name: /^Odd word out/ })).toBeChecked();
+    expect(within(screen.getByRole('radiogroup', { name: 'Category' })).getByRole('radio', { name: /heywan/ })).toBeChecked();
+    // a way or a category that is no such thing changes nothing
+    cleanup();
+    renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1&way=loud&category=nowhere' });
+    expect(await screen.findByRole('radio', { name: /^Classic/ })).toBeChecked();
+    expect(within(screen.getByRole('radiogroup', { name: 'Category' })).getByRole('radio', { name: 'Any' })).toBeChecked();
   });
 
   it('says plainly when there are no cards to play with', async () => {
@@ -215,7 +239,7 @@ describe('the phone going round', () => {
   it('gives the odd one out a card like anyone’s, with the other word on it', async () => {
     serve(offered());
     renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
-    await start(['Odd word out']);
+    await start([/^Odd word out/]);
     const cards = await dealRound();
     expect(cards.filter((c) => c.includes('kûçik'))).toHaveLength(1);
     expect(cards.filter((c) => c.includes('pisîk'))).toHaveLength(3);
@@ -225,7 +249,7 @@ describe('the phone going round', () => {
   it('tells a blind impostor nothing, not even the category', async () => {
     serve(offered());
     renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
-    await start(['In the dark']);
+    await start([/^In the dark/]);
     const cards = await dealRound();
     const theirs = cards.find((c) => c.includes('You’re the impostor'))!;
     expect(theirs).not.toContain('heywan');

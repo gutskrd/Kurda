@@ -114,6 +114,7 @@ export function couchDeck(pool: readonly Card[], dialect: GameDialect, difficult
       word: chosen.word,
       meanings: chosen.meanings,
       hint: { ku: chosen.hint.ku, meanings: chosen.hint.meanings },
+      category: chosen.category,
       decoys,
       twin: twin ? { word: twin.word, meanings: twin.meanings } : null,
     });

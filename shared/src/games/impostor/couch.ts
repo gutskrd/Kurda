@@ -68,6 +68,8 @@ export interface CouchCard {
   meanings: Meanings;
   /** the category, in Kurdish, with its meaning */
   hint: { ku: string; meanings: Meanings };
+  /** the category's slug, which its picture is found by; absent from a server that does not say */
+  category?: string;
   /** other approved words the caught impostor's guess is chosen among */
   decoys: string[];
   /** another approved word of the same category, for the odd one out; null where the category has no other */
@@ -128,9 +130,14 @@ export interface CouchState {
 }
 
 /** What a seat's card shows when it is turned up. */
-export type CouchHand =
-  | { role: 'player'; word: string; meanings: Meanings; hint: { ku: string; meanings: Meanings } }
-  | { role: 'impostor'; hint: { ku: string; meanings: Meanings } | null };
+/** The category a card shows: its name, what that means, and the slug its picture is found by where the server said it. */
+export interface CouchHint {
+  ku: string;
+  meanings: Meanings;
+  category?: string;
+}
+
+export type CouchHand = { role: 'player'; word: string; meanings: Meanings; hint: CouchHint } | { role: 'impostor'; hint: CouchHint | null };
 
 export type CouchNameSlip = 'too-few' | 'too-many' | 'empty' | 'same';
 
@@ -217,7 +224,7 @@ export function couchStart(dialect: GameDialect, players: readonly string[], wan
 
 /** A seat's card, as its holder alone should see it. In the odd-word game the odd one's card looks like anyone's. */
 export function couchHand(state: CouchState, seat: number): CouchHand {
-  const hint = { ku: state.card.hint.ku, meanings: state.card.hint.meanings };
+  const hint: CouchHint = { ku: state.card.hint.ku, meanings: state.card.hint.meanings, category: state.card.category };
   if (!state.impostors.includes(seat)) return { role: 'player', word: state.card.word, meanings: state.card.meanings, hint };
   if (state.settings.way === 'odd' && state.card.twin) return { role: 'player', word: state.card.twin.word, meanings: state.card.twin.meanings, hint };
   return { role: 'impostor', hint: state.settings.way === 'classic' ? hint : null };

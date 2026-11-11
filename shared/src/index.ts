@@ -594,6 +594,8 @@ export {
   IMPOSTOR_CATEGORY_PICTURES,
   IMPOSTOR_EMBLEMS_DRAWN,
   IMPOSTOR_WAYS_DRAWN,
+  impostorCategoriesInOrder,
+  impostorCategoryRank,
   impostorCategorySvg,
   impostorCategoryTone,
   impostorEmblemSvg,

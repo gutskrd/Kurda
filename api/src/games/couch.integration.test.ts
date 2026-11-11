@@ -118,6 +118,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Impostor on one phone (int
       expect(c.decoys.every((d) => d.startsWith(`${tag}l`) && d !== c.word)).toBe(true);
       expect(c.twin!.word.startsWith(`${tag}l`)).toBe(true);
       expect(c.hint).toEqual({ ku: `${tag}kom`, meanings: { en: `a group of ${large}` } });
+      // the slug goes with the card, so the phone can show the category's picture
+      expect(c.category).toBe(large);
     }
   });
 

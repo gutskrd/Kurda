@@ -529,6 +529,22 @@ const categoryOf = (slug: string | null | undefined): { draw: Draw; tone: string
   return Object.hasOwn(CATEGORIES, slug) ? CATEGORIES[slug]! : LABEL;
 };
 
+/**
+ * Where a category stands among its fellows on a screen that lists them: the
+ * order they are drawn in above, which starts with the things a table of
+ * beginners names most easily (animals, food, fruit) and ends with the
+ * abstract ones. A category that is not drawn here comes after them all.
+ */
+export function impostorCategoryRank(slug: string): number {
+  const at = IMPOSTOR_CATEGORY_PICTURES.indexOf(slug);
+  return at < 0 ? IMPOSTOR_CATEGORY_PICTURES.length : at;
+}
+
+/** Categories in the order a screen lists them (`impostorCategoryRank`), those not drawn here last, as they came. */
+export function impostorCategoriesInOrder<T extends { slug: string }>(categories: readonly T[]): T[] {
+  return categories.map((c, i) => ({ c, i })).sort((a, b) => impostorCategoryRank(a.c.slug) - impostorCategoryRank(b.c.slug) || a.i - b.i).map((x) => x.c);
+}
+
 /** The colour a category's tile is tinted with: its picture's own. */
 export function impostorCategoryTone(slug: string | null | undefined): string {
   return categoryOf(slug).tone;
@@ -625,7 +641,8 @@ const maskOnly: Draw = (dr) => {
 
 const EMBLEMS: Readonly<Record<ImpostorEmblem, { draw: Draw; title: string }>> = {
   cards: { draw: cards, title: 'Kurdish Impostor' },
-  mask: { draw: maskOnly, title: 'The impostor’s mask' },
+  // every card's back wears it, so its label says nothing of whose card it is
+  mask: { draw: maskOnly, title: 'A card, face down' },
 };
 
 /** The game's emblem: the hand of cards for its start, the mask for a card's back. */

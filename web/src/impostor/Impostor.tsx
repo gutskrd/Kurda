@@ -1,13 +1,13 @@
-import { Link, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import type { GameDialect, GameDifficulty, ImpostorBoard, ImpostorOutcome } from '@kurda/shared';
-import { ImpostorIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { GameRoom } from '../play/MultiRoom';
 import { useGameView } from '../play/useGameView';
-import { PartyLobbyNote, PartyPage, PartyStart } from '../party/PartyPage';
+import { PartyLobbyNote, PartyPage } from '../party/PartyPage';
 import { ImpostorBoardView, ImpostorReveal } from './Board';
 import { categoriesAt, useImpostorCategories } from './categories';
 import { Couch } from './Couch';
+import { ImpostorStart } from './Start';
 import './impostor.css';
 
 const NEW_PATH = '/app/games/impostor';
@@ -15,9 +15,9 @@ const NEW_PATH = '/app/games/impostor';
 /**
  * Kurdish Impostor (/app/games/impostor): one word for everyone but the
  * impostor, two rounds of Kurdish clues, a vote. Without an id it is the
- * start: how to play and a game with friends, offered only where approved
- * word cards are; with one, the room (play/MultiRoom.tsx) with the table
- * inside. The word is never in the address: the room is found by its id.
+ * start (Start.tsx): the game in a line and one thing to press, offered only
+ * where approved word cards are; with one, the room (play/MultiRoom.tsx) with
+ * the table inside. The word is never in the address: the room is found by its id.
  * With `couch=1` it is the game for people in one room, on this one phone
  * (Couch.tsx).
  */
@@ -36,33 +36,9 @@ export function Impostor(): React.JSX.Element {
       {id ? (
         <Room key={id} id={id} />
       ) : (
-        <PartyStart
-          game="impostor"
-          introKey="games.impostor.intro"
-          steps={['games.impostor.how.card', 'games.impostor.how.clues', 'games.impostor.how.vote']}
-          blurbKey="games.impostor.withFriendsBlurb"
-          notOfferedKey="games.impostor.notOffered"
-          Icon={ImpostorIcon}
-          also={<CouchWay />}
-        />
+        <ImpostorStart />
       )}
     </PartyPage>
-  );
-}
-
-/** The other way to play, for people sitting together: one phone, passed round. */
-function CouchWay(): React.JSX.Element {
-  const t = useT();
-  return (
-    <section className="party-way couch-way" aria-labelledby="party-couch">
-      <h2 id="party-couch" className="party-way-title">
-        {t('games.couch.title')}
-      </h2>
-      <p className="muted">{t('games.couch.blurb')}</p>
-      <Link to={`${NEW_PATH}?couch=1`} className="btn btn-secondary">
-        {t('games.couch.open')}
-      </Link>
-    </section>
   );
 }
 

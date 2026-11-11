@@ -13,6 +13,8 @@ import {
   STORY_LENGTHS,
   TIMER_PRESETS,
   dialectDirection,
+  impostorCategoriesInOrder,
+  impostorCategoryTone,
   isAllowedQuestionCount,
   meaningIn,
   storyTextDirection,
@@ -30,7 +32,9 @@ import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { CategoryArt } from '../impostor/art';
 import { categoriesAt, useImpostorCategories } from '../impostor/categories';
+import { PictureRadio } from '../impostor/PictureRadio';
 import { prefersReducedMotion } from '../lib/motion';
 import type { UserSummary } from '../lib/types';
 import { dialectName } from '../learn/map';
@@ -457,17 +461,20 @@ export function InviteForm({
             />
           )}
           {game === 'impostor' && impostorCategories.length > 0 && (
-            <ChipRadio
+            <PictureRadio
               label={t('games.impostor.category')}
+              layout="strip"
               value={categoryNow}
               onChange={setCategory}
               options={[
-                { value: '', label: t('games.couch.anyCategory') },
-                ...impostorCategories.map((c) => ({
+                { value: '', label: t('games.couch.anyCategory'), art: <CategoryArt category={null} size={48} />, tone: impostorCategoryTone(null) },
+                ...impostorCategoriesInOrder(impostorCategories).map((c) => ({
                   value: c.slug,
                   label: c.ku,
                   hint: meaningIn(c.meanings, locale) ?? undefined,
                   lang: dialectDirection(partyHere.dialect).lang,
+                  art: <CategoryArt category={c.slug} size={48} />,
+                  tone: impostorCategoryTone(c.slug),
                 })),
               ]}
             />

@@ -30,6 +30,8 @@ import {
   IMPOSTOR_CATEGORY_PICTURES,
   IMPOSTOR_EMBLEMS_DRAWN,
   IMPOSTOR_WAYS_DRAWN,
+  impostorCategoriesInOrder,
+  impostorCategoryRank,
   impostorCategorySvg,
   impostorCategoryTone,
   impostorEmblemSvg,
@@ -983,6 +985,13 @@ describe('Kurdish Impostor’s pictures', () => {
     for (const way of IMPOSTOR_WAYS_DRAWN) expect(impostorWayTone(way)).toMatch(/^#[0-9a-f]{6}$/);
     const heaviest = Math.max(...[null, ...IMPOSTOR_CATEGORY_PICTURES].map((category) => impostorCategorySvg({ category }).length));
     expect(heaviest).toBeLessThan(6 * 1024);
+  });
+
+  it('lists categories with the easily named ones first, and one nobody has drawn after them all', () => {
+    const listed = impostorCategoriesInOrder([{ slug: 'world' }, { slug: 'made-later' }, { slug: 'fruit' }, { slug: 'another-one' }, { slug: 'animals' }]);
+    expect(listed.map((c) => c.slug)).toEqual(['animals', 'fruit', 'world', 'made-later', 'another-one']);
+    expect(impostorCategoryRank('animals')).toBe(0);
+    expect(impostorCategoryRank('made-later')).toBe(IMPOSTOR_CATEGORY_PICTURES.length);
   });
 
   it('refuses a way, an emblem or a size it cannot draw', () => {

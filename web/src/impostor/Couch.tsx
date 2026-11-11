@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   COUCH_CLUE_SECONDS,
   COUCH_DEFAULTS,
@@ -29,6 +29,9 @@ import {
   couchTotals,
   couchVoter,
   dialectDirection,
+  impostorCategoriesInOrder,
+  impostorCategoryTone,
+  impostorWayTone,
   meaningIn,
   type CouchCard,
   type CouchDeck,
@@ -41,7 +44,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
-import { ImpostorIcon } from '../components/icons';
+import { CaretDownIcon, ChatsIcon, ImpostorIcon, PlusIcon, RedoIcon, SlidersIcon, TimerIcon } from '../components/icons';
 import { Loading } from '../components/states';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -50,6 +53,9 @@ import { haptic } from '../lib/haptics';
 import { prefersReducedMotion } from '../lib/motion';
 import { ChipRadio } from '../play/ChipRadio';
 import { PartyTimer } from '../party/PartyPage';
+import { CategoryArt, EmblemArt, WayArt } from './art';
+import { PictureRadio } from './PictureRadio';
+import { WAY_KEY, WAY_NOTE } from './ways';
 import './couch.css';
 
 /**
@@ -78,8 +84,6 @@ import './couch.css';
  */
 
 const KEPT = 'hevalo.couch';
-const WAY_KEY: Record<CouchSettings['way'], MessageKey> = { classic: 'games.couch.way.classic', blind: 'games.couch.way.blind', odd: 'games.couch.way.odd' };
-const WAY_NOTE: Record<CouchSettings['way'], MessageKey> = { classic: 'games.couch.way.classic.note', blind: 'games.couch.way.blind.note', odd: 'games.couch.way.odd.note' };
 const VOTE_KEY: Record<CouchSettings['vote'], MessageKey> = { secret: 'games.couch.vote.secret', open: 'games.couch.vote.open' };
 const LEVEL_KEY: Record<GameDifficulty, MessageKey> = {
   beginner: 'games.solo.difficulty.beginner',
@@ -120,6 +124,10 @@ interface Evening {
 export function Couch(): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
+  // a way to play or a category chosen on the start page arrives in the address
+  const [params] = useSearchParams();
+  const askedWay = COUCH_WAYS.find((w) => w === params.get('way')) ?? null;
+  const askedCategory = params.get('category');
   const [offers, setOffers] = useState<CouchOffer[] | null>(null);
   const [evening, setEvening] = useState<Evening | null>(null);
   const [busy, setBusy] = useState(false);
@@ -187,7 +195,9 @@ export function Couch(): React.JSX.Element {
       </div>
     );
   }
-  if (!evening) return <Setup offers={offers} busy={busy} failed={failed} onStart={(...args) => void begin(...args)} />;
+  if (!evening) {
+    return <Setup offers={offers} busy={busy} failed={failed} askedWay={askedWay} askedCategory={askedCategory} onStart={(...args) => void begin(...args)} />;
+  }
   const play = (game: CouchState): void => setEvening({ ...evening, game });
   return (
     <div className="couch">
@@ -203,21 +213,27 @@ function Setup({
   offers,
   busy,
   failed,
+  askedWay,
+  askedCategory,
   onStart,
 }: {
   offers: readonly CouchOffer[];
   busy: boolean;
   failed: boolean;
+  /** a way to play chosen before the setup opened: it wins over the one this phone remembers */
+  askedWay: CouchSettings['way'] | null;
+  /** a category chosen before the setup opened, by its slug */
+  askedCategory: string | null;
   onStart: (names: string[], settings: CouchSettings, dialect: GameDialect, difficulty: GameDifficulty, category: string | null) => void;
 }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const [kept] = useState(readKept);
   const [names, setNames] = useState<string[]>(() => (kept && kept.names.length >= COUCH_MIN_PLAYERS ? kept.names : Array.from({ length: COUCH_MIN_PLAYERS + 1 }, () => '')));
-  const [settings, setSettings] = useState<CouchSettings>(kept?.settings ?? COUCH_DEFAULTS);
+  const [settings, setSettings] = useState<CouchSettings>(() => ({ ...(kept?.settings ?? COUCH_DEFAULTS), ...(askedWay ? { way: askedWay } : {}) }));
   const [dialect, setDialect] = useState<GameDialect>(offers[0]!.dialect);
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
-  const [category, setCategory] = useState('');
+  const [category, setCategory] = useState(askedCategory ?? '');
   const [slip, setSlip] = useState<MessageKey | null>(null);
 
   const offer = offers.find((o) => o.dialect === dialect) ?? offers[0]!;
@@ -236,6 +252,9 @@ function Setup({
     onStart(checked.names, { ...settings, impostors: checked.names.length >= COUCH_TWO_IMPOSTORS_FROM ? settings.impostors : 1 }, offer.dialect, level.difficulty, chosenCategory || null);
   }
 
+  const clueNow = settings.clueSeconds === 0 ? t('games.couch.noClock') : t('games.party.seconds', { count: settings.clueSeconds });
+  const talkNow = settings.talkSeconds === 0 ? t('games.couch.noClock') : t('games.couch.minutes', { count: settings.talkSeconds / 60 });
+
   return (
     <form
       className="couch-setup"
@@ -244,96 +263,158 @@ function Setup({
         start();
       }}
     >
-      <p className="page-sub">{t('games.couch.blurb')}</p>
-      <fieldset className="couch-players">
-        <legend className="chip-radio-legend">{t('games.couch.players')}</legend>
-        <ol className="couch-names">
-          {names.map((name, i) => (
-            <li key={i} className="couch-name">
-              <span className="couch-name-n" aria-hidden="true">
-                {i + 1}
-              </span>
-              <input
-                className="input"
-                value={name}
-                maxLength={COUCH_NAME_MAX}
-                placeholder={t('games.couch.playerName', { n: i + 1 })}
-                aria-label={t('games.couch.playerName', { n: i + 1 })}
-                autoComplete="off"
-                enterKeyHint="next"
-                onChange={(e) => setNames(names.map((n, j) => (j === i ? e.target.value : n)))}
-              />
-              {canRemove && (
-                <button type="button" className="couch-name-remove" aria-label={t('games.couch.removePlayer', { name: named[i]! })} onClick={() => setNames(names.filter((_, j) => j !== i))}>
-                  <span aria-hidden="true">×</span>
-                </button>
-              )}
-            </li>
-          ))}
-        </ol>
-        {canAdd && (
-          <Button type="button" variant="secondary" size="sm" onClick={() => setNames([...names, ''])}>
-            {t('games.couch.addPlayer')}
-          </Button>
+      <p className="page-sub couch-lead">{t('games.couch.blurb')}</p>
+
+      <div className="couch-step">
+        <fieldset className="couch-players">
+          <legend className="couch-step-title">
+            <span className="couch-step-n" aria-hidden="true">
+              1
+            </span>
+            {t('games.couch.players')}
+          </legend>
+          <ol className="couch-names">
+            {names.map((name, i) => (
+              <li key={i} className="couch-name">
+                <span className="couch-name-n" aria-hidden="true">
+                  {name.trim() === '' ? i + 1 : name.trim().slice(0, 1).toUpperCase()}
+                </span>
+                <input
+                  className="input"
+                  value={name}
+                  maxLength={COUCH_NAME_MAX}
+                  placeholder={t('games.couch.playerName', { n: i + 1 })}
+                  aria-label={t('games.couch.playerName', { n: i + 1 })}
+                  autoComplete="off"
+                  enterKeyHint="next"
+                  onChange={(e) => setNames(names.map((n, j) => (j === i ? e.target.value : n)))}
+                />
+                {canRemove && (
+                  <button type="button" className="couch-name-remove" aria-label={t('games.couch.removePlayer', { name: named[i]! })} onClick={() => setNames(names.filter((_, j) => j !== i))}>
+                    <span aria-hidden="true">×</span>
+                  </button>
+                )}
+              </li>
+            ))}
+          </ol>
+          {canAdd && (
+            <Button type="button" variant="secondary" size="sm" className="couch-add" onClick={() => setNames([...names, ''])}>
+              <PlusIcon size={16} />
+              {t('games.couch.addPlayer')}
+            </Button>
+          )}
+          {slip && (
+            <p className="party-hint" role="alert">
+              {t(slip)}
+            </p>
+          )}
+        </fieldset>
+      </div>
+
+      <div className="couch-step">
+        <PictureRadio
+          step={2}
+          label={t('games.couch.way')}
+          layout="cards"
+          value={settings.way}
+          onChange={(v) => set('way', v)}
+          options={COUCH_WAYS.map((w) => ({ value: w, label: t(WAY_KEY[w]), hint: t(WAY_NOTE[w]), art: <WayArt way={w} size={60} />, tone: impostorWayTone(w) }))}
+        />
+        {roomForTwo && (
+          <ChipRadio label={t('games.couch.impostors')} value={settings.impostors} onChange={(v) => set('impostors', v)} options={([1, 2] as const).map((n) => ({ value: n, label: String(n) }))} />
         )}
-        {slip && (
+      </div>
+
+      <div className="couch-step">
+        {level.categories.length > 0 && (
+          <PictureRadio
+            step={3}
+            label={t('games.impostor.category')}
+            layout="tiles"
+            value={chosenCategory}
+            onChange={setCategory}
+            first={12}
+            moreLabel={(count) => t('common.showMoreCount', { count })}
+            options={[
+              { value: '', label: t('games.couch.anyCategory'), art: <CategoryArt category={null} size={52} />, tone: impostorCategoryTone(null) },
+              ...impostorCategoriesInOrder(level.categories).map((c) => ({
+                value: c.slug,
+                label: c.ku,
+                hint: meaningIn(c.meanings, locale) ?? undefined,
+                lang: script.lang,
+                art: <CategoryArt category={c.slug} size={52} />,
+                tone: impostorCategoryTone(c.slug),
+              })),
+            ]}
+          />
+        )}
+        {offers.length > 1 && (
+          <ChipRadio label={t('games.dialect')} value={offer.dialect} onChange={setDialect} options={offers.map((o) => ({ value: o.dialect, label: dialectName(o.dialect) }))} />
+        )}
+        {offer.difficulties.length > 1 && (
+          <ChipRadio
+            label={t('games.party.level')}
+            value={level.difficulty}
+            onChange={setDifficulty}
+            options={offer.difficulties.map((d) => ({ value: d.difficulty, label: t(LEVEL_KEY[d.difficulty]) }))}
+          />
+        )}
+      </div>
+
+      {/* the rules have sensible answers already: they wait folded, saying what they are set to */}
+      <details className="couch-rules">
+        <summary className="couch-rules-head">
+          <span className="couch-rules-title">
+            <SlidersIcon size={18} />
+            {t('games.couch.rules')}
+          </span>
+          <span className="couch-rules-now" aria-hidden="true">
+            <span>
+              <RedoIcon size={14} />
+              {settings.rounds}
+            </span>
+            <span>
+              <TimerIcon size={14} />
+              {clueNow}
+            </span>
+            <span>
+              <ChatsIcon size={14} />
+              {talkNow}
+            </span>
+          </span>
+          <span className="couch-rules-caret" aria-hidden="true">
+            <CaretDownIcon size={16} />
+          </span>
+        </summary>
+        <div className="couch-rules-body">
+          <ChipRadio label={t('games.couch.rounds')} value={settings.rounds} onChange={(v) => set('rounds', v)} options={COUCH_ROUNDS.map((n) => ({ value: n, label: String(n) }))} />
+          <ChipRadio
+            label={t('games.impostor.clueTime')}
+            value={settings.clueSeconds}
+            onChange={(v) => set('clueSeconds', v)}
+            options={COUCH_CLUE_SECONDS.map((sec) => ({ value: sec, label: sec === 0 ? t('games.couch.noClock') : t('games.party.seconds', { count: sec }) }))}
+          />
+          <ChipRadio
+            label={t('games.couch.talkTime')}
+            value={settings.talkSeconds}
+            onChange={(v) => set('talkSeconds', v)}
+            options={COUCH_TALK_SECONDS.map((sec) => ({ value: sec, label: sec === 0 ? t('games.couch.noClock') : t('games.couch.minutes', { count: sec / 60 }) }))}
+          />
+          <ChipRadio label={t('games.impostor.vote.phase')} value={settings.vote} onChange={(v) => set('vote', v)} options={COUCH_VOTES.map((v) => ({ value: v, label: t(VOTE_KEY[v]) }))} />
+        </div>
+      </details>
+
+      <div className="couch-go">
+        {failed && (
           <p className="party-hint" role="alert">
-            {t(slip)}
+            {t('games.couch.failed')}
           </p>
         )}
-      </fieldset>
-
-      <ChipRadio label={t('games.couch.way')} value={settings.way} onChange={(v) => set('way', v)} options={COUCH_WAYS.map((w) => ({ value: w, label: t(WAY_KEY[w]) }))} />
-      <p className="couch-note muted">{t(WAY_NOTE[settings.way])}</p>
-      {roomForTwo && (
-        <ChipRadio label={t('games.couch.impostors')} value={settings.impostors} onChange={(v) => set('impostors', v)} options={([1, 2] as const).map((n) => ({ value: n, label: String(n) }))} />
-      )}
-      {offers.length > 1 && (
-        <ChipRadio label={t('games.dialect')} value={offer.dialect} onChange={setDialect} options={offers.map((o) => ({ value: o.dialect, label: dialectName(o.dialect) }))} />
-      )}
-      {offer.difficulties.length > 1 && (
-        <ChipRadio
-          label={t('games.party.level')}
-          value={level.difficulty}
-          onChange={setDifficulty}
-          options={offer.difficulties.map((d) => ({ value: d.difficulty, label: t(LEVEL_KEY[d.difficulty]) }))}
-        />
-      )}
-      {level.categories.length > 0 && (
-        <ChipRadio
-          label={t('games.impostor.category')}
-          value={chosenCategory}
-          onChange={setCategory}
-          options={[
-            { value: '', label: t('games.couch.anyCategory') },
-            ...level.categories.map((c) => ({ value: c.slug, label: c.ku, hint: meaningIn(c.meanings, locale) ?? undefined, lang: script.lang })),
-          ]}
-        />
-      )}
-      <ChipRadio label={t('games.couch.rounds')} value={settings.rounds} onChange={(v) => set('rounds', v)} options={COUCH_ROUNDS.map((n) => ({ value: n, label: String(n) }))} />
-      <ChipRadio
-        label={t('games.impostor.clueTime')}
-        value={settings.clueSeconds}
-        onChange={(v) => set('clueSeconds', v)}
-        options={COUCH_CLUE_SECONDS.map((s) => ({ value: s, label: s === 0 ? t('games.couch.noClock') : t('games.party.seconds', { count: s }) }))}
-      />
-      <ChipRadio
-        label={t('games.couch.talkTime')}
-        value={settings.talkSeconds}
-        onChange={(v) => set('talkSeconds', v)}
-        options={COUCH_TALK_SECONDS.map((s) => ({ value: s, label: s === 0 ? t('games.couch.noClock') : t('games.couch.minutes', { count: s / 60 }) }))}
-      />
-      <ChipRadio label={t('games.impostor.vote.phase')} value={settings.vote} onChange={(v) => set('vote', v)} options={COUCH_VOTES.map((v) => ({ value: v, label: t(VOTE_KEY[v]) }))} />
-
-      {failed && (
-        <p className="party-hint" role="alert">
-          {t('games.couch.failed')}
-        </p>
-      )}
-      <Button type="submit" size="lg" block disabled={busy}>
-        {busy ? t('games.couch.dealing') : t('games.couch.start')}
-      </Button>
-      <p className="couch-note muted">{t('games.couch.noPay')}</p>
+        <Button type="submit" size="lg" block disabled={busy} className="couch-deal-btn">
+          {busy ? t('games.couch.dealing') : t('games.couch.start')}
+        </Button>
+        <p className="couch-note muted">{t('games.couch.noPay')}</p>
+      </div>
     </form>
   );
 }
@@ -374,10 +455,10 @@ function PassTo({ name, onMine }: { name: string; onMine: () => void }): React.J
   const t = useT();
   return (
     <div className="couch-pass">
-      <p className="couch-pass-title">{t('games.couch.passTo', { name })}</p>
       <span className="couch-pass-disc" aria-hidden="true">
         {name.slice(0, 1).toUpperCase()}
       </span>
+      <p className="couch-pass-title">{t('games.couch.passTo', { name })}</p>
       <Button size="lg" block onClick={onMine}>
         {t('games.couch.iAm', { name })}
       </Button>
@@ -422,40 +503,42 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
   return (
     <div className="couch-deal">
       <Progress done={game.dealt} of={game.players.length} />
-      <div className={`imp-card couch-card${shown ? ' is-face' : ' is-back'}${shown && hand.role === 'impostor' ? ' is-impostor' : ''}`} role="group" aria-label={t('games.couch.cardOf', { name })}>
+      <div className={`couch-card${shown ? ' is-face' : ' is-back'}${shown && hand.role === 'impostor' ? ' is-impostor' : ''}`} role="group" aria-label={t('games.couch.cardOf', { name })}>
         {!shown ? (
           <span className="couch-card-back" aria-hidden="true">
-            <ImpostorIcon size={44} />
+            <EmblemArt emblem="mask" size={148} />
           </span>
         ) : (
-          <>
+          <div className="couch-card-face">
             {hand.hint && (
-              <>
-                <p className="imp-card-label">{t('games.impostor.category')}</p>
-                <p className="imp-card-hint">
-                  <span lang={script.lang} dir={script.dir}>
-                    {hand.hint.ku}
-                  </span>
-                  <span className="imp-card-meaning"> · {meaningIn(hand.hint.meanings, locale)}</span>
-                </p>
-              </>
+              <div className="couch-card-top">
+                <CategoryArt category={hand.hint.category ?? 'category'} size={44} />
+                <div>
+                  <p className="imp-card-label">{t('games.impostor.category')}</p>
+                  <p className="imp-card-hint">
+                    <span lang={script.lang} dir={script.dir}>
+                      {hand.hint.ku}
+                    </span>
+                    <span className="imp-card-meaning"> · {meaningIn(hand.hint.meanings, locale)}</span>
+                  </p>
+                </div>
+              </div>
             )}
             {hand.role === 'player' ? (
-              <>
+              <div className="couch-card-main">
                 <p className="imp-card-word" lang={script.lang} dir={script.dir}>
                   {hand.word}
                 </p>
                 <p className="imp-card-meaning">{meaningIn(hand.meanings, locale)}</p>
-              </>
+              </div>
             ) : (
-              <>
-                <p className="imp-card-word is-impostor">
-                  <ImpostorIcon size={26} /> {t('games.impostor.youAreImpostor')}
-                </p>
+              <div className="couch-card-main">
+                <EmblemArt emblem="mask" size={72} />
+                <p className="imp-card-word is-impostor">{t('games.impostor.youAreImpostor')}</p>
                 <p className="imp-card-meaning">{t('games.impostor.blendIn')}</p>
-              </>
+              </div>
             )}
-          </>
+          </div>
         )}
       </div>
       <button
@@ -478,7 +561,7 @@ function Deal({ game, seat, onSeen }: { game: CouchState; seat: number; onSeen: 
       >
         {t('games.couch.hold')}
       </button>
-      <p className="couch-note muted">{t('games.couch.holdNote')}</p>
+      <p className="couch-note couch-centre muted">{t('games.couch.holdNote')}</p>
       <Button size="lg" block variant="secondary" disabled={!seen || shown} onClick={onSeen}>
         {t('games.couch.seen')}
       </Button>
@@ -530,22 +613,24 @@ function Clues({ game, onNext, onVote }: { game: CouchState; onNext: () => void;
   const speaker = couchSpeaker(game)!;
   return (
     <div className="couch-clues">
-      <p className="imp-phase">{t('games.impostor.round', { round: speaker.round, rounds: game.settings.rounds })}</p>
-      <p className="couch-speaker" aria-live="polite">
-        {t('games.couch.speaker', { name: game.players[speaker.seat]! })}
-      </p>
-      <p className="couch-note muted">{t('games.couch.sayClue')}</p>
-      {game.settings.clueSeconds > 0 && <Countdown key={game.turn} seconds={game.settings.clueSeconds} onEnd={onNext} />}
-      <ol className="couch-order">
-        {game.order.map((seat, i) => {
-          const at = game.turn % game.order.length;
-          return (
-            <li key={seat} className={i === at ? 'is-now' : i < at ? 'is-done' : ''} aria-current={i === at ? 'true' : undefined}>
-              {game.players[seat]}
-            </li>
-          );
-        })}
-      </ol>
+      <div className="couch-stage">
+        <p className="imp-phase">{t('games.impostor.round', { round: speaker.round, rounds: game.settings.rounds })}</p>
+        <p className="couch-speaker" aria-live="polite">
+          {t('games.couch.speaker', { name: game.players[speaker.seat]! })}
+        </p>
+        <p className="couch-note">{t('games.couch.sayClue')}</p>
+        {game.settings.clueSeconds > 0 && <Countdown key={game.turn} seconds={game.settings.clueSeconds} onEnd={onNext} />}
+        <ol className="couch-order">
+          {game.order.map((seat, i) => {
+            const at = game.turn % game.order.length;
+            return (
+              <li key={seat} className={i === at ? 'is-now' : i < at ? 'is-done' : ''} aria-current={i === at ? 'true' : undefined}>
+                {game.players[seat]}
+              </li>
+            );
+          })}
+        </ol>
+      </div>
       <Button size="lg" block onClick={onNext}>
         {t('games.couch.next')}
       </Button>
@@ -560,9 +645,11 @@ function Talk({ game, onVote }: { game: CouchState; onVote: () => void }): React
   const t = useT();
   return (
     <div className="couch-talk">
-      <p className="couch-speaker">{t('games.couch.talk.title')}</p>
-      <p className="couch-note muted">{t('games.couch.talk.note')}</p>
-      <Countdown seconds={game.settings.talkSeconds} onEnd={onVote} />
+      <div className="couch-stage">
+        <p className="couch-speaker">{t('games.couch.talk.title')}</p>
+        <p className="couch-note">{t('games.couch.talk.note')}</p>
+        <Countdown seconds={game.settings.talkSeconds} onEnd={onVote} />
+      </div>
       <Button size="lg" block onClick={onVote}>
         {t('games.couch.toVote')}
       </Button>
@@ -763,24 +850,26 @@ function Reveal({
           </ul>
         </section>
       )}
-      <table className="couch-score">
-        <thead>
-          <tr>
-            <th scope="col">{t('games.couch.players')}</th>
-            <th scope="col">{t('games.couch.roundPoints')}</th>
-            <th scope="col">{t('games.couch.total')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {board.map((row) => (
-            <tr key={row.seat} className={reveal.impostors.includes(row.seat) ? 'is-impostor' : ''}>
-              <th scope="row">{row.name}</th>
-              <td>{row.round > 0 ? `+${row.round}` : '0'}</td>
-              <td>{row.total}</td>
+      <div className="couch-score-wrap">
+        <table className="couch-score">
+          <thead>
+            <tr>
+              <th scope="col">{t('games.couch.players')}</th>
+              <th scope="col">{t('games.couch.roundPoints')}</th>
+              <th scope="col">{t('games.couch.total')}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {board.map((row) => (
+              <tr key={row.seat} className={reveal.impostors.includes(row.seat) ? 'is-impostor' : ''}>
+                <th scope="row">{row.name}</th>
+                <td>{row.round > 0 ? `+${row.round}` : '0'}</td>
+                <td>{row.total}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       {failed && (
         <p className="party-hint" role="alert">
           {t('games.couch.failed')}
