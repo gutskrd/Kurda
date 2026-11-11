@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { DEER_BOARD_TEXT, DEER_INK, DEER_PICTURE, DEER_VIEW, deerBoard, deerCard, deerTiltFor } from '@kurda/shared';
+import { useMarkup } from '../lib/useMarkup';
 
 /** The mascot itself, cut free of the icon's card (see `@kurda/shared` deer.ts). */
 const MASCOT = '/mascot-deer.png';
@@ -29,9 +30,14 @@ export type DeerBoard = { kind: 'stars'; stars: number } | { kind: 'letters'; le
  */
 export const tiltFor = deerTiltFor;
 
-/** A group drawn from the shared deer's markup. */
+/**
+ * A group drawn from the shared deer's markup. The markup is made again on
+ * every render, but handed over as the same object while it reads the same
+ * (lib/useMarkup), so the card is put in once and the board again only as its
+ * stars change.
+ */
 function Layer({ markup, className, style }: { markup: string; className?: string; style?: React.CSSProperties }): React.JSX.Element {
-  return <g className={className} style={style} dangerouslySetInnerHTML={{ __html: markup }} />;
+  return <g className={className} style={style} dangerouslySetInnerHTML={useMarkup(markup)} />;
 }
 
 export function HevaloDeer({

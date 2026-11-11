@@ -13,6 +13,7 @@ import {
 import { Button } from '../components/Button';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { useMarkup } from '../lib/useMarkup';
 
 /**
  * Who Am I?'s stage on the website, the same for a round alone and for the
@@ -67,11 +68,13 @@ export function ForeheadCard({
   const t = useT();
   const { locale } = useI18n();
   const svg = useMemo(() => deerSilhouetteSvg('currentColor', 240, t('games.whoAmI.card')), [t]);
+  // the same markup while the drawing is the same: the stage is drawn again with every question and as the card turns, and the silhouette stays put
+  const silhouette = useMarkup(svg);
   const script = dialectDirection(dialect);
   const kind = categoryName(category, t);
   return (
     <figure className="wa-stage">
-      <div className="wa-silhouette" aria-hidden="true" dangerouslySetInnerHTML={{ __html: svg }} />
+      <div className="wa-silhouette" aria-hidden="true" dangerouslySetInnerHTML={silhouette} />
       <div
         className={`wa-card${identity ? ' is-turned' : ''}`}
         style={{ left: `${FOREHEAD.x * 100}%`, top: `${FOREHEAD.y * 100}%`, width: `${FOREHEAD.width * 100}%` }}

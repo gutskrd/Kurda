@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { kingdomBuildings, NO_KINGDOM_LEVELS, type KingdomView } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -10,6 +10,8 @@ afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();
   localStorage.clear();
+  // the page in sight again, for the tests that put it out of sight
+  Reflect.deleteProperty(document, 'hidden');
 });
 
 const counts = { houses: 14, school: 5, teahouse: 0, spring: 9, market: 1, orchard: 4 };
@@ -36,6 +38,20 @@ function serve(view: KingdomView) {
 const reduceMotion = (): void => {
   vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce'), media: query, addEventListener: () => undefined, removeEventListener: () => undefined }));
 };
+
+/**
+ * The reader goes to another tab: the page hears it is out of sight and draws
+ * itself again, every part of it, to hold the village's life still. Nothing it
+ * shows has changed, which makes this the plainest way to have the whole page
+ * drawn again around its pictures.
+ */
+function leaveThePage(container: HTMLElement): void {
+  Object.defineProperty(document, 'hidden', { configurable: true, get: () => true });
+  act(() => {
+    document.dispatchEvent(new Event('visibilitychange'));
+  });
+  expect(container.querySelector('.kingdom-page')).toHaveClass('is-paused');
+}
 
 /** The world's transform as the camera last wrote it: its scale. */
 const scaleOf = (container: HTMLElement): number => Number(/scale\(([\d.]+)\)/.exec((container.querySelector('.kingdom-world') as HTMLElement).style.transform)?.[1]);
@@ -195,6 +211,64 @@ describe('The Village on the website', () => {
     renderApp(<KingdomPage />);
     expect(await screen.findByRole('dialog', { name: en['kingdom.celebrate.kicker'] })).toBeInTheDocument();
     expect(screen.queryByTestId('kingdom-raise')).toBeNull();
+  });
+
+  /**
+   * The page draws itself again all the time: as the camera settles, as
+   * something is tapped, as a raise ticks its badge over, as the reader comes
+   * back to the tab. A picture that has not changed stays the node it was. Put
+   * in again, every animal near the view would be parsed afresh and start its
+   * loop over, out of step with the one clock the village's life runs on.
+   */
+  it('leaves the village’s life and an open building’s picture in place when the page is drawn again', async () => {
+    const user = userEvent.setup();
+    reduceMotion();
+    serve(village());
+    const { container } = renderApp(<KingdomPage />);
+    await user.click(await screen.findByRole('button', { name: `${en['kingdom.name.school']}, Level 1 of 5` }));
+    const sheet = await screen.findByRole('dialog', { name: en['kingdom.name.school'] });
+    const keyframes = container.querySelector('.kingdom-world > style')!.firstChild;
+    const actors = [...container.querySelectorAll('.kingdom-life > .kg-a')].map((actor) => actor.firstChild);
+    const picture = sheet.querySelector('.kingdom-sheet-art > svg');
+    expect(keyframes).not.toBeNull();
+    expect(actors.length).toBeGreaterThan(0);
+    expect(picture).not.toBeNull();
+    leaveThePage(container);
+    expect(container.querySelector('.kingdom-world > style')!.firstChild).toBe(keyframes);
+    const now = [...container.querySelectorAll('.kingdom-life > .kg-a')].map((actor) => actor.firstChild);
+    expect(now).toHaveLength(actors.length);
+    now.forEach((drawn, i) => expect(drawn).toBe(actors[i]));
+    expect(sheet.querySelector('.kingdom-sheet-art > svg')).toBe(picture);
+  });
+
+  it('leaves a building going up in place, every layer and sparkle of it, when the page is drawn again', async () => {
+    serve(village({ celebrate: [{ building: 'houses', level: 1, zer: 0, reachedAt: '2026-11-05T10:00:00.000Z' }] }));
+    const { container } = renderApp(<KingdomPage />);
+    const raise = await screen.findByTestId('kingdom-raise');
+    expect([...raise.children].map((layer) => layer.className)).toEqual([
+      'kingdom-raise-old',
+      'kingdom-raise-scaffold',
+      'kingdom-raise-next',
+      'kingdom-raise-dust',
+      ...Array.from({ length: 8 }, () => 'kingdom-raise-spark'),
+    ]);
+    const layers = [...raise.children].map((layer) => layer.firstChild);
+    for (const drawn of layers) expect(drawn).not.toBeNull();
+    leaveThePage(container);
+    expect(screen.getByTestId('kingdom-raise')).toBe(raise);
+    [...raise.children].forEach((layer, i) => expect(layer.firstChild).toBe(layers[i]));
+  });
+
+  it('leaves a celebration’s picture in place when the page under it is drawn again', async () => {
+    reduceMotion();
+    serve(village({ celebrate: [{ building: 'school', level: 1, zer: 0, reachedAt: '2026-11-05T10:00:00.000Z' }] }));
+    const { container } = renderApp(<KingdomPage />);
+    const dialog = await screen.findByRole('dialog', { name: en['kingdom.celebrate.kicker'] });
+    const picture = within(dialog).getByRole('img', { name: en['kingdom.name.school'] });
+    expect(picture.parentElement).toHaveClass('kingdom-celebrate-art');
+    leaveThePage(container);
+    expect(within(dialog).getByRole('img', { name: en['kingdom.name.school'] })).toBe(picture);
+    expect(picture.isConnected).toBe(true);
   });
 
   it('says when the village could not be read, with a way to try again', async () => {

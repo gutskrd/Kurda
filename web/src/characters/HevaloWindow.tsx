@@ -1,6 +1,7 @@
 import { useId, useMemo, useState } from 'react';
-import { WINDOW_PLACE, WINDOW_POP, WINDOW_VIEW, windowArt } from '@kurda/shared';
+import { WINDOW_PLACE, WINDOW_POP, WINDOW_VIEW, windowArt, type WindowArt } from '@kurda/shared';
 import { prefersReducedMotion } from '../lib/motion';
+import { useMarkup } from '../lib/useMarkup';
 import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import './characters.css';
 
@@ -49,19 +50,13 @@ export function HevaloWindow({
     '--window-pop-ms': `${WINDOW_POP.ms}ms`,
     '--window-pop-delay': `${WINDOW_POP.delayMs}ms`,
   } as React.CSSProperties;
-  const layer = (part: 'back' | 'front' | 'shadow') => (
-    <>
-      <span className={`hevalo-window-art is-light is-${part}`} dangerouslySetInnerHTML={{ __html: art.light[part] }} />
-      <span className={`hevalo-window-art is-dark is-${part}`} dangerouslySetInnerHTML={{ __html: art.dark[part] }} />
-    </>
-  );
   return (
     <span
       className={`hevalo-window${pop && !still ? ' is-popping' : ''}${rtl ? ' is-mirrored' : ''}${className ? ` ${className}` : ''}`}
       style={style}
       aria-hidden="true"
     >
-      {layer('back')}
+      <WindowLayer part="back" art={art} />
       {/* cut off at the sill and nowhere else: an ear or an antler may reach past the window's top and sides, into the room */}
       <span className="hevalo-window-cut">
         <span
@@ -77,8 +72,25 @@ export function HevaloWindow({
           <SpeakingCharacter speaker="hevalo" audio={null} crop="head" size={figure.height * size} decorative reaction={reaction} />
         </span>
       </span>
-      {layer('front')}
-      {layer('shadow')}
+      <WindowLayer part="front" art={art} />
+      <WindowLayer part="shadow" art={art} />
     </span>
+  );
+}
+
+/**
+ * One part of the window, drawn for a light page and for a dark one. Each
+ * drawing is handed over as the same markup for as long as it is the same
+ * (lib/useMarkup): the window is drawn again whenever he is given a new
+ * reaction or the page around it changes, and its layers stay where they are.
+ */
+function WindowLayer({ part, art }: { part: keyof WindowArt; art: { light: WindowArt; dark: WindowArt } }): React.JSX.Element {
+  const light = useMarkup(art.light[part]);
+  const dark = useMarkup(art.dark[part]);
+  return (
+    <>
+      <span className={`hevalo-window-art is-light is-${part}`} dangerouslySetInnerHTML={light} />
+      <span className={`hevalo-window-art is-dark is-${part}`} dangerouslySetInnerHTML={dark} />
+    </>
   );
 }

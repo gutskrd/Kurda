@@ -50,6 +50,32 @@ describe('HevaloWindow', () => {
     expect(win).toHaveAttribute('aria-hidden', 'true');
   });
 
+  /**
+   * The page a window is on draws itself again as its words change, and he is
+   * handed a new reaction with every answer. The window's own drawing has not
+   * changed, so its layers stay the nodes they were: put in again, each would
+   * be parsed afresh, and whatever held on to one would be holding something
+   * no longer on the page.
+   */
+  it('leaves the window’s drawing in place when the page around it is drawn again, he reacts, or it changes size', () => {
+    const page = (reaction: 'cheer' | null, size: number): React.JSX.Element => (
+      <I18nProvider>
+        <HevaloWindow size={size} reaction={reaction} />
+      </I18nProvider>
+    );
+    const { rerender, container } = render(page(null, 200));
+    const layers = [...container.querySelectorAll('.hevalo-window-art > svg')];
+    expect(layers).toHaveLength(6);
+    for (const next of [page(null, 200), page('cheer', 200), page('cheer', 160)]) {
+      rerender(next);
+      const now = [...container.querySelectorAll('.hevalo-window-art > svg')];
+      expect(now).toHaveLength(layers.length);
+      now.forEach((layer, i) => expect(layer).toBe(layers[i]));
+    }
+    // and the page was drawn again: the window is the size it was last asked for
+    expect(parseFloat(container.querySelector<HTMLElement>('.hevalo-window')!.style.height)).toBe(160);
+  });
+
   it('keeps two windows on a page apart: each drawing its own ids', () => {
     const { container } = render(
       <I18nProvider>

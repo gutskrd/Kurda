@@ -1,5 +1,6 @@
 import { useId, useMemo, type CSSProperties } from 'react';
-import { CHEST_LAYERS, chestDrawing, type ChestTier } from '@kurda/shared';
+import { CHEST_LAYERS, chestDrawing, type ChestLayerId, type ChestTier } from '@kurda/shared';
+import { useMarkup } from '../lib/useMarkup';
 
 /**
  * A quest's chest, the drawing the phone shows too (shared `art/chest.ts`):
@@ -52,12 +53,24 @@ export function Chest({
       aria-hidden="true"
       focusable="false"
     >
-      <g data-part="shadow" dangerouslySetInnerHTML={{ __html: drawing.layers.shadow.markup }} />
+      <Part part="shadow" markup={drawing.layers.shadow.markup} />
       <g className="chest-hop">
         {CHEST_LAYERS.filter((part) => part !== 'shadow').map((part) => (
-          <g key={part} data-part={part} dangerouslySetInnerHTML={{ __html: drawing.layers[part].markup }} />
+          <Part key={part} part={part} markup={drawing.layers[part].markup} />
         ))}
       </g>
     </svg>
   );
+}
+
+/**
+ * One part of the chest: a group the stylesheet finds by its name. Its
+ * drawing is handed over as the same markup for as long as it is the same
+ * (lib/useMarkup). The chest opens by classes on the whole drawing, on a
+ * screen that draws itself again at every step, and the stylesheet has to be
+ * moving the parts that are already there: one put in again would start over
+ * whatever was playing inside it.
+ */
+function Part({ part, markup }: { part: ChestLayerId; markup: string }): React.JSX.Element {
+  return <g data-part={part} dangerouslySetInnerHTML={useMarkup(markup)} />;
 }

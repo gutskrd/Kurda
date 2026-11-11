@@ -43,8 +43,9 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { Celebration } from '../ranks/Celebration';
 import { prefersReducedMotion } from '../lib/motion';
+import { useMarkup } from '../lib/useMarkup';
 import { useRail } from '../social/RailProvider';
-import { lifeMarkup } from './life';
+import { lifeMarkup, type ActorMarkup } from './life';
 import { LevelBadge, LevelSheet, LevelUp, useVillageSeen } from './VillageLevel';
 import './kingdom.css';
 
@@ -438,6 +439,8 @@ function Village(props: VillageProps): React.JSX.Element {
     const sprites = new Map<KingdomSprite, string>(KINGDOM_SPRITES.map((s) => [s, kingdomSpriteSvg(s, { dark })]));
     return lifeMarkup(kingdomLife(levels, village), (s) => sprites.get(s) ?? '');
   }, [levels, village, dark]);
+  // the keyframes as the same markup while they read the same, so the page drawn again does not have every loop's rules parsed again
+  const keyframes = useMarkup(life.css);
   const ages = useRef(new Map<string, number>());
   const laid = life.actors.filter((a) => overlaps(a.reach, lifeNear));
   for (const a of laid) if (!ages.current.has(a.id)) ages.current.set(a.id, Math.round(now() - PAGE_START));
@@ -713,17 +716,10 @@ function Village(props: VillageProps): React.JSX.Element {
             {tiles.map((tile) =>
               overlaps(tile, near) ? <img key={`${tile.x},${tile.y}`} className="kingdom-tile" src={tile.url} alt="" draggable={false} style={onCanvas(tile)} /> : null,
             )}
-            <style dangerouslySetInnerHTML={{ __html: life.css }} />
+            <style dangerouslySetInnerHTML={keyframes} />
             <div className="kingdom-life" aria-hidden="true">
               {laid.map((a) => (
-                <span
-                  key={a.id}
-                  className={`kg-a${reacting?.id === a.id ? ` is-${reacting.tap === 'deer' ? 'happy' : reacting.tap}` : ''}`}
-                  data-actor={a.id}
-                  data-tap={a.tap}
-                  style={{ '--kg-age': `${ages.current.get(a.id) ?? 0}ms` } as CSSProperties}
-                  dangerouslySetInnerHTML={{ __html: a.html }}
-                />
+                <Actor key={a.id} actor={a} age={ages.current.get(a.id) ?? 0} reaction={reacting?.id === a.id ? reacting.tap : null} />
               ))}
             </div>
             {isRaising && current && <Raise upgrade={current} dark={dark} />}
@@ -830,7 +826,7 @@ function Village(props: VillageProps): React.JSX.Element {
           open
           label={t('kingdom.celebrate.kicker')}
           tone="zer"
-          art={<span className="kingdom-celebrate-art" dangerouslySetInnerHTML={{ __html: kingdomBuildingSvg({ building: current.building, level: current.level, size: 168, dark, title: t(buildingNameKey(current.building)) }) }} />}
+          art={<CelebrateArt upgrade={current} dark={dark} />}
           kicker={t('kingdom.celebrate.kicker')}
           title={t('kingdom.celebrate.title', { building: t(buildingNameKey(current.building)), level: current.level })}
           body={t(growsKey(current.building))}
@@ -850,6 +846,38 @@ function Village(props: VillageProps): React.JSX.Element {
       )}
     </div>
   );
+}
+
+/**
+ * One of the village's living things, laid over the world. A component of its
+ * own so that its markup is handed over as the same object for as long as it
+ * is the same (lib/useMarkup): the page draws itself again as the camera
+ * settles and as things are tapped, and an actor put in again would start
+ * every one of its loops over at the age it was laid at, out of step with the
+ * one clock the village's life runs on.
+ */
+function Actor({ actor, age, reaction }: { actor: ActorMarkup; age: number; reaction: KingdomTap | null }): React.JSX.Element {
+  return (
+    <span
+      className={`kg-a${reaction ? ` is-${reaction === 'deer' ? 'happy' : reaction}` : ''}`}
+      data-actor={actor.id}
+      data-tap={actor.tap}
+      style={{ '--kg-age': `${age}ms` } as CSSProperties}
+      dangerouslySetInnerHTML={useMarkup(actor.html)}
+    />
+  );
+}
+
+/**
+ * The picture a new level is celebrated with: the building at that level,
+ * named for a screen reader. Made again only when what it shows changes, so
+ * it is not put in again, mid-spring, each time the page under it draws itself.
+ */
+function CelebrateArt({ upgrade, dark }: { upgrade: KingdomUpgrade; dark: boolean }): React.JSX.Element {
+  const t = useT();
+  const title = t(buildingNameKey(upgrade.building));
+  const art = useMemo(() => ({ __html: kingdomBuildingSvg({ building: upgrade.building, level: upgrade.level, size: 168, dark, title }) }), [upgrade.building, upgrade.level, dark, title]);
+  return <span className="kingdom-celebrate-art" dangerouslySetInnerHTML={art} />;
 }
 
 /** The learner's Zêr, from the rail's own poll (no request of its own); null until it has arrived. */
@@ -938,9 +966,11 @@ function BuildingSheet({ building: b, dark, rising }: { building: KingdomBuildin
   const t = useT();
   const locale = useLocale();
   const number = (v: number): string => new Intl.NumberFormat(locale).format(v);
+  // made again only when what it shows changes, as the card's is: the page under an open sheet goes on drawing itself
+  const picture = useMemo(() => ({ __html: kingdomBuildingSvg({ building: b.id, level: b.level, rising, size: 148, dark, idPrefix: `kgsheet${b.id}` }) }), [b.id, b.level, rising, dark]);
   return (
     <div className="kingdom-sheet-body">
-      <span className="kingdom-sheet-art" aria-hidden="true" dangerouslySetInnerHTML={{ __html: kingdomBuildingSvg({ building: b.id, level: b.level, rising, size: 148, dark, idPrefix: `kgsheet${b.id}` }) }} />
+      <span className="kingdom-sheet-art" aria-hidden="true" dangerouslySetInnerHTML={picture} />
       <h2 className="kingdom-sheet-title">{t(buildingNameKey(b.id))}</h2>
       <p className="kingdom-sheet-level">{levelText(t, b)}</p>
       <h3 className="kingdom-sheet-heading">{t('kingdom.builtBy')}</h3>
@@ -991,14 +1021,21 @@ function Raise({ upgrade, dark }: { upgrade: KingdomUpgrade; dark: boolean }): R
       sparkle: kingdomSpriteSvg('sparkle', { dark }),
     };
   }, [upgrade, dark]);
+  // each layer as the same markup while its drawing is the same: the page draws itself again several times while a building
+  // goes up (the camera flying to it, its badge ticking over, the coins), and every layer has to stay the one that is moving
+  const old = useMarkup(art.old);
+  const scaffold = useMarkup(art.scaffold);
+  const next = useMarkup(art.next);
+  const dust = useMarkup(art.dust);
+  const spark = useMarkup(art.sparkle);
   return (
     <div className="kingdom-raise" style={onCanvas(kingdomPlotBox(upgrade.building))} aria-hidden="true" data-testid="kingdom-raise">
-      <span className="kingdom-raise-old" dangerouslySetInnerHTML={{ __html: art.old }} />
-      <span className="kingdom-raise-scaffold" dangerouslySetInnerHTML={{ __html: art.scaffold }} />
-      <span className="kingdom-raise-next" dangerouslySetInnerHTML={{ __html: art.next }} />
-      <span className="kingdom-raise-dust" dangerouslySetInnerHTML={{ __html: art.dust }} />
+      <span className="kingdom-raise-old" dangerouslySetInnerHTML={old} />
+      <span className="kingdom-raise-scaffold" dangerouslySetInnerHTML={scaffold} />
+      <span className="kingdom-raise-next" dangerouslySetInnerHTML={next} />
+      <span className="kingdom-raise-dust" dangerouslySetInnerHTML={dust} />
       {SPARKS.map(([dx, dy, delay], i) => (
-        <span key={i} className="kingdom-raise-spark" style={{ '--dx': `${dx}%`, '--dy': `${dy}%`, animationDelay: `${1350 + delay}ms` } as CSSProperties} dangerouslySetInnerHTML={{ __html: art.sparkle }} />
+        <span key={i} className="kingdom-raise-spark" style={{ '--dx': `${dx}%`, '--dy': `${dy}%`, animationDelay: `${1350 + delay}ms` } as CSSProperties} dangerouslySetInnerHTML={spark} />
       ))}
     </div>
   );
