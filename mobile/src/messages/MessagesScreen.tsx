@@ -32,6 +32,7 @@ import { resolveDeepLink, type InboxItem } from '../notifications/inbox';
 import { messagePreview, previewIcon } from '../chat/preview';
 import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
 import type { Group } from '../groups/api';
+import { membersLine } from '../groups/memberCount';
 import {
   FILTER_LABEL,
   MESSAGE_FILTERS,
@@ -409,7 +410,7 @@ function ConversationRow({
   const { t } = useI18n();
   const dir = useDirection();
   const unread = row.unread > 0;
-  const line = row.kind === 'direct' ? preview(row.chat) : t('groups.memberCount', { count: row.group.memberCount });
+  const line = row.kind === 'direct' ? preview(row.chat) : membersLine(t, row.group.memberCount);
   // a gift or a game has no words of its own: its mark goes before the line that stands in for them
   const mark = row.kind === 'direct' ? previewIcon(row.chat.lastKind) : null;
   const when = row.kind === 'direct' ? listTime(row.at, locale) : '';

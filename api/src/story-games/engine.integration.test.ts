@@ -735,6 +735,10 @@ describe.skipIf(!DATABASE_URL)('story game engine (integration)', () => {
       expect(await svc.card(member, g.gameId)).toMatchObject({ status: 'open', canJoin: true });
       expect(await svc.card(stranger, g.gameId)).toMatchObject({ status: 'unavailable', canJoin: false });
       await expect(svc.join(stranger, { id: g.gameId })).rejects.toMatchObject({ code: 'GAME_NOT_FOUND' });
+      // a group that was open once is a room of people nobody chose: shared there, the game takes no member on that account
+      await pool.query(`UPDATE groups SET privacy = 'open' WHERE id = $1`, [groupId]);
+      expect(await svc.card(member, g.gameId)).toMatchObject({ status: 'unavailable', canJoin: false });
+      await expect(svc.join(member, { id: g.gameId })).rejects.toMatchObject({ code: 'GAME_NOT_FOUND' });
       await pool.query(`UPDATE story_games SET chat_group_id = NULL WHERE id = $1`, [g.gameId]);
       await pool.query(`DELETE FROM groups WHERE id = $1`, [groupId]);
       await svc.start(g.gameId, g.host);

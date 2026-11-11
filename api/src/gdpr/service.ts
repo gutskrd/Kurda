@@ -763,6 +763,8 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM group_mutes WHERE user_id = $1`);
   await q(`DELETE FROM group_bans WHERE user_id = $1`);
   await q(`DELETE FROM group_rejoin_requests WHERE user_id = $1`);
+  // and the note that they were taken out of a group that was open, kept so that it could be undone (migration 1751000420000)
+  await q(`DELETE FROM open_group_closures WHERE user_id = $1`);
   // and their name off what they did as an admin, which then reads as an admin's (the account is
   // anonymized, not deleted, so the foreign keys' SET NULL never runs)
   await q(`UPDATE group_bans SET banned_by = NULL WHERE banned_by = $1`);

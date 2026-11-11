@@ -21,6 +21,7 @@ import { Avatar } from '../components/Avatar';
 import { SendError } from '../reports/SendError';
 import { useArrival } from '../lib/motion';
 import { GroupAvatar } from '../groups/GroupAvatar';
+import { membersLine } from '../groups/memberCount';
 import { announceGroupsChanged, useGroupsChanged } from '../groups/groupsChanged';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
 
@@ -397,7 +398,7 @@ function Conversations({
           active={g.id === activeGroup}
           avatar={<GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={40} />}
           name={g.name}
-          preview={t('groups.memberCount', { count: g.memberCount })}
+          preview={membersLine(t, g.memberCount)}
           unread={groupUnread[g.id] ?? 0}
         />
       ))}
@@ -533,7 +534,7 @@ function GroupsList({ activeGroup, query = '', onNew }: { activeGroup: string | 
               <span className="chat-convo-top">
                 <span className="chat-convo-name" dir="auto">{g.name}</span>
               </span>
-              <span className="chat-convo-last">{t('groups.memberCount', { count: g.memberCount })}</span>
+              <span className="chat-convo-last">{membersLine(t, g.memberCount)}</span>
             </span>
           </Link>
         ))

@@ -27,6 +27,7 @@ import { BanSheet } from './BanSheet';
 import { OptionsMenu, type MenuItem } from './OptionsMenu';
 import { BansSection, RequestsSection, useModeration } from './GroupModeration';
 import { announceGroupsChanged } from './groupsChanged';
+import { membersLine } from './memberCount';
 
 /** Something that cannot be taken back, waiting for a yes. */
 type Ask =
@@ -266,7 +267,7 @@ export function GroupInfo({
             {detail.description}
           </p>
         )}
-        <p className="ginfo-meta">{t('groups.memberCount', { count: detail.memberCount ?? detail.members.length })}</p>
+        <p className="ginfo-meta">{membersLine(t, detail.memberCount ?? detail.members.length)}</p>
       </header>
 
       {error && (

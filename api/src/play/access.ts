@@ -39,6 +39,14 @@ export interface JoinCheck {
  *   (after a report, say) no longer vouches through it, for this game or for
  *   the next rounds that inherit its group.
  *
+ * A game shared into a group that was OPEN before every group became private
+ * (`groups.privacy` still says so, migration 1751000420000) lets nobody in on
+ * that account. Its members are strangers to one another: they walked in,
+ * nobody chose them. A friends game can hold the host's friend who is
+ * fifteen, and letting that room in would be the very stranger contact an
+ * open game is refused to a minor for. A host who wants them in opens the
+ * game instead.
+ *
  * The answer is a yes or a no and is never explained: every caller turns a no
  * into the same "not found" as a game that does not exist, so a refusal says
  * nothing about anybody's age or blocks.
@@ -56,7 +64,7 @@ export async function canJoin(executor: Executor, check: JoinCheck): Promise<boo
        ($4::uuid IS NOT NULL AND EXISTS (
           SELECT 1 FROM group_members gm JOIN groups g ON g.id = gm.group_id
            WHERE gm.group_id = $4 AND gm.user_id = $1
-             AND g.archived_at IS NULL
+             AND g.archived_at IS NULL AND g.privacy <> 'open'
              AND EXISTS (SELECT 1 FROM group_members h WHERE h.group_id = $4 AND h.user_id = $3))) AS in_group`,
     [check.joinerId, others, check.hostId, check.chatGroupId],
   );

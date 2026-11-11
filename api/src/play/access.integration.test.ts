@@ -89,6 +89,20 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
       expect(await canJoin(pool, check({ joinerId: groupMate, hostId: host, chatGroupId: gid }))).toBe(false);
     });
 
+    it('does not take strangers from a group that was open once (a host who wants them opens the game)', async () => {
+      const host = await makeUser();
+      const strangerInGroup = await makeUser();
+      const gid = await makeGroup([host, strangerInGroup]);
+      // as the groups that were open are left: marked, and their members people nobody chose
+      await pool.query(`UPDATE groups SET privacy = 'open' WHERE id = $1`, [gid]);
+      expect(await canJoin(pool, check({ joinerId: strangerInGroup, hostId: host, chatGroupId: gid }))).toBe(false);
+      // the host's friends in it still can, as anywhere
+      const friendInGroup = await makeUser();
+      await pool.query(`INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`, [gid, friendInGroup]);
+      await befriend(pool, host, friendInGroup);
+      expect(await canJoin(pool, check({ joinerId: friendInGroup, hostId: host, chatGroupId: gid }))).toBe(true);
+    });
+
     it('stops taking the group once the group has removed the host', async () => {
       const host = await makeUser();
       const groupMate = await makeUser();

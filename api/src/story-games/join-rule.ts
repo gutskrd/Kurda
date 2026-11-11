@@ -34,8 +34,13 @@ export interface JoinFacts {
  * - a 'friends' game takes the host's accepted friends, and the members of a
  *   group chat the host shared it into. Every group is private: everyone in
  *   one was put there by somebody they chose (an owner or admin adds only
- *   their own friends), so that brings in nobody new to a child. The play
- *   module's `canJoin` draws the same line.
+ *   their own friends), so that brings in nobody new to a child.
+ *
+ * A game shared into a group that was OPEN before every group became private
+ * (`groups.privacy` still says so) lets nobody in on that account: its
+ * members walked in, nobody chose them, and a friends game can hold the
+ * host's friend who is fifteen. The play module's `canJoin` draws the same
+ * lines.
  *
  * A refusal is never explained to the joiner: it looks exactly like a game
  * that does not exist.
@@ -69,7 +74,7 @@ export async function joinFacts(
        ($4::uuid IS NOT NULL AND EXISTS (
           SELECT 1 FROM group_members gm JOIN groups g ON g.id = gm.group_id
            WHERE gm.group_id = $4 AND gm.user_id = $2
-             AND g.archived_at IS NULL)) AS in_group`,
+             AND g.archived_at IS NULL AND g.privacy <> 'open')) AS in_group`,
     [game.id, joinerId, game.hostId, game.chatGroupId],
   );
   const r = res.rows[0]!;

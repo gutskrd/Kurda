@@ -373,7 +373,7 @@ describe('Messages', () => {
     await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
     expect(await screen.findByRole('link', { name: /My Club/ })).toHaveAttribute('href', '/app/messages?group=g1');
     // how many are in it, and no word about who may come in
-    expect(screen.getByText('1 members')).toBeInTheDocument();
+    expect(screen.getByText('1 member')).toBeInTheDocument();
     expect(screen.queryByText(/invite-only|open group/i)).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /discover|join/i })).not.toBeInTheDocument();
   });

@@ -206,4 +206,32 @@ describe.skipIf(!DATABASE_URL)('private groups (integration)', () => {
       expect((await call('friend', 'GET', '/me/groups')).json().groups).toEqual([]);
     });
   });
+
+  /*
+   * A group that was open is the one kind whose members nobody chose: they
+   * walked in. The migration leaves it marked as such, and it goes on as the
+   * room for known adults it was.
+   */
+  describe('a group that was open before every group became private', () => {
+    it('takes a friend known to be an adult, and nobody else, saying only that it takes nobody new', async () => {
+      for (const tag of ['keeper', 'grown']) await person(tag);
+      await person('young', bornYearsAgo(15));
+      await befriend(pool, id.keeper!, id.grown!);
+      await befriend(pool, id.keeper!, id.young!);
+      const was = (await call('keeper', 'POST', '/groups', { name: `Was open ${suffix}` })).json().id as string;
+      await pool.query(`UPDATE groups SET privacy = 'open' WHERE id = $1`, [was]);
+
+      expect((await call('keeper', 'POST', `/groups/${was}/invite`, { userId: id.grown })).statusCode).toBe(200);
+      expect(said(await call('keeper', 'POST', `/groups/${was}/invite`, { userId: id.young }))).toEqual([403, 'FORBIDDEN', 'this group takes nobody new']);
+      expect((await members(was)).sort()).toEqual([id.keeper, id.grown].sort());
+      // it is as private as any other: found by nobody, joined by nobody
+      expect(said(await call('young', 'GET', `/groups/${was}`))).toEqual([404, 'GROUP_NOT_FOUND', 'no such group']);
+      expect((await call('young', 'POST', `/groups/${was}/join`)).statusCode).toBe(403);
+
+      // the same friend is added to a group that was always private, as anybody's friend is
+      const always = (await call('keeper', 'POST', '/groups', { name: `Always private ${suffix}` })).json().id as string;
+      expect((await call('keeper', 'POST', `/groups/${always}/invite`, { userId: id.young })).statusCode).toBe(200);
+      expect((await members(always)).sort()).toEqual([id.keeper, id.young].sort());
+    });
+  });
 });

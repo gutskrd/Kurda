@@ -27,6 +27,7 @@ import { useChatGifts } from '../gifts/useChatGifts';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from '../groups/GroupAvatar';
 import { GroupInfo } from '../groups/GroupInfo';
+import { membersLine } from '../groups/memberCount';
 import { GroupAsk } from '../groups/GroupAsk';
 import { GroupMissing, GroupOutside } from '../groups/GroupOutside';
 import { ClearedLine, GroupWelcome, clearedWords } from '../groups/GroupWelcome';
@@ -376,7 +377,7 @@ export function GroupThread({
                 {name}
               </span>
               <span className="ghead-sub">
-                {typeof memberCount === 'number' ? t('groups.memberCount', { count: memberCount }) : t('groups.members')}
+                {typeof memberCount === 'number' ? membersLine(t, memberCount) : t('groups.members')}
               </span>
             </span>
           </button>

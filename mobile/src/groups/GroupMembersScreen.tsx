@@ -27,6 +27,7 @@ import { GroupAvatar } from './GroupAvatar';
 import { BanSheet } from './BanSheet';
 import { useClearChat } from './clearing';
 import { groupError } from './groupError';
+import { membersLine } from './memberCount';
 import { usePullRefresh } from '../net/usePullRefresh';
 import {
   deleteGroup,
@@ -228,7 +229,7 @@ export function GroupMembersScreen({
                 {detail.name}
               </Text>
               {detail.description ? <Text style={[styles.about, dir.free, styles.centred, { color: colors.textSecondary }]}>{detail.description}</Text> : null}
-              <Text style={[styles.meta, { color: colors.textSecondary }]}>{t('groups.memberCount', { count: detail.memberCount })}</Text>
+              <Text style={[styles.meta, { color: colors.textSecondary }]}>{membersLine(t, detail.memberCount)}</Text>
             </View>
 
             {error ? (

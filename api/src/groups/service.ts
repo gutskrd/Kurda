@@ -32,6 +32,7 @@ import { filterText } from '../moderation/filter.js';
 import { recordNotifications } from '../notifications/inbox-service.js';
 import type { Notification } from '../push/service.js';
 import { notBlockedSql } from '../friends/blocked.js';
+import { isNotKnownAdultUser } from '../users/age.js';
 import { approvedNotice, bannedNotice, declinedNotice, removedNotice, requestNotice, type NoticeGroup, type PushNotice } from './notices.js';
 
 /**
@@ -214,6 +215,14 @@ export interface GroupDetail extends Group {
  * the other members, and they of the minor, is what a group has always shown
  * its own members.
  *
+ * A group that was open before every group became private is the one place
+ * that reasoning does not reach: its members walked in, nobody chose them
+ * (`groups.privacy` still says 'open' of it, and says nothing else any more;
+ * migration 1751000420000). It goes on as what it was, a room for known
+ * adults: nobody not known to be one is added to it or let back into it
+ * (`staysAdultsOnly`), and a game shared into it lets no member in on that
+ * account (play/access.ts).
+ *
  * One person owns at most MAX_GROUPS_OWNED groups and is in at most
  * MAX_GROUP_MEMBERSHIPS (`assertGroupRoom`), whether they start a group, are
  * added to one or are handed one. A group passed on by the server itself
@@ -294,6 +303,17 @@ export class GroupService {
     }
   }
 
+  /**
+   * Whether this group has to stay closed to this person: it was open once,
+   * so its members are strangers to one another, and the person is not known
+   * to be an adult. The refusal says only that the group takes nobody new,
+   * never why.
+   */
+  private async staysAdultsOnly(client: Pick<pg.Pool, 'query'>, groupId: string, userId: string): Promise<boolean> {
+    const g = await client.query<{ was_open: boolean }>(`SELECT privacy = 'open' AS was_open FROM groups WHERE id = $1`, [groupId]);
+    return g.rows[0]?.was_open === true && (await isNotKnownAdultUser(client, userId));
+  }
+
   private async addMember(client: Pick<pg.Pool, 'query'>, groupId: string, userId: string): Promise<void> {
     const g = await client.query<{ archived_at: Date | null; n: number }>(
       `SELECT archived_at,
@@ -354,6 +374,9 @@ export class GroupService {
       if (role !== 'owner' && role !== 'moderator') throw new AppError('FORBIDDEN', 403, 'only staff can invite');
       if (!(await areFriends(client, inviterId, targetId))) {
         throw new AppError('NOT_FRIENDS', 403, 'you can only add your friends to a group');
+      }
+      if (await this.staysAdultsOnly(client, groupId, targetId)) {
+        throw new AppError('FORBIDDEN', 403, 'this group takes nobody new');
       }
       if (!(await this.roleOf(client, groupId, targetId))) {
         // someone banned is let back by lifting the ban first, never by being added past it
@@ -779,7 +802,7 @@ export class GroupService {
       await this.answer(client, groupId, targetId, actorId, 'approved');
       await client.query(`DELETE FROM group_bans WHERE group_id = $1 AND user_id = $2`, [groupId, targetId]);
       const grp = await this.noticeGroup(client, groupId);
-      const allowed = await areFriends(client, actorId, targetId);
+      const allowed = (await areFriends(client, actorId, targetId)) && !(await this.staysAdultsOnly(client, groupId, targetId));
       let back = false;
       if (allowed) {
         // a limit or a full group refuses with an error; the ban stays lifted all the same

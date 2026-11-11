@@ -1948,6 +1948,7 @@ export type TranslationKey =
   | 'post.picture.sub'
   | 'groups.messageDeleted'
   | 'groups.memberCount'
+  | 'groups.memberCount.one'
   | 'chat.typing.one'
   | 'chat.typing.two'
   | 'chat.typing.many'
@@ -4831,6 +4832,7 @@ const en: Catalog = {
   'post.picture.sub': 'A picture or a meme',
   'groups.messageDeleted': 'This message was removed.',
   'groups.memberCount': '{count} members',
+  'groups.memberCount.one': '1 member',
   'chat.typing.one': '{name} is typing…',
   'chat.typing.two': '{first} and {second} are typing…',
   'chat.typing.many': '{count} people are typing…',
@@ -8244,6 +8246,7 @@ const ku: Catalog = {
   'post.picture.sub': 'Wêneyek an mîmek',
   'groups.messageDeleted': 'Ev peyam hate rakirin.',
   'groups.memberCount': '{count} endam',
+  'groups.memberCount.one': '1 endam',
   'chat.typing.one': '{name} dinivîse…',
   'chat.typing.two': '{first} û {second} dinivîsin…',
   'chat.typing.many': '{count} kes dinivîsin…',
@@ -11656,6 +11659,7 @@ const de: Catalog = {
   'post.picture.sub': 'Ein Bild oder ein Meme',
   'groups.messageDeleted': 'Diese Nachricht wurde entfernt.',
   'groups.memberCount': '{count} Mitglieder',
+  'groups.memberCount.one': '1 Mitglied',
   'chat.typing.one': '{name} schreibt…',
   'chat.typing.two': '{first} und {second} schreiben…',
   'chat.typing.many': '{count} Leute schreiben…',
@@ -15068,6 +15072,7 @@ const es: Catalog = {
   'post.picture.sub': 'Una imagen o un meme',
   'groups.messageDeleted': 'Este mensaje se ha eliminado.',
   'groups.memberCount': '{count} miembros',
+  'groups.memberCount.one': '1 miembro',
   'chat.typing.one': '{name} está escribiendo…',
   'chat.typing.two': '{first} y {second} están escribiendo…',
   'chat.typing.many': '{count} personas están escribiendo…',
@@ -18480,6 +18485,7 @@ const tr: Catalog = {
   'post.picture.sub': 'Bir resim ya da bir mizah görseli',
   'groups.messageDeleted': 'Bu mesaj kaldırıldı.',
   'groups.memberCount': '{count} üye',
+  'groups.memberCount.one': '1 üye',
   'chat.typing.one': '{name} yazıyor…',
   'chat.typing.two': '{first} ve {second} yazıyor…',
   'chat.typing.many': '{count} kişi yazıyor…',
@@ -21892,6 +21898,7 @@ const ar: Catalog = {
   'post.picture.sub': 'صورة أو ميم',
   'groups.messageDeleted': 'تمت إزالة هذه الرسالة.',
   'groups.memberCount': '{count} عضوًا',
+  'groups.memberCount.one': 'عضو واحد',
   'chat.typing.one': '{name} يكتب…',
   'chat.typing.two': '{first} و{second} يكتبان…',
   'chat.typing.many': '{count} أشخاص يكتبون…',
@@ -25304,6 +25311,7 @@ const fr: Catalog = {
   'post.picture.sub': 'Une image ou un mème',
   'groups.messageDeleted': 'Ce message a été supprimé.',
   'groups.memberCount': '{count} membres',
+  'groups.memberCount.one': '1 membre',
   'chat.typing.one': '{name} écrit…',
   'chat.typing.two': '{first} et {second} écrivent…',
   'chat.typing.many': '{count} personnes écrivent…',
@@ -28716,6 +28724,7 @@ const nl: Catalog = {
   'post.picture.sub': 'Een foto of een meme',
   'groups.messageDeleted': 'Dit bericht is verwijderd.',
   'groups.memberCount': '{count} leden',
+  'groups.memberCount.one': '1 lid',
   'chat.typing.one': '{name} is aan het typen…',
   'chat.typing.two': '{first} en {second} zijn aan het typen…',
   'chat.typing.many': '{count} mensen zijn aan het typen…',
@@ -32129,6 +32138,7 @@ const ckb: Catalog = {
   'post.picture.sub': 'وێنەیەک یان میمێک',
   'groups.messageDeleted': 'ئەم نامەیە لابرا.',
   'groups.memberCount': '{count} ئەندام',
+  'groups.memberCount.one': '1 ئەندام',
   'chat.typing.one': '{name} دەنووسێت…',
   'chat.typing.two': '{first} و {second} دەنووسن…',
   'chat.typing.many': '{count} کەس دەنووسن…',
