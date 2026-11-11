@@ -155,38 +155,42 @@ export function amedi(rnd, { x, y, w, fill, lights = null }) {
 }
 
 /**
- * Akre on Newroz night: the mountain behind the town, and up it, lines of
- * torches carried by the climbers, zig-zagging to the fire at the top — bunched
- * where the path is steep, strung out where it is easy, each flame a little
- * different. Returns the torches, and a glow for each, to be laid in as light.
+ * Akre on Newroz night: the climbers' torches going up the mountain to the
+ * fire on its summit. Each line of them leaves the town at one of `feet`
+ * ([x, y, sway, legs]) and climbs the face in `legs` switchbacks, `sway` wide
+ * at the bottom and tighter as the mountain narrows, all of them drawing
+ * together under the `summit`; the climbers bunch and string out, and the
+ * far ones are smaller. `ground(x)` is the skyline, and no torch is carried
+ * above it.
+ *
+ * Returns the torches, and a glow for each, to be laid in as light.
  */
-export function akreTorches(rnd, { x, y, top, width, paths = 3, colour = '#ffb347' }) {
+export function akreTorches(rnd, { summit, feet, ground = () => -Infinity, colour = '#ffb347' }) {
   const torches = [];
-  for (let p = 0; p < paths; p++) {
-    let px = x + (p - (paths - 1) / 2) * width * 0.35;
-    let py = y;
-    const legs = Math.round(between(rnd, 6, 9));
-    const legH = (y - top) / legs;
-    for (let l = 0; l < legs; l++) {
-      const dir = l % 2 === 0 ? 1 : -1;
-      const len = width * between(rnd, 0.12, 0.22) * (1 - l / (legs + 2));
-      const bow = between(rnd, -0.25, 0.25) * legH;
-      let t = 0;
-      while (t < 1) {
-        const bx = px + dir * len * t;
-        const by = py - legH * t + Math.sin(t * Math.PI) * bow;
-        torches.push([bx + between(rnd, -1.2, 1.2), by + between(rnd, -1.2, 1.2), between(rnd, 0.8, 2)]);
-        // climbers bunch and string out: the gaps between torches vary
-        t += between(rnd, 3, 13) / len;
-      }
-      px += dir * len;
-      py -= legH;
+  for (const [fx, fy, sway, legs] of feet) {
+    const turns = legs * Math.PI;
+    const phase = between(rnd, 0, Math.PI * 2);
+    const rise = fy - summit[1];
+    // a mountain path: straight legs across the face, turning back on themselves at each end, and no two
+    // bends as far out as each other
+    const leg = (a) => (2 / Math.PI) * Math.asin(Math.sin(a) * 0.985);
+    const bends = Array.from({ length: legs + 2 }, () => between(rnd, 0.6, 1.15));
+    let t = 0;
+    while (t < 1) {
+      const a = t * turns + phase;
+      const reach = sway * (1 - t) ** 0.85 * bends[Math.floor(a / Math.PI) - Math.floor(phase / Math.PI)];
+      const x = fx + (summit[0] - fx) * (1 - (1 - t) ** 1.6) + leg(a) * reach;
+      const y = fy - rise * t;
+      const far = 1 - t * 0.55;
+      if (y > ground(x) + 5) torches.push([x + between(rnd, -0.8, 0.8), y + between(rnd, -0.8, 0.8), between(rnd, 0.8, 1.7) * far]);
+      // the gap to the next climber, along the path: a leg runs nearly level, so it covers little height
+      t += (between(rnd, 2.2, 7.5) * far) / Math.hypot(rise, (reach * turns * 2) / Math.PI);
     }
   }
   const hot = ['#fff2c8', colour, colour, '#ff8a3a'];
   const dots = torches.map(([tx, ty, r]) => `<circle cx="${n(tx)}" cy="${n(ty)}" r="${n(r)}" fill="${hot[Math.floor(rnd() * hot.length) % hot.length]}"/>`).join('');
   const glow = torches.map(([tx, ty, r]) => `<circle cx="${n(tx)}" cy="${n(ty)}" r="${n(r * 3.2)}"/>`).join('');
-  return { dots, glow: `<g fill="${colour}" fill-opacity="0.35">${glow}</g>`, summit: [x + between(rnd, -10, 10), top] };
+  return { dots, glow: `<g fill="${colour}" fill-opacity="0.35">${glow}</g>` };
 }
 
 /**
