@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { requireAuth } from '../plugins/auth.js';
+import { requireAccount } from '../plugins/auth.js';
 import { requireUnrestricted } from '../moderation/restrictions.js';
 import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
@@ -29,14 +29,15 @@ export function registerVoiceRoutes(app: FastifyInstance, config: AppConfig): vo
         rateLimit: { max: limits.uploadRateMax, windowMs: limits.uploadRateWindowMs, per: 'user-or-ip' as const },
         skipValidation: true,
       },
-      preHandler: [requireAuth, requireUnrestricted('media')],
+      // an account, not a guest: a guest cannot post or comment, so has nothing to attach a recording to
+      preHandler: [requireAccount, requireUnrestricted('media')],
     },
     async (req, reply) => {
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
       if (!raw) return reply.code(415).send({ code: 'INVALID_AUDIO', message: 'send raw audio bytes with an audio/* content-type' });
 
-      const res = await storeAudioMedia({ pool: app.db, storage: app.storage, usage, limits, log: app.log }, VOICE_KIND, raw);
+      const res = await storeAudioMedia({ pool: app.db, storage: app.storage, usage, limits, log: app.log }, VOICE_KIND, raw, req.user!.id);
       if (!res.ok) {
         req.log.warn({ userId: req.user!.id, reason: res.reason, bytes: raw.length }, 'voice note upload rejected');
         return reply.code(res.status).send({ code: res.code, message: res.message });

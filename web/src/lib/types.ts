@@ -4,7 +4,7 @@
  * mobile/src/auth/AuthContext.tsx) so the web app speaks the same protocol —
  * no new/duplicated backend logic.
  */
-import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge } from '@kurda/shared';
+import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge, StreakRepairOffer } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
@@ -75,6 +75,26 @@ export interface StreakSummary {
   /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
   freezeProgress?: number;
   sessionsPerFreeze?: number;
+  /** the most freezes that can be held at once: one, two for a Hevalo+ member */
+  maxFreezes?: number;
+  /**
+   * The streak that ended and can still be restored: how long it was, what
+   * that costs now, and when the offer ends. Null when there is nothing to
+   * restore; absent on older responses.
+   */
+  repair?: StreakRepairOffer | null;
+}
+
+/** What POST /me/streak/repair answers with. */
+export interface StreakRepairResult {
+  restored: boolean;
+  duplicate: boolean;
+  days: number;
+  costGems: number;
+  free: boolean;
+  /** the gem balance afterwards */
+  gems: number;
+  streak: StreakSummary;
 }
 
 /**
@@ -197,8 +217,10 @@ export interface PublicProfile extends ProfileCosmetics {
   league?: ProfileLeague | null;
   /** Game Ranks per game they play this season (contract 4); "Resting" ones carry no tier for others */
   ranks?: ProfileRank[];
-  /** the season frame worn round the avatar, or null */
+  /** the frame worn round the avatar: a season frame's SKU or a shop frame's; null for none */
   frameSku?: string | null;
+  /** the picture of a frame from the shop (a season frame has none: it is drawn from its SKU) */
+  frameUrl?: string | null;
   /** the three badges they show (a minor's only to friends) */
   badges?: ShowcaseBadge[];
   achievements?: number;
@@ -403,23 +425,19 @@ export interface RhymeResult {
 
 export type GroupRole = 'owner' | 'moderator' | 'member';
 
-/** A group / club (KUR-084). */
+/**
+ * A group / club (KUR-084). Every group is private: its members see it, and
+ * the only way in is to be added by its owner or an admin who is your friend.
+ */
 export interface Group {
   id: string;
   name: string;
   description: string | null;
-  privacy: 'open' | 'invite';
   ownerId: string | null;
   archivedAt: string | null;
   memberCount: number;
   /** the group's own picture on the CDN; null (or absent, from an older server) shows its initials */
   photoUrl?: string | null;
-}
-
-/** A group as discovery lists it (GET /groups): whether the reader is already in it, or banned from it. */
-export interface DiscoverGroup extends Group {
-  joined?: boolean;
-  banned?: boolean;
 }
 
 /** A group in the caller's own list (GET /me/groups) — carries their role. */
@@ -437,10 +455,15 @@ export interface GroupMember {
   joinedAt: string;
 }
 
-/** Group detail with its roster and the caller's own role (GET /groups/:id). */
+/**
+ * Group detail with its roster and the caller's own role (GET /groups/:id).
+ * Only a member is given it whole. Someone banned gets the name, the picture
+ * and where they stand, with everything else empty; anyone else is answered
+ * 404, as for a group that does not exist.
+ */
 export interface GroupDetail extends Group {
   members: GroupMember[];
-  /** null when the caller is not a member */
+  /** null for someone banned, the only non-member who is answered at all */
   myRole: GroupRole | null;
   /** where the caller stands with it; an older server leaves it out, and `myRole` says as much */
   standing?: GroupStanding;
@@ -511,6 +534,8 @@ export interface DailyRewardStatus {
    * Absent on older responses, where canClaim alone decides.
    */
   learnedToday?: boolean;
+  /** gems a claim today adds for a Hevalo+ member; 0 or absent for everyone else */
+  plusGems?: number;
 }
 
 /** Result of POST /rewards/daily/claim. */
@@ -519,6 +544,8 @@ export interface ClaimResult {
   cycleDay: number;
   reward: number;
   balance: number;
+  /** gems a Hevalo+ member received with the claim; 0 or absent for everyone else */
+  plusGems?: number;
 }
 
 /** A community library post (story or poem) — the one public browse endpoint. */

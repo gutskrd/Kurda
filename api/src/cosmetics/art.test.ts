@@ -27,6 +27,8 @@ interface Named {
 interface Generator {
   BACKGROUNDS: (Named & { key: string })[];
   ICONS: (Named & { key: string })[];
+  FRAMES: (Named & { key: string })[];
+  FRAME_MAX_BYTES: number;
   STICKERS: (Named & { file: string })[];
   BG: { width: number; height: number; maxBytes: number };
   ICON: { size: number; maxBytes: number };
@@ -35,9 +37,11 @@ interface Generator {
   OVERLAY_FILE: string;
   backgroundSvg(piece: unknown): string;
   iconSvg(piece: unknown): string;
+  frameSvg(piece: unknown): string;
   stickerSvg(piece: unknown): string;
   backgroundFile(piece: unknown, i: number): string;
   iconFile(piece: unknown, i: number): string;
+  frameFile(piece: unknown, i: number): string;
   stickerFile(piece: unknown): string;
   renderAll(out: string): Promise<string[]>;
 }
@@ -75,6 +79,7 @@ describe('the cosmetic art generator', () => {
   it('writes the same SVG every time it is asked', () => {
     for (const piece of gen.BACKGROUNDS) expect(gen.backgroundSvg(piece)).toBe(gen.backgroundSvg(piece));
     for (const piece of gen.ICONS) expect(gen.iconSvg(piece)).toBe(gen.iconSvg(piece));
+    for (const piece of gen.FRAMES) expect(gen.frameSvg(piece)).toBe(gen.frameSvg(piece));
     for (const piece of gen.STICKERS) expect(gen.stickerSvg(piece)).toBe(gen.stickerSvg(piece));
   }, 120_000);
 
@@ -82,6 +87,7 @@ describe('the cosmetic art generator', () => {
     const expected = [
       ...gen.BACKGROUNDS.map((p, i) => gen.backgroundFile(p, i)),
       ...gen.ICONS.map((p, i) => gen.iconFile(p, i)),
+      ...gen.FRAMES.map((p, i) => gen.frameFile(p, i)),
       ...gen.STICKERS.map((p) => gen.stickerFile(p)),
       gen.OVERLAY_FILE,
     ];
@@ -100,6 +106,12 @@ describe('the cosmetic art generator', () => {
       const meta = await sharp(file).metadata();
       expect([meta.format, meta.width, meta.height, meta.hasAlpha]).toEqual(['png', gen.ICON.size, gen.ICON.size, true]);
       expect(readFileSync(file).length).toBeLessThanOrEqual(gen.ICON.maxBytes);
+    }
+    for (const [i, piece] of gen.FRAMES.entries()) {
+      const file = join(out, gen.frameFile(piece, i));
+      const meta = await sharp(file).metadata();
+      expect([meta.format, meta.width, meta.height, meta.hasAlpha]).toEqual(['png', gen.ICON.size, gen.ICON.size, true]);
+      expect(readFileSync(file).length).toBeLessThanOrEqual(gen.FRAME_MAX_BYTES);
     }
     for (const piece of gen.STICKERS) {
       const file = join(out, gen.stickerFile(piece));

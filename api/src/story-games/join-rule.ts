@@ -15,7 +15,7 @@ export interface JoinFacts {
   /** the joiner is the host (coming back to their own game) */
   isHost: boolean;
   friendsWithHost: boolean;
-  /** the host shared the game into an invite-only group chat the joiner is a member of */
+  /** the host shared the game into a group chat the joiner is a member of */
   inSharedGroup: boolean;
 }
 
@@ -31,18 +31,16 @@ export interface JoinFacts {
  *   an account of unknown age never joins one, even a friend of the host's,
  *   so every member of an open game is an adult and a child is never in a game
  *   strangers could walk into;
- * - a 'friends' game takes the host's accepted friends, and the members of an
- *   invite-only group chat the host shared it into. Everyone in an
- *   invite-only group was put there by somebody they chose (groups invite only
- *   friends), so that brings in nobody new to a child.
+ * - a 'friends' game takes the host's accepted friends, and the members of a
+ *   group chat the host shared it into. Every group is private: everyone in
+ *   one was put there by somebody they chose (an owner or admin adds only
+ *   their own friends), so that brings in nobody new to a child.
  *
- * A game shared into an OPEN group lets nobody in on that account. The child
- * at risk is not the joiner — minors are never in open groups — but the one
- * already in the lobby: a friends game can hold the host's friend who is
- * fifteen, and an open group is strangers by design (adults-only for that
- * reason), so letting its members in would be the very stranger contact an
- * open game is refused to a minor for. A host who wants the group's adults in
- * opens the game instead. The play module's `canJoin` draws the same line.
+ * A game shared into a group that was OPEN before every group became private
+ * (`groups.privacy` still says so) lets nobody in on that account: its
+ * members walked in, nobody chose them, and a friends game can hold the
+ * host's friend who is fifteen. The play module's `canJoin` draws the same
+ * lines.
  *
  * A refusal is never explained to the joiner: it looks exactly like a game
  * that does not exist.

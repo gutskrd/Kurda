@@ -31,7 +31,7 @@
  * as a grid of controls, and a letter's ranges are named by the words they
  * start and end at instead of by the folded prefix the build happens to use.
  */
-import { foldLetter, letterKey } from '@kurda/shared';
+import { PROVIDER, foldLetter, letterKey } from '@kurda/shared';
 import { escapeHtml as escape } from './escape.js';
 import { ZAGROSIAN_MARK, ZAGROSIAN_URL, ZAGROSIAN_VIEWBOX } from '../src/brand/zagrosian.js';
 import { alphabetOf, compareKeys } from './ferheng-alphabet.js';
@@ -278,8 +278,9 @@ const NAV_ICONS: Record<string, string> = {
  *
  * Section for section and link for link the same as `web/src/components/
  * Footer.tsx`: the brand and its tagline, the Kurdish motto, the three columns,
- * the bottom bar. These pages had a two-column footer of their own for a while,
- * which is the kind of difference a reader cannot name and can see.
+ * the bottom bar with the business and its KvK number. These pages had a
+ * two-column footer of their own for a while, which is the kind of difference
+ * a reader cannot name and can see.
  *
  * The strings are the `ku` catalogue's, read from web/src/i18n/ku.ts rather
  * than translated again — these pages are `lang="ku"` and have no reader whose
@@ -331,7 +332,7 @@ ${/* plain text until there is a listing, as in the app's Footer.tsx */ ''}
 </div>
 </div>
 <div class="footer-bottom">
-<span class="footer-bottom-left"><span>© ${new Date().getFullYear()} Hevalo</span><span class="muted">${licence}</span></span>
+<span class="footer-bottom-left"><span>© ${new Date().getFullYear()} Hevalo</span><span class="muted">${licence}</span><a class="footer-imprint" href="/about#provider">${escape(`${PROVIDER.legalName} · KvK ${PROVIDER.kvk}`)}</a></span>
 ${/* the imprint, drawn exactly as the app draws it — see ZagrosianCredit.tsx */ ''}
 <a class="by-zagrosian" href="${ZAGROSIAN_URL}" target="_blank" rel="noreferrer noopener">${labelled('footer.byZagrosian', c.footer.byZagrosian)}<svg class="by-zagrosian-mark" viewBox="${ZAGROSIAN_VIEWBOX}" fill="currentColor" focusable="false" aria-hidden="true"><path fill-rule="evenodd" d="${ZAGROSIAN_MARK}"></path></svg></a>
 </div>
@@ -1230,6 +1231,9 @@ img { max-width: 100%; display: block; }
   justify-content: space-between; color: var(--ink-3); font-size: 0.88rem;
 }
 .footer-bottom-left { display: flex; flex-wrap: wrap; gap: 4px 20px; align-items: center; }
+.footer-imprint { color: var(--ink-3); }
+.footer-imprint:hover { color: var(--ink); }
+@media (pointer: coarse) { .footer-imprint { display: inline-flex; align-items: center; min-height: 44px; } }
 /* who made this — an imprint, not an advertisement. It sits at the weight of
    the copyright line beside it and only lifts when somebody reaches for it;
    the mark is drawn in currentColor so it brightens with the words rather than

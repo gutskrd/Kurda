@@ -14,7 +14,7 @@ import { GREETINGS } from './standing';
  * (cleared for everyone says so in its own line above this) — and three
  * greetings in the Kurdish the learner is learning, any of which a tap sends.
  * The greetings are left out for someone who cannot post now. The owner and
- * admins of an invite-only group that has nobody else in it yet are offered
+ * admins of a group that has nobody else in it yet are offered
  * to add friends, since nobody else can be in it otherwise.
  */
 export function GroupWelcome({

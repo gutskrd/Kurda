@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listedLearnGames, toDialect, type GameDialect, type GamesAvailability, type LearnGame, type LearnGameId } from '@kurda/shared';
+import { listedLearnGames, toDialect, type GameDialect, type GamesAvailability, type LearnGame, type LearnGameId, type ListedLearnGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -21,10 +21,10 @@ import './party-minis.css';
  * this app has a page for, the card each one wears in Learn's Games group,
  * and the variety they are played in.
  *
- * Learn's Games list is the registry filtered twice — by what this app can
- * open (here) and by what has enough approved content in the learner's
- * variety right now (GET /games/availability) — so a game shows up the day its
- * content is published, and never as "coming soon".
+ * Learn's Games list is every game in the registry this app can open (here).
+ * Those with enough approved content in the learner's variety right now (GET
+ * /games/availability) come first with a way in; the rest follow as "coming
+ * soon", seen but not opened, until their content is published.
  */
 
 interface WebGame {
@@ -227,43 +227,59 @@ export function useOpenRound(game: LearnGameId, dialect: GameDialect): string | 
   return open;
 }
 
-/** The learning games to list for this learner now. */
-export function useListedLearnGames(): LearnGame[] {
+/** The learning games to list for this learner now, each with whether it can be played yet. */
+export function useListedLearnGames(): ListedLearnGame[] {
   const dialect = useGameDialect();
+  const { status } = useAuth();
   const availability = useAvailability(dialect);
   // The Last Letter is offered where its dictionary can check words (its own answer, from the multiplayer games' API)
   const chain = useLastLetterAvailability();
   const offered = [...offeredDialects(chain, 'group'), ...offeredDialects(chain, 'solo')].includes(dialect);
-  const merged = availability && { ...availability, games: [...(availability.games ?? []).filter((g) => g.id !== 'last-letter'), { id: 'last-letter', available: offered }] };
+  // both answers before anything is listed, so its card does not start as coming soon and then move; a visitor
+  // without an account is never asked that one, and for them it is not open yet
+  const chainKnown = chain !== null || status === 'signedOut';
+  const merged =
+    availability && chainKnown
+      ? { ...availability, games: [...(availability.games ?? []).filter((g) => g.id !== 'last-letter'), { id: 'last-letter', available: offered }] }
+      : null;
   return listedLearnGames(merged, PLAYABLE);
 }
 
-/** One learning game's card, in the same box as Peyvok's and the race's. */
-export function LearnGameTile({ game, signedIn }: { game: LearnGame; signedIn: boolean }): React.JSX.Element | null {
+/**
+ * One learning game's card, in the same box as Peyvok's and the race's. A game
+ * still short of approved content says so in its badge, where "sign in to
+ * play" would otherwise be, and has no Play button: there is nothing to open
+ * yet, signed in or not.
+ */
+export function LearnGameTile({ game, ready = true, signedIn }: { game: LearnGame; ready?: boolean; signedIn: boolean }): React.JSX.Element | null {
   const t = useT();
   const web = WEB_LEARN_GAMES[game.id];
   if (!web) return null;
   const { Visual } = web;
   return (
-    <article className={`game-tile game-tile--learn game-tile--${game.id} lp-tone-${game.tone}`}>
+    <article className={`game-tile game-tile--learn game-tile--${game.id} lp-tone-${game.tone}${ready ? '' : ' is-soon'}`}>
       <div className="game-tile-visual">
         <Visual />
       </div>
       <div className="game-tile-text">
         <div className="game-tile-head">
           <h3>{t(web.nameKey)}</h3>
-          {!signedIn && <span className="badge">{t('games.signInToPlay')}</span>}
+          {!ready ? (
+            <span className="badge">{t('games.comingSoon')}</span>
+          ) : (
+            !signedIn && <span className="badge">{t('games.signInToPlay')}</span>
+          )}
         </div>
         <p>{t(web.bodyKey)}</p>
         <ul className="game-tags">
           {web.modes.map((mode) => (
-            <li key={mode} className={signedIn ? undefined : 'is-locked'}>
+            <li key={mode} className={signedIn && ready ? undefined : 'is-locked'}>
               {t(mode === 'solo' ? 'games.mode.solo' : 'games.mode.online')}
-              {!signedIn && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
+              {ready && !signedIn && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
             </li>
           ))}
         </ul>
-        {signedIn && (
+        {signedIn && ready && (
           <Link to={web.href} className="btn btn-primary btn-sm">
             {t('games.play')}
           </Link>

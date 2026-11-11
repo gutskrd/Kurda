@@ -19,7 +19,7 @@ export function registerLessonRoutes(
   xp?: XpService,
   milestones?: MilestoneRecorder,
 ): void {
-  // perfect first completions pay Gems (KUR-068) inside `complete`
+  // perfect first completions ask for their Gems (KUR-068) inside `complete`; the rule is switched off, so none are paid unless an admin switches it on
   const sessions = new LessonSessionService(app.db, { xp, gems, milestones });
   const content = new ContentRepository(app.db);
 

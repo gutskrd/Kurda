@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { PROVIDER } from '@kurda/shared';
 import { Brand } from './Brand';
 import { ZagrosianCredit } from './ZagrosianCredit';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -13,6 +14,11 @@ import { publishedDictionary } from '../layouts/navLinks';
  * the words "coming soon" — a link that promises an app and delivers a
  * storefront. Until the apps are in the stores, the column says so in plain
  * text and links nowhere.
+ *
+ * The bottom bar carries the registered business and its KvK number on every
+ * public page, as Dutch law asks of a site that offers a service, and links to
+ * the full details (address, email, phone) on the About page, where they are
+ * shown once rather than repeated in every footer.
  */
 export function Footer(): React.JSX.Element {
   const t = useT();
@@ -82,6 +88,9 @@ export function Footer(): React.JSX.Element {
           <span className="footer-bottom-left">
             <span>© {year} Hevalo</span>
             <span className="muted">{t('footer.madeWithCare')}</span>
+            <Link className="footer-imprint" to="/about#provider">
+              {t('footer.imprint', { name: PROVIDER.legalName, kvk: PROVIDER.kvk })}
+            </Link>
           </span>
           <ZagrosianCredit />
         </div>

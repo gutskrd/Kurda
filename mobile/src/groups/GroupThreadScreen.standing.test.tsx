@@ -29,30 +29,34 @@ afterEach(() => {
 const DAY = 86_400_000;
 const later = (days: number) => new Date(Date.now() + days * DAY).toISOString();
 
+/** The group as the server answers a member, or — its name and standing, the rest empty — someone banned from it. */
 const group = (standing: GroupStanding, over: Record<string, unknown> = {}) =>
   ok({
     id: 'g1',
     name: 'Newroz club',
     description: null,
-    privacy: 'open',
     ownerId: null,
     archivedAt: null,
-    memberCount: 9,
+    memberCount: standing.kind === 'member' ? 9 : 0,
     photoUrl: null,
     myRole: standing.kind === 'member' ? standing.role : null,
     members: [],
     standing,
     ...over,
   });
+/** What the server answers anyone who is neither in the group nor banned from it, whether it exists or not. */
+const noSuchGroup = fail({ code: 'GROUP_NOT_FOUND', status: 404, kind: 'client' });
 const banned = (request: Extract<GroupStanding, { kind: 'banned' }>['request'], until: string | null = later(5), reason: string | null = 'Spam') =>
   ({ kind: 'banned', until, reason, request }) as GroupStanding;
 const refused = fail({ code: 'GROUP_BANNED', status: 403, details: { until: later(5) } });
 
-function open(routes: Record<string, unknown>) {
+function open(routes: Record<string, unknown>, onExit: () => void = () => undefined) {
   const client = fakeClient({ 'POST /groups/g1/chat/read': ok({ ok: true }), ...routes } as never);
   testAuth.client = client;
   testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
-  renderWithProviders(<GroupThreadScreen groupId="g1" name="" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />);
+  renderWithProviders(
+    <GroupThreadScreen groupId="g1" name="" onExit={onExit} onOpenMembers={() => undefined} onLeft={() => undefined} onFindPeople={() => undefined} />,
+  );
   return client;
 }
 
@@ -66,6 +70,12 @@ describe('opening a group one is banned from', () => {
     const announce = vi.spyOn(AccessibilityInfo, 'announceForAccessibility');
     expect(await screen.findByRole('heading', { name: /^You’re banned from this group until / })).toBeTruthy();
     expect(screen.getByText('Reason: Spam')).toBeTruthy();
+    // the group by name, and nothing else of it: no way in, no page of it to open, no count of its people
+    expect(screen.getAllByText('Newroz club').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Group info' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Chat options' })).toBeNull();
+    expect(screen.queryByText(/members/)).toBeNull();
     // nothing to send from outside the group
     expect(screen.queryByLabelText('Message…')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Ask to come back' }));
@@ -141,32 +151,40 @@ describe('opening a group one is banned from', () => {
   });
 });
 
-describe('opening a group one is out of', () => {
-  it('offers to join an open group again, and opens the chat once in', async () => {
-    let member = false;
-    const client = open({
-      'GET /groups/g1/chat': () => (member ? ok({ messages: [] }) : fail({ code: 'NOT_A_MEMBER', status: 403 })),
-      'GET /groups/g1': () => group(member ? { kind: 'member', role: 'member' } : { kind: 'out' }),
-      'POST /groups/g1/join': () => {
-        member = true;
-        return ok({ ok: true });
-      },
-    });
-    expect(await screen.findByRole('heading', { name: 'You’re not in this group' })).toBeTruthy();
-    expect(screen.getByText('It’s an open group, so you can join it whenever you like.')).toBeTruthy();
-    const join = screen.getByRole('button', { name: 'Join group' });
-    await act(async () => {
-      fireEvent.click(join);
-    });
-    expect(client.calls.some((c) => c.path === '/groups/g1/join')).toBe(true);
-    expect(await screen.findByText('This is the start of Newroz club')).toBeTruthy();
-    expect(screen.getByLabelText('Message…')).toBeTruthy();
+describe('opening a group one is not in', () => {
+  it('says there is no such group, shows nothing of it, and offers the way back', async () => {
+    const onExit = vi.fn();
+    const client = open({ 'GET /groups/g1/chat': fail({ code: 'NOT_A_MEMBER', status: 403 }), 'GET /groups/g1': noSuchGroup }, onExit);
+    expect(await screen.findByText('There’s no group here, or you’re not in it. Groups are private, so only an admin can add you.')).toBeTruthy();
+    expect(screen.getAllByText('Group not found').length).toBeGreaterThan(0);
+    // no way in, no chat, and no page of the group to open
+    expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
+    expect(screen.queryByLabelText('Message…')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Group info' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Chat options' })).toBeNull();
+    expect(client.calls.some((c) => c.path === '/groups/g1/join')).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Back to messages' }));
+    expect(onExit).toHaveBeenCalled();
   });
 
-  it('says an admin can add them to an invite-only group, with nothing to press', async () => {
-    open({ 'GET /groups/g1/chat': fail({ code: 'NOT_A_MEMBER', status: 403 }), 'GET /groups/g1': group({ kind: 'out' }, { privacy: 'invite' }) });
-    expect(await screen.findByText('It’s invite-only: an admin of the group can add you.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Join group' })).toBeNull();
+  it('shows the chat again to someone the card stood in front of once they are a member', async () => {
+    let back = false;
+    open({
+      'GET /groups/g1/chat': () => (back ? ok({ messages: [] }) : refused),
+      'GET /groups/g1': () => group(back ? { kind: 'member', role: 'member' } : banned({ kind: 'can_ask' })),
+      // approved between the card being drawn and the request being sent: the server says they are not banned
+      'POST /groups/g1/requests': () => {
+        back = true;
+        return fail({ code: 'NOT_BANNED', status: 409, kind: 'client' });
+      },
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Ask to come back' }));
+    const send = await screen.findByRole('button', { name: 'Send request' });
+    await act(async () => {
+      fireEvent.click(send);
+    });
+    expect(await screen.findByText('This is the start of Newroz club')).toBeTruthy();
+    expect(screen.getByLabelText('Message…')).toBeTruthy();
   });
 });
 
@@ -174,12 +192,12 @@ describe('being removed or banned while the chat is open', () => {
   const said = { id: 'm1', senderId: 'u2', username: 'azad', avatarUrl: null, body: 'Silav', createdAt: new Date().toISOString(), deleted: false };
 
   it('turns the chat into where the reader stands at the next send, never a raw error', async () => {
-    let standing: GroupStanding = { kind: 'member', role: 'member' };
+    let removed = false;
     open({
       'GET /groups/g1/chat': ok({ messages: [said] }),
-      'GET /groups/g1': () => group(standing),
+      'GET /groups/g1': () => (removed ? noSuchGroup : group({ kind: 'member', role: 'member' })),
       'POST /groups/g1/chat': () => {
-        standing = { kind: 'out' };
+        removed = true;
         return fail({ code: 'NOT_A_MEMBER', status: 403 });
       },
     });
@@ -190,7 +208,10 @@ describe('being removed or banned while the chat is open', () => {
       fireEvent.click(send);
     });
     expect(await screen.findByRole('heading', { name: 'You’re no longer in this group' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Join group' })).toBeTruthy();
+    // the group they were just in keeps its name; the way back is an admin's to give
+    expect(await screen.findByText('An admin of the group can add you again.')).toBeTruthy();
+    expect(screen.getAllByText('Newroz club').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: /join/i })).toBeNull();
     expect(screen.queryByLabelText('Message…')).toBeNull();
     expect(screen.queryByText('Silav')).toBeNull();
   });

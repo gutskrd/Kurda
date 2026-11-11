@@ -42,6 +42,7 @@ import { poolQuiet, queriesDuring } from '../test/query-count.js';
 import { bustAvailability } from './availability.js';
 import { bustGamePools, itemKey } from './sources.js';
 import { learnGameServices } from './routes.js';
+import { removeCourses } from '../test/courses.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -294,7 +295,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
 
   afterAll(async () => {
     await poolQuiet(pool);
-    await pool.query(`DELETE FROM courses WHERE id = ANY($1::uuid[])`, [courseIds]);
+    await removeCourses(pool, courseIds);
     await pool.query(`DELETE FROM stories WHERE id = ANY($1::uuid[])`, [storyIds]);
     await pool.query(`DELETE FROM lesson_audio WHERE key = ANY($1)`, [audioKeys]);
     if (entryIds.length) await pool.query(`DELETE FROM dict_entries WHERE id = ANY($1::uuid[])`, [entryIds]);
@@ -356,7 +357,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
       // a round come back to is not shown the passages again
       const again = (await call('GET', `/games/solo/sessions/${view.id}`, learner)).json();
       expect(again.items.every((v: { phase: string; text: unknown }) => v.phase === 'restore' && v.text === null)).toBe(true);
-      expect((await call('POST', `/games/solo/sessions/${view.id}/begin`, learner, { index: 99 })).statusCode).toBe(404);
+      expect((await call('POST', `/games/solo/sessions/${view.id}/begin`, learner, { index: 20 })).statusCode).toBe(404);
       // a lesson's conversation is a passage too
       const services = learnGameServices(app, { xp: new XpService(app.db) });
       const passages = await services.memory.pool('kmr');
@@ -445,14 +446,21 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
     it('reads a clip through the API by its handle, without a token, byte ranges and all', async () => {
       const { id } = (await play(learner, 'hear-it')).json();
       const items = await stored<HearStored>(id);
-      const path = hearItClipPath(id, items[0]!.clip);
+      // which recording a round opens with is drawn afresh each time, and it may be a lesson's, one of the
+      // alphabet's example words, or another suite's. The clip read here is the first whose file is kept in
+      // storage (a dictionary's pronunciation is fetched from its own host, which this suite does not stand in for)
+      const item = items.find((i) => i.recording.source !== 'dictionary') ?? items[0]!;
+      const path = hearItClipPath(id, item.clip);
       const whole = await call('GET', path, '');
       expect(whole.statusCode, whole.body).toBe(200);
       expect(whole.headers['content-type']).toBe('audio/wav');
       expect(whole.headers['accept-ranges']).toBe('bytes');
       expect(String(whole.headers['cache-control'])).toMatch(/^private/);
-      const media = (await pool.query<{ media_key: string }>(`SELECT media_key FROM lesson_audio WHERE key = $1`, [items[0]!.recording.id])).rows[0]!.media_key;
-      const file = objects.get(media) ?? OTHERS;
+      // its file is found the way the route finds it: in the table of the recording's own source
+      const table = item.recording.source === 'lesson' ? 'lesson_audio' : 'alphabet_audio';
+      const kept = await pool.query<{ media_key: string }>(`SELECT media_key FROM ${table} WHERE key = $1`, [item.recording.id]);
+      expect(kept.rows, `${item.recording.source} recording ${item.recording.id}`).toHaveLength(1);
+      const file = objects.get(kept.rows[0]!.media_key) ?? OTHERS;
       expect(whole.rawPayload.equals(file)).toBe(true);
 
       const start = await call('GET', path, '', undefined, { range: 'bytes=0-1' });
@@ -463,7 +471,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
 
       // a handle is this round's only, and nothing at all once the round has expired
       const { id: another } = (await play(learner, 'hear-it')).json();
-      expect((await call('GET', hearItClipPath(another, items[0]!.clip), '')).statusCode).toBe(404);
+      expect((await call('GET', hearItClipPath(another, item.clip), '')).statusCode).toBe(404);
       expect((await call('GET', hearItClipPath(id, 'A'.repeat(22)), '')).statusCode).toBe(404);
       await pool.query(`UPDATE game_sessions SET expires_at = now() - interval '1 second' WHERE id = $1`, [id]);
       expect((await call('GET', path, '')).statusCode).toBe(410);

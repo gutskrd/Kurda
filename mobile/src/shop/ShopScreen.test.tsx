@@ -115,6 +115,19 @@ describe('the Shop, by kind', () => {
     expect(screen.getByRole('button', { name: 'Hevalo, Hevalo violet, Free' })).toBeTruthy();
   });
 
+  it('shows a frame the way it will be worn: round your own picture, in its row and in its sheet', async () => {
+    open([...CATALOGUE, item({ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', price: 1400, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' })], { zer: 2000, gems: 0 });
+    const row = await screen.findByRole('button', { name: /^Xeleka Laleyan, Tulip wreath, 1.?400 Zêr$/ });
+    await waitFor(() => expect(row.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/frames/made-01-lale.png'));
+    // your own picture inside it (here, with no photo, the letters of your name on their disc)
+    expect(row.querySelector('[role="img"][aria-label*="rojda"]')).not.toBeNull();
+    // and again, larger, in the sheet the row opens: the frame and your picture are each on screen twice
+    fireEvent.click(row);
+    expect(await screen.findByRole('button', { name: 'Buy' })).toBeTruthy();
+    await waitFor(() => expect(document.querySelectorAll('img[src="https://hevalo.app/cosmetics/frames/made-01-lale.png"]')).toHaveLength(2));
+    expect(document.querySelectorAll('[role="img"][aria-label*="rojda"]')).toHaveLength(2);
+  });
+
   it('narrows to one kind with the kind control, which says how many of each there are', async () => {
     open();
     const kinds = await screen.findByRole('radiogroup', { name: 'Kinds of item' });

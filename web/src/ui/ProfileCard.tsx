@@ -34,8 +34,10 @@ export interface ProfileCardProps {
   premium?: boolean;
   online?: boolean;
   level?: Pick<LevelInfo, 'level' | 'xp' | 'nextLevelXp' | 'progress'>;
-  /** the season frame worn round the face (contract 4 §R5), or none */
+  /** the frame worn round the face: a season frame (contract 4 §R5) or one from the shop; none without */
   frameSku?: string | null;
+  /** the picture of a frame from the shop, which is laid on rather than drawn */
+  frameUrl?: string | null;
   /** under the handle: where they are from, what they were given */
   meta?: ReactNode;
   /** beside the name on a wide card: the edit button, the friend actions */
@@ -57,6 +59,7 @@ export function ProfileCard({
   online,
   level,
   frameSku,
+  frameUrl,
   meta,
   aside,
   wide = false,
@@ -88,7 +91,7 @@ export function ProfileCard({
                 <PersonGlyph size={48} />
               </span>
             )}
-            <FrameOverlay sku={frameSku} face={wide ? 120 : 84} title={(tier) => t('seasons.frameTitle', { tier: rankTierNamed(t, tier).name })} />
+            <FrameOverlay sku={frameSku} url={frameUrl} face={wide ? 120 : 84} title={(tier) => t('seasons.frameTitle', { tier: rankTierNamed(t, tier).name })} />
             {icon && <IconOverlay icon={icon} />}
           </span>
           <div className="pc-names">

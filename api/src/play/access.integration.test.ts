@@ -25,10 +25,11 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
     users.push(res.rows[0]!.id);
     return res.rows[0]!.id;
   };
-  const makeGroup = async (privacy: 'open' | 'invite', memberIds: string[]): Promise<string> => {
+  /** A group with these members, the first its owner: seated, since none of them is the others' friend here. */
+  const makeGroup = async (memberIds: string[]): Promise<string> => {
     const g = await pool.query<{ id: string }>(
-      `INSERT INTO groups (name, privacy, owner_id) VALUES ($1, $2, $3) RETURNING id`,
-      [`Play ${suffix} ${groupIds.length}`, privacy, memberIds[0]],
+      `INSERT INTO groups (name, owner_id) VALUES ($1, $2) RETURNING id`,
+      [`Play ${suffix} ${groupIds.length}`, memberIds[0]],
     );
     const id = g.rows[0]!.id;
     groupIds.push(id);
@@ -72,12 +73,12 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
       expect(await canJoin(pool, check({ joinerId: playersFriend, hostId: host, memberIds: [host, adultFriend] }))).toBe(false);
     });
 
-    it('takes the members of an invite-only group chat it was shared into', async () => {
+    it('takes the members of a group chat it was shared into, friends of the host or not', async () => {
       const host = await makeUser();
       const groupMate = await makeUser();
       const minorGroupMate = await makeUser('minor');
       const outsider = await makeUser();
-      const gid = await makeGroup('invite', [host, groupMate, minorGroupMate]);
+      const gid = await makeGroup([host, groupMate, minorGroupMate]);
       expect(await canJoin(pool, check({ joinerId: groupMate, hostId: host, chatGroupId: gid }))).toBe(true);
       expect(await canJoin(pool, check({ joinerId: minorGroupMate, hostId: host, chatGroupId: gid }))).toBe(true);
       expect(await canJoin(pool, check({ joinerId: outsider, hostId: host, chatGroupId: gid }))).toBe(false);
@@ -88,13 +89,27 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
       expect(await canJoin(pool, check({ joinerId: groupMate, hostId: host, chatGroupId: gid }))).toBe(false);
     });
 
+    it('does not take strangers from a group that was open once (a host who wants them opens the game)', async () => {
+      const host = await makeUser();
+      const strangerInGroup = await makeUser();
+      const gid = await makeGroup([host, strangerInGroup]);
+      // as the groups that were open are left: marked, and their members people nobody chose
+      await pool.query(`UPDATE groups SET privacy = 'open' WHERE id = $1`, [gid]);
+      expect(await canJoin(pool, check({ joinerId: strangerInGroup, hostId: host, chatGroupId: gid }))).toBe(false);
+      // the host's friends in it still can, as anywhere
+      const friendInGroup = await makeUser();
+      await pool.query(`INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`, [gid, friendInGroup]);
+      await befriend(pool, host, friendInGroup);
+      expect(await canJoin(pool, check({ joinerId: friendInGroup, hostId: host, chatGroupId: gid }))).toBe(true);
+    });
+
     it('stops taking the group once the group has removed the host', async () => {
       const host = await makeUser();
       const groupMate = await makeUser();
       const minorGroupMate = await makeUser('minor');
       const friend = await makeUser();
       await befriend(pool, host, friend);
-      const gid = await makeGroup('invite', [groupMate, host, minorGroupMate, friend]);
+      const gid = await makeGroup([groupMate, host, minorGroupMate, friend]);
       expect(await canJoin(pool, check({ joinerId: minorGroupMate, hostId: host, chatGroupId: gid }))).toBe(true);
       // a moderator takes the host out (after a report, say): their games shared there no longer let the group in
       await pool.query(`DELETE FROM group_members WHERE group_id = $1 AND user_id = $2`, [gid, host]);
@@ -104,17 +119,6 @@ describe.skipIf(!DATABASE_URL)('play join rule (integration)', () => {
       expect(await canJoin(pool, check({ joinerId: friend, hostId: host, chatGroupId: gid }))).toBe(true);
     });
 
-    it('does not take strangers from an OPEN group it was shared into (a host who wants them opens the game)', async () => {
-      const host = await makeUser();
-      const strangerInGroup = await makeUser();
-      const gid = await makeGroup('open', [host, strangerInGroup]);
-      expect(await canJoin(pool, check({ joinerId: strangerInGroup, hostId: host, chatGroupId: gid }))).toBe(false);
-      // the host's friends in it still can, as anywhere
-      const friendInGroup = await makeUser();
-      await pool.query(`INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`, [gid, friendInGroup]);
-      await befriend(pool, host, friendInGroup);
-      expect(await canJoin(pool, check({ joinerId: friendInGroup, hostId: host, chatGroupId: gid }))).toBe(true);
-    });
   });
 
   describe("an 'open' game", () => {

@@ -9,6 +9,7 @@
  */
 import { lessonPath, type PathStop, type PathStopLook, type UnitTone } from '@kurda/shared';
 import type { ColorScheme } from '../theme/appearance';
+import { LIGHT } from '../theme/palette';
 import type { TranslationKey } from '../i18n/translations';
 import { STATE_LABEL, type CourseEntry } from './node';
 import type { SkillNode } from './types';
@@ -68,9 +69,15 @@ export const FACE_INK: Record<ColorScheme, { paper: (tone: ToneColors) => string
   dark: { paper: (tone) => tone.ink, stone: '#e2e3e8' },
 };
 
-/** The sun's gold under an earned trophy, and the glyph on it. */
+/** The sun's gold under an earned trophy. */
 export const GOLD_LIP: Record<ColorScheme, string> = { dark: '#b88d1f', light: '#b07f00' };
-export const GOLD_INK = '#3a2a00';
+/**
+ * The glyph on that gold: the palette's `textOnGold`, under the name the
+ * fire's ladder still asks for it by. It is the same brown in both schemes,
+ * which is what lets it stay a constant here; a screen with the palette in
+ * hand reads `colors.textOnGold` itself.
+ */
+export const GOLD_INK = LIGHT.textOnGold;
 
 /**
  * Two colours blended, `t` of the way from `a` to `b` (both #rrggbb): the

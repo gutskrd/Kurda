@@ -1,9 +1,9 @@
 /**
  * The Last Letter as the phone's Learn Games list shows it: the shared
  * registry entry (`LAST_LETTER_LEARN_ENTRY`) with what the phone adds — its
- * catalogue keys, its screen and its icon — and whether to show it at all
+ * catalogue keys, its screen and its icon — and whether it opens
  * (`useLastLetterAvailability`: only where a dialect's dictionary is big
- * enough, with no "coming soon"). The list renders it as every other card.
+ * enough; elsewhere it is listed as coming soon). The list renders it as every other card.
  */
 import { LAST_LETTER_LEARN_ENTRY } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';

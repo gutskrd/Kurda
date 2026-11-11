@@ -13,7 +13,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { courseProgress, dialectName } from '../learn/map';
 import { CoursePath } from '../learn/CoursePath';
 import type { PracticeDue } from '../learn/types';
-import type { MeProfile } from '../lib/types';
+import type { MeProfile, StreakSummary } from '../lib/types';
 import { useCourses, type CourseEntry } from '../learn/useCourses';
 import { LearnHeader } from '../learn/LearnHeader';
 import { StreakSheet } from '../learn/StreakSheet';
@@ -112,8 +112,10 @@ function TodayStrip(): React.JSX.Element {
   const me = useApiGet<{ user: MeProfile }>('/me');
   const due = useApiGet<PracticeDue>('/practice/due');
   const [streakOpen, setStreakOpen] = useState(false);
+  // a streak restored in the sheet is the streak here too, from then on: the strip's fire and its number
+  const [restored, setRestored] = useState<StreakSummary | null>(null);
   const g = goal.data;
-  const summary = me.data?.user?.streak;
+  const summary = restored ?? me.data?.user?.streak;
   const streak = summary?.current;
   const number = (n: number): string => n.toLocaleString(locale);
   const waiting = (goal.loading && !g) || (me.loading && !me.data);
@@ -159,7 +161,7 @@ function TodayStrip(): React.JSX.Element {
           )}
         </>
       )}
-      <StreakSheet streak={streakOpen && summary ? summary : null} onClose={() => setStreakOpen(false)} />
+      <StreakSheet streak={streakOpen && summary ? summary : null} onClose={() => setStreakOpen(false)} onRestored={setRestored} />
     </section>
   );
 }

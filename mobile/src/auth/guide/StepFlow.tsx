@@ -80,6 +80,7 @@ export function StepFlow({
   onFinish,
   onExit,
   notice,
+  progress = true,
   testID = 'step-flow',
 }: {
   steps: readonly FlowStep[];
@@ -88,6 +89,8 @@ export function StepFlow({
   /** back from the first step; without it the first step has no way back */
   onExit?: () => void;
   notice?: ReactNode;
+  /** false leaves the bar out: a flow of one question (the emailed code) has nothing to count */
+  progress?: boolean;
   testID?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -176,7 +179,11 @@ export function StepFlow({
             ) : (
               <View style={styles.back} />
             )}
-            <Progress count={steps.length} filled={index + 1} mirrored={dir.row === 'row-reverse'} label={t('guide.step', { step: index + 1, count: steps.length })} />
+            {progress ? (
+              <Progress count={steps.length} filled={index + 1} mirrored={dir.row === 'row-reverse'} label={t('guide.step', { step: index + 1, count: steps.length })} />
+            ) : (
+              <View style={styles.flex} />
+            )}
             <View style={styles.back} />
           </View>
 

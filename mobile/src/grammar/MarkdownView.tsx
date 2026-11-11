@@ -8,7 +8,7 @@ function Inline({ spans }: { spans: Span[] }) {
   return (
     <Text>
       {spans.map((s, i) => (
-        <Text key={i} style={[s.bold && styles.bold, s.code && [styles.code, { backgroundColor: colors.glassFill, color: colors.primaryStrong }]]}>
+        <Text key={i} style={[s.bold && styles.bold, s.code && [styles.code, { backgroundColor: colors.glassFill, color: colors.textPrimary }]]}>
           {s.text}
         </Text>
       ))}

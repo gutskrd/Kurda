@@ -249,18 +249,30 @@ export function soloGames(): LearnGame[] {
   return LEARN_GAMES.filter((g) => g.mode === 'solo' || g.mode === 'both');
 }
 
+/** A game as Learn lists it, and whether it can be played in the learner's variety yet. */
+export interface ListedLearnGame {
+  game: LearnGame;
+  /** false while the game is still short of approved content: listed as coming soon, with no way in */
+  ready: boolean;
+}
+
 /**
- * The games an app lists in Learn, in the registry's order: those it has a
- * screen for (`playable`) that are available in the learner's variety now.
- * Before the availability has arrived (null) nothing new is listed, so a game
- * never appears and then vanishes; the village is never a game in the list.
+ * The games an app lists in Learn: every one it has a screen for
+ * (`playable`), those with enough approved content in the learner's variety
+ * first and the rest after them as coming soon, each group in the registry's
+ * order. A game is shown before its content is ready so a learner knows it is
+ * on its way; it opens only once it is, so nothing is ever played on drafts.
+ * Before the availability has arrived (null) nothing is listed, so the cards
+ * do not reshuffle as it lands; the village is never a game in the list.
  */
 export function listedLearnGames(
   availability: { games: ReadonlyArray<{ id: string; available: boolean }> } | null | undefined,
   playable: readonly LearnGameId[],
-): LearnGame[] {
-  const open = new Set((availability?.games ?? []).filter((g) => g.available).map((g) => g.id));
-  return LEARN_GAMES.filter((g) => g.mode !== 'meta' && playable.includes(g.id) && open.has(g.id));
+): ListedLearnGame[] {
+  if (!availability) return [];
+  const open = new Set((availability.games ?? []).filter((g) => g.available).map((g) => g.id));
+  const listed = LEARN_GAMES.filter((g) => g.mode !== 'meta' && playable.includes(g.id)).map((game) => ({ game, ready: open.has(game.id) }));
+  return [...listed.filter((g) => g.ready), ...listed.filter((g) => !g.ready)];
 }
 
 /** The game a kind of content belongs to (each kind belongs to exactly one). */

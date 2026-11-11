@@ -3,11 +3,11 @@
  *
  * Search and suggestions already left minors out. These go through every
  * other place a person's name or id is listed for somebody else to read —
- * another person's friends, group rosters, posts and comments, the wall and
- * profile tabs, the public boards, a league table, a tournament bracket, an
- * open group's chat, a profile's tags — as an anonymous visitor and as a
- * signed-in adult stranger, and checks that the minor is on none of them
- * while their friends still see them where they did before.
+ * another person's friends, a group's roster and chat, posts and comments, the
+ * wall and profile tabs, the public boards, a league table, a tournament
+ * bracket, a profile's tags — as an anonymous visitor and as a signed-in
+ * adult stranger, and checks that the minor is on none of them while their
+ * friends still see them where they did before.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
@@ -17,6 +17,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
+import { seatInGroup } from '../test/groups.js';
 import { canonicalPair } from '../friends/pair.js';
 import { LeaderboardService } from '../leaderboards/service.js';
 import { LeagueService } from '../leagues/service.js';
@@ -209,56 +210,50 @@ describe.skipIf(!DATABASE_URL)('minors are on no list a stranger can read (integ
   });
 
   describe('groups', () => {
-    let open = '';
     let ours = '';
 
     beforeAll(async () => {
-      const made = await call(stranger, 'POST', '/groups', { name: `Open ${suffix}`, privacy: 'open' });
-      open = made.json().id;
-      await call(pal, 'POST', `/groups/${open}/join`);
-      // a membership, and a message, from before the minor's age was known
-      await pool.query(`INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'member')`, [open, minor.id]);
-      await pool.query(`INSERT INTO group_messages (group_id, sender_id, body) VALUES ($1, $2, 'Silav hemû!')`, [
-        open,
-        minor.id,
-      ]);
-      await call(stranger, 'POST', `/groups/${open}/chat`, { body: 'Bi xêr hatî' });
-
-      // an invite-only group the minor started, with their friend in it
-      ours = (await call(minor, 'POST', '/groups', { name: `Ours ${suffix}`, privacy: 'invite' })).json().id;
+      // a group the minor started, with their friend in it, and something said there
+      ours = (await call(minor, 'POST', '/groups', { name: `Ours ${suffix}`, description: `Ya me ${suffix}` })).json().id;
       await call(minor, 'POST', `/groups/${ours}/invite`, { userId: pal.id });
+      await call(minor, 'POST', `/groups/${ours}/chat`, { body: 'Silav hemû!' });
     });
 
-    it('a roster names a minor to their friends only, and keeps the real size', async () => {
-      const seen = (await call(stranger, 'GET', `/groups/${open}`)).json();
-      expect(mentions(seen, minor.id)).toBe(false);
-      expect(seen.memberCount).toBe(3);
-      expect(seen.members).toHaveLength(2);
-
-      const byFriend = (await call(pal, 'GET', `/groups/${open}`)).json();
-      expect((byFriend.members as Array<{ userId: string }>).map((m) => m.userId)).toContain(minor.id);
+    it('a group a minor is in shows a stranger nothing: not its roster, its owner, its chat, nor that it is there', async () => {
+      for (const reader of [stranger, null]) {
+        const group = await call(reader, 'GET', `/groups/${ours}`);
+        expect(group.statusCode).toBe(reader ? 404 : 401);
+        expect(mentions(group.json(), minor.id)).toBe(false);
+        expect(group.body).not.toContain(`Ours ${suffix}`);
+        const chat = await call(reader, 'GET', `/groups/${ours}/chat`);
+        expect(chat.statusCode).toBe(reader ? 403 : 401);
+        expect(mentions(chat.json(), minor.id)).toBe(false);
+      }
+      // and no list of groups a stranger can ask for names it
+      expect((await call(stranger, 'GET', '/groups')).json()).toEqual({ groups: [] });
+      expect((await call(stranger, 'GET', '/me/groups')).json().groups).toEqual([]);
     });
 
-    it('a group a minor owns does not name them as its owner to an outsider', async () => {
-      const outside = (await call(stranger, 'GET', `/groups/${ours}`)).json();
-      expect(outside.ownerId).toBeNull();
-      expect(mentions(outside, minor.id)).toBe(false);
-      // the people in it see one another
+    it('the people in it see one another, and what each of them said', async () => {
       const inside = (await call(pal, 'GET', `/groups/${ours}`)).json();
       expect(inside.ownerId).toBe(minor.id);
+      expect(inside.memberCount).toBe(2);
       expect((inside.members as Array<{ userId: string }>).map((m) => m.userId)).toContain(minor.id);
+      const said = (await call(pal, 'GET', `/groups/${ours}/chat`)).json().messages as Array<{ senderId: string; body: string }>;
+      expect(said.map((m) => [m.senderId, m.body])).toEqual([[minor.id, 'Silav hemû!']]);
     });
 
-    it("an open group's chat shows what a minor said there to their friends only", async () => {
-      const toStranger = (await call(stranger, 'GET', `/groups/${open}/chat`)).json().messages as Array<{
-        senderId: string;
-        body: string;
-      }>;
-      expect(toStranger.map((m) => m.senderId)).not.toContain(minor.id);
-      expect(toStranger.map((m) => m.body)).toContain('Bi xêr hatî');
-
-      const toFriend = (await call(pal, 'GET', `/groups/${open}/chat`)).json().messages as Array<{ senderId: string }>;
-      expect(toFriend.map((m) => m.senderId)).toContain(minor.id);
+    it('someone banned from it is told its name and where they stand, and nothing about its people', async () => {
+      // once in it (seated as they stood: this is not about how they came in), then banned by its owner
+      await seatInGroup(pool, ours, stranger.id);
+      expect((await call(minor, 'POST', `/groups/${ours}/bans`, { userId: stranger.id, duration: '1d' })).statusCode).toBe(200);
+      const seen = await call(stranger, 'GET', `/groups/${ours}`);
+      expect(seen.statusCode).toBe(200);
+      expect(seen.json()).toMatchObject({ name: `Ours ${suffix}`, description: null, ownerId: null, memberCount: 0, members: [], myRole: null, standing: { kind: 'banned' } });
+      expect(mentions(seen.json(), minor.id)).toBe(false);
+      expect(mentions(seen.json(), pal.id)).toBe(false);
+      expect(seen.body).not.toContain(`Ya me ${suffix}`);
+      expect(mentions((await call(stranger, 'GET', `/groups/${ours}/chat`)).json(), minor.id)).toBe(false);
     });
   });
 

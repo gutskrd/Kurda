@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cellState, dailyAction, type DailyStatus } from './daily.js';
+import { cellState, dailyAction, plusGemsOf, type DailyStatus } from './daily.js';
 
 const status = (over: Partial<DailyStatus> = {}): DailyStatus => ({
   canClaim: false,
@@ -46,5 +46,18 @@ describe('cellState', () => {
   it('shows the cycle so far once today is claimed', () => {
     const s = status({ alreadyClaimedToday: true, learnedToday: true, claimableDay: 4, cycleDay: 4 });
     expect([3, 4, 5].map((d) => cellState(s, d))).toEqual(['claimed', 'claimed', 'upcoming']);
+  });
+});
+
+describe('plusGemsOf', () => {
+  it('is the gems a Hevalo+ member’s claim adds, from the status or from the claim’s answer', () => {
+    expect(plusGemsOf(status({ plusGems: 5 }))).toBe(5);
+    expect(plusGemsOf({ plusGems: 5 })).toBe(5);
+  });
+
+  it('is nothing to say for anyone else, or for an older server that sends none', () => {
+    expect(plusGemsOf(status({ plusGems: 0 }))).toBeNull();
+    expect(plusGemsOf(status())).toBeNull();
+    expect(plusGemsOf(null)).toBeNull();
   });
 });

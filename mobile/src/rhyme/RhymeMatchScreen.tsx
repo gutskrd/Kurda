@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
@@ -24,6 +24,7 @@ import { InviteSheet } from '../play/InviteSheet';
 import { LobbyShare } from '../play/CodeTicket';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { RematchPanel } from '../play/RematchPanel';
+import { Verdict } from '../play/Verdict';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
 import {
   createMatch,
@@ -40,6 +41,7 @@ import {
   type RhymeQuality,
   type RhymeReject,
 } from './matchApi';
+import { Loading } from '../theme/Loading';
 
 const DIALECTS: readonly Dialect[] = ['kurmanci', 'sorani'];
 
@@ -302,7 +304,7 @@ function MatchRoom({
       </GlassCard>
     );
   }
-  if (!match) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+  if (!match) return <Loading style={styles.loading} />;
 
   const playerCount = match.scoreboard.length || (match.me ? 1 : 0);
   const seconds = Math.ceil(remaining / 1000);
@@ -391,9 +393,7 @@ function MatchRoom({
     const mine = results?.ranking.find((r) => r.userId === user?.id);
     return (
       <GlassCard style={styles.card}>
-        <Text style={[styles.verdict, { color: colors.primary }]}>
-          {mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}
-        </Text>
+        <Verdict won={mine?.rank === 1}>{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</Verdict>
         {/* what this game did to your rank, with its one plain reason — before the table */}
         {match.rated?.rated ? <RankResultPanel game="rhyme-match" gameRef={id} /> : null}
         {results ? (
@@ -411,7 +411,7 @@ function MatchRoom({
                   <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>
                     {t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
                   </Text>
-                  {r.xpAwarded ? <Text style={[styles.xp, { color: colors.gold }]}>+{r.xpAwarded} XP</Text> : null}
+                  {r.xpAwarded ? <Text style={[styles.xp, { color: colors.goldText }]}>+{r.xpAwarded} XP</Text> : null}
                   {/* anyone else in the game can be reported, by seat */}
                   {r.userId !== user?.id && r.seat !== undefined ? (
                     <PlayerReportButton game="rhyme-match" gameId={results.id} seat={r.seat} name={r.name ?? null} />
@@ -421,7 +421,7 @@ function MatchRoom({
             </View>
           </>
         ) : (
-          <ActivityIndicator color={colors.primary} />
+          <Loading />
         )}
         {/* play again with the same people: a rematch for two, the host's next round for more */}
         <View style={styles.stretch}>
@@ -506,7 +506,7 @@ function MatchRoom({
             <View key={`${f.word}-${i}`} style={[styles.foundRow, { backgroundColor: colors.controlTrack }]}>
               <Text style={[styles.foundWord, { color: colors.textPrimary }]}>{f.word}</Text>
               <View style={styles.foundMeta}>
-                <Text style={[styles.foundQuality, { color: f.quality === 'perfect' ? colors.success : colors.gold }]}>
+                <Text style={[styles.foundQuality, { color: f.quality === 'perfect' ? colors.success : colors.goldText }]}>
                   {t(f.quality === 'perfect' ? 'games.rhyme.quality.perfect' : 'games.rhyme.quality.near')}
                 </Text>
                 <Text style={[styles.foundPoints, { color: colors.textSecondary }]}>+{f.points}</Text>
@@ -562,7 +562,6 @@ const styles = StyleSheet.create({
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   waiting: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
   loading: { marginTop: spacing.xxl },
-  verdict: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   scoreLine: {
     flexDirection: 'row',
     alignItems: 'center',

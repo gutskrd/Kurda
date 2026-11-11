@@ -74,7 +74,7 @@ export function PremiumPill(): React.JSX.Element {
   const { t } = useI18n();
   return (
     <View style={[styles.premium, { backgroundColor: colors.gold }]}>
-      <Text style={[styles.premiumText, { color: colors.textOnPrimary }]}>{t('profile.premium')}</Text>
+      <Text style={[styles.premiumText, { color: colors.textOnGold }]}>{t('profile.premium')}</Text>
     </View>
   );
 }

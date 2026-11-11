@@ -16,6 +16,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { befriend, block } from '../test/social.js';
+import { seatInGroup } from '../test/groups.js';
 import { FeedService } from '../feed/service.js';
 import { LibraryCommentService } from '../library/comment-service.js';
 import { ImageCommentService } from '../images/comment-service.js';
@@ -328,8 +329,9 @@ describe.skipIf(!DATABASE_URL)('a block hides what the other person wrote (integ
     beforeAll(async () => {
       groups = new GroupService(pool);
       chat = new GroupChatService(pool, groups, hub);
-      gid = (await groups.create(dev.id, { name: `Blocks ${suffix}`, privacy: 'open' })).id;
-      for (const who of [ana, ben, cal]) await groups.join(who.id, gid);
+      gid = (await groups.create(dev.id, { name: `Blocks ${suffix}` })).id;
+      // members with blocks between them, and no friendships this suite did not make: seated, not added
+      await seatInGroup(pool, gid, ana.id, ben.id, cal.id);
       await chat.markRead(ana.id, gid);
       for (const who of [ana, ben, cal, dev]) await chat.send(who.id, gid, `silav ji ${who.id}`);
     });

@@ -2,39 +2,44 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { GROUP_REQUEST_NOTE_MAX, type GroupRequestState, type GroupStanding } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiError, GroupDetail } from '../lib/types';
-import { Button } from '../components/Button';
+import type { ApiError } from '../lib/types';
+import { Button, LinkButton } from '../components/Button';
 import { Sheet } from '../components/Sheet';
+import { EmptyState } from '../components/states';
 import { formatUntil, untilOf } from '../reports/restriction';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from './GroupAvatar';
-import { announceGroupsChanged } from './groupsChanged';
+
+/** Someone banned from a group: until when, why, and where asking to come back stands. */
+export type Banned = Extract<GroupStanding, { kind: 'banned' }>;
 
 /**
- * A group seen from outside it, in place of its chat.
+ * A group in place of its chat, for someone who is out of it.
  *
- * Someone who is not in it — never was, was removed, or left — sees the group
- * and the ordinary way in: Join for an open group, and for an invite-only one
- * that an admin can add them. Nothing holds a removed person out.
+ * A group is private: only its members see it. So this has just two readers.
+ * Someone banned sees the group's picture and name, how long the ban lasts,
+ * the reason if the admins gave one, and where asking to come back stands:
+ * they can ask (with a short note), their request is waiting (and can be
+ * withdrawn), they can ask again from a date, or the admins are not taking
+ * requests from them. And someone taken out while its chat was open (`gone`)
+ * is told so first, calmly, with the focus, since the box they were typing in
+ * has gone; if they were only removed, an admin can add them again.
  *
- * Someone banned sees, instead of Join, how long the ban lasts, the reason if
- * the admins gave one, and where asking to come back stands: they can ask
- * (with a short note), their request is waiting (and can be withdrawn), they
- * can ask again from a date, or the admins are not taking requests from them.
- *
- * `gone` is for a chat that was open when its reader was taken out: it says
- * so first, and takes the focus, since the box they were typing in has gone.
+ * Anyone else who opens a group's address is shown `GroupMissing`: the server
+ * tells them nothing about it, not even whether it exists.
  */
 export function GroupOutside({
-  detail,
-  standing,
+  group,
+  banned,
   gone,
   onChanged,
 }: {
-  detail: GroupDetail;
-  standing: Exclude<GroupStanding, { kind: 'member' }>;
+  /** what the page still knows of the group: its picture and name */
+  group: { id: string; name: string; photoUrl?: string | null };
+  /** the ban, when that is why they are out; null for someone only removed */
+  banned: Banned | null;
   gone: boolean;
-  /** the reader's standing changed here (joined, asked, withdrew): read the group again */
+  /** the reader's standing changed here (asked, withdrew, let back): read the group again */
   onChanged: () => Promise<void>;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -44,12 +49,12 @@ export function GroupOutside({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   /** where asking stands, as this page last heard it (a request sent or withdrawn shows at once) */
-  const [request, setRequest] = useState<GroupRequestState | null>(standing.kind === 'banned' ? standing.request : null);
+  const [request, setRequest] = useState<GroupRequestState | null>(banned?.request ?? null);
   const [asking, setAsking] = useState(false);
   const [said, setSaid] = useState<string | null>(null);
   const headRef = useRef<HTMLHeadingElement>(null);
 
-  useEffect(() => setRequest(standing.kind === 'banned' ? standing.request : null), [standing]);
+  useEffect(() => setRequest(banned?.request ?? null), [banned]);
   useEffect(() => {
     if (gone) headRef.current?.focus();
   }, [gone]);
@@ -64,44 +69,31 @@ export function GroupOutside({
       }
       case 'REQUESTS_CLOSED':
         return setRequest({ kind: 'closed' });
-      // already waiting, not banned any more, or banned since: the group says how things are now
+      // already waiting, not banned any more, or the group itself gone: the group says how things are now
       case 'REQUEST_PENDING':
       case 'NOT_BANNED':
-      case 'GROUP_BANNED':
+      case 'GROUP_NOT_FOUND':
         return onChanged();
     }
     setError(describeError(e, t));
   }
 
-  async function join(): Promise<void> {
-    setBusy(true);
-    setError(null);
-    const res = await client.post(`/groups/${detail.id}/join`);
-    setBusy(false);
-    if (!res.ok) return refused(res.error);
-    announceGroupsChanged();
-    await onChanged();
-  }
-
   async function withdraw(): Promise<void> {
     setBusy(true);
     setError(null);
-    const res = await client.delete(`/groups/${detail.id}/requests`);
+    const res = await client.delete(`/groups/${group.id}/requests`);
     setBusy(false);
     if (!res.ok) return refused(res.error);
     setRequest({ kind: 'can_ask' });
     setSaid(t('groups.ask.withdrawn'));
   }
 
-  const meta = `${detail.privacy === 'invite' ? t('groups.inviteGroup') : t('groups.openGroup')} · ${t('groups.memberCount', { count: detail.memberCount })}`;
-
   return (
     <div className="gout">
-      <GroupAvatar id={detail.id} name={detail.name} photoUrl={detail.photoUrl} size={88} />
+      <GroupAvatar id={group.id} name={group.name} photoUrl={group.photoUrl} size={88} />
       <h2 className="gout-name" dir="auto">
-        {detail.name}
+        {group.name}
       </h2>
-      <p className="gout-meta">{meta}</p>
 
       <div className="gstand" aria-labelledby={`${id}-title`} role="group">
         {gone && (
@@ -109,30 +101,21 @@ export function GroupOutside({
             {t('groups.out.gone')}
           </h3>
         )}
-        {standing.kind === 'banned' ? (
+        {banned ? (
           <>
             <p className="gstand-title" id={`${id}-title`}>
-              {standing.until ? t('groups.banned.until', { date: formatUntil(standing.until, locale) }) : t('groups.banned.forGood')}
+              {banned.until ? t('groups.banned.until', { date: formatUntil(banned.until, locale) }) : t('groups.banned.forGood')}
             </p>
-            {standing.reason && (
+            {banned.reason && (
               <p className="gstand-reason">
-                <span className="gstand-label">{t('groups.banned.reason')}</span> <bdi>{standing.reason}</bdi>
+                <span className="gstand-label">{t('groups.banned.reason')}</span> <bdi>{banned.reason}</bdi>
               </p>
             )}
             {request && <AskState request={request} busy={busy} onAsk={() => setAsking(true)} onWithdraw={() => void withdraw()} />}
           </>
-        ) : detail.privacy === 'open' ? (
-          <>
-            <p className="gstand-title" id={`${id}-title`}>
-              {gone ? t('groups.out.canJoinAgain') : t('groups.out.canJoin')}
-            </p>
-            <Button className="gstand-act" onClick={() => void join()} disabled={busy}>
-              {busy ? t('groups.joining') : t('groups.join')}
-            </Button>
-          </>
         ) : (
           <p className="gstand-title" id={`${id}-title`}>
-            {t('groups.out.inviteOnly')}
+            {t('groups.out.canBeAdded')}
           </p>
         )}
         {error && (
@@ -147,8 +130,8 @@ export function GroupOutside({
 
       <AskSheet
         open={asking}
-        groupId={detail.id}
-        groupName={detail.name}
+        groupId={group.id}
+        groupName={group.name}
         onClose={() => setAsking(false)}
         onSent={(state) => {
           setAsking(false);
@@ -161,6 +144,26 @@ export function GroupOutside({
         }}
       />
     </div>
+  );
+}
+
+/**
+ * What a group's address shows someone who is not in it: that there is no
+ * such group here, and the way back to their own conversations. The same
+ * whether the group exists or not, because the server says the same.
+ */
+export function GroupMissing(): React.JSX.Element {
+  const t = useT();
+  return (
+    <EmptyState
+      title={t('groups.missing.title')}
+      message={t('groups.missing.body')}
+      action={
+        <LinkButton to="/app/messages" size="sm" variant="secondary" className="state-action">
+          {t('groups.missing.back')}
+        </LinkButton>
+      }
+    />
   );
 }
 
@@ -219,7 +222,7 @@ function AskSheet({
   groupName: string;
   onClose: () => void;
   onSent: (state: GroupRequestState) => void;
-  /** a refusal about the request itself (a wait, closed, already waiting) */
+  /** a refusal about the request itself (a wait, closed, already waiting, not banned any more) */
   onRefused: (error: ApiError) => void;
 }): React.JSX.Element | null {
   const { client } = useAuth();
@@ -244,7 +247,7 @@ function AskSheet({
       return;
     }
     const e2 = res.error;
-    if (['REQUEST_WAIT', 'REQUESTS_CLOSED', 'REQUEST_PENDING', 'NOT_BANNED'].includes(e2.code ?? '')) onRefused(e2);
+    if (['REQUEST_WAIT', 'REQUESTS_CLOSED', 'REQUEST_PENDING', 'NOT_BANNED', 'GROUP_NOT_FOUND'].includes(e2.code ?? '')) onRefused(e2);
     else setError(e2.code === 'GROUP_TEXT_REJECTED' ? t('groups.textRejected') : describeError(e2, t));
   }
 

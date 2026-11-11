@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   DEFAULT_ITEM_FILTER,
   GIFTS_PER_DAY,
@@ -35,6 +35,7 @@ import { EmptyState } from '../theme/EmptyState';
 import { KIND_LABEL, kindWithCount, withinBalance } from '../shop/format';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from '../shop/ItemFilters';
 import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type SentGift } from './api';
+import { Loading } from '../theme/Loading';
 
 /** A friend a gift can go to. */
 export interface GiftFriend {
@@ -340,7 +341,7 @@ function WhatStep({
       </View>
     );
   }
-  if (!catalog) return <ActivityIndicator color={colors.primary} style={styles.spinner} />;
+  if (!catalog) return <Loading style={styles.spinner} />;
 
   const priceWords = (item: GiftCatalogItem): string => `${item.price} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
 
@@ -384,7 +385,7 @@ function WhatStep({
           <ItemArt category={item.category} path={item.assetUrl} width={wide ? undefined : 64} />
           {item.tier !== 'common' ? (
             <View style={[styles.tier, dir.row === 'row-reverse' ? styles.tierLeft : styles.tierRight, { backgroundColor: colors.gold }]}>
-              <Text style={[styles.tierText, { color: colors.textOnPrimary }]}>{t(TIER_LABEL[item.tier])}</Text>
+              <Text style={[styles.tierText, { color: colors.textOnGold }]}>{t(TIER_LABEL[item.tier])}</Text>
             </View>
           ) : null}
         </View>
@@ -393,7 +394,7 @@ function WhatStep({
           {item.name}
         </Text>
         <View style={[styles.priceRow, { flexDirection: dir.row }]}>
-          <Icon name={CURRENCY_ICON[item.currency]} size={14} color={item.currency === 'zer' ? colors.gold : colors.accent} />
+          <Icon name={CURRENCY_ICON[item.currency]} size={14} color={item.currency === 'zer' ? colors.gold : colors.primary} />
           <Text style={[styles.price, { color: colors.textPrimary }]}>{item.price}</Text>
         </View>
         {ownedLine ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
@@ -413,7 +414,7 @@ function WhatStep({
           <Text style={[styles.chipText, { color: colors.textPrimary }]}>{catalog.balance.zer}</Text>
         </View>
         <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
-          <Icon name="gem" size={14} color={colors.accent} />
+          <Icon name="gem" size={14} color={colors.primary} />
           <Text style={[styles.chipText, { color: colors.textPrimary }]}>{catalog.balance.gems}</Text>
         </View>
       </View>
@@ -481,7 +482,7 @@ function WhatStep({
             <Text style={[styles.selectedText, { color: colors.textPrimary }]} numberOfLines={1}>
               {t('gift.picker.selected', { name: picked.name })}
             </Text>
-            <Icon name={CURRENCY_ICON[picked.currency]} size={14} color={picked.currency === 'zer' ? colors.gold : colors.accent} />
+            <Icon name={CURRENCY_ICON[picked.currency]} size={14} color={picked.currency === 'zer' ? colors.gold : colors.primary} />
             <Text style={[styles.price, { color: colors.textPrimary }]}>{picked.price}</Text>
           </View>
         ) : null}

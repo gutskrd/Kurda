@@ -424,10 +424,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     // closing a child's account at once revokes their Sign in with Apple too
     apple: appleTokens(config, app.db, { log: app.log }),
   });
-  // read when it is called: the realtime gateway is set up after these routes
-  const birthMonths = new BirthMonthService(app.db, gdpr, {
-    revoke: (room, userId) => app.realtime.revoke(room, userId),
-  });
+  const birthMonths = new BirthMonthService(app.db, gdpr);
 
   /**
    * The one-time birth month answer, for an account that has none (Google and
@@ -460,6 +457,14 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
   app.delete('/me', { preHandler: requireAuth }, async (req) => {
     if (req.user!.guest === true) {
       await gdpr.closeNow(req.user!.id, 'guest_left');
+      return { deletionScheduled: false, deleted: true, graceDays: 0 };
+    }
+    // A sign-up that never confirmed its address is closed at once too: the
+    // grace period is for coming back to something, and its notice would be
+    // mail to an address nobody showed to be theirs. A guest's claim that was
+    // never confirmed goes the same way here, learning and all: the person
+    // asked for the account to be deleted, not for the claim to lapse.
+    if (!req.user!.emailVerified && (await gdpr.endUnconfirmedSignup(req.user!.id, { keepLearning: false })) === 'closed') {
       return { deletionScheduled: false, deleted: true, graceDays: 0 };
     }
     await gdpr.requestDeletion(req.user!.id);

@@ -150,6 +150,27 @@ describe('Shop', () => {
     expect(night.querySelector('img')).toBeNull();
   });
 
+  it('shows a frame the way it will be worn: round a face, at a frame’s own size', async () => {
+    const items: ShopItem[] = [
+      { sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', currency: 'zer', price: 1400, isUnique: true, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' },
+      { sku: 'ic-1', name: 'Roj', description: 'Sun', category: 'icon', currency: 'zer', price: 600, isUnique: true, premiumOnly: false, assetUrl: '/cosmetics/icons/made-02-roj.png' },
+    ];
+    vi.stubGlobal('fetch', makeFetch([], [], { items, balances: { zer: 2000 } }));
+    renderApp(<Shop />, ['/app/shop']);
+
+    const frame = (await screen.findByText('Xeleka Laleyan')).closest('figure')!;
+    const worn = frame.querySelector('.shop-thumb-frame .art-frame.is-made') as HTMLElement;
+    expect(worn.querySelector('img.art-frame-ring')).toHaveAttribute('src', '/cosmetics/frames/made-01-lale.png');
+    // the face in the middle two thirds of it, whoever is looking
+    expect((worn.querySelector('.art-frame-face') as HTMLElement).style.width).toBe(`${Math.round((104 * 2) / 3)}px`);
+    expect(within(frame).getByRole('button', { name: 'Buy' })).toBeEnabled();
+    expect(frame).toHaveTextContent('1,400');
+    // an icon is still its own picture, with nothing round it
+    const icon = screen.getByText('Roj').closest('figure')!;
+    expect(icon.querySelector('.art-frame')).toBeNull();
+    expect(icon.querySelector('.shop-thumb-icon img')).toHaveAttribute('src', '/cosmetics/icons/made-02-roj.png');
+  });
+
   it('narrows to one kind of thing', async () => {
     vi.stubGlobal('fetch', makeFetch([]));
     renderApp(<Shop />, ['/app/shop']);

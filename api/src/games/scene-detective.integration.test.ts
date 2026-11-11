@@ -25,6 +25,7 @@ import { poolQuiet, queriesDuring } from '../test/query-count.js';
 import { bustAvailability } from './availability.js';
 import { bustGamePools } from './sources.js';
 import { seedStarterGameContent } from './starters.js';
+import { removeCourses } from '../test/courses.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -153,7 +154,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
     await pool.query(`DELETE FROM game_content WHERE payload::text LIKE $1 OR origin = $2`, [`%${tag}%`, `starter:${tag}-case`]);
     await pool.query(`DELETE FROM content_seeds WHERE name = $1`, [`game_content:starter:${tag}-case`]);
     await pool.query(`DELETE FROM lesson_audio WHERE url LIKE $1`, [`%${tag}%`]);
-    await pool.query(`DELETE FROM courses WHERE id = ANY($1::uuid[])`, [courseIds]);
+    await removeCourses(pool, courseIds);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');

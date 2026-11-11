@@ -48,6 +48,7 @@ import { EmptyState } from '../theme/EmptyState';
 import type { RootNavigation } from '../navigation/rootStack';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftSentNote } from '../gifts/GiftSentNote';
+import { FrameArt } from './FrameArt';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from './ItemFilters';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
@@ -61,10 +62,10 @@ const GUTTER = spacing.lg;
 /**
  * The shop, sorted by kind (KUR-070).
  *
- * Every item sits under its kind — Backgrounds, Icons, Tags, and "More" for
+ * Every item sits under its kind — Backgrounds, Icons, Frames, Tags, and "More" for
  * anything an admin files under a category of their own — in the order the
  * browser shows them, each with a count and its picture. Above the list, a
- * search over names and meanings ("istikan" finds Îstîkan, "tea" finds it
+ * search over names and meanings ("cay" finds Çay, "tea" finds it
  * too), one kind at a time, an order, and "Within my Zêr". What arrived for you
  * (gifts) stays above the catalogue; the search and the kinds stay at the top
  * of the screen once you scroll past it.
@@ -221,7 +222,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 )}
               </View>
               <View style={styles.balanceChip}>
-                <Icon name="gem" size={18} color={colors.accent} />
+                <Icon name="gem" size={18} color={colors.primary} />
                 {loading ? (
                   <SkeletonText size={typography.sizes.md} width={20} />
                 ) : (
@@ -455,7 +456,11 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
     >
       {/* one column wide enough for a background, so every name starts at the same place */}
       <View style={styles.thumb}>
-        <ItemArt category={item.category} path={item.assetUrl} width={wide ? THUMB : ICON_THUMB} />
+        {itemCategory(item.category) === 'frame' && item.assetUrl ? (
+          <FrameArt path={item.assetUrl} width={FRAME_THUMB} />
+        ) : (
+          <ItemArt category={item.category} path={item.assetUrl} width={wide ? THUMB : ICON_THUMB} />
+        )}
       </View>
       <View style={styles.rowMain}>
         {/*
@@ -483,7 +488,7 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
         ) : (
           <>
             <Text style={[styles.price, { color: affordable ? colors.textPrimary : colors.textSecondary }]}>{item.price}</Text>
-            <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={16} color={item.currency === 'zer' ? colors.gold : colors.accent} />
+            <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={16} color={item.currency === 'zer' ? colors.gold : colors.primary} />
           </>
         )}
       </View>
@@ -515,12 +520,16 @@ function ItemDetail({
   const artWidth = wide ? Math.min(Math.min(width, SHEET_MAX_WIDTH) - layout.gutter * 2, 400) : 128;
   return (
     <View style={styles.detail}>
-      <ItemArt category={item.category} path={item.assetUrl} width={artWidth} style={styles.preview} />
+      {itemCategory(item.category) === 'frame' && item.assetUrl ? (
+        <FrameArt path={item.assetUrl} width={160} style={styles.preview} />
+      ) : (
+        <ItemArt category={item.category} path={item.assetUrl} width={artWidth} style={styles.preview} />
+      )}
       <Text style={[styles.detailName, { color: colors.textPrimary }]} accessibilityRole="header">
         {item.name}
       </Text>
       {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
-      <Text style={[styles.detailPrice, { color: item.price === 0 ? colors.success : colors.accent }]}>{priceWords(item, t)}</Text>
+      <Text style={[styles.detailPrice, { color: item.price === 0 ? colors.success : colors.textPrimary }]}>{priceWords(item, t)}</Text>
 
       {affordable ? (
         <>
@@ -559,7 +568,7 @@ function ItemDetail({
             {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.earnMoreGems')}
           </Text>
           {item.currency === 'zer' ? (
-            <ClayButton label={t('shop.earnZer')} tone="accent" onPress={onEarnMore} />
+            <ClayButton label={t('shop.earnZer')} tone="primary" onPress={onEarnMore} />
           ) : null}
         </View>
       )}
@@ -570,6 +579,8 @@ function ItemDetail({
 /** A background's thumbnail (16:9) and an icon's (square) — the column is the wider of the two. */
 const THUMB = 72;
 const ICON_THUMB = 52;
+/** A frame is shown round a face, which needs more room than an icon: as wide as its column allows. */
+const FRAME_THUMB = 68;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },

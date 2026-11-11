@@ -170,7 +170,8 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
       // checked before the file is stored, so a timeline from another take stores nothing
       const lipsync = voice.lipsync ? fitLipsync(voice.lipsync, info.durationMs) : null;
 
-      const res = await storeAudioMedia({ pool: app.db, storage: app.storage, usage, limits, log: app.log }, KIND, raw);
+      // the course's audio: it has no uploader, so it never goes with the account of whoever recorded it
+      const res = await storeAudioMedia({ pool: app.db, storage: app.storage, usage, limits, log: app.log }, KIND, raw, null);
       if (!res.ok) return reply.code(res.status).send({ code: res.code, message: res.message });
 
       const client = await app.db.connect();

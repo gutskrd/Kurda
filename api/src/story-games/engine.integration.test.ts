@@ -724,28 +724,23 @@ describe.skipIf(!DATABASE_URL)('story game engine (integration)', () => {
       expect(await svc.card(friend, g.gameId)).toMatchObject({ status: 'open', isMember: false, canJoin: true });
       expect(await svc.card(stranger, g.gameId)).toMatchObject({ status: 'unavailable', players: 0, canJoin: false });
       expect(await svc.card(friend, '00000000-0000-4000-8000-000000000000')).toMatchObject({ status: 'unavailable' });
-      // shared into a group chat: an invite-only group's members may see it and
-      // join; an open group's are strangers to everyone in it, and may not
-      const inGroup = async (privacy: 'invite' | 'open') => {
-        const member = await user();
-        const grp = await pool.query<{ id: string }>(
-          `INSERT INTO groups (name, privacy, owner_id) VALUES ($1, $2, $3) RETURNING id`,
-          [`sge ${privacy} ${suffix}`, privacy, g.host],
-        );
-        await pool.query(
-          `INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'owner'), ($1, $3, 'member')`,
-          [grp.rows[0]!.id, g.host, member],
-        );
-        await pool.query(`UPDATE story_games SET chat_group_id = $2 WHERE id = $1`, [g.gameId, grp.rows[0]!.id]);
-        return { member, groupId: grp.rows[0]!.id };
-      };
-      const openGroup = await inGroup('open');
-      expect(await svc.card(openGroup.member, g.gameId)).toMatchObject({ status: 'unavailable', canJoin: false });
-      await expect(svc.join(openGroup.member, { id: g.gameId })).rejects.toMatchObject({ code: 'GAME_NOT_FOUND' });
-      const inviteGroup = await inGroup('invite');
-      expect(await svc.card(inviteGroup.member, g.gameId)).toMatchObject({ status: 'open', canJoin: true });
+      // shared into a group chat: the group's members may see it and join,
+      // friends of the host or not, and nobody from outside the group
+      const member = await user();
+      const grp = await pool.query<{ id: string }>(`INSERT INTO groups (name, owner_id) VALUES ($1, $2) RETURNING id`, [`sge ${suffix}`, g.host]);
+      const groupId = grp.rows[0]!.id;
+      await pool.query(`INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'owner'), ($1, $3, 'member')`, [groupId, g.host, member]);
+      expect(await svc.card(member, g.gameId)).toMatchObject({ status: 'unavailable', canJoin: false });
+      await pool.query(`UPDATE story_games SET chat_group_id = $2 WHERE id = $1`, [g.gameId, groupId]);
+      expect(await svc.card(member, g.gameId)).toMatchObject({ status: 'open', canJoin: true });
+      expect(await svc.card(stranger, g.gameId)).toMatchObject({ status: 'unavailable', canJoin: false });
+      await expect(svc.join(stranger, { id: g.gameId })).rejects.toMatchObject({ code: 'GAME_NOT_FOUND' });
+      // a group that was open once is a room of people nobody chose: shared there, the game takes no member on that account
+      await pool.query(`UPDATE groups SET privacy = 'open' WHERE id = $1`, [groupId]);
+      expect(await svc.card(member, g.gameId)).toMatchObject({ status: 'unavailable', canJoin: false });
+      await expect(svc.join(member, { id: g.gameId })).rejects.toMatchObject({ code: 'GAME_NOT_FOUND' });
       await pool.query(`UPDATE story_games SET chat_group_id = NULL WHERE id = $1`, [g.gameId]);
-      await pool.query(`DELETE FROM groups WHERE id = ANY($1::uuid[])`, [[openGroup.groupId, inviteGroup.groupId]]);
+      await pool.query(`DELETE FROM groups WHERE id = $1`, [groupId]);
       await svc.start(g.gameId, g.host);
       for (const u of g.all) await svc.doneReading(g.gameId, u);
       expect(await svc.card(friend, g.gameId)).toMatchObject({ status: 'started', canJoin: false });

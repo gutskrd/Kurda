@@ -1,5 +1,6 @@
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { StyleSheet, Text, View } from 'react-native';
+import { Icon } from '../theme/Icon';
 import { PressableScale } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
@@ -33,12 +34,13 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
     <View style={[styles.bar, { backgroundColor: colors.glassFill }]}>
       <PressableScale
         onPress={toggle}
-        style={[styles.button, { backgroundColor: colors.primaryStrong }]}
+        style={[styles.button, { backgroundColor: colors.primary }]}
         accessibilityRole="button"
         accessibilityLabel={status.playing ? t('recorder.pause') : t('recorder.play')}
         hitSlop={8}
       >
-        <Text style={[styles.symbol, { color: colors.textOnPrimary }]}>{status.playing ? '❚❚' : '▶'}</Text>
+        {/* the player's own glyphs, as the story reader draws them; two characters stood in for them and sat off-centre */}
+        <Icon name={status.playing ? 'audio-pause' : 'audio-play'} size={20} color={colors.textOnPrimary} />
       </PressableScale>
       <View style={styles.track}>
         <View style={[styles.trackBg, { backgroundColor: colors.controlTrack }]}>
@@ -55,7 +57,6 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
 const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, padding: spacing.sm },
   button: { width: 40, height: 40, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  symbol: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   track: { flex: 1, gap: 4 },
   trackBg: { height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   trackFill: { height: 6, borderRadius: radii.pill },

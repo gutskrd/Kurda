@@ -40,7 +40,8 @@ export function registerPushRoutes(
     { schema: { body: registerBody }, preHandler: requireAuth },
     async (req, reply) => {
       const { platform, token } = req.body as z.infer<typeof registerBody>;
-      await tokens.register(req.user!.id, platform, token);
+      // under the session it was registered from, so it ends when that session does
+      await tokens.register(req.user!.id, platform, token, req.user!.familyId ?? null);
       return reply.code(201).send({ ok: true });
     },
   );

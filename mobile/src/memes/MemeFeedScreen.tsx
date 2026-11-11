@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
-  ActivityIndicator,
   FlatList,
   Image,
   RefreshControl,
@@ -29,6 +28,7 @@ import { onPostDeleted } from '../composer/postDeleted';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
+import { Loading } from '../theme/Loading';
 
 const PAGE = 20;
 
@@ -187,7 +187,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
                 action={{ label: t('post.open'), onPress: compose }}
               />
             }
-            ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
+            ListFooterComponent={loadingMore ? <Loading style={{ marginVertical: spacing.md }} /> : null}
           />
         </AsyncBoundary>
 

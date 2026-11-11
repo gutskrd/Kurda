@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -14,6 +14,7 @@ import type { ApiError } from '../api/types';
 import { describeError, describeErrorOr, type Translate } from '../api/errors';
 import { formatDay, restrictionOf } from '../reports/sendErrors';
 import { SendErrorNotice } from '../reports/SendError';
+import { Loading } from '../theme/Loading';
 
 /**
  * Change username (KUR-004). Shows the current name, validates the new one live
@@ -139,7 +140,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
               onPress={submit}
               style={[styles.save, !canSubmit && !done && styles.saveDisabled]}
             />
-            {saving ? <ActivityIndicator color={colors.primary} style={styles.spinner} /> : null}
+            {saving ? <Loading style={styles.spinner} /> : null}
           </View>
         )}
       </KeyboardAvoidingView>

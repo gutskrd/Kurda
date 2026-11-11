@@ -32,6 +32,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { befriend } from '../test/social.js';
+import { addFriendsToGroup } from '../test/groups.js';
 import { GroupService } from '../groups/service.js';
 import { FriendService } from '../friends/service.js';
 import { SavedWordsService } from '../dictionary/saved-words-service.js';
@@ -112,8 +113,8 @@ describe.skipIf(!DATABASE_URL)('limits (integration)', () => {
   /** Groups `owner` owns, made in one statement with their owner membership. */
   const ownGroups = async (owner: string, n: number, archived = false): Promise<string[]> => {
     const g = await pool.query<{ id: string }>(
-      `INSERT INTO groups (name, owner_id, privacy, archived_at)
-       SELECT 'Kom ' || g, $1, 'open', CASE WHEN $3 THEN now() END FROM generate_series(1, $2) g RETURNING id`,
+      `INSERT INTO groups (name, owner_id, archived_at)
+       SELECT 'Kom ' || g, $1, CASE WHEN $3 THEN now() END FROM generate_series(1, $2) g RETURNING id`,
       [owner, n, archived],
     );
     const ids = g.rows.map((r) => r.id);
@@ -208,7 +209,7 @@ describe.skipIf(!DATABASE_URL)('limits (integration)', () => {
       const groups = new GroupService(pool);
       const owner = await person();
       const results = await Promise.allSettled(
-        Array.from({ length: 15 }, (_, i) => groups.create(owner, { name: `Bi hev re ${i}`, privacy: 'invite' })),
+        Array.from({ length: 15 }, (_, i) => groups.create(owner, { name: `Bi hev re ${i}` })),
       );
       const made = results.filter((r) => r.status === 'fulfilled').length;
       const refused = results.filter((r) => r.status === 'rejected');
@@ -219,30 +220,35 @@ describe.skipIf(!DATABASE_URL)('limits (integration)', () => {
       expect(owned.rows[0]!.n).toBe(MAX_GROUPS_OWNED);
     });
 
-    it(`a person is in at most ${MAX_GROUP_MEMBERSHIPS} groups; leaving one makes room, and joining one already joined is no refusal`, async () => {
+    it(`a person is in at most ${MAX_GROUP_MEMBERSHIPS} groups; leaving one makes room, and being added to one they are in already is no refusal`, async () => {
       const groups = new GroupService(pool);
       const me = await person();
       const mine = await joinGroups(me, MAX_GROUP_MEMBERSHIPS - 1);
-      const [open1, open2] = await ownGroups(await person(), 2);
-      await groups.join(me, open1!);
-      await expect(groups.join(me, open2!)).rejects.toMatchObject(reached('group_memberships', MAX_GROUP_MEMBERSHIPS));
+      // a friend who owns two more groups: being added by them is the way into either
+      const owner = await person();
+      await befriend(pool, owner, me);
+      const [first, second] = await ownGroups(owner, 2);
+      await groups.invite(owner, first!, me);
+      await expect(groups.invite(owner, second!, me)).rejects.toMatchObject(reached('group_memberships', MAX_GROUP_MEMBERSHIPS, true));
       // already in it: nothing changes, so nothing is refused
-      await expect(groups.join(me, open1!)).resolves.toBeUndefined();
-      // starting a group is being in one more as well
+      await expect(groups.invite(owner, first!, me)).resolves.toBeUndefined();
+      // starting a group is being in one more as well, and that limit is one's own
       await expect(groups.create(me, { name: 'Ya min' })).rejects.toMatchObject(reached('group_memberships', MAX_GROUP_MEMBERSHIPS));
 
       await groups.leave(me, mine[0]!);
-      await expect(groups.join(me, open2!)).resolves.toBeUndefined();
+      await expect(groups.invite(owner, second!, me)).resolves.toBeUndefined();
     });
 
     it('an archived group is not one you are in', async () => {
       const groups = new GroupService(pool);
       const me = await person();
       const mine = await joinGroups(me, MAX_GROUP_MEMBERSHIPS);
-      const [open] = await ownGroups(await person(), 1);
-      await expect(groups.join(me, open!)).rejects.toMatchObject({ code: LIMIT_REACHED });
+      const owner = await person();
+      await befriend(pool, owner, me);
+      const [more] = await ownGroups(owner, 1);
+      await expect(groups.invite(owner, more!, me)).rejects.toMatchObject({ code: LIMIT_REACHED });
       await pool.query(`UPDATE groups SET archived_at = now() WHERE id = $1`, [mine[0]]);
-      await expect(groups.join(me, open!)).resolves.toBeUndefined();
+      await expect(groups.invite(owner, more!, me)).resolves.toBeUndefined();
     });
 
     it('adding a friend who is in as many groups as anyone may be is refused as their limit', async () => {
@@ -250,7 +256,7 @@ describe.skipIf(!DATABASE_URL)('limits (integration)', () => {
       const owner = await person();
       const friend = await person();
       await befriend(pool, owner, friend);
-      const { id } = await groups.create(owner, { name: 'Ya vexwendinê', privacy: 'invite' });
+      const { id } = await groups.create(owner, { name: 'Ya vexwendinê' });
       await joinGroups(friend, MAX_GROUP_MEMBERSHIPS);
       await expect(groups.invite(owner, id, friend)).rejects.toMatchObject(reached('group_memberships', MAX_GROUP_MEMBERSHIPS, true));
     });
@@ -260,7 +266,7 @@ describe.skipIf(!DATABASE_URL)('limits (integration)', () => {
       const owner = await person();
       const member = await person();
       const { id } = await groups.create(owner, { name: 'Ya ku tê dayîn' });
-      await groups.join(member, id);
+      await addFriendsToGroup(pool, id, owner, member);
       await ownGroups(member, MAX_GROUPS_OWNED);
       await expect(groups.transferOwnership(owner, id, member)).rejects.toMatchObject(reached('groups_owned', MAX_GROUPS_OWNED, true));
       await pool.query(`UPDATE groups SET archived_at = now() WHERE owner_id = $1 AND id <> $2`, [member, id]);
@@ -269,10 +275,13 @@ describe.skipIf(!DATABASE_URL)('limits (integration)', () => {
 
     it('a full group says so with its number, as before', async () => {
       const groups = new GroupService(pool);
-      const [id] = await ownGroups(await person(), 1);
+      const owner = await person();
+      const [id] = await ownGroups(owner, 1);
       const many = await people(99);
       await pool.query(`INSERT INTO group_members (group_id, user_id) SELECT $1, unnest($2::uuid[])`, [id, many]);
-      await expect(groups.join(await person(), id!)).rejects.toMatchObject({
+      const late = await person();
+      await befriend(pool, owner, late);
+      await expect(groups.invite(owner, id!, late)).rejects.toMatchObject({
         code: 'GROUP_FULL',
         details: { limit: 'group_members', max: 100 },
       });

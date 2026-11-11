@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AccessibilityInfo, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { MenuIn, PressableScale } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import type { GiftUserEvent } from '@kurda/shared';
 import { useUserEvents, type UserEvent } from '../realtime/useUserEvents';
@@ -31,6 +31,11 @@ function isGiftEvent(event: UserEvent): event is GiftUserEvent {
  * you a gift", Open or Later. Open goes to that chat and unwraps it there. It
  * is a status, not an alert: it does not take focus, and it stays until it is
  * answered rather than vanishing before it can be read.
+ *
+ * It arrives the way a menu does, growing a little and fading in (a fade
+ * alone under Reduce Motion), where it used to be simply there between one
+ * frame and the next. Each gift's banner is its own, so a second gift
+ * arriving over the first is seen to arrive.
  */
 export function GiftArrivals(): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();
@@ -52,7 +57,7 @@ export function GiftArrivals(): React.JSX.Element | null {
     if (chat.kind === 'dm') navigation.navigate('Chat', { userId: chat.userId, username: from.name, openGift: giftId });
     else navigation.navigate('GroupThread', { groupId: chat.groupId, name: '', openGift: giftId });
   };
-  return <GiftBanner event={banner} onOpen={open} onLater={() => setBanner(null)} />;
+  return <GiftBanner key={banner.giftId} event={banner} onOpen={open} onLater={() => setBanner(null)} />;
 }
 
 export function GiftBanner({
@@ -75,7 +80,7 @@ export function GiftBanner({
   }, [text, event.giftId]);
   return (
     <View style={[styles.wrap, { top: top + spacing.xs }]} pointerEvents="box-none">
-      <View
+      <MenuIn
         style={[styles.banner, { flexDirection: dir.row, backgroundColor: colors.background, borderColor: colors.gold, shadowColor: colors.softShadow }]}
         accessibilityRole="summary"
         accessibilityLiveRegion="polite"
@@ -96,7 +101,7 @@ export function GiftBanner({
           <Icon name="gift" size={16} color={colors.textOnPrimary} />
           <Text style={[styles.openText, { color: colors.textOnPrimary }]}>{t('gift.banner.open')}</Text>
         </PressableScale>
-      </View>
+      </MenuIn>
     </View>
   );
 }

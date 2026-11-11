@@ -2,13 +2,17 @@
  * Who may come back to a group, and what the group's chat shows each member,
  * read alike by the server, the website and the phone.
  *
+ * Every group is private: its members are the only people who see it, and the
+ * only way in is to be added by its owner or an admin who is your friend.
+ *
  * Removed and banned are different things. Someone removed is simply out:
- * they can join an open group again, or be added again to an invite-only one,
- * like anybody else. Someone banned cannot come back by themselves, for a day,
- * a week or for good — but they can ask to, with a short note, and the group's
- * owner or admins decide. Asking can never be used to pester them: one request
- * waits at a time, each one turned down makes the next wait longer, and the
- * admins can stop the requests from one person altogether.
+ * they can be added again like anybody else, and until then the group is as
+ * hidden from them as from a stranger. Someone banned cannot be added back,
+ * for a day, a week or for good — but they still see the group's name and
+ * where they stand, and they can ask to come back, with a short note; the
+ * group's owner or admins decide. Asking can never be used to pester them: one
+ * request waits at a time, each one turned down makes the next wait longer,
+ * and the admins can stop the requests from one person altogether.
  *
  * Clearing a chat is either for oneself (any member: the messages so far are
  * gone from their own view only) or for everyone (the owner or an admin: gone
@@ -53,14 +57,13 @@ export type GroupRequestState =
   | { kind: 'closed' };
 
 /**
- * Where the viewer stands with a group (`GET /groups/:id`, `standing`):
- * a member with their role; not in it and free to join or be added (`out`);
- * or banned, until when (null for good), with their reason if one was given,
- * and where asking to come back stands.
+ * Where the viewer stands with a group (`GET /groups/:id`, `standing`): a
+ * member with their role; or banned, until when (null for good), with their
+ * reason if one was given, and where asking to come back stands. Nobody else
+ * is answered at all: to them the group does not exist (404).
  */
 export type GroupStanding =
   | { kind: 'member'; role: Role }
-  | { kind: 'out' }
   | { kind: 'banned'; until: string | null; reason: string | null; request: GroupRequestState };
 
 /** A banned person, as the owner and admins see them (`GET /groups/:id/bans`). */

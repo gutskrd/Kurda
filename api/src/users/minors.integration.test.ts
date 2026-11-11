@@ -15,6 +15,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
+import { seatInGroup } from '../test/groups.js';
 import { isKnownAdultRow, minorSql, notKnownAdultSql } from './age.js';
 import { LeagueService } from '../leagues/service.js';
 import { weekStart } from '../leagues/league-logic.js';
@@ -236,7 +237,7 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
     it('cannot reach anybody until it answers', async () => {
       const writes: Array<[string, string, Record<string, unknown> | undefined]> = [
         ['POST', '/friends/requests', { userId: adult.id }],
-        ['POST', '/groups', { name: `Waiting ${suffix}`, privacy: 'invite' }],
+        ['POST', '/groups', { name: `Waiting ${suffix}` }],
         ['POST', `/chat/${adult.id}/messages`, { body: 'Silav' }],
         ['POST', '/library/posts', { type: 'gotin', body: 'Silav' }],
         // editing or publishing puts words in front of readers just as posting does
@@ -309,18 +310,18 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
       await new LeagueService(pool).ensureMembership(user.id);
       expect((await call(asker, 'POST', '/friends/requests', { userId: user.id })).json().outcome).toBe('requested');
       expect((await call(user, 'POST', '/friends/requests', { userId: asked.id })).json().outcome).toBe('requested');
-      // analytics switched on, and open groups: one an adult started, one they
-      // started that somebody else joined, one nobody joined, and an
-      // invite-only one of their own
+      // analytics switched on, and groups: one an adult runs that they are in,
+      // one of their own with somebody else in it, and one they are alone in
+      // (the memberships written as they stood, not through the friendships
+      // this test is about to count)
       expect((await call(user, 'POST', '/me/consent', { analytics: true })).statusCode).toBe(200);
-      const group = async (owner: Account, name: string, privacy: 'open' | 'invite') =>
-        (await call(owner, 'POST', '/groups', { name: `${name} ${suffix}`, privacy })).json().id as string;
-      const theirs = await group(asker, 'Late theirs', 'open');
-      const owned = await group(user, 'Late owned', 'open');
-      const alone = await group(user, 'Late alone', 'open');
-      const closed = await group(user, 'Late closed', 'invite');
-      expect((await call(user, 'POST', `/groups/${theirs}/join`)).statusCode).toBe(200);
-      expect((await call(asked, 'POST', `/groups/${owned}/join`)).statusCode).toBe(200);
+      const group = async (owner: Account, name: string) =>
+        (await call(owner, 'POST', '/groups', { name: `${name} ${suffix}` })).json().id as string;
+      const theirs = await group(asker, 'Late theirs');
+      const owned = await group(user, 'Late owned');
+      const alone = await group(user, 'Late alone');
+      await seatInGroup(pool, theirs, user.id);
+      await seatInGroup(pool, owned, asked.id);
       await call(user, 'GET', `/groups/${theirs}/chat`); // a live-room invite, as the app gets one
       await pool.query(`UPDATE users SET birth_year = NULL, birth_month = NULL WHERE id = $1`, [user.id]);
       const revoked: Array<[string, string]> = [];
@@ -338,25 +339,24 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
         analyticsConsent: false,
       });
 
-      // out of every open group, with the one somebody joined handed to them
-      // and the empty one archived; the invite-only one is still theirs
+      // their groups stay as they were: every group is private, so each is one
+      // they made or somebody who runs it put them in
       const member = await pool.query<{ group_id: string }>(`SELECT group_id FROM group_members WHERE user_id = $1`, [
         user.id,
       ]);
-      expect(member.rows.map((r) => r.group_id)).toEqual([closed]);
+      expect(member.rows.map((r) => r.group_id).sort()).toEqual([theirs, owned, alone].sort());
       const groups = await pool.query<{ id: string; owner_id: string | null; archived: boolean }>(
         `SELECT id, owner_id, archived_at IS NOT NULL AS archived FROM groups WHERE id = ANY($1::uuid[])`,
-        [[owned, alone, closed]],
+        [[theirs, owned, alone]],
       );
       const byId = new Map(groups.rows.map((g) => [g.id, g]));
-      expect(byId.get(owned)).toMatchObject({ owner_id: asked.id, archived: false });
-      expect(byId.get(alone)).toMatchObject({ owner_id: null, archived: true });
-      expect(byId.get(closed)).toMatchObject({ owner_id: user.id, archived: false });
-      expect((await call(asked, 'GET', `/groups/${owned}`)).json().myRole).toBe('owner');
-      // and out of those groups' live chat
-      expect(revoked.sort()).toEqual(
-        [theirs, owned, alone].map((id): [string, string] => [`group:${id}`, user.id]).sort(),
-      );
+      expect(byId.get(theirs)).toMatchObject({ owner_id: asker.id, archived: false });
+      expect(byId.get(owned)).toMatchObject({ owner_id: user.id, archived: false });
+      expect(byId.get(alone)).toMatchObject({ owner_id: user.id, archived: false });
+      expect((await call(user, 'GET', `/groups/${owned}`)).json()).toMatchObject({ myRole: 'owner', memberCount: 2 });
+      expect((await call(user, 'GET', `/groups/${theirs}/chat`)).statusCode).toBe(200);
+      // and nobody is taken out of a live chat
+      expect(revoked).toEqual([]);
       expect((await call(user, 'GET', '/me/notification-prefs')).json()).toMatchObject({ streak: false, friends: false });
       // out of this week's table (the row is kept, marked as left, so that
       // choosing to come back returns them to the same one)
@@ -559,39 +559,38 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
     });
 
     describe('groups', () => {
-      let openGroup = '';
       let strangersGroup = '';
       let friendsGroup = '';
 
       beforeAll(async () => {
-        const make = async (owner: Account, name: string, privacy: 'open' | 'invite') => {
-          const res = await call(owner, 'POST', '/groups', { name: `${name} ${suffix}`, privacy });
+        const make = async (owner: Account, name: string) => {
+          const res = await call(owner, 'POST', '/groups', { name: `${name} ${suffix}` });
           if (res.statusCode !== 200) throw new Error(`group ${name}: ${res.statusCode} ${res.body}`);
           return res.json().id as string;
         };
-        openGroup = await make(adult, 'Open', 'open');
-        strangersGroup = await make(adult, 'Strangers', 'invite');
-        friendsGroup = await make(friendOfMinor, 'Friends', 'invite');
+        strangersGroup = await make(adult, 'Strangers');
+        friendsGroup = await make(friendOfMinor, 'Friends');
       });
 
-      it('a minor cannot see, join or start an open group', async () => {
-        const join = await call(minor, 'POST', `/groups/${openGroup}/join`);
-        expect(join.statusCode).toBe(403);
-        expect(join.json().code).toBe('OPEN_GROUPS_ADULTS_ONLY');
+      it('a minor starts a group like anyone, and nobody of any age finds or joins one', async () => {
+        const started = await call(minor, 'POST', '/groups', { name: `Ours ${suffix}` });
+        expect(started.statusCode).toBe(200);
+        // an older app's "open" changes nothing: it is as hidden as any other group
+        const asked = await call(minor, 'POST', '/groups', { name: `Mine ${suffix}`, privacy: 'open' });
+        expect(asked.statusCode).toBe(200);
+        expect((await call(adult, 'GET', `/groups/${asked.json().id}`)).statusCode).toBe(404);
 
-        const start = await call(minor, 'POST', '/groups', { name: `Mine ${suffix}`, privacy: 'open' });
-        expect(start.statusCode).toBe(403);
-        // with no privacy given a group is open, so that is refused too
-        expect((await call(minor, 'POST', '/groups', { name: `Mine2 ${suffix}` })).statusCode).toBe(403);
-
-        expect((await call(minor, 'GET', '/groups')).json().groups).toEqual([]);
-        const seen = (await call(adult, 'GET', '/groups')).json().groups as Array<{ id: string }>;
-        expect(seen.map((g) => g.id)).toContain(openGroup);
-      });
-
-      it('a minor can start an invite-only group', async () => {
-        const res = await call(minor, 'POST', '/groups', { name: `Ours ${suffix}`, privacy: 'invite' });
-        expect(res.statusCode).toBe(200);
+        // no list of groups, and no way in by oneself: one answer whatever the age of whoever asks
+        expect((await call(minor, 'GET', '/groups')).json()).toEqual({ groups: [] });
+        expect((await call(adult, 'GET', '/groups')).json()).toEqual({ groups: [] });
+        const minorJoins = await call(minor, 'POST', `/groups/${friendsGroup}/join`);
+        const adultJoins = await call(other, 'POST', `/groups/${friendsGroup}/join`);
+        expect(answer(minorJoins)).toEqual(answer(adultJoins));
+        expect([minorJoins.statusCode, minorJoins.json().code]).toEqual([403, 'INVITE_ONLY']);
+        const minorLooks = await call(minor, 'GET', `/groups/${strangersGroup}`);
+        const adultLooks = await call(other, 'GET', `/groups/${strangersGroup}`);
+        expect(answer(minorLooks)).toEqual(answer(adultLooks));
+        expect([minorLooks.statusCode, minorLooks.json().code]).toEqual([404, 'GROUP_NOT_FOUND']);
       });
 
       // deliberately changed: this pinned a 403 NOT_ACCEPTING_INVITES for a
@@ -605,47 +604,38 @@ describe.skipIf(!DATABASE_URL)('age and minors (integration)', () => {
         expect(minorByStranger.statusCode).toBe(403);
         expect(minorByStranger.json().code).toBe('NOT_FRIENDS');
 
-        // a friend adds either to an invite-only group
+        // a friend adds either
         const minorByFriend = await call(friendOfMinor, 'POST', `/groups/${friendsGroup}/invite`, { userId: minor.id });
         const adultByFriend = await call(friendOfMinor, 'POST', `/groups/${friendsGroup}/invite`, { userId: other.id });
         expect(answer(minorByFriend)).toEqual(answer(adultByFriend));
         expect(minorByFriend.statusCode).toBe(200);
 
-        // and nobody is added to an open group, which anyone joins for themselves
-        await call(friendOfMinor, 'POST', `/groups/${openGroup}/join`);
-        await pool.query(`UPDATE group_members SET role = 'moderator' WHERE group_id = $1 AND user_id = $2`, [
-          openGroup,
-          friendOfMinor.id,
-        ]);
-        const minorIntoOpen = await call(friendOfMinor, 'POST', `/groups/${openGroup}/invite`, { userId: minor.id });
-        const adultIntoOpen = await call(friendOfMinor, 'POST', `/groups/${openGroup}/invite`, { userId: other.id });
-        expect(answer(minorIntoOpen)).toEqual(answer(adultIntoOpen));
-        expect(minorIntoOpen.json().code).toBe('OPEN_GROUP_NO_INVITES');
-
         const memberships = await pool.query(
           `SELECT group_id FROM group_members WHERE user_id = $1 AND group_id = ANY($2::uuid[])`,
-          [minor.id, [strangersGroup, openGroup]],
+          [minor.id, [strangersGroup]],
         );
         expect(memberships.rowCount).toBe(0);
       });
 
-      it('a minor chats in an invite-only group, but not in an open one joined before we knew', async () => {
+      it('a minor in a group a friend added them to chats there, and its members see one another whole', async () => {
         const inFriends = await call(minor, 'POST', `/groups/${friendsGroup}/chat`, { body: 'Silav!' });
         expect(inFriends.statusCode).toBe(200);
 
-        // a membership from before the age was known
-        await pool.query(`INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'member')`, [
-          openGroup,
-          minor.id,
-        ]);
-        const send = await call(minor, 'POST', `/groups/${openGroup}/chat`, { body: 'Silav!' });
-        expect(send.statusCode).toBe(403);
-        expect(send.json().code).toBe('OPEN_GROUPS_ADULTS_ONLY');
-        expect((await call(minor, 'GET', `/groups/${openGroup}/chat`)).statusCode).toBe(403);
-        // they can still leave
-        expect((await call(minor, 'POST', `/groups/${openGroup}/leave`)).statusCode).toBe(200);
+        // `other` is in it too and is no friend of the minor's: inside a group
+        // that changes nothing, since somebody each of them chose put them there
+        const forOther = (await call(other, 'GET', `/groups/${friendsGroup}`)).json();
+        expect(forOther.members.map((m: { userId: string }) => m.userId).sort()).toEqual([friendOfMinor.id, minor.id, other.id].sort());
+        expect(forOther.ownerId).toBe(friendOfMinor.id);
+        expect((await call(other, 'GET', `/groups/${friendsGroup}/chat`)).json().messages.map((m: { senderId: string }) => m.senderId)).toEqual([minor.id]);
+        const forMinor = (await call(minor, 'GET', `/groups/${friendsGroup}`)).json();
+        expect(forMinor.members).toHaveLength(3);
+        expect(forMinor).toMatchObject({ ownerId: friendOfMinor.id, memberCount: 3, myRole: 'member' });
 
-        expect((await call(adult, 'POST', `/groups/${openGroup}/chat`, { body: 'Silav!' })).statusCode).toBe(200);
+        // outside it, the group and its people stay hidden from everyone alike
+        expect((await call(adult, 'GET', `/groups/${friendsGroup}`)).statusCode).toBe(404);
+        // and the minor can leave like anyone
+        expect((await call(minor, 'POST', `/groups/${friendsGroup}/leave`)).statusCode).toBe(200);
+        expect((await call(minor, 'GET', `/groups/${friendsGroup}`)).statusCode).toBe(404);
       });
     });
   });

@@ -15,11 +15,10 @@ export type PushNotice = (userId: string, notification: Notification) => Promise
 export interface NoticeGroup {
   id: string;
   name: string;
-  privacy: 'open' | 'invite';
 }
 
 function notice(kind: GroupNoticeKind, group: NoticeGroup, title: string, body: string, data: Record<string, string> = {}): Notification {
-  return { category: 'friends', title, body, data: { kind, groupId: group.id, groupName: group.name, privacy: group.privacy, ...data } };
+  return { category: 'friends', title, body, data: { kind, groupId: group.id, groupName: group.name, ...data } };
 }
 
 /** A day as the English line says it: "5 November 2026". */
@@ -27,10 +26,9 @@ function day(at: Date): string {
   return at.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 }
 
-/** Removed, which leaves no ban: an open group they can join again, an invite-only one they can be added to again. */
+/** Removed, which leaves no ban: they can be added again, the way anyone comes into a group. */
 export function removedNotice(group: NoticeGroup): Notification {
-  const again = group.privacy === 'open' ? 'You can join again.' : 'An admin can add you again.';
-  return notice('group_removed', group, 'Removed from a group', `You were removed from ${group.name}. ${again}`);
+  return notice('group_removed', group, 'Removed from a group', `You were removed from ${group.name}. An admin can add you again.`);
 }
 
 const BAN_SPANS: Record<GroupBanDuration, string> = { '1d': 'for a day', '7d': 'for a week', perm: 'for good' };
@@ -53,13 +51,9 @@ export function requestNotice(group: NoticeGroup, count: number): Notification {
   return notice('group_request', group, 'Requests to come back', body, { count: String(count) });
 }
 
-/** Their request was accepted: back in, or free to join or be added again when a rule kept them from being put back. */
+/** Their request was accepted: back in, or free to be added again when a rule kept them from being put back. */
 export function approvedNotice(group: NoticeGroup, rejoined: boolean): Notification {
-  const body = rejoined
-    ? `You're back in ${group.name}.`
-    : group.privacy === 'open'
-      ? `You can join ${group.name} again.`
-      : `An admin can add you to ${group.name} again.`;
+  const body = rejoined ? `You're back in ${group.name}.` : `An admin can add you to ${group.name} again.`;
   return notice('group_request_approved', group, 'Request accepted', body, { rejoined: String(rejoined) });
 }
 

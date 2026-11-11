@@ -26,6 +26,7 @@ import { pass2fa } from '../test/admin-2fa.js';
 import { bornYearsAgo } from '../test/age.js';
 import { befriend } from '../test/social.js';
 import { countQueries } from '../test/query-count.js';
+import { removeCourses } from '../test/courses.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -171,7 +172,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       client.release();
     }
     await pool.query(`DELETE FROM game_content WHERE payload::text LIKE $1`, [`%${tag}%`]);
-    if (courseIds.length) await pool.query(`DELETE FROM courses WHERE id = ANY($1::uuid[])`, [courseIds]);
+    await removeCourses(pool, courseIds);
     for (const key of ['impostor:kmr', 'impostor:ckb', 'dont-say:kmr', 'dont-say:ckb']) await app.cache.del('mp-availability', key);
     await bustAvailability(app.cache);
     await bustGamePools(app.cache);
@@ -567,9 +568,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       // an import run twice adds nothing
       const again = await call(editor, 'POST', '/admin/game-content/import', { from: 'vocabulary', dialect: 'kmr' });
       expect(again.body.created).toBe(0);
-      // a learner is never dealt a starter draft
+      // a learner is never dealt a starter draft, and the admin answers them as a route that is not there
       const learner = await register('dslearner');
-      expect((await call(learner, 'GET', `/admin/game-content/vocabulary?dialect=kmr`)).status).toBe(403);
+      expect((await call(learner, 'GET', `/admin/game-content/vocabulary?dialect=kmr`)).status).toBe(404);
     });
   });
 });

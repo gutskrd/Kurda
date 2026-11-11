@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { canEditGroup, canManage, canModerateGroup, canSetRole, roleRank, type Role } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -12,6 +12,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
+import { EmptyState } from '../theme/EmptyState';
 import { showActions } from '../theme/actionSheet';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useTheme } from '../theme/ThemeProvider';
@@ -21,11 +22,12 @@ import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { ReportSheet } from '../reports/ReportSheet';
 import { SettingsNote, SettingsRow, SettingsSection } from '../settings/list';
-import { Pill } from './ClubsScreen';
+import { AddFriendsSheet } from './AddFriendsSheet';
 import { GroupAvatar } from './GroupAvatar';
 import { BanSheet } from './BanSheet';
 import { useClearChat } from './clearing';
 import { groupError } from './groupError';
+import { membersLine } from './memberCount';
 import { usePullRefresh } from '../net/usePullRefresh';
 import {
   deleteGroup,
@@ -37,23 +39,30 @@ import {
   type GroupDetail,
   type GroupMember,
 } from './api';
+import { Loading } from '../theme/Loading';
 
 /**
  * A group's own page (KUR-084): what it is, who is in it, and what you may do.
+ * A member's page only: nobody else is shown a group at all, so anyone else
+ * who lands here is told there is no such group.
  *
  * At the top the group as it presents itself — its picture in its rounded
- * square, its name, what it is about, open or invite-only and how many are in
- * it — and, for its owner and admins, "Edit group". Then the members, one
- * quiet row each: the face, the name, and Owner or Admin under it where that
- * is so. Nothing to tap on the row but the row itself and, where you may do
- * something about that person, a ⋯ at its end that lists only what you may —
- * so no row carries three buttons that crowd its name, and no button says
- * "Admin" when it means "make admin" — Remove and Ban among them for anyone
- * the reader outranks. For the owner and admins, the requests to come back
- * (with how many wait) and who is banned, each a page of its own. Last, the
- * things about the group itself: clear its chat (for oneself, or as its
- * owner or an admin for everyone), report it, leave it, or, for its owner,
- * delete it.
+ * square, its name, what it is about and how many are in it. Then, always in
+ * the same order, so the page reads the same for everyone and only grows with
+ * what the reader may do:
+ *
+ * - the members, one quiet row each: the face, the name, and Owner or Admin
+ *   under it where that is so. For the owner and admins "Add friends" leads
+ *   them, since adding a friend is the only way anyone comes in. Nothing to
+ *   tap on a row but the row itself and, where you may do something about
+ *   that person, a ⋯ at its end that lists only what you may — so no row
+ *   carries three buttons that crowd its name, and no button says "Admin"
+ *   when it means "make admin" — Remove and Ban among them for anyone the
+ *   reader outranks;
+ * - for the owner and admins: the requests to come back, only while somebody
+ *   asks (with how many wait); who is banned; and "Edit group";
+ * - clearing the chat (for oneself, or as its owner or an admin for everyone);
+ * - last, apart: report the group, leave it, or, for its owner, delete it.
  *
  * Who may do what comes from `@kurda/shared`, which is what the server decides
  * with: this screen only chooses what to show.
@@ -82,11 +91,18 @@ export function GroupMembersScreen({
   const [error, setError] = useState<string | null>(null);
   const [reporting, setReporting] = useState(false);
   const [banning, setBanning] = useState<GroupMember | null>(null);
+  const [adding, setAdding] = useState(false);
+  // the server answered that there is no such group for this reader (deleted, or they are not in it)
+  const [missing, setMissing] = useState(false);
 
   const load = useCallback(
     () =>
       groupDetail(client, groupId).then((res) => {
-        if (res.ok) setDetail(res.data);
+        if (res.ok) {
+          setDetail(res.data);
+          // someone banned is told a group's name and nothing of its people: this page is not theirs either
+          setMissing(res.data.myRole === null);
+        } else if (res.error.code === 'GROUP_NOT_FOUND' || res.error.status === 404) setMissing(true);
         else setError(describeError(res.error, t));
       }),
     [client, groupId, t],
@@ -142,8 +158,6 @@ export function GroupMembersScreen({
       });
     }
     const removable = myRole !== null && m.userId !== me && canManage(myRole, m.role);
-    // removed, they can come back by themselves (or be added again); banned, only by asking
-    const comeBack = detail?.privacy === 'invite' ? 'groups.removeConfirmInvite' : 'groups.removeConfirmOpen';
     showActions({
       title: m.username,
       cancel: t('common.cancel'),
@@ -155,7 +169,8 @@ export function GroupMembersScreen({
                 label: t('groups.removeMember'),
                 destructive: true,
                 onPress: () =>
-                  Alert.alert(t('groups.removeMember'), t(comeBack, { name: m.username, group: groupName }), [
+                  // removed, they can be added again; banned, they come back only by asking
+                  Alert.alert(t('groups.removeMember'), t('groups.removeConfirm', { name: m.username, group: groupName }), [
                     { text: t('common.cancel'), style: 'cancel' },
                     { text: t('groups.remove'), style: 'destructive', onPress: () => void act(m.userId, () => removeMember(client, groupId, m.userId)) },
                   ]),
@@ -193,15 +208,14 @@ export function GroupMembersScreen({
   const editable = canEditGroup(myRole);
   const moderator = canModerateGroup(myRole);
   const waiting = detail?.pendingRequests ?? 0;
-  const meta = detail
-    ? [detail.privacy === 'invite' ? t('groups.inviteGroup') : t('groups.openGroup'), t('groups.memberCount', { count: detail.memberCount })].join(' · ')
-    : '';
 
   return (
     <GradientBackground>
       <View style={styles.screen}>
         <ScreenHeader title={t('groups.info')} onBack={onExit} />
-        {detail === null ? (
+        {missing ? (
+          <EmptyState title={t('groups.missing.title')} body={t('groups.missing.body')} action={{ label: t('groups.missing.back'), onPress: onExit }} />
+        ) : detail === null ? (
           error ? (
             <Text style={[styles.error, { color: colors.danger }]}>{error}</Text>
           ) : (
@@ -215,12 +229,7 @@ export function GroupMembersScreen({
                 {detail.name}
               </Text>
               {detail.description ? <Text style={[styles.about, dir.free, styles.centred, { color: colors.textSecondary }]}>{detail.description}</Text> : null}
-              <Text style={[styles.meta, { color: colors.textSecondary }]}>{meta}</Text>
-              {editable ? (
-                <View style={styles.editRow}>
-                  <Pill label={t('groups.edit')} onPress={onEdit} />
-                </View>
-              ) : null}
+              <Text style={[styles.meta, { color: colors.textSecondary }]}>{membersLine(t, detail.memberCount)}</Text>
             </View>
 
             {error ? (
@@ -229,19 +238,9 @@ export function GroupMembersScreen({
               </Text>
             ) : null}
 
-            {moderator ? (
-              <SettingsSection>
-                <SettingsRow
-                  icon="user-plus"
-                  title={t('groups.requests.title')}
-                  badge={waiting > 0 ? { count: waiting, label: t('groups.requests.waiting', { count: waiting }) } : undefined}
-                  onPress={() => navigation.navigate('GroupRequests', { groupId })}
-                />
-                <SettingsRow icon="block" title={t('groups.bans.title')} onPress={() => navigation.navigate('GroupBans', { groupId })} />
-              </SettingsSection>
-            ) : null}
-
             <SettingsSection title={t('groups.members')} footer={editable ? t('groups.adminHint') : undefined}>
+              {/* the one way anyone comes into a group, so it leads the people who are in it */}
+              {moderator ? <SettingsRow icon="user-plus" title={t('groups.addFriends.title')} onPress={() => setAdding(true)} opens={false} /> : null}
               {members.map((m) => (
                 <MemberRow
                   key={m.userId}
@@ -254,6 +253,22 @@ export function GroupMembersScreen({
                 />
               ))}
             </SettingsSection>
+
+            {moderator ? (
+              <SettingsSection>
+                {/* only while somebody asks: an empty list is nothing to open */}
+                {waiting > 0 ? (
+                  <SettingsRow
+                    icon="mail"
+                    title={t('groups.requests.title')}
+                    badge={{ count: waiting, label: t('groups.requests.waiting', { count: waiting }) }}
+                    onPress={() => navigation.navigate('GroupRequests', { groupId })}
+                  />
+                ) : null}
+                <SettingsRow icon="block" title={t('groups.bans.title')} onPress={() => navigation.navigate('GroupBans', { groupId })} />
+                {editable ? <SettingsRow icon="pencil" title={t('groups.edit')} onPress={onEdit} /> : null}
+              </SettingsSection>
+            ) : null}
 
             {myRole !== null ? (
               <SettingsSection>
@@ -277,11 +292,26 @@ export function GroupMembersScreen({
                 )}
               </SettingsSection>
             ) : null}
-            {busy === 'leave' || busy === 'delete' ? <ActivityIndicator color={colors.textSecondary} style={styles.working} /> : null}
+            {busy === 'leave' || busy === 'delete' ? <Loading style={styles.working} /> : null}
           </ScrollView>
         )}
         {reporting ? (
           <ReportSheet visible target={{ type: 'group', groupId }} name={groupName} onClose={() => setReporting(false)} onLeftGroup={onLeft} />
+        ) : null}
+        {moderator && detail ? (
+          <AddFriendsSheet
+            visible={adding}
+            groupId={groupId}
+            memberIds={detail.members.map((m) => m.userId)}
+            onClose={() => {
+              setAdding(false);
+              void load();
+            }}
+            onFindPeople={() => {
+              setAdding(false);
+              navigation.navigate('Tabs', { screen: 'Search' });
+            }}
+          />
         ) : null}
         <BanSheet
           groupId={groupId}
@@ -333,7 +363,7 @@ function MemberRow({
         {role ? <Text style={[styles.memberRole, dir.text, { color: colors.textSecondary }]}>{role}</Text> : null}
       </View>
       {busy ? (
-        <ActivityIndicator color={colors.textSecondary} style={styles.more} />
+        <Loading style={styles.more} />
       ) : onMore ? (
         <Pressable onPress={onMore} hitSlop={4} accessibilityRole="button" accessibilityLabel={t('post.menu')} style={styles.more}>
           <Icon name="more" size={22} color={colors.textSecondary} />
@@ -374,7 +404,6 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.xl), textAlign: 'center', marginTop: spacing.sm },
   about: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   meta: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  editRow: { marginTop: spacing.sm },
   // under the picture everything is centred, whichever way it reads
   centred: { textAlign: 'center' },
   member: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingHorizontal: layout.gutter, minHeight: 60, paddingVertical: spacing.sm },

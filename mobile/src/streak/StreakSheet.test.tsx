@@ -92,6 +92,16 @@ describe('the streak sheet', () => {
     expect(within(ladder()).queryByText('Now')).toBeNull();
   });
 
+  it('says a freeze can be held one at a time, and two for a Hevalo+ member', () => {
+    open(9);
+    expect(screen.getByText(/You can hold one at a time\.$/)).toBeTruthy();
+    cleanup();
+    renderWithProviders(<StreakSheet streak={{ ...streak(9), freezes: 2, maxFreezes: 2 }} onClose={() => undefined} />);
+    expect(screen.getByText(/With Hevalo\+ you can hold 2 at a time\.$/)).toBeTruthy();
+    expect(screen.queryByText(/hold one at a time/)).toBeNull();
+    expect(screen.getByLabelText('2 Streak freezes')).toBeTruthy();
+  });
+
   it('burns the blaze at 120 days, with the Newroz fire still to come', () => {
     open(120);
     expect(rungs()[5]).toBe('Blaze, from day 100, your fire now');

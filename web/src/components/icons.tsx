@@ -252,6 +252,8 @@ export const CropIcon = named(Crop, 22);
 export const FilterIcon = named(MagicWand, 22);
 export const SlidersIcon = named(SlidersHorizontal, 22);
 export const DrawIcon = named(Pencil, 22);
+/** Something written that can be put right: the address a code was sent to. */
+export const EditIcon = named(Pencil, 22);
 export const BookmarkIcon = named(BookmarkSimple, 22);
 /** Something is waiting for you to look at it. */
 export const BellIcon = named(Bell, 22);

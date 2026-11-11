@@ -1,5 +1,5 @@
 import { Fragment, useState, type ReactNode } from 'react';
-import { foldForSearch } from '@kurda/shared';
+import { PROVIDER, foldForSearch } from '@kurda/shared';
 import { useNavigation } from '@react-navigation/native';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
@@ -19,6 +19,7 @@ import { ACCENT_LABEL } from '../keyboard/KeyboardSettings';
 import { useKeyboardPrefs } from '../keyboard/prefs';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
 import { SearchField } from '../theme/SearchField';
+import { useConfirmDelete } from '../auth/useConfirmDelete';
 import { LEGAL_URLS, SUPPORT_EMAIL, contactSupport, openLegal } from '../legal/links';
 import { useMyAccount } from '../settings/account';
 import { useSettingsAttention } from '../settings/attention';
@@ -53,7 +54,7 @@ interface Entry {
  * anything on the page behind it ("accent" finds Keyboard and accents).
  */
 export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
-  const { client, logout, deleteAccount, isGuest } = useAuth();
+  const { client, logout, isGuest } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { preference, colors } = useTheme();
   const { t, locale } = useI18n();
@@ -121,25 +122,10 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
    * account for a grace period and signing back in cancels it, so we warn,
    * sign out, and then say it again over the welcome screen: leaving without
    * a word read as the app having crashed, and it is the one moment the way
-   * back has to be clear.
+   * back has to be clear (auth/useConfirmDelete, shared with the screens a
+   * new account waits at).
    */
-  const confirmDelete = () => {
-    // a guest has no grace period: nobody could sign in to it again, so the server closes it at once
-    Alert.alert(t('settings.delete.confirmTitle'), isGuest ? t('settings.delete.guestWarning') : t('settings.delete.warning'), [
-      { text: t('common.cancel'), style: 'cancel' },
-      {
-        text: t('settings.delete.confirm'),
-        style: 'destructive',
-        onPress: () => {
-          void deleteAccount().then((result) => {
-            if (!result.ok) Alert.alert(t('settings.delete.failed'), result.message);
-            else if (result.graceDays > 0) Alert.alert(t('settings.delete.scheduledTitle'), t('settings.delete.scheduledBody', { days: result.graceDays }));
-            else Alert.alert(t('settings.delete.guestDone'));
-          });
-        },
-      },
-    ]);
-  };
+  const confirmDelete = useConfirmDelete();
 
   /*
    * A guest has no email and no password, so logging out is the end of the
@@ -352,6 +338,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           key: 'credits',
           terms: [t('settings.credits.title')],
           row: <SettingsRow icon="heart" title={t('settings.credits.title')} onPress={page('credits')} />,
+        },
+        {
+          // the business's registration, at the foot of the legal rows the way an imprint closes a page;
+          // the name, address and the rest are on the About page the row above opens
+          key: 'kvk',
+          terms: [t('settings.kvk'), PROVIDER.kvk],
+          row: <SettingsRow icon="place-work" title={t('settings.kvk')} value={PROVIDER.kvk} />,
         },
       ],
     },

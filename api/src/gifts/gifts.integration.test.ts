@@ -120,13 +120,9 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       [from.id],
     )).rows;
 
-  const group = async (name: string, owner: Account, members: Account[], privacy: 'invite' | 'open' = 'invite') => {
+  const group = async (name: string, owner: Account, members: Account[]) => {
     const id = (
-      await pool.query<{ id: string }>(`INSERT INTO groups (name, privacy, owner_id) VALUES ($1, $2, $3) RETURNING id`, [
-        `${name} ${suffix}`,
-        privacy,
-        owner.id,
-      ])
+      await pool.query<{ id: string }>(`INSERT INTO groups (name, owner_id) VALUES ($1, $2) RETURNING id`, [`${name} ${suffix}`, owner.id])
     ).rows[0]!.id;
     groupIds.push(id);
     await pool.query(`INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'owner')`, [id, owner.id]);

@@ -178,7 +178,7 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
     ]);
     const group = (
       await pool.query<{ id: string }>(
-        `INSERT INTO groups (name, privacy, owner_id) VALUES ($1, 'invite', $2) RETURNING id`,
+        `INSERT INTO groups (name, owner_id) VALUES ($1, $2) RETURNING id`,
         [`Child ${suffix} ${tag}`, child.id],
       )
     ).rows[0]!.id;
@@ -426,7 +426,7 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
     );
     const group = (
       await pool.query<{ id: string }>(
-        `INSERT INTO groups (name, privacy, owner_id) VALUES ($1, 'invite', $2) RETURNING id`,
+        `INSERT INTO groups (name, owner_id) VALUES ($1, $2) RETURNING id`,
         [`Child ${suffix} gifts`, friend.id],
       )
     ).rows[0]!.id;

@@ -111,7 +111,7 @@ describe('Profile view (full, read-only)', () => {
     expect(bg?.src).toContain('/cosmetics/backgrounds/b.webp');
     const avatar = document.querySelector('img.pc-face-img') as HTMLImageElement | null;
     expect(avatar?.src).toBe('https://cdn.test/a.png');
-    expect(screen.getByText('Premium')).toBeInTheDocument();
+    expect(screen.getByText('Hevalo+')).toBeInTheDocument();
     expect(screen.getByText('River Song')).toBeInTheDocument();
     // the level badge on the card says 3
     expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 3');

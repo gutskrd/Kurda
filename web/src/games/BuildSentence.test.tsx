@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LAST_LETTER_LEARN_ENTRY, type SentenceItemView, type SentenceLadderView, type SoloSessionView } from '@kurda/shared';
 import { BuildSentence, difficultyForStep } from './BuildSentence';
@@ -195,14 +195,15 @@ describe('Learn’s games list', () => {
     expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
   });
 
-  it('leaves it out while there is not enough approved content in the learner’s Kurdish', async () => {
+  it('shows it as coming soon, with no way in, while there is not enough approved content in the learner’s Kurdish', async () => {
     server(session('kmr', [['a']]), () => ({}), {}, false);
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
     // once the count has come back, and said no
-    await waitFor(() => expect(vi.mocked(fetch).mock.calls.some(([url]) => String(url).includes('/games/availability'))).toBe(true));
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(screen.queryByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeNull();
+    const card = (await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).closest('article')!;
+    expect(card).toHaveClass('is-soon');
+    expect(within(card).getByText('Coming soon')).toBeInTheDocument();
+    expect(within(card).queryByRole('link', { name: 'Play' })).toBeNull();
   });
 
   it('lists The Last Letter where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
@@ -216,6 +217,9 @@ describe('Learn’s games list', () => {
     server(session('kmr', [['a']]), () => ({}), {}, true, false);
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeInTheDocument();
-    expect(screen.queryByRole('heading', { name: 'The Last Letter' })).toBeNull();
+    // still listed, as coming soon, after the games that can be played
+    const soon = screen.getByRole('heading', { name: 'The Last Letter' }).closest('article')!;
+    expect(within(soon).getByText('Coming soon')).toBeInTheDocument();
+    expect(within(soon).queryByRole('link', { name: 'Play' })).toBeNull();
   });
 });

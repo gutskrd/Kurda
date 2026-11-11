@@ -96,6 +96,21 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
     expect((await wallet.balances(userId)).gems).toBe(200);
   });
 
+  it('a refund of a purchase that was held takes nothing: it never paid anything out', async () => {
+    const t = txn('heldrefund');
+    await iap.redeem(userId, 'apple', t, product);
+    const transactionId = JSON.parse(t).transactionId as string;
+    // as the fraud rules leave it: the receipt held, its Gems never credited
+    await pool.query(`UPDATE iap_receipts SET status = 'held' WHERE platform = 'apple' AND transaction_id = $1`, [transactionId]);
+    const before = (await wallet.balances(userId)).gems;
+
+    expect(await iap.refund('apple', transactionId)).toEqual({ found: true, clawedBack: 0 });
+    // the Gems the buyer holds from other purchases are theirs
+    expect((await wallet.balances(userId)).gems).toBe(before);
+    const row = await pool.query<{ status: string }>(`SELECT status FROM iap_receipts WHERE platform = 'apple' AND transaction_id = $1`, [transactionId]);
+    expect(row.rows[0]?.status).toBe('refunded');
+  });
+
   it('refund never drives the balance negative (caps at what remains)', async () => {
     // fresh user with a single pack, most of it spent before the refund
     const reg = await app.inject({

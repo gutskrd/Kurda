@@ -146,7 +146,8 @@ export function cosmeticArtUrl(assetKey: string, publicUrl: PublicUrl): string |
  */
 export function cosmeticAssetUrl(category: string, assetKey: string | null, publicUrl: PublicUrl): string | null {
   if (!assetKey) return null;
-  if (category === 'background' || category === 'icon') return cosmeticArtUrl(assetKey, publicUrl);
+  // (a frame bought in the shop is a picture the site ships too; a season frame has none, and is drawn by the apps)
+  if (category === 'background' || category === 'icon' || category === 'frame') return cosmeticArtUrl(assetKey, publicUrl);
   // any other item (a power-up, a streak freeze, a tag…) may be given a square
   // picture uploaded in the admin; without one the apps draw its glyph
   if (uploadedArtKind(assetKey) === 'icon') return publicUrl(assetKey);

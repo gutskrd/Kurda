@@ -1,7 +1,6 @@
 import { useState, type ReactNode, type Ref } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { HevaloWindow } from '../../characters/HevaloWindow';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { SpeechBubble } from '../../auth/guide/HevaloGuide';
@@ -239,38 +238,12 @@ const TEXT_CONTENT_TYPE = {
   none: undefined,
 } as const;
 
-export function SubmitButton(props: { label: string; busy: boolean; onPress: () => void }) {
-  const { colors } = useTheme();
-  return (
-    <Pressable
-      onPress={props.onPress}
-      disabled={props.busy}
-      accessibilityRole="button"
-      accessibilityState={{ disabled: props.busy, busy: props.busy }}
-      testID="submit"
-      style={({ pressed }) => [styles.buttonWrap, { opacity: props.busy ? 0.7 : pressed ? 0.92 : 1 }]}
-    >
-      <LinearGradient
-        colors={[colors.primary, colors.primaryStrong]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 0, y: 1 }}
-        style={[styles.button, { borderColor: colors.clayBorder, shadowColor: colors.softShadow }]}
-      >
-        {props.busy ? (
-          <ActivityIndicator color={colors.textOnPrimary} />
-        ) : (
-          <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{props.label}</Text>
-        )}
-      </LinearGradient>
-    </Pressable>
-  );
-}
-
-export function LinkText(props: { label: string; onPress: () => void }) {
+/** A link under a form. `destructive` is for the one that cannot be undone (deleting the account): the screen's one red. */
+export function LinkText(props: { label: string; onPress: () => void; destructive?: boolean }) {
   const { colors } = useTheme();
   return (
     <Pressable onPress={props.onPress} accessibilityRole="button" style={styles.link}>
-      <Text style={[styles.linkText, { color: colors.primary }]}>{props.label}</Text>
+      <Text style={[styles.linkText, { color: props.destructive ? colors.danger : colors.primary }]}>{props.label}</Text>
     </Pressable>
   );
 }
@@ -315,18 +288,6 @@ const styles = StyleSheet.create({
   affixStart: { left: spacing.sm },
   error: { fontSize: typography.sizes.xs, marginTop: spacing.xs },
   formError: { fontSize: typography.sizes.sm, marginBottom: spacing.md, textAlign: 'center' },
-  buttonWrap: { marginTop: spacing.sm },
-  button: {
-    borderRadius: radii.pill,
-    borderWidth: 1,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    elevation: 6,
-  },
-  buttonText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   /**
    * A link is still something a finger has to land on.
    *

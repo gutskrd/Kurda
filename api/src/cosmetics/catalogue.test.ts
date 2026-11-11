@@ -31,6 +31,7 @@ interface Manifest {
   avatars: { key: string }[];
   icons: Row[];
   backgrounds: Row[];
+  frames: Row[];
 }
 interface Piece {
   key?: string;
@@ -41,9 +42,11 @@ interface Piece {
 interface Generator {
   BACKGROUNDS: Piece[];
   ICONS: Piece[];
+  FRAMES: Piece[];
   STICKERS: Piece[];
   backgroundFile(piece: Piece, i: number): string;
   iconFile(piece: Piece, i: number): string;
+  frameFile(piece: Piece, i: number): string;
   stickerFile(piece: Piece): string;
 }
 type MadeRow = [string, 'background' | 'icon', string, string, string, number, boolean, number];
@@ -55,6 +58,10 @@ interface Migration {
 /** A later migration that renamed pieces 1751000161000 put on sale, by their art. */
 interface Renames {
   RENAMED: { assetKey: string; from: [string, string]; to: [string, string] }[];
+}
+/** The migration that put the frames on sale: [sku, name, description, assetKey, price, displayOrder]. */
+interface FramesMigration {
+  FRAMES: [string, string, string, string, number, number][];
 }
 
 const manifest = JSON.parse(readFileSync(join(ROOT, 'api', 'content', 'cosmetics.json'), 'utf8')) as Manifest;
@@ -70,16 +77,40 @@ describe('the cosmetic catalogue', () => {
   let gen: Generator;
   let migration: Migration;
   let renames: Renames[];
+  let framesOnSale: FramesMigration;
 
   beforeAll(async () => {
     gen = (await import(pathToFileURL(join(ROOT, 'scripts', 'generate-cosmetic-art.mjs')).href)) as Generator;
     migration = (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000161000_code-made-cosmetics.js')).href)) as Migration;
-    renames = [(await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000179000_tea-glass-and-sun-seal.js')).href)) as Renames];
+    // in the order they were applied: a piece renamed twice goes through both names
+    renames = [
+      (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000179000_tea-glass-and-sun-seal.js')).href)) as Renames,
+      (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000430000_tea-is-cay.js')).href)) as Renames,
+    ];
+    framesOnSale = (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000431000_frames-to-buy.js')).href)) as FramesMigration;
   });
 
   it('names a file that exists for every asset key', () => {
     const missing = rows().filter((r) => !existsSync(join(COSMETICS, r.assetKey)));
     expect(missing.map((r) => `${r.sku} → ${r.assetKey}`)).toEqual([]);
+  });
+
+  it('sells the frames the generator draws, under its names, each a file that ships and nothing in the folder besides', () => {
+    const drawn = gen.FRAMES.map((p, i) => ({ sku: `frame-made-${p.key}`, file: gen.frameFile(p, i), ku: p.ku, en: p.en }));
+    const selling = manifest.frames.map((r) => ({ sku: r.sku, file: `web/public/cosmetics/${r.assetKey}`, ku: r.name, en: r.description }));
+    expect(selling).toEqual(drawn);
+    expect(files('frames').sort()).toEqual(manifest.frames.map((r) => r.assetKey).sort());
+    for (const r of manifest.frames) {
+      // dearer than an icon, and bought outright: a frame shows only while it is owned
+      expect(r.price, r.sku).toBeGreaterThanOrEqual(1200);
+      expect(r.price, r.sku).toBeLessThanOrEqual(2000);
+      expect(r.premiumOnly, r.sku).toBe(false);
+    }
+  });
+
+  it('is the list of frames migration 1751000431000 puts on sale', () => {
+    const fromManifest = manifest.frames.map((r) => [r.sku, r.name, r.description ?? '', r.assetKey, r.price, r.displayOrder]);
+    expect(framesOnSale.FRAMES).toEqual(fromManifest);
   });
 
   it('has a row for every background and icon on disk', () => {

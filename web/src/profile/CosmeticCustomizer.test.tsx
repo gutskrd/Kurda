@@ -129,7 +129,7 @@ describe('CosmeticCustomizer', () => {
     expect((buy?.body as { idempotencyKey: string }).idempotencyKey.length).toBeGreaterThanOrEqual(8);
   });
 
-  it('offers a free item to everyone, even with no Zêr, rather than marking it Premium', async () => {
+  it('offers a free item to everyone, even with no Zêr, rather than marking it Hevalo+', async () => {
     const calls: Array<{ url: string; body: unknown }> = [];
     vi.stubGlobal(
       'fetch',
@@ -155,7 +155,7 @@ describe('CosmeticCustomizer', () => {
     renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
 
     const freeTile = (await screen.findByText('Daybreak')).closest('figure')!;
-    expect(within(freeTile).queryByText('Premium')).not.toBeInTheDocument();
+    expect(within(freeTile).queryByText('Hevalo+')).not.toBeInTheDocument();
     const get = within(freeTile).getByRole('button', { name: 'Get it free' });
     expect(get).toBeEnabled();
     // a priced one still needs the Zêr
@@ -173,7 +173,7 @@ describe('CosmeticCustomizer', () => {
     expect(await screen.findByText('No backgrounds available yet.')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('tab', { name: /Icons/ }));
     expect(screen.getByText('No icons available yet.')).toBeInTheDocument();
-    // and where a frame comes from, since none can be bought
+    // and where a frame comes from, when the shop has none to sell either
     await userEvent.click(screen.getByRole('tab', { name: /Frames/ }));
     expect(screen.getByText(/No frames yet/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'See this season' })).toHaveAttribute('href', '/app/season');
@@ -186,7 +186,7 @@ describe('CosmeticCustomizer', () => {
     renderApp(<CosmeticCustomizer me={withIcon} onChanged={() => {}} />, ['/app/profile']);
 
     await userEvent.click(await screen.findByRole('tab', { name: /Icons/ }));
-    const toggle = screen.getByRole('checkbox', { name: /show premium icon/i });
+    const toggle = screen.getByRole('checkbox', { name: /show the icon on my profile/i });
     expect(toggle).toBeChecked();
     await userEvent.click(toggle);
 
@@ -200,7 +200,7 @@ describe('CosmeticCustomizer', () => {
     renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile']);
     await userEvent.click(await screen.findByRole('tab', { name: /Icons/ }));
     await screen.findByText('No icons available yet.');
-    expect(screen.queryByRole('checkbox', { name: /show premium icon/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: /show the icon on my profile/i })).not.toBeInTheDocument();
   });
 
   it('files your cosmetics under tabs with counts, what you own first and badged', async () => {
@@ -259,6 +259,45 @@ describe('CosmeticCustomizer', () => {
     await userEvent.click(within(frame).getByRole('button', { name: /Take Gir season frame off/ }));
     expect(await within(frame).findByText('Owned')).toBeInTheDocument();
     expect(calls.filter((c) => c.url.includes('/me/cosmetics/frame')).map((c) => c.body)).toEqual([{ sku: 'frame_rank_gir' }, { sku: null }]);
+  });
+
+  it('sells the shop’s frames on the Frames tab, each round your own face, and wears one that is owned', async () => {
+    const calls: Array<{ url: string; method: string; body: unknown }> = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit): Promise<Response> => {
+        const body = init?.body ? JSON.parse(init.body as string) : null;
+        calls.push({ url, method: init?.method ?? 'GET', body });
+        if (url.includes('/me/cosmetics/frame')) return jsonResponse(200, { frameSku: body?.sku ?? null });
+        if (url.includes('/me/inventory')) {
+          return jsonResponse(200, {
+            items: [{ sku: 'frame-made-genim', name: 'Xeleka Genim', category: 'frame', quantity: 1, premiumOnly: false, assetUrl: '/cosmetics/frames/made-02-genim.png' }],
+          });
+        }
+        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 3000, gems: 0 } });
+        if (url.includes('/users/1')) return jsonResponse(200, { userId: '1', username: 'ada', frameSku: null, frameUrl: null });
+        if (url.includes('/shop')) {
+          return jsonResponse(200, {
+            items: [{ sku: 'frame-made-lale', name: 'Xeleka Laleyan', description: 'Tulip wreath', category: 'frame', currency: 'zer', price: 1400, isUnique: true, premiumOnly: false, assetUrl: '/cosmetics/frames/made-01-lale.png' }],
+          });
+        }
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<CosmeticCustomizer me={me} onChanged={() => {}} />, ['/app/profile/edit']);
+    await userEvent.click(await screen.findByRole('tab', { name: /Frames/ }));
+
+    // the one that is owned first, then the one for sale; each by its own name, as a ring round a face
+    expect(names()).toEqual(['Xeleka Genim', 'Xeleka Laleyan']);
+    const owned = screen.getByText('Xeleka Genim', { selector: '.cosmetic-name' }).closest('figure')!;
+    expect(owned.querySelector('.art-frame.is-made img.art-frame-ring')).toHaveAttribute('src', '/cosmetics/frames/made-02-genim.png');
+    const selling = screen.getByText('Xeleka Laleyan', { selector: '.cosmetic-name' }).closest('figure')!;
+    expect(selling.querySelector('.art-frame.is-made img.art-frame-ring')).toHaveAttribute('src', '/cosmetics/frames/made-01-lale.png');
+    expect(within(selling).getByRole('button', { name: /1,400/ })).toBeEnabled();
+
+    await userEvent.click(within(owned).getByRole('button', { name: 'Equip' }));
+    expect(await within(owned).findByText('Equipped')).toBeInTheDocument();
+    expect(calls.find((c) => c.url.includes('/me/cosmetics/frame'))).toMatchObject({ method: 'PUT', body: { sku: 'frame-made-genim' } });
   });
 
   it('knows which frame is worn, from your own profile', async () => {

@@ -1,6 +1,6 @@
 {
   "ios": {
-    "NSPhotoLibraryUsageDescription": "Hevalo fotoğraflarına yalnızca profil fotoğrafın, bir caps ya da görselli bir gönderi için fotoğraf seçtiğinde erişir.",
+    "NSPhotoLibraryUsageDescription": "Hevalo fotoğraflarına yalnızca profil fotoğrafın, bir grubun fotoğrafı, bir caps ya da görselli bir gönderi için fotoğraf seçtiğinde erişir.",
     "NSMicrophoneUsageDescription": "Hevalo mikrofonu yalnızca sesli not kaydederken ya da bir konuşma alıştırması yaparken kullanır."
   }
 }

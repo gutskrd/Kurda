@@ -1,10 +1,10 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { ScrollView, StyleSheet, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme/ThemeProvider';
+import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { radii, spacing, typography } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { useI18n } from '../i18n/I18nContext';
 import { reportRenderError } from './crashReporting';
@@ -72,21 +72,8 @@ function CrashScreen({ error, onRetry }: { error: Error; onRetry: () => void }) 
       */}
       {__DEV__ ? <Text style={[styles.detail, { color: colors.textSecondary }]}>{String(error.message)}</Text> : null}
 
-      <Pressable
-        onPress={onRetry}
-        accessibilityRole="button"
-        testID="crash-retry"
-        style={({ pressed }) => [styles.buttonWrap, { opacity: pressed ? 0.92 : 1 }]}
-      >
-        <LinearGradient
-          colors={[colors.primary, colors.primaryStrong]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 0, y: 1 }}
-          style={[styles.button, { borderColor: colors.clayBorder, shadowColor: colors.softShadow }]}
-        >
-          <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('common.retry')}</Text>
-        </LinearGradient>
-      </Pressable>
+      {/* the app's own primary button: the boundary sits inside the providers, so the palette it needs is there */}
+      <ClayButton label={t('common.retry')} tone="primary" size="large" onPress={onRetry} style={styles.buttonWrap} testID="crash-retry" />
     </ScrollView>
   );
 }
@@ -97,14 +84,4 @@ const styles = StyleSheet.create({
   body: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
   detail: { fontSize: typography.sizes.xs, textAlign: 'center', fontStyle: 'italic' },
   buttonWrap: { alignSelf: 'stretch', marginTop: spacing.md },
-  button: {
-    borderRadius: radii.lg,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    shadowOpacity: 0.25,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  buttonText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });

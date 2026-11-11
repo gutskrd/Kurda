@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   canEditGroup,
   canManage,
@@ -15,17 +15,19 @@ import { describeError } from '../lib/api';
 import type { ApiError, GroupDetail, GroupMember } from '../lib/types';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
-import { BlockIcon, DrawIcon, FlagIcon, HostIcon, RemovePersonIcon, SafetyIcon, SignOutIcon, TrashIcon, UserIcon } from '../components/icons';
+import { BlockIcon, DrawIcon, FlagIcon, HostIcon, InviteIcon, RemovePersonIcon, SafetyIcon, SignOutIcon, TrashIcon, UserIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
 import { ReportSheet } from '../reports/ReportSheet';
 import { useT } from '../i18n/I18nProvider';
 import { GroupAvatar } from './GroupAvatar';
 import { GroupEdit } from './GroupEdit';
 import { GroupAsk } from './GroupAsk';
+import { AddFriendsSheet } from './AddFriendsSheet';
 import { BanSheet } from './BanSheet';
 import { OptionsMenu, type MenuItem } from './OptionsMenu';
 import { BansSection, RequestsSection, useModeration } from './GroupModeration';
 import { announceGroupsChanged } from './groupsChanged';
+import { membersLine } from './memberCount';
 
 /** Something that cannot be taken back, waiting for a yes. */
 type Ask =
@@ -37,37 +39,43 @@ type Ask =
 
 /**
  * A group's own page, opened from its thread: what it is, who is in it, and
- * what you may do about it.
+ * what you may do about it. A member's page only: nobody else is shown a
+ * group at all.
  *
- * At the top the group itself — its picture, name, description, whether
- * anyone can join and how many have — and, for the owner and the admins, the
- * way to change those. Then the members, one plain row each: a face, a name,
- * and a quiet word under it for the owner and the admins. Nothing to press on
- * the row but the person: what you may do about somebody (make them an admin,
- * hand them the group, remove or ban them) waits behind a ⋯ at its end, and
- * only when there is something. The rules are @kurda/shared's, which the
- * server decides with too, so nothing is offered that would be refused.
+ * At the top the group itself — its picture, name, description and how many
+ * are in it. Then, always in the same order, so the page reads the same for
+ * everyone and only grows with what you may do:
  *
- * The owner and the admins also see who asks to come back — above the
- * members, since each is waiting on them — and, under the members, who is
- * banned.
+ * - the members, one plain row each: a face, a name, and a quiet word under it
+ *   for the owner and the admins. For the owner and the admins "Add friends"
+ *   leads the list, since adding a friend is the only way anyone comes in.
+ *   Nothing to press on a row but the person: what you may do about somebody
+ *   (make them an admin, hand them the group, remove or ban them) waits behind
+ *   a ⋯ at its end, and only when there is something. The rules are
+ *   @kurda/shared's, which the server decides with too, so nothing is offered
+ *   that would be refused;
+ * - who asks to come back, for the owner and the admins, and only while
+ *   somebody does; then who is banned;
+ * - what is about the group itself, apart at the end: edit it (the owner and
+ *   the admins), report it, leave it, or for its owner delete it.
  *
  * Anything that cannot be undone — removing someone, handing on the group,
  * leaving it, deleting it, turning a request down, lifting a ban — asks first,
- * in a step of its own with the plain consequences and Cancel beside it. What
- * is about the group rather than its members (report, leave, delete) sits at
- * the end, apart.
+ * in a step of its own with the plain consequences and Cancel beside it.
  */
 export function GroupInfo({
   detail,
   onChanged,
   onLeft,
+  showRequests = false,
 }: {
   detail: GroupDetail;
   /** reload the group (its name, picture and roster) after a change */
   onChanged: () => Promise<void>;
   /** you are no longer in it (left, or deleted it): whatever showed it goes */
   onLeft: () => void;
+  /** opened to answer the requests to come back: they are brought into view */
+  showRequests?: boolean;
 }): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
@@ -80,6 +88,7 @@ export function GroupInfo({
   const [done, setDone] = useState<string | null>(null);
   const [reporting, setReporting] = useState(false);
   const [banning, setBanning] = useState<GroupMember | null>(null);
+  const [adding, setAdding] = useState(false);
   /** turning a request down stops that person's requests too */
   const [stopRequests, setStopRequests] = useState(false);
 
@@ -87,6 +96,17 @@ export function GroupInfo({
   const mayEdit = canEditGroup(myRole);
   const moderates = canModerateGroup(myRole);
   const moderation = useModeration(detail.id, moderates);
+  // the list once it has come, the group's own count until then
+  const waiting = moderation.requests?.length ?? detail.pendingRequests ?? 0;
+
+  // the requests sit under the members: whoever came to answer them is taken there, once
+  const requestsRef = useRef<HTMLDivElement>(null);
+  const shownRequests = useRef(false);
+  useEffect(() => {
+    if (!showRequests || shownRequests.current || !requestsRef.current) return;
+    shownRequests.current = true;
+    requestsRef.current.scrollIntoView?.({ block: 'start' });
+  }, [showRequests, waiting]);
 
   async function act(
     run: () => Promise<{ ok: boolean; error?: ApiError }>,
@@ -247,17 +267,7 @@ export function GroupInfo({
             {detail.description}
           </p>
         )}
-        <p className="ginfo-meta">
-          {detail.privacy === 'invite' ? t('groups.inviteGroup') : t('groups.openGroup')}
-          {' · '}
-          {t('groups.memberCount', { count: detail.memberCount ?? detail.members.length })}
-        </p>
-        {mayEdit && (
-          <Button variant="secondary" size="sm" className="ginfo-edit" onClick={() => setEditing(true)}>
-            <DrawIcon size={16} />
-            {t('groups.edit')}
-          </Button>
-        )}
+        <p className="ginfo-meta">{membersLine(t, detail.memberCount ?? detail.members.length)}</p>
       </header>
 
       {error && (
@@ -266,24 +276,16 @@ export function GroupInfo({
         </div>
       )}
 
-      {moderates && (
-        <RequestsSection
-          requests={moderation.requests}
-          waiting={detail.pendingRequests ?? 0}
-          error={moderation.error}
-          busy={busy}
-          onApprove={(r) => void approve(r)}
-          onDecline={(r) => {
-            setStopRequests(false);
-            setAsk({ kind: 'decline', request: r });
-          }}
-        />
-      )}
-
       <section className="ginfo-section" aria-labelledby="ginfo-members">
         <h3 className="ginfo-section-title" id="ginfo-members">
           {t('groups.members')}
         </h3>
+        {moderates && (
+          <Button variant="secondary" size="sm" className="ginfo-add" aria-haspopup="dialog" onClick={() => setAdding(true)}>
+            <InviteIcon size={16} />
+            {t('groups.addFriends')}
+          </Button>
+        )}
         {mayEdit && <p className="ginfo-hint">{t('groups.adminHint')}</p>}
         <ul className="ginfo-members">
           {members.map((m) => {
@@ -323,6 +325,22 @@ export function GroupInfo({
         </ul>
       </section>
 
+      {moderates && waiting > 0 && (
+        <div ref={requestsRef}>
+          <RequestsSection
+            requests={moderation.requests}
+            waiting={waiting}
+            error={moderation.error}
+            busy={busy}
+            onApprove={(r) => void approve(r)}
+            onDecline={(r) => {
+              setStopRequests(false);
+              setAsk({ kind: 'decline', request: r });
+            }}
+          />
+        </div>
+      )}
+
       {moderates && (
         <BansSection
           bans={moderation.bans}
@@ -333,6 +351,14 @@ export function GroupInfo({
       )}
 
       <ul className="ginfo-end">
+        {mayEdit && (
+          <li>
+            <button type="button" className="ginfo-end-row" onClick={() => setEditing(true)}>
+              <DrawIcon size={18} />
+              {t('groups.edit')}
+            </button>
+          </li>
+        )}
         {myRole !== 'owner' && (
           <li>
             <button type="button" className="ginfo-end-row" onClick={() => setReporting(true)}>
@@ -374,6 +400,16 @@ export function GroupInfo({
           onLeft();
         }}
       />
+      {moderates && (
+        <AddFriendsSheet
+          open={adding}
+          groupId={detail.id}
+          groupName={detail.name}
+          memberIds={new Set(detail.members.map((m) => m.userId))}
+          onClose={() => setAdding(false)}
+          onAdded={() => void onChanged()}
+        />
+      )}
       <BanSheet
         groupId={detail.id}
         groupName={detail.name}
@@ -405,8 +441,8 @@ function askWords(
         body: (
           <>
             <p>{t('groups.removeFrom', { name, group: detail.name })}</p>
-            {/* removed is not banned: they can come back, and are told how */}
-            <p>{detail.privacy === 'invite' ? t('groups.remove.canBeAdded', { name }) : t('groups.remove.canJoin', { name })}</p>
+            {/* removed is not banned: they can be added again, and are told so */}
+            <p>{t('groups.remove.canBeAdded', { name })}</p>
           </>
         ),
         action: t('groups.removeMember'),

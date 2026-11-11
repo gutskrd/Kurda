@@ -53,7 +53,7 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
     },
   );
 
-  /** Wear a season frame you were given (or none). */
+  /** Wear a frame you own, a season's or one of the shop's (or none). */
   app.put(
     '/me/cosmetics/frame',
     { schema: { body: skuBody }, config: { rateLimit }, preHandler: requireAccount },

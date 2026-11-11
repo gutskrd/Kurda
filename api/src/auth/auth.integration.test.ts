@@ -68,7 +68,9 @@ describe.skipIf(!DATABASE_URL)('POST /auth/register (integration)', () => {
   });
 
   it('duplicate email returns a safe generic error (no enumeration)', async () => {
-    await register({ email: email('dup'), username: uname('dupa'), password: 'a-strong-password1' }, '10.1.0.2');
+    const first = await register({ email: email('dup'), username: uname('dupa'), password: 'a-strong-password1' }, '10.1.0.2');
+    // an address is kept for the account that confirmed it; one never confirmed does not hold it (pending-signups)
+    await pool.query(`UPDATE users SET email_verified_at = now() WHERE id = $1`, [first.json().user.id]);
     const res = await register(
       { email: email('dup'), username: uname('dupb'), password: 'a-strong-password1' },
       '10.1.0.3',

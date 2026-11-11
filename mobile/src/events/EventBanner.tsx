@@ -21,10 +21,14 @@ interface ActiveEvent {
  * A tap-through banner for the highest-priority live event (KUR-091), shown on
  * the Learn tab only while an event is active. Hidden entirely otherwise.
  *
- * Its look is the event theme's colour and emoji, or, when an admin has given
+ * Its look is the event theme's colour and glyph, or, when an admin has given
  * the theme a banner picture (art/overrides.ts), that picture behind the
  * event's name, cropped to fill and dimmed under the words so they read on
  * whatever it shows. A picture that will not load leaves the colour.
+ *
+ * The words and the glyphs are in the pack's own ink, which is chosen to read
+ * on the pack's colour; with no pack the banner is a primary button's fill
+ * and takes a primary button's label colour.
  */
 export function EventBanner() {
   const navigation = useNavigation<RootNavigation>();
@@ -52,7 +56,7 @@ export function EventBanner() {
 
   if (!event) return null;
 
-  const ink = picture ? ON_PICTURE : colors.textOnPrimary;
+  const ink = picture ? ON_PICTURE : pack ? pack.ink : colors.textOnPrimary;
   return (
     <PressableScale
       onPress={() => navigation.navigate('EventQuests')}
@@ -66,16 +70,14 @@ export function EventBanner() {
           <Image source={{ uri: picture }} style={styles.fill} resizeMode="cover" onError={() => setFailed(picture)} accessibilityIgnoresInvertColors />
           <View style={styles.dim} />
         </View>
-      ) : pack ? (
-        <Text style={styles.emoji}>{pack.emoji}</Text>
       ) : (
-        <Icon name="star" size={24} color={colors.textOnPrimary} />
+        <Icon name={pack ? pack.icon : 'star'} size={GLYPH} color={ink} />
       )}
       <View style={{ flex: 1 }}>
         <Text style={[styles.title, { color: ink }]}>{event.name}</Text>
         <Text style={[styles.subtitle, { color: ink }]}>{t('events.bannerSubtitle')}</Text>
       </View>
-      <Text style={[styles.chevron, { color: ink }]}>›</Text>
+      <Icon name="chevron-right" size={20} color={ink} />
     </PressableScale>
   );
 }
@@ -84,6 +86,8 @@ export function EventBanner() {
 // dark enough that even an all-white picture leaves both lines above 4.5:1
 const ON_PICTURE = '#FFFFFF';
 const UNDER_WORDS = 'rgba(0,0,0,0.6)';
+/** The glyph before the words: the theme's own, or a star for an event with no theme. */
+const GLYPH = 24;
 /** A banner with a picture is taller than the colour one, so the picture shows as more than a strip. */
 const PICTURED_HEIGHT = 112;
 
@@ -99,8 +103,6 @@ const styles = StyleSheet.create({
   pictured: { minHeight: PICTURED_HEIGHT, overflow: 'hidden' },
   fill: { width: '100%', height: '100%' },
   dim: { ...StyleSheet.absoluteFill, backgroundColor: UNDER_WORDS },
-  emoji: { fontSize: typography.sizes.xl },
   title: { fontWeight: typography.weights.bold, fontSize: typography.sizes.md },
   subtitle: { opacity: 0.9, fontSize: typography.sizes.sm },
-  chevron: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { GIFT_REDUCED_MOTION_MS, GIFT_UNWRAP_MS } from '@kurda/shared';
 import { unwrapPlan } from './motion';
-import { messagePreview } from '../chat/preview';
+import { messagePreview, previewIcon } from '../chat/preview';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 
@@ -47,10 +47,17 @@ describe('unwrapPlan', () => {
 describe('messagePreview', () => {
   const t = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.ku[key], vars);
   it('writes its own line for a gift or a game, in the reader’s language', () => {
-    expect(messagePreview({ lastMessage: 'Sent a gift', lastKind: 'gift' }, t)).toBe('🎁 Diyarî');
+    expect(messagePreview({ lastMessage: 'Sent a gift', lastKind: 'gift' }, t)).toBe('Diyarî');
     expect(messagePreview({ lastMessage: 'Peyvok Battle', lastKind: 'game' }, t)).toBe(TRANSLATIONS.ku['play.chat.preview']);
     expect(messagePreview({ lastMessage: 'silav', lastKind: 'text' }, t)).toBe('silav');
     // an older server sends no kind
     expect(messagePreview({ lastMessage: 'silav' }, t)).toBe('silav');
+  });
+
+  it('names the mark the list draws before a gift or a game, and none before words', () => {
+    expect(previewIcon('gift')).toBe('gift');
+    expect(previewIcon('game')).toBe('play');
+    expect(previewIcon('text')).toBeNull();
+    expect(previewIcon(undefined)).toBeNull();
   });
 });

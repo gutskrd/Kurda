@@ -1,7 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
-  ActivityIndicator,
-  Animated,
   Pressable,
   ScrollView,
   Share,
@@ -18,7 +16,7 @@ import { sectionLabel, display } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useShake } from '../theme/animate';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import {
   backspace,
@@ -36,6 +34,7 @@ import type { SearchResult } from '../dictionary/types';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
+import { Loading } from '../theme/Loading';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -100,7 +99,6 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const reduceMotion = useReducedMotion();
   const insets = useSafeAreaInsets();
 
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
@@ -113,7 +111,8 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [edu, setEdu] = useState<EduEntry | null>(null);
   const [savedWord, setSavedWord] = useState(false);
 
-  const shake = useRef(new Animated.Value(0)).current;
+  // a guess the game will not take: the board shakes as every wrong answer in the app does, and is still under Reduce Motion
+  const shake = useShake();
 
   const loadStats = useCallback(() => {
     void client.get<WordleStats>('/wordle/stats').then((r) => r.ok && setStats(r.data));
@@ -141,17 +140,6 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     }
   };
 
-  const runShake = () => {
-    if (reduceMotion) return;
-    shake.setValue(0);
-    Animated.sequence([
-      Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: -1, duration: 60, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: 0, duration: 60, useNativeDriver: true }),
-    ]).start();
-  };
-
   const fetchEducation = useCallback(
     async (target: string | null) => {
       if (!target) return;
@@ -174,7 +162,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     if (!game || game.status !== 'playing' || submitting) return;
     if (draft.length !== game.targetLength) {
       setNote(t('games.wordle.enterLetters', { count: game.targetLength }));
-      runShake();
+      shake.run();
       return;
     }
     setSubmitting(true);
@@ -202,7 +190,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
             ? t('games.wordle.wrongLength')
             : describeError(res.error, t),
       );
-      runShake();
+      shake.run();
     }
   }, [client, game, draft, submitting, loadStats, fetchEducation, t]);
 
@@ -267,7 +255,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
               <Segmented<Difficulty> options={DIFFICULTIES} value={difficulty} onChange={setDifficulty} labelOf={(d) => t(DIFFICULTY_KEY[d])} />
             </View>
             {starting ? (
-              <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+              <Loading style={{ marginTop: spacing.lg }} />
             ) : (
               <View style={styles.startActions}>
                 <ClayButton label={t('games.wordle.daily')} icon="star" tone="primary" onPress={() => start('daily')} style={{ alignSelf: 'stretch' }} />
@@ -287,7 +275,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           </GlassCard>
         ) : (
           <>
-            <WordleBoard board={board} cellSize={cellSize} shake={shake} />
+            <WordleBoard board={board} cellSize={cellSize} shake={shake.translateX} />
 
             {note ? <Text style={[styles.note, { color: colors.danger }]}>{note}</Text> : null}
 
@@ -346,6 +334,8 @@ function ResultPanel({
   return (
     <View style={styles.result}>
       <GlassCard style={styles.resultCard}>
+        {/* the line used to open with a party popper; the spark is the app's own, in the colour of a right answer */}
+        {won ? <Icon name="sparkle" size={28} color={colors.success} style={styles.resultMark} /> : null}
         <Text style={[styles.resultTitle, { color: won ? colors.success : colors.danger }]}>
           {won ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
         </Text>
@@ -427,6 +417,7 @@ const styles = StyleSheet.create({
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   result: { gap: spacing.md, marginTop: spacing.md },
   resultCard: { gap: spacing.sm },
+  resultMark: { alignSelf: 'center' },
   resultTitle: { ...display(typography.sizes.xl), textAlign: 'center' },
   resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
   edu: { borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, marginTop: spacing.sm },

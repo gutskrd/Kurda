@@ -12,7 +12,8 @@ import { PROVIDER, isProviderPlaceholder, type ProviderIdentity } from '@kurda/s
  * The server logs these at boot rather than refusing to start: the local
  * docker-compose stack runs as production too (config/env.ts), and a contact
  * detail not yet filled in should not take lessons down for everyone. The
- * Terms, About and /copyright pages show the same placeholders as they are.
+ * /copyright page leaves the DMCA agent out entirely until one is registered,
+ * rather than showing a bracketed name to a rights holder.
  */
 export function providerPlaceholderWarnings(nodeEnv: string, provider: ProviderIdentity = PROVIDER): string[] {
   if (nodeEnv !== 'production') return [];

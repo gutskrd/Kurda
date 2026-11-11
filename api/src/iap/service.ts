@@ -188,6 +188,13 @@ export class IapService {
         return { found: true, clawedBack: 0 };
       }
 
+      // a receipt that was held never paid anything out: it is marked refunded, and nothing is taken back for it
+      if (receipt.status !== 'granted') {
+        await client.query(`UPDATE iap_receipts SET status = 'refunded', refunded_at = now(), clawed_back = 0 WHERE id = $1`, [receipt.id]);
+        await client.query('COMMIT');
+        return { found: true, clawedBack: 0 };
+      }
+
       // claw back what's still there (never drive the balance negative)
       await client.query(
         `INSERT INTO wallet_balances (user_id, currency) VALUES ($1, 'gems')

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { Toggle } from '../theme/Toggle';
 import { countByCategory, itemCategory, matchesQuery, type ItemCategory } from '@kurda/shared';
@@ -17,16 +17,17 @@ import type { TranslationKey } from '../i18n/translations';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
 import { wearFrame } from '../ranks/api';
-import { SeasonFramed, framedAvatarSize, frameTierOf } from '../ranks/art';
+import { PictureFramed, SeasonFramed, framedAvatarSize, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
 import { KIND_LABEL, kindWithCount } from '../shop/format';
 import { ItemArt, KindChips, SearchField } from '../shop/ItemFilters';
 import { equip, inventory, setIconVisibility, type CosmeticSlot, type InventoryItem } from './cosmetics';
 import { InitialsAvatar } from './InitialsAvatar';
+import { Loading } from '../theme/Loading';
 
 type Kind = ItemCategory;
 
-/** Always offered, even with none of them: frames are earned, and the empty tab says how. */
+/** Always offered, even with none of them: frames are earned or bought, and the empty tab says where. */
 const ALWAYS: readonly Kind[] = ['background', 'icon', 'frame'];
 
 /** More than this many of one kind and a search field is worth its row. */
@@ -36,11 +37,22 @@ const SEARCH_FROM = 8;
 const GAP = spacing.sm;
 const MIN_TILE: Record<'wide' | 'square', number> = { wide: 100, square: 72 };
 
-/** What a kind says when there is none of it, and where to get some. */
-const EMPTY: Partial<Record<Kind, { text: TranslationKey; action: TranslationKey; to: 'Shop' | 'Season' }>> = {
-  background: { text: 'edit.noBackgrounds', action: 'shop.refreshed.open', to: 'Shop' },
-  icon: { text: 'edit.noIcons', action: 'shop.refreshed.open', to: 'Shop' },
-  frame: { text: 'edit.noFrames', action: 'edit.seeSeason', to: 'Season' },
+type Way = { action: TranslationKey; to: 'Shop' | 'Season' };
+
+/**
+ * What a kind says when there is none of it, and where to get some. A frame
+ * has two ways in: a season hands one out, and the shop sells its own.
+ */
+const EMPTY: Partial<Record<Kind, { text: TranslationKey; ways: readonly Way[] }>> = {
+  background: { text: 'edit.noBackgrounds', ways: [{ action: 'shop.refreshed.open', to: 'Shop' }] },
+  icon: { text: 'edit.noIcons', ways: [{ action: 'shop.refreshed.open', to: 'Shop' }] },
+  frame: {
+    text: 'edit.noFrames',
+    ways: [
+      { action: 'edit.seeSeason', to: 'Season' },
+      { action: 'shop.refreshed.open', to: 'Shop' },
+    ],
+  },
 };
 
 /**
@@ -203,12 +215,23 @@ export function CosmeticPicker({
                 />
               </SeasonFramed>
             </View>
+          ) : current === 'frame' && item.assetUrl ? (
+            // one of the shop's frames, round your own face as a season frame is
+            <View style={[styles.frameTile, { width: art, height: art, backgroundColor: colors.controlTrack }]}>
+              <PictureFramed url={item.assetUrl} size={Math.round(art * 0.86)}>
+                <InitialsAvatar
+                  name={user?.displayName ?? user?.username ?? ''}
+                  id={user?.id ?? ''}
+                  size={framedAvatarSize(Math.round(art * 0.86))}
+                />
+              </PictureFramed>
+            </View>
           ) : (
             <ItemArt category={item.category} path={item.assetUrl} width={art} />
           )}
           {busy === item.sku ? (
             <View style={[StyleSheet.absoluteFill, styles.busy, { backgroundColor: colors.glassFill }]}>
-              <ActivityIndicator color={colors.primary} />
+              <Loading />
             </View>
           ) : null}
           {on ? (
@@ -239,7 +262,7 @@ export function CosmeticPicker({
       </Text>
 
       {items === null ? (
-        <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
+        <Loading style={{ marginVertical: spacing.md }} />
       ) : (
         <>
           <KindChips
@@ -256,7 +279,11 @@ export function CosmeticPicker({
             {ofKind.length === 0 && empty ? (
               <View style={[styles.emptyBox, { backgroundColor: colors.glassFill }]}>
                 <Text style={[styles.empty, dir.text, { color: colors.textSecondary }]}>{t(empty.text)}</Text>
-                <ClayButton label={t(empty.action)} onPress={() => navigation.navigate(empty.to)} style={dir.row === 'row-reverse' ? styles.end : styles.start} />
+                <View style={[styles.ways, { flexDirection: dir.row }]}>
+                  {empty.ways.map((way) => (
+                    <ClayButton key={way.to} label={t(way.action)} onPress={() => navigation.navigate(way.to)} />
+                  ))}
+                </View>
               </View>
             ) : current === 'tag' || current === 'other' ? (
               <View style={styles.list}>
@@ -318,6 +345,7 @@ const styles = StyleSheet.create({
   ringWide: { borderRadius: radii.sm + 2 },
   ringSquare: { borderRadius: radii.md + 2 },
   frameTile: { alignItems: 'center', justifyContent: 'center', borderRadius: radii.md },
+  ways: { flexWrap: 'wrap', gap: spacing.sm },
   busy: { alignItems: 'center', justifyContent: 'center' },
   check: { position: 'absolute', top: 4, width: 20, height: 20, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   checkRight: { right: 4 },

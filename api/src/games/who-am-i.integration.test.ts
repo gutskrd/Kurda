@@ -20,6 +20,7 @@ import { poolQuiet } from '../test/query-count.js';
 import { bustAvailability } from './availability.js';
 import { bustGamePools } from './sources.js';
 import { learnGameServices } from './routes.js';
+import { removeCourses } from '../test/courses.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -140,7 +141,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
   afterAll(async () => {
     await poolQuiet(pool);
     await pool.query(`DELETE FROM game_content WHERE id = ANY($1::uuid[]) OR payload::text LIKE $2`, [contentIds, `%${tag}%`]);
-    await pool.query(`DELETE FROM courses WHERE id = ANY($1::uuid[])`, [courseIds]);
+    await removeCourses(pool, courseIds);
     if (entryIds.length) await pool.query(`DELETE FROM dict_entries WHERE id = ANY($1::uuid[])`, [entryIds]);
     const client = await pool.connect();
     try {

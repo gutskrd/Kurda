@@ -4,7 +4,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import type { IncomingInvite, MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon, type IconName } from '../theme/Icon';
@@ -37,6 +37,8 @@ interface GameCard {
   /** one line, what you do in it */
   line: TranslationKey;
   mode: Mode;
+  /** still short of approved content: shown as coming soon, and does not open */
+  soon?: boolean;
 }
 
 /**
@@ -83,13 +85,14 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   // the season's line under Ranks is held in grey until its answer, so the word above it does not jump
   const [ranksSettled, setRanksSettled] = useState(false);
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
-  // the learning games (games/learnGames.ts), each listed once it has enough approved content in the learner's Kurdish
+  // the learning games (games/learnGames.ts): all of them, those without enough approved content yet as coming soon
   const learnGames = useListedLearnGames();
   const cards: GameCard[] = [
     ...GAME_CARDS,
-    ...learnGames.flatMap((g): GameCard[] => {
+    ...learnGames.flatMap(({ game: g, ready }): GameCard[] => {
       const phone = PHONE_LEARN_GAMES[g.id];
-      return phone ? [{ key: g.id, route: phone.route, icon: g.glyph, name: phone.name, line: phone.line, mode: g.mode === 'solo' ? 'solo' : g.mode === 'multi' ? 'friends' : 'both' }] : [];
+      const mode: Mode = g.mode === 'solo' ? 'solo' : g.mode === 'multi' ? 'friends' : 'both';
+      return phone ? [{ key: g.id, route: phone.route, icon: g.glyph, name: phone.name, line: phone.line, mode, soon: !ready }] : [];
     }),
   ];
 
@@ -211,6 +214,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   onPress={() => void join(invite)}
                   accessibilityRole="button"
                   accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name, game })}
+                  hitSlop={JOIN_SLOP}
                   style={[styles.joinButton, { backgroundColor: colors.primary }]}
                 >
                   <Text style={[styles.joinText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
@@ -231,13 +235,16 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         <View style={[styles.grid, { flexDirection: dir.row }]}>
           {cards.map((card) => {
             const name = t(card.name);
-            const mode = t(MODE_LABEL[card.mode]);
+            // a game still short of approved content says so where its mode would be, and does not open
+            const mode = t(card.soon ? 'games.comingSoon' : MODE_LABEL[card.mode]);
             return (
               <PressableScale
                 key={card.key}
                 onPress={() => navigation.navigate(card.route)}
+                disabled={card.soon}
                 accessibilityRole="button"
                 accessibilityLabel={`${name}, ${mode}. ${t(card.line)}`}
+                accessibilityState={card.soon ? { disabled: true } : undefined}
                 testID={`game-${card.key}`}
                 style={[
                   styles.card,
@@ -247,7 +254,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   },
                 ]}
               >
-                <View style={[styles.cardIcon, { backgroundColor: colors.controlTrack }]}>
+                <View style={[styles.cardIcon, { backgroundColor: colors.controlTrack }, card.soon && styles.soon]}>
                   <Icon name={card.icon} size={22} color={colors.textPrimary} />
                 </View>
                 <Text style={[styles.cardName, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
@@ -259,7 +266,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                 <View style={[styles.cardFoot, { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }]}>
                   <View style={[styles.mode, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>
                     <Icon
-                      name={card.mode === 'solo' ? 'person' : 'people'}
+                      name={card.soon ? 'clock' : card.mode === 'solo' ? 'person' : 'people'}
                       size={12}
                       color={colors.textSecondary}
                     />
@@ -276,6 +283,13 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
     </ScrollView>
   );
 }
+
+/**
+ * Join is drawn as tall as the avatar it shares a row with, and caught as a
+ * full fingertip: the slop above and below makes up the difference.
+ */
+const JOIN_HEIGHT = 36;
+const JOIN_SLOP = hitSlopFor(MIN_TOUCH_TARGET, JOIN_HEIGHT);
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, paddingTop: spacing.md, gap: spacing.lg },
@@ -299,7 +313,7 @@ const styles = StyleSheet.create({
   heading: { ...sectionLabel },
   invite: { alignItems: 'center', gap: spacing.md - 4, borderRadius: radii.md, padding: spacing.md - 4 },
   inviteText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  joinButton: { minHeight: 36, paddingHorizontal: spacing.md, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  joinButton: { minHeight: JOIN_HEIGHT, paddingHorizontal: spacing.md, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   joinText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
 
   grid: { flexWrap: 'wrap', gap: layout.rowGap },
@@ -326,4 +340,6 @@ const styles = StyleSheet.create({
   },
   // a long "Solo or with friends" wraps inside its chip rather than running off the card
   modeText: { flexShrink: 1, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  // the picture of a game not open yet is quieter than the ones that open; its words stay readable
+  soon: { opacity: 0.5 },
 });

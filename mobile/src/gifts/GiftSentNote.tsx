@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { MenuIn, PressableScale } from '../theme/MotionParts';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
@@ -13,6 +13,9 @@ import { useDirection } from '../reports/direction';
  * A gift given from the shop is posted into the chat with that friend like
  * any other (the API does it), so the shop says so and offers the way there,
  * instead of an alert that said it was "on its way" to nowhere in particular.
+ *
+ * It arrives the way a menu does, growing a little and fading in, and only
+ * fades under Reduce Motion.
  */
 export function GiftSentNote({
   itemName,
@@ -30,7 +33,7 @@ export function GiftSentNote({
   const dir = useDirection();
   return (
     <View style={styles.wrap} pointerEvents="box-none">
-      <View
+      <MenuIn
         style={[styles.note, { backgroundColor: colors.background, borderColor: colors.gold, shadowColor: colors.softShadow }]}
         accessibilityLiveRegion="polite"
         accessibilityRole="summary"
@@ -55,7 +58,7 @@ export function GiftSentNote({
           <Icon name="chat" size={16} color={colors.textOnPrimary} />
           <Text style={[styles.openText, { color: colors.textOnPrimary }]}>{t('gift.shop.openChat')}</Text>
         </PressableScale>
-      </View>
+      </MenuIn>
     </View>
   );
 }

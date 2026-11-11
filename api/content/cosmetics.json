@@ -135,8 +135,8 @@
     },
     {
       "sku": "icon-made-caydan",
-      "name": "Îstîkan",
-      "description": "Tea glass",
+      "name": "Çay",
+      "description": "Tea",
       "assetKey": "icons/made-08-caydan.png",
       "price": 900,
       "premiumOnly": true,
@@ -228,8 +228,8 @@
     },
     {
       "sku": "icon-accessoire-icon-04",
-      "name": "Îstîkan",
-      "description": "Tea glass",
+      "name": "Çay",
+      "description": "Tea",
       "assetKey": "icons/made-08-caydan.png",
       "price": 800,
       "premiumOnly": true,
@@ -1209,6 +1209,278 @@
       "premiumOnly": true,
       "displayOrder": 52,
       "active": false
+    }
+  ],
+  "frames": [
+    {
+      "sku": "frame-made-lale",
+      "name": "Xeleka Laleyan",
+      "description": "Tulip wreath",
+      "assetKey": "frames/made-01-lale.png",
+      "price": 1400,
+      "premiumOnly": false,
+      "displayOrder": 0
+    },
+    {
+      "sku": "frame-made-genim",
+      "name": "Xeleka Genim",
+      "description": "Wheat wreath",
+      "assetKey": "frames/made-02-genim.png",
+      "price": 1200,
+      "premiumOnly": false,
+      "displayOrder": 1
+    },
+    {
+      "sku": "frame-made-kilim",
+      "name": "Xeleka Kilîmê",
+      "description": "Kilim band",
+      "assetKey": "frames/made-03-kilim.png",
+      "price": 1600,
+      "premiumOnly": false,
+      "displayOrder": 2
+    },
+    {
+      "sku": "frame-made-roj",
+      "name": "Xeleka Rojê",
+      "description": "Sun rays",
+      "assetKey": "frames/made-04-roj.png",
+      "price": 2000,
+      "premiumOnly": false,
+      "displayOrder": 3
+    },
+    {
+      "sku": "frame-made-sev",
+      "name": "Xeleka Şevê",
+      "description": "Night sky",
+      "assetKey": "frames/made-05-sev.png",
+      "price": 1800,
+      "premiumOnly": false,
+      "displayOrder": 4
+    },
+    {
+      "sku": "frame-made-newroz",
+      "name": "Xeleka Newrozê",
+      "description": "Newroz fire",
+      "assetKey": "frames/made-06-newroz.png",
+      "price": 2000,
+      "premiumOnly": false,
+      "displayOrder": 5
+    },
+    {
+      "sku": "frame-made-bihar",
+      "name": "Xeleka Biharê",
+      "description": "Spring vine",
+      "assetKey": "frames/made-07-bihar.png",
+      "price": 1300,
+      "premiumOnly": false,
+      "displayOrder": 6
+    },
+    {
+      "sku": "frame-made-gul",
+      "name": "Xeleka Gulan",
+      "description": "Rose wreath",
+      "assetKey": "frames/made-08-gul.png",
+      "price": 1400,
+      "premiumOnly": false,
+      "displayOrder": 7
+    },
+    {
+      "sku": "frame-made-binefs",
+      "name": "Xeleka Binefşan",
+      "description": "Violet wreath",
+      "assetKey": "frames/made-09-binefs.png",
+      "price": 1500,
+      "premiumOnly": false,
+      "displayOrder": 8
+    },
+    {
+      "sku": "frame-made-nergiz",
+      "name": "Xeleka Nêrgizan",
+      "description": "Narcissus wreath",
+      "assetKey": "frames/made-10-nergiz.png",
+      "price": 1400,
+      "premiumOnly": false,
+      "displayOrder": 9
+    },
+    {
+      "sku": "frame-made-behiv",
+      "name": "Xeleka Behîvê",
+      "description": "Almond blossom",
+      "assetKey": "frames/made-11-behiv.png",
+      "price": 1700,
+      "premiumOnly": false,
+      "displayOrder": 10
+    },
+    {
+      "sku": "frame-made-ask",
+      "name": "Xeleka Askê",
+      "description": "Fawn",
+      "assetKey": "frames/made-12-ask.png",
+      "price": 1600,
+      "premiumOnly": false,
+      "displayOrder": 11
+    },
+    {
+      "sku": "frame-made-rovi",
+      "name": "Xeleka Rovî",
+      "description": "Sleeping fox",
+      "assetKey": "frames/made-13-rovi.png",
+      "price": 1600,
+      "premiumOnly": false,
+      "displayOrder": 12
+    },
+    {
+      "sku": "frame-made-mar",
+      "name": "Xeleka Marî",
+      "description": "Serpent",
+      "assetKey": "frames/made-14-mar.png",
+      "price": 1800,
+      "premiumOnly": false,
+      "displayOrder": 13
+    },
+    {
+      "sku": "frame-made-bask-spi",
+      "name": "Baskên Spî",
+      "description": "White wings",
+      "assetKey": "frames/made-15-bask-spi.png",
+      "price": 1900,
+      "premiumOnly": false,
+      "displayOrder": 14
+    },
+    {
+      "sku": "frame-made-bask-res",
+      "name": "Baskên Reş",
+      "description": "Black wings",
+      "assetKey": "frames/made-16-bask-res.png",
+      "price": 1900,
+      "premiumOnly": false,
+      "displayOrder": 15
+    },
+    {
+      "sku": "frame-made-sterkan",
+      "name": "Xeleka Stêrkan",
+      "description": "Ring of stars",
+      "assetKey": "frames/made-17-sterkan.png",
+      "price": 1700,
+      "premiumOnly": false,
+      "displayOrder": 16
+    },
+    {
+      "sku": "frame-made-ronahiya-bakur",
+      "name": "Xeleka Ronahiya Bakur",
+      "description": "Northern lights",
+      "assetKey": "frames/made-18-ronahiya-bakur.png",
+      "price": 2000,
+      "premiumOnly": false,
+      "displayOrder": 17
+    },
+    {
+      "sku": "frame-made-dem",
+      "name": "Xeleka Demê",
+      "description": "Clock face",
+      "assetKey": "frames/made-19-dem.png",
+      "price": 1500,
+      "premiumOnly": false,
+      "displayOrder": 18
+    },
+    {
+      "sku": "frame-made-efsun",
+      "name": "Xeleka Efsûnê",
+      "description": "Enchanted ring",
+      "assetKey": "frames/made-20-efsun.png",
+      "price": 1800,
+      "premiumOnly": false,
+      "displayOrder": 19
+    },
+    {
+      "sku": "frame-made-res",
+      "name": "Xeleka Reş",
+      "description": "Black scrollwork",
+      "assetKey": "frames/made-21-res.png",
+      "price": 1700,
+      "premiumOnly": false,
+      "displayOrder": 20
+    },
+    {
+      "sku": "frame-made-neqs",
+      "name": "Xeleka Neqşê",
+      "description": "Inlaid band",
+      "assetKey": "frames/made-22-neqs.png",
+      "price": 1500,
+      "premiumOnly": false,
+      "displayOrder": 21
+    },
+    {
+      "sku": "frame-made-zerin",
+      "name": "Pelên Zêrîn",
+      "description": "Golden leaves",
+      "assetKey": "frames/made-23-zerin.png",
+      "price": 2000,
+      "premiumOnly": false,
+      "displayOrder": 22
+    },
+    {
+      "sku": "frame-made-nisan",
+      "name": "Nîşangeh",
+      "description": "Crosshair",
+      "assetKey": "frames/made-24-nisan.png",
+      "price": 1300,
+      "premiumOnly": false,
+      "displayOrder": 23
+    },
+    {
+      "sku": "frame-made-wene",
+      "name": "Wêne",
+      "description": "Instant photo",
+      "assetKey": "frames/made-25-wene.png",
+      "price": 1300,
+      "premiumOnly": false,
+      "displayOrder": 24
+    },
+    {
+      "sku": "frame-made-tari",
+      "name": "Xeleka Tarî",
+      "description": "Black thorns",
+      "assetKey": "frames/made-26-tari.png",
+      "price": 1800,
+      "premiumOnly": false,
+      "displayOrder": 25
+    },
+    {
+      "sku": "frame-made-ziv",
+      "name": "Stiriyên Zîvîn",
+      "description": "Silver thorns",
+      "assetKey": "frames/made-27-ziv.png",
+      "price": 1900,
+      "premiumOnly": false,
+      "displayOrder": 26
+    },
+    {
+      "sku": "frame-made-stiri",
+      "name": "Xeleka Stiriyan",
+      "description": "Ring of thorns",
+      "assetKey": "frames/made-28-stiri.png",
+      "price": 1700,
+      "premiumOnly": false,
+      "displayOrder": 27
+    },
+    {
+      "sku": "frame-made-dukel",
+      "name": "Xeleka Dûkelê",
+      "description": "Smoke ring",
+      "assetKey": "frames/made-29-dukel.png",
+      "price": 1600,
+      "premiumOnly": false,
+      "displayOrder": 28
+    },
+    {
+      "sku": "frame-made-rojgirtin",
+      "name": "Rojgirtin",
+      "description": "Eclipse",
+      "assetKey": "frames/made-30-rojgirtin.png",
+      "price": 2000,
+      "premiumOnly": false,
+      "displayOrder": 29
     }
   ]
 }

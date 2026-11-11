@@ -170,7 +170,7 @@ describe('a thread on the shared connection', () => {
     });
     renderWithProviders(
       <RealtimeProvider>
-        <GroupThreadScreen groupId="grp" name="Hevalên" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />
+        <GroupThreadScreen groupId="grp" name="Hevalên" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} onFindPeople={() => undefined} />
       </RealtimeProvider>,
     );
     expect(await screen.findByText('message g1')).toBeTruthy();

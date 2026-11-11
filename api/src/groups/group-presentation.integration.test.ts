@@ -10,6 +10,7 @@ import sharp from 'sharp';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { GroupService } from './service.js';
+import { addFriendsToGroup } from '../test/groups.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { mediaLimits } from '../media/mediaLimits.js';
 import type { MediaStorage } from '../media/storage.js';
@@ -91,9 +92,8 @@ describe.skipIf(!DATABASE_URL)('group name, description and picture (integration
   });
 
   const makeGroup = async (name: string): Promise<string> => {
-    const { id: gid } = await groups.create(id.owner!, { name: `${name} ${suffix}`, privacy: 'open' });
-    await groups.join(id.admin!, gid);
-    await groups.join(id.member!, gid);
+    const { id: gid } = await groups.create(id.owner!, { name: `${name} ${suffix}` });
+    await addFriendsToGroup(pool, gid, id.owner!, id.admin!, id.member!);
     await groups.setRole(id.owner!, gid, id.admin!, 'moderator');
     return gid;
   };
@@ -116,7 +116,9 @@ describe.skipIf(!DATABASE_URL)('group name, description and picture (integration
     expect((await patch('admin', gid, { description: '' })).json().description).toBeNull();
 
     expect((await patch('member', gid, { name: 'Mine now' })).json().code).toBe('NOT_GROUP_ADMIN');
-    expect((await patch('outsider', gid, { name: 'Mine now' })).statusCode).toBe(403);
+    // to someone who is not in it there is no such group to rename
+    const outside = await patch('outsider', gid, { name: 'Mine now' });
+    expect([outside.statusCode, outside.json().code]).toEqual([404, 'GROUP_NOT_FOUND']);
     expect((await pool.query(`SELECT name FROM groups WHERE id = $1`, [gid])).rows[0].name).toBe(`Renamed ${suffix}`);
   });
 
@@ -133,10 +135,13 @@ describe.skipIf(!DATABASE_URL)('group name, description and picture (integration
     expect(made.statusCode).toBe(422);
   });
 
-  it('puts up a picture for the owner or an admin only, and shows it wherever the group is listed', async () => {
+  it('puts up a picture for the owner or an admin only, and shows it to the members wherever the group is listed', async () => {
     const gid = await makeGroup('Picture');
     const refused = await setGroupPhoto(deps(), gid, id.member!, await png(200, 40, 40));
     expect(refused).toMatchObject({ ok: false, code: 'NOT_GROUP_ADMIN' });
+    // someone outside it is told there is no such group, as everywhere
+    expect(await setGroupPhoto(deps(), gid, id.outsider!, await png(200, 40, 40))).toMatchObject({ ok: false, status: 404, code: 'GROUP_NOT_FOUND' });
+    expect(await clearGroupPhoto(deps(), gid, id.outsider!)).toMatchObject({ ok: false, status: 404, code: 'GROUP_NOT_FOUND' });
     expect(await photoKey(gid)).toBeNull();
 
     const first = await setGroupPhoto(deps(), gid, id.admin!, await png(30, 120, 200));
@@ -147,11 +152,16 @@ describe.skipIf(!DATABASE_URL)('group name, description and picture (integration
     expect((await pool.query(`SELECT photo_set_by FROM groups WHERE id = $1`, [gid])).rows[0].photo_set_by).toBe(id.admin);
 
     const url = `https://cdn.test/${key}`;
-    expect((await groups.get(gid, id.outsider!, (k) => `https://cdn.test/${k}`)).photoUrl).toBe(url);
+    expect((await groups.get(gid, id.member!, (k) => `https://cdn.test/${k}`)).photoUrl).toBe(url);
     expect((await groups.myGroups(id.member!, (k) => `https://cdn.test/${k}`)).find((g) => g.id === gid)?.photoUrl).toBe(url);
-    const listed = (await groups.discover(id.outsider!, 200, (k) => `https://cdn.test/${k}`)).find((g) => g.id === gid);
-    expect(listed).toMatchObject({ photoUrl: url, joined: false });
-    expect((await groups.discover(id.member!, 200)).find((g) => g.id === gid)?.joined).toBe(true);
+    // nobody outside the group is shown it, picture or anything else
+    await expect(groups.get(gid, id.outsider!, (k) => `https://cdn.test/${k}`)).rejects.toMatchObject({ code: 'GROUP_NOT_FOUND' });
+    expect((await groups.myGroups(id.outsider!)).find((g) => g.id === gid)).toBeUndefined();
+    // but someone banned still sees whose group it is
+    await addFriendsToGroup(pool, gid, id.owner!, id.outsider!);
+    await groups.ban(id.owner!, gid, { userId: id.outsider!, duration: '1d' });
+    expect((await groups.get(gid, id.outsider!, (k) => `https://cdn.test/${k}`)).photoUrl).toBe(url);
+    await groups.unban(id.owner!, gid, id.outsider!);
 
     // a new picture replaces it: the old one leaves the storage total and the bucket
     await setGroupPhoto(deps(), gid, id.owner!, await png(250, 200, 30));
@@ -196,7 +206,7 @@ describe.skipIf(!DATABASE_URL)('group name, description and picture (integration
     const res = await app.inject({
       method: 'POST',
       url: '/reports',
-      headers: { authorization: `Bearer ${token.outsider}` },
+      headers: { authorization: `Bearer ${token.member}` },
       payload: { targetType: 'group', targetId: gid, category: 'spam' },
     });
     expect(res.statusCode).toBe(201);

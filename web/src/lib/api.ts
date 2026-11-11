@@ -361,6 +361,7 @@ export class ApiClient {
  */
 export const CODE_COPY: Record<string, MessageKey> = {
   ACCOUNT_NOT_ACTIVATED: 'error.notActivated',
+  VERIFICATION_EMAIL_LIMIT: 'error.code.verificationEmailLimit',
   ACCOUNT_DISABLED: 'error.code.accountDisabled',
   CODE_EXPIRED: 'error.code.codeExpired',
   INVALID_CODE: 'error.code.invalidCode',
@@ -384,7 +385,6 @@ export const CODE_COPY: Record<string, MessageKey> = {
   UNDER_MINIMUM_AGE: 'error.code.underMinimumAge',
   INVALID_BIRTH_MONTH: 'error.code.invalidBirthMonth',
   BIRTH_DATE_ALREADY_SET: 'error.code.birthDateAlreadySet',
-  OPEN_GROUPS_ADULTS_ONLY: 'error.code.openGroupsAdultsOnly',
   VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
   LEARN_FIRST: 'error.code.learnFirst',
   // a new password found in a public breach (sign-up, reset, change)

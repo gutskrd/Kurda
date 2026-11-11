@@ -19,7 +19,6 @@ import { navigation } from '../play/testing/navigation';
 import { GroupMembersScreen } from './GroupMembersScreen';
 import { GroupRequestsScreen } from './GroupRequestsScreen';
 import { GroupBansScreen } from './GroupBansScreen';
-import { ClubsScreen } from './ClubsScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(() => {
@@ -37,7 +36,6 @@ const detail = (myRole: string, over: Record<string, unknown> = {}) =>
     id: 'g1',
     name: 'Newroz club',
     description: null,
-    privacy: 'open',
     ownerId: 'u-owner',
     archivedAt: null,
     memberCount: 3,
@@ -74,21 +72,13 @@ const press = (buttons: AlertButton[], text: string) => act(async () => buttons.
 const berfinMenu = () => fireEvent.click(screen.getAllByRole('button', { name: 'Post options' })[1]!);
 
 describe('removing or banning a member', () => {
-  it('says a removed member can come back by themselves, or be added again', async () => {
+  it('says a removed member can be added again, before removing them', async () => {
     info({ 'GET /groups/g1': detail('moderator') });
     await screen.findByText('berfin');
     const shown = alerts();
     berfinMenu();
     await press(shown[0]!.buttons, 'Remove from group');
-    expect(shown[1]!.message).toBe('Remove berfin from Newroz club? berfin can join again later.');
-    cleanup();
-
-    info({ 'GET /groups/g1': detail('moderator', { privacy: 'invite' }) });
-    await screen.findByText('berfin');
-    const again = alerts();
-    berfinMenu();
-    await press(again[0]!.buttons, 'Remove from group');
-    expect(again[1]!.message).toBe('Remove berfin from Newroz club? berfin can be added again.');
+    expect(shown[1]!.message).toBe('Remove berfin from Newroz club? berfin can be added again.');
   });
 
   it('bans for as long as is chosen, with a reason they will see, and their messages too if asked', async () => {
@@ -113,7 +103,7 @@ describe('removing or banning a member', () => {
     expect(screen.getByText('8/200')).toBeTruthy();
     expect(screen.getByText('berfin will see this')).toBeTruthy();
     fireEvent.click(screen.getByRole('switch', { name: 'Also delete their messages in this group' }));
-    expect(screen.getByText('Removed members can join again. Banned members can’t, but they can ask you to let them back.')).toBeTruthy();
+    expect(screen.getByText('Removed members can be added again. Banned members can’t, but they can ask you to let them back.')).toBeTruthy();
     const ban = screen.getByRole('button', { name: 'Ban berfin' });
     await act(async () => {
       fireEvent.click(ban);
@@ -245,7 +235,7 @@ describe('who is banned', () => {
     const shown = alerts();
     fireEvent.click(screen.getByRole('button', { name: 'Unban kawa' }));
     expect(shown[0]!.title).toBe('Unban kawa');
-    expect(shown[0]!.message).toBe('This doesn’t add kawa back: they can join again, or be added again.');
+    expect(shown[0]!.message).toBe('This doesn’t add kawa back: an admin can add them again.');
     await press(shown[0]!.buttons, 'Unban');
     expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/groups/g1/bans/u5')).toBe(true);
     await waitFor(() => expect(screen.queryByText('kawa')).toBeNull());
@@ -256,46 +246,5 @@ describe('who is banned', () => {
     testAuth.client = fakeClient({ 'GET /groups/g1/bans': ok({ bans: [] }) });
     renderWithProviders(<GroupBansScreen groupId="g1" onExit={() => undefined} />);
     expect(await screen.findByText('Nobody is banned')).toBeTruthy();
-  });
-});
-
-describe('a group one is banned from, in the list to discover', () => {
-  const found = (id: string, name: string, over: Record<string, unknown> = {}) => ({
-    id,
-    name,
-    description: null,
-    privacy: 'open',
-    ownerId: null,
-    archivedAt: null,
-    memberCount: 5,
-    photoUrl: null,
-    joined: false,
-    ...over,
-  });
-
-  it('says Banned instead of Join, and opens the group to say where the reader stands', async () => {
-    testAuth.client = fakeClient({ 'GET /groups': ok({ groups: [found('g1', 'Newroz club', { banned: true })] }), 'GET /me/groups': ok({ groups: [] }) });
-    renderWithProviders(<ClubsScreen onExit={() => undefined} />);
-    const pill = await screen.findAllByRole('button', { name: 'Banned from Newroz club' });
-    expect(screen.queryByRole('button', { name: 'Join: Newroz club' })).toBeNull();
-    fireEvent.click(pill.at(-1)!);
-    expect(navigation.navigate).toHaveBeenCalledWith('GroupThread', { groupId: 'g1', name: 'Newroz club' });
-  });
-
-  it('learns it from a refused Join where the list did not say', async () => {
-    testAuth.client = fakeClient({
-      'GET /groups': ok({ groups: [found('g1', 'Newroz club')] }),
-      'GET /me/groups': ok({ groups: [] }),
-      'POST /groups/g1/join': fail({ code: 'GROUP_BANNED', status: 403, details: { until: null } }),
-    });
-    renderWithProviders(<ClubsScreen onExit={() => undefined} />);
-    const join = await screen.findByRole('button', { name: 'Join: Newroz club' });
-    await act(async () => {
-      fireEvent.click(join);
-    });
-    expect(await screen.findByText('You’re banned from this group for good')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: 'Banned from Newroz club' }).length).toBeGreaterThan(0);
-    expect(navigation.navigate).not.toHaveBeenCalled();
-    expect(felt).toContain('wrong');
   });
 });

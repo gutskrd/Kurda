@@ -5,7 +5,7 @@ import { hasCapability } from './roles.js';
 import { requireAdmin, requireCapability } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { expiryFrom, normalizeReason } from './moderation.js';
-import { CONTENT_EDITOR, USER_FILTERS, USERS_PAGE_MAX, VOICE_ACTOR, type UserFilter } from './user-admin-service.js';
+import { CONTENT_EDITOR, PLUS_GRANT_MAX_DAYS, USER_FILTERS, USERS_PAGE_MAX, VOICE_ACTOR, type UserFilter } from './user-admin-service.js';
 import type { RoleResult, UserAdminService } from './user-admin-service.js';
 import { VOICES_PER_ACCOUNT_MAX, setVoices, voicesOf } from '../recording/links.js';
 import { VOICE_ID } from '../recording/script.js';
@@ -25,6 +25,12 @@ const walletBody = z.object({
   currency: z.enum(['zer', 'gems']),
   amount: z.number().int().min(-WALLET_ADJUST_MAX).max(WALLET_ADJUST_MAX),
   /** the console's key for this one change, so a double click or a retry moves the money once */
+  idempotencyKey: z.string().min(8).max(120).optional(),
+});
+const plusBody = z.object({
+  reason: z.string(),
+  days: z.number().int().min(1).max(PLUS_GRANT_MAX_DAYS),
+  /** the console's key for this one grant, so a double click or a retry adds the days once */
   idempotencyKey: z.string().min(8).max(120).optional(),
 });
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
@@ -238,6 +244,26 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
       if (b.amount === 0) return reply.code(400).send({ code: 'INVALID_AMOUNT', message: 'amount must be non-zero' });
       const userId = (req.params as z.infer<typeof idParam>).id;
       return sendResult(reply, await users.adjustWallet(req.user!.id, userId, b.currency, b.amount, reason, b.idempotencyKey));
+    },
+  );
+
+  /**
+   * Give Hevalo+ for a number of days, or extend it by them: for testers and
+   * reviewers while membership cannot be bought. A superadmin's, like a
+   * balance change, with the same limit on how often and a reason kept in the
+   * person's history.
+   */
+  app.post(
+    '/admin/users/:id/plus',
+    { schema: { params: idParam, body: plusBody }, config: walletLimit, preHandler: canAdjustEconomy },
+    async (req, reply) => {
+      const b = req.body as z.infer<typeof plusBody>;
+      const reason = normalizeReason(b.reason);
+      if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
+      const userId = (req.params as z.infer<typeof idParam>).id;
+      const res = await users.grantPlus(req.user!.id, userId, b.days, reason, b.idempotencyKey);
+      if (!res.ok) return reply.code(404).send({ code: res.code, message: 'no such user' });
+      return { ok: true, premiumUntil: res.premiumUntil.toISOString(), ...(res.duplicate ? { duplicate: true } : {}) };
     },
   );
 }

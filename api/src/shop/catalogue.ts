@@ -72,12 +72,12 @@ export interface RemoveResult extends Omit<ItemUsage, 'outcome'> {
   artReleased: boolean;
 }
 
-/** The SKUs of the backgrounds and icons the shop ships with. */
+/** The SKUs of the backgrounds, icons and frames the shop ships with. */
 function loadBuiltInSkus(): ReadonlySet<string> {
   try {
     const p = join(dirname(fileURLToPath(import.meta.url)), '..', '..', 'content', 'cosmetics.json');
-    const manifest = JSON.parse(readFileSync(p, 'utf8')) as { icons?: { sku: string }[]; backgrounds?: { sku: string }[] };
-    return new Set([...(manifest.icons ?? []), ...(manifest.backgrounds ?? [])].map((i) => i.sku));
+    const manifest = JSON.parse(readFileSync(p, 'utf8')) as { icons?: { sku: string }[]; backgrounds?: { sku: string }[]; frames?: { sku: string }[] };
+    return new Set([...(manifest.icons ?? []), ...(manifest.backgrounds ?? []), ...(manifest.frames ?? [])].map((i) => i.sku));
   } catch {
     return new Set();
   }

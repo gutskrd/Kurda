@@ -10,7 +10,7 @@
  * gaps the light can come through, which is what the compositor's light
  * shafts are made from.
  */
-import { between, linear, n, pt, radialAt } from './kit.mjs';
+import { between, linear, n, pt, radialAt, stopsOf } from './kit.mjs';
 
 /** A noise frequency, written finely enough: two decimals would turn 0.004 into 0, and the noise into stripes. */
 const freqOf = (v) => String(Math.round(v * 1e5) / 1e5);
@@ -481,43 +481,140 @@ export function motes(rnd, { x0 = 0, x1 = 1280, y0 = 0, y1 = 720, count, size = 
 }
 
 /**
- * A bonfire: tongues of flame from a bed of embers, each drawn four times over
- * — deep red at the edge, orange, gold, a white heart — bunched to the middle
- * and leaning with `wind`. Returns the flames, and the logs and the glowing
- * bed under them, to be laid in apart: the flames as light.
+ * The four passes a flame is drawn in, one inside the other: how much of the
+ * ribbon each covers (`k`), and its colour from its foot to its tip, where it
+ * thins to nothing.
  */
-export function fire(rnd, { x, y, w, h, wind = 0.1, tongues = 11 }) {
+const FLAME = {
+  edge: { k: 1, stops: [[0, '#ff5a14'], [0.5, '#e8300e', 0.95], [0.84, '#b41a0c', 0.6], [1, '#7a0c08', 0]] },
+  body: { k: 0.84, stops: [[0, '#ffa52a'], [0.55, '#ff7a18', 0.94], [0.88, '#f04a12', 0.5], [1, '#e03a10', 0]] },
+  heart: { k: 0.64, stops: [[0, '#ffd866'], [0.6, '#ffb030', 0.96], [1, '#ff8a1e', 0.1]] },
+  core: { k: 0.36, stops: [[0, '#fff3c4'], [0.55, '#ffe490', 0.92], [1, '#ffc650', 0.1]] },
+};
+
+/**
+ * A bonfire, laid in the way one is painted: a pyre of logs leant together
+ * over a bed of embers, and flame in ribbons that sway as they rise — bunched
+ * to the middle and tallest there, leaning with `wind`, a few torn loose above
+ * the rest. (x, y) is the middle of the bed, `w` the pyre's width and `h` the
+ * tallest flame.
+ *
+ * Returns the `bed`; the pyre, logs leant to a point, in two halves, `back`
+ * to stand behind the fire and `front` before it, each log dark against the
+ * flames with its edge toward the fire's heart lit; and `flames(cv, pass)` —
+ * the markup of one pass ('edge', 'body', 'heart' or 'core', see FLAME), its
+ * gradient added to the canvas it is drawn on. The flames are light: each
+ * pass is laid in screened, the cooler ones softer.
+ */
+export function fire(rnd, { x, y, w, h, wind = 0.1, tongues = 13 }) {
   const list = [];
   for (let i = 0; i < tongues; i++) {
     const u = ((rnd() + rnd() + rnd()) / 3) * 2 - 1;
-    const tall = h * (1 - u * u * 0.7) * between(rnd, 0.5, 1.05);
-    list.push({ bx: x + u * w * 0.5, tall, wide: w * between(rnd, 0.18, 0.3) * (1 - Math.abs(u) * 0.35), lean: (wind + between(rnd, -0.14, 0.14)) * tall, curl: between(rnd, -0.3, 0.3) });
+    const tall = h * (1 - u * u * 0.72) * between(rnd, 0.55, 1.05);
+    list.push({
+      bx: x + u * w * 0.5,
+      foot: y,
+      tall,
+      wide: w * between(rnd, 0.22, 0.36) * (1 - Math.abs(u) * 0.3),
+      lean: (wind + between(rnd, -0.1, 0.1)) * tall,
+      sway: between(rnd, 0.25, 0.6) * (rnd() < 0.5 ? -1 : 1),
+      turns: between(rnd, 1.1, 2.1),
+      phase: between(rnd, 0, Math.PI * 2),
+      loose: false,
+    });
+  }
+  for (let i = 0; i < Math.round(tongues * 0.45); i++) {
+    const up = between(rnd, 0.5, 0.92);
+    const tall = h * between(rnd, 0.07, 0.15);
+    list.push({
+      bx: x + between(rnd, -0.2, 0.2) * w + wind * h * up,
+      foot: y - h * up,
+      tall,
+      wide: tall * between(rnd, 0.28, 0.5),
+      lean: (wind + between(rnd, -0.2, 0.2)) * tall,
+      sway: between(rnd, -0.5, 0.5),
+      turns: 1,
+      phase: between(rnd, 0, Math.PI * 2),
+      loose: true,
+    });
   }
   list.sort((a, b) => b.tall - a.tall);
-  const tongue = ({ bx, tall, wide, lean, curl }, k) => {
-    const H = tall * k;
-    const W = wide * (0.4 + 0.6 * k);
-    const tip = [bx + lean * k, y - H];
-    return `M${pt([bx - W / 2, y])} C${pt([bx - W * 0.6, y - H * 0.32])} ${pt([bx - W * 0.15 + lean * k * 0.35 + curl * W, y - H * 0.62])} ${pt(tip)} C${pt([bx + W * 0.3 + lean * k * 0.5 + curl * W, y - H * 0.55])} ${pt([bx + W * 0.62, y - H * 0.26])} ${pt([bx + W / 2, y])} Z`;
+  // one ribbon of flame at `k` of its size: up its left side to the tip, a point, and down its right
+  const ribbon = (t, k) => {
+    const H = t.tall * k;
+    const wide = t.wide * (0.3 + 0.7 * k);
+    const middle = (v) => t.bx + t.lean * k * v ** 1.3 + Math.sin(v * Math.PI * t.turns + t.phase) * t.sway * wide * v;
+    const left = [];
+    const right = [];
+    const steps = 10;
+    for (let i = 0; i < steps; i++) {
+      const v = i / steps;
+      // widest a little above its foot (a loose flame at its middle), then drawn out to the tip
+      const belly = t.loose ? Math.sin(Math.PI * (0.12 + v * 0.88)) : 0.78 + 0.22 * Math.sin(Math.PI * Math.min(1, v / 0.36));
+      const half = (wide / 2) * belly * (1 - v) ** 0.7;
+      left.push([middle(v) - half, t.foot - H * v]);
+      right.push([middle(v) + half, t.foot - H * v]);
+    }
+    const tip = [middle(1), t.foot - H];
+    let d = `M${pt(left[0])}`;
+    for (let i = 1; i < steps - 1; i++) d += ` Q${pt(left[i])} ${pt(mid(left[i], left[i + 1]))}`;
+    d += ` Q${pt(left[steps - 1])} ${pt(tip)} Q${pt(right[steps - 1])} ${pt(mid(right[steps - 1], right[steps - 2]))}`;
+    for (let i = steps - 2; i > 0; i--) d += ` Q${pt(right[i])} ${pt(mid(right[i], right[i - 1]))}`;
+    return `${d} L${pt(right[0])} Z`;
   };
-  const passes = [[1, '#c82a16', 0.8], [0.82, '#ff6a1a', 0.9], [0.6, '#ffaa2e', 0.95], [0.38, '#ffe6a0', 1]];
-  const flames = passes.map(([k, colour, a]) => `<path d="${list.map((t) => tongue(t, k)).join(' ')}" fill="${colour}" fill-opacity="${n(a)}"/>`).join('');
-  // logs leant together over the bed, their undersides catching the glow
-  const logs = [];
-  const lit = [];
-  for (let i = 0; i < 7; i++) {
-    const side = i % 2 === 0 ? -1 : 1;
-    const foot = [x + side * w * between(rnd, 0.3, 0.62), y + between(rnd, 2, 9)];
-    const top = [x + side * w * between(rnd, -0.05, 0.12), y - h * between(rnd, 0.16, 0.3)];
-    const thick = w * between(rnd, 0.06, 0.09);
-    logs.push(`<path d="M${pt(foot)} L${pt(top)}" stroke-width="${n(thick)}"/>`);
-    lit.push(`<path d="M${pt([foot[0], foot[1] - thick * 0.3])} L${pt([top[0], top[1] + thick * 0.2])}" stroke-width="${n(thick * 0.3)}"/>`);
+  const flames = (cv, pass) => {
+    const { k, stops } = FLAME[pass];
+    const g = cv.id('flame');
+    cv.def(`<linearGradient id="${g}" gradientUnits="userSpaceOnUse" x1="0" y1="${n(y)}" x2="0" y2="${n(y - h * k * 1.04)}">${stopsOf(stops)}</linearGradient>`);
+    return `<path d="${list.map((t) => ribbon(t, k)).join(' ')}" fill="url(#${g})"/>`;
+  };
+  // a log from its foot on the ground to its top over the bed, thicker at the foot: dark against the fire, the
+  // edge of it toward the fire's heart catching the light, and a few cracks in its char glowing
+  const apex = [x + wind * h * 0.1, y - h * 0.36];
+  const heart = [x, y - h * 0.14];
+  const log = (foot, top, thick, bark = '#150907') => {
+    const len = Math.hypot(top[0] - foot[0], top[1] - foot[1]);
+    const along = [(top[0] - foot[0]) / len, (top[1] - foot[1]) / len];
+    let across = [-along[1], along[0]];
+    const middle = mid(foot, top);
+    if ((heart[0] - middle[0]) * across[0] + (heart[1] - middle[1]) * across[1] < 0) across = [-across[0], -across[1]];
+    const at = (u, v) => [foot[0] + along[0] * len * u + across[0] * thick * v, foot[1] + along[1] * len * u + across[1] * thick * v];
+    const cracks = [];
+    for (let i = 0; i < 3; i++) {
+      const u = between(rnd, 0.15, 0.85);
+      cracks.push(`M${pt(at(u, between(rnd, -0.1, 0.2)))} L${pt(at(u + between(rnd, 0.03, 0.08), between(rnd, 0.2, 0.42)))}`);
+    }
+    return (
+      `<path d="M${pt(at(0, -0.5))} L${pt(at(1, -0.34))} Q${pt(at(1.03, 0))} ${pt(at(1, 0.34))} L${pt(at(0, 0.5))} Q${pt(at(-0.03, 0))} ${pt(at(0, -0.5))} Z" fill="${bark}"/>` +
+      `<path d="M${pt(at(0.04, 0.42))} L${pt(at(0.97, 0.28))}" stroke="#ff8a3a" stroke-opacity="0.6" stroke-width="${n(thick * 0.12)}" stroke-linecap="round"/>` +
+      `<path d="${cracks.join(' ')}" stroke="#ffb04a" stroke-opacity="0.65" stroke-width="${n(thick * 0.07)}" stroke-linecap="round"/>`
+    );
+  };
+  // a pyre, as tall as it is wide and no two logs alike: each from the edge of the bed up toward the point where
+  // they meet, some stopping short of it and some running on past, as leant logs cross
+  const leant = (a, bark) => {
+    const foot = [x + Math.cos(a) * w * between(rnd, 0.3, 0.54), y + 5 + Math.sin(a) * w * 0.08];
+    const over = between(rnd, -0.2, 0.26);
+    const top = [apex[0] + (apex[0] - foot[0]) * over + between(rnd, -9, 9), apex[1] + (apex[1] - foot[1]) * over + between(rnd, -8, 8)];
+    return log(foot, top, w * between(rnd, 0.055, 0.09), bark);
+  };
+  const back = [];
+  const front = [];
+  for (let i = 0; i < 6; i++) back.push(leant(Math.PI + (i + 0.5 + between(rnd, -0.3, 0.3)) * (Math.PI / 6), '#1c0c08'));
+  for (let i = 0; i < 6; i++) front.push(leant((i + 0.5 + between(rnd, -0.3, 0.3)) * (Math.PI / 6)));
+  // the bed: embers white at the middle, orange round it, and coals lying in it
+  const coals = [];
+  for (let i = 0; i < 30; i++) {
+    const a = between(rnd, 0, Math.PI * 2);
+    const r = Math.sqrt(rnd());
+    const hot = rnd() < 0.55;
+    coals.push(`<ellipse cx="${n(x + Math.cos(a) * r * w * 0.56)}" cy="${n(y + 5 + Math.sin(a) * r * w * 0.08)}" rx="${n(between(rnd, 2, 6))}" ry="${n(between(rnd, 1.2, 3))}" fill="${hot ? '#ffe2a0' : '#220b06'}"/>`);
   }
-  const bed = `<ellipse cx="${n(x)}" cy="${n(y + 4)}" rx="${n(w * 0.62)}" ry="${n(h * 0.05)}" fill="#ff7a22"/><ellipse cx="${n(x)}" cy="${n(y + 3)}" rx="${n(w * 0.36)}" ry="${n(h * 0.03)}" fill="#ffd27a"/>`;
-  return {
-    flames,
-    logs: `${bed}<g stroke="#1c0c06" stroke-linecap="round">${logs.join('')}</g><g stroke="#ff8a3a" stroke-opacity="0.7" stroke-linecap="round">${lit.join('')}</g>`,
-  };
+  const bed =
+    `<ellipse cx="${n(x)}" cy="${n(y + 5)}" rx="${n(w * 0.58)}" ry="${n(w * 0.088)}" fill="#c8360c"/>` +
+    `<ellipse cx="${n(x)}" cy="${n(y + 4)}" rx="${n(w * 0.42)}" ry="${n(w * 0.06)}" fill="#ff8420"/>` +
+    `<ellipse cx="${n(x)}" cy="${n(y + 3)}" rx="${n(w * 0.22)}" ry="${n(w * 0.032)}" fill="#ffd27a"/>${coals.join('')}`;
+  return { flames, bed, back: back.join(''), front: front.join('') };
 }
 
 /**

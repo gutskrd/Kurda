@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   LAST_LETTER_DEFAULT_TURN_SECONDS,
   LAST_LETTER_TURN_SECONDS,
@@ -23,6 +23,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import { LastLetterBoardView } from './LastLetterBoard';
 import { offeredDialects, useLastLetterAvailability } from './availability';
+import { Loading } from '../theme/Loading';
 
 /** A dialect is called by its own name in every language, the way a language is. */
 const DIALECT_NAME: Record<LetterDialect, string> = { kmr: 'Kurmancî', ckb: 'Soranî' };
@@ -65,7 +66,7 @@ function Start({ onEnter }: { onEnter: (id: string) => void }): React.JSX.Elemen
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (answer === null) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
+  if (answer === null) return <Loading style={styles.loading} />;
   if (group.length === 0) {
     return (
       <GlassCard style={styles.card}>

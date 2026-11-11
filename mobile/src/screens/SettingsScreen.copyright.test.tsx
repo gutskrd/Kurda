@@ -2,6 +2,7 @@
 import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { Linking } from 'react-native';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { PROVIDER } from '@kurda/shared';
 import { fakeClient, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { COPYRIGHT_URL, SettingsScreen } from './SettingsScreen';
@@ -49,5 +50,14 @@ describe('Settings → About Hevalo', () => {
       'https://hevalo.app/how-hevalo-teaches',
       'mailto:support@hevalo.app',
     ]);
+  });
+
+  // the registration Dutch law asks for, shown as it is and not as a link: there is nothing to open
+  it('shows the KvK number at the foot of the legal rows', () => {
+    testAuth.client = fakeClient();
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    expect(screen.getByText('KvK number')).toBeTruthy();
+    expect(screen.getByText(PROVIDER.kvk)).toBeTruthy();
+    expect(PROVIDER.kvk).toBe('42217689');
   });
 });

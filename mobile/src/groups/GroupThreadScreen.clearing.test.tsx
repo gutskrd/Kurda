@@ -51,7 +51,6 @@ const detail = (myRole: string) =>
     id: 'g1',
     name: 'Newroz club',
     description: null,
-    privacy: 'open',
     ownerId: 'u-owner',
     archivedAt: null,
     memberCount: 12,
@@ -70,7 +69,7 @@ function thread(myRole: string, routes: Record<string, unknown> = {}) {
   const client = fakeClient({ 'GET /groups/g1/chat': history, 'POST /groups/g1/chat/read': ok({ ok: true }), 'GET /groups/g1': detail(myRole), ...routes } as never);
   testAuth.client = client;
   testAuth.user = { ...testAuth.user, id: 'me', username: 'rojda' };
-  renderWithProviders(<GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />);
+  renderWithProviders(<GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} onFindPeople={() => undefined} />);
   return client;
 }
 

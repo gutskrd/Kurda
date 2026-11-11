@@ -31,20 +31,21 @@ export interface JoinCheck {
  *   the host's who is a minor, or whose age nobody knows, does not join one
  *   either. Only a known adult can open a game (checked where it is created),
  *   so a child is never in a game strangers could walk into;
- * - a 'friends' game takes the host's accepted friends, and the members of an
- *   invite-only group chat the host shared it into. Everyone in an
- *   invite-only group was put there by somebody they chose (groups only invite
- *   friends), so that brings in nobody new to a child. That holds only while
- *   the host is in the group too: a host the group has removed (after a
- *   report, say) no longer vouches through it, for this game or for the next
- *   rounds that inherit its group.
+ * - a 'friends' game takes the host's accepted friends, and the members of a
+ *   group chat the host shared it into. Every group is private: everyone in
+ *   one was put there by somebody they chose (an owner or admin adds only
+ *   their own friends), so that brings in nobody new to a child. That holds
+ *   only while the host is in the group too: a host the group has removed
+ *   (after a report, say) no longer vouches through it, for this game or for
+ *   the next rounds that inherit its group.
  *
- * A game shared into an OPEN group lets nobody in on that account. An open
- * group is strangers by design — it is adults-only for that reason — and a
- * friends game can hold the host's friend who is fifteen; letting the group in
- * would be the stranger contact an open game is refused to a minor for. A host
- * who wants the group's adults in opens the game instead. (The contract's
- * wording let any group in; this is the safer reading of the same rule.)
+ * A game shared into a group that was OPEN before every group became private
+ * (`groups.privacy` still says so, migration 1751000420000) lets nobody in on
+ * that account. Its members are strangers to one another: they walked in,
+ * nobody chose them. A friends game can hold the host's friend who is
+ * fifteen, and letting that room in would be the very stranger contact an
+ * open game is refused to a minor for. A host who wants them in opens the
+ * game instead.
  *
  * The answer is a yes or a no and is never explained: every caller turns a no
  * into the same "not found" as a game that does not exist, so a refusal says

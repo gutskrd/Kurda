@@ -25,7 +25,7 @@ import { BURST } from '../../theme/celebration';
 import { timing, useCountUp } from '../../theme/animate';
 import { duration } from '../../theme/motion';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
-import { GOLD_INK, TONES, type ToneColors } from '../../coursemap/path';
+import { TONES, type ToneColors } from '../../coursemap/path';
 import { NO_MOMENTS, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
 import { ReminderOffer } from '../../push/ReminderOffer';
@@ -190,7 +190,7 @@ export function LessonResults({
       ? 'lesson.results.strongerSorani'
       : 'lesson.results.strongerKurmanci';
   const tones = TONES[scheme];
-  const gold: ToneColors = { fill: colors.gold, lip: colors.gold, ink: GOLD_INK, text: colors.goldText };
+  const gold: ToneColors = { fill: colors.gold, lip: colors.gold, ink: colors.textOnGold, text: colors.goldText };
   const clock = sitting ? sittingClock(sitting.ms) : null;
 
   return (

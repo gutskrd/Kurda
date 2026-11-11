@@ -10,11 +10,7 @@
  */
 
 /* ---- the card's picture: tiles on a line and a tray, no words ---------------- */
-@media (min-width: 1000px) {
-  .game-tile--build-sentence {
-    grid-column: span 7;
-  }
-}
+/* its width in the grid is the grid's (styles/product.css): every game's card is laid out the same */
 .lg-mini {
   display: grid;
   gap: 18px;

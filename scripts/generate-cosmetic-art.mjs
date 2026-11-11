@@ -45,13 +45,21 @@
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): Kurdish things painted as
  * still lifes — a ripe pomegranate, a glass of tea on its saucer, a seal
- * of red wax with the flag's sun pressed into it, a saz, a buck come down
- * to drink (the deer of the backgrounds, figures.mjs), a sheaf of wheat tied
- * with a bow, a white dove with a letter, the Newroz fire — painted by hand
- * rather than modelled, their light and shadow laid on as a painter lays them
- * and brushed over (cosmetic-art/brush.mjs), and cut out of the dark, so that
- * each lies over a profile picture with nothing round it but its own light
- * (cosmetic-art/still.mjs).
+ * of red wax with the flag's sun pressed into it, a saz, a sheaf of wheat
+ * tied with a bow, a white dove carrying a letter, the Newroz fire — painted
+ * by hand rather than modelled, their light and shadow laid on as a painter
+ * lays them and brushed over (cosmetic-art/brush.mjs), a dark line drawn
+ * round each as round a cut-out; and one drawn soft, as with a pastel, a
+ * fawn sitting up with no line round it,
+ * and cut out of the dark, so that each lies over a profile picture with
+ * nothing round it but its own light (cosmetic-art/still.mjs).
+ * Frames (512×512 PNG, cosmetic-art/frames.mjs): rings to wear round a
+ * profile picture, drawn the same way — tulips, wheat, a kilim band, the
+ * sun's rays, the night sky, the Newroz fire; wreaths of spring flowers; a
+ * fawn, a sleeping fox, a snake, wings; stars, northern lights, a clock's
+ * numerals, glowing signs, black scrollwork; an inlaid band, gilt leaves, a
+ * sight's cross, a photograph; thorns, smoke, an eclipse —
+ * each with its middle left for the face.
  * Stickers (512×512 WebP, here): the suns, a Kurdistan flag badge, the Hevalo
  * deer and a few words in a badge.
  *
@@ -76,8 +84,9 @@
  *
  * ── what it owns ──────────────────────────────────────────────────────────
  *
- * `web/public/cosmetics/backgrounds`, `web/public/cosmetics/icons` and
- * `web/public/stickers` belong to this script whole: a file in them that it did
+ * `web/public/cosmetics/backgrounds`, `web/public/cosmetics/icons`,
+ * `web/public/cosmetics/frames` and `web/public/stickers` belong to this
+ * script whole: a file in them that it did
  * not write is removed when it runs against the repo. It also writes
  * `web/public/filters/kurdistan.webp`.
  */
@@ -105,10 +114,11 @@ import {
 } from './cosmetic-art/kit.mjs';
 import { BACKGROUNDS } from './cosmetic-art/backgrounds.mjs';
 import { renderScene } from './cosmetic-art/render.mjs';
+import { FRAMES } from './cosmetic-art/frames.mjs';
 import { ICONS } from './cosmetic-art/icons.mjs';
 import { renderStill } from './cosmetic-art/still.mjs';
 
-export { BACKGROUNDS, ICONS };
+export { BACKGROUNDS, FRAMES, ICONS };
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -326,6 +336,35 @@ export async function renderIcon(piece) {
 
 export const iconFile = (piece, i) => `web/public/cosmetics/icons/made-${String(i + 1).padStart(2, '0')}-${piece.key}.png`;
 
+// ─────────────────────────────────────────────────────────────── frames
+
+/** A frame's still life, as an icon's is. */
+export function frameStill(piece) {
+  return piece.still(random(seedOf(`frame:${piece.key}`)));
+}
+
+/** The still life written out as text — the same text on every machine. */
+export function frameSvg(piece) {
+  return JSON.stringify(frameStill(piece));
+}
+
+/** A frame, painted and written as an icon is: a PNG with its transparency, within the same budget. */
+export async function renderFrame(piece) {
+  const px = await renderStill(frameStill(piece), seedOf(`frame:${piece.key}:grain`));
+  for (const colours of [256, 192, 128, 96]) {
+    const buf = await sharp(px, { raw: { width: ICON.size, height: ICON.size, channels: 4 } })
+      .png({ palette: true, quality: 100, colours, effort: 10, compressionLevel: 9, dither: 0.6 })
+      .toBuffer();
+    if (buf.length <= FRAME_MAX_BYTES) return buf;
+  }
+  throw new Error(`frame ${piece.key}: cannot fit under ${FRAME_MAX_BYTES} bytes`);
+}
+
+/** A frame is a ring with a great deal of edge to it, so it is allowed more than an icon is. */
+export const FRAME_MAX_BYTES = 120 * 1024;
+
+export const frameFile = (piece, i) => `web/public/cosmetics/frames/made-${String(i + 1).padStart(2, '0')}-${piece.key}.png`;
+
 // ─────────────────────────────────────────────────────────────── stickers
 
 export const STICKER = { size: 512, maxBytes: 60 * 1024 };
@@ -503,7 +542,7 @@ export async function renderSticker(piece) {
 export const stickerFile = (piece) => `web/public/stickers/${piece.file}.webp`;
 export const OVERLAY_FILE = 'web/public/filters/kurdistan.webp';
 /** Folders nothing but this script writes into. */
-export const OWNED_DIRS = ['web/public/cosmetics/backgrounds', 'web/public/cosmetics/icons', 'web/public/stickers'];
+export const OWNED_DIRS = ['web/public/cosmetics/backgrounds', 'web/public/cosmetics/icons', 'web/public/cosmetics/frames', 'web/public/stickers'];
 
 // ──────────────────────────────────────────────────────── the flag overlay
 
@@ -630,6 +669,7 @@ function parseArgs(argv) {
 const DRAW = {
   background: (i) => renderBackground(BACKGROUNDS[i]),
   icon: (i) => renderIcon(ICONS[i]),
+  frame: (i) => renderFrame(FRAMES[i]),
   sticker: (i) => renderSticker(STICKERS[i]),
   overlay: () => renderFlagOverlay(),
 };
@@ -690,6 +730,7 @@ export async function renderAll(outRoot, { only = null, log = () => {} } = {}) {
   const jobs = [
     ...BACKGROUNDS.map((piece, i) => ({ kind: 'background', i, name: piece.key, file: backgroundFile(piece, i) })),
     ...ICONS.map((piece, i) => ({ kind: 'icon', i, name: piece.key, file: iconFile(piece, i) })),
+    ...FRAMES.map((piece, i) => ({ kind: 'frame', i, name: `frame-${piece.key}`, file: frameFile(piece, i) })),
     ...STICKERS.map((piece, i) => ({ kind: 'sticker', i, name: piece.file, file: stickerFile(piece) })),
     { kind: 'overlay', i: 0, name: 'kurdistan', file: OVERLAY_FILE },
   ].filter((job) => wanted(job.name));

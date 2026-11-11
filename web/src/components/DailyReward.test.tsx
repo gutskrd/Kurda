@@ -97,6 +97,63 @@ describe('DailyReward', () => {
     expect(screen.queryByRole('link', { name: en['daily.goLearn'] })).not.toBeInTheDocument();
   });
 
+  /**
+   * A Hevalo+ member's claim brings a few gems as well: said in one line, as
+   * what the claim adds before it and what it added after, and to nobody else.
+   */
+  it('says the gems a Hevalo+ member’s claim adds, and that it added them', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('/rewards/daily/claim')) return jsonResponse(200, { claimed: true, cycleDay: 3, reward: 20, balance: 120, plusGems: 5 });
+      if (url.includes('/rewards/daily')) {
+        return jsonResponse(200, { canClaim: true, claimableDay: 3, reward: 20, schedule: [], alreadyClaimedToday: false, cycleDay: 2, plusGems: 5 });
+      }
+      if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 100, gems: 0 }, history: [] });
+      return jsonResponse(200, {});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<DailyReward />);
+
+    const claim = await screen.findByRole('button', { name: /claim daily zêr/i });
+    expect(screen.getByText('+5 gems with Hevalo+')).toBeInTheDocument();
+    await userEvent.click(claim);
+    expect(await screen.findByText(/\+20 zêr claimed/i)).toBeInTheDocument();
+    expect(screen.getByText('+5 gems with Hevalo+')).toBeInTheDocument();
+  });
+
+  it('says nothing about gems to anyone else, before the claim or after it', async () => {
+    const fetchMock = vi.fn(async (url: string) => {
+      if (url.includes('/rewards/daily/claim')) return jsonResponse(200, { claimed: true, cycleDay: 3, reward: 20, balance: 120, plusGems: 0 });
+      if (url.includes('/rewards/daily')) {
+        return jsonResponse(200, { canClaim: true, claimableDay: 3, reward: 20, schedule: [], alreadyClaimedToday: false, cycleDay: 2, plusGems: 0 });
+      }
+      if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 100, gems: 0 }, history: [] });
+      return jsonResponse(200, {});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<DailyReward />);
+
+    const claim = await screen.findByRole('button', { name: /claim daily zêr/i });
+    expect(screen.queryByText(/Hevalo\+/)).not.toBeInTheDocument();
+    await userEvent.click(claim);
+    expect(await screen.findByText(/\+20 zêr claimed/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Hevalo\+/)).not.toBeInTheDocument();
+  });
+
+  it('does not repeat a member’s gems on a day already claimed', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        routedFetch({
+          '/rewards/daily': { canClaim: false, claimableDay: 3, reward: 20, schedule: [], alreadyClaimedToday: true, learnedToday: true, cycleDay: 3, plusGems: 5 },
+          '/me/wallet': { balances: { zer: 100, gems: 5 }, history: [] },
+        }),
+      ),
+    );
+    renderApp(<DailyReward />);
+    expect(await screen.findByText(/claimed today/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Hevalo\+/)).not.toBeInTheDocument();
+  });
+
   it('renders nothing if the reward status cannot load', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(500, {})));
     const { container } = renderApp(<DailyReward />);

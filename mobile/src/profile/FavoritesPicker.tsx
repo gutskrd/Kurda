@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -12,6 +12,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { FAVORITE_KINDS, clearFavorite, favoriteCopy, setFavorite, type FavoriteKind } from './favorites';
 import type { FavoriteRef } from './types';
+import { Loading } from '../theme/Loading';
 
 /** How many published posts to offer — the browser offers the same fifty. */
 const BROWSE = 50;
@@ -131,7 +132,7 @@ function Slot({
         >
           {current ? current.title : t('favorites.none')}
         </Text>
-        {busy ? <ActivityIndicator color={colors.primary} /> : null}
+        {busy ? <Loading /> : null}
         {current && !busy ? (
           <Pressable
             onPress={remove}
@@ -157,7 +158,7 @@ function Slot({
 
       {open ? (
         posts === null ? (
-          <ActivityIndicator color={colors.primary} style={styles.spinner} />
+          <Loading style={styles.spinner} />
         ) : posts.length === 0 ? (
           <Text style={[styles.empty, { color: colors.textSecondary }]}>{t(copy.empty)}</Text>
         ) : (

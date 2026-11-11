@@ -9,6 +9,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
+import { makeLearner } from '../test/progress.js';
 import { StreakService } from './service.js';
 import { localDate, shiftDate } from './streak-logic.js';
 
@@ -104,5 +105,44 @@ describe.skipIf(!DATABASE_URL)('learning streak (integration)', () => {
     // and a lesson after it keeps it too
     const after = await streaks.recordActivity(userId, 'UTC');
     expect(after).toMatchObject({ current: 4, freezeUsedOn: shiftDate(today, -1) });
+  });
+
+  /** Ten sessions, one a day from the 1st of August: enough learning for two freezes, if there is room for two. */
+  const tenDays = async (id: string) => {
+    let last = await streaks.recordActivity(id, 'UTC', at('2026-08-01'));
+    for (let i = 1; i < 10; i++) last = await streaks.recordActivity(id, 'UTC', at(shiftDate('2026-08-01', i)));
+    return last;
+  };
+
+  it('holds one freeze without Hevalo+, however much is learned', async () => {
+    const who = await makeLearner(pool, `learn_one_${suffix}`);
+    expect(await tenDays(who.id)).toMatchObject({ current: 10, freezes: 1, maxFreezes: 1, freezeProgress: 5 });
+  });
+
+  it('a Hevalo+ member earns and holds a second freeze, and two missed days in a row are both kept', async () => {
+    const who = await makeLearner(pool, `learn_plus_${suffix}`);
+    await pool.query(`UPDATE users SET premium_until = '2027-01-01T00:00:00Z' WHERE id = $1`, [who.id]);
+    expect(await tenDays(who.id)).toMatchObject({ current: 10, freezes: 2, maxFreezes: 2, freezeProgress: 0 });
+
+    // the 11th and the 12th missed, seen again on the 13th: both freezes spent, the run kept
+    const kept = await streaks.get(who.id, 'UTC', at('2026-08-13'));
+    expect(kept).toMatchObject({ current: 10, freezes: 0, maxFreezes: 2, freezeUsedOn: '2026-08-12', lastActiveOn: '2026-08-12', repair: null });
+    const week = await streaks.recent(who.id, 'UTC', at('2026-08-13'));
+    expect(week.recent).toEqual([
+      { date: '2026-08-11', kind: 'frozen' },
+      { date: '2026-08-12', kind: 'frozen' },
+    ]);
+    expect((await streaks.recordActivity(who.id, 'UTC', at('2026-08-13'))).current).toBe(11);
+  });
+
+  it('keeps a second freeze after membership ends, and earns no more while holding it', async () => {
+    const who = await makeLearner(pool, `learn_lapsed_${suffix}`);
+    await pool.query(`UPDATE users SET premium_until = '2026-08-10T23:00:00Z' WHERE id = $1`, [who.id]);
+    expect(await tenDays(who.id)).toMatchObject({ freezes: 2, maxFreezes: 2 });
+    // membership over: the two held are still there and still drawn, and five more sessions add none
+    let after = await streaks.get(who.id, 'UTC', at('2026-08-11'));
+    expect(after).toMatchObject({ freezes: 2, maxFreezes: 2 });
+    for (let i = 0; i < 5; i++) after = await streaks.recordActivity(who.id, 'UTC', at('2026-08-11'));
+    expect(after).toMatchObject({ current: 11, freezes: 2, maxFreezes: 2, freezeProgress: 5 });
   });
 });

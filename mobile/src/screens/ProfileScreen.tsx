@@ -28,7 +28,7 @@ import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type Pr
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { AvatarStage } from '../profile/AvatarStage';
 import { OverviewGrid, OverviewSkeleton, type OverviewTile } from '../profile/OverviewGrid';
-import { LeagueEmblem, SeasonFramed, frameTierOf } from '../ranks/art';
+import { Framed, LeagueEmblem } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
 import { leagueTint } from '../ranks/tint';
 import { knownTier, leagueLabel, leagueName } from '../leagues/format';
@@ -170,6 +170,8 @@ function AccountProfile() {
     league: ProfileLeague | null;
     badges: ShowcaseBadge[];
     frameSku: string | null;
+    /** the picture of a frame from the shop; a season frame is drawn from its SKU */
+    frameUrl: string | null;
   } | null>(null);
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -237,9 +239,10 @@ function AccountProfile() {
             league?: ProfileLeague | null;
             badges?: ShowcaseBadge[];
             frameSku?: string | null;
+            frameUrl?: string | null;
           }>(`/users/${id}`);
           if (active && p.ok) {
-            setProgress({ ranks: p.data.ranks ?? [], league: p.data.league ?? null, badges: p.data.badges ?? [], frameSku: p.data.frameSku ?? null });
+            setProgress({ ranks: p.data.ranks ?? [], league: p.data.league ?? null, badges: p.data.badges ?? [], frameSku: p.data.frameSku ?? null, frameUrl: p.data.frameUrl ?? null });
           }
         }
         if (active) {
@@ -285,7 +288,6 @@ function AccountProfile() {
   }, [me, user, t]);
 
   const country = me?.country ? countryName(me.country, locale) ?? me.country : null;
-  const frameTier = frameTierOf(progress?.frameSku);
   const leagueTier = knownTier(progress?.league?.tier);
   // the stage under the face is the league's water, or the brand before there is a league
   const stageTint = leagueTier ? leagueTint(leagueTier, scheme)[1] : colors.primary;
@@ -416,14 +418,10 @@ function AccountProfile() {
         <View style={styles.hero}>
           <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel={t('profile.changePhoto')}>
             <AvatarStage tint={stageTint} size={STAGE}>
-              {frameTier ? (
-                // the season frame rings the face; the face and its icon stay their own size inside it
-                <SeasonFramed tier={frameTier} size={FRAMED} label={t('season.frameOf', { tier: t(TIER_NAME_KEY[frameTier]) })}>
-                  {face}
-                </SeasonFramed>
-              ) : (
-                face
-              )}
+              {/* the frame rings the face; the face and its icon stay their own size inside it */}
+              <Framed sku={progress?.frameSku} url={progress?.frameUrl} size={FRAMED} label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
+                {face}
+              </Framed>
               {uploading ? (
                 <View style={[styles.avatarOverlay, { backgroundColor: colors.scrim }]}>
                   <ActivityIndicator color={colors.textOnScrim} />
@@ -531,7 +529,7 @@ function AccountProfile() {
 
         {user?.id ? <ProfileActivity key={reloadKey} userId={user.id} own /> : null}
       </ScrollView>
-      <StreakSheet streak={streakOpen ? streak : null} onClose={() => setStreakOpen(false)} />
+      <StreakSheet streak={streakOpen ? streak : null} onClose={() => setStreakOpen(false)} onRestored={setStreak} />
     </GradientBackground>
   );
 }

@@ -9,26 +9,36 @@
  * About page, the /copyright page and the copyright emails all read them from
  * here, so changing a detail is one edit.
  *
- * OWNER: replace every value in [square brackets] before launch. While one is
- * still a placeholder the pages show it as it is, so a missing detail is
- * visible rather than silently left out (`isProviderPlaceholder`).
+ * The DMCA agent is still in [square brackets]: it is only a US registration,
+ * and until it is made /copyright leaves its section out rather than showing
+ * the brackets (`isProviderPlaceholder`).
  */
 
 export interface ProviderIdentity {
   /** the brand people see */
   brand: string;
-  /** the trading name the About page already names */
+  /** the trade name the provider uses for Hevalo, shown as "trading as" after the registered name */
   tradingName: string;
-  /** the legal name registered with the KvK (for an eenmanszaak, the owner's name and the trading name) */
+  /** the name registered with the KvK that the pages name the provider by: the business, Zagrosian */
   legalName: string;
-  /** a street address (a PO box is not enough for the provider itself) */
+  /**
+   * The establishment address as registered with the KvK (a PO box is not enough
+   * for the provider itself). If it is ever shielded in the Handelsregister, the
+   * public postal address registered instead goes here.
+   */
   address: string;
   /** Kamer van Koophandel number */
   kvk: string;
-  /** btw-identificatienummer */
-  vat: string;
+  /**
+   * btw-identificatienummer (NL + nine digits + B + two digits), not the
+   * omzetbelastingnummer. Left out until the Belastingdienst has issued it: the
+   * pages then show no VAT line rather than a blank one.
+   */
+  vat?: string;
   /** the general email address */
   email: string;
+  /** the business telephone number as registered with the KvK, written internationally */
+  phone: string;
   /** DSA Art. 12: where members write */
   userContact: { email: string; languages: readonly string[] };
   /** DSA Art. 11: where authorities write */
@@ -41,17 +51,24 @@ export interface ProviderIdentity {
   governingLaw: string;
 }
 
+/*
+ * Zagrosian is an eenmanszaak registered with the KvK; Hevalo is one of its two
+ * trade names (handelsnamen) under the same registration. The details are the
+ * ones on the KvK's registration notice, as the owner chose to show them: the
+ * registered name and trade name, the establishment address, the KvK number,
+ * the registered email and telephone number.
+ */
 export const PROVIDER: ProviderIdentity = {
   brand: 'Hevalo',
-  tradingName: 'Zagrosian',
-  legalName: '[Legal name as registered with the KvK]',
-  address: '[Street and number, postcode, city, the Netherlands]',
-  kvk: '[KvK number]',
-  vat: '[VAT number (btw-id)]',
-  email: '[hello@your-domain]',
-  userContact: { email: '[support@your-domain]', languages: ['English', 'Nederlands', 'Kurmancî'] },
-  authorityContact: { email: '[legal@your-domain]', languages: ['English', 'Nederlands'] },
-  copyrightEmail: '[copyright@your-domain]',
+  tradingName: 'Hevalo',
+  legalName: 'Zagrosian',
+  address: 'Westerengstraat 7, 6669 BE Dodewaard, Nederland',
+  kvk: '42217689',
+  email: 'contact@zagrosian.com',
+  phone: '+31 6 38066158',
+  userContact: { email: 'support@hevalo.app', languages: ['English', 'Nederlands', 'Kurmancî'] },
+  authorityContact: { email: 'contact@zagrosian.com', languages: ['English', 'Nederlands'] },
+  copyrightEmail: 'contact@zagrosian.com',
   dmcaAgent: {
     name: '[DMCA designated agent — name]',
     address: '[DMCA designated agent — postal address]',

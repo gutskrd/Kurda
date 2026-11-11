@@ -5,8 +5,8 @@ import { useAuth } from '../auth/AuthProvider';
 /**
  * Where The Last Letter is offered now (`GET /mp/last-letter/availability`):
  * per dialect, with friends once the dictionary can check players' words, and
- * against Hevalo once admins have curated enough of its words. The game lists
- * itself only where it is offered; nowhere says "coming soon".
+ * against Hevalo once admins have curated enough of its words. Learn's list
+ * opens it only where it is offered, and shows it as coming soon elsewhere.
  *
  * Read once per page load and shared: the answer changes when an import or an
  * admin's curation lands, not while somebody is choosing a game.

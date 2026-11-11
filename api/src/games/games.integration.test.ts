@@ -20,6 +20,7 @@ import { poolQuiet, queriesDuring } from '../test/query-count.js';
 import { bustAvailability } from './availability.js';
 import { bustGamePools } from './sources.js';
 import { learnGameServices } from './routes.js';
+import { removeCourses } from '../test/courses.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
@@ -152,7 +153,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('learning games (integration)', () 
     await poolQuiet(pool);
     await pool.query(`DELETE FROM game_content WHERE payload::text LIKE $1`, [`%${tag}%`]);
     await pool.query(`DELETE FROM game_content WHERE payload::text LIKE $1`, [`%${tagCkb}%`]);
-    await pool.query(`DELETE FROM courses WHERE id = ANY($1::uuid[])`, [courseIds]);
+    await removeCourses(pool, courseIds);
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -196,7 +197,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('learning games (integration)', () 
       expect(view.items).toHaveLength(8);
       expect(view.states.every((st: { attempts: number }) => st.attempts === 0)).toBe(true);
       for (const item of view.items) {
-        expect(Object.keys(item).sort()).toEqual(['index', 'key', 'level', 'meaning', 'rung', 'tiles']);
+        // nothing worked out from the sentence: a key hashed from it would let the tiles be checked before they are sent
+        expect(Object.keys(item).sort()).toEqual(['index', 'level', 'meaning', 'rung', 'tiles']);
         expect(item.tiles.join(' ')).not.toContain('draftonly');
         for (const t of item.tiles) expect(textScript(t)).toBe('latin');
       }
@@ -234,7 +236,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('learning games (integration)', () 
       const spent = await answer(learner, id, 1, wrongOrder(items[1]!, 'kmr'));
       expect(spent.json()).toMatchObject({ correct: false, done: true });
       expect(spent.json().correction.firstWrong).toBe(0);
-      expect((await answer(learner, id, 99, [0])).statusCode).toBe(404);
+      // an item the round does not have (the route itself refuses a place no round could have, with 400)
+      expect((await answer(learner, id, 20, [0])).statusCode).toBe(404);
+      expect((await answer(learner, id, 99, [0])).statusCode).toBe(400);
       expect((await call('POST', `/games/solo/sessions/${id}/answers`, learner, { index: 2, answer: { order: 'no' } })).statusCode).toBe(400);
     });
 

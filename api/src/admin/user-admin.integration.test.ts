@@ -237,6 +237,76 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect((await svc.detail(id))!.age).toBe('unknown');
   });
 
+  /**
+   * Hevalo+ by days, for testers and reviewers while it cannot be bought:
+   * given, extended from where it ends, and every grant in the history.
+   */
+  describe('granting Hevalo+', () => {
+    const plusActions = async (id: string) =>
+      (await svc.detail(id))!.actions.filter((a) => a.action === 'plus_grant');
+
+    it('gives it from today, extends it from where it ends, and starts again once it has run out', async () => {
+      const id = await reg(`plus${suffix}`.slice(0, 20), '10.101.0.8');
+      expect((await svc.detail(id))!.premiumUntil).toBeNull();
+
+      const first = await svc.grantPlus(adminId, id, 30, 'tester for the spring release', undefined, new Date('2026-06-01T12:00:00Z'));
+      expect(first).toEqual({ ok: true, premiumUntil: new Date('2026-07-01T12:00:00Z') });
+      // ten days in, a week more is added to the end, not to today
+      const more = await svc.grantPlus(adminId, id, 7, 'one more week', undefined, new Date('2026-06-10T12:00:00Z'));
+      expect(more).toEqual({ ok: true, premiumUntil: new Date('2026-07-08T12:00:00Z') });
+      // long after it ran out, it starts from the day it is given
+      const again = await svc.grantPlus(adminId, id, 10, 'back for the autumn release', undefined, new Date('2026-09-01T00:00:00Z'));
+      expect(again).toEqual({ ok: true, premiumUntil: new Date('2026-09-11T00:00:00Z') });
+
+      expect((await svc.detail(id))!.premiumUntil).toEqual(new Date('2026-09-11T00:00:00Z'));
+      const history = await plusActions(id);
+      expect(history).toHaveLength(3);
+      expect(history.map((a) => a.reason).sort()).toEqual(['back for the autumn release', 'one more week', 'tester for the spring release']);
+      expect(history.find((a) => a.reason === 'one more week')).toMatchObject({
+        adminId,
+        meta: { days: 7, before: '2026-07-01T12:00:00.000Z', after: '2026-07-08T12:00:00.000Z' },
+      });
+    });
+
+    it('adds the days once per request key, and logs it once', async () => {
+      const id = await reg(`plusk${suffix}`.slice(0, 20), '10.101.0.9');
+      const key = `plus-${suffix}`;
+      const now = new Date('2026-06-01T12:00:00Z');
+      const first = await svc.grantPlus(adminId, id, 30, 'reviewer', key, now);
+      const again = await svc.grantPlus(adminId, id, 30, 'reviewer', key, now);
+      expect(first).toEqual({ ok: true, premiumUntil: new Date('2026-07-01T12:00:00Z') });
+      expect(again).toEqual({ ok: true, premiumUntil: new Date('2026-07-01T12:00:00Z'), duplicate: true });
+      expect(await plusActions(id)).toHaveLength(1);
+      // sent together, the same: the account's lock makes one of them the repeat
+      const other = `plus2-${suffix}`;
+      const burst = await Promise.all(Array.from({ length: 6 }, () => svc.grantPlus(adminId, id, 5, 'reviewer, extended', other, now)));
+      expect(burst.filter((r) => r.ok && !r.duplicate)).toHaveLength(1);
+      expect((await svc.detail(id))!.premiumUntil).toEqual(new Date('2026-07-06T12:00:00Z'));
+      expect(await plusActions(id)).toHaveLength(2);
+    });
+
+    it('makes the person a member wherever membership is read', async () => {
+      const name = `plusm${suffix}`.slice(0, 20);
+      const id = await reg(name, '10.101.0.10');
+      const token = (
+        await app.inject({ method: 'POST', url: '/auth/login', payload: { email: `${name}_${suffix}@it.kurda.app`, password: 'a-strong-password1' } })
+      ).json().tokens.accessToken as string;
+      const me = async () => (await app.inject({ method: 'GET', url: '/me', headers: { authorization: `Bearer ${token}` } })).json().user;
+      expect(await me()).toMatchObject({ premium: false, streak: { maxFreezes: 1 } });
+      await svc.grantPlus(adminId, id, 14, 'reviewer for the store listing');
+      expect(await me()).toMatchObject({ premium: true, streak: { maxFreezes: 2 } });
+    });
+
+    it('refuses an account that does not exist or was closed, and days that are not a whole number in range', async () => {
+      expect(await svc.grantPlus(adminId, '00000000-0000-0000-0000-000000000000', 30, 'x')).toEqual({ ok: false, code: 'NOT_FOUND' });
+      const closed = await reg(`plusc${suffix}`.slice(0, 20), '10.101.0.11');
+      await pool.query(`UPDATE users SET deleted_at = now() WHERE id = $1`, [closed]);
+      expect(await svc.grantPlus(adminId, closed, 30, 'x')).toEqual({ ok: false, code: 'NOT_FOUND' });
+      for (const days of [0, -5, 1.5, 367]) await expect(svc.grantPlus(adminId, targetId, days, 'x')).rejects.toThrow(/whole days/);
+    });
+
+  });
+
   it('refuses actions on an unknown user', async () => {
     expect(await svc.warn(adminId, '00000000-0000-0000-0000-000000000000', 'x')).toEqual({ ok: false, code: 'NOT_FOUND' });
     expect(await svc.detail('00000000-0000-0000-0000-000000000000')).toBeNull();

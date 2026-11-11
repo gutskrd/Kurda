@@ -169,13 +169,16 @@ describe('the copyright notice form', () => {
 });
 
 describe('the provider details', () => {
-  it('shows the DMCA agent and the contact points, with an unfilled detail marked as such', () => {
+  it('names the DMCA agent once one is registered, and shows the contact points', () => {
     serve();
     show();
-    const agent = screen.getByRole('heading', { name: 'DMCA designated agent' }).closest('section')!;
-    const name = within(agent).getByText(PROVIDER.dmcaAgent.name);
-    // while the owner has not filled it in, it shows as a placeholder rather than vanishing
-    if (PROVIDER.dmcaAgent.name.startsWith('[')) expect(name).toHaveAttribute('data-placeholder', 'true');
+    const agent = screen.queryByRole('heading', { name: 'DMCA designated agent' });
+    if (PROVIDER.dmcaAgent.name.startsWith('[')) {
+      // not registered with the US Copyright Office yet: no section of placeholders on a live page
+      expect(agent).toBeNull();
+    } else {
+      expect(within(agent!.closest('section')!).getByText(PROVIDER.dmcaAgent.name)).toBeInTheDocument();
+    }
     const contact = screen.getByRole('heading', { name: 'Other questions' }).closest('section')!;
     expect(within(contact).getByText('For authorities')).toBeInTheDocument();
     expect(within(contact).getByRole('link', { name: 'Terms' })).toHaveAttribute('href', '/terms');

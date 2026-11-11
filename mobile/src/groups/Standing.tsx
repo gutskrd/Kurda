@@ -11,7 +11,7 @@ import { BottomSheet } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { askToRejoin, joinGroup, withdrawRejoin } from './api';
+import { askToRejoin, withdrawRejoin } from './api';
 import { groupError } from './groupError';
 import { CalmCard } from './Welcome';
 
@@ -20,36 +20,39 @@ interface CardGroup {
   id: string;
   name: string;
   photoUrl: string | null;
-  privacy: 'open' | 'invite';
 }
 
+/** Someone banned from a group: until when, why, and where asking to come back stands. */
+export type Banned = Extract<GroupStanding, { kind: 'banned' }>;
+
 /**
- * Where someone who is not in a group stands with it, in place of the chat.
+ * Where someone who is out of a group stands with it, in place of the chat.
  *
- * Shown to someone who opens a group they are out of (from a notification, a
- * link, the discover list), and to someone removed or banned while the chat
- * was open (`left`: "You're no longer in this group"), never as a raw error.
- *
- * Out and free to come in: an open group has Join; an invite-only one says an
- * admin can add them. Banned: until when, or for good, the reason if one was
+ * A group is private, so this has two readers only, and neither is shown a
+ * raw error. Someone banned (who opens it from a notification, or was banned
+ * while the chat was open) sees until when, or for good, the reason if one was
  * given, and where asking to come back stands — ask (a sheet with a note for
  * the admins), the request waiting with a way to withdraw it, the day they may
- * ask again, or that the admins are not taking requests from them.
+ * ask again, or that the admins are not taking requests from them. And someone
+ * removed while the chat was open (`left`, with no ban) is told they are no
+ * longer in the group and that an admin can add them again.
+ *
+ * Anyone else is not shown a group at all: the thread says there is no such
+ * group, which is all the server tells them.
  */
 export function StandingCard({
   group,
-  standing,
+  banned,
   left,
   onStanding,
-  onJoined,
   onReload,
 }: {
   group: CardGroup;
-  standing: Exclude<GroupStanding, { kind: 'member' }>;
+  /** the ban, when that is why they are out; null for someone only removed */
+  banned: Banned | null;
   left: boolean;
   /** the standing changed here (a request sent or withdrawn) */
   onStanding: (standing: GroupStanding) => void;
-  onJoined: () => void;
   /** ask the server where the reader stands, when an answer says it changed */
   onReload: () => void;
 }): React.JSX.Element {
@@ -60,29 +63,12 @@ export function StandingCard({
   const [error, setError] = useState<string | null>(null);
   const [asking, setAsking] = useState(false);
 
-  const banned = standing.kind === 'banned' ? standing : null;
   const bannedLine = banned
     ? banned.until
       ? t('groups.standing.bannedUntil', { date: formatUntil(banned.until, locale) })
       : t('groups.standing.bannedForGood')
     : null;
-  const heading = left ? t('groups.standing.gone') : (bannedLine ?? t('groups.standing.out'));
-
-  const join = async (): Promise<void> => {
-    setBusy(true);
-    setError(null);
-    const res = await joinGroup(client, group.id);
-    setBusy(false);
-    if (res.ok) {
-      haptic('correct');
-      onJoined();
-      return;
-    }
-    haptic('wrong');
-    // banned since the card was drawn: the card learns how
-    if (res.error.code === 'GROUP_BANNED') onReload();
-    else setError(groupError(res.error, t));
-  };
+  const heading = left || !bannedLine ? t('groups.standing.gone') : bannedLine;
 
   const withdraw = async (): Promise<void> => {
     if (!banned) return;
@@ -110,13 +96,8 @@ export function StandingCard({
 
       {banned ? (
         <RequestPart request={banned.request} busy={busy} onAsk={() => setAsking(true)} onWithdraw={() => void withdraw()} when={(iso) => noticeTime(iso, t, locale)} day={(iso) => formatDay(iso, locale)} />
-      ) : group.privacy === 'open' ? (
-        <>
-          <Text style={[styles.line, { color: colors.textSecondary }]}>{t('groups.standing.joinOpen')}</Text>
-          <ClayButton label={t('groups.standing.join')} tone="primary" busy={busy} onPress={() => void join()} style={styles.action} />
-        </>
       ) : (
-        <Text style={[styles.line, { color: colors.textSecondary }]}>{t('groups.standing.joinInvite')}</Text>
+        <Text style={[styles.line, { color: colors.textSecondary }]}>{t('groups.standing.canBeAdded')}</Text>
       )}
 
       {error ? (
@@ -181,8 +162,9 @@ function RequestPart({
  *
  * `onAnswer` gets where the request now stands — waiting, or, when the server
  * says so instead, a wait or requests closed — or null when the standing
- * itself moved (no longer banned, a request already waiting) and should be
- * asked for again. Anything else (asking too often today) stays in the sheet.
+ * itself moved (no longer banned, a request already waiting, the group gone)
+ * and should be asked for again. Anything else (asking too often today) stays
+ * in the sheet.
  */
 function AskSheet({
   visible,
@@ -223,7 +205,7 @@ function AskSheet({
     const until = (res.error.details as { until?: unknown } | undefined)?.until;
     if (res.error.code === 'REQUEST_WAIT' && typeof until === 'string') onAnswer({ kind: 'wait', until });
     else if (res.error.code === 'REQUESTS_CLOSED') onAnswer({ kind: 'closed' });
-    else if (res.error.code === 'REQUEST_PENDING' || res.error.code === 'NOT_BANNED' || res.error.code === 'REQUEST_WAIT') onAnswer(null);
+    else if (['REQUEST_PENDING', 'NOT_BANNED', 'REQUEST_WAIT', 'GROUP_NOT_FOUND'].includes(res.error.code ?? '')) onAnswer(null);
     else setError(groupError(res.error, t));
   };
 

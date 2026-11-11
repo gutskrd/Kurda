@@ -84,4 +84,18 @@ describe.skipIf(!DATABASE_URL)('activity feed (integration)', () => {
     expect(entry.congrats).toBe(1);
     expect(entry.didCongrats).toBe(true);
   });
+
+  it('only a friend can congratulate: somebody who merely knows the id is told nothing and counted nowhere', async () => {
+    const event = await activity.publish(id.a!, 'streak_milestone', { days: 14 });
+    // e is not a friend of a
+    expect(await activity.congratulate(id.e!, event.id)).toBeNull();
+    // and nobody congratulates their own
+    expect(await activity.congratulate(id.a!, event.id)).toBeNull();
+    expect(await activity.congratulate(id.b!, event.id)).toBe(1);
+    // a friend who has since been blocked is no longer shown it either
+    await pool.query(`INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [id.a, id.b]);
+    const later = await activity.publish(id.a!, 'streak_milestone', { days: 21 });
+    expect(await activity.congratulate(id.b!, later.id)).toBeNull();
+    await pool.query(`DELETE FROM blocks WHERE blocker_id = $1 AND blocked_id = $2`, [id.a, id.b]);
+  });
 });

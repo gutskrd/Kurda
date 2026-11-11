@@ -17,6 +17,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 import { GamesView } from '../learn/GamesView';
+import { setListsUpcomingGames } from './learnGames';
 import { forgetLastLetterAvailability } from '../lastletter/availability';
 import { BuildSentenceScreen, difficultyForStep } from './BuildSentenceScreen';
 
@@ -83,6 +84,7 @@ const doneWrong = {
 beforeEach(() => {
   localStorage.clear();
   resetCourseDialect();
+  setListsUpcomingGames(false);
   navigation.navigate.mockClear();
 });
 afterEach(cleanup);
@@ -192,7 +194,7 @@ describe('the games list', () => {
     expect(screen.getByTestId('game-wordle')).toBeTruthy();
   });
 
-  it('leaves it out while there is not enough approved content', async () => {
+  it('leaves it out while there is not enough approved content: the phone lists what can be played', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr', false) });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
@@ -200,6 +202,18 @@ describe('the games list', () => {
     await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByTestId('game-build-sentence')).toBeNull();
+  });
+
+  it('can show it as coming soon instead, and does not open it', async () => {
+    setListsUpcomingGames(true);
+    const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr', false) });
+    testAuth.client = client;
+    renderWithProviders(<GamesView />);
+    expect(await screen.findByTestId('game-wordle')).toBeTruthy();
+    const card = await screen.findByTestId('game-build-sentence');
+    expect(card.getAttribute('aria-label')).toBe('Build a Kurdish Sentence, Coming soon. Put a real Kurdish sentence in order, from its meaning.');
+    fireEvent.click(card);
+    expect(navigation.navigate).not.toHaveBeenCalledWith('BuildSentence');
   });
 
   it('lists The Last Letter where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
@@ -213,6 +227,7 @@ describe('the games list', () => {
     fireEvent.click(await screen.findByTestId('game-last-letter'));
     expect(navigation.navigate).toHaveBeenCalledWith('LastLetter');
     cleanup();
+    navigation.navigate.mockClear();
     forgetLastLetterAvailability();
     testAuth.client = fakeClient({
       ...base,

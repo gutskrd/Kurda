@@ -1362,83 +1362,141 @@ export const SCENES = {
   'agire-newroze': {
     ku: 'Agirê Newrozê',
     en: 'Newroz fire',
-    // Newroz night at Akre: the climbers' torches zig-zagging up the mountain to the fire at the top, the town
-    // lit below it, fires on the hills all round, and in front of us the bonfire, its sparks going up into the dark
+    // Newroz night at Akre, from a meadow across the valley: the bonfire before us, tall against a blue night,
+    // its sparks going up into the dark; beyond it the mountain, the climbers' torches zig-zagging up it to the
+    // fire on the summit and the town lit at its foot, fires on the hills round about, the new moon over them;
+    // and at our feet the spring grass with its tulips and narcissi, in colour where the firelight reaches them
     scene(rnd) {
       const s = new Scene(rnd);
-      const flame = [640, 572];
+      const ground = (x) => 526 - 32 * Math.exp(-(((x - 872) / 330) ** 2)) - 9 * Math.exp(-(((x - 180) / 260) ** 2)) + 4 * Math.sin(x / 70) + 2 * Math.sin(x / 23);
+      const flame = [872, Math.round(ground(872)) + 3];
+      const heart = [flame[0], flame[1] - 100];
+      const moon = [226, 252];
+      const firelight = { x: heart[0], y: heart[1], colour: '#ffa24a', width: 2.4, strength: 1, reach: 780 };
       s.layer({}, (cv) => {
-        sky(cv, [[0, '#07040f'], [0.45, '#1e0a1e'], [0.8, '#4a1418'], [1, '#6a1e1a']]);
-        cv.add(starfield(rnd, { y0: 0, y1: 260, count: 200, bright: 3 }));
+        sky(cv, [[0, '#03041a'], [0.3, '#090d2c'], [0.48, '#14143e'], [0.6, '#2a1c48'], [0.68, '#46223e'], [1, '#46223e']]);
+        cv.add(starfield(rnd, { y0: 0, y1: 410, count: 300, bright: 4, colours: ['#ffffff', '#dfe6ff', '#fff1d8'] }));
+        // the new moon of the month the year turns in: a thin crescent, cold against the fire
+        glow(cv, { x: moon[0], y: moon[1], r: 160, colour: '#8ea4ff', opacity: 0.28 });
+        cv.add(`<path transform="rotate(-24 ${moon[0]} ${moon[1]})" d="M${moon[0]},${moon[1] - 22} A22,22 0 0,1 ${moon[0]},${moon[1] + 22} A31,31 0 0,0 ${moon[0]},${moon[1] - 22} Z" fill="#eef2ff"/>`);
       });
-      // the mountain, its faces lit from below by the town and the fires
-      const pts = s.terrain({ blur: 1 }, { base: 470, peaks: [{ x: 700, h: 300, l: 420, r: 460, k: 1.1 }, { x: 160, h: 140, s: 260 }, { x: 1200, h: 170, s: 260 }], rough: 0.1, lit: '#4a1c1c', shadow: '#0e050a', foot: '#22090f', footFrom: 420, light: [0.1, 0.55, 0.6], ambient: 0.28 });
-      const yAt = (x) => heightAt(pts, x);
-      let summit = [700, 170];
-      let torchGlow = '';
+      // the river of stars across the top of the night, faint
+      s.layer({ scale: 2, blur: 6, blend: 'screen' }, (cv) => {
+        noise(cv, { x: -200, y: -50, w: 1700, h: 240, freq: [0.006, 0.014], seed: s.seed(), colour: '#8a94e0', contrast: 2.2, bias: -1, opacity: 0.3, fade: [[0, 0], [0.5, 1], [1, 0]], rotate: -13 });
+      });
+      // the hills beyond the valley, blue with distance, a fire on each
+      const light = [-0.75, -0.45, 0.5];
+      const hills = s.terrain({ blur: 1.8, haze: ['#241a46', 0.42] }, { base: 468, peaks: [{ x: 1050, h: 128, l: 340, r: 300 }, { x: 1300, h: 96, s: 260 }, { x: 716, h: 52, s: 240 }], rough: 0.22, lit: '#2a2c60', shadow: '#08081c', light, ambient: 0.3, ribs: 5, relief: 0.8 });
+      s.layer({ blur: 2, blend: 'screen' }, (cv) => {
+        for (const hx of [1058, 1196, 1264]) {
+          const hy = heightAt(hills, hx) + 3;
+          glow(cv, { x: hx, y: hy, r: 28, colour: '#ff8a3a', opacity: 0.8 });
+          cv.add(`<path d="M${hx - 3},${n(hy)} Q${hx - 2},${n(hy - 7)} ${hx},${n(hy - 11)} Q${hx + 2},${n(hy - 7)} ${hx + 3},${n(hy)} Z" fill="#ffe0a0"/>`);
+        }
+      });
+      // the mountain over Akre: its faces cold under the moon, its foot warm with the light of the town
+      const mountain = s.terrain({ blur: 1, haze: ['#1c1638', 0.12] }, { base: 486, peaks: [{ x: 452, h: 270, l: 410, r: 440, k: 1.12 }, { x: 20, h: 104, l: 200, r: 360 }], rough: 0.16, lit: '#32356e', shadow: '#060614', foot: '#361424', footFrom: 410, light, ambient: 0.18, ribs: 6 });
+      const slope = (x) => heightAt(mountain, x);
+      const summit = [452, slope(452)];
+      const torches = akreTorches(rnd, { summit: [summit[0], summit[1] + 8], feet: [[318, 440, 74, 7], [566, 442, 46, 5]], ground: slope });
       let windows = '';
-      s.layer({ blur: 1 }, (cv) => {
-        const t = akreTorches(rnd, { x: 700, y: 430, top: yAt(700) + 8, width: 600, paths: 3 });
-        summit = t.summit;
-        torchGlow = t.glow;
-        cv.add(t.dots);
-        // Akre, its houses stepped up the foot of the mountain, every window lit
-        const town = hewraman(rnd, { x0: 270, y0: 528, x1: 1130, y1: 528, thick: 120, bow: 64, ground: (x) => yAt(x) + 60, house: 15, wall: '#1e0c10', wallLit: '#2a1216', wallDark: '#12060a', roof: '#2e1418', door: '#0a0306', lights: '#ffc06a', lit: 0.26, light: 1 });
+      s.layer({ blur: 0.8 }, (cv) => {
+        cv.add(torches.dots);
+        // Akre, its houses stepped up the foot of the mountain: across a valley at night a town is its lights, so
+        // the walls are hardly lighter than the rock, a window lit here and there, and the lamps of its lanes
+        const town = hewraman(rnd, { x0: 214, y0: 484, x1: 712, y1: 486, thick: 68, bow: 30, ground: (x) => slope(x) + 40, house: 9, wall: '#1c1328', wallLit: '#221730', wallDark: '#150e20', roof: '#2a1c36', door: '#0c0814', lights: '#ffc878', lit: 0.2, light: 1 });
         cv.add(town.houses);
-        windows = town.glow;
-      });
-      s.layer({ blur: 2, blend: 'screen', opacity: 0.5 }, (cv) => cv.add(windows));
-      // the torches, the fire on the summit, and the fires on the hills round about, as light
-      s.layer({ blur: 2.2, blend: 'screen' }, (cv) => {
-        cv.add(torchGlow);
-        glow(cv, { x: summit[0], y: summit[1], r: 70, colour: '#ff9a3a', opacity: 0.85 });
-        cv.add(`<circle cx="${summit[0]}" cy="${summit[1] + 4}" r="5" fill="#fff0c0"/>`);
-        for (const hx of [90, 210, 1130, 1240]) {
-          const hy = yAt(hx) + 3;
-          glow(cv, { x: hx, y: hy, r: 34, colour: '#ff8a3a', opacity: 0.8 });
-          cv.add(`<path d="M${hx - 4},${hy} Q${hx - 2},${hy - 9} ${hx},${hy - 13} Q${hx + 2},${hy - 9} ${hx + 4},${hy} Z" fill="#ffe0a0"/>`);
+        const lamps = [];
+        for (let i = 0; i < 90; i++) {
+          const x = 226 + ((rnd() + rnd()) / 2) * 474;
+          const y = 488 - rnd() ** 1.4 * 58 * Math.sin((Math.PI * (x - 214)) / 498) ** 0.6;
+          lamps.push([x, y, between(rnd, 0.8, 1.7)]);
         }
+        cv.add(lamps.map(([x, y, r]) => `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="${rnd() < 0.25 ? '#fff0c8' : '#ffc070'}"/>`).join(''));
+        windows = `${town.glow}<g fill="#ffb860" fill-opacity="0.4">${lamps.map(([x, y, r]) => `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r * 3.4)}"/>`).join('')}</g>`;
       });
-      // smoke from a thousand torches over the town, lit from below
+      s.layer({ blur: 2, blend: 'screen', opacity: 0.75 }, (cv) => cv.add(windows));
+      // the torches and the fire on the summit, as light
+      s.layer({ blur: 2, blend: 'screen' }, (cv) => {
+        cv.add(torches.glow);
+        glow(cv, { x: summit[0], y: summit[1], r: 74, colour: '#ff9a3a', opacity: 0.9 });
+        cv.add(`<path d="M${summit[0] - 5},${n(summit[1] + 6)} Q${summit[0] - 4},${n(summit[1] - 7)} ${summit[0] + 1},${n(summit[1] - 15)} Q${summit[0] + 4},${n(summit[1] - 6)} ${summit[0] + 5},${n(summit[1] + 6)} Z" fill="#fff0c0"/>`);
+      });
+      s.layer({ blur: 0.5, blend: 'screen' }, (cv) => {
+        cv.add(embers(rnd, { x: summit[0], y: summit[1] - 8, rise: 60, spread: 8, count: 34, wind: 0.3, colours: ['#ffd36a', '#ff9a3a'] }));
+      });
+      // the smoke of a thousand torches lying in the valley over the town, lit from below
       s.layer({ scale: 2, blur: 4, blend: 'screen' }, (cv) => {
-        noise(cv, { y: 300, h: 300, freq: [0.005, 0.01], seed: s.seed(), colour: '#ff6a2a', contrast: 2.4, bias: -1.1, opacity: 0.32, fade: [[0, 0], [0.5, 1], [1, 0]] });
+        noise(cv, { y: 380, h: 150, freq: [0.004, 0.012], seed: s.seed(), colour: '#ff7a3a', contrast: 2.3, bias: -1.1, opacity: 0.24, fade: [[0, 0], [0.55, 1], [1, 0.3]] });
       });
-      // the ground round the fire, a ring of stones
-      s.layer({}, (cv) => {
-        cv.add('<path d="M-20,530 C300,518 900,518 1300,530 L1300,740 L-20,740 Z" fill="#140608"/>');
-        const g = cv.id('ground');
-        cv.def(`<radialGradient id="${g}" gradientUnits="userSpaceOnUse" cx="${flame[0]}" cy="${flame[1]}" r="560" gradientTransform="translate(0 ${flame[1] * 0.72}) scale(1 0.28)"><stop offset="0" stop-color="#ff8a3a" stop-opacity="0.8"/><stop offset="0.35" stop-color="#c8401a" stop-opacity="0.38"/><stop offset="1" stop-color="#c8401a" stop-opacity="0"/></radialGradient>`);
-        cv.add(`<rect x="-20" y="516" width="1320" height="224" fill="url(#${g})"/>`);
-        const stones = [];
-        for (let i = 0; i < 16; i++) {
-          const a = (i / 16) * Math.PI * 2;
-          const sx = flame[0] + Math.cos(a) * 150;
-          const sy = flame[1] + 6 + Math.sin(a) * 26;
-          if (Math.sin(a) < -0.2) continue;
-          stones.push(`<ellipse cx="${n(sx)}" cy="${n(sy)}" rx="${n(between(rnd, 13, 19))}" ry="${n(between(rnd, 7, 10))}" fill="#2a0e0c"/><ellipse cx="${n(sx - 2)}" cy="${n(sy - 3)}" rx="${n(between(rnd, 8, 12))}" ry="${n(3.5)}" fill="#a8441e" fill-opacity="0.55"/>`);
-        }
-        cv.add(stones.join(''));
+      // the near side of the valley, a dark fold of ground between the town and us
+      s.terrain({ blur: 1.2, haze: ['#2a1c40', 0.22] }, { base: 530, peaks: [{ x: 260, h: 46, s: 460, round: true }, { x: 1090, h: 56, s: 400, round: true }, { x: 690, h: 36, s: 320, round: true }], rough: 0.05, lit: '#1c2440', shadow: '#05060e', light, grassy: 0.3, blade: 1.6, relief: 0.6, ambient: 0.2 });
+      // the meadow we stand in, in flower: dark under the moon, and in its own colours where the fire lights it
+      s.carpet({}, {
+        top: ground,
+        far: 1.5,
+        near: 22,
+        ground: '#090812',
+        fog: ['#2a1c40', 0.5],
+        light: [0.4, -1],
+        pool: { x: flame[0], y: flame[1] + 46, r: 580, ambient: 0.2, squash: 0.44 },
+        patches: 0.25,
+        focus: { from: 0.8, blur: 1.8 },
+        plants: [
+          { kind: 'blades', share: 5, colours: ['#1e3e26', '#2a4e2a', '#173220', '#3a5e2e'], height: 1.2 },
+          { kind: 'bell', share: 1, colours: ['#1e3e26'], flower: ['#e0262c', '#f0402a', '#c81e2a'], leaves: '#2a4e2a', height: 1.4, drifts: 1.8 },
+          { kind: 'daisy', share: 0.7, colours: ['#1e3e26'], flower: ['#fff6e0', '#ffeec8'], leaves: '#2a4e2a', centre: '#ffb81a', drifts: 1.4 },
+        ],
       });
-      // the bonfire: the logs and the embers they lie in, then the flames as light, and its glow over everything
-      const f = fire(rnd, { x: flame[0], y: flame[1], w: 220, h: 320, wind: 0.08, tongues: 15 });
-      s.layer({}, (cv) => cv.add(f.logs));
-      s.layer({ blur: 1.1, blend: 'screen' }, (cv) => rough(cv, f.flames, { scale: 11, freq: 0.03, seed: s.seed() }));
+      // the firelight on the ground: what it falls on brightens in its own colours, warmest by the fire
+      s.layer({ blend: 'light' }, (cv) => {
+        const g = cv.id('lit');
+        cv.def(`<radialGradient id="${g}" gradientUnits="userSpaceOnUse" cx="${flame[0]}" cy="${flame[1]}" r="620" gradientTransform="translate(0 ${n(flame[1] * 0.62)}) scale(1 0.38)"><stop offset="0" stop-color="#ffd088"/><stop offset="0.25" stop-color="#ff9a44" stop-opacity="0.75"/><stop offset="1" stop-color="#ff6a2a" stop-opacity="0"/></radialGradient>`);
+        let d = 'M-20,740';
+        for (let x = -20; x <= 1300; x += 20) d += ` L${x},${n(ground(x))}`;
+        cv.add(`<path d="${d} L1300,740 Z" fill="url(#${g})"/>`);
+      });
+      // the bonfire: the far side of the pyre on its bed, the flames as light, pass over pass, the near logs dark
+      // against them, and small flames licking up in front of those
+      const f = fire(rnd, { x: flame[0], y: flame[1], w: 214, h: 344, wind: 0.07, tongues: 17 });
+      const licks = fire(rnd, { x: flame[0], y: flame[1] + 8, w: 196, h: 130, wind: 0.07, tongues: 11 });
+      s.layer({ blur: 2.6 }, (cv) => cv.add(f.bed));
+      s.layer({ blur: 0.6 }, (cv) => cv.add(f.back));
+      s.layer({ blur: 1.8, blend: 'screen' }, (cv) => rough(cv, f.flames(cv, 'edge'), { scale: 13, freq: 0.022, seed: s.seed() }));
+      s.layer({ blur: 1.3, blend: 'screen' }, (cv) => rough(cv, f.flames(cv, 'body'), { scale: 10, freq: 0.026, seed: s.seed() }));
+      s.layer({ blur: 1, blend: 'screen' }, (cv) => rough(cv, f.flames(cv, 'heart'), { scale: 8, freq: 0.03, seed: s.seed() }));
+      s.layer({ blur: 2.4, blend: 'screen', opacity: 0.45 }, (cv) => rough(cv, f.flames(cv, 'core'), { scale: 6, freq: 0.03, seed: s.seed() }));
+      s.layer({ blur: 0.7 }, (cv) => cv.add(f.front));
+      s.layer({ blur: 1.6, blend: 'screen' }, (cv) => rough(cv, licks.flames(cv, 'edge'), { scale: 9, freq: 0.03, seed: s.seed() }));
+      s.layer({ blur: 1.2, blend: 'screen', opacity: 0.8 }, (cv) => rough(cv, licks.flames(cv, 'body'), { scale: 8, freq: 0.03, seed: s.seed() }));
+      s.layer({ blur: 1, blend: 'screen', opacity: 0.55 }, (cv) => rough(cv, licks.flames(cv, 'heart'), { scale: 6, freq: 0.03, seed: s.seed() }));
+      // the grass it stands in, the blades before it dark against the embers and lit along their tips
+      s.layer({ blur: 0.4, rim: { ...firelight, y: flame[1] - 30, width: 1.6, strength: 1.3, reach: 320 } }, (cv) => {
+        cv.add(grass(rnd, { x0: flame[0] - 150, x1: flame[0] + 150, y: flame[1] + 26, count: 150, height: 27, colours: ['#0c1a10', '#132616', '#1a3620'], wind: 0.05, width: 1.8 }));
+      });
+      // its glow in the air, wide and then close
       s.layer({ blend: 'screen' }, (cv) => {
-        glow(cv, { x: flame[0], y: flame[1] - 110, r: 480, colour: '#ff6a1a', opacity: 0.42 });
-        glow(cv, { x: flame[0], y: flame[1] - 90, r: 180, colour: '#ffc060', opacity: 0.55 });
+        glow(cv, { x: heart[0], y: heart[1] - 20, r: 470, colour: '#ff6a1a', opacity: 0.26 });
+        glow(cv, { x: heart[0], y: heart[1] + 10, r: 230, colour: '#ffa848', opacity: 0.5 });
       });
+      // sparks: thick over the flames, thinning as they climb and drift, and a few so near they are out of focus
       s.layer({ blur: 0.6, blend: 'screen' }, (cv) => {
-        cv.add(embers(rnd, { x: flame[0], y: flame[1] - 200, rise: 470, spread: 80, count: 220, wind: 0.22, colours: ['#ffd36a', '#ff9a3a', '#fff0c0', '#ff6a2a'] }));
+        cv.add(embers(rnd, { x: flame[0], y: flame[1] - 170, rise: 430, spread: 62, count: 280, wind: 0.2, colours: ['#ffd36a', '#ff9a3a', '#fff0c0', '#ff6a2a'] }));
+      });
+      s.layer({ blur: 5, blend: 'screen', opacity: 0.8 }, (cv) => {
+        cv.add(motes(rnd, { x0: 600, x1: 1240, y0: 120, y1: 470, count: 12, size: 7, colours: ['#ffb44a', '#ff7a2a', '#ffd98a'], opacity: [0.25, 0.65] }));
       });
       // grass at our feet, too near to be in focus, its tips catching the fire
-      s.layer({ blur: 2, rim: { x: flame[0], y: flame[1] - 80, colour: '#ff9a4a', width: 2, strength: 0.8, reach: 900 } }, (cv) => {
-        cv.add(grass(rnd, { x0: -30, x1: 1310, y: 716, count: 420, height: 44, colours: ['#0a0305', '#120507', '#0e0406'], wind: 0.08, width: 3 }));
+      s.layer({ blur: 2, rim: { ...firelight, y: heart[1] + 20, width: 2, strength: 0.9, reach: 900 } }, (cv) => {
+        cv.add(grass(rnd, { x0: -30, x1: 1310, y: 722, count: 380, height: 50, colours: ['#06060e', '#0a0a14', '#080a10'], wind: 0.08, width: 3 }));
       });
       return s.done({
-        bloom: { threshold: 0.55, strength: 0.75, radius: 26, tint: '#ffb070' },
-        grade: { lift: [0.03, 0.01, 0.02], gain: [1.04, 0.95, 0.88], saturation: 1.1, contrast: 0.24, shadows: ['#1a0408', 0.5] },
-        vignette: { strength: 0.5, colour: '#080204' },
-        grain: 0.018,
+        bloom: { threshold: 0.58, strength: 0.7, radius: 26, tint: '#ffb070' },
+        diffuse: { radius: 16, strength: 0.16, soften: 0.05 },
+        grade: { lift: [0.012, 0.012, 0.03], gain: [1.04, 0.98, 0.98], saturation: 1.12, contrast: 0.22, shadows: ['#060a26', 0.45] },
+        vignette: { strength: 0.5, colour: '#02030c' },
+        grain: 0.016,
+        clumps: 0.01,
       });
     },
   },

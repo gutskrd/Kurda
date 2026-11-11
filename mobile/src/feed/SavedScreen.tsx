@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
@@ -16,6 +16,7 @@ import { getSaved } from './api';
 import { FeedCard, FeedSkeleton } from './FeedCard';
 import type { FeedItem } from './types';
 import { onPostDeleted, samePost } from '../composer/postDeleted';
+import { Loading } from '../theme/Loading';
 
 const PAGE = 20;
 
@@ -131,7 +132,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
               </Text>
             }
             ListFooterComponent={
-              loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null
+              loadingMore ? <Loading style={{ marginVertical: spacing.md }} /> : null
             }
           />
         </AsyncBoundary>

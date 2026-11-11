@@ -559,6 +559,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                     key={v.id}
                     onPress={() => navigation.push('StoryReader', { slug: v.slug })}
                     accessibilityRole="button"
+                    hitSlop={VERSION_SLOP}
                     style={({ pressed }) => [styles.version, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
                   >
                     <Icon name="translate" size={14} color={colors.primary} />
@@ -976,6 +977,13 @@ const COVER_HEIGHT = 180;
  */
 const WORD_BUTTON = 40;
 const WORD_BUTTON_SLOP = hitSlopFor(WORD_BUTTON, WORD_BUTTON);
+/**
+ * A chip to the same story in another variety: a small pill among the
+ * credits, caught as a full fingertip. The slop is half the gap between two
+ * rows of them, so one chip's never reaches into the next.
+ */
+const VERSION_HEIGHT = 36;
+const VERSION_SLOP = hitSlopFor(MIN_TOUCH_TARGET, VERSION_HEIGHT);
 
 const styles = StyleSheet.create({
   content: { ...COLUMN, padding: spacing.lg, gap: spacing.lg },
@@ -987,7 +995,7 @@ const styles = StyleSheet.create({
   source: { fontSize: typography.sizes.xs, lineHeight: 18 },
   pills: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   versions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  version: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: 36, borderRadius: radii.pill, paddingHorizontal: spacing.md - 2 },
+  version: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, minHeight: VERSION_HEIGHT, borderRadius: radii.pill, paddingHorizontal: spacing.md - 2 },
   versionText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   actions: { gap: spacing.sm },
   headerButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },

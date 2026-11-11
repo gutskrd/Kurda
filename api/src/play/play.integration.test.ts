@@ -403,14 +403,14 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
     expect(missing.body.status).toBe('unavailable');
   });
 
-  it("a lobby shared into an invite-only group posts its card there, and the group's members may join", async () => {
+  it("a lobby shared into a group posts its card there, and the group's members may join", async () => {
     const host = await register('host8');
     const owner = await register('owner8');
     const groupMate = await register('mate8');
     const outsider = await register('out8');
     await befriend(pool, owner.id, host.id);
     await befriend(pool, owner.id, groupMate.id);
-    const g = await call(owner, 'POST', '/groups', { name: `Lîstik ${suffix}`, privacy: 'invite' });
+    const g = await call(owner, 'POST', '/groups', { name: `Lîstik ${suffix}` });
     expect(g.status).toBe(200);
     const gid = g.body.id as string;
     groupIds.push(gid);

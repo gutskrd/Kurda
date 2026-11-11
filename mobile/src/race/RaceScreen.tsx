@@ -531,8 +531,8 @@ function Result({
           ) : null}
           {result.personalBest && !result.implausible ? (
             <View style={[styles.best, { backgroundColor: colors.gold }]}>
-              <Icon name="trophy" size={16} color={colors.textOnPrimary} />
-              <Text style={[styles.bestText, { color: colors.textOnPrimary }]}>{t('games.race.personalBest')}</Text>
+              <Icon name="trophy" size={16} color={colors.textOnGold} />
+              <Text style={[styles.bestText, { color: colors.textOnGold }]}>{t('games.race.personalBest')}</Text>
             </View>
           ) : null}
           <View style={styles.figures}>

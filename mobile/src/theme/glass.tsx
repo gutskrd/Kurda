@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Animated, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { radii, spacing, typography } from './tokens';
+import { fontScaleCap, radii, spacing, typography } from './tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from './ThemeProvider';
 import { Icon, type IconName } from './Icon';
@@ -119,7 +119,7 @@ export function GlassRow({
 }
 
 /** What a button is for, and what colour that makes it. */
-export type ClayTone = 'neutral' | 'primary' | 'accent' | 'success' | 'danger';
+export type ClayTone = 'neutral' | 'primary' | 'success' | 'danger';
 
 export function ClayButton({
   label,
@@ -133,6 +133,7 @@ export function ClayButton({
   disabled = false,
   accessibilityLabel,
   style,
+  testID,
 }: {
   label: string;
   onPress: () => void;
@@ -144,8 +145,9 @@ export function ClayButton({
   accessibilityLabel?: string;
   /**
    * Neutral unless the button means something: the brand for the action a
-   * screen is for, accent for a way to earn, success and danger for the two
-   * answers a lesson gives back.
+   * screen is for, success and danger for the two answers a lesson gives
+   * back. There was an accent tone for a way to earn, in a grey so close to
+   * the brand's ink that it read as the same button printed badly.
    */
   tone?: ClayTone;
   /**
@@ -177,12 +179,13 @@ export function ClayButton({
   /** Nothing to press yet — a lesson with no answer typed, a purchase mid-flight. */
   disabled?: boolean;
   style?: StyleProp<ViewStyle>;
+  /** For a scripted walk of a screen, where the label changes with the language. */
+  testID?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const TONE: Record<ClayTone, string | null> = {
     neutral: null,
     primary: colors.primary,
-    accent: colors.accent,
     success: colors.success,
     danger: colors.danger,
   };
@@ -209,6 +212,7 @@ export function ClayButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ busy, disabled: off }}
+      testID={testID}
       style={({ pressed }) => [{ opacity: off ? 0.5 : pressed ? 0.92 : 1 }, style]}
     >
       <Animated.View
@@ -228,7 +232,7 @@ export function ClayButton({
         )}
         {badge ? (
           <View style={[styles.clayBadge, { backgroundColor: colors.gold }]}>
-            <Text style={[styles.clayBadgeText, { color: colors.textOnPrimary }]}>{badge}</Text>
+            <Text style={[styles.clayBadgeText, { color: colors.textOnGold }]}>{badge}</Text>
           </View>
         ) : null}
       </Animated.View>
@@ -389,6 +393,8 @@ export function Segmented<T extends string>({
               numberOfLines={wrap ? 2 : 1}
               adjustsFontSizeToFit={wrap}
               minimumFontScale={wrap ? 0.8 : undefined}
+              // a segment is a share of the control's width: its label grows only as far as still fits one
+              maxFontSizeMultiplier={fontScaleCap.fixedBox}
             >
               {label}
             </Text>
@@ -440,7 +446,8 @@ export function GlassSelect<T extends string>({
         )}
       </Pressable>
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.selectBackdrop} onPress={() => setOpen(false)}>
+        {/* the palette's scrim, which is deeper by evening; a literal here dimmed the dark page too little */}
+        <Pressable style={[styles.selectBackdrop, { backgroundColor: colors.scrim }]} onPress={() => setOpen(false)}>
           <Pressable onPress={() => undefined} style={styles.selectMenuWrap}>
             {/* the menu grows in from just under its size as the scrim fades */}
             <MenuIn>
@@ -544,7 +551,7 @@ const styles = StyleSheet.create({
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
   segTextActive: { fontWeight: typography.weights.semibold },
   segTextWrap: { lineHeight: SEG_LINE, textAlign: 'center' },
-  selectBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
+  selectBackdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   selectMenuWrap: { alignSelf: 'stretch' },
   selectMenu: { alignSelf: 'stretch', gap: spacing.xs },
   selectMenuTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginBottom: spacing.xs },

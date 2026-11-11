@@ -3,6 +3,7 @@ import {
   countdownParts,
   formatCompact,
   formatCountdown,
+  formatDay,
   formatExpectedAt,
   interpolate,
   isRTL,
@@ -105,5 +106,25 @@ describe('formatExpectedAt', () => {
 
   it('hands back what it could not read', () => {
     expect(formatExpectedAt('not-a-date', 'en', now)).toBe('not-a-date');
+  });
+});
+
+describe('formatDay', () => {
+  const day = new Date('2026-11-11T23:59:00.000Z');
+
+  it('names a day in full, in the reader’s language, with no clock time', () => {
+    expect(formatDay(day, 'en', 'UTC')).toMatch(/^Wednesday, (November 11|11 November)$/);
+    expect(formatDay(day, 'de', 'UTC')).toBe('Mittwoch, 11. November');
+    expect(formatDay(day, 'fr', 'UTC')).toBe('mercredi 11 novembre');
+    expect(formatDay(day, 'en', 'UTC')).not.toMatch(/\d:\d/);
+  });
+
+  it('goes by the reader’s own day', () => {
+    // a minute before midnight UTC is already Thursday in Baghdad
+    expect(formatDay(day, 'en', 'Asia/Baghdad')).toMatch(/^Thursday/);
+  });
+
+  it('has words for the day in both Kurdish catalogues', () => {
+    for (const locale of ['ku', 'ckb'] as const) expect(formatDay(day, locale, 'UTC').length).toBeGreaterThan(4);
   });
 });

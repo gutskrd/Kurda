@@ -73,6 +73,9 @@ export {
 } from './lesson-player.js';
 /** The week a kept streak is shown in, laid out the same on the phone and the website. */
 export { streakWeek, weekStartsOn, type RecentDay, type WeekDay, type WeekDayState } from './streak-week.js';
+/** Restoring a streak that ended: what it costs, how long it is offered, and what a Hevalo+ member is given. */
+export * from './streak-repair.js';
+export * from './plus.js';
 /** Today's three quests, and the chests they pay: learning only, never anything paid. */
 export {
   QUEST_KINDS,
@@ -751,3 +754,4 @@ export * from './games/clues.js';
 export * from './games/multi/order.js';
 export * from './games/impostor/rules.js';
 export * from './games/dont-say/rules.js';
+export * from './pending-signup.js';

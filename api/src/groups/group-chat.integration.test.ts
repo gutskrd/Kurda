@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { GroupService } from './service.js';
 import { GroupChatService } from './chat-service.js';
+import { addFriendsToGroup } from '../test/groups.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -58,9 +59,8 @@ describe.skipIf(!DATABASE_URL)('group chat (integration)', () => {
     id.b = await register('b', '10.85.2.1'); // member
     id.c = await register('c', '10.85.3.1'); // member (removed later)
     id.d = await register('d', '10.85.4.1'); // non-member
-    gid = (await groups.create(id.a!, { name: `Chat ${suffix}`, privacy: 'open' })).id;
-    await groups.join(id.b!, gid);
-    await groups.join(id.c!, gid);
+    gid = (await groups.create(id.a!, { name: `Chat ${suffix}` })).id;
+    await addFriendsToGroup(pool, gid, id.a!, id.b!, id.c!);
   });
 
   afterAll(async () => {
@@ -88,6 +88,13 @@ describe.skipIf(!DATABASE_URL)('group chat (integration)', () => {
 
     await expect(chat.history(id.d!, gid)).rejects.toThrow(/not in this group/i);
     await expect(chat.send(id.d!, gid, 'sneaking in')).rejects.toThrow(/not in this group/i);
+    // and the refusal is the one for a group that does not exist, so it tells an outsider nothing
+    const none = '00000000-0000-4000-8000-000000000000';
+    const real = await chat.history(id.d!, gid).catch((err: unknown) => err as { code: string; message: string });
+    const made = await chat.history(id.d!, none).catch((err: unknown) => err as { code: string; message: string });
+    expect([(real as { code: string }).code, (real as { message: string }).message]).toEqual([(made as { code: string }).code, (made as { message: string }).message]);
+    expect(await chat.canRead(gid, id.d!)).toBe(false);
+    expect(await chat.canReadEach(gid, [id.b!, id.d!, id.a!])).toEqual([true, false, true]);
   });
 
   it('a removed member loses history access immediately', async () => {

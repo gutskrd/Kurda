@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Modal, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { MarkdownView } from '../grammar/MarkdownView';
@@ -11,6 +11,7 @@ import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import type { SkillNode } from './types';
+import { Loading } from '../theme/Loading';
 
 /**
  * A unit's guide — the grammar notes of its skills — or one skill's Tips,
@@ -58,7 +59,7 @@ export function UnitGuide({ guide, onClose }: { guide: { title: string; skills: 
                     </Text>
                   ) : null}
                   {!note ? (
-                    <ActivityIndicator color={colors.textSecondary} accessibilityLabel={t('common.loading')} />
+                    <Loading />
                   ) : 'error' in note ? (
                     <Text style={[styles.error, dir.text, { color: colors.danger }]}>{note.error}</Text>
                   ) : (

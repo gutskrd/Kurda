@@ -3,8 +3,9 @@ import type pg from 'pg';
 /**
  * A learner's progress, for their data export (contract 4 §B2): every XP they
  * earned and what of it counted, their league tier and every league week,
- * their streaks, their badges and showcase, the old achievements, the rated
- * games the ranked badges were counted from, the league seasons archived
+ * their streaks and the ones they restored, their badges and showcase, the
+ * old achievements, the rated games the ranked badges were counted from, the
+ * league seasons archived
  * before Game Ranks, the stories they kept on their shelf and how far they
  * read each one, the dictionary words they saved, their rounds of the
  * learning games with how far up each ladder they climbed, and the levels
@@ -39,10 +40,15 @@ export async function exportProgress(db: Executor, userId: string): Promise<Reco
     streak:
       (
         await q(
-          `SELECT current_streak, longest_streak, last_active_on, freezes, days_learned, last_learned_on
+          `SELECT current_streak, longest_streak, last_active_on, freezes, days_learned, last_learned_on,
+                  freeze_used_on, ended_streak, ended_last_active_on, ended_restored_on
              FROM user_streaks WHERE user_id = $1`,
         )
       )[0] ?? null,
+    // each streak they restored after it ended: which, how long it was, what it cost and when
+    streakRepairs: await q(
+      `SELECT ended_last_active_on, days, cost_gems, free, repaired_on, created_at FROM streak_repairs WHERE user_id = $1 ORDER BY created_at`,
+    ),
     badges: await q(
       `SELECT badge_key, tier, progress, earned_at, tier_earned_at FROM user_badges WHERE user_id = $1 ORDER BY badge_key`,
     ),

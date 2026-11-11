@@ -1,13 +1,17 @@
 import { useState } from 'react';
-import { Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useAuth } from '../../auth/AuthContext';
-import { FIELD_ERROR_COPY, validateEmail, FIELD_ERROR_VARS } from '../../auth/validators';
-import type { AuthStackParamList } from '../../navigation/authStack';
-import { spacing, typography } from '../../theme/tokens';
-import { useTheme } from '../../theme/ThemeProvider';
-import { AuthScreenShell, Field, FormError, LinkText, SubmitButton } from './AuthForm';
+import { AnswerSummary } from '../../auth/guide/AnswerSummary';
+import { GuideField } from '../../auth/guide/GuideField';
+import { StepFlow, type FlowStep } from '../../auth/guide/StepFlow';
+import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, validateEmail } from '../../auth/validators';
 import { useI18n } from '../../i18n/I18nContext';
+import type { AuthStackParamList } from '../../navigation/authStack';
+import { useDirection } from '../../reports/direction';
+import { useTheme } from '../../theme/ThemeProvider';
+import { spacing, typography } from '../../theme/tokens';
+import { LinkText } from './AuthForm';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
@@ -25,6 +29,18 @@ export function ForgotPasswordScreen({ navigation, route }: Props) {
  * Ask for a reset link. Signed out, from the sign-in form; signed in, from
  * Change password, for an account that signs in with Google or Apple and has
  * no password to change yet — where there is no sign-in to go back to.
+ *
+ * It is asked the way signing in is (auth/guide/StepFlow), because it is
+ * reached from there: Hevalo asks where to send the link, over the one
+ * field, with the address the sign-in had already filled in. It was a card of
+ * its own, and what came after sending was one grey sentence in its middle.
+ *
+ * What comes after is now a step: the address is shown back as it was typed,
+ * since a typo is only ever caught by seeing it, and the chevron goes back to
+ * put it right. The sentence still says "if an account exists": whether one
+ * does is not something to tell whoever is asking. A request that never
+ * reached the server (offline, a fault, too many tries) stays on the question
+ * and says why, because "on its way" would not be true.
  */
 export function ForgotPasswordForm({
   email: initialEmail,
@@ -37,54 +53,67 @@ export function ForgotPasswordForm({
 }) {
   const { requestPasswordReset } = useAuth();
   const { colors } = useTheme();
-  const [email, setEmail] = useState(initialEmail ?? '');
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState(false);
   const { t } = useI18n();
-  const [sent, setSent] = useState(false);
-  // the request never reached the server (offline, a fault, too many tries): "on its way" would not be true
-  const [failure, setFailure] = useState<string | null>(null);
+  const dir = useDirection();
+  const [email, setEmail] = useState(initialEmail ?? '');
 
-  const submit = async () => {
-    const emailError = validateEmail(email);
-    setError(emailError ? t(FIELD_ERROR_COPY[emailError], FIELD_ERROR_VARS) : null);
-    if (emailError) return;
-    setBusy(true);
-    setFailure(null);
-    const err = await requestPasswordReset(email.trim());
-    setBusy(false);
-    if (err) setFailure(err);
-    else setSent(true);
-  };
+  const steps: FlowStep[] = [
+    {
+      key: 'email',
+      question: t('guide.email.question'),
+      says: t('guide.reset.says'),
+      action: t('auth.reset.sendLink'),
+      check: () => {
+        const why = validateEmail(email);
+        return why ? t(FIELD_ERROR_COPY[why], FIELD_ERROR_VARS) : null;
+      },
+      commit: async () => {
+        const failure = await requestPasswordReset(email.trim());
+        return failure ? { ok: false, error: failure } : { ok: true };
+      },
+      render: (tools) => (
+        <GuideField
+          tools={tools}
+          value={email}
+          onChangeText={setEmail}
+          label={t('auth.email')}
+          keyboardType="email-address"
+          complete="email"
+          placeholder="you@example.com"
+          last
+          testID="email"
+        />
+      ),
+      footer: onBackToLogin ? <LinkText label={t('auth.reset.backToLogin')} onPress={() => onBackToLogin(email.trim())} /> : undefined,
+    },
+    {
+      key: 'sent',
+      question: t('guide.reset.sent.question'),
+      says: t('guide.reset.sent.says'),
+      action: onBackToLogin ? t('auth.reset.backToLogin') : t('common.done'),
+      render: () => (
+        <View style={styles.sent}>
+          <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
+            {t('auth.reset.sent')}
+          </Text>
+          <AnswerSummary rows={[{ label: t('auth.email'), value: email.trim() }]} testID="reset-sent-to" />
+        </View>
+      ),
+    },
+  ];
 
   return (
-    <AuthScreenShell title={t('auth.reset.title')} onBack={onBack}>
-      {sent ? (
-        <Text
-          style={{
-            color: colors.textPrimary,
-            fontSize: typography.sizes.md,
-            marginBottom: spacing.md,
-            textAlign: 'center',
-          }}
-        >
-          {t('auth.reset.sent')}
-        </Text>
-      ) : (
-        <>
-          <Field
-            label={t('auth.email')}
-            value={email}
-            onChangeText={setEmail}
-            error={error}
-            keyboardType="email-address"
-            testID="email"
-          />
-          <FormError message={failure} />
-          <SubmitButton label={t('auth.reset.sendLink')} busy={busy} onPress={submit} />
-        </>
-      )}
-      {onBackToLogin ? <LinkText label={t('auth.reset.backToLogin')} onPress={() => onBackToLogin(email.trim())} /> : null}
-    </AuthScreenShell>
+    <StepFlow
+      steps={steps}
+      progress={false}
+      onFinish={() => (onBackToLogin ? onBackToLogin(email.trim()) : onBack?.())}
+      onExit={onBack}
+      testID="reset-flow"
+    />
   );
 }
+
+const styles = StyleSheet.create({
+  sent: { gap: spacing.md },
+  lead: { fontSize: typography.sizes.md, lineHeight: 22, marginTop: -spacing.sm },
+});

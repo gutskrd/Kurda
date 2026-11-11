@@ -10,6 +10,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { GroupService } from './service.js';
 import { GroupChatService } from './chat-service.js';
+import { addFriendsToGroup } from '../test/groups.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -52,10 +53,10 @@ describe.skipIf(!DATABASE_URL)('clearing a group chat (integration)', () => {
   const bodies = async (tag: string, gid: string) => (await history(tag, gid)).messages.map((m: { body: string }) => m.body);
   const unread = async (tag: string, gid: string) => (await chat.unread(id[tag]!)).find((u) => u.groupId === gid)?.unread;
 
-  /** An open group of the owner's, with an admin and two members. */
+  /** A group of the owner's, with an admin and two members: the owner's friends, added by the owner. */
   async function group(): Promise<string> {
-    const { id: gid } = await groups.create(id.owner!, { name: `Clear ${suffix} ${++n}`, privacy: 'open' });
-    for (const tag of ['admin', 'm1', 'm2']) await groups.join(id[tag]!, gid);
+    const { id: gid } = await groups.create(id.owner!, { name: `Clear ${suffix} ${++n}` });
+    await addFriendsToGroup(pool, gid, id.owner!, id.admin!, id.m1!, id.m2!);
     await groups.setRole(id.owner!, gid, id.admin!, 'moderator');
     return gid;
   }
@@ -170,14 +171,14 @@ describe.skipIf(!DATABASE_URL)('clearing a group chat (integration)', () => {
     expect(await bodies('owner', own)).toEqual(['later']);
   });
 
-  it('starts a member who left and came back without their own clear', async () => {
+  it('starts a member who left and was added again without their own clear', async () => {
     const gid = await group();
     await say('owner', gid, 'berê');
     await chat.clear(id.m1!, gid, 'me');
     await call('m1', 'POST', `/groups/${gid}/leave`);
     expect((await call('m1', 'GET', `/groups/${gid}/chat`)).json().code).toBe('NOT_A_MEMBER');
     expect((await call('m1', 'POST', `/groups/${gid}/chat/clear`, { for: 'me' })).json().code).toBe('NOT_A_MEMBER');
-    await call('m1', 'POST', `/groups/${gid}/join`);
+    await addFriendsToGroup(pool, gid, id.owner!, id.m1!);
     expect(await history('m1', gid)).toMatchObject({ cleared: { forMe: null }, messages: [expect.objectContaining({ body: 'berê' })] });
   });
 

@@ -1,5 +1,5 @@
 /*
- * Groups: their picture, finding one, and a group's own page (web/src/groups).
+ * Groups: their picture, a group's own page, and its chat (web/src/groups).
  *
  * A group is a rounded square everywhere and a person a circle, so the two are
  * told apart before a name is read. Lists are rows on hairlines, not boxes;
@@ -28,118 +28,23 @@
   display: block;
 }
 
-/* ---- finding a group ----------------------------------------------------- */
-.gdisc {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  min-width: 0;
-}
-.gdisc-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--text-section);
-  font-weight: 600;
-}
-.gdisc-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-}
-.gdisc-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  min-width: 0;
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--separator);
-}
-.gdisc-row:last-child {
-  border-bottom: 0;
-}
-.gdisc-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.gdisc-name {
-  font-weight: 650;
-  font-size: var(--text-body);
-  color: var(--ink);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.gdisc-about {
-  color: var(--ink-3);
-  font-size: var(--text-secondary);
-  line-height: 1.35;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  overflow-wrap: anywhere;
-}
-.gdisc-meta {
-  color: var(--ink-3);
-  font-size: var(--text-caption);
-}
-/* the one thing to press on a row: Join in ink, Open as its outline */
-.gdisc-btn {
+/* ---- starting a group: "New group" beside the new message, on Messages ---- */
+.chat-head-actions {
   flex: none;
-  min-width: 68px;
-  height: 34px;
-  padding: 0 14px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--primary);
-  background: var(--primary);
-  color: var(--primary-ink);
-  font: inherit;
-  font-size: var(--text-secondary);
-  font-weight: 650;
-  text-decoration: none;
-  white-space: nowrap;
-  cursor: pointer;
-  position: relative;
-}
-/* the pill stays slim; the place to press is a full 44px */
-.gdisc-btn::after {
-  content: '';
-  position: absolute;
-  inset: -5px -2px;
-}
-.gdisc-btn.is-outline {
-  background: transparent;
-  color: var(--ink);
-  border-color: var(--border-strong);
-}
-.gdisc-btn:hover:not(:disabled) {
-  background: var(--primary-hover);
-}
-.gdisc-btn.is-outline:hover {
-  background: var(--surface-2);
-}
-.gdisc-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-.gdisc-empty,
-.gdisc-none {
-  margin: var(--space-4) 0 0;
-  color: var(--ink-3);
-  text-align: center;
-}
-.gdisc-empty {
-  display: flex;
-  flex-direction: column;
+  display: inline-flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-2);
+}
+.chat-new-group {
+  gap: 6px;
+  min-height: 44px;
+}
+/* nothing here yet: find people, or start a group */
+.chat-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
 }
 
 /* ---- a group's own page ------------------------------------------------- */
@@ -183,9 +88,12 @@
   color: var(--ink-3);
   font-size: var(--text-caption);
 }
-.ginfo-edit {
+/* "Add friends", leading the members: the one way anyone comes in */
+.ginfo-add {
+  align-self: flex-start;
   margin-top: var(--space-2);
   gap: 6px;
+  min-height: 44px;
 }
 .ginfo-section-title {
   margin: 0;
@@ -452,6 +360,12 @@
 .ghead:hover {
   background: var(--surface);
 }
+/* out of the group its name is only a name: nothing opens */
+.ghead.is-plain,
+.ghead.is-plain:hover {
+  background: none;
+  cursor: default;
+}
 .ghead-text {
   min-width: 0;
   display: flex;
@@ -579,12 +493,7 @@
   overflow-wrap: anywhere;
 }
 
-/* ---- a group seen from outside: the way in, or where a ban stands -------- */
-.gout-meta {
-  margin: 0;
-  color: var(--ink-3);
-  font-size: var(--text-caption);
-}
+/* ---- out of a group: where a ban stands, or that an admin can add you again */
 .gstand {
   width: 100%;
   margin-top: var(--space-4);
@@ -804,8 +713,63 @@
 .gadd-who:hover {
   background: transparent;
 }
-
-/* in discovery, a group you are banned from: an outline that opens where the ban is explained */
-.gdisc-btn.is-banned {
-  color: var(--danger);
+/* the one thing to press on a friend's row: Add in ink, Added as its outline */
+.gadd-btn {
+  flex: none;
+  min-width: 68px;
+  height: 34px;
+  padding: 0 14px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--primary);
+  background: var(--primary);
+  color: var(--primary-ink);
+  font: inherit;
+  font-size: var(--text-secondary);
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+}
+/* the pill stays slim; the place to press is a full 44px */
+.gadd-btn::after {
+  content: '';
+  position: absolute;
+  inset: -5px -2px;
+}
+.gadd-btn.is-outline {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--border-strong);
+}
+.gadd-btn:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+.gadd-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+/* Done, at the sheet's foot and its end: on to the chat */
+.gadd-actions {
+  justify-content: flex-end;
+}
+.gadd-actions .btn {
+  min-width: 112px;
+}
+/* nobody to add yet: a sentence, and the way to find people */
+.gadd-nobody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  color: var(--ink-2);
+  line-height: 1.45;
+}
+.gadd-nobody p {
+  margin: 0;
+}
+.gadd-find {
+  min-height: 44px;
 }

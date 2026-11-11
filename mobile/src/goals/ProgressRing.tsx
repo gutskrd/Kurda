@@ -18,7 +18,7 @@ export function ProgressRing({ progress, completed, caption, size = 140 }: Props
   const stroke = 12;
   const radius = (size - stroke) / 2;
   const { circumference, dashoffset } = ringStroke(progress, radius);
-  const tint = completed ? colors.success : colors.accent;
+  const tint = completed ? colors.success : colors.primary;
 
   return (
     <View style={{ width: size, height: size }}>

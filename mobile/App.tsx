@@ -75,7 +75,6 @@ import { unreadBadge } from './src/notifications/inbox';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
 import { GroupThreadScreen } from './src/groups/GroupThreadScreen';
-import { ClubsScreen } from './src/groups/ClubsScreen';
 import { GroupMembersScreen } from './src/groups/GroupMembersScreen';
 import { GroupEditScreen } from './src/groups/GroupEditScreen';
 import { GroupRequestsScreen } from './src/groups/GroupRequestsScreen';
@@ -88,6 +87,7 @@ import { I18nProvider } from './src/i18n/I18nContext';
 import { OnboardingScreen, useOnboarding } from './src/onboarding/OnboardingScreen';
 import { ThemeProvider, useTheme } from './src/theme/ThemeProvider';
 import { useReducedMotion } from './src/a11y/useReducedMotion';
+import { duration } from './src/theme/motion';
 import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { noteScreen } from './src/errors/crashReporting';
@@ -243,7 +243,6 @@ function useMenuGroups(navigation: RootNavigation, require: ReturnType<typeof us
       titleKey: null,
       links: [
         { key: 'friends', labelKey: 'nav.friends', icon: 'people', onPress: () => require('friends') && navigation.navigate('Friends') },
-        { key: 'clubs', labelKey: 'groups.discover', icon: 'people', onPress: () => require('groups') && navigation.navigate('Clubs') },
       ],
     },
     {
@@ -290,11 +289,12 @@ function SignedInTabs() {
         /*
          * Tabs cross-fade; they do not cut. With no animation one screen is
          * replaced by another between two frames, which reads as a flicker
-         * rather than as a move. 200ms, and nothing at all for somebody who
-         * has asked for less motion.
+         * rather than as a move. As long as anything else arriving takes
+         * (`duration.base`), and nothing at all for somebody who has asked
+         * for less motion.
          */
         animation: reduceMotion ? 'none' : 'fade',
-        transitionSpec: { animation: 'timing', config: { duration: 200 } },
+        transitionSpec: { animation: 'timing', config: { duration: duration.base } },
       }}
       // five icons along the bottom edge, with the badges
       tabBar={(props) => <TabBar {...props} />}
@@ -509,13 +509,6 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Clubs" options={{ presentation: 'card' }}>
-        {({ navigation }) => (
-          <GuestWall reason="groups" onBack={() => navigation.goBack()}>
-            <ClubsScreen onExit={() => navigation.goBack()} />
-          </GuestWall>
-        )}
-      </RootStack.Screen>
       <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }} getId={groupThreadRouteId}>
         {({ route, navigation }) => (
           <GuestWall reason="groups" onBack={() => navigation.goBack()}>
@@ -523,6 +516,8 @@ function SignedInRoot() {
               groupId={route.params.groupId}
               name={route.params.name}
               openGift={route.params.openGift}
+              addFriends={route.params.addFriends}
+              onFindPeople={() => navigation.navigate('Tabs', { screen: 'Search' })}
               onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
               onExit={() => navigation.goBack()}
               onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
@@ -795,6 +790,7 @@ function SignedInRoot() {
 function Root() {
   const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
+  const reduceMotion = useReducedMotion();
 
   // a link opened while signed out (the one that started the app, or one tapped since) waits for the sign-in
   useEffect(() => {
@@ -840,7 +836,11 @@ function Root() {
     }
     return (
       <Entrance>
-      <AuthStack.Navigator initialRouteName={AUTH_INITIAL_ROUTE} screenOptions={{ headerShown: false }}>
+      <AuthStack.Navigator
+        initialRouteName={AUTH_INITIAL_ROUTE}
+        // signing in slides between its screens as the app does, and does not slide for somebody who asked for less motion
+        screenOptions={{ headerShown: false, animation: reduceMotion ? 'none' : 'default' }}
+      >
         {/* Welcome's back walks into the intro (KUR-271): choice → notifications → welcome → language */}
         <AuthStack.Screen name="Welcome">
           {(props) => <WelcomeScreen {...props} onBack={() => onboarding.reopen('notifications')} />}

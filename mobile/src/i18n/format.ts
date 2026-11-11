@@ -55,6 +55,21 @@ export function formatDateTime(iso: string, locale: Locale, timeZone?: string): 
 }
 
 /**
+ * A day named in full in the reader's language — "Thursday, 12 November" — in
+ * the device's time zone (or an explicit one). For saying which day something
+ * lasts through, where a clock time or a countdown would only hurry the reader.
+ */
+export function formatDay(date: Date, locale: Locale, timeZone?: string): string {
+  const options: Intl.DateTimeFormatOptions = { weekday: 'long', day: 'numeric', month: 'long', ...(timeZone ? { timeZone } : {}) };
+  try {
+    return new Intl.DateTimeFormat(locale, options).format(date);
+  } catch {
+    // a locale the device has no data for falls back to its own
+    return new Intl.DateTimeFormat(undefined, options).format(date);
+  }
+}
+
+/**
  * When something is expected, in the reader's own language and time zone (or
  * an explicit one): the time alone when it is today, the weekday and the time
  * within the coming week, and the date as well when it is further off than
