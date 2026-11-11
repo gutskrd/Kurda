@@ -1366,10 +1366,10 @@
       "displayOrder": 16
     },
     {
-      "sku": "frame-made-keskesor",
-      "name": "Keskesor",
-      "description": "Rainbow light",
-      "assetKey": "frames/made-18-keskesor.png",
+      "sku": "frame-made-ronahiya-bakur",
+      "name": "Xeleka Ronahiya Bakur",
+      "description": "Northern lights",
+      "assetKey": "frames/made-18-ronahiya-bakur.png",
       "price": 2000,
       "premiumOnly": false,
       "displayOrder": 17

@@ -1,7 +1,7 @@
 /**
  * Frames made of light and of metal (see frames.mjs): a ring of stars, the
- * colours of the rainbow thrown out round the face, a clock's numerals, a ring
- * of signs that glow, and a frame of black carved scrollwork.
+ * northern lights turned low, a clock's numerals, a ring of signs that glow,
+ * and a frame of black carved scrollwork.
  *
  * What shines here has to be seen on a white page as well as a dark one, so
  * nothing is white light alone: each has a colour of its own and, where it is
@@ -21,14 +21,6 @@ export function sparkle(at, turn, long, short) {
   const tips = [off(at, turn, long), off(at, turn + 90, short), off(at, turn + 180, long), off(at, turn + 270, short)];
   const waist = (i) => off(at, turn + 45 + i * 90, Math.min(long, short) * 0.2);
   return `M${pt(tips[0])} Q${pt(waist(0))} ${pt(tips[1])} Q${pt(waist(1))} ${pt(tips[2])} Q${pt(waist(2))} ${pt(tips[3])} Q${pt(waist(3))} ${pt(tips[0])} Z`;
-}
-
-/** A colour of the rainbow: `h` in degrees round the wheel, as #rrggbb. */
-function hue(h, s = 0.9, l = 0.6) {
-  const k = (i) => (i + h / 30) % 12;
-  const a = s * Math.min(l, 1 - l);
-  const f = (i) => Math.round((l - a * Math.max(-1, Math.min(k(i) - 3, 9 - k(i), 1))) * 255);
-  return `#${[f(0), f(8), f(4)].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
 }
 
 /**
@@ -92,31 +84,62 @@ export const LIGHTS = [
     },
   },
   {
-    key: 'keskesor',
-    ku: 'Keskesor',
-    en: 'Rainbow light',
-    // light broken into its colours and thrown out round the face, as a cut glass throws it on a wall: rays of
-    // every colour of the rainbow, each going its way round the ring from red through to violet, long and short,
-    // soft at their ends, and a fine bright hoop where they start
+    key: 'ronahiya-bakur',
+    ku: 'Xeleka Ronahiya Bakur',
+    en: 'Northern lights',
+    // the northern lights round the face, turned low: curtains of soft light standing out from the ring, green
+    // where they rise and going through blue to violet as they thin away, here and there a breath of rose at
+    // the foot, none of them with an edge; a little of the night behind them, and a fine pale hoop
     still(rnd) {
       const s = new Still(rnd);
-      const rays = [];
-      for (let i = 0; i < 72; i++) {
-        const a = i * 5 + rnd() * 3;
-        rays.push([a, 28 + rnd() * 50, 7 + rnd() * 9, hue((a * 2 + 200 + rnd() * 40) % 360, 0.95, 0.56 + rnd() * 0.1), 0.5 + rnd() * 0.45]);
+      // a curtain: where it stands, how tall and how broad, how bright, and its colours from foot to top. The
+      // colours go round the ring in slow turns, so that neighbours are alike and the whole is not a rainbow
+      const curtains = [];
+      const [turnA, turnB] = [rnd() * 360, rnd() * 360];
+      const foot = ['#46e6a6', '#3ad6b8', '#62f0b0', '#34c8c8'];
+      const body = ['#3aa8e0', '#4a84f0', '#36c0d0'];
+      const top = ['#7a5cf0', '#9a6af6', '#5a6cf0'];
+      for (let i = 0; i < 58; i++) {
+        const a = i * (360 / 58) + (rnd() - 0.5) * 5;
+        const swell = 0.5 + 0.5 * Math.sin(((a + turnA) * Math.PI) / 90);
+        const cool = 0.5 + 0.5 * Math.sin(((a + turnB) * Math.PI) / 180);
+        const rose = rnd() < 0.14;
+        curtains.push({
+          a,
+          lean: (rnd() - 0.5) * 7,
+          tall: 30 + swell * 30 + rnd() * 16,
+          wide: 11 + rnd() * 13,
+          bright: 0.4 + swell * 0.3 + rnd() * 0.16,
+          colours: [rose ? '#f07ab8' : foot[Math.floor(rnd() * foot.length)], cool > 0.55 ? body[1] : body[Math.floor(rnd() * body.length)], cool > 0.5 ? top[Math.floor(rnd() * 2)] : top[2]],
+        });
       }
-      const draw = (cv, scale) => rays.map(([a, len, wide, colour, opacity]) => `<path d="${blade(P(a, 176), P(a, 178 + len * scale), wide * scale, { at: 0.3, point: 0.9 })}" fill="${colour}" fill-opacity="${n(opacity)}"/>`).join('');
-      s.glow((cv) => cv.add(draw(cv, 1)), { blur: 9, strength: 0.7, halo: 0.4 });
-      s.paint((cv) => cv.add(draw(cv, 1)), { blur: 2.2 });
-      s.paint((cv) => cv.add(draw(cv, 0.6)), { blur: 0.8, opacity: 0.9 });
+      const draw = (cv, grow, widen, strength) =>
+        curtains
+          .map(({ a, lean, tall, wide, bright, colours }) => {
+            const from = P(a, 175);
+            const to = P(a + lean, 177 + tall * grow);
+            return `<path d="${blade(from, to, wide * widen, { at: 0.3, point: 0.55 })}" fill="${linear(cv, [[0, colours[0], bright * strength], [0.45, colours[1], bright * strength * 0.8], [1, colours[2], 0]], ...from, ...to)}"/>`;
+          })
+          .join('');
+      // the night behind them, thin, so that they are light on a white page too
+      s.paint((cv) => cv.add(`<path d="${ring(244)}" fill="${radial(cv, [[0.7, '#0a1634', 0.36], [0.86, '#0c1a3c', 0.2], [1, '#0c1a3c', 0]], C, C, 244)}"/>`));
+      s.glow((cv) => cv.add(draw(cv, 1, 1.2, 1)), { blur: 12, strength: 0.5, halo: 0.5 });
+      s.paint((cv) => cv.add(draw(cv, 1, 1, 1)), { blur: 6 });
+      s.paint((cv) => cv.add(draw(cv, 0.7, 0.5, 0.8)), { blur: 3.2 });
+      // where a curtain is brightest, a third of the way up it: a few of them, pale green or pale blue
       s.paint((cv) => {
-        // the hoop, itself all the colours in turn
-        let hoop = '';
-        for (let i = 0; i < 72; i++) hoop += `<path d="M${pt(P(i * 5, 176))} A176 176 0 0 1 ${pt(P(i * 5 + 5.6, 176))}" fill="none" stroke="${hue((i * 10 + 200) % 360, 0.9, 0.7)}" stroke-width="7"/>`;
-        cv.add(hoop);
-        cv.add(`<path d="${round(176)}" fill="none" stroke="#ffffff" stroke-width="2.4" stroke-opacity="0.9"/>`);
-      });
-      return s.done({ finish: { paint: 0, grain: 0.006, contrast: 0.04, saturation: 1.05 } });
+        let lights = '';
+        for (const { a, lean, tall, wide, bright } of curtains) {
+          if (bright < 0.72) continue;
+          const [x, y] = P(a + lean * 0.35, 177 + tall * 0.34);
+          lights += `<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(tall * 0.2)}" ry="${n(wide * 0.26)}" transform="rotate(${n(a)} ${n(x)} ${n(y)})" fill="${rnd() < 0.6 ? '#a4ffd8' : '#9ad8ff'}" fill-opacity="0.5"/>`;
+        }
+        cv.add(lights);
+      }, { blur: 3 });
+      s.paint((cv) => {
+        cv.add(`<path d="${round(175.5)}" fill="none" stroke="#baffe2" stroke-width="2.4" stroke-opacity="0.55"/>`);
+      }, { blur: 0.8 });
+      return s.done({ finish: { paint: 0, grain: 0.012, contrast: 0.03, saturation: 0.96 } });
     },
   },
   {

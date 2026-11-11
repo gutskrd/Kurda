@@ -41,7 +41,7 @@ export const FRAMES = [
   ['frame-made-bask-spi', 'Baskên Spî', 'White wings', 'frames/made-15-bask-spi.png', 1900, 14],
   ['frame-made-bask-res', 'Baskên Reş', 'Black wings', 'frames/made-16-bask-res.png', 1900, 15],
   ['frame-made-sterkan', 'Xeleka Stêrkan', 'Ring of stars', 'frames/made-17-sterkan.png', 1700, 16],
-  ['frame-made-keskesor', 'Keskesor', 'Rainbow light', 'frames/made-18-keskesor.png', 2000, 17],
+  ['frame-made-ronahiya-bakur', 'Xeleka Ronahiya Bakur', 'Northern lights', 'frames/made-18-ronahiya-bakur.png', 2000, 17],
   ['frame-made-dem', 'Xeleka Demê', 'Clock face', 'frames/made-19-dem.png', 1500, 18],
   ['frame-made-efsun', 'Xeleka Efsûnê', 'Enchanted ring', 'frames/made-20-efsun.png', 1800, 19],
   ['frame-made-res', 'Xeleka Reş', 'Black scrollwork', 'frames/made-21-res.png', 1700, 20],
