@@ -577,6 +577,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
           { left: `${tag}pisik`, right: 'cat' },
           { left: `${tag}kucik`, right: 'the dog' },
           { left: `${tag}rev`, right: 'to run' },
+          { left: `${tag}lewra`, right: 'because' },
+          // the category's own name, taught as a word: never a card of that category
+          { left: 'heywan', right: 'cat, animal' },
         ],
       });
       await repo.publishLesson(lesson);
@@ -585,7 +588,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       const editor = await register('dseditor', '{content_editor}');
       const picked = await call(editor, 'GET', `/admin/game-content/vocabulary?dialect=kmr&q=${tag}`);
       expect(picked.status, picked.raw).toBe(200);
-      expect(picked.body.words.map((w: { ku: string }) => w.ku).sort()).toEqual([`${tag}kucik`, `${tag}pisik`, `${tag}rev`]);
+      expect(picked.body.words.map((w: { ku: string }) => w.ku).sort()).toEqual([`${tag}kucik`, `${tag}lewra`, `${tag}pisik`, `${tag}rev`]);
 
       const imported = await call(editor, 'POST', '/admin/game-content/import', { from: 'vocabulary', dialect: 'kmr' });
       expect(imported.status, imported.raw).toBe(200);
@@ -594,8 +597,18 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
         [`${tag}%`],
       );
       const starters = rows.rows.filter((r) => r.source === 'starter');
-      expect(starters.map((r) => r.payload.word).sort()).toEqual([`${tag}kucik`, `${tag}pisik`]);
-      for (const r of starters) expect(r).toMatchObject({ status: 'draft', review_status: 'unreviewed', payload: { category: 'animals', hint: { ku: 'heywan' } } });
+      // a word no category takes ("because") makes no card; a verb goes among the verbs
+      expect(starters.map((r) => r.payload.word).sort()).toEqual([`${tag}kucik`, `${tag}pisik`, `${tag}rev`]);
+      for (const r of starters) {
+        const verb = r.payload.word === `${tag}rev`;
+        expect(r).toMatchObject({
+          status: 'draft',
+          review_status: 'unreviewed',
+          payload: verb ? { category: 'actions', hint: { ku: 'lêker' } } : { category: 'animals', hint: { ku: 'heywan' } },
+        });
+      }
+      const ownName = await pool.query(`SELECT 1 FROM game_content WHERE kind = 'word_card' AND payload->>'word' = 'heywan' AND created_by = $1`, [editor.id]);
+      expect(ownName.rowCount).toBe(0);
       // an import run twice adds nothing
       const again = await call(editor, 'POST', '/admin/game-content/import', { from: 'vocabulary', dialect: 'kmr' });
       expect(again.body.created).toBe(0);

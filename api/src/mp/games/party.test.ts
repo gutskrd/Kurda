@@ -160,8 +160,26 @@ describe('the starter categories', () => {
     expect(starterCategoryOf('a pencil')?.slug).toBe('school');
     expect(starterCategoryOf('winter')?.slug).toBe('time');
     expect(starterCategoryOf('the wedding')?.slug).toBe('celebrations');
-    expect(starterCategoryOf('to run')).toBeNull();
+    expect(starterCategoryOf('seven')?.slug).toBe('numbers');
+    expect(starterCategoryOf('the storm')?.slug).toBe('weather');
+    expect(starterCategoryOf('to whistle up the wind')).toBeNull();
     expect(starterCategoryOf(undefined)).toBeNull();
+  });
+
+  it('sort a word by its first meaning, and a verb as a verb', () => {
+    // the lesson taught "box"; "chest" is its second meaning, and no part of the body
+    expect(starterCategoryOf('box, chest')?.slug).toBe('things');
+    expect(starterCategoryOf('good, well')?.slug).toBe('qualities');
+    expect(starterCategoryOf('injection; needle')?.slug).toBe('health');
+    // the same English word, once a verb and once not
+    expect(starterCategoryOf('to light (a fire)')?.slug).toBe('actions');
+    expect(starterCategoryOf('light (not heavy)')?.slug).toBe('qualities');
+    expect(starterCategoryOf('to run')?.slug).toBe('actions');
+    // a verb no category lists as a verb still finds the category that lists the word
+    expect(starterCategoryOf('to milk')?.slug).toBe('actions');
+    expect(starterCategoryOf('to race')?.slug).toBe('sports');
+    // a meaning in a later place decides only when the first has no category
+    expect(starterCategoryOf('I wonder, fox')?.slug).toBe('animals');
   });
 
   it('name each category once and file each meaning under one category only', () => {
@@ -169,10 +187,25 @@ describe('the starter categories', () => {
     expect(new Set(slugs).size).toBe(slugs.length);
     const words = STARTER_CATEGORIES.flatMap((c) => c.words);
     expect(words.filter((w, i) => words.indexOf(w) !== i)).toEqual([]);
+    const verbs = STARTER_CATEGORIES.flatMap((c) => c.verbs ?? []);
+    expect(verbs.filter((w, i) => verbs.indexOf(w) !== i)).toEqual([]);
     for (const c of STARTER_CATEGORIES) {
       expect(c.name.kmr.trim()).not.toBe('');
       expect(c.name.ckb.trim()).not.toBe('');
       expect(Object.keys(c.meanings).sort()).toEqual(['ar', 'de', 'en', 'es', 'fr', 'nl', 'tr']);
+      // every meaning is written the way a lesson's meaning is read: lower case, no article, no "to"
+      for (const w of [...c.words, ...(c.verbs ?? [])]) expect(meaningKeys(w), w).toEqual([w]);
     }
+    // no two categories are called the same in a variety or in a reader's language: a host chooses among their names
+    for (const of of [(c: (typeof STARTER_CATEGORIES)[number]) => c.name.kmr, (c: (typeof STARTER_CATEGORIES)[number]) => c.name.ckb, (c: (typeof STARTER_CATEGORIES)[number]) => c.meanings.en]) {
+      const names = STARTER_CATEGORIES.map(of);
+      expect(names.filter((n, i) => names.indexOf(n) !== i)).toEqual([]);
+    }
+  });
+
+  it('are forty, wide enough that most of what a course teaches can become a card', () => {
+    expect(STARTER_CATEGORIES).toHaveLength(40);
+    expect(STARTER_CATEGORIES.reduce((n, c) => n + c.words.length + (c.verbs?.length ?? 0), 0)).toBeGreaterThan(1500);
+    for (const c of STARTER_CATEGORIES) expect(c.words.length + (c.verbs?.length ?? 0), c.slug).toBeGreaterThanOrEqual(12);
   });
 });

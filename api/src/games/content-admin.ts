@@ -531,7 +531,8 @@ export class GameContentAdminService {
    * each category used becomes a category draft. All of them are 'starter'
    * drafts: the category names wait for a native speaker, and every card for
    * a reviewer, before a game can show them. Filed at level 1; the reviewer
-   * moves a card that belongs higher.
+   * moves a card that belongs higher. A word that is its category's own name
+   * (heywan, in animals) is left out: the hint would be the answer.
    */
   async importStarterWordCards(dialect: GameDialect, ctx: ActionContext, limit = 500): Promise<ImportResult> {
     const cards: Array<{ level: number; payload: GameContentPayload; origin: string }> = [];
@@ -541,6 +542,8 @@ export class GameContentAdminService {
       const en = w.meanings.en?.trim();
       const category = starterCategoryOf(en);
       if (!en || !category) continue;
+      // the category's own name is the impostor's hint: as a card it would give its word away
+      if (foldForDialect(w.ku, dialect, true) === foldForDialect(category.name[dialect], dialect, true)) continue;
       const payload = {
         word: w.ku,
         meanings: { ...w.meanings, en } as Meanings,
