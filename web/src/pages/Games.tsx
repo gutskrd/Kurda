@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { gameEmblemTone, type GameEmblem } from '@kurda/shared';
+import { gameEmblemTone, gameOfTheDay, type GameEmblem } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { LinkButton } from '../components/Button';
@@ -80,8 +80,6 @@ const FILTERS: ReadonlyArray<{ id: 'all' | Company; labelKey: MessageKey }> = [
   { id: 'friends', labelKey: 'games.filter.friends' },
 ];
 
-const DAY_MS = 86_400_000;
-
 /**
  * The game the page puts forward today: one of those that can be played,
  * a different one each day, the same one for everybody all day (pure, for the
@@ -89,7 +87,8 @@ const DAY_MS = 86_400_000;
  */
 export function featuredGame(games: readonly GameEntry[], now: number): GameEntry | null {
   const ready = games.filter((g) => g.ready);
-  return ready.length > 0 ? ready[Math.floor(now / DAY_MS) % ready.length]! : null;
+  const today = gameOfTheDay(ready.length, now);
+  return today === null ? null : ready[today]!;
 }
 
 /** The tint a game's card and picture tile wear: its emblem's own colour. */

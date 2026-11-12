@@ -31,12 +31,16 @@ import { keptKey } from '../streak/kept';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => {
+  // the game Games puts forward changes with the day: on this one it is the race, so Peyvok's card is a card
+  vi.useFakeTimers({ toFake: ['Date'] });
+  vi.setSystemTime(2 * 86_400_000);
   localStorage.clear();
   navigation.navigate.mockReset();
 });
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 const MAP = {
@@ -290,11 +294,11 @@ describe('Learn', () => {
     expect(localStorage.getItem(LEARN_VIEW_KEY)).toBeNull();
   });
 
-  it('lists the games as cards that say who they are played with, one tap to open', async () => {
+  it('lists the games as cards with a button for each way they are played, one tap to open', async () => {
     client();
     renderWithProviders(<LearnScreen view="games" />);
     const battle = await screen.findByTestId('game-battle');
-    expect(battle.getAttribute('aria-label')).toBe('Peyvok Battle, With friends. Race a friend to the same word.');
+    expect(battle.getAttribute('aria-label')).toBe('Peyvok, With friends');
     fireEvent.click(battle);
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle');
     // the rankings and the league, small, at the top

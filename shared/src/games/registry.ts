@@ -300,6 +300,17 @@ export function lessonExercises(
   return LEARN_GAMES.filter((g) => g.place === 'lessons' && playable.includes(g.id) && open.has(g.id));
 }
 
+const DAY_MS = 86_400_000;
+
+/**
+ * Which of `count` games a page puts forward today, by its place among them:
+ * a different one each day, the same one for everybody all day (UTC), on the
+ * website and on the phone alike. Null while there is nothing to put forward.
+ */
+export function gameOfTheDay(count: number, now: number): number | null {
+  return count > 0 ? Math.floor(now / DAY_MS) % count : null;
+}
+
 /** The game a kind of content belongs to (each kind belongs to exactly one). */
 export function gameOfKind(kind: GameContentKind): LearnGame | null {
   return LEARN_GAMES.find((g) => g.contentKinds.includes(kind)) ?? null;

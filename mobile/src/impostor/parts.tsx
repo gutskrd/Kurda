@@ -42,10 +42,12 @@ export function GoldButton({
   busy = false,
   disabled = false,
   style,
+  testID,
 }: {
   label: string;
   icon?: IconName;
   onPress: () => void;
+  testID?: string;
   /** working on it: the press is taken away, and a screen reader is told */
   busy?: boolean;
   disabled?: boolean;
@@ -63,6 +65,7 @@ export function GoldButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled: off, busy }}
       aria-disabled={off}
+      testID={testID}
       style={[styles.goldEdge, { opacity: off ? 0.6 : 1 }, style]}
     >
       {({ pressed }) => (
