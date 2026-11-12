@@ -9,7 +9,10 @@
  * the card and the question together and tap yes or no themselves. The phone
  * hides the card again and says what the card's own answer is. A player may
  * also ask the room a question of their own; the friends answer that one out
- * loud, looking at the card, and the phone only counts it.
+ * loud, looking at the card, and the phone only counts it. There are no
+ * tiles to guess from: a player who thinks they know says who they are, the
+ * phone is turned to the room once more, and the friends say whether that is
+ * right.
  *
  * It is the same game by the same rules: this module only starts a table
  * from the cards the server dealt for the room (api/src/games/who-am-i.ts),

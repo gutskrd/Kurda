@@ -99,8 +99,10 @@ describe('a table', () => {
 });
 
 describe('a table the server runs', () => {
-  it('takes no question asked out loud: that move is the one-phone game’s, where nothing is paid', () => {
+  it('takes no question asked out loud and no guess judged by the room: those moves are the one-phone game’s, where nothing is paid', () => {
     expect(whoAmITableModule.moveSchema.safeParse({ kind: 'aloud' }).success).toBe(false);
+    // nor a guess the room judges: a guess there is a tile, checked here
+    expect(whoAmITableModule.moveSchema.safeParse({ kind: 'said', right: true }).success).toBe(false);
     expect(whoAmITableModule.moveSchema.safeParse({ kind: 'pass' }).success).toBe(true);
   });
 

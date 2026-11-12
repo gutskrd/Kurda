@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   WHO_AM_I_FACTS,
   WHO_AM_I_MIN_QUESTIONS,
+  WHO_AM_I_ROOM_GUESSES,
   WHO_AM_I_START_POINTS,
   answerFor,
   dealWhoAmI,
@@ -451,6 +452,73 @@ describe('a question of one’s own, away from one room', () => {
     const s = table();
     expect(R.viewFor(s, 1).open).toBe(false);
     expect(R.apply(s, 1, { kind: 'aloud' }, T0)).toEqual({ ok: false, reason: 'not-here' });
+  });
+
+  it('leaves the judging to the server there too: a guess said out loud is refused, and the tiles are dealt', () => {
+    const s = table();
+    expect(R.apply(s, 1, { kind: 'said', right: true }, T0)).toEqual({ ok: false, reason: 'not-here' });
+    expect(R.viewFor(s, 1).mine!.tiles.length).toBeGreaterThan(0);
+  });
+});
+
+describe('guessing in one room', () => {
+  const dealt = () => ({
+    dialect: 'kmr' as const,
+    difficulty: 'beginner' as const,
+    deals: [POOL[0]!, POOL[2]!].map((target, i) => dealWhoAmI(target, POOL, TEMPLATES, { seed: 's', salt: `seat:${i}`, want: 4 })!),
+  });
+
+  it('shows nothing to pick from: who a player is, is said out loud', () => {
+    const s = startCouchTable(dealt(), T0, 'couch');
+    expect(R.viewFor(s, 0).mine).toMatchObject({ tiles: [], guessesLeft: WHO_AM_I_ROOM_GUESSES, identity: null });
+  });
+
+  it('takes the room’s word that the player said it: the card comes off and is scored like any guess', () => {
+    let s = startCouchTable(dealt(), T0, 'couch');
+    s = move(s, 0, { kind: 'aloud' });
+    s = move(s, 0, { kind: 'said', right: true });
+    const mine = R.viewFor(s, 0).mine!;
+    expect(mine).toMatchObject({ solved: true, points: whoAmIPoints(1, 0, true) });
+    expect(mine.identity!.word).toBe('pisîk');
+    expect(s.turn).toBe(1);
+  });
+
+  it('allows one more miss than at a table with tiles, then the player is out', () => {
+    let s = startCouchTable(dealt(), T0, 'couch');
+    for (let miss = 1; miss < WHO_AM_I_ROOM_GUESSES; miss++) {
+      s = move(s, 0, { kind: 'said', right: false });
+      expect(R.viewFor(s, 0).mine).toMatchObject({ out: false, guessesLeft: WHO_AM_I_ROOM_GUESSES - miss });
+      s = move(s, 1, { kind: 'pass' });
+    }
+    s = move(s, 0, { kind: 'said', right: false });
+    expect(R.viewFor(s, 0).mine).toMatchObject({ out: true, guessesLeft: 0 });
+    // a right guess after misses costs what the misses cost
+    s = move(s, 1, { kind: 'said', right: false });
+    s = move(s, 1, { kind: 'said', right: true });
+    expect(R.viewFor(s, 1).mine!.points).toBe(whoAmIPoints(0, 1, true));
+    expect(R.finished(s)).toBe(true);
+  });
+
+  it('never forces a guess: with the list asked through, a question of one’s own or a pass still goes', () => {
+    let s = startCouchTable(dealt(), T0, 'couch');
+    const all = s.seats[0]!.deal!.questions;
+    for (const q of all) {
+      s = move(s, 0, { kind: 'ask', question: q.id });
+      s = roomAnswers(s, true, T0);
+      s = move(s, 0, { kind: 'pass' });
+      s = move(s, 1, { kind: 'pass' });
+    }
+    expect(R.viewFor(s, 0).mine).toMatchObject({ mustGuess: false, suggested: [] });
+    s = move(s, 0, { kind: 'aloud' });
+    s = move(s, 0, { kind: 'pass' });
+    expect(s.turn).toBe(1);
+  });
+
+  it('does not take a guess while the room is still answering a question', () => {
+    let s = startCouchTable(dealt(), T0, 'couch');
+    s = move(s, 0, { kind: 'ask', question: firstQuestion(s, 0).id });
+    expect(R.apply(s, 0, { kind: 'said', right: true }, T0)).toEqual({ ok: false, reason: 'being-answered' });
+    expect(R.apply(s, 1, { kind: 'said', right: true }, T0)).toEqual({ ok: false, reason: 'not-your-turn' });
   });
 });
 

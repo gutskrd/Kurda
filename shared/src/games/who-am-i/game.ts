@@ -64,6 +64,11 @@ export function isWhoAmIFact(v: unknown): v is WhoAmIFact {
 
 /** Wrong guesses at an identity before its player is out. */
 export const WHO_AM_I_GUESSES = 2;
+/**
+ * The same, in one room, where there are no tiles to pick from: the player says who they are and anything may be
+ * said, so one more miss is allowed.
+ */
+export const WHO_AM_I_ROOM_GUESSES = 3;
 /** Tiles to guess from, by difficulty; beginners also see what each tile means. */
 export const WHO_AM_I_CANDIDATES: Readonly<Record<GameDifficulty, number>> = { beginner: 4, intermediate: 6, advanced: 8 };
 /** The fewest tiles a deal may fall back to when too few identities share enough facts. */
