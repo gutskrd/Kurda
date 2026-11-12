@@ -199,28 +199,21 @@ function Start({
           <GoldButton label={t('games.couch.open')} icon="device-phone" onPress={onPhone} style={styles.stretch} />
         </Card>
       ) : null}
-      {together && phone ? (
-        // the second way in, said quietly under the first: smaller words, and a button that is only an outline
-        <Card style={styles.quiet}>
-          <Text accessibilityRole="header" style={[styles.quietTitle, { color: colors.textPrimary }]}>
+      {together ? (
+        // Under the way on one phone this is the second way in, and says so quietly: smaller words, and a button that
+        // is only an outline. Gold is for the first thing to press, so it wears gold only where it is the only way.
+        <Card style={phone ? styles.quiet : styles.way}>
+          <Text accessibilityRole="header" style={[phone ? styles.quietTitle : styles.title, { color: colors.textPrimary }]}>
             {t('games.whoAmI.online')}
           </Text>
-          <Text style={[styles.note, { color: colors.textSecondary }]}>
+          <Text style={[phone ? styles.note : styles.blurb, { color: colors.textSecondary }]}>
             {t('games.whoAmI.onlineBlurb', { min: WHO_AM_I_TABLE_MIN_PLAYERS, max: WHO_AM_I_TABLE_MAX_PLAYERS })}
           </Text>
-          <ClayButton label={t('stories.lobby.invite')} icon="people" variant="outline" onPress={askFriends} style={styles.quietButton} />
-        </Card>
-      ) : null}
-      {together && !phone ? (
-        // gold is for the first thing to press: the way with friends wears it only where it is the only way
-        <Card style={styles.way}>
-          <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
-            {t('games.whoAmI.online')}
-          </Text>
-          <Text style={[styles.blurb, { color: colors.textSecondary }]}>
-            {t('games.whoAmI.onlineBlurb', { min: WHO_AM_I_TABLE_MIN_PLAYERS, max: WHO_AM_I_TABLE_MAX_PLAYERS })}
-          </Text>
-          <GoldButton label={t('stories.lobby.invite')} icon="people" onPress={askFriends} style={styles.stretch} />
+          {phone ? (
+            <ClayButton label={t('stories.lobby.invite')} icon="people" variant="outline" onPress={askFriends} style={styles.quietButton} />
+          ) : (
+            <GoldButton label={t('stories.lobby.invite')} icon="people" onPress={askFriends} style={styles.stretch} />
+          )}
         </Card>
       ) : null}
       <ScoringNote />

@@ -80,6 +80,8 @@ import {
  *   with the phone already turned away from them: the friends' one tap
  *   answers and hides it, and switching away from the page or the screen
  *   locking hides it too;
+ * - the way to that screen takes no tap in its first moment, so a double
+ *   tap on the board cannot run on into it and turn the card up;
  * - between two players there is always a screen with nothing on it but the
  *   next player's name;
  * - the holder's own card is never drawn until it comes off, and nobody
@@ -92,11 +94,18 @@ import {
  *   and are never sent anywhere;
  * - leaving asks first, since the cards and the points go with the page.
  *
- * Nothing here keeps a clock: the phone waits for the room. A game played
- * this way earns nothing, because the phone holds every card.
+ * No turn has a clock: the phone waits for the room. A game played this way
+ * earns nothing, because the phone holds every card.
  */
 
 const KEPT = 'hevalo.whoami.couch';
+
+/**
+ * How long the way to the friends' screen takes no tap after it appears: longer than the gap inside a double tap.
+ * A hurried second tap on the board can land where that button has just appeared, and would turn the card up in
+ * front of its own wearer.
+ */
+const TURN_ROUND_MS = 400;
 
 /** A name as it is kept: one line, trimmed to what fits on the screen between two players. */
 function cleanName(raw: string): string {
@@ -178,6 +187,11 @@ function askable(board: WhoAmITableBoard, id: string): WhoAmIQuestion | null {
   const mine = board.mine;
   if (!mine || mine.asked.some((a) => a.question === id)) return null;
   return mine.questions.find((q) => q.id === id) ?? null;
+}
+
+/** The dialect's own yes and no, for a line that tells the friends what to say out loud. */
+function sayYesNo(dialect: GameDialect, t: Translate): { yes: string; no: string } {
+  return { yes: yesNo(dialect, true, t), no: yesNo(dialect, false, t) };
 }
 
 /** After a turn has ended: the hand-over to whoever is next, or the end. */
@@ -370,7 +384,8 @@ function Play({
   const screen = useRef<HTMLDivElement>(null);
   const go = (next: Step): void => setGame({ ...game, step: next });
   // which screen this is: it changes whenever what the room is looking at is replaced
-  const shown = `${step.at}:${step.at === 'guessed' ? step.seat : ''}:${step.at === 'say' || step.at === 'friends' ? step.question : ''}:${game.state.turns}:${game.state.phase}`;
+  const about = step.at === 'guessed' ? step.seat : step.at === 'say' || step.at === 'friends' ? step.question : '';
+  const shown = `${step.at}:${about}:${game.state.turns}:${game.state.phase}`;
   // A new screen starts at its top with the focus on it: the button just pressed is gone with the old one, and a long
   // board may have been scrolled to its end.
   useEffect(() => {
@@ -432,13 +447,18 @@ function announcement(game: Game, t: Translate): string {
   if (state.turn === null) return '';
   const name = names[state.turn]!;
   if (step.at === 'pass') return t('games.whoAmI.couch.handover', { name });
+  // a question of the holder's own is one the step carries none for
+  const own = (step.at === 'say' || step.at === 'friends') && step.question === null;
   if (step.at === 'say') {
-    return step.question === null ? `${t('games.whoAmI.couch.ownAsk')} ${t('games.whoAmI.couch.ownTurn')}` : `${t('games.whoAmI.couch.readAloud')}. ${t('games.whoAmI.couch.turnPhone')}`;
+    return own ? `${t('games.whoAmI.couch.ownAsk')} ${t('games.whoAmI.couch.ownTurn')}` : `${t('games.whoAmI.couch.readAloud')}. ${t('games.whoAmI.couch.turnPhone')}`;
   }
-  if (step.at === 'friends') return `${t('games.whoAmI.couch.is', { name })} ${step.question === null ? t('games.whoAmI.couch.ownAnswer', { name }) : t('games.whoAmI.couch.isItTrue')}`;
-  // back on the holder's board: the card's verdict, that the friends have answered, or whose board it is
+  if (step.at === 'friends') return `${t('games.whoAmI.couch.is', { name })} ${own ? t('games.whoAmI.couch.ownAnswer', { name, ...sayYesNo(state.dialect, t) }) : t('games.whoAmI.couch.isItTrue')}`;
+  // back on the holder's board: the card's verdict, or that the friends have answered
   if (state.phase === 'decide') return state.told ? `${t('games.whoAmI.cardSays')} ${yesNo(state.dialect, state.told.truth, t)}` : t('games.whoAmI.couch.ownAnswered');
-  return t('games.whoAmI.couch.whoAreYou', { name });
+  // or whose board it is, with what the board says when the turn is not simply a question to pick
+  const mine = viewOf(game, state.turn).mine;
+  const also = mine?.mustGuess ? t('games.whoAmI.mustGuess') : mine?.suggested.length === 0 ? t('games.whoAmI.couch.noSuggestions') : null;
+  return [t('games.whoAmI.couch.whoAreYou', { name }), also].filter(Boolean).join(' ');
 }
 
 // ---------- who is playing ----------
@@ -625,6 +645,8 @@ function Board({
   // the questions asked, in the order they were asked: what the holder has learnt so far
   const answered = askedFirst(mine.questions, mine.asked).slice(0, mine.asked.length);
   const kind = categoryName(mine.category, t);
+  // what a guess is worth now: every question costs, one of the holder's own as much as one from the list
+  const worth = whoAmIPoints(mine.asked.length + mine.aloud, crossed.length, true);
   // what the turn asks of the holder, when that is not simply to pick a question
   const note = mine.mustGuess
     ? t('games.whoAmI.mustGuess')
@@ -658,13 +680,13 @@ function Board({
         <div className="wa-turn-text">
           <h2 className="wa-turn-whose">{t('games.whoAmI.couch.whoAreYou', { name })}</h2>
           {kind && <p className="wa-turn-kind">{kind}</p>}
-          {note && <p className="wa-turn-wait">{note}</p>}
-          <p className="wa-turn-worth">
-            {`${t('games.whoAmI.worth', { count: whoAmIPoints(mine.asked.length + mine.aloud, crossed.length, true) })} · ${t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}`}
-          </p>
         </div>
+        {note && <p className="wa-turn-wait">{note}</p>}
+        <p className="wa-turn-worth">
+          {`${t('games.whoAmI.worth', { count: worth })} · ${t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}`}
+        </p>
       </div>
-      <GuessTiles dialect={board.dialect} tiles={mine.tiles} crossed={crossed} canGuess busy={false} onGuess={onGuess} heading={t('games.whoAmI.couch.oneOf')}>
+      <GuessTiles heading={t('games.whoAmI.couch.oneOf')} dialect={board.dialect} tiles={mine.tiles} crossed={crossed} canGuess busy={false} onGuess={onGuess}>
         {deciding && !mine.mustGuess ? (
           <Button variant="secondary" onClick={onPass}>
             {t('games.whoAmI.couch.nextPlayer')}
@@ -719,8 +741,23 @@ function Board({
  * told to ask one of their own. Nothing has been asked of the rules yet, so
  * the way back costs nothing.
  */
-function Say({ game, seat, question, onFriends, onBack }: { game: Game; seat: number; question: string | null; onFriends: () => void; onBack: () => void }): React.JSX.Element | null {
+function Say({
+  game,
+  seat,
+  question,
+  onFriends,
+  onBack,
+}: {
+  game: Game;
+  seat: number;
+  /** the question picked from the list; none when the holder asks one of their own */
+  question: string | null;
+  onFriends: () => void;
+  onBack: () => void;
+}): React.JSX.Element | null {
   const t = useT();
+  // when this screen appeared: the way on to the friends is not taken at once (TURN_ROUND_MS)
+  const [since] = useState(() => Date.now());
   const board = viewOf(game, seat);
   const picked = question === null ? null : askable(board, question);
   if (question !== null && !picked) return null;
@@ -735,12 +772,19 @@ function Say({ game, seat, question, onFriends, onBack }: { game: Game; seat: nu
           </>
         ) : (
           <>
-            <h2 className="wa-night-title">{t('games.whoAmI.couch.ownAsk')}</h2>
+            <h2 className="wa-night-kicker">{t('games.whoAmI.couch.own')}</h2>
+            <p className="wa-night-lead">{t('games.whoAmI.couch.ownAsk')}</p>
             <p className="wa-night-shout">{t('games.whoAmI.couch.ownTurn')}</p>
           </>
         )}
       </div>
-      <Button size="lg" block onClick={onFriends}>
+      <Button
+        size="lg"
+        block
+        onClick={() => {
+          if (Date.now() - since >= TURN_ROUND_MS) onFriends();
+        }}
+      >
         {t('games.whoAmI.couch.friendsTap')}
       </Button>
       <Button variant="ghost" block onClick={onBack}>
@@ -755,8 +799,9 @@ function Say({ game, seat, question, onFriends, onBack }: { game: Game; seat: nu
  * holder's card on the deer's forehead, large, and the question beside it,
  * so nobody has to remember a card. For a question from the list the friends
  * tap the dialect's yes or no themselves; for one the holder asked out loud
- * they answer out loud and tap that they are done. Either tap takes the card
- * off the screen, and so does the page being hidden.
+ * they answer out loud, in the same two words if they can, and tap that they
+ * are done. Either tap takes the card off the screen, and so does the page
+ * being hidden.
  */
 function Friends({
   game,
@@ -801,7 +846,9 @@ function Friends({
             <p className="wa-night-shout">{t('games.whoAmI.couch.isItTrue')}</p>
           </>
         ) : (
-          <p className="wa-night-shout">{t('games.whoAmI.couch.ownAnswer', { name })}</p>
+          <p className="wa-night-shout">
+            <WithWords text={t('games.whoAmI.couch.ownAnswer', { name })} words={sayYesNo(board.dialect, t)} dialect={board.dialect} />
+          </p>
         )}
       </div>
       {picked ? (
@@ -878,7 +925,8 @@ function End({ game, busy, failed, onAgain, onChange }: { game: Game; busy: bool
   const seats = board.seats.flatMap((s): TableSeat[] => {
     const card = reveal.find((r) => r.seat === s.seat);
     if (!card) return [];
-    return [{ seat: s.seat, name: game.names[s.seat]!, card: { word: card.word, meanings: card.meanings }, own: false, asked: s.asked, points: s.points, solved: s.solved, out: s.out, left: s.left }];
+    const worn = { word: card.word, meanings: card.meanings };
+    return [{ seat: s.seat, name: game.names[s.seat]!, card: worn, own: false, asked: s.asked, points: s.points, solved: s.solved, out: s.out, left: s.left }];
   });
   const places = [...whoAmITableRules.places(game.state)].sort((a, b) => a.place - b.place || a.seat - b.seat);
   return (

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { WhoAmIDeal } from '@kurda/shared';
 import { jsonResponse } from '../test/utils';
@@ -9,10 +9,12 @@ import { WhoAmI } from './WhoAmI';
 
 /**
  * Who Am I? on one phone, from the way in to the end: the setup and what it
- * asks the server for (the room's size, never a name), every card shown to
- * the rest of the room only while it is held, the phone handed over, a
- * question read out, what the room said, the card's verdict, a guess that
- * misses and one that lands, the end, and another game with the same names.
+ * asks the server for (the room's size, never a name), the phone handed
+ * straight to the first player with no card to memorise, a suggested
+ * question picked in one tap and read out, the phone turned to the friends
+ * who see the card and tap the answer themselves, the card gone again and its
+ * verdict, a question of a player's own asked out loud, a guess that misses
+ * and one that lands, the end, and another game with the same names.
  */
 
 afterEach(() => {
@@ -25,18 +27,21 @@ afterEach(() => {
 const me = { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@example.com', emailVerified: true } };
 type Call = { url: string; method: string; body: unknown };
 
-// stand-in words for the cards and the questions, never shown to a learner
+// Stand-in words for the cards and the questions, never shown to a learner. Every tile is an animal, so the rules
+// suggest the two questions about animals and leave out the one whose answer follows from the kind on the card.
 const QUESTIONS = [
   { id: 'q1', ku: 'Ew dikare bifire?', meanings: { en: 'Can it fly?' }, fact: 'can-fly' },
   { id: 'q2', ku: 'Ew li malê tê dîtin?', meanings: { en: 'Do you find it at home?' }, fact: 'at-home' },
+  { id: 'q3', ku: 'Ew cihek e?', meanings: { en: 'Is it a place?' }, fact: 'place' },
 ];
 const CARDS: Record<string, { word: string; en: string; facts: Record<string, boolean> }> = {
-  cat: { word: 'pisîk', en: 'cat', facts: { 'can-fly': false, 'at-home': true } },
-  bird: { word: 'çûk', en: 'bird', facts: { 'can-fly': true, 'at-home': false } },
-  dog: { word: 'kûçik', en: 'dog', facts: { 'can-fly': false, 'at-home': true } },
+  cat: { word: 'pisîk', en: 'cat', facts: { 'can-fly': false, 'at-home': true, place: false } },
+  bird: { word: 'çûk', en: 'bird', facts: { 'can-fly': true, 'at-home': false, place: false } },
+  dog: { word: 'kûçik', en: 'dog', facts: { 'can-fly': false, 'at-home': true, place: false } },
   fish: { word: 'masî', en: 'fish', facts: {} },
   horse: { word: 'hesp', en: 'horse', facts: {} },
 };
+const WORDS = ['pisîk', 'çûk', 'kûçik'];
 
 /** A card for one player: who it is, and the tiles it could be, none of them another player's card. */
 function deal(who: string): WhoAmIDeal {
@@ -93,17 +98,6 @@ async function start(names: string[]): Promise<void> {
   await userEvent.click(screen.getByRole('button', { name: 'Deal the cards' }));
 }
 
-/** One player's card held up for the rest of the room, read while the button is held, and hidden again. Answers what it said. */
-async function lookAt(name: string): Promise<string> {
-  const hold = await screen.findByRole('button', { name: `Hold to show ${name}’s card` });
-  const card = screen.getByRole('figure', { name: `${name}’s card` });
-  fireEvent.pointerDown(hold);
-  const text = card.textContent ?? '';
-  fireEvent.pointerUp(hold);
-  await userEvent.click(screen.getByRole('button', { name: 'Next' }));
-  return text;
-}
-
 const open = () => renderPlay(<WhoAmI />, { route: '/app/games/who-am-i?couch=1' });
 
 /** What the phone last told a screen reader. */
@@ -116,14 +110,51 @@ async function headlineWith(word: string): Promise<HTMLElement> {
   return marked.closest('h2')!;
 }
 
+/** The phone taken by whoever it is handed to: their board. */
+async function take(name: string): Promise<void> {
+  await userEvent.click(await screen.findByRole('button', { name: `I’m ${name}` }));
+  expect(await screen.findByRole('heading', { name: `${name}, who are you?` })).toBeInTheDocument();
+}
+
+/**
+ * The phone turned to the friends. The way there takes no tap in its first moment on the screen (a double tap on the
+ * board must not run on into the card), so the tap is made until it is taken.
+ */
+async function turnToFriends(): Promise<void> {
+  const button = await screen.findByRole('button', { name: 'Friends: tap here' });
+  await waitFor(async () => {
+    await userEvent.click(button);
+    expect(screen.queryByRole('button', { name: 'Friends: tap here' })).toBeNull();
+  });
+}
+
+/** A suggested question picked, read out, and the phone turned to the friends, who tap this answer. */
+async function askSuggested(question: RegExp, answer: 'Erê yes' | 'Na no'): Promise<void> {
+  await userEvent.click(within(screen.getByRole('list', { name: 'Suggested' })).getByRole('button', { name: question }));
+  await turnToFriends();
+  await userEvent.click(await screen.findByRole('button', { name: answer }));
+}
+
+/** No card is on the screen: no player's word anywhere but among the holder's own tiles, where any tile may be. */
+function expectNoCard(): void {
+  expect(screen.queryByRole('figure', { name: /’s card$/ })).toBeNull();
+  for (const word of WORDS) for (const el of screen.queryAllByText(word)) expect(el.closest('[role="radio"]')).not.toBeNull();
+}
+
 describe('Who Am I? on one phone, the setup', () => {
-  it('takes two to six names and a level from the offer, and asks for a card for each by the room’s size alone', async () => {
+  it('says how a turn goes in three steps, takes two to six names and a level, and asks for a card for each by the room’s size alone', async () => {
     const calls = serve();
     open();
     // two players to begin with, each a box with its number for a name
     const boxes = await screen.findAllByRole('textbox');
     expect(boxes.map((b) => b.getAttribute('aria-label'))).toEqual(['Player 1', 'Player 2']);
     expect(boxes[0]).toHaveAttribute('maxlength', '14');
+    // how a turn goes, as three short lines above the form
+    expect(within(screen.getAllByRole('list')[0]!).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
+      'Pick a question and read it out loud.',
+      'Turn the phone to your friends: they see your card and answer.',
+      'Guess who you are. Fewer questions, more points.',
+    ]);
     expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull();
     for (let i = 0; i < 4; i++) await userEvent.click(screen.getByRole('button', { name: 'Add a player' }));
     expect(screen.getAllByRole('textbox')).toHaveLength(6);
@@ -150,7 +181,7 @@ describe('Who Am I? on one phone, the setup', () => {
     await userEvent.type(all[1]!, 'Berfîn');
     await userEvent.click(screen.getByRole('button', { name: 'Deal the cards' }));
     // the third box was left empty: it plays under the name on it
-    expect(await screen.findByText('Card 1 of 3')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeInTheDocument();
     expect(deals(calls)).toHaveLength(1);
     expect(deals(calls)[0]!.method).toBe('POST');
     expect(deals(calls)[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'intermediate', players: 3 });
@@ -174,90 +205,296 @@ describe('Who Am I? on one phone, the setup', () => {
   });
 });
 
-describe('Who Am I? on one phone, looking round', () => {
-  it('shows each card to the rest of the room only while it is held, then holds nothing but a name', async () => {
+describe('Who Am I? on one phone, a turn', () => {
+  it('goes straight to the first player, with no card to look at or remember first', async () => {
     serve();
     open();
     await start(['Azad', 'Berfîn', 'Ciwan']);
 
-    expect(await screen.findByText('Card 1 of 3')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Everyone but Azad: this is Azad’s card.' })).toBeInTheDocument();
-    expect(screen.getByText('Azad, look away!')).toBeInTheDocument();
-    expect(said()).toBe('Everyone but Azad: this is Azad’s card. Azad, look away!');
+    // the phone goes to whoever is on turn, with nothing on it but their name
+    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeInTheDocument();
+    expect(said()).toBe('Azad’s turn. Hand them the phone.');
+    expect(screen.queryByText(/^Card \d+ of \d+$/)).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Hold to show/ })).toBeNull();
+    expect(screen.queryByRole('figure')).toBeNull();
+    for (const word of WORDS) expect(document.body).not.toHaveTextContent(word);
+  });
+
+  it('suggests questions with what they mean, asked in one tap, and keeps the whole list folded away', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+
+    // the banner: who it is for, what the card may say of itself, and what a guess is worth now
+    expect(said()).toBe('Azad, who are you?');
+    expect(screen.getByText('An animal')).toBeInTheDocument();
+    expect(screen.getByText('Points if you guess now: 10 · Guesses left: 2')).toBeInTheDocument();
+    // his own card is a question mark, and nobody else's is on his screen for a neighbour to glance at
+    expect(screen.getByText('The card on your forehead')).toBeInTheDocument();
+    expectNoCard();
+    expect(document.body).not.toHaveTextContent('çûk');
+    // no clock anywhere: the phone waits for the room
+    expect(screen.queryByRole('timer')).toBeNull();
+
+    // who he could be, each tile with what it means at this level
+    const tiles = screen.getByRole('radiogroup', { name: 'You are one of these' });
+    expect(within(tiles).getAllByRole('radio').map((r) => r.textContent)).toEqual(['pisîk cat', 'masî fish', 'hesp horse']);
+
+    // the questions worth asking: Kurdish, with the meaning under each without a tap
+    const ask = screen.getByRole('region', { name: 'Ask a question' });
+    const suggested = within(within(ask).getByRole('list', { name: 'Suggested' })).getAllByRole('button');
+    expect(suggested.map((b) => b.textContent)).toEqual(['Ew dikare bifire? Can it fly?', 'Ew li malê tê dîtin? Do you find it at home?']);
+    expect(within(suggested[0]!).getByText('Ew dikare bifire?')).toHaveAttribute('lang', 'ku');
+    // the whole list is folded away until it is asked for
+    const all = within(ask).getByRole('button', { name: 'All questions (3)' });
+    expect(all).toHaveAttribute('aria-expanded', 'false');
+    expect(within(ask).queryByRole('button', { name: 'Ask' })).toBeNull();
+    expect(within(ask).queryByText('Ew cihek e?')).toBeNull();
+    // nothing known yet, so nothing is listed as known
+    expect(screen.queryByRole('region', { name: 'What you know so far' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Skip my turn' })).toBeInTheDocument();
+
+    // one tap on a suggested question: it is there to read out, large, with what it means
+    await userEvent.click(suggested[0]!);
+    expect(await screen.findByRole('heading', { name: 'Read it out loud' })).toBeInTheDocument();
+    expect(screen.getByText('Ew dikare bifire?')).toHaveAttribute('lang', 'ku');
+    expect(screen.getByText('Can it fly?')).toBeInTheDocument();
+    expect(screen.getByText('Now turn the phone to your friends.')).toBeInTheDocument();
+    expect(said()).toBe('Read it out loud. Now turn the phone to your friends.');
+    expectNoCard();
+
+    // the way back spends nothing
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 2')).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'What you know so far' })).toBeNull();
+
+    // the whole list, unfolded: every question, each with what it means at this level, and Ask
+    await userEvent.click(screen.getByRole('button', { name: 'All questions (3)' }));
+    const list = within(screen.getByRole('region', { name: 'Ask a question' }));
+    expect(list.getByRole('button', { name: 'All questions (3)' })).toHaveAttribute('aria-expanded', 'true');
+    expect(list.getByText('Ew cihek e?')).toHaveAttribute('lang', 'ku');
+    expect(list.getByText('Is it a place?')).toBeInTheDocument();
+    expect(list.queryByText('Tap a question to see what it means.')).toBeNull();
+    expect(list.getAllByRole('button', { name: 'Ask' })).toHaveLength(3);
+    // a question from the list goes the same way: read out first
+    await userEvent.click(list.getAllByRole('button', { name: 'Ask' })[2]!);
+    expect(await screen.findByRole('heading', { name: 'Read it out loud' })).toBeInTheDocument();
+    expect(screen.getByText('Is it a place?')).toBeInTheDocument();
+  });
+
+  it('shows the friends the card beside the question, takes their answer, and hides the card again', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await userEvent.click(screen.getByRole('button', { name: /^Ew dikare bifire\?/ }));
+    await turnToFriends();
+
+    // the friends' screen: who Azad is, the question again, and the dialect's yes and no to tap
+    expect(await screen.findByRole('heading', { name: 'Azad is…' })).toBeInTheDocument();
     const card = screen.getByRole('figure', { name: 'Azad’s card' });
-    const hold = screen.getByRole('button', { name: 'Hold to show Azad’s card' });
-    const next = screen.getByRole('button', { name: 'Next' });
-    // nothing to read, and no going on, before the room has looked
-    expect(card).toHaveTextContent('Hidden card');
-    expect(document.body).not.toHaveTextContent('pisîk');
-    expect(next).toBeDisabled();
-    fireEvent.pointerDown(hold);
     expect(within(card).getByText('pisîk')).toHaveAttribute('lang', 'ku');
     expect(card).toHaveTextContent('cat');
-    expect(next).toBeDisabled();
-    fireEvent.pointerUp(hold);
-    expect(document.body).not.toHaveTextContent('pisîk');
-    expect(next).toBeEnabled();
-    // looking away from the page hides it as well
-    fireEvent.pointerDown(hold);
+    expect(screen.getByText('Ew dikare bifire?')).toHaveAttribute('lang', 'ku');
+    expect(screen.getByText('Can it fly?')).toBeInTheDocument();
+    expect(said()).toBe('Azad is… Is it true? Tap your answer.');
+    const answers = screen.getByRole('group', { name: 'Is it true? Tap your answer.' });
+    expect(within(within(answers).getByRole('button', { name: 'Erê yes' })).getByText('Erê')).toHaveAttribute('lang', 'ku');
+    expect(within(answers).getByRole('button', { name: 'Na no' })).toBeInTheDocument();
+
+    // the page hidden, or another window in front: the card is gone, and the phone is back a step
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(await screen.findByRole('heading', { name: 'Read it out loud' })).toBeInTheDocument();
+    expectNoCard();
+    await turnToFriends();
+    expect(await screen.findByRole('figure', { name: 'Azad’s card' })).toHaveTextContent('pisîk');
     act(() => {
       window.dispatchEvent(new Event('blur'));
     });
-    expect(document.body).not.toHaveTextContent('pisîk');
-    await userEvent.click(next);
+    expect(await screen.findByRole('heading', { name: 'Read it out loud' })).toBeInTheDocument();
+    expectNoCard();
+    // nothing was asked of the rules by any of that
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 2')).toBeInTheDocument();
 
-    expect(await screen.findByText('Card 2 of 3')).toBeInTheDocument();
-    expect(await lookAt('Berfîn')).toContain('çûk');
-    expect(await lookAt('Ciwan')).toContain('kûçik');
+    // the friends tap their answer: the card is off the screen at once, and the card's own verdict is on Azad's board
+    await askSuggested(/^Ew dikare bifire\?/, 'Na no');
+    const verdict = await screen.findByRole('region', { name: /^The card says:/ });
+    expectNoCard();
+    expect(within(verdict).getByText('Azad asked:')).toBeInTheDocument();
+    expect(within(verdict).getByText('Can it fly?')).toBeInTheDocument();
+    expect(within(verdict).getByText('Na')).toHaveAttribute('lang', 'ku');
+    expect(within(verdict).getByText('Your friends got it right: +1 for each of them.')).toBeInTheDocument();
+    expect(said()).toBe('The card says: Na');
+    expect(screen.getByRole('heading', { name: 'Azad, who are you?' })).toBeInTheDocument();
+    expect(screen.getByText('The card has answered. Guess who you are, or pass the turn on.')).toBeInTheDocument();
+    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 2')).toBeInTheDocument();
+    // the turn is a guess or the phone passed on: nothing more to ask
+    expect(screen.queryByRole('region', { name: 'Ask a question' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Skip my turn' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Guess' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next player' })).toBeInTheDocument();
+    // what he knows so far: his question, what it means, and the card's answer
+    const known = screen.getByRole('region', { name: 'What you know so far' });
+    expect(within(known).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Ew dikare bifire? Can it fly?Na']);
+  });
 
-    // the phone goes to whoever is on turn, with no card on it
-    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeInTheDocument();
-    expect(said()).toBe('Azad’s turn. Hand them the phone.');
-    for (const word of ['pisîk', 'çûk', 'kûçik']) expect(document.body).not.toHaveTextContent(word);
+  it('takes no tap on the way to the friends in the screen’s first moment, so a double tap cannot turn the card up', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    // the clock stands still from here: the second tap of a double tap comes in the same moment as the first
+    const now = vi.spyOn(Date, 'now').mockReturnValue(1_700_000_000_000);
+    await userEvent.click(screen.getByRole('button', { name: /^Ew dikare bifire\?/ }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Friends: tap here' }));
+    expect(screen.getByRole('heading', { name: 'Read it out loud' })).toBeInTheDocument();
+    expectNoCard();
+    // a moment later the same button turns the phone to the friends
+    now.mockReturnValue(1_700_000_000_400);
+    await userEvent.click(screen.getByRole('button', { name: 'Friends: tap here' }));
+    expect(await screen.findByRole('figure', { name: 'Azad’s card' })).toHaveTextContent('pisîk');
+  });
+
+  it('says kindly when the friends answered wrong, in the dialect’s own words', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    // a cat does not fly, whatever the friends say
+    await askSuggested(/^Ew dikare bifire\?/, 'Erê yes');
+    const verdict = await screen.findByRole('region', { name: /^The card says:/ });
+    const line = within(verdict).getByText(/^Your friends said/);
+    expect(line).toHaveTextContent('Your friends said Erê, but the card says Na.');
+    for (const word of within(line).getAllByText(/^(Erê|Na)$/)) expect(word).toHaveAttribute('lang', 'ku');
+    expect(within(verdict).queryByText(/right/)).toBeNull();
+  });
+
+  it('counts a question of the player’s own, asked out loud, and gives no verdict on it', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await userEvent.click(screen.getByRole('button', { name: 'Ask my own question' }));
+
+    // what to do, and nothing spent yet
+    expect(await screen.findByRole('heading', { name: 'Ask my own question' })).toBeInTheDocument();
+    expect(screen.getByText('Ask your friends any yes-or-no question about yourself. In Kurdish if you can!')).toBeInTheDocument();
+    expect(screen.getByText('Turn the phone to your friends so they can see your card.')).toBeInTheDocument();
+    expect(said()).toBe('Ask your friends any yes-or-no question about yourself. In Kurdish if you can! Turn the phone to your friends so they can see your card.');
+    expectNoCard();
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 2')).toBeInTheDocument();
+
+    // the friends see the card and answer out loud: nothing to tap but that they are done
+    await userEvent.click(screen.getByRole('button', { name: 'Ask my own question' }));
+    await turnToFriends();
+    expect(await screen.findByRole('heading', { name: 'Azad is…' })).toBeInTheDocument();
+    expect(screen.getByRole('figure', { name: 'Azad’s card' })).toHaveTextContent('pisîk');
+    // what to say is on the screen in the dialect's own two words
+    const say = screen.getByText(/^Answer Azad out loud:/);
+    expect(say).toHaveTextContent('Answer Azad out loud: yes (Erê) or no (Na).');
+    for (const word of within(say).getAllByText(/^(Erê|Na)$/)) expect(word).toHaveAttribute('lang', 'ku');
+    expect(said()).toBe('Azad is… Answer Azad out loud: yes (Erê) or no (Na).');
+    expect(screen.queryByRole('button', { name: 'Erê yes' })).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Done: hide the card' }));
+
+    // back with Azad: the card is hidden, the question is counted, and the card itself said nothing
+    expect(await screen.findByText('Your friends have answered. Guess who you are, or pass the phone on.', { selector: '.wa-turn-wait' })).toBeInTheDocument();
+    expect(said()).toBe('Your friends have answered. Guess who you are, or pass the phone on.');
+    expectNoCard();
+    expect(screen.queryByRole('region', { name: /^The card says:/ })).toBeNull();
+    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 2')).toBeInTheDocument();
+    const known = screen.getByRole('region', { name: 'What you know so far' });
+    expect(within(known).getByText('Questions of your own: 1 (each takes 1 off your points)')).toBeInTheDocument();
+    expect(within(known).queryByRole('listitem')).toBeNull();
+    // one question to a turn, whoever wrote it
+    expect(screen.queryByRole('button', { name: 'Ask my own question' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Ask a question' })).toBeNull();
+
+    // the phone goes on, and comes back with the count still on the board
+    await userEvent.click(screen.getByRole('button', { name: 'Next player' }));
+    await take('Berfîn');
+    await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
+    await take('Azad');
+    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 2')).toBeInTheDocument();
+    expect(screen.getByText('Questions of your own: 1 (each takes 1 off your points)')).toBeInTheDocument();
+    // a card found after it is worth one less
+    await userEvent.click(screen.getByRole('radio', { name: /pisîk/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
+    expect(await headlineWith('pisîk')).toHaveTextContent('You are pisîk!');
+    expect(screen.getByText('Points: 9')).toBeInTheDocument();
+  });
+
+  it('opens the whole list when nothing is left to suggest, and leaves only a guess once every question is asked', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    // the two suggested questions, one to a turn
+    for (const question of [/^Ew dikare bifire\?/, /^Ew li malê tê dîtin\?/]) {
+      await take('Azad');
+      await askSuggested(question, 'Na no');
+      await userEvent.click(await screen.findByRole('button', { name: 'Next player' }));
+      await take('Berfîn');
+      await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
+    }
+
+    // nothing left to suggest, with a question still on the list: the board says so, and the list is open
+    await take('Azad');
+    expect(screen.getByText('No more suggestions. Pick from all the questions, or take a guess.')).toBeInTheDocument();
+    const ask = screen.getByRole('region', { name: 'Ask a question' });
+    expect(within(ask).queryByRole('list', { name: 'Suggested' })).toBeNull();
+    expect(within(ask).getByRole('button', { name: 'All questions (3)' })).toHaveAttribute('aria-expanded', 'true');
+    // the questions asked carry the card's answer, here and under what he knows so far
+    expect(within(ask).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Ew dikare bifire? Can it fly?Na', 'Ew li malê tê dîtin? Do you find it at home?Erê', 'Ew cihek e? Is it a place?Ask']);
+    expect(within(screen.getByRole('region', { name: 'What you know so far' })).getAllByRole('listitem')).toHaveLength(2);
+
+    // the last question asked: the turn has to be a guess, and says why
+    await userEvent.click(within(ask).getByRole('button', { name: 'Ask' }));
+    await turnToFriends();
+    await userEvent.click(await screen.findByRole('button', { name: 'Na no' }));
+    expect(await screen.findByText('You have asked every question, so this turn has to be a guess.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Next player' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Skip my turn' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Ask my own question' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Guess' })).toBeInTheDocument();
+  });
+
+  it('keeps the meanings of the list a tap away above the beginner’s level, and under the suggested questions all the same', async () => {
+    serve();
+    open();
+    await screen.findAllByRole('textbox');
+    await userEvent.click(within(screen.getByRole('radiogroup', { name: 'Difficulty' })).getByRole('radio', { name: 'Intermediate' }));
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+
+    // the tiles are the words alone at this level
+    expect(within(screen.getByRole('radiogroup', { name: 'You are one of these' })).getAllByRole('radio').map((r) => r.textContent)).toEqual(['pisîk', 'masî', 'hesp']);
+    // a suggested question is picked by what it means, so that is always under it
+    const ask = within(screen.getByRole('region', { name: 'Ask a question' }));
+    expect(ask.getByRole('button', { name: 'Ew dikare bifire? Can it fly?' })).toBeInTheDocument();
+    await userEvent.click(ask.getByRole('button', { name: 'All questions (3)' }));
+    expect(ask.getByText('Tap a question to see what it means.')).toBeInTheDocument();
+    expect(ask.queryByText('Is it a place?')).toBeNull();
+    const question = ask.getByRole('button', { name: 'Ew cihek e?' });
+    await userEvent.click(question);
+    expect(question).toHaveAttribute('aria-expanded', 'true');
+    expect(ask.getByText('Is it a place?')).toBeInTheDocument();
   });
 });
 
 describe('Who Am I? on one phone, a game', () => {
-  it('goes from a question read out to the room’s answer, the card’s verdict, a guess, and the end', async () => {
+  it('goes from a question to the card’s verdict, a guess that misses and one that lands, and the end', async () => {
     const calls = serve();
     open();
     await start(['Azad', 'Berfîn']);
-    expect(await lookAt('Azad')).toContain('pisîk');
-    expect(await lookAt('Berfîn')).toContain('çûk');
 
-    // Azad takes the phone: his board, his own card a question mark
-    await userEvent.click(await screen.findByRole('button', { name: 'I’m Azad' }));
-    expect(screen.getByText('Azad’s turn', { selector: '.wa-turn-whose' })).toBeInTheDocument();
-    expect(screen.getByText('Ask one question about your card, or guess if you know who you are.')).toBeInTheDocument();
-    expect(screen.getAllByText('The card on your forehead').length).toBeGreaterThan(0);
-    for (const el of screen.queryAllByText('pisîk')) expect(el.closest('[role="radio"]')).not.toBeNull();
-    // Berfîn sits beside him: her card is not on his screen for her to glance at
-    expect(document.body).not.toHaveTextContent('çûk');
-    const seats = within(screen.getByRole('list', { name: 'The table' })).getAllByRole('listitem');
-    expect(seats.map((li) => li.textContent)).toEqual([expect.stringContaining('Azad'), expect.stringContaining('Berfîn')]);
-    expect(seats[1]).toHaveTextContent('Hidden card');
-    // no clock anywhere: the phone waits for the room
-    expect(screen.queryByRole('timer')).toBeNull();
-
-    // a question picked: large, to read out, and what the room said
-    await userEvent.click(screen.getAllByRole('button', { name: 'Ask' })[0]!);
-    expect(await screen.findByText('Read it out loud')).toBeInTheDocument();
-    const question = screen.getByRole('button', { name: 'Ew dikare bifire?' });
-    expect(within(question).getByText('Ew dikare bifire?')).toHaveAttribute('lang', 'ku');
-    await userEvent.click(question);
-    expect(screen.getByText('Can it fly?')).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'What did the room say?' })).toBeInTheDocument();
-    const room = screen.getByRole('group', { name: 'What did the room say?' });
-    expect(within(room).getByRole('button', { name: 'Erê yes' })).toBeInTheDocument();
-    await userEvent.click(within(room).getByRole('button', { name: 'Na no' }));
-
-    // the card says which it is, and whether the room was right
-    const verdict = await screen.findByRole('region', { name: /^The card says:/ });
-    expect(within(verdict).getByText('Na')).toHaveAttribute('lang', 'ku');
-    expect(within(verdict).getByText('The room was right: +1 for everyone who answered.')).toBeInTheDocument();
-    expect(said()).toBe('The card says: Na');
-    expect(screen.getByText(/Points if you guess now: 9/)).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Ask' })).toBeNull();
+    await take('Azad');
+    await askSuggested(/^Ew dikare bifire\?/, 'Na no');
+    await screen.findByRole('region', { name: /^The card says:/ });
 
     // a guess that misses: it says so, and how many are left
     await userEvent.click(screen.getByRole('radio', { name: /masî/ }));
@@ -265,32 +502,33 @@ describe('Who Am I? on one phone, a game', () => {
     expect(await screen.findByText('masî', { selector: '.wa-word' })).toHaveAttribute('lang', 'ku');
     expect(screen.getByText('masî', { selector: '.wa-word' }).parentElement).toHaveTextContent('Not masî.');
     expect(screen.getByRole('heading', { name: 'Guesses left: 1' })).toBeInTheDocument();
+    expect(said()).toBe('Guesses left: 1');
     expect(document.body).not.toHaveTextContent('pisîk');
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
 
     // Berfîn's turn: she passes it on without asking
     expect(await screen.findByRole('heading', { name: 'Berfîn’s turn. Hand them the phone.' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'I’m Berfîn' }));
-    expect(screen.getByText('Berfîn’s turn', { selector: '.wa-turn-whose' })).toBeInTheDocument();
+    await take('Berfîn');
+    expectNoCard();
     expect(document.body).not.toHaveTextContent('pisîk');
-    await userEvent.click(screen.getByRole('button', { name: 'Pass the turn on' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
 
-    // Azad again: the answer is on his question, the wrong tile crossed out, and this guess lands
-    await userEvent.click(await screen.findByRole('button', { name: 'I’m Azad' }));
-    expect(within(screen.getByRole('region', { name: 'Ask a question' })).getByText('Na')).toBeInTheDocument();
+    // Azad again: the answer he had is on his board, the wrong tile crossed out, and this guess lands
+    await take('Azad');
+    expect(within(screen.getByRole('region', { name: 'What you know so far' })).getByText('Na')).toHaveAttribute('lang', 'ku');
+    expect(screen.getByText('Points if you guess now: 6 · Guesses left: 1')).toBeInTheDocument();
     expect(screen.getByRole('radio', { name: 'masî, Not this one' })).toBeDisabled();
     await userEvent.click(screen.getByRole('radio', { name: /pisîk/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
     expect(await headlineWith('pisîk')).toHaveTextContent('You are pisîk!');
+    expect(said()).toBe('Got it');
     expect(screen.getByRole('figure', { name: 'Azad’s card' })).toHaveTextContent('cat');
     // ten, less one question and one wrong guess
     expect(screen.getByText('Points: 6')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
 
-    // Berfîn finds hers outright, with the point for the room's right answer on top
-    await userEvent.click(await screen.findByRole('button', { name: 'I’m Berfîn' }));
-    // Azad's card is off now, so it is on the table for all to read
-    expect(within(screen.getByRole('list', { name: 'The table' })).getAllByRole('listitem')[0]).toHaveTextContent('pisîk');
+    // Berfîn finds hers outright, with the point for the friends' right answer on top
+    await take('Berfîn');
     await userEvent.click(screen.getByRole('radio', { name: /çûk/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
     expect(await headlineWith('çûk')).toHaveTextContent('You are çûk!');
@@ -312,10 +550,9 @@ describe('Who Am I? on one phone, a game', () => {
     expect(screen.queryByRole('button', { name: 'Leave the game' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Back to games' })).toHaveAttribute('href', '/app/games');
 
-    // again: the same names, a new deal
+    // again: the same names, a new deal, and straight to the first player
     await userEvent.click(screen.getByRole('button', { name: 'Play again' }));
-    expect(await screen.findByRole('heading', { name: 'Everyone but Azad: this is Azad’s card.' })).toBeInTheDocument();
-    expect(screen.getByText('Card 1 of 2')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeInTheDocument();
     expect(deals(calls).map((c) => c.body)).toEqual([
       { dialect: 'kmr', difficulty: 'beginner', players: 2 },
       { dialect: 'kmr', difficulty: 'beginner', players: 2 },
@@ -323,26 +560,17 @@ describe('Who Am I? on one phone, a game', () => {
     expect(JSON.stringify(calls)).not.toContain('Azad');
   });
 
-  it('says when the room answered wrong, and puts a player out at the second wrong guess', async () => {
+  it('puts a player out at the second wrong guess', async () => {
     serve();
     open();
     await start(['Azad', 'Berfîn']);
-    await lookAt('Azad');
-    await lookAt('Berfîn');
-    await userEvent.click(await screen.findByRole('button', { name: 'I’m Azad' }));
-    await userEvent.click(screen.getAllByRole('button', { name: 'Ask' })[0]!);
-    // a cat does not fly, whatever the room says
-    await userEvent.click(await screen.findByRole('button', { name: 'Erê yes' }));
-    const verdict = await screen.findByRole('region', { name: /^The card says:/ });
-    expect(within(verdict).getByText('Na')).toBeInTheDocument();
-    expect(within(verdict).getByText('The room was wrong: no points for this answer.')).toBeInTheDocument();
-
+    await take('Azad');
     await userEvent.click(screen.getByRole('radio', { name: /masî/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
     await userEvent.click(await screen.findByRole('button', { name: 'Next' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'I’m Berfîn' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Pass the turn on' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'I’m Azad' }));
+    await take('Berfîn');
+    await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
+    await take('Azad');
     await userEvent.click(screen.getByRole('radio', { name: /hesp/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
     // out: the card comes off, and is worth nothing
@@ -358,14 +586,14 @@ describe('Who Am I? on one phone, a game', () => {
     await screen.findAllByRole('textbox');
     expect(screen.getByRole('link', { name: 'Back to games' })).toHaveAttribute('href', '/app/games');
     await start(['Azad', 'Berfîn']);
-    await screen.findByText('Card 1 of 2');
+    await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' });
 
     await userEvent.click(screen.getByRole('button', { name: 'Back to games' }));
     const asked = await screen.findByRole('dialog', { name: 'Leave this game?' });
     expect(within(asked).getByText('The cards and the points of this game will be lost.')).toBeInTheDocument();
     await userEvent.click(within(asked).getByRole('button', { name: 'Keep playing' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(screen.getByText('Card 1 of 2')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeInTheDocument();
     expect(where()).toBe('/app/games/who-am-i?couch=1');
 
     await userEvent.click(screen.getByRole('button', { name: 'Leave the game' }));
@@ -377,7 +605,7 @@ describe('Who Am I? on one phone, a game', () => {
     serve();
     const first = open();
     await start(['Azad', 'Berfîn', 'Ciwan']);
-    await screen.findByText('Card 1 of 3');
+    await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' });
     first.unmount();
     open();
     await waitFor(() => expect(screen.getAllByRole('textbox').map((b) => (b as HTMLInputElement).value)).toEqual(['Azad', 'Berfîn', 'Ciwan']));

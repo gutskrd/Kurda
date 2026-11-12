@@ -8,8 +8,9 @@ import { forgetMpAvailability } from '../games/mpAvailability';
 import { WhoAmI } from './WhoAmI';
 
 /**
- * Who Am I? on the website: the start and its two ways in, and the table
- * with friends online from both sides of a question, the asker's and an
+ * Who Am I? on the website: the start and its two ways in, one phone first,
+ * and the table with friends online from both sides of a question, the
+ * asker's (their list with the questions worth asking first) and an
  * answerer's, through the card's verdict to a guess and the end.
  *
  * The room's server here is the game's own rules: a table is begun from three
@@ -66,7 +67,7 @@ const online = (offered: boolean) => ({
 });
 
 describe('Who Am I?, the start', () => {
-  it('offers the two ways to play, each with its own way in, and no round alone', async () => {
+  it('offers one phone first and friends online as the quieter way under it, each with its own way in, and no round alone', async () => {
     serve({ ...onePhone(true), ...online(true) });
     renderPlay(<WhoAmI />, { route: '/app/games/who-am-i' });
 
@@ -76,15 +77,19 @@ describe('Who Am I?, the start', () => {
 
     const friends = screen.getByRole('region', { name: 'With friends online' });
     expect(within(friends).getByText('Everyone on their own screen. 2 to 6 players.')).toBeInTheDocument();
+    // the phone's card is the main way in: first on the page and marked so, with the other the quiet one
+    expect(screen.getAllByRole('region').slice(0, 2)).toEqual([phone, friends]);
+    expect(phone).toHaveClass('is-main');
+    expect(friends).toHaveClass('is-quiet');
     // the invite form for this game: its difficulty, and the longest it may run
     const longest = await within(friends).findByRole('radiogroup', { name: 'Longest game' });
     expect(within(longest).getAllByRole('radio').map((r) => r.parentElement?.textContent)).toEqual(['5 min', '10 min', '15 min']);
     expect(within(longest).getByRole('radio', { name: '10 min' })).toBeChecked();
     expect(within(friends).getByRole('button', { name: 'Create game' })).toBeInTheDocument();
 
-    // the deer wears a card nobody has read yet, and the page says what the game is
+    // the deer wears a card nobody has read yet, and the page says what the game is in two short sentences
     expect(screen.getByText('The card on your forehead')).toBeInTheDocument();
-    expect(screen.getByText(/^Everyone wears a card on their forehead that they cannot read\./)).toBeInTheDocument();
+    expect(screen.getByText('There is a card on your forehead that only your friends can read. Ask yes-or-no questions in Kurdish to find out who you are.')).toBeInTheDocument();
     // nothing is played alone any more
     expect(screen.queryByText('On your own')).toBeNull();
     expect(document.querySelector('a[href*="solo"]')).toBeNull();
@@ -111,7 +116,8 @@ describe('Who Am I?, the start', () => {
   it('leaves out a way that cannot be played yet', async () => {
     serve({ ...onePhone(false), ...online(true) });
     const first = renderPlay(<WhoAmI />, { route: '/app/games/who-am-i' });
-    expect(await screen.findByRole('region', { name: 'With friends online' })).toBeInTheDocument();
+    // the one way there is to play is not the quiet one
+    expect(await screen.findByRole('region', { name: 'With friends online' })).not.toHaveClass('is-quiet');
     expect(screen.queryByRole('region', { name: 'On this phone' })).toBeNull();
     first.unmount();
 
@@ -162,13 +168,17 @@ const FACTS: Record<string, Record<string, boolean>> = {
   dog: { 'can-fly': false, 'at-home': true },
 };
 
+// A question whose answer follows from the kind on the card (every tile is an animal), so the rules never suggest it.
+// It is dealt first, to show that the list is led by what is suggested and not by the order of the deal.
+const PLACE = { id: 'q3', ku: 'Ew cihek e?', meanings: { en: 'Is it a place?' }, fact: 'place' };
+
 /** A card for one seat: who it is, and the tiles it could be, none of them another seat's card. */
-function deal(who: 'cat' | 'bird' | 'dog', dialect: 'kmr' | 'ckb' = 'kmr'): WhoAmIDeal {
+function deal(who: 'cat' | 'bird' | 'dog', dialect: 'kmr' | 'ckb' = 'kmr', questions: WhoAmIDeal['questions'] = QUESTIONS[dialect]): WhoAmIDeal {
   const card = (id: string) => ({ id: `i-${id}`, word: WORDS[dialect][id as keyof (typeof WORDS)['kmr']], meanings: { en: id }, category: 'animal' });
   return {
     identity: { ...card(who), key: who, level: 1, facts: FACTS[who]! },
     candidates: [card(who), card('fish'), card('horse')],
-    questions: QUESTIONS[dialect],
+    questions,
   };
 }
 
@@ -179,10 +189,11 @@ const seat = (n: number, extra: Record<string, unknown> = {}) => ({ seat: n, use
  * bird and Baran the dog. `play` is a move by anyone at the table, as the
  * server would take it; the page's own moves arrive through the route.
  */
-function table(opts: { dialect?: 'kmr' | 'ckb'; refuse?: { status: number; body: unknown } } = {}) {
+function table(opts: { dialect?: 'kmr' | 'ckb'; difficulty?: 'beginner' | 'intermediate'; questions?: WhoAmIDeal['questions']; refuse?: { status: number; body: unknown } } = {}) {
   const dialect = opts.dialect ?? 'kmr';
+  const difficulty = opts.difficulty ?? 'beginner';
   let state: WhoAmITableState = whoAmITableRules.init(
-    { dialect, minutes: 10, difficulty: 'beginner', deals: [1, 2, 3].map((n, i) => ({ seat: n, deal: deal((['cat', 'bird', 'dog'] as const)[i]!, dialect) })) },
+    { dialect, minutes: 10, difficulty, deals: [1, 2, 3].map((n, i) => ({ seat: n, deal: deal((['cat', 'bird', 'dog'] as const)[i]!, dialect, opts.questions) })) },
     [1, 2, 3].map((n) => ({ seat: n, team: null, bot: null })),
     { now: Date.now(), seed: 'a-seed' },
   );
@@ -197,7 +208,7 @@ function table(opts: { dialect?: 'kmr' | 'ckb'; refuse?: { status: number; body:
       version,
       serverNow: new Date().toISOString(),
       dialect,
-      settings: { dialect, minutes: 10, difficulty: 'beginner' },
+      settings: { dialect, minutes: 10, difficulty },
       access: 'friends',
       code: null,
       rated: { rated: false, counts: null, friendlyReason: null, damped: false },
@@ -288,12 +299,14 @@ describe('Who Am I?, the table online, on my turn', () => {
     expect(seatOf('Baran')).toHaveTextContent('kûçik');
     expectOwnCardUnread('pisîk');
 
-    // a question says what it means when it is tapped
-    const question = screen.getByRole('button', { name: 'Ew dikare bifire?' });
-    expect(within(question).getByText('Ew dikare bifire?')).toHaveAttribute('lang', 'ku');
-    await userEvent.click(question);
-    expect(question).toHaveAttribute('aria-expanded', 'true');
-    expect(screen.getByText('Can it fly?')).toBeInTheDocument();
+    // at the beginner's level every question says what it means under it, with nothing to tap
+    const deck = screen.getByRole('region', { name: 'Ask a question' });
+    expect(within(deck).getByText('Ew dikare bifire?')).toHaveAttribute('lang', 'ku');
+    expect(within(deck).getByText('Can it fly?')).toBeInTheDocument();
+    expect(within(deck).queryByText('Tap a question to see what it means.')).toBeNull();
+    expect(within(deck).queryByRole('button', { name: 'Ew dikare bifire?' })).toBeNull();
+    // a question of one's own is for a room that sits together: it is never offered at a table online
+    expect(screen.queryByRole('button', { name: 'Ask my own question' })).toBeNull();
     expect(screen.getByText(/Points if you guess now: 10/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Pass the turn on' })).toBeInTheDocument();
 
@@ -345,6 +358,55 @@ describe('Who Am I?, the table online, on my turn', () => {
     // the last verdict stays on the table while the next player chooses
     expect(screen.getByRole('region', { name: /^The card says:/ })).toBeInTheDocument();
     expectOwnCardUnread('pisîk');
+  });
+
+  it('leads my list with the suggested questions under their own label, then the rest, and asks from either as before', async () => {
+    const t = table({ questions: [PLACE, ...QUESTIONS.kmr] });
+    const moved = open();
+    await screen.findByText('Your turn');
+
+    const deck = screen.getByRole('region', { name: 'Ask a question' });
+    const [suggested, rest] = within(deck).getAllByRole('list');
+    // the questions worth asking next come first, whatever the order they were dealt in
+    expect(suggested).toBe(within(deck).getByRole('list', { name: 'Suggested' }));
+    expect(within(suggested!).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Ew dikare bifire? Can it fly?Ask', 'Ew li malê tê dîtin? Do you find it at home?Ask']);
+    // then the rest of the list under a label of its own, as askable as ever
+    expect(rest).toBe(within(deck).getByRole('list', { name: 'Other questions' }));
+    expect(within(rest!).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Ew cihek e? Is it a place?Ask']);
+    await userEvent.click(within(rest!).getByRole('button', { name: 'Ask' }));
+    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'ask', question: 'q3' }]));
+
+    // once the turn is no longer one to ask in, the list is my notes: nothing in it is suggested
+    t.play(2, { kind: 'answer', yes: false });
+    t.play(3, { kind: 'answer', yes: false });
+    moved();
+    const notes = await screen.findByRole('region', { name: 'Your questions' });
+    expect(within(notes).queryByRole('list', { name: 'Suggested' })).toBeNull();
+    expect(within(notes).queryByText('Other questions')).toBeNull();
+    expect(within(notes).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Ew cihek e? Is it a place?Na', 'Ew dikare bifire? Can it fly?', 'Ew li malê tê dîtin? Do you find it at home?']);
+
+    // round the table and back to me: what is left to suggest leads the list again
+    for (const by of [1, 2, 3]) t.play(by, { kind: 'pass' });
+    moved();
+    const again = await screen.findByRole('region', { name: 'Ask a question' });
+    expect(within(within(again).getByRole('list', { name: 'Suggested' })).getAllByRole('button', { name: 'Ask' })).toHaveLength(2);
+    await userEvent.click(within(again).getAllByRole('button', { name: 'Ask' })[0]!);
+    await waitFor(() => expect(t.moves()[1]).toEqual({ kind: 'ask', question: 'q1' }));
+  });
+
+  it('keeps what a question means a tap away above the beginner’s level', async () => {
+    table({ difficulty: 'intermediate' });
+    open();
+    await screen.findByText('Your turn');
+    const deck = screen.getByRole('region', { name: 'Ask a question' });
+    expect(within(deck).getByText('Tap a question to see what it means.')).toBeInTheDocument();
+    expect(within(deck).queryByText('Can it fly?')).toBeNull();
+    // suggested all the same, and first
+    const question = within(within(deck).getByRole('list', { name: 'Suggested' })).getByRole('button', { name: 'Ew dikare bifire?' });
+    expect(within(question).getByText('Ew dikare bifire?')).toHaveAttribute('lang', 'ku');
+    await userEvent.click(question);
+    expect(question).toHaveAttribute('aria-expanded', 'true');
+    expect(within(deck).getByText('Can it fly?')).toBeInTheDocument();
   });
 
   it('takes the card off my forehead at a right guess, and I go on answering for the others', async () => {

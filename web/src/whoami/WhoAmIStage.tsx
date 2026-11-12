@@ -115,15 +115,17 @@ export function WithWords({ text, words, dialect }: { text: string; words: Reado
   const parts = text.split(/\{(\w+)\}/);
   return (
     <>
-      {parts.map((part, i) =>
-        i % 2 === 0 ? (
-          part
-        ) : (
+      {parts.map((part, i) => {
+        if (i % 2 === 0) return part;
+        const word = words[part];
+        // a hole nobody filled is left as it was written, as the catalogue's own lookup leaves it
+        if (typeof word !== 'string') return `{${part}}`;
+        return (
           <span key={i} className="wa-word" lang={script.lang} dir={script.dir}>
-            {words[part] ?? ''}
+            {word}
           </span>
-        ),
-      )}
+        );
+      })}
     </>
   );
 }
@@ -410,9 +412,9 @@ export function askedFirst(questions: readonly WhoAmIQuestion[], asked: readonly
 /**
  * The deck of questions, for a player on a screen of their own. While one may
  * be asked, the few the rules suggest come first under their own label, so a
- * learner who does not know where to begin is shown; then the rest, those
- * asked carrying the card's answer. When nothing may be asked the deck is the
- * player's notes, and nothing in it is suggested.
+ * learner who does not know where to begin is shown; then the rest under
+ * theirs, those asked carrying the card's answer. When nothing may be asked
+ * the deck is the player's notes, and nothing in it is suggested.
  */
 export function QuestionDeck({
   dialect,
@@ -439,6 +441,7 @@ export function QuestionDeck({
   const t = useT();
   const title = useId();
   const label = useId();
+  const others = useId();
   const first = canAsk ? suggested.flatMap((id) => questions.filter((q) => q.id === id)) : [];
   const rest = askedFirst(questions, asked).filter((q) => !first.includes(q));
   return (
@@ -455,7 +458,23 @@ export function QuestionDeck({
           <QuestionList dialect={dialect} questions={first} asked={asked} meanings={meanings} onAsk={onAsk} disabled={disabled} labelledBy={label} />
         </>
       )}
-      {rest.length > 0 && <QuestionList dialect={dialect} questions={rest} asked={asked} meanings={meanings} onAsk={canAsk ? onAsk : undefined} disabled={disabled} />}
+      {/* the rest is named only beside the suggested ones: on its own it is simply the list */}
+      {first.length > 0 && rest.length > 0 && (
+        <h3 id={others} className="wa-label">
+          {t('games.whoAmI.otherQuestions')}
+        </h3>
+      )}
+      {rest.length > 0 && (
+        <QuestionList
+          dialect={dialect}
+          questions={rest}
+          asked={asked}
+          meanings={meanings}
+          onAsk={canAsk ? onAsk : undefined}
+          disabled={disabled}
+          labelledBy={first.length > 0 ? others : undefined}
+        />
+      )}
     </section>
   );
 }
@@ -466,7 +485,15 @@ export function QuestionDeck({
  * tap, since a beginner picks by the meaning. One tap picks a question; what
  * follows (reading it out, turning the phone round) is the page's own.
  */
-export function SuggestedQuestions({ dialect, questions, onPick }: { dialect: GameDialect; questions: readonly WhoAmIQuestion[]; onPick: (question: string) => void }): React.JSX.Element {
+export function SuggestedQuestions({
+  dialect,
+  questions,
+  onPick,
+}: {
+  dialect: GameDialect;
+  questions: readonly WhoAmIQuestion[];
+  onPick: (question: string) => void;
+}): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
   const label = useId();

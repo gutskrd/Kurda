@@ -668,8 +668,8 @@ button.gs-back {
 .gs .wa-guess-actions .btn {
   min-height: 52px;
 }
-/* the one who wears the card stands in the game's own light */
-.gs .wa-board > .wa-stage {
+/* the one who wears the card stands in the game's own light, small as they are beside their turn's headline */
+.gs .wa-turn .wa-stage {
   background: radial-gradient(closest-side, color-mix(in srgb, var(--gs-tone) 26%, transparent) 0%, transparent 100%);
 }
 .gs .wa-worth {

@@ -541,20 +541,28 @@ function Turn({ game, seat, play }: { game: Game; seat: number; play: Play }): R
     }
     play(applied.state, m.kind === 'pass' ? { at: 'pass' } : { at: 'turn' });
   };
+  // a question chosen is only a screen to read it from: the rules hear of it when the friends answer
   const choose = (question: string | null): void => play(table, { at: 'read', question });
 
   // a question of their own costs what any question costs, so it is counted with the rest
-  const worth = `${t('games.whoAmI.worth', { count: whoAmIPoints(mine.asked.length + mine.aloud, crossed.length, true) })} · ${t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}`;
+  const points = whoAmIPoints(mine.asked.length + mine.aloud, crossed.length, true);
+  const worth = `${t('games.whoAmI.worth', { count: points })} · ${t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}`;
   const own =
     mine.aloud > 0 ? (
-      <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('games.whoAmI.own.count', { count: mine.aloud, cost: WHO_AM_I_QUESTION_COST })}</Text>
+      <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>
+        {t('games.whoAmI.own.count', { count: mine.aloud, cost: WHO_AM_I_QUESTION_COST })}
+      </Text>
     ) : null;
   // What they know so far, always in sight. The same answers are stamped on the full list, but that list is folded
   // away while there are suggestions to tap, and a guess is made from exactly these.
   const answered = mine.asked.map((a) => mine.questions.find((q) => q.id === a.question)).filter((q): q is WhoAmIQuestion => !!q);
   const known =
-    answered.length > 0 ? <QuestionDeck dialect={dialect} title={t('games.whoAmI.known')} questions={answered} asked={mine.asked} meanings={beginner} onAsk={null} /> : null;
-  const tiles = <GuessTiles dialect={dialect} title={t('games.whoAmI.oneOfThese')} tiles={mine.tiles} crossed={crossed} onGuess={(tile) => move({ kind: 'guess', tile })} />;
+    answered.length > 0 ? (
+      <QuestionDeck dialect={dialect} title={t('games.whoAmI.known')} questions={answered} asked={mine.asked} meanings={beginner} onAsk={null} />
+    ) : null;
+  const tiles = (
+    <GuessTiles dialect={dialect} title={t('games.whoAmI.oneOfThese')} tiles={mine.tiles} crossed={crossed} onGuess={(tile) => move({ kind: 'guess', tile })} />
+  );
 
   if (view.phase === 'decide') {
     // the card's own answer to the question just asked from the list; a question asked out loud leaves none
@@ -628,9 +636,9 @@ function Turn({ game, seat, play }: { game: Game; seat: number; play: Play }): R
             <QuestionDeck dialect={dialect} questions={mine.questions} asked={mine.asked} meanings={beginner} onAsk={choose} />
           </Fold>
           {view.open ? <ClayButton label={t('games.whoAmI.own.ask')} icon="chat" tone="primary" variant="outline" onPress={() => choose(null)} /> : null}
-          {own}
         </View>
       )}
+      {own}
       {mine.mustGuess ? null : <ClayButton label={t('games.whoAmI.skip')} variant="outline" onPress={() => move({ kind: 'pass' })} />}
       {known}
       {seats}
@@ -705,10 +713,12 @@ function Friends({ game, seat, question, play }: { game: Game; seat: number; que
     // a question the rules will not take was never put to the room: back to the board, with nothing spent
     if (!asked?.ok) return play(table, { at: 'turn' });
     const next = roomAnswers(asked.state, yes, now);
+    // felt in the hands that tapped it: whether the card agrees with them
     haptic(next.told?.truth === yes ? 'correct' : 'wrong');
     play(next, { at: 'turn' });
   };
   const heard = (): void => {
+    // the friends' answer was theirs to give and nobody's to check: the rules only count the question
     const counted = whoAmITableRules.apply(table, seat, { kind: 'aloud' }, Date.now());
     play(counted.ok ? counted.state : table, { at: 'turn' });
   };
@@ -755,7 +765,9 @@ function Guessed({ game, seat, tile, correct, onNext }: { game: Game; seat: numb
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageTitle}>
           {t('games.whoAmI.wrongGuess', { word: guess })}
         </Text>
-        <Text style={styles.stageLine}>{identity ? t('games.whoAmI.youWere', { word: identity.word }) : t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}</Text>
+        <Text style={styles.stageLine}>
+          {identity ? t('games.whoAmI.youWere', { word: identity.word }) : t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}
+        </Text>
       </Cloth>
       <GoldButton label={t('games.couch.next')} onPress={onNext} />
     </>
@@ -793,7 +805,14 @@ function Solved({
         <View style={styles.solved}>
           {moment.plan.travel ? <GlowRing progress={moment.ring} colour={TABLE.gold} size={SOLVED * 0.8} /> : null}
           {moment.plan.travel ? (
-            <ConfettiBurst progress={moment.burst} count={BURST.badge} seed={points * 13 + identity.word.length} colours={[TABLE.gold, TABLE.goldSoft, TABLE.ink]} reach={150} />
+            <ConfettiBurst
+              progress={moment.burst}
+              count={BURST.badge}
+              seed={points * 13 + identity.word.length}
+              colours={[TABLE.gold, TABLE.goldSoft, TABLE.ink]}
+              reach={150}
+              testID="who-am-i-found-burst"
+            />
           ) : null}
           <ForeheadCard dialect={dialect} category={category} identity={identity} size={SOLVED} cut="large" night />
         </View>

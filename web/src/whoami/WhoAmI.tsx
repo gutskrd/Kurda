@@ -99,8 +99,10 @@ export function WhoAmI(): React.JSX.Element {
 }
 
 /**
- * The start: the hidden deer on the night, what the game is in a line, and
- * the two ways to play it, each a card with its own way in. A way the
+ * The start: the hidden deer on the night, what the game is in a line or two
+ * a beginner reads at a glance, and the two ways to play it. One phone passed
+ * round a room is the main way in, first and with the page's gold button;
+ * a table with friends online is the quieter card under it. A way the
  * reviewed words cannot fill yet is left out, and with neither the page says
  * so plainly.
  */
@@ -132,7 +134,7 @@ function Start(): React.JSX.Element {
         <p className="gs-hero-line">{t('games.whoAmI.intro')}</p>
       </div>
       {onePhone && (
-        <section className="wa-way" aria-labelledby="wa-way-phone">
+        <section className="wa-way is-main" aria-labelledby="wa-way-phone">
           <h2 id="wa-way-phone" className="wa-way-title">
             {t('games.whoAmI.way.phone')}
           </h2>
@@ -143,7 +145,8 @@ function Start(): React.JSX.Element {
         </section>
       )}
       {online && (
-        <section className="wa-way" aria-labelledby="wa-way-online">
+        // the quieter card only beside the main way in: where it is the one way to play, it stands as a card does
+        <section className={`wa-way${onePhone ? ' is-quiet' : ''}`} aria-labelledby="wa-way-online">
           <h2 id="wa-way-online" className="wa-way-title">
             {t('games.whoAmI.way.online')}
           </h2>
@@ -223,9 +226,11 @@ function tableSeats(board: Board, me: number | null, name: (seat: number) => str
  *   countdown drawn from the server's clock;
  * - everyone's forehead, the reader's own card hidden until it comes off;
  * - then what the reader can do now: on their turn, their tiles and their
- *   questions; while a friend's question is on the table, that friend's card
- *   and the dialect's yes and no; once the card has answered, its verdict
- *   and how everyone answered, with the tiles again for whoever asked.
+ *   questions, the few worth asking next first and, for a beginner, each
+ *   with what it means; while a friend's question is on the table, that
+ *   friend's card and the dialect's yes and no; once the card has answered,
+ *   its verdict and how everyone answered, with the tiles again for whoever
+ *   asked.
  *
  * The page draws only what the server's view holds. The reader's own card is
  * in it only once it is off their forehead, so nothing here could show it
@@ -393,7 +398,16 @@ function TableBoard({
             )}
           </GuessTiles>
           {mayGuess && mine.mustGuess && <p className="wa-must">{t('games.whoAmI.mustGuess')}</p>}
-          <QuestionDeck dialect={board.dialect} questions={mine.questions} asked={mine.asked} canAsk={mayAsk} disabled={busy} onAsk={(question) => void act({ kind: 'ask', question })} />
+          <QuestionDeck
+            dialect={board.dialect}
+            questions={mine.questions}
+            asked={mine.asked}
+            suggested={mine.suggested}
+            meanings={board.difficulty === 'beginner'}
+            canAsk={mayAsk}
+            disabled={busy}
+            onAsk={(question) => void act({ kind: 'ask', question })}
+          />
         </div>
       )}
 

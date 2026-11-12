@@ -23,7 +23,7 @@ vi.mock('../realtime/RealtimeProvider', () => ({
   useRealtimeListener: () => undefined,
 }));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { whoAmITableRules as R, type WhoAmIDeal, type WhoAmIIdentity, type WhoAmITableMove, type WhoAmITableState } from '@kurda/shared';
+import { whoAmITableRules as R, type GameDifficulty, type WhoAmIDeal, type WhoAmIIdentity, type WhoAmITableMove, type WhoAmITableState } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -32,11 +32,13 @@ import { forgetMpAvailability } from '../games/mpAvailability';
 import { WhoAmIScreen } from './WhoAmIScreen';
 
 /**
- * Who Am I? on the phone: the start with its two ways and what each is
- * offered on, and the room with friends played through the game's own rules,
- * from the side of the one asking and of one answering. The table behind the
- * fake server is the real one (shared rules), so every board a test reads is
- * a board the server would send that seat, its own card left out.
+ * Who Am I? on the phone: the start with its two ways (one phone first, with
+ * friends online the quieter second) and what each is offered on, and the
+ * room with friends played through the game's own rules, from the side of the
+ * one asking (the suggested questions first in their list, and for a beginner
+ * each with what it means) and of one answering. The table behind the fake
+ * server is the real one (shared rules), so every board a test reads is a
+ * board the server would send that seat, its own card left out.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -69,6 +71,8 @@ const QUESTIONS: WhoAmIDeal['questions'] = [
   { id: 'fly', ku: 'Ew dikare bifire?', meanings: { en: 'Can it fly?' }, fact: 'can-fly' },
   { id: 'legs', ku: 'Çar lingên wê hene?', meanings: { en: 'Does it walk on four legs?' }, fact: 'four-legs' },
 ];
+// a question every animal answers the same way: once the card says it is an animal there is nothing to learn from it, so it is never suggested
+const ALIVE: WhoAmIDeal['questions'][number] = { id: 'alive', ku: 'Ew zindî ye?', meanings: { en: 'Is it alive?' }, fact: 'alive' };
 /** A card dealt among two others that are nobody else's card, as the server deals a table. */
 const deal = (identity: WhoAmIIdentity, others: WhoAmIIdentity[], questions = QUESTIONS): WhoAmIDeal => ({
   identity,
@@ -87,9 +91,9 @@ const NAMES = ['Azad', 'Rojda', 'Baran'];
  * bird, seat 3 the horse. The reader sits on `me`; their moves go through the
  * rules as the server would put them, and the others move by `other`.
  */
-function tableServer(me: number, deals: WhoAmIDeal[] = DEALS) {
+function tableServer(me: number, deals: WhoAmIDeal[] = DEALS, difficulty: GameDifficulty = 'beginner') {
   let state: WhoAmITableState = R.init(
-    { dialect: 'kmr', minutes: 10, difficulty: 'beginner', deals: deals.map((d, i) => ({ seat: i + 1, deal: d })) },
+    { dialect: 'kmr', minutes: 10, difficulty, deals: deals.map((d, i) => ({ seat: i + 1, deal: d })) },
     deals.map((_, i) => ({ seat: i + 1, team: null, bot: null })),
     { now: Date.now(), seed: 'r' },
   );
@@ -105,7 +109,7 @@ function tableServer(me: number, deals: WhoAmIDeal[] = DEALS) {
       version,
       serverNow: new Date().toISOString(),
       dialect: 'kmr',
-      settings: { dialect: 'kmr', minutes: 10, difficulty: 'beginner' },
+      settings: { dialect: 'kmr', minutes: 10, difficulty },
       access: 'friends',
       code: null,
       rated: { rated: false, counts: null, friendlyReason: null, damped: false },
@@ -181,17 +185,22 @@ const offered = (difficulties: string[] = ['beginner'], group = true, dialect: '
 });
 
 describe('the start', () => {
-  it('offers the game on this phone and with friends online, the hidden card on Hevalo’s forehead, and no way to play alone', async () => {
+  it('offers the game on this phone first and with friends online after it, the hidden card on Hevalo’s forehead, and no way to play alone', async () => {
     testAuth.client = fakeClient(offered());
     renderWithProviders(<WhoAmIScreen onExit={() => undefined} />);
-    expect(await screen.findByRole('heading', { name: 'On this phone' })).toBeTruthy();
+    const phone = await screen.findByRole('heading', { name: 'On this phone' });
     expect(screen.getByText('Pass one phone round the room. 2 to 6 players.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Play on this phone' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'With friends online' })).toBeTruthy();
+    const online = screen.getByRole('heading', { name: 'With friends online' });
     expect(screen.getByText('Everyone on their own screen. 2 to 6 players.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Invite friends' })).toBeTruthy();
+    // one phone is the main way in: it comes before the way with friends
+    expect(phone.compareDocumentPosition(online) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getByLabelText('The card on your forehead')).toBeTruthy();
-    expect(screen.getByText(/^Everyone wears a card on their forehead that they cannot read\./)).toBeTruthy();
+    // what the game is, in two short sentences
+    expect(
+      screen.getByText('There is a card on your forehead that only your friends can read. Ask yes-or-no questions in Kurdish to find out who you are.'),
+    ).toBeTruthy();
     expect(screen.queryByText('On your own')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Play' })).toBeNull();
 
@@ -290,9 +299,12 @@ describe('the room, for the one asking', () => {
     expect(screen.getAllByText('pisîk')).toHaveLength(1);
     expect(screen.getByRole('radio', { name: 'pisîk' })).toBeTruthy();
 
-    // a tap on a question says what it means; Ask asks it
-    press('Ew dikare bifire?');
-    expect(await screen.findByText('Can it fly?')).toBeTruthy();
+    // a beginner reads what each question means under it, with nothing to tap first; Ask asks it
+    expect(screen.getByText('Can it fly?')).toBeTruthy();
+    expect(screen.getByText('Does it walk on four legs?')).toBeTruthy();
+    expect(screen.queryByText('Tap a question to see what it means.')).toBeNull();
+    // a question of one's own is for a room that sits together: it is never offered, or sent, online
+    expect(screen.queryByRole('button', { name: 'Ask my own question' })).toBeNull();
     press('Ask: Ew dikare bifire?');
     expect(await screen.findByText('Your friends are answering.')).toBeTruthy();
     expect(server.moves()).toEqual([{ kind: 'ask', question: 'fly' }]);
@@ -301,6 +313,50 @@ describe('the room, for the one asking', () => {
     // while it is being answered nothing of the reader's can be pressed
     expect(screen.queryByRole('button', { name: 'Guess' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Pass the turn on' })).toBeNull();
+  });
+
+  it('lists the suggested questions first under their own label, then the rest, and asks as it always did', async () => {
+    // the deal puts a question that is never suggested first, so the order on the screen is the suggestions' and not the deal's
+    const server = tableServer(1, [deal(CAT, [animal('dog', 'kûçik', {}), animal('cow', 'çêlek', {})], [ALIVE, ...QUESTIONS]), DEALS[1]!, DEALS[2]!]);
+    testAuth.client = server.client;
+    renderWithProviders(<WhoAmIScreen id="r1" onExit={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Your turn' });
+    const asks = (): Array<string | null> => screen.getAllByRole('button', { name: /^Ask:/ }).map((b) => b.getAttribute('aria-label'));
+    expect(asks()).toEqual(['Ask: Ew dikare bifire?', 'Ask: Çar lingên wê hene?', 'Ask: Ew zindî ye?']);
+    const suggested = screen.getByText('Suggested');
+    const others = screen.getByText('Other questions');
+    const [fly, legs, alive] = screen.getAllByRole('button', { name: /^Ask:/ });
+    expect(suggested.compareDocumentPosition(fly!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(legs!.compareDocumentPosition(others) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(others.compareDocumentPosition(alive!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+
+    // the Ask button and the move are what they were
+    press('Ask: Ew dikare bifire?');
+    await screen.findByText('Nobody has answered yet.');
+    expect(server.moves()).toEqual([{ kind: 'ask', question: 'fly' }]);
+    await server.other(2, { kind: 'answer', yes: false });
+    await server.other(3, { kind: 'answer', yes: false });
+    await screen.findByLabelText('The card says: Na');
+    // round the table and back: the one still worth asking is suggested, the answered one and the foregone one are the rest
+    press('Pass the turn on');
+    await screen.findByRole('heading', { name: 'Rojda’s turn' });
+    await server.other(2, { kind: 'pass' });
+    await server.other(3, { kind: 'pass' });
+    await screen.findByRole('heading', { name: 'Your turn' });
+    expect(asks()).toEqual(['Ask: Çar lingên wê hene?', 'Ask: Ew zindî ye?']);
+    expect(screen.getByText('Suggested')).toBeTruthy();
+    expect(screen.getByText('Other questions')).toBeTruthy();
+  });
+
+  it('keeps the tap that says what a question means above beginner', async () => {
+    const server = tableServer(1, DEALS, 'intermediate');
+    testAuth.client = server.client;
+    renderWithProviders(<WhoAmIScreen id="r1" onExit={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Your turn' });
+    expect(screen.getByText('Tap a question to see what it means.')).toBeTruthy();
+    expect(screen.queryByText('Can it fly?')).toBeNull();
+    press('Ew dikare bifire?');
+    expect(await screen.findByText('Can it fly?')).toBeTruthy();
   });
 
   it('says who has answered and never what, then the card’s own verdict with each friend marked, and takes the guess', async () => {
@@ -389,9 +445,11 @@ describe('the room, for one answering', () => {
     expect(await screen.findByText('Answer Azad’s question.')).toBeTruthy();
     expect(screen.getByText('Azad asks about their card:')).toBeTruthy();
     expect(screen.getByLabelText('Azad’s card: pisîk, cat')).toBeTruthy();
-    // the question, where a tap says what it means (the reader's own list has it too, lower down)
-    fireEvent.click(screen.getAllByRole('button', { name: 'Ew dikare bifire?' })[0]!);
-    expect(await screen.findByText('Can it fly?')).toBeTruthy();
+    // the question on the table, where a tap says what it means (the reader's own list, lower down, says it already)
+    const asked = screen.getByRole('button', { name: 'Ew dikare bifire?' });
+    expect(within(asked).queryByText('Can it fly?')).toBeNull();
+    fireEvent.click(asked);
+    expect(await within(asked).findByText('Can it fly?')).toBeTruthy();
     // the reader's own card is the hidden mark; their word is only a tile among the others
     expect(within(table()).getByLabelText(/^You, The card on your forehead, An animal, /)).toBeTruthy();
     expect(within(table()).queryByText('çûk')).toBeNull();

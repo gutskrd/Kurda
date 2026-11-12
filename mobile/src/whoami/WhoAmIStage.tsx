@@ -428,6 +428,13 @@ export function SuggestedQuestions({
   );
 }
 
+/**
+ * A player's own questions as a list: those asked first, each with the card's
+ * answer stamped on it, then those still to ask, each with Ask where the
+ * reader may. Given the ones worth asking next, it puts those at the top under
+ * a label of their own and the rest under another, so a learner's eye lands on
+ * where to begin.
+ */
 export function QuestionDeck({
   dialect,
   title,
@@ -510,7 +517,9 @@ export function QuestionDeck({
       {meanings ? null : <Text style={[styles.muted, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.tapToSee')}</Text>}
       {first.length > 0 ? <Text style={[styles.group, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.suggested')}</Text> : null}
       {first.map(row)}
-      {first.length > 0 && rest.length > 0 ? <Text style={[styles.group, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.otherQuestions')}</Text> : null}
+      {first.length > 0 && rest.length > 0 ? (
+        <Text style={[styles.group, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.otherQuestions')}</Text>
+      ) : null}
       {rest.map(row)}
     </View>
   );
@@ -606,7 +615,8 @@ export function QuestionCard({
   const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
   const meaning = meaningIn(question.meanings, locale) ?? question.meanings.en;
-  const ku = <Text style={[size === 'loud' ? styles.saidKuLoud : size === 'large' ? styles.saidKuLarge : styles.saidKu, kurdish(dialect), { color: ink }]}>{question.ku}</Text>;
+  const written = size === 'loud' ? styles.saidKuLoud : size === 'large' ? styles.saidKuLarge : styles.saidKu;
+  const ku = <Text style={[written, kurdish(dialect), { color: ink }]}>{question.ku}</Text>;
   if (plain) {
     return (
       <View style={styles.said}>
@@ -863,7 +873,15 @@ const styles = StyleSheet.create({
   group: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase' },
   // a suggested question is a card of the table's cloth standing on its own edge, and goes down onto it under the thumb
   suggestEdge: { borderRadius: radii.lg, backgroundColor: TABLE.nightDeep, paddingBottom: 4 },
-  suggestFace: { minHeight: 64, alignItems: 'center', gap: spacing.sm, paddingVertical: 10, paddingHorizontal: spacing.md, borderRadius: radii.lg, backgroundColor: TABLE.nightLight },
+  suggestFace: {
+    minHeight: 64,
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingVertical: 10,
+    paddingHorizontal: spacing.md,
+    borderRadius: radii.lg,
+    backgroundColor: TABLE.nightLight,
+  },
   suggestText: { flex: 1, gap: 2 },
   suggestKu: { fontSize: 20, lineHeight: 28, fontWeight: typography.weights.bold, color: TABLE.ink },
   suggestMeaning: { fontSize: typography.sizes.sm, lineHeight: 20, color: TABLE.inkSoft },

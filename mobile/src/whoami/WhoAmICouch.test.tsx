@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', async () => ({ ...(await import('../reports/testing/svg')), SvgXml: () => null }));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
@@ -7,8 +7,7 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { AccessibilityInfo } from 'react-native';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import type { WhoAmICouchOffer, WhoAmIDeal, WhoAmIIdentity } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -18,19 +17,17 @@ import { WhoAmICouch } from './WhoAmICouch';
 
 /**
  * Who Am I? on one phone, in the phone app, from who is playing to the end:
- * what the setup asks the server for (never a name), each card shown to the
- * room only while the button is held, the phone from hand to hand with the
- * holder's own card never on it, a question read out and the room's answer
- * tapped in, the card's verdict, guesses right and wrong, the points, another
- * game for the same room, and the way out that asks first.
+ * what the setup asks the server for (never a name), the phone from hand to
+ * hand with nothing to memorise first, the questions suggested with what they
+ * mean and asked by one tap, the question read out, the friends' screen that
+ * alone shows the holder's card and takes the answer, the card hidden again,
+ * the card's verdict and how the friends did, a question of the holder's own,
+ * guesses right and wrong, the points, another game for the same room, and
+ * the way out that asks first.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
 
-beforeEach(() => {
-  // the renderer these tests run in answers that a screen reader is always on; on a phone it usually is not
-  vi.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(false);
-});
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -53,21 +50,22 @@ const QUESTIONS: WhoAmIDeal['questions'] = [
   { id: 'fly', ku: 'Ew dikare bifire?', meanings: { en: 'Can it fly?' }, fact: 'can-fly' },
   { id: 'legs', ku: 'Çar lingên wê hene?', meanings: { en: 'Does it walk on four legs?' }, fact: 'four-legs' },
 ];
+// a question every animal answers the same way: once the card says it is an animal there is nothing to learn from it, so it is never suggested
+const ALIVE: WhoAmIDeal['questions'][number] = { id: 'alive', ku: 'Ew zindî ye?', meanings: { en: 'Is it alive?' }, fact: 'alive' };
 /** A card dealt among two others that are nobody else's card, as the server deals a room. */
 const deal = (identity: WhoAmIIdentity, others: WhoAmIIdentity[], questions = QUESTIONS): WhoAmIDeal => ({
   identity,
   candidates: [others[0]!, identity, others[1]!].map(({ id, word, meanings, category }) => ({ id, word, meanings, category })),
   questions,
 });
-const DEALS = [
-  deal(CAT, [animal('dog', 'kûçik', {}), animal('cow', 'çêlek', {})]),
-  deal(BIRD, [animal('fish', 'masî', {}), animal('duck', 'werdek', {})]),
-  deal(HORSE, [animal('donkey', 'ker', {}), animal('camel', 'hêştir', {})]),
-];
+const CAT_AMONG = [animal('dog', 'kûçik', {}), animal('cow', 'çêlek', {})];
+const BIRD_AMONG = [animal('fish', 'masî', {}), animal('duck', 'werdek', {})];
+const DEALS = [deal(CAT, CAT_AMONG), deal(BIRD, BIRD_AMONG), deal(HORSE, [animal('donkey', 'ker', {}), animal('camel', 'hêştir', {})])];
 const CARDS = ['pisîk', 'çûk', 'hesp'];
 const NAMES = ['Azad', 'Berfîn', 'Ciwan'];
 const OFFER: WhoAmICouchOffer = { dialect: 'kmr', difficulties: ['beginner', 'intermediate'] };
 const DEAL = 'POST /games/who-am-i/couch/deal';
+const ASK_FLY = 'Ask: Ew dikare bifire? (Can it fly?)';
 
 /** A server that deals the room its cards: as many as it was asked for, in the order the room sits. */
 const dealing = (deals: WhoAmIDeal[] = DEALS) =>
@@ -91,33 +89,21 @@ async function start(names: string[] = NAMES): Promise<void> {
   press('Deal the cards');
 }
 
-const holdOf = (name: string): HTMLElement => screen.getByRole('button', { name: `Hold to show ${name}’s card` });
-/** A finger down on the button and, later, up again: the two halves of a hold. */
-const fingerDown = (name: string): void => {
-  fireEvent.mouseDown(holdOf(name), { button: 0, buttons: 1 });
-};
-const fingerUp = (name: string): void => {
-  fireEvent.mouseUp(holdOf(name), { button: 0 });
-};
-
-/** Every card shown to the room in turn, held and let go, and the game begun. */
-async function lookRound(names: string[] = NAMES, cards: string[] = CARDS): Promise<void> {
-  for (const [i, name] of names.entries()) {
-    await screen.findByRole('heading', { name: `${name}, look away!` });
-    fingerDown(name);
-    await screen.findByText(cards[i]!);
-    fingerUp(name);
-    await waitFor(() => expect(screen.queryByText(cards[i]!)).toBeNull());
-    press(i === names.length - 1 ? 'Start the game' : 'Next');
-  }
-}
-
 /** The phone taken by the player it was handed to. */
 async function take(name: string): Promise<void> {
   expect(await screen.findByRole('heading', { name: `${name}’s turn. Hand them the phone.` })).toBeTruthy();
   // between two players the screen shows nobody's card
   for (const word of CARDS) expect(document.body.textContent).not.toContain(word);
   press(`I’m ${name}`);
+  await screen.findByRole('heading', { name: `${name}, who are you?` });
+}
+
+/** A suggested question tapped, read out, and the phone turned to the friends. */
+async function toFriends(name: string, ask: string = ASK_FLY): Promise<void> {
+  press(ask);
+  await screen.findByRole('heading', { name: 'Read it out loud' });
+  press('Friends: tap here');
+  await screen.findByRole('heading', { name: `${name} is…` });
 }
 
 const guess = (word: string): void => {
@@ -126,15 +112,17 @@ const guess = (word: string): void => {
 };
 
 describe('the setup', () => {
-  it('asks the server for a card each at the difficulty chosen, and never for anything about the room', async () => {
+  it('says the game in three steps, asks the server for a card each at the difficulty chosen, and never for anything about the room', async () => {
     const client = dealing();
     testAuth.client = client;
     renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
     await screen.findByRole('button', { name: 'Deal the cards' });
-    expect(screen.getByText('Sitting together? Pass one phone round the room: 2 to 6 players, and the questions and answers are said out loud.')).toBeTruthy();
+    expect(screen.getByLabelText('1. Pick a question and read it out loud.')).toBeTruthy();
+    expect(screen.getByLabelText('2. Turn the phone to your friends: they see your card and answer.')).toBeTruthy();
+    expect(screen.getByLabelText('3. Guess who you are. Fewer questions, more points.')).toBeTruthy();
     fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Difficulty' })).getByRole('radio', { name: 'Intermediate' }));
     await start();
-    expect(await screen.findByRole('heading', { name: 'Azad, look away!' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeTruthy();
     expect(client.calls).toHaveLength(1);
     expect(client.calls[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'intermediate', players: 3 });
     expect(JSON.stringify(client.calls)).not.toContain('Azad');
@@ -160,7 +148,7 @@ describe('the setup', () => {
     // a box left empty plays under the name on it
     fireEvent.change(screen.getByLabelText('Player 2'), { target: { value: '' } });
     press('Deal the cards');
-    expect(await screen.findByRole('heading', { name: 'Azad, look away!' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeTruthy();
     expect(client.calls[0]!.body).toEqual({ dialect: 'kmr', difficulty: 'beginner', players: 2 });
   });
 
@@ -169,7 +157,7 @@ describe('the setup', () => {
     renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
     await start();
     expect(await screen.findByText('The cards couldn’t be fetched. Check your connection and try again.')).toBeTruthy();
-    expect(screen.queryByText(/look away/)).toBeNull();
+    expect(screen.queryByText(/Hand them the phone/)).toBeNull();
   });
 
   it('says what to change when there are too few approved cards for a room this size', async () => {
@@ -186,112 +174,306 @@ describe('the setup', () => {
     expect(
       await screen.findByText('There aren’t enough reviewed cards for this many players at this difficulty yet. Try another difficulty or fewer players.'),
     ).toBeTruthy();
-    expect(screen.queryByText(/look away/)).toBeNull();
+    expect(screen.queryByText(/Hand them the phone/)).toBeNull();
     // one player fewer, and the cards are dealt: the sentence goes with the problem
     press('Remove Ciwan');
     press('Deal the cards');
-    expect(await screen.findByRole('heading', { name: 'Azad, look away!' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeTruthy();
     expect(screen.queryByText(/^There aren’t enough reviewed cards/)).toBeNull();
   });
 });
 
-describe('looking round', () => {
-  it('shows each card to the room only while the button is held, and moves on only once it has been seen and hidden', async () => {
+describe('the first turn', () => {
+  it('begins at once, with no card shown round the room to remember first', async () => {
     testAuth.client = dealing();
     renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
     await start();
-    expect(await screen.findByRole('heading', { name: 'Azad, look away!' })).toBeTruthy();
-    expect(screen.getByText('Everyone but Azad: this is Azad’s card.')).toBeTruthy();
-    // face down until somebody holds the button: the card is only named
-    expect(screen.getByLabelText('Azad’s card')).toBeTruthy();
-    expect(screen.queryByText('pisîk')).toBeNull();
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', true);
-
-    fingerDown('Azad');
-    expect(await screen.findByText('pisîk')).toBeTruthy();
-    expect(screen.getByText('cat')).toBeTruthy();
-    // while it is up, the phone cannot move on with the card showing
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', true);
-    fingerUp('Azad');
-    await waitFor(() => expect(screen.queryByText('pisîk')).toBeNull());
-    press('Next');
-
-    expect(await screen.findByRole('heading', { name: 'Berfîn, look away!' })).toBeTruthy();
-    expect(screen.queryByText('çûk')).toBeNull();
-    fingerDown('Berfîn');
-    expect(await screen.findByText('çûk')).toBeTruthy();
-    fingerUp('Berfîn');
-    press('Next');
-    // the last card, and then the first turn
-    expect(await screen.findByRole('heading', { name: 'Ciwan, look away!' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Start the game' })).toHaveProperty('disabled', true);
+    // straight from the deal to the first player's name: nobody is asked to look away, and nothing is held down to show a card
+    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeTruthy();
+    expect(screen.queryByText(/look away/)).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Hold to show/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Start the game' })).toBeNull();
+    for (const word of CARDS) expect(document.body.textContent).not.toContain(word);
   });
 
-  it('turns the card face down when the app is no longer the one in front', async () => {
+  it('puts the tiles and the suggested questions under a short banner, each question with what it means, and nobody’s hidden card', async () => {
     testAuth.client = dealing();
     renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
     await start();
-    await screen.findByRole('heading', { name: 'Azad, look away!' });
-    fingerDown('Azad');
-    await screen.findByText('pisîk');
-    const visible = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
-    act(() => {
-      document.dispatchEvent(new Event('visibilitychange'));
-    });
-    await waitFor(() => expect(screen.queryByText('pisîk')).toBeNull());
-    visible.mockRestore();
-  });
-
-  it('turns the card by a tap for someone listening to the phone, who cannot press and hold', async () => {
-    vi.spyOn(AccessibilityInfo, 'isScreenReaderEnabled').mockResolvedValue(true);
-    testAuth.client = dealing();
-    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
-    await start();
-    await screen.findByRole('heading', { name: 'Azad, look away!' });
-    await act(async () => {});
-    press('Hold to show Azad’s card');
-    expect(await screen.findByText('pisîk')).toBeTruthy();
-    press('Hold to show Azad’s card');
-    await waitFor(() => expect(screen.queryByText('pisîk')).toBeNull());
-    expect(screen.getByRole('button', { name: 'Next' })).toHaveProperty('disabled', false);
-  });
-});
-
-describe('a game', () => {
-  it('goes from the cards to a question read out, the room’s answer, the card’s verdict, guesses right and wrong, and the points', async () => {
-    const client = dealing();
-    testAuth.client = client;
-    const onLeave = vi.fn();
-    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={onLeave} />);
-    await start();
-    await lookRound();
-
-    // Azad has the phone: his own card is the hidden mark, and nobody else's is on the screen he holds up
     await take('Azad');
-    expect(await screen.findByRole('heading', { name: 'Azad’s turn' })).toBeTruthy();
-    expect(screen.getByText('Ask one question, guess your card, or pass.')).toBeTruthy();
+    expect(screen.getByText('An animal')).toBeTruthy();
+    expect(screen.getByText('Points if you guess now: 10 · Guesses left: 2')).toBeTruthy();
     expect(screen.queryByRole('timer')).toBeNull();
+
+    // who he might be: his own word is one tile among the others, and nobody else's card is on the screen he holds
+    const tiles = screen.getByRole('radiogroup', { name: 'You are one of these' });
+    expect(within(tiles).getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual(['kûçik', 'pisîk', 'çêlek']);
     expect(screen.getAllByText('pisîk')).toHaveLength(1);
-    expect(screen.getByRole('radio', { name: 'pisîk' })).toBeTruthy();
     expect(screen.queryByText('çûk')).toBeNull();
     expect(screen.queryByText('hesp')).toBeNull();
     expect(within(table()).getByLabelText('Azad, A hidden card, Points: 0, Questions: 0, On turn')).toBeTruthy();
     expect(within(table()).getByLabelText('Berfîn, A hidden card, Points: 0, Questions: 0')).toBeTruthy();
 
-    // he picks a question and reads it out; the room says no
-    press('Ew dikare bifire?');
-    expect(await screen.findByText('Can it fly?')).toBeTruthy();
-    press('Ask: Ew dikare bifire?');
-    expect(await screen.findByText('Read it out loud')).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Ew dikare bifire?' })).toBeTruthy();
-    expect(screen.getByRole('heading', { name: 'What did the room say?' })).toBeTruthy();
-    expect(screen.queryByText('pisîk')).toBeNull();
-    press('Na');
+    // the questions worth asking, each with its meaning in sight and asked by one tap
+    expect(screen.getByRole('heading', { name: 'Ask a question' })).toBeTruthy();
+    expect(screen.getByText('Suggested')).toBeTruthy();
+    expect(screen.getByRole('button', { name: ASK_FLY })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Ask: Çar lingên wê hene? (Does it walk on four legs?)' })).toBeTruthy();
+    expect(screen.getByText('Can it fly?')).toBeTruthy();
+    expect(screen.getByText('Does it walk on four legs?')).toBeTruthy();
+    // nothing learned yet, so no advice and no list of answers
+    expect(screen.queryByText(/^No more suggestions/)).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'What you know so far' })).toBeNull();
 
-    // the card itself says which it is, and whether the room was right
+    // every question is folded under them: for a beginner each with its meaning, and no tap needed to see it
+    const all = screen.getByRole('button', { name: 'All questions (2)' });
+    expect(all.getAttribute('aria-expanded')).toBe('false');
+    expect(screen.queryByRole('button', { name: 'Ask: Ew dikare bifire?' })).toBeNull();
+    fireEvent.click(all);
+    expect(screen.getByRole('button', { name: 'Ask: Ew dikare bifire?' })).toBeTruthy();
+    expect(screen.getAllByText('Can it fly?')).toHaveLength(2);
+    expect(screen.queryByText('Tap a question to see what it means.')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Ask my own question' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Skip my turn' })).toBeTruthy();
+  });
+
+  it('keeps the tap for a meaning in the full list above beginner, where the suggested questions still say theirs', async () => {
+    testAuth.client = dealing();
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await screen.findByRole('button', { name: 'Deal the cards' });
+    fireEvent.click(within(screen.getByRole('radiogroup', { name: 'Difficulty' })).getByRole('radio', { name: 'Intermediate' }));
+    await start();
+    await take('Azad');
+    expect(screen.getByRole('button', { name: ASK_FLY })).toBeTruthy();
+    expect(screen.getAllByText('Can it fly?')).toHaveLength(1);
+    press('All questions (2)');
+    expect(screen.getByText('Tap a question to see what it means.')).toBeTruthy();
+    expect(screen.getAllByText('Can it fly?')).toHaveLength(1);
+    press('Ew dikare bifire?');
+    expect(screen.getAllByText('Can it fly?')).toHaveLength(2);
+  });
+
+  it('says when the suggestions have run out, with every question already open to pick from', async () => {
+    testAuth.client = dealing([deal(CAT, CAT_AMONG, [ALIVE]), DEALS[1]!]);
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    expect(screen.getByText('No more suggestions. Pick from all the questions, or take a guess.')).toBeTruthy();
+    expect(screen.queryByText('Suggested')).toBeNull();
+    expect(screen.getByRole('button', { name: 'All questions (1)' }).getAttribute('aria-expanded')).toBe('true');
+    expect(screen.getByText('Is it alive?')).toBeTruthy();
+    // a question from the full list is read out like any other, and still costs nothing until the friends answer
+    press('Ask: Ew zindî ye?');
+    expect(await screen.findByRole('heading', { name: 'Read it out loud' })).toBeTruthy();
+    expect(screen.getByText('Ew zindî ye?')).toBeTruthy();
+  });
+});
+
+describe('a question from the list', () => {
+  it('is read out with its meaning, costs nothing until the friends answer, and only their screen shows the card', async () => {
+    testAuth.client = dealing();
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start();
+    await take('Azad');
+
+    // one tap on a suggested question: it is on the screen to read out, large, with what it means
+    press(ASK_FLY);
+    expect(await screen.findByRole('heading', { name: 'Read it out loud' })).toBeTruthy();
+    expect(screen.getByText('Ew dikare bifire?')).toBeTruthy();
+    expect(screen.getByText('Can it fly?')).toBeTruthy();
+    expect(screen.getByText('Now turn the phone to your friends.')).toBeTruthy();
+    expect(document.body.textContent).not.toContain('pisîk');
+
+    // the way back spends nothing
+    press('Back to my questions');
+    await screen.findByRole('heading', { name: 'Azad, who are you?' });
+    expect(screen.getByText('Points if you guess now: 10 · Guesses left: 2')).toBeTruthy();
+    expect(within(table()).getByLabelText('Azad, A hidden card, Points: 0, Questions: 0, On turn')).toBeTruthy();
+
+    // turned to the friends: his card on the forehead, word and meaning, with the question and the two answers
+    await toFriends('Azad');
+    expect(screen.getByText('pisîk')).toBeTruthy();
+    expect(screen.getByText('cat')).toBeTruthy();
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.getByText('Ew dikare bifire?')).toBeTruthy();
+    expect(screen.getByText('Can it fly?')).toBeTruthy();
+    expect(screen.getByText('Is it true? Tap your answer.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Erê' })).toBeTruthy();
+
+    // they tap their answer: the card is off the screen at once, and the card's own answer is on it
+    press('Na');
     expect(await screen.findByLabelText('The card says: Na')).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Azad is…' })).toBeNull();
+    // his word and its meaning are on the screen once each again: the tile he may guess, among the others
+    expect(screen.getAllByText('pisîk')).toHaveLength(1);
+    expect(screen.getAllByText('cat')).toHaveLength(1);
+    expect(screen.getByRole('radio', { name: 'pisîk' })).toBeTruthy();
     expect(screen.getByText('Azad asks about their card:')).toBeTruthy();
-    expect(screen.getByText('The room was right.')).toBeTruthy();
+    expect(screen.getByText('Your friends got it right: +1 for each of them.')).toBeTruthy();
+    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 2')).toBeTruthy();
+    // what he knows now, under the tiles: the question with its meaning and the card's answer
+    const known = screen.getByRole('heading', { name: 'What you know so far' }).parentElement!;
+    expect(within(known).getByText('Ew dikare bifire?')).toBeTruthy();
+    expect(within(known).getByText('Can it fly?')).toBeTruthy();
+    expect(within(known).getByText('Na')).toBeTruthy();
+    // one question to a turn: nothing more to ask, only the guess or the phone passed on
+    expect(screen.queryByRole('button', { name: /^Ask/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Next player' })).toBeTruthy();
+  });
+
+  it('takes the card off the friends’ screen when the app is no longer the one in front, with nothing spent', async () => {
+    testAuth.client = dealing();
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start();
+    await take('Azad');
+    await toFriends('Azad');
+    expect(screen.getByText('pisîk')).toBeTruthy();
+    const visible = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    // back at the question to read out: the card is gone, and the question has not been asked
+    expect(await screen.findByRole('heading', { name: 'Read it out loud' })).toBeTruthy();
+    expect(document.body.textContent).not.toContain('pisîk');
+    visible.mockRestore();
+    press('Back to my questions');
+    await screen.findByRole('heading', { name: 'Azad, who are you?' });
+    expect(screen.getByText('Points if you guess now: 10 · Guesses left: 2')).toBeTruthy();
+  });
+
+  it('says kindly when the friends were wrong, and takes away the pass once every question has been asked', async () => {
+    testAuth.client = dealing([deal(CAT, CAT_AMONG, QUESTIONS.slice(0, 1)), DEALS[1]!]);
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await toFriends('Azad');
+    press('Erê');
+    expect(await screen.findByLabelText('The card says: Na')).toBeTruthy();
+    expect(screen.getByText('Your friends said Erê, but the card says Na.')).toBeTruthy();
+    // his one question is asked: the turn is a guess
+    expect(screen.getByText('You have asked every question. Now you have to guess.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Next player' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Guess' })).toBeTruthy();
+  });
+
+  it('plays a Soranî room in Soranî, the friends answering and the card speaking in its own yes and no', async () => {
+    const pishile = animal('cat', 'پشیلە', { 'can-fly': false });
+    const balinde = animal('bird', 'باڵندە', { 'can-fly': true });
+    const flies: WhoAmIDeal['questions'] = [{ id: 'fly', ku: 'ئایا دەتوانێت بفڕێت؟', meanings: { en: 'Can it fly?' }, fact: 'can-fly' }];
+    const client = fakeClient({
+      [DEAL]: ok({
+        dialect: 'ckb',
+        difficulty: 'beginner',
+        deals: [
+          deal(pishile, [animal('dog', 'سەگ', {}), animal('cow', 'مانگا', {})], flies),
+          deal(balinde, [animal('fish', 'ماسی', {}), animal('duck', 'مراوی', {})], flies),
+        ],
+      }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<WhoAmICouch offer={{ dialect: 'ckb', difficulties: ['beginner'] }} onLeave={() => undefined} />);
+    await start(['Azad', 'Berfîn']);
+    expect(client.calls[0]!.body).toEqual({ dialect: 'ckb', difficulty: 'beginner', players: 2 });
+    press(await screen.findByRole('button', { name: 'I’m Azad' }).then(() => 'I’m Azad'));
+    await toFriends('Azad', 'Ask: ئایا دەتوانێت بفڕێت؟ (Can it fly?)');
+    expect(screen.getByText('پشیلە')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'بەڵێ' })).toBeTruthy();
+    press('نەخێر');
+    expect(await screen.findByLabelText('The card says: نەخێر')).toBeTruthy();
+    expect(screen.getByText('Your friends got it right: +1 for each of them.')).toBeTruthy();
+  });
+});
+
+describe('a question of one’s own', () => {
+  it('is asked out loud, answered out loud by friends who see the card, counted as a question, and given no verdict', async () => {
+    testAuth.client = dealing();
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start();
+    await take('Azad');
+    press('Ask my own question');
+    expect(await screen.findByRole('heading', { name: 'Ask your friends any yes-or-no question about yourself. In Kurdish if you can!' })).toBeTruthy();
+    expect(screen.getByText('Then turn the phone to your friends so they can see your card.')).toBeTruthy();
+    expect(document.body.textContent).not.toContain('pisîk');
+    // changing his mind costs nothing
+    press('Back to my questions');
+    await screen.findByRole('heading', { name: 'Azad, who are you?' });
+    expect(screen.getByText('Points if you guess now: 10 · Guesses left: 2')).toBeTruthy();
+
+    press('Ask my own question');
+    press(await screen.findByRole('button', { name: 'Friends: tap here' }).then(() => 'Friends: tap here'));
+    // the friends see his card, are told to answer out loud in the dialect's own words, and tap nothing but that they have
+    expect(await screen.findByRole('heading', { name: 'Azad is…' })).toBeTruthy();
+    expect(screen.getByText('pisîk')).toBeTruthy();
+    expect(screen.getByText('cat')).toBeTruthy();
+    expect(screen.getByText('Answer Azad out loud: yes (Erê) or no (Na).')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Erê' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Na' })).toBeNull();
+    press('Done: hide the card');
+
+    // back with him: the card hidden, no verdict of the card's, one question spent, and a guess or the phone passed on
+    expect(await screen.findByRole('heading', { name: 'Your friends have answered. Guess, or pass the phone on.' })).toBeTruthy();
+    expect(screen.queryByRole('heading', { name: 'Azad is…' })).toBeNull();
+    expect(screen.getAllByText('pisîk')).toHaveLength(1);
+    expect(screen.getByRole('radio', { name: 'pisîk' })).toBeTruthy();
+    expect(screen.queryByLabelText(/^The card says/)).toBeNull();
+    expect(screen.queryByText(/^Your friends (got it right|said)/)).toBeNull();
+    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 2')).toBeTruthy();
+    expect(screen.getByText('Questions of your own: 1 (each takes 1 off your points)')).toBeTruthy();
+    expect(within(table()).getByLabelText('Azad, A hidden card, Points: 0, Questions: 1, On turn')).toBeTruthy();
+    // nothing checked the answer, so nobody is paid for it
+    expect(within(table()).getByLabelText('Berfîn, A hidden card, Points: 0, Questions: 0')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Ask/ })).toBeNull();
+
+    // the phone goes on; when it comes back his count is still on his board, and his list is as it was
+    press('Next player');
+    await take('Berfîn');
+    press('Skip my turn');
+    await take('Ciwan');
+    press('Skip my turn');
+    await take('Azad');
+    expect(screen.getByText('Questions of your own: 1 (each takes 1 off your points)')).toBeTruthy();
+    expect(screen.getByRole('button', { name: ASK_FLY })).toBeTruthy();
+    guess('pisîk');
+    expect(await screen.findByRole('heading', { name: 'You are pisîk!' })).toBeTruthy();
+    expect(screen.getByText('Your points: 9')).toBeTruthy();
+  });
+
+  it('is not offered once every question on the list has been asked', async () => {
+    testAuth.client = dealing([deal(CAT, CAT_AMONG, QUESTIONS.slice(0, 1)), deal(BIRD, BIRD_AMONG, QUESTIONS.slice(0, 1))]);
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await toFriends('Azad');
+    press('Na');
+    await screen.findByLabelText('The card says: Na');
+    guess('kûçik');
+    press(await screen.findByRole('button', { name: 'Next' }).then(() => 'Next'));
+    await take('Berfîn');
+    press('Skip my turn');
+    // his turn again, with nothing left on his list: only the guess, and why
+    await take('Azad');
+    expect(screen.getByText('You have asked every question. Now you have to guess.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Ask my own question' })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^All questions/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Skip my turn' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'What you know so far' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Guess' })).toBeTruthy();
+  });
+});
+
+describe('a game', () => {
+  it('goes round the room from the first hand-over to guesses right and wrong, the points, and another game for the same room', async () => {
+    const client = dealing();
+    testAuth.client = client;
+    const onLeave = vi.fn();
+    renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={onLeave} />);
+    await start();
+
+    // Azad asks, his friends answer rightly, and he has it in one
+    await take('Azad');
+    await toFriends('Azad');
+    press('Na');
+    await screen.findByLabelText('The card says: Na');
     guess('pisîk');
     expect(await screen.findByRole('heading', { name: 'You are pisîk!' })).toBeTruthy();
     expect(screen.getByText('Your points: 9')).toBeTruthy();
@@ -300,7 +482,7 @@ describe('a game', () => {
     // Berfîn: Azad's card is off his forehead for all to see; hers and Ciwan's are not on the screen
     await take('Berfîn');
     expect(within(table()).getByLabelText('Azad, pisîk, cat, Points: 9, Questions: 1, Got it')).toBeTruthy();
-    // a right answer about Azad's card was a point for each of the room
+    // a right answer about Azad's card was a point for each of his friends
     expect(within(table()).getByLabelText('Berfîn, A hidden card, Points: 1, Questions: 0, On turn')).toBeTruthy();
     expect(within(table()).queryByText('çûk')).toBeNull();
     expect(screen.queryByText('hesp')).toBeNull();
@@ -310,9 +492,9 @@ describe('a game', () => {
     expect(screen.queryByText('çûk')).toBeNull();
     press('Next');
 
-    // Ciwan passes; Azad has his card, so the phone goes back to Berfîn
+    // Ciwan skips; Azad has his card, so the phone goes back to Berfîn
     await take('Ciwan');
-    press('Pass the turn on');
+    press('Skip my turn');
     await take('Berfîn');
     expect(screen.getByRole('radio', { name: 'masî, Not this one' })).toBeTruthy();
     guess('werdek');
@@ -337,9 +519,9 @@ describe('a game', () => {
     // a game over is left without being asked twice
     expect(screen.queryByRole('button', { name: 'End the game' })).toBeNull();
 
-    // the same room again: a new deal, and the cards shown round once more
+    // the same room again: a new deal, and straight to the first hand-over
     press('Play again');
-    expect(await screen.findByRole('heading', { name: 'Azad, look away!' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeTruthy();
     expect(client.calls.map((c) => c.body)).toEqual([
       { dialect: 'kmr', difficulty: 'beginner', players: 3 },
       { dialect: 'kmr', difficulty: 'beginner', players: 3 },
@@ -348,49 +530,28 @@ describe('a game', () => {
     expect(onLeave).not.toHaveBeenCalled();
   });
 
-  it('says when the room was wrong, and takes away the pass once every question has been asked', async () => {
-    testAuth.client = dealing([deal(CAT, [animal('dog', 'kûçik', {}), animal('cow', 'çêlek', {})], QUESTIONS.slice(0, 1)), DEALS[1]!]);
+  it('makes a card found the happiest moment, the flecks flying, and keeps them away for a phone that asks for less motion', async () => {
+    testAuth.client = dealing();
     renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={() => undefined} />);
     await start(['Azad', 'Berfîn']);
-    await lookRound(['Azad', 'Berfîn']);
+    // every other test here runs with Reduce Motion on: the card and the words are there, and nothing flies
     await take('Azad');
-    press('Ask: Ew dikare bifire?');
-    await screen.findByText('Read it out loud');
-    press('Erê');
-    expect(await screen.findByLabelText('The card says: Na')).toBeTruthy();
-    expect(screen.getByText('The room was wrong.')).toBeTruthy();
-    // his one question is asked: the turn is a guess
-    expect(screen.getByText('You have asked every question. Now you have to guess.')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'Pass the turn on' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Guess' })).toBeTruthy();
-  });
+    guess('pisîk');
+    expect(await screen.findByRole('heading', { name: 'You are pisîk!' })).toBeTruthy();
+    expect(screen.queryByTestId('who-am-i-found-burst')).toBeNull();
+    press('Next');
 
-  it('plays a Soranî room in Soranî, the card answering in its own yes and no', async () => {
-    const pishile = animal('cat', 'پشیلە', { 'can-fly': false });
-    const balinde = animal('bird', 'باڵندە', { 'can-fly': true });
-    const flies: WhoAmIDeal['questions'] = [{ id: 'fly', ku: 'ئایا دەتوانێت بفڕێت؟', meanings: { en: 'Can it fly?' }, fact: 'can-fly' }];
-    const client = fakeClient({
-      [DEAL]: ok({
-        dialect: 'ckb',
-        difficulty: 'beginner',
-        deals: [
-          deal(pishile, [animal('dog', 'سەگ', {}), animal('cow', 'مانگا', {})], flies),
-          deal(balinde, [animal('fish', 'ماسی', {}), animal('duck', 'مراوی', {})], flies),
-        ],
-      }),
-    });
-    testAuth.client = client;
-    renderWithProviders(<WhoAmICouch offer={{ dialect: 'ckb', difficulties: ['beginner'] }} onLeave={() => undefined} />);
-    await start(['Azad', 'Berfîn']);
-    expect(client.calls[0]!.body).toEqual({ dialect: 'ckb', difficulty: 'beginner', players: 2 });
-    await lookRound(['Azad', 'Berfîn'], ['پشیلە', 'باڵندە']);
-    press(await screen.findByRole('button', { name: 'I’m Azad' }).then(() => 'I’m Azad'));
-    press('Ask: ئایا دەتوانێت بفڕێت؟');
-    await screen.findByText('Read it out loud');
-    expect(screen.getByRole('button', { name: 'بەڵێ' })).toBeTruthy();
-    press('نەخێر');
-    expect(await screen.findByLabelText('The card says: نەخێر')).toBeTruthy();
-    expect(screen.getByText('The room was right.')).toBeTruthy();
+    patchReactNativeWeb({ reduceMotion: false });
+    try {
+      await take('Berfîn');
+      guess('çûk');
+      expect(await screen.findByRole('heading', { name: 'You are çûk!' })).toBeTruthy();
+      expect(await screen.findByTestId('who-am-i-found-burst')).toBeTruthy();
+      expect(screen.getByText('çûk')).toBeTruthy();
+      expect(screen.getByText('Your points: 10')).toBeTruthy();
+    } finally {
+      patchReactNativeWeb({ reduceMotion: true });
+    }
   });
 
   it('finishes from the end, or goes back to who is playing with the names still there', async () => {
@@ -398,7 +559,6 @@ describe('a game', () => {
     testAuth.client = dealing();
     renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={onLeave} />);
     await start(['Azad', 'Berfîn']);
-    await lookRound(['Azad', 'Berfîn']);
     await take('Azad');
     guess('pisîk');
     press(await screen.findByRole('button', { name: 'Next' }).then(() => 'Next'));
@@ -410,7 +570,6 @@ describe('a game', () => {
     expect(await screen.findByRole('button', { name: 'Deal the cards' })).toBeTruthy();
     expect((screen.getByLabelText('Player 1') as HTMLInputElement).value).toBe('Azad');
     press('Deal the cards');
-    await lookRound(['Azad', 'Berfîn']);
     await take('Azad');
     guess('pisîk');
     press(await screen.findByRole('button', { name: 'Next' }).then(() => 'Next'));
@@ -428,28 +587,33 @@ describe('the way out', () => {
     testAuth.client = dealing();
     renderWithProviders(<WhoAmICouch offer={OFFER} onLeave={onLeave} />);
     await start();
-    await screen.findByRole('heading', { name: 'Azad, look away!' });
+    await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' });
 
     // its own button, on every screen of the game
     press('End the game');
     expect(await screen.findByRole('heading', { name: 'End this game?' })).toBeTruthy();
     expect(screen.getByText('The cards and the points are not kept.')).toBeTruthy();
     press('Keep playing');
-    expect(await screen.findByRole('heading', { name: 'Azad, look away!' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' })).toBeTruthy();
 
     // the header's way back, and the phone's own, ask the same thing
     press('Back');
     expect(await screen.findByRole('heading', { name: 'End this game?' })).toBeTruthy();
     press('Keep playing');
-    await lookRound();
-    await screen.findByRole('heading', { name: 'Azad’s turn. Hand them the phone.' });
+    // with the friends holding the phone too: the game they were in is still there after the question
+    await take('Azad');
+    await toFriends('Azad');
     expect(screen.getByRole('button', { name: 'End the game' })).toBeTruthy();
     act(() => backOut());
     expect(await screen.findByRole('heading', { name: 'End this game?' })).toBeTruthy();
+    expect(document.body.textContent).not.toContain('pisîk');
     expect(onLeave).not.toHaveBeenCalled();
+    press('Keep playing');
+    expect(await screen.findByRole('heading', { name: 'Azad is…' })).toBeTruthy();
 
     // ended, the room is back at who is playing, the names still there; from there back leaves at once
     press('End the game');
+    press(await screen.findByRole('button', { name: 'End the game' }).then(() => 'End the game'));
     expect(await screen.findByRole('button', { name: 'Deal the cards' })).toBeTruthy();
     expect((screen.getByLabelText('Player 3') as HTMLInputElement).value).toBe('Ciwan');
     press('Back');
