@@ -331,16 +331,15 @@ export function QuestionCard({
 /**
  * Questions as rows, in the order given: each in Kurdish with what it means
  * (under it where `meanings` says so, at a tap otherwise), and at its end the
- * card's answer as a stamp once it is asked, or Ask while one may be asked.
+ * card's answer as a stamp once it is asked, or Ask where the page takes one.
  */
 export function QuestionList({
   dialect,
   questions,
   asked,
   meanings,
-  canAsk,
-  disabled,
   onAsk,
+  disabled = false,
   labelledBy,
 }: {
   dialect: GameDialect;
@@ -348,10 +347,10 @@ export function QuestionList({
   asked: readonly WhoAmIAsked[];
   /** every question's meaning is under it without a tap, as a beginner reads them */
   meanings: boolean;
-  /** a question may be asked now; when not, the rows are the player's notes, to read */
-  canAsk: boolean;
-  disabled: boolean;
-  onAsk: (question: string) => void;
+  /** asks a question, while one may be asked; without it the rows are the player's notes, to read */
+  onAsk?: (question: string) => void;
+  /** a move is on its way: nothing more is taken until it has answered */
+  disabled?: boolean;
   /** the heading these rows stand under, where they are one group of several */
   labelledBy?: string;
 }): React.JSX.Element {
@@ -390,7 +389,7 @@ export function QuestionList({
             )}
             {answer !== undefined ? (
               <Stamp dialect={dialect} answer={answer} />
-            ) : canAsk ? (
+            ) : onAsk ? (
               <Button size="sm" variant="secondary" disabled={disabled} onClick={() => onAsk(q.id)}>
                 {t('games.whoAmI.ask')}
               </Button>
@@ -453,10 +452,10 @@ export function QuestionDeck({
           <h3 id={label} className="wa-label">
             {t('games.whoAmI.suggested')}
           </h3>
-          <QuestionList dialect={dialect} questions={first} asked={asked} meanings={meanings} canAsk={canAsk} disabled={disabled} onAsk={onAsk} labelledBy={label} />
+          <QuestionList dialect={dialect} questions={first} asked={asked} meanings={meanings} onAsk={onAsk} disabled={disabled} labelledBy={label} />
         </>
       )}
-      {rest.length > 0 && <QuestionList dialect={dialect} questions={rest} asked={asked} meanings={meanings} canAsk={canAsk} disabled={disabled} onAsk={onAsk} />}
+      {rest.length > 0 && <QuestionList dialect={dialect} questions={rest} asked={asked} meanings={meanings} onAsk={canAsk ? onAsk : undefined} disabled={disabled} />}
     </section>
   );
 }

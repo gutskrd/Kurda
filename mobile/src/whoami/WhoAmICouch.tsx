@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, AppState, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, AppState, Pressable, ScrollView, StyleSheet, Text, TextInput, View, type StyleProp, type ViewStyle } from 'react-native';
 import { usePreventRemove } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
@@ -7,6 +7,8 @@ import {
   WHO_AM_I_COUCH_MAX_PLAYERS,
   WHO_AM_I_COUCH_MIN_PLAYERS,
   WHO_AM_I_COUCH_NAME_MAX,
+  WHO_AM_I_HELP_POINTS,
+  WHO_AM_I_QUESTION_COST,
   couchName,
   roomAnswers,
   startCouchTable,
@@ -16,6 +18,7 @@ import {
   type GameDifficulty,
   type WhoAmICouchDeals,
   type WhoAmICouchOffer,
+  type WhoAmIQuestion,
   type WhoAmITableMove,
   type WhoAmITableState,
 } from '@kurda/shared';
@@ -27,17 +30,34 @@ import { haptic } from '../feedback/haptics';
 import { DIFFICULTY_KEY } from '../games/partyChoices';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { Cloth, GoldButton, StepTitle } from '../impostor/parts';
+import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
 import { useHardwareBack } from '../navigation/hardwareBack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useDirection } from '../reports/direction';
 import { Note } from '../stories/ui';
+import { BURST } from '../theme/celebration';
+import { ConfettiBurst, GlowRing, useCelebration } from '../theme/CelebrationParts';
 import { ClayButton, GlassCard, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { ForeheadCard, Foreheads, GuessTiles, QuestionCard, QuestionDeck, ScoringNote, VerdictCard, YesNoButtons, type CardFace, type TableSeat } from './WhoAmIStage';
+import {
+  Fold,
+  ForeheadCard,
+  Foreheads,
+  GuessTiles,
+  QuestionCard,
+  QuestionDeck,
+  ScoringNote,
+  SuggestedQuestions,
+  VerdictCard,
+  YesNoButtons,
+  kindOf,
+  yesNo,
+  type CardFace,
+  type TableSeat,
+} from './WhoAmIStage';
 
 /**
  * Who Am I? on one phone, passed round a room.
@@ -45,17 +65,24 @@ import { ForeheadCard, Foreheads, GuessTiles, QuestionCard, QuestionDeck, Scorin
  * The rules are the table's own (shared/src/games/who-am-i/rules.ts), started
  * and answered for a room by couch.ts; this is the phone's part in them. It
  * asks who is playing and how hard, fetches a card for everyone (approved
- * identities, dealt by the server), and walks the room through the game:
- * each player's card shown to the others while that player looks away, then
- * the phone from hand to hand. Whoever holds it picks a question and reads it
- * out, the room answers out loud, the holder taps what the room said, the
- * card says which it is, and the holder guesses or passes the phone on.
+ * identities, dealt by the server), and walks the room through a game in
+ * which nobody has to remember anything. The phone goes from hand to hand.
+ * Whoever holds it picks a question, one of the few suggested or any on their
+ * list, and reads it out, then turns the phone to their friends. There, and
+ * only there, the holder's card is on the screen beside the question: the
+ * friends read it and tap yes or no themselves. The card is hidden again, the
+ * phone says what the card's own answer is and how the friends did, and the
+ * holder guesses or passes the phone on. A holder may also ask the room a
+ * question of their own: the friends look at the card and answer out loud,
+ * and the phone only counts it.
  *
  * What it is careful about, because one screen is read by people who must not
  * see their own card:
- * - a card is on the screen only while the others hold the button down for
- *   it, at the start, and once it is off its player's forehead; letting go,
- *   leaving the app or the screen locking hides it;
+ * - a hidden card is drawn in one place, the friends' screen, which its
+ *   wearer has turned away from; the answer tapped, leaving the app or the
+ *   screen locking takes it off again;
+ * - the holder's own board shows nobody's hidden card, not the others'
+ *   either: a neighbour glancing at the phone would read their own;
  * - everything a turn draws comes from the rules' view for the seat holding
  *   the phone, where that seat's own card is not, and the row of seats shows
  *   each card as its own wearer may see it;
@@ -90,23 +117,6 @@ export function useCouchOffer(dialect: GameDialect, enabled = true): WhoAmICouch
   return offer;
 }
 
-/** Whether a screen reader is reading the phone: its user cannot press and hold, so a card is turned by a tap instead. */
-function useScreenReader(): boolean {
-  const [on, setOn] = useState(false);
-  useEffect(() => {
-    let alive = true;
-    void AccessibilityInfo.isScreenReaderEnabled().then((v) => {
-      if (alive) setOn(v);
-    });
-    const sub = AccessibilityInfo.addEventListener('screenReaderChanged', setOn);
-    return () => {
-      alive = false;
-      sub.remove();
-    };
-  }, []);
-  return on;
-}
-
 /**
  * A glass card with its contents laid out by `style`. The glass card's own
  * style is its frame's, so a gap or an alignment given there never reaches
@@ -120,8 +130,20 @@ function Card({ style, children }: { style: StyleProp<ViewStyle>; children: Reac
   );
 }
 
-/** What the room is looking at: each card in turn, the phone between two players, a turn, or what a guess came to. */
-type Moment = { at: 'look'; seat: number } | { at: 'pass' } | { at: 'turn' } | { at: 'guessed'; seat: number; tile: string; correct: boolean };
+/**
+ * What the room is looking at: the phone between two players, the holder's
+ * board, a question chosen and waiting to be read out, the friends' screen
+ * with the holder's card on it, or what a guess came to. A question chosen is
+ * named by its id; null is one of the holder's own, asked out loud. Nothing
+ * is asked of the rules until the friends have answered, so the way back from
+ * a question chosen costs nothing.
+ */
+type Moment =
+  | { at: 'pass' }
+  | { at: 'turn' }
+  | { at: 'read'; question: string | null }
+  | { at: 'friends'; question: string | null }
+  | { at: 'guessed'; seat: number; tile: string; correct: boolean };
 
 interface Game {
   players: string[];
@@ -156,6 +178,17 @@ export function WhoAmICouch({
   usePreventRemove(held, ask);
   useHardwareBack(held ? ask : null);
 
+  // The friends' screen is the one place a hidden card is drawn. The moment the app is not the one in front (another
+  // app, the lock screen, the app switcher) it goes back to the question waiting to be read out, so the card is not
+  // on the screen when its wearer picks the phone up again.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active') return;
+      setGame((g) => (g !== null && g.moment.at === 'friends' ? { ...g, moment: { at: 'read', question: g.moment.question } } : g));
+    });
+    return () => sub.remove();
+  }, []);
+
   /** A card for everyone, dealt by the server, and the table laid from them. */
   async function deal(players: string[], level: GameDifficulty): Promise<void> {
     setBusy(true);
@@ -169,8 +202,9 @@ export function WhoAmICouch({
     }
     if (!Array.isArray(res.data?.deals) || res.data.deals.length !== players.length) return setFailed(t('games.couch.failed'));
     haptic('tap');
-    // the seed is the phone's own, from the generator a new device id comes from
-    setGame({ players, difficulty: level, table: startCouchTable(res.data, Date.now(), newDeviceId()), moment: { at: 'look', seat: 0 } });
+    // Straight to the first hand-over: nobody is shown a card to remember, a card is read at the moment it is answered
+    // about. The seed is the phone's own, from the generator a new device id comes from.
+    setGame({ players, difficulty: level, table: startCouchTable(res.data, Date.now(), newDeviceId()), moment: { at: 'pass' } });
   }
 
   /** Back to who is playing, with the names still there. */
@@ -231,7 +265,14 @@ export function WhoAmICouch({
   return (
     <>
       {header}
-      <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+      {/* keyed by what the room is looking at, so each screen of the game opens at its top however far the last one was scrolled */}
+      <ScrollView
+        key={over ? 'end' : game.moment.at}
+        style={styles.screen}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
         {over ? (
           <End
             game={game}
@@ -253,6 +294,9 @@ export function WhoAmICouch({
 }
 
 // ---------- who is playing, and how hard ----------
+
+/** The whole game in three steps, said before anyone has typed a name. */
+const HOW: readonly TranslationKey[] = ['games.whoAmI.couch.step1', 'games.whoAmI.couch.step2', 'games.whoAmI.couch.step3'];
 
 function Setup({
   offer,
@@ -297,12 +341,22 @@ function Setup({
   return (
     <View style={styles.screen}>
       <ScrollView style={styles.screen} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>
-          {t('games.whoAmI.couch.blurb', { min: WHO_AM_I_COUCH_MIN_PLAYERS, max: WHO_AM_I_COUCH_MAX_PLAYERS })}
-        </Text>
+        {/* the numbers on this screen are the game's three steps: the form under them is short enough to need none */}
+        <Cloth style={styles.how}>
+          {HOW.map((key, i) => (
+            <View key={key} accessible accessibilityLabel={`${i + 1}. ${t(key)}`} style={[styles.howRow, { flexDirection: dir.row }]}>
+              <View style={styles.howN}>
+                <Text style={styles.howNText}>{i + 1}</Text>
+              </View>
+              <Text style={[styles.howText, dir.text]}>{t(key)}</Text>
+            </View>
+          ))}
+        </Cloth>
 
         <Card style={styles.form}>
-          <StepTitle n={1}>{t('games.couch.players')}</StepTitle>
+          <Text accessibilityRole="header" style={[styles.formTitle, dir.text, { color: colors.textPrimary }]}>
+            {t('games.couch.players')}
+          </Text>
           <View style={styles.names}>
             {names.map((name, i) => (
               <View key={i} style={[styles.nameRow, { flexDirection: dir.row }]}>
@@ -344,7 +398,9 @@ function Setup({
 
         {levels.length > 1 ? (
           <Card style={styles.form}>
-            <StepTitle n={2}>{t('games.solo.difficulty')}</StepTitle>
+            <Text accessibilityRole="header" style={[styles.formTitle, dir.text, { color: colors.textPrimary }]}>
+              {t('games.solo.difficulty')}
+            </Text>
             <Segmented<GameDifficulty>
               groupLabel={t('games.solo.difficulty')}
               options={levels}
@@ -397,113 +453,37 @@ function roomSeats(game: Game): TableSeat[] {
   });
 }
 
-function Round({ game, play }: { game: Game; play: (table: WhoAmITableState, moment: Moment) => void }): React.JSX.Element | null {
+type Play = (table: WhoAmITableState, moment: Moment) => void;
+
+function Round({ game, play }: { game: Game; play: Play }): React.JSX.Element | null {
   const { table, moment, players } = game;
-  if (moment.at === 'look') {
-    // the card on a forehead, read from the seat beside it: anyone but its wearer may
-    const reader = (moment.seat + 1) % players.length;
-    const card = whoAmITableRules.viewFor(table, reader).seats.find((s) => s.seat === moment.seat)?.card ?? null;
-    const last = moment.seat === players.length - 1;
-    return (
-      <Look
-        key={moment.seat}
-        dialect={table.dialect}
-        name={players[moment.seat]!}
-        card={card}
-        at={moment.seat}
-        of={players.length}
-        last={last}
-        onNext={() => play(table, last ? { at: 'pass' } : { at: 'look', seat: moment.seat + 1 })}
-      />
-    );
-  }
   if (moment.at === 'guessed') {
     return <Guessed game={game} seat={moment.seat} tile={moment.tile} correct={moment.correct} onNext={() => play(table, { at: 'pass' })} />;
   }
   const seat = table.turn;
   if (seat === null) return null;
-  if (moment.at === 'pass') return <PassTo name={players[seat]!} onMine={() => play(table, { at: 'turn' })} />;
+  const name = players[seat]!;
+  if (moment.at === 'pass') return <PassTo name={name} onMine={() => play(table, { at: 'turn' })} />;
+  if (moment.at === 'read' || moment.at === 'friends') {
+    // the holder's own list, from the board as their seat is sent it; a question can be put to the room only while the turn waits for one
+    const view = whoAmITableRules.viewFor(table, seat);
+    const question = moment.question === null ? null : (view.mine?.questions.find((q) => q.id === moment.question) ?? null);
+    if (view.phase === 'ask' && (moment.question === null || question !== null)) {
+      const chosen = moment.question;
+      if (moment.at === 'read') {
+        return (
+          <ReadOut
+            dialect={view.dialect}
+            question={question}
+            onFriends={() => play(table, { at: 'friends', question: chosen })}
+            onBack={() => play(table, { at: 'turn' })}
+          />
+        );
+      }
+      return <Friends game={game} seat={seat} question={question} play={play} />;
+    }
+  }
   return <Turn key={`${seat}:${table.turns}`} game={game} seat={seat} play={play} />;
-}
-
-/** How far the phone has got round the room, as dots. */
-function Progress({ done, of }: { done: number; of: number }): React.JSX.Element {
-  const { colors } = useTheme();
-  return (
-    <View style={styles.dots} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      {Array.from({ length: of }, (_, i) => (
-        <View key={i} style={[styles.dot, { backgroundColor: i < done ? TABLE.gold : i === done ? colors.textPrimary : colors.controlTrack }]} />
-      ))}
-    </View>
-  );
-}
-
-/** Before the first turn: one player's card, shown to everyone else while that player looks away. */
-function Look({
-  dialect,
-  name,
-  card,
-  at,
-  of,
-  last,
-  onNext,
-}: {
-  dialect: GameDialect;
-  name: string;
-  card: CardFace | null;
-  at: number;
-  of: number;
-  last: boolean;
-  onNext: () => void;
-}): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const reader = useScreenReader();
-  const [shown, setShown] = useState(false);
-  const [seen, setSeen] = useState(false);
-
-  // the card goes face down the moment the app is not the one in front: another app, the lock screen, the app switcher
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state !== 'active') setShown(false);
-    });
-    return () => sub.remove();
-  }, []);
-
-  const show = (): void => {
-    if (!shown) haptic('tap');
-    setShown(true);
-    setSeen(true);
-  };
-  const hide = (): void => setShown(false);
-  const hold = t('games.whoAmI.look.hold', { name });
-  return (
-    <>
-      <Progress done={at} of={of} />
-      <Cloth style={styles.stage}>
-        <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageTitle}>
-          {t('games.whoAmI.look.title', { name })}
-        </Text>
-        <Text style={styles.stageLine}>{t('games.whoAmI.look.body', { name })}</Text>
-        <ForeheadCard dialect={dialect} category={null} identity={shown ? card : null} night hiddenLabel={t('games.couch.cardOf', { name })} />
-      </Cloth>
-      <Pressable
-        onPressIn={reader ? undefined : show}
-        onPressOut={reader ? undefined : hide}
-        // someone listening to the phone cannot press and hold: for them a tap turns the card, and another turns it back
-        onPress={reader ? () => (shown ? hide() : show()) : undefined}
-        accessibilityRole="button"
-        accessibilityLabel={hold}
-        accessibilityState={{ selected: shown }}
-        style={[styles.hold, { backgroundColor: shown ? TABLE.gold : `${TABLE.gold}29`, borderColor: TABLE.gold }]}
-      >
-        <Icon name="eye" size={22} color={shown ? TABLE.goldInk : colors.goldText} />
-        <Text style={[styles.holdText, { color: shown ? TABLE.goldInk : colors.goldText }]}>{hold}</Text>
-      </Pressable>
-      <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('games.whoAmI.look.note')}</Text>
-      <ClayButton label={last ? t('play.room.start') : t('games.couch.next')} tone="primary" size="large" disabled={!seen || shown} onPress={onNext} />
-    </>
-  );
 }
 
 /** The screen between two players: nothing on it but whose turn it is to hold the phone. */
@@ -525,13 +505,18 @@ function PassTo({ name, onMine }: { name: string; onMine: () => void }): React.J
 }
 
 /**
- * One player's turn, with the phone in their hands: their questions and
- * tiles; then the question they chose, to read out, and what the room said;
- * then the card's own answer, and a guess or the phone passed on.
+ * One player's turn, with the phone in their hands. While the turn waits for
+ * a question: who they might be, as tiles to guess from; the questions worth
+ * asking next, each asked by one tap; every question folded under them; a
+ * question of their own; and the turn skipped. Once the friends have answered:
+ * what the card said and how the friends did, the tiles again, and the phone
+ * on to the next player. Their own card is on neither, and nobody else's
+ * hidden card is, so the phone can be handed back with nothing to cover.
  */
-function Turn({ game, seat, play }: { game: Game; seat: number; play: (table: WhoAmITableState, moment: Moment) => void }): React.JSX.Element | null {
+function Turn({ game, seat, play }: { game: Game; seat: number; play: Play }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const { table, players } = game;
   // the board as the seat holding the phone is sent it: their own card is not on it
   const view = whoAmITableRules.viewFor(table, seat);
@@ -539,6 +524,8 @@ function Turn({ game, seat, play }: { game: Game; seat: number; play: (table: Wh
   if (!mine) return null;
   const name = players[seat]!;
   const dialect = view.dialect;
+  // a beginner reads what every question means without asking for it
+  const beginner = view.difficulty === 'beginner';
   const crossed = mine.guesses.filter((g) => !g.correct).map((g) => g.tile);
   const seats = <Foreheads dialect={dialect} seats={roomSeats(game)} label={t('games.whoAmI.table')} />;
 
@@ -548,80 +535,205 @@ function Turn({ game, seat, play }: { game: Game; seat: number; play: (table: Wh
     if (!applied.ok) return;
     if (m.kind === 'guess') {
       const correct = applied.outcome.correct === true;
-      haptic(correct ? 'celebrate' : 'wrong');
+      // a right guess is felt as its celebration lands (Solved); a wrong one here and now
+      if (!correct) haptic('wrong');
       return play(applied.state, { at: 'guessed', seat, tile: m.tile, correct });
     }
     play(applied.state, m.kind === 'pass' ? { at: 'pass' } : { at: 'turn' });
   };
-  const pass = mine.mustGuess ? (
-    <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('games.whoAmI.wait.mustGuess')}</Text>
-  ) : (
-    <ClayButton label={t('games.whoAmI.pass')} variant="outline" onPress={() => move({ kind: 'pass' })} />
-  );
+  const choose = (question: string | null): void => play(table, { at: 'read', question });
 
-  if (view.phase === 'answer' && view.pending) {
+  // a question of their own costs what any question costs, so it is counted with the rest
+  const worth = `${t('games.whoAmI.worth', { count: whoAmIPoints(mine.asked.length + mine.aloud, crossed.length, true) })} · ${t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}`;
+  const own =
+    mine.aloud > 0 ? (
+      <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('games.whoAmI.own.count', { count: mine.aloud, cost: WHO_AM_I_QUESTION_COST })}</Text>
+    ) : null;
+  // What they know so far, always in sight. The same answers are stamped on the full list, but that list is folded
+  // away while there are suggestions to tap, and a guess is made from exactly these.
+  const answered = mine.asked.map((a) => mine.questions.find((q) => q.id === a.question)).filter((q): q is WhoAmIQuestion => !!q);
+  const known =
+    answered.length > 0 ? <QuestionDeck dialect={dialect} title={t('games.whoAmI.known')} questions={answered} asked={mine.asked} meanings={beginner} onAsk={null} /> : null;
+  const tiles = <GuessTiles dialect={dialect} title={t('games.whoAmI.oneOfThese')} tiles={mine.tiles} crossed={crossed} onGuess={(tile) => move({ kind: 'guess', tile })} />;
+
+  if (view.phase === 'decide') {
+    // the card's own answer to the question just asked from the list; a question asked out loud leaves none
+    const told = view.told && view.told.seat === seat ? view.told : null;
+    // the friends tapped one answer between them, so the first given is what they all said
+    const said = told?.answers.find((a) => a.yes !== null)?.yes ?? null;
     return (
       <>
-        <Cloth style={styles.stage}>
-          <Text style={styles.stageKicker}>{t('games.whoAmI.readOut')}</Text>
-          <QuestionCard key={view.pending.question.id} dialect={dialect} question={view.pending.question} ink={TABLE.ink} soft={TABLE.inkSoft} large />
-        </Cloth>
-        <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[styles.heading, { color: colors.textPrimary }]}>
-          {t('games.whoAmI.roomSaid')}
-        </Text>
-        <YesNoButtons
-          dialect={dialect}
-          onAnswer={(yes) => {
-            const next = roomAnswers(table, yes, Date.now());
-            haptic(next.told?.truth === yes ? 'correct' : 'wrong');
-            play(next, { at: 'turn' });
-          }}
-        />
-      </>
-    );
-  }
-
-  if (view.phase === 'decide' && view.told) {
-    const said = view.told.answers.filter((a) => a.yes !== null);
-    return (
-      <>
-        <VerdictCard
-          dialect={dialect}
-          heading={t('games.whoAmI.asks', { name })}
-          question={view.told.question}
-          truth={view.told.truth}
-          note={said.length === 0 ? undefined : t(said.some((a) => a.right) ? 'games.whoAmI.room.right' : 'games.whoAmI.room.wrong')}
-        />
-        <GuessTiles dialect={dialect} tiles={mine.tiles} crossed={crossed} onGuess={(tile) => move({ kind: 'guess', tile })} />
-        {pass}
-        <QuestionDeck dialect={dialect} title={t('games.whoAmI.yourQuestions')} questions={mine.questions} asked={mine.asked} onAsk={null} />
+        {told ? (
+          <VerdictCard
+            dialect={dialect}
+            heading={t('games.whoAmI.asks', { name })}
+            question={told.question}
+            truth={told.truth}
+            plain
+            note={
+              said === null
+                ? undefined
+                : said === told.truth
+                  ? t('games.whoAmI.friends.right', { count: WHO_AM_I_HELP_POINTS })
+                  : t('games.whoAmI.friends.wrong', { said: yesNo(dialect, said, t), truth: yesNo(dialect, told.truth, t) })
+            }
+          />
+        ) : (
+          <Cloth style={styles.stage}>
+            <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageSay}>
+              {t('games.whoAmI.own.answered')}
+            </Text>
+          </Cloth>
+        )}
+        <Text style={[styles.stat, { color: colors.textSecondary }]}>{worth}</Text>
+        {own}
+        {mine.mustGuess ? <Text style={[styles.note, styles.center, { color: colors.textSecondary }]}>{t('games.whoAmI.wait.mustGuess')}</Text> : null}
+        {tiles}
+        {mine.mustGuess ? null : <ClayButton label={t('games.whoAmI.nextPlayer')} variant="outline" onPress={() => move({ kind: 'pass' })} />}
+        {known}
         {seats}
       </>
     );
   }
 
+  const kind = kindOf(mine.category, t);
+  const suggested = mine.suggested.map((id) => mine.questions.find((q) => q.id === id)).filter((q): q is WhoAmIQuestion => !!q);
+  // one line of advice where the banner has room for it: why this turn is a guess, or that the suggestions have run out
+  const advice = mine.mustGuess ? t('games.whoAmI.wait.mustGuess') : suggested.length === 0 ? t('games.whoAmI.noSuggestions') : null;
+  return (
+    <>
+      <Cloth style={styles.banner}>
+        <View style={[styles.bannerRow, { flexDirection: dir.row }]}>
+          {/* the deer is decoration here, drawn small so the questions are on the first screen */}
+          <ForeheadCard dialect={dialect} category={null} identity={null} size={76} cut="small" night />
+          <View style={styles.bannerText}>
+            {kind ? <Text style={[styles.bannerKind, dir.text]}>{kind}</Text> : null}
+            <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[styles.bannerTitle, dir.text]}>
+              {t('games.whoAmI.board.title', { name })}
+            </Text>
+            <Text style={[styles.bannerStat, dir.text]}>{worth}</Text>
+          </View>
+        </View>
+        {advice ? <Text style={styles.bannerAdvice}>{advice}</Text> : null}
+      </Cloth>
+      {tiles}
+      {mine.mustGuess ? null : (
+        <View style={styles.asking}>
+          <Text accessibilityRole="header" style={[styles.formTitle, dir.text, { color: colors.textPrimary }]}>
+            {t('games.whoAmI.questions')}
+          </Text>
+          {suggested.length > 0 ? <SuggestedQuestions dialect={dialect} questions={suggested} onAsk={choose} /> : null}
+          {/* with nothing suggested the full list is the next thing to reach for, so it is open already */}
+          <Fold bare title={t('games.whoAmI.allQuestions', { count: mine.questions.length })} startOpen={suggested.length === 0}>
+            <QuestionDeck dialect={dialect} questions={mine.questions} asked={mine.asked} meanings={beginner} onAsk={choose} />
+          </Fold>
+          {view.open ? <ClayButton label={t('games.whoAmI.own.ask')} icon="chat" tone="primary" variant="outline" onPress={() => choose(null)} /> : null}
+          {own}
+        </View>
+      )}
+      {mine.mustGuess ? null : <ClayButton label={t('games.whoAmI.skip')} variant="outline" onPress={() => move({ kind: 'pass' })} />}
+      {known}
+      {seats}
+    </>
+  );
+}
+
+/**
+ * A question chosen and not yet asked: the holder reads it out loud, then
+ * turns the phone to their friends. A question of their own has no words
+ * here, only what to do. Nothing has been spent, so there is a way back.
+ */
+function ReadOut({
+  dialect,
+  question,
+  onFriends,
+  onBack,
+}: {
+  dialect: GameDialect;
+  /** the question from the list; null for one of the holder's own */
+  question: WhoAmIQuestion | null;
+  onFriends: () => void;
+  onBack: () => void;
+}): React.JSX.Element {
+  const { t } = useI18n();
   return (
     <>
       <Cloth style={styles.stage}>
-        <ForeheadCard dialect={dialect} category={mine.category} identity={null} size={150} night />
-        <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageTitle}>
-          {t('games.whoAmI.turn.theirs', { name })}
-        </Text>
-        <Text style={styles.stageLine}>{t(mine.mustGuess ? 'games.whoAmI.wait.mustGuess' : 'games.whoAmI.wait.ask.you')}</Text>
-        <Text style={styles.stageStat}>
-          {t('games.whoAmI.worth', { count: whoAmIPoints(mine.asked.length, crossed.length, true) })} · {t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}
-        </Text>
+        {question ? (
+          <>
+            <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageKicker}>
+              {t('games.whoAmI.readOut')}
+            </Text>
+            <QuestionCard key={question.id} dialect={dialect} question={question} ink={TABLE.ink} soft={TABLE.inkSoft} size="loud" plain />
+            <Text style={styles.stageLine}>{t('games.whoAmI.turnPhone')}</Text>
+          </>
+        ) : (
+          <>
+            <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageSay}>
+              {t('games.whoAmI.own.title')}
+            </Text>
+            <Text style={styles.stageLine}>{t('games.whoAmI.own.turn')}</Text>
+          </>
+        )}
       </Cloth>
-      <QuestionDeck
-        dialect={dialect}
-        title={t(mine.mustGuess ? 'games.whoAmI.yourQuestions' : 'games.whoAmI.questions')}
-        questions={mine.questions}
-        asked={mine.asked}
-        onAsk={mine.mustGuess ? null : (question) => move({ kind: 'ask', question })}
-      />
-      <GuessTiles dialect={dialect} tiles={mine.tiles} crossed={crossed} onGuess={(tile) => move({ kind: 'guess', tile })} />
-      {mine.mustGuess ? null : pass}
-      {seats}
+      <GoldButton label={t('games.whoAmI.friendsTap')} icon="people" onPress={onFriends} />
+      <ClayButton label={t('games.whoAmI.backToBoard')} variant="outline" onPress={onBack} />
+    </>
+  );
+}
+
+/**
+ * The friends' screen, the holder looking away: the holder's card on the
+ * deer's forehead, read by everyone but them, and the question to answer. A
+ * question from the list the friends answer by tapping yes or no, which asks
+ * it of the rules and answers it for the whole room in one step; a question
+ * of the holder's own they answer out loud, and one tap counts it. Either tap
+ * takes the card off the screen at once.
+ */
+function Friends({ game, seat, question, play }: { game: Game; seat: number; question: WhoAmIQuestion | null; play: Play }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const { table, players } = game;
+  const name = players[seat]!;
+  const dialect = table.dialect;
+  // the card on a forehead, read from the seat beside it: anyone but its wearer may
+  const card: CardFace | null = whoAmITableRules.viewFor(table, (seat + 1) % players.length).seats.find((s) => s.seat === seat)?.card ?? null;
+
+  const answer = (yes: boolean): void => {
+    const now = Date.now();
+    const asked = question ? whoAmITableRules.apply(table, seat, { kind: 'ask', question: question.id }, now) : null;
+    // a question the rules will not take was never put to the room: back to the board, with nothing spent
+    if (!asked?.ok) return play(table, { at: 'turn' });
+    const next = roomAnswers(asked.state, yes, now);
+    haptic(next.told?.truth === yes ? 'correct' : 'wrong');
+    play(next, { at: 'turn' });
+  };
+  const heard = (): void => {
+    const counted = whoAmITableRules.apply(table, seat, { kind: 'aloud' }, Date.now());
+    play(counted.ok ? counted.state : table, { at: 'turn' });
+  };
+
+  return (
+    <>
+      <Cloth style={styles.stage}>
+        <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageTitle}>
+          {t('games.whoAmI.friends.title', { name })}
+        </Text>
+        <ForeheadCard dialect={dialect} category={null} identity={card} size={200} cut="large" night hiddenLabel={t('games.couch.cardOf', { name })} />
+        {question ? (
+          <QuestionCard key={question.id} dialect={dialect} question={question} ink={TABLE.ink} soft={TABLE.inkSoft} size="large" plain />
+        ) : (
+          <Text style={styles.stageSay}>{t('games.whoAmI.friends.aloud', { name, yes: yesNo(dialect, true, t), no: yesNo(dialect, false, t) })}</Text>
+        )}
+      </Cloth>
+      {question ? (
+        <>
+          <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('games.whoAmI.friends.ask')}</Text>
+          <YesNoButtons dialect={dialect} onAnswer={answer} />
+        </>
+      ) : (
+        <GoldButton label={t('games.whoAmI.friends.done')} icon="eye-off" onPress={heard} />
+      )}
     </>
   );
 }
@@ -635,20 +747,62 @@ function Guessed({ game, seat, tile, correct, onNext }: { game: Game; seat: numb
   const guess = mine.tiles.find((x) => x.id === tile)?.word ?? '';
   // the player's own card, only where the rules have taken it off: at a right guess, or out of guesses
   const identity = mine.identity;
+  if (correct && identity) return <Solved dialect={view.dialect} category={mine.category} identity={identity} points={mine.points} onNext={onNext} />;
   return (
     <>
       <Cloth style={styles.stage}>
         <ForeheadCard dialect={view.dialect} category={mine.category} identity={identity} size={180} night />
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageTitle}>
-          {correct && identity ? t('games.whoAmI.youAre', { word: identity.word }) : t('games.whoAmI.wrongGuess', { word: guess })}
+          {t('games.whoAmI.wrongGuess', { word: guess })}
         </Text>
-        {correct ? (
-          <Text style={styles.stageLine}>{t('games.whoAmI.score', { count: mine.points })}</Text>
-        ) : identity ? (
-          <Text style={styles.stageLine}>{t('games.whoAmI.youWere', { word: identity.word })}</Text>
-        ) : (
-          <Text style={styles.stageLine}>{t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}</Text>
-        )}
+        <Text style={styles.stageLine}>{identity ? t('games.whoAmI.youWere', { word: identity.word }) : t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}</Text>
+      </Cloth>
+      <GoldButton label={t('games.couch.next')} onPress={onNext} />
+    </>
+  );
+}
+
+const SOLVED = 200;
+
+/**
+ * A card found: the happiest moment of the game, played as the app's one
+ * celebration is (theme/CelebrationParts.tsx). The card turns face up on the
+ * forehead as a ring of gold widens behind it and the flecks fly, the phone
+ * buzzes and chimes as it lands, and then the words come. With Reduce Motion
+ * nothing travels: the card and the words are simply there.
+ */
+function Solved({
+  dialect,
+  category,
+  identity,
+  points,
+  onNext,
+}: {
+  dialect: GameDialect;
+  category: string | null;
+  identity: CardFace;
+  points: number;
+  onNext: () => void;
+}): React.JSX.Element {
+  const { t } = useI18n();
+  const moment = useCelebration();
+  const rise = moment.plan.travel ? moment.details.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) : 0;
+  return (
+    <>
+      <Cloth style={styles.stage}>
+        <View style={styles.solved}>
+          {moment.plan.travel ? <GlowRing progress={moment.ring} colour={TABLE.gold} size={SOLVED * 0.8} /> : null}
+          {moment.plan.travel ? (
+            <ConfettiBurst progress={moment.burst} count={BURST.badge} seed={points * 13 + identity.word.length} colours={[TABLE.gold, TABLE.goldSoft, TABLE.ink]} reach={150} />
+          ) : null}
+          <ForeheadCard dialect={dialect} category={category} identity={identity} size={SOLVED} cut="large" night />
+        </View>
+        <Animated.View style={[styles.solvedWords, { opacity: moment.details, transform: [{ translateY: rise }] }]}>
+          <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={styles.stageTitle}>
+            {t('games.whoAmI.youAre', { word: identity.word })}
+          </Text>
+          <Text style={styles.solvedPoints}>{t('games.whoAmI.score', { count: points })}</Text>
+        </Animated.View>
       </Cloth>
       <GoldButton label={t('games.couch.next')} onPress={onNext} />
     </>
@@ -732,8 +886,23 @@ const styles = StyleSheet.create({
   // the one divider on the screen: what scrolls ends here, and what is always in reach begins
   go: { gap: spacing.sm, paddingTop: spacing.sm, paddingHorizontal: spacing.lg, borderTopWidth: StyleSheet.hairlineWidth },
   goNote: { fontSize: typography.sizes.xs, textAlign: 'center' },
-  dots: { flexDirection: 'row', justifyContent: 'center', gap: 6 },
-  dot: { width: 22, height: 6, borderRadius: radii.pill },
+  // the three steps, on the table's own cloth: small numbers in gold, a line each
+  how: { gap: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
+  howRow: { alignItems: 'center', gap: spacing.sm },
+  howN: { width: 24, height: 24, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: TABLE.gold },
+  howNText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: TABLE.goldInk },
+  howText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20, color: TABLE.ink },
+  formTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  // the banner of a turn is kept low, the deer beside its words, so the tiles and the questions start on the first screen
+  banner: { gap: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
+  bannerRow: { alignItems: 'center', gap: spacing.md },
+  bannerText: { flex: 1, gap: 2 },
+  bannerKind: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase', color: TABLE.goldSoft },
+  bannerTitle: { fontSize: typography.sizes.lg, lineHeight: 28, fontWeight: typography.weights.bold, color: TABLE.ink },
+  bannerStat: { fontSize: typography.sizes.sm, lineHeight: 20, fontWeight: typography.weights.semibold, color: TABLE.goldSoft },
+  bannerAdvice: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', color: TABLE.ink },
+  asking: { gap: spacing.sm },
+  stat: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
   stage: { alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.lg, paddingHorizontal: spacing.lg },
   stageKicker: {
     fontSize: typography.sizes.xs,
@@ -744,19 +913,12 @@ const styles = StyleSheet.create({
     color: TABLE.goldSoft,
   },
   stageTitle: { fontSize: typography.sizes.xl, lineHeight: 34, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.ink },
+  // a whole sentence said on the cloth: smaller than a title, so it still fits a phone held out to a room
+  stageSay: { fontSize: typography.sizes.lg, lineHeight: 30, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.ink },
   stageLine: { fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center', color: TABLE.inkSoft },
-  stageStat: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center', color: TABLE.goldSoft },
-  hold: {
-    minHeight: 64,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: spacing.sm,
-    borderWidth: 2,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.md,
-  },
-  holdText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  solved: { alignItems: 'center', justifyContent: 'center' },
+  solvedWords: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.xs },
+  solvedPoints: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center', color: TABLE.goldSoft },
   pass: { alignItems: 'center', gap: spacing.lg, paddingVertical: spacing.xl, paddingHorizontal: spacing.lg },
   passHalo: { width: 140, height: 140, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: `${TABLE.gold}26` },
   passDisc: { width: 108, height: 108, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center', backgroundColor: TABLE.gold },

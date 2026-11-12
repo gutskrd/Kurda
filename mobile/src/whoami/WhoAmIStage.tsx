@@ -26,7 +26,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
 import { ClayButton } from '../theme/glass';
-import { Icon } from '../theme/Icon';
+import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { TABLE } from '../impostor/table';
@@ -37,12 +37,17 @@ import { TABLE } from '../impostor/table';
  * drawn from (the website's are in whoami/WhoAmIStage.tsx).
  *
  * Hevalo's silhouette with a card on his forehead, large for the one the
- * screen is about and small for every seat at the table; the deck of Kurdish
- * questions, where a tap shows what one means, Ask asks it, and the card's
- * answer is stamped on it in the dialect's own yes or no; the paper tiles to
- * guess from, a wrong one crossed out; the question on the table with the two
- * answers to give; the card's verdict as a card of its own colour; and how
- * the game scores, folded away.
+ * screen is about and small for every seat at the table; the questions worth
+ * asking next as cards one tap asks; the deck of Kurdish questions, the
+ * suggested ones first, where Ask asks one and the card's answer is stamped
+ * on it in the dialect's own yes or no; the paper tiles to guess from, a
+ * wrong one crossed out; the question on the table with the two answers to
+ * give; the card's verdict as a card of its own colour; and what folds away
+ * under a title, how the game scores among it.
+ *
+ * What a question means is under it wherever a beginner reads it (the
+ * suggested cards, the beginner's deck, the question read out on one phone);
+ * elsewhere a tap shows it, so a learner further on tries the Kurdish first.
  *
  * Nothing here decides what may be seen. A card is drawn when it is handed in
  * and the hidden mark when it is not, so a screen shows a player their own
@@ -112,6 +117,16 @@ export interface CardFace {
 const STAGE = 220;
 const CARD_W = STAGE * FOREHEAD.width;
 const CARD_H = 64;
+/** The card friends read from across a sofa: wide enough for a word set large, whatever the deer's size. */
+const CARD_LARGE_W = 168;
+const CARD_LARGE_H = 92;
+
+/**
+ * How a card is cut for where it is read: on the reader's own screen, small
+ * on a deer drawn beside a banner (the mark or the word alone), or large for
+ * friends who read it from where they sit.
+ */
+export type CardCut = 'regular' | 'small' | 'large';
 
 // ───────────────────────────────────────────────────────────── the one who wears the card
 
@@ -120,6 +135,7 @@ export function ForeheadCard({
   category,
   identity,
   size = STAGE,
+  cut = 'regular',
   night = false,
   hiddenLabel,
 }: {
@@ -129,6 +145,7 @@ export function ForeheadCard({
   /** the card's face, once it may be read here; null while it stays hidden */
   identity: CardFace | null;
   size?: number;
+  cut?: CardCut;
   /** on the night cloth, where the deer is the evening's colour whatever the theme */
   night?: boolean;
   /** what a screen reader calls the hidden card, where it is not the reader's own */
@@ -153,8 +170,11 @@ export function ForeheadCard({
   }, [shown, reduce, turn]);
   const rotateY = turn.interpolate({ inputRange: [0, 1], outputRange: ['90deg', '0deg'] });
   const kind = kindOf(category, t);
-  // a card never narrower than a word needs, however small the one who wears it is drawn
-  const width = Math.max(CARD_W, size * FOREHEAD.width);
+  const small = cut === 'small';
+  const large = cut === 'large';
+  // a card never narrower than a word needs, however small the one who wears it is drawn; the small cut alone follows the deer
+  const width = small ? size * 0.62 : large ? Math.max(CARD_LARGE_W, size * FOREHEAD.width) : Math.max(CARD_W, size * FOREHEAD.width);
+  const height = small ? size * 0.36 : large ? CARD_LARGE_H : CARD_H;
   return (
     <View style={[styles.stage, { width: size, height: size }]}>
       <View accessible={false} importantForAccessibility="no-hide-descendants">
@@ -162,27 +182,29 @@ export function ForeheadCard({
       </View>
       <Animated.View
         style={[
-          styles.card,
-          { width, left: size * FOREHEAD.x - width / 2, top: size * FOREHEAD.y - CARD_H / 2, borderColor: tone.fill },
+          small ? styles.cardSmall : styles.card,
+          { width, minHeight: height, left: size * FOREHEAD.x - width / 2, top: size * FOREHEAD.y - height / 2, borderColor: tone.fill },
           { transform: [{ perspective: 600 }, { rotateY }, { rotate: '-2deg' }] },
         ]}
         accessibilityLiveRegion="polite"
       >
         {identity ? (
           <>
-            <Text style={[styles.cardWord, kurdish(dialect)]} numberOfLines={1} adjustsFontSizeToFit>
+            <Text style={[small ? styles.cardWordSmall : large ? styles.cardWordLarge : styles.cardWord, kurdish(dialect)]} numberOfLines={1} adjustsFontSizeToFit>
               {identity.word}
             </Text>
-            <Text style={styles.cardKind} numberOfLines={1}>
-              {meaningIn(identity.meanings, locale) ?? identity.meanings.en}
-            </Text>
+            {small ? null : (
+              <Text style={large ? styles.cardKindLarge : styles.cardKind} numberOfLines={1}>
+                {meaningIn(identity.meanings, locale) ?? identity.meanings.en}
+              </Text>
+            )}
           </>
         ) : (
           <>
-            <Text style={styles.cardMark} accessibilityLabel={hiddenLabel ?? t('games.whoAmI.card')}>
+            <Text style={small ? styles.cardMarkSmall : styles.cardMark} accessibilityLabel={hiddenLabel ?? t('games.whoAmI.card')}>
               ?
             </Text>
-            {kind ? <Text style={styles.cardKind}>{kind}</Text> : null}
+            {kind && !small ? <Text style={styles.cardKind}>{kind}</Text> : null}
           </>
         )}
       </Animated.View>
@@ -354,18 +376,77 @@ export function Foreheads({ dialect, seats, label }: { dialect: GameDialect; sea
 
 // ───────────────────────────────────────────────────────────── the questions and the tiles
 
+/**
+ * The questions worth asking next, for a learner who does not know where to
+ * begin: each a card of the table's own cloth, its Kurdish large and what it
+ * means under it for every reader, and one tap asks it.
+ */
+export function SuggestedQuestions({
+  dialect,
+  questions,
+  onAsk,
+}: {
+  dialect: GameDialect;
+  questions: readonly WhoAmIQuestion[];
+  onAsk: (question: string) => void;
+}): React.JSX.Element {
+  const { t, locale } = useI18n();
+  const { colors } = useTheme();
+  const dir = useDirection();
+  return (
+    <View style={styles.section}>
+      <Text style={[styles.group, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.suggested')}</Text>
+      {questions.map((q) => {
+        const meaning = meaningIn(q.meanings, locale) ?? q.meanings.en;
+        return (
+          <Pressable
+            key={q.id}
+            onPress={() => {
+              haptic('select');
+              onAsk(q.id);
+            }}
+            accessibilityRole="button"
+            // the meaning is part of what the card says, so someone listening hears it as someone looking reads it
+            accessibilityLabel={`${t('games.whoAmI.ask')}: ${q.ku} (${meaning})`}
+            style={styles.suggestEdge}
+          >
+            {({ pressed }) => (
+              <View style={[styles.suggestFace, { flexDirection: dir.row }, pressed ? styles.down : null]}>
+                <View style={styles.suggestText}>
+                  <Text style={[styles.suggestKu, kurdish(dialect)]}>{q.ku}</Text>
+                  <Text style={[styles.suggestMeaning, dir.text]}>{meaning}</Text>
+                </View>
+                <View style={dir.flip}>
+                  <Icon name="chevron-right" size={20} color={TABLE.gold} />
+                </View>
+              </View>
+            )}
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 export function QuestionDeck({
   dialect,
   title,
   questions,
   asked,
+  suggested = [],
+  meanings = false,
   busy = false,
   onAsk,
 }: {
   dialect: GameDialect;
-  title: string;
+  /** the list's heading; none where what holds the list has already said what it is */
+  title?: string;
   questions: readonly WhoAmIQuestion[];
   asked: readonly WhoAmIAsked[];
+  /** the questions worth asking next, put first under a label of their own; those already asked are left where they are */
+  suggested?: readonly string[];
+  /** what each question means is under it with no tap: the beginner's list */
+  meanings?: boolean;
   busy?: boolean;
   /** asking one, on the reader's turn to; null where the list is only to be read */
   onAsk: ((question: string) => void) | null;
@@ -375,56 +456,77 @@ export function QuestionDeck({
   const dir = useDirection();
   const [open, setOpen] = useState<string | null>(null);
   const answers = new Map(asked.map((a) => [a.question, a.answer]));
-  const order = [...asked.map((a) => questions.find((q) => q.id === a.question)).filter((q): q is WhoAmIQuestion => !!q), ...questions.filter((q) => !answers.has(q.id))];
+  const first = suggested.map((id) => questions.find((q) => q.id === id)).filter((q): q is WhoAmIQuestion => !!q && !answers.has(q.id));
+  const rest = [
+    ...asked.map((a) => questions.find((q) => q.id === a.question)).filter((q): q is WhoAmIQuestion => !!q),
+    ...questions.filter((q) => !answers.has(q.id) && !first.includes(q)),
+  ];
+  const row = (q: WhoAmIQuestion): React.JSX.Element => {
+    const answer = answers.get(q.id);
+    const shown = open === q.id;
+    const meaning = meaningIn(q.meanings, locale) ?? q.meanings.en;
+    return (
+      <View key={q.id} style={[styles.question, { flexDirection: dir.row, backgroundColor: answer === undefined ? colors.glassFill : colors.controlTrack }]}>
+        {meanings ? (
+          <View style={styles.questionText}>
+            <Text style={[styles.questionKu, kurdish(dialect), { color: colors.textPrimary }]}>{q.ku}</Text>
+            <Text style={[styles.muted, dir.text, { color: colors.textSecondary }]}>{meaning}</Text>
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => setOpen(shown ? null : q.id)}
+            accessibilityRole="button"
+            accessibilityState={{ expanded: shown }}
+            aria-expanded={shown}
+            accessibilityLabel={q.ku}
+            style={styles.questionText}
+          >
+            <Text style={[styles.questionKu, kurdish(dialect), { color: colors.textPrimary }]}>{q.ku}</Text>
+            {shown ? <Text style={[styles.muted, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
+          </Pressable>
+        )}
+        {answer !== undefined ? (
+          <Stamp dialect={dialect} answer={answer} />
+        ) : onAsk ? (
+          <ClayButton
+            label={t('games.whoAmI.ask')}
+            accessibilityLabel={`${t('games.whoAmI.ask')}: ${q.ku}`}
+            tone="primary"
+            variant="outline"
+            disabled={busy}
+            onPress={() => onAsk(q.id)}
+          />
+        ) : null}
+      </View>
+    );
+  };
   return (
     <View style={styles.section}>
-      <Text accessibilityRole="header" style={[styles.title, dir.text, { color: colors.textPrimary }]}>
-        {title}
-      </Text>
-      <Text style={[styles.muted, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.tapToSee')}</Text>
-      {order.map((q) => {
-        const answer = answers.get(q.id);
-        const shown = open === q.id;
-        return (
-          <View key={q.id} style={[styles.question, { flexDirection: dir.row, backgroundColor: answer === undefined ? colors.glassFill : colors.controlTrack }]}>
-            <Pressable
-              onPress={() => setOpen(shown ? null : q.id)}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: shown }}
-              aria-expanded={shown}
-              accessibilityLabel={q.ku}
-              style={styles.questionText}
-            >
-              <Text style={[styles.questionKu, kurdish(dialect), { color: colors.textPrimary }]}>{q.ku}</Text>
-              {shown ? <Text style={[styles.muted, dir.text, { color: colors.textSecondary }]}>{meaningIn(q.meanings, locale) ?? q.meanings.en}</Text> : null}
-            </Pressable>
-            {answer !== undefined ? (
-              <Stamp dialect={dialect} answer={answer} />
-            ) : onAsk ? (
-              <ClayButton
-                label={t('games.whoAmI.ask')}
-                accessibilityLabel={`${t('games.whoAmI.ask')}: ${q.ku}`}
-                tone="primary"
-                variant="outline"
-                disabled={busy}
-                onPress={() => onAsk(q.id)}
-              />
-            ) : null}
-          </View>
-        );
-      })}
+      {title ? (
+        <Text accessibilityRole="header" style={[styles.title, dir.text, { color: colors.textPrimary }]}>
+          {title}
+        </Text>
+      ) : null}
+      {meanings ? null : <Text style={[styles.muted, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.tapToSee')}</Text>}
+      {first.length > 0 ? <Text style={[styles.group, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.suggested')}</Text> : null}
+      {first.map(row)}
+      {first.length > 0 && rest.length > 0 ? <Text style={[styles.group, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.otherQuestions')}</Text> : null}
+      {rest.map(row)}
     </View>
   );
 }
 
 export function GuessTiles({
   dialect,
+  title,
   tiles,
   crossed,
   busy = false,
   onGuess,
 }: {
   dialect: GameDialect;
+  /** what the tiles are called, where "Who are you?" is already said above them */
+  title?: string;
   tiles: readonly WhoAmITile[];
   /** the tiles guessed wrongly so far */
   crossed: readonly string[];
@@ -438,12 +540,13 @@ export function GuessTiles({
   const [picked, setPicked] = useState<string | null>(null);
   const open = onGuess !== null;
   const can = open && picked !== null && !crossed.includes(picked) && !busy;
+  const heading = title ?? t('games.whoAmI.guessTitle');
   return (
     <View style={styles.section}>
       <Text accessibilityRole="header" style={[styles.title, dir.text, { color: colors.textPrimary }]}>
-        {t('games.whoAmI.guessTitle')}
+        {heading}
       </Text>
-      <View style={[styles.tiles, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={t('games.whoAmI.guessTitle')}>
+      <View style={[styles.tiles, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={heading}>
         {tiles.map((tile) => {
           const out = crossed.includes(tile.id);
           const on = open && picked === tile.id;
@@ -478,23 +581,40 @@ export function GuessTiles({
 
 // ───────────────────────────────────────────────────────────── the question on the table
 
-/** A question said in full: its Kurdish, large, and what it means at a tap. */
+/**
+ * A question said in full: its Kurdish, large, and what it means at a tap.
+ * `plain` writes the meaning under it from the start, for a room of beginners
+ * reading it together: nothing to press, and nothing kept back.
+ */
 export function QuestionCard({
   dialect,
   question,
   ink,
   soft,
-  large = false,
+  size = 'regular',
+  plain = false,
 }: {
   dialect: GameDialect;
   question: WhoAmIQuestion;
   /** the colours of what it is written on */
   ink: string;
   soft: string;
-  large?: boolean;
+  /** `loud` is for the one screen that holds nothing else: the question to read out to the room */
+  size?: 'regular' | 'large' | 'loud';
+  plain?: boolean;
 }): React.JSX.Element {
   const { t, locale } = useI18n();
   const [open, setOpen] = useState(false);
+  const meaning = meaningIn(question.meanings, locale) ?? question.meanings.en;
+  const ku = <Text style={[size === 'loud' ? styles.saidKuLoud : size === 'large' ? styles.saidKuLarge : styles.saidKu, kurdish(dialect), { color: ink }]}>{question.ku}</Text>;
+  if (plain) {
+    return (
+      <View style={styles.said}>
+        {ku}
+        <Text style={[styles.saidMeaning, { color: soft }]}>{meaning}</Text>
+      </View>
+    );
+  }
   return (
     <Pressable
       onPress={() => setOpen((o) => !o)}
@@ -505,10 +625,8 @@ export function QuestionCard({
       aria-expanded={open}
       style={styles.said}
     >
-      <Text style={[large ? styles.saidKuLarge : styles.saidKu, kurdish(dialect), { color: ink }]}>{question.ku}</Text>
-      <Text style={[open ? styles.saidMeaning : styles.saidHint, { color: soft }]}>
-        {open ? (meaningIn(question.meanings, locale) ?? question.meanings.en) : t('games.whoAmI.tapToSee')}
-      </Text>
+      {ku}
+      <Text style={[open ? styles.saidMeaning : styles.saidHint, { color: soft }]}>{open ? meaning : t('games.whoAmI.tapToSee')}</Text>
     </Pressable>
   );
 }
@@ -567,15 +685,18 @@ export function VerdictCard({
   answers = [],
   note,
   quiet = false,
+  plain = false,
 }: {
   dialect: GameDialect;
   heading: string;
   question: WhoAmIQuestion;
   truth: boolean;
   answers?: readonly VerdictAnswer[];
-  /** a line under the answer: whether the room was right, on one phone */
+  /** a line under the answer: how the friends did, on one phone */
   note?: string;
   quiet?: boolean;
+  /** the question's meaning is under it from the start, as it was when it was read out */
+  plain?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -587,7 +708,7 @@ export function VerdictCard({
   return (
     <View accessibilityLiveRegion="polite" style={[styles.verdict, { backgroundColor: paint.fill }]}>
       <Text style={[styles.verdictHeading, { color: paint.soft }]}>{heading}</Text>
-      <QuestionCard key={question.id} dialect={dialect} question={question} ink={paint.ink} soft={paint.soft} />
+      <QuestionCard key={question.id} dialect={dialect} question={question} ink={paint.ink} soft={paint.soft} plain={plain} />
       <View accessible accessibilityLabel={t('games.whoAmI.verdict', { answer: said })} style={styles.verdictSays}>
         <Text style={[styles.verdictLabel, { color: paint.soft }]}>{t('games.whoAmI.cardSays')}</Text>
         {quiet ? <Stamp dialect={dialect} answer={truth} large /> : <Text style={[styles.verdictWord, kurdish(dialect), { color: paint.ink }]}>{said}</Text>}
@@ -622,40 +743,64 @@ export function VerdictCard({
   );
 }
 
-// ───────────────────────────────────────────────────────────── how it scores
+// ───────────────────────────────────────────────────────────── what folds away
 
-/** How the game scores, folded away under its title: there for whoever asks, out of the way of the game. */
-export function ScoringNote(): React.JSX.Element {
+/**
+ * A part of the screen folded away under its title: there for whoever asks,
+ * out of the way of the game. `bare` lays what is inside straight on the
+ * page, for a list whose rows have fills of their own.
+ */
+export function Fold({
+  title,
+  icon,
+  bare = false,
+  startOpen = false,
+  children,
+}: {
+  title: string;
+  icon?: IconName;
+  bare?: boolean;
+  /** open from the start, where what is inside is the next thing to reach for */
+  startOpen?: boolean;
+  children: React.ReactNode;
+}): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
   const dir = useDirection();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(startOpen);
   return (
-    <View style={[styles.scoring, { backgroundColor: colors.glassFill }]}>
+    <View style={bare ? styles.foldBare : [styles.fold, { backgroundColor: colors.glassFill }]}>
       <Pressable
         onPress={() => setOpen((o) => !o)}
         accessibilityRole="button"
-        accessibilityLabel={t('games.whoAmI.scoring.title')}
+        accessibilityLabel={title}
         accessibilityState={{ expanded: open }}
         aria-expanded={open}
-        style={[styles.scoringHead, { flexDirection: dir.row }]}
+        style={[styles.foldHead, { flexDirection: dir.row }, bare ? [styles.foldHeadBare, { backgroundColor: colors.glassFill }] : null]}
       >
-        <Icon name="star" size={18} color={colors.textSecondary} />
-        <Text style={[styles.scoringTitle, dir.text, { color: colors.textPrimary }]}>{t('games.whoAmI.scoring.title')}</Text>
+        {icon ? <Icon name={icon} size={18} color={colors.textSecondary} /> : null}
+        <Text style={[styles.foldTitle, dir.text, { color: colors.textPrimary }]}>{title}</Text>
         <View style={open ? styles.turned : null}>
           <Icon name="chevron-down" size={18} color={colors.textSecondary} />
         </View>
       </Pressable>
-      {open ? (
-        <View style={styles.scoringLines}>
-          <Text style={[styles.scoringLine, dir.text, { color: colors.textSecondary }]}>
-            {t('games.whoAmI.scoring.own', { start: WHO_AM_I_START_POINTS, question: WHO_AM_I_QUESTION_COST, wrong: WHO_AM_I_WRONG_GUESS_COST })}
-          </Text>
-          <Text style={[styles.scoringLine, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.scoring.help', { count: WHO_AM_I_HELP_POINTS })}</Text>
-          <Text style={[styles.scoringLine, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.scoring.out', { count: WHO_AM_I_GUESSES })}</Text>
-        </View>
-      ) : null}
+      {open ? <View style={bare ? null : styles.foldBody}>{children}</View> : null}
     </View>
+  );
+}
+
+/** How the game scores, folded away under its title. */
+export function ScoringNote(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  return (
+    <Fold title={t('games.whoAmI.scoring.title')} icon="star">
+      <Text style={[styles.scoringLine, dir.text, { color: colors.textSecondary }]}>
+        {t('games.whoAmI.scoring.own', { start: WHO_AM_I_START_POINTS, question: WHO_AM_I_QUESTION_COST, wrong: WHO_AM_I_WRONG_GUESS_COST })}
+      </Text>
+      <Text style={[styles.scoringLine, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.scoring.help', { count: WHO_AM_I_HELP_POINTS })}</Text>
+      <Text style={[styles.scoringLine, dir.text, { color: colors.textSecondary }]}>{t('games.whoAmI.scoring.out', { count: WHO_AM_I_GUESSES })}</Text>
+    </Fold>
   );
 }
 
@@ -663,7 +808,6 @@ const styles = StyleSheet.create({
   stage: { alignSelf: 'center' },
   card: {
     position: 'absolute',
-    minHeight: CARD_H,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 8,
@@ -672,9 +816,15 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     backgroundColor: PAPER,
   },
+  // the same card on a deer drawn small: no room round its mark, and a lighter edge
+  cardSmall: { position: 'absolute', alignItems: 'center', justifyContent: 'center', borderRadius: radii.xs, borderWidth: 2, backgroundColor: PAPER },
   cardMark: { fontSize: 28, fontWeight: typography.weights.bold, color: PAPER_INK },
+  cardMarkSmall: { fontSize: 16, lineHeight: 20, fontWeight: typography.weights.bold, color: PAPER_INK },
   cardWord: { fontSize: 20, fontWeight: typography.weights.bold, color: PAPER_INK },
+  cardWordSmall: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, color: PAPER_INK },
+  cardWordLarge: { fontSize: 30, lineHeight: 38, fontWeight: typography.weights.bold, color: PAPER_INK },
   cardKind: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, color: PAPER_SOFT },
+  cardKindLarge: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, color: PAPER_SOFT },
 
   table: { flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   // the gold round a seat is its turn, a state and not a frame: every other seat's edge is clear
@@ -709,6 +859,14 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   muted: { fontSize: typography.sizes.sm },
+  // what a group of questions is, said small over it
+  group: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 0.8, textTransform: 'uppercase' },
+  // a suggested question is a card of the table's cloth standing on its own edge, and goes down onto it under the thumb
+  suggestEdge: { borderRadius: radii.lg, backgroundColor: TABLE.nightDeep, paddingBottom: 4 },
+  suggestFace: { minHeight: 64, alignItems: 'center', gap: spacing.sm, paddingVertical: 10, paddingHorizontal: spacing.md, borderRadius: radii.lg, backgroundColor: TABLE.nightLight },
+  suggestText: { flex: 1, gap: 2 },
+  suggestKu: { fontSize: 20, lineHeight: 28, fontWeight: typography.weights.bold, color: TABLE.ink },
+  suggestMeaning: { fontSize: typography.sizes.sm, lineHeight: 20, color: TABLE.inkSoft },
   question: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: 6 },
   questionText: { flex: 1, minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: 6 },
   questionKu: { fontSize: 18, fontWeight: typography.weights.semibold },
@@ -743,6 +901,7 @@ const styles = StyleSheet.create({
   said: { alignSelf: 'stretch', minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', gap: 4 },
   saidKu: { fontSize: typography.sizes.lg, lineHeight: 30, fontWeight: typography.weights.bold, textAlign: 'center' },
   saidKuLarge: { fontSize: typography.sizes.xl, lineHeight: 38, fontWeight: typography.weights.bold, textAlign: 'center' },
+  saidKuLoud: { fontSize: typography.sizes.xxl, lineHeight: 46, fontWeight: typography.weights.bold, textAlign: 'center' },
   saidMeaning: { fontSize: typography.sizes.md, textAlign: 'center' },
   saidHint: { fontSize: typography.sizes.xs, textAlign: 'center' },
   yesNo: { alignSelf: 'stretch', gap: spacing.sm },
@@ -763,10 +922,13 @@ const styles = StyleSheet.create({
   verdictMark: { alignItems: 'center', gap: 4 },
   verdictMarkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 
-  scoring: { borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
-  scoringHead: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', gap: spacing.sm },
-  scoringTitle: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  scoringLines: { gap: spacing.xs, paddingBottom: spacing.sm },
+  fold: { borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  // laid bare, only the title is a surface: what opens under it sits on the page like the rows round it
+  foldBare: { gap: spacing.sm },
+  foldHeadBare: { borderRadius: radii.lg, paddingHorizontal: spacing.md },
+  foldHead: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', gap: spacing.sm },
+  foldTitle: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  foldBody: { gap: spacing.xs, paddingBottom: spacing.sm },
   scoringLine: { fontSize: typography.sizes.sm, lineHeight: 21 },
   turned: { transform: [{ rotate: '180deg' }] },
 });

@@ -79,12 +79,13 @@ const END_KEY: Record<NonNullable<WhoAmITableBoard['endedBy']>, TranslationKey> 
  * asking yes/no questions in Kurdish. Never played alone.
  *
  * Without an id, the start: the night stage with the hidden deer, what the
- * game is in a line, and its two ways, each offered only where approved
- * identities and questions allow: on this phone, passed round a room
- * (WhoAmICouch.tsx), or with friends online through the invite sheet. With an
- * id, the room (play/GameRoom.tsx) with the table inside, for an account
- * only. `way` is the way a card on the Games page asked for. The website's
- * whoami/WhoAmI.tsx plays the same game.
+ * game is in two short sentences, and its two ways, each offered only where
+ * approved identities and questions allow. On this phone, passed round a room
+ * (WhoAmICouch.tsx), is the main way in: it comes first and wears the gold
+ * button. With friends online, through the invite sheet, is the quieter card
+ * under it. With an id, the room (play/GameRoom.tsx) with the table inside,
+ * for an account only. `way` is the way a card on the Games page asked for.
+ * The website's whoami/WhoAmI.tsx plays the same game.
  */
 export function WhoAmIScreen({ id: initialId, way, onExit }: { id?: string; way?: 'phone' | 'friends'; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
@@ -184,7 +185,7 @@ function Start({
     <>
       {/* the night every game opens on: the one who wears the card, and what the game is */}
       <Cloth style={styles.stage}>
-        <ForeheadCard dialect={dialect} category={null} identity={null} night />
+        <ForeheadCard dialect={dialect} category={null} identity={null} size={180} night />
         <Text style={styles.stageLine}>{t('games.whoAmI.intro')}</Text>
       </Cloth>
       {phone ? (
@@ -198,7 +199,20 @@ function Start({
           <GoldButton label={t('games.couch.open')} icon="device-phone" onPress={onPhone} style={styles.stretch} />
         </Card>
       ) : null}
-      {together ? (
+      {together && phone ? (
+        // the second way in, said quietly under the first: smaller words, and a button that is only an outline
+        <Card style={styles.quiet}>
+          <Text accessibilityRole="header" style={[styles.quietTitle, { color: colors.textPrimary }]}>
+            {t('games.whoAmI.online')}
+          </Text>
+          <Text style={[styles.note, { color: colors.textSecondary }]}>
+            {t('games.whoAmI.onlineBlurb', { min: WHO_AM_I_TABLE_MIN_PLAYERS, max: WHO_AM_I_TABLE_MAX_PLAYERS })}
+          </Text>
+          <ClayButton label={t('stories.lobby.invite')} icon="people" variant="outline" onPress={askFriends} style={styles.quietButton} />
+        </Card>
+      ) : null}
+      {together && !phone ? (
+        // gold is for the first thing to press: the way with friends wears it only where it is the only way
         <Card style={styles.way}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
             {t('games.whoAmI.online')}
@@ -206,12 +220,7 @@ function Start({
           <Text style={[styles.blurb, { color: colors.textSecondary }]}>
             {t('games.whoAmI.onlineBlurb', { min: WHO_AM_I_TABLE_MIN_PLAYERS, max: WHO_AM_I_TABLE_MAX_PLAYERS })}
           </Text>
-          {/* gold is for the first thing to press: the way with friends wears it only where it is the only way */}
-          {phone ? (
-            <ClayButton label={t('stories.lobby.invite')} icon="people" tone="primary" size="large" onPress={askFriends} style={styles.stretch} />
-          ) : (
-            <GoldButton label={t('stories.lobby.invite')} icon="people" onPress={askFriends} style={styles.stretch} />
-          )}
+          <GoldButton label={t('stories.lobby.invite')} icon="people" onPress={askFriends} style={styles.stretch} />
         </Card>
       ) : null}
       <ScoringNote />
@@ -266,8 +275,9 @@ function moveError(error: ApiError, t: ReturnType<typeof useI18n>['t']): string 
 /**
  * The table itself, inside the room: whose turn it is and what it waits for,
  * against the server's clock; the question on the table, to answer or to
- * watch being answered; the card's verdict; the reader's own questions and
- * tiles; and everyone as a row of foreheads.
+ * watch being answered; the card's verdict; the reader's own questions (the
+ * ones the server suggests asking next first, and for a beginner each with
+ * what it means under it) and tiles; and everyone as a row of foreheads.
  *
  * What the reader must do next is always straight under the banner. On their
  * own turn that is their questions and tiles, and the row of foreheads moves
@@ -381,6 +391,8 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
         title={t(acting && phase === 'ask' ? 'games.whoAmI.questions' : 'games.whoAmI.yourQuestions')}
         questions={mine.questions}
         asked={mine.asked}
+        suggested={mine.suggested}
+        meanings={board.difficulty === 'beginner'}
         busy={busy}
         onAsk={acting && phase === 'ask' ? (question) => void act({ kind: 'ask', question }) : null}
       />
@@ -544,6 +556,9 @@ const styles = StyleSheet.create({
   stage: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
   stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center' },
   way: { alignItems: 'center', gap: spacing.sm },
+  quiet: { alignItems: 'center', gap: spacing.xs },
+  quietTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  quietButton: { alignSelf: 'stretch', marginTop: spacing.xs },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
