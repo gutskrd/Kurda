@@ -402,8 +402,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .mt-page,
-  .mt-page[dir='rtl'],
-  .lg-mini-page {
+  .mt-page[dir='rtl'] {
     transform: none;
   }
   .mt-ribbon {

@@ -12,50 +12,6 @@
  * Logical properties throughout, so a right-to-left page turns round whole.
  */
 
-/* ---- the card's picture: three cards pinned at a slant ------------------------- */
-.dt-mini {
-  grid-auto-flow: column;
-  gap: 12px;
-  width: min(100%, 260px);
-}
-.dt-mini-card {
-  position: relative;
-  display: grid;
-  align-content: start;
-  gap: 6px;
-  width: 64px;
-  height: 72px;
-  padding: 18px 8px 8px;
-  border: 2px solid var(--border-strong);
-  border-radius: 6px;
-  background: var(--bg);
-  color: var(--u-fill, var(--ink-3));
-}
-.dt-mini-card:nth-child(1) {
-  transform: rotate(-4deg);
-}
-.dt-mini-card:nth-child(3) {
-  transform: rotate(3deg);
-}
-.dt-mini-card.is-on {
-  border-color: var(--u-fill, var(--border-strong));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--u-fill, var(--border)) 35%, transparent);
-}
-.dt-mini-card svg {
-  position: absolute;
-  top: 2px;
-  inset-inline-start: calc(50% - 7px);
-}
-.dt-mini-line {
-  display: block;
-  height: 6px;
-  border-radius: var(--r-pill);
-  background: var(--surface-3);
-}
-.dt-mini-line.is-short {
-  width: 60%;
-}
-
 /* ---- the page ------------------------------------------------------------------- */
 .solo-page.dt-page {
   max-width: 1120px;

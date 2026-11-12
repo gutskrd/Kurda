@@ -21,7 +21,7 @@ import { describeError } from '../lib/api';
 import { PlayButton } from '../learn/PlayButton';
 import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability, useGameDialect } from './soloRounds';
-import { CaseMini } from './CaseMini';
+import { GameArt } from './GameArt';
 import './detective.css';
 
 /**
@@ -373,7 +373,7 @@ export function Detective(): React.JSX.Element {
         dialect={dialect}
         title={t('games.detective.name')}
         blurb={t('games.detective.intro')}
-        intro={<CaseMini />}
+        intro={<GameArt game="detective" size={132} moving />}
         difficulties={difficulties}
         open={open}
         renderRound={(round) => <CaseRound key={round.sessionId} round={round} dialect={dialect} />}

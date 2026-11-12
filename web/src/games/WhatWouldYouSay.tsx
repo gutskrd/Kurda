@@ -34,7 +34,7 @@ import { PlayButton } from '../learn/PlayButton';
 import { Tile } from '../learn/Tile';
 import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability, useGameDialect } from './soloRounds';
-import { SceneMini } from './SceneMini';
+import { GameArt } from './GameArt';
 import './scene.css';
 
 /**
@@ -354,7 +354,7 @@ export function WhatWouldYouSay(): React.JSX.Element {
         dialect={dialect}
         title={t('games.say.name')}
         blurb={t('games.say.intro')}
-        intro={<SceneMini />}
+        intro={<GameArt game="what-would-you-say" size={132} moving />}
         difficulties={difficulties}
         open={open}
         renderRound={(round) => <SceneBoard round={round} dialect={dialect} />}

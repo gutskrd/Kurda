@@ -10,34 +10,6 @@
  * character's, which stills under reduced motion).
  */
 
-/* ---- the card's picture: a bubble heard, two to answer with ------------------- */
-.ws-mini {
-  gap: 10px;
-  justify-items: stretch;
-  width: min(100%, 240px);
-}
-.ws-mini-bubble {
-  display: block;
-  height: 26px;
-  border: 2px solid var(--border-strong);
-  border-radius: 14px;
-  background: var(--bg);
-}
-.ws-mini-bubble--heard {
-  width: 70%;
-  justify-self: start;
-  border-color: var(--u-fill, var(--border-strong));
-}
-.ws-mini-bubble--reply {
-  width: 58%;
-  justify-self: end;
-}
-.ws-mini-bubble--reply.is-on {
-  width: 66%;
-  border-color: var(--u-fill, var(--border-strong));
-  background: color-mix(in srgb, var(--u-fill, var(--surface-2)) 22%, var(--bg));
-}
-
 /* ---- the board ------------------------------------------------------------------- */
 .ws-board {
   display: grid;

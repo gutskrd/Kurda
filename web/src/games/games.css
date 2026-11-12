@@ -10,40 +10,6 @@
  * it in script (BuildSentence.tsx).
  */
 
-/* ---- a card's picture: tiles on a line, no words --------------------------------- */
-/* its width in the grid is the grid's (styles/product.css): every game's card is laid out the same */
-.lg-mini {
-  display: grid;
-  gap: 18px;
-  justify-items: center;
-  width: min(100%, 300px);
-}
-.lg-mini-line {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  width: 100%;
-  min-height: 34px;
-  padding-bottom: 8px;
-  border-bottom: 2px solid var(--u-fill, var(--border-strong));
-}
-.lg-mini-tile {
-  height: 26px;
-  border-radius: 9px;
-  border: 2px solid var(--border-strong);
-  background: var(--bg);
-  box-shadow: 0 3px 0 var(--border-strong);
-}
-.lg-mini-tile.is-on {
-  border-color: var(--u-fill, var(--border-strong));
-  box-shadow: 0 3px 0 var(--u-lip, var(--border-strong));
-}
-.lg-mini-tile.is-lifted {
-  transform: translateY(-6px) rotate(-3deg);
-  box-shadow: 0 9px 14px rgba(0, 0, 0, 0.35);
-}
-
 /* ---- the shell ------------------------------------------------------------------ */
 .solo-page {
   max-width: var(--container-narrow);
