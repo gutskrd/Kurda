@@ -26,7 +26,6 @@ vi.mock('../lib/sound', () => ({
 }));
 
 import { HearIt } from './HearIt';
-import { Games } from '../pages/Games';
 import { jsonResponse, renderApp } from '../test/utils';
 
 beforeEach(() => {
@@ -115,7 +114,7 @@ const done = (over: Record<string, unknown> = {}) => ({
 describe('Hear It, Find It', () => {
   it('opens on the ladder a round climbs', async () => {
     server(session([item()]), () => ({}));
-    renderApp(<HearIt />, ['/app/games/hear-it']);
+    renderApp(<HearIt />, ['/app/learn/practice/hear-it']);
     expect(await screen.findByRole('heading', { name: 'Hear It, Find It' })).toBeInTheDocument();
     const ladder = (await screen.findByRole('heading', { name: 'How a round climbs' })).closest('section')!;
     expect(within(ladder).getAllByRole('listitem')).toHaveLength(4);
@@ -125,7 +124,7 @@ describe('Hear It, Find It', () => {
 
   it('plays the clip from its round’s handle, and counts the replays down', async () => {
     server(session([item()]), () => ({}));
-    renderApp(<HearIt />, ['/app/games/hear-it']);
+    renderApp(<HearIt />, ['/app/learn/practice/hear-it']);
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     expect(await screen.findByText('Find the word')).toBeInTheDocument();
     // played as it opens, from an address that names the round and the handle only
@@ -142,9 +141,17 @@ describe('Hear It, Find It', () => {
     expect(sound.played).toHaveLength(3);
   });
 
+  // an exercise of the lessons' practice: the way out of a round is the way back to Learn
+  it('leaves a round to the lessons, not to the games', async () => {
+    server(session([item()]), () => ({}));
+    renderApp(<HearIt />, ['/app/learn/practice/hear-it']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    expect(await screen.findByRole('link', { name: 'Leave the round' })).toHaveAttribute('href', '/app/learn');
+  });
+
   it('gives a play back when the recording would not play', async () => {
     server(session([item()]), () => ({}));
-    renderApp(<HearIt />, ['/app/games/hear-it']);
+    renderApp(<HearIt />, ['/app/learn/practice/hear-it']);
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     await screen.findByText('Replays left: 2');
     act(() => sound.errors.forEach((l) => l(sound.played[0]!)));
@@ -158,7 +165,7 @@ describe('Hear It, Find It', () => {
         ? { index: 0, attempt: 1, correct: false, firstTry: false, done: false, hint: { struck: 1, right: null }, correction: null, why: null, xp: 0, repeat: false }
         : done(),
     );
-    renderApp(<HearIt />, ['/app/games/hear-it']);
+    renderApp(<HearIt />, ['/app/learn/practice/hear-it']);
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     expect(await screen.findByText('Hamo speaking')).toBeInTheDocument();
     expect(screen.getByText('A new voice')).toBeInTheDocument();
@@ -181,7 +188,7 @@ describe('Hear It, Find It', () => {
 
   it('asks what a phrase means in the reader’s own language', async () => {
     server(session([item({ stage: 'phrase', options: null, meanings: [{ en: 'Good morning', de: 'Guten Morgen' }, { en: 'Good night' }, { en: 'Thank you' }, { en: 'See you' }] })]), () => ({}));
-    renderApp(<HearIt />, ['/app/games/hear-it']);
+    renderApp(<HearIt />, ['/app/learn/practice/hear-it']);
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     const choices = await screen.findByRole('group', { name: 'Choices' });
     expect(within(choices).getByRole('button', { name: 'Good morning' })).toHaveAttribute('lang', 'en');
@@ -194,7 +201,7 @@ describe('Hear It, Find It', () => {
         ? { index: 0, attempt: 1, correct: false, firstTry: false, done: false, hint: { struck: null, right: [true, false] }, correction: null, why: null, xp: 0, repeat: false }
         : done({ correction: { text: 'Ez diçim malê.', meanings: { en: 'I am going home.' }, verdict: 'typo', choice: null, speaker: null }, why: 'type' }),
     );
-    renderApp(<HearIt />, ['/app/games/hear-it']);
+    renderApp(<HearIt />, ['/app/learn/practice/hear-it']);
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     const field = await screen.findByRole('textbox', { name: 'What you heard' });
     expect(screen.getByRole('group', { name: 'Kurdish letters' })).toBeInTheDocument();
@@ -214,21 +221,12 @@ describe('Hear It, Find It', () => {
   it('sets Soranî choices right to left', async () => {
     localStorage.setItem('hevalo.learn.courseDialect', 'sorani');
     server(session([item({ options: ['ماڵ', 'باڵ', 'کاڵ', 'خاڵ'] })], 'ckb'), () => ({}));
-    renderApp(<HearIt />, ['/app/games/hear-it']);
+    renderApp(<HearIt />, ['/app/learn/practice/hear-it']);
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     const choices = await screen.findByRole('group', { name: 'Choices' });
     for (const b of within(choices).getAllByRole('button')) {
       expect(b).toHaveAttribute('dir', 'rtl');
       expect(b).toHaveAttribute('lang', 'ckb');
     }
-  });
-});
-
-describe('Learn’s games list', () => {
-  it('lists Hear It, Find It once it can be played', async () => {
-    server(session([item()]), () => ({}));
-    renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'Hear It, Find It' })).closest('article')!;
-    expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/hear-it');
   });
 });

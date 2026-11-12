@@ -20,6 +20,12 @@ export interface JobDefinition<T> {
   name: string;
   schema: ZodType<T>;
   handler: (payload: T, ctx: JobContext) => Promise<void>;
+  /**
+   * How often this job is tried and how long it waits before the first new
+   * try (doubling after that), where the queue's own patience is too short
+   * for it. Whoever enqueues it may still say otherwise for one job.
+   */
+  retry?: { attempts: number; backoffDelayMs: number };
 }
 
 export function defineJob<T>(def: JobDefinition<T>): JobDefinition<T> {

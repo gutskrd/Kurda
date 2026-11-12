@@ -1,10 +1,12 @@
-import type { IncomingInvite, PlayUserEvent } from '@kurda/shared';
+import { isPlayGame, type IncomingInvite, type PlayUserEvent } from '@kurda/shared';
 
 /**
  * The invites the banner shows, kept from `GET /play/invites` and the events
  * on your own channel. Pure, so the rules are tested apart from the banner:
  *
- * - only pending invites that have not run out are shown, newest first;
+ * - only pending invites that have not run out are shown, newest first, and
+ *   only to a game this app can open: one to a game that has since been
+ *   retired is not an invitation to anything;
  * - a new invite from the same host for the same game replaces the old one
  *   (the server cancels the old one too, and says so);
  * - any answer — yours from another device, the host taking it back, the
@@ -23,7 +25,7 @@ export function applyInviteEvent(list: readonly IncomingInvite[], event: PlayUse
 
 export function liveInvites(list: readonly IncomingInvite[], now: number): IncomingInvite[] {
   return list
-    .filter((i) => i.status === 'pending' && Date.parse(i.expiresAt) > now)
+    .filter((i) => i.status === 'pending' && Date.parse(i.expiresAt) > now && isPlayGame(i.game))
     .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
 

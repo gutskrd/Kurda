@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { InviteLists, PlayGame } from '@kurda/shared';
+import { isPlayGame, type InviteLists, type PlayGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
@@ -67,7 +67,9 @@ export function useInvites(enabled = true): { lists: InviteLists | null; refresh
     let alive = true;
     void client.get<InviteLists>('/play/invites').then((r) => {
       if (!alive || !r.ok) return;
-      setLists({ incoming: r.data.incoming ?? [], outgoing: r.data.outgoing ?? [] });
+      // an invite to a game this app does not have (one that is no longer part of Hevalo, sent before it
+      // went) has no banner to draw and no lobby to open: it is left out here, for everything that reads these
+      setLists({ incoming: (r.data.incoming ?? []).filter((i) => isPlayGame(i.game)), outgoing: (r.data.outgoing ?? []).filter((o) => isPlayGame(o.game)) });
     });
     return () => {
       alive = false;

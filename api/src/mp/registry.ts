@@ -2,8 +2,6 @@ import { MULTI_GAMES, type MultiGame } from '@kurda/shared';
 import type { AnyGameModule } from './module.js';
 import { lastLetterModule } from './games/last-letter.js';
 import { impostorModule } from './games/impostor.js';
-import { dontSayModule } from './games/dont-say.js';
-import { bluffModule } from './games/bluff.js';
 import { whoAmIRaceModule } from './games/who-am-i.js';
 
 /**
@@ -16,8 +14,6 @@ import { whoAmIRaceModule } from './games/who-am-i.js';
 export const GAME_MODULES: Readonly<Record<MultiGame, AnyGameModule>> = {
   'last-letter': lastLetterModule,
   impostor: impostorModule,
-  'dont-say': dontSayModule,
-  bluff: bluffModule,
   'who-am-i': whoAmIRaceModule,
 };
 
@@ -27,3 +23,4 @@ export function moduleOf(game: MultiGame): AnyGameModule {
 }
 
 export const ALL_MODULES: readonly AnyGameModule[] = MULTI_GAMES.map((g) => GAME_MODULES[g]);
+

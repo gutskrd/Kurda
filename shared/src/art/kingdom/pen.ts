@@ -1,7 +1,9 @@
 /**
- * The village's isometric pen: the 2:1 diamond projection, the light that
- * falls on every form from the upper left, the ink round each object, and
- * the palette by day and at dusk.
+ * The isometric pen the lesson path's land is drawn with (art/path-land.ts):
+ * the 2:1 diamond projection, the light that falls on every form from the
+ * upper left, the ink round each object, and the palette by day and at dusk.
+ * It was made for The Village, which is no longer part of Hevalo; the path
+ * was drawn to read as the same small world, and still is.
  *
  * World units are laid out on the ground with x running down to the right,
  * y down to the left and z straight up; a step of one along x or y moves one

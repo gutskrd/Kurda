@@ -7,7 +7,7 @@ import { appleTokens } from '../auth/apple-tokens.js';
 import { makeExportJob } from '../jobs/gdpr-jobs.js';
 import { AppError } from '../plugins/errors.js';
 import { guestAccountError, requireAccount, requireAuth, requireRoles } from '../plugins/auth.js';
-import { validateUsername, USERNAME_ERROR_MESSAGE } from './username.js';
+import { USERNAME_CHANGE_COOLDOWN_DAYS, UsernameChangeService } from './username-change.js';
 import { StreakService } from '../streaks/service.js';
 import { SocialService } from '../social/service.js';
 import { FriendService } from '../friends/service.js';
@@ -22,7 +22,7 @@ import { birthDateRequired, isBelowConsentAgeRow, isKnownAdultRow, isMinorRow } 
 import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
 import { leaveThisWeek, returnThisWeek } from '../leagues/service.js';
 
-export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
+export { USERNAME_CHANGE_COOLDOWN_DAYS };
 /** Profile photos are small; cap tighter than the global media limit (KUR-177). */
 export const MAX_PROFILE_PHOTO_BYTES = 5 * 1024 * 1024;
 /** Timezone can be changed at most once per week (KUR-031 anti time-travel). */
@@ -72,7 +72,8 @@ export const patchMeBodySchema = z
        cannot offer something the server would refuse */
     locale: z.enum(APP_LOCALE_CODES).optional(),
     timezone: timezoneSchema.optional(),
-    username: z.string().min(3).max(30).optional(),
+    /** refused here: a username is changed at POST /me/username, which asks for the password (users/username-change.ts) */
+    username: z.string().max(60).optional(),
     /** deny mic → speaking exercises skipped course-wide (KUR-036) */
     skipSpeaking: z.boolean().optional(),
     /** ISO-3166 alpha-2 country, or '' to clear */
@@ -81,6 +82,14 @@ export const patchMeBodySchema = z
     leaguesEnabled: z.boolean().optional(),
   })
   .refine((body) => Object.keys(body).length > 0, { message: 'no fields to update' });
+
+/** A username as it is typed: the rules themselves are users/username.ts, which says which one a name breaks. */
+const usernameQuerySchema = z.object({ username: z.string().min(1).max(60) });
+const changeUsernameBodySchema = z.strictObject({
+  username: z.string().min(1).max(60),
+  /** asked of every account that has a password; one that signs in through another service has none to give */
+  currentPassword: z.string().min(1).max(200).optional(),
+});
 
 interface MeRow {
   id: string;
@@ -587,37 +596,9 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         }
       }
 
+      // a username is not a profile field: it is changed with the password, within limits, and written down (POST /me/username)
       if (body.username !== undefined) {
-        const res = validateUsername(body.username);
-        if (!res.ok) {
-          throw new AppError('INVALID_USERNAME', 400, USERNAME_ERROR_MESSAGE[res.reason], { reason: res.reason });
-        }
-        const username = res.value;
-        const current = await app.db.query<{ username: string; username_changed_at: Date | null }>(
-          `SELECT username, username_changed_at FROM users WHERE id = $1`,
-          [userId],
-        );
-        const row = current.rows[0] as { username: string; username_changed_at: Date | null };
-        // case-insensitive compare: only a real change spends the cooldown (a
-        // re-cased no-op like Mohamad→mohamad is not a "change")
-        if (username.toLowerCase() !== row.username.toLowerCase()) {
-          const cooldownMs = USERNAME_CHANGE_COOLDOWN_DAYS * 24 * 3_600_000;
-          if (row.username_changed_at && Date.now() - new Date(row.username_changed_at).getTime() < cooldownMs) {
-            const availableAt = new Date(new Date(row.username_changed_at).getTime() + cooldownMs);
-            throw new AppError(
-              'USERNAME_CHANGE_COOLDOWN',
-              429,
-              `You can change your username again on ${availableAt.toISOString().slice(0, 10)}.`,
-              {
-                availableAt: availableAt.toISOString(),
-                cooldownDays: USERNAME_CHANGE_COOLDOWN_DAYS,
-                retryAfterSec: Math.ceil((availableAt.getTime() - Date.now()) / 1_000),
-              },
-            );
-          }
-          add('username', username);
-          add('username_changed_at', new Date());
-        }
+        throw new AppError('USERNAME_CHANGE_ELSEWHERE', 400, 'a username is changed at POST /me/username');
       }
 
       if (sets.length === 0) {
@@ -625,7 +606,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         return { user: toMe(unchanged.rows[0] as MeRow) };
       }
 
-      try {
+      {
         const updated = await app.db.query<MeRow>(
           `UPDATE users SET ${sets.join(', ')} WHERE id = $1 RETURNING *`,
           values,
@@ -638,12 +619,59 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         // learning XP, as everyone does
         if (body.leaguesEnabled === true) await returnThisWeek(app.db, userId);
         return { user: toMe(updated.rows[0] as MeRow) };
-      } catch (err) {
-        if ((err as { constraint?: string }).constraint === 'users_username_active_uniq') {
-          throw new AppError('USERNAME_TAKEN', 409, 'username already in use');
-        }
-        throw err;
       }
+    },
+  );
+
+  /*
+   * The username: what a person is told before changing it, whether a name
+   * could be theirs, and the change (users/username-change.ts has the rules).
+   *
+   *   GET  /me/username              where they stand: the wait, the names held for them, whether a password is asked
+   *   GET  /me/username/available    ?username=…  (30 a minute)
+   *   POST /me/username              { username, currentPassword? }  (5 in 15 minutes, as a password change)
+   *
+   * None of it is open to a guest, who has a made-up name until they claim
+   * the account, nor to somebody who may not post: a username is published.
+   */
+  const usernames = new UsernameChangeService(app.db, { jobs: app.jobs ?? null, security: app.securityLog, log: app.log });
+  const requireNamed = async (req: { user?: { id: string; guest?: boolean } }): Promise<string> => {
+    if (req.user!.guest === true) throw guestAccountError();
+    await assertUnrestricted(app.db, req.user!.id, 'post');
+    return req.user!.id;
+  };
+
+  app.get('/me/username', { preHandler: requireAuth }, async (req) => {
+    if (req.user!.guest === true) throw guestAccountError();
+    return usernames.status(req.user!.id);
+  });
+
+  app.get(
+    '/me/username/available',
+    {
+      schema: { querystring: usernameQuerySchema },
+      preHandler: requireAuth,
+      config: { rateLimit: { max: 30, windowMs: 60_000, per: 'user-or-ip' as const } },
+    },
+    async (req) => {
+      if (req.user!.guest === true) throw guestAccountError();
+      return usernames.available(req.user!.id, (req.query as z.infer<typeof usernameQuerySchema>).username);
+    },
+  );
+
+  app.post(
+    '/me/username',
+    {
+      schema: { body: changeUsernameBodySchema },
+      preHandler: requireAuth,
+      config: { rateLimit: { max: 5, windowMs: 15 * 60_000, per: 'user-or-ip' as const } },
+    },
+    async (req) => {
+      const userId = await requireNamed(req);
+      const body = req.body as z.infer<typeof changeUsernameBodySchema>;
+      const result = await usernames.change(userId, body.username, body.currentPassword);
+      const row = await app.db.query<MeRow>(`SELECT * FROM users WHERE id = $1`, [userId]);
+      return { user: toMe(row.rows[0] as MeRow), changed: result.changed, status: await usernames.status(userId) };
     },
   );
 }

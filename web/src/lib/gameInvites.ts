@@ -10,7 +10,7 @@
  * here is the part that is a `MessageKey`, which is web's own type.
  */
 import type { MessageKey } from '../i18n/en';
-import type { GameInviteType } from '@kurda/shared';
+import { isRetiredGame, type GameInviteType } from '@kurda/shared';
 
 export {
   invitePath,
@@ -33,8 +33,6 @@ export const INVITE_NAME_KEY: Record<GameInviteType, MessageKey> = {
   stories: 'games.stories.name',
   'last-letter': 'games.lastLetter.name',
   impostor: 'games.impostor.name',
-  'dont-say': 'games.dontSay.name',
-  bluff: 'games.bluff.name',
   'who-am-i': 'games.whoAmI.name',
 };
 
@@ -44,7 +42,25 @@ export const INVITE_BLURB_KEY: Record<GameInviteType, MessageKey> = {
   stories: 'games.invite.blurb.stories',
   'last-letter': 'games.invite.blurb.lastLetter',
   impostor: 'games.invite.blurb.impostor',
-  'dont-say': 'games.invite.blurb.dontSay',
-  bluff: 'games.bluff.blurb',
   'who-am-i': 'games.whoAmI.blurb',
 };
+
+/**
+ * A lobby link to a game that is no longer part of Hevalo (Don't Say the
+ * Word!, Kurdish Bluff), still sitting in a chat from when it was sent. The
+ * shared reader knows only the games that are played, so it does not see
+ * these; a retired game's lobby lived at its own name, which is all this
+ * needs to know. Whoever draws the message says the game is no longer played
+ * instead of showing a bare address that leads nowhere.
+ */
+const LOBBY_LINK = String.raw`\S*/app/games/([a-z][a-z-]*)\?id=[A-Za-z0-9-]+\S*`;
+
+/** Whether `text` carries a lobby link to a retired game. */
+export function hasRetiredInvite(text: string): boolean {
+  return [...text.matchAll(new RegExp(LOBBY_LINK, 'g'))].some((m) => isRetiredGame(m[1]));
+}
+
+/** `text` without its lobby links to retired games, for showing what the sender wrote round them. */
+export function withoutRetiredInvites(text: string): string {
+  return text.replace(new RegExp(LOBBY_LINK, 'g'), (whole, segment: string) => (isRetiredGame(segment) ? ' ' : whole));
+}

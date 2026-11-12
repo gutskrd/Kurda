@@ -1,0 +1,455 @@
+/*
+ * The start of Kurdish Impostor (impostor/Start.tsx) and the choices drawn as
+ * pictures (impostor/PictureRadio.tsx).
+ *
+ * The game has a look of its own: a night-blue table with gold on it, the
+ * colours of the masked card in its emblem. The hero is that table, in both
+ * themes, because it is a place rather than a panel of the page; everything
+ * under it is the page's own surfaces, each tinted with the colour of the
+ * picture it holds (`--tone`, set where the picture is drawn).
+ *
+ * The one thing to press is gold and stands a little off the page on its own
+ * edge; nothing else on the page is that colour and that weight. Under Reduce
+ * Motion the hand of cards is still and nothing lifts.
+ */
+.imp-start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-6);
+}
+.imp-start p,
+.imp-start h2 {
+  margin: 0;
+}
+
+/* ---- the table: the game in one line, and Play ---- */
+.imp-hero {
+  --night: #2a2150;
+  --night-deep: #171231;
+  --night-ink: #f4efff;
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  border-radius: var(--r-xl);
+  background: radial-gradient(120% 80% at 50% 0%, #4a3a8c 0%, var(--night) 52%, var(--night-deep) 100%);
+  color: var(--night-ink);
+  text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+/* the lamp over the table: one soft pool of gold light behind the cards */
+.imp-hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -20% 10% auto;
+  height: 260px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(242, 182, 50, 0.28), rgba(242, 182, 50, 0));
+}
+.imp-hero-art {
+  display: grid;
+  place-items: center;
+  animation: imp-float 5s ease-in-out infinite;
+}
+.imp-art {
+  display: inline-grid;
+  line-height: 0;
+}
+.imp-hero-meta {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #f2c95a;
+}
+.imp-hero-tagline {
+  /* a heading takes the page's own ink unless told: the table is night in both themes */
+  color: var(--night-ink);
+  max-width: 18ch;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 6.4vw, 2.125rem);
+  font-weight: 700;
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.imp-hero-actions {
+  display: grid;
+  gap: var(--space-3);
+  width: min(100%, 420px);
+  margin-top: var(--space-4);
+}
+/* Play: gold, standing off the table on its own edge */
+.imp-hero-play.btn,
+.couch-deal-btn.btn {
+  --lip: #a8791a;
+  height: 58px;
+  border: 0;
+  background: #f2b632;
+  color: #2a1d05;
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  box-shadow: 0 5px 0 var(--lip);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) ease;
+}
+.imp-hero-play.btn:hover:not(:disabled),
+.couch-deal-btn.btn:hover:not(:disabled) {
+  background: #f7c651;
+}
+.imp-hero-play.btn:active:not(:disabled),
+.couch-deal-btn.btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--lip);
+}
+.couch-deal-btn.btn:disabled {
+  opacity: 0.7;
+}
+.imp-hero-friends.btn {
+  height: 48px;
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--night-ink);
+}
+.imp-hero-friends.btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.36);
+}
+
+/* ---- a shelf: a title and a row or a list of things to choose ---- */
+.imp-shelf,
+.imp-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+}
+.imp-shelf-title {
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 700;
+  /* a link to it from the top of the page must not leave it under the bar */
+  scroll-margin-top: calc(var(--nav-h, 64px) + var(--space-4));
+}
+.imp-panel {
+  padding: var(--space-5);
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border);
+  background: var(--surface-solid);
+}
+.imp-panel-lead {
+  color: var(--ink-2);
+}
+
+/* the three ways to play, each a card that opens the setup with it chosen */
+.imp-ways {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.imp-way {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  height: 100%;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-3);
+  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in srgb, var(--tone) 34%, var(--border));
+  background: color-mix(in srgb, var(--tone) 14%, var(--surface-solid));
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    transform var(--dur) var(--ease-spring),
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.imp-way:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--tone) 70%, var(--border));
+  background: color-mix(in srgb, var(--tone) 22%, var(--surface-solid));
+}
+.imp-way-art {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--tone) 22%, transparent);
+}
+.imp-way-text {
+  display: grid;
+  gap: 2px;
+}
+.imp-way-name {
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+.imp-way-note {
+  font-size: var(--text-secondary);
+  line-height: 1.35;
+  color: var(--ink-3);
+}
+.imp-way-go {
+  display: grid;
+  color: var(--ink-3);
+}
+:dir(rtl) .imp-way-go {
+  transform: scaleX(-1);
+}
+
+/* the categories, on one row that scrolls: each opens the setup with it chosen */
+.imp-cat-strip {
+  display: flex;
+  gap: var(--space-2);
+  margin: 0 calc(var(--space-4) * -1);
+  padding: 2px var(--space-4) var(--space-2);
+  list-style: none;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+}
+.imp-cat-strip::-webkit-scrollbar {
+  display: none;
+}
+.imp-cat-strip li {
+  flex: none;
+  scroll-snap-align: start;
+}
+.imp-cat {
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  width: 104px;
+  padding: var(--space-3) var(--space-2);
+  border-radius: var(--r-lg);
+  border: 1px solid color-mix(in srgb, var(--tone) 30%, var(--border));
+  background: color-mix(in srgb, var(--tone) 14%, var(--surface-solid));
+  color: var(--ink);
+  text-align: center;
+  text-decoration: none;
+  transition:
+    transform var(--dur) var(--ease-spring),
+    background var(--dur-fast) ease;
+}
+.imp-cat:hover {
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--tone) 24%, var(--surface-solid));
+}
+.imp-cat-art {
+  margin-bottom: 4px;
+}
+.imp-cat-name {
+  max-width: 100%;
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+.imp-cat-meaning {
+  max-width: 100%;
+  font-size: var(--text-caption);
+  line-height: 1.2;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+
+/* ---- a choice among pictures (PictureRadio.tsx) ---- */
+.pic-radio {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.pic-radio-options {
+  display: grid;
+  gap: var(--space-2);
+}
+.pic-radio.is-cards .pic-radio-options {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+}
+.pic-radio.is-tiles .pic-radio-options {
+  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+}
+.pic-radio.is-strip .pic-radio-options {
+  display: flex;
+  margin: 0 calc(var(--space-4) * -1);
+  padding: 2px var(--space-4) var(--space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.pic-radio.is-strip .pic-radio-options::-webkit-scrollbar {
+  display: none;
+}
+.pic-option {
+  position: relative;
+  display: grid;
+  gap: var(--space-3);
+  border-radius: var(--r-lg);
+  border: 2px solid transparent;
+  background: color-mix(in srgb, var(--tone) 12%, var(--surface-solid));
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    transform var(--dur) var(--ease-spring),
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.pic-option input {
+  /* the radio itself is the control a keyboard and a screen reader use */
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+.pic-option:hover {
+  background: color-mix(in srgb, var(--tone) 20%, var(--surface-solid));
+}
+.pic-option.is-on {
+  border-color: color-mix(in srgb, var(--tone) 82%, var(--ink));
+  background: color-mix(in srgb, var(--tone) 26%, var(--surface-solid));
+}
+.pic-option:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.pic-option-art {
+  display: grid;
+  place-items: center;
+}
+.pic-option-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.pic-option-label {
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+/* a long name on a small square: a size down, and never cut inside a word it could keep whole */
+.pic-radio.is-tiles .pic-option.is-long .pic-option-label,
+.pic-radio.is-strip .pic-option.is-long .pic-option-label,
+.imp-cat.is-long .imp-cat-name {
+  font-size: 0.8125rem;
+  letter-spacing: -0.01em;
+  overflow-wrap: break-word;
+}
+.pic-radio-more {
+  justify-self: center;
+  margin-top: var(--space-3);
+}
+.pic-option-hint {
+  font-size: var(--text-caption);
+  line-height: 1.3;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+/* chosen is told by a tick as well as by colour */
+.pic-option-tick {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: transparent;
+}
+.pic-option.is-on .pic-option-tick {
+  border-color: transparent;
+  background: var(--ink);
+}
+.pic-option.is-on .pic-option-tick::after {
+  content: '';
+  width: 10px;
+  height: 6px;
+  margin-top: -2px;
+  border-left: 2.5px solid var(--app-bg);
+  border-bottom: 2.5px solid var(--app-bg);
+  transform: rotate(-45deg);
+}
+/* wide cards: the picture, then the words, then the tick */
+.pic-radio.is-cards .pic-option {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-3);
+}
+.pic-radio.is-cards .pic-option-art {
+  width: 68px;
+  height: 68px;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--tone) 20%, transparent);
+}
+.pic-radio.is-cards .pic-option-label {
+  font-size: var(--text-body);
+}
+.pic-radio.is-cards .pic-option-hint {
+  font-size: var(--text-secondary);
+}
+/* small squares: the picture over its name, the tick in the corner */
+.pic-radio.is-tiles .pic-option,
+.pic-radio.is-strip .pic-option {
+  justify-items: center;
+  align-content: start;
+  gap: 6px;
+  min-height: 118px;
+  padding: var(--space-3) 6px var(--space-2);
+  text-align: center;
+}
+.pic-radio.is-strip .pic-option {
+  flex: none;
+  width: 100px;
+}
+.pic-radio.is-tiles .pic-option-text,
+.pic-radio.is-strip .pic-option-text {
+  justify-items: center;
+}
+.pic-radio.is-tiles .pic-option-tick,
+.pic-radio.is-strip .pic-option-tick {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  width: 18px;
+  height: 18px;
+  border: 0;
+}
+.pic-radio.is-tiles .pic-option.is-on .pic-option-tick::after,
+.pic-radio.is-strip .pic-option.is-on .pic-option-tick::after {
+  width: 8px;
+  height: 5px;
+  border-width: 2px;
+}
+
+@keyframes imp-float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-1.5deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(1.5deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .imp-hero-art {
+    animation: none;
+  }
+  .imp-way,
+  .imp-cat,
+  .pic-option,
+  .imp-hero-play.btn,
+  .couch-deal-btn.btn {
+    transition: none;
+  }
+  .imp-way:hover,
+  .imp-cat:hover {
+    transform: none;
+  }
+}

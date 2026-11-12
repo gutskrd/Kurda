@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { EmailProvider } from './provider.js';
+import { renderEmailHtml, type EmailBlock, type EmailBrand } from './layout.js';
 
 /** A file that came with a support email: what it is, never its bytes (those stay in Resend). */
 export interface SupportAttachment {
@@ -222,6 +223,27 @@ export function replySubject(subject: string): string {
   return /^re:/i.test(bare) ? bare : `Re: ${bare || '(no subject)'}`;
 }
 
+/** As much of the mail an answer answers as is quoted under it in the designed email; the text version carries all of it. */
+const QUOTED_UP_TO = 4000;
+
+/**
+ * An answer as a designed email: the sender's mark, what the person at the
+ * desk wrote (their paragraphs and line breaks kept), and the mail it answers
+ * quoted under it. No picture and no heading: it is a letter, not a notice.
+ */
+export function answerHtml(answer: { brand: EmailBrand; subject: string; body: string; quoted?: { caption: string; text: string } }): string {
+  const blocks: EmailBlock[] = answer.body
+    .split(/\r?\n\s*\r?\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter((paragraph) => paragraph !== '')
+    .map((paragraph) => ({ kind: 'text', parts: [paragraph] }));
+  if (answer.quoted) {
+    const text = answer.quoted.text.trim();
+    blocks.push({ kind: 'quote', caption: answer.quoted.caption, text: text.length > QUOTED_UP_TO ? `${text.slice(0, QUOTED_UP_TO)}…` : text });
+  }
+  return renderEmailHtml({ brand: answer.brand, lang: 'en', title: answer.subject, preheader: answer.body.trim().slice(0, 140), blocks, align: 'start' });
+}
+
 /**
  * The support inbox: mail received at the support address, kept so admins can
  * read it in the panel and answer it from there.
@@ -230,11 +252,16 @@ export function replySubject(subject: string): string {
  * Resend to be up, and reading it again would cost a call every time. An
  * answer goes out from the support address, threaded under the mail it answers
  * (In-Reply-To / References), with the mail it answers quoted under it.
+ *
+ * Mail written to an address at zagrosian.com is the business's own post. Where
+ * an address for it is set (`zagrosianFrom`), its answer goes out from that
+ * address under Zagrosian's mark; otherwise it is answered as support, as
+ * everything was before.
  */
 export class SupportInbox {
   constructor(
     private readonly pool: pg.Pool,
-    private readonly deps: { reader: ReceivedMailReader | null; provider: EmailProvider; from: string },
+    private readonly deps: { reader: ReceivedMailReader | null; provider: EmailProvider; from: string; zagrosianFrom?: string },
   ) {}
 
   /** Whether bodies can be read (a key that may read received mail is set). */
@@ -374,6 +401,15 @@ export class SupportInbox {
     const when = mail.received_at.toUTCString();
     const who = mail.from_name ? `${mail.from_name} <${mail.from_address}>` : mail.from_address;
     const text = quoted ? `${body}\n\nOn ${when}, ${who} wrote:\n${quoted}` : body;
+    const asZagrosian = this.deps.zagrosianFrom !== undefined && mail.to_addresses.some((to) => /@zagrosian\.com>?\s*$/i.test(to));
+    const from = asZagrosian ? this.deps.zagrosianFrom! : this.deps.from;
+    const original = mail.text_body ?? (mail.html_body ? htmlToPreviewText(mail.html_body) : '');
+    const html = answerHtml({
+      brand: asZagrosian ? 'zagrosian' : 'hevalo',
+      subject: replySubject(mail.subject),
+      body,
+      ...(original ? { quoted: { caption: `On ${when}, ${who} wrote:`, text: original } } : {}),
+    });
     const threadId = threadIdOf(mail.message_id);
     let messageId: string;
     try {
@@ -381,8 +417,9 @@ export class SupportInbox {
         to: mail.from_address,
         subject: replySubject(mail.subject),
         text,
-        from: this.deps.from,
-        replyTo: this.deps.from,
+        html,
+        from,
+        replyTo: from,
         ...(threadId ? { headers: { 'In-Reply-To': threadId, References: threadId } } : {}),
       }));
     } catch (err) {

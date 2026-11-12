@@ -65,11 +65,15 @@ export function registerRankRoutes(
     },
   );
 
-  /** Your remembered Rated/Friendly choice per game (what a setup sheet starts on). */
+  /**
+   * Your remembered Rated/Friendly choice per game (what a setup sheet starts
+   * on). Only for the games there are: a choice kept for a game that is no
+   * longer part of Hevalo has no sheet to start.
+   */
   app.get('/ranks/preferences', { preHandler: requireAccount }, async (req) => {
     const rows = await app.db.query<{ game: RankedGame; rated: boolean }>(
-      `SELECT game, rated FROM rank_preferences WHERE user_id = $1`,
-      [req.user!.id],
+      `SELECT game, rated FROM rank_preferences WHERE user_id = $1 AND game = ANY($2::text[])`,
+      [req.user!.id, [...RANKED_GAMES]],
     );
     return { preferences: Object.fromEntries(rows.rows.map((r) => [r.game, r.rated])) as Partial<Record<RankedGame, boolean>> };
   });

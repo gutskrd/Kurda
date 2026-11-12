@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { jsonResponse } from '../test/utils';
 import { renderPlay } from '../play/testing';
 import { forgetPartyOffers } from '../party/offer';
+import { forgetImpostorCategories } from './categories';
 import { Impostor } from './Impostor';
 
 /**
@@ -19,6 +20,7 @@ afterEach(() => {
   vi.unstubAllGlobals();
   localStorage.clear();
   forgetPartyOffers();
+  forgetImpostorCategories();
 });
 
 const me = { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@example.com', emailVerified: true } };
@@ -122,6 +124,23 @@ const offered = (kmr: boolean) => ({
   '/games/availability?dialect=ckb': { dialect: 'ckb', games: [{ id: 'impostor', available: false, difficulties: [], levels: {}, levelled: true, minimum: 12 }] },
 });
 
+// the categories with enough approved cards for a game, as the server lists them
+const categories = {
+  '/games/impostor/couch?dialect=kmr': {
+    dialect: 'kmr',
+    difficulties: [
+      {
+        difficulty: 'beginner',
+        cards: 16,
+        categories: [
+          { slug: 'animals', ku: 'heywan', meanings: { en: 'animal' }, cards: 8 },
+          { slug: 'food', ku: 'xwarin', meanings: { en: 'food' }, cards: 5 },
+        ],
+      },
+    ],
+  },
+};
+
 describe('Kurdish Impostor, the start', () => {
   it('says plainly where it is not offered, with no promise', async () => {
     serve(offered(false));
@@ -139,7 +158,26 @@ describe('Kurdish Impostor, the start', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
     await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/play/lobbies'))?.body).toMatchObject({
       game: 'impostor',
-      settings: { dialect: 'kmr', difficulty: 'beginner', clueSeconds: 45 },
+      settings: { dialect: 'kmr', difficulty: 'beginner', clueSeconds: 45, category: null },
+    }));
+    // no category has enough approved cards yet: the choice is not shown at all
+    expect(screen.queryByRole('radiogroup', { name: 'Category' })).toBeNull();
+  });
+
+  it('lets the host draw the word from one category, or from any, and give a full minute for a clue', async () => {
+    const calls = serve({ ...offered(true), ...categories, 'POST /play/lobbies': { game: 'impostor', lobbyId: 'new1', invited: 0 } });
+    renderPlay(<Impostor />, { route: '/app/games/impostor' });
+    const group = await screen.findByRole('radiogroup', { name: 'Category' });
+    expect(within(group).getAllByRole('radio')).toHaveLength(3);
+    expect(within(group).getByRole('radio', { name: 'Any' })).toBeChecked();
+    // the category’s Kurdish name is marked as Kurdish, its meaning in the reader’s language beside it
+    expect(within(group).getByText('heywan')).toHaveAttribute('lang', 'ku');
+    await userEvent.click(within(group).getByRole('radio', { name: /heywan/ }));
+    await userEvent.click(screen.getByRole('radio', { name: '60 s' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
+    await waitFor(() => expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/play/lobbies'))?.body).toMatchObject({
+      game: 'impostor',
+      settings: { dialect: 'kmr', difficulty: 'beginner', clueSeconds: 60, category: 'animals' },
     }));
   });
 });
@@ -150,6 +188,13 @@ describe('Kurdish Impostor, the room', () => {
     renderPlay(<Impostor />, { route: '/app/games/impostor?id=g1' });
     expect(await screen.findByText(/Beginner · 30 s/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Waiting for more players…' })).toBeDisabled();
+  });
+
+  it('names the category the host chose to everyone waiting in the lobby', async () => {
+    serve({ ...categories, '/mp/impostor/g1': room({ settings: { dialect: 'kmr', difficulty: 'beginner', clueSeconds: 60, category: 'animals' } }) });
+    renderPlay(<Impostor />, { route: '/app/games/impostor?id=g1' });
+    await waitFor(() => expect(document.querySelector('.party-lobby-note')).toHaveTextContent('Beginner · heywan · 60 s'));
+    expect(screen.getByText('heywan')).toHaveAttribute('lang', 'ku');
   });
 
   it('puts the speaker in the light, shows your card, the clues so far, and checks your clue before it is sent', async () => {

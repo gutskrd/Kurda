@@ -1,10 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, screen, within } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LAST_LETTER_LEARN_ENTRY, type SentenceItemView, type SentenceLadderView, type SoloSessionView } from '@kurda/shared';
+import type { SentenceItemView, SentenceLadderView, SoloSessionView } from '@kurda/shared';
 import { BuildSentence, difficultyForStep } from './BuildSentence';
-import { Games } from '../pages/Games';
-import { forgetLastLetterAvailability } from '../lastletter/availability';
 import { jsonResponse, renderApp } from '../test/utils';
 
 afterEach(() => {
@@ -55,7 +53,7 @@ interface Answer {
 }
 
 /** A server for one round: the answers it is sent are recorded, and answered from `grade`. */
-function server(round: SoloSessionView<SentenceItemView>, grade: (a: Answer) => unknown, results: unknown, availability = true, chain = false) {
+function server(round: SoloSessionView<SentenceItemView>, grade: (a: Answer) => unknown, results: unknown, availability = true) {
   const sent: Answer[] = [];
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
@@ -64,7 +62,6 @@ function server(round: SoloSessionView<SentenceItemView>, grade: (a: Answer) => 
       if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'ada@example.com', emailVerified: true } });
       if (url.includes('/games/availability'))
         return jsonResponse(200, { dialect: round.dialect, games: [{ id: 'build-sentence', available: availability, difficulties: availability ? ['beginner'] : [], levels: {}, levelled: true, minimum: 30 }] });
-      if (url.includes('/mp/last-letter/availability')) return jsonResponse(200, { dialects: [{ dialect: 'kmr', group: chain, solo: false }] });
       if (url.includes('/games/build-sentence/ladder')) return jsonResponse(200, { ...ladder, dialect: round.dialect });
       if (url.endsWith('/games/solo/sessions')) return jsonResponse(201, round);
       if (url.includes('/answers')) {
@@ -95,7 +92,7 @@ const done = (index: number, correct: boolean, firstTry: boolean, attempt: numbe
 describe('Build a Kurdish Sentence', () => {
   it('opens on the ladder, with the learner’s rung and only the difficulties that can be played', async () => {
     server(session('kmr', [['a', 'b']]), () => ({}), {});
-    renderApp(<BuildSentence />, ['/app/games/build-sentence']);
+    renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
     expect(await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeInTheDocument();
     const rungs = within((await screen.findByText('The ladder')).closest('section')!).getAllByRole('listitem');
     expect(rungs).toHaveLength(6);
@@ -113,7 +110,7 @@ describe('Build a Kurdish Sentence', () => {
       (a) => (a.attempt === 1 ? { index: 0, attempt: 1, correct: false, firstTry: false, done: false, hint: { firstWrong: 0 }, correction: null, why: null, xp: 0, repeat: false } : done(0, false, false, 2)),
       {},
     );
-    renderApp(<BuildSentence />, ['/app/games/build-sentence']);
+    renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     expect(await screen.findByText('Meaning 0')).toBeInTheDocument();
 
@@ -157,7 +154,7 @@ describe('Build a Kurdish Sentence', () => {
       items: [{ index: 0, correct: false, firstTry: false, xp: 0, repeat: false }],
       streak: null,
     });
-    renderApp(<BuildSentence />, ['/app/games/build-sentence']);
+    renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     await userEvent.click(within(await screen.findByRole('group', { name: 'Words to use' })).getByRole('button', { name: 'a' }));
     await userEvent.click(screen.getByRole('button', { name: 'Check' }));
@@ -167,10 +164,38 @@ describe('Build a Kurdish Sentence', () => {
     expect(screen.queryByText(/^\+\d+ XP$/)).toBeNull();
   });
 
+  /*
+   * It is an exercise of the lessons' practice, not a game: the way out of a
+   * round and the way back from its results both lead to Learn, worded as a
+   * lesson's are, and another go is another round.
+   */
+  it('leaves to the lessons, and offers another round rather than another game', async () => {
+    server(session('kmr', [['a', 'b']]), () => done(0, true, true, 1), {
+      correct: 1,
+      total: 1,
+      firstTry: 1,
+      xp: 2,
+      learningCounted: true,
+      needed: 1,
+      items: [{ index: 0, correct: true, firstTry: true, xp: 2, repeat: false }],
+      streak: null,
+    });
+    renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    expect(await screen.findByRole('link', { name: 'Leave the round' })).toHaveAttribute('href', '/app/learn');
+    await userEvent.click(within(await screen.findByRole('group', { name: 'Words to use' })).getByRole('button', { name: 'a' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Check' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
+    expect(await screen.findByRole('link', { name: 'Back to Learn' })).toHaveAttribute('href', '/app/learn');
+    expect(screen.getByRole('button', { name: 'Another round' })).toBeInTheDocument();
+    expect(screen.queryByText('Back to games')).toBeNull();
+    expect(screen.queryByText('Play again')).toBeNull();
+  });
+
   it('reads a Soranî round right to left', async () => {
     localStorage.setItem('hevalo.learn.courseDialect', 'sorani');
     server(session('ckb', [['ماڵ', 'من']]), () => ({}), {});
-    renderApp(<BuildSentence />, ['/app/games/build-sentence']);
+    renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
     expect(await screen.findByText('In Soranî')).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     expect(await screen.findByRole('group', { name: 'Your sentence' })).toHaveAttribute('dir', 'rtl');
@@ -181,45 +206,5 @@ describe('Build a Kurdish Sentence', () => {
     expect(difficultyForStep(1)).toBe('beginner');
     expect(difficultyForStep(5)).toBe('intermediate');
     expect(difficultyForStep(6)).toBe('advanced');
-  });
-});
-
-describe('Learn’s games list', () => {
-  it('adds a learning game in the same kind of box once it can be played', async () => {
-    server(session('kmr', [['a']]), () => ({}), {});
-    renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).closest('article')!;
-    expect(card).toHaveClass('game-tile');
-    expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/build-sentence');
-    // the games that were there are all still there
-    expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
-  });
-
-  it('shows it as coming soon, with no way in, while there is not enough approved content in the learner’s Kurdish', async () => {
-    server(session('kmr', [['a']]), () => ({}), {}, false);
-    renderApp(<Games />, ['/app/games']);
-    expect(await screen.findByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
-    // once the count has come back, and said no
-    const card = (await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).closest('article')!;
-    expect(card).toHaveClass('is-soon');
-    expect(within(card).getByText('Coming soon')).toBeInTheDocument();
-    expect(within(card).queryByRole('link', { name: 'Play' })).toBeNull();
-  });
-
-  it('lists The Last Letter where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
-    forgetLastLetterAvailability();
-    server(session('kmr', [['a']]), () => ({}), {}, true, true);
-    renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'The Last Letter' })).closest('article')!;
-    expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', LAST_LETTER_LEARN_ENTRY.path);
-    cleanup();
-    forgetLastLetterAvailability();
-    server(session('kmr', [['a']]), () => ({}), {}, true, false);
-    renderApp(<Games />, ['/app/games']);
-    expect(await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeInTheDocument();
-    // still listed, as coming soon, after the games that can be played
-    const soon = screen.getByRole('heading', { name: 'The Last Letter' }).closest('article')!;
-    expect(within(soon).getByText('Coming soon')).toBeInTheDocument();
-    expect(within(soon).queryByRole('link', { name: 'Play' })).toBeNull();
   });
 });

@@ -22,17 +22,20 @@ import type { MessageKey } from '../i18n/en';
 import { prefersReducedMotion } from '../lib/motion';
 import { Tile } from '../learn/Tile';
 import { SoloGameShell, type SoloRound } from './SoloGameShell';
-import { useAvailability, useGameDialect } from './learnGames';
+import { useAvailability, useGameDialect } from './soloRounds';
 
 /**
- * Build a Kurdish Sentence (/app/games/build-sentence).
+ * Build a Kurdish Sentence (/app/learn/practice/build-sentence), an exercise
+ * of the lessons' practice. It is a round of the solo kit like the games
+ * played alone, which is why it lives beside them; Learn's Lessons half is
+ * where a learner finds it (learn/practiceTools.tsx).
  *
  * The stage: the meaning on a card, a ruled line the sentence is laid on,
  * and a tray of word tiles under it — the sentence's own words and a few that
  * are not. A tile lifts off the tray under the finger and snaps onto the end
  * of the line; one tapped on the line flies home to its place in the tray,
  * which keeps a ghost of it so nothing shuffles. When the line is right it
- * settles: the tiles close up and the rule fills with the game's colour.
+ * settles: the tiles close up and the rule fills with the exercise's colour.
  *
  * A wrong first try marks the first word out of place on the player's own
  * line and leaves the rest to them; once an item is done the sentence is laid
@@ -46,7 +49,7 @@ import { useAvailability, useGameDialect } from './learnGames';
 
 type Round = SoloRound<SentenceItemView, SentenceHint, SentenceCorrection>;
 
-/** The game's colour, from the registry: one of the path's tones. */
+/** The exercise's colour, from the registry: one of the path's tones. */
 const TONE = learnGame('build-sentence').tone;
 
 export const RUNG_KEY: Record<SentenceRung, MessageKey> = {

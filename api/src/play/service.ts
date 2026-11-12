@@ -5,6 +5,7 @@ import {
   MAX_INVITEES_PER_REQUEST,
   MAX_PENDING_PLAY_INVITES,
   REMATCH_OFFER_SECONDS,
+  isRetiredGame,
   normalizeJoinCode,
   type ChatGameRef,
   type DeclineReason,
@@ -385,6 +386,11 @@ export class PlayService {
   async accept(userId: string, inviteId: string): Promise<{ game: PlayGame; lobbyId: string }> {
     const row = await this.ownInvite(inviteId, userId, 'invitee_id');
     const answer = { game: row.game, lobbyId: row.lobby_id };
+    // an invite to a game that is no longer part of Hevalo leads nowhere: it ends here, as one to a lobby that closed does
+    if (isRetiredGame(row.game)) {
+      if (row.status === 'pending') await this.closeInvite(row, 'expired');
+      throw gameNotFound();
+    }
     if (row.status === 'accepted') return answer;
     if (row.status !== 'pending') throw new AppError('INVITE_CLOSED', 409, 'this invite is no longer open', { status: row.status });
     const outcome = await this.adapter(row.game).join(userId, row.lobby_id);
@@ -424,7 +430,8 @@ export class PlayService {
       [code],
     );
     const row = found.rows[0];
-    if (!row) throw gameNotFound();
+    // a code left on a lobby of a game that is no longer played is nobody's code
+    if (!row || isRetiredGame(row.game)) throw gameNotFound();
     const outcome = await this.adapter(row.game).join(userId, row.id);
     if (outcome === 'joined' || outcome === 'already') return { game: row.game, lobbyId: row.id };
     if (outcome === 'started') throw new AppError('GAME_STARTED', 409, 'this game has already started');
@@ -500,6 +507,8 @@ export class PlayService {
     );
     const groups = new Map<string, { game: PlayGame; lobbyId: string; invitees: OutgoingInviteState[] }>();
     for (const r of outgoingRows.rows) {
+      // what was sent for a game that is no longer played is not something a host can still act on
+      if (isRetiredGame(r.game)) continue;
       const key = `${r.game}:${r.lobby_id}`;
       let group = groups.get(key);
       if (!group) {

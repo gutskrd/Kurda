@@ -5,7 +5,7 @@ import type { LobbyCard } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from './testing/navigation';
-import { cardAction, cardSpent, cardStamp, ChatGameCard, gameCardOf } from './ChatGameCard';
+import { cardAction, cardSpent, cardStamp, ChatGameCard, gameCardOf, retiredGameOf } from './ChatGameCard';
 
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -71,6 +71,36 @@ describe('gameCardOf', () => {
     });
     expect(gameCardOf({ body: 'just words' })).toBeNull();
     expect(gameCardOf({ kind: 'gift', body: null })).toBeNull();
+  });
+
+  /*
+   * A chat keeps what was sent in it. An invitation to Don't Say the Word! or
+   * Kurdish Bluff, sent while those were games, names a game that has no
+   * screen any more: it is not a card, and nothing in the thread tries to
+   * open it.
+   */
+  it('makes no card of an invitation to a game that has been retired', () => {
+    expect(gameCardOf({ kind: 'game', game: { game: 'dont-say' as never, lobbyId: 'x' }, body: null })).toBeNull();
+    expect(gameCardOf({ kind: 'game', game: { game: 'bluff' as never, lobbyId: 'x' }, body: null })).toBeNull();
+    expect(gameCardOf({ kind: 'text', body: `Come! https://hevalo.app/app/games/dont-say?id=${LOBBY}` })).toBeNull();
+  });
+});
+
+describe('retiredGameOf', () => {
+  it('knows an invitation to a retired game, as a game message and as an old link, keeping the words around the link', () => {
+    expect(retiredGameOf({ kind: 'game', game: { game: 'dont-say', lobbyId: 'x' }, body: null })).toEqual({ rest: '' });
+    expect(retiredGameOf({ kind: 'game', game: { game: 'bluff', lobbyId: 'x' }, body: null })).toEqual({ rest: '' });
+    expect(retiredGameOf({ kind: 'text', body: `Come! https://hevalo.app/app/games/bluff?id=${LOBBY}` })).toEqual({ rest: 'Come!' });
+    expect(retiredGameOf({ body: `/app/games/dont-say?id=${LOBBY}` })).toEqual({ rest: '' });
+  });
+
+  it('leaves alone a game that is still played, plain words and a gift', () => {
+    expect(retiredGameOf({ kind: 'game', game: { game: 'rhyme-match', lobbyId: 'x' }, body: null })).toBeNull();
+    expect(retiredGameOf({ kind: 'text', body: `https://hevalo.app/app/games/impostor?id=${LOBBY}` })).toBeNull();
+    expect(retiredGameOf({ kind: 'text', body: 'Do you remember the bluff we played?' })).toBeNull();
+    expect(retiredGameOf({ kind: 'gift', body: null })).toBeNull();
+    // a link to a game that is still played wins over one that is not
+    expect(retiredGameOf({ kind: 'text', body: `/app/games/bluff?id=${LOBBY} /app/games/impostor?id=${LOBBY}` })).toBeNull();
   });
 });
 

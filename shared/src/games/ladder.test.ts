@@ -11,7 +11,7 @@ import {
   stepAfterRound,
 } from './build-sentence/ladder.js';
 import { GAME_DIFFICULTIES, DIFFICULTY_LEVELS, answerXp, availableDifficulties, roundCountsAsLearning, roundLearningNeeds, roundXpCeiling } from './solo.js';
-import { LEARN_GAMES, LEARN_GAME_XP_SOURCES, LEARN_GAME_IDS, learnGame, listedLearnGames } from './registry.js';
+import { LEARN_GAMES, LEARN_GAME_XP_SOURCES, LEARN_GAME_IDS, RETIRED_GAME_IDS, RETIRED_GAME_XP_SOURCES, isLearnGameId, isRetiredGame, learnGame, lessonExercises, listedLearnGames } from './registry.js';
 import type { LearnGameId } from './registry.js';
 
 describe('stepping up the ladder', () => {
@@ -142,17 +142,39 @@ describe('the registry', () => {
     expect(new Set(sources).size).toBe(sources.length);
     for (const s of LEARN_GAME_XP_SOURCES) expect(s).toMatch(/^game_[a-z_]+$/);
     expect(learnGame('build-sentence').minimum).toBe(30);
-    expect(learnGame('kingdom').xpSources).toEqual([]);
+  });
+
+  it('no longer has the three retired games, and still counts what they paid as game XP', () => {
+    for (const id of RETIRED_GAME_IDS) {
+      expect(isLearnGameId(id)).toBe(false);
+      expect(isRetiredGame(id)).toBe(true);
+    }
+    expect(isRetiredGame('impostor')).toBe(false);
+    // XP in the ledger from a retired game stays under the league's daily cap for games
+    for (const s of RETIRED_GAME_XP_SOURCES) expect(LEARN_GAME_XP_SOURCES).toContain(s);
   });
 
   it('lists every game an app can open, the ready ones first and the rest as coming soon, each in the registry’s order', () => {
-    const availability = { games: [{ id: 'hear-it', available: true }, { id: 'detective', available: false }, { id: 'kingdom', available: true }] };
+    const availability = { games: [{ id: 'memory-thief', available: true }, { id: 'detective', available: false }, { id: 'hear-it', available: true }] };
     const listed = (playable: LearnGameId[]) => listedLearnGames(availability, playable).map((g) => `${g.game.id}:${g.ready ? 'ready' : 'soon'}`);
-    // build-sentence has no answer at all, detective a "no": both are listed, after the ready one
-    expect(listed(['build-sentence', 'hear-it', 'detective', 'kingdom'])).toEqual(['hear-it:ready', 'build-sentence:soon', 'detective:soon']);
-    expect(listed(['build-sentence'])).toEqual(['build-sentence:soon']);
+    // what-would-you-say has no answer at all, detective a "no": both are listed, after the ready one
+    expect(listed(['what-would-you-say', 'memory-thief', 'detective'])).toEqual(['memory-thief:ready', 'what-would-you-say:soon', 'detective:soon']);
+    expect(listed(['detective'])).toEqual(['detective:soon']);
+    // the lessons' two exercises are never games in the list, ready or not
+    expect(listed(['build-sentence', 'hear-it', 'memory-thief'])).toEqual(['memory-thief:ready']);
     // nothing until the availability has arrived, so the cards do not reshuffle as it lands
-    expect(listedLearnGames(null, ['build-sentence'])).toEqual([]);
+    expect(listedLearnGames(null, ['memory-thief'])).toEqual([]);
+  });
+
+  it('offers the lessons’ practice its two exercises, and only one that can be done now', () => {
+    expect(LEARN_GAMES.filter((g) => g.place === 'lessons').map((g) => g.id)).toEqual(['build-sentence', 'hear-it']);
+    const availability = { games: [{ id: 'hear-it', available: true }, { id: 'build-sentence', available: false }, { id: 'memory-thief', available: true }] };
+    const offered = (playable: LearnGameId[]) => lessonExercises(availability, playable).map((g) => g.id);
+    // build-sentence is short of content, so it is not shown at all; a game is never an exercise
+    expect(offered(['build-sentence', 'hear-it', 'memory-thief'])).toEqual(['hear-it']);
+    // an app without a screen for one does not offer it
+    expect(offered(['build-sentence'])).toEqual([]);
+    expect(lessonExercises(null, ['hear-it'])).toEqual([]);
   });
 
   it('asks free text only of games played with others', () => {

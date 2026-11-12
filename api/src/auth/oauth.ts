@@ -117,6 +117,10 @@ async function uniqueUsername(pool: pg.Pool, base: string): Promise<string> {
   const free = await pool.query<{ candidate: string }>(
     `SELECT c.candidate FROM unnest($1::text[]) WITH ORDINALITY AS c(candidate, n)
       WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = c.candidate::citext AND deleted_at IS NULL)
+        -- nor one held for the account that gave it up (migration username-history)
+        AND NOT EXISTS (
+          SELECT 1 FROM username_history h JOIN users u ON u.id = h.user_id
+           WHERE h.username = c.candidate::citext AND h.held_until > now() AND u.deleted_at IS NULL)
       ORDER BY c.n LIMIT 1`,
     [candidates],
   );

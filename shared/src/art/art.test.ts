@@ -26,8 +26,20 @@ import {
 } from './index.js';
 import { coinSvg, gemSvg } from './currency.js';
 import { wordSetSvg } from './word-sets.js';
+import {
+  IMPOSTOR_CATEGORY_PICTURES,
+  IMPOSTOR_EMBLEMS_DRAWN,
+  IMPOSTOR_WAYS_DRAWN,
+  impostorCategoriesInOrder,
+  impostorCategoryRank,
+  impostorCategorySvg,
+  impostorCategoryTone,
+  impostorEmblemSvg,
+  impostorWaySvg,
+  impostorWayTone,
+} from './impostor.js';
+import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
-import { BUILDING_SCALE, KINGDOM_ANIMAL_HEIGHT, KINGDOM_CAIRN, KINGDOM_FIGURE_HEIGHT, KINGDOM_FRAME, KINGDOM_PLOTS, KINGDOM_SCENE, KINGDOM_SPRITES, kingdomBuildingDoors, kingdomBuildingSvg, kingdomPoint, kingdomLife, kingdomPlotSvg, kingdomSceneSvg, kingdomSpriteSvg, kingdomTiles, type KingdomFrame, type KingdomNode } from './kingdom.js';
 import {
   PATH_LANDMARK_LOOP,
   PATH_STOP_ART,
@@ -41,7 +53,6 @@ import {
 } from './path-land.js';
 import { PATH_CAIRN_GROUNDS, PATH_LANDMARKS, PATH_LANDS, cairnBox, trailStones } from '../path-world.js';
 import { lessonPath } from '../lesson-path.js';
-import { KINGDOM_BUILDINGS, type KingdomBuilding, type KingdomLevel } from '../games/kingdom/buildings.js';
 import { WORD_SET_IDS } from '../word-sets/words.js';
 import {
   CHEST_BOX,
@@ -904,6 +915,168 @@ describe('the word sets’ pictures', () => {
   });
 });
 
+describe('Kurdish Impostor’s pictures', () => {
+  // the starter categories (api/src/games/word-categories.ts): every one of them has a picture of its own
+  const STARTER = [
+    'animals', 'food', 'fruit', 'vegetables', 'drinks', 'family', 'body', 'clothes', 'home', 'jobs', 'nature', 'town', 'transport', 'colours',
+    'school', 'time', 'kitchen', 'feelings', 'play', 'music', 'celebrations', 'tools', 'village', 'numbers', 'weather', 'health', 'people',
+    'taste', 'stories', 'money', 'qualities', 'character', 'actions', 'culture', 'language', 'work', 'travel', 'things', 'sports', 'world',
+  ];
+
+  it('draws a valid, self-contained picture for every category, way to play and emblem, small and large', () => {
+    for (const size of [40, 56, 120]) {
+      for (const category of [null, ...IMPOSTOR_CATEGORY_PICTURES, 'a-category-an-editor-made']) checkSvg(impostorCategorySvg({ category, size }), size);
+      for (const way of IMPOSTOR_WAYS_DRAWN) checkSvg(impostorWaySvg({ way, size }), size);
+      for (const emblem of IMPOSTOR_EMBLEMS_DRAWN) checkSvg(impostorEmblemSvg({ emblem, size }), size);
+    }
+  });
+
+  it('has a picture of its own for each of the forty starter categories, and no two alike', () => {
+    expect([...IMPOSTOR_CATEGORY_PICTURES].sort()).toEqual([...STARTER].sort());
+    const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
+    const all = [null, ...IMPOSTOR_CATEGORY_PICTURES].map((category) => strip(impostorCategorySvg({ category })));
+    expect(new Set(all).size).toBe(all.length);
+    const ways = IMPOSTOR_WAYS_DRAWN.map((way) => strip(impostorWaySvg({ way })));
+    expect(new Set(ways).size).toBe(3);
+  });
+
+  it('gives a category nobody has drawn the label every category can wear, and any category the fan of cards', () => {
+    const strip = (svg: string): string => svg.replace(/ (id|aria-labelledby)="[^"]*"/g, '').replace(/url\(#[^)]*\)/g, 'url()');
+    const label = impostorCategorySvg({ category: 'made-later' });
+    expect(strip(impostorCategorySvg({ category: 'another-one' }))).toBe(strip(label));
+    expect(strip(label)).not.toBe(strip(impostorCategorySvg({ category: 'animals' })));
+    expect(strip(impostorCategorySvg({ category: null }))).not.toBe(strip(label));
+    // a slug that is a word of the language's own is no picture: only the listed ones are
+    expect(strip(impostorCategorySvg({ category: 'constructor' }))).toBe(strip(label));
+    expect(impostorCategoryTone('constructor')).toBe(impostorCategoryTone('made-later'));
+  });
+
+  it('is the same picture every time, labels itself, and never writes a word or a numeral', () => {
+    for (const category of [null, ...IMPOSTOR_CATEGORY_PICTURES]) {
+      const svg = impostorCategorySvg({ category });
+      expect(impostorCategorySvg({ category })).toBe(svg);
+      expect(svg).toMatch(/<title id="[^"]+">[^<]+<\/title>/);
+      expect(svg).not.toMatch(/<text/);
+    }
+    expect(impostorCategorySvg({ category: 'fruit', title: 'fêkî & <sêv>' })).toContain('fêkî &amp; &lt;sêv&gt;');
+    // the numbers are counted, one bead, two, three: each bead is three ellipses
+    expect((impostorCategorySvg({ category: 'numbers' }).match(/<ellipse/g) ?? []).length).toBe(6 * 3);
+  });
+
+  it('keeps ids apart between the pictures on one page, and uses a caller’s prefix', () => {
+    const seen = new Set<string>();
+    const all = [
+      ...[null, ...IMPOSTOR_CATEGORY_PICTURES].map((category) => impostorCategorySvg({ category })),
+      ...IMPOSTOR_WAYS_DRAWN.map((way) => impostorWaySvg({ way })),
+      ...IMPOSTOR_EMBLEMS_DRAWN.map((emblem) => impostorEmblemSvg({ emblem })),
+    ];
+    for (const svg of all) {
+      for (const [, id] of svg.matchAll(/ id="([^"]+)"/g)) {
+        expect(seen.has(id!), id).toBe(false);
+        seen.add(id!);
+      }
+    }
+    expect(impostorWaySvg({ way: 'odd', idPrefix: 'mine' })).toContain('id="minet"');
+  });
+
+  it('has a colour for every tile, and stays light enough to put a page of them on one screen', () => {
+    for (const category of [null, ...IMPOSTOR_CATEGORY_PICTURES, 'made-later']) expect(impostorCategoryTone(category)).toMatch(/^#[0-9a-f]{6}$/);
+    for (const way of IMPOSTOR_WAYS_DRAWN) expect(impostorWayTone(way)).toMatch(/^#[0-9a-f]{6}$/);
+    const heaviest = Math.max(...[null, ...IMPOSTOR_CATEGORY_PICTURES].map((category) => impostorCategorySvg({ category }).length));
+    expect(heaviest).toBeLessThan(6 * 1024);
+  });
+
+  it('lists categories with the easily named ones first, and one nobody has drawn after them all', () => {
+    const listed = impostorCategoriesInOrder([{ slug: 'world' }, { slug: 'made-later' }, { slug: 'fruit' }, { slug: 'another-one' }, { slug: 'animals' }]);
+    expect(listed.map((c) => c.slug)).toEqual(['animals', 'fruit', 'world', 'made-later', 'another-one']);
+    expect(impostorCategoryRank('animals')).toBe(0);
+    expect(impostorCategoryRank('made-later')).toBe(IMPOSTOR_CATEGORY_PICTURES.length);
+  });
+
+  it('refuses a way, an emblem or a size it cannot draw', () => {
+    expect(() => impostorWaySvg({ way: 'loud' as never })).toThrow(RangeError);
+    expect(() => impostorEmblemSvg({ emblem: 'crown' as never })).toThrow(RangeError);
+    expect(() => impostorCategorySvg({ category: 'fruit', size: 0 })).toThrow(RangeError);
+  });
+});
+
+/**
+ * The emails' pictures (art/email.ts): one small scene for what each email is
+ * about, drawn as the app's other object pictures are, each a loop. They are
+ * written out as images for the emails themselves, which is why every moment
+ * of every loop must stand alone as a drawing.
+ */
+describe('the emails’ pictures', () => {
+  const MOMENTS = [0, 0.1, 0.25, 0.37, 0.5, 0.62, 0.75, 0.9, 0.99];
+  const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
+
+  it('draws a valid, self-contained picture at every moment of every loop, small and large', () => {
+    for (const picture of EMAIL_PICTURES) {
+      for (const at of MOMENTS) checkSvg(emailPictureSvg({ picture, size: 120, at }), 120);
+      for (const size of [56, 248]) checkSvg(emailPictureSvg({ picture, size }), size);
+    }
+  });
+
+  it('is the same picture every time, no two alike, labelled, and without a word or a numeral', () => {
+    const all = EMAIL_PICTURES.map((picture) => {
+      const svg = emailPictureSvg({ picture });
+      expect(emailPictureSvg({ picture })).toBe(svg);
+      expect(svg).toMatch(/<title id="[^"]+">[^<]+<\/title>/);
+      for (const at of MOMENTS) expect(emailPictureSvg({ picture, at }), `${picture} at ${at}`).not.toMatch(/<text/);
+      return strip(svg);
+    });
+    expect(new Set(all).size).toBe(all.length);
+    expect(emailPictureSvg({ picture: 'key', title: 'kilît & <mifte>' })).toContain('kilît &amp; &lt;mifte&gt;');
+  });
+
+  it('moves, comes back to where it began, and rests on a moment of its own loop', () => {
+    for (const picture of EMAIL_PICTURES) {
+      const moments = new Set(MOMENTS.map((at) => strip(emailPictureSvg({ picture, at }))));
+      // a loop is more than a still: most of its moments differ from each other
+      expect(moments.size, picture).toBeGreaterThanOrEqual(6);
+      // the end of a turn is the start of the next, wherever the count has got to
+      expect(emailPictureSvg({ picture, at: 1 })).toBe(emailPictureSvg({ picture, at: 0 }));
+      expect(emailPictureSvg({ picture, at: 2.25 })).toBe(emailPictureSvg({ picture, at: 0.25 }));
+      expect(emailPictureSvg({ picture, at: -0.75 })).toBe(emailPictureSvg({ picture, at: 0.25 }));
+      const still = emailPictureStill(picture);
+      expect(still, picture).toBeGreaterThanOrEqual(0);
+      expect(still, picture).toBeLessThan(1);
+      expect(emailPictureSvg({ picture })).toBe(emailPictureSvg({ picture, at: still }));
+      // slow enough to be calm, short enough that a glance sees the whole of it
+      expect(emailPictureLoopMs(picture), picture).toBeGreaterThanOrEqual(2000);
+      expect(emailPictureLoopMs(picture), picture).toBeLessThanOrEqual(4500);
+    }
+  });
+
+  it('closes its loop on the bell hanging still, so its ringing starts and ends at rest', () => {
+    // the bell and its clapper are each turned about their own point: no turn at all at the seam
+    for (const at of [0, 0.999]) {
+      const turns = [...emailPictureSvg({ picture: 'bell', at }).matchAll(/rotate\((-?[0-9.]+) /g)].map((m) => Math.abs(Number(m[1])));
+      expect(turns.length, `at ${at}`).toBe(2);
+      for (const turn of turns) expect(turn, `at ${at}`).toBeLessThan(0.5);
+    }
+    // and in between it swings
+    expect(emailPictureSvg({ picture: 'bell', at: 1 / 12 })).toMatch(/rotate\(1[0-9](\.[0-9]+)? /);
+  });
+
+  it('stands each picture on a pale tile of its own colour', () => {
+    for (const picture of EMAIL_PICTURES) {
+      const tone = emailPictureTone(picture);
+      expect(tone, picture).toMatch(/^#[0-9a-f]{6}$/);
+      // pale enough that the picture reads on it: every channel in the upper part of its range
+      for (const channel of [1, 3, 5]) expect(parseInt(tone.slice(channel, channel + 2), 16), picture).toBeGreaterThanOrEqual(0xc8);
+    }
+  });
+
+  it('refuses a picture nobody has drawn, a size that is not one, and a moment that is not a number', () => {
+    expect(() => emailPictureSvg({ picture: 'dragon' as EmailPicture })).toThrow(RangeError);
+    expect(() => emailPictureTone('constructor' as EmailPicture)).toThrow(RangeError);
+    expect(() => emailPictureLoopMs('toString' as EmailPicture)).toThrow(RangeError);
+    expect(() => emailPictureSvg({ picture: 'key', size: 0 })).toThrow(RangeError);
+    expect(() => emailPictureSvg({ picture: 'key', at: Number.NaN })).toThrow(RangeError);
+  });
+});
+
 describe('the chest', () => {
   const CHESTS: readonly ChestTier[] = ['common', 'rare', 'epic'];
 
@@ -1092,306 +1265,6 @@ describe('the join ticket', () => {
     for (const tile of TICKET_ART_TILES) {
       expect(tile.y - 0).toBeCloseTo(TICKET_ART_BOX.height - (tile.y + tile.height));
     }
-  });
-});
-
-/**
- * The village is the one drawing allowed two things the rest of the art is
- * not, because its owner asked for them: a heavy dark outline round every
- * object, and isometric depth. Everything else still holds — flat planes of
- * colour (no gradient anywhere in the village's own drawing; only the deer,
- * Hamo and Xezal keep the soft light the course's own drawings of them have
- * always had), nothing outside the drawing, every drawing well-formed and
- * labelled. The world is the one large picture in the app, several times the
- * village's size, so it has weight budgets of its own below: one for the
- * whole of it and one for each of the tiles an app draws it in.
- */
-describe('the kingdom’s village', () => {
-  const LEVELS = [0, 1, 2, 3, 4, 5] as const;
-  const all = (level: KingdomLevel): Record<KingdomBuilding, KingdomLevel> =>
-    Object.fromEntries(KINGDOM_BUILDINGS.map((b) => [b, level])) as Record<KingdomBuilding, KingdomLevel>;
-  const flatColour = (svg: string): void => expect(svg).not.toMatch(/Gradient|<filter|<mask|blur/);
-
-  it('draws every building at every stage, and every stage being built, large and small, by the same rules as every drawing', () => {
-    for (const building of KINGDOM_BUILDINGS) {
-      for (const level of LEVELS) {
-        for (const size of [48, 120, 168]) checkSvg(kingdomBuildingSvg({ building, level, size }), size);
-        checkSvg(kingdomBuildingSvg({ building, level, size: 96, dark: true }), 96);
-        const rising = kingdomBuildingSvg({ building, level, rising: true, size: 120 });
-        checkSvg(rising, 120);
-        flatColour(rising);
-        if (level < 5) expect(rising, `${building} ${level}`).not.toBe(kingdomBuildingSvg({ building, level, size: 120 }));
-      }
-    }
-  });
-
-  it('adds to a building at each stage rather than drawing something else, and never draws two stages alike', () => {
-    for (const building of KINGDOM_BUILDINGS) {
-      const stages = LEVELS.map((level) => kingdomBuildingSvg({ building, level, idPrefix: 'k' }));
-      expect(new Set(stages).size, building).toBe(6);
-      for (let i = 2; i < stages.length; i++) expect(elements(stages[i]!), `${building} ${i}`).toBeGreaterThanOrEqual(elements(stages[i - 1]!));
-    }
-  });
-
-  it('draws the whole village as a valid, self-contained, flat-coloured picture of its own shape, the same every time', () => {
-    for (const level of LEVELS) {
-      for (const dark of [false, true]) {
-        const svg = kingdomSceneSvg({ levels: all(level), dark, width: 500, rising: level < 5 ? [...KINGDOM_BUILDINGS] : [] });
-        const root = parse(svg);
-        expect(root.attrs.viewBox).toBe(`0 0 ${KINGDOM_SCENE.width} ${KINGDOM_SCENE.height}`);
-        expect(root.attrs.role).toBe('img');
-        expect(root.children[0]?.name).toBe('title');
-        expect(root.attrs['aria-labelledby']).toBe(root.children[0]?.attrs.id);
-        walk(root, (e) => {
-          expect(ALLOWED.has(e.name), e.name).toBe(true);
-          for (const [k, v] of Object.entries(e.attrs)) {
-            expect(k.startsWith('on') || /href$/i.test(k), k).toBe(false);
-            if (k !== 'xmlns') expect(v, `${k} on <${e.name}>`).not.toMatch(/NaN|Infinity|undefined|null/);
-          }
-        });
-        expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|data:/i);
-        flatColour(svg);
-        // the one large picture in the app: the whole valley at its fullest, every building in scaffolding, woods all round,
-        // is allowed under a megabyte, and no app ever draws it whole (it draws the tiles near its view)
-        expect(svg.length).toBeLessThan(900 * 1024);
-      }
-    }
-    const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
-    expect(kingdomSceneSvg({ levels: some })).toBe(kingdomSceneSvg({ levels: some }));
-    expect(kingdomSceneSvg({ levels: some })).not.toBe(kingdomSceneSvg({ levels: { ...some, teahouse: 1 } }));
-    expect(kingdomSceneSvg({ levels: some, dark: true })).not.toBe(kingdomSceneSvg({ levels: some }));
-    expect(kingdomSceneSvg({ levels: some, rising: ['school'] })).not.toBe(kingdomSceneSvg({ levels: some }));
-    // what sways is left to the apps when they move it, and the scene still stands without it
-    expect(kingdomSceneSvg({ levels: some, moving: true }).length).toBeLessThan(kingdomSceneSvg({ levels: some }).length);
-    // a building left off its plot, for an app to raise it there itself
-    expect(kingdomSceneSvg({ levels: some, without: 'market' }).length).toBeLessThan(kingdomSceneSvg({ levels: some }).length);
-    // a whole world drawn a dozen times over: given room on a busy machine
-  }, 30000);
-
-  it('stands the shepherds’ cairn on an outcrop at the top of the camp’s track, grown into the hill, by day and at dusk', () => {
-    const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
-    // its stones as the lesson path draws them, but no knoll of golden grass: the outcrop's rock and the hill's own green round it
-    for (const dark of [false, true]) {
-      const svg = kingdomSceneSvg({ levels: some, dark });
-      expect(svg).toContain(dark ? '#877b7e' : '#978b81');
-      expect(svg).not.toContain(dark ? '#c98f3c' : '#e2a334');
-    }
-    // at the top of the track, inside the world
-    const foot = kingdomPoint(KINGDOM_CAIRN[0], KINGDOM_CAIRN[1], 0);
-    expect(foot.x).toBeGreaterThan(40);
-    expect(foot.x).toBeLessThan(KINGDOM_SCENE.width - 40);
-    expect(foot.y - 40).toBeGreaterThan(0);
-  });
-
-  it('puts every building, its tap and its badge inside the frame an app keeps in view, and no two taps on one spot', () => {
-    const inFrame = (x: number, y: number): boolean => x >= KINGDOM_FRAME.x && x <= KINGDOM_FRAME.x + KINGDOM_FRAME.w && y >= KINGDOM_FRAME.y && y <= KINGDOM_FRAME.y + KINGDOM_FRAME.h;
-    expect(KINGDOM_FRAME.x + KINGDOM_FRAME.w).toBeLessThanOrEqual(KINGDOM_SCENE.width);
-    expect(KINGDOM_FRAME.y + KINGDOM_FRAME.h).toBeLessThanOrEqual(KINGDOM_SCENE.height);
-    const boxes = KINGDOM_BUILDINGS.map((b) => KINGDOM_PLOTS[b].box);
-    for (const b of KINGDOM_BUILDINGS) {
-      const { box, badge } = KINGDOM_PLOTS[b];
-      expect(inFrame(box.x, box.y) && inFrame(box.x + box.w, box.y + box.h), b).toBe(true);
-      expect(inFrame(badge.x, badge.y), b).toBe(true);
-      // tall enough to hit with a thumb on a phone, where the frame is drawn about as wide as the screen
-      expect(Math.min(box.w, box.h), b).toBeGreaterThan(48);
-    }
-    boxes.forEach((a, i) =>
-      boxes.slice(i + 1).forEach((b) => {
-        const apart = a.x + a.w <= b.x || b.x + b.w <= a.x || a.y + a.h <= b.y || b.y + b.h <= a.y;
-        expect(apart).toBe(true);
-      }),
-    );
-    // each building alone, to raise it in place, and its scaffolding on its own to drop away
-    for (const building of KINGDOM_BUILDINGS) {
-      const whole = kingdomPlotSvg({ building, level: 2, rising: true });
-      const parts = [kingdomPlotSvg({ building, level: 2, rising: true, scaffold: 'none' }), kingdomPlotSvg({ building, level: 2, rising: true, scaffold: 'only' })];
-      for (const svg of [whole, ...parts]) {
-        const root = parse(svg);
-        expect(root.attrs['aria-hidden']).toBe('true');
-        walk(root, (e) => expect(ALLOWED.has(e.name), e.name).toBe(true));
-        flatColour(svg);
-      }
-      expect(parts[0]!.length + parts[1]!.length, building).toBeGreaterThan(whole.length * 0.9);
-    }
-  });
-
-  it('moves only what has been built, inside the canvas, every loop closing on itself so it never jumps', () => {
-    const ids = (levels: Record<KingdomBuilding, KingdomLevel>): string[] => kingdomLife(levels).map((a) => a.id);
-    // the deer, the camp's sheep, the hill's goats, the hens by the tenûr, the dog, the sky, the water and the tenûr's smoke are always there
-    expect(ids(all(0))).toEqual(expect.arrayContaining(['hevalo', 'campsheep0', 'campsheep1', 'goat0', 'hen0', 'dog', 'birds0', 'cloud0', 'cloudshade0', 'tenur0', 'waterfall', 'fish0', 'shimmer0', 'streamglint0', 'campflame']));
-    // the cat, the bees, the chimneys' smoke and the people come with the buildings they belong to
-    for (const id of ['cat', 'bees', 'hamo', 'xezo']) expect(ids(all(0))).not.toContain(id);
-    expect(ids({ ...all(0), houses: 1 })).toContain('cat');
-    expect(ids({ ...all(0), orchard: 3 })).toContain('bees');
-    expect(ids({ ...all(0), teahouse: 2 })).toEqual(expect.arrayContaining(['teahousesmoke00', 'hamo']));
-    expect(ids({ ...all(0), school: 1 })).toContain('xezo');
-    expect(ids({ ...all(0), spring: 2 })).toEqual(expect.arrayContaining(['ripple0', 'spout', 'falls']));
-    // the valley's animals and water come as the total rises: the fold's sheep, the mill's wheel, the boat, the cow, the donkey, the pigeons
-    const valley = ['sheep0', 'foldgoat0', 'coophen0', 'coophen0chick0', 'millwheel', 'boat', 'cow', 'donkey', 'pigeons', 'gust0'];
-    for (const id of valley) expect(ids(all(0)), id).not.toContain(id);
-    expect(ids(all(5))).toEqual(expect.arrayContaining(valley));
-    // the deer, the people and the animals answer a tap, each in its own way
-    const taps = Object.fromEntries(kingdomLife(all(5)).filter((a) => a.tap).map((a) => [a.id, a.tap]));
-    expect(taps).toMatchObject({ hevalo: 'deer', hamo: 'person', xezo: 'person', campsheep0: 'hop', goat0: 'hop', coophen0: 'flutter', cow: 'turn', donkey: 'turn', dog: 'wag' });
-    const full = kingdomLife(all(5));
-    expect(new Set(full.map((a) => a.id)).size).toBe(full.length);
-    // an animal's legs swing while it walks, turning about the hip and back, and stand square while it stands
-    const legs = (node: KingdomNode): KingdomNode[] => [...(node.sprite?.startsWith('leg') ? [node] : []), ...(node.children ?? []).flatMap(legs)];
-    for (const id of ['campsheep0', 'cow', 'donkey', 'dog', 'goat0']) {
-      const all = legs(full.find((a) => a.id === id)!);
-      expect(all, id).toHaveLength(8);
-      expect(all.filter((leg) => leg.motion && Math.max(...leg.motion.frames.map((f) => Math.abs(f.r))) > 10), id).toHaveLength(4);
-    }
-    // a hen walks on two legs, and scratches with one
-    const parts = (node: KingdomNode): KingdomNode[] => [node, ...(node.children ?? []).flatMap(parts)];
-    const hen = parts(full.find((a) => a.id === 'hen0')!);
-    const henLegs = hen.filter((p) => p.sprite === 'henLeg');
-    expect(henLegs).toHaveLength(2);
-    expect(henLegs.filter((leg) => leg.motion!.frames.some((f) => f.r < -30))).toHaveLength(1);
-    // she pecks with her head and flutters with her wing, which a tap moves too
-    expect(hen.find((p) => p.role === 'head')!.motion!.frames.some((f) => f.r > 30)).toBe(true);
-    expect(hen.find((p) => p.role === 'wing')!.motion!.frames.some((f) => f.r > 40)).toBe(true);
-    // the chicks follow their hen
-    expect(full.filter((a) => a.id.startsWith('coophen0chick')).length).toBeGreaterThan(0);
-    const check = (node: KingdomNode, where: string, inClip = false): void => {
-      for (const v of [node.box.x, node.box.y, node.box.w, node.box.h, ...node.origin, ...Object.values(node.still)]) expect(Number.isFinite(v), where).toBe(true);
-      if (node.motion) {
-        const f = node.motion.frames;
-        expect(node.motion.period, where).toBeGreaterThan(200);
-        expect(f[0]!.t, where).toBe(0);
-        expect(f[f.length - 1]!.t, where).toBe(1);
-        for (let i = 1; i < f.length; i++) expect(f[i]!.t, where).toBeGreaterThan(f[i - 1]!.t);
-        const pose = ({ x, y, r, sx, sy, o }: KingdomFrame) => ({ x, y, r, sx, sy, o });
-        const first = pose(f[0]!);
-        const last = pose(f[f.length - 1]!);
-        // a loop closes on itself, or jumps back only while it cannot be seen (smoke gone, a cloud past the edge), or
-        // slides a repeating pattern inside a window that clips it (the waterfall's streaks), where the jump is one whole repeat
-        if ((first.o > 0 || last.o > 0) && !inClip) {
-          // a whole turn (the bees circling) ends where it began
-          for (const k of Object.keys(first) as (keyof typeof first)[]) expect(k === 'r' ? (last.r - first.r) % 360 : last[k], `${where} ${k}`).toBeCloseTo(k === 'r' ? 0 : first[k], 2);
-        }
-        for (const frame of f) for (const v of Object.values(frame)) expect(Number.isFinite(v), where).toBe(true);
-      }
-      node.children?.forEach((c, i) => check(c, `${where}.${i}`, node.clip === true));
-    };
-    for (const actor of full) {
-      check(actor, actor.id);
-      // where it stands when nothing moves (a cloud starts its drift off the canvas's edge)
-      const x = actor.box.x + actor.still.x;
-      const y = actor.box.y + actor.still.y;
-      expect(x + actor.box.w, actor.id).toBeGreaterThan(0);
-      expect(x, actor.id).toBeLessThan(KINGDOM_SCENE.width);
-      expect(y, actor.id).toBeGreaterThan(0);
-      expect(y + actor.box.h, actor.id).toBeLessThan(KINGDOM_SCENE.height);
-    }
-    // the deer is the app's own drawing of Hevalo, shown whole when nothing moves
-    const deer = full.find((a) => a.id === 'hevalo')!;
-    expect(deer.still.o).toBe(1);
-    expect(kingdomSpriteSvg('deerHead')).toMatch(/kgdeer-/);
-    for (const sprite of KINGDOM_SPRITES) {
-      for (const dark of [false, true]) {
-        const svg = kingdomSpriteSvg(sprite, { dark });
-        const root = parse(svg);
-        expect(root.attrs['aria-hidden'], sprite).toBe('true');
-        walk(root, (e) => expect(ALLOWED.has(e.name), `${sprite} <${e.name}>`).toBe(true));
-        expect(svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|data:/i);
-        if (!/^(deer|hamo|xezo)/.test(sprite)) flatColour(svg);
-      }
-    }
-  });
-
-  it('stands its people a little taller than a door and well under an eave, Hevalo as tall as they are, and the animals to scale with them', () => {
-    // every finished house the buildings draw, at every stage, measured in the canvas's units
-    const doors = KINGDOM_BUILDINGS.flatMap((b) => ([0, 1, 2, 3, 4, 5] as const).flatMap((l) => kingdomBuildingDoors(b, l))).map((d) => ({ door: d.door * BUILDING_SCALE, eave: d.eave * BUILDING_SCALE }));
-    expect(doors.length).toBeGreaterThan(5);
-    for (const { door, eave } of doors) {
-      expect(KINGDOM_FIGURE_HEIGHT).toBeGreaterThan(door * 1.05);
-      expect(KINGDOM_FIGURE_HEIGHT).toBeLessThan(eave * 0.85);
-    }
-    // each figure's box is the figure's height, its drawing filling it
-    const life = kingdomLife(all(5));
-    for (const id of ['hevalo', 'hamo', 'xezo']) {
-      const a = life.find((x) => x.id === id)!;
-      expect(a.box.h, id).toBeGreaterThan(KINGDOM_FIGURE_HEIGHT * 0.9);
-      expect(a.box.h, id).toBeLessThan(KINGDOM_FIGURE_HEIGHT * 1.1);
-    }
-    // a donkey to its ears or a cow to her horns stands under a person, a sheep or a dog to their waist, a hen to their knee
-    const h = KINGDOM_ANIMAL_HEIGHT;
-    expect(h.donkey).toBeLessThan(KINGDOM_FIGURE_HEIGHT);
-    expect(h.cow).toBeLessThan(h.donkey);
-    expect(Math.max(h.sheep, h.goat, h.dog)).toBeLessThan(KINGDOM_FIGURE_HEIGHT * 0.7);
-    expect(h.hen).toBeLessThan(KINGDOM_FIGURE_HEIGHT * 0.45);
-    expect(h.chick).toBeLessThan(h.hen * 0.6);
-  });
-
-  it('brings its people to their chores as the village grows, each a person’s height (a child less), nodding and waving when tapped', () => {
-    const people = ['shepherd', 'baker', 'farmer', 'boy', 'girl', 'carrier', 'elder', 'rider', 'weaver'];
-    const at = (village: number): string[] => kingdomLife(all(0), village).map((a) => a.id).filter((id) => people.includes(id));
-    expect(at(1)).toEqual(['shepherd']);
-    expect(at(4).sort()).toEqual(['baker', 'farmer', 'shepherd']);
-    expect(at(25).sort()).toEqual([...people].sort());
-    expect(at(7).sort()).toEqual(['baker', 'boy', 'farmer', 'girl', 'shepherd']);
-    const full = kingdomLife(all(5));
-    for (const id of people.filter((p) => p !== 'rider')) {
-      const a = full.find((x) => x.id === id)!;
-      expect(a.tap, id).toBe('wave');
-      // the box reaches a little past the person, for their tools
-      const tall = (a.box.h * 33) / 37;
-      expect(tall, id).toBeCloseTo(id === 'boy' || id === 'girl' ? KINGDOM_FIGURE_HEIGHT * 0.66 : KINGDOM_FIGURE_HEIGHT, 1);
-    }
-    // the rider sits his donkey
-    const parts = (node: KingdomNode): KingdomNode[] => [node, ...(node.children ?? []).flatMap(parts)];
-    expect(parts(full.find((a) => a.id === 'rider')!).some((p) => p.sprite === 'riderSeat')).toBe(true);
-    expect(() => kingdomLife(all(0), 26)).toThrow(RangeError);
-  });
-
-  it('cuts the world into tiles that lie side by side as the whole of it, each light enough to draw on a phone', () => {
-    const some = { houses: 2, school: 1, teahouse: 0, spring: 3, market: 5, orchard: 4 } as const;
-    for (const levels of [all(0), some, all(5)]) {
-      const tiles = kingdomTiles({ levels, moving: true });
-      // they cover the canvas, each reaching two units past its own edge so neighbours overlap and never show a seam
-      expect(tiles.reduce((sum, t) => sum + (t.w - 2) * (t.h - 2), 0)).toBe(KINGDOM_SCENE.width * KINGDOM_SCENE.height);
-      for (const tile of tiles) {
-        const root = parse(tile.svg);
-        expect(root.attrs.viewBox).toBe(`${tile.x} ${tile.y} ${tile.w} ${tile.h}`);
-        expect(root.attrs['aria-hidden']).toBe('true');
-        walk(root, (e) => expect(ALLOWED.has(e.name), e.name).toBe(true));
-        expect(tile.svg.replace('xmlns="http://www.w3.org/2000/svg"', '')).not.toMatch(/https?:|\/\/|<image|<script|<style|<text|data:/i);
-        flatColour(tile.svg);
-        // the village's heart at its fullest is the heaviest; every other tile is far lighter
-        expect(tile.svg.length, `${tile.x},${tile.y}`).toBeLessThan(200 * 1024);
-      }
-    }
-    expect(kingdomTiles({ levels: some, moving: true }).map((t) => t.svg)).toEqual(kingdomTiles({ levels: some, moving: true }).map((t) => t.svg));
-  });
-
-  it('fills the valley in as the total rises, and draws the village’s heart on its own for its tile', () => {
-    const at = (total: number): Record<KingdomBuilding, KingdomLevel> => {
-      const l = all(0);
-      for (let i = 0; i < total; i++) l[KINGDOM_BUILDINGS[i % 6]!] = (l[KINGDOM_BUILDINGS[i % 6]!] + 1) as KingdomLevel;
-      return l;
-    };
-    const size = (total: number): number => kingdomSceneSvg({ levels: at(total) }).length;
-    // each step of the valley's growth adds to the picture (the buildings' own stages aside, which add too)
-    expect(size(10)).toBeGreaterThan(size(0));
-    expect(size(30)).toBeGreaterThan(size(20));
-    // the village's heart alone, for a picture of it such as the Games tile
-    const heart = kingdomSceneSvg({ levels: at(15), framed: true, width: 300 });
-    expect(parse(heart).attrs.viewBox).toBe(`${KINGDOM_FRAME.x} ${KINGDOM_FRAME.y} ${KINGDOM_FRAME.w} ${KINGDOM_FRAME.h}`);
-    expect(heart.length).toBeLessThan(kingdomSceneSvg({ levels: at(15) }).length);
-    expect(heart.length).toBeLessThan(260 * 1024);
-  });
-
-  it('escapes its label and refuses what it cannot draw', () => {
-    const svg = kingdomBuildingSvg({ building: 'spring', level: 2, title: 'Kanî & <b>' });
-    checkSvg(svg, 120);
-    expect(svg).toContain('Kanî &amp; &lt;b&gt;');
-    expect(() => kingdomBuildingSvg({ building: 'castle' as KingdomBuilding, level: 1 })).toThrow(RangeError);
-    expect(() => kingdomBuildingSvg({ building: 'spring', level: 6 as KingdomLevel })).toThrow(RangeError);
-    expect(() => kingdomSceneSvg({ levels: { ...all(1), orchard: -1 as KingdomLevel } })).toThrow(RangeError);
-    expect(() => kingdomSceneSvg({ levels: all(1), width: 0 })).toThrow(RangeError);
-    expect(() => kingdomLife({ ...all(1), market: 9 as KingdomLevel })).toThrow(RangeError);
-    expect(() => kingdomSpriteSvg('dragon' as never)).toThrow(RangeError);
   });
 });
 

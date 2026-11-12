@@ -39,6 +39,19 @@ export interface EnqueueOptions {
   backoffDelayMs?: number;
 }
 
+/**
+ * How a job is tried again: what this enqueue asks for, else what the job
+ * itself asks for (`JobDefinition.retry`), else the queue's default.
+ */
+export function jobRetryOptions(def: Pick<JobDefinition<unknown>, 'retry'>, opts: Pick<EnqueueOptions, 'attempts' | 'backoffDelayMs'> = {}): { attempts?: number; backoff?: { type: 'exponential'; delay: number } } {
+  const attempts = opts.attempts ?? def.retry?.attempts;
+  const delay = opts.backoffDelayMs ?? def.retry?.backoffDelayMs;
+  return {
+    ...(attempts ? { attempts } : {}),
+    ...(delay ? { backoff: { type: 'exponential' as const, delay } } : {}),
+  };
+}
+
 export class JobQueue {
   constructor(private readonly queue: Queue) {}
 
@@ -70,8 +83,7 @@ export class JobQueue {
       delay: opts.delayMs,
       // priority queues (KUR-119): auth emails > push > analytics
       priority: priorityForJob(def.name),
-      ...(opts.attempts ? { attempts: opts.attempts } : {}),
-      ...(opts.backoffDelayMs ? { backoff: { type: 'exponential', delay: opts.backoffDelayMs } } : {}),
+      ...jobRetryOptions(def, opts),
     });
     return job.id as string;
   }

@@ -99,13 +99,11 @@ export type RootStackParamList = {
   WordleBattle: { id?: string } | undefined;
   Rhyme: undefined;
   Race: undefined;
-  /** Build a Kurdish Sentence, the first of the learning games (games/BuildSentenceScreen) */
+  /** Build a Kurdish Sentence, an exercise of the lessons' practice (games/BuildSentenceScreen, opened from practice/PracticeHubScreen) */
   BuildSentence: undefined;
-  /** The Village ("kingdom" in code): the learner's village, built by their learning (kingdom/KingdomScreen) */
-  Kingdom: undefined;
   /** The Memory Thief (games/MemoryThiefScreen) */
   MemoryThief: undefined;
-  /** Hear It, Find It (games/HearItScreen) */
+  /** Hear It, Find It, an exercise of the lessons' practice (games/HearItScreen, opened from practice/PracticeHubScreen) */
   HearIt: undefined;
   /** What Would You Say? (games/WhatWouldYouSayScreen) */
   WhatWouldYouSay: undefined;
@@ -117,10 +115,6 @@ export type RootStackParamList = {
   LastLetter: { id?: string } | undefined;
   /** Kurdish Impostor: an id for a room (a code, an invite, a card); nothing for the start. */
   Impostor: { id?: string } | undefined;
-  /** Don't Say the Word!: an id for a room; nothing for the start. */
-  DontSay: { id?: string } | undefined;
-  /** Kurdish Bluff: an id for a room (a code, an invite, a card); nothing for the start (bluff/BluffScreen) */
-  Bluff: { id?: string } | undefined;
   /** Who Am I?: an id for a race's room; nothing for the start, alone or a race (whoami/WhoAmIScreen) */
   WhoAmI: { id?: string } | undefined;
   /** An id when an invite link opened it (`/app/games/stories?id=…`): it hands over to that game. */

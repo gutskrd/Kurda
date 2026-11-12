@@ -9,6 +9,8 @@ import { resetRatedChoices } from '../ranks/ratedPrefs';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { HapticEvent } from '../feedback/hapticPacing';
+import { forgetImpostorCategories } from '../impostor/categories';
+import { forgetPartyOffers } from '../party/offer';
 import { navigation } from './testing/navigation';
 import { InviteSheet, orderFriends, recentPlayers, sentText } from './InviteSheet';
 import { flightMs } from './SentTickets';
@@ -222,6 +224,47 @@ describe('InviteSheet', () => {
       chat: { groupId: 'grp-1' },
     });
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'b1' });
+  });
+
+  it('lets the host of Kurdish Impostor draw the word from one category and give a full minute for a clue', async () => {
+    // stand-in Kurdish for the fixtures, never shown to a learner
+    const client = fakeClient(
+      routes({
+        'GET /games/availability?dialect=kmr': ok({ dialect: 'kmr', games: [{ id: 'impostor', available: true, difficulties: ['beginner'], levels: {}, levelled: true, minimum: 12 }] }),
+        'GET /games/availability?dialect=ckb': ok({ dialect: 'ckb', games: [] }),
+        'GET /games/impostor/couch?dialect=kmr': ok({
+          dialect: 'kmr',
+          difficulties: [
+            {
+              difficulty: 'beginner',
+              cards: 16,
+              categories: [
+                { slug: 'animals', ku: 'heywan', meanings: { en: 'animal' }, cards: 8 },
+                { slug: 'food', ku: 'xwarin', meanings: { en: 'food' }, cards: 5 },
+              ],
+            },
+          ],
+        }),
+        'POST /play/lobbies': ok({ game: 'impostor', lobbyId: 'i1', invited: 0 }),
+      }),
+    );
+    testAuth.client = client;
+    const onClose = vi.fn();
+    renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
+    fireEvent.click(await screen.findByRole('radio', { name: 'Kurdish Impostor' }));
+    const any = await screen.findByRole('radio', { name: 'Any' });
+    expect(screen.getByRole('radiogroup', { name: 'Category' }).contains(any)).toBe(true);
+    // a category reads as its Kurdish name with the meaning in the reader's language
+    fireEvent.click(screen.getByRole('radio', { name: 'heywan · animal' }));
+    fireEvent.click(screen.getByRole('radio', { name: '60 s' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toMatchObject({
+      game: 'impostor',
+      settings: { dialect: 'kmr', difficulty: 'beginner', clueSeconds: 60, category: 'animals' },
+    });
+    forgetPartyOffers();
+    forgetImpostorCategories();
   });
 
   it('asks Rated or Friendly for a new game, says what each means, and sends the host’s choice', async () => {

@@ -1,4 +1,4 @@
-import type { MultiGame } from '@kurda/shared';
+import { MULTI_GAMES, type MultiGame } from '@kurda/shared';
 
 /**
  * Each multiplayer learning game's name in English, for the places the server
@@ -9,8 +9,6 @@ import type { MultiGame } from '@kurda/shared';
 export const MULTI_GAME_TITLES: Readonly<Record<MultiGame, string>> = {
   'last-letter': 'The Last Letter',
   impostor: 'Kurdish Impostor',
-  'dont-say': 'Don’t Say the Word!',
-  bluff: 'Kurdish Bluff',
   'who-am-i': 'Who Am I?',
 };
 
@@ -18,4 +16,16 @@ export const MULTI_GAME_TITLES: Readonly<Record<MultiGame, string>> = {
 export function multiTitleSql(column: string): string {
   const cases = Object.entries(MULTI_GAME_TITLES).map(([game, title]) => `WHEN '${game}' THEN '${title.replace(/'/g, "''")}'`);
   return `(CASE ${column} ${cases.join(' ')} ELSE ${column} END)`;
+}
+
+/**
+ * `<column> IN (…)` naming the games the engine runs, for a query that reads
+ * stored lobbies. Don't Say the Word! and Kurdish Bluff are no longer part of
+ * Hevalo, and the lobbies played while they were stay in the database: with
+ * this in its WHERE, such a lobby is not there for anything that plays, shows
+ * or walks games, so no request and no timer ever looks for a module that
+ * does not exist. Literals from the one list, never built from input.
+ */
+export function playedGamesSql(column: string): string {
+  return `${column} IN (${MULTI_GAMES.map((g) => `'${g}'`).join(', ')})`;
 }

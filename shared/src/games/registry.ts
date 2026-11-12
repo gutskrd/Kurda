@@ -13,10 +13,21 @@
  * their variety (`minimum`, at some difficulty), and only by an app that has
  * a screen for it; there is no "coming soon".
  *
+ * Two entries are not games any more but exercises of the lessons' practice
+ * (`place: 'lessons'`): Build a Kurdish Sentence and Hear It, Find It. They
+ * are still rounds of the solo kit, made, checked and paid by the same rules,
+ * which is why they stay in this list; Learn's Games never lists them, and
+ * the lessons' practice does.
+ *
+ * Don't Say the Word!, Kurdish Bluff and The Village are no longer part of
+ * Hevalo (`RETIRED_GAME_IDS`). Nothing lists, opens or starts one; their
+ * names are kept only so that what was written while they were played is
+ * still read for what it is.
+ *
  * Per-game modules. The registry is data only and imports no game: a game's
  * own rules live in a folder of its own beside this file —
  * `build-sentence/` for Build a Kurdish Sentence, `last-letter/` for The Last
- * Letter, `multi/` for the multiplayer engine every party game shares — and are
+ * Letter, `multi/` for the multiplayer engine every game with friends shares — and are
  * exported through `games/index.ts`, one line per module. A new game adds its
  * entry here and its folder there; nothing else in this file changes.
  */
@@ -32,10 +43,7 @@ export const LEARN_GAME_IDS = [
   'detective',
   'last-letter',
   'impostor',
-  'dont-say',
-  'bluff',
   'who-am-i',
-  'kingdom',
 ] as const;
 export type LearnGameId = (typeof LEARN_GAME_IDS)[number];
 
@@ -43,8 +51,36 @@ export function isLearnGameId(v: unknown): v is LearnGameId {
   return (LEARN_GAME_IDS as readonly unknown[]).includes(v);
 }
 
-/** How a game is played: alone, with others, either, or (the village) not played at all but grown. */
-export type LearnGameMode = 'solo' | 'multi' | 'both' | 'meta';
+/**
+ * Games that were part of Hevalo once and are not any more. No list, page,
+ * invitation or lobby offers one, and the server refuses to start one. The
+ * names stay known because rows written while they were played still carry
+ * them (matches, XP, old invitations in a chat): whatever reads such a row
+ * says the game is no longer played, rather than failing on a name it has
+ * never heard of.
+ */
+export const RETIRED_GAME_IDS = ['dont-say', 'bluff', 'kingdom'] as const;
+export type RetiredGameId = (typeof RETIRED_GAME_IDS)[number];
+
+export function isRetiredGame(v: unknown): v is RetiredGameId {
+  return (RETIRED_GAME_IDS as readonly unknown[]).includes(v);
+}
+
+/**
+ * The XP sources the retired games paid from. They are still game sources:
+ * XP already in the ledger under one of them keeps counting as game XP, under
+ * the league's daily cap, exactly as it did the day it was earned.
+ */
+export const RETIRED_GAME_XP_SOURCES: readonly string[] = ['game_dont_say_place', 'game_bluff_place'];
+
+/** How a game is played: alone, with others, or either. */
+export type LearnGameMode = 'solo' | 'multi' | 'both';
+
+/**
+ * Where a learner finds an entry: among Learn's games, or with the lessons'
+ * practice (an exercise the solo kit runs that is not a game).
+ */
+export type LearnGamePlace = 'games' | 'lessons';
 
 /**
  * Approved Kurdish a game reads where it already is, besides its own rows:
@@ -62,11 +98,12 @@ export type TrustedSource = (typeof TRUSTED_SOURCES)[number];
  * The picture on a game's card, by name. Each app draws it from its own icon
  * set (the phone's names are these; the browser maps them to the same glyphs).
  */
-export type GameGlyph = 'tiles' | 'eye' | 'headphones' | 'chat' | 'search' | 'text-t' | 'people' | 'block' | 'quotes' | 'question' | 'mountains';
+export type GameGlyph = 'tiles' | 'eye' | 'headphones' | 'chat' | 'search' | 'text-t' | 'people' | 'question';
 
 export interface LearnGame {
   id: LearnGameId;
   mode: LearnGameMode;
+  place: LearnGamePlace;
   /** how many people play one game; a solo game is 1 to 1 */
   players: { min: number; max: number };
   /** players type their own words, which go through the chat's safety checks before anyone else sees them */
@@ -93,6 +130,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   {
     id: 'build-sentence',
     mode: 'solo',
+    place: 'lessons',
     players: { min: 1, max: 1 },
     freeText: false,
     sources: ['lesson-sentences', 'vocabulary'],
@@ -106,6 +144,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   {
     id: 'memory-thief',
     mode: 'solo',
+    place: 'games',
     players: { min: 1, max: 1 },
     freeText: false,
     sources: ['story-passages', 'conversations'],
@@ -119,6 +158,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   {
     id: 'hear-it',
     mode: 'solo',
+    place: 'lessons',
     players: { min: 1, max: 1 },
     freeText: false,
     sources: ['recordings'],
@@ -132,6 +172,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   {
     id: 'what-would-you-say',
     mode: 'solo',
+    place: 'games',
     players: { min: 1, max: 1 },
     freeText: false,
     sources: ['conversations'],
@@ -145,6 +186,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   {
     id: 'detective',
     mode: 'solo',
+    place: 'games',
     players: { min: 1, max: 1 },
     freeText: false,
     sources: ['lesson-sentences', 'story-passages', 'recordings'],
@@ -158,6 +200,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   {
     id: 'last-letter',
     mode: 'both',
+    place: 'games',
     players: { min: 1, max: 8 },
     freeText: false,
     sources: ['dictionary', 'vocabulary'],
@@ -171,6 +214,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   {
     id: 'impostor',
     mode: 'multi',
+    place: 'games',
     players: { min: 3, max: 8 },
     freeText: true,
     sources: ['vocabulary'],
@@ -182,34 +226,9 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     tone: 'rose',
   },
   {
-    id: 'dont-say',
-    mode: 'multi',
-    players: { min: 3, max: 8 },
-    freeText: true,
-    sources: ['vocabulary'],
-    contentKinds: ['taboo_card'],
-    minimum: 20,
-    xpSources: ['game_dont_say_place'],
-    dialects: GAME_DIALECTS,
-    glyph: 'block',
-    tone: 'clay',
-  },
-  {
-    id: 'bluff',
-    mode: 'multi',
-    players: { min: 3, max: 8 },
-    freeText: true,
-    sources: [],
-    contentKinds: ['bluff_card'],
-    minimum: 20,
-    xpSources: ['game_bluff_place'],
-    dialects: GAME_DIALECTS,
-    glyph: 'quotes',
-    tone: 'pine',
-  },
-  {
     id: 'who-am-i',
     mode: 'both',
+    place: 'games',
     players: { min: 1, max: 8 },
     freeText: false,
     sources: ['vocabulary'],
@@ -220,20 +239,6 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     glyph: 'question',
     tone: 'meadow',
   },
-  {
-    id: 'kingdom',
-    mode: 'meta',
-    players: { min: 1, max: 1 },
-    freeText: false,
-    sources: [],
-    contentKinds: ['building_name'],
-    minimum: 6,
-    // the village pays no XP: it grows from learning that already paid
-    xpSources: [],
-    dialects: GAME_DIALECTS,
-    glyph: 'mountains',
-    tone: 'saffron',
-  },
 ];
 
 /** A game's entry; every id has one. */
@@ -241,10 +246,13 @@ export function learnGame(id: LearnGameId): LearnGame {
   return LEARN_GAMES.find((g) => g.id === id)!;
 }
 
-/** Every XP source the learning games pay from, for the API's list of game sources (and its league cap). */
-export const LEARN_GAME_XP_SOURCES: readonly string[] = [...new Set(LEARN_GAMES.flatMap((g) => g.xpSources))];
+/**
+ * Every XP source the learning games pay from or ever paid from, for the
+ * API's list of game sources (and its league cap).
+ */
+export const LEARN_GAME_XP_SOURCES: readonly string[] = [...new Set([...LEARN_GAMES.flatMap((g) => g.xpSources), ...RETIRED_GAME_XP_SOURCES])];
 
-/** The games played alone, in the order Learn lists them. */
+/** Everything the solo kit runs a round of, the lessons' two exercises included, in the registry's order. */
 export function soloGames(): LearnGame[] {
   return LEARN_GAMES.filter((g) => g.mode === 'solo' || g.mode === 'both');
 }
@@ -257,13 +265,13 @@ export interface ListedLearnGame {
 }
 
 /**
- * The games an app lists in Learn: every one it has a screen for
+ * The games an app lists in Learn: every game it has a screen for
  * (`playable`), those with enough approved content in the learner's variety
  * first and the rest after them as coming soon, each group in the registry's
  * order. A game is shown before its content is ready so a learner knows it is
  * on its way; it opens only once it is, so nothing is ever played on drafts.
  * Before the availability has arrived (null) nothing is listed, so the cards
- * do not reshuffle as it lands; the village is never a game in the list.
+ * do not reshuffle as it lands. The lessons' exercises are never in the list.
  */
 export function listedLearnGames(
   availability: { games: ReadonlyArray<{ id: string; available: boolean }> } | null | undefined,
@@ -271,8 +279,25 @@ export function listedLearnGames(
 ): ListedLearnGame[] {
   if (!availability) return [];
   const open = new Set((availability.games ?? []).filter((g) => g.available).map((g) => g.id));
-  const listed = LEARN_GAMES.filter((g) => g.mode !== 'meta' && playable.includes(g.id)).map((game) => ({ game, ready: open.has(game.id) }));
+  const listed = LEARN_GAMES.filter((g) => g.place === 'games' && playable.includes(g.id)).map((game) => ({ game, ready: open.has(game.id) }));
   return [...listed.filter((g) => g.ready), ...listed.filter((g) => !g.ready)];
+}
+
+/**
+ * The exercises the lessons' practice offers besides its own sessions: those
+ * an app has a screen for (`playable`) that can be done in the learner's
+ * variety now, in the registry's order. One that is short of approved content
+ * is not shown at all: practice is a place to do something, and a card that
+ * opens nothing does not belong in it. Nothing is listed before the
+ * availability has arrived.
+ */
+export function lessonExercises(
+  availability: { games: ReadonlyArray<{ id: string; available: boolean }> } | null | undefined,
+  playable: readonly LearnGameId[],
+): LearnGame[] {
+  if (!availability) return [];
+  const open = new Set((availability.games ?? []).filter((g) => g.available).map((g) => g.id));
+  return LEARN_GAMES.filter((g) => g.place === 'lessons' && playable.includes(g.id) && open.has(g.id));
 }
 
 /** The game a kind of content belongs to (each kind belongs to exactly one). */

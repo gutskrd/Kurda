@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { toLeagueTier, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { isRankedGame, toLeagueTier, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import { Medal } from '../badges/parts';
 import { LeagueEmblem, PlacementEmblem, RankEmblem } from '../ranks/art';
@@ -28,7 +28,8 @@ export function ProfileProgress({
   own?: boolean;
 }): React.JSX.Element | null {
   const t = useT();
-  const shown = (ranks ?? []).filter((r) => r.tier || r.placing || r.resting || r.bestTier);
+  // a rank in a game that is no longer part of Hevalo is not shown: there is nowhere left to play it
+  const shown = (ranks ?? []).filter((r) => isRankedGame(r.game) && (r.tier || r.placing || r.resting || r.bestTier));
   const leagueTier = toLeagueTier(league?.tier ?? null);
   const showcase = badges ?? [];
   if (shown.length === 0 && showcase.length === 0 && !leagueTier && !own) return null;

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { inviteLinkPattern, parseInvite, type LobbyCard, type PlayGame } from '@kurda/shared';
+import { RETIRED_GAME_IDS, inviteLinkPattern, isPlayGame, isRetiredGame, parseInvite, type LobbyCard, type PlayGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { Translate } from '../api/errors';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -89,16 +89,36 @@ export function linkedGame(body: string | null | undefined): { game: PlayGame; l
 /**
  * The game a chat message shows as a card, if any: a game message (kind
  * 'game'), or a text with an old invite link in it — with what is left of the
- * text once the link is out.
+ * text once the link is out. A message is as old as the chat it is in, so the
+ * game it names is checked against the games there are: one that is not among
+ * them has no card (see `retiredGameOf`).
  */
 export function gameCardOf(message: {
   kind?: string | null;
   game?: { game: PlayGame; lobbyId: string } | null;
   body?: string | null;
 }): { game: PlayGame; lobbyId: string; rest: string } | null {
-  if (message.kind === 'game' && message.game) return { game: message.game.game, lobbyId: message.game.lobbyId, rest: '' };
+  if (message.kind === 'game' && message.game) return isPlayGame(message.game.game) ? { game: message.game.game, lobbyId: message.game.lobbyId, rest: '' } : null;
   if (message.kind && message.kind !== 'text') return null;
   return linkedGame(message.body);
+}
+
+// an invite link to a game Hevalo no longer has, as such links were written: "/app/games/<game>?id=<id>", any origin or none
+const RETIRED_LINK = String.raw`\S*/app/games/(?:${RETIRED_GAME_IDS.join('|')})\?id=[A-Za-z0-9-]+\S*`;
+
+/**
+ * Whether a chat message is an invitation to a game Hevalo no longer has: a
+ * game message that names one, or a text with such a game's old invite link
+ * in it. The thread shows these as a quiet line saying the game is no longer
+ * played, with nothing to press; `rest` is what else was written beside the
+ * link, which is still the sender's own words.
+ */
+export function retiredGameOf(message: { kind?: string | null; game?: { game: string; lobbyId: string } | null; body?: string | null }): { rest: string } | null {
+  if (message.kind === 'game') return message.game && isRetiredGame(message.game.game) ? { rest: '' } : null;
+  if ((message.kind && message.kind !== 'text') || !message.body) return null;
+  // a link to a game that is still played wins: its card is the thing to show
+  if (parseInvite(message.body) || !new RegExp(RETIRED_LINK).test(message.body)) return null;
+  return { rest: message.body.replace(new RegExp(RETIRED_LINK, 'g'), '').trim() };
 }
 
 /**

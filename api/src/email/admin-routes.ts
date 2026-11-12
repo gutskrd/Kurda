@@ -5,6 +5,7 @@ import { AppError } from '../plugins/errors.js';
 import type { AppConfig } from '../config/env.js';
 import { SEND_EMAIL_JOB_NAME } from '../jobs/email.js';
 import type { EmailProvider } from './provider.js';
+import { renderEmailHtml } from './layout.js';
 import type { SupportInbox } from './support-inbox.js';
 
 /** Who sees how email is set up, and may send the test: the people who run the place. */
@@ -93,12 +94,28 @@ export function registerEmailAdminRoutes(
         throw new AppError('EMAIL_NOT_CONFIGURED', 409, 'no email provider is set up: set RESEND_API_KEY (or SMTP_URL / SMTP_HOST)');
       }
       try {
+        const working = `If you are reading it, email from ${addressOf(config.EMAIL_FROM)} is getting through.`;
+        const answers = config.EMAIL_REPLY_TO ? `Answers to it go to ${config.EMAIL_REPLY_TO}.` : null;
         const { messageId } = await provider.send({
           to,
           subject: 'Hevalo: test email',
-          text: `This is a test from the Hevalo admin panel.\n\nIf you are reading it, email from ${addressOf(config.EMAIL_FROM)} is getting through.${
-            config.EMAIL_REPLY_TO ? `\nAnswers to it go to ${config.EMAIL_REPLY_TO}.` : ''
-          }\n\n— Hevalo`,
+          text: `This is a test from the Hevalo admin panel.\n\n${working}${answers ? `\n${answers}` : ''}\n\n— Hevalo`,
+          // drawn as every email is, so the test also shows how they look in this inbox
+          html: renderEmailHtml({
+            brand: 'hevalo',
+            lang: 'en',
+            title: 'Hevalo: test email',
+            preheader: working,
+            picture: 'letter',
+            heading: 'Email is working',
+            blocks: [
+              { kind: 'text', parts: ['This is a test from the Hevalo admin panel.'] },
+              { kind: 'text', parts: [working] },
+              ...(answers ? [{ kind: 'text' as const, parts: [answers], quiet: true }] : []),
+            ],
+            align: 'center',
+            signoff: 'Hevalo',
+          }),
         });
         return { sent: true, to, messageId };
       } catch (err) {

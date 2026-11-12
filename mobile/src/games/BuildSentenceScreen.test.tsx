@@ -18,7 +18,6 @@ import { navigation } from '../play/testing/navigation';
 import { rememberCourseDialect, resetCourseDialect } from '../learn/courseDialect';
 import { GamesView } from '../learn/GamesView';
 import { setListsUpcomingGames } from './learnGames';
-import { forgetLastLetterAvailability } from '../lastletter/availability';
 import { BuildSentenceScreen, difficultyForStep } from './BuildSentenceScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -178,64 +177,43 @@ describe('BuildSentenceScreen', () => {
   });
 });
 
-describe('the games list', () => {
-  const base = {
-    'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
-    'GET /play/invites': ok({ incoming: [], outgoing: [] }),
-  };
+/*
+ * Build a Kurdish Sentence was a game once. It is an exercise of the lessons'
+ * practice now: nothing on the way calls it a game, and leaving it goes back
+ * to wherever it was opened from.
+ */
+describe('Build a Kurdish Sentence, as an exercise of the lessons', () => {
+  const finished = { correct: 0, total: 1, firstTry: 0, xp: 0, learningCounted: false, needed: 1, items: [{ index: 0, correct: false, firstTry: false, xp: 0, repeat: false }], streak: null };
 
-  it('adds a learning game as a card like the others once it can be played, one tap to open', async () => {
-    testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr') });
-    renderWithProviders(<GamesView />);
-    const card = await screen.findByTestId('game-build-sentence');
-    expect(card.getAttribute('aria-label')).toBe('Build a Kurdish Sentence, Solo. Put a real Kurdish sentence in order, from its meaning.');
-    fireEvent.click(card);
-    expect(navigation.navigate).toHaveBeenCalledWith('BuildSentence');
-    expect(screen.getByTestId('game-wordle')).toBeTruthy();
+  it('offers another round and Done when a round ends, in practice’s words rather than a game’s', async () => {
+    const onExit = vi.fn();
+    testAuth.client = routes('kmr', ['a', 'b'], [{ ...doneWrong, attempt: 1 }], finished);
+    renderWithProviders(<BuildSentenceScreen onExit={onExit} />);
+    await screen.findByText('Up to 16 XP');
+    fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+    fireEvent.click(within(await screen.findByTestId('sentence-tray')).getByRole('button', { name: 'a' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
+    expect(await screen.findByRole('button', { name: 'Another round' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Play again' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Back to games' })).toBeNull();
+    // Done leaves the exercise: the app takes the learner back to where they opened it (practice/exercises.ts)
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
   });
 
-  it('leaves it out while there is not enough approved content: the phone lists what can be played', async () => {
-    const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr', false) });
+  it('is not among the games, even while it can be done', async () => {
+    const client = fakeClient({
+      'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
+      'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+      'GET /games/availability?dialect=kmr': availability('kmr'),
+    });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     expect(await screen.findByTestId('game-wordle')).toBeTruthy();
     await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByTestId('game-build-sentence')).toBeNull();
-  });
-
-  it('can show it as coming soon instead, and does not open it', async () => {
-    setListsUpcomingGames(true);
-    const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr', false) });
-    testAuth.client = client;
-    renderWithProviders(<GamesView />);
-    expect(await screen.findByTestId('game-wordle')).toBeTruthy();
-    const card = await screen.findByTestId('game-build-sentence');
-    expect(card.getAttribute('aria-label')).toBe('Build a Kurdish Sentence, Coming soon. Put a real Kurdish sentence in order, from its meaning.');
-    fireEvent.click(card);
-    expect(navigation.navigate).not.toHaveBeenCalledWith('BuildSentence');
-  });
-
-  it('lists The Last Letter where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
-    forgetLastLetterAvailability();
-    testAuth.client = fakeClient({
-      ...base,
-      'GET /games/availability?dialect=kmr': availability('kmr'),
-      'GET /mp/last-letter/availability': ok({ dialects: [{ dialect: 'kmr', group: true, solo: false }] }),
-    });
-    renderWithProviders(<GamesView />);
-    fireEvent.click(await screen.findByTestId('game-last-letter'));
-    expect(navigation.navigate).toHaveBeenCalledWith('LastLetter');
-    cleanup();
-    navigation.navigate.mockClear();
-    forgetLastLetterAvailability();
-    testAuth.client = fakeClient({
-      ...base,
-      'GET /games/availability?dialect=kmr': availability('kmr'),
-      'GET /mp/last-letter/availability': ok({ dialects: [{ dialect: 'kmr', group: false, solo: false }] }),
-    });
-    renderWithProviders(<GamesView />);
-    expect(await screen.findByTestId('game-build-sentence')).toBeTruthy();
-    expect(screen.queryByTestId('game-last-letter')).toBeNull();
+    expect(screen.queryByText('Build a Kurdish Sentence')).toBeNull();
   });
 });

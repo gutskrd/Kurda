@@ -20,11 +20,14 @@ import { API_URL } from '../lib/config';
 import { onError, onPlaying, play, stop } from '../lib/sound';
 import { TextAnswer } from '../learn/TextAnswer';
 import { SoloGameShell, type SoloRound } from './SoloGameShell';
-import { useAvailability, useGameDialect, useOpenRound } from './learnGames';
+import { useAvailability, useGameDialect, useOpenRound } from './soloRounds';
 import './hear-it.css';
 
 /**
- * Hear It, Find It (/app/games/hear-it).
+ * Hear It, Find It (/app/learn/practice/hear-it), an exercise of the lessons'
+ * practice. It is a round of the solo kit like the games played alone, which
+ * is why it lives beside them; Learn's Lessons half is where a learner finds
+ * it (learn/practiceTools.tsx).
  *
  * The stage is a small radio: a speaker grille, one big play key, and a row
  * of sound-wave bars that move while a person's voice plays and lie still

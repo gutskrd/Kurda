@@ -3,16 +3,16 @@ import { GAME_DIALECTS, type GameDialect, type GameDifficulty, type GamesAvailab
 import { useAuth } from '../auth/AuthContext';
 
 /**
- * Where the party games (Kurdish Impostor, Don't Say the Word!) are offered
- * now, on the phone: per variety, the difficulties whose approved cards reach
- * the game's minimum (`GET /games/availability`, the answer Learn's list
- * reads). A game is made only where it is offered, so the start screen and the
- * invite sheet choose among these; nowhere says "coming soon".
+ * Where Kurdish Impostor is offered now, on the phone: per variety, the
+ * difficulties whose approved cards reach the game's minimum
+ * (`GET /games/availability`, the answer Learn's list reads). A game is made
+ * only where it is offered, so the start screen and the invite sheet choose
+ * among these; nowhere says "coming soon".
  *
  * Read once while the app runs for both varieties and shared by every screen
  * that asks: it changes when an editor publishes cards.
  */
-export type PartyGame = Extract<LearnGameId, 'impostor' | 'dont-say'>;
+export type PartyGame = Extract<LearnGameId, 'impostor'>;
 
 export interface PartyOffer {
   dialect: GameDialect;

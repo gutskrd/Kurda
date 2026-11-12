@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { listedLearnGames, toDialect, type GameDialect, type GamesAvailability, type LearnGame, type LearnGameId, type ListedLearnGame } from '@kurda/shared';
+import { listedLearnGames, type LearnGame, type LearnGameId, type ListedLearnGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { useI18n, useT } from '../i18n/I18nProvider';
+import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { defaultVariety } from '../stories/prefs';
 import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '../lastletter/learnCard';
+import { useAvailability, useGameDialect } from './soloRounds';
 import { SceneMini } from './SceneMini';
 import { CaseMini } from './CaseMini';
 // the path's colours: a game's card wears one of its tones (`lp-tone-*`)
@@ -13,7 +12,6 @@ import '../learn/path.css';
 import './games.css';
 // the learning games' own cards are drawn by their own stylesheets
 import './memory-thief.css';
-import './hear-it.css';
 import './party-minis.css';
 
 /**
@@ -25,6 +23,11 @@ import './party-minis.css';
  * Those with enough approved content in the learner's variety right now (GET
  * /games/availability) come first with a way in; the rest follow as "coming
  * soon", seen but not opened, until their content is published.
+ *
+ * Build a Kurdish Sentence and Hear It, Find It are rounds of the same kit
+ * and are not here: they are exercises of the lessons' practice
+ * (learn/practiceTools.tsx). What the two lists share, the learner's variety and
+ * what can be done in it, is games/soloRounds.ts.
  */
 
 interface WebGame {
@@ -35,26 +38,6 @@ interface WebGame {
   modes: ReadonlyArray<'solo' | 'online'>;
   /** a small picture of the game, decorative, drawn without any Kurdish of its own */
   Visual: () => React.JSX.Element;
-}
-
-/** Tiles on a ruled line and a tray of more below: Build a Kurdish Sentence, without words. */
-function SentenceMini(): React.JSX.Element {
-  return (
-    <div className="lg-mini lg-mini--sentence" aria-hidden>
-      <span className="lg-mini-line">
-        <span className="lg-mini-tile is-on" style={{ width: 44 }} />
-        <span className="lg-mini-tile is-on" style={{ width: 62 }} />
-        <span className="lg-mini-tile is-lifted" style={{ width: 38 }} />
-      </span>
-      <span className="lg-mini-tray">
-        <span className="lg-mini-ghost" style={{ width: 44 }} />
-        <span className="lg-mini-tile" style={{ width: 52 }} />
-        <span className="lg-mini-ghost" style={{ width: 62 }} />
-        <span className="lg-mini-tile" style={{ width: 30 }} />
-        <span className="lg-mini-ghost" style={{ width: 38 }} />
-      </span>
-    </div>
-  );
 }
 
 /** Word cards in a chain, each one's last letter lit where the next begins: The Last Letter, without words. */
@@ -97,19 +80,6 @@ function MemoryMini(): React.JSX.Element {
   );
 }
 
-/** Note cards fanned on a table with a token on one: Kurdish Bluff, without words. */
-function BluffMini(): React.JSX.Element {
-  return (
-    <div className="lg-mini lg-mini--bluff" aria-hidden>
-      <span className="lg-mini-note" style={{ transform: 'rotate(-7deg)' }} />
-      <span className="lg-mini-note is-on" style={{ transform: 'rotate(2deg)' }}>
-        <span className="lg-mini-token" />
-      </span>
-      <span className="lg-mini-note" style={{ transform: 'rotate(8deg)' }} />
-    </div>
-  );
-}
-
 /** A card with a question mark held up, and two answers stamped below: Who Am I?, without words. */
 function WhoAmIMini(): React.JSX.Element {
   return (
@@ -118,23 +88,6 @@ function WhoAmIMini(): React.JSX.Element {
       <span className="lg-mini-line">
         <span className="lg-mini-stamp is-yes" />
         <span className="lg-mini-stamp" />
-      </span>
-    </div>
-  );
-}
-
-/** A small radio: a grille, a play key and the bars of a voice: Hear It, Find It. */
-function HearMini(): React.JSX.Element {
-  return (
-    <div className="lg-mini lg-mini--hear" aria-hidden>
-      <span className="lg-mini-radio">
-        <span className="lg-mini-grille" />
-        <span className="lg-mini-key" />
-        <span className="lg-mini-wave">
-          {[10, 18, 28, 16, 24, 12, 20].map((h, i) => (
-            <span key={i} className="lg-mini-bar" style={{ height: h }} />
-          ))}
-        </span>
       </span>
     </div>
   );
@@ -158,74 +111,17 @@ function TableMini(): React.JSX.Element {
   );
 }
 
-/** A card with its words struck through, and a buzzer: Don't Say the Word!, without words. */
-function CardMini(): React.JSX.Element {
-  return (
-    <div className="lg-mini lg-mini--card" aria-hidden>
-      <span className="lg-mini-card">
-        <span className="lg-mini-tile is-on" style={{ width: 54 }} />
-        <span className="lg-mini-strike" style={{ width: 40 }} />
-        <span className="lg-mini-strike" style={{ width: 48 }} />
-        <span className="lg-mini-strike" style={{ width: 34 }} />
-      </span>
-      <span className="lg-mini-buzzer" />
-    </div>
-  );
-}
-
 export const WEB_LEARN_GAMES: Partial<Record<LearnGameId, WebGame>> = {
-  'build-sentence': { href: '/app/games/build-sentence', nameKey: 'games.sentence.name', bodyKey: 'games.sentence.body', modes: ['solo'], Visual: SentenceMini },
   'memory-thief': { href: '/app/games/memory-thief', nameKey: 'games.memory.name', bodyKey: 'games.memory.body', modes: ['solo'], Visual: MemoryMini },
-  'hear-it': { href: '/app/games/hear-it', nameKey: 'games.hear.name', bodyKey: 'games.hear.body', modes: ['solo'], Visual: HearMini },
   'what-would-you-say': { href: '/app/games/what-would-you-say', nameKey: 'games.say.name', bodyKey: 'games.say.body', modes: ['solo'], Visual: SceneMini },
   detective: { href: '/app/games/detective', nameKey: 'games.detective.name', bodyKey: 'games.detective.body', modes: ['solo'], Visual: CaseMini },
   'last-letter': { href: LAST_LETTER_CARD.href, nameKey: LAST_LETTER_CARD.nameKey, bodyKey: LAST_LETTER_CARD.blurbKey, modes: ['online', 'solo'], Visual: ChainMini },
-  // the party games are listed where /games/availability finds enough approved cards for the learner's variety
+  // the games with friends are listed where /games/availability finds enough approved cards for the learner's variety
   impostor: { href: '/app/games/impostor', nameKey: 'games.impostor.name', bodyKey: 'games.invite.blurb.impostor', modes: ['online'], Visual: TableMini },
-  'dont-say': { href: '/app/games/dont-say', nameKey: 'games.dontSay.name', bodyKey: 'games.invite.blurb.dontSay', modes: ['online'], Visual: CardMini },
-  bluff: { href: '/app/games/bluff', nameKey: 'games.bluff.name', bodyKey: 'games.bluff.blurb', modes: ['online'], Visual: BluffMini },
   'who-am-i': { href: '/app/games/who-am-i', nameKey: 'games.whoAmI.name', bodyKey: 'games.whoAmI.blurb', modes: ['solo', 'online'], Visual: WhoAmIMini },
 };
 
 const PLAYABLE = Object.keys(WEB_LEARN_GAMES) as LearnGameId[];
-
-/** The learner's variety for the games: their course's, else the interface's, else the one chosen last, else Kurmancî. */
-export function useGameDialect(): GameDialect {
-  const { locale } = useI18n();
-  return toDialect(defaultVariety(locale)) ?? 'kmr';
-}
-
-/** What can be played in a variety, asked once per visit; null until it answers (or when it cannot). */
-export function useAvailability(dialect: GameDialect): GamesAvailability | null {
-  const { client } = useAuth();
-  const [availability, setAvailability] = useState<GamesAvailability | null>(null);
-  useEffect(() => {
-    let live = true;
-    void client.get<GamesAvailability>(`/games/availability?dialect=${dialect}`).then((res) => {
-      if (live && res.ok) setAvailability(res.data);
-    });
-    return () => {
-      live = false;
-    };
-  }, [client, dialect]);
-  return availability;
-}
-
-/** A round of a game this learner left unfinished in a variety, to offer first; null when there is none (or until it answers). */
-export function useOpenRound(game: LearnGameId, dialect: GameDialect): string | null {
-  const { client } = useAuth();
-  const [open, setOpen] = useState<string | null>(null);
-  useEffect(() => {
-    let live = true;
-    void client.get<{ id: string | null }>(`/games/solo/open?game=${game}&dialect=${dialect}`).then((res) => {
-      if (live && res.ok) setOpen(res.data.id);
-    });
-    return () => {
-      live = false;
-    };
-  }, [client, game, dialect]);
-  return open;
-}
 
 /** The learning games to list for this learner now, each with whether it can be played yet. */
 export function useListedLearnGames(): ListedLearnGame[] {

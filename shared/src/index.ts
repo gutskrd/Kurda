@@ -571,6 +571,13 @@ export * from './badges.js';
  * clash with the badge catalogue's and the ranks' lists, which own the names.
  */
 export {
+  EMAIL_PICTURES,
+  emailPictureLoopMs,
+  emailPictureStill,
+  emailPictureSvg,
+  emailPictureTone,
+  type EmailArtOptions,
+  type EmailPicture,
   badgeSvg,
   badgeShineSvg,
   badgeShines,
@@ -591,6 +598,19 @@ export {
   CURRENCY_CANVAS,
   type CurrencyOptions,
   wordSetSvg,
+  IMPOSTOR_CATEGORY_PICTURES,
+  IMPOSTOR_EMBLEMS_DRAWN,
+  IMPOSTOR_WAYS_DRAWN,
+  impostorCategoriesInOrder,
+  impostorCategoryRank,
+  impostorCategorySvg,
+  impostorCategoryTone,
+  impostorEmblemSvg,
+  impostorWaySvg,
+  impostorWayTone,
+  type ImpostorArtOptions,
+  type ImpostorEmblem,
+  type ImpostorWay,
   type WordSetArtOptions,
   type WordsCardId,
   TICKET_ART_BOX,
@@ -744,14 +764,12 @@ export * from './games/last-letter/rules.js';
 export * from './games/last-letter/learn.js';
 export * from './games/last-letter/slip.js';
 
-// The Village ("kingdom" in code): the village that grows from real learning, its buildings, thresholds and view
-export * from './games/kingdom/index.js';
 /**
- * The party games where players write their own Kurdish: what a clue or a
- * guess may be, and Kurdish Impostor's and Don't Say the Word!'s rules.
+ * The games where players write their own Kurdish: what a clue or a guess
+ * may be, and Kurdish Impostor's rules.
  */
 export * from './games/clues.js';
 export * from './games/multi/order.js';
 export * from './games/impostor/rules.js';
-export * from './games/dont-say/rules.js';
+export * from './games/impostor/couch.js';
 export * from './pending-signup.js';

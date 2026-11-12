@@ -56,8 +56,19 @@ afterEach(() => {
   cleanup();
 });
 
-function open(hub: PracticeHub) {
-  testAuth.client = fakeClient({ 'GET /practice/hub': ok(hub) });
+/** What GET /games/availability says of the lessons' two exercises, and of a game, in Kurmancî. */
+const availability = (sentence: boolean, hear: boolean) =>
+  ok({
+    dialect: 'kmr',
+    games: [
+      { id: 'build-sentence', available: sentence, difficulties: sentence ? ['beginner'] : [] },
+      { id: 'hear-it', available: hear, difficulties: hear ? ['beginner'] : [] },
+      { id: 'memory-thief', available: true, difficulties: ['beginner'] },
+    ],
+  });
+
+function open(hub: PracticeHub, games?: ReturnType<typeof availability>) {
+  testAuth.client = fakeClient({ 'GET /practice/hub': ok(hub), ...(games ? { 'GET /games/availability?dialect=kmr': games } : {}) });
   renderWithProviders(<PracticeHubScreen onExit={() => undefined} />);
 }
 
@@ -122,6 +133,42 @@ describe('the practice hub', () => {
     expect(within(hero).queryByText('+5–10 XP')).toBeNull();
     fireEvent.click(within(hero).getByRole('button', { name: 'Go to lessons' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Tabs', { screen: 'Learn', params: { view: 'lessons' } });
+  });
+
+  /*
+   * Build a Kurdish Sentence and Hear It, Find It are practice now: the hub
+   * lists each while it can be done in the learner's Kurdish, beside the kind
+   * it is nearest to, and its row opens the exercise's own screen.
+   */
+  it('lists the two exercises that have a screen of their own, and opens each from its row', async () => {
+    open(learned, availability(true, true));
+    const sentence = await screen.findByRole('button', { name: 'Build a Kurdish Sentence, Put the words in order' });
+    const hear = screen.getByRole('button', { name: 'Hear It, Find It, Find what you heard' });
+    const names = screen.getAllByRole('button').map((b) => b.getAttribute('aria-label') ?? '');
+    const at = (start: string) => names.findIndex((n) => n.startsWith(start));
+    expect(at('Words, ')).toBeLessThan(at('Build a Kurdish Sentence, '));
+    expect(at('Build a Kurdish Sentence, ')).toBeLessThan(at('Listen, '));
+    expect(at('Listen, ')).toBeLessThan(at('Hear It, Find It, '));
+    expect(at('Hear It, Find It, ')).toBeLessThan(at('Speak, '));
+    fireEvent.click(sentence);
+    expect(navigation.navigate).toHaveBeenLastCalledWith('BuildSentence');
+    expect(felt).toContain('select');
+    fireEvent.click(hear);
+    expect(navigation.navigate).toHaveBeenLastCalledWith('HearIt');
+    // a game is never listed among the practice
+    expect(screen.queryByText('The Memory Thief')).toBeNull();
+  });
+
+  it('leaves out an exercise that cannot be done yet, and both when the answer cannot be had', async () => {
+    open(learned, availability(false, true));
+    expect(await screen.findByRole('button', { name: /^Hear It, Find It, / })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Build a Kurdish Sentence/ })).toBeNull();
+    cleanup();
+    // no answer about the exercises: the hub stands as it always did, with its five kinds
+    open(learned);
+    expect(await screen.findByRole('button', { name: 'Mistakes, 3 to put right' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Hear It, Find It/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Build a Kurdish Sentence/ })).toBeNull();
   });
 
   it('keeps speaking off when the learner turned it off', async () => {

@@ -20,7 +20,6 @@ import {
   useToast,
 } from '../ui';
 import {
-  GAME_NAME,
   REASON_MAX,
   badgeTierName,
   rankLine,
@@ -28,6 +27,7 @@ import {
   thresholdText,
   type BadgeCatalogue,
   type UserBadges,
+  gameName,
 } from '../progress';
 import { BadgeArt, PlayerGamesTable, RankEmblem, useResetRating } from './RankParts';
 
@@ -70,7 +70,7 @@ function RankCardView({ card: r, onReset }: { card: RankCard; onReset: () => voi
       <div className="rank-card-head">
         <RankEmblem tier={r.tier} division={r.division} placing={r.placement?.played} size={64} />
         <div className="rank-card-title">
-          <span className="subtle">{GAME_NAME[r.game]}</span>
+          <span className="subtle">{gameName(r.game)}</span>
           <strong>{rankLine(r.tier, r.division, r.placement)}</strong>
           <span>
             {r.points.toLocaleString()} points

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { GAME_CONTENT_KINDS, checkGameContent, contentHeadline, gameContentSchema, kurdishTexts, meaningIn, sameWords } from './content.js';
+import { GAME_CONTENT_KINDS, checkGameContent, contentHeadline, gameContentSchema, isGameContentKind, kurdishTexts, meaningIn, sameWords } from './content.js';
 import { LEARN_GAMES, gameOfKind } from './registry.js';
 
 const en = (text: string) => ({ en: text });
@@ -79,10 +79,8 @@ describe('checkGameContent', () => {
     expect(checkGameContent('case_file', 'kmr', { ...good, steps: [{ ...good.steps[0], evidence: ['e9'] }] }).ok).toBe(false);
   });
 
-  it('does not let the word to describe be one of its forbidden words', () => {
-    const card = { target: 'pisîk', meanings: en('cat'), forbidden: ['mişk', 'şîr', 'pisîk'] };
-    expect(checkGameContent('taboo_card', 'kmr', card).ok).toBe(false);
-    expect(checkGameContent('taboo_card', 'kmr', { ...card, forbidden: ['mişk', 'şîr', 'dû'] }).ok).toBe(true);
+  it('knows no kind written for a game that is no longer part of Hevalo', () => {
+    for (const kind of ['taboo_card', 'bluff_card', 'building_name']) expect(isGameContentKind(kind)).toBe(false);
   });
 
   it('lists every Kurdish text of a row with its path', () => {

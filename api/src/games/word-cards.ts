@@ -1,6 +1,6 @@
 /**
  * Cards made from approved words, for the admin's Game content page (shared
- * games/word-cards.ts): Kurdish Bluff's cards and Who Am I?'s identities.
+ * games/word-cards.ts): Who Am I?'s identities.
  *
  *   GET  /admin/game-content/words?dialect&q&from&limit   words to pick from, with their approved meanings and an example
  *   POST /admin/game-content/from-word                    { kind, dialect, ref, level, category?, facts? }: a draft made of one
@@ -9,8 +9,8 @@
  * teach (with the English the lesson pairs them with, and a published
  * lesson's sentence that uses them as the example), and dictionary entries an
  * admin curated for the games (`in_games`), with their first sense and its
- * example. A Bluff card may be either; an identity is always a word the
- * lessons teach. The Kurdish is copied from there into the draft by the server —
+ * example. The picker lists both; an identity is always a word the lessons
+ * teach. The Kurdish is copied from there into the draft by the server —
  * the word, its Kurdish definition where the dictionary has one, the example
  * — so nobody types it again; the editor adds what is not Kurdish. Each row
  * remembers the word it was made of (`origin`), so a word is one card of a
@@ -200,9 +200,6 @@ export class GameWordCards {
 
   /** The payload a kind of card is made with from a word, as it will be stored, or why it cannot be. */
   payloadFor(kind: WordCardKind, word: Omit<GameWordCandidate, 'made'>, extra: { category?: string; facts?: Record<string, boolean> }): unknown {
-    if (kind === 'bluff_card') {
-      return { word: word.word, definitions: word.meanings, ...(word.example ? { example: { ku: word.example.ku, ...(Object.keys(word.example.meanings).length ? { meanings: word.example.meanings } : {}) } } : {}) };
-    }
     if (!word.meanings.en) throw new AppError('NO_MEANING', 422, 'this word has no English meaning to show beside it; pick another');
     // only the facts a question can ask: the table is the shared list, nothing typed beside it
     const facts = Object.fromEntries(Object.entries(extra.facts ?? {}).filter(([k]) => isWhoAmIFact(k)));

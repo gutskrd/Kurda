@@ -32,7 +32,7 @@ import {
   type Column,
   type Tone,
 } from '../ui';
-import { GAME_NAME, percent, rankTierName, rankTierShort, type TopPlayer } from '../progress';
+import { GAME_NAME, percent, rankTierName, rankTierShort, type TopPlayer, gameName } from '../progress';
 import { PairGamesDrawer, PlayerGamesTable, RankCell, RankEmblem, useResetRating } from './RankParts';
 
 type View = 'spread' | 'top' | 'pairs';
@@ -308,7 +308,7 @@ function Pairs(): React.JSX.Element {
             <span className="subtle">and</span>
             <UserLink user={{ id: p.b.userId, username: p.b.username }} />
           </span>
-          <span className="cell-sub">{GAME_NAME[p.game]}</span>
+          <span className="cell-sub">{gameName(p.game)}</span>
         </span>
       ),
     },

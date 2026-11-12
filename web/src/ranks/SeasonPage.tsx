@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { seasonById, type MyRanks, type RankTier, type SeasonEmblem, type SeasonOverview } from '@kurda/shared';
+import { isRankedGame, seasonById, type MyRanks, type RankTier, type SeasonEmblem, type SeasonOverview } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { ArrowIcon, GemIcon } from '../components/icons';
@@ -90,7 +90,8 @@ export function SeasonPage(): React.JSX.Element {
             {t('seasons.thisSeason')}
           </h2>
           <ul className="season-progress">
-            {mine.ranks.map((r) => {
+            {/* this season is played only in the games there are: a row left from one that is gone is not drawn */}
+            {mine.ranks.filter((r) => isRankedGame(r.game)).map((r) => {
               const enough = r.season.ratedGames >= overview.minGames;
               const peak = r.season.peakTier;
               return (

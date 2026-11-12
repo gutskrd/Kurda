@@ -17,7 +17,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { AccessibilityInfo } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -87,8 +87,13 @@ const LIBRARY = {
   me: { finished: 0, total: 1, averageScore: null },
 };
 
-function client(streak: Record<string, unknown> = STREAK, due: { due: number; available: number; open: string | null } = { due: 8, available: 20, open: null }) {
+function client(
+  streak: Record<string, unknown> = STREAK,
+  due: { due: number; available: number; open: string | null } = { due: 8, available: 20, open: null },
+  more: Parameters<typeof fakeClient>[0] = {},
+) {
   testAuth.client = fakeClient({
+    ...more,
     'GET /courses': ok({ courses: [{ id: 'c1', slug: 'kmr', title: 'Kurmancî', dialect: 'kmr' }] }),
     'GET /courses/c1/map': ok(MAP),
     'GET /me/daily-goal': ok({ goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false }),
@@ -106,7 +111,53 @@ const lessonsTab = () => screen.getByRole('button', { name: 'Lessons' });
 const storiesTab = () => screen.getByRole('button', { name: 'Stories' });
 const gamesTab = () => screen.getByRole('button', { name: 'Games' });
 
+/** What GET /games/availability says of the lessons' two exercises, and of a game. */
+const exercises = (sentence: boolean, hear: boolean) =>
+  ok({
+    dialect: 'kmr',
+    games: [
+      { id: 'build-sentence', available: sentence, difficulties: sentence ? ['beginner'] : [] },
+      { id: 'hear-it', available: hear, difficulties: hear ? ['beginner'] : [] },
+      { id: 'memory-thief', available: true, difficulties: ['beginner'] },
+    ],
+  });
+
 describe('Learn', () => {
+  /*
+   * Build a Kurdish Sentence and Hear It, Find It are part of the lessons:
+   * each has a tile among the Lessons half's tools while it can be done in
+   * the course's Kurdish, and opens its own screen from there.
+   */
+  it('offers the lessons’ two exercises among the tools on Lessons, and opens each', async () => {
+    client(STREAK, undefined, { 'GET /games/availability?dialect=kmr': exercises(true, true) });
+    renderWithProviders(<LearnScreen />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Build a Kurdish Sentence, Put the words in order' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('BuildSentence');
+    fireEvent.click(screen.getByRole('button', { name: 'Hear It, Find It, Find what you heard' }));
+    expect(navigation.navigate).toHaveBeenLastCalledWith('HearIt');
+    // A game is not a tool of the lessons. The Games half is mounted beside this one and lists the game
+    // once it has drawn, so the claim is about the tools, and holds whether or not it has.
+    const tools = within(screen.getByTestId('learn-tools'));
+    expect(tools.getByRole('button', { name: /^Hear It, Find It, / })).toBeTruthy();
+    expect(tools.queryByText('The Memory Thief')).toBeNull();
+    await waitFor(() => expect(screen.queryByText('The Memory Thief')).not.toBeNull());
+    expect(tools.queryByText('The Memory Thief')).toBeNull();
+  });
+
+  it('shows no tile for an exercise that cannot be done yet, and none when the answer cannot be had', async () => {
+    client(STREAK, undefined, { 'GET /games/availability?dialect=kmr': exercises(false, true) });
+    renderWithProviders(<LearnScreen />);
+    expect(await screen.findByRole('button', { name: /^Hear It, Find It, / })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Build a Kurdish Sentence/ })).toBeNull();
+    cleanup();
+    client();
+    renderWithProviders(<LearnScreen />);
+    expect(await screen.findByText('Malbat', { selector: '[role="heading"]' })).toBeTruthy();
+    await waitFor(() => expect((testAuth.client as ReturnType<typeof fakeClient>).calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
+    expect(screen.queryByRole('button', { name: /^Hear It, Find It/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: /^Build a Kurdish Sentence/ })).toBeNull();
+  });
+
   it('opens on Lessons, with one next step at the top', async () => {
     client();
     renderWithProviders(<LearnScreen />);

@@ -1,7 +1,7 @@
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Animated, AppState, Linking, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { PracticeHub, PracticeHubUnit, PracticeMode } from '@kurda/shared';
+import type { GamesAvailability, PracticeHub, PracticeHubUnit, PracticeMode } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -15,6 +15,7 @@ import { haptic, refreshFelt } from '../feedback/haptics';
 import { micRefused } from '../recording/useMicRecorder';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
+import { useCourseDialect } from '../learn/courseDialect';
 import { useDirection } from '../reports/direction';
 import { useListEntrance, usePop } from '../theme/animate';
 import { BottomSheet } from '../theme/BottomSheet';
@@ -25,6 +26,7 @@ import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
+import { exercisesOf, type PhoneExercise } from './exercises';
 import { ROW_TONES, heroOf, heroTone, hubRows, practiceXpRange, type Hero, type HubRow, type Line } from './hub';
 
 /**
@@ -38,14 +40,20 @@ import { ROW_TONES, heroOf, heroTone, hubRows, practiceXpRange, type Hero, type 
  * button says what a session pays. Under it, a row for each other kind —
  * mistakes, words, listening, speaking, a unit of your choice — its name and
  * one line, with a big badge in its own colour at the end that pops under the
- * finger. The card and the rows rise in one after another as the hub arrives
+ * finger. Two of the rows open an exercise with a screen of its own, Build a
+ * Kurdish Sentence after the words and Hear It, Find It after listening, each
+ * there only while it can be done in the learner's Kurdish (exercises.ts).
+ * The card and the rows rise in one after another as the hub arrives
  * (`useListEntrance`), and simply stand there on a later visit. A kind with
  * nothing in it stays in the list, dimmed, and says what would put something
  * there, so nothing disappears without a word.
  *
  * It reads the hub in one request (GET /practice/hub), again each time the
  * screen comes back into view — after a session, the counts have moved — and
- * when pulled down. Speaking also listens to the microphone: refused for
+ * when pulled down. What the exercises can be done with is asked alongside
+ * it and waited for, so the list arrives whole and no row moves under a
+ * thumb; when that cannot be had the hub stands without them. Speaking also
+ * listens to the microphone: refused for
  * good, its row is the way to Settings, and coming back from there finds out
  * whether it was allowed.
  */
@@ -55,20 +63,27 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
+  const dialect = useCourseDialect();
   const [hub, setHub] = useState<PracticeHub | null>(null);
+  const [exercises, setExercises] = useState<PhoneExercise[]>([]);
   const [error, setError] = useState<ApiError | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [refused, setRefused] = useState(false);
   const [picking, setPicking] = useState(false);
 
   const load = useCallback(async () => {
-    const [res, mic] = await Promise.all([client.get<PracticeHub>('/practice/hub'), micRefused()]);
+    const [res, mic, games] = await Promise.all([
+      client.get<PracticeHub>('/practice/hub'),
+      micRefused(),
+      client.get<GamesAvailability>(`/games/availability?dialect=${dialect}`),
+    ]);
     setRefused(mic);
+    setExercises(games.ok ? exercisesOf(games.data) : []);
     if (res.ok) {
       setHub(res.data);
       setError(null);
     } else setError(res.error);
-  }, [client]);
+  }, [client, dialect]);
 
   useFocusEffect(
     useCallback(() => {
@@ -95,7 +110,7 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
   );
 
   // one row object per kind for as long as the hub stands, so the rows (memoised) are drawn again only when it changes
-  const rows = useMemo(() => (hub ? hubRows(hub, { micRefused: refused }) : []), [hub, refused]);
+  const rows = useMemo(() => (hub ? hubRows(hub, { micRefused: refused, exercises }) : []), [hub, refused, exercises]);
   const entering = useListEntrance(hub !== null);
 
   const press = useCallback(
@@ -104,9 +119,10 @@ export function PracticeHubScreen({ onExit }: { onExit: () => void }): React.JSX
       haptic('select');
       if (row.action.kind === 'start') start(row.action.mode);
       else if (row.action.kind === 'pick') setPicking(true);
+      else if (row.action.kind === 'open') navigation.navigate(row.action.route);
       else void Linking.openSettings().catch(() => undefined);
     },
-    [start],
+    [start, navigation],
   );
 
   const say = (line: Line) => t(line.key, line.count === undefined ? undefined : { count: formatNumber(line.count, locale) });

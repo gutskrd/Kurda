@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { forgetPartyOffers } from '../party/offer';
+import { forgetImpostorCategories } from './categories';
 import { ImpostorScreen } from './ImpostorScreen';
 
 /**
@@ -110,6 +111,7 @@ describe('ImpostorScreen', () => {
   afterEach(() => {
     cleanup();
     forgetPartyOffers();
+    forgetImpostorCategories();
   });
 
   it('says plainly where it is not offered, and explains the game where it is', async () => {
@@ -129,6 +131,19 @@ describe('ImpostorScreen', () => {
     renderWithProviders(<ImpostorScreen id="g1" onExit={() => undefined} />);
     expect(await screen.findByText('Kurmancî · Beginner · 30 s')).toBeTruthy();
     expect(screen.getByText('Waiting for more players…')).toBeTruthy();
+  });
+
+  it('names the category the host chose to everyone waiting in the lobby', async () => {
+    testAuth.client = fakeClient({
+      ...quiet,
+      'GET /mp/impostor/g1': ok(room({ settings: { dialect: 'kmr', difficulty: 'beginner', clueSeconds: 60, category: 'animals' } })),
+      'GET /games/impostor/couch?dialect=kmr': ok({
+        dialect: 'kmr',
+        difficulties: [{ difficulty: 'beginner', cards: 16, categories: [{ slug: 'animals', ku: 'heywan', meanings: { en: 'animal' }, cards: 8 }] }],
+      }),
+    });
+    renderWithProviders(<ImpostorScreen id="g1" onExit={() => undefined} />);
+    expect(await screen.findByText('Kurmancî · Beginner · heywan · 60 s')).toBeTruthy();
   });
 
   it('puts the speaker in the light, shows your card and the clues, and checks your clue before sending it', async () => {

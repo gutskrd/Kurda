@@ -1,0 +1,639 @@
+/*
+ * Kurdish Impostor on one phone (impostor/Couch.tsx).
+ *
+ * The setup is three numbered steps a room can answer without reading
+ * anything twice (who is playing, which game, what about), the rules folded
+ * under them with the answers they already have, and Deal the cards always in
+ * reach at the foot of the screen. Then one thing at a time, large, for a
+ * screen held at arm's length and passed round a room.
+ *
+ * The round is played at the game's own table (start.css): night blue with
+ * gold on it. The card is a card: face down it wears the mask; turned up it
+ * is paper, in both themes, with the category's picture in its corner; the
+ * impostor's is the colour of the mask's own night. It is face up only while
+ * its holder presses.
+ *
+ * Under Reduce Motion nothing turns, pulses or lifts; things are simply there.
+ */
+.couch,
+.couch-setup,
+.couch-deal,
+.couch-clues,
+.couch-talk,
+.couch-vote {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  min-width: 0;
+}
+.couch p,
+.couch-setup p {
+  margin: 0;
+}
+.couch-count {
+  justify-self: center;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.couch-note {
+  font-size: var(--text-secondary);
+}
+.couch-lead {
+  margin: 0;
+}
+.couch-centre {
+  text-align: center;
+}
+
+/* ---- the setup ---- */
+.couch-setup {
+  gap: var(--space-5);
+}
+.couch-step {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface-solid);
+}
+.couch-step-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  /* a legend is not laid out by its fieldset's grid: it carries its own space */
+  margin-bottom: var(--space-3);
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.couch-step-n {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #f2b632;
+  color: #2a1d05;
+  font-family: var(--font-sans);
+  font-size: var(--text-secondary);
+  font-weight: 800;
+}
+
+/* the players' names */
+.couch-players {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.couch-names {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.couch-name {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+.couch-name-n {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-weight: 800;
+}
+.couch-name-remove {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.couch-name-remove:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.couch-add {
+  justify-self: start;
+}
+
+/* the rules, folded: what they are set to shows on the fold */
+.couch-rules {
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface-solid);
+}
+.couch-rules-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: inherit;
+  cursor: pointer;
+  list-style: none;
+}
+.couch-rules-head::-webkit-details-marker {
+  display: none;
+}
+.couch-rules-head:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.couch-rules-title {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-weight: 700;
+}
+.couch-rules-now {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  font-size: var(--text-caption);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.couch-rules-now > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  white-space: nowrap;
+}
+.couch-rules-caret {
+  display: grid;
+  color: var(--ink-3);
+  transition: transform var(--dur) var(--ease-out);
+}
+.couch-rules[open] .couch-rules-caret {
+  transform: rotate(180deg);
+}
+.couch-rules-body {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-2) var(--space-4) var(--space-4);
+}
+
+/* Deal the cards: always in reach, at the foot of the screen */
+.couch-go {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: grid;
+  gap: var(--space-2);
+  margin: 0 calc(var(--space-4) * -1);
+  padding: var(--space-4) var(--space-4) calc(var(--space-3) + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, var(--app-bg) 72%, transparent);
+  text-align: center;
+}
+.couch-go .couch-note {
+  font-size: var(--text-caption);
+}
+
+/* ---- the table: what the room looks at between and during turns ---- */
+.couch-pass,
+.couch-stage {
+  --night: #2a2150;
+  --night-deep: #171231;
+  --night-ink: #f4efff;
+  --night-soft: rgba(244, 239, 255, 0.7);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-5);
+  border-radius: var(--r-xl);
+  background: radial-gradient(120% 90% at 50% 0%, #46378a 0%, var(--night) 55%, var(--night-deep) 100%);
+  color: var(--night-ink);
+  text-align: center;
+}
+.couch-pass .couch-note,
+.couch-stage .couch-note,
+.couch-stage .imp-phase {
+  color: var(--night-soft);
+}
+.couch-stage .imp-phase {
+  margin: 0;
+}
+
+/* how far round the room the phone has got */
+.couch-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.couch-dots li {
+  width: 22px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  transition: background var(--dur) ease;
+}
+.couch-dots li.is-done {
+  background: #f2b632;
+}
+.couch-dots li.is-now {
+  background: var(--ink);
+}
+
+/* between two players: a name and nothing else */
+.couch-pass {
+  padding-block: var(--space-8);
+}
+.couch-pass-title,
+.couch-pass .imp-caught {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--night-ink);
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.couch-pass-disc {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: #f2b632;
+  color: #2a1d05;
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 700;
+  box-shadow:
+    0 0 0 8px rgba(242, 182, 50, 0.18),
+    0 0 0 18px rgba(242, 182, 50, 0.08);
+  animation: couch-ring 2.4s ease-in-out infinite;
+}
+.couch-pass .btn-primary,
+.couch-pass .btn-primary:hover:not(:disabled),
+.couch-stage .btn-primary,
+.couch-stage .btn-primary:hover:not(:disabled) {
+  background: #f2b632;
+  border-color: #f2b632;
+  color: #2a1d05;
+}
+.couch-pass .btn-primary:hover:not(:disabled),
+.couch-stage .btn-primary:hover:not(:disabled) {
+  background: #f7c651;
+}
+
+/* the card: face down until its holder presses, and only while they press */
+.couch-card {
+  --paper: #fbf5e9;
+  --paper-ink: #2c2137;
+  --paper-soft: #6c5f79;
+  justify-self: center;
+  display: grid;
+  width: min(100%, 320px);
+  aspect-ratio: 5 / 6;
+  border-radius: 22px;
+  box-shadow: 0 14px 34px rgba(18, 12, 40, 0.34);
+  overflow: hidden;
+}
+.couch-card-back,
+.couch-card-face {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  border-radius: inherit;
+}
+.couch-card-back {
+  place-items: center;
+  background:
+    radial-gradient(closest-side at 50% 50%, rgba(242, 182, 50, 0.16), rgba(242, 182, 50, 0) 70%),
+    linear-gradient(160deg, #3a2f72 0%, #241b4d 100%);
+  /* the line a card's back has inside its edge */
+  box-shadow: inset 0 0 0 10px #241b4d, inset 0 0 0 12px rgba(242, 182, 50, 0.55);
+  animation: couch-turn 180ms var(--ease-out);
+}
+.couch-card-face {
+  grid-template-rows: auto minmax(0, 1fr);
+  padding: var(--space-4);
+  background: var(--paper);
+  color: var(--paper-ink);
+  animation: couch-turn 220ms var(--ease-out);
+}
+.couch-card-face p {
+  margin: 0;
+}
+.couch-card-top {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  text-align: start;
+}
+.couch-card-face .imp-card-label {
+  color: var(--paper-soft);
+}
+.couch-card-face .imp-card-hint {
+  color: var(--paper-ink);
+}
+.couch-card-face .imp-card-meaning {
+  color: var(--paper-soft);
+}
+.couch-card-main {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+}
+.couch-card-face .imp-card-word {
+  margin: 0 !important;
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 12vw, 3rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--paper-ink);
+}
+.couch-card-main .imp-card-meaning {
+  font-size: var(--text-body);
+}
+/* the impostor's card is the night the mask is cut from */
+.couch-card.is-impostor .couch-card-face {
+  background: linear-gradient(160deg, #3a2f72 0%, #1d1640 100%);
+  color: #f4efff;
+}
+.couch-card.is-impostor .imp-card-label,
+.couch-card.is-impostor .imp-card-meaning {
+  color: rgba(244, 239, 255, 0.72);
+}
+.couch-card.is-impostor .imp-card-hint {
+  color: #f4efff;
+}
+.couch-card.is-impostor .imp-card-word.is-impostor {
+  font-size: 1.6rem;
+  color: #f2c95a;
+}
+.couch-hold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: 68px;
+  padding: var(--space-4);
+  border: 2px solid #f2b632;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font: inherit;
+  font-size: var(--text-body);
+  font-weight: 800;
+  cursor: pointer;
+  /* a long press here shows the card: it must not also select text, open a menu or scroll the page */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.couch-hold.is-held {
+  background: #f2b632;
+  color: #2a1d05;
+  transform: scale(0.98);
+}
+
+/* whose clue it is, and the clock */
+.couch-speaker {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.couch-vote > .couch-speaker {
+  text-align: center;
+}
+.couch-vote > .couch-note {
+  text-align: center;
+}
+.couch-clock {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+.couch-clock-left {
+  font-size: 64px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+}
+.couch-clock-left.is-low {
+  color: #ff9c90;
+}
+.couch-stage .party-timer {
+  background: rgba(255, 255, 255, 0.16);
+}
+.couch-stage .party-timer-fill {
+  background: #f2b632;
+}
+.couch-stage .party-timer.is-low .party-timer-fill {
+  background: #ff9c90;
+}
+.couch-order {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.couch-order li {
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  color: var(--night-soft);
+}
+.couch-order li.is-done {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+.couch-order li.is-now {
+  background: #f2b632;
+  color: #2a1d05;
+}
+
+/* a vote: one row for each name, a thumb wide */
+.couch-vote .imp-vote-options {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+.couch-vote .imp-vote-options .btn,
+.couch .imp-guess-options .btn {
+  height: 56px;
+  font-size: var(--text-body);
+}
+.couch .imp-guess {
+  display: grid;
+  gap: var(--space-4);
+}
+.couch .imp-guess .couch-speaker {
+  text-align: center;
+}
+.couch .imp-guess-option {
+  border-color: #f2b632;
+  font-family: var(--font-display);
+  font-size: 1.375rem !important;
+  font-weight: 700;
+}
+
+/* the reveal: the word on the paper it was dealt on, then who it was */
+.couch-reveal .imp-reveal-word {
+  justify-self: center;
+  width: min(100%, 320px);
+  padding: var(--space-5) var(--space-4);
+  border-radius: 22px;
+  background: #fbf5e9;
+  box-shadow: 0 14px 34px rgba(18, 12, 40, 0.3);
+}
+.couch-reveal .imp-reveal-word .imp-card-label,
+.couch-reveal .imp-reveal-word .imp-card-meaning {
+  color: #6c5f79;
+}
+.couch-reveal .imp-reveal-word .imp-card-word {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  color: #2c2137;
+}
+.couch-reveal .imp-reveal-who {
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  text-align: center;
+}
+.couch-reveal > .muted {
+  text-align: center;
+}
+.couch-reveal .imp-flip-face {
+  font-size: 13px;
+}
+
+/* the evening's score */
+.couch-score {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.couch-score th,
+.couch-score td {
+  padding: 12px 8px;
+  border-bottom: 1px solid var(--separator);
+  text-align: start;
+}
+.couch-score thead th {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+.couch-score td {
+  text-align: end;
+  width: 5.5em;
+}
+.couch-score tbody th {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.couch-score tbody tr:first-child th,
+.couch-score tbody tr:first-child td {
+  font-weight: 800;
+}
+.couch-score tr.is-impostor th {
+  color: var(--danger);
+}
+.couch-score-wrap {
+  padding: var(--space-2) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface-solid);
+}
+
+@keyframes couch-turn {
+  from {
+    transform: perspective(700px) rotateY(70deg);
+    opacity: 0.4;
+  }
+  to {
+    transform: perspective(700px) rotateY(0deg);
+    opacity: 1;
+  }
+}
+@keyframes couch-ring {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 8px rgba(242, 182, 50, 0.18),
+      0 0 0 18px rgba(242, 182, 50, 0.08);
+  }
+  50% {
+    box-shadow:
+      0 0 0 12px rgba(242, 182, 50, 0.2),
+      0 0 0 26px rgba(242, 182, 50, 0.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .couch-card-back,
+  .couch-card-face,
+  .couch-pass-disc {
+    animation: none;
+  }
+  .couch-hold,
+  .couch-dots li,
+  .couch-rules-caret {
+    transition: none;
+  }
+  .couch-hold.is-held {
+    transform: none;
+  }
+}

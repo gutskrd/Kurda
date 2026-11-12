@@ -141,7 +141,7 @@ export class GuestService {
         user = inserted.rows[0];
       } catch (err) {
         const pgErr = err as { code?: string; constraint?: string };
-        if (pgErr.code === PG_UNIQUE_VIOLATION && pgErr.constraint === 'users_username_active_uniq') continue;
+        if (pgErr.code === PG_UNIQUE_VIOLATION && (pgErr.constraint === 'users_username_active_uniq' || pgErr.constraint === 'users_username_held')) continue;
         throw err;
       }
     }

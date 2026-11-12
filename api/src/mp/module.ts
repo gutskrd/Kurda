@@ -95,7 +95,7 @@ export interface GameModule<State = unknown, Move = unknown, Settings = unknown,
   /**
    * Whether the game can be offered in this dialect now, with friends and
    * against Hevalo, and anything more the apps need to offer it (Kurdish
-   * Bluff: the languages its cards have real meanings in).
+   * Impostor: the categories its approved cards are in).
    */
   availability?(db: Executor, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean } & Record<string, unknown>>;
 }

@@ -2754,6 +2754,13 @@ a.mkp-activity-row:hover {
 .invite-lead {
   margin: 0 0 8px;
 }
+/* where an invite to a game that is no longer part of Hevalo was: a line, not a ticket */
+.invite-retired {
+  display: block;
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.75;
+}
 
 /*
  * A bubble shrink-wraps its text, so an invite card had no definite width to
@@ -3961,6 +3968,39 @@ a.mkp-activity-row:hover {
 }
 .password-form .settings-actions {
   margin-top: var(--space-2);
+}
+
+/* the username card: the name as it stands, the names still kept for its owner, and the wait */
+.username-now {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+  margin: 0 0 16px;
+}
+.username-now dt {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.username-now dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.username-held {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.username-held li + li {
+  margin-top: 4px;
+}
+.username-wait {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--ink-2);
 }
 
 /* ---- who gave them what they are wearing --------------------------------- */

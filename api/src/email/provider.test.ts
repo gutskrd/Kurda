@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { loadConfig } from '../config/env.js';
 import {
   createEmailProvider,
+  RESEND_SENDS_PER_SECOND,
   ResendEmailProvider,
   SmtpEmailProvider,
   StubEmailProvider,
@@ -127,5 +128,114 @@ describe('ResendEmailProvider', () => {
     );
     const provider = new ResendEmailProvider('re_secret', 'no-reply@hevalo.app');
     await expect(provider.send({ to: 'u@e.com', subject: 's', text: 't' })).rejects.toThrow(/422/);
+  });
+});
+
+/**
+ * A rush: many people asking for a code in the same minute. The account may
+ * ask the provider ten times a second, and the queue's workers are faster
+ * than that, so sends take turns under the limit, and one that is still told
+ * "too fast" waits and asks again instead of being lost.
+ */
+describe('ResendEmailProvider in a rush', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  const mail = (n: number) => ({ to: `u${n}@e.com`, subject: 's', text: 't', idempotencyKey: `send-email/${n}` });
+
+  it('starts a hundred sends asked for at once no faster than the account may ask, and loses none', async () => {
+    vi.useFakeTimers();
+    const started: number[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      started.push(Date.now());
+      return new Response('{"id":"m"}', { status: 200 });
+    });
+    const provider = new ResendEmailProvider('re_secret', 'no-reply@hevalo.app');
+    const all = Promise.all(Array.from({ length: 100 }, (_, n) => provider.send(mail(n))));
+    await vi.runAllTimersAsync();
+    expect(await all).toHaveLength(100);
+    expect(started).toHaveLength(100);
+    // in any one second, no more than the pace allows: which is under the account's ten
+    expect(RESEND_SENDS_PER_SECOND).toBeLessThan(10);
+    for (let i = 0; i + RESEND_SENDS_PER_SECOND < started.length; i++) {
+      expect(started[i + RESEND_SENDS_PER_SECOND]! - started[i]!, `sends ${i} to ${i + RESEND_SENDS_PER_SECOND}`).toBeGreaterThanOrEqual(1000);
+    }
+    // and a hundred codes are still out within a quarter of a minute
+    expect(started.at(-1)! - started[0]!).toBeLessThan(15_000);
+  });
+
+  it('does not hold up a single send', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{"id":"m"}', { status: 200 }));
+    const provider = new ResendEmailProvider('re_secret', 'no-reply@hevalo.app');
+    await provider.send(mail(1));
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('waits as long as it is told when it is told “too fast”, then sends the same email once', async () => {
+    vi.useFakeTimers();
+    const calls: Array<{ at: number; key: string }> = [];
+    const t0 = Date.now();
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      calls.push({ at: Date.now() - t0, key: (init!.headers as Record<string, string>)['Idempotency-Key']! });
+      return calls.length === 1
+        ? new Response('{"statusCode":429,"name":"rate_limit_exceeded","message":"Too many requests"}', { status: 429, headers: { 'retry-after': '2' } })
+        : new Response('{"id":"msg_after"}', { status: 200 });
+    });
+    const provider = new ResendEmailProvider('re_secret', 'no-reply@hevalo.app');
+    const sent = provider.send(mail(7));
+    await vi.runAllTimersAsync();
+    expect(await sent).toEqual({ messageId: 'msg_after' });
+    expect(calls).toHaveLength(2);
+    expect(calls[1]!.at).toBeGreaterThanOrEqual(2000);
+    // the same key both times: asked twice, it is still one email
+    expect(calls.map((c) => c.key)).toEqual(['send-email/7', 'send-email/7']);
+  });
+
+  it('holds back what is waiting behind a send that was told “too fast”', async () => {
+    vi.useFakeTimers();
+    const t0 = Date.now();
+    const calls: Array<{ at: number; to: string }> = [];
+    let refused = false;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      calls.push({ at: Date.now() - t0, to: JSON.parse(init!.body as string).to });
+      if (!refused) {
+        refused = true;
+        return new Response('rate_limit_exceeded', { status: 429, headers: { 'retry-after': '3' } });
+      }
+      return new Response('{"id":"m"}', { status: 200 });
+    });
+    const provider = new ResendEmailProvider('re_secret', 'no-reply@hevalo.app');
+    const both = Promise.all([provider.send(mail(1)), provider.send(mail(2))]);
+    await vi.runAllTimersAsync();
+    await both;
+    // nothing was asked again inside the three seconds the provider asked for
+    const during = calls.slice(1).filter((c) => c.at > 200 && c.at < 3000);
+    expect(during, JSON.stringify(calls)).toEqual([]);
+    expect(calls.filter((c) => c.to === 'u1@e.com')).toHaveLength(2);
+  });
+
+  it('gives the send back to the job after three refusals, to be tried again later', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('rate_limit_exceeded', { status: 429, headers: { 'retry-after': '1' } }));
+    const provider = new ResendEmailProvider('re_secret', 'no-reply@hevalo.app');
+    const sent = provider.send(mail(1)).catch((err: Error) => err);
+    await vi.runAllTimersAsync();
+    expect(await sent).toBeInstanceOf(Error);
+    expect(((await sent) as Error).message).toMatch(/429/);
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not wait on an allowance that is used up: that does not pass in a second', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () => new Response('{"statusCode":429,"name":"monthly_quota_exceeded","message":"You have reached your monthly email sending quota."}', { status: 429 }),
+    );
+    const provider = new ResendEmailProvider('re_secret', 'no-reply@hevalo.app');
+    await expect(provider.send(mail(1))).rejects.toThrow(/quota/);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

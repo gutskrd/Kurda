@@ -1,6 +1,7 @@
 /*
  * The learning games (games/*.tsx): their cards in Learn's Games group, the
- * solo round's shell, and Build a Kurdish Sentence's stage.
+ * solo round's shell, and the stage of Build a Kurdish Sentence, which is an
+ * exercise of the lessons' practice run by the same shell.
  *
  * Each game wears one of the path's tones (`lp-tone-*`, learn/path.css), so
  * its card, its ladder and its settled line are the same colour, and the gold
@@ -9,7 +10,7 @@
  * it in script (BuildSentence.tsx).
  */
 
-/* ---- the card's picture: tiles on a line and a tray, no words ---------------- */
+/* ---- a card's picture: tiles on a line, no words --------------------------------- */
 /* its width in the grid is the grid's (styles/product.css): every game's card is laid out the same */
 .lg-mini {
   display: grid;
@@ -17,25 +18,19 @@
   justify-items: center;
   width: min(100%, 300px);
 }
-.lg-mini-line,
-.lg-mini-tray {
+.lg-mini-line {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
   width: 100%;
-}
-.lg-mini-line {
   min-height: 34px;
   padding-bottom: 8px;
   border-bottom: 2px solid var(--u-fill, var(--border-strong));
 }
-.lg-mini-tile,
-.lg-mini-ghost {
+.lg-mini-tile {
   height: 26px;
   border-radius: 9px;
-}
-.lg-mini-tile {
   border: 2px solid var(--border-strong);
   background: var(--bg);
   box-shadow: 0 3px 0 var(--border-strong);
@@ -47,9 +42,6 @@
 .lg-mini-tile.is-lifted {
   transform: translateY(-6px) rotate(-3deg);
   box-shadow: 0 9px 14px rgba(0, 0, 0, 0.35);
-}
-.lg-mini-ghost {
-  background: var(--surface-2);
 }
 
 /* ---- the shell ------------------------------------------------------------------ */
@@ -572,32 +564,4 @@
 .lg-mini-seat.is-lit {
   border-color: var(--u-fill, var(--border-strong));
   background: var(--u-fill, var(--border-strong));
-}
-
-/* Don't Say the Word!'s card: a card of struck-through words, and the buzzer beside it */
-.lg-mini--card {
-  grid-auto-flow: column;
-  align-items: end;
-  gap: 18px;
-}
-.lg-mini-card {
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 2px solid var(--u-fill, var(--border-strong));
-  background: var(--bg);
-}
-.lg-mini-strike {
-  height: 3px;
-  border-radius: 2px;
-  background: var(--u-lip, var(--border-strong));
-}
-.lg-mini-buzzer {
-  width: 34px;
-  height: 18px;
-  border-radius: 34px 34px 4px 4px;
-  background: var(--u-fill, var(--border-strong));
-  box-shadow: 0 4px 0 var(--u-lip, var(--border-strong));
 }

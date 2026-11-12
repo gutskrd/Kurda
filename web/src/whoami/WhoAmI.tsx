@@ -30,7 +30,7 @@ import { GameRoom, seatNamer } from '../play/MultiRoom';
 import { useGameView } from '../play/useGameView';
 import { useServerClock } from '../stories/useStoryGame';
 import { SoloGameShell, type SoloRound } from '../games/SoloGameShell';
-import { useAvailability, useGameDialect } from '../games/learnGames';
+import { useAvailability, useGameDialect } from '../games/soloRounds';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { DIFFICULTY_KEY, type RaceOffer } from '../games/partyChoices';
 import { dialectName } from '../learn/map';

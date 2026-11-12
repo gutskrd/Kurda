@@ -717,7 +717,7 @@ export class AuthService {
     } catch (err) {
       const constraint = (err as { constraint?: string }).constraint;
       // usernames are public, so a specific answer; addresses are not (as at sign-up)
-      if (constraint === 'users_username_active_uniq') throw new AppError('USERNAME_TAKEN', 409, 'username already in use');
+      if (constraint === 'users_username_active_uniq' || constraint === 'users_username_held') throw new AppError('USERNAME_TAKEN', 409, 'username already in use');
       if (constraint === 'users_email_active_uniq') {
         throw new AppError(
           'REGISTRATION_FAILED',

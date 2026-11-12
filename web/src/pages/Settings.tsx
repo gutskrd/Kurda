@@ -10,6 +10,7 @@ import { Skeleton, SkeletonRegion } from '../components/Skeleton';
 import { Button } from '../components/Button';
 import {
   ArrowIcon,
+  AtIcon,
   BellIcon,
   BlockIcon,
   BookIcon,
@@ -36,6 +37,7 @@ import {
 } from '../components/icons';
 import { BlockedUsers } from '../settings/BlockedUsers';
 import { ChangePassword } from '../settings/ChangePassword';
+import { ChangeUsername } from '../settings/ChangeUsername';
 import { SignedInDevices } from '../settings/SignedInDevices';
 import { SettingsChoices, SettingsRow, SettingsSearch, SettingsSection, SettingsSwitch, searchable } from '../settings/SettingsList';
 import { GiftSoundSetting } from '../gifts/GiftSoundSetting';
@@ -87,6 +89,7 @@ export const SUPPORT_EMAIL = 'support@hevalo.app';
 
 /** Every page Settings opens, each at /app/settings/<page>. */
 const PAGES = [
+  'username',
   'password',
   'devices',
   'notifications',
@@ -106,6 +109,7 @@ export type SettingsPage = (typeof PAGES)[number];
 const isPage = (value: string | undefined): value is SettingsPage => (PAGES as readonly string[]).includes(value ?? '');
 
 const PAGE_TITLE: Record<SettingsPage, MessageKey> = {
+  username: 'settings.username.title',
   password: 'settings.password.title',
   devices: 'settings.devices.title',
   notifications: 'notifications.title',
@@ -269,9 +273,16 @@ function SettingsIndex({ me, current }: { me: MeState; current?: SettingsPage })
           key: 'profile',
           icon: <ProfileIcon />,
           title: t('profile.edit'),
+          to: '/app/profile/edit',
+        },
+        {
+          key: 'username',
+          icon: <AtIcon />,
+          title: t('settings.username.title'),
           value: user ? username : fromAccount(undefined),
           valueText: user?.username,
-          to: '/app/profile/edit',
+          terms: [t('settings.username.change')],
+          ...go('username'),
         },
         { key: 'password', icon: <KeyIcon />, title: t('settings.password.title'), terms: [t('settings.password.change')], ...go('password') },
         {
@@ -463,6 +474,9 @@ function SettingsPageView({
 
   let body: React.ReactNode;
   switch (page) {
+    case 'username':
+      body = <ChangeUsername onChanged={(name) => me.onChanged({ username: name })} />;
+      break;
     case 'password':
       body = <ChangePassword />;
       break;

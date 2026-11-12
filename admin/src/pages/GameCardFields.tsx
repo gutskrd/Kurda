@@ -1,17 +1,15 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { dialectDirection, type GameDialect, type WordCategoryContent } from '@kurda/shared';
 import { listWordCategories, searchVocabulary, type VocabularyPick } from '../gameContent';
 import { Button, Field, Note, errorLine, useDebounced, useLoad } from '../ui';
 
 /**
- * The card editors of the party games, for the Game content page
- * (GameContent.tsx): a Kurdish Impostor word card and a Don't Say the Word!
- * card are made by picking their words from published vocabulary — what
- * published lessons and stories already teach, with its meaning — so no
- * Kurdish is typed again. What an editor writes is the English (and other
- * languages') meaning, the category a word card is filed under, and which
- * picked words a taboo card forbids. The row still goes through review before
- * a game may show it.
+ * The card editor of Kurdish Impostor, for the Game content page
+ * (GameContent.tsx): a word card is made by picking its word from published
+ * vocabulary — what published lessons and stories already teach, with its
+ * meaning — so no Kurdish is typed again. What an editor writes is the
+ * English (and other languages') meaning and the category the card is filed
+ * under. The row still goes through review before a game may show it.
  */
 
 type Payload = Record<string, unknown>;
@@ -163,85 +161,6 @@ export function WordCardFields({
       {!readOnly && forms.length < 12 && (
         <VocabularyPicker dialect={dialect} label="Add a form" exclude={[word, ...forms]} onPick={(w) => onChange({ ...payload, forms: [...forms, w.ku] })} />
       )}
-    </>
-  );
-}
-
-/**
- * A Don't Say the Word! card: the word to describe (picked), what it means,
- * the three to five words that may not be said (picked), and any forms of
- * them that are refused too.
- */
-export function TabooCardFields({
-  payload,
-  onChange,
-  dialect,
-  readOnly,
-  Meanings,
-}: {
-  payload: Payload;
-  onChange: (p: Payload) => void;
-  dialect: GameDialect;
-  readOnly: boolean;
-  Meanings: (p: { value: Record<string, string>; onChange: (v: Record<string, string>) => void; label: string; readOnly: boolean }) => React.JSX.Element;
-}): React.JSX.Element {
-  const target = String(payload.target ?? '');
-  const forbidden = ((payload.forbidden as string[] | undefined) ?? []).filter((f) => f !== '');
-  const forms = (payload.forms as string[] | undefined) ?? [];
-  const [picking, setPicking] = useState<'forbidden' | 'forms' | null>(null);
-  useEffect(() => {
-    if (readOnly) setPicking(null);
-  }, [readOnly]);
-  const onCard = [target, ...forbidden, ...forms];
-  return (
-    <>
-      <Field label="The word to describe" hint="Picked from published vocabulary." required>
-        {target ? <PickedWord word={target} dialect={dialect} readOnly={readOnly} label="the word" onRemove={() => onChange({ ...payload, target: '' })} /> : <p className="subtle">No word picked yet.</p>}
-      </Field>
-      {!readOnly && !target && <VocabularyPicker dialect={dialect} label="Pick the word to describe" exclude={onCard} onPick={(w) => onChange({ ...payload, target: w.ku, meanings: meaningsOf(w) })} />}
-      <Meanings label="What it means" value={(payload.meanings as Record<string, string>) ?? { en: '' }} onChange={(m) => onChange({ ...payload, meanings: m })} readOnly={readOnly} />
-      <Field label="Words that may not be said" hint="Three to five: the words a describer would reach for first. Each is picked from published vocabulary." required>
-        <div className="gc-list">
-          {forbidden.map((f, i) => (
-            <PickedWord key={`${f}:${i}`} word={f} dialect={dialect} readOnly={readOnly} label="the forbidden word" onRemove={() => onChange({ ...payload, forbidden: forbidden.filter((_, j) => j !== i) })} />
-          ))}
-          {forbidden.length === 0 && <p className="subtle">None picked yet.</p>}
-        </div>
-      </Field>
-      {!readOnly && (
-        <div className="row">
-          <Button icon="plus" disabled={forbidden.length >= 5} onClick={() => setPicking('forbidden')}>
-            Add a forbidden word
-          </Button>
-          <Button icon="plus" disabled={forms.length >= 16} onClick={() => setPicking('forms')}>
-            Add another form
-          </Button>
-          {picking && (
-            <Button variant="ghost" onClick={() => setPicking(null)}>
-              Done picking
-            </Button>
-          )}
-        </div>
-      )}
-      {picking === 'forbidden' && (
-        <VocabularyPicker
-          dialect={dialect}
-          label="Pick a forbidden word"
-          exclude={onCard}
-          onPick={(w) => {
-            onChange({ ...payload, forbidden: [...forbidden, w.ku].slice(0, 5) });
-            if (forbidden.length + 1 >= 5) setPicking(null);
-          }}
-        />
-      )}
-      <Field label="Other forms that are refused too" hint="Optional: a plural or another form of the word or of a forbidden word. Common endings are caught already.">
-        <div className="gc-list">
-          {forms.map((f, i) => (
-            <PickedWord key={`${f}:${i}`} word={f} dialect={dialect} readOnly={readOnly} label="the form" onRemove={() => onChange({ ...payload, forms: forms.filter((_, j) => j !== i) })} />
-          ))}
-        </div>
-      </Field>
-      {picking === 'forms' && <VocabularyPicker dialect={dialect} label="Pick another form" exclude={onCard} onPick={(w) => onChange({ ...payload, forms: [...forms, w.ku] })} />}
     </>
   );
 }

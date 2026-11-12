@@ -48,7 +48,9 @@ const spoken = (body: string): string => body.replace(/"(accessToken|refreshToke
 
 describe('what counts as the database speaking', () => {
   it('is never a token’s own letters, and is still anything the driver says beside one', () => {
-    const tokens = '"tokens":{"accessToken":"eyJh.bGPg_x.Qpg_","refreshToken":"l2VDZA2_qR7NPG_TWWwuFkS67KUbO4zjCRlnCyjtumy4"}';
+    // The made-up tokens are plain on purpose: one that looked real would read, to anyone checking the
+    // repository for leaked credentials, as a credential. All they need is "pg_" in them, in either case.
+    const tokens = '"tokens":{"accessToken":"aaaa.aaPg_a.apg_","refreshToken":"aaaa_aaaaPG_aaaaaaaa"}';
     expect(`{${tokens}}`).toMatch(DATABASE_WORDS);
     expect(spoken(`{${tokens}}`)).not.toMatch(DATABASE_WORDS);
     expect(spoken(`{"message":"relation \\"pg_class\\" does not exist",${tokens}}`)).toMatch(DATABASE_WORDS);

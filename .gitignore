@@ -14,6 +14,8 @@ coverage/
 .expo/
 
 api/.pgdata/
+# a local Redis writes its snapshot where it was started
+dump.rdb
 
 # The demo site is its own standalone repo (preserved separately) — never
 # absorb it into this monorepo. Still Demo-MyKurda on disk and in its own

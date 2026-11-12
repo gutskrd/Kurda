@@ -1,4 +1,7 @@
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { EMAIL_PICTURES } from '@kurda/shared';
 import { EMAIL_LOCALES, EMAIL_TEMPLATES, renderEmail, emailLocaleFor } from './templates.js';
 
 describe('renderEmail', () => {
@@ -143,5 +146,151 @@ describe('the urgent-report email to moderators', () => {
       expect(r.text, locale).not.toMatch(/\{[a-z]+\}/);
     }
     expect(renderEmail('moderation-urgent', 'en').subject).toBe('A new urgent report needs review');
+  });
+});
+
+/**
+ * Every email is drawn from its own text (layout.ts): the same words, one
+ * picture, and the link or the code as the one thing to act on. These hold
+ * for all of them, so a template added later is held to them too.
+ */
+describe('every email, designed', () => {
+  const VARS = {
+    username: 'rojda',
+    link: 'https://hevalo.app/verify?token=abc123',
+    code: '482915',
+    previous: 'rojda_amed',
+    time: '12 November 2026, 08:14 UTC',
+    holdDays: '60',
+    cooldownDays: '30',
+    graceDays: '30',
+    reference: 'CR-2026-0042',
+    contact: 'contact@zagrosian.com',
+    headline: 'An old session key was used again',
+    list: '• one thing\n• another thing',
+    name: 'A. Example',
+    address: '1 Example Street',
+    phone: '+31 6 00000000',
+    email: 'person@example.org',
+    statement: 'I made it myself.\nIt was removed by mistake.',
+    signature: 'A. Example',
+    restoreDate: '26 November 2026',
+  };
+  /** The words of an HTML email, as a reader gets them. */
+  const words = (html: string): string =>
+    html
+      .replace(/<style[\s\S]*?<\/style>/g, ' ')
+      .replace(/<br>/g, ' ')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&#39;/g, "'")
+      .replace(/&quot;/g, '"')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/\s+/g, ' ');
+
+  it('has a designed version in both languages, with its picture, its heading and nothing left unfilled', () => {
+    for (const template of EMAIL_TEMPLATES) {
+      for (const locale of EMAIL_LOCALES) {
+        const r = renderEmail(template, locale, VARS);
+        const where = `${template} ${locale}`;
+        expect(r.html, where).toMatch(/^<!doctype html><html lang="(en|ku)" dir="ltr">/);
+        // its picture as a loop, and the moment it rests on for a reader who wants less motion
+        expect(r.html, where).toMatch(/<img class="loop" src="https:\/\/hevalo\.app\/email\/([a-z]+)\.gif" width="168" height="168" alt=""[^>]*><img class="still" src="https:\/\/hevalo\.app\/email\/\1\.png" width="168" height="168" alt="" style="display:none;/);
+        expect(r.html, where).toContain('<h1 ');
+        expect(r.html, where).not.toMatch(/\{[a-zA-Z]+\}/);
+        // the page asks nothing of the reader's program but to draw it
+        expect(r.html, where).not.toMatch(/<script|<link|<form|<iframe|\son[a-z]+=|javascript:/i);
+      }
+    }
+  });
+
+  it('says in the designed version everything the text says', () => {
+    for (const template of EMAIL_TEMPLATES) {
+      for (const locale of EMAIL_LOCALES) {
+        const r = renderEmail(template, locale, VARS);
+        // the link is the button and the line under it, or a link inside its sentence: compared without it
+        const shown = words(r.html).replaceAll(VARS.link, '').replace(/\s+/g, ' ');
+        for (const paragraph of r.text.split(/\n{2,}/)) {
+          // the dash before the signature is the footer's rule
+          const said = paragraph.replace(VARS.link, '').replace(/^—\s*/, '').replace(/\s+/g, ' ').trim();
+          if (said) expect(shown, `${template} ${locale}: ${said.slice(0, 50)}`).toContain(said);
+        }
+      }
+    }
+  });
+
+  it('makes the link the one button, worded for what it does, with the address again underneath', () => {
+    for (const [template, en, ku] of [
+      ['verify-email', 'Confirm your email', 'E-nameya xwe piştrast bike'],
+      ['password-reset', 'Update password', 'Şîfreyê Nû Bike'],
+      ['oauth-no-password', 'Set a password', 'Şîfreyekê saz bike'],
+      ['moderation-urgent', 'Open the report', 'Raporê veke'],
+      ['security-alert', 'Open the security log', 'Tomara ewlehiyê veke'],
+    ] as const) {
+      for (const [locale, label] of [['en', en], ['ku', ku]] as const) {
+        const r = renderEmail(template, locale, VARS);
+        const buttons = r.html.match(/<a href="[^"]*" class="btn"[^>]*>[^<]*<\/a>/g) ?? [];
+        expect(buttons, `${template} ${locale}`).toHaveLength(1);
+        expect(buttons[0], `${template} ${locale}`).toContain(`href="${VARS.link}"`);
+        expect(buttons[0], `${template} ${locale}`).toContain(`>${label}</a>`);
+        expect(words(r.html), `${template} ${locale}`).toContain(VARS.link);
+      }
+    }
+  });
+
+  it('shows the code large, and no button beside it', () => {
+    const r = renderEmail('verify-email-code', 'en', VARS);
+    expect(r.html).toMatch(/letter-spacing:8px[^>]*>482915</);
+    expect(r.html).not.toContain('class="btn"');
+  });
+
+  it('never makes a link of an address somebody else wrote into an email', () => {
+    // a copyright notice names the page it is about: only a page on Hevalo itself is linked
+    const own = renderEmail('copyright-received', 'en', { ...VARS, link: 'https://hevalo.app/app/post/8842' });
+    expect(own.html).toContain('<a href="https://hevalo.app/app/post/8842"');
+    const elsewhere = renderEmail('copyright-received', 'en', { ...VARS, link: 'https://evil.example/app/post/8842' });
+    expect(elsewhere.html).not.toContain('href="https://evil.example');
+    expect(words(elsewhere.html)).toContain('https://evil.example/app/post/8842');
+    // and what a person wrote in a statement is words, with its line breaks, whatever it looks like
+    const notice = renderEmail('copyright-counter-notice', 'en', { ...VARS, statement: 'See https://evil.example/x\n<a href="https://evil.example">here</a>' });
+    expect(notice.html).not.toContain('href="https://evil.example');
+    expect(notice.html).toContain('See https://evil.example/x<br>&lt;a href=&quot;https://evil.example&quot;&gt;here&lt;/a&gt;');
+  });
+
+  it('draws no button for a link that is not a web address', () => {
+    for (const link of ['javascript:alert(1)', 'data:text/html,<b>x</b>', 'not a link']) {
+      const r = renderEmail('password-reset', 'en', { ...VARS, link });
+      expect(r.html, link).not.toContain('class="btn"');
+      expect(r.html, link).not.toMatch(/href="(javascript|data):/i);
+    }
+  });
+
+  it('sets a short email in the middle and a long one from the edge', () => {
+    expect(renderEmail('verify-email-code', 'en', VARS).html).toMatch(/<td align="center" style="padding:0 0 14px;"><p class="ink2"/);
+    expect(renderEmail('copyright-counter-notice', 'en', VARS).html).toMatch(/<td align="left" style="padding:0 0 14px;"><p class="ink2"/);
+  });
+
+  it('has a loop and a still in the website’s public folder for every picture an email shows', () => {
+    const folder = fileURLToPath(new URL('../../../web/public/email/', import.meta.url));
+    for (const picture of EMAIL_PICTURES) {
+      for (const kind of ['gif', 'png']) expect(existsSync(`${folder}${picture}.${kind}`), `${picture}.${kind}: run npm run email:art --workspace api`).toBe(true);
+    }
+  });
+
+  it('gives each email the picture of what it is about', () => {
+    const shown = (template: (typeof EMAIL_TEMPLATES)[number]) => /\/email\/([a-z]+)\.gif/.exec(renderEmail(template, 'en', VARS).html)?.[1];
+    expect(shown('verify-email')).toBe('letter');
+    expect(shown('verify-email-code')).toBe('code');
+    expect(shown('password-reset')).toBe('key');
+    expect(shown('password-changed')).toBe('lock');
+    expect(shown('username-changed')).toBe('badge');
+    expect(shown('new-sign-in')).toBe('device');
+    expect(shown('sign-in-attempts')).toBe('shield');
+    expect(shown('security-alert')).toBe('bell');
+    expect(shown('deletion-notice')).toBe('hourglass');
+    expect(shown('moderation-urgent')).toBe('flag');
+    expect(shown('copyright-received')).toBe('document');
+    expect(shown('copyright-kept')).toBe('scales');
   });
 });

@@ -23,7 +23,7 @@ import type { MessageKey } from '../i18n/en';
 import { prefersReducedMotion } from '../lib/motion';
 import { Tile } from '../learn/Tile';
 import { SoloGameShell, type SoloRound } from './SoloGameShell';
-import { useAvailability, useGameDialect, useOpenRound } from './learnGames';
+import { useAvailability, useGameDialect, useOpenRound } from './soloRounds';
 import './memory-thief.css';
 
 /**

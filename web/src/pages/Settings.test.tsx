@@ -51,7 +51,8 @@ describe('Settings: the list', () => {
     expect(within(row(en['settings.leagues.title'])).getByText(en['settings.on'])).toBeInTheDocument();
     expect(within(row(en['settings.appearance.title'])).getByText(en['settings.appearance.dark'])).toBeInTheDocument();
     expect(within(row(en['language.settingsTitle'])).getByText('English')).toBeInTheDocument();
-    expect(within(row(en['profile.edit'])).getByText('@ada')).toBeInTheDocument();
+    expect(within(row(en['settings.username.title'])).getByText('@ada')).toBeInTheDocument();
+    expect(row(en['settings.username.title'])).toHaveAttribute('href', '/app/settings/username');
     // each opens its own page
     expect(row(en['settings.privacy.title'])).toHaveAttribute('href', '/app/settings/visibility');
     expect(row(en['settings.blocked.title'])).toHaveAttribute('href', '/app/settings/blocked');

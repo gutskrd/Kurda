@@ -247,6 +247,8 @@ describe('the recording script', () => {
         },
       },
       { id: 'g-old', kind: 'scenario', dialect: 'kmr', status: 'archived', payload: { line: { ku: 'Kevn e.' }, reply: { ku: 'Erê.' } } },
+      { id: 'g-q', kind: 'question_template', dialect: 'ckb', status: 'draft', payload: { ku: 'ئاش', meanings: { en: 'the mill' }, fact: 'place' } },
+      // a row written for a game that is no longer part of Hevalo: nobody is asked to record it
       { id: 'g-b', kind: 'building_name', dialect: 'ckb', status: 'draft', payload: { building: 'mill', ku: 'ئاش', meanings: { en: 'the mill' } } },
     ];
     const lines = buildScript({ exercises: [exercise({ type: 'conversation', payload: conversation })], stories: [], games, plan: PLAN, letters: [], words: [] });
@@ -258,7 +260,9 @@ describe('the recording script', () => {
     const reply = lines.find((l) => l.text === 'Spas, xalo!')!;
     expect(reply).toMatchObject({ voice: NARRATOR.kmr, key: lessonAudioKey('Spas, xalo!'), before: { name: 'Hamo', text: 'Fermo, sêvek!' } });
     expect(lines.find((l) => l.text === 'Ez li malê bûm.')).toMatchObject({ voice: 'hevalo', cue: 'From Bozo.', section: { id: 'games:case_file' } });
-    expect(lines.find((l) => l.text === 'ئاش')).toMatchObject({ voice: NARRATOR.ckb, dialect: 'ckb' });
+    const mill = lines.find((l) => l.text === 'ئاش')!;
+    expect(mill).toMatchObject({ voice: NARRATOR.ckb, dialect: 'ckb' });
+    expect(mill.places.map((p) => p.ref?.id)).toEqual(['g-q']);
     expect(lines.some((l) => l.text === 'Kevn e.')).toBe(false);
   });
 

@@ -154,6 +154,20 @@ export const SECURITY_EVENTS = {
     meaning: 'Someone signed in tried to change the password and got the current one wrong.',
     staffEscalates: true,
   },
+  'username.changed': {
+    severity: 'notice',
+    category: 'account',
+    title: 'Username changed',
+    meaning: `Changed while signed in, with the current password where the account has one. The old name is held for the account for 60 days and the owner was emailed. ${IF_NOT_YOU}`,
+    staffEscalates: true,
+  },
+  'username.change_failed': {
+    severity: 'notice',
+    category: 'account',
+    title: 'Wrong current password when changing the username',
+    meaning: 'Someone signed in tried to change the username and got the current password wrong.',
+    staffEscalates: true,
+  },
   'password.reset_requested': {
     severity: 'info',
     category: 'account',

@@ -2,13 +2,23 @@
  * Transactional email templates (KUR-098), localized Kurdish + English (v1).
  * Pure rendering — subject + plain-text body with `{var}` interpolation. An
  * unknown locale falls back to English so a send never produces a blank email.
+ *
+ * Each email is written once, as its plain text. The designed version every
+ * reader with a modern inbox sees is read from that same text (`designOf`):
+ * its paragraphs, the link that becomes the one button, the code that becomes
+ * a large code, the lines that stay lines. So the two can never say different
+ * things, and a new template needs only its text, its picture and, where it
+ * has a link to press, what the button says. The look itself is layout.ts.
  */
+import { PROVIDER, type EmailPicture } from '@kurda/shared';
+import { renderEmailHtml, type EmailBlock, type EmailDesign, type Inline } from './layout.js';
 
 export const EMAIL_TEMPLATES = [
   'verify-email',
   'verify-email-code',
   'password-reset',
   'password-changed',
+  'username-changed',
   'oauth-no-password',
   'deletion-notice',
   'moderation-urgent',
@@ -47,17 +57,16 @@ export function emailLocaleFor(locale: string | null | undefined): EmailLocale {
 }
 
 export interface RenderedEmail {
-  /** always present — the fallback for clients that refuse HTML */
   subject: string;
+  /** always sent — what a program that refuses HTML shows */
   text: string;
-  /** only for templates that define one */
-  html?: string;
+  /** the designed email, read from the same text */
+  html: string;
 }
 
 interface Entry {
   subject: string;
   text: string;
-  html?: string;
 }
 
 const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
@@ -72,12 +81,12 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
   },
   'verify-email-code': {
-    en: { subject: "Your Hevalo verification code", text: "Welcome to Hevalo!\n\nTo finish setting up your account, please use this code:\n\n{code}\n\nThis code is valid for 15 minutes.\n\nIf you didn't ask for this, you can ignore this message. Your account is safe.\n\nThank you for choosing Hevalo.\n\n— The Hevalo team", html: "<div style=\"background:#f5f6f8;padding:24px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;\"><div style=\"max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;color:#14171c;\"><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;font-size:20px;font-weight:700;\">Welcome to <strong>Hevalo</strong>!</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">To finish setting up your account, please use this code:</p><div style=\"text-align:center;margin:0 0 20px;\"><div style=\"display:inline-block;padding:16px 28px;border:1px solid #e3e6ea;border-radius:10px;background:#fafbfc;font-size:32px;font-weight:700;letter-spacing:8px;\">{code}</div></div><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\"><strong>This code is valid for 15 minutes.</strong></p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;color:#5b6169;\">If you didn't ask for this, you can ignore this message. Your account is safe.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">Thank you for choosing <strong>Hevalo</strong>.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;margin-bottom:0;\">— <strong>The Hevalo team</strong></p></div></div>" },
-    ku: { subject: "Koda piştrastkirinê ya Hevalo", text: "Bi xêr hatî Hevalo!\n\nJi bo temamkirina tomarkirina xwe, ji kerema xwe vê kodê bikar bîne:\n\n{code}\n\nEv kod ji bo 15 xulekan derbasdar e.\n\nHeke te ev daxwaz nekiriye, tu dikarî vê peyamê paşguh bikî. Hesabê te ewle ye.\n\nSpas ji bo ku te Hevalo hilbijart.\n\n— Tîma Hevalo", html: "<div style=\"background:#f5f6f8;padding:24px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;\"><div style=\"max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;color:#14171c;\"><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;font-size:20px;font-weight:700;\">Bi xêr hatî <strong>Hevalo</strong>!</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">Ji bo temamkirina tomarkirina xwe, ji kerema xwe vê kodê bikar bîne:</p><div style=\"text-align:center;margin:0 0 20px;\"><div style=\"display:inline-block;padding:16px 28px;border:1px solid #e3e6ea;border-radius:10px;background:#fafbfc;font-size:32px;font-weight:700;letter-spacing:8px;\">{code}</div></div><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\"><strong>Ev kod ji bo 15 xulekan derbasdar e.</strong></p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;color:#5b6169;\">Heke te ev daxwaz nekiriye, tu dikarî vê peyamê paşguh bikî. Hesabê te ewle ye.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">Spas ji bo ku te <strong>Hevalo</strong> hilbijart.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;margin-bottom:0;\">— <strong>Tîma Hevalo</strong></p></div></div>" },
+    en: { subject: "Your Hevalo verification code", text: "Welcome to Hevalo!\n\nTo finish setting up your account, please use this code:\n\n{code}\n\nThis code is valid for 15 minutes.\n\nIf you didn't ask for this, you can ignore this message. Your account is safe.\n\nThank you for choosing Hevalo.\n\n— The Hevalo team" },
+    ku: { subject: "Koda piştrastkirinê ya Hevalo", text: "Bi xêr hatî Hevalo!\n\nJi bo temamkirina tomarkirina xwe, ji kerema xwe vê kodê bikar bîne:\n\n{code}\n\nEv kod ji bo 15 xulekan derbasdar e.\n\nHeke te ev daxwaz nekiriye, tu dikarî vê peyamê paşguh bikî. Hesabê te ewle ye.\n\nSpas ji bo ku te Hevalo hilbijart.\n\n— Tîma Hevalo" },
   },
   'password-reset': {
-    en: { subject: "Reset your password", text: "Hello {username},\n\nWe received a request to update the password on your Hevalo account.\n\nTo update your password, use this link:\n\n{link}\n\nThis link is valid for one hour.\nFor the security of your account, it can only be used once.\n\nIf you didn't ask to reset your password, you can ignore this message.\nYour password will not change unless you use this link.\n\nIf several password-reset requests were sent without your knowledge,\nplease contact us about the security of your account.\n\n— The Hevalo team", html: "<div style=\"background:#f5f6f8;padding:24px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;\"><div style=\"max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;color:#14171c;\"><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;font-size:20px;font-weight:700;\">Hello {username},</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">We received a request to <strong>update the password on your Hevalo account</strong>.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">To update your password, tap the button below:</p><div style=\"text-align:center;margin:0 0 24px;\"><a href=\"{link}\" style=\"display:inline-block;background:#b8922e;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:14px 28px;border-radius:10px;\">Update password</a></div><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\"><strong>This link is valid for one hour.</strong> For the security of your account, it can only be used once.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">If you didn't ask to reset your password, you can ignore this message. <strong>Your password will not change unless you use this link.</strong></p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;color:#5b6169;\">If several password-reset requests were sent without your knowledge, please contact us about the security of your account.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">— <strong>The Hevalo team</strong></p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;font-size:13px;color:#8a9099;margin-bottom:0;word-break:break-all;\">If the button doesn't work, copy this link: {link}</p></div></div>" },
-    ku: { subject: "Şîfreya xwe ji nû ve saz bike", text: "Silav {username},\n\nMe daxwazek ji bo nûvekirina şîfreya hesabê te yê Hevalo wergirt.\n\nJi bo nûvekirina şîfreya xwe, vê girêdanê bikar bîne:\n\n{link}\n\nEv girêdan ji bo saetekê derbasdar e.\nJi bo ewlehiya hesabê te, ew tenê carekê dikare were bikaranîn.\n\nHeke te daxwaza nûvekirina şîfreyê nekiriye, tu dikarî vê peyamê paşguh bikî.\nŞîfreya te wê neyê guhertin heta ku tu vê girêdanê bikar neynî.\n\nHeke bêyî destûra te çend daxwazên nûvekirina şîfreyê hatibin şandin, ji kerema xwe ji bo\newlehiya hesabê xwe bi me re têkilî daynin.\n\n— Tîma Hevalo", html: "<div style=\"background:#f5f6f8;padding:24px 0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;\"><div style=\"max-width:560px;margin:0 auto;background:#ffffff;border-radius:12px;padding:32px;color:#14171c;\"><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;font-size:20px;font-weight:700;\">Silav {username},</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">Me daxwazek ji bo <strong>nûvekirina şîfreya hesabê te yê Hevalo</strong> wergirt.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">Ji bo nûvekirina şîfreya xwe, li bişkoka jêrîn bitikîne:</p><div style=\"text-align:center;margin:0 0 24px;\"><a href=\"{link}\" style=\"display:inline-block;background:#b8922e;color:#ffffff;text-decoration:none;font-weight:700;font-size:16px;padding:14px 28px;border-radius:10px;\">Şîfreyê Nû Bike</a></div><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\"><strong>Ev girêdan ji bo saetekê derbasdar e.</strong> Ji bo ewlehiya hesabê te, ew tenê carekê dikare were bikaranîn.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">Heke te daxwaza nûvekirina şîfreyê nekiriye, tu dikarî vê peyamê paşguh bikî. <strong>Şîfreya te wê neyê guhertin heta ku tu vê girêdanê bikar neynî.</strong></p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;color:#5b6169;\">Heke bêyî destûra te çend daxwazên nûvekirina şîfreyê hatibin şandin, ji kerema xwe ji bo ewlehiya hesabê xwe bi me re têkilî daynin.</p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;\">— <strong>Tîma Hevalo</strong></p><p style=\"margin:0 0 18px;font-size:16px;line-height:1.6;font-size:13px;color:#8a9099;margin-bottom:0;word-break:break-all;\">Heke bişkok naxebite, vê girêdanê kopî bike: {link}</p></div></div>" },
+    en: { subject: "Reset your password", text: "Hello {username},\n\nWe received a request to update the password on your Hevalo account.\n\nTo update your password, use this link:\n\n{link}\n\nThis link is valid for one hour.\nFor the security of your account, it can only be used once.\n\nIf you didn't ask to reset your password, you can ignore this message.\nYour password will not change unless you use this link.\n\nIf several password-reset requests were sent without your knowledge,\nplease contact us about the security of your account.\n\n— The Hevalo team" },
+    ku: { subject: "Şîfreya xwe ji nû ve saz bike", text: "Silav {username},\n\nMe daxwazek ji bo nûvekirina şîfreya hesabê te yê Hevalo wergirt.\n\nJi bo nûvekirina şîfreya xwe, vê girêdanê bikar bîne:\n\n{link}\n\nEv girêdan ji bo saetekê derbasdar e.\nJi bo ewlehiya hesabê te, ew tenê carekê dikare were bikaranîn.\n\nHeke te daxwaza nûvekirina şîfreyê nekiriye, tu dikarî vê peyamê paşguh bikî.\nŞîfreya te wê neyê guhertin heta ku tu vê girêdanê bikar neynî.\n\nHeke bêyî destûra te çend daxwazên nûvekirina şîfreyê hatibin şandin, ji kerema xwe ji bo\newlehiya hesabê xwe bi me re têkilî daynin.\n\n— Tîma Hevalo" },
   },
   'password-changed': {
     en: {
@@ -87,6 +96,16 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     ku: {
       subject: 'Şîfreya te hate guhertin',
       text: 'Silav {username},\n\nŞîfreya te ya Hevalo nû hate guhertin.\n\nHeke ev tu bûyî, tiştek din ji bo kirinê nîne.\n\nHeke ne tu bûyî, tavilê şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre) û bi piştgiriyê re têkilî deyne.\n\n— Tîma Hevalo',
+    },
+  },
+  'username-changed': {
+    en: {
+      subject: 'Your username was changed',
+      text: 'Hello {username},\n\nThe username of your Hevalo account was just changed from {previous} to {username} ({time}).\n\nIf this was you, there is nothing else to do. Your old username is kept for you for {holdDays} days, so nobody else can take it, and you can change your username again after {cooldownDays} days.\n\nIf it wasn’t you, change your password now (Settings, then Password) and contact support.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Navê te yê bikarhêner hate guhertin',
+      text: 'Silav {username},\n\nNavê bikarhêner ê hesabê te yê Hevalo nû ji {previous} bû {username} ({time}).\n\nHeke ev tu bûyî, tiştek din ji bo kirinê nîne. Navê te yê berê {holdDays} rojan ji bo te tê parastin, da ku kesek din nikaribe wî bigire, û tu dikarî piştî {cooldownDays} rojan navê xwe dîsa biguherînî.\n\nHeke ne tu bûyî, tavilê şîfreya xwe biguherîne (Mîheng, paşê Şîfre) û bi piştgiriyê re têkilî deyne.\n\n— Tîma Hevalo',
     },
   },
   'oauth-no-password': {
@@ -240,30 +259,134 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
   },
 };
 
-/** `{name}` placeholders shared by the text and HTML interpolators. */
+/** `{name}` placeholders. */
 const TOKEN_RE = /\{(\w+)\}/g;
 
 function interpolate(template: string, vars: Record<string, string>): string {
   return template.replace(TOKEN_RE, (whole, key: string) => (key in vars ? vars[key]! : whole));
 }
 
+// ---------------------------------------------------------------------------
+// the designed email, read from the text
+// ---------------------------------------------------------------------------
+
+/** What each email's picture is, and what its button says when it has a link to press. */
+const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<EmailLocale, string> }> = {
+  'verify-email': { picture: 'letter', button: { en: 'Confirm your email', ku: 'E-nameya xwe piştrast bike' } },
+  'verify-email-code': { picture: 'code' },
+  'password-reset': { picture: 'key', button: { en: 'Update password', ku: 'Şîfreyê Nû Bike' } },
+  'password-changed': { picture: 'lock' },
+  'username-changed': { picture: 'badge' },
+  'oauth-no-password': { picture: 'key', button: { en: 'Set a password', ku: 'Şîfreyekê saz bike' } },
+  'deletion-notice': { picture: 'hourglass' },
+  'moderation-urgent': { picture: 'flag', button: { en: 'Open the report', ku: 'Raporê veke' } },
+  'copyright-received': { picture: 'document' },
+  // a decision on a notice is something weighed
+  'copyright-removed': { picture: 'scales' },
+  'copyright-upheld': { picture: 'scales' },
+  'copyright-kept': { picture: 'scales' },
+  'copyright-counter-notice': { picture: 'document' },
+  'new-sign-in': { picture: 'device' },
+  'sign-in-attempts': { picture: 'shield' },
+  'security-alert': { picture: 'bell', button: { en: 'Open the security log', ku: 'Tomara ewlehiyê veke' } },
+};
+
+/** The footer's two lines every email has: where to write, and the link again for a button that will not press. */
+const HELP: Record<EmailLocale, string> = { en: 'Need a hand? Write to {email}.', ku: 'Alîkarî divê? Ji {email} re binivîse.' };
+const FALLBACK: Record<EmailLocale, string> = { en: 'If the button doesn’t work, copy this link:', ku: 'Heke bişkok naxebite, vê girêdanê kopî bike:' };
+
+/** A paragraph longer than this is read from the edge; set in the middle it would be a ragged block. */
+const CENTRED_UP_TO = 220;
+
 /**
- * Interpolated values can be user-controlled (a username, say), so escape them
- * before they reach markup — the template is trusted, the values are not.
+ * A paragraph as the layout takes it: its words, with what was filled in as
+ * plain words too (the layout escapes them), except the two things a sentence
+ * may link — `{link}` and the `{contact}` address.
  */
-function escapeHtml(value: string): string {
-  return value
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
+function sentence(template: string, vars: Record<string, string>): Inline[] {
+  const out: Inline[] = [];
+  let last = 0;
+  for (const m of template.matchAll(TOKEN_RE)) {
+    const key = m[1]!;
+    if (!(key in vars)) continue;
+    out.push(template.slice(last, m.index));
+    const value = vars[key]!;
+    out.push(key === 'link' ? { link: value } : key === 'contact' ? { mailto: value } : value);
+    last = m.index + m[0].length;
+  }
+  out.push(template.slice(last));
+  return out.filter((part) => part !== '');
 }
 
-function interpolateHtml(template: string, vars: Record<string, string>): string {
-  return template.replace(TOKEN_RE, (whole, key: string) =>
-    key in vars ? escapeHtml(vars[key]!) : whole,
-  );
+/** Lines that are kept as lines: a list, somebody's statement, or `Label: {value}` on every line. */
+function keepsItsLines(chunk: string): boolean {
+  if (chunk === '{list}' || chunk.includes('{statement}')) return true;
+  return chunk.includes('\n') && chunk.split('\n').every((line) => /^[^\s:{}][^:{}]{0,30}:\s*\{\w+\}$/.test(line));
+}
+
+/**
+ * The email's design, read from its text: blank lines part the paragraphs; a
+ * `{code}` alone is the code; a `{link}` alone, or closing a line after a
+ * colon, is the button; the last line after a dash is who signs it. What
+ * follows the button or the code is the small print.
+ */
+function designOf(template: EmailTemplate, locale: EmailLocale, entry: Entry, vars: Record<string, string>): EmailDesign {
+  const chunks = entry.text
+    .split(/\n{2,}/)
+    .map((c) => c.trim())
+    .filter((c) => c !== '');
+  const last = chunks.at(-1);
+  const signoff = chunks.length > 1 && last !== undefined && /^—\s*/.test(last) ? interpolate(chunks.pop()!.replace(/^—\s*/, ''), vars) : undefined;
+
+  const label = DESIGN[template].button?.[locale] ?? DESIGN[template].button?.en ?? interpolate(entry.subject, vars);
+  const button = (): EmailBlock => ({ kind: 'button', label, href: vars.link ?? '{link}' });
+  const blocks: EmailBlock[] = [];
+  let acted = false;
+  let centred = true;
+  let preheader: string | undefined;
+  for (const chunk of chunks) {
+    if (chunk === '{code}') {
+      blocks.push({ kind: 'code', code: vars.code ?? '{code}' });
+      acted = true;
+      continue;
+    }
+    if (chunk === '{link}') {
+      blocks.push(button());
+      acted = true;
+      continue;
+    }
+    if (keepsItsLines(chunk)) {
+      blocks.push({ kind: 'details', lines: chunk.split('\n').map((line) => interpolate(line, vars)) });
+      centred = false;
+      continue;
+    }
+    // hard-wrapped lines of one paragraph are one paragraph
+    const flowed = chunk.replace(/\s*\n\s*/g, ' ');
+    const closing = /^(.*[:：])\s*\{link\}$/.exec(flowed);
+    const words = closing ? closing[1]! : flowed;
+    if (words.length > CENTRED_UP_TO) centred = false;
+    // the line an inbox shows beside the subject: the first that is not a greeting
+    if (preheader === undefined && !/^[^.!?]{1,40},$/.test(words)) preheader = interpolate(words, vars);
+    blocks.push({ kind: 'text', parts: sentence(words, vars), ...(acted ? { quiet: true } : {}) });
+    if (closing) {
+      blocks.push(button());
+      acted = true;
+    }
+  }
+  return {
+    brand: 'hevalo',
+    lang: locale,
+    title: interpolate(entry.subject, vars),
+    ...(preheader !== undefined ? { preheader } : {}),
+    picture: DESIGN[template].picture,
+    // a reference in brackets belongs to the subject line, where a reader searches for it, not to the heading
+    heading: interpolate(entry.subject.replace(/\s*\(\{\w+\}\)\s*$/, ''), vars),
+    blocks,
+    align: centred ? 'center' : 'start',
+    ...(signoff !== undefined ? { signoff } : {}),
+    help: { text: HELP[locale], email: PROVIDER.userContact.email },
+    ...(blocks.some((b) => b.kind === 'button') ? { fallback: FALLBACK[locale] } : {}),
+  };
 }
 
 /** Render a template in a locale (fallback English), interpolating `vars`. */
@@ -272,10 +395,11 @@ export function renderEmail(
   locale: EmailLocale,
   vars: Record<string, string> = {},
 ): RenderedEmail {
-  const entry = CATALOG[template][locale] ?? CATALOG[template].en;
+  const known = CATALOG[template][locale] ? locale : 'en';
+  const entry = CATALOG[template][known];
   return {
     subject: interpolate(entry.subject, vars),
     text: interpolate(entry.text, vars),
-    ...(entry.html ? { html: interpolateHtml(entry.html, vars) } : {}),
+    html: renderEmailHtml(designOf(template, known, entry, vars)),
   };
 }

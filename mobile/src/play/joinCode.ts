@@ -103,8 +103,6 @@ const GAME_COLOUR: Record<PlayGame, 'success' | 'gold' | 'primary'> = {
   stories: 'primary',
   'last-letter': 'primary',
   impostor: 'gold',
-  'dont-say': 'gold',
-  bluff: 'success',
   'who-am-i': 'gold',
 };
 

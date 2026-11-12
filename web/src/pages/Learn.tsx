@@ -12,6 +12,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { courseProgress, dialectName } from '../learn/map';
 import { CoursePath } from '../learn/CoursePath';
+import { ExerciseTools } from '../learn/practiceTools';
 import type { PracticeDue } from '../learn/types';
 import type { MeProfile, StreakSummary } from '../lib/types';
 import { useCourses, type CourseEntry } from '../learn/useCourses';
@@ -168,11 +169,15 @@ function TodayStrip(): React.JSX.Element {
 
 /**
  * Practice tools: review, the alphabet, the words to know and the dictionary,
- * side by side.
+ * side by side, and after them the lessons' two exercises (building a
+ * sentence, finding what was heard) where the learner's variety has enough
+ * approved content for them (learn/practiceTools.tsx).
  *
  * Tools, not courses — each is something to reach for between lessons — so
  * they share a row rather than each taking a card of the page's full width.
- * The dictionary a visitor gets is the published one, which needs no account.
+ * The dictionary a visitor gets is the published one, which needs no account;
+ * review and the exercises are the learner's own, so a visitor is not shown
+ * them.
  */
 function Tools({ signedIn }: { signedIn: boolean }): React.JSX.Element {
   const t = useT();
@@ -206,6 +211,7 @@ function Tools({ signedIn }: { signedIn: boolean }): React.JSX.Element {
           <span className="learn-tool-body">{t('words.toolHint')}</span>
         </Link>
         {dictionary}
+        {signedIn && <ExerciseTools />}
       </div>
     </section>
   );

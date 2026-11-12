@@ -2,7 +2,7 @@ import type pg from 'pg';
 import { resolveSections } from './profile-activity.js';
 import { levelInfo, resolveAvatarUrl, type LevelInfo, type PublicUrl } from '../cosmetics/access.js';
 import { unseenGiftsSql } from '../shop/service.js';
-import { multiTitleSql } from '../mp/titles.js';
+import { multiTitleSql, playedGamesSql } from '../mp/titles.js';
 
 /**
  * What is happening with your people, in one read.
@@ -90,6 +90,7 @@ const LIVE_GAMES_SQL = `
       FROM game_lobby_players p
       JOIN game_lobbies l ON l.id = p.lobby_id
      WHERE p.user_id = ANY($1) AND l.finished_at IS NULL AND NOT p.removed AND p.left_at IS NULL
+       AND ${playedGamesSql('l.game')}
        AND COALESCE(l.started_at, l.created_at) > now() - ($2 || ' minutes')::interval
   ) AS live
   ORDER BY user_id, started_at DESC`;
