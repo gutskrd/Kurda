@@ -66,11 +66,13 @@ export function isRetiredGame(v: unknown): v is RetiredGameId {
 }
 
 /**
- * The XP sources the retired games paid from. They are still game sources:
- * XP already in the ledger under one of them keeps counting as game XP, under
- * the league's daily cap, exactly as it did the day it was earned.
+ * The XP sources the retired games paid from, and the one Who Am I? paid from
+ * while it could be played alone (`game_who_am_i`; the game is played with
+ * others only now). They are still game sources: XP already in the ledger
+ * under one of them keeps counting as game XP, under the league's daily cap,
+ * exactly as it did the day it was earned.
  */
-export const RETIRED_GAME_XP_SOURCES: readonly string[] = ['game_dont_say_place', 'game_bluff_place', 'game_what_would_you_say'];
+export const RETIRED_GAME_XP_SOURCES: readonly string[] = ['game_dont_say_place', 'game_bluff_place', 'game_what_would_you_say', 'game_who_am_i'];
 
 /** How a game is played: alone, with others, or either. */
 export type LearnGameMode = 'solo' | 'multi' | 'both';
@@ -212,14 +214,15 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   },
   {
     id: 'who-am-i',
-    mode: 'both',
+    // a card is read by somebody else: with friends online, or on one phone passed round a room; never alone
+    mode: 'multi',
     place: 'games',
-    players: { min: 1, max: 8 },
+    players: { min: 2, max: 6 },
     freeText: false,
     sources: ['vocabulary'],
     contentKinds: ['identity', 'question_template'],
     minimum: 10,
-    xpSources: ['game_who_am_i', 'game_who_am_i_place'],
+    xpSources: ['game_who_am_i_place'],
     dialects: GAME_DIALECTS,
     glyph: 'question',
     tone: 'meadow',

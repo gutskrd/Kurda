@@ -1,12 +1,11 @@
 /**
- * Who Am I? played alone, without a database: a round dealt from approved
- * rows, what the player is sent of it, how a guess is judged, and the picked
- * words a card is made of (word-cards.ts).
+ * Who Am I? without a database: what a table is dealt from, how a whole
+ * table is dealt, and the picked words a card is made of (word-cards.ts).
  */
 import { describe, expect, it } from 'vitest';
-import { WHO_AM_I_ROUND_ITEMS, type GameContentKind } from '@kurda/shared';
+import { WHO_AM_I_MIN_TEMPLATES, type GameContentKind } from '@kurda/shared';
 import type { TrustedSources } from './sources.js';
-import { WhoAmIGame, identitiesAt, whoAmIPool } from './who-am-i.js';
+import { dealTable, identitiesAt, tableDifficulties, whoAmIPool } from './who-am-i.js';
 import { GameWordCards, entryCandidate } from './word-cards.js';
 
 const FACTS = ['alive', 'animal', 'four-legs', 'can-fly', 'lives-in-water', 'bigger-than-person', 'at-home'] as const;
@@ -34,7 +33,6 @@ const TEMPLATES = [...FACTS, 'sweet'].map((fact, i) => ({
 const sources = {
   content: async (kind: GameContentKind) => (kind === 'identity' ? IDENTITIES : kind === 'question_template' ? TEMPLATES : []),
 } as unknown as TrustedSources;
-const noneSeen = { query: async () => ({ rows: [], rowCount: 0 }) } as never;
 
 describe('the pool', () => {
   it('reads published identities and templates, keeping only facts a question can ask', async () => {
@@ -47,58 +45,55 @@ describe('the pool', () => {
   });
 });
 
-describe('a round', () => {
-  const game = new WhoAmIGame(sources);
-
-  it('deals a few hidden identities, each among tiles, never sending which one it is', async () => {
-    const round = (await game.build({ userId: 'u1', dialect: 'kmr', difficulty: 'beginner', seed: 'seed' }, noneSeen))!;
-    expect(round.items).toHaveLength(WHO_AM_I_ROUND_ITEMS);
-    const item = round.items[0]!;
-    const view = game.view(item, 0);
-    // tiles are known by their place in the round, never by the identity behind them
-    expect(view.tiles.map((t) => t.id)).toEqual(['a', 'b', 'c', 'd']);
-    for (const t of item.tiles) expect(JSON.stringify(view)).not.toContain(t.id);
-    expect(view.tiles).toHaveLength(4);
-    // a beginner sees what the tiles mean
-    expect(view.tiles[0]!.meanings).not.toBeNull();
-    const sent = JSON.stringify(view);
-    expect(sent).not.toContain('"facts"');
-    expect(sent).not.toContain('"fact"');
-    expect(sent).not.toContain(`"identity"`);
-    // the template whose fact no tile's table answers is never offered
-    expect(view.questions.map((q) => q.ku)).not.toContain('Pirsa 7?');
+describe('a table', () => {
+  it('deals every seat a different card, with tiles and questions of its own', async () => {
+    const pool = await whoAmIPool(sources, 'kmr');
+    const dealt = dealTable(pool, 'beginner', [1, 2, 3, 4], 'seed')!;
+    expect(dealt.map((d) => d.seat)).toEqual([1, 2, 3, 4]);
+    expect(new Set(dealt.map((d) => d.deal.identity.id)).size).toBe(4);
+    // only the difficulty's own identities are worn
+    for (const d of dealt) expect(d.deal.identity.level).toBe(1);
+    for (const d of dealt) {
+      expect(d.deal.candidates.some((c) => c.id === d.deal.identity.id)).toBe(true);
+      expect(d.deal.questions.length).toBeGreaterThanOrEqual(4);
+    }
   });
 
-  it('judges a guess by the tile, says which tile it was not, and names the identity once done', async () => {
-    const round = (await game.build({ userId: 'u1', dialect: 'kmr', difficulty: 'beginner', seed: 'seed' }, noneSeen))!;
-    const item = round.items[0]!;
-    const view = game.view(item, 0);
-    const right = view.tiles[item.tiles.findIndex((t) => t.id === item.identity.id)]!.id;
-    const other = view.tiles.find((t) => t.id !== right)!.id;
-    expect(game.grade(item, { guess: right })).toBe(true);
-    expect(game.grade(item, { guess: other })).toBe(false);
-    // the identity's own id is no guess at all
-    expect(game.grade(item, { guess: item.identity.id })).toBe(false);
-    expect(game.hint(item, { guess: other })).toEqual({ notThis: other });
-    expect(game.correction(item)).toEqual({ id: right, word: item.identity.word, meanings: item.identity.meanings, category: 'animal' });
+  it('deals no seat a tile that is a card another seat wears: a card a player can read is never one they could strike out', async () => {
+    const pool = await whoAmIPool(sources, 'kmr');
+    for (const seed of ['a', 'b', 'c', 'd', 'e']) {
+      const dealt = dealTable(pool, 'beginner', [1, 2, 3, 4, 5, 6], seed)!;
+      for (const d of dealt) {
+        const theirs = dealt.filter((x) => x.seat !== d.seat).map((x) => x.deal.identity.id);
+        expect(d.deal.candidates.some((c) => theirs.includes(c.id))).toBe(false);
+      }
+    }
   });
 
-  it('names the kind of thing only when every tile is that kind', async () => {
-    const round = (await game.build({ userId: 'u1', dialect: 'kmr', difficulty: 'beginner', seed: 'seed' }, noneSeen))!;
-    const item = round.items[0]!;
-    expect(game.view(item, 0).category).toBe(item.identity.category);
-    const mixed = { ...item, tiles: item.tiles.map((t, i) => (i === 0 && t.id !== item.identity.id ? { ...t, category: 'object' } : i === 1 && t.id !== item.identity.id ? { ...t, category: 'object' } : t)) };
-    expect(game.view(mixed, 0).category).toBeNull();
+  it('deals the same table from the same seed, and another from another', async () => {
+    const pool = await whoAmIPool(sources, 'kmr');
+    const shape = (seed: string) => JSON.stringify(dealTable(pool, 'beginner', [1, 2], seed));
+    expect(shape('one')).toBe(shape('one'));
+    expect(shape('one')).not.toBe(shape('two'));
   });
 
-  it('makes no round at a difficulty without enough identities', async () => {
-    expect(await game.build({ userId: 'u1', dialect: 'kmr', difficulty: 'intermediate', seed: 'seed' }, noneSeen)).toBeNull();
+  it('deals nobody rather than a table without somebody', async () => {
+    const pool = await whoAmIPool(sources, 'kmr');
+    // seven identities at the first two levels: an eighth seat has no card to wear
+    expect(dealTable(pool, 'beginner', [1, 2, 3, 4, 5, 6, 7, 8], 'seed')).toBeNull();
+    expect(dealTable(pool, 'intermediate', [1, 2], 'seed')).toBeNull();
   });
 
-  it('hides the tiles’ meanings above beginner', async () => {
-    const many = { content: async (kind: GameContentKind) => (kind === 'identity' ? IDENTITIES.map((i) => ({ ...i, level: 4 })) : TEMPLATES) } as unknown as TrustedSources;
-    const round = (await new WhoAmIGame(many).build({ userId: 'u1', dialect: 'kmr', difficulty: 'advanced', seed: 'seed' }, noneSeen))!;
-    expect(new WhoAmIGame(many).view(round.items[0]!, 0).tiles.every((t) => t.meanings === null)).toBe(true);
+  it('is offered only with enough question templates, at the difficulties whose levels hold enough identities', async () => {
+    const pool = await whoAmIPool(sources, 'kmr');
+    // eight templates here: fewer than the game asks for before it is offered
+    expect(pool.templates.length).toBeLessThan(WHO_AM_I_MIN_TEMPLATES);
+    expect(tableDifficulties(pool)).toEqual([]);
+    const enough = { ...pool, templates: Array.from({ length: WHO_AM_I_MIN_TEMPLATES }, (_, i) => ({ ...pool.templates[i % pool.templates.length]!, id: `t${i}` })) };
+    expect(tableDifficulties(enough)).toEqual([]);
+    const full = { ...enough, identities: [...pool.identities, ...pool.identities.map((x, i) => ({ ...x, id: `more-${i}`, word: `${x.word}x`, level: 1 }))] };
+    expect(tableDifficulties(full)).toContain('beginner');
+    expect(tableDifficulties(full)).not.toContain('intermediate');
   });
 });
 

@@ -1,12 +1,13 @@
 /**
- * Who Am I?: the player has a hidden identity — an animal, a thing, a job, a
- * food or a place, each a word from published lessons — and finds out what it
- * is by asking yes/no questions from an approved list, then guessing from a
- * few tiles. The answers come from the identity's facts table, never from
- * anyone typing: "Does it fly?" asks the fact `can-fly`, and the identity's
- * row says yes or no. Fewer questions score more.
+ * Who Am I?: a player has a hidden identity — an animal, a thing, a job, a
+ * food or a place, each a word from published lessons — on a card the others
+ * can read, and finds out what it is by asking yes/no questions from an
+ * approved list, then guessing from a few tiles. What the card says to a
+ * question comes from the identity's facts table, never from anyone typing:
+ * "Does it fly?" asks the fact `can-fly`, and the identity's row says yes or
+ * no. Fewer questions score more.
  *
- * This module is what the solo round and the race share, pure:
+ * This module is what the game's rules (rules.ts) are played with, pure:
  *   - the facts an identity may have, and what each one means (the admin's
  *     facts table is these, and a question template asks exactly one of them);
  *   - how a hidden identity is dealt: the candidates shown as tiles (the
@@ -59,9 +60,7 @@ export function isWhoAmIFact(v: unknown): v is WhoAmIFact {
   return WHO_AM_I_FACTS.some((f) => f.key === v);
 }
 
-/** Identities in one solo round. */
-export const WHO_AM_I_ROUND_ITEMS = 5;
-/** Guesses at one identity: the solo round's tries. */
+/** Wrong guesses at an identity before its player is out. */
 export const WHO_AM_I_GUESSES = 2;
 /** Tiles to guess from, by difficulty; beginners also see what each tile means. */
 export const WHO_AM_I_CANDIDATES: Readonly<Record<GameDifficulty, number>> = { beginner: 4, intermediate: 6, advanced: 8 };
@@ -104,7 +103,7 @@ export interface WhoAmITemplate {
   fact: string;
 }
 
-/** A hidden identity, dealt: the server keeps all of it, and sends the player `candidates` and `questions` only. */
+/** A hidden identity, dealt: the server keeps all of it, and sends its player `candidates` and `questions` only. */
 export interface WhoAmIDeal {
   identity: WhoAmIIdentity;
   /** the tiles, shuffled; the identity is one of them (a deal made before tiles carried their category has none) */
@@ -239,44 +238,4 @@ export interface WhoAmIQuestion {
 export interface WhoAmIAsked {
   question: string;
   answer: boolean;
-}
-
-/** One hidden identity of a solo round, as the player is sent it: never the identity. */
-export interface WhoAmIItemView {
-  index: number;
-  /** what kind of thing it is, when every tile is that kind; null when the tiles are of several */
-  category: string | null;
-  tiles: WhoAmITile[];
-  questions: WhoAmIQuestion[];
-  asked: WhoAmIAsked[];
-}
-
-/** A guess at an identity: one of the tiles. */
-export interface WhoAmIAnswer {
-  guess: string;
-}
-
-/** After a wrong first guess: that tile is not it. */
-export interface WhoAmIHint {
-  notThis: string;
-}
-
-/**
- * Once an identity is done: who it was. What it scored is the apps' to work
- * out (`whoAmIPoints`) from the questions asked and the guesses made, which
- * the round already carries.
- */
-export interface WhoAmICorrection {
-  id: string;
-  word: string;
-  meanings: Meanings;
-  category: string;
-}
-
-/** `POST /games/who-am-i/sessions/:id/ask`: the answer, and every question asked about this identity so far. */
-export interface WhoAmIAskResult {
-  index: number;
-  question: string;
-  answer: boolean;
-  asked: WhoAmIAsked[];
 }

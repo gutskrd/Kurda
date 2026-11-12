@@ -2,7 +2,7 @@ import { MULTI_GAMES, type MultiGame } from '@kurda/shared';
 import type { AnyGameModule } from './module.js';
 import { lastLetterModule } from './games/last-letter.js';
 import { impostorModule } from './games/impostor.js';
-import { whoAmIRaceModule } from './games/who-am-i.js';
+import { whoAmITableModule } from './games/who-am-i.js';
 
 /**
  * Every multiplayer learning game the engine runs, by its name. A new game is
@@ -14,7 +14,7 @@ import { whoAmIRaceModule } from './games/who-am-i.js';
 export const GAME_MODULES: Readonly<Record<MultiGame, AnyGameModule>> = {
   'last-letter': lastLetterModule,
   impostor: impostorModule,
-  'who-am-i': whoAmIRaceModule,
+  'who-am-i': whoAmITableModule,
 };
 
 export function moduleOf(game: MultiGame): AnyGameModule {
