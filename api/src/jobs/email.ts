@@ -7,6 +7,15 @@ import type { EmailTemplate, EmailLocale } from '../email/templates.js';
 
 export const SEND_EMAIL_JOB_NAME = 'send-email';
 
+/**
+ * An email is tried eight times, the waits doubling from two seconds: a
+ * little over four minutes in all. The queue's own four tries are over in
+ * seven seconds, which is shorter than a rush of sign-ups lasts: when the
+ * provider says it is being asked too fast, a code that gave up then would
+ * never arrive, and its reader would be left at the code screen.
+ */
+export const SEND_EMAIL_RETRY = { attempts: 8, backoffDelayMs: 2_000 } as const;
+
 const payloadSchema = z.object({
   // the same pattern the forms accept, or an address we let sign up gets no mail
   to: z.email({ pattern: EMAIL_PATTERN }),
@@ -44,6 +53,7 @@ export type SendEmailPayload = z.infer<typeof payloadSchema>;
 export const sendEmailJob = defineJob({
   name: SEND_EMAIL_JOB_NAME,
   schema: payloadSchema,
+  retry: SEND_EMAIL_RETRY,
   handler: async (payload, ctx) => {
     ctx.log.info(
       { to: maskEmail(payload.to), template: payload.template, locale: payload.locale, attempt: ctx.attempt },
@@ -62,6 +72,7 @@ export function makeSendEmailJob(email: EmailService): JobDefinition<SendEmailPa
   return defineJob({
     name: SEND_EMAIL_JOB_NAME,
     schema: payloadSchema,
+    retry: SEND_EMAIL_RETRY,
     handler: async (payload, ctx) => {
       // A retry after a send whose answer never came (a timeout, a dropped
       // connection, a 5xx after the mail was accepted) would otherwise be a

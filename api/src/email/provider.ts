@@ -44,43 +44,86 @@ export class StubEmailProvider implements EmailProvider {
 }
 
 /**
+ * How many sends a second this process starts at most. The account is allowed
+ * ten requests a second, shared by everything that uses its keys; eight
+ * leaves room for the support desk's answers and for the moments two
+ * processes are sending at once.
+ */
+export const RESEND_SENDS_PER_SECOND = 8;
+/** How often one send waits and asks again inside the call when it is told "too fast", before the job's own retries take over. */
+const TOO_FAST_TRIES = 3;
+/** The longest one such wait is: a provider asking for longer is not having a busy second, and the job's retries wait better than a held worker does. */
+const TOO_FAST_WAIT_MAX_MS = 10_000;
+
+const wait = (ms: number): Promise<void> => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
  * Resend (https://resend.com) over its HTTP API — no SDK, just fetch. Needs an
  * API key and a verified sending domain for the From address. A non-2xx
  * response throws so the send-email job retries with backoff.
+ *
+ * Sends are paced. When many people sign up in the same minute the queue
+ * hands over their codes as fast as its workers run, which is faster than
+ * the account may ask; unpaced, the surplus is refused and each refusal
+ * costs a retry. So sends take turns, a fixed step apart, and one that is
+ * still told "too fast" waits as long as the answer says and asks again,
+ * holding the others back for that long too. With the job's idempotency key
+ * a send asked for twice is still one email.
  */
 export class ResendEmailProvider implements EmailProvider {
+  /** when the next send may start */
+  private nextTurn = 0;
+
   constructor(
     private readonly apiKey: string,
     private readonly from: string,
     private readonly replyTo?: string,
   ) {}
 
+  /** Waits for this send's turn: one every 1000 / RESEND_SENDS_PER_SECOND ms, in the order they asked. */
+  private async turn(): Promise<void> {
+    const now = Date.now();
+    const at = Math.max(now, this.nextTurn);
+    this.nextTurn = at + 1000 / RESEND_SENDS_PER_SECOND;
+    if (at > now) await wait(at - now);
+  }
+
   async send({ to, subject, text, html, from, replyTo, headers, idempotencyKey }: EmailPayload): Promise<{ messageId: string }> {
     const answerTo = replyTo ?? this.replyTo;
-    const res = await fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
-      },
-      // `text` always goes too, so a client refusing HTML still gets the message
-      body: JSON.stringify({
-        from: from ?? this.from,
-        to,
-        subject,
-        text,
-        ...(html ? { html } : {}),
-        ...(answerTo ? { reply_to: answerTo } : {}),
-        ...(headers ? { headers } : {}),
-      }),
+    // `text` always goes too, so a client refusing HTML still gets the message
+    const body = JSON.stringify({
+      from: from ?? this.from,
+      to,
+      subject,
+      text,
+      ...(html ? { html } : {}),
+      ...(answerTo ? { reply_to: answerTo } : {}),
+      ...(headers ? { headers } : {}),
     });
-    if (!res.ok) {
+    for (let attempt = 1; ; attempt++) {
+      await this.turn();
+      const res = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+          ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
+        },
+        body,
+      });
+      if (res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { id?: string };
+        return { messageId: data.id ?? 'resend' };
+      }
       const detail = await res.text().catch(() => '');
-      throw new Error(`Resend send failed (${res.status}): ${detail}`.trim());
+      // "too fast" passes in a second; a used-up allowance (also a 429) does not, and waiting here would only hold a worker
+      const tooFast = res.status === 429 && !/quota/i.test(detail);
+      if (!tooFast || attempt >= TOO_FAST_TRIES) throw new Error(`Resend send failed (${res.status}): ${detail}`.trim());
+      const asked = Number(res.headers.get('retry-after'));
+      const pause = Math.min(TOO_FAST_WAIT_MAX_MS, Number.isFinite(asked) && asked > 0 ? asked * 1000 : 1000);
+      // everything waiting behind this send waits too: asking again at once is what was just refused
+      this.nextTurn = Math.max(this.nextTurn, Date.now() + pause);
     }
-    const data = (await res.json().catch(() => ({}))) as { id?: string };
-    return { messageId: data.id ?? 'resend' };
   }
 }
 

@@ -103,6 +103,25 @@ Received mail counts against the same Resend quota as sent mail (on the free
 plan, 100 a day and 3,000 a month, sent and received together), so a flood of
 mail to the support address could hold up verification codes for the day.
 
+## A rush of sends
+
+The account may ask the provider ten times a second, shared by everything that
+uses its keys, and each send is one request. When many people sign up in the
+same minute the queue's workers hand codes over faster than that, so:
+
+- sends take turns, eight a second from one process
+  (`RESEND_SENDS_PER_SECOND` in `api/src/email/provider.ts`);
+- a send that is still told "too fast" waits as long as the answer says, asks
+  again, and holds back the sends behind it for that long;
+- an email job is tried eight times, the waits doubling from two seconds, a
+  little over four minutes in all (`SEND_EMAIL_RETRY` in
+  `api/src/jobs/email.ts`), where the queue's default gives up after seven
+  seconds. Every try carries the job's idempotency key, so a send asked for
+  twice is one email.
+
+At that pace a thousand codes take a little over two minutes to leave. The
+monthly allowance is the other limit: sent and received mail count together.
+
 ## How the emails look
 
 Every email is written once, as plain text, in `api/src/email/templates.ts`.
