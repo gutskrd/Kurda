@@ -370,10 +370,6 @@
 .dt-note-a {
   font-weight: 600;
 }
-.dt-deducted {
-  color: var(--ink-2);
-}
-
 @media (max-width: 480px) {
   .dt-cards {
     grid-template-columns: 1fr;

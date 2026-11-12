@@ -58,6 +58,11 @@ export interface GameRoomProps<Board> {
  * with a report beside each other player, Rated or Friendly, Join, Start, and
  * after the game its places, what it did to your rank, and Play again. The
  * game draws only its own staging.
+ *
+ * The places show XP beside whoever earned some, and nothing beside whoever
+ * did not: never a zero. A game played against Hevalo alone earns none (XP is
+ * for lessons, stories and games played online with other people), and its
+ * results say so in one quiet line.
  */
 export function GameRoom<Board>({
   game,
@@ -243,6 +248,7 @@ export function GameRoom<Board>({
           );
         })}
       </View>
+      {view.mode === 'solo' ? <Text style={[styles.note, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text> : null}
       {view.me !== null && view.mode === 'group' ? (
         <View style={styles.stretch}>
           <RematchPanel

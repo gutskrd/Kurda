@@ -58,7 +58,6 @@ interface WordleGameView {
   keyboard: Record<string, Feedback>;
   remainingAttempts: number;
   target: string | null;
-  xpAwarded: number | null;
 }
 
 interface WordleStats {
@@ -68,7 +67,6 @@ interface WordleStats {
   currentStreak: number;
   longestStreak: number;
   fastestMs: number | null;
-  totalXp: number;
   wordsLearned: number;
   winPercentage: number;
   averageGuesses: number;
@@ -97,6 +95,10 @@ const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
  * carries upgrade-only colour memory. Win/lose reveals the word with an
  * educational card (dictionary #45) and a save-to-vocabulary action (#47), plus
  * a spoiler-safe share grid.
+ *
+ * Peyvok is played alone, so it earns no XP, daily or practice: XP is for
+ * lessons, stories and games played online with other people. The result says
+ * so in one quiet line, and neither it nor the statistics show an XP figure.
  */
 export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -309,7 +311,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   );
 }
 
-/** Win/lose result: reveal, XP, educational card + save, share, play again. */
+/** Win/lose result: reveal, the note that a game alone earns no XP, educational card + save, share, play again. */
 function ResultPanel({
   game,
   edu,
@@ -343,13 +345,13 @@ function ResultPanel({
         {won ? (
           <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
             {t('games.wordle.solvedIn', { count: game.guesses.length, max: MAX_ATTEMPTS })}
-            {game.xpAwarded ? ` · +${game.xpAwarded} XP` : ''}
           </Text>
         ) : (
           <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
             {t('games.wordle.theWordWas')} <Text style={{ color: colors.textPrimary, fontWeight: typography.weights.bold }}>{(game.target ?? '').toUpperCase()}</Text>
           </Text>
         )}
+        <Text style={[styles.resultNote, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text>
 
         {edu ? (
           <View style={[styles.edu, { backgroundColor: colors.controlTrack }]}>
@@ -384,8 +386,6 @@ function ResultPanel({
             <Stat label={t('games.wordle.stat.streak')} value={String(stats.currentStreak)} />
             <Stat label={t('games.wordle.stat.best')} value={String(stats.longestStreak)} />
             <Stat label={t('games.wordle.stat.average')} value={stats.averageGuesses ? stats.averageGuesses.toFixed(1) : '—'} />
-            {/* XP is the app's own unit and reads the same in every language */}
-            <Stat label="XP" value={String(stats.totalXp)} />
           </View>
         </GlassCard>
       ) : null}
@@ -422,6 +422,7 @@ const styles = StyleSheet.create({
   resultMark: { alignSelf: 'center' },
   resultTitle: { ...display(typography.sizes.xl), textAlign: 'center' },
   resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
+  resultNote: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
   edu: { borderRadius: radii.md, padding: spacing.md, gap: spacing.xs, marginTop: spacing.sm },
   eduHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   eduWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
@@ -432,7 +433,8 @@ const styles = StyleSheet.create({
   resultActions: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm },
   statsCard: { gap: spacing.sm },
   statsTitle: { ...sectionLabel },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.md },
+  // five figures, three and two: spaced evenly, so the two under the three sit in the middle and not at the edges
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-evenly', rowGap: spacing.md },
   stat: { width: '30%', alignItems: 'center' },
   statValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   statLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },

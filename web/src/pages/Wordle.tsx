@@ -35,7 +35,13 @@ function guessError(err: ApiError, t: (key: MessageKey) => string): string {
   }
 }
 
-/** A single-player Kurdish Peyvok — server-scored, answer withheld until it ends. */
+/**
+ * A single-player Kurdish Peyvok — server-scored, answer withheld until it ends.
+ *
+ * Played alone it earns no XP (XP is for lessons, stories and games played
+ * online with other people), so the result shows no figure of it and says so
+ * once, with where XP is earned.
+ */
 export function Wordle(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
@@ -148,7 +154,7 @@ export function Wordle(): React.JSX.Element {
                 {game.status === 'won' ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
                 {game.target && game.status === 'lost' && <> {t('games.wordle.theWordWas', { word: game.target })}</>}
               </p>
-              {game.xpAwarded ? <p className="gs-earned">+{game.xpAwarded} XP</p> : null}
+              <p className="gs-alone">{t('games.noXpAlone')}</p>
               {mode === 'practice' ? (
                 <Button onClick={() => void start()}>{t('games.playAgain')}</Button>
               ) : (

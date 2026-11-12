@@ -70,7 +70,9 @@ const API_MAX_TYPED = 4000;
  *
  * The one game of the four with no lobby and no invite — it is a solo time
  * trial. Speed is the server's to decide (it timed the handover), so the timer
- * here is for the racer and is never sent.
+ * here is for the racer and is never sent. Raced alone, it earns no XP: the
+ * result is its speed, its accuracy and its time, with one quiet line saying
+ * where XP does come from.
  *
  * What you read and what takes the keys are two things: the text, drawn word
  * by word and coloured as you go, and an invisible field over it that the
@@ -537,14 +539,13 @@ function Result({
             <Figure value={result.wpm.toFixed(1)} label={t('games.race.wpm')} />
             <Figure value={`${Math.round(result.accuracy * 100)}%`} label={t('games.race.accuracy')} />
             <Figure value={`${(result.elapsedMs / 1000).toFixed(1)}s`} label={t('games.race.time')} />
-            {/* XP is the app's own unit and reads the same in every language */}
-            <Figure value={`+${result.xpAwarded}`} label="XP" />
           </View>
           {result.accented > 0 && result.accentMode !== 'hidden' ? (
             <Text style={[styles.accents, { color: colors.textSecondary }]}>
               {t('games.race.accents', { right: result.accented - result.accentMisses, total: result.accented })}
             </Text>
           ) : null}
+          <Text style={[styles.accents, { color: colors.textSecondary }]}>{t('games.noXpAlone')}</Text>
           <GoldButton label={t('games.race.again')} busy={starting} onPress={onAgain} style={styles.stretch} />
         </View>
       </GlassCard>
@@ -612,9 +613,10 @@ const styles = StyleSheet.create({
     borderRadius: radii.pill,
   },
   bestText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  figures: { flexDirection: 'row', flexWrap: 'wrap', alignSelf: 'stretch', rowGap: spacing.md, marginTop: spacing.sm },
-  // two across, not four: "words per minute" is PEYV/XULEK in Kurmancî and
-  // Wörter/Minute in German, and four of those in a phone's width collide
+  // three figures, two and one: centred, so the one under the two sits in the middle
+  figures: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignSelf: 'stretch', rowGap: spacing.md, marginTop: spacing.sm },
+  // two across, not three: "words per minute" is PEYV/XULEK in Kurmancî and
+  // Wörter/Minute in German, and three of those in a phone's width collide
   figure: { width: '50%', alignItems: 'center' },
   figureValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   figureLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },

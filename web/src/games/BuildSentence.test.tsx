@@ -173,6 +173,28 @@ describe('Build a Kurdish Sentence', () => {
     expect(screen.queryByText(/^\+\d+ XP$/)).toBeNull();
   });
 
+  it('pays as a lesson does: what a round earned is on its results, and nothing calls it a game played alone', async () => {
+    server(session('kmr', [['a', 'b']]), () => done(0, true, true, 1), {
+      correct: 1,
+      total: 1,
+      firstTry: 1,
+      xp: 2,
+      learningCounted: true,
+      needed: 1,
+      items: [{ index: 0, correct: true, firstTry: true, xp: 2, repeat: true }],
+      streak: 4,
+    });
+    renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    await userEvent.click(within(await screen.findByRole('group', { name: 'Words to use' })).getByRole('button', { name: 'a' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Check' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
+    expect(await screen.findByText('+2 XP')).toBeInTheDocument();
+    expect(screen.getByText('Today counts for your streak.')).toBeInTheDocument();
+    expect(screen.getByText('Answered right lately, so no XP this time')).toBeInTheDocument();
+    expect(screen.queryByText(/Played alone, a game earns no XP/)).toBeNull();
+  });
+
   /*
    * It is an exercise of the lessons' practice, not a game: the way out of a
    * round and the way back from its results both lead to Learn, worded as a

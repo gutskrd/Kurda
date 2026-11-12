@@ -173,7 +173,7 @@ describe('LastLetterScreen', () => {
     expect((input as HTMLElement).style.direction || input.getAttribute('dir')).toBe('rtl');
   });
 
-  it('lists the places when it ends, Hevalo by name and each score in words', async () => {
+  it('lists the places when a game against Hevalo ends, each score in words, with one quiet line about XP and no XP figure', async () => {
     testAuth.client = fakeClient({
       ...quiet,
       'GET /mp/last-letter/g1': ok(
@@ -182,9 +182,10 @@ describe('LastLetterScreen', () => {
           status: 'finished',
           code: null,
           players: [seat(1, { userId: 'me', isMe: true, isHost: true }), seat(2, { bot: 'hevalo' })],
+          // against Hevalo the game is played alone: the server pays nothing for it
           results: [
             { seat: 2, place: 1, score: 9, xpAwarded: null },
-            { seat: 1, place: 2, score: 8, xpAwarded: 16 },
+            { seat: 1, place: 2, score: 8, xpAwarded: 0 },
           ],
           board: board({ yourTurn: false, turn: null, endedBy: 'last-standing' }),
         }),
@@ -195,7 +196,32 @@ describe('LastLetterScreen', () => {
     expect(screen.getByText('Hevalo won this time.')).toBeTruthy();
     expect(screen.getByText('Hevalo')).toBeTruthy();
     expect(screen.getByText('Words: 8')).toBeTruthy();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
+    // nothing earned is shown, not even a zero
+    expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
+  });
+
+  it('shows the XP a game with friends earned beside whoever earned it, and no line about playing alone', async () => {
+    testAuth.client = fakeClient({
+      ...quiet,
+      'GET /mp/last-letter/g1': ok(
+        room({
+          status: 'finished',
+          players: [seat(1, { userId: 'me', isMe: true, isHost: true }), seat(2, { userId: 'u2', name: 'Rojda' })],
+          results: [
+            { seat: 1, place: 1, score: 9, xpAwarded: 16 },
+            { seat: 2, place: 2, score: 8, xpAwarded: 0 },
+          ],
+          board: board({ yourTurn: false, turn: null, endedBy: 'last-standing' }),
+        }),
+      ),
+    });
+    renderWithProviders(<LastLetterScreen id="g1" onExit={() => undefined} />);
+    expect(await screen.findByText('You won!')).toBeTruthy();
     expect(screen.getByText('+16 XP')).toBeTruthy();
+    // whoever earned none has no figure beside them: never "+0 XP"
+    expect(screen.getAllByText(/\+\d+ XP/)).toHaveLength(1);
+    expect(screen.queryByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeNull();
   });
 
   it('says a game that is not this person’s to see is unavailable', async () => {

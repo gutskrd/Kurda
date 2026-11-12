@@ -5,6 +5,7 @@ import {
   GAME_DIFFICULTIES,
   isGameEmblem,
   learnGame,
+  paysAlone,
   roundXpCeiling,
   type GameDialect,
   type GameDifficulty,
@@ -37,8 +38,16 @@ import { GameArt } from './GameArt';
  * What every learning game played alone has around its own staging, on the
  * phone: the intro (the game's own picture of it, the difficulty), the round
  * (where you are in it, the verdict and its explanation after each answer),
- * and results that say exactly what happened — right, right first time, what
- * it paid, and when it paid nothing, why.
+ * and results that say exactly what happened: right, right first time, and
+ * whether the day counts.
+ *
+ * What a round pays is the shared registry's to say (`paysAlone`). A game
+ * played alone earns no XP: XP is for lessons, stories and games played
+ * online with other people. So a game's round promises none before it
+ * starts and shows none when it ends, and its results say so in one quiet
+ * line; a round played well enough still counts as a day learned. The
+ * lessons' two exercises pay as lessons do, and for those the shell says
+ * what a round can earn, what this one did, and when it paid nothing, why.
  *
  * The round is the server's (api/src/games/solo.ts): made there, checked
  * there, paid there once. A round left open is offered again until it
@@ -102,7 +111,7 @@ interface Props<Item, H, C, B> {
   /** the game puts the verdict and the way on in its own round (`SoloRound.feedback`), next to what was answered */
   feedbackInRound?: boolean;
   onExit: () => void;
-  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts */
+  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts, for a round that pays */
   roundItems?: number;
 }
 
@@ -170,6 +179,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   const { t } = useI18n();
   // an exercise of the lessons' practice rather than a game: its results speak of practice
   const exercise = learnGame(game).place === 'lessons';
+  // whether a round of this earns XP at all: a game played alone does not, and nothing here may say it does
+  const pays = paysAlone(game);
   // a game's own picture, for its start and its result; an exercise of the lessons has none
   const emblem = !exercise && isGameEmblem(game) ? game : null;
   const dir = useDirection();
@@ -306,13 +317,17 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         <Text style={muted}>{t('games.solo.results.firstTry', { n: results.firstTry })}</Text>
         {results.learningCounted ? (
           <>
-            <Text style={[dir.text, styles.xp, { color: colors.goldText }]}>{t('games.solo.results.xp', { xp: results.xp })}</Text>
+            {pays ? <Text style={[dir.text, styles.xp, { color: colors.goldText }]}>{t('games.solo.results.xp', { xp: results.xp })}</Text> : null}
             <Text style={muted}>{t('games.solo.results.streak')}</Text>
-            {results.items.some((i) => i.correct && i.repeat) ? <Text style={muted}>{t('games.solo.results.repeat')}</Text> : null}
+            {pays && results.items.some((i) => i.correct && i.repeat) ? <Text style={muted}>{t('games.solo.results.repeat')}</Text> : null}
           </>
         ) : (
-          <Text style={[...text, styles.honest]}>{t('games.solo.results.noXp', { needed: results.needed, correct: results.firstTry })}</Text>
+          <Text style={[...text, styles.honest]}>
+            {t(pays ? 'games.solo.results.noXp' : 'games.solo.results.notCounted', { needed: results.needed, correct: results.firstTry })}
+          </Text>
         )}
+        {/* where a round that pays shows what it earned: said once, quietly, so nobody waits for XP that is not coming */}
+        {pays ? null : <Text style={muted}>{t('games.noXpAlone')}</Text>}
         {resultsExtra}
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
         <View style={styles.actions}>
@@ -416,7 +431,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
             );
           })}
         </View>
-        {chosen ? <Text style={muted}>{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen], roundItems) })}</Text> : null}
+        {chosen && pays ? <Text style={muted}>{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen], roundItems) })}</Text> : null}
         {exercise ? (
           <TileButton label={t('games.solo.start')} onPress={() => void start()} busy={busy} disabled={!chosen} />
         ) : (

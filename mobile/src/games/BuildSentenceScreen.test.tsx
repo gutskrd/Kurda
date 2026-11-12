@@ -156,6 +156,8 @@ describe('BuildSentenceScreen', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
     expect(await screen.findByText('0 of 1 right')).toBeTruthy();
     expect(screen.getByText('Get at least 1 right on the first try to earn XP and count today. This time: 0.')).toBeTruthy();
+    // an exercise of the lessons pays as a lesson does: the line for a game played alone is not its to show
+    expect(screen.queryByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeNull();
   });
 
   it('plays in the learner’s Soranî, the line filling from the right', async () => {

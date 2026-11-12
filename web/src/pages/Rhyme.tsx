@@ -208,7 +208,8 @@ export function Rhyme(): React.JSX.Element {
           ) : (
             <div className="wordle-result">
               <p className="wordle-result-title">{t('games.rhyme.roundOver', { score: game.score, count: game.accepted })}</p>
-              {game.xpAwarded ? <p className="gs-earned">+{game.xpAwarded} XP</p> : null}
+              {/* a round alone earns no XP: said once, where what it paid used to stand */}
+              <p className="gs-alone">{t('games.noXpAlone')}</p>
               <Button onClick={() => void start()}>{t('games.playAgain')}</Button>
             </div>
           )}

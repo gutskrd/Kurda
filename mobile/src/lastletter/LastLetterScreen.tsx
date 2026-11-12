@@ -35,6 +35,9 @@ const DIALECT_NAME: Record<LetterDialect, string> = { kmr: 'Kurmancî', ckb: 'So
  * that have what it needs. With one, the room (play/GameRoom.tsx) with the
  * chain inside. A code, an invite, a card or a rematch opens a room here as
  * new params on the same screen, and the room follows them.
+ *
+ * A game with friends earns XP by where it is finished; a game against Hevalo
+ * is played alone and earns none, which the room's results say in one line.
  */
 export function LastLetterScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();

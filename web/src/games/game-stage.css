@@ -309,16 +309,17 @@
   height: 52px;
 }
 
-/* what a round paid, where a game says it on its own card */
-.gs-earned {
-  justify-self: center;
+/*
+ * Where a game played alone would have said what it paid: one quiet line, that such a game earns no XP and where XP
+ * is earned. It takes its place and its alignment from the result it stands in.
+ */
+.gs-alone {
+  max-width: 44ch;
   margin: 0;
-  padding: 6px var(--space-4);
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--gs-gold) 18%, transparent);
-  color: var(--gold-ink, var(--ink));
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+  text-wrap: balance;
 }
 
 /* ---- a start that is the emblem and one button (a round against a clock) -------------- */

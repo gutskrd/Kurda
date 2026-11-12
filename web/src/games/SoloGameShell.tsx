@@ -6,6 +6,7 @@ import {
   gameEmblemTone,
   isGameEmblem,
   learnGame,
+  paysAlone,
   roundXpCeiling,
   type GameDialect,
   type GameDifficulty,
@@ -36,12 +37,21 @@ import './game-stage.css';
  * intro (what the game is, the game's own picture of it, the difficulty), the
  * round (where you are in it, the feedback after each answer with its
  * explanation), and results that say exactly what happened — how many right,
- * how many on the first try, what it paid, and when it paid nothing, why.
+ * how many on the first try, and whether the day counts.
+ *
+ * What a round pays depends on what it is (the registry's `paysAlone`). An
+ * exercise of the lessons pays XP as a lesson does, so its screens say what
+ * it can pay, what it paid, and when it paid nothing, why. A game played
+ * alone pays none: XP is for lessons, stories and games played online with
+ * other people. Its screens never show a figure of XP, not even a zero; they
+ * say once, on the results, that a game alone earns none and where it is
+ * earned. A round played well enough still counts as a day learned, and that
+ * is said either way.
  *
  * The round is the server's (api/src/games/solo.ts): it is made there, every
- * try is checked there, and the finish pays there, once. This shell only
- * carries the tries and shows what comes back. A round left open is offered
- * again ("Continue your round") until it expires.
+ * try is checked there, and the finish settles it there, once. This shell
+ * only carries the tries and shows what comes back. A round left open is
+ * offered again ("Continue your round") until it expires.
  *
  * The game draws the item itself (`renderRound`): its board, its Check
  * button, its nudge after a wrong try and its correction once an item is
@@ -104,11 +114,11 @@ interface Props<Item, H, C, B> {
   renderRound: (round: SoloRound<Item, H, C, B>) => React.ReactNode;
   /** the explanation for an item's `why`, in the reader's words */
   explain: (why: string) => string | null;
-  /** after a round is paid: the game refreshes what it shows (the ladder) */
+  /** after a round is finished: the game refreshes what it shows (the ladder) */
   onFinished?: (results: SoloResults) => void;
   /** more for the results screen: a rung opened */
   resultsExtra?: React.ReactNode;
-  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts */
+  /** items in one of its rounds, when it is not SOLO_ROUND_ITEMS: what "up to N XP" counts, for a round that pays */
   roundItems?: number;
   /** the game puts the verdict and the way on in its own round (`SoloRound.feedback`), next to what was answered */
   feedbackInRound?: boolean;
@@ -154,6 +164,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   const { client } = useAuth();
   const place = learnGame(game).place;
   const home = HOME[place];
+  // whether a round of this earns XP at all: the lessons' exercises do, a game played alone does not
+  const pays = paysAlone(game);
   // the games' stage, in the game's own colour; an exercise of the lessons is not on it
   const staged = place === 'games';
   const stage = staged ? ' gs' : '';
@@ -305,13 +317,15 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           <li>{t('games.solo.results.firstTry', { n: results.firstTry })}</li>
           {results.learningCounted ? (
             <>
-              <li className="solo-xp">{t('games.solo.results.xp', { xp: results.xp })}</li>
+              {pays && <li className="solo-xp">{t('games.solo.results.xp', { xp: results.xp })}</li>}
               <li>{t('games.solo.results.streak')}</li>
             </>
           ) : (
-            <li className="solo-honest">{t('games.solo.results.noXp', { needed: results.needed, correct: results.firstTry })}</li>
+            <li className="solo-honest">{t(pays ? 'games.solo.results.noXp' : 'games.solo.results.notCounted', { needed: results.needed, correct: results.firstTry })}</li>
           )}
-          {results.learningCounted && results.items.some((i) => i.correct && i.repeat) && <li className="solo-muted">{t('games.solo.results.repeat')}</li>}
+          {pays && results.learningCounted && results.items.some((i) => i.correct && i.repeat) && <li className="solo-muted">{t('games.solo.results.repeat')}</li>}
+          {/* where a round that pays says what it paid, a game played alone says once why there is nothing to say */}
+          {!pays && <li className="solo-muted">{t('games.noXpAlone')}</li>}
         </ul>
         {resultsExtra}
         {error && <p className="field-error">{error}</p>}
@@ -426,7 +440,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
             );
           })}
         </div>
-        {chosen && <p className="solo-muted">{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen], roundItems) })}</p>}
+        {chosen && pays && <p className="solo-muted">{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen], roundItems) })}</p>}
       </fieldset>
       <Button size="lg" className={staged ? 'gs-go' : undefined} onClick={() => void start()} disabled={busy || !chosen}>
         {t('games.solo.start')}

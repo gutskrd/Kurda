@@ -489,8 +489,9 @@ export function Race(): React.JSX.Element {
                 <Figure value={result.wpm.toFixed(1)} label={t('games.race.wpm')} />
                 <Figure value={`${Math.round(result.accuracy * 100)}%`} label={t('games.race.accuracy')} />
                 <Figure value={(result.elapsedMs / 1000).toFixed(1) + 's'} label={t('games.race.time')} />
-                <Figure value={`+${result.xpAwarded}`} label="XP" />
               </div>
+              {/* a race alone earns no XP: no figure of it among the others, and one line that says where XP is earned */}
+              <p className="gs-alone">{t('games.noXpAlone')}</p>
               {result.accentMode !== 'hidden' && result.accented > 0 && (
                 <p className="race-accents">
                   {t('games.race.accents', { right: result.accented - result.accentMisses, total: result.accented })}

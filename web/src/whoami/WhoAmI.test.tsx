@@ -94,9 +94,10 @@ describe('Who Am I?, the start', () => {
     // nothing is played alone any more
     expect(screen.queryByText('On your own')).toBeNull();
     expect(document.querySelector('a[href*="solo"]')).toBeNull();
-    // how it scores is on the page, folded away, with the misses allowed on one phone, the way the page leads with
+    // how it scores is on the page, folded away; only the one-phone screens allow one more miss, and say so there
     expect(screen.getByText('How it scores')).toBeInTheDocument();
-    expect(screen.getByText(/^After 3 wrong guesses you are out/)).toBeInTheDocument();
+    expect(screen.getByText(/^After 2 wrong guesses you are out/)).toBeInTheDocument();
+    expect(screen.queryByText(/^After 3 wrong guesses/)).toBeNull();
   });
 
   it('makes a table with friends at the level and the longest time chosen, and opens its lobby', async () => {
@@ -118,9 +119,8 @@ describe('Who Am I?, the start', () => {
   it('leaves out a way that cannot be played yet', async () => {
     serve({ ...onePhone(false), ...online(true) });
     const first = renderPlay(<WhoAmI />, { route: '/app/games/who-am-i' });
-    // the one way there is to play is not the quiet one, and the note counts the misses as a table online does
+    // the one way there is to play is not the quiet one
     expect(await screen.findByRole('region', { name: 'With friends online' })).not.toHaveClass('is-quiet');
-    expect(screen.getByText(/^After 2 wrong guesses you are out/)).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'On this phone' })).toBeNull();
     first.unmount();
 

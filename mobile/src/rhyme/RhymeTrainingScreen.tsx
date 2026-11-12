@@ -37,7 +37,6 @@ interface RhymeGameView {
   score: number;
   accepted: number;
   status: 'active' | 'ended';
-  xpAwarded: number | null;
 }
 
 interface Found {
@@ -63,7 +62,11 @@ function clock(ms: number): string {
  * Rhyming Words — training (solo) screen (KUR-299). Shows a prompt word and a
  * countdown; the player types real Kurdish words that rhyme, scored server-side
  * (#298 engine). Every accepted rhyme adds to the score; when the timer runs
- * out the round ends and awards XP. Mirrors the Peyvok screen's flow.
+ * out the round ends. Mirrors the Peyvok screen's flow.
+ *
+ * Training is played alone, so a round is scored and earns no XP: XP is for
+ * lessons, stories and games played online with other people (Rhyme Match is
+ * the one with a friend). The result says so in one quiet line.
  */
 export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -99,7 +102,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
     [client, game],
   );
 
-  // countdown; when it hits zero, end the round (awards XP)
+  // countdown; when it hits zero, end the round
   useEffect(() => {
     if (!game || game.status === 'ended') return;
     if (remaining <= 0) {
@@ -180,7 +183,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
                 {t('games.rhyme.timeUpRound')}
               </Text>
               <Text style={styles.stageScore}>{t('games.rhyme.scoreLine', { score: game.score, count: game.accepted })}</Text>
-              {game.xpAwarded ? <Text style={styles.stageEarned}>{`+${game.xpAwarded} XP`}</Text> : null}
+              <Text style={styles.stageNote}>{t('games.noXpAlone')}</Text>
             </Cloth>
             <GoldButton label={t('games.playAgain')} icon="bolt" onPress={start} />
             <ClayButton label={t('common.done')} tone="neutral" onPress={onExit} style={{ alignSelf: 'stretch' }} />
@@ -255,7 +258,8 @@ const styles = StyleSheet.create({
   stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   stageKicker: { marginTop: spacing.sm, color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase' },
   stageScore: { ...display(typography.sizes.xl), color: TABLE.ink, textAlign: 'center' },
-  stageEarned: { marginTop: spacing.xs, color: TABLE.goldSoft, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  // where the round's XP used to be: quiet, the colour of the cloth's smaller writing
+  stageNote: { marginTop: spacing.xs, color: TABLE.inkSoft, fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center', marginTop: spacing.xs },
   promptRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, padding: spacing.lg },
   promptCol: { flex: 1 },

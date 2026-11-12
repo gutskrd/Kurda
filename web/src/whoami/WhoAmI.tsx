@@ -6,9 +6,7 @@ import {
   WHO_AM_I_COUCH_MAX_PLAYERS,
   WHO_AM_I_COUCH_MIN_PLAYERS,
   WHO_AM_I_DECIDE_SECONDS,
-  WHO_AM_I_GUESSES,
   WHO_AM_I_HELP_POINTS,
-  WHO_AM_I_ROOM_GUESSES,
   WHO_AM_I_TABLE_MAX_PLAYERS,
   WHO_AM_I_TABLE_MIN_PLAYERS,
   learnGame,
@@ -156,8 +154,8 @@ function Start(): React.JSX.Element {
           <InviteForm target={{ kind: 'new', game: 'who-am-i' }} lockGame heading={false} />
         </section>
       )}
-      {/* one note for the page: it counts the misses as the way the page leads with does, and each way gives its own once opened */}
-      <ScoringNote guesses={onePhone ? WHO_AM_I_ROOM_GUESSES : WHO_AM_I_GUESSES} />
+      {/* The misses allowed are a table online's here: only the one-phone screens say one more, so a reader going online never reads two numbers. */}
+      <ScoringNote />
     </div>
   );
 }
