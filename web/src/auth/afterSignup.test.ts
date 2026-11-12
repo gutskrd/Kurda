@@ -12,6 +12,13 @@ describe('safeFrom', () => {
     expect(safeFrom('/app')).toBe('/app');
   });
 
+  it('keeps a game’s invite link, rebuilt from what it says', () => {
+    expect(safeFrom('/join/impostor/KVXV5E?from=0B1E2D3C-4a5f-4c6d-8e7f-9a0b1c2d3e4f')).toBe('/join/impostor/KVXV5E?from=0b1e2d3c-4a5f-4c6d-8e7f-9a0b1c2d3e4f');
+    expect(safeFrom('/join/peyvok-battle/kvxv5e?from=someone&next=https://evil.example')).toBe('/join/peyvok-battle/KVXV5E');
+    expect(safeFrom('/join/chess/KVXV5E')).toBeNull();
+    expect(safeFrom('/join/impostor/KVXV5E/extra')).toBeNull();
+  });
+
   it('refuses anywhere else: another site, another origin in disguise, the app’s own doors', () => {
     expect(safeFrom('https://evil.example/app')).toBeNull();
     expect(safeFrom('//evil.example/app')).toBeNull();

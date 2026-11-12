@@ -27,6 +27,7 @@
 import { SOURCES, SOURCE_ORDER, type Source } from './teaching/sources';
 // the one file, not the package: its index would bring the whole of @kurda/shared into the edge script
 import { isScannerProbe } from '@kurda/shared/src/scanner-paths';
+import { parseJoinLink, type JoinLink, type JoinLinkGame } from '@kurda/shared/src/join-link';
 
 /*
  * The two pieces of the Workers runtime this file uses, declared here rather
@@ -216,6 +217,60 @@ function previewHead(preview: Preview, url: string): Array<string | ''> {
     `<meta name="twitter:title" content="${attr(preview.title)}" />`,
     `<meta name="twitter:description" content="${attr(preview.description)}" />`,
     preview.image ? `<meta name="twitter:image" content="${attr(preview.image)}" />` : '',
+  ];
+}
+
+/**
+ * What each game is called on the card of an invitation to it. English, as
+ * the rest of this file's words are: whatever unfurls a link is not told who
+ * will read it. The message the link arrives in is in the sender's language,
+ * and the page it opens is in the reader's.
+ */
+const INVITE_GAME: Record<JoinLinkGame, string> = {
+  'wordle-battle': 'Peyvok Battle',
+  'rhyme-match': 'Rhyme Match',
+  stories: 'a Kurdish story game',
+  'last-letter': 'The Last Letter',
+  impostor: 'Kurdish Impostor',
+  'who-am-i': 'Who Am I?',
+};
+
+/** The games with a card of their own (api/scripts/generate-invite-art.ts); the rest show the site's. */
+const INVITE_CARDS: ReadonlySet<JoinLinkGame> = new Set(['wordle-battle', 'rhyme-match', 'last-letter', 'impostor', 'who-am-i']);
+
+/**
+ * An invitation to a game, as a head: the game's name and its own picture,
+ * and the code said once more for whoever reads the card without tapping it.
+ *
+ * Nothing is looked up. The link says which game it is and what its code is
+ * (shared/src/join-link.ts), both read by a pattern that takes nothing else,
+ * so this is a table lookup like a listed page's: it cannot fail, costs no
+ * request, and gives nobody a way to ask the server which codes are in use.
+ * Who shared the link is not on the card: the address may name them, and a
+ * name from an address is not put into markup.
+ */
+function inviteHead(invite: JoinLink, url: string): Array<string | ''> {
+  const title = `You’re invited to play ${INVITE_GAME[invite.game]} on Hevalo`;
+  const code = `${invite.code.slice(0, 3)} ${invite.code.slice(3)}`;
+  const description = `Tap to join the game. Or open Games → Join with a code and type ${code}.`;
+  const image = new URL(INVITE_CARDS.has(invite.game) ? `/invite/${invite.game}.png` : '/og.png', url).toString();
+  return [
+    `<title>${attr(title)}</title>`,
+    `<meta name="description" content="${attr(description)}" />`,
+    `<link rel="canonical" href="${attr(url)}" />`,
+    `<meta property="og:type" content="website" />`,
+    `<meta property="og:site_name" content="Hevalo" />`,
+    `<meta property="og:url" content="${attr(url)}" />`,
+    `<meta property="og:title" content="${attr(title)}" />`,
+    `<meta property="og:description" content="${attr(description)}" />`,
+    `<meta property="og:image" content="${attr(image)}" />`,
+    `<meta property="og:image:width" content="1200" />`,
+    `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="${attr(`${INVITE_GAME[invite.game]} on Hevalo`)}" />`,
+    `<meta name="twitter:card" content="summary_large_image" />`,
+    `<meta name="twitter:title" content="${attr(title)}" />`,
+    `<meta name="twitter:description" content="${attr(description)}" />`,
+    `<meta name="twitter:image" content="${attr(image)}" />`,
   ];
 }
 
@@ -623,6 +678,19 @@ export default {
       return withHead(assets, staticHead(page, clean));
     }
 
+    /*
+     * An invitation to a game: the game's own card, from the link alone. A
+     * lobby lasts an evening, so the page is kept out of search results, and
+     * its canonical is the link without whoever shared it.
+     */
+    const invite = parseJoinLink(url.pathname, url.search);
+    if (invite) {
+      const clean = new URL(url.pathname.replace(/\/$/, ''), url.origin).toString();
+      const invited = withHead(assets, inviteHead(invite, clean));
+      invited.headers.set('x-robots-tag', 'noindex');
+      return invited;
+    }
+
     const route = routeFor(url.pathname);
     if (!route) return assets;
 
@@ -649,6 +717,7 @@ export const __test = {
   sitemap,
   staticHead,
   previewHead,
+  inviteHead,
   jsonLd,
   teachingArticle,
   STATIC_PAGES,

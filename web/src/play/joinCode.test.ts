@@ -31,6 +31,10 @@ describe('codeFromTyping', () => {
     expect(codeFromTyping('Play Peyvok Battle with me on Hevalo! Open Games → Join with a code and type ABC 234.')).toBe('ABC234');
     // "PEYVAN" could be a code on its own; the code the message ends with is the one meant
     expect(codeFromTyping('Li ser Hevalo bi min re Pêşbaziya Peyvan bilîze! Lîstik → Bi kodekê beşdar bibe veke û XYZ 789 binivîse.')).toBe('XYZ789');
+    // the whole invitation as Share sends it, link and all: the link ends with the same code
+    expect(
+      codeFromTyping('Play Kurdish Impostor with me on Hevalo! Open Games → Join with a code and type ABC 234.\nOr tap to join: https://hevalo.app/join/impostor/ABC234?from=0b1e2d3c-4a5f-4c6d-8e7f-9a0b1c2d3e4f'),
+    ).toBe('ABC234');
     expect(codeFromTyping('لەسەر Hevalo لەگەڵم یاری بکە! یاری ← بە کۆدێک بەشداربە بکەرەوە و KMN-456 بنووسە.')).toBe('KMN456');
   });
 });

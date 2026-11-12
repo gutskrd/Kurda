@@ -248,6 +248,7 @@ export type TranslationKey =
   | 'play.code.hint'
   | 'play.code.shareText'
   | 'play.code.shareStory'
+  | 'play.code.shareTap'
   | 'play.join.line'
   | 'play.join.hint'
   | 'play.join.notFound'
@@ -3586,6 +3587,7 @@ const en: Catalog = {
   'play.code.hint': 'Friends open {path} and type it in.',
   'play.code.shareText': 'Play {game} with me on Hevalo! Open {path} and type {code}',
   'play.code.shareStory': 'Play “{title}” with me on Hevalo! Open {path} and type {code}',
+  'play.code.shareTap': 'Or tap to join:',
   'play.join.line': 'Got a code from a friend? Type it in to jump into their game.',
   'play.join.hint': 'Type the code a friend gave you: six letters and numbers.',
   'play.join.notFound': 'No open game has this code. Check it, or ask your friend for a new one.',
@@ -6912,6 +6914,7 @@ const ku: Catalog = {
   'play.code.hint': 'Heval {path} vedikin û kodê dinivîsin.',
   'play.code.shareText': 'Li Hevaloyê {game} bi min re bilîze! {path} veke û {code} binivîse',
   'play.code.shareStory': 'Li Hevaloyê “{title}” bi min re bilîze! {path} veke û {code} binivîse',
+  'play.code.shareTap': 'An jî li girêdanê bixe û beşdar bibe:',
   'play.join.line': 'Hevalekî kodek da te? Binivîse û rasterast tevlî lîstika wî bibe.',
   'play.join.hint': 'Koda ku hevalekî da te binivîse: şeş tîp û hejmar.',
   'play.join.notFound': 'Tu lîstikeke vekirî bi vê kodê tune. Kontrol bike, an ji hevalê xwe kodeke nû bixwaze.',
@@ -10237,6 +10240,7 @@ const de: Catalog = {
   'play.code.hint': 'Freunde öffnen {path} und tippen ihn ein.',
   'play.code.shareText': 'Spiel {game} mit mir auf Hevalo! Öffne {path} und gib {code} ein',
   'play.code.shareStory': 'Spiel „{title}“ mit mir auf Hevalo! Öffne {path} und gib {code} ein',
+  'play.code.shareTap': 'Oder tippe zum Beitreten:',
   'play.join.line': 'Hast du einen Code von einem Freund? Gib ihn ein und spring direkt in sein Spiel.',
   'play.join.hint': 'Gib den Code ein, den dir ein Freund gegeben hat: sechs Buchstaben und Ziffern.',
   'play.join.notFound': 'Kein offenes Spiel hat diesen Code. Prüfe ihn oder bitte deinen Freund um einen neuen.',
@@ -13562,6 +13566,7 @@ const es: Catalog = {
   'play.code.hint': 'Tus amigos abren {path} y lo escriben.',
   'play.code.shareText': '¡Juega a {game} conmigo en Hevalo! Abre {path} y escribe {code}',
   'play.code.shareStory': '¡Juega a «{title}» conmigo en Hevalo! Abre {path} y escribe {code}',
+  'play.code.shareTap': 'O toca para unirte:',
   'play.join.line': '¿Te ha dado un código un amigo? Escríbelo y entra directo en su partida.',
   'play.join.hint': 'Escribe el código que te dio un amigo: seis letras y números.',
   'play.join.notFound': 'Ninguna partida abierta tiene este código. Revísalo o pide uno nuevo a tu amigo.',
@@ -16887,6 +16892,7 @@ const tr: Catalog = {
   'play.code.hint': 'Arkadaşların {path} bölümünü açıp kodu yazar.',
   'play.code.shareText': 'Hevalo’da benimle {game} oyna! {path} bölümünü aç ve {code} yaz',
   'play.code.shareStory': 'Hevalo’da benimle “{title}” oyna! {path} bölümünü aç ve {code} yaz',
+  'play.code.shareTap': 'Ya da katılmak için dokun:',
   'play.join.line': 'Bir arkadaşın sana kod mu verdi? Yaz ve doğrudan oyununa katıl.',
   'play.join.hint': 'Bir arkadaşının verdiği kodu yaz: altı harf ve rakam.',
   'play.join.notFound': 'Bu koda sahip açık bir oyun yok. Kontrol et ya da arkadaşından yeni bir kod iste.',
@@ -20212,6 +20218,7 @@ const ar: Catalog = {
   'play.code.hint': 'يفتح أصدقاؤك {path} ويكتبون الرمز.',
   'play.code.shareText': 'العب {game} معي على Hevalo! افتح {path} واكتب {code}',
   'play.code.shareStory': 'العب «{title}» معي على Hevalo! افتح {path} واكتب {code}',
+  'play.code.shareTap': 'أو اضغط للانضمام:',
   'play.join.line': 'أعطاك صديق رمزًا؟ اكتبه وادخل لعبته مباشرة.',
   'play.join.hint': 'اكتب الرمز الذي أعطاك إياه صديق: ستة أحرف وأرقام.',
   'play.join.notFound': 'لا توجد لعبة مفتوحة بهذا الرمز. تحقّق منه، أو اطلب من صديقك رمزًا جديدًا.',
@@ -23537,6 +23544,7 @@ const fr: Catalog = {
   'play.code.hint': 'Tes amis ouvrent {path} et le saisissent.',
   'play.code.shareText': 'Joue à {game} avec moi sur Hevalo ! Ouvre {path} et saisis {code}',
   'play.code.shareStory': 'Joue à « {title} » avec moi sur Hevalo ! Ouvre {path} et saisis {code}',
+  'play.code.shareTap': 'Ou touche pour rejoindre :',
   'play.join.line': 'Un ami t’a donné un code ? Saisis-le pour rejoindre sa partie.',
   'play.join.hint': 'Saisis le code qu’un ami t’a donné : six lettres et chiffres.',
   'play.join.notFound': 'Aucune partie ouverte n’a ce code. Vérifie-le, ou demande-en un nouveau à ton ami.',
@@ -26862,6 +26870,7 @@ const nl: Catalog = {
   'play.code.hint': 'Vrienden openen {path} en typen hem in.',
   'play.code.shareText': 'Speel {game} met mij op Hevalo! Open {path} en typ {code}',
   'play.code.shareStory': 'Speel “{title}” met mij op Hevalo! Open {path} en typ {code}',
+  'play.code.shareTap': 'Of tik om mee te doen:',
   'play.join.line': 'Een code van een vriend gekregen? Typ hem in en spring meteen in zijn spel.',
   'play.join.hint': 'Typ de code die een vriend je gaf: zes letters en cijfers.',
   'play.join.notFound': 'Geen open spel heeft deze code. Controleer hem, of vraag je vriend om een nieuwe.',
@@ -30188,6 +30197,7 @@ const ckb: Catalog = {
   'play.code.hint': 'هاوڕێیان {path} دەکەنەوە و کۆدەکە دەنووسن.',
   'play.code.shareText': 'لە Hevalo لەگەڵم یاری {game} بکە! {path} بکەرەوە و {code} بنووسە',
   'play.code.shareStory': 'لە Hevalo لەگەڵم یاری «{title}» بکە! {path} بکەرەوە و {code} بنووسە',
+  'play.code.shareTap': 'یان پەنجە بنێ بە بەستەرەکەدا و بەشدار بە:',
   'play.join.line': 'هاوڕێیەک کۆدێکی پێداویت؟ بینووسە و ڕاستەوخۆ بچۆ ناو یارییەکەی.',
   'play.join.hint': 'ئەو کۆدەی هاوڕێیەک پێی داویت بنووسە: شەش پیت و ژمارە.',
   'play.join.notFound': 'هیچ یارییەکی کراوە ئەم کۆدەی نییە. بیپشکنە، یان داوای کۆدێکی نوێ لە هاوڕێکەت بکە.',

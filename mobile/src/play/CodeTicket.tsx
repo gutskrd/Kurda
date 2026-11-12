@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, Easing, Pressable, Share, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { formatJoinCode, type PlayGame } from '@kurda/shared';
+import { buildJoinLink, formatJoinCode, type PlayGame } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -67,6 +68,7 @@ export function CodeTicket({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, rtl } = useI18n();
+  const { user } = useAuth();
   const dir = useDirection();
   const { announce, region } = useAnnouncer();
   const [copied, setCopied] = useState(false);
@@ -87,7 +89,9 @@ export function CodeTicket({
   };
 
   const share = (): void => {
-    const message = shareMessage({ game: t(GAME_NAME_KEY[game]), code, storyTitle }, t, rtl, formatJoinCode);
+    // the code as a link too, saying who is asking, so a friend who is not one yet can ask to be
+    const link = buildJoinLink(game, code, { from: user?.id });
+    const message = shareMessage({ game: t(GAME_NAME_KEY[game]), code, storyTitle, link }, t, rtl, formatJoinCode);
     // the sheet's own dismissal is not a failure, and has nothing to report
     void Share.share({ message }).catch(() => undefined);
   };

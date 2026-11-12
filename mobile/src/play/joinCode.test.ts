@@ -37,6 +37,12 @@ describe('typedCode', () => {
     expect(typedCode('Hevalo’da benimle oyna! ABC-234 yaz')).toBe('ABC234');
   });
 
+  it('reads the code out of the whole invitation, link and all', () => {
+    const invitation = 'Play Kurdish Impostor with me on Hevalo! Open Games → Join with a code and type ABC 234\nOr tap to join: https://hevalo.app/join/impostor/ABC234?from=0b1e2d3c-4a5f-4c6d-8e7f-9a0b1c2d3e4f';
+    expect(typedCode(invitation)).toBe('ABC234');
+    expect(typedCode('Li Hevaloyê bi min re bilîze! Lîstik → Bi kodekê beşdar bibe veke û XYZ 789 binivîse\nAn jî li girêdanê bixe û beşdar bibe: https://hevalo.app/join/who-am-i/XYZ789')).toBe('XYZ789');
+  });
+
   it('does not grow past six when a seventh character is typed onto a whole code', () => {
     expect(typedCode('ABC2345')).toBe('ABC234');
   });

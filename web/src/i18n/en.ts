@@ -2483,6 +2483,7 @@ export const en = {
   'play.code.shareRhymeMatch': 'Play Rhyme Match with me on Hevalo! Open Games → Join with a code and type {code}.',
   'play.code.shareStories': 'Read a Kurdish story with me on Hevalo! Open Games → Join with a code and type {code}.',
   'play.code.shareCopied': 'Invite copied. Paste it in a message to your friend.',
+  'play.code.shareTap': 'Or tap to join:',
   'play.code.hint': 'Friends open Games → Join with a code and type it in.',
   'play.code.hintOpen': 'Any adult can join with it: Games → Join with a code.',
   'play.join.title': 'Join with a code',
@@ -3874,6 +3875,24 @@ export const en = {
   'civak.emptyBody': 'Be the first: a saying, a poem or a picture, with the + button. Or find people to learn with.',
   'character.speaking': '{name} speaking',
   'characters.resting': '{name} is resting',
+  // an invitation to a game, opened from a link (play/InvitePage.tsx)
+  'invite.kicker': 'You’re invited to play',
+  'invite.from': '{name} is waiting for you at the table.',
+  'invite.generic': 'A friend is waiting for you at the table.',
+  'invite.code': 'The code: {code}',
+  'invite.join': 'Join the game',
+  'invite.joining': 'Joining…',
+  'invite.create': 'Create an account and join',
+  'invite.login': 'I already have an account',
+  'invite.free': 'Hevalo is free. Make an account and you land right back here, ready to join.',
+  'invite.fallback': 'Or open Games → Join with a code and type {code}.',
+  'invite.friends.needed': 'You and {name} aren’t friends on Hevalo yet. Send a friend request, and join when they say yes.',
+  'invite.friends.ask': 'Send {name} a friend request',
+  'invite.friends.sent': 'Your friend request is on its way to {name}. When they accept, tap Join again.',
+  'invite.friends.failed': 'The request could not be sent. Try again in a moment.',
+  'invite.broken.title': 'This invitation is not complete',
+  'invite.broken.body': 'The link is missing a part. Ask your friend for the code and type it in under Games → Join with a code.',
+  'invite.broken.games': 'Open Games',
 } as const;
 
 export type MessageKey = keyof typeof en;

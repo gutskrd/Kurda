@@ -81,6 +81,13 @@ describe('old addresses', () => {
     for (const path of ['app/learn/practice/build-sentence', '/app/learn/practice/hear-it']) expect(legacyTabPath(path), path).toBe(path);
   });
 
+  it('opens Learn’s games for a game’s invite link, where the code is typed or pasted', () => {
+    expect(legacyTabPath('join/impostor/KVXV5E?from=0b1e2d3c-4a5f-4c6d-8e7f-9a0b1c2d3e4f')).toBe('learn?view=games');
+    expect(legacyTabPath('/join/peyvok-battle/ABC234')).toBe('/learn?view=games');
+    // only the link's own shape: anything longer is left for the navigator to refuse
+    expect(legacyTabPath('join/impostor/KVXV5E/more')).toBe('join/impostor/KVXV5E/more');
+  });
+
   it('opens Learn’s games for a link to a game that was retired, whatever room it named', () => {
     for (const path of ['app/games/dont-say?id=abc12345', '/app/games/bluff?id=abc12345', 'app/games/bluff', 'app/games/village', 'app/games/kingdom']) {
       expect(legacyTabPath(path), path).toBe(`${path.startsWith('/') ? '/' : ''}learn?view=games`);

@@ -22,6 +22,7 @@ export {
   type GameInvite,
   type GameInviteType,
 } from './game-invites.js';
+export * from './join-link.js';
 export {
   APP_LOCALES,
   APP_LOCALE_CODES,

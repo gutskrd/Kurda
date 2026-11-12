@@ -33,6 +33,7 @@ const LibraryPostPage = lazy(() => import('./pages/LibraryPostPage').then((m) =>
 const Saved = lazy(() => import('./pages/Saved').then((m) => ({ default: m.Saved })));
 const DimenPost = lazy(() => import('./pages/DimenPost').then((m) => ({ default: m.DimenPost })));
 const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games })));
+const InvitePage = lazy(() => import('./play/InvitePage').then((m) => ({ default: m.InvitePage })));
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
 const LastLetter = lazy(() => import('./lastletter/LastLetter').then((m) => ({ default: m.LastLetter })));
 const Impostor = lazy(() => import('./impostor/Impostor').then((m) => ({ default: m.Impostor })));
@@ -186,6 +187,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="/faq" element={<Faq />} />
         {/* what the lessons are built on, with the studies; see teaching/principles.ts */}
         <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
+        {/* a game's invite link from a message: what it is, and the way in (shared join-link.ts) */}
+        <Route path="/join/:game/:code" element={<InvitePage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
       <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />

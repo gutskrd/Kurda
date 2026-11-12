@@ -110,6 +110,8 @@ export function legacyTabPath(path: string): string {
   const rest = query ? `&${query}` : '';
   const story = /^app\/learn\/stories\/([^/]+)$/.exec(bare);
   if (story) return `${lead}app/games/stories/${story[1]}${query ? `?${query}` : ''}`;
+  // a game's invite link (shared join-link.ts): it lands on Games, where Join with a code is and takes the code pasted or typed
+  if (/^join\/[a-z-]+\/[A-Za-z0-9]+$/.test(bare)) return `${lead}learn?view=games`;
   switch (bare) {
     case 'app/learn':
       return `${lead}learn${query ? `?${query}` : ''}`;

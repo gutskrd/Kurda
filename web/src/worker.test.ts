@@ -519,3 +519,37 @@ describe('a scanner’s probe', () => {
     expect(assets).toHaveBeenCalledTimes(4);
   });
 });
+
+describe('an invitation to a game', () => {
+  const { inviteHead, REPLACED } = __test;
+  const head = (tags: ReadonlyArray<string | ''>) => tags.filter(Boolean).join('');
+  const url = 'https://hevalo.app/join/impostor/KVXV5E';
+
+  it('wears the game’s own card: its name, its picture, and the code said once more', () => {
+    const tags = head(inviteHead({ game: 'impostor', code: 'KVXV5E', from: null }, url));
+    expect(tags).toContain('<meta property="og:title" content="You’re invited to play Kurdish Impostor on Hevalo" />');
+    expect(tags).toContain('<meta property="og:image" content="https://hevalo.app/invite/impostor.png" />');
+    expect(tags).toContain('type KVX V5E.');
+    expect(tags).toContain(`<link rel="canonical" href="${url}" />`);
+    expect(tags).toContain('<meta name="twitter:card" content="summary_large_image" />');
+  });
+
+  it('shows the site’s card for a game with no picture of its own', () => {
+    const tags = head(inviteHead({ game: 'stories', code: 'ABC234', from: null }, 'https://hevalo.app/join/stories/ABC234'));
+    expect(tags).toContain('<meta property="og:image" content="https://hevalo.app/og.png" />');
+    expect(tags).toContain('a Kurdish story game');
+  });
+
+  it('puts nothing of who shared it on the card', () => {
+    const from = '0b1e2d3c-4a5f-4c6d-8e7f-9a0b1c2d3e4f';
+    expect(head(inviteHead({ game: 'who-am-i', code: 'ABC234', from }, 'https://hevalo.app/join/who-am-i/ABC234'))).not.toContain(from);
+  });
+
+  it('writes no tag the shell’s copy of is left standing beside it', () => {
+    const written = [...head(inviteHead({ game: 'impostor', code: 'KVXV5E', from: null }, url)).matchAll(/<(title|meta|link)\b[^>]*?(?:property|name|rel)?="?([^" >]*)"?/g)];
+    expect(written.length).toBeGreaterThan(10);
+    for (const selector of ['title', 'link[rel="canonical"]', 'meta[property="og:title"]', 'meta[property="og:image"]', 'meta[name="twitter:image"]', 'meta[name="description"]']) {
+      expect(REPLACED).toContain(selector);
+    }
+  });
+});
