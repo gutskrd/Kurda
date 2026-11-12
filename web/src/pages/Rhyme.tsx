@@ -1,18 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { RhymeGame, RhymeResult } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
-import { ArrowIcon } from '../components/icons';
 import { useTypeOnly } from '../components/typeOnly';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
 import { GameArt } from '../games/GameArt';
-import '../games/game-start.css';
+import { GameHead, stageTone } from '../games/GameHead';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -145,18 +143,10 @@ export function Rhyme(): React.JSX.Element {
   const seconds = Math.ceil(remaining / 1000);
 
   return (
-    <div className="container game-page">
-      <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
-          <ArrowIcon size={18} />
-        </Link>
-        <div>
-          <span className="eyebrow">{t('nav.games')}</span>
-          <h1 className="page-title" style={{ margin: 0 }}>{t('games.rhyme.name')}</h1>
-        </div>
-      </div>
+    <div className="container game-page gs" style={stageTone('rhyme')}>
+      <GameHead game="rhyme" title={t('games.rhyme.name')} />
 
-      <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')} style={{ marginBottom: 8 }}>
+      <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')}>
         {(['kurmanci', 'sorani'] as const).map((d) => (
           <button key={d} role="tab" aria-selected={dialect === d} className={`chip${dialect === d ? ' active' : ''}`} onClick={() => choose(d)}>
             {d === 'kurmanci' ? 'Kurmancî' : 'Soranî'}
@@ -165,10 +155,12 @@ export function Rhyme(): React.JSX.Element {
       </div>
 
       {!started ? (
-        <div className="game-start">
-          <GameArt game="rhyme" size={132} moving />
-          <p className="game-start-body">{t('games.rhyme.body')}</p>
-          <Button size="lg" onClick={() => void start()}>
+        <div className="gs-start">
+          <div className="gs-hero">
+            <GameArt game="rhyme" size={148} moving />
+            <p className="gs-hero-line">{t('games.rhyme.body')}</p>
+          </div>
+          <Button size="lg" className="gs-go" onClick={() => void start()}>
             {t('games.solo.start')}
           </Button>
         </div>
@@ -215,10 +207,8 @@ export function Rhyme(): React.JSX.Element {
             </form>
           ) : (
             <div className="wordle-result">
-              <p className="wordle-result-title">
-                {t('games.rhyme.roundOver', { score: game.score, count: game.accepted })}
-                {game.xpAwarded ? <> +{game.xpAwarded} XP</> : null}
-              </p>
+              <p className="wordle-result-title">{t('games.rhyme.roundOver', { score: game.score, count: game.accepted })}</p>
+              {game.xpAwarded ? <p className="gs-earned">+{game.xpAwarded} XP</p> : null}
               <Button onClick={() => void start()}>{t('games.playAgain')}</Button>
             </div>
           )}

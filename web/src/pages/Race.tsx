@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import {
   BACKTICK_WAIT_MS,
   compareTyping,
@@ -16,7 +15,7 @@ import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
-import { ArrowIcon, GearIcon } from '../components/icons';
+import { GearIcon } from '../components/icons';
 import { useTypeOnly } from '../components/typeOnly';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -25,6 +24,8 @@ import { KeyboardGuide } from '../keyboard/KeyboardGuide';
 import { KeyboardSettings } from '../keyboard/KeyboardSettings';
 import { guideNudgeDue } from '../keyboard/guide';
 import { getKeyboardPrefs, useKeyboardPrefs } from '../keyboard/prefs';
+import { GameArt } from '../games/GameArt';
+import { GameHead, stageTone } from '../games/GameHead';
 import { RaceText } from '../race/RaceText';
 import { capTyping } from '../race/input';
 import { useRaceCapture } from '../race/useRaceCapture';
@@ -287,15 +288,8 @@ export function Race(): React.JSX.Element {
     guideNudgeDue(result, { guidedThisRace: guided, dismissedAt: prefs.guideNudgeDismissedAt });
 
   return (
-    <div className="container container-narrow">
-      <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
-          <ArrowIcon size={18} />
-        </Link>
-        <div>
-          <span className="eyebrow">{t('nav.games')}</span>
-          <h1 className="page-title">{t('games.race.name')}</h1>
-        </div>
+    <div className="container container-narrow game-page gs" style={stageTone('race')}>
+      <GameHead game="race" title={t('games.race.name')}>
         {!running && (
           <button
             type="button"
@@ -308,7 +302,7 @@ export function Race(): React.JSX.Element {
             <span className="race-settings-label">{t('keyboard.settings.title')}</span>
           </button>
         )}
-      </div>
+      </GameHead>
 
       {!running && settingsOpen && (
         <section className="card race-settings" id={`${ids}-settings`} aria-label={t('keyboard.settings.title')}>
@@ -318,7 +312,10 @@ export function Race(): React.JSX.Element {
 
       {!game && (
         <div className="race-lobby">
-          <p className="page-sub">{t('games.race.intro')}</p>
+          <div className="gs-hero">
+            <GameArt game="race" size={148} moving />
+            <p className="gs-hero-line">{t('games.race.intro')}</p>
+          </div>
           <div className="race-choice">
             <span className="race-choice-label" id={`${ids}-dialect`}>
               {t('games.race.textIn')}
@@ -360,7 +357,7 @@ export function Race(): React.JSX.Element {
           <p className="field-hint race-mode-note">
             {t('games.race.modeNote', { mode: t(MODE_LABEL[prefs.accentMode]) })}
           </p>
-          <Button onClick={start} disabled={starting} aria-busy={starting}>
+          <Button size="lg" className="gs-go" onClick={start} disabled={starting} aria-busy={starting}>
             {starting ? t('games.starting') : t('games.race.start')}
           </Button>
           {startError && (

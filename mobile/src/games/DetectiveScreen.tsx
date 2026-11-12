@@ -393,23 +393,6 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
   );
 }
 
-/** Three cards pinned at a slant, the middle one ringed: the intro's picture of the game, without any Kurdish of its own. */
-function CaseMini(): React.JSX.Element {
-  const { colors, scheme } = useTheme();
-  const tone = TONES[scheme][GAME.tone];
-  return (
-    <View style={styles.mini} aria-hidden>
-      {[-4, 0, 3].map((deg, i) => (
-        <View key={i} style={[styles.miniCard, { backgroundColor: colors.surface, borderColor: i === 1 ? tone.fill : colors.controlTrack, transform: [{ rotate: `${deg}deg` }] }]}>
-          <Icon name="pin" size={14} color={tone.fill} />
-          <View style={[styles.miniLine, { backgroundColor: colors.controlTrack }]} />
-          <View style={[styles.miniLine, { width: '60%', backgroundColor: colors.controlTrack }]} />
-        </View>
-      ))}
-    </View>
-  );
-}
-
 export function DetectiveScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { t } = useI18n();
@@ -439,7 +422,6 @@ export function DetectiveScreen({ onExit }: { onExit: () => void }): React.JSX.E
       dialect={dialect}
       title={t('games.detective.name')}
       blurb={t('games.detective.intro')}
-      intro={<CaseMini />}
       difficulties={difficulties}
       open={open}
       renderRound={(round) => <CaseRound key={round.sessionId} round={round} dialect={dialect} />}
@@ -491,7 +473,4 @@ const styles = StyleSheet.create({
   hint: { padding: spacing.sm, borderRadius: radii.sm },
   note: { gap: 2 },
   noteAnswer: { fontWeight: typography.weights.semibold },
-  mini: { flexDirection: 'row', justifyContent: 'center', gap: spacing.sm, paddingVertical: spacing.sm },
-  miniCard: { width: 60, height: 68, borderWidth: 2, borderRadius: radii.xs, alignItems: 'center', paddingTop: 4, gap: 6, paddingHorizontal: 8 },
-  miniLine: { height: 6, width: '100%', borderRadius: radii.pill },
 });

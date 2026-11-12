@@ -6,8 +6,7 @@ import { describeError } from '../api/errors';
 import { spacing, radii, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display } from '../theme/fonts';
-import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
-import { Icon } from '../theme/Icon';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { useShake } from '../theme/animate';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -15,6 +14,9 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import { Loading } from '../theme/Loading';
+import { GameArt } from '../games/GameArt';
+import { Cloth, GoldButton } from '../impostor/parts';
+import { TABLE } from '../impostor/table';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane';
@@ -161,41 +163,42 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
 
         {!game ? (
-          <GlassCard style={styles.startCard}>
-            <Icon name="speaker" size={44} tone="primary" />
-            <Text style={[styles.startTitle, { color: colors.textPrimary }]}>{t('games.rhyme.name')}</Text>
-            <Text style={[styles.startHint, { color: colors.textSecondary }]}>
-              {t('games.rhyme.rules')}
-            </Text>
-            {starting ? (
-              <Loading style={{ marginTop: spacing.lg }} />
-            ) : (
-              <ClayButton label={t('games.rhyme.start')} icon="bolt" tone="primary" onPress={start} style={{ alignSelf: 'stretch', marginTop: spacing.lg }} />
-            )}
+          <>
+            <Cloth style={styles.stage}>
+              <GameArt game="rhyme" size={132} moving />
+              <Text style={styles.stageName}>{t('games.rhyme.name')}</Text>
+              <Text style={styles.stageLine}>{t('games.rhyme.rules')}</Text>
+            </Cloth>
+            {starting ? <Loading style={{ marginTop: spacing.md }} /> : <GoldButton label={t('games.rhyme.start')} icon="bolt" onPress={start} />}
             {note ? <Text style={[styles.note, { color: colors.danger }]}>{note}</Text> : null}
-          </GlassCard>
+          </>
         ) : finished ? (
-          <GlassCard style={styles.resultCard}>
-            <Text style={[styles.resultTitle, { color: colors.primary }]}>{t('games.rhyme.timeUpRound')}</Text>
-            <Text style={[styles.resultLine, { color: colors.textSecondary }]}>
-              {t('games.rhyme.scoreLine', { score: game.score, count: game.accepted })}
-              {game.xpAwarded ? ` · +${game.xpAwarded} XP` : ''}
-            </Text>
-            <ClayButton label={t('games.playAgain')} icon="bolt" tone="primary" onPress={start} style={{ alignSelf: 'stretch', marginTop: spacing.md }} />
-            <ClayButton label={t('common.done')} tone="neutral" onPress={onExit} style={{ alignSelf: 'stretch', marginTop: spacing.sm }} />
-          </GlassCard>
+          <>
+            <Cloth style={styles.stage}>
+              <GameArt game="rhyme" size={96} />
+              <Text style={styles.stageKicker} accessibilityRole="header">
+                {t('games.rhyme.timeUpRound')}
+              </Text>
+              <Text style={styles.stageScore}>{t('games.rhyme.scoreLine', { score: game.score, count: game.accepted })}</Text>
+              {game.xpAwarded ? <Text style={styles.stageEarned}>{`+${game.xpAwarded} XP`}</Text> : null}
+            </Cloth>
+            <GoldButton label={t('games.playAgain')} icon="bolt" onPress={start} />
+            <ClayButton label={t('common.done')} tone="neutral" onPress={onExit} style={{ alignSelf: 'stretch' }} />
+          </>
         ) : (
           <>
-            <View style={styles.promptRow}>
-              <View>
-                <Text style={[styles.promptLabel, { color: colors.textSecondary }]}>{t('games.rhyme.rhymeWith')}</Text>
-                <Text style={[styles.prompt, { color: colors.textPrimary }]}>{game.prompt}</Text>
+            <Cloth style={styles.promptRow}>
+              <View style={styles.promptCol}>
+                <Text style={styles.promptLabel}>{t('games.rhyme.rhymeWith')}</Text>
+                <Text style={styles.prompt}>{game.prompt}</Text>
               </View>
               <View style={styles.metaCol}>
-                <Text style={[styles.timer, { color: remaining <= 10000 ? colors.danger : colors.textPrimary }]}>{clock(remaining)}</Text>
-                <Text style={[styles.score, { color: colors.primary }]}>{game.score} pts</Text>
+                <View style={[styles.timerChip, remaining <= 10000 && styles.timerLow]}>
+                  <Text style={[styles.timer, remaining <= 10000 && styles.timerLowText]}>{clock(remaining)}</Text>
+                </View>
+                <Text style={styles.score}>{game.score} pts</Text>
               </View>
-            </View>
+            </Cloth>
 
             <Animated.View style={{ transform: [{ translateX: shake.translateX }] }}>
               <View style={styles.inputRow}>
@@ -246,18 +249,28 @@ const styles = StyleSheet.create({
   // flex + centre so a long translated name shares the row with the back
   // button instead of wrapping over it: "Peyvok" is one word, "Peyvok
   // Battle" in some languages is three
-  startCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
-  startTitle: { ...display(typography.sizes.xl), marginTop: spacing.sm },
-  startHint: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
+  // the night the game is played on: its start, the word to rhyme with, and how the round ended
+  stage: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
+  stageName: { ...display(typography.sizes.xxl), color: TABLE.ink, textAlign: 'center', marginTop: spacing.sm },
+  stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
+  stageKicker: { marginTop: spacing.sm, color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase' },
+  stageScore: { ...display(typography.sizes.xl), color: TABLE.ink, textAlign: 'center' },
+  stageEarned: { marginTop: spacing.xs, color: TABLE.goldSoft, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center', marginTop: spacing.xs },
-  promptRow: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
-  promptLabel: { fontSize: typography.sizes.sm, textTransform: 'uppercase', letterSpacing: 1 },
-  prompt: { fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold },
-  metaCol: { alignItems: 'flex-end' },
-  timer: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  score: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  promptRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, padding: spacing.lg },
+  promptCol: { flex: 1 },
+  promptLabel: { color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, textTransform: 'uppercase', letterSpacing: 1 },
+  prompt: { ...display(typography.sizes.xxl), color: TABLE.ink },
+  metaCol: { alignItems: 'flex-end', gap: spacing.xs },
+  timerChip: { borderRadius: radii.md, backgroundColor: TABLE.veil, paddingHorizontal: spacing.md, paddingVertical: spacing.xs },
+  // the last ten seconds: the clock turns to a warm card, told by its ground as well as its colour
+  timerLow: { backgroundColor: TABLE.goldSoft },
+  timer: { color: TABLE.ink, fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
+  timerLowText: { color: TABLE.goldInk },
+  score: { color: TABLE.inkSoft, fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   inputRow: { flexDirection: 'row', gap: spacing.sm, alignItems: 'center' },
-  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: typography.sizes.md },
+  // minWidth: a text field will not shrink below its own idea of a width, and pushed Add off the screen's edge
+  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, minWidth: 0, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.md, fontSize: typography.sizes.md },
   addBtn: { paddingHorizontal: spacing.lg },
   found: { gap: spacing.xs, marginTop: spacing.sm },
   foundRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
@@ -267,7 +280,4 @@ const styles = StyleSheet.create({
   foundPoints: { fontSize: typography.sizes.sm },
   finish: { alignItems: 'center', marginTop: spacing.lg },
   finishText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, textDecorationLine: 'underline' },
-  resultCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
-  resultTitle: { ...display(typography.sizes.xxl) },
-  resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
 });

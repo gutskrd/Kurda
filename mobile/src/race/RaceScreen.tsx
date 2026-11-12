@@ -26,6 +26,9 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ClayButton, GlassCard, GlassRow, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
+import { GameArt } from '../games/GameArt';
+import { Cloth, GoldButton } from '../impostor/parts';
+import { TABLE } from '../impostor/table';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -296,11 +299,14 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
         {!game ? (
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+            {/* the night every game opens on: the emblem acting the race out, and what the race is */}
+            <Cloth style={styles.stage}>
+              <GameArt game="race" size={132} moving />
+              <Text style={styles.stageLine}>{t('games.race.intro')}</Text>
+            </Cloth>
             <GlassCard>
               {/* the card's style dresses its outside; what is in it is laid out here */}
               <View style={styles.card}>
-                <Icon name="bolt" size={44} tone="primary" />
-                <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.intro')}</Text>
                 <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.textIn')}</Text>
                 <View style={styles.full}>
                   <Segmented<TypingDialect>
@@ -319,15 +325,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                     labelOf={(v) => t(LENGTH_KEY[Number(v) as RaceLength])}
                   />
                 </View>
-                <ClayButton
-                  label={t('games.race.start')}
-                  icon="play"
-                  tone="primary"
-                  size="large"
-                  busy={starting}
-                  onPress={() => void start()}
-                  style={styles.stretch}
-                />
+                <GoldButton label={t('games.race.start')} icon="play" busy={starting} onPress={() => void start()} style={styles.stretch} />
                 {error ? (
                   <Text style={[styles.error, { color: colors.danger }]} accessibilityLiveRegion="polite">
                     {error}
@@ -547,7 +545,7 @@ function Result({
               {t('games.race.accents', { right: result.accented - result.accentMisses, total: result.accented })}
             </Text>
           ) : null}
-          <ClayButton label={t('games.race.again')} tone="primary" size="large" busy={starting} onPress={onAgain} style={styles.stretch} />
+          <GoldButton label={t('games.race.again')} busy={starting} onPress={onAgain} style={styles.stretch} />
         </View>
       </GlassCard>
 
@@ -585,6 +583,8 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   raceContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md },
   card: { alignItems: 'center', gap: spacing.sm },
+  stage: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
+  stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   full: { alignSelf: 'stretch' },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

@@ -104,6 +104,15 @@ describe('Build a Kurdish Sentence', () => {
     expect(screen.getByText('Up to 16 XP')).toBeInTheDocument();
   });
 
+  it('keeps the lessons’ plain page: an exercise is not put on the games’ stage', async () => {
+    server(session('kmr', [['a', 'b']]), () => ({}), {});
+    const { container } = renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
+    expect(await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeInTheDocument();
+    expect(container.querySelector('.gs')).toBeNull();
+    expect(container.querySelector('.gs-hero')).toBeNull();
+    expect(container.querySelector('.gp-art')).toBeNull();
+  });
+
   it('lays tiles on the line, nudges after a wrong try, then corrects with each word’s meaning', async () => {
     const sent = server(
       session('kmr', [['malê', 'ez', 'diçim', 'nan']]),
