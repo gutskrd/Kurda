@@ -69,6 +69,24 @@ describe('old addresses', () => {
     expect(legacyTabPath('/app/games/wordle-battle?id=abc123')).toBe('/app/games/peyvok-battle?id=abc123');
   });
 
+  /*
+   * Two games became exercises of the lessons' practice and three were
+   * retired. A link written while they were games still opens something: the
+   * exercise where it is now, or the games there are.
+   */
+  it('opens the lessons’ two exercises from their old place among the games', () => {
+    expect(legacyTabPath('app/games/build-sentence')).toBe('app/learn/practice/build-sentence');
+    expect(legacyTabPath('/app/games/hear-it')).toBe('/app/learn/practice/hear-it');
+    // and leaves their own addresses alone
+    for (const path of ['app/learn/practice/build-sentence', '/app/learn/practice/hear-it']) expect(legacyTabPath(path), path).toBe(path);
+  });
+
+  it('opens Learn’s games for a link to a game that was retired, whatever room it named', () => {
+    for (const path of ['app/games/dont-say?id=abc12345', '/app/games/bluff?id=abc12345', 'app/games/bluff', 'app/games/village', 'app/games/kingdom']) {
+      expect(legacyTabPath(path), path).toBe(`${path.startsWith('/') ? '/' : ''}learn?view=games`);
+    }
+  });
+
   it('keeps a query the old address carried', () => {
     expect(legacyTabPath('play?from=push')).toBe('learn?view=games&from=push');
     expect(legacyTabPath('inbox?from=push')).toBe('messages?from=push');

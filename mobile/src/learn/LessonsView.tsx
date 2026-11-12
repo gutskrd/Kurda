@@ -11,6 +11,7 @@ import {
   type NativeScrollEvent,
   type NativeSyntheticEvent,
 } from 'react-native';
+import { isSoraniDialect } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { refreshFelt } from '../feedback/haptics';
@@ -41,7 +42,8 @@ import type { Streak } from '../streak/format';
 import { KeptStreakSheet, useKeptStreak } from '../streak/KeptStreak';
 import { ReminderNudge } from '../push/ReminderNudge';
 import { fraction, nextStep, type NextStep } from './next';
-import { rememberCourseDialect } from './courseDialect';
+import { rememberCourseDialect, useCourseDialect } from './courseDialect';
+import { useLessonExercises } from '../practice/useLessonExercises';
 
 /**
  * Learn's first half: the next lesson, the tools, the course, and the rest of
@@ -149,6 +151,9 @@ export function LessonsView({
   // the learner's Kurdish, for whatever else speaks to them in it (learn/courseDialect.ts)
   const dialect = entry?.course.dialect;
   useEffect(() => rememberCourseDialect(dialect), [dialect]);
+  // the exercises are asked about once the course is known, in its Kurdish; with no course, in the Kurdish last learnt here
+  const remembered = useCourseDialect();
+  const exercises = useLessonExercises(courses === null ? null : dialect ? (isSoraniDialect(dialect) ? 'ckb' : 'kmr') : remembered);
 
   /*
    * Scrolling to the current skill. The path says where its focus stop sits
@@ -342,6 +347,10 @@ export function LessonsView({
               detail={t('words.toolHint')}
               onPress={() => navigation.navigate('Words')}
             />
+            {/* the lessons' exercises with a screen of their own, while they can be done (practice/exercises.ts); the hub lists them too */}
+            {exercises.map((e) => (
+              <ToolTile key={e.key} icon={e.icon} title={t(e.title)} titleLines={2} detail={t(e.detail)} onPress={() => navigation.navigate(e.route)} />
+            ))}
           </View>
           {/* today's three quests, slim, under the tools: a chest waiting shows here */}
           <QuestsCard />
@@ -593,6 +602,7 @@ function ToolTile({
   icon,
   letters,
   title,
+  titleLines = 1,
   detail,
   highlight = false,
   onPress,
@@ -601,6 +611,8 @@ function ToolTile({
   /** letters to show where the icon would be */
   letters?: { text: string; rtl: boolean };
   title: string;
+  /** how many lines the title may take: an exercise's name is a phrase, which half a row cannot hold on one */
+  titleLines?: number;
   detail: string;
   /** something is waiting in it (words due), said in gold as well as in words */
   highlight?: boolean;
@@ -631,7 +643,7 @@ function ToolTile({
       ) : icon ? (
         <Icon name={icon} size={24} color={colors.textPrimary} />
       ) : null}
-      <Text style={[styles.tileTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+      <Text style={[styles.tileTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={titleLines}>
         {title}
       </Text>
       {detail ? (
@@ -661,7 +673,7 @@ const styles = StyleSheet.create({
   reviewOpenRow: { alignItems: 'center', gap: spacing.sm + 4 },
   reviewOpenText: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
 
-  // the four two by two: the path is what this screen is for, and the tools sit above it, small
+  // two to a row: the path is what this screen is for, and the tools sit above it, small
   tools: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tile: { flexGrow: 1, flexBasis: '40%', minHeight: 76, borderRadius: radii.lg, paddingVertical: spacing.sm + 4, paddingHorizontal: spacing.sm + 4, gap: 2 },
   tileLetters: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, lineHeight: 22 },

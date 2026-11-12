@@ -4,7 +4,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GiftBubble } from '../gifts/GiftBubble';
-import { ChatGameCard, gameCardOf } from '../play/ChatGameCard';
+import { ChatGameCard, gameCardOf, retiredGameOf } from '../play/ChatGameCard';
 import { useReportAction } from '../reports/reportAction';
 import type { ChatMessage } from '../gifts/api';
 
@@ -17,7 +17,9 @@ import type { ChatMessage } from '../gifts/api';
  *   what else was written above it.
  * - `gift` — the present (gifts/GiftBubble).
  * - `game` — the game's live card (play/ChatGameCard): whether it can still
- *   be joined, and Join.
+ *   be joined, and Join. An invitation to a game Hevalo no longer has, as a
+ *   game message or as an old link in a text, is a quiet line saying the game
+ *   is no longer played, with nothing to press.
  *
  * Returns the content alone: the screen draws the bubble around a text
  * message, and nothing around a card, which is its own surface.
@@ -48,6 +50,9 @@ export function MessageContent({
       <GoneCard onReport={onReport} />
     );
   }
+  // an invitation to a game that has since been retired: nothing to join, so nothing to press
+  const retired = retiredGameOf(message);
+  if (retired) return <RetiredGame rest={retired.rest} mine={mine} onReport={onReport} />;
   // a game card, or an old invite link in a text
   const game = gameCardOf(message);
   if (game) return <GameMessage game={game} mine={mine} from={mine ? undefined : senderName || undefined} onReport={onReport} />;
@@ -63,7 +68,7 @@ function TextBody({ body, mine }: { body: string; mine: boolean }): React.JSX.El
 
 /** Is this message drawn as its own card (no bubble around it)? A gift, a game card, or an old invite link. */
 export function isCardMessage(message: ChatMessage): boolean {
-  return message.kind === 'gift' || message.kind === 'game' || gameCardOf(message) !== null;
+  return message.kind === 'gift' || message.kind === 'game' || gameCardOf(message) !== null || retiredGameOf(message) !== null;
 }
 
 /**
@@ -108,6 +113,31 @@ function GameFallback({ onReport }: { onReport?: () => void }): React.JSX.Elemen
     <View style={[styles.card, { backgroundColor: colors.glassFill }]} accessible {...report}>
       <Icon name="play" size={18} color={colors.textSecondary} />
       <Text style={[styles.cardText, { color: colors.textSecondary }]}>{t('chat.gameCard')}</Text>
+    </View>
+  );
+}
+
+/**
+ * An invitation to a game Hevalo no longer has: any words sent with it in
+ * their own bubble, then one quiet line. The game cannot be opened, so the
+ * line is not a control; it is read as one element, and that is where Report
+ * sits for a message somebody else sent.
+ */
+function RetiredGame({ rest, mine, onReport }: { rest: string; mine: boolean; onReport?: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const report = useReportAction(onReport);
+  return (
+    <View style={[styles.game, mine ? styles.gameMine : null]}>
+      {rest ? (
+        <View style={[styles.bubble, { backgroundColor: mine ? colors.primary : colors.controlTrack }]}>
+          <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{rest}</Text>
+        </View>
+      ) : null}
+      <View style={[styles.card, { backgroundColor: colors.glassFill }]} accessible {...report} testID="retired-game">
+        <Icon name="play" size={18} color={colors.textSecondary} />
+        <Text style={[styles.cardText, { color: colors.textSecondary }]}>{t('chat.gameRetired')}</Text>
+      </View>
     </View>
   );
 }

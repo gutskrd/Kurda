@@ -43,6 +43,12 @@ describe('the invite banner’s list', () => {
     expect(liveInvites(list, T).map((i) => i.id)).toEqual(['new', 'old']);
   });
 
+  // an invite made while a game was still part of Hevalo is not an invitation to anything once it is not
+  it('shows no invite to a game that has been retired', () => {
+    const list = [invite('still', { game: 'impostor' }), invite('gone', { game: 'dont-say' as never }), invite('gone-too', { game: 'bluff' as never })];
+    expect(liveInvites(list, T).map((i) => i.id)).toEqual(['still']);
+  });
+
   it('knows when the next one runs out', () => {
     expect(nextExpiry([invite('a'), invite('b', { expiresAt: new Date(T + 60_000).toISOString() })], T)).toBe(60_000);
     expect(nextExpiry([], T)).toBeNull();

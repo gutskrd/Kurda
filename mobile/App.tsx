@@ -57,6 +57,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { PracticeHubScreen } from './src/practice/PracticeHubScreen';
+import { leaveExercise } from './src/practice/exercises';
 import { JumpTestScreen } from './src/coursemap/JumpTestScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
@@ -603,15 +604,15 @@ function SignedInRoot() {
         )}
       </RootStack.Screen>
       {/*
-        The lessons' two exercises (practice/exercises.ts), opened from the practice hub. Leaving one goes back
-        there; opened by a link, with nothing behind it, it leaves to the hub rather than nowhere. A guest does
-        them too, as a guest does a lesson.
+        The lessons' two exercises (practice/exercises.ts), opened from the practice hub or the Lessons half.
+        Leaving one goes back there; opened by a link, with nothing behind it, it leaves to the hub rather
+        than nowhere (`leaveExercise`). A guest does them too, as a guest does a lesson.
       */}
       <RootStack.Screen name="BuildSentence" options={{ presentation: 'card' }}>
-        {({ navigation }) => <BuildSentenceScreen onExit={() => (navigation.canGoBack() ? navigation.goBack() : navigation.replace('PracticeHub'))} />}
+        {({ navigation }) => <BuildSentenceScreen onExit={() => leaveExercise(navigation)} />}
       </RootStack.Screen>
       <RootStack.Screen name="HearIt" options={{ presentation: 'card' }}>
-        {({ navigation }) => <HearItScreen onExit={() => (navigation.canGoBack() ? navigation.goBack() : navigation.replace('PracticeHub'))} />}
+        {({ navigation }) => <HearItScreen onExit={() => leaveExercise(navigation)} />}
       </RootStack.Screen>
       {/* a learning game is learning, as a lesson is: a guest plays it too (api/src/games) */}
       <RootStack.Screen name="MemoryThief" options={{ presentation: 'card' }}>

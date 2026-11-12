@@ -1,6 +1,6 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { badgeDef, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { badgeDef, isRankedGame, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { sectionLabel } from '../theme/fonts';
@@ -47,7 +47,8 @@ export function ProgressShowcase({
   const { colors } = useTheme();
   const { t } = useI18n();
   const leagueTier = knownTier(league?.tier);
-  const shown = ranks.filter((r) => r.tier || r.placing || r.resting || r.bestTier);
+  // a rank in a game Hevalo no longer has is not shown: there is nowhere left to play for it
+  const shown = ranks.filter((r) => isRankedGame(r.game) && (r.tier || r.placing || r.resting || r.bestTier));
   if (badges.length === 0 && shown.length === 0 && !leagueTier && !own) return null;
 
   return (

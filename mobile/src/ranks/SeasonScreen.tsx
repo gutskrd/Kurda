@@ -3,6 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   RANKED_GAMES,
+  isRankedGame,
   seasonById,
   sterkTitle,
   tierIndex,
@@ -70,7 +71,8 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       if (o.ok) setOverview(o.data);
       else setError(o.error);
       if (r.ok) setRanks(r.data);
-      if (e.ok) setEmblems(e.data.emblems);
+      // an emblem won in a game Hevalo no longer has names a game this screen has no word for: it is left out
+      if (e.ok) setEmblems(e.data.emblems.filter((x) => isRankedGame(x.game)));
       if (inv.ok) setFrames((inv.data.items ?? []).filter((i) => i.category === 'frame' && frameTierOf(i.sku)).map((i) => i.sku));
       if (me?.ok) setWearing(me.data.frameSku ?? null);
     });

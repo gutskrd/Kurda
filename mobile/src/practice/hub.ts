@@ -2,11 +2,15 @@
  * What the practice hub offers, from what GET /practice/hub says: the one
  * thing most worth doing now, for the card at the top, and the row for every
  * other kind of practice — each either ready to start or saying, in one line,
- * why it is not. Pure, so the choices are tested apart from the screen.
+ * why it is not. Among the rows, each beside the kind it is nearest to, are
+ * the lessons' two exercises that have a screen of their own
+ * (practice/exercises.ts), when they can be done now. Pure, so the choices
+ * are tested apart from the screen.
  */
 import { ACCURACY_BONUS_XP, BASE_LESSON_XP, type PracticeHub, type PracticeHubUnit, type PracticeMode, type UnitTone } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { IconName } from '../theme/Icon';
+import type { ExerciseRoute, PhoneExercise } from './exercises';
 
 /**
  * The card at the top:
@@ -33,13 +37,14 @@ export interface Line {
 
 /**
  * What a row does when pressed: start a session of its kind, open the unit
- * picker, or open Settings to allow the microphone. Null for a row with
- * nothing to do, which is shown, dimmed, with its reason.
+ * picker, open Settings to allow the microphone, or open an exercise's own
+ * screen. Null for a row with nothing to do, which is shown, dimmed, with its
+ * reason.
  */
-export type RowAction = { kind: 'start'; mode: PracticeMode } | { kind: 'pick' } | { kind: 'settings' } | null;
+export type RowAction = { kind: 'start'; mode: PracticeMode } | { kind: 'pick' } | { kind: 'settings' } | { kind: 'open'; route: ExerciseRoute } | null;
 
 export interface HubRow {
-  key: 'mistakes' | 'words' | 'listen' | 'speak' | 'unit';
+  key: 'mistakes' | 'words' | 'listen' | 'speak' | 'unit' | PhoneExercise['key'];
   icon: IconName;
   title: TranslationKey;
   detail: Line;
@@ -53,9 +58,17 @@ export interface HubRow {
  * nothing in it says what would put something there. Speaking also answers to
  * the learner turning speaking off, and to a microphone refused for good —
  * then the row is the way to Settings, where only it can be allowed again.
+ *
+ * The exercises are the exception to "never hidden": one is in the list only
+ * while it can be done (`exercises` holds those), since what keeps it away is
+ * content an editor has yet to publish, which nothing the learner does would
+ * change. Building a sentence follows the words it is made of, and Hear It,
+ * Find It follows listening.
  */
-export function hubRows(hub: PracticeHub, { micRefused }: { micRefused: boolean }): HubRow[] {
+export function hubRows(hub: PracticeHub, { micRefused, exercises = [] }: { micRefused: boolean; exercises?: readonly PhoneExercise[] }): HubRow[] {
   const count = (n: number, one: TranslationKey, many: TranslationKey): Line => (n === 1 ? { key: one } : { key: many, count: n });
+  const exercise = (key: PhoneExercise['key']): HubRow[] =>
+    exercises.filter((e) => e.key === key).map((e) => ({ key: e.key, icon: e.icon, title: e.title, detail: { key: e.detail }, waiting: false, action: { kind: 'open', route: e.route } }));
   return [
     {
       key: 'mistakes',
@@ -73,6 +86,7 @@ export function hubRows(hub: PracticeHub, { micRefused }: { micRefused: boolean 
       waiting: false,
       action: hub.words ? { kind: 'start', mode: 'words' } : null,
     },
+    ...exercise('sentence'),
     {
       key: 'listen',
       icon: 'headphones',
@@ -81,6 +95,7 @@ export function hubRows(hub: PracticeHub, { micRefused }: { micRefused: boolean 
       waiting: false,
       action: hub.listen ? { kind: 'start', mode: 'listen' } : null,
     },
+    ...exercise('hear'),
     speakRow(hub, micRefused),
     {
       key: 'unit',
@@ -117,7 +132,7 @@ export function practiceXpRange(): { min: number; max: number } {
 }
 
 /** The colour each kind's badge wears (coursemap/path.ts `TONES`): one each, so the rows are told apart at a glance. */
-export const ROW_TONES: Record<HubRow['key'], UnitTone> = { mistakes: 'rose', words: 'saffron', listen: 'meadow', speak: 'clay', unit: 'pine' };
+export const ROW_TONES: Record<HubRow['key'], UnitTone> = { mistakes: 'rose', words: 'saffron', sentence: 'river', listen: 'meadow', hear: 'dusk', speak: 'clay', unit: 'pine' };
 
 /** The colour the card at the top is painted in: a unit's own, else by what it offers. */
 export function heroTone(hero: Hero): UnitTone {

@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   DIFFICULTY_LEVELS,
   GAME_DIFFICULTIES,
+  learnGame,
   roundXpCeiling,
   type GameDialect,
   type GameDifficulty,
@@ -41,6 +42,13 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
  * button, its nudge after a wrong try and its correction once an item is
  * done; this draws the rest. The website's games/SoloGameShell.tsx is the
  * same shell, so the two say the same things in the same order.
+ *
+ * Two of the rounds it carries are not games but exercises of the lessons'
+ * practice (Build a Kurdish Sentence and Hear It, Find It: the shared
+ * registry's `place: 'lessons'`). For those the results offer another round
+ * and Done, which goes back to wherever the exercise was opened from (the
+ * practice hub, or the Lessons half of Learn); nothing on the way calls an
+ * exercise a game.
  */
 
 export interface SoloRound<Item, H, C, B = unknown> {
@@ -148,6 +156,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  // an exercise of the lessons' practice rather than a game: its results speak of practice
+  const exercise = learnGame(game).place === 'lessons';
   const dir = useDirection();
   const [phase, setPhase] = useState<Phase>('intro');
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
@@ -278,8 +288,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         )}
         {resultsExtra}
         <View style={styles.actions}>
-          <TileButton label={t('games.solo.playAgain')} onPress={() => void start()} busy={busy} disabled={!chosen} />
-          <TileButton label={t('games.solo.backToGames')} onPress={onExit} tone="success" />
+          <TileButton label={t(exercise ? 'practice.exercise.again' : 'games.solo.playAgain')} onPress={() => void start()} busy={busy} disabled={!chosen} />
+          <TileButton label={t(exercise ? 'common.done' : 'games.solo.backToGames')} onPress={onExit} tone="success" />
         </View>
       </ScrollView>
     );

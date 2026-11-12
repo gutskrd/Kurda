@@ -192,18 +192,23 @@ describe('HearItScreen', () => {
   });
 });
 
-describe('the games list', () => {
-  const base = {
-    'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
-    'GET /play/invites': ok({ incoming: [], outgoing: [] }),
-  };
-
-  it('adds Hear It, Find It as a card once it can be played, one tap to open', async () => {
-    testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr') });
+/*
+ * Hear It, Find It was a game once. It is an exercise of the lessons'
+ * practice now, listed there and never among the games.
+ */
+describe('Hear It, Find It, as an exercise of the lessons', () => {
+  it('is not among the games, even while it can be done', async () => {
+    const client = fakeClient({
+      'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
+      'GET /play/invites': ok({ incoming: [], outgoing: [] }),
+      'GET /games/availability?dialect=kmr': availability('kmr'),
+    });
+    testAuth.client = client;
     renderWithProviders(<GamesView />);
-    const card = await screen.findByTestId('game-hear-it');
-    expect(card.getAttribute('aria-label')).toBe('Hear It, Find It, Solo. Listen to real voices and find what you heard.');
-    fireEvent.click(card);
-    expect(navigation.navigate).toHaveBeenCalledWith('HearIt');
+    expect(await screen.findByTestId('game-wordle')).toBeTruthy();
+    await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(screen.queryByTestId('game-hear-it')).toBeNull();
+    expect(screen.queryByText('Hear It, Find It')).toBeNull();
   });
 });

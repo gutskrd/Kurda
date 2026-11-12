@@ -15,10 +15,14 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
  * /games/availability), so a game appears the day its content is published.
  * The rest can follow them as "coming soon", seen but not opened; that is
  * off on the phone (`listsUpcoming` below says why).
+ *
+ * Build a Kurdish Sentence and Hear It, Find It are rounds of the same kit
+ * but are not games: they are exercises of the lessons' practice, listed
+ * there (practice/exercises.ts) and never here.
  */
 
 /** The screens the learning games open on (root stack routes). */
-export type LearnGameRoute = 'BuildSentence' | 'MemoryThief' | 'HearIt' | 'WhatWouldYouSay' | 'Detective' | 'LastLetter' | 'Impostor' | 'DontSay' | 'Bluff' | 'WhoAmI';
+export type LearnGameRoute = 'MemoryThief' | 'WhatWouldYouSay' | 'Detective' | 'LastLetter' | 'Impostor' | 'WhoAmI';
 
 export interface PhoneGame {
   route: LearnGameRoute;
@@ -28,16 +32,12 @@ export interface PhoneGame {
 }
 
 export const PHONE_LEARN_GAMES: Partial<Record<LearnGameId, PhoneGame>> = {
-  'build-sentence': { route: 'BuildSentence', name: 'games.sentence.name', line: 'games.card.sentence' },
   'memory-thief': { route: 'MemoryThief', name: 'games.memory.name', line: 'games.card.memory' },
-  'hear-it': { route: 'HearIt', name: 'games.hear.name', line: 'games.card.hear' },
   'what-would-you-say': { route: 'WhatWouldYouSay', name: 'games.say.name', line: 'games.card.say' },
   detective: { route: 'Detective', name: 'games.detective.name', line: 'games.card.detective' },
   'last-letter': { route: LAST_LETTER_CARD.route, name: LAST_LETTER_CARD.nameKey, line: LAST_LETTER_CARD.lineKey },
-  // the party games are listed where /games/availability finds enough approved cards for the learner's Kurdish
+  // Kurdish Impostor is listed where /games/availability finds enough approved cards for the learner's Kurdish
   impostor: { route: 'Impostor', name: 'games.impostor.name', line: 'games.invite.blurb.impostor' },
-  'dont-say': { route: 'DontSay', name: 'games.dontSay.name', line: 'games.invite.blurb.dontSay' },
-  bluff: { route: 'Bluff', name: 'games.bluff.name', line: 'games.bluff.blurb' },
   'who-am-i': { route: 'WhoAmI', name: 'games.whoAmI.name', line: 'games.whoAmI.blurb' },
 };
 

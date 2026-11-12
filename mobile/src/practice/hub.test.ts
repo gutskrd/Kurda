@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PracticeHub } from '@kurda/shared';
+import { exercisesOf } from './exercises';
 import { ROW_TONES, heroOf, heroTone, hubRows, practiceXpRange } from './hub';
 
 const empty: PracticeHub = { due: 0, available: 0, mistakes: 0, listen: false, speak: false, words: false, skipSpeaking: false, units: [] };
@@ -38,13 +39,30 @@ describe('the card at the top of the practice hub', () => {
   it('gives every row a colour of its own', () => {
     const tones = Object.values(ROW_TONES);
     expect(new Set(tones).size).toBe(tones.length);
-    expect(Object.keys(ROW_TONES).sort()).toEqual(['listen', 'mistakes', 'speak', 'unit', 'words']);
+    expect(Object.keys(ROW_TONES).sort()).toEqual(['hear', 'listen', 'mistakes', 'sentence', 'speak', 'unit', 'words']);
   });
 });
 
 describe('the rows of the practice hub', () => {
   it('lists every kind, in the same order, whatever is in them', () => {
     expect(hubRows(empty, { micRefused: false }).map((r) => r.key)).toEqual(['mistakes', 'words', 'listen', 'speak', 'unit']);
+  });
+
+  /*
+   * Build a Kurdish Sentence and Hear It, Find It were games once; they are
+   * practice. Each has a row beside the kind it is nearest to, only while it
+   * can be done, and its row opens its own screen rather than a session.
+   */
+  it('puts each exercise that can be done beside the kind it is nearest to', () => {
+    const games = (ids: string[]) => exercisesOf({ dialect: 'kmr', games: ids.map((id) => ({ id, available: true, difficulties: ['beginner'] })) } as never);
+    const both = hubRows(empty, { micRefused: false, exercises: games(['build-sentence', 'hear-it']) });
+    expect(both.map((r) => r.key)).toEqual(['mistakes', 'words', 'sentence', 'listen', 'hear', 'speak', 'unit']);
+    expect(both.find((r) => r.key === 'sentence')).toMatchObject({ title: 'games.sentence.name', detail: { key: 'learn.tools.sentenceHint' }, action: { kind: 'open', route: 'BuildSentence' } });
+    expect(both.find((r) => r.key === 'hear')).toMatchObject({ title: 'games.hear.name', detail: { key: 'learn.tools.hearHint' }, action: { kind: 'open', route: 'HearIt' } });
+    // one that is short of content is not there at all, and nothing else moves
+    expect(hubRows(empty, { micRefused: false, exercises: games(['hear-it']) }).map((r) => r.key)).toEqual(['mistakes', 'words', 'listen', 'hear', 'speak', 'unit']);
+    // an exercise does not wear the glyph of the kind beside it
+    expect(both.find((r) => r.key === 'hear')!.icon).not.toBe(both.find((r) => r.key === 'listen')!.icon);
   });
 
   it('says why a kind with nothing in it cannot start, and gives it nothing to do', () => {

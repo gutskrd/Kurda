@@ -26,7 +26,7 @@ import { lobbyRoute } from '../play/routes';
 import { useUserEvents } from '../realtime/useUserEvents';
 import { PHONE_LEARN_GAMES, useListedLearnGames, type LearnGameRoute } from '../games/learnGames';
 
-type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race' | LearnGameRoute | 'Kingdom';
+type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race' | LearnGameRoute;
 type Mode = 'solo' | 'friends' | 'both';
 
 interface GameCard {
@@ -53,8 +53,6 @@ export const GAME_CARDS: readonly GameCard[] = [
   { key: 'rhyme', route: 'Rhyme', icon: 'speaker', name: 'games.rhyme.name', line: 'games.card.rhyme', mode: 'solo' },
   { key: 'rhymeMatch', route: 'RhymeMatch', icon: 'people', name: 'games.rhymeMatch.name', line: 'games.card.rhymeMatch', mode: 'friends' },
   { key: 'race', route: 'Race', icon: 'bolt', name: 'games.race.name', line: 'games.card.race', mode: 'solo' },
-  // the learner's own village, grown by what they learn everywhere else (kingdom/KingdomScreen)
-  { key: 'kingdom', route: 'Kingdom', icon: 'home', name: 'kingdom.title', line: 'kingdom.card', mode: 'solo' },
 ];
 
 const MODE_LABEL: Record<Mode, TranslationKey> = {
