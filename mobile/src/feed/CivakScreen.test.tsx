@@ -8,13 +8,14 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { fakeClient, ok, testAuth } from '../reports/testing/auth';
-import { navigation } from '../play/testing/navigation';
+import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { navigation, refocus } from '../play/testing/navigation';
 import { UnreadProvider } from '../messages/unread';
-import { CivakScreen } from './CivakScreen';
+import { CivakScreen, mergeFresh } from './CivakScreen';
+import type { FeedItem } from './types';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => navigation.navigate.mockReset());
@@ -135,6 +136,64 @@ describe('Home', () => {
     expect(screen.queryByText('Most popular · This week')).toBeNull();
   });
 
+  /*
+   * Coming back to Home — from a post, a profile, another tab — used to empty
+   * the wall and ask for it again, so the reader was back at the top of a grey
+   * page every time. The posts stay; the read is quiet.
+   */
+  it('keeps the posts on the screen when it is come back to, and brings them up to date quietly', async () => {
+    const liked = { ...post('a'), engagement: { ...post('a').engagement, liked: true, likes: 3 } };
+    let reads = 0;
+    const client = open({
+      extra: {
+        // the first read, then what a later one finds: a like on the post shown, and a post that is new
+        'GET /feed?section=all&limit=20&offset=0': (() => ok({ items: reads++ === 0 ? [post('a')] : [post('n'), liked] })) as never,
+      },
+    });
+    expect(await screen.findByText('Post a')).toBeTruthy();
+    act(() => refocus());
+    // no skeleton, and the post never leaves the screen while the wall is asked for again
+    expect(screen.queryByTestId('skeleton')).toBeNull();
+    expect(screen.getByText('Post a')).toBeTruthy();
+    await waitFor(() => expect(client.calls.filter((c) => c.path === '/feed?section=all&limit=20&offset=0')).toHaveLength(2));
+    // the wall was at its top, so the new post is on it, and the one shown has its new count
+    expect(await screen.findByText('Post n')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Unlike (3)' })).toBeTruthy();
+  });
+
+  it('says nothing when a quiet read fails: what was shown stays', async () => {
+    let reads = 0;
+    open({
+      extra: {
+        'GET /feed?section=all&limit=20&offset=0': (() => (reads++ === 0 ? ok({ items: [post('a')] }) : fail({ kind: 'network', message: 'offline' }))) as never,
+      },
+    });
+    expect(await screen.findByText('Post a')).toBeTruthy();
+    act(() => refocus());
+    await waitFor(() => expect(reads).toBe(2));
+    expect(screen.getByText('Post a')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
+
+  it('goes back to its skeleton only for another way of reading the wall', async () => {
+    let answer: (() => void) | null = null;
+    open({
+      items: [post('a')],
+      extra: {
+        'GET /feed?section=dimen&kind=mim&limit=20&offset=0': (() => new Promise((resolve) => (answer = () => resolve(ok({ items: [post('m1')] }))))) as never,
+      },
+    });
+    expect(await screen.findByText('Post a')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Meme' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show posts' }));
+    // the posts of the wall before say nothing about this one: grey until it answers
+    await waitFor(() => expect(screen.queryByText('Post a')).toBeNull());
+    expect(screen.getAllByTestId('skeleton').length).toBeGreaterThan(0);
+    await act(async () => answer?.());
+    expect(await screen.findByText('Post m1')).toBeTruthy();
+  });
+
   it('leaves the wall as it was when the sheet is closed another way, and Reset puts the choices back', async () => {
     const client = open({ items: [post('a')] });
     fireEvent.click(await screen.findByRole('button', { name: 'Sort and filter' }));
@@ -153,5 +212,24 @@ describe('Home', () => {
     await waitFor(() =>
       expect(screen.getByRole('radiogroup', { name: 'Sort by' }).querySelector('[aria-checked="true"]')?.textContent).toContain('Newest'),
     );
+  });
+});
+
+describe('mergeFresh', () => {
+  const item = (id: string, likes = 0) => ({ ...post(id), engagement: { ...post(id).engagement, likes } }) as unknown as FeedItem;
+
+  it('gives each post shown what the read says of it, in its place, and drops none', () => {
+    const merged = mergeFresh([item('a'), item('b'), item('c')], [item('b', 4)], true);
+    expect(merged.items.map((i) => i.id)).toEqual(['a', 'b', 'c']);
+    expect(merged.items[1]!.engagement.likes).toBe(4);
+  });
+
+  it('puts new posts on top while the wall is at its top, and holds them back while it is not', () => {
+    const top = mergeFresh([item('a')], [item('n1'), item('n2'), item('a')], true);
+    expect(top.items.map((i) => i.id)).toEqual(['n1', 'n2', 'a']);
+    expect(top.waiting).toEqual([]);
+    const down = mergeFresh([item('a')], [item('n1'), item('n2'), item('a')], false);
+    expect(down.items.map((i) => i.id)).toEqual(['a']);
+    expect(down.waiting.map((i) => i.id)).toEqual(['n1', 'n2']);
   });
 });
