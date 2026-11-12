@@ -6,7 +6,9 @@ import {
   WHO_AM_I_COUCH_MAX_PLAYERS,
   WHO_AM_I_COUCH_MIN_PLAYERS,
   WHO_AM_I_DECIDE_SECONDS,
+  WHO_AM_I_GUESSES,
   WHO_AM_I_HELP_POINTS,
+  WHO_AM_I_ROOM_GUESSES,
   WHO_AM_I_TABLE_MAX_PLAYERS,
   WHO_AM_I_TABLE_MIN_PLAYERS,
   learnGame,
@@ -154,7 +156,8 @@ function Start(): React.JSX.Element {
           <InviteForm target={{ kind: 'new', game: 'who-am-i' }} lockGame heading={false} />
         </section>
       )}
-      <ScoringNote />
+      {/* one note for the page: it counts the misses as the way the page leads with does, and each way gives its own once opened */}
+      <ScoringNote guesses={onePhone ? WHO_AM_I_ROOM_GUESSES : WHO_AM_I_GUESSES} />
     </div>
   );
 }
@@ -225,12 +228,15 @@ function tableSeats(board: Board, me: number | null, name: (seat: number) => str
  * - whose turn it is and what the turn is waiting for, with the wait's
  *   countdown drawn from the server's clock;
  * - everyone's forehead, the reader's own card hidden until it comes off;
- * - then what the reader can do now: on their turn, their tiles and their
- *   questions, the few worth asking next first and, for a beginner, each
- *   with what it means; while a friend's question is on the table, that
- *   friend's card and the dialect's yes and no; once the card has answered,
- *   its verdict and how everyone answered, with the tiles again for whoever
- *   asked.
+ * - then what the reader can do now: on their turn, their questions, the
+ *   few worth asking next first and, for a beginner, each with what it
+ *   means; while a friend's question is on the table, that friend's card and
+ *   the dialect's yes and no; once the card has answered, its verdict and
+ *   how everyone answered;
+ * - and, on their turn, the way to say they know who they are. Only that
+ *   opens the words to choose from, with Guess under them: until then
+ *   nothing on the board lists who the reader could be, so the questions do
+ *   the finding out. A turn that has to be a guess opens them by itself.
  *
  * The page draws only what the server's view holds. The reader's own card is
  * in it only once it is off their forehead, so nothing here could show it
@@ -261,6 +267,8 @@ function TableBoard({
   const [error, setError] = useState<string | null>(null);
   // the reader's last guess, to say what came of it
   const [guessed, setGuessed] = useState<{ tile: string; correct: boolean } | null>(null);
+  // the wait in which the reader said they know who they are: their tiles are open for that wait, and closed again after it
+  const [knownAt, setKnownAt] = useState<string | null>(null);
 
   const me = view.me?.seat ?? null;
   const mine = board.mine;
@@ -298,6 +306,22 @@ function TableBoard({
     if (part) bringIntoView(part);
     // only when the table moves on to another wait: `me`, `myTurn` and the phase are read as they stand then
   }, [wait]);
+
+  // The words to choose from are listed only once the reader says they know who they are, or when the turn has to be
+  // a guess. Their own press opens and closes them, and the focus goes with it, since the button pressed is gone.
+  const choosing = mayGuess && (mine?.mustGuess === true || knownAt === wait);
+  const know = useRef<HTMLButtonElement>(null);
+  const tiles = useRef<HTMLDivElement>(null);
+  const pressed = useRef(false);
+  useEffect(() => {
+    if (!pressed.current) return;
+    pressed.current = false;
+    (choosing ? tiles.current : know.current)?.focus();
+  }, [choosing]);
+  const choose = (open: boolean): void => {
+    pressed.current = true;
+    setKnownAt(open ? wait : null);
+  };
 
   const act = async (body: WhoAmITableMove): Promise<void> => {
     setBusy(true);
@@ -386,17 +410,39 @@ function TableBoard({
       </div>
 
       {mine && guessing && (
-        <div className="wa-hand">
+        <div className={`wa-hand${choosing ? ' is-choosing' : ''}`}>
           <p className="wa-worth">
             {`${t('games.whoAmI.worth', { count: whoAmIPoints(mine.asked.length, crossed.length, true) })} · ${t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}`}
           </p>
-          <GuessTiles dialect={board.dialect} tiles={mine.tiles} crossed={crossed} canGuess={mayGuess} busy={busy} onGuess={(tile) => void act({ kind: 'guess', tile })}>
-            {mine.mustGuess ? null : (
-              <Button variant="secondary" disabled={busy} onClick={() => void act({ kind: 'pass' })}>
+          {choosing ? (
+            <div className="wa-choose" ref={tiles} tabIndex={-1}>
+              <GuessTiles dialect={board.dialect} tiles={mine.tiles} crossed={crossed} canGuess busy={busy} onGuess={(tile) => void act({ kind: 'guess', tile })}>
+                {/* a turn that has to be a guess has no way back from them */}
+                {mine.mustGuess ? null : (
+                  <Button variant="ghost" disabled={busy} onClick={() => choose(false)}>
+                    {t('games.whoAmI.notYet')}
+                  </Button>
+                )}
+              </GuessTiles>
+            </div>
+          ) : mayGuess ? (
+            // With an answer in hand a guess is what the turn is for, and the gold is its. Before that it leaves the
+            // first thing to do to the questions.
+            <div className="wa-acts">
+              <button
+                ref={know}
+                type="button"
+                className={`btn btn-lg ${board.phase === 'decide' ? 'btn-primary' : 'btn-secondary'}`}
+                aria-expanded={false}
+                onClick={() => choose(true)}
+              >
+                {t('games.whoAmI.know')}
+              </button>
+              <Button variant="secondary" size="lg" disabled={busy} onClick={() => void act({ kind: 'pass' })}>
                 {t('games.whoAmI.pass')}
               </Button>
-            )}
-          </GuessTiles>
+            </div>
+          ) : null}
           {mayGuess && mine.mustGuess && <p className="wa-must">{t('games.whoAmI.mustGuess')}</p>}
           <QuestionDeck
             dialect={board.dialect}

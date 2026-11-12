@@ -35,10 +35,11 @@ import { WhoAmIScreen } from './WhoAmIScreen';
  * Who Am I? on the phone: the start with its two ways (one phone first, with
  * friends online the quieter second) and what each is offered on, and the
  * room with friends played through the game's own rules, from the side of the
- * one asking (the suggested questions first in their list, and for a beginner
- * each with what it means) and of one answering. The table behind the fake
- * server is the real one (shared rules), so every board a test reads is a
- * board the server would send that seat, its own card left out.
+ * one asking (the suggested questions first in their list, for a beginner
+ * each with what it means, and no words to pick from until they say they
+ * know who they are) and of one answering. The table behind the fake server
+ * is the real one (shared rules), so every board a test reads is a board the
+ * server would send that seat, its own card left out.
  */
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -178,6 +179,12 @@ const table = (): HTMLElement => screen.getByLabelText('The table');
 const press = (name: string | RegExp): void => {
   fireEvent.click(screen.getByRole('button', { name }));
 };
+/** The reader says they know who they are, which opens the tiles, and guesses one of them. */
+const guess = (word: string): void => {
+  press('I know who I am!');
+  fireEvent.click(screen.getByRole('radio', { name: word }));
+  press('Guess');
+};
 
 const offered = (difficulties: string[] = ['beginner'], group = true, dialect: 'kmr' | 'ckb' = 'kmr') => ({
   [`GET /games/who-am-i/couch?dialect=${dialect}`]: ok({ dialect, difficulties }),
@@ -295,9 +302,11 @@ describe('the room, for the one asking', () => {
     expect(within(table()).getByLabelText('Baran, hesp, horse, Points: 0, Questions: 0')).toBeTruthy();
     expect(within(table()).getByLabelText('You, The card on your forehead, An animal, Points: 0, Questions: 0, On turn')).toBeTruthy();
     expect(within(table()).queryByText('pisîk')).toBeNull();
-    // their word is on the screen once, as one tile among the others
-    expect(screen.getAllByText('pisîk')).toHaveLength(1);
-    expect(screen.getByRole('radio', { name: 'pisîk' })).toBeTruthy();
+    // nothing lists who the reader might be while questions are being asked: no tiles, and their own word nowhere
+    expect(screen.queryByText('pisîk')).toBeNull();
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Guess' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'I know who I am!' })).toBeTruthy();
 
     // a beginner reads what each question means under it, with nothing to tap first; Ask asks it
     expect(screen.getByText('Can it fly?')).toBeTruthy();
@@ -311,8 +320,52 @@ describe('the room, for the one asking', () => {
     expect(screen.getByText('Your question')).toBeTruthy();
     expect(screen.getByText('Nobody has answered yet.')).toBeTruthy();
     // while it is being answered nothing of the reader's can be pressed
+    expect(screen.queryByRole('button', { name: 'I know who I am!' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Guess' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Pass the turn on' })).toBeNull();
+  });
+
+  it('lists no words until the reader says they know who they are, opens the tiles in place, and closes them again', async () => {
+    const server = tableServer(1);
+    testAuth.client = server.client;
+    renderWithProviders(<WhoAmIScreen id="r1" onExit={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Your turn' });
+    expect(screen.queryByText('You are one of these')).toBeNull();
+    expect(screen.queryByRole('radio')).toBeNull();
+
+    // saying so opens the tiles and Guess where the button was, with the questions still there to ask instead
+    press('I know who I am!');
+    const tiles = screen.getByRole('radiogroup', { name: 'You are one of these' });
+    expect(within(tiles).getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual(['kûçik', 'pisîk', 'çêlek']);
+    expect(screen.getByRole('button', { name: 'Guess' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'I know who I am!' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Ask: Ew dikare bifire?' })).toBeTruthy();
+
+    // not yet: they are put away again, and the server has been told nothing
+    press('Not yet');
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.queryByText('You are one of these')).toBeNull();
+    expect(screen.getByRole('button', { name: 'I know who I am!' })).toBeTruthy();
+    expect(server.moves()).toEqual([]);
+
+    // left open while a question is asked instead, they are closed again once the card has answered
+    press('I know who I am!');
+    press('Ask: Ew dikare bifire?');
+    await screen.findByText('Nobody has answered yet.');
+    expect(screen.queryByRole('radio')).toBeNull();
+    await server.other(2, { kind: 'answer', yes: false });
+    await server.other(3, { kind: 'answer', yes: false });
+    await screen.findByLabelText('The card says: Na');
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.queryByText('pisîk')).toBeNull();
+
+    // asked for there too, the guess is a tile sent to the server, as it always was
+    guess('pisîk');
+    expect(await screen.findByRole('heading', { name: 'You are pisîk!' })).toBeTruthy();
+    expect(server.moves()).toEqual([
+      { kind: 'ask', question: 'fly' },
+      { kind: 'guess', tile: 'cat' },
+    ]);
   });
 
   it('lists the suggested questions first under their own label, then the rest, and asks as it always did', async () => {
@@ -381,19 +434,20 @@ describe('the room, for the one asking', () => {
     expect(screen.getByText(/Points if you guess now: 9/)).toBeTruthy();
     expect(within(table()).queryByText('pisîk')).toBeNull();
 
-    // a wrong tile is crossed out and said; the card stays on the forehead
-    fireEvent.click(screen.getByRole('radio', { name: 'kûçik' }));
-    press('Guess');
+    // a wrong tile is said; the card stays on the forehead, and with the turn gone on the tiles are put away
+    guess('kûçik');
     expect(await screen.findByText('No, you are not kûçik.')).toBeTruthy();
-    expect(screen.getByRole('radio', { name: 'kûçik, Not this one' })).toBeTruthy();
     expect(screen.getByText(/Guesses left: 1/)).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Rojda’s turn' })).toBeTruthy();
-    expect(within(table()).queryByText('pisîk')).toBeNull();
+    expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.queryByText('pisîk')).toBeNull();
 
-    // round the table and back; the right tile takes the card off the forehead
+    // round the table and back: the wrong tile is crossed out among the choices, and the right one takes the card off the forehead
     await server.other(2, { kind: 'pass' });
     await server.other(3, { kind: 'pass' });
     await screen.findByRole('heading', { name: 'Your turn' });
+    press('I know who I am!');
+    expect(screen.getByRole('radio', { name: 'kûçik, Not this one' })).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'pisîk' }));
     press('Guess');
     expect(await screen.findByRole('heading', { name: 'You are pisîk!' })).toBeTruthy();
@@ -406,7 +460,7 @@ describe('the room, for the one asking', () => {
     ]);
   });
 
-  it('passes the turn on, and offers no pass once every question has been asked', async () => {
+  it('passes the turn on, and on a turn that has to be a guess opens the tiles by itself, with no pass', async () => {
     const server = tableServer(1, [deal(CAT, [animal('dog', 'kûçik', {}), animal('cow', 'çêlek', {})], QUESTIONS.slice(0, 1)), DEALS[1]!, DEALS[2]!]);
     testAuth.client = server.client;
     renderWithProviders(<WhoAmIScreen id="r1" onExit={() => undefined} />);
@@ -425,7 +479,11 @@ describe('the room, for the one asking', () => {
     await server.other(2, { kind: 'answer', yes: false });
     await server.other(3, { kind: 'answer', yes: false });
     expect(await screen.findByText('You have asked every question. Now you have to guess.')).toBeTruthy();
+    // there is nothing else this turn can be, so the tiles are there without being asked for, and cannot be put away
+    expect(screen.getByRole('radiogroup', { name: 'You are one of these' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Guess' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'I know who I am!' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Not yet' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Pass the turn on' })).toBeNull();
   });
 });
@@ -437,9 +495,12 @@ describe('the room, for one answering', () => {
     renderWithProviders(<WhoAmIScreen id="r1" onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Azad’s turn' })).toBeTruthy();
     expect(screen.getByText('Azad is choosing a question.')).toBeTruthy();
-    // waiting, the reader has their own list and tiles, and nothing on them to press
+    // waiting, the reader has their own list to think with, nothing on it to press, and no words to pick from
+    expect(screen.getByRole('heading', { name: 'Your questions' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: /^Ask:/ })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'I know who I am!' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Guess' })).toBeNull();
+    expect(screen.queryByRole('radio')).toBeNull();
 
     await server.other(1, { kind: 'ask', question: 'fly' });
     expect(await screen.findByText('Answer Azad’s question.')).toBeTruthy();
@@ -450,10 +511,9 @@ describe('the room, for one answering', () => {
     expect(within(asked).queryByText('Can it fly?')).toBeNull();
     fireEvent.click(asked);
     expect(await within(asked).findByText('Can it fly?')).toBeTruthy();
-    // the reader's own card is the hidden mark; their word is only a tile among the others
+    // the reader's own card is the hidden mark, and their word is nowhere on the screen
     expect(within(table()).getByLabelText(/^You, The card on your forehead, An animal, /)).toBeTruthy();
-    expect(within(table()).queryByText('çûk')).toBeNull();
-    expect(screen.getAllByText('çûk')).toHaveLength(1);
+    expect(screen.queryByText('çûk')).toBeNull();
 
     press('Na');
     expect(await screen.findByText('You said: Na')).toBeTruthy();
@@ -477,7 +537,7 @@ describe('the room, for one answering', () => {
     expect(await screen.findByRole('heading', { name: 'Your turn' })).toBeTruthy();
     expect(screen.getByLabelText('The card says: Na')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Ask: Ew dikare bifire?' })).toBeTruthy();
-    expect(within(table()).queryByText('çûk')).toBeNull();
+    expect(screen.queryByText('çûk')).toBeNull();
   });
 
   it('says so when a move comes too late to be taken', async () => {
@@ -500,8 +560,7 @@ describe('the room, for one answering', () => {
     await screen.findByRole('heading', { name: 'Azad’s turn' });
     await server.other(1, { kind: 'pass' });
     await screen.findByRole('heading', { name: 'Your turn' });
-    fireEvent.click(screen.getByRole('radio', { name: 'çûk' }));
-    press('Guess');
+    guess('çûk');
     expect(await screen.findByRole('heading', { name: 'You are çûk!' })).toBeTruthy();
     expect(within(table()).getByLabelText('You, çûk, bird, Points: 10, Questions: 0, Got it')).toBeTruthy();
     // no list and no tiles any more, and still a say in the others' questions
@@ -519,8 +578,7 @@ describe('the end of a game with friends', () => {
     testAuth.client = server.client;
     renderWithProviders(<WhoAmIScreen id="r1" onExit={() => undefined} />);
     await screen.findByRole('heading', { name: 'Your turn' });
-    fireEvent.click(screen.getByRole('radio', { name: 'pisîk' }));
-    press('Guess');
+    guess('pisîk');
     await screen.findByRole('heading', { name: 'You are pisîk!' });
     await server.other(2, { kind: 'guess', tile: 'bird' });
     await server.other(3, { kind: 'guess', tile: 'horse' });

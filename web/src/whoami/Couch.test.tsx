@@ -10,11 +10,12 @@ import { WhoAmI } from './WhoAmI';
 /**
  * Who Am I? on one phone, from the way in to the end: the setup and what it
  * asks the server for (the room's size, never a name), the phone handed
- * straight to the first player with no card to memorise, a suggested
- * question picked in one tap and read out, the phone turned to the friends
- * who see the card and tap the answer themselves, the card gone again and its
- * verdict, a question of a player's own asked out loud, a guess that misses
- * and one that lands, the end, and another game with the same names.
+ * straight to the first player with no card to memorise and no words to
+ * choose from, a suggested question picked in one tap and read out, the phone
+ * turned to the friends who see the card and tap the answer themselves, the
+ * card gone again and its verdict, a question of a player's own asked out
+ * loud, a guess said out loud that the friends judge, one that misses and one
+ * that lands, the end, and another game with the same names.
  */
 
 afterEach(() => {
@@ -135,10 +136,27 @@ async function askSuggested(question: RegExp, answer: 'Erê yes' | 'Na no'): Pro
   await userEvent.click(await screen.findByRole('button', { name: answer }));
 }
 
-/** No card is on the screen: no player's word anywhere but among the holder's own tiles, where any tile may be. */
+/** A guess said out loud: the holder says they know, turns the phone round, and the friends tap whether that is it. */
+async function sayWho(verdict: 'Yes, that’s it!' | 'Not yet'): Promise<void> {
+  await userEvent.click(screen.getByRole('button', { name: 'I know who I am!' }));
+  await turnToFriends();
+  await userEvent.click(await screen.findByRole('button', { name: verdict }));
+}
+
+/** No card is on the screen, and nothing that names one: no player's word is anywhere on the page. */
 function expectNoCard(): void {
   expect(screen.queryByRole('figure', { name: /’s card$/ })).toBeNull();
-  for (const word of WORDS) for (const el of screen.queryAllByText(word)) expect(el.closest('[role="radio"]')).not.toBeNull();
+  for (const word of WORDS) expect(document.body).not.toHaveTextContent(word);
+}
+
+/** Nothing lists who the holder could be: no tiles to pick from and no Guess to press, only the way to say they know. */
+function expectNoChoices(): void {
+  expect(screen.queryByRole('radiogroup')).toBeNull();
+  expect(screen.queryByRole('radio')).toBeNull();
+  expect(screen.queryByText('You are one of these')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Guess' })).toBeNull();
+  for (const word of ['masî', 'hesp']) expect(document.body).not.toHaveTextContent(word);
+  expect(screen.getByRole('button', { name: 'I know who I am!' })).toBeInTheDocument();
 }
 
 describe('Who Am I? on one phone, the setup', () => {
@@ -153,8 +171,10 @@ describe('Who Am I? on one phone, the setup', () => {
     expect(within(screen.getAllByRole('list')[0]!).getAllByRole('listitem').map((li) => li.textContent)).toEqual([
       'Pick a question and read it out loud.',
       'Turn the phone to your friends: they see your card and answer.',
-      'Guess who you are. Fewer questions, more points.',
+      'Say who you are when you know. Fewer questions, more points.',
     ]);
+    // in one room, with nothing to pick from, one more miss is allowed than at a table online
+    expect(screen.getByText(/^After 3 wrong guesses you are out/)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Remove/ })).toBeNull();
     for (let i = 0; i < 4; i++) await userEvent.click(screen.getByRole('button', { name: 'Add a player' }));
     expect(screen.getAllByRole('textbox')).toHaveLength(6);
@@ -229,17 +249,16 @@ describe('Who Am I? on one phone, a turn', () => {
     // the banner: who it is for, what the card may say of itself, and what a guess is worth now
     expect(said()).toBe('Azad, who are you?');
     expect(screen.getByText('An animal')).toBeInTheDocument();
-    expect(screen.getByText('Points if you guess now: 10 · Guesses left: 2')).toBeInTheDocument();
+    expect(screen.getByText('Points if you guess now: 10 · Guesses left: 3')).toBeInTheDocument();
     // his own card is a question mark, and nobody else's is on his screen for a neighbour to glance at
     expect(screen.getByText('The card on your forehead')).toBeInTheDocument();
     expectNoCard();
-    expect(document.body).not.toHaveTextContent('çûk');
     // no clock anywhere: the phone waits for the room
     expect(screen.queryByRole('timer')).toBeNull();
 
-    // who he could be, each tile with what it means at this level
-    const tiles = screen.getByRole('radiogroup', { name: 'You are one of these' });
-    expect(within(tiles).getAllByRole('radio').map((r) => r.textContent)).toEqual(['pisîk cat', 'masî fish', 'hesp horse']);
+    // nothing says who he could be: he finds out by asking, and says so when he knows, on a button that is not the gold one
+    expectNoChoices();
+    expect(screen.getByRole('button', { name: 'I know who I am!' })).toHaveClass('btn-secondary');
 
     // the questions worth asking: Kurdish, with the meaning under each without a tap
     const ask = screen.getByRole('region', { name: 'Ask a question' });
@@ -266,7 +285,7 @@ describe('Who Am I? on one phone, a turn', () => {
 
     // the way back spends nothing
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 2')).toBeInTheDocument();
+    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 3')).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'What you know so far' })).toBeNull();
 
     // the whole list, unfolded: every question, each with what it means at this level, and Ask
@@ -318,7 +337,7 @@ describe('Who Am I? on one phone, a turn', () => {
     expectNoCard();
     // nothing was asked of the rules by any of that
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 2')).toBeInTheDocument();
+    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 3')).toBeInTheDocument();
 
     // the friends tap their answer: the card is off the screen at once, and the card's own verdict is on Azad's board
     await askSuggested(/^Ew dikare bifire\?/, 'Na no');
@@ -331,12 +350,13 @@ describe('Who Am I? on one phone, a turn', () => {
     expect(said()).toBe('The card says: Na');
     expect(screen.getByRole('heading', { name: 'Azad, who are you?' })).toBeInTheDocument();
     expect(screen.getByText('The card has answered. Guess who you are, or pass the turn on.')).toBeInTheDocument();
-    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 2')).toBeInTheDocument();
+    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 3')).toBeInTheDocument();
     // the turn is a guess or the phone passed on: nothing more to ask
     expect(screen.queryByRole('region', { name: 'Ask a question' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Skip my turn' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Guess' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Next player' })).toBeInTheDocument();
+    // and still no words to choose from: to say who he is, is the turn's main button now
+    expectNoChoices();
     // what he knows so far: his question, what it means, and the card's answer
     const known = screen.getByRole('region', { name: 'What you know so far' });
     expect(within(known).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Ew dikare bifire? Can it fly?Na']);
@@ -387,7 +407,7 @@ describe('Who Am I? on one phone, a turn', () => {
     expect(said()).toBe('Ask your friends any yes-or-no question about yourself. In Kurdish if you can! Turn the phone to your friends so they can see your card.');
     expectNoCard();
     await userEvent.click(screen.getByRole('button', { name: 'Back' }));
-    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 2')).toBeInTheDocument();
+    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 3')).toBeInTheDocument();
 
     // the friends see the card and answer out loud: nothing to tap but that they are done
     await userEvent.click(screen.getByRole('button', { name: 'Ask my own question' }));
@@ -407,7 +427,7 @@ describe('Who Am I? on one phone, a turn', () => {
     expect(said()).toBe('Your friends have answered. Guess who you are, or pass the phone on.');
     expectNoCard();
     expect(screen.queryByRole('region', { name: /^The card says:/ })).toBeNull();
-    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 2')).toBeInTheDocument();
+    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 3')).toBeInTheDocument();
     const known = screen.getByRole('region', { name: 'What you know so far' });
     expect(within(known).getByText('Questions of your own: 1 (each takes 1 off your points)')).toBeInTheDocument();
     expect(within(known).queryByRole('listitem')).toBeNull();
@@ -420,16 +440,15 @@ describe('Who Am I? on one phone, a turn', () => {
     await take('Berfîn');
     await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
     await take('Azad');
-    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 2')).toBeInTheDocument();
+    expect(screen.getByText('Points if you guess now: 9 · Guesses left: 3')).toBeInTheDocument();
     expect(screen.getByText('Questions of your own: 1 (each takes 1 off your points)')).toBeInTheDocument();
     // a card found after it is worth one less
-    await userEvent.click(screen.getByRole('radio', { name: /pisîk/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
+    await sayWho('Yes, that’s it!');
     expect(await headlineWith('pisîk')).toHaveTextContent('You are pisîk!');
     expect(screen.getByText('Points: 9')).toBeInTheDocument();
   });
 
-  it('opens the whole list when nothing is left to suggest, and leaves only a guess once every question is asked', async () => {
+  it('opens the whole list when nothing is left to suggest, and never makes a turn a guess once every question is asked', async () => {
     serve();
     open();
     await start(['Azad', 'Berfîn']);
@@ -445,6 +464,7 @@ describe('Who Am I? on one phone, a turn', () => {
     // nothing left to suggest, with a question still on the list: the board says so, and the list is open
     await take('Azad');
     expect(screen.getByText('No more suggestions. Pick from all the questions, or take a guess.')).toBeInTheDocument();
+    expect(said()).toBe('Azad, who are you? No more suggestions. Pick from all the questions, or take a guess.');
     const ask = screen.getByRole('region', { name: 'Ask a question' });
     expect(within(ask).queryByRole('list', { name: 'Suggested' })).toBeNull();
     expect(within(ask).getByRole('button', { name: 'All questions (3)' })).toHaveAttribute('aria-expanded', 'true');
@@ -452,15 +472,25 @@ describe('Who Am I? on one phone, a turn', () => {
     expect(within(ask).getAllByRole('listitem').map((li) => li.textContent)).toEqual(['Ew dikare bifire? Can it fly?Na', 'Ew li malê tê dîtin? Do you find it at home?Erê', 'Ew cihek e? Is it a place?Ask']);
     expect(within(screen.getByRole('region', { name: 'What you know so far' })).getAllByRole('listitem')).toHaveLength(2);
 
-    // the last question asked: the turn has to be a guess, and says why
+    // the last question on the list, asked: in one room the turn is still his to pass on
     await userEvent.click(within(ask).getByRole('button', { name: 'Ask' }));
     await turnToFriends();
     await userEvent.click(await screen.findByRole('button', { name: 'Na no' }));
-    expect(await screen.findByText('You have asked every question, so this turn has to be a guess.')).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Next player' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Skip my turn' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Ask my own question' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Guess' })).toBeInTheDocument();
+    await screen.findByRole('region', { name: /^The card says:/ });
+    expect(screen.queryByText('You have asked every question, so this turn has to be a guess.')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Next player' }));
+    await take('Berfîn');
+    await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
+
+    // and the next one is no dead end: the board says the list is used up, and what there still is to do
+    await take('Azad');
+    expect(screen.getByText('You have asked every question on the list. Ask one of your own, or say who you are.')).toBeInTheDocument();
+    const used = screen.getByRole('region', { name: 'Ask a question' });
+    expect(within(used).getByRole('button', { name: 'All questions (3)' })).toHaveAttribute('aria-expanded', 'false');
+    expect(within(used).queryByRole('button', { name: 'Ask' })).toBeNull();
+    expect(within(used).getByRole('button', { name: 'Ask my own question' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Skip my turn' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'I know who I am!' })).toBeInTheDocument();
   });
 
   it('keeps the meanings of the list a tap away above the beginner’s level, and under the suggested questions all the same', async () => {
@@ -471,8 +501,8 @@ describe('Who Am I? on one phone, a turn', () => {
     await start(['Azad', 'Berfîn']);
     await take('Azad');
 
-    // the tiles are the words alone at this level
-    expect(within(screen.getByRole('radiogroup', { name: 'You are one of these' })).getAllByRole('radio').map((r) => r.textContent)).toEqual(['pisîk', 'masî', 'hesp']);
+    // no words to choose from at any level
+    expectNoChoices();
     // a suggested question is picked by what it means, so that is always under it
     const ask = within(screen.getByRole('region', { name: 'Ask a question' }));
     expect(ask.getByRole('button', { name: 'Ew dikare bifire? Can it fly?' })).toBeInTheDocument();
@@ -483,6 +513,107 @@ describe('Who Am I? on one phone, a turn', () => {
     await userEvent.click(question);
     expect(question).toHaveAttribute('aria-expanded', 'true');
     expect(ask.getByText('Is it a place?')).toBeInTheDocument();
+  });
+});
+
+describe('Who Am I? on one phone, a guess said out loud', () => {
+  it('turns the phone to the friends, who judge it with the card in front of them, and hides the card again on a miss', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    await userEvent.click(screen.getByRole('button', { name: 'I know who I am!' }));
+
+    // what to do, with nothing spent and no card yet
+    expect(await screen.findByRole('heading', { name: 'I know who I am!' })).toBeInTheDocument();
+    expect(screen.getByText('Say out loud who you are.')).toBeInTheDocument();
+    expect(screen.getByText('Now turn the phone to your friends.')).toBeInTheDocument();
+    expect(said()).toBe('Say out loud who you are. Now turn the phone to your friends.');
+    expectNoCard();
+    await userEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(await screen.findByText('Points if you guess now: 10 · Guesses left: 3')).toBeInTheDocument();
+
+    // the friends see the card and say whether that was it, on two keys of the answers' own colours
+    await userEvent.click(screen.getByRole('button', { name: 'I know who I am!' }));
+    await turnToFriends();
+    expect(await screen.findByRole('heading', { name: 'Azad is…' })).toBeInTheDocument();
+    const card = screen.getByRole('figure', { name: 'Azad’s card' });
+    expect(within(card).getByText('pisîk')).toHaveAttribute('lang', 'ku');
+    expect(card).toHaveTextContent('cat');
+    expect(said()).toBe('Azad is… Did Azad get it right?');
+    const judge = screen.getByRole('group', { name: 'Did Azad get it right?' });
+    expect(within(judge).getByRole('button', { name: 'Yes, that’s it!' })).toHaveClass('is-yes');
+    expect(within(judge).getByRole('button', { name: 'Not yet' })).toHaveClass('is-no');
+
+    // the page hidden: the card is gone, and the phone is back a step with nothing judged
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(await screen.findByText('Say out loud who you are.')).toBeInTheDocument();
+    expectNoCard();
+
+    // not yet: the card is off the screen at once, and the miss names no word, since none was picked
+    await turnToFriends();
+    await userEvent.click(await screen.findByRole('button', { name: 'Not yet' }));
+    expect(await screen.findByText('Not yet!')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Guesses left: 2' })).toBeInTheDocument();
+    expect(said()).toBe('Not yet! Guesses left: 2');
+    expectNoCard();
+    expect(screen.queryByRole('figure')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+
+    // the phone goes on, and back with Azad the miss has cost what a wrong guess costs
+    await take('Berfîn');
+    await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
+    await take('Azad');
+    expect(screen.getByText('Points if you guess now: 7 · Guesses left: 2')).toBeInTheDocument();
+    expectNoCard();
+  });
+
+  it('takes the card off at a right one, in the game’s happiest moment', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    await take('Azad');
+    // an answer first: to say who he is, is then the turn's main button, beside the way on
+    await askSuggested(/^Ew dikare bifire\?/, 'Na no');
+    await screen.findByRole('region', { name: /^The card says:/ });
+    expect(screen.getByRole('button', { name: 'I know who I am!' })).toHaveClass('btn-primary');
+    await sayWho('Yes, that’s it!');
+
+    expect(await headlineWith('pisîk')).toHaveTextContent('You are pisîk!');
+    expect(said()).toBe('Got it');
+    // the card is his to read now, inside the celebration
+    const card = screen.getByRole('figure', { name: 'Azad’s card' });
+    expect(card).toHaveTextContent('cat');
+    expect(card.closest('.celebrate')).not.toBeNull();
+    // ten, less the one question
+    expect(screen.getByText('Points: 9')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByRole('heading', { name: 'Berfîn’s turn. Hand them the phone.' })).toBeInTheDocument();
+  });
+
+  it('puts a player out at the third miss, one more than a table online allows', async () => {
+    serve();
+    open();
+    await start(['Azad', 'Berfîn']);
+    for (const left of [2, 1]) {
+      await take('Azad');
+      await sayWho('Not yet');
+      expect(await screen.findByRole('heading', { name: `Guesses left: ${left}` })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+      await take('Berfîn');
+      await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
+    }
+    await take('Azad');
+    expect(screen.getByText('Points if you guess now: 4 · Guesses left: 1')).toBeInTheDocument();
+    await sayWho('Not yet');
+    // out: the card comes off, and is worth nothing
+    expect(await screen.findByText('Out of guesses', { selector: '.wa-night-kicker' })).toBeInTheDocument();
+    expect(said()).toBe('Out of guesses');
+    expect(screen.queryByText('Not yet!')).toBeNull();
+    expect(await headlineWith('pisîk')).toHaveTextContent('You were pisîk.');
+    expect(screen.getByText('Points: 0')).toBeInTheDocument();
   });
 });
 
@@ -497,31 +628,23 @@ describe('Who Am I? on one phone, a game', () => {
     await screen.findByRole('region', { name: /^The card says:/ });
 
     // a guess that misses: it says so, and how many are left
-    await userEvent.click(screen.getByRole('radio', { name: /masî/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
-    expect(await screen.findByText('masî', { selector: '.wa-word' })).toHaveAttribute('lang', 'ku');
-    expect(screen.getByText('masî', { selector: '.wa-word' }).parentElement).toHaveTextContent('Not masî.');
-    expect(screen.getByRole('heading', { name: 'Guesses left: 1' })).toBeInTheDocument();
-    expect(said()).toBe('Guesses left: 1');
-    expect(document.body).not.toHaveTextContent('pisîk');
+    await sayWho('Not yet');
+    expect(await screen.findByRole('heading', { name: 'Guesses left: 2' })).toBeInTheDocument();
+    expectNoCard();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
 
     // Berfîn's turn: she passes it on without asking
     expect(await screen.findByRole('heading', { name: 'Berfîn’s turn. Hand them the phone.' })).toBeInTheDocument();
     await take('Berfîn');
     expectNoCard();
-    expect(document.body).not.toHaveTextContent('pisîk');
     await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
 
-    // Azad again: the answer he had is on his board, the wrong tile crossed out, and this guess lands
+    // Azad again: the answer he had is on his board, and this guess lands
     await take('Azad');
     expect(within(screen.getByRole('region', { name: 'What you know so far' })).getByText('Na')).toHaveAttribute('lang', 'ku');
-    expect(screen.getByText('Points if you guess now: 6 · Guesses left: 1')).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: 'masî, Not this one' })).toBeDisabled();
-    await userEvent.click(screen.getByRole('radio', { name: /pisîk/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
+    expect(screen.getByText('Points if you guess now: 6 · Guesses left: 2')).toBeInTheDocument();
+    await sayWho('Yes, that’s it!');
     expect(await headlineWith('pisîk')).toHaveTextContent('You are pisîk!');
-    expect(said()).toBe('Got it');
     expect(screen.getByRole('figure', { name: 'Azad’s card' })).toHaveTextContent('cat');
     // ten, less one question and one wrong guess
     expect(screen.getByText('Points: 6')).toBeInTheDocument();
@@ -529,8 +652,7 @@ describe('Who Am I? on one phone, a game', () => {
 
     // Berfîn finds hers outright, with the point for the friends' right answer on top
     await take('Berfîn');
-    await userEvent.click(screen.getByRole('radio', { name: /çûk/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
+    await sayWho('Yes, that’s it!');
     expect(await headlineWith('çûk')).toHaveTextContent('You are çûk!');
     expect(screen.getByText('Points: 11')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Next' }));
@@ -558,25 +680,6 @@ describe('Who Am I? on one phone, a game', () => {
       { dialect: 'kmr', difficulty: 'beginner', players: 2 },
     ]);
     expect(JSON.stringify(calls)).not.toContain('Azad');
-  });
-
-  it('puts a player out at the second wrong guess', async () => {
-    serve();
-    open();
-    await start(['Azad', 'Berfîn']);
-    await take('Azad');
-    await userEvent.click(screen.getByRole('radio', { name: /masî/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Next' }));
-    await take('Berfîn');
-    await userEvent.click(screen.getByRole('button', { name: 'Skip my turn' }));
-    await take('Azad');
-    await userEvent.click(screen.getByRole('radio', { name: /hesp/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
-    // out: the card comes off, and is worth nothing
-    expect(await screen.findByText('Out of guesses')).toBeInTheDocument();
-    expect(await headlineWith('pisîk')).toHaveTextContent('You were pisîk.');
-    expect(screen.getByText('Points: 0')).toBeInTheDocument();
   });
 
   it('asks before it lets a game go, from the way back and from Leave the game', async () => {

@@ -36,10 +36,13 @@ import type { MessageKey } from '../i18n/en';
  *   answer is stamped on it in the dialect's own yes or no (Erê / Na,
  *   بەڵێ / نەخێر). A beginner reads what every question means under it; at
  *   the other levels a tap shows it.
- * - The tiles, the words a player could be: pick one, then Guess. A tile
- *   already guessed wrong is crossed out.
- * - The two answers a friend gives to somebody else's question, and the
- *   card's own verdict on it, as a card of the answer's colour.
+ * - The tiles, the words a player at a table online could be: pick one,
+ *   then Guess. A tile already guessed wrong is crossed out. They are not
+ *   there until the player says they know who they are. In one room there
+ *   are none: who a player is, is said out loud.
+ * - Two keys a thumb wide: the two answers a friend gives to somebody else's
+ *   question, or what a room says to a guess said out loud. And the card's
+ *   own verdict on a question, as a card of the answer's colour.
  *
  * Nothing here decides what may be shown. A card is drawn when its word is
  * handed in and hidden when it is not, so the rules' view (`viewFor`) stays
@@ -519,7 +522,11 @@ export function SuggestedQuestions({
   );
 }
 
-/** The words a player could be: pick one, then Guess; a tile already guessed wrong is crossed out. */
+/**
+ * The words a player at a table online could be: pick one, then Guess; a tile
+ * already guessed wrong is crossed out. The page shows them once the player
+ * says they know who they are, and not before.
+ */
 export function GuessTiles({
   dialect,
   tiles,
@@ -527,7 +534,6 @@ export function GuessTiles({
   canGuess,
   busy,
   onGuess,
-  heading,
   children,
 }: {
   dialect: GameDialect;
@@ -538,9 +544,7 @@ export function GuessTiles({
   /** a move is on its way: nothing more is taken until it has answered */
   busy: boolean;
   onGuess: (tile: string) => void;
-  /** what stands over the tiles, where "Who are you?" is already the screen's own headline */
-  heading?: string;
-  /** what else the turn offers beside Guess (passing it on) */
+  /** what else stands beside Guess (the way back from guessing) */
   children?: ReactNode;
 }): React.JSX.Element {
   const t = useT();
@@ -552,7 +556,7 @@ export function GuessTiles({
   return (
     <section className="wa-guess" aria-labelledby={title}>
       <h2 id={title} className="wa-title">
-        {heading ?? t('games.whoAmI.guessTitle')}
+        {t('games.whoAmI.oneOf')}
       </h2>
       <div className="wa-tiles" role="radiogroup" aria-labelledby={title}>
         {tiles.map((tile) => {
@@ -598,8 +602,25 @@ export function GuessTiles({
   );
 }
 
-/** The two answers to a question about somebody else's card: the dialect's yes and no, a thumb wide. */
-export function AnswerPanel({ dialect, label, disabled, onAnswer }: { dialect: GameDialect; label: string; disabled: boolean; onAnswer: (yes: boolean) => void }): React.JSX.Element {
+/**
+ * The two answers to a question about somebody else's card: the dialect's yes
+ * and no, a thumb wide. With `words` the same two keys, in the same two
+ * colours, say something else in the reader's language: what a room answers
+ * to a guess said out loud, which is no yes-or-no question of the game's.
+ */
+export function AnswerPanel({
+  dialect,
+  label,
+  disabled,
+  onAnswer,
+  words,
+}: {
+  dialect: GameDialect;
+  label: string;
+  disabled: boolean;
+  onAnswer: (yes: boolean) => void;
+  words?: { yes: string; no: string };
+}): React.JSX.Element {
   const t = useT();
   const script = dialectDirection(dialect);
   return (
@@ -608,13 +629,19 @@ export function AnswerPanel({ dialect, label, disabled, onAnswer }: { dialect: G
         const own = gloss(dialect, yes, t);
         return (
           <button key={String(yes)} type="button" className={`wa-answer-btn${yes ? ' is-yes' : ' is-no'}`} disabled={disabled} onClick={() => onAnswer(yes)}>
-            <span className="wa-answer-ku" lang={script.lang} dir={script.dir}>
-              {yesNo(dialect, yes, t)}
-            </span>
-            {own && (
+            {words ? (
+              <span className="wa-answer-say">{yes ? words.yes : words.no}</span>
+            ) : (
               <>
-                {' '}
-                <span className="wa-answer-gloss">{own}</span>
+                <span className="wa-answer-ku" lang={script.lang} dir={script.dir}>
+                  {yesNo(dialect, yes, t)}
+                </span>
+                {own && (
+                  <>
+                    {' '}
+                    <span className="wa-answer-gloss">{own}</span>
+                  </>
+                )}
               </>
             )}
           </button>
@@ -668,8 +695,13 @@ export function VerdictCard({
   );
 }
 
-/** How the game scores, folded away under the table: read once, and there when somebody asks. */
-export function ScoringNote(): React.JSX.Element {
+/**
+ * How the game scores, folded away under the table: read once, and there when
+ * somebody asks. `guesses` is how many wrong guesses put a player out where
+ * the note stands: one more in one room, with nothing to pick from, than at
+ * a table online.
+ */
+export function ScoringNote({ guesses = WHO_AM_I_GUESSES }: { guesses?: number }): React.JSX.Element {
   const t = useT();
   return (
     <details className="wa-scoring">
@@ -677,7 +709,7 @@ export function ScoringNote(): React.JSX.Element {
       <ul>
         <li>{t('games.whoAmI.scoring.own', { start: WHO_AM_I_START_POINTS, question: WHO_AM_I_QUESTION_COST, wrong: WHO_AM_I_WRONG_GUESS_COST })}</li>
         <li>{t('games.whoAmI.scoring.help', { help: WHO_AM_I_HELP_POINTS })}</li>
-        <li>{t('games.whoAmI.scoring.out', { guesses: WHO_AM_I_GUESSES })}</li>
+        <li>{t('games.whoAmI.scoring.out', { guesses })}</li>
       </ul>
     </details>
   );

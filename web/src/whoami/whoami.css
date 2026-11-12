@@ -10,7 +10,10 @@
  *   the table    every player as a small forehead, the one on turn in gold
  *   a question   a card of the deck; asked, it wears the answer as a stamp;
  *                the few worth asking next stand first, under their label
- *   an answer    two keys a thumb wide, the dialect's yes and its no
+ *   an answer    two keys a thumb wide, the dialect's yes and its no, or
+ *                what a room says to a guess said out loud
+ *   a guess      online, tiles to pick from, there only once the player
+ *                says they know who they are; in one room none at all
  *   the verdict  a card of the answer's own colour, green for yes and clay
  *                for no, so what the card said is never one more opinion
  *
@@ -554,6 +557,15 @@ p.wa-q-text {
   font-size: var(--text-secondary);
   opacity: 0.86;
 }
+/* the same keys saying a short sentence in the reader's language: smaller, so it fits half a phone's width */
+.wa-answer-say {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-wrap: balance;
+}
 
 /* who has answered so far: never what */
 .wa-who,
@@ -662,16 +674,26 @@ p.wa-q-text {
   opacity: 0.82;
 }
 
-/* ---- the reader's hand: who they could be, and what they may ask -------------------------- */
+/* ---- the reader's hand: what they may ask, and, once they say they know, who they could be --- */
+/* side by side only while the tiles are open: until then the questions have the page's width to themselves */
 @media (min-width: 900px) {
-  .wa-hand {
+  .wa-hand.is-choosing {
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     align-items: start;
   }
-  .wa-hand > .wa-worth,
-  .wa-hand > .wa-must {
+  .wa-hand.is-choosing > .wa-worth,
+  .wa-hand.is-choosing > .wa-must {
     grid-column: 1 / -1;
   }
+}
+/* what a turn offers besides a question: beside each other where both fit, one under the other where they do not */
+.wa-acts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.wa-acts > .btn {
+  flex: 1 1 auto;
 }
 .wa-worth {
   justify-self: center;

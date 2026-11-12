@@ -270,12 +270,17 @@ function moveError(error: ApiError, t: ReturnType<typeof useI18n>['t']): string 
  * against the server's clock; the question on the table, to answer or to
  * watch being answered; the card's verdict; the reader's own questions (the
  * ones the server suggests asking next first, and for a beginner each with
- * what it means under it) and tiles; and everyone as a row of foreheads.
+ * what it means under it); and everyone as a row of foreheads.
+ *
+ * Nothing lists the words the reader might be while questions are being
+ * asked: a list of choices in sight all along would make the game a quiz. On
+ * their own turn "I know who I am!" opens the tiles to guess from, and "Not
+ * yet" closes them again; a turn that has to be a guess opens them by itself.
  *
  * What the reader must do next is always straight under the banner. On their
- * own turn that is their questions and tiles, and the row of foreheads moves
- * under them; the rest of the time the row comes first and their own list
- * waits below it, to think with.
+ * own turn that is their questions and the way to guess, and the row of
+ * foreheads moves under them; the rest of the time the row comes first and
+ * their own list waits below it, to think with.
  *
  * Every card here is drawn from the board as the server sent it to this
  * reader. Their own is not on it until it is off their forehead (`card` null
@@ -290,6 +295,8 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
   const [error, setError] = useState<string | null>(null);
   // the tile of a wrong guess just made, said once under the tiles until the next move
   const [missed, setMissed] = useState<string | null>(null);
+  // the moment of the game at which the reader last said they know who they are: the tiles are open for that moment only
+  const [knowsAt, setKnowsAt] = useState<string | null>(null);
   const board = view.board;
   if (!board || board.turn === null) return null;
   const me = view.me?.seat ?? null;
@@ -305,6 +312,10 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
   const guessing = !!mine && !mine.solved && !mine.out;
   // the reader's own turn, at a moment something of theirs can be pressed
   const acting = myTurn && guessing && phase !== 'answer';
+  // this wait of this turn, by name: saying "I know" opens the tiles for it, and the next wait starts with them closed
+  const moment = `${board.turns}:${phase}`;
+  // a turn that has to be a guess has nothing else on it, so the tiles are there without being asked for
+  const choosing = acting && (mine?.mustGuess === true || knowsAt === moment);
   const toAnswer = phase === 'answer' && pending !== null && me !== null && pending.waiting.includes(me);
   const answered = phase === 'answer' && pending !== null && me !== null && pending.answered.includes(me);
   const left = Math.max(0, Math.ceil((Date.parse(board.phaseEndsAt) - now) / 1000));
@@ -391,8 +402,13 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
       />
     ) : null;
   const tiles =
-    mine && guessing ? (
-      <GuessTiles dialect={dialect} tiles={mine.tiles} crossed={crossed} busy={busy} onGuess={acting ? (tile) => void act({ kind: 'guess', tile }) : null} />
+    mine && choosing ? (
+      <>
+        <GuessTiles dialect={dialect} tiles={mine.tiles} crossed={crossed} busy={busy} onGuess={(tile) => void act({ kind: 'guess', tile })} />
+        {mine.mustGuess ? null : <ClayButton label={t('games.whoAmI.notYet')} variant="outline" disabled={busy} onPress={() => setKnowsAt(null)} />}
+      </>
+    ) : acting ? (
+      <ClayButton label={t('games.whoAmI.iKnow')} tone="primary" size="large" disabled={busy} onPress={() => setKnowsAt(moment)} />
     ) : null;
   /** What the card said to the last question, and how each friend answered: loud while it is decided on, quiet after. */
   const verdict = (quiet: boolean): React.JSX.Element | null =>
@@ -496,7 +512,6 @@ function TableBoard({ view, skew, move }: { view: TableView; skew: number; move:
         <>
           {status}
           {deck}
-          {tiles}
         </>
       ) : null}
       {acting && phase === 'decide' ? deck : null}

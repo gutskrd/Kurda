@@ -40,10 +40,11 @@ import { TABLE } from '../impostor/table';
  * screen is about and small for every seat at the table; the questions worth
  * asking next as cards one tap asks; the deck of Kurdish questions, the
  * suggested ones first, where Ask asks one and the card's answer is stamped
- * on it in the dialect's own yes or no; the paper tiles to guess from, a
- * wrong one crossed out; the question on the table with the two answers to
- * give; the card's verdict as a card of its own colour; and what folds away
- * under a title, how the game scores among it.
+ * on it in the dialect's own yes or no; the paper tiles a player online
+ * guesses from once they say they know, a wrong one crossed out; the question
+ * on the table with the two answers to give, which are also the room's two
+ * verdicts on who a player said they are; the card's verdict as a card of its
+ * own colour; and what folds away under a title, how the game scores among it.
  *
  * What a question means is under it wherever a beginner reads it (the
  * suggested cards, the beginner's deck, the question read out on one phone);
@@ -525,31 +526,32 @@ export function QuestionDeck({
   );
 }
 
+/**
+ * The words a player may be, as paper tiles to pick one from and guess. They
+ * are a game with friends online's alone, and are drawn only once the player
+ * says they know: a list of choices in sight all along would be a quiz, not
+ * the game. On one phone there are none, and who one is is said out loud.
+ */
 export function GuessTiles({
   dialect,
-  title,
   tiles,
   crossed,
   busy = false,
   onGuess,
 }: {
   dialect: GameDialect;
-  /** what the tiles are called, where "Who are you?" is already said above them */
-  title?: string;
   tiles: readonly WhoAmITile[];
   /** the tiles guessed wrongly so far */
   crossed: readonly string[];
   busy?: boolean;
-  /** guessing one, when the reader may; null where the tiles are only to be read */
-  onGuess: ((tile: string) => void) | null;
+  onGuess: (tile: string) => void;
 }): React.JSX.Element {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
   const dir = useDirection();
   const [picked, setPicked] = useState<string | null>(null);
-  const open = onGuess !== null;
-  const can = open && picked !== null && !crossed.includes(picked) && !busy;
-  const heading = title ?? t('games.whoAmI.guessTitle');
+  const can = picked !== null && !crossed.includes(picked) && !busy;
+  const heading = t('games.whoAmI.oneOfThese');
   return (
     <View style={styles.section}>
       <Text accessibilityRole="header" style={[styles.title, dir.text, { color: colors.textPrimary }]}>
@@ -558,8 +560,8 @@ export function GuessTiles({
       <View style={[styles.tiles, { flexDirection: dir.row }]} accessibilityRole="radiogroup" accessibilityLabel={heading}>
         {tiles.map((tile) => {
           const out = crossed.includes(tile.id);
-          const on = open && picked === tile.id;
-          const off = !open || out || busy;
+          const on = picked === tile.id;
+          const off = out || busy;
           return (
             <Pressable
               key={tile.id}
@@ -583,7 +585,7 @@ export function GuessTiles({
           );
         })}
       </View>
-      {open ? <ClayButton label={t('games.whoAmI.guess')} tone="primary" size="large" disabled={!can} onPress={() => (picked ? onGuess(picked) : undefined)} /> : null}
+      <ClayButton label={t('games.whoAmI.guess')} tone="primary" size="large" disabled={!can} onPress={() => (picked ? onGuess(picked) : undefined)} />
     </View>
   );
 }
@@ -641,33 +643,53 @@ export function QuestionCard({
   );
 }
 
-/** The two answers to give, in the dialect's own yes and no: two buttons a thumb cannot miss. */
-export function YesNoButtons({ dialect, disabled = false, onAnswer }: { dialect: GameDialect; disabled?: boolean; onAnswer: (yes: boolean) => void }): React.JSX.Element {
+/**
+ * The two answers to give: two buttons a thumb cannot miss, yes in the yes
+ * colour and no in the no colour. They say the dialect's own yes and no, side
+ * by side. Given `labels` they say a phrase each in the reader's own words
+ * (the room's verdict on who a player said they are), one under the other so
+ * the whole phrase fits a phone.
+ */
+export function YesNoButtons({
+  dialect,
+  labels,
+  disabled = false,
+  onAnswer,
+}: {
+  dialect: GameDialect;
+  /** what the two buttons say in place of the dialect's yes and no */
+  labels?: { yes: string; no: string };
+  disabled?: boolean;
+  onAnswer: (yes: boolean) => void;
+}): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   return (
-    <View style={[styles.yesNo, { flexDirection: dir.row }]}>
-      {[true, false].map((yes) => (
-        <Pressable
-          key={String(yes)}
-          onPress={() => {
-            haptic('select');
-            onAnswer(yes);
-          }}
-          disabled={disabled}
-          accessibilityRole="button"
-          accessibilityLabel={yesNo(dialect, yes, t)}
-          accessibilityState={{ disabled }}
-          aria-disabled={disabled}
-          style={[styles.answerEdge, { backgroundColor: yes ? YES_EDGE : NO_EDGE, opacity: disabled ? 0.5 : 1 }]}
-        >
-          {({ pressed }) => (
-            <View style={[styles.answerFace, { backgroundColor: yes ? YES : NO }, pressed ? styles.down : null]}>
-              <Text style={[styles.answerText, kurdish(dialect)]}>{yesNo(dialect, yes, t)}</Text>
-            </View>
-          )}
-        </Pressable>
-      ))}
+    <View style={labels ? styles.yesNoStacked : [styles.yesNo, { flexDirection: dir.row }]}>
+      {[true, false].map((yes) => {
+        const says = labels ? (yes ? labels.yes : labels.no) : yesNo(dialect, yes, t);
+        return (
+          <Pressable
+            key={String(yes)}
+            onPress={() => {
+              haptic('select');
+              onAnswer(yes);
+            }}
+            disabled={disabled}
+            accessibilityRole="button"
+            accessibilityLabel={says}
+            accessibilityState={{ disabled }}
+            aria-disabled={disabled}
+            style={[labels ? styles.answerEdgeStacked : styles.answerEdge, { backgroundColor: yes ? YES_EDGE : NO_EDGE, opacity: disabled ? 0.5 : 1 }]}
+          >
+            {({ pressed }) => (
+              <View style={[styles.answerFace, { backgroundColor: yes ? YES : NO }, pressed ? styles.down : null]}>
+                <Text style={labels ? styles.answerPhrase : [styles.answerText, kurdish(dialect)]}>{says}</Text>
+              </View>
+            )}
+          </Pressable>
+        );
+      })}
     </View>
   );
 }
@@ -923,9 +945,13 @@ const styles = StyleSheet.create({
   saidMeaning: { fontSize: typography.sizes.md, textAlign: 'center' },
   saidHint: { fontSize: typography.sizes.xs, textAlign: 'center' },
   yesNo: { alignSelf: 'stretch', gap: spacing.sm },
+  yesNoStacked: { alignSelf: 'stretch', gap: spacing.sm },
   answerEdge: { flex: 1, borderRadius: radii.lg, paddingBottom: 5 },
+  // one under the other each is as tall as its own face: sharing out a height that is not there would fold them flat
+  answerEdgeStacked: { borderRadius: radii.lg, paddingBottom: 5 },
   answerFace: { minHeight: 68, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.sm, borderRadius: radii.lg },
   answerText: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, color: ON_ANSWER },
+  answerPhrase: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center', color: ON_ANSWER },
 
   verdict: { alignItems: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: radii.xl },
   verdictHeading: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },

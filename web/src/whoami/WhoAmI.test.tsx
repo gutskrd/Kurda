@@ -11,7 +11,8 @@ import { WhoAmI } from './WhoAmI';
  * Who Am I? on the website: the start and its two ways in, one phone first,
  * and the table with friends online from both sides of a question, the
  * asker's (their list with the questions worth asking first) and an
- * answerer's, through the card's verdict to a guess and the end.
+ * answerer's, through the card's verdict to a guess and the end. The words
+ * to guess from are listed only once a player says they know who they are.
  *
  * The room's server here is the game's own rules: a table is begun from three
  * dealt cards, every move the page sends is judged by `whoAmITableRules`, and
@@ -93,8 +94,9 @@ describe('Who Am I?, the start', () => {
     // nothing is played alone any more
     expect(screen.queryByText('On your own')).toBeNull();
     expect(document.querySelector('a[href*="solo"]')).toBeNull();
-    // how it scores is on the page, folded away
+    // how it scores is on the page, folded away, with the misses allowed on one phone, the way the page leads with
     expect(screen.getByText('How it scores')).toBeInTheDocument();
+    expect(screen.getByText(/^After 3 wrong guesses you are out/)).toBeInTheDocument();
   });
 
   it('makes a table with friends at the level and the longest time chosen, and opens its lobby', async () => {
@@ -116,8 +118,9 @@ describe('Who Am I?, the start', () => {
   it('leaves out a way that cannot be played yet', async () => {
     serve({ ...onePhone(false), ...online(true) });
     const first = renderPlay(<WhoAmI />, { route: '/app/games/who-am-i' });
-    // the one way there is to play is not the quiet one
+    // the one way there is to play is not the quiet one, and the note counts the misses as a table online does
     expect(await screen.findByRole('region', { name: 'With friends online' })).not.toHaveClass('is-quiet');
+    expect(screen.getByText(/^After 2 wrong guesses you are out/)).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: 'On this phone' })).toBeNull();
     first.unmount();
 
@@ -270,11 +273,26 @@ function open() {
 
 const seatOf = (name: string): HTMLElement => within(screen.getByRole('list', { name: 'The table' })).getByText(name).closest('li')!;
 
-/** The reader's own word may be among their tiles, as any tile may: it is on the page nowhere else. */
+/** The reader's own word may be among their tiles once those are open, as any tile may: it is on the page nowhere else. */
 function expectOwnCardUnread(word: string): void {
   for (const el of screen.queryAllByText(word)) expect(el.closest('[role="radio"]')).not.toBeNull();
   expect(seatOf('You')).toHaveTextContent('The card on your forehead');
   expect(seatOf('You')).not.toHaveTextContent(word);
+}
+
+/** Nothing on the board lists who I could be: no tiles and no Guess, only the way to say I know. */
+function expectNoChoices(): void {
+  expect(screen.queryByRole('radiogroup')).toBeNull();
+  expect(screen.queryByRole('radio')).toBeNull();
+  expect(screen.queryByText('You are one of these')).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Guess' })).toBeNull();
+  expect(screen.getByRole('button', { name: 'I know who I am!' })).toHaveAttribute('aria-expanded', 'false');
+}
+
+/** My tiles, opened by saying I know who I am. */
+async function openTiles(): Promise<HTMLElement> {
+  await userEvent.click(screen.getByRole('button', { name: 'I know who I am!' }));
+  return screen.findByRole('radiogroup', { name: 'You are one of these' });
 }
 
 describe('Who Am I?, the table online, on my turn', () => {
@@ -298,6 +316,10 @@ describe('Who Am I?, the table online, on my turn', () => {
     expect(seatOf('Rojda')).toHaveTextContent('Questions: 0');
     expect(seatOf('Baran')).toHaveTextContent('kûçik');
     expectOwnCardUnread('pisîk');
+    // the words I could be are not listed while there are questions to ask
+    expectNoChoices();
+    // a table online counts the misses its own way
+    expect(screen.getByText(/^After 2 wrong guesses you are out/)).toBeInTheDocument();
 
     // at the beginner's level every question says what it means under it, with nothing to tap
     const deck = screen.getByRole('region', { name: 'Ask a question' });
@@ -346,18 +368,73 @@ describe('Who Am I?, the table online, on my turn', () => {
     expect(seatOf('Rojda')).toHaveTextContent('Points: 1');
     expectOwnCardUnread('pisîk');
 
-    // a wrong guess: the tile is crossed out, the page says so, and the turn moves on
+    // with the answer in hand the words are still not listed, until I say I know who I am
+    expectNoChoices();
+    expect(screen.getByRole('button', { name: 'I know who I am!' })).toHaveClass('btn-primary');
+    const tiles = await openTiles();
+    expect(within(tiles).getAllByRole('radio').map((r) => r.textContent)).toEqual(['pisîk cat', 'masî fish', 'hesp horse']);
+
+    // a wrong guess: the page says so, the turn moves on, and the words are off the board again
     await userEvent.click(screen.getByRole('radio', { name: /masî/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
     await waitFor(() => expect(t.moves()[1]).toEqual({ kind: 'guess', tile: 'i-fish' }));
     expect(await screen.findByText('Rojda’s turn')).toBeInTheDocument();
     expect(screen.getByText('Rojda is choosing a question.')).toBeInTheDocument();
     expect(screen.getByRole('status')).toHaveTextContent('Not masî. Guesses left: 1');
-    expect(screen.getByRole('radio', { name: 'masî, Not this one' })).toBeDisabled();
+    expect(screen.queryByRole('radiogroup')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'I know who I am!' })).toBeNull();
     expect(seatOf('Rojda')).toHaveAttribute('aria-current', 'true');
     // the last verdict stays on the table while the next player chooses
     expect(screen.getByRole('region', { name: /^The card says:/ })).toBeInTheDocument();
     expectOwnCardUnread('pisîk');
+
+    // round the table and back to me: the tile I guessed wrong is crossed out when I open them again
+    for (const by of [2, 3]) t.play(by, { kind: 'pass' });
+    moved();
+    expect(await screen.findByText('Your turn')).toBeInTheDocument();
+    expectNoChoices();
+    await openTiles();
+    expect(screen.getByRole('radio', { name: 'masî, Not this one' })).toBeDisabled();
+  });
+
+  it('lists the words to choose from only once I say I know who I am, and folds them away again at Not yet', async () => {
+    const t = table();
+    const moved = open();
+    await screen.findByText('Your turn');
+    expectNoChoices();
+    expect(screen.getByRole('button', { name: 'I know who I am!' })).toHaveClass('btn-secondary');
+
+    // said: the tiles and Guess are there in place of the button, and the focus has gone with them
+    const tiles = await openTiles();
+    expect(within(tiles).getAllByRole('radio')).toHaveLength(3);
+    expect(screen.getByRole('button', { name: 'Guess' })).toBeDisabled();
+    expect(screen.queryByRole('button', { name: 'I know who I am!' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Pass the turn on' })).toBeNull();
+    expect(tiles.closest('.wa-choose')).toHaveFocus();
+
+    // not yet: they are folded away, the focus is back on the button, and the table has heard nothing
+    await userEvent.click(screen.getByRole('button', { name: 'Not yet' }));
+    expectNoChoices();
+    expect(screen.getByRole('button', { name: 'I know who I am!' })).toHaveFocus();
+    expect(screen.getByRole('button', { name: 'Pass the turn on' })).toBeInTheDocument();
+    expect(t.moves()).toEqual([]);
+
+    // opened again and left open while a question is asked: the wait after the answer starts without them
+    await openTiles();
+    await userEvent.click(screen.getAllByRole('button', { name: 'Ask' })[0]!);
+    await waitFor(() => expect(t.moves()).toEqual([{ kind: 'ask', question: 'q1' }]));
+    t.play(2, { kind: 'answer', yes: false });
+    t.play(3, { kind: 'answer', yes: false });
+    moved();
+    await screen.findByRole('region', { name: /^The card says:/ });
+    expectNoChoices();
+
+    // a guess online is a tile the table checks, never the word of a room
+    await openTiles();
+    await userEvent.click(screen.getByRole('radio', { name: /pisîk/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
+    await waitFor(() => expect(t.moves()[1]).toEqual({ kind: 'guess', tile: 'i-cat' }));
+    expect(JSON.stringify(t.moves())).not.toContain('said');
   });
 
   it('leads my list with the suggested questions under their own label, then the rest, and asks from either as before', async () => {
@@ -413,6 +490,7 @@ describe('Who Am I?, the table online, on my turn', () => {
     const t = table();
     const moved = open();
     await screen.findByText('Your turn');
+    await openTiles();
     await userEvent.click(screen.getByRole('radio', { name: /pisîk/ }));
     await userEvent.click(screen.getByRole('button', { name: 'Guess' }));
     await waitFor(() => expect(t.moves()).toEqual([{ kind: 'guess', tile: 'i-cat' }]));
@@ -437,7 +515,7 @@ describe('Who Am I?, the table online, on my turn', () => {
     await waitFor(() => expect(t.moves()[1]).toEqual({ kind: 'answer', yes: true }));
   });
 
-  it('offers no pass once every question is asked, and says why', async () => {
+  it('opens the words by itself once every question is asked, offers no pass and no way back, and says why', async () => {
     const t = table();
     // my first question asked and answered, the turn round the table, and now my second and last
     for (const question of ['q1', 'q2']) {
@@ -451,7 +529,11 @@ describe('Who Am I?, the table online, on my turn', () => {
     expect(screen.getAllByText('You have asked every question, so this turn has to be a guess.').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'Pass the turn on' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Ask' })).toBeNull();
+    // the turn is a guess, so the words to guess from are there without being asked for, and cannot be put away
+    expect(within(screen.getByRole('radiogroup', { name: 'You are one of these' })).getAllByRole('radio')).toHaveLength(3);
     expect(screen.getByRole('button', { name: 'Guess' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'I know who I am!' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Not yet' })).toBeNull();
     // both answers are on my list, each the card's own
     const list = screen.getByRole('region', { name: 'Your questions' });
     expect(within(list).getByText('Na')).toBeInTheDocument();
