@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import type { MyRanks } from '@kurda/shared';
+import { isRankedGame, type MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { MedalIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -27,7 +27,8 @@ export function RanksSection(): React.JSX.Element | null {
     let cancelled = false;
     void client.get<MyRanks>('/ranks/me').then((res) => {
       // an answer without the shape (an API from before Game Ranks) shows nothing
-      if (!cancelled && res.ok && Array.isArray(res.data?.ranks) && res.data.season) setRanks(res.data);
+      // a rank in a game that is no longer part of Hevalo has no page to open and nothing left to play for
+      if (!cancelled && res.ok && Array.isArray(res.data?.ranks) && res.data.season) setRanks({ ...res.data, ranks: res.data.ranks.filter((r) => isRankedGame(r.game)) });
     });
     return () => {
       cancelled = true;

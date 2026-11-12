@@ -38,8 +38,6 @@ const SHARE_KEY: Record<PlayGame, MessageKey> = {
   stories: 'play.code.shareStories',
   'last-letter': 'play.code.shareLastLetter',
   impostor: 'play.code.shareImpostor',
-  'dont-say': 'play.code.shareDontSay',
-  bluff: 'games.bluff.share',
   'who-am-i': 'games.whoAmI.share',
 };
 

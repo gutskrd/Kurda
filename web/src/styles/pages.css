@@ -2754,6 +2754,13 @@ a.mkp-activity-row:hover {
 .invite-lead {
   margin: 0 0 8px;
 }
+/* where an invite to a game that is no longer part of Hevalo was: a line, not a ticket */
+.invite-retired {
+  display: block;
+  font-size: 0.85rem;
+  font-style: italic;
+  opacity: 0.75;
+}
 
 /*
  * A bubble shrink-wraps its text, so an invite card had no definite width to

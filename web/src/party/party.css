@@ -1,26 +1,10 @@
 /*
- * What the party games' pages share on the website (party/PartyPage.tsx): the
- * start's three steps and its "with friends" panel, the lobby's settings line,
- * and the timer bar that empties as a wait runs out. Flat planes from the
- * palette; under Reduce Motion the bar jumps rather than glides.
+ * What Kurdish Impostor's page is built from on the website
+ * (party/PartyPage.tsx): the three steps of how a round goes, the lobby's
+ * settings line, and the timer bar that empties as a wait runs out. Flat
+ * planes from the palette; under Reduce Motion the bar jumps rather than
+ * glides.
  */
-.party-start {
-  display: grid;
-  gap: var(--space-4);
-}
-.party-how,
-.party-way {
-  display: grid;
-  gap: var(--space-2);
-  padding: var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: var(--surface-solid);
-}
-.party-way-title {
-  margin: 0;
-  font-size: var(--text-section);
-}
 .party-steps {
   display: grid;
   gap: var(--space-3);

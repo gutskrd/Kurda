@@ -50,7 +50,7 @@ import { RatedChoice, useRatedChoice } from '../ranks/rated';
 import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
 import { usePartyOffer, type PartyGame } from '../party/offer';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
-import { BluffChoices, RaceChoices, type BluffOffer, type RaceOffer } from '../games/partyChoices';
+import { RaceChoices, type RaceOffer } from '../games/partyChoices';
 
 /** What the sheet is opened for. */
 export type InviteTarget =
@@ -160,15 +160,13 @@ export function InviteForm({
     useLastLetterAvailability(target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === 'last-letter'))),
     'group',
   );
-  // the party games, in the varieties and at the levels their approved cards allow
+  // Kurdish Impostor, in the varieties and at the levels its approved cards allow
   const partyAsked = (g: PartyGame) => target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === g));
   const impostorOffer = usePartyOffer('impostor', partyAsked('impostor'));
-  const dontSayOffer = usePartyOffer('dont-say', partyAsked('dont-say'));
-  // Kurdish Bluff and the Who Am I? race, where their content lets them be played (and in which languages and difficulties)
-  const askParty = target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && (target.game === 'bluff' || target.game === 'who-am-i')));
-  const bluffOffers = useMpAvailability<BluffOffer>('bluff', askParty);
-  const raceOffers = useMpAvailability<RaceOffer>('who-am-i', askParty);
-  // their choices, handed up by their own chips; null until there is something to choose
+  // the Who Am I? race, where its content lets it be played (and at which difficulties)
+  const askRace = target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === 'who-am-i'));
+  const raceOffers = useMpAvailability<RaceOffer>('who-am-i', askRace);
+  // its choices, handed up by its own chips; null until there is something to choose
   const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const fixedStory = target.kind === 'new' ? (target.story ?? null) : null;
   const gameFixed = lockGame || target.kind === 'lobby';
@@ -232,12 +230,10 @@ export function InviteForm({
     ...(storiesOpen || game === 'stories' ? (['stories'] as const) : []),
     ...(lastLetterDialects.length > 0 || game === 'last-letter' ? (['last-letter'] as const) : []),
     ...((impostorOffer ?? []).length > 0 || game === 'impostor' ? (['impostor'] as const) : []),
-    ...((dontSayOffer ?? []).length > 0 || game === 'dont-say' ? (['dont-say'] as const) : []),
-    ...(groupDialects(bluffOffers).length > 0 || game === 'bluff' ? (['bluff'] as const) : []),
     ...(groupDialects(raceOffers).length > 0 || game === 'who-am-i' ? (['who-am-i'] as const) : []),
   ];
-  // a party game's lobby: a variety it is offered in (the chosen one when it is), and a level offered there
-  const partyOffer = game === 'impostor' ? (impostorOffer ?? []) : game === 'dont-say' ? (dontSayOffer ?? []) : [];
+  // Kurdish Impostor's lobby: a variety it is offered in (the chosen one when it is), and a level offered there
+  const partyOffer = game === 'impostor' ? (impostorOffer ?? []) : [];
   const wanted: LetterDialect = dialect === 'sorani' ? 'ckb' : 'kmr';
   const partyHere = partyOffer.find((o) => o.dialect === wanted) ?? partyOffer[0] ?? null;
   const [partyDifficulty, setPartyDifficulty] = useState<GameDifficulty>('beginner');
@@ -270,9 +266,9 @@ export function InviteForm({
     setFriends((f) => (f.length > max ? f.slice(-max) : f));
   }, [max]);
 
-  const storyReady = (game !== 'stories' || lengths.length > 0) && ((game !== 'impostor' && game !== 'dont-say') || target.kind === 'lobby' || partyHere !== null);
-  // a party game is made only with something its content can be played with
-  const partyReady = target.kind === 'lobby' || (game !== 'bluff' && game !== 'who-am-i') || partySettings !== null;
+  const storyReady = (game !== 'stories' || lengths.length > 0) && (game !== 'impostor' || target.kind === 'lobby' || partyHere !== null);
+  // a race is made only with something its content can be played with
+  const partyReady = target.kind === 'lobby' || game !== 'who-am-i' || partySettings !== null;
 
   function settings(): Record<string, unknown> {
     switch (game) {
@@ -284,9 +280,6 @@ export function InviteForm({
         return { dialect: letterDialect, turnSeconds, rated };
       case 'impostor':
         return { dialect: partyHere?.dialect ?? wanted, difficulty: difficultyNow ?? 'beginner', clueSeconds, category: categoryNow || null, rated };
-      case 'dont-say':
-        return { dialect: partyHere?.dialect ?? wanted, difficulty: difficultyNow ?? 'beginner', rated };
-      case 'bluff':
       case 'who-am-i':
         return { ...(partySettings ?? {}), rated };
       case 'stories':
@@ -442,7 +435,7 @@ export function InviteForm({
         </>
       )}
 
-      {target.kind !== 'lobby' && (game === 'impostor' || game === 'dont-say') && partyHere && (
+      {target.kind !== 'lobby' && game === 'impostor' && partyHere && (
         <>
           {partyOffer.length > 1 && (
             <ChipRadio
@@ -460,7 +453,7 @@ export function InviteForm({
               options={partyHere.difficulties.map((d) => ({ value: d, label: t(PARTY_LEVEL_KEY[d]) }))}
             />
           )}
-          {game === 'impostor' && impostorCategories.length > 0 && (
+          {impostorCategories.length > 0 && (
             <PictureRadio
               label={t('games.impostor.category')}
               layout="strip"
@@ -479,19 +472,13 @@ export function InviteForm({
               ]}
             />
           )}
-          {game === 'impostor' && (
-            <ChipRadio
-              label={t('games.impostor.clueTime')}
-              value={clueSeconds}
-              onChange={setClueSeconds}
-              options={IMPOSTOR_CLUE_SECONDS.map((sec) => ({ value: sec, label: t('games.party.seconds', { count: sec }) }))}
-            />
-          )}
+          <ChipRadio
+            label={t('games.impostor.clueTime')}
+            value={clueSeconds}
+            onChange={setClueSeconds}
+            options={IMPOSTOR_CLUE_SECONDS.map((sec) => ({ value: sec, label: t('games.party.seconds', { count: sec }) }))}
+          />
         </>
-      )}
-
-      {target.kind !== 'lobby' && game === 'bluff' && (
-        <BluffChoices offers={bluffOffers ?? []} preferred={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} />
       )}
 
       {target.kind !== 'lobby' && game === 'who-am-i' && (

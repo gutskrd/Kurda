@@ -20,7 +20,7 @@ import type { MessageKey } from '../i18n/en';
 import { describeError } from '../lib/api';
 import { PlayButton } from '../learn/PlayButton';
 import { SoloGameShell, type SoloRound } from './SoloGameShell';
-import { useAvailability, useGameDialect } from './learnGames';
+import { useAvailability, useGameDialect } from './soloRounds';
 import { CaseMini } from './CaseMini';
 import './detective.css';
 

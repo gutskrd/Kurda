@@ -1,5 +1,5 @@
-import type { ChatGameRef, ChatMessageKind, GiftCard } from '@kurda/shared';
-import { INVITE_NAME_KEY, inviteLinkPattern, parseInvite } from '../lib/gameInvites';
+import { isPlayGame, type ChatGameRef, type ChatMessageKind, type GiftCard } from '@kurda/shared';
+import { INVITE_NAME_KEY, hasRetiredInvite, inviteLinkPattern, parseInvite, withoutRetiredInvites } from '../lib/gameInvites';
 import type { MessageKey } from '../i18n/en';
 
 /** Just enough of the i18n contract to name a game — this file has no React. */
@@ -35,12 +35,18 @@ export function messagePreview(message: Previewable | string, t: Translate): str
   // or a list names it only once the reader has opened theirs
   if (m.kind === 'gift') return m.gift?.myOpened ? t('chat.preview.giftNamed', { item: m.gift.name }) : t('chat.preview.gift');
   if (m.kind === 'game') {
-    return m.game ? t('games.invite.preview', { game: t(INVITE_NAME_KEY[m.game.game]) }) : t('chat.preview.game');
+    // a card for a game that is no longer part of Hevalo is still a game card, with no name to give it
+    return m.game && isPlayGame(m.game.game) ? t('games.invite.preview', { game: t(INVITE_NAME_KEY[m.game.game]) }) : t('chat.preview.game');
   }
   const body = m.body ?? '';
   const invite = parseInvite(body);
   const collapse = (text: string): string => text.replace(/\s+/g, ' ').trim();
 
+  if (!invite && hasRetiredInvite(body)) {
+    // an old link to a game that is gone: what was typed round it, and what it was, never the bare address
+    const rest = collapse(withoutRetiredInvites(body));
+    return rest ? `${rest} · ${t('chat.preview.game')}` : t('chat.preview.game');
+  }
   if (!invite) return collapse(body);
 
   // a row of text, so it says what the thing is rather than drawing a picture

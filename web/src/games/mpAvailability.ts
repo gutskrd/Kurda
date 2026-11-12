@@ -4,10 +4,9 @@ import { useAuth } from '../auth/AuthProvider';
 
 /**
  * Where a multiplayer learning game is offered now (`GET /mp/:game/availability`),
- * for the games that answer more than "with friends or not" — Kurdish Bluff
- * names the languages its cards have real meanings in, the Who Am I? race the
- * difficulties its identities fill. Per dialect; a game is only offered where
- * it says so, and nothing says "coming soon".
+ * for the games that answer more than "with friends or not" — the Who Am I?
+ * race names the difficulties its identities fill. Per dialect; a game is
+ * only offered where it says so, and nothing says "coming soon".
  *
  * Read once per page load per game and shared, as The Last Letter's is: the
  * answer moves when content is published, not while somebody is choosing.

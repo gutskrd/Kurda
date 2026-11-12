@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import type { ChatGameRef, LobbyCard } from '@kurda/shared';
+import { isPlayGame, type ChatGameRef, type LobbyCard } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -10,6 +10,7 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import { TicketBody, TicketGlyph, TicketStamp, TicketStub, ticketClass, useFreshStamp } from '../ui/Ticket';
 import { GAME_NAME_KEY, joinLobby, lobbyPath, playError, summaryParts } from './playApi';
 import { RatedBadge } from '../ranks/rated';
+import { RetiredGameNote } from '../components/GameInviteCard';
 
 const STATUS_KEY: Record<Exclude<LobbyCard['status'], 'open'>, MessageKey> = {
   full: 'play.card.full',
@@ -158,9 +159,13 @@ export function ChatGameCard({
  * What a thread hands `MessageList` as `renderBody` for game cards: the live
  * card for a message that is one, nothing (draw it as text) otherwise. A
  * thread that draws other kinds too tries theirs first and falls back to this.
+ *
+ * A card shared for a game that is no longer part of Hevalo has no lobby to
+ * read and none to join: it is a line saying so, with nothing to press.
  */
 export function gameCardBody(m: ChatExtras & { senderId?: string; username?: string }): React.ReactNode | undefined {
   if (m.kind !== 'game' || !m.game) return undefined;
+  if (!isPlayGame(m.game.game)) return <RetiredGameNote />;
   const from = m.senderId && m.username ? { id: m.senderId, name: m.username } : null;
   return <ChatGameCard game={m.game.game} lobbyId={m.game.lobbyId} from={from} />;
 }

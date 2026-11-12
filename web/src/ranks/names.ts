@@ -79,9 +79,15 @@ export function rankLabel(t: Translate, tier: RankTier, division: Division | nul
   return t('ranks.tierDivision', { tier: name, division: ROMAN[division] });
 }
 
-/** The game's own name ("Peyvok Battle"), from the play layer's map. */
+/**
+ * The game's own name ("Peyvok Battle"), from the play layer's map. A row
+ * kept from a game that is no longer part of Hevalo (an emblem won in a past
+ * season) names a game this app has no word for, whatever its type says: it
+ * is called what it is, a game no longer played.
+ */
 export function gameName(t: Translate, game: RankedGame): string {
-  return t(GAME_NAME_KEY[game]);
+  const key = GAME_NAME_KEY[game] as MessageKey | undefined;
+  return t(key ?? 'games.retired');
 }
 
 const REASON_KEY: Record<RankReason, MessageKey> = {

@@ -138,6 +138,28 @@ describe('the five places', () => {
     await waitFor(() => expect(where()).toBe('/app/rankings'));
   });
 
+  // the two exercises were games once: a bookmark of either still opens it, where it lives now
+  it('sends the two exercises’ old game addresses to their pages under Learn', async () => {
+    signIn();
+    serve();
+    const sentence = visit('/app/games/build-sentence');
+    await waitFor(() => expect(where()).toBe('/app/learn/practice/build-sentence'));
+    sentence.unmount();
+    visit('/app/games/hear-it');
+    await waitFor(() => expect(where()).toBe('/app/learn/practice/hear-it'));
+  });
+
+  // an old invite, notification or bookmark of a game that is gone lands on the games, not on a missing page
+  it('sends the addresses of the games that are no longer played to the games list', async () => {
+    signIn();
+    serve();
+    for (const old of ['/app/games/dont-say?id=g1', '/app/games/bluff?id=g2', '/app/games/village', '/app/games/kingdom', '/app/village', '/app/kingdom']) {
+      const page = visit(old);
+      await waitFor(() => expect(where(), old).toBe('/app/games'));
+      page.unmount();
+    }
+  });
+
   // a bookmark, or a battle invite already sent, from before the game was renamed
   it('sends the word game’s old addresses to Peyvok, keeping a battle’s id', async () => {
     serve();

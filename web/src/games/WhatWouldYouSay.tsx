@@ -33,7 +33,7 @@ import { play, soundPlayer } from '../lib/sound';
 import { PlayButton } from '../learn/PlayButton';
 import { Tile } from '../learn/Tile';
 import { SoloGameShell, type SoloRound } from './SoloGameShell';
-import { useAvailability, useGameDialect } from './learnGames';
+import { useAvailability, useGameDialect } from './soloRounds';
 import { SceneMini } from './SceneMini';
 import './scene.css';
 

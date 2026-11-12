@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import {
   DIFFICULTY_LEVELS,
   GAME_DIFFICULTIES,
+  learnGame,
   roundXpCeiling,
   type GameDialect,
   type GameDifficulty,
   type LearnGameId,
+  type LearnGamePlace,
   type SoloAnswerResult,
   type SoloItemState,
   type SoloResults,
@@ -20,6 +22,9 @@ import type { MessageKey } from '../i18n/en';
 import { describeError } from '../lib/api';
 import { haptic } from '../lib/haptics';
 import { dialectName } from '../learn/map';
+// a round wears one of the path's tones (`lp-tone-*`), and the shell's own look is the games' stylesheet
+import '../learn/path.css';
+import './games.css';
 
 /**
  * What every learning game played alone has around its own staging: the
@@ -36,6 +41,11 @@ import { dialectName } from '../learn/map';
  * The game draws the item itself (`renderRound`): its board, its Check
  * button, its nudge after a wrong try and its correction once an item is
  * done. The shell draws the verdict, the explanation and the way on.
+ *
+ * Two of the rounds it carries are not games: Build a Kurdish Sentence and
+ * Hear It, Find It are exercises of the lessons' practice (the registry's
+ * `place`). For them the way out leads back to Learn and is worded as a
+ * lesson's is, and another go is another round, not another game.
  */
 
 /** What a game's board is handed for the item in front of the player. */
@@ -100,6 +110,12 @@ const DIFFICULTY_KEY: Record<GameDifficulty, MessageKey> = {
   advanced: 'games.solo.difficulty.advanced',
 };
 
+/** Where a round leaves to and how its results word the way back and another go, by where the registry puts it. */
+const HOME: Record<LearnGamePlace, { to: string; back: MessageKey; again: MessageKey }> = {
+  games: { to: '/app/games', back: 'games.solo.backToGames', again: 'games.solo.playAgain' },
+  lessons: { to: '/app/learn', back: 'lesson.backToLearn', again: 'learn.exercise.again' },
+};
+
 type Phase = 'intro' | 'round' | 'results';
 
 /** The first item still to answer, or the length when every one is done. */
@@ -126,6 +142,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
 }: Props<Item, H, C, B>): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
+  const home = HOME[learnGame(game).place];
   const [phase, setPhase] = useState<Phase>('intro');
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
   const [session, setSession] = useState<SoloSessionView<Item, B> | null>(null);
@@ -270,10 +287,10 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         {resultsExtra}
         <div className="solo-actions">
           <Button onClick={() => void start()} disabled={busy || !chosen}>
-            {t('games.solo.playAgain')}
+            {t(home.again)}
           </Button>
-          <Link to="/app/games" className="btn btn-secondary">
-            {t('games.solo.backToGames')}
+          <Link to={home.to} className="btn btn-secondary">
+            {t(home.back)}
           </Link>
         </div>
       </section>
@@ -313,7 +330,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
     return (
       <section className="solo solo--round" aria-labelledby="solo-title">
         <header className="solo-bar">
-          <Link to="/app/games" className="solo-exit" aria-label={t('games.solo.exit')}>
+          <Link to={home.to} className="solo-exit" aria-label={t('games.solo.exit')}>
             <CloseIcon size={20} />
           </Link>
           <h1 id="solo-title" ref={heading} tabIndex={-1} className="sr-only">

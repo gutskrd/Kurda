@@ -2,9 +2,11 @@ import { Link } from 'react-router-dom';
 import {
   INVITE_BLURB_KEY,
   INVITE_NAME_KEY,
+  hasRetiredInvite,
   inviteLinkPattern,
   invitePath,
   parseInvite,
+  withoutRetiredInvites,
   type GameInvite,
   type GameInviteType,
 } from '../lib/gameInvites';
@@ -22,9 +24,26 @@ import type { MessageKey } from '../i18n/en';
  * page's: Kurmancî in an Arabic or Soranî interface stays left to right, with
  * its question mark at the end of the question rather than the start, and
  * Soranî in an English one runs right to left.
+ *
+ * An invite to a game that is no longer part of Hevalo keeps the words sent
+ * with it and loses its link: in its place a line says the game is no longer
+ * played, and there is nothing to press.
  */
 export function MessageBody({ body }: { body: string }): React.JSX.Element {
   const invite = parseInvite(body);
+  if (!invite && hasRetiredInvite(body)) {
+    const rest = withoutRetiredInvites(body).replace(/\s+/g, ' ').trim();
+    return (
+      <>
+        {rest && (
+          <p className="invite-lead" dir="auto">
+            {rest}
+          </p>
+        )}
+        <RetiredGameNote />
+      </>
+    );
+  }
   if (!invite) return <span dir="auto">{body}</span>;
   // keep any human text the sender wrote alongside the link
   const rest = body.replace(inviteLinkPattern(), ' ').replace(/\s+/g, ' ').trim();
@@ -47,8 +66,6 @@ const ACTION_KEY: Record<GameInviteType, MessageKey> = {
   stories: 'games.stories.join',
   'last-letter': 'games.lastLetter.join',
   impostor: 'games.impostor.join',
-  'dont-say': 'games.dontSay.join',
-  bluff: 'games.bluff.join',
   'who-am-i': 'games.whoAmI.join',
 };
 
@@ -72,4 +89,13 @@ export function GameInviteCard({ invite }: { invite: GameInvite }): React.JSX.El
       <InviteCardBody type={invite.type} game={label} blurb={t(INVITE_BLURB_KEY[invite.type])} action={t(ACTION_KEY[invite.type])} />
     </Link>
   );
+}
+
+/**
+ * What stands where an invite to a retired game was: one quiet line, not a
+ * ticket, since there is no game behind it to join or to look at.
+ */
+export function RetiredGameNote(): React.JSX.Element {
+  const t = useT();
+  return <span className="invite-retired">{t('games.retired')}</span>;
 }

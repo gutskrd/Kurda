@@ -15,6 +15,19 @@ describe('MessageBody', () => {
     expect(screen.getByText('Join game')).toBeInTheDocument();
   });
 
+  it('says a game is no longer played where an old invite to it was, with nothing to press', () => {
+    const id = '0b0c2c43-5a1e-4b1e-9b5e-6f1b2a3c4d5e';
+    for (const game of ['dont-say', 'bluff']) {
+      const shown = show(<MessageBody body={`come and play https://hevalo.app/app/games/${game}?id=${id}`} />);
+      expect(screen.getByText('This game is no longer played.')).toBeInTheDocument();
+      // what was written round the link stays; the address that leads nowhere does not
+      expect(screen.getByText('come and play')).toBeInTheDocument();
+      expect(screen.queryByRole('link')).toBeNull();
+      expect(screen.queryByText(new RegExp(id))).toBeNull();
+      shown.unmount();
+    }
+  });
+
   it('leaves text without a link as it is', () => {
     show(<MessageBody body="just words" />);
     expect(screen.getByText('just words')).toBeInTheDocument();

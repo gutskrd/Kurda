@@ -3,9 +3,8 @@ import { GAME_DIALECTS, type GameDialect, type GameDifficulty, type GamesAvailab
 import { useAuth } from '../auth/AuthProvider';
 
 /**
- * Where the party games (Kurdish Impostor, Don't Say the Word!) are offered
- * now: per variety, the difficulties whose approved cards reach the game's
- * minimum (`GET /games/availability`, the same answer Learn's list reads). A
+ * Where Kurdish Impostor is offered now: per variety, the difficulties whose
+ * approved cards reach the game's minimum (`GET /games/availability`, the same answer Learn's list reads). A
  * game is made only where it is offered, so the start page and the invite
  * sheet choose among these, and a game offered nowhere says so rather than
  * "coming soon".
@@ -13,7 +12,7 @@ import { useAuth } from '../auth/AuthProvider';
  * Read once per page load for both varieties and shared: it changes when an
  * editor publishes cards, not while somebody is choosing a game.
  */
-export type PartyGame = Extract<LearnGameId, 'impostor' | 'dont-say'>;
+export type PartyGame = Extract<LearnGameId, 'impostor'>;
 
 export interface PartyOffer {
   dialect: GameDialect;
@@ -27,7 +26,7 @@ export function forgetPartyOffers(): void {
   cached = null;
 }
 
-/** The varieties a party game is offered in, each with its difficulties; null until it answers. */
+/** The varieties the game is offered in, each with its difficulties; null until it answers. */
 export function usePartyOffer(game: PartyGame, enabled = true): PartyOffer[] | null {
   const { client } = useAuth();
   const [answer, setAnswer] = useState<GamesAvailability[] | null>(null);

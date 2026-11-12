@@ -9,6 +9,7 @@ import {
   TICKET_ART_STUB,
   TICKET_ART_TILES,
   burstPlan,
+  isPlayGame,
   parseInvite,
   type JoinedByCode,
 } from '@kurda/shared';
@@ -114,6 +115,11 @@ export function JoinCodeForm({
     setMessage(null);
     const res = await client.post<JoinedByCode>('/play/join', { code: value });
     if (!mounted.current) return;
+    // a code can only lead to a game this app has a page for
+    if (res.ok && !isPlayGame(res.data.game)) {
+      refuse(t('play.join.notFound'));
+      return;
+    }
     if (res.ok) {
       setPhase('joined');
       setFresh(JOIN_CODE_LENGTH);
