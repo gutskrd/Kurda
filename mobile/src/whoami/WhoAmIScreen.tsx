@@ -1,240 +1,236 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ScrollView, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import {
-  WHO_AM_I_GUESSES,
-  WHO_AM_I_ROUND_ITEMS,
-  dialectDirection,
+  WHO_AM_I_ANSWER_SECONDS,
+  WHO_AM_I_ASK_SECONDS,
+  WHO_AM_I_COUCH_MAX_PLAYERS,
+  WHO_AM_I_COUCH_MIN_PLAYERS,
+  WHO_AM_I_DECIDE_SECONDS,
+  WHO_AM_I_TABLE_MAX_PLAYERS,
+  WHO_AM_I_TABLE_MIN_PLAYERS,
+  meaningIn,
   whoAmIPoints,
-  type GameDialect,
   type GameDifficulty,
   type MultiMoveAnswer,
   type MultiView,
-  type SoloResults,
-  type WhoAmIAskResult,
-  type WhoAmIAsked,
-  type WhoAmICorrection,
-  type WhoAmIHint,
-  type WhoAmIItemView,
-  type WhoAmIRaceBoard,
-  type WhoAmIRaceOutcome,
+  type WhoAmICouchOffer,
+  type WhoAmITableBoard,
+  type WhoAmITableMove,
+  type WhoAmITableOutcome,
 } from '@kurda/shared';
-import type { ApiResult } from '../api/types';
+import type { ApiError, ApiResult } from '../api/types';
 import { describeError } from '../api/errors';
-import { useAuth } from '../auth/AuthContext';
-import { GuestWall } from '../auth/AccountGate';
-import { TONES } from '../coursemap/path';
+import { GuestWall, useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
 import { leftResults } from '../feedback/gameFinished';
 import { useI18n } from '../i18n/I18nContext';
+import type { TranslationKey } from '../i18n/translations';
 import { useCourseDialect } from '../learn/courseDialect';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { PartyTimer } from '../party/Composer';
+import { PARTY_DIALECT_NAME } from '../party/PartyStart';
 import { GameRoom, multiSeatName } from '../play/GameRoom';
 import { InviteSheet } from '../play/InviteSheet';
 import { useGameView } from '../play/useGameView';
+import { useDirection } from '../reports/direction';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
+import { Icon } from '../theme/Icon';
+import { Loading } from '../theme/Loading';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { SoloGameShell, type SoloRound } from '../games/SoloGameShell';
-import { useAvailability } from '../games/learnGames';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { DIFFICULTY_KEY } from '../games/partyChoices';
+import { useServerNow } from '../impostor/ImpostorBoard';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
-import { ForeheadCard, GuessTiles, QuestionDeck, WHO_AM_I_TONE } from './WhoAmIStage';
-import { Loading } from '../theme/Loading';
+import { WhoAmICouch, useCouchOffer } from './WhoAmICouch';
+import {
+  ForeheadCard,
+  Foreheads,
+  GuessTiles,
+  QuestionCard,
+  QuestionDeck,
+  ScoringNote,
+  VerdictCard,
+  YesNoButtons,
+  kindOf,
+  listed,
+  yesNo,
+  type TableSeat,
+} from './WhoAmIStage';
 
-type Round = SoloRound<WhoAmIItemView, WhoAmIHint, WhoAmICorrection>;
+type TableView = MultiView<WhoAmITableBoard | null>;
+type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<WhoAmITableBoard | null, WhoAmITableOutcome>>>;
+
+/** How long each of a turn's three waits runs, for the share of it that is left. */
+const WAIT_SECONDS: Record<WhoAmITableBoard['phase'], number> = { ask: WHO_AM_I_ASK_SECONDS, answer: WHO_AM_I_ANSWER_SECONDS, decide: WHO_AM_I_DECIDE_SECONDS };
+
+/** How each way the game can end reads, under who everyone was. A game called off with everyone gone reads as one too few were left in. */
+const END_KEY: Record<NonNullable<WhoAmITableBoard['endedBy']>, TranslationKey> = {
+  'all-done': 'games.whoAmI.end.allDone',
+  time: 'games.whoAmI.end.time',
+  'too-few': 'games.whoAmI.end.tooFew',
+  abandoned: 'games.whoAmI.end.tooFew',
+};
 
 /**
- * Who Am I? on the phone: a hidden word on a card on Hevalo's forehead,
- * found by asking yes/no questions in Kurdish. Without an id, the start —
- * a round alone (the solo shell) or a race with friends (the invite sheet) —
- * each offered only where approved identities and questions allow. With an
- * id, a race's room (play/GameRoom.tsx), for an account only. The website's
+ * Who Am I? on the phone: everyone wears a Kurdish word on their forehead
+ * that the others can read and they cannot, and finds out who they are by
+ * asking yes/no questions in Kurdish. Never played alone.
+ *
+ * Without an id, the start: the night stage with the hidden deer, what the
+ * game is in a line, and its two ways, each offered only where approved
+ * identities and questions allow: on this phone, passed round a room
+ * (WhoAmICouch.tsx), or with friends online through the invite sheet. With an
+ * id, the room (play/GameRoom.tsx) with the table inside, for an account
+ * only. `way` is the way a card on the Games page asked for. The website's
  * whoami/WhoAmI.tsx plays the same game.
  */
-export function WhoAmIScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
+export function WhoAmIScreen({ id: initialId, way, onExit }: { id?: string; way?: 'phone' | 'friends'; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
+  const dialect = useCourseDialect();
   const [id, setId] = useState<string | null>(initialId ?? null);
-  const [alone, setAlone] = useState(false);
+  const [onPhone, setOnPhone] = useState(way === 'phone' && !initialId);
+  // kept here, above the start, so the sheet a card asked for opens once and not again each time the start comes back
+  const [inviting, setInviting] = useState(way === 'friends' && !initialId);
   useEffect(() => {
-    if (initialId) setId(initialId);
+    if (!initialId) return;
+    setId(initialId);
+    setInviting(false);
   }, [initialId]);
   useEffect(() => () => leftResults(), [id]);
-  if (alone && !id) return <SoloRoundScreen onExit={() => setAlone(false)} />;
+  // where the game can be played on one phone in the learner's Kurdish; a room has no use for the answer
+  const offer = useCouchOffer(dialect, !id);
+
+  if (id) {
+    return (
+      <GuestWall reason="play" onBack={() => setId(null)}>
+        <GradientBackground>
+          <ScreenHeader title={t('games.whoAmI.name')} onBack={onExit} />
+          <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+            <TableRoom key={id} id={id} onNew={() => setId(null)} onOpen={setId} />
+          </ScrollView>
+        </GradientBackground>
+      </GuestWall>
+    );
+  }
+  if (onPhone && offer && offer.difficulties.length > 0) {
+    return (
+      <GradientBackground>
+        {/* the game on one phone keeps its own header, whose way back asks before a game is lost */}
+        <WhoAmICouch offer={offer} onLeave={() => setOnPhone(false)} />
+      </GradientBackground>
+    );
+  }
   return (
     <GradientBackground>
       <ScreenHeader title={t('games.whoAmI.name')} onBack={onExit} />
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        {id ? (
-          <GuestWall reason="play" onBack={() => setId(null)}>
-            <RaceRoom key={id} id={id} onNew={() => setId(null)} onOpen={setId} />
-          </GuestWall>
-        ) : (
-          <Start onAlone={() => setAlone(true)} />
-        )}
+        <Start offer={offer} inviting={inviting} onInviting={setInviting} onPhone={() => setOnPhone(true)} />
       </ScrollView>
     </GradientBackground>
   );
 }
 
-function Start({ onAlone }: { onAlone: () => void }): React.JSX.Element {
+/**
+ * A glass card with its contents laid out by `style`. The glass card's own
+ * style is its frame's, so a gap or an alignment given there never reaches
+ * what is inside it.
+ */
+function Card({ style, children }: { style: StyleProp<ViewStyle>; children: React.ReactNode }): React.JSX.Element {
+  return (
+    <GlassCard>
+      <View style={style}>{children}</View>
+    </GlassCard>
+  );
+}
+
+// ---------- the start ----------
+
+function Start({
+  offer,
+  inviting,
+  onInviting,
+  onPhone,
+}: {
+  offer: WhoAmICouchOffer | null | undefined;
+  /** the invite sheet is open, or was asked for on the way in */
+  inviting: boolean;
+  onInviting: (open: boolean) => void;
+  onPhone: () => void;
+}): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const { isGuest } = useAuth();
+  const gate = useAccountGate();
   const dialect = useCourseDialect();
-  const availability = useAvailability(dialect);
-  const race = useMpAvailability('who-am-i', !isGuest);
-  const [inviting, setInviting] = useState(false);
-  if (availability === null || (!isGuest && race === null)) return <Loading style={styles.loading} />;
-  const solo = availability.games.find((g) => g.id === 'who-am-i')?.available ?? false;
-  const together = !isGuest && groupDialects(race).length > 0;
-  if (!solo && !together) {
+  // a guest is not told where the game is played online, and is offered an account at its door instead
+  const online = useMpAvailability('who-am-i', !gate.isGuest);
+  if (offer === undefined || (!gate.isGuest && online === null)) return <Loading style={styles.loading} />;
+  const phone = (offer?.difficulties.length ?? 0) > 0;
+  // the same approved identities fill both ways, so what one phone is offered a guest's account would be too
+  const together = gate.isGuest ? phone : groupDialects(online).length > 0;
+  if (!phone && !together) {
     return (
-      <GlassCard style={styles.card}>
+      <Card style={styles.way}>
+        <Icon name="question" size={40} tone="primary" />
         <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.whoAmI.notOffered')}</Text>
-      </GlassCard>
+      </Card>
     );
   }
+  const askFriends = (): void => {
+    if (gate.require('play')) onInviting(true);
+  };
   return (
     <>
       {/* the night every game opens on: the one who wears the card, and what the game is */}
       <Cloth style={styles.stage}>
-        <ForeheadCard dialect={dialect} category="animal" identity={null} />
+        <ForeheadCard dialect={dialect} category={null} identity={null} night />
         <Text style={styles.stageLine}>{t('games.whoAmI.intro')}</Text>
       </Cloth>
-      {solo ? (
-        <GlassCard style={styles.card}>
+      {phone ? (
+        <Card style={styles.way}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
-            {t('games.whoAmI.alone')}
+            {t('games.whoAmI.onePhone')}
           </Text>
-          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.whoAmI.aloneBlurb')}</Text>
-          <GoldButton label={t('games.play')} icon="play" onPress={onAlone} style={styles.stretch} />
-        </GlassCard>
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>
+            {t('games.whoAmI.onePhoneBlurb', { min: WHO_AM_I_COUCH_MIN_PLAYERS, max: WHO_AM_I_COUCH_MAX_PLAYERS })}
+          </Text>
+          <GoldButton label={t('games.couch.open')} icon="device-phone" onPress={onPhone} style={styles.stretch} />
+        </Card>
       ) : null}
       {together ? (
-        <GlassCard style={styles.card}>
+        <Card style={styles.way}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
-            {t('games.whoAmI.race')}
+            {t('games.whoAmI.online')}
           </Text>
-          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.whoAmI.raceBlurb')}</Text>
-          <ClayButton label={t('games.whoAmI.race')} icon="people" tone="primary" onPress={() => setInviting(true)} style={styles.stretch} />
-        </GlassCard>
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>
+            {t('games.whoAmI.onlineBlurb', { min: WHO_AM_I_TABLE_MIN_PLAYERS, max: WHO_AM_I_TABLE_MAX_PLAYERS })}
+          </Text>
+          {/* gold is for the first thing to press: the way with friends wears it only where it is the only way */}
+          {phone ? (
+            <ClayButton label={t('stories.lobby.invite')} icon="people" tone="primary" size="large" onPress={askFriends} style={styles.stretch} />
+          ) : (
+            <GoldButton label={t('stories.lobby.invite')} icon="people" onPress={askFriends} style={styles.stretch} />
+          )}
+        </Card>
       ) : null}
-      {inviting ? <InviteSheet target={{ kind: 'new', game: 'who-am-i' }} onClose={() => setInviting(false)} /> : null}
+      <ScoringNote />
+      {inviting && together && !gate.isGuest ? <InviteSheet target={{ kind: 'new', game: 'who-am-i' }} onClose={() => onInviting(false)} /> : null}
     </>
   );
 }
 
-// ---------- alone ----------
+// ---------- the room ----------
 
-function SoloBoard({ round, dialect, onAsked }: { round: Round; dialect: GameDialect; onAsked: (index: number, asked: WhoAmIAsked[]) => void }): React.JSX.Element {
-  const { t } = useI18n();
-  const { colors } = useTheme();
-  const { client } = useAuth();
-  const { item, result, busy, submit, sessionId, state } = round;
-  const [asked, setAsked] = useState<WhoAmIAsked[]>(item.asked);
-  const [crossed, setCrossed] = useState<string[]>([]);
-  const [asking, setAsking] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
-    setAsked(item.asked);
-    setCrossed([]);
-    setError(null);
-  }, [item.index, item.asked]);
-  useEffect(() => {
-    const not = result?.hint?.notThis;
-    if (not) setCrossed((c) => (c.includes(not) ? c : [...c, not]));
-  }, [result]);
-  const done = result?.done === true || state.done;
-  const ask = async (question: string): Promise<void> => {
-    setAsking(true);
-    setError(null);
-    const res = await client.post<WhoAmIAskResult>(`/games/who-am-i/sessions/${sessionId}/ask`, { index: item.index, question });
-    setAsking(false);
-    if (!res.ok) return setError(describeError(res.error, t));
-    setAsked(res.data.asked);
-    onAsked(item.index, res.data.asked);
-    haptic(res.data.answer ? 'correct' : 'wrong');
-  };
-  const identity = result?.correction ? { word: result.correction.word, meanings: result.correction.meanings } : null;
-  const line = done
-    ? result?.correct
-      ? t('games.whoAmI.score', { count: whoAmIPoints(asked.length, crossed.length, true) })
-      : t('games.whoAmI.out')
-    : `${t('games.whoAmI.worth', { count: whoAmIPoints(asked.length, crossed.length, true) })} · ${t('games.whoAmI.guessesLeft', { count: WHO_AM_I_GUESSES - state.attempts })}`;
-  return (
-    <View style={styles.board}>
-      <ForeheadCard dialect={dialect} category={item.category} identity={identity} />
-      <Text style={[styles.line, { color: colors.textPrimary }]} accessibilityLiveRegion="polite">
-        {line}
-      </Text>
-      <QuestionDeck dialect={dialect} questions={item.questions} asked={asked} disabled={done || busy || asking} onAsk={(q) => void ask(q)} />
-      {error ? <Text style={{ color: colors.danger }}>{error}</Text> : null}
-      <GuessTiles dialect={dialect} tiles={item.tiles} crossed={crossed} right={result?.correction?.id ?? null} disabled={done || busy} onGuess={(tile) => void submit({ guess: tile })} />
-    </View>
-  );
+/** The earlier of the turn's present wait and the game's own end: when the server next settles something by itself. */
+function nextDeadline(board: WhoAmITableBoard): string {
+  return Date.parse(board.endsAt) < Date.parse(board.phaseEndsAt) ? board.endsAt : board.phaseEndsAt;
 }
 
-function SoloRoundScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
-  const { t } = useI18n();
-  const { client } = useAuth();
-  const { scheme } = useTheme();
-  const dialect = useCourseDialect();
-  const availability = useAvailability(dialect);
-  const [open, setOpen] = useState<string | null>(null);
-  const [score, setScore] = useState<number | null>(null);
-  const asked = useRef(new Map<number, number>());
-  const session = useRef<string | null>(null);
-  const tone = TONES[scheme][WHO_AM_I_TONE];
-
-  useEffect(() => {
-    void client.get<{ id: string | null }>(`/games/solo/open?game=who-am-i&dialect=${dialect}`).then((res) => {
-      if (res.ok) setOpen(res.data.id);
-    });
-  }, [client, dialect]);
-
-  const finished = useCallback(
-    async (results: SoloResults) => {
-      // a round come back to may have had questions asked before: the round itself says how many
-      const id = session.current;
-      const view = id ? await client.get<{ items: WhoAmIItemView[] }>(`/games/solo/sessions/${id}`) : null;
-      const counts = new Map(asked.current);
-      if (view?.ok) for (const item of view.data.items) counts.set(item.index, item.asked.length);
-      setScore(results.items.reduce((sum, i) => sum + whoAmIPoints(counts.get(i.index) ?? 0, i.correct && !i.firstTry ? 1 : 0, i.correct), 0));
-    },
-    [client],
-  );
-
-  const game = availability?.games.find((g) => g.id === 'who-am-i');
-  return (
-    <SoloGameShell<WhoAmIItemView, WhoAmIHint, WhoAmICorrection>
-      game="who-am-i"
-      dialect={dialect}
-      title={t('games.whoAmI.name')}
-      blurb={t('games.whoAmI.intro')}
-      difficulties={availability ? (game?.difficulties ?? []) : null}
-      open={open}
-      roundItems={WHO_AM_I_ROUND_ITEMS}
-      renderRound={(round) => {
-        session.current = round.sessionId;
-        return <SoloBoard round={round} dialect={dialect} onAsked={(index, a) => asked.current.set(index, a.length)} />;
-      }}
-      explain={() => null}
-      onFinished={(r) => void finished(r)}
-      resultsExtra={score !== null ? <Text style={[styles.total, { color: tone.text }]}>{t('games.whoAmI.score', { count: score })}</Text> : null}
-      onExit={onExit}
-      tone={tone.fill}
-    />
-  );
-}
-
-// ---------- the race ----------
-
-function RaceRoom({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen: (id: string) => void }): React.JSX.Element {
+function TableRoom({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen: (id: string) => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const room = useGameView<WhoAmIRaceBoard | null, WhoAmIRaceOutcome>('who-am-i', id, { deadlineOf: (v) => v.board?.endsAt ?? null });
+  const room = useGameView<WhoAmITableBoard | null, WhoAmITableOutcome>('who-am-i', id, { deadlineOf: (v) => (v.board ? nextDeadline(v.board) : null) });
   return (
     <GameRoom
       game="who-am-i"
@@ -247,149 +243,324 @@ function RaceRoom({ id, onNew, onOpen }: { id: string; onNew: () => void; onOpen
         const s = v.settings as { difficulty?: GameDifficulty; minutes?: number };
         return (
           <Text style={[styles.note, { color: colors.textSecondary }]}>
-            {v.dialect === 'ckb' ? 'Soranî' : 'Kurmancî'}
+            {PARTY_DIALECT_NAME[v.dialect]}
             {s.difficulty ? ` · ${t(DIFFICULTY_KEY[s.difficulty])}` : ''}
             {s.minutes ? ` · ${t('games.whoAmI.minutesCount', { count: s.minutes })}` : ''}
           </Text>
         );
       }}
-      playing={(v) => <RaceBoard view={v} skew={room.skew} move={room.move} />}
-      ending={(v) => {
-        const reveal = v.board?.reveal ?? [];
-        if (reveal.length === 0) return null;
-        const dir = dialectDirection(v.dialect);
-        return (
-          <View style={styles.reveal}>
-            <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
-              {t('games.whoAmI.reveal')}
-            </Text>
-            {reveal.map((r) => {
-              const p = v.players.find((x) => x.seat === r.seat);
-              return (
-                <View key={r.seat} style={styles.revealRow}>
-                  <Text style={[styles.bold, { color: colors.textPrimary }]}>{p ? multiSeatName(p, t) : t('stories.player', { seat: r.seat })}</Text>
-                  <Text style={[styles.revealWord, { color: colors.textPrimary, writingDirection: dir.dir }]}>
-                    {r.word}
-                  </Text>
-                  <Text style={{ color: colors.textSecondary }}>{r.meanings.en}</Text>
-                </View>
-              );
-            })}
-          </View>
-        );
-      }}
+      playing={(v) => <TableBoard view={v} skew={room.skew} move={room.move} />}
+      ending={(v) => <TableReveal view={v} />}
       scoreOf={(r) => t('games.whoAmI.points', { count: r.score })}
     />
   );
 }
 
-/** The server's time, ticking every second while `on`. */
-function useServerNow(skew: number, on: boolean): number {
-  const [now, setNow] = useState(() => Date.now() + skew);
-  useEffect(() => {
-    setNow(Date.now() + skew);
-    if (!on) return;
-    const timer = setInterval(() => setNow(Date.now() + skew), 1000);
-    return () => clearInterval(timer);
-  }, [skew, on]);
-  return now;
+/** Why a move was not taken, in the reader's words: the turn has usually moved on under the thumb. */
+function moveError(error: ApiError, t: ReturnType<typeof useI18n>['t']): string {
+  if (error.code === 'NOT_YOUR_TURN') return t('games.party.notYourTurn');
+  if (error.code === 'MOVE_REFUSED') return t('games.party.notNow');
+  return describeError(error, t);
 }
 
-function RaceBoard({
-  view,
-  skew,
-  move,
-}: {
-  view: MultiView<WhoAmIRaceBoard | null>;
-  skew: number;
-  move: (body: unknown) => Promise<ApiResult<MultiMoveAnswer<WhoAmIRaceBoard | null, WhoAmIRaceOutcome>>>;
-}): React.JSX.Element | null {
+/**
+ * The table itself, inside the room: whose turn it is and what it waits for,
+ * against the server's clock; the question on the table, to answer or to
+ * watch being answered; the card's verdict; the reader's own questions and
+ * tiles; and everyone as a row of foreheads.
+ *
+ * What the reader must do next is always straight under the banner. On their
+ * own turn that is their questions and tiles, and the row of foreheads moves
+ * under them; the rest of the time the row comes first and their own list
+ * waits below it, to think with.
+ *
+ * Every card here is drawn from the board as the server sent it to this
+ * reader. Their own is not on it until it is off their forehead (`card` null
+ * on their seat, `mine.identity` null), and nothing here draws one that is.
+ */
+function TableBoard({ view, skew, move }: { view: TableView; skew: number; move: Move }): React.JSX.Element | null {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
   const now = useServerNow(skew, view.status === 'active');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // the tile of a wrong guess just made, said once under the tiles until the next move
+  const [missed, setMissed] = useState<string | null>(null);
   const board = view.board;
-  if (!board) return null;
+  if (!board || board.turn === null) return null;
+  const me = view.me?.seat ?? null;
   const mine = board.mine;
+  const turn = board.turn;
+  const { phase, pending, told, dialect } = board;
   const name = (seat: number): string => {
     const p = view.players.find((x) => x.seat === seat);
     return p ? multiSeatName(p, t) : t('stories.player', { seat });
   };
-  const left = Math.max(0, Math.ceil((Date.parse(board.endsAt) - now) / 1000));
-  const act = async (body: unknown): Promise<void> => {
+  const asker = name(turn);
+  const myTurn = turn === me;
+  const guessing = !!mine && !mine.solved && !mine.out;
+  // the reader's own turn, at a moment something of theirs can be pressed
+  const acting = myTurn && guessing && phase !== 'answer';
+  const toAnswer = phase === 'answer' && pending !== null && me !== null && pending.waiting.includes(me);
+  const answered = phase === 'answer' && pending !== null && me !== null && pending.answered.includes(me);
+  const left = Math.max(0, Math.ceil((Date.parse(board.phaseEndsAt) - now) / 1000));
+  // the game's own clock, the longest it may run: said quietly, so its end is no surprise
+  const gameLeft = Math.max(0, Math.ceil((Date.parse(board.endsAt) - now) / 1000));
+
+  const act = async (body: WhoAmITableMove): Promise<void> => {
     setBusy(true);
     setError(null);
+    setMissed(null);
     const res = await move(body);
     setBusy(false);
-    if (!res.ok) return setError(describeError(res.error, t));
-    const outcome = res.data.outcome;
-    if (outcome.kind === 'guess') haptic(outcome.correct ? 'celebrate' : 'wrong');
+    if (!res.ok) return setError(moveError(res.error, t));
+    if (body.kind !== 'guess') return;
+    const correct = res.data.outcome.correct === true;
+    haptic(correct ? 'celebrate' : 'wrong');
+    if (!correct) setMissed(body.tile);
   };
-  const playing = !!mine && !mine.solved && !mine.out;
+
+  const waitingFor =
+    phase === 'ask'
+      ? myTurn
+        ? t(mine?.mustGuess ? 'games.whoAmI.wait.mustGuess' : 'games.whoAmI.wait.ask.you')
+        : t('games.whoAmI.wait.ask.them', { name: asker })
+      : phase === 'answer'
+        ? myTurn
+          ? t('games.whoAmI.wait.answer.asker')
+          : toAnswer
+            ? t('games.whoAmI.wait.answer.you', { name: asker })
+            : answered
+              ? t('games.whoAmI.wait.answer.done')
+              : t('games.whoAmI.wait.answer.them', { name: asker })
+        : myTurn
+          ? t(mine?.mustGuess ? 'games.whoAmI.wait.mustGuess' : 'games.whoAmI.wait.decide.you')
+          : t('games.whoAmI.wait.decide.them', { name: asker });
+
+  const seats: TableSeat[] = board.seats.map((s) => ({
+    seat: s.seat,
+    name: name(s.seat),
+    mine: s.seat === me,
+    // the reader's own seat has no card on the board until it is off their forehead: the hidden mark is drawn for it
+    card: s.card,
+    kind: s.seat === me && !s.card ? kindOf(mine?.category ?? null, t) : null,
+    points: s.points,
+    asked: s.asked,
+    solved: s.solved,
+    out: s.out,
+    left: s.left,
+    onTurn: s.seat === turn,
+    answer: phase === 'answer' && pending ? (pending.answered.includes(s.seat) ? 'answered' : pending.waiting.includes(s.seat) ? 'waiting' : null) : null,
+  }));
+  // the card the question is about, for those answering it; never the reader's own
+  const askerCard = pending && pending.seat !== me ? (board.seats.find((s) => s.seat === pending.seat)?.card ?? null) : null;
+  const askerCardSpoken = askerCard
+    ? `${t('games.couch.cardOf', { name: asker })}: ${askerCard.word}, ${meaningIn(askerCard.meanings, locale) ?? askerCard.meanings.en}`
+    : '';
   const crossed = mine?.guesses.filter((g) => !g.correct).map((g) => g.tile) ?? [];
+  const missedWord = missed ? (mine?.tiles.find((x) => x.id === missed)?.word ?? null) : null;
+
+  const status =
+    mine && guessing ? (
+      <View style={styles.status}>
+        <Text style={[styles.line, { color: colors.textPrimary }]}>
+          {t('games.whoAmI.worth', { count: whoAmIPoints(mine.asked.length, crossed.length, true) })} · {t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}
+        </Text>
+        {missedWord ? (
+          <Text accessibilityLiveRegion="polite" style={[styles.line, { color: colors.danger }]}>
+            {t('games.whoAmI.wrongGuess', { word: missedWord })}
+          </Text>
+        ) : null}
+      </View>
+    ) : null;
+  const deck =
+    mine && guessing ? (
+      <QuestionDeck
+        dialect={dialect}
+        title={t(acting && phase === 'ask' ? 'games.whoAmI.questions' : 'games.whoAmI.yourQuestions')}
+        questions={mine.questions}
+        asked={mine.asked}
+        busy={busy}
+        onAsk={acting && phase === 'ask' ? (question) => void act({ kind: 'ask', question }) : null}
+      />
+    ) : null;
+  const tiles =
+    mine && guessing ? (
+      <GuessTiles dialect={dialect} tiles={mine.tiles} crossed={crossed} busy={busy} onGuess={acting ? (tile) => void act({ kind: 'guess', tile }) : null} />
+    ) : null;
+  /** What the card said to the last question, and how each friend answered: loud while it is decided on, quiet after. */
+  const verdict = (quiet: boolean): React.JSX.Element | null =>
+    told ? (
+      <VerdictCard
+        dialect={dialect}
+        heading={told.seat === me ? t('games.whoAmI.yourQuestion') : t('games.whoAmI.asks', { name: name(told.seat) })}
+        question={told.question}
+        truth={told.truth}
+        answers={told.answers.map((a) => ({ seat: a.seat, name: name(a.seat), yes: a.yes, right: a.right }))}
+        quiet={quiet}
+      />
+    ) : null;
+  // with every question asked there is nothing to wait for: the turn is a guess, and the banner says so
+  const pass =
+    acting && !mine?.mustGuess ? <ClayButton label={t('games.whoAmI.pass')} variant="outline" disabled={busy} onPress={() => void act({ kind: 'pass' })} /> : null;
+
   return (
     <View style={styles.board}>
-      <Text style={[styles.clock, { color: colors.textPrimary }]} accessibilityRole="timer" accessibilityLabel={t('games.whoAmI.timeLeft', { count: left })}>
-        {t('games.whoAmI.timeLeft', { count: left })}
-      </Text>
-      {board.firstSolver !== null ? (
-        <Text style={[styles.line, { color: colors.primary }]} accessibilityLiveRegion="polite">
-          {board.firstSolver === view.me?.seat ? t('games.whoAmI.youFirst') : t('games.whoAmI.first', { name: name(board.firstSolver) })}
+      <Cloth style={styles.banner}>
+        <View accessibilityLiveRegion="polite" style={styles.bannerText}>
+          <Text accessibilityRole="header" style={[styles.bannerTitle, { color: myTurn ? TABLE.gold : TABLE.ink }]}>
+            {myTurn ? t('games.whoAmI.turn.yours') : t('games.whoAmI.turn.theirs', { name: asker })}
+          </Text>
+          <Text style={styles.bannerLine}>{waitingFor}</Text>
+        </View>
+        <View style={[styles.clock, { flexDirection: dir.row }]}>
+          <Text style={[styles.clockLeft, { color: left <= 5 ? TABLE.low : TABLE.ink }]} accessibilityElementsHidden importantForAccessibility="no">
+            {t('games.party.seconds', { count: left })}
+          </Text>
+          <View style={styles.clockBar}>
+            <PartyTimer
+              share={Math.max(0, Date.parse(board.phaseEndsAt) - now) / (WAIT_SECONDS[phase] * 1000)}
+              low={left <= 5 && (acting || toAnswer)}
+              color={TABLE.gold}
+              label={t('games.whoAmI.timeLeft', { count: left })}
+            />
+          </View>
+        </View>
+        <Text style={styles.gameLeft}>{t('games.whoAmI.gameLeft', { time: `${Math.floor(gameLeft / 60)}:${String(gameLeft % 60).padStart(2, '0')}` })}</Text>
+      </Cloth>
+      {error ? (
+        <Text accessibilityRole="alert" style={[styles.line, { color: colors.danger }]}>
+          {error}
         </Text>
       ) : null}
-      {mine ? (
+
+      {phase === 'answer' && pending ? (
+        myTurn ? (
+          <View style={[styles.panel, { backgroundColor: colors.glassFill }]}>
+            <Text style={[styles.panelHeading, { color: colors.textSecondary }]}>{t('games.whoAmI.yourQuestion')}</Text>
+            <QuestionCard key={pending.question.id} dialect={dialect} question={pending.question} ink={colors.textPrimary} soft={colors.textSecondary} />
+            <Text accessibilityLiveRegion="polite" style={[styles.line, { color: colors.textPrimary }]}>
+              {pending.answered.length > 0 ? t('games.whoAmI.answeredSoFar', { names: listed(pending.answered.map(name), locale) }) : t('games.whoAmI.nobodyYet')}
+            </Text>
+          </View>
+        ) : (
+          <View style={[styles.panel, { backgroundColor: colors.glassFill }]}>
+            <Text style={[styles.panelHeading, { color: colors.textSecondary }]}>{t('games.whoAmI.asks', { name: asker })}</Text>
+            <QuestionCard key={pending.question.id} dialect={dialect} question={pending.question} ink={colors.textPrimary} soft={colors.textSecondary} />
+            {askerCard ? (
+              <View accessible accessibilityLabel={askerCardSpoken}>
+                <ForeheadCard dialect={dialect} category={null} identity={askerCard} size={150} />
+              </View>
+            ) : null}
+            {toAnswer ? (
+              <YesNoButtons dialect={dialect} disabled={busy} onAnswer={(yes) => void act({ kind: 'answer', yes })} />
+            ) : answered ? (
+              <Text accessibilityLiveRegion="polite" style={[styles.line, { color: colors.textPrimary }]}>
+                {pending.mine === null ? t('games.whoAmI.wait.answer.done') : t('games.whoAmI.youSaid', { answer: yesNo(dialect, pending.mine, t) })}
+              </Text>
+            ) : null}
+          </View>
+        )
+      ) : null}
+      {phase === 'decide' ? verdict(false) : null}
+
+      {acting ? (
         <>
-          <ForeheadCard dialect={board.dialect} category={mine.category} identity={mine.identity} />
-          <Text style={[styles.line, { color: colors.textPrimary }]}>
-            {mine.solved
-              ? `${t('games.whoAmI.gotIt')} ${t('games.whoAmI.score', { count: mine.points })}`
-              : mine.out
-                ? t('games.whoAmI.out')
-                : `${t('games.whoAmI.worth', { count: whoAmIPoints(mine.asked.length, crossed.length, true) })} · ${t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}`}
-          </Text>
-          <QuestionDeck dialect={board.dialect} questions={mine.questions} asked={mine.asked} disabled={!playing || busy} onAsk={(q) => void act({ kind: 'ask', question: q })} />
-          {error ? <Text style={{ color: colors.danger }}>{error}</Text> : null}
-          <GuessTiles dialect={board.dialect} tiles={mine.tiles} crossed={crossed} right={mine.identity?.id ?? null} disabled={!playing || busy} onGuess={(tile) => void act({ kind: 'guess', tile })} />
+          {status}
+          {phase === 'ask' ? deck : null}
+          {tiles}
+          {pass}
         </>
       ) : null}
-      <View style={styles.others}>
-        <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
-          {t('games.whoAmI.others')}
-        </Text>
-        {board.seats
-          .filter((s) => s.seat !== view.me?.seat)
-          .map((s) => (
-            <View key={s.seat} style={[styles.other, { borderColor: colors.controlTrack, opacity: s.out || s.left ? 0.6 : 1 }]}>
-              <Text style={[styles.bold, { color: colors.textPrimary }]}>{name(s.seat)}</Text>
-              <Text style={{ color: colors.textSecondary }}>{t('games.whoAmI.seatAsked', { count: s.asked })}</Text>
-              {s.solved ? <Text style={[styles.bold, { color: colors.success }]}>{t('games.whoAmI.solved')}</Text> : null}
-              {s.out ? <Text style={{ color: colors.danger }}>{t('games.whoAmI.out')}</Text> : null}
-            </View>
-          ))}
-      </View>
+
+      <Foreheads dialect={dialect} seats={seats} label={t('games.whoAmI.table')} />
+
+      {/* the reader's own card, only once the server has sent it: they have it, or are out of guesses */}
+      {mine?.identity ? (
+        <View style={styles.mine}>
+          <ForeheadCard dialect={dialect} category={mine.category} identity={mine.identity} size={180} />
+          <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[styles.title, { color: colors.textPrimary }]}>
+            {mine.solved ? t('games.whoAmI.youAre', { word: mine.identity.word }) : t('games.whoAmI.youWere', { word: mine.identity.word })}
+          </Text>
+          <Text style={[styles.line, { color: colors.textPrimary }]}>{t('games.whoAmI.score', { count: mine.points })}</Text>
+          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.whoAmI.keepAnswering')}</Text>
+        </View>
+      ) : null}
+      {guessing && !acting ? (
+        <>
+          {status}
+          {deck}
+          {tiles}
+        </>
+      ) : null}
+      {acting && phase === 'decide' ? deck : null}
+
+      {/* the last question stays on the table while the next turn is chosen, for whoever missed what the card said */}
+      {phase === 'ask' ? verdict(true) : null}
+      <ScoringNote />
+    </View>
+  );
+}
+
+/** The game is over: who everyone was, each card on its forehead, and why it ended. The room adds the places and Play again. */
+function TableReveal({ view }: { view: TableView }): React.JSX.Element | null {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const board = view.board;
+  if (!board?.reveal) return null;
+  const reveal = board.reveal;
+  const seats: TableSeat[] = board.seats.map((s) => {
+    const p = view.players.find((x) => x.seat === s.seat);
+    return {
+      seat: s.seat,
+      name: p ? multiSeatName(p, t) : t('stories.player', { seat: s.seat }),
+      mine: s.seat === view.me?.seat,
+      card: reveal.find((r) => r.seat === s.seat) ?? s.card,
+      kind: null,
+      points: s.points,
+      asked: s.asked,
+      solved: s.solved,
+      out: s.out,
+      left: s.left,
+      onTurn: false,
+      answer: null,
+    };
+  });
+  return (
+    <View style={styles.reveal}>
+      <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
+        {t('games.whoAmI.reveal')}
+      </Text>
+      <Foreheads dialect={board.dialect} seats={seats} label={t('games.whoAmI.table')} />
+      {board.endedBy ? <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t(END_KEY[board.endedBy])}</Text> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  stage: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
-  stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
-  card: { alignItems: 'center', gap: spacing.sm },
-  stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   loading: { marginTop: spacing.xl },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  stage: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
+  stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center' },
+  way: { alignItems: 'center', gap: spacing.sm },
+  stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
+  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
-  board: { gap: spacing.md },
-  line: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
-  clock: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  total: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  bold: { fontWeight: typography.weights.bold },
-  others: { gap: spacing.sm },
-  other: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm, borderWidth: 1, borderRadius: radii.md, padding: spacing.sm, minHeight: 44 },
+  board: { gap: spacing.md },
+  banner: { gap: spacing.sm, paddingVertical: spacing.md, paddingHorizontal: spacing.md },
+  bannerText: { gap: 2 },
+  bannerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
+  bannerLine: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', color: TABLE.inkSoft },
+  clock: { alignItems: 'center', gap: spacing.sm },
+  clockLeft: { minWidth: 44, fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center', fontVariant: ['tabular-nums'] },
+  clockBar: { flex: 1 },
+  gameLeft: { fontSize: typography.sizes.xs, textAlign: 'center', color: TABLE.inkSoft, fontVariant: ['tabular-nums'] },
+  panel: { alignItems: 'center', gap: spacing.sm, padding: spacing.md, borderRadius: radii.xl },
+  panelHeading: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  status: { gap: 2 },
+  line: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  mine: { alignItems: 'center', gap: spacing.xs },
   reveal: { alignSelf: 'stretch', gap: spacing.sm },
-  revealRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm },
-  revealWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
 });

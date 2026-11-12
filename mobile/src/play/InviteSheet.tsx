@@ -52,7 +52,7 @@ import { PictureTiles } from '../impostor/parts';
 import { usePartyOffer } from '../party/offer';
 import { PARTY_LEVEL_KEY } from '../party/PartyStart';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
-import { RaceChoices } from '../games/partyChoices';
+import { TableChoices } from '../games/partyChoices';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
@@ -150,20 +150,20 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const letterDialects = offeredDialects(useLastLetterAvailability(target.kind !== 'lobby'), 'group');
   // Kurdish Impostor, in the varieties and at the levels its approved cards allow
   const impostorOffer = usePartyOffer('impostor', target.kind !== 'lobby') ?? [];
-  // the Who Am I? race, where its content lets it be played
-  const raceOffers = useMpAvailability('who-am-i', target.kind !== 'lobby');
+  // a table of Who Am I?, where its content lets it be played
+  const tableOffers = useMpAvailability('who-am-i', target.kind !== 'lobby');
   const offeredGames = PLAY_GAMES.filter(
     (g) =>
       fixedGame === g ||
       ((g !== 'last-letter' || letterDialects.length > 0) &&
         (g !== 'impostor' || impostorOffer.length > 0) &&
-        (g !== 'who-am-i' || groupDialects(raceOffers).length > 0)),
+        (g !== 'who-am-i' || groupDialects(tableOffers).length > 0)),
   );
   const [partyLevel, setPartyLevel] = useState<GameDifficulty>('beginner');
   const [clueSeconds, setClueSeconds] = useState<string>(String(IMPOSTOR_DEFAULT_CLUE_SECONDS));
   // the category Impostor's word is drawn from: '' for any
   const [category, setCategory] = useState('');
-  // the race's choices, handed up by its own fields; null when the game cannot be made in the Kurdish chosen
+  // Who Am I?'s choices, handed up by its own fields; null when the game cannot be made in the Kurdish chosen
   const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const [stories, setStories] = useState<StoryListItem[]>([]);
   const [story, setStory] = useState<SetupState>(() => initialSetup({ mode: 'duo', dialect, length: 'short' }));
@@ -525,7 +525,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
               />
             </View>
           ) : null}
-          {game === 'who-am-i' ? <RaceChoices offers={raceOffers ?? []} dialect={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} /> : null}
+          {game === 'who-am-i' ? <TableChoices offers={tableOffers ?? []} dialect={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} /> : null}
 
           <View style={styles.field}>
             <SectionLabel>{t('ranks.gameType')}</SectionLabel>

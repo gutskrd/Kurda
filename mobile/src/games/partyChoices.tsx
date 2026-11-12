@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { GAME_DIFFICULTIES, WHO_AM_I_RACE_DEFAULT_MINUTES, WHO_AM_I_RACE_MINUTES, type GameDifficulty, type LetterDialect } from '@kurda/shared';
+import { GAME_DIFFICULTIES, WHO_AM_I_TABLE_DEFAULT_MINUTES, WHO_AM_I_TABLE_MINUTES, type GameDifficulty, type LetterDialect } from '@kurda/shared';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { Segmented } from '../theme/glass';
@@ -9,11 +9,11 @@ import { Note, SectionLabel } from '../stories/ui';
 import type { MpDialectOffer } from './mpAvailability';
 
 /**
- * What a host chooses for the Who Am I? race on the phone, in the invite
+ * What a host chooses for a table of Who Am I? on the phone, in the invite
  * sheet (play/InviteSheet.tsx): only what is offered in the Kurdish chosen
- * above — a difficulty the identities fill — handed up as the lobby's
- * settings as they change, or null when the game cannot be made in that
- * Kurdish.
+ * above — a difficulty the identities fill — and the longest the game may
+ * run, handed up as the lobby's settings as they change, or null when the
+ * game cannot be made in that Kurdish.
  */
 
 export const DIFFICULTY_KEY: Record<GameDifficulty, TranslationKey> = {
@@ -22,7 +22,7 @@ export const DIFFICULTY_KEY: Record<GameDifficulty, TranslationKey> = {
   advanced: 'games.solo.difficulty.advanced',
 };
 
-export function RaceChoices({
+export function TableChoices({
   offers,
   dialect,
   onChange,
@@ -34,7 +34,7 @@ export function RaceChoices({
   const { t } = useI18n();
   const difficulties = GAME_DIFFICULTIES.filter((d) => offers.find((o) => o.dialect === dialect && o.group)?.difficulties?.includes(d));
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
-  const [minutes, setMinutes] = useState<string>(String(WHO_AM_I_RACE_DEFAULT_MINUTES));
+  const [minutes, setMinutes] = useState<string>(String(WHO_AM_I_TABLE_DEFAULT_MINUTES));
   const chosen = difficulty && difficulties.includes(difficulty) ? difficulty : (difficulties[0] ?? null);
   useEffect(() => {
     onChange(chosen ? { dialect, difficulty: chosen, minutes: Number(minutes) } : null);
@@ -50,7 +50,7 @@ export function RaceChoices({
         <SectionLabel>{t('games.whoAmI.minutes')}</SectionLabel>
         <Segmented<string>
           groupLabel={t('games.whoAmI.minutes')}
-          options={WHO_AM_I_RACE_MINUTES.map(String)}
+          options={WHO_AM_I_TABLE_MINUTES.map(String)}
           value={minutes}
           onChange={setMinutes}
           labelOf={(m) => t('games.whoAmI.minutesCount', { count: Number(m) })}

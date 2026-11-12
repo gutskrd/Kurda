@@ -150,6 +150,34 @@ describe('the games list', () => {
     expect(screen.queryByText('Peyvok Battle')).toBeNull();
   });
 
+  it('gives Who Am I? one card with a button for this phone and one for friends, each opening its screen on that way', async () => {
+    const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('who-am-i'), game('impostor')]) });
+    testAuth.client = client;
+    renderWithProviders(<GamesView />);
+    await settled(client);
+    const phone = await screen.findByTestId('game-who-am-i-phone');
+    expect(phone.getAttribute('aria-label')).toBe('Who Am I?, On this phone');
+    fireEvent.click(phone);
+    expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'phone' });
+    const friends = screen.getByTestId('game-who-am-i-friends');
+    expect(friends.getAttribute('aria-label')).toBe('Who Am I?, With friends');
+    fireEvent.click(friends);
+    expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'friends' });
+    // one card for the game, which is not itself pressed, and no way to play it alone
+    expect(screen.getAllByText('Who Am I?')).toHaveLength(1);
+    expect(screen.getByTestId('card-who-am-i').getAttribute('role')).not.toBe('button');
+    expect(screen.queryByTestId('game-who-am-i')).toBeNull();
+    // Kurdish Impostor's own screen asks how to play: its card is the one way in
+    fireEvent.click(screen.getByTestId('game-impostor'));
+    expect(navigation.navigate).toHaveBeenCalledWith('Impostor');
+
+    // it is a game for more than one: among the games with friends, and not among those played alone
+    fireEvent.click(screen.getByTestId('games-filter-friends'));
+    expect(screen.getByTestId('game-who-am-i-phone')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('games-filter-solo'));
+    expect(screen.queryByTestId('game-who-am-i-phone')).toBeNull();
+  });
+
   it('puts one game forward above the cards, a different one each day, and does not say it twice', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([]) });
     testAuth.client = client;

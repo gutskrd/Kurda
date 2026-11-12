@@ -4,8 +4,8 @@ import { useAuth } from '../auth/AuthContext';
 
 /**
  * Where a multiplayer learning game is offered now (`GET /mp/:game/availability`),
- * on the phone, for a game that answers more than "with friends or not": the
- * Who Am I? race names the difficulties its identities fill. Per dialect; a
+ * on the phone, for a game that answers more than "with friends or not":
+ * Who Am I? names the difficulties its identities fill. Per dialect; a
  * game is only offered where it says so, with no "coming soon" anywhere.
  *
  * Read once while the app runs and shared by every screen that asks, as The
@@ -15,7 +15,7 @@ export interface MpDialectOffer {
   dialect: LetterDialect;
   group: boolean;
   solo: boolean;
-  /** the Who Am I? race: the difficulties it can be played at */
+  /** Who Am I?: the difficulties it can be played at */
   difficulties?: GameDifficulty[];
 }
 

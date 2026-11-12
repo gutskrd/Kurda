@@ -39,6 +39,8 @@ interface Way {
   key: string;
   route: GameRoute;
   label: TranslationKey;
+  /** the way a game's screen opens on, where one screen holds every way to play it (Who Am I?) */
+  params?: { way: 'phone' | 'friends' };
 }
 
 interface GameCard {
@@ -48,7 +50,7 @@ interface GameCard {
   name: TranslationKey;
   /** one line, what you do in it */
   line: TranslationKey;
-  /** its ways in, one per screen it has; a game whose own screen asks how to play has one */
+  /** its ways in: one per screen it has, or one per way its one screen can open on; a game with a single way has one */
   ways: readonly Way[];
   mode: Mode;
   /** still short of approved content: named under the cards as coming soon, and does not open */
@@ -124,11 +126,12 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
  * you the code of.
  *
  * Then the games themselves, each one card: its drawn emblem on a tile of its
- * own colour, a line about it, and a way in. A game with one screen opens
+ * own colour, a line about it, and a way in. A game with one way in opens
  * when its card is pressed; a game with a screen for playing alone and
- * another for playing a friend has a button for each, so a game is one tap
- * from here. A filter shows the games played alone or with friends, and a
- * game still short of approved content is only named, under the cards.
+ * another for playing a friend has a button for each, and so has Who Am I?,
+ * played on this phone or with friends, so a game is one tap from here. A
+ * filter shows the games played alone or with friends, and a game still
+ * short of approved content is only named, under the cards.
  */
 export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -152,7 +155,10 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       const phone = PHONE_LEARN_GAMES[g.id];
       const mode: Mode = g.mode === 'solo' ? 'solo' : g.mode === 'multi' ? 'friends' : 'both';
       if (!phone) return [];
-      return [{ key: g.id, emblem: g.id as GameEmblem, name: phone.name, line: phone.line, ways: [{ key: g.id, route: phone.route, label: 'games.play' }], mode, soon: !ready }];
+      const ways: Way[] = phone.ways
+        ? phone.ways.map((w) => ({ key: w.key, route: phone.route, label: w.label, params: { way: w.way } }))
+        : [{ key: g.id, route: phone.route, label: 'games.play' }];
+      return [{ key: g.id, emblem: g.id as GameEmblem, name: phone.name, line: phone.line, ways, mode, soon: !ready }];
     }),
   ];
   // the game put forward stands above the cards, and is not said twice among them; under a filter the cards are whole
@@ -198,6 +204,15 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       navigation.navigate(route.name, route.params as never);
     },
     [client, navigation],
+  );
+
+  const open = useCallback(
+    (way: Way) => {
+      // only Who Am I?'s screen takes a way to open on; every other game has a screen for each of its ways
+      if (way.route === 'WhoAmI' && way.params) navigation.navigate('WhoAmI', way.params);
+      else navigation.navigate(way.route);
+    },
+    [navigation],
   );
 
   const shown = liveInvites(invites, Date.now());
@@ -300,11 +315,11 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           <View style={styles.heroWays}>
             {featured.ways.map((way, i) =>
               i === 0 ? (
-                <GoldButton key={way.key} label={t(way.label)} onPress={() => navigation.navigate(way.route)} testID={`game-${way.key}`} />
+                <GoldButton key={way.key} label={t(way.label)} onPress={() => open(way)} testID={`game-${way.key}`} />
               ) : (
                 <PressableScale
                   key={way.key}
-                  onPress={() => navigation.navigate(way.route)}
+                  onPress={() => open(way)}
                   accessibilityRole="button"
                   accessibilityLabel={`${t(featured.name)}, ${t(way.label)}`}
                   testID={`game-${way.key}`}
@@ -378,7 +393,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                       {card.ways.map((way, i) => (
                         <PressableScale
                           key={way.key}
-                          onPress={() => navigation.navigate(way.route)}
+                          onPress={() => open(way)}
                           accessibilityRole="button"
                           accessibilityLabel={`${name}, ${t(way.label)}`}
                           hitSlop={WAY_SLOP}
@@ -393,11 +408,11 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                 </View>
               </>
             );
-            // one screen: the whole card opens it. Two: the card holds a button for each, and is not itself pressed.
+            // one way in: the whole card opens it. Two: the card holds a button for each, and is not itself pressed.
             return single ? (
               <PressableScale
                 key={card.key}
-                onPress={() => navigation.navigate(single.route)}
+                onPress={() => open(single)}
                 accessibilityRole="button"
                 accessibilityLabel={`${name}, ${t(MODE_LABEL[card.mode])}. ${t(card.line)}`}
                 testID={`game-${card.key}`}

@@ -113,8 +113,11 @@ export type RootStackParamList = {
   LastLetter: { id?: string } | undefined;
   /** Kurdish Impostor: an id for a room (a code, an invite, a card); nothing for the start. */
   Impostor: { id?: string } | undefined;
-  /** Who Am I?: an id for a race's room; nothing for the start, alone or a race (whoami/WhoAmIScreen) */
-  WhoAmI: { id?: string } | undefined;
+  /**
+   * Who Am I?: an id for a room with friends; nothing for the start. `way` is a card on the Games page asking for
+   * one of the game's two ways at once: on this phone, or with friends online (whoami/WhoAmIScreen).
+   */
+  WhoAmI: { id?: string; way?: 'phone' | 'friends' } | undefined;
   /** An id when an invite link opened it (`/app/games/stories?id=…`): it hands over to that game. */
   Stories: { id?: string } | undefined;
   StoryReader: { slug: string };
