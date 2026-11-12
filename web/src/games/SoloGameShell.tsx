@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import {
   DIFFICULTY_LEVELS,
   GAME_DIFFICULTIES,
+  gameEmblemTone,
+  isGameEmblem,
   learnGame,
   roundXpCeiling,
   type GameDialect,
@@ -22,9 +24,12 @@ import type { MessageKey } from '../i18n/en';
 import { describeError } from '../lib/api';
 import { haptic } from '../lib/haptics';
 import { dialectName } from '../learn/map';
+import { GameArt } from './GameArt';
 // a round wears one of the path's tones (`lp-tone-*`), and the shell's own look is the games' stylesheet
 import '../learn/path.css';
 import './games.css';
+// a game's round is played on the games' stage; a lesson's exercise keeps the lessons' plain page
+import './game-stage.css';
 
 /**
  * What every learning game played alone has around its own staging: the
@@ -46,6 +51,11 @@ import './games.css';
  * Hear It, Find It are exercises of the lessons' practice (the registry's
  * `place`). For them the way out leads back to Learn and is worded as a
  * lesson's is, and another go is another round, not another game.
+ *
+ * A game is played on the games' stage (game-stage.css): it opens on its
+ * emblem acting out the game, and its result is given on the same night, so
+ * the start and the end of a round are plainly one place. An exercise of the
+ * lessons has no emblem and keeps the lessons' plain page.
  */
 
 /** What a game's board is handed for the item in front of the player. */
@@ -142,7 +152,14 @@ export function SoloGameShell<Item, H, C, B = unknown>({
 }: Props<Item, H, C, B>): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
-  const home = HOME[learnGame(game).place];
+  const place = learnGame(game).place;
+  const home = HOME[place];
+  // the games' stage, in the game's own colour; an exercise of the lessons is not on it
+  const staged = place === 'games';
+  const stage = staged ? ' gs' : '';
+  // the game's own picture (shared/src/art/games.ts), for its start and its result
+  const emblem = staged && isGameEmblem(game) ? game : null;
+  const tone = emblem ? ({ '--gs-tone': gameEmblemTone(emblem) } as React.CSSProperties) : undefined;
   const [phase, setPhase] = useState<Phase>('intro');
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
   const [session, setSession] = useState<SoloSessionView<Item, B> | null>(null);
@@ -261,9 +278,9 @@ export function SoloGameShell<Item, H, C, B = unknown>({
 
   if (phase === 'results' && results && session) {
     const right = results.items.filter((i) => i.correct).length;
-    return (
-      <section className="solo solo--results" aria-labelledby="solo-title">
-        <h1 id="solo-title" ref={heading} tabIndex={-1} className="solo-title">
+    const outcome = (
+      <>
+        <h1 id="solo-title" ref={heading} tabIndex={-1} className={staged ? 'gs-hero-meta' : 'solo-title'}>
           {t('games.solo.results.title')}
         </h1>
         <p className="solo-score">{t('games.solo.results.score', { correct: results.correct, total: results.total })}</p>
@@ -272,6 +289,18 @@ export function SoloGameShell<Item, H, C, B = unknown>({
             <li key={i.index} className={`solo-stone ${i.correct ? (i.firstTry ? 'is-first' : 'is-right') : 'is-missed'}`} aria-hidden />
           ))}
         </ol>
+      </>
+    );
+    return (
+      <section className={`solo solo--results${stage}`} style={tone} aria-labelledby="solo-title">
+        {staged ? (
+          <div className="gs-hero gs-hero--result">
+            {emblem && <GameArt game={emblem} size={104} />}
+            {outcome}
+          </div>
+        ) : (
+          outcome
+        )}
         <ul className="solo-facts">
           <li>{t('games.solo.results.firstTry', { n: results.firstTry })}</li>
           {results.learningCounted ? (
@@ -285,6 +314,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           {results.learningCounted && results.items.some((i) => i.correct && i.repeat) && <li className="solo-muted">{t('games.solo.results.repeat')}</li>}
         </ul>
         {resultsExtra}
+        {error && <p className="field-error">{error}</p>}
         <div className="solo-actions">
           <Button onClick={() => void start()} disabled={busy || !chosen}>
             {t(home.again)}
@@ -328,7 +358,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
     );
     const round = { sessionId: session.id, board: session.board ?? null, item, index, total: session.items.length, state, result, busy, submit, begin: beginItem };
     return (
-      <section className="solo solo--round" aria-labelledby="solo-title">
+      <section className={`solo solo--round${stage}`} style={tone} aria-labelledby="solo-title">
         <header className="solo-bar">
           <Link to={home.to} className="solo-exit" aria-label={t('games.solo.exit')}>
             <CloseIcon size={20} />
@@ -358,12 +388,25 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   }
 
   return (
-    <section className="solo solo--intro" aria-labelledby="solo-title">
-      <h1 id="solo-title" ref={heading} tabIndex={-1} className="solo-title">
-        {title}
-      </h1>
-      <p className="solo-blurb">{blurb}</p>
-      <p className="solo-variety">{t('games.solo.variety', { variety: dialectName(dialect) })}</p>
+    <section className={`solo solo--intro${stage}`} style={tone} aria-labelledby="solo-title">
+      {staged ? (
+        <div className="gs-hero">
+          {emblem && <GameArt game={emblem} size={148} moving />}
+          <p className="gs-hero-meta">{t('games.solo.variety', { variety: dialectName(dialect) })}</p>
+          <h1 id="solo-title" ref={heading} tabIndex={-1} className="gs-hero-title">
+            {title}
+          </h1>
+          <p className="gs-hero-line">{blurb}</p>
+        </div>
+      ) : (
+        <>
+          <h1 id="solo-title" ref={heading} tabIndex={-1} className="solo-title">
+            {title}
+          </h1>
+          <p className="solo-blurb">{blurb}</p>
+          <p className="solo-variety">{t('games.solo.variety', { variety: dialectName(dialect) })}</p>
+        </>
+      )}
       {intro}
       {open && (
         <Button variant="secondary" onClick={() => void resume()} disabled={busy} className="solo-continue">
@@ -385,7 +428,7 @@ export function SoloGameShell<Item, H, C, B = unknown>({
         </div>
         {chosen && <p className="solo-muted">{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen], roundItems) })}</p>}
       </fieldset>
-      <Button size="lg" onClick={() => void start()} disabled={busy || !chosen}>
+      <Button size="lg" className={staged ? 'gs-go' : undefined} onClick={() => void start()} disabled={busy || !chosen}>
         {t('games.solo.start')}
       </Button>
       {difficulties !== null && offered.length === 0 && <p className="solo-muted">{t('games.solo.notEnough')}</p>}

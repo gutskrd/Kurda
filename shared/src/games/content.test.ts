@@ -80,22 +80,20 @@ describe('checkGameContent', () => {
   });
 
   it('knows no kind written for a game that is no longer part of Hevalo', () => {
-    for (const kind of ['taboo_card', 'bluff_card', 'building_name']) expect(isGameContentKind(kind)).toBe(false);
+    for (const kind of ['taboo_card', 'bluff_card', 'building_name', 'scenario']) expect(isGameContentKind(kind)).toBe(false);
   });
 
   it('lists every Kurdish text of a row with its path', () => {
-    const res = checkGameContent('scenario', 'kmr', {
-      situation: en('At the market'),
-      line: { ku: 'Fermo!', meanings: en('Here you are!') },
-      reply: { ku: 'Spas.', meanings: en('Thanks.') },
-      others: [
-        { ku: 'Şev baş.', meanings: en('Good night.') },
-        { ku: 'Ez birçî me.', meanings: en('I am hungry.') },
-      ],
+    const res = checkGameContent('word_card', 'kmr', {
+      word: 'pisîk',
+      meanings: en('cat'),
+      category: 'animals',
+      hint: { ku: 'heywan', meanings: en('animal') },
+      forms: ['pisîkan'],
     });
     expect(res.ok).toBe(true);
-    if (res.ok) expect(kurdishTexts('scenario', res.payload).map((t) => t.path)).toEqual(['line.ku', 'reply.ku', 'others.0.ku', 'others.1.ku']);
-    if (res.ok) expect(contentHeadline('scenario', res.payload)).toBe('Fermo!');
+    if (res.ok) expect(kurdishTexts('word_card', res.payload).map((t) => t.path)).toEqual(['word', 'hint.ku', 'forms.0']);
+    if (res.ok) expect(contentHeadline('word_card', res.payload)).toBe('pisîk');
   });
 });
 

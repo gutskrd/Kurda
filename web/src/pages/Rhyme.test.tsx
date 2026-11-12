@@ -25,6 +25,16 @@ const round = {
 };
 
 describe('Rhyme (solo training)', () => {
+  it('opens on a start, with no round asked for and no clock running', async () => {
+    const fetched = vi.fn(async (url: string) => (url.includes('/rhyme/training') ? jsonResponse(200, round) : jsonResponse(200, {})));
+    vi.stubGlobal('fetch', fetched);
+    renderApp(<Rhyme />, ['/app/games/rhyme']);
+    expect(await screen.findByRole('button', { name: 'Start' })).toBeInTheDocument();
+    expect(screen.getByText('Find as many Kurdish words as you can that rhyme with the prompt.')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Your rhyme')).toBeNull();
+    expect(fetched.mock.calls.some(([url]) => String(url).includes('/rhyme/training'))).toBe(false);
+  });
+
   it('starts a round showing the prompt', async () => {
     vi.stubGlobal(
       'fetch',
@@ -34,6 +44,7 @@ describe('Rhyme (solo training)', () => {
       }),
     );
     renderApp(<Rhyme />, ['/app/games/rhyme']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     expect(await screen.findByText('roj')).toBeInTheDocument();
     expect(screen.getByLabelText('Your rhyme')).toBeInTheDocument();
   });
@@ -55,6 +66,7 @@ describe('Rhyme (solo training)', () => {
       }),
     );
     renderApp(<Rhyme />, ['/app/games/rhyme']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
 
     await userEvent.type(await screen.findByLabelText('Your rhyme'), 'koj');
     await userEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -73,6 +85,7 @@ describe('Rhyme (solo training)', () => {
       }),
     );
     renderApp(<Rhyme />, ['/app/games/rhyme']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     expect(await screen.findByText(/no words available/i)).toBeInTheDocument();
   });
 
@@ -95,6 +108,7 @@ describe('Rhyme (solo training)', () => {
       const stop = onGameFinished((e) => heard.push(e));
       stubRound(150);
       renderApp(<Rhyme />, ['/app/games/rhyme']);
+      await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
 
       await waitFor(() => expect(heard).toEqual([{ game: 'rhyme', gaveUp: false }]));
       stop();
@@ -105,6 +119,7 @@ describe('Rhyme (solo training)', () => {
       const stop = onGameFinished((e) => heard.push(e));
       stubRound(60000);
       renderApp(<Rhyme />, ['/app/games/rhyme']);
+      await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
 
       await userEvent.click(await screen.findByRole('button', { name: 'End round' }));
 

@@ -7,11 +7,9 @@ import { withKit } from '../test/render';
 import { GameContent } from './GameContent';
 
 /**
- * What Would You Say?'s scenes and Kurdish Detective's case files on the Game
- * content page: scenes are imported from published conversations; a scene's
- * Kurdish is shown and never typed, its wrong replies kept to two at least
- * and added only from published lines; a case's evidence is picked card by
- * card from published lines, with its English and recording key copied.
+ * Kurdish Detective's case files on the Game content page: a case's evidence
+ * is picked card by card from published lines, with its English and
+ * recording key copied, and its Kurdish is shown and never typed.
  */
 
 const ID = '7d1f0f6a-3b9a-4c55-8f0b-0c3c0bde0002';
@@ -21,29 +19,43 @@ const en = (t: string) => ({ en: t });
 function row(over: Partial<AdminGameContent>): AdminGameContent {
   return {
     id: ID,
-    kind: 'scenario',
-    game: 'what-would-you-say',
+    kind: 'case_file',
+    game: 'detective',
     dialect: 'kmr',
     level: 1,
     payload: {
-      situation: en('Hamo says this to you.'),
-      speaker: 'hamo',
-      line: { ku: 'Tu çend salî yî?', meanings: en('How old are you?'), recording: 'conv|0|x' },
-      reply: { ku: 'Ez heft salî me.', meanings: en('I am seven.') },
-      others: [
-        { ku: 'Li wir sêv hene!', meanings: en('There are apples over there!') },
-        { ku: 'Ez ne hêdî me!', meanings: en('I am not slow!') },
+      title: en('The missing apples'),
+      intro: en('Someone took the apples.'),
+      suspects: [
+        { id: 'hamo', name: 'Hamo', about: en('The uncle.') },
+        { id: 'xezo', name: 'Xezo', about: en('The niece.') },
       ],
-      origin: { type: 'conversation', ref: 'ex1:0' },
+      evidence: [
+        {
+          id: 'card-1',
+          kind: 'overheard',
+          ku: 'Tu çend salî yî?',
+          meanings: en('How old are you?'),
+          speaker: 'hamo',
+          recording: 'conv|0|x',
+          origin: { type: 'conversation', ref: 'ex1:0' },
+        },
+        { id: 'card-2', kind: 'statement', ku: 'Ez heft salî me.', meanings: en('I am seven.') },
+        { id: 'card-3', kind: 'note', ku: 'Li wir sêv hene!', meanings: en('There are apples over there!') },
+      ],
+      steps: [{ prompt: en('Who asks?'), options: [en('Hamo'), en('Xezo')], correctIndex: 0, evidence: ['card-1', 'card-2', 'card-3'] }],
+      culprit: 'xezo',
+      solution: en('Xezo took them.'),
+      hints: [],
     },
-    headline: 'Tu çend salî yî?',
+    headline: 'The missing apples',
     status: 'draft',
     reviewStatus: 'unreviewed',
     reviewedBy: null,
     reviewedAt: null,
     reviewNote: null,
     source: 'admin',
-    origin: 'conversation:ex1:0',
+    origin: null,
     lockVersion: 1,
     publishedAt: null,
     createdAt: '2026-11-01T10:00:00.000Z',
@@ -76,46 +88,35 @@ async function open(hash: string): Promise<HTMLElement> {
   return page.container;
 }
 
-describe('scenes', () => {
-  it('are imported as drafts from published conversations', async () => {
-    const api = fakeApi(on('GET', /^\/admin\/game-content\?/, json({ rows: [], total: 0 })), on('POST', '/admin/game-content/import', json({ created: 18, skipped: 0 })));
-    const page = await open('#/game-content');
-    await click(button(page, 'Scenes from conversations (Kurmancî)'));
-    expect(api.calls.find((c) => c.method === 'POST')!.body).toEqual({ from: 'conversations', dialect: 'kmr' });
-    expect(text(document.body)).toContain('Imported 18 new drafts from published conversations (Kurmancî)');
-  });
-
-  it('show their Kurdish without a field to type it in, and add wrong replies only from published lines', async () => {
+describe('case files', () => {
+  it('show their Kurdish without a field to type it in, and add cards only from published lines', async () => {
     const api = fakeApi(on('GET', `/admin/game-content/${ID}`, json(row({}))), on('GET', /^\/admin\/game-content\/lines\?/, json({ lines })));
     const page = await open(`#/game-content/${ID}`);
     expect(text(page)).toContain('Tu çend salî yî?');
-    expect(text(page)).toContain('How old are you?');
-    // no Kurdish is ever typed: there is no input holding it
+    // no Kurdish is ever typed: there is no input holding it, only its meaning
     for (const input of page.querySelectorAll('input')) expect(input.value).not.toContain('Tu çend salî yî?');
     expect(page.querySelector('span[lang="ku"]')?.textContent).toBe('Tu çend salî yî?');
-    // two wrong replies is the least a scene keeps
-    expect((page.querySelector('button[aria-label="Remove wrong reply 1"]') as HTMLButtonElement).disabled).toBe(true);
+    expect([...page.querySelectorAll<HTMLInputElement>('input')].some((i) => i.value === 'How old are you?')).toBe(true);
+    expect(text(page)).toContain('Ready to save.');
+    expect(text(page)).not.toContain('No step uses it');
 
-    await click(button(page, 'Add a wrong reply from a published line'));
+    await click(button(page, 'Add a card from a published line'));
     await settle();
     expect(api.calls.some((c) => c.path.startsWith('/admin/game-content/lines?dialect=kmr'))).toBe(true);
-    expect(text(page)).toContain('Otobûs diçe, zû were!');
     await click(page.querySelectorAll<HTMLButtonElement>('.gc-line-picker-list button')[0]!);
     expect(text(page)).toContain('Otobûs diçe, zû were!');
     expect(page.querySelector('.gc-line-picker')).toBeNull();
-    expect((page.querySelector('button[aria-label="Remove wrong reply 1"]') as HTMLButtonElement).disabled).toBe(false);
-    expect(text(page)).toContain('Ready to save.');
+    // the new card is allowed (a red herring), and said to be one no step uses yet
+    expect(text(page)).toContain('No step uses it');
   });
-});
 
-describe('case files', () => {
   it('are put together card by card from published lines, with their English and recordings copied', async () => {
     let saved: unknown = null;
     const api = fakeApi(
       on('GET', /^\/admin\/game-content\/lines\?/, json({ lines })),
       on('POST', '/admin/game-content', (call) => {
         saved = call.body;
-        return json(row({ kind: 'case_file', game: 'detective', payload: (call.body as { payload: AdminGameContent['payload'] }).payload }), 201);
+        return json(row({ payload: (call.body as { payload: AdminGameContent['payload'] }).payload }), 201);
       }),
     );
     const page = await open('#/game-content/new?kind=case_file');

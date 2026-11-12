@@ -1,13 +1,12 @@
 /**
  * The recordings of the lines a round shows, read once for the whole round.
  *
- * What Would You Say? plays the line the player is answering, and Kurdish
- * Detective the remarks pinned to its board, in the voice a person recorded
- * them in. A line taken from a conversation is filed under the conversation,
- * its part and its words (`conversationLineKey`), and a sentence recorded on
- * its own under its words alone (`lessonAudioKey`); each line names the keys
- * it may be found under, most particular first, and gets the first that has
- * a recording. One query, however many lines.
+ * Kurdish Detective plays the remarks pinned to its board in the voice a
+ * person recorded them in. A line taken from a conversation is filed under
+ * the conversation, its part and its words (`conversationLineKey`), and a
+ * sentence recorded on its own under its words alone (`lessonAudioKey`); each
+ * line names the keys it may be found under, most particular first, and gets
+ * the first that has a recording. One query, however many lines.
  *
  * The recording's address travels beside the line's own words, as a lesson's
  * conversation sends its lines (lessonaudio/delivery.ts): nothing is behind

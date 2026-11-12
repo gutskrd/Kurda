@@ -1,6 +1,6 @@
 /**
- * Starter content for the learning games, seeded once each as drafts for
- * review: today, Kurdish Detective's first case (api/content/games).
+ * Starter content written for the learning games, seeded once each: today,
+ * Kurdish Detective's first case (api/content/games).
  *
  * A starter case is written in the interface languages only — its title,
  * suspects, questions and solution — and its evidence names lines of the
@@ -8,9 +8,10 @@
  * rather than holding any Kurdish. Seeding copies each line's Kurdish, its
  * English, who says it and the key its recording is filed under from the
  * conversation as it is in the database (published, else its newest
- * version), so nothing Kurdish is written for the game. The row goes in as a
- * draft (`source = 'starter'`, unreviewed): no learner meets it until a
- * reviewer approves it and an editor publishes it.
+ * version), so nothing Kurdish is written for the game. The row goes in
+ * published, as the rest of the starter library does (starter-library.ts):
+ * `source = 'starter'`, approved with no reviewer named, which the admin
+ * panel shows as not yet read by a person.
  *
  * Each starter is seeded once, as the starter stories are (stories/import.ts):
  * a row in `content_seeds` remembers it, so a starter an editor deleted stays
@@ -159,8 +160,8 @@ export async function seedStarterGameContent(
       try {
         await client.query('BEGIN');
         const row = await client.query(
-          `INSERT INTO game_content (kind, dialect, level, payload, source, origin)
-           VALUES ('case_file', $1, $2, $3::jsonb, 'starter', $4)
+          `INSERT INTO game_content (kind, dialect, level, payload, source, origin, status, review_status, reviewed_at, published_at)
+           VALUES ('case_file', $1, $2, $3::jsonb, 'starter', $4, 'published', 'approved', now(), now())
            ON CONFLICT (kind, dialect, origin) WHERE origin IS NOT NULL DO NOTHING
            RETURNING id`,
           [starter.dialect, starter.level, JSON.stringify(checked.payload), `starter:${starter.slug}`],
@@ -175,7 +176,7 @@ export async function seedStarterGameContent(
         client.release();
       }
     }
-    if (seeded.length > 0) log.info({ seeded }, 'starter game content seeded as drafts');
+    if (seeded.length > 0) log.info({ seeded }, 'starter game content seeded');
   } catch (err) {
     log.warn({ err }, 'starter game content could not be seeded');
   }

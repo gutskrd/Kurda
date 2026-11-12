@@ -3,6 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   DIFFICULTY_LEVELS,
   GAME_DIFFICULTIES,
+  isGameEmblem,
   learnGame,
   roundXpCeiling,
   type GameDialect,
@@ -18,6 +19,8 @@ import { describeError } from '../api/errors';
 import { haptic } from '../feedback/haptics';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
+import { Cloth, GoldButton } from '../impostor/parts';
+import { TABLE } from '../impostor/table';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useDirection } from '../reports/direction';
@@ -28,6 +31,7 @@ import { TileButton } from '../theme/Tile';
 import { useTheme } from '../theme/ThemeProvider';
 import { displayFont } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
+import { GameArt } from './GameArt';
 
 /**
  * What every learning game played alone has around its own staging, on the
@@ -49,6 +53,11 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
  * and Done, which goes back to wherever the exercise was opened from (the
  * practice hub, or the Lessons half of Learn); nothing on the way calls an
  * exercise a game.
+ *
+ * A game opens on the night the Games half puts its featured game on, with
+ * its emblem acting the game out and one gold button to begin, and its
+ * result is given on the same night: the start and the end of a round are
+ * one place. An exercise has no emblem and keeps the lessons' plain page.
  */
 
 export interface SoloRound<Item, H, C, B = unknown> {
@@ -111,20 +120,23 @@ function nextOpen(states: readonly SoloItemState[]): number {
 }
 
 /** A stone per item: the one you are on raised, the ones done filled by how they went. */
-function Stones({ states, here, tone }: { states: readonly SoloItemState[]; here: number | null; tone: string }): React.JSX.Element {
+function Stones({ states, here, tone, night = false }: { states: readonly SoloItemState[]; here: number | null; tone: string; night?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
+  // on the night the stones are told apart by gold and by the cloth's own veil, whatever the theme
+  const track = night ? TABLE.veil : colors.controlTrack;
   return (
-    <View style={[styles.stones, { flexDirection: dir.row }]} aria-hidden>
+    <View style={[styles.stones, night && styles.stonesNight, { flexDirection: dir.row }]} aria-hidden>
       {states.map((s) => {
-        const fill = s.done ? (s.correct ? tone : 'transparent') : colors.controlTrack;
+        const fill = s.done ? (s.correct ? tone : 'transparent') : track;
         return (
           <View
             key={s.index}
             style={[
               styles.stone,
+              night && styles.stoneNight,
               { backgroundColor: fill, opacity: s.done && s.correct && !s.firstTry ? 0.55 : 1 },
-              s.done && !s.correct && { borderWidth: 2, borderColor: colors.controlTrack },
+              s.done && !s.correct && { borderWidth: 2, borderColor: track },
               s.index === here && styles.stoneHere,
               s.index === here && !s.done && { backgroundColor: colors.textSecondary },
             ]}
@@ -158,6 +170,8 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   const { t } = useI18n();
   // an exercise of the lessons' practice rather than a game: its results speak of practice
   const exercise = learnGame(game).place === 'lessons';
+  // a game's own picture, for its start and its result; an exercise of the lessons has none
+  const emblem = !exercise && isGameEmblem(game) ? game : null;
   const dir = useDirection();
   const [phase, setPhase] = useState<Phase>('intro');
   const [difficulty, setDifficulty] = useState<GameDifficulty | null>(null);
@@ -271,11 +285,24 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   if (phase === 'results' && results && session) {
     body = (
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, ...text]} accessibilityRole="header">
-          {t('games.solo.results.title')}
-        </Text>
-        <Text style={[styles.score, ...text]}>{t('games.solo.results.score', { correct: results.correct, total: results.total })}</Text>
-        <Stones states={session.states} here={null} tone={tone} />
+        {exercise ? (
+          <>
+            <Text style={[styles.title, ...text]} accessibilityRole="header">
+              {t('games.solo.results.title')}
+            </Text>
+            <Text style={[styles.score, ...text]}>{t('games.solo.results.score', { correct: results.correct, total: results.total })}</Text>
+            <Stones states={session.states} here={null} tone={tone} />
+          </>
+        ) : (
+          <Cloth style={styles.hero}>
+            {emblem ? <GameArt game={emblem} size={96} /> : null}
+            <Text style={styles.heroKicker} accessibilityRole="header">
+              {t('games.solo.results.title')}
+            </Text>
+            <Text style={styles.heroScore}>{t('games.solo.results.score', { correct: results.correct, total: results.total })}</Text>
+            <Stones states={session.states} here={null} tone={TABLE.gold} night />
+          </Cloth>
+        )}
         <Text style={muted}>{t('games.solo.results.firstTry', { n: results.firstTry })}</Text>
         {results.learningCounted ? (
           <>
@@ -287,8 +314,13 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           <Text style={[...text, styles.honest]}>{t('games.solo.results.noXp', { needed: results.needed, correct: results.firstTry })}</Text>
         )}
         {resultsExtra}
+        {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
         <View style={styles.actions}>
-          <TileButton label={t(exercise ? 'practice.exercise.again' : 'games.solo.playAgain')} onPress={() => void start()} busy={busy} disabled={!chosen} />
+          {exercise ? (
+            <TileButton label={t('practice.exercise.again')} onPress={() => void start()} busy={busy} disabled={!chosen} />
+          ) : (
+            <GoldButton label={t('games.solo.playAgain')} onPress={() => void start()} busy={busy} disabled={!chosen} />
+          )}
           <TileButton label={t(exercise ? 'common.done' : 'games.solo.backToGames')} onPress={onExit} tone="success" />
         </View>
       </ScrollView>
@@ -340,11 +372,23 @@ export function SoloGameShell<Item, H, C, B = unknown>({
   } else {
     body = (
       <ScrollView contentContainerStyle={styles.content}>
-        <Text style={[styles.title, ...text]} accessibilityRole="header">
-          {title}
-        </Text>
-        <Text style={[...text, styles.blurb]}>{blurb}</Text>
-        <Text style={muted}>{t('games.solo.variety', { variety: dialect === 'ckb' ? 'Soranî' : 'Kurmancî' })}</Text>
+        {exercise ? (
+          <>
+            <Text style={[styles.title, ...text]} accessibilityRole="header">
+              {title}
+            </Text>
+            <Text style={[...text, styles.blurb]}>{blurb}</Text>
+            <Text style={muted}>{t('games.solo.variety', { variety: dialect === 'ckb' ? 'Soranî' : 'Kurmancî' })}</Text>
+          </>
+        ) : (
+          <Cloth style={styles.hero}>
+            {emblem ? <GameArt game={emblem} size={132} moving /> : null}
+            <Text style={styles.heroKicker}>{t('games.solo.variety', { variety: dialect === 'ckb' ? 'Soranî' : 'Kurmancî' })}</Text>
+            {/* the screen's header already says the game's name as the heading; here it is the picture's caption */}
+            <Text style={styles.heroName}>{title}</Text>
+            <Text style={styles.heroLine}>{blurb}</Text>
+          </Cloth>
+        )}
         {intro}
         {open ? <TileButton label={t('games.solo.continue')} onPress={() => void resume()} busy={busy} tone="success" /> : null}
         <Text style={[styles.legend, ...text]}>{t('games.solo.difficulty')}</Text>
@@ -373,7 +417,11 @@ export function SoloGameShell<Item, H, C, B = unknown>({
           })}
         </View>
         {chosen ? <Text style={muted}>{t('games.solo.upToXp', { xp: roundXpCeiling(DIFFICULTY_LEVELS[chosen], roundItems) })}</Text> : null}
-        <TileButton label={t('games.solo.start')} onPress={() => void start()} busy={busy} disabled={!chosen} />
+        {exercise ? (
+          <TileButton label={t('games.solo.start')} onPress={() => void start()} busy={busy} disabled={!chosen} />
+        ) : (
+          <GoldButton label={t('games.solo.start')} onPress={() => void start()} busy={busy} disabled={!chosen} />
+        )}
         {difficulties !== null && offered.length === 0 ? <Text style={muted}>{t('games.solo.notEnough')}</Text> : null}
         {error ? <Text style={[dir.text, { color: colors.danger }]}>{error}</Text> : null}
       </ScrollView>
@@ -399,7 +447,14 @@ const styles = StyleSheet.create({
   chipText: { fontSize: typography.sizes.sm },
   bar: { alignItems: 'center', gap: spacing.sm },
   stones: { flex: 1, gap: 6 },
+  stonesNight: { flex: 0, alignSelf: 'stretch', justifyContent: 'center', marginTop: spacing.sm },
   stone: { flex: 1, maxWidth: 44, height: 8, borderRadius: radii.pill },
+  stoneNight: { height: 10 },
+  hero: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
+  heroKicker: { marginTop: spacing.sm, color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase' },
+  heroName: { color: TABLE.ink, fontFamily: displayFont, fontSize: typography.sizes.xxl, fontWeight: typography.displayWeight, textAlign: 'center' },
+  heroLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
+  heroScore: { color: TABLE.ink, fontFamily: displayFont, fontSize: typography.sizes.xxl + 8, fontWeight: typography.displayWeight, textAlign: 'center' },
   stoneHere: { transform: [{ scaleY: 1.5 }] },
   count: { fontSize: typography.sizes.xs, fontVariant: ['tabular-nums'] },
   feedback: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },

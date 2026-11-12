@@ -83,6 +83,12 @@
   aspect-ratio: 1;
   color: var(--wa-shadow);
 }
+/* on a phone the card is smaller while a round is played, so the words it could be are on the first screen with it */
+@media (max-width: 640px) {
+  .wa-board > .wa-stage {
+    width: min(100%, 176px);
+  }
+}
 .wa-silhouette svg {
   display: block;
   width: 100%;

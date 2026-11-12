@@ -28,7 +28,8 @@
  * in `game_seen` as a finished round's is — so the corrections a round showed
  * cannot be read, the round dropped, and the same items played again first
  * as if never met. (Kurdish Detective also carries the hints spent on a case
- * into the next round of that case: detective.ts.)
+ * into the next round of that case until a round has paid for them:
+ * detective.ts.)
  *
  * A game's item view never carries anything worked out from its answer: no
  * key hashed from the sentence, no stable id of the identity behind a tile.

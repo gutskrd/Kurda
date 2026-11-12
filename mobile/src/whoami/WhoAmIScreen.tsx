@@ -38,6 +38,8 @@ import { SoloGameShell, type SoloRound } from '../games/SoloGameShell';
 import { useAvailability } from '../games/learnGames';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { DIFFICULTY_KEY } from '../games/partyChoices';
+import { Cloth, GoldButton } from '../impostor/parts';
+import { TABLE } from '../impostor/table';
 import { ForeheadCard, GuessTiles, QuestionDeck, WHO_AM_I_TONE } from './WhoAmIStage';
 import { Loading } from '../theme/Loading';
 
@@ -96,17 +98,18 @@ function Start({ onAlone }: { onAlone: () => void }): React.JSX.Element {
   }
   return (
     <>
-      <GlassCard style={styles.card}>
+      {/* the night every game opens on: the one who wears the card, and what the game is */}
+      <Cloth style={styles.stage}>
         <ForeheadCard dialect={dialect} category="animal" identity={null} />
-        <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.whoAmI.intro')}</Text>
-      </GlassCard>
+        <Text style={styles.stageLine}>{t('games.whoAmI.intro')}</Text>
+      </Cloth>
       {solo ? (
         <GlassCard style={styles.card}>
           <Text accessibilityRole="header" style={[styles.title, { color: colors.textPrimary }]}>
             {t('games.whoAmI.alone')}
           </Text>
           <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.whoAmI.aloneBlurb')}</Text>
-          <ClayButton label={t('games.play')} icon="play" tone="primary" onPress={onAlone} style={styles.stretch} />
+          <GoldButton label={t('games.play')} icon="play" onPress={onAlone} style={styles.stretch} />
         </GlassCard>
       ) : null}
       {together ? (
@@ -370,6 +373,8 @@ function RaceBoard({
 }
 
 const styles = StyleSheet.create({
+  stage: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
+  stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },

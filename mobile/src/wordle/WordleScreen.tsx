@@ -35,6 +35,9 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import { Loading } from '../theme/Loading';
+import { GameArt } from '../games/GameArt';
+import { Cloth, GoldButton } from '../impostor/parts';
+import { TABLE } from '../impostor/table';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -245,20 +248,18 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
 
         {!game ? (
-          <GlassCard style={styles.startCard}>
-            <Icon name="grid" size={44} tone="primary" />
-            <Text style={[styles.startTitle, { color: colors.textPrimary }]}>{t('games.wordle.name')}</Text>
-            <Text style={[styles.startHint, { color: colors.textSecondary }]}>
-              {t('games.wordle.rules')}
-            </Text>
-            <View style={{ alignSelf: 'stretch', marginTop: spacing.md }}>
-              <Segmented<Difficulty> options={DIFFICULTIES} value={difficulty} onChange={setDifficulty} labelOf={(d) => t(DIFFICULTY_KEY[d])} />
-            </View>
+          <>
+            <Cloth style={styles.stage}>
+              <GameArt game="peyvok" size={132} moving />
+              <Text style={styles.stageName}>{t('games.wordle.name')}</Text>
+              <Text style={styles.stageLine}>{t('games.wordle.rules')}</Text>
+            </Cloth>
+            <Segmented<Difficulty> options={DIFFICULTIES} value={difficulty} onChange={setDifficulty} labelOf={(d) => t(DIFFICULTY_KEY[d])} />
             {starting ? (
               <Loading style={{ marginTop: spacing.lg }} />
             ) : (
               <View style={styles.startActions}>
-                <ClayButton label={t('games.wordle.daily')} icon="star" tone="primary" onPress={() => start('daily')} style={{ alignSelf: 'stretch' }} />
+                <GoldButton label={t('games.wordle.daily')} icon="star" onPress={() => start('daily')} />
                 <ClayButton label={t('games.wordle.practice')} icon="bolt" tone="neutral" onPress={() => start('practice')} style={{ alignSelf: 'stretch' }} />
               </View>
             )}
@@ -272,7 +273,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                 })}
               </Text>
             ) : null}
-          </GlassCard>
+          </>
         ) : (
           <>
             <WordleBoard board={board} cellSize={cellSize} shake={shake.translateX} />
@@ -369,7 +370,7 @@ function ResultPanel({
 
         <View style={styles.resultActions}>
           <ClayButton label={t('share.title')} icon="chat" tone="neutral" onPress={onShare} style={{ flex: 1 }} />
-          <ClayButton label={t('games.wordle.practice')} icon="bolt" tone="primary" onPress={onPractice} style={{ flex: 1 }} />
+          <GoldButton label={t('games.wordle.practice')} icon="bolt" onPress={onPractice} style={{ flex: 1 }} />
         </View>
         <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={{ alignSelf: 'stretch', marginTop: spacing.sm }} />
       </GlassCard>
@@ -409,11 +410,12 @@ const styles = StyleSheet.create({
   // flex + centre so a long translated name shares the row with the back
   // button instead of wrapping over it: "Peyvok" is one word, "Peyvok
   // Battle" in some languages is three
-  startCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
-  startTitle: { ...display(typography.sizes.xl), marginTop: spacing.sm },
-  startHint: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
-  startActions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.lg },
-  startStats: { fontSize: typography.sizes.sm, marginTop: spacing.md },
+  // the night the game opens on: its emblem acting the game out, its name, and how it is played
+  stage: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.lg, paddingVertical: spacing.lg },
+  stageName: { ...display(typography.sizes.xxl), color: TABLE.ink, textAlign: 'center', marginTop: spacing.sm },
+  stageLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
+  startActions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },
+  startStats: { fontSize: typography.sizes.sm, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   result: { gap: spacing.md, marginTop: spacing.md },
   resultCard: { gap: spacing.sm },

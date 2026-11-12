@@ -109,6 +109,19 @@ describe('The Memory Thief', () => {
     expect(await screen.findByText('Up to 10 XP')).toBeInTheDocument();
   });
 
+  it('opens on the games’ stage: its emblem over its name, and one gold way in', async () => {
+    server(session([item()]), () => ({}));
+    const { container } = renderApp(<MemoryThief />, ['/app/games/memory-thief']);
+    const title = await screen.findByRole('heading', { name: 'The Memory Thief' });
+    const hero = title.closest('.gs-hero');
+    expect(hero).not.toBeNull();
+    // the emblem is decoration: drawn, and hidden from a screen reader
+    expect(hero!.querySelector('.gp-art')?.getAttribute('aria-hidden')).toBe('true');
+    expect(container.querySelector('.solo.gs')).not.toBeNull();
+    const start = await screen.findByRole('button', { name: 'Start' });
+    expect(start.className).toContain('gs-go');
+  });
+
   it('shows the passage to study, takes its words, and lets them be given back from tiles', async () => {
     const sent = server(session([item()]), (a) =>
       a.attempt === 1
@@ -246,7 +259,7 @@ describe('Learn’s games list', () => {
     server(session([item()]), () => ({}));
     renderApp(<Games />, ['/app/games']);
     const card = (await screen.findByRole('heading', { name: 'The Memory Thief' })).closest('article')!;
-    expect(card).toHaveClass('game-tile');
+    expect(card).toHaveClass('gp-card');
     expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/memory-thief');
   });
 });

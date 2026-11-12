@@ -104,20 +104,26 @@ function metaOf(meta: Record<string, unknown>): CaseMeta | null {
 
 /**
  * The hints already spent on this case in the learner's last round of it,
- * when that round was left unfinished (given up for another, or expired)
- * within the repeat window: what the next round of the case starts with.
- * Nothing when the last round of it was finished — its hints were paid for.
+ * when that round did not pay for them, within the repeat window: what the
+ * next round of the case starts with. A round pays for its hints at its
+ * finish, out of what its answers earned — so one left unfinished (given up
+ * for another, or expired) did not, and neither did one finished without
+ * counting, which earned nothing to take them from. Were that second kind
+ * let go, a hint would be free to anyone who finished a round empty and
+ * played the case again knowing what the hint had shown.
+ * Nothing when the last round of it was finished and counted: its hints
+ * were paid for.
  */
 export async function carriedHints(db: Pick<pg.Pool, 'query'>, userId: string, dialect: string, caseId: string): Promise<CaseMeta['spent'] | null> {
-  const res = await db.query<{ spent: CaseMeta['spent'] | null; finished: boolean }>(
-    `SELECT meta->'spent' AS spent, finished_at IS NOT NULL AS finished FROM game_sessions
+  const res = await db.query<{ spent: CaseMeta['spent'] | null; paid: boolean }>(
+    `SELECT meta->'spent' AS spent, (finished_at IS NOT NULL AND learning_counted IS TRUE) AS paid FROM game_sessions
       WHERE user_id = $1 AND game = $2 AND dialect = $3 AND meta->>'caseId' = $4
         AND created_at > now() - make_interval(days => $5)
       ORDER BY created_at DESC LIMIT 1`,
     [userId, DETECTIVE, dialect, caseId, GAME_REPEAT_XP_DAYS],
   );
   const last = res.rows[0];
-  if (!last || last.finished || !last.spent || typeof last.spent.used !== 'number') return null;
+  if (!last || last.paid || !last.spent || typeof last.spent.used !== 'number') return null;
   return {
     used: Math.min(DETECTIVE_HINTS, Math.max(0, last.spent.used)),
     read: Math.max(0, Number(last.spent.read) || 0),

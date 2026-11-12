@@ -1,17 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, WordleGame } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
-import { ArrowIcon } from '../components/icons';
 import { WordleBoard, WordleKeyboard } from '../components/WordleBoard';
 import { useWordleKeys } from '../keyboard/wordleKeys';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
+import { GameHead, stageTone } from '../games/GameHead';
 
 type Mode = 'daily' | 'practice';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -107,16 +106,8 @@ export function Wordle(): React.JSX.Element {
   useWordleKeys(playing, press);
 
   return (
-    <div className="container game-page">
-      <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
-          <ArrowIcon size={18} />
-        </Link>
-        <div>
-          <span className="eyebrow">{t('nav.games')}</span>
-          <h1 className="page-title" style={{ margin: 0 }}>{t('games.wordle.name')}</h1>
-        </div>
-      </div>
+    <div className="container game-page gs" style={stageTone('peyvok')}>
+      <GameHead game="peyvok" title={t('games.wordle.name')} />
 
       <div className="toolbar wordle-toolbar" role="group" aria-label={t('games.options')}>
         <div className="chat-tabs" role="tablist" aria-label={t('games.wordle.mode')}>
@@ -152,12 +143,12 @@ export function Wordle(): React.JSX.Element {
           />
           {notice && <div className="wordle-notice" role="status">{notice}</div>}
           {game.status !== 'playing' && (
-            <div className="wordle-result">
+            <div className={`wordle-result is-${game.status}`}>
               <p className="wordle-result-title">
                 {game.status === 'won' ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
                 {game.target && game.status === 'lost' && <> {t('games.wordle.theWordWas', { word: game.target })}</>}
-                {game.xpAwarded ? <> +{game.xpAwarded} XP</> : null}
               </p>
+              {game.xpAwarded ? <p className="gs-earned">+{game.xpAwarded} XP</p> : null}
               {mode === 'practice' ? (
                 <Button onClick={() => void start()}>{t('games.playAgain')}</Button>
               ) : (

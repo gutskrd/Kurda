@@ -168,6 +168,7 @@ import { ContentAdminService } from './content/admin-service.js';
 import { seedStarterLessons } from './content/starter-lessons.js';
 import { seedRoadLessons } from './content/road-seed.js';
 import { seedStarterGameContent } from './games/starters.js';
+import { seedStarterLibrary } from './games/starter-library.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
 import { UserAdminService } from './admin/user-admin-service.js';
 import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
@@ -723,8 +724,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       app.addHook('onReady', async () => {
         await seedStarterLessons(app.db, app.log);
         await seedRoadLessons(app.db, app.log);
-        // and the learning games' starters, drafts made of the Road's own lines once those are there (games/starters.ts)
+        // and the learning games' starters: the first case, made of the Road's own lines once those are there (games/starters.ts),
+        // then each game's first set of rows, made once from the course and published (games/starter-library.ts)
         await seedStarterGameContent(app.db, app.log);
+        await seedStarterLibrary(app.db, app.log, app.cache);
       });
     }
     // the push and notification services set up with the leagues, above

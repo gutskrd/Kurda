@@ -45,11 +45,14 @@ export const GAME_NAME: Readonly<Record<RankedGame, string>> = {
  * What a game is called on a row read back from the server. A row written
  * while Don't Say the Word! or Kurdish Bluff was still played (a season's
  * standings, an old rating) names a game that is not ranked any more: it is
- * named as it was and marked, rather than shown as a blank.
+ * named as it was and marked, rather than shown as a blank. What Would You
+ * Say? was played alone and never ranked, so no rating names it; it is here
+ * so that any row that does carry its name reads the same way.
  */
 const RETIRED_GAME_NAME: Readonly<Record<string, string>> = {
   'dont-say': 'Don’t Say the Word! (no longer played)',
   bluff: 'Kurdish Bluff (no longer played)',
+  'what-would-you-say': 'What Would You Say? (no longer played)',
 };
 export function gameName(game: string): string {
   return (GAME_NAME as Readonly<Record<string, string>>)[game] ?? RETIRED_GAME_NAME[game] ?? game;

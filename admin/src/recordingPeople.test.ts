@@ -109,7 +109,7 @@ describe('a person’s script to rehearse from', () => {
       before: { name: 'Hevalo', text: 'Sêv…', meaning: 'Apples…' },
       places: [
         { kind: 'conversation', label: 'Unit 1 · Lesson 3 · conversation ‘Bi xêr hatî!’, line 4', status: 'published', voice: 'hamo', ref: null },
-        { kind: 'game', label: 'What Would You Say? · ‘At the gate’ · the line heard', status: 'draft', voice: 'hamo', ref: null },
+        { kind: 'game', label: 'Kurdish Detective · case ‘At the gate’ · overheard 1', status: 'draft', voice: 'hamo', ref: null },
       ],
       live: true,
     }),
@@ -123,7 +123,7 @@ describe('a person’s script to rehearse from', () => {
     expect(md).toContain('1. [recorded] **Silav! Bi xêr hatî!**\n   - Means: Hello! Welcome!');
     expect(md).toContain('   - Before it: Hevalo: “Sêv…” (Apples…)');
     expect(md).toContain('   - Unit 1 · Lesson 3 · conversation ‘Bi xêr hatî!’, line 4\n');
-    expect(md).toContain('   - What Would You Say? · ‘At the gate’ · the line heard — draft');
+    expect(md).toContain('   - Kurdish Detective · case ‘At the gate’ · overheard 1 — draft');
   });
 
   it('opens in a spreadsheet as one row a line, the Kurdish letters and the quotes intact', () => {

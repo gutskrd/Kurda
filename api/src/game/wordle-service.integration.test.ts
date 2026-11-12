@@ -111,6 +111,17 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     expect(second.game.id).toBe(first.game.id); // same game, not a new word
   });
 
+  it('gives two asks made at the same moment the one game of the day, and fails neither', async () => {
+    const u = await makeUser();
+    const svc = serviceAt(new Date('2026-08-03T09:00:00Z'));
+    const answers = await Promise.all(Array.from({ length: 6 }, () => svc.startDaily(u, 'medium')));
+    const ids = answers.map((a) => (a.ok ? a.game.id : null));
+    expect(ids.every((id) => id !== null)).toBe(true);
+    expect(new Set(ids).size).toBe(1);
+    const rows = await pool.query(`SELECT count(*)::int AS n FROM wordle_games WHERE user_id = $1 AND mode = 'daily'`, [u]);
+    expect(rows.rows[0].n).toBe(1);
+  });
+
   it('rotates the daily word every 24h', async () => {
     const u1 = await makeUser();
     const u2 = await makeUser();

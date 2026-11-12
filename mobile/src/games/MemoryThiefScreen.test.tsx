@@ -101,6 +101,17 @@ describe('MemoryThiefScreen', () => {
     expect(await screen.findByText('Up to 10 XP')).toBeTruthy();
   });
 
+  it('opens on the night with its emblem, its name once as the heading, and one way in', async () => {
+    testAuth.client = routes(session([item()]), []);
+    const { container } = renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
+    await waitFor(() => expect(container.querySelectorAll('svg[data-xml="drawn"]').length).toBeGreaterThan(0));
+    // the screen's header is the heading; the name under the emblem is its caption, not a second heading
+    expect(await screen.findByRole('heading', { name: 'The Memory Thief' })).toBeTruthy();
+    expect(screen.getAllByText('The Memory Thief')).toHaveLength(2);
+    expect(screen.getByText('In Kurmancî')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Start' })).toBeTruthy();
+  });
+
   it('shows the passage, takes its words, and lets them be given back from tiles', async () => {
     const client = routes(session([item()]), [
       { index: 0, attempt: 1, correct: false, firstTry: false, done: false, hint: { wrong: [1] }, correction: null, why: null, xp: 0, repeat: false },

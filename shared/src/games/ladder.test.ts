@@ -114,7 +114,7 @@ describe('what a round pays', () => {
   });
 
   it('lets tapping at random through far less often once second tries do not count', () => {
-    // three choices, the second try after a hint that rules one out (What Would You Say? at beginner)
+    // three choices, the second try after a hint that rules one out: the kindest odds a round of choices gives
     const binomial = (n: number, k: number, p: number): number => {
       let c = 1;
       for (let i = 0; i < k; i++) c = (c * (n - i)) / (i + 1);
@@ -144,22 +144,28 @@ describe('the registry', () => {
     expect(learnGame('build-sentence').minimum).toBe(30);
   });
 
-  it('no longer has the three retired games, and still counts what they paid as game XP', () => {
+  it('no longer has the retired games, and still counts what they paid as game XP', () => {
+    expect([...RETIRED_GAME_IDS]).toEqual(['dont-say', 'bluff', 'kingdom', 'what-would-you-say']);
     for (const id of RETIRED_GAME_IDS) {
       expect(isLearnGameId(id)).toBe(false);
       expect(isRetiredGame(id)).toBe(true);
+      expect(LEARN_GAMES.map((g): string => g.id)).not.toContain(id);
     }
     expect(isRetiredGame('impostor')).toBe(false);
     // XP in the ledger from a retired game stays under the league's daily cap for games
     for (const s of RETIRED_GAME_XP_SOURCES) expect(LEARN_GAME_XP_SOURCES).toContain(s);
+    expect(LEARN_GAME_XP_SOURCES).toContain('game_what_would_you_say');
   });
 
   it('lists every game an app can open, the ready ones first and the rest as coming soon, each in the registry’s order', () => {
     const availability = { games: [{ id: 'memory-thief', available: true }, { id: 'detective', available: false }, { id: 'hear-it', available: true }] };
     const listed = (playable: LearnGameId[]) => listedLearnGames(availability, playable).map((g) => `${g.game.id}:${g.ready ? 'ready' : 'soon'}`);
-    // what-would-you-say has no answer at all, detective a "no": both are listed, after the ready one
-    expect(listed(['what-would-you-say', 'memory-thief', 'detective'])).toEqual(['memory-thief:ready', 'what-would-you-say:soon', 'detective:soon']);
+    // who-am-i has no answer at all, detective a "no": both are listed, after the ready one
+    expect(listed(['who-am-i', 'memory-thief', 'detective'])).toEqual(['memory-thief:ready', 'detective:soon', 'who-am-i:soon']);
     expect(listed(['detective'])).toEqual(['detective:soon']);
+    // a retired game is not in the registry, so it is never listed, whatever an old answer says of it
+    const old = { games: [{ id: 'what-would-you-say', available: true }] };
+    expect(listedLearnGames(old, ['what-would-you-say' as LearnGameId, 'memory-thief']).map((g) => g.game.id)).toEqual(['memory-thief']);
     // the lessons' two exercises are never games in the list, ready or not
     expect(listed(['build-sentence', 'hear-it', 'memory-thief'])).toEqual(['memory-thief:ready']);
     // nothing until the availability has arrived, so the cards do not reshuffle as it lands

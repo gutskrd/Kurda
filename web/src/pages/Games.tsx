@@ -1,209 +1,274 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { gameEmblemTone, gameOfTheDay, type GameEmblem } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
-import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthProvider';
-import { RaceMini, RhymeMini, WordleMini } from '../landing/mocks';
 import { RanksSection } from '../ranks/RanksSection';
 import { LearnHeader } from '../learn/LearnHeader';
-import { ChevronIcon, TrophyIcon } from '../components/icons';
+import { ChevronIcon, TrophyIcon, UserIcon, UsersIcon } from '../components/icons';
 import { JoinCodeEntry } from '../play/JoinCode';
-import { LearnGameTile, useListedLearnGames } from '../games/learnGames';
+import { WEB_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
+import { GameArt } from '../games/GameArt';
+import '../games/games-page.css';
+
+/** Who a game is played with: the page's filter sorts the games by it. */
+type Company = 'solo' | 'friends';
 
 /**
- * A game, before it has words.
+ * A game as the page lists it.
  *
- * Keys rather than text, resolved at render: this array is built once when the
- * module loads, so a label baked in here would keep whichever language the app
- * happened to start in even after somebody changed it.
+ * Keys rather than text, resolved at render: the three games below are built
+ * once when the module loads, so a label baked in here would keep whichever
+ * language the app happened to start in even after somebody changed it.
  */
-interface GameMode {
-  labelKey: MessageKey;
-  blurbKey: MessageKey;
-  href: string;
-}
-
-interface GameCard {
-  /** the tile's shape in the grid, shared with the front page */
-  id: 'wordle' | 'rhyme' | 'race';
-  /** a small picture of the game being played — the front page's, decorative */
-  visual: React.JSX.Element;
+export interface GameEntry {
+  id: GameEmblem;
   nameKey: MessageKey;
+  /** one line for its card */
+  lineKey: MessageKey;
+  /** what it is, said in full where there is room: the featured card */
   bodyKey: MessageKey;
-  /** how this game can be played; one box per game, the mode is chosen on click */
-  modes: GameMode[];
+  /** its ways in, one per page it has; a game whose own page asks how to play has one */
+  ways: ReadonlyArray<{ labelKey: MessageKey; href: string }>;
+  company: readonly Company[];
+  /** false while it is short of approved content: listed, and not opened */
+  ready: boolean;
 }
 
-/** One box per game — the mode (solo / online / …) is chosen after clicking. */
-const GAMES: GameCard[] = [
+/** The three games that have always been here: each has its own pages, rules and tables (see games/registry.ts). */
+const CLASSICS: readonly GameEntry[] = [
   {
-    id: 'wordle',
-    visual: <WordleMini />,
+    id: 'peyvok',
     nameKey: 'games.wordle.name',
+    lineKey: 'games.card.wordle',
     bodyKey: 'games.wordle.body',
-    modes: [
-      { labelKey: 'games.mode.solo', blurbKey: 'games.wordle.solo', href: '/app/games/peyvok' },
-      { labelKey: 'games.mode.online', blurbKey: 'games.wordle.online', href: '/app/games/peyvok-battle' },
+    ways: [
+      { labelKey: 'games.mode.solo', href: '/app/games/peyvok' },
+      { labelKey: 'games.mode.online', href: '/app/games/peyvok-battle' },
     ],
+    company: ['solo', 'friends'],
+    ready: true,
   },
   {
     id: 'rhyme',
-    visual: <RhymeMini />,
     nameKey: 'games.rhyme.name',
+    lineKey: 'games.card.rhyme',
     bodyKey: 'games.rhyme.body',
-    modes: [
-      { labelKey: 'games.mode.solo', blurbKey: 'games.rhyme.solo', href: '/app/games/rhyme' },
-      { labelKey: 'games.mode.online', blurbKey: 'games.rhyme.online', href: '/app/games/rhyme-match' },
+    ways: [
+      { labelKey: 'games.mode.solo', href: '/app/games/rhyme' },
+      { labelKey: 'games.mode.online', href: '/app/games/rhyme-match' },
     ],
+    company: ['solo', 'friends'],
+    ready: true,
   },
   {
     id: 'race',
-    visual: <RaceMini />,
     nameKey: 'games.race.name',
+    lineKey: 'games.card.race',
     bodyKey: 'games.race.body',
-    modes: [
-      {
-        labelKey: 'games.race.mode',
-        blurbKey: 'games.race.blurb',
-        href: '/app/games/race',
-      },
-    ],
+    ways: [{ labelKey: 'games.play', href: '/app/games/race' }],
+    company: ['solo'],
+    ready: true,
   },
 ];
 
+const FILTERS: ReadonlyArray<{ id: 'all' | Company; labelKey: MessageKey }> = [
+  { id: 'all', labelKey: 'games.filter.all' },
+  { id: 'solo', labelKey: 'games.filter.solo' },
+  { id: 'friends', labelKey: 'games.filter.friends' },
+];
+
 /**
- * Learn, on its Games group (/app/games). Every game is one box; clicking it asks how you want to play
- * (solo vs online) instead of scattering each mode across its own card. All
- * games are server-authoritative — the client never scores itself.
+ * The game the page puts forward today: one of those that can be played,
+ * a different one each day, the same one for everybody all day (pure, for the
+ * tests). None while nothing can be played.
+ */
+export function featuredGame(games: readonly GameEntry[], now: number): GameEntry | null {
+  const ready = games.filter((g) => g.ready);
+  const today = gameOfTheDay(ready.length, now);
+  return today === null ? null : ready[today]!;
+}
+
+/** The tint a game's card and picture tile wear: its emblem's own colour. */
+const toneOf = (id: GameEmblem): React.CSSProperties => ({ '--gp-tone': gameEmblemTone(id) }) as React.CSSProperties;
+
+/** Who a game is played with, said in small beside a single way in. */
+function Company({ company }: { company: readonly Company[] }): React.JSX.Element {
+  const t = useT();
+  return (
+    <ul className="gp-company">
+      {company.map((c) => (
+        <li key={c}>
+          {c === 'solo' ? <UserIcon size={14} /> : <UsersIcon size={14} />}
+          {t(c === 'solo' ? 'games.filter.solo' : 'games.filter.friends')}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * A game's ways in. Signed in: one button for each page it has, the first in
+ * gold. Signed out there is nothing to open — every game keeps its score on
+ * the server against the player — so the one thing offered is the way to an
+ * account.
+ */
+function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: boolean; large?: boolean }): React.JSX.Element {
+  const t = useT();
+  const size = large ? '' : ' btn-sm';
+  if (!signedIn) {
+    return (
+      <div className="gp-ways">
+        <Link to="/login" state={{ from: '/app/games' }} className={`btn btn-secondary${size}`}>
+          {t('games.signInToPlay')}
+        </Link>
+      </div>
+    );
+  }
+  return (
+    <div className="gp-ways">
+      {game.ways.map((way, i) => (
+        <Link key={way.href} to={way.href} className={`btn ${i === 0 ? 'btn-primary gp-play' : 'btn-secondary'}${size}`}>
+          {t(way.labelKey)}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
+/** One game: its picture on a tile of its own colour, what it is, and its ways in. */
+function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry; signedIn: boolean; hero?: boolean; place?: number }): React.JSX.Element {
+  const t = useT();
+  return (
+    <article className={`gp-card${hero ? ' gp-card--hero' : ''}`} style={toneOf(game.id)}>
+      <div className="gp-card-art">
+        {/* every emblem plays its own loop, each card a little after the one before, so the shelf never moves as one */}
+        <GameArt game={game.id} size={hero ? 148 : 84} moving after={hero ? 0 : 900 + place * 1300} />
+      </div>
+      <div className="gp-card-text">
+        {hero && <p className="gp-kicker">{t('games.featured')}</p>}
+        <h3 className="gp-card-name">{t(game.nameKey)}</h3>
+        <p className="gp-card-body">{t(hero ? game.bodyKey : game.lineKey)}</p>
+        {/* two pages say who each is for on their buttons; one page for both says it here */}
+        {game.ways.length === 1 && <Company company={game.company} />}
+        <Ways game={game} signedIn={signedIn} large={hero} />
+      </div>
+    </article>
+  );
+}
+
+/**
+ * Learn, on its Games group (/app/games).
  *
- * Which is also why every game needs an account, the solo rounds included:
- * the server keeps the score against the player (every route in api/src/game
- * asks who is playing). This page used to offer guests the solo modes, and a
- * guest who took the offer got an error instead of a game. Now a guest sees
- * every game, every mode marked as needing an account, and the way to make one.
+ * The page is a shelf, not a list of rules: the game put forward today at the
+ * top, a way in for somebody holding a friend's code, then every game as one
+ * card — its drawn emblem, a line about it, and a button for each way it is
+ * played. Nothing on a card needs a second step: a game with a page for
+ * playing alone and another for playing online has a button for each.
  *
- * A friend's game is joined from here too, by the code they read out or sent
- * ("Join with a code", play/JoinCode.tsx): one way in for every online game,
- * at the top of the page where somebody holding a code looks first.
+ * Every game needs an account, the solo rounds included: the server keeps the
+ * score against the player (every route in api/src/game asks who is playing).
+ * A visitor sees every game and, on each, the way to sign in.
  *
- * The stories, which replaced the ranked quiz here, have a group of their own
- * now (Learn → Stories, stories/StoriesLibrary.tsx): reading is not a game,
- * and the questions after a story are reached from the story.
+ * A game that is still short of approved content in the learner's Kurdish is
+ * not among the cards: it is named in a short row at the foot of the shelf,
+ * so the shelf itself only ever holds what can be opened.
+ *
+ * The stories have a group of their own (Learn → Stories): reading is not a
+ * game, and the questions after a story are reached from the story.
  */
 export function Games(): React.JSX.Element {
   const { status } = useAuth();
   const signedIn = status === 'signedIn';
-  const [chooser, setChooser] = useState<GameCard | null>(null);
   const t = useT();
-  // the learning games (games/learnGames.tsx): all of them, those without enough approved content yet as coming soon
+  const [filter, setFilter] = useState<'all' | Company>('all');
+  // the learning games (games/learnGames.tsx): all of them, each with whether it can be played yet
   const learnGames = useListedLearnGames();
 
+  const games = useMemo<GameEntry[]>(
+    () => [
+      ...CLASSICS,
+      ...learnGames.flatMap(({ game, ready }): GameEntry[] => {
+        const web = WEB_LEARN_GAMES[game.id];
+        if (!web) return [];
+        return [
+          {
+            id: game.id as GameEmblem,
+            nameKey: web.nameKey,
+            lineKey: web.lineKey,
+            bodyKey: web.bodyKey,
+            ways: [{ labelKey: 'games.play', href: web.href }],
+            company: web.modes.map((m) => (m === 'solo' ? 'solo' : 'friends')),
+            ready,
+          },
+        ];
+      }),
+    ],
+    [learnGames],
+  );
+  const open = games.filter((g) => g.ready);
+  const soon = games.filter((g) => !g.ready);
+  // the game put forward stands above the shelf, and is not said twice on it; under a filter the shelf is whole
+  const featured = filter === 'all' ? featuredGame(games, Date.now()) : null;
+  const shelf = open.filter((g) => g !== featured && (filter === 'all' || g.company.includes(filter)));
+
   return (
-    <div className="container game-page">
+    <div className="container game-page gp">
       <LearnHeader view="games" />
-
-      {/*
-        Rankings, small and first: the way to the leagues and the season from
-        the games they are about. Invites from friends are not repeated here —
-        they arrive as the banner above every page, this one included, where
-        they can be answered at once.
-      */}
-      <Link to="/app/rankings" className="games-rankings">
-        <TrophyIcon size={20} />
-        <span className="games-rankings-text">
-          <span className="games-rankings-title">{t('nav.rankings')}</span>
-          <span className="games-rankings-sub">{t('learn.rankingsSub')}</span>
-        </span>
-        <ChevronIcon size={16} className="games-rankings-go" />
-      </Link>
-
-      {/* a friend's code, into their game: any of the three online games */}
-      <JoinCodeEntry />
-
-      {/* the front page's tiles, with the real ways in: the same pictures, the same grid */}
       <h2 className="sr-only">{t('games.title')}</h2>
-      <div className="game-grid">
-        {GAMES.map((g) => {
-          // nothing is playable without an account (see the note above)
-          const playable = signedIn ? g.modes : [];
-          const single = playable.length === 1 ? playable[0] : undefined;
-          /*
-           * A badge only when it tells you something: what a visitor can do
-           * without an account. "Playable" on every card of a signed-in player
-           * said nothing the Play button did not, in the gold that is kept for
-           * what is earned.
-           */
-          const badge = signedIn ? null : t('games.signInToPlay');
-          // each mode its own way in, when each has its own page
-          const direct = playable.length > 1;
-          return (
-            <article className={`game-tile game-tile--${g.id}`} key={g.nameKey}>
-              <div className="game-tile-visual">{g.visual}</div>
-              <div className="game-tile-text">
-                <div className="game-tile-head">
-                  <h3>{t(g.nameKey)}</h3>
-                  {badge && <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>{badge}</span>}
-                </div>
-                <p>{t(g.bodyKey)}</p>
-                <ul className="game-tags">
-                  {g.modes.map((m) => {
-                    const locked = !signedIn;
-                    return (
-                      <li key={m.labelKey} className={locked ? 'is-locked' : direct ? 'is-link' : undefined}>
-                        {/* straight into the game: Learn opens on Games for somebody who plays,
-                            so this is the second tap from anywhere, not the fourth */}
-                        {direct ? (
-                          <Link to={m.href} className="game-tag-link">
-                            {t(m.labelKey)}
-                          </Link>
-                        ) : (
-                          t(m.labelKey)
-                        )}
-                        {locked && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
-                      </li>
-                    );
-                  })}
-                </ul>
-                {playable.length > 0 &&
-                  (single ? (
-                    <Link to={single.href} className="btn btn-primary btn-sm">
-                      {t('games.play')}
-                    </Link>
-                  ) : (
-                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setChooser(g)}>
-                      {t('games.play')}
-                    </button>
-                  ))}
-              </div>
-            </article>
-          );
-        })}
-        {learnGames.map(({ game, ready }) => (
-          <LearnGameTile key={game.id} game={game} ready={ready} signedIn={signedIn} />
+
+      {featured && <GameCard game={featured} signedIn={signedIn} hero />}
+
+      <div className="gp-quick">
+        {/* a friend's code, into their game: one way in for every online game, where somebody holding a code looks first */}
+        <JoinCodeEntry />
+        {/* the leagues and the season, from the games they are about */}
+        <Link to="/app/rankings" className="games-rankings">
+          <TrophyIcon size={20} />
+          <span className="games-rankings-text">
+            <span className="games-rankings-title">{t('nav.rankings')}</span>
+            <span className="games-rankings-sub">{t('learn.rankingsSub')}</span>
+          </span>
+          <ChevronIcon size={16} className="games-rankings-go" />
+        </Link>
+      </div>
+
+      <div className="gp-filter" role="group" aria-label={t('games.title')}>
+        {FILTERS.map((f) => (
+          <button key={f.id} type="button" className="gp-filter-chip" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
+            {t(f.labelKey)}
+          </button>
         ))}
       </div>
 
+      <div className="gp-shelf">
+        {shelf.map((g, i) => (
+          <GameCard key={g.id} game={g} signedIn={signedIn} place={i} />
+        ))}
+      </div>
+
+      {soon.length > 0 && (
+        <section className="gp-soon" aria-labelledby="gp-soon-title">
+          <h2 id="gp-soon-title" className="gp-soon-title">
+            {t('games.comingSoon')}
+          </h2>
+          <ul className="gp-soon-list">
+            {soon.map((g) => (
+              <li key={g.id}>
+                <article className="gp-soon-item is-soon" style={toneOf(g.id)}>
+                  <GameArt game={g.id} size={40} />
+                  <h3 className="gp-soon-name">{t(g.nameKey)}</h3>
+                </article>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* your rank in each game played against people, and the season (signed in only) */}
       <RanksSection />
-
-      <Modal open={chooser !== null} onClose={() => setChooser(null)} label={chooser ? t('games.howToPlay') : t('games.chooseMode')}>
-        {chooser && (
-          <div className="mode-chooser">
-            <h2 className="friend-heading" style={{ marginTop: 0 }}>{t(chooser.nameKey)}</h2>
-            <p className="muted">{t('games.howToPlay')}</p>
-            <div className="mode-list">
-              {chooser.modes.map((m) => (
-                <Link key={m.href} to={m.href} className="mode-option" onClick={() => setChooser(null)}>
-                  <span className="mode-option-label">{t(m.labelKey)}</span>
-                  <span className="mode-option-blurb">{t(m.blurbKey)}</span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        )}
-      </Modal>
 
       {!signedIn && (
         <div className="cta" style={{ marginTop: 40 }}>

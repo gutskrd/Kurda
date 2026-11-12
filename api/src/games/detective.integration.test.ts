@@ -1,12 +1,10 @@
 /**
- * What Would You Say? and Kurdish Detective against real Postgres and Redis:
- * scenes are imported as drafts from published conversations only, with real
- * wrong replies from other conversations, and played only once published; a
- * round chooses or builds the reply and is paid once by performance; a case
- * is put together from published lines without typing Kurdish, its board
- * keeps every meaning back until it is found or a hint buys it, and each
- * hint costs a point at the finish; the starter case is seeded once as an
- * unreviewed draft.
+ * Kurdish Detective against real Postgres and Redis: the line picker lists
+ * published lines only; a case is put together from them without typing
+ * Kurdish, and offered only once it is published; its board keeps every
+ * meaning back until it is found or a hint buys it, and each hint costs a
+ * point at the finish; the starter case is seeded once, published, made of
+ * the course's own lines.
  */
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -15,13 +13,13 @@ import { pathToFileURL } from 'node:url';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { DETECTIVE_HINTS, conversationLineKey, gameWords, foldForDialect } from '@kurda/shared';
+import { DETECTIVE_HINTS, conversationLineKey } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
 import { activate } from '../test/activate.js';
 import { pass2fa } from '../test/admin-2fa.js';
-import { poolQuiet, queriesDuring } from '../test/query-count.js';
+import { poolQuiet } from '../test/query-count.js';
 import { bustAvailability } from './availability.js';
 import { bustGamePools } from './sources.js';
 import { seedStarterGameContent } from './starters.js';
@@ -30,16 +28,7 @@ import { removeCourses } from '../test/courses.js';
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 
-interface SceneItem {
-  key: string;
-  mode: 'choose' | 'tiles';
-  shown: number[];
-  tiles: string[];
-  reply: { ku: string };
-  line: { ku: string; audio: { src: string } | null };
-}
-
-describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish Detective (integration)', () => {
+describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', () => {
   const config = loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;
@@ -101,26 +90,12 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
     correctIndex: 0,
   });
 
-  async function stored(sessionId: string): Promise<SceneItem[]> {
-    return (await pool.query<{ items: SceneItem[] }>(`SELECT items FROM game_sessions WHERE id = $1`, [sessionId])).rows[0]!.items;
-  }
-
-  /** Approve and publish rows straight in the table, at a level: the admin flow itself is tested below and in games.integration.test.ts. */
-  async function publish(ids: readonly string[], level: number): Promise<void> {
-    await pool.query(
-      `UPDATE game_content SET level = $2, review_status = 'approved', reviewed_at = now(), status = 'published', published_at = now() WHERE id = ANY($1::uuid[])`,
-      [ids, level],
-    );
-    await bustGamePools(app.cache);
-    await bustAvailability(app.cache);
-  }
-
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     const repo = new ContentRepository(pool);
-    const course = await repo.createCourse({ slug: `scenes-kmr-${s}`, dialect: 'kurmanji', titleKu: 'K', titleEn: 'Scenes' });
+    const course = await repo.createCourse({ slug: `cases-kmr-${s}`, dialect: 'kurmanji', titleKu: 'K', titleEn: 'Cases' });
     courseIds.push(course);
     const unit = await repo.createUnit(course, 1, 'Y', 'Unit');
     const skill = await repo.createSkill(unit, 1, 'S', 'Skill');
@@ -134,12 +109,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
     // a draft lesson's conversation, which no game and no import may read
     const draft = await repo.createLesson(skill, 2, 'B', 'Draft');
     await repo.addExercise(draft, 1, 'conversation', { ...conversation(99, `d${s.replace(/[^a-z0-9]/g, '')}`.slice(0, 32)), lines: conversation(99, 'x').lines.map((l) => ({ ...l, text: l.text.replace(word(99, 0), `${tag}draftonly`) })) });
-    // the first conversation's first line is recorded
-    const c0 = conversation(0, conversationIds[0]!);
-    await pool.query(
-      `INSERT INTO lesson_audio (key, text, media_key, url, content_type, duration_ms, speaker) VALUES ($1, $2, $3, $4, 'audio/mpeg', 1200, 'hamo') ON CONFLICT (key) DO NOTHING`,
-      [conversationLineKey(conversationIds[0]!, 0, c0.lines[0]!.text), c0.lines[0]!.text, `audio/${tag}.mp3`, `https://media.example.com/${tag}.mp3`],
-    );
     await bustGamePools(app.cache);
     await bustAvailability(app.cache);
 
@@ -153,7 +122,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
     await poolQuiet(pool);
     await pool.query(`DELETE FROM game_content WHERE payload::text LIKE $1 OR origin = $2`, [`%${tag}%`, `starter:${tag}-case`]);
     await pool.query(`DELETE FROM content_seeds WHERE name = $1`, [`game_content:starter:${tag}-case`]);
-    await pool.query(`DELETE FROM lesson_audio WHERE url LIKE $1`, [`%${tag}%`]);
     await removeCourses(pool, courseIds);
     const client = await pool.connect();
     try {
@@ -171,37 +139,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
     await app.close();
   });
 
-  describe('scenes in the admin panel', () => {
-    it('are imported as drafts from published conversations only, with real wrong replies from other conversations, once', async () => {
-      expect((await call('POST', '/admin/game-content/import', learner, { from: 'conversations', dialect: 'kmr' })).statusCode).toBe(404);
-      const first = await call('POST', '/admin/game-content/import', editor, { from: 'conversations', dialect: 'kmr' });
-      expect(first.statusCode, first.body).toBe(200);
-      expect(first.json().created).toBeGreaterThanOrEqual(18);
-      expect((await call('POST', '/admin/game-content/import', editor, { from: 'conversations', dialect: 'kmr' })).json().created).toBe(0);
-
-      const rows = await pool.query(`SELECT status, review_status, source, origin, payload FROM game_content WHERE kind = 'scenario' AND payload::text LIKE $1`, [`%${tag}%`]);
-      expect(rows.rows.length).toBeGreaterThanOrEqual(18);
-      for (const r of rows.rows) {
-        expect(r).toMatchObject({ status: 'draft', review_status: 'unreviewed', source: 'admin' });
-        expect(r.origin).toMatch(/^conversation:/);
-        expect(JSON.stringify(r.payload)).not.toContain('draftonly');
-        // the situation is the editor's to write, in the interface language only
-        expect(r.payload.situation.en).toMatch(/says this to you/);
-        expect(r.payload.others.length).toBeGreaterThanOrEqual(2);
-        const own = new Set(gameWords(`${r.payload.line.ku} ${r.payload.reply.ku}`).map((w) => foldForDialect(w, 'kmr')));
-        for (const o of r.payload.others) {
-          // a line the course already has, from another conversation, with its own English
-          expect(o.meanings.en).toBeTruthy();
-          expect(gameWords(o.ku).some((w) => own.has(foldForDialect(w, 'kmr')) && w.startsWith(tag))).toBe(false);
-          // never a line that answers anything (thanks, fine)
-          expect(o.ku.startsWith('Spas')).toBe(false);
-        }
-      }
-      // a question is answered first in each conversation
-      expect(rows.rows.some((r) => r.payload.line.ku.endsWith('?') && r.payload.line.recording)).toBe(true);
-    });
-
-    it('lists published lines to copy into a case or a scene, never a draft’s', async () => {
+  describe('the line picker in the admin panel', () => {
+    it('lists published lines to copy into a case, never a draft’s', async () => {
       expect((await call('GET', `/admin/game-content/lines?dialect=kmr&q=${tag}`, learner)).statusCode).toBe(404);
       const res = await call('GET', `/admin/game-content/lines?dialect=kmr&q=${tag}`, editor);
       expect(res.statusCode, res.body).toBe(200);
@@ -211,100 +150,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
       const first = lines.find((l) => l.ku.startsWith(word(0, 0)))!;
       expect(first).toMatchObject({ en: 'Where is thing 0?', speaker: 'hamo', origin: { type: 'conversation' } });
       expect(first.recording).toBe(conversationLineKey(conversationIds[0]!, 0, first.ku));
-    });
-  });
-
-  describe('a round of What Would You Say?', () => {
-    let beginner: string[] = [];
-
-    beforeAll(async () => {
-      // the scene whose line is recorded among the beginner's
-      const ids = (
-        await pool.query<{ id: string }>(
-          `SELECT id FROM game_content WHERE kind = 'scenario' AND payload::text LIKE $1 ORDER BY (payload->'line'->>'ku' LIKE $2) DESC, origin`,
-          [`%${tag}%`, `${word(0, 0)}%`],
-        )
-      ).rows.map((r) => r.id);
-      beginner = ids.slice(0, 9);
-      await publish(beginner, 1);
-      await publish(ids.slice(9, 17), 4);
-    });
-
-    it('is offered once a difficulty holds enough published scenes', async () => {
-      const game = (await call('GET', '/games/availability?dialect=kmr', '')).json().games.find((g: { id: string }) => g.id === 'what-would-you-say');
-      expect(game.levels['1']).toBeGreaterThanOrEqual(9);
-      expect(game.difficulties).toEqual(expect.arrayContaining(['beginner', 'advanced']));
-      const ckb = (await call('GET', '/games/availability?dialect=ckb', '')).json().games.find((g: { id: string }) => g.id === 'what-would-you-say');
-      expect(ckb.available).toBe(false);
-    });
-
-    it('deals eight scenes with three real replies each and nothing that says which is right', async () => {
-      const res = await call('POST', '/games/solo/sessions', learner, { game: 'what-would-you-say', dialect: 'kmr', difficulty: 'beginner' });
-      expect(res.statusCode, res.body).toBe(201);
-      const view = res.json();
-      expect(view.items).toHaveLength(8);
-      for (const item of view.items) {
-        expect(Object.keys(item).sort()).toEqual(['index', 'level', 'line', 'options', 'place', 'situation', 'speaker', 'tiles']);
-        expect(item.options).toHaveLength(3);
-        expect(item.tiles).toBeNull();
-      }
-      expect(JSON.stringify(view)).not.toMatch(/meanings|"why"|fits/);
-    });
-
-    it('rules a wrong reply out with what it means, explains every option, and pays once', async () => {
-      const { id } = (await call('POST', '/games/solo/sessions', learner, { game: 'what-would-you-say', dialect: 'kmr', difficulty: 'beginner' })).json();
-      const items = await stored(id);
-      const wrong = items[0]!.shown.findIndex((x) => x >= 0);
-      const nudge = await call('POST', `/games/solo/sessions/${id}/answers`, learner, { index: 0, answer: { choice: wrong }, attempt: 1 });
-      expect(nudge.json()).toMatchObject({ correct: false, done: false, correction: null, hint: { ruledOut: wrong } });
-      expect(nudge.json().hint.meanings.en).toBeTruthy();
-      const right = await call('POST', `/games/solo/sessions/${id}/answers`, learner, { index: 0, answer: { choice: items[0]!.shown.indexOf(-1) }, attempt: 2 });
-      expect(right.json()).toMatchObject({ correct: true, firstTry: false, done: true, why: 'reply' });
-      expect(right.json().correction.options.map((o: { fits: boolean }) => o.fits)).toEqual(items[0]!.shown.map((x) => x === -1));
-      for (let i = 1; i < items.length; i++) {
-        await call('POST', `/games/solo/sessions/${id}/answers`, learner, { index: i, answer: { choice: items[i]!.shown.indexOf(-1) } });
-      }
-      const done = (await call('POST', `/games/solo/sessions/${id}/finish`, learner)).json();
-      expect(done).toMatchObject({ correct: 8, total: 8, firstTry: 7, learningCounted: true });
-      expect(done.deducted).toBeUndefined();
-      const ledger = await pool.query(`SELECT source, amount FROM xp_ledger WHERE ref_id = $1`, [`${id}:${learnerId}`]);
-      expect(ledger.rows).toEqual([{ source: 'game_what_would_you_say', amount: done.xp }]);
-    });
-
-    it('plays the line heard in its recording', async () => {
-      // a round is eight of the nine beginner scenes: within a few rounds the recorded one is dealt
-      const lines: Array<{ ku: string; audio: { src: string } | null }> = [];
-      for (let n = 0; n < 6 && !lines.some((l) => l.ku.startsWith(word(0, 0))); n++) {
-        const view = (await call('POST', '/games/solo/sessions', other, { game: 'what-would-you-say', dialect: 'kmr', difficulty: 'beginner' })).json();
-        lines.push(...view.items.map((i: { line: { ku: string; audio: { src: string } | null } }) => i.line));
-      }
-      const recorded = lines.find((l) => l.ku.startsWith(word(0, 0)));
-      expect(recorded?.audio?.src).toBe(`https://media.example.com/${tag}.mp3`);
-      expect(lines.filter((l) => l.audio !== null).every((l) => l.ku.startsWith(word(0, 0)))).toBe(true);
-    });
-
-    it('builds the reply from tiles at the advanced level', async () => {
-      const res = await call('POST', '/games/solo/sessions', learner, { game: 'what-would-you-say', dialect: 'kmr', difficulty: 'advanced' });
-      expect(res.statusCode, res.body).toBe(201);
-      const items = await stored(res.json().id);
-      expect(res.json().items.every((i: { tiles: string[] | null; options: unknown }) => Array.isArray(i.tiles) && i.options === null)).toBe(true);
-      const item = items[0]!;
-      const used = new Set<number>();
-      const order = gameWords(item.reply.ku).map((w) => {
-        const at = item.tiles.findIndex((t, i) => !used.has(i) && foldForDialect(t, 'kmr') === foldForDialect(w, 'kmr'));
-        used.add(at);
-        return at;
-      });
-      const answered = await call('POST', `/games/solo/sessions/${res.json().id}/answers`, learner, { index: 0, answer: { order } });
-      expect(answered.json()).toMatchObject({ correct: true, firstTry: true });
-    });
-
-    it('is made within a small statement budget', async () => {
-      const own = (statements: readonly string[]) => statements.filter((sql) => !/\bFROM maintenance\b/.test(sql));
-      await call('POST', '/games/solo/sessions', learner, { game: 'what-would-you-say', dialect: 'kmr', difficulty: 'beginner' });
-      await poolQuiet(app.db);
-      const made = await queriesDuring(app.db, () => call('POST', '/games/solo/sessions', learner, { game: 'what-would-you-say', dialect: 'kmr', difficulty: 'beginner' }));
-      expect(own(made.statements).length, made.statements.join('\n')).toBeLessThanOrEqual(12);
     });
   });
 
@@ -453,6 +298,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
       await pool.query(`UPDATE game_seen SET last_seen_at = now() - interval '30 days' WHERE user_id = $1 AND item_key = $2`, [sleuthId, `gc:${caseId}:accuse`]);
       const third = (await call('POST', '/games/solo/sessions', sleuth, { game: 'detective', dialect: 'kmr', difficulty: 'beginner' })).json();
       expect(third.board).toMatchObject({ hintsUsed: 0 });
+
+      // a round finished empty earned nothing to pay its hint from: the hint is still owed in the next round of the case
+      expect((await call('POST', `/games/solo/sessions/${third.id}/hints`, sleuth, { evidence: 'where' })).statusCode).toBe(200);
+      const empty = (await call('POST', `/games/solo/sessions/${third.id}/finish`, sleuth)).json();
+      expect(empty).toMatchObject({ correct: 0, learningCounted: false, xp: 0 });
+      const fourth = (await call('POST', '/games/solo/sessions', sleuth, { game: 'detective', dialect: 'kmr', difficulty: 'beginner' })).json();
+      expect(fourth.board).toMatchObject({ hintsUsed: 1, hintsLeft: DETECTIVE_HINTS - 1 });
     });
 
     it('seeds a starter case once, as an unreviewed draft made of the course’s own lines', async () => {
@@ -483,7 +335,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
       const quiet = { info: () => undefined, warn: () => undefined };
       expect((await seedStarterGameContent(pool, quiet, [pathToFileURL(file)])).seeded).toEqual([`${tag}-case`]);
       const row = (await pool.query(`SELECT status, review_status, source, payload FROM game_content WHERE origin = $1`, [`starter:${tag}-case`])).rows[0];
-      expect(row).toMatchObject({ status: 'draft', review_status: 'unreviewed', source: 'starter' });
+      // a starter goes in published, with no reviewer named
+      expect(row).toMatchObject({ status: 'published', review_status: 'approved', source: 'starter' });
       expect(row.payload.evidence.map((e: { ku: string }) => e.ku)).toEqual(c1.lines.slice(0, 3).map((l) => l.text));
       expect(row.payload.evidence[0].recording).toBe(conversationLineKey(conversationIds[1]!, 0, c1.lines[0]!.text));
       // once only, even after an editor deletes it

@@ -153,7 +153,16 @@ describe('the five places', () => {
   it('sends the addresses of the games that are no longer played to the games list', async () => {
     signIn();
     serve();
-    for (const old of ['/app/games/dont-say?id=g1', '/app/games/bluff?id=g2', '/app/games/village', '/app/games/kingdom', '/app/village', '/app/kingdom']) {
+    const gone = [
+      '/app/games/dont-say?id=g1',
+      '/app/games/bluff?id=g2',
+      '/app/games/village',
+      '/app/games/kingdom',
+      '/app/village',
+      '/app/kingdom',
+      '/app/games/what-would-you-say',
+    ];
+    for (const old of gone) {
       const page = visit(old);
       await waitFor(() => expect(where(), old).toBe('/app/games'));
       page.unmount();

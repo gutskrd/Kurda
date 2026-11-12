@@ -2,7 +2,6 @@ import { useState } from 'react';
 import {
   CHARACTER_NAMES,
   EVIDENCE_KINDS,
-  SCENE_PLACES,
   SPEAKERS,
   dialectDirection,
   unusedEvidence,
@@ -10,69 +9,47 @@ import {
   type EvidenceKind,
   type GameDialect,
   type PublishedLine,
-  type ScenePlace,
 } from '@kurda/shared';
 import { publishedLines } from '../gameContent';
 import { Badge, Banner, Button, Field, Icon, Note, errorLine, useDebounced, useLoad } from '../ui';
 
 /**
- * The editors of What Would You Say?'s scenes and Kurdish Detective's case
- * files, on the Game content page (GameContent.tsx).
+ * The editor of Kurdish Detective's case files, on the Game content page
+ * (GameContent.tsx).
  *
- * Neither ever has Kurdish typed into it. Every Kurdish line is copied from a
+ * It never has Kurdish typed into it. Every Kurdish line is copied from a
  * published lesson, conversation or story with the line picker (GET
  * /admin/game-content/lines), which brings its English and the key its
  * recording is filed under; a line already in a row is shown, never edited,
- * and can only be swapped for another picked one or removed. What the editor
- * writes is in the interface languages: a scene's situation, why a reply fits
- * or not, a case's story, its suspects, questions, solution and hints.
- *
- * The importer fills a scene's line, reply and wrong replies from published
- * conversations; the editor writes the situation, checks each wrong reply
- * really does not fit (removing one that might), and may pick more. A case is
- * put together here card by card.
+ * and can only be removed. What the editor writes is in the interface
+ * languages: a case's story, its suspects, questions, solution and hints. A
+ * case is put together here card by card.
  */
 
 type Payload = Record<string, unknown>;
 type M = Record<string, string>;
-
-const PLACE_NAME: Record<ScenePlace, string> = {
-  home: 'At home',
-  street: 'In the street',
-  market: 'At the market',
-  shop: 'In a shop',
-  school: 'At school',
-  cafe: 'At a café',
-  bus: 'On the bus',
-  doctor: 'At the doctor’s',
-  phone: 'On the phone',
-  village: 'In the village',
-  party: 'At a celebration',
-  work: 'At work',
-};
 
 const KIND_LABEL: Record<EvidenceKind, string> = { message: 'Message', statement: 'Statement', overheard: 'Overheard (plays its recording)', note: 'Note' };
 
 const ORIGIN_LABEL: Record<PublishedLine['origin']['type'], string> = { conversation: 'Conversation', lesson: 'Lesson', story: 'Story' };
 
 /** An English line with what it means; English is the one every other language falls back to. */
-function English({ label, value, onChange, readOnly, hint }: { label: string; value: M | undefined; onChange: (m: M) => void; readOnly: boolean; hint?: string }): React.JSX.Element {
+function English({ label, value, onChange, readOnly }: { label: string; value: M | undefined; onChange: (m: M) => void; readOnly: boolean }): React.JSX.Element {
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label}>
       <input value={value?.en ?? ''} onChange={(e) => onChange({ ...(value ?? {}), en: e.target.value })} readOnly={readOnly} />
     </Field>
   );
 }
 
-/** A Kurdish line as it is stored: shown, with where it came from, never typed. */
-function KurdishLine({ ku, en, dialect }: { ku: string; en?: string; dialect: GameDialect }): React.JSX.Element {
+/** A Kurdish line as it is stored: shown, never typed. */
+function KurdishLine({ ku, dialect }: { ku: string; dialect: GameDialect }): React.JSX.Element {
   const script = dialectDirection(dialect);
   return (
     <span className="gc-line">
       <span className="gc-line-ku" lang={script.lang} dir={script.dir}>
         {ku || '—'}
       </span>
-      {en && <span className="subtle">{en}</span>}
     </span>
   );
 }
@@ -123,109 +100,6 @@ export function LinePicker({ dialect, onPick, label = 'Pick a published line', o
         </ul>
       )}
     </div>
-  );
-}
-
-/** A picked line as a scene's reply: its Kurdish, its English, its recording's key. */
-function asReply(line: PublishedLine): Payload {
-  return { ku: line.ku, meanings: { en: line.en ?? '' }, ...(line.recording ? { recording: line.recording } : {}) };
-}
-
-/** What Would You Say?'s scene: the situation and place, the line heard, the real reply, and the wrong ones. */
-export function ScenarioFields({ payload, onChange, dialect, readOnly }: { payload: Payload; onChange: (p: Payload) => void; dialect: GameDialect; readOnly: boolean }): React.JSX.Element {
-  const [picking, setPicking] = useState<'line' | 'reply' | 'other' | null>(null);
-  const line = (payload.line as Payload | undefined) ?? {};
-  const reply = (payload.reply as Payload | undefined) ?? {};
-  const others = (payload.others as Payload[] | undefined) ?? [];
-  const set = (patch: Payload) => onChange({ ...payload, ...patch });
-  const pick = (picked: PublishedLine): void => {
-    if (picking === 'line') set({ line: asReply(picked), ...(picked.speaker ? { speaker: picked.speaker } : {}) });
-    else if (picking === 'reply') set({ reply: asReply(picked) });
-    else if (picking === 'other') set({ others: [...others, asReply(picked)] });
-    setPicking(null);
-  };
-  return (
-    <>
-      <English
-        label="The situation"
-        hint="Where this happens and who is talking, in a sentence, in the interface language — never Kurdish. The importer only says who speaks: write the scene."
-        value={payload.situation as M}
-        onChange={(m) => set({ situation: m })}
-        readOnly={readOnly}
-      />
-      <div className="row">
-        <Field label="Place" hint="Drawn on the scene card.">
-          <select value={String(payload.place ?? '')} disabled={readOnly} onChange={(e) => set({ place: e.target.value || undefined })}>
-            <option value="">No place</option>
-            {SCENE_PLACES.map((p) => (
-              <option key={p} value={p}>
-                {PLACE_NAME[p]}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="Who is speaking" hint="The character shown saying the line.">
-          <select value={String(payload.speaker ?? '')} disabled={readOnly} onChange={(e) => set({ speaker: e.target.value || undefined })}>
-            <option value="">Nobody shown</option>
-            {SPEAKERS.map((s) => (
-              <option key={s} value={s}>
-                {CHARACTER_NAMES[s]}
-              </option>
-            ))}
-          </select>
-        </Field>
-      </div>
-
-      <Field label="What they say" hint="Copied from a published conversation.">
-        <div className="gc-list">
-          <KurdishLine ku={String(line.ku ?? '')} en={(line.meanings as M | undefined)?.en} dialect={dialect} />
-          {!readOnly && (
-            <Button icon="search" onClick={() => setPicking('line')}>
-              {line.ku ? 'Pick another line' : 'Pick the line'}
-            </Button>
-          )}
-        </div>
-      </Field>
-      <Field label="The real reply" hint="What was really said next. Learners choose it, or build it from tiles at the advanced level.">
-        <div className="gc-list">
-          <KurdishLine ku={String(reply.ku ?? '')} en={(reply.meanings as M | undefined)?.en} dialect={dialect} />
-          {!readOnly && (
-            <Button icon="search" onClick={() => setPicking('reply')}>
-              {reply.ku ? 'Pick another reply' : 'Pick the reply'}
-            </Button>
-          )}
-          <English label="What the reply means" value={reply.meanings as M} onChange={(m) => set({ reply: { ...reply, meanings: m } })} readOnly={readOnly} />
-          <English label="Why it fits (optional)" value={reply.why as M} onChange={(m) => set({ reply: { ...reply, why: m.en ? m : undefined } })} readOnly={readOnly} />
-        </div>
-      </Field>
-      <Field label="Wrong replies" hint="Two to four real lines from other conversations. Check each one could not answer what was said; remove any that might.">
-        <div className="gc-list">
-          {others.map((o, i) => (
-            <div key={i} className="gc-card">
-              <KurdishLine ku={String(o.ku ?? '')} dialect={dialect} />
-              <English label={`What wrong reply ${i + 1} means`} value={o.meanings as M} onChange={(m) => set({ others: others.map((x, j) => (j === i ? { ...x, meanings: m } : x)) })} readOnly={readOnly} />
-              <English
-                label={`Why wrong reply ${i + 1} does not fit (optional)`}
-                value={o.why as M}
-                onChange={(m) => set({ others: others.map((x, j) => (j === i ? { ...x, why: m.en ? m : undefined } : x)) })}
-                readOnly={readOnly}
-              />
-              {!readOnly && (
-                <Button variant="ghost" icon="trash" aria-label={`Remove wrong reply ${i + 1}`} disabled={others.length <= 2} onClick={() => set({ others: others.filter((_, j) => j !== i) })}>
-                  Remove
-                </Button>
-              )}
-            </div>
-          ))}
-          {!readOnly && others.length < 4 && (
-            <Button icon="plus" onClick={() => setPicking('other')}>
-              Add a wrong reply from a published line
-            </Button>
-          )}
-        </div>
-      </Field>
-      {picking && <LinePicker dialect={dialect} onPick={pick} onClose={() => setPicking(null)} label={picking === 'other' ? 'Pick a wrong reply' : 'Pick a published line'} />}
-    </>
   );
 }
 

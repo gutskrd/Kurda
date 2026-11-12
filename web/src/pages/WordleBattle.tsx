@@ -5,7 +5,7 @@ import { describeError } from '../lib/api';
 import type { ApiError, WordleGuessRow, LetterFeedback } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
-import { ArrowIcon } from '../components/icons';
+import { GameHead, stageTone } from '../games/GameHead';
 import { WordleBoard, WordleKeyboard } from '../components/WordleBoard';
 import { useWordleKeys } from '../keyboard/wordleKeys';
 import { useRail } from '../social/RailProvider';
@@ -107,16 +107,8 @@ export function WordleBattle(): React.JSX.Element {
   const t = useT();
   const id = params.get('id');
   return (
-    <div className="container game-page">
-      <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
-          <ArrowIcon size={18} />
-        </Link>
-        <div>
-          <span className="eyebrow">{t('nav.games')}</span>
-          <h1 className="page-title" style={{ margin: 0 }}>{t('games.battle.name')}</h1>
-        </div>
-      </div>
+    <div className="container game-page gs" style={stageTone('peyvok')}>
+      <GameHead game="peyvok" title={t('games.battle.name')} />
       {id ? <BattleRoom key={id} id={id} /> : <CreateBattle />}
     </div>
   );

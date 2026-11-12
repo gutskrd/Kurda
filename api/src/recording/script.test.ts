@@ -220,9 +220,10 @@ describe('the recording script', () => {
     expect(exerciseMeaning('translate', { prompt: 'Answer Hamo: “I am well.”', accepted: ['Ez baş im.'] }, 'Ez baş im.').guess).toBe('I am well.');
   });
 
-  it('lists the games’ spoken lines last, under the conversation line a scene took them from', () => {
+  it('lists the games’ spoken lines last, a case’s card under the conversation line it was copied from', () => {
     const lineKey = conversationLineKey(conversation.id, 0, 'Fermo, sêvek!');
     const games: GameInput[] = [
+      { id: 'g-q', kind: 'question_template', dialect: 'ckb', status: 'draft', payload: { ku: 'ئاش', meanings: { en: 'the mill' }, fact: 'place' } },
       {
         id: 'g-case',
         kind: 'case_file',
@@ -231,14 +232,20 @@ describe('the recording script', () => {
         payload: {
           title: { en: 'The missing apples' },
           suspects: [{ id: 'bozo', name: 'Bozo' }],
-          evidence: [{ id: 'e1', kind: 'statement', ku: 'Ez li malê bûm.', meanings: { en: 'I was at home.' }, speaker: 'hevalo', from: 'bozo' }],
+          evidence: [
+            { id: 'e1', kind: 'overheard', ku: 'Fermo, sêvek!', meanings: { en: 'Here, an apple!' }, speaker: 'hamo', recording: lineKey },
+            { id: 'e2', kind: 'statement', ku: 'Ez li malê bûm.', meanings: { en: 'I was at home.' }, speaker: 'hevalo', from: 'bozo' },
+          ],
         },
       },
+      { id: 'g-old', kind: 'case_file', dialect: 'kmr', status: 'archived', payload: { evidence: [{ id: 'e1', kind: 'note', ku: 'Kevn e.' }] } },
+      // rows written for games that are no longer part of Hevalo: nobody is asked to record them
+      { id: 'g-b', kind: 'building_name', dialect: 'ckb', status: 'draft', payload: { building: 'mill', ku: 'ئاش', meanings: { en: 'the mill' } } },
       {
         id: 'g-scene',
         kind: 'scenario',
         dialect: 'kmr',
-        status: 'draft',
+        status: 'published',
         payload: {
           situation: { en: 'Hamo offers you fruit.' },
           speaker: 'hamo',
@@ -246,24 +253,21 @@ describe('the recording script', () => {
           reply: { ku: 'Spas, xalo!', meanings: { en: 'Thanks, uncle!' } },
         },
       },
-      { id: 'g-old', kind: 'scenario', dialect: 'kmr', status: 'archived', payload: { line: { ku: 'Kevn e.' }, reply: { ku: 'Erê.' } } },
-      { id: 'g-q', kind: 'question_template', dialect: 'ckb', status: 'draft', payload: { ku: 'ئاش', meanings: { en: 'the mill' }, fact: 'place' } },
-      // a row written for a game that is no longer part of Hevalo: nobody is asked to record it
-      { id: 'g-b', kind: 'building_name', dialect: 'ckb', status: 'draft', payload: { building: 'mill', ku: 'ئاش', meanings: { en: 'the mill' } } },
     ];
     const lines = buildScript({ exercises: [exercise({ type: 'conversation', payload: conversation })], stories: [], games, plan: PLAN, letters: [], words: [] });
     const merged = lines.find((l) => l.key === lineKey)!;
     expect(merged.places.map((p) => p.kind)).toEqual(['conversation', 'game']);
-    expect(merged.places[1]!.label).toBe('What Would You Say? · ‘Hamo offers you fruit.’ · the line heard');
-    // the scene before the case, whatever order the rows came in
-    expect(texts(lines.slice(3))).toEqual(['Spas, xalo!', 'Ez li malê bûm.', 'ئاش']);
-    const reply = lines.find((l) => l.text === 'Spas, xalo!')!;
-    expect(reply).toMatchObject({ voice: NARRATOR.kmr, key: lessonAudioKey('Spas, xalo!'), before: { name: 'Hamo', text: 'Fermo, sêvek!' } });
+    expect(merged.places[1]!.label).toBe('Kurdish Detective · case ‘The missing apples’ · overheard 1');
+    // the case before the question, whatever order the rows came in
+    expect(texts(lines.slice(3))).toEqual(['Ez li malê bûm.', 'ئاش']);
     expect(lines.find((l) => l.text === 'Ez li malê bûm.')).toMatchObject({ voice: 'hevalo', cue: 'From Bozo.', section: { id: 'games:case_file' } });
     const mill = lines.find((l) => l.text === 'ئاش')!;
     expect(mill).toMatchObject({ voice: NARRATOR.ckb, dialect: 'ckb' });
     expect(mill.places.map((p) => p.ref?.id)).toEqual(['g-q']);
     expect(lines.some((l) => l.text === 'Kevn e.')).toBe(false);
+    // the scene's reply is said nowhere else, and its line only in the conversation and the case
+    expect(lines.some((l) => l.text === 'Spas, xalo!')).toBe(false);
+    expect(merged.places.map((p) => p.ref?.id ?? null)).not.toContain('g-scene');
   });
 
   it('trusts a game line’s recording key only while it is still the key of those words', () => {

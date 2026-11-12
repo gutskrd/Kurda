@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { RhymeGame, RhymeResult } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
-import { ArrowIcon } from '../components/icons';
 import { useTypeOnly } from '../components/typeOnly';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
+import { GameArt } from '../games/GameArt';
+import { GameHead, stageTone } from '../games/GameHead';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -34,7 +34,14 @@ const REJECT_KEY: Record<string, MessageKey> = {
   profane: 'games.rhyme.reject.profane',
 };
 
-/** Solo Rhyming Words — a timed round; each rhyme is scored server-side. */
+/**
+ * Solo Rhyming Words — a timed round; each rhyme is scored server-side.
+ *
+ * The page opens on a start, not on a running clock: the round is a minute
+ * long and begins when it is asked for, so nobody arrives to find ten seconds
+ * of it already gone. Choosing the other variety comes back to the start for
+ * the same reason.
+ */
 export function Rhyme(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
@@ -51,8 +58,11 @@ export function Rhyme(): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
   // "End round" before the clock runs out is giving the round up
   const [endedEarly, setEndedEarly] = useState(false);
+  // nothing is asked of the server, and no clock runs, until Start is pressed
+  const [started, setStarted] = useState(false);
 
   const start = useCallback(async () => {
+    setStarted(true);
     setGame(null);
     setEndedEarly(false);
     setLoadError(null);
@@ -71,9 +81,18 @@ export function Rhyme(): React.JSX.Element {
     }
   }, [client, dialect]);
 
-  useEffect(() => {
-    void start();
-  }, [start]);
+  /** The other variety's words: back to the start, with nothing running. */
+  const choose = (d: Dialect): void => {
+    if (d === dialect) return;
+    setDialect(d);
+    setStarted(false);
+    setGame(null);
+    setLoadError(null);
+    setEmptyLexicon(false);
+    setFound([]);
+    setWord('');
+    setNotice(null);
+  };
 
   const active = game?.status === 'active' && remaining > 0;
   // the rating box hears of a round the server has ended — not of one given up
@@ -124,26 +143,28 @@ export function Rhyme(): React.JSX.Element {
   const seconds = Math.ceil(remaining / 1000);
 
   return (
-    <div className="container game-page">
-      <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
-          <ArrowIcon size={18} />
-        </Link>
-        <div>
-          <span className="eyebrow">{t('nav.games')}</span>
-          <h1 className="page-title" style={{ margin: 0 }}>{t('games.rhyme.name')}</h1>
-        </div>
-      </div>
+    <div className="container game-page gs" style={stageTone('rhyme')}>
+      <GameHead game="rhyme" title={t('games.rhyme.name')} />
 
-      <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')} style={{ marginBottom: 8 }}>
+      <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')}>
         {(['kurmanci', 'sorani'] as const).map((d) => (
-          <button key={d} role="tab" aria-selected={dialect === d} className={`chip${dialect === d ? ' active' : ''}`} onClick={() => setDialect(d)}>
+          <button key={d} role="tab" aria-selected={dialect === d} className={`chip${dialect === d ? ' active' : ''}`} onClick={() => choose(d)}>
             {d === 'kurmanci' ? 'Kurmancî' : 'Soranî'}
           </button>
         ))}
       </div>
 
-      {emptyLexicon ? (
+      {!started ? (
+        <div className="gs-start">
+          <div className="gs-hero">
+            <GameArt game="rhyme" size={148} moving />
+            <p className="gs-hero-line">{t('games.rhyme.body')}</p>
+          </div>
+          <Button size="lg" className="gs-go" onClick={() => void start()}>
+            {t('games.solo.start')}
+          </Button>
+        </div>
+      ) : emptyLexicon ? (
         <div className="wordle-msg">{t('games.emptyPool')}</div>
       ) : loadError ? (
         <ErrorState message={loadError} onRetry={() => void start()} />
@@ -186,10 +207,8 @@ export function Rhyme(): React.JSX.Element {
             </form>
           ) : (
             <div className="wordle-result">
-              <p className="wordle-result-title">
-                {t('games.rhyme.roundOver', { score: game.score, count: game.accepted })}
-                {game.xpAwarded ? <> +{game.xpAwarded} XP</> : null}
-              </p>
+              <p className="wordle-result-title">{t('games.rhyme.roundOver', { score: game.score, count: game.accepted })}</p>
+              {game.xpAwarded ? <p className="gs-earned">+{game.xpAwarded} XP</p> : null}
               <Button onClick={() => void start()}>{t('games.playAgain')}</Button>
             </div>
           )}

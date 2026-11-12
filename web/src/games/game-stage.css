@@ -1,0 +1,736 @@
+/*
+ * The stage every game is played on (the solo round's shell, and the games
+ * with pages of their own): how a game's start, its round and its result
+ * look, in one place, so that all of them are plainly the same house.
+ *
+ *   the start   — the game's emblem, playing, on the night the Games page
+ *                 puts its featured game on; its name and a line under it;
+ *                 the choices as cards that stand off the page; one gold
+ *                 button that begins
+ *   the round   — a bar that says where you are, a stone for every item;
+ *                 the verdict on each answer as a card of its own colour
+ *   the result  — the score large, the round's stones under it, what was
+ *                 earned as a short list, and the way on in gold
+ *
+ * The night is the same in the light theme and the dark, as the party
+ * games' table is: a place, not a surface of the app. Everything round it
+ * wears the theme. Gold is for the one thing to press. Only transform,
+ * opacity and colour move; base.css stills every animation under
+ * prefers-reduced-motion.
+ */
+.gs {
+  --gs-tone: #8a5bd6;
+  --gs-night: #2a2150;
+  --gs-night-deep: #171231;
+  --gs-night-ink: #f4efff;
+  --gs-gold: #f2b632;
+  --gs-gold-lip: #a8791a;
+  --gs-gold-ink: #2a1d05;
+}
+
+/* ---- the start: the emblem on the night ------------------------------------------- */
+.gs-hero {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-5) var(--space-6);
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--gs-tone) 44%, transparent) 0%, transparent 70%),
+    radial-gradient(120% 90% at 50% 0%, #3c2f78 0%, var(--gs-night) 55%, var(--gs-night-deep) 100%);
+  color: var(--gs-night-ink);
+  text-align: center;
+  overflow: hidden;
+  isolation: isolate;
+}
+/* a lamp over the table: soft gold from above, behind the emblem */
+.gs-hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: -30% 12% auto;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(242, 182, 50, 0.22), rgba(242, 182, 50, 0));
+}
+.gs-hero-meta {
+  margin: var(--space-2) 0 0;
+  color: #f2c95a;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gs-hero-title {
+  margin: 0;
+  /* a heading takes the page's own ink unless told: the stage is night in both themes */
+  color: var(--gs-night-ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.7rem, 6.6vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.12;
+  text-wrap: balance;
+}
+.gs-hero-title:focus {
+  outline: none;
+}
+.gs-hero-line {
+  max-width: 36ch;
+  margin: 0;
+  color: rgba(244, 239, 255, 0.82);
+  font-size: var(--text-body);
+  line-height: 1.45;
+  text-wrap: balance;
+}
+
+/* ---- the choices: cards that stand off the page ------------------------------------ */
+.gs .solo-difficulty legend {
+  margin-bottom: var(--space-2);
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gs .solo-chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: var(--space-2);
+}
+.gs .solo-chip {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 56px;
+  padding: var(--space-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  box-shadow: 0 3px 0 var(--border-strong);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.gs .solo-chip:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+.gs .solo-chip.is-on {
+  border-color: var(--gs-gold);
+  background: color-mix(in srgb, var(--gs-gold) 16%, var(--surface));
+  box-shadow: 0 3px 0 var(--gs-gold-lip);
+  font-weight: 700;
+}
+.gs .solo-chip.is-off {
+  border-style: dashed;
+  background: transparent;
+  color: var(--ink-4);
+  box-shadow: none;
+  cursor: default;
+}
+.gs .solo-chip.is-off:active {
+  transform: none;
+}
+
+/* ---- the one thing to press --------------------------------------------------------- */
+/* a primary button anywhere on the stage is the gold one: Start, Check, Next, Play again */
+.gs .btn-primary {
+  --lip: var(--gs-gold-lip);
+  border: 0;
+  background: var(--gs-gold);
+  color: var(--gs-gold-ink);
+  font-weight: 800;
+  box-shadow: 0 4px 0 var(--lip);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) ease;
+}
+.gs .btn-primary:hover:not(:disabled) {
+  background: #f7c651;
+  color: var(--gs-gold-ink);
+}
+.gs .btn-primary:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--lip);
+}
+.gs .btn-primary:disabled,
+.gs .btn-primary[aria-disabled='true'] {
+  opacity: 0.5;
+}
+/* the way in: as wide as the stage, and taller than anything else on it */
+.gs .gs-go.btn {
+  justify-self: stretch;
+  width: min(100%, 440px);
+  height: 58px;
+  margin-inline: auto;
+  font-size: 1.125rem;
+  letter-spacing: 0.01em;
+  box-shadow: 0 5px 0 var(--lip);
+}
+/* a round left open: offered across the stage, quieter than Start */
+.gs .solo-continue {
+  justify-self: stretch;
+  width: min(100%, 440px);
+  height: 48px;
+  margin-inline: auto;
+}
+
+/* ---- the round: where you are ------------------------------------------------------- */
+.gs .solo-bar {
+  gap: var(--space-2);
+  padding: 6px var(--space-3) 6px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+}
+.gs .solo-stone {
+  height: 10px;
+  max-width: none;
+}
+.gs .solo-stone.is-here {
+  transform: none;
+  background: var(--gs-gold);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--gs-gold) 28%, transparent);
+}
+.gs .solo-count {
+  padding-inline: var(--space-2);
+  color: var(--ink-2);
+  font-weight: 700;
+}
+
+/* ---- the verdict on an answer ------------------------------------------------------- */
+.gs .solo-feedback {
+  border: 1px solid transparent;
+}
+/* until there is a verdict it takes no room: a question's card ends under its button */
+.gs .solo-feedback:empty {
+  min-height: 0;
+  border: 0;
+}
+.gs .solo-feedback.is-right {
+  border-color: color-mix(in srgb, var(--success) 45%, transparent);
+}
+.gs .solo-feedback.is-missed {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+}
+.gs .solo-feedback.is-again {
+  border-color: var(--border-strong);
+}
+.gs .solo-verdict {
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+.gs .solo-feedback.is-right .solo-verdict {
+  color: var(--success);
+}
+
+/* ---- the result: given on the same night the round began on ------------------------- */
+.gs.solo--results {
+  justify-items: center;
+  gap: var(--space-4);
+}
+.gs-hero--result {
+  justify-self: stretch;
+  gap: var(--space-3);
+  padding-bottom: var(--space-6);
+}
+/* "Round finished" is the page's heading, set as the small line over the score */
+.gs-hero--result .gs-hero-meta {
+  margin: 0;
+  font-family: var(--font-sans);
+  line-height: 1.3;
+}
+.gs-hero--result .gs-hero-meta:focus {
+  outline: none;
+}
+.gs-hero--result .solo-score {
+  margin: 0;
+  color: var(--gs-night-ink);
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 10vw, 3rem);
+  font-weight: 700;
+  line-height: 1.05;
+}
+.gs-hero--result .solo-stones--results {
+  flex: none;
+  justify-content: center;
+  width: min(100%, 320px);
+  max-width: none;
+  margin-top: var(--space-1);
+}
+/* the round's stones on the night: gold for first try, pale gold for right, an empty ring for missed */
+.gs-hero--result .solo-stone {
+  height: 12px;
+  background: rgba(255, 255, 255, 0.16);
+}
+.gs-hero--result .solo-stone.is-first {
+  background: var(--gs-gold);
+}
+.gs-hero--result .solo-stone.is-right {
+  background: rgba(242, 182, 50, 0.5);
+}
+.gs-hero--result .solo-stone.is-missed {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.28);
+}
+.gs.solo--results .solo-facts {
+  width: min(100%, 440px);
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  overflow: hidden;
+}
+.gs.solo--results .solo-facts li {
+  padding: var(--space-3) var(--space-4);
+}
+.gs.solo--results .solo-facts li + li {
+  border-top: 1px solid var(--border);
+}
+.gs.solo--results .solo-xp {
+  background: color-mix(in srgb, var(--gs-gold) 14%, transparent);
+}
+.gs.solo--results .solo-actions {
+  justify-content: center;
+  width: min(100%, 440px);
+}
+.gs.solo--results .solo-actions .btn {
+  flex: 1 1 160px;
+  height: 52px;
+}
+
+/* what a round paid, where a game says it on its own card */
+.gs-earned {
+  justify-self: center;
+  margin: 0;
+  padding: 6px var(--space-4);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--gs-gold) 18%, transparent);
+  color: var(--gold-ink, var(--ink));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- a start that is the emblem and one button (a round against a clock) -------------- */
+.gs-start {
+  display: grid;
+  gap: var(--space-5);
+  margin-top: var(--space-3);
+}
+
+/* ---- a game's own header: back, where it belongs, its name ---------------------------- */
+.gs-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+.gs-back {
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink-2);
+  transition:
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-out);
+}
+.gs-back:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.gs-back:active {
+  transform: scale(0.94);
+}
+/* the arrow is drawn pointing on; back is the other way, and on a right-to-left page back is to the right */
+.gs-back svg {
+  transform: rotate(180deg);
+}
+[dir='rtl'] .gs-back svg {
+  transform: none;
+}
+.gs-head .gp-art {
+  flex: none;
+}
+.gs-head-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+.gs-head-eyebrow {
+  color: var(--ink-3);
+  font-size: var(--text-tab);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gs-head-title {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 720px) {
+  .gs-hero {
+    padding: var(--space-8) var(--space-8) var(--space-6);
+  }
+}
+
+/* ======================================================================================
+ * The games with pages of their own, on the same stage.
+ * ====================================================================================== */
+
+/* ---- Peyvok: the board is a table, its letters tiles that stand on it ------------------- */
+.gs .wordle-board {
+  margin: var(--space-3) 0 var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(90% 60% at 50% 0%, color-mix(in srgb, var(--gs-tone) 34%, transparent) 0%, transparent 70%),
+    radial-gradient(120% 90% at 50% 0%, #3c2f78 0%, var(--gs-night) 55%, var(--gs-night-deep) 100%);
+}
+.gs .wordle-cell {
+  border: 2px solid rgba(255, 255, 255, 0.16);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--gs-night-ink);
+  transition:
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease,
+    transform var(--dur-fast) var(--ease-out);
+}
+/* a letter just typed: the tile comes up to meet it */
+.gs .wordle-cell.wordle-typing {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
+}
+/* a guess that has been judged: every tile a cut-out of its colour, standing on its own edge */
+.gs .wordle-cell.wordle-green,
+.gs .wordle-cell.wordle-yellow,
+.gs .wordle-cell.wordle-gray {
+  border: 0;
+  transform: none;
+}
+.gs .wordle-cell.wordle-green {
+  background: #3fa45b;
+  color: #ffffff;
+  box-shadow: 0 4px 0 #2b703e;
+}
+.gs .wordle-cell.wordle-yellow {
+  background: var(--gs-gold);
+  color: var(--gs-gold-ink);
+  box-shadow: 0 4px 0 var(--gs-gold-lip);
+}
+.gs .wordle-cell.wordle-gray {
+  background: #6f7a8a;
+  color: #ffffff;
+  box-shadow: 0 4px 0 #4b5462;
+}
+.gs .wordle-key {
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--surface-3);
+  box-shadow: 0 3px 0 var(--border-strong);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) ease;
+}
+.gs .wordle-key:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+.gs .wordle-key.wordle-green {
+  background: #3fa45b;
+  color: #ffffff;
+  box-shadow: 0 3px 0 #2b703e;
+}
+.gs .wordle-key.wordle-yellow {
+  background: var(--gs-gold);
+  color: var(--gs-gold-ink);
+  box-shadow: 0 3px 0 var(--gs-gold-lip);
+}
+.gs .wordle-key.wordle-gray {
+  background: transparent;
+  color: var(--ink-4);
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+/* how a game ended: a card of its own, with the way on in gold */
+.gs .wordle-result {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  text-align: center;
+}
+.gs .wordle-result-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  text-wrap: balance;
+}
+/* ---- Rhyming Words: the word to rhyme with, on the night, with the clock beside it ------ */
+.gs .rhyme-stage {
+  align-items: center;
+  margin: var(--space-3) 0;
+  padding: var(--space-5);
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(90% 70% at 20% 0%, color-mix(in srgb, var(--gs-tone) 40%, transparent) 0%, transparent 70%),
+    radial-gradient(120% 90% at 50% 0%, #3c2f78 0%, var(--gs-night) 55%, var(--gs-night-deep) 100%);
+  color: var(--gs-night-ink);
+}
+.gs .rhyme-label {
+  color: #f2c95a;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+}
+.gs .rhyme-prompt {
+  color: var(--gs-night-ink);
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 9vw, 2.75rem);
+  line-height: 1.1;
+}
+.gs .rhyme-timer {
+  min-width: 68px;
+  border: 0;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--gs-night-ink);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+.gs .rhyme-timer.low {
+  background: #ff9c90;
+  color: #3a0d08;
+}
+.gs .rhyme-score {
+  color: rgba(244, 239, 255, 0.8);
+  font-weight: 600;
+}
+.gs .rhyme-compose .input {
+  min-height: 56px;
+  border-radius: var(--r-lg);
+  font-size: var(--text-body);
+}
+.gs .rhyme-compose .btn {
+  min-height: 56px;
+  padding-inline: var(--space-5);
+  border-radius: var(--r-lg);
+}
+.gs .rhyme-chip {
+  border: 0;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  box-shadow: 0 2px 0 var(--border-strong);
+  font-weight: 600;
+}
+
+/* ---- Typing Race ------------------------------------------------------------------------- */
+.gs .race-lobby {
+  display: grid;
+  gap: var(--space-4);
+}
+.gs .race-choice {
+  display: grid;
+  gap: var(--space-2);
+}
+.gs .race-choice-label {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gs .race-figure {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+}
+.gs .race-figure-value {
+  font-variant-numeric: tabular-nums;
+}
+.gs .race-progress {
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+  overflow: hidden;
+}
+.gs .race-progress-fill {
+  border-radius: var(--r-pill);
+  background: var(--gs-gold);
+}
+.gs .race-result {
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+
+/* ---- the choice chips of the older games' pages: the same cards --------------------------- */
+.gs .chat-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.gs .chat-tabs .chip {
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+  box-shadow: 0 3px 0 var(--border-strong);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.gs .chat-tabs .chip:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+.gs .chat-tabs .chip.active,
+.gs .chat-tabs .chip[aria-selected='true'],
+.gs .chat-tabs .chip[aria-pressed='true'] {
+  border-color: var(--gs-gold);
+  background: color-mix(in srgb, var(--gs-gold) 16%, var(--surface));
+  color: var(--ink);
+  box-shadow: 0 3px 0 var(--gs-gold-lip);
+  font-weight: 700;
+}
+
+/* ---- Who Am I?: questions and tiles that can be pressed look pressable --------------------- */
+.gs .wa-q {
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--border-strong);
+}
+.gs .wa-q.is-asked {
+  background: transparent;
+  box-shadow: none;
+}
+.gs .wa-q .btn {
+  box-shadow: 0 3px 0 var(--lip);
+}
+.gs .wa-tile {
+  border-radius: var(--r-lg);
+  box-shadow: 0 3px 0 var(--border-strong);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) ease;
+}
+.gs .wa-tile:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+.gs .wa-tile.is-picked {
+  border-color: var(--gs-gold);
+  background: color-mix(in srgb, var(--gs-gold) 16%, var(--surface));
+  box-shadow: 0 3px 0 var(--gs-gold-lip);
+}
+.gs .wa-guess > .btn {
+  justify-self: stretch;
+  min-height: 52px;
+}
+/* the one who wears the card stands in the game's own light */
+.gs .wa-board > .wa-stage {
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--gs-tone) 26%, transparent) 0%, transparent 100%);
+}
+.gs .wa-worth {
+  justify-self: center;
+  padding: 6px var(--space-4);
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--gs-gold) 16%, transparent);
+  font-weight: 700;
+}
+
+/* ---- Kurdish Detective: the case file lies on the night; an answer is a card to pick up ---- */
+.gs .dt-file {
+  position: relative;
+  padding: var(--space-5);
+  border: 0;
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(90% 70% at 0% 0%, color-mix(in srgb, var(--gs-tone) 40%, transparent) 0%, transparent 70%),
+    radial-gradient(120% 90% at 50% 0%, #3c2f78 0%, var(--gs-night) 55%, var(--gs-night-deep) 100%);
+  color: var(--gs-night-ink);
+}
+.gs .dt-title {
+  color: var(--gs-night-ink);
+}
+.gs .dt-intro {
+  color: rgba(244, 239, 255, 0.82);
+}
+.gs .dt-question,
+.gs .dt-hints,
+.gs .dt-notebook {
+  border-radius: var(--r-xl);
+}
+.gs .dt-option,
+.gs .dt-accuse {
+  min-height: 52px;
+  border-width: 1px;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  font-weight: 600;
+  box-shadow: 0 3px 0 var(--border-strong);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
+}
+.gs .dt-option:active:not(:disabled),
+.gs .dt-accuse:active:not(:disabled) {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--border-strong);
+}
+.gs .dt-option.is-picked,
+.gs .dt-accuse.is-picked {
+  border-color: var(--gs-gold);
+  background: color-mix(in srgb, var(--gs-gold) 16%, var(--surface));
+  box-shadow: 0 3px 0 var(--gs-gold-lip);
+}
+.gs .dt-option.is-right,
+.gs .dt-accuse.is-right {
+  border-color: var(--success);
+  background: var(--success-soft);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--success) 55%, transparent);
+}
+.gs .dt-option.is-wrong,
+.gs .dt-accuse.is-wrong {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  box-shadow: none;
+}
+.gs .dt-option:disabled:not(.is-right):not(.is-wrong):not(.is-picked),
+.gs .dt-accuse:disabled:not(.is-right):not(.is-wrong):not(.is-picked) {
+  box-shadow: none;
+}

@@ -27,7 +27,8 @@ export function registerRhymeRoutes(
   /** Start a solo training round with a random dictionary prompt. */
   app.post(
     '/rhyme/training',
-    { schema: { body: startBody }, preHandler: requireAuth },
+    // a round is a row and several reads: thirty a minute is more than anyone plays
+    { schema: { body: startBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth },
     async (req, reply) => {
       const { dialect } = req.body as z.infer<typeof startBody>;
       const res = await rhyme.startTraining(req.user!.id, dialect);

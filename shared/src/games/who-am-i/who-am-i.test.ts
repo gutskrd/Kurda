@@ -207,9 +207,33 @@ describe('the kind of thing a hidden identity is', () => {
   it('is shared by the tiles whenever the pool has enough of the kind', () => {
     // the cup shares the facts it has with every animal: it is still dealt after the animals
     const cupLike = { ...POOL[6]!, facts: { ...POOL[0]!.facts, alive: false, animal: false } };
-    const deal = dealWhoAmI(POOL[0]!, [...POOL.slice(0, 6), cupLike], TEMPLATES, { seed: 's', salt: '0', want: 6 })!;
+    // four animals can be told apart by asking (the dog answers as the cat does, the cow as the horse): four tiles are all animals
+    const deal = dealWhoAmI(POOL[0]!, [...POOL.slice(0, 6), cupLike], TEMPLATES, { seed: 's', salt: '0', want: 4 })!;
     expect(deal.candidates.every((c) => c.category === 'animal')).toBe(true);
     expect(sharedCategory(POOL[0]!.category, deal.candidates)).toBe('animal');
+  });
+});
+
+describe('tiles a question can tell apart', () => {
+  const answersOf = (id: string): string => {
+    const identity = POOL.find((p) => p.id === id)!;
+    return Object.keys(POOL[0]!.facts).sort().map((k) => String(identity.facts[k])).join(',');
+  };
+
+  it('never deals two tiles that answer every question alike', () => {
+    for (const target of POOL.slice(0, 6)) {
+      for (const seed of ['a', 'b', 'c', 'd']) {
+        const deal = dealWhoAmI(target, POOL, TEMPLATES, { seed, salt: '0', want: 8 })!;
+        const answers = deal.candidates.map((c) => answersOf(c.id));
+        expect(new Set(answers).size).toBe(answers.length);
+        expect(deal.candidates.some((c) => c.id === target.id)).toBe(true);
+      }
+    }
+  });
+
+  it('leaves out the dog when the cat is hidden: nothing asked would tell them apart', () => {
+    const deal = dealWhoAmI(POOL[0]!, POOL, TEMPLATES, { seed: 's', salt: '0', want: 8 })!;
+    expect(deal.candidates.map((c) => c.id)).not.toContain('dog');
   });
 
   it('is left off the race’s card when the tiles are of several kinds', () => {

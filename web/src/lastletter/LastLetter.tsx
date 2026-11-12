@@ -11,9 +11,11 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
-import { ArrowIcon, ChainIcon } from '../components/icons';
+import { ChainIcon } from '../components/icons';
 import { Loading } from '../components/states';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { GameArt } from '../games/GameArt';
+import { GameHead, stageTone } from '../games/GameHead';
 import { dialectName } from '../learn/map';
 import { InviteForm } from '../play/InviteSheet';
 import { ChipRadio } from '../play/ChipRadio';
@@ -42,18 +44,8 @@ export function LastLetter(): React.JSX.Element {
   const t = useT();
   const id = params.get('id');
   return (
-    <div className="container game-page ll-page">
-      <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
-          <ArrowIcon size={18} />
-        </Link>
-        <div>
-          <span className="eyebrow">{t('nav.games')}</span>
-          <h1 className="page-title" style={{ margin: 0 }}>
-            {t('games.lastLetter.name')}
-          </h1>
-        </div>
-      </div>
+    <div className="container game-page ll-page gs" style={stageTone('last-letter')}>
+      <GameHead game="last-letter" title={t('games.lastLetter.name')} />
       {id ? <Room key={id} id={id} /> : <Start />}
     </div>
   );
@@ -98,7 +90,10 @@ function Start(): React.JSX.Element {
 
   return (
     <div className="ll-start">
-      <p className="page-sub">{t('games.lastLetter.intro')}</p>
+      <div className="gs-hero">
+        <GameArt game="last-letter" size={148} moving />
+        <p className="gs-hero-line">{t('games.lastLetter.intro')}</p>
+      </div>
       <section className="ll-way" aria-labelledby="ll-friends">
         <h2 id="ll-friends" className="ll-way-title">
           {t('games.lastLetter.withFriends')}

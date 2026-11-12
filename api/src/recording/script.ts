@@ -85,10 +85,14 @@ const TYPE_LABEL: Record<string, string> = {
   writing: 'writing',
 };
 
-/** The learning games whose lines are spoken, in the order their lines are listed, and what the page calls each. */
-const GAME_KINDS = ['scenario', 'case_file', 'question_template'] as const;
+/**
+ * The learning games whose lines are spoken, in the order their lines are
+ * listed, and what the page calls each. A row of any other kind was written
+ * for a game that is no longer part of Hevalo (a scene of What Would You
+ * Say?, say), and nobody is asked to record it.
+ */
+const GAME_KINDS = ['case_file', 'question_template'] as const;
 const GAME_NAME: Record<(typeof GAME_KINDS)[number], string> = {
-  scenario: 'What Would You Say?',
   case_file: 'Kurdish Detective',
   question_template: 'Who Am I?',
 };
@@ -185,7 +189,7 @@ export interface ScriptLine {
   meaning: string | null;
   /** how to say it, where the text alone could be read two ways (a letter's sound) */
   hint: string | null;
-  /** what is happening when it is said: the exercise's prompt, a scene's situation */
+  /** what is happening when it is said: the exercise's prompt, who a case's card comes from */
   cue: string | null;
   /** a conversation's line is recorded with its conversation and part (`&line=`); `name` is the part's, as the conversation writes it */
   conversation: { id: string; part: number; title: string | null; name: string | null } | null;
@@ -637,7 +641,7 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
       recording: unknown,
       planned: SpeakerId | null,
       label: string,
-      extra: Pick<Entry, 'sure' | 'cue' | 'before'>,
+      extra: Pick<Entry, 'sure' | 'cue'>,
     ): void => {
       if (typeof ku !== 'string' || !sayable(ku)) return;
       const { key, conversation } = gameLineKey(ku, recording);
@@ -655,19 +659,7 @@ function addGames(builder: Builder, games: readonly GameInput[]): void {
       });
     };
 
-    if (kind === 'scenario') {
-      const line = isRecord(p.line) ? p.line : {};
-      const reply = isRecord(p.reply) ? p.reply : {};
-      const speaker = isSpeakerId(p.speaker) ? p.speaker : null;
-      const situation = en(p.situation);
-      const where = `${GAME_NAME.scenario} · ${situation ? `‘${clip(situation, 60)}’` : 'a scene'}`;
-      say(line.ku, line.recording, speaker, `${where} · the line heard`, { sure: en(line.meanings), cue: situation });
-      say(reply.ku, reply.recording, null, `${where} · the reply`, {
-        sure: en(reply.meanings),
-        cue: situation,
-        before: typeof line.ku === 'string' ? { name: speaker ? characterName(speaker) : null, text: line.ku, meaning: en(line.meanings) } : null,
-      });
-    } else if (kind === 'case_file') {
+    if (kind === 'case_file') {
       const title = en(p.title);
       const suspects = new Map(
         (Array.isArray(p.suspects) ? p.suspects : []).filter(isRecord).map((s) => [String(s.id), str(s.name) ?? String(s.id)]),

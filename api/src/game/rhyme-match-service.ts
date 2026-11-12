@@ -37,6 +37,7 @@ import {
   type RhymeReject,
 } from './rhyme.js';
 import { rankRhyme, rhymePlacementXp, type RhymeMatchPlayerResult } from './rhyme-match.js';
+import { filterText } from '../moderation/filter.js';
 
 const DEFAULT_WINDOW_MS = 60_000;
 const MIN_WINDOW_MS = 30_000;
@@ -319,7 +320,8 @@ export class RhymeMatchService {
         : undefined;
       const result = evaluateSubmission(
         { prompt: match.prompt, submission: word, elapsedMs, windowMs: match.window_ms, dialect: match.dialect, usedWords: player.used_words },
-        { lexicon, overrideQuality },
+        // the words found are shown to everybody in the match when it ends: one the filter refuses is not taken
+        { lexicon, overrideQuality, isProfane: (w) => filterText(w).flagged },
       );
 
       if (result.accepted) {
@@ -730,7 +732,11 @@ export class RhymeMatchService {
     const players = await client.query<PlayerRow>(`SELECT * FROM rhyme_match_players WHERE match_id = $1 AND NOT removed`, [matchId]);
     const ranked = rankRhyme(players.rows.map((r) => this.toResult(r)));
     const count = ranked.length;
-    const placed = ranked.map((r) => ({ userId: r.userId, xp: rhymePlacementXp(r.rank, count) }));
+    // A place is paid for a match that was played: to those who found a rhyme, and only when two of them did. A match
+    // started and left alone until its window closed used to tie everyone first on nothing, and pay them all for it.
+    const rhymed = new Set(players.rows.filter((r) => r.accepted > 0).map((r) => r.user_id));
+    const played = rhymed.size >= 2;
+    const placed = ranked.map((r) => ({ userId: r.userId, xp: played && rhymed.has(r.userId) ? rhymePlacementXp(r.rank, count) : 0 }));
     // each award on its own (it locks and caps the player's day), the record of what each was paid in one statement
     for (const { userId, xp } of placed) {
       await this.xp.award({ userId, source: 'rhyme_match', amount: xp, refId: `match:${matchId}:${userId}` }, client);

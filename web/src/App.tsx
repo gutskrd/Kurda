@@ -41,7 +41,6 @@ const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })
 const BuildSentence = lazy(() => import('./games/BuildSentence').then((m) => ({ default: m.BuildSentence })));
 const MemoryThief = lazy(() => import('./games/MemoryThief').then((m) => ({ default: m.MemoryThief })));
 const HearIt = lazy(() => import('./games/HearIt').then((m) => ({ default: m.HearIt })));
-const WhatWouldYouSay = lazy(() => import('./games/WhatWouldYouSay').then((m) => ({ default: m.WhatWouldYouSay })));
 const Detective = lazy(() => import('./games/Detective').then((m) => ({ default: m.Detective })));
 const WhoAmI = lazy(() => import('./whoami/WhoAmI').then((m) => ({ default: m.WhoAmI })));
 const StoriesLibrary = lazy(() => import('./stories/StoriesLibrary').then((m) => ({ default: m.StoriesLibrary })));
@@ -157,12 +156,13 @@ function ExerciseMoved({ to }: { to: string }): React.JSX.Element {
 }
 
 /**
- * Where Don't Say the Word!, Kurdish Bluff and The Village were, under /app.
- * A game's lobby was its page with an `?id=`, so the page's own path is all
- * there is to catch. The village had two addresses among the games; the bare
- * ones are caught as well, for a link written down from memory.
+ * Where Don't Say the Word!, Kurdish Bluff, The Village and What Would You
+ * Say? were, under /app. A game's lobby was its page with an `?id=`, so the
+ * page's own path is all there is to catch. The village had two addresses
+ * among the games; the bare ones are caught as well, for a link written down
+ * from memory.
  */
-const RETIRED_GAME_PATHS = ['games/dont-say', 'games/bluff', 'games/village', 'games/kingdom', 'village', 'kingdom'] as const;
+const RETIRED_GAME_PATHS = ['games/dont-say', 'games/bluff', 'games/village', 'games/kingdom', 'village', 'kingdom', 'games/what-would-you-say'] as const;
 
 /**
  * Every address the site answers, and what is drawn at each.
@@ -310,7 +310,6 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
         {/* the learning games, each a round made and scored on the server like the others */}
         <Route path="games/memory-thief" element={<RequireAccount what="gate.what.play"><MemoryThief /></RequireAccount>} />
-        <Route path="games/what-would-you-say" element={<RequireAccount what="gate.what.play"><WhatWouldYouSay /></RequireAccount>} />
         <Route path="games/detective" element={<RequireAccount what="gate.what.play"><Detective /></RequireAccount>} />
         {/* Stories replaced the ranked quiz, then moved from the games to Learn's
             own Stories group: both old addresses lead there (an invite's `?id=`
@@ -342,9 +341,9 @@ export function AppRoutes(): React.JSX.Element {
           path="games/impostor"
           element={<RequireAccount what="gate.what.playOthers"><Impostor /></RequireAccount>}
         />
-        {/* Don't Say the Word!, Kurdish Bluff and The Village are no longer part of
-            Hevalo: an old link, bookmark or invitation to one lands on the games
-            that are, rather than on "page not found" */}
+        {/* Don't Say the Word!, Kurdish Bluff, The Village and What Would You Say?
+            are no longer part of Hevalo: an old link, bookmark or invitation to
+            one lands on the games that are, rather than on "page not found" */}
         {RETIRED_GAME_PATHS.map((path) => (
           <Route key={path} path={path} element={<Navigate to="/app/games" replace />} />
         ))}

@@ -79,3 +79,14 @@ export function drawFor(seed: string): Draw {
     },
   };
 }
+
+/**
+ * A number from 0 to 1 for each label under one seed, from a keyed digest of
+ * the two: the same number on every replica, and none of them to be worked
+ * out from the others. Who Am I? orders its tiles, its questions and its
+ * hidden identities by these; a plain hash of the seed there let a client
+ * that saw one order compute the rest, the hidden identity among them.
+ */
+export function unitFor(seed: string): (label: string) => number {
+  return (label) => keyedDigest(`${seed}\u0000${label}`).readUInt32LE(0) / 4294967296;
+}

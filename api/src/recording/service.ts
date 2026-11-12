@@ -149,7 +149,7 @@ export class RecordingPeopleService {
         `SELECT id, kind, dialect, status, payload FROM game_content
           WHERE status <> 'archived' AND kind = ANY($1::text[])
           ORDER BY dialect, level, created_at, id`,
-        [['scenario', 'case_file', 'question_template']],
+        [['case_file', 'question_template']],
       ),
       readFile(new URL('plan.json', roadDir), 'utf8')
         .then((text) => planFrom(JSON.parse(text)))

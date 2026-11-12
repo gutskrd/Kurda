@@ -1,0 +1,358 @@
+/*
+ * Learn's Games page (pages/Games.tsx): a shelf of games.
+ *
+ * Every game is one card: its emblem on a tile of the emblem's own colour
+ * (`--gp-tone`, from shared/src/art/games.ts), a line about it, and a button
+ * for each way it is played. The game put forward today is the same card
+ * drawn large, on the night the party games are played in. A card lies on
+ * its side, picture first, so its words have room at any width: one to a row
+ * on a phone, two and then three where the page has the room for them.
+ *
+ * Gold is for the one thing to press on a card. Each emblem plays its own
+ * short loop (games/GameArt.tsx); on this page only transform, opacity and
+ * colour move, and nothing moves for a reader who asked for less motion.
+ */
+.gp {
+  --gp-gap: var(--space-3);
+  /* the shelf counts its columns by the room the page gives it, which a side rail narrows on a wide screen */
+  container-type: inline-size;
+}
+
+/* ---- a card ------------------------------------------------------------------------ */
+.gp-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: center;
+  padding: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  transition:
+    border-color var(--dur-fast) ease,
+    transform var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
+}
+.gp-card-art {
+  display: grid;
+  place-items: center;
+  align-self: stretch;
+  min-width: 108px;
+  padding: var(--space-3);
+  border-radius: var(--r-lg);
+  /* the emblem's own colour, thinned onto the card: the same tile in the light and in the dark */
+  background: color-mix(in srgb, var(--gp-tone) 18%, transparent);
+}
+.gp-card-text {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  padding-block: 2px;
+}
+.gp-card-name {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+.gp-card-body {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+  text-wrap: pretty;
+}
+.gp-company {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.gp-company li {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.gp-ways {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: 4px;
+}
+.gp-ways .btn {
+  flex: 0 1 auto;
+}
+/* the one thing to press: gold, standing off the card on its own edge, as the party games' Play does */
+.gp-play.btn {
+  --lip: #a8791a;
+  border: 0;
+  background: #f2b632;
+  color: #2a1d05;
+  font-weight: 800;
+  box-shadow: 0 3px 0 var(--lip);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) ease;
+}
+.gp-play.btn:hover {
+  background: #f7c651;
+}
+.gp-play.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--lip);
+}
+@media (hover: hover) {
+  .gp-card:hover {
+    border-color: color-mix(in srgb, var(--gp-tone) 55%, var(--border));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+  }
+  .gp-card--hero:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+/* ---- the game put forward today ---------------------------------------------------- */
+.gp-card--hero {
+  --night: #2a2150;
+  --night-deep: #171231;
+  --night-ink: #f4efff;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+  padding: var(--space-6) var(--space-5) var(--space-5);
+  border: 0;
+  background:
+    radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--gp-tone) 42%, transparent) 0%, transparent 70%),
+    radial-gradient(120% 90% at 50% 0%, #3c2f78 0%, var(--night) 55%, var(--night-deep) 100%);
+  color: var(--night-ink);
+  text-align: center;
+  overflow: hidden;
+}
+.gp-card--hero .gp-card-art {
+  min-width: 0;
+  padding: 0;
+  background: none;
+}
+.gp-card--hero .gp-card-text {
+  justify-items: center;
+  gap: var(--space-2);
+  width: min(100%, 460px);
+}
+.gp-kicker {
+  margin: 0;
+  color: #f2c95a;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gp-card--hero .gp-card-name {
+  /* a heading takes the page's own ink unless told: the hero is night in both themes */
+  color: var(--night-ink);
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 6.4vw, 2.125rem);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+.gp-card--hero .gp-card-body {
+  color: rgba(244, 239, 255, 0.78);
+  font-size: var(--text-body);
+  text-wrap: balance;
+}
+.gp-card--hero .gp-company {
+  justify-content: center;
+  color: rgba(244, 239, 255, 0.7);
+}
+.gp-card--hero .gp-ways {
+  justify-content: center;
+  width: 100%;
+  margin-top: var(--space-3);
+}
+.gp-card--hero .gp-ways .btn {
+  flex: 1 1 180px;
+  max-width: 280px;
+  height: 52px;
+  font-size: 1.0625rem;
+}
+.gp-card--hero .gp-play.btn {
+  box-shadow: 0 5px 0 var(--lip);
+}
+.gp-card--hero .gp-play.btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--lip);
+}
+.gp-card--hero .btn-secondary {
+  border-color: rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--night-ink);
+}
+.gp-card--hero .btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+/* ---- the code and the rankings ------------------------------------------------------ */
+.gp-quick {
+  display: grid;
+  gap: var(--gp-gap);
+  margin-bottom: var(--space-5);
+}
+.gp-quick > * {
+  margin: 0;
+}
+.gp-quick .games-rankings {
+  margin-bottom: 0;
+}
+
+/* ---- the filter --------------------------------------------------------------------- */
+.gp-filter {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  /* three short words fit a phone; in a language where they do not, they scroll rather than wrap */
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.gp-filter::-webkit-scrollbar {
+  display: none;
+}
+.gp-filter-chip {
+  flex: none;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  font: inherit;
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+.gp-filter-chip:hover {
+  border-color: var(--border-strong);
+}
+.gp-filter-chip[aria-pressed='true'] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--surface-solid);
+}
+
+/* ---- the shelf ---------------------------------------------------------------------- */
+.gp-shelf {
+  display: grid;
+  gap: var(--gp-gap);
+}
+
+/* ---- on the way ---------------------------------------------------------------------- */
+.gp-soon {
+  margin-top: var(--space-6);
+}
+.gp-soon-title {
+  margin: 0 0 var(--space-2);
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.gp-soon-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.gp-soon-item {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px var(--space-4) 6px 6px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+}
+.gp-soon-item .gp-art {
+  opacity: 0.7;
+}
+.gp-soon-name {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+
+/* ---- your ranks, on this page: a row to swipe on a phone rather than six cards to scroll past ---- */
+@media (max-width: 719px) {
+  .gp .ranks-grid {
+    grid-auto-flow: column;
+    grid-auto-columns: min(82%, 300px);
+    grid-template-columns: none;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    margin-inline: calc(var(--space-4) * -1);
+    padding: 2px var(--space-4) var(--space-3);
+    scrollbar-width: none;
+  }
+  .gp .ranks-grid::-webkit-scrollbar {
+    display: none;
+  }
+  .gp .ranks-grid > * {
+    scroll-snap-align: start;
+  }
+}
+
+/* ---- wider screens ------------------------------------------------------------------- */
+@media (min-width: 720px) {
+  .gp-card--hero {
+    grid-template-columns: auto minmax(0, 1fr);
+    justify-items: start;
+    gap: var(--space-6);
+    padding: var(--space-6) var(--space-8);
+    text-align: start;
+  }
+  .gp-card--hero .gp-card-text {
+    justify-items: start;
+    width: auto;
+  }
+  .gp-card--hero .gp-company,
+  .gp-card--hero .gp-ways {
+    justify-content: flex-start;
+  }
+  .gp-quick {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: stretch;
+  }
+}
+@container (min-width: 600px) {
+  .gp-shelf {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@container (min-width: 1040px) {
+  .gp-shelf {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gp-card:hover {
+    transform: none;
+  }
+}

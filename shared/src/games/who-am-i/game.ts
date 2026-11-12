@@ -113,9 +113,12 @@ export interface WhoAmIDeal {
   questions: Array<{ id: string; ku: string; meanings: Meanings; fact: string }>;
 }
 
-function draw<T>(seed: string, salt: string, items: readonly T[], keyOf: (item: T) => string): T[] {
+/** A number from 0 to 1 for a label: the same number for the same label, and nothing a label's number says about another's. */
+export type DealUnit = (label: string) => number;
+
+function draw<T>(unit: DealUnit, salt: string, items: readonly T[], keyOf: (item: T) => string): T[] {
   return items
-    .map((item) => ({ item, k: seededUnit(seed, `${salt}:${keyOf(item)}`) }))
+    .map((item) => ({ item, k: unit(`${salt}:${keyOf(item)}`) }))
     .sort((a, b) => a.k - b.k)
     .map((x) => x.item);
 }
@@ -128,21 +131,46 @@ function sharedFacts(ids: readonly WhoAmIIdentity[]): Set<string> {
 }
 
 /**
+ * Keeps, of a list of identities, those no question could confuse with the
+ * hidden one or with one kept before: each answers the hidden identity's
+ * facts in a way of its own. A cat and a dog that say yes and no to all the
+ * same questions cannot be told apart by asking, and a round that deals both
+ * is a coin toss; only the first of such a pair is dealt.
+ */
+function tellsApart(target: WhoAmIIdentity): (p: WhoAmIIdentity) => boolean {
+  const keys = Object.keys(target.facts).sort();
+  const answers = (p: WhoAmIIdentity): string => keys.map((k) => (p.facts[k] === true ? 'y' : p.facts[k] === false ? 'n' : '-')).join('');
+  const taken = new Set([answers(target)]);
+  return (p) => {
+    const a = answers(p);
+    if (taken.has(a)) return false;
+    taken.add(a);
+    return true;
+  };
+}
+
+/**
  * Deal one hidden identity: up to `want` tiles (the identity, and the others
- * that share most of its facts), and the questions every tile can answer —
- * those that tell the tiles apart first. Fewer tiles are dealt when that is
+ * that share most of its facts, none answering every question as another
+ * does), and the questions every tile can answer — those that tell the tiles
+ * apart first. Fewer tiles are dealt when that is
  * what it takes to have WHO_AM_I_MIN_QUESTIONS questions; null when even
- * WHO_AM_I_MIN_CANDIDATES cannot. Everything is drawn from the seed: the same
- * deal on every replica, and a round read again is the round it was.
+ * WHO_AM_I_MIN_CANDIDATES cannot. Everything is drawn from the seed (through
+ * `unit`, where the caller gives one): the same deal on every replica, and a
+ * round read again is the round it was.
  */
 export function dealWhoAmI(
   target: WhoAmIIdentity,
   pool: readonly WhoAmIIdentity[],
   templates: readonly WhoAmITemplate[],
-  opts: { seed: string; salt: string; want: number },
+  opts: { seed: string; salt: string; want: number; unit?: DealUnit },
 ): WhoAmIDeal | null {
+  // The server deals with a draw keyed by a secret of its own (`unit`). The seed's plain hash is only for a caller
+  // that has no secret to keep (a test, a preview): its numbers can be worked back from the order of what it deals,
+  // and with them the hidden identity.
+  const unit: DealUnit = opts.unit ?? ((label) => seededUnit(opts.seed, label));
   const others = draw(
-    opts.seed,
+    unit,
     `${opts.salt}:others`,
     pool.filter((p) => p.id !== target.id && p.word !== target.word),
     (p) => p.id,
@@ -150,9 +178,10 @@ export function dealWhoAmI(
     .map((p) => ({ p, same: p.category === target.category, shared: Object.keys(target.facts).filter((k) => typeof p.facts[k] === 'boolean').length }))
     // the identity's own kind first, so the kind the card names tells the tiles nothing apart
     .sort((a, b) => Number(b.same) - Number(a.same) || b.shared - a.shared)
-    .map((x) => x.p);
+    .map((x) => x.p)
+    .filter(tellsApart(target));
   const byFact = new Map<string, WhoAmITemplate>();
-  for (const t of draw(opts.seed, `${opts.salt}:templates`, templates, (t) => t.id)) if (!byFact.has(t.fact)) byFact.set(t.fact, t);
+  for (const t of draw(unit, `${opts.salt}:templates`, templates, (t) => t.id)) if (!byFact.has(t.fact)) byFact.set(t.fact, t);
 
   for (let n = Math.max(WHO_AM_I_MIN_CANDIDATES, opts.want); n >= WHO_AM_I_MIN_CANDIDATES; n--) {
     const tiles = [target, ...others.slice(0, n - 1)];
@@ -168,9 +197,9 @@ export function dealWhoAmI(
     const questions = [...asked].sort((a, b) => splits(b) - splits(a)).slice(0, WHO_AM_I_MAX_QUESTIONS);
     return {
       identity: target,
-      candidates: draw(opts.seed, `${opts.salt}:tiles`, tiles, (x) => x.id).map((x) => ({ id: x.id, word: x.word, meanings: x.meanings, category: x.category })),
+      candidates: draw(unit, `${opts.salt}:tiles`, tiles, (x) => x.id).map((x) => ({ id: x.id, word: x.word, meanings: x.meanings, category: x.category })),
       // the list is drawn again, so its order says nothing about which questions split the tiles
-      questions: draw(opts.seed, `${opts.salt}:asked`, questions, (q) => q.id).map((q) => ({ id: q.id, ku: q.ku, meanings: q.meanings, fact: q.fact })),
+      questions: draw(unit, `${opts.salt}:asked`, questions, (q) => q.id).map((q) => ({ id: q.id, ku: q.ku, meanings: q.meanings, fact: q.fact })),
     };
   }
   return null;

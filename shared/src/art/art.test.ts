@@ -38,6 +38,7 @@ import {
   impostorWaySvg,
   impostorWayTone,
 } from './impostor.js';
+import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import {
@@ -912,6 +913,112 @@ describe('the word sets’ pictures', () => {
   it('counts the numbers on the abacus instead of writing them, one bead, then two, then three', () => {
     // each bead is three ellipses: its edge, its face and its spot of light
     expect((wordSetSvg({ set: 'numbers', size: 44 }).match(/<ellipse/g) ?? []).length).toBe(6 * 3);
+  });
+});
+
+describe('the games’ emblems', () => {
+  // every game Learn's Games page can list: the three with pages of their own, and the registry's games
+  const LISTED = ['peyvok', 'rhyme', 'race', 'memory-thief', 'detective', 'last-letter', 'impostor', 'who-am-i'];
+
+  it('draws a valid, self-contained emblem for every game, small and large', () => {
+    for (const size of [40, 84, 148]) for (const game of GAME_EMBLEMS) checkSvg(gameEmblemSvg({ game, size }), size);
+  });
+
+  it('has an emblem of its own for every game on the page, and no two alike', () => {
+    expect([...GAME_EMBLEMS].sort()).toEqual([...LISTED].sort());
+    const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
+    const all = GAME_EMBLEMS.map((game) => strip(gameEmblemSvg({ game })));
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  it('writes nothing in a picture: no letters and no numerals, so it reads the same in every language', () => {
+    for (const game of GAME_EMBLEMS) expect(gameEmblemSvg({ game })).not.toMatch(/<text\b/);
+  });
+
+  it('gives Kurdish Impostor the hand of cards its own page shows', () => {
+    const strip = (svg: string): string => svg.replace(/ (id|aria-labelledby)="[^"]*"/g, '').replace(/url\(#[^)]*\)/g, 'url()');
+    expect(strip(gameEmblemSvg({ game: 'impostor', size: 120 }))).toBe(strip(impostorEmblemSvg({ emblem: 'cards', size: 120 })));
+  });
+
+  describe('in motion', () => {
+    const layersOf = (game: (typeof GAME_EMBLEMS)[number]) => gameEmblemLayers({ game, size: 120 });
+
+    it('draws every emblem in layers, each a whole valid picture, with a pose for every moment of the loop', () => {
+      for (const game of GAME_EMBLEMS) {
+        const layers = layersOf(game);
+        expect(layers.length, game).toBeGreaterThanOrEqual(2);
+        // something in every emblem acts: a picture that only sits there has no loop to speak of
+        expect(layers.some((l) => l.poses !== null), game).toBe(true);
+        for (const layer of layers) {
+          checkSvg(layer.svg, 120);
+          expect(layer.svg).not.toMatch(/<text\b/);
+          if (layer.poses) expect(layer.poses).toHaveLength(GAME_EMBLEM_SAMPLES + 1);
+          for (const edge of layer.pivot) expect(edge >= 0 && edge <= 120, game).toBe(true);
+        }
+        expect(gameEmblemLoopMs(game), game).toBeGreaterThanOrEqual(4000);
+        expect(gameEmblemLoopMs(game), game).toBeLessThanOrEqual(7000);
+      }
+    });
+
+    it('ends every loop where it began, so it goes round without a jump', () => {
+      for (const game of GAME_EMBLEMS) {
+        for (const layer of layersOf(game)) {
+          if (!layer.poses) continue;
+          const [first, last] = [layer.poses[0]!, layer.poses[GAME_EMBLEM_SAMPLES]!];
+          for (const field of ['x', 'y', 'sx', 'sy', 'o'] as const) expect(last[field], `${game} ${field}`).toBeCloseTo(first[field], 2);
+          // a hand that has gone once round is where it started
+          expect(((last.r - first.r) % 360 + 360) % 360, `${game} turn`).toBeCloseTo(0, 2);
+        }
+      }
+    });
+
+    it('keeps every part inside the picture, at a size and an opacity a part can have', () => {
+      for (const game of GAME_EMBLEMS) {
+        for (const layer of layersOf(game)) {
+          for (const pose of layer.poses ?? []) {
+            for (const value of Object.values(pose)) expect(Number.isFinite(value), game).toBe(true);
+            expect(Math.abs(pose.x) <= 40 && Math.abs(pose.y) <= 40, game).toBe(true);
+            expect(pose.sx >= 0 && pose.sx <= 1.5 && pose.sy >= 0 && pose.sy <= 1.5, game).toBe(true);
+            expect(pose.o >= 0 && pose.o <= 1, game).toBe(true);
+          }
+        }
+      }
+    });
+
+    it('is never an empty picture: at every moment something of the emblem is there to see', () => {
+      for (const game of GAME_EMBLEMS) {
+        const layers = layersOf(game);
+        for (let at = 0; at <= GAME_EMBLEM_SAMPLES; at++) {
+          const seen = layers.some((l) => l.poses === null || (l.poses[at]!.o > 0.6 && l.poses[at]!.sx > 0.6 && l.poses[at]!.sy > 0.6));
+          expect(seen, `${game} at ${at}`).toBe(true);
+        }
+      }
+    });
+
+    it('rests: for a good part of every loop nothing in the emblem moves at all', () => {
+      for (const game of GAME_EMBLEMS.filter((g) => g !== 'race' && g !== 'who-am-i')) {
+        const moving = layersOf(game).filter((l) => l.poses !== null);
+        let still = 0;
+        for (let at = 1; at <= GAME_EMBLEM_SAMPLES; at++) {
+          const same = moving.every((l) => JSON.stringify(l.poses![at]) === JSON.stringify(l.poses![at - 1]));
+          if (same) still++;
+        }
+        // the race's hand and the asker's sway never stop; everything else has moments of rest between its beats
+        expect(still / GAME_EMBLEM_SAMPLES, game).toBeGreaterThanOrEqual(0.08);
+      }
+    });
+
+    it('is the same loop every time it is asked for', () => {
+      for (const game of GAME_EMBLEMS) expect(JSON.stringify(layersOf(game).map((l) => l.poses))).toBe(JSON.stringify(layersOf(game).map((l) => l.poses)));
+    });
+  });
+
+  it('has a colour for every game’s card, and refuses a game it has never heard of', () => {
+    for (const game of GAME_EMBLEMS) expect(gameEmblemTone(game)).toMatch(/^#[0-9a-f]{6}$/);
+    expect(isGameEmblem('peyvok')).toBe(true);
+    expect(isGameEmblem('constructor')).toBe(false);
+    expect(() => gameEmblemSvg({ game: 'bluff' as never })).toThrow(RangeError);
+    expect(() => gameEmblemTone('toString' as never)).toThrow(RangeError);
   });
 });
 

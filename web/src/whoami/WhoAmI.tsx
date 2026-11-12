@@ -19,7 +19,7 @@ import {
   type WhoAmIRaceOutcome,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { ArrowIcon, HelpIcon } from '../components/icons';
+import { HelpIcon } from '../components/icons';
 import { Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import { describeError } from '../lib/api';
@@ -29,6 +29,7 @@ import { InviteForm } from '../play/InviteSheet';
 import { GameRoom, seatNamer } from '../play/MultiRoom';
 import { useGameView } from '../play/useGameView';
 import { useServerClock } from '../stories/useStoryGame';
+import { GameHead, stageTone } from '../games/GameHead';
 import { SoloGameShell, type SoloRound } from '../games/SoloGameShell';
 import { useAvailability, useGameDialect } from '../games/soloRounds';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
@@ -60,18 +61,8 @@ export function WhoAmI(): React.JSX.Element {
   const solo = params.get('solo') === '1';
   if (solo && !id) return <SoloRoundPage />;
   return (
-    <div className={`container game-page wa-page lp-tone-${TONE}`}>
-      <div className="wordle-head">
-        <Link to="/app/games" className="chat-back" aria-label={t('games.back')}>
-          <ArrowIcon size={18} />
-        </Link>
-        <div>
-          <span className="eyebrow">{t('nav.games')}</span>
-          <h1 className="page-title" style={{ margin: 0 }}>
-            {t('games.whoAmI.name')}
-          </h1>
-        </div>
-      </div>
+    <div className={`container game-page wa-page gs lp-tone-${TONE}`} style={stageTone('who-am-i')}>
+      <GameHead game="who-am-i" title={t('games.whoAmI.name')} />
       {id ? <RaceRoom key={id} id={id} /> : <Start />}
     </div>
   );
@@ -98,9 +89,11 @@ function Start(): React.JSX.Element {
   }
   return (
     <div className="wa-start">
-      <p className="page-sub">{t('games.whoAmI.intro')}</p>
-      <div className="wa-start-stage">
-        <ForeheadCard dialect={dialect} category="animal" identity={null} />
+      <div className="gs-hero">
+        <div className="wa-start-stage">
+          <ForeheadCard dialect={dialect} category="animal" identity={null} />
+        </div>
+        <p className="gs-hero-line">{t('games.whoAmI.intro')}</p>
       </div>
       {alone && (
         <section className="wa-way" aria-labelledby="wa-alone">
@@ -169,8 +162,7 @@ function SoloBoard({ round, dialect, onAsked }: { round: Round; dialect: GameDia
             : t('games.whoAmI.out')
           : `${t('games.whoAmI.worth', { count: worth })} · ${t('games.whoAmI.guessesLeft', { count: WHO_AM_I_GUESSES - state.attempts })}`}
       </p>
-      <QuestionDeck dialect={dialect} questions={item.questions} asked={asked} disabled={done || busy || asking} onAsk={(q) => void ask(q)} />
-      {error && <p className="field-error">{error}</p>}
+      {/* who it could be comes first: a question is chosen by looking at the words it has to tell apart */}
       <GuessTiles
         dialect={dialect}
         tiles={item.tiles}
@@ -179,6 +171,8 @@ function SoloBoard({ round, dialect, onAsked }: { round: Round; dialect: GameDia
         disabled={done || busy}
         onGuess={(tile) => void submit({ guess: tile })}
       />
+      {error && <p className="field-error">{error}</p>}
+      <QuestionDeck dialect={dialect} questions={item.questions} asked={asked} disabled={done || busy || asking} onAsk={(q) => void ask(q)} />
     </div>
   );
 }
@@ -337,8 +331,6 @@ function RaceBoard({
                 ? t('games.whoAmI.out')
                 : `${t('games.whoAmI.worth', { count: whoAmIPoints(mine.asked.length, crossed.length, true) })} · ${t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}`}
           </p>
-          <QuestionDeck dialect={board.dialect} questions={mine.questions} asked={mine.asked} disabled={!playing || busy} onAsk={(q) => void act({ kind: 'ask', question: q })} />
-          {error && <p className="field-error">{error}</p>}
           <GuessTiles
             dialect={board.dialect}
             tiles={mine.tiles}
@@ -347,6 +339,8 @@ function RaceBoard({
             disabled={!playing || busy}
             onGuess={(tile) => void act({ kind: 'guess', tile })}
           />
+          {error && <p className="field-error">{error}</p>}
+          <QuestionDeck dialect={board.dialect} questions={mine.questions} asked={mine.asked} disabled={!playing || busy} onAsk={(q) => void act({ kind: 'ask', question: q })} />
         </>
       )}
       <section className="wa-others" aria-labelledby="wa-others-title">

@@ -6,7 +6,7 @@
  */
 import { describe, expect, it, vi } from 'vitest';
 import * as exercises from '../content/exercises.js';
-import { drawFor } from './draw.js';
+import { drawFor, unitFor } from './draw.js';
 
 describe('a seeded draw', () => {
   it('is the same for the same seed, and another for another', () => {
@@ -52,5 +52,29 @@ describe('a seeded draw', () => {
     } finally {
       digest.mockRestore();
     }
+  });
+});
+
+describe('a keyed number for a label', () => {
+  it('is the same for the same seed and label, another for another of either, and always from 0 up to 1', () => {
+    const unit = unitFor('lobby-seed');
+    expect(unit('seat:1:tiles:a')).toBe(unit('seat:1:tiles:a'));
+    expect(unit('seat:1:tiles:a')).toBe(unitFor('lobby-seed')('seat:1:tiles:a'));
+    expect(unit('seat:1:tiles:a')).not.toBe(unit('seat:1:tiles:b'));
+    expect(unit('seat:1:tiles:a')).not.toBe(unitFor('another-seed')('seat:1:tiles:a'));
+    const many = Array.from({ length: 400 }, (_, i) => unit(`label-${i}`));
+    for (const n of many) expect(n >= 0 && n < 1).toBe(true);
+    expect(new Set(many).size).toBe(many.length);
+  });
+
+  it('keeps a seed and a label apart: one is never read as the end of the other', () => {
+    expect(unitFor('ab')('c')).not.toBe(unitFor('a')('bc'));
+  });
+
+  it('is made with the server’s keyed digest, so it cannot be worked out from the seed alone', () => {
+    const digest = vi.spyOn(exercises, 'keyedDigest');
+    unitFor('lobby-seed')('target:1');
+    expect(digest).toHaveBeenCalledTimes(1);
+    digest.mockRestore();
   });
 });

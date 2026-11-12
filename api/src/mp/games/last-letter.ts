@@ -21,6 +21,7 @@ import {
   requiredLetter,
   startSpellings,
   wordKey,
+  wordLetters,
   type LastLetterBoard,
   type LastLetterMove,
   type LastLetterOutcome,
@@ -60,6 +61,12 @@ type Executor = Pick<pg.Pool, 'query'>;
  * Hevalo plays only curated words of the game's dialect, chosen at random among
  * those that fit, and now and then cannot think of one (more often as the chain
  * grows), so a game against Hevalo can be won.
+ *
+ * The words the course teaches count as well (`courseWords`): every published
+ * word card is a word a lesson pairs with its meaning, so a player may play
+ * it whether or not the dictionary has it yet, with the lesson's meaning
+ * beside it, and Hevalo may play it when it has no curated word that fits.
+ * They are counted with the dictionary's for both of the game's minimums.
  */
 
 /** The parts of speech a word in a chain may be. */
@@ -139,7 +146,58 @@ export async function checkWord(db: Executor, dialect: LetterDialect, key: strin
     [keys, dictionaryDialect(dialect)],
   );
   const fit = res.rows.filter((e) => usable(dialect, key, e));
-  return { found: fit.length > 0, meaning: fit.length > 0 ? meaningOf(fit) : null };
+  if (fit.length > 0) {
+    const meaning = meaningOf(fit);
+    // a word the dictionary has but nobody glossed for the games still shows the meaning its lesson gives it
+    return { found: true, meaning: meaning ?? (await courseWords(db, dialect)).get(key) ?? null };
+  }
+  const taught = await courseWords(db, dialect);
+  return taught.has(key) ? { found: true, meaning: taught.get(key) ?? null } : { found: false, meaning: null };
+}
+
+/**
+ * The words the course teaches, as its published word cards hold them: each
+ * by its letters in the dialect, with the short English meaning its lesson
+ * gives it. A name, a word the filter refuses and anything that is not one
+ * word of the dialect are left out. Kept for a minute per variety: a move
+ * may ask twice, a variety holds a thousand cards and more, and each is read
+ * through the word filter, which is too much to do again on every word
+ * somebody types. A card published or taken down shows within that minute.
+ */
+const COURSE_WORDS_MS = 60_000;
+const courseWordsKept = new Map<LetterDialect, { at: number; words: Promise<Map<string, string | null>> }>();
+
+/** Read the cards again on the next ask (for the tests, which publish a card and play it at once). */
+export function forgetCourseWords(): void {
+  courseWordsKept.clear();
+}
+
+export function courseWords(db: Executor, dialect: LetterDialect, now: number = Date.now()): Promise<Map<string, string | null>> {
+  const kept = courseWordsKept.get(dialect);
+  if (kept && now - kept.at < COURSE_WORDS_MS) return kept.words;
+  const words = readCourseWords(db, dialect);
+  courseWordsKept.set(dialect, { at: now, words });
+  // a read that failed is not kept: the next move tries again
+  words.catch(() => {
+    if (courseWordsKept.get(dialect)?.words === words) courseWordsKept.delete(dialect);
+  });
+  return words;
+}
+
+async function readCourseWords(db: Executor, dialect: LetterDialect): Promise<Map<string, string | null>> {
+  const res = await db.query<{ word: string; en: string | null }>(
+    `SELECT payload->>'word' AS word, payload->'meanings'->>'en' AS en FROM game_content
+      WHERE kind = 'word_card' AND dialect = $1 AND status = 'published' AND review_status = 'approved'`,
+    [dialect],
+  );
+  const out = new Map<string, string | null>();
+  for (const row of res.rows) {
+    const key = typeof row.word === 'string' ? wordKey(dialect, row.word) : null;
+    if (!key || isProperNoun(dialect, row.word) || filterText(key).flagged || out.has(key)) continue;
+    const en = row.en?.trim() ?? '';
+    out.set(key, en.length > 0 && en.length <= MEANING_MAX ? en : null);
+  }
+  return out;
 }
 
 /** Hevalo's word for the turn, or null when it cannot think of one. */
@@ -164,17 +222,32 @@ export async function hevaloWord(db: Executor, state: LastLetterState): Promise<
     if (!usable(dialect, key, e) || filterText(key).flagged) continue;
     return { key, verdict: 'ok', meaning: meaningOf([e]) };
   }
-  return null;
+  // no curated word fits: one the course teaches, of the same size, chosen at random among those that fit
+  const taught = [...(await courseWords(db, dialect))].filter(([key]) => {
+    const letters = wordLetters(dialect, key)?.length ?? 0;
+    return letters >= HEVALO_LETTERS[0] && letters <= HEVALO_LETTERS[1] && !used.has(key) && (!required || beginsWith(dialect, key, required));
+  });
+  const pick = taught[Math.floor(Math.random() * taught.length)];
+  return pick ? { key: pick[0], verdict: 'ok', meaning: pick[1] } : null;
 }
 
-/** Dictionary entries of a dialect, and curated ones, each counted only up to what the rule needs. */
+/**
+ * The words a chain can be checked against and the words Hevalo can play:
+ * the dictionary's entries of a dialect and its curated ones, each with the
+ * words the course teaches (published word cards) beside them. Every count
+ * stops at what the rule needs.
+ */
 export async function lastLetterCounts(db: Executor, dialect: LetterDialect): Promise<{ words: number; hevalo: number }> {
-  const res = await db.query<{ words: number; hevalo: number }>(
+  const res = await db.query<{ words: number; hevalo: number; taught: number }>(
     `SELECT (SELECT count(*) FROM (SELECT 1 FROM dict_entries WHERE dialect = $1 LIMIT $2) a)::int AS words,
-            (SELECT count(*) FROM (SELECT 1 FROM dict_entries WHERE dialect = $1 AND in_games LIMIT $3) b)::int AS hevalo`,
-    [dictionaryDialect(dialect), LAST_LETTER_MIN_DICTIONARY_WORDS, LAST_LETTER_MIN_HEVALO_WORDS],
+            (SELECT count(*) FROM (SELECT 1 FROM dict_entries WHERE dialect = $1 AND in_games LIMIT $3) b)::int AS hevalo,
+            (SELECT count(*) FROM (SELECT 1 FROM game_content
+                                    WHERE kind = 'word_card' AND dialect = $4 AND status = 'published' AND review_status = 'approved'
+                                    LIMIT $2) c)::int AS taught`,
+    [dictionaryDialect(dialect), LAST_LETTER_MIN_DICTIONARY_WORDS, LAST_LETTER_MIN_HEVALO_WORDS, dialect],
   );
-  return res.rows[0] ?? { words: 0, hevalo: 0 };
+  const row = res.rows[0] ?? { words: 0, hevalo: 0, taught: 0 };
+  return { words: row.words + row.taught, hevalo: row.hevalo + row.taught };
 }
 
 /** The refs of a word paid for on each of the last LAST_LETTER_SOLO_REPEAT_DAYS days (UTC), today first. */

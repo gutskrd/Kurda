@@ -10,7 +10,6 @@ export * from './solo.js';
 export * from './build-sentence/ladder.js';
 export * from './memory-thief/rules.js';
 export * from './hear-it/rules.js';
-export * from './what-would-you-say/rules.js';
 export * from './detective/rules.js';
 export * from './who-am-i/index.js';
 export * from './word-cards.js';

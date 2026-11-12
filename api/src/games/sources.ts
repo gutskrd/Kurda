@@ -19,6 +19,13 @@
  * Drafts, lessons in review, unpublished stories and unapproved rows are never
  * read here, so no game can reach them.
  *
+ * One reader looks further, and no game holds it: the starter library
+ * (games/starter-library.ts) reads the course as it stands (`scope: 'course'`)
+ * — the lessons and stories Hevalo ships, published or not yet — to make each
+ * game's first set of rows from them. What it makes are `game_content` rows,
+ * published, which the games then read like any other row. `game_content` and
+ * the recordings are read the same way in both scopes.
+ *
  * Every item is in exactly one variety. The variety comes from where the item
  * lives (a course's, a story's or a row's dialect, read through `toDialect`),
  * and the item's Kurdish must also be written in that variety's script
@@ -61,7 +68,6 @@ import {
   gameWords,
   lessonAudioKey,
   lessonAudioTargets,
-  scenarioLevel,
   storyAudioSentences,
   storyParagraphs,
   storySpelling,
@@ -190,8 +196,8 @@ export interface PublishedContent<K extends GameContentKind> {
 
 /**
  * One line of a published conversation, where it stands and who says it: for
- * a scene made of the line and the one after it, for a case's evidence, and
- * for the admin's line picker, so none of them types the Kurdish again.
+ * a case's evidence and for the admin's line picker, so neither types the
+ * Kurdish again.
  */
 export interface TaughtLine {
   /** the exercise, the conversation's own id, and its title when it is in the variety's script */
@@ -206,7 +212,7 @@ export interface TaughtLine {
   en: string | null;
   /** the lesson-audio key a recording of this line is filed under ('' when it cannot be filed) */
   recording: string;
-  /** from where its unit stands in its course (`scenarioLevel`) */
+  /** from where its unit stands in its course (`unitLevel`) */
   level: GameLevel;
   /** 'conversation:<exerciseId>:<index>' */
   origin: string;
@@ -402,6 +408,17 @@ export function wordsOfExercise(row: Pick<ExerciseRow, 'type' | 'payload'>, dial
 }
 
 /**
+ * The level of a conversation from where its unit stands in its course: the
+ * first fifth of the units is level 1, the last fifth level 5. A course is
+ * written to grow harder unit by unit, so this is the course's own order.
+ */
+export function unitLevel(unitPosition: number, unitCount: number): GameLevel {
+  if (!(unitCount > 0) || !(unitPosition > 0)) return 1;
+  const share = Math.min(1, Math.max(0, (unitPosition - 1) / unitCount));
+  return Math.min(5, Math.floor(share * 5) + 1) as GameLevel;
+}
+
+/**
  * Every line of one conversation exercise in the variety's script (pure, for
  * the tests), each with the key its recording is filed under and the level
  * its unit gives it.
@@ -487,6 +504,13 @@ export function publishedRecordingTexts(
 
 // ---------- the readers ----------
 
+/**
+ * What a reader counts as the course: `published` is what learners can meet,
+ * and the only scope a game reads; `course` is every lesson and story that
+ * has not been archived, drafts among them, for the starter library alone.
+ */
+export type SourceScope = 'published' | 'course';
+
 export class TrustedSources {
   private readonly memo = new Map<string, { at: number; value: Promise<unknown> }>();
 
@@ -494,13 +518,20 @@ export class TrustedSources {
     private readonly db: Executor,
     private readonly cache: Cache | null = null,
     private readonly clock: () => number = Date.now,
+    private readonly scope: SourceScope = 'published',
   ) {}
+
+  /** Which lessons count: the published ones, or for the starter library every one that is not put away. */
+  private get lessonsThatCount(): string {
+    return this.scope === 'course' ? `l.status <> 'archived'` : `l.status = 'published'`;
+  }
 
   /** A pool through the cache, under the current generation. */
   private async pooled<T>(name: string, dialect: GameDialect, load: () => Promise<T>): Promise<T> {
     if (!this.cache) return load();
     const generation = (await this.cache.get<string>(CACHE_DOMAIN, GENERATION_ID)) ?? '0';
-    return this.cache.withCache(CACHE_DOMAIN, `${generation}:${name}:${dialect}`, POOL_TTL_SECONDS, load);
+    // the scope is part of the key: what the starter library reads of the course is never a game's pool
+    return this.cache.withCache(CACHE_DOMAIN, `${generation}:${this.scope === 'course' ? 'course:' : ''}${name}:${dialect}`, POOL_TTL_SECONDS, load);
   }
 
   /**
@@ -513,7 +544,7 @@ export class TrustedSources {
   async derived<T>(name: string, dialect: GameDialect, build: () => Promise<T>): Promise<T> {
     if (!this.cache) return build();
     const generation = (await this.cache.get<string>(CACHE_DOMAIN, GENERATION_ID)) ?? '0';
-    const key = `${generation}:${name}:${dialect}`;
+    const key = `${generation}:${this.scope === 'course' ? 'course:' : ''}${name}:${dialect}`;
     const now = this.clock();
     const hit = this.memo.get(key);
     if (hit && now - hit.at < DERIVED_TTL_MS) return hit.value as Promise<T>;
@@ -541,7 +572,7 @@ export class TrustedSources {
            JOIN skills s ON s.id = l.skill_id
            JOIN units u ON u.id = s.unit_id
            JOIN courses c ON c.id = u.course_id
-          WHERE l.status = 'published'
+          WHERE ${this.lessonsThatCount}
           ORDER BY l.skill_id, l.position, l.version DESC
        )
        SELECT e.id, e.type, e.payload, live.dialect, live.id AS lesson_id
@@ -636,7 +667,7 @@ export class TrustedSources {
     return this.pooled('story-passages', dialect, async () => {
       const res = await this.db.query<{ id: string; title: string; level: number; body: string; glossary: Array<{ term: string; meanings: Partial<Meanings> }> }>(
         `SELECT id, title, level, body, glossary FROM stories
-          WHERE status = 'published' AND review_status = 'approved' AND dialect = $1
+          WHERE ${this.scope === 'course' ? `status <> 'archived'` : `status = 'published' AND review_status = 'approved'`} AND dialect = $1
           ORDER BY level, id`,
         [storySpelling(dialect)],
       );
@@ -755,7 +786,7 @@ export class TrustedSources {
              JOIN skills s ON s.id = l.skill_id
              JOIN units u ON u.id = s.unit_id
              JOIN courses c ON c.id = u.course_id
-            WHERE l.status = 'published'
+            WHERE ${this.lessonsThatCount}
             ORDER BY l.skill_id, l.position, l.version DESC
          )
          SELECT e.id, e.type, e.payload, live.dialect, live.unit_rank, live.unit_count
@@ -766,7 +797,7 @@ export class TrustedSources {
       const out: TaughtLine[] = [];
       for (const row of res.rows) {
         if (toDialect(row.dialect) !== dialect) continue;
-        out.push(...conversationLinesOf(row, dialect, scenarioLevel(row.unit_rank, row.unit_count)));
+        out.push(...conversationLinesOf(row, dialect, unitLevel(row.unit_rank, row.unit_count)));
       }
       return out;
     });

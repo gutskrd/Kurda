@@ -70,7 +70,7 @@ describe('old addresses', () => {
   });
 
   /*
-   * Two games became exercises of the lessons' practice and three were
+   * Two games became exercises of the lessons' practice and four were
    * retired. A link written while they were games still opens something: the
    * exercise where it is now, or the games there are.
    */
@@ -83,6 +83,10 @@ describe('old addresses', () => {
 
   it('opens Learn’s games for a link to a game that was retired, whatever room it named', () => {
     for (const path of ['app/games/dont-say?id=abc12345', '/app/games/bluff?id=abc12345', 'app/games/bluff', 'app/games/village', 'app/games/kingdom']) {
+      expect(legacyTabPath(path), path).toBe(`${path.startsWith('/') ? '/' : ''}learn?view=games`);
+    }
+    // a game played alone had no room, only its own page
+    for (const path of ['app/games/what-would-you-say', '/app/games/what-would-you-say', 'app/games/what-would-you-say/']) {
       expect(legacyTabPath(path), path).toBe(`${path.startsWith('/') ? '/' : ''}learn?view=games`);
     }
   });
