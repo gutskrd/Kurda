@@ -169,8 +169,7 @@ function SoloBoard({ round, dialect, onAsked }: { round: Round; dialect: GameDia
             : t('games.whoAmI.out')
           : `${t('games.whoAmI.worth', { count: worth })} · ${t('games.whoAmI.guessesLeft', { count: WHO_AM_I_GUESSES - state.attempts })}`}
       </p>
-      <QuestionDeck dialect={dialect} questions={item.questions} asked={asked} disabled={done || busy || asking} onAsk={(q) => void ask(q)} />
-      {error && <p className="field-error">{error}</p>}
+      {/* who it could be comes first: a question is chosen by looking at the words it has to tell apart */}
       <GuessTiles
         dialect={dialect}
         tiles={item.tiles}
@@ -179,6 +178,8 @@ function SoloBoard({ round, dialect, onAsked }: { round: Round; dialect: GameDia
         disabled={done || busy}
         onGuess={(tile) => void submit({ guess: tile })}
       />
+      {error && <p className="field-error">{error}</p>}
+      <QuestionDeck dialect={dialect} questions={item.questions} asked={asked} disabled={done || busy || asking} onAsk={(q) => void ask(q)} />
     </div>
   );
 }
@@ -337,8 +338,6 @@ function RaceBoard({
                 ? t('games.whoAmI.out')
                 : `${t('games.whoAmI.worth', { count: whoAmIPoints(mine.asked.length, crossed.length, true) })} · ${t('games.whoAmI.guessesLeft', { count: mine.guessesLeft })}`}
           </p>
-          <QuestionDeck dialect={board.dialect} questions={mine.questions} asked={mine.asked} disabled={!playing || busy} onAsk={(q) => void act({ kind: 'ask', question: q })} />
-          {error && <p className="field-error">{error}</p>}
           <GuessTiles
             dialect={board.dialect}
             tiles={mine.tiles}
@@ -347,6 +346,8 @@ function RaceBoard({
             disabled={!playing || busy}
             onGuess={(tile) => void act({ kind: 'guess', tile })}
           />
+          {error && <p className="field-error">{error}</p>}
+          <QuestionDeck dialect={board.dialect} questions={mine.questions} asked={mine.asked} disabled={!playing || busy} onAsk={(q) => void act({ kind: 'ask', question: q })} />
         </>
       )}
       <section className="wa-others" aria-labelledby="wa-others-title">

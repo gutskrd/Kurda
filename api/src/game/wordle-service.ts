@@ -117,13 +117,21 @@ export class WordleService {
     const picked = await this.pickTarget(difficulty, dayIndex);
     if (!picked) return { ok: false, reason: 'empty-pool' };
 
+    // Two asks at once (a page that mounts twice, two devices opening the app together) both find no game above and
+    // both come here. The day's one game is the table's to keep (`wordle_games_one_daily_per_day`): the second insert
+    // steps aside and is given the game the first one made, rather than failing the request with the index's name.
     const inserted = await this.pool.query<GameRow>(
       `INSERT INTO wordle_games (user_id, mode, difficulty, day_index, target, target_length)
        VALUES ($1, 'daily', $2, $3, $4, $5)
+       ON CONFLICT (user_id, day_index) WHERE mode = 'daily' DO NOTHING
        RETURNING *`,
       [userId, picked.difficulty, dayIndex, picked.target, toLetters(picked.target).length],
     );
-    return { ok: true, game: this.toView(inserted.rows[0]!) };
+    const made = inserted.rows[0];
+    if (made) return { ok: true, game: this.toView(made) };
+    const theirs = await this.pool.query<GameRow>(`SELECT * FROM wordle_games WHERE user_id = $1 AND mode = 'daily' AND day_index = $2`, [userId, dayIndex]);
+    const kept = theirs.rows[0];
+    return kept ? { ok: true, game: this.toView(kept) } : { ok: false, reason: 'empty-pool' };
   }
 
   /** Start a fresh practice game: random word, unlimited, no streak/daily effect. */

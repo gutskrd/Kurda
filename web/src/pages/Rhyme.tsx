@@ -11,6 +11,8 @@ import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
 import { haptic } from '../lib/haptics';
+import { GameArt } from '../games/GameArt';
+import '../games/game-start.css';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -34,7 +36,14 @@ const REJECT_KEY: Record<string, MessageKey> = {
   profane: 'games.rhyme.reject.profane',
 };
 
-/** Solo Rhyming Words — a timed round; each rhyme is scored server-side. */
+/**
+ * Solo Rhyming Words — a timed round; each rhyme is scored server-side.
+ *
+ * The page opens on a start, not on a running clock: the round is a minute
+ * long and begins when it is asked for, so nobody arrives to find ten seconds
+ * of it already gone. Choosing the other variety comes back to the start for
+ * the same reason.
+ */
 export function Rhyme(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
@@ -51,8 +60,11 @@ export function Rhyme(): React.JSX.Element {
   const inputRef = useRef<HTMLInputElement>(null);
   // "End round" before the clock runs out is giving the round up
   const [endedEarly, setEndedEarly] = useState(false);
+  // nothing is asked of the server, and no clock runs, until Start is pressed
+  const [started, setStarted] = useState(false);
 
   const start = useCallback(async () => {
+    setStarted(true);
     setGame(null);
     setEndedEarly(false);
     setLoadError(null);
@@ -71,9 +83,18 @@ export function Rhyme(): React.JSX.Element {
     }
   }, [client, dialect]);
 
-  useEffect(() => {
-    void start();
-  }, [start]);
+  /** The other variety's words: back to the start, with nothing running. */
+  const choose = (d: Dialect): void => {
+    if (d === dialect) return;
+    setDialect(d);
+    setStarted(false);
+    setGame(null);
+    setLoadError(null);
+    setEmptyLexicon(false);
+    setFound([]);
+    setWord('');
+    setNotice(null);
+  };
 
   const active = game?.status === 'active' && remaining > 0;
   // the rating box hears of a round the server has ended — not of one given up
@@ -137,13 +158,21 @@ export function Rhyme(): React.JSX.Element {
 
       <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')} style={{ marginBottom: 8 }}>
         {(['kurmanci', 'sorani'] as const).map((d) => (
-          <button key={d} role="tab" aria-selected={dialect === d} className={`chip${dialect === d ? ' active' : ''}`} onClick={() => setDialect(d)}>
+          <button key={d} role="tab" aria-selected={dialect === d} className={`chip${dialect === d ? ' active' : ''}`} onClick={() => choose(d)}>
             {d === 'kurmanci' ? 'Kurmancî' : 'Soranî'}
           </button>
         ))}
       </div>
 
-      {emptyLexicon ? (
+      {!started ? (
+        <div className="game-start">
+          <GameArt game="rhyme" size={132} />
+          <p className="game-start-body">{t('games.rhyme.body')}</p>
+          <Button size="lg" onClick={() => void start()}>
+            {t('games.solo.start')}
+          </Button>
+        </div>
+      ) : emptyLexicon ? (
         <div className="wordle-msg">{t('games.emptyPool')}</div>
       ) : loadError ? (
         <ErrorState message={loadError} onRetry={() => void start()} />
