@@ -7,6 +7,7 @@ import {
   dealWhoAmI,
   isWhoAmIFact,
   sharedCategory,
+  suggestWhoAmIQuestions,
   whoAmIPoints,
   type WhoAmIIdentity,
   type WhoAmITemplate,
@@ -415,6 +416,88 @@ describe('the table on one phone', () => {
     expect(s.phase).toBe('decide');
     expect(R.viewFor(s, 0).told).toMatchObject({ truth: q.truth, answers: [{ seat: 1, right: false }, { seat: 2, right: false }] });
     expect(R.viewFor(s, 0).mine!.asked).toEqual([{ question: q.id, answer: q.truth }]);
+  });
+
+  it('lets a player ask the room a question of their own: counted, and never answered by the card', () => {
+    let s = startCouchTable(dealt(), T0, 'couch');
+    expect(R.viewFor(s, 0).open).toBe(true);
+    s = move(s, 0, { kind: 'aloud' });
+    // the turn goes on to a guess or a pass, with no answer of the card's on the table
+    expect(s).toMatchObject({ turn: 0, phase: 'decide', told: null });
+    const mine = R.viewFor(s, 0).mine!;
+    expect(mine).toMatchObject({ aloud: 1, asked: [] });
+    expect(R.viewFor(s, 1).seats[0]!.asked).toBe(1);
+    // one question to a turn, whoever answers it
+    expect(R.apply(s, 0, { kind: 'aloud' }, T0)).toEqual({ ok: false, reason: 'asked-this-turn' });
+    expect(R.apply(s, 0, { kind: 'ask', question: firstQuestion(s, 0).id }, T0)).toEqual({ ok: false, reason: 'asked-this-turn' });
+    // and it costs what a question costs
+    const deal = s.seats[0]!.deal!;
+    s = move(s, 0, { kind: 'guess', tile: deal.identity.id });
+    expect(R.viewFor(s, 0).mine!.points).toBe(whoAmIPoints(1, 0, true));
+  });
+
+  it('clears the last answer of the card when the next question is the player’s own', () => {
+    let s = startCouchTable(dealt(), T0, 'couch');
+    s = move(s, 0, { kind: 'ask', question: firstQuestion(s, 0).id });
+    s = roomAnswers(s, true, T0);
+    s = move(s, 0, { kind: 'pass' });
+    s = move(s, 1, { kind: 'aloud' });
+    expect(s.told).toBeNull();
+  });
+});
+
+describe('a question of one’s own, away from one room', () => {
+  it('is refused at a table the server runs', () => {
+    const s = table();
+    expect(R.viewFor(s, 1).open).toBe(false);
+    expect(R.apply(s, 1, { kind: 'aloud' }, T0)).toEqual({ ok: false, reason: 'not-here' });
+  });
+});
+
+describe('the questions suggested next', () => {
+  const Q = (facts: string[]): Array<{ id: string; fact: string }> => facts.map((fact) => ({ id: `q:${fact}`, fact }));
+  const all = Q(['can-fly', 'sweet', 'alive', 'works-outdoors', 'animal', 'place', 'four-legs', 'uses-electricity', 'edible', 'person']);
+
+  it('begins with the wide questions, whatever order the list is in', () => {
+    expect(suggestWhoAmIQuestions(all, [], null)).toEqual(['q:alive', 'q:animal', 'q:person']);
+    expect(suggestWhoAmIQuestions(all, [], null, 5)).toEqual(['q:alive', 'q:animal', 'q:person', 'q:edible', 'q:place']);
+  });
+
+  it('follows a yes: an animal is asked about legs and wings, not whether it is a place', () => {
+    const asked = [{ question: 'q:animal', answer: true }];
+    expect(suggestWhoAmIQuestions(all, asked, null)).toEqual(['q:edible', 'q:can-fly', 'q:four-legs']);
+  });
+
+  it('follows a no: what is beside the point comes after everything else, and what is already known never', () => {
+    const asked = [{ question: 'q:alive', answer: false }];
+    // not alive: not an animal and not a person either, so neither is asked; whether it flies is asked last
+    expect(suggestWhoAmIQuestions(all, asked, null, 10)).toEqual(['q:edible', 'q:place', 'q:sweet', 'q:uses-electricity', 'q:can-fly', 'q:four-legs', 'q:works-outdoors']);
+  });
+
+  it('never suggests a question that was asked, and is empty when every answer left is known', () => {
+    const asked = all.map((q) => ({ question: q.id, answer: false }));
+    expect(suggestWhoAmIQuestions(all, asked, null)).toEqual([]);
+    // a place is not alive, not an animal and not a person: there is nothing left to learn from this list
+    expect(suggestWhoAmIQuestions(Q(['place', 'animal', 'person', 'alive']), [{ question: 'q:place', answer: true }], null)).toEqual([]);
+  });
+
+  it('skips what the kind on the card already says', () => {
+    expect(suggestWhoAmIQuestions(all, [], 'animal')).toEqual(['q:edible', 'q:can-fly', 'q:four-legs']);
+    expect(suggestWhoAmIQuestions(all, [], 'food')).toEqual(['q:alive', 'q:sweet', 'q:can-fly']);
+  });
+
+  it('is on every player’s view while they are still guessing, and reads nothing but their own answers', () => {
+    let s = table();
+    const mine = R.viewFor(s, 1).mine!;
+    expect(mine.suggested.length).toBeGreaterThan(0);
+    expect(mine.suggested.every((id) => mine.questions.some((q) => q.id === id))).toBe(true);
+    // two players dealt the same list and the same answers are suggested the same: the hidden card is not read
+    const deal = s.seats[0]!.deal!;
+    const twin = { ...deal.identity, id: 'twin', facts: Object.fromEntries(Object.keys(deal.identity.facts).map((k) => [k, !deal.identity.facts[k]])) };
+    expect(suggestWhoAmIQuestions(deal.questions, [], sharedCategory(twin.category, deal.candidates))).toEqual(mine.suggested);
+    // once the card is found there is nothing left to suggest
+    s = move(s, 1, { kind: 'guess', tile: deal.identity.id });
+    expect(R.viewFor(s, 1).mine!.suggested).toEqual([]);
   });
 });
 

@@ -15,6 +15,8 @@
  *     offered — only those every candidate has an answer to, so the list
  *     itself never gives the identity away;
  *   - the points a solved identity is worth;
+ *   - which questions to suggest next, for a learner who does not know where
+ *     to begin (`suggestWhoAmIQuestions`);
  *   - the shapes a round travels in.
  *
  * The Kurdish here is none: the identities' words and the questions are
@@ -216,6 +218,92 @@ export function sharedCategory(category: string, tiles: ReadonlyArray<{ category
 /** The answer to a question about an identity: yes or no, from its facts. */
 export function answerFor(identity: Pick<WhoAmIIdentity, 'facts'>, fact: string): boolean {
   return identity.facts[fact] === true;
+}
+
+// ---------- questions worth asking next ----------
+
+/**
+ * What an answer settles besides itself: an animal is alive and is neither a
+ * person nor a place, and so on. Only ever used to choose which questions to
+ * suggest; what a card says to a question is its facts table's alone.
+ */
+const SETTLES: Partial<Record<WhoAmIFact, { yes?: Partial<Record<WhoAmIFact, boolean>>; no?: Partial<Record<WhoAmIFact, boolean>> }>> = {
+  animal: { yes: { alive: true, person: false, place: false } },
+  person: { yes: { alive: true, animal: false, place: false, edible: false } },
+  place: { yes: { alive: false, animal: false, person: false, edible: false } },
+  edible: { yes: { person: false, place: false } },
+  alive: { no: { animal: false, person: false } },
+};
+
+/** What the kind of thing on the card settles, when the card names its kind. */
+const KIND_SETTLES: Record<WhoAmICategory, Partial<Record<WhoAmIFact, boolean>>> = {
+  animal: { alive: true, animal: true, person: false, place: false },
+  object: { alive: false, animal: false, person: false, place: false, edible: false },
+  profession: { alive: true, person: true, animal: false, place: false, edible: false },
+  food: { edible: true, animal: false, person: false, place: false },
+  place: { place: true, alive: false, animal: false, person: false, edible: false },
+};
+
+/** Questions that are about one kind of thing: not worth asking once that kind is ruled out. */
+const ASKED_OF: Partial<Record<WhoAmIFact, ReadonlyArray<readonly [WhoAmIFact, boolean]>>> = {
+  'can-fly': [['animal', false], ['alive', false]],
+  'lives-in-water': [['animal', false], ['alive', false]],
+  'four-legs': [['animal', false], ['alive', false]],
+  sweet: [['edible', false]],
+  'works-outdoors': [['person', false]],
+  'uses-electricity': [['alive', true], ['edible', true], ['place', true]],
+  'helps-sick': [['animal', true], ['edible', true]],
+  'at-home': [['person', true], ['place', true]],
+  'bigger-than-person': [['person', true]],
+};
+
+/** How many questions are suggested at once: few enough to read at a glance. */
+export const WHO_AM_I_SUGGESTIONS = 3;
+
+/**
+ * The questions to suggest next, best first: the ones a player would ask if
+ * they knew the game. The wide ones come before the narrow ones ("Is it
+ * alive?" before "Does it fly?"), a question whose answer follows from what
+ * has been answered already is left out (an animal is not asked whether it
+ * is a place), and so is one about a kind of thing that has been ruled out
+ * (nothing that is not an animal is asked whether it flies) until nothing
+ * better is left. When every answer left is already known the list is empty.
+ *
+ * It reads only what the player can already see: the questions they were
+ * dealt, the answers they have had, and the kind of thing the card names
+ * when it names one. Nothing about the hidden identity goes into it, so the
+ * suggestions say nothing the list did not.
+ */
+export function suggestWhoAmIQuestions(
+  questions: ReadonlyArray<{ id: string; fact: string }>,
+  asked: readonly WhoAmIAsked[],
+  category: string | null,
+  count: number = WHO_AM_I_SUGGESTIONS,
+): string[] {
+  const known = new Map<string, boolean>();
+  const settle = (also: Partial<Record<WhoAmIFact, boolean>> | undefined): void => {
+    for (const [fact, value] of Object.entries(also ?? {})) if (!known.has(fact)) known.set(fact, value);
+  };
+  if (isWhoAmICategory(category)) settle(KIND_SETTLES[category]);
+  const factOf = new Map(questions.map((q) => [q.id, q.fact]));
+  for (const a of asked) {
+    const fact = factOf.get(a.question);
+    if (!fact) continue;
+    known.set(fact, a.answer);
+    if (isWhoAmIFact(fact)) settle(a.answer ? SETTLES[fact]?.yes : SETTLES[fact]?.no);
+  }
+  const done = new Set(asked.map((a) => a.question));
+  const order = (fact: string): number => {
+    const at = WHO_AM_I_FACTS.findIndex((f) => f.key === fact);
+    return at < 0 ? WHO_AM_I_FACTS.length : at;
+  };
+  const open = questions.filter((q) => !done.has(q.id)).sort((a, b) => order(a.fact) - order(b.fact));
+  const beside = (q: { fact: string }): boolean => isWhoAmIFact(q.fact) && (ASKED_OF[q.fact] ?? []).some(([fact, value]) => known.get(fact) === value);
+  // A question whose answer is already known is never suggested: it costs a point for nothing. One that is only
+  // beside the point comes after everything else, since a card can still surprise; when even those are gone the
+  // list is empty, which is its own advice.
+  const unknown = open.filter((q) => !known.has(q.fact));
+  return [...unknown.filter((q) => !beside(q)), ...unknown.filter(beside)].slice(0, Math.max(0, count)).map((q) => q.id);
 }
 
 // ---------- what the apps are sent ----------

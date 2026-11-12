@@ -30,6 +30,16 @@
  * room runs the same rules in the app (couch.ts): there the phone holds every
  * card, so that game is never paid or rated.
  *
+ * A table in one room is `open`: its player on turn may, instead of a
+ * question from the list, ask the room one of their own out loud (`aloud`).
+ * The room answers it from the card they can read, nothing checks the answer,
+ * and it costs what any question costs. Only the phone's own game sets this:
+ * the server never does, so a game that is paid for takes no such move.
+ *
+ * A learner who does not know what to ask is shown where to begin: each view
+ * names a few of its own questions as the ones to ask next
+ * (`suggestWhoAmIQuestions`), read from nothing the player cannot already see.
+ *
  * A turn has three waits, each with a clock of its own:
  *   ask     the player on turn picks a question, guesses outright, or passes
  *   answer  everyone else answers the question about the card they can see
@@ -48,6 +58,7 @@ import {
   WHO_AM_I_GUESSES,
   answerFor,
   sharedCategory,
+  suggestWhoAmIQuestions,
   whoAmIPoints,
   type WhoAmIAsked,
   type WhoAmIDeal,
@@ -78,10 +89,14 @@ export interface WhoAmITableSettings {
   difficulty: GameDifficulty;
   /** each seat's deal, made by the server at the start; never stored in the lobby's settings */
   deals?: ReadonlyArray<{ seat: number; deal: WhoAmIDeal }>;
+  /** a table in one room, on one phone: a question may also be asked out loud. Never set for a game the server runs. */
+  open?: boolean;
 }
 
 export type WhoAmITableMove =
   | { kind: 'ask'; question: string }
+  /** a question of the player's own, asked of the room out loud: only at an `open` table */
+  | { kind: 'aloud' }
   | { kind: 'answer'; yes: boolean }
   | { kind: 'guess'; tile: string }
   | { kind: 'pass' };
@@ -99,6 +114,8 @@ interface TableSeat {
   deal: WhoAmIDeal | null;
   /** the questions this seat asked about its own card, each with the card's own answer */
   asked: WhoAmIAsked[];
+  /** questions of its own it asked the room out loud, at an open table: counted, never answered by the card */
+  aloud: number;
   guesses: Array<{ tile: string; correct: boolean }>;
   solvedAt: number | null;
   out: boolean;
@@ -118,6 +135,8 @@ interface TableAnswer {
 export interface WhoAmITableState {
   dialect: LetterDialect;
   difficulty: GameDifficulty;
+  /** a table in one room: questions may be asked out loud */
+  open: boolean;
   seed: string;
   startedAt: number;
   endsAt: number;
@@ -146,6 +165,8 @@ export interface WhoAmITableCard {
 export interface WhoAmITableBoard {
   dialect: LetterDialect;
   difficulty: GameDifficulty;
+  /** a table in one room: the player on turn may also ask the room a question of their own */
+  open: boolean;
   startedAt: string;
   endsAt: string;
   turn: number | null;
@@ -158,7 +179,11 @@ export interface WhoAmITableBoard {
     category: string | null;
     tiles: WhoAmITile[];
     questions: WhoAmIQuestion[];
+    /** the questions to ask next, best first: a few of `questions`, none asked yet */
+    suggested: string[];
     asked: WhoAmIAsked[];
+    /** questions of their own asked out loud, at an open table */
+    aloud: number;
     guesses: Array<{ tile: string; correct: boolean }>;
     guessesLeft: number;
     /** every question dealt has been asked: this turn is a guess */
@@ -208,9 +233,14 @@ function wrong(s: TableSeat): number {
   return s.guesses.filter((g) => !g.correct).length;
 }
 
+/** Every question a seat has asked: those from its list, and those of its own asked out loud. */
+function questions(s: TableSeat): number {
+  return s.asked.length + s.aloud;
+}
+
 /** A seat's score: what its own card earned, and a point for every right answer about another's. */
 function points(s: TableSeat): number {
-  return whoAmIPoints(s.asked.length, wrong(s), s.solvedAt !== null) + s.helped * WHO_AM_I_HELP_POINTS;
+  return whoAmIPoints(questions(s), wrong(s), s.solvedAt !== null) + s.helped * WHO_AM_I_HELP_POINTS;
 }
 
 /** Still guessing: at the table, with a card, neither solved nor out. */
@@ -296,7 +326,7 @@ function resolve(state: WhoAmITableState, now: number): void {
 
 /** A seat took part: it asked, answered or guessed at least once. */
 function tookPart(s: TableSeat): boolean {
-  return s.asked.length > 0 || s.answered > 0 || s.guesses.length > 0;
+  return questions(s) > 0 || s.answered > 0 || s.guesses.length > 0;
 }
 
 export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoAmITableSettings, WhoAmITableBoard, WhoAmITableOutcome> = {
@@ -305,10 +335,11 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
     const state: WhoAmITableState = {
       dialect: settings.dialect,
       difficulty: settings.difficulty,
+      open: settings.open === true,
       seed: start.seed,
       startedAt: start.now,
       endsAt: start.now + settings.minutes * 60_000,
-      seats: seats.map((s) => ({ seat: s.seat, deal: deals.get(s.seat) ?? null, asked: [], guesses: [], solvedAt: null, out: false, left: false, helped: 0, answered: 0 })),
+      seats: seats.map((s) => ({ seat: s.seat, deal: deals.get(s.seat) ?? null, asked: [], aloud: 0, guesses: [], solvedAt: null, out: false, left: false, helped: 0, answered: 0 })),
       turn: null,
       phase: 'ask',
       phaseEndsAt: start.now,
@@ -353,6 +384,20 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
       // nobody there to answer (they have all just gone): the card answers by itself
       if (unanswered(next).length === 0) resolve(next, now);
       return { ok: true, state: next, outcome: { kind: 'ask', correct: null } };
+    }
+
+    if (move.kind === 'aloud') {
+      // a question of the asker's own, put to the room: only where the table sits in one room, and one to a turn like any other
+      if (!next.open) return { ok: false, reason: 'not-here' };
+      if (next.phase !== 'ask') return { ok: false, reason: 'asked-this-turn' };
+      // with every question on the list asked, the turn is a guess: the game has to end
+      if (askedAll(me)) return { ok: false, reason: 'must-guess' };
+      me.aloud++;
+      // the room's answer is the room's: the card says nothing, so no answer of its is left on the table
+      next.told = null;
+      next.phase = 'decide';
+      next.phaseEndsAt = now + WHO_AM_I_DECIDE_SECONDS * 1000;
+      return { ok: true, state: next, outcome: { kind: 'aloud', correct: null } };
     }
 
     // a guess or a pass: before asking, or once the answer is on the table; never while it is being answered
@@ -450,6 +495,7 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
     const showMeanings = state.difficulty === 'beginner';
     // who may read the cards at all: someone with a card of their own, still at the table
     const reads = !!me && present(me);
+    const kind = deal ? sharedCategory(deal.identity.category, deal.candidates) : null;
     const question = (owner: number, id: string): WhoAmIQuestion => {
       const q = state.seats.find((s) => s.seat === owner)?.deal?.questions.find((x) => x.id === id);
       return { id, ku: q?.ku ?? '', meanings: q?.meanings ?? { en: '' } };
@@ -458,6 +504,7 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
     return {
       dialect: state.dialect,
       difficulty: state.difficulty,
+      open: state.open,
       startedAt: new Date(state.startedAt).toISOString(),
       endsAt: new Date(state.endsAt).toISOString(),
       turn: state.turn,
@@ -467,10 +514,13 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
       mine:
         me && deal
           ? {
-              category: sharedCategory(deal.identity.category, deal.candidates),
+              category: kind,
               tiles: deal.candidates.map((c) => ({ id: c.id, word: c.word, meanings: showMeanings ? c.meanings : null })),
               questions: deal.questions.map((q) => ({ id: q.id, ku: q.ku, meanings: q.meanings })),
+              // only while there is a card left to find: chosen from what this player already sees, never from the card
+              suggested: guessing(me) ? suggestWhoAmIQuestions(deal.questions, me.asked, kind) : [],
               asked: me.asked.map((a) => ({ ...a })),
+              aloud: me.aloud,
               guesses: me.guesses.map((g) => ({ ...g })),
               guessesLeft: Math.max(0, WHO_AM_I_GUESSES - wrong(me)),
               mustGuess: guessing(me) && askedAll(me),
@@ -483,7 +533,7 @@ export const whoAmITableRules: GameRules<WhoAmITableState, WhoAmITableMove, WhoA
           : null,
       seats: state.seats.map((s) => ({
         seat: s.seat,
-        asked: s.asked.length,
+        asked: questions(s),
         wrong: wrong(s),
         solved: s.solvedAt !== null,
         out: s.out,

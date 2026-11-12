@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { WHO_AM_I_MIN_TEMPLATES, type GameContentKind } from '@kurda/shared';
 import type { TrustedSources } from './sources.js';
 import { dealTable, identitiesAt, tableDifficulties, whoAmIPool } from './who-am-i.js';
+import { whoAmITableModule } from '../mp/games/who-am-i.js';
 import { GameWordCards, entryCandidate } from './word-cards.js';
 
 const FACTS = ['alive', 'animal', 'four-legs', 'can-fly', 'lives-in-water', 'bigger-than-person', 'at-home'] as const;
@@ -94,6 +95,18 @@ describe('a table', () => {
     const full = { ...enough, identities: [...pool.identities, ...pool.identities.map((x, i) => ({ ...x, id: `more-${i}`, word: `${x.word}x`, level: 1 }))] };
     expect(tableDifficulties(full)).toContain('beginner');
     expect(tableDifficulties(full)).not.toContain('intermediate');
+  });
+});
+
+describe('a table the server runs', () => {
+  it('takes no question asked out loud: that move is the one-phone game’s, where nothing is paid', () => {
+    expect(whoAmITableModule.moveSchema.safeParse({ kind: 'aloud' }).success).toBe(false);
+    expect(whoAmITableModule.moveSchema.safeParse({ kind: 'pass' }).success).toBe(true);
+  });
+
+  it('is never opened by what a lobby is made with', () => {
+    const made = whoAmITableModule.lobbySchema.parse({ dialect: 'kmr', difficulty: 'beginner', open: true, deals: [] });
+    expect(made.settings).toEqual({ dialect: 'kmr', minutes: 10, difficulty: 'beginner' });
   });
 });
 
