@@ -166,7 +166,7 @@ export function Rhyme(): React.JSX.Element {
 
       {!started ? (
         <div className="game-start">
-          <GameArt game="rhyme" size={132} />
+          <GameArt game="rhyme" size={132} moving />
           <p className="game-start-body">{t('games.rhyme.body')}</p>
           <Button size="lg" onClick={() => void start()}>
             {t('games.solo.start')}

@@ -27,7 +27,19 @@ export {
   type ImpostorEmblem,
   type ImpostorWay,
 } from './impostor.js';
-export { GAME_EMBLEMS, gameEmblemSvg, gameEmblemTone, isGameEmblem, type GameArtOptions, type GameEmblem } from './games.js';
+export {
+  GAME_EMBLEMS,
+  GAME_EMBLEM_SAMPLES,
+  gameEmblemLayers,
+  gameEmblemLoopMs,
+  gameEmblemSvg,
+  gameEmblemTone,
+  isGameEmblem,
+  type GameArtOptions,
+  type GameEmblem,
+  type GameEmblemLayer,
+  type GamePose,
+} from './games.js';
 export { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailArtOptions, type EmailPicture } from './email.js';
 export { TICKET_ART_BOX, TICKET_ART_OUTLINE, TICKET_ART_PERFORATION, TICKET_ART_STUB, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 export {

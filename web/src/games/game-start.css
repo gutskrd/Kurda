@@ -1,7 +1,7 @@
 /*
- * A game's start (games/GameArt.tsx beside it): its emblem on the night the
- * games page puts its featured game on, a line about it, and the one button
- * that begins. For a game whose round runs against a clock, so that the clock
+ * A game's start (games/GameArt.tsx beside it): its emblem, playing its own
+ * loop, on the night the games page puts its featured game on, a line about
+ * it, and the one button that begins. For a game whose round runs against a clock, so that the clock
  * starts when the player says and not when the page happens to open.
  */
 .game-start {
@@ -17,11 +17,6 @@
   background: radial-gradient(120% 90% at 50% 0%, #4a3a8c 0%, var(--night) 55%, var(--night-deep) 100%);
   color: var(--night-ink);
   text-align: center;
-}
-.game-start .gp-art {
-  display: inline-grid;
-  line-height: 0;
-  animation: game-start-float 5s ease-in-out infinite;
 }
 .game-start-body {
   max-width: 34ch;
@@ -53,18 +48,4 @@
 .game-start .btn:active:not(:disabled) {
   transform: translateY(3px);
   box-shadow: 0 2px 0 var(--lip);
-}
-@keyframes game-start-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .game-start .gp-art {
-    animation: none;
-  }
 }

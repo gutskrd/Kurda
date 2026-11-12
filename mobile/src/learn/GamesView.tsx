@@ -1,5 +1,5 @@
 import { useCallback, useState, type Ref } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { gameEmblemTone, gameOfTheDay, type GameEmblem, type IncomingInvite, type MyRanks } from '@kurda/shared';
@@ -144,6 +144,8 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   // the learning games (games/learnGames.ts): all of them, those without enough approved content yet as coming soon
   const learnGames = useListedLearnGames();
   const [filter, setFilter] = useState<Filter>('all');
+  // the emblems act while this screen is the one being looked at, and rest while another is
+  const watching = useIsFocused();
   const cards: GameCard[] = [
     ...GAME_CARDS,
     ...learnGames.flatMap(({ game: g, ready }): GameCard[] => {
@@ -289,7 +291,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
 
       {featured ? (
         <Cloth style={styles.hero}>
-          <GameArt game={featured.emblem} size={132} />
+          <GameArt game={featured.emblem} size={132} moving={watching} />
           <Text style={styles.heroKicker}>{t('games.featured')}</Text>
           <Text style={styles.heroName} accessibilityRole="header">
             {t(featured.name)}
@@ -344,14 +346,15 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           })}
         </View>
         <View style={styles.cards}>
-          {shelf.map((card) => {
+          {shelf.map((card, place) => {
             const name = t(card.name);
             const tone = gameEmblemTone(card.emblem);
             const single = card.ways.length === 1 ? card.ways[0]! : null;
             const inside = (
               <>
                 <View style={[styles.cardArt, { backgroundColor: `${tone}2e` }]}>
-                  <GameArt game={card.emblem} size={76} />
+                  {/* each card a little after the one before, so the list never moves as one */}
+                  <GameArt game={card.emblem} size={76} moving={watching} after={900 + place * 1300} />
                 </View>
                 <View style={styles.cardText}>
                   <Text style={[styles.cardName, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>

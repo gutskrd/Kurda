@@ -1,0 +1,19 @@
+/*
+ * A game's emblem (games/GameArt.tsx): still, one picture; moving, its layers
+ * laid over one another, each played by the browser on its own. The motion
+ * itself is the art's (shared/src/art/games.ts); nothing here moves anything.
+ */
+.gp-art {
+  display: inline-grid;
+  line-height: 0;
+}
+.gp-art--moving {
+  position: relative;
+  display: inline-block;
+}
+.gp-art-layer {
+  position: absolute;
+  inset: 0;
+  line-height: 0;
+  will-change: transform, opacity;
+}

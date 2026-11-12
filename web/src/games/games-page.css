@@ -8,19 +8,14 @@
  * its side, picture first, so its words have room at any width: one to a row
  * on a phone, two and then three where the page has the room for them.
  *
- * Gold is for the one thing to press on a card. Only transform, opacity and
- * colour move; base.css stills every animation under prefers-reduced-motion.
+ * Gold is for the one thing to press on a card. Each emblem plays its own
+ * short loop (games/GameArt.tsx); on this page only transform, opacity and
+ * colour move, and nothing moves for a reader who asked for less motion.
  */
 .gp {
   --gp-gap: var(--space-3);
   /* the shelf counts its columns by the room the page gives it, which a side rail narrows on a wide screen */
   container-type: inline-size;
-}
-
-/* ---- the emblem -------------------------------------------------------------------- */
-.gp-art {
-  display: inline-grid;
-  line-height: 0;
 }
 
 /* ---- a card ------------------------------------------------------------------------ */
@@ -149,7 +144,6 @@
   min-width: 0;
   padding: 0;
   background: none;
-  animation: gp-float 5s ease-in-out infinite;
 }
 .gp-card--hero .gp-card-text {
   justify-items: center;
@@ -207,16 +201,6 @@
 .gp-card--hero .btn-secondary:hover {
   background: rgba(255, 255, 255, 0.18);
 }
-@keyframes gp-float {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
 /* ---- the code and the rankings ------------------------------------------------------ */
 .gp-quick {
   display: grid;
@@ -368,9 +352,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gp-card--hero .gp-card-art {
-    animation: none;
-  }
   .gp-card:hover {
     transform: none;
   }

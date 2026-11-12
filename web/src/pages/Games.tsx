@@ -139,12 +139,13 @@ function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: bo
 }
 
 /** One game: its picture on a tile of its own colour, what it is, and its ways in. */
-function GameCard({ game, signedIn, hero = false }: { game: GameEntry; signedIn: boolean; hero?: boolean }): React.JSX.Element {
+function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry; signedIn: boolean; hero?: boolean; place?: number }): React.JSX.Element {
   const t = useT();
   return (
     <article className={`gp-card${hero ? ' gp-card--hero' : ''}`} style={toneOf(game.id)}>
       <div className="gp-card-art">
-        <GameArt game={game.id} size={hero ? 148 : 84} />
+        {/* every emblem plays its own loop, each card a little after the one before, so the shelf never moves as one */}
+        <GameArt game={game.id} size={hero ? 148 : 84} moving after={hero ? 0 : 900 + place * 1300} />
       </div>
       <div className="gp-card-text">
         {hero && <p className="gp-kicker">{t('games.featured')}</p>}
@@ -243,8 +244,8 @@ export function Games(): React.JSX.Element {
       </div>
 
       <div className="gp-shelf">
-        {shelf.map((g) => (
-          <GameCard key={g.id} game={g} signedIn={signedIn} />
+        {shelf.map((g, i) => (
+          <GameCard key={g.id} game={g} signedIn={signedIn} place={i} />
         ))}
       </div>
 
