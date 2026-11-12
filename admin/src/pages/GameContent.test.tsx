@@ -85,6 +85,18 @@ describe('the list', () => {
     expect(api.calls.at(-1)!.path).toContain('game=build-sentence');
   });
 
+  it('says of a starter row nobody has read that nobody has read it, not that it was approved', async () => {
+    const starter = row({ status: 'published', reviewStatus: 'approved', reviewedBy: null, reviewedAt: '2026-11-12T09:00:00.000Z', source: 'starter' });
+    const read = row({ id: '00000000-0000-4000-8000-0000000000aa', status: 'published', reviewStatus: 'approved', reviewedBy: { id: 'u1', username: 'ada' }, source: 'starter', headline: 'Nan heye.' });
+    fakeApi(on('GET', /^\/admin\/game-content\?/, json({ rows: [starter, read], total: 2 })));
+    const page = await open('#/game-content');
+    const rows = [...page.querySelectorAll('tbody tr')].map((tr) => text(tr as HTMLElement));
+    expect(rows[0]).toContain('Not read by a person yet');
+    expect(rows[0]).not.toContain('Approved');
+    expect(rows[1]).toContain('Approved');
+    expect(rows[1]).not.toContain('Not read by a person yet');
+  });
+
   it('imports drafts from published lessons, and says how many were new', async () => {
     const api = fakeApi(
       on('GET', /^\/admin\/game-content\?/, json({ rows: [], total: 0 })),

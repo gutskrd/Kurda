@@ -95,6 +95,17 @@ export function GameContent(): React.JSX.Element {
 const STATUS_TONE: Record<AdminGameContent['status'], Tone> = { draft: 'warn', in_review: 'info', published: 'ok', archived: 'neutral' };
 const REVIEW_TONE: Record<AdminGameContent['reviewStatus'], Tone> = { unreviewed: 'warn', approved: 'ok' };
 
+/**
+ * A row's review state as its badge says it. The starter library publishes
+ * its rows with no reviewer named (api/src/games/starter-library.ts): such a
+ * row is live, and nobody has read it yet, which is what its badge says —
+ * not "Approved", a word that means a person looked.
+ */
+function reviewBadge(row: Pick<AdminGameContent, 'reviewStatus' | 'reviewedBy' | 'source'>): { tone: Tone; label: string } {
+  if (row.source === 'starter' && row.reviewStatus === 'approved' && row.reviewedBy === null) return { tone: 'warn', label: 'Not read by a person yet' };
+  return { tone: REVIEW_TONE[row.reviewStatus], label: REVIEW_LABEL[row.reviewStatus] };
+}
+
 function GameContentHome({ tab }: { tab: 'rows' | 'readiness' | 'words' }): React.JSX.Element {
   const toast = useToast();
   const [importing, setImporting] = useState(false);
@@ -215,7 +226,7 @@ function Rows(): React.JSX.Element {
       cell: (r) => (
         <span className="badges">
           <Badge tone={STATUS_TONE[r.status]}>{STATUS_LABEL[r.status]}</Badge>
-          <Badge tone={REVIEW_TONE[r.reviewStatus]}>{REVIEW_LABEL[r.reviewStatus]}</Badge>
+          <Badge tone={reviewBadge(r).tone}>{reviewBadge(r).label}</Badge>
           {r.source === 'starter' && <Badge tone="warn">Starter</Badge>}
           {r.issues.length > 0 && <Badge tone="bad">{r.issues.length} to fix</Badge>}
         </span>
@@ -543,8 +554,13 @@ function ReviewPanel({ row, busy, pending, onReview }: { row: AdminGameContent |
       ) : (
         <>
           <div className="st-review-state">
-            <Badge tone={approved ? 'ok' : 'warn'}>{REVIEW_LABEL[row.reviewStatus]}</Badge>
-            {row.reviewedAt && (
+            <Badge tone={reviewBadge(row).tone}>{reviewBadge(row).label}</Badge>
+            {row.reviewedAt && row.reviewedBy === null && approved && row.source === 'starter' ? (
+              <span className="subtle">
+                Published with the starter library <Time value={row.reviewedAt} />. Approve it once you have read it, or withdraw it.
+              </span>
+            ) : null}
+            {row.reviewedAt && !(row.reviewedBy === null && approved && row.source === 'starter') && (
               <span className="subtle">
                 {approved ? 'Approved' : 'Approval withdrawn'}{' '}
                 {row.reviewedBy && (
@@ -566,7 +582,8 @@ function ReviewPanel({ row, busy, pending, onReview }: { row: AdminGameContent |
                 <textarea rows={2} value={note} onChange={(e) => setNote(e.target.value)} maxLength={600} />
               </Field>
               <div className="row st-review-actions">
-                {approved ? (
+                {/* a starter row nobody has read can be approved as it stands: that puts a reader's name on it, and it stays live */}
+                {approved && row.reviewedBy !== null ? (
                   row.status === 'published' ? (
                     <span className="subtle">Unpublish it first to withdraw its approval.</span>
                   ) : (
@@ -670,7 +687,7 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
           row ? (
             <span className="badges">
               <Badge tone={STATUS_TONE[row.status]}>{STATUS_LABEL[row.status]}</Badge>
-              <Badge tone={REVIEW_TONE[row.reviewStatus]}>{REVIEW_LABEL[row.reviewStatus]}</Badge>
+              <Badge tone={reviewBadge(row).tone}>{reviewBadge(row).label}</Badge>
               <Badge>{GAME_DIALECT_NAME[row.dialect]}</Badge>
             </span>
           ) : null
