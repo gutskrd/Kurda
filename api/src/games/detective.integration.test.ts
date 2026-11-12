@@ -256,7 +256,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', 
       const done = (await call('POST', `/games/solo/sessions/${id}/finish`, learner)).json();
       // solved, and a day learned; but a game played alone earns no XP, whatever was right and whatever hints were spent
       expect(done).toMatchObject({ correct: 3, total: 3, learningCounted: true, xp: 0 });
-      expect(done.deducted).toBeUndefined();
+      expect(done).not.toHaveProperty('deducted');
       expect(done.items.every((i: { xp: number }) => i.xp === 0)).toBe(true);
       const ledger = await pool.query(`SELECT source, amount FROM xp_ledger WHERE user_id = $1 AND source LIKE 'game_%'`, [learnerId]);
       expect(ledger.rows).toEqual([]);
