@@ -50,7 +50,7 @@ import { RatedChoice, useRatedChoice } from '../ranks/rated';
 import { offeredDialects, useLastLetterAvailability } from '../lastletter/availability';
 import { usePartyOffer, type PartyGame } from '../party/offer';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
-import { RaceChoices, type RaceOffer } from '../games/partyChoices';
+import { TableChoices, type TableOffer } from '../games/partyChoices';
 
 /** What the sheet is opened for. */
 export type InviteTarget =
@@ -163,9 +163,9 @@ export function InviteForm({
   // Kurdish Impostor, in the varieties and at the levels its approved cards allow
   const partyAsked = (g: PartyGame) => target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === g));
   const impostorOffer = usePartyOffer('impostor', partyAsked('impostor'));
-  // the Who Am I? race, where its content lets it be played (and at which difficulties)
-  const askRace = target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === 'who-am-i'));
-  const raceOffers = useMpAvailability<RaceOffer>('who-am-i', askRace);
+  // Who Am I? with friends, where its content lets it be played (and at which difficulties)
+  const askTable = target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === 'who-am-i'));
+  const tableOffers = useMpAvailability<TableOffer>('who-am-i', askTable);
   // its choices, handed up by its own chips; null until there is something to choose
   const [partySettings, setPartySettings] = useState<Record<string, unknown> | null>(null);
   const fixedStory = target.kind === 'new' ? (target.story ?? null) : null;
@@ -230,7 +230,7 @@ export function InviteForm({
     ...(storiesOpen || game === 'stories' ? (['stories'] as const) : []),
     ...(lastLetterDialects.length > 0 || game === 'last-letter' ? (['last-letter'] as const) : []),
     ...((impostorOffer ?? []).length > 0 || game === 'impostor' ? (['impostor'] as const) : []),
-    ...(groupDialects(raceOffers).length > 0 || game === 'who-am-i' ? (['who-am-i'] as const) : []),
+    ...(groupDialects(tableOffers).length > 0 || game === 'who-am-i' ? (['who-am-i'] as const) : []),
   ];
   // Kurdish Impostor's lobby: a variety it is offered in (the chosen one when it is), and a level offered there
   const partyOffer = game === 'impostor' ? (impostorOffer ?? []) : [];
@@ -267,7 +267,7 @@ export function InviteForm({
   }, [max]);
 
   const storyReady = (game !== 'stories' || lengths.length > 0) && (game !== 'impostor' || target.kind === 'lobby' || partyHere !== null);
-  // a race is made only with something its content can be played with
+  // a table of Who Am I? is made only with something its content can be played with
   const partyReady = target.kind === 'lobby' || game !== 'who-am-i' || partySettings !== null;
 
   function settings(): Record<string, unknown> {
@@ -482,7 +482,7 @@ export function InviteForm({
       )}
 
       {target.kind !== 'lobby' && game === 'who-am-i' && (
-        <RaceChoices offers={raceOffers ?? []} preferred={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} />
+        <TableChoices offers={tableOffers ?? []} preferred={dialect === 'sorani' ? 'ckb' : 'kmr'} onChange={setPartySettings} />
       )}
 
       {target.kind !== 'lobby' && game === 'stories' && (

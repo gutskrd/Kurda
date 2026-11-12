@@ -1,42 +1,92 @@
 /*
- * Who Am I?'s staging (whoami/WhoAmIStage.tsx): Hevalo's silhouette in the
- * game's meadow tone with the hidden word's card on his forehead, a deck of
- * Kurdish questions whose answers are stamped on them, and the tiles to guess
- * from. Flat planes; the card turns over and a stamp lands, and under Reduce
- * Motion both simply appear.
+ * Who Am I?'s staging (whoami/WhoAmIStage.tsx, WhoAmI.tsx, Couch.tsx).
+ *
+ * The same house as the other games (games/game-stage.css): the start and
+ * the moments a room looks at one screen together are on the night; choices
+ * are cards that stand off the page; gold is for the one thing to press.
+ *
+ *   the card     paper, in both themes, on Hevalo's forehead: a question mark
+ *                until its word may be read, then the word and its meaning
+ *   the table    every player as a small forehead, the one on turn in gold
+ *   a question   a card of the deck; asked, it wears the answer as a stamp
+ *   an answer    two keys a thumb wide, the dialect's yes and its no
+ *   the verdict  a card of the answer's own colour, green for yes and clay
+ *                for no, so what the card said is never one more opinion
+ *
+ * Everything is laid out with logical properties, so a right-to-left page
+ * mirrors by itself; the silhouette is the same either way round. Only
+ * transform, opacity and colour move, and base.css stills every animation
+ * under prefers-reduced-motion: the card and the stamp simply appear.
  */
 .wa-page {
   --wa-ink: var(--u-text);
   --wa-shadow: var(--u-lip);
   --wa-paper: #fbf6e9;
   --wa-paper-ink: #2a2a33;
-  --wa-yes: #2e7a52;
-  --wa-no: #a9532f;
+  --wa-paper-soft: #5b5b66;
+  /* yes and no as words on the page's own surfaces: light on the dark theme, deep on the light one */
+  --wa-yes: #86e2a4;
+  --wa-no: #f2b59a;
+  /* and as the fill of the card that carries the verdict, the same in both themes */
+  --wa-yes-fill: #1f5c3d;
+  --wa-no-fill: #7d3c21;
+  --wa-verdict-ink: #fdf9f0;
+}
+:root[data-theme='light'] .wa-page {
+  --wa-yes: #256843;
+  --wa-no: #934627;
 }
 
+.wa-title,
+.wa-way-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.wa-centre {
+  text-align: center;
+}
+.wa-hint {
+  margin: 0;
+}
+.wa-word {
+  font-weight: 800;
+}
+/* which way of playing this page is, under the game's name */
+.wa-mode {
+  justify-self: start;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--gs-gold) 18%, transparent);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+
+/* ---- the start ------------------------------------------------------------------------ */
 .wa-start {
   display: grid;
-  gap: var(--space-4, 16px);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
 }
 .wa-start-stage {
-  max-width: 220px;
-  justify-self: center;
+  width: min(100%, 220px);
 }
 .wa-way {
   display: grid;
-  gap: var(--space-2, 8px);
-  padding: var(--space-4, 16px);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: var(--surface-solid);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: 0 3px 0 var(--border-strong);
 }
-.wa-way .btn {
-  justify-self: start;
-}
-.wa-way-title,
-.wa-title {
+.wa-way > p {
   margin: 0;
-  font-size: var(--text-section);
+}
+.wa-way-go {
+  justify-self: stretch;
+  margin-top: var(--space-2);
 }
 .wa-lobby-note {
   margin: 0;
@@ -44,72 +94,49 @@
 .wa-not-offered {
   display: grid;
   justify-items: center;
-  gap: var(--space-3, 12px);
+  gap: var(--space-3);
   text-align: center;
 }
 
-.wa-board {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: var(--space-4, 16px);
-  min-width: 0;
-}
-@media (min-width: 900px) {
-  .wa-board {
-    grid-template-columns: minmax(220px, 300px) minmax(0, 1fr);
-    align-items: start;
-  }
-  .wa-board > .wa-stage,
-  .wa-board > .wa-worth,
-  .wa-board > .wa-race-head {
-    grid-column: 1;
-  }
-  .wa-board > .wa-deck,
-  .wa-board > .wa-guess,
-  .wa-board > .wa-others,
-  .wa-board > .field-error {
-    grid-column: 2;
-  }
-  .wa-board > .wa-deck {
-    grid-row: span 3;
-  }
-}
-
-/* the silhouette and the card on its forehead */
+/* ---- the silhouette and the card on its forehead --------------------------------------- */
 .wa-stage {
   position: relative;
   margin: 0 auto;
-  width: min(100%, 260px);
+  width: min(100%, 220px);
   aspect-ratio: 1;
   color: var(--wa-shadow);
 }
-/* on a phone the card is smaller while a round is played, so the words it could be are on the first screen with it */
-@media (max-width: 640px) {
-  .wa-board > .wa-stage {
-    width: min(100%, 176px);
-  }
-}
-.wa-silhouette svg {
+.wa-silhouette svg,
+.wa-seat-deer svg {
   display: block;
   width: 100%;
   height: auto;
 }
-.wa-card {
+/* the picture is the same either way round: the card is placed from its left in either direction */
+.wa-card,
+.wa-seat-card {
   position: absolute;
   transform: translate(-50%, -50%) rotate(-2deg);
   display: grid;
   justify-items: center;
+  align-content: center;
   gap: 2px;
-  min-height: 56px;
-  padding: 8px 10px;
   border-radius: 10px;
   background: var(--wa-paper);
   color: var(--wa-paper-ink);
   text-align: center;
   box-shadow: 0 0 0 3px var(--u-fill);
 }
-/* the picture is the same either way round: the card is placed from its left in either direction */
-.wa-card.is-turned {
+.wa-card {
+  /* as wide as its word, up to nearly the whole picture: a word is read whole, never broken across two lines of a card */
+  width: max-content;
+  max-width: 92%;
+  min-height: 56px;
+  padding: 8px 10px;
+}
+/* a card turns over when it comes off: the one held up, and at the table the reader's own, not every card they could read all along */
+.wa-card.is-turned,
+.wa-seat.is-me .wa-seat-card.is-turned {
   animation: wa-turn 520ms var(--ease-emphasis) both;
 }
 .wa-card-mark {
@@ -120,43 +147,490 @@
 .wa-card-kind {
   font-size: var(--text-caption);
   font-weight: 700;
-  color: #5b5b66;
+  color: var(--wa-paper-soft);
 }
 .wa-card-word {
   font-size: 20px;
   font-weight: 800;
-  overflow-wrap: anywhere;
+  /* only a word too long for the widest card is broken at all */
+  overflow-wrap: break-word;
 }
 .wa-card-meaning {
   font-size: var(--text-caption);
-  color: #5b5b66;
+  color: var(--wa-paper-soft);
+}
+
+/* ---- a table under way ------------------------------------------------------------------ */
+.wa-board,
+.wa-couch,
+.wa-couch-screen,
+.wa-hand,
+.wa-read,
+.wa-look,
+.wa-end {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  min-width: 0;
+}
+.wa-board p,
+.wa-couch p {
+  margin: 0;
+}
+/* on a board the wearer's own hidden card is a reminder, not the picture: small, so the tiles are on the first screen with it */
+.wa-board > .wa-stage {
+  width: min(100%, 160px);
+}
+
+/* whose turn it is, what it waits for, and how long the wait has left */
+.wa-turn {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2) var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+.wa-turn.is-mine {
+  border-color: var(--gs-gold);
+  background: color-mix(in srgb, var(--gs-gold) 12%, var(--surface));
+}
+.wa-turn-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.wa-turn-whose {
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 700;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.wa-turn-wait {
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+.wa-turn-game {
+  grid-column: 1 / -1;
+  font-size: var(--text-caption);
+}
+.wa-timer {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  min-width: 56px;
+}
+.wa-timer-left {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.wa-timer-bar {
+  position: relative;
+  width: 56px;
+  height: 6px;
+  border-radius: var(--r-pill);
+  background: var(--separator);
+  overflow: hidden;
+}
+.wa-timer-fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--gs-gold);
+  transform-origin: left center;
+  transition: transform 1s linear;
+}
+[dir='rtl'] .wa-timer-fill {
+  transform-origin: right center;
+}
+.wa-timer.is-low .wa-timer-left {
+  color: var(--danger);
+}
+.wa-timer.is-low .wa-timer-fill {
+  background: var(--danger);
+}
+
+/* the table: three foreheads across a phone, all of them in a row where there is room */
+.wa-table {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(104px, 150px));
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wa-seat {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-content: start;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-2) 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  text-align: center;
+}
+.wa-seat.is-turn {
+  border-color: var(--gs-gold);
+  background: color-mix(in srgb, var(--gs-gold) 12%, var(--surface));
+  box-shadow: 0 3px 0 var(--gs-gold-lip);
+}
+.wa-seat.is-solved {
+  border-color: var(--wa-yes);
+}
+.wa-seat.is-out {
+  opacity: 0.72;
+}
+.wa-seat-figure {
+  position: relative;
+  display: block;
+  width: min(100%, 92px);
+  aspect-ratio: 1;
+  color: var(--wa-shadow);
+}
+.wa-seat-deer {
+  display: block;
+}
+.wa-seat-card {
+  left: 50%;
+  top: 44%;
+  width: 104%;
+  min-height: 38px;
+  padding: 4px 6px;
+  border-radius: 8px;
+  box-shadow: 0 0 0 2px var(--u-fill);
+}
+.wa-seat-card .wa-card-mark {
+  font-size: 22px;
+  align-self: center;
+}
+.wa-seat-word {
+  font-size: 15px;
+  font-weight: 800;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+.wa-seat-meaning {
+  font-size: var(--text-tab);
+  line-height: 1.2;
+  color: var(--wa-paper-soft);
+  overflow-wrap: anywhere;
+}
+.wa-seat-name {
+  max-width: 100%;
+  overflow: hidden;
+  font-weight: 700;
+  /* a long name is cut with a mark rather than broken in the middle: the seat is known by its card too */
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.wa-seat-meta {
+  display: grid;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
+}
+.wa-chip {
+  max-width: 100%;
+  padding: 2px 10px;
+  border-radius: var(--r-md);
+  background: var(--wa-yes-fill);
+  color: var(--wa-verdict-ink);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+.wa-chip.is-out {
+  background: var(--wa-no-fill);
+}
+.wa-chip.is-turn {
+  background: var(--gs-gold);
+  color: var(--gs-gold-ink);
+}
+
+/* what became of the reader's own card: there only when it has something to say */
+.wa-mine {
+  display: grid;
+  gap: 4px;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--r-lg);
+  background: color-mix(in srgb, var(--gs-gold) 14%, transparent);
+  text-align: center;
+}
+.wa-mine:empty,
+.wa-news:empty {
+  display: none;
+}
+.wa-mine-line.is-strong {
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+/* ---- a question on the table ------------------------------------------------------------- */
+.wa-pending {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+}
+.wa-pending > .wa-stage {
+  width: min(100%, 176px);
+}
+.wa-pending-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  font-weight: 700;
+  text-align: center;
+}
+.wa-asked {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.wa-asked-text {
+  display: grid;
+  gap: 4px;
+  min-height: 44px;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--r-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  cursor: pointer;
+}
+.wa-asked.is-large .wa-asked-text {
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 6.4vw, 2rem);
+  line-height: 1.2;
+}
+.wa-asked .wa-hint {
+  font-size: var(--text-caption);
+  text-align: center;
+}
+.wa-asked-text:focus-visible,
+.wa-q-text:focus-visible,
+.wa-tile:focus-visible,
+.wa-answer-btn:focus-visible,
+.wa-hold:focus-visible,
+.wa-name-remove:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.wa-q-meaning {
+  font-family: var(--font-sans);
+  font-size: var(--text-secondary);
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+/* yes and no: two keys, each a thumb wide */
+.wa-answer {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+.wa-answer-btn {
+  --lip: #173f2b;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 2px;
+  min-height: 84px;
+  padding: var(--space-3);
+  border: 0;
+  border-radius: var(--r-lg);
+  background: var(--wa-yes-fill);
+  color: var(--wa-verdict-ink);
+  font: inherit;
+  cursor: pointer;
+  box-shadow: 0 4px 0 var(--lip);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
+}
+.wa-answer-btn.is-no {
+  --lip: #552714;
+  background: var(--wa-no-fill);
+}
+.wa-answer-btn:active:not(:disabled) {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--lip);
+}
+.wa-answer-btn:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.wa-answer-ku {
+  font-family: var(--font-display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+.wa-answer-gloss {
+  font-size: var(--text-secondary);
+  opacity: 0.86;
+}
+
+/* who has answered so far: never what */
+.wa-who,
+.wa-answers {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.wa-who li,
+.wa-answers li {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font-size: var(--text-secondary);
+}
+.wa-who li.is-done {
+  background: color-mix(in srgb, var(--gs-gold) 22%, var(--surface));
+}
+.wa-who-name,
+.wa-answers-name {
+  font-weight: 700;
+}
+.wa-who-mark {
+  color: var(--ink-3);
+}
+
+/* ---- the card's own verdict --------------------------------------------------------------- */
+.wa-verdict {
+  --lip: #173f2b;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-4);
+  border-radius: var(--r-xl);
+  background: var(--wa-yes-fill);
+  color: var(--wa-verdict-ink);
+  text-align: center;
+  box-shadow: 0 4px 0 var(--lip);
+}
+.wa-verdict.is-no {
+  --lip: #552714;
+  background: var(--wa-no-fill);
+}
+.wa-verdict-by {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.86;
+}
+.wa-verdict .wa-asked-text {
+  font-size: 1.125rem;
+}
+.wa-verdict .wa-q-meaning {
+  color: inherit;
+  opacity: 0.8;
+}
+.wa-verdict-says {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin: 0;
+  color: inherit;
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  line-height: 1.2;
+}
+.wa-verdict-gloss {
+  font-family: var(--font-sans);
+  font-size: var(--text-secondary);
+  font-weight: 500;
+  opacity: 0.86;
+}
+/* on its own card the stamp is the card's ink, whichever answer it is, and larger */
+.wa-verdict .wa-stamp.is-yes,
+.wa-verdict .wa-stamp.is-no {
+  color: inherit;
+  font-size: 1.5rem;
+}
+.wa-verdict-you {
+  font-weight: 700;
+}
+.wa-verdict .wa-answers li {
+  background: rgba(255, 255, 255, 0.14);
+}
+.wa-answers li.is-right .wa-answers-mark::before {
+  content: '✓ ';
+}
+.wa-answers li.is-wrong .wa-answers-mark::before {
+  content: '✗ ';
+}
+.wa-answers li.is-none,
+.wa-answers li.is-wrong {
+  opacity: 0.82;
+}
+
+/* ---- the reader's hand: who they could be, and what they may ask -------------------------- */
+@media (min-width: 900px) {
+  .wa-hand {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .wa-hand > .wa-worth,
+  .wa-hand > .wa-must {
+    grid-column: 1 / -1;
+  }
 }
 .wa-worth {
-  margin: 0;
+  justify-self: center;
   text-align: center;
   font-weight: 700;
   color: var(--wa-ink);
 }
-.wa-total {
-  font-size: var(--text-section);
-  font-weight: 800;
-  color: var(--wa-ink);
+.wa-must {
+  justify-self: center;
+  font-weight: 700;
+  text-align: center;
 }
-
-/* the deck of questions */
 .wa-deck,
-.wa-guess,
-.wa-others {
+.wa-guess {
   display: grid;
-  gap: var(--space-2, 8px);
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
   min-width: 0;
-}
-.wa-hint {
-  margin: 0;
 }
 .wa-questions {
   display: grid;
-  gap: 8px;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -165,7 +639,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 6px 8px 6px 6px;
+  padding-block: 6px;
+  padding-inline: 6px 8px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface-solid);
@@ -177,10 +652,11 @@
   flex: 1;
   display: grid;
   gap: 2px;
+  min-width: 0;
   min-height: 44px;
   padding: 6px 8px;
   border: 0;
-  border-radius: var(--r-sm, 8px);
+  border-radius: var(--r-sm);
   background: transparent;
   color: inherit;
   font: inherit;
@@ -189,23 +665,17 @@
   text-align: start;
   cursor: pointer;
 }
-.wa-q-text:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
-.wa-q-meaning {
-  font-size: var(--text-caption);
-  font-weight: 500;
-  color: var(--ink-3, var(--ink));
-}
 .wa-stamp {
   flex: none;
+  display: inline-block;
   min-width: 64px;
   padding: 4px 10px;
   border: 3px solid currentColor;
   border-radius: 8px;
+  font-family: var(--font-sans);
   font-weight: 900;
   font-size: 17px;
+  line-height: 1.2;
   text-align: center;
   text-transform: uppercase;
   transform: rotate(-8deg);
@@ -218,15 +688,15 @@
   color: var(--wa-no);
 }
 
-/* the tiles */
 .wa-tiles {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr));
-  gap: 8px;
+  gap: var(--space-2);
 }
 .wa-tile {
   display: grid;
   gap: 2px;
+  min-width: 0;
   min-height: 56px;
   padding: 8px 10px;
   border: 2px solid var(--border);
@@ -237,10 +707,6 @@
   text-align: center;
   cursor: pointer;
 }
-.wa-tile:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-}
 .wa-tile.is-picked {
   border-color: var(--u-fill);
   box-shadow: inset 0 0 0 2px var(--u-fill);
@@ -250,82 +716,305 @@
   text-decoration: line-through;
   cursor: default;
 }
-.wa-tile.is-right {
-  border-color: var(--wa-yes);
-  box-shadow: inset 0 0 0 2px var(--wa-yes);
+.wa-tile:disabled:not(.is-crossed) {
+  cursor: default;
 }
 .wa-tile-word {
   font-size: 18px;
   font-weight: 700;
+  overflow-wrap: anywhere;
 }
 .wa-tile-meaning {
   font-size: var(--text-caption);
-  color: var(--ink-3, var(--ink));
+  color: var(--ink-3);
 }
-.wa-guess > .btn {
-  justify-self: start;
+.wa-guess-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+  gap: var(--space-2);
 }
 
-/* the race */
-.wa-race-head {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  justify-content: center;
-  align-items: center;
-}
-.wa-clock {
-  padding: 4px 12px;
-  border-radius: var(--r-pill);
-  background: var(--surface-solid);
+/* how it scores: folded away, for whoever asks */
+.wa-scoring {
+  padding: var(--space-2) var(--space-4);
   border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+.wa-scoring summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
   font-weight: 700;
+  cursor: pointer;
 }
-.wa-first {
-  font-weight: 800;
-  color: var(--wa-ink);
+.wa-scoring summary:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
-.wa-others ul,
-.wa-reveal ul {
+.wa-scoring ul {
   display: grid;
   gap: 6px;
+  margin: 0 0 var(--space-2);
+  padding-inline-start: 1.2em;
+}
+
+/* ---- once it is over ------------------------------------------------------------------------ */
+.wa-reveal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+}
+.wa-reveal .wa-title {
+  text-align: center;
+}
+.wa-ended {
+  margin: 0;
+  color: var(--ink-2);
+  text-align: center;
+}
+.wa-end-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  text-align: center;
+}
+
+/* ---- on one phone: the setup ------------------------------------------------------------------ */
+.wa-setup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+  min-width: 0;
+}
+.wa-setup p {
+  margin: 0;
+}
+.wa-setup-lead {
+  color: var(--ink-2);
+}
+.wa-setup-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-3);
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--surface-solid);
+}
+.wa-setup-title {
+  /* a legend is not laid out by its fieldset's grid: it carries its own space */
+  margin-bottom: var(--space-3);
+  padding: 0;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+.wa-names {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.wa-others li,
-.wa-reveal li {
-  display: flex;
-  flex-wrap: wrap;
+.wa-name {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 8px;
-  min-height: 44px;
-  padding: 6px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface-solid);
+  gap: var(--space-2);
 }
-.wa-others li.is-out {
-  opacity: 0.6;
-}
-.wa-other-name,
-.wa-reveal-name {
-  font-weight: 700;
-}
-.wa-reveal-word {
+.wa-name-n {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
   font-weight: 800;
-  font-size: 18px;
 }
-.wa-chip {
-  padding: 2px 10px;
+.wa-name-remove {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.wa-name-remove:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.wa-add {
+  justify-self: start;
+}
+.wa-setup-go {
+  display: grid;
+  gap: var(--space-2);
+  text-align: center;
+}
+.wa-setup-note {
+  font-size: var(--text-caption);
+}
+
+/* ---- on one phone: what the room looks at ------------------------------------------------------ */
+/* a screen takes the focus when it replaces another, by the page's doing and not by a key: no ring to draw */
+.wa-couch-screen:focus {
+  outline: none;
+}
+.wa-couch-count {
+  justify-self: center;
+  padding: 4px 12px;
   border-radius: var(--r-pill);
-  background: var(--wa-yes);
-  color: #fff;
+  background: var(--surface-2);
+  color: var(--ink-3);
   font-size: var(--text-caption);
   font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
-.wa-chip.is-out {
-  background: var(--wa-no);
+.wa-couch-note {
+  font-size: var(--text-secondary);
+  text-align: center;
+}
+/* the night a screen is on when it is held up for the room, the same in both themes */
+.wa-night {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-6) var(--space-5);
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(90% 70% at 50% 0%, color-mix(in srgb, var(--gs-tone) 44%, transparent) 0%, transparent 70%),
+    radial-gradient(120% 90% at 50% 0%, #3c2f78 0%, var(--gs-night) 55%, var(--gs-night-deep) 100%);
+  color: var(--gs-night-ink);
+  text-align: center;
+}
+.wa-night-title {
+  margin: 0;
+  color: var(--gs-night-ink);
+  font-family: var(--font-display);
+  font-size: var(--text-title);
+  font-weight: 700;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+.wa-night-shout {
+  color: #f2c95a;
+  font-size: var(--text-section);
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+.wa-night-kicker {
+  color: #f2c95a;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.wa-night-points {
+  padding: 6px var(--space-4);
+  border-radius: var(--r-pill);
+  background: rgba(242, 182, 50, 0.2);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.wa-night .wa-q-meaning,
+.wa-night .wa-hint {
+  color: rgba(244, 239, 255, 0.78);
+}
+/* between two players: a name and nothing else */
+.wa-pass {
+  padding-block: var(--space-8);
+}
+.wa-pass-disc {
+  display: grid;
+  place-items: center;
+  width: 112px;
+  height: 112px;
+  border-radius: 50%;
+  background: var(--gs-gold);
+  color: var(--gs-gold-ink);
+  font-family: var(--font-display);
+  font-size: 52px;
+  font-weight: 700;
+  box-shadow:
+    0 0 0 8px rgba(242, 182, 50, 0.18),
+    0 0 0 18px rgba(242, 182, 50, 0.08);
+}
+/* the card is on the screen only while this is held */
+.wa-hold {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 68px;
+  padding: var(--space-4);
+  border: 2px solid var(--gs-gold);
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font: inherit;
+  font-size: var(--text-body);
+  font-weight: 800;
+  cursor: pointer;
+  /* a long press here shows the card: it must not also select text, open a menu or scroll the page */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
+}
+.wa-hold.is-held {
+  background: var(--gs-gold);
+  color: var(--gs-gold-ink);
+  transform: scale(0.98);
+}
+.wa-couch-leave {
+  display: flex;
+  justify-content: center;
+}
+
+/* leaving a game on one phone is asked about first (drawn over the page, outside the stage) */
+.wa-leave {
+  display: grid;
+  gap: var(--space-3);
+}
+.wa-leave-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+.wa-leave-body {
+  margin: 0;
+  color: var(--ink-2);
+}
+.wa-leave-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+/* Arabic script is joined, and tracking pulls the joins apart */
+[dir='rtl'] .wa-verdict-by,
+[dir='rtl'] .wa-couch-count,
+[dir='rtl'] .wa-night-kicker {
+  letter-spacing: normal;
 }
 
 @keyframes wa-turn {
@@ -350,7 +1039,16 @@
 }
 @media (prefers-reduced-motion: reduce) {
   .wa-card.is-turned,
+  .wa-seat.is-me .wa-seat-card.is-turned,
   .wa-stamp {
     animation: none;
+  }
+  .wa-timer-fill,
+  .wa-hold,
+  .wa-answer-btn {
+    transition: none;
+  }
+  .wa-hold.is-held {
+    transform: none;
   }
 }

@@ -39,7 +39,8 @@ export const WEB_LEARN_GAMES: Partial<Record<LearnGameId, WebGame>> = {
   'last-letter': { href: LAST_LETTER_CARD.href, nameKey: LAST_LETTER_CARD.nameKey, lineKey: LAST_LETTER_CARD.blurbKey, bodyKey: LAST_LETTER_CARD.blurbKey, modes: ['solo', 'online'] },
   // the games with friends are listed where /games/availability finds enough approved cards for the learner's variety
   impostor: { href: '/app/games/impostor', nameKey: 'games.impostor.name', lineKey: 'games.invite.blurb.impostor', bodyKey: 'games.invite.blurb.impostor', modes: ['online'] },
-  'who-am-i': { href: '/app/games/who-am-i', nameKey: 'games.whoAmI.name', lineKey: 'games.card.whoAmI', bodyKey: 'games.whoAmI.blurb', modes: ['solo', 'online'] },
+  // never played alone: on one phone passed round a room, or with friends online, and its own page asks which
+  'who-am-i': { href: '/app/games/who-am-i', nameKey: 'games.whoAmI.name', lineKey: 'games.card.whoAmI', bodyKey: 'games.whoAmI.blurb', modes: ['online'] },
 };
 
 const PLAYABLE = Object.keys(WEB_LEARN_GAMES) as LearnGameId[];

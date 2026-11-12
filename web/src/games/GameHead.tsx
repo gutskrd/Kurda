@@ -11,14 +11,24 @@ import './game-stage.css';
  * out in the same corner and knows by the picture which game they are in.
  *
  * `children` sit at the far end of the row (the typing race's settings).
+ *
+ * A page with something to lose by leaving (a game on one phone, whose cards
+ * live only on the page) gives `onBack`: the way back is then a button in the
+ * same corner, and the page asks before it lets go.
  */
-export function GameHead({ game, title, children }: { game: GameEmblem; title: string; children?: React.ReactNode }): React.JSX.Element {
+export function GameHead({ game, title, onBack, children }: { game: GameEmblem; title: string; onBack?: () => void; children?: React.ReactNode }): React.JSX.Element {
   const t = useT();
   return (
     <header className="gs-head">
-      <Link to="/app/games" className="gs-back" aria-label={t('games.back')}>
-        <ArrowIcon size={18} />
-      </Link>
+      {onBack ? (
+        <button type="button" className="gs-back" aria-label={t('games.back')} onClick={onBack}>
+          <ArrowIcon size={18} />
+        </button>
+      ) : (
+        <Link to="/app/games" className="gs-back" aria-label={t('games.back')}>
+          <ArrowIcon size={18} />
+        </Link>
+      )}
       <GameArt game={game} size={44} />
       <div className="gs-head-text">
         <span className="gs-head-eyebrow">{t('nav.games')}</span>

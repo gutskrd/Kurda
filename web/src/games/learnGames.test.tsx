@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { LAST_LETTER_LEARN_ENTRY } from '@kurda/shared';
 import { Games } from '../pages/Games';
 import { forgetLastLetterAvailability } from '../lastletter/availability';
@@ -81,6 +82,32 @@ describe('Learn’s games list', () => {
     expect(await screen.findByRole('heading', { name: 'The Memory Thief' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeNull();
     expect(screen.queryByRole('heading', { name: 'Hear It, Find It' })).toBeNull();
+  });
+
+  /*
+   * Who Am I? is never played alone: on one phone passed round a room, or
+   * with friends online. Its own page asks which, so its card has the one way
+   * in, as Kurdish Impostor's has, and it is a game for friends.
+   */
+  it('lists Who Am I? as a game for friends with one way in, as Kurdish Impostor is', async () => {
+    server({ 'memory-thief': true, impostor: true, 'who-am-i': true });
+    renderApp(<Games />, ['/app/games']);
+    for (const [name, href] of [
+      ['Who Am I?', '/app/games/who-am-i'],
+      ['Kurdish Impostor', '/app/games/impostor'],
+    ] as const) {
+      const card = (await screen.findByRole('heading', { name })).closest('article')!;
+      expect((await within(card).findAllByRole('link')).map((a) => a.getAttribute('href'))).toEqual([href]);
+      expect(within(card).getByRole('link', { name: 'Play' })).toBeInTheDocument();
+      expect(within(card).getByText('With friends')).toBeInTheDocument();
+      expect(within(card).queryByText('On your own')).toBeNull();
+    }
+    // and so it is not among the games to play on your own
+    await userEvent.click(screen.getByRole('button', { name: 'On your own' }));
+    expect(screen.queryByRole('heading', { name: 'Who Am I?' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'The Memory Thief' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'With friends' }));
+    expect(screen.getByRole('heading', { name: 'Who Am I?' })).toBeInTheDocument();
   });
 
   // an old answer, or a server a version behind, may still name the games that are gone

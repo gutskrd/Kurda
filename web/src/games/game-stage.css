@@ -357,6 +357,12 @@
 .gs-back:active {
   transform: scale(0.94);
 }
+/* a page that asks before it lets go draws the way back as a button, in the same corner */
+button.gs-back {
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
 /* the arrow is drawn pointing on; back is the other way, and on a right-to-left page back is to the right */
 .gs-back svg {
   transform: rotate(180deg);
@@ -655,8 +661,11 @@
   background: color-mix(in srgb, var(--gs-gold) 16%, var(--surface));
   box-shadow: 0 3px 0 var(--gs-gold-lip);
 }
-.gs .wa-guess > .btn {
-  justify-self: stretch;
+/* a tile that cannot be pressed now lies flat: the player's notes, not a choice */
+.gs .wa-tile:disabled {
+  box-shadow: none;
+}
+.gs .wa-guess-actions .btn {
   min-height: 52px;
 }
 /* the one who wears the card stands in the game's own light */
@@ -664,11 +673,14 @@
   background: radial-gradient(closest-side, color-mix(in srgb, var(--gs-tone) 26%, transparent) 0%, transparent 100%);
 }
 .gs .wa-worth {
-  justify-self: center;
   padding: 6px var(--space-4);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--gs-gold) 16%, transparent);
-  font-weight: 700;
+}
+/* on the night the silhouette is the green of the game's own picture, in either theme: the same deer wherever it stands */
+.gs .gs-hero .wa-stage,
+.gs .wa-night .wa-stage {
+  color: #45a26a;
 }
 
 /* ---- Kurdish Detective: the case file lies on the night; an answer is a card to pick up ---- */
