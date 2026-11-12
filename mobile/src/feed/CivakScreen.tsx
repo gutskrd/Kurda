@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
@@ -56,6 +56,10 @@ const PAGE = 20;
  * dot while any are unread. Under it, the row of friends' faces, then the
  * filters, then the posts, which run the full width of the screen: a picture
  * is the size of the phone, not of a card on it.
+ *
+ * The wall is read from its skeleton twice only: as it first opens, and when
+ * the way of reading it changes. Coming back to it keeps the posts and the
+ * place, and brings it up to date without a sign of doing so.
  */
 export function CivakScreen(): React.JSX.Element {
   const { client } = useAuth();
@@ -84,6 +88,9 @@ export function CivakScreen(): React.JSX.Element {
   const [end, setEnd] = useState(false);
 
   const [filtering, setFiltering] = useState(false);
+  // whether the wall is at its top, and the new posts a quiet read brought while it was not (see the focus effect)
+  const atTop = useRef(true);
+  const waiting = useRef<FeedItem[]>([]);
 
   /** A new way of reading the wall: from its top, the posts asked for again. */
   const choose = useCallback((next: FeedFilterValue) => {
@@ -103,37 +110,95 @@ export function CivakScreen(): React.JSX.Element {
     }, [refreshBadges]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      setItems(null);
-      void (async () => {
-        const res = await fetchPage(0);
-        if (!active) return;
-        if (res.ok) {
-          setItems(res.data.items ?? []);
-          setEnd((res.data.items ?? []).length < PAGE);
-          setError(null);
-        } else {
-          setError(res.error);
-        }
-      })();
-      return () => {
-        active = false;
-      };
-    }, [fetchPage]),
-  );
+  /*
+   * The wall as it first arrives, and from its skeleton again when the way
+   * of reading it changes (another order, another kind of post): those are
+   * the two times nothing that is on the screen is worth keeping.
+   */
+  useEffect(() => {
+    let active = true;
+    setItems(null);
+    waiting.current = [];
+    void (async () => {
+      const res = await fetchPage(0);
+      if (!active) return;
+      if (res.ok) {
+        setItems(res.data.items ?? []);
+        setEnd((res.data.items ?? []).length < PAGE);
+        setError(null);
+      } else {
+        setError(res.error);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [fetchPage]);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
     const res = await fetchPage(0);
     if (res.ok) {
+      waiting.current = [];
       setItems(res.data.items ?? []);
       setEnd((res.data.items ?? []).length < PAGE);
       setError(null);
     }
     setRefreshing(false);
   }, [fetchPage]);
+
+  /*
+   * Coming back to the wall — from a post, a profile, the composer, another
+   * tab — finds it as it was left: the same posts, at the same place. It used
+   * to be emptied and asked for again on every return, so a reader twenty
+   * posts down opened one, came back, and was at the top of a grey page.
+   *
+   * It is asked for again all the same, quietly: what is already shown takes
+   * its new counts in place (a like given on the post's own page), and
+   * nothing is taken away. Posts that are new go on top only while the wall
+   * is at its top, where they push nothing the reader is looking at; further
+   * down they wait until the wall is back there — a pull, or a tap on the
+   * Home tab, which is the way to ask for the newest. A quiet read that fails
+   * says nothing: what is shown is still true enough.
+   */
+  const latest = useRef({ fetchPage, refresh, loaded: false, failed: false });
+  latest.current = { fetchPage, refresh, loaded: items !== null, failed: error !== null };
+  useFocusEffect(
+    useCallback(() => {
+      const now = latest.current;
+      // the first load is the effect's above; one that failed is asked for again in full
+      if (!now.loaded) {
+        if (now.failed) void now.refresh();
+        return;
+      }
+      let active = true;
+      const asked = now.fetchPage;
+      void (async () => {
+        const res = await asked(0);
+        // answered after the reader chose another way of reading the wall: not this wall's posts
+        if (!active || !res.ok || latest.current.fetchPage !== asked) return;
+        const fresh = res.data.items ?? [];
+        setItems((prev) => {
+          if (!prev) return prev;
+          const merged = mergeFresh(prev, fresh, atTop.current);
+          waiting.current = merged.waiting;
+          return merged.items;
+        });
+      })();
+      return () => {
+        active = false;
+      };
+    }, []),
+  );
+
+  /** The wall is at its top again: the posts that arrived while it was not go on it. */
+  const onScroll = useCallback((e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    atTop.current = e.nativeEvent.contentOffset.y <= 0;
+    if (!atTop.current || waiting.current.length === 0) return;
+    const arrived = waiting.current;
+    waiting.current = [];
+    setItems((prev) => (prev ? mergeFresh(prev, arrived, true).items : prev));
+  }, []);
 
   // a pull asks the friends row again too: who is online moves faster than the wall
   const [pulls, setPulls] = useState(0);
@@ -210,6 +275,8 @@ export function CivakScreen(): React.JSX.Element {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(onPull)} tintColor={colors.textSecondary} />}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
+          onScroll={onScroll}
+          scrollEventThrottle={64}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <>
@@ -277,6 +344,21 @@ export function CivakScreen(): React.JSX.Element {
       </View>
     </GradientBackground>
   );
+}
+
+/**
+ * A wall that is showing, brought up to date with a first page just read:
+ * each post already on it takes what the read says about it, in its place,
+ * and none is dropped. The posts the wall did not have go on top when
+ * `onTop` says they may, in the order the read gave them; otherwise they are
+ * handed back as `waiting`, for when the wall is at its top.
+ */
+export function mergeFresh(shown: readonly FeedItem[], fresh: readonly FeedItem[], onTop: boolean): { items: FeedItem[]; waiting: FeedItem[] } {
+  const read = new Map(fresh.map((i) => [i.key, i]));
+  const have = new Set(shown.map((i) => i.key));
+  const kept = shown.map((i) => read.get(i.key) ?? i);
+  const unseen = fresh.filter((i) => !have.has(i.key));
+  return onTop ? { items: [...unseen, ...kept], waiting: [] } : { items: kept, waiting: unseen };
 }
 
 const styles = StyleSheet.create({
