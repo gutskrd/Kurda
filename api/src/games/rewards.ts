@@ -1,6 +1,12 @@
 /**
  * What a finished solo round of a learning game pays, and what it counts for.
  *
+ * Only a round of the lessons' own exercises pays XP (`paysAlone`, the
+ * games registry). A game played alone pays none: there is nobody to play
+ * against, and XP is for lessons and for games online with other people. Its
+ * round is still scored and still counts as a day learned when it was played
+ * well enough, exactly as below; it is only the XP that is not paid.
+ *
  * Rewards follow performance, never opening or finishing a game:
  * - every item answered right pays by its level (`answerXp`): 1 XP at levels
  *   1–2, 2 at level 3, 3 at levels 4–5, and one more for a first try;
@@ -16,8 +22,6 @@
  *   sources (GAME_XP_SOURCES), so the league's daily cap on game XP applies;
  *   its ref is `${sessionId}:${userId}`, unique to the learner, so XpService
  *   pays it once whatever happens;
- * - a game whose round has costs of its own (Kurdish Detective's hints) has
- *   them taken off what the answers earned, never below nothing;
  * - no Zêr and no Gewher, ever.
  *
  * Runs inside the caller's transaction (the one that closes the round), so a
@@ -51,12 +55,10 @@ export interface RoundToPay {
   sessionId: string;
   userId: string;
   game: string;
-  /** the game's XP ledger source (its registry entry's) */
-  source: string;
+  /** the XP ledger source the round pays from (its registry entry's); null for a game that pays nothing when it is played alone */
+  source: string | null;
   items: readonly ItemOutcome[];
   now: Date;
-  /** XP the round's own costs take off what its answers earned (Kurdish Detective's hints); absent for a game without */
-  deduct?: number;
 }
 
 /**
@@ -87,7 +89,7 @@ export async function recordSeen(client: Pick<pg.PoolClient, 'query'>, userId: s
  * results as the learner is shown them.
  */
 export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: RoundToPay): Promise<SoloResults> {
-  const { sessionId, userId, game, items, now } = round;
+  const { sessionId, userId, game, items, now, source } = round;
   // one finish of this learner's rounds of this game at a time: the repeat check below is then one answer
   await client.query(`SELECT pg_advisory_xact_lock(hashtextextended('game-finish:' || $1 || ':' || $2, 0))`, [userId, game]);
 
@@ -105,16 +107,16 @@ export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: R
   const learning = roundCountsAsLearning(firstTry, total);
   const shown = items.map((i) => {
     const repeat = recent.has(i.key);
-    return { index: i.index, correct: i.correct, firstTry: i.correct && i.firstTry, repeat, xp: learning ? answerXp(i.level, { correct: i.correct, firstTry: i.firstTry, repeat }) : 0 };
+    // a round that pays nothing shows no XP beside an answer either: what is shown is what was earned
+    const xp = learning && source !== null ? answerXp(i.level, { correct: i.correct, firstTry: i.firstTry, repeat }) : 0;
+    return { index: i.index, correct: i.correct, firstTry: i.correct && i.firstTry, repeat, xp };
   });
-  const answered = shown.reduce((sum, i) => sum + i.xp, 0);
-  const deducted = Math.min(answered, Math.max(0, round.deduct ?? 0));
-  const earned = answered - deducted;
+  const earned = shown.reduce((sum, i) => sum + i.xp, 0);
 
   let xp = 0;
   let streak: number | null = null;
   if (learning) {
-    if (earned > 0) xp = await deps.xp.award({ userId, source: round.source, amount: earned, refId: `${sessionId}:${userId}` }, client);
+    if (earned > 0 && source !== null) xp = await deps.xp.award({ userId, source, amount: earned, refId: `${sessionId}:${userId}` }, client);
     const user = await client.query<{ timezone: string | null }>(`SELECT timezone FROM users WHERE id = $1`, [userId]);
     const tz = safeTimeZone(user.rows[0]?.timezone);
     streak = (await deps.streaks.recordActivity(userId, tz, now, client)).current;
@@ -124,8 +126,5 @@ export async function payRound(client: pg.PoolClient, deps: RewardDeps, round: R
   // what the round covered, for the next round's choice and the next repeat check
   await recordSeen(client, userId, game, items, now);
 
-  const results: SoloResults = { correct, total, firstTry, xp, learningCounted: learning, needed: roundLearningNeeds(total), items: shown, streak };
-  // what the costs took, only for a game that has them, and only from a round that was paying
-  if (round.deduct !== undefined) results.deducted = learning ? deducted : 0;
-  return results;
+  return { correct, total, firstTry, xp, learningCounted: learning, needed: roundLearningNeeds(total), items: shown, streak };
 }

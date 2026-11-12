@@ -177,16 +177,16 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     );
 
   let raceText = '';
-  const race = async (userId: string, r: { wpm: number; accuracy: number; errors: number; xp?: number }) => {
+  const race = async (userId: string, r: { wpm: number; accuracy: number; errors: number; score?: number }) => {
     raceText ||= (
       await pool.query<{ id: string }>(
         `INSERT INTO race_texts (title, body) VALUES ('T', 'Ev nivîsek dirêj e ji bo pêşbaziyê.') RETURNING id`,
       )
     ).rows[0]!.id;
     await pool.query(
-      `INSERT INTO race_games (user_id, text_id, finished_at, wpm, accuracy, score, xp_awarded, errors, accent_misses)
-       VALUES ($1, $2, now(), $3, $4, 100, $5, $6, 0)`,
-      [userId, raceText, r.wpm, r.accuracy, r.xp ?? 10, r.errors],
+      `INSERT INTO race_games (user_id, text_id, finished_at, wpm, accuracy, score, errors, accent_misses)
+       VALUES ($1, $2, now(), $3, $4, $5, $6, 0)`,
+      [userId, raceText, r.wpm, r.accuracy, r.score ?? 100, r.errors],
     );
   };
 
@@ -425,7 +425,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     it('Bilez, Rastnivîs and Destê zêrîn from races, but never from an implausible one', async () => {
       const p = await counted();
       await race(p.id, { wpm: 40, accuracy: 1, errors: 0 });
-      await race(p.id, { wpm: 400, accuracy: 1, errors: 0, xp: 0 }); // implausible: worth nothing
+      await race(p.id, { wpm: 400, accuracy: 1, errors: 0, score: 0 }); // implausible: scored nothing, so it counts for no badge
       await badges.recordSoloGame(p.id);
       expect(await progressOf(p.id, 'bilez')).toBe(40);
       expect(await tierOf(p.id, 'bilez')).toBe(2);

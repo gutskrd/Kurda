@@ -382,16 +382,15 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('The Memory Thief and Hear It, Find
       expect(['glossary', 'vocabulary']).toContain(second.json().why);
     });
 
-    it('pays by performance once, learning counted', async () => {
+    it('counts as a day learned and pays no XP: it is a game played alone', async () => {
       const { id } = (await play(other, 'memory-thief')).json();
       const items = await stored<MemoryStored>(id);
       for (let i = 0; i < items.length; i++) expect((await answer(other, id, i, rightGaps(items[i]!))).json().correct).toBe(true);
       const results = (await call('POST', `/games/solo/sessions/${id}/finish`, other)).json();
-      expect(results).toMatchObject({ correct: MEMORY_ROUND_PASSAGES, total: MEMORY_ROUND_PASSAGES, learningCounted: true });
-      const ledger = await pool.query(`SELECT source, amount FROM xp_ledger WHERE ref_id LIKE $1`, [`${id}:%`]);
-      expect(ledger.rows).toEqual([{ source: 'game_memory_thief', amount: results.xp }]);
+      expect(results).toMatchObject({ correct: MEMORY_ROUND_PASSAGES, total: MEMORY_ROUND_PASSAGES, learningCounted: true, xp: 0 });
+      expect(results.items.every((i: { xp: number }) => i.xp === 0)).toBe(true);
+      expect((await pool.query(`SELECT 1 FROM xp_ledger WHERE ref_id LIKE $1`, [`${id}:%`])).rowCount).toBe(0);
       expect((await call('POST', `/games/solo/sessions/${id}/finish`, other)).json()).toEqual(results);
-      expect((await pool.query(`SELECT 1 FROM xp_ledger WHERE ref_id LIKE $1`, [`${id}:%`])).rowCount).toBe(1);
     });
 
     it('is typed at the advanced difficulty, a lost mark taken as a typo', async () => {

@@ -6,12 +6,8 @@ import {
   emptyStats,
   filterByDifficulty,
   pickDailyWord,
-  PRACTICE_XP_FACTOR,
   utcDayIndex,
   winPercentage,
-  wordleXp,
-  WORDLE_LOSS_XP,
-  WORDLE_WIN_XP,
   type WordleGameResult,
 } from './wordle-daily.js';
 
@@ -66,30 +62,6 @@ describe('pickDailyWord', () => {
   });
 });
 
-describe('wordleXp', () => {
-  it('awards the daily win table by guess count', () => {
-    expect(wordleXp({ won: true, guesses: 1, practice: false })).toBe(WORDLE_WIN_XP[1]);
-    expect(wordleXp({ won: true, guesses: 6, practice: false })).toBe(WORDLE_WIN_XP[6]);
-    expect(wordleXp({ won: true, guesses: 3, practice: false })).toBe(60);
-  });
-
-  it('gives participation XP for a loss', () => {
-    expect(wordleXp({ won: false, guesses: 6, practice: false })).toBe(WORDLE_LOSS_XP);
-  });
-
-  it('reduces practice XP by the practice factor', () => {
-    expect(wordleXp({ won: true, guesses: 1, practice: true })).toBe(
-      Math.round(WORDLE_WIN_XP[1]! * PRACTICE_XP_FACTOR),
-    );
-  });
-
-  it('rewards fewer guesses more', () => {
-    const one = wordleXp({ won: true, guesses: 1, practice: false });
-    const five = wordleXp({ won: true, guesses: 5, practice: false });
-    expect(one).toBeGreaterThan(five);
-  });
-});
-
 describe('applyGameResult — stats + streak', () => {
   const dailyWin = (dayIndex: number, guesses = 3, timeMs = 4000): WordleGameResult => ({
     won: true,
@@ -99,12 +71,14 @@ describe('applyGameResult — stats + streak', () => {
     dayIndex,
   });
 
-  it('increments played/wins and accumulates XP', () => {
-    const { stats, xpAwarded } = applyGameResult(emptyStats(), dailyWin(10));
-    expect(stats.played).toBe(1);
-    expect(stats.wins).toBe(1);
-    expect(xpAwarded).toBe(60);
-    expect(stats.totalXp).toBe(60);
+  it('increments played and wins, and adds no XP: a game played alone pays none', () => {
+    const before = { ...emptyStats(), totalXp: 240 };
+    const result = applyGameResult(before, dailyWin(10));
+    expect(result.stats.played).toBe(1);
+    expect(result.stats.wins).toBe(1);
+    // what was paid while it still paid stays as it stood
+    expect(result.stats.totalXp).toBe(240);
+    expect(result).not.toHaveProperty('xpAwarded');
   });
 
   it('continues the streak on consecutive daily wins', () => {

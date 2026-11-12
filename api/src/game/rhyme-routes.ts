@@ -2,7 +2,6 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { RhymeService } from './rhyme-service.js';
-import type { XpService } from '../xp/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 
 const startBody = z.object({
@@ -20,7 +19,7 @@ const guessBody = z.object({
  */
 export function registerRhymeRoutes(
   app: FastifyInstance,
-  deps: { xp?: XpService; milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
+  deps: { milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
 ): void {
   const rhyme = new RhymeService(app.db, deps);
 

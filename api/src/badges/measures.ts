@@ -365,10 +365,10 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   ),
   race_best_wpm: count(
     `SELECT COALESCE(floor(max(wpm)), 0) AS n FROM race_games
-      WHERE user_id = $1 AND finished_at IS NOT NULL AND xp_awarded > 0 AND accuracy >= 0.9`,
+      WHERE user_id = $1 AND finished_at IS NOT NULL AND score > 0 AND accuracy >= 0.9`,
   ),
   races_98_percent: count(
-    `SELECT count(*) AS n FROM race_games WHERE user_id = $1 AND finished_at IS NOT NULL AND xp_awarded > 0 AND accuracy >= 0.98`,
+    `SELECT count(*) AS n FROM race_games WHERE user_id = $1 AND finished_at IS NOT NULL AND score > 0 AND accuracy >= 0.98`,
   ),
   story_quiz_perfect: count(
     `SELECT count(*) AS n FROM story_game_players p JOIN story_games g ON g.id = p.game_id
@@ -502,7 +502,7 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   ),
   beat_two_tiers_higher: count(`SELECT count(*) AS n FROM badge_rated_games WHERE user_id = $1 AND beat_higher_by >= 2`),
   flawless_race: count(
-    `SELECT count(*) AS n FROM race_games WHERE user_id = $1 AND finished_at IS NOT NULL AND xp_awarded > 0
+    `SELECT count(*) AS n FROM race_games WHERE user_id = $1 AND finished_at IS NOT NULL AND score > 0
         AND errors = 0 AND accent_misses = 0 AND accuracy >= 1`,
   ),
   // a Newroz story finished on 21 March of the learner's own calendar

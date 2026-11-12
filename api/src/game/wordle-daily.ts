@@ -73,24 +73,6 @@ export function pickDailyWord(
   return shuffled[idx] ?? null;
 }
 
-/** XP for a daily win by guess count; loss (or out-of-range) → participation XP. */
-export const WORDLE_WIN_XP: Record<number, number> = { 1: 100, 2: 80, 3: 60, 4: 50, 5: 40, 6: 30 };
-export const WORDLE_LOSS_XP = 10;
-/** Practice games award a reduced share and never affect the daily streak. */
-export const PRACTICE_XP_FACTOR = 0.5;
-
-export interface WordleXpInput {
-  won: boolean;
-  /** guesses used (1..6) when won */
-  guesses: number;
-  practice: boolean;
-}
-
-export function wordleXp({ won, guesses, practice }: WordleXpInput): number {
-  const base = won ? (WORDLE_WIN_XP[guesses] ?? WORDLE_LOSS_XP) : WORDLE_LOSS_XP;
-  return practice ? Math.round(base * PRACTICE_XP_FACTOR) : base;
-}
-
 export interface WordleStats {
   played: number;
   wins: number;
@@ -100,6 +82,7 @@ export interface WordleStats {
   /** total guesses across *won* games — averaged over wins */
   guessesInWins: number;
   fastestMs: number | null;
+  /** XP the game paid while a game played alone still paid any: kept as it stood, and never added to */
   totalXp: number;
   wordsLearned: number;
   /** last daily day index seen, to detect consecutive-day streaks */
@@ -145,23 +128,17 @@ export interface WordleGameResult {
 /**
  * Fold a finished game into the player's stats. Only **daily** games move the
  * streak: a win on the day after the last daily continues it, a win after a gap
- * resets it to 1, and a loss breaks it. Practice games update totals/XP but
- * never the streak. Returns the new stats plus the XP that was awarded (to post
- * through the XP system #030).
+ * resets it to 1, and a loss breaks it. Practice games update the totals but
+ * never the streak. No XP comes of either: Peyvok is played alone, and XP is
+ * for lessons and for games online with other people.
  */
-export function applyGameResult(
-  stats: WordleStats,
-  result: WordleGameResult,
-): { stats: WordleStats; xpAwarded: number } {
-  const xpAwarded = wordleXp({ won: result.won, guesses: result.guesses, practice: !result.daily });
-
+export function applyGameResult(stats: WordleStats, result: WordleGameResult): { stats: WordleStats } {
   const next: WordleStats = {
     ...stats,
     played: stats.played + 1,
     wins: stats.wins + (result.won ? 1 : 0),
     losses: stats.losses + (result.won ? 0 : 1),
     guessesInWins: stats.guessesInWins + (result.won ? result.guesses : 0),
-    totalXp: stats.totalXp + xpAwarded,
     wordsLearned: stats.wordsLearned + (result.savedWord ? 1 : 0),
   };
 
@@ -180,5 +157,5 @@ export function applyGameResult(
     next.lastDailyDayIndex = result.dayIndex;
   }
 
-  return { stats: next, xpAwarded };
+  return { stats: next };
 }

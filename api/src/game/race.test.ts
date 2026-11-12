@@ -3,9 +3,6 @@ import {
   countCorrect,
   HUMAN_WPM_CEILING,
   MIN_RACE_MS,
-  raceXp,
-  RACE_MAX_BONUS_XP,
-  RACE_PARTICIPATION_XP,
   scoreRace,
 } from './race.js';
 
@@ -254,27 +251,6 @@ describe('scoreRace', () => {
   });
 });
 
-describe('raceXp', () => {
-  const target = 'ez ji welatê xwe hez dikim';
-
-  it('pays nothing for typing nothing', () => {
-    expect(raceXp(scoreRace({ target, typed: '', elapsedMs: 10_000 }))).toBe(0);
-  });
-
-  it('pays the entry plus a slice of the score', () => {
-    const xp = raceXp(scoreRace({ target, typed: target, elapsedMs: 30_000 }));
-    expect(xp).toBeGreaterThan(RACE_PARTICIPATION_XP);
-  });
-
-  it('caps the bonus, so one enormous text cannot mint XP', () => {
-    // 5000 characters at 200 wpm takes five minutes; typing them inside the
-    // clock floor would be a paste, which is scored separately below
-    const huge = scoreRace({ target: 'a'.repeat(5000), typed: 'a'.repeat(5000), elapsedMs: 300_000 });
-    expect(huge.implausible).toBe(false);
-    expect(raceXp(huge)).toBe(RACE_PARTICIPATION_XP + RACE_MAX_BONUS_XP);
-  });
-});
-
 /**
  * The browser will not let anyone paste into the race, but the browser is not
  * the boundary — the finish endpoint takes whatever it is posted. This is where
@@ -291,16 +267,14 @@ describe('a speed no person reaches', () => {
     expect(s.wpm).toBeLessThan(HUMAN_WPM_CEILING);
     expect(s.implausible).toBe(false);
     expect(s.score).toBeGreaterThan(0);
-    expect(raceXp(s)).toBeGreaterThan(0);
   });
 
-  it('refuses to rank or pay a run nobody typed', () => {
+  it('refuses to rank a run nobody typed', () => {
     // the whole text at once, inside the clock floor: about 1200 wpm
     const pasted = scoreRace({ target: 'a'.repeat(200), typed: 'a'.repeat(200), elapsedMs: 500 });
     expect(pasted.wpm).toBeGreaterThan(HUMAN_WPM_CEILING);
     expect(pasted.implausible).toBe(true);
     expect(pasted.score).toBe(0);
-    expect(raceXp(pasted)).toBe(0);
     // and it is not celebrated as a flawless run either
     expect(pasted.perfect).toBe(false);
   });

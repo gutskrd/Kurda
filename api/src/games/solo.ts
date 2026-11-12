@@ -43,6 +43,7 @@ import {
   SOLO_SESSION_HOURS,
   answerXp,
   learnGame,
+  paysAlone,
   type GameDialect,
   type GameDifficulty,
   type LearnGameId,
@@ -94,8 +95,6 @@ export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correct
    * case board). Sent with the round when it is made and when it is read.
    */
   board?(items: Item[], meta: Record<string, unknown>, states: SoloItemState[]): unknown;
-  /** XP the round's own costs take off what its answers earned, at the finish (Kurdish Detective's hints) */
-  deduction?(meta: Record<string, unknown>): number;
   /**
    * For a game whose items are studied before they are answered (The Memory
    * Thief): the player is ready to answer this item, and what it shows while
@@ -109,8 +108,7 @@ export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correct
   hintAsk?: z.ZodType<unknown>;
   /**
    * Spend one hint on the round as a whole: what the round decides from now
-   * on (its new `meta`), or an AppError when there is none to give. The
-   * finish takes what was spent into account through `deduction`.
+   * on (its new `meta`), or an AppError when there is none to give.
    */
   spendHint?(round: { items: Item[]; meta: Record<string, unknown>; states: SoloItemState[] }, ask: unknown): Record<string, unknown>;
   /** after the round is paid, inside the same transaction (Build a Kurdish Sentence moves its ladder) */
@@ -359,8 +357,8 @@ export class SoloService {
           hint: !done ? engine.hint(item, last, row.dialect) : null,
           correction: done ? engine.correction(item, last, row.dialect) : null,
           why: done ? engine.why(item) : null,
-          // what it would pay, before the finish checks the repeat window again and that the round was learning
-          xp: answerXp(item.level, { correct, firstTry, repeat: item.repeat === true }),
+          // what it would pay, before the finish checks the repeat window again and that the round was learning; nothing in a game that pays none
+          xp: paysAlone(row.game) ? answerXp(item.level, { correct, firstTry, repeat: item.repeat === true }) : 0,
           repeat: item.repeat === true,
         };
       };
@@ -452,9 +450,9 @@ export class SoloService {
         correct: states[i]!.correct,
         firstTry: states[i]!.firstTry,
       }));
-      const source = learnGame(row.game).xpSources[0]!;
-      const deduct = engine.deduction?.(row.meta);
-      const results = await payRound(client, this.deps, { sessionId: row.id, userId, game: row.game, source, items, now, deduct });
+      // only the lessons' exercises pay; a game played alone is scored and counted, and earns no XP
+      const source = paysAlone(row.game) ? learnGame(row.game).xpSources[0]! : null;
+      const results = await payRound(client, this.deps, { sessionId: row.id, userId, game: row.game, source, items, now });
       await engine.finished?.(client, { userId, dialect: row.dialect, meta: row.meta, items: row.items, results });
       await client.query(
         `UPDATE game_sessions SET finished_at = $2, results = $3::jsonb, xp_awarded = $4, learning_counted = $5 WHERE id = $1`,

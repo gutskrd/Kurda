@@ -8,9 +8,8 @@ type Executor = Pick<pg.Pool, 'query'>;
  * One multiplayer learning game, as the engine (service.ts) runs it: its pure
  * rules, and the few things that need the server — reading the settings a host
  * may choose, preparing a move that needs a lookup before the rules can judge
- * it (a word checked against the dictionary), Hevalo's move, what a game
- * against Hevalo pays, and whether the game has the content to be offered at
- * all. Everything else — lobbies, invites, seats, the clock, presence, who is
+ * it (a word checked against the dictionary), Hevalo's move, and whether the
+ * game has the content to be offered at all. Everything else — lobbies, invites, seats, the clock, presence, who is
  * away, the stand-in host, placement XP, Game Ranks, reports by seat — is the
  * engine's, the same for every game.
  */
@@ -88,30 +87,11 @@ export interface GameModule<State = unknown, Move = unknown, Settings = unknown,
   /** Hevalo's move for a computer seat whose turn has come, or null for "could not think of one" */
   bot?(db: Executor, state: State, seat: number): Promise<Move | null>;
   /**
-   * What a finished game against Hevalo pays the person (never placement: a
-   * game with fewer than two people pays none), inside the finishing transaction.
-   */
-  payAgainstHevalo?(db: pg.PoolClient, game: SoloGame, state: State): Promise<number>;
-  /**
    * Whether the game can be offered in this dialect now, with friends and
    * against Hevalo, and anything more the apps need to offer it (Kurdish
    * Impostor: the categories its approved cards are in).
    */
   availability?(db: Executor, dialect: LetterDialect): Promise<{ group: boolean; solo: boolean } & Record<string, unknown>>;
-}
-
-/** Paying XP from inside a finishing transaction (XpService.award with the transaction's client). */
-export type SoloAward = (input: { userId: string; source: string; amount: number; refId: string }) => Promise<number>;
-
-/** A finished game against Hevalo, for what it pays. */
-export interface SoloGame {
-  lobbyId: string;
-  userId: string;
-  seat: number;
-  dialect: LetterDialect;
-  /** the server's clock at the finish */
-  now: Date;
-  award: SoloAward;
 }
 
 /** Any game module, whatever its types: the engine treats state and moves as opaque. */

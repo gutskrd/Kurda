@@ -1106,8 +1106,8 @@ export class MultiplayerService {
   /**
    * The end, in the transaction that reached it: each seat's place and score,
    * placement XP (only with at least two people who played to the end, less
-   * against the same people again today), what a game against Hevalo pays, and
-   * Game Ranks. A game its rules say did not count (`counted`: called off,
+   * against the same people again today), and Game Ranks. A game against
+   * Hevalo pays nothing and rates nobody. A game its rules say did not count (`counted`: called off,
    * too few left, the impostor gone) shows its places but pays no placement
    * and is closed for Game Ranks as void: everyone still seated would
    * otherwise share first place for a game nobody finished.
@@ -1147,13 +1147,8 @@ export class MultiplayerService {
           return placeOf ? [{ userId: p.user_id!, place: placeOf.place }] : [];
         }),
       );
-    } else if (m.payAgainstHevalo) {
-      const me = people[0];
-      if (me && me.moves > 0) {
-        const paid = await m.payAgainstHevalo(t.client, { lobbyId: t.lobby.id, userId: me.user_id!, seat: me.seat, dialect: t.lobby.dialect, now: t.now, award }, t.lobby.state);
-        await t.client.query(`UPDATE game_lobby_players SET xp_awarded = $3 WHERE lobby_id = $1 AND seat = $2`, [t.lobby.id, me.seat, paid]);
-      }
     }
+    // A game against Hevalo pays nothing: there is nobody to play against, and XP is for games with other people.
     await this.reload(t);
     await this.bump(t, `status = 'finished', finished_at = $3, due_at = NULL`, [t.now], { card: true });
   }

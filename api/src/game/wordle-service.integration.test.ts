@@ -134,7 +134,7 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     expect(t1.rows[0]!.target).not.toBe(t2.rows[0]!.target);
   });
 
-  it('scores a first-guess daily win: reveals answer, awards 100 XP, streak 1', async () => {
+  it('scores a first-guess daily win: reveals the answer, streak 1, and pays no XP for a game played alone', async () => {
     const u = await makeUser();
     const dayIndex = utcDayIndex(new Date('2026-08-03T00:00:00Z'));
     const gameId = await insertGame(u, 'daily', 'medium', 'malan', dayIndex);
@@ -145,27 +145,22 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     if (!res.ok) return;
     expect(res.game.status).toBe('won');
     expect(res.game.target).toBe('malan'); // revealed only now
-    expect(res.game.xpAwarded).toBe(100);
+    expect(res.game.xpAwarded).toBe(0);
     expect(res.game.guesses[0]!.feedback).toEqual(['green', 'green', 'green', 'green', 'green']);
 
     const stats = await svc.stats(u);
     expect(stats.wins).toBe(1);
     expect(stats.played).toBe(1);
     expect(stats.currentStreak).toBe(1);
-    expect(stats.totalXp).toBe(100);
+    expect(stats.totalXp).toBe(0);
     expect(stats.winPercentage).toBe(100);
 
     const xp = await pool.query<{ xp: number }>(`SELECT xp FROM users WHERE id=$1`, [u]);
-    expect(xp.rows[0]!.xp).toBe(100);
+    expect(xp.rows[0]!.xp).toBe(0);
+    expect((await pool.query(`SELECT 1 FROM xp_ledger WHERE user_id = $1`, [u])).rowCount).toBe(0);
   });
 
-  /**
-   * The ledger's (source, ref_id) key is unique across all users, and the
-   * daily key used to be the day alone: the first finisher each day was
-   * credited and everyone after them silently got nothing, while being told
-   * they had earned it.
-   */
-  it('credits every finisher of the same daily word, each once', async () => {
+  it('pays none of the players of the same daily word: nothing is written to the ledger for Peyvok', async () => {
     const dayIndex = utcDayIndex(new Date('2026-08-05T00:00:00Z'));
     const players = [await makeUser(), await makeUser(), await makeUser()];
     const svc = serviceAt(new Date());
@@ -173,16 +168,13 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     for (const u of players) {
       const gameId = await insertGame(u, 'daily', 'medium', 'malan', dayIndex);
       const res = await svc.guess(u, gameId, 'malan');
-      expect(res.ok && res.game.xpAwarded).toBe(100);
+      expect(res.ok && res.game.status).toBe('won');
+      expect(res.ok && res.game.xpAwarded).toBe(0);
     }
 
     const xp = await pool.query<{ xp: number }>(`SELECT xp FROM users WHERE id = ANY($1)`, [players]);
-    expect(xp.rows.map((r) => r.xp)).toEqual([100, 100, 100]);
-    const ledger = await pool.query<{ ref_id: string }>(
-      `SELECT ref_id FROM xp_ledger WHERE source = 'wordle' AND user_id = ANY($1)`,
-      [players],
-    );
-    expect(new Set(ledger.rows.map((r) => r.ref_id)).size).toBe(3);
+    expect(xp.rows.map((r) => r.xp)).toEqual([0, 0, 0]);
+    expect((await pool.query(`SELECT 1 FROM xp_ledger WHERE source = 'wordle' AND user_id = ANY($1)`, [players])).rowCount).toBe(0);
   });
 
   it('reports a daily win that extends the streak, so streak milestones can be awarded', async () => {
@@ -236,7 +228,7 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     }
   });
 
-  it('awards participation XP (10) on a daily loss and keeps streak at 0', async () => {
+  it('keeps the streak at 0 on a daily loss, and pays nothing for taking part', async () => {
     const u = await makeUser();
     const dayIndex = utcDayIndex(new Date('2026-08-04T00:00:00Z'));
     const gameId = await insertGame(u, 'daily', 'medium', 'malan', dayIndex);
@@ -248,15 +240,15 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     expect(last!.ok).toBe(true);
     if (!last!.ok) return;
     expect(last!.game.status).toBe('lost');
-    expect(last!.game.xpAwarded).toBe(10);
+    expect(last!.game.xpAwarded).toBe(0);
 
     const stats = await svc.stats(u);
     expect(stats.losses).toBe(1);
     expect(stats.currentStreak).toBe(0);
-    expect(stats.totalXp).toBe(10);
+    expect(stats.totalXp).toBe(0);
   });
 
-  it('practice win pays reduced XP (50) and never touches the daily streak', async () => {
+  it('practice win pays nothing and never touches the daily streak', async () => {
     const u = await makeUser();
     const gameId = await insertGame(u, 'practice', 'medium', 'kurdi', null);
     const svc = serviceAt(new Date());
@@ -265,7 +257,7 @@ describe.skipIf(!DATABASE_URL)('wordle service (integration)', () => {
     expect(res.ok).toBe(true);
     if (!res.ok) return;
     expect(res.game.status).toBe('won');
-    expect(res.game.xpAwarded).toBe(50); // round(100 * 0.5)
+    expect(res.game.xpAwarded).toBe(0);
 
     const stats = await svc.stats(u);
     expect(stats.wins).toBe(1);

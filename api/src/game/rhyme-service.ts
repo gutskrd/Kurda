@@ -1,7 +1,6 @@
 import type pg from 'pg';
 import { dictionaryKey } from '@kurda/shared';
 import { pickRhymePrompt } from './rhyme-prompt.js';
-import { XpService } from '../xp/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 import {
   evaluateSubmission,
@@ -14,10 +13,6 @@ import {
 
 /** Answer window for a training round. */
 const WINDOW_MS = 60_000;
-/** XP per accepted rhyme, capped — training is low-stakes practice. */
-const XP_PER_RHYME = 5;
-const MAX_XP = 30;
-
 export type RhymeMode = 'training';
 
 /** Client-safe view of a training game. */
@@ -59,18 +54,18 @@ interface GameRow {
  * Rhyming Words — training (solo) backend (KUR-299). Server-authoritative: the
  * game holds the prompt + a timed window; each submission is scored by the #298
  * engine against the dictionary (the "is it a real word" lexicon) and the pure
- * rhyme phonetics. Finishing awards a small, idempotent XP amount (#030).
+ * rhyme phonetics. Finishing pays no XP: training is played alone, and XP is
+ * for lessons and for games online with other people. `xpAwarded` stays in
+ * what the apps are sent, always nothing, for the app versions that read it.
  */
 export class RhymeService {
-  private readonly xp: XpService;
   private readonly now: () => Date;
   private readonly milestones?: Pick<MilestoneRecorder, 'recordSoloGame'>;
 
   constructor(
     private readonly pool: pg.Pool,
-    deps: { xp?: XpService; now?: () => Date; milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
+    deps: { now?: () => Date; milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
   ) {
-    this.xp = deps.xp ?? new XpService(pool);
     this.now = deps.now ?? (() => new Date());
     this.milestones = deps.milestones;
   }
@@ -97,7 +92,7 @@ export class RhymeService {
   /**
    * Score one submission. A rejected guess (not a word / doesn't rhyme / dup /
    * the prompt) does not change the score. Submitting after the window closes
-   * ends the game (and awards XP) instead of scoring.
+   * ends the game instead of scoring.
    */
   async submit(userId: string, gameId: string, word: string): Promise<SubmitResult> {
     const client = await this.pool.connect();
@@ -176,7 +171,7 @@ export class RhymeService {
     }
   }
 
-  /** End the round early (e.g. player taps Finish); awards XP. */
+  /** End the round early (e.g. player taps Finish). */
   async end(userId: string, gameId: string): Promise<SubmitResult> {
     const client = await this.pool.connect();
     try {
@@ -216,10 +211,8 @@ export class RhymeService {
 
   private async finish(client: pg.PoolClient, row: GameRow): Promise<number> {
     await client.query(`UPDATE rhyme_games SET status = 'ended', ended_at = now() WHERE id = $1`, [row.id]);
-    const amount = Math.min(MAX_XP, row.accepted * XP_PER_RHYME);
-    // idempotent per game; award() no-ops when amount <= 0
-    await this.xp.award({ userId: row.user_id, source: 'rhyme', amount, refId: `training:${row.id}` }, client);
-    return amount;
+    // nothing is paid for a round played alone
+    return 0;
   }
 
   /**

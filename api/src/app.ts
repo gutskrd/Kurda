@@ -649,7 +649,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // the learning games (Build a Kurdish Sentence and the games after it): approved content only,
     // rounds made and checked here, paid by performance; and their content's review in the admin panel
     registerLearnGameRoutes(app, { xp: xpService, milestones: badges, config, recordingFiles: options.recordingFiles });
-    registerWordleRoutes(app, { xp: xpService, milestones: badges });
+    registerWordleRoutes(app, { milestones: badges });
     // `play_changed` after every change to a lobby (play/events.ts), so clients
     // stop polling. The gateway it speaks through is set up further down, so it
     // is looked up when there is something to say.
@@ -667,9 +667,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     // Peyvok Battle multiplayer (KUR-306) — server-authoritative, poll-safe
     registerWordleBattleRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
-    registerRhymeRoutes(app, { xp: xpService, milestones: badges });
+    registerRhymeRoutes(app, { milestones: badges });
     // typing race (solo time trial) over admin-curated texts
-    registerRaceRoutes(app, { xp: xpService, milestones: badges });
+    registerRaceRoutes(app, { milestones: badges });
     // Rhyme 1v1 / free-for-all multiplayer (KUR-299) — server-authoritative, poll-safe
     registerRhymeMatchRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
 
