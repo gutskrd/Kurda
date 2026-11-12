@@ -601,8 +601,8 @@ function HandOver({ name, onMine }: { name: string; onMine: () => void }): React
  * Once a question is answered the card's verdict is on top, and the turn is a
  * guess or the phone passed on.
  *
- * No card is on it, the holder's or anybody else's, so the friends can hand
- * the phone straight back to it.
+ * Nobody's card can be read on it, the holder's or anybody else's, so the
+ * friends can hand the phone straight back to it.
  */
 function Board({
   game,
