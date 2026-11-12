@@ -322,7 +322,7 @@ export function LessonsView({
           <ReminderNudge hold={kept.pending} />
           {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
           {openReview ? <ContinueReview onPress={() => navigation.navigate('Practice', { sessionId: openReview })} /> : null}
-          <View style={styles.tools}>
+          <View style={styles.tools} testID="learn-tools">
             {/* practice's hub, with what review has due on its face */}
             <ToolTile
               icon="review"

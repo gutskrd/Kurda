@@ -17,7 +17,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { AccessibilityInfo } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -135,8 +135,13 @@ describe('Learn', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('BuildSentence');
     fireEvent.click(screen.getByRole('button', { name: 'Hear It, Find It, Find what you heard' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('HearIt');
-    // a game is not a tool of the lessons
-    expect(screen.queryByText('The Memory Thief')).toBeNull();
+    // A game is not a tool of the lessons. The Games half is mounted beside this one and lists the game
+    // once it has drawn, so the claim is about the tools, and holds whether or not it has.
+    const tools = within(screen.getByTestId('learn-tools'));
+    expect(tools.getByRole('button', { name: /^Hear It, Find It, / })).toBeTruthy();
+    expect(tools.queryByText('The Memory Thief')).toBeNull();
+    await waitFor(() => expect(screen.queryByText('The Memory Thief')).not.toBeNull());
+    expect(tools.queryByText('The Memory Thief')).toBeNull();
   });
 
   it('shows no tile for an exercise that cannot be done yet, and none when the answer cannot be had', async () => {
