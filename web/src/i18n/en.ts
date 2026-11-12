@@ -469,10 +469,9 @@ export const en = {
   'games.card.wordle': 'Guess the Kurdish word in six tries.',
   'games.card.rhyme': 'Find words that rhyme, against the clock.',
   'games.card.race': 'Type a Kurdish text quickly and accurately.',
-  'games.card.memory': 'Read a passage, then win back the words the thief took.',
-  'games.card.say': 'Someone speaks to you in Kurdish. Choose the reply that fits.',
-  'games.card.detective': 'Read the Kurdish evidence and name who did it.',
-  'games.card.lastLetter': 'Chain words: each starts where the last one ended.',
+  'games.card.memory': 'Study a real passage, then give back the words the thief took.',
+  'games.card.say': 'Answer someone in a real Kurdish conversation, the way it really went on.',
+  'games.card.detective': 'Solve a case from Kurdish evidence, then name who did it.',
   'games.card.whoAmI': 'Ask yes-or-no questions in Kurdish to find your word.',
 
   // ---- signing in, the rest of it ------------------------------------------

@@ -38,7 +38,7 @@ export const PHONE_LEARN_GAMES: Partial<Record<LearnGameId, PhoneGame>> = {
   'last-letter': { route: LAST_LETTER_CARD.route, name: LAST_LETTER_CARD.nameKey, line: LAST_LETTER_CARD.lineKey },
   // Kurdish Impostor is listed where /games/availability finds enough approved cards for the learner's Kurdish
   impostor: { route: 'Impostor', name: 'games.impostor.name', line: 'games.invite.blurb.impostor' },
-  'who-am-i': { route: 'WhoAmI', name: 'games.whoAmI.name', line: 'games.whoAmI.blurb' },
+  'who-am-i': { route: 'WhoAmI', name: 'games.whoAmI.name', line: 'games.card.whoAmI' },
 };
 
 const PLAYABLE = Object.keys(PHONE_LEARN_GAMES) as LearnGameId[];

@@ -37,7 +37,7 @@ export const WEB_LEARN_GAMES: Partial<Record<LearnGameId, WebGame>> = {
   'memory-thief': { href: '/app/games/memory-thief', nameKey: 'games.memory.name', lineKey: 'games.card.memory', bodyKey: 'games.memory.body', modes: ['solo'] },
   'what-would-you-say': { href: '/app/games/what-would-you-say', nameKey: 'games.say.name', lineKey: 'games.card.say', bodyKey: 'games.say.body', modes: ['solo'] },
   detective: { href: '/app/games/detective', nameKey: 'games.detective.name', lineKey: 'games.card.detective', bodyKey: 'games.detective.body', modes: ['solo'] },
-  'last-letter': { href: LAST_LETTER_CARD.href, nameKey: LAST_LETTER_CARD.nameKey, lineKey: 'games.card.lastLetter', bodyKey: LAST_LETTER_CARD.blurbKey, modes: ['solo', 'online'] },
+  'last-letter': { href: LAST_LETTER_CARD.href, nameKey: LAST_LETTER_CARD.nameKey, lineKey: LAST_LETTER_CARD.blurbKey, bodyKey: LAST_LETTER_CARD.blurbKey, modes: ['solo', 'online'] },
   // the games with friends are listed where /games/availability finds enough approved cards for the learner's variety
   impostor: { href: '/app/games/impostor', nameKey: 'games.impostor.name', lineKey: 'games.invite.blurb.impostor', bodyKey: 'games.invite.blurb.impostor', modes: ['online'] },
   'who-am-i': { href: '/app/games/who-am-i', nameKey: 'games.whoAmI.name', lineKey: 'games.card.whoAmI', bodyKey: 'games.whoAmI.blurb', modes: ['solo', 'online'] },
