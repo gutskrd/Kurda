@@ -38,6 +38,7 @@ import {
   impostorWaySvg,
   impostorWayTone,
 } from './impostor.js';
+import { GAME_EMBLEMS, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import {
@@ -912,6 +913,39 @@ describe('the word sets’ pictures', () => {
   it('counts the numbers on the abacus instead of writing them, one bead, then two, then three', () => {
     // each bead is three ellipses: its edge, its face and its spot of light
     expect((wordSetSvg({ set: 'numbers', size: 44 }).match(/<ellipse/g) ?? []).length).toBe(6 * 3);
+  });
+});
+
+describe('the games’ emblems', () => {
+  // every game Learn's Games page can list: the three with pages of their own, and the registry's games
+  const LISTED = ['peyvok', 'rhyme', 'race', 'memory-thief', 'what-would-you-say', 'detective', 'last-letter', 'impostor', 'who-am-i'];
+
+  it('draws a valid, self-contained emblem for every game, small and large', () => {
+    for (const size of [40, 84, 148]) for (const game of GAME_EMBLEMS) checkSvg(gameEmblemSvg({ game, size }), size);
+  });
+
+  it('has an emblem of its own for every game on the page, and no two alike', () => {
+    expect([...GAME_EMBLEMS].sort()).toEqual([...LISTED].sort());
+    const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
+    const all = GAME_EMBLEMS.map((game) => strip(gameEmblemSvg({ game })));
+    expect(new Set(all).size).toBe(all.length);
+  });
+
+  it('writes nothing in a picture: no letters and no numerals, so it reads the same in every language', () => {
+    for (const game of GAME_EMBLEMS) expect(gameEmblemSvg({ game })).not.toMatch(/<text\b/);
+  });
+
+  it('gives Kurdish Impostor the hand of cards its own page shows', () => {
+    const strip = (svg: string): string => svg.replace(/ (id|aria-labelledby)="[^"]*"/g, '').replace(/url\(#[^)]*\)/g, 'url()');
+    expect(strip(gameEmblemSvg({ game: 'impostor', size: 120 }))).toBe(strip(impostorEmblemSvg({ emblem: 'cards', size: 120 })));
+  });
+
+  it('has a colour for every game’s card, and refuses a game it has never heard of', () => {
+    for (const game of GAME_EMBLEMS) expect(gameEmblemTone(game)).toMatch(/^#[0-9a-f]{6}$/);
+    expect(isGameEmblem('peyvok')).toBe(true);
+    expect(isGameEmblem('constructor')).toBe(false);
+    expect(() => gameEmblemSvg({ game: 'bluff' as never })).toThrow(RangeError);
+    expect(() => gameEmblemTone('toString' as never)).toThrow(RangeError);
   });
 });
 

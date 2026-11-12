@@ -685,6 +685,12 @@ export {
   type RankDivision as ArtRankDivision,
   type LeagueTier as ArtLeagueTier,
   type Season as ArtSeason,
+  GAME_EMBLEMS,
+  gameEmblemSvg,
+  gameEmblemTone,
+  isGameEmblem,
+  type GameArtOptions,
+  type GameEmblem,
 } from './art/index.js';
 /**
  * The art's metals, for the parts of a screen drawn around an emblem — a

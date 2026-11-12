@@ -447,30 +447,33 @@ export const en = {
   'games.title': 'Games',
   'games.signInToPlay': 'Sign in to play',
   'games.comingSoon': 'Coming soon',
-  'games.chooseMode': 'Choose a mode',
-  'games.howToPlay': 'How do you want to play?',
   'games.playAndScore': 'Play, and keep score',
 
   'games.wordle.name': 'Peyvok',
   'games.wordle.body': 'Guess the Kurdish word in six tries — on your own, or racing a friend.',
-  'games.wordle.solo': 'Today’s daily puzzle, plus unlimited practice rounds across three difficulties.',
-  'games.wordle.online': 'Create a battle, invite a friend or give them its code, and race to the same word.',
 
   'games.rhyme.name': 'Rhyming Words',
   'games.rhyme.body': 'Find as many Kurdish words as you can that rhyme with the prompt.',
-  'games.rhyme.solo': 'A timed solo round against the clock — good for building vocabulary fast.',
-  'games.rhyme.online': 'Head-to-head: invite a friend or give them the code, and out-rhyme them in one shared window.',
 
   'games.race.name': 'Typing Race',
   'games.race.body': 'Type a Kurdish text as fast and as accurately as you can — speed is measured server-side.',
-  'games.race.mode': 'Race the clock',
-  'games.race.blurb': 'Pick a length, type the text, and get your words per minute and accuracy.',
 
 
   'games.mode.solo': 'Play solo',
   'games.mode.online': 'Play online',
-  'games.mode.needsAccount': 'needs an account',
   'games.play': 'Play',
+  'games.featured': 'Featured',
+  'games.filter.all': 'All',
+  'games.filter.solo': 'On your own',
+  'games.filter.friends': 'With friends',
+  'games.card.wordle': 'Guess the Kurdish word in six tries.',
+  'games.card.rhyme': 'Find words that rhyme, against the clock.',
+  'games.card.race': 'Type a Kurdish text quickly and accurately.',
+  'games.card.memory': 'Read a passage, then win back the words the thief took.',
+  'games.card.say': 'Someone speaks to you in Kurdish. Choose the reply that fits.',
+  'games.card.detective': 'Read the Kurdish evidence and name who did it.',
+  'games.card.lastLetter': 'Chain words: each starts where the last one ended.',
+  'games.card.whoAmI': 'Ask yes-or-no questions in Kurdish to find your word.',
 
   // ---- signing in, the rest of it ------------------------------------------
   'auth.login.rememberMe': 'Remember me',

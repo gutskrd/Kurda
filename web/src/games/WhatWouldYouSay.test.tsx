@@ -177,8 +177,9 @@ describe('What Would You Say? in Learn’s games', () => {
     server(session('kmr', [scene()]), () => ({}), false);
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
-    const soon = (await screen.findByRole('heading', { name: 'What Would You Say?' })).closest('article')!;
-    expect(within(soon).getByText('Coming soon')).toBeInTheDocument();
-    expect(within(soon).queryByRole('link', { name: 'Play' })).toBeNull();
+    // named under the shelf, with nothing to open
+    const soon = await screen.findByRole('region', { name: 'Coming soon' });
+    expect(within(soon).getByRole('heading', { name: 'What Would You Say?' })).toBeInTheDocument();
+    expect(within(soon).queryByRole('link')).toBeNull();
   });
 });

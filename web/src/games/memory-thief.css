@@ -1,5 +1,5 @@
 /*
- * The Memory Thief (games/MemoryThief.tsx): its card's picture, and its stage
+ * The Memory Thief (games/MemoryThief.tsx): its stage
  * — a page on a desk, the ribbon of study time along the page's top edge,
  * words that lift off the paper like ink, soft glowing gaps, the tray of
  * tiles or the typed fields, and the calm reveal.
@@ -9,44 +9,6 @@
  * movement at once; here the ribbon and the glow also stay still, so the
  * page shows its state by colour alone.
  */
-
-/* ---- the card's picture: a page, a word lifting off it, the gaps it leaves --------- */
-.lg-mini-page {
-  position: relative;
-  display: grid;
-  gap: 10px;
-  width: min(100%, 220px);
-  padding: 16px 18px;
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--u-fill, var(--gold)) 10%, var(--surface-solid));
-  box-shadow: 0 5px 0 color-mix(in srgb, var(--u-lip, var(--border-strong)) 45%, transparent);
-  transform: rotate(-1.5deg);
-}
-.lg-mini-row {
-  display: flex;
-  gap: 7px;
-}
-.lg-mini-ink,
-.lg-mini-gap,
-.lg-mini-lift {
-  height: 9px;
-  border-radius: var(--r-pill);
-}
-.lg-mini-ink {
-  background: var(--ink-3);
-}
-.lg-mini-gap {
-  background: color-mix(in srgb, var(--u-fill, var(--gold)) 35%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--u-fill, var(--gold)) 14%, transparent);
-}
-.lg-mini-lift {
-  position: absolute;
-  top: -6px;
-  inset-inline-end: 22px;
-  background: var(--ink-3);
-  opacity: 0.55;
-  transform: rotate(-8deg);
-}
 
 /* ---- the intro: three steps ------------------------------------------------------- */
 .mt-steps {

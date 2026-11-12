@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Games } from './Games';
+import { Games, featuredGame, type GameEntry } from './Games';
 import { TopNav } from '../components/TopNav';
 import { renderApp, jsonResponse } from '../test/utils';
 
@@ -26,45 +26,33 @@ describe('Games hub', () => {
   it('shows one box per game (not one per mode)', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
-    expect(await screen.findByText('Peyvok')).toBeInTheDocument();
-    expect(screen.getByText('Rhyming Words')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Rhyming Words' })).toBeInTheDocument();
     // the ranked quiz is gone, and the stories that took its place have a group of their own now
     expect(screen.queryByText('Ranked Quiz')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Stories' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Stories' })).toHaveAttribute('href', '/app/learn/stories');
     // the separate per-mode cards are gone
-    expect(screen.queryByText('Peyvok Battle')).not.toBeInTheDocument();
-    expect(screen.queryByText('Rhyme Match')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Peyvok Battle' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Rhyme Match' })).toBeNull();
   });
 
-  it('asks how you want to play, then links to the chosen mode', async () => {
-    signIn();
-    renderApp(<Games />, ['/app/games']);
-
-    // Peyvok has two modes → clicking Play opens the chooser
-    const playButtons = await screen.findAllByRole('button', { name: /^play$/i });
-    await userEvent.click(playButtons[0]!);
-
-    expect(await screen.findByText(/how do you want to play/i)).toBeInTheDocument();
-    const chooser = screen.getByRole('dialog');
-    expect(within(chooser).getByRole('link', { name: /play solo/i })).toHaveAttribute('href', '/app/games/peyvok');
-    expect(within(chooser).getByRole('link', { name: /play online/i })).toHaveAttribute('href', '/app/games/peyvok-battle');
-  });
-
-  it('lets each mode be chosen on the card itself, without the chooser', async () => {
+  it('gives a game with a page for each way to play a button for each, on its card', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
     const wordle = (await screen.findByRole('heading', { name: 'Peyvok' })).closest('article')!;
-    await within(wordle).findByRole('button', { name: /^play$/i });
-    expect(within(wordle).getByRole('link', { name: 'Play solo' })).toHaveAttribute('href', '/app/games/peyvok');
+    expect(await within(wordle).findByRole('link', { name: 'Play solo' })).toHaveAttribute('href', '/app/games/peyvok');
     expect(within(wordle).getByRole('link', { name: 'Play online' })).toHaveAttribute('href', '/app/games/peyvok-battle');
+    // nothing stands between the card and the game: no second question to answer
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it('marks a card only when the mark says something a signed-in player needs', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
-    await screen.findAllByRole('button', { name: /^play$/i });
+    await screen.findAllByRole('link', { name: 'Play' });
     expect(screen.queryByText('Playable')).toBeNull();
+    expect(screen.queryByText('Sign in to play')).toBeNull();
   });
 
   it('links a single-mode game straight to its page', async () => {
@@ -72,10 +60,37 @@ describe('Games hub', () => {
     renderApp(<Games />, ['/app/games']);
     // wait for the session to land: until it does, the page is drawn for a
     // signed-out visitor, who has no Play links at all
-    await screen.findAllByRole('button', { name: /^play$/i });
+    const race = (await screen.findByRole('heading', { name: 'Typing Race' })).closest('article')!;
+    expect(await within(race).findByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/race');
+    // one page, so it says who it is for in words rather than on two buttons
+    expect(within(race).getByText('On your own')).toBeInTheDocument();
+  });
 
-    const hrefs = screen.getAllByRole('link', { name: /^play/i }).map((a) => a.getAttribute('href'));
-    expect(hrefs).toContain('/app/games/race');
+  it('puts one game forward above the shelf, and does not say it twice', async () => {
+    signIn();
+    renderApp(<Games />, ['/app/games']);
+    await screen.findAllByRole('link', { name: 'Play' });
+    expect(screen.getAllByText('Featured')).toHaveLength(1);
+    for (const name of ['Peyvok', 'Rhyming Words', 'Typing Race']) expect(screen.getAllByRole('heading', { name })).toHaveLength(1);
+  });
+
+  it('shows only the games played the chosen way, the featured one among them', async () => {
+    signIn();
+    renderApp(<Games />, ['/app/games']);
+    await screen.findAllByRole('link', { name: 'Play' });
+    const filter = screen.getByRole('group', { name: 'Games' });
+    expect(within(filter).getByRole('button', { name: 'All' })).toHaveAttribute('aria-pressed', 'true');
+
+    await userEvent.click(within(filter).getByRole('button', { name: 'With friends' }));
+    expect(within(filter).getByRole('button', { name: 'With friends' })).toHaveAttribute('aria-pressed', 'true');
+    // the race is played alone; the other two have a page for playing online
+    expect(screen.queryByRole('heading', { name: 'Typing Race' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Rhyming Words' })).toBeInTheDocument();
+    expect(screen.queryByText('Featured')).toBeNull();
+
+    await userEvent.click(within(filter).getByRole('button', { name: 'On your own' }));
+    expect(screen.getByRole('heading', { name: 'Typing Race' })).toBeInTheDocument();
   });
 
   /**
@@ -95,15 +110,13 @@ describe('Games hub', () => {
     expect(screen.getByRole('link', { name: 'Create your account' })).toHaveAttribute('href', '/register');
   });
 
-  it('still says what each game has, and that it needs an account', async () => {
+  it('still says what each game is, and gives the way to an account on each', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
 
-    // knowing there is more here once you sign up is the reason to sign up
-    // two modes each for Peyvok and Rhyme, one for the race
-    expect(await screen.findAllByText(/needs an account/)).toHaveLength(5);
-    expect(screen.getAllByText('Play solo').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Play online').length).toBeGreaterThan(0);
+    // knowing what is here once you sign up is the reason to sign up
+    for (const name of ['Peyvok', 'Rhyming Words', 'Typing Race']) expect(await screen.findByRole('heading', { name })).toBeInTheDocument();
+    for (const link of screen.getAllByRole('link', { name: 'Sign in to play' })) expect(link).toHaveAttribute('href', '/login');
   });
 
   /**
@@ -123,23 +136,38 @@ describe('Games hub', () => {
     expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Reimwörter' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Schreibwettlauf' })).toBeInTheDocument();
-    // the mode hints under each box, and the badge
-    expect(screen.getAllByText('Allein spielen').length).toBeGreaterThan(0);
+    // the filter, and the way in a visitor is given
+    expect(screen.getByRole('button', { name: 'Mit Freunden' })).toBeInTheDocument();
     expect(screen.getAllByText('Zum Spielen anmelden').length).toBeGreaterThan(0);
   });
 
-  it('translates the mode chooser too', async () => {
+  it('translates the ways in too', async () => {
     localStorage.setItem('hevalo_locale', 'tr');
     signIn();
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
 
     // the game's name is the same in every language, so wait for the Turkish around it
     const wordle = (await screen.findByRole('heading', { name: 'Peyvok' })).closest('article')!;
-    await userEvent.click(await within(wordle).findByRole('button', { name: 'Oyna' }));
+    expect(await within(wordle).findByRole('link', { name: 'Tek başına oyna' })).toHaveAttribute('href', '/app/games/peyvok');
+    const race = screen.getByRole('heading', { name: 'Yazma yarışı' }).closest('article')!;
+    expect(within(race).getByRole('link', { name: 'Oyna' })).toHaveAttribute('href', '/app/games/race');
+  });
+});
 
-    expect(await screen.findByText('Nasıl oynamak istersin?')).toBeInTheDocument();
-    expect(screen.getByText('Günün bulmacası ve üç zorlukta sınırsız alıştırma turu.')).toBeInTheDocument();
+describe('the game put forward', () => {
+  const game = (id: GameEntry['id'], ready: boolean): GameEntry => ({ id, nameKey: 'games.title', lineKey: 'games.title', bodyKey: 'games.title', ways: [], company: ['solo'], ready });
+  const DAY = 86_400_000;
+
+  it('is one that can be played, a different one each day and the same one all day', () => {
+    const games = [game('peyvok', true), game('last-letter', false), game('rhyme', true), game('race', true)];
+    const picks = [0, 1, 2, 3].map((day) => featuredGame(games, day * DAY)!.id);
+    expect(picks).toEqual(['peyvok', 'rhyme', 'race', 'peyvok']);
+    expect(featuredGame(games, DAY + 1)!.id).toBe(featuredGame(games, 2 * DAY - 1)!.id);
+  });
+
+  it('is nothing while nothing can be played', () => {
+    expect(featuredGame([game('last-letter', false)], 0)).toBeNull();
+    expect(featuredGame([], 0)).toBeNull();
   });
 });
 
@@ -149,11 +177,11 @@ describe('Join with a code, on the Games hub', () => {
     renderApp(<Games />, ['/app/games']);
     const card = await screen.findByRole('button', { name: /^Join with a code/ });
     expect(card).toHaveTextContent('Got a code from a friend? Type it in and you’re in their game.');
-    // ahead of the games themselves, where somebody holding a code looks first
-    const firstGame = screen.getByRole('heading', { name: 'Peyvok' });
-    expect(card.compareDocumentPosition(firstGame) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // ahead of the shelf of games, where somebody holding a code looks first
+    const shelf = screen.getByRole('group', { name: 'Games' });
+    expect(card.compareDocumentPosition(shelf) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     // the session lands before the sheet is opened, so it shows the boxes and not the gate
-    await screen.findAllByRole('button', { name: /^play$/i });
+    await screen.findAllByRole('link', { name: 'Play' });
     await userEvent.click(card);
     const sheet = await screen.findByRole('dialog', { name: 'Join with a code' });
     expect(within(sheet).getByLabelText('Join with a code')).toBeInTheDocument();

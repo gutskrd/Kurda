@@ -34,21 +34,23 @@ describe('Learn’s games list', () => {
     server({ 'memory-thief': true });
     renderApp(<Games />, ['/app/games']);
     const card = (await screen.findByRole('heading', { name: 'The Memory Thief' })).closest('article')!;
-    expect(card).toHaveClass('game-tile');
+    expect(card).toHaveClass('gp-card');
     expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/memory-thief');
     // the games that were there are all still there
     expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
   });
 
-  it('shows it as coming soon, with no way in, while there is not enough approved content in the learner’s Kurdish', async () => {
+  it('names it under the shelf as coming soon, with no way in, while there is not enough approved content in the learner’s Kurdish', async () => {
     server({ 'memory-thief': false });
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
     // once the count has come back, and said no
-    const card = (await screen.findByRole('heading', { name: 'The Memory Thief' })).closest('article')!;
+    const soon = await screen.findByRole('region', { name: 'Coming soon' });
+    const card = within(soon).getByRole('heading', { name: 'The Memory Thief' }).closest('article')!;
     expect(card).toHaveClass('is-soon');
-    expect(within(card).getByText('Coming soon')).toBeInTheDocument();
-    expect(within(card).queryByRole('link', { name: 'Play' })).toBeNull();
+    expect(within(soon).queryByRole('link')).toBeNull();
+    // and it is not a card on the shelf
+    expect(card).not.toHaveClass('gp-card');
   });
 
   it('lists The Last Letter where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
@@ -62,10 +64,10 @@ describe('Learn’s games list', () => {
     server({ 'memory-thief': true }, false);
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByRole('heading', { name: 'The Memory Thief' })).toBeInTheDocument();
-    // still listed, as coming soon, after the games that can be played
-    const soon = screen.getByRole('heading', { name: 'The Last Letter' }).closest('article')!;
-    expect(within(soon).getByText('Coming soon')).toBeInTheDocument();
-    expect(within(soon).queryByRole('link', { name: 'Play' })).toBeNull();
+    // still named, as coming soon, after the games that can be played
+    const soon = screen.getByRole('region', { name: 'Coming soon' });
+    expect(within(soon).getByRole('heading', { name: 'The Last Letter' })).toBeInTheDocument();
+    expect(within(soon).queryByRole('link')).toBeNull();
   });
 
   /*

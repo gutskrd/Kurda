@@ -246,7 +246,7 @@ describe('Learn’s games list', () => {
     server(session([item()]), () => ({}));
     renderApp(<Games />, ['/app/games']);
     const card = (await screen.findByRole('heading', { name: 'The Memory Thief' })).closest('article')!;
-    expect(card).toHaveClass('game-tile');
+    expect(card).toHaveClass('gp-card');
     expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/memory-thief');
   });
 });
