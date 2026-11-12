@@ -298,6 +298,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', 
       await pool.query(`UPDATE game_seen SET last_seen_at = now() - interval '30 days' WHERE user_id = $1 AND item_key = $2`, [sleuthId, `gc:${caseId}:accuse`]);
       const third = (await call('POST', '/games/solo/sessions', sleuth, { game: 'detective', dialect: 'kmr', difficulty: 'beginner' })).json();
       expect(third.board).toMatchObject({ hintsUsed: 0 });
+
+      // a round finished empty earned nothing to pay its hint from: the hint is still owed in the next round of the case
+      expect((await call('POST', `/games/solo/sessions/${third.id}/hints`, sleuth, { evidence: 'where' })).statusCode).toBe(200);
+      const empty = (await call('POST', `/games/solo/sessions/${third.id}/finish`, sleuth)).json();
+      expect(empty).toMatchObject({ correct: 0, learningCounted: false, xp: 0 });
+      const fourth = (await call('POST', '/games/solo/sessions', sleuth, { game: 'detective', dialect: 'kmr', difficulty: 'beginner' })).json();
+      expect(fourth.board).toMatchObject({ hintsUsed: 1, hintsLeft: DETECTIVE_HINTS - 1 });
     });
 
     it('seeds a starter case once, as an unreviewed draft made of the course’s own lines', async () => {

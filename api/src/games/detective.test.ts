@@ -177,10 +177,10 @@ describe('the starter case', () => {
 
 describe('hints spent on a round given up', () => {
   const game = new DetectiveGame(sources([published(2)]));
-  /** A database whose last round of the case was left unfinished with these hints spent, or finished. */
-  const lastRound = (spent: unknown, finished: boolean) =>
+  /** A database whose last round of the case spent these hints, and did or did not pay for them at its finish. */
+  const lastRound = (spent: unknown, paid: boolean) =>
     ({
-      query: async (sql: string) => (sql.includes("meta->'spent'") ? { rows: [{ spent, finished }] } : { rows: [] }),
+      query: async (sql: string) => (sql.includes("meta->'spent'") ? { rows: [{ spent, paid }] } : { rows: [] }),
     }) as never;
 
   it('carry into the next round of the case: its cards translated, its hints read, their cost taken', async () => {
@@ -191,9 +191,17 @@ describe('hints spent on a round given up', () => {
     expect(game.deduction(round.meta)).toBe(2 * DETECTIVE_HINT_XP);
   });
 
-  it('do not carry from a round that was finished, which paid for them', async () => {
+  it('do not carry from a round that was finished and counted, which paid for them', async () => {
     const round = (await game.build(ask(), lastRound({ used: 2, read: 1, translated: ['away'] }, true)))!;
     expect(game.board(round.items, round.meta, states(3))!.hintsUsed).toBe(0);
+  });
+
+  it('are asked of the database as paid only for a round that was finished and counted', async () => {
+    // a round finished empty earned nothing to take its hints from: it must not read as paid
+    let asked = '';
+    const db = { query: async (sql: string) => ((asked = sql), { rows: [] }) } as never;
+    expect(await carriedHints(db, 'u1', 'kmr', 'case1')).toBeNull();
+    expect(asked).toContain('finished_at IS NOT NULL AND learning_counted IS TRUE');
   });
 
   it('are read with care: never more than the case has', async () => {
