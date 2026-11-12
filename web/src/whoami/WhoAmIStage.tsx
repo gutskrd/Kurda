@@ -29,9 +29,13 @@ import type { MessageKey } from '../i18n/en';
  *   word and its meaning.
  * - The table: every player as a small forehead, with what a viewer may read
  *   on it, their points and questions, and whose turn it is.
- * - The deck of questions, in Kurdish: tapping one shows what it means in the
- *   reader's language; Ask asks it, and the card's answer is stamped on it in
- *   the dialect's own yes or no (Erê / Na, بەڵێ / نەخێر).
+ * - The questions, in Kurdish. The few the rules suggest asking next come
+ *   first, under a label of their own: on one phone as keys a thumb wide,
+ *   each with what it means under it, picked with one tap; online as the
+ *   first rows of the list. In the list, Ask asks a question, and the card's
+ *   answer is stamped on it in the dialect's own yes or no (Erê / Na,
+ *   بەڵێ / نەخێر). A beginner reads what every question means under it; at
+ *   the other levels a tap shows it.
  * - The tiles, the words a player could be: pick one, then Guess. A tile
  *   already guessed wrong is crossed out.
  * - The two answers a friend gives to somebody else's question, and the
@@ -100,22 +104,33 @@ function plainDeer(width: number): string {
 }
 
 /**
- * A sentence in the reader's language with one Kurdish word in it ("You are
- * {word}!"). The sentence keeps its own word order, and the word is marked as
- * the Kurdish it is, so it is read and laid out as Kurdish wherever it falls.
+ * A sentence in the reader's language with Kurdish in it ("Your friends said
+ * {said}, but the card says {truth}."). The sentence keeps its own word
+ * order, and each Kurdish word is marked as the Kurdish it is, so it is read
+ * and laid out as Kurdish wherever it falls.
  */
-export function WithWord({ text, word, dialect }: { text: string; word: string; dialect: GameDialect }): React.JSX.Element {
+export function WithWords({ text, words, dialect }: { text: string; words: Readonly<Record<string, string>>; dialect: GameDialect }): React.JSX.Element {
   const script = dialectDirection(dialect);
-  const [before, ...after] = text.split('{word}');
+  // split at the holes and keep their names: every second part is a hole
+  const parts = text.split(/\{(\w+)\}/);
   return (
     <>
-      {before}
-      <span className="wa-word" lang={script.lang} dir={script.dir}>
-        {word}
-      </span>
-      {after.join('')}
+      {parts.map((part, i) =>
+        i % 2 === 0 ? (
+          part
+        ) : (
+          <span key={i} className="wa-word" lang={script.lang} dir={script.dir}>
+            {words[part] ?? ''}
+          </span>
+        ),
+      )}
     </>
   );
+}
+
+/** The same for a sentence with one Kurdish word in it ("You are {word}!"). */
+export function WithWord({ text, word, dialect }: { text: string; word: string; dialect: GameDialect }): React.JSX.Element {
+  return <WithWords text={text} words={{ word }} dialect={dialect} />;
 }
 
 /** Hevalo as a silhouette, the card on his forehead: a question mark until the word may be read. */
@@ -261,23 +276,40 @@ export function Stamp({ dialect, answer }: { dialect: GameDialect; answer: boole
 /**
  * One question on its own, in Kurdish: tapping it shows what it means in the
  * reader's language. `hint` says so under it, where the question is the thing
- * on the screen; on the verdict's card it is left out.
+ * on the screen; on the verdict's card it is left out. With `shown` the
+ * meaning is under it from the start and nothing is tapped: where a screen is
+ * read by a room, nobody should have to know there was something to press.
  */
 export function QuestionCard({
   dialect,
   question,
   large = false,
   hint = true,
+  shown = false,
 }: {
   dialect: GameDialect;
   question: WhoAmIQuestion;
   large?: boolean;
   hint?: boolean;
+  shown?: boolean;
 }): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
   const script = dialectDirection(dialect);
   const [open, setOpen] = useState(false);
+  const meaning = meaningIn(question.meanings, locale) ?? question.meanings.en;
+  if (shown) {
+    return (
+      <div className={`wa-asked${large ? ' is-large' : ''}`}>
+        <p className="wa-asked-text">
+          <span lang={script.lang} dir={script.dir}>
+            {question.ku}
+          </span>{' '}
+          <span className="wa-q-meaning">{meaning}</span>
+        </p>
+      </div>
+    );
+  }
   return (
     <div className={`wa-asked${large ? ' is-large' : ''}`}>
       <button type="button" className="wa-asked-text" aria-expanded={open} onClick={() => setOpen(!open)}>
@@ -287,7 +319,7 @@ export function QuestionCard({
         {open && (
           <>
             {' '}
-            <span className="wa-q-meaning">{meaningIn(question.meanings, locale) ?? question.meanings.en}</span>
+            <span className="wa-q-meaning">{meaning}</span>
           </>
         )}
       </button>
@@ -296,43 +328,54 @@ export function QuestionCard({
   );
 }
 
-/** The deck of questions: tap one to see what it means, Ask to ask it; asked ones carry the card's answer, stamped. */
-export function QuestionDeck({
+/**
+ * Questions as rows, in the order given: each in Kurdish with what it means
+ * (under it where `meanings` says so, at a tap otherwise), and at its end the
+ * card's answer as a stamp once it is asked, or Ask while one may be asked.
+ */
+export function QuestionList({
   dialect,
   questions,
   asked,
+  meanings,
   canAsk,
   disabled,
   onAsk,
+  labelledBy,
 }: {
   dialect: GameDialect;
   questions: readonly WhoAmIQuestion[];
   asked: readonly WhoAmIAsked[];
-  /** a question may be asked now; when not, the deck is the player's notes, to read */
+  /** every question's meaning is under it without a tap, as a beginner reads them */
+  meanings: boolean;
+  /** a question may be asked now; when not, the rows are the player's notes, to read */
   canAsk: boolean;
   disabled: boolean;
   onAsk: (question: string) => void;
+  /** the heading these rows stand under, where they are one group of several */
+  labelledBy?: string;
 }): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
-  const title = useId();
   const script = dialectDirection(dialect);
   const [open, setOpen] = useState<string | null>(null);
   const answers = new Map(asked.map((a) => [a.question, a.answer]));
-  // the questions asked first, in the order they were asked; the rest after
-  const order = [...asked.map((a) => questions.find((q) => q.id === a.question)).filter((q): q is WhoAmIQuestion => !!q), ...questions.filter((q) => !answers.has(q.id))];
   return (
-    <section className="wa-deck" aria-labelledby={title}>
-      <h2 id={title} className="wa-title">
-        {t(canAsk ? 'games.whoAmI.questions' : 'games.whoAmI.yourQuestions')}
-      </h2>
-      <p className="muted wa-hint">{t('games.whoAmI.tapToSee')}</p>
-      <ul className="wa-questions">
-        {order.map((q) => {
-          const answer = answers.get(q.id);
-          const shown = open === q.id;
-          return (
-            <li key={q.id} className={`wa-q${answer !== undefined ? ' is-asked' : ''}`}>
+    <ul className="wa-questions" aria-labelledby={labelledBy}>
+      {questions.map((q) => {
+        const answer = answers.get(q.id);
+        const shown = open === q.id;
+        const meaning = meaningIn(q.meanings, locale) ?? q.meanings.en;
+        return (
+          <li key={q.id} className={`wa-q${answer !== undefined ? ' is-asked' : ''}`}>
+            {meanings ? (
+              <p className="wa-q-text">
+                <span lang={script.lang} dir={script.dir}>
+                  {q.ku}
+                </span>{' '}
+                <span className="wa-q-meaning">{meaning}</span>
+              </p>
+            ) : (
               <button type="button" className="wa-q-text" aria-expanded={shown} onClick={() => setOpen(shown ? null : q.id)}>
                 <span lang={script.lang} dir={script.dir}>
                   {q.ku}
@@ -340,22 +383,113 @@ export function QuestionDeck({
                 {shown && (
                   <>
                     {' '}
-                    <span className="wa-q-meaning">{meaningIn(q.meanings, locale) ?? q.meanings.en}</span>
+                    <span className="wa-q-meaning">{meaning}</span>
                   </>
                 )}
               </button>
-              {answer !== undefined ? (
-                <Stamp dialect={dialect} answer={answer} />
-              ) : canAsk ? (
-                <Button size="sm" variant="secondary" disabled={disabled} onClick={() => onAsk(q.id)}>
-                  {t('games.whoAmI.ask')}
-                </Button>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
+            )}
+            {answer !== undefined ? (
+              <Stamp dialect={dialect} answer={answer} />
+            ) : canAsk ? (
+              <Button size="sm" variant="secondary" disabled={disabled} onClick={() => onAsk(q.id)}>
+                {t('games.whoAmI.ask')}
+              </Button>
+            ) : null}
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
+/** A player's questions in the order their list is read: those asked first, as they were asked, and the rest after. */
+export function askedFirst(questions: readonly WhoAmIQuestion[], asked: readonly WhoAmIAsked[]): WhoAmIQuestion[] {
+  const done = new Set(asked.map((a) => a.question));
+  return [...asked.flatMap((a) => questions.filter((q) => q.id === a.question)), ...questions.filter((q) => !done.has(q.id))];
+}
+
+/**
+ * The deck of questions, for a player on a screen of their own. While one may
+ * be asked, the few the rules suggest come first under their own label, so a
+ * learner who does not know where to begin is shown; then the rest, those
+ * asked carrying the card's answer. When nothing may be asked the deck is the
+ * player's notes, and nothing in it is suggested.
+ */
+export function QuestionDeck({
+  dialect,
+  questions,
+  asked,
+  suggested,
+  meanings,
+  canAsk,
+  disabled,
+  onAsk,
+}: {
+  dialect: GameDialect;
+  questions: readonly WhoAmIQuestion[];
+  asked: readonly WhoAmIAsked[];
+  /** the questions to ask next, best first, by id (the rules' own choice) */
+  suggested: readonly string[];
+  /** every question's meaning is under it without a tap */
+  meanings: boolean;
+  /** a question may be asked now; when not, the deck is the player's notes, to read */
+  canAsk: boolean;
+  disabled: boolean;
+  onAsk: (question: string) => void;
+}): React.JSX.Element {
+  const t = useT();
+  const title = useId();
+  const label = useId();
+  const first = canAsk ? suggested.flatMap((id) => questions.filter((q) => q.id === id)) : [];
+  const rest = askedFirst(questions, asked).filter((q) => !first.includes(q));
+  return (
+    <section className="wa-deck" aria-labelledby={title}>
+      <h2 id={title} className="wa-title">
+        {t(canAsk ? 'games.whoAmI.questions' : 'games.whoAmI.yourQuestions')}
+      </h2>
+      {!meanings && <p className="muted wa-hint">{t('games.whoAmI.tapToSee')}</p>}
+      {first.length > 0 && (
+        <>
+          <h3 id={label} className="wa-label">
+            {t('games.whoAmI.suggested')}
+          </h3>
+          <QuestionList dialect={dialect} questions={first} asked={asked} meanings={meanings} canAsk={canAsk} disabled={disabled} onAsk={onAsk} labelledBy={label} />
+        </>
+      )}
+      {rest.length > 0 && <QuestionList dialect={dialect} questions={rest} asked={asked} meanings={meanings} canAsk={canAsk} disabled={disabled} onAsk={onAsk} />}
     </section>
+  );
+}
+
+/**
+ * The questions to ask next, for a phone passed round a room: each a key a
+ * thumb wide, the Kurdish large and what it means under it, there without a
+ * tap, since a beginner picks by the meaning. One tap picks a question; what
+ * follows (reading it out, turning the phone round) is the page's own.
+ */
+export function SuggestedQuestions({ dialect, questions, onPick }: { dialect: GameDialect; questions: readonly WhoAmIQuestion[]; onPick: (question: string) => void }): React.JSX.Element {
+  const t = useT();
+  const { locale } = useI18n();
+  const label = useId();
+  const script = dialectDirection(dialect);
+  return (
+    <div className="wa-suggest">
+      <h3 id={label} className="wa-label">
+        {t('games.whoAmI.suggested')}
+      </h3>
+      <ul className="wa-suggest-list" aria-labelledby={label}>
+        {questions.map((q) => (
+          <li key={q.id}>
+            <button type="button" className="wa-suggest-q" onClick={() => onPick(q.id)}>
+              <span className="wa-suggest-ku" lang={script.lang} dir={script.dir}>
+                {q.ku}
+              </span>{' '}
+              <span className="wa-q-meaning">{meaningIn(q.meanings, locale) ?? q.meanings.en}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -367,6 +501,7 @@ export function GuessTiles({
   canGuess,
   busy,
   onGuess,
+  heading,
   children,
 }: {
   dialect: GameDialect;
@@ -377,6 +512,8 @@ export function GuessTiles({
   /** a move is on its way: nothing more is taken until it has answered */
   busy: boolean;
   onGuess: (tile: string) => void;
+  /** what stands over the tiles, where "Who are you?" is already the screen's own headline */
+  heading?: string;
   /** what else the turn offers beside Guess (passing it on) */
   children?: ReactNode;
 }): React.JSX.Element {
@@ -389,7 +526,7 @@ export function GuessTiles({
   return (
     <section className="wa-guess" aria-labelledby={title}>
       <h2 id={title} className="wa-title">
-        {t('games.whoAmI.guessTitle')}
+        {heading ?? t('games.whoAmI.guessTitle')}
       </h2>
       <div className="wa-tiles" role="radiogroup" aria-labelledby={title}>
         {tiles.map((tile) => {
@@ -465,13 +602,15 @@ export function AnswerPanel({ dialect, label, disabled, onAnswer }: { dialect: G
  * What the card itself said to a question: who asked what, the card's yes or
  * no, and under it whatever the page adds (how each friend answered, whether
  * the room was right). A card of the answer's own colour, so the truth is
- * never mistaken for one more opinion at the table.
+ * never mistaken for one more opinion at the table. `shown` puts what the
+ * question means under it without a tap, as on a phone handed back and forth.
  */
 export function VerdictCard({
   dialect,
   by,
   question,
   truth,
+  shown = false,
   children,
 }: {
   dialect: GameDialect;
@@ -479,6 +618,7 @@ export function VerdictCard({
   by: string;
   question: WhoAmIQuestion;
   truth: boolean;
+  shown?: boolean;
   children?: ReactNode;
 }): React.JSX.Element {
   const t = useT();
@@ -487,7 +627,7 @@ export function VerdictCard({
   return (
     <section className={`wa-verdict${truth ? ' is-yes' : ' is-no'}`} aria-labelledby={title}>
       <p className="wa-verdict-by">{by}</p>
-      <QuestionCard key={question.id} dialect={dialect} question={question} hint={false} />
+      <QuestionCard key={question.id} dialect={dialect} question={question} hint={false} shown={shown} />
       <h2 id={title} className="wa-verdict-says">
         <span>{t('games.whoAmI.cardSays')}</span> <Stamp dialect={dialect} answer={truth} />
         {own && (
