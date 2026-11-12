@@ -34,7 +34,7 @@ import { IMPOSTOR_FAN_ANGLES, IMPOSTOR_FAN_FOOT, impostorEmblemSvg, impostorMask
 import { Drawing, checkSize, n, prefixFor, tint } from './svg.js';
 
 /** The games that have an emblem, by the name each goes by on the Games page. */
-export const GAME_EMBLEMS = ['peyvok', 'rhyme', 'race', 'memory-thief', 'what-would-you-say', 'detective', 'last-letter', 'impostor', 'who-am-i'] as const;
+export const GAME_EMBLEMS = ['peyvok', 'rhyme', 'race', 'memory-thief', 'detective', 'last-letter', 'impostor', 'who-am-i'] as const;
 export type GameEmblem = (typeof GAME_EMBLEMS)[number];
 
 export interface GameArtOptions {
@@ -406,58 +406,6 @@ const memoryThief: EmblemDef = {
   ],
 };
 
-/** What Would You Say?: something is said to you; after a beat the answer comes up under it, and is marked right. */
-const whatWouldYouSay: EmblemDef = {
-  title: 'What Would You Say?',
-  loopMs: 5200,
-  layers: [
-    {
-      draw: (dr) => {
-        form(dr, `${rr(8, 14, 74, 40, 15)}M22 48L40 52L16 68Z`, tones(TEAL), 4.5, 2.4);
-        line(dr, 'M24 29H64', tint(TEAL, 0.62), 6);
-        line(dr, 'M24 42H48', tint(TEAL, 0.62), 6);
-      },
-      pivot: [16, 68],
-      // what is said to you is always there: it leans in as it is said, and waits
-      keys: [[0, {}], [0.04, {}, 'hold'], [0.1, { r: -5, s: 1.05 }, 'out'], [0.18, { r: 1.5, s: 1 }, 'inOut'], [0.24, { r: 0 }, 'inOut'], [1, {}, 'hold']],
-    },
-    {
-      draw: (dr) => form(dr, `${rr(38, 62, 74, 40, 15)}M98 96L104 114L80 100Z`, tones(GOLD), 4.5, 2.4),
-      pivot: [104, 114],
-      keys: [
-        [0, { s: 0, o: 0, y: 8 }],
-        [0.36, {}, 'hold'],
-        [0.46, { s: 1, o: 1, y: 0 }, 'back'],
-        [0.64, {}, 'hold'],
-        [0.68, { y: -3.6 }, 'out'],
-        [0.73, { y: 0 }, 'in'],
-        [0.76, { sx: 1.03, sy: 0.96 }, 'out'],
-        [0.8, { s: 1 }, 'out'],
-        [0.92, {}, 'hold'],
-        [0.975, { o: 0, s: 0.92 }, 'in'],
-        [1, { s: 0, y: 8 }, 'hold'],
-      ],
-    },
-    {
-      // the tick: stamped on, a little crooked, then straight
-      draw: (dr) => line(dr, 'M60 82L70 92L90 72', '#fffaf1', 8),
-      pivot: [75, 82],
-      keys: [
-        [0, { s: 0, o: 0, r: -25 }],
-        [0.5, {}, 'hold'],
-        [0.57, { s: 1.25, o: 1, r: 5 }, 'out'],
-        [0.62, { s: 1, r: 0 }, 'inOut'],
-        [0.64, {}, 'hold'],
-        [0.68, { y: -3.6 }, 'out'],
-        [0.73, { y: 0 }, 'in'],
-        [0.92, {}, 'hold'],
-        [0.975, { o: 0, s: 0.92 }, 'in'],
-        [1, { s: 0, r: -25 }, 'hold'],
-      ],
-    },
-  ],
-};
-
 /**
  * Kurdish Detective: the glass comes in from the corner, looks at one card,
  * finds nothing and moves on; over the second it stops, and what it was
@@ -617,7 +565,6 @@ const EMBLEMS: Readonly<Record<GameEmblem, EmblemDef>> = {
   rhyme,
   race,
   'memory-thief': memoryThief,
-  'what-would-you-say': whatWouldYouSay,
   detective,
   'last-letter': lastLetter,
   impostor,
@@ -629,7 +576,6 @@ const TONES: Readonly<Record<GameEmblem, string>> = {
   rhyme: PINK,
   race: ORANGE,
   'memory-thief': GOLD,
-  'what-would-you-say': TEAL,
   detective: SKY,
   'last-letter': ORANGE,
   impostor: PURPLE,

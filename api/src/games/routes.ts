@@ -18,9 +18,11 @@
  *   POST /games/impostor/couch/deck                    { dialect, difficulty, category?, count? }: an evening's cards (10 a minute)
  *
  * The games played alone: Build a Kurdish Sentence, The Memory Thief, Hear
- * It, Find It, What Would You Say? and Kurdish Detective, each an engine
- * registered with the solo round, and each counting its own availability
- * where rows alone do not say it.
+ * It, Find It and Kurdish Detective, each an engine registered with the solo
+ * round, and each counting its own availability where rows alone do not say
+ * it. What Would You Say? is no longer part of Hevalo: it has no engine here,
+ * so a round of it cannot be made, and a round left in the table is not
+ * opened.
  *
  * For the people who edit lessons and stories (content.edit), and who publish
  * them (content.publish), behind the admin 2FA gate like every staff route:
@@ -33,9 +35,9 @@
  *   POST   /admin/game-content/:id/(publish|unpublish|archive)  { lockVersion }   (content.publish)
  *   POST   /admin/game-content/:id/review               { approved, note?, lockVersion }   (content.publish)
  *   DELETE /admin/game-content/:id?lockVersion=
- *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories' | 'vocabulary' | 'conversations', dialect, limit? }: drafts from approved content
+ *   POST   /admin/game-content/import                   { from: 'lessons' | 'stories' | 'vocabulary', dialect, limit? }: drafts from approved content
  *   GET    /admin/game-content/vocabulary?dialect&q&limit   published vocabulary, for a card editor to pick its Kurdish from
- *   GET    /admin/game-content/lines?dialect=&q=         published lines to copy into a case or a scene
+ *   GET    /admin/game-content/lines?dialect=&q=         published lines to copy into a case
  *   GET    /admin/game-content/words?dialect&q&from      approved words to make a card of (word-cards.ts)
  *   POST   /admin/game-content/from-word                { kind, dialect, ref, level, … }: an identity as a draft, its Kurdish copied
  */
@@ -67,7 +69,6 @@ import { TrustedSources } from './sources.js';
 import { BuildSentenceGame } from './build-sentence.js';
 import { MemoryThiefGame } from './memory-thief.js';
 import { HearItGame } from './hear-it.js';
-import { WhatWouldYouSayGame } from './what-would-you-say.js';
 import { DetectiveGame } from './detective.js';
 import { registerGameClipRoute } from './clips.js';
 import { GameAvailabilityService } from './availability.js';
@@ -111,7 +112,7 @@ const updateContentBody = lockBody.extend({ level: z.number().int().min(1).max(5
 const reviewBody = lockBody.extend({ approved: z.boolean(), note: z.string().max(GAME_CONTENT_REVIEW_NOTE_MAX).nullish() });
 const deleteQuery = z.object({ lockVersion: z.coerce.number().int().min(0) });
 const importBody = z.object({
-  from: z.enum(['lessons', 'stories', 'vocabulary', 'conversations']),
+  from: z.enum(['lessons', 'stories', 'vocabulary']),
   dialect: z.enum(GAME_DIALECTS),
   limit: z.number().int().min(1).max(2000).optional(),
 });
@@ -173,7 +174,6 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
   solo.register(sentences);
   solo.register(memory);
   solo.register(hearing);
-  solo.register(new WhatWouldYouSayGame(sources));
   solo.register(new DetectiveGame(sources));
   const whoAmI = new WhoAmIGame(sources);
   solo.register(whoAmI);
@@ -318,7 +318,6 @@ export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDep
   app.post('/admin/game-content/import', { schema: { body: importBody }, preHandler: canEdit }, async (req) => {
     const b = req.body as z.infer<typeof importBody>;
     if (b.from === 'vocabulary') return content.importStarterWordCards(b.dialect, context(req), b.limit);
-    if (b.from === 'conversations') return content.importScenarios(b.dialect, context(req), b.limit);
     return b.from === 'lessons'
       ? content.importLessonSentences(b.dialect, context(req), b.limit)
       : content.importStoryPassages(b.dialect, context(req), b.limit);

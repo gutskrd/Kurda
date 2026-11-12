@@ -918,7 +918,7 @@ describe('the word sets’ pictures', () => {
 
 describe('the games’ emblems', () => {
   // every game Learn's Games page can list: the three with pages of their own, and the registry's games
-  const LISTED = ['peyvok', 'rhyme', 'race', 'memory-thief', 'what-would-you-say', 'detective', 'last-letter', 'impostor', 'who-am-i'];
+  const LISTED = ['peyvok', 'rhyme', 'race', 'memory-thief', 'detective', 'last-letter', 'impostor', 'who-am-i'];
 
   it('draws a valid, self-contained emblem for every game, small and large', () => {
     for (const size of [40, 84, 148]) for (const game of GAME_EMBLEMS) checkSvg(gameEmblemSvg({ game, size }), size);

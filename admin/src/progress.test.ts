@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   badgeTierName,
+  gameName,
   holdsRankTools,
   rankLine,
   rankTierName,
@@ -35,6 +36,14 @@ describe('names', () => {
     expect(rankLine('ciya', 2)).toBe('Çiya II');
     expect(rankLine('sterk', 1)).toBe('Stêrk');
     expect(rankLine(null, null, { played: 2, of: 5 })).toBe('Placing 2/5');
+  });
+
+  it('names a game on a stored row, one that is no longer played as it was called, and never a blank', () => {
+    expect(gameName('impostor')).toBe('Kurdish Impostor');
+    expect(gameName('bluff')).toBe('Kurdish Bluff (no longer played)');
+    expect(gameName('what-would-you-say')).toBe('What Would You Say? (no longer played)');
+    // a name nobody has heard of is shown as it is stored
+    expect(gameName('no-such-game')).toBe('no-such-game');
   });
 
   it('names seasons, badge tiers and what a tier needs', () => {

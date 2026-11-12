@@ -74,7 +74,7 @@ const LINES: Line[] = [
     before: { name: 'Hamo', text: 'Xezo, binêre!', meaning: 'Xezo, look!' },
     places: [
       { kind: 'conversation', label: 'Unit 3 · Lesson 2 · conversation ‘Nexşeya kevn’, line 4', status: 'published', voice: 'xezo', ref: null },
-      { kind: 'game', label: 'What Would You Say? · ‘In the attic’ · the line heard', status: 'draft', voice: 'xezo', ref: null },
+      { kind: 'game', label: 'Kurdish Detective · case ‘In the attic’ · overheard 1', status: 'draft', voice: 'xezo', ref: null },
     ],
   }),
   line({
@@ -193,7 +193,7 @@ describe('recording one person’s lines', () => {
     expect(within(here).getByText('This map is old!')).toBeInTheDocument();
     // where it comes from, then every place it is said
     expect(within(here).getAllByText('Unit 3 · Lesson 2 · conversation ‘Nexşeya kevn’, line 4')).toHaveLength(2);
-    expect(within(here).getByText('What Would You Say? · ‘In the attic’ · the line heard — draft')).toBeInTheDocument();
+    expect(within(here).getByText('Kurdish Detective · case ‘In the attic’ · overheard 1 — draft')).toBeInTheDocument();
     expect(within(here).getByText('Said in 2 places: one take serves them all')).toBeInTheDocument();
     // every page was read: the list has the line from the second one
     expect(screen.getByRole('navigation', { name: 'Lines' })).toHaveTextContent('Ez li malê me.');

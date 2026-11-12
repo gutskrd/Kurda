@@ -22,7 +22,7 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
  */
 
 /** The screens the learning games open on (root stack routes). */
-export type LearnGameRoute = 'MemoryThief' | 'WhatWouldYouSay' | 'Detective' | 'LastLetter' | 'Impostor' | 'WhoAmI';
+export type LearnGameRoute = 'MemoryThief' | 'Detective' | 'LastLetter' | 'Impostor' | 'WhoAmI';
 
 export interface PhoneGame {
   route: LearnGameRoute;
@@ -33,7 +33,6 @@ export interface PhoneGame {
 
 export const PHONE_LEARN_GAMES: Partial<Record<LearnGameId, PhoneGame>> = {
   'memory-thief': { route: 'MemoryThief', name: 'games.memory.name', line: 'games.card.memory' },
-  'what-would-you-say': { route: 'WhatWouldYouSay', name: 'games.say.name', line: 'games.card.say' },
   detective: { route: 'Detective', name: 'games.detective.name', line: 'games.card.detective' },
   'last-letter': { route: LAST_LETTER_CARD.route, name: LAST_LETTER_CARD.nameKey, line: LAST_LETTER_CARD.lineKey },
   // Kurdish Impostor is listed where /games/availability finds enough approved cards for the learner's Kurdish

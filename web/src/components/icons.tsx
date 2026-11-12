@@ -109,15 +109,7 @@ import { ArrowsDownUp } from '@phosphor-icons/react/dist/icons/ArrowsDownUp';
 import { Funnel } from '@phosphor-icons/react/dist/icons/Funnel';
 // starting a conversation
 import { NotePencil } from '@phosphor-icons/react/dist/icons/NotePencil';
-// What Would You Say?'s places, and Kurdish Detective's board
-import { Signpost } from '@phosphor-icons/react/dist/icons/Signpost';
-import { Basket } from '@phosphor-icons/react/dist/icons/Basket';
-import { ChalkboardTeacher } from '@phosphor-icons/react/dist/icons/ChalkboardTeacher';
-import { Coffee } from '@phosphor-icons/react/dist/icons/Coffee';
-import { Bus } from '@phosphor-icons/react/dist/icons/Bus';
-import { Stethoscope } from '@phosphor-icons/react/dist/icons/Stethoscope';
-import { Confetti } from '@phosphor-icons/react/dist/icons/Confetti';
-import { Briefcase } from '@phosphor-icons/react/dist/icons/Briefcase';
+// Kurdish Detective's board
 import { PushPin } from '@phosphor-icons/react/dist/icons/PushPin';
 import { Notebook } from '@phosphor-icons/react/dist/icons/Notebook';
 import { Ear } from '@phosphor-icons/react/dist/icons/Ear';
@@ -339,19 +331,6 @@ export const SortIcon = named(ArrowsDownUp, 18);
 export const FunnelIcon = named(Funnel, 20);
 /** a new conversation: a note being written, beside the list of them */
 export const NewMessageIcon = named(NotePencil, 22);
-
-/* What Would You Say?: where a scene is set, one glyph per place (shared
-   SCENE_PLACES; home, shop and phone are the House, Storefront and phone
-   above, and the village the mountains Rated is drawn with, in outline) */
-export const StreetIcon = named(Signpost, 22);
-export const MarketIcon = named(Basket, 22);
-export const SchoolIcon = named(ChalkboardTeacher, 22);
-export const CafeIcon = named(Coffee, 22);
-export const BusIcon = named(Bus, 22);
-export const DoctorIcon = named(Stethoscope, 22);
-export const VillageIcon = named(Mountains, 22);
-export const PartyIcon = named(Confetti, 22);
-export const WorkIcon = named(Briefcase, 22);
 
 /* Kurdish Detective: a card pinned to the board, the notebook, what a card is
    (overheard, a note, a statement; a message is the envelope above), a hint

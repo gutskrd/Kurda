@@ -40,7 +40,6 @@ const flat = (n: number): Levels => ({ 1: n, 2: n, 3: n, 4: n, 5: n });
 /** The kind of row whose count is a game's count, for the games made of their own rows. */
 const MAIN_KIND: Partial<Record<LearnGameId, GameContentKind>> = {
   'memory-thief': 'passage',
-  'what-would-you-say': 'scenario',
   detective: 'case_file',
   impostor: 'word_card',
   'who-am-i': 'identity',

@@ -38,7 +38,7 @@ import {
   type GameContentImport,
 } from '../gameContent';
 import { WordCardFields } from './GameCardFields';
-import { CaseFileFields, ScenarioFields } from './SceneCaseFields';
+import { CaseFileFields } from './CaseFileFields';
 import {
   Badge,
   Banner,
@@ -64,9 +64,9 @@ import {
 import { IdentityFields, QuestionTemplateFields, WordPicker } from './GameWordCards';
 
 /**
- * Game content: the learning games' own rows — sentences, passages,
- * scenarios, case files, cards — written, imported, reviewed and published
- * the way stories are (api/src/games/content-admin.ts).
+ * Game content: the learning games' own rows — sentences, passages, case
+ * files, cards — written, imported, reviewed and published the way stories
+ * are (api/src/games/content-admin.ts).
  *
  *   #/game-content              every row, filtered by game, kind, variety, level and status, and the importers
  *   #/game-content/readiness    what each game can be played with, per variety and level
@@ -161,7 +161,7 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' | 'words' }): Reac
         <>
           <Section
             title="Import from approved content"
-            description="Makes drafts from what is already published, without typing the Kurdish again: lessons’ sentences with their English and accepted orders, stories’ paragraphs with their glossary words to hide, conversations’ moments as scenes with real wrong replies from other conversations, and Kurdish Impostor’s word cards — published words sorted into starter categories by their meaning, whose category names wait for a native speaker. Each draft still needs review. Running an import twice adds nothing new."
+            description="Makes drafts from what is already published, without typing the Kurdish again: lessons’ sentences with their English and accepted orders, stories’ paragraphs with their glossary words to hide, and Kurdish Impostor’s word cards — published words sorted into starter categories by their meaning, whose category names wait for a native speaker. Each draft still needs review. Running an import twice adds nothing new."
           >
             <div className="row">
               {GAME_DIALECTS.map((d) => (
@@ -171,9 +171,6 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' | 'words' }): Reac
                   </Button>
                   <Button icon="upload" busy={importing} onClick={() => void runImport('stories', d)}>
                     Passages from stories ({GAME_DIALECT_NAME[d]})
-                  </Button>
-                  <Button icon="upload" busy={importing} onClick={() => void runImport('conversations', d)}>
-                    Scenes from conversations ({GAME_DIALECT_NAME[d]})
                   </Button>
                   <Button icon="upload" busy={importing} onClick={() => void runImport('vocabulary', d)}>
                     Starter word cards from vocabulary ({GAME_DIALECT_NAME[d]})
@@ -216,7 +213,8 @@ function Rows(): React.JSX.Element {
         );
       },
     },
-    { key: 'kind', header: 'Kind', cell: (r) => KIND_NAME[r.kind] },
+    // a row of a kind this console no longer knows (written for a game that is gone) is named by what it is stored as
+    { key: 'kind', header: 'Kind', cell: (r) => KIND_NAME[r.kind] ?? r.kind },
     { key: 'game', header: 'Game', cell: (r) => (r.game ? (GAME_NAME[r.game as LearnGameId] ?? r.game) : '—') },
     { key: 'dialect', header: 'Variety', cell: (r) => GAME_DIALECT_NAME[r.dialect] },
     { key: 'level', header: 'Level', cell: (r) => r.level, sort: (a, b) => a.level - b.level },
@@ -625,9 +623,11 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
     setLevel(r.level);
     setPayload(r.payload as unknown as Record<string, unknown>);
   };
+  // a row written for a game that is no longer part of Hevalo has no schema and no fields here: it is never taken up for editing
+  const retired = !!loaded.data && !isKind(loaded.data.kind);
   useEffect(() => {
-    if (loaded.data) take(loaded.data);
-  }, [loaded.data]);
+    if (loaded.data && !retired) take(loaded.data);
+  }, [loaded.data, retired]);
 
   const checked = useMemo(() => checkGameContent(kind, dialect, payload), [kind, dialect, payload]);
   const pending = !!row && (level !== row.level || JSON.stringify(payload) !== JSON.stringify(row.payload));
@@ -675,6 +675,9 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
   };
 
   if (id && loaded.error) return <Banner tone="bad">{errorLine(loaded.error, 'this content')}</Banner>;
+  if (retired) {
+    return <Banner tone="info">This row was written for a game that is no longer part of Hevalo. It is kept as it is, and cannot be opened or changed here.</Banner>;
+  }
   if (id && !row) return <p className="subtle">Loading…</p>;
 
   return (
@@ -745,8 +748,6 @@ function GameContentEditor({ id, newKind }: { id: string | null; newKind: GameCo
           <SentenceFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
         ) : kind === 'passage' ? (
           <PassageFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
-        ) : kind === 'scenario' ? (
-          <ScenarioFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
         ) : kind === 'case_file' ? (
           <CaseFileFields payload={payload} onChange={setPayload} dialect={dialect} readOnly={!editable} />
         ) : kind === 'word_card' ? (

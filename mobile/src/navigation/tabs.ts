@@ -94,11 +94,11 @@ export function isLearnView(v: unknown): v is LearnView {
  * reader's own address. `/app/stories` is left alone: on the website that is
  * the community wall's old address, not the library's.
  *
- * Two games became exercises of the lessons' practice, and three were
+ * Two games became exercises of the lessons' practice, and four were
  * retired. A link to Build a Kurdish Sentence or Hear It, Find It at its old
  * place among the games opens the exercise where it is now; a link to Don't
- * Say the Word!, Kurdish Bluff or The Village, whatever room it named, opens
- * Learn's games, where what can be played is.
+ * Say the Word!, Kurdish Bluff, The Village or What Would You Say?, whatever
+ * room it named, opens Learn's games, where what can be played is.
  *
  * Pure, so the rewriting is tested without a navigator; App.tsx runs every
  * incoming path through it before React Navigation reads it.
@@ -130,6 +130,7 @@ export function legacyTabPath(path: string): string {
     case 'app/games/bluff':
     case 'app/games/village':
     case 'app/games/kingdom':
+    case 'app/games/what-would-you-say':
       return `${lead}learn?view=games`;
     // the word game's lobby, from before the game was renamed
     case 'app/games/wordle-battle':

@@ -105,8 +105,6 @@ export type RootStackParamList = {
   MemoryThief: undefined;
   /** Hear It, Find It, an exercise of the lessons' practice (games/HearItScreen, opened from practice/PracticeHubScreen) */
   HearIt: undefined;
-  /** What Would You Say? (games/WhatWouldYouSayScreen) */
-  WhatWouldYouSay: undefined;
   /** Kurdish Detective (games/DetectiveScreen) */
   Detective: undefined;
   /** An id when a join code, an invite or an old invite link opened it; nothing when you came to make one. */

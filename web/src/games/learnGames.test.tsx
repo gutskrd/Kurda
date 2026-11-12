@@ -85,9 +85,10 @@ describe('Learn’s games list', () => {
 
   // an old answer, or a server a version behind, may still name the games that are gone
   it('draws no card for a game that is no longer part of Hevalo, whatever the server says', async () => {
-    server({ 'memory-thief': true, 'dont-say': true, bluff: true, kingdom: true });
+    server({ 'memory-thief': true, 'dont-say': true, bluff: true, kingdom: true, 'what-would-you-say': true });
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByRole('heading', { name: 'The Memory Thief' })).toBeInTheDocument();
-    for (const gone of [/Don’t Say/, /Bluff/, /Village/]) expect(screen.queryByRole('heading', { name: gone })).toBeNull();
+    for (const gone of [/Don’t Say/, /Bluff/, /Village/, /Would You Say/]) expect(screen.queryByRole('heading', { name: gone })).toBeNull();
+    expect(document.querySelector('a[href="/app/games/what-would-you-say"]')).toBeNull();
   });
 });

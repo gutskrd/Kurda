@@ -15,25 +15,18 @@
  * and is one row of its kind per variety however often a maker runs.
  */
 import {
-  CHARACTER_NAMES,
   PASSAGE_HIDDEN,
-  SCENARIO_LINE_WORDS,
-  SCENARIO_TILE_WORDS,
   WHO_AM_I_FACTS,
   checkGameContent,
   foldForDialect,
-  gameWords,
-  guessPlace,
-  pickWrongReplies,
   sentenceShape,
   type GameContentPayload,
   type GameDialect,
   type Meanings,
-  type ReplyCandidate,
   type WhoAmIFact,
 } from '@kurda/shared';
 import { candidatesIn, conversationLevel, conversationWindows } from './memory-thief.js';
-import type { TaughtLine, TrustedSources } from './sources.js';
+import type { TrustedSources } from './sources.js';
 import { STARTER_CATEGORIES, starterCategoryOf } from './word-categories.js';
 import { starterIdentityOf } from './starter-identities.js';
 
@@ -43,9 +36,6 @@ export interface ContentDraft {
   payload: GameContentPayload;
   origin: string;
 }
-
-/** Scenes taken from one conversation at most: a few good moments, not every line of it. */
-export const SCENES_PER_CONVERSATION = 2;
 
 /**
  * Lessons' sentences as `sentence` rows, with the English and the orders they
@@ -150,64 +140,6 @@ export async function wordCardDrafts(sources: TrustedSources, dialect: GameDiale
     return checked.ok ? [{ level: 1, payload: checked.payload, origin: `starter-category:${c.slug}` }] : [];
   });
   return { categories, cards };
-}
-
-/**
- * Conversations as `scenario` rows: in each, up to SCENES_PER_CONVERSATION
- * moments where one person says a line and someone else answers it — a
- * question answered first — with the answer as the right reply and real lines
- * from other conversations of about the same level as the wrong ones
- * (`pickWrongReplies`), each with its English and the key its recording is
- * filed under. The situation says only who is speaking, and the place is the
- * one the conversation's English mentions most.
- */
-export async function scenarioDrafts(sources: TrustedSources, dialect: GameDialect, limit = 200): Promise<ContentDraft[]> {
-  const lines = await sources.conversationLines(dialect);
-  const byExercise = new Map<string, TaughtLine[]>();
-  for (const l of lines) byExercise.set(l.exerciseId, [...(byExercise.get(l.exerciseId) ?? []), l]);
-  const pool: ReplyCandidate[] = lines.filter((l) => l.en).map((l) => ({ ku: l.ku, en: l.en, conversation: l.conversation, level: l.level }));
-  const recordingOf = new Map(lines.map((l) => [`${l.conversation}\u0000${l.ku}`, l.recording]));
-  const words = (ku: string) => gameWords(ku).length;
-
-  const drafts: ContentDraft[] = [];
-  for (const conversation of byExercise.values()) {
-    if (drafts.length >= limit) break;
-    const pairs: Array<[TaughtLine, TaughtLine]> = [];
-    for (let i = 0; i + 1 < conversation.length; i++) {
-      const [a, b] = [conversation[i]!, conversation[i + 1]!];
-      // someone else answering, both with their English, each long enough to say something particular, the answer of a size to choose or build
-      if (a.index + 1 !== b.index || a.part === b.part || !a.en || !b.en) continue;
-      if (words(a.ku) < SCENARIO_LINE_WORDS || words(b.ku) < SCENARIO_LINE_WORDS || words(b.ku) > SCENARIO_TILE_WORDS.max + 2) continue;
-      pairs.push([a, b]);
-    }
-    const asked = (l: TaughtLine) => /[?؟]\s*$/u.test(l.ku);
-    pairs.sort((x, y) => Number(asked(y[0])) - Number(asked(x[0])) || x[0].index - y[0].index);
-    const place = guessPlace(conversation.map((l) => l.en));
-    let taken = 0;
-    for (const [a, b] of pairs) {
-      if (taken >= SCENES_PER_CONVERSATION || drafts.length >= limit) break;
-      const wrong = pickWrongReplies({ line: a.ku, reply: b.ku, conversation: a.conversation, level: a.level }, pool, dialect);
-      if (wrong.length < 2) continue;
-      const said = a.speaker ? CHARACTER_NAMES[a.speaker] : null;
-      const payload = {
-        situation: { en: said ? `${said} says this to you.` : 'Someone says this to you.' },
-        ...(place ? { place } : {}),
-        ...(a.speaker ? { speaker: a.speaker } : {}),
-        line: { ku: a.ku, meanings: { en: a.en }, ...(a.recording ? { recording: a.recording } : {}) },
-        reply: { ku: b.ku, meanings: { en: b.en }, ...(b.recording ? { recording: b.recording } : {}) },
-        others: wrong.map((w) => {
-          const recording = recordingOf.get(`${w.conversation}\u0000${w.ku}`);
-          return { ku: w.ku, meanings: { en: w.en! }, ...(recording ? { recording } : {}) };
-        }),
-        origin: { type: 'conversation', ref: `${a.exerciseId}:${a.index}` },
-      };
-      const checked = checkGameContent('scenario', dialect, payload);
-      if (!checked.ok) continue;
-      drafts.push({ level: a.level, payload: checked.payload, origin: a.origin });
-      taken++;
-    }
-  }
-  return drafts;
 }
 
 /** A whole facts table from the few that are true of a thing: every other fact is a no. */

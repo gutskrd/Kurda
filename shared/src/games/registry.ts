@@ -19,10 +19,10 @@
  * which is why they stay in this list; Learn's Games never lists them, and
  * the lessons' practice does.
  *
- * Don't Say the Word!, Kurdish Bluff and The Village are no longer part of
- * Hevalo (`RETIRED_GAME_IDS`). Nothing lists, opens or starts one; their
- * names are kept only so that what was written while they were played is
- * still read for what it is.
+ * Don't Say the Word!, Kurdish Bluff, The Village and What Would You Say? are
+ * no longer part of Hevalo (`RETIRED_GAME_IDS`). Nothing lists, opens or
+ * starts one; their names are kept only so that what was written while they
+ * were played is still read for what it is.
  *
  * Per-game modules. The registry is data only and imports no game: a game's
  * own rules live in a folder of its own beside this file —
@@ -39,7 +39,6 @@ export const LEARN_GAME_IDS = [
   'build-sentence',
   'memory-thief',
   'hear-it',
-  'what-would-you-say',
   'detective',
   'last-letter',
   'impostor',
@@ -55,11 +54,11 @@ export function isLearnGameId(v: unknown): v is LearnGameId {
  * Games that were part of Hevalo once and are not any more. No list, page,
  * invitation or lobby offers one, and the server refuses to start one. The
  * names stay known because rows written while they were played still carry
- * them (matches, XP, old invitations in a chat): whatever reads such a row
- * says the game is no longer played, rather than failing on a name it has
- * never heard of.
+ * them (matches, rounds played alone, XP, old invitations in a chat):
+ * whatever reads such a row says the game is no longer played, rather than
+ * failing on a name it has never heard of.
  */
-export const RETIRED_GAME_IDS = ['dont-say', 'bluff', 'kingdom'] as const;
+export const RETIRED_GAME_IDS = ['dont-say', 'bluff', 'kingdom', 'what-would-you-say'] as const;
 export type RetiredGameId = (typeof RETIRED_GAME_IDS)[number];
 
 export function isRetiredGame(v: unknown): v is RetiredGameId {
@@ -71,7 +70,7 @@ export function isRetiredGame(v: unknown): v is RetiredGameId {
  * XP already in the ledger under one of them keeps counting as game XP, under
  * the league's daily cap, exactly as it did the day it was earned.
  */
-export const RETIRED_GAME_XP_SOURCES: readonly string[] = ['game_dont_say_place', 'game_bluff_place'];
+export const RETIRED_GAME_XP_SOURCES: readonly string[] = ['game_dont_say_place', 'game_bluff_place', 'game_what_would_you_say'];
 
 /** How a game is played: alone, with others, or either. */
 export type LearnGameMode = 'solo' | 'multi' | 'both';
@@ -85,7 +84,7 @@ export type LearnGamePlace = 'games' | 'lessons';
 /**
  * Approved Kurdish a game reads where it already is, besides its own rows:
  *   lesson-sentences — published lessons' translations and conversation lines, with English and accepted orders
- *   conversations    — published lessons' conversations, as pairs of one line and the next
+ *   conversations    — published lessons' conversations, a few lines at a time
  *   vocabulary       — published lessons' word pairs, and published stories' glossaries
  *   story-passages   — published stories' paragraphs, with the glossary terms in each
  *   recordings       — people's recordings (lesson, alphabet and dictionary audio), never synthesised ones
@@ -98,7 +97,7 @@ export type TrustedSource = (typeof TRUSTED_SOURCES)[number];
  * The picture on a game's card, by name. Each app draws it from its own icon
  * set (the phone's names are these; the browser maps them to the same glyphs).
  */
-export type GameGlyph = 'tiles' | 'eye' | 'headphones' | 'chat' | 'search' | 'text-t' | 'people' | 'question';
+export type GameGlyph = 'tiles' | 'eye' | 'headphones' | 'search' | 'text-t' | 'people' | 'question';
 
 export interface LearnGame {
   id: LearnGameId;
@@ -114,7 +113,7 @@ export interface LearnGame {
   contentKinds: readonly GameContentKind[];
   /**
    * The approved items of its main content one difficulty must hold for the
-   * game to be offered at it: sentences, passages, scenarios, cards…
+   * game to be offered at it: sentences, passages, case files, cards…
    */
   minimum: number;
   /** the XP ledger sources it pays from; every one is a game source, under the league's daily cap */
@@ -168,20 +167,6 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     dialects: GAME_DIALECTS,
     glyph: 'headphones',
     tone: 'meadow',
-  },
-  {
-    id: 'what-would-you-say',
-    mode: 'solo',
-    place: 'games',
-    players: { min: 1, max: 1 },
-    freeText: false,
-    sources: ['conversations'],
-    contentKinds: ['scenario'],
-    minimum: 8,
-    xpSources: ['game_what_would_you_say'],
-    dialects: GAME_DIALECTS,
-    glyph: 'chat',
-    tone: 'rose',
   },
   {
     id: 'detective',

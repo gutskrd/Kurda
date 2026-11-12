@@ -33,22 +33,20 @@ import type { GamesAvailability } from './solo.js';
  * The kinds of row, one per thing a game needs written:
  *   sentence          — Build a Kurdish Sentence: a sentence, its meaning, the word orders it accepts
  *   passage           — The Memory Thief: a passage and the key words that vanish from it
- *   scenario          — What Would You Say?: the situation, the line heard, the real reply, real wrong replies
  *   case_file         — Kurdish Detective: suspects, evidence lines, deduction steps, the solution
  *   word_category     — Kurdish Impostor: a category's Kurdish name and its meaning
  *   word_card         — Kurdish Impostor: a word, its category and the impostor's hint
  *   identity          — Who Am I?: an identity and its yes/no facts
  *   question_template — Who Am I?: a yes/no question and the fact that answers it
  *
- * The database knows three kinds more (`taboo_card`, `bluff_card`,
- * `building_name`), written for games that are no longer part of Hevalo.
- * Their rows stay where they are and nothing reads them: every query that
- * lists or deals content names the kinds it wants from this list.
+ * The database knows four kinds more (`taboo_card`, `bluff_card`,
+ * `building_name`, `scenario`), written for games that are no longer part of
+ * Hevalo. Their rows stay where they are and nothing reads them: every query
+ * that lists or deals content names the kinds it wants from this list.
  */
 export const GAME_CONTENT_KINDS = [
   'sentence',
   'passage',
-  'scenario',
   'case_file',
   'word_category',
   'word_card',
@@ -98,10 +96,6 @@ export type Meanings = { en: string } & Partial<Record<AppLocale, string>>;
 /** A short slug: lower-case letters, digits and dashes. */
 export const GAME_SLUG_PATTERN = /^[a-z0-9-]{2,40}$/;
 
-/** The rooms a scene can be set in, for its card's picture; the words are the apps'. */
-export const SCENE_PLACES = ['home', 'street', 'market', 'shop', 'school', 'cafe', 'bus', 'doctor', 'phone', 'village', 'party', 'work'] as const;
-export type ScenePlace = (typeof SCENE_PLACES)[number];
-
 /** What a detective's evidence card is: a written message, a statement, talk overheard (with its recording), a note. */
 export const EVIDENCE_KINDS = ['message', 'statement', 'overheard', 'note'] as const;
 export type EvidenceKind = (typeof EVIDENCE_KINDS)[number];
@@ -148,24 +142,6 @@ function build() {
     translation: someMeanings.optional(),
     /** the words that dissolve, each as it is written in the text */
     hidden: z.array(z.strictObject({ term: kurdish(60), meanings })).min(PASSAGE_HIDDEN.min).max(PASSAGE_HIDDEN.max),
-    origin: origin.optional(),
-  });
-
-  // the lesson-audio key of a line's recording, when the importer took it from a conversation that may be recorded
-  const recording = plain(200).optional();
-  const line = z.strictObject({ ku: kurdish(300), meanings, recording });
-  const option = z.strictObject({ ku: kurdish(300), meanings, why: meanings.optional(), recording });
-  const scenario = z.strictObject({
-    /** where and with whom, in the interface languages: not Kurdish, so it needs no native review */
-    situation: meanings,
-    place: z.enum(SCENE_PLACES).optional(),
-    speaker: z.enum(SPEAKERS).optional(),
-    /** what the other person says */
-    line,
-    /** the real next line */
-    reply: option,
-    /** real lines from other conversations, which do not fit here */
-    others: z.array(option).min(2).max(4),
     origin: origin.optional(),
   });
 
@@ -247,7 +223,6 @@ function build() {
   return {
     sentence,
     passage,
-    scenario,
     case_file: caseFile,
     word_category: wordCategory,
     word_card: wordCard,
@@ -267,7 +242,6 @@ export function gameContentSchema<K extends GameContentKind>(kind: K): Schemas[K
 
 export type SentenceContent = z.infer<Schemas['sentence']>;
 export type PassageContent = z.infer<Schemas['passage']>;
-export type ScenarioContent = z.infer<Schemas['scenario']>;
 export type CaseFileContent = z.infer<Schemas['case_file']>;
 export type WordCategoryContent = z.infer<Schemas['word_category']>;
 export type WordCardContent = z.infer<Schemas['word_card']>;
@@ -278,7 +252,6 @@ export type QuestionTemplateContent = z.infer<Schemas['question_template']>;
 export interface GameContentByKind {
   sentence: SentenceContent;
   passage: PassageContent;
-  scenario: ScenarioContent;
   case_file: CaseFileContent;
   word_category: WordCategoryContent;
   word_card: WordCardContent;
@@ -314,13 +287,6 @@ export function kurdishTexts(kind: GameContentKind, payload: GameContentPayload)
       add('title', p.title);
       add('text', p.text);
       p.hidden.forEach((h, i) => add(`hidden.${i}.term`, h.term));
-      break;
-    }
-    case 'scenario': {
-      const p = payload as ScenarioContent;
-      add('line.ku', p.line.ku);
-      add('reply.ku', p.reply.ku);
-      p.others.forEach((o, i) => add(`others.${i}.ku`, o.ku));
       break;
     }
     case 'case_file':
@@ -410,8 +376,6 @@ export function contentHeadline(kind: GameContentKind, payload: GameContentPaylo
       const p = payload as PassageContent;
       return p.title ?? p.text.slice(0, 80);
     }
-    case 'scenario':
-      return (payload as ScenarioContent).line.ku;
     case 'case_file':
       return (payload as CaseFileContent).title.en;
     case 'word_category':
@@ -490,28 +454,15 @@ export interface MemoryThiefItemView {
 
 /**
  * A recording played beside the Kurdish it says, and who says it (with the
- * mouth's timeline, as lessons send it). What Would You Say? and Kurdish
- * Detective send the recording's own address rather than a handle: the words
- * are on screen beside it — the line heard, an overheard remark pinned to the
- * board — exactly as a lesson sends a conversation's lines with theirs, so
- * there is nothing behind it to give away.
+ * mouth's timeline, as lessons send it). Kurdish Detective sends the
+ * recording's own address rather than a handle: the words are on screen
+ * beside it — an overheard remark pinned to the board — exactly as a lesson
+ * sends a conversation's lines with theirs, so there is nothing behind it to
+ * give away.
  */
 export interface SpokenAudio {
   src: string;
   voice: RecordingVoice | null;
-}
-
-/** What Would You Say?: the scene, the line heard, and the replies to choose from or build (games/what-would-you-say). */
-export interface WhatWouldYouSayItemView {
-  index: number;
-  situation: Meanings;
-  place: ScenePlace | null;
-  speaker: SpeakerId | null;
-  line: { ku: string; audio: SpokenAudio | null };
-  /** real lines to choose from, shuffled; null at advanced level, where the reply is built from tiles */
-  options: string[] | null;
-  tiles: string[] | null;
-  level: GameLevel;
 }
 
 /**

@@ -68,7 +68,6 @@ import {
   gameWords,
   lessonAudioKey,
   lessonAudioTargets,
-  scenarioLevel,
   storyAudioSentences,
   storyParagraphs,
   storySpelling,
@@ -197,8 +196,8 @@ export interface PublishedContent<K extends GameContentKind> {
 
 /**
  * One line of a published conversation, where it stands and who says it: for
- * a scene made of the line and the one after it, for a case's evidence, and
- * for the admin's line picker, so none of them types the Kurdish again.
+ * a case's evidence and for the admin's line picker, so neither types the
+ * Kurdish again.
  */
 export interface TaughtLine {
   /** the exercise, the conversation's own id, and its title when it is in the variety's script */
@@ -213,7 +212,7 @@ export interface TaughtLine {
   en: string | null;
   /** the lesson-audio key a recording of this line is filed under ('' when it cannot be filed) */
   recording: string;
-  /** from where its unit stands in its course (`scenarioLevel`) */
+  /** from where its unit stands in its course (`unitLevel`) */
   level: GameLevel;
   /** 'conversation:<exerciseId>:<index>' */
   origin: string;
@@ -406,6 +405,17 @@ export function wordsOfExercise(row: Pick<ExerciseRow, 'type' | 'payload'>, dial
   return pairs
     .filter((p) => fitsDialect(p.ku, dialect) && gameWords(p.ku).length === 1)
     .map((p) => ({ key: itemKey('w', dialect, foldForDialect(p.ku, dialect)), ku: gameWords(p.ku)[0]!, meanings: { en: p.meaning.trim() } }));
+}
+
+/**
+ * The level of a conversation from where its unit stands in its course: the
+ * first fifth of the units is level 1, the last fifth level 5. A course is
+ * written to grow harder unit by unit, so this is the course's own order.
+ */
+export function unitLevel(unitPosition: number, unitCount: number): GameLevel {
+  if (!(unitCount > 0) || !(unitPosition > 0)) return 1;
+  const share = Math.min(1, Math.max(0, (unitPosition - 1) / unitCount));
+  return Math.min(5, Math.floor(share * 5) + 1) as GameLevel;
 }
 
 /**
@@ -787,7 +797,7 @@ export class TrustedSources {
       const out: TaughtLine[] = [];
       for (const row of res.rows) {
         if (toDialect(row.dialect) !== dialect) continue;
-        out.push(...conversationLinesOf(row, dialect, scenarioLevel(row.unit_rank, row.unit_count)));
+        out.push(...conversationLinesOf(row, dialect, unitLevel(row.unit_rank, row.unit_count)));
       }
       return out;
     });

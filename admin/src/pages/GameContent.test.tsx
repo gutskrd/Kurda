@@ -10,7 +10,9 @@ import { GameContent } from './GameContent';
  * The Game content page: the list and its filters, the importers, the
  * readiness view, and one row's editor — the checks it runs as the content is
  * typed (Kurdish in the other variety's script is refused before a save is
- * tried), its review panel, and publishing only what was approved.
+ * tried), its review panel, and publishing only what was approved. And what
+ * it no longer does: a scene of What Would You Say?, which is no longer part
+ * of Hevalo, can be neither imported nor written here.
  */
 
 const ID = '7d1f0f6a-3b9a-4c55-8f0b-0c3c0bde0001';
@@ -219,5 +221,39 @@ describe('the party games’ cards', () => {
     await click(button(page, 'Starter word cards from vocabulary (Kurmancî)'));
     expect(api.calls.find((c) => c.method === 'POST')!.body).toEqual({ from: 'vocabulary', dialect: 'kmr' });
     expect(text(document.body)).toContain('Imported 9 new drafts from published vocabulary (Kurmancî)');
+  });
+});
+
+describe('scenes of a game that is no longer part of Hevalo', () => {
+  it('are not imported from conversations any more, and the other importers are still offered', async () => {
+    fakeApi(on('GET', /^\/admin\/game-content\?/, json({ rows: [], total: 0 })));
+    const page = await open('#/game-content');
+    expect(button(page, 'Sentences from lessons (Kurmancî)')).not.toBeNull();
+    expect(button(page, 'Passages from stories (Kurmancî)')).not.toBeNull();
+    expect(button(page, /^Scenes from conversations/)).toBeNull();
+    expect(text(page)).not.toContain('What Would You Say?');
+    // neither the kind nor the game is offered for a new row or as a filter
+    for (const option of page.querySelectorAll('option')) expect(option.textContent).not.toMatch(/Scenario|What Would You Say/);
+  });
+
+  it('cannot be started by a link to a new row of the kind: the editor opens on a sentence instead', async () => {
+    fakeApi();
+    const page = await open('#/game-content/new?kind=scenario');
+    expect(text(page)).not.toContain('The situation');
+    expect((page.querySelector('select') as HTMLSelectElement).value).toBe('sentence');
+  });
+
+  // the server lists and opens no such row; one that reached the page all the same (a server a version behind) must not break it
+  it('do not break the page if the server still hands one over: the list names it as stored, and it is not opened', async () => {
+    const payload = { situation: { en: 'Hamo says this to you.' } };
+    const scene = { ...row(), kind: 'scenario', game: 'what-would-you-say', headline: 'Tu çend salî yî?', payload } as unknown as AdminGameContent;
+    fakeApi(on('GET', /^\/admin\/game-content\?/, json({ rows: [scene], total: 1 })), on('GET', `/admin/game-content/${ID}`, json(scene)));
+    const list = await open('#/game-content');
+    expect(text(list.querySelector('table'))).toContain('Tu çend salî yî?');
+    expect(text(list.querySelector('table'))).toContain('scenario');
+    unmount?.();
+    const page = await open(`#/game-content/${ID}`);
+    expect(text(page)).toContain('written for a game that is no longer part of Hevalo');
+    expect(page.querySelector('input, textarea, select')).toBeNull();
   });
 });

@@ -9,7 +9,6 @@
  * archived, published or not yet):
  *
  *   passage        The Memory Thief          stories' paragraphs, and conversations a few lines at a time
- *   scenario       What Would You Say?       a line of a conversation and the line that answered it
  *   word_card      Kurdish Impostor          the course's words, sorted into the starter categories
  *   word_category  Kurdish Impostor          the categories themselves
  *   identity       Who Am I?                 the course's words for the things the starter table knows
@@ -43,7 +42,6 @@ import {
   conversationPassageDrafts,
   identityDrafts,
   passageDrafts,
-  scenarioDrafts,
   sentenceDrafts,
   wordCardDrafts,
   type ContentDraft,
@@ -65,17 +63,15 @@ export interface StarterLibraryResult {
 
 /** Everything the library makes for a variety, by kind (pure but for its reads). */
 export async function starterLibraryRows(sources: TrustedSources, dialect: GameDialect): Promise<Array<{ kind: GameContentKind; rows: ContentDraft[] }>> {
-  const [stories, conversations, scenarios, words, identities, sentences] = await Promise.all([
+  const [stories, conversations, words, identities, sentences] = await Promise.all([
     passageDrafts(sources, dialect),
     conversationPassageDrafts(sources, dialect),
-    scenarioDrafts(sources, dialect, 400),
     wordCardDrafts(sources, dialect, 1500),
     identityDrafts(sources, dialect),
     sentenceDrafts(sources, dialect, 1500),
   ]);
   return [
     { kind: 'passage', rows: [...stories, ...conversations] },
-    { kind: 'scenario', rows: scenarios },
     { kind: 'word_category', rows: words.categories },
     { kind: 'word_card', rows: words.cards },
     { kind: 'identity', rows: identities },

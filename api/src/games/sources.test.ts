@@ -1,9 +1,10 @@
 /**
  * Reading approved lessons for the learning games, without a database: which
  * English a translation asks for, which sentences an exercise teaches and in
- * which orders, a conversation as line pairs and whole, the alphabet's letter
- * sounds told from its words, and the rule that a sentence in
- * the other variety's script is left out. Then which recordings a game may
+ * which orders, a conversation as line pairs, whole and line by line with
+ * each line's level, the alphabet's letter sounds told from its words, and
+ * the rule that a sentence in the other variety's script is left out. Then
+ * which recordings a game may
  * play and what each one's own item says it means, what a lesson attests its
  * words mean (exactly as written, never a look-alike), and the pools' own
  * memo, which follows the cache's generation.
@@ -15,6 +16,7 @@ import {
   DERIVED_TTL_MS,
   TrustedSources,
   bustGamePools,
+  conversationLinesOf,
   conversationOf,
   isAlphabetSoundKey,
   meaningOfPrompt,
@@ -25,6 +27,7 @@ import {
   sentenceKey,
   taughtIn,
   sentencesOf,
+  unitLevel,
   wordsOfExercise,
 } from './sources.js';
 
@@ -172,6 +175,34 @@ describe('pairsOf and wordsOfExercise', () => {
       ['sêv', 'apple'],
       ['nan', 'bread'],
     ]);
+  });
+});
+
+describe('a conversation line by line', () => {
+  it('gives every line its place, its part, its English and its recording’s key', () => {
+    const payload = {
+      id: 'roadu02s3l3a',
+      title: 'Tu çend salî yî?',
+      speakers: [{ character: 'xezo' }, { character: 'hamo' }],
+      lines: [
+        { speaker: 0, text: 'Tu çend salî yî?', en: 'How old are you?' },
+        { speaker: 1, text: 'Ez heft salî me.', en: 'I am seven.' },
+      ],
+      prompt: 'How old?',
+      options: ['Seven', 'Eight'],
+      correctIndex: 0,
+    };
+    const lines = conversationLinesOf({ id: 'ex1', type: 'conversation', payload }, 'kmr', 2);
+    expect(lines).toHaveLength(2);
+    expect(lines[1]).toMatchObject({ exerciseId: 'ex1', index: 1, part: 1, speaker: 'hamo', en: 'I am seven.', level: 2, origin: 'conversation:ex1:1' });
+    expect(lines[1]!.recording).toBe(conversationLineKey('roadu02s3l3a', 1, 'Ez heft salî me.'));
+    expect(conversationLinesOf({ id: 'ex1', type: 'conversation', payload }, 'ckb', 2)).toEqual([]);
+  });
+
+  it('takes a line’s level from its unit’s place in its course', () => {
+    expect([1, 3, 4, 6, 9, 11, 12].map((u) => unitLevel(u, 12))).toEqual([1, 1, 2, 3, 4, 5, 5]);
+    expect(unitLevel(1, 1)).toBe(1);
+    expect(unitLevel(0, 0)).toBe(1);
   });
 });
 

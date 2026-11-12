@@ -101,10 +101,10 @@ export interface DetectiveHintAsk {
 }
 
 /**
- * A published line an editor can pick for a case's evidence or a scene's
- * replies (GET /admin/game-content/lines), so the Kurdish is copied from where
- * a person approved it and never typed again: a conversation's line, a
- * lesson's sentence, a story's sentence.
+ * A published line an editor can pick for a case's evidence (GET
+ * /admin/game-content/lines), so the Kurdish is copied from where a person
+ * approved it and never typed again: a conversation's line, a lesson's
+ * sentence, a story's sentence.
  */
 export interface PublishedLine {
   ku: string;

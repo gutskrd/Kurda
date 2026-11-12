@@ -17,21 +17,19 @@
  * is refused with 422 INVALID and its issues, each with a path.
  *
  * The importers make drafts from what is already approved, so no Kurdish is
- * typed again: published lessons' sentences become `sentence` rows, published
- * stories' paragraphs `passage` rows (their glossary terms the words to hide),
- * published conversations `scenario` rows (a line, the line that answered it,
- * and real lines from other conversations as wrong replies). The starter word
- * cards for Kurdish Impostor are published vocabulary sorted into a short list
- * of categories by each word's English meaning (word-categories.ts): the word
- * and its meaning are copied, and the category's name — the one new Kurdish,
- * the impostor's hint — makes them starter drafts for native review. An import
- * run twice adds nothing: each row remembers where it came from (`origin`,
- * unique per kind and variety).
+ * typed again: published lessons' sentences become `sentence` rows and
+ * published stories' paragraphs `passage` rows (their glossary terms the
+ * words to hide). The starter word cards for Kurdish Impostor are published
+ * vocabulary sorted into a short list of categories by each word's English
+ * meaning (word-categories.ts): the word and its meaning are copied, and the
+ * category's name — the one new Kurdish, the impostor's hint — makes them
+ * starter drafts for native review. An import run twice adds nothing: each
+ * row remembers where it came from (`origin`, unique per kind and variety).
  *
  * The word and forbidden-word cards' editors pick their Kurdish from the same
  * published vocabulary (`vocabulary`), so a card is made by choosing words,
  * not by typing them. The line picker lists published lines for an editor to
- * put in a case or a scene the same way, by copying.
+ * put in a case the same way, by copying.
  *
  * Reviewing, publishing, unpublishing, archiving, deleting and importing are
  * audited, the row before and after, beside the automatic audit of every
@@ -67,7 +65,7 @@ import { escapeLike } from '../db/like.js';
 import { AppError } from '../plugins/errors.js';
 import { bustAvailability, type GameAvailabilityService } from './availability.js';
 import { bustGamePools, type TrustedSources, type VocabularyWord } from './sources.js';
-import { passageDrafts, scenarioDrafts, sentenceDrafts, wordCardDrafts, type ContentDraft } from './content-drafts.js';
+import { passageDrafts, sentenceDrafts, wordCardDrafts, type ContentDraft } from './content-drafts.js';
 
 /** A row as the admin panel lists and edits it (@kurda/shared `AdminGameContent`). */
 export type GameContentRow = AdminGameContent;
@@ -131,10 +129,10 @@ const FROM = `FROM game_content c LEFT JOIN users ru ON ru.id = c.reviewed_by`;
  * `c.kind IN (…)`: the kinds a game is made of today, for every read of a
  * stored row. The table also holds rows written for games that are no longer
  * part of Hevalo (cards for Don't Say the Word! and Kurdish Bluff, the
- * village's building names). They stay where they are; with this in its
- * WHERE no list shows one and no id opens, changes or publishes one, so a
- * kind without a schema is never handed to the checks. Literals from the
- * shared list, never built from input.
+ * village's building names, What Would You Say?'s scenes). They stay where
+ * they are; with this in its WHERE no list shows one and no id opens, changes
+ * or publishes one, so a kind without a schema is never handed to the checks.
+ * Literals from the shared list, never built from input.
  */
 const KNOWN_KIND = `c.kind IN (${GAME_CONTENT_KINDS.map((k) => `'${k}'`).join(', ')})`;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -204,8 +202,6 @@ export interface ImportResult {
   created: number;
   skipped: number;
 }
-
-export { SCENES_PER_CONVERSATION } from './content-drafts.js';
 
 /** Lines the picker lists at once. */
 export const PICKED_LINES_MAX = 60;
@@ -503,14 +499,9 @@ export class GameContentAdminService {
     return { created: a.created + b.created, skipped: a.skipped + b.skipped };
   }
 
-  /** Published conversations as `scenario` drafts (content-drafts.ts `scenarioDrafts`); the situation is the editor's to write. */
-  async importScenarios(dialect: GameDialect, ctx: ActionContext, limit = 200): Promise<ImportResult> {
-    return this.insertDrafts('scenario', dialect, await scenarioDrafts(this.sources, dialect, limit), ctx, 'published conversations');
-  }
-
   /**
-   * Published lines an editor may copy into a case's evidence or a scene: the
-   * lines of published conversations, published lessons' sentences and
+   * Published lines an editor may copy into a case's evidence: the lines of
+   * published conversations, published lessons' sentences and
    * published stories' sentences, in this variety only, those matching `q`
    * (in the Kurdish or its English, folded) first by where they come from.
    */

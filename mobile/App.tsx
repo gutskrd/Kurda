@@ -111,7 +111,6 @@ import { BuildSentenceScreen } from './src/games/BuildSentenceScreen';
 import { WhoAmIScreen } from './src/whoami/WhoAmIScreen';
 import { MemoryThiefScreen } from './src/games/MemoryThiefScreen';
 import { HearItScreen } from './src/games/HearItScreen';
-import { WhatWouldYouSayScreen } from './src/games/WhatWouldYouSayScreen';
 import { DetectiveScreen } from './src/games/DetectiveScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
@@ -617,9 +616,6 @@ function SignedInRoot() {
       {/* a learning game is learning, as a lesson is: a guest plays it too (api/src/games) */}
       <RootStack.Screen name="MemoryThief" options={{ presentation: 'card' }}>
         {({ navigation }) => <MemoryThiefScreen onExit={() => navigation.goBack()} />}
-      </RootStack.Screen>
-      <RootStack.Screen name="WhatWouldYouSay" options={{ presentation: 'card' }}>
-        {({ navigation }) => <WhatWouldYouSayScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Detective" options={{ presentation: 'card' }}>
         {({ navigation }) => <DetectiveScreen onExit={() => navigation.goBack()} />}

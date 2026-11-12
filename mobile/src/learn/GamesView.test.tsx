@@ -113,22 +113,22 @@ describe('the games list', () => {
   });
 
   /*
-   * Don't Say the Word!, Kurdish Bluff and The Village are no longer part of
-   * Hevalo. Whatever a server still says about them, and with coming-soon
-   * cards switched on, none of them has a card.
+   * Don't Say the Word!, Kurdish Bluff, The Village and What Would You Say?
+   * are no longer part of Hevalo. Whatever a server still says about them,
+   * and with coming-soon cards switched on, none of them has a card.
    */
   it('has no card for a game that was retired, whatever the server says of it', async () => {
     setListsUpcomingGames(true);
     const client = fakeClient({
       ...base,
-      'GET /games/availability?dialect=kmr': availability([game('memory-thief'), game('dont-say'), game('bluff'), game('kingdom')]),
+      'GET /games/availability?dialect=kmr': availability([game('memory-thief'), game('dont-say'), game('bluff'), game('kingdom'), game('what-would-you-say')]),
     });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     await settled(client);
     expect(screen.getByTestId('game-memory-thief')).toBeTruthy();
-    for (const id of ['dont-say', 'bluff', 'kingdom']) expect(screen.queryByTestId(`game-${id}`), id).toBeNull();
-    for (const name of ['Don’t Say the Word!', 'Kurdish Bluff', 'The Village']) expect(screen.queryByText(name), name).toBeNull();
+    for (const id of ['dont-say', 'bluff', 'kingdom', 'what-would-you-say']) expect(screen.queryByTestId(`game-${id}`), id).toBeNull();
+    for (const name of ['Don’t Say the Word!', 'Kurdish Bluff', 'The Village', 'What Would You Say?']) expect(screen.queryByText(name), name).toBeNull();
     expect(GAME_CARDS.flatMap((c) => c.ways.map((w) => w.key))).toEqual(['wordle', 'battle', 'rhyme', 'rhymeMatch', 'race']);
   });
 
