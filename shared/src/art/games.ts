@@ -31,6 +31,7 @@
  */
 import { dab, form, ring, rr, type Tones } from './cutout.js';
 import { IMPOSTOR_FAN_ANGLES, IMPOSTOR_FAN_FOOT, impostorEmblemSvg, impostorMaskedCard, impostorOpenCard } from './impostor.js';
+import { deerSilhouetteSvg } from '../games/who-am-i/silhouette.js';
 import { Drawing, checkSize, n, prefixFor, tint } from './svg.js';
 
 /** The games that have an emblem, by the name each goes by on the Games page. */
@@ -54,7 +55,6 @@ const SKY = '#74bdea';
 const PURPLE = '#8a5bd6';
 const PINK = '#e96a9c';
 const ORANGE = '#f08a34';
-const TEAL = '#2fa7a0';
 const STEEL = '#9aa5b4';
 const NIGHT = '#3b2f63';
 /** The deep tone lines are drawn in: never black. */
@@ -62,7 +62,6 @@ const INK = '#3a2b4d';
 const CREAM: Tones = { light: '#fffaf1', base: '#f6ead6', shade: '#cdb898' };
 const WHITE: Tones = { light: '#ffffff', base: '#eef2f7', shade: '#bcc6d4' };
 const WOOD: Tones = { light: '#f3cf9c', base: '#dba869', shade: '#a2733c' };
-const SKIN: Tones = { light: '#fbe3c8', base: '#f0c9a0', shade: '#c79a6c' };
 
 /** A colour as a form's three tones. */
 const tones = (hex: string): Tones => ({ light: tint(hex, 0.32), base: hex, shade: tint(hex, -0.32) });
@@ -503,34 +502,50 @@ const lastLetter: EmblemDef = {
 /** An answer of Who Am I? being given: its bead swells and settles. */
 const answers = (...at: number[]): Key[] => [[0, {}], ...at.flatMap((t): Key[] => [[t, {}, 'hold'], [t + 0.04, { s: 1.4 }, 'out'], [t + 0.11, { s: 1 }, 'inOut']]), [1, {}, 'hold']];
 
+/** The green the hidden deer is cut from: the game's own, a step deeper than the board's so the card stands off it. */
+const DEER = '#45a26a';
+
 /**
- * Who Am I?: somebody wearing a card they cannot see, shifting from foot to
- * foot while they ask. The card wobbles as they try to look up at it, the
- * answers come — yes, no, yes — and at the last one the card jumps.
+ * Hevalo's head and shoulders as the flat silhouette the game's stage wears
+ * (games/who-am-i/silhouette.ts), fitted to the emblem's square: the same
+ * drawing in both places, so the picture on the game's card is the one the
+ * player meets when the game opens.
+ */
+function hiddenDeer(dr: Drawing): void {
+  const svg = deerSilhouetteSvg(DEER, 120, '');
+  const box = (/viewBox="([^"]+)"/.exec(svg)?.[1] ?? '0 0 120 120').split(/\s+/).map(Number) as [number, number, number, number];
+  const inner = svg
+    .replace(/^<svg[^>]*>/, '')
+    .replace(/<title[^>]*>[\s\S]*?<\/title>/, '')
+    .replace(/<\/svg>\s*$/, '');
+  // the drawing runs on below the shoulders: it is cut at the picture's own edge
+  const frame = dr.clip('M0 0H120V120H0Z');
+  dr.add(`<g clip-path="url(#${frame})"><g fill="${DEER}" transform="scale(${n(120 / box[2])}) translate(${n(-box[0])} ${n(-box[1])})">${inner}</g></g>`);
+}
+
+/**
+ * Who Am I?: the hidden deer. Hevalo is a shadow with a card on the forehead
+ * that everyone can read but the one who wears it; the card tips as if its
+ * wearer were trying to look up at it, and the table answers, yes on one
+ * side and no on the other.
  */
 const whoAmI: EmblemDef = {
   title: 'Who Am I?',
   loopMs: 5200,
   layers: [
-    {
-      draw: (dr) => {
-        form(dr, rr(27, 72, 66, 40, 20), tones(TEAL), 4, 2.4);
-        form(dr, ring(60, 56, 19), SKIN, 3, 2);
-      },
-      pivot: [60, 112],
-      keys: [[0, {}], [0.25, { r: -1.6 }, 'inOut'], [0.5, { r: 0 }, 'inOut'], [0.75, { r: 1.6 }, 'inOut'], [1, { r: 0 }, 'inOut']],
-    },
+    // the wearer keeps still: it is the card that moves
+    { draw: hiddenDeer },
     {
       draw: (dr) =>
-        turned(dr, -7, 60, 26, () => {
-          form(dr, rr(39, 8, 42, 34, 8), CREAM, 4, 2.4);
-          form(dr, star(60, 26, 10.5), tones(GOLD), 1.8, 1.4);
+        turned(dr, -5, 60, 48, () => {
+          form(dr, rr(37, 31, 46, 34, 8), CREAM, 4, 2.4);
+          form(dr, star(60, 48, 10.5), tones(GOLD), 1.8, 1.4);
         }),
-      pivot: [60, 42],
+      pivot: [60, 64],
       keys: [[0, {}], [0.1, { r: -6 }, 'inOut'], [0.22, { r: 5 }, 'inOut'], [0.32, { r: -2 }, 'inOut'], [0.4, { r: 0 }, 'inOut'], [0.72, {}, 'hold'], [0.76, { y: -5, r: 3 }, 'out'], [0.83, { y: 0, r: 0 }, 'in'], [0.87, { sx: 1.04, sy: 0.95 }, 'out'], [0.91, { s: 1 }, 'out'], [1, {}, 'hold']],
     },
-    { draw: (dr) => bead(dr, 17, 60, 10, GREEN, 3), pivot: [17, 60], keys: answers(0.26, 0.66) },
-    { draw: (dr) => bead(dr, 103, 60, 10, RED, 3), pivot: [103, 60], keys: answers(0.46) },
+    { draw: (dr) => bead(dr, 15, 100, 10, GREEN, 3), pivot: [15, 100], keys: answers(0.26, 0.66) },
+    { draw: (dr) => bead(dr, 105, 100, 10, RED, 3), pivot: [105, 100], keys: answers(0.46) },
   ],
 };
 
@@ -579,7 +594,7 @@ const TONES: Readonly<Record<GameEmblem, string>> = {
   detective: SKY,
   'last-letter': ORANGE,
   impostor: PURPLE,
-  'who-am-i': TEAL,
+  'who-am-i': GREEN,
 };
 
 export function isGameEmblem(v: unknown): v is GameEmblem {
