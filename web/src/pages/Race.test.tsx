@@ -32,7 +32,8 @@ function result(over: Record<string, unknown> = {}) {
     accented: 1,
     errors: 0,
     elapsedMs: 30_000,
-    xpAwarded: 15,
+    // what the server sends for a race run alone
+    xpAwarded: 0,
     personalBest: false,
     ...over,
   };
@@ -356,7 +357,25 @@ describe('Typing Race', () => {
     await user.keyboard(TARGET);
 
     expect(await screen.findByText('Not scored')).toBeInTheDocument();
-    expect(screen.getByText(/faster than anyone types/i)).toBeInTheDocument();
+    // why it does not count, with no word on XP: a race alone earns none either way
+    expect(screen.getByText('That is faster than anyone types, so this run does not count for the rankings.')).toBeInTheDocument();
+    expect(screen.queryByText(/\d+ XP/)).toBeNull();
+  });
+
+  it('shows the speed, the accuracy and the time on the result and no XP, and says once where XP is earned', async () => {
+    stub();
+    seenGuide();
+    const user = userEvent.setup();
+    await begin(user);
+
+    await user.keyboard(TARGET);
+
+    expect(await screen.findByText('Perfect run!')).toBeInTheDocument();
+    const figures = document.querySelector('.race-figures')!;
+    expect([...figures.querySelectorAll('.race-figure-label')].map((l) => l.textContent)).toEqual(['WPM', 'Accuracy', 'Time']);
+    expect(figures).not.toHaveTextContent('XP');
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeInTheDocument();
+    expect(screen.queryByText(/\+\s*\d+/)).toBeNull();
   });
 
   it('celebrates an ordinary finished run, and a personal best', async () => {

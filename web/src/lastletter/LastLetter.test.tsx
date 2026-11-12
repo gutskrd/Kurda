@@ -182,9 +182,10 @@ describe('The Last Letter, the room', () => {
         status: 'finished',
         code: null,
         players: [seat(1, { userId: 'me', isMe: true, isHost: true }), seat(2, { bot: 'hevalo' })],
+        // a game against Hevalo pays nothing: the server sends no XP for either seat
         results: [
           { seat: 2, place: 1, score: 9, xpAwarded: null },
-          { seat: 1, place: 2, score: 8, xpAwarded: 16 },
+          { seat: 1, place: 2, score: 8, xpAwarded: 0 },
         ],
         board: board({ yourTurn: false, turn: null, endedBy: 'last-standing' }),
       }),
@@ -195,7 +196,32 @@ describe('The Last Letter, the room', () => {
     const results = screen.getByRole('list', { name: 'Results' });
     expect(within(results).getByText('Hevalo')).toBeInTheDocument();
     expect(within(results).getByText('Words: 8')).toBeInTheDocument();
-    expect(within(results).getByText('+16 XP')).toBeInTheDocument();
+    // no XP on the places, never a "+0 XP", and one line under them that says where XP is earned
+    expect(results).not.toHaveTextContent('XP');
+    expect(screen.queryByText(/\d+ XP/)).toBeNull();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeInTheDocument();
+  });
+
+  it('keeps the XP on the places of a game with friends, and says nothing there of playing alone', async () => {
+    serve({
+      '/mp/last-letter/g1': room({
+        status: 'finished',
+        code: null,
+        players: [seat(1, { userId: 'me', isMe: true, isHost: true }), seat(2, { name: 'Rojda' })],
+        results: [
+          { seat: 1, place: 1, score: 9, xpAwarded: 16 },
+          { seat: 2, place: 2, score: 8, xpAwarded: 0 },
+        ],
+        board: board({ yourTurn: false, turn: null, endedBy: 'last-standing' }),
+      }),
+    });
+    renderPlay(<LastLetter />, { route: '/app/games/last-letter?id=g1' });
+    const results = await screen.findByRole('list', { name: 'Results' });
+    const [first, second] = within(results).getAllByRole('listitem');
+    expect(within(first!).getByText('+16 XP')).toBeInTheDocument();
+    // a place that earned none shows none, rather than a zero
+    expect(second).not.toHaveTextContent('XP');
+    expect(screen.queryByText(/Played alone, a game earns no XP/)).toBeNull();
   });
 
   it('says a game that is not this person’s to see is unavailable', async () => {

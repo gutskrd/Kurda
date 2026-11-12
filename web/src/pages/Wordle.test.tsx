@@ -30,7 +30,8 @@ const wonGame = {
   keyboard: { k: 'green', a: 'green', r: 'green' },
   remainingAttempts: 5,
   target: 'kar',
-  xpAwarded: 20,
+  // what the server sends for a game played alone
+  xpAwarded: 0,
 };
 
 describe('Wordle', () => {
@@ -70,6 +71,36 @@ describe('Wordle', () => {
 
     expect(guessBody).toMatchObject({ word: 'kar' });
     await waitFor(() => expect(screen.getByText(/solved it/i)).toBeInTheDocument());
+  });
+
+  it('shows no XP on the result of a game played alone, and says once where XP is earned', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        // a daily already played, opened again: its result is on the page at once
+        if (url.includes('/wordle/daily')) return jsonResponse(200, wonGame);
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+    expect(await screen.findByText(/solved it/i)).toBeInTheDocument();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeInTheDocument();
+    // that line is the page's one mention of XP: no figure of it, not even a zero
+    expect(screen.queryByText(/\d+ XP/)).toBeNull();
+    expect(screen.getAllByText(/XP/)).toHaveLength(1);
+  });
+
+  it('keeps that line off a game still being played', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/wordle/daily')) return jsonResponse(200, startedGame);
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+    expect(await screen.findByRole('button', { name: 'k' })).toBeInTheDocument();
+    expect(screen.queryByText(/XP/)).toBeNull();
   });
 
   it('shows a friendly message when the word pool is empty', async () => {

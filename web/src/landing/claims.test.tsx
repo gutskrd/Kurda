@@ -17,6 +17,10 @@ import { en } from '../i18n/en';
  * won`), and a league everyone is in when it is a choice. Listening and
  * speaking exercises exist in the player, but the first course has none yet,
  * so every line that names them says "in lessons that have them".
+ *
+ * And one that stopped being true when the rule changed: "games earn XP".
+ * XP comes from lessons, stories and games played online with other people;
+ * a game played alone, against Hevalo or on one phone earns none.
  */
 describe('what the front page promises', () => {
   it('promises listening and speaking only in the lessons that have them', () => {
@@ -39,6 +43,15 @@ describe('what the front page promises', () => {
     expect(container.textContent).not.toMatch(/a review or the daily peyvok/i);
     expect(screen.getByText(/finish a lesson or a review each day for zêr/i)).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/come back each day for zêr|show up every day for zêr/i);
+  });
+
+  it('promises XP for lessons, stories and games played online with friends, not for games as such', () => {
+    const { container } = renderApp(<Landing />);
+    expect(container.textContent).not.toMatch(/games and lessons earn xp/i);
+    expect(screen.getByText(/^Lessons, stories and games played online with friends earn XP, and a weekly league ranks it/)).toBeInTheDocument();
+    expect(screen.getByText('Lessons, stories and games with friends online earn XP.')).toBeInTheDocument();
+    // an account keeps the scores of the games; it is not said to keep XP they no longer all earn
+    expect(screen.getByText('The games need a free account, which keeps your scores.')).toBeInTheDocument();
   });
 
   it('says recordings are slowed in listening exercises, where there is a recording', () => {
@@ -77,6 +90,14 @@ describe('what the FAQ promises', () => {
     renderApp(<Faq />);
     const answer = screen.getByText('What are XP, leagues and Zêr?').closest('details')!;
     expect(within(answer).getByText(/leagues are optional, and you can leave them in settings/i)).toBeInTheDocument();
+  });
+
+  it('says where XP comes from, and that a game played alone or on one phone earns none', () => {
+    renderApp(<Faq />);
+    const answer = screen.getByText('What are XP, leagues and Zêr?').closest('details')!;
+    expect(answer.textContent).toMatch(/XP is what lessons, reviews, stories and games played online with other people earn you/);
+    expect(answer.textContent).toMatch(/a game played alone or on one phone earns none/);
+    expect(answer.textContent).not.toMatch(/stories and games earn you/);
   });
 
   it('does not offer the games without an account', () => {

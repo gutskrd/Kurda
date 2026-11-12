@@ -321,7 +321,10 @@ export function SoloGameShell<Item, H, C, B = unknown>({
               <li>{t('games.solo.results.streak')}</li>
             </>
           ) : (
-            <li className="solo-honest">{t(pays ? 'games.solo.results.noXp' : 'games.solo.results.notCounted', { needed: results.needed, correct: results.firstTry })}</li>
+            // a round that fell short says what would make the day count, and speaks of earning XP only where a round can
+            <li className="solo-honest">
+              {t(pays ? 'games.solo.results.noXp' : 'games.solo.results.notCounted', { needed: results.needed, correct: results.firstTry })}
+            </li>
           )}
           {pays && results.learningCounted && results.items.some((i) => i.correct && i.repeat) && <li className="solo-muted">{t('games.solo.results.repeat')}</li>}
           {/* where a round that pays says what it paid, a game played alone says once why there is nothing to say */}

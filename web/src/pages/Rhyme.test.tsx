@@ -95,7 +95,7 @@ describe('Rhyme (solo training)', () => {
         'fetch',
         vi.fn(async (url: string) => {
           if (url.includes('/rhyme/training/r1/end')) {
-            return jsonResponse(200, { game: { ...round, remainingMs: 0, status: 'ended', xpAwarded: 5 } });
+            return jsonResponse(200, { game: { ...round, remainingMs: 0, status: 'ended', xpAwarded: 0 } });
           }
           if (url.includes('/rhyme/training')) return jsonResponse(200, { ...round, remainingMs });
           return jsonResponse(200, {});
@@ -112,6 +112,20 @@ describe('Rhyme (solo training)', () => {
 
       await waitFor(() => expect(heard).toEqual([{ game: 'rhyme', gaveUp: false }]));
       stop();
+    });
+
+    it('shows no XP once the round is over, and says once where XP is earned', async () => {
+      stubRound(60000);
+      renderApp(<Rhyme />, ['/app/games/rhyme']);
+      await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+      // while the clock runs nothing speaks of XP
+      await screen.findByRole('button', { name: 'End round' });
+      expect(screen.queryByText(/XP/)).toBeNull();
+
+      await userEvent.click(screen.getByRole('button', { name: 'End round' }));
+      expect(await screen.findByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Play again' })).toBeInTheDocument();
+      expect(screen.queryByText(/\d+ XP/)).toBeNull();
     });
 
     it('reports a round ended early with “End round” as given up', async () => {
