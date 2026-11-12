@@ -28,7 +28,8 @@ export function registerWordleRoutes(
   /** Start (or resume) today's shared daily puzzle. */
   app.post(
     '/wordle/daily',
-    { schema: { body: difficultyBody }, preHandler: requireAuth },
+    // a round is a row and a read of the word pool: thirty a minute is more than anyone plays, and few enough not to be a tap left running
+    { schema: { body: difficultyBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth },
     async (req, reply) => {
       const { difficulty } = req.body as z.infer<typeof difficultyBody>;
       const res = await wordle.startDaily(req.user!.id, difficulty);
@@ -42,7 +43,8 @@ export function registerWordleRoutes(
   /** Start an unlimited practice game (random word, reduced XP, no streak). */
   app.post(
     '/wordle/practice',
-    { schema: { body: difficultyBody }, preHandler: requireAuth },
+    // a round is a row and a read of the word pool: thirty a minute is more than anyone plays, and few enough not to be a tap left running
+    { schema: { body: difficultyBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth },
     async (req, reply) => {
       const { difficulty } = req.body as z.infer<typeof difficultyBody>;
       const res = await wordle.startPractice(req.user!.id, difficulty);

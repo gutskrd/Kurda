@@ -11,7 +11,6 @@ import {
   WHO_AM_I_RACE_MINUTES,
   availableDifficulties,
   dealWhoAmI,
-  seededUnit,
   whoAmIRaceRules,
   type GameDifficulty,
   type GameLevel,
@@ -27,6 +26,7 @@ import { TrustedSources } from '../../games/sources.js';
 import { identitiesAt, whoAmIPool } from '../../games/who-am-i.js';
 import { AppError } from '../../plugins/errors.js';
 import type { GameModule, LobbyChoices } from '../module.js';
+import { unitFor } from '../../games/draw.js';
 
 /**
  * Who Am I? as a race, on the server (shared/src/games/who-am-i/rules.ts):
@@ -114,14 +114,16 @@ export const whoAmIRaceModule: GameModule<WhoAmIRaceState, WhoAmIRaceMove, WhoAm
   async deal(db, settings, { dialect, seed, seats }) {
     const { identities, templates } = await whoAmIPool(new TrustedSources(db), dialect);
     const here = identitiesAt(identities, settings.difficulty);
-    const order = here.map((i) => ({ i, k: seededUnit(seed, `target:${i.id}`) })).sort((a, b) => a.k - b.k).map((x) => x.i);
+    // every draw is keyed here: the order of a seat's tiles and questions says nothing of who is hidden, on any seat
+    const unit = unitFor(seed);
+    const order = here.map((i) => ({ i, k: unit(`target:${i.id}`) })).sort((a, b) => a.k - b.k).map((x) => x.i);
     const want = WHO_AM_I_CANDIDATES[settings.difficulty];
     const deals: Array<{ seat: number; deal: WhoAmIDeal }> = [];
     const used = new Set<string>();
     for (const s of seats) {
       const fresh = order.filter((i) => !used.has(i.id));
       for (const target of [...fresh, ...order]) {
-        const deal = dealWhoAmI(target, identities, templates, { seed, salt: `seat:${s.seat}`, want });
+        const deal = dealWhoAmI(target, identities, templates, { seed, salt: `seat:${s.seat}`, want, unit });
         if (!deal) continue;
         used.add(target.id);
         deals.push({ seat: s.seat, deal });

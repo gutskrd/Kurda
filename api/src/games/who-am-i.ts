@@ -56,7 +56,7 @@ import {
 } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
-import { drawFor } from './draw.js';
+import { drawFor, unitFor } from './draw.js';
 import { freshestFirst, seenFor } from './seen.js';
 import type { TrustedSources } from './sources.js';
 import type { RoundAsk, SoloEngine, StoredItem } from './solo.js';
@@ -133,7 +133,7 @@ export class WhoAmIGame implements SoloEngine<WhoAmIItem, WhoAmIItemView, WhoAmI
     for (const target of targets) {
       if (items.length >= WHO_AM_I_ROUND_ITEMS) break;
       // the tiles come from the whole variety, so a small level still has company to hide among
-      const deal = dealWhoAmI(target, identities, templates, { seed: ask.seed, salt: String(items.length), want });
+      const deal = dealWhoAmI(target, identities, templates, { seed: ask.seed, salt: String(items.length), want, unit: unitFor(ask.seed) });
       if (!deal) continue;
       items.push({
         key: target.key,

@@ -881,7 +881,12 @@ export class WordleBattleService {
     const players = await client.query<PlayerRow>(`SELECT * FROM wordle_battle_players WHERE battle_id = $1 AND NOT removed`, [battleId]);
     const ranked = rankBattle(players.rows.map((r) => this.toBattleResult(r)));
     const count = ranked.length;
-    const placed = ranked.map((r) => ({ userId: r.userId, xp: placementXp(r.rank, count) }));
+    // A place is paid for a battle that was raced: to those who made a guess, and only when two of them did. A battle
+    // started and walked away from by everyone used to tie them all first with nothing typed, and pay every one of them
+    // the winner's XP, as often as a battle could be made.
+    const guessed = new Set(players.rows.filter((r) => r.guess_count > 0).map((r) => r.user_id));
+    const raced = guessed.size >= 2;
+    const placed = ranked.map((r) => ({ userId: r.userId, xp: raced && guessed.has(r.userId) ? placementXp(r.rank, count) : 0 }));
     // each award on its own (it locks and caps the player's day), the record of what each was paid in one statement
     for (const { userId, xp } of placed) {
       await this.xp.award({ userId, source: 'wordle_battle', amount: xp, refId: `battle:${battleId}:${userId}` }, client);

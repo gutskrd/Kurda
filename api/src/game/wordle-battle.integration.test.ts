@@ -131,6 +131,42 @@ describe.skipIf(!DATABASE_URL)('wordle battle (integration)', () => {
     expect(await ledgerXp(p2)).toBe(p2Row.xpAwarded);
   });
 
+  it('pays nobody for a battle that was started and walked away from', async () => {
+    const host = await makeUser();
+    const p2 = await makeUser();
+    await befriend(pool, host, p2);
+    const created = await svc.create(host, { difficulty: 'medium' });
+    if (!created.ok) throw new Error('create failed');
+    const battleId = created.battle.id;
+    expect((await svc.join(battleId, p2)).ok).toBe(true);
+    expect((await svc.start(battleId, host)).ok).toBe(true);
+    // nobody types a word: both leave, and the battle ends with the two of them tied on nothing
+    await svc.leave(battleId, host);
+    await svc.leave(battleId, p2);
+    expect((await svc.state(battleId, host)).status).toBe('finished');
+    const results = await svc.results(battleId, host);
+    for (const row of results!.ranking) expect(row.xpAwarded ?? 0).toBe(0);
+    expect(await ledgerXp(host)).toBe(0);
+    expect(await ledgerXp(p2)).toBe(0);
+  });
+
+  it('pays only the one who raced when the other never made a guess', async () => {
+    const host = await makeUser();
+    const p2 = await makeUser();
+    await befriend(pool, host, p2);
+    const created = await svc.create(host, { difficulty: 'medium' });
+    if (!created.ok) throw new Error('create failed');
+    const battleId = created.battle.id;
+    await svc.join(battleId, p2);
+    await svc.start(battleId, host);
+    // one guess from the host, none from the other, who leaves: a race needs two to have raced
+    await svc.guess(battleId, host, MEDIUM[0]!);
+    await svc.leave(battleId, p2);
+    await svc.leave(battleId, host);
+    expect(await ledgerXp(host)).toBe(0);
+    expect(await ledgerXp(p2)).toBe(0);
+  });
+
   it('rejects guesses from a non-member and needs two players to start', async () => {
     const host = await makeUser();
     const created = await svc.create(host, { difficulty: 'medium' });

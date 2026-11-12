@@ -520,7 +520,8 @@ export class TrustedSources {
   private async pooled<T>(name: string, dialect: GameDialect, load: () => Promise<T>): Promise<T> {
     if (!this.cache) return load();
     const generation = (await this.cache.get<string>(CACHE_DOMAIN, GENERATION_ID)) ?? '0';
-    return this.cache.withCache(CACHE_DOMAIN, `${generation}:${name}:${dialect}`, POOL_TTL_SECONDS, load);
+    // the scope is part of the key: what the starter library reads of the course is never a game's pool
+    return this.cache.withCache(CACHE_DOMAIN, `${generation}:${this.scope === 'course' ? 'course:' : ''}${name}:${dialect}`, POOL_TTL_SECONDS, load);
   }
 
   /**
@@ -533,7 +534,7 @@ export class TrustedSources {
   async derived<T>(name: string, dialect: GameDialect, build: () => Promise<T>): Promise<T> {
     if (!this.cache) return build();
     const generation = (await this.cache.get<string>(CACHE_DOMAIN, GENERATION_ID)) ?? '0';
-    const key = `${generation}:${name}:${dialect}`;
+    const key = `${generation}:${this.scope === 'course' ? 'course:' : ''}${name}:${dialect}`;
     const now = this.clock();
     const hit = this.memo.get(key);
     if (hit && now - hit.at < DERIVED_TTL_MS) return hit.value as Promise<T>;

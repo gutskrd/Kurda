@@ -159,10 +159,32 @@ export async function checkWord(db: Executor, dialect: LetterDialect, key: strin
  * The words the course teaches, as its published word cards hold them: each
  * by its letters in the dialect, with the short English meaning its lesson
  * gives it. A name, a word the filter refuses and anything that is not one
- * word of the dialect are left out. Read afresh each time: the cards of one
- * variety are a few hundred short rows behind one index.
+ * word of the dialect are left out. Kept for a minute per variety: a move
+ * may ask twice, a variety holds a thousand cards and more, and each is read
+ * through the word filter, which is too much to do again on every word
+ * somebody types. A card published or taken down shows within that minute.
  */
-export async function courseWords(db: Executor, dialect: LetterDialect): Promise<Map<string, string | null>> {
+const COURSE_WORDS_MS = 60_000;
+const courseWordsKept = new Map<LetterDialect, { at: number; words: Promise<Map<string, string | null>> }>();
+
+/** Read the cards again on the next ask (for the tests, which publish a card and play it at once). */
+export function forgetCourseWords(): void {
+  courseWordsKept.clear();
+}
+
+export function courseWords(db: Executor, dialect: LetterDialect, now: number = Date.now()): Promise<Map<string, string | null>> {
+  const kept = courseWordsKept.get(dialect);
+  if (kept && now - kept.at < COURSE_WORDS_MS) return kept.words;
+  const words = readCourseWords(db, dialect);
+  courseWordsKept.set(dialect, { at: now, words });
+  // a read that failed is not kept: the next move tries again
+  words.catch(() => {
+    if (courseWordsKept.get(dialect)?.words === words) courseWordsKept.delete(dialect);
+  });
+  return words;
+}
+
+async function readCourseWords(db: Executor, dialect: LetterDialect): Promise<Map<string, string | null>> {
   const res = await db.query<{ word: string; en: string | null }>(
     `SELECT payload->>'word' AS word, payload->'meanings'->>'en' AS en FROM game_content
       WHERE kind = 'word_card' AND dialect = $1 AND status = 'published' AND review_status = 'approved'`,
