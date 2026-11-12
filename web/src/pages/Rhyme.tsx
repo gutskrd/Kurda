@@ -41,6 +41,9 @@ const REJECT_KEY: Record<string, MessageKey> = {
  * long and begins when it is asked for, so nobody arrives to find ten seconds
  * of it already gone. Choosing the other variety comes back to the start for
  * the same reason.
+ *
+ * A round here is played alone, so it earns no XP: the result gives the
+ * score and the rhymes found, and one line on where XP is earned.
  */
 export function Rhyme(): React.JSX.Element {
   const { client } = useAuth();

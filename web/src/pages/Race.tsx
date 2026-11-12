@@ -43,6 +43,10 @@ import { reportGameFinished, reportGameStarted } from '../feedback/gameFinished'
  * only its own word, in the accent mode the race was started in. The field
  * only ever takes typing at its end (race/useRaceCapture) — a click, an arrow
  * key or select-all can no longer put the next letter in the middle.
+ *
+ * A race is run alone, so it earns no XP: the result gives the speed, the
+ * accuracy and the time, counts for the rankings unless the server would not
+ * score it, and says in one line where XP is earned.
  */
 
 const LENGTHS: Array<{ value: RaceLength; labelKey: MessageKey }> = [
