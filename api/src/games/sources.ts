@@ -19,6 +19,13 @@
  * Drafts, lessons in review, unpublished stories and unapproved rows are never
  * read here, so no game can reach them.
  *
+ * One reader looks further, and no game holds it: the starter library
+ * (games/starter-library.ts) reads the course as it stands (`scope: 'course'`)
+ * — the lessons and stories Hevalo ships, published or not yet — to make each
+ * game's first set of rows from them. What it makes are `game_content` rows,
+ * published, which the games then read like any other row. `game_content` and
+ * the recordings are read the same way in both scopes.
+ *
  * Every item is in exactly one variety. The variety comes from where the item
  * lives (a course's, a story's or a row's dialect, read through `toDialect`),
  * and the item's Kurdish must also be written in that variety's script
@@ -487,6 +494,13 @@ export function publishedRecordingTexts(
 
 // ---------- the readers ----------
 
+/**
+ * What a reader counts as the course: `published` is what learners can meet,
+ * and the only scope a game reads; `course` is every lesson and story that
+ * has not been archived, drafts among them, for the starter library alone.
+ */
+export type SourceScope = 'published' | 'course';
+
 export class TrustedSources {
   private readonly memo = new Map<string, { at: number; value: Promise<unknown> }>();
 
@@ -494,7 +508,13 @@ export class TrustedSources {
     private readonly db: Executor,
     private readonly cache: Cache | null = null,
     private readonly clock: () => number = Date.now,
+    private readonly scope: SourceScope = 'published',
   ) {}
+
+  /** Which lessons count: the published ones, or for the starter library every one that is not put away. */
+  private get lessonsThatCount(): string {
+    return this.scope === 'course' ? `l.status <> 'archived'` : `l.status = 'published'`;
+  }
 
   /** A pool through the cache, under the current generation. */
   private async pooled<T>(name: string, dialect: GameDialect, load: () => Promise<T>): Promise<T> {
@@ -541,7 +561,7 @@ export class TrustedSources {
            JOIN skills s ON s.id = l.skill_id
            JOIN units u ON u.id = s.unit_id
            JOIN courses c ON c.id = u.course_id
-          WHERE l.status = 'published'
+          WHERE ${this.lessonsThatCount}
           ORDER BY l.skill_id, l.position, l.version DESC
        )
        SELECT e.id, e.type, e.payload, live.dialect, live.id AS lesson_id
@@ -636,7 +656,7 @@ export class TrustedSources {
     return this.pooled('story-passages', dialect, async () => {
       const res = await this.db.query<{ id: string; title: string; level: number; body: string; glossary: Array<{ term: string; meanings: Partial<Meanings> }> }>(
         `SELECT id, title, level, body, glossary FROM stories
-          WHERE status = 'published' AND review_status = 'approved' AND dialect = $1
+          WHERE ${this.scope === 'course' ? `status <> 'archived'` : `status = 'published' AND review_status = 'approved'`} AND dialect = $1
           ORDER BY level, id`,
         [storySpelling(dialect)],
       );
@@ -755,7 +775,7 @@ export class TrustedSources {
              JOIN skills s ON s.id = l.skill_id
              JOIN units u ON u.id = s.unit_id
              JOIN courses c ON c.id = u.course_id
-            WHERE l.status = 'published'
+            WHERE ${this.lessonsThatCount}
             ORDER BY l.skill_id, l.position, l.version DESC
          )
          SELECT e.id, e.type, e.payload, live.dialect, live.unit_rank, live.unit_count

@@ -483,7 +483,8 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('What Would You Say? and Kurdish De
       const quiet = { info: () => undefined, warn: () => undefined };
       expect((await seedStarterGameContent(pool, quiet, [pathToFileURL(file)])).seeded).toEqual([`${tag}-case`]);
       const row = (await pool.query(`SELECT status, review_status, source, payload FROM game_content WHERE origin = $1`, [`starter:${tag}-case`])).rows[0];
-      expect(row).toMatchObject({ status: 'draft', review_status: 'unreviewed', source: 'starter' });
+      // a starter goes in published, with no reviewer named
+      expect(row).toMatchObject({ status: 'published', review_status: 'approved', source: 'starter' });
       expect(row.payload.evidence.map((e: { ku: string }) => e.ku)).toEqual(c1.lines.slice(0, 3).map((l) => l.text));
       expect(row.payload.evidence[0].recording).toBe(conversationLineKey(conversationIds[1]!, 0, c1.lines[0]!.text));
       // once only, even after an editor deletes it

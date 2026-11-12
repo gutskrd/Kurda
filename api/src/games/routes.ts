@@ -52,6 +52,7 @@ import {
   LEARN_GAME_IDS,
   SOLO_MAX_ATTEMPTS,
   SOLO_ROUND_ITEMS,
+  lastLetterAvailability,
 } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
 import { requireCapability } from '../admin/routes.js';
@@ -70,6 +71,7 @@ import { WhatWouldYouSayGame } from './what-would-you-say.js';
 import { DetectiveGame } from './detective.js';
 import { registerGameClipRoute } from './clips.js';
 import { GameAvailabilityService } from './availability.js';
+import { lastLetterCounts } from '../mp/games/last-letter.js';
 import { SoloService } from './solo.js';
 import { GameContentAdminService } from './content-admin.js';
 import { WhoAmIGame, registerWhoAmIRoutes } from './who-am-i.js';
@@ -152,6 +154,14 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
   const availability = new GameAvailabilityService(app.db, sources, sentences, cache, {
     'memory-thief': { count: async (dialect) => ({ levels: await memory.levels(dialect) }) },
     'hear-it': { count: (dialect) => hearing.availability(dialect) },
+    // a word chain is offered by its own rule (a dictionary big enough to check words fairly), the same one its page asks
+    'last-letter': {
+      count: async (dialect) => {
+        const { words, hevalo } = await lastLetterCounts(app.db, dialect);
+        const n = hevalo;
+        return { levels: { 1: n, 2: n, 3: n, 4: n, 5: n }, difficulties: lastLetterAvailability(dialect, words, hevalo).group ? [...GAME_DIFFICULTIES] : [] };
+      },
+    },
   });
   const solo = new SoloService(app.db, {
     xp: deps.xp,

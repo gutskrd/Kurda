@@ -39,21 +39,14 @@
  */
 import type pg from 'pg';
 import {
-  CHARACTER_NAMES,
   GAME_CONTENT_KINDS,
   GAME_LEVELS,
   LEARN_GAMES,
-  PASSAGE_HIDDEN,
-  SCENARIO_LINE_WORDS,
-  SCENARIO_TILE_WORDS,
   checkGameContent,
   contentHeadline,
   foldForDialect,
   gameOfKind,
-  gameWords,
-  guessPlace,
   lessonAudioKey,
-  pickWrongReplies,
   sentenceShape,
   storySentences,
   type AdminGameContent,
@@ -66,17 +59,15 @@ import {
   type GameContentStatus,
   type GameDialect,
   type GameLevel,
-  type Meanings,
   type PublishedLine,
-  type ReplyCandidate,
 } from '@kurda/shared';
 import { AuditService } from '../admin/audit-service.js';
 import type { Cache } from '../cache/cache.js';
 import { escapeLike } from '../db/like.js';
 import { AppError } from '../plugins/errors.js';
 import { bustAvailability, type GameAvailabilityService } from './availability.js';
-import { bustGamePools, type TaughtLine, type TrustedSources, type VocabularyWord } from './sources.js';
-import { STARTER_CATEGORIES, starterCategoryOf } from './word-categories.js';
+import { bustGamePools, type TrustedSources, type VocabularyWord } from './sources.js';
+import { passageDrafts, scenarioDrafts, sentenceDrafts, wordCardDrafts, type ContentDraft } from './content-drafts.js';
 
 /** A row as the admin panel lists and edits it (@kurda/shared `AdminGameContent`). */
 export type GameContentRow = AdminGameContent;
@@ -214,8 +205,7 @@ export interface ImportResult {
   skipped: number;
 }
 
-/** Scenes an import takes from one conversation at most: a few good moments, not every line of it. */
-export const SCENES_PER_CONVERSATION = 2;
+export { SCENES_PER_CONVERSATION } from './content-drafts.js';
 
 /** Lines the picker lists at once. */
 export const PICKED_LINES_MAX = 60;
@@ -439,7 +429,7 @@ export class GameContentAdminService {
   private async insertDrafts(
     kind: GameContentKind,
     dialect: GameDialect,
-    drafts: Array<{ level: number; payload: GameContentPayload; origin: string }>,
+    drafts: ContentDraft[],
     ctx: ActionContext,
     what: string,
     source: GameContentSource = 'admin',
@@ -468,40 +458,14 @@ export class GameContentAdminService {
     });
   }
 
-  /**
-   * Published lessons' sentences as `sentence` drafts, with the English and
-   * the orders they accept, on the level their shape gives them. Only those
-   * `checkGameContent` would store.
-   */
+  /** Published lessons' sentences as `sentence` drafts (content-drafts.ts `sentenceDrafts`). */
   async importLessonSentences(dialect: GameDialect, ctx: ActionContext, limit = 500): Promise<ImportResult> {
-    const sentences = (await this.sources.lessonSentences(dialect)).slice(0, limit);
-    const drafts: Array<{ level: number; payload: GameContentPayload; origin: string }> = [];
-    for (const s of sentences) {
-      const payload = { ku: s.ku, meanings: s.meaning, orders: s.orders.slice(1), origin: { type: s.origin.startsWith('conversation') ? 'conversation' : 'lesson', ref: s.origin.split(':').slice(1).join(':') } };
-      const checked = checkGameContent('sentence', dialect, payload);
-      if (checked.ok) drafts.push({ level: sentenceShape(s.ku, s.meaning.en, dialect).level, payload: checked.payload, origin: s.origin });
-    }
-    return this.insertDrafts('sentence', dialect, drafts, ctx, 'published lessons');
+    return this.insertDrafts('sentence', dialect, await sentenceDrafts(this.sources, dialect, limit), ctx, 'published lessons');
   }
 
-  /**
-   * Published stories' paragraphs as `passage` drafts: the paragraph, and as
-   * the words that vanish the glossary terms it holds (two to six), each with
-   * the meanings the story's glossary gives it.
-   */
+  /** Published stories' paragraphs as `passage` drafts (content-drafts.ts `passageDrafts`). */
   async importStoryPassages(dialect: GameDialect, ctx: ActionContext, limit = 500): Promise<ImportResult> {
-    const passages = (await this.sources.storyPassages(dialect)).filter((p) => p.glossary.length >= PASSAGE_HIDDEN.min).slice(0, limit);
-    const drafts: Array<{ level: number; payload: GameContentPayload; origin: string }> = [];
-    for (const p of passages) {
-      const hidden = p.glossary
-        .filter((g) => typeof g.meanings.en === 'string' && g.meanings.en.trim() !== '')
-        .slice(0, PASSAGE_HIDDEN.max)
-        .map((g) => ({ term: g.term, meanings: g.meanings as Meanings }));
-      const payload = { title: p.title, text: p.text, hidden, origin: { type: 'story', ref: `${p.storyId}:${p.paragraph}` } };
-      const checked = checkGameContent('passage', dialect, payload);
-      if (checked.ok) drafts.push({ level: Math.min(5, Math.max(1, p.level)), payload: checked.payload, origin: `story:${p.storyId}:${p.paragraph}` });
-    }
-    return this.insertDrafts('passage', dialect, drafts, ctx, 'published stories');
+    return this.insertDrafts('passage', dialect, await passageDrafts(this.sources, dialect, limit), ctx, 'published stories');
   }
 
   /**
@@ -527,103 +491,21 @@ export class GameContentAdminService {
   }
 
   /**
-   * Kurdish Impostor's starter cards: each published word whose English
-   * meaning puts it in a starter category becomes a word card draft — its
-   * word and meaning copied, the category's name as the impostor's hint — and
-   * each category used becomes a category draft. All of them are 'starter'
-   * drafts: the category names wait for a native speaker, and every card for
-   * a reviewer, before a game can show them. Filed at level 1; the reviewer
-   * moves a card that belongs higher. A word that is its category's own name
-   * (heywan, in animals) is left out: the hint would be the answer.
+   * Kurdish Impostor's starter cards from published vocabulary, and the
+   * categories they are sorted into (content-drafts.ts `wordCardDrafts`). All
+   * of them are 'starter' drafts: the category names are new Kurdish, for a
+   * native speaker to read before a game shows them.
    */
   async importStarterWordCards(dialect: GameDialect, ctx: ActionContext, limit = 500): Promise<ImportResult> {
-    const cards: Array<{ level: number; payload: GameContentPayload; origin: string }> = [];
-    const used = new Set<string>();
-    for (const w of await this.sources.vocabulary(dialect)) {
-      if (cards.length >= limit) break;
-      const en = w.meanings.en?.trim();
-      const category = starterCategoryOf(en);
-      if (!en || !category) continue;
-      // the category's own name is the impostor's hint: as a card it would give its word away
-      if (foldForDialect(w.ku, dialect, true) === foldForDialect(category.name[dialect], dialect, true)) continue;
-      const payload = {
-        word: w.ku,
-        meanings: { ...w.meanings, en } as Meanings,
-        category: category.slug,
-        hint: { ku: category.name[dialect], meanings: category.meanings },
-        forms: [],
-      };
-      const checked = checkGameContent('word_card', dialect, payload);
-      if (!checked.ok) continue;
-      cards.push({ level: 1, payload: checked.payload, origin: `vocabulary:${w.key}` });
-      used.add(category.slug);
-    }
-    const categories = STARTER_CATEGORIES.filter((c) => used.has(c.slug)).flatMap((c) => {
-      const checked = checkGameContent('word_category', dialect, { slug: c.slug, ku: c.name[dialect], meanings: c.meanings });
-      return checked.ok ? [{ level: 1, payload: checked.payload, origin: `starter-category:${c.slug}` }] : [];
-    });
+    const { categories, cards } = await wordCardDrafts(this.sources, dialect, limit);
     const a = await this.insertDrafts('word_category', dialect, categories, ctx, 'starter categories', 'starter');
     const b = await this.insertDrafts('word_card', dialect, cards, ctx, 'published vocabulary', 'starter');
     return { created: a.created + b.created, skipped: a.skipped + b.skipped };
   }
 
-  /**
-   * Published conversations as `scenario` drafts: in each, up to
-   * SCENES_PER_CONVERSATION moments where one person says a line and someone
-   * else answers it — a question answered first — with the answer as the
-   * right reply and real lines from other conversations of about the same
-   * level as the wrong ones (`pickWrongReplies`), each with its English and
-   * the key its recording is filed under. The situation is the editor's to
-   * write; the draft says only who is speaking, and suggests the place the
-   * conversation's English mentions most.
-   */
+  /** Published conversations as `scenario` drafts (content-drafts.ts `scenarioDrafts`); the situation is the editor's to write. */
   async importScenarios(dialect: GameDialect, ctx: ActionContext, limit = 200): Promise<ImportResult> {
-    const lines = await this.sources.conversationLines(dialect);
-    const byExercise = new Map<string, TaughtLine[]>();
-    for (const l of lines) byExercise.set(l.exerciseId, [...(byExercise.get(l.exerciseId) ?? []), l]);
-    const pool: ReplyCandidate[] = lines.filter((l) => l.en).map((l) => ({ ku: l.ku, en: l.en, conversation: l.conversation, level: l.level }));
-    const recordingOf = new Map(lines.map((l) => [`${l.conversation}\u0000${l.ku}`, l.recording]));
-    const words = (ku: string) => gameWords(ku).length;
-
-    const drafts: Array<{ level: number; payload: GameContentPayload; origin: string }> = [];
-    for (const conversation of byExercise.values()) {
-      if (drafts.length >= limit) break;
-      const pairs: Array<[TaughtLine, TaughtLine]> = [];
-      for (let i = 0; i + 1 < conversation.length; i++) {
-        const [a, b] = [conversation[i]!, conversation[i + 1]!];
-        // someone else answering, both with their English, each long enough to say something particular, the answer of a size to choose or build
-        if (a.index + 1 !== b.index || a.part === b.part || !a.en || !b.en) continue;
-        if (words(a.ku) < SCENARIO_LINE_WORDS || words(b.ku) < SCENARIO_LINE_WORDS || words(b.ku) > SCENARIO_TILE_WORDS.max + 2) continue;
-        pairs.push([a, b]);
-      }
-      const asked = (l: TaughtLine) => /[?؟]\s*$/u.test(l.ku);
-      pairs.sort((x, y) => Number(asked(y[0])) - Number(asked(x[0])) || x[0].index - y[0].index);
-      const place = guessPlace(conversation.map((l) => l.en));
-      let taken = 0;
-      for (const [a, b] of pairs) {
-        if (taken >= SCENES_PER_CONVERSATION || drafts.length >= limit) break;
-        const wrong = pickWrongReplies({ line: a.ku, reply: b.ku, conversation: a.conversation, level: a.level }, pool, dialect);
-        if (wrong.length < 2) continue;
-        const said = a.speaker ? CHARACTER_NAMES[a.speaker] : null;
-        const payload = {
-          situation: { en: said ? `${said} says this to you.` : 'Someone says this to you.' },
-          ...(place ? { place } : {}),
-          ...(a.speaker ? { speaker: a.speaker } : {}),
-          line: { ku: a.ku, meanings: { en: a.en }, ...(a.recording ? { recording: a.recording } : {}) },
-          reply: { ku: b.ku, meanings: { en: b.en }, ...(b.recording ? { recording: b.recording } : {}) },
-          others: wrong.map((w) => {
-            const recording = recordingOf.get(`${w.conversation}\u0000${w.ku}`);
-            return { ku: w.ku, meanings: { en: w.en! }, ...(recording ? { recording } : {}) };
-          }),
-          origin: { type: 'conversation', ref: `${a.exerciseId}:${a.index}` },
-        };
-        const checked = checkGameContent('scenario', dialect, payload);
-        if (!checked.ok) continue;
-        drafts.push({ level: a.level, payload: checked.payload, origin: a.origin });
-        taken++;
-      }
-    }
-    return this.insertDrafts('scenario', dialect, drafts, ctx, 'published conversations');
+    return this.insertDrafts('scenario', dialect, await scenarioDrafts(this.sources, dialect, limit), ctx, 'published conversations');
   }
 
   /**

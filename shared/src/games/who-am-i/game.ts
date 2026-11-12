@@ -128,9 +128,29 @@ function sharedFacts(ids: readonly WhoAmIIdentity[]): Set<string> {
 }
 
 /**
+ * Keeps, of a list of identities, those no question could confuse with the
+ * hidden one or with one kept before: each answers the hidden identity's
+ * facts in a way of its own. A cat and a dog that say yes and no to all the
+ * same questions cannot be told apart by asking, and a round that deals both
+ * is a coin toss; only the first of such a pair is dealt.
+ */
+function tellsApart(target: WhoAmIIdentity): (p: WhoAmIIdentity) => boolean {
+  const keys = Object.keys(target.facts).sort();
+  const answers = (p: WhoAmIIdentity): string => keys.map((k) => (p.facts[k] === true ? 'y' : p.facts[k] === false ? 'n' : '-')).join('');
+  const taken = new Set([answers(target)]);
+  return (p) => {
+    const a = answers(p);
+    if (taken.has(a)) return false;
+    taken.add(a);
+    return true;
+  };
+}
+
+/**
  * Deal one hidden identity: up to `want` tiles (the identity, and the others
- * that share most of its facts), and the questions every tile can answer —
- * those that tell the tiles apart first. Fewer tiles are dealt when that is
+ * that share most of its facts, none answering every question as another
+ * does), and the questions every tile can answer — those that tell the tiles
+ * apart first. Fewer tiles are dealt when that is
  * what it takes to have WHO_AM_I_MIN_QUESTIONS questions; null when even
  * WHO_AM_I_MIN_CANDIDATES cannot. Everything is drawn from the seed: the same
  * deal on every replica, and a round read again is the round it was.
@@ -150,7 +170,8 @@ export function dealWhoAmI(
     .map((p) => ({ p, same: p.category === target.category, shared: Object.keys(target.facts).filter((k) => typeof p.facts[k] === 'boolean').length }))
     // the identity's own kind first, so the kind the card names tells the tiles nothing apart
     .sort((a, b) => Number(b.same) - Number(a.same) || b.shared - a.shared)
-    .map((x) => x.p);
+    .map((x) => x.p)
+    .filter(tellsApart(target));
   const byFact = new Map<string, WhoAmITemplate>();
   for (const t of draw(opts.seed, `${opts.salt}:templates`, templates, (t) => t.id)) if (!byFact.has(t.fact)) byFact.set(t.fact, t);
 
