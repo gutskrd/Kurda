@@ -273,7 +273,7 @@ function interpolate(template: string, vars: Record<string, string>): string {
 /** What each email's picture is, and what its button says when it has a link to press. */
 const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<EmailLocale, string> }> = {
   'verify-email': { picture: 'letter', button: { en: 'Confirm your email', ku: 'E-nameya xwe piştrast bike' } },
-  'verify-email-code': { picture: 'letter' },
+  'verify-email-code': { picture: 'code' },
   'password-reset': { picture: 'key', button: { en: 'Update password', ku: 'Şîfreyê Nû Bike' } },
   'password-changed': { picture: 'lock' },
   'username-changed': { picture: 'badge' },
@@ -281,13 +281,14 @@ const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<Ema
   'deletion-notice': { picture: 'hourglass' },
   'moderation-urgent': { picture: 'flag', button: { en: 'Open the report', ku: 'Raporê veke' } },
   'copyright-received': { picture: 'document' },
-  'copyright-removed': { picture: 'document' },
-  'copyright-upheld': { picture: 'document' },
-  'copyright-kept': { picture: 'document' },
+  // a decision on a notice is something weighed
+  'copyright-removed': { picture: 'scales' },
+  'copyright-upheld': { picture: 'scales' },
+  'copyright-kept': { picture: 'scales' },
   'copyright-counter-notice': { picture: 'document' },
   'new-sign-in': { picture: 'device' },
   'sign-in-attempts': { picture: 'shield' },
-  'security-alert': { picture: 'shield', button: { en: 'Open the security log', ku: 'Tomara ewlehiyê veke' } },
+  'security-alert': { picture: 'bell', button: { en: 'Open the security log', ku: 'Tomara ewlehiyê veke' } },
 };
 
 /** The footer's two lines every email has: where to write, and the link again for a button that will not press. */

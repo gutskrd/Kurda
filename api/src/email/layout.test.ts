@@ -29,7 +29,10 @@ describe('the email layout', () => {
     expect(html).toMatch(/<div style="display:none;[^"]*">Shown beside the subject<\/div>/);
     // every image says its size, so the page does not jump, and is decoration to a screen reader
     for (const img of html.match(/<img [^>]*>/g) ?? []) expect(img).toMatch(/width="\d+" height="\d+" alt=""/);
-    expect(html).toContain('<img src="https://hevalo.app/email/key.png" width="168" height="168"');
+    // the picture is its loop; the moment it rests on is beside it, out of sight unless less motion is asked for
+    expect(html).toContain('<img class="loop" src="https://hevalo.app/email/key.gif" width="168" height="168"');
+    expect(html).toMatch(/<img class="still" src="https:\/\/hevalo\.app\/email\/key\.png" width="168" height="168" alt="" style="display:none;mso-hide:all;/);
+    expect(html).toContain('@media (prefers-reduced-motion:reduce){.loop{display:none!important}.still{display:block!important}}');
   });
 
   it('wears the sender’s own mark: Hevalo’s, or Zagrosian’s', () => {

@@ -107,19 +107,24 @@ mail to the support address could hold up verification codes for the day.
 
 Every email is written once, as plain text, in `api/src/email/templates.ts`.
 The designed version a modern inbox shows is read from that same text and
-drawn by `api/src/email/layout.ts`: the sender's mark, one picture on a tile, a
+drawn by `api/src/email/layout.ts`: the sender's mark, one picture on a tile,
+moving in a small loop, a
 large heading (the subject), the paragraphs, the link as the one button or the
 code as a large code, and a footer with who signs it, where to write and the
 registered details. The plain text always goes out beside it.
 
 - A new template needs its text in both languages, a picture, and, if it has
   a link to press, what the button says (`DESIGN` in `templates.ts`).
-- The pictures are drawn in `shared/src/art/email.ts`. Email programs do not
-  draw SVG, so `npm run email:art --workspace api` writes them as images into
-  `web/public/email/`; an email points at `https://hevalo.app/email/<name>.png`.
-  Run it after adding or changing a picture and commit what it writes. The
-  website must be deployed with the images before an email that uses a new one
-  is sent, or that email shows an empty tile until it is.
+- The pictures are drawn in `shared/src/art/email.ts`, each as a small loop
+  (an envelope opening, a code being typed, a padlock closing). Email programs
+  do not draw SVG, so `npm run email:art --workspace api` writes each into
+  `web/public/email/` twice: `<name>.gif`, the loop an email shows, and
+  `<name>.png`, the moment it rests on, which a program that passes on a
+  reader's wish for less motion shows instead. An email points at
+  `https://hevalo.app/email/<name>.gif`. Run it after adding or changing a
+  picture and commit what it writes. The website must be deployed with the
+  images before an email that uses a new one is sent, or that email shows an
+  empty tile until it is.
 - Whatever is filled into an email (a username, a statement somebody wrote) is
   escaped and is never markup. A button opens only an http(s) address; a link
   inside a sentence is drawn only for an address on Hevalo itself.

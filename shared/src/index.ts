@@ -572,6 +572,8 @@ export * from './badges.js';
  */
 export {
   EMAIL_PICTURES,
+  emailPictureLoopMs,
+  emailPictureStill,
   emailPictureSvg,
   emailPictureTone,
   type EmailArtOptions,

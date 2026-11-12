@@ -38,7 +38,7 @@ import {
   impostorWaySvg,
   impostorWayTone,
 } from './impostor.js';
-import { EMAIL_PICTURES, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
+import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import {
   PATH_LANDMARK_LOOP,
@@ -1001,26 +1001,62 @@ describe('Kurdish Impostor’s pictures', () => {
 });
 
 /**
- * The emails' pictures (art/email.ts): one object for what each email is
- * about, drawn as the app's other object pictures are. They are written out
- * as images for the emails themselves, which is why each must stand alone.
+ * The emails' pictures (art/email.ts): one small scene for what each email is
+ * about, drawn as the app's other object pictures are, each a loop. They are
+ * written out as images for the emails themselves, which is why every moment
+ * of every loop must stand alone as a drawing.
  */
 describe('the emails’ pictures', () => {
-  it('draws a valid, self-contained picture for every email, small and large', () => {
-    for (const size of [56, 120, 248]) for (const picture of EMAIL_PICTURES) checkSvg(emailPictureSvg({ picture, size }), size);
+  const MOMENTS = [0, 0.1, 0.25, 0.37, 0.5, 0.62, 0.75, 0.9, 0.99];
+  const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
+
+  it('draws a valid, self-contained picture at every moment of every loop, small and large', () => {
+    for (const picture of EMAIL_PICTURES) {
+      for (const at of MOMENTS) checkSvg(emailPictureSvg({ picture, size: 120, at }), 120);
+      for (const size of [56, 248]) checkSvg(emailPictureSvg({ picture, size }), size);
+    }
   });
 
   it('is the same picture every time, no two alike, labelled, and without a word or a numeral', () => {
-    const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
     const all = EMAIL_PICTURES.map((picture) => {
       const svg = emailPictureSvg({ picture });
       expect(emailPictureSvg({ picture })).toBe(svg);
       expect(svg).toMatch(/<title id="[^"]+">[^<]+<\/title>/);
-      expect(svg).not.toMatch(/<text/);
+      for (const at of MOMENTS) expect(emailPictureSvg({ picture, at }), `${picture} at ${at}`).not.toMatch(/<text/);
       return strip(svg);
     });
     expect(new Set(all).size).toBe(all.length);
     expect(emailPictureSvg({ picture: 'key', title: 'kilît & <mifte>' })).toContain('kilît &amp; &lt;mifte&gt;');
+  });
+
+  it('moves, comes back to where it began, and rests on a moment of its own loop', () => {
+    for (const picture of EMAIL_PICTURES) {
+      const moments = new Set(MOMENTS.map((at) => strip(emailPictureSvg({ picture, at }))));
+      // a loop is more than a still: most of its moments differ from each other
+      expect(moments.size, picture).toBeGreaterThanOrEqual(6);
+      // the end of a turn is the start of the next, wherever the count has got to
+      expect(emailPictureSvg({ picture, at: 1 })).toBe(emailPictureSvg({ picture, at: 0 }));
+      expect(emailPictureSvg({ picture, at: 2.25 })).toBe(emailPictureSvg({ picture, at: 0.25 }));
+      expect(emailPictureSvg({ picture, at: -0.75 })).toBe(emailPictureSvg({ picture, at: 0.25 }));
+      const still = emailPictureStill(picture);
+      expect(still, picture).toBeGreaterThanOrEqual(0);
+      expect(still, picture).toBeLessThan(1);
+      expect(emailPictureSvg({ picture })).toBe(emailPictureSvg({ picture, at: still }));
+      // slow enough to be calm, short enough that a glance sees the whole of it
+      expect(emailPictureLoopMs(picture), picture).toBeGreaterThanOrEqual(2000);
+      expect(emailPictureLoopMs(picture), picture).toBeLessThanOrEqual(4500);
+    }
+  });
+
+  it('closes its loop on the bell hanging still, so its ringing starts and ends at rest', () => {
+    // the bell and its clapper are each turned about their own point: no turn at all at the seam
+    for (const at of [0, 0.999]) {
+      const turns = [...emailPictureSvg({ picture: 'bell', at }).matchAll(/rotate\((-?[0-9.]+) /g)].map((m) => Math.abs(Number(m[1])));
+      expect(turns.length, `at ${at}`).toBe(2);
+      for (const turn of turns) expect(turn, `at ${at}`).toBeLessThan(0.5);
+    }
+    // and in between it swings
+    expect(emailPictureSvg({ picture: 'bell', at: 1 / 12 })).toMatch(/rotate\(1[0-9](\.[0-9]+)? /);
   });
 
   it('stands each picture on a pale tile of its own colour', () => {
@@ -1032,10 +1068,12 @@ describe('the emails’ pictures', () => {
     }
   });
 
-  it('refuses a picture nobody has drawn, and a size that is not one', () => {
+  it('refuses a picture nobody has drawn, a size that is not one, and a moment that is not a number', () => {
     expect(() => emailPictureSvg({ picture: 'dragon' as EmailPicture })).toThrow(RangeError);
     expect(() => emailPictureTone('constructor' as EmailPicture)).toThrow(RangeError);
+    expect(() => emailPictureLoopMs('toString' as EmailPicture)).toThrow(RangeError);
     expect(() => emailPictureSvg({ picture: 'key', size: 0 })).toThrow(RangeError);
+    expect(() => emailPictureSvg({ picture: 'key', at: Number.NaN })).toThrow(RangeError);
   });
 });
 

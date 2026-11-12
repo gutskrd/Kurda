@@ -195,7 +195,8 @@ describe('every email, designed', () => {
         const r = renderEmail(template, locale, VARS);
         const where = `${template} ${locale}`;
         expect(r.html, where).toMatch(/^<!doctype html><html lang="(en|ku)" dir="ltr">/);
-        expect(r.html, where).toMatch(/<img src="https:\/\/hevalo\.app\/email\/[a-z]+\.png" width="168" height="168" alt=""/);
+        // its picture as a loop, and the moment it rests on for a reader who wants less motion
+        expect(r.html, where).toMatch(/<img class="loop" src="https:\/\/hevalo\.app\/email\/([a-z]+)\.gif" width="168" height="168" alt=""[^>]*><img class="still" src="https:\/\/hevalo\.app\/email\/\1\.png" width="168" height="168" alt="" style="display:none;/);
         expect(r.html, where).toContain('<h1 ');
         expect(r.html, where).not.toMatch(/\{[a-zA-Z]+\}/);
         // the page asks nothing of the reader's program but to draw it
@@ -270,8 +271,26 @@ describe('every email, designed', () => {
     expect(renderEmail('copyright-counter-notice', 'en', VARS).html).toMatch(/<td align="left" style="padding:0 0 14px;"><p class="ink2"/);
   });
 
-  it('has an image in the website’s public folder for every picture an email shows', () => {
+  it('has a loop and a still in the website’s public folder for every picture an email shows', () => {
     const folder = fileURLToPath(new URL('../../../web/public/email/', import.meta.url));
-    for (const picture of EMAIL_PICTURES) expect(existsSync(`${folder}${picture}.png`), `${picture}.png: run npm run email:art --workspace api`).toBe(true);
+    for (const picture of EMAIL_PICTURES) {
+      for (const kind of ['gif', 'png']) expect(existsSync(`${folder}${picture}.${kind}`), `${picture}.${kind}: run npm run email:art --workspace api`).toBe(true);
+    }
+  });
+
+  it('gives each email the picture of what it is about', () => {
+    const shown = (template: (typeof EMAIL_TEMPLATES)[number]) => /\/email\/([a-z]+)\.gif/.exec(renderEmail(template, 'en', VARS).html)?.[1];
+    expect(shown('verify-email')).toBe('letter');
+    expect(shown('verify-email-code')).toBe('code');
+    expect(shown('password-reset')).toBe('key');
+    expect(shown('password-changed')).toBe('lock');
+    expect(shown('username-changed')).toBe('badge');
+    expect(shown('new-sign-in')).toBe('device');
+    expect(shown('sign-in-attempts')).toBe('shield');
+    expect(shown('security-alert')).toBe('bell');
+    expect(shown('deletion-notice')).toBe('hourglass');
+    expect(shown('moderation-urgent')).toBe('flag');
+    expect(shown('copyright-received')).toBe('document');
+    expect(shown('copyright-kept')).toBe('scales');
   });
 });

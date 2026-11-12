@@ -2,10 +2,10 @@ import { PROVIDER, emailPictureTone, type EmailPicture } from '@kurda/shared';
 
 /**
  * How every email from Hevalo and from Zagrosian looks: the sender's mark,
- * one drawn picture on a tile, a large heading, a few short lines, one thing
- * to press (or a code to type), and a quiet footer that says who wrote and
- * where to answer. Nothing else: an email that asks for one thing shows one
- * thing.
+ * one drawn picture on a tile, moving in a small loop, a large heading, a few
+ * short lines, one thing to press (or a code to type), and a quiet footer
+ * that says who wrote and where to answer. Nothing else: an email that asks
+ * for one thing shows one thing.
  *
  * This file only draws. What an email says is written once, as its plain
  * text (templates.ts), and read into blocks from there; an answer from the
@@ -17,6 +17,10 @@ import { PROVIDER, emailPictureTone, type EmailPicture } from '@kurda/shared';
  *   - pictures are images at an address (email draws no SVG), each with its
  *     size written on it so the page does not jump while they load, and its
  *     tile's colour behind it so a blocked image leaves a tile, not a hole;
+ *   - the picture is its loop, and beside it, out of sight, the moment it
+ *     rests on: a program that passes on a reader's wish for less motion
+ *     shows that instead, and one that plays no loops shows the loop's first
+ *     frame, which is the same moment;
  *   - a program in dark mode either reads the stylesheet's dark colours or
  *     turns the light page dark itself, and leaves images alone either way,
  *     which is why the mark and the picture sit on tiles of their own.
@@ -202,9 +206,12 @@ export function renderEmailHtml(design: EmailDesign): string {
     ),
   );
   if (design.picture) {
+    const tile = `border:0;border-radius:40px;background:${emailPictureTone(design.picture)};`;
+    const at = `${EMAIL_ASSET_ORIGIN}/email/${design.picture}`;
     rows.push(
       row(
-        `<img src="${EMAIL_ASSET_ORIGIN}/email/${design.picture}.png" width="168" height="168" alt="" style="display:block;border:0;border-radius:40px;background:${emailPictureTone(design.picture)};">`,
+        `<img class="loop" src="${at}.gif" width="168" height="168" alt="" style="display:block;${tile}">` +
+          `<img class="still" src="${at}.png" width="168" height="168" alt="" style="display:none;mso-hide:all;${tile}">`,
         'center',
         '0 0 28px',
       ),
@@ -247,6 +254,7 @@ export function renderEmailHtml(design: EmailDesign): string {
     `<title>${escapeHtml(design.title)}</title><style>` +
     `@media (prefers-color-scheme:dark){.bg{background:#0f1012!important}.ink{color:#ffffff!important}.ink2{color:#d9dadc!important}.ink3{color:#a0a2a8!important}` +
     `.btn{background:#f2f2f0!important;color:#111111!important}.panel{background:#1c1e22!important}.rule{border-color:#2b2d33!important}}` +
+    `@media (prefers-reduced-motion:reduce){.loop{display:none!important}.still{display:block!important}}` +
     `@media (max-width:480px){.h1{font-size:27px!important}.wrap{padding:28px 20px 32px!important}}` +
     `</style></head><body class="bg" style="margin:0;padding:0;background:${PAPER};-webkit-text-size-adjust:100%;">${preheader}` +
     `<table role="presentation" class="bg" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${PAPER};"><tr><td class="wrap" align="center" style="padding:40px 24px 44px;">` +
