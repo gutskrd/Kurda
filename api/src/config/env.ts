@@ -196,6 +196,14 @@ const envSchema = z.object({
   /** The address the support inbox answers from (admin → Email). */
   SUPPORT_EMAIL_FROM: z.string().default('Hevalo Support <support@hevalo.app>'),
   /**
+   * The address an answer goes out from when the mail it answers was written
+   * to an address at zagrosian.com: the business itself, in its own look, not
+   * Hevalo's support. Unset, every answer goes out from SUPPORT_EMAIL_FROM.
+   * Set it only once the sending key may send for zagrosian.com: a key kept
+   * to hevalo.app is refused for it, and the answer is then not sent.
+   */
+  ZAGROSIAN_EMAIL_FROM: z.string().optional(),
+  /**
    * The signing secret (`whsec_…`) of the Resend webhook that tells us about
    * mail received at the support address, and about bounces and complaints.
    * The webhook is refused while it is unset.

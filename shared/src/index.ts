@@ -571,6 +571,11 @@ export * from './badges.js';
  * clash with the badge catalogue's and the ranks' lists, which own the names.
  */
 export {
+  EMAIL_PICTURES,
+  emailPictureSvg,
+  emailPictureTone,
+  type EmailArtOptions,
+  type EmailPicture,
   badgeSvg,
   badgeShineSvg,
   badgeShines,

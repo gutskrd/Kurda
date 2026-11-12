@@ -103,6 +103,33 @@ Received mail counts against the same Resend quota as sent mail (on the free
 plan, 100 a day and 3,000 a month, sent and received together), so a flood of
 mail to the support address could hold up verification codes for the day.
 
+## How the emails look
+
+Every email is written once, as plain text, in `api/src/email/templates.ts`.
+The designed version a modern inbox shows is read from that same text and
+drawn by `api/src/email/layout.ts`: the sender's mark, one picture on a tile, a
+large heading (the subject), the paragraphs, the link as the one button or the
+code as a large code, and a footer with who signs it, where to write and the
+registered details. The plain text always goes out beside it.
+
+- A new template needs its text in both languages, a picture, and, if it has
+  a link to press, what the button says (`DESIGN` in `templates.ts`).
+- The pictures are drawn in `shared/src/art/email.ts`. Email programs do not
+  draw SVG, so `npm run email:art --workspace api` writes them as images into
+  `web/public/email/`; an email points at `https://hevalo.app/email/<name>.png`.
+  Run it after adding or changing a picture and commit what it writes. The
+  website must be deployed with the images before an email that uses a new one
+  is sent, or that email shows an empty tile until it is.
+- Whatever is filled into an email (a username, a statement somebody wrote) is
+  escaped and is never markup. A button opens only an http(s) address; a link
+  inside a sentence is drawn only for an address on Hevalo itself.
+- An answer from the support inbox is drawn the same way, without a picture or
+  a heading: it is a letter. Mail written to an address at zagrosian.com is
+  answered from `ZAGROSIAN_EMAIL_FROM`, under Zagrosian's mark, once that is
+  set; the sending key must then be allowed to send for zagrosian.com (a key
+  kept to hevalo.app is refused, and the admin is told the answer was not
+  sent). Unset, such mail is answered as support, as before.
+
 ## Verify
 
 After configuring, open the admin panel's **Email** page: it says which

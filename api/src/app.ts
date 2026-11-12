@@ -795,6 +795,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       reader: config.RESEND_INBOX_API_KEY ? new ResendMailReader(config.RESEND_INBOX_API_KEY) : null,
       provider: emailProvider,
       from: config.SUPPORT_EMAIL_FROM,
+      ...(config.ZAGROSIAN_EMAIL_FROM ? { zagrosianFrom: config.ZAGROSIAN_EMAIL_FROM } : {}),
     });
     registerResendWebhookRoutes(app, { secret: config.RESEND_WEBHOOK_SECRET, email: emailService, inbox: supportInbox });
     registerEmailAdminRoutes(app, { config, provider: emailProvider, inbox: supportInbox });

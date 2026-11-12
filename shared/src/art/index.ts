@@ -27,6 +27,7 @@ export {
   type ImpostorEmblem,
   type ImpostorWay,
 } from './impostor.js';
+export { EMAIL_PICTURES, emailPictureSvg, emailPictureTone, type EmailArtOptions, type EmailPicture } from './email.js';
 export { TICKET_ART_BOX, TICKET_ART_OUTLINE, TICKET_ART_PERFORATION, TICKET_ART_STUB, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 export {
   CHEST_BOX,

@@ -11,6 +11,8 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { pass2fa } from '../test/admin-2fa.js';
 import { activate } from '../test/activate.js';
+import { StubEmailProvider } from './provider.js';
+import { SupportInbox } from './support-inbox.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const KEY = Buffer.from('support-inbox-integration-key');
@@ -215,6 +217,35 @@ describe.skipIf(!DATABASE_URL)('support inbox (integration)', () => {
     // the id is no plain message id any more, so the answer goes out unthreaded rather than with it
     const answered = await call('POST', `/admin/support/emails/${rows[0].id}/reply`, support, { body: 'We are on it.' });
     expect(answered.statusCode, answered.body).toBe(200);
+  });
+
+  /*
+   * What goes out, looked at where it is handed to the provider: the answer
+   * as words and as the designed email, from the desk the mail was written to.
+   */
+  it('sends an answer as words and as a designed email, and answers for Zagrosian only where that is set up', async () => {
+    const mail = (id: string, to: string) => ({ providerId: id, from: 'Rojda <rojda.z@example.com>', to: [to], cc: [], subject: 'Hello', messageId: null, attachments: [], receivedAt: new Date().toISOString() });
+    const sent = new StubEmailProvider();
+    const desk = new SupportInbox(pool, { reader: null, provider: sent, from: 'Hevalo Support <support@hevalo.app>', zagrosianFrom: 'Zagrosian <contact@zagrosian.com>' });
+    const toHevalo = (await desk.record(mail(`e_design_h_${suffix}`, 'support@hevalo.app')))!;
+    const toZagrosian = (await desk.record(mail(`e_design_z_${suffix}`, 'Zagrosian <contact@zagrosian.com>')))!;
+    await desk.reply(toHevalo, support.id, 'Thank you.\n\n<b>Hevalo</b>');
+    await desk.reply(toZagrosian, support.id, 'Thank you.');
+
+    expect(sent.sent[0]).toMatchObject({ to: 'rojda.z@example.com', subject: 'Re: Hello', from: 'Hevalo Support <support@hevalo.app>', replyTo: 'Hevalo Support <support@hevalo.app>' });
+    expect(sent.sent[0]!.text.startsWith('Thank you.\n\n<b>Hevalo</b>')).toBe(true);
+    expect(sent.sent[0]!.html).toMatch(/>Hevalo<\/span>/);
+    // what the desk typed is words in the designed email, never markup
+    expect(sent.sent[0]!.html).toContain('&lt;b&gt;Hevalo&lt;/b&gt;');
+    expect(sent.sent[1]).toMatchObject({ from: 'Zagrosian <contact@zagrosian.com>', replyTo: 'Zagrosian <contact@zagrosian.com>' });
+    expect(sent.sent[1]!.html).toMatch(/>Zagrosian<\/span>/);
+
+    // with no address set for the business, its post is answered as support, as it always was
+    const plain = new StubEmailProvider();
+    const before = new SupportInbox(pool, { reader: null, provider: plain, from: 'Hevalo Support <support@hevalo.app>' });
+    await before.reply(toZagrosian, support.id, 'Once more.');
+    expect(plain.sent[0]).toMatchObject({ from: 'Hevalo Support <support@hevalo.app>' });
+    expect(plain.sent[0]!.html).toMatch(/>Hevalo<\/span>/);
   });
 
   it('suppresses an address that bounced or complained', async () => {

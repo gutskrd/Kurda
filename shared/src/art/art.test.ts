@@ -38,6 +38,7 @@ import {
   impostorWaySvg,
   impostorWayTone,
 } from './impostor.js';
+import { EMAIL_PICTURES, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import {
   PATH_LANDMARK_LOOP,
@@ -996,6 +997,45 @@ describe('Kurdish Impostor’s pictures', () => {
     expect(() => impostorWaySvg({ way: 'loud' as never })).toThrow(RangeError);
     expect(() => impostorEmblemSvg({ emblem: 'crown' as never })).toThrow(RangeError);
     expect(() => impostorCategorySvg({ category: 'fruit', size: 0 })).toThrow(RangeError);
+  });
+});
+
+/**
+ * The emails' pictures (art/email.ts): one object for what each email is
+ * about, drawn as the app's other object pictures are. They are written out
+ * as images for the emails themselves, which is why each must stand alone.
+ */
+describe('the emails’ pictures', () => {
+  it('draws a valid, self-contained picture for every email, small and large', () => {
+    for (const size of [56, 120, 248]) for (const picture of EMAIL_PICTURES) checkSvg(emailPictureSvg({ picture, size }), size);
+  });
+
+  it('is the same picture every time, no two alike, labelled, and without a word or a numeral', () => {
+    const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id').replace(/<title[^>]*>[^<]*<\/title>/, '');
+    const all = EMAIL_PICTURES.map((picture) => {
+      const svg = emailPictureSvg({ picture });
+      expect(emailPictureSvg({ picture })).toBe(svg);
+      expect(svg).toMatch(/<title id="[^"]+">[^<]+<\/title>/);
+      expect(svg).not.toMatch(/<text/);
+      return strip(svg);
+    });
+    expect(new Set(all).size).toBe(all.length);
+    expect(emailPictureSvg({ picture: 'key', title: 'kilît & <mifte>' })).toContain('kilît &amp; &lt;mifte&gt;');
+  });
+
+  it('stands each picture on a pale tile of its own colour', () => {
+    for (const picture of EMAIL_PICTURES) {
+      const tone = emailPictureTone(picture);
+      expect(tone, picture).toMatch(/^#[0-9a-f]{6}$/);
+      // pale enough that the picture reads on it: every channel in the upper part of its range
+      for (const channel of [1, 3, 5]) expect(parseInt(tone.slice(channel, channel + 2), 16), picture).toBeGreaterThanOrEqual(0xc8);
+    }
+  });
+
+  it('refuses a picture nobody has drawn, and a size that is not one', () => {
+    expect(() => emailPictureSvg({ picture: 'dragon' as EmailPicture })).toThrow(RangeError);
+    expect(() => emailPictureTone('constructor' as EmailPicture)).toThrow(RangeError);
+    expect(() => emailPictureSvg({ picture: 'key', size: 0 })).toThrow(RangeError);
   });
 });
 
