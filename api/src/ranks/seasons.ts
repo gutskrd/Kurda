@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import {
   FEW_PLAYERS,
+  RANKED_GAMES,
   RANK_TIER_KEYS,
   RESTING_DAYS,
   SEASON_REWARD_GEMS,
@@ -343,13 +344,18 @@ export class RankSeasons {
   // -------------------------------------------------------------------------
   // reading
 
-  /** A player's season emblems (10+ rated games in a game that season), newest first. */
+  /**
+   * A player's season emblems (10+ rated games in a game that season), newest
+   * first. An emblem is shown under its game's name, so one earned in a game
+   * that is no longer part of Hevalo is not listed; the result stays recorded,
+   * and what it was rewarded with is theirs.
+   */
   async emblems(userId: string): Promise<SeasonEmblem[]> {
     const rows = await this.pool.query<{ season_id: string; game: RankedGame; peak_tier: string; peak_points: number; rated_games: number }>(
       `SELECT season_id, game, peak_tier, peak_points, rated_games FROM rank_season_results
-        WHERE user_id = $1 AND rated_games >= $2 AND peak_tier IS NOT NULL
+        WHERE user_id = $1 AND rated_games >= $2 AND peak_tier IS NOT NULL AND game = ANY($3::text[])
         ORDER BY season_id DESC, game`,
-      [userId, SEASON_REWARD_MIN_GAMES],
+      [userId, SEASON_REWARD_MIN_GAMES, [...RANKED_GAMES]],
     );
     return rows.rows
       .filter((r) => isRankTier(r.peak_tier))

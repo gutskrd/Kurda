@@ -1,15 +1,14 @@
 /**
- * Kurdish Bluff and the Who Am I? race on the multiplayer engine, through
- * the routes, against real Postgres: what each player's view may hold (never
- * the real meaning's place, nobody's vote before the vote closes, nobody's
- * identity before it may be seen), the free-text gate a fake goes through and
- * the copy kept for a report, scoring and placement XP, and where each game
- * is offered.
+ * The Who Am I? race on the multiplayer engine, through the routes, against
+ * real Postgres: what each player's view may hold (nobody's identity before
+ * it may be seen), a race that runs on its own clock and waits on nobody,
+ * scoring and placement XP, where the game is offered, and what a view costs
+ * to read.
  */
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { BLUFF_FAKE_MAX, type BluffBoard, type MultiView, type WhoAmIRaceBoard } from '@kurda/shared';
+import type { MultiView, WhoAmIRaceBoard } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
@@ -29,13 +28,13 @@ interface User {
 
 const FACTS = ['alive', 'animal', 'person', 'edible', 'place', 'can-fly', 'lives-in-water', 'four-legs', 'bigger-than-person', 'at-home', 'sweet', 'uses-electricity'];
 
-describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Bluff and the Who Am I? race (integration)', () => {
+describe.skipIf(!DATABASE_URL || !REDIS_URL)('the Who Am I? race (integration)', () => {
   const config = loadConfig({ DATABASE_URL, ...(REDIS_URL ? { REDIS_URL } : {}), NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;
   const suffix = Date.now().toString(36);
   // letters only, unique to this run: this suite's words are told from any other suite's
-  const tag = `zb${suffix.replace(/[^a-z]/g, '')}`;
+  const tag = `zw${suffix.replace(/[^a-z]/g, '')}`;
   const contentIds: string[] = [];
   let ip = 0;
 
@@ -44,15 +43,15 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Bluff and the Who Am I? ra
       method: 'POST',
       url: '/auth/register',
       payload: {
-        email: `bw_${name}_${suffix}@it.kurda.app`,
-        username: `bw_${name}_${suffix}`.slice(0, 30),
+        email: `wr_${name}_${suffix}@it.kurda.app`,
+        username: `wr_${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
         ...bornYearsAgo(30),
       },
-      remoteAddress: `10.152.${Math.floor(ip / 200)}.${(ip++ % 200) + 1}`,
+      remoteAddress: `10.158.${Math.floor(ip / 200)}.${(ip++ % 200) + 1}`,
     });
-    expect(res.statusCode).toBe(201);
+    expect(res.statusCode, res.body).toBe(201);
     await activate(app, pool, res);
     return { id: res.json().user.id, token: res.json().tokens.accessToken };
   };
@@ -62,12 +61,12 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Bluff and the Who Am I? ra
       url,
       headers: { authorization: `Bearer ${who.token}` },
       ...(payload !== undefined ? { payload: payload as object } : {}),
-      remoteAddress: '10.152.250.1',
+      remoteAddress: '10.158.250.1',
     });
     return { status: res.statusCode, body: res.body ? res.json() : null, raw: res.body };
   };
   /** A lobby of `game` with the host and `guests` friends of the host in it, started. */
-  const started = async (game: 'bluff' | 'who-am-i', settings: Record<string, unknown>, name: string, guests = 2) => {
+  const started = async (game: 'who-am-i', settings: Record<string, unknown>, name: string, guests = 2) => {
     const host = await register(`${name}h`);
     const others: User[] = [];
     for (let i = 0; i < guests; i++) {
@@ -101,22 +100,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Bluff and the Who Am I? ra
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    // two dozen approved Bluff cards with an English meaning, half of them with a German one too
-    for (let i = 0; i < 24; i++) {
-      const definitions = i < 12 ? { en: `${tag} meaning ${i}`, de: `${tag} Bedeutung ${i}` } : { en: `${tag} meaning ${i}` };
-      const payload = { word: `${tag}${letters(i)}`, definitions, ...(i === 0 ? { example: { ku: `Ev ${tag}a ye.`, meanings: { en: 'This is it.' } } } : {}) };
-      const r = await pool.query<{ id: string }>(
-        `INSERT INTO game_content (kind, dialect, level, payload, status, review_status) VALUES ('bluff_card', 'kmr', 4, $1::jsonb, 'published', 'approved') RETURNING id`,
-        [JSON.stringify(payload)],
-      );
-      contentIds.push(r.rows[0]!.id);
-    }
-    // a draft that no game may deal
-    const draft = await pool.query<{ id: string }>(
-      `INSERT INTO game_content (kind, dialect, level, payload) VALUES ('bluff_card', 'kmr', 4, $1::jsonb) RETURNING id`,
-      [JSON.stringify({ word: `${tag}draftonly`, definitions: { en: `${tag} never dealt` } })],
-    );
-    contentIds.push(draft.rows[0]!.id);
     // a dozen identities at the first level, each with a full table in its own pattern, and a question per fact
     for (let i = 0; i < 12; i++) {
       const facts = Object.fromEntries(FACTS.map((f, j) => [f, ((i >> (j % 4)) & 1) === 1]));
@@ -135,7 +118,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Bluff and the Who Am I? ra
     }
     await bustGamePools(app.cache);
     await bustAvailability(app.cache);
-    for (const k of ['bluff:kmr', 'bluff:ckb', 'who-am-i:kmr', 'who-am-i:ckb']) await app.cache.del('mp-availability', k);
+    for (const k of ['who-am-i:kmr', 'who-am-i:ckb']) await app.cache.del('mp-availability', k);
     vi.spyOn(app.realtime, 'notifyUser').mockImplementation(async () => undefined);
   });
 
@@ -155,150 +138,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Bluff and the Who Am I? ra
     if (contentIds.length) await pool.query(`DELETE FROM game_content WHERE id = ANY($1::uuid[])`, [contentIds]);
     await bustGamePools(app.cache);
     await bustAvailability(app.cache);
-    for (const k of ['bluff:kmr', 'bluff:ckb', 'who-am-i:kmr', 'who-am-i:ckb']) await app.cache.del('mp-availability', k);
+    for (const k of ['who-am-i:kmr', 'who-am-i:ckb']) await app.cache.del('mp-availability', k);
     await pool.end();
     await app.close();
-  });
-
-  // ---------------------------------------------------------------------------
-  describe('Kurdish Bluff', () => {
-    type View = MultiView<BluffBoard | null>;
-    interface Deck {
-      deck: Array<{ id: string; word: string; real: string }>;
-      round: number;
-      current: { options: Array<{ id: string; text: string; real: boolean }> | null };
-    }
-
-    it('is offered where there are enough approved cards, in the languages they have', async () => {
-      const me = await register('avail');
-      const r = await call(me, 'GET', '/mp/bluff/availability?dialect=kmr');
-      expect(r.status).toBe(200);
-      const kmr = r.body.dialects[0];
-      expect(kmr).toMatchObject({ dialect: 'kmr', group: true, solo: false });
-      expect(kmr.languages.map((l: { language: string }) => l.language)).toEqual(expect.arrayContaining(['en', 'de']));
-      // and listed among Learn’s games
-      const learn = await app.inject({ method: 'GET', url: '/games/availability?dialect=kmr' });
-      expect(learn.json().games.find((g: { id: string }) => g.id === 'bluff')).toMatchObject({ available: true });
-    });
-
-    it('deals only approved cards with a meaning in the host’s language, and keeps every meaning out of every view while writing', async () => {
-      const { host, guests, id } = await started('bluff', { language: 'de', rounds: 3, writeSeconds: 60 }, 'deal');
-      const dealt = await state<Deck>(id);
-      expect(dealt.deck).toHaveLength(3);
-      for (const c of dealt.deck) {
-        expect(c.real).toContain('Bedeutung');
-        expect(c.word).not.toContain('draftonly');
-      }
-      const v = (await call(guests[0]!, 'GET', `/mp/bluff/${id}`)).body as View;
-      expect(v.board).toMatchObject({ phase: 'write', round: 1, rounds: 3, language: 'de', word: dealt.deck[0]!.word });
-      const raw = (await call(host, 'GET', `/mp/bluff/${id}`)).raw;
-      for (const c of dealt.deck) expect(raw).not.toContain(c.real);
-      // the lobby's own settings never hold the deck
-      const settings = await pool.query(`SELECT settings FROM game_lobbies WHERE id = $1`, [id]);
-      expect(JSON.stringify(settings.rows[0].settings)).not.toContain('Bedeutung');
-    });
-
-    it('sends a fake through the free-text gate, keeps it with the move, and votes without one', async () => {
-      const { host, guests, id } = await started('bluff', { language: 'en', rounds: 3, writeSeconds: 60 }, 'play');
-      const [a, b] = guests as [User, User];
-      const write = (who: User, text: string) => call(who, 'POST', `/mp/bluff/${id}/moves`, { kind: 'write', text });
-      const vote = (who: User, option: string) => call(who, 'POST', `/mp/bluff/${id}/moves`, { kind: 'vote', option });
-
-      expect((await write(a, 'you s.h.i.t')).body.code).toBe('TEXT_NOT_ALLOWED');
-      expect((await write(a, 'x'.repeat(BLUFF_FAKE_MAX + 1))).body.code).toBe('TEXT_TOO_LONG');
-      expect((await vote(a, 'A')).status).toBe(409);
-
-      expect((await write(host, 'a small   grey bird')).status).toBe(200);
-      // the others are told someone wrote, never what
-      const meanwhile = await call(a, 'GET', `/mp/bluff/${id}`);
-      expect(meanwhile.raw).not.toContain('grey bird');
-      expect((meanwhile.body as View).board!.writtenBy).toEqual([await seatOf(id, host)]);
-      expect((await write(a, 'a heavy wooden door')).status).toBe(200);
-      // the same as the host's, word for word once tidied: one option, written by both
-      const last = await write(b, 'A small grey bird.');
-      expect(last.status).toBe(200);
-
-      const deck = await state<Deck>(id);
-      const real = deck.current.options!.find((o) => o.real)!;
-      const bird = deck.current.options!.find((o) => o.text.startsWith('a small'))!;
-      const door = deck.current.options!.find((o) => o.text === 'a heavy wooden door')!;
-      const hostView = ((await call(host, 'GET', `/mp/bluff/${id}`)).body as View).board!;
-      expect(hostView.phase).toBe('vote');
-      expect(hostView.options!.map((o) => o.id)).not.toContain(bird.id);
-      expect(hostView.options!.map((o) => o.id)).toEqual(expect.arrayContaining([real.id, door.id]));
-      for (const o of hostView.options!) expect(Object.keys(o).sort()).toEqual(['id', 'text']);
-      expect(((await call(b, 'GET', `/mp/bluff/${id}`)).body as View).board!.options!.map((o) => o.id)).not.toContain(bird.id);
-
-      expect((await vote(host, bird.id)).status).toBe(409);
-      expect((await vote(host, real.id)).status).toBe(200);
-      expect((await vote(a, bird.id)).status).toBe(200);
-      // a vote is hidden until everyone has voted
-      const waiting = ((await call(b, 'GET', `/mp/bluff/${id}`)).body as View).board!;
-      expect(waiting.reveal).toBeNull();
-      expect(waiting.votedBy).toHaveLength(2);
-      // who may vote is open, never who voted for what: no option carries its voters until the reveal
-      expect(waiting.voters).toEqual(expect.arrayContaining(waiting.votedBy));
-      expect(JSON.stringify(waiting.options ?? [])).not.toContain('voters');
-      expect((await vote(b, door.id)).status).toBe(200);
-
-      const reveal = ((await call(a, 'GET', `/mp/bluff/${id}`)).body as View).board!;
-      expect(reveal.phase).toBe('reveal');
-      expect(reveal.reveal).toMatchObject({ word: deck.deck[0]!.word, real: deck.deck[0]!.real });
-      const score = (who: number) => reveal.scores.find((s) => s.seat === who)!.score;
-      const [hs, as, bs] = [await seatOf(id, host), await seatOf(id, a), await seatOf(id, b)];
-      // the host found it and fooled one; the second guest fooled one with the same bird; the first guest wrote the door
-      expect(score(hs)).toBe(3);
-      expect(score(bs)).toBe(1);
-      expect(score(as)).toBe(1);
-
-      const moves = await pool.query<{ text: string | null; seat: number }>(`SELECT text, seat FROM game_moves WHERE lobby_id = $1 AND kind = 'move' ORDER BY seq`, [id]);
-      expect(moves.rows.map((r) => r.text)).toEqual(['a small grey bird', 'a heavy wooden door', 'A small grey bird.', null, null, null]);
-
-      // a report names the seat and keeps what was written
-      const filed = await call(host, 'POST', '/reports', { targetType: 'game_player', targetId: id, game: 'bluff', seat: as, category: 'other' });
-      expect(filed.status).toBe(201);
-      const evidence = await pool.query<{ evidence: { extra?: { typed?: Array<{ text: string }> } } }>(
-        `SELECT evidence FROM reports WHERE reporter_id = $1 ORDER BY created_at DESC LIMIT 1`,
-        [host.id],
-      );
-      expect(evidence.rows[0]!.evidence.extra!.typed!.map((t) => t.text)).toEqual(['a heavy wooden door']);
-
-      // the reveal's time up: the next word
-      await expire(id, 'phaseEndsAt');
-      expect(((await call(a, 'GET', `/mp/bluff/${id}`)).body as View).board).toMatchObject({ phase: 'write', round: 2 });
-    });
-
-    it('plays out on the clock and pays placement to the players who played', async () => {
-      const { host, guests, id } = await started('bluff', { language: 'en', rounds: 3, writeSeconds: 60 }, 'end', 2);
-      for (const who of [host, ...guests]) await call(who, 'POST', `/mp/bluff/${id}/moves`, { kind: 'write', text: `a guess by ${who.id.slice(0, 4)}` });
-      for (let i = 0; i < 10 && (await pool.query(`SELECT status FROM game_lobbies WHERE id = $1`, [id])).rows[0].status !== 'finished'; i++) {
-        await expire(id, 'phaseEndsAt');
-      }
-      const done = (await call(host, 'GET', `/mp/bluff/${id}`)).body as View;
-      expect(done.status).toBe('finished');
-      expect(done.board!.history).toHaveLength(3);
-      const paid = await pool.query(`SELECT 1 FROM xp_ledger WHERE source = 'game_bluff_place' AND ref_id LIKE $1`, [`mp:${id}:%`]);
-      expect(paid.rowCount).toBe(3);
-    });
-
-    it('is not made in a dialect without its cards', async () => {
-      const me = await register('nockb');
-      const r = await call(me, 'POST', '/play/lobbies', { game: 'bluff', settings: { dialect: 'ckb', language: 'en' } });
-      expect(r.status).toBe(404);
-    });
-
-    it('reads a game in a fixed number of statements', async () => {
-      const { host, id } = await started('bluff', { language: 'en', rounds: 3 }, 'budget', 2);
-      await call(host, 'GET', `/mp/bluff/${id}`);
-      const log = countQueries(app.db);
-      try {
-        await call(host, 'GET', `/mp/bluff/${id}`);
-      } finally {
-        log.stop();
-      }
-      // the lobby, its seats, the names, and whose fakes this viewer may not be shown
-      expect(log.count, log.statements.join('\n')).toBeLessThanOrEqual(7);
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -372,6 +214,37 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Bluff and the Who Am I? ra
       const r = await call(me, 'GET', '/mp/who-am-i/availability?dialect=kmr');
       expect(r.body.dialects[0]).toMatchObject({ dialect: 'kmr', group: true, solo: false });
       expect(r.body.dialects[0].difficulties).toContain('beginner');
+    });
+
+    it('pays placement only to the players still in it when the clock ends it', async () => {
+      const { host, guests, id } = await started('who-am-i', { minutes: 3, difficulty: 'beginner' }, 'paid', 2);
+      const dealt = await state<Dealt>(id);
+      // everyone plays: a question each
+      for (const who of [host, ...guests]) {
+        const seat = await seatOf(id, who);
+        const question = dealt.seats.find((s) => s.seat === seat)!.deal.questions[0]!;
+        expect((await call(who, 'POST', `/mp/who-am-i/${id}/moves`, { kind: 'ask', question: question.id })).status).toBe(200);
+      }
+      // one of the three walks away before the end: no pay for a game they did not stay in
+      expect((await call(guests[1]!, 'POST', `/mp/who-am-i/${id}/leave`)).status).toBe(200);
+      await expire(id, 'endsAt');
+      const done = (await call(host, 'GET', `/mp/who-am-i/${id}`)).body as View;
+      expect(done.status).toBe('finished');
+      const paid = await pool.query<{ ref_id: string }>(`SELECT ref_id FROM xp_ledger WHERE source = 'game_who_am_i_place' AND ref_id LIKE $1`, [`mp:${id}:%`]);
+      expect(paid.rows.map((r) => r.ref_id).sort()).toEqual([`mp:${id}:${host.id}`, `mp:${id}:${guests[0]!.id}`].sort());
+    });
+
+    it('reads a race in a fixed number of statements', async () => {
+      const { host, id } = await started('who-am-i', { minutes: 3, difficulty: 'beginner' }, 'budget', 2);
+      await call(host, 'GET', `/mp/who-am-i/${id}`);
+      const log = countQueries(app.db);
+      try {
+        await call(host, 'GET', `/mp/who-am-i/${id}`);
+      } finally {
+        log.stop();
+      }
+      // the lobby, its seats and the names
+      expect(log.count, log.statements.join('\n')).toBeLessThanOrEqual(7);
     });
 
     it('lets nobody outside the race look in', async () => {

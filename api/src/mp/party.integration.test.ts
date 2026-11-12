@@ -1,21 +1,22 @@
 /**
- * Kurdish Impostor and Don't Say the Word! through the routes, against real
- * Postgres and Redis: a game dealt only from approved cards, what each seat's
- * view may and may not hold (the word never in the impostor's, the impostor
- * in nobody else's, the card in nobody's but the describer's), every clue and
- * guess through the chat pipeline's gate and then the game's own checks, the
- * teams chosen in the lobby, places and placement XP, reports by seat with
- * what was typed, where each game is offered, and the admin's vocabulary
- * picker and starter word cards. And what keeps the games fair and safe: a
- * game called off pays nobody, nobody's text reaches the gate for a move that
- * is not theirs, a minor is never seated with someone who is not their friend,
- * a block made during a game parts the pair, and a report must name the
- * lobby's own game.
+ * Kurdish Impostor through the routes, against real Postgres and Redis: a
+ * game dealt only from approved cards, what each seat's view may and may not
+ * hold (the word never in the impostor's, the impostor in nobody else's),
+ * every clue and guess through the chat pipeline's gate and then the game's
+ * own checks, places and placement XP, reports by seat with what was typed,
+ * where the game is offered, and the admin's vocabulary picker and starter
+ * word cards. And what keeps the games fair and safe: a game called off pays
+ * nobody, nobody's text reaches the gate for a move that is not theirs, a
+ * minor is never seated with someone who is not their friend, a block made
+ * during a game parts the pair, and a report must name the lobby's own game.
+ *
+ * The games that are no longer part of Hevalo have a suite of their own
+ * (retired-games.integration.test.ts).
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { IMPOSTOR_GUESS_OPTIONS, type DontSayBoard, type DontSayState, type ImpostorBoard, type ImpostorState, type MultiView } from '@kurda/shared';
+import { IMPOSTOR_GUESS_OPTIONS, type ImpostorBoard, type ImpostorState, type MultiView } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
@@ -37,7 +38,6 @@ interface User {
 }
 
 type ImpostorView = MultiView<ImpostorBoard | null>;
-type DontSayView = MultiView<DontSayBoard | null>;
 
 // stand-in Kurdish for the fixtures, never shown to a learner: harmless words for clues and guesses
 const CLUES = ['heywan', 'biçûk', 'mezin', 'germ', 'sar', 'nerm', 'zû', 'dirêj', 'kesk', 'şîn', 'sor', 'spî', 'reş', 'zer', 'giran', 'sivik'];
@@ -87,7 +87,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
   };
 
   /** A host and `n - 1` friends of the host in a started lobby of `game`. */
-  const table = async (game: 'impostor' | 'dont-say', tagName: string, n: number, settings: Record<string, unknown> = {}, start = true) => {
+  const table = async (game: 'impostor', tagName: string, n: number, settings: Record<string, unknown> = {}, start = true) => {
     const people: User[] = [];
     for (let i = 0; i < n; i++) people.push(await register(`${tagName}${i}`));
     const [host, ...guests] = people;
@@ -107,16 +107,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
   };
   const state = async <S>(id: string): Promise<S> => (await pool.query<{ state: S }>(`SELECT state FROM game_lobbies WHERE id = $1`, [id])).rows[0]!.state;
 
-  /** The present wait's time has run out, as the database's clock sees it. */
-  const expire = async (id: string, path: string) => {
-    await pool.query(
-      `UPDATE game_lobbies SET state = jsonb_set(state, $2::text[], to_jsonb((extract(epoch FROM now()) * 1000)::bigint - 1000)),
-              due_at = now() - interval '1 second' WHERE id = $1`,
-      [id, `{${path}}`],
-    );
-    await app.multiplayer.advance(id);
-  };
-
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
@@ -135,23 +125,11 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
         [payload],
       );
     }
-    for (let i = 0; i < 24; i++) {
-      const payload = {
-        target: `${tag}${letters(i)}`,
-        meanings: { en: `${tag} target ${letters(i)}` },
-        forbidden: [`${tag}yek${letters(i)}`, `${tag}du${letters(i)}`, `${tag}se${letters(i)}`],
-        forms: [],
-      };
-      await pool.query(
-        `INSERT INTO game_content (kind, dialect, level, payload, status, review_status) VALUES ('taboo_card', 'kmr', 1, $1, 'published', 'approved')`,
-        [payload],
-      );
-    }
     // a draft card nobody approved: never dealt
     await pool.query(`INSERT INTO game_content (kind, dialect, level, payload) VALUES ('word_card', 'kmr', 1, $1)`, [
       { word: `${tag}draftonly`, meanings: { en: 'draft' }, category: 'things', hint: { ku: `${tag}kom`, meanings: { en: 'things' } }, forms: [] },
     ]);
-    for (const key of ['impostor:kmr', 'impostor:ckb', 'dont-say:kmr', 'dont-say:ckb']) await app.cache.del('mp-availability', key);
+    for (const key of ['impostor:kmr', 'impostor:ckb']) await app.cache.del('mp-availability', key);
     await bustAvailability(app.cache);
     await bustGamePools(app.cache);
   });
@@ -173,21 +151,21 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
     }
     await pool.query(`DELETE FROM game_content WHERE payload::text LIKE $1`, [`%${tag}%`]);
     await removeCourses(pool, courseIds);
-    for (const key of ['impostor:kmr', 'impostor:ckb', 'dont-say:kmr', 'dont-say:ckb']) await app.cache.del('mp-availability', key);
+    for (const key of ['impostor:kmr', 'impostor:ckb']) await app.cache.del('mp-availability', key);
     await bustAvailability(app.cache);
     await bustGamePools(app.cache);
     await pool.end();
     await app.close();
   });
 
-  it('takes both games, and every game before them, in each of the database’s lists of games', async () => {
+  it('takes the games there are in each of the database’s lists of games', async () => {
     const defs = await pool.query<{ conrelid: string; def: string }>(
       `SELECT conrelid::regclass::text AS conrelid, pg_get_constraintdef(oid) AS def FROM pg_constraint
         WHERE contype = 'c' AND (conname LIKE '%_game_check' OR conname IN ('dm_messages_kind_check', 'group_messages_kind_check'))`,
     );
     expect(defs.rows.map((r) => r.conrelid)).toContain('game_lobbies');
     for (const row of defs.rows) {
-      for (const g of ['impostor', 'dont-say', 'last-letter']) expect(row.def, row.conrelid).toContain(`'${g}'`);
+      for (const g of ['impostor', 'last-letter', 'who-am-i']) expect(row.def, row.conrelid).toContain(`'${g}'`);
     }
   });
 
@@ -447,117 +425,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
       const bySeat = await seats(id, people);
       const reporter = [...bySeat.values()][0]!;
       const seat = [...bySeat.keys()].find((x) => bySeat.get(x) !== reporter)!;
-      const wrong = await call(reporter, 'POST', '/reports', { targetType: 'game_player', targetId: id, game: 'dont-say', seat, category: 'other' });
+      const wrong = await call(reporter, 'POST', '/reports', { targetType: 'game_player', targetId: id, game: 'who-am-i', seat, category: 'other' });
       expect(wrong.status).toBe(404);
       expect((await call(reporter, 'POST', '/reports', { targetType: 'game_player', targetId: id, game: 'impostor', seat, category: 'other' })).status).toBe(201);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // Don't Say the Word!
-
-  describe('Don’t Say the Word!', () => {
-    /** The turn's moment to get ready is over. */
-    const ready = (id: string) =>
-      pool.query(`UPDATE game_lobbies SET state = jsonb_set(state, '{turn,readyAt}', to_jsonb((extract(epoch FROM now()) * 1000)::bigint - 1000)) WHERE id = $1`, [id]);
-
-    it('lets players choose a team in the lobby, the host place anyone, and starts only with two teams of two', async () => {
-      const { id, people, host } = await table('dont-say', 'dsteam', 4, {}, false);
-      const lobby = (await call(host, 'GET', `/mp/dont-say/${id}`)).body as DontSayView;
-      expect(lobby.teams).toBe(2);
-      expect(lobby.players.map((p) => p.team).sort()).toEqual([1, 1, 2, 2]);
-      const guest = people[1]!;
-      const guestSeat = (await call(guest, 'GET', `/mp/dont-say/${id}`)).body.me.seat as number;
-      const otherTeam = lobby.players.find((p) => p.seat === guestSeat)!.team === 1 ? 2 : 1;
-      // a player moves themselves, never anyone else
-      expect((await call(guest, 'POST', `/mp/dont-say/${id}/team`, { seat: guestSeat, team: otherTeam })).status).toBe(200);
-      const someoneElse = lobby.players.find((p) => p.seat !== guestSeat && !p.isHost)!.seat;
-      expect((await call(guest, 'POST', `/mp/dont-say/${id}/team`, { seat: someoneElse, team: otherTeam })).status).toBe(403);
-      const uneven = await call(host, 'POST', `/mp/dont-say/${id}/start`);
-      expect(uneven.status).toBe(409);
-      expect(uneven.body).toMatchObject({ code: 'CANNOT_START', details: { reason: 'teams-uneven' } });
-      // the host puts them back, and it starts
-      expect((await call(host, 'POST', `/mp/dont-say/${id}/team`, { seat: guestSeat, team: otherTeam === 1 ? 2 : 1 })).status).toBe(200);
-      expect((await call(host, 'POST', `/mp/dont-say/${id}/start`)).status).toBe(200);
-    });
-
-    it('shows the card to the describer alone, buzzes a forbidden word without showing it, and scores a right guess', async () => {
-      const { id, people } = await table('dont-say', 'dsplay', 4);
-      const bySeat = await seats(id, people);
-      let s = await state<DontSayState>(id);
-      const turn = s.turn!;
-      const describer = bySeat.get(turn.seat)!;
-      const team = s.seats.filter((x) => x.team === turn.team).map((x) => x.seat);
-      const mate = bySeat.get(team.find((x) => x !== turn.seat)!)!;
-      const rival = bySeat.get(s.seats.find((x) => x.team !== turn.team)!.seat)!;
-      const inPlay = s.deck[turn.card!]!;
-
-      // before the minute starts, nothing is taken
-      expect((await call(mate, 'POST', `/mp/dont-say/${id}/moves`, { guess: 'heywan' })).body.details).toMatchObject({ reason: 'not-ready' });
-      await ready(id);
-
-      const mine = (await call(describer, 'GET', `/mp/dont-say/${id}`)).body as DontSayView;
-      expect(mine.board!.role).toBe('describer');
-      expect(mine.board!.card).toEqual({ target: inPlay.target, meanings: inPlay.meanings, forbidden: inPlay.forbidden });
-      for (const who of [mate, rival]) {
-        const v = await call(who, 'GET', `/mp/dont-say/${id}`);
-        expect((v.body as DontSayView).board!.card).toBeNull();
-        for (const hidden of [inPlay.target, ...inPlay.forbidden]) expect(v.raw).not.toContain(hidden);
-      }
-
-      expect((await call(describer, 'POST', `/mp/dont-say/${id}/moves`, { clue: 'qûn' })).body.code).toBe('TEXT_NOT_ALLOWED');
-      const buzzText = `tiştek wek ${inPlay.forbidden[0]}`;
-      const buzz = await call(describer, 'POST', `/mp/dont-say/${id}/moves`, { clue: buzzText });
-      expect(buzz.status, buzz.raw).toBe(200);
-      expect(buzz.body.outcome).toEqual({ kind: 'buzz', said: inPlay.forbidden[0] });
-      const heard = await call(rival, 'GET', `/mp/dont-say/${id}`);
-      expect((heard.body as DontSayView).board!.buzz).toMatchObject({ seat: turn.seat });
-      expect(heard.raw).not.toContain(buzzText);
-      expect((heard.body as DontSayView).board!.teams.find((t) => t.team === turn.team)!.score).toBe(-1);
-      // kept with the move, for a report
-      const kept = await pool.query<{ text: string }>(`SELECT text FROM game_moves WHERE lobby_id = $1 ORDER BY seq DESC LIMIT 1`, [id]);
-      expect(kept.rows[0]!.text).toBe(buzzText);
-
-      s = await state<DontSayState>(id);
-      const next = s.deck[s.turn!.card!]!;
-      expect((await call(describer, 'POST', `/mp/dont-say/${id}/moves`, { clue: 'tiştekî mezin' })).status).toBe(200);
-      expect((await call(rival, 'GET', `/mp/dont-say/${id}`)).body.board.clues.map((c: { text: string }) => c.text)).toEqual(['tiştekî mezin']);
-      expect((await call(rival, 'POST', `/mp/dont-say/${id}/moves`, { guess: next.target })).body.code).toBe('NOT_YOUR_TURN');
-      const right = await call(mate, 'POST', `/mp/dont-say/${id}/moves`, { guess: next.target });
-      expect(right.body.outcome).toEqual({ kind: 'guess', right: true });
-      expect((right.body.view as DontSayView).board!.done.at(-1)).toMatchObject({ target: next.target, result: 'guessed', forbidden: null });
-
-      // the minute runs out: the other team's turn
-      await expire(id, 'turn,endsAt');
-      const after = (await call(rival, 'GET', `/mp/dont-say/${id}`)).body as DontSayView;
-      expect(after.board!.turn!.team).not.toBe(turn.team);
-    });
-
-    it('plays every turn to the end, places each team together, and shows the cards in full only then', async () => {
-      const { id, people } = await table('dont-say', 'dsend', 4);
-      const bySeat = await seats(id, people);
-      // each describer gives one clue, so every person played
-      for (let i = 0; i < 8; i++) {
-        const s = await state<DontSayState>(id);
-        if (!s.turn) break;
-        await ready(id);
-        await call(bySeat.get(s.turn.seat)!, 'POST', `/mp/dont-say/${id}/moves`, { clue: CLUES[i] });
-        await expire(id, 'turn,endsAt');
-      }
-      const done = (await call(people[0]!, 'GET', `/mp/dont-say/${id}`)).body as DontSayView;
-      expect(done.status).toBe('finished');
-      expect(done.board!.endedBy).toBe('turns-done');
-      expect(done.board!.done.every((d) => Array.isArray(d.forbidden))).toBe(true);
-      // a draw: both teams first
-      expect(done.results!.every((r) => r.place === 1)).toBe(true);
-      const xp = await pool.query(`SELECT count(*)::int AS n FROM xp_ledger WHERE source = 'game_dont_say_place' AND ref_id LIKE $1`, [`mp:${id}:%`]);
-      expect(xp.rows[0].n).toBe(4);
-    });
-
-    it('says where it is offered', async () => {
-      const me = await register('dsav');
-      const r = await call(me, 'GET', '/mp/dont-say/availability?dialect=kmr');
-      expect(r.body.dialects).toEqual([{ dialect: 'kmr', group: true, solo: false }]);
     });
   });
 

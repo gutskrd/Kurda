@@ -4,9 +4,8 @@
  * deal never travels in anything a client sent.
  */
 import { describe, expect, it } from 'vitest';
-import { IMPOSTOR_CATEGORY_PICTURES, dontSayRules, impostorRules, type ImpostorSettings, type WordCardContent } from '@kurda/shared';
+import { IMPOSTOR_CATEGORY_PICTURES, impostorRules, type ImpostorSettings, type WordCardContent } from '@kurda/shared';
 import { dealFrom, impostorModule } from './impostor.js';
-import { dontSayModule } from './dont-say.js';
 import { STARTER_CATEGORIES, meaningKeys, starterCategoryOf } from '../../games/word-categories.js';
 
 // stand-in Kurdish for the fixtures, never shown to a learner
@@ -120,29 +119,6 @@ describe('Kurdish Impostor on the server', () => {
     }
     // the approved cards of a category can be withdrawn between making the lobby and starting it
     await expect(impostorModule.deal!(contentDb(things), of('animals').settings, { dialect: 'kmr', seed: 's', seats: [] })).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE' });
-  });
-});
-
-describe('Don’t Say the Word! on the server', () => {
-  it('is a team game of three to eight, with a clue, a guess or a skip as its moves', () => {
-    expect(dontSayModule.teams).toBe(2);
-    expect(dontSayModule.lobbySchema.safeParse({ maxPlayers: 9 }).success).toBe(false);
-    expect(dontSayModule.moveSchema.safeParse({ skip: true }).success).toBe(true);
-    expect(dontSayModule.moveSchema.safeParse({ skip: false }).success).toBe(false);
-    expect(dontSayModule.freeText!.textOf({ guess: 'pisîk' })).toBe('pisîk');
-    expect(dontSayModule.freeText!.textOf({ skip: true })).toBeNull();
-  });
-
-  it('deals the approved cards of the difficulty as a shuffled deck, and refuses too few', async () => {
-    const taboo = (target: string) => ({ target, meanings: { en: target }, forbidden: ['yek', 'du', 'sê'], forms: [] });
-    const rows = Array.from({ length: 20 }, (_, i) => ({ kind: 'taboo_card', level: 3, payload: taboo(`peyv${'abcdefghijklmnopqrst'[i]}`) }));
-    const choices = dontSayModule.lobbySchema.parse({ dialect: 'kmr', difficulty: 'intermediate' });
-    const dealt = await dontSayModule.deal!(contentDb(rows), choices.settings, { dialect: 'kmr', seed: 's', seats: [] });
-    expect(dealt.deck).toHaveLength(20);
-    expect(new Set(dealt.deck!.map((c) => c.target)).size).toBe(20);
-    const state = dontSayRules.init(dealt, [1, 2, 3].map((seat) => ({ seat, team: 1, bot: null })), { now: 0, seed: 's' });
-    expect(state.deck).toHaveLength(20);
-    await expect(dontSayModule.deal!(contentDb(rows.slice(0, 19)), choices.settings, { dialect: 'kmr', seed: 's', seats: [] })).rejects.toMatchObject({ code: 'GAME_UNAVAILABLE' });
   });
 });
 

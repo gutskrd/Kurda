@@ -31,7 +31,8 @@ import type { StoryGameNotifier } from '../story-games/notifier.js';
 import { awayAfter, controllerOf, dueStep, isAway, lobbyClosesAt, nextDue, type EngineSeat } from './engine.js';
 import { gateFreeText, type FreeTextDeps } from './free-text.js';
 import type { AnyGameModule } from './module.js';
-import { moduleOf, playedGamesSql } from './registry.js';
+import { moduleOf } from './registry.js';
+import { playedGamesSql } from './titles.js';
 
 /** A long-poll waits at most this long for a change. */
 export const POLL_WAIT_MS = 20_000;

@@ -230,31 +230,12 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
       expect((await call('GET', `/admin/game-content/words?dialect=kmr`, learner)).statusCode).toBe(404);
     });
 
-    it('makes a Bluff card of a word as a draft, its Kurdish copied, once per word', async () => {
+    it('makes no card for a game that is no longer part of Hevalo', async () => {
       const club = words.find((w) => w.word === `${tag}gurz`)!;
-      const made = await call('POST', '/admin/game-content/from-word', editor, { kind: 'bluff_card', dialect: 'kmr', ref: club.ref, level: 4 });
-      expect(made.statusCode, made.body).toBe(201);
-      const row = made.json();
-      expect(row).toMatchObject({ kind: 'bluff_card', status: 'draft', reviewStatus: 'unreviewed', origin: club.ref, level: 4 });
-      expect(row.payload).toEqual({ word: `${tag}gurz`, definitions: { en: 'a club, a mace' }, example: { ku: `Wî ${tag}gurz hilda.`, meanings: { en: 'He picked up the club.' } } });
-      const again = await call('POST', '/admin/game-content/from-word', editor, { kind: 'bluff_card', dialect: 'kmr', ref: club.ref, level: 4 });
-      expect(again.statusCode).toBe(409);
-      expect(again.json()).toMatchObject({ code: 'ALREADY_MADE', details: { id: row.id } });
-
-      // its meanings in other languages are the editor's to add; its Kurdish is never typed over
-      const added = await call('PUT', `/admin/game-content/${row.id}`, editor, {
-        level: 4,
-        payload: { ...row.payload, definitions: { ...row.payload.definitions, de: 'eine Keule' } },
-        lockVersion: row.lockVersion,
-      });
-      expect(added.statusCode, added.body).toBe(200);
-      const retyped = await call('PUT', `/admin/game-content/${row.id}`, editor, { level: 4, payload: { ...added.json().payload, word: `${tag}gurzz` }, lockVersion: added.json().lockVersion });
-      expect(retyped.statusCode).toBe(422);
-      expect(retyped.json().details.errors[0].path).toBe('word');
-      // a draft no game deals
-      const services = learnGameServices(app, { xp: new XpService(app.db) });
-      await bustGamePools(app.cache);
-      expect((await services.sources.content('bluff_card', 'kmr')).map((c) => c.id)).not.toContain(row.id);
+      const res = await call('POST', '/admin/game-content/from-word', editor, { kind: 'bluff_card', dialect: 'kmr', ref: club.ref, level: 4 });
+      expect(res.statusCode).toBe(400);
+      const none = await pool.query(`SELECT 1 FROM game_content WHERE origin = $1`, [club.ref]);
+      expect(none.rowCount).toBe(0);
     });
 
     it('makes an identity of a word with its category and facts, and refuses one without', async () => {
@@ -267,8 +248,29 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
       const made = await call('POST', '/admin/game-content/from-word', editor, { kind: 'identity', dialect: 'kmr', ref: bear.ref, level: 2, category: 'animal', facts });
       expect(made.statusCode, made.body).toBe(201);
       expect(made.json().payload).toEqual({ word: `${tag}hirç`, meanings: { en: 'bear' }, category: 'animal', facts: { alive: true, animal: true, 'four-legs': true, 'can-fly': false } });
+      const row = made.json();
+      expect(row).toMatchObject({ kind: 'identity', status: 'draft', reviewStatus: 'unreviewed', origin: bear.ref, level: 2 });
       const listed = (await call('GET', `/admin/game-content/words?dialect=kmr&q=${tag}`, editor)).json().words as GameWordCandidate[];
-      expect(listed.find((w) => w.ref === bear.ref)!.made).toEqual({ identity: made.json().id });
+      expect(listed.find((w) => w.ref === bear.ref)!.made).toEqual({ identity: row.id });
+      // a word becomes one card of a kind
+      const again = await call('POST', '/admin/game-content/from-word', editor, { kind: 'identity', dialect: 'kmr', ref: bear.ref, level: 2, category: 'animal', facts });
+      expect(again.statusCode).toBe(409);
+      expect(again.json()).toMatchObject({ code: 'ALREADY_MADE', details: { id: row.id } });
+
+      // its meanings in other languages are the editor's to add; its Kurdish is never typed over
+      const added = await call('PUT', `/admin/game-content/${row.id}`, editor, {
+        level: 2,
+        payload: { ...row.payload, meanings: { ...row.payload.meanings, de: 'Bär' } },
+        lockVersion: row.lockVersion,
+      });
+      expect(added.statusCode, added.body).toBe(200);
+      const retyped = await call('PUT', `/admin/game-content/${row.id}`, editor, { level: 2, payload: { ...added.json().payload, word: `${tag}hirçç` }, lockVersion: added.json().lockVersion });
+      expect(retyped.statusCode).toBe(422);
+      expect(retyped.json().details.errors[0].path).toBe('word');
+      // a draft no game deals
+      const services = learnGameServices(app, { xp: new XpService(app.db) });
+      await bustGamePools(app.cache);
+      expect((await services.sources.content('identity', 'kmr')).map((c) => c.id)).not.toContain(row.id);
     });
 
     it('makes identities only of words the lessons teach', async () => {
@@ -279,7 +281,15 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
     });
 
     it('refuses a word that is not approved', async () => {
-      const res = await call('POST', '/admin/game-content/from-word', editor, { kind: 'bluff_card', dialect: 'kmr', ref: 'dict:00000000-0000-4000-8000-000000000000', level: 4 });
+      const facts = { alive: false, animal: false, 'four-legs': false, 'can-fly': false };
+      const res = await call('POST', '/admin/game-content/from-word', editor, {
+        kind: 'identity',
+        dialect: 'kmr',
+        ref: 'vocab:kmr:kmr:000000000000000000000000',
+        level: 2,
+        category: 'object',
+        facts,
+      });
       expect(res.statusCode).toBe(404);
     });
   });

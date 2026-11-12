@@ -132,10 +132,9 @@ describe('a word picked for a card', () => {
     expect(entryCandidate(row('gurz', null), 'kmr')).toBeNull();
   });
 
-  it('makes a Bluff card with the word’s meanings and example, and an identity only with an English meaning and known facts', () => {
+  it('makes an identity only with an English meaning and known facts', () => {
     const cards = new GameWordCards({} as never, sources);
     const word = { ref: 'dict:x', source: 'dictionary' as const, dialect: 'kmr' as const, word: 'gurz', meanings: { en: 'a club', ku: 'çomax' }, example: { ku: 'Wî gurz hilda.', meanings: {} } };
-    expect(cards.payloadFor('bluff_card', word, {})).toEqual({ word: 'gurz', definitions: { en: 'a club', ku: 'çomax' }, example: { ku: 'Wî gurz hilda.' } });
     expect(cards.payloadFor('identity', word, { category: 'object', facts: { alive: false, 'made-up': true } })).toEqual({
       word: 'gurz',
       meanings: { en: 'a club', ku: 'çomax' },

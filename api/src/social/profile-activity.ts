@@ -1,6 +1,6 @@
 import type pg from 'pg';
 import { EngagementService, type EngagementKind } from './engagement-service.js';
-import { multiTitleSql } from '../mp/titles.js';
+import { multiTitleSql, playedGamesSql } from '../mp/titles.js';
 
 /**
  * What a profile shows besides the person themselves: what they have posted and
@@ -257,6 +257,8 @@ export class ProfileActivityService {
                 CASE WHEN l.mode = 'solo' THEN 'against Hevalo' ELSE 'place ' || p.place::text END, l.finished_at
            FROM game_lobby_players p JOIN game_lobbies l ON l.id = p.lobby_id
           WHERE p.user_id = $1 AND NOT p.removed AND l.status = 'finished' AND p.place IS NOT NULL
+            -- a game that is no longer part of Hevalo has no name to show here
+            AND ${playedGamesSql('l.game')}
        ) AS played
        ORDER BY at DESC
        LIMIT $2 OFFSET $3`,

@@ -37,7 +37,7 @@
  *   GET    /admin/game-content/vocabulary?dialect&q&limit   published vocabulary, for a card editor to pick its Kurdish from
  *   GET    /admin/game-content/lines?dialect=&q=         published lines to copy into a case or a scene
  *   GET    /admin/game-content/words?dialect&q&from      approved words to make a card of (word-cards.ts)
- *   POST   /admin/game-content/from-word                { kind, dialect, ref, level, … }: a Bluff card or an identity as a draft, its Kurdish copied
+ *   POST   /admin/game-content/from-word                { kind, dialect, ref, level, … }: an identity as a draft, its Kurdish copied
  */
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';

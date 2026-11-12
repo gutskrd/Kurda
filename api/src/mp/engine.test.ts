@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AWAY_TURN_GRACE_MS, bluffRules, lastLetterRules as R, whoAmIRaceRules, type LastLetterState } from '@kurda/shared';
+import { AWAY_TURN_GRACE_MS, lastLetterRules as R, whoAmIRaceRules, type LastLetterState } from '@kurda/shared';
 import { awayAfter, controllerOf, dueStep, nextDue, type EngineSeat } from './engine.js';
 
 const T0 = 1_700_000_000_000;
@@ -62,17 +62,18 @@ describe('what is due', () => {
   });
 
   it('is a timeout for no seat when a clock runs out with nobody waited on', () => {
-    const deck = [{ id: 'c1', word: 'gurz', real: 'a club', example: null }];
-    const bluff = bluffRules.timeout(
-      bluffRules.init({ dialect: 'kmr', language: 'en', rounds: 3, writeSeconds: 60, deck }, [1, 2, 3].map((n) => ({ seat: n, team: null, bot: null })), { now: T0, seed: 'x' }),
-      [1, 2, 3],
-      T0 + 60_000,
-    );
-    // the reveal is on show, waiting on nobody, until its own clock
+    const race = whoAmIRaceRules.init({ dialect: 'kmr', minutes: 3, difficulty: 'beginner', deals: [] }, [1, 2, 3].map((n) => ({ seat: n, team: null, bot: null })), {
+      now: T0,
+      seed: 'x',
+    });
+    // a race waits on nobody: everybody plays until its own clock
+    const running = { ...race, finishedAt: null };
+    const ends = whoAmIRaceRules.dueAt(running)!;
+    expect(whoAmIRaceRules.waitingFor(running)).toEqual([]);
     const seats = [seat(1), seat(2), seat(3)];
-    expect(dueStep(bluffRules, bluff, seats, bluff.phaseEndsAt - 1, T0)).toBeNull();
-    expect(dueStep(bluffRules, bluff, seats, bluff.phaseEndsAt, T0)).toEqual({ kind: 'timeout', seats: [] });
-    expect(nextDue(bluffRules, bluff, seats, T0)).toBe(bluff.phaseEndsAt);
+    expect(dueStep(whoAmIRaceRules, running, seats, ends - 1, T0)).toBeNull();
+    expect(dueStep(whoAmIRaceRules, running, seats, ends, T0)).toEqual({ kind: 'timeout', seats: [] });
+    expect(nextDue(whoAmIRaceRules, running, seats, T0)).toBe(ends);
   });
 
   it('never passes over a player in a game that waits on nobody', () => {
