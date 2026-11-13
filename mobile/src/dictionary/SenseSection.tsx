@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useDirection } from '../reports/direction';
+import { Icon } from '../theme/Icon';
 import { heldRow } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
@@ -12,6 +14,8 @@ import type { Sense } from './types';
  */
 export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCollapsed: boolean }) {
   const { colors } = useTheme();
+  // shut, the chevron points the way the page reads
+  const flip = useDirection().flip;
   const [open, setOpen] = useState(!startCollapsed);
   const hasExamples = sense.examples.length > 0;
 
@@ -34,7 +38,8 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
         <Text style={[styles.def, { color: colors.textPrimary }]}>
           {sense.position}. {sense.definitionEn ?? sense.definitionKu}
         </Text>
-        {hasExamples ? <Text style={[styles.chevron, { color: colors.textSecondary }]}>{open ? '▾' : '▸'}</Text> : null}
+        {/* the set's own chevrons, as every other row that opens has, in place of two triangles typed as text */}
+        {hasExamples ? <Icon name={open ? 'chevron-down' : 'chevron-right'} size={16} color={colors.textSecondary} style={open ? undefined : (flip ?? undefined)} /> : null}
       </Pressable>
       {sense.definitionEn && sense.definitionKu ? (
         <Text style={[styles.defKu, { color: colors.textSecondary }]}>{sense.definitionKu}</Text>
@@ -63,7 +68,6 @@ const styles = StyleSheet.create({
     minWidth: 64,
   },
   def: { flex: 1, fontSize: typography.sizes.md },
-  chevron: { fontSize: typography.sizes.md },
   defKu: { fontSize: typography.sizes.sm, marginLeft: 64 + spacing.sm },
   examples: { marginLeft: 64 + spacing.sm, gap: spacing.xs, marginTop: spacing.xs },
   example: { borderRadius: radii.sm, padding: spacing.sm },

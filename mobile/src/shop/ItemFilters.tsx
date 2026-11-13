@@ -6,7 +6,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
   type StyleProp,
   type ViewStyle,
@@ -31,16 +30,20 @@ import { pressedDim } from '../theme/motion';
  * them out its own way: the shop as a list under the server's own words
  * (BACKGROUND, ICON, TAG) with no pictures, the inventory as two unlabelled
  * shelves of squares, the gift picker as one long grid. They now share one
- * set of controls — a search field, a row of kinds with how many there are of
+ * set of controls — the search field, a row of kinds with how many there are of
  * each, an order, a few switches — and one way of drawing an item, so a
  * background looks like a background and is found under Backgrounds wherever
  * it is. What is searched, sorted and counted is @kurda/shared's
- * (shop-items.ts), the same as the browser's.
+ * (shop-items.ts), the same as the browser's. The search field itself is the
+ * app's one (`theme/SearchField`), not a copy kept here.
  *
  * Chips rather than the segmented control: a kind is a word and a count, and
  * four of those do not fit across a phone in German or Dutch without being cut
  * short. A row of chips scrolls instead, starting from the reading side.
  */
+
+/** The most that can be typed into a search of items: longer than any item's name, short enough that a slip of the thumb is not searched for. */
+export const SEARCH_MAX = 80;
 
 /** A row of chips that scrolls sideways and starts on the reading side (right, in Soranî and Arabic). */
 function ChipRow({ children, inset = 0, style }: { children: ReactNode; inset?: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
@@ -274,57 +277,6 @@ export function SortChip({ value, onChange }: { value: ItemSort; onChange: (sort
   );
 }
 
-/** A search field: the glass, a magnifier, and a ✕ to empty it once there is something in it. */
-export function SearchField({
-  value,
-  onChange,
-  label,
-  style,
-}: {
-  value: string;
-  onChange: (next: string) => void;
-  /** the placeholder, and what a screen reader calls the field */
-  label: string;
-  style?: StyleProp<ViewStyle>;
-}): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const dir = useDirection();
-  const input = useRef<TextInput>(null);
-  return (
-    <View style={[styles.field, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, style]}>
-      <Icon name="search" size={18} color={colors.textSecondary} />
-      <TextInput
-        ref={input}
-        value={value}
-        onChangeText={onChange}
-        placeholder={label}
-        placeholderTextColor={colors.textSecondary}
-        accessibilityLabel={label}
-        autoCorrect={false}
-        autoCapitalize="none"
-        returnKeyType="search"
-        maxLength={80}
-        style={[styles.input, dir.text, { color: colors.textPrimary }]}
-      />
-      {value ? (
-        <Pressable
-          onPress={() => {
-            // emptied, with the cursor left in it for the next search
-            onChange('');
-            input.current?.focus();
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={t('shop.search.clear')}
-          style={({ pressed }) => [styles.clearSearch, { opacity: pressed ? pressedDim : 1 }]}
-        >
-          <Icon name="clear-fill" size={18} color={colors.textSecondary} />
-        </Pressable>
-      ) : null}
-    </View>
-  );
-}
-
 /** "27 items", said again when it changes, and "Clear filters" beside it while anything is narrowed. */
 export function ResultsLine({ count, onClear }: { count: number; onClear?: () => void }): React.JSX.Element {
   const { colors } = useTheme();
@@ -450,9 +402,6 @@ const styles = StyleSheet.create({
   menuTitle: { ...sectionLabel, paddingTop: spacing.sm, paddingBottom: spacing.xs },
   menuOption: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, minHeight: 48 },
   menuText: { flex: 1, fontSize: typography.ios.row },
-  field: { alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md },
-  input: { flex: 1, fontSize: typography.sizes.md, minHeight: MIN_TOUCH_TARGET, paddingVertical: 0 },
-  clearSearch: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginHorizontal: -spacing.sm },
   results: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
   resultsText: { flexShrink: 1, fontSize: typography.sizes.sm, fontVariant: ['tabular-nums'] },
   clearFilters: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.xs },

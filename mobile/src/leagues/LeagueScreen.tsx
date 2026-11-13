@@ -7,6 +7,7 @@ import { AsyncBoundary } from '../net/AsyncBoundary';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -333,32 +334,25 @@ const BOB = { distance: 3, ms: 2600 } as const;
  * The learner's own emblem on the ladder, afloat: it rises and settles a few
  * points every couple of seconds, on the native driver, so the one league
  * that is theirs is the one thing on the row that is alive. It holds still
- * while the page is not in front (the loop is started on focus and stopped
- * on blur) and under Reduce Motion, where it is simply there.
+ * while the page is not in front or the app is in the background, and under
+ * Reduce Motion, where it is simply there (`useMotionAlive`).
  */
 function Bobbing({ children }: { children: ReactNode }): React.JSX.Element {
-  const reduce = useReducedMotion();
+  const alive = useMotionAlive();
   const ride = useRef(new Animated.Value(0)).current;
-  useFocusEffect(
-    useCallback(() => {
-      if (reduce) {
-        ride.setValue(0);
-        return;
-      }
-      const ease = Easing.inOut(Easing.sin);
-      const loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(ride, { toValue: 1, duration: BOB.ms / 2, easing: ease, useNativeDriver: true }),
-          Animated.timing(ride, { toValue: 0, duration: BOB.ms / 2, easing: ease, useNativeDriver: true }),
-        ]),
-      );
-      loop.start();
-      return () => {
-        loop.stop();
-        ride.setValue(0);
-      };
-    }, [reduce, ride]),
-  );
+  useEffect(() => {
+    if (!alive) {
+      ride.setValue(0);
+      return;
+    }
+    const ease = Easing.inOut(Easing.sin);
+    const loop = Animated.loop(Animated.sequence([timing(ride, 1, BOB.ms / 2, { easing: ease }), timing(ride, 0, BOB.ms / 2, { easing: ease })]));
+    loop.start();
+    return () => {
+      loop.stop();
+      ride.setValue(0);
+    };
+  }, [alive, ride]);
   const translateY = ride.interpolate({ inputRange: [0, 1], outputRange: [0, -BOB.distance] });
   return <Animated.View style={{ transform: [{ translateY }] }}>{children}</Animated.View>;
 }

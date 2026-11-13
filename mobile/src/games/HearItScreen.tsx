@@ -14,6 +14,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useScreenAwake } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -77,19 +78,23 @@ const WHY_KEY: Record<HearStage, TranslationKey> = {
 /** The wave's bars and how tall each stands at its loudest, a little out of step with the next. */
 const BARS = [0.5, 0.8, 0.6, 1, 0.7, 0.9, 0.55, 0.75, 0.45];
 
-/** One bar of the wave: still at rest, rising and falling while a voice plays (still under Reduce Motion). */
-function Bar({ peak, i, playing, color }: { peak: number; i: number; playing: boolean; color: string }): React.JSX.Element {
+/**
+ * One bar of the wave: still at rest, rising and falling while a voice plays
+ * (still under Reduce Motion, and while the game is not the screen in front:
+ * `awake`).
+ */
+function Bar({ peak, i, playing, awake, color }: { peak: number; i: number; playing: boolean; awake: boolean; color: string }): React.JSX.Element {
   const reduce = useReducedMotion();
   const level = useRef(new Animated.Value(0.18)).current;
   useEffect(() => {
-    if (!playing || reduce) {
+    if (!playing || reduce || !awake) {
       level.setValue(playing ? 0.6 * peak : 0.18);
       return;
     }
     const loop = Animated.loop(Animated.sequence([timing(level, peak, 280 + (i % 3) * 90), timing(level, 0.25, 300 + (i % 2) * 110)]));
     loop.start();
     return () => loop.stop();
-  }, [playing, reduce, level, peak, i]);
+  }, [playing, reduce, awake, level, peak, i]);
   return <Animated.View style={[styles.bar, { backgroundColor: color, opacity: playing ? 0.95 : 0.45, transform: [{ scaleY: level }] }]} />;
 }
 
@@ -99,6 +104,8 @@ function Radio({ item, url, done }: { item: HearItItemView; url: string; done: b
   const dir = useDirection();
   const tone = TONES[scheme][GAME.tone];
   const audio = useAudio(url);
+  // the wave moves only while the game is the screen in front
+  const awake = useScreenAwake();
   const [plays, setPlays] = useState(0);
   const started = useRef<string | null>(null);
   const allowed = 1 + item.replays;
@@ -147,7 +154,7 @@ function Radio({ item, url, done }: { item: HearItItemView; url: string; done: b
         </PressableScale>
         <View style={[styles.wave, { flexDirection: dir.row }]} aria-hidden>
           {BARS.map((peak, i) => (
-            <Bar key={i} peak={peak} i={i} playing={audio.playing} color={tone.fill} />
+            <Bar key={i} peak={peak} i={i} playing={audio.playing} awake={awake} color={tone.fill} />
           ))}
         </View>
       </View>

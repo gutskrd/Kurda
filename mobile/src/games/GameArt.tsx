@@ -2,6 +2,7 @@ import { useEffect, useId, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import { GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, type GameEmblem, type GamePose } from '@kurda/shared';
+import { useScreenAwake } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 
 /**
@@ -17,12 +18,15 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
  * each drawn once, and one clock running on the native driver moves them all
  * by their poses — position, turn, size and opacity, nothing drawn again.
  * `after` starts the loop that far in, so a list of emblems does not move as
- * one. With Reduce Motion on, the still emblem is shown.
+ * one. With Reduce Motion on, the still emblem is shown — and so it is while
+ * the screen it is on is behind another or the app is in the background: a
+ * loop nobody is watching is a cost and nothing else.
  */
 export function GameArt({ game, size = 72, moving = false, after = 0 }: { game: GameEmblem; size?: number; moving?: boolean; after?: number }): React.JSX.Element {
   const idPrefix = `ga${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   const reduce = useReducedMotion();
-  return moving && !reduce ? <MovingArt game={game} size={size} idPrefix={idPrefix} after={after} /> : <StillArt game={game} size={size} idPrefix={idPrefix} />;
+  const awake = useScreenAwake();
+  return moving && !reduce && awake ? <MovingArt game={game} size={size} idPrefix={idPrefix} after={after} /> : <StillArt game={game} size={size} idPrefix={idPrefix} />;
 }
 
 function StillArt({ game, size, idPrefix }: { game: GameEmblem; size: number; idPrefix: string }): React.JSX.Element {

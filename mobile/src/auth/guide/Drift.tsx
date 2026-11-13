@@ -1,9 +1,9 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Animated, Easing, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
+import { useScreenAwake } from '../../a11y/useMotionAlive';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { springTo } from '../../theme/animate';
 import type { SlideDirection } from '../../theme/SlideSwap';
-import { useScreenFocus } from './focus';
 
 /** How far the art floats up and down, in points, and how long one float there and back takes. */
 export const DRIFT = { rise: 4, ms: 5200 } as const;
@@ -36,7 +36,8 @@ export function Drift({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
-  const focused = useScreenFocus();
+  // in front, and the app not in the background: the float has nobody to move for otherwise
+  const focused = useScreenAwake();
   const float = useRef(new Animated.Value(0)).current;
   const across = useRef(new Animated.Value(direction && !reduce ? (direction === 'forward' ? 1 : -1) * (mirrored ? -1 : 1) * PARALLAX : 0)).current;
 

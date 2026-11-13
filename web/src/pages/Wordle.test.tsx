@@ -174,4 +174,78 @@ describe('Peyvok and the keyboard in front of you', () => {
 
     expect(heard).toEqual([]);
   });
+
+  /**
+   * A guess the board will not take used to change a line of words under it
+   * and nothing else. The row it was typed in shakes now, once for each
+   * refusal — the same shake under its other name the second time, since a
+   * class that is already there does not play again.
+   */
+  it('shakes the row a guess was refused in, and again for the next refusal', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => (url.includes('/wordle/daily') ? jsonResponse(200, startedGame) : jsonResponse(200, {}))),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'k' }));
+    expect(document.querySelector('.wordle-row.is-refused')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Enter' }));
+    expect(await screen.findByText('Enter 3 letters.')).toBeInTheDocument();
+    expect(document.querySelector('.wordle-row.is-refused')).toHaveClass('is-shake-a');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Enter' }));
+    await waitFor(() => expect(document.querySelector('.wordle-row.is-refused')).toHaveClass('is-shake-b'));
+    // only the row being typed in: the empty ones under it stay still
+    expect(document.querySelectorAll('.wordle-row.is-refused')).toHaveLength(1);
+  });
+
+  it('turns over the row a guess was judged in, and marks the one that found the word', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/wordle/games/w1/guesses')) return jsonResponse(200, wonGame);
+        if (url.includes('/wordle/daily')) return jsonResponse(200, startedGame);
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+
+    for (const key of ['k', 'a', 'r', 'Enter']) await userEvent.click(await screen.findByRole('button', { name: key }));
+    await screen.findByText(/solved it/i);
+    const judged = document.querySelector('.wordle-row.is-judged');
+    expect(judged).toHaveClass('is-found');
+    // each tile knows its place in the row, which is what staggers the turn
+    expect([...judged!.querySelectorAll<HTMLElement>('.wordle-cell')].map((cell) => cell.style.getPropertyValue('--i'))).toEqual(['0', '1', '2']);
+  });
+
+  /**
+   * The page asked "daily or practice?" and "how hard?" above every game, and
+   * forgot the answers each time it was opened. It opens on the last ones now.
+   */
+  it('opens on the mode and difficulty last played on this device', async () => {
+    const started: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        const at = url.indexOf('/wordle/');
+        if (at >= 0 && init?.method === 'POST') {
+          started.push(`${url.slice(at)} ${String(init.body)}`);
+          return jsonResponse(200, startedGame);
+        }
+        return jsonResponse(200, {});
+      }),
+    );
+    const first = renderApp(<Wordle />, ['/app/games/peyvok']);
+    await userEvent.click(await screen.findByRole('tab', { name: 'Practice' }));
+    await userEvent.click(screen.getByRole('tab', { name: 'Hard' }));
+    await waitFor(() => expect(started.at(-1)).toBe('/wordle/practice {"difficulty":"hard"}'));
+    first.unmount();
+
+    started.length = 0;
+    renderApp(<Wordle />, ['/app/games/peyvok']);
+    await waitFor(() => expect(started).toEqual(['/wordle/practice {"difficulty":"hard"}']));
+    expect(screen.getByRole('tab', { name: 'Practice' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByRole('tab', { name: 'Hard' })).toHaveAttribute('aria-selected', 'true');
+  });
 });

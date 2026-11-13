@@ -715,6 +715,62 @@ describe('Civak', () => {
     expect(screen.getByText('axaftin')).toBeInTheDocument();
   });
 
+  /**
+   * With today's reward there to take, the top of Home had two filled buttons:
+   * Claim, and the wall's +. A screen has one thing to press first; while the
+   * claim waits it is Claim, and the + is drawn quietly until it has been made.
+   */
+  it('has one filled button while today’s reward waits: Claim, with the + drawn quietly until it is claimed', async () => {
+    signIn();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/feed')) return jsonResponse(200, { items: [item('library:s1')] });
+        if (url.includes('/rewards/daily/claim')) return jsonResponse(200, { claimed: true, cycleDay: 3, reward: 20, balance: 120 });
+        if (url.includes('/rewards/daily')) {
+          return jsonResponse(200, { canClaim: true, claimableDay: 3, reward: 20, schedule: [], alreadyClaimedToday: false, cycleDay: 2 });
+        }
+        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 100, gems: 0 }, history: [] });
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Civak />, ['/app/civak']);
+
+    const claim = await screen.findByRole('button', { name: 'Claim daily Zêr' });
+    const plus = await screen.findByRole('button', { name: 'Post something' });
+    expect(claim).toHaveClass('btn-primary');
+    await waitFor(() => expect(plus).toHaveClass('is-secondary'));
+
+    await userEvent.click(claim);
+    // claimed: nothing competes with the + any more, and it is the wall's filled button again
+    await waitFor(() => expect(plus).not.toHaveClass('is-secondary'));
+    // and the claim landed: the coin is marked for its pop, with its sparks beside it
+    expect(document.querySelector('.zer-coin')).toHaveClass('is-landed');
+    expect(document.querySelector('.zer-burst')).not.toBeNull();
+  });
+
+  it('leaves the + filled on a day with nothing to claim', async () => {
+    signIn();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/feed')) return jsonResponse(200, { items: [item('library:s1')] });
+        if (url.includes('/rewards/daily')) {
+          return jsonResponse(200, { canClaim: false, claimableDay: 3, reward: 20, schedule: [], alreadyClaimedToday: true, cycleDay: 3 });
+        }
+        if (url.includes('/me/wallet')) return jsonResponse(200, { balances: { zer: 100, gems: 0 }, history: [] });
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Civak />, ['/app/civak']);
+
+    const plus = await screen.findByRole('button', { name: 'Post something' });
+    await screen.findByText('Claimed today');
+    expect(plus).not.toHaveClass('is-secondary');
+  });
+
   describe('coming back to the wall', () => {
     it('rises in the first time it arrives, and is simply there, without waiting, the next time', async () => {
       // the wall answers at once the first time; the second time it is held back until the test lets it go

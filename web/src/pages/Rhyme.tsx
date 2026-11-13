@@ -204,8 +204,9 @@ export function Rhyme(): React.JSX.Element {
                 autoFocus
                 {...typeOnly}
               />
-              <Button type="submit" disabled={busy || word.trim().length === 0}>
-                {busy ? '…' : t('games.submit')}
+              {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
+              <Button type="submit" disabled={busy || word.trim().length === 0} aria-busy={busy || undefined}>
+                {t('games.submit')}
               </Button>
             </form>
           ) : (

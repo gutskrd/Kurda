@@ -10,7 +10,6 @@ export interface ApiState<T> {
   error: string | null;
   loading: boolean;
 }
-type State<T> = ApiState<T>;
 
 /**
  * Whose answers the memory may hand over (lib/apiMemory.ts): the signed-in
@@ -43,12 +42,12 @@ export function useMemoryOwner(): string | null {
  * A `null` path asks nothing: for a caller that was handed the answer by
  * whoever rendered it, and has no need to ask again.
  */
-export function useApiGet<T>(path: string | null, { fresh = false }: { fresh?: boolean } = {}): State<T> & { reload: () => void } {
+export function useApiGet<T>(path: string | null, { fresh = false }: { fresh?: boolean } = {}): ApiState<T> & { reload: () => void } {
   const { client } = useAuth();
   const t = useT();
   const who = useMemoryOwner();
   const memory = fresh ? null : who;
-  const [state, setState] = useState<State<T>>(() => {
+  const [state, setState] = useState<ApiState<T>>(() => {
     if (path === null) return { data: null, error: null, loading: false };
     const kept = memory ? lastAnswer<T>(memory, path) : null;
     return kept ? { data: kept.data, error: null, loading: false } : { data: null, error: null, loading: true };

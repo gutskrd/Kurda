@@ -9,6 +9,8 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -101,6 +103,37 @@ describe('an invite on the Games screen', () => {
 });
 
 describe('the games list', () => {
+  /*
+   * Lessons and Stories, a swipe to either side, read again when pulled down;
+   * Games did not, so an invite sent a moment ago waited for a change of tab.
+   */
+  it('reads the rank and the invites again when pulled down, and shows an invite that has come since', async () => {
+    let incoming: unknown[] = [];
+    const client = fakeClient({ ...base, 'GET /play/invites': () => ok({ incoming, outgoing: [] }) } as never);
+    testAuth.client = client;
+    renderWithProviders(<GamesView />);
+    await settled(client);
+    const count = (path: string) => client.calls.filter((call) => call.path === path).length;
+    const before = [count('/ranks/me'), count('/play/invites')];
+    expect(screen.queryByRole('button', { name: /azad/ })).toBeNull();
+    incoming = [
+      {
+        id: 'inv2',
+        game: 'wordle-battle',
+        lobbyId: 'b8',
+        status: 'pending',
+        from: { name: 'azad', avatarUrl: null },
+        summary: {},
+        rematch: false,
+        createdAt: new Date(A_DAY_THE_RACE_IS_FEATURED - 10_000).toISOString(),
+        expiresAt: new Date(A_DAY_THE_RACE_IS_FEATURED + 100_000).toISOString(),
+      },
+    ];
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
+    expect(await screen.findByRole('button', { name: /azad/ })).toBeTruthy();
+    expect([count('/ranks/me'), count('/play/invites')]).toEqual([before[0]! + 1, before[1]! + 1]);
+  });
+
   it('adds a learning game as a card like the others once it can be played, one tap to open', async () => {
     testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('memory-thief')]) });
     renderWithProviders(<GamesView />);

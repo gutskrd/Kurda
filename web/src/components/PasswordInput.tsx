@@ -2,11 +2,18 @@ import { useState } from 'react';
 import { EyeIcon } from './icons';
 import { useT } from '../i18n/I18nProvider';
 
+/**
+ * A password field with its own show/hide eye.
+ *
+ * It has no placeholder unless it is given one: every use of it has a label
+ * above it that says what it is, and the word it used to repeat inside the
+ * field was English in all nine languages.
+ */
 export function PasswordInput({
   value,
   onChange,
   autoComplete = 'current-password',
-  placeholder = 'Password',
+  placeholder,
   id,
   invalid = false,
   describedBy,

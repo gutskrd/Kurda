@@ -110,6 +110,14 @@ export const POP_SCALE = 1.05;
 export const CARD_TURN_MS = 480;
 export const CARD_TURN_SETTLE = 0.8;
 
+/**
+ * A slow pulse on something that waits to be noticed — never on a control —
+ * one way, there or back: `turn` for the mark on whose turn it is at a game's
+ * table, `breath` for a hero glyph breathing over a form. They were 900 and
+ * 1700 written where they were used.
+ */
+export const PULSE_MS = { turn: 900, breath: 1700 } as const;
+
 /** New content in a list: how far it rises, how the rows follow each other, and how many are greeted. */
 export const ENTRANCE = {
   distance: 8,

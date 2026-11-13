@@ -308,7 +308,8 @@ export const FeedCard = memo(function FeedCard({
           onPress={() => act('repost')}
         />
         <View style={styles.spacer} />
-        <Action icon="send" label={t('share.post')} onPress={() => void share()} />
+        {/* sharing has a glyph of its own: the paper plane is Messages and Send, and a post is not sent to anybody here */}
+        <Action icon="share" label={t('share.post')} onPress={() => void share()} />
         <Action
           icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
           on={e.bookmarked}
@@ -498,7 +499,8 @@ function TickCount({ value, color }: { value: number; color: string }): React.JS
     }
     setTick({ now: value, was: tick.now, up: value > tick.now });
     p.setValue(0);
-    const run = springTo(p, 1, 'standard');
+    // the count answers a tap on a control used all day: there inside 300 ms, with no bounce
+    const run = springTo(p, 1, 'chrome');
     run.start(({ finished }) => {
       if (finished) setTick((s) => ({ ...s, was: null }));
     });

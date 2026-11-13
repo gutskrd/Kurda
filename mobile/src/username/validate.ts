@@ -50,9 +50,25 @@ export const USERNAME_RULE_VARS = { min: USERNAME_MIN, max: USERNAME_MAX } as co
 
 const fail = (issue: UsernameIssue): UsernameCheck => ({ ok: false, issue, message: MESSAGE[issue] });
 
-/** Structural check + NFC-normalised value (same order as the server). */
+/**
+ * A handle as it was meant, from what was typed: without the "@" people put
+ * in front of one because that is how a handle is written everywhere else,
+ * and without the full stop or comma a keyboard leaves after a word. None of
+ * the three can be part of a username, so nothing somebody chose is lost —
+ * and "@dilan" was being told it had invalid characters. What is checked and
+ * what is sent are both this.
+ */
+export function cleanUsername(raw: string): string {
+  return String(raw ?? '')
+    .trim()
+    .replace(/^@+/, '')
+    .replace(/[.,]+$/, '')
+    .trim();
+}
+
+/** Structural check + NFC-normalised value (same order as the server), of the handle as it was meant (`cleanUsername`). */
 export function checkUsername(raw: string): UsernameCheck {
-  const v = normalizeKurdish(String(raw ?? '')).trim();
+  const v = cleanUsername(normalizeKurdish(String(raw ?? '')));
   if (v.length < USERNAME_MIN) return fail('too-short');
   if (v.length > USERNAME_MAX) return fail('too-long');
   if (!CHARSET.test(v)) return fail('invalid-chars');

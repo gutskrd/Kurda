@@ -15,8 +15,8 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { display } from '../../theme/fonts';
 import { useI18n } from '../../i18n/I18nContext';
+import { BackButton } from '../../navigation/BackButton';
 import { useDirection } from '../../reports/direction';
-import { pressedDim } from '../../theme/motion';
 
 /** How tall the window Hevalo looks in at is drawn over the sign-in choice; its width follows. */
 const WINDOW_HEIGHT = 150;
@@ -65,30 +65,16 @@ export function AuthScreenShell({
    */
   const centred = Boolean(hero);
 
-
-  const { t } = useI18n();
   const insets = useSafeAreaInsets();
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
   return (
     <GradientBackground>
       {onBack ? (
-        // the same way back as every other screen's header: a chevron and the word, on the reading side
-        <Pressable
-          onPress={onBack}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.back')}
-          hitSlop={10}
-          style={({ pressed }) => [
-            styles.back,
-            { flexDirection: dir.row, top: insets.top + spacing.sm },
-            mirrored ? styles.backEnd : styles.backStart,
-            pressed && styles.pressed,
-          ]}
-        >
-          <Icon name="chevron-left" size={20} color={colors.primary} style={dir.flip ?? undefined} />
-          <Text style={[styles.backText, { color: colors.primary }]}>{t('common.back')}</Text>
-        </Pressable>
+        // the one way back every screen has — the bare chevron, on the reading side — where this page had a "‹ Back" of its own in the brand's ink
+        <View style={[styles.back, { top: insets.top + spacing.sm }, mirrored ? styles.backEnd : styles.backStart]}>
+          <BackButton onPress={onBack} />
+        </View>
       ) : null}
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         {/*
@@ -271,11 +257,10 @@ export function FormError({ message }: { message: string | null }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
-  back: { position: 'absolute', top: spacing.xl, zIndex: 1, alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: 2 },
-  backStart: { left: spacing.lg },
-  backEnd: { right: spacing.lg },
-  backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  pressed: { opacity: pressedDim },
+  // the chevron sits inside its 44-point target, so the target starts short of the gutter and the glyph meets it
+  back: { position: 'absolute', top: spacing.xl, zIndex: 1 },
+  backStart: { left: spacing.lg - (MIN_TOUCH_TARGET - 26) / 2 },
+  backEnd: { right: spacing.lg - (MIN_TOUCH_TARGET - 26) / 2 },
   brand: { ...display(typography.sizes.xxl), textAlign: 'center' },
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
   hero: { alignSelf: 'center', alignItems: 'center', marginBottom: spacing.md },

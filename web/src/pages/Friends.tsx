@@ -4,6 +4,7 @@ import { ConfirmButton } from '../components/ConfirmButton';
 import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
 import { useProfileModal } from '../profile/ProfileModal';
+import { UserActions } from '../profile/UserActions';
 import { ErrorState, EmptyState } from '../components/states';
 import { FriendListSkeleton } from '../components/skeletons';
 import { Avatar } from '../components/Avatar';
@@ -57,8 +58,8 @@ export function Friends(): React.JSX.Element {
   // place is held while this page asks for them, rather than opening up above
   // your friends once they arrive
   const waiting = useRail().data.requests.length;
-  // why an answer or a block did not go through: a friend list that is full
-  // (theirs or yours) says so, rather than the request just staying put
+  // why an answer did not go through: a friend list that is full (theirs or
+  // yours) says so, rather than the request just staying put
   const [err, setErr] = useState<string | null>(null);
 
   /** Take back a request you sent — nothing tells the other person either way. */
@@ -68,19 +69,15 @@ export function Friends(): React.JSX.Element {
   }
 
   /**
-   * Unfriending and blocking are different things and are offered as such.
-   * Removing is mutual and reversible; blocking is silent and absolute, so it
-   * is the quieter of the two buttons rather than the louder one.
+   * Unfriending and blocking are different things and are offered as such:
+   * removing is mutual and reversible, blocking silent and absolute. Neither
+   * stands in the row any more. A row had three buttons, and two of them ended
+   * the friendship from one press beside the one that starts a game; both are
+   * in the row's ⋯ now (profile/UserActions.tsx), where removing is asked
+   * twice and a block says what it does before it is done.
    */
   async function unfriend(userId: string): Promise<void> {
     await client.delete(`/friends/${userId}`);
-    friends.reload();
-  }
-
-  async function block(userId: string): Promise<void> {
-    setErr(null);
-    const res = await client.post(`/friends/${userId}/block`);
-    if (!res.ok) setErr(describeError(res.error, t));
     friends.reload();
   }
 
@@ -171,7 +168,7 @@ export function Friends(): React.JSX.Element {
       <section className="friend-section">
         <h2 className="friend-heading">{t('friends.yours')}</h2>
         {friends.loading ? (
-          <FriendListSkeleton actions={3} />
+          <FriendListSkeleton widths={[44, 36]} />
         ) : friends.error ? (
           <ErrorState message={friends.error} onRetry={friends.reload} />
         ) : (friends.data?.friends.length ?? 0) === 0 ? (
@@ -186,17 +183,16 @@ export function Friends(): React.JSX.Element {
                   <>
                     {/* a game with them: the invite sheet, with them already chosen */}
                     <PlayWithButton userId={u.userId} name={u.displayName || u.username} className="btn btn-secondary btn-sm friend-play" iconOnly />
-                    <ConfirmButton
-                      className="btn btn-secondary btn-sm"
-                      title={t('friends.removeWho', { name: u.username })}
-                      label={t('friends.remove')}
-                      onConfirm={() => unfriend(u.userId)}
-                    />
-                    <ConfirmButton
-                      className="btn btn-ghost btn-sm"
-                      title={t('friends.blockWho', { name: u.username })}
-                      label={t('friends.block')}
-                      onConfirm={() => block(u.userId)}
+                    {/* everything else there is to do about them: off the list, a report, a block */}
+                    <UserActions
+                      userId={u.userId}
+                      name={u.displayName || u.username}
+                      remove={{
+                        label: t('friends.remove'),
+                        title: t('friends.removeWho', { name: u.username }),
+                        onConfirm: () => unfriend(u.userId),
+                      }}
+                      onBlocked={friends.reload}
                     />
                   </>
                 }

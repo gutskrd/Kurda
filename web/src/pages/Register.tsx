@@ -4,6 +4,7 @@ import type { CompanionStatus } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { AuthCard } from '../auth/AuthCard';
 import { arrivalPause, holdArrival } from '../auth/arrival';
+import { useFieldProblem, type AuthField } from '../auth/fieldProblem';
 import { Button } from '../components/Button';
 import { PasswordInput } from '../components/PasswordInput';
 import { useI18n, useT } from '../i18n/I18nProvider';
@@ -12,6 +13,20 @@ import { BirthMonthFields, EMPTY_BIRTH_MONTH, birthMonthOf } from '../auth/Birth
 import { AgeStop, ageStopRemembered, rememberAgeStop, type AgeStopKind } from '../auth/AgeStop';
 import { rememberAfterSignup } from '../auth/afterSignup';
 
+/** The fields this form can mark: the three the server refuses over, and the month and year it will not send without. */
+type Field = AuthField | 'birth';
+
+/**
+ * Create an account (/register).
+ *
+ * A refusal that is about one field is said under that field, which is marked,
+ * shaken once and given the caret (auth/fieldProblem.ts): a username that is
+ * taken under the username, a password rule under the password, the month and
+ * year not chosen under those. What a username may be made of is under its
+ * field from the start, as the password's rule is, so it is read before the
+ * form is refused for it and not only after. An address that may already have
+ * an account is not about a field and keeps its place above the form.
+ */
 export function Register(): React.JSX.Element {
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -26,6 +41,7 @@ export function Register(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   /** the server's code for the refusal, where it calls for a way on rather than a fix to the form */
   const [errorCode, setErrorCode] = useState<string | null>(null);
+  const problems = useFieldProblem<Field>({ email: 'email', username: 'username', password: 'password' });
   const [busy, setBusy] = useState(false);
   // read once: an earlier refusal in this browser session keeps the form away
   const [stopped, setStopped] = useState<AgeStopKind | null>(ageStopRemembered);
@@ -35,14 +51,15 @@ export function Register(): React.JSX.Element {
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
+    setError(null);
+    setErrorCode(null);
+    problems.clear();
     const chosen = birthMonthOf(birth);
     if (!chosen) {
-      setError(t('age.required'));
+      problems.show('birth', t('age.required'));
       return;
     }
     setBusy(true);
-    setError(null);
-    setErrorCode(null);
     // made, the page stays a moment for Hevalo to be pleased, then leaves by itself
     const release = holdArrival();
     held.current = release;
@@ -55,11 +72,12 @@ export function Register(): React.JSX.Element {
       // no account was made; the explanation replaces the form, and stays
       rememberAgeStop('refused');
       setStopped('refused');
+    } else if (err?.field) {
+      problems.show(err.field, err.message);
     } else if (err) {
       setError(err.message);
       setErrorCode(err.code ?? null);
-    }
-    else {
+    } else {
       // a friend's invite or a story's quiz that sent them here: opened once
       // the email is confirmed (pages/VerifyEmail), not lost to the first lesson
       rememberAfterSignup((location.state as { from?: unknown } | null)?.from);
@@ -72,7 +90,14 @@ export function Register(): React.JSX.Element {
 
   if (stopped) return <AgeStop accountClosed={stopped === 'closed'} />;
 
-  const companion: CompanionStatus = inside ? 'success' : busy ? 'busy' : error ? 'error' : 'idle';
+  const companion: CompanionStatus = inside ? 'success' : busy ? 'busy' : error || problems.any ? 'error' : 'idle';
+  const emailProblem = problems.of('email');
+  const usernameProblem = problems.of('username');
+  const passwordProblem = problems.of('password');
+  const usernameRule = t('error.code.usernameChars');
+  // the rule the name broke is the hint already under the field: said once, in red, rather than twice
+  const ruleIsTheProblem = usernameProblem === usernameRule;
+  const usernameSaidBy = [ruleIsTheProblem ? '' : 'username-hint', usernameProblem ? 'username-error' : ''].filter(Boolean).join(' ');
 
   return (
     <div className="auth-wrap">
@@ -109,7 +134,7 @@ export function Register(): React.JSX.Element {
             )
           )}
 
-          <div className="field">
+          <div className={problems.fieldClass('email')}>
             <label className="field-label" htmlFor="email">
               {t('auth.email')}
             </label>
@@ -118,15 +143,25 @@ export function Register(): React.JSX.Element {
               className="input"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                problems.clear('email');
+              }}
               autoComplete="email"
               placeholder="you@example.com"
               required
               autoFocus
+              aria-invalid={emailProblem ? true : undefined}
+              aria-describedby={emailProblem ? 'email-error' : undefined}
             />
+            {emailProblem && (
+              <span className="field-problem" id="email-error" role="alert">
+                {emailProblem}
+              </span>
+            )}
           </div>
 
-          <div className="field">
+          <div className={problems.fieldClass('username')}>
             <label className="field-label" htmlFor="username">
               {t('auth.username')}
             </label>
@@ -135,22 +170,67 @@ export function Register(): React.JSX.Element {
               className="input"
               type="text"
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={(e) => {
+                setUsername(e.target.value);
+                problems.clear('username');
+              }}
               autoComplete="username"
+              // a name is typed as it is meant: no capital put on it, nothing corrected, no red wave under a Kurdish word
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
               placeholder={t('auth.register.usernameHelp')}
               required
+              aria-invalid={usernameProblem ? true : undefined}
+              aria-describedby={usernameSaidBy}
             />
+            {!ruleIsTheProblem && (
+              <span className="field-hint" id="username-hint">
+                {usernameRule}
+              </span>
+            )}
+            {usernameProblem && (
+              <span className="field-problem" id="username-error" role="alert">
+                {usernameProblem}
+              </span>
+            )}
           </div>
 
-          <div className="field">
+          <div className={problems.fieldClass('password')}>
             <label className="field-label" htmlFor="password">
               {t('auth.password')}
             </label>
-            <PasswordInput id="password" value={password} onChange={setPassword} autoComplete="new-password" />
-            <span className="field-hint">{t('auth.passwordHint')}</span>
+            <PasswordInput
+              id="password"
+              value={password}
+              onChange={(next) => {
+                setPassword(next);
+                problems.clear('password');
+              }}
+              autoComplete="new-password"
+              invalid={Boolean(passwordProblem)}
+              describedBy={passwordProblem ? 'password-hint password-error' : 'password-hint'}
+            />
+            <span className="field-hint" id="password-hint">
+              {t('auth.passwordHint')}
+            </span>
+            {passwordProblem && (
+              <span className="field-problem" id="password-error" role="alert">
+                {passwordProblem}
+              </span>
+            )}
           </div>
 
-          <BirthMonthFields value={birth} onChange={setBirth} disabled={busy} />
+          <BirthMonthFields
+            value={birth}
+            onChange={(next) => {
+              setBirth(next);
+              problems.clear('birth');
+            }}
+            disabled={busy}
+            problem={problems.of('birth')}
+            className={problems.fieldClass('birth', 'field birth-month')}
+          />
 
           {/*
             Asked here rather than after signing up, and it takes effect while

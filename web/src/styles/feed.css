@@ -295,7 +295,7 @@
 .fcard-like.just-on.is-on svg,
 .fcard-repost.just-on.is-on svg,
 .fcard-save.just-on.is-on svg {
-  animation: fcard-pop 0.28s cubic-bezier(0.2, 1.5, 0.4, 1);
+  animation: fcard-pop var(--dur-slow) var(--ease-spring);
 }
 @keyframes fcard-pop {
   from { transform: scale(0.7); }
@@ -368,6 +368,19 @@
 .post-plus:hover {
   background: var(--primary-hover);
 }
+/*
+ * While today's reward waits to be claimed, Claim is the page's one filled
+ * button and the + is drawn as a secondary one (feed/PostButton.tsx): the same
+ * place, the same size, the page's quiet ground with an edge.
+ */
+.post-plus.is-secondary {
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  color: var(--ink);
+}
+.post-plus.is-secondary:hover {
+  background: var(--surface-3);
+}
 /* below this the row is tight, and a + on its own is understood */
 @media (max-width: 560px) {
   .post-plus {
@@ -392,10 +405,7 @@
   font-size: 0.8rem;
   padding: 5px 11px;
 }
-.seg-sub .seg-btn.is-active {
-  background: var(--gold-soft);
-  color: var(--gold-ink);
-}
+/* its chosen one is no longer a gold tint of its own: it is drawn as every chosen one is (shell.css) */
 
 /* deleting your own post, in its ⋯ menu: red from the start, and plainly asking once armed */
 .fcard-delete.is-armed {

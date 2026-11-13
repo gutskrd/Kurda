@@ -47,8 +47,10 @@ describe('Friends', () => {
     expect(await screen.findByRole('heading', { name: 'Amis', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Trouver des gens' })).toHaveAttribute('href', '/app/search');
     expect(screen.getByRole('heading', { name: 'Vos amis' })).toBeInTheDocument();
+    // what ends a friendship is behind the row’s ⋯, named for the person too
+    await userEvent.click(screen.getByRole('button', { name: 'En savoir plus sur zana' }));
     expect(screen.getByTitle('Retirer zana de vos amis')).toBeInTheDocument();
-    expect(screen.getByTitle('Bloquer zana')).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: 'Bloquer' })).toBeInTheDocument();
   });
 
   it('lists your friends and hides requests when there are none', async () => {
@@ -193,6 +195,46 @@ describe('Friends', () => {
     expect(within(sheet).getByRole('radiogroup', { name: 'Game' })).toBeInTheDocument();
     expect(await within(sheet).findByRole('checkbox', { name: /Zana/ })).toBeChecked();
     expect(within(sheet).getByRole('button', { name: 'Create and invite (1)' })).toBeInTheDocument();
+  });
+
+  /**
+   * A row used to carry three buttons — a game, Remove and Block — and two of
+   * the three ended the friendship from one press beside the one pressed most.
+   */
+  it('keeps the game in a friend’s row and puts removing and blocking behind its ⋯', async () => {
+    const fetchMock = routedFetch({
+      '/friends/requests/outgoing': { requests: [] },
+      '/friends/requests': { requests: [] },
+      '/friends': { friends: [{ userId: 'u2', username: 'zana', displayName: 'Zana' }] },
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<Friends />);
+    const sent = (method: string, path: string): boolean =>
+      fetchMock.mock.calls.some(([url, init]) => String(url).endsWith(path) && init?.method === method);
+
+    expect(await screen.findByRole('button', { name: 'Play with Zana' })).toBeInTheDocument();
+    // nothing in the row itself takes them off the list or blocks them
+    expect(screen.queryByText('Remove')).not.toBeInTheDocument();
+    expect(screen.queryByText('Block')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'More about Zana' }));
+    const menu = screen.getByRole('menu');
+    expect(within(menu).getAllByRole('menuitem').map((item) => item.textContent?.trim())).toEqual(['Remove', 'Report', 'Block']);
+
+    // removing is asked twice, there in the menu
+    await userEvent.click(within(menu).getByRole('menuitem', { name: 'Remove zana as a friend' }));
+    expect(sent('DELETE', '/friends/u2')).toBe(false);
+    await userEvent.click(within(menu).getByRole('menuitem', { name: /press again to confirm/i }));
+    await waitFor(() => expect(sent('DELETE', '/friends/u2')).toBe(true));
+    await waitFor(() => expect(screen.queryByRole('menu')).not.toBeInTheDocument());
+
+    // a block says what it does before it is done
+    await userEvent.click(screen.getByRole('button', { name: 'More about Zana' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Block' }));
+    const ask = screen.getByRole('dialog', { name: 'Block Zana' });
+    expect(sent('POST', '/friends/u2/block')).toBe(false);
+    await userEvent.click(within(ask).getByRole('button', { name: 'Block' }));
+    await waitFor(() => expect(sent('POST', '/friends/u2/block')).toBe(true));
   });
 
   it('sends finding someone new to Search', async () => {

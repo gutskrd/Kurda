@@ -196,8 +196,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
                         autoCapitalize="none"
                         autoCorrect={false}
                         maxLength={USERNAME_MAX}
-                        placeholder="new_username"
-                        placeholderTextColor={colors.textSecondary}
+                        // no example in the field: one was written in English, and the line under the field already says what a name may be made of
                         accessibilityLabel={t('username.new')}
                         editable={!saving && !done}
                       />

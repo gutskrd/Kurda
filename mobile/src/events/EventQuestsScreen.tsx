@@ -241,6 +241,7 @@ function QuestRow({ quest, busy, fresh, onClaim }: { quest: QuestView; busy: boo
 function ClaimedMark({ fresh, seed }: { fresh: boolean; seed: number }): React.JSX.Element {
   const { t } = useI18n();
   const { colors } = useTheme();
+  const dir = useDirection();
   const reduce = useReducedMotion();
   const sparks = useRef(new Animated.Value(0)).current;
   const burst = fresh && !reduce;
@@ -253,7 +254,10 @@ function ClaimedMark({ fresh, seed }: { fresh: boolean; seed: number }): React.J
   return (
     <View style={styles.claimedWrap}>
       {burst ? <ConfettiBurst progress={sparks} count={8} seed={seed} colours={[colors.gold, '#FFE16A', '#FFBD1F']} reach={44} testID="event-claim-sparks" /> : null}
-      <Text style={[styles.claimed, { color: colors.success }]}>✓ {t('events.claimed')}</Text>
+      <View style={[styles.claimedRow, { flexDirection: dir.row }]}>
+        <Icon name="check" size={14} color={colors.success} />
+        <Text style={[styles.claimed, { color: colors.success }]}>{t('events.claimed')}</Text>
+      </View>
     </View>
   );
 }
@@ -282,6 +286,7 @@ const styles = StyleSheet.create({
   count: { fontSize: typography.sizes.sm },
   claimBtn: { minWidth: 96 },
   claimedWrap: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', alignItems: 'center' },
+  claimedRow: { alignItems: 'center', gap: spacing.xs },
   claimed: { fontWeight: typography.weights.bold, fontSize: typography.sizes.sm },
   locked: { fontSize: typography.sizes.sm },
 });

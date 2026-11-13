@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { categoryName, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -20,6 +20,7 @@ import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton, ErrorRetry } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { PressableScale, Rise, heldDim } from '../theme/MotionParts';
+import { SearchField } from '../theme/SearchField';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -351,31 +352,8 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         refreshControl={pull}
       >
         <View style={[styles.searchRow, { flexDirection: dir.row }]}>
-          <View style={[styles.search, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>
-            <Icon name="search" size={18} color={colors.textSecondary} />
-            <TextInput
-              value={q}
-              onChangeText={setQ}
-              placeholder={t('stories.library.search')}
-              placeholderTextColor={colors.textSecondary}
-              accessibilityLabel={t('stories.library.search')}
-              autoCorrect={false}
-              autoCapitalize="none"
-              returnKeyType="search"
-              style={[styles.searchInput, dir.text, { color: colors.textPrimary }]}
-            />
-            {q ? (
-              <Pressable
-                onPress={() => setQ('')}
-                accessibilityRole="button"
-                accessibilityLabel={t('stories.library.clearSearch')}
-                hitSlop={8}
-                style={({ pressed }) => [styles.searchClear, pressed && heldDim]}
-              >
-                <Icon name="clear-fill" size={18} color={colors.textSecondary} />
-              </Pressable>
-            ) : null}
-          </View>
+          {/* the app's one search field, in place of a copy of it built here */}
+          <SearchField value={q} onChangeText={setQ} label={t('stories.library.search')} style={styles.search} />
           {/* sorting and narrowing is one button beside the search, filled while anything is on */}
           <HeaderButton
             icon={isPlainFilter(filter) ? 'filter' : 'filter-fill'}
@@ -682,9 +660,7 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   heading: { ...sectionLabel },
   searchRow: { alignItems: 'center', gap: spacing.xs },
-  search: { flex: 1, alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md },
-  searchInput: { flex: 1, minHeight: MIN_TOUCH_TARGET, fontSize: typography.sizes.md },
-  searchClear: { minWidth: 28, minHeight: 28, alignItems: 'center', justifyContent: 'center' },
+  search: { flex: 1 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

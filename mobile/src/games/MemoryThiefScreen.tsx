@@ -15,6 +15,7 @@ import {
   type MemoryWhy,
 } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
@@ -131,19 +132,19 @@ function InkWord({ text, lifting, order, style }: { text: string; lifting: boole
   );
 }
 
-/** A gap's soft glow, breathing while it waits for its word (still under Reduce Motion). */
+/** A gap's soft glow, breathing while it waits for its word (still under Reduce Motion, and while the game is not the screen in front). */
 function useGlow(on: boolean): Animated.Value {
-  const reduce = useReducedMotion();
+  const alive = useMotionAlive();
   const glow = useRef(new Animated.Value(0.45)).current;
   useEffect(() => {
-    if (!on || reduce) {
+    if (!on || !alive) {
       glow.setValue(on ? 0.45 : 0);
       return;
     }
     const loop = Animated.loop(Animated.sequence([timing(glow, 0.8, 1200), timing(glow, 0.15, 1200)]));
     loop.start();
     return () => loop.stop();
-  }, [on, reduce, glow]);
+  }, [on, alive, glow]);
   return glow;
 }
 

@@ -144,15 +144,19 @@ function FeedPostBox({ picture }: { picture: boolean }): React.JSX.Element {
 export function FriendListSkeleton({
   count = 6,
   actions = 1,
+  widths,
   label,
 }: {
   count?: number;
-  /** how many buttons each row carries, as the page's own rows do */
+  /** how many worded buttons each row carries, as the page's own rows do */
   actions?: number;
+  /** or the row's own buttons, by width, where they are not words: a friend's game and ⋯ */
+  widths?: readonly number[];
   label?: MessageKey;
 }): React.JSX.Element {
   const t = useT();
-  const widths = [44, 84, 64];
+  const worded = [44, 84, 64];
+  const boxes = widths ?? Array.from({ length: actions }, (_, j) => worded[(j + (3 - actions)) % 3]!);
   return (
     <SkeletonRegion label={t(label ?? 'common.loading')} className="post-list">
       {times(count, (i) => (
@@ -167,8 +171,8 @@ export function FriendListSkeleton({
             </span>
           </span>
           <span className="friend-actions">
-            {times(actions, (j) => (
-              <ButtonBox key={j} size="sm" w={widths[(j + (3 - actions)) % 3]!} />
+            {boxes.map((w, j) => (
+              <ButtonBox key={j} size="sm" w={w} />
             ))}
           </span>
         </div>

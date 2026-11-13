@@ -26,6 +26,7 @@ import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
+import { SearchField } from '../theme/SearchField';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -52,7 +53,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftSentNote } from '../gifts/GiftSentNote';
 import { FrameArt } from './FrameArt';
-import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from './ItemFilters';
+import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SEARCH_MAX, SortChip, ToggleChip } from './ItemFilters';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -281,8 +282,9 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 <View style={[styles.column, styles.toolbarInner]}>
                   <SearchField
                     value={filter.query}
-                    onChange={(query) => setFilter((f) => ({ ...f, query }))}
+                    onChangeText={(query) => setFilter((f) => ({ ...f, query }))}
                     label={t('shop.search.label')}
+                    maxLength={SEARCH_MAX}
                     style={styles.gutter}
                   />
                   <KindChips

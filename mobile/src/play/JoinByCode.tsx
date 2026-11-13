@@ -236,7 +236,7 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
   // the wave while the server is asked: a loading shimmer, the one loop the motion rules allow
   const wave = useRef(Array.from({ length: JOIN_CODE_LENGTH }, () => new Animated.Value(0))).current;
   useEffect(() => {
-    if (phase !== 'joining' || reduce) return;
+    if (phase !== 'joining' || reduce || !awake) return;
     const loop = Animated.loop(
       Animated.stagger(
         70,
@@ -248,7 +248,7 @@ function CodeBoxes({ code, phase, focused, flipped }: { code: string; phase: Pha
       loop.stop();
       for (const v of wave) v.setValue(0);
     };
-  }, [phase, reduce, wave]);
+  }, [phase, reduce, awake, wave]);
 
   // the flip as a box turns green: over on its edge and back, the colour changing as it is side-on
   const flips = useRef(Array.from({ length: JOIN_CODE_LENGTH }, () => new Animated.Value(0))).current;

@@ -5,7 +5,7 @@ import { ClayButton } from '../../theme/glass';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../auth/AuthContext';
 import { isGoogleConfigured } from '../../auth/google';
-import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, validateEmail, validatePassword } from '../../auth/validators';
+import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, cleanEmail, validateEmail, validatePassword } from '../../auth/validators';
 import { StepFlow, type FlowStep } from '../../auth/guide/StepFlow';
 import { GuideField } from '../../auth/guide/GuideField';
 import { AgeRuler } from '../../auth/guide/AgeRuler';
@@ -13,7 +13,7 @@ import { MonthChips } from '../../auth/guide/MonthChips';
 import { PasswordStrengthMeter } from '../../auth/guide/PasswordStrength';
 import { AnswerSummary } from '../../auth/guide/AnswerSummary';
 import { birthYearFrom } from '../../auth/guide/age';
-import { USERNAME_RULE_VARS, checkUsername } from '../../username/validate';
+import { USERNAME_RULE_VARS, checkUsername, cleanUsername } from '../../username/validate';
 import { LinkText } from './AuthForm';
 import { AppleButton, GoogleButton, useSocialSignIn } from './SocialSignIn';
 import { useI18n } from '../../i18n/I18nContext';
@@ -83,7 +83,7 @@ export function ClaimAccountScreen({
     onExit();
   }, [claimed, onExit]);
 
-  const chosenName = username.normalize('NFC').trim();
+  const chosenName = cleanUsername(username.normalize('NFC'));
 
   const method: FlowStep = {
     key: 'method',
@@ -200,7 +200,7 @@ export function ClaimAccountScreen({
         <AnswerSummary
           rows={[
             { label: t('auth.username'), value: chosenName },
-            { label: t('auth.email'), value: email.trim() },
+            { label: t('auth.email'), value: cleanEmail(email) },
           ]}
         />
       ),
@@ -211,7 +211,7 @@ export function ClaimAccountScreen({
         if (month === null) return { ok: false, error: t('guide.register.month.required'), at: 'month' };
         setMayHaveAccount(false);
         const error = await claimAccount({
-          email: email.trim(),
+          email: cleanEmail(email),
           // the generated name kept is not a change to send
           ...(chosenName !== user?.username ? { username: chosenName } : {}),
           password,
@@ -242,8 +242,8 @@ export function ClaimAccountScreen({
     <View style={[styles.notice, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite" testID="claim-may-have-account">
       <Text style={[styles.noticeText, { color: colors.textPrimary }]}>{t('error.code.registrationFailed')}</Text>
       <View style={styles.noticeActions}>
-        <ClayButton label={t('auth.login.submit')} tone="primary" onPress={() => onSignIn(email.trim())} style={styles.noticeAction} />
-        <ClayButton label={t('auth.reset.title')} variant="outline" tone="primary" onPress={() => onForgotPassword(email.trim())} style={styles.noticeAction} />
+        <ClayButton label={t('auth.login.submit')} tone="primary" onPress={() => onSignIn(cleanEmail(email))} style={styles.noticeAction} />
+        <ClayButton label={t('auth.reset.title')} variant="outline" tone="primary" onPress={() => onForgotPassword(cleanEmail(email))} style={styles.noticeAction} />
       </View>
     </View>
   ) : null;

@@ -1,4 +1,5 @@
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { StyleSheet, Text, View } from 'react-native';
@@ -27,7 +28,7 @@ import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 export function DailyRewardCard() {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [status, setStatus] = useState<DailyStatus | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [justEarned, setJustEarned] = useState<DailyClaim | null>(null);
@@ -84,7 +85,16 @@ export function DailyRewardCard() {
                 state === 'today' && styles.cellToday,
               ]}
             >
-              <Text style={[styles.cellDay, { color: textColor }]}>{state === 'claimed' ? '✓' : `D${day}`}</Text>
+              {state === 'claimed' ? (
+                <View style={styles.cellMark}>
+                  <Icon name="check" size={12} color={textColor} />
+                </View>
+              ) : (
+                // "Day 3" in the reader's own language and digits, where there was a "D3" in every one; it shrinks before it is cut
+                <Text style={[styles.cellDay, { color: textColor }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+                  {t('daily.day', { day: formatNumber(day, locale) })}
+                </Text>
+              )}
               <Text style={[styles.cellAmount, { color: textColor }]}>{amount}</Text>
             </View>
           );
@@ -157,6 +167,8 @@ const styles = StyleSheet.create({
   cellToday: { borderWidth: 2 },
   cellSkeleton: { flex: 1 },
   cellDay: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
+  // as tall as the day's line it stands in for, so a day taken keeps its amount where the others have theirs
+  cellMark: { height: 16, justifyContent: 'center' },
   cellAmount: { fontSize: typography.sizes.xs },
   done: { textAlign: 'center', fontSize: typography.sizes.sm, paddingVertical: spacing.sm },
   plus: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs },

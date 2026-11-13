@@ -23,6 +23,7 @@ import {
   type LeagueTier,
   type RankTier,
 } from '@kurda/shared';
+import { useScreenAwake } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { assetUrl } from '../api/env';
 import { useArtOverride } from '../art/overrides';
@@ -261,8 +262,11 @@ function BadgeGlint({ badgeKey, size, play }: { badgeKey: string; size: number; 
     [badgeKey, size, idPrefix],
   );
   const values = useRef(GLINT_PHASES.map(() => new Animated.Value(0))).current;
+  // a glint that comes round again does so only while its screen is in front; one that plays once is left to finish
+  const awake = useScreenAwake();
+  const watched = play !== 'loop' || awake;
   useEffect(() => {
-    if (reduce) return;
+    if (reduce || !watched) return;
     const pass = Animated.stagger(
       GLINT_STEP_MS,
       values.map((v) =>
@@ -274,8 +278,11 @@ function BadgeGlint({ badgeKey, size, play }: { badgeKey: string; size: number; 
     );
     const run = play === 'loop' ? Animated.loop(Animated.sequence([Animated.delay(900), pass, Animated.delay(GLINT_REST_MS)])) : Animated.sequence([Animated.delay(250), pass]);
     run.start();
-    return () => run.stop();
-  }, [reduce, play, values]);
+    return () => {
+      run.stop();
+      for (const v of values) v.setValue(0);
+    };
+  }, [reduce, watched, play, values]);
   if (reduce) return null;
   return (
     <View {...HIDDEN} pointerEvents="none" style={StyleSheet.absoluteFill}>
@@ -334,13 +341,15 @@ export function SeasonFramed({
     [tier, size, turns, reduce, picture, idPrefix],
   );
   const spin = useRef(new Animated.Value(0)).current;
+  // the glint goes round the ring only while somebody can see it
+  const awake = useScreenAwake();
   useEffect(() => {
-    if (!glint) return;
+    if (!glint || !awake) return;
     spin.setValue(0);
     const loop = Animated.loop(Animated.timing(spin, { toValue: 1, duration: FRAME_TURN_MS, easing: Easing.linear, useNativeDriver: true }));
     loop.start();
     return () => loop.stop();
-  }, [glint, spin]);
+  }, [glint, awake, spin]);
   const inner = framedAvatarSize(size);
   const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
   return (

@@ -67,8 +67,70 @@ describe('Register', () => {
     await fillAccount();
     await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
 
-    expect(await screen.findByRole('alert')).toHaveTextContent(en['age.required']);
+    const said = await screen.findByRole('alert');
+    expect(said).toHaveTextContent(en['age.required']);
     expect(bodyOf(fetchMock, '/auth/register')).toBeUndefined();
+    // said under the two it is about, which are marked, and not above the form
+    const birth = screen.getByRole('group', { name: en['age.label'] });
+    expect(birth).toContainElement(said);
+    expect(birth).toHaveClass('has-problem');
+    // and gone once an answer is being given
+    await chooseBirth('3', '1990');
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  /**
+   * Every refusal used to be one red box above the first field. A username
+   * that is taken is said under the username, which is marked, shaken once and
+   * given the caret; and what a username may be made of is under its field
+   * from the start, not only after the form was refused for it.
+   */
+  it('says what is wrong with the username under the username, and its rule there from the start', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(409, { code: 'USERNAME_TAKEN', message: 'username taken' })),
+    );
+    renderRegister();
+    const username = screen.getByLabelText('Username');
+    // the rule is a hint that stays, and the field is typed as it is meant
+    expect(username).toHaveAccessibleDescription(en['error.code.usernameChars']);
+    expect(username).toHaveAttribute('autocapitalize', 'none');
+    expect(username).toHaveAttribute('spellcheck', 'false');
+
+    await fillAccount();
+    await chooseBirth('3', '1990');
+    await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
+
+    const said = await screen.findByText(en['error.code.usernameTaken']);
+    const field = username.closest('.field')!;
+    expect(field).toContainElement(said);
+    expect(field).toHaveClass('has-problem', 'is-shake-a');
+    expect(username).toHaveAttribute('aria-invalid', 'true');
+    await waitFor(() => expect(username).toHaveFocus());
+    // the rule is still there beside it, and nothing is said above the form
+    expect(within(field as HTMLElement).getByText(en['error.code.usernameChars'])).toHaveClass('field-hint');
+    expect(document.querySelector('.msg')).toBeNull();
+    // the other fields are not marked for it
+    expect(screen.getByLabelText('Password').closest('.field')).not.toHaveClass('has-problem');
+
+    await userEvent.type(username, '2');
+    expect(field).not.toHaveClass('has-problem');
+  });
+
+  it('says a broken username rule once, in the rule’s own place', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(400, { code: 'INVALID_USERNAME', message: 'bad', details: { reason: 'charset' } })),
+    );
+    renderRegister();
+    await fillAccount();
+    await chooseBirth('3', '1990');
+    await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
+
+    const said = await screen.findByRole('alert');
+    expect(said).toHaveClass('field-problem');
+    // whatever the rule's words are, they are on the page once: not as a grey hint and again in red
+    expect(screen.getAllByText(said.textContent!)).toHaveLength(1);
   });
 
   it('sends the month and year with the new account', async () => {

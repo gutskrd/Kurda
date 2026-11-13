@@ -237,9 +237,9 @@ input[type='password']::-ms-clear {
   border: 1px solid var(--input-border);
   border-radius: var(--r-md);
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    box-shadow 0.15s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out);
 }
 .input::placeholder {
   color: var(--ink-4);
@@ -405,9 +405,9 @@ input[type='password']::-ms-clear {
 .card-link {
   display: block;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    transform 0.12s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 .card-link:hover {
   border-color: var(--border-strong);
@@ -526,14 +526,8 @@ input[type='password']::-ms-clear {
   width: 60%;
   /* parked off the left edge; the keyframes carry it across with a transform alone */
   transform: translateX(-100%) skewX(-18deg);
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 255, 255, 0.05) 30%,
-    rgba(255, 255, 255, 0.14) 50%,
-    rgba(255, 255, 255, 0.05) 70%,
-    transparent
-  );
+  /* the light itself is the scheme's (tokens.css): the dark page's faint white would not show on a light grey box */
+  background: linear-gradient(90deg, transparent, var(--skeleton-ray-soft) 30%, var(--skeleton-ray) 50%, var(--skeleton-ray-soft) 70%, transparent);
   animation: skeleton-ray 1.6s ease-in-out infinite;
 }
 .skeleton-circle {

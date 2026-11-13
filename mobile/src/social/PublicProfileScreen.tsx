@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
@@ -30,6 +31,7 @@ import type { ProfileSections } from '../profile/sections';
 import { ReportSheet } from '../reports/ReportSheet';
 import { blockUser } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
 import { PlayWithButton } from '../play/PlayWithButton';
 import { useAnnouncer } from '../stories/ui';
 import { TicketSlip } from './FriendTicket';
@@ -76,7 +78,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const { require } = useAccountGate();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -218,13 +220,14 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           ) : (
             <>
               <View style={styles.stats}>
-                <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} fire={fireLevel(profile.streak ?? 0)} />
-                <Stat label="XP" value={`${profile.xp ?? 0}`} />
+                {/* grouped, and in the reader's own digits, as the same numbers are on their own profile */}
+                <Stat label={t('profile.streak')} value={formatNumber(profile.streak ?? 0, locale)} fire={fireLevel(profile.streak ?? 0)} />
+                <Stat label={t('profile.stat.xp')} value={formatNumber(profile.xp ?? 0, locale)} />
                 {/* a league only while they take part, translated; nothing for somebody never in one */}
                 {knownTier(profile.league?.tier ?? profile.tier) ? (
                   <Stat label={t('profile.league')} value={leagueName(t, knownTier(profile.league?.tier ?? profile.tier)!)} />
                 ) : null}
-                <Stat label={t('profile.badges')} value={`${profile.achievements ?? 0}`} />
+                <Stat label={t('profile.badges')} value={formatNumber(profile.achievements ?? 0, locale)} />
               </View>
 
               <ProgressShowcase
@@ -279,7 +282,9 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                 for in the same moment, and they do different halves of the
                 job: a block ends it for you and tells nobody, a report tells
                 a moderator and changes nothing you can see. Neither is
-                offered as a substitute for the other.
+                offered as a substitute for the other. Together, but not side
+                by side: one at each end of the line, each a fingertip tall, so
+                reaching for Report cannot land on Block.
               */}
               <View style={styles.danger}>
                 <Pressable onPress={() => setReporting(true)} style={({ pressed }) => [styles.block, pressed && heldDim]} accessibilityRole="button">
@@ -380,8 +385,8 @@ const styles = StyleSheet.create({
   statValue,
   statLabel: statCaption,
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.lg },
-  block: { paddingVertical: spacing.sm, alignItems: 'center' },
-  danger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl },
+  block: { minHeight: MIN_TOUCH_TARGET, minWidth: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
+  danger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   blockText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   dim: { textAlign: 'center', marginTop: spacing.md },
 });

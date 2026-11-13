@@ -117,6 +117,8 @@ export function Civak(): React.JSX.Element {
   // only a wall that arrives rises in, and only the first time in this tab: one drawn from memory is simply there
   const arriving = useArrival(!!items && items.length > 0, 'civak');
   const [error, setError] = useState<string | null>(null);
+  // today's reward is waiting to be claimed: Claim is the one filled button on the page while it is, and the + steps back
+  const [claimWaiting, setClaimWaiting] = useState(false);
   const more = wall?.more ?? false;
   const [loadingMore, setLoadingMore] = useState(false);
   const fetchingMore = useRef(false);
@@ -222,7 +224,7 @@ export function Civak(): React.JSX.Element {
         thing on it that was not a door comes with it. It renders nothing at all
         for a visitor without an account, and nothing once today is claimed.
       */}
-      <DailyReward />
+      <DailyReward onClaimWaiting={setClaimWaiting} />
 
       {/* the week's league in one line, with the goal ring: a door to it, not a copy */}
       <HomeLeagueLine />
@@ -230,7 +232,7 @@ export function Civak(): React.JSX.Element {
       {/* how the wall is sorted and narrowed, then the funnel and the + — the + belongs with the wall it adds to */}
       <div className="feed-filters" ref={row}>
         <FeedFilter value={value} onChange={choose} />
-        <PostButton onPosted={() => void load(0)} />
+        <PostButton onPosted={() => void load(0)} secondary={claimWaiting} />
       </div>
 
       {error && <ErrorState message={error} onRetry={() => void load(0)} />}

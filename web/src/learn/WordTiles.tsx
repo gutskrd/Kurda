@@ -43,7 +43,7 @@ export function useAnswerMode(bank: readonly string[] | undefined): [AnswerMode,
 }
 
 /** How long a tile takes to fly to the line or back to its place: the slow token (tokens.css). */
-const FLY_MS = 320;
+const FLY_MS = 280;
 const FLY_EASE = 'cubic-bezier(0.2, 0.8, 0.2, 1)';
 /** Arabic script: a Soranî bank is laid right to left; one in a Latin script left to right, whatever the course. */
 const ARABIC_SCRIPT = /[؀-ۿݐ-ݿﭐ-﷿ﹰ-﻿]/;

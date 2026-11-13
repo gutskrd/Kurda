@@ -24,6 +24,7 @@ import { joining } from '../play/joining';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { useUserEvents } from '../realtime/useUserEvents';
 import { PHONE_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { GAME_CARDS, learnGameCard, type GameCard, type GameMode, type GameWay } from '../games/gameCards';
@@ -107,27 +108,44 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   const shelf = cards.filter((c) => !c.soon && c !== featured && playedAs(c.mode, filter));
   const upcoming = cards.filter((c) => c.soon);
 
-  useFocusEffect(
-    useCallback(() => {
-      let live = true;
+  /**
+   * Reads the rank and the invites, for the screen coming into view and for a
+   * pull. `live` says whether the answer is still wanted: a screen left while
+   * it travelled takes none of it.
+   */
+  const read = useCallback(
+    async (live: () => boolean): Promise<void> => {
       // a guest holds no rank and is sent no invites, and the server refuses both questions
       if (isGuest) {
         setRanksSettled(true);
-      } else {
-        void getMyRanks(client).then((res) => {
-          if (!live) return;
+        return;
+      }
+      await Promise.all([
+        getMyRanks(client).then((res) => {
+          if (!live()) return;
           if (res.ok) setRanks(res.data);
           setRanksSettled(true);
-        });
-        void listInvites(client).then((res) => {
-          if (live && res.ok) setInvites(res.data.incoming);
-        });
-      }
+        }),
+        listInvites(client).then((res) => {
+          if (live() && res.ok) setInvites(res.data.incoming);
+        }),
+      ]);
+    },
+    [client, isGuest],
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      let live = true;
+      void read(() => live);
       return () => {
         live = false;
       };
-    }, [client, isGuest]),
+    }, [read]),
   );
+
+  // pulled down, it reads again, as Lessons and Stories beside it do — an invite or a rank that changed elsewhere need not wait for a tab change
+  const pull = usePullRefresh(() => read(() => true));
 
   // an invite that arrives, or is answered somewhere else, while this is open
   useUserEvents(
@@ -173,6 +191,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       ref={scrollRef}
       contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
       showsVerticalScrollIndicator={false}
+      refreshControl={pull}
     >
       {/* rankings and the league: small, at the top, for whoever looks for them */}
       <View style={[styles.entries, { flexDirection: dir.row }]}>

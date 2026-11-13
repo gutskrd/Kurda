@@ -12,7 +12,7 @@
 .pc {
   position: relative;
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: var(--surface);
   box-shadow: var(--glass-rim);
   overflow: hidden;
@@ -145,7 +145,6 @@
   height: 100%;
   border-radius: inherit;
   background: var(--gold);
-  transition: width 0.4s ease;
 }
 .pcard-level-next {
   font-size: 0.78rem;
@@ -314,7 +313,7 @@
   display: grid;
   gap: 2px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
@@ -462,7 +461,7 @@ a.rank-name:hover {
   min-width: 0;
   padding: 9px 10px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--surface);
 }
 .player.is-done {
@@ -517,7 +516,6 @@ a.rank-name:hover {
   display: block;
   height: 100%;
   background: var(--ink-2);
-  transition: width 0.3s ease;
 }
 
 /* ---- a game invite --------------------------------------------------------- */
@@ -531,7 +529,7 @@ a.rank-name:hover {
   width: min(100%, 300px);
   color: var(--ink);
   text-decoration: none;
-  transition: transform 0.12s ease;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 a.invite-card:active {
   transform: translateY(1px);
@@ -579,7 +577,7 @@ a.invite-card:hover {
   align-items: center;
   height: 32px;
   padding: 0 14px;
-  border-radius: 9px;
+  border-radius: var(--r-sm);
   background: var(--primary);
   color: var(--primary-ink);
   font-size: 0.8rem;
@@ -634,9 +632,9 @@ a.invite-card:hover {
   background: var(--surface);
   overflow: hidden;
   transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    transform 0.2s ease;
+    border-color var(--dur) var(--ease-out),
+    background var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
 }
 /* only a tile that is itself the link lifts; in the app the button is the way in */
 .game-tile:has(.game-stretch):hover {
@@ -753,7 +751,7 @@ a.invite-card:hover {
 /* ---- pieces of the pictures, shared with the screens ----------------------- */
 .lp-card {
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
@@ -789,7 +787,7 @@ a.invite-card:hover {
   justify-self: start;
   height: 32px;
   padding: 0 14px;
-  border-radius: 9px;
+  border-radius: var(--r-sm);
   background: var(--primary);
   color: var(--primary-ink);
   font-size: 0.8rem;
@@ -1058,7 +1056,7 @@ a.invite-card:hover {
   margin-bottom: 20px;
   padding: 14px 16px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
@@ -1114,7 +1112,7 @@ a.invite-card:hover {
   gap: 10px;
   padding: 22px;
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }

@@ -94,7 +94,8 @@ function RankedBody({ rank }: { rank: RankCardData }): React.JSX.Element {
             aria-valuenow={Math.round(progress.fraction * 100)}
             aria-label={next ? t('ranks.toNext', { points: progress.pointsToGo ?? 0, next }) : t('ranks.topOfClimb')}
           >
-            <span className="rank-progress-fill" style={{ width: `${Math.max(3, progress.fraction * 100)}%` }} />
+            {/* a sliver at the least, so a climb just begun is seen to have begun; moved along its track by `--p` (styles/motion.css) */}
+            <span className="rank-progress-fill" style={{ '--p': Math.min(1, Math.max(0.03, progress.fraction)) } as React.CSSProperties} />
           </div>
           <span className="rank-progress-label">
             {next ? t('ranks.toNext', { points: progress.pointsToGo ?? 0, next }) : tier === 'sterk' ? t('ranks.sterkHint') : t('ranks.topOfClimb')}

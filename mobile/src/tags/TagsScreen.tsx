@@ -5,7 +5,7 @@ import { Toggle } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -157,13 +157,16 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                     </Text>
                   </View>
                   <Toggle value={tag.displayed} onValueChange={(v) => void toggleDisplay(tag, v)} accessibilityLabel={t('tags.showOnProfile', { tag: tag.label })} />
+                  {/*
+                    Taking a tag off for good stands clear of the switch that
+                    only hides it: a fingertip's square of its own, a gap away,
+                    where it was a small cross whose reach ran onto the switch.
+                  */}
                   <Pressable
                     onPress={() => revoke(tag)}
-                    // a 20-point glyph, caught at a fingertip's 44
-                    hitSlop={hitSlopFor(20, 20)}
                     accessibilityRole="button"
                     accessibilityLabel={t('tags.removeTag', { tag: tag.label })}
-                    style={({ pressed }) => pressed && heldDim}
+                    style={({ pressed }) => [styles.remove, pressed && heldDim]}
                   >
                     <Icon name="close" size={20} color={colors.danger} />
                   </Pressable>
@@ -179,7 +182,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                   <View key={tag.key} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
                     <Text style={[styles.claimLabel, { color: colors.textPrimary }]}>
                       {tag.label}
-                      {tag.sensitive ? <Text style={{ color: colors.textSecondary }}> · sensitive</Text> : null}
+                      {tag.sensitive ? <Text style={{ color: colors.textSecondary }}>{` · ${t('tags.sensitive')}`}</Text> : null}
                     </Text>
                     <ClayButton label={t('tags.claim')} tone="neutral" onPress={() => startClaim(tag)} />
                   </View>
@@ -239,6 +242,7 @@ const styles = StyleSheet.create({
   buyBtn: { marginTop: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
   rowMain: { flex: 1, gap: 2 },
+  remove: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginLeft: spacing.sm },
   sensitive: { fontSize: typography.sizes.xs },
   claimLabel: { flex: 1, fontSize: typography.sizes.md },
   sheet: { position: 'absolute', left: spacing.lg, right: spacing.lg, bottom: spacing.lg, borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },

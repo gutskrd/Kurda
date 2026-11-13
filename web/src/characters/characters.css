@@ -53,7 +53,7 @@
 /* a look eases to where it goes, as an eye does, rather than jumping */
 .speaking-character [data-pupil],
 .speaking-character [data-iris] {
-  transition: transform 160ms ease-out;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 .speaking-character.is-pressable {
   cursor: pointer;

@@ -29,9 +29,10 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useDirection } from '../reports/direction';
-import { useEnter } from '../theme/animate';
+import { timing, useEnter } from '../theme/animate';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Icon } from '../theme/Icon';
+import { duration } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -293,10 +294,10 @@ export function PathHostView({
     const say = (): void => {
       setSaid(words[turn % words.length]!);
       turn += 1;
-      Animated.timing(shown, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+      timing(shown, 1, duration.base).start();
       timers.push(
         setTimeout(() => {
-          Animated.timing(shown, { toValue: 0, duration: 220, useNativeDriver: true }).start(() => setSaid(null));
+          timing(shown, 0, duration.base).start(() => setSaid(null));
         }, PATH_MOTION.sayForMs),
       );
     };

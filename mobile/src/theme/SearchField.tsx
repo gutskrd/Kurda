@@ -15,7 +15,9 @@ import { pressedDim } from './motion';
  * Messages filters its own list with one and Search asks the server with
  * another, and they looked different — one with a clear button and one
  * without, at two heights. Same field now, 44 tall, with the clear button a
- * fingertip wide.
+ * fingertip wide — and the same one in the shop, the gift picker, the
+ * profile's items and the stories' library, which each had a copy of it built
+ * by hand.
  *
  * Clearing leaves the cursor in the field with the keyboard up, ready for the
  * next search, as a phone's own search fields do.
@@ -29,9 +31,11 @@ export const SearchField = forwardRef<TextInput, {
   onSubmit?: () => void;
   returnKeyType?: ReturnKeyTypeOptions;
   autoFocus?: boolean;
+  /** the most that can be typed, where what is searched has a limit */
+  maxLength?: number;
   /** where the field sits (a margin), not how it looks */
   style?: StyleProp<ViewStyle>;
-}>(function SearchField({ value, onChangeText, label, placeholder, onSubmit, returnKeyType = 'search', autoFocus, style }, ref) {
+}>(function SearchField({ value, onChangeText, label, placeholder, onSubmit, returnKeyType = 'search', autoFocus, maxLength, style }, ref) {
   const { colors } = useTheme();
   const input = useRef<TextInput>(null);
   useImperativeHandle(ref, () => input.current as TextInput);
@@ -58,6 +62,7 @@ export const SearchField = forwardRef<TextInput, {
         returnKeyType={returnKeyType}
         onSubmitEditing={onSubmit}
         autoFocus={autoFocus}
+        maxLength={maxLength}
         accessibilityLabel={label}
         style={[styles.input, dir.text, { color: colors.textPrimary }]}
       />

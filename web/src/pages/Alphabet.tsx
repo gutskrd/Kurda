@@ -151,7 +151,8 @@ export function Alphabet(): React.JSX.Element {
   const progress = (
     <div className={`ab-progress${explored === order.length ? ' is-done' : ''}`}>
       <div className="ab-progress-track" aria-hidden="true">
-        <span style={{ width: `${(explored / order.length) * 100}%` }} />
+        {/* a full-width fill moved along its track by `--p` (styles/motion.css), as the lesson's bar is */}
+        <span style={{ '--p': order.length > 0 ? explored / order.length : 0 } as React.CSSProperties} />
       </div>
       <span className="ab-progress-text" aria-live="polite">
         {explored === order.length

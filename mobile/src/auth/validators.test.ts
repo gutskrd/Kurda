@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { validateEmail, validatePassword, validateUsername } from './validators';
+import { cleanEmail, validateEmail, validatePassword, validateUsername } from './validators';
 
 describe('validateEmail', () => {
   it('accepts normal emails and trims whitespace', () => {
@@ -15,6 +15,21 @@ describe('validateEmail', () => {
     for (const address of ['name@example.com', 'Name.Surname+tag@example.com', 'x@privaterelay.appleid.com', 'ROJDA@EXAMPLE.COM', 'a.b-c_d@mail.example.com']) {
       expect(validateEmail(address), address).toBeNull();
     }
+  });
+  /*
+   * A keyboard ends a word with a full stop, and an address copied out of a
+   * sentence brings its comma: the address is what is in front of them.
+   */
+  it('takes an address as it was meant: without a full stop or comma after it', () => {
+    expect(cleanEmail('rojda@example.com.')).toBe('rojda@example.com');
+    expect(cleanEmail(' rojda@example.com, ')).toBe('rojda@example.com');
+    expect(cleanEmail('rojda@example.com .')).toBe('rojda@example.com');
+    expect(validateEmail('rojda@example.com.')).toBeNull();
+    expect(validateEmail('rojda@example.com,')).toBeNull();
+    // the dots that belong to it stay
+    expect(cleanEmail('name.surname@mail.example.com')).toBe('name.surname@mail.example.com');
+    // and nothing but a full stop is still nothing
+    expect(validateEmail(' . ')).toBe('required');
   });
   it('rejects empties and malformed values', () => {
     expect(validateEmail('')).toBe('required');
@@ -43,6 +58,7 @@ describe('validateUsername', () => {
     expect(validateUsername(decomposed)).toBeNull();
   });
   it('rejects spaces, emoji and short names', () => {
+    expect(validateUsername('@dilan.')).toBeNull();
     expect(validateUsername('ab')).toBe('invalid_username');
     expect(validateUsername('has space')).toBe('invalid_username');
     expect(validateUsername('emoji😀')).toBe('invalid_username');

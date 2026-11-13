@@ -219,12 +219,12 @@ const styles = StyleSheet.create({
   verdictText: { ...display(typography.sizes.lg) },
   prompt: { ...display(typography.sizes.lg), lineHeight: 30 },
   options: { gap: spacing.sm },
-  // the same pills the question offered, now saying which was right
+  // the tiles the question offered, in their shape, laid flat now that there is nothing to press and saying which was right
   option: {
     alignItems: 'center',
     gap: spacing.sm,
     minHeight: OPTION_MIN_HEIGHT,
-    borderRadius: radii.pill,
+    borderRadius: radii.lg,
     paddingHorizontal: spacing.md + spacing.xs,
     paddingVertical: spacing.sm,
   },

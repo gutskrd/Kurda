@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
+import { SendButton } from '../chat/SendButton';
 import { MIN_TOUCH_TARGET, decorative } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -150,11 +151,12 @@ function CommentRow({
               <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('comments.reply')}</Text>
             </Pressable>
             {mine ? (
+              // at the far end of the line from Reply: the two were a thumb's slip apart, their reaches touching
               <Pressable
                 onPress={() => thread.confirmDelete(c)}
                 hitSlop={ACTION_SLOP}
                 accessibilityRole="button"
-                style={({ pressed }) => [styles.action, pressed && heldDim]}
+                style={({ pressed }) => [styles.action, styles.actionApart, pressed && heldDim]}
               >
                 <Text style={[styles.actionText, { color: colors.danger }]}>{t('common.delete')}</Text>
               </Pressable>
@@ -283,16 +285,8 @@ export function CommentComposer({
           multiline
           maxLength={maxLength}
         />
-        <Pressable
-          onPress={onSubmit}
-          disabled={!ready}
-          accessibilityRole="button"
-          accessibilityLabel={t('comments.post')}
-          accessibilityState={{ disabled: !ready }}
-          style={({ pressed }) => [styles.send, { opacity: ready ? 1 : 0.4 }, pressed && heldDim]}
-        >
-          <Icon name="chevron-right" size={24} tone="primary" />
-        </Pressable>
+        {/* the one send control every field in the app has */}
+        <SendButton ready={ready} onPress={onSubmit} label={t('comments.post')} />
       </View>
     </View>
   );
@@ -332,6 +326,7 @@ const styles = StyleSheet.create({
   voiceText: { flexShrink: 1 },
   actions: { flexDirection: 'row', gap: spacing.md, paddingTop: 2 },
   action: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  actionApart: { marginLeft: 'auto' },
   actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   more: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm, alignSelf: 'flex-start' },
   moreRule: { width: 24, height: StyleSheet.hairlineWidth },

@@ -52,6 +52,62 @@ describe('Login', () => {
     expect(alert).not.toHaveTextContent('invalid email or password');
   });
 
+  /**
+   * One red box above the first field said every refusal, three rows from the
+   * button that caused it. A wrong pair is said under the password now: the
+   * field is marked and shaken, the caret is in it, and it is named to a
+   * screen reader as what is wrong.
+   */
+  it('says a wrong pair under the password, marks and shakes that field, and puts the caret in it', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(401, { code: 'INVALID_CREDENTIALS', message: 'invalid email or password' })),
+    );
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
+    const password = screen.getByLabelText('Password');
+    await userEvent.type(password, 'wrongpass');
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+
+    const said = await screen.findByText(en['error.code.invalidCredentials']);
+    const field = password.closest('.field')!;
+    expect(field).toContainElement(said);
+    expect(said).toHaveClass('field-problem');
+    expect(field).toHaveClass('has-problem', 'is-shake-a');
+    expect(password).toHaveAttribute('aria-invalid', 'true');
+    expect(password).toHaveAccessibleDescription(en['error.code.invalidCredentials']);
+    await waitFor(() => expect(password).toHaveFocus());
+    // nothing above the form: the banner is for what is not about a field
+    expect(document.querySelector('.msg')).toBeNull();
+
+    // refused again, it shakes again: the same shake under its other name
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+    await waitFor(() => expect(password.closest('.field')).toHaveClass('is-shake-b'));
+
+    // and the mark goes as soon as either half of the pair is being mended
+    await userEvent.type(password, 'x');
+    expect(password.closest('.field')).not.toHaveClass('has-problem');
+    expect(screen.queryByText(en['error.code.invalidCredentials'])).not.toBeInTheDocument();
+  });
+
+  it('keeps what is not about a field above the form', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new TypeError('offline');
+      }),
+    );
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'a-password1');
+    await userEvent.click(screen.getByRole('button', { name: /^sign in$/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveClass('msg');
+    expect(alert).toHaveTextContent(en['error.offline']);
+    expect(document.querySelector('.has-problem')).toBeNull();
+  });
+
   it('navigates into the app on success', async () => {
     vi.stubGlobal(
       'fetch',

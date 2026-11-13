@@ -401,7 +401,7 @@ function ResultPanel({
         ) : null}
 
         <View style={styles.resultActions}>
-          <ClayButton label={t('share.title')} icon="chat" tone="neutral" onPress={onShare} style={{ flex: 1 }} />
+          <ClayButton label={t('share.title')} icon="share" tone="neutral" onPress={onShare} style={{ flex: 1 }} />
           <GoldButton label={t('games.wordle.practice')} icon="bolt" onPress={onPractice} style={{ flex: 1 }} />
         </View>
         <ClayButton label={t('games.wordle.daily')} icon="star" tone="neutral" onPress={onDaily} style={{ alignSelf: 'stretch', marginTop: spacing.sm }} />

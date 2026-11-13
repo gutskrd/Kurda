@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   IMPOSTOR_CLUE_LIMITS,
   dialectDirection,
@@ -12,6 +12,7 @@ import {
 } from '@kurda/shared';
 import type { ApiResult } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
@@ -22,8 +23,8 @@ import { SLIP_KEY, partyTextError } from '../party/text';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
-import { pressedDim } from '../theme/motion';
-import { turnCard } from '../theme/animate';
+import { PULSE_MS, pressedDim } from '../theme/motion';
+import { timing, turnCard } from '../theme/animate';
 
 export type ImpostorView = MultiView<ImpostorBoard | null>;
 type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<ImpostorBoard | null, ImpostorOutcome>>>;
@@ -67,25 +68,26 @@ export function kurdishStyle(dialect: ImpostorBoard['dialect']): { writingDirect
 export function ImpostorBoardView({ view, skew, move }: { view: ImpostorView; skew: number; move: Move }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const reduce = useReducedMotion();
   const board = view.board;
   const now = useServerNow(skew, view.status === 'active');
   const glow = useRef(new Animated.Value(1)).current;
   const speaking = board?.phase === 'clues' ? (board.turn?.seat ?? null) : null;
+  // the mark on whose turn it is breathes only while the table is the screen in front
+  const alive = useMotionAlive();
   useEffect(() => {
-    if (reduce || speaking === null) {
+    if (!alive || speaking === null) {
       glow.setValue(1);
       return;
     }
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(glow, { toValue: 0.55, duration: 900, useNativeDriver: true }),
-        Animated.timing(glow, { toValue: 1, duration: 900, useNativeDriver: true }),
+        timing(glow, 0.55, PULSE_MS.turn, { easing: Easing.inOut(Easing.sin) }),
+        timing(glow, 1, PULSE_MS.turn, { easing: Easing.inOut(Easing.sin) }),
       ]),
     );
     loop.start();
     return () => loop.stop();
-  }, [reduce, speaking, glow]);
+  }, [alive, speaking, glow]);
 
   if (!board) return null;
   const name = (seat: number): string => {

@@ -8,6 +8,7 @@ import type { ApiError, ApiResult } from '../../api/types';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
+import { Tile } from '../../theme/Tile';
 import { useTheme } from '../../theme/ThemeProvider';
 import { display } from '../../theme/fonts';
 import { radii, spacing, typography } from '../../theme/tokens';
@@ -20,7 +21,6 @@ import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextPro
 import { Note, Sheet, useFocusOn } from '../ui';
 import { closesSoon, isTimed, secondsLeft, useTicker } from './clock';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
-import { pressedDim } from '../../theme/motion';
 
 /** Options are numbered 1–4, the same numbers the web's keys use. */
 export const OPTION_MIN_HEIGHT = 60;
@@ -205,33 +205,28 @@ export function Question({
         {q.options.map((option, i) => {
           const on = chosen === i;
           return (
-            <Pressable
+            // the lipped tile a lesson's answers are: it sinks under the finger, wears the brand's ink once chosen, and fades when another was
+            <Tile
               key={i}
+              state={on ? 'picked' : locked ? 'disabled' : 'idle'}
               onPress={() => void answer(i)}
               disabled={locked || sending?.state === 'sending'}
-              accessibilityRole="button"
               accessibilityLabel={`${i + 1}. ${option}`}
               {...storyTextProps(dialect)}
-              accessibilityState={{ selected: on, disabled: locked && !on }}
-              style={({ pressed }) => [
-                styles.option,
-                {
-                  flexDirection: storyRowDirection(dialect),
-                  backgroundColor: on ? colors.primary : colors.glassFill,
-                  opacity: locked && !on ? 0.55 : pressed ? pressedDim : 1,
-                },
-              ]}
+              selected={on}
+              faceStyle={[styles.option, { flexDirection: storyRowDirection(dialect) }]}
             >
-              <View style={[styles.badge, { backgroundColor: on ? colors.textOnPrimary : colors.controlTrack }]}>
-                <Text style={[styles.badgeText, { color: on ? colors.primary : colors.textPrimary }]}>{i + 1}</Text>
-              </View>
-              <Text
-                {...storyTextProps(dialect)}
-                style={[styles.optionText, { color: on ? colors.textOnPrimary : colors.textPrimary }, storyTextStyle(dialect)]}
-              >
-                {option}
-              </Text>
-            </Pressable>
+              {(ink) => (
+                <>
+                  <View style={[styles.badge, { backgroundColor: on ? colors.primary : colors.controlTrack }]}>
+                    <Text style={[styles.badgeText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>{i + 1}</Text>
+                  </View>
+                  <Text {...storyTextProps(dialect)} style={[styles.optionText, { color: ink }, storyTextStyle(dialect)]}>
+                    {option}
+                  </Text>
+                </>
+              )}
+            </Tile>
           );
         })}
       </View>
@@ -341,13 +336,12 @@ const styles = StyleSheet.create({
   toggle: { alignSelf: 'flex-start', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   toggleText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   options: { gap: spacing.sm },
-  // a full-width pill (design notes §6), padded in from its rounded ends
+  // the face of a full-width tile: the number, then the words from where the text starts
   option: {
     alignItems: 'center',
+    justifyContent: 'flex-start',
     gap: spacing.md,
     minHeight: OPTION_MIN_HEIGHT,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.md + spacing.xs,
     paddingVertical: spacing.sm,
   },
   badge: { width: 30, height: 30, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },

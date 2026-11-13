@@ -61,8 +61,8 @@ function chooseAge(age: number): void {
 }
 
 /** Answers the questions as somebody `age` years old signing up would, up to the last look, and sends them. */
-async function signUp(email: string, { send = true, age = 34 }: { send?: boolean; age?: number } = {}) {
-  fireEvent.change(screen.getByTestId('username'), { target: { value: 'rojda_k' } });
+async function signUp(email: string, { send = true, age = 34, name = 'rojda_k' }: { send?: boolean; age?: number; name?: string } = {}) {
+  fireEvent.change(screen.getByTestId('username'), { target: { value: name } });
   await press(en['common.continue']);
   // the ruler starts with no age, so it is slid to one
   expect(await screen.findByRole('slider')).toBeTruthy();
@@ -94,6 +94,22 @@ describe('signing up', () => {
       birthMonth: 3,
       birthYear: birthYearFrom(34, 3),
     });
+  });
+
+  /*
+   * "@rojda_k" is how a handle is written everywhere else, and a keyboard
+   * ends a word with a full stop: both are taken as they were meant, shown
+   * back that way on the last look, and sent that way.
+   */
+  it('takes a handle typed with an "@" and an address ending in a full stop as they were meant', async () => {
+    auth.register.mockResolvedValue(null);
+    renderRegister();
+    await signUp('rojda@example.com.', { send: false, name: '@rojda_k' });
+    expect(screen.getByText('rojda_k')).toBeTruthy();
+    expect(screen.getByText('rojda@example.com')).toBeTruthy();
+    await press(en['auth.register.submit']);
+    await waitFor(() => expect(auth.register).toHaveBeenCalledTimes(1));
+    expect(auth.register).toHaveBeenCalledWith(expect.objectContaining({ email: 'rojda@example.com', username: 'rojda_k' }));
   });
 
   it('does not go on from a name that breaks the rules, and says why under the field', async () => {

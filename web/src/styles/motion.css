@@ -3,16 +3,23 @@
  * (--dur-*, --ease-*, --press-scale), the same numbers the phone keeps.
  *
  * What moves, and only that: a press gives a little and springs back; an
- * answer pops when it was right and shakes once when it was not; a bar slides
- * to its new value; a list's first screenful rises in once as it arrives; a
- * sheet or a dialog springs up while the scrim fades; a heart pops with a tiny
- * burst; a speaking character rises into its tile; a join code's tiles drop
- * onto their ticket and the boxes a code is typed into answer each key; an
- * invitation is handed over as a ticket — it swings in, tears, folds away,
- * flies to a friend, gets stamped; and something earned is celebrated
- * (ranks/Celebration.tsx). Nothing loops but a loading shimmer, a typing
- * caret and a ticket's slow glint or light (only while it is in front), and
- * nothing moves while it is being read.
+ * answer pops when it was right and shakes once when it was not, and so does
+ * a field a form was refused over; a bar slides to its new value; a list's
+ * first screenful rises in once, the first time it arrives in a tab; a sheet
+ * or a dialog comes up while the scrim fades, and leaves the way it came; a
+ * heart pops with a tiny burst, and the day's coin with the same burst in
+ * gold; a Peyvok row turns over tile by tile, its colour changing while each
+ * tile is edge-on; a speaking character rises into its tile; a join code's
+ * tiles drop onto their ticket and the boxes a code is typed into answer each
+ * key; an invitation is handed over as a ticket — it swings in, tears, folds
+ * away, flies an arc to a friend, gets stamped; and something earned is
+ * celebrated (ranks/Celebration.tsx). Nothing loops but a loading shimmer, a
+ * typing caret, a ticket's slow glint or light and the one emblem a page puts
+ * forward (games/GameArt.tsx) — each only while it is in front — and nothing
+ * moves while it is being read.
+ *
+ * Nothing that is not a celebration or a value on the move takes longer than
+ * `--dur-slow`, which is under 300ms.
  *
  * Only transform and opacity are animated. Under prefers-reduced-motion,
  * base.css takes every duration to nothing, so each of these lands at its end
@@ -48,6 +55,11 @@
   transform: translateY(-2px) scale(var(--press-scale));
   transition-duration: 80ms;
 }
+/*
+ * The rest of what can be pressed — pills, rows, bare icons — answers at the
+ * end of shell.css, the last sheet, since a pressed state has to come after
+ * every hover it outranks.
+ */
 
 /* ---- an answer, answered ---------------------------------------------------- */
 @keyframes answer-pop {
@@ -104,7 +116,7 @@
 .lesson-match.is-wrong,
 .lesson-tiles.is-wrong .lesson-answer-line,
 .tile.is-flash.is-wrong {
-  animation: answer-shake 300ms ease-in-out;
+  animation: answer-shake var(--dur-slow) ease-in-out;
 }
 /* a pair just found: a light sweeps across both tiles, corner to corner, and a sparkle twinkles at the end */
 @keyframes tile-sweep {
@@ -241,6 +253,33 @@
 }
 [dir='rtl'] .lesson-progress > span {
   transform: translateX(calc((1 - var(--p, 0)) * 100%));
+}
+/*
+ * The other bars that move to a new value are moved the same way, on the same
+ * token: a rank's climb, the level on a profile card, a player's meter in a
+ * game, the letters and words opened so far. Each of them animated its width,
+ * which is layout on every frame, over anything from 0.3s to 0.9s. Their
+ * tracks clip, so the part of the fill that is not yet earned is out of sight.
+ */
+.rank-progress-fill,
+.pcard-level-fill,
+.player-meter > span,
+.ab-progress-track > span {
+  width: 100%;
+  transform: translateX(calc((var(--p, 0) - 1) * 100%));
+}
+[dir='rtl'] .rank-progress-fill,
+[dir='rtl'] .pcard-level-fill,
+[dir='rtl'] .player-meter > span,
+[dir='rtl'] .ab-progress-track > span {
+  transform: translateX(calc((1 - var(--p, 0)) * 100%));
+}
+/* a rank's bar only moves where a result moves it (ranks/RankResult.tsx); on its card it is simply where it stands */
+.rank-progress-fill.is-animated,
+.pcard-level-fill,
+.player-meter > span,
+.ab-progress-track > span {
+  transition: transform var(--dur-progress) var(--ease-out);
 }
 /* and a light runs along the fill, once, the way it moved */
 @keyframes sheen {
@@ -642,6 +681,51 @@
   }
 }
 
+/* ---- the day's reward, claimed -------------------------------------------------- */
+/*
+ * Claiming the reward used to change a number and add a line of words; the
+ * coin it is about did not move. Now it lands: the coin pops, once, and throws
+ * the six sparks a like throws, in the reward's gold (components/DailyReward.tsx,
+ * which also gives a phone its small buzz). Smaller than a tile, so its pop
+ * is larger than a tile's to be seen at all.
+ */
+@keyframes coin-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.18);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.zer-coin {
+  position: relative;
+}
+.zer-coin.is-landed > .currency-icon {
+  animation: coin-pop var(--dur-slow) var(--ease-spring);
+}
+.zer-burst {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 50%;
+  color: var(--gold);
+  box-shadow:
+    0 -28px 0 currentColor,
+    24px -14px 0 currentColor,
+    24px 14px 0 currentColor,
+    0 28px 0 currentColor,
+    -24px 14px 0 currentColor,
+    -24px -14px 0 currentColor;
+  pointer-events: none;
+  animation: like-burst var(--dur-slow) var(--ease-out) both;
+}
+
 /* ---- a lobby's join code ------------------------------------------------------ */
 /*
  * A lobby's ticket (play/CodeTicket.tsx). Its tiles drop onto it one after
@@ -868,10 +952,23 @@
     transform: translateX(calc(var(--t-out, -1) * 6px));
   }
 }
+/*
+ * Thrown, not slid: a thing let go of travels an arc. It lifts off the hand,
+ * gathers speed over the top — by then further across than it is along, and
+ * above the straight line to the face — and comes down onto the face slowing.
+ * The two halves carry their own curves so that it does not pause at the top.
+ */
 @keyframes admit-fly {
   18% {
     opacity: 1;
     transform: translateY(-8px) rotate(calc(var(--tilt, 0deg) + var(--t-out, -1) * 8deg)) scale(1.04);
+    animation-timing-function: cubic-bezier(0.5, 0, 0.9, 0.7);
+  }
+  62% {
+    opacity: 1;
+    transform: translate(calc(var(--fly-x, 0px) * 0.62), calc(var(--fly-y, -120px) * 0.4 - 26px)) rotate(calc(var(--tilt, 0deg) + var(--t-out, -1) * -4deg))
+      scale(0.72);
+    animation-timing-function: cubic-bezier(0.1, 0.4, 0.3, 1);
   }
   to {
     opacity: 0;
@@ -909,7 +1006,7 @@
   animation: admit-back 380ms var(--ease-spring) backwards;
 }
 .admit-tray.is-refused {
-  animation: answer-shake 300ms ease-in-out 380ms;
+  animation: answer-shake var(--dur-slow) ease-in-out 380ms;
 }
 .admit-dealt {
   animation: admit-deal 460ms var(--ease-spring) calc(var(--i, 0) * 70ms) backwards;
@@ -1048,7 +1145,7 @@
   transition-delay: calc(var(--i, 0) * 75ms + 220ms);
 }
 .code-entry.is-error .code-boxes {
-  animation: answer-shake 300ms ease-in-out;
+  animation: answer-shake var(--dur-slow) ease-in-out;
 }
 /* the sheet's ticket swings in as the sheet rises, and the hub's tilts on its card, upright under a hover */
 @keyframes ticket-in {
@@ -1103,12 +1200,23 @@
     transform: translateX(-2px);
   }
 }
-/* the same shake under two names: a row refused twice running shakes twice, by taking the other name */
-.wordle-row.is-shake-a {
-  animation: answer-shake 300ms ease-in-out;
+/*
+ * The same shake under two names: a row refused twice running shakes twice, by
+ * taking the other name. A form's field refused by the server is shaken the
+ * same way (auth/fieldProblem.ts) — what is typed into, not its label nor the
+ * words under it, which have to be read while it happens.
+ */
+.wordle-row.is-shake-a,
+.field.is-shake-a > .input,
+.field.is-shake-a > .input-wrap,
+.field.is-shake-a > .birth-month-row {
+  animation: answer-shake var(--dur-slow) ease-in-out;
 }
-.wordle-row.is-shake-b {
-  animation: answer-shake-again 300ms ease-in-out;
+.wordle-row.is-shake-b,
+.field.is-shake-b > .input,
+.field.is-shake-b > .input-wrap,
+.field.is-shake-b > .birth-month-row {
+  animation: answer-shake-again var(--dur-slow) ease-in-out;
 }
 .wordle-row.is-judged .wordle-cell {
   animation: code-flip 440ms var(--ease-out) calc(var(--i, 0) * 75ms) backwards;
@@ -1134,10 +1242,12 @@
 @media (prefers-reduced-motion: reduce) {
   .celebrate-ring,
   .celebrate-burst,
-  .fcard-burst {
+  .fcard-burst,
+  .zer-burst {
     display: none;
   }
   .btn:active:not(:disabled),
+  .close-btn:active:not(:disabled),
   .game-tile:has(.game-stretch):active {
     transform: none;
   }

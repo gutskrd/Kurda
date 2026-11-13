@@ -27,6 +27,12 @@
   --gs-gold: var(--stage-gold);
   --gs-gold-lip: var(--stage-gold-lip);
   --gs-gold-ink: var(--stage-gold-ink);
+  /* a letter in its place, and one not in the word: each with the edge it stands on, said here once for the board and the keys */
+  --gs-right: #3fa45b;
+  --gs-right-lip: #2b703e;
+  --gs-absent: #6f7a8a;
+  --gs-absent-lip: #4b5462;
+  --gs-on-colour: #ffffff;
 }
 
 /* ---- the start: the emblem on the night ------------------------------------------- */
@@ -440,9 +446,9 @@ button.gs-back {
   transform: none;
 }
 .gs .wordle-cell.wordle-green {
-  background: #3fa45b;
-  color: #ffffff;
-  box-shadow: 0 4px 0 #2b703e;
+  background: var(--gs-right);
+  color: var(--gs-on-colour);
+  box-shadow: 0 4px 0 var(--gs-right-lip);
 }
 .gs .wordle-cell.wordle-yellow {
   background: var(--gs-gold);
@@ -450,9 +456,9 @@ button.gs-back {
   box-shadow: 0 4px 0 var(--gs-gold-lip);
 }
 .gs .wordle-cell.wordle-gray {
-  background: #6f7a8a;
-  color: #ffffff;
-  box-shadow: 0 4px 0 #4b5462;
+  background: var(--gs-absent);
+  color: var(--gs-on-colour);
+  box-shadow: 0 4px 0 var(--gs-absent-lip);
 }
 .gs .wordle-key {
   border: 0;
@@ -469,9 +475,9 @@ button.gs-back {
   box-shadow: 0 1px 0 var(--border-strong);
 }
 .gs .wordle-key.wordle-green {
-  background: #3fa45b;
-  color: #ffffff;
-  box-shadow: 0 3px 0 #2b703e;
+  background: var(--gs-right);
+  color: var(--gs-on-colour);
+  box-shadow: 0 3px 0 var(--gs-right-lip);
 }
 .gs .wordle-key.wordle-yellow {
   background: var(--gs-gold);

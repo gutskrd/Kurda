@@ -88,8 +88,9 @@ export function PartyComposer({
         aria-describedby={note ? `${id}-hint` : undefined}
         {...typeOnly}
       />
-      <Button type="submit" disabled={busy || disabled || !text.trim() || hint !== null}>
-        {busy ? '…' : sendLabel}
+      {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
+      <Button type="submit" disabled={busy || disabled || !text.trim() || hint !== null} aria-busy={busy || undefined}>
+        {sendLabel}
       </Button>
       {note && (
         <p id={`${id}-hint`} className="party-hint" role="status">

@@ -132,7 +132,7 @@ describe('GiftPickerSheet', () => {
       <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={onSent} />,
     );
     expect(screen.getByText('A gift for Rojda')).toBeTruthy();
-    expect(await screen.findByText('1000')).toBeTruthy();
+    expect(await screen.findByText('1,000')).toBeTruthy();
     expect(screen.getByText('Already has it')).toBeTruthy();
     expect(screen.getByText('Not enough to give this')).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Star/ }).getAttribute('aria-disabled')).toBe('true');

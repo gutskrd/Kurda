@@ -133,23 +133,21 @@ describe('Profile view (full, read-only)', () => {
     expect(await screen.findByRole('heading', { level: 1, name: '@ada' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /share profile/i })).toBeInTheDocument();
 
-    const menu = screen.getByRole('button', { name: 'Menu' });
+    // the button says what it holds, in the items’ own words, rather than “Menu”
+    const menu = screen.getByRole('button', { name: 'Shop, Saved, Friends, Badges, Rankings, Settings' });
     expect(menu).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'true');
-    for (const [name, href] of [
+    const list = document.querySelector<HTMLElement>('.profile-menu-list')!;
+    // six, and no more: reports and standing are in Settings, which is the last of these
+    expect(within(list).getAllByRole('link').map((link) => [link.textContent, link.getAttribute('href')])).toEqual([
       ['Shop', '/app/shop'],
       ['Saved', '/app/saved'],
       ['Friends', '/app/friends'],
       ['Badges', '/app/badges'],
       ['Rankings', '/app/rankings'],
       ['Settings', '/app/settings'],
-      ['My reports', '/app/settings/reports'],
-      ['Account standing', '/app/settings/standing'],
-    ]) {
-      const list = document.querySelector<HTMLElement>('.profile-menu-list')!;
-      expect(within(list).getByRole('link', { name })).toHaveAttribute('href', href);
-    }
+    ]);
     await userEvent.keyboard('{Escape}');
     expect(document.querySelector('.profile-menu-list')).toBeNull();
     expect(menu).toHaveFocus();

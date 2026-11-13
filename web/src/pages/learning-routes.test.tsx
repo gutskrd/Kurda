@@ -238,6 +238,31 @@ describe('Learn', () => {
     expect(within(today).getByRole('link', { name: '7 due' })).toHaveAttribute('href', '/app/learn/review');
   });
 
+  /**
+   * Past the goal the chip went on counting against it — "130/20 XP" — which
+   * reads as a sum gone wrong. A goal that is met says what was earned, with
+   * the mark of done beside it.
+   */
+  it('says what was earned, with a done mark, once today’s goal is passed, not a fraction over it', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const path = new URL(url).pathname;
+        if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true, streak: { current: 5, longest: 9, freezes: 0, lastActiveOn: null } } });
+        if (path === '/me/daily-goal') return jsonResponse(200, { goal: 20, effectiveGoal: 20, earnedXp: 130, progress: 1, completed: true });
+        if (path === '/courses') return jsonResponse(200, { courses: [] });
+        return jsonResponse(200, { due: 0, available: 9 });
+      }),
+    );
+    routes('/app/learn');
+    const today = await screen.findByRole('region', { name: 'Today' });
+    const goal = await within(today).findByRole('progressbar', { name: 'Today’s goal' });
+    expect(goal).toHaveAttribute('aria-valuetext', 'Today’s goal is done');
+    expect(within(today).getByText('130 XP')).toBeInTheDocument();
+    expect(within(today).queryByText('130/20 XP')).not.toBeInTheDocument();
+    expect(today.querySelector('.learn-strip-done')).not.toBeNull();
+  });
+
   it('opens the whole story of the streak from it, in a sheet that Escape closes', async () => {
     vi.stubGlobal(
       'fetch',
@@ -478,6 +503,51 @@ describe('a lesson', () => {
     expect(screen.queryByText('hello')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 1, name: 'Goodbye' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn/course/c1');
+  });
+
+  /**
+   * Opening a lesson showed a spinner alone on an empty screen until its
+   * session arrived. It shows the lesson's own frame now — the way out where
+   * the way out will be, the empty progress track, the bar at the foot — so
+   * the lesson arrives into a picture that is already there.
+   */
+  it('stands in the lesson’s own frame while the session is on its way, with the way out already working', async () => {
+    let letGo: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => (letGo = resolve));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const path = new URL(url).pathname;
+        if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true } });
+        await held;
+        return jsonResponse(200, {
+          sessionId: 's1',
+          lessonId: 'l2',
+          expiresAt: '2026-10-08T00:00:00Z',
+          completed: false,
+          exercises: [{ id: 'a', position: 1, type: 'translate', prompt: 'hello' }],
+          answered: {},
+          grammarMd: null,
+          dialect: 'kurmanji',
+        });
+      }),
+    );
+    routes({ pathname: '/app/learn/lesson/l2', search: '?course=c1' });
+
+    // said once, as a status, for a screen reader; the boxes are not read out
+    const waiting = (await screen.findByText('Opening the lesson…')).closest('[role="status"]')!;
+    expect(waiting).toHaveAttribute('aria-busy', 'true');
+    const frame = waiting.closest('.lesson')!;
+    expect(frame.querySelector('.lesson-progress')).not.toBeNull();
+    expect(frame.querySelector('.lesson-bar')).not.toBeNull();
+    // no spinner on an empty page any more
+    expect(document.querySelector('.spinner')).toBeNull();
+    // leaving does not wait for the lesson, and goes where the lesson's own ✕ will
+    expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn/course/c1');
+
+    letGo();
+    expect(await screen.findByText('hello')).toBeInTheDocument();
+    expect(screen.queryByText('Opening the lesson…')).not.toBeInTheDocument();
   });
 
   it('says when it cannot be opened, and can try again', async () => {

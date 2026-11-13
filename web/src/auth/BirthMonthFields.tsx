@@ -47,17 +47,23 @@ export function BirthMonthFields({
   value,
   onChange,
   disabled,
+  problem = null,
+  className = 'field birth-month',
 }: {
   value: BirthMonthValue;
   onChange: (next: BirthMonthValue) => void;
   disabled?: boolean;
+  /** what is wrong with the answer, said under the two of them (a form sent with neither chosen) */
+  problem?: string | null;
+  /** the wrapper's classes, when a form marks it (auth/fieldProblem.ts) */
+  className?: string;
 }): React.JSX.Element {
   const t = useT();
   const id = useId();
   const years = useMemo(() => birthYearChoices(), []);
 
   return (
-    <fieldset className="field birth-month" disabled={disabled}>
+    <fieldset className={className} disabled={disabled} aria-describedby={problem ? `${id}-error` : undefined}>
       <legend className="field-label">{t('age.label')}</legend>
       <div className="birth-month-row">
         <label className="sr-only" htmlFor={`${id}-month`}>
@@ -100,6 +106,11 @@ export function BirthMonthFields({
         </select>
       </div>
       <span className="field-hint">{t('age.help')}</span>
+      {problem && (
+        <span className="field-problem" id={`${id}-error`} role="alert">
+          {problem}
+        </span>
+      )}
     </fieldset>
   );
 }

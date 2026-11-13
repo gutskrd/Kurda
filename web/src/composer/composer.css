@@ -17,7 +17,7 @@
   background: var(--scrim);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-  animation: fade 0.15s ease;
+  animation: fade var(--dur-fast) var(--ease-out);
 }
 .cmp-panel {
   display: flex;
@@ -97,6 +97,12 @@
 .cmp-post:disabled {
   opacity: 0.45;
   cursor: default;
+}
+/* under a finger, a finger's height */
+@media (pointer: coarse) {
+  .cmp-post {
+    min-height: 44px;
+  }
 }
 .cmp-cancel:focus-visible,
 .cmp-post:focus-visible,
@@ -390,7 +396,7 @@
   border-radius: 12px;
   background: var(--surface-3);
   cursor: pointer;
-  transition: background 0.15s ease;
+  transition: background var(--dur-fast) var(--ease-out);
 }
 .cmp-switch::before {
   content: '';
@@ -401,7 +407,7 @@
   height: 18px;
   border-radius: 50%;
   background: #fff;
-  transition: transform 0.15s ease;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 .cmp-switch:checked {
   background: var(--success);

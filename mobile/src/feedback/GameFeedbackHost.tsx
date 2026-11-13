@@ -1,10 +1,12 @@
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { NavigationContainerRefContext } from '@react-navigation/native';
-import { Animated, Easing, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Animated, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { APP_FEEDBACK_DELAY_MS } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { timing } from '../theme/animate';
+import { duration } from '../theme/motion';
 import { radii, spacing } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { getFeedbackState, storeReviewPrompted } from './api';
@@ -127,12 +129,7 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
       return;
     }
     enter.setValue(0);
-    Animated.timing(enter, {
-      toValue: 1,
-      duration: 260,
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: Platform.OS !== 'web',
-    }).start();
+    timing(enter, 1, duration.slow).start();
   }, [open, reduceMotion, enter]);
 
   // nothing covers the results once it has gone

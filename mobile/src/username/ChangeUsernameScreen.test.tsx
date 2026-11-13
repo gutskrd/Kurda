@@ -30,7 +30,7 @@ async function tryName(routes: Routes, options: { password?: string | null } = {
   testAuth.client = client;
   renderWithProviders(<ChangeUsernameScreen onExit={() => undefined} />);
   expect(await screen.findByText('rojda')).toBeTruthy();
-  fireEvent.change(screen.getByPlaceholderText('new_username'), { target: { value: NAME } });
+  fireEvent.change(screen.getByLabelText('New username'), { target: { value: NAME } });
   const password = options.password === undefined ? 'a-strong-password1' : options.password;
   if (password !== null) fireEvent.change(screen.getByTestId('username-password'), { target: { value: password } });
   await act(async () => {
@@ -79,7 +79,7 @@ describe('changing the username', () => {
     testAuth.client = fakeClient({ 'GET /me/username': ok(STATUS), [FREE]: ok({ available: true, username: NAME }) });
     renderWithProviders(<ChangeUsernameScreen onExit={() => undefined} />);
     await screen.findByText('rojda');
-    fireEvent.change(screen.getByPlaceholderText('new_username'), { target: { value: NAME } });
+    fireEvent.change(screen.getByLabelText('New username'), { target: { value: NAME } });
     expect(await screen.findByText('This username is free.', undefined, { timeout: 2000 })).toBeTruthy();
   });
 
@@ -88,7 +88,7 @@ describe('changing the username', () => {
     testAuth.client = client;
     renderWithProviders(<ChangeUsernameScreen onExit={() => undefined} />);
     await screen.findByText('rojda');
-    fireEvent.change(screen.getByPlaceholderText('new_username'), { target: { value: NAME } });
+    fireEvent.change(screen.getByLabelText('New username'), { target: { value: NAME } });
     fireEvent.change(screen.getByTestId('username-password'), { target: { value: 'a-strong-password1' } });
     expect(await screen.findByText('That username is already taken.', undefined, { timeout: 2000 })).toBeTruthy();
     await act(async () => {
@@ -145,7 +145,7 @@ describe('changing the username', () => {
     testAuth.client = fakeClient({ 'GET /me/username': ok({ ...STATUS, canChange: false, availableAt: '2027-01-10T12:00:00.000Z' }) });
     renderWithProviders(<ChangeUsernameScreen onExit={() => undefined} />);
     expect(await screen.findByText(/^You can change your username again on .*2027\.$/)).toBeTruthy();
-    expect(screen.queryByPlaceholderText('new_username')).toBeNull();
+    expect(screen.queryByLabelText('New username')).toBeNull();
     expect(screen.queryByRole('button', { name: 'Save username' })).toBeNull();
   });
 

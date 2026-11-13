@@ -1,14 +1,12 @@
 /* The landing page lives in marketing.css. What stays here is shared with the
    app's own screens: the feature card and the call-to-action panel. */
 
-/* glass feature/info card */
+/* feature/info card: a tint on the page, with nothing behind it to frost */
 .feature {
   padding: 24px;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--glass-rim), var(--shadow-sm);
 }
 .feature-icon {
@@ -37,8 +35,6 @@
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--glass-rim), var(--shadow);
   padding: clamp(32px, 5vw, 56px);
   text-align: center;
@@ -53,7 +49,7 @@
   color: var(--ink-2);
 }
 
-/* ---- auth (glass card over the photo, like the admin login) ------------ */
+/* ---- auth (a card on the page: the photo it once frosted is gone, and so is the frost) ------------ */
 .auth-wrap {
   min-height: calc(100vh - var(--nav-h));
   display: grid;
@@ -67,8 +63,6 @@
   border-radius: var(--r-xl);
   border: 1px solid var(--border-strong);
   background: var(--bg);
-  -webkit-backdrop-filter: blur(28px) saturate(1.3);
-  backdrop-filter: blur(28px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);
 }
 .auth-card h1 {
@@ -248,8 +242,6 @@
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
 }
 .stat .k {
   font-size: 0.78rem;
@@ -274,13 +266,11 @@
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--glass-rim);
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    transform 0.12s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 .post:hover {
   border-color: var(--border-strong);
@@ -506,7 +496,7 @@
   background: var(--surface);
   color: var(--ink-3);
   cursor: pointer;
-  transition: color 0.15s ease, border-color 0.15s ease;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 .user-actions-btn:hover {
   color: var(--ink);
@@ -527,9 +517,9 @@
  * underneath read straight through the options, and you cannot tell the words
  * you can click from the words you cannot.
  *
- * Near-solid rather than fully so, with a blur behind it, so it still belongs
- * to the same glass as the rest of the app — but nothing legible survives
- * behind it.
+ * It is the panel's own solid colour now (`--panel-bg`, tokens.css). The blur
+ * that was kept behind it when it was near-solid had nothing left to do once
+ * it was opaque, and is gone.
  */
 .user-menu {
   position: absolute;
@@ -544,8 +534,6 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
   background: var(--panel-bg);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  backdrop-filter: blur(20px) saturate(1.2);
   box-shadow: var(--shadow-lg);
   text-align: left;
 }
@@ -693,8 +681,6 @@
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
 }
 .friend-id {
   flex: 1;
@@ -744,7 +730,7 @@
 .nav-avatar-btn .friend-avatar {
   width: 32px;
   height: 32px;
-  transition: border-color 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 .nav-avatar-btn:hover .friend-avatar {
   border-color: var(--gold);
@@ -804,8 +790,8 @@ button.feature {
 .stat-link {
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
 }
 .stat-link:hover {
   border-color: var(--border-strong);
@@ -832,8 +818,8 @@ button.feature {
   overflow: hidden;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    transform 0.1s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 .avatar-tile img {
   width: 100%;
@@ -1276,10 +1262,8 @@ button.feature {
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
   color: var(--ink);
-  transition: border-color 0.15s ease, background 0.15s ease;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
 .chat-convo:hover {
   background: var(--surface-2);
@@ -1780,7 +1764,7 @@ button.feature {
 .mkp-showcase {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   padding: 16px 18px;
   box-shadow: var(--glass-rim);
 }
@@ -1823,7 +1807,7 @@ button.feature {
 .mkp-online {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   padding: 16px 18px;
   box-shadow: var(--glass-rim);
 }
@@ -1996,10 +1980,7 @@ button.feature {
 .seg-btn:hover {
   color: var(--ink);
 }
-.seg-btn.is-active {
-  background: var(--surface-2);
-  color: var(--ink);
-}
+/* the chosen segment is drawn as every chosen one is: the shared rule in shell.css */
 .dimen-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -2109,11 +2090,7 @@ button.feature {
   color: var(--ink);
   background: var(--bg);
 }
-.mkp-tab.is-active {
-  color: var(--ink);
-  background: var(--surface-2);
-  border-color: var(--border);
-}
+/* the tab you are on is drawn as every chosen one is: the shared rule in shell.css */
 .mkp-tab-hidden {
   font-size: var(--text-tab);
   letter-spacing: 0.06em;
@@ -2379,7 +2356,7 @@ a.mkp-activity-row:hover {
   border: 2px solid var(--border);
   border-radius: 8px;
   text-transform: lowercase;
-  transition: border-color 0.12s ease, background 0.12s ease;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out);
 }
 .wordle-typing {
   border-color: var(--border-strong);
@@ -2473,11 +2450,7 @@ a.mkp-activity-row:hover {
 .wordle-layout-option:hover {
   color: var(--ink);
 }
-.wordle-layout-option.is-on {
-  border-color: var(--border-strong);
-  color: var(--ink);
-  background: var(--surface-2);
-}
+/* the layout in use is drawn as every chosen one is: the shared rule in shell.css */
 
 /*
  * Wordle on a phone, where the game only works if the board and the keyboard
@@ -2814,7 +2787,7 @@ a.mkp-activity-row:hover {
   border-radius: var(--r-md);
   background: var(--surface);
   color: var(--ink);
-  transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  transition: border-color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 .mode-option:hover {
   background: var(--surface-2);
@@ -2853,7 +2826,7 @@ a.mkp-activity-row:hover {
   font: inherit;
   font-weight: 600;
   cursor: pointer;
-  transition: border-color 0.16s ease;
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 .verify-address:hover {
   border-color: var(--border-strong);
@@ -2947,7 +2920,7 @@ a.mkp-activity-row:hover {
   backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--shadow);
   overflow: hidden;
-  animation: msg-toast-in 0.18s ease-out;
+  animation: msg-toast-in var(--dur) var(--ease-out);
 }
 @keyframes msg-toast-in {
   from { opacity: 0; transform: translateY(6px); }
@@ -3005,7 +2978,7 @@ a.mkp-activity-row:hover {
     width: auto;
   }
   .msg-toast {
-    animation: msg-toast-in-top 0.18s ease-out;
+    animation: msg-toast-in-top var(--dur) var(--ease-out);
   }
   @keyframes msg-toast-in-top {
     from { opacity: 0; transform: translateY(-6px); }
@@ -3092,8 +3065,6 @@ a.mkp-activity-row:hover {
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
   padding: 24px;
 }
 .post-body {
@@ -3227,7 +3198,7 @@ a.mkp-activity-row:hover {
   background: var(--surface-2);
   color: var(--ink-2);
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 .shop-gift-btn:hover:not(:disabled) {
   background: var(--gold-soft);
@@ -3313,7 +3284,7 @@ a.mkp-activity-row:hover {
   color: var(--ink);
   font: inherit;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  transition: background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 .gift-friend:hover:not(:disabled) {
   background: var(--surface-2);
@@ -4113,8 +4084,8 @@ a.mkp-activity-row:hover {
   font-size: 0.88rem;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
 }
 .mkp-friend:hover {
   border-color: var(--gold-ink);

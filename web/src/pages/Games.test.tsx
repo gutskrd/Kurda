@@ -74,6 +74,26 @@ describe('Games hub', () => {
     for (const name of ['Peyvok', 'Rhyming Words', 'Typing Race']) expect(screen.getAllByRole('heading', { name })).toHaveLength(1);
   });
 
+  /**
+   * Every card's first button was gold, so the page had as many "press this
+   * one" buttons as it had games. Gold is the game put forward's Play and
+   * nothing else; the shelf's ways in are the quiet buttons.
+   */
+  it('keeps gold for the one game put forward: the shelf’s buttons are all quiet', async () => {
+    signIn();
+    renderApp(<Games />, ['/app/games']);
+    await screen.findAllByRole('link', { name: 'Play' });
+
+    const gold = [...document.querySelectorAll('.gp-play')];
+    expect(gold).toHaveLength(1);
+    expect(gold[0]!.closest('article')).toHaveClass('gp-card--hero');
+    // on the shelf, no button outweighs another
+    for (const way of document.querySelectorAll('.gp-shelf .gp-ways .btn')) expect(way).toHaveClass('btn-secondary');
+    // and under a filter, with nothing put forward, there is no gold button at all
+    await userEvent.click(screen.getByRole('button', { name: 'On your own' }));
+    expect(document.querySelector('.gp-play')).toBeNull();
+  });
+
   it('shows only the games played the chosen way, the featured one among them', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);

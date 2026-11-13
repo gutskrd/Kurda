@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkUsername, type UsernameIssue, USERNAME_MIN, USERNAME_MAX, USERNAME_RULE_VARS } from './validate';
+import { checkUsername, cleanUsername, type UsernameIssue, USERNAME_MIN, USERNAME_MAX, USERNAME_RULE_VARS } from './validate';
 import { TRANSLATIONS, LOCALES } from '../i18n/translations';
 
 const issue = (raw: string): UsernameIssue | 'ok' => {
@@ -11,6 +11,23 @@ describe('checkUsername (client)', () => {
   it('accepts valid names incl. Kurdish letters, trimming + normalising', () => {
     expect(checkUsername('rojda_kurdi')).toEqual({ ok: true, value: 'rojda_kurdi' });
     expect(checkUsername('  şêrîn  ')).toEqual({ ok: true, value: 'şêrîn' });
+  });
+
+  /*
+   * A handle is written "@dilan" everywhere else, and a keyboard leaves a full
+   * stop or a comma after a word: neither is somebody choosing a bad name.
+   */
+  it('takes a handle as it was meant: without an "@" in front or a full stop or comma after', () => {
+    expect(checkUsername('@dilan')).toEqual({ ok: true, value: 'dilan' });
+    expect(checkUsername('dilan.')).toEqual({ ok: true, value: 'dilan' });
+    expect(checkUsername(' @şêrîn_99, ')).toEqual({ ok: true, value: 'şêrîn_99' });
+    expect(cleanUsername('@@rojda..')).toBe('rojda');
+    // only at the ends: an "@" or a dot inside a name is still not a name
+    expect(issue('di@lan')).toBe('invalid-chars');
+    expect(issue('di.lan')).toBe('invalid-chars');
+    // and what is left is still held to the rules
+    expect(issue('@ab.')).toBe('too-short');
+    expect(issue('@')).toBe('too-short');
   });
 
   it('flags each structural rule with a reason', () => {

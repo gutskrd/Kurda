@@ -535,7 +535,7 @@ function FreezeLine({ streak }: { streak: Streak }): React.JSX.Element | null {
       fill.setValue(share);
       return;
     }
-    const run = Animated.timing(fill, { toValue: share, duration: STREAK_DAY_TIMING.freezeMs, delay: STREAK_DAY_TIMING.freezeAtMs, useNativeDriver: true });
+    const run = timing(fill, share, STREAK_DAY_TIMING.freezeMs, { delay: STREAK_DAY_TIMING.freezeAtMs });
     run.start();
     return () => run.stop();
   }, [reduce, share, fill]);
