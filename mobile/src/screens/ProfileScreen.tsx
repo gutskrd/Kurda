@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import { GuestBenefits, useAccountGate } from '../auth/AccountGate';
@@ -9,7 +9,6 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
-import { LinearGradient } from 'expo-linear-gradient';
 import { display, statValue, statCaption } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -22,6 +21,7 @@ import { useDirection } from '../reports/direction';
 import { useUnread } from '../messages/unread';
 import { SITE_ORIGIN } from '../feed/api';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { Horizon } from '../profile/Horizon';
 import { CosmeticBackground, FavoriteRow, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
 import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
@@ -52,6 +52,8 @@ const AVATAR = 96;
 const FRAMED = Math.round(AVATAR / SEASON_FRAME_INNER);
 /** The tinted stage the face springs in onto: room round the frame for its two soft discs. */
 const STAGE = FRAMED + 36;
+/** How tall the band behind the face is: what you wear as a background, or your own horizon until you wear one. */
+const BANNER = 124;
 
 /**
  * The parts of `/me` a profile puts on screen.
@@ -136,11 +138,16 @@ function GuestProfile(): React.JSX.Element {
  * what you have made.
  *
  * In the order somebody opening their own profile wants it answered: is this
- * me (the face, the name, the handle and the year you joined), how am I
+ * me (the band of sky or the background you wear, the face over its edge, the
+ * name, the handle and the year you joined), what can I do with it (Edit and
+ * Share side by side, and the way to more friends beside them), how am I
  * doing (three numbers that count up, then the four tiles of the overview —
- * the streak with its fire, the course, the league with its emblem, the XP),
- * how do I change it and who do I know (Add friends, then Edit and Share) —
- * and then the badges and the ranks, and what you have written.
+ * the streak with its fire, the course, the league with its emblem, the XP)
+ * — and then the badges and the ranks, and what you have written.
+ *
+ * What you wear as a background is in the band, as it is on the website, and
+ * no words are written over it: a name over somebody's artwork was only as
+ * readable as the artwork let it be.
  *
  * What it is not is a menu. Everything that is a place rather than a thing
  * you do to a profile — the shop, settings, what you saved, badges, tags, the
@@ -150,6 +157,7 @@ function AccountProfile() {
   const { user, client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors, scheme } = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const openMenu = useOpenMenu();
@@ -360,28 +368,6 @@ function AccountProfile() {
 
   return (
     <GradientBackground>
-      {/*
-        What they are wearing, behind everything, with a scrim over it.
-
-        The scrim is a gradient rather than a flat wash. Flat, it darkened the
-        picture and then stopped, leaving a hard horizontal line where the
-        background ended and the page began; running it to the page's own
-        colour keeps white text readable over whatever somebody is wearing and
-        lets the picture dissolve into the screen instead.
-      */}
-      {me?.background ? (
-        <>
-          <CosmeticBackground background={me.background} style={styles.cosmeticBg} />
-          <LinearGradient
-            colors={[colors.scrim, colors.background]}
-            start={{ x: 0.5, y: 0 }}
-            end={{ x: 0.5, y: 1 }}
-            style={styles.cosmeticScrim}
-            pointerEvents="none"
-          />
-        </>
-      ) : null}
-
       <ScrollView
         ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingTop: topInset, paddingBottom: tabBarInset }]}
@@ -417,11 +403,22 @@ function AccountProfile() {
         </View>
 
         {/*
-          The face in the middle on its stage, springing in as the profile
-          opens; under it the name, the handle and the year, where they are
-          from, and who they are in their own words.
+          The band behind the face: the background you wear, or your own
+          horizon until you wear one (the picture the website draws in your
+          banner). It is a picture, and nothing is written over it.
         */}
-        <View style={styles.hero}>
+        <View style={[styles.banner, { backgroundColor: colors.controlTrack }]}>
+          {/* the horizon is always there underneath: a background that is still loading, or is a film the phone does not play, leaves it showing */}
+          {(me?.id ?? user?.id) ? <Horizon seed={me?.id ?? user?.id ?? ''} width={windowWidth - layout.gutter * 2} height={BANNER} /> : null}
+          {me?.background ? <CosmeticBackground background={me.background} style={StyleSheet.absoluteFill} /> : null}
+        </View>
+
+        {/*
+          The face in the middle on its stage, over the band's lower edge,
+          springing in as the profile opens; under it the name, the handle and
+          the year, where they are from, and who they are in their own words.
+        */}
+        <View style={[styles.hero, styles.heroOverBanner]}>
           <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel={t('profile.changePhoto')} style={({ pressed }) => pressed && heldDim}>
             <AvatarStage tint={stageTint} size={STAGE}>
               {/* the frame rings the face; the face and its icon stay their own size inside it */}
@@ -454,6 +451,46 @@ function AccountProfile() {
         </View>
 
         {/*
+          What people do with their own profile, straight under who they are:
+          change it, and send it to somebody, side by side and the same size —
+          and beside them, the way to the people who make the rest of it worth
+          having. Each is a fingertip tall.
+        */}
+        <View style={[styles.actions, { flexDirection: dir.row }]}>
+          <Pressable
+            onPress={() => navigation.navigate('EditProfile')}
+            accessibilityRole="button"
+            accessibilityLabel={t('profile.edit')}
+            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+          >
+            <Icon name="pencil" size={18} color={colors.textPrimary} />
+            <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
+              {t('profile.edit')}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={share}
+            accessibilityRole="button"
+            accessibilityLabel={t('profile.share')}
+            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
+          >
+            <Icon name="share" size={18} color={colors.textPrimary} />
+            <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
+              {t('profile.share')}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate('Friends')}
+            accessibilityRole="button"
+            accessibilityLabel={t('profile.addFriends')}
+            testID="profile-add-friends"
+            style={({ pressed }) => [styles.actionIcon, { backgroundColor: colors.primary, opacity: pressed ? pressedDim : 1 }]}
+          >
+            <Icon name="user-plus" size={20} tone="onPrimary" />
+          </Pressable>
+        </View>
+
+        {/*
           Three numbers that answer "how am I doing", counting up as they
           arrive. The friend count opens the friends, the badge count the
           badges, the way such counts do everywhere; the level is a number
@@ -471,37 +508,6 @@ function AccountProfile() {
             {aside.join('  ·  ')}
           </Text>
         ) : null}
-
-        {/*
-          What people do with their own profile: find the people who make the
-          rest of it worth having, first and in the brand's colour; then
-          change it, and send it to somebody, side by side and the same size.
-        */}
-        <ClayButton label={t('profile.addFriends')} icon="user-plus" tone="primary" onPress={() => navigation.navigate('Friends')} style={styles.addFriends} />
-        <View style={[styles.actions, { flexDirection: dir.row }]}>
-          <Pressable
-            onPress={() => navigation.navigate('EditProfile')}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.edit')}
-            hitSlop={{ top: 4, bottom: 4 }}
-            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
-          >
-            <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
-              {t('profile.edit')}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={share}
-            accessibilityRole="button"
-            accessibilityLabel={t('profile.share')}
-            hitSlop={{ top: 4, bottom: 4 }}
-            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
-          >
-            <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
-              {t('profile.share')}
-            </Text>
-          </Pressable>
-        </View>
 
         <GiftedNote background={me?.background} icon={me?.icon} />
 
@@ -602,15 +608,16 @@ function Stat({ label, value, onPress, loading = false }: { label: string; value
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: layout.gutter, gap: spacing.sm },
-  // full-bleed behind the header; the scrim sits on top of it at the same size
-  cosmeticBg: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
-  cosmeticScrim: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
+  // the band behind the face, clipped to its own corners
+  banner: { alignSelf: 'stretch', height: BANNER, borderRadius: radii.lg, overflow: 'hidden' },
 
   topBar: { alignSelf: 'stretch', alignItems: 'center', minHeight: MIN_TOUCH_TARGET },
   topName: { flex: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
 
   // the face in the middle, and everything about who this is under it
   hero: { alignSelf: 'stretch', alignItems: 'center', gap: 4, marginTop: spacing.xs },
+  // half the stage stands over the band's lower edge (less the gap the column puts between the two)
+  heroOverBanner: { marginTop: -(STAGE / 2 + spacing.sm) },
   // the working picture sits over the face alone, not over the stage round it
   avatarOverlay: {
     position: 'absolute',
@@ -642,18 +649,21 @@ const styles = StyleSheet.create({
   aside: { fontSize: typography.sizes.xs, textAlign: 'center' },
   showcaseSkeleton: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
 
-  addFriends: { alignSelf: 'stretch', marginTop: spacing.md },
-  actions: { alignSelf: 'stretch', gap: spacing.sm },
-  // 36 tall, as a profile's buttons are, and 44 to the finger with the slop above and below
+  actions: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
+  // a fingertip tall, drawn that tall: a 36pt button with slop above and below looked smaller than it was to press
   action: {
     flex: 1,
-    minHeight: 36,
-    borderRadius: radii.sm,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
   },
-  actionText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  actionText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, flexShrink: 1 },
+  // the way to more friends: the one filled control of the three, round, and as tall as its neighbours
+  actionIcon: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 
   // a guest's card: the face they were given, the offer, and the four things an account keeps
   guestCard: { marginTop: spacing.md },

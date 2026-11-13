@@ -9,19 +9,33 @@ import { ProfileProgress } from '../profile/ProfileProgress';
 import { ProfileTree } from '../tree/ProfileTree';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
-import { CoinIcon } from '../components/icons';
+import { CoinIcon, EditIcon } from '../components/icons';
 import { ProfileMenu, ShareProfile } from '../profile/ProfileMenu';
 import { ErrorState } from '../components/states';
 import { FullProfileSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import type { MessageKey } from '../i18n/en';
+
+/** Who can open a profile, in the words Settings says it in. */
+const SEEN_BY: Record<MeProfile['profileVisibility'], MessageKey> = {
+  everyone: 'settings.visibility.everyone',
+  members: 'settings.visibility.members',
+  friends: 'settings.visibility.friends',
+  nobody: 'settings.visibility.nobody',
+};
 
 /**
  * The signed-in user's own profile: the same page everybody else's is
  * (profile/FullProfile), with what is yours to do in place of the friend
- * actions — edit, share, and the menu of the shop, your friends, your badges
- * and settings — and one section more that only you are shown: the streak
- * numbers a missed day never takes away, your freezes and your Zêr. All
- * editing lives on /app/profile/edit.
+ * actions — edit and share in a row under your words, and the menu of the
+ * shop, your friends, your badges and settings in the banner's corner — and
+ * one section more that only you are shown: the streak numbers a missed day
+ * never takes away, your freezes and your Zêr. All editing lives on
+ * /app/profile/edit.
+ *
+ * It also says who can open this page, with the way to change it: a profile
+ * is the most public thing an account has, and nobody should have to go
+ * looking through Settings to learn who is reading theirs.
  */
 export function Profile(): React.JSX.Element {
   const { client, user } = useAuth();
@@ -87,7 +101,9 @@ export function Profile(): React.JSX.Element {
   if (loading) return <FullProfileSkeleton label="profile.loadingYours" own />;
   if (error || !me) return <ErrorState title={t('profile.loadFailedYours')} message={error ?? t('profile.unavailable')} onRetry={() => setReloadKey((n) => n + 1)} />;
 
+  const joined = new Date(me.createdAt);
   const view: FullProfileView = {
+    id: me.id,
     name: me.displayName || me.username,
     username: me.username,
     avatarUrl: me.avatarUrl ?? me.profilePhotoUrl,
@@ -105,6 +121,8 @@ export function Profile(): React.JSX.Element {
     country: me.country ? { code: me.country, name: countryName(me.country, locale) ?? me.country } : null,
     frameSku: shown?.frameSku ?? null,
     frameUrl: shown?.frameUrl ?? null,
+    joinedYear: Number.isNaN(joined.getTime()) ? null : joined.getFullYear(),
+    seenBy: SEEN_BY[me.profileVisibility] ? { who: t(SEEN_BY[me.profileVisibility]), to: '/app/settings/visibility' } : null,
   };
   const number = (n: number): string => n.toLocaleString(locale);
   const maxFreezes = me.streak.maxFreezes ?? 1;
@@ -114,14 +132,16 @@ export function Profile(): React.JSX.Element {
     <FullProfile
       own
       view={view}
-      // what is yours to do: edit, share, and everything that is yours but is not this page behind the menu
+      // everything that is yours but is not this page, behind the menu in the banner's corner
+      corner={<ProfileMenu />}
+      // what is yours to do with the page itself: change it, and send it to somebody
       headerAction={
-        <div className="profile-actions-row">
+        <div className="pc-acts">
           <Link to="/app/profile/edit" className="btn btn-secondary btn-sm">
+            <EditIcon size={16} />
             {t('profile.edit')}
           </Link>
           <ShareProfile userId={me.id} name={view.name} />
-          <ProfileMenu />
         </div>
       }
       progress={

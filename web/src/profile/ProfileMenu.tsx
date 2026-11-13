@@ -5,11 +5,13 @@ import { BookmarkIcon, GearIcon, MedalIcon, MoreIcon, ShareIcon, ShopIcon, Troph
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
 import { keepInView } from '../reports/keepInView';
+import { shareProfileLink } from './share';
 
 /**
- * Everything that is yours but is not your profile, behind one button at the
- * top of it: the shop, what you saved, your friends, your badges and ranks,
- * and settings.
+ * Everything that is yours but is not your profile, behind one button in the
+ * far corner of its banner — where the menu of a profile is looked for, and
+ * where the menu about anybody else is too: the shop, what you saved, your
+ * friends, your badges and ranks, and settings.
  *
  * These used to be spread across the top bar — a shop icon, a gear, a face
  * that opened a popup — which on a phone either crowded the bar or hid in a
@@ -112,24 +114,11 @@ export function ProfileMenu(): React.JSX.Element {
 export function ShareProfile({ userId, name }: { userId: string; name: string }): React.JSX.Element {
   const t = useT();
   const [copied, setCopied] = useState(false);
-  const url = new URL(`/app/users/${userId}`, window.location.origin).toString();
 
   async function share(): Promise<void> {
-    if (typeof navigator.share === 'function') {
-      try {
-        await navigator.share({ title: name, url });
-        return;
-      } catch {
-        // dismissed, or refused: copying is still a working answer
-      }
-    }
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
-    } catch {
-      setCopied(false);
-    }
+    if ((await shareProfileLink(userId, name)) !== 'copied') return;
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 2000);
   }
 
   return (

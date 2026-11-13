@@ -718,6 +718,9 @@ export {
   type TreeAir,
   type TreeSceneOptions,
   type TreeSky,
+  horizonSky,
+  horizonSvg,
+  type HorizonOptions,
 } from './art/index.js';
 /**
  * The art's metals, for the parts of a screen drawn around an emblem — a

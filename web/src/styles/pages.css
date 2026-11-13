@@ -1943,11 +1943,62 @@ button.chat-run-avatar:hover {
   padding: 0 16px 80px;
 }
 
+/*
+ * What there is to know about them besides their name, on one line that
+ * wraps: where they are from, when they joined, and — on your own profile —
+ * who can open the page, which is a link to where that is changed.
+ */
+.mkp-about {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+.mkp-about > li,
+.mkp-seen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.mkp-about svg {
+  flex: none;
+  color: var(--ink-3);
+}
+.mkp-seen {
+  /* a fingertip tall where it is pressed, without making the line taller than its neighbours */
+  position: relative;
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+.mkp-seen::before {
+  content: '';
+  position: absolute;
+  inset: -12px -6px;
+}
+.mkp-seen:hover {
+  color: var(--ink);
+  text-decoration-color: currentColor;
+}
+/* a level, said as a word on the popup, where there is no bar for it */
+.pc-level-chip {
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--gold-ink);
+  font-weight: 650;
+}
 .mkp-country {
   display: flex;
   align-items: center;
   gap: 7px;
-  margin-top: 5px;
   color: var(--ink-2);
   font-size: 0.85rem;
 }
@@ -1955,15 +2006,6 @@ button.chat-run-avatar:hover {
   display: block;
   border-radius: 2px;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
-}
-.mkp-actions {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-  width: 100%;
-}
-.mkp-actions .btn {
-  flex: 1 1 auto;
 }
 
 /* the sections under the card, in the order they are read */
@@ -1985,7 +2027,9 @@ button.chat-run-avatar:hover {
  */
 .mkp-facts {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  /* however many numbers there are to show — three for somebody with no friends list to show, four for most — they share the width */
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   margin: 18px 0 0;
   padding: 14px 0 0;
   border-top: 1px solid var(--separator);
@@ -2080,7 +2124,7 @@ button.chat-run-avatar:hover {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  margin-top: 2px;
+  margin-top: 4px;
   color: var(--gold-ink);
   font-size: 0.92rem;
   font-weight: 600;
@@ -2149,6 +2193,7 @@ button.chat-run-avatar:hover {
 /* two by two on a phone, where the longer words need the room */
 @media (max-width: 559px) {
   .mkp-yours .mkp-facts {
+    grid-auto-flow: row;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     row-gap: 14px;
   }

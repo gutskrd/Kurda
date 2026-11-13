@@ -1454,6 +1454,7 @@ export type TranslationKey =
   | 'chat.jumpToNew'
   | 'chat.noMessagesBody'
   | 'moderation.report'
+  | 'moderation.moreAbout'
   | 'dictionary.backToSearch'
   | 'dictionary.playPronunciation'
   | 'dictionary.wordOfDay'
@@ -2476,6 +2477,7 @@ export type TranslationKey =
   | 'friends.cancelRequest'
   | 'friends.remove'
   | 'friends.removeWho'
+  | 'friends.removeFriend'
   | 'friends.suggestions'
   | 'friends.mutual'
   | 'friends.mutualOne'
@@ -4366,6 +4368,7 @@ const en: Catalog = {
   'chat.jumpToNew': 'New messages below: {count}',
   'chat.noMessagesBody': 'Message a friend from their profile to start a conversation.',
   'moderation.report': 'Report',
+  'moderation.moreAbout': 'More about {name}',
   'dictionary.backToSearch': 'Back to search',
   'dictionary.playPronunciation': 'Play pronunciation',
   'dictionary.wordOfDay': 'Word of the day',
@@ -5413,6 +5416,7 @@ const en: Catalog = {
   'friends.cancelRequest': 'Cancel your request to {name}',
   'friends.remove': 'Remove',
   'friends.removeWho': 'Remove {name} as a friend',
+  'friends.removeFriend': 'Remove friend',
   'friends.suggestions': 'People you may know',
   'friends.mutual': '{count} mutual friends',
   'friends.mutualOne': '1 mutual friend',
@@ -7832,6 +7836,7 @@ const ku: Catalog = {
   'chat.jumpToNew': 'Peyamên nû li jêr: {count}',
   'chat.noMessagesBody': 'Ji profîla hevalekî peyamekê bişîne da ku suhbetek dest pê bike.',
   'moderation.report': 'Ragihîne',
+  'moderation.moreAbout': 'Bêtir derbarê {name} de',
   'dictionary.backToSearch': 'Vegere lêgerînê',
   'dictionary.playPronunciation': 'Bilêvkirinê lêxe',
   'dictionary.wordOfDay': 'Peyva rojê',
@@ -8878,6 +8883,7 @@ const ku: Catalog = {
   'friends.cancelRequest': 'Daxwaza xwe ya ji {name} betal bike',
   'friends.remove': 'Rake',
   'friends.removeWho': '{name} ji hevaltiyê rake',
+  'friends.removeFriend': 'Ji hevaltiyê rake',
   'friends.suggestions': 'Kesên ku dibe tu wan nas bikî',
   'friends.mutual': '{count} hevalên hevpar',
   'friends.mutualOne': '1 hevalê hevpar',
@@ -11297,6 +11303,7 @@ const de: Catalog = {
   'chat.jumpToNew': 'Neue Nachrichten unten: {count}',
   'chat.noMessagesBody': 'Schreib einem Freund von seinem Profil aus, um eine Unterhaltung zu beginnen.',
   'moderation.report': 'Melden',
+  'moderation.moreAbout': 'Mehr über {name}',
   'dictionary.backToSearch': 'Zurück zur Suche',
   'dictionary.playPronunciation': 'Aussprache abspielen',
   'dictionary.wordOfDay': 'Wort des Tages',
@@ -12343,6 +12350,7 @@ const de: Catalog = {
   'friends.cancelRequest': 'Deine Anfrage an {name} zurückziehen',
   'friends.remove': 'Entfernen',
   'friends.removeWho': '{name} als Freund entfernen',
+  'friends.removeFriend': 'Freundschaft beenden',
   'friends.suggestions': 'Leute, die du kennen könntest',
   'friends.mutual': '{count} gemeinsame Freunde',
   'friends.mutualOne': '1 gemeinsamer Freund',
@@ -14762,6 +14770,7 @@ const es: Catalog = {
   'chat.jumpToNew': 'Mensajes nuevos abajo: {count}',
   'chat.noMessagesBody': 'Escribe a un amigo desde su perfil para empezar una conversación.',
   'moderation.report': 'Denunciar',
+  'moderation.moreAbout': 'Más sobre {name}',
   'dictionary.backToSearch': 'Volver a la búsqueda',
   'dictionary.playPronunciation': 'Reproducir la pronunciación',
   'dictionary.wordOfDay': 'Palabra del día',
@@ -15808,6 +15817,7 @@ const es: Catalog = {
   'friends.cancelRequest': 'Cancelar tu solicitud a {name}',
   'friends.remove': 'Quitar',
   'friends.removeWho': 'Quitar a {name} de tus amigos',
+  'friends.removeFriend': 'Quitar de tus amigos',
   'friends.suggestions': 'Personas que quizá conozcas',
   'friends.mutual': '{count} amigos en común',
   'friends.mutualOne': '1 amigo en común',
@@ -18227,6 +18237,7 @@ const tr: Catalog = {
   'chat.jumpToNew': 'Aşağıda yeni mesajlar: {count}',
   'chat.noMessagesBody': 'Sohbet başlatmak için bir arkadaşına profilinden mesaj gönder.',
   'moderation.report': 'Bildir',
+  'moderation.moreAbout': '{name} hakkında daha fazlası',
   'dictionary.backToSearch': 'Aramaya dön',
   'dictionary.playPronunciation': 'Telaffuzu oynat',
   'dictionary.wordOfDay': 'Günün kelimesi',
@@ -19273,6 +19284,7 @@ const tr: Catalog = {
   'friends.cancelRequest': '{name} kişisine gönderdiğin isteği geri al',
   'friends.remove': 'Çıkar',
   'friends.removeWho': '{name} kişisini arkadaşlıktan çıkar',
+  'friends.removeFriend': 'Arkadaşlıktan çıkar',
   'friends.suggestions': 'Tanıyor olabileceğin kişiler',
   'friends.mutual': '{count} ortak arkadaş',
   'friends.mutualOne': '1 ortak arkadaş',
@@ -21692,6 +21704,7 @@ const ar: Catalog = {
   'chat.jumpToNew': 'رسائل جديدة في الأسفل: {count}',
   'chat.noMessagesBody': 'راسل صديقًا من ملفه الشخصي لبدء محادثة.',
   'moderation.report': 'إبلاغ',
+  'moderation.moreAbout': 'المزيد عن {name}',
   'dictionary.backToSearch': 'العودة إلى البحث',
   'dictionary.playPronunciation': 'تشغيل النطق',
   'dictionary.wordOfDay': 'كلمة اليوم',
@@ -22738,6 +22751,7 @@ const ar: Catalog = {
   'friends.cancelRequest': 'إلغاء طلبك إلى {name}',
   'friends.remove': 'إزالة',
   'friends.removeWho': 'إزالة {name} من أصدقائك',
+  'friends.removeFriend': 'إزالة من الأصدقاء',
   'friends.suggestions': 'أشخاص قد تعرفهم',
   'friends.mutual': 'الأصدقاء المشتركون: {count}',
   'friends.mutualOne': 'صديق مشترك واحد',
@@ -25157,6 +25171,7 @@ const fr: Catalog = {
   'chat.jumpToNew': 'Nouveaux messages en bas : {count}',
   'chat.noMessagesBody': 'Écris à un ami depuis son profil pour lancer une conversation.',
   'moderation.report': 'Signaler',
+  'moderation.moreAbout': 'En savoir plus sur {name}',
   'dictionary.backToSearch': 'Retour à la recherche',
   'dictionary.playPronunciation': 'Écouter la prononciation',
   'dictionary.wordOfDay': 'Mot du jour',
@@ -26203,6 +26218,7 @@ const fr: Catalog = {
   'friends.cancelRequest': 'Annuler ta demande à {name}',
   'friends.remove': 'Retirer',
   'friends.removeWho': 'Retirer {name} de tes amis',
+  'friends.removeFriend': 'Retirer de tes amis',
   'friends.suggestions': 'Personnes que tu connais peut-être',
   'friends.mutual': '{count} amis en commun',
   'friends.mutualOne': '1 ami en commun',
@@ -28622,6 +28638,7 @@ const nl: Catalog = {
   'chat.jumpToNew': 'Nieuwe berichten onderaan: {count}',
   'chat.noMessagesBody': 'Open het profiel van een vriend en stuur een bericht om een gesprek te beginnen.',
   'moderation.report': 'Melden',
+  'moderation.moreAbout': 'Meer over {name}',
   'dictionary.backToSearch': 'Terug naar zoeken',
   'dictionary.playPronunciation': 'Uitspraak afspelen',
   'dictionary.wordOfDay': 'Woord van de dag',
@@ -29668,6 +29685,7 @@ const nl: Catalog = {
   'friends.cancelRequest': 'Je verzoek aan {name} annuleren',
   'friends.remove': 'Verwijderen',
   'friends.removeWho': '{name} als vriend verwijderen',
+  'friends.removeFriend': 'Als vriend verwijderen',
   'friends.suggestions': 'Mensen die je misschien kent',
   'friends.mutual': '{count} gemeenschappelijke vrienden',
   'friends.mutualOne': '1 gemeenschappelijke vriend',
@@ -32088,6 +32106,7 @@ const ckb: Catalog = {
   'chat.jumpToNew': 'نامەی نوێ لە خوارەوە: {count}',
   'chat.noMessagesBody': 'لە پرۆفایلی هاوڕێیەکەوە نامەیەکی بۆ بنێرە بۆ دەستپێکردنی گفتوگۆ.',
   'moderation.report': 'ڕاپۆرت',
+  'moderation.moreAbout': 'زیاتر دەربارەی {name}',
   'dictionary.backToSearch': 'گەڕانەوە بۆ گەڕان',
   'dictionary.playPronunciation': 'دەربڕین لێبدە',
   'dictionary.wordOfDay': 'وشەی ڕۆژ',
@@ -33134,6 +33153,7 @@ const ckb: Catalog = {
   'friends.cancelRequest': 'داواکارییەکەت بۆ {name} هەڵبوەشێنەوە',
   'friends.remove': 'لابردن',
   'friends.removeWho': '{name} لە هاوڕێیەتی لابە',
+  'friends.removeFriend': 'لە هاوڕێیەتی لابە',
   'friends.suggestions': 'کەسانێک کە لەوانەیە بیانناسیت',
   'friends.mutual': '{count} هاوڕێی هاوبەش',
   'friends.mutualOne': '1 هاوڕێی هاوبەش',

@@ -85,7 +85,8 @@ import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE, hasBadgeGlyph } from './badges.js';
 import { dayMedalSvg, streakMedalSvg } from './medals.js';
 import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
-import { TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt } from './tree-scene.js';
+import { SKIES, TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt } from './tree-scene.js';
+import { horizonSky, horizonSvg } from './horizon.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
 import { characterArt } from '../characters/index.js';
@@ -1823,5 +1824,62 @@ describe('the learner’s tree', () => {
   it('refuses a size that is not one', () => {
     expect(() => treeSvg({ species: 'beru', stage: 3, size: 0 })).toThrow(RangeError);
     expect(() => treeSvg({ species: 'beru', stage: 3, idPrefix: 'a b' })).toThrow(RangeError);
+  });
+
+  it('draws the night sky’s moon as a horn that can be drawn: its way back is a wider round than the horn is tall', () => {
+    // an arc whose radius is less than half its chord is no arc: the moon was once written that way and never appeared
+    const moon = /A([\d.]+) [\d.]+ 0 1 0 [\d.]+ [\d.]+A([\d.]+) [\d.]+ 0 0 1 /.exec(treeSceneSvg({ sky: 'night' }));
+    expect(moon).not.toBeNull();
+    expect(Number(moon?.[2])).toBeGreaterThan(Number(moon?.[1]));
+  });
+});
+
+/**
+ * The horizon over a profile: somebody's own sky and mountains, behind their
+ * face until they wear a background.
+ */
+describe('the horizon over a profile', () => {
+  const PEOPLE = ['48cc9c07-c6ce-4755-b717-9a4918cd771e', 'd2b60bd3-c41f-4cfd-aaa8-bd94c9be302e', 'dilan', 'rojîn', 'azad', 'berîvan', 'a', 'b', 'c', 'd', 'e', 'f'];
+
+  it('is drawn the same on every machine, and passes as a drawing', () => {
+    for (const seed of PEOPLE) {
+      const svg = horizonSvg({ seed, size: 360, title: 'A horizon' });
+      checkSvg(svg, 360);
+      expect(horizonSvg({ seed, size: 360, title: 'A horizon' })).toBe(svg);
+      // light enough to be behind every face on a list of them
+      expect(svg.length).toBeLessThan(8_000);
+    }
+  });
+
+  it('is each person’s own: no two of them share a horizon, and between them they have every sky', () => {
+    expect(new Set(PEOPLE.map((seed) => horizonSvg({ seed }))).size).toBe(PEOPLE.length);
+    for (const seed of PEOPLE) expect(TREE_SKIES).toContain(horizonSky(seed));
+    expect(new Set(PEOPLE.map(horizonSky)).size).toBeGreaterThanOrEqual(3);
+    // the sky can be asked for, and is then the one drawn
+    expect(horizonSvg({ seed: 'dilan', sky: 'night' })).toContain('#0b1130');
+    expect(horizonSvg({ seed: 'dilan', sky: 'day' })).toContain('#52aeee');
+  });
+
+  it('keeps the sun and the first ridge inside the middle band, which is all a short banner shows', () => {
+    for (const seed of PEOPLE) {
+      for (const sky of TREE_SKIES) {
+        const svg = horizonSvg({ seed, sky });
+        // the sun or moon: a circle, or the horn's first point, between a fifth above and a tenth below the middle line
+        // the sun is the circle in that sky's own sun colour; the moon is a horn, and its first point is its top
+        const sun = new RegExp(`<circle cx="[\\d.]+" cy="([\\d.]+)" r="([\\d.]+)" fill="${SKIES[sky].orb[3]}"`).exec(svg);
+        const moon = /<path d="M[\d.]+ ([\d.]+)A([\d.]+) /.exec(svg);
+        const orb = sky === 'night' ? moon : sun;
+        expect(orb, `${seed} ${sky}`).not.toBeNull();
+        const middle = sky === 'night' ? Number(orb?.[1]) + Number(orb?.[2]) : Number(orb?.[1]);
+        expect(middle).toBeGreaterThan(50);
+        expect(middle).toBeLessThan(64);
+      }
+    }
+  });
+
+  it('keeps its ids its own, so two on one page do not collide, and refuses a size that is not one', () => {
+    const a = checkSvg(horizonSvg({ seed: 'dilan', title: 'A horizon', idPrefix: 'a' }), 360);
+    for (const id of checkSvg(horizonSvg({ seed: 'dilan', title: 'A horizon', idPrefix: 'b' }), 360)) expect(a.has(id)).toBe(false);
+    expect(() => horizonSvg({ seed: 'dilan', size: 0 })).toThrow(RangeError);
   });
 });

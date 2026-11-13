@@ -108,7 +108,7 @@ describe('Profile view (full, read-only)', () => {
     await screen.findByText('Ada Lovelace');
 
     const card = document.querySelector<HTMLElement>('.pc')!;
-    const strip = within(card).getByRole('list');
+    const strip = card.querySelector<HTMLElement>('.mkp-facts')!;
     expect(within(strip).getAllByRole('listitem').map((li) => li.querySelector('.mkp-fact-label')?.textContent)).toEqual(['Streak', 'XP', 'Friends', 'Badges']);
     // a number with a page of its own is the way into it; the others are only numbers
     expect(within(strip).getByRole('link', { name: /Friends/ })).toHaveAttribute('href', '/app/friends');
@@ -182,7 +182,7 @@ describe('Profile view (full, read-only)', () => {
     expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 3');
   });
 
-  it('makes your name the page’s heading, and keeps everything that is yours behind the menu beside Edit and Share', async () => {
+  it('makes your name the page’s heading, with Edit and Share under your words and everything else that is yours behind the menu in the banner’s corner', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(
@@ -196,12 +196,16 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Ada Lovelace' })).toBeInTheDocument();
-    const actions = document.querySelector<HTMLElement>('.profile-actions-row')!;
-    expect(within(actions).getByRole('link', { name: /edit profile/i })).toBeInTheDocument();
+    // the two things done to the page itself, and nothing else, in the row of actions
+    const actions = document.querySelector<HTMLElement>('.pc-aside .pc-acts')!;
+    expect(within(actions).getByRole('link', { name: /edit profile/i })).toHaveAttribute('href', '/app/profile/edit');
     expect(within(actions).getByRole('button', { name: /share profile/i })).toBeInTheDocument();
+    expect(within(actions).getAllByRole('button')).toHaveLength(1);
 
     // the button says what it holds, in the items’ own words, rather than “Menu”
     const menu = screen.getByRole('button', { name: 'Shop, Saved, Friends, Badges, Rankings, Settings' });
+    // and it is where the menu of a profile is looked for: the far corner of the banner
+    expect(document.querySelector('.pc-corner')).toContainElement(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'false');
     await userEvent.click(menu);
     expect(menu).toHaveAttribute('aria-expanded', 'true');
@@ -218,5 +222,50 @@ describe('Profile view (full, read-only)', () => {
     await userEvent.keyboard('{Escape}');
     expect(document.querySelector('.profile-menu-list')).toBeNull();
     expect(menu).toHaveFocus();
+  });
+
+  /**
+   * A profile is the most public thing an account has. Who can open it is
+   * said on the page itself, in the words Settings says it in, and it is one
+   * press from where it is changed; nobody has to go looking to learn who is
+   * reading theirs.
+   */
+  it('says who can see your profile, with the way to change it, and the year you joined', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        routedFetch({
+          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/friends': { friends: [], total: 0 },
+          '/me': { user: { ...meUser, profileVisibility: 'friends' } },
+        }),
+      ),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+    await screen.findByText('Ada Lovelace');
+
+    expect(screen.getByRole('link', { name: 'Who can see this: Friends only' })).toHaveAttribute('href', '/app/settings/visibility');
+    expect(screen.getByText('Joined 2026')).toBeInTheDocument();
+  });
+
+  it('draws your own horizon in the banner while you wear no background', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        routedFetch({
+          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/friends': { friends: [], total: 0 },
+          '/me': { user: meUser },
+        }),
+      ),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+    await screen.findByText('Ada Lovelace');
+
+    const horizon = document.querySelector('.pc-banner .pc-horizon');
+    expect(horizon?.querySelector('svg')).not.toBeNull();
+    // it is decoration: the page is about the person, not their weather
+    expect(horizon).toHaveAttribute('aria-hidden', 'true');
+    expect(document.querySelector('.pc-banner .pcard-bg-media')).toBeNull();
   });
 });

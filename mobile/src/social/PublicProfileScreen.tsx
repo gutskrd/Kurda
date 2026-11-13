@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { Alert, Image, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
@@ -16,6 +15,10 @@ import { ClayButton, GradientBackground } from '../theme/glass';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { HeaderButton } from '../navigation/HeaderButton';
+import { showActions } from '../theme/actionSheet';
+import { SITE_ORIGIN } from '../feed/api';
+import { Horizon } from '../profile/Horizon';
 import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
 import { knownTier, leagueName } from '../leagues/format';
 import { ProfileTree } from '../tree/ProfileTree';
@@ -36,7 +39,6 @@ import { formatNumber } from '../i18n/format';
 import { PlayWithButton } from '../play/PlayWithButton';
 import { useAnnouncer } from '../stories/ui';
 import { TicketSlip } from './FriendTicket';
-import { heldDim } from '../theme/MotionParts';
 
 interface Profile {
   userId: string;
@@ -80,7 +82,26 @@ interface Profile {
   favoriteStory?: FavoriteRef | null;
 }
 
-/** Public profile with a friend action + block (KUR-082). */
+/** How tall the band of sky behind their face is. */
+const BANNER = 104;
+/** How big their face is, and so how far it stands over the band's lower edge. */
+const FACE = 96;
+
+/**
+ * Somebody else's profile (KUR-082).
+ *
+ * Who they are first — their sky and their face, the name they chose, where
+ * they are from and their own words — then the one thing most people came to
+ * do, as the filled button: write to a friend, ask to be friends, answer
+ * somebody who asked first. Their numbers and what they have made follow.
+ *
+ * Everything that is about ending something, or about telling a moderator,
+ * is behind the ⋯ at the end of the bar at the top, where the menu about a
+ * person is looked for: send their profile on, stop being friends, report
+ * them, block them. Report and Block are two separate, plainly named items,
+ * each one tap from the menu; they used to be two words at the foot of the
+ * card, under everything else on it.
+ */
 export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit: () => void }) {
   const { client } = useAuth();
   // anyone's profile is open to a guest; writing to them or befriending them is the account's (auth/AccountGate)
@@ -88,6 +109,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const { width: windowWidth } = useWindowDimensions();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -182,6 +204,31 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
     ]);
   }, [client, userId, onExit, t]);
 
+  const name = profile?.displayName ?? profile?.username ?? '';
+  /** Their profile's address, as anybody can open it: the same link the website shares. */
+  const share = useCallback(() => {
+    if (!profile) return;
+    void Share.share({ message: t('profile.shareMessage', { name, url: `${SITE_ORIGIN}/app/users/${profile.userId}` }) });
+  }, [profile, name, t]);
+
+  /** The menu about them: what is not the one thing most people came to do. */
+  const more = useCallback(() => {
+    if (!profile) return;
+    showActions({
+      title: name,
+      cancel: t('common.cancel'),
+      actions: [
+        { label: t('profile.share'), onPress: share },
+        // a friendship is ended from here, asked first (act): it is not a button beside "Message"
+        ...(profile.friendStatus === 'friends' ? [{ label: t('friends.removeFriend'), destructive: true, onPress: () => act('friends') }] : []),
+        { label: t('moderation.report'), onPress: () => setReporting(true) },
+        { label: t('moderation.block'), destructive: true, onPress: block },
+      ],
+    });
+  }, [profile, name, share, act, block, t]);
+  // nothing to end, report or block about yourself
+  const menu = profile && profile.friendStatus !== 'self' ? <HeaderButton icon="more" label={t('moderation.moreAbout', { name })} onPress={more} edge="end" testID="profile-more" /> : null;
+
   if (notFound) {
     return (
       <GradientBackground>
@@ -195,7 +242,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   return (
     <GradientBackground>
       <View style={styles.screen}>
-        <Header onExit={onExit} />
+        <Header onExit={onExit} right={menu} />
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
         <AsyncBoundary
           loading={!profile}
@@ -210,17 +257,23 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         >
           {() => {
             if (!profile) return null;
-            const labelKey = friendActionLabel(profile.friendStatus);
+            // a friend's button would only say so: ending it is in the menu, and what you do with a friend is write and play
+            const labelKey = profile.friendStatus === 'friends' ? null : friendActionLabel(profile.friendStatus);
+            const cardWidth = windowWidth - layout.gutter * 2;
             return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
+          {/* their own sky behind their face: the picture the website draws in their banner */}
+          <Horizon seed={profile.userId} width={cardWidth} height={BANNER} style={styles.banner} />
+          <View style={[styles.face, { borderColor: colors.background, backgroundColor: colors.background }]}>
           <Framed
             sku={profile.frameSku}
             url={profile.frameUrl}
             size={Math.round(96 / SEASON_FRAME_INNER)}
             label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}
           >
-            <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
+            <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={FACE} photoUrl={profile.avatarUrl} />
           </Framed>
+          </View>
           {/*
             The name they chose leads and the handle follows, as on your own
             profile and on the website. It was the other way round here: the
@@ -306,39 +359,19 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             </>
           )}
 
-          {profile.friendStatus !== 'self' ? (
-            <View style={styles.safety}>
-              {/*
-                Report and block sit together because they are what you reach
-                for in the same moment, and they do different halves of the
-                job: a block ends it for you and tells nobody, a report tells
-                a moderator and changes nothing you can see. Neither is
-                offered as a substitute for the other. Together, but not side
-                by side: one at each end of the line, each a fingertip tall, so
-                reaching for Report cannot land on Block.
-              */}
-              <View style={styles.danger}>
-                <Pressable onPress={() => setReporting(true)} style={({ pressed }) => [styles.block, pressed && heldDim]} accessibilityRole="button">
-                  <Text style={[styles.blockText, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
-                </Pressable>
-                <Pressable onPress={block} style={({ pressed }) => [styles.block, pressed && heldDim]} accessibilityRole="button">
-                  <Text style={[styles.blockText, { color: colors.danger }]}>{t('moderation.block')}</Text>
-                </Pressable>
-              </View>
-              <ReportSheet
-                visible={reporting}
-                target={{ type: 'user', userId: profile.userId }}
-                name={profile.displayName ?? profile.username}
-                blockable={{ userId: profile.userId, name: profile.displayName ?? profile.username }}
-                onClose={() => setReporting(false)}
-                // blocked from the report: the profile is gone to you now
-                onBlocked={() => {
-                  setReporting(false);
-                  onExit();
-                }}
-              />
-            </View>
-          ) : null}
+          {/* the same sheet as everywhere else something can be reported, opened from the menu at the top */}
+          <ReportSheet
+            visible={reporting}
+            target={{ type: 'user', userId: profile.userId }}
+            name={profile.displayName ?? profile.username}
+            blockable={{ userId: profile.userId, name: profile.displayName ?? profile.username }}
+            onClose={() => setReporting(false)}
+            // blocked from the report: the profile is gone to you now
+            onBlocked={() => {
+              setReporting(false);
+              onExit();
+            }}
+          />
         </View>
             );
           }}
@@ -362,7 +395,10 @@ function ProfileCardSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   return (
     <View style={[styles.card, { backgroundColor: colors.controlTrack }]} accessibilityLabel={t('common.loading')}>
-      <Skeleton width={96} height={96} radius={radii.pill} raised />
+      <View style={styles.banner} />
+      <View style={[styles.face, { borderColor: colors.background, backgroundColor: colors.background }]}>
+        <Skeleton width={FACE} height={FACE} radius={radii.pill} raised />
+      </View>
       <SkeletonText size={typography.sizes.xl} width={120} align="center" raised />
       <SkeletonText size={typography.sizes.md} width={72} align="center" raised />
       <View style={styles.stats}>
@@ -385,8 +421,8 @@ function ProfileCardSkeleton(): React.JSX.Element {
 const LARGE_BUTTON = 50;
 
 /** No title: on a profile the person is the title, and their name is on the card below. */
-function Header({ onExit }: { onExit: () => void }) {
-  return <ScreenHeader onBack={onExit} />;
+function Header({ onExit, right }: { onExit: () => void; right?: React.ReactNode }) {
+  return <ScreenHeader onBack={onExit} right={right} />;
 }
 /** A number and what it counts; `fire` puts the streak's fire before it, as big as their streak has grown it. */
 function Stat({ label, value, fire }: { label: string; value: string; fire?: FireLevel }) {
@@ -407,7 +443,11 @@ const styles = StyleSheet.create({
   scroll: { paddingBottom: spacing.xxl },
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, padding: spacing.xl },
+  // the band of sky runs to the card's edges, so the card clips it to its own corners
+  card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, paddingHorizontal: spacing.xl, paddingBottom: spacing.xl, overflow: 'hidden' },
+  banner: { height: BANNER, alignSelf: 'stretch', marginHorizontal: -spacing.xl },
+  // their face stands half over the band's lower edge, ringed in the page's own colour
+  face: { marginTop: -(FACE / 2 + 4 + spacing.sm), borderRadius: radii.pill, borderWidth: 4 },
   username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   display: { fontSize: typography.sizes.md },
   // the flag and the name of where they are from, as your own profile draws them
@@ -421,10 +461,5 @@ const styles = StyleSheet.create({
   statValue,
   statLabel: statCaption,
   actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
-  // report and block close the card, a step away from everything else on it
-  safety: { alignSelf: 'stretch', marginTop: spacing.md },
-  block: { minHeight: MIN_TOUCH_TARGET, minWidth: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
-  danger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  blockText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   dim: { textAlign: 'center', marginTop: spacing.md },
 });

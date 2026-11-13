@@ -922,9 +922,9 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
                 </p>
               </div>
               <div className="pc-aside">
-                <div className={own ? 'profile-actions-row' : 'mkp-actions'}>
-                  <ButtonBox size="sm" w={own ? 104 : 92} />
-                  <ButtonBox size="sm" w={own ? 116 : 72} />
+                <div className="pc-acts">
+                  <ButtonBox size="sm" w={own ? 118 : 106} />
+                  <ButtonBox size="sm" w={own ? 136 : 84} />
                 </div>
               </div>
             </div>

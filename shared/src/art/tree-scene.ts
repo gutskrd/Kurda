@@ -38,7 +38,7 @@ export function treeAir(species: string, stage: TreeStage, health: TreeHealth): 
   return health === 'fresh' ? 'motes' : null;
 }
 
-interface Sky {
+export interface Sky {
   /** the sky itself, from its top to the horizon */
   air: readonly [string, string, string];
   /** the light the tree stands in, and how strong it is */
@@ -51,7 +51,8 @@ interface Sky {
   cloud: readonly [string, string];
 }
 
-const SKIES: Record<TreeSky, Sky> = {
+/** Each sky's colours: the air, the light, the sun or moon, the mountains and the clouds. The horizon over a profile is painted from the same ones (`horizon.ts`). */
+export const SKIES: Record<TreeSky, Sky> = {
   dawn: { air: ['#86bdea', '#f4cbbd', '#ffe9cc'], glow: ['#fff6dc', 0.7], orb: [25, 82, 10, '#fff4c8', '#ffd58a'], ridges: ['#d3c0d6', '#b5a4c9', '#978cb8'], cloud: ['#fff5ec', '#f4c6bd'] },
   day: { air: ['#52aeee', '#a3daf8', '#e2f5ff'], glow: ['#ffffff', 0.62], orb: [95, 41, 8, '#fff8d2', '#fff0a2'], ridges: ['#bcdbf0', '#98c4e5', '#7aadd8'], cloud: ['#ffffff', '#d2eafa'] },
   dusk: { air: ['#3b3d84', '#c75d8e', '#ffb47c'], glow: ['#ffe2c0', 0.5], orb: [96, 85, 11, '#ffdca6', '#ff9c68'], ridges: ['#94608f', '#704a84', '#523a75'], cloud: ['#ffc7ad', '#c56d98'] },
@@ -117,8 +118,9 @@ export function treeSceneSvg(opts: TreeSceneOptions): string {
   dr.def(radialAt(halo, [[0, haloColour, 0.75 * (1 - dry * 0.4)], [0.4, haloColour, 0.3], [1, haloColour, 0]], ox, oy, or * 4.4));
   dr.add(`<circle cx="${n(ox)}" cy="${n(oy)}" r="${n(or * 4.4)}" fill="url(#${halo})"/>`);
   if (opts.sky === 'night') {
-    // a new moon's horn: the round of it, less the round of its own shadow
-    dr.add(`<path d="M${n(ox)} ${n(oy - or)}A${n(or)} ${n(or)} 0 1 1 ${n(ox)} ${n(oy + or)}A${n(or * 0.82)} ${n(or * 0.82)} 0 1 0 ${n(ox)} ${n(oy - or)}Z" fill="${c(colour)}" transform="rotate(-24 ${n(ox)} ${n(oy)})"/>`);
+    // a young moon's horn: the round of it on one side, and a shallower round back, which is its own shadow's edge.
+    // (The way back used to be a tighter round than the horn is wide, which no arc can be, so the moon was not drawn at all.)
+    dr.add(`<path d="M${n(ox)} ${n(oy - or)}A${n(or)} ${n(or)} 0 1 0 ${n(ox)} ${n(oy + or)}A${n(or * 1.35)} ${n(or * 1.35)} 0 0 1 ${n(ox)} ${n(oy - or)}Z" fill="${c(colour)}" transform="rotate(-24 ${n(ox)} ${n(oy)})"/>`);
   } else {
     dr.add(`<circle cx="${n(ox)}" cy="${n(oy)}" r="${n(or)}" fill="${c(colour)}"/>`);
   }

@@ -6,6 +6,7 @@ import { useT } from '../i18n/I18nProvider';
 import { FrameOverlay } from '../ranks/art';
 import { rankTierNamed } from '../ranks/names';
 import { useAvatarSrc } from '../art/overrides';
+import { Horizon } from './Horizon';
 
 /**
  * A person, as Hevalo shows one: their background as a banner, their face
@@ -21,6 +22,12 @@ import { useAvatarSrc } from '../art/overrides';
  * is where it reads as *theirs* — like a header image — and it leaves the text
  * on the app's own black, where it is always legible, instead of on somebody's
  * artwork, where it measured as low as 3.3:1.
+ *
+ * Somebody who wears no background has a horizon of their own there (`seed`),
+ * so no profile opens on an empty band. The corner of the banner is where the
+ * menu about this person is — the place such a menu is looked for — and what
+ * can be done with them (`aside`) sits in a row of its own under their words,
+ * or beside their face where the card is wide.
  *
  * Presentation only. Ownership and premium are settled by the server before a
  * background or an icon ever arrives here.
@@ -38,9 +45,13 @@ export interface ProfileCardProps {
   frameSku?: string | null;
   /** the picture of a frame from the shop, which is laid on rather than drawn */
   frameUrl?: string | null;
+  /** who this is, for the horizon drawn where no background is worn: their id; without it the banner is plain */
+  seed?: string;
+  /** on the banner's far corner: the menu about this person, and whatever closes the card */
+  corner?: ReactNode;
   /** under the handle: where they are from, what they were given */
   meta?: ReactNode;
-  /** beside the name on a wide card: the edit button, the friend actions */
+  /** what can be done: the edit and share buttons, the friend actions */
   aside?: ReactNode;
   /** name and level beside the face rather than under it — the full profile */
   wide?: boolean;
@@ -60,6 +71,8 @@ export function ProfileCard({
   level,
   frameSku,
   frameUrl,
+  seed,
+  corner,
   meta,
   aside,
   wide = false,
@@ -72,9 +85,8 @@ export function ProfileCard({
   const Name = wide ? 'h1' : 'span';
   return (
     <div className={`pc${wide ? ' pc--wide' : ''}${background ? ' pc--has-bg' : ''}`}>
-      <div className="pc-banner">
-        {background && <CosmeticBackground background={background} />}
-      </div>
+      <div className="pc-banner">{background ? <CosmeticBackground background={background} /> : seed ? <Horizon seed={seed} /> : null}</div>
+      {corner && <div className="pc-corner">{corner}</div>}
       <div className="pc-body">
         <div className="pc-id">
           <span className="pc-face">
@@ -95,6 +107,8 @@ export function ProfileCard({
             )}
             <FrameOverlay sku={frameSku} url={frameUrl} face={wide ? 120 : 84} title={(tier) => t('seasons.frameTitle', { tier: rankTierNamed(t, tier).name })} />
             {icon && <IconOverlay icon={icon} />}
+            {/* here now: a dot on the face, as everywhere a person is listed, and said in words beside the handle */}
+            {online && <span className="pc-presence" aria-hidden="true" />}
           </span>
           <div className="pc-names">
             <div className="pc-name-row">
@@ -103,10 +117,10 @@ export function ProfileCard({
               </Name>
               {premium && <PremiumPill />}
             </div>
-            {username && <div className="pc-handle">@{username}</div>}
-            {online && (
-              <div className="pc-online">
-                <span className="presence-dot presence-dot-inline" /> {t('profile.online')}
+            {(username || online) && (
+              <div className="pc-handle">
+                {username && <span dir="ltr">@{username}</span>}
+                {online && <span className="pc-online">{t('profile.online')}</span>}
               </div>
             )}
             {meta}
