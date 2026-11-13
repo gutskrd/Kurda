@@ -1670,7 +1670,6 @@ export const fr: Catalogue = {
   'lesson.streak.freeze': '{done} séances sur {per} avant ton prochain gel',
   'lesson.streak.freezeReadyOne': 'Tu as un gel de côté',
   'lesson.streak.freezeReady': 'Tu as {count} gels de côté',
-  'lesson.streak.dayStreak': 'jours d’affilée',
   'lesson.streak.say.first': 'Premier jour, c’est fait ! Toute longue série commence comme ça.',
   'lesson.streak.say.back': 'Te revoilà, et ça me fait tellement plaisir ! On continue demain.',
   'lesson.streak.say.best': 'Ta plus longue série jusqu’ici ! Je suis si fier de toi.',

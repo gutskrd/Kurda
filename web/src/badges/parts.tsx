@@ -1,4 +1,4 @@
-import { badgeLeft, badgeTierKey, badgeDef, badgeViewFraction, type BadgeView } from '@kurda/shared';
+import { badgeColour, badgeLeft, badgeTierKey, badgeDef, badgeViewFraction, hasBadgeArt, type BadgeView } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import { BadgeMedal } from '../ranks/art';
 import { badgeNamed, badgeTierNamed, unitWord, withMeaning, type Translate } from '../ranks/names';
@@ -49,6 +49,18 @@ export function Medal({
       playing={playing}
     />
   );
+}
+
+/**
+ * The badge's own colour as a style, for what is drawn round it: the light
+ * under it on its tile, the wash behind it on its sheet (`--badge`). The
+ * colour is the art's (shared `badgeColour`): grey until it is earned, the
+ * same violet for every secret not yet found. A badge this build has no art
+ * for (the server knows one newer than the page) gets none.
+ */
+export function badgeWash(view: MedalView): React.CSSProperties | undefined {
+  if (!hasBadgeArt(view.key)) return undefined;
+  return { '--badge': badgeColour(view.key, view.hidden ? 'secret' : view.tier > 0 ? 'earned' : 'locked') } as React.CSSProperties;
 }
 
 /**

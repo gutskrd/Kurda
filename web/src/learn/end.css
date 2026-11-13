@@ -311,107 +311,90 @@
   padding-top: 8px;
   text-align: center;
 }
-/* its own layer, so the fire standing in front of the window is in front of nothing else */
-.end-week-hevalo {
-  isolation: isolate;
+/*
+ * A quiet panel with its name at the top, and on it the card: the page's
+ * raised surface, with the medal standing half over its top edge. The panel
+ * leaves the medal its room above the card.
+ */
+.streak-panel {
+  display: grid;
+  width: min(440px, 100%);
+  padding: 22px 10px 10px;
+  border-radius: 40px;
+  background: var(--surface-2);
+}
+.streak-panel-name {
+  margin: 0 0 76px;
+  color: var(--ink-3);
+  font-size: var(--text-section);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.streak-card {
+  position: relative;
   display: grid;
   justify-items: center;
-  gap: 10px;
+  gap: 6px;
+  padding: 78px 14px 22px;
+  border-radius: 32px;
+  background: var(--surface-solid);
 }
-/* Hevalo's window, and the streak's fire on the ground in front of its lower corner, on the side the reading starts from */
-.end-week-scene {
-  display: flex;
-  align-items: flex-end;
+/* half over the card's top edge; it arrives the way anything earned arrives here, and settles */
+.streak-card-medal {
+  position: absolute;
+  top: -66px;
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  line-height: 0;
+  animation: medal-in 620ms var(--ease-spring) 120ms both;
 }
-/* in front of the wall: its logs over the wall's corner and a little below its foot, nearer than the wall */
-.end-week-fire {
-  position: relative;
-  z-index: 1;
-  margin-inline-end: calc(-1 * var(--fire-over));
-  margin-bottom: calc(-1 * var(--fire-drop));
+[dir='rtl'] .streak-card-medal {
+  translate: 50% 0;
 }
-/* what Hevalo says, in a bubble whose tail points down at him */
-.end-bubble {
-  position: relative;
-  max-width: min(340px, 100%);
+@keyframes medal-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.6) rotate(-8deg);
+  }
+}
+.streak-card-title {
   margin: 0;
-  padding: 14px 18px;
-  border: 2px solid var(--border-strong);
-  border-radius: var(--r-lg);
-  background: var(--panel-bg);
-  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: clamp(1.6rem, 7vw, 1.95rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+.streak-card-title:focus {
+  outline: none;
+}
+.streak-card-cheer {
+  max-width: 30ch;
+  margin: 0;
+  color: var(--ink-3);
   font-size: var(--text-body);
   line-height: 1.4;
   animation: celebrate-words var(--dur-slow) var(--ease-out) 200ms both;
 }
-.end-bubble::after {
-  content: '';
-  position: absolute;
-  inset-inline-start: calc(50% + var(--window-aside, 0px));
-  bottom: -9px;
-  width: 16px;
-  height: 16px;
-  margin-inline-start: -8px;
-  border-right: 2px solid var(--border-strong);
-  border-bottom: 2px solid var(--border-strong);
-  border-bottom-right-radius: 4px;
-  background: var(--panel-bg);
-  rotate: 45deg;
-}
-.end-week-count {
-  display: grid;
-  justify-items: center;
-  margin: 0;
-  line-height: 1;
-}
-.end-week-count:focus {
-  outline: none;
-}
-/* the number in the flame's colours: a gradient through the letters, deep enough to read on the light page too */
-.end-week-number {
-  padding: 0 4px 4px;
-  background: linear-gradient(180deg, #ffd25e, #f3922b);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-size: clamp(4.5rem, 24vw, 6.5rem);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-:root[data-theme='light'] .end-week-number {
-  background-image: linear-gradient(180deg, #d98500, #a84f00);
-}
-.end-week-words {
-  color: #f3a23a;
-  font-family: var(--font-sans);
-  font-size: var(--text-section);
-  font-weight: 800;
-}
-:root[data-theme='light'] .end-week-words {
-  color: #a84f00;
-}
-/* the fire's stage, and the next one as a near goal */
+/* the fire's stage and the next one, under the card: a near goal, said quietly */
 .end-week-stage {
-  margin: -4px 0 0;
-  color: var(--ink-2);
+  margin: 0;
+  color: var(--ink-3);
   font-size: var(--text-secondary);
   font-weight: 600;
 }
 .end-week-stage-name {
-  color: #f3a23a;
+  color: var(--ink-2);
   font-weight: 800;
 }
-:root[data-theme='light'] .end-week-stage-name {
-  color: #a84f00;
-}
 
-/* the week: each day's initial over a round mark, today's name in gold */
+/* the week: each day's name over its medal, or over its date while it is still to come */
 .end-days {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-  width: min(420px, 100%);
-  margin: 8px 0 0;
+  gap: 2px;
+  width: 100%;
+  margin: 18px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -421,57 +404,39 @@
   gap: 8px;
 }
 .end-day-name {
-  color: var(--ink-3);
-  font-size: var(--text-secondary);
-  font-weight: 700;
+  color: var(--ink-4);
+  font-size: 0.86rem;
+  font-weight: 500;
 }
 .end-day.is-today .end-day-name {
-  color: var(--gold);
-}
-:root[data-theme='light'] .end-day.is-today .end-day-name {
-  color: var(--gold-ink);
+  color: var(--ink-2);
+  font-weight: 700;
 }
 .end-day-mark {
   display: grid;
   place-items: center;
-  /* narrower on a narrow screen, so today's ring stays clear of the days beside it */
-  width: min(40px, 100% - 6px);
-  aspect-ratio: 1;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: var(--surface-2);
-  color: transparent;
+  color: var(--ink);
+  font-size: 1.2rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
   animation: day-in var(--dur-slow) var(--ease-spring) calc(300ms + var(--order, 0) * 70ms) both;
 }
-.end-day.is-learned .end-day-mark {
-  background: var(--gold);
-  color: #2a1a00;
-}
-/* kept by a freeze: ice blue */
-.end-day.is-frozen .end-day-mark {
-  background: var(--gems);
-  color: #03213b;
-}
-:root[data-theme='light'] .end-day.is-frozen .end-day-mark {
-  color: #ffffff;
-}
+/* a day that went by without a lesson: its date, more quietly, and nothing said against it */
 .end-day.is-missed .end-day-mark {
-  background: var(--surface-2);
+  color: var(--ink-4);
 }
-.end-day.is-ahead .end-day-mark {
-  background: none;
-  box-shadow: inset 0 0 0 2px var(--surface-3);
+/* today, still to learn: ringed */
+.end-day.is-today:not(.is-learned):not(.is-frozen) .end-day-mark {
+  box-shadow: inset 0 0 0 2px var(--gold);
 }
-/* today: ringed, and the last to arrive, with a pop */
+/* today's medal is the last to arrive, with a pop */
 .end-day.is-today .end-day-mark {
-  box-shadow:
-    0 0 0 3px var(--app-bg),
-    0 0 0 5px var(--gold);
   animation-name: day-pop;
   animation-duration: 520ms;
-}
-.end-day.is-today:not(.is-learned) .end-day-mark {
-  background: none;
-  box-shadow: inset 0 0 0 3px var(--gold);
 }
 @keyframes day-in {
   from {
@@ -487,6 +452,12 @@
   60% {
     opacity: 1;
     transform: scale(1.18);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .streak-card-medal,
+  .end-day-mark {
+    animation: none;
   }
 }
 

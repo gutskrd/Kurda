@@ -4,15 +4,18 @@ import {
   badgeShineSvg,
   badgeShines,
   badgeSvg,
+  dayMedalSvg,
   hasBadgeArt,
   leagueEmblemSvg,
   placementEmblemSvg,
   rankEmblemSvg,
   seasonFrameShineSvg,
   seasonFrameSvg,
+  streakMedalSvg,
   SEASON_FRAME_INNER,
   SEASON_FRAME_SHINE,
   type ArtBadgeTier,
+  type DayMedal,
   type Division,
   type LeagueTier,
   type RankTier,
@@ -115,6 +118,20 @@ export function RankEmblem({
     );
   }
   return <Svg svg={svg ?? ''} className={cls} />;
+}
+
+/** The medal a kept streak is handed: the gold pentagon with its laurel (shared art/medals.ts). */
+export function StreakMedal({ size = 96, title }: { size?: number; title: string }): React.JSX.Element {
+  const id = useArtId();
+  const svg = useMemo(() => streakMedalSvg({ size, title, idPrefix: id }), [size, title, id]);
+  return <Svg svg={svg} className="art art-medal" />;
+}
+
+/** A day's medal in the streak's week: gold with the laurel for a day learned, ice with a snowflake for one a freeze kept. */
+export function DayMedalArt({ kind, size = 36, title }: { kind: DayMedal; size?: number; title: string }): React.JSX.Element {
+  const id = useArtId();
+  const svg = useMemo(() => dayMedalSvg({ kind, size, title, idPrefix: id }), [kind, size, title, id]);
+  return <Svg svg={svg} className={`art art-medal is-${kind}`} />;
 }
 
 export function PlacementEmblem({ done, size = 96, title }: { done: number; size?: number; title: string }): React.JSX.Element {

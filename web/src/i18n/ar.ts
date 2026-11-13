@@ -1665,7 +1665,6 @@ export const ar: Catalogue = {
   'lesson.streak.freeze': '{done} من {per} جلسات حتى تجميدك التالي',
   'lesson.streak.freezeReadyOne': 'لديك تجميد محفوظ',
   'lesson.streak.freezeReady': 'لديك {count} تجميدات محفوظة',
-  'lesson.streak.dayStreak': 'سلسلة أيام',
   'lesson.streak.say.first': 'اليوم الأول، تم! كل سلسلة طويلة تبدأ هكذا تمامًا.',
   'lesson.streak.say.back': 'لقد عدت، وأنا سعيد جدًا! لنواصل غدًا.',
   'lesson.streak.say.best': 'أطول سلسلة لك حتى الآن! أنا فخور بك جدًا.',

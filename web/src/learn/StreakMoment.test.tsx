@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // the fire as its props: how big it burns and what it grows from, whoever draws it
 vi.mock('../components/Fire', () => import('../test/fireProbe'));
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, fireBesideWindow, flameMoment } from '@kurda/shared';
+import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, flameMoment } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { onLessonSound } from '../lib/sounds';
 import { preloadCatalogue } from '../i18n/catalogues';
@@ -13,7 +13,8 @@ import type { Streak } from './types';
  * The streak kept today: the flame that rolls the day on, and grows on the
  * day the fire grew, and the week it sits in — each day's state, the week
  * starting where the reader's calendar starts it, right to left in Soranî —
- * Hevalo's word for the day, and the fire's stage with the next one.
+ * on one card under the streak's medal, with Hevalo's word for the day, and
+ * the fire's stage with the next one.
  */
 
 const week: Streak = {
@@ -125,19 +126,34 @@ describe('the week', () => {
     expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
   });
 
-  it('has Hevalo say a word for the day it is, his head in at the window', () => {
+  it('hands over the streak’s medal on one card, with the streak in words and Hevalo’s word for the day it is', () => {
     inLanguage(<StreakWeek streak={week} />);
+    // the medal stands over the card: a picture beside words that already say it, so it is not read out twice
+    const medal = document.querySelector('.streak-card .streak-card-medal');
+    expect(medal).toHaveAttribute('aria-hidden', 'true');
+    expect(medal?.querySelector('svg')).toBeInTheDocument();
     expect(screen.getByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
-    expect(document.querySelector('.end-week-hevalo .hevalo-window [data-crop="head"]')).toHaveAttribute('data-speaker', 'hevalo');
-    // the fire burning on the floor beside it, as big as four days have grown it, its logs across the wall's corner
-    expect(document.querySelector('.end-week-scene .end-week-fire')).toHaveAttribute('data-stage', 'kindling');
-    const beside = fireBesideWindow(160);
-    expect(document.querySelector('.end-week-scene .end-week-fire')).toHaveAttribute('data-size', String(beside.fire));
-    expect(document.querySelector('.end-week-hevalo')).toHaveStyle({ '--fire-over': `${beside.over}px`, '--fire-drop': `${beside.drop}px` });
-    expect(document.querySelector('.end-week-scene .end-week-fire')).not.toHaveAttribute('data-from');
-    expect(document.querySelector('.end-week-scene .hevalo-window')).toBeInTheDocument();
-    // and the heading takes it along, for whoever lands on it
+    // the heading takes the word along, for whoever lands on it
     expect(screen.getByRole('heading', { name: '4-day streak' })).toHaveAccessibleDescription('Another day learned. See you again tomorrow!');
+    // over the card, what it is a card of
+    expect(document.querySelector('.streak-panel-name')).toHaveTextContent('Streak');
+  });
+
+  it('gives a day learned a gold medal, a day a freeze kept an ice one, and every other day its date', () => {
+    inLanguage(<StreakWeek streak={week} />);
+    const cells = screen.getAllByRole('listitem');
+    const mark = (i: number): Element => cells[i]!.querySelector('.end-day-mark')!;
+    // Monday the 26th learned, Tuesday kept by a freeze
+    expect(mark(0).querySelector('.art-medal')).toHaveClass('is-learned');
+    expect(mark(1).querySelector('.art-medal')).toHaveClass('is-frozen');
+    // Wednesday went by: its date, and nothing said against it
+    expect(mark(2)).toHaveTextContent('28');
+    expect(mark(2).querySelector('svg')).toBeNull();
+    // today, learned: the medal; the days to come: their dates
+    expect(mark(3).querySelector('.art-medal')).toHaveClass('is-learned');
+    expect([4, 5, 6].map((i) => mark(i).textContent)).toEqual(['30', '31', '1']);
+    // the names are a calendar's short ones
+    expect(cells.map((li) => li.querySelector('.end-day-name')?.textContent)).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
   });
 });
 

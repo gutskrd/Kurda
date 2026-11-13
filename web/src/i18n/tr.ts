@@ -1666,7 +1666,6 @@ export const tr: Catalogue = {
   'lesson.streak.freeze': 'Sonraki dondurucuna {per} oturumdan {done} tanesi tamam',
   'lesson.streak.freezeReadyOne': 'Bir dondurucun saklı',
   'lesson.streak.freezeReady': '{count} dondurucun saklı',
-  'lesson.streak.dayStreak': 'günlük seri',
   'lesson.streak.say.first': 'İlk gün tamam! Her uzun seri tam böyle başlar.',
   'lesson.streak.say.back': 'Geri döndün, çok sevindim! Yarın da devam edelim.',
   'lesson.streak.say.best': 'Şimdiye kadarki en uzun serin! Seninle gurur duyuyorum.',

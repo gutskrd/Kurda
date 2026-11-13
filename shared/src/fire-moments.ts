@@ -1,13 +1,10 @@
 /**
  * The growing fire (fire-stages.ts) where it is a moment of its own, the same
  * on both apps: the streak kept, lighting up and on the day its fire grew, a
- * run's milestone in a lesson, the ladder of stages a streak climbs, and the
- * fire by Hevalo's window in the streak's week.
+ * run's milestone in a lesson, and the ladder of stages a streak climbs.
  */
 
-import { FIRE_LOGS, FIRE_VIEW } from './art/fire.js';
 import { CELEBRATE_MS } from './celebration.js';
-import { WINDOW_PLACE, WINDOW_VIEW } from './characters/window.js';
 import { FIRE_GROW, FIRE_STAGES, FIRE_STAGE_DAYS, fireGrewToday, fireLevel, fireStageIndex, runFireLevel, type FireLevel, type FireStage } from './fire-stages.js';
 
 /** A stage the fire burns at: every one but the cold logs. */
@@ -93,45 +90,6 @@ export function flameMoment(days: number): FlameMoment {
     overMs: grew ? LANDS_AT_MS + FIRE_GREW_READ_MS : FLAME_IGNITE.atMs + CELEBRATE_MS,
     zoom: ZOOM[fireLevel(days).stage] ?? 1,
   };
-}
-
-/** How tall the fire beside Hevalo's window is drawn, as a share of the window's height: a spark small but plain beside him, the Newroz fire grand, short of his face. */
-const BESIDE = 0.94;
-/** How far its logs lie across the wall's corner, as a share of their length. */
-const ACROSS = 0.25;
-/** How far its logs lie below the wall's foot, as a share of the window's height: on the floor, nearer to us than the wall. */
-const NEARER = 0.015;
-
-export interface FireBesideWindow {
-  /** how tall the fire is drawn (its `size`) */
-  fire: number;
-  /** how far the fire's box reaches over the window's */
-  over: number;
-  /** how far the fire's box reaches below the window's */
-  drop: number;
-  /** how far the window's middle, and the fire's, stand from the middle of the two together, each to its own side */
-  windowAside: number;
-  fireAside: number;
-}
-
-/**
- * The streak's week: Hevalo's window `tall` high, and the fire burning on
- * the floor in front of its lower corner, on the side the reading starts
- * from. Laid out from where the logs lie in the fire's box (`FIRE_LOGS`) and
- * where the wall stands in the window's (`WINDOW_PLACE.wall`): the fire's logs
- * across the wall's corner and a little below its foot, nearer than the wall.
- * The same at every stage, so the scene never moves: the logs lie where they
- * lie, and the fire on them grows.
- */
-export function fireBesideWindow(tall: number): FireBesideWindow {
-  const fire = tall * BESIDE;
-  const unit = fire / FIRE_VIEW.h;
-  const fireWide = FIRE_VIEW.w * unit;
-  const windowWide = (tall * WINDOW_VIEW.w) / WINDOW_VIEW.h;
-  const { wall } = WINDOW_PLACE;
-  const over = fireWide - (FIRE_LOGS.x + FIRE_LOGS.w) * unit + wall.left * windowWide + ACROSS * FIRE_LOGS.w * unit;
-  const drop = (FIRE_VIEW.y + FIRE_VIEW.h - FIRE_LOGS.y - FIRE_LOGS.h) * unit - (1 - wall.foot) * tall + NEARER * tall;
-  return { fire, over, drop, windowAside: (fireWide - over) / 2, fireAside: (windowWide - over) / 2 };
 }
 
 /** How long a run's milestone has the screen, unless a tap or a key goes on sooner. */

@@ -11,7 +11,7 @@ vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'
 vi.mock('../../theme/Fire', () => import('../../theme/testing/fireProbe'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { AccessibilityInfo, Animated } from 'react-native';
-import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, fireBesideWindow, flameMoment } from '@kurda/shared';
+import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, flameMoment } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { onHaptic, resetHaptics } from '../../feedback/haptics';
@@ -130,9 +130,6 @@ describe('the kept streak', () => {
     show({ current: 1, longest: 9 });
     fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     expect(await screen.findByText('Welcome back! A fresh start is still a great start.')).toBeTruthy();
-    // his head in at the window under his words, the fire burning in front of it: drawn after it, so over its corner
-    const scene = within(screen.getByTestId('lesson-streak-day'));
-    expect(scene.getByTestId('hevalo-window').compareDocumentPosition(scene.getByTestId('fire')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     cleanup();
 
     show({ current: 9, longest: 9 });
@@ -230,32 +227,47 @@ describe('the day the fire grew', () => {
   });
 });
 
-describe('the fire beside the window', () => {
+describe('the streak’s card', () => {
   const stage = async (current: number): Promise<string | null> => {
     show({ current, longest: Math.max(current, 9) });
     fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     await screen.findByTestId('lesson-streak-day');
     const line = screen.queryByTestId('streak-stage')?.textContent ?? null;
-    const fire = within(screen.getByTestId('lesson-streak-day')).getByTestId('fire').dataset.stage;
     cleanup();
-    return `${fire}: ${line}`;
+    return line;
   };
 
-  it('burns at the fire of today, its stage named under the streak with the next as a near goal', async () => {
-    expect(await stage(1)).toBe('spark: Spark · a little flame at 3 days');
-    expect(await stage(5)).toBe('kindling: Little flame · a campfire at 7 days');
-    expect(await stage(12)).toBe('campfire: Campfire · a big fire at 14 days');
-    expect(await stage(45)).toBe('bonfire: Bonfire · a blaze at 100 days');
+  it('names the fire’s stage under the card, with the next as a near goal', async () => {
+    expect(await stage(1)).toBe('Spark · a little flame at 3 days');
+    expect(await stage(5)).toBe('Little flame · a campfire at 7 days');
+    expect(await stage(12)).toBe('Campfire · a big fire at 14 days');
+    expect(await stage(45)).toBe('Bonfire · a blaze at 100 days');
     // at the biggest there is, simply its name
-    expect(await stage(400)).toBe('newroz: Newroz fire');
+    expect(await stage(400)).toBe('Newroz fire');
   });
 
-  it('stands the fire on the floor by the window, its logs across the wall corner', async () => {
+  it('hands over the streak’s medal on the card, a picture beside the words that say it', async () => {
     show({ current: 12 });
     fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
-    const fire = within(await screen.findByTestId('lesson-streak-day')).getByTestId('fire');
-    expect(Number(fire.dataset.size)).toBe(fireBesideWindow(156).fire);
-    expect(fire.parentElement!.style.bottom).toBe(`${-fireBesideWindow(156).drop}px`);
+    const card = within(await screen.findByTestId('lesson-streak-day'));
+    // drawn; the heading under it is the streak in words
+    expect(card.getByTestId('streak-medal').querySelector('svg')).toBeTruthy();
+    expect(card.getByRole('heading', { name: '12 day streak' })).toBeTruthy();
+    expect(card.getByText('Streak')).toBeTruthy();
+  });
+
+  it('gives a day learned and a day a freeze kept a medal each, and every other day its date', async () => {
+    show({ recent: [{ date: '2026-10-26', kind: 'learned' }, { date: '2026-10-27', kind: 'frozen' }] });
+    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    const week = within(await screen.findByTestId('streak-week'));
+    const mark = (date: string): HTMLElement => within(week.getByTestId(`week-${date}`)).getByTestId(/^day-/);
+    expect(mark('2026-10-26').querySelector('svg')).toBeTruthy();
+    expect(mark('2026-10-27').querySelector('svg')).toBeTruthy();
+    // the two medals are told apart by their sign, not only their colour
+    expect(mark('2026-10-26').innerHTML).not.toBe(mark('2026-10-27').innerHTML);
+    // Wednesday went by, today is still to learn, and the rest are to come: each its date
+    expect(['2026-10-28', '2026-10-29', '2026-10-30', '2026-10-31', '2026-11-01'].map((d) => mark(d).textContent)).toEqual(['28', '29', '30', '31', '1']);
+    expect(mark('2026-10-28').querySelector('svg')).toBeNull();
   });
 
   it('names the stage in Sorani too', async () => {

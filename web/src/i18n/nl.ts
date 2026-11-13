@@ -1671,7 +1671,6 @@ export const nl: Catalogue = {
   'lesson.streak.freeze': '{done} van {per} sessies tot je volgende bevriezing',
   'lesson.streak.freezeReadyOne': 'Je hebt een bevriezing bewaard',
   'lesson.streak.freezeReady': 'Je hebt {count} bevriezingen bewaard',
-  'lesson.streak.dayStreak': 'dagen op rij',
   'lesson.streak.say.first': 'Dag één, gedaan! Elke lange reeks begint precies zo.',
   'lesson.streak.say.back': 'Je bent terug, wat fijn! Morgen gaan we verder.',
   'lesson.streak.say.best': 'Je langste reeks tot nu toe! Ik ben zo trots op je.',

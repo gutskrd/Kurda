@@ -1677,7 +1677,6 @@ export const ckb: Catalogue = {
   'lesson.streak.freeze': '{done} لە {per} دانیشتن بۆ بەستنی داهاتووت',
   'lesson.streak.freezeReadyOne': 'بەستنێکت هەڵگرتووە',
   'lesson.streak.freezeReady': '{count} بەستنت هەڵگرتووە',
-  'lesson.streak.dayStreak': 'ڕۆژی لەسەریەک',
   'lesson.streak.say.first': 'ڕۆژی یەکەم تەواو بوو! هەموو زنجیرەیەکی درێژ بەم شێوەیە دەست پێدەکات.',
   'lesson.streak.say.back': 'گەڕایتەوە، زۆر دڵخۆشم! با سبەینێش بەردەوام بین.',
   'lesson.streak.say.best': 'درێژترین زنجیرەت تا ئێستا! زۆر شانازیت پێوە دەکەم.',

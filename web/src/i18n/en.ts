@@ -1756,7 +1756,6 @@ export const en = {
   'lesson.streak.freeze': '{done} of {per} sessions to your next freeze',
   'lesson.streak.freezeReadyOne': 'You have a freeze saved',
   'lesson.streak.freezeReady': 'You have {count} freezes saved',
-  'lesson.streak.dayStreak': 'day streak',
   'lesson.streak.say.first': 'Day one, done! Every long streak starts just like this.',
   'lesson.streak.say.back': 'You’re back, and I’m so happy! Let’s keep it going tomorrow.',
   'lesson.streak.say.best': 'Your longest streak yet! I’m so proud of you.',

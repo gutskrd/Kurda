@@ -1671,7 +1671,6 @@ export const de: Catalogue = {
   'lesson.streak.freeze': '{done} von {per} Einheiten bis zur nächsten Einfrierung',
   'lesson.streak.freezeReadyOne': 'Du hast eine Einfrierung gespeichert',
   'lesson.streak.freezeReady': 'Du hast {count} Einfrierungen gespeichert',
-  'lesson.streak.dayStreak': 'Tage in Folge',
   'lesson.streak.say.first': 'Tag eins geschafft! Jede lange Serie fängt genau so an.',
   'lesson.streak.say.back': 'Du bist zurück, wie schön! Morgen machen wir weiter.',
   'lesson.streak.say.best': 'Deine längste Serie bisher! Ich bin so stolz auf dich.',

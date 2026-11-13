@@ -2,9 +2,7 @@
  * How an icon's parts are painted as a small enamel glyph in a metal: the
  * part says what it is (the metal, its shaded face, an accent, snow, a cut
  * line), this decides the colour and the light. The season mark on the rank
- * emblems draws its season this way; a badge paints the same parts as its
- * hero, in their own colours (hero.ts), so a snowflake is the same snowflake
- * on both.
+ * emblems draws its season this way.
  *
  * A glyph is the brightest thing on its badge — it is lit from within, the
  * metal's highlight at the top running to its light tone at the bottom. Parts

@@ -8,17 +8,20 @@ import {
   badgeShineSvg,
   badgeShines,
   badgeSvg,
+  dayMedalSvg,
   hasBadgeArt,
   leagueEmblemSvg,
   placementEmblemSvg,
   rankEmblemSvg,
   seasonFrameShineSvg,
   seasonFrameSvg,
+  streakMedalSvg,
   type ArtBadgeKey,
   type ArtBadgeTier,
   type ArtSeason,
   type ArtSlotFamily,
   type BadgeState,
+  type DayMedal,
   type Division,
   type LeagueTier,
   type RankTier,
@@ -76,6 +79,20 @@ function Art({ xml, size, label, style }: { xml: string; size: number; label: st
       </View>
     </View>
   );
+}
+
+/** The medal a kept streak is handed: the gold pentagon with its laurel (shared art/medals.ts). */
+export function StreakMedal({ size, label }: { size: number; label: string }): React.JSX.Element {
+  const idPrefix = useArtId();
+  const xml = useMemo(() => streakMedalSvg({ size, title: label, idPrefix }), [size, label, idPrefix]);
+  return <Art xml={xml} size={size} label={label} />;
+}
+
+/** A day's medal in the streak's week: gold with the laurel for a day learned, ice with a snowflake for one a freeze kept. */
+export function DayMedalArt({ kind, size, label }: { kind: DayMedal; size: number; label: string }): React.JSX.Element {
+  const idPrefix = useArtId();
+  const xml = useMemo(() => dayMedalSvg({ kind, size, title: label, idPrefix }), [kind, size, label, idPrefix]);
+  return <Art xml={xml} size={size} label={label} />;
 }
 
 /**

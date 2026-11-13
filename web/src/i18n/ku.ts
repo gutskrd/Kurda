@@ -1673,7 +1673,6 @@ export const ku: Catalogue = {
   'lesson.streak.freeze': '{done} ji {per} danişînan heta cemidandina te ya din',
   'lesson.streak.freezeReadyOne': 'Cemidandinek li cem te ye',
   'lesson.streak.freezeReady': '{count} cemidandin li cem te ne',
-  'lesson.streak.dayStreak': 'rojên li pey hev',
   'lesson.streak.say.first': 'Roja yekem qediya! Her rêzeke dirêj wiha dest pê dike.',
   'lesson.streak.say.back': 'Tu vegeriyayî, ez pir kêfxweş im! Em sibê jî bidomînin.',
   'lesson.streak.say.best': 'Rêza te ya herî dirêj heta niha! Ez bi te serbilind im.',

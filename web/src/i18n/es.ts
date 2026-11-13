@@ -1669,7 +1669,6 @@ export const es: Catalogue = {
   'lesson.streak.freeze': '{done} de {per} sesiones para tu próximo congelador',
   'lesson.streak.freezeReadyOne': 'Tienes un congelador guardado',
   'lesson.streak.freezeReady': 'Tienes {count} congeladores guardados',
-  'lesson.streak.dayStreak': 'días seguidos',
   'lesson.streak.say.first': '¡Primer día, hecho! Toda racha larga empieza justo así.',
   'lesson.streak.say.back': '¡Has vuelto y me alegro mucho! Sigamos mañana.',
   'lesson.streak.say.best': '¡Tu racha más larga hasta ahora! Estoy muy orgulloso de ti.',

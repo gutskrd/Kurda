@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type TextStyle } from 'react-native';
-import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import {
   FIRE_VIEW,
   FLAME_IGNITE,
   STREAK_DAY_TIMING,
-  fireBesideWindow,
   fireFrame,
   fireLevel,
   fireSizeToFit,
@@ -20,14 +19,13 @@ import {
 } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useCelebrationHold } from '../../badges/BadgeCelebrationHost';
-import { HevaloWindow } from '../../characters/HevaloWindow';
-import { REST, TONES } from '../../coursemap/path';
 import { haptic } from '../../feedback/haptics';
 import { playSound } from '../../feedback/sounds';
 import { useI18n } from '../../i18n/I18nContext';
 import { formatNumber } from '../../i18n/format';
 import type { TranslationKey } from '../../i18n/translations';
 import { useScreenBottomInset, useScreenTopInset } from '../../navigation/tabBarLayout';
+import { DayMedalArt, StreakMedal } from '../../ranks/art';
 import { useDirection } from '../../reports/direction';
 import { FIRE_GREW, FIRE_NEXT, FIRE_STAGE_NAME } from '../../streak/fireWords';
 import { springTo, timing } from '../../theme/animate';
@@ -48,19 +46,11 @@ const FLAME_MOST = 400;
 /** The ring that bursts out of the fire as it lights, and the glow behind it. */
 const RING = 168;
 const GLOW = RING * 1.6;
-/** The day's number on the flame's screen, and on the streak's. */
+/** The day's number on the flame's screen. */
 const NUMBER = 112;
-const NUMBER_SMALL = 88;
-/**
- * Hevalo's window under his words, and the fire on the floor in front of it,
- * by its lower corner on the side the reading starts from (shared
- * `fireBesideWindow`): its logs across the wall's corner, a little nearer
- * than the wall. The two stand together in the middle, the window towards
- * where the reading ends and the fire towards where it starts.
- */
-const WINDOW = 156;
-const BESIDE = fireBesideWindow(WINDOW);
-/** A day of the week: the circle, and when the circles arrive one after another, today's last. */
+/** The streak's medal, which stands half over the top edge of the streak's card. */
+const MEDAL = 132;
+/** A day of the week: its medal or its date, and when they arrive one after another, today's last. */
 const DAY = 36;
 const DAY_STAGGER_MS = 50;
 
@@ -85,10 +75,13 @@ const SPEECH: Record<StreakMood, readonly [TranslationKey, TranslationKey]> = {
  * and the pop leaps on up into its new stage, felt and heard as that lands,
  * with a line under the day saying what it grew into, and it stays until the
  * line has been read. A tap, or a second and a half after it lights, moves on to
- * the streak itself: Hevalo with a few words about the day (a first day, a
- * comeback, a longest run yet, or another day), the number, the fire's stage
- * and the next one, the week with the days learned in it, how near the next
- * freeze is, and one button — "See you tomorrow" once today's goal is done.
+ * the streak itself, on one card: the streak's medal standing half over its
+ * top edge, the streak in words, a few words from Hevalo about the day (a
+ * first day, a comeback, a longest run yet, or another day) and the week,
+ * each day a small medal if it was learned and its date if it is still to
+ * come. Under the card are the fire's stage with the next one and how near
+ * the next freeze is, and one button — "See you tomorrow" once today's goal
+ * is done.
  *
  * The week needs the learner's own today and recent days from the server; an
  * older server sends neither, and then the week is left out rather than
@@ -363,7 +356,6 @@ function RollingNumber({
 function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; goalDone: boolean; onContinue: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const dir = useDirection();
   const reduce = useReducedMotion();
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
@@ -373,59 +365,54 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
   const speech = streakSpeech(streak);
   const words = t(SPEECH[speech.mood][speech.line], { count: formatNumber(day, locale) });
   const arrive = useRef(new Animated.Value(reduce ? 1 : 0)).current;
+  const land = useRef(new Animated.Value(reduce ? 1 : 0)).current;
   // only a server that says what today is, and which days were learned, has a week to show
   const week = streak.today && streak.recent ? streakWeek({ today: streak.today, recent: streak.recent, startsOn: weekStartsOn(locale) }) : null;
 
   useEffect(() => {
     if (reduce) {
       arrive.setValue(1);
+      land.setValue(1);
       return;
     }
-    const run = timing(arrive, 1, duration.slow);
+    // the card rises into place, and the medal lands on it the way anything earned arrives here
+    const run = Animated.parallel([timing(arrive, 1, duration.slow), springTo(land, 1, 'bouncy', 120)]);
     run.start();
     return () => run.stop();
-  }, [reduce, arrive]);
+  }, [reduce, arrive, land]);
   const rise = arrive.interpolate({ inputRange: [0, 1], outputRange: [10, 0] });
-  // the window and the bubble's point at it towards where the reading ends, the fire towards where it starts
-  const toEnd = dir.rtl ? -1 : 1;
+  const title = `${formatNumber(day, locale)} ${t(unitFor(day))}`;
 
   return (
     <View style={[styles.screen, { paddingTop: top }]} testID="lesson-streak-day">
       <ScrollView contentContainerStyle={styles.weekBody}>
-        <Animated.View style={[styles.speaker, { opacity: arrive, transform: [{ translateY: rise }] }]}>
-          <View style={[styles.bubble, { backgroundColor: colors.surface, borderColor: colors.separator }]}>
-            <Text style={[styles.bubbleText, dir.text, { color: colors.textPrimary }]}>{words}</Text>
-            <View
-              style={[styles.tail, { backgroundColor: colors.surface, borderColor: colors.separator, transform: [{ translateX: toEnd * BESIDE.windowAside }, { rotate: '45deg' }] }]}
-            />
-          </View>
-          {/* Hevalo with his head in at the window under his words, the fire burning on the ground in front of it */}
-          <View style={styles.hevalo} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <HevaloWindow size={WINDOW} flip={dir.rtl} reaction="cheer" style={{ transform: [{ translateX: toEnd * BESIDE.windowAside }] }} />
-            <View style={[styles.inFront, { bottom: -BESIDE.drop, transform: [{ translateX: -toEnd * BESIDE.fireAside }] }]}>
-              <Fire size={BESIDE.fire} level={level} />
-            </View>
+        {/* a quiet panel with its name at the top, and on it the card, the medal half over the card's top edge */}
+        <Animated.View style={[styles.panel, { backgroundColor: colors.controlTrack, opacity: arrive, transform: [{ translateY: rise }] }]}>
+          <Text style={[styles.panelName, { color: colors.textSecondary }]}>{t('profile.stat.streak')}</Text>
+          <View style={[styles.card, { backgroundColor: colors.surface }]}>
+            {/* a picture beside the words that say it: not read out a second time */}
+            <Animated.View
+              style={[styles.medal, { opacity: land.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1] }), transform: [{ scale: land.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }] }]}
+              accessibilityElementsHidden
+              importantForAccessibility="no-hide-descendants"
+              testID="streak-medal"
+            >
+              <StreakMedal size={MEDAL} label="" />
+            </Animated.View>
+            <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header" maxFontSizeMultiplier={1.3}>
+              {title}
+            </Text>
+            <Text style={[styles.cheer, { color: colors.textSecondary }]}>{words}</Text>
+            {week ? <WeekRow week={week} travel={!reduce} /> : null}
           </View>
         </Animated.View>
-        <View
-          style={styles.count}
-          accessible
-          accessibilityRole="header"
-          accessibilityLabel={`${formatNumber(day, locale)} ${t(unitFor(day))}`}
-        >
-          <Text style={[styles.bigNumber, { color: colors.goldText }]} maxFontSizeMultiplier={1}>
-            {formatNumber(day, locale)}
-          </Text>
-          <Text style={[styles.unit, { color: colors.goldText }]}>{t(unitFor(day))}</Text>
-        </View>
         {/* the fire's stage, and the next as a near goal: never a countdown, and at the Newroz fire simply its name */}
         {level.stage !== 'cold' ? (
           <Text style={[styles.stage, { color: colors.textSecondary }]} testID="streak-stage">
-            <Text style={[styles.stageName, { color: colors.goldText }]}>{t(FIRE_STAGE_NAME[level.stage])}</Text>
+            <Text style={[styles.stageName, { color: colors.textPrimary }]}>{t(FIRE_STAGE_NAME[level.stage])}</Text>
             {next && next.stage !== 'cold' && next.stage !== 'spark' ? ` · ${t(FIRE_NEXT[next.stage], { count: formatNumber(next.at, locale) })}` : null}
           </Text>
         ) : null}
-        {week ? <WeekRow week={week} travel={!reduce} /> : null}
         <FreezeLine streak={streak} />
       </ScrollView>
       <View style={[styles.bar, { paddingBottom: bottom }]}>
@@ -436,15 +423,16 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
 }
 
 /**
- * The week the streak was kept in: the days' initials over seven circles,
+ * The week the streak was kept in: the days' initials over seven places,
  * from the day the learner's week starts on (Saturday in Kurdish and Arabic).
- * A day learned is gold with a check, one a freeze kept is ice blue with a
- * check, today not learned yet is a gold ring, a missed day a muted disc and a
- * day still ahead an empty ring — a shape for each, never the colour alone.
- * The circles arrive one after another and today's pops in last.
+ * A day learned wears a small gold medal with the laurel, one a freeze kept an
+ * ice-blue one with a snowflake; a day still to come is its date, and so is
+ * one that went by without a lesson, more quietly — never a cross. Today,
+ * still to learn, is its date in a gold ring. A sign for each, never the
+ * colour alone. They arrive one after another and today's pops in last.
  */
 function WeekRow({ week, travel }: { week: WeekDay[]; travel: boolean }): React.JSX.Element {
-  const { colors, scheme } = useTheme();
+  const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
   const initials = t('lesson.streak.weekdays').split(' ');
@@ -459,20 +447,15 @@ function WeekRow({ week, travel }: { week: WeekDay[]; travel: boolean }): React.
   const others = week.filter((d) => !d.isToday).length;
   let order = 0;
   return (
-    <View
-      style={[styles.week, { flexDirection: dir.row, backgroundColor: colors.surface }]}
-      accessible
-      accessibilityLabel={summary}
-      testID="streak-week"
-    >
+    <View style={[styles.week, { flexDirection: dir.row }]} accessible accessibilityLabel={summary} testID="streak-week">
       {week.map((d) => {
         const at = d.isToday ? others : order++;
         return (
           <View key={d.date} style={styles.dayColumn} testID={`week-${d.date}`}>
-            <Text style={[styles.dayName, { color: d.isToday ? colors.goldText : colors.textSecondary }, d.isToday && styles.dayNameToday]} maxFontSizeMultiplier={1.3}>
+            <Text style={[styles.dayName, { color: d.isToday ? colors.textPrimary : colors.textSecondary }, d.isToday && styles.dayNameToday]} maxFontSizeMultiplier={1.3}>
               {initials[d.weekday] ?? ''}
             </Text>
-            <DayCircle day={d} delayMs={at * DAY_STAGGER_MS + (d.isToday ? STREAK_DAY_TIMING.countAtMs : 0)} travel={travel} scheme={scheme} />
+            <DayMark day={d} delayMs={at * DAY_STAGGER_MS + (d.isToday ? STREAK_DAY_TIMING.countAtMs : 0)} travel={travel} />
           </View>
         );
       })}
@@ -480,8 +463,10 @@ function WeekRow({ week, travel }: { week: WeekDay[]; travel: boolean }): React.
   );
 }
 
-function DayCircle({ day, delayMs, travel, scheme }: { day: WeekDay; delayMs: number; travel: boolean; scheme: 'light' | 'dark' }): React.JSX.Element {
+/** One day's place in the week: its medal, or its date. */
+function DayMark({ day, delayMs, travel }: { day: WeekDay; delayMs: number; travel: boolean }): React.JSX.Element {
   const { colors } = useTheme();
+  const { locale } = useI18n();
   const pop = useRef(new Animated.Value(travel ? 0 : 1)).current;
   useEffect(() => {
     if (!travel) {
@@ -492,30 +477,22 @@ function DayCircle({ day, delayMs, travel, scheme }: { day: WeekDay; delayMs: nu
     run.start();
     return () => run.stop();
   }, [travel, pop, delayMs, day.isToday]);
-  const ice = TONES[scheme].river;
-  const rest = REST[scheme];
-  const look =
-    day.state === 'learned'
-      ? { backgroundColor: colors.gold, borderColor: colors.gold, mark: colors.textOnGold }
-      : day.state === 'frozen'
-        ? { backgroundColor: ice.fill, borderColor: ice.fill, mark: ice.ink }
-        : day.state === 'today'
-          ? { backgroundColor: 'transparent', borderColor: colors.gold, mark: null }
-          : day.state === 'missed'
-            ? { backgroundColor: rest.fill, borderColor: rest.fill, mark: null }
-            : { backgroundColor: 'transparent', borderColor: rest.fill, mark: null };
   const scale = day.isToday && travel ? pop.interpolate({ inputRange: [0, 1], outputRange: [0.2, 1] }) : 1;
+  const medal = day.state === 'learned' || day.state === 'frozen' ? day.state : null;
+  // the day of the month, from the date as the server wrote it: no time zone moves it
+  const date = Number(day.date.slice(8, 10));
   return (
     <Animated.View
-      style={[styles.day, { backgroundColor: look.backgroundColor, borderColor: look.borderColor, opacity: pop, transform: [{ scale }] }]}
+      style={[styles.day, day.state === 'today' ? [styles.dayRing, { borderColor: colors.gold }] : null, { opacity: pop, transform: [{ scale }] }]}
       testID={`day-${day.state}`}
     >
-      {look.mark ? (
-        // a check as bold as the circle it sits in; the icon set's is a hairline
-        <Svg width={18} height={18} viewBox="0 0 24 24">
-          <Path d="M5 12.5 L10 17.5 L19 7.5" stroke={look.mark} strokeWidth={3.4} strokeLinecap="round" strokeLinejoin="round" fill="none" />
-        </Svg>
-      ) : null}
+      {medal ? (
+        <DayMedalArt kind={medal} size={DAY} label="" />
+      ) : (
+        <Text style={[styles.dayDate, { color: day.state === 'missed' ? colors.textSecondary : colors.textPrimary }, day.state === 'missed' && styles.dayGone]} maxFontSizeMultiplier={1.2}>
+          {formatNumber(date, locale)}
+        </Text>
+      )}
     </Animated.View>
   );
 }
@@ -572,24 +549,25 @@ const styles = StyleSheet.create({
   rolling: { flexDirection: 'row', justifyContent: 'center' },
   leaving: { position: 'absolute', top: 0, left: 0, right: 0, textAlign: 'center' },
   weekBody: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: layout.gutter, paddingVertical: spacing.md, gap: spacing.md, maxWidth: layout.column, width: '100%', alignSelf: 'center' },
-  speaker: { alignItems: 'center', gap: spacing.md },
-  bubble: { alignSelf: 'stretch', borderRadius: radii.lg, borderWidth: 1.5, paddingVertical: spacing.md, paddingHorizontal: spacing.md + 4 },
-  bubbleText: { fontSize: typography.sizes.md, lineHeight: 24 },
-  // the bubble's point, towards Hevalo under it
-  tail: { position: 'absolute', bottom: -8, alignSelf: 'center', width: 16, height: 16, borderRightWidth: 1.5, borderBottomWidth: 1.5 },
-  hevalo: { alignItems: 'center', justifyContent: 'flex-end' },
-  // its logs a little below the wall's foot, on the floor nearer than the wall
-  inFront: { position: 'absolute' },
-  count: { alignItems: 'center' },
-  bigNumber: { ...display(NUMBER_SMALL), fontVariant: ['tabular-nums'], textAlign: 'center' },
-  unit: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center', marginTop: -spacing.xs },
-  stage: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center', marginTop: -spacing.sm },
+  // the panel leaves the medal its room above the card
+  panel: { borderRadius: radii.xl, paddingTop: spacing.md + 4, paddingHorizontal: spacing.sm, paddingBottom: spacing.sm },
+  panelName: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center', marginBottom: MEDAL / 2 + spacing.sm },
+  card: { alignItems: 'center', gap: spacing.xs + 2, borderRadius: radii.lg, paddingTop: MEDAL / 2 + spacing.sm, paddingBottom: spacing.md + 4, paddingHorizontal: spacing.sm },
+  // half over the card's top edge
+  medal: { position: 'absolute', top: -MEDAL / 2, alignSelf: 'center' },
+  title: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center', letterSpacing: -0.4 },
+  cheer: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center', paddingHorizontal: spacing.sm },
+  stage: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
   stageName: { fontWeight: typography.weights.bold },
-  week: { justifyContent: 'space-between', borderRadius: radii.lg, paddingVertical: spacing.md - 2, paddingHorizontal: spacing.sm },
-  dayColumn: { flex: 1, alignItems: 'center', gap: spacing.xs + 2 },
-  dayName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
+  week: { alignSelf: 'stretch', justifyContent: 'space-between', marginTop: spacing.md },
+  dayColumn: { flex: 1, alignItems: 'center', gap: spacing.sm },
+  dayName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
   dayNameToday: { fontWeight: typography.weights.bold },
-  day: { width: DAY, height: DAY, borderRadius: radii.pill, borderWidth: 2.5, alignItems: 'center', justifyContent: 'center' },
+  day: { width: DAY, height: DAY, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  // today, still to learn: its date in a ring
+  dayRing: { borderWidth: 2 },
+  dayDate: { fontSize: typography.sizes.md + 1, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  dayGone: { opacity: 0.7 },
   freeze: { alignSelf: 'stretch', gap: spacing.sm },
   freezeHead: { alignItems: 'center', gap: spacing.sm },
   freezeText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },

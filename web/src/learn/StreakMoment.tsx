@@ -4,7 +4,6 @@ import {
   FIRE_VIEW,
   FLAME_IGNITE,
   celebrationPlan,
-  fireBesideWindow,
   fireFrame,
   fireLevel,
   fireSizeToFit,
@@ -20,9 +19,8 @@ import {
   type WeekDay,
   type WeekDayState,
 } from '@kurda/shared';
-import { HevaloWindow } from '../characters/HevaloWindow';
 import { Fire } from '../components/Fire';
-import { CheckIcon } from '../components/icons';
+import { DayMedalArt, StreakMedal } from '../ranks/art';
 import { CelebrationArt } from '../ranks/Celebration';
 import { prefersReducedMotion, useCelebrationMoment } from '../lib/motion';
 import { playLessonSound } from '../lib/sounds';
@@ -48,10 +46,12 @@ import type { Streak } from './types';
  * been read. Under reduced motion nothing squashes, rings or travels: the dim
  * screen cross-fades to the warm one.
  *
- * Then the week (`StreakWeek`): Hevalo, his head in at the window by the
- * fire, saying a warm word for the day it is — a first day, a comeback, a new
- * best, or simply another day — the number and "day streak", the fire's stage
- * and the next one, the seven days of this week with what happened on each,
+ * Then the week (`StreakWeek`): one card. The streak's medal stands half over
+ * its top edge, gold with a laurel; under it the streak in words, a warm word
+ * from Hevalo for the day it is — a first day, a comeback, a new best, or
+ * simply another day — and the seven days of this week, each a small medal if
+ * it was learned (or kept by a freeze) and its date if it is still to come.
+ * Under the card are the fire the streak has grown into, with the next one,
  * and how far the freezes have got.
  * Nothing counts down, warns or asks for anything: a streak is a number that
  * went up.
@@ -197,16 +197,9 @@ const CHEERS: Record<StreakMood, MessageKey> = {
   ordinary: 'lesson.streak.say.steady',
 };
 
-/**
- * Hevalo's window under his words, and the fire on the floor in front of it,
- * by its lower corner on the side the reading starts from (shared
- * `fireBesideWindow`): its logs across the wall's corner, a little nearer
- * than the wall. The two stand together in the middle, the window towards
- * where the reading ends, where the bubble points.
- */
-const WINDOW = 160;
-const BESIDE = fireBesideWindow(WINDOW);
-const SCENE = { '--fire-over': `${BESIDE.over}px`, '--fire-drop': `${BESIDE.drop}px`, '--window-aside': `${BESIDE.windowAside}px` } as React.CSSProperties;
+/** The medal over the card's top edge, and a day's medal in the row of the week. */
+const MEDAL = 132;
+const DAY_MEDAL = 38;
 
 const DAY_WORDS: Record<WeekDayState, MessageKey> = {
   learned: 'lesson.streak.week.learned',
@@ -233,37 +226,34 @@ export function StreakWeek({ streak }: { streak: Streak }): React.JSX.Element {
 
   return (
     <section className="end-week" aria-labelledby="end-week-title">
-      <div className="end-week-hevalo" style={SCENE}>
-        <p className="end-bubble" id="end-week-cheer">
-          {t(CHEERS[streakMood(streak)])}
-        </p>
-        <div className="end-week-scene">
-          <Fire size={BESIDE.fire} level={level} className="end-week-fire" />
-          <HevaloWindow size={WINDOW} reaction="cheer" />
+      <div className="streak-panel">
+        {/* the panel's own name, as a shelf says what stands on it */}
+        <p className="streak-panel-name">{t('profile.stat.streak')}</p>
+        <div className="streak-card">
+          <span className="streak-card-medal" aria-hidden="true">
+            <StreakMedal size={MEDAL} title="" />
+          </span>
+          <h2 className="streak-card-title" id="end-week-title" tabIndex={-1} ref={heading} aria-describedby="end-week-cheer">
+            {t('learn.today.streak', { count: number(streak.current) })}
+          </h2>
+          <p className="streak-card-cheer" id="end-week-cheer">
+            {t(CHEERS[streakMood(streak)])}
+          </p>
+          {days && (
+            <ol className="end-days" aria-label={t('lesson.streak.week')}>
+              {days.map((day, i) => (
+                <WeekCell key={day.date} day={day} order={i} />
+              ))}
+            </ol>
+          )}
         </div>
       </div>
-      <h2 className="end-week-count" id="end-week-title" tabIndex={-1} ref={heading} aria-describedby="end-week-cheer">
-        <span className="end-week-number" aria-hidden="true">
-          {number(streak.current)}
-        </span>
-        <span className="end-week-words" aria-hidden="true">
-          {t('lesson.streak.dayStreak')}
-        </span>
-        <span className="sr-only">{t('learn.today.streak', { count: number(streak.current) })}</span>
-      </h2>
       {/* the fire's stage, and the next as a near goal: never a countdown, and at the Newroz fire simply its name */}
       {level.stage !== 'cold' && (
         <p className="end-week-stage">
           <span className="end-week-stage-name">{t(FIRE_STAGE_NAME[level.stage])}</span>
           {next && next.stage !== 'cold' && next.stage !== 'spark' && <> · {t(FIRE_NEXT[next.stage], { count: number(next.at) })}</>}
         </p>
-      )}
-      {days && (
-        <ol className="end-days" aria-label={t('lesson.streak.week')}>
-          {days.map((day, i) => (
-            <WeekCell key={day.date} day={day} order={i} />
-          ))}
-        </ol>
       )}
       {freeze && (
         <div className="end-freeze">
@@ -286,10 +276,12 @@ export function StreakWeek({ streak }: { streak: Streak }): React.JSX.Element {
 }
 
 /**
- * One day of the week: its initial, and a round mark — gold with a check for
- * a day learned, ice blue with a check for one a freeze kept, muted for one
- * missed, an empty grey ring for one still ahead. Today is ringed and pops in
- * last; its name is said in full, with what happened on it.
+ * One day of the week: its name, short, over what happened on it. A day
+ * learned wears a small gold medal, one a freeze kept an ice-blue one with a
+ * snowflake; a day still to come is its date, and so is one that was missed,
+ * more quietly — never a cross. Today is ringed until it is learned, and its
+ * medal is the last to arrive; its name is said in full, with what happened
+ * on it.
  */
 function WeekCell({ day, order }: { day: WeekDay; order: number }): React.JSX.Element {
   const t = useT();
@@ -298,8 +290,10 @@ function WeekCell({ day, order }: { day: WeekDay; order: number }): React.JSX.El
   // a browser may know no Kurdish day names: the course's own, as the days of the week are taught (Saturday first)
   const kurdish = locale === 'ku' ? 'kmr' : locale === 'ckb' ? 'ckb' : null;
   const full = kurdish ? wordIn(wordSet('days')[(day.weekday + 1) % 7]!, kurdish) : new Intl.DateTimeFormat(locale, { weekday: 'long', timeZone: 'UTC' }).format(at);
-  const initial = kurdish ? [...full][0]! : new Intl.DateTimeFormat(locale, { weekday: 'narrow', timeZone: 'UTC' }).format(at);
+  // short, as a calendar heads its columns; the course's names have no short form of their own, so their first letter
+  const short = kurdish ? [...full][0]! : new Intl.DateTimeFormat(locale, { weekday: 'short', timeZone: 'UTC' }).format(at);
   const words = day.isToday && day.state === 'learned' ? t('lesson.streak.week.learnedToday', { day: full }) : t(DAY_WORDS[day.state], { day: full });
+  const medal = day.state === 'learned' || day.state === 'frozen' ? day.state : null;
   return (
     <li
       className={`end-day is-${day.state}${day.isToday ? ' is-today' : ''}`}
@@ -307,10 +301,10 @@ function WeekCell({ day, order }: { day: WeekDay; order: number }): React.JSX.El
       aria-label={words}
     >
       <span className="end-day-name" aria-hidden="true">
-        {initial}
+        {short}
       </span>
       <span className="end-day-mark" aria-hidden="true">
-        {(day.state === 'learned' || day.state === 'frozen') && <CheckIcon size={18} weight="bold" />}
+        {medal ? <DayMedalArt kind={medal} size={DAY_MEDAL} title="" /> : new Intl.NumberFormat(locale, { useGrouping: false }).format(at.getUTCDate())}
       </span>
     </li>
   );

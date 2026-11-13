@@ -13,6 +13,7 @@ import {
   SEASON_FRAME_SHINE,
   SEASONS,
   SMALL_BADGE,
+  badgeColour,
   badgeShineSvg,
   badgeShines,
   badgeSvg,
@@ -78,11 +79,11 @@ import {
 } from './chest.js';
 import type { ChestTier } from '../quests.js';
 import { SEASON_ICONS } from './icons.js';
-import { PICTURES } from './pictures.js';
-import { PROPS } from './props/index.js';
+import { BADGE_GLYPHS, GLYPH_VIEWBOX } from './badge-glyphs.js';
 import { SHAPES } from './shapes.js';
 import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
-import { TINY_BADGE } from './badges.js';
+import { TINY_BADGE, hasBadgeGlyph } from './badges.js';
+import { dayMedalSvg, streakMedalSvg } from './medals.js';
 import { escapeXml, wholePath } from './svg.js';
 import { characterArt } from '../characters/index.js';
 import { BADGES as CATALOGUE, BADGE_FAMILIES as CATALOGUE_FAMILIES, BADGE_TIERS as CATALOGUE_TIERS } from '../badges.js';
@@ -289,7 +290,7 @@ describe('the checks themselves', () => {
     const good = badgeSvg({ key: 'agir' });
     expect(() => checkSvg(good, 96)).not.toThrow();
     expect(() => checkSvg(good.replace('</svg>', ''), 96)).toThrow();
-    expect(() => checkSvg(good.replace('</g>', '</defs>'), 96)).toThrow();
+    expect(() => checkSvg(good.replace('</linearGradient>', '</defs>'), 96)).toThrow();
     expect(() => checkSvg(good.replace(/<title[^<]*<\/title>/, ''), 96)).toThrow();
     expect(() => checkSvg(good.replace('</svg>', '<image href="https://example.org/a.png"/></svg>'), 96)).toThrow();
     expect(() => checkSvg(good.replace(/url\(#[^)]+\)/, 'url(https://example.org/a.svg#g)'), 96)).toThrow();
@@ -320,28 +321,19 @@ describe('the badge catalogue the art draws', () => {
     for (const b of CATALOGUE) expect([1, 4], b.key).toContain(b.tiers.length);
   });
 
-  it('has a drawing for every badge of the catalogue, and none for a badge it does not have', () => {
-    // a picture Hevalo shows (props/) or one that stands alone (pictures.ts); the ranked tiers show their rank's stone
-    const drawn = (key: string): number => (PROPS[key] ? 1 : 0) + (PICTURES[key] ? 1 : 0);
-    const stones = Object.values(RANK_BADGE) as string[];
-    const undrawn = CATALOGUE.filter((b) => !stones.includes(b.key) && drawn(b.key) === 0).map((b) => b.key);
-    expect(undrawn, 'catalogue badges with no picture').toEqual([]);
-    expect(CATALOGUE.filter((b) => drawn(b.key) > 1).map((b) => b.key), 'badges drawn twice').toEqual([]);
+  it('has a symbol for every badge of the catalogue, and none for a badge it does not have', () => {
+    expect(CATALOGUE.filter((b) => !hasBadgeGlyph(b.key)).map((b) => b.key), 'catalogue badges with no symbol').toEqual([]);
     for (const tier of RANK_TIERS) expect(isBadgeKey(RANK_BADGE[tier]), `${tier} has a ranked badge`).toBe(true);
-    expect([...Object.keys(PROPS), ...Object.keys(PICTURES)].filter((k) => !isBadgeKey(k)), 'drawings for no catalogue badge').toEqual([]);
+    // the generated glyphs are the catalogue's, and the "?" every secret shows until it is found
+    expect(Object.keys(BADGE_GLYPHS).filter((k) => !isBadgeKey(k)), 'glyphs for no catalogue badge').toEqual(['secret']);
+    expect(GLYPH_VIEWBOX).toBe(256);
+    for (const [key, paths] of Object.entries(BADGE_GLYPHS)) {
+      expect(paths.length, key).toBeGreaterThan(0);
+      // an empty or truncated path draws nothing at all, which reads as a blank badge rather than as an error
+      for (const d of paths) expect(d.startsWith('M') && d.length > 20, `${key}: ${d.slice(0, 12)}`).toBe(true);
+    }
     // the flat glyphs left are the seasons' marks on a season's emblem
     expect(Object.keys(SEASON_ICONS).sort()).toEqual([...SEASONS].sort());
-  });
-
-  it('draws every secret whole, in its own colours', () => {
-    for (const b of CATALOGUE.filter((d) => d.family === 'secret')) expect(PICTURES[b.key], b.key).toBeDefined();
-  });
-
-  it('sets a picture drawn whole on its plate without Hevalo, and with him every badge that has an icon', () => {
-    const hevalo = (svg: string): boolean => /-antler|-head|-ear/.test(svg);
-    for (const key of BADGE_KEYS.filter((k) => badgeArt(k).family !== 'secret' && !Object.values(RANK_BADGE).includes(k))) {
-      expect(hevalo(badgeSvg({ key, tier: 2 })), key).toBe(PICTURES[key] === undefined);
-    }
   });
 });
 
@@ -413,20 +405,32 @@ describe('badgeSvg', () => {
     expect(new Set(secrets.map((s) => s.replace(/<circle[^>]*fill-opacity[^>]*\/>/g, ''))).size).toBe(1);
   });
 
-  it('shows Hevalo himself, the drawing he speaks with, in greys until it is earned', () => {
-    const art = characterArt('hevalo', 'own');
-    const antlers = wholePath(/ d="([^"]*)"/.exec(art.head)?.[1] ?? '');
-    const fur = /fill="(#[0-9a-f]{6})"/.exec(art.head)?.[1] ?? '';
-    expect(antlers.length).toBeGreaterThan(200);
-    for (const key of ['agir', 'rank-ciya', 'newroz'] as BadgeKey[]) {
-      expect(badgeSvg({ key })).toContain(antlers);
-      expect(badgeSvg({ key, size: 40 })).toContain(antlers);
-      expect(badgeSvg({ key, state: 'locked' })).toContain(antlers);
-      expect(badgeSvg({ key, state: 'locked' })).not.toContain(fur);
+  it('is one piece with one symbol pressed into it, in the badge’s own colour, and in greys until it is earned', () => {
+    /** Every colour a drawing names, but for the white of its lights and the black of its shadow. */
+    const colours = (svg: string): string[] => [...new Set(svg.match(/#[0-9a-f]{6}/g) ?? [])].filter((c) => c !== '#ffffff' && c !== '#000000');
+    const isGrey = (hex: string): boolean => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+      return Math.max(r, g, b) - Math.min(r, g, b) <= 32;
+    };
+    for (const key of ['agir', 'rank-ciya', 'newroz', 'tire-rast'] as BadgeKey[]) {
+      const symbol = (BADGE_GLYPHS[key] ?? []).join('');
+      expect(symbol.length, key).toBeGreaterThan(20);
+      // the same symbol large, small and not yet earned
+      expect(badgeSvg({ key }), key).toContain(symbol);
+      expect(badgeSvg({ key, size: 40 }), key).toContain(symbol);
+      expect(badgeSvg({ key, state: 'locked' }), key).toContain(symbol);
+      // earned it is in colour; not yet earned, every colour on it is a grey
+      expect(colours(badgeSvg({ key })).some((c) => !isGrey(c)), key).toBe(true);
+      expect(colours(badgeSvg({ key, state: 'locked' })).filter((c) => !isGrey(c)), key).toEqual([]);
+      // a secret not yet found shows the "?" and nothing of what it hides
+      expect(badgeSvg({ key, state: 'secret' }), key).not.toContain(symbol);
+      expect(badgeSvg({ key, state: 'secret' }), key).toContain((BADGE_GLYPHS.secret ?? []).join(''));
     }
-    // a secret, found or not, is not his
-    expect(badgeSvg({ key: 'tire-rast' })).not.toContain(antlers);
-    expect(badgeSvg({ key: 'tire-rast', state: 'secret' })).not.toContain(antlers);
+    // each badge has a colour of its own: a family's row is a row of colours
+    for (const family of BADGE_FAMILIES) {
+      const faces = BADGE_KEYS.filter((k) => badgeArt(k).family === family).map((key) => colours(badgeSvg({ key, idPrefix: 'x' })).join(' '));
+      expect(new Set(faces).size, family).toBeGreaterThanOrEqual(5);
+    }
   });
 
   it('gives every family a soft, symmetrical silhouette: every outward corner rounded', () => {
@@ -458,7 +462,7 @@ describe('badgeSvg', () => {
     expect(small.replace(/width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, '')).not.toBe(large.replace(/width="\d+" height="\d+"/, ''));
   });
 
-  it('keeps a small badge to its plate, picture and pips: the light and the sparkle go', () => {
+  it('keeps a small badge to its piece, symbol and pips: the shadow under it goes, and then the gloss', () => {
     for (const key of ['ders', 'agir', 'rank-lutke', 'newroz'] as BadgeKey[]) {
       const large = badgeSvg({ key, tier: 4 });
       const tiny = badgeSvg({ key, tier: 4, size: TINY_BADGE - 8 });
@@ -480,11 +484,13 @@ describe('badgeSvg', () => {
     expect(svg).toContain('Fire &amp; &lt;b&gt;&quot;streak&quot;&lt;/b&gt;');
   });
 
-  it('has a glint for Zêr and Firûze (and the single badges that wear their borders), drawn as its own layer', () => {
+  it('has a glint for Zêr and Firûze, and for the badges with a single tier, drawn as its own layer', () => {
     expect(TIERS.map((tier) => badgeShines('ders', tier))).toEqual([false, false, true, true]);
     expect(badgeShines('hemereng')).toBe(true);
     expect(badgeShines('newroz', 4)).toBe(true);
-    expect(badgeShines('vegera')).toBe(false);
+    expect(badgeShines('newroz', 2)).toBe(false);
+    expect(badgeShines('vegera')).toBe(true);
+    expect(badgeShines('night-owl' as BadgeKey)).toBe(false);
     for (const family of BADGE_FAMILIES) {
       const key = BADGE_KEYS.find((k) => badgeArt(k).family === family) as BadgeKey;
       const frames = [0, 0.25, 0.5, 0.75, 1].map((phase) => badgeShineSvg({ key, phase, size: 96 }));
@@ -496,12 +502,57 @@ describe('badgeSvg', () => {
     expect(() => badgeShineSvg({ key: 'agir', phase: Number.NaN })).toThrow(RangeError);
   });
 
+  it('says its own colour for what an app draws round it, and gives nothing away before it is earned or found', () => {
+    expect(badgeColour('agir')).toMatch(/^#[0-9a-f]{6}$/);
+    expect(badgeSvg({ key: 'agir' })).toContain(badgeColour('agir'));
+    expect(badgeColour('agir')).not.toBe(badgeColour('ders'));
+    // not yet earned: the same grey for every badge; a secret not yet found: the same violet
+    expect(badgeColour('agir', 'locked')).toBe(badgeColour('ders', 'locked'));
+    expect(badgeColour('mirari', 'secret')).toBe(badgeColour('tire-rast', 'secret'));
+    expect(() => badgeColour('night-owl' as BadgeKey)).toThrow(RangeError);
+  });
+
   it('refuses what it cannot draw', () => {
     expect(() => badgeSvg({ key: 'night-owl' as BadgeKey })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', tier: 5 as BadgeTier })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', size: 0 })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', size: Number.NaN })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', idPrefix: 'a b"' })).toThrow(RangeError);
+  });
+});
+
+describe('the streak’s medals', () => {
+  it('draws the medal and a day’s two medals as valid, self-contained pictures at the sizes the apps show them', () => {
+    for (const size of [24, 36, 44, 96, 132, 200]) {
+      checkSvg(streakMedalSvg({ size }), size);
+      checkSvg(dayMedalSvg({ kind: 'learned', size }), size);
+      checkSvg(dayMedalSvg({ kind: 'frozen', size }), size);
+    }
+  });
+
+  it('draws the same picture every time, with ids that never meet another’s on the page', () => {
+    expect(streakMedalSvg({ size: 96 })).toBe(streakMedalSvg({ size: 96 }));
+    const all = [streakMedalSvg(), dayMedalSvg({ kind: 'learned' }), dayMedalSvg({ kind: 'frozen' })];
+    const ids = all.map((svg) => [...svg.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]));
+    expect(new Set(ids.flat()).size).toBe(ids.flat().length);
+    expect(streakMedalSvg({ idPrefix: 'mine' })).toContain('id="mine');
+  });
+
+  it('tells a day learned from a day a freeze kept by its sign, not only its colour: a laurel, a snowflake', () => {
+    const snow = (BADGE_GLYPHS.zivistan ?? []).join('');
+    expect(dayMedalSvg({ kind: 'frozen' })).toContain(snow);
+    expect(dayMedalSvg({ kind: 'learned' })).not.toContain(snow);
+    // the laurel is the medal's own: the same on a learned day as on the medal a streak is handed
+    const leaves = (svg: string): number => Math.max(...[...svg.matchAll(/ d="([^"]*)"/g)].map((m) => (m[1]!.match(/Z/g) ?? []).length));
+    expect(leaves(dayMedalSvg({ kind: 'learned' }))).toBe(leaves(streakMedalSvg()));
+    expect(leaves(streakMedalSvg())).toBe(20);
+  });
+
+  it('labels itself, takes a caller’s label, and refuses what it cannot draw', () => {
+    expect(streakMedalSvg()).toMatch(/>Streak<\/title>/);
+    expect(dayMedalSvg({ kind: 'frozen', title: 'Tuesday, kept by a freeze' })).toMatch(/>Tuesday, kept by a freeze<\/title>/);
+    expect(() => dayMedalSvg({ kind: 'missed' as never })).toThrow(RangeError);
+    expect(() => streakMedalSvg({ size: 0 })).toThrow(RangeError);
   });
 });
 
@@ -807,10 +858,9 @@ describe('light', () => {
     ];
     for (const svg of drawings) {
       walk(parse(svg), (e) => {
-        // a glow is a radial fade to nothing; the enamel's own gradient is clipped to the piece and never fades out, and a
-        // picture's own gradients (pen.ts) are in its own small box, placed with it
+        // a glow is a radial fade to nothing, placed on the canvas; a piece's gloss and the shadow under it are in their own
+        // shape's box, and end where it does
         if (e.name !== 'radialGradient' || e.attrs.gradientUnits !== 'userSpaceOnUse' || e.children.at(-1)?.attrs['stop-opacity'] !== '0') return;
-        if (/pen[lbro]\d+$/.test(e.attrs.id ?? '')) return;
         const [cx, cy, r] = [Number(e.attrs.cx), Number(e.attrs.cy), Number(e.attrs.r)];
         expect(Math.min(cx - r, cy - r), svg.slice(0, 160)).toBeGreaterThanOrEqual(0);
         expect(Math.max(cx + r, cy + r), svg.slice(0, 160)).toBeLessThanOrEqual(120);
@@ -821,10 +871,9 @@ describe('light', () => {
 
 describe('weight', () => {
   it('keeps every drawing small enough to inline a page of them', () => {
-    // a badge carries Hevalo himself, the drawing he speaks with, and its metal, ribbon and wings, so it may be heavier than an
-    // emblem; the most detailed of the drawings (the boy fishing the sky from the moon) sets how much heavier
+    // a badge is a few shapes and one glyph; the most detailed glyph sets how heavy one can be
     const badges = Math.max(...BADGE_KEYS.flatMap((key) => TIERS.flatMap((tier) => [badgeSvg({ key, tier }).length, badgeSvg({ key, tier, size: 40 }).length])));
-    expect(badges).toBeLessThan(32 * 1024);
+    expect(badges).toBeLessThan(12 * 1024);
     const biggest = Math.max(
       ...RANK_TIERS.map((tier) => rankEmblemSvg({ tier, division: 1 }).length),
       ...LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier }).length),
