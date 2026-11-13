@@ -91,11 +91,11 @@ const KINDS: Record<TreeSpecies, Kind> = {
     sprig: '#6cc24c',
     turns: ['#d8c2b4', '#a58a72'],
   },
-  // the willow by the water: a dome that hangs down in strands
+  // the weeping willow: a fountain of long sprays that arch out of its crown and hang nearly to the ground
   bi: {
     habit: 'weeping',
-    leaves: ['#17604f', '#1f8062', '#32a274', '#5cc487', '#92e09b', '#cdf5bd'],
-    wood: ['#3f3326', '#5e4c35', '#806a48', '#ab9263'],
+    leaves: ['#2c5a26', '#3d7a2f', '#5a9a39', '#80ba45', '#b0d85f', '#e0f29a'],
+    wood: ['#3a2d22', '#57432f', '#77603f', '#a48958'],
     bears: 'catkins',
     fruit: ['#e9f7b0', '#b7d877', '#ffffff'],
     seed: 'round',
@@ -811,31 +811,26 @@ const TIERS: Record<Grown, Stand> = {
   },
 };
 
-/** A weeping tree: a low dome its strands hang from. */
+/**
+ * A weeping tree. Only the top of its crown is a mass of leaves, small and
+ * flat; the rest of it is the sprays that arch out from there and hang
+ * (`drawSprays`), which is why `half`, how far its sprays reach to either
+ * side, is so much wider than its cap.
+ */
 const WEEPING: Record<Grown, Stand> = {
-  3: { trunk: 26, girth: 4.2, crownY: 44, half: 21, ground: 25, depth: 14, tufts: 6, flowers: 0, puffs: [[0.4, 0.0, 0.5, 0], [-0.42, 0.04, 0.52, 2], [0.04, -0.26, 0.62, 2]] },
-  4: { trunk: 28, girth: 6.4, crownY: 52, half: 29, ground: 31, depth: 14, tufts: 7, flowers: 1, puffs: [[0.5, -0.02, 0.46, 0], [-0.52, 0.02, 0.46, 0], [-0.24, -0.26, 0.48, 2], [0.26, -0.28, 0.48, 2], [0.0, -0.42, 0.44, 2]] },
-  5: {
-    trunk: 30,
-    girth: 9,
-    crownY: 60,
-    half: 37,
-    ground: 37,
-    depth: 15,
-    tufts: 8,
-    flowers: 2,
-    puffs: [[0.62, 0.0, 0.38, 0], [-0.64, 0.02, 0.38, 0], [0.34, -0.3, 0.4, 0], [-0.36, -0.3, 0.4, 2], [0.0, -0.44, 0.42, 2], [0.2, -0.08, 0.36, 2], [-0.24, -0.06, 0.36, 2]],
-  },
+  3: { trunk: 24, girth: 4, crownY: 40, half: 22, ground: 25, depth: 14, tufts: 6, flowers: 0, puffs: [[0.04, -0.3, 0.36, 2, 0.78]] },
+  4: { trunk: 27, girth: 6.2, crownY: 47, half: 30, ground: 31, depth: 14, tufts: 7, flowers: 1, puffs: [[-0.22, -0.2, 0.26, 0, 0.78], [0.2, -0.24, 0.3, 2, 0.78]] },
+  5: { trunk: 30, girth: 8.8, crownY: 53, half: 38, ground: 37, depth: 15, tufts: 8, flowers: 2, puffs: [[0.3, -0.18, 0.24, 0, 0.78], [-0.26, -0.2, 0.26, 2, 0.78], [0.04, -0.32, 0.3, 2, 0.78]] },
   6: {
     trunk: 32,
-    girth: 12,
-    crownY: 62,
-    half: 44,
+    girth: 11.5,
+    crownY: 58,
+    half: 46,
     ground: 43,
     depth: 15,
     tufts: 10,
     flowers: 3,
-    puffs: [[0.68, 0.0, 0.34, 0], [-0.7, 0.02, 0.34, 0], [0.4, -0.3, 0.36, 0], [-0.42, -0.3, 0.36, 0], [0.0, -0.46, 0.34, 2], [0.5, -0.1, 0.32, 2], [-0.5, -0.08, 0.32, 2], [0.22, -0.26, 0.36, 2], [-0.22, -0.24, 0.36, 2]],
+    puffs: [[0.34, -0.2, 0.22, 0, 0.78], [-0.36, -0.2, 0.22, 0, 0.78], [-0.12, -0.3, 0.26, 2, 0.78], [0.12, -0.34, 0.28, 2, 0.78]],
   },
 };
 
@@ -1027,42 +1022,124 @@ function i_shade(c: readonly [string, string, string], dx: number): string {
   return dx > 0 ? c[1] : c[0];
 }
 
-/** The strands a weeping tree lets down: far ones dark behind its trunk, near ones light before it. */
-function drawStrands(stand: Stand, cy: number, ramp: Ramp, rand: Rand, front: boolean, health: TreeHealth, stage: Grown): string {
-  const s = STATE[health];
-  const count = (stage - 1) * 2 + (front ? 1 : 2);
-  let out = '';
-  for (let i = 0; i < count; i++) {
-    const u = (i + 0.5) / count;
-    const x = MID + (u - 0.5) * 2 * stand.half * (front ? 0.92 : 1.02) + (rand() - 0.5) * 2;
-    const off = Math.abs(u - 0.5) * 2;
-    // those in the middle are held back, so the trunk shows between them
-    if (front && off < 0.26) continue;
-    if (health === 'withered' && i % 3 !== 0) {
-      rand();
-      rand();
-      continue;
-    }
-    const y0 = cy + stand.half * (0.1 - off * off * 0.06);
-    const reach = (GROUND - y0 - 3) * (0.5 + off * 0.42 + rand() * 0.1) * (health === 'withered' ? 0.5 : s.full);
-    const sway = (u - 0.5) * 4 + (rand() - 0.5) * 2;
-    const line: Pt[] = [[x, y0], [x + sway * 0.5, y0 + reach * 0.5], [x + sway, y0 + reach]];
-    const [c0, c1] = front ? [ramp[3], ramp[4]] : [ramp[1], ramp[2]];
-    out += path(limb(line, [1.5, 1.2, 0.5]), c0);
-    if (health === 'withered') continue;
-    // its leaves, in pairs down it, one of each pair in each of its two colours
-    const pairs = Math.max(3, Math.round(reach / 3.9));
-    const drawn = ['', ''];
-    for (let k = 0; k < pairs; k++) {
-      const t = (k + 0.6) / pairs;
-      const at: Pt = [x + sway * t * (0.5 + t * 0.5), y0 + reach * t];
-      const len = 3.6 + (1 - t) * 1.4;
-      drawn[k % 2] += leafAt(at, 118 + (rand() - 0.5) * 16, len, len * 0.36);
-      drawn[(k + 1) % 2] += leafAt(at, 62 + (rand() - 0.5) * 16, len * 0.92, len * 0.36);
-    }
-    out += path(drawn[0] as string, c0) + path(drawn[1] as string, c1);
+/**
+ * One spray of a weeping tree: a twig that leaves the crown going outward and
+ * ends hanging straight down, thin where it starts, full of leaves along its
+ * middle and drawn to a point at its tip. Its leaves are narrow and lie
+ * nearly along it, their tips standing out past its edge, the ones on its
+ * left in the light. `bare` is the twig alone, for a tree that has withered.
+ */
+function spray(from: Pt, tip: Pt, width: number, body: string, lit: string, rand: Rand, bare: boolean): string {
+  // out first, then down, and a little past its tip on the way: the curve is pulled toward a point above and outside it
+  const side = Math.sign(tip[0] - from[0]);
+  const ctrl: Pt = [tip[0] + side * Math.abs(tip[0] - from[0]) * 0.34, from[1] - Math.abs(tip[0] - from[0]) * 0.28];
+  const steps = Math.max(5, Math.round(Math.hypot(tip[0] - from[0], tip[1] - from[1]) / 6.5));
+  const spine: Pt[] = Array.from({ length: steps + 1 }, (_, i) => {
+    const t = i / steps;
+    const [a, b, c] = [(1 - t) * (1 - t), 2 * (1 - t) * t, t * t];
+    return [a * from[0] + b * ctrl[0] + c * tip[0], a * from[1] + b * ctrl[1] + c * tip[1]] as Pt;
+  });
+  if (bare) return path(limb(spine, spine.map((_, i) => 1.2 - (i / steps) * 0.9)), body);
+  const widths = spine.map((_, i) => {
+    const t = i / steps;
+    return width * 0.6 * (0.34 + Math.sin(Math.PI * Math.min(1, t * 1.1)) * 0.66) * (t > 0.86 ? 0.5 : 1);
+  });
+  let left = '';
+  let right = '';
+  for (let i = 1; i < steps; i++) {
+    const [x, y] = spine[i] as Pt;
+    const [px, py] = spine[i - 1] as Pt;
+    const along = (Math.atan2(y - py, x - px) * 180) / Math.PI;
+    // longer where the spray is full, shorter toward its tip
+    const len = width * (1.3 - (i / steps) * 0.5) * (0.9 + rand() * 0.3);
+    const w = (widths[i] as number) * 0.34;
+    const l = Math.hypot(x - px, y - py) || 1;
+    // to the twig's own left and right, a little off it
+    const [nx, ny] = [(y - py) / l, -(x - px) / l];
+    const [ax, ay] = nx < 0 ? [nx, ny] : [-nx, -ny];
+    // standing off the twig where it is full, lying closer along it toward its tip, so it ends in a tuft and not a tail
+    const off = 28 - (i / steps) * 16 + rand() * 8;
+    left += leafAt([x + ax * w, y + ay * w], along + (nx < 0 ? -1 : 1) * off, len, len * 0.2);
+    right += leafAt([x - ax * w, y - ay * w], along + (nx < 0 ? 1 : -1) * off, len, len * 0.2);
   }
-  return out;
+  const end = spine[steps - 1] as Pt;
+  right += leafAt(end, 90 + (rand() - 0.5) * 16, width * 1.25, width * 0.22);
+  return path(limb(spine, widths), body) + path(right, body) + path(left, lit);
+}
+
+/** A tier of a weeping tree's sprays: how many, where they leave the crown, where their tips hang, how thick, and in what colours. */
+interface Tier {
+  count: number;
+  /** where a spray starts and where its tip hangs, for `u` from -1 (far left) to 1 (far right) */
+  from: (u: number) => Pt;
+  tip: (u: number) => Pt;
+  width: number;
+  tones: readonly (readonly [string, string])[];
+  /** the sprays nearest the middle are left out, so the trunk shows between them */
+  part: number;
+}
+
+/**
+ * The sprays of a weeping tree, which are most of its crown: a far tier,
+ * dark, behind its trunk and hanging lowest; a middle tier from under its
+ * cap, down to the grass at its sides and held up over its trunk; and a near
+ * tier, in the light, from its top to half way down. Together they are the
+ * round fountain a willow is. Thirsty, they hang closer in; wilting, they are
+ * shorter; withered, a few bare twigs are left.
+ */
+function drawSprays(stand: Stand, cy: number, ramp: Ramp, rand: Rand, layer: 'far' | 'middle' | 'near', health: TreeHealth, stage: Grown): string {
+  const s = STATE[health];
+  const h = stand.half;
+  const more = stage - 3;
+  const floor = GROUND - 3;
+  // how far out a tip hangs: all the way when fresh, drawn in as the tree dries
+  const out = 1 - s.droop * 0.03;
+  const tiers: Record<typeof layer, Tier> = {
+    far: {
+      count: 4 + more * 2,
+      from: (u) => [MID + u * h * 0.4, cy - h * 0.1],
+      tip: (u) => [MID + u * h * 0.84 * out, floor - (1 - Math.abs(u)) ** 2 * h * 0.2],
+      width: h * 0.135,
+      tones: [[ramp[0], ramp[1]], [ramp[1], ramp[1]]],
+      part: 0,
+    },
+    middle: {
+      count: 5 + more * 2,
+      from: (u) => [MID + u * h * 0.44, cy - h * 0.3 * (1 - u * u)],
+      tip: (u) => [MID + u * h * 0.9 * out, floor - 3 - (1 - Math.abs(u)) ** 1.5 * (floor - 3 - (cy + h * 0.5))],
+      width: h * 0.12,
+      tones: [[ramp[2], ramp[3]], [ramp[1], ramp[2]]],
+      part: 0.14,
+    },
+    near: {
+      count: 5 + more * 2,
+      from: (u) => [MID + u * h * 0.2, cy - h * (0.5 - Math.abs(u) * 0.08)],
+      tip: (u) => [MID + u * h * 0.8 * out, cy + h * (0.04 + Math.abs(u) * 0.74)],
+      width: h * 0.11,
+      tones: [[ramp[3], ramp[5]], [ramp[2], ramp[4]], [ramp[3], ramp[4]]],
+      part: 0,
+    },
+  };
+  const tier = tiers[layer];
+  const bare = health === 'withered';
+  let drawn = '';
+  // from the outside in, so the sprays nearer the middle lie over the ones beside them
+  const order = Array.from({ length: tier.count }, (_, i) => i).sort((a, b) => Math.abs(b - (tier.count - 1) / 2) - Math.abs(a - (tier.count - 1) / 2));
+  for (const i of order) {
+    const u = tier.count === 1 ? 0 : (i / (tier.count - 1)) * 2 - 1;
+    const jitter: Pt = [(rand() - 0.5) * h * 0.07, (rand() - 0.5) * h * 0.1];
+    const keep = rand();
+    if (Math.abs(u) < tier.part) continue;
+    // a withered tree keeps a twig here and there; a wilting one has let some sprays go
+    if (bare ? layer !== 'middle' || i % 2 === 1 : health === 'wilting' && keep < 0.22) continue;
+    const from = tier.from(u);
+    const full = tier.tip(u);
+    const reach = bare ? 0.62 : s.full;
+    const tip: Pt = [from[0] + (full[0] - from[0]) * (0.5 + reach * 0.5) + jitter[0], Math.min(floor, from[1] + (full[1] - from[1]) * reach + jitter[1])];
+    const [body, lit] = tier.tones[i % tier.tones.length] as readonly [string, string];
+    drawn += spray(from, tip, tier.width, body, lit, rand, bare);
+  }
+  return drawn;
 }
 
 /** What a drawing is made of: the ground, which stands still, and what grows on it, which can move. */
@@ -1092,7 +1169,8 @@ function drawGrown(drGround: Drawing, dr: Drawing, kind: Kind, stage: Grown, hea
     ...(squash === undefined ? {} : { squash }),
     out: kind.habit === 'tiers' ? (x >= 0 ? -20 : 200) : (Math.atan2(y - 0.2, x || 0.01) * 180) / Math.PI,
   }));
-  if (kind.habit === 'weeping') plant += drawStrands(stand, cy, ramp, rand, false, health, stage);
+  const weeping = kind.habit === 'weeping';
+  if (weeping) plant += drawSprays(stand, cy, ramp, rand, 'far', health, stage);
   plant += drawWood(dr, timber, wood, rand, stage >= 5);
   if (health === 'withered' && !stem) {
     // bare, but for a last leaf or two at the ends of its boughs
@@ -1101,16 +1179,27 @@ function drawGrown(drGround: Drawing, dr: Drawing, kind: Kind, stage: Grown, hea
       const len = 3 + rand() * 1.6;
       plant += path(leafAt([x, y], 70 + rand() * 50, len, len * 0.42), ramp[2]) + (i % 4 === 0 ? path(leafAt([x, y], 120 + rand() * 30, len * 0.8, len * 0.4), ramp[3]) : '');
     });
+    // a weeping tree keeps the twigs its sprays hung on
+    if (weeping) plant += drawSprays(stand, cy, [wood[1], wood[1], wood[1], wood[2], wood[2], wood[2]], rand, 'middle', health, stage);
   } else {
-    if (health !== 'withered') plant += drawUnderside(puffs, ramp, rand);
-    for (const p of puffs) plant += drawPuff(dr, p, ramp, rand, mark, s.droop / 4.5, kind.sprig);
+    if (weeping) {
+      // the shaded inside of the fountain, which the sprays hang in front of, and its round top, which they flow over
+      const h = stand.half * s.full;
+      plant += path(puffPath(MID, cy - h * 0.12, h * 0.62, h * 0.3, rand, 11, 0.6), ramp[1]);
+      plant += drawSprays(stand, cy, ramp, rand, 'middle', health, stage);
+      plant += path(puffPath(MID, cy - h * 0.3, h * 0.46, h * 0.2, rand, 9, 0.66), ramp[2]);
+      plant += path(puffPath(MID - h * 0.06, cy - h * 0.36, h * 0.3, h * 0.12, rand, 7, 0.7), ramp[3]);
+    } else {
+      if (health !== 'withered') plant += drawUnderside(puffs, ramp, rand);
+      for (const p of puffs) plant += drawPuff(dr, p, ramp, rand, mark, s.droop / 4.5, kind.sprig);
+    }
     if (health === 'fresh' || health === 'thirsty') {
       const bears = drawBears(dr, kind, stage, puffs, stand, cy, rand);
       plant += bears.on;
       ground += bears.down;
     }
   }
-  if (kind.habit === 'weeping') plant += drawStrands(stand, cy, ramp, rand, true, health, stage);
+  if (weeping && health !== 'withered') plant += drawSprays(stand, cy, ramp, rand, 'near', health, stage);
   if (s.fallen > 0) ground += drawFallen([ramp[2], ramp[3], ramp[4]], Math.round(s.fallen * (0.5 + stage * 0.12)), stand.ground, cy, rand);
   return { ground, plant };
 }

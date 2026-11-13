@@ -1652,7 +1652,8 @@ describe('the learner’s tree', () => {
         const drawn = TREE_HEALTHS.map((health) => treeSvg({ species, stage, health, title: 'A tree' }));
         expect(new Set(drawn).size, `${species} ${stage}`).toBe(TREE_HEALTHS.length);
       }
-      expect(count(treeSvg({ species, stage: 6, health: 'withered', title: 'A tree' }), 'clipPath')).toBeLessThan(count(treeSvg({ species, stage: 6, title: 'A tree' }), 'clipPath'));
+      // what is left of a withered tree is far less drawing than the tree in leaf, whatever its crown is made of
+      expect(count(treeSvg({ species, stage: 6, health: 'withered', title: 'A tree' }), 'path'), species).toBeLessThan(count(treeSvg({ species, stage: 6, title: 'A tree' }), 'path') * 0.75);
     }
   });
 
@@ -1702,6 +1703,18 @@ describe('the learner’s tree', () => {
     for (const id of drop) expect(can.has(id)).toBe(false);
     expect(waterDropSvg({ title: 'Water' })).toBe(waterDropSvg({ title: 'Water' }));
     expect(() => wateringCanSvg({ size: -1 })).toThrow(RangeError);
+  });
+
+  it('draws the willow as a fountain of sprays: most of its crown is leaves hung on curved twigs, not masses', () => {
+    // a crown of masses is clipped mass by mass; the willow's has none to clip, only its island and its wood
+    expect(count(treeSvg({ species: 'bi', stage: 6, title: 'x' }), 'clipPath')).toBe(2);
+    expect(count(treeSvg({ species: 'beru', stage: 6, title: 'x' }), 'clipPath')).toBeGreaterThan(8);
+    // more sprays at every stage
+    for (const stage of [4, 5, 6] as const) expect(count(treeSvg({ species: 'bi', stage, title: 'x' }), 'path')).toBeGreaterThan(count(treeSvg({ species: 'bi', stage: (stage - 1) as 3 | 4 | 5, title: 'x' }), 'path'));
+    // withered, its twigs are bare: the wood's colours only, none of its greens
+    const bare = treeSvg({ species: 'bi', stage: 6, health: 'withered', title: 'x' });
+    expect(bare).not.toContain('#80ba45');
+    expect(treeSvg({ species: 'bi', stage: 6, title: 'x' })).toContain('#80ba45');
   });
 
   it('refuses a size that is not one', () => {
