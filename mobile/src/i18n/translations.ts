@@ -2756,7 +2756,6 @@ export type TranslationKey =
   | 'games.mode.both'
   | 'games.comingSoon'
   | 'games.featured'
-  | 'games.filter.all'
   // --- the learning games: Build a Sentence and the solo round ---
   | 'games.sentence.name'
   | 'games.sentence.body'
@@ -6223,7 +6222,6 @@ const en: Catalog = {
   'games.mode.both': 'Solo or with friends',
   'games.comingSoon': 'Coming soon',
   'games.featured': 'Featured',
-  'games.filter.all': 'All',
   // ---- the learning games: Build a Sentence and the solo round ----
   'games.sentence.name': 'Build a Sentence',
   'games.sentence.body': 'Read what a real Kurdish sentence means, then lay its words in order. Climb from short sentences to two clauses.',
@@ -9689,7 +9687,6 @@ const ku: Catalog = {
   'games.mode.both': 'Bi tenê an bi hevalan re',
   'games.comingSoon': 'Di demeke nêzîk de',
   'games.featured': 'Bijarte',
-  'games.filter.all': 'Hemû',
   // ---- the learning games: Build a Sentence and the solo round ----
   'games.sentence.name': 'Hevokekê ava bike',
   'games.sentence.body': 'Bixwîne ka hevokeke rastîn a kurdî tê çi wateyê, paşê peyvên wê bi rêz deyne. Ji hevokên kurt heta du beşan hilkişe.',
@@ -13155,7 +13152,6 @@ const de: Catalog = {
   'games.mode.both': 'Allein oder mit Freunden',
   'games.comingSoon': 'Bald verfügbar',
   'games.featured': 'Empfohlen',
-  'games.filter.all': 'Alle',
   // ---- the learning games: Build a Sentence and the solo round ----
   'games.sentence.name': 'Bau einen Satz',
   'games.sentence.body': 'Lies, was ein echter kurdischer Satz bedeutet, und lege dann seine Wörter in die richtige Reihenfolge. Steig von kurzen Sätzen bis zu zwei Teilsätzen auf.',
@@ -16621,7 +16617,6 @@ const es: Catalog = {
   'games.mode.both': 'Solo o con amigos',
   'games.comingSoon': 'Muy pronto',
   'games.featured': 'Destacado',
-  'games.filter.all': 'Todos',
   // ---- the learning games: Build a Sentence and the solo round ----
   'games.sentence.name': 'Construye una frase',
   'games.sentence.body': 'Lee qué significa una frase kurda real y luego coloca sus palabras en orden. Sube desde frases cortas hasta frases con dos oraciones.',
@@ -20087,7 +20082,6 @@ const tr: Catalog = {
   'games.mode.both': 'Tek başına ya da arkadaşlarla',
   'games.comingSoon': 'Çok yakında',
   'games.featured': 'Öne çıkan',
-  'games.filter.all': 'Tümü',
   // ---- the learning games: Build a Sentence and the solo round ----
   'games.sentence.name': 'Bir cümle kur',
   'games.sentence.body': 'Gerçek bir Kürtçe cümlenin ne anlama geldiğini oku, sonra kelimelerini sıraya diz. Kısa cümlelerden iki yan cümleli olanlara kadar tırman.',
@@ -23553,7 +23547,6 @@ const ar: Catalog = {
   'games.mode.both': 'منفردًا أو مع الأصدقاء',
   'games.comingSoon': 'قريبًا',
   'games.featured': 'مختارات',
-  'games.filter.all': 'الكل',
   // ---- the learning games: Build a Sentence and the solo round ----
   'games.sentence.name': 'ركّب جملة',
   'games.sentence.body': 'اقرأ معنى جملة كردية حقيقية، ثم رتّب كلماتها. اصعد من الجمل القصيرة حتى الجملتين المترابطتين.',
@@ -27019,7 +27012,6 @@ const fr: Catalog = {
   'games.mode.both': 'En solo ou entre amis',
   'games.comingSoon': 'Bientôt',
   'games.featured': 'À la une',
-  'games.filter.all': 'Tous',
   // ---- the learning games: Build a Sentence and the solo round ----
   'games.sentence.name': 'Construis une phrase',
   'games.sentence.body': 'Lis ce que veut dire une vraie phrase kurde, puis remets ses mots dans l’ordre. Progresse des phrases courtes jusqu’aux phrases à deux propositions.',
@@ -30485,7 +30477,6 @@ const nl: Catalog = {
   'games.mode.both': 'Alleen of met vrienden',
   'games.comingSoon': 'Binnenkort',
   'games.featured': 'Uitgelicht',
-  'games.filter.all': 'Alles',
   // ---- the learning games: Build a Sentence and the solo round ----
   'games.sentence.name': 'Bouw een zin',
   'games.sentence.body': 'Lees wat een echte Koerdische zin betekent en leg dan de woorden op volgorde. Klim van korte zinnen tot twee deelzinnen.',
@@ -33952,7 +33943,6 @@ const ckb: Catalog = {
   'games.mode.both': 'بە تەنیا یان لەگەڵ هاوڕێکان',
   'games.comingSoon': 'بەم زووانە',
   'games.featured': 'هەڵبژاردە',
-  'games.filter.all': 'هەموو',
   // ---- the learning games: Build a Sentence and the solo round ----
   'games.sentence.name': 'ڕستەیەک دروست بکە',
   'games.sentence.body': 'بخوێنەوە ڕستەیەکی ڕاستەقینەی کوردی چ واتایەکی هەیە، پاشان وشەکانی بە ڕیز دابنێ. لە ڕستەی کورتەوە بۆ دوو بڕگە سەربکەوە.',

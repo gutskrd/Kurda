@@ -259,12 +259,6 @@ describe('the games list', () => {
     // Xapînok's own screen asks how to play: its card is the one way in
     fireEvent.click(screen.getByTestId('game-impostor'));
     expect(navigation.navigate).toHaveBeenCalledWith('Impostor');
-
-    // it is a game for more than one: among the games with friends, and not among those played alone
-    fireEvent.click(screen.getByTestId('games-filter-friends'));
-    expect(screen.getByTestId('game-who-am-i-phone')).toBeTruthy();
-    fireEvent.click(screen.getByTestId('games-filter-solo'));
-    expect(screen.queryByTestId('game-who-am-i-phone')).toBeNull();
   });
 
   it('puts one game forward above the cards, a different one each day, and does not say it twice', async () => {
@@ -283,27 +277,21 @@ describe('the games list', () => {
     expect(featuredCard([{ ...card('b'), soon: true }], 0)).toBeNull();
   });
 
-  it('shows only the games played the chosen way, the featured one among them', async () => {
+  /**
+   * Deliberately changed. Every card's Play was the party games' gold, so the
+   * cards ended in a row of the same button; each is now its own game's
+   * colour, and there is no filter to work.
+   */
+  it('gives every game’s Play its own colour, and has no filter', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('memory-thief'), game('impostor')]) });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     await settled(client);
     expect(await screen.findByTestId('game-impostor')).toBeTruthy();
-    expect(screen.getByTestId('games-filter-all').getAttribute('aria-pressed')).toBe('true');
-
-    fireEvent.click(screen.getByTestId('games-filter-friends'));
-    expect(screen.getByTestId('games-filter-friends').getAttribute('aria-pressed')).toBe('true');
-    expect(screen.queryByText('Featured')).toBeNull();
-    // the race and Dizê Bîrê are played alone
-    expect(screen.queryByTestId('game-race')).toBeNull();
-    expect(screen.queryByTestId('game-memory-thief')).toBeNull();
-    expect(screen.getByTestId('game-impostor')).toBeTruthy();
-    expect(screen.getByTestId('game-battle')).toBeTruthy();
-
-    fireEvent.click(screen.getByTestId('games-filter-solo'));
-    expect(screen.getByTestId('game-race')).toBeTruthy();
-    expect(screen.getByTestId('game-memory-thief')).toBeTruthy();
-    expect(screen.queryByTestId('game-impostor')).toBeNull();
+    expect(screen.queryByTestId('games-filter-all')).toBeNull();
+    expect(screen.queryByTestId('games-filter-friends')).toBeNull();
+    // every game is listed whoever it is played with
+    for (const id of ['game-impostor', 'game-memory-thief']) expect(screen.getByTestId(id)).toBeTruthy();
   });
 
   // Build a Sentence and Hear It, Find It are practice now (practice/exercises.ts), listed with the lessons
