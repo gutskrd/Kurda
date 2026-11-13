@@ -365,6 +365,9 @@ export class GdprService {
     );
     // the names they used to have are theirs too, and no longer held for anybody
     await executor.query(`DELETE FROM username_history WHERE user_id = $1`, [userId]);
+    // their tree, and the kinds of tree they bought
+    await executor.query(`DELETE FROM user_trees WHERE user_id = $1`, [userId]);
+    await executor.query(`DELETE FROM user_tree_kinds WHERE user_id = $1`, [userId]);
     await executor.query(
       `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,
       [userId],
@@ -455,6 +458,12 @@ export class GdprService {
       `SELECT username, changed_at, held_until FROM username_history WHERE user_id = $1 ORDER BY changed_at DESC LIMIT 200`,
       [userId],
     );
+    // their tree as it stands, and the kinds of tree they bought
+    const tree = await this.pool.query(
+      `SELECT species, planted_on, last_watered_on, waterings, water, harvests, planted FROM user_trees WHERE user_id = $1`,
+      [userId],
+    );
+    const treeKinds = await this.pool.query(`SELECT species, bought_at FROM user_tree_kinds WHERE user_id = $1 ORDER BY bought_at`, [userId]);
     const sessions = await this.pool.query(
       `SELECT device_name, created_at, expires_at, revoked_at
        FROM refresh_tokens WHERE user_id = $1 ORDER BY created_at DESC LIMIT 100`,
@@ -532,6 +541,8 @@ export class GdprService {
       format: 'kurda-user-export/v1',
       user: user.rows[0] ?? null,
       previousUsernames: previousUsernames.rows,
+      tree: tree.rows[0] ?? null,
+      treeKinds: treeKinds.rows,
       posts,
       sessions: sessions.rows,
       signInDevices: devices.rows,

@@ -115,6 +115,8 @@ export interface SessionResults {
   firstCompletion?: boolean;
   /** today's quests this session moved, before and after (absent when none moved, or on an older server) */
   quests?: QuestStep[];
+  /** the water this session earned the learner's tree, and what they hold now (absent when it earned none, or on an older server) */
+  tree?: { gained: number; water: number };
 }
 
 /** POST …/answers */

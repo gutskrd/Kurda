@@ -63,6 +63,8 @@ import { registerDailyRewardRoutes } from './rewards/routes.js';
 import { StreakService } from './streaks/service.js';
 import { registerStreakRoutes } from './streaks/routes.js';
 import { DailyQuestService } from './quests/service.js';
+import { registerTreeRoutes } from './trees/routes.js';
+import { TreeService } from './trees/service.js';
 import { registerDailyQuestRoutes } from './quests/routes.js';
 import { GemService } from './gems/service.js';
 import { registerGemRoutes } from './gems/routes.js';
@@ -554,7 +556,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const moderationKit = registerModeration(app, config, options.moderation);
     // copyright notices from the public /copyright page land in the same queue (contract-3 §C)
     registerCopyright(app, config, options.copyright);
-    registerSocialRoutes(app, new SocialService(app.db, friends, ranks), { reports: moderationKit.reports });
+    registerSocialRoutes(app, new SocialService(app.db, friends, ranks), { reports: moderationKit.reports, trees: new TreeService(app.db, new WalletService(app.db)) });
     registerActivityRoutes(app, activity);
     // one wall for stories, poems and pictures — public, like the pages it replaces
     registerFeedRoutes(app);
@@ -644,6 +646,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerStreakRoutes(app, new StreakService(app.db, new WalletService(app.db)));
     // today's three quests, moved by finished lessons and practice, each paying a chest of Zêr
     registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
+    // the learner's tree: planted once, watered with what lessons earn, another kind bought with Zêr
+    registerTreeRoutes(app, new TreeService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService, badges);
     // the learning games (Build a Sentence and the games after it): approved content only,

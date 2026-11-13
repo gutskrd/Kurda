@@ -84,6 +84,8 @@ import { SHAPES } from './shapes.js';
 import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE, hasBadgeGlyph } from './badges.js';
 import { dayMedalSvg, streakMedalSvg } from './medals.js';
+import { TREE_FOOT, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
+import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
 import { characterArt } from '../characters/index.js';
 import { BADGES as CATALOGUE, BADGE_FAMILIES as CATALOGUE_FAMILIES, BADGE_TIERS as CATALOGUE_TIERS } from '../badges.js';
@@ -1604,5 +1606,106 @@ describe('the lesson path’s world', () => {
     expect(sound(walked)).toBe(4);
     expect(() => pathLandSvg({ ground: 'moon' as never, width: 390, height: 600, stops, stones })).toThrow(RangeError);
     expect(() => pathLandSvg({ ground: 'snow', width: 0, height: 600, stops, stones })).toThrow(RangeError);
+  });
+});
+
+describe('the learner’s tree', () => {
+  const stages = Array.from({ length: TREE_STAGES }, (_, i) => i as TreeStage);
+  const count = (svg: string, tag: string): number => svg.split(`<${tag}`).length - 1;
+
+  it('draws every kind at every stage, in every state, as a valid, self-contained picture', () => {
+    for (const species of TREE_SPECIES) {
+      for (const stage of stages) {
+        for (const health of TREE_HEALTHS) {
+          const svg = treeSvg({ species, stage, health, size: 240, title: 'A tree' });
+          checkSvg(svg, 240);
+          // light enough to draw many of on a page of profiles
+          expect(svg.length, `${species} ${stage} ${health}`).toBeLessThan(80_000);
+        }
+      }
+    }
+  });
+
+  it('is the same picture every time, with ids of its own beside another on the page', () => {
+    const one = treeSvg({ species: 'beru', stage: 6, title: 'Oak' });
+    expect(treeSvg({ species: 'beru', stage: 6, title: 'Oak' })).toBe(one);
+    const a = checkSvg(treeSvg({ species: 'beru', stage: 6, title: 'Oak', idPrefix: 'a' }), 240);
+    const b = checkSvg(treeSvg({ species: 'beru', stage: 6, title: 'Oak', idPrefix: 'b' }), 240);
+    for (const id of a) expect(b.has(id)).toBe(false);
+    // a kind, a stage and a state each have their own ids too, so two trees on a page never share a clip
+    const other = checkSvg(treeSvg({ species: 'beru', stage: 6, health: 'thirsty', title: 'Oak' }), 240);
+    for (const id of checkSvg(one, 240)) expect(other.has(id)).toBe(false);
+  });
+
+  it('grows: each stage is its own drawing, and there is more of it each time from the sprout on', () => {
+    for (const species of TREE_SPECIES) {
+      const drawn = stages.map((stage) => treeSvg({ species, stage, title: 'A tree' }));
+      expect(new Set(drawn).size).toBe(TREE_STAGES);
+      // a grown tree's crown is made of more masses at each stage: more clips, more paths
+      for (const stage of [4, 5, 6] as const) expect(count(drawn[stage]!, 'path'), `${species} ${stage}`).toBeGreaterThan(count(drawn[stage - 1]!, 'path'));
+    }
+  });
+
+  it('shows how it fares: each state is drawn differently, and a withered tree has lost most of its crown', () => {
+    for (const species of TREE_SPECIES) {
+      for (const stage of [1, 2, 3, 6] as const) {
+        const drawn = TREE_HEALTHS.map((health) => treeSvg({ species, stage, health, title: 'A tree' }));
+        expect(new Set(drawn).size, `${species} ${stage}`).toBe(TREE_HEALTHS.length);
+      }
+      expect(count(treeSvg({ species, stage: 6, health: 'withered', title: 'A tree' }), 'clipPath')).toBeLessThan(count(treeSvg({ species, stage: 6, title: 'A tree' }), 'clipPath'));
+    }
+  });
+
+  it('bears on the great tree what the kind bears: fruit, blossom, ribbons or lights, and nothing once it wilts', () => {
+    // the pomegranate's fruit and the night tree's lights are in colours no leaf of theirs has
+    expect(treeSvg({ species: 'hinar', stage: 6, title: 'x' })).toContain('#e23a36');
+    expect(treeSvg({ species: 'hinar', stage: 4, title: 'x' })).not.toContain('#e23a36');
+    expect(treeSvg({ species: 'hinar', stage: 6, health: 'wilting', title: 'x' })).not.toContain('#e23a36');
+    expect(treeSvg({ species: 'sev', stage: 6, title: 'x' })).toContain('radialGradient');
+    expect(treeSvg({ species: 'miraz', stage: 6, title: 'x' })).toContain('#3aa3e8');
+    expect(treeSvg({ species: 'behiv', stage: 6, title: 'x' })).toContain('#fff4f7');
+  });
+
+  it('comes in two layers that are the whole between them: the ground, which stands still, and the plant on it', () => {
+    for (const species of ['beru', 'bi', 'kaj'] as const) {
+      for (const stage of [0, 2, 6] as const) {
+        const whole = treeSvg({ species, stage, title: 'A tree' });
+        const ground = treeSvg({ species, stage, part: 'ground', title: 'A tree' });
+        const plant = treeSvg({ species, stage, part: 'plant', title: 'A tree' });
+        checkSvg(ground, 240);
+        checkSvg(plant, 240);
+        for (const tag of ['path', 'ellipse']) expect(count(ground, tag) + count(plant, tag), `${species} ${stage} ${tag}`).toBe(count(whole, tag));
+        // the two can be on a page together
+        const ids = checkSvg(ground, 240);
+        for (const id of checkSvg(plant, 240)) expect(ids.has(id)).toBe(false);
+      }
+    }
+    // the island is the ground's, the trunk and crown the plant's
+    expect(count(treeSvg({ species: 'beru', stage: 6, part: 'plant', title: 'x' }), 'path')).toBeGreaterThan(count(treeSvg({ species: 'beru', stage: 6, part: 'ground', title: 'x' }), 'path'));
+    // a plant turns about its foot, which is inside the picture and low in it
+    expect(TREE_FOOT.x).toBe(0.5);
+    expect(TREE_FOOT.y).toBeGreaterThan(0.7);
+    expect(TREE_FOOT.y).toBeLessThan(1);
+  });
+
+  it('knows which kinds it can draw, and gives each a colour of its own', () => {
+    for (const species of TREE_SPECIES) expect(hasTreeArt(species)).toBe(true);
+    expect(hasTreeArt('cactus')).toBe(false);
+    expect(hasTreeArt('toString')).toBe(false);
+    for (const species of TREE_SPECIES) expect(treeColour(species)).toMatch(/^#[0-9a-f]{6}$/);
+    expect(treeColour('behiv')).not.toBe(treeColour('beru'));
+  });
+
+  it('draws the drop of water and the watering can as valid pictures, each with ids of its own', () => {
+    const drop = checkSvg(waterDropSvg({ size: 24, title: 'Water' }), 24);
+    const can = checkSvg(wateringCanSvg({ size: 96, title: 'Watering can' }), 96);
+    for (const id of drop) expect(can.has(id)).toBe(false);
+    expect(waterDropSvg({ title: 'Water' })).toBe(waterDropSvg({ title: 'Water' }));
+    expect(() => wateringCanSvg({ size: -1 })).toThrow(RangeError);
+  });
+
+  it('refuses a size that is not one', () => {
+    expect(() => treeSvg({ species: 'beru', stage: 3, size: 0 })).toThrow(RangeError);
+    expect(() => treeSvg({ species: 'beru', stage: 3, idPrefix: 'a b' })).toThrow(RangeError);
   });
 });

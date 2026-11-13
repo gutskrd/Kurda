@@ -1,0 +1,545 @@
+/*
+ * The learner's tree: the page it has to itself, its card on Learn and its
+ * place on a profile. `--tree` is the kind's own colour (shared
+ * `treeColour`), which washes what the tree stands in front of.
+ */
+
+/* ───────────────────────────────────────────────────────────── the drawing */
+.tree-art {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  line-height: 0;
+}
+.tree-art-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+.tree-art-layer > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* the plant moves a little in the air, about its foot; the ground under it does not */
+.tree-art-plant.is-swaying {
+  animation: tree-sway 6.4s ease-in-out infinite;
+}
+@keyframes tree-sway {
+  0%,
+  100% {
+    transform: rotate(-0.9deg);
+  }
+  50% {
+    transform: rotate(0.9deg);
+  }
+}
+.water-drop,
+.watering-can {
+  display: inline-block;
+  flex: none;
+  line-height: 0;
+}
+
+/* ──────────────────────────────────────────────────────────────── the page */
+.tree-page {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 560px;
+  padding-bottom: var(--space-8);
+}
+.tree-soon {
+  margin: 0;
+  color: var(--ink-3);
+}
+/* where the tree stands: a soft light in its own colour, and nothing else */
+.tree-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 340px;
+  border-radius: var(--r-xl);
+  background:
+    radial-gradient(120% 80% at 50% 100%, color-mix(in srgb, var(--tree, #4fb24f) 26%, transparent), transparent 70%),
+    linear-gradient(180deg, color-mix(in srgb, var(--tree, #4fb24f) 9%, var(--surface-solid)), var(--surface-solid));
+  overflow: hidden;
+}
+.tree-stage.is-waiting {
+  background: none;
+}
+.tree-stage-art {
+  max-width: 100%;
+}
+/* watered: the plant starts, the way anything does that is given a drink */
+.tree-stage.is-pouring .tree-art-plant {
+  animation: tree-drink 900ms var(--ease-spring) 260ms both;
+}
+@keyframes tree-drink {
+  0% {
+    transform: scale(1, 1);
+  }
+  30% {
+    transform: scale(1.04, 0.94);
+  }
+  60% {
+    transform: scale(0.97, 1.05);
+  }
+  100% {
+    transform: scale(1, 1);
+  }
+}
+/* the can, tipped over the tree, and what falls from its rose */
+.tree-pour {
+  position: absolute;
+  top: 10px;
+  inset-inline-end: 12%;
+  animation: tree-can 1050ms var(--ease-out) both;
+  transform-origin: 80% 80%;
+}
+@keyframes tree-can {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) rotate(0deg);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) rotate(-34deg);
+  }
+  78% {
+    opacity: 1;
+    transform: translateY(0) rotate(-34deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-6px) rotate(-8deg);
+  }
+}
+.tree-pour-drops i {
+  position: absolute;
+  top: 42px;
+  left: -2px;
+  opacity: 0;
+  animation: tree-drop 520ms ease-in calc(220ms + var(--i) * 110ms) both;
+}
+@keyframes tree-drop {
+  0% {
+    opacity: 0;
+    transform: translate(calc(var(--i) * -5px), 0) scale(0.7);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--i) * -9px - 14px), 120px) scale(1);
+  }
+}
+
+/* how it fares, said plainly and once */
+.tree-health,
+.tree-note {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  align-items: baseline;
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+}
+.tree-health strong {
+  color: var(--ink);
+  font-weight: 800;
+}
+.tree-health.is-wilting,
+.tree-health.is-withered {
+  background: color-mix(in srgb, var(--gold) 16%, var(--surface-solid));
+}
+.tree-note {
+  background: color-mix(in srgb, var(--tree, #4fb24f) 14%, var(--surface-solid));
+  color: var(--ink);
+  font-weight: 600;
+}
+
+/* how far to what comes next */
+.tree-growth {
+  display: grid;
+  gap: 8px;
+  padding: 14px 16px;
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+}
+.tree-growth-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+.tree-growth-next {
+  color: var(--ink);
+  font-weight: 700;
+}
+.tree-growth-count {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.tree-bar {
+  height: 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.tree-bar > span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--tree, #4fb24f);
+  transform: scaleX(var(--to));
+  transform-origin: 0 50%;
+  transition: transform var(--dur-progress, 400ms) var(--ease-out);
+}
+[dir='rtl'] .tree-bar > span {
+  transform-origin: 100% 50%;
+}
+/* its seven stages as a row of beads: the ones behind it filled, the one it is at ringed */
+.tree-steps {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.tree-steps li {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--surface-2);
+}
+.tree-steps li.is-done {
+  background: var(--tree, #4fb24f);
+}
+.tree-steps li.is-now {
+  background: var(--surface-solid);
+  box-shadow: inset 0 0 0 2px var(--tree, #4fb24f);
+}
+.tree-harvests {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  text-align: center;
+}
+
+/* the water held, and the pouring of it */
+.tree-water {
+  display: grid;
+  gap: 10px;
+}
+.tree-water-held {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  color: var(--ink);
+  font-weight: 700;
+}
+.tree-water-actions,
+.tree-water-none {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+}
+.tree-water-actions > .btn-lg,
+.tree-water-none > .btn-lg {
+  width: 100%;
+}
+.tree-water-none p {
+  margin: 0;
+  color: var(--ink-3);
+  text-align: center;
+}
+.tree-about {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  text-align: center;
+}
+.tree-failed {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: var(--r-md);
+  background: var(--danger-soft);
+  color: var(--ink);
+  font-size: var(--text-secondary);
+}
+.tree-moment-zer {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin: 0;
+  font-weight: 800;
+}
+
+/* ─────────────────────────────────────────── choosing a tree, and the nursery */
+.tree-choices,
+.tree-kinds {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.tree-choices-more {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  text-align: center;
+}
+.tree-kind {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 14px 10px 10px;
+  border-radius: var(--r-lg);
+  background: var(--surface-solid);
+}
+[dir='rtl'] .tree-kind {
+  padding: 10px 10px 10px 14px;
+}
+.tree-kind-art {
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: radial-gradient(90% 70% at 50% 100%, color-mix(in srgb, var(--tree) 24%, transparent), transparent 72%), color-mix(in srgb, var(--tree) 8%, var(--surface-2));
+}
+.tree-kind-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.tree-kind-name {
+  color: var(--ink);
+  font-size: 1.08rem;
+  font-weight: 800;
+}
+.tree-kind-meaning {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+.tree-kind-about {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.tree-kind-price,
+.tree-kind-note {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  font-weight: 700;
+}
+/* on a narrow screen a kind's button goes under it, so its words keep the room beside its picture */
+@media (max-width: 520px) {
+  .tree-kind {
+    grid-template-columns: auto 1fr;
+  }
+  .tree-kind > .btn {
+    grid-column: 1 / -1;
+  }
+}
+.tree-nursery-title {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+}
+.tree-nursery-sub {
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.tree-nursery-zer {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  margin: 10px 0;
+  font-weight: 800;
+}
+.tree-nursery .tree-kind {
+  background: var(--surface-2);
+}
+.tree-ask {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  padding-top: var(--space-4);
+  text-align: center;
+}
+.tree-ask-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+.tree-ask-body,
+.tree-ask-short {
+  margin: 0;
+  color: var(--ink-3);
+}
+.tree-ask-short {
+  color: var(--ink);
+  font-weight: 700;
+}
+.tree-ask-actions {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+/* ───────────────────────────────────────────────────────── its card on Learn */
+/* the quests' card's sibling: the same width, edge and ground, right under it */
+.tree-card {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+  max-width: var(--container-narrow);
+  min-height: 64px;
+  margin: 0 auto var(--space-5);
+  padding: 8px 14px 8px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+}
+[dir='rtl'] .tree-card {
+  padding: 8px 8px 8px 14px;
+}
+.tree-card-art {
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-md);
+  background: color-mix(in srgb, var(--tree, #4fb24f) 12%, var(--surface-2));
+}
+.tree-card-text {
+  display: grid;
+  flex: 1;
+  gap: 1px;
+  min-width: 0;
+}
+.tree-card-title {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 8px;
+  align-items: baseline;
+  color: var(--ink);
+  font-weight: 800;
+}
+.tree-card-stage {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+.tree-card-sub {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.tree-card.is-wilting .tree-card-sub,
+.tree-card.is-withered .tree-card-sub {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.tree-card-water {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  padding: 4px 9px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, #2f9bf0 14%, var(--surface-2));
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+.tree-card-go {
+  flex: none;
+  color: var(--ink-4);
+}
+[dir='rtl'] .tree-card-go {
+  transform: scaleX(-1);
+}
+
+/* ─────────────────────────────────────────────────────────── on a profile */
+.profile-tree-body {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.profile-tree-art {
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-lg);
+  background: radial-gradient(90% 70% at 50% 100%, color-mix(in srgb, var(--tree, #4fb24f) 26%, transparent), transparent 72%), color-mix(in srgb, var(--tree, #4fb24f) 7%, var(--surface-2));
+}
+.profile-tree-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+.profile-tree-name {
+  color: var(--ink);
+  font-size: 1.12rem;
+  font-weight: 800;
+}
+.profile-tree-meaning,
+.profile-tree-facts {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+.profile-tree-meaning {
+  font-weight: 600;
+}
+.profile-tree-health {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: color-mix(in srgb, var(--gold) 18%, var(--surface-2));
+  color: var(--ink);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.profile-tree-plant {
+  display: inline-flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* the water a lesson earned, in its results */
+.lesson-moment.is-water {
+  gap: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tree-art-plant.is-swaying,
+  .tree-stage.is-pouring .tree-art-plant,
+  .tree-pour,
+  .tree-pour-drops i {
+    animation: none;
+  }
+  .tree-bar > span {
+    transition: none;
+  }
+}

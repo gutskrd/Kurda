@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NO_LESSON_MOMENTS, type LessonMoments, type QuestStep } from '@kurda/shared';
 import { jsonResponse, renderApp } from '../test/utils';
@@ -141,6 +141,17 @@ describe('the title', () => {
   it('calls a review a review', () => {
     show({ correct: 3, accuracy: 0.5 }, { kind: 'practice' });
     expect(screen.getByRole('heading', { name: 'Review finished' })).toBeInTheDocument();
+  });
+});
+
+describe('water for the tree', () => {
+  it('says what the lesson earned the learner’s tree, and nothing where it earned none', () => {
+    show({ tree: { gained: 1, water: 3 } });
+    expect(screen.getByText('+1 water for your tree')).toBeInTheDocument();
+    cleanup();
+    // no tree planted, a replay, or a server without trees: the results carry nothing about it
+    show();
+    expect(screen.queryByText(/water for your tree/)).toBeNull();
   });
 });
 

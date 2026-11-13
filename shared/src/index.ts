@@ -701,6 +701,13 @@ export {
   type GameEmblem,
   type GameEmblemLayer,
   type GamePose,
+  TREE_FOOT,
+  hasTreeArt,
+  treeColour,
+  treeSvg,
+  waterDropSvg,
+  wateringCanSvg,
+  type TreeOptions,
 } from './art/index.js';
 /**
  * The art's metals, for the parts of a screen drawn around an emblem — a
@@ -730,6 +737,8 @@ export {
   type FireLevel,
   type FireStage,
 } from './fire-stages.js';
+/** The learner's tree: its kinds and prices, how it grows with water and fares without it, planting and watering. */
+export * from './tree.js';
 /** The kept streak's card coming alive: when its medal takes its turn and when each part of the card arrives, alike on both. */
 export { STREAK_LEAVE_MS, STREAK_LEAVE_POSE, smoothPoses, streakReveal, type MedalPose, type StreakReveal } from './streak-reveal.js';
 /** The fire as a moment of its own: the day it grew and how it lights up, a run's milestone, and the ladder of stages a streak climbs. */

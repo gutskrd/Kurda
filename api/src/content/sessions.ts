@@ -14,6 +14,7 @@ import { qualityFromVerdict } from '../review/sm2.js';
 import { modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 import { moveQuests } from '../quests/service.js';
+import { earnWater, type WaterEarned } from '../trees/service.js';
 
 export const SESSION_TTL_HOURS = 24;
 /** XP-ledger source tag for lesson-completion awards. */
@@ -128,6 +129,8 @@ export interface SessionResults {
   firstCompletion: boolean;
   /** today's quests this completion moved, before and after; absent when it moved none */
   quests?: QuestStep[];
+  /** the water this completion earned the learner's tree, and what is held now; absent when it earned none (no tree planted, a replay) */
+  tree?: WaterEarned;
 }
 
 /**
@@ -515,6 +518,7 @@ export class LessonSessionService {
     let firstCompletion: boolean | null = null;
     let claimedNow = false;
     let quests: QuestStep[] = [];
+    let water: WaterEarned | null = null;
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
@@ -573,6 +577,8 @@ export class LessonSessionService {
           if (learning) {
             const listeningRight = answers.rows.filter((a) => a.type === 'listening' && a.accepted).length;
             quests = await moveQuests(client, userId, tz, { lesson: true, accuracy, perfect, listeningRight, xpToday: goal.earnedXp });
+            // and water for the learner's tree, if they have planted one
+            water = await earnWater(client, userId);
           }
         }
         await client.query('COMMIT');
@@ -618,6 +624,7 @@ export class LessonSessionService {
       streak: { ...streak, ...week },
       firstCompletion,
       ...(quests.length > 0 ? { quests } : {}),
+      ...(water && water.gained > 0 ? { tree: water } : {}),
     };
   }
 

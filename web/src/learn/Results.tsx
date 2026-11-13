@@ -26,6 +26,7 @@ import {
 import { HevaloWindow } from '../characters/HevaloWindow';
 import { Button } from '../components/Button';
 import { AccuracyIcon, CheckIcon, StarIcon, TimerIcon, UpIcon, XpIcon } from '../components/icons';
+import { WaterDrop } from '../tree/TreeArt';
 import { CelebrationArt, useCelebrationHold } from '../ranks/Celebration';
 import { leagueName } from '../ranks/names';
 import { playLessonSound } from '../lib/sounds';
@@ -351,7 +352,7 @@ export function Results({
 
             <ResultCards results={results} grade={grade} elapsedMs={elapsedMs} />
 
-            {(goal || moments.goalMet || league || moments.level !== null) && (
+            {(goal || moments.goalMet || league || moments.level !== null || results.tree) && (
               <ul className="lesson-moments">
                 {goal ? (
                   <li className={`lesson-moment lesson-goal${goalDone ? ' is-goal' : ''}`}>
@@ -393,6 +394,12 @@ export function Results({
                   <li className="lesson-moment lesson-row">
                     <StarIcon size={18} weight="fill" />
                     {t('lesson.results.levelUp', { level: number(moments.level) })}
+                  </li>
+                )}
+                {results.tree && (
+                  <li className="lesson-moment lesson-row is-water">
+                    <WaterDrop size={18} />
+                    {t('tree.results.water', { count: number(results.tree.gained) })}
                   </li>
                 )}
               </ul>
