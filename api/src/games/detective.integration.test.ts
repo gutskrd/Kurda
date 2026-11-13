@@ -1,5 +1,5 @@
 /**
- * Kurdish Detective against real Postgres and Redis: the line picker lists
+ * Detektîf against real Postgres and Redis: the line picker lists
  * published lines only; a case is put together from them without typing
  * Kurdish, and offered only once it is published; its board keeps every
  * meaning back until it is found or a hint buys it, and each hint costs a
@@ -28,7 +28,7 @@ import { removeCourses } from '../test/courses.js';
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 
-describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', () => {
+describe.skipIf(!DATABASE_URL || !REDIS_URL)('Detektîf (integration)', () => {
   const config = loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;
@@ -153,7 +153,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', 
     });
   });
 
-  describe('Kurdish Detective', () => {
+  describe('Detektîf', () => {
     let caseId = '';
 
     it('puts a case together from published lines, and offers it only once it is published', async () => {

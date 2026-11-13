@@ -70,7 +70,7 @@ import { heldDim } from '../theme/MotionParts';
 import { turnCard } from '../theme/animate';
 
 /**
- * Kurdish Impostor on one phone, passed round a room.
+ * Impostor on one phone, passed round a room.
  *
  * The rules are shared/src/games/impostor/couch.ts; this is the phone's part
  * in them, the website's screens (web/src/impostor/Couch.tsx) in the phone's

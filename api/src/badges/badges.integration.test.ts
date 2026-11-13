@@ -132,7 +132,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     return g.rows[0]!.id;
   };
 
-  /** A finished Peyvok Battle: each player solved (in so many guesses) or not; a rematch of another, if said. */
+  /** A finished Pêşbaziya Peyvan: each player solved (in so many guesses) or not; a rematch of another, if said. */
   const battle = async (
     host: TestLearner,
     players: Array<{ user: TestLearner; solved: boolean; guesses: number; ms?: number }>,
@@ -379,7 +379,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
   });
 
   describe('games', () => {
-    it('Peyvzan, Tîrê rast, Heval and Mêvandar from a finished Peyvok Battle, through the play layer’s event', async () => {
+    it('Peyvzan, Tîrê rast, Heval and Mêvandar from a finished Pêşbaziya Peyvan, through the play layer’s event', async () => {
       const me = await counted();
       const friend = await counted();
       await befriend(pool, me.id, friend.id);

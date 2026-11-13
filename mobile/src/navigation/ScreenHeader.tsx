@@ -55,6 +55,15 @@ const EDGE_SLACK = (MIN_TOUCH_TARGET - 26) / 2;
  * its chevron points right, which is the direction "back" is for a reader of
  * those languages.
  */
+/**
+ * How far a title may be set smaller to fit between the two sides before it
+ * is cut short. A game's name is Kurmancî in every language, and the longer
+ * ones ("Pêşbaziya Nivîsandinê") are a little wider than the room a narrow
+ * phone leaves beside a trailing action: a name a few points smaller reads
+ * better than a name with its end missing.
+ */
+const TITLE_FIT = 0.8;
+
 export function ScreenHeader({
   title,
   onBack,
@@ -159,12 +168,12 @@ export function ScreenHeader({
             style={({ pressed }) => [styles.titleRow, { flexDirection: dir.row }, pressed && styles.pressed]}
           >
             {titleAvatar}
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={TITLE_FIT}>
               {title}
             </Text>
           </Pressable>
         ) : title ? (
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
+          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={TITLE_FIT} accessibilityRole="header">
             {title}
           </Text>
         ) : null}

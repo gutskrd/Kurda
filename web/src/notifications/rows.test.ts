@@ -52,7 +52,7 @@ describe('noteKind', () => {
 
 describe('splitAtName', () => {
   it('cuts a sentence around the name wherever the language put it', () => {
-    expect(splitAtName('Rojda invited you to play Peyvok Battle', 'Rojda')).toEqual(['', 'Rojda', ' invited you to play Peyvok Battle']);
+    expect(splitAtName('Rojda invited you to play Pêşbaziya Peyvan', 'Rojda')).toEqual(['', 'Rojda', ' invited you to play Pêşbaziya Peyvan']);
     expect(splitAtName('دیارییەک لە Berfinەوە', 'Berfin')).toEqual(['دیارییەک لە ', 'Berfin', 'ەوە']);
   });
 

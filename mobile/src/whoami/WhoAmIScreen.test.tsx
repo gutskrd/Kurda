@@ -32,7 +32,7 @@ import { forgetMpAvailability } from '../games/mpAvailability';
 import { WhoAmIScreen } from './WhoAmIScreen';
 
 /**
- * Who Am I? on the phone: the start with its two ways (one phone first, with
+ * Ez kî me? on the phone: the start with its two ways (one phone first, with
  * friends online the quieter second) and what each is offered on, and the
  * room with friends played through the game's own rules, from the side of the
  * one asking (the suggested questions first in their list, for a beginner
@@ -238,7 +238,7 @@ describe('the start', () => {
     const client = fakeClient(offered([], false, 'ckb'));
     testAuth.client = client;
     renderWithProviders(<WhoAmIScreen onExit={() => undefined} />);
-    expect(await screen.findByText('Who Am I? needs more reviewed words and questions before it can be played in this Kurdish.')).toBeTruthy();
+    expect(await screen.findByText('Ez kî me? needs more reviewed words and questions before it can be played in this Kurdish.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Play on this phone' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Invite friends' })).toBeNull();
     expect(client.calls.map((c) => c.path)).toContain('/games/who-am-i/couch?dialect=ckb');

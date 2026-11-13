@@ -138,7 +138,7 @@ describe('the games list', () => {
     testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('memory-thief')]) });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-memory-thief');
-    expect(card.getAttribute('aria-label')).toBe('The Memory Thief, Solo. Study a real passage, then give back the words the thief took.');
+    expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Solo. Study a real passage, then give back the words the thief took.');
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('MemoryThief');
     expect(screen.getByTestId('game-wordle')).toBeTruthy();
@@ -160,13 +160,13 @@ describe('the games list', () => {
     expect(await screen.findByTestId('game-wordle')).toBeTruthy();
     // named under the cards, and nothing to press
     const card = await screen.findByTestId('game-memory-thief');
-    expect(card.getAttribute('aria-label')).toBe('The Memory Thief, Coming soon');
+    expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Coming soon');
     expect(card.getAttribute('role')).not.toBe('button');
     fireEvent.click(card);
     expect(navigation.navigate).not.toHaveBeenCalledWith('MemoryThief');
   });
 
-  it('lists The Last Letter where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
+  it('lists Tîpa Dawî where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
     forgetLastLetterAvailability();
     testAuth.client = fakeClient({
       ...base,
@@ -209,6 +209,18 @@ describe('the games list', () => {
     expect(GAME_CARDS.flatMap((c) => c.ways.map((w) => w.key))).toEqual(['wordle', 'battle', 'rhyme', 'rhymeMatch', 'race']);
   });
 
+  it('calls a game by its Kurmancî name and says what the name means under it; Peyvok means only itself', async () => {
+    const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([]) });
+    testAuth.client = client;
+    renderWithProviders(<GamesView />);
+    await settled(client);
+    // the card, and perhaps the featured game above it, each say both
+    expect(screen.getAllByText('Pêşbaziya Nivîsandinê').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Typing race').length).toBe(screen.getAllByText('Pêşbaziya Nivîsandinê').length);
+    expect(screen.getAllByText('Rhyming words').length).toBe(screen.getAllByText('Peyvên Hevserwa').length);
+    expect(screen.queryByText('Typing Race')).toBeNull();
+  });
+
   it('gives Peyvok one card with a button for playing alone and one for playing a friend', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([]) });
     testAuth.client = client;
@@ -224,27 +236,27 @@ describe('the games list', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle');
     // one card for the game, not one for each way to play it
     expect(screen.getAllByText('Peyvok')).toHaveLength(1);
-    expect(screen.queryByText('Peyvok Battle')).toBeNull();
+    expect(screen.queryByText('Pêşbaziya Peyvan')).toBeNull();
   });
 
-  it('gives Who Am I? one card with a button for this phone and one for friends, each opening its screen on that way', async () => {
+  it('gives Ez kî me? one card with a button for this phone and one for friends, each opening its screen on that way', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('who-am-i'), game('impostor')]) });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
     await settled(client);
     const phone = await screen.findByTestId('game-who-am-i-phone');
-    expect(phone.getAttribute('aria-label')).toBe('Who Am I?, On this phone');
+    expect(phone.getAttribute('aria-label')).toBe('Ez kî me?, On this phone');
     fireEvent.click(phone);
     expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'phone' });
     const friends = screen.getByTestId('game-who-am-i-friends');
-    expect(friends.getAttribute('aria-label')).toBe('Who Am I?, With friends');
+    expect(friends.getAttribute('aria-label')).toBe('Ez kî me?, With friends');
     fireEvent.click(friends);
     expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'friends' });
     // one card for the game, which is not itself pressed, and no way to play it alone
-    expect(screen.getAllByText('Who Am I?')).toHaveLength(1);
+    expect(screen.getAllByText('Ez kî me?')).toHaveLength(1);
     expect(screen.getByTestId('card-who-am-i').getAttribute('role')).not.toBe('button');
     expect(screen.queryByTestId('game-who-am-i')).toBeNull();
-    // Kurdish Impostor's own screen asks how to play: its card is the one way in
+    // Xapînok's own screen asks how to play: its card is the one way in
     fireEvent.click(screen.getByTestId('game-impostor'));
     expect(navigation.navigate).toHaveBeenCalledWith('Impostor');
 
@@ -261,7 +273,7 @@ describe('the games list', () => {
     renderWithProviders(<GamesView />);
     await settled(client);
     expect(screen.getAllByText('Featured')).toHaveLength(1);
-    expect(screen.getAllByText('Typing Race')).toHaveLength(1);
+    expect(screen.getAllByText('Pêşbaziya Nivîsandinê')).toHaveLength(1);
     fireEvent.click(screen.getByTestId('game-race'));
     expect(navigation.navigate).toHaveBeenCalledWith('Race');
 
@@ -282,7 +294,7 @@ describe('the games list', () => {
     fireEvent.click(screen.getByTestId('games-filter-friends'));
     expect(screen.getByTestId('games-filter-friends').getAttribute('aria-pressed')).toBe('true');
     expect(screen.queryByText('Featured')).toBeNull();
-    // the race and The Memory Thief are played alone
+    // the race and Dizê Bîrê are played alone
     expect(screen.queryByTestId('game-race')).toBeNull();
     expect(screen.queryByTestId('game-memory-thief')).toBeNull();
     expect(screen.getByTestId('game-impostor')).toBeTruthy();
@@ -294,7 +306,7 @@ describe('the games list', () => {
     expect(screen.queryByTestId('game-impostor')).toBeNull();
   });
 
-  // Build a Kurdish Sentence and Hear It, Find It are practice now (practice/exercises.ts), listed with the lessons
+  // Build a Sentence and Hear It, Find It are practice now (practice/exercises.ts), listed with the lessons
   it('does not list the lessons’ two exercises, ready or coming soon', async () => {
     setListsUpcomingGames(true);
     const client = fakeClient({

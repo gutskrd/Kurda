@@ -1,5 +1,5 @@
 /**
- * Kurdish Detective: a round is one case, solved from Kurdish evidence.
+ * Detective: a round is one case, solved from Kurdish evidence.
  *
  * The cases are published `case_file` rows (approved by a reviewer, in one
  * variety). Each holds suspects, evidence cards whose Kurdish was picked from

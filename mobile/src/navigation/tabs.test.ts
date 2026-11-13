@@ -64,7 +64,7 @@ describe('old addresses', () => {
     expect(legacyTabPath('/inbox')).toBe('/messages');
   });
 
-  it('opens a Peyvok Battle invite sent before the game was renamed', () => {
+  it('opens a Pêşbaziya Peyvan invite sent before the game was renamed', () => {
     expect(legacyTabPath('app/games/wordle-battle?id=abc123')).toBe('app/games/peyvok-battle?id=abc123');
     expect(legacyTabPath('/app/games/wordle-battle?id=abc123')).toBe('/app/games/peyvok-battle?id=abc123');
   });

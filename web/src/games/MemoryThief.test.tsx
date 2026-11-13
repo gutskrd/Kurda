@@ -98,11 +98,11 @@ const correction = (verdicts: Array<'right' | 'typo' | 'wrong'>, given: string[]
   ],
 });
 
-describe('The Memory Thief', () => {
+describe('Dizê Bîrê', () => {
   it('opens on its three steps, and promises no XP for a game played alone', async () => {
     server(session([item()]), () => ({}));
     renderApp(<MemoryThief />, ['/app/games/memory-thief']);
-    expect(await screen.findByRole('heading', { name: 'The Memory Thief' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Dizê Bîrê' })).toBeInTheDocument();
     expect(screen.getByText('Study the passage')).toBeInTheDocument();
     expect(screen.getByText('Words vanish')).toBeInTheDocument();
     expect(screen.getByText('Give them back')).toBeInTheDocument();
@@ -155,7 +155,7 @@ describe('The Memory Thief', () => {
   it('opens on the games’ stage: its emblem over its name, and one gold way in', async () => {
     server(session([item()]), () => ({}));
     const { container } = renderApp(<MemoryThief />, ['/app/games/memory-thief']);
-    const title = await screen.findByRole('heading', { name: 'The Memory Thief' });
+    const title = await screen.findByRole('heading', { name: 'Dizê Bîrê' });
     const hero = title.closest('.gs-hero');
     expect(hero).not.toBeNull();
     // the emblem is decoration: drawn, and hidden from a screen reader
@@ -298,10 +298,10 @@ describe('The Memory Thief', () => {
 });
 
 describe('Learn’s games list', () => {
-  it('lists The Memory Thief once it can be played', async () => {
+  it('lists Dizê Bîrê once it can be played', async () => {
     server(session([item()]), () => ({}));
     renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'The Memory Thief' })).closest('article')!;
+    const card = (await screen.findByRole('heading', { name: 'Dizê Bîrê' })).closest('article')!;
     expect(card).toHaveClass('gp-card');
     expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/memory-thief');
   });

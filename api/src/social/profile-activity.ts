@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { GAME_NAMES } from '@kurda/shared';
 import { EngagementService, type EngagementKind } from './engagement-service.js';
 import { multiTitleSql, playedGamesSql } from '../mp/titles.js';
 
@@ -231,22 +232,22 @@ export class ProfileActivityService {
       id: string; game: string; outcome: string | null; detail: string | null; at: Date;
     }>(
       `SELECT id, game, outcome, detail, at FROM (
-         SELECT w.id::text AS id, 'Peyvok' AS game, w.status AS outcome,
+         SELECT w.id::text AS id, '${GAME_NAMES.peyvok}' AS game, w.status AS outcome,
                 w.difficulty AS detail, w.finished_at AS at
            FROM wordle_games w
           WHERE w.user_id = $1 AND w.finished_at IS NOT NULL AND w.status <> 'playing'
          UNION ALL
-         SELECT r.id::text, 'Rhyming Words', NULL,
+         SELECT r.id::text, '${GAME_NAMES.rhyme}', NULL,
                 r.score::text || ' points', r.ended_at
            FROM rhyme_games r
           WHERE r.user_id = $1 AND r.ended_at IS NOT NULL
          UNION ALL
-         SELECT g.id::text, 'Typing Race', NULL,
+         SELECT g.id::text, '${GAME_NAMES.race}', NULL,
                 g.wpm::text || ' WPM', g.finished_at
            FROM race_games g
           WHERE g.user_id = $1 AND g.finished_at IS NOT NULL
          UNION ALL
-         SELECT b.battle_id::text, 'Peyvok Battle',
+         SELECT b.battle_id::text, '${GAME_NAMES['wordle-battle']}',
                 CASE WHEN b.solved THEN 'won' ELSE 'lost' END,
                 b.guess_count::text || ' guesses', b.finished_at
            FROM wordle_battle_players b

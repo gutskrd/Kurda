@@ -31,11 +31,11 @@ import type { GamesAvailability } from './solo.js';
 
 /**
  * The kinds of row, one per thing a game needs written:
- *   sentence          — Build a Kurdish Sentence: a sentence, its meaning, the word orders it accepts
+ *   sentence          — Build a Sentence: a sentence, its meaning, the word orders it accepts
  *   passage           — The Memory Thief: a passage and the key words that vanish from it
- *   case_file         — Kurdish Detective: suspects, evidence lines, deduction steps, the solution
- *   word_category     — Kurdish Impostor: a category's Kurdish name and its meaning
- *   word_card         — Kurdish Impostor: a word, its category and the impostor's hint
+ *   case_file         — Detective: suspects, evidence lines, deduction steps, the solution
+ *   word_category     — Impostor: a category's Kurdish name and its meaning
+ *   word_card         — Impostor: a word, its category and the impostor's hint
  *   identity          — Who Am I?: an identity and its yes/no facts
  *   question_template — Who Am I?: a yes/no question and the fact that answers it
  *
@@ -454,7 +454,7 @@ export interface MemoryThiefItemView {
 
 /**
  * A recording played beside the Kurdish it says, and who says it (with the
- * mouth's timeline, as lessons send it). Kurdish Detective sends the
+ * mouth's timeline, as lessons send it). Detective sends the
  * recording's own address rather than a handle: the words are on screen
  * beside it — an overheard remark pinned to the board — exactly as a lesson
  * sends a conversation's lines with theirs, so there is nothing behind it to
@@ -466,7 +466,7 @@ export interface SpokenAudio {
 }
 
 /**
- * Kurdish Detective: the case board as the player opens it (games/detective).
+ * Detective: the case board as the player opens it (games/detective).
  * The solution stays on the server, and so does what a card means until the
  * player has found it — by a deduction it proves, or by spending a hint on it.
  */

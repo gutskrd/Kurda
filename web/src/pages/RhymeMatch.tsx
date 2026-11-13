@@ -93,7 +93,7 @@ export function RhymeMatch(): React.JSX.Element {
   const id = params.get('id');
   return (
     <div className="container game-page gs" style={stageTone('rhyme')}>
-      <GameHead game="rhyme" title={t('games.rhymeMatch.name')} />
+      <GameHead game="rhyme" title={t('games.rhymeMatch.name')} meaning={t('games.rhymeMatch.meaning')} />
       {id ? <MatchRoom key={id} id={id} /> : <CreateMatch />}
     </div>
   );

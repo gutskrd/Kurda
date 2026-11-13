@@ -527,7 +527,7 @@ describe('an invitation to a game', () => {
 
   it('wears the game’s own card: its name, its picture, and the code said once more', () => {
     const tags = head(inviteHead({ game: 'impostor', code: 'KVXV5E', from: null }, url));
-    expect(tags).toContain('<meta property="og:title" content="You’re invited to play Kurdish Impostor on Hevalo" />');
+    expect(tags).toContain('<meta property="og:title" content="You’re invited to play Xapînok on Hevalo" />');
     expect(tags).toContain('<meta property="og:image" content="https://hevalo.app/invite/impostor.png" />');
     expect(tags).toContain('type KVX V5E.');
     expect(tags).toContain(`<link rel="canonical" href="${url}" />`);

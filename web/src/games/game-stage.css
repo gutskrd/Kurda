@@ -393,14 +393,14 @@ button.gs-back {
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+/* a game's name is never cut short: the longer Kurmancî ones take a second line on a narrow screen */
 .gs-head-title {
   margin: 0;
-  overflow: hidden;
   font-family: var(--font-display);
   font-size: var(--text-section);
   line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 @media (min-width: 720px) {
@@ -691,7 +691,7 @@ button.gs-back {
   color: #45a26a;
 }
 
-/* ---- Kurdish Detective: the case file lies on the night; an answer is a card to pick up ---- */
+/* ---- Detective: the case file lies on the night; an answer is a card to pick up ---- */
 .gs .dt-file {
   position: relative;
   padding: var(--space-5);

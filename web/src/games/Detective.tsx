@@ -23,7 +23,7 @@ import { useAvailability, useGameDialect } from './soloRounds';
 import './detective.css';
 
 /**
- * Kurdish Detective (/app/games/detective).
+ * Detective (/app/games/detective).
  *
  * The stage is a case board: the case file's title and story at the top, the
  * suspects' portraits (the app's own characters where one plays a suspect,

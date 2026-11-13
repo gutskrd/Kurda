@@ -178,8 +178,8 @@ describe('MemoryThiefScreen', () => {
     const { container } = renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
     await waitFor(() => expect(container.querySelectorAll('svg[data-xml="drawn"]').length).toBeGreaterThan(0));
     // the screen's header is the heading; the name under the emblem is its caption, not a second heading
-    expect(await screen.findByRole('heading', { name: 'The Memory Thief' })).toBeTruthy();
-    expect(screen.getAllByText('The Memory Thief')).toHaveLength(2);
+    expect(await screen.findByRole('heading', { name: 'Dizê Bîrê' })).toBeTruthy();
+    expect(screen.getAllByText('Dizê Bîrê')).toHaveLength(2);
     expect(screen.getByText('In Kurmancî')).toBeTruthy();
     expect(await screen.findByRole('button', { name: 'Start' })).toBeTruthy();
   });
@@ -318,11 +318,11 @@ describe('the games list', () => {
     'GET /play/invites': ok({ incoming: [], outgoing: [] }),
   };
 
-  it('adds The Memory Thief as a card once it can be played, one tap to open', async () => {
+  it('adds Dizê Bîrê as a card once it can be played, one tap to open', async () => {
     testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr') });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-memory-thief');
-    expect(card.getAttribute('aria-label')).toBe('The Memory Thief, Solo. Study a real passage, then give back the words the thief took.');
+    expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Solo. Study a real passage, then give back the words the thief took.');
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('MemoryThief');
   });

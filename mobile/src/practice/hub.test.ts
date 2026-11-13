@@ -49,7 +49,7 @@ describe('the rows of the practice hub', () => {
   });
 
   /*
-   * Build a Kurdish Sentence and Hear It, Find It were games once; they are
+   * Build a Sentence and Hear It, Find It were games once; they are
    * practice. Each has a row beside the kind it is nearest to, only while it
    * can be done, and its row opens its own screen rather than a session.
    */

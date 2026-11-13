@@ -172,15 +172,15 @@ describe('Search for a person or a game', () => {
       await new Promise((r) => setTimeout(r, 20));
     });
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'impostor' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'Kurdish Impostor' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Xapînok' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Impostor');
     // one name, two ways in: each row says which, and opens that one
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'who am' } });
-    fireEvent.click(await screen.findByRole('button', { name: 'Who Am I?, With friends' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Ez kî me?, With friends' }));
     expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'friends' });
     // and the first games are found as they always were
     fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'battle' } });
-    expect(await screen.findByRole('button', { name: 'Peyvok Battle' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Pêşbaziya Peyvan' })).toBeTruthy();
   });
 });
 

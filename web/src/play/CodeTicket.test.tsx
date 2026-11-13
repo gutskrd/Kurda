@@ -72,8 +72,8 @@ describe('the code ticket', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
     // the link is last, where a message draws it as the game's card: the game and the code, on the site the ticket is on
     expect(share).toHaveBeenCalledWith({
-      title: 'Peyvok Battle',
-      text: `Play Peyvok Battle with me on Hevalo! Open Games → Join with a code and type ABC 234.\nOr tap to join: ${window.location.origin}/join/peyvok-battle/ABC234`,
+      title: 'Pêşbaziya Peyvan',
+      text: `Play a Peyvok battle with me on Hevalo! Open Games → Join with a code and type ABC 234.\nOr tap to join: ${window.location.origin}/join/peyvok-battle/ABC234`,
     });
     // nothing is handed over beside the words: some share targets drop a link sent that way
     expect(share.mock.calls[0]![0]).not.toHaveProperty('url');
@@ -94,7 +94,7 @@ describe('the code ticket', () => {
     renderApp(<CodeTicket game="rhyme-match" code="ABC234" />);
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
     expect(writeText).toHaveBeenCalledWith(
-      `Play Rhyme Match with me on Hevalo! Open Games → Join with a code and type ABC 234.\nOr tap to join: ${window.location.origin}/join/rhyme-match/ABC234`,
+      `Play a rhyme match with me on Hevalo! Open Games → Join with a code and type ABC 234.\nOr tap to join: ${window.location.origin}/join/rhyme-match/ABC234`,
     );
     expect(screen.getByRole('status')).toHaveTextContent('Invite copied. Paste it in a message to your friend.');
   });

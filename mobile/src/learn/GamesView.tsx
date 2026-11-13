@@ -27,7 +27,7 @@ import { lobbyRoute } from '../play/routes';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { useUserEvents } from '../realtime/useUserEvents';
 import { PHONE_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
-import { GAME_CARDS, learnGameCard, type GameCard, type GameMode, type GameWay } from '../games/gameCards';
+import { GAME_CARDS, GAME_MEANING, learnGameCard, type GameCard, type GameMode, type GameWay } from '../games/gameCards';
 import { GameArt } from '../games/GameArt';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
@@ -105,6 +105,9 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   ];
   // the game put forward stands above the cards, and is not said twice among them; under a filter the cards are whole
   const featured = filter === 'all' ? featuredCard(cards, Date.now()) : null;
+  // what the featured game's name means, unless the interface is Kurdish and the two are the same words
+  const featuredMeaningKey = featured ? GAME_MEANING[featured.emblem] : undefined;
+  const featuredMeaning = featured && featuredMeaningKey && t(featuredMeaningKey) !== t(featured.name) ? t(featuredMeaningKey) : null;
   const shelf = cards.filter((c) => !c.soon && c !== featured && playedAs(c.mode, filter));
   const upcoming = cards.filter((c) => c.soon);
 
@@ -276,6 +279,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           <Text style={styles.heroName} accessibilityRole="header">
             {t(featured.name)}
           </Text>
+          {featuredMeaning ? <Text style={styles.heroMeaning}>{featuredMeaning}</Text> : null}
           <Text style={styles.heroLine}>{t(featured.line)}</Text>
           <View style={styles.heroWays}>
             {featured.ways.map((way, i) =>
@@ -328,6 +332,9 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         <View style={styles.cards}>
           {shelf.map((card, place) => {
             const name = t(card.name);
+            const meaningKey = GAME_MEANING[card.emblem];
+            // what the name means, unless the interface is Kurdish and the two are the same words
+            const meaning = meaningKey && t(meaningKey) !== name ? t(meaningKey) : null;
             const single = card.ways.length === 1 ? card.ways[0]! : null;
             const inside = (
               <>
@@ -339,6 +346,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   <Text style={[styles.cardName, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
                     {name}
                   </Text>
+                  {meaning ? <Text style={[styles.cardMeaning, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
                   <Text style={[styles.cardLine, dir.text, { color: colors.textSecondary }]}>{t(card.line)}</Text>
                   {single ? (
                     <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
@@ -462,6 +470,7 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', gap: spacing.xs, borderRadius: radii.xl, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.lg },
   heroKicker: { marginTop: spacing.sm, color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase' },
   heroName: { color: TABLE.ink, fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  heroMeaning: { marginTop: -6, color: TABLE.inkSoft, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
   heroLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   heroWays: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
   heroOther: {
@@ -485,6 +494,7 @@ const styles = StyleSheet.create({
   cardArt: { alignItems: 'center', justifyContent: 'center' },
   cardText: { flex: 1, justifyContent: 'center', gap: 4, paddingVertical: 2 },
   cardName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  cardMeaning: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, marginTop: -2 },
   cardLine: { fontSize: typography.sizes.sm, lineHeight: 19 },
   cardFoot: { flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
   play: { minHeight: PLAY_HEIGHT, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill },

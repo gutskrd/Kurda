@@ -10,7 +10,7 @@ import { TABLE, TABLE_CLOTH } from './table';
 import { pressedDim } from '../theme/motion';
 
 /**
- * The parts Kurdish Impostor's screens on the phone are built from, shared by
+ * The parts Impostor's screens on the phone are built from, shared by
  * its start (ImpostorStart.tsx), the game on one phone (CouchGame.tsx) and
  * the invite sheet's category choice: the table's cloth, the one gold thing
  * to press, a numbered step's title, and the choices drawn as pictures.

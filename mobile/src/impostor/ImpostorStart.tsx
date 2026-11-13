@@ -28,7 +28,7 @@ export interface CouchAsk {
 }
 
 /**
- * The start of Kurdish Impostor on the phone: what the game is in one line,
+ * The start of Impostor on the phone: what the game is in one line,
  * and one thing to press.
  *
  * It is laid out in the order a person decides: the hand of cards on the

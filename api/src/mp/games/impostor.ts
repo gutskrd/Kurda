@@ -36,7 +36,7 @@ import type { GameModule, LobbyChoices } from '../module.js';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * Kurdish Impostor on the server: what the pure rules
+ * Impostor on the server: what the pure rules
  * (shared/src/games/impostor/rules.ts) cannot decide alone.
  *
  * - The deal. When the host starts, one word card is drawn from the approved

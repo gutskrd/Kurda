@@ -10,7 +10,7 @@ import { CouchGame } from './CouchGame';
 import { ImpostorScreen } from './ImpostorScreen';
 
 /**
- * Kurdish Impostor on one phone, in the phone app, from the way in to the
+ * Xapînok on one phone, in the phone app, from the way in to the
  * score: the setup and what it asks the server for (never a name), the phone
  * going round with each card shown only while it is pressed, the clues in turn
  * with their clock, the two kinds of vote, the caught impostor's guess, the
@@ -174,7 +174,7 @@ describe('the way in', () => {
   it('says plainly where no variety has the cards for it', async () => {
     testAuth.client = fakeClient({ 'GET /games/impostor/couch?dialect=kmr': ok(none), 'GET /games/impostor/couch?dialect=ckb': fail({}) });
     renderWithProviders(<CouchGame onLeave={() => undefined} />);
-    expect(await screen.findByText('Kurdish Impostor isn’t offered in this Kurdish yet.')).toBeTruthy();
+    expect(await screen.findByText('Xapînok isn’t offered in this Kurdish yet.')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Deal the cards' })).toBeNull();
   });
 });

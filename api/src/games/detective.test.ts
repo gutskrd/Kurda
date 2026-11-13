@@ -1,5 +1,5 @@
 /**
- * Kurdish Detective without a database: a round is one published case of the
+ * Detektîf without a database: a round is one published case of the
  * difficulty's levels, its deduction steps then the accusation; the board
  * holds no answer and no card's meaning until it is found or a hint buys it;
  * hints are counted on the round and cost XP at the finish; the accusation's

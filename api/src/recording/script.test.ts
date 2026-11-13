@@ -146,7 +146,7 @@ describe('the recording script', () => {
       ['lesson', 'Unit 1 · Lesson 1 · exercise 1 (translate)', 'published'],
       ['lesson', 'Unit 3 · Lesson 1 · exercise 2 (writing)', 'draft'],
       ['story', 'Story ‘Şorbeya Nîskê’ · paragraph 1, sentence 1', 'published'],
-      ['game', 'Who Am I? · a question (not played aloud in the game yet)', 'draft'],
+      ['game', 'Ez kî me? · a question (not played aloud in the game yet)', 'draft'],
     ]);
     expect(line!.live).toBe(true);
     expect(line!.section.id).toBe('kurmanji-road:1');
@@ -257,7 +257,7 @@ describe('the recording script', () => {
     const lines = buildScript({ exercises: [exercise({ type: 'conversation', payload: conversation })], stories: [], games, plan: PLAN, letters: [], words: [] });
     const merged = lines.find((l) => l.key === lineKey)!;
     expect(merged.places.map((p) => p.kind)).toEqual(['conversation', 'game']);
-    expect(merged.places[1]!.label).toBe('Kurdish Detective · case ‘The missing apples’ · overheard 1');
+    expect(merged.places[1]!.label).toBe('Detektîf · case ‘The missing apples’ · overheard 1');
     // the case before the question, whatever order the rows came in
     expect(texts(lines.slice(3))).toEqual(['Ez li malê bûm.', 'ئاش']);
     expect(lines.find((l) => l.text === 'Ez li malê bûm.')).toMatchObject({ voice: 'hevalo', cue: 'From Bozo.', section: { id: 'games:case_file' } });

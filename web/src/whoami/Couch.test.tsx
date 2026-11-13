@@ -8,7 +8,7 @@ import { forgetMpAvailability } from '../games/mpAvailability';
 import { WhoAmI } from './WhoAmI';
 
 /**
- * Who Am I? on one phone, from the way in to the end: the setup and what it
+ * Ez kî me? on one phone, from the way in to the end: the setup and what it
  * asks the server for (the room's size, never a name), the phone handed
  * straight to the first player with no card to memorise and no words to
  * choose from, a suggested question picked in one tap and read out, the phone
@@ -159,7 +159,7 @@ function expectNoChoices(): void {
   expect(screen.getByRole('button', { name: 'I know who I am!' })).toBeInTheDocument();
 }
 
-describe('Who Am I? on one phone, the setup', () => {
+describe('Ez kî me? on one phone, the setup', () => {
   it('says how a turn goes in three steps, takes two to six names and a level, and asks for a card for each by the room’s size alone', async () => {
     const calls = serve();
     open();
@@ -220,12 +220,12 @@ describe('Who Am I? on one phone, the setup', () => {
   it('says plainly when there are no cards to play with', async () => {
     serve(offer([]));
     open();
-    expect(await screen.findByText('Who Am I? needs more reviewed words and questions before it can be played in this Kurdish.')).toBeInTheDocument();
+    expect(await screen.findByText('Ez kî me? needs more reviewed words and questions before it can be played in this Kurdish.')).toBeInTheDocument();
     expect(screen.queryByRole('textbox')).toBeNull();
   });
 });
 
-describe('Who Am I? on one phone, a turn', () => {
+describe('Ez kî me? on one phone, a turn', () => {
   it('goes straight to the first player, with no card to look at or remember first', async () => {
     serve();
     open();
@@ -516,7 +516,7 @@ describe('Who Am I? on one phone, a turn', () => {
   });
 });
 
-describe('Who Am I? on one phone, a guess said out loud', () => {
+describe('Ez kî me? on one phone, a guess said out loud', () => {
   it('turns the phone to the friends, who judge it with the card in front of them, and hides the card again on a miss', async () => {
     serve();
     open();
@@ -617,7 +617,7 @@ describe('Who Am I? on one phone, a guess said out loud', () => {
   });
 });
 
-describe('Who Am I? on one phone, a game', () => {
+describe('Ez kî me? on one phone, a game', () => {
   it('goes from a question to the card’s verdict, a guess that misses and one that lands, and the end', async () => {
     const calls = serve();
     open();

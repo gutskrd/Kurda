@@ -1,5 +1,5 @@
 /**
- * Who Am I? beside its table, and the cards made of picked words, against
+ * Ez kî me? beside its table, and the cards made of picked words, against
  * real Postgres and Redis: the game on one phone (where it is offered, and a
  * card for everyone in the room), no round of it alone any more and what
  * becomes of one left open; the admin picking approved words for identities
@@ -27,7 +27,7 @@ const REDIS_URL = process.env.REDIS_URL;
 
 const FACTS = ['alive', 'animal', 'person', 'edible', 'place', 'can-fly', 'lives-in-water', 'four-legs', 'bigger-than-person', 'at-home', 'sweet', 'uses-electricity'];
 
-describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked words (integration)', () => {
+describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? and cards from picked words (integration)', () => {
   const config = loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;

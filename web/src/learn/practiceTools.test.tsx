@@ -39,7 +39,7 @@ describe('the lessons’ two exercises among the practice tools', () => {
   it('offers both where the learner’s Kurdish has enough for them, each at its page under Learn', async () => {
     server({ 'build-sentence': true, 'hear-it': true, 'memory-thief': true });
     renderApp(<ExerciseTools />);
-    expect(await screen.findByRole('link', { name: /^Build a Kurdish Sentence/ })).toHaveAttribute('href', '/app/learn/practice/build-sentence');
+    expect(await screen.findByRole('link', { name: /^Build a Sentence/ })).toHaveAttribute('href', '/app/learn/practice/build-sentence');
     expect(screen.getByRole('link', { name: /^Hear It, Find It/ })).toHaveAttribute('href', '/app/learn/practice/hear-it');
     // each says in a line what it is, as the other tools do
     expect(screen.getByText('Put a sentence’s words in order')).toBeInTheDocument();
@@ -52,7 +52,7 @@ describe('the lessons’ two exercises among the practice tools', () => {
     server({ 'build-sentence': false, 'hear-it': true });
     renderApp(<ExerciseTools />);
     expect(await screen.findByRole('link', { name: /^Hear It, Find It/ })).toBeInTheDocument();
-    expect(screen.queryByText('Build a Kurdish Sentence')).toBeNull();
+    expect(screen.queryByText('Build a Sentence')).toBeNull();
     expect(screen.queryByText('Coming soon')).toBeNull();
   });
 
@@ -68,10 +68,10 @@ describe('Learn’s practice tools', () => {
   it('has the two exercises after the dictionary for somebody signed in', async () => {
     server({ 'build-sentence': true, 'hear-it': true });
     renderApp(<Learn />, ['/app/learn']);
-    const sentence = await screen.findByRole('link', { name: /^Build a Kurdish Sentence/ });
+    const sentence = await screen.findByRole('link', { name: /^Build a Sentence/ });
     const tools = sentence.closest('.learn-tools')!;
     const titles = [...tools.querySelectorAll('.learn-tool-title')].map((el) => el.textContent);
-    expect(titles.slice(-3)).toEqual(['Dictionary', 'Build a Kurdish Sentence', 'Hear It, Find It']);
+    expect(titles.slice(-3)).toEqual(['Dictionary', 'Build a Sentence', 'Hear It, Find It']);
   });
 
   it('shows a visitor neither, and does not ask the server about them', async () => {
@@ -79,7 +79,7 @@ describe('Learn’s practice tools', () => {
     renderApp(<Learn />, ['/app/learn']);
     // the tools a visitor has are there
     expect(await screen.findByRole('link', { name: /Dictionary/ })).toBeInTheDocument();
-    expect(screen.queryByText('Build a Kurdish Sentence')).toBeNull();
+    expect(screen.queryByText('Build a Sentence')).toBeNull();
     expect(screen.queryByText('Hear It, Find It')).toBeNull();
     expect(asked(fetchMock)).toBe(0);
   });

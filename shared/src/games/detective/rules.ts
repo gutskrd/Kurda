@@ -1,5 +1,5 @@
 /**
- * Kurdish Detective: how a case is played, from either side.
+ * Detective: how a case is played, from either side.
  *
  * A case file (`case_file` content) holds a title and an introduction in the
  * interface languages, the suspects, evidence cards whose Kurdish is reused

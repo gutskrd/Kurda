@@ -108,7 +108,7 @@ function serve(routes: Record<string, unknown>, calls: Array<{ url: string; meth
   return calls;
 }
 
-describe('The Last Letter, the room', () => {
+describe('Tîpa Dawî, the room', () => {
   it('shows the lobby: the code on its ticket, the settings, Start waiting for a second player', async () => {
     serve({ '/mp/last-letter/g1': room() });
     renderPlay(<LastLetter />, { route: '/app/games/last-letter?id=g1' });
@@ -234,15 +234,15 @@ describe('The Last Letter, the room', () => {
       }),
     );
     renderPlay(<LastLetter />, { route: '/app/games/last-letter?id=g1' });
-    expect(await screen.findByRole('link', { name: 'The Last Letter' })).toHaveAttribute('href', '/app/games/last-letter');
+    expect(await screen.findByRole('link', { name: 'Tîpa Dawî' })).toHaveAttribute('href', '/app/games/last-letter');
   });
 });
 
-describe('The Last Letter, the start', () => {
+describe('Tîpa Dawî, the start', () => {
   it('is not offered where the dictionary is too small, without a promise', async () => {
     serve({ '/mp/last-letter/availability': { dialects: [{ dialect: 'kmr', group: false, solo: false }, { dialect: 'ckb', group: false, solo: false }] } });
     renderPlay(<LastLetter />, { route: '/app/games/last-letter' });
-    expect(await screen.findByText('The Last Letter isn’t offered in this Kurdish.')).toBeInTheDocument();
+    expect(await screen.findByText('Tîpa Dawî isn’t offered in this Kurdish.')).toBeInTheDocument();
     expect(screen.queryByText(/soon/i)).toBeNull();
   });
 

@@ -7,7 +7,7 @@
  *   GET  /games/solo/sessions/:id        come back to it: the items and how far it got
  *   POST /games/solo/sessions/:id/answers  one try at one item: right or not, a hint or the correction
  *   POST /games/solo/sessions/:id/finish   pay it (once), record the learning, say how it went
- *   POST /games/solo/sessions/:id/hints    spend a hint, for a game whose rounds have them (Kurdish Detective)
+ *   POST /games/solo/sessions/:id/hints    spend a hint, for a game whose rounds have them (Detective)
  *   POST /games/solo/sessions/:id/begin    { index }: what an item shows while it is studied gives way to what it is answered with (The Memory Thief)
  *
  * A game plugs in an engine (`SoloEngine`): how a round is made from its
@@ -27,7 +27,7 @@
  * (it is expired at once), it pays nothing, and what it covered is recorded
  * in `game_seen` as a finished round's is — so the corrections a round showed
  * cannot be read, the round dropped, and the same items played again first
- * as if never met. (Kurdish Detective also carries the hints spent on a case
+ * as if never met. (Detective also carries the hints spent on a case
  * into the next round of that case until a round has paid for them:
  * detective.ts.)
  *
@@ -91,7 +91,7 @@ export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correct
   why(item: Item): string | null;
   /**
    * What the whole round shares beside its items, as the player is sent it,
-   * from what the round decided and how far it has got (Kurdish Detective's
+   * from what the round decided and how far it has got (Detective's
    * case board). Sent with the round when it is made and when it is read.
    */
   board?(items: Item[], meta: Record<string, unknown>, states: SoloItemState[]): unknown;
@@ -111,7 +111,7 @@ export interface SoloEngine<Item extends StoredItem, View, Answer, Hint, Correct
    * on (its new `meta`), or an AppError when there is none to give.
    */
   spendHint?(round: { items: Item[]; meta: Record<string, unknown>; states: SoloItemState[] }, ask: unknown): Record<string, unknown>;
-  /** after the round is paid, inside the same transaction (Build a Kurdish Sentence moves its ladder) */
+  /** after the round is paid, inside the same transaction (Build a Sentence moves its ladder) */
   finished?(client: pg.PoolClient, round: { userId: string; dialect: GameDialect; meta: Record<string, unknown>; items: readonly Item[]; results: SoloResults }): Promise<void>;
 }
 

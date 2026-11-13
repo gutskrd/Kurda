@@ -86,11 +86,11 @@ function server(handlers: { answer?: (body: { index: number; answer: { choice: n
   return sent;
 }
 
-describe('Kurdish Detective', () => {
+describe('Detektîf', () => {
   it('lays out the case board: the suspects’ portraits and the evidence in its Kurdish only', async () => {
     server({});
     renderApp(<Detective />, ['/app/games/detective']);
-    expect(await screen.findByRole('heading', { name: 'Kurdish Detective' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Detektîf' })).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     expect(await screen.findByRole('heading', { name: 'The empty jar' })).toBeInTheDocument();
     const boardEl = screen.getByRole('region', { name: 'The case board' });
@@ -112,7 +112,7 @@ describe('Kurdish Detective', () => {
   it('opens without a word on what a case could pay or a hint could cost', async () => {
     server({});
     renderApp(<Detective />, ['/app/games/detective']);
-    expect(await screen.findByRole('heading', { name: 'Kurdish Detective' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Detektîf' })).toBeInTheDocument();
     expect(screen.getByText('Every case is solved from Kurdish evidence. Answer each question, then accuse a suspect. Hints help, but a case has only a few.')).toBeInTheDocument();
     expect(await screen.findByRole('radio', { name: 'Beginner' })).toBeChecked();
     expect(document.body).not.toHaveTextContent('XP');
@@ -224,11 +224,11 @@ describe('Kurdish Detective', () => {
   });
 });
 
-describe('Kurdish Detective in Learn’s games', () => {
+describe('Detektîf in Learn’s games', () => {
   it('has its card once a case can be played', async () => {
     server({});
     renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'Kurdish Detective' })).closest('article')!;
+    const card = (await screen.findByRole('heading', { name: 'Detektîf' })).closest('article')!;
     expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/detective');
   });
 });

@@ -1,6 +1,6 @@
 /*
  * The learning games (games/*.tsx): their cards in Learn's Games group, the
- * solo round's shell, and the stage of Build a Kurdish Sentence, which is an
+ * solo round's shell, and the stage of Build a Sentence, which is an
  * exercise of the lessons' practice run by the same shell.
  *
  * Each game wears one of the path's tones (`lp-tone-*`, learn/path.css), so
@@ -207,7 +207,7 @@
   gap: var(--space-3);
 }
 
-/* ---- Build a Kurdish Sentence ----------------------------------------------------- */
+/* ---- Build a Sentence ----------------------------------------------------- */
 .bs-board {
   display: grid;
   gap: var(--space-5);

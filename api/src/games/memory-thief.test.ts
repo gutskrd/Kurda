@@ -1,5 +1,5 @@
 /**
- * The Memory Thief's rounds without a database: which words a passage can
+ * Dizê Bîrê's rounds without a database: which words a passage can
  * lose and which it does, how the passage is laid out with its gaps, how
  * conversations are cut into passages, the round made at a difficulty, the
  * decoys, and how the words given back are graded, nudged and corrected.
@@ -221,7 +221,7 @@ const ask = (difficulty: 'beginner' | 'intermediate' | 'advanced', dialect: Game
   seed,
 });
 
-describe('a round of The Memory Thief', () => {
+describe('a round of Dizê Bîrê', () => {
   const game = new MemoryThiefGame(fakeSources('kmr'));
 
   it('is five passages at the difficulty’s levels, at most two of one story, the easier first', async () => {

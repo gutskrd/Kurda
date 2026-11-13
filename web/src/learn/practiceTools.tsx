@@ -6,7 +6,7 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
 /**
- * The lessons' two exercises that were games once: Build a Kurdish Sentence
+ * The lessons' two exercises that were games once: Build a Sentence
  * and Hear It, Find It. Which of the registry's exercises this app has a page
  * for, and the card each wears among Learn's practice tools.
  *

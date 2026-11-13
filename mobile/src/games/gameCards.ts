@@ -15,6 +15,24 @@ import type { LearnGameRoute } from './learnGames';
 export type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race' | LearnGameRoute;
 export type GameMode = 'solo' | 'friends' | 'both';
 
+/**
+ * What each game's name means, said in the reader's language under it. A
+ * game's name is Kurmancî in every language the app speaks ("Xapînok", not
+ * "Impostor"), which teaches a word and tells a newcomer nothing: the line
+ * under it does the telling, and a search finds the game by either. Peyvok is
+ * a made-up word and means only itself; where the interface is Kurdish the
+ * meaning is the name again, and is not said twice.
+ */
+export const GAME_MEANING: Partial<Record<GameEmblem, TranslationKey>> = {
+  rhyme: 'games.rhyme.meaning',
+  race: 'games.race.meaning',
+  'memory-thief': 'games.memory.meaning',
+  detective: 'games.detective.meaning',
+  'last-letter': 'games.lastLetter.meaning',
+  impostor: 'games.impostor.meaning',
+  'who-am-i': 'games.whoAmI.meaning',
+};
+
 /** One way into a game: the screen it opens, and what its button says. */
 export interface GameWay {
   /** names its button for the tests (`game-<key>`) */

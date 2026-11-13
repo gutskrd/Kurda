@@ -1,5 +1,5 @@
 /**
- * Build a Kurdish Sentence's rounds without a database: the round is made of
+ * Build a Sentence's rounds without a database: the round is made of
  * the learner's variety and difficulty only, never hands over the answer in
  * order, keeps decoys off the sentence's own words, grades every accepted
  * order, nudges before it corrects, and moves the ladder.

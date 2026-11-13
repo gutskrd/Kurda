@@ -1,5 +1,5 @@
 /**
- * Who Am I? with friends on the multiplayer engine, through the routes,
+ * Ez kî me? with friends on the multiplayer engine, through the routes,
  * against real Postgres: what each player's payload holds (everybody's card
  * but their own), a turn in which the others answer and the card decides,
  * the clocks, scoring and placement XP, where the game is offered, and what
@@ -28,7 +28,7 @@ interface User {
 
 const FACTS = ['alive', 'animal', 'person', 'edible', 'place', 'can-fly', 'lives-in-water', 'four-legs', 'bigger-than-person', 'at-home', 'sweet', 'uses-electricity'];
 
-describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? with friends (integration)', () => {
+describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? with friends (integration)', () => {
   const config = loadConfig({ DATABASE_URL, ...(REDIS_URL ? { REDIS_URL } : {}), NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;

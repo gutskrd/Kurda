@@ -265,7 +265,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the games that are no longer part 
       const res = await call(host, 'GET', `/users/${host.id}/activity?kind=games`);
       expect(res.status, res.raw).toBe(200);
       const entries = res.body.entries as Array<{ id: string; title: string }>;
-      expect(entries.map((e) => e.title)).toEqual(['Kurdish Impostor']);
+      expect(entries.map((e) => e.title)).toEqual(['Xapînok']);
       expect(entries[0]!.id).toContain(kept);
     });
 

@@ -95,7 +95,7 @@ afterEach(() => {
   localStorage.clear();
 });
 
-describe('Typing Race', () => {
+describe('Pêşbaziya Nivîsandinê', () => {
   /**
    * The text and the box are one surface. Two boxes meant the text sat on the
    * page as ordinary prose beside an input — select it, copy it, paste it, and

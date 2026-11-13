@@ -28,6 +28,7 @@ import { SOURCES, SOURCE_ORDER, type Source } from './teaching/sources';
 // the one file, not the package: its index would bring the whole of @kurda/shared into the edge script
 import { isScannerProbe } from '@kurda/shared/src/scanner-paths';
 import { parseJoinLink, type JoinLink, type JoinLinkGame } from '@kurda/shared/src/join-link';
+import { GAME_NAMES } from '@kurda/shared/src/games/names';
 
 /*
  * The two pieces of the Workers runtime this file uses, declared here rather
@@ -221,18 +222,19 @@ function previewHead(preview: Preview, url: string): Array<string | ''> {
 }
 
 /**
- * What each game is called on the card of an invitation to it. English, as
- * the rest of this file's words are: whatever unfurls a link is not told who
- * will read it. The message the link arrives in is in the sender's language,
- * and the page it opens is in the reader's.
+ * What each game is called on the card of an invitation to it: its own name,
+ * which is Kurmancî and the same for every reader (shared: games/names.ts).
+ * The words round it are English, as the rest of this file's are: whatever
+ * unfurls a link is not told who will read it. The message the link arrives
+ * in is in the sender's language, and the page it opens is in the reader's.
  */
 const INVITE_GAME: Record<JoinLinkGame, string> = {
-  'wordle-battle': 'Peyvok Battle',
-  'rhyme-match': 'Rhyme Match',
+  'wordle-battle': GAME_NAMES['wordle-battle'],
+  'rhyme-match': GAME_NAMES['rhyme-match'],
   stories: 'a Kurdish story game',
-  'last-letter': 'The Last Letter',
-  impostor: 'Kurdish Impostor',
-  'who-am-i': 'Who Am I?',
+  'last-letter': GAME_NAMES['last-letter'],
+  impostor: GAME_NAMES.impostor,
+  'who-am-i': GAME_NAMES['who-am-i'],
 };
 
 /** The games with a card of their own (api/scripts/generate-invite-art.ts); the rest show the site's. */

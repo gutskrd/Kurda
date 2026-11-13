@@ -149,7 +149,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
   const [dialect, setDialect] = useState<StoryDialect>(locale === 'ckb' ? 'sorani' : (prefs.dialect ?? 'kurmanci'));
   // The Last Letter, in the dialects whose dictionary can check players' words (asked only where it could be offered)
   const letterDialects = offeredDialects(useLastLetterAvailability(target.kind !== 'lobby'), 'group');
-  // Kurdish Impostor, in the varieties and at the levels its approved cards allow
+  // Impostor, in the varieties and at the levels its approved cards allow
   const impostorOffer = usePartyOffer('impostor', target.kind !== 'lobby') ?? [];
   // a table of Who Am I?, where its content lets it be played
   const tableOffers = useMpAvailability('who-am-i', target.kind !== 'lobby');

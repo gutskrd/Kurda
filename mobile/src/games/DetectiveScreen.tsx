@@ -31,7 +31,7 @@ import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability } from './learnGames';
 
 /**
- * Kurdish Detective on the phone.
+ * Detective on the phone.
  *
  * The case board, top to bottom: the case file's title and story, the
  * suspects' portraits in a row (the app's own characters where one plays a

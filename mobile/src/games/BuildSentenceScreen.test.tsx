@@ -180,11 +180,11 @@ describe('BuildSentenceScreen', () => {
 });
 
 /*
- * Build a Kurdish Sentence was a game once. It is an exercise of the lessons'
+ * Build a Sentence was a game once. It is an exercise of the lessons'
  * practice now: nothing on the way calls it a game, and leaving it goes back
  * to wherever it was opened from.
  */
-describe('Build a Kurdish Sentence, as an exercise of the lessons', () => {
+describe('Build a Sentence, as an exercise of the lessons', () => {
   const finished = { correct: 0, total: 1, firstTry: 0, xp: 0, learningCounted: false, needed: 1, items: [{ index: 0, correct: false, firstTry: false, xp: 0, repeat: false }], streak: null };
 
   it('offers another round and Done when a round ends, in practice’s words rather than a game’s', async () => {
@@ -216,6 +216,6 @@ describe('Build a Kurdish Sentence, as an exercise of the lessons', () => {
     await waitFor(() => expect(client.calls.some((c) => c.path.startsWith('/games/availability'))).toBe(true));
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(screen.queryByTestId('game-build-sentence')).toBeNull();
-    expect(screen.queryByText('Build a Kurdish Sentence')).toBeNull();
+    expect(screen.queryByText('Build a Sentence')).toBeNull();
   });
 });

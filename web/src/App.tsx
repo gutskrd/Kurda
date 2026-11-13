@@ -149,7 +149,7 @@ function StoriesMoved(): React.JSX.Element {
 }
 
 /**
- * The addresses Build a Kurdish Sentence and Hear It, Find It had while they
+ * The addresses Build a Sentence and Hear It, Find It had while they
  * were games: they are exercises of the lessons' practice now, under Learn.
  * A round left open and offered again (`?…`) comes along.
  */
@@ -284,7 +284,7 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="alphabet" element={<Alphabet />} />
         {/* the words after the letters — colours, numbers, days, months — open to
             everyone too, each set on a page of its own (pages/Words.tsx, WordSet.tsx) */}
-        {/* the lessons' two exercises that were games once: Build a Kurdish Sentence
+        {/* the lessons' two exercises that were games once: Build a Sentence
             and Hear It, Find It. They are rounds made and checked on the server
             against the learner, so they need an account as a lesson does; the
             addresses they had among the games lead here, a round's `?…` kept */}

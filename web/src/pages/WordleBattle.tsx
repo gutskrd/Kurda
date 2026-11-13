@@ -109,7 +109,7 @@ export function WordleBattle(): React.JSX.Element {
   const id = params.get('id');
   return (
     <div className="container game-page gs" style={stageTone('peyvok')}>
-      <GameHead game="peyvok" title={t('games.battle.name')} />
+      <GameHead game="peyvok" title={t('games.battle.name')} meaning={t('games.battle.meaning')} />
       {id ? <BattleRoom key={id} id={id} /> : <CreateBattle />}
     </div>
   );

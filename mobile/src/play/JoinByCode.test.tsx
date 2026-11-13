@@ -129,7 +129,7 @@ describe('JoinCodeSheet', () => {
 
   it('takes the code out of the whole message a friend shared', async () => {
     const { field, joins } = sheet({ 'POST /play/join': ok({ game: 'wordle-battle', lobbyId: LOBBY }) });
-    type(field, 'Play Peyvok Battle with me on Hevalo! Open Games → Join with a code and type KQ7 M4X');
+    type(field, 'Play Pêşbaziya Peyvan with me on Hevalo! Open Games → Join with a code and type KQ7 M4X');
     await waitFor(() => expect(joins()[0]?.body).toEqual({ code: 'KQ7M4X' }));
   });
 

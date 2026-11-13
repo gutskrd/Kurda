@@ -355,7 +355,7 @@ describe.skipIf(!DATABASE_URL)('reports (integration)', () => {
     expect(row.rows[0]!.evidence.game.players.map((p) => p.username)).toEqual([reporter.username, author.username]);
   });
 
-  it('reports a Rhyme Match player by seat, and seats are the game’s own, not the join order', async () => {
+  it('reports a Pêşbaziya Serwayan player by seat, and seats are the game’s own, not the join order', async () => {
     const match = await pool.query<{ id: string }>(
       `INSERT INTO rhyme_matches (created_by, prompt, window_ms, status) VALUES ($1, 'dil', 60000, 'finished') RETURNING id`,
       [other.id],

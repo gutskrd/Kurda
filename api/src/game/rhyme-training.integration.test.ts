@@ -1,4 +1,4 @@
-/** Rhyming Words training backend against real Postgres (CI job). KUR-299. */
+/** Peyvên Hevserwa training backend against real Postgres (CI job). KUR-299. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';

@@ -8,7 +8,7 @@ import { dialectName } from '../learn/map';
 import './party.css';
 
 /**
- * The frame of Kurdish Impostor's page on the website (/app/games/impostor):
+ * The frame of Impostor's page on the website (/app/games/impostor):
  * the back link and the title, and under them whatever the page is showing —
  * its start (impostor/Start.tsx), the game on one phone, or the room. The
  * pieces a room is built from are here too: the line that says what a lobby

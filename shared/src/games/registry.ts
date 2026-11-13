@@ -20,7 +20,7 @@
  * lessons, and pay as lessons do.
  *
  * Two entries are not games any more but exercises of the lessons' practice
- * (`place: 'lessons'`): Build a Kurdish Sentence and Hear It, Find It. They
+ * (`place: 'lessons'`): Build a Sentence and Hear It, Find It. They
  * are still rounds of the solo kit, made, checked and paid by the same rules,
  * which is why they stay in this list; Learn's Games never lists them, and
  * the lessons' practice does.
@@ -32,7 +32,7 @@
  *
  * Per-game modules. The registry is data only and imports no game: a game's
  * own rules live in a folder of its own beside this file —
- * `build-sentence/` for Build a Kurdish Sentence, `last-letter/` for The Last
+ * `build-sentence/` for Build a Sentence, `last-letter/` for The Last
  * Letter, `multi/` for the multiplayer engine every game with friends shares — and are
  * exported through `games/index.ts`, one line per module. A new game adds its
  * entry here and its folder there; nothing else in this file changes.
@@ -74,7 +74,7 @@ export function isRetiredGame(v: unknown): v is RetiredGameId {
 /**
  * The XP sources nothing pays from any more: the retired games', and the ones
  * games paid from while a round played alone still earned XP (Who Am I?,
- * Memory Thief and Kurdish Detective alone, The Last Letter against Hevalo).
+ * Memory Thief and Detective alone, The Last Letter against Hevalo).
  * They are still game sources: XP already in the ledger under one of them
  * keeps counting as game XP, under the league's daily cap, exactly as it did
  * the day it was earned.

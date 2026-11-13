@@ -16,7 +16,7 @@ import { backOut } from '../play/testing/navigation';
 import { WhoAmICouch } from './WhoAmICouch';
 
 /**
- * Who Am I? on one phone, in the phone app, from who is playing to the end:
+ * Ez kî me? on one phone, in the phone app, from who is playing to the end:
  * what the setup asks the server for (never a name), the phone from hand to
  * hand with nothing to memorise first and no list of words to pick from, the
  * questions suggested with what they mean and asked by one tap, the question

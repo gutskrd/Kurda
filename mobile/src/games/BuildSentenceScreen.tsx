@@ -31,7 +31,7 @@ import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability } from './learnGames';
 
 /**
- * Build a Kurdish Sentence on the phone.
+ * Build a Sentence on the phone.
  *
  * The stage: the meaning on a card, a ruled line the sentence is laid on, and
  * a tray of word tiles under it — the sentence's own words and a few that are

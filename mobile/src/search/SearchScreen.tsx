@@ -267,7 +267,7 @@ export function SearchScreen(): React.JSX.Element {
   );
   const games = useMemo(() => {
     if (!wanted.includes('games')) return [];
-    return gameDestinations(cards).filter((g) => matches(t(g.labelKey), term));
+    return gameDestinations(cards).filter((g) => [g.labelKey, ...(g.alsoKeys ?? [])].some((key) => matches(t(key), term)));
   }, [wanted, cards, term, t]);
 
   const typed = term.length > 0;

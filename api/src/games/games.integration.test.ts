@@ -189,7 +189,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('learning games (integration)', () 
     });
   });
 
-  describe('a round of Build a Kurdish Sentence', () => {
+  describe('a round of Build a Sentence', () => {
     it('is made on the server and sent without its answers, from published lessons only', async () => {
       const res = await play(learner, 'kmr');
       expect(res.statusCode, res.body).toBe(201);

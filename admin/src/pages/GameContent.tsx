@@ -77,7 +77,7 @@ import { IdentityFields, QuestionTemplateFields, WordPicker } from './GameWordCa
  * Learners only ever meet a row that is published, and only an approved row
  * can be published. The importers copy approved Kurdish (published lessons'
  * sentences, published stories' paragraphs, published vocabulary sorted into
- * starter categories for Kurdish Impostor) into drafts, so nothing is typed
+ * starter categories for Impostor) into drafts, so nothing is typed
  * again; the word and forbidden-word cards are made by picking their words
  * from published vocabulary (GameCardFields.tsx). Each draft still goes
  * through review before a game may show it.
@@ -161,7 +161,7 @@ function GameContentHome({ tab }: { tab: 'rows' | 'readiness' | 'words' }): Reac
         <>
           <Section
             title="Import from approved content"
-            description="Makes drafts from what is already published, without typing the Kurdish again: lessons’ sentences with their English and accepted orders, stories’ paragraphs with their glossary words to hide, and Kurdish Impostor’s word cards — published words sorted into starter categories by their meaning, whose category names wait for a native speaker. Each draft still needs review. Running an import twice adds nothing new."
+            description="Makes drafts from what is already published, without typing the Kurdish again: lessons’ sentences with their English and accepted orders, stories’ paragraphs with their glossary words to hide, and Impostor’s word cards — published words sorted into starter categories by their meaning, whose category names wait for a native speaker. Each draft still needs review. Running an import twice adds nothing new."
           >
             <div className="row">
               {GAME_DIALECTS.map((d) => (

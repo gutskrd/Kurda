@@ -57,7 +57,7 @@ import { GameArt } from './GameArt';
  * same shell, so the two say the same things in the same order.
  *
  * Two of the rounds it carries are not games but exercises of the lessons'
- * practice (Build a Kurdish Sentence and Hear It, Find It: the shared
+ * practice (Build a Sentence and Hear It, Find It: the shared
  * registry's `place: 'lessons'`). For those the results offer another round
  * and Done, which goes back to wherever the exercise was opened from (the
  * practice hub, or the Lessons half of Learn); nothing on the way calls an
@@ -70,9 +70,9 @@ import { GameArt } from './GameArt';
  */
 
 export interface SoloRound<Item, H, C, B = unknown> {
-  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Kurdish Detective's hints) */
+  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Detective's hints) */
   sessionId: string;
-  /** what the whole round shares, as the round was sent (Kurdish Detective's case board); null for a game without */
+  /** what the whole round shares, as the round was sent (Detective's case board); null for a game without */
   board: B | null;
   /**
    * The verdict, the explanation and the way on, for a game that places them

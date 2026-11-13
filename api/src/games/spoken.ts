@@ -1,7 +1,7 @@
 /**
  * The recordings of the lines a round shows, read once for the whole round.
  *
- * Kurdish Detective plays the remarks pinned to its board in the voice a
+ * Detective plays the remarks pinned to its board in the voice a
  * person recorded them in. A line taken from a conversation is filed under
  * the conversation, its part and its words (`conversationLineKey`), and a
  * sentence recorded on its own under its words alone (`lessonAudioKey`); each

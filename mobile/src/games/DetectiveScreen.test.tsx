@@ -188,7 +188,7 @@ describe('DetectiveScreen', () => {
 });
 
 describe('the games list', () => {
-  it('adds Kurdish Detective once a case can be played, one tap to open', async () => {
+  it('adds Detektîf once a case can be played, one tap to open', async () => {
     testAuth.client = fakeClient({
       'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
       'GET /play/invites': ok({ incoming: [], outgoing: [] }),
@@ -196,7 +196,7 @@ describe('the games list', () => {
     });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-detective', {}, SLOW);
-    expect(card.getAttribute('aria-label')).toBe('Kurdish Detective, Solo. Solve a case from Kurdish evidence, then name who did it.');
+    expect(card.getAttribute('aria-label')).toBe('Detektîf, Solo. Solve a case from Kurdish evidence, then name who did it.');
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('Detective');
   });

@@ -1,5 +1,5 @@
 /**
- * Who Am I? without a database: what a table is dealt from, how a whole
+ * Ez kî me? without a database: what a table is dealt from, how a whole
  * table is dealt, and the picked words a card is made of (word-cards.ts).
  */
 import { describe, expect, it } from 'vitest';

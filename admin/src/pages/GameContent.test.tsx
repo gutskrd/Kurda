@@ -76,7 +76,7 @@ describe('the list', () => {
     const api = fakeApi(on('GET', /^\/admin\/game-content\?/, json({ rows: [row()], total: 1 })));
     const page = await open('#/game-content');
     expect(text(page)).toContain('Ev mala me ye.');
-    expect(text(page)).toContain('Build a Kurdish Sentence');
+    expect(text(page)).toContain('Build a Sentence');
     expect(text(page)).toContain('Draft');
     expect(page.querySelector('a[href="#/game-content/' + ID + '"]')?.getAttribute('lang')).toBe('ku');
     const game = page.querySelector<HTMLSelectElement>('select[aria-label="Game"]')!;
@@ -212,7 +212,7 @@ describe('the party games’ cards', () => {
     expect(page.querySelector('input[lang="ku"]')).toBeNull();
   });
 
-  it('imports Kurdish Impostor’s starter word cards as drafts from published vocabulary', async () => {
+  it('imports Impostor’s starter word cards as drafts from published vocabulary', async () => {
     const api = fakeApi(
       on('GET', /^\/admin\/game-content\?/, json({ rows: [], total: 0 })),
       on('POST', '/admin/game-content/import', json({ created: 9, skipped: 0 })),

@@ -61,7 +61,7 @@ describe('a game’s invite link', () => {
   it('says which game it is, who is waiting, and the code, to someone with no account, and leads them to one and back', async () => {
     signedOut();
     page(`/join/impostor/KVXV5E?from=${HOST}`);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Kurdish Impostor' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Xapînok' })).toBeInTheDocument();
     expect(screen.getByText('You’re invited to play')).toBeInTheDocument();
     expect(await screen.findByText('Hamo is waiting for you at the table.')).toBeInTheDocument();
     expect(screen.getByLabelText('The code: K V X V 5 E')).toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('a game’s invite link', () => {
   it('names nobody the link does not name, and nothing the address made up', async () => {
     signedOut();
     page('/join/who-am-i/ABC234?from=%3Cscript%3E');
-    expect(await screen.findByRole('heading', { level: 1, name: 'Who Am I?' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ez kî me?' })).toBeInTheDocument();
     expect(screen.getByText('A friend is waiting for you at the table.')).toBeInTheDocument();
     expect(document.body.innerHTML).not.toContain('script>');
   });

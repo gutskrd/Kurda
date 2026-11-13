@@ -17,6 +17,7 @@
  * the same picture for everybody.
  */
 import { deerSilhouetteSvg } from '../games/who-am-i/silhouette.js';
+import { GAME_NAMES } from '../games/names.js';
 import type { Cover, Key, Part } from './game-acting.js';
 import { INK, PAPER, brush, letter, loop, roundish, smooth, type P } from './ink.js';
 import { Drawing, n, tint } from './svg.js';
@@ -188,7 +189,7 @@ const tapped = (c: number): number => 0.2 + c * 0.085;
  * The letters adrift round the phone lift as if on one swell passing.
  */
 const peyvok: Cover = {
-  title: 'Peyvok',
+  title: GAME_NAMES.peyvok,
   loopMs: 5600,
   parts: [
     { draw: (dr) => ground(dr, SAGE) },
@@ -294,7 +295,7 @@ const listens = (shown: 'sitting' | 'singing'): Key[] => [
  * it before, leans away — and then cannot help answering with the same note.
  */
 const rhyme: Cover = {
-  title: 'Rhyme',
+  title: GAME_NAMES.rhyme,
   loopMs: 6000,
   parts: [
     {
@@ -360,7 +361,7 @@ const everyStride = (keys: readonly Key[]): Key[] => Array.from({ length: STRIDE
  * again; the one behind gains a little, and loses it, and never stops trying.
  */
 const race: Cover = {
-  title: 'Typing race',
+  title: GAME_NAMES.race,
   loopMs: 4800,
   parts: [
     {
@@ -515,7 +516,7 @@ const creeps = (late: number, deep: number, then: readonly Key[] = []): Key[] =>
  * swings the torch round at a noise that was nothing.
  */
 const thief: Cover = {
-  title: 'Memory thief',
+  title: GAME_NAMES['memory-thief'],
   loopMs: 6400,
   parts: [
     {
@@ -627,7 +628,7 @@ const cocks = (late: number, far: number): Key[] => [[0, {}], [0.26 + late, {}, 
  * right.
  */
 const detective: Cover = {
-  title: 'Detective',
+  title: GAME_NAMES.detective,
   loopMs: 6400,
   parts: [
     {
@@ -677,7 +678,7 @@ const strikes = (side: -1 | 1): Key[] => [[0, {}], [0.1, {}, 'hold'], [0.24, { x
  * them together hard enough to strike sparks.
  */
 const lastLetter: Cover = {
-  title: 'Last letter',
+  title: GAME_NAMES['last-letter'],
   loopMs: 5200,
   parts: [
     { draw: (dr) => ground(dr, GRAPE) },
@@ -760,7 +761,7 @@ function spyCard(dr: Drawing): void {
  * the card with nothing on it comes up for a look; the brim comes down.
  */
 const impostor: Cover = {
-  title: 'Impostor',
+  title: GAME_NAMES.impostor,
   loopMs: 5600,
   parts: [
     {
@@ -837,7 +838,7 @@ const reads = (left: number, right: number): Key[] => [[0, {}], [0.08, {}, 'hold
  * note's corner just to make it worse.
  */
 const whoAmI: Cover = {
-  title: 'Who am I?',
+  title: GAME_NAMES['who-am-i'],
   loopMs: 5200,
   parts: [
     {

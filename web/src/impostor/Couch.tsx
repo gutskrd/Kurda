@@ -59,7 +59,7 @@ import { WAY_KEY, WAY_NOTE } from './ways';
 import './couch.css';
 
 /**
- * Kurdish Impostor on one phone, passed round a room (/app/games/impostor?couch=1).
+ * Impostor on one phone, passed round a room (/app/games/impostor?couch=1).
  *
  * The rules are shared/src/games/impostor/couch.ts; this is the phone's part
  * in them. It asks who is playing and how, fetches an evening's cards (approved

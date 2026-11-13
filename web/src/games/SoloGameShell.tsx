@@ -57,7 +57,7 @@ import './game-stage.css';
  * button, its nudge after a wrong try and its correction once an item is
  * done. The shell draws the verdict, the explanation and the way on.
  *
- * Two of the rounds it carries are not games: Build a Kurdish Sentence and
+ * Two of the rounds it carries are not games: Build a Sentence and
  * Hear It, Find It are exercises of the lessons' practice (the registry's
  * `place`). For them the way out leads back to Learn and is worded as a
  * lesson's is, and another go is another round, not another game.
@@ -70,9 +70,9 @@ import './game-stage.css';
 
 /** What a game's board is handed for the item in front of the player. */
 export interface SoloRound<Item, H, C, B = unknown> {
-  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Kurdish Detective's hints, Who Am I?'s questions) */
+  /** the round's id: what a game's clips are played from (`hearItClipPath`), and what it asks more of than answers (Detective's hints, Who Am I?'s questions) */
   sessionId: string;
-  /** what the whole round shares, as the round was sent (Kurdish Detective's case board); null for a game without */
+  /** what the whole round shares, as the round was sent (Detective's case board); null for a game without */
   board: B | null;
   item: Item;
   index: number;
@@ -103,7 +103,7 @@ interface Props<Item, H, C, B> {
   title: string;
   /** one line on what the game is */
   blurb: string;
-  /** the game's own introduction above the difficulty: Build a Kurdish Sentence's ladder */
+  /** the game's own introduction above the difficulty: Build a Sentence's ladder */
   intro?: React.ReactNode;
   /** the difficulties with enough approved content; null while they are being counted */
   difficulties: GameDifficulty[] | null;

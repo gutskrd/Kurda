@@ -57,7 +57,7 @@ export function kurdishStyle(dialect: ImpostorBoard['dialect']): { writingDirect
 }
 
 /**
- * Kurdish Impostor's own staging on the phone, inside the room
+ * Impostor's own staging on the phone, inside the room
  * (play/GameRoom.tsx) — the website's staging in the phone's parts: the table
  * with the players along its two sides and the one giving a clue in a pool of
  * light (a soft pulse, still under Reduce Motion), your card on the tabletop

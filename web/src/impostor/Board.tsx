@@ -42,7 +42,7 @@ function rows<T>(items: readonly T[]): [T[], T[]] {
 }
 
 /**
- * Kurdish Impostor's own staging, inside the room (play/MultiRoom.tsx):
+ * Impostor's own staging, inside the room (play/MultiRoom.tsx):
  *
  * - a table with the players seated around it, the one giving a clue in a
  *   pool of light, and on the table your card — the word and its meaning, or

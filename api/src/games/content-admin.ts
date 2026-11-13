@@ -19,7 +19,7 @@
  * The importers make drafts from what is already approved, so no Kurdish is
  * typed again: published lessons' sentences become `sentence` rows and
  * published stories' paragraphs `passage` rows (their glossary terms the
- * words to hide). The starter word cards for Kurdish Impostor are published
+ * words to hide). The starter word cards for Impostor are published
  * vocabulary sorted into a short list of categories by each word's English
  * meaning (word-categories.ts): the word and its meaning are copied, and the
  * category's name — the one new Kurdish, the impostor's hint — makes them
@@ -487,7 +487,7 @@ export class GameContentAdminService {
   }
 
   /**
-   * Kurdish Impostor's starter cards from published vocabulary, and the
+   * Impostor's starter cards from published vocabulary, and the
    * categories they are sorted into (content-drafts.ts `wordCardDrafts`). All
    * of them are 'starter' drafts: the category names are new Kurdish, for a
    * native speaker to read before a game shows them.

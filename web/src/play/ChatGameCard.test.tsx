@@ -31,7 +31,7 @@ describe('ChatGameCard', () => {
     renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
 
     expect(await screen.findByText('2 of 4 joined')).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Peyvok Battle invite' })).toHaveTextContent('Easy');
+    expect(screen.getByRole('group', { name: 'Pêşbaziya Peyvan invite' })).toHaveTextContent('Easy');
     await userEvent.click(screen.getByRole('button', { name: 'Join' }));
     await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=b1'));
     expect(calls.some((c: Call) => c.method === 'POST' && c.path === '/wordle/battles/b1/join')).toBe(true);
@@ -88,7 +88,7 @@ describe('ChatGameCard as a ticket', () => {
   it('is a ticket in the game’s colour while it can be joined, with no stamp', async () => {
     fakeApi({ [CARD]: card() });
     renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
-    const ticket = await screen.findByRole('group', { name: 'Peyvok Battle invite' });
+    const ticket = await screen.findByRole('group', { name: 'Pêşbaziya Peyvan invite' });
     await screen.findByText('2 of 4 joined');
     expect(ticket).toHaveClass('ticket', 'ticket--wordle-battle');
     expect(stampOf()).toBeNull();
@@ -134,7 +134,7 @@ describe('ChatGameCard as a ticket', () => {
   it('says whose invite it is to a screen reader', async () => {
     fakeApi({ [CARD]: card() });
     renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" from={{ id: 'u9', name: 'Rojîn' }} />);
-    expect(await screen.findByRole('group', { name: 'Game invite from Rojîn: Peyvok Battle' })).toBeInTheDocument();
+    expect(await screen.findByRole('group', { name: 'Game invite from Rojîn: Pêşbaziya Peyvan' })).toBeInTheDocument();
   });
 });
 

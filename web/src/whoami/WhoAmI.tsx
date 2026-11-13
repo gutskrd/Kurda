@@ -90,7 +90,7 @@ export function WhoAmI(): React.JSX.Element {
         <Couch />
       ) : (
         <>
-          <GameHead game="who-am-i" title={t('games.whoAmI.name')} />
+          <GameHead game="who-am-i" title={t('games.whoAmI.name')} meaning={t('games.whoAmI.meaning')} />
           {id ? <Room key={id} id={id} /> : <Start />}
         </>
       )}

@@ -3,7 +3,7 @@ import type { CouchCategory, CouchOffer, GameDialect, GameDifficulty } from '@ku
 import { useAuth } from '../auth/AuthProvider';
 
 /**
- * The categories a game of Kurdish Impostor can draw its word from: per
+ * The categories a game of Impostor can draw its word from: per
  * variety and difficulty, those with enough approved cards for a word and the
  * guess’s other options (`GET /games/impostor/couch`, the list the game on one
  * phone chooses from too). A host picks one of these or none; the server

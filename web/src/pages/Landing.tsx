@@ -239,7 +239,7 @@ export function Landing(): React.JSX.Element {
   // the phone in the hero shows the app in turn: the path you learn on, a game with a friend, the stories
   const heroScreens: PhoneScreen[] = [
     { id: 'path', label: t('learn.view.lessons'), screen: <PathScreen /> },
-    { id: 'battle', label: t('games.battle.name'), screen: <BattleScreen /> },
+    { id: 'battle', label: t('nav.games'), screen: <BattleScreen /> },
     { id: 'stories', label: t('learn.view.stories'), screen: <StoriesScreen /> },
   ];
   // warm the API early so sign-in later doesn't pay the cold-start penalty

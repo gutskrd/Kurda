@@ -16,7 +16,7 @@ import { useAvailability, useGameDialect } from './soloRounds';
  * content is published. Each wears the emblem drawn for it
  * (shared/src/art/games.ts).
  *
- * Build a Kurdish Sentence and Hear It, Find It are rounds of the same kit
+ * Build a Sentence and Hear It, Find It are rounds of the same kit
  * and are not here: they are exercises of the lessons' practice
  * (learn/practiceTools.tsx). What the two lists share, the learner's variety and
  * what can be done in it, is games/soloRounds.ts.

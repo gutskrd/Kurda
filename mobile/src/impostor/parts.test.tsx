@@ -7,7 +7,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { GoldButton, PictureCards, PictureTiles, type PictureOption } from './parts';
 
 /**
- * The parts Kurdish Impostor's screens are built from: choices drawn as
+ * The parts Xapînok's screens are built from: choices drawn as
  * pictures that are still radios, a long list folded without ever hiding the
  * one chosen, and the one gold thing to press.
  */

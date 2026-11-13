@@ -4,6 +4,7 @@
  * sent, the solo round's rules, and each game's own module (one line each).
  */
 export * from './registry.js';
+export * from './names.js';
 export * from './dialect.js';
 export * from './content.js';
 export * from './solo.js';

@@ -160,7 +160,7 @@ export function InviteForm({
     useLastLetterAvailability(target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === 'last-letter'))),
     'group',
   );
-  // Kurdish Impostor, in the varieties and at the levels its approved cards allow
+  // Impostor, in the varieties and at the levels its approved cards allow
   const partyAsked = (g: PartyGame) => target.kind !== 'lobby' && (!lockGame || (target.kind === 'new' && target.game === g));
   const impostorOffer = usePartyOffer('impostor', partyAsked('impostor'));
   // Who Am I? with friends, where its content lets it be played (and at which difficulties)
@@ -232,7 +232,7 @@ export function InviteForm({
     ...((impostorOffer ?? []).length > 0 || game === 'impostor' ? (['impostor'] as const) : []),
     ...(groupDialects(tableOffers).length > 0 || game === 'who-am-i' ? (['who-am-i'] as const) : []),
   ];
-  // Kurdish Impostor's lobby: a variety it is offered in (the chosen one when it is), and a level offered there
+  // Impostor's lobby: a variety it is offered in (the chosen one when it is), and a level offered there
   const partyOffer = game === 'impostor' ? (impostorOffer ?? []) : [];
   const wanted: LetterDialect = dialect === 'sorani' ? 'ckb' : 'kmr';
   const partyHere = partyOffer.find((o) => o.dialect === wanted) ?? partyOffer[0] ?? null;

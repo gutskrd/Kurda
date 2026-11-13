@@ -1,5 +1,5 @@
 /**
- * Kurdish Impostor for one phone, through the routes, against real Postgres
+ * Xapînok for one phone, through the routes, against real Postgres
  * and Redis: where it is offered, an evening's cards dealt only from approved
  * word cards, one category's when one is asked for, and what the routes will
  * not take: a caller who is not signed in, a body that carries anything about
@@ -19,7 +19,7 @@ import { bustGamePools } from './sources.js';
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 
-describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Impostor on one phone (integration)', () => {
+describe.skipIf(!DATABASE_URL || !REDIS_URL)('Xapînok on one phone (integration)', () => {
   const config = loadConfig({ DATABASE_URL, ...(REDIS_URL ? { REDIS_URL } : {}), NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;

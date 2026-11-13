@@ -1,5 +1,5 @@
 /**
- * The pictures of Kurdish Impostor: one for every category a word can come
+ * The pictures of Impostor: one for every category a word can come
  * from, one for "any category", one for each way the game can be played, and
  * the game's own emblem (the masked card among the open ones).
  *
@@ -16,6 +16,7 @@
  * Each picture has a colour of its own (`impostorCategoryTone`) that the two
  * apps tint its tile with.
  */
+import { GAME_NAMES } from '../games/names.js';
 import { dab, form, ring, rr, type Tones } from './cutout.js';
 import { Drawing, checkSize, n, prefixFor, tint } from './svg.js';
 
@@ -640,7 +641,7 @@ const maskOnly: Draw = (dr) => {
 };
 
 const EMBLEMS: Readonly<Record<ImpostorEmblem, { draw: Draw; title: string }>> = {
-  cards: { draw: cards, title: 'Kurdish Impostor' },
+  cards: { draw: cards, title: GAME_NAMES.impostor },
   // every card's back wears it, so its label says nothing of whose card it is
   mask: { draw: maskOnly, title: 'A card, face down' },
 };

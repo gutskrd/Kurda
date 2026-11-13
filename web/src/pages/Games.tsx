@@ -91,6 +91,24 @@ export function featuredGame(games: readonly GameEntry[], now: number): GameEntr
   return today === null ? null : ready[today]!;
 }
 
+/**
+ * What each game's name means, said in the reader's language under it. A
+ * game's name is Kurmancî in every language the app speaks ("Xapînok", not
+ * "Impostor"), which teaches a word and tells a newcomer nothing: the line
+ * under it does the telling. Peyvok is a made-up word and means only itself;
+ * where the interface is Kurdish the meaning is the name again, and is not
+ * said twice.
+ */
+const MEANING: Partial<Record<GameEmblem, MessageKey>> = {
+  rhyme: 'games.rhyme.meaning',
+  race: 'games.race.meaning',
+  'memory-thief': 'games.memory.meaning',
+  detective: 'games.detective.meaning',
+  'last-letter': 'games.lastLetter.meaning',
+  impostor: 'games.impostor.meaning',
+  'who-am-i': 'games.whoAmI.meaning',
+};
+
 /** The colour a game's card takes at its edge under a hand: the game's own. */
 const toneOf = (id: GameEmblem): React.CSSProperties => ({ '--gp-tone': gameEmblemTone(id) }) as React.CSSProperties;
 
@@ -147,6 +165,9 @@ function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry
   // a hand on a shelf card — over it, on it, or the keyboard in it — plays its emblem through once more
   const [again, setAgain] = useState(0);
   const stir = hero ? undefined : (): void => setAgain((n) => n + 1);
+  const name = t(game.nameKey);
+  const meaningKey = MEANING[game.id];
+  const meaning = meaningKey ? t(meaningKey) : null;
   return (
     <article className={`gp-card${hero ? ' gp-card--hero' : ''}`} style={toneOf(game.id)} onPointerEnter={stir} onPointerDown={stir} onFocus={stir}>
       <div className="gp-card-art">
@@ -156,7 +177,8 @@ function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry
       </div>
       <div className="gp-card-text">
         {hero && <p className="gp-kicker">{t('games.featured')}</p>}
-        <h3 className="gp-card-name">{t(game.nameKey)}</h3>
+        <h3 className="gp-card-name">{name}</h3>
+        {meaning && meaning !== name && <p className="gp-card-meaning">{meaning}</p>}
         <p className="gp-card-body">{t(hero ? game.bodyKey : game.lineKey)}</p>
         {/* two pages say who each is for on their buttons; one page for both says it here */}
         {game.ways.length === 1 && <Company company={game.company} />}

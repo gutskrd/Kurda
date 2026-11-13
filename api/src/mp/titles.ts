@@ -1,15 +1,16 @@
-import { MULTI_GAMES, type MultiGame } from '@kurda/shared';
+import { GAME_NAMES, MULTI_GAMES, type MultiGame } from '@kurda/shared';
 
 /**
- * Each multiplayer learning game's name in English, for the places the server
- * writes one itself: an inbox entry's fallback text, the profile's list of
- * games played and the social rail's "playing now". The apps name games from
- * their own catalogues.
+ * Each multiplayer learning game's name, for the places the server writes one
+ * itself: an inbox entry's fallback text, the profile's list of games played
+ * and the social rail's "playing now". A game's name is Kurmancî and the same
+ * for every reader (shared: games/names.ts), so the server can say it without
+ * knowing who will read it. The apps name games from their own catalogues.
  */
 export const MULTI_GAME_TITLES: Readonly<Record<MultiGame, string>> = {
-  'last-letter': 'The Last Letter',
-  impostor: 'Kurdish Impostor',
-  'who-am-i': 'Who Am I?',
+  'last-letter': GAME_NAMES['last-letter'],
+  impostor: GAME_NAMES.impostor,
+  'who-am-i': GAME_NAMES['who-am-i'],
 };
 
 /** SQL naming the game in `column` (a `game_lobbies.game`) by its title. Literals only: never built from input. */

@@ -109,7 +109,7 @@ import { ArrowsDownUp } from '@phosphor-icons/react/dist/icons/ArrowsDownUp';
 import { Funnel } from '@phosphor-icons/react/dist/icons/Funnel';
 // starting a conversation
 import { NotePencil } from '@phosphor-icons/react/dist/icons/NotePencil';
-// Kurdish Detective's board
+// Detective's board
 import { PushPin } from '@phosphor-icons/react/dist/icons/PushPin';
 import { Notebook } from '@phosphor-icons/react/dist/icons/Notebook';
 import { Ear } from '@phosphor-icons/react/dist/icons/Ear';
@@ -203,7 +203,7 @@ export const CoinIcon = currency(coinSvg, 22);
 export const TilesIcon = named(SquaresFour, 22);
 /** Two links of a chain: The Last Letter, a chain of words each holding on to the one before. */
 export const ChainIcon = named(LinkGlyph, 22);
-/** Someone in disguise: Kurdish Impostor, where one player at the table only pretends to know the word. */
+/** Someone in disguise: Impostor, where one player at the table only pretends to know the word. */
 export const ImpostorIcon = named(Detective, 22);
 /** Across to the other side: a player moved to the other team. */
 export const SwapIcon = named(ArrowsLeftRight, 18);
@@ -332,7 +332,7 @@ export const FunnelIcon = named(Funnel, 20);
 /** a new conversation: a note being written, beside the list of them */
 export const NewMessageIcon = named(NotePencil, 22);
 
-/* Kurdish Detective: a card pinned to the board, the notebook, what a card is
+/* Detective: a card pinned to the board, the notebook, what a card is
    (overheard, a note, a statement; a message is the envelope above), a hint
    bought, the accusation, and the game itself */
 export const PinIcon = named(PushPin, 20, 'fill');

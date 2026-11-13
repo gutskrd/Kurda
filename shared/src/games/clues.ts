@@ -1,6 +1,6 @@
 /**
  * What a typed clue or guess is, in the party games where players write their
- * own Kurdish (Kurdish Impostor, Don't Say the Word!): whether it is short
+ * own Kurdish (Impostor, Don't Say the Word!): whether it is short
  * enough, in the game's own script, and whether it says a word it may not.
  *
  * The free-text gate (api/src/mp/free-text.ts) decides whether a text may be

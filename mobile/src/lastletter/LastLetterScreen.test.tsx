@@ -236,7 +236,7 @@ describe('LastLetterScreen', () => {
       'GET /mp/last-letter/availability': ok({ dialects: [{ dialect: 'kmr', group: false, solo: false }, { dialect: 'ckb', group: false, solo: false }] }),
     });
     renderWithProviders(<LastLetterScreen onExit={() => undefined} />);
-    expect(await screen.findByText('The Last Letter isn’t offered in this Kurdish.')).toBeTruthy();
+    expect(await screen.findByText('Tîpa Dawî isn’t offered in this Kurdish.')).toBeTruthy();
     expect(screen.queryByText(/soon/i)).toBeNull();
   });
 

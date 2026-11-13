@@ -19,12 +19,13 @@ describe('matches', () => {
   });
 
   it('ignores case', () => {
-    expect(matches('Typing Race', 'race')).toBe(true);
-    expect(matches('typing race', 'RACE')).toBe(true);
+    expect(matches('Typing race', 'RACE')).toBe(true);
+    expect(matches('Pêşbaziya Nivîsandinê', 'PÊŞBAZIYA')).toBe(true);
   });
 
   it('matches inside a word, not only at the start', () => {
-    expect(matches('Peyvok Battle', 'vok')).toBe(true);
+    expect(matches('Peyvok', 'vok')).toBe(true);
+    expect(matches('Pêşbaziya Peyvan', 'peyv')).toBe(true);
   });
 
   /*
@@ -41,13 +42,13 @@ describe('matches', () => {
 });
 
 describe('filterByLabel', () => {
-  const rows = [{ n: 'Rhyming Words' }, { n: 'Typing Race' }, { n: 'Peyvok Battle' }];
+  const rows = [{ n: 'Peyvên Hevserwa' }, { n: 'Pêşbaziya Nivîsandinê' }, { n: 'Pêşbaziya Peyvan' }];
 
   it('keeps the list in its own order', () => {
     expect(filterByLabel(rows, (r) => r.n, 'y').map((r) => r.n)).toEqual([
-      'Rhyming Words',
-      'Typing Race',
-      'Peyvok Battle',
+      'Peyvên Hevserwa',
+      'Pêşbaziya Nivîsandinê',
+      'Pêşbaziya Peyvan',
     ]);
   });
 

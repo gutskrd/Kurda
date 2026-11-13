@@ -18,7 +18,7 @@ const tag = `lib${Date.now().toString(36)}`;
 const quiet = { info: () => undefined, warn: () => undefined };
 const seedName = `game_content:starter-library:${STARTER_LIBRARY_VERSION}:kmr`;
 
-/** Two paragraphs, each holding two of the glossary's words: two passages for The Memory Thief. */
+/** Two paragraphs, each holding two of the glossary's words: two passages for Dizê Bîrê. */
 const BODY = `Îro Rojîn diçe dibistana nû. Mamoste dibêje: “Rojbaş, zarokno!”\n\nRojîn li qelema xwe digere. Hevala wê dibêje: “Fermo, ev qelema min e.”`;
 const GLOSSARY = [
   { term: 'dibistana', meanings: { en: 'school' } },

@@ -1,6 +1,6 @@
 /**
  * The ranked badges earned from real rated games (contract 4 §R → §B2): Peyvok
- * Battles and Rhyme Matches played through their services, rated by Game
+ * Battles and Pêşbaziya Serwayanes played through their services, rated by Game
  * Ranks, told on `ranks.events`, and heard by the badges the way the API
  * wires them (`createProgression` given the RankService's events). Then a
  * season closed by the season job, and the season's badges it hands out.
@@ -143,7 +143,7 @@ describe.skipIf(!DATABASE_URL)('ranked badges from rated games (integration)', (
     await pool.end();
   });
 
-  describe('Peyvok Battle', () => {
+  describe('Pêşbaziya Peyvan', () => {
     beforeAll(async () => {
       for (const w of WORDS) {
         const r = await pool.query<{ id: string }>(
@@ -205,7 +205,7 @@ describe.skipIf(!DATABASE_URL)('ranked badges from rated games (integration)', (
     }, 120_000);
   });
 
-  describe('Rhyme Match', () => {
+  describe('Pêşbaziya Serwayan', () => {
     beforeAll(async () => {
       // the match prompt is drawn from the whole dictionary: own it, as the rhyme suites do
       await pool.query(`DELETE FROM dict_entries`);

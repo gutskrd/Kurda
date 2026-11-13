@@ -7,7 +7,7 @@ import { forgetPartyOffers } from '../party/offer';
 import { Impostor } from './Impostor';
 
 /**
- * Kurdish Impostor on one phone, from the way in to the score: the setup and
+ * Xapînok on one phone, from the way in to the score: the setup and
  * what it asks the server for (never a name), the phone going round with each
  * card shown only while it is pressed, the clues in turn with their clock,
  * the two kinds of vote, the caught impostor's guess, the reveal, and the
@@ -142,7 +142,7 @@ describe('the way in', () => {
   it('says plainly when there are no cards to play with', async () => {
     serve({ '/games/impostor/couch?dialect=kmr': none, '/games/impostor/couch?dialect=ckb': none });
     renderPlay(<Impostor />, { route: '/app/games/impostor?couch=1' });
-    expect(await screen.findByText('Kurdish Impostor isn’t offered in this Kurdish yet.')).toBeInTheDocument();
+    expect(await screen.findByText('Xapînok isn’t offered in this Kurdish yet.')).toBeInTheDocument();
   });
 });
 

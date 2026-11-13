@@ -1,5 +1,5 @@
 /**
- * Build a Kurdish Sentence: the ladder of structures a learner climbs, how a
+ * Build a Sentence: the ladder of structures a learner climbs, how a
  * sentence finds its rung, and how a wrong order is answered.
  *
  * The sentences are approved ones — published lessons' translations and

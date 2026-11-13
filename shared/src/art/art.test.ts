@@ -1057,7 +1057,7 @@ describe('the games’ emblems', () => {
   });
 });
 
-describe('Kurdish Impostor’s pictures', () => {
+describe('Xapînok’s pictures', () => {
   // the starter categories (api/src/games/word-categories.ts): every one of them has a picture of its own
   const STARTER = [
     'animals', 'food', 'fruit', 'vegetables', 'drinks', 'family', 'body', 'clothes', 'home', 'jobs', 'nature', 'town', 'transport', 'colours',

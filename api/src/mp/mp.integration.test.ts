@@ -1,5 +1,5 @@
 /**
- * The multiplayer learning games' engine and The Last Letter on it, through
+ * The multiplayer learning games' engine and Tîpa Dawî on it, through
  * the routes, against real Postgres: a lobby's life from invite to rematch,
  * turns that run out, players who go away or leave, what each player may see,
  * placement XP and Game Ranks, the join rule for minors and blocks, reports by

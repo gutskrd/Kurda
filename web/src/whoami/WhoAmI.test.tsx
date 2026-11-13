@@ -8,7 +8,7 @@ import { forgetMpAvailability } from '../games/mpAvailability';
 import { WhoAmI } from './WhoAmI';
 
 /**
- * Who Am I? on the website: the start and its two ways in, one phone first,
+ * Ez kî me? on the website: the start and its two ways in, one phone first,
  * and the table with friends online from both sides of a question, the
  * asker's (their list with the questions worth asking first) and an
  * answerer's, through the card's verdict to a guess and the end. The words
@@ -67,7 +67,7 @@ const online = (offered: boolean) => ({
   '/mp/who-am-i/availability': { dialects: [{ dialect: 'kmr', group: offered, solo: false, difficulties: offered ? ['beginner'] : [] }] },
 });
 
-describe('Who Am I?, the start', () => {
+describe('Ez kî me?, the start', () => {
   it('offers one phone first and friends online as the quieter way under it, each with its own way in, and no round alone', async () => {
     serve({ ...onePhone(true), ...online(true) });
     renderPlay(<WhoAmI />, { route: '/app/games/who-am-i' });
@@ -134,7 +134,7 @@ describe('Who Am I?, the start', () => {
   it('is not offered without enough reviewed words and questions, and makes no promise', async () => {
     serve({ ...onePhone(false), ...online(false) });
     renderPlay(<WhoAmI />, { route: '/app/games/who-am-i' });
-    expect(await screen.findByText('Who Am I? needs more reviewed words and questions before it can be played in this Kurdish.')).toBeInTheDocument();
+    expect(await screen.findByText('Ez kî me? needs more reviewed words and questions before it can be played in this Kurdish.')).toBeInTheDocument();
     expect(screen.queryByText(/soon/i)).toBeNull();
     expect(screen.queryByRole('region', { name: 'On this phone' })).toBeNull();
   });
@@ -295,7 +295,7 @@ async function openTiles(): Promise<HTMLElement> {
   return screen.findByRole('radiogroup', { name: 'You are one of these' });
 }
 
-describe('Who Am I?, the table online, on my turn', () => {
+describe('Ez kî me?, the table online, on my turn', () => {
   it('asks from my own list, waits while my friends answer, reads the card’s verdict, and guesses', async () => {
     const t = table();
     const moved = open();
@@ -549,7 +549,7 @@ describe('Who Am I?, the table online, on my turn', () => {
   });
 });
 
-describe('Who Am I?, the table online, answering a friend', () => {
+describe('Ez kî me?, the table online, answering a friend', () => {
   it('shows their card beside their question, takes my yes or no once, and says who was right', async () => {
     const t = table();
     t.play(1, { kind: 'pass' });
@@ -678,7 +678,7 @@ describe('Who Am I?, the table online, answering a friend', () => {
   });
 });
 
-describe('Who Am I?, once the table is done', () => {
+describe('Ez kî me?, once the table is done', () => {
   it('says why it ended, who everyone was and what each scored, with the way to another game', async () => {
     const t = table();
     t.play(1, { kind: 'guess', tile: 'i-cat' });
@@ -691,7 +691,7 @@ describe('Who Am I?, once the table is done', () => {
     expect(within(reveal).getByText('çûk')).toBeInTheDocument();
     expect(within(reveal).getByText('kûçik')).toBeInTheDocument();
     expect(within(screen.getByRole('list', { name: 'Results' })).getAllByText('Points: 10')).toHaveLength(3);
-    expect(screen.getByRole('link', { name: 'Who Am I?' })).toHaveAttribute('href', '/app/games/who-am-i');
+    expect(screen.getByRole('link', { name: 'Ez kî me?' })).toHaveAttribute('href', '/app/games/who-am-i');
     expect(where()).toBe('/app/games/who-am-i?id=r1');
   });
 

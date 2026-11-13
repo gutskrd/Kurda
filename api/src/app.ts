@@ -646,7 +646,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService, badges);
-    // the learning games (Build a Kurdish Sentence and the games after it): approved content only,
+    // the learning games (Build a Sentence and the games after it): approved content only,
     // rounds made and checked here, paid by performance; and their content's review in the admin panel
     registerLearnGameRoutes(app, { xp: xpService, milestones: badges, config, recordingFiles: options.recordingFiles });
     registerWordleRoutes(app, { milestones: badges });

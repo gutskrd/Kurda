@@ -39,7 +39,7 @@ describe('game invites', () => {
   });
 
   // a link already sent in a chat or an email before the game was renamed
-  it('still reads a Peyvok Battle link at its old address', () => {
+  it('still reads a Pêşbaziya Peyvan link at its old address', () => {
     const body = 'werin https://hevalo.app/app/games/wordle-battle?id=match-42';
     expect(parseInvite(body)).toEqual({ type: 'wordle-battle', id: 'match-42' });
     expect(body.replace(inviteLinkPattern(), '').trim()).toBe('werin');

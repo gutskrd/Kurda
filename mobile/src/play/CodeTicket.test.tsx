@@ -63,7 +63,7 @@ describe('CodeTicket', () => {
     renderWithProviders(<CodeTicket game="wordle-battle" code="ABC234" />);
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     const sent = share.mock.calls[0]?.[0] as { message: string; url?: string };
-    expect(sent.message).toBe('Play Peyvok Battle with me on Hevalo! Open Games → Join with a code and type ABC 234\nOr tap to join: https://hevalo.app/join/peyvok-battle/ABC234');
+    expect(sent.message).toBe('Play Pêşbaziya Peyvan with me on Hevalo! Open Games → Join with a code and type ABC 234\nOr tap to join: https://hevalo.app/join/peyvok-battle/ABC234');
     // one message for every phone: a link sent beside the words is dropped by some share targets
     expect(sent.url).toBeUndefined();
   });

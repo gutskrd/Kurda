@@ -13,7 +13,7 @@
  * one a search finds.
  */
 import { foldDiacritics } from '@kurda/shared';
-import { GAME_CARDS, type GameCard, type GameRoute } from '../games/gameCards';
+import { GAME_CARDS, GAME_MEANING, type GameCard, type GameRoute } from '../games/gameCards';
 import type { TranslationKey } from '../i18n/translations';
 import type { IconName } from '../theme/icon-paths';
 
@@ -34,6 +34,8 @@ export const SCOPE_LABEL: Record<Scope, TranslationKey> = {
 export interface Destination {
   key: string;
   labelKey: TranslationKey;
+  /** what else finds it: a game's own name where this is one way into it, and what the name means in the reader's language */
+  alsoKeys?: readonly TranslationKey[];
   icon: IconName;
   /** A route on the root stack: one of a game's screens. */
   route: GameRoute;
@@ -43,12 +45,18 @@ export interface Destination {
 
 /**
  * A way into a game that has a name of its own. Peyvok against a friend is
- * "Peyvok Battle" everywhere else in the app, and that is the name somebody
- * types; a way without one is found by its game's.
+ * "Pêşbaziya Peyvan" everywhere else in the app, and is listed under that
+ * name; a way without one is listed under its game's.
  */
 const WAY_NAME: Partial<Record<string, TranslationKey>> = {
   battle: 'games.battle.name',
   rhymeMatch: 'games.rhymeMatch.name',
+};
+
+/** What those names mean in the reader's language: "battle" still finds the battle. */
+const WAY_MEANING: Partial<Record<string, TranslationKey>> = {
+  battle: 'games.battle.meaning',
+  rhymeMatch: 'games.rhymeMatch.meaning',
 };
 
 /** The glyph beside a game in the results: its own where it has one, the games' own otherwise. */
@@ -77,6 +85,8 @@ export function gameDestinations(cards: readonly GameCard[]): Destination[] {
       card.ways.map((way) => ({
         key: way.key,
         labelKey: WAY_NAME[way.key] ?? card.name,
+        // a game's name is Kurmancî in every language: somebody who types "impostor", or "peyvok" for its battle, still finds it
+        alsoKeys: [card.name, ...(GAME_MEANING[card.emblem] ? [GAME_MEANING[card.emblem]!] : []), ...(WAY_MEANING[way.key] ? [WAY_MEANING[way.key]!] : [])],
         icon: way.label === 'games.mode.friends' ? 'people' : (GAME_GLYPH[card.key] ?? 'play'),
         route: way.route,
         ...(way.params ? { params: way.params } : null),

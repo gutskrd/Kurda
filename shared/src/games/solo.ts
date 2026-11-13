@@ -110,7 +110,7 @@ export interface SoloSessionView<Item, Board = unknown> {
   maxAttempts: number;
   finished: boolean;
   expiresAt: string;
-  /** what the whole round shares beside its items, for a game that has one (Kurdish Detective's case board) */
+  /** what the whole round shares beside its items, for a game that has one (Detective's case board) */
   board?: Board;
 }
 

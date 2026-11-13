@@ -212,7 +212,7 @@ describe('InviteSheet', () => {
     testAuth.client = client;
     const onClose = vi.fn();
     renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
-    fireEvent.click(await screen.findByRole('radio', { name: 'Peyvok Battle' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Pêşbaziya Peyvan' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
@@ -226,7 +226,7 @@ describe('InviteSheet', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'b1' });
   });
 
-  it('lets the host of Kurdish Impostor draw the word from one category and give a full minute for a clue', async () => {
+  it('lets the host of Xapînok draw the word from one category and give a full minute for a clue', async () => {
     // stand-in Kurdish for the fixtures, never shown to a learner
     const client = fakeClient(
       routes({
@@ -251,7 +251,7 @@ describe('InviteSheet', () => {
     testAuth.client = client;
     const onClose = vi.fn();
     renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
-    fireEvent.click(await screen.findByRole('radio', { name: 'Kurdish Impostor' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Xapînok' }));
     const any = await screen.findByRole('radio', { name: 'Any' });
     expect(screen.getByRole('radiogroup', { name: 'Category' }).contains(any)).toBe(true);
     // a category reads as its Kurdish name with the meaning in the reader's language
@@ -271,7 +271,7 @@ describe('InviteSheet', () => {
     const client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'rhyme-match', lobbyId: 'm1', invited: 0 }) }));
     testAuth.client = client;
     renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={() => undefined} />);
-    fireEvent.click(await screen.findByRole('radio', { name: 'Rhyme Match' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Pêşbaziya Serwayan' }));
     expect(screen.getByRole('radiogroup', { name: 'Game type' })).toBeTruthy();
     expect(screen.getByRole('radio', { name: /^Friendly\. Just for fun/ }).getAttribute('aria-checked')).toBe('true');
     fireEvent.click(screen.getByRole('radio', { name: /^Rated\. Counts for your rank/ }));
@@ -363,9 +363,9 @@ describe('InviteSheet, its tickets', () => {
     const onClose = vi.fn();
     testAuth.client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'rhyme-match', lobbyId: 'm7', invited: 0 }) }));
     renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
-    fireEvent.click(await screen.findByRole('radio', { name: 'Rhyme Match' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Pêşbaziya Serwayan' }));
     // the group's ticket carries the game it is for
-    expect(screen.getAllByText('Rhyme Match').length).toBeGreaterThan(1);
+    expect(screen.getAllByText('Pêşbaziya Serwayan').length).toBeGreaterThan(1);
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     expect(await screen.findByText('Posted in the group')).toBeTruthy();
     expect(onClose).not.toHaveBeenCalled();

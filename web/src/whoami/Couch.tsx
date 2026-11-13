@@ -248,7 +248,7 @@ export function Couch(): React.JSX.Element {
   );
 
   const under = game !== null && game.step.at !== 'end';
-  const head = <GameHead game="who-am-i" title={t('games.whoAmI.name')} onBack={under ? () => setLeaving('/app/games') : undefined} />;
+  const head = <GameHead game="who-am-i" title={t('games.whoAmI.name')} meaning={t('games.whoAmI.meaning')} onBack={under ? () => setLeaving('/app/games') : undefined} />;
 
   if (offers === null) {
     return (

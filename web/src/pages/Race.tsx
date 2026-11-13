@@ -293,7 +293,7 @@ export function Race(): React.JSX.Element {
 
   return (
     <div className="container container-narrow game-page gs" style={stageTone('race')}>
-      <GameHead game="race" title={t('games.race.name')}>
+      <GameHead game="race" title={t('games.race.name')} meaning={t('games.race.meaning')}>
         {!running && (
           <button
             type="button"

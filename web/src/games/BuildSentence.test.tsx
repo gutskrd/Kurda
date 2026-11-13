@@ -89,11 +89,11 @@ const done = (index: number, correct: boolean, firstTry: boolean, attempt: numbe
   repeat: false,
 });
 
-describe('Build a Kurdish Sentence', () => {
+describe('Build a Sentence', () => {
   it('opens on the ladder, with the learner’s rung and only the difficulties that can be played', async () => {
     server(session('kmr', [['a', 'b']]), () => ({}), {});
     renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
-    expect(await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Build a Sentence' })).toBeInTheDocument();
     const rungs = within((await screen.findByText('The ladder')).closest('section')!).getAllByRole('listitem');
     expect(rungs).toHaveLength(6);
     const here = rungs.find((r) => r.getAttribute('aria-current') === 'step')!;
@@ -107,7 +107,7 @@ describe('Build a Kurdish Sentence', () => {
   it('keeps the lessons’ plain page: an exercise is not put on the games’ stage', async () => {
     server(session('kmr', [['a', 'b']]), () => ({}), {});
     const { container } = renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
-    expect(await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Build a Sentence' })).toBeInTheDocument();
     expect(container.querySelector('.gs')).toBeNull();
     expect(container.querySelector('.gs-hero')).toBeNull();
     expect(container.querySelector('.gp-art')).toBeNull();

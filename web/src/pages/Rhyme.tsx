@@ -147,7 +147,7 @@ export function Rhyme(): React.JSX.Element {
 
   return (
     <div className="container game-page gs" style={stageTone('rhyme')}>
-      <GameHead game="rhyme" title={t('games.rhyme.name')} />
+      <GameHead game="rhyme" title={t('games.rhyme.name')} meaning={t('games.rhyme.meaning')} />
 
       <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')}>
         {(['kurmanci', 'sorani'] as const).map((d) => (
