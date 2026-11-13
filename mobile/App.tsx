@@ -72,6 +72,8 @@ import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
 import { MessagesScreen } from './src/messages/MessagesScreen';
 import { FriendRequestsScreen } from './src/messages/FriendRequestsScreen';
+import { LettersScreen } from './src/letters/LettersScreen';
+import { LetterThreadScreen } from './src/letters/LetterThreadScreen';
 import { UnreadProvider, useUnread } from './src/messages/unread';
 import { unreadBadge } from './src/notifications/inbox';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
@@ -532,6 +534,21 @@ function SignedInRoot() {
         {({ navigation }) => (
           <GuestWall reason="friends" onBack={() => navigation.goBack()}>
             <FriendRequestsScreen onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      {/* letters by bird: a guest has no bird, and is shown the way to an account instead */}
+      <RootStack.Screen name="Letters" options={{ presentation: 'card' }}>
+        {({ navigation }) => (
+          <GuestWall reason="message" onBack={() => navigation.goBack()}>
+            <LettersScreen onExit={() => navigation.goBack()} />
+          </GuestWall>
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="LetterThread" options={{ presentation: 'card' }} getId={({ params }) => params.threadId}>
+        {({ route, navigation }) => (
+          <GuestWall reason="message" onBack={() => navigation.goBack()}>
+            <LetterThreadScreen threadId={route.params.threadId} onExit={() => navigation.goBack()} />
           </GuestWall>
         )}
       </RootStack.Screen>
