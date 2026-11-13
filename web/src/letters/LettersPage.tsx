@@ -13,7 +13,13 @@ import { letterErrorText } from './errors';
 import './letters.css';
 
 /** What the page is showing under the window: the letters page as it stands, writing, a bird on its way, or a letter that has just come. */
-type Moment = { kind: 'rest' } | { kind: 'writing' } | { kind: 'sent'; result: BirdOutResult } | { kind: 'arrived'; person: LetterPerson; letter: LetterItem; threadId: string };
+type Moment =
+  | { kind: 'rest' }
+  | { kind: 'writing' }
+  | { kind: 'sent'; result: BirdOutResult }
+  /** your bird has flown and is out there waiting: said at once, before the page has been read again */
+  | { kind: 'waiting' }
+  | { kind: 'arrived'; person: LetterPerson; letter: LetterItem; threadId: string };
 
 /**
  * Letters by bird (/app/letters): writing to somebody new in Kurdish, and
@@ -73,7 +79,7 @@ export function LettersPage(): React.JSX.Element {
       setMoment({ kind: 'arrived', person: result.person, letter: result.letter, threadId: result.threadId });
     } else {
       setScene({ kind: 'away' });
-      setMoment({ kind: 'rest' });
+      setMoment({ kind: 'waiting' });
     }
     home.reload();
   }
@@ -85,11 +91,12 @@ export function LettersPage(): React.JSX.Element {
     setBusy(false);
     if (res.ok || res.error.status === 404) {
       setScene({ kind: 'arriving', bird: data.bird });
+      setMoment({ kind: 'rest' });
       home.reload();
     }
   }
 
-  const out = data.out !== null && moment.kind !== 'arrived';
+  const out = (data.out !== null || moment.kind === 'waiting') && moment.kind !== 'arrived';
   const canWrite = data.refusal === null && !out && data.roomForMore;
 
   return (
