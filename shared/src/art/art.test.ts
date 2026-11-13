@@ -1667,6 +1667,48 @@ describe('the learner’s tree', () => {
     expect(treeSvg({ species: 'behiv', stage: 6, title: 'x' })).toContain('#fff4f7');
   });
 
+  it('starts as the kind’s own seed, cracked and lit from inside, and the seed is what moves when it is watered', () => {
+    const seeds = new Set(TREE_SPECIES.map((species) => treeSvg({ species, stage: 0, title: 'A seed', idPrefix: 's' })));
+    expect(seeds.size).toBe(TREE_SPECIES.length);
+    const alive = treeSvg({ species: 'beru', stage: 0, title: 'x' });
+    // the light it stands in, and the green light in its crack
+    expect(alive).toContain('radialGradient');
+    expect(alive).toContain('#e6ff8f');
+    const asleep = treeSvg({ species: 'beru', stage: 0, health: 'withered', title: 'x' });
+    expect(asleep).not.toContain('radialGradient');
+    expect(asleep).not.toContain('#e6ff8f');
+    // the seed is the plant's layer, not the ground's: an acorn's own brown is in the one and not the other
+    expect(treeSvg({ species: 'beru', stage: 0, part: 'plant', title: 'x' })).toContain('#b9803a');
+    expect(treeSvg({ species: 'beru', stage: 0, part: 'ground', title: 'x' })).not.toContain('#b9803a');
+    // the sprout still has its seed at its foot
+    expect(treeSvg({ species: 'beru', stage: 1, title: 'x' })).toContain('#b9803a');
+    expect(treeSvg({ species: 'beru', stage: 2, title: 'x' })).not.toContain('#b9803a');
+  });
+
+  it('is its own kind from the sapling on: a pine in tiers, a first flower on a tree that blossoms, its crown’s colour on top', () => {
+    const sapling = (species: (typeof TREE_SPECIES)[number]): string => treeSvg({ species, stage: 2, title: 'x', idPrefix: 's' });
+    // a pine's needles are many more blades than a broad-leaved sapling's few leaves
+    expect(count(sapling('kaj'), 'path')).toBeGreaterThan(count(sapling('beru'), 'path') * 1.5);
+    // the almond's sapling has a flower with its gold heart; the oak's has none
+    expect(sapling('behiv')).toContain('#ffd76a');
+    expect(sapling('beru')).not.toContain('#ffd76a');
+    // the autumn tree and the night tree are green below and their own colour on top
+    expect(sapling('payiz')).toContain('#f9a424');
+    expect(sapling('sev')).toContain('#4f6bd0');
+    // and a tree in blossom is in flower from its first crown
+    expect(treeSvg({ species: 'behiv', stage: 3, title: 'x' })).toContain('#ffd76a');
+  });
+
+  it('lays something of its own under the great tree, and takes it away again when the tree is left to wilt', () => {
+    // the pool at the willow's foot, the lantern by the wish tree
+    expect(treeSvg({ species: 'bi', stage: 6, title: 'x' })).toContain('#49a7dc');
+    expect(treeSvg({ species: 'bi', stage: 5, title: 'x' })).not.toContain('#49a7dc');
+    expect(treeSvg({ species: 'bi', stage: 6, health: 'wilting', title: 'x' })).not.toContain('#49a7dc');
+    expect(treeSvg({ species: 'miraz', stage: 6, part: 'ground', title: 'x' })).toContain('#ffd76a');
+    // it lies on the ground, so it stands still while the tree sways
+    expect(treeSvg({ species: 'bi', stage: 6, part: 'plant', title: 'x' })).not.toContain('#49a7dc');
+  });
+
   it('comes in two layers that are the whole between them: the ground, which stands still, and the plant on it', () => {
     for (const species of ['beru', 'bi', 'kaj'] as const) {
       for (const stage of [0, 2, 6] as const) {
