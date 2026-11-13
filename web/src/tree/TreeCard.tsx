@@ -3,6 +3,7 @@ import { treeColour } from '@kurda/shared';
 import { ChevronIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { TreeArt, WaterDrop } from './TreeArt';
+import { TreePicture } from './TreeScene';
 import { healthName, stageName, treeNamed, treeTitle } from './names';
 import { useTree } from './useTree';
 import './tree.css';
@@ -50,7 +51,7 @@ export function TreeCard(): React.JSX.Element | null {
   return (
     <Link to="/app/tree" className={`tree-card is-${tree.health}`} style={{ '--tree': treeColour(tree.species) } as React.CSSProperties} aria-label={`${treeTitle(t, tree)}. ${sub}`}>
       <span className="tree-card-art">
-        <TreeArt species={tree.species} stage={tree.stage} health={tree.health} size={56} />
+        <TreePicture species={tree.species} stage={tree.stage} health={tree.health} size={56} />
       </span>
       <span className="tree-card-text">
         <span className="tree-card-title">

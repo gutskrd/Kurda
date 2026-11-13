@@ -84,8 +84,8 @@ import { SHAPES } from './shapes.js';
 import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE, hasBadgeGlyph } from './badges.js';
 import { dayMedalSvg, streakMedalSvg } from './medals.js';
-import { TREE_FOOT, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
-import { TREE_SKIES, treeCloudSvg, treeSceneSvg, treeSkyAt } from './tree-scene.js';
+import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
+import { TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt } from './tree-scene.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
 import { characterArt } from '../characters/index.js';
@@ -1784,6 +1784,32 @@ describe('the learner’s tree', () => {
     const a = checkSvg(treeSceneSvg({ sky: 'dawn', title: 'The sky', idPrefix: 'a' }), 360);
     for (const id of checkSvg(treeSceneSvg({ sky: 'dawn', title: 'The sky', idPrefix: 'b' }), 360)) expect(a.has(id)).toBe(false);
     expect(() => treeSceneSvg({ sky: 'day', size: 0 })).toThrow(RangeError);
+  });
+
+  it('says what is in the air round a tree: its own kind of thing once it has a crown, and nothing round one left to wilt', () => {
+    expect(treeAir('behiv', 5, 'fresh')).toBe('petals');
+    expect(treeAir('payiz', 3, 'fresh')).toBe('leaves');
+    expect(treeAir('sev', 6, 'thirsty')).toBe('fireflies');
+    // before it has a crown, and for every other kind, light in the sun
+    expect(treeAir('behiv', 2, 'fresh')).toBe('motes');
+    expect(treeAir('beru', 6, 'fresh')).toBe('motes');
+    // a thirsty tree has lost its light; a wilting or withered one has still air, whatever its kind
+    expect(treeAir('beru', 6, 'thirsty')).toBeNull();
+    expect(treeAir('behiv', 6, 'wilting')).toBeNull();
+    expect(treeAir('sev', 6, 'withered')).toBeNull();
+  });
+
+  it('says where a plant’s top is in its picture and where water poured on it lands: lower for a seed, high for a great tree', () => {
+    expect(TREE_TOP).toHaveLength(TREE_STAGES);
+    expect(TREE_WATER_LANDS).toHaveLength(TREE_STAGES);
+    for (const stage of stages) {
+      // the water lands on the plant: under its top, and above its foot
+      expect(TREE_WATER_LANDS[stage]).toBeGreaterThan(TREE_TOP[stage]);
+      expect(TREE_WATER_LANDS[stage]).toBeLessThan(TREE_FOOT.y);
+    }
+    // a grown tree's top is higher in its picture at each stage
+    for (const stage of [4, 5, 6] as const) expect(TREE_TOP[stage]).toBeLessThan(TREE_TOP[stage - 1]!);
+    expect(TREE_TOP[0]).toBeGreaterThan(TREE_TOP[6]);
   });
 
   it('draws a cloud for each sky, in that sky’s colours', () => {

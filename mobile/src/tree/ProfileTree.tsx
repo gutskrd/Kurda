@@ -10,6 +10,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { healthName, stageName, treeNamed, treeTitle } from './names';
 import { TreeArt } from './TreeArt';
+import { TreePicture } from './TreeScene';
 
 /**
  * Somebody's tree on their profile: the tree as it stands today, its kind,
@@ -48,7 +49,7 @@ export function ProfileTree({ tree, onOpen }: { tree: TreeGlimpse | null | undef
     .join(' · ');
   const body = (
     <>
-      <TreeArt species={planted.species} stage={planted.stage} health={planted.health} size={112} label={treeTitle(t, planted)} />
+      <TreePicture species={planted.species} stage={planted.stage} health={planted.health} size={112} label={treeTitle(t, planted)} />
       <View style={styles.text}>
         <Text style={[styles.name, dir.text, { color: colors.textPrimary }]}>{named.name}</Text>
         {named.meaning ? <Text style={[styles.meaning, dir.text, { color: colors.textSecondary }]}>{named.meaning}</Text> : null}

@@ -11,6 +11,7 @@
  * it fills, so on a wide page it is the top of the sky that is cut off, never
  * the mountains.
  */
+import type { TreeHealth, TreeStage } from '../tree.js';
 import { Drawing, checkSize, linearAt, mix, n, prefixFor, radialAt, seeded, type Pt } from './svg.js';
 
 /** The skies there are, in the order a day goes through them. */
@@ -23,6 +24,18 @@ export function treeSkyAt(hour: number): TreeSky {
   if (hour >= 8 && hour < 17) return 'day';
   if (hour >= 17 && hour < 20) return 'dusk';
   return 'night';
+}
+
+/** What is in the air round a tree: light in the sun, petals or leaves coming down, or the night tree's fireflies. */
+export type TreeAir = 'motes' | 'petals' | 'leaves' | 'fireflies';
+
+/** What is in the air round this tree, if anything: a tree left to wilt has still air round it. */
+export function treeAir(species: string, stage: TreeStage, health: TreeHealth): TreeAir | null {
+  if (health === 'wilting' || health === 'withered') return null;
+  if (stage >= 3 && species === 'sev') return 'fireflies';
+  if (stage >= 3 && species === 'behiv') return 'petals';
+  if (stage >= 3 && species === 'payiz') return 'leaves';
+  return health === 'fresh' ? 'motes' : null;
 }
 
 interface Sky {

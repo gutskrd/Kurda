@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { TREE_FULL, TREE_STAGES, treeColour, type TreeSky, type TreeSpecies, type TreeStage, type TreeView } from '@kurda/shared';
+import { TREE_FULL, TREE_STAGES, TREE_TOP, TREE_WATER_LANDS, treeAir, treeColour, type TreeSky, type TreeSpecies, type TreeStage, type TreeView } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button, LinkButton } from '../components/Button';
 import { CoinIcon } from '../components/icons';
@@ -13,7 +13,7 @@ import { playLessonSound } from '../lib/sounds';
 import { Celebration } from '../ranks/Celebration';
 import { withMeaning } from '../ranks/names';
 import { TreeArt, WaterDrop, WateringCan } from './TreeArt';
-import { TreeAmbient, TreeSkyScene, treeAir, useTreeSky } from './TreeScene';
+import { TreeAmbient, TreePicture, TreeSkyScene, useTreeSky } from './TreeScene';
 import { healthName, stageName, treeAbout, treeNamed, treeTitle } from './names';
 import { useTree, type MyTree, type TreeKindOffer, type Watered } from './useTree';
 import './tree.css';
@@ -21,11 +21,6 @@ import './tree.css';
 /** How long the can pours for before the page shows what the water did, and how long a tree is watched growing before the app says that it grew. */
 const POUR_MS = 1500;
 const GROW_MS = 1150;
-
-/** Where the water lands on the picture at each stage, from its top, in hundredths of its height: on a seed's heap of earth, on a great tree's crown. */
-const LAND = [68, 54, 42, 44, 38, 32, 28] as const;
-/** Where the thought of a thirsty tree floats, by stage: beside its top, wherever that is. */
-const THOUGHT = [40, 26, 12, 14, 8, 4, 2] as const;
 
 /** What the page is in the middle of: nothing, the can pouring, or the tree growing under it. */
 type Phase = 'idle' | 'pour' | 'grow';
@@ -373,7 +368,8 @@ function Stage({
   };
   // how the picture comes in: grown into, dropped in as a seed just planted, or simply arriving with the page
   const came = grown > 0 ? 'is-grown' : planted > 0 && tree.stage === 0 ? 'is-planted' : 'is-shown';
-  const places = { '--land': `${LAND[tree.stage]}%`, '--thought': `${THOUGHT[tree.stage]}%` } as React.CSSProperties;
+  // where the water lands on the picture, and where a thirsty tree's thought floats: beside its top, wherever that is at its stage
+  const places = { '--land': `${TREE_WATER_LANDS[tree.stage] * 100}%`, '--thought': `${Math.max(2, TREE_TOP[tree.stage] * 100 - 12)}%` } as React.CSSProperties;
   return (
     <section className={`tree-stage is-${sky} is-${tree.health}${phase === 'pour' ? ' is-pouring' : ''}${phase === 'grow' ? ' is-growing' : ''}`} aria-label={label}>
       <TreeSkyScene sky={sky} health={tree.health} />
@@ -504,7 +500,7 @@ function KindCard({
   return (
     <article className="tree-kind" style={{ '--tree': treeColour(kind.species) } as React.CSSProperties}>
       <span className="tree-kind-art">
-        <TreeArt species={kind.species} stage={TREE_FULL} size={112} />
+        <TreePicture species={kind.species} stage={TREE_FULL} size={112} />
       </span>
       <span className="tree-kind-text">
         <span className="tree-kind-name">{named.name}</span>

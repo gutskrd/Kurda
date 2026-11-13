@@ -39,13 +39,24 @@ const mine = (tree: TreeView | null, over: { owned?: string[]; zer?: number } = 
 const missing = fail({ kind: 'client', status: 404, code: 'NOT_FOUND', message: 'no route' });
 
 describe('the tree’s screen', () => {
-  it('offers the kinds that are free to start from before a tree is planted, and plants the one chosen', async () => {
+  it('offers the seeds that are free to start from before a tree is planted, shows the tree the picked one will be, and plants it', async () => {
     const client = fakeClient({ 'GET /me/tree': ok(mine(null)), 'POST /me/tree/plant': ok(mine(view({ species: 'hinar', waterings: 0, water: 1, plantedOn: TODAY }))) });
     testAuth.client = client;
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
     expect(await screen.findByRole('heading', { name: 'Plant your tree' })).toBeTruthy();
+    // the four starters, each a seed to pick; nothing that has to be bought
+    expect(screen.getAllByRole('radio')).toHaveLength(4);
     for (const name of ['Berû', 'Hinar', 'Behîv', 'Bî']) expect(screen.getByText(name)).toBeTruthy();
     expect(screen.queryByText('Dara Şevê')).toBeNull();
+    // the first is picked to begin with, and what stands in the scene is the tree it will be
+    expect(screen.getByRole('radio', { name: 'Berû (Oak)' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('img', { name: 'Berû (Oak)' })).toBeTruthy();
+    expect(screen.getByText('The oak of the Zagros: slow to grow, and it outlasts everything.')).toBeTruthy();
+    // picking another changes the tree shown, and plants nothing
+    fireEvent.click(screen.getByRole('radio', { name: 'Hinar (Pomegranate)' }));
+    expect(screen.getByRole('radio', { name: 'Hinar (Pomegranate)' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('img', { name: 'Hinar (Pomegranate)' })).toBeTruthy();
+    expect(client.calls.some((c) => c.path === '/me/tree/plant')).toBe(false);
     fireEvent.click(screen.getByRole('button', { name: 'Plant: Hinar (Pomegranate)' }));
     await waitFor(() => expect(client.calls.find((c) => c.path === '/me/tree/plant')?.body).toEqual({ species: 'hinar' }));
     // the seed, with the water to bring it up
@@ -107,6 +118,48 @@ describe('the tree’s screen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Water the tree' }));
     expect(await screen.findByText('It is drinking again. Welcome back.')).toBeTruthy();
     expect(screen.queryByTestId('tree-health')).toBeNull();
+  });
+
+  it('stands in the sky of the learner’s own hour, with the mountains and three clouds, none of it read out', async () => {
+    const hours = vi.spyOn(Date.prototype, 'getHours').mockReturnValue(22);
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view())) });
+    const { unmount } = renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    const stage = await screen.findByTestId('tree-stage');
+    // night's own colour is under the picture until it is drawn
+    expect(stage.style.backgroundColor).toBe('rgb(26, 38, 86)');
+    expect(within(stage).getByTestId('tree-scene')).toBeTruthy();
+    expect(within(stage).getAllByTestId('tree-scene-cloud')).toHaveLength(3);
+    // the tree is what is named; its weather is not
+    expect(within(stage).getByRole('img', { name: 'Berû, Seedling' })).toBeTruthy();
+    unmount();
+    hours.mockReturnValue(12);
+    renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    expect((await screen.findByTestId('tree-stage')).style.backgroundColor).toBe('rgb(163, 218, 248)');
+    hours.mockRestore();
+  });
+
+  it('floats a thought of water by a tree that wants some, and not by one that is well', async () => {
+    const dry = treeView({ species: 'beru', plantedOn: '2026-11-01', lastWateredOn: '2026-11-08', waterings: 15, water: 1, harvests: 0 }, TODAY);
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(dry)) });
+    const { unmount } = renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    await screen.findByTestId('tree-health');
+    expect(screen.getByTestId('tree-thought')).toBeTruthy();
+    unmount();
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view())) });
+    renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Berû' });
+    expect(screen.queryByTestId('tree-thought')).toBeNull();
+  });
+
+  it('shows what is being grown toward: the next stage in a ring closed by how far it has come', async () => {
+    testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view({ waterings: 9, water: 3 }))) });
+    renderWithProviders(<TreeScreen onExit={() => undefined} />);
+    await screen.findByRole('progressbar', { name: 'Next: Young tree' });
+    // two of the seven waterings to the next stage
+    const fill = screen.getByTestId('tree-goal-fill');
+    expect(Number(fill.getAttribute('stroke-dashoffset')) / Number(fill.getAttribute('stroke-dasharray'))).toBeCloseTo(1 - 2 / 7, 4);
+    // the tree itself, and the stage after it in the ring
+    expect(screen.getAllByTestId('tree-art')).toHaveLength(2);
   });
 
   it('leads back to the lessons when no water is held', async () => {

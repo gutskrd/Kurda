@@ -1690,6 +1690,15 @@ export interface TreeOptions {
   idPrefix?: string;
 }
 
+/**
+ * Where a plant's top is in its picture at each stage, and where water poured
+ * over it lands, as shares of the picture's height from its top: a seed is
+ * low in its picture and a great tree fills it. An app drops the water to
+ * the one, and floats a thirsty tree's thought of water beside the other.
+ */
+export const TREE_TOP: readonly [number, number, number, number, number, number, number] = [0.52, 0.4, 0.29, 0.31, 0.19, 0.09, 0.03];
+export const TREE_WATER_LANDS: readonly [number, number, number, number, number, number, number] = [0.68, 0.55, 0.44, 0.46, 0.4, 0.33, 0.29];
+
 /** Where a plant stands on the canvas, as shares of its width and height: the point a sway turns about. */
 export const TREE_FOOT = { x: MID / 120, y: GROUND / 120 } as const;
 

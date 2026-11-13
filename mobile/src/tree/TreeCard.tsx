@@ -13,6 +13,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { getTree, type MyTree } from './api';
 import { healthName, stageName, treeNamed, treeTitle } from './names';
 import { TreeArt, WaterDrop } from './TreeArt';
+import { TreePicture } from './TreeScene';
 
 /** The tree's picture on the card. */
 const ART = 52;
@@ -80,7 +81,7 @@ export function TreeCard(): React.JSX.Element | null {
   return (
     <PressableScale onPress={open} accessibilityRole="button" accessibilityLabel={`${treeTitle(t, tree)}. ${sub}`} style={[styles.card, { flexDirection: dir.row, backgroundColor: colors.surface }]} testID="tree-card">
       <View style={[styles.art, { backgroundColor: colors.controlTrack }]}>
-        <TreeArt species={tree.species} stage={tree.stage} health={tree.health} size={ART} />
+        <TreePicture species={tree.species} stage={tree.stage} health={tree.health} size={ART} />
       </View>
       <View style={styles.main}>
         <View style={[styles.head, { flexDirection: dir.row }]}>

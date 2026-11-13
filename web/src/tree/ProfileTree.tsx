@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { hasTreeArt, treeColour, type TreeGlimpse } from '@kurda/shared';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { TreeArt } from './TreeArt';
+import { TreePicture } from './TreeScene';
 import { healthName, stageName, treeNamed, treeTitle } from './names';
 import './tree.css';
 
@@ -46,7 +47,7 @@ export function ProfileTree({ tree, own = false }: { tree: TreeGlimpse | null | 
       </div>
       <div className={`profile-tree-body is-${tree.health}`}>
         <span className="profile-tree-art">
-          <TreeArt species={tree.species} stage={tree.stage} health={tree.health} size={132} title={treeTitle(t, tree)} />
+          <TreePicture species={tree.species} stage={tree.stage} health={tree.health} size={132} title={treeTitle(t, tree)} />
         </span>
         <span className="profile-tree-text">
           <span className="profile-tree-name">{named.name}</span>

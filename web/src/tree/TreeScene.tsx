@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { treeCloudSvg, treeSceneSvg, treeSkyAt, type TreeHealth, type TreeSky, type TreeStage } from '@kurda/shared';
+import { treeCloudSvg, treeSceneSvg, treeSkyAt, type TreeAir, type TreeHealth, type TreeSky, type TreeStage } from '@kurda/shared';
+import { TreeArt } from './TreeArt';
 import './tree.css';
 
 /**
@@ -49,16 +50,22 @@ export function TreeSkyScene({ sky, health }: { sky: TreeSky; health: TreeHealth
   );
 }
 
-/** What is in the air round a tree: light in the sun, petals or leaves coming down, or the night tree's fireflies. */
-export type TreeAir = 'motes' | 'petals' | 'leaves' | 'fireflies';
-
-/** What is in the air round this tree, if anything: a tree left to wilt has still air round it. */
-export function treeAir(species: string, stage: TreeStage, health: TreeHealth): TreeAir | null {
-  if (health === 'wilting' || health === 'withered') return null;
-  if (stage >= 3 && species === 'sev') return 'fireflies';
-  if (stage >= 3 && species === 'behiv') return 'petals';
-  if (stage >= 3 && species === 'payiz') return 'leaves';
-  return health === 'fresh' ? 'motes' : null;
+/**
+ * A tree in its sky as a still picture: what a profile, a card and the
+ * nursery show, where nothing needs to move. Its sky is the day's, but for
+ * the night tree, which is seen as it is meant to be: at night. `title`
+ * names the tree; the sky behind it is never read out.
+ */
+export function TreePicture({ species, stage, health = 'fresh', size, title = '' }: { species: string; stage: TreeStage; health?: TreeHealth; size: number; title?: string }): React.JSX.Element {
+  const id = `p${useId().replace(/[^A-Za-z0-9_-]/g, '')}`;
+  const sky: TreeSky = species === 'sev' ? 'night' : 'day';
+  const scene = useMemo(() => ({ __html: treeSceneSvg({ sky, dry: DRY[health], size, idPrefix: id }) }), [sky, health, size, id]);
+  return (
+    <span className="tree-picture" style={{ width: size, height: size }}>
+      <span className="tree-picture-sky" aria-hidden="true" dangerouslySetInnerHTML={scene} />
+      <TreeArt species={species} stage={stage} health={health} size={size} title={title} />
+    </span>
+  );
 }
 
 /** Nine of whatever is in the air, each on a course of its own: where it starts, how long it takes, how far it drifts. */
