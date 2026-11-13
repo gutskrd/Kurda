@@ -261,13 +261,15 @@ function FriendRequestsRow(): React.JSX.Element | null {
 function LettersRow(): React.JSX.Element | null {
   const t = useT();
   const { data } = useApiGet<LettersHome>('/letters');
-  if (!data) return null;
+  // an answer without the shape (a server from before letters) draws no row rather than breaking the list
+  if (!data || !Array.isArray(data.penPals)) return null;
   const unread = data.penPals.reduce((n, p) => n + p.unread, 0);
   const waiting = data.penPals.find((p) => p.yourTurn);
   const line = waiting ? t('letters.row.yourTurn', { name: waiting.person.name }) : data.out ? t('letters.out.title') : t('letters.row.invite');
   return (
-    <Link to="/app/letters" className="chat-requests chat-letters">
-      <BirdBadge bird={data.bird} size={40} />
+    // gold only while a letter waits on you, like the requests above; otherwise one quiet row among the conversations
+    <Link to="/app/letters" className={`chat-requests chat-letters${waiting || unread > 0 ? ' is-waiting' : ''}`}>
+      <BirdBadge bird={data.bird} size={48} />
       <span className="chat-convo-body">
         <span className="chat-convo-name">{t('letters.title')}</span>
         <span className="chat-convo-last">{line}</span>

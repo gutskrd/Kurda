@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, screen, within } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import { LAST_LETTER_LEARN_ENTRY } from '@kurda/shared';
 import { Games } from '../pages/Games';
 import { forgetLastLetterAvailability } from '../lastletter/availability';
@@ -102,12 +101,9 @@ describe('Learn’s games list', () => {
       expect(within(card).getByText('With friends')).toBeInTheDocument();
       expect(within(card).queryByText('On your own')).toBeNull();
     }
-    // and so it is not among the games to play on your own
-    await userEvent.click(screen.getByRole('button', { name: 'On your own' }));
-    expect(screen.queryByRole('heading', { name: 'Ez kî me?' })).toBeNull();
-    expect(screen.getByRole('heading', { name: 'Dizê Bîrê' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'With friends' }));
-    expect(screen.getByRole('heading', { name: 'Ez kî me?' })).toBeInTheDocument();
+    // and a game played alone says so on its card instead
+    const alone = screen.getByRole('heading', { name: 'Dizê Bîrê' }).closest('article')!;
+    expect(within(alone).getByText('On your own')).toBeInTheDocument();
   });
 
   // an old answer, or a server a version behind, may still name the games that are gone

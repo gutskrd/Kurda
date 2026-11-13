@@ -1428,6 +1428,15 @@
   color: var(--ink);
   text-decoration: none;
 }
+/* letters: a door like the requests row, quiet until a letter waits to be answered */
+.chat-letters:not(.is-waiting) {
+  border-color: var(--border);
+  background: var(--surface);
+}
+.chat-letters + .chat-convo,
+.chat-requests + .chat-letters {
+  margin-top: var(--space-2);
+}
 /* as large as the faces in the rows under it, so the list keeps one left edge */
 .chat-requests-icon {
   flex: none;

@@ -249,6 +249,11 @@ function Library(): React.JSX.Element {
       return { ...l, featured: follow(l.featured), recent: follow(l.recent), continue: follow(l.continue), bookmarks };
     });
 
+  // with no story published yet there is nothing to count, search or play together: the page says so, and only that
+  const nothingYet = !active && library !== null && library.total === 0;
+
+  if (nothingYet) return <EmptyState title={t('stories.library.empty')} />;
+
   return (
     <>
       {signedIn && library?.me && <ProgressCard me={library.me} />}
