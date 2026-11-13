@@ -92,6 +92,12 @@ export function socialNotification(note: InboxNote, t: Translate, locale?: strin
         href: helpline && /^https:\/\//.test(helpline) ? helpline : HELPLINE_URL,
       };
     }
+    case 'letter': {
+      // a bird has come to the window: straight to the correspondence it came from
+      const thread = str(data.threadId);
+      const to = thread && /^[0-9a-f-]{36}$/i.test(thread) ? `/app/letters/${thread}` : '/app/letters';
+      return { title: t('letters.notify.title'), body: t('letters.notify.body'), to };
+    }
     case 'gift': {
       const to = giftChatPath(str(data.chat), str(data.giftId));
       return { title: t('notify.gift.title'), body: t('notify.gift.body'), ...(to ? { to } : {}) };

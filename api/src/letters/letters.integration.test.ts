@@ -85,14 +85,19 @@ describe.skipIf(!DATABASE_URL)('letters by bird (integration)', () => {
     expect((await home(rojda)).penPals[0]!.unread).toBe(0);
   });
 
-  it('lets pen pals write one letter each in turn', async () => {
+  it('lets either answer first after the meeting, and then one letter each in turn', async () => {
     const [a, b] = [await adult('turna'), await adult('turnb')];
     await out(a);
     const met = await out(b);
     if (met.kind !== 'met') throw new Error('the birds did not meet');
+    // the two letters crossed in the same moment: both may write back
+    expect((await home(a)).penPals[0]!.yourTurn).toBe(true);
+    expect((await home(b)).penPals[0]!.yourTurn).toBe(true);
     const write = (p: Person) => call('POST', `/letters/threads/${met.threadId}`, p.token, { body: 'Spas ji bo nameya te, hevalê min!' });
-    // he wrote last: it is hers to answer, not his to write again
+    // he answers first; now it is hers, not his to write again
+    expect((await write(b)).statusCode).toBe(200);
     expect((await write(b)).json()).toMatchObject({ code: 'NOT_YOUR_TURN' });
+    expect((await home(b)).penPals[0]!.yourTurn).toBe(false);
     expect((await write(a)).statusCode).toBe(200);
     expect((await write(a)).json()).toMatchObject({ code: 'NOT_YOUR_TURN' });
     expect((await write(b)).statusCode).toBe(200);

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { groupLimits, type LimitDetails } from '@kurda/shared';
+import { groupLimits, type LettersHome, type LimitDetails } from '@kurda/shared';
 import { useApiGet, useMemoryOwner } from '../lib/useApi';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
@@ -26,6 +26,7 @@ import { GroupAvatar } from '../groups/GroupAvatar';
 import { membersLine } from '../groups/memberCount';
 import { announceGroupsChanged, useGroupsChanged } from '../groups/groupsChanged';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
+import { BirdBadge } from '../letters/LetterParts';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -168,6 +169,7 @@ export function Messages(): React.JSX.Element {
             ))}
           </div>
           <FriendRequestsRow />
+          <LettersRow />
           {filter === 'groups' ? (
             <GroupsList activeGroup={activeGroup} query={query} onNew={newGroup} />
           ) : (
@@ -246,6 +248,31 @@ function FriendRequestsRow(): React.JSX.Element | null {
         </span>
       </span>
       <span className="chat-unread">{requests.length}</span>
+      <ChevronIcon size={16} className="list-row-go flip-rtl" />
+    </Link>
+  );
+}
+
+/**
+ * The way into letters by bird (letters/LettersPage.tsx), at the top of the
+ * conversations: your bird, and in a few words what is new — a letter waiting
+ * to be answered, your bird out — or, with nothing yet, what letters are.
+ */
+function LettersRow(): React.JSX.Element | null {
+  const t = useT();
+  const { data } = useApiGet<LettersHome>('/letters');
+  if (!data) return null;
+  const unread = data.penPals.reduce((n, p) => n + p.unread, 0);
+  const waiting = data.penPals.find((p) => p.yourTurn);
+  const line = waiting ? t('letters.row.yourTurn', { name: waiting.person.name }) : data.out ? t('letters.out.title') : t('letters.row.invite');
+  return (
+    <Link to="/app/letters" className="chat-requests chat-letters">
+      <BirdBadge bird={data.bird} size={40} />
+      <span className="chat-convo-body">
+        <span className="chat-convo-name">{t('letters.title')}</span>
+        <span className="chat-convo-last">{line}</span>
+      </span>
+      {unread > 0 && <span className="chat-unread">{unread}</span>}
       <ChevronIcon size={16} className="list-row-go flip-rtl" />
     </Link>
   );

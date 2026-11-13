@@ -98,6 +98,19 @@ const toItem = (row: LetterRow, me: string): LetterItem => ({
 
 const personOf = (id: string, name: string): LetterPerson => ({ id, name, bird: letterBirdOf(id) });
 
+/**
+ * SQL: it is `me`'s turn to write in the correspondence `thread` — the other
+ * has written, and nothing of mine was delivered after their last letter.
+ * The two letters that cross when two birds meet are delivered in the same
+ * moment, so after a meeting either of the two may answer first; from then on
+ * it goes a letter each in turn. `thread` and `me` are literals from this file.
+ */
+const YOUR_TURN_SQL = (thread: string, me: string): string => `(
+  EXISTS (SELECT 1 FROM letters written WHERE written.thread_id = ${thread} AND written.sender_id <> ${me} AND written.status IN ('delivered','removed'))
+  AND NOT EXISTS (
+    SELECT 1 FROM letters mine WHERE mine.thread_id = ${thread} AND mine.sender_id = ${me} AND mine.status IN ('delivered','removed')
+       AND mine.delivered_at > (SELECT max(theirs.delivered_at) FROM letters theirs WHERE theirs.thread_id = ${thread} AND theirs.sender_id <> ${me} AND theirs.status IN ('delivered','removed'))))`;
+
 /** The name a pen pal is shown by: their display name, or their username. */
 const NAME_SQL = (alias: string): string => `COALESCE(NULLIF(btrim(${alias}.display_name), ''), ${alias}.username)`;
 
@@ -184,9 +197,9 @@ export class LetterService {
     await this.comeHome(this.pool, userId);
     const open = await this.openThreads(this.pool, userId);
     const out = await this.pool.query<{ created_at: Date }>(`SELECT created_at FROM letters WHERE sender_id = $1 AND status = 'flying'`, [userId]);
-    const pals = await this.pool.query<{ id: string; other: string; name: string; last_letter_at: Date; last_sender: string | null; unread: number }>(
+    const pals = await this.pool.query<{ id: string; other: string; name: string; last_letter_at: Date; your_turn: boolean; unread: number }>(
       `SELECT t.id, o.id AS other, ${NAME_SQL('o')} AS name, t.last_letter_at,
-              (SELECT l.sender_id FROM letters l WHERE l.thread_id = t.id AND l.status IN ('delivered','removed') ORDER BY l.created_at DESC, l.id DESC LIMIT 1) AS last_sender,
+              ${YOUR_TURN_SQL('t.id', '$1::uuid')} AS your_turn,
               (SELECT count(*)::int FROM letters l WHERE l.thread_id = t.id AND l.recipient_id = $1 AND l.status = 'delivered' AND l.read_at IS NULL) AS unread
          FROM letter_threads t
          JOIN users o ON o.id = CASE WHEN t.user_lo = $1 THEN t.user_hi ELSE t.user_lo END
@@ -198,7 +211,7 @@ export class LetterService {
       threadId: p.id,
       person: personOf(p.other, p.name),
       lastLetterAt: p.last_letter_at.toISOString(),
-      yourTurn: p.last_sender !== null && p.last_sender !== userId,
+      yourTurn: p.your_turn,
       unread: p.unread,
     }));
     return {
@@ -309,13 +322,12 @@ export class LetterService {
       [threadId],
     );
     const letters = rows.rows.map((row) => toItem(row, userId));
-    const last = rows.rows[rows.rows.length - 1];
     const closed = t.ended || !t.sameBand;
     return {
       threadId,
       person: personOf(t.other, t.name),
       letters,
-      yourTurn: !closed && last !== undefined && last.sender_id !== userId,
+      yourTurn: !closed && (await this.yourTurn(this.pool, threadId, userId)),
       closed,
     };
   }
@@ -342,6 +354,11 @@ export class LetterService {
     return { other: row.other, name: row.name, ended: row.ended, sameBand: row.same_band };
   }
 
+  private async yourTurn(db: Pick<pg.Pool, 'query'>, threadId: string, userId: string): Promise<boolean> {
+    const r = await db.query<{ yours: boolean }>(`SELECT ${YOUR_TURN_SQL('$1::uuid', '$2::uuid')} AS yours`, [threadId, userId]);
+    return r.rows[0]?.yours === true;
+  }
+
   /** Write back to a pen pal: refused when it is not your turn, after a goodbye, or once your bands have parted. */
   async reply(userId: string, threadId: string, raw: string): Promise<LetterItem> {
     const text = await this.cleaned(userId, raw);
@@ -356,11 +373,7 @@ export class LetterService {
       if (!t.sameBand) throw new AppError('LETTERS_BANDS', 403, 'letters only pass between people of the same age band');
       const me = await this.me(client, userId);
       const band = this.bandOf(me);
-      const last = await client.query<{ sender_id: string }>(
-        `SELECT sender_id FROM letters WHERE thread_id = $1 AND status IN ('delivered','removed') ORDER BY created_at DESC, id DESC LIMIT 1`,
-        [threadId],
-      );
-      if (last.rows[0]?.sender_id === userId) throw new AppError('NOT_YOUR_TURN', 409, 'wait for their letter before you write again');
+      if (!(await this.yourTurn(client, threadId, userId))) throw new AppError('NOT_YOUR_TURN', 409, 'wait for their letter before you write again');
       await this.withinDay(client, userId);
       const ins = await client.query<LetterRow>(
         `INSERT INTO letters (sender_id, recipient_id, thread_id, body, age_band, status, delivered_at)

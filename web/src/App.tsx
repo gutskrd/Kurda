@@ -77,6 +77,8 @@ const ProfileEdit = lazy(() => import('./pages/ProfileEdit').then((m) => ({ defa
 const UserProfile = lazy(() => import('./pages/UserProfile').then((m) => ({ default: m.UserProfile })));
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
 const Messages = lazy(() => import('./pages/Messages').then((m) => ({ default: m.Messages })));
+const LettersPage = lazy(() => import('./letters/LettersPage').then((m) => ({ default: m.LettersPage })));
+const LetterThreadPage = lazy(() => import('./letters/LetterThreadPage').then((m) => ({ default: m.LetterThreadPage })));
 const Shop = lazy(() => import('./pages/Shop').then((m) => ({ default: m.Shop })));
 const About = lazy(() => import('./pages/About').then((m) => ({ default: m.About })));
 const CopyrightPage = lazy(() => import('./copyright/CopyrightPage').then((m) => ({ default: m.CopyrightPage })));
@@ -371,6 +373,9 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="search" element={<Search />} />
         <Route path="friends" element={<RequireAccount what="gate.what.addFriends"><Friends /></RequireAccount>} />
         <Route path="messages" element={<RequireAccount what="gate.what.sendMessages"><Messages /></RequireAccount>} />
+        {/* letters by bird: pen pals met by sending a bird out (letters/LettersPage.tsx) */}
+        <Route path="letters" element={<RequireAccount what="gate.what.sendMessages"><LettersPage /></RequireAccount>} />
+        <Route path="letters/:threadId" element={<RequireAccount what="gate.what.sendMessages"><LetterThreadPage /></RequireAccount>} />
         <Route path="shop" element={<RequireAccount what="gate.what.buy"><Shop /></RequireAccount>} />
         <Route path="profile" element={<RequireAccount what="gate.what.profile"><Profile /></RequireAccount>} />
         <Route
