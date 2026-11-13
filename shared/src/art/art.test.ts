@@ -85,7 +85,8 @@ import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE, hasBadgeGlyph } from './badges.js';
 import { dayMedalSvg, streakMedalSvg } from './medals.js';
 import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
-import { SKIES, TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt } from './tree-scene.js';
+import { SKIES, TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt, treeStudioSvg } from './tree-scene.js';
+import { TREE_SEASONS, treeSeasonAt } from '../tree.js';
 import { horizonSky, horizonSvg } from './horizon.js';
 import { LETTER_SILL, letterBirdSvg, letterEnvelopeSvg, letterWindowSvg } from './letters.js';
 import { LETTER_BIRDS } from '../letters.js';
@@ -1918,5 +1919,39 @@ describe('the letters’ pictures', () => {
     expect(LETTER_SILL.y).toBeLessThan(100);
     expect(LETTER_SILL.birdShare).toBeGreaterThan(0.2);
     expect(LETTER_SILL.birdShare).toBeLessThan(0.5);
+  });
+});
+
+describe('the tree through the seasons', () => {
+  it('knows the season from the month, as the year goes in the north', () => {
+    const at = (month: number): string => treeSeasonAt(new Date(2026, month - 1, 15));
+    expect([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(at)).toEqual([
+      'winter', 'winter', 'spring', 'spring', 'spring', 'summer', 'summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter',
+    ]);
+  });
+
+  it('draws every kind at every grown stage in every season, and its scene, each a valid picture', () => {
+    for (const season of TREE_SEASONS) {
+      checkSvg(treeStudioSvg({ season, size: 120, title: 'A season' }), 120);
+      for (const species of TREE_SPECIES) for (const stage of [0, 2, 4, 6] as const) checkSvg(treeSvg({ species, stage, season, size: 120, title: 'A tree' }), 120);
+    }
+  });
+
+  it('turns a tree that loses its leaves with the seasons, and keeps an evergreen green until the snow', () => {
+    const crown = (species: (typeof TREE_SPECIES)[number], season: (typeof TREE_SEASONS)[number]): string =>
+      treeSvg({ species, stage: 6, season, part: 'plant', idPrefix: 'x' });
+    const oak = TREE_SEASONS.map((season) => crown('beru', season));
+    expect(new Set(oak).size).toBe(4);
+    // the pine is the same tree in spring, summer and autumn, frosted only in winter
+    expect(crown('kaj', 'spring')).toBe(crown('kaj', 'summer'));
+    expect(crown('kaj', 'autumn')).toBe(crown('kaj', 'summer'));
+    expect(crown('kaj', 'winter')).not.toBe(crown('kaj', 'summer'));
+  });
+
+  it('stands a tree in a season on the floor, with its long shadow; without one it floats on its island as before', () => {
+    const seasoned = treeSvg({ species: 'beru', stage: 6, season: 'summer', part: 'ground' });
+    const before = treeSvg({ species: 'beru', stage: 6, part: 'ground' });
+    expect(seasoned).toContain('linearGradient');
+    expect(seasoned).not.toBe(before);
   });
 });

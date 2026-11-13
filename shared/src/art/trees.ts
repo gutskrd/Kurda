@@ -22,7 +22,7 @@
  * from a generator seeded with the tree's own kind, so the same tree is the
  * same string on every machine.
  */
-import type { TreeHealth, TreeSpecies, TreeStage } from '../tree.js';
+import type { TreeHealth, TreeSeason, TreeSpecies, TreeStage } from '../tree.js';
 import { leaf } from './paint.js';
 import { Drawing, checkSize, linearAt, mix, n, prefixFor, pt, radialBox, seeded, tint, type Pt } from './svg.js';
 
@@ -63,6 +63,12 @@ interface Kind {
   build?: { spread?: number; lift?: number; girth?: number };
   /** other colours some of its masses come in, so its crown is not one flat colour */
   hues?: readonly Ramp[];
+  /**
+   * Set when the tree is drawn in a season (`seasonal`): it stands on the
+   * floor of its scene rather than floating, on a flat round of grass with a
+   * long shadow and two pale stones beside it, as in the owner's reference.
+   */
+  studio?: { litter: readonly string[]; flowers: boolean; snow: boolean };
 }
 
 const KINDS: Record<TreeSpecies, Kind> = {
@@ -215,6 +221,69 @@ const STATE: Record<TreeHealth, { dry: number; dead: number; full: number; droop
 function fared(ramp: Ramp, health: TreeHealth, turns: readonly [string, string] = [DRY, DEAD]): Ramp {
   const s = STATE[health];
   return ramp.map((c) => mix(mix(c, turns[0], s.dry), turns[1], s.dead)) as unknown as Ramp;
+}
+
+// ──────────────────────────────────────────────────────────────── seasons
+
+/** The crowns of the seasons, deep to light: spring's blossom, autumn's turned leaves, and winter's snow. */
+const SPRING: Ramp = ['#b4507a', '#cc6a92', '#e088ab', '#eea6c2', '#f7c6d8', '#fde6ef'];
+const AUTUMN: Ramp = ['#a3401a', '#cc5a1e', '#e8742a', '#f39239', '#f8b155', '#fcd78f'];
+const SNOW: Ramp = ['#a9bdd4', '#c3d2e3', '#dbe5f0', '#ecf2f8', '#f7fafd', '#ffffff'];
+
+const toward = (ramp: Ramp, to: Ramp, t: number): Ramp => ramp.map((c, i) => mix(c, to[i] as string, t)) as unknown as Ramp;
+
+/**
+ * A kind as it is in a season. A tree that loses its leaves blossoms pink in
+ * spring, is its own green in summer, turns orange in autumn and is white
+ * with snow in winter; an evergreen, and the night tree, keep their colours
+ * the year round and are frosted in winter. Each keeps a little of its own
+ * colour under the season's, so an oak in autumn is still not a willow. What
+ * a tree bears comes and goes with the season too — no fruit under snow, no
+ * blossom on turned leaves — and the grass at its foot is fresh in spring,
+ * strewn with fallen leaves in autumn and under snow in winter.
+ */
+function seasonal(kind: Kind, species: TreeSpecies, season: TreeSeason): Kind {
+  const evergreen = kind.habit === 'tiers' || kind.habit === 'column' || species === 'sev';
+  const keeps = (bears: Kind['bears']): boolean => bears === 'lights' || bears === 'ribbons';
+  const studio = { litter: [] as readonly string[], flowers: true, snow: false };
+  if (season === 'summer') return { ...kind, studio };
+  if (season === 'spring') {
+    if (evergreen) return { ...kind, grass: [mix(kind.grass[0], '#5fbf5a', 0.3), mix(kind.grass[1], '#9be07a', 0.3)], studio };
+    const t = kind.bears === 'blossom' ? 0.5 : 0.88;
+    return {
+      ...kind,
+      leaves: toward(kind.leaves, SPRING, t),
+      ...(kind.hues ? { hues: kind.hues.map((h) => toward(h, SPRING, t)) } : {}),
+      bears: kind.bears === 'blossom' || keeps(kind.bears) ? kind.bears : 'none',
+      grass: [mix(kind.grass[0], '#5fbf5a', 0.3), mix(kind.grass[1], '#9be07a', 0.3)],
+      studio: { ...studio, litter: [SPRING[3], SPRING[4], SPRING[5]] },
+    };
+  }
+  if (season === 'autumn') {
+    const litter = [AUTUMN[1], AUTUMN[2], AUTUMN[3], AUTUMN[4]];
+    if (evergreen) return { ...kind, grass: [mix(kind.grass[0], '#c9822f', 0.35), mix(kind.grass[1], '#e8a64a', 0.35)], studio: { ...studio, litter: litter.slice(0, 2) } };
+    const t = species === 'payiz' ? 0.35 : 0.92;
+    return {
+      ...kind,
+      sprig: undefined,
+      leaves: toward(kind.leaves, AUTUMN, t),
+      ...(kind.hues ? { hues: kind.hues.map((h) => toward(h, AUTUMN, t)) } : {}),
+      bears: kind.bears === 'blossom' || kind.bears === 'catkins' ? 'none' : kind.bears,
+      grass: ['#d77a2e', '#f2a34a'],
+      studio: { ...studio, litter, flowers: false },
+    };
+  }
+  // winter
+  const t = evergreen ? 0.42 : 0.88;
+  return {
+    ...kind,
+    sprig: undefined,
+    leaves: toward(kind.leaves, SNOW, t),
+    ...(kind.hues ? { hues: kind.hues.map((h) => toward(h, SNOW, t)) } : {}),
+    bears: keeps(kind.bears) ? kind.bears : 'none',
+    grass: ['#dbe6f1', '#ffffff'],
+    studio: { litter: [], flowers: false, snow: true },
+  };
 }
 
 // ───────────────────────────────────────────────────────────────── shapes
@@ -543,6 +612,7 @@ function grassOf(kind: Kind, health: TreeHealth): [string, string] {
  * unwatered the grass turns to straw, the earth pales and the flowers go.
  */
 function drawIsland(dr: Drawing, kind: Kind, health: TreeHealth, half: number, depth: number, rand: Rand, tufts: number, flowers: number, top = GROUND): string {
+  if (kind.studio) return drawRound(dr, kind, health, half, tufts, flowers, top);
   const s = STATE[health];
   const [g0, g1] = grassOf(kind, health);
   const soil = soilOf(health);
@@ -587,6 +657,77 @@ function drawIsland(dr: Drawing, kind: Kind, health: TreeHealth, half: number, d
       out += ellipse(x + 0.3, y - 1.8, 0.7, 0.7, c === '#ffffff' ? '#ffcf4a' : '#f08a2a');
     }
   }
+  return out;
+}
+
+/** A pale stone on the floor of a scene, matte as the reference's are: its body, the light on its top, and the shade under it. */
+function paleStone(x: number, y: number, r: number): string {
+  return (
+    ellipse(x + r * 0.3, y + r * 0.42, r * 1.3, r * 0.34, '#1e2a4a', ' opacity="0.12"') +
+    path(`M${n(x - r * 1.2)} ${n(y + r * 0.3)}C${n(x - r * 1.24)} ${n(y - r * 0.5)} ${n(x - r * 0.5)} ${n(y - r * 0.92)} ${n(x + r * 0.2)} ${n(y - r * 0.86)}C${n(x + r * 0.9)} ${n(y - r * 0.8)} ${n(x + r * 1.26)} ${n(y - r * 0.2)} ${n(x + r * 1.2)} ${n(y + r * 0.3)}Z`, '#cdc9d2') +
+    path(`M${n(x - r * 1.06)} ${n(y + r * 0.06)}C${n(x - r * 1.04)} ${n(y - r * 0.5)} ${n(x - r * 0.44)} ${n(y - r * 0.82)} ${n(x + r * 0.16)} ${n(y - r * 0.78)}C${n(x + r * 0.7)} ${n(y - r * 0.72)} ${n(x + r * 0.96)} ${n(y - r * 0.3)} ${n(x + r * 0.9)} ${n(y + r * 0.02)}Z`, '#e8e5ec')
+  );
+}
+
+/**
+ * The tree's ground in a season (`seasonal`), traced from the owner's
+ * reference: a flat round of grass lying on the floor of the scene, its rim a
+ * shade darker, its long shadow stretched away to the left and fading, and
+ * two pale stones beside it. In autumn the round is strewn with what has
+ * fallen; in winter it lies under snow; in spring and summer it has its
+ * flowers.
+ */
+function drawRound(dr: Drawing, kind: Kind, health: TreeHealth, half: number, tufts: number, flowers: number, top: number): string {
+  const studio = kind.studio!;
+  // its own run of numbers, so a season's litter or snow never moves a leaf of the tree above it
+  const rand = seeded(`round:${n(half)}:${tufts}:${flowers}`);
+  const s = STATE[health];
+  const [g0, g1] = grassOf(kind, health);
+  const ry = half * 0.2;
+  // the long shadow, darkest at the tree and faded to nothing before the picture's own edge
+  const far = Math.max(3, MID - half * 3.4);
+  const fade = dr.id('sh');
+  dr.def(linearAt(fade, [[0, '#1e2a4a', 0], [0.45, '#1e2a4a', 0.16], [1, '#1e2a4a', 0.34]], far, 0, MID, 0));
+  const reach = MID - far;
+  let out = `<path d="M${n(MID + half * 0.3)} ${n(top + ry * 0.7)}C${n(MID - reach * 0.3)} ${n(top + ry * 1.5)} ${n(MID - reach * 0.76)} ${n(top + ry * 1.2)} ${n(far)} ${n(top + ry * 0.3)}C${n(MID - reach * 0.76)} ${n(top - ry * 1.6)} ${n(MID - reach * 0.3)} ${n(top - ry * 2.2)} ${n(MID)} ${n(top - ry * 1.4)}Z" fill="url(#${fade})"/>`;
+  out += ellipse(MID + 1, top + ry * 0.9, half * 1.02, ry * 0.6, '#1e2a4a', ' opacity="0.12"');
+  // the round: its rim, then its top, then the lighter grass on it
+  out += ellipse(MID, top + ry * 0.32, half, ry, tint(g0, -0.18));
+  out += ellipse(MID, top, half, ry, g0);
+  out += path(puffPath(MID - half * 0.06, top - ry * 0.12, half * 0.84, ry * 0.66, rand, Math.round(half * 0.3) + 5, 0.4), g1, ' opacity="0.7"');
+  // flecks over it, as the reference's round is made of many small leaves
+  for (let i = 0; i < Math.round(half * 1.4); i++) {
+    const a = rand() * Math.PI * 2;
+    const d = Math.sqrt(rand()) * 0.92;
+    out += ellipse(MID + Math.cos(a) * half * d, top + Math.sin(a) * ry * d, 0.7 + rand() * 0.5, 0.4, i % 2 === 0 ? tint(g0, -0.1) : tint(g1, 0.18), ' opacity="0.85"');
+  }
+  out += ellipse(MID + half * 0.05, top, half * 0.42, ry * 0.42, tint(g0, -0.3), ' opacity="0.28"');
+  if (!studio.snow) {
+    for (let i = 0; i < tufts; i++) {
+      const side = i % 2 === 0 ? -1 : 1;
+      out += tuft(MID + side * half * (0.4 + rand() * 0.46), top + ry * (rand() - 0.3) * 0.8, 2.2 + rand() * 2, s.droop * 5 * side, g0, g1);
+    }
+  }
+  if (studio.flowers && health === 'fresh') {
+    for (let i = 0; i < flowers; i++) {
+      const side = i % 2 === 0 ? 1 : -1;
+      const x = MID + side * half * (0.5 + rand() * 0.3);
+      const y = top + ry * (rand() - 0.2) * 0.6;
+      const c = i % 3 === 0 ? '#ffd45a' : '#ffffff';
+      for (let k = 0; k < 5; k++) out += path(leafAt([x, y - 0.6], k * 72 - 90, 1.7, 0.85), c);
+      out += ellipse(x, y - 0.6, 0.6, 0.6, c === '#ffffff' ? '#ffcf4a' : '#f08a2a');
+    }
+  }
+  // what has come down on it: leaves in autumn, petals in spring
+  studio.litter.forEach((c) => {
+    for (let k = 0; k < 3; k++) {
+      const a = rand() * Math.PI * 2;
+      const d = 0.2 + rand() * 0.7;
+      out += path(leafAt([MID + Math.cos(a) * half * d, top + Math.sin(a) * ry * d], rand() * 360, 2.4 + rand(), 1.1), c);
+    }
+  });
+  // the two pale stones: one at the round's left edge, one out on the floor to its right
+  out += paleStone(MID - half * 1.02, top + ry * 0.5, 3.6 + half * 0.08) + paleStone(MID + half * 1.36, top + ry * 0.1, 2.6 + half * 0.06);
   return out;
 }
 
@@ -1683,6 +1824,13 @@ export interface TreeOptions {
    * drawn on the same canvas, so one over the other is the whole.
    */
   part?: 'whole' | 'ground' | 'plant';
+  /**
+   * The season it is drawn in (`treeSeasonAt` gives today's): its crown and
+   * its ground as the season has them, standing on the floor of its scene
+   * (`treeStudioSvg`). Without one it is drawn as it always was, on its
+   * floating island.
+   */
+  season?: TreeSeason;
   /** how big it is shown, in points or CSS pixels (it is square) */
   size?: number;
   /** what a screen reader is told it is; empty where the words beside it say so */
@@ -1707,8 +1855,8 @@ export function treeSvg(opts: TreeOptions): string {
   const size = checkSize(opts.size, 240);
   const health = opts.health ?? 'fresh';
   const part = opts.part ?? 'whole';
-  const kind = KINDS[opts.species];
-  const prefix = prefixFor(opts.idPrefix, 'tree', opts.species, opts.stage, health, part);
+  const kind = opts.season ? seasonal(KINDS[opts.species], opts.species, opts.season) : KINDS[opts.species];
+  const prefix = prefixFor(opts.idPrefix, 'tree', opts.species, opts.stage, health, part, opts.season);
   // the whole is one drawing; a layer is drawn alongside the other, so that both come out exactly as they are in the whole
   const whole = new Drawing(prefix);
   const drGround = part === 'whole' ? whole : new Drawing(`${prefix}g`);

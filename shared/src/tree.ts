@@ -203,3 +203,21 @@ export interface TreeGlimpse {
 export function treeGlimpse(view: TreeView): TreeGlimpse {
   return { species: view.species, stage: view.stage, health: view.health, age: view.age, harvests: view.harvests };
 }
+
+/**
+ * The seasons a tree goes through, by the calendar of the learner's own
+ * clock, as trees in Kurdistan do: blossom in spring, full green in summer,
+ * turning in autumn, snow in winter (art/trees.ts draws each). A year's
+ * seasons follow the months of the north, where the Kurdish lands are.
+ */
+export const TREE_SEASONS = ['spring', 'summer', 'autumn', 'winter'] as const;
+export type TreeSeason = (typeof TREE_SEASONS)[number];
+
+/** The season on a day: March to May spring, June to August summer, September to November autumn, December to February winter. */
+export function treeSeasonAt(day: Date = new Date()): TreeSeason {
+  const month = day.getMonth() + 1;
+  if (month >= 3 && month <= 5) return 'spring';
+  if (month >= 6 && month <= 8) return 'summer';
+  if (month >= 9 && month <= 11) return 'autumn';
+  return 'winter';
+}

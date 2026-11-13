@@ -10,7 +10,20 @@ export * from './keys.js';
 export { badgeSvg, badgeShineSvg, badgeShines, badgeColour, SMALL_BADGE, type BadgeOptions, type BadgeShineOptions, type BadgeState } from './badges.js';
 export { dayMedalSvg, streakMedalSvg, type DayMedal, type MedalOptions } from './medals.js';
 export { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg, type TreeOptions } from './trees.js';
-export { TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt, type TreeAir, type TreeSceneOptions, type TreeSky } from './tree-scene.js';
+export {
+  TREE_SKIES,
+  TREE_STUDIO,
+  TREE_STUDIO_HORIZON,
+  treeAir,
+  treeCloudSvg,
+  treeSceneSvg,
+  treeSkyAt,
+  treeStudioSvg,
+  type TreeAir,
+  type TreeSceneOptions,
+  type TreeSky,
+  type TreeStudioOptions,
+} from './tree-scene.js';
 export { horizonSky, horizonSvg, type HorizonOptions } from './horizon.js';
 export {
   LETTER_BIRD_FEET,
