@@ -115,13 +115,15 @@ function eye(dr: Drawing, cx: number, cy: number, r: number, look: readonly [num
   const [px, py] = [cx + look[0] * r * 0.4, cy + look[1] * r * 0.4];
   fill(dr, ring(px, py, r * 0.46), INK);
   fill(dr, ring(px + r * 0.14, py - r * 0.18, r * 0.14), WHITE);
-  if (lid) {
-    const y = cy - r + lid.down * 2 * r;
-    const rise = Math.tan((lid.slope * Math.PI) / 180) * r;
-    inside(dr, round, () => fill(dr, `M${n(cx - r - 1)} ${n(cy - r - 1)}H${n(cx + r + 1)}V${n(y + rise)}L${n(cx - r - 1)} ${n(y - rise)}Z`, lid.colour));
-    inside(dr, ring(cx, cy, r + 0.9), () => line(dr, `M${n(cx - r - 2)} ${n(y - rise * 1.2)}L${n(cx + r + 2)} ${n(y + rise * 1.2)}`, INK, 1.7));
-  }
+  if (lid) eyelid(dr, cx, cy, r, lid);
   line(dr, round, INK, 1.5);
+}
+/** A lid over an eye: the wearer's colour down to where the lid has come, and the line of its edge. */
+function eyelid(dr: Drawing, cx: number, cy: number, r: number, lid: Lid): void {
+  const y = cy - r + lid.down * 2 * r;
+  const rise = Math.tan((lid.slope * Math.PI) / 180) * r;
+  inside(dr, ring(cx, cy, r), () => fill(dr, `M${n(cx - r - 1)} ${n(cy - r - 1)}H${n(cx + r + 1)}V${n(y + rise)}L${n(cx - r - 1)} ${n(y - rise)}Z`, lid.colour));
+  inside(dr, ring(cx, cy, r + 0.9), () => line(dr, `M${n(cx - r - 2)} ${n(y - rise * 1.2)}L${n(cx + r + 2)} ${n(y + rise * 1.2)}`, INK, 1.7));
 }
 
 /** The letters with a hat stand a little low on a tile and the ones with a tail a little high, so that each sits in the middle of its tile to the eye. */
@@ -514,20 +516,23 @@ function foxHead(dr: Drawing): void {
   fill(dr, 'M72 22L83.6 5.6L90 31Z', FOX);
   fill(dr, 'M57 27L56 17.4L62.4 23Z', INK);
   fill(dr, 'M78 22L83 13.6L85.6 26Z', INK);
+  // the two ends of the band he has tied across his eyes, flying out behind his head
+  fill(dr, 'M54 36.6C48 33.6 44 34.6 38.6 29.6C40.6 37 46 39.6 53 40Z', INK);
+  fill(dr, 'M53 39C47.6 40.6 44.6 45 39.6 46C44 49.6 50 46.4 54.6 42Z', INK);
   lit(dr, FOX_HEAD, FOX, 2.4, 0.16);
   inside(dr, FOX_HEAD, () => {
-    // the pale of his cheek and muzzle, and the mask across his eyes
+    // the pale of his cheek and muzzle, and the band: narrow, level, and going right round his head
     fill(dr, 'M50 48C59 44 69 47 77 45C84 43.4 88 40 91 37L108 48V64H50Z', FUR);
-    fill(dr, 'M48 33C60 29 76 29 91 34.4L96 44C85 39.6 74 41.4 66 43.6C60 45.2 54 44.8 48 43Z', INK);
+    fill(dr, 'M48 34.8C62 31.4 78 31.6 93 35.8L97 43C84 39.8 72 39.8 62 40.8C57 41.4 52.6 41.8 48 41.8Z', INK);
   });
   fill(dr, oval(100, 49.2, 3.3, 2.9), INK);
   line(dr, 'M86.6 55C90 55.6 93.6 54.6 96 52.8', INK, 1.4);
-  // the eye that keeps watch through the mask, looking back the way he came
-  fill(dr, 'M73.6 38C76.4 33.8 82.8 33.4 86 37.2C83 40.8 77 41 73.6 38Z', WHITE);
-  fill(dr, ring(78, 37.4, 1.9), INK);
-  // the cap pulled down over his brow
-  lit(dr, 'M52 34C53 22 61 15 71 15C81 15 88 21 90.4 33C78 27.4 64 27.6 52 34Z', CAP, 1.8, 0.18);
-  line(dr, 'M52.6 33.6C64 27.6 78 27.4 90 32.8', tint(CAP, 0.36), 3.2);
+  // the eye that keeps watch through the band, looking back the way he came
+  fill(dr, 'M74.4 37.2C77 33.6 82.8 33.4 85.6 36.6C82.8 39.6 77.4 39.8 74.4 37.2Z', WHITE);
+  fill(dr, ring(78.4, 36.6, 1.8), INK);
+  // the cap, on the top of his head and clear of the band
+  lit(dr, 'M55 29C56.6 20 63 14.6 71 14.6C79 14.6 85.6 19.6 87.6 28C77 24 65 24.4 55 29Z', CAP, 1.8, 0.18);
+  line(dr, 'M55.6 28.4C65 24.2 77 24 87 27.4', tint(CAP, 0.36), 3);
 }
 
 function foxTorch(dr: Drawing): void {
@@ -600,12 +605,12 @@ const TWEED = '#3f7d5f';
 function check(dr: Drawing, d: string, xs: readonly number[], ys: readonly number[]): void {
   inside(dr, d, () => {
     for (const x of xs) {
-      line(dr, `M${n(x)} 0V124`, tint(TWEED, -0.3), 2.2);
-      line(dr, `M${n(x + 3.4)} 0V124`, GOLD, 0.8);
+      line(dr, `M${n(x)} -130V130`, tint(TWEED, -0.3), 2);
+      line(dr, `M${n(x + 3)} -130V130`, GOLD, 0.8);
     }
     for (const y of ys) {
-      line(dr, `M0 ${n(y)}H124`, tint(TWEED, -0.3), 2.2);
-      line(dr, `M0 ${n(y + 3.4)}H124`, GOLD, 0.8);
+      line(dr, `M-130 ${n(y)}H130`, tint(TWEED, -0.3), 2);
+      line(dr, `M-130 ${n(y + 3)}H130`, GOLD, 0.8);
     }
   });
 }
@@ -618,58 +623,80 @@ function pawPrint(dr: Drawing, cx: number, cy: number, k: number, hex: string, t
   });
 }
 
-function houndCoat(dr: Drawing): void {
-  // what shows of his neck between his jaw and his collar, in the shade of his head
-  fill(dr, 'M64 58H96L100 84H60Z', tint(HOUND, -0.12));
-  const cape = 'M36 124C38 97 48 79 64 74C76 70 98 70 108 75C118 80 122 98 124 124Z';
+function houndTail(dr: Drawing): void {
+  line(dr, 'M93 85C100 83.6 105.4 78 106 70.6', tint(HOUND, -0.1), 5.6);
+}
+
+/** Everything of him below the neck: his feet, his long coat, and the short cape over its shoulders. */
+function houndBody(dr: Drawing): void {
+  // his feet under the hem of the coat, the far one a tone darker
+  fill(dr, 'M74 104.6C74 99 78.4 96 84.6 96.4C89.4 96.8 92 99.6 92 104.6Z', tint(HOUND, -0.14));
+  lit(dr, 'M54 104.6C54 98.4 59 95.2 66.4 95.8C72 96.2 75 99.4 75 104.6Z', HOUND, 1.6, 0.14);
+  line(dr, 'M59.6 100.4V104M64.6 100V104', tint(HOUND, -0.4), 1.2);
+  // what shows of his neck, in the shade of his head
+  fill(dr, 'M68 46H85V62H68Z', tint(HOUND, -0.12));
+  const coat = 'M63 57C58.6 70 56 84 55.4 96.6H97C96.4 83 94 69 90 57Z';
+  fill(dr, coat, tint(TWEED, -0.12));
+  check(dr, coat, [63, 76, 89], [88]);
+  // the cape, and the shade it throws on the coat below it
+  const cape = 'M62 53C54.6 59 49.6 69 48 79C60 84.6 88 84.6 100.4 77.6C98.6 67.6 95.4 59.4 90.6 53Z';
+  inside(dr, coat, () => fill(dr, cape, tint(TWEED, -0.42), at(0, 2.6)));
   fill(dr, cape, TWEED);
-  check(dr, cape, [50, 66, 82, 98, 114], [90, 106]);
+  check(dr, cape, [56, 69, 82, 95], [66]);
   // the collar, turned down round his neck
-  const collar = 'M60 76C69 85.6 98 85.6 109 75C102 68.6 71 68.6 60 76Z';
-  fill(dr, collar, tint(TWEED, -0.2));
+  fill(dr, 'M65 54.6C71 60 86 60 92.6 53.6C87 50 72 50 65 54.6Z', tint(TWEED, -0.24));
 }
 
+/** His head about the middle of his skull, looking left: the muzzle, the long ear, the eye, and the deerstalker on top. */
 function houndHead(dr: Drawing): void {
-  lit(dr, oval(78, 42, 19.6, 19), HOUND, 2.4, 0.14);
-  // the muzzle out to the left, his nose at the end of it, and his mouth shut on a thought
-  lit(dr, rr(29, 42, 48, 22, 11), MUZZLE, 2.2, 0.12);
-  fill(dr, 'M29.6 49C29.6 44.6 33 42.4 37 42.4C40.4 42.4 42.6 44.6 42 47.4C41.4 50.6 38 53 34.4 53C31.6 53 29.6 51.6 29.6 49Z', INK);
-  line(dr, 'M36 53V57.4C42 62 54 62.4 63 58', INK, 1.6);
+  lit(dr, oval(0, 0, 17, 16.4), HOUND, 2.2, 0.14);
+  // the muzzle, his nose at the end of it, and his mouth shut on a thought
+  lit(dr, rr(-33, -2.4, 35, 17.6, 8.8), MUZZLE, 2, 0.12);
+  fill(dr, 'M-33 3.2C-33 -1 -29.8 -3 -26 -3C-22.6 -3 -20.6 -0.8 -21.2 2.2C-21.8 5.4 -25 7.6 -28.6 7.6C-31.2 7.6 -33 5.8 -33 3.2Z', INK);
+  line(dr, 'M-26.6 7.6V10.6C-21 14.4 -13 14.4 -7 11', INK, 1.5);
   // the long ear, hanging down past his jaw
-  lit(dr, 'M84 30C94 29 101 39 101 53C101 66 98 76 93 80C88 83 83.6 79 82.6 71C81 58 80.6 42 84 30Z', EAR, 2, 0.2);
+  lit(dr, 'M6 -13C15 -14 21 -5 21 7C21 17 18.4 25 14 28.4C9.6 31 6 27.4 5 20.6C3.6 10 3 -3 6 -13Z', EAR, 1.8, 0.2);
   // the eye, on what is in the glass
-  eye(dr, 67, 39.4, 4.5, [-0.55, 0.6], { colour: HOUND, down: 0.28, slope: 10 });
-}
-
-function houndCap(dr: Drawing): void {
+  eye(dr, -9.4, -4.6, 4.3, [-0.5, 0.6], { colour: HOUND, down: 0.24, slope: 8 });
   // the deerstalker: a peak before and behind, the crown, and the flaps tied in a bow on top
-  fill(dr, 'M60 35C54 32 46 33 41 37.6C47 39.6 55 39.4 61.4 37.6Z', tint(TWEED, -0.2));
-  fill(dr, 'M97 35C103 36 109 40 110.4 45.6C105 45 99 42.6 95.6 39Z', tint(TWEED, -0.2));
-  const crown = 'M57 37.4C58 24 66 15.6 78 15.6C90 15.6 98 24 99 37.4C86 32 70 32 57 37.4Z';
+  fill(dr, 'M-16 -7.4C-21 -10.4 -29 -9.2 -33.4 -4.6C-27.4 -2.8 -20.6 -3.2 -14.6 -5.2Z', tint(TWEED, -0.2));
+  fill(dr, 'M16 -8C21.4 -7 26.6 -3.4 27.8 1.6C22.6 1.2 17.4 -1.2 14.6 -4.4Z', tint(TWEED, -0.2));
+  const crown = 'M-18 -5.6C-17 -17.6 -10 -24.6 0 -24.6C10 -24.6 17 -17.6 18 -5.6C7 -10.4 -7 -10.4 -18 -5.6Z';
   fill(dr, crown, TWEED);
-  check(dr, crown, [64, 77, 90], [24]);
-  fill(dr, 'M77.4 15.8C73.6 10.8 69 11.6 69.4 15C69.8 17.6 74 18 77.4 15.8Z', tint(TWEED, -0.2));
-  fill(dr, 'M78.6 15.8C82.4 10.8 87 11.6 86.6 15C86.2 17.6 82 18 78.6 15.8Z', tint(TWEED, -0.2));
-  fill(dr, ring(78, 15.6, 2), tint(TWEED, -0.42));
+  check(dr, crown, [-12, -1, 10], [-18]);
+  fill(dr, 'M-0.6 -24.4C-4 -28.8 -8.2 -28 -7.8 -25C-7.4 -22.8 -3.6 -22.4 -0.6 -24.4Z', tint(TWEED, -0.2));
+  fill(dr, 'M0.6 -24.4C4 -28.8 8.2 -28 7.8 -25C7.4 -22.8 3.6 -22.4 0.6 -24.4Z', tint(TWEED, -0.2));
+  fill(dr, ring(0, -24.6, 1.9), tint(TWEED, -0.42));
+}
+/** Where the middle of his skull is, and how far his head is bent to the glass. */
+const HOUND_HEAD = [66, 40] as const;
+const HOUND_BENT = -13;
+/** He is drawn at one size and shown a little larger, grown from the floor between his feet. */
+const HOUND_GROWN = 1.1;
+const HOUND_STANDS = [64, 106] as const;
+const grown = (dr: Drawing, draw: () => void): void => placed(dr, HOUND_STANDS[0] * (1 - HOUND_GROWN), HOUND_STANDS[1] * (1 - HOUND_GROWN), 0, HOUND_GROWN, draw);
+const grownPoint = (x: number, y: number): readonly [number, number] => [HOUND_STANDS[0] + (x - HOUND_STANDS[0]) * HOUND_GROWN, HOUND_STANDS[1] + (y - HOUND_STANDS[1]) * HOUND_GROWN];
+
+/** The glass he holds out, the print it has found large in it, and the arm that holds it. */
+function houndGlass(dr: Drawing): void {
+  line(dr, 'M36.6 83.4L48.6 79.6', '#b4602c', 5.2);
+  fill(dr, ring(24, 88, 14.6), '#eaf6fe');
+  pawPrint(dr, 24, 89, 1.5, EAR, -16);
+  line(dr, ring(24, 88, 14.6), INK, 4);
+  line(dr, 'M15.6 82.4C16.8 79.6 19 77.6 21.8 76.8', WHITE, 1.8);
+  // the sleeve his arm comes out of the cape in, and the paw on the handle
+  line(dr, 'M62 72.6L53 78', tint(TWEED, -0.24), 9.6);
+  lit(dr, 'M43.6 77.6C45.4 74.4 50 74 53.4 76C56.4 77.8 57 82 54.6 84.8C52 87.6 46.8 87.2 44.4 84.6C42.6 82.6 42.4 79.8 43.6 77.6Z', HOUND, 1.4, 0.16);
+  line(dr, 'M47 76.6L46.2 79.8M50.6 76.2L50 79.4', tint(HOUND, -0.42), 1.2);
 }
 
-/** The glass he holds out, and the print it has found, large in it. */
-function houndGlass(dr: Drawing): void {
-  line(dr, 'M43 101L64 113', '#b4602c', 6);
-  fill(dr, ring(30, 90, 17), '#eaf6fe');
-  pawPrint(dr, 30, 91, 1.7, EAR, -16);
-  line(dr, ring(30, 90, 17), INK, 4.4);
-  line(dr, 'M20.6 83.6C22 80.4 24.6 78.2 27.8 77.2', WHITE, 2);
-  // the sleeve his arm comes out of the cape in, and the paw that holds the glass
-  line(dr, 'M86 125L71 114.6', tint(TWEED, -0.2), 10.4);
-  lit(dr, 'M56.6 108C58.6 104.4 64 103.8 67.8 106C71.2 108 71.8 113.2 69 116.4C66 119.6 60 119.2 57.2 116.2C55.2 114 55.2 110.6 56.6 108Z', HOUND, 1.6, 0.16);
-  line(dr, 'M60.4 106.6L59.4 110.4M64.6 106.2L63.8 110.2', tint(HOUND, -0.42), 1.3);
-}
+/** The head bends to the glass at the find, and comes up again. */
+const bends: Key[] = [[0, {}], [0.5, {}, 'hold'], [0.56, { r: -5 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut'], [1, {}, 'hold']];
 
 /**
- * The detective: a hound in a deerstalker, looking down his nose at his glass.
- * He lifts it, sets it down again — and there is a print, large in it, and
- * his head comes down to look.
+ * The detective: a hound in a deerstalker and a cape, on his feet and bent
+ * over his glass. He lifts it, sets it down again — and there is a print,
+ * large in it: his head comes down to look, and his tail gives him away.
  */
 const detective: Cover = {
   title: GAME_NAMES.detective,
@@ -678,16 +705,23 @@ const detective: Cover = {
     {
       draw: (dr) => {
         ground(dr, SKY);
-        fill(dr, ring(72, 48, 43), tint(SKY, 0.24));
+        fill(dr, ring(64, 54, 45), tint(SKY, 0.24));
+        // the floor he stands on, and his shadow on it
+        fill(dr, 'M0 99H120V120H0Z', tint(SKY, -0.1));
+        fill(dr, oval(74, 105, 31, 3), tint(SKY, -0.24));
       },
     },
-    { draw: houndCoat },
-    { draw: (dr) => placed(dr, 0, 3, 0, 1, () => houndHead(dr)), pivot: [82, 63], keys: [[0, {}], [0.5, {}, 'hold'], [0.56, { r: -3 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
-    { draw: (dr) => placed(dr, 0, 3, 0, 1, () => houndCap(dr)), pivot: [82, 63], keys: [[0, {}], [0.5, {}, 'hold'], [0.56, { r: -3 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
     {
-      draw: houndGlass,
-      pivot: [62, 112],
-      keys: [[0, {}], [0.06, {}, 'hold'], [0.18, { x: 3, y: -8, r: 7 }, 'inOut'], [0.3, {}, 'hold'], [0.42, { x: 0, y: 0, r: 0 }, 'inOut'], [0.5, { s: 1.06 }, 'out'], [0.58, { s: 1 }, 'inOut'], [1, {}, 'hold']],
+      draw: (dr) => grown(dr, () => houndTail(dr)),
+      pivot: grownPoint(93, 85),
+      keys: [[0, {}], [0.56, {}, 'hold'], [0.6, { r: 14 }, 'out'], [0.65, { r: -10 }, 'inOut'], [0.7, { r: 12 }, 'inOut'], [0.75, { r: -8 }, 'inOut'], [0.8, { r: 0 }, 'inOut'], [1, {}, 'hold']],
+    },
+    { draw: (dr) => grown(dr, () => houndBody(dr)) },
+    { draw: (dr) => grown(dr, () => placed(dr, HOUND_HEAD[0], HOUND_HEAD[1], HOUND_BENT, 1, () => houndHead(dr))), pivot: grownPoint(78, 52), keys: bends },
+    {
+      draw: (dr) => grown(dr, () => houndGlass(dr)),
+      pivot: grownPoint(58, 76),
+      keys: [[0, {}], [0.06, {}, 'hold'], [0.18, { x: 2, y: -7, r: 6 }, 'inOut'], [0.3, {}, 'hold'], [0.42, { x: 0, y: 0, r: 0 }, 'inOut'], [0.5, { s: 1.05 }, 'out'], [0.58, { s: 1 }, 'inOut'], [1, {}, 'hold']],
     },
   ],
 };
@@ -765,44 +799,53 @@ const lastLetter: Cover = {
 // ───────────────────────────────────────────────────────────── the impostor
 
 const MUSTARD = '#f4b73b';
-/** His hat, and his face in the shadow of it. */
-const DARK = '#2a1f47';
-const COAT = '#4c3a96';
-const BAND = '#b79cf5';
+/** His hat, and his face a tone lighter in the shadow of it. */
+const HAT = '#241a3d';
+const FACE = '#3d2e66';
+const TRENCH = '#fff1d8';
+const BAND = '#a98bf2';
+/** His eyes: where each is, and the lid that makes it sly. The near one is the narrower. */
+const EYES: ReadonlyArray<readonly [number, number, number, Lid]> = [
+  [47.6, 60, 7.4, { colour: FACE, down: 0.44, slope: 9 }],
+  [72.4, 60, 7.4, { colour: FACE, down: 0.32, slope: -9 }],
+];
 
 function stranger(dr: Drawing): void {
-  // the coat's shoulders, and the head between them, in the shadow of his hat
-  fill(dr, 'M2 124L9 106C11 97 20 91 32 89L50 85H70L88 89C100 91 109 97 111 106L118 124Z', COAT);
-  fill(dr, oval(60, 62, 20.6, 21), DARK);
-  // the collar turned up: two wings that stand out past his cheeks and meet under his eyes
-  fill(dr, 'M30 54L60 76L90 54C88 70 83 82 76.6 90.6H43.4C37 82 32 70 30 54Z', tint(COAT, 0.14));
-  line(dr, 'M30.6 54.6L60 76L89.4 54.6', BAND, 1.8);
-  // where the two wings meet, the lapels below them, and the coat done up
-  line(dr, 'M60 77V124', tint(COAT, -0.3), 1.8);
-  line(dr, 'M43.6 91L60 105L76.4 91', tint(COAT, -0.3), 1.6);
-  for (const x of [52.6, 67.4]) fill(dr, ring(x, 111.6, 2.2), tint(COAT, -0.34));
-}
-/** The whites of his eyes under the brim, which cuts them off level. */
-function strangerWhites(dr: Drawing): void {
-  for (const x of [50.4, 69.6]) fill(dr, `M${n(x - 6.2)} 58H${n(x + 6.2)}C${n(x + 6.2)} 63.4 ${n(x + 3.4)} 66 ${n(x)} 66C${n(x - 3.4)} 66 ${n(x - 6.2)} 63.4 ${n(x - 6.2)} 58Z`, WHITE);
+  // the coat's shoulders, and his scarf in the opening of it
+  lit(dr, 'M3 124L12 105C15 96 25 90.6 38 88.6L52 85H68L82 88.6C95 90.6 105 96 108 105L117 124Z', TRENCH, 2.8, 0.1);
+  fill(dr, 'M33 76H87L60 104Z', BAND);
+  // his head, round, in the shadow of his hat
+  fill(dr, ring(60, 60, 26.4), FACE);
+  // the collar turned up: a wing either side of his chin, coming down to where the coat closes
+  fill(dr, 'M27.6 70L60 101L27 95Z', TRENCH);
+  fill(dr, 'M92.4 70L60 101L93 95Z', TRENCH);
+  // the coat done up
+  line(dr, 'M60 101V124', tint(TRENCH, -0.3), 1.8);
+  for (const [x, y, r] of EYES) fill(dr, ring(x, y, r), WHITE);
 }
 function strangerEyes(dr: Drawing): void {
-  for (const x of [48, 67.2]) fill(dr, ring(x, 61, 2.5), INK);
+  for (const [x, y, r] of EYES) {
+    fill(dr, ring(x - 2.6, y + 0.8, r * 0.46), INK);
+    fill(dr, ring(x - 1.8, y - 0.2, r * 0.13), WHITE);
+  }
+}
+function strangerLids(dr: Drawing): void {
+  for (const [x, y, r, lid] of EYES) eyelid(dr, x, y, r, lid);
 }
 function strangerHat(dr: Drawing): void {
-  turned(dr, -5, 60, 48, () => {
-    fill(dr, 'M16 49C30 43.6 90 43.6 104 49C104 52.6 90 56 60 56C30 56 16 52.6 16 49Z', DARK);
-    const crown = 'M38 48C37 32 41 16 50 14C54.6 13 57 17.6 60 17.6C63 17.6 65.4 13 70 14C79 16 83 32 82 48C70 51 50 51 38 48Z';
-    fill(dr, crown, DARK);
-    inside(dr, crown, () => fill(dr, 'M30 37H90V46H30Z', BAND));
-    line(dr, 'M18.6 50.4C34 55 86 55 101.4 50.4', tint(DARK, 0.22), 1.4);
+  turned(dr, -5, 60, 42, () => {
+    fill(dr, 'M15 43C29 37 91 37 105 43C105 47 91 50.6 60 50.6C29 50.6 15 47 15 43Z', HAT);
+    const crown = 'M36.6 42C35.6 29 40 15.6 49 13.6C54 12.6 57 17 60 17C63 17 66 12.6 71 13.6C80 15.6 84.4 29 83.4 42C70 45.6 50 45.6 36.6 42Z';
+    fill(dr, crown, HAT);
+    inside(dr, crown, () => fill(dr, 'M30 31.6H90V40.6H30Z', BAND));
+    line(dr, 'M17.6 44.6C33 49.6 87 49.6 102.4 44.6', tint(HAT, 0.24), 1.4);
   });
 }
 
 /**
- * The impostor: a stranger with his hat down and his collar up, and nothing
- * of his face to be seen but his eyes — which go from one side to the other,
- * because he is the one who does not have the word.
+ * The impostor: a round-headed stranger with his hat down and his collar up.
+ * His eyes go from one side to the other under their lids, because he is the
+ * one who does not have the word.
  */
 const impostor: Cover = {
   title: GAME_NAMES.impostor,
@@ -811,16 +854,16 @@ const impostor: Cover = {
     {
       draw: (dr) => {
         ground(dr, MUSTARD);
-        fill(dr, ring(60, 58, 47), tint(MUSTARD, 0.22));
+        fill(dr, ring(60, 60, 47), tint(MUSTARD, -0.09));
         stranger(dr);
-        strangerWhites(dr);
       },
     },
     {
       draw: strangerEyes,
-      keys: [[0, {}], [0.1, {}, 'hold'], [0.13, { x: 4.6 }, 'out'], [0.34, {}, 'hold'], [0.37, { x: 0 }, 'out'], [0.52, {}, 'hold'], [0.55, { x: 4.6 }, 'out'], [0.66, {}, 'hold'], [0.69, { x: 0 }, 'out'], [1, {}, 'hold']],
+      keys: [[0, {}], [0.1, {}, 'hold'], [0.13, { x: 5 }, 'out'], [0.34, {}, 'hold'], [0.37, { x: 0 }, 'out'], [0.52, {}, 'hold'], [0.55, { x: 5 }, 'out'], [0.66, {}, 'hold'], [0.69, { x: 0 }, 'out'], [1, {}, 'hold']],
     },
-    { draw: strangerHat, pivot: [60, 48], keys: [[0, {}], [0.7, {}, 'hold'], [0.76, { y: 2.6, r: -3 }, 'out'], [0.86, {}, 'hold'], [0.93, { y: 0, r: 0 }, 'inOut'], [1, {}, 'hold']] },
+    { draw: strangerLids },
+    { draw: strangerHat, pivot: [60, 44], keys: [[0, {}], [0.7, {}, 'hold'], [0.76, { y: 2.4, r: -3 }, 'out'], [0.86, {}, 'hold'], [0.93, { y: 0, r: 0 }, 'inOut'], [1, {}, 'hold']] },
   ],
 };
 
