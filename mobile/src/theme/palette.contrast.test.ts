@@ -49,6 +49,12 @@ for (const p of [LIGHT, DARK]) {
       }
     });
 
+    // a conversation is body text, so both voices are held to 4.5:1 on their own bubble
+    it('the words in a chat bubble meet AA (4.5:1), yours and theirs', () => {
+      expect(contrastRatio(p.bubbleMineInk, p.bubbleMine)).toBeGreaterThanOrEqual(AA_NORMAL);
+      expect(contrastRatio(p.bubbleTheirsInk, p.bubbleTheirs)).toBeGreaterThanOrEqual(AA_NORMAL);
+    });
+
     it('primary text on the background meets AA (4.5:1)', () => {
       expect(contrastRatio(p.textPrimary, p.background)).toBeGreaterThanOrEqual(AA_NORMAL);
     });

@@ -27,6 +27,19 @@ export function CalmCard({
   group: { id: string; name: string; photoUrl: string | null };
   children: ReactNode;
 }): React.JSX.Element {
+  return (
+    <CalmFrame name={group.name} picture={(size) => <GroupAvatar name={group.name} id={group.id} size={size} photoUrl={group.photoUrl} />}>
+      {children}
+    </CalmFrame>
+  );
+}
+
+/**
+ * The card itself, around any picture: a group's, or the face of the one
+ * friend a new conversation is with (chat/DmWelcome.tsx). `picture` is
+ * handed the size the card has room for.
+ */
+export function CalmFrame({ name, picture, children }: { name: string; picture: (size: number) => ReactNode; children: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
   // a short phone (an SE) keeps the whole card on screen: a smaller picture, less air
   const compact = useWindowDimensions().height < 700;
@@ -34,14 +47,20 @@ export function CalmCard({
     <View style={[styles.card, compact && styles.compact, { backgroundColor: colors.surface }]}>
       {/* the name under it says whose picture it is */}
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <GroupAvatar name={group.name} id={group.id} size={compact ? AVATAR_COMPACT : AVATAR} photoUrl={group.photoUrl} />
+        {picture(compact ? AVATAR_COMPACT : AVATAR)}
       </View>
       <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityRole="header">
-        {group.name}
+        {name}
       </Text>
       {children}
     </View>
   );
+}
+
+/** The line under the name on a calm card: where the chat stands. */
+export function CalmLine({ children }: { children: string }): React.JSX.Element {
+  const { colors } = useTheme();
+  return <Text style={[styles.line, { color: colors.textSecondary }]}>{children}</Text>;
 }
 
 /**
@@ -69,9 +88,7 @@ export function WelcomeCard({
   onGreet: (greeting: string) => void;
   onAddFriends?: () => void;
 }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const script = useCourseDialect();
   const line =
     view.kind === 'none'
       ? t('groups.welcome.start', { group: group.name })
@@ -81,29 +98,42 @@ export function WelcomeCard({
   const greet = canGreet && view.kind !== 'mine';
   return (
     <CalmCard group={group}>
-      {line ? <Text style={[styles.line, { color: colors.textSecondary }]}>{line}</Text> : null}
-      {greet ? (
-        <View style={styles.greet}>
-          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.welcome.sayHello')}</Text>
-          <View style={styles.chips}>
-            {GREETINGS[script].map((greeting) => (
-              <Pressable
-                key={greeting}
-                onPress={() => onGreet(greeting)}
-                accessibilityRole="button"
-                accessibilityLabel={greeting}
-                accessibilityLanguage={scriptLanguage(script)}
-                accessibilityHint={t('groups.welcome.greetHint')}
-                style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack }, pressed && styles.pressed]}
-              >
-                <Text style={[styles.chipText, scriptText(script), { color: colors.textPrimary }]}>{greeting}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      ) : null}
+      {line ? <CalmLine>{line}</CalmLine> : null}
+      {greet ? <Greetings hint={t('groups.welcome.greetHint')} onGreet={onGreet} /> : null}
       {onAddFriends ? <ClayButton label={t('groups.addFriends.title')} icon="user-plus" variant="outline" onPress={onAddFriends} style={styles.add} /> : null}
     </CalmCard>
+  );
+}
+
+/**
+ * Three ways to say hello, in the learner's own Kurdish, each sent with one
+ * tap: the first word in a new chat is already practice. The same under a
+ * group's welcome and under a first conversation with one friend
+ * (chat/DmWelcome.tsx); `hint` tells a screen reader where the tap sends it.
+ */
+export function Greetings({ hint, onGreet }: { hint: string; onGreet: (greeting: string) => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const script = useCourseDialect();
+  return (
+    <View style={styles.greet}>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.welcome.sayHello')}</Text>
+      <View style={styles.chips}>
+        {GREETINGS[script].map((greeting) => (
+          <Pressable
+            key={greeting}
+            onPress={() => onGreet(greeting)}
+            accessibilityRole="button"
+            accessibilityLabel={greeting}
+            accessibilityLanguage={scriptLanguage(script)}
+            accessibilityHint={hint}
+            style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack }, pressed && styles.pressed]}
+          >
+            <Text style={[styles.chipText, scriptText(script), { color: colors.textPrimary }]}>{greeting}</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
   );
 }
 

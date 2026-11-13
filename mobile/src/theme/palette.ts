@@ -148,6 +148,22 @@ export interface Palette {
   surfaceRaised: string;
 
   /**
+   * A conversation's two voices, the same as the website's `--bubble-*`.
+   *
+   * Your own words are in the sun's gold, written in the deep brown that is
+   * read on it; the other side's are a quiet neutral in the page's own ink.
+   * The app's ink used to fill your bubbles, which on a near-white page is a
+   * column of black boxes, and in the evening a column of white ones.
+   *
+   * Solid, all four: a bubble's tail is a second shape drawn in the same
+   * colour beside it, and two translucent shapes show where they overlap.
+   */
+  bubbleMine: string;
+  bubbleMineInk: string;
+  bubbleTheirs: string;
+  bubbleTheirsInk: string;
+
+  /**
    * The bar's own fill: solid.
    *
    * There is no blur behind the bar on any platform, so any translucency
@@ -220,6 +236,11 @@ export const LIGHT: Palette = {
 
   surface: '#FFFFFF',
   surfaceRaised: '#FFFFFF',
+  // 9.6:1 for the brown on the gold; the neutral is a step under the page, and 15:1 under its ink
+  bubbleMine: '#F5BE3D',
+  bubbleMineInk: '#2A1D05',
+  bubbleTheirs: '#E8E8E5',
+  bubbleTheirsInk: '#111111',
   barFill: '#FFFFFF',
   goldText: '#8A6400',
 };
@@ -269,6 +290,11 @@ export const DARK: Palette = {
 
   surface: '#14171C',
   surfaceRaised: '#1B1F26',
+  // 9:1 for the brown on the evening's gold; the neutral is a step over the raised surface, 14:1 under white
+  bubbleMine: '#F2B632',
+  bubbleMineInk: '#2A1D05',
+  bubbleTheirs: '#262B34',
+  bubbleTheirsInk: '#FFFFFF',
   barFill: '#1B1F26',
   goldText: '#F0C24A',
 };
