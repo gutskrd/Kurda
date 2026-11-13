@@ -3,8 +3,9 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { LinkButton } from '../components/Button';
-import { EmptyState, ErrorState, Loading } from '../components/states';
+import { EmptyState, ErrorState } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
+import { LessonPlaceholder } from '../learn/LessonPlaceholder';
 import { PRACTICE_PATHS, SessionPlayer } from '../learn/SessionPlayer';
 import type { EmptyPractice, PracticeSessionView } from '../learn/types';
 
@@ -119,7 +120,8 @@ function ReviewPage({ sessionId }: { sessionId: string | undefined }): React.JSX
       </div>
     );
   }
-  if (!view) return <Loading label={t('review.loading')} />;
+  // a review is played in the lesson's frame, so that frame is what waits for it
+  if (!view) return <LessonPlaceholder label={t('review.loading')} />;
   return (
     <SessionPlayer
       key={view.sessionId}

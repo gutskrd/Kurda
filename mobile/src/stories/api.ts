@@ -19,6 +19,7 @@ import {
 } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
+import { joined } from '../play/joining';
 
 /**
  * Stories over the API (contract §A3/§A4, and the library of §C). The shapes
@@ -120,7 +121,8 @@ export const joinGame = (
  * back when the server stopped waiting because it was shutting down.
  */
 export const getGame = (client: ApiClient, id: string, since?: number): Promise<ApiResult<StoryGameView | Record<string, never>>> =>
-  client.get(`/story-games/${id}${since !== undefined ? `?v=${since}` : ''}`);
+  // an invite to it accepted a moment ago is let land first: until it has, this is nobody's game (play/joining.ts)
+  joined(id).then(() => client.get(`/story-games/${id}${since !== undefined ? `?v=${since}` : ''}`));
 
 export const getGameStory = (client: ApiClient, id: string): Promise<ApiResult<StoryDetail>> =>
   client.get(`/story-games/${id}/story`);

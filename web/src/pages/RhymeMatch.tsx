@@ -5,6 +5,7 @@ import { describeError } from '../lib/api';
 import type { RhymeResult } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
+import { TrophyIcon } from '../components/icons';
 import { GameHead, stageTone } from '../games/GameHead';
 import { useRail } from '../social/RailProvider';
 import { PlayerChip } from '../ui/PlayerChip';
@@ -292,7 +293,10 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     const others = results?.ranking.filter((r) => !r.isMe) ?? [];
     return (
       <div className="match-results">
-        <h2 className="match-verdict">{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</h2>
+        <h2 className="match-verdict">
+          {mine?.rank === 1 && <TrophyIcon size={26} className="verdict-icon" />}
+          {mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}
+        </h2>
         {match.rated && <RatedBadge rated={shownRated(match.rated)} size="sm" className="match-rated" />}
         {/* what the game did to your rank, then the badges it earned */}
         {match.me != null && <RankResult game="rhyme-match" gameRef={id} />}

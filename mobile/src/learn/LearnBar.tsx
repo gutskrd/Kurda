@@ -18,6 +18,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
+import { pressedDim } from '../theme/motion';
 
 /** The ring in the bar: an icon's size. */
 const RING = 24;
@@ -109,7 +110,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
           onPress={() => show('streak')}
           accessibilityRole="button"
           accessibilityLabel={t('learn.bar.streak', { days: streakWords })}
-          style={({ pressed }) => [styles.stat, { flexDirection: dir.row, opacity: pressed ? 0.6 : 1 }]}
+          style={({ pressed }) => [styles.stat, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
           testID="learn-bar-streak"
         >
           <Fire size={24} level={fireLevel(days)} />
@@ -121,7 +122,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
           onPress={() => show('goal')}
           accessibilityRole="button"
           accessibilityLabel={goalWords}
-          style={({ pressed }) => [styles.stat, { opacity: pressed ? 0.6 : 1 }]}
+          style={({ pressed }) => [styles.stat, { opacity: pressed ? pressedDim : 1 }]}
           testID="learn-bar-goal"
         >
           <View importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
@@ -134,7 +135,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
           onPress={() => navigation.navigate('Shop')}
           accessibilityRole="button"
           accessibilityLabel={t('learn.bar.zer', { count: formatNumber(zer, locale) })}
-          style={({ pressed }) => [styles.stat, { flexDirection: dir.row, opacity: pressed ? 0.6 : 1 }]}
+          style={({ pressed }) => [styles.stat, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
           testID="learn-bar-zer"
         >
           <Icon name="coin" size={22} color={colors.gold} />

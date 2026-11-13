@@ -44,7 +44,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
-import { CaretDownIcon, ChatsIcon, ImpostorIcon, PlusIcon, RedoIcon, SlidersIcon, TimerIcon } from '../components/icons';
+import { CaretDownIcon, ChatsIcon, CloseIcon, ImpostorIcon, PlusIcon, RedoIcon, SlidersIcon, TimerIcon } from '../components/icons';
 import { Loading } from '../components/states';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -291,7 +291,7 @@ function Setup({
                 />
                 {canRemove && (
                   <button type="button" className="couch-name-remove" aria-label={t('games.couch.removePlayer', { name: named[i]! })} onClick={() => setNames(names.filter((_, j) => j !== i))}>
-                    <span aria-hidden="true">×</span>
+                    <CloseIcon size={18} />
                   </button>
                 )}
               </li>

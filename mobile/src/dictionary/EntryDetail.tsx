@@ -16,6 +16,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { SenseSection } from './SenseSection';
 import { SourceLine } from './SourceLine';
 import type { Entry } from './types';
+import { useHardwareBack } from '../navigation/hardwareBack';
 import { useI18n } from '../i18n/I18nContext';
 import { describeError, isMaintenance } from '../api/errors';
 
@@ -28,11 +29,22 @@ function voiceOf(recording: DictionaryAudio): RecordingVoice | null {
 /** Senses beyond this start collapsed so long entries stay scannable (KUR-045). */
 const COLLAPSE_AFTER = 8;
 
+/**
+ * One word, opened from the results of a search.
+ *
+ * It takes the place of the list that led to it rather than being pushed over
+ * it (search/SearchScreen says why), so the navigator knows nothing of it:
+ * left to itself, Android's back — the button, or the swipe in from the edge —
+ * went past the word *and* the results, out of the dictionary or the Search
+ * tab altogether. Back is routed to the same way out the chevron takes, so it
+ * returns to the results being read.
+ */
 export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
   const tabBarInset = useTabBarInset();
+  useHardwareBack(onBack);
   const [entry, setEntry] = useState<Entry | null>(null);
   const [saved, setSaved] = useState(false);
   // with a character to say any of them, each pronunciation gets its own row; else the one button, as before

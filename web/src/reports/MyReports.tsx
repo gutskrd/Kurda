@@ -36,7 +36,8 @@ const STATUS: Record<ReportStatus, MessageKey> = {
  */
 export function MyReports(): React.JSX.Element {
   const t = useT();
-  const { data, loading, error, reload } = useApiGet<MyReportsPage>('/me/reports');
+  // what became of a report is asked every time: an answer shown a moment old could be the wrong one
+  const { data, loading, error, reload } = useApiGet<MyReportsPage>('/me/reports', { fresh: true });
 
   return (
     <div className="container container-narrow">

@@ -3,7 +3,7 @@ import { Modal, Pressable, StyleSheet, Text, View, useWindowDimensions, type Sty
 import Svg, { Line } from 'react-native-svg';
 import { scriptDialect, type PromptToken } from '@kurda/shared';
 import { useI18n } from '../../i18n/I18nContext';
-import { MenuIn } from '../../theme/MotionParts';
+import { MenuIn, heldDim } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { TILE_EDGE, tileTone } from '../../theme/tileTones';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
@@ -78,6 +78,7 @@ export function PromptWords({ prompt, tokens, style }: { prompt: string; tokens?
               accessibilityLabel={token.text}
               accessibilityHint={token.meanings.join(', ')}
               hitSlop={{ top: 8, bottom: 8 }}
+              style={({ pressed }) => pressed && heldDim}
             >
               <Text style={[style, direction]}>{token.text}</Text>
               {/* laid over the word's width rather than given one, so the word alone decides how wide it is */}

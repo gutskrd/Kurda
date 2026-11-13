@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { heldRow } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
@@ -54,7 +55,8 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
 
 const styles = StyleSheet.create({
   sense: { paddingVertical: spacing.sm, gap: 4 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  // opens the examples: a fingertip tall
+  header: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   pos: {
     fontSize: typography.sizes.xs,
     fontStyle: 'italic',

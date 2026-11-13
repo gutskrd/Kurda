@@ -7,6 +7,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
+import { pressedDim } from '../theme/motion';
 
 /** How far a 26pt glyph sits inside its 44pt target: the header reaches out by this much so the glyph meets the gutter. */
 const EDGE_SLACK = (MIN_TOUCH_TARGET - 26) / 2;
@@ -192,7 +193,7 @@ const styles = StyleSheet.create({
   sideFill: { flex: 1 },
   trailing: { alignItems: 'center' },
   leading: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
-  pressed: { opacity: 0.5 },
+  pressed: { opacity: pressedDim },
   title: { fontSize: typography.ios.row, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
   // the face and the name together, centred as the title alone is, a fingertip tall
   titleRow: { flexShrink: 1, alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },

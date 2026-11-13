@@ -145,9 +145,11 @@ export function Shop(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const locale = useLocale();
-  const shop = useApiGet<{ items: ShopItem[] }>('/shop');
-  const inventory = useApiGet<InventoryWithNotice>('/me/inventory');
-  const wallet = useApiGet<{ balances: { zer: number; gems?: number } }>('/me/wallet');
+  // what is on sale, what is owned and what there is to spend are asked every time: a shelf drawn from
+  // memory would offer again what was bought a minute ago, against a balance that has since been spent
+  const shop = useApiGet<{ items: ShopItem[] }>('/shop', { fresh: true });
+  const inventory = useApiGet<InventoryWithNotice>('/me/inventory', { fresh: true });
+  const wallet = useApiGet<{ balances: { zer: number; gems?: number } }>('/me/wallet', { fresh: true });
   const [view, setView] = useShopView();
   const ids = useIdPrefix('shop');
 

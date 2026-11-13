@@ -56,12 +56,17 @@ const CATALOGUE: ShopItem[] = [
 ];
 
 function open(items: ShopItem[] = CATALOGUE, balances = { zer: 550, gems: 12 }) {
+  // the purse after something is bought: what the purchase says is left, and what the wallet then says too
+  let spent = false;
   const client = fakeClient({
     'GET /shop': ok({ items }),
-    'GET /me/wallet': ok({ balances }),
+    'GET /me/wallet': () => ok({ balances: spent ? { ...balances, zer: 150 } : balances }),
     'GET /me/inventory': ok({ items: [], refreshedItems: [] }),
     'GET /me/gifts': ok({ gifts: [], unseen: 0 }),
-    'POST /shop/purchase': ok({ purchased: true, balance: 150 }),
+    'POST /shop/purchase': () => {
+      spent = true;
+      return ok({ purchased: true, balance: 150 });
+    },
   });
   testAuth.client = client;
   renderWithProviders(<ShopScreen onExit={() => undefined} onEarnMore={() => undefined} />);
@@ -215,6 +220,28 @@ describe('the Shop, by kind', () => {
     // bought: felt as it lands, as a purchase that failed would be
     await waitFor(() => expect(felt).toEqual(['tap']));
     stop();
+    // said in the sheet it was bought from, with what is left in the purse — and no system box to dismiss
+    expect(await screen.findByTestId('shop-bought')).toBeTruthy();
+    expect(screen.getByText('Gola Şîn is yours!')).toBeTruthy();
+    expect(Alert.alert).not.toHaveBeenCalled();
+    // the server's new balance, in the purse at the top and in the sheet
+    expect(screen.getAllByText('150').length).toBeGreaterThanOrEqual(2);
+    expect(screen.queryByRole('button', { name: 'Buy' })).toBeNull();
+    // one button, which closes the sheet
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    await waitFor(() => expect(screen.queryByTestId('shop-bought')).toBeNull());
+  });
+
+  it('says why in a clear message when a purchase fails, and leaves the item to be tried again', async () => {
+    const client = open();
+    (client.post as unknown as { mockImplementation: (f: unknown) => void }).mockImplementation(async (path: string) =>
+      path === '/shop/purchase' ? { ok: false, error: { kind: 'client', message: 'Not enough Zêr.', status: 402, code: 'INSUFFICIENT_FUNDS' } } : { ok: true, data: {} },
+    );
+    fireEvent.click(await screen.findByRole('button', { name: /^Gola Şîn,/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
+    await waitFor(() => expect(Alert.alert).toHaveBeenCalledWith('Purchase failed', expect.any(String)));
+    expect(screen.queryByTestId('shop-bought')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Buy' })).toBeTruthy();
   });
 
   it('still asks first before a dear purchase', async () => {

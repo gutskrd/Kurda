@@ -1,21 +1,22 @@
-import { useState, type ReactNode, type Ref } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
+import { Animated, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { HevaloWindow } from '../../characters/HevaloWindow';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { SpeechBubble } from '../../auth/guide/HevaloGuide';
 import { useScreenFocus } from '../../auth/guide/focus';
 import { useSpokenLine } from '../../auth/guide/speech';
-import { useListEntrance } from '../../theme/animate';
+import { useListEntrance, useShake } from '../../theme/animate';
 import { GlassCard, GradientBackground } from '../../theme/glass';
 import { BreathingIcon, Icon, type IconName } from '../../theme/Icon';
-import { Rise } from '../../theme/MotionParts';
+import { Rise, heldDim } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { display } from '../../theme/fonts';
 import { useI18n } from '../../i18n/I18nContext';
 import { useDirection } from '../../reports/direction';
+import { pressedDim } from '../../theme/motion';
 
 /** How tall the window Hevalo looks in at is drawn over the sign-in choice; its width follows. */
 const WINDOW_HEIGHT = 150;
@@ -157,6 +158,11 @@ export function AuthScreenShell({
  * A form of several fields says on the keyboard where Return goes: Next to the
  * field below, keeping the keyboard up, and Done on the last, which sends it.
  *
+ * Refused, it shakes once as its line appears under it, the way the one field
+ * of a sign-in step does: a red sentence alone is easy to miss on a form whose
+ * button was just pressed, and a wrong password ought to feel like one. Still
+ * under Reduce Motion, where the red edge and the line say it.
+ *
  * In Soranî and Arabic the label, the typing and the eye start on the right.
  */
 export function Field(props: {
@@ -181,11 +187,19 @@ export function Field(props: {
   const mirrored = dir.row === 'row-reverse';
   const [reveal, setReveal] = useState(false);
   const hidden = props.secure && !reveal;
+  // once, as a refusal appears (or is replaced by another): not while its line simply stays
+  const shake = useShake();
+  const refusal = props.error ?? null;
+  const shown = useRef<string | null>(refusal);
+  useEffect(() => {
+    if (refusal && refusal !== shown.current) shake.run();
+    shown.current = refusal;
+  }, [refusal, shake]);
 
   return (
     <View style={styles.field}>
       <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{props.label}</Text>
-      <View>
+      <Animated.View style={{ transform: [{ translateX: shake.translateX }] }}>
         <TextInput
           style={[
             styles.input,
@@ -218,12 +232,12 @@ export function Field(props: {
             accessibilityLabel={reveal ? t('auth.hidePassword') : t('auth.showPassword')}
             accessibilityState={{ selected: reveal }}
             hitSlop={8}
-            style={[styles.affix, mirrored ? styles.affixStart : styles.affixEnd]}
+            style={({ pressed }) => [styles.affix, mirrored ? styles.affixStart : styles.affixEnd, pressed && heldDim]}
           >
             <Icon name={reveal ? 'eye-off' : 'eye'} size={20} color={colors.textSecondary} />
           </Pressable>
         ) : null}
-      </View>
+      </Animated.View>
       {props.error ? <Text style={[styles.error, dir.text, { color: colors.danger }]}>{props.error}</Text> : null}
     </View>
   );
@@ -242,7 +256,7 @@ const TEXT_CONTENT_TYPE = {
 export function LinkText(props: { label: string; onPress: () => void; destructive?: boolean }) {
   const { colors } = useTheme();
   return (
-    <Pressable onPress={props.onPress} accessibilityRole="button" style={styles.link}>
+    <Pressable onPress={props.onPress} accessibilityRole="button" style={({ pressed }) => [styles.link, pressed && heldDim]}>
       <Text style={[styles.linkText, { color: props.destructive ? colors.danger : colors.primary }]}>{props.label}</Text>
     </Pressable>
   );
@@ -261,7 +275,7 @@ const styles = StyleSheet.create({
   backStart: { left: spacing.lg },
   backEnd: { right: spacing.lg },
   backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   brand: { ...display(typography.sizes.xxl), textAlign: 'center' },
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
   hero: { alignSelf: 'center', alignItems: 'center', marginBottom: spacing.md },

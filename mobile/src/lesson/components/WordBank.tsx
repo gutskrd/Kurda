@@ -13,6 +13,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { tileTone } from '../../theme/tileTones';
 import { radii, spacing } from '../../theme/tokens';
 import type { AnswerMode } from '../answerModePref';
+import { pressedDim } from '../../theme/motion';
 
 /** A tile's height before one has been measured: a fingertip and its lip. */
 const TILE_HEIGHT = MIN_TOUCH_TARGET + LIP;
@@ -253,5 +254,5 @@ const styles = StyleSheet.create({
   rtl: { writingDirection: 'rtl' },
   flying: { position: 'absolute', left: 0, top: 0, zIndex: 2 },
   switch: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
 });

@@ -11,6 +11,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sendErrorOf, standingExplains } from './sendErrors';
 import { useDirection } from './direction';
+import { heldDim } from '../theme/MotionParts';
 
 /** The icon's width and the gap after it: the link lines up with the words. */
 const LINK_INSET = 26;
@@ -64,7 +65,7 @@ export function SendErrorNotice({
             hitSlop={12}
             accessibilityRole="button"
             accessibilityLabel={t('social.close')}
-            style={styles.dismiss}
+            style={({ pressed }) => [styles.dismiss, pressed && heldDim]}
           >
             <Icon name="close" size={16} color={colors.textSecondary} />
           </Pressable>
@@ -78,7 +79,7 @@ export function SendErrorNotice({
           }}
           accessibilityRole="link"
           // under the words, past the icon, on the side they start from
-          style={[styles.link, dir.rtl ? { alignSelf: 'flex-end', paddingRight: LINK_INSET } : { paddingLeft: LINK_INSET }]}
+          style={({ pressed }) => [styles.link, dir.rtl ? { alignSelf: 'flex-end', paddingRight: LINK_INSET } : { paddingLeft: LINK_INSET }, pressed && heldDim]}
         >
           <Text style={[styles.linkText, { color: colors.primary }]}>{t('restriction.seeStanding')}</Text>
         </Pressable>

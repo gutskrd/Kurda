@@ -1101,6 +1101,12 @@
 .learn-strip-ring.is-met .learn-strip-ring-fill {
   stroke: var(--gold);
 }
+/* the mark of done beside what was earned, once today's goal is passed */
+.learn-strip-done {
+  flex: none;
+  margin-inline-start: -2px;
+  color: var(--success);
+}
 /* review waiting: the one item here that opens something */
 .learn-strip-chip {
   margin-inline-start: auto;
@@ -1660,10 +1666,71 @@
     min-width: 44px;
     min-height: 44px;
   }
+  /* the ⋯ beside a person, undo and redo, the framer's zoom: small squares with room round them, so they grow */
+  .user-actions-btn,
+  .editor-history-btn,
+  .framer-zoom-btn {
+    width: 44px;
+    height: 44px;
+  }
+  .check,
+  .mkp-friend,
+  .learn-strip-chip,
+  .verify-address,
+  .btn.cosmetic-action {
+    min-height: 44px;
+  }
+  /*
+   * Words that are pressed — a quiet link in a sentence, the way back above a
+   * heading — and the round buttons that sit in a line of text or inside a
+   * field keep their size: growing them would push the lines round them
+   * apart. What grows is the area that answers a finger, out past their edges
+   * to 44px (each is its own anchor for it: the `:where` rule under this
+   * block).
+   */
+  .link-btn::after,
+  .link-button::after,
+  .back-link::after,
+  .rank-card-more::after,
+  .story-replay::after,
+  .chat-jump::after,
+  .ab-sound::after,
+  .settings-search-clear::after,
+  .nav-search-clear::after {
+    content: '';
+    position: absolute;
+    inset: -12px -8px;
+  }
+  /* 24px, in the story's own line */
+  .story-replay::after {
+    inset: -10px;
+  }
+  /* 32px tall, and already wide */
+  .chat-jump::after,
+  .rank-card-more::after {
+    inset: -6px 0;
+  }
+  /* 36px round */
+  .ab-sound::after,
+  .settings-search-clear::after {
+    inset: -4px;
+  }
+  /* 28px, in a letter's own row */
+  .ab-sound--sm::after {
+    inset: -8px;
+  }
+  /* 32px in the bar's field; 40px on a phone, where this is more than it needs and harms nothing */
+  .nav-search-clear::after {
+    inset: -6px;
+  }
   .profile-progress-link {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+  }
+  /* the anchor for the wider area above, at no weight at all: a control placed some other way by its own rule keeps that */
+  :where(.link-btn, .link-button, .back-link, .rank-card-more, .story-replay, .chat-jump, .ab-sound) {
+    position: relative;
   }
 }
 

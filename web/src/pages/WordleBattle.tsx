@@ -6,7 +6,8 @@ import type { ApiError, WordleGuessRow, LetterFeedback } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { GameHead, stageTone } from '../games/GameHead';
-import { WordleBoard, WordleKeyboard } from '../components/WordleBoard';
+import { TrophyIcon } from '../components/icons';
+import { WordleBoard, WordleKeyboard, useReveal } from '../components/WordleBoard';
 import { useWordleKeys } from '../keyboard/wordleKeys';
 import { useRail } from '../social/RailProvider';
 import { PlayerChip } from '../ui/PlayerChip';
@@ -142,6 +143,9 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   const [current, setCurrent] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [refusals, setRefusals] = useState(0);
+  // your last guess's row is still turning over: what it means for you waits for the tiles to have said it
+  const { revealing, hold } = useReveal();
   const loadedOnce = useRef(false);
 
   const load = useCallback(async () => {
@@ -184,11 +188,18 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   // the rating box hears of a battle that ended while you watched (not one opened finished)
   useGameFinished('wordle-battle', battle?.me ? id : null, battle?.status === 'finished');
 
+  // a guess the game would not take shakes the row it was typed in (components/WordleBoard.tsx)
+  const refuse = useCallback((why: string) => {
+    setNotice(why);
+    setRefusals((n) => n + 1);
+    haptic('wrong');
+  }, []);
+
   const submit = useCallback(async () => {
     if (!battle?.me || !active || busy) return;
     const letters = Array.from(current);
     if (letters.length !== battle.targetLength) {
-      setNotice(t('games.wordle.enterLetters', { count: battle.targetLength }));
+      refuse(t('games.wordle.enterLetters', { count: battle.targetLength }));
       return;
     }
     setBusy(true);
@@ -200,21 +211,25 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
       setCurrent('');
       // this guess finished your board: found, or out of tries
       const after = res.data.me;
-      if (after && (after.solved || after.status !== 'playing')) haptic(after.solved ? 'correct' : 'wrong');
+      if (after && (after.solved || after.status !== 'playing')) {
+        haptic(after.solved ? 'correct' : 'wrong');
+        hold(res.data.targetLength, after.solved);
+      }
     } else {
-      setNotice(guessMsg(res.error, t));
+      refuse(guessMsg(res.error, t));
     }
-  }, [client, id, battle, active, busy, current, t]);
+  }, [client, id, battle, active, busy, current, t, refuse, hold]);
 
   const press = useCallback(
     (key: string) => {
-      if (!active) return;
+      // while a guess is being judged the keys are let go, not dimmed: the board is about to answer
+      if (!active || busy) return;
       setNotice(null);
       if (key === 'Enter') return void submit();
       if (key === 'Backspace') return setCurrent((c) => Array.from(c).slice(0, -1).join(''));
       setCurrent((c) => (battle && Array.from(c).length >= battle.targetLength ? c : c + key));
     },
-    [active, submit, battle],
+    [active, busy, submit, battle],
   );
 
   useWordleKeys(active, press);
@@ -308,6 +323,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     return (
       <div className="match-results">
         <h2 className="match-verdict">
+          {mine?.rank === 1 && <TrophyIcon size={26} className="verdict-icon" />}
           {mine?.rank === 1 ? t('games.youWon') : mine?.solved ? t('games.battle.solvedIt') : t('games.battle.over')}
         </h2>
         {battle.rated && <RatedBadge rated={shownRated(battle.rated)} size="sm" className="match-rated" />}
@@ -409,16 +425,18 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
             current={current}
             totalRows={me.guesses.length + me.remainingAttempts}
             showCurrent={active}
+            refusals={refusals}
           />
           {notice && <div className="wordle-notice" role="status">{notice}</div>}
-          {!active && (
+          {!active && !revealing && (
             <div className="wordle-result">
               <p className="wordle-result-title">
+                {me.solved && <TrophyIcon size={22} className="verdict-icon" />}
                 {me.solved ? t('games.battle.youSolvedWaiting') : t('games.battle.noTriesWaiting')}
               </p>
             </div>
           )}
-          <WordleKeyboard keyboard={me.keyboard} onPress={press} disabled={!active || busy} />
+          <WordleKeyboard keyboard={me.keyboard} onPress={press} disabled={!active} />
         </>
       )}
     </div>

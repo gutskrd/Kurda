@@ -6,6 +6,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ReportSheet } from './ReportSheet';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * Report one player of a game, by their seat.
@@ -38,7 +39,7 @@ export function PlayerReportButton({
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={t('report.title.named', { name: label })}
-        style={styles.button}
+        style={({ pressed }) => [styles.button, pressed && heldDim]}
       >
         <Icon name="flag" size={16} color={colors.textSecondary} />
       </Pressable>

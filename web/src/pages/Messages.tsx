@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { groupLimits, type LimitDetails } from '@kurda/shared';
-import { useApiGet } from '../lib/useApi';
+import { useApiGet, useMemoryOwner } from '../lib/useApi';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { lastAnswer, remember } from '../lib/apiMemory';
 import { limitText } from '../lib/limits';
 import type { ApiError, Conversation, MyGroup, UserSummary } from '../lib/types';
 import { messagePreview } from '../chat/messagePreview';
+import { PreviewIcon } from '../chat/PreviewIcon';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { DmThread } from '../chat/DmThread';
 import { GroupThread } from '../chat/GroupThread';
@@ -37,6 +39,14 @@ type Filter = 'all' | 'unread' | 'groups';
 
 /** A group's unread count, as GET /me/groups/unread gives it. */
 type GroupUnread = Record<string, number>;
+
+/** The list as it was last drawn, and what it is remembered under (lib/apiMemory.ts). */
+interface KeptList {
+  convos: Conversation[];
+  groups: MyGroup[];
+  groupUnread: GroupUnread;
+}
+const LIST_MEMORY = 'messages:list';
 
 /**
  * When a conversation last moved, as short as it can be said: "now", "5m",
@@ -307,11 +317,14 @@ function Conversations({
   const t = useT();
   const locale = useLocale();
   const { state } = useRealtime();
-  const [convos, setConvos] = useState<Conversation[] | null>(null);
-  const [groups, setGroups] = useState<MyGroup[]>([]);
-  const [groupUnread, setGroupUnread] = useState<GroupUnread>({});
+  // the list as it was last drawn in this tab (lib/apiMemory.ts): shown at once on coming back, and asked for again behind it
+  const who = useMemoryOwner();
+  const [kept] = useState(() => (who ? (lastAnswer<KeptList>(who, LIST_MEMORY)?.data ?? null) : null));
+  const [convos, setConvos] = useState<Conversation[] | null>(kept?.convos ?? null);
+  const [groups, setGroups] = useState<MyGroup[]>(kept?.groups ?? []);
+  const [groupUnread, setGroupUnread] = useState<GroupUnread>(kept?.groupUnread ?? {});
   const [error, setError] = useState<string | null>(null);
-  const loadedOnce = useRef(false);
+  const loadedOnce = useRef(kept !== null);
 
   const loadConvos = useCallback(async () => {
     const [res, mine, unread] = await Promise.all([
@@ -334,9 +347,15 @@ function Conversations({
     return pollWhileVisible(() => void loadConvos(), state === 'open' ? CONVO_POLL_LIVE : CONVO_POLL_FALLBACK);
   }, [loadConvos, refreshKey, state]);
 
+  // what the list holds now is what coming back to Messages shows
+  useEffect(() => {
+    if (who && convos !== null) remember<KeptList>(who, LIST_MEMORY, { convos, groups, groupUnread });
+  }, [who, convos, groups, groupUnread]);
+
   const onDm = useCallback(() => void loadConvos(), [loadConvos]);
   useGroupsChanged(onDm);
-  const arriving = useArrival(convos !== null);
+  // only a list that arrives rises in, and only the first time in this tab: one drawn from memory is simply there
+  const arriving = useArrival(convos !== null, 'messages');
   useRealtimeEvent('dm', onDm);
   useRealtimeEvent('dm_read', onDm);
   useRealtimeEvent('group_msg', onDm);
@@ -383,6 +402,8 @@ function Conversations({
           preview={
             <>
               {c.lastFromMe && t('chat.youPrefix')}
+              {/* a gift or a game card wears the app's own icon before its words */}
+              <PreviewIcon kind={c.lastKind} />
               {/* the message in its own direction, apart from "You:" in the page's */}
               <bdi>{messagePreview({ body: c.lastMessage, kind: c.lastKind }, t)}</bdi>
             </>

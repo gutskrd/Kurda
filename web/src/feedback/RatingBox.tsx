@@ -9,7 +9,7 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
-import { StarIcon } from '../components/icons';
+import { HeartIcon, StarIcon } from '../components/icons';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { HevaloDeer } from './HevaloDeer';
@@ -201,7 +201,17 @@ export function RatingBox({
 
       {/* the follow-up appears as the stars are chosen; a screen reader hears it */}
       <p className="rb-follow" aria-live="polite">
-        {!settings && followUp === 'improve' ? t('appFeedback.improve') : loving ? t('appFeedback.thanksLove') : ''}
+        {!settings && followUp === 'improve' ? (
+          t('appFeedback.improve')
+        ) : loving ? (
+          <>
+            {t('appFeedback.thanksLove')}
+            {/* the heart is drawn, in the app's own gold, where one used to be typed after the words */}
+            <HeartIcon size={18} weight="fill" className="rb-heart" />
+          </>
+        ) : (
+          ''
+        )}
       </p>
 
       {asksImprove && (

@@ -22,6 +22,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import type { AlphabetAudio } from './audio';
 import { CardLabel, Like, MarkedWord, Meaning, PlayButton, SpokenStage, scriptLanguage, scriptRow, scriptText } from './parts';
 import type { ClipPlayer } from './useClipPlayer';
+import { pressedDim } from '../theme/motion';
 
 const FORM: Record<'alone' | 'start' | 'middle' | 'end', TranslationKey> = {
   alone: 'alphabet.form.alone',
@@ -322,7 +323,7 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
       onPress={() => onStep(by)}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.step, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.step, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
       <Icon name={icon} size={20} color={colors.primary} style={dir.flip ?? undefined} />
     </Pressable>

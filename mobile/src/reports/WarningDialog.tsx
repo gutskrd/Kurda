@@ -14,6 +14,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { accountStanding, acknowledgeWarnings } from './api';
 import { useDirection } from './direction';
 import { CATEGORY_LABEL } from './labels';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * A warning, shown once, the next time the app is opened.
@@ -91,7 +92,7 @@ export function WarningDialog(): React.JSX.Element | null {
           <Pressable
             onPress={() => done(() => navigation.navigate('AccountStanding'))}
             accessibilityRole="link"
-            style={styles.link}
+            style={({ pressed }) => [styles.link, pressed && heldDim]}
           >
             <Text style={[styles.linkText, { color: colors.primary }]}>{t('restriction.seeStanding')}</Text>
           </Pressable>

@@ -33,6 +33,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { PlayWithButton } from '../play/PlayWithButton';
 import { useAnnouncer } from '../stories/ui';
 import { TicketSlip } from './FriendTicket';
+import { heldDim } from '../theme/MotionParts';
 
 interface Profile {
   userId: string;
@@ -281,10 +282,10 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                 offered as a substitute for the other.
               */}
               <View style={styles.danger}>
-                <Pressable onPress={() => setReporting(true)} style={styles.block} accessibilityRole="button">
+                <Pressable onPress={() => setReporting(true)} style={({ pressed }) => [styles.block, pressed && heldDim]} accessibilityRole="button">
                   <Text style={[styles.blockText, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
                 </Pressable>
-                <Pressable onPress={block} style={styles.block} accessibilityRole="button">
+                <Pressable onPress={block} style={({ pressed }) => [styles.block, pressed && heldDim]} accessibilityRole="button">
                   <Text style={[styles.blockText, { color: colors.danger }]}>{t('moderation.block')}</Text>
                 </Pressable>
               </View>

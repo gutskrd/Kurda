@@ -246,7 +246,10 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
 
             {status.canChange ? (
               <ClayButton
-                label={done ? t('username.saved') : saving ? t('username.saving') : t('username.save')}
+                label={done ? t('username.saved') : t('username.save')}
+                // saving: the button turns and takes no second press, and a screen reader is told what it is doing
+                accessibilityLabel={saving ? t('username.saving') : undefined}
+                busy={saving}
                 tone="primary"
                 onPress={() => void submit()}
                 style={[styles.save, !canSubmit && !done && styles.saveDisabled]}

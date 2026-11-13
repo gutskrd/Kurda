@@ -367,7 +367,8 @@ export function UnitRailSheet({ units, open, onClose, onPick }: { units: RailUni
               accessibilityRole="button"
               accessibilityLabel={`${number}, ${u.title}`}
               accessibilityState={{ selected: u.here }}
-              style={({ pressed }) => [styles.railRow, { flexDirection: dir.row, opacity: pressed ? 0.7 : 1 }]}
+              // held, the row fills as a list row does (it has its own inset, so the fill is its own shape)
+              style={({ pressed }) => [styles.railRow, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack, borderRadius: radii.sm }]}
             >
               <View style={styles.railMark}>
                 {i > 0 ? <View style={[styles.railLine, styles.railLineUp, { backgroundColor: colors.separator }]} /> : null}

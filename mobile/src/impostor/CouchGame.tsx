@@ -65,6 +65,9 @@ import type { CouchAsk } from './ImpostorStart';
 import { Cloth, GoldButton, PictureCards, PictureTiles, StepTitle } from './parts';
 import { TABLE } from './table';
 import { WAY_KEY, WAY_NOTE } from './ways';
+import { pressedDim } from '../theme/motion';
+import { heldDim } from '../theme/MotionParts';
+import { turnCard } from '../theme/animate';
 
 /**
  * Kurdish Impostor on one phone, passed round a room.
@@ -370,7 +373,7 @@ function Setup({
                     onPress={() => rename(names.filter((_, j) => j !== i))}
                     accessibilityRole="button"
                     accessibilityLabel={t('games.couch.removePlayer', { name: named[i]! })}
-                    style={({ pressed }) => [styles.nameRemove, { opacity: pressed ? 0.6 : 1 }]}
+                    style={({ pressed }) => [styles.nameRemove, { opacity: pressed ? pressedDim : 1 }]}
                   >
                     <Icon name="close" size={18} color={colors.textSecondary} />
                   </Pressable>
@@ -465,7 +468,7 @@ function Setup({
             accessibilityLabel={t('games.couch.rules')}
             accessibilityState={{ expanded: rulesOpen }}
             aria-expanded={rulesOpen}
-            style={[styles.rulesHead, { flexDirection: dir.row }]}
+            style={({ pressed }) => [styles.rulesHead, { flexDirection: dir.row }, pressed && heldDim]}
           >
             <Icon name="filter" size={18} color={colors.textPrimary} />
             <Text style={[styles.rulesTitle, { color: colors.textPrimary }]}>{t('games.couch.rules')}</Text>
@@ -795,7 +798,7 @@ function Choice({ label, onPress, kurdish, accent = false }: { label: string; on
       }}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.choice, { backgroundColor: colors.glassFill, borderColor: accent ? colors.gold : 'transparent', opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.choice, { backgroundColor: colors.glassFill, borderColor: accent ? colors.gold : 'transparent', opacity: pressed ? pressedDim : 1 }]}
     >
       {kurdish ? (
         <Text style={[styles.choiceWord, { writingDirection: kurdishStyle(kurdish).writingDirection, color: colors.textPrimary }]}>{label}</Text>
@@ -902,7 +905,7 @@ function Reveal({
       turn.setValue(1);
       return;
     }
-    Animated.timing(turn, { toValue: 1, duration: 520, useNativeDriver: true }).start();
+    turnCard(turn).start();
   }, [reduce, turn, won]);
   if (!reveal) return null;
   const script = kurdishStyle(game.dialect);
@@ -919,7 +922,8 @@ function Reveal({
           ? 'games.couch.end.oddCaught'
           : 'games.impostor.end.caught';
   const scaleX = turn.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 1] });
-  const face = turn.interpolate({ inputRange: [0, 0.5, 0.51, 1], outputRange: [0, 0, 1, 1] });
+  // the turn comes a touch past flat before it settles: the face is simply there by then
+  const face = turn.interpolate({ inputRange: [0, 0.5, 0.51, 1], outputRange: [0, 0, 1, 1], extrapolate: 'clamp' });
   return (
     <>
       <View accessibilityLabel={t('games.impostor.table')} style={styles.flips}>

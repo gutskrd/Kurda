@@ -18,6 +18,7 @@ import type { Exercise } from '../types';
 import { canPlayAudio, useAudio } from '../useAudio';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { MultipleChoiceExercise } from './MultipleChoiceExercise';
+import { pressedDim } from '../../theme/motion';
 
 interface Props {
   exercise: Exercise;
@@ -175,7 +176,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
                     hitSlop={hitSlopFor(PLAY, PLAY)}
                     style={({ pressed }) => [
                       styles.play,
-                      { backgroundColor: colors.controlTrack, borderColor: sounding ? colors.gold : 'transparent', opacity: pressed ? 0.7 : 1 },
+                      { backgroundColor: colors.controlTrack, borderColor: sounding ? colors.gold : 'transparent', opacity: pressed ? pressedDim : 1 },
                     ]}
                   >
                     {/* the speaker points the same way in every language */}

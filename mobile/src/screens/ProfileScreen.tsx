@@ -42,6 +42,8 @@ import type { Streak } from '../streak/format';
 import { StreakSheet } from '../streak/StreakSheet';
 import { formatNumber } from '../i18n/format';
 import { Fire } from '../theme/Fire';
+import { pressedDim } from '../theme/motion';
+import { heldDim } from '../theme/MotionParts';
 
 /** How big the face is: the largest thing on the screen, in the middle, over the numbers. */
 const AVATAR = 96;
@@ -416,7 +418,7 @@ function AccountProfile() {
           from, and who they are in their own words.
         */}
         <View style={styles.hero}>
-          <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel={t('profile.changePhoto')}>
+          <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel={t('profile.changePhoto')} style={({ pressed }) => pressed && heldDim}>
             <AvatarStage tint={stageTint} size={STAGE}>
               {/* the frame rings the face; the face and its icon stay their own size inside it */}
               <Framed sku={progress?.frameSku} url={progress?.frameUrl} size={FRAMED} label={(tier) => t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
@@ -478,7 +480,7 @@ function AccountProfile() {
             accessibilityRole="button"
             accessibilityLabel={t('profile.edit')}
             hitSlop={{ top: 4, bottom: 4 }}
-            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
           >
             <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
               {t('profile.edit')}
@@ -489,7 +491,7 @@ function AccountProfile() {
             accessibilityRole="button"
             accessibilityLabel={t('profile.share')}
             hitSlop={{ top: 4, bottom: 4 }}
-            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
           >
             <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
               {t('profile.share')}
@@ -586,7 +588,7 @@ function Stat({ label, value, onPress, loading = false }: { label: string; value
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`${settled} ${label}`}
-      style={({ pressed }) => [styles.stat, pressed && { opacity: 0.6 }]}
+      style={({ pressed }) => [styles.stat, pressed && { opacity: pressedDim }]}
     >
       {body}
     </Pressable>

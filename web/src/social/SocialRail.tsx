@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
-import { ChatsIcon, CloseIcon, GameIcon, ChevronIcon } from '../components/icons';
+import { CloseButton } from '../components/CloseButton';
+import { ChatsIcon, GameIcon, ChevronIcon } from '../components/icons';
 import { DmThread } from '../chat/DmThread';
 import { GroupThread } from '../chat/GroupThread';
 import { RailStrip } from './RailStrip';
@@ -89,9 +90,7 @@ export function SocialRail(): React.JSX.Element | null {
             <ChevronIcon size={16} className={collapsed ? 'rail-fold-arrow' : 'rail-fold-arrow is-open'} />
           </button>
           <span className="rail-title">{t('rail.title')}</span>
-          <button type="button" className="rail-close" onClick={() => setOpen(false)} aria-label={t('rail.closePanel')}>
-            <CloseIcon size={18} />
-          </button>
+          <CloseButton className="rail-close is-inline" label={t('rail.closePanel')} onClick={() => setOpen(false)} />
         </div>
 
         {/*

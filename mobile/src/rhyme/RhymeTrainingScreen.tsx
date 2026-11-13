@@ -17,6 +17,7 @@ import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
+import { heldDim } from '../theme/MotionParts';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane';
@@ -237,7 +238,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
               ))}
             </View>
 
-            <Pressable onPress={() => void end(remaining > 0)} accessibilityRole="button" style={styles.finish}>
+            <Pressable onPress={() => void end(remaining > 0)} accessibilityRole="button" style={({ pressed }) => [styles.finish, pressed && heldDim]}>
               <Text style={[styles.finishText, { color: colors.textSecondary }]}>{t('games.rhyme.endRound')}</Text>
             </Pressable>
           </>

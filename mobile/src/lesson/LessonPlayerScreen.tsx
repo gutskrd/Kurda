@@ -37,6 +37,8 @@ import { deviceStore } from '../keyboard/deviceStore';
 import { useQuietInvites } from '../play/quietInvites';
 import { useDirection } from '../reports/direction';
 import { Loading } from '../theme/Loading';
+import { pressedDim } from '../theme/motion';
+import { PressableScale } from '../theme/MotionParts';
 
 /** Endpoint paths for a playable session — lessons and practice differ only here. */
 export interface SessionPaths {
@@ -660,7 +662,8 @@ export function SessionPlayer({
       </ScrollView>
 
         {stall ? (
-          <Pressable
+          // a card to press: it gives under the finger, so asking again is answered before the server is
+          <PressableScale
             onPress={retry}
             disabled={submitting}
             accessibilityRole="button"
@@ -670,7 +673,7 @@ export function SessionPlayer({
             <Text style={[styles.offlineText, { color: colors.textSecondary }]}>
               {submitting ? t('lesson.syncing') : stall === 'offline' ? t('lesson.offlineRetry') : t('lesson.failedRetry')}
             </Text>
-          </Pressable>
+          </PressableScale>
         ) : (
           <FeedbackFooter
             feedback={state.feedback}
@@ -842,7 +845,7 @@ const styles = StyleSheet.create({
   },
   // a fingertip's worth around a 24pt mark; the row's own gap does the spacing
   headerButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginHorizontal: -spacing.sm },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   reask: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg },
   progressWrap: { flex: 1 },
   body: { padding: spacing.lg, gap: spacing.lg, flexGrow: 1 },

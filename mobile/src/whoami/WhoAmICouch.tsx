@@ -56,6 +56,7 @@ import {
   type CardFace,
   type TableSeat,
 } from './WhoAmIStage';
+import { pressedDim } from '../theme/motion';
 
 /**
  * Who Am I? on one phone, passed round a room.
@@ -399,7 +400,7 @@ function Setup({
                     onPress={() => onNames(names.filter((_, j) => j !== i))}
                     accessibilityRole="button"
                     accessibilityLabel={t('games.couch.removePlayer', { name: named[i]! })}
-                    style={({ pressed }) => [styles.nameRemove, { opacity: pressed ? 0.6 : 1 }]}
+                    style={({ pressed }) => [styles.nameRemove, { opacity: pressed ? pressedDim : 1 }]}
                   >
                     <Icon name="close" size={18} color={colors.textSecondary} />
                   </Pressable>

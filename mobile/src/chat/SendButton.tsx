@@ -5,6 +5,7 @@ import { useDirection } from '../reports/direction';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
+import { pressedDim } from '../theme/motion';
 
 /** The filled circle the arrow sits in, inside the 44pt touch. */
 const DISC = 34;
@@ -50,7 +51,7 @@ export function SendButton({ ready, onPress }: { ready: boolean; onPress: () => 
       accessibilityRole="button"
       accessibilityLabel={t('chat.send')}
       accessibilityState={{ disabled: !ready }}
-      style={({ pressed }) => [styles.button, { opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.button, { opacity: pressed ? pressedDim : 1 }]}
     >
       <View style={[styles.disc, { backgroundColor: ready ? colors.primary : 'transparent' }]}>
         <View style={dir.rtl ? dir.flip : null}>

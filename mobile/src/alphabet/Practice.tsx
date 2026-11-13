@@ -26,6 +26,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import type { AlphabetAudio } from './audio';
 import { Like, Meaning, PlayButton, SpokenStage, scriptLanguage, scriptText } from './parts';
 import type { ClipPlayer } from './useClipPlayer';
+import { pressedDim } from '../theme/motion';
 
 interface Item {
   q: AlphabetQuestion;
@@ -288,7 +289,7 @@ export function Practice({
                       onPress={() => onOpen(m.id)}
                       accessibilityRole="button"
                       accessibilityLabel={text}
-                      style={({ pressed }) => [styles.reviewTile, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+                      style={({ pressed }) => [styles.reviewTile, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                     >
                       <Glyph o={{ id: m.id, text, script: m.script }} size={typography.sizes.xl} />
                     </Pressable>
@@ -356,7 +357,7 @@ function Choice({
         accessibilityState={{ disabled: state !== 'open' }}
         style={({ pressed }) => [
           styles.choice,
-          { backgroundColor: fill, borderColor: edge, opacity: state === 'dim' ? 0.45 : pressed ? 0.75 : 1 },
+          { backgroundColor: fill, borderColor: edge, opacity: state === 'dim' ? 0.45 : pressed ? pressedDim : 1 },
         ]}
       >
         <Glyph o={option} size={words ? typography.sizes.lg : typography.sizes.xl + 4} />

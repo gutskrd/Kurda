@@ -1,13 +1,13 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { fireLevel } from '@kurda/shared';
-import { useApiGet } from '../lib/useApi';
+import { useApiGet, type ApiState } from '../lib/useApi';
 import { LinkButton } from '../components/Button';
 import { ErrorState, EmptyState } from '../components/states';
 import { CourseGridSkeleton, CourseMapSkeleton } from '../components/skeletons';
 import { Skeleton } from '../components/Skeleton';
 import { Fire } from '../components/Fire';
-import { DictionaryIcon } from '../components/icons';
+import { CheckIcon, DictionaryIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { courseProgress, dialectName } from '../learn/map';
@@ -44,9 +44,9 @@ interface DailyGoal {
  * primary action, the path's own "Start" or "Continue", and two equal white
  * buttons a screen apart ask the learner to choose before they can start.
  */
-function ReviewEntry(): React.JSX.Element {
+function ReviewEntry({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element {
   const t = useT();
-  const { data, error, loading } = useApiGet<PracticeDue>('/practice/due');
+  const { data, error, loading } = due;
   let body: React.ReactNode;
   let action: React.ReactNode = null;
   if (loading && !data) {
@@ -106,12 +106,11 @@ function GoalRing({ share, met }: { share: number; met: boolean }): React.JSX.El
  * until the answers are in, so the path below does not jump when they land,
  * and a part that fails is quietly left out: the path is the page.
  */
-function TodayStrip(): React.JSX.Element {
+function TodayStrip({ due }: { due: ApiState<PracticeDue> }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const goal = useApiGet<DailyGoal>('/me/daily-goal');
   const me = useApiGet<{ user: MeProfile }>('/me');
-  const due = useApiGet<PracticeDue>('/practice/due');
   const [streakOpen, setStreakOpen] = useState(false);
   // a streak restored in the sheet is the streak here too, from then on: the strip's fire and its number
   const [restored, setRestored] = useState<StreakSummary | null>(null);
@@ -152,7 +151,15 @@ function TodayStrip(): React.JSX.Element {
               aria-valuetext={g.completed ? t('learn.today.done') : t('learn.today.goal', { xp: number(g.earnedXp), goal: number(target) })}
             >
               <GoalRing share={g.progress} met={g.completed} />
-              <span aria-hidden="true">{t('learn.today.goalShort', { xp: number(g.earnedXp), goal: number(target) })}</span>
+              {/* a goal that is passed is done, not a fraction past its end: "130/20 XP" becomes what was earned, with the mark of done */}
+              {g.completed ? (
+                <>
+                  <span aria-hidden="true">{t('leagues.result.xp', { xp: number(g.earnedXp) })}</span>
+                  <CheckIcon size={16} className="learn-strip-done" />
+                </>
+              ) : (
+                <span aria-hidden="true">{t('learn.today.goalShort', { xp: number(g.earnedXp), goal: number(target) })}</span>
+              )}
             </p>
           )}
           {due.data && (due.data.open || due.data.due > 0) && (
@@ -179,8 +186,10 @@ function TodayStrip(): React.JSX.Element {
  * review and the exercises are the learner's own, so a visitor is not shown
  * them.
  */
-function Tools({ signedIn }: { signedIn: boolean }): React.JSX.Element {
+function Tools({ due }: { due: ApiState<PracticeDue> | null }): React.JSX.Element {
   const t = useT();
+  // review is the learner's own, so what is due is only ever handed over for somebody signed in
+  const signedIn = due !== null;
   const locale = useLocale();
   const dictionary = signedIn ? (
     <Link to="/app/dictionary" className="learn-tool learn-tool-link">
@@ -201,7 +210,7 @@ function Tools({ signedIn }: { signedIn: boolean }): React.JSX.Element {
         {t('learn.tools.title')}
       </h2>
       <div className={`learn-tools${signedIn ? '' : ' is-guest'}`}>
-        {signedIn && <ReviewEntry />}
+        {due && <ReviewEntry due={due} />}
         {/* the letters every course is written in, and the first words after them: one way in (pages/Words.tsx) */}
         <Link to="/app/learn/words" className="learn-tool learn-tool-link">
           <span className="learn-tool-letters" lang="ku" aria-hidden="true">
@@ -318,12 +327,16 @@ function Lessons(): React.JSX.Element {
   const t = useT();
   const [params] = useSearchParams();
   const { entries, error, reload } = useCourses();
+  // what review has waiting is asked once here, for the strip, the path and the review tool alike
+  const due = useApiGet<PracticeDue>('/practice/due');
   const picked = entries ? pickCourse(entries, params.get('course')) : null;
   // a lesson opened from here comes back here, on the same course
   const home = picked && entries && entries.length > 1 ? `/app/learn?course=${encodeURIComponent(picked.course.id)}` : '/app/learn';
+  // the path is handed the map and the courses this page already holds, so it does not ask for them again
+  const courses = useMemo(() => (entries ?? []).map((e) => e.course), [entries]);
   return (
     <>
-      <TodayStrip />
+      <TodayStrip due={due} />
       <QuestsCard />
       {entries && entries.length > 1 && (
         <nav className="lp-courses learn-courses-switch" aria-label={t('coursemap.courses')}>
@@ -343,12 +356,18 @@ function Lessons(): React.JSX.Element {
       {/* the path is Learn's home: the course picked, its lessons one tap away */}
       {picked ? (
         <section className="learn-path" aria-label={picked.course.title}>
-          <CoursePath key={picked.course.id} courseId={picked.course.id} showHeader={false} home={home} />
+          <CoursePath
+            key={picked.course.id}
+            courseId={picked.course.id}
+            showHeader={false}
+            home={home}
+            given={{ map: picked.map, courses, due }}
+          />
         </section>
       ) : (
         !entries && !error && <CourseMapSkeleton />
       )}
-      <Tools signedIn />
+      <Tools due={due} />
       <section aria-labelledby="learn-courses-title">
         <h2 className="learn-section-title" id="learn-courses-title">
           {t('learn.courses.title')}
@@ -390,7 +409,7 @@ export function Learn(): React.JSX.Element {
         <CourseGridSkeleton />
       ) : (
         <>
-          <Tools signedIn={false} />
+          <Tools due={null} />
           <GuestCourses />
         </>
       )}

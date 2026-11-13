@@ -13,6 +13,7 @@ import { blockedUsers, unblockUser, type BlockedUser } from './blocks';
 import { EmptyState } from '../theme/EmptyState';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { Loading } from '../theme/Loading';
+import { heldDim } from '../theme/MotionParts';
 
 /** "3 Sep" / "3 Sep 2024" — the year only when it is not this one. */
 function when(iso: string): string {
@@ -139,7 +140,13 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                     {busy === u.userId ? (
                       <Loading />
                     ) : (
-                      <Pressable onPress={() => unblock(u)} accessibilityRole="button" hitSlop={8}>
+                      <Pressable
+                        onPress={() => unblock(u)}
+                        accessibilityRole="button"
+                        // one 18-point line of words, caught at a fingertip's 44
+                        hitSlop={13}
+                        style={({ pressed }) => pressed && heldDim}
+                      >
                         <Text style={[styles.action, { color: colors.primary }]}>{t('settings.blocked.unblock')}</Text>
                       </Pressable>
                     )}
@@ -147,7 +154,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
                 ))}
 
                 {list.length < total ? (
-                  <Pressable onPress={() => void load(list.length)} accessibilityRole="button" style={styles.more}>
+                  <Pressable onPress={() => void load(list.length)} accessibilityRole="button" style={({ pressed }) => [styles.more, pressed && heldDim]}>
                     <Text style={[styles.action, { color: colors.primary }]}>
                       {t('common.showMoreCount', { count: total - list.length })}
                     </Text>

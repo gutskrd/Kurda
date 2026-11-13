@@ -241,6 +241,13 @@
 .fcard-act:disabled {
   cursor: default;
 }
+/* a press the server took back (feed/FeedCard.tsx): why, under the row it was pressed in */
+.fcard-refused {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-caption);
+  line-height: 1.4;
+}
 /* share and save sit at the far end, away from the counts */
 .fcard-share {
   margin-inline-start: auto;

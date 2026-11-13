@@ -12,6 +12,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ticketTone } from '../play/Ticket';
 import { splitName, type NoticeActor, type NoticeKind } from './inbox';
 import { NOTICE, NOTICE_ROW_HEIGHT } from './rowMetrics';
+import { pressedDim } from '../theme/motion';
 
 export interface NoticeRowProps {
   title: string;
@@ -240,5 +241,5 @@ const styles = StyleSheet.create({
   headingText: { ...sectionLabel, flexShrink: 1 },
   markAll: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   markAllText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
 });

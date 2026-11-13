@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
@@ -51,7 +51,14 @@ export function VoiceRecorder({
         <View style={styles.player}>
           <AudioPlayer url={value} />
         </View>
-        <Pressable onPress={() => onChange(null)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('recorder.remove')}>
+        <Pressable
+          onPress={() => onChange(null)}
+          // one 18-point line of words, caught at a fingertip's 44
+          hitSlop={WORD_SLOP}
+          accessibilityRole="button"
+          accessibilityLabel={t('recorder.remove')}
+          style={({ pressed }) => pressed && heldDim}
+        >
           <Text style={[styles.action, { color: colors.danger }]}>{t('common.remove')}</Text>
         </Pressable>
       </View>
@@ -62,6 +69,7 @@ export function VoiceRecorder({
     return (
       <PressableScale
         onPress={() => void mic.stop()}
+        hitSlop={PILL_SLOP}
         style={[styles.pill, { backgroundColor: colors.dangerFill, borderColor: colors.danger }]}
         accessibilityRole="button"
         accessibilityLabel={t('lesson.speak.stop')}
@@ -78,6 +86,7 @@ export function VoiceRecorder({
     <PressableScale
       onPress={() => void start()}
       disabled={mic.busy}
+      hitSlop={PILL_SLOP}
       style={[styles.pill, { backgroundColor: colors.glassFill, opacity: mic.busy ? 0.5 : 1 }]}
       accessibilityRole="button"
       accessibilityLabel={t('recorder.startNote')}
@@ -87,6 +96,11 @@ export function VoiceRecorder({
     </PressableScale>
   );
 }
+
+/** A line of small words is about 18 points tall: this much round it makes a fingertip's 44. */
+const WORD_SLOP = { top: 13, bottom: 13, left: 8, right: 8 };
+/** The pills are drawn 36 points tall, and caught at 44. */
+const PILL_SLOP = { top: 4, bottom: 4 };
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },

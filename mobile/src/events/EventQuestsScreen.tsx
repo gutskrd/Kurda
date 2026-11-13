@@ -32,6 +32,7 @@ import {
   type EventQuestsView,
   type QuestView,
 } from './quests.js';
+import { heldDim } from '../theme/MotionParts';
 
 interface ActiveEvent {
   key: string;
@@ -181,7 +182,7 @@ function Notice({ title, text, onDismiss, onRetry }: { title?: string; text: str
           <Text style={[styles.noticeText, dir.text, { color: colors.danger }]}>{text}</Text>
         </View>
         {onDismiss ? (
-          <Pressable onPress={onDismiss} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('common.close')}>
+          <Pressable onPress={onDismiss} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('common.close')} style={({ pressed }) => pressed && heldDim}>
             <Icon name="close" size={16} color={colors.textSecondary} />
           </Pressable>
         ) : null}

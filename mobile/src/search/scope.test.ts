@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { GAMES, SCOPES, SCOPE_LABEL, filterByLabel, matches, readyForServer, scopesToRun } from './scope';
+import { GAME_CARDS, learnGameCard } from '../games/gameCards';
+import { GAMES, SCOPES, SCOPE_LABEL, filterByLabel, gameDestinations, matches, peopleQuery, readyForServer, scopesToRun, wayWord } from './scope';
 
 describe('matches', () => {
   /*
@@ -95,5 +96,66 @@ describe('the registries', () => {
   it('gives every game a distinct key and a route', () => {
     expect(new Set(GAMES.map((g) => g.key)).size).toBe(GAMES.length);
     for (const g of GAMES) expect(g.route).toMatch(/^[A-Z]/);
+  });
+
+  /*
+   * Search kept a list of its own, five ways into three games, and the games
+   * added after it could not be found by name. It reads the cards the Games
+   * screen shows now, so a way into a game is a row in a search or the test
+   * says so.
+   */
+  it('finds every way into every game that has a card', () => {
+    expect(GAMES.map((g) => g.key)).toEqual(GAME_CARDS.flatMap((c) => c.ways.map((w) => w.key)));
+    expect(GAMES.map((g) => g.route)).toEqual(['Wordle', 'WordleBattle', 'Rhyme', 'RhymeMatch', 'Race']);
+  });
+
+  it('keeps the name a way into a game is known by, and the game’s own for the rest', () => {
+    const name = (key: string) => GAMES.find((g) => g.key === key)?.labelKey;
+    expect(name('wordle')).toBe('games.wordle.name');
+    expect(name('battle')).toBe('games.battle.name');
+    expect(name('rhymeMatch')).toBe('games.rhymeMatch.name');
+    expect(name('race')).toBe('games.race.name');
+  });
+
+  it('lists a learning game once it can be played, a row for each of its ways, and not before', () => {
+    const impostor = learnGameCard({ id: 'impostor', route: 'Impostor', name: 'games.impostor.name', line: 'games.invite.blurb.impostor', mode: 'friends', ready: true });
+    const whoAmI = learnGameCard({
+      id: 'who-am-i',
+      route: 'WhoAmI',
+      name: 'games.whoAmI.name',
+      line: 'games.card.whoAmI',
+      mode: 'both',
+      ready: true,
+      ways: [
+        { key: 'who-am-i-phone', label: 'games.whoAmI.onePhone', way: 'phone' },
+        { key: 'who-am-i-friends', label: 'games.mode.friends', way: 'friends' },
+      ],
+    });
+    const soon = learnGameCard({ id: 'detective', route: 'Detective', name: 'games.detective.name', line: 'games.card.detective', mode: 'solo', ready: false });
+    const found = gameDestinations([impostor, whoAmI, soon]);
+    expect(found.map((g) => [g.key, g.route, g.params?.way ?? null])).toEqual([
+      ['impostor', 'Impostor', null],
+      ['who-am-i-phone', 'WhoAmI', 'phone'],
+      ['who-am-i-friends', 'WhoAmI', 'friends'],
+    ]);
+    // two rows under one name are told apart by the word on the card's button; a game with one way needs none
+    expect(wayWord([impostor, whoAmI], 'who-am-i-phone')).toBe('games.whoAmI.onePhone');
+    expect(wayWord([impostor, whoAmI], 'impostor')).toBeNull();
+    // and a way with a name of its own says it in its name
+    expect(wayWord(GAME_CARDS, 'battle')).toBeNull();
+    expect(wayWord(GAME_CARDS, 'wordle')).toBe('games.mode.solo');
+  });
+});
+
+describe('peopleQuery', () => {
+  /* The app writes a handle as "@dilan", and that is how it is copied and typed back. */
+  it('looks for the name without the "@" before it', () => {
+    expect(peopleQuery('@dilan')).toBe('dilan');
+    expect(peopleQuery('  @@dilan ')).toBe('dilan');
+    expect(peopleQuery('dilan')).toBe('dilan');
+  });
+
+  it('leaves an "@" inside what was typed alone', () => {
+    expect(peopleQuery('a@b')).toBe('a@b');
   });
 });

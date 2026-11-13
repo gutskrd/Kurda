@@ -12,8 +12,7 @@ import { useDirection } from '../reports/direction';
 import { unreadBadge } from '../notifications/inbox';
 import { useUnread } from '../messages/unread';
 import { haptic } from '../feedback/haptics';
-import { springTo, timing } from '../theme/animate';
-import { POP_SCALE, duration } from '../theme/motion';
+import { springTo, usePressScale } from '../theme/animate';
 import { TAB_BAR_HEIGHT } from './tabBarLayout';
 import { TABS, type TabName } from './tabs';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -23,8 +22,6 @@ import { useAuth } from '../auth/AuthContext';
 const GLYPH = 26;
 /** Your picture on the Profile tab, a little smaller than the glyphs so its ring fits the same box. */
 const AVATAR = 24;
-/** How far a tab sinks while it is held: enough to feel, not enough to look like it moved. */
-const PRESSED_SCALE = 0.86;
 /** The soft capsule behind the tab you are on: room round the glyph, and no taller than the bar's middle. */
 const PILL = { width: 56, height: 32 } as const;
 
@@ -40,11 +37,14 @@ const PILL = { width: 56, height: 32 } as const;
  * held, as the system bar does for somebody using large text, so nobody has
  * to guess what a glyph means.
  *
- * A tab sinks a little under the finger and springs back, and the one chosen
- * pops a little as it is chosen, with a soft tinted capsule sliding along
- * the bar to sit behind it — so the change of tab is seen moving, not only
- * found. Moving to another tab gives the light tick of a selection. Somebody
- * who has asked for less motion gets neither the sink, the pop nor the
+ * A tab gives a little under the finger, as every button in the app does,
+ * and a soft tinted capsule slides along the bar to sit behind the one
+ * chosen — so the change of tab is seen moving, not only found. That is all
+ * that moves: the bar is the most used control there is, and what is used
+ * all day arrives and stops. The glyph used to sink much further than any
+ * other button and pop past its size on a bounce as it was chosen, on every
+ * change of tab. Moving to another tab gives the light tick of a selection.
+ * Somebody who has asked for less motion gets neither the give nor the
  * slide: the capsule is simply behind the tab they are on.
  *
  * Two things badge, and nothing else does: Messages, with how many unread
@@ -90,7 +90,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
    * on a transform. The bar's width is measured once it is laid out; until
    * then there is nothing to place it by and it is not drawn. It arrives
    * where it belongs with no slide the first time, and slides there on the
-   * standard spring after that — straight there under Reduce Motion.
+   * interface's own spring after that (no bounce, there within 300 ms) —
+   * straight there under Reduce Motion.
    */
   const [barWidth, setBarWidth] = useState(0);
   const slot = barWidth > 0 ? barWidth / state.routes.length : 0;
@@ -106,7 +107,7 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
       pillX.setValue(to);
       return;
     }
-    const slide = springTo(pillX, to);
+    const slide = springTo(pillX, to, 'chrome');
     slide.start();
     return () => slide.stop();
   }, [place, slot, reduceMotion, pillX]);
@@ -165,7 +166,6 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
               spoken={spoken}
               focused={focused}
               peek={held === i ? full : null}
-              reduceMotion={reduceMotion}
               onPress={onPress}
               onLongPress={onLongPress}
               onRelease={() => setHeld((h) => (h === i ? null : h))}
@@ -213,13 +213,12 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
   );
 }
 
-/** One tab: the whole fifth of the bar is the target; it sinks while held, and pops a little as it becomes the tab you are on. */
+/** One tab: the whole fifth of the bar is the target; its glyph gives under the finger as any button does (`usePressScale`), and does nothing more. */
 function TabButton({
   name,
   spoken,
   focused,
   peek,
-  reduceMotion,
   onPress,
   onLongPress,
   onRelease,
@@ -230,35 +229,21 @@ function TabButton({
   focused: boolean;
   /** the tab's name, shown above it while it is held */
   peek: string | null;
-  reduceMotion: boolean;
   onPress: () => void;
   onLongPress: () => void;
   onRelease: () => void;
   children: React.ReactNode;
 }): React.JSX.Element {
-  const scale = useRef(new Animated.Value(1)).current;
-  // down without a bounce, back with the little one Apple gives a release
-  const press = (toValue: number) => {
-    if (reduceMotion) return;
-    springTo(scale, toValue, toValue === 1 ? 'release' : 'standard').start();
-  };
-  // chosen: up past its size and back on the bouncy spring, taking over from the finger's release
-  const was = useRef(focused);
-  useEffect(() => {
-    if (focused && !was.current && !reduceMotion) {
-      scale.stopAnimation();
-      Animated.sequence([timing(scale, POP_SCALE, duration.quick), springTo(scale, 1, 'bouncy')]).start();
-    }
-    was.current = focused;
-  }, [focused, reduceMotion, scale]);
+  // still under Reduce Motion, where the tab's own change of shape is the answer
+  const press = usePressScale();
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={400}
-      onPressIn={() => press(PRESSED_SCALE)}
+      onPressIn={press.onPressIn}
       onPressOut={() => {
-        press(1);
+        press.onPressOut();
         onRelease();
       }}
       accessibilityRole="tab"
@@ -267,7 +252,7 @@ function TabButton({
       testID={`tab-${name}`}
       style={styles.item}
     >
-      <Animated.View style={[styles.glyph, { transform: [{ scale }] }]}>{children}</Animated.View>
+      <Animated.View style={[styles.glyph, { transform: [{ scale: press.scale }] }]}>{children}</Animated.View>
       {peek ? <Peek text={peek} /> : null}
     </Pressable>
   );

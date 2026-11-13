@@ -18,6 +18,8 @@ import { spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { postDeleted } from './postDeleted';
+import { pressedDim } from '../theme/motion';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * The pieces of a post's own page that came with pictures on written posts:
@@ -100,7 +102,7 @@ export function PostMenuButton({ post, onDeleted }: { post: MenuPost; onDeleted?
   if (!menu.open) return null;
   return (
     <>
-      <Pressable onPress={menu.open} accessibilityRole="button" accessibilityLabel={t('post.menu')} style={styles.menuButton}>
+      <Pressable onPress={menu.open} accessibilityRole="button" accessibilityLabel={t('post.menu')} style={({ pressed }) => [styles.menuButton, pressed && heldDim]}>
         <Icon name="more" size={22} color={colors.primary} />
       </Pressable>
       {menu.sheet}
@@ -185,7 +187,7 @@ const styles = StyleSheet.create({
   menuButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   // the height GlassRow gives a row a thumb is meant to land on
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52 },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   rowText: { fontSize: typography.ios.row },
   confirm: { gap: spacing.md, paddingBottom: spacing.sm },
   confirmTitle: { ...display(typography.sizes.lg) },

@@ -14,6 +14,7 @@ import type { TranslationKey } from '../i18n/translations';
 
 import { PROFILE_SECTIONS, type ProfileSection, type ProfileSections } from './sections';
 import { EmptyState } from '../theme/EmptyState';
+import { heldDim } from '../theme/MotionParts';
 
 const LABEL: Record<ProfileSection, TranslationKey> = {
   posts: 'profile.tab.posts',
@@ -132,7 +133,7 @@ export function ProfileActivity({
               onPress={() => setSection(s)}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
-              style={[styles.tab, on ? { backgroundColor: colors.selectedFill } : null]}
+              style={({ pressed }) => [styles.tab, on ? { backgroundColor: colors.selectedFill } : null, pressed && heldDim]}
             >
               <Icon name={GLYPH[s]} size={18} color={on ? colors.textPrimary : colors.textSecondary} />
               <Text

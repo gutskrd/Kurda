@@ -11,6 +11,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { getExpectedGains, setLobbyRated } from './api';
 import { friendlyReasonKey, rankName, signed } from './format';
+import { pressedDim } from '../theme/motion';
 
 /**
  * The Rated / Friendly badge (contract 4 §R2), shown before anyone joins: in
@@ -68,7 +69,7 @@ export function RatedChoice({ value, onChange }: { value: boolean; onChange: (ra
               styles.tile,
               {
                 backgroundColor: on ? (o.rated ? colors.gold : colors.primary) : colors.controlTrack,
-                opacity: pressed ? 0.85 : 1,
+                opacity: pressed ? pressedDim : 1,
               },
             ]}
           >

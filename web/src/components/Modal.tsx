@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { CloseIcon } from './icons';
+import { CloseButton } from './CloseButton';
 import { escapeClearsField } from './SearchField';
 import { wrapTab } from './Sheet';
 import { useT } from '../i18n/I18nProvider';
+import { useLeaving } from '../lib/motion';
 import { lockPageScroll } from '../lib/scrollLock';
 
 /**
@@ -17,6 +18,13 @@ import { lockPageScroll } from '../lib/scrollLock';
  * written: a dialog opened from inside a box with its own layer (a chat open
  * full-screen on a phone is one) was otherwise drawn inside that layer, under
  * the site's header, its top and its close button out of reach.
+ *
+ * Closed, it leaves the way it came (lib/motion.ts `useLeaving`,
+ * styles/motion.css): the picture of it stays for a moment and goes, while
+ * everything that matters has already happened — the focus is back where it
+ * was, the page scrolls again, and what is still drawn is inert, is no longer
+ * a dialog to assistive technology, and cannot be pressed. For a reader who
+ * asked for less motion it is simply gone.
  */
 export function Modal({
   open,
@@ -39,6 +47,10 @@ export function Modal({
   // reader was typing in.
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const leaving = useLeaving(open);
+  // what it held when it was last open: most callers stop passing it the moment they close it
+  const held = useRef(children);
+  if (open) held.current = children;
 
   useEffect(() => {
     if (!open) return;
@@ -60,23 +72,21 @@ export function Modal({
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open && !leaving) return null;
 
   return createPortal(
-    <div className="modal-overlay" onMouseDown={onClose}>
+    <div className={`modal-overlay${leaving ? ' is-leaving' : ''}`} onMouseDown={leaving ? undefined : onClose} aria-hidden={leaving || undefined} inert={leaving}>
       <div
         className="modal-panel"
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
+        role={leaving ? undefined : 'dialog'}
+        aria-modal={leaving ? undefined : 'true'}
+        aria-label={leaving ? undefined : label}
         tabIndex={-1}
         ref={panelRef}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <button type="button" className="modal-close" aria-label={t('common.close')} onClick={onClose}>
-          <CloseIcon size={18} />
-        </button>
-        {children}
+        <CloseButton className="modal-close" label={t('common.close')} onClick={onClose} />
+        {open ? children : held.current}
       </div>
     </div>,
     document.body,

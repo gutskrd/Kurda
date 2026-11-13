@@ -10,6 +10,8 @@ import { Icon, type IconName } from './Icon';
 import { useTheme } from './ThemeProvider';
 import { Toggle } from './Toggle';
 import { layout, radii, spacing, typography } from './tokens';
+import { pressedDim } from './motion';
+import { heldDim } from './MotionParts';
 
 /**
  * Sort and filter, as one sheet: the pieces the community wall (feed/FeedFilter.tsx)
@@ -67,7 +69,7 @@ export function FilterSheet({
           accessibilityRole="button"
           accessibilityState={{ disabled: resetDisabled }}
           hitSlop={8}
-          style={styles.reset}
+          style={({ pressed }) => [styles.reset, pressed && heldDim]}
         >
           <Text style={[styles.resetText, { color: resetDisabled ? colors.textSecondary : colors.textPrimary }]}>{resetLabel}</Text>
         </Pressable>
@@ -219,14 +221,22 @@ export function FilterChip({
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityHint={t('feed.sortFilter.button')}
-        style={[styles.chipMain, { flexDirection: dir.row }]}
+        // drawn 36 points tall, caught at a fingertip's 44
+        hitSlop={{ top: 4, bottom: 4 }}
+        style={({ pressed }) => [styles.chipMain, { flexDirection: dir.row }, pressed && heldDim]}
       >
         {icon ? <Icon name={icon} size={16} color={colors.textPrimary} /> : null}
         <Text style={[styles.chipText, { color: colors.textPrimary }]} numberOfLines={1}>
           {label}
         </Text>
       </Pressable>
-      <Pressable onPress={onClear} accessibilityRole="button" accessibilityLabel={clearLabel} hitSlop={8} style={styles.chipClear}>
+      <Pressable
+        onPress={onClear}
+        accessibilityRole="button"
+        accessibilityLabel={clearLabel}
+        hitSlop={8}
+        style={({ pressed }) => [styles.chipClear, pressed && heldDim]}
+      >
         <Icon name="close" size={14} color={colors.textSecondary} />
       </Pressable>
     </View>
@@ -253,7 +263,7 @@ const styles = StyleSheet.create({
   pill: { alignItems: 'center', gap: 6, minHeight: 36, paddingHorizontal: spacing.md - 2, borderRadius: radii.pill, justifyContent: 'center' },
   pillText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   pillCount: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   toggle: { alignItems: 'center', gap: spacing.sm + 2, minHeight: MIN_TOUCH_TARGET + 4, paddingHorizontal: spacing.sm, marginTop: spacing.sm },
   footer: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingTop: spacing.sm + 4, borderTopWidth: StyleSheet.hairlineWidth, marginHorizontal: -layout.gutter, paddingHorizontal: layout.gutter },
   reset: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.xs },

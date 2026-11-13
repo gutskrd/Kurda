@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { PressableScale } from '../../theme/MotionParts';
+import { PressableScale, heldDim } from '../../theme/MotionParts';
 import type { StoryDetail, StoryGameView, StoryGlossEntry } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
 import { describeError } from '../../api/errors';
@@ -20,6 +20,7 @@ import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextPro
 import { Note, Sheet, useFocusOn } from '../ui';
 import { closesSoon, isTimed, secondsLeft, useTicker } from './clock';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
+import { pressedDim } from '../../theme/motion';
 
 /** Options are numbered 1–4, the same numbers the web's keys use. */
 export const OPTION_MIN_HEIGHT = 60;
@@ -190,7 +191,12 @@ export function Question({
         ) : null
       ) : null}
       {q.promptEn ? (
-        <Pressable onPress={() => update({ englishUnder: !english })} accessibilityRole="button" style={styles.toggle} hitSlop={8}>
+        <Pressable
+          onPress={() => update({ englishUnder: !english })}
+          accessibilityRole="button"
+          style={({ pressed }) => [styles.toggle, pressed && heldDim]}
+          hitSlop={8}
+        >
           <Text style={[styles.toggleText, { color: colors.primary }]}>{english ? t('stories.question.hideEnglish') : t('stories.question.showEnglish')}</Text>
         </Pressable>
       ) : null}
@@ -212,7 +218,7 @@ export function Question({
                 {
                   flexDirection: storyRowDirection(dialect),
                   backgroundColor: on ? colors.primary : colors.glassFill,
-                  opacity: locked && !on ? 0.55 : pressed ? 0.85 : 1,
+                  opacity: locked && !on ? 0.55 : pressed ? pressedDim : 1,
                 },
               ]}
             >

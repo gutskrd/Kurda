@@ -36,6 +36,7 @@ import { KIND_LABEL, kindWithCount, withinBalance } from '../shop/format';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from '../shop/ItemFilters';
 import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type SentGift } from './api';
 import { Loading } from '../theme/Loading';
+import { pressedDim } from '../theme/motion';
 
 /** A friend a gift can go to. */
 export interface GiftFriend {
@@ -186,7 +187,7 @@ function CheckRow({
       aria-checked={checked}
       aria-disabled={disabled}
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.checkRow, { flexDirection: dir.row, opacity: disabled ? 0.45 : pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.checkRow, { flexDirection: dir.row, opacity: disabled ? 0.45 : pressed ? pressedDim : 1 }]}
     >
       {avatar}
       <Text
@@ -376,7 +377,7 @@ function WhatStep({
           {
             backgroundColor: colors.controlTrack,
             borderColor: selected ? colors.gold : 'transparent',
-            opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
+            opacity: disabled ? 0.45 : pressed ? pressedDim : 1,
           },
         ]}
       >

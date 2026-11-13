@@ -9,6 +9,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { rateUrl } from './appInfo';
 import { RatingBox } from './RatingBox';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * "Send feedback" and "Rate Hevalo", in Settings → About.
@@ -49,7 +50,7 @@ export function FeedbackSettingsRows({
               onPress={() => setOpen(false)}
               accessibilityRole="button"
               accessibilityLabel={t('common.close')}
-              style={styles.close}
+              style={({ pressed }) => [styles.close, pressed && heldDim]}
             >
               <Icon name="close" size={22} color={colors.textSecondary} />
             </Pressable>

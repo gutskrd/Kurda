@@ -141,7 +141,10 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
           <RatedChoice value={rated} onChange={setRated} />
         </View>
         <ClayButton
-          label={busy ? t('games.creating') : t('games.rhymeMatch.create')}
+          label={t('games.rhymeMatch.create')}
+          // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
+          accessibilityLabel={busy ? t('games.creating') : undefined}
+          busy={busy}
           icon="play"
           tone="primary"
           onPress={() => void create()}
@@ -353,14 +356,18 @@ function MatchRoom({
           {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
           {match.me == null ? (
             <ClayButton
-              label={busy ? t('games.joining') : t('games.rhymeMatch.join')}
+              label={t('games.rhymeMatch.join')}
+              accessibilityLabel={busy ? t('games.joining') : undefined}
+              busy={busy}
               tone="primary"
               onPress={() => void act(() => joinMatch(client, id))}
               style={styles.stretch}
             />
           ) : isHost && playerCount >= 2 ? (
             <ClayButton
-              label={busy ? t('games.starting') : t('games.rhymeMatch.start')}
+              label={t('games.rhymeMatch.start')}
+              accessibilityLabel={busy ? t('games.starting') : undefined}
+              busy={busy}
               tone="primary"
               onPress={() => {
                 haptic('tap');

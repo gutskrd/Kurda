@@ -17,7 +17,9 @@ import { navigation } from '../play/testing/navigation';
 import { setListsUpcomingGames } from '../games/learnGames';
 import { forgetLastLetterAvailability } from '../lastletter/availability';
 import { resetCourseDialect } from './courseDialect';
-import { GAME_CARDS, GamesView, featuredCard } from './GamesView';
+import { GAME_CARDS } from '../games/gameCards';
+import { joined } from '../play/joining';
+import { GamesView, featuredCard } from './GamesView';
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -54,6 +56,48 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.useRealTimers();
+});
+
+/*
+ * Join on an invite used to take the row away, wait for the server to accept
+ * it, and only then open the lobby. The lobby opens at once now, and its own
+ * first read waits for the accept already on its way (play/joining.ts).
+ */
+describe('an invite on the Games screen', () => {
+  const invite = {
+    id: 'inv1',
+    game: 'wordle-battle',
+    lobbyId: 'b7',
+    status: 'pending',
+    from: { name: 'azad', avatarUrl: null },
+    summary: {},
+    rematch: false,
+    createdAt: new Date(A_DAY_THE_RACE_IS_FEATURED - 10_000).toISOString(),
+    expiresAt: new Date(A_DAY_THE_RACE_IS_FEATURED + 100_000).toISOString(),
+  };
+
+  it('opens the lobby at once, before the server has answered, and holds the lobby’s first read until it has', async () => {
+    let accepted: (r: unknown) => void = () => undefined;
+    const client = fakeClient({
+      ...base,
+      'GET /play/invites': ok({ incoming: [invite], outgoing: [] }),
+      'POST /play/invites/inv1/accept': () => new Promise((resolve) => (accepted = resolve)),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<GamesView />);
+    fireEvent.click(await screen.findByRole('button', { name: /azad/ }));
+    // the lobby is asked for in the same breath as the accept is sent
+    expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'b7' });
+    expect(client.calls.some((c) => c.path === '/play/invites/inv1/accept')).toBe(true);
+    // somebody not in it yet would be refused the lobby: its read waits
+    let read = false;
+    void joined('b7').then(() => (read = true));
+    await Promise.resolve();
+    expect(read).toBe(false);
+    accepted(ok({ game: 'wordle-battle', lobbyId: 'b7' }));
+    await joined('b7');
+    expect(read).toBe(true);
+  });
 });
 
 describe('the games list', () => {

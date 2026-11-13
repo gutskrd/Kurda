@@ -19,6 +19,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, typography } from '../theme/tokens';
 import type { AlphabetAudio } from './audio';
 import type { ClipPlayer } from './useClipPlayer';
+import { pressedDim } from '../theme/motion';
 
 /**
  * The small parts the alphabet screen and its practice are made of: a sound's
@@ -74,7 +75,7 @@ export function PlayButton({
       hitSlop={size === 'regular' ? 4 : 0}
       style={({ pressed }) => [
         styles.play,
-        { width: side, height: side, backgroundColor: colors.controlTrack, borderColor: on ? colors.gold : 'transparent', opacity: pressed ? 0.7 : 1 },
+        { width: side, height: side, backgroundColor: colors.controlTrack, borderColor: on ? colors.gold : 'transparent', opacity: pressed ? pressedDim : 1 },
       ]}
     >
       {/* the speaker points the same way in every language */}

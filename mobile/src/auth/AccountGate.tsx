@@ -16,6 +16,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useAuth } from './AuthContext';
 import { onGuestRefused } from './guestRefused';
+import { pressedDim } from '../theme/motion';
 
 /**
  * The account gate: where a guest meets the things only an account can do.
@@ -285,5 +286,5 @@ const styles = StyleSheet.create({
   primary: { marginTop: spacing.sm },
   dismiss: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   dismissText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
 });

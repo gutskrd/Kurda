@@ -16,6 +16,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { giftItem } from './gifts';
 import { SearchField } from '../theme/SearchField';
 import { Loading } from '../theme/Loading';
+import { heldDim, heldRow } from '../theme/MotionParts';
 
 interface Friend {
   userId: string;
@@ -125,7 +126,7 @@ export function GiftSheet({
                 accessibilityRole="button"
                 // each row names its friend: a screen reader heard "Send <item>" on every one
                 accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
-                style={styles.row}
+                style={({ pressed }) => [styles.row, pressed && heldRow(colors.controlTrack)]}
               >
                 <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
                 <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -148,7 +149,7 @@ export function GiftSheet({
         </Text>
       ) : null}
 
-      <Pressable onPress={onClose} accessibilityRole="button" style={styles.cancel}>
+      <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => [styles.cancel, pressed && heldDim]}>
         <Text style={[styles.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
       </Pressable>
     </BottomSheet>

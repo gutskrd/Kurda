@@ -2,7 +2,9 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
-import { BlockIcon, CloseIcon, FlagIcon, MoreIcon } from '../components/icons';
+import { CloseButton } from '../components/CloseButton';
+import { ConfirmButton } from '../components/ConfirmButton';
+import { BlockIcon, FlagIcon, MoreIcon, RemovePersonIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { ReportSheet } from '../reports/ReportSheet';
 import { keepInView } from '../reports/keepInView';
@@ -22,11 +24,17 @@ type Panel = null | 'menu' | 'report' | 'block';
  * tells nobody; a report tells a moderator and changes nothing you can see.
  * Most people want both, so neither is offered as a substitute for the other —
  * and the report sheet, once sent, offers the block in one tap.
+ *
+ * A row of your friends list has the same ⋯ (pages/Friends.tsx), where
+ * taking somebody off the list (`remove`) comes first in it: the row keeps
+ * the one thing done often, a game with them, and what ends a friendship is
+ * a press further away, asked twice.
  */
 export function UserActions({
   userId,
   name,
   onBlocked,
+  remove,
   className = '',
 }: {
   userId: string;
@@ -34,6 +42,8 @@ export function UserActions({
   name: string;
   /** called once the block has actually landed */
   onBlocked?: () => void;
+  /** a friend, who can be taken off the list from here: the item's word, what it means in full, and the doing */
+  remove?: { label: string; title: string; onConfirm: () => void | Promise<void> };
   className?: string;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -112,6 +122,23 @@ export function UserActions({
 
       {panel === 'menu' && (
         <div className="user-menu" role="menu" ref={popRef}>
+          {remove && (
+            // pressed once it asks, pressed again it is done (ConfirmButton), and the menu goes with it
+            <ConfirmButton
+              role="menuitem"
+              className="user-menu-item"
+              title={remove.title}
+              label={
+                <>
+                  <RemovePersonIcon size={16} /> {remove.label}
+                </>
+              }
+              onConfirm={async () => {
+                await remove.onConfirm();
+                setPanel(null);
+              }}
+            />
+          )}
           <button type="button" role="menuitem" className="user-menu-item" onClick={() => open('report')}>
             <FlagIcon size={16} /> {t('moderation.report')}
           </button>
@@ -125,9 +152,7 @@ export function UserActions({
         <div className="user-menu user-menu-wide" role="dialog" aria-label={t('friends.blockWho', { name })} ref={popRef}>
           <div className="user-menu-head">
             <strong>{t('moderation.blockWhoTitle', { name })}</strong>
-            <button type="button" className="user-menu-x" onClick={() => setPanel(null)} aria-label={t('common.close')}>
-              <CloseIcon size={15} />
-            </button>
+            <CloseButton className="is-inline" label={t('common.close')} onClick={() => setPanel(null)} />
           </div>
           <p className="user-menu-note">{t('moderation.blockNote')}</p>
           {error && <div className="msg msg-error">{error}</div>}

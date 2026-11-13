@@ -147,6 +147,48 @@
   }
 }
 
+/* ---- the close button (components/CloseButton.tsx) ---------------------- */
+/*
+ * One for every dialog, sheet, panel and toast: a round button a finger's
+ * width across with the drawn ✕ in it. Its ground is the opaque surface, so
+ * it reads on a photograph (a profile's artwork fills its dialog) as it does
+ * on a panel, in either scheme. Whoever uses it only says where it goes.
+ */
+.close-btn {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-solid);
+  color: var(--ink-2);
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out),
+    transform var(--dur) var(--ease-spring);
+}
+.close-btn:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  color: var(--ink);
+}
+.close-btn:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+  transition-duration: var(--dur-fast), var(--dur-fast), var(--dur-fast), 80ms;
+}
+.close-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+/* where it sits in a row of words (a menu's head, a toast): the row keeps the height its words give it */
+.close-btn.is-inline {
+  margin-block: -8px;
+}
+
 /* ---- forms ------------------------------------------------------------- */
 .field {
   display: flex;

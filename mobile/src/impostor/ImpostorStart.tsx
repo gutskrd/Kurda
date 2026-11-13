@@ -17,6 +17,7 @@ import { kurdishStyle } from './ImpostorBoard';
 import { Cloth, GoldButton } from './parts';
 import { TABLE } from './table';
 import { WAY_KEY, WAY_NOTE } from './ways';
+import { pressedDim } from '../theme/motion';
 
 const STEPS = ['games.impostor.how.card', 'games.impostor.how.clues', 'games.impostor.how.vote'] as const;
 
@@ -72,7 +73,7 @@ export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }
           onPress={() => setInviting(true)}
           accessibilityRole="button"
           accessibilityLabel={t('games.party.withFriends')}
-          style={({ pressed }) => [styles.friends, { opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [styles.friends, { opacity: pressed ? pressedDim : 1 }]}
         >
           <Icon name="people" size={18} color={TABLE.ink} />
           <Text style={styles.friendsText}>{t('games.party.withFriends')}</Text>
@@ -89,7 +90,7 @@ export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }
             onPress={() => onCouch({ way })}
             accessibilityRole="button"
             accessibilityLabel={`${t(WAY_KEY[way])}. ${t(WAY_NOTE[way])}`}
-            style={({ pressed }) => [styles.way, { flexDirection: dir.row, backgroundColor: `${impostorWayTone(way)}26`, opacity: pressed ? 0.8 : 1 }]}
+            style={({ pressed }) => [styles.way, { flexDirection: dir.row, backgroundColor: `${impostorWayTone(way)}26`, opacity: pressed ? pressedDim : 1 }]}
           >
             <View style={[styles.wayArt, { backgroundColor: `${impostorWayTone(way)}3a` }]}>
               <WayArt way={way} size={60} />
@@ -119,7 +120,7 @@ export function ImpostorStart({ onCouch }: { onCouch: (ask?: CouchAsk) => void }
                   onPress={() => onCouch({ category: c.slug })}
                   accessibilityRole="button"
                   accessibilityLabel={meaning ? `${c.ku} · ${meaning}` : c.ku}
-                  style={({ pressed }) => [styles.cat, { backgroundColor: `${impostorCategoryTone(c.slug)}26`, opacity: pressed ? 0.8 : 1 }]}
+                  style={({ pressed }) => [styles.cat, { backgroundColor: `${impostorCategoryTone(c.slug)}26`, opacity: pressed ? pressedDim : 1 }]}
                 >
                   <CategoryArt category={c.slug} size={52} />
                   <Text style={[c.ku.length > 9 ? styles.catNameLong : styles.catName, { color: colors.textPrimary, writingDirection: script.writingDirection }]} numberOfLines={2}>

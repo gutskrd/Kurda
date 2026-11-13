@@ -45,7 +45,7 @@
   background: var(--scrim);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-  animation: fade 0.15s ease;
+  animation: fade var(--dur-fast) var(--ease-out);
 }
 .sheet-panel {
   position: relative;
@@ -62,7 +62,8 @@
   backdrop-filter: blur(30px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);
   outline: none;
-  animation: sheet-rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* how long and on which curve is motion.css's to say: it springs in the middle of a wide screen, and slides without overshoot on a phone */
+  animation: sheet-rise var(--dur) var(--ease-out);
 }
 @keyframes sheet-rise {
   from {
@@ -70,28 +71,12 @@
     transform: translateY(12px) scale(0.98);
   }
 }
-.sheet-grip {
-  display: none;
-}
+/* where the close button goes; how it looks is the one close button's own (ui.css `.close-btn`) */
 .sheet-close {
   position: absolute;
   top: 12px;
   inset-inline-end: 12px;
   z-index: 3;
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--ink-2);
-  cursor: pointer;
-}
-.sheet-close:hover {
-  color: var(--ink);
-  background: var(--surface-2);
 }
 /* a phone: up from the bottom edge, where the thumb already is */
 @media (max-width: 640px) {
@@ -106,14 +91,6 @@
     border-bottom: 0;
     padding: 22px 16px calc(20px + env(safe-area-inset-bottom));
     animation-name: sheet-up;
-  }
-  .sheet-grip {
-    display: block;
-    width: 40px;
-    height: 4px;
-    margin: -8px auto 12px;
-    border-radius: var(--r-pill);
-    background: var(--border-strong);
   }
 }
 @keyframes sheet-up {
@@ -1767,13 +1744,12 @@ button.gift-bubble:active {
   padding: 8px 8px 8px 10px;
   border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
   border-radius: var(--r-lg);
+  /* the scheme's own panel under a touch of the gift's gold: it was a fixed near-black, which the light scheme's dark ink could not be read on */
   background:
-    radial-gradient(120% 140% at 0% 0%, rgba(240, 194, 74, 0.22), transparent 60%),
-    rgba(18, 21, 27, 0.96);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
+    radial-gradient(120% 140% at 0% 0%, var(--gold-soft), transparent 60%),
+    var(--panel-bg);
   box-shadow: var(--shadow);
-  animation: gift-arrive 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: gift-arrive var(--dur-slow) var(--ease-out);
 }
 @keyframes gift-arrive {
   from {
@@ -1794,7 +1770,7 @@ button.gift-bubble:active {
 .gift-arrival-who .friend-avatar {
   width: 22px;
   height: 22px;
-  border: 2px solid rgba(18, 21, 27, 0.96);
+  border: 2px solid var(--panel-bg);
 }
 .gift-arrival-text {
   flex: 1;
@@ -1804,24 +1780,8 @@ button.gift-bubble:active {
   overflow-wrap: anywhere;
 }
 .gift-arrival-open {
-  min-height: 40px;
+  min-height: 44px;
   min-width: 64px;
-}
-.gift-arrival-close {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  display: inline-grid;
-  place-items: center;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-3);
-  cursor: pointer;
-}
-.gift-arrival-close:hover {
-  color: var(--ink);
-  background: var(--surface-2);
 }
 
 /* ---- a group gift some friends could not be given: who got it, and why not -- */

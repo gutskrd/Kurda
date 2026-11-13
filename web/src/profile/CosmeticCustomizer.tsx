@@ -6,6 +6,7 @@ import { describeError, requestId } from '../lib/api';
 import type { InventoryItem, MeProfile, PurchaseResult, ShopItem } from '../lib/types';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { StarIcon } from '../components/icons';
 import {
   ItemSearch,
   ItemSort,
@@ -386,7 +387,11 @@ function CosmeticTile({
         {(equipped || tile.owned) && (
           <span className={`cosmetic-state${equipped ? ' is-equipped' : ''}`}>{equipped ? t('edit.equipped') : t('shop.owned')}</span>
         )}
-        {tile.premiumOnly && <span className="cosmetic-badge" title={t('profile.premium')}>★</span>}
+        {tile.premiumOnly && (
+          <span className="cosmetic-badge" title={t('profile.premium')}>
+            <StarIcon size={12} weight="fill" />
+          </span>
+        )}
       </div>
       <figcaption className="cosmetic-caption">
         <span className="cosmetic-name" title={tile.name}>

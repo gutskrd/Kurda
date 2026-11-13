@@ -1,6 +1,7 @@
 import type { RatedState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
+import { joined } from '../play/joining';
 import type { Feedback, ScoredGuess } from './board';
 
 export type Difficulty = 'easy' | 'medium' | 'hard';
@@ -111,7 +112,8 @@ export const guessInBattle = (client: ApiClient, id: string, word: string): Prom
   client.post(`/wordle/battles/${id}/guesses`, { word });
 
 export const getBattle = (client: ApiClient, id: string): Promise<ApiResult<BattleState>> =>
-  client.get(`/wordle/battles/${id}`);
+  // an invite to it accepted a moment ago is let land first: until it has, this is nobody's battle (play/joining.ts)
+  joined(id).then(() => client.get(`/wordle/battles/${id}`));
 
 /** 409s until the match is over — the word is in here, so it cannot come sooner. */
 export const getResults = (client: ApiClient, id: string): Promise<ApiResult<BattleResults>> =>

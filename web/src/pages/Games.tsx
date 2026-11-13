@@ -110,9 +110,12 @@ function Company({ company }: { company: readonly Company[] }): React.JSX.Elemen
 }
 
 /**
- * A game's ways in. Signed in: one button for each page it has, the first in
- * gold. Signed out there is nothing to open — every game keeps its score on
- * the server against the player — so the one thing offered is the way to an
+ * A game's ways in. Signed in: one button for each page it has. Only the game
+ * put forward has its first in gold (`large`): gold is the one thing to press
+ * on a screen, and a shelf where every card had a gold button had eight of
+ * them. On the shelf the ways in are the quiet buttons, all of one weight.
+ * Signed out there is nothing to open — every game keeps its score on the
+ * server against the player — so the one thing offered is the way to an
  * account.
  */
 function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: boolean; large?: boolean }): React.JSX.Element {
@@ -130,7 +133,7 @@ function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: bo
   return (
     <div className="gp-ways">
       {game.ways.map((way, i) => (
-        <Link key={way.href} to={way.href} className={`btn ${i === 0 ? 'btn-primary gp-play' : 'btn-secondary'}${size}`}>
+        <Link key={way.href} to={way.href} className={`btn ${i === 0 && large ? 'btn-primary gp-play' : 'btn-secondary'}${size}`}>
           {t(way.labelKey)}
         </Link>
       ))}
@@ -141,11 +144,15 @@ function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: bo
 /** One game: its picture on a tile of its own colour, what it is, and its ways in. */
 function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry; signedIn: boolean; hero?: boolean; place?: number }): React.JSX.Element {
   const t = useT();
+  // a hand on a shelf card — over it, on it, or the keyboard in it — plays its emblem through once more
+  const [again, setAgain] = useState(0);
+  const stir = hero ? undefined : (): void => setAgain((n) => n + 1);
   return (
-    <article className={`gp-card${hero ? ' gp-card--hero' : ''}`} style={toneOf(game.id)}>
+    <article className={`gp-card${hero ? ' gp-card--hero' : ''}`} style={toneOf(game.id)} onPointerEnter={stir} onPointerDown={stir} onFocus={stir}>
       <div className="gp-card-art">
-        {/* every emblem plays its own loop, each card a little after the one before, so the shelf never moves as one */}
-        <GameArt game={game.id} size={hero ? 148 : 84} moving after={hero ? 0 : 900 + place * 1300} />
+        {/* the game put forward acts for as long as it is in view; on the shelf each emblem plays through once as it
+            arrives, a moment after the card before it, and then rests — one thing moving at a time, never the shelf */}
+        {hero ? <GameArt game={game.id} size={148} moving /> : <GameArt game={game.id} size={84} moving="once" after={300 + place * 160} again={again} />}
       </div>
       <div className="gp-card-text">
         {hero && <p className="gp-kicker">{t('games.featured')}</p>}

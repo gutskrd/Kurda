@@ -8,9 +8,12 @@
  * its side, picture first, so its words have room at any width: one to a row
  * on a phone, two and then three where the page has the room for them.
  *
- * Gold is for the one thing to press on a card. Each emblem plays its own
- * short loop (games/GameArt.tsx); on this page only transform, opacity and
- * colour move, and nothing moves for a reader who asked for less motion.
+ * Gold is for the one thing to press on the page: the game put forward
+ * today's Play. The shelf's ways in are the quiet buttons. The featured
+ * emblem acts for as long as it is in view; a shelf card's plays through once
+ * as it arrives and again under a hand, then rests (games/GameArt.tsx). On
+ * this page only transform, opacity and colour move, and nothing moves for a
+ * reader who asked for less motion.
  */
 .gp {
   --gp-gap: var(--space-3);
@@ -90,21 +93,21 @@
 .gp-ways .btn {
   flex: 0 1 auto;
 }
-/* the one thing to press: gold, standing off the card on its own edge, as the party games' Play does */
+/* the one thing to press: the stage's gold (tokens.css), standing off the card on its own edge, as the party games' Play does */
 .gp-play.btn {
-  --lip: #a8791a;
+  --lip: var(--stage-gold-lip);
   border: 0;
-  background: #f2b632;
-  color: #2a1d05;
+  background: var(--stage-gold);
+  color: var(--stage-gold-ink);
   font-weight: 800;
   box-shadow: 0 3px 0 var(--lip);
   transition:
     transform var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) var(--ease-out),
-    background var(--dur-fast) ease;
+    background var(--dur-fast) var(--ease-out);
 }
 .gp-play.btn:hover {
-  background: #f7c651;
+  background: color-mix(in srgb, var(--stage-gold) 82%, #fff);
 }
 .gp-play.btn:active {
   transform: translateY(2px);
@@ -250,6 +253,12 @@
   border-color: var(--ink);
   background: var(--ink);
   color: var(--surface-solid);
+}
+/* under a finger, a finger's height */
+@media (pointer: coarse) {
+  .gp-filter-chip {
+    min-height: 44px;
+  }
 }
 
 /* ---- the shelf ---------------------------------------------------------------------- */

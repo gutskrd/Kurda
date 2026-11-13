@@ -31,6 +31,7 @@ import { storyTextProps, storyTextStyle } from './storyText';
 import { ChoiceChips, Note, SectionLabel, Sheet } from './ui';
 import { RatedChoice } from '../ranks/Rated';
 import { useRatedChoice } from '../ranks/ratedPrefs';
+import { pressedDim } from '../theme/motion';
 
 /** What a refusal to create a game means, in the player's language. */
 export function createErrorMessage(error: ApiError, t: Translate): string {
@@ -143,7 +144,7 @@ export function StoryPresetFields({
                     {...(s ? storyTextProps(s.dialect) : null)}
                     style={({ pressed }) => [
                       styles.pickRow,
-                      { backgroundColor: on ? colors.successFill : colors.controlTrack, opacity: pressed ? 0.8 : 1 },
+                      { backgroundColor: on ? colors.successFill : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
                     ]}
                   >
                     <View style={[styles.radio, { borderColor: on ? colors.primary : colors.textSecondary }]}>

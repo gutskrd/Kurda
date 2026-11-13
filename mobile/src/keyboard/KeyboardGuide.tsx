@@ -25,6 +25,7 @@ import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { HevaloDeer } from '../feedback/HevaloDeer';
 import { guidePlatform, guideSteps, lettersTyped, stepParts, tryLetters } from './guide';
 import { useKeyboardPrefs } from './prefs';
+import { heldDim } from '../theme/MotionParts';
 
 /** The phones this card has steps for; the browser has its own guide for computers. */
 const PHONES: readonly KeyboardPlatform[] = ['ios', 'android'];
@@ -96,7 +97,7 @@ export function KeyboardGuide({
             accessibilityRole="button"
             accessibilityLabel={t('common.close')}
             hitSlop={8}
-            style={styles.close}
+            style={({ pressed }) => [styles.close, pressed && heldDim]}
           >
             <Icon name="close" size={22} color={colors.textSecondary} />
           </Pressable>
@@ -131,9 +132,10 @@ export function KeyboardGuide({
                     }}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: on }}
-                    style={[
+                    style={({ pressed }) => [
                       styles.platform,
                       { backgroundColor: on ? colors.primary : colors.controlTrack },
+                      pressed && heldDim,
                     ]}
                   >
                     <Text style={[styles.platformText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>

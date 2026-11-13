@@ -1,8 +1,9 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { CloseIcon } from './icons';
+import { CloseButton } from './CloseButton';
 import { escapeClearsField } from './SearchField';
 import { useT } from '../i18n/I18nProvider';
+import { useLeaving } from '../lib/motion';
 import { lockPageScroll } from '../lib/scrollLock';
 
 /**
@@ -23,6 +24,13 @@ import { lockPageScroll } from '../lib/scrollLock';
  * inside that panel, because a backdrop filter makes its own containing block
  * for anything fixed. And its Escape is caught before anything under it hears
  * it, so closing the sheet does not also close the profile it was opened from.
+ *
+ * Closed, it leaves the way it came — down off the bottom edge on a phone —
+ * as a Modal does (lib/motion.ts `useLeaving`): only its picture stays for
+ * that moment, inert and no longer a dialog, with the focus already back
+ * where it was. There is no grip at its top: a grip says "drag me", and this
+ * sheet is closed by its ✕, by Escape and by a press beside it, so the grip
+ * that used to be drawn there promised something that did not happen.
  */
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -70,6 +78,10 @@ export function Sheet({
   // the latest onClose without re-running the effect (and refocusing) on every render
   const closeRef = useRef(onClose);
   closeRef.current = onClose;
+  const leaving = useLeaving(open);
+  // what it held when it was last open: most callers stop passing it the moment they close it
+  const held = useRef(children);
+  if (open) held.current = children;
 
   useEffect(() => {
     if (!open) return;
@@ -96,24 +108,21 @@ export function Sheet({
     };
   }, [open]);
 
-  if (!open) return null;
+  if (!open && !leaving) return null;
 
   return createPortal(
-    <div className="sheet-overlay" onMouseDown={onClose}>
+    <div className={`sheet-overlay${leaving ? ' is-leaving' : ''}`} onMouseDown={leaving ? undefined : onClose} aria-hidden={leaving || undefined} inert={leaving}>
       <div
         className={`sheet-panel${className ? ` ${className}` : ''}`}
-        role="dialog"
-        aria-modal="true"
-        aria-label={label}
+        role={leaving ? undefined : 'dialog'}
+        aria-modal={leaving ? undefined : 'true'}
+        aria-label={leaving ? undefined : label}
         tabIndex={-1}
         ref={panelRef}
         onMouseDown={(e) => e.stopPropagation()}
       >
-        <span className="sheet-grip" aria-hidden />
-        <button type="button" className="sheet-close" aria-label={t('common.close')} onClick={onClose}>
-          <CloseIcon size={18} />
-        </button>
-        {children}
+        <CloseButton className="sheet-close" label={t('common.close')} onClick={onClose} />
+        {open ? children : held.current}
       </div>
     </div>,
     document.body,

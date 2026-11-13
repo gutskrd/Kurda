@@ -176,13 +176,9 @@
   text-transform: uppercase;
   color: var(--ink-3);
 }
+/* the one close button (ui.css `.close-btn`), here only when the rail is a drawer */
 .rail-close {
   display: none; /* the drawer needs it; the fixed rail does not */
-  border: 0;
-  background: transparent;
-  color: var(--ink-3);
-  cursor: pointer;
-  padding: 2px;
 }
 .rail-body {
   flex: 1;
@@ -485,16 +481,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* where the toast's close button goes (the one close button, ui.css `.close-btn`) */
 .rail-toast-x {
-  flex: none;
-  border: 0;
-  background: transparent;
-  color: var(--ink-4);
-  padding: 0 10px;
-  cursor: pointer;
-}
-.rail-toast-x:hover {
-  color: var(--ink);
+  align-self: center;
+  margin-inline-end: 6px;
 }
 .rail-toast-timer {
   position: absolute;
@@ -595,7 +585,7 @@
     visibility: visible;
   }
   .rail-close {
-    display: block;
+    display: inline-grid;
   }
   .rail-scrim {
     display: block;
@@ -799,23 +789,9 @@
   background: var(--bg);
 }
 
-/* the dock's close sits where a window's close sits: the far end of its bar */
+/* the dock's close sits where a window's close sits: the far end of its bar (the one close button, ui.css `.close-btn`) */
 .chat-dock-close {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
   margin-inline-start: auto;
-  border: 0;
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--ink-4);
-  cursor: pointer;
-}
-.chat-dock-close:hover {
-  color: var(--ink);
-  background: var(--surface-2);
 }
 
 /* a group row is the friend row's shape: name links, bubble docks */

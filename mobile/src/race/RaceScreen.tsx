@@ -11,7 +11,7 @@ import {
   type NativeSyntheticEvent,
   type TextInputSelectionChangeEventData,
 } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import {
   BACKTICK_WAIT_MS,
   compareTyping,
@@ -292,7 +292,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               onPress={() => setSettingsOpen(true)}
               accessibilityRole="button"
               accessibilityLabel={t('keyboard.settings.title')}
-              style={styles.headerButton}
+              style={({ pressed }) => [styles.headerButton, pressed && heldDim]}
             >
               <Icon name="keyboard" size={22} color={colors.textPrimary} />
             </Pressable>
@@ -377,7 +377,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                 accessibilityRole="button"
                 accessibilityLabel={t('games.race.tapToType')}
                 focusable={false}
-                style={[styles.typeArea, { backgroundColor: colors.controlTrack }]}
+                style={({ pressed }) => [styles.typeArea, { backgroundColor: colors.controlTrack }, pressed && heldDim]}
               >
                 <RaceText
                   text={shown}

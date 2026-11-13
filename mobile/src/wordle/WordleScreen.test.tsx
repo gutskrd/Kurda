@@ -6,11 +6,14 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
+// the result holds a badge's celebration back while its own plays, and that host listens to the navigator
+vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn(), leftResults: vi.fn() }));
-import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { TURN_MS, TURN_STAGGER_MS, turnMs } from './WordleBoard';
 import { WordleScreen } from './WordleScreen';
 
 /**
@@ -93,3 +96,71 @@ describe('Peyvok’s result', () => {
     expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
   });
 });
+
+/*
+ * The game's own moments. A guess used to grey the whole keyboard while it
+ * was scored, and its colours appeared between two frames; a word found was a
+ * card that was simply there.
+ */
+describe('Peyvok while it is played', () => {
+  const playing = { ...over('won'), status: 'playing' as const, guesses: [row('mal', 'ygx')], remainingAttempts: 5, target: null };
+
+  /** A game under way, with the next guess answered when the test says so. */
+  async function open(): Promise<(answer: unknown) => Promise<void>> {
+    let resolve: (answer: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'GET /wordle/stats': ok(STATS),
+      'POST /wordle/daily': ok(playing),
+      'POST /wordle/games/w1/guesses': () => new Promise((r) => (resolve = r)),
+      'GET /dictionary/search?q=dar': ok({ results: [] }),
+    } as never);
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Daily' }));
+    for (const letter of ['d', 'a', 'r']) fireEvent.click(await screen.findByRole('button', { name: letter }));
+    fireEvent.click(screen.getByRole('button', { name: 'Enter' }));
+    return (answer) => act(async () => resolve(answer));
+  }
+
+  it('leaves the keyboard as it is while a guess is scored: Enter alone says it is being seen to, and no key is taken', async () => {
+    const answer = await open();
+    expect(screen.getByTestId('peyvok-checking')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Enter' }).getAttribute('aria-busy')).toBe('true');
+    // every key is drawn as it was, not faded, and none of them takes a press meanwhile
+    const key = screen.getByRole('button', { name: 'z' });
+    expect(key.style.opacity).toBe('1');
+    fireEvent.click(key);
+    await answer(ok({ ...playing, guesses: [row('mal', 'ygx'), row('dar', 'gxg')], remainingAttempts: 4 }));
+    expect(screen.queryByTestId('peyvok-checking')).toBeNull();
+    // the letter pressed while it was being scored was not typed into the next row: only its key is called "z"
+    expect(screen.getAllByLabelText('z')).toHaveLength(1);
+  });
+
+  it('celebrates a word found by the guess just made, once', async () => {
+    const answer = await open();
+    await answer(ok(over('won')));
+    expect(await screen.findByText('Solved it!')).toBeTruthy();
+    expect(screen.getByTestId('peyvok-win-moment')).toBeTruthy();
+  });
+
+  it('only shows the result of a word found before the screen was opened', async () => {
+    testAuth.client = serving(over('won'));
+    renderWithProviders(<WordleScreen onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Daily' }));
+    expect(await screen.findByText('Solved it!')).toBeTruthy();
+    expect(screen.queryByTestId('peyvok-win-moment')).toBeNull();
+  });
+
+  it('turns nothing over under Reduce Motion: the colours are simply there', async () => {
+    const answer = await open();
+    await answer(ok({ ...playing, guesses: [row('mal', 'ygx'), row('dar', 'gxg')], remainingAttempts: 4 }));
+    expect(screen.queryAllByTestId('peyvok-cell-turning')).toHaveLength(0);
+    expect(screen.getByLabelText('d, correct')).toBeTruthy();
+  });
+
+  it('turns a scored row a cell after a cell, on the numbers a join code’s boxes turn on', () => {
+    expect(turnMs(5, false)).toBe(4 * TURN_STAGGER_MS + TURN_MS);
+    expect(turnMs(1, false)).toBe(TURN_MS);
+    expect(turnMs(5, true)).toBe(0);
+  });
+});
+

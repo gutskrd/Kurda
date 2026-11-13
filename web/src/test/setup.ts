@@ -1,6 +1,8 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach } from 'vitest';
 import { cleanup, configure } from '@testing-library/react';
+import { forgetAnswers } from '../lib/apiMemory';
+import { forgetArrivals } from '../lib/motion';
 
 /*
  * How long a findBy… or waitFor waits for the page to catch up. Testing
@@ -40,8 +42,16 @@ const userAgentStyles = document.createElement('style');
 userAgentStyles.textContent = 'mark { display: inline }';
 document.head.appendChild(userAgentStyles);
 
+/*
+ * What the app keeps for as long as a tab is open — the last answer to each
+ * question (lib/apiMemory.ts), and which lists have risen in already
+ * (lib/motion.ts) — is kept in the module, and a file of tests is one tab to
+ * the module. Each test is a new visit: it starts with nothing remembered.
+ */
 afterEach(() => {
   cleanup();
   localStorage.clear();
   sessionStorage.clear();
+  forgetAnswers();
+  forgetArrivals();
 });

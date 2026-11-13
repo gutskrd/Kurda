@@ -3,6 +3,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
+import { pressedDim } from '../theme/motion';
 
 /**
  * The way out of a screen with a big title.
@@ -22,7 +23,7 @@ export function BackButton({ onPress }: { onPress: () => void }): React.JSX.Elem
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={t('common.back')}
-      style={({ pressed }) => [styles.button, pressed && { opacity: 0.5 }]}
+      style={({ pressed }) => [styles.button, pressed && { opacity: pressedDim }]}
     >
       <Icon name="chevron-left" size={26} color={colors.textPrimary} style={flip ?? undefined} />
     </Pressable>

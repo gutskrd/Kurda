@@ -22,6 +22,8 @@ import { SLIP_KEY, partyTextError } from '../party/text';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
+import { pressedDim } from '../theme/motion';
+import { turnCard } from '../theme/animate';
 
 export type ImpostorView = MultiView<ImpostorBoard | null>;
 type Move = (body: unknown) => Promise<ApiResult<MultiMoveAnswer<ImpostorBoard | null, ImpostorOutcome>>>;
@@ -303,7 +305,7 @@ function Guess({ board, move }: { board: ImpostorBoard; move: Move }): React.JSX
             setBusy(false);
             if (res.ok) haptic(res.data.outcome.kind === 'guess' && res.data.outcome.right ? 'correct' : 'wrong');
           }}
-          style={({ pressed }) => [styles.option, { borderColor: colors.gold, backgroundColor: colors.glassFill, opacity: !board.yourGuess ? 0.6 : pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [styles.option, { borderColor: colors.gold, backgroundColor: colors.glassFill, opacity: !board.yourGuess ? 0.6 : pressed ? pressedDim : 1 }]}
         >
           <Text style={[styles.guessText, script, { color: colors.textPrimary }]}>{o}</Text>
         </Pressable>
@@ -329,7 +331,7 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
       turn.setValue(1);
       return;
     }
-    Animated.timing(turn, { toValue: 1, duration: 520, useNativeDriver: true }).start();
+    turnCard(turn).start();
   }, [reduce, turn]);
   if (!board?.reveal) return null;
   const reveal = board.reveal;
@@ -339,7 +341,8 @@ export function ImpostorReveal({ view }: { view: ImpostorView }): React.JSX.Elem
   };
   const script = kurdishStyle(board.dialect);
   const scaleX = turn.interpolate({ inputRange: [0, 0.5, 1], outputRange: [1, 0, 1] });
-  const face = turn.interpolate({ inputRange: [0, 0.5, 0.51, 1], outputRange: [0, 0, 1, 1] });
+  // the turn comes a touch past flat before it settles: the face is simply there by then
+  const face = turn.interpolate({ inputRange: [0, 0.5, 0.51, 1], outputRange: [0, 0, 1, 1], extrapolate: 'clamp' });
   return (
     <View style={styles.reveal}>
       <View accessibilityLabel={t('games.impostor.table')} style={styles.flips}>

@@ -133,13 +133,17 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
    * answer it offers is the one that keeps the progress: making the account.
    */
   const [guestLeaving, setGuestLeaving] = useState(false);
+  /*
+   * An account is asked too, in the same sheet: signing out costs it nothing
+   * that cannot be got back, but the row sits between "Sign out everywhere"
+   * and "Delete account", and a thumb that lands on it by mistake used to be
+   * out of the app, and on the sign-in screen, before it had lifted.
+   */
+  const [leaving, setLeaving] = useState(false);
   const askedLogout = () => {
-    if (!isGuest) {
-      void logout();
-      return;
-    }
     haptic('select');
-    setGuestLeaving(true);
+    if (isGuest) setGuestLeaving(true);
+    else setLeaving(true);
   };
 
   const page = (key: SettingsPageKey) => () => navigation.navigate('SettingsPage', { page: key });
@@ -279,8 +283,13 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
       ],
     },
     {
-      key: 'about',
-      title: t('settings.group.about'),
+      /*
+       * Somewhere to ask, and then what the app is and answers to. They were
+       * one list of ten rows, where the way to reach a person was the third
+       * of ten under a heading that did not say help was in it.
+       */
+      key: 'help',
+      title: t('settings.group.help'),
       entries: [
         {
           // tell us what you think, and (once the app is in the stores) rate it there
@@ -300,6 +309,12 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           terms: [t('settings.support'), SUPPORT_EMAIL],
           row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} opens={false} onPress={() => void contactSupport(t)} />,
         },
+      ],
+    },
+    {
+      key: 'about',
+      title: t('settings.group.about'),
+      entries: [
         {
           // the website's pages the app answers to, each opened on hevalo.app so there is one copy of each
           key: 'teaching',
@@ -421,6 +436,22 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         {shown.length === 0 ? <SettingsNote>{t('settings.search.none', { query: query.trim() })}</SettingsNote> : null}
         <VersionLine />
       </SettingsPage>
+
+      <BottomSheet visible={leaving} onClose={() => setLeaving(false)} title={t('settings.logout.title')} testID="logout-ask">
+        <Text style={[styles.sheetBody, dir.text, { color: colors.textSecondary }]}>{t('settings.logout.body')}</Text>
+        <View style={styles.sheetActions}>
+          <ClayButton
+            label={t('profile.logout')}
+            tone="primary"
+            size="large"
+            onPress={() => {
+              setLeaving(false);
+              void logout();
+            }}
+          />
+          <ClayButton label={t('common.cancel')} variant="outline" onPress={() => setLeaving(false)} />
+        </View>
+      </BottomSheet>
 
       <BottomSheet visible={guestLeaving} onClose={() => setGuestLeaving(false)} title={t('guest.logout.title')} testID="guest-logout">
         <Text style={[styles.sheetBody, dir.text, { color: colors.textSecondary }]}>{t('guest.logout.body')}</Text>

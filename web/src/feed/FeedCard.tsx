@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { describeError } from '../lib/api';
 import { Avatar } from '../components/Avatar';
 import { BookmarkIcon, CommentIcon, HeartIcon, RepostIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
@@ -68,7 +69,7 @@ export function FeedCard({
   function likeFromPicture(): void {
     if (waiting) return;
     setPop((n) => n + 1);
-    if (!item.engagement.liked) void engage.toggle('like');
+    if (!engage.engagement.liked) void engage.toggle('like');
   }
 
   const badge = cardKind(item);
@@ -149,37 +150,94 @@ export function FeedCard({
 }
 
 interface Engage {
-  busy: Kind | null;
+  /** the post's likes, reposts and saves as the reader sees them now: what they just pressed counted in at once */
+  engagement: FeedItem['engagement'];
   /** turned on here, by a press: only then does its icon land with a pop (and a like with its sparks) */
   justOn: { kind: Kind; n: number } | null;
+  /** why the last press was taken back, said under the row for a few seconds; null otherwise */
+  refused: string | null;
   toggle: (kind: Kind) => Promise<void>;
 }
 
+/** How long "that did not go through" stays under the row. */
+const REFUSED_MS = 4000;
+
+const STATE: Record<Kind, 'liked' | 'reposted' | 'bookmarked'> = { like: 'liked', repost: 'reposted', bookmark: 'bookmarked' };
+const COUNT: Record<Kind, 'likes' | 'reposts' | 'bookmarks'> = { like: 'likes', repost: 'reposts', bookmark: 'bookmarks' };
+
+/** The server's numbers with the reader's unanswered presses laid over them. */
+function withPresses(e: FeedItem['engagement'], pressed: Partial<Record<Kind, boolean>>): FeedItem['engagement'] {
+  const next = { ...e };
+  for (const kind of Object.keys(pressed) as Kind[]) {
+    const on = pressed[kind];
+    if (on === undefined || on === e[STATE[kind]]) continue;
+    next[STATE[kind]] = on;
+    next[COUNT[kind]] = Math.max(0, (e[COUNT[kind]] ?? 0) + (on ? 1 : -1));
+  }
+  return next;
+}
+
 /**
- * Liking, reposting and saving a post: one at a time, each a toggle the
- * server has the last word on.
+ * Liking, reposting and saving a post: each a toggle that answers the press
+ * itself. The heart fills and its count moves the moment it is pressed — the
+ * sparks go with a heart that is filling, never ahead of one — and the server
+ * is told behind that. Its answer has the last word: its totals replace the
+ * guess (somebody else may have liked the post meanwhile), and a press it
+ * refuses, or never hears of, is put back as it was with a line saying so.
+ *
+ * The three do not wait on one another: saving a post while its like is still
+ * on its way is an ordinary thing to do. A second press on the same one while
+ * the first is unanswered is let go, so the server is never sent two toggles
+ * that would cancel out.
  */
 export function useEngagement(item: FeedItem, onChanged: ((next: FeedItem) => void) | undefined, waiting = false): Engage {
   const { client, status } = useAuth();
-  const [busy, setBusy] = useState<Kind | null>(null);
+  const t = useT();
+  const [pressed, setPressed] = useState<Partial<Record<Kind, boolean>>>({});
+  const sending = useRef<Partial<Record<Kind, boolean>>>({});
   // never for a post that was already liked when the page drew it
   const [justOn, setJustOn] = useState<{ kind: Kind; n: number } | null>(null);
+  const [refused, setRefused] = useState<string | null>(null);
+  // the post as it is now, for an answer that arrives after another has changed it
+  const latest = useRef(item);
+  latest.current = item;
+  const engagement = withPresses(item.engagement, pressed);
+
+  useEffect(() => {
+    if (!refused) return;
+    const id = window.setTimeout(() => setRefused(null), REFUSED_MS);
+    return () => window.clearTimeout(id);
+  }, [refused]);
 
   async function toggle(kind: Kind): Promise<void> {
-    if (status !== 'signedIn' || busy || waiting) return;
-    const on = kind === 'like' ? item.engagement.liked : kind === 'repost' ? item.engagement.reposted : item.engagement.bookmarked;
-    if (!on) setJustOn((j) => ({ kind, n: (j?.n ?? 0) + 1 }));
-    setBusy(kind);
+    if (status !== 'signedIn' || waiting || sending.current[kind]) return;
+    const on = !engagement[STATE[kind]];
+    sending.current[kind] = true;
+    setRefused(null);
+    setPressed((p) => ({ ...p, [kind]: on }));
+    if (on) setJustOn((j) => ({ kind, n: (j?.n ?? 0) + 1 }));
     const res = await client.post<{ on: boolean; engagement: FeedItem['engagement'] }>(
       `/posts/${item.targetType}/${item.id}/${kind}`,
     );
-    setBusy(null);
-    // the server returns the fresh totals; taking them keeps the count right
-    // even when someone else liked it while this page was open
-    if (res.ok && onChanged) onChanged({ ...item, engagement: res.data.engagement });
+    sending.current[kind] = false;
+    // answered either way: what is shown from here is the server's, or what it was before the press
+    setPressed((p) => {
+      const rest = { ...p };
+      delete rest[kind];
+      return rest;
+    });
+    if (res.ok) {
+      // the server returns the fresh totals; taking them keeps the count right
+      // even when someone else liked it while this page was open
+      onChanged?.({ ...latest.current, engagement: res.data.engagement });
+      return;
+    }
+    // taken back: nothing is left looking done that was not, and the reader is told why
+    setJustOn((j) => (j?.kind === kind ? null : j));
+    setRefused(describeError(res.error, t));
   }
 
-  return { busy, justOn, toggle };
+  return { engagement, justOn, refused, toggle };
 }
 
 /**
@@ -209,10 +267,10 @@ export function PostActions({
   const t = useT();
   const { locale } = useI18n();
   const signedIn = status === 'signedIn';
-  const { engagement: e } = item;
-  const { busy, justOn, toggle } = engage;
+  const { engagement: e, justOn, refused, toggle } = engage;
   const count = (n: number): string => shortCount(n, locale);
-  const held = !signedIn || busy !== null || waiting;
+  // only what cannot act is held: a press already on its way to the server does not hold the other two
+  const held = !signedIn || waiting;
 
   /**
    * Say what the button does, not what it counts.
@@ -236,7 +294,7 @@ export function PostActions({
     </>
   );
 
-  return (
+  const row = (
     <footer className="fcard-actions" aria-busy={waiting || undefined}>
       <button
         type="button"
@@ -248,8 +306,8 @@ export function PostActions({
         onClick={() => void toggle('like')}
       >
         <HeartIcon size={20} weight={e.liked ? 'fill' : 'regular'} />
-        {/* a fresh element for each like, so its sparks play once per press (styles/motion.css) */}
-        {justOn?.kind === 'like' && <span key={justOn.n} className="fcard-burst" aria-hidden="true" />}
+        {/* a fresh element for each like, so its sparks play once per press, and only round a heart that is filled (styles/motion.css) */}
+        {justOn?.kind === 'like' && e.liked && <span key={justOn.n} className="fcard-burst" aria-hidden="true" />}
         {e.likes > 0 && <span className="fcard-count">{count(e.likes)}</span>}
       </button>
 
@@ -299,6 +357,18 @@ export function PostActions({
         <BookmarkIcon size={20} weight={e.bookmarked ? 'fill' : 'regular'} />
       </button>
     </footer>
+  );
+
+  return (
+    <>
+      {row}
+      {/* a press that was taken back, and why: said where it was pressed, and gone again by itself */}
+      {refused && (
+        <p className="fcard-refused" role="status">
+          {refused}
+        </p>
+      )}
+    </>
   );
 }
 

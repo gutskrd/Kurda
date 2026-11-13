@@ -10,7 +10,8 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
 import { springTo, usePressScale } from './animate';
-import { MenuIn, heldRow } from './MotionParts';
+import { pressedDim } from './motion';
+import { MenuIn, heldRow, heldDim } from './MotionParts';
 import { EmptyState } from './EmptyState';
 
 /** Full-bleed spatial gradient backdrop for a screen. */
@@ -201,8 +202,9 @@ export function ClayButton({
   // one already has a shape and a rim round it is just a rim
   const edge = outline ? (toneColor ?? colors.glassBorder) : 'transparent';
   const off = busy || disabled;
-  // gives a little under the finger and springs back (animate.ts); still under Reduce Motion
+  // gives a little under the finger and springs back (animate.ts); still under Reduce Motion, where it fades instead
   const press = usePressScale(!off);
+  const reduce = useReducedMotion();
   return (
     <Pressable
       onPress={onPress}
@@ -213,7 +215,7 @@ export function ClayButton({
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ busy, disabled: off }}
       testID={testID}
-      style={({ pressed }) => [{ opacity: off ? 0.5 : pressed ? 0.92 : 1 }, style]}
+      style={({ pressed }) => [{ opacity: off ? 0.5 : pressed && reduce ? pressedDim : 1 }, style]}
     >
       <Animated.View
         style={[
@@ -344,7 +346,8 @@ export function Segmented<T extends string>({
       x.setValue(to);
       return;
     }
-    springTo(x, to).start();
+    // the interface's own spring: no bounce, and there within 300 ms
+    springTo(x, to, 'chrome').start();
   }, [index, seg, x, reduceMotion]);
 
   return (
@@ -381,7 +384,7 @@ export function Segmented<T extends string>({
             // a regular segment is drawn 32pt tall; the slop takes its touch to 44 without making it look bigger
             hitSlop={padV < SEG_PAD_V_TALL ? SEG_SLOP : undefined}
             // one line keeps the height it always had, and a second adds no more than its own height
-            style={[styles.segItem, wrap ? { minHeight: padV * 2 + SEG_LINE, paddingVertical: SEG_PAD } : { paddingVertical: padV }]}
+            style={({ pressed }) => [styles.segItem, wrap ? { minHeight: padV * 2 + SEG_LINE, paddingVertical: SEG_PAD } : { paddingVertical: padV }, pressed && heldDim]}
           >
             <Text
               style={[

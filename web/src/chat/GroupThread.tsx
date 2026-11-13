@@ -11,6 +11,7 @@ import { Composer } from './Composer';
 import { ChatGameButton } from '../play/PlayButtons';
 import { gameCardBody } from '../play/ChatGameCard';
 import { useStickyScroll } from './useStickyScroll';
+import { useOutbox, type Unsent } from './useOutbox';
 import { useTypingSignal, useTypingWatch, typingLabel } from './useTyping';
 import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
@@ -19,7 +20,8 @@ import { byTime, THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
 import { ThreadSkeleton } from '../components/skeletons';
 import { Modal } from '../components/Modal';
-import { ArrowIcon, CloseIcon, TrashIcon } from '../components/icons';
+import { ArrowIcon, ChevronIcon, TrashIcon } from '../components/icons';
+import { CloseButton } from '../components/CloseButton';
 import { SendError } from '../reports/SendError';
 import { ReportSheet } from '../reports/ReportSheet';
 import { restrictionOf } from '../reports/restriction';
@@ -35,6 +37,9 @@ import { AddFriendsSheet } from '../groups/AddFriendsSheet';
 import { OptionsMenu } from '../groups/OptionsMenu';
 import { announceGroupsChanged } from '../groups/groupsChanged';
 import { isGroupMissing, isOutOfGroup, shownClear, sinceCleared, standingOf } from '../groups/standing';
+
+/** A message as the thread draws it: the server's, or one of the reader's own that is not sent yet. */
+type Shown = GroupMessage & { pending?: Unsent['pending'] };
 
 /**
  * A group conversation, as a page or as a dock beside the social rail.
@@ -89,7 +94,6 @@ export function GroupThread({
   const [cleared, setCleared] = useState<GroupChatCleared | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
-  const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState<ApiError | null>(null);
   /** the message being reported, while the report sheet is open */
   const [reporting, setReporting] = useState<GroupMessage | null>(null);
@@ -107,7 +111,49 @@ export function GroupThread({
   const rootRef = useRef<HTMLDivElement>(null);
   const { refreshUnread } = useMessages();
   const { openProfile } = useProfileModal();
-  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
+  /*
+   * A message is in the thread the moment it is sent (chat/useOutbox.ts), and
+   * the server is told behind that. One it refuses leaves the thread and the
+   * reason is said where it always was, its words back in the box if nothing
+   * has been typed since — and a refusal for being taken out of the group
+   * shows that instead; one it could not be reached for stays, marked as not
+   * sent, with a way to try again.
+   */
+  const refuseOut = useRef<() => void>(() => undefined);
+  const outbox = useOutbox<GroupMessage>({
+    post: (body) => client.post<GroupMessage>(`/groups/${groupId}/chat`, { body }),
+    onDelivered: (message) =>
+      setMessages((m) => {
+        const list = m ?? [];
+        return list.some((x) => x.id === message.id) ? list : [...list, message];
+      }),
+    onRefused: (error, body) => {
+      if (isOutOfGroup(error)) {
+        refuseOut.current();
+        return;
+      }
+      setSendErr(error);
+      setText((now) => now || body);
+    },
+  });
+  // the thread as it is read: what the server has, then what is still the reader's alone
+  const thread = useMemo<Shown[]>(
+    () => [
+      ...(messages ?? []),
+      ...outbox.unsent.map((u) => ({
+        id: u.id,
+        senderId: user?.id ?? '',
+        username: user?.username ?? '',
+        avatarUrl: null,
+        body: u.body,
+        createdAt: u.createdAt,
+        deleted: false,
+        pending: u.pending,
+      })),
+    ],
+    [messages, outbox.unsent, user?.id, user?.username],
+  );
+  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(thread);
   const { typing, note } = useTypingWatch();
   const signalTyping = useTypingSignal(
     useCallback(() => void client.post(`/groups/${groupId}/chat/typing`).catch(() => undefined), [client, groupId]),
@@ -145,6 +191,7 @@ export function GroupThread({
     inside.current = false;
     void loadDetail();
   }, [loadDetail]);
+  refuseOut.current = refusedOut;
 
   // gifts: only ever between friends, so the picker offers your friends among
   // the members (the roster you can see, met with your friends list)
@@ -287,35 +334,24 @@ export function GroupThread({
   );
   useRealtimeEvent('group_typing', onTyping);
 
-  /** Send a message; whether it went. */
-  async function post(body: string): Promise<boolean> {
-    setSending(true);
+  /** Put a message in the thread and send it behind that (`outbox`, above). */
+  function post(body: string): void {
     setSendErr(null);
-    const res = await client.post<GroupMessage>(`/groups/${groupId}/chat`, { body });
-    setSending(false);
-    if (res.ok) {
-      setMessages((m) => {
-        const list = m ?? [];
-        if (list.some((x) => x.id === res.data.id)) return list;
-        return [...list, res.data];
-      });
-      scrollToBottom('smooth');
-      return true;
-    }
-    if (isOutOfGroup(res.error)) refusedOut();
-    else setSendErr(res.error);
-    return false;
+    outbox.send(body);
+    scrollToBottom('smooth');
   }
 
-  async function send(): Promise<void> {
+  function send(): void {
     const body = text.trim();
     if (!body) return;
-    if (await post(body)) setText('');
+    setText('');
+    post(body);
   }
 
   /** A greeting from the empty chat's card; then the box is where the conversation goes on. */
-  async function greet(greeting: string): Promise<void> {
-    if (await post(greeting)) rootRef.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus();
+  function greet(greeting: string): void {
+    post(greeting);
+    rootRef.current?.querySelector<HTMLTextAreaElement>('textarea')?.focus();
   }
 
   async function clear(scope: 'me' | 'everyone'): Promise<void> {
@@ -394,11 +430,7 @@ export function GroupThread({
             ]}
           />
         )}
-        {onClose && (
-          <button type="button" className="chat-dock-close" onClick={onClose} aria-label={t('chat.closeWith', { name })}>
-            <CloseIcon size={16} />
-          </button>
-        )}
+        {onClose && <CloseButton className="chat-dock-close is-inline" label={t('chat.closeWith', { name })} onClick={onClose} />}
       </header>
 
       <Modal open={showInfo && !outside} onClose={() => setShowInfo(false)} label={t('groups.info')}>
@@ -452,7 +484,7 @@ export function GroupThread({
         ) : (
           <>
             {shown?.kind === 'everyone' && <ClearedLine by={shown.by} at={shown.at} mine={shown.by !== null && shown.by === user?.username} />}
-            {messages.length === 0 ? (
+            {thread.length === 0 ? (
               loadError ? (
                 <p className="muted chat-hint">{loadError}</p>
               ) : (
@@ -460,18 +492,23 @@ export function GroupThread({
                   group={{ id: groupId, name, photoUrl: detail?.photoUrl }}
                   cleared={shown?.kind === 'me' ? shown : shown ? { kind: 'everyone' } : null}
                   canPost={canPost}
-                  sending={sending}
-                  onGreet={(greeting) => void greet(greeting)}
+                  onGreet={greet}
                   onAddFriends={alone ? () => setAddingFriends(true) : undefined}
                 />
               )
             ) : (
               <MessageList
-                messages={messages}
+                messages={thread}
                 myId={user?.id}
                 onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
                 onReport={setReporting}
                 renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
+                onRetry={(m) => outbox.retry(m.id)}
+                // taken back: its words return to the box, unless something else has been typed there since
+                onDiscard={(m) => {
+                  const words = outbox.discard(m.id);
+                  if (words) setText((now) => now || words);
+                }}
               />
             )}
           </>
@@ -495,6 +532,7 @@ export function GroupThread({
       {!atBottom && !outside && messages !== null && messages.length > 0 && (
         <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')}>
           {t('chat.jumpToLatest')}
+          <ChevronIcon size={14} className="chat-jump-icon" />
         </button>
       )}
 
@@ -516,8 +554,7 @@ export function GroupThread({
             setText(next);
             if (next) signalTyping();
           }}
-          onSubmit={() => void send()}
-          sending={sending}
+          onSubmit={send}
           placeholder={t('chat.messageTheGroup')}
           tools={
             <>

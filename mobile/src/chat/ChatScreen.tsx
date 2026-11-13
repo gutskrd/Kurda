@@ -44,6 +44,7 @@ import { ReportSheet } from '../reports/ReportSheet';
 import { SendErrorNotice } from '../reports/SendError';
 import { ChatGameButton } from '../play/ChatGameButton';
 import { appendOnce, mergeLatest, useCatchUp } from '../realtime/catchUp';
+import { restoredDraft, useOutgoing } from './sending';
 
 const MAX_LEN = 2000;
 /** The face beside the name in the header: big enough to know them by, small enough for a bar. */
@@ -56,8 +57,10 @@ const HEADER_FACE = 28;
  * unwrap, a game card. The gift button beside the composer gives this friend
  * something; their gifts arrive here wrapped, and `openGift` (the gift banner
  * and its notification) unwraps one as soon as the thread is open. Pressing
- * and holding one of their messages reports it. A send the server refuses
- * says why above the composer — and keeps what was typed.
+ * and holding one of their messages reports it. A message is in the thread
+ * the moment it is sent, drawn as still on its way until the server has it
+ * (chat/sending.ts); one the server refuses is taken out again, says why
+ * above the composer — and what was typed goes back in the field.
  */
 export function ChatScreen({
   userId,
@@ -102,8 +105,13 @@ export function ChatScreen({
   const name = username || messages.find((m) => m.senderId === userId)?.username || '';
   // the gift picker's one friend, the same array until the friend changes
   const giftFriends = useMemo(() => [{ userId, name }], [userId, name]);
+  // the messages sent from here that the server has not answered for yet
+  const { outgoing, begin, settle } = useOutgoing();
   // newest first, for the inverted list below — once per change to the thread, not per keystroke
-  const newestFirst = useMemo(() => [...messages].reverse(), [messages]);
+  const newestFirst = useMemo<ShownMessage[]>(
+    () => [...messages, ...outgoing.map((m): ShownMessage => ({ ...m, senderId: me, kind: 'text', gift: null, game: null, pending: true }))].reverse(),
+    [messages, outgoing, me],
+  );
 
   const markRead = useCallback(() => void client.post(`/chat/${userId}/read`), [client, userId]);
 
@@ -191,12 +199,15 @@ export function ChatScreen({
   /** Send words into the thread: null when they went, else the refusal, for whoever asked to say. */
   const post = useCallback(
     async (body: string): Promise<ApiError | null> => {
+      // in the thread at once, as one on its way; the server's copy takes its place, or it is taken out
+      const sending = begin(body);
       const res = await client.post<ChatMessage>(`/chat/${userId}/messages`, { body });
+      settle(sending);
       if (!res.ok) return res.error;
       setMessages((prev) => appendOnce(prev, res.data));
       return null;
     },
-    [client, userId],
+    [client, userId, begin, settle],
   );
 
   // the person, not one message: their profile, a report, or a block
@@ -239,9 +250,9 @@ export function ChatScreen({
     const refused = await post(body);
     if (!refused) return;
     haptic('error');
-    // a refused message is put back, so nothing typed is lost
+    // a refused message is put back, before anything typed since, so nothing typed is lost
     setSendError(refused);
-    setDraft(body);
+    setDraft((now) => restoredDraft(body, now));
   }, [draft, post]);
 
   return (
@@ -293,7 +304,10 @@ export function ChatScreen({
                   delayLongPress={350}
                   accessible={whole}
                   {...(whole ? messageA11y(t, options) : null)}
-                  style={({ pressed }) => [styles.bubbleRow, mine !== mirrored ? styles.rowEnd : styles.rowStart, pressed && styles.held]}
+                  // on its way: said to a screen reader as busy, and drawn fainter until the server has it
+                  accessibilityState={item.pending ? { busy: true } : undefined}
+                  testID={item.pending ? 'message-sending' : undefined}
+                  style={({ pressed }) => [styles.bubbleRow, mine !== mirrored ? styles.rowEnd : styles.rowStart, item.pending && styles.sending, pressed && styles.held]}
                 >
                   {card ? (
                     <MessageContent message={item} mine={mine} senderName={item.username || name} onOpenGift={startUnwrap} onReport={report} />
@@ -423,12 +437,17 @@ function ThreadSkeleton({ mirrored }: { mirrored: boolean }): React.JSX.Element 
   );
 }
 
+/** A message in the thread: the server's, or one sent from here that it has not answered for yet. */
+type ShownMessage = ChatMessage & { pending?: boolean };
+
 /** a one-line bubble: 8 above and below a 17pt line */
 const BUBBLE_LINE = spacing.sm * 2 + lineOf(typography.sizes.md);
 
 const styles = StyleSheet.create({
   // a held message sinks a little under the finger, so the hold is felt to be doing something
   held: { transform: [{ scale: 0.97 }] },
+  // a message still on its way, as a comment being posted is drawn
+  sending: { opacity: 0.6 },
   flex: { flex: 1 },
   skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden' },
   screen: { flex: 1 },

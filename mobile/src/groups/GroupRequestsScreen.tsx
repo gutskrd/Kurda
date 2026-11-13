@@ -20,6 +20,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { approveRejoin, declineRejoin, rejoinRequests } from './api';
 import { groupError } from './groupError';
+import { heldRow } from '../theme/MotionParts';
 
 /**
  * The requests to come back to a group, for its owner and admins, oldest
@@ -110,7 +111,8 @@ export function GroupRequestsScreen({ groupId, onExit }: { groupId: string; onEx
               onPress={() => navigation.navigate('UserProfile', { userId: r.userId })}
               accessibilityRole="button"
               accessibilityLabel={`${r.username}, ${noticeTime(r.sentAt, t, locale)}`}
-              style={[styles.who, { flexDirection: dir.row }]}
+              // held, the row fills as a list row does: who they are opens their profile
+              style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
             >
               <InitialsAvatar name={r.username} id={r.userId} size={44} photoUrl={r.avatarUrl} />
               <View style={styles.names}>

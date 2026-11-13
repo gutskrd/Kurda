@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiClient, createApiClient, describeError } from '../lib/api';
 import { persistTokens } from '../lib/tokenStorage';
+import { forgetAnswers } from '../lib/apiMemory';
 import { thisDeviceName } from '../lib/deviceName';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
 import type { AuthPayload, SessionUser } from '../lib/types';
@@ -75,15 +76,18 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
 
   // Build the client once. onLogout fires when a refresh fails mid-session;
   // onSuspended when that failure is a suspension, with its reasons;
-  // onMaintenance when Hevalo has been taken offline.
+  // onMaintenance when Hevalo has been taken offline. Whoever was signed in,
+  // what the app remembers of their answers goes with them (lib/apiMemory.ts).
   const { client, storage } = useMemo(
     () =>
       createApiClient(
         () => {
+          forgetAnswers();
           setUser(null);
           setStatus('signedOut');
         },
         (details) => {
+          forgetAnswers();
           setUser(null);
           setStatus('signedOut');
           setSuspension(details);
@@ -134,6 +138,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   }, [status, client]);
 
   const applyAuth = (payload: AuthPayload, remember: boolean): void => {
+    // a new person at this browser, or the same one again: nothing kept from before is theirs to see
+    forgetAnswers();
     persistTokens(payload.tokens, remember);
     setUser(payload.user);
     setStatus('signedIn');
@@ -173,6 +179,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       // not wait on a slow network
       void client.endSession();
       storage.clear();
+      // and nothing this account loaded stays behind for whoever is here next
+      forgetAnswers();
       setUser(null);
       setStatus('signedOut');
     },

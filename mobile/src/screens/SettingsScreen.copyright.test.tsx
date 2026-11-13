@@ -16,7 +16,7 @@ vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 
-describe('Settings → About Hevalo', () => {
+describe('Settings → About & legal', () => {
   afterEach(() => {
     cleanup();
     vi.restoreAllMocks();

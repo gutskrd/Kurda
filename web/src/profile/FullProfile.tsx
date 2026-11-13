@@ -3,6 +3,7 @@ import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../
 import { flagUrl } from '../lib/countries';
 import { GiftedNote } from './cosmetic-parts';
 import { ProfileCard } from '../ui/ProfileCard';
+import { BookIcon, FeatherIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 
 /** Normalized data a Hevalo profile renders (self or another user). */
@@ -121,7 +122,9 @@ export function FullProfile({
                 <div className="mkp-showcase-label">{t('profile.favoritePoem')}</div>
                 <div className="mkp-showcase">
                   <Link to="/poems" className="mkp-fav">
-                    <span className="mkp-fav-thumb" aria-hidden="true">✒️</span>
+                    <span className="mkp-fav-thumb" aria-hidden="true">
+                      <FeatherIcon size={26} />
+                    </span>
                     <span className="mkp-fav-meta"><span className="mkp-fav-title">{view.favPoem.title}</span></span>
                   </Link>
                 </div>
@@ -133,7 +136,9 @@ export function FullProfile({
                 <div className="mkp-showcase-label">{t('profile.favoriteStory')}</div>
                 <div className="mkp-showcase">
                   <Link to="/stories" className="mkp-fav">
-                    <span className="mkp-fav-thumb" aria-hidden="true">📖</span>
+                    <span className="mkp-fav-thumb" aria-hidden="true">
+                      <BookIcon size={26} />
+                    </span>
                     <span className="mkp-fav-meta"><span className="mkp-fav-title">{view.favStory.title}</span></span>
                   </Link>
                 </div>

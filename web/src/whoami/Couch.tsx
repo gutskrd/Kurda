@@ -26,7 +26,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
-import { HelpIcon, PlusIcon } from '../components/icons';
+import { CloseIcon, HelpIcon, PlusIcon } from '../components/icons';
 import { Modal } from '../components/Modal';
 import { Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
@@ -574,7 +574,7 @@ function Setup({
               />
               {canRemove && (
                 <button type="button" className="wa-name-remove" aria-label={t('games.couch.removePlayer', { name: named[i]! })} onClick={() => setNames(names.filter((_, j) => j !== i))}>
-                  <span aria-hidden="true">×</span>
+                  <CloseIcon size={18} />
                 </button>
               )}
             </li>

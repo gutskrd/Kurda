@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { heldRow } from '../theme/MotionParts';
+import { heldRow, heldDim } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { describeError, isMaintenance } from '../api/errors';
 import { EntryDetail } from '../dictionary/EntryDetail';
@@ -161,7 +161,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
                   onPress={() => removeSaved(w.entryId)}
                   accessibilityRole="button"
                   accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })}
-                  style={styles.removeButton}
+                  style={({ pressed }) => [styles.removeButton, pressed && heldDim]}
                 >
                   <Icon name="close" size={18} color={colors.textSecondary} />
                 </Pressable>
@@ -246,7 +246,8 @@ const styles = StyleSheet.create({
   recents: { gap: spacing.xs },
   savedHeading: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   recentsTitle: { ...sectionLabel },
-  recentRow: { paddingVertical: spacing.sm },
+  // a row to tap: a fingertip tall, the word in the middle of it
+  recentRow: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingVertical: spacing.sm },
   recentText: { fontSize: typography.sizes.md },
   savedRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
   savedMain: { flex: 1 },

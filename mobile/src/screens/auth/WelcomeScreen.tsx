@@ -6,7 +6,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { isGoogleConfigured } from '../../auth/google';
 import { AgreeLine } from '../../legal/links';
 import { useListEntrance } from '../../theme/animate';
-import { Rise } from '../../theme/MotionParts';
+import { Rise, heldDim } from '../../theme/MotionParts';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
@@ -111,7 +111,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       </View>
 
       <Rise delay={row(3)}>
-        <Pressable onPress={() => navigation.navigate('Login')} style={styles.link} accessibilityRole="button">
+        <Pressable onPress={() => navigation.navigate('Login')} style={({ pressed }) => [styles.link, pressed && heldDim]} accessibilityRole="button">
           <Text style={[styles.linkText, { color: colors.primary }]}>{t('welcome.haveAccount')}</Text>
         </Pressable>
       </Rise>
@@ -123,7 +123,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         opens Hevalo's introduction, which starts the session at its end.
       */}
       <Rise delay={row(4)}>
-        <Pressable onPress={() => setGuestFlow(true)} style={styles.link} accessibilityRole="button" testID="welcome-guest">
+        <Pressable onPress={() => setGuestFlow(true)} style={({ pressed }) => [styles.link, pressed && heldDim]} accessibilityRole="button" testID="welcome-guest">
           <Text style={[styles.linkText, { color: colors.textSecondary }]}>{t('welcome.guest')}</Text>
         </Pressable>
       </Rise>

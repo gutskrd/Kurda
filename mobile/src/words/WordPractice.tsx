@@ -25,6 +25,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import type { WordsAudio } from './audio';
 import { DayName, Digits, Swatch, WordText, meaningOf } from './parts';
+import { pressedDim } from '../theme/motion';
 
 interface Item {
   q: WordQuestion;
@@ -254,7 +255,7 @@ export function WordPractice({
                     onPress={() => onOpen(w.id)}
                     accessibilityRole="button"
                     accessibilityLabel={wordIn(w, dialect)}
-                    style={({ pressed }) => [styles.reviewTile, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+                    style={({ pressed }) => [styles.reviewTile, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                   >
                     <Face word={w} dialect={dialect} shows="word" size="option" />
                   </Pressable>
@@ -335,7 +336,7 @@ function Choice({
         accessibilityRole="button"
         accessibilityLabel={state === 'right' ? `${said}, ${t('lesson.correct')}` : said}
         accessibilityState={{ disabled: state !== 'open' }}
-        style={({ pressed }) => [styles.choice, { backgroundColor: fill, borderColor: edge, opacity: state === 'dim' ? 0.45 : pressed ? 0.75 : 1 }]}
+        style={({ pressed }) => [styles.choice, { backgroundColor: fill, borderColor: edge, opacity: state === 'dim' ? 0.45 : pressed ? pressedDim : 1 }]}
       >
         <Face word={word} dialect={dialect} shows={shows} size="option" />
         {state === 'right' ? <Icon name="check" size={16} color={colors.success} style={styles.choiceMark} /> : null}

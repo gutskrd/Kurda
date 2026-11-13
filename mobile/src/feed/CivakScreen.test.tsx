@@ -14,8 +14,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation, refocus } from '../play/testing/navigation';
 import { UnreadProvider } from '../messages/unread';
-import { CivakScreen, mergeFresh } from './CivakScreen';
-import type { FeedItem } from './types';
+import { CivakScreen } from './CivakScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => navigation.navigate.mockReset());
@@ -212,24 +211,5 @@ describe('Home', () => {
     await waitFor(() =>
       expect(screen.getByRole('radiogroup', { name: 'Sort by' }).querySelector('[aria-checked="true"]')?.textContent).toContain('Newest'),
     );
-  });
-});
-
-describe('mergeFresh', () => {
-  const item = (id: string, likes = 0) => ({ ...post(id), engagement: { ...post(id).engagement, likes } }) as unknown as FeedItem;
-
-  it('gives each post shown what the read says of it, in its place, and drops none', () => {
-    const merged = mergeFresh([item('a'), item('b'), item('c')], [item('b', 4)], true);
-    expect(merged.items.map((i) => i.id)).toEqual(['a', 'b', 'c']);
-    expect(merged.items[1]!.engagement.likes).toBe(4);
-  });
-
-  it('puts new posts on top while the wall is at its top, and holds them back while it is not', () => {
-    const top = mergeFresh([item('a')], [item('n1'), item('n2'), item('a')], true);
-    expect(top.items.map((i) => i.id)).toEqual(['n1', 'n2', 'a']);
-    expect(top.waiting).toEqual([]);
-    const down = mergeFresh([item('a')], [item('n1'), item('n2'), item('a')], false);
-    expect(down.items.map((i) => i.id)).toEqual(['a']);
-    expect(down.waiting.map((i) => i.id)).toEqual(['n1', 'n2']);
   });
 });

@@ -18,6 +18,7 @@ import { CHEST_RATIO } from './ChestArt';
 import { ChestScreen } from './ChestScreen';
 import { MonthlyQuests } from './MonthlyQuests';
 import { QuestRows } from './QuestRows';
+import { pressedDim } from '../theme/motion';
 
 /**
  * Today's three quests, in one of two places.
@@ -204,5 +205,5 @@ const styles = StyleSheet.create({
   bar: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.xs },
   later: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   laterText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
 });

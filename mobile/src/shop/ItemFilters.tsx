@@ -22,6 +22,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { KIND_LABEL, SORT_LABEL, itemsText, kindWithCount } from './format';
+import { pressedDim } from '../theme/motion';
 
 /**
  * The pieces the shop, the inventory and the gift picker find their way with.
@@ -132,7 +133,7 @@ export function KindChips<K extends string>({
               accessibilityLabel={o.a11y ?? o.label}
               style={({ pressed }) => [
                 styles.chip,
-                { flexDirection: dir.row, backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? 0.8 : 1 },
+                { flexDirection: dir.row, backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
               ]}
             >
               <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>
@@ -177,7 +178,7 @@ export function ToggleChip({
       accessibilityLabel={label}
       style={({ pressed }) => [
         styles.chip,
-        { flexDirection: dir.row, backgroundColor: value ? colors.primary : colors.controlTrack, opacity: pressed ? 0.8 : 1 },
+        { flexDirection: dir.row, backgroundColor: value ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
       ]}
     >
       {value ? (
@@ -210,7 +211,7 @@ export function SortChip({ value, onChange }: { value: ItemSort; onChange: (sort
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={t('shop.sort.label', { sort: current })}
-        style={({ pressed }) => [styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+        style={({ pressed }) => [styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
       >
         <Icon name="sort" size={16} color={colors.textPrimary} />
         <Text style={[styles.chipText, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -250,7 +251,7 @@ export function SortChip({ value, onChange }: { value: ItemSort; onChange: (sort
                     accessibilityState={{ checked: on }}
                     aria-checked={on}
                     accessibilityLabel={t(SORT_LABEL[s])}
-                    style={({ pressed }) => [styles.menuOption, { flexDirection: dir.row, opacity: pressed ? 0.6 : 1 }]}
+                    style={({ pressed }) => [styles.menuOption, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
                   >
                     <Text
                       style={[
@@ -315,7 +316,7 @@ export function SearchField({
           }}
           accessibilityRole="button"
           accessibilityLabel={t('shop.search.clear')}
-          style={({ pressed }) => [styles.clearSearch, { opacity: pressed ? 0.6 : 1 }]}
+          style={({ pressed }) => [styles.clearSearch, { opacity: pressed ? pressedDim : 1 }]}
         >
           <Icon name="clear-fill" size={18} color={colors.textSecondary} />
         </Pressable>
@@ -339,7 +340,7 @@ export function ResultsLine({ count, onClear }: { count: number; onClear?: () =>
           onPress={onClear}
           accessibilityRole="button"
           accessibilityLabel={t('shop.filter.clear')}
-          style={({ pressed }) => [styles.clearFilters, { opacity: pressed ? 0.6 : 1 }]}
+          style={({ pressed }) => [styles.clearFilters, { opacity: pressed ? pressedDim : 1 }]}
         >
           <Text style={[styles.clearText, { color: colors.primary }]}>{t('shop.filter.clear')}</Text>
         </Pressable>

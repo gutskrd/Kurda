@@ -11,6 +11,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import type { ToneColors } from './path';
 import type { SkillNode } from './types';
+import { pressedDim } from '../theme/motion';
+import { heldRow } from '../theme/MotionParts';
 
 type Stop = PathStop<SkillNode>;
 type Unit = PathUnit<SkillNode>;
@@ -163,7 +165,7 @@ function Card({
                 onPress={() => onLesson(lesson.lessonId)}
                 accessibilityRole="button"
                 accessibilityLabel={`${lesson.title}, ${word}`}
-                style={({ pressed }) => [styles.lessonRow, { flexDirection: dir.row, opacity: pressed ? 0.7 : 1 }]}
+                style={({ pressed }) => [styles.lessonRow, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
               >
                 {row}
               </Pressable>
@@ -198,7 +200,7 @@ function Card({
           onPress={() => onTips(skill)}
           accessibilityRole="button"
           accessibilityLabel={t('coursemap.path.tipsFor', { skill: skill.title })}
-          style={({ pressed }) => [styles.tips, { flexDirection: dir.row, opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [styles.tips, { flexDirection: dir.row, opacity: pressed ? pressedDim : 1 }]}
         >
           <Icon name="book" size={18} color={colors.textPrimary} />
           <Text style={[styles.tipsText, { color: colors.textPrimary }]}>{t('grammar.title')}</Text>

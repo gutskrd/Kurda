@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { MultiGame, MultiResult, MultiSeat, MultiView } from '@kurda/shared';
 import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
+import { TrophyIcon } from '../components/icons';
 import { ErrorState, Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -261,6 +262,7 @@ function Verdict({ won, label }: { won: boolean; label: string }): React.JSX.Ele
   useEffect(() => heading.current?.focus(), []);
   return (
     <h2 ref={heading} tabIndex={-1} className={`match-verdict${won ? ' is-won' : ''}`}>
+      {won && <TrophyIcon size={26} className="verdict-icon" />}
       {label}
     </h2>
   );

@@ -1,5 +1,9 @@
-/** The pages played with nothing else on the screen (layouts/FocusLayout.tsx): a lesson and a review. */
-const FOCUSED = /^\/app\/learn\/(lesson|review)(\/|$)/;
+/**
+ * The pages played with nothing else on the screen (layouts/FocusLayout.tsx):
+ * a lesson, a review, and the way to a new account's first lesson, which shows
+ * the lesson's frame until it has found the lesson.
+ */
+const FOCUSED = /^\/app\/learn\/(lesson|review|next)(\/|$)/;
 
 /**
  * Whether a page is one of them: what the invite banner and the rating box

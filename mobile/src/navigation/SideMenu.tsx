@@ -109,7 +109,8 @@ export function SideMenu({
      * supersedes an earlier animation on the same value when a new one starts,
      * so there was never anything to clean up.
      */
-    releaseSpring(away, to, v, { kind: v ? 'release' : 'standard' }).start();
+    // a flick is finished on the spring a finger's throw gets; a tap on its button, on the interface's own (there within 300 ms)
+    releaseSpring(away, to, v, { kind: v ? 'release' : 'chrome' }).start();
   }, [open, reduceMotion, away, width]);
 
   // the system back gesture closes the panel before it leaves the screen

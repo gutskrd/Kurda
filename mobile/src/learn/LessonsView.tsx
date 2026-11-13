@@ -44,6 +44,8 @@ import { ReminderNudge } from '../push/ReminderNudge';
 import { fraction, nextStep, type NextStep } from './next';
 import { rememberCourseDialect, useCourseDialect } from './courseDialect';
 import { useLessonExercises } from '../practice/useLessonExercises';
+import { pressedDim } from '../theme/motion';
+import { PressableScale } from '../theme/MotionParts';
 
 /**
  * Learn's first half: the next lesson, the tools, the course, and the rest of
@@ -374,7 +376,7 @@ export function LessonsView({
                       style={({ pressed }) => [
                         styles.chip,
                         on ? styles.chipOn : null,
-                        { backgroundColor: on ? 'transparent' : colors.controlTrack, borderColor: colors.textPrimary, opacity: pressed ? 0.75 : 1 },
+                        { backgroundColor: on ? 'transparent' : colors.controlTrack, borderColor: colors.textPrimary, opacity: pressed ? pressedDim : 1 },
                       ]}
                     >
                       <Text style={[styles.chipText, { color: on ? colors.textPrimary : colors.textSecondary }]} numberOfLines={1}>
@@ -446,7 +448,7 @@ export function LessonsView({
             onPress={jump}
             accessibilityRole="button"
             accessibilityLabel={jumpWord}
-            style={({ pressed }) => [styles.jump, { flexDirection: dir.row, backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
+            style={({ pressed }) => [styles.jump, { flexDirection: dir.row, backgroundColor: colors.primary, opacity: pressed ? pressedDim : 1 }]}
           >
             <Icon name={away === 'up' ? 'move-up' : 'move-down'} size={18} color={colors.textOnPrimary} />
             <Text style={[styles.jumpText, { color: colors.textOnPrimary }]}>{jumpWord}</Text>
@@ -621,14 +623,15 @@ function ToolTile({
   const { colors } = useTheme();
   const dir = useDirection();
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={detail ? `${title}, ${detail}` : title}
-      style={({ pressed }) => [
+      // a card: it gives under the finger, as the cards on every other screen do
+      style={[
         styles.tile,
         // a column starts on the reading side too
-        { backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1, alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' },
+        { backgroundColor: colors.surface, alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' },
       ]}
     >
       {letters ? (
@@ -651,7 +654,7 @@ function ToolTile({
           {detail}
         </Text>
       ) : null}
-    </Pressable>
+    </PressableScale>
   );
 }
 

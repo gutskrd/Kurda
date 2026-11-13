@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { AccessibilityInfo, Animated, Easing, findNodeHandle, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { DeclineReason, IncomingInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -393,7 +393,12 @@ function InviteCard({
                 {invite.summary.rated !== undefined ? <RatedPill rated={invite.summary.rated} small style={flow.row === 'row-reverse' ? styles.endSelf : undefined} /> : null}
               </View>
               {/* folds it away without answering: the host hears nothing */}
-              <Pressable onPress={() => setHidden(true)} accessibilityRole="button" accessibilityLabel={t('play.banner.hide')} style={[styles.hide, flow.row === 'row-reverse' ? styles.hideLeft : styles.hideRight]}>
+              <Pressable
+                onPress={() => setHidden(true)}
+                accessibilityRole="button"
+                accessibilityLabel={t('play.banner.hide')}
+                style={({ pressed }) => [styles.hide, flow.row === 'row-reverse' ? styles.hideLeft : styles.hideRight, pressed && heldDim]}
+              >
                 <Icon name="chevron-down" size={18} color={colors.textSecondary} />
               </Pressable>
             </View>

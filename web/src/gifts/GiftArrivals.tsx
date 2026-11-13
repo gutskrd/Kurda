@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import type { GiftUserEvent } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
-import { CloseIcon } from '../components/icons';
+import { CloseButton } from '../components/CloseButton';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { useT } from '../i18n/I18nProvider';
@@ -85,9 +85,7 @@ export function GiftArrivals(): React.JSX.Element | null {
           >
             {t('gift.open')}
           </button>
-          <button type="button" className="gift-arrival-close" aria-label={t('gift.dismiss', { name: a.from })} onClick={() => drop(a.giftId)}>
-            <CloseIcon size={15} />
-          </button>
+          <CloseButton label={t('gift.dismiss', { name: a.from })} onClick={() => drop(a.giftId)} />
         </div>
       ))}
     </div>

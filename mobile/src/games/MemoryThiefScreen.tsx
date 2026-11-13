@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   CHARACTER_NAMES,
   MEMORY_ROUND_PASSAGES,
@@ -32,6 +32,7 @@ import { displayFont } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability, useOpenRound } from './learnGames';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * The Memory Thief on the phone.
@@ -152,7 +153,8 @@ function StudyRibbon({ seconds, color, rtl }: { seconds: number; color: string; 
   const left = useRef(new Animated.Value(1)).current;
   useEffect(() => {
     if (reduce) return;
-    const run = Animated.timing(left, { toValue: 0, duration: seconds * 1000, useNativeDriver: true });
+    // a clock runs at one speed: left to the default curve it ran slow, then fast, then slow, and said there was more time than there was
+    const run = timing(left, 0, seconds * 1000, { easing: Easing.linear });
     run.start();
     return () => run.stop();
   }, [left, seconds, reduce]);
@@ -213,7 +215,7 @@ function GapSlot({
         accessibilityRole="button"
         accessibilityLabel={label}
         accessibilityState={{ selected, disabled }}
-        style={[
+        style={({ pressed }) => [
           styles.gap,
           {
             borderBottomColor: edge,
@@ -221,6 +223,7 @@ function GapSlot({
             opacity: look === 'kept' ? 0.7 : 1,
           },
           selected && { backgroundColor: colors.controlTrack },
+          pressed && heldDim,
         ]}
       >
         <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.glow, { backgroundColor: look === 'again' ? colors.dangerFill : tone.fill, opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.3] }) }]} />
@@ -449,9 +452,10 @@ function MemoryBoard({ round, dialect }: { round: Round; dialect: GameDialect })
                     accessibilityRole="button"
                     accessibilityState={{ selected: selected === i }}
                     accessibilityLabel={t('games.memory.gapLabel', { n: i + 1 })}
-                    style={[
+                    style={({ pressed }) => [
                       styles.chip,
                       { borderColor: wrong.has(i) ? colors.danger : selected === i ? tone.fill : colors.controlTrack, backgroundColor: w ? colors.controlTrack : 'transparent' },
+                      pressed && heldDim,
                     ]}
                   >
                     <Text style={[styles.chipText, { color: colors.textPrimary }]}>{i + 1}</Text>

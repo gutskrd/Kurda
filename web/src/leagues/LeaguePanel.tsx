@@ -15,7 +15,7 @@ import { Button, LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { LeagueCardSkeleton } from '../components/skeletons';
 import { ErrorState } from '../components/states';
-import { BookIcon, DownIcon, PersonGlyph, ShieldIcon, SignOutIcon, SparkleIcon, TimerIcon, UpIcon } from '../components/icons';
+import { BookIcon, DownIcon, PersonGlyph, ShieldIcon, SparkleIcon, TimerIcon, UpIcon } from '../components/icons';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
@@ -226,21 +226,23 @@ function Resting(): React.JSX.Element {
 }
 
 /**
- * The way out of the weekly leagues: a button of its own at the end of the
- * week, drawn as plainly as any other, where it is found when it is looked
- * for. Asked once, in plain words that say what stays — no "are you sure you
- * want to give up", and Leave is not drawn as a danger: nothing is lost, and
- * the way back in is on the page that follows.
+ * The way out of the weekly leagues, at the very foot of the week: a quiet
+ * line of words, not a button. It used to be a button, and before a learner
+ * has joined a week it stood straight under the page's one action, "Start a
+ * lesson" — the way out drawn at half the weight of the way in. Leaving is a
+ * setting (Settings → Weekly leagues, where it is a switch); here it is only
+ * findable when it is looked for. Asked once, in plain words that say what
+ * stays — no "are you sure you want to give up", and Leave is not drawn as a
+ * danger: nothing is lost, and the way back in is on the page that follows.
  */
 function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => Promise<boolean> }): React.JSX.Element {
   const t = useT();
   const [asking, setAsking] = useState(false);
   return (
     <div className="league-leave">
-      <Button variant="secondary" onClick={() => setAsking(true)}>
-        <SignOutIcon size={18} />
+      <button type="button" className="link-btn league-leave-link" onClick={() => setAsking(true)}>
         {t('leagues.leave')}
-      </Button>
+      </button>
       <Modal open={asking} onClose={() => setAsking(false)} label={t('leagues.leave.title')}>
         <div className="league-leave-dialog">
           <h2 className="league-leave-title">{t('leagues.leave.title')}</h2>

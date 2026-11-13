@@ -50,9 +50,6 @@
 
 /* ---- the top of the page ---------------------------------------------------- */
 
-.lp-back {
-  display: inline-block;
-}
 .lp-continue {
   margin-top: var(--space-4);
 }

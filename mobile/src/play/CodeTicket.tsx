@@ -16,6 +16,7 @@ import { Icon } from '../theme/Icon';
 import { HeartBurst } from '../theme/MotionParts';
 import { LIP, SHINE } from '../theme/Tile';
 import type { TileTone } from '../theme/tileTones';
+import { pressedDim } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useAnnouncer } from '../stories/ui';
@@ -292,7 +293,8 @@ function CopyButton({ copied, fired, onPress }: { copied: boolean; fired: number
       onPressOut={press.onPressOut}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.action, { opacity: pressed ? 0.92 : 1 }]}
+      // it gives under the finger (the scale below); where nothing may move, it fades instead
+      style={({ pressed }) => [styles.action, { opacity: pressed && press.scale === 1 ? pressedDim : 1 }]}
     >
       <Animated.View style={[styles.copy, { backgroundColor: copied ? colors.successFill : colors.controlTrack, transform: [{ scale: press.scale }] }]}>
         <HeartBurst fired={fired} color={colors.success} size={20}>
@@ -349,7 +351,7 @@ const styles = StyleSheet.create({
   top: { alignItems: 'center', gap: spacing.md, paddingBottom: spacing.md },
   heading: { alignItems: 'center', gap: spacing.xs + 2 },
   tilesPress: { alignSelf: 'stretch', alignItems: 'center', borderRadius: radii.md },
-  pressed: { opacity: 0.85 },
+  pressed: { opacity: pressedDim },
   tiles: { direction: 'ltr', flexDirection: 'row' },
   tile: { position: 'absolute', top: 0 },
   lip: { position: 'absolute', top: LIP, left: 0, right: 0, bottom: 0, borderRadius: radii.md },

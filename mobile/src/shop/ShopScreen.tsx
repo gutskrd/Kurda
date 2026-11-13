@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View, type StyleProp, type TextStyle } from 'react-native';
+import { Pop, PressableScale } from '../theme/MotionParts';
+import { useCountUp } from '../theme/animate';
 import {
   DEFAULT_ITEM_FILTER,
   applyItemFilter,
@@ -42,6 +43,8 @@ import {
   type ShopItem,
 } from './format';
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
+import type { Locale } from '../i18n/translations';
 import { GiftSheet } from './GiftSheet';
 import { ReceivedGifts } from './ReceivedGifts';
 import { EmptyState } from '../theme/EmptyState';
@@ -83,6 +86,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const [error, setError] = useState<ApiError | null>(null);
   const [selected, setSelected] = useState<ShopItem | null>(null);
   const [busy, setBusy] = useState(false);
+  // the item just bought, while its sheet is still up saying so
+  const [bought, setBought] = useState<string | null>(null);
   const [gifting, setGifting] = useState<ShopItem | null>(null);
   // a gift from the shop goes into your chat with that friend: fly it there, then say where it is
   const [sentGift, setSentGift] = useState<{ item: ShopItem; to: { userId: string; username: string; name: string }; flying: boolean } | null>(null);
@@ -129,9 +134,11 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       if (res.ok) {
         // it is yours: felt as it lands, as a failure to buy it is
         haptic('tap');
-        setSelected(null);
+        // said in the sheet it was bought from, where its picture pops and the purse counts down to what is left
+        // (a system box saying "Purchased" over the shop was a second thing to dismiss, with nothing in it to see)
+        setBought(item.sku);
+        if (typeof res.data.balance === 'number') setBalances((b) => ({ ...b, [item.currency]: res.data.balance }));
         void load();
-        Alert.alert(t('shop.purchased'), t('shop.itemIsYours', { name: item.name }));
       } else if (res.error.code === 'PRICE_CHANGED') {
         setSelected(null);
         void load(); // pull fresh prices
@@ -146,12 +153,18 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
     [client, load, t],
   );
 
+  /** The item's sheet goes, and with it the word that it was just bought. */
+  const closeItem = useCallback(() => {
+    setSelected(null);
+    setBought(null);
+  }, []);
+
   const confirmBuy = useCallback(
     (item: ShopItem) => {
       if (needsConfirmation(item)) {
         Alert.alert(
           t('shop.confirmPurchase'),
-          `${t('shop.spendOn', { price: item.price, currency: currencyLabel(item.currency), name: item.name })}\n\n${t('shop.finalNote')}`,
+          `${t('shop.spendOn', { price: formatNumber(item.price, locale), currency: currencyLabel(item.currency), name: item.name })}\n\n${t('shop.finalNote')}`,
           [
             { text: t('common.cancel'), style: 'cancel' },
             { text: t('shop.buy'), onPress: () => void buy(item) },
@@ -161,7 +174,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         void buy(item);
       }
     },
-    [buy, t],
+    [buy, t, locale],
   );
 
   // the kinds on offer — fixed by the catalogue, not by what is typed, so a
@@ -218,7 +231,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 {loading ? (
                   <SkeletonText size={typography.sizes.md} width={40} />
                 ) : (
-                  <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.zer}</Text>
+                  <Counted value={balances.zer} style={[styles.balance, { color: colors.textPrimary }]} />
                 )}
               </View>
               <View style={styles.balanceChip}>
@@ -226,7 +239,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                 {loading ? (
                   <SkeletonText size={typography.sizes.md} width={20} />
                 ) : (
-                  <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.gems}</Text>
+                  <Counted value={balances.gems} style={[styles.balance, { color: colors.textPrimary }]} />
                 )}
               </View>
             </View>
@@ -320,12 +333,14 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         </AsyncBoundary>
 
         {/* no title in the header: the item's own name heads the sheet, under its picture */}
-        <BottomSheet visible={selected !== null} onClose={() => setSelected(null)}>
+        <BottomSheet visible={selected !== null} onClose={closeItem}>
           {selected ? (
             <ItemDetail
               item={selected}
               balances={balances}
               busy={busy}
+              bought={bought === selected.sku}
+              onDone={closeItem}
               onBuy={confirmBuy}
               onEarnMore={onEarnMore}
               onGift={(it) => {
@@ -435,15 +450,33 @@ function ShopSkeleton(): React.JSX.Element {
 }
 
 /** The price as it is read: "Free", or the number and the currency (Zêr keeps its name; gems are translated, as the gift picker says them). */
-function priceWords(item: ShopItem, t: (key: 'shop.free' | 'gift.picker.gems') => string): string {
+function priceWords(item: ShopItem, t: (key: 'shop.free' | 'gift.picker.gems') => string, locale: Locale): string {
   if (item.price === 0) return t('shop.free');
-  return `${item.price} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
+  return `${formatNumber(item.price, locale)} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
+}
+
+/**
+ * A number in the purse, moving to its new value when it changes: bought
+ * something, and the Zêr are seen to go down to what is left (straight there
+ * under Reduce Motion). Grouped and in the reader's own digits, as every
+ * number in the app is.
+ */
+function Counted({ value, style }: { value: number; style: StyleProp<TextStyle> }): React.JSX.Element {
+  const { locale } = useI18n();
+  const [span, setSpan] = useState({ from: value, to: value });
+  if (span.to !== value) setSpan({ from: span.to, to: value });
+  const shown = useCountUp(span.to, { from: span.from });
+  return (
+    <Text style={style} accessibilityLabel={formatNumber(value, locale)}>
+      {formatNumber(shown, locale)}
+    </Text>
+  );
 }
 
 /** One item in the list: its picture, name, meaning and price. */
 function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balances; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   const wide = itemCategory(item.category) === 'background';
   const affordable = canAfford(item, balances);
@@ -451,7 +484,7 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
     <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={[item.name, item.description, priceWords(item, t)].filter(Boolean).join(', ')}
+      accessibilityLabel={[item.name, item.description, priceWords(item, t, locale)].filter(Boolean).join(', ')}
       style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
     >
       {/* one column wide enough for a background, so every name starts at the same place */}
@@ -487,7 +520,7 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
           <Text style={[styles.price, { color: colors.success }]}>{t('shop.free')}</Text>
         ) : (
           <>
-            <Text style={[styles.price, { color: affordable ? colors.textPrimary : colors.textSecondary }]}>{item.price}</Text>
+            <Text style={[styles.price, { color: affordable ? colors.textPrimary : colors.textSecondary }]}>{formatNumber(item.price, locale)}</Text>
             <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={16} color={item.currency === 'zer' ? colors.gold : colors.primary} />
           </>
         )}
@@ -496,10 +529,20 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
   );
 }
 
+/**
+ * One item, in its sheet: what it is, what it costs, and Buy.
+ *
+ * Bought, the sheet stays and says so itself: the picture pops, as anything
+ * just earned does, "… is yours!" takes the price's place, and the purse
+ * counts down to what is left, with one button to close. Still under Reduce
+ * Motion, where the words and the new number say it.
+ */
 function ItemDetail({
   item,
   balances,
   busy,
+  bought,
+  onDone,
   onBuy,
   onEarnMore,
   onGift,
@@ -507,12 +550,16 @@ function ItemDetail({
   item: ShopItem;
   balances: Balances;
   busy: boolean;
+  /** just bought, from this sheet */
+  bought: boolean;
+  onDone: () => void;
   onBuy: (item: ShopItem) => void;
   onEarnMore: () => void;
   onGift: (item: ShopItem) => void;
 }) {
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const dir = useDirection();
   const { width } = useWindowDimensions();
   const affordable = canAfford(item, balances);
   const wide = itemCategory(item.category) === 'background';
@@ -520,18 +567,37 @@ function ItemDetail({
   const artWidth = wide ? Math.min(Math.min(width, SHEET_MAX_WIDTH) - layout.gutter * 2, 400) : 128;
   return (
     <View style={styles.detail}>
-      {itemCategory(item.category) === 'frame' && item.assetUrl ? (
-        <FrameArt path={item.assetUrl} width={160} style={styles.preview} />
-      ) : (
-        <ItemArt category={item.category} path={item.assetUrl} width={artWidth} style={styles.preview} />
-      )}
+      <Pop when={bought}>
+        {itemCategory(item.category) === 'frame' && item.assetUrl ? (
+          <FrameArt path={item.assetUrl} width={160} style={styles.preview} />
+        ) : (
+          <ItemArt category={item.category} path={item.assetUrl} width={artWidth} style={styles.preview} />
+        )}
+      </Pop>
       <Text style={[styles.detailName, { color: colors.textPrimary }]} accessibilityRole="header">
         {item.name}
       </Text>
       {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
-      <Text style={[styles.detailPrice, { color: item.price === 0 ? colors.success : colors.textPrimary }]}>{priceWords(item, t)}</Text>
+      {bought ? null : (
+        <Text style={[styles.detailPrice, { color: item.price === 0 ? colors.success : colors.textPrimary }]}>{priceWords(item, t, locale)}</Text>
+      )}
 
-      {affordable ? (
+      {bought ? (
+        <>
+          <View style={[styles.yours, { flexDirection: dir.row }]} accessibilityLiveRegion="polite" testID="shop-bought">
+            <Icon name="check" size={20} color={colors.success} />
+            <Text style={[styles.yoursText, { color: colors.textPrimary }]}>{t('shop.itemIsYours', { name: item.name })}</Text>
+          </View>
+          {item.price > 0 ? (
+            // what is left in the purse, counting down from what was there
+            <View style={[styles.left, { flexDirection: dir.row }]}>
+              <Icon name={item.currency === 'zer' ? 'coin' : 'gem'} size={18} color={item.currency === 'zer' ? colors.gold : colors.primary} />
+              <Counted value={balances[item.currency]} style={[styles.leftText, { color: colors.textPrimary }]} />
+            </View>
+          ) : null}
+          <ClayButton label={t('common.done')} tone="primary" size="large" onPress={onDone} style={styles.stretch} />
+        </>
+      ) : affordable ? (
         <>
           <ClayButton
             label={item.price === 0 ? t('shop.getFree') : t('shop.buy')}
@@ -584,6 +650,11 @@ const FRAME_THUMB = 68;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  // bought: the words, and what is left in the purse under them
+  yours: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, marginTop: spacing.sm },
+  yoursText: { flexShrink: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, textAlign: 'center' },
+  left: { alignItems: 'center', justifyContent: 'center', gap: spacing.xs, marginBottom: spacing.sm },
+  leftText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   balances: { flexDirection: 'row', gap: spacing.md },
   balanceChip: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   balance: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

@@ -28,6 +28,7 @@ import {
   type DeviceSession,
 } from './api';
 import { Loading } from '../theme/Loading';
+import { pressedDim } from '../theme/motion';
 
 /**
  * The measurements a device row and its placeholder share, so the grey rows
@@ -318,7 +319,7 @@ const styles = StyleSheet.create({
   action: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   actionHit: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.xs },
   actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   others: { marginTop: spacing.sm },
   only: { fontSize: typography.sizes.sm, lineHeight: 21, marginTop: spacing.sm, textAlign: 'center' },
 });

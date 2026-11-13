@@ -7,7 +7,7 @@ import type { ApiError, ApiResult } from '../../api/types';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
-import { AnswerMotion, DrawnCheck } from '../../theme/MotionParts';
+import { AnswerMotion, DrawnCheck, heldDim } from '../../theme/MotionParts';
 import { haptic } from '../../feedback/haptics';
 import { useTheme } from '../../theme/ThemeProvider';
 import { display } from '../../theme/fonts';
@@ -164,7 +164,12 @@ export function Reveal({
             </Text>
           ) : null}
           {r.explanationEn ? (
-            <Pressable onPress={() => update({ englishUnder: !english })} accessibilityRole="button" style={styles.toggle} hitSlop={8}>
+            <Pressable
+              onPress={() => update({ englishUnder: !english })}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.toggle, pressed && heldDim]}
+              hitSlop={8}
+            >
               <Text style={[styles.toggleText, { color: colors.primary }]}>{english ? t('stories.question.hideEnglish') : t('stories.question.showEnglish')}</Text>
             </Pressable>
           ) : null}

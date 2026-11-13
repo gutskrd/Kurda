@@ -53,6 +53,7 @@ import { usePartyOffer } from '../party/offer';
 import { PARTY_LEVEL_KEY } from '../party/PartyStart';
 import { groupDialects, useMpAvailability } from '../games/mpAvailability';
 import { TableChoices } from '../games/partyChoices';
+import { pressedDim } from '../theme/motion';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
@@ -366,7 +367,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
         accessibilityRole={single ? 'radio' : 'checkbox'}
         accessibilityState={{ checked: on, disabled: locked }}
         accessibilityLabel={f.online ? t('play.sheet.friendOnline', { name }) : name}
-        style={({ pressed }) => [styles.friend, { backgroundColor: on ? colors.controlTrack : 'transparent', opacity: pressed ? 0.8 : 1 }]}
+        style={({ pressed }) => [styles.friend, { backgroundColor: on ? colors.controlTrack : 'transparent', opacity: pressed ? pressedDim : 1 }]}
       >
         <View>
           <InitialsAvatar name={name} id={f.userId} size={36} photoUrl={f.avatarUrl} />
@@ -442,7 +443,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
                       accessibilityLabel={t(GAME_NAME_KEY[g])}
                       style={({ pressed }) => [
                         styles.gameTile,
-                        { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? 0.85 : 1 },
+                        { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
                       ]}
                     >
                       <Icon name={GAME_ICON[g]} size={22} color={on ? colors.textOnPrimary : colors.primary} />

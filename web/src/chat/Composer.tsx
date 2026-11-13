@@ -1,24 +1,35 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 /**
  * The message box, shared by the direct and group threads.
  *
  * It was a single-line input, so a message could not contain a line break at all
  * — pressing Enter submitted and there was no other way to get one. It is now a
- * textarea that grows with its content: Enter sends (what everyone expects in a
- * chat) and Shift+Enter starts a new line.
+ * textarea that grows with its content.
+ *
+ * What Enter does follows what is under the hand. At a keyboard, Enter sends
+ * (what everyone expects in a chat) and Shift+Enter starts a new line. On a
+ * touch screen there is no Shift to hold, so Enter is the new line, as it is
+ * in every chat on a phone, and Send is the button beside the box; the key
+ * itself says which (`enterKeyHint`).
+ *
+ * The box does not wait on the server: the thread shows a message the moment
+ * it is sent (chat/useOutbox.ts), so Send is ready again at once.
  */
 
 /** Grow to this many lines, then scroll — past that it eats the thread. */
 const MAX_ROWS = 5;
 
+/** A finger is the main pointer: there is no Shift+Enter to be had. */
+const TOUCH = '(pointer: coarse)';
+
 export function Composer({
   value,
   onChange,
   onSubmit,
-  sending,
   placeholder,
   maxLength = 2000,
   tools,
@@ -26,7 +37,6 @@ export function Composer({
   value: string;
   onChange: (next: string) => void;
   onSubmit: () => void;
-  sending: boolean;
   placeholder: string;
   maxLength?: number;
   /**
@@ -38,6 +48,7 @@ export function Composer({
 }): React.JSX.Element {
   const t = useT();
   const ref = useRef<HTMLTextAreaElement>(null);
+  const touch = useMediaQuery(TOUCH);
 
   // Re-measure on every change: reset to auto first, or the height only ever
   // grows because scrollHeight can never report less than the current height.
@@ -62,7 +73,7 @@ export function Composer({
       className="chat-compose"
       onSubmit={(e) => {
         e.preventDefault();
-        if (!empty && !sending) onSubmit();
+        if (!empty) onSubmit();
       }}
     >
       {tools && <div className="chat-compose-tools">{tools}</div>}
@@ -73,18 +84,20 @@ export function Composer({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={(e) => {
-          // Enter sends; Shift+Enter (or a composing IME) writes a newline
+          // at a keyboard Enter sends and Shift+Enter (or a composing IME) writes a new line; on a touch screen Enter is the new line
+          if (touch) return;
           if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
             e.preventDefault();
-            if (!empty && !sending) onSubmit();
+            if (!empty) onSubmit();
           }
         }}
+        enterKeyHint={touch ? 'enter' : 'send'}
         placeholder={placeholder}
         maxLength={maxLength}
         aria-label={t('chat.message')}
       />
-      <Button type="submit" disabled={sending || empty}>
-        {sending ? t('chat.sending') : t('chat.send')}
+      <Button type="submit" disabled={empty}>
+        {t('chat.send')}
       </Button>
     </form>
   );

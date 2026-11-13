@@ -3,7 +3,8 @@ import { preloadCatalogue } from '../i18n/catalogues';
 import { cleanup, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useLocation } from 'react-router-dom';
-import { Civak } from './Civak';
+import { Civak, firstPage } from './Civak';
+import { AppGate } from '../components/AppGate';
 import { renderApp, jsonResponse } from '../test/utils';
 
 afterEach(() => {
@@ -137,6 +138,77 @@ describe('Civak', () => {
     await waitFor(() => expect(within(card).getByRole('button', { name: 'Unlike (1)' })).toBeInTheDocument());
     expect(card.textContent).toContain('1');
     expect(queries).toHaveLength(1);
+  });
+
+  it('fills the heart and counts the like at the press, before the server has answered, and lets a save go meanwhile', async () => {
+    signIn();
+    // the like is held back until the test lets it go; everything else answers at once
+    let letGo: () => void = () => undefined;
+    const held = new Promise<void>((resolve) => (letGo = resolve));
+    const posts: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/feed')) return jsonResponse(200, { items: [item('library:s1', { engagement: engagement({ likes: 2 }) })] });
+        if (url.includes('/like')) {
+          posts.push('like');
+          await held;
+          return jsonResponse(200, { on: true, engagement: engagement({ likes: 5, liked: true, bookmarks: 1, bookmarked: true }) });
+        }
+        if (url.includes('/bookmark')) {
+          posts.push('bookmark');
+          return jsonResponse(200, { on: true, engagement: engagement({ likes: 2, bookmarks: 1, bookmarked: true }) });
+        }
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Civak />, ['/app/civak']);
+
+    const card = (await screen.findByText('Çîroka min')).closest<HTMLElement>('.fcard')!;
+    const like = within(card).getByRole('button', { name: /^Like/ });
+    await waitFor(() => expect(like).toBeEnabled());
+    await userEvent.click(like);
+
+    // at once: the heart is on, the count has moved, and the sparks are round a filled heart
+    expect(within(card).getByRole('button', { name: 'Unlike (3)' })).toHaveAttribute('aria-pressed', 'true');
+    expect(card.querySelector('.fcard-like.is-on .fcard-burst')).not.toBeNull();
+    // and the other two are not held while it is on its way
+    const save = within(card).getByRole('button', { name: 'Save' });
+    expect(save).toBeEnabled();
+    await userEvent.click(save);
+    await waitFor(() => expect(within(card).getByRole('button', { name: 'Remove from saved' })).toBeInTheDocument());
+    // a second press on the heart while the first is unanswered is let go: one like is sent, not two
+    await userEvent.click(within(card).getByRole('button', { name: /^Unlike/ }));
+    expect(posts.filter((p) => p === 'like')).toHaveLength(1);
+
+    // the server's totals have the last word: somebody else liked it meanwhile
+    letGo();
+    await waitFor(() => expect(within(card).getByRole('button', { name: 'Unlike (5)' })).toBeInTheDocument());
+  });
+
+  it('takes a like back, and says why, when the server refuses it', async () => {
+    signIn();
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/feed')) return jsonResponse(200, { items: [item('library:s1')] });
+        if (url.includes('/posts/')) return jsonResponse(500, { code: 'INTERNAL', message: 'boom' });
+        if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'me' } });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Civak />, ['/app/civak']);
+
+    const card = (await screen.findByText('Çîroka min')).closest<HTMLElement>('.fcard')!;
+    const like = within(card).getByRole('button', { name: /^Like/ });
+    await waitFor(() => expect(like).toBeEnabled());
+    await userEvent.click(like);
+
+    // back as it was: not liked, no sparks left round an empty heart, and a line under the row
+    await waitFor(() => expect(within(card).getByRole('status')).toHaveTextContent('Something went wrong on our end'));
+    expect(within(card).getByRole('button', { name: 'Like' })).toHaveAttribute('aria-pressed', 'false');
+    expect(card.querySelector('.fcard-burst')).toBeNull();
   });
 
   it('saves a post separately from liking it', async () => {
@@ -641,5 +713,92 @@ describe('Civak', () => {
 
     expect(await screen.findByText('Something new')).toBeInTheDocument();
     expect(screen.getByText('axaftin')).toBeInTheDocument();
+  });
+
+  describe('coming back to the wall', () => {
+    it('rises in the first time it arrives, and is simply there, without waiting, the next time', async () => {
+      // the wall answers at once the first time; the second time it is held back until the test lets it go
+      let asked = 0;
+      let letGo: () => void = () => undefined;
+      const held = new Promise<void>((resolve) => (letGo = resolve));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) => {
+          if (!url.includes('/feed')) return jsonResponse(200, {});
+          asked += 1;
+          if (asked > 1) await held;
+          return jsonResponse(200, { items: [item('library:s1', asked > 1 ? { title: 'Çîroka min, ji nû ve' } : {})] });
+        }),
+      );
+      // inside the app's gate, as the page always is: it is drawn once it is known who is reading
+      const first = renderApp(<AppGate><Civak /></AppGate>, ['/app/civak']);
+      await screen.findByText('Çîroka min');
+      await waitFor(() => expect(document.querySelector('.feed')).toHaveClass('rise-in'));
+      first.unmount();
+
+      renderApp(<AppGate><Civak /></AppGate>, ['/app/civak']);
+      // the wall it showed is there while the server has not answered yet, and it does not rise in again
+      expect(await screen.findByText('Çîroka min')).toBeInTheDocument();
+      expect(asked).toBe(2);
+      expect(document.querySelector('.feed')).not.toHaveClass('rise-in');
+      // and what it was asked for behind that takes its place when it comes
+      letGo();
+      expect(await screen.findByText('Çîroka min, ji nû ve')).toBeInTheDocument();
+    });
+
+    it('keeps what had been read further down, under the first page as it is now', () => {
+      const page = (from: number, count: number) => Array.from({ length: count }, (_, i) => item(`library:p${from + i}`) as never);
+      const showing = { key: 'k', items: page(0, 40), nextOffset: 40, more: true };
+      // a post was made since: it leads, and nothing read before is lost or shown twice
+      const now = firstPage(showing, 'k', [item('library:new') as never, ...page(0, 19)]);
+      expect(now.items).toHaveLength(41);
+      expect(now.items[0]).toMatchObject({ key: 'library:new' });
+      expect(now.nextOffset).toBe(40);
+      // a post taken down from the first page is gone when nothing new pushed it out
+      const without = firstPage(showing, 'k', page(1, 20));
+      expect(without.items.some((i) => i.key === 'library:p0')).toBe(false);
+      expect(without.items).toHaveLength(39);
+    });
+
+    it('does not rise in a second time in the same tab, even when it has to be fetched again', async () => {
+      feedFetch([item('library:s1')]);
+      const first = renderApp(<Civak />, ['/app/civak']);
+      await screen.findByText('Çîroka min');
+      first.unmount();
+      // another filter is another wall to fetch, but the same list on the same screen
+      renderApp(<Civak />, ['/app/civak?section=dimen']);
+      await screen.findByText('Çîroka min');
+      expect(document.querySelector('.feed')).not.toHaveClass('rise-in');
+    });
+
+    it('loads the next page as the end of the wall comes near, and keeps the button', async () => {
+      const page = (from: number) => Array.from({ length: 20 }, (_, i) => item(`library:p${from + i}`, { title: `Post ${from + i}` }));
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) => {
+          if (!url.includes('/feed')) return jsonResponse(200, {});
+          return jsonResponse(200, { items: url.includes('offset=0') ? page(0) : url.includes('offset=20') ? page(20) : [] });
+        }),
+      );
+      // a browser that can watch for the end: jsdom cannot, so the test stands in for it
+      let seen: (entries: Array<{ isIntersecting: boolean }>) => void = () => undefined;
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(callback: (entries: Array<{ isIntersecting: boolean }>) => void) {
+            seen = callback;
+          }
+          observe(): void {}
+          disconnect(): void {}
+        },
+      );
+      renderApp(<Civak />, ['/app/civak']);
+      await screen.findByText('Post 0');
+      expect(screen.getByRole('button', { name: 'Show more' })).toBeInTheDocument();
+      seen([{ isIntersecting: true }]);
+      expect(await screen.findByText('Post 39')).toBeInTheDocument();
+      // as jsdom had it, for whatever runs after this
+      vi.stubGlobal('IntersectionObserver', undefined);
+    });
   });
 });

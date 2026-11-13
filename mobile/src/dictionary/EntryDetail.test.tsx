@@ -6,6 +6,8 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
+// Android's back, pressed by the test (`pressBack`)
+vi.mock('../navigation/hardwareBack', () => import('../navigation/testing/hardwareBack'));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { encodeLipsync, type DictionaryAudio } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -13,6 +15,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { characterLayers } from '../characters/layers';
 import { FakeAudio, fakeFrames, type Frames } from '../characters/testing/audio';
+import { pressBack, resetHardwareBack } from '../navigation/testing/hardwareBack';
 import { EntryDetail } from './EntryDetail';
 import type { Entry } from './types';
 
@@ -95,3 +98,22 @@ describe('a dictionary entry’s pronunciations', () => {
     expect(screen.queryByText('Hamo')).toBeNull();
   });
 });
+
+/*
+ * The entry takes the results' place rather than being pushed over them, so
+ * the navigator does not know it is there: Android's back used to go past it
+ * and the results both.
+ */
+describe('a dictionary entry and Android’s back', () => {
+  it('goes back to the results, the way its chevron does', async () => {
+    resetHardwareBack();
+    const onBack = vi.fn();
+    testAuth.client = fakeClient({ 'GET /dictionary/entries/e1': ok(entry([])) });
+    renderWithProviders(<EntryDetail entryId="e1" onBack={onBack} />);
+    expect(await screen.findByText('mal')).toBeTruthy();
+    // taken by the entry, and not left to leave the screen
+    expect(pressBack()).toBe(true);
+    expect(onBack).toHaveBeenCalledTimes(1);
+  });
+});
+

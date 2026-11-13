@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  Animated,
   Pressable,
   ScrollView,
   Share,
@@ -17,6 +18,10 @@ import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/g
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useShake } from '../theme/animate';
+import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../theme/CelebrationParts';
+import { BURST } from '../theme/celebration';
+import { useCelebrationHold } from '../badges/BadgeCelebrationHost';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import {
   backspace,
@@ -28,7 +33,7 @@ import {
   type Feedback,
 } from './board';
 import { buildShareText } from './share';
-import { WordleBoard, cellSizeFor } from './WordleBoard';
+import { WordleBoard, cellSizeFor, turnMs } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
 import type { SearchResult } from '../dictionary/types';
 import { useI18n } from '../i18n/I18nContext';
@@ -38,6 +43,7 @@ import { Loading } from '../theme/Loading';
 import { GameArt } from '../games/GameArt';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
+import { heldDim } from '../theme/MotionParts';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -105,6 +111,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const { colors } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+  const reduce = useReducedMotion();
 
   const [difficulty, setDifficulty] = useState<Difficulty>('medium');
   const [game, setGame] = useState<WordleGameView | null>(null);
@@ -115,6 +122,8 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const [stats, setStats] = useState<WordleStats | null>(null);
   const [edu, setEdu] = useState<EduEntry | null>(null);
   const [savedWord, setSavedWord] = useState(false);
+  // the word was found by the guess just made, on this screen: the one time the result celebrates
+  const [wonNow, setWonNow] = useState(false);
 
   // a guess the game will not take: the board shakes as every wrong answer in the app does, and is still under Reduce Motion
   const shake = useShake();
@@ -135,6 +144,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
     setDraft([]);
     setEdu(null);
     setSavedWord(false);
+    setWonNow(false);
     const res = await client.post<WordleGameView>(`/wordle/${mode}`, { difficulty });
     setStarting(false);
     if (res.ok) {
@@ -178,8 +188,9 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       setDraft([]);
       setNote(null);
       if (res.data.status !== 'playing') {
-        // the word found is a right answer; running out of tries a gentle miss — a guess along the way is neither
-        haptic(res.data.status === 'won' ? 'correct' : 'wrong');
+        // the word found has its moment, felt as that lands (ResultPanel); running out of tries is a gentle miss — a guess along the way is neither
+        if (res.data.status === 'won') setWonNow(true);
+        else haptic('wrong');
         loadStats();
         void fetchEducation(res.data.target);
         // this guess ended it — a daily reopened after it was played is not a finish
@@ -278,13 +289,16 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           </>
         ) : (
           <>
-            <WordleBoard board={board} cellSize={cellSize} shake={shake.translateX} />
+            {/* a new game is a new board: only a row scored while it is on screen turns over */}
+            <WordleBoard key={game.id} board={board} cellSize={cellSize} shake={shake.translateX} />
 
             {note ? <Text style={[styles.note, { color: colors.danger }]}>{note}</Text> : null}
 
             {finished ? (
               <ResultPanel
                 game={game}
+                // once the last row has turned over, so the two do not play over each other
+                celebrateAfterMs={wonNow ? turnMs(game.targetLength, reduce) : null}
                 edu={edu}
                 savedWord={savedWord}
                 onSave={saveToVocab}
@@ -304,7 +318,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       */}
       {game && !finished ? (
         <View style={[styles.keyboardDock, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
-          <WordleKeyboard keyboard={game.keyboard} onKey={onKey} disabled={submitting} />
+          <WordleKeyboard keyboard={game.keyboard} onKey={onKey} checking={submitting} />
         </View>
       ) : null}
     </GradientBackground>
@@ -314,6 +328,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 /** Win/lose result: reveal, the note that a game alone earns no XP, educational card + save, share, play again. */
 function ResultPanel({
   game,
+  celebrateAfterMs,
   edu,
   savedWord,
   onSave,
@@ -323,6 +338,8 @@ function ResultPanel({
   stats,
 }: {
   game: WordleGameView;
+  /** the word was found just now: its moment plays, this long after the panel appears; null for a result that is only shown */
+  celebrateAfterMs: number | null;
   edu: EduEntry | null;
   savedWord: boolean;
   onSave: () => void;
@@ -338,7 +355,13 @@ function ResultPanel({
     <View style={styles.result}>
       <GlassCard style={styles.resultCard}>
         {/* the line used to open with a party popper; the spark is the app's own, in the colour of a right answer */}
-        {won ? <Icon name="sparkle" size={28} color={colors.success} style={styles.resultMark} /> : null}
+        {won ? (
+          celebrateAfterMs !== null ? (
+            <WinMoment delayMs={celebrateAfterMs} seed={game.guesses.length} />
+          ) : (
+            <Icon name="sparkle" size={28} color={colors.success} style={styles.resultMark} />
+          )
+        ) : null}
         <Text style={[styles.resultTitle, { color: won ? colors.success : colors.danger }]}>
           {won ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
         </Text>
@@ -361,7 +384,14 @@ function ResultPanel({
               {edu.pos ? <Text style={[styles.eduPos, { color: colors.textSecondary }]}>{edu.pos}</Text> : null}
             </View>
             {edu.definition ? <Text style={[styles.eduDef, { color: colors.textSecondary }]}>{edu.definition}</Text> : null}
-            <Pressable onPress={onSave} accessibilityRole="button" style={styles.saveRow} disabled={savedWord}>
+            <Pressable
+              onPress={onSave}
+              accessibilityRole="button"
+              // one 20-point line, caught at a fingertip's 44
+              hitSlop={SAVE_SLOP}
+              style={({ pressed }) => [styles.saveRow, pressed && heldDim]}
+              disabled={savedWord}
+            >
               <Icon name={savedWord ? 'check' : 'star'} size={16} color={colors.primary} />
               <Text style={[styles.saveText, { color: colors.primary }]}>
                 {savedWord ? t('dictionary.savedWord') : t('dictionary.saveWord')}
@@ -393,6 +423,39 @@ function ResultPanel({
   );
 }
 
+/** "Save word" is one 20-point line: this much above and below it makes a fingertip's 44. */
+const SAVE_SLOP = { top: 12, bottom: 12 };
+
+/** How big the spark's stage is: room for its ring to widen and its flecks to be thrown. */
+const WIN_STAGE = 96;
+
+/**
+ * The word found, as it is found: the app's one celebration (theme/celebration.ts),
+ * small, on the result's own mark — the spark springs in, a ring widens once
+ * behind it, a handful of flecks is thrown, and it is felt and heard once as
+ * it lands. Only for a guess made here and now: a daily opened again after it
+ * was solved shows the same spark and stays still. Under Reduce Motion the
+ * spark fades in and nothing travels.
+ */
+function WinMoment({ delayMs, seed }: { delayMs: number; seed: number }): React.JSX.Element {
+  const { colors } = useTheme();
+  const moment = useCelebration({ delayMs });
+  useCelebrationHold(moment.playing);
+  const { plan } = moment;
+  const scale = plan.travel ? moment.art.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] }) : 1;
+  const opacity = moment.art.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
+  return (
+    <View style={styles.winStage} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="peyvok-win-moment">
+      <SoftGlow colour={colors.success} size={WIN_STAGE} id="peyvok-win-glow" />
+      {plan.travel ? <GlowRing progress={moment.ring} colour={colors.success} size={WIN_STAGE * 0.5} /> : null}
+      {plan.travel ? <ConfettiBurst progress={moment.burst} count={BURST.lesson} seed={seed} colours={[colors.success, colors.gold]} reach={WIN_STAGE} /> : null}
+      <Animated.View style={{ opacity, transform: [{ scale }] }}>
+        <Icon name="sparkle" size={28} color={colors.success} />
+      </Animated.View>
+    </View>
+  );
+}
+
 function Stat({ label, value }: { label: string; value: string }): React.JSX.Element {
   const { colors } = useTheme();
   return (
@@ -420,6 +483,8 @@ const styles = StyleSheet.create({
   result: { gap: spacing.md, marginTop: spacing.md },
   resultCard: { gap: spacing.sm },
   resultMark: { alignSelf: 'center' },
+  // the spark's own stage while it celebrates; the flecks may fly past its edges
+  winStage: { alignSelf: 'center', width: WIN_STAGE, height: WIN_STAGE / 2, alignItems: 'center', justifyContent: 'center', overflow: 'visible' },
   resultTitle: { ...display(typography.sizes.xl), textAlign: 'center' },
   resultLine: { fontSize: typography.sizes.md, textAlign: 'center' },
   resultNote: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center' },

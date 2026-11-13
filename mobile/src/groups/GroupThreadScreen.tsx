@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityIndicator,
@@ -45,17 +45,22 @@ import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
 import { SendErrorNotice } from '../reports/SendError';
 import { restrictionOf } from '../reports/sendErrors';
 import { ChatGameButton } from '../play/ChatGameButton';
-import { mergeLatest, useCatchUp } from '../realtime/catchUp';
+import { appendOnce, mergeLatest, useCatchUp } from '../realtime/catchUp';
+import { restoredDraft, useOutgoing } from '../chat/sending';
 import { showActions } from '../theme/actionSheet';
 import { afterClear, clearedSince, clearedView, useClearChat, useClearedHere } from './clearing';
 import { ClearedLine, WelcomeCard } from './Welcome';
 import { StandingCard, type Banned } from './Standing';
 import { AddFriendsSheet } from './AddFriendsSheet';
 import { Loading } from '../theme/Loading';
+import { heldDim } from '../theme/MotionParts';
 
 const MAX_LEN = 2000;
 
-type Message = Omit<GroupMessage, 'body'> & ChatMessage;
+type Message = Omit<GroupMessage, 'body'> & ChatMessage & {
+  /** sent from here and not yet answered for by the server (chat/sending.ts) */
+  pending?: boolean;
+};
 
 /** A refusal that means the reader is not in the group (any more): removed, banned, or never in it. */
 const isOutside = (error: ApiError): boolean => error.code === 'NOT_A_MEMBER' || error.code === 'GROUP_BANNED';
@@ -138,6 +143,20 @@ export function GroupThreadScreen({
   const me = user?.id ?? '';
 
   const [messages, setMessages] = useState<Message[]>([]);
+  // what the room's listener (made once) reads: the messages held now
+  const held = useRef<Message[]>([]);
+  held.current = messages;
+  // the messages sent from here that the server has not answered for yet, drawn after the ones it has
+  const { outgoing, begin, settle, echoed } = useOutgoing();
+  const thread = useMemo<Message[]>(
+    () => [
+      ...messages,
+      ...outgoing.map(
+        (m): Message => ({ ...m, senderId: me, username: user?.username ?? '', avatarUrl: null, deleted: false, kind: 'text', gift: null, game: null, pending: true }),
+      ),
+    ],
+    [messages, outgoing, me, user?.username],
+  );
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -312,7 +331,9 @@ export function GroupThreadScreen({
    * History loaded once on mount and nothing after it, so a reply to a group
    * message did not appear until you left the thread and came back — the browser
    * has joined `group:{id}` and listened for these three since the thread was
-   * built. Our own send still appends locally; the echo is dropped by id.
+   * built. Our own send is in the thread at once, as one on its way
+   * (chat/sending.ts), and takes the server's copy from whichever arrives
+   * first, the send's answer or the room's echo: the other is dropped by id.
    */
   useRoomEvents(
     `group:${groupId}`,
@@ -324,6 +345,8 @@ export function GroupThreadScreen({
           if (!message?.id) return;
           const own = message.gift ? pendingCards.current.get(message.gift.batchId) : undefined;
           const shown = own ? { ...message, gift: own } : message;
+          // our own words back from the room before the send was answered: the one drawn as on its way gives them its place
+          if (message.senderId === me && message.body && !held.current.some((m) => m.id === message.id)) echoed(message.body);
           setMessages((prev) => (prev.some((m) => m.id === shown.id) ? prev : [...prev, shown]));
           // it is on screen, so it counts as read
           void markGroupRead(client, groupId);
@@ -359,7 +382,7 @@ export function GroupThreadScreen({
           note(ev.username);
         }
       },
-      [groupId, client, me, note],
+      [groupId, client, me, note, echoed],
     ),
   );
 
@@ -397,12 +420,16 @@ export function GroupThreadScreen({
   /** Send words into the room: null when they went, else the refusal, for whoever asked to say. */
   const post = useCallback(
     async (body: string): Promise<ApiError | null> => {
+      // in the thread at once, as one on its way; the server's copy takes its place, or it is taken out
+      const sending = begin(body);
       const res = await sendToGroup(client, groupId, body);
+      settle(sending);
       if (!res.ok) return res.error;
-      setMessages((prev) => [...prev, res.data as Message]);
+      // once: the room may have echoed it already
+      setMessages((prev) => appendOnce(prev, res.data as Message));
       return null;
     },
-    [client, groupId],
+    [client, groupId, begin, settle],
   );
 
   /**
@@ -435,8 +462,8 @@ export function GroupThreadScreen({
     const refused = await post(body);
     if (!refused) return;
     haptic('error');
-    // the draft comes back when the message did not go, so nothing is lost
-    setDraft(body);
+    // the draft comes back when the message did not go, before anything typed since, so nothing is lost
+    setDraft((now) => restoredDraft(body, now));
     refusedSend(refused);
   }, [draft, post, refusedSend]);
 
@@ -498,7 +525,7 @@ export function GroupThreadScreen({
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel={t('groups.info')}
-                  style={styles.headerBtn}
+                  style={({ pressed }) => [styles.headerBtn, pressed && heldDim]}
                 >
                   <Icon name="people" size={20} tone="primary" />
                 </Pressable>
@@ -509,7 +536,7 @@ export function GroupThreadScreen({
                   hitSlop={10}
                   accessibilityRole="button"
                   accessibilityLabel={t('groups.chatOptions')}
-                  style={styles.headerBtn}
+                  style={({ pressed }) => [styles.headerBtn, pressed && heldDim]}
                 >
                   <Icon name="more" size={20} tone="secondary" />
                 </Pressable>
@@ -538,7 +565,7 @@ export function GroupThreadScreen({
               <Loading />
             )}
           </ScrollView>
-        ) : messages.length === 0 ? (
+        ) : thread.length === 0 ? (
           <ScrollView contentContainerStyle={styles.welcome}>
             {view.kind === 'everyone' ? <ClearedLine by={view.by} at={view.at} me={user?.username ?? ''} /> : null}
             <View style={styles.centred}>
@@ -553,7 +580,7 @@ export function GroupThreadScreen({
           </ScrollView>
         ) : (
           <FlatList
-            data={[...messages].reverse()}
+            data={[...thread].reverse()}
             inverted
             keyExtractor={(m) => m.id}
             contentContainerStyle={styles.list}
@@ -763,8 +790,17 @@ function Bubble({
       delayLongPress={350}
       accessible={whole}
       {...(whole ? messageA11y(t, options) : null)}
+      // on its way: said to a screen reader as busy, and drawn fainter until the server has it
+      accessibilityState={message.pending ? { busy: true } : undefined}
+      testID={message.pending ? 'message-sending' : undefined}
       // your own words at the end of the line and theirs (with their face) at its start, whichever side that is
-      style={({ pressed }) => [styles.bubbleRow, { flexDirection: dir.row }, mine !== mirrored ? styles.rowEnd : styles.rowStart, pressed && styles.held]}
+      style={({ pressed }) => [
+        styles.bubbleRow,
+        { flexDirection: dir.row },
+        mine !== mirrored ? styles.rowEnd : styles.rowStart,
+        message.pending && styles.sending,
+        pressed && styles.held,
+      ]}
     >
       {!mine ? (
         <InitialsAvatar name={message.username} id={message.senderId} size={28} photoUrl={message.avatarUrl} />
@@ -803,6 +839,8 @@ function Bubble({
 const styles = StyleSheet.create({
   // a held message sinks a little under the finger, so the hold is felt to be doing something
   held: { transform: [{ scale: 0.97 }] },
+  // a message still on its way, as a comment being posted is drawn
+  sending: { opacity: 0.6 },
   flex: { flex: 1 },
   skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden' },
   senderSkeleton: { marginBottom: 2, marginHorizontal: spacing.xs },

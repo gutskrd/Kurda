@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { Avatar } from '../components/Avatar';
-import { BellIcon, CloseIcon, GameIcon, TicketIcon } from '../components/icons';
+import { CloseButton } from '../components/CloseButton';
+import { BellIcon, GameIcon, TicketIcon } from '../components/icons';
 import type { Arrival } from './useSocialRail';
 import { useT } from '../i18n/I18nProvider';
 
@@ -75,9 +76,7 @@ function Toast({
           {arrival.body && <span className="rail-toast-body">{arrival.body}</span>}
         </span>
       </button>
-      <button type="button" className="rail-toast-x" onClick={onDismiss} aria-label={t('rail.dismiss')}>
-        <CloseIcon size={14} />
-      </button>
+      <CloseButton className="rail-toast-x" label={t('rail.dismiss')} onClick={onDismiss} />
       {/* a bar that drains, so the toast's remaining time is visible rather than
           a surprise when it vanishes mid-read */}
       <span className="rail-toast-timer" aria-hidden />

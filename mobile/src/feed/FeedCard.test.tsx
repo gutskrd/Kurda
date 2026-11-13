@@ -15,7 +15,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { UnreadProvider } from '../messages/unread';
 import { onPostDeleted, postDeleted, type DeletedPost } from '../composer/postDeleted';
-import { FeedCard, pillCount } from './FeedCard';
+import { DOUBLE_TAP_MS, FeedCard, pillCount } from './FeedCard';
 import { CivakScreen } from './CivakScreen';
 import type { FeedItem } from './types';
 
@@ -150,6 +150,85 @@ describe('a post in the chain', () => {
     // the count ticks up in the pill
     expect(screen.getByText('1')).toBeTruthy();
     expect(client.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['POST /posts/library/p1/like']);
+  });
+
+  /*
+   * A like, a repost and a save shared one lock: with a like on its way, a
+   * tap on Save was dropped without a word. Each now waits only on itself.
+   */
+  it('saves while a like is still on its way to the server, and keeps both when the answers come', async () => {
+    const answers: Record<string, (r: unknown) => void> = {};
+    const client = fakeClient({
+      'POST /posts/library/p1/like': () => new Promise((resolve) => (answers.like = resolve)),
+      'POST /posts/library/p1/bookmark': () => new Promise((resolve) => (answers.bookmark = resolve)),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<FeedCard item={item()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Like' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    // both shown at once, and both asked for
+    expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Remove from saved' })).toBeTruthy();
+    expect(client.calls.map((c) => c.path)).toEqual(['/posts/library/p1/like', '/posts/library/p1/bookmark']);
+    // the like's answer does not know about the save yet: the save stays as it was tapped
+    await act(async () => answers.like!(ok({ on: true, engagement: { liked: true, likes: 1, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } })));
+    expect(screen.getByRole('button', { name: 'Remove from saved' })).toBeTruthy();
+    await act(async () => answers.bookmark!(ok({ on: true, engagement: { liked: true, likes: 1, reposted: false, reposts: 0, bookmarked: true, bookmarks: 1 } })));
+    expect(screen.getByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Remove from saved' })).toBeTruthy();
+  });
+
+  it('does nothing at all for a second tap on a like already on its way: no buzz, no second call', async () => {
+    const haptics = await import('../feedback/haptics');
+    const felt = vi.spyOn(haptics, 'haptic').mockImplementation(() => undefined);
+    let answer: (r: unknown) => void = () => undefined;
+    const client = fakeClient({ 'POST /posts/library/p1/like': () => new Promise((resolve) => (answer = resolve)) } as never);
+    testAuth.client = client;
+    renderWithProviders(<FeedCard item={item()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Like' }));
+    expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
+    expect(felt).toHaveBeenCalledTimes(1);
+    // tapped again before the server has answered
+    fireEvent.click(screen.getByRole('button', { name: 'Unlike (1)' }));
+    expect(client.calls).toHaveLength(1);
+    expect(felt).toHaveBeenCalledTimes(1);
+    await act(async () => answer(ok({ on: true, engagement: { liked: true, likes: 1, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } })));
+    expect(screen.getByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
+  });
+
+  it('puts back only what was refused, leaving another change alone', async () => {
+    const answers: Record<string, (r: unknown) => void> = {};
+    testAuth.client = fakeClient({
+      'POST /posts/library/p1/like': () => new Promise((resolve) => (answers.like = resolve)),
+      'POST /posts/library/p1/repost': () => new Promise((resolve) => (answers.repost = resolve)),
+    } as never);
+    renderWithProviders(<FeedCard item={item()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Like' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Repost' }));
+    expect(await screen.findByRole('button', { name: 'Undo repost (1)' })).toBeTruthy();
+    await act(async () => answers.like!({ ok: false, error: { kind: 'server', message: 'no', status: 500 } }));
+    // the like went back; the repost, still on its way, stands
+    expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Undo repost (1)' })).toBeTruthy();
+  });
+
+  it('opens a post one short moment after a single tap, and likes it on two', async () => {
+    testAuth.client = fakeClient({
+      'POST /posts/library/p1/like': ok({ on: true, engagement: { liked: true, likes: 1, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } }),
+    });
+    renderWithProviders(<FeedCard item={item()} />);
+    const words = screen.getByRole('button', { name: 'Poem: Şev' });
+    fireEvent.click(words);
+    expect(navigation.navigate).not.toHaveBeenCalled();
+    await act(() => new Promise((r) => setTimeout(r, DOUBLE_TAP_MS + 30)));
+    expect(navigation.navigate).toHaveBeenCalledWith('LibraryPost', { postId: 'p1' });
+    navigation.navigate.mockReset();
+    // two taps inside the window are a like, and open nothing
+    fireEvent.click(words);
+    fireEvent.click(words);
+    expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
+    await act(() => new Promise((r) => setTimeout(r, DOUBLE_TAP_MS + 30)));
+    expect(navigation.navigate).not.toHaveBeenCalled();
   });
 
   it('opens the menu from the ⋯ on your own, and reporting from it on somebody else’s', () => {

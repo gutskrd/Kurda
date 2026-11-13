@@ -64,6 +64,15 @@
   /* gold used as text */
   --gold-ink: #f6d68b;
   --gold-soft: rgba(240, 194, 74, 0.16);
+  /*
+   * The gold of the game stage (games/game-stage.css) and of the Games page's
+   * one Play button: a place lit by its own lamp, the same in the light scheme
+   * and the dark, so it is not `--gold` — but it is said once, here, and not
+   * typed again wherever a game needs it.
+   */
+  --stage-gold: #f2b632;
+  --stage-gold-lip: #a8791a;
+  --stage-gold-ink: #2a1d05;
   --gems: #7cc6ff;
   /* a heart that has been given: its own colour, apart from gold and the semantic pair */
   --like: #ff8fa3;

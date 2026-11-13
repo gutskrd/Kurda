@@ -29,6 +29,13 @@ export interface ChatMessage extends Groupable {
   avatarUrl?: string | null;
   /** group messages only: removed by a moderator or its author */
   deleted?: boolean;
+  /**
+   * Your own message that the server has not answered for (chat/useOutbox.ts):
+   * `sending` is on its way and drawn a little dimmed; `failed` never got
+   * there, says so under itself and offers to try again. Neither is ever
+   * given a sent mark or a read receipt.
+   */
+  pending?: 'sending' | 'failed';
 }
 
 export function MessageList<T extends ChatMessage>({
@@ -38,6 +45,8 @@ export function MessageList<T extends ChatMessage>({
   onOpenProfile,
   renderBody,
   onReport,
+  onRetry,
+  onDiscard,
 }: {
   /** oldest first */
   messages: readonly T[];
@@ -54,6 +63,10 @@ export function MessageList<T extends ChatMessage>({
   renderBody?: (m: T) => ReactNode | undefined;
   /** report someone else's message, from its options (held, right-clicked, or by keyboard) */
   onReport?: (m: T) => void;
+  /** send a message that did not go once more */
+  onRetry?: (m: T) => void;
+  /** take a message that did not go back out of the thread */
+  onDiscard?: (m: T) => void;
 }): React.JSX.Element {
   const locale = useLocale();
   const t = useT();
@@ -109,7 +122,7 @@ export function MessageList<T extends ChatMessage>({
                         key={m.id}
                         className={`bubble${mine ? ' mine' : ''}${
                           i === run.messages.length - 1 ? ' bubble-tail' : ''
-                        }${m.kind && m.kind !== 'text' ? ' is-card' : ''}`}
+                        }${m.kind && m.kind !== 'text' ? ' is-card' : ''}${m.pending ? ` is-${m.pending}` : ''}`}
                       >
                         {m.deleted ? (
                           <em className="muted">{t('chat.messageDeleted')}</em>
@@ -118,6 +131,29 @@ export function MessageList<T extends ChatMessage>({
                         )}
                       </div>
                     );
+                    // not sent yet, or not sent at all: only its words, and for one that failed, what can be done about it
+                    if (m.pending) {
+                      return (
+                        <Fragment key={m.id}>
+                          {bubble}
+                          {m.pending === 'failed' && (
+                            <p className="chat-unsent" role="status">
+                              <span>{t('chat.notSent')}</span>
+                              {onRetry && (
+                                <button type="button" className="link-btn" onClick={() => onRetry(m)}>
+                                  {t('common.retry')}
+                                </button>
+                              )}
+                              {onDiscard && (
+                                <button type="button" className="link-btn" onClick={() => onDiscard(m)}>
+                                  {t('common.cancel')}
+                                </button>
+                              )}
+                            </p>
+                          )}
+                        </Fragment>
+                      );
+                    }
                     // held, right-clicked or reached by keyboard: copy its words, report someone else's
                     if (m.deleted) return bubble;
                     const words = !m.kind || m.kind === 'text' ? (m.body ?? null) : null;
@@ -135,11 +171,20 @@ export function MessageList<T extends ChatMessage>({
                     );
                   })}
 
-                  {/* one timestamp per burst — on every bubble it becomes noise */}
-                  <div className="chat-run-meta">
-                    <time dateTime={last.createdAt}>{timeLabel(last.createdAt, locale)}</time>
-                    {mine && renderStatus?.(last)}
-                  </div>
+                  {/* one timestamp per burst — on every bubble it becomes noise. A burst whose last message
+                      is still on its way says that instead; one that did not go has said so under itself */}
+                  {last.pending === 'sending' ? (
+                    <div className="chat-run-meta" role="status">
+                      {t('chat.sending')}
+                    </div>
+                  ) : (
+                    !last.pending && (
+                      <div className="chat-run-meta">
+                        <time dateTime={last.createdAt}>{timeLabel(last.createdAt, locale)}</time>
+                        {mine && renderStatus?.(last)}
+                      </div>
+                    )
+                  )}
                 </div>
               </div>
             );

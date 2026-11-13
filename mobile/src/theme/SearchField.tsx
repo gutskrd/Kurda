@@ -6,6 +6,7 @@ import { useDirection } from '../reports/direction';
 import { Icon } from './Icon';
 import { useTheme } from './ThemeProvider';
 import { radii, spacing, typography } from './tokens';
+import { pressedDim } from './motion';
 
 /**
  * A search field: a magnifier, the words, and a clear button once there are
@@ -68,7 +69,7 @@ export const SearchField = forwardRef<TextInput, {
           }}
           accessibilityRole="button"
           accessibilityLabel={t('search.clear')}
-          style={({ pressed }) => [styles.clear, { opacity: pressed ? 0.6 : 1 }]}
+          style={({ pressed }) => [styles.clear, { opacity: pressed ? pressedDim : 1 }]}
         >
           <Icon name="clear-fill" size={18} color={colors.textSecondary} />
         </Pressable>

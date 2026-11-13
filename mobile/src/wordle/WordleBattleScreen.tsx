@@ -128,7 +128,10 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
           <RatedChoice value={rated} onChange={setRated} />
         </View>
         <ClayButton
-          label={busy ? t('games.creating') : t('games.battle.create')}
+          label={t('games.battle.create')}
+          // working on it: the button turns and takes no second press, and a screen reader is told what it is doing
+          accessibilityLabel={busy ? t('games.creating') : undefined}
+          busy={busy}
           icon="play"
           tone="primary"
           onPress={() => void create()}
@@ -325,14 +328,18 @@ function BattleRoom({
           {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
           {battle.me == null ? (
             <ClayButton
-              label={busy ? t('games.joining') : t('games.battle.join')}
+              label={t('games.battle.join')}
+              accessibilityLabel={busy ? t('games.joining') : undefined}
+              busy={busy}
               tone="primary"
               onPress={() => void act(() => joinBattle(client, id))}
               style={styles.stretch}
             />
           ) : isHost && playerCount >= 2 ? (
             <ClayButton
-              label={busy ? t('games.starting') : t('games.battle.start')}
+              label={t('games.battle.start')}
+              accessibilityLabel={busy ? t('games.starting') : undefined}
+              busy={busy}
               tone="primary"
               onPress={() => {
                 haptic('tap');
@@ -467,7 +474,7 @@ function BattleRoom({
               {me.solved ? t('games.battle.youSolvedWaiting') : t('games.battle.noTriesWaiting')}
             </Text>
           ) : null}
-          <WordleKeyboard keyboard={me.keyboard} onKey={press} disabled={!active || busy} style={styles.keyboardBleed} />
+          <WordleKeyboard keyboard={me.keyboard} onKey={press} disabled={!active} checking={busy} style={styles.keyboardBleed} />
         </>
       ) : null}
     </>

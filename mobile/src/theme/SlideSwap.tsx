@@ -32,8 +32,10 @@ export function useSlideLeaving(): boolean {
  * slide that was showing moves out the way the reader is going — to the
  * start side going on, to the end side going back, the other way round in a
  * language read from the right — and fades as it goes, while the one
- * arriving rises into its place on the standard spring, the way a row rises
- * into a list. Under Reduce Motion the two cross-fade and nothing travels.
+ * arriving rises into its place on the interface's own spring (no bounce,
+ * there within 300 ms: a lesson turns a step every few seconds), the way a
+ * row rises into a list. Under Reduce Motion the two cross-fade and nothing
+ * travels.
  *
  * `id` names the slide showing; when it changes, the children drawn last
  * are kept as they were and sent off, and the new children come in. The
@@ -134,7 +136,7 @@ function Pane({
   useEffect(() => {
     if (role === 'in') {
       if (there.current) return;
-      const run = reduce ? timing(p, 1, duration.base) : springTo(p, 1, 'standard');
+      const run = reduce ? timing(p, 1, duration.base) : springTo(p, 1, 'chrome');
       run.start(({ finished }) => {
         if (finished) there.current = true;
       });

@@ -5,7 +5,7 @@ import { Toggle } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -17,6 +17,7 @@ import { TagBadge } from './TagBadge';
 import { claimableCatalog, purchasableTags, tagLabel, type ClaimedTag, type ProfileTags, type TagRow } from './types';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * Tags & badges management (KUR-287): shows the user's effective main tag +
@@ -156,7 +157,14 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                     </Text>
                   </View>
                   <Toggle value={tag.displayed} onValueChange={(v) => void toggleDisplay(tag, v)} accessibilityLabel={t('tags.showOnProfile', { tag: tag.label })} />
-                  <Pressable onPress={() => revoke(tag)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('tags.removeTag', { tag: tag.label })}>
+                  <Pressable
+                    onPress={() => revoke(tag)}
+                    // a 20-point glyph, caught at a fingertip's 44
+                    hitSlop={hitSlopFor(20, 20)}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('tags.removeTag', { tag: tag.label })}
+                    style={({ pressed }) => pressed && heldDim}
+                  >
                     <Icon name="close" size={20} color={colors.danger} />
                   </Pressable>
                 </View>
@@ -204,7 +212,15 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             ) : null}
             <View style={styles.sheetActions}>
               <ClayButton label={t('common.cancel')} tone="neutral" onPress={() => setClaiming(null)} style={styles.flex} />
-              <ClayButton label={busy ? t('tags.adding') : t('tags.add')} tone="primary" onPress={submitClaim} style={styles.flex} />
+              <ClayButton
+                label={t('tags.add')}
+                // adding: the button turns and takes no second press, and a screen reader is told what it is doing
+                accessibilityLabel={busy ? t('tags.adding') : undefined}
+                busy={busy}
+                tone="primary"
+                onPress={submitClaim}
+                style={styles.flex}
+              />
             </View>
           </View>
         ) : null}

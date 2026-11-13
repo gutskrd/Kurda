@@ -11,6 +11,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { LobbyInvites } from './LobbyInvites';
 import { PlayerReportButton } from '../reports/PlayerReportButton';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * How often a battle or a match asks the server when nothing has told it to:
@@ -122,7 +123,7 @@ export function LobbyPeople({
                       onPress={remove}
                       accessibilityRole="button"
                       accessibilityLabel={t('stories.lobby.removeWho', { name })}
-                      style={styles.remove}
+                      style={({ pressed }) => [styles.remove, pressed && heldDim]}
                     >
                       <Icon name="close" size={18} color={colors.textSecondary} />
                     </Pressable>

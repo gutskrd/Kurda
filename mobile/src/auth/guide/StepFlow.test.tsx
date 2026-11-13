@@ -152,10 +152,14 @@ describe('StepFlow', () => {
     fireEvent.change(screen.getByTestId('word'), { target: { value: 'av' } });
     await press('Send');
     expect(screen.getByRole('button', { name: 'Send' }).getAttribute('aria-busy')).toBe('true');
+    // a person takes longer than the pacer's gap between two buzzes
+    await new Promise((resolve) => setTimeout(resolve, PACING.minGapMs + 10));
     await act(async () => answer({ ok: false, error: 'Not that word.', says: 'Another word, maybe?' }));
     expect(screen.getByTestId('step-error').textContent).toBe('Not that word.');
     expect(bubble()).toBe('Another word, maybe?');
     expect(screen.getByText('A word?')).toBeTruthy();
+    // the server refused something that was asked for: felt as that, after the tick of the step before it
+    expect(felt).toEqual(['select', 'error']);
   });
 
   it('goes back to the question a refusal is about, with the line under its field', async () => {

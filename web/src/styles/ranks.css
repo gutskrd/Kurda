@@ -1577,18 +1577,18 @@
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-/* the way out: a button of its own at the end, drawn as plainly as any other */
+/* the way out: a quiet line of words at the very foot of the week, well clear of the page's one action (leagues/LeaguePanel.tsx) */
 .league-leave {
   display: flex;
   justify-content: center;
-  padding: 16px 0 8px;
+  padding: var(--space-8) 0 var(--space-2);
 }
-.league-leave > .btn {
-  gap: 8px;
+.league-leave-link {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
 }
-/* the door's arrow points the way out, which is the other way in a right-to-left page */
-[dir='rtl'] .league-leave > .btn svg {
-  transform: scaleX(-1);
+.league-leave-link:hover {
+  color: var(--ink);
 }
 .league-leave-dialog {
   display: grid;

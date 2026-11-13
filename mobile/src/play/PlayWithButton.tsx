@@ -7,6 +7,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { InviteSheet } from './InviteSheet';
+import { pressedDim } from '../theme/motion';
 
 /**
  * "Play" with a friend (contract §B1): on their profile a full button, on a
@@ -24,7 +25,7 @@ export function PlayWithButton({ friendId, name, compact = false }: { friendId: 
           onPress={() => setOpen(true)}
           accessibilityRole="button"
           accessibilityLabel={t('play.withName', { name })}
-          style={({ pressed }) => [styles.icon, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [styles.icon, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
         >
           <Icon name="play" size={20} color={colors.primary} />
         </Pressable>

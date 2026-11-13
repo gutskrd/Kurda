@@ -4,7 +4,8 @@ import { describeError } from '../lib/api';
 import type { ApiError, WordleGame } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
-import { WordleBoard, WordleKeyboard } from '../components/WordleBoard';
+import { TrophyIcon } from '../components/icons';
+import { WordleBoard, WordleKeyboard, useReveal } from '../components/WordleBoard';
 import { useWordleKeys } from '../keyboard/wordleKeys';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
@@ -20,6 +21,39 @@ const DIFFICULTY_KEY: Record<Difficulty, MessageKey> = {
   medium: 'games.difficulty.medium',
   hard: 'games.difficulty.hard',
 };
+
+/**
+ * How Peyvok was last played on this device — today's word or a practice one,
+ * and how hard — so the game opens the way it was left. On this device only:
+ * it is a habit of the hand, not something an account needs to carry.
+ */
+const CHOICE_KEY = 'hevalo_peyvok_choice';
+const MODES: readonly Mode[] = ['daily', 'practice'];
+const DIFFICULTIES: readonly Difficulty[] = ['easy', 'medium', 'hard'];
+
+function readChoice(): { mode: Mode; difficulty: Difficulty } {
+  const first = { mode: 'daily' as Mode, difficulty: 'medium' as Difficulty };
+  try {
+    const kept: unknown = JSON.parse(localStorage.getItem(CHOICE_KEY) ?? 'null');
+    if (!kept || typeof kept !== 'object') return first;
+    const { mode, difficulty } = kept as { mode?: unknown; difficulty?: unknown };
+    return {
+      mode: MODES.includes(mode as Mode) ? (mode as Mode) : first.mode,
+      difficulty: DIFFICULTIES.includes(difficulty as Difficulty) ? (difficulty as Difficulty) : first.difficulty,
+    };
+  } catch {
+    // nothing kept, or storage blocked: the game opens as it always did
+    return first;
+  }
+}
+
+function writeChoice(choice: { mode: Mode; difficulty: Difficulty }): void {
+  try {
+    localStorage.setItem(CHOICE_KEY, JSON.stringify(choice));
+  } catch {
+    // storage blocked: the choice lasts for this visit
+  }
+}
 
 /** A refusal from the server, in the reader's language. */
 function guessError(err: ApiError, t: (key: MessageKey) => string): string {
@@ -45,14 +79,26 @@ function guessError(err: ApiError, t: (key: MessageKey) => string): string {
 export function Wordle(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  const [mode, setMode] = useState<Mode>('daily');
-  const [difficulty, setDifficulty] = useState<Difficulty>('medium');
+  // the way it was last played on this device: the same two questions are not asked again before every game
+  const [mode, setMode] = useState<Mode>(() => readChoice().mode);
+  const [difficulty, setDifficulty] = useState<Difficulty>(() => readChoice().difficulty);
+  useEffect(() => writeChoice({ mode, difficulty }), [mode, difficulty]);
   const [game, setGame] = useState<WordleGame | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [emptyPool, setEmptyPool] = useState(false);
   const [current, setCurrent] = useState('');
   const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  // guesses the game would not take, counted: each one shakes the row it was typed in
+  const [refusals, setRefusals] = useState(0);
+  // the last guess's row is still turning over: the result waits for the tiles to have said it
+  const { revealing, hold } = useReveal();
+
+  const refuse = useCallback((why: string) => {
+    setNotice(why);
+    setRefusals((n) => n + 1);
+    haptic('wrong');
+  }, []);
 
   const start = useCallback(async () => {
     setGame(null);
@@ -60,6 +106,7 @@ export function Wordle(): React.JSX.Element {
     setEmptyPool(false);
     setCurrent('');
     setNotice(null);
+    setRefusals(0);
     const res = await client.post<WordleGame>(`/wordle/${mode}`, { difficulty });
     if (res.ok) setGame(res.data);
     else if (res.error.code === 'EMPTY_POOL') setEmptyPool(true);
@@ -79,7 +126,7 @@ export function Wordle(): React.JSX.Element {
     const letters = Array.from(current);
     if (letters.length === 0) return;
     if (letters.length !== game.targetLength) {
-      setNotice(t('games.wordle.enterLetters', { count: game.targetLength }));
+      refuse(t('games.wordle.enterLetters', { count: game.targetLength }));
       return;
     }
     setSubmitting(true);
@@ -90,21 +137,25 @@ export function Wordle(): React.JSX.Element {
       setGame(res.data);
       setCurrent('');
       // the word found is a right answer, running out of tries a gentle miss; a guess along the way is neither
-      if (res.data.status !== 'playing') haptic(res.data.status === 'won' ? 'correct' : 'wrong');
+      if (res.data.status !== 'playing') {
+        haptic(res.data.status === 'won' ? 'correct' : 'wrong');
+        hold(res.data.targetLength, res.data.status === 'won');
+      }
     } else {
-      setNotice(guessError(res.error, t));
+      refuse(guessError(res.error, t));
     }
-  }, [client, game, playing, submitting, current, t]);
+  }, [client, game, playing, submitting, current, t, refuse, hold]);
 
   const press = useCallback(
     (key: string) => {
-      if (!game || !playing) return;
+      // while a guess is being judged the keys are let go, not dimmed: the board is about to answer
+      if (!game || !playing || submitting) return;
       setNotice(null);
       if (key === 'Enter') return void submit();
       if (key === 'Backspace') return setCurrent((c) => Array.from(c).slice(0, -1).join(''));
       setCurrent((c) => (Array.from(c).length >= game.targetLength ? c : c + key));
     },
-    [game, playing, submit],
+    [game, playing, submitting, submit],
   );
 
   // the physical keyboard: any key that types a letter of the alphabet
@@ -146,11 +197,13 @@ export function Wordle(): React.JSX.Element {
             current={current}
             totalRows={game.guesses.length + game.remainingAttempts}
             showCurrent={game.status === 'playing'}
+            refusals={refusals}
           />
           {notice && <div className="wordle-notice" role="status">{notice}</div>}
-          {game.status !== 'playing' && (
+          {game.status !== 'playing' && !revealing && (
             <div className={`wordle-result is-${game.status}`}>
               <p className="wordle-result-title">
+                {game.status === 'won' && <TrophyIcon size={22} className="verdict-icon" />}
                 {game.status === 'won' ? t('games.wordle.solved') : t('games.wordle.outOfTries')}
                 {game.target && game.status === 'lost' && <> {t('games.wordle.theWordWas', { word: game.target })}</>}
               </p>
@@ -162,7 +215,7 @@ export function Wordle(): React.JSX.Element {
               )}
             </div>
           )}
-          <WordleKeyboard keyboard={game.keyboard} onPress={press} disabled={!playing || submitting} />
+          <WordleKeyboard keyboard={game.keyboard} onPress={press} disabled={!playing} />
         </>
       )}
     </div>

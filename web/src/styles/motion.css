@@ -549,6 +549,63 @@
   animation-duration: var(--dur-slow);
   animation-timing-function: var(--ease-spring);
 }
+/*
+ * On a phone the sheet is fixed to the bottom edge and slides up its whole
+ * height. A spring's overshoot there is a twentieth of that height: the sheet
+ * lifted clear of the edge it is attached to and showed the page under it
+ * before settling. It slides on the emphasis curve instead — fast, then a long
+ * settle, and never past where it stops.
+ */
+@media (max-width: 640px) {
+  .sheet-panel {
+    animation-timing-function: var(--ease-emphasis);
+  }
+}
+/*
+ * Closed, each leaves the way it came (components/Modal.tsx, Sheet.tsx, on
+ * lib/motion.ts `useLeaving`): the scrim fades and the panel goes back down
+ * the few pixels it rose — a phone's sheet back off the bottom edge — in one
+ * `--dur` on the out-curve. What is drawn for that moment is only a picture:
+ * it is inert, and takes no press. A reader who asked for less motion never
+ * sees it: nothing is left drawn once it is closed.
+ */
+@keyframes scrim-leave {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes panel-leave {
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+}
+@keyframes sheet-leave {
+  to {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+@keyframes sheet-down {
+  to {
+    transform: translateY(100%);
+  }
+}
+:is(.modal-overlay, .sheet-overlay).is-leaving {
+  pointer-events: none;
+  animation: scrim-leave var(--dur) var(--ease-out) forwards;
+}
+.modal-overlay.is-leaving .modal-panel {
+  animation: panel-leave var(--dur) var(--ease-out) forwards;
+}
+.sheet-overlay.is-leaving .sheet-panel {
+  animation: sheet-leave var(--dur) var(--ease-out) forwards;
+}
+@media (max-width: 640px) {
+  .sheet-overlay.is-leaving .sheet-panel {
+    animation-name: sheet-down;
+  }
+}
 
 /* ---- a like ------------------------------------------------------------------ */
 /* the heart pops (feed.css) with six small sparks thrown a few pixels out, once per like (FeedCard) */
@@ -1013,6 +1070,64 @@
 .join-code-card:active {
   transform: scale(var(--press-scale));
   transition-duration: 80ms;
+}
+
+/* ---- Peyvok --------------------------------------------------------------------- */
+/*
+ * A guess on the board (components/WordleBoard.tsx), answered where it was
+ * typed. One the game will not take shakes its row once, as a wrong answer
+ * does. One that is judged turns its tiles over, each a beat after the one
+ * before, and a tile takes its colour — and the edge it stands on — while it
+ * is edge-on, so the row is read left to right as it turns rather than all at
+ * once. The word found pops along its row when the last tile is down. The
+ * beats are the component's too (`REVEAL`): the result waits for them.
+ */
+@keyframes answer-shake-again {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  17% {
+    transform: translateX(-7px);
+  }
+  33% {
+    transform: translateX(6px);
+  }
+  50% {
+    transform: translateX(-5px);
+  }
+  67% {
+    transform: translateX(4px);
+  }
+  83% {
+    transform: translateX(-2px);
+  }
+}
+/* the same shake under two names: a row refused twice running shakes twice, by taking the other name */
+.wordle-row.is-shake-a {
+  animation: answer-shake 300ms ease-in-out;
+}
+.wordle-row.is-shake-b {
+  animation: answer-shake-again 300ms ease-in-out;
+}
+.wordle-row.is-judged .wordle-cell {
+  animation: code-flip 440ms var(--ease-out) calc(var(--i, 0) * 75ms) backwards;
+  transition-property: background, border-color, border-width, color, box-shadow;
+  transition-duration: 0s;
+  transition-delay: calc(var(--i, 0) * 75ms + 220ms);
+}
+.wordle-row.is-judged.is-found .wordle-cell {
+  animation:
+    code-flip 440ms var(--ease-out) calc(var(--i, 0) * 75ms) backwards,
+    answer-pop var(--dur-slow) var(--ease-spring) calc((var(--wordle-cols, 5) - 1) * 75ms + 440ms + var(--i, 0) * 40ms);
+}
+/* still: the row is simply judged, its colours there at once, and nothing shakes */
+@media (prefers-reduced-motion: reduce) {
+  .wordle-row.is-refused,
+  .wordle-row.is-judged .wordle-cell {
+    animation: none;
+    transition-delay: 0s;
+  }
 }
 
 /* ---- still ------------------------------------------------------------------- */

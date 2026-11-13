@@ -1,4 +1,4 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import { badgeDef, isRankedGame, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -79,15 +79,15 @@ export function ProgressShowcase({
               ))}
             </PressableScale>
           ) : (
-            <Pressable
+            <PressableScale
               onPress={onBadges}
               accessibilityRole="button"
-              style={({ pressed }) => [styles.empty, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+              style={[styles.empty, { backgroundColor: colors.controlTrack }]}
             >
               <Icon name="medal" size={18} color={colors.textSecondary} />
               <Text style={[styles.emptyText, { color: colors.textPrimary }]}>{t('profile.showcaseChoose')}</Text>
               <Icon name="chevron-right" size={14} color={colors.textSecondary} />
-            </Pressable>
+            </PressableScale>
           )}
         </View>
       ) : null}
@@ -163,12 +163,12 @@ function Chip({
 }): React.JSX.Element {
   const { colors } = useTheme();
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       disabled={!onPress}
       accessibilityRole={onPress ? 'button' : undefined}
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+      style={[styles.chip, { backgroundColor: colors.controlTrack }]}
     >
       {art}
       <View style={styles.chipText}>
@@ -184,7 +184,7 @@ function Chip({
           </Text>
         ) : null}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 

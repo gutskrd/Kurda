@@ -30,6 +30,8 @@ import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { TABLE } from '../impostor/table';
+import { heldDim } from '../theme/MotionParts';
+import { turnCard } from '../theme/animate';
 
 /**
  * Who Am I?'s stage on the phone: the parts the room with friends
@@ -165,7 +167,7 @@ export function ForeheadCard({
       return;
     }
     turn.setValue(0);
-    const anim = Animated.timing(turn, { toValue: 1, duration: 480, useNativeDriver: true });
+    const anim = turnCard(turn);
     anim.start();
     return () => anim.stop();
   }, [shown, reduce, turn]);
@@ -487,7 +489,7 @@ export function QuestionDeck({
             accessibilityState={{ expanded: shown }}
             aria-expanded={shown}
             accessibilityLabel={q.ku}
-            style={styles.questionText}
+            style={({ pressed }) => [styles.questionText, pressed && heldDim]}
           >
             <Text style={[styles.questionKu, kurdish(dialect), { color: colors.textPrimary }]}>{q.ku}</Text>
             {shown ? <Text style={[styles.muted, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
@@ -635,7 +637,7 @@ export function QuestionCard({
       accessibilityHint={t('games.whoAmI.tapToSee')}
       accessibilityState={{ expanded: open }}
       aria-expanded={open}
-      style={styles.said}
+      style={({ pressed }) => [styles.said, pressed && heldDim]}
     >
       {ku}
       <Text style={[open ? styles.saidMeaning : styles.saidHint, { color: soft }]}>{open ? meaning : t('games.whoAmI.tapToSee')}</Text>
@@ -807,7 +809,7 @@ export function Fold({
         accessibilityLabel={title}
         accessibilityState={{ expanded: open }}
         aria-expanded={open}
-        style={[styles.foldHead, { flexDirection: dir.row }, bare ? [styles.foldHeadBare, { backgroundColor: colors.glassFill }] : null]}
+        style={({ pressed }) => [styles.foldHead, { flexDirection: dir.row }, bare ? [styles.foldHeadBare, { backgroundColor: colors.glassFill }] : null, pressed && heldDim]}
       >
         {icon ? <Icon name={icon} size={18} color={colors.textSecondary} /> : null}
         <Text style={[styles.foldTitle, dir.text, { color: colors.textPrimary }]}>{title}</Text>

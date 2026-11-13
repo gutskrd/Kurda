@@ -2,7 +2,7 @@ import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { gameEmblemTone, gameOfTheDay, type GameEmblem, type IncomingInvite, type MyRanks } from '@kurda/shared';
+import { gameEmblemTone, gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -20,75 +20,20 @@ import { getMyRanks } from '../ranks/api';
 import { daysLeftText, seasonTitle } from '../ranks/format';
 import { acceptInvite, listInvites } from '../play/api';
 import { applyInviteEvent, liveInvites } from '../play/invites';
+import { joining } from '../play/joining';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
 import { useUserEvents } from '../realtime/useUserEvents';
-import { PHONE_LEARN_GAMES, useListedLearnGames, type LearnGameRoute } from '../games/learnGames';
+import { PHONE_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
+import { GAME_CARDS, learnGameCard, type GameCard, type GameMode, type GameWay } from '../games/gameCards';
 import { GameArt } from '../games/GameArt';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
 
-type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race' | LearnGameRoute;
-type Mode = 'solo' | 'friends' | 'both';
+type Mode = GameMode;
+type Way = GameWay;
 type Filter = 'all' | 'solo' | 'friends';
-
-/** One way into a game: the screen it opens, and what its button says. */
-interface Way {
-  /** names its button for the tests (`game-<key>`) */
-  key: string;
-  route: GameRoute;
-  label: TranslationKey;
-  /** the way a game's screen opens on, where one screen holds every way to play it (Who Am I?) */
-  params?: { way: 'phone' | 'friends' };
-}
-
-interface GameCard {
-  key: string;
-  /** the picture drawn for it (shared/src/art/games.ts) */
-  emblem: GameEmblem;
-  name: TranslationKey;
-  /** one line, what you do in it */
-  line: TranslationKey;
-  /** its ways in: one per screen it has, or one per way its one screen can open on; a game with a single way has one */
-  ways: readonly Way[];
-  mode: Mode;
-  /** still short of approved content: named under the cards as coming soon, and does not open */
-  soon?: boolean;
-}
-
-/**
- * The games that have screens of their own (the rest come from the shared
- * registry, games/learnGames.ts). Peyvok and the rhymes are each one card
- * with two ways in: alone, and against a friend. Stories are not among them
- * any more: reading is Learn's own middle group, and a story's quiz starts
- * from the story.
- */
-export const GAME_CARDS: readonly GameCard[] = [
-  {
-    key: 'wordle',
-    emblem: 'peyvok',
-    name: 'games.wordle.name',
-    line: 'games.card.wordle',
-    ways: [
-      { key: 'wordle', route: 'Wordle', label: 'games.mode.solo' },
-      { key: 'battle', route: 'WordleBattle', label: 'games.mode.friends' },
-    ],
-    mode: 'both',
-  },
-  {
-    key: 'rhyme',
-    emblem: 'rhyme',
-    name: 'games.rhyme.name',
-    line: 'games.card.rhyme',
-    ways: [
-      { key: 'rhyme', route: 'Rhyme', label: 'games.mode.solo' },
-      { key: 'rhymeMatch', route: 'RhymeMatch', label: 'games.mode.friends' },
-    ],
-    mode: 'both',
-  },
-  { key: 'race', emblem: 'race', name: 'games.race.name', line: 'games.card.race', ways: [{ key: 'race', route: 'Race', label: 'games.play' }], mode: 'solo' },
-];
 
 const MODE_LABEL: Record<Mode, TranslationKey> = {
   solo: 'games.mode.solo',
@@ -154,11 +99,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
     ...learnGames.flatMap(({ game: g, ready }): GameCard[] => {
       const phone = PHONE_LEARN_GAMES[g.id];
       const mode: Mode = g.mode === 'solo' ? 'solo' : g.mode === 'multi' ? 'friends' : 'both';
-      if (!phone) return [];
-      const ways: Way[] = phone.ways
-        ? phone.ways.map((w) => ({ key: w.key, route: phone.route, label: w.label, params: { way: w.way } }))
-        : [{ key: g.id, route: phone.route, label: 'games.play' }];
-      return [{ key: g.id, emblem: g.id as GameEmblem, name: phone.name, line: phone.line, ways, mode, soon: !ready }];
+      return phone ? [learnGameCard({ id: g.id, ...phone, mode, ready })] : [];
     }),
   ];
   // the game put forward stands above the cards, and is not said twice among them; under a filter the cards are whole
@@ -196,11 +137,16 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   );
 
   const join = useCallback(
-    async (invite: IncomingInvite) => {
+    (invite: IncomingInvite) => {
       setInvites((list) => list.filter((i) => i.id !== invite.id));
-      const res = await acceptInvite(client, invite.id);
-      // one that can no longer be accepted still opens the game, which says why
-      const route = res.ok ? lobbyRoute(res.data.game, res.data.lobbyId) : lobbyRoute(invite.game, invite.lobbyId);
+      /*
+       * The lobby opens at once, and the invite is accepted behind it: its
+       * first read waits for that (play/joining.ts). The row used to go, and
+       * then nothing happened for the length of a request. One that can no
+       * longer be accepted still opens the game, which says why.
+       */
+      joining(invite.lobbyId, acceptInvite(client, invite.id));
+      const route = lobbyRoute(invite.game, invite.lobbyId);
       navigation.navigate(route.name, route.params as never);
     },
     [client, navigation],
@@ -290,7 +236,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   {headline}
                 </Text>
                 <PressableScale
-                  onPress={() => void join(invite)}
+                  onPress={() => join(invite)}
                   accessibilityRole="button"
                   accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name, game })}
                   hitSlop={JOIN_SLOP}

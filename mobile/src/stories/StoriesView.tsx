@@ -19,7 +19,7 @@ import { useListEntrance } from '../theme/animate';
 import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton, ErrorRetry } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { PressableScale, Rise } from '../theme/MotionParts';
+import { PressableScale, Rise, heldDim } from '../theme/MotionParts';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -32,6 +32,7 @@ import { SetupSheet } from './SetupSheet';
 import { storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { COLUMN, Note, Pill } from './ui';
 import { usePullRefresh } from '../net/usePullRefresh';
+import { pressedDim } from '../theme/motion';
 
 /**
  * Which variety a game is set up in: Soranî when the interface is Soranî,
@@ -243,7 +244,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           </Text>
           {/* with two chips or more, their "Clear all" already says this */}
           {parts.length < 2 ? (
-            <Pressable onPress={startOver} accessibilityRole="button" style={styles.clear} hitSlop={8}>
+            <Pressable onPress={startOver} accessibilityRole="button" style={({ pressed }) => [styles.clear, pressed && heldDim]} hitSlop={8}>
               <Text style={[styles.clearText, { color: colors.primary }]}>{t('stories.library.clearFilters')}</Text>
             </Pressable>
           ) : null}
@@ -364,7 +365,13 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
               style={[styles.searchInput, dir.text, { color: colors.textPrimary }]}
             />
             {q ? (
-              <Pressable onPress={() => setQ('')} accessibilityRole="button" accessibilityLabel={t('stories.library.clearSearch')} hitSlop={8} style={styles.searchClear}>
+              <Pressable
+                onPress={() => setQ('')}
+                accessibilityRole="button"
+                accessibilityLabel={t('stories.library.clearSearch')}
+                hitSlop={8}
+                style={({ pressed }) => [styles.searchClear, pressed && heldDim]}
+              >
                 <Icon name="clear-fill" size={18} color={colors.textSecondary} />
               </Pressable>
             ) : null}
@@ -426,7 +433,9 @@ function ShelfChip({ label, onPress, count }: { label: string; onPress: () => vo
       }}
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${formatNumber(count, locale)}`}
-      style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+      // drawn 36 points tall, caught at a fingertip's 44
+      hitSlop={{ top: 4, bottom: 4 }}
+      style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
       <Text style={[styles.chipText, { color: colors.textPrimary }]} numberOfLines={1}>
         {label}
@@ -606,7 +615,7 @@ export function StoryCard({
         accessibilityLabel={bookmarked ? t('stories.library.bookmarked') : t('stories.library.bookmark')}
         accessibilityState={{ selected: bookmarked }}
         hitSlop={6}
-        style={({ pressed }) => [styles.bookmark, { backgroundColor: colors.surface, opacity: pressed ? 0.8 : 1 }]}
+        style={({ pressed }) => [styles.bookmark, { backgroundColor: colors.surface, opacity: pressed ? pressedDim : 1 }]}
       >
         <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={18} color={bookmarked ? colors.gold : colors.textSecondary} />
       </Pressable>

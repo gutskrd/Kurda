@@ -18,6 +18,7 @@ import { GroupAvatar } from './GroupAvatar';
 import { groupError } from './groupError';
 import { clearGroupPhoto, groupDetail, updateGroup, type GroupDetail } from './api';
 import { Loading } from '../theme/Loading';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * Change how a group presents itself, as its owner or an admin: its picture,
@@ -130,7 +131,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
               accessibilityRole="button"
               accessibilityState={{ disabled: !canSave, busy: saving }}
               hitSlop={8}
-              style={styles.save}
+              style={({ pressed }) => [styles.save, pressed && heldDim]}
             >
               {saving ? (
                 <ActivityIndicator color={colors.textPrimary} />
@@ -154,6 +155,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
                 disabled={!editable || uploading}
                 accessibilityRole="button"
                 accessibilityLabel={photoUrl ? t('groups.photo.change') : t('groups.photo.add')}
+                style={({ pressed }) => pressed && heldDim}
               >
                 <GroupAvatar name={trimmed || detail.name} id={detail.id} size={PHOTO} photoUrl={photoUrl} />
                 {uploading ? (
@@ -166,7 +168,7 @@ export function GroupEditScreen({ groupId, onExit }: { groupId: string; onExit: 
                   </View>
                 )}
               </Pressable>
-              <Pressable onPress={photoChoices} disabled={!editable || uploading} accessibilityRole="button" hitSlop={8}>
+              <Pressable onPress={photoChoices} disabled={!editable || uploading} accessibilityRole="button" hitSlop={8} style={({ pressed }) => pressed && heldDim}>
                 <Text style={[styles.photoLink, { color: colors.textPrimary }]}>{photoUrl ? t('groups.photo.change') : t('groups.photo.add')}</Text>
               </Pressable>
             </View>

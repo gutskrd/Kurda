@@ -13,6 +13,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { openPhoneSettings, readPermission, requestPermission } from './device';
 import { readOfferRecord, saveOfferShown, settingsAction, shouldNudgeReminders, type PushPermissionState } from './permission';
 import { minorStatus } from './ReminderOffer';
+import { pressedDim } from '../theme/motion';
 
 /** Hevalo's head, at the size of the line beside him. */
 const HEVALO = 40;
@@ -75,7 +76,7 @@ export function ReminderNudge({ hold, store = deviceStore }: { hold: boolean; st
       accessibilityRole="button"
       accessibilityLabel={t('social.close')}
       hitSlop={8}
-      style={({ pressed }) => [styles.close, { opacity: pressed ? 0.6 : 1 }]}
+      style={({ pressed }) => [styles.close, { opacity: pressed ? pressedDim : 1 }]}
     >
       <Icon name="close" size={16} color={colors.textSecondary} />
     </Pressable>

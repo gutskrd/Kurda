@@ -1,4 +1,4 @@
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { fontScaleCap, radii, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -6,6 +6,7 @@ import { Icon } from '../theme/Icon';
 import { useKeyboardPrefs } from '../keyboard/prefs';
 import { DEL, ENTER, keyboardRows, keyFeedback, type Feedback } from './board';
 import { feedbackColor, feedbackInk, feedbackWord } from './WordleBoard';
+import { pressedDim } from '../theme/motion';
 
 /** The gap between keys; half of it on either side is still the key's to tap. */
 const GAP = 6;
@@ -24,16 +25,26 @@ const KEY_HEIGHT = 52;
  *
  * A key only ever upgrades — grey to yellow to green, never back — and a screen
  * reader hears the letter with how it scored: "ê, in the word, wrong place".
+ *
+ * While a guess is with the server (`checking`) the keys take no press and
+ * Enter turns where its arrow was: the one key that was pressed says it is
+ * being seen to. The whole keyboard used to fade and come back on every
+ * guess, thirty-three keys flickering for the sake of one. `disabled` is for
+ * a board that is not being played (a battle that is over), and that does
+ * fade.
  */
 export function WordleKeyboard({
   keyboard,
   onKey,
   disabled = false,
+  checking = false,
   style,
 }: {
   keyboard: Record<string, Feedback>;
   onKey: (key: string) => void;
   disabled?: boolean;
+  /** a guess is being scored: no key is taken, and Enter says so */
+  checking?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -66,22 +77,26 @@ export function WordleKeyboard({
                   onPress={() => onKey(key)}
                   accessibilityRole="button"
                   accessibilityLabel={label}
-                  accessibilityState={{ disabled }}
-                  disabled={disabled}
+                  accessibilityState={{ disabled, busy: checking && key === ENTER }}
+                  disabled={disabled || checking}
                   hitSlop={GAP / 2}
                   style={({ pressed }) => [
                     styles.key,
                     { flex: weight(key) },
                     {
                       backgroundColor: fb ? feedbackColor(fb, colors) : control ? colors.glassBorder : colors.controlTrack,
-                      opacity: disabled ? 0.55 : pressed ? 0.7 : 1,
+                      opacity: disabled ? 0.55 : pressed ? pressedDim : 1,
                     },
                   ]}
                 >
                   {key === DEL ? (
                     <Icon name="backspace" size={22} color={colors.textPrimary} />
                   ) : key === ENTER ? (
-                    <Icon name="key-return" size={22} color={colors.textPrimary} />
+                    checking ? (
+                      <ActivityIndicator color={colors.textPrimary} testID="peyvok-checking" />
+                    ) : (
+                      <Icon name="key-return" size={22} color={colors.textPrimary} />
+                    )
                   ) : (
                     // a key is as wide as a tenth of the row: its letter grows only as far as still fits it
                     <Text style={[styles.keyText, { color: feedbackInk(fb ?? null, colors) }]} maxFontSizeMultiplier={fontScaleCap.fixedBox}>

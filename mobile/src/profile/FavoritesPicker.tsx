@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { listPosts } from '../library/api';
@@ -139,6 +139,7 @@ function Slot({
             hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
             accessibilityRole="button"
             accessibilityLabel={t('common.remove')}
+            style={({ pressed }) => pressed && heldDim}
           >
             <Text style={[styles.action, { color: colors.textSecondary }]}>{t('common.remove')}</Text>
           </Pressable>
@@ -149,6 +150,7 @@ function Slot({
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
           accessibilityLabel={open ? t('common.cancel') : t('favorites.change')}
+          style={({ pressed }) => pressed && heldDim}
         >
           <Text style={[styles.action, { color: colors.primary }]}>
             {open ? t('common.cancel') : t('favorites.change')}

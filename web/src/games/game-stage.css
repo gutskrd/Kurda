@@ -23,9 +23,10 @@
   --gs-night: #2a2150;
   --gs-night-deep: #171231;
   --gs-night-ink: #f4efff;
-  --gs-gold: #f2b632;
-  --gs-gold-lip: #a8791a;
-  --gs-gold-ink: #2a1d05;
+  /* the stage's own gold, kept once in tokens.css: the Games page's Play is the same button */
+  --gs-gold: var(--stage-gold);
+  --gs-gold-lip: var(--stage-gold-lip);
+  --gs-gold-ink: var(--stage-gold-ink);
 }
 
 /* ---- the start: the emblem on the night ------------------------------------------- */

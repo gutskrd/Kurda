@@ -4,7 +4,7 @@ import { Animated, Pressable, Share, StyleSheet, Text, View, useWindowDimensions
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
-import { HeartBurst } from '../theme/MotionParts';
+import { HeartBurst, heldDim } from '../theme/MotionParts';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -24,11 +24,17 @@ import { PostPictures } from '../composer/PostPictures';
 import { usePostMenu } from '../composer/PostExtras';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { ReportSheet } from '../reports/ReportSheet';
+import { pressedDim } from '../theme/motion';
 
 /** The avatar beside a post's author: big enough to recognise somebody by, small enough to sit on one line. */
 const AUTHOR = 32;
-/** Two taps closer together than this are one double tap. */
-const DOUBLE_TAP_MS = 260;
+/**
+ * Two taps closer together than this are one double tap. It is also how long
+ * a single tap waits before it opens the post, so it is kept as short as a
+ * double tap can comfortably be made in; the press itself is answered at
+ * once (the words fill, the picture fades), so the wait is never a silence.
+ */
+export const DOUBLE_TAP_MS = 220;
 
 /**
  * One post on the wall, whichever half it came from: a written post and a
@@ -49,7 +55,9 @@ const DOUBLE_TAP_MS = 260;
  * A heart is the one reaction there is. A double tap on the words or the
  * pictures likes the post, with a heart that blooms in the middle of it and
  * the tick of a like; a single tap opens it. A like counts at once, before
- * the server has answered, and quietly goes back if the server says no.
+ * the server has answered, and quietly goes back if the server says no. A
+ * like, a repost and a save each wait only on themselves: one on its way to
+ * the server does not hold the other two back.
  *
  * The "⋯" is your own post's Edit and Delete, and anyone else's Report.
  * `standalone` is the post on its own page: nothing to open, and its
@@ -89,7 +97,11 @@ export const FeedCard = memo(function FeedCard({
   // the engagement shown: the server's, or the change just made while it answers
   const [shown, setShown] = useState(item.engagement);
   const [reporting, setReporting] = useState(false);
-  const pending = useRef<EngagementKind | null>(null);
+  // which of the three is on its way to the server: each locks itself and nothing else
+  const pending = useRef(new Set<EngagementKind>());
+  // what is shown now, for a change made while another kind's answer is still out
+  const now = useRef(shown);
+  now.current = shown;
   useEffect(() => setShown(item.engagement), [item.engagement]);
 
   const open = useCallback(() => {
@@ -108,36 +120,61 @@ export const FeedCard = memo(function FeedCard({
    */
   const toggle = useCallback(
     async (kind: EngagementKind) => {
-      if (!require(kind === 'bookmark' ? 'save' : 'react')) return;
-      if (pending.current) return;
-      pending.current = kind;
-      const before = shown;
       const flag = kind === 'like' ? 'liked' : kind === 'repost' ? 'reposted' : 'bookmarked';
       const count = kind === 'like' ? 'likes' : kind === 'repost' ? 'reposts' : 'bookmarks';
-      const on = !before[flag];
-      setShown({ ...before, [flag]: on, [count]: Math.max(0, before[count] + (on ? 1 : -1)) });
+      const before = { on: now.current[flag], count: now.current[count] };
+      const on = !before.on;
+      pending.current.add(kind);
+      // only this kind's flag and count: another kind's change, made meanwhile, is left as it stands
+      setShown((s) => ({ ...s, [flag]: on, [count]: Math.max(0, s[count] + (on ? 1 : -1)) }));
       const res = await toggleEngagement(client, item, kind);
-      pending.current = null;
+      pending.current.delete(kind);
       if (!res.ok) {
-        setShown(before);
+        setShown((s) => ({ ...s, [flag]: before.on, [count]: before.count }));
         return;
       }
-      setShown(res.data.engagement);
-      onChanged?.({ ...item, engagement: res.data.engagement });
+      // the server's totals, except for a kind whose own answer is still on its way
+      const answered = res.data.engagement;
+      const waiting = pending.current;
+      setShown((s) => ({
+        ...answered,
+        ...(waiting.has('like') ? { liked: s.liked, likes: s.likes } : null),
+        ...(waiting.has('repost') ? { reposted: s.reposted, reposts: s.reposts } : null),
+        ...(waiting.has('bookmark') ? { bookmarked: s.bookmarked, bookmarks: s.bookmarks } : null),
+      }));
+      onChanged?.({ ...item, engagement: answered });
     },
-    [client, item, onChanged, shown, require],
+    [client, item, onChanged],
+  );
+
+  /**
+   * Whether a tap on one of the three may go ahead: an account, and nothing
+   * of the same kind already on its way. Asked before anything is felt or
+   * seen, so a tap that will do nothing does nothing at all — the heart used
+   * to pop and stay empty when a like was tapped while another was out.
+   */
+  const may = useCallback(
+    (kind: EngagementKind): boolean => require(kind === 'bookmark' ? 'save' : 'react') && !pending.current.has(kind),
+    [require],
+  );
+
+  const act = useCallback(
+    (kind: EngagementKind) => {
+      if (may(kind)) void toggle(kind);
+    },
+    [may, toggle],
   );
 
   const like = useCallback(() => {
-    // a guest's heart does not pop and then ask: the offer comes first
-    if (!require('react')) return;
+    // a guest's heart does not pop and then ask, and neither does one already on its way: the guard comes first
+    if (!may('like')) return;
     // a like is felt and pops; taking one back is quiet
-    if (!shown.liked) {
+    if (!now.current.liked) {
       haptic('tap');
       setLikes((n) => n + 1);
     }
     void toggle('like');
-  }, [shown.liked, toggle, require]);
+  }, [may, toggle]);
 
   /*
    * One tap opens the post; two quick taps like it. The first tap waits a
@@ -196,7 +233,7 @@ export const FeedCard = memo(function FeedCard({
     <View style={[styles.post, !standalone && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator }]}>
       {/* one line: who, what kind of post and how long ago; the "⋯" at the end */}
       <View style={[styles.head, { flexDirection: dir.row }]}>
-        <Pressable onPress={openAuthor} accessibilityRole="button" accessibilityLabel={who} hitSlop={6}>
+        <Pressable onPress={openAuthor} accessibilityRole="button" accessibilityLabel={who} hitSlop={6} style={({ pressed }) => pressed && heldDim}>
           <InitialsAvatar name={who} id={item.author.id} size={AUTHOR} photoUrl={item.author.avatarUrl} />
         </Pressable>
         <View style={[styles.byline, { flexDirection: dir.row }]}>
@@ -212,7 +249,7 @@ export const FeedCard = memo(function FeedCard({
           accessibilityRole="button"
           accessibilityLabel={menu.open ? t('post.menu') : t('moderation.reportPost')}
           hitSlop={6}
-          style={styles.more}
+          style={({ pressed }) => [styles.more, pressed && heldDim]}
         >
           <Icon name="more" size={22} color={colors.textPrimary} />
         </Pressable>
@@ -227,7 +264,8 @@ export const FeedCard = memo(function FeedCard({
             accessibilityRole={standalone ? undefined : 'button'}
             accessibilityLabel={item.title ? `${badge}: ${item.title}` : `${badge} — ${who}`}
             accessibilityHint={t('feed.doubleTapHint')}
-            style={styles.words}
+            // answered at once, as a row held down is: the tap itself waits a moment to see whether a second follows
+            style={({ pressed }) => [styles.words, pressed && !standalone && { backgroundColor: colors.controlTrack }]}
           >
             {item.title ? (
               <Text style={[styles.title, dir.free, { color: colors.textPrimary }]} numberOfLines={standalone ? undefined : 3}>
@@ -267,7 +305,7 @@ export const FeedCard = memo(function FeedCard({
           tint={e.reposted ? colors.success : undefined}
           label={e.reposted ? t('repost.undo') : t('repost.do')}
           count={count(e.reposts)}
-          onPress={() => void toggle('repost')}
+          onPress={() => act('repost')}
         />
         <View style={styles.spacer} />
         <Action icon="send" label={t('share.post')} onPress={() => void share()} />
@@ -275,7 +313,7 @@ export const FeedCard = memo(function FeedCard({
           icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
           on={e.bookmarked}
           label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
-          onPress={() => void toggle('bookmark')}
+          onPress={() => act('bookmark')}
         />
       </View>
 
@@ -381,9 +419,9 @@ const WIDE = 600;
 /** a title is bold and a size up from what is under it, in the face the rest of the post is in */
 const TITLE_SIZE = 19;
 const TITLE_LINE = 25;
-/** a pill's height: drawn at 36, reached at 44 */
+/** a pill's height, and a round one's width: drawn at 36, reached at 44 each way (the row's 8-point gap is shared out between neighbours) */
 const PILL = 36;
-const PILL_SLOP = { top: (MIN_TOUCH_TARGET - PILL) / 2, bottom: (MIN_TOUCH_TARGET - PILL) / 2, left: 2, right: 2 };
+const PILL_SLOP = { top: (MIN_TOUCH_TARGET - PILL) / 2, bottom: (MIN_TOUCH_TARGET - PILL) / 2, left: (MIN_TOUCH_TARGET - PILL) / 2, right: (MIN_TOUCH_TARGET - PILL) / 2 };
 
 /**
  * One soft pill in the row under a post: a 20pt glyph and its count when
@@ -509,7 +547,7 @@ const styles = StyleSheet.create({
   spacer: { flex: 1 },
   pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: PILL, height: PILL, borderRadius: radii.pill },
   pillWide: { paddingHorizontal: spacing.sm + 4 },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   count: { fontSize: typography.sizes.sm, lineHeight: COUNT_LINE, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   // the count's window: one line tall, so a number sliding out is gone at its edge
   tick: { height: COUNT_LINE, overflow: 'hidden', justifyContent: 'center' },

@@ -1134,6 +1134,26 @@ html:has(.lesson-bar) {
   border-top-width: 2px;
 }
 /*
+ * A lesson before it is here (learn/LessonPlaceholder.tsx): the frame above is
+ * the lesson's own, so only what stands in for the answers and for the bar's
+ * one button is said here — the button where Check will be, at its width.
+ */
+.lesson-placeholder-options {
+  display: grid;
+  gap: 12px;
+}
+.skeleton.lesson-placeholder-go {
+  width: 160px;
+  margin-inline-start: auto;
+  margin-bottom: 4px;
+  border-radius: 14px;
+}
+@media (max-width: 480px) {
+  .skeleton.lesson-placeholder-go {
+    width: 100%;
+  }
+}
+/*
  * The verdict's colour, and what is written on it: the page's own ground on
  * green and red (dark on the dark page's light shades, light on the light
  * page's deep ones), and a dark brown on gold, which is light in both.

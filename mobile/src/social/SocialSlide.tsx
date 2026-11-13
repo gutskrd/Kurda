@@ -9,13 +9,13 @@ import {
   Text,
   View,
 } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -175,7 +175,14 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
           <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
             {t('messages.new')}
           </Text>
-          <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('rail.closePanel')}>
+          <Pressable
+            onPress={onClose}
+            // a 20-point glyph, caught at a fingertip's 44
+            hitSlop={hitSlopFor(20, 20)}
+            accessibilityRole="button"
+            accessibilityLabel={t('rail.closePanel')}
+            style={({ pressed }) => pressed && heldDim}
+          >
             <Icon name="close" size={20} tone="secondary" />
           </Pressable>
         </View>
@@ -284,7 +291,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
             {data && friends.length === 0 ? (
               <Pressable
                 onPress={() => go(() => navigation.navigate('Tabs', { screen: 'Search' }))}
-                style={styles.empty}
+                style={({ pressed }) => [styles.empty, pressed && heldDim]}
                 accessibilityRole="button"
                 accessibilityLabel={t('rail.findPeople')}
               >
