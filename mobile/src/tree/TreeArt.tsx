@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { TREE_FOOT, hasTreeArt, treeSvg, waterDropSvg, wateringCanSvg, type TreeHealth, type TreeStage } from '@kurda/shared';
+import { TREE_FOOT, hasTreeArt, treeSvg, waterDropSvg, wateringCanSvg, type TreeHealth, type TreeSeason, type TreeStage } from '@kurda/shared';
 import { useMotionAlive } from '../a11y/useMotionAlive';
+import { useTreeSeason } from './season';
 
 const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
 
@@ -31,6 +32,9 @@ function useArtId(): string {
  * what a profile and a list want. A kind this build has no drawing for is
  * not drawn at all.
  *
+ * It is drawn in a season, standing on its round of grass with its long
+ * shadow: the one given, or the learner's own today.
+ *
  * `label` names it for a screen reader; leave it empty where the words
  * beside it already say what it is.
  */
@@ -38,6 +42,7 @@ export function TreeArt({
   species,
   stage,
   health = 'fresh',
+  season,
   size,
   label = '',
   alive = false,
@@ -47,6 +52,7 @@ export function TreeArt({
   species: string;
   stage: TreeStage;
   health?: TreeHealth;
+  season?: TreeSeason;
   size: number;
   label?: string;
   alive?: boolean;
@@ -56,6 +62,8 @@ export function TreeArt({
 }): React.JSX.Element | null {
   const id = useArtId();
   const moving = useMotionAlive();
+  const today = useTreeSeason();
+  const drawnIn = season ?? today;
   const sway = useRef(new Animated.Value(0)).current;
   // a withered tree does not sway, nor a seed: there is nothing on them for the air to move
   const sways = alive && moving && health !== 'withered' && stage > 0;
@@ -71,10 +79,10 @@ export function TreeArt({
   }, [sways, sway]);
   const xml = useMemo(() => {
     if (!hasTreeArt(species)) return null;
-    const base = { species, stage, health, size };
+    const base = { species, stage, health, size, season: drawnIn };
     if (!alive) return { whole: treeSvg({ ...base, idPrefix: id }), ground: null, plant: null };
     return { whole: null, ground: treeSvg({ ...base, part: 'ground', idPrefix: `${id}g` }), plant: treeSvg({ ...base, part: 'plant', idPrefix: `${id}p` }) };
-  }, [species, stage, health, size, alive, id]);
+  }, [species, stage, health, size, alive, id, drawnIn]);
   if (!xml) return null;
   const named = label ? { accessible: true, accessibilityRole: 'image' as const, accessibilityLabel: label } : HIDDEN;
   const foot = `${TREE_FOOT.x * 100}% ${TREE_FOOT.y * 100}%`;

@@ -120,22 +120,21 @@ describe('the tree’s screen', () => {
     expect(screen.queryByTestId('tree-health')).toBeNull();
   });
 
-  it('stands in the sky of the learner’s own hour, with the mountains and three clouds, none of it read out', async () => {
-    const hours = vi.spyOn(Date.prototype, 'getHours').mockReturnValue(22);
+  it('stands in the scene of the learner’s own season, none of it read out', async () => {
+    const month = vi.spyOn(Date.prototype, 'getMonth').mockReturnValue(3);
     testAuth.client = fakeClient({ 'GET /me/tree': ok(mine(view())) });
     const { unmount } = renderWithProviders(<TreeScreen onExit={() => undefined} />);
     const stage = await screen.findByTestId('tree-stage');
-    // night's own colour is under the picture until it is drawn
-    expect(stage.style.backgroundColor).toBe('rgb(26, 38, 86)');
+    // spring's blush is under the picture until it is drawn
+    expect(stage.style.backgroundColor).toBe('rgb(251, 224, 234)');
     expect(within(stage).getByTestId('tree-scene')).toBeTruthy();
-    expect(within(stage).getAllByTestId('tree-scene-cloud')).toHaveLength(3);
     // the tree is what is named; its weather is not
     expect(within(stage).getByRole('img', { name: 'Berû, Seedling' })).toBeTruthy();
     unmount();
-    hours.mockReturnValue(12);
+    month.mockReturnValue(0);
     renderWithProviders(<TreeScreen onExit={() => undefined} />);
-    expect((await screen.findByTestId('tree-stage')).style.backgroundColor).toBe('rgb(163, 218, 248)');
-    hours.mockRestore();
+    expect((await screen.findByTestId('tree-stage')).style.backgroundColor).toBe('rgb(47, 132, 204)');
+    month.mockRestore();
   });
 
   it('floats a thought of water by a tree that wants some, and not by one that is well', async () => {
