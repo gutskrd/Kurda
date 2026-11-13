@@ -120,11 +120,15 @@ export function RankEmblem({
   return <Svg svg={svg ?? ''} className={cls} />;
 }
 
-/** The medal a kept streak is handed: the gold pentagon with its laurel (shared art/medals.ts). */
-export function StreakMedal({ size = 96, title }: { size?: number; title: string }): React.JSX.Element {
+/**
+ * The medal a kept streak is handed: the gold pentagon with its laurel (shared
+ * art/medals.ts). `unlit` is the same medal in greys, as it was before
+ * today's lesson lit it: the streak's card opens on it, under the gold one.
+ */
+export function StreakMedal({ size = 96, title, unlit = false }: { size?: number; title: string; unlit?: boolean }): React.JSX.Element {
   const id = useArtId();
-  const svg = useMemo(() => streakMedalSvg({ size, title, idPrefix: id }), [size, title, id]);
-  return <Svg svg={svg} className="art art-medal" />;
+  const svg = useMemo(() => streakMedalSvg({ size, title, idPrefix: id, unlit }), [size, title, id, unlit]);
+  return <Svg svg={svg} className={`art art-medal${unlit ? ' is-unlit' : ''}`} />;
 }
 
 /** A day's medal in the streak's week: gold with the laurel for a day learned, ice with a snowflake for one a freeze kept. */

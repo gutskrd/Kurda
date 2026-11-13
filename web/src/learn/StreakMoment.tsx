@@ -1,8 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   BURST,
   FIRE_VIEW,
   FLAME_IGNITE,
+  STREAK_LEAVE_MS,
+  STREAK_LEAVE_POSE,
   celebrationPlan,
   fireFrame,
   fireLevel,
@@ -11,6 +13,7 @@ import {
   freezeLine,
   nextFireStage,
   streakMood,
+  streakReveal,
   streakWeek,
   weekStartsOn,
   wordIn,
@@ -46,13 +49,26 @@ import type { Streak } from './types';
  * been read. Under reduced motion nothing squashes, rings or travels: the dim
  * screen cross-fades to the warm one.
  *
- * Then the week (`StreakWeek`): one card. The streak's medal stands half over
- * its top edge, gold with a laurel; under it the streak in words, a warm word
- * from Hevalo for the day it is — a first day, a comeback, a new best, or
- * simply another day — and the seven days of this week, each a small medal if
- * it was learned (or kept by a freeze) and its date if it is still to come.
- * Under the card are the fire the streak has grown into, with the next one,
- * and how far the freezes have got.
+ * The flame is for the day the fire grew: on any other day the week below is
+ * the whole of the moment.
+ *
+ * The week (`StreakWeek`) is one card. The streak's medal stands half over
+ * its top edge; under it the streak in words, a warm word from Hevalo for
+ * the day it is — a first day, a comeback, a new best, or simply another day
+ * — and the seven days of this week, each a small medal if it was learned
+ * (or kept by a freeze) and its date if it is still to come. Under the card
+ * are the fire the streak has grown into, with the next one, and how far the
+ * freezes have got.
+ *
+ * The card comes alive as it opens (shared `streakReveal`): it opens on
+ * yesterday, the medal grey and the number as it was; the medal gathers
+ * itself, hops, turns to gold as the app's one celebration bursts out of it,
+ * and lands as the number rolls on to today's; then the word, the week day
+ * by day, what stands under the card and the way on arrive in turn. A click
+ * on the card finishes it at once. Leaving, its words fade and the medal
+ * gathers itself and is gone. Under reduced motion the grey medal
+ * cross-fades to the gold one and everything else is simply there.
+ *
  * Nothing counts down, warns or asks for anything: a streak is a number that
  * went up.
  */
@@ -209,32 +225,156 @@ const DAY_WORDS: Record<WeekDayState, MessageKey> = {
   ahead: 'lesson.streak.week.ahead',
 };
 
-export function StreakWeek({ streak }: { streak: Streak }): React.JSX.Element {
+/** How the medal's turn eases from one pose to the next: in and out, as a thing with weight moves. */
+const POSE_EASING = 'cubic-bezier(0.37, 0, 0.63, 1)';
+
+export function StreakWeek({
+  streak,
+  afterFlame = false,
+  leaving = false,
+  onSettled,
+}: {
+  streak: Streak;
+  /** the flame played before this (the day the fire grew): the number has rolled and the moment been heard already */
+  afterFlame?: boolean;
+  /** the way on was taken: the card goes, over `STREAK_LEAVE_MS` */
+  leaving?: boolean;
+  /** everything on the card has arrived, or the reader finished it with a click */
+  onSettled?: () => void;
+}): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const heading = useRef<HTMLHeadingElement>(null);
+  const medal = useRef<HTMLSpanElement>(null);
+  const turn = useRef<Animation | null>(null);
+  const heard = useRef(afterFlame);
+  const [reduce] = useState(prefersReducedMotion);
+  const plan = useMemo(() => streakReveal(reduce), [reduce]);
+  const [settled, setSettled] = useState(false);
+  // the app's one celebration, bursting out of the medal as it turns to gold: felt once, there
+  const moment = useCelebrationMoment(plan.burstAtMs);
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
   const freeze = freezeLine(streak);
   const level = fireLevel(streak.current);
   const next = nextFireStage(streak.current);
   // an older server says neither what today is nor which days were learned: the week is left out rather than guessed
   const days = streak.today && streak.recent ? streakWeek({ today: streak.today, recent: streak.recent, startsOn: weekStartsOn(locale) }) : null;
+  const told = useRef(onSettled);
+  told.current = onSettled;
+
+  /** Heard once, as the medal turns to gold, unless the flame before it was heard already. */
+  const hear = useCallback((): void => {
+    if (heard.current) return;
+    heard.current = true;
+    playLessonSound('reward');
+  }, []);
+
+  /** Everything has arrived, by itself or at a click: said once to whoever asked to be told. */
+  const arrived = useRef(false);
+  const settle = useCallback((): void => {
+    if (arrived.current) return;
+    arrived.current = true;
+    setSettled(true);
+    told.current?.();
+  }, []);
 
   useEffect(() => {
     heading.current?.focus({ preventScroll: true });
-  }, []);
+    const sound = window.setTimeout(hear, plan.burstAtMs);
+    const over = window.setTimeout(settle, plan.overMs);
+    return () => {
+      window.clearTimeout(sound);
+      window.clearTimeout(over);
+    };
+  }, [plan, hear, settle]);
+
+  // the medal's turn: gathers, hops, lands (the poses are the shared plan's, about its foot)
+  useEffect(() => {
+    const el = medal.current;
+    if (!el || !plan.travel || typeof el.animate !== 'function') return;
+    const playing = el.animate(
+      plan.poses.map((p) => ({ offset: p.at, transform: `translateY(${p.lift * MEDAL}px) scale(${p.sx}, ${p.sy})`, easing: POSE_EASING })),
+      { duration: plan.medalMs, delay: plan.medalAtMs, fill: 'both' },
+    );
+    turn.current = playing;
+    return () => playing.cancel();
+  }, [plan]);
+
+  // leaving: it gathers itself once more, and is gone
+  useEffect(() => {
+    const el = medal.current;
+    if (!leaving || reduce || !el || typeof el.animate !== 'function') return;
+    const { sx, sy, scale } = STREAK_LEAVE_POSE;
+    const going = el.animate([{ transform: 'none', opacity: 1 }, { transform: `scale(${sx * scale}, ${sy * scale})`, opacity: 0 }], {
+      duration: STREAK_LEAVE_MS,
+      easing: 'cubic-bezier(0.4, 0, 1, 1)',
+      fill: 'both',
+    });
+    return () => going.cancel();
+  }, [leaving, reduce]);
+
+  /** A click on the card while it plays: everything where it ends, at once. */
+  const finish = (): void => {
+    if (arrived.current) return;
+    turn.current?.finish();
+    moment.skip();
+    hear();
+    settle();
+  };
+
+  // the streak in words, with its number on its own so that it can roll: "{count}-day streak" around a mark
+  const [before, after] = t('learn.today.streak', { count: '\u0001' }).split('\u0001');
+  const timing = {
+    '--light-at': `${plan.lightAtMs}ms`,
+    '--light-ms': `${plan.lightMs}ms`,
+    '--count-at': `${plan.countAtMs}ms`,
+    '--words-at': `${plan.wordsAtMs}ms`,
+    '--week-at': `${plan.weekAtMs}ms`,
+    '--day-step': `${plan.dayStepMs}ms`,
+    '--after-at': `${plan.afterAtMs}ms`,
+  } as React.CSSProperties;
+  const ring = { '--celebrate-ring-delay': `${plan.burstAtMs}ms` } as React.CSSProperties;
 
   return (
-    <section className="end-week" aria-labelledby="end-week-title">
+    <section
+      className={`end-week${settled ? ' is-settled' : ''}${leaving ? ' is-leaving' : ''}${plan.travel ? '' : ' is-still'}`}
+      aria-labelledby="end-week-title"
+      style={timing}
+      onClick={finish}
+    >
       <div className="streak-panel">
         {/* the panel's own name, as a shelf says what stands on it */}
         <p className="streak-panel-name">{t('profile.stat.streak')}</p>
         <div className="streak-card">
-          <span className="streak-card-medal" aria-hidden="true">
-            <StreakMedal size={MEDAL} title="" />
+          {/* a picture beside the words that say it: not read out a second time */}
+          <span className={`celebrate streak-card-medal tone-zer ${moment.playing ? 'is-playing' : 'is-done'}`} style={ring} aria-hidden="true">
+            <CelebrationArt flecks={BURST.lesson} seed={streak.current * 11 + 7} reach={120} delayMs={plan.burstAtMs} still={reduce}>
+              <span className="streak-medal-float">
+                <span className="streak-medal-turn" ref={medal}>
+                  {/* yesterday's, in grey, and today's over it: one medal changing colour */}
+                  <StreakMedal size={MEDAL} title="" unlit />
+                  <span className="streak-medal-lit">
+                    <StreakMedal size={MEDAL} title="" />
+                  </span>
+                </span>
+              </span>
+            </CelebrationArt>
+            {/* a few sparks that rise off it once it is lit, the way they rise off a fire */}
+            {plan.travel && (
+              <span className="streak-medal-sparks">
+                <i />
+                <i />
+                <i />
+              </span>
+            )}
           </span>
           <h2 className="streak-card-title" id="end-week-title" tabIndex={-1} ref={heading} aria-describedby="end-week-cheer">
-            {t('learn.today.streak', { count: number(streak.current) })}
+            <span aria-hidden="true">
+              {before}
+              <RollingNumber from={afterFlame ? streak.current : Math.max(0, streak.current - 1)} to={streak.current} delayMs={plan.countAtMs} fade={reduce} />
+              {after}
+            </span>
+            <span className="sr-only">{t('learn.today.streak', { count: number(streak.current) })}</span>
           </h2>
           <p className="streak-card-cheer" id="end-week-cheer">
             {t(CHEERS[streakMood(streak)])}

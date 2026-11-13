@@ -11,7 +11,7 @@ vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'
 vi.mock('../../theme/Fire', () => import('../../theme/testing/fireProbe'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { AccessibilityInfo, Animated } from 'react-native';
-import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, flameMoment } from '@kurda/shared';
+import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, STREAK_LEAVE_MS, flameMoment, streakReveal } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { onHaptic, resetHaptics } from '../../feedback/haptics';
@@ -52,36 +52,62 @@ const show = (over: Partial<Streak> = {}, goalDone = false, onContinue = () => u
 /** the week's circles in the order they are laid out, by what each day was */
 const days = () => within(screen.getByTestId('streak-week')).getAllByTestId(/^day-/).map((d) => d.getAttribute('data-testid'));
 
+/** The streak's card, past the flame where the day has one (the day the fire grew). */
+async function card(): Promise<HTMLElement> {
+  await waitFor(() => expect(screen.queryByTestId('lesson-streak-flame') ?? screen.queryByTestId('lesson-streak-day')).toBeTruthy());
+  const flame = screen.queryByTestId('lesson-streak-flame');
+  if (flame) fireEvent.click(flame);
+  return screen.findByTestId('lesson-streak-day');
+}
+
 describe('the kept streak', () => {
-  it('opens on the flame, felt and heard once, and a tap moves on to the streak itself', async () => {
+  it('opens straight on the streak itself on a day the fire did not grow, felt and heard once', async () => {
+    const said = listen();
     const felt: string[] = [];
     const heard: string[] = [];
     const stopFeel = onHaptic((e) => felt.push(e));
     const stopHear = onSound((f) => heard.push(String(f)));
     try {
       show();
-      const flame = await screen.findByTestId('lesson-streak-flame');
-      expect(flame.getAttribute('aria-label')).toBe('6 day streak');
+      expect(await screen.findByRole('heading', { name: '6 day streak' })).toBeTruthy();
+      expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
+      expect(said).toEqual(['6 day streak']);
       await waitFor(() => expect(felt).toEqual(['celebrate']));
       expect(heard).toHaveLength(1);
-      fireEvent.click(flame);
-      expect(await screen.findByRole('heading', { name: '6 day streak' })).toBeTruthy();
+      // a tap on the card afterwards is not a second one
+      fireEvent.click(screen.getByTestId('streak-card'));
       expect(felt).toEqual(['celebrate']);
+      expect(heard).toHaveLength(1);
     } finally {
       stopFeel();
       stopHear();
     }
   });
 
-  it('moves on by itself after a moment', async () => {
-    show();
-    expect(await screen.findByTestId('lesson-streak-flame')).toBeTruthy();
-    expect(await screen.findByRole('heading', { name: '6 day streak' })).toBeTruthy();
+  it('opens on the flame on the day the fire grew, and a tap moves on to the streak itself, felt once', async () => {
+    const felt: string[] = [];
+    const heard: string[] = [];
+    const stopFeel = onHaptic((e) => felt.push(e));
+    const stopHear = onSound((f) => heard.push(String(f)));
+    try {
+      listen();
+      show({ current: 7 });
+      const flame = await screen.findByTestId('lesson-streak-flame');
+      expect(flame.getAttribute('aria-label')).toBe('7 day streak');
+      fireEvent.click(flame);
+      expect(await screen.findByRole('heading', { name: '7 day streak' })).toBeTruthy();
+      // the flame was the moment: the card after it is not felt or heard again
+      await act(async () => new Promise((r) => setTimeout(r, streakReveal(true).overMs + 200)));
+      expect(felt).toEqual(['celebrate']);
+      expect(heard).toHaveLength(1);
+    } finally {
+      stopFeel();
+      stopHear();
+    }
   });
 
   it('lays out the week: learned, kept by a freeze, missed, today and the days ahead', async () => {
     show({ recent: [{ date: '2026-10-26', kind: 'learned' }, { date: '2026-10-27', kind: 'frozen' }] });
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     await screen.findByTestId('streak-week');
     // a Monday week in English; today not learned yet is a ring of its own
     expect(days()).toEqual(['day-learned', 'day-frozen', 'day-missed', 'day-today', 'day-ahead', 'day-ahead', 'day-ahead']);
@@ -92,7 +118,6 @@ describe('the kept streak', () => {
 
   it('leaves the week out when an older server did not say what today is', async () => {
     show({ today: undefined, recent: undefined });
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     expect(await screen.findByRole('heading', { name: '6 day streak' })).toBeTruthy();
     expect(screen.queryByTestId('streak-week')).toBeNull();
   });
@@ -100,7 +125,6 @@ describe('the kept streak', () => {
   it('starts the week on Saturday in Kurdish', async () => {
     localStorage.setItem('kurda_locale_v1', 'ku');
     show({ recent: [...streak.recent!, { date: '2026-10-29', kind: 'learned' }] });
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     await screen.findByText('Ş');
     const columns = within(screen.getByTestId('streak-week')).getAllByTestId(/^week-/);
     expect(columns.map((c) => c.getAttribute('data-testid'))).toEqual([
@@ -119,7 +143,6 @@ describe('the kept streak', () => {
   it('reads the week from the right in Soranî, starting on Saturday', async () => {
     localStorage.setItem('kurda_locale_v1', 'ckb');
     show();
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     await screen.findByText('ش');
     const week = screen.getByTestId('streak-week');
     expect(getComputedStyle(week).flexDirection).toBe('row-reverse');
@@ -128,19 +151,17 @@ describe('the kept streak', () => {
 
   it('has Hevalo welcome back somebody who missed days, and cheer a longest run', async () => {
     show({ current: 1, longest: 9 });
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    await card();
     expect(await screen.findByText('Welcome back! A fresh start is still a great start.')).toBeTruthy();
     cleanup();
 
     show({ current: 9, longest: 9 });
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     expect(await screen.findByText('9 days, a new record! Let’s see how far it goes.')).toBeTruthy();
   });
 
   it('says see you tomorrow once today’s goal is done, and goes on with it', async () => {
     const onContinue = vi.fn();
     show({}, true, onContinue);
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     fireEvent.click(await screen.findByRole('button', { name: 'See you tomorrow' }));
     expect(onContinue).toHaveBeenCalledTimes(1);
   });
@@ -214,24 +235,24 @@ describe('the day the fire grew', () => {
     }
   });
 
-  it('burns at the fire of today on another day, growing from nothing, and moves on once it has lit and been seen', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
-    listen();
-    show({ current: 12 });
-    const flame = await screen.findByTestId('lesson-streak-flame');
-    expect(within(flame).getByTestId('fire').dataset.stage).toBe('campfire');
-    expect(within(flame).getByTestId('fire').dataset.from).toBeUndefined();
-    expect(screen.queryByTestId('lesson-streak-grew')).toBeNull();
-    await act(() => vi.advanceTimersByTimeAsync(flameMoment(12).overMs + 50));
-    expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
+  it('keeps the flame for the days the fire grew: the 1st, the 3rd, the 7th, and no day between', async () => {
+    const opensOn = async (current: number): Promise<string> => {
+      listen();
+      show({ current, longest: Math.max(current, 9) });
+      await waitFor(() => expect(screen.queryByTestId('lesson-streak-flame') ?? screen.queryByTestId('lesson-streak-day')).toBeTruthy());
+      const first = screen.queryByTestId('lesson-streak-flame') ? 'flame' : 'card';
+      cleanup();
+      return first;
+    };
+    for (const day of [1, 3, 7, 14]) expect(await opensOn(day)).toBe('flame');
+    for (const day of [2, 4, 6, 12, 400]) expect(await opensOn(day)).toBe('card');
   });
 });
 
 describe('the streak’s card', () => {
   const stage = async (current: number): Promise<string | null> => {
     show({ current, longest: Math.max(current, 9) });
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
-    await screen.findByTestId('lesson-streak-day');
+    await card();
     const line = screen.queryByTestId('streak-stage')?.textContent ?? null;
     cleanup();
     return line;
@@ -248,17 +269,15 @@ describe('the streak’s card', () => {
 
   it('hands over the streak’s medal on the card, a picture beside the words that say it', async () => {
     show({ current: 12 });
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
-    const card = within(await screen.findByTestId('lesson-streak-day'));
+    const shown = within(await card());
     // drawn; the heading under it is the streak in words
-    expect(card.getByTestId('streak-medal').querySelector('svg')).toBeTruthy();
-    expect(card.getByRole('heading', { name: '12 day streak' })).toBeTruthy();
-    expect(card.getByText('Streak')).toBeTruthy();
+    expect(shown.getByTestId('streak-medal').querySelector('svg')).toBeTruthy();
+    expect(shown.getByRole('heading', { name: '12 day streak' })).toBeTruthy();
+    expect(shown.getByText('Streak')).toBeTruthy();
   });
 
   it('gives a day learned and a day a freeze kept a medal each, and every other day its date', async () => {
     show({ recent: [{ date: '2026-10-26', kind: 'learned' }, { date: '2026-10-27', kind: 'frozen' }] });
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     const week = within(await screen.findByTestId('streak-week'));
     const mark = (date: string): HTMLElement => within(week.getByTestId(`week-${date}`)).getByTestId(/^day-/);
     expect(mark('2026-10-26').querySelector('svg')).toBeTruthy();
@@ -273,19 +292,136 @@ describe('the streak’s card', () => {
   it('names the stage in Sorani too', async () => {
     localStorage.setItem('kurda_locale_v1', 'ckb');
     show({ current: 12 });
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     expect((await screen.findByTestId('streak-stage')).textContent).toMatch(/^ئاگری کەمپ · ئاگرێکی گەورە لە ڕۆژی .+دا$/);
   });
 });
 
 
-describe('the flame lighting up', () => {
-  /** what the device asks for, read once before the screen under test opens (the setting is asked once, and kept) */
-  async function device(reduceMotion: boolean): Promise<void> {
-    patchReactNativeWeb({ reduceMotion });
-    show().unmount();
-    await act(async () => undefined);
+/** What the device asks for, read once before the screen under test opens (the setting is asked once, and kept). */
+async function device(reduceMotion: boolean): Promise<void> {
+  patchReactNativeWeb({ reduceMotion });
+  show().unmount();
+  await act(async () => undefined);
+}
+
+describe('the card coming alive', () => {
+  const plan = streakReveal(false);
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    await device(true);
+  });
+
+  /** The card as it opens, its clock held at the start (a test's animations otherwise run on by themselves). */
+  async function opened(over: Partial<Streak> = {}, onContinue = () => undefined): Promise<HTMLElement> {
+    const real = Animated.timing;
+    vi.spyOn(Animated, 'timing').mockImplementation((value, config) => {
+      const run = real(value, config);
+      return config.duration === plan.overMs && config.toValue === plan.overMs ? { ...run, start: () => undefined } : run;
+    });
+    show(over, false, onContinue);
+    return card();
   }
+  const opacity = (el: HTMLElement): number => Number(el.style.opacity === '' ? 1 : el.style.opacity);
+
+  it('opens on yesterday: the medal grey and standing, the number as it was and quiet, and the rest still to come', async () => {
+    await device(false);
+    const shown = within(await opened());
+    // one medal changing colour: the gold one is over the grey one, not seen yet
+    expect(opacity(shown.getByTestId('streak-medal-lit'))).toBe(0);
+    expect(shown.getByTestId('streak-medal').querySelectorAll('svg').length).toBeGreaterThanOrEqual(2);
+    const turn = shown.getByTestId('streak-medal-turn');
+    expect(turn.style.transform).toContain('translateY(0px)');
+    expect(turn.style.transform).toContain('scaleX(1)');
+    expect(turn.style.transform).toContain('scaleY(1)');
+    // yesterday's number is there to roll away, and today's to roll in
+    const title = shown.getByRole('heading', { name: '6 day streak' });
+    expect(within(title).getByText('5')).toBeTruthy();
+    expect(within(title).getByText('6')).toBeTruthy();
+    expect(opacity(title)).toBeLessThan(0.6);
+    // the word for the day, the week and the way on have not arrived
+    expect(opacity(shown.getByTestId('streak-cheer'))).toBe(0);
+    expect(opacity(within(shown.getByTestId('streak-week')).getAllByTestId(/^day-/)[0]!)).toBe(0);
+    expect(opacity(screen.getByTestId('streak-onward'))).toBe(0);
+    // though it answers from the first frame
+    expect(within(screen.getByTestId('streak-onward')).getByRole('button', { name: 'Continue' })).toBeTruthy();
+    // the app's one celebration waits in the medal
+    expect(shown.getByTestId('streak-medal-ring')).toBeTruthy();
+    expect(shown.getByTestId('streak-medal-flecks')).toBeTruthy();
+  });
+
+  it('is finished at once by a tap on the card: gold, today’s number in full ink, everything there, and felt once', async () => {
+    await device(false);
+    const felt: string[] = [];
+    const stop = onHaptic((e) => felt.push(e));
+    try {
+      const shown = within(await opened());
+      expect(felt).toEqual([]);
+      fireEvent.click(shown.getByTestId('streak-card'));
+      expect(opacity(shown.getByTestId('streak-medal-lit'))).toBe(1);
+      expect(opacity(shown.getByRole('heading', { name: '6 day streak' }))).toBe(1);
+      expect(opacity(shown.getByTestId('streak-cheer'))).toBe(1);
+      for (const day of within(shown.getByTestId('streak-week')).getAllByTestId(/^day-/)) expect(opacity(day)).toBe(1);
+      expect(opacity(screen.getByTestId('streak-onward'))).toBe(1);
+      expect(shown.getByTestId('streak-medal-turn').style.transform).toContain('scaleY(1)');
+      expect(felt).toEqual(['celebrate']);
+      fireEvent.click(shown.getByTestId('streak-card'));
+      expect(felt).toEqual(['celebrate']);
+    } finally {
+      stop();
+    }
+  });
+
+  it('brings today’s day in after the whole week, wherever it stands in it', async () => {
+    await device(false);
+    const shown = within(await opened());
+    const week = within(shown.getByTestId('streak-week'));
+    // a Thursday: the fourth place, and still the last to arrive
+    const marks = week.getAllByTestId(/^day-/);
+    expect(marks[3]!.getAttribute('data-testid')).toBe('day-today');
+    // it pops from smaller than the others grow from
+    const scale = (el: HTMLElement): number => Number(/scale\(([\d.]+)\)/.exec(el.style.transform)?.[1]);
+    expect(scale(marks[3]!)).toBeLessThan(scale(marks[0]!));
+  });
+
+  it('does not roll the number again after the flame: the day it grew was counted there', async () => {
+    await device(false);
+    listen();
+    const shown = within(await opened({ current: 7, longest: 9 }));
+    const title = shown.getByRole('heading', { name: '7 day streak' });
+    expect(within(title).getByText('7')).toBeTruthy();
+    expect(within(title).queryByText('6')).toBeNull();
+    // and its medal still takes its turn, from grey
+    expect(opacity(shown.getByTestId('streak-medal-lit'))).toBe(0);
+  });
+
+  it('leaves the way it came, fast: the way on is taken once the medal has gathered itself and gone', async () => {
+    await device(false);
+    const onContinue = vi.fn();
+    await opened({}, onContinue);
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    // pressed again while it leaves: still one way on
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onContinue).not.toHaveBeenCalled();
+    await act(() => vi.advanceTimersByTimeAsync(STREAK_LEAVE_MS + 20));
+    expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+
+  it('only cross-fades under Reduce Motion: no turn, ring, flecks or sparks, everything else simply there, and on at once', async () => {
+    await device(true);
+    const onContinue = vi.fn();
+    const shown = within(await opened({}, onContinue));
+    expect(shown.getByTestId('streak-medal-turn').style.transform).toBe('');
+    expect(shown.queryByTestId('streak-medal-ring')).toBeNull();
+    expect(shown.queryByTestId('streak-medal-flecks')).toBeNull();
+    expect(opacity(shown.getByTestId('streak-cheer'))).toBe(1);
+    for (const day of within(shown.getByTestId('streak-week')).getAllByTestId(/^day-/)) expect(opacity(day)).toBe(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('the flame lighting up', () => {
   afterEach(async () => {
     vi.restoreAllMocks();
     await device(true);
@@ -305,7 +441,7 @@ describe('the flame lighting up', () => {
       lighting.push(config);
       return { ...run, start: () => undefined };
     });
-    show({ current: 12 });
+    show({ current: 14, longest: 14 });
     return { flame: await screen.findByTestId('lesson-streak-flame'), lighting };
   }
 
@@ -327,7 +463,7 @@ describe('the flame lighting up', () => {
     expect(within(flame).getByTestId('lesson-streak-sparks')).toBeTruthy();
     // and a tap still goes on at once
     fireEvent.click(flame);
-    expect(await screen.findByRole('heading', { name: '12 day streak' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: '14 day streak' })).toBeTruthy();
   });
 
   it('lights where it is under Reduce Motion: the dim screen cross-fades to the warm one, with no squash, ring or sparks', async () => {
@@ -344,7 +480,7 @@ describe('the flame lighting up', () => {
     expect(within(flame).queryByTestId('lesson-streak-ring')).toBeNull();
     expect(within(flame).queryByTestId('lesson-streak-sparks')).toBeNull();
     fireEvent.click(flame);
-    expect(await screen.findByRole('heading', { name: '12 day streak' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: '14 day streak' })).toBeTruthy();
   });
 
   it('draws the spark of the first day closer than the fire of a year', async () => {
@@ -355,8 +491,9 @@ describe('the flame lighting up', () => {
       cleanup();
       return drawn;
     };
-    const year = await size(400);
+    const year = await size(365);
     expect(await size(1)).toBeCloseTo(year * flameMoment(1).zoom, 6);
-    expect(await size(12)).toBe(year);
+    expect(await size(14)).toBeCloseTo(year * flameMoment(14).zoom, 6);
+    expect(flameMoment(1).zoom).toBeGreaterThan(flameMoment(365).zoom);
   });
 });

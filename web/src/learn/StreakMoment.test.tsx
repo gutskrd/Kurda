@@ -2,9 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // the fire as its props: how big it burns and what it grows from, whoever draws it
 vi.mock('../components/Fire', () => import('../test/fireProbe'));
 import { act, fireEvent, render, screen } from '@testing-library/react';
-import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, flameMoment } from '@kurda/shared';
+import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, flameMoment, streakReveal } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
-import { onLessonSound } from '../lib/sounds';
+import { onLessonSound, resetLessonSounds } from '../lib/sounds';
 import { preloadCatalogue } from '../i18n/catalogues';
 import { StreakFlame, StreakWeek } from './StreakMoment';
 import type { Streak } from './types';
@@ -154,6 +154,116 @@ describe('the week', () => {
     expect([4, 5, 6].map((i) => mark(i).textContent)).toEqual(['30', '31', '1']);
     // the names are a calendar's short ones
     expect(cells.map((li) => li.querySelector('.end-day-name')?.textContent)).toEqual(['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']);
+  });
+});
+
+describe('the card coming alive', () => {
+  const plan = streakReveal(false);
+
+  it('opens on yesterday: the medal grey under the gold one, the number as it was, ready to roll on', () => {
+    inLanguage(<StreakWeek streak={week} />);
+    const medal = document.querySelector('.streak-medal-turn')!;
+    // one medal changing colour: yesterday's in grey, and today's over it, which fades in as it turns
+    expect(medal.querySelector(':scope > .art-medal')).toHaveClass('is-unlit');
+    expect(medal.querySelector('.streak-medal-lit .art-medal')).not.toHaveClass('is-unlit');
+    // the digit that changes turns from 3 to 4 in its own column, as the medal comes down
+    const title = screen.getByRole('heading', { name: '4-day streak' });
+    expect(title.querySelector('.roll-column')).toHaveTextContent('34');
+    expect(title.querySelector('.roll')).toHaveStyle({ '--roll-delay': `${plan.countAtMs}ms` });
+    expect(title).toHaveTextContent('4-day streak');
+  });
+
+  it('times every part of the card from the one plan both apps follow', () => {
+    inLanguage(<StreakWeek streak={week} />);
+    expect(document.querySelector('.end-week')).toHaveStyle({
+      '--light-at': `${plan.lightAtMs}ms`,
+      '--count-at': `${plan.countAtMs}ms`,
+      '--words-at': `${plan.wordsAtMs}ms`,
+      '--week-at': `${plan.weekAtMs}ms`,
+      '--day-step': `${plan.dayStepMs}ms`,
+      '--after-at': `${plan.afterAtMs}ms`,
+    });
+    // the app's one celebration bursts out of the medal as it turns to gold
+    expect(document.querySelector('.streak-card-medal')).toHaveStyle({ '--celebrate-ring-delay': `${plan.burstAtMs}ms` });
+    expect(document.querySelector('.streak-card-medal')).toHaveClass('is-playing');
+  });
+
+  it('is heard once, as the medal turns to gold, and settles by itself when everything has arrived', () => {
+    vi.useFakeTimers();
+    resetLessonSounds();
+    const heard: string[] = [];
+    const stop = onLessonSound((s) => heard.push(s));
+    const onSettled = vi.fn();
+    inLanguage(<StreakWeek streak={week} onSettled={onSettled} />);
+    act(() => vi.advanceTimersByTime(plan.burstAtMs - 10));
+    expect(heard).toEqual([]);
+    act(() => vi.advanceTimersByTime(10));
+    expect(heard).toEqual(['reward']);
+    expect(document.querySelector('.end-week')).not.toHaveClass('is-settled');
+    act(() => vi.advanceTimersByTime(plan.overMs));
+    expect(document.querySelector('.end-week')).toHaveClass('is-settled');
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(heard).toEqual(['reward']);
+    stop();
+  });
+
+  it('finishes at once on a click: everything where it ends, heard all the same, and only once', () => {
+    vi.useFakeTimers();
+    // chimes too close together are dropped by the clock, and the test before this one ran its own clock on by seconds
+    resetLessonSounds();
+    const heard: string[] = [];
+    const stop = onLessonSound((s) => heard.push(s));
+    const onSettled = vi.fn();
+    inLanguage(<StreakWeek streak={week} onSettled={onSettled} />);
+    // a moment in, while the medal is still grey
+    act(() => vi.advanceTimersByTime(300));
+    fireEvent.click(screen.getByRole('heading', { name: '4-day streak' }));
+    expect(document.querySelector('.end-week')).toHaveClass('is-settled');
+    expect(document.querySelector('.streak-card-medal')).toHaveClass('is-done');
+    expect(heard).toEqual(['reward']);
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    // the timers it would have run by change nothing more
+    act(() => vi.advanceTimersByTime(plan.overMs + 100));
+    expect(heard).toEqual(['reward']);
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
+  it('after the flame, stands at today’s number and keeps quiet: the flame rolled it and was heard', () => {
+    vi.useFakeTimers();
+    resetLessonSounds();
+    const heard: string[] = [];
+    const stop = onLessonSound((s) => heard.push(s));
+    inLanguage(<StreakWeek streak={{ ...week, current: 7 }} afterFlame />);
+    expect(screen.getByRole('heading', { name: '7-day streak' }).querySelector('.roll-column')).toBeNull();
+    act(() => vi.advanceTimersByTime(plan.overMs + 100));
+    expect(heard).toEqual([]);
+    stop();
+  });
+
+  it('goes when the way on is taken', () => {
+    const { rerender } = render(
+      <I18nProvider>
+        <StreakWeek streak={week} />
+      </I18nProvider>,
+    );
+    expect(document.querySelector('.end-week')).not.toHaveClass('is-leaving');
+    rerender(
+      <I18nProvider>
+        <StreakWeek streak={week} leaving />
+      </I18nProvider>,
+    );
+    expect(document.querySelector('.end-week')).toHaveClass('is-leaving');
+  });
+
+  it('only cross-fades for a reader who asked for less motion: no sparks, and nothing travels', () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce'), media: query, addEventListener: () => undefined, removeEventListener: () => undefined, addListener: () => undefined, removeListener: () => undefined }));
+    const still = streakReveal(true);
+    inLanguage(<StreakWeek streak={week} />);
+    expect(document.querySelector('.end-week')).toHaveClass('is-still');
+    expect(document.querySelector('.streak-medal-sparks')).toBeNull();
+    expect(document.querySelector('.end-week')).toHaveStyle({ '--week-at': `${still.weekAtMs}ms`, '--after-at': `${still.afterAtMs}ms` });
+    expect(screen.getByRole('heading', { name: '4-day streak' }).querySelector('.roll')).toHaveClass('is-fading');
   });
 });
 

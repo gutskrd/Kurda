@@ -81,10 +81,14 @@ function Art({ xml, size, label, style }: { xml: string; size: number; label: st
   );
 }
 
-/** The medal a kept streak is handed: the gold pentagon with its laurel (shared art/medals.ts). */
-export function StreakMedal({ size, label }: { size: number; label: string }): React.JSX.Element {
+/**
+ * The medal a kept streak is handed: the gold pentagon with its laurel
+ * (shared art/medals.ts). `unlit` is the same medal in greys, as it is until
+ * today's lesson lights it.
+ */
+export function StreakMedal({ size, label, unlit = false }: { size: number; label: string; unlit?: boolean }): React.JSX.Element {
   const idPrefix = useArtId();
-  const xml = useMemo(() => streakMedalSvg({ size, title: label, idPrefix }), [size, label, idPrefix]);
+  const xml = useMemo(() => streakMedalSvg({ size, title: label, idPrefix, unlit }), [size, label, idPrefix, unlit]);
   return <Art xml={xml} size={size} label={label} />;
 }
 

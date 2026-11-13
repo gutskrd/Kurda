@@ -157,10 +157,3 @@ export function freezeLine(streak: { freezes?: number; freezeProgress?: number; 
  * `rowsMs`). Nothing moves on by itself after that: the learner taps on.
  */
 export const RESULTS_TIMING = { tilesAtMs: 420, tileStaggerMs: 40, xpAtMs: 420, goalAtMs: 900, goalMs: 400, rowsAtMs: 1000, rowsMs: 200 } as const;
-
-/**
- * The streak's week, in ms from when it opens: today's day pops in
- * (`countAtMs`) and the freeze bar fills (`freezeAtMs`, over `freezeMs`). The
- * flame before it lights by `FLAME_IGNITE` (fire-moments.ts).
- */
-export const STREAK_DAY_TIMING = { countAtMs: 300, freezeAtMs: 600, freezeMs: 400 } as const;

@@ -30,6 +30,8 @@ interface MedalTone {
 }
 
 const GOLD: MedalTone = { light: '#ffe596', mid: '#f8c84c', dark: '#eeb02c', deep: '#c98a14', ink: ['#b8801a', '#8f5d08'] };
+/** The medal before it is lit: the same piece in the greys a badge not yet earned is drawn in. */
+const UNLIT: MedalTone = { light: '#dfe2e8', mid: '#c3c8d2', dark: '#a9b0bc', deep: '#8f96a4', ink: ['#8a91a0', '#6c7383'] };
 const ICE: MedalTone = { light: '#d6eeff', mid: '#9fd2f8', dark: '#6fb6ec', deep: '#3f8fd0', ink: ['#3d86c4', '#235f9a'] };
 
 const rad = (deg: number): number => (deg * Math.PI) / 180;
@@ -96,6 +98,8 @@ function pressed(dr: Drawing, t: MedalTone, top: number, bottom: number, draw: (
 export interface MedalOptions {
   /** pixels; default 96 */
   size?: number;
+  /** the medal before it is lit: yesterday's, in greys (the streak's card opens on it, under the gold one) */
+  unlit?: boolean;
   /** the accessible label */
   title?: string;
   idPrefix?: string;
@@ -103,11 +107,14 @@ export interface MedalOptions {
 
 /**
  * The streak's medal: a soft pentagon of gold with a laurel pressed into it,
- * and a soft shadow under it.
+ * and a soft shadow under it. `unlit` is the same medal before today's
+ * lesson lit it, in greys, the same shapes at the same places, so that one
+ * laid over the other is one medal changing colour.
  */
 export function streakMedalSvg(opts: MedalOptions = {}): string {
   const size = checkSize(opts.size, 96);
-  const dr = new Drawing(prefixFor(opts.idPrefix, 'streak-medal'));
+  const tone = opts.unlit ? UNLIT : GOLD;
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'streak-medal', opts.unlit === true));
   const cy = 55;
   const r = 52;
   const corners = regular(60, cy, r, 5, -90);
@@ -117,10 +124,10 @@ export function streakMedalSvg(opts: MedalOptions = {}): string {
   const shadow = dr.id('s');
   dr.def(radialBox(shadow, [[0, '#000000', 0.22], [1, '#000000', 0]]));
   dr.add(`<ellipse cx="60" cy="112" rx="36" ry="5.5" fill="url(#${shadow})"/>`);
-  dr.add(piece(dr, face, under, inner, GOLD, cy, r));
+  dr.add(piece(dr, face, under, inner, tone, cy, r));
   const sign = laurel(60, cy + 3, 19.5, 13.5, 4.3);
   dr.add(
-    pressed(dr, GOLD, cy - 22, cy + 26, (fill, stroke, dy) => {
+    pressed(dr, tone, cy - 22, cy + 26, (fill, stroke, dy) => {
       const move = dy === 0 ? '' : ` transform="translate(0 ${n2(dy)})"`;
       return `<path d="${sign.stems}"${move} fill="none" stroke="${stroke}" stroke-width="2" stroke-linecap="round"/><path d="${sign.leaves}"${move} fill="${fill}"/>`;
     }),

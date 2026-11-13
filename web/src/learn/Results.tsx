@@ -4,13 +4,16 @@ import {
   BURST,
   NO_LESSON_MOMENTS,
   RESULTS_TIMING,
+  STREAK_LEAVE_MS,
   celebrationPlan,
+  flameMoment,
   justDone,
   practisableMistakes,
   questRows,
   resultsActions,
   resultsGrade,
   resultsOutcome,
+  streakReveal,
   toLeagueTier,
   withOpened,
   type DeliveredExercise,
@@ -183,11 +186,35 @@ export function Results({
     }
   }, [chestOpen]);
 
+  // the flame has the screen only on the day the fire grew: on any other day the streak's card is the whole of the moment
+  const fireGrew = moments.streakKept && flameMoment(results.streak.current).grew !== null;
   const stages: Stage[] = ['results'];
-  if (moments.streakKept) stages.push('flame', 'week');
+  if (moments.streakKept) stages.push(...(fireGrew ? (['flame', 'week'] as const) : (['week'] as const)));
   if (steps.length > 0) stages.push('quests');
   const [stage, setStage] = useState<Stage>('results');
   const following = stages[stages.indexOf(stage) + 1] ?? null;
+  // the streak's card: whether everything on it has arrived, and whether the way on was taken and it is going
+  const [weekSettled, setWeekSettled] = useState(false);
+  const [weekLeaving, setWeekLeaving] = useState(false);
+  const leaveTimer = useRef<number | undefined>(undefined);
+  useEffect(() => () => window.clearTimeout(leaveTimer.current), []);
+  /**
+   * Take the way on from the streak's card: the card goes first (its words
+   * fade, its medal gathers itself and is gone), then `then`. From any other
+   * screen, and for a reader who asked for less motion, `then` at once.
+   */
+  const leaving = (then: () => void): void => {
+    if (stage !== 'week' || prefersReducedMotion()) {
+      then();
+      return;
+    }
+    if (weekLeaving) return;
+    setWeekLeaving(true);
+    leaveTimer.current = window.setTimeout(() => {
+      setWeekLeaving(false);
+      then();
+    }, STREAK_LEAVE_MS);
+  };
 
   useEffect(() => {
     // each screen starts at its top; the one after the results takes the focus itself
@@ -208,11 +235,12 @@ export function Results({
     return () => window.removeEventListener('keydown', onKey);
   }, []);
 
-  const act = (action: ResultsAction): void => {
-    if (action === 'next' && next) onNext(next);
-    else if (action === 'practise') onPractise(practise);
-    else navigate(exitTo);
-  };
+  const act = (action: ResultsAction): void =>
+    leaving(() => {
+      if (action === 'next' && next) onNext(next);
+      else if (action === 'practise') onPractise(practise);
+      else navigate(exitTo);
+    });
   const label = (action: ResultsAction): string =>
     action === 'next' ? t('lesson.results.next') : action === 'practise' ? t('lesson.results.practise') : t('common.done');
   const share = (xpToday: number): number => (goal && goal.target > 0 ? Math.max(0, Math.min(1, xpToday / goal.target)) : 0);
@@ -223,7 +251,7 @@ export function Results({
     bar = null;
     primary.current = null;
   } else if (following) {
-    const onward = (): void => setStage(following);
+    const onward = (): void => leaving(() => setStage(following));
     primary.current = onward;
     bar = (
       <BarRow
@@ -293,7 +321,7 @@ export function Results({
         {stage === 'flame' ? (
           <StreakFlame streak={results.streak} onDone={() => setStage('week')} />
         ) : stage === 'week' ? (
-          <StreakWeek streak={results.streak} />
+          <StreakWeek streak={results.streak} afterFlame={fireGrew} leaving={weekLeaving} onSettled={() => setWeekSettled(true)} />
         ) : stage === 'quests' ? (
           <QuestsStage rows={rows} monthDone={questDay.day?.monthDone ?? null} />
         ) : (
@@ -407,7 +435,18 @@ export function Results({
           </section>
         )}
       </div>
-      {bar && <ActionBar>{bar}</ActionBar>}
+      {bar &&
+        (stage === 'week' ? (
+          // the way on is the last thing on the streak's card to arrive (shared `streakReveal`); its key answers from the first frame
+          <div
+            className={`end-bar-late${weekSettled ? ' is-settled' : ''}`}
+            style={{ '--onward-at': `${streakReveal(prefersReducedMotion()).onwardAtMs}ms` } as React.CSSProperties}
+          >
+            <ActionBar>{bar}</ActionBar>
+          </div>
+        ) : (
+          <ActionBar>{bar}</ActionBar>
+        ))}
       {/* it keeps the chests it opened with, so one opened does not close it */}
       {chestOpen && (
         <ChestScreen

@@ -548,6 +548,22 @@ describe('the streak’s medals', () => {
     expect(leaves(streakMedalSvg())).toBe(20);
   });
 
+  it('draws the medal unlit as the same medal in greys: the same shapes, so one laid on the other only changes colour', () => {
+    const shapes = (svg: string): string[] => [...svg.matchAll(/ d="([^"]*)"/g)].map((m) => m[1]!);
+    const lit = streakMedalSvg({ idPrefix: 'x' });
+    const unlit = streakMedalSvg({ idPrefix: 'x', unlit: true });
+    checkSvg(unlit, 96);
+    expect(shapes(unlit)).toEqual(shapes(lit));
+    expect(unlit).not.toBe(lit);
+    const colours = (svg: string): string[] => [...new Set(svg.match(/#[0-9a-f]{6}/g) ?? [])].filter((c) => c !== '#ffffff' && c !== '#000000');
+    for (const hex of colours(unlit)) {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+      expect(Math.max(r, g, b) - Math.min(r, g, b), hex).toBeLessThanOrEqual(32);
+    }
+    // two on one page keep ids of their own
+    expect(streakMedalSvg({ unlit: true })).not.toContain(/ id="([^"]+)"/.exec(streakMedalSvg())![1]!);
+  });
+
   it('labels itself, takes a caller’s label, and refuses what it cannot draw', () => {
     expect(streakMedalSvg()).toMatch(/>Streak<\/title>/);
     expect(dayMedalSvg({ kind: 'frozen', title: 'Tuesday, kept by a freeze' })).toMatch(/>Tuesday, kept by a freeze<\/title>/);

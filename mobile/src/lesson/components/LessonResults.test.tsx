@@ -122,9 +122,9 @@ describe('the way on', () => {
     });
     fireEvent.click(await screen.findByRole('button', { name: 'Next lesson' }));
 
-    // the flame first; a tap moves on to the week
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    // the streak on its card (the flame before it is for the day the fire grew, and the sixth is not one)
     expect(await screen.findByRole('heading', { name: '6 day streak' })).toBeTruthy();
+    expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     // then the quests this lesson moved, and on

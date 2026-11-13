@@ -930,10 +930,9 @@ describe('the results', () => {
     expect(screen.getByText('+15 XP this week · #4 in Kanî League')).toBeInTheDocument();
     expect(screen.queryByText(/^Up to/)).not.toBeInTheDocument();
 
-    // the streak was kept today: Continue, never by itself, to its flame, and Escape on from it to the week rather than out
+    // the streak was kept today: Continue, never by itself, to its card
     await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     expect(await screen.findByRole('heading', { name: '8-day streak' })).toBeInTheDocument();
-    await userEvent.keyboard('{Escape}');
     expect(await screen.findByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
     expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
     expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l1');

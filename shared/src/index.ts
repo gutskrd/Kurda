@@ -131,7 +131,6 @@ export {
 export {
   NO_LESSON_MOMENTS,
   RESULTS_TIMING,
-  STREAK_DAY_TIMING,
   anyLessonMoment,
   freezeLine,
   lessonMoments,
@@ -731,6 +730,8 @@ export {
   type FireLevel,
   type FireStage,
 } from './fire-stages.js';
+/** The kept streak's card coming alive: when its medal takes its turn and when each part of the card arrives, alike on both. */
+export { STREAK_LEAVE_MS, STREAK_LEAVE_POSE, smoothPoses, streakReveal, type MedalPose, type StreakReveal } from './streak-reveal.js';
 /** The fire as a moment of its own: the day it grew and how it lights up, a run's milestone, and the ladder of stages a streak climbs. */
 export {
   FIRE_GREW_READ_MS,
