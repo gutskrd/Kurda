@@ -12,6 +12,8 @@ import { PlayWithButton } from '../play/PlayButtons';
 import { AddFriendButton } from '../social/FriendTickets';
 import { countryName } from '../lib/countries';
 import { ErrorState } from '../components/states';
+import { LockIcon } from '../components/icons';
+import { ProfileCard } from '../ui/ProfileCard';
 import { FullProfileSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -55,14 +57,24 @@ export function UserProfile(): React.JSX.Element {
 
   const name = profile.displayName || profile.username;
 
-  // privacy-hidden: identity is still shown so you can send a friend request
+  // privacy-hidden: who it is is still shown, in the same card as anybody's, so that you can ask to be friends
   if (profile.private) {
     return (
-      <div className="container container-narrow">
-        <div className="card" style={{ marginTop: 24, textAlign: 'center' }}>
-          <h1 className="page-title" style={{ marginTop: 0 }}>{name}</h1>
-          <p className="page-sub" style={{ margin: '8px auto 18px' }}>{t('profile.private')}</p>
-          <FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />
+      <div className="mkp-page">
+        <div className="mkp-wrap">
+          <ProfileCard
+            wide
+            name={name}
+            username={profile.username}
+            avatarUrl={profile.avatarUrl ?? profile.profilePhotoUrl}
+            aside={<FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />}
+            meta={
+              <p className="mkp-private">
+                <LockIcon size={15} />
+                {t('profile.private')}
+              </p>
+            }
+          />
         </div>
       </div>
     );

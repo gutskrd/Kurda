@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
@@ -21,8 +21,8 @@ import { knownTier, leagueName } from '../leagues/format';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { Framed } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { SEASON_FRAME_INNER, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
-import { FavoriteRow } from '../profile/cosmetic-parts';
+import { SEASON_FRAME_INNER, countryName, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { FavoriteRow, flagUrl } from '../profile/cosmetic-parts';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity, ProfileActivitySkeleton } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
@@ -41,6 +41,9 @@ interface Profile {
   userId: string;
   username: string;
   displayName: string | null;
+  /** what they say about themselves, and where they are from: sent with a profile you may see */
+  bio?: string | null;
+  country?: string | null;
   /** the server resolves this (uploaded photo → chosen avatar); the phone was dropping it */
   avatarUrl?: string | null;
   friendStatus: FriendStatus;
@@ -212,12 +215,60 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           >
             <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
           </Framed>
-          <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
-          {profile.displayName ? <Text style={[styles.display, { color: colors.textSecondary }]}>{profile.displayName}</Text> : null}
+          {/*
+            The name they chose leads and the handle follows, as on your own
+            profile and on the website. It was the other way round here: the
+            handle large, and the name somebody picked for themselves small
+            under it.
+          */}
+          <Text style={[styles.username, { color: colors.textPrimary }]} accessibilityRole="header">
+            {profile.displayName ?? profile.username}
+          </Text>
+          <Text style={[styles.display, { color: colors.textSecondary }]}>{`@${profile.username}`}</Text>
+          {!profile.private && profile.country ? (
+            <View style={styles.country}>
+              <Image source={{ uri: flagUrl(profile.country) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden />
+              <Text style={[styles.countryName, { color: colors.textSecondary }]}>{countryName(profile.country, locale) ?? profile.country}</Text>
+            </View>
+          ) : null}
+          {/* their own words: the one part of a profile that is not a number */}
+          {!profile.private && profile.bio ? <Text style={[styles.bio, { color: colors.textPrimary }]}>{profile.bio}</Text> : null}
+          {profile.private ? <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.private')}</Text> : null}
 
-          {profile.private ? (
-            <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.private')}</Text>
-          ) : (
+          {/* what you can do sits with who they are, above the numbers, where a thumb finds it without scrolling */}
+          {profile.friendStatus !== 'self' ? (
+            <View style={styles.actions}>
+              {profile.friendStatus === 'friends' ? (
+                <>
+                  <ClayButton
+                    label={t('profile.message')}
+                    tone="primary"
+                    size="large"
+                    onPress={() => require('message') && navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
+                  />
+                  {/* the quiz's 1v1 challenge went with the quiz: any game, through the invite sheet */}
+                  <PlayWithButton friendId={profile.userId} name={profile.displayName ?? profile.username} />
+                </>
+              ) : null}
+              {labelKey ? (
+                // a request is a ticket handed over: it slips away from the button, and home again when taken back
+                <TicketSlip sent={profile.friendStatus === 'pending_out'}>
+                  <ClayButton
+                    label={t(labelKey)}
+                    icon={profile.friendStatus === 'pending_out' ? 'ticket' : profile.friendStatus === 'none' ? 'user-plus' : undefined}
+                    // an undo is pressable but not an invitation, so it stays neutral
+                    tone={isActionable(profile.friendStatus) && !isUndo(profile.friendStatus) ? 'primary' : 'neutral'}
+                    size="large"
+                    busy={busy}
+                    disabled={!isActionable(profile.friendStatus)}
+                    onPress={() => require('friends') && act(profile.friendStatus)}
+                  />
+                </TicketSlip>
+              ) : null}
+            </View>
+          ) : null}
+
+          {profile.private ? null : (
             <>
               <View style={styles.stats}>
                 {/* grouped, and in the reader's own digits, as the same numbers are on their own profile */}
@@ -249,34 +300,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           )}
 
           {profile.friendStatus !== 'self' ? (
-            <View style={styles.actions}>
-              {profile.friendStatus === 'friends' ? (
-                <>
-                  <ClayButton
-                    label={t('profile.message')}
-                    tone="primary"
-                    size="large"
-                    onPress={() => require('message') && navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
-                  />
-                  {/* the quiz's 1v1 challenge went with the quiz: any game, through the invite sheet */}
-                  <PlayWithButton friendId={profile.userId} name={profile.displayName ?? profile.username} />
-                </>
-              ) : null}
-              {labelKey ? (
-                // a request is a ticket handed over: it slips away from the button, and home again when taken back
-                <TicketSlip sent={profile.friendStatus === 'pending_out'}>
-                  <ClayButton
-                    label={t(labelKey)}
-                    icon={profile.friendStatus === 'pending_out' ? 'ticket' : profile.friendStatus === 'none' ? 'user-plus' : undefined}
-                    // an undo is pressable but not an invitation, so it stays neutral
-                    tone={isActionable(profile.friendStatus) && !isUndo(profile.friendStatus) ? 'primary' : 'neutral'}
-                    size="large"
-                    busy={busy}
-                    disabled={!isActionable(profile.friendStatus)}
-                    onPress={() => require('friends') && act(profile.friendStatus)}
-                  />
-                </TicketSlip>
-              ) : null}
+            <View style={styles.safety}>
               {/*
                 Report and block sit together because they are what you reach
                 for in the same moment, and they do different halves of the
@@ -377,14 +401,21 @@ const styles = StyleSheet.create({
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, padding: spacing.xl },
-  username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   display: { fontSize: typography.sizes.md },
+  // the flag and the name of where they are from, as your own profile draws them
+  country: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  flag: { width: 22, height: 16 },
+  countryName: { fontSize: typography.sizes.sm },
+  bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
   stats: { flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: spacing.md },
   stat: { alignItems: 'center', gap: 2 },
   statValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statValue,
   statLabel: statCaption,
-  actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.lg },
+  actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
+  // report and block close the card, a step away from everything else on it
+  safety: { alignSelf: 'stretch', marginTop: spacing.md },
   block: { minHeight: MIN_TOUCH_TARGET, minWidth: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
   danger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   blockText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
