@@ -13,6 +13,7 @@ import {
   SEASON_FRAME_SHINE,
   SEASONS,
   SMALL_BADGE,
+  badgeColour,
   badgeShineSvg,
   badgeShines,
   badgeSvg,
@@ -78,11 +79,14 @@ import {
 } from './chest.js';
 import type { ChestTier } from '../quests.js';
 import { SEASON_ICONS } from './icons.js';
-import { PICTURES } from './pictures.js';
-import { PROPS } from './props/index.js';
+import { BADGE_GLYPHS, GLYPH_VIEWBOX } from './badge-glyphs.js';
 import { SHAPES } from './shapes.js';
 import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
-import { TINY_BADGE } from './badges.js';
+import { TINY_BADGE, hasBadgeGlyph } from './badges.js';
+import { dayMedalSvg, streakMedalSvg } from './medals.js';
+import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
+import { TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt } from './tree-scene.js';
+import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
 import { characterArt } from '../characters/index.js';
 import { BADGES as CATALOGUE, BADGE_FAMILIES as CATALOGUE_FAMILIES, BADGE_TIERS as CATALOGUE_TIERS } from '../badges.js';
@@ -289,7 +293,7 @@ describe('the checks themselves', () => {
     const good = badgeSvg({ key: 'agir' });
     expect(() => checkSvg(good, 96)).not.toThrow();
     expect(() => checkSvg(good.replace('</svg>', ''), 96)).toThrow();
-    expect(() => checkSvg(good.replace('</g>', '</defs>'), 96)).toThrow();
+    expect(() => checkSvg(good.replace('</linearGradient>', '</defs>'), 96)).toThrow();
     expect(() => checkSvg(good.replace(/<title[^<]*<\/title>/, ''), 96)).toThrow();
     expect(() => checkSvg(good.replace('</svg>', '<image href="https://example.org/a.png"/></svg>'), 96)).toThrow();
     expect(() => checkSvg(good.replace(/url\(#[^)]+\)/, 'url(https://example.org/a.svg#g)'), 96)).toThrow();
@@ -320,28 +324,19 @@ describe('the badge catalogue the art draws', () => {
     for (const b of CATALOGUE) expect([1, 4], b.key).toContain(b.tiers.length);
   });
 
-  it('has a drawing for every badge of the catalogue, and none for a badge it does not have', () => {
-    // a picture Hevalo shows (props/) or one that stands alone (pictures.ts); the ranked tiers show their rank's stone
-    const drawn = (key: string): number => (PROPS[key] ? 1 : 0) + (PICTURES[key] ? 1 : 0);
-    const stones = Object.values(RANK_BADGE) as string[];
-    const undrawn = CATALOGUE.filter((b) => !stones.includes(b.key) && drawn(b.key) === 0).map((b) => b.key);
-    expect(undrawn, 'catalogue badges with no picture').toEqual([]);
-    expect(CATALOGUE.filter((b) => drawn(b.key) > 1).map((b) => b.key), 'badges drawn twice').toEqual([]);
+  it('has a symbol for every badge of the catalogue, and none for a badge it does not have', () => {
+    expect(CATALOGUE.filter((b) => !hasBadgeGlyph(b.key)).map((b) => b.key), 'catalogue badges with no symbol').toEqual([]);
     for (const tier of RANK_TIERS) expect(isBadgeKey(RANK_BADGE[tier]), `${tier} has a ranked badge`).toBe(true);
-    expect([...Object.keys(PROPS), ...Object.keys(PICTURES)].filter((k) => !isBadgeKey(k)), 'drawings for no catalogue badge').toEqual([]);
+    // the generated glyphs are the catalogue's, and the "?" every secret shows until it is found
+    expect(Object.keys(BADGE_GLYPHS).filter((k) => !isBadgeKey(k)), 'glyphs for no catalogue badge').toEqual(['secret']);
+    expect(GLYPH_VIEWBOX).toBe(256);
+    for (const [key, paths] of Object.entries(BADGE_GLYPHS)) {
+      expect(paths.length, key).toBeGreaterThan(0);
+      // an empty or truncated path draws nothing at all, which reads as a blank badge rather than as an error
+      for (const d of paths) expect(d.startsWith('M') && d.length > 20, `${key}: ${d.slice(0, 12)}`).toBe(true);
+    }
     // the flat glyphs left are the seasons' marks on a season's emblem
     expect(Object.keys(SEASON_ICONS).sort()).toEqual([...SEASONS].sort());
-  });
-
-  it('draws every secret whole, in its own colours', () => {
-    for (const b of CATALOGUE.filter((d) => d.family === 'secret')) expect(PICTURES[b.key], b.key).toBeDefined();
-  });
-
-  it('sets a picture drawn whole on its plate without Hevalo, and with him every badge that has an icon', () => {
-    const hevalo = (svg: string): boolean => /-antler|-head|-ear/.test(svg);
-    for (const key of BADGE_KEYS.filter((k) => badgeArt(k).family !== 'secret' && !Object.values(RANK_BADGE).includes(k))) {
-      expect(hevalo(badgeSvg({ key, tier: 2 })), key).toBe(PICTURES[key] === undefined);
-    }
   });
 });
 
@@ -413,20 +408,32 @@ describe('badgeSvg', () => {
     expect(new Set(secrets.map((s) => s.replace(/<circle[^>]*fill-opacity[^>]*\/>/g, ''))).size).toBe(1);
   });
 
-  it('shows Hevalo himself, the drawing he speaks with, in greys until it is earned', () => {
-    const art = characterArt('hevalo', 'own');
-    const antlers = wholePath(/ d="([^"]*)"/.exec(art.head)?.[1] ?? '');
-    const fur = /fill="(#[0-9a-f]{6})"/.exec(art.head)?.[1] ?? '';
-    expect(antlers.length).toBeGreaterThan(200);
-    for (const key of ['agir', 'rank-ciya', 'newroz'] as BadgeKey[]) {
-      expect(badgeSvg({ key })).toContain(antlers);
-      expect(badgeSvg({ key, size: 40 })).toContain(antlers);
-      expect(badgeSvg({ key, state: 'locked' })).toContain(antlers);
-      expect(badgeSvg({ key, state: 'locked' })).not.toContain(fur);
+  it('is one piece with one symbol pressed into it, in the badge’s own colour, and in greys until it is earned', () => {
+    /** Every colour a drawing names, but for the white of its lights and the black of its shadow. */
+    const colours = (svg: string): string[] => [...new Set(svg.match(/#[0-9a-f]{6}/g) ?? [])].filter((c) => c !== '#ffffff' && c !== '#000000');
+    const isGrey = (hex: string): boolean => {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+      return Math.max(r, g, b) - Math.min(r, g, b) <= 32;
+    };
+    for (const key of ['agir', 'rank-ciya', 'newroz', 'tire-rast'] as BadgeKey[]) {
+      const symbol = (BADGE_GLYPHS[key] ?? []).join('');
+      expect(symbol.length, key).toBeGreaterThan(20);
+      // the same symbol large, small and not yet earned
+      expect(badgeSvg({ key }), key).toContain(symbol);
+      expect(badgeSvg({ key, size: 40 }), key).toContain(symbol);
+      expect(badgeSvg({ key, state: 'locked' }), key).toContain(symbol);
+      // earned it is in colour; not yet earned, every colour on it is a grey
+      expect(colours(badgeSvg({ key })).some((c) => !isGrey(c)), key).toBe(true);
+      expect(colours(badgeSvg({ key, state: 'locked' })).filter((c) => !isGrey(c)), key).toEqual([]);
+      // a secret not yet found shows the "?" and nothing of what it hides
+      expect(badgeSvg({ key, state: 'secret' }), key).not.toContain(symbol);
+      expect(badgeSvg({ key, state: 'secret' }), key).toContain((BADGE_GLYPHS.secret ?? []).join(''));
     }
-    // a secret, found or not, is not his
-    expect(badgeSvg({ key: 'tire-rast' })).not.toContain(antlers);
-    expect(badgeSvg({ key: 'tire-rast', state: 'secret' })).not.toContain(antlers);
+    // each badge has a colour of its own: a family's row is a row of colours
+    for (const family of BADGE_FAMILIES) {
+      const faces = BADGE_KEYS.filter((k) => badgeArt(k).family === family).map((key) => colours(badgeSvg({ key, idPrefix: 'x' })).join(' '));
+      expect(new Set(faces).size, family).toBeGreaterThanOrEqual(5);
+    }
   });
 
   it('gives every family a soft, symmetrical silhouette: every outward corner rounded', () => {
@@ -458,7 +465,7 @@ describe('badgeSvg', () => {
     expect(small.replace(/width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, '')).not.toBe(large.replace(/width="\d+" height="\d+"/, ''));
   });
 
-  it('keeps a small badge to its plate, picture and pips: the light and the sparkle go', () => {
+  it('keeps a small badge to its piece, symbol and pips: the shadow under it goes, and then the gloss', () => {
     for (const key of ['ders', 'agir', 'rank-lutke', 'newroz'] as BadgeKey[]) {
       const large = badgeSvg({ key, tier: 4 });
       const tiny = badgeSvg({ key, tier: 4, size: TINY_BADGE - 8 });
@@ -480,11 +487,13 @@ describe('badgeSvg', () => {
     expect(svg).toContain('Fire &amp; &lt;b&gt;&quot;streak&quot;&lt;/b&gt;');
   });
 
-  it('has a glint for Zêr and Firûze (and the single badges that wear their borders), drawn as its own layer', () => {
+  it('has a glint for Zêr and Firûze, and for the badges with a single tier, drawn as its own layer', () => {
     expect(TIERS.map((tier) => badgeShines('ders', tier))).toEqual([false, false, true, true]);
     expect(badgeShines('hemereng')).toBe(true);
     expect(badgeShines('newroz', 4)).toBe(true);
-    expect(badgeShines('vegera')).toBe(false);
+    expect(badgeShines('newroz', 2)).toBe(false);
+    expect(badgeShines('vegera')).toBe(true);
+    expect(badgeShines('night-owl' as BadgeKey)).toBe(false);
     for (const family of BADGE_FAMILIES) {
       const key = BADGE_KEYS.find((k) => badgeArt(k).family === family) as BadgeKey;
       const frames = [0, 0.25, 0.5, 0.75, 1].map((phase) => badgeShineSvg({ key, phase, size: 96 }));
@@ -496,12 +505,73 @@ describe('badgeSvg', () => {
     expect(() => badgeShineSvg({ key: 'agir', phase: Number.NaN })).toThrow(RangeError);
   });
 
+  it('says its own colour for what an app draws round it, and gives nothing away before it is earned or found', () => {
+    expect(badgeColour('agir')).toMatch(/^#[0-9a-f]{6}$/);
+    expect(badgeSvg({ key: 'agir' })).toContain(badgeColour('agir'));
+    expect(badgeColour('agir')).not.toBe(badgeColour('ders'));
+    // not yet earned: the same grey for every badge; a secret not yet found: the same violet
+    expect(badgeColour('agir', 'locked')).toBe(badgeColour('ders', 'locked'));
+    expect(badgeColour('mirari', 'secret')).toBe(badgeColour('tire-rast', 'secret'));
+    expect(() => badgeColour('night-owl' as BadgeKey)).toThrow(RangeError);
+  });
+
   it('refuses what it cannot draw', () => {
     expect(() => badgeSvg({ key: 'night-owl' as BadgeKey })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', tier: 5 as BadgeTier })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', size: 0 })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', size: Number.NaN })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', idPrefix: 'a b"' })).toThrow(RangeError);
+  });
+});
+
+describe('the streak’s medals', () => {
+  it('draws the medal and a day’s two medals as valid, self-contained pictures at the sizes the apps show them', () => {
+    for (const size of [24, 36, 44, 96, 132, 200]) {
+      checkSvg(streakMedalSvg({ size }), size);
+      checkSvg(dayMedalSvg({ kind: 'learned', size }), size);
+      checkSvg(dayMedalSvg({ kind: 'frozen', size }), size);
+    }
+  });
+
+  it('draws the same picture every time, with ids that never meet another’s on the page', () => {
+    expect(streakMedalSvg({ size: 96 })).toBe(streakMedalSvg({ size: 96 }));
+    const all = [streakMedalSvg(), dayMedalSvg({ kind: 'learned' }), dayMedalSvg({ kind: 'frozen' })];
+    const ids = all.map((svg) => [...svg.matchAll(/ id="([^"]+)"/g)].map((m) => m[1]));
+    expect(new Set(ids.flat()).size).toBe(ids.flat().length);
+    expect(streakMedalSvg({ idPrefix: 'mine' })).toContain('id="mine');
+  });
+
+  it('tells a day learned from a day a freeze kept by its sign, not only its colour: a laurel, a snowflake', () => {
+    const snow = (BADGE_GLYPHS.zivistan ?? []).join('');
+    expect(dayMedalSvg({ kind: 'frozen' })).toContain(snow);
+    expect(dayMedalSvg({ kind: 'learned' })).not.toContain(snow);
+    // the laurel is the medal's own: the same on a learned day as on the medal a streak is handed
+    const leaves = (svg: string): number => Math.max(...[...svg.matchAll(/ d="([^"]*)"/g)].map((m) => (m[1]!.match(/Z/g) ?? []).length));
+    expect(leaves(dayMedalSvg({ kind: 'learned' }))).toBe(leaves(streakMedalSvg()));
+    expect(leaves(streakMedalSvg())).toBe(20);
+  });
+
+  it('draws the medal unlit as the same medal in greys: the same shapes, so one laid on the other only changes colour', () => {
+    const shapes = (svg: string): string[] => [...svg.matchAll(/ d="([^"]*)"/g)].map((m) => m[1]!);
+    const lit = streakMedalSvg({ idPrefix: 'x' });
+    const unlit = streakMedalSvg({ idPrefix: 'x', unlit: true });
+    checkSvg(unlit, 96);
+    expect(shapes(unlit)).toEqual(shapes(lit));
+    expect(unlit).not.toBe(lit);
+    const colours = (svg: string): string[] => [...new Set(svg.match(/#[0-9a-f]{6}/g) ?? [])].filter((c) => c !== '#ffffff' && c !== '#000000');
+    for (const hex of colours(unlit)) {
+      const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)) as [number, number, number];
+      expect(Math.max(r, g, b) - Math.min(r, g, b), hex).toBeLessThanOrEqual(32);
+    }
+    // two on one page keep ids of their own
+    expect(streakMedalSvg({ unlit: true })).not.toContain(/ id="([^"]+)"/.exec(streakMedalSvg())![1]!);
+  });
+
+  it('labels itself, takes a caller’s label, and refuses what it cannot draw', () => {
+    expect(streakMedalSvg()).toMatch(/>Streak<\/title>/);
+    expect(dayMedalSvg({ kind: 'frozen', title: 'Tuesday, kept by a freeze' })).toMatch(/>Tuesday, kept by a freeze<\/title>/);
+    expect(() => dayMedalSvg({ kind: 'missed' as never })).toThrow(RangeError);
+    expect(() => streakMedalSvg({ size: 0 })).toThrow(RangeError);
   });
 });
 
@@ -807,10 +877,9 @@ describe('light', () => {
     ];
     for (const svg of drawings) {
       walk(parse(svg), (e) => {
-        // a glow is a radial fade to nothing; the enamel's own gradient is clipped to the piece and never fades out, and a
-        // picture's own gradients (pen.ts) are in its own small box, placed with it
+        // a glow is a radial fade to nothing, placed on the canvas; a piece's gloss and the shadow under it are in their own
+        // shape's box, and end where it does
         if (e.name !== 'radialGradient' || e.attrs.gradientUnits !== 'userSpaceOnUse' || e.children.at(-1)?.attrs['stop-opacity'] !== '0') return;
-        if (/pen[lbro]\d+$/.test(e.attrs.id ?? '')) return;
         const [cx, cy, r] = [Number(e.attrs.cx), Number(e.attrs.cy), Number(e.attrs.r)];
         expect(Math.min(cx - r, cy - r), svg.slice(0, 160)).toBeGreaterThanOrEqual(0);
         expect(Math.max(cx + r, cy + r), svg.slice(0, 160)).toBeLessThanOrEqual(120);
@@ -821,10 +890,9 @@ describe('light', () => {
 
 describe('weight', () => {
   it('keeps every drawing small enough to inline a page of them', () => {
-    // a badge carries Hevalo himself, the drawing he speaks with, and its metal, ribbon and wings, so it may be heavier than an
-    // emblem; the most detailed of the drawings (the boy fishing the sky from the moon) sets how much heavier
+    // a badge is a few shapes and one glyph; the most detailed glyph sets how heavy one can be
     const badges = Math.max(...BADGE_KEYS.flatMap((key) => TIERS.flatMap((tier) => [badgeSvg({ key, tier }).length, badgeSvg({ key, tier, size: 40 }).length])));
-    expect(badges).toBeLessThan(32 * 1024);
+    expect(badges).toBeLessThan(12 * 1024);
     const biggest = Math.max(
       ...RANK_TIERS.map((tier) => rankEmblemSvg({ tier, division: 1 }).length),
       ...LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier }).length),
@@ -1539,5 +1607,221 @@ describe('the lesson path’s world', () => {
     expect(sound(walked)).toBe(4);
     expect(() => pathLandSvg({ ground: 'moon' as never, width: 390, height: 600, stops, stones })).toThrow(RangeError);
     expect(() => pathLandSvg({ ground: 'snow', width: 0, height: 600, stops, stones })).toThrow(RangeError);
+  });
+});
+
+describe('the learner’s tree', () => {
+  const stages = Array.from({ length: TREE_STAGES }, (_, i) => i as TreeStage);
+  const count = (svg: string, tag: string): number => svg.split(`<${tag}`).length - 1;
+
+  it('draws every kind at every stage, in every state, as a valid, self-contained picture', () => {
+    for (const species of TREE_SPECIES) {
+      for (const stage of stages) {
+        for (const health of TREE_HEALTHS) {
+          const svg = treeSvg({ species, stage, health, size: 240, title: 'A tree' });
+          checkSvg(svg, 240);
+          // light enough to draw many of on a page of profiles
+          expect(svg.length, `${species} ${stage} ${health}`).toBeLessThan(80_000);
+        }
+      }
+    }
+  });
+
+  it('is the same picture every time, with ids of its own beside another on the page', () => {
+    const one = treeSvg({ species: 'beru', stage: 6, title: 'Oak' });
+    expect(treeSvg({ species: 'beru', stage: 6, title: 'Oak' })).toBe(one);
+    const a = checkSvg(treeSvg({ species: 'beru', stage: 6, title: 'Oak', idPrefix: 'a' }), 240);
+    const b = checkSvg(treeSvg({ species: 'beru', stage: 6, title: 'Oak', idPrefix: 'b' }), 240);
+    for (const id of a) expect(b.has(id)).toBe(false);
+    // a kind, a stage and a state each have their own ids too, so two trees on a page never share a clip
+    const other = checkSvg(treeSvg({ species: 'beru', stage: 6, health: 'thirsty', title: 'Oak' }), 240);
+    for (const id of checkSvg(one, 240)) expect(other.has(id)).toBe(false);
+  });
+
+  it('grows: each stage is its own drawing, and there is more of it each time from the sprout on', () => {
+    for (const species of TREE_SPECIES) {
+      const drawn = stages.map((stage) => treeSvg({ species, stage, title: 'A tree' }));
+      expect(new Set(drawn).size).toBe(TREE_STAGES);
+      // a grown tree's crown is made of more masses at each stage: more clips, more paths
+      for (const stage of [4, 5, 6] as const) expect(count(drawn[stage]!, 'path'), `${species} ${stage}`).toBeGreaterThan(count(drawn[stage - 1]!, 'path'));
+    }
+  });
+
+  it('shows how it fares: each state is drawn differently, and a withered tree has lost most of its crown', () => {
+    for (const species of TREE_SPECIES) {
+      for (const stage of [1, 2, 3, 6] as const) {
+        const drawn = TREE_HEALTHS.map((health) => treeSvg({ species, stage, health, title: 'A tree' }));
+        expect(new Set(drawn).size, `${species} ${stage}`).toBe(TREE_HEALTHS.length);
+      }
+      // what is left of a withered tree is far less drawing than the tree in leaf, whatever its crown is made of
+      expect(count(treeSvg({ species, stage: 6, health: 'withered', title: 'A tree' }), 'path'), species).toBeLessThan(count(treeSvg({ species, stage: 6, title: 'A tree' }), 'path') * 0.75);
+    }
+  });
+
+  it('bears on the great tree what the kind bears: fruit, blossom, ribbons or lights, and nothing once it wilts', () => {
+    // the pomegranate's fruit and the night tree's lights are in colours no leaf of theirs has
+    expect(treeSvg({ species: 'hinar', stage: 6, title: 'x' })).toContain('#e23a36');
+    expect(treeSvg({ species: 'hinar', stage: 4, title: 'x' })).not.toContain('#e23a36');
+    expect(treeSvg({ species: 'hinar', stage: 6, health: 'wilting', title: 'x' })).not.toContain('#e23a36');
+    expect(treeSvg({ species: 'sev', stage: 6, title: 'x' })).toContain('radialGradient');
+    expect(treeSvg({ species: 'miraz', stage: 6, title: 'x' })).toContain('#3aa3e8');
+    expect(treeSvg({ species: 'behiv', stage: 6, title: 'x' })).toContain('#fff4f7');
+  });
+
+  it('starts as the kind’s own seed, cracked and lit from inside, and the seed is what moves when it is watered', () => {
+    const seeds = new Set(TREE_SPECIES.map((species) => treeSvg({ species, stage: 0, title: 'A seed', idPrefix: 's' })));
+    expect(seeds.size).toBe(TREE_SPECIES.length);
+    const alive = treeSvg({ species: 'beru', stage: 0, title: 'x' });
+    // the light it stands in, and the green light in its crack
+    expect(alive).toContain('radialGradient');
+    expect(alive).toContain('#e6ff8f');
+    const asleep = treeSvg({ species: 'beru', stage: 0, health: 'withered', title: 'x' });
+    expect(asleep).not.toContain('radialGradient');
+    expect(asleep).not.toContain('#e6ff8f');
+    // the seed is the plant's layer, not the ground's: an acorn's own brown is in the one and not the other
+    expect(treeSvg({ species: 'beru', stage: 0, part: 'plant', title: 'x' })).toContain('#b9803a');
+    expect(treeSvg({ species: 'beru', stage: 0, part: 'ground', title: 'x' })).not.toContain('#b9803a');
+    // the sprout still has its seed at its foot
+    expect(treeSvg({ species: 'beru', stage: 1, title: 'x' })).toContain('#b9803a');
+    expect(treeSvg({ species: 'beru', stage: 2, title: 'x' })).not.toContain('#b9803a');
+  });
+
+  it('is its own kind from the sapling on: a pine in tiers, a first flower on a tree that blossoms, its crown’s colour on top', () => {
+    const sapling = (species: (typeof TREE_SPECIES)[number]): string => treeSvg({ species, stage: 2, title: 'x', idPrefix: 's' });
+    // a pine's needles are many more blades than a broad-leaved sapling's few leaves
+    expect(count(sapling('kaj'), 'path')).toBeGreaterThan(count(sapling('beru'), 'path') * 1.5);
+    // the almond's sapling has a flower with its gold heart; the oak's has none
+    expect(sapling('behiv')).toContain('#ffd76a');
+    expect(sapling('beru')).not.toContain('#ffd76a');
+    // the autumn tree and the night tree are green below and their own colour on top
+    expect(sapling('payiz')).toContain('#f9a424');
+    expect(sapling('sev')).toContain('#4f6bd0');
+    // and a tree in blossom is in flower from its first crown
+    expect(treeSvg({ species: 'behiv', stage: 3, title: 'x' })).toContain('#ffd76a');
+  });
+
+  it('lays something of its own under the great tree, and takes it away again when the tree is left to wilt', () => {
+    // the pool at the willow's foot, the lantern by the wish tree
+    expect(treeSvg({ species: 'bi', stage: 6, title: 'x' })).toContain('#49a7dc');
+    expect(treeSvg({ species: 'bi', stage: 5, title: 'x' })).not.toContain('#49a7dc');
+    expect(treeSvg({ species: 'bi', stage: 6, health: 'wilting', title: 'x' })).not.toContain('#49a7dc');
+    expect(treeSvg({ species: 'miraz', stage: 6, part: 'ground', title: 'x' })).toContain('#ffd76a');
+    // it lies on the ground, so it stands still while the tree sways
+    expect(treeSvg({ species: 'bi', stage: 6, part: 'plant', title: 'x' })).not.toContain('#49a7dc');
+  });
+
+  it('comes in two layers that are the whole between them: the ground, which stands still, and the plant on it', () => {
+    for (const species of ['beru', 'bi', 'kaj'] as const) {
+      for (const stage of [0, 2, 6] as const) {
+        const whole = treeSvg({ species, stage, title: 'A tree' });
+        const ground = treeSvg({ species, stage, part: 'ground', title: 'A tree' });
+        const plant = treeSvg({ species, stage, part: 'plant', title: 'A tree' });
+        checkSvg(ground, 240);
+        checkSvg(plant, 240);
+        for (const tag of ['path', 'ellipse']) expect(count(ground, tag) + count(plant, tag), `${species} ${stage} ${tag}`).toBe(count(whole, tag));
+        // the two can be on a page together
+        const ids = checkSvg(ground, 240);
+        for (const id of checkSvg(plant, 240)) expect(ids.has(id)).toBe(false);
+      }
+    }
+    // the island is the ground's, the trunk and crown the plant's
+    expect(count(treeSvg({ species: 'beru', stage: 6, part: 'plant', title: 'x' }), 'path')).toBeGreaterThan(count(treeSvg({ species: 'beru', stage: 6, part: 'ground', title: 'x' }), 'path'));
+    // a plant turns about its foot, which is inside the picture and low in it
+    expect(TREE_FOOT.x).toBe(0.5);
+    expect(TREE_FOOT.y).toBeGreaterThan(0.7);
+    expect(TREE_FOOT.y).toBeLessThan(1);
+  });
+
+  it('knows which kinds it can draw, and gives each a colour of its own', () => {
+    for (const species of TREE_SPECIES) expect(hasTreeArt(species)).toBe(true);
+    expect(hasTreeArt('cactus')).toBe(false);
+    expect(hasTreeArt('toString')).toBe(false);
+    for (const species of TREE_SPECIES) expect(treeColour(species)).toMatch(/^#[0-9a-f]{6}$/);
+    expect(treeColour('behiv')).not.toBe(treeColour('beru'));
+  });
+
+  it('draws the drop of water and the watering can as valid pictures, each with ids of its own', () => {
+    const drop = checkSvg(waterDropSvg({ size: 24, title: 'Water' }), 24);
+    const can = checkSvg(wateringCanSvg({ size: 96, title: 'Watering can' }), 96);
+    for (const id of drop) expect(can.has(id)).toBe(false);
+    expect(waterDropSvg({ title: 'Water' })).toBe(waterDropSvg({ title: 'Water' }));
+    expect(() => wateringCanSvg({ size: -1 })).toThrow(RangeError);
+  });
+
+  it('draws the willow as a fountain of sprays: most of its crown is leaves hung on curved twigs, not masses', () => {
+    // a crown of masses is clipped mass by mass; the willow's has none to clip, only its island and its wood
+    expect(count(treeSvg({ species: 'bi', stage: 6, title: 'x' }), 'clipPath')).toBe(2);
+    expect(count(treeSvg({ species: 'beru', stage: 6, title: 'x' }), 'clipPath')).toBeGreaterThan(8);
+    // more sprays at every stage
+    for (const stage of [4, 5, 6] as const) expect(count(treeSvg({ species: 'bi', stage, title: 'x' }), 'path')).toBeGreaterThan(count(treeSvg({ species: 'bi', stage: (stage - 1) as 3 | 4 | 5, title: 'x' }), 'path'));
+    // withered, its twigs are bare: the wood's colours only, none of its greens
+    const bare = treeSvg({ species: 'bi', stage: 6, health: 'withered', title: 'x' });
+    expect(bare).not.toContain('#80ba45');
+    expect(treeSvg({ species: 'bi', stage: 6, title: 'x' })).toContain('#80ba45');
+  });
+
+  it('knows the sky of an hour: dawn, day, dusk and night, round the clock', () => {
+    expect([0, 4, 5, 7, 8, 12, 16, 17, 19, 20, 23].map(treeSkyAt)).toEqual(['night', 'night', 'dawn', 'dawn', 'day', 'day', 'day', 'dusk', 'dusk', 'night', 'night']);
+    for (let hour = 0; hour < 24; hour++) expect(TREE_SKIES).toContain(treeSkyAt(hour));
+  });
+
+  it('draws the scene a tree stands in for every sky, each its own picture, and fades it round a tree left dry', () => {
+    const scenes = TREE_SKIES.map((sky) => treeSceneSvg({ sky, size: 360, title: 'The sky' }));
+    for (const scene of scenes) checkSvg(scene, 360);
+    expect(new Set(scenes).size).toBe(TREE_SKIES.length);
+    // three ridges of mountains under every sky; stars only once the light goes
+    for (const scene of scenes) expect(count(scene, 'path')).toBeGreaterThanOrEqual(3);
+    expect(count(treeSceneSvg({ sky: 'night' }), 'circle')).toBeGreaterThan(count(treeSceneSvg({ sky: 'dusk' }), 'circle'));
+    expect(count(treeSceneSvg({ sky: 'dusk' }), 'circle')).toBeGreaterThan(count(treeSceneSvg({ sky: 'day' }), 'circle'));
+    // the same sky twice is the same string; dry, its colours have gone toward dust
+    expect(treeSceneSvg({ sky: 'day' })).toBe(treeSceneSvg({ sky: 'day' }));
+    expect(treeSceneSvg({ sky: 'day', dry: 1 })).not.toBe(treeSceneSvg({ sky: 'day' }));
+    expect(treeSceneSvg({ sky: 'day' })).toContain('#52aeee');
+    expect(treeSceneSvg({ sky: 'day', dry: 1 })).not.toContain('#52aeee');
+    // it is light enough to sit behind every tree
+    for (const scene of scenes) expect(scene.length).toBeLessThan(8_000);
+    // two on a page keep their gradients apart
+    const a = checkSvg(treeSceneSvg({ sky: 'dawn', title: 'The sky', idPrefix: 'a' }), 360);
+    for (const id of checkSvg(treeSceneSvg({ sky: 'dawn', title: 'The sky', idPrefix: 'b' }), 360)) expect(a.has(id)).toBe(false);
+    expect(() => treeSceneSvg({ sky: 'day', size: 0 })).toThrow(RangeError);
+  });
+
+  it('says what is in the air round a tree: its own kind of thing once it has a crown, and nothing round one left to wilt', () => {
+    expect(treeAir('behiv', 5, 'fresh')).toBe('petals');
+    expect(treeAir('payiz', 3, 'fresh')).toBe('leaves');
+    expect(treeAir('sev', 6, 'thirsty')).toBe('fireflies');
+    // before it has a crown, and for every other kind, light in the sun
+    expect(treeAir('behiv', 2, 'fresh')).toBe('motes');
+    expect(treeAir('beru', 6, 'fresh')).toBe('motes');
+    // a thirsty tree has lost its light; a wilting or withered one has still air, whatever its kind
+    expect(treeAir('beru', 6, 'thirsty')).toBeNull();
+    expect(treeAir('behiv', 6, 'wilting')).toBeNull();
+    expect(treeAir('sev', 6, 'withered')).toBeNull();
+  });
+
+  it('says where a plant’s top is in its picture and where water poured on it lands: lower for a seed, high for a great tree', () => {
+    expect(TREE_TOP).toHaveLength(TREE_STAGES);
+    expect(TREE_WATER_LANDS).toHaveLength(TREE_STAGES);
+    for (const stage of stages) {
+      // the water lands on the plant: under its top, and above its foot
+      expect(TREE_WATER_LANDS[stage]).toBeGreaterThan(TREE_TOP[stage]);
+      expect(TREE_WATER_LANDS[stage]).toBeLessThan(TREE_FOOT.y);
+    }
+    // a grown tree's top is higher in its picture at each stage
+    for (const stage of [4, 5, 6] as const) expect(TREE_TOP[stage]).toBeLessThan(TREE_TOP[stage - 1]!);
+    expect(TREE_TOP[0]).toBeGreaterThan(TREE_TOP[6]);
+  });
+
+  it('draws a cloud for each sky, in that sky’s colours', () => {
+    const clouds = TREE_SKIES.map((sky) => treeCloudSvg({ sky, size: 120, title: 'A cloud' }));
+    for (const cloud of clouds) checkSvg(cloud, 120);
+    expect(new Set(clouds).size).toBe(TREE_SKIES.length);
+    expect(treeCloudSvg({ sky: 'day' })).toContain('#ffffff');
+    expect(treeCloudSvg({ sky: 'night' })).not.toContain('#ffffff');
+  });
+
+  it('refuses a size that is not one', () => {
+    expect(() => treeSvg({ species: 'beru', stage: 3, size: 0 })).toThrow(RangeError);
+    expect(() => treeSvg({ species: 'beru', stage: 3, idPrefix: 'a b' })).toThrow(RangeError);
   });
 });

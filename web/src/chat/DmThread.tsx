@@ -2,14 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiError, DmMessage } from '../lib/types';
+import type { ApiError, Conversation, DmMessage } from '../lib/types';
 import { useProfileModal } from '../profile/ProfileModal';
 import { useMessages } from './MessagesProvider';
 import { MessageList } from './MessageList';
 import { Composer } from './Composer';
-import { useStickyScroll } from './useStickyScroll';
+import { useStickyScroll, useUnseenBelow } from './useStickyScroll';
 import { useOutbox, type Unsent } from './useOutbox';
-import { useTypingSignal, useTypingWatch, typingLabel } from './useTyping';
+import { useTypingSignal, useTypingWatch } from './useTyping';
+import { TypingBubble } from './TypingBubble';
+import { DmWelcome } from './DmWelcome';
 import { ReadReceipt } from './ReadReceipt';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -19,6 +21,7 @@ import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { ThreadSkeleton } from '../components/skeletons';
 import { ArrowIcon, ChevronIcon } from '../components/icons';
+import { Avatar } from '../components/Avatar';
 import { CloseButton } from '../components/CloseButton';
 import { ChatGameButton } from '../play/PlayButtons';
 import { gameCardBody } from '../play/ChatGameCard';
@@ -143,8 +146,35 @@ export function DmThread({
     ],
     [messages, outbox.unsent, user?.id, user?.username],
   );
-  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(shown);
   const { typing, note } = useTypingWatch();
+  // the thread follows what is new at its foot: a message, or the bubble of somebody writing one
+  const isTyping = typing.length > 0;
+  const following = useMemo(() => ({ shown, isTyping }), [shown, isTyping]);
+  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(following);
+  const unseen = useUnseenBelow(shown, atBottom, user?.id);
+  /*
+   * Who this is, for the head of the thread: their face, and whether they are
+   * here now. The conversation list knows both; a thread opened from a link
+   * knew only an id, and was headed "Conversation". Their face is also on
+   * every message they have sent, which is where it comes from before the
+   * list answers, and for somebody the list does not have yet.
+   */
+  const [other, setOther] = useState<Pick<Conversation, 'username' | 'avatarUrl' | 'online'> | null>(null);
+  useEffect(() => {
+    let live = true;
+    setOther(null);
+    void client.get<{ conversations?: Conversation[] }>('/chat/conversations').then((res) => {
+      if (!live || !res.ok) return;
+      const found = (res.data?.conversations ?? []).find((c) => c.userId === otherId);
+      if (found) setOther({ username: found.username, avatarUrl: found.avatarUrl, online: found.online });
+    });
+    return () => {
+      live = false;
+    };
+  }, [client, otherId]);
+  const theirs = useMemo(() => (messages ?? []).find((m) => m.senderId === otherId), [messages, otherId]);
+  const name = otherName ?? other?.username ?? theirs?.username;
+  const face = other?.avatarUrl ?? theirs?.avatarUrl ?? null;
   const signalTyping = useTypingSignal(
     useCallback(() => void client.post(`/chat/${otherId}/typing`).catch(() => undefined), [client, otherId]),
   );
@@ -271,56 +301,68 @@ export function DmThread({
             <ArrowIcon size={18} />
           </Link>
         )}
-        <button
-          type="button"
-          className="chat-thread-title"
-          onClick={() => openProfile({ kind: 'user', userId: otherId, username: otherName })}
-        >
-          {otherName ?? t('chat.conversation')}
+        {/* who it is with: their face, their name, and that they are here when they are; the way to their profile */}
+        <button type="button" className="chat-head-who" onClick={() => openProfile({ kind: 'user', userId: otherId, username: name })}>
+          <span className="chat-head-face">
+            <Avatar url={face} glyphSize={20} online={other?.online} />
+          </span>
+          <span className="chat-head-text">
+            <span className="chat-thread-title" dir="auto">
+              {name ?? t('chat.conversation')}
+            </span>
+            {other?.online && <span className="chat-head-status">{t('profile.online')}</span>}
+          </span>
         </button>
         {onClose && <CloseButton className="chat-dock-close is-inline" label={t('chat.closeWith', { name: otherName ?? t('chat.thisPerson') })} onClick={onClose} />}
       </header>
 
-      <div className="chat-messages" ref={scrollRef}>
-        {messages === null && shown.length === 0 ? (
-          <ThreadSkeleton />
-        ) : shown.length === 0 ? (
-          <p className="muted chat-hint">{loadError ?? t('chat.sayHello')}</p>
-        ) : (
-          <MessageList
-            messages={shown}
-            myId={user?.id}
-            renderStatus={(m) => <ReadReceipt message={m} />}
-            onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
-            onReport={setReporting}
-            renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
-            onRetry={(m) => outbox.retry(m.id)}
-            // taken back: its words return to the box, unless something else has been typed there since
-            onDiscard={(m) => {
-              const words = outbox.discard(m.id);
-              if (words) setText((now) => now || words);
-            }}
-          />
+      <div className="chat-scroll">
+        <div className="chat-messages" ref={scrollRef}>
+          {messages === null && shown.length === 0 ? (
+            <ThreadSkeleton />
+          ) : shown.length === 0 ? (
+            loadError ? (
+              <p className="muted chat-hint">{loadError}</p>
+            ) : (
+              <DmWelcome
+                name={name ?? t('chat.thisPerson')}
+                avatarUrl={face}
+                onGreet={(words) => {
+                  setSendErr(null);
+                  outbox.send(words);
+                }}
+              />
+            )
+          ) : (
+            <MessageList
+              messages={shown}
+              myId={user?.id}
+              renderStatus={(m) => <ReadReceipt message={m} />}
+              onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
+              onReport={setReporting}
+              renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
+              onRetry={(m) => outbox.retry(m.id)}
+              // taken back: its words return to the box, unless something else has been typed there since
+              onDiscard={(m) => {
+                const words = outbox.discard(m.id);
+                if (words) setText((now) => now || words);
+              }}
+            />
+          )}
+          <TypingBubble names={typing} avatarUrl={face} />
+        </div>
+
+        {!atBottom && messages !== null && messages.length > 0 && (
+          <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')} aria-label={unseen > 0 ? t('chat.jumpToNew', { count: unseen }) : t('chat.jumpToLatest')} title={t('chat.jumpToLatest')}>
+            <ChevronIcon size={18} className="chat-jump-icon" />
+            {unseen > 0 && (
+              <span className="chat-jump-count" aria-hidden="true">
+                {unseen > 99 ? '99+' : unseen}
+              </span>
+            )}
+          </button>
         )}
       </div>
-
-      {typing.length > 0 && (
-        <div className="chat-typing" aria-live="polite">
-          <span className="chat-typing-dots" aria-hidden>
-            <i />
-            <i />
-            <i />
-          </span>
-          {typingLabel(typing, t)}
-        </div>
-      )}
-
-      {!atBottom && messages !== null && messages.length > 0 && (
-        <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')}>
-          {t('chat.jumpToLatest')}
-          <ChevronIcon size={14} className="chat-jump-icon" />
-        </button>
-      )}
 
       {gifts.notice}
       <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />

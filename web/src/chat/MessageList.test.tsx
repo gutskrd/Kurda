@@ -38,7 +38,7 @@ beforeAll(() => {
 const show = (ui: React.ReactNode) => render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('MessageList', () => {
-  it('names a group sender once per burst, not once per message', () => {
+  it('names a group sender once per burst, not once per message, and prints the name', () => {
     show(
       <MessageList
         messages={[
@@ -47,26 +47,29 @@ describe('MessageList', () => {
           msg('3', 'u2', 'third', at(10, 2), { username: 'zana' }),
         ]}
         myId="me"
+        named
       />,
     );
     expect(screen.getAllByText('zana')).toHaveLength(1);
+    // in a group the side alone does not say who: the name is there to be read
+    expect(screen.getByText('zana').className).not.toContain('sr-only');
     expect(screen.getByText('first')).toBeInTheDocument();
     expect(screen.getByText('third')).toBeInTheDocument();
   });
 
-  it('names the sender in a one-to-one thread too', () => {
-    // Snapchat-style: every burst says who wrote it, in both kinds of thread
+  it('says who wrote a run in a conversation of two, to a screen reader only', () => {
+    // their side and colour say it to the eye; a reader who cannot see those still hears the name
     show(<MessageList messages={[msg('1', 'u2', 'hello', at(10, 0), { username: 'zana' })]} myId="me" />);
-    expect(screen.getByText('zana')).toBeInTheDocument();
+    expect(screen.getByText('zana').className).toContain('sr-only');
     expect(screen.getByText('hello')).toBeInTheDocument();
   });
 
-  it('labels your own run as You', () => {
-    show(<MessageList messages={[msg('1', 'me', 'mine', at(10, 0), { username: 'hamude' })]} myId="me" />);
-    expect(screen.getByText('You')).toBeInTheDocument();
+  it('says a run is yours to a screen reader, and prints no label over it, in a group either', () => {
+    show(<MessageList messages={[msg('1', 'me', 'mine', at(10, 0), { username: 'hamude' })]} myId="me" named />);
+    expect(screen.getByText('You').className).toContain('sr-only');
   });
 
-  it('shows one avatar per burst, at its start, and none on your own', () => {
+  it('shows one avatar per burst, and none on your own', () => {
     const { container } = show(
       <MessageList
         messages={[
@@ -105,14 +108,46 @@ describe('MessageList', () => {
     expect(runs[1]!.className).not.toContain('mine');
   });
 
-  it('gives only the last bubble of a burst a tail', () => {
+  it('gives only the last bubble of a burst a tail, and says which bubble is first and which last', () => {
     const { container } = show(
-      <MessageList messages={[msg('1', 'u2', 'a', at(10, 0)), msg('2', 'u2', 'b', at(10, 1))]} myId="me" />,
+      <MessageList messages={[msg('1', 'u2', 'a', at(10, 0)), msg('2', 'u2', 'b', at(10, 1)), msg('3', 'u2', 'c', at(10, 2))]} myId="me" />,
     );
     const bubbles = [...container.querySelectorAll('.bubble')];
-    expect(bubbles).toHaveLength(2);
+    expect(bubbles).toHaveLength(3);
     expect(bubbles[0]!.className).not.toContain('bubble-tail');
-    expect(bubbles[1]!.className).toContain('bubble-tail');
+    expect(bubbles[2]!.className).toContain('bubble-tail');
+    // the corners between two bubbles of a run are tightened by these
+    expect(bubbles.map((b) => [b.classList.contains('is-first'), b.classList.contains('is-last')])).toEqual([[true, false], [false, false], [false, true]]);
+  });
+
+  it('prints the time where a moment of the conversation ends, and keeps every other run’s for a screen reader', () => {
+    const { container } = show(
+      <MessageList
+        messages={[
+          // a quick exchange, a pause of an hour, and one more
+          msg('1', 'u2', 'a', at(10, 0)),
+          msg('2', 'me', 'b', at(10, 1)),
+          msg('3', 'u2', 'c', at(10, 2)),
+          msg('4', 'me', 'd', at(11, 30)),
+        ]}
+        myId="me"
+      />,
+    );
+    const metas = [...container.querySelectorAll('.chat-run-meta')];
+    expect(metas).toHaveLength(4);
+    // the last run before the pause, and the last of the day
+    expect(metas.map((m) => !m.classList.contains('sr-only'))).toEqual([false, false, true, true]);
+    expect([...container.querySelectorAll('.chat-run')].map((r) => r.classList.contains('has-meta'))).toEqual([false, false, true, true]);
+    // a bubble says its own time to a pointer resting on it
+    expect(container.querySelector('.bubble')?.getAttribute('title')).toBeTruthy();
+  });
+
+  it('shows one to three emoji on their own large, without a bubble', () => {
+    const { container } = show(
+      <MessageList messages={[msg('1', 'u2', '❤️', at(10, 0)), msg('2', 'u2', 'spas ❤️', at(10, 1)), msg('3', 'me', '👋🏽 😄', at(10, 30))]} myId="me" />,
+    );
+    const bubbles = [...container.querySelectorAll('.bubble')];
+    expect(bubbles.map((b) => b.classList.contains('is-emoji'))).toEqual([true, false, true]);
   });
 
   it('shows one timestamp per burst rather than one per message', () => {

@@ -1,8 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { FIRE_LOGS, FIRE_VIEW, fireDrawing } from './art/fire.js';
+import { FIRE_VIEW, fireDrawing } from './art/fire.js';
 import { CELEBRATE_MS } from './celebration.js';
-import { WINDOW_PLACE, WINDOW_VIEW } from './characters/window.js';
-import { FIRE_GREW_READ_MS, FLAME_IGNITE, RUN_MOMENT_MS, fireBesideWindow, fireLadder, flameMoment, runMoment } from './fire-moments.js';
+import { FIRE_GREW_READ_MS, FLAME_IGNITE, RUN_MOMENT_MS, fireLadder, flameMoment, runMoment } from './fire-moments.js';
 import { FIRE_GROW, fireLevel, runFireLevel } from './fire-stages.js';
 
 describe('the flame on the day the streak was kept', () => {
@@ -61,47 +60,6 @@ describe('the flame lighting up', () => {
     // wider as it squashes, narrower as it stretches: about as much fire all through
     expect(pop[lowest]!.sx).toBeGreaterThan(1);
     expect(pop[highest]!.sx).toBeLessThan(1);
-  });
-});
-
-describe('the fire beside Hevalo at his window', () => {
-  const tall = 160;
-  const at = fireBesideWindow(tall);
-  const unit = at.fire / FIRE_VIEW.h;
-  const windowWide = (tall * WINDOW_VIEW.w) / WINDOW_VIEW.h;
-  // laid out from the fire's left edge, the window after it, as in a page read from the left
-  const windowLeft = FIRE_VIEW.w * unit - at.over;
-  const wallCorner = windowLeft + WINDOW_PLACE.wall.left * windowWide;
-  const logs = { left: FIRE_LOGS.x * unit, right: (FIRE_LOGS.x + FIRE_LOGS.w) * unit };
-
-  it('lays its logs across the wall corner, most of them in the room in front of it', () => {
-    expect(logs.right).toBeGreaterThan(wallCorner);
-    expect(logs.left).toBeLessThan(wallCorner);
-    expect((logs.right - wallCorner) / (logs.right - logs.left)).toBeCloseTo(0.25, 9);
-  });
-
-  it('lays them on the floor a little below the wall, nearer to us than it', () => {
-    // from the window box's foot, up
-    const wallFoot = (1 - WINDOW_PLACE.wall.foot) * tall;
-    const logsFoot = (FIRE_VIEW.h - FIRE_LOGS.y - FIRE_LOGS.h) * unit - at.drop;
-    expect(logsFoot).toBeLessThan(wallFoot);
-    expect(wallFoot - logsFoot).toBeLessThan(tall * 0.05);
-  });
-
-  it('draws the fire a little shorter than the window, and puts each as far either side of their middle as they stand apart', () => {
-    expect(at.fire).toBeGreaterThan(tall * 0.8);
-    expect(at.fire).toBeLessThan(tall);
-    const fireMiddle = (FIRE_VIEW.w * unit) / 2;
-    const windowMiddle = windowLeft + windowWide / 2;
-    expect(at.windowAside + at.fireAside).toBeCloseTo(windowMiddle - fireMiddle, 9);
-    // the two together centred: as far out past the fire as past the window
-    expect(windowMiddle - at.windowAside).toBeCloseTo(fireMiddle + at.fireAside, 9);
-  });
-
-  it('keeps the Newroz fire clear of his face: its flame ends short of the middle of the window', () => {
-    const newroz = fireDrawing({ stage: 'newroz', growth: 1 }, at.fire);
-    const right = FIRE_VIEW.w / 2 + newroz.flame.w / 2;
-    expect(right * unit).toBeLessThan(windowLeft + windowWide * 0.35);
   });
 });
 

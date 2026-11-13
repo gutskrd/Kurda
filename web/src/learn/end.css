@@ -311,107 +311,227 @@
   padding-top: 8px;
   text-align: center;
 }
-/* its own layer, so the fire standing in front of the window is in front of nothing else */
-.end-week-hevalo {
-  isolation: isolate;
+/*
+ * A quiet panel with its name at the top, and on it the card: the page's
+ * raised surface, with the medal standing half over its top edge. The panel
+ * leaves the medal its room above the card.
+ */
+.streak-panel {
+  display: grid;
+  width: min(440px, 100%);
+  padding: 22px 10px 10px;
+  border-radius: 40px;
+  background: var(--surface-2);
+}
+.streak-panel-name {
+  margin: 0 0 76px;
+  color: var(--ink-3);
+  font-size: var(--text-section);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.streak-card {
+  position: relative;
   display: grid;
   justify-items: center;
-  gap: 10px;
+  gap: 6px;
+  padding: 78px 14px 22px;
+  border-radius: 32px;
+  background: var(--surface-solid);
 }
-/* Hevalo's window, and the streak's fire on the ground in front of its lower corner, on the side the reading starts from */
-.end-week-scene {
-  display: flex;
-  align-items: flex-end;
-}
-/* in front of the wall: its logs over the wall's corner and a little below its foot, nearer than the wall */
-.end-week-fire {
-  position: relative;
-  z-index: 1;
-  margin-inline-end: calc(-1 * var(--fire-over));
-  margin-bottom: calc(-1 * var(--fire-drop));
-}
-/* what Hevalo says, in a bubble whose tail points down at him */
-.end-bubble {
-  position: relative;
-  max-width: min(340px, 100%);
-  margin: 0;
-  padding: 14px 18px;
-  border: 2px solid var(--border-strong);
-  border-radius: var(--r-lg);
-  background: var(--panel-bg);
-  color: var(--ink);
-  font-size: var(--text-body);
-  line-height: 1.4;
-  animation: celebrate-words var(--dur-slow) var(--ease-out) 200ms both;
-}
-.end-bubble::after {
-  content: '';
+/*
+ * Half over the card's top edge. It opens unlit, in grey, and takes its turn
+ * (learn/StreakMoment.tsx plays the shared poses on `.streak-medal-turn`):
+ * the gold one over it fades in at the top of its hop, as the app's one
+ * celebration bursts out from behind it.
+ */
+.streak-card-medal {
   position: absolute;
-  inset-inline-start: calc(50% + var(--window-aside, 0px));
-  bottom: -9px;
-  width: 16px;
-  height: 16px;
-  margin-inline-start: -8px;
-  border-right: 2px solid var(--border-strong);
-  border-bottom: 2px solid var(--border-strong);
-  border-bottom-right-radius: 4px;
-  background: var(--panel-bg);
-  rotate: 45deg;
+  top: -66px;
+  inset-inline-start: 50%;
+  translate: -50% 0;
+  line-height: 0;
 }
-.end-week-count {
-  display: grid;
-  justify-items: center;
+[dir='rtl'] .streak-card-medal {
+  translate: 50% 0;
+}
+/* the medal was there from the start: it does not arrive, and casts no second shadow */
+.streak-card-medal .celebrate-art-inner {
+  filter: none;
+  animation: none;
+}
+/* the light of the burst: there as the medal turns to gold, and gone again, so the card under it stays clean */
+.streak-card-medal .celebrate-glow {
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  background: radial-gradient(closest-side, rgba(255, 205, 90, 0.55), transparent);
+  opacity: 0;
+  animation: medal-glow 900ms var(--ease-out) var(--celebrate-ring-delay) both;
+}
+@keyframes medal-glow {
+  0% {
+    opacity: 0;
+  }
+  22% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+.streak-card-medal .celebrate-ring {
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+}
+/* about its foot: it squashes onto the card, and hops off it */
+.streak-medal-turn {
+  position: relative;
+  display: block;
+  transform-origin: 50% 88%;
+}
+.streak-medal-lit {
+  position: absolute;
+  inset: 0;
+  animation: streak-light var(--light-ms) linear var(--light-at) both;
+}
+@keyframes streak-light {
+  from {
+    opacity: 0;
+  }
+}
+/* lit, it is never quite still: it rides up and down a little, the way a thing does that is not pinned to the page */
+.streak-medal-float {
+  display: block;
+  animation: medal-float 3.4s ease-in-out calc(var(--after-at) + 400ms) infinite;
+}
+@keyframes medal-float {
+  50% {
+    transform: translateY(-3px);
+  }
+}
+/* and now and then a spark rises off it */
+.streak-medal-sparks {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.streak-medal-sparks i {
+  position: absolute;
+  top: 26%;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f8c84c;
+  opacity: 0;
+  animation: medal-spark 2.6s ease-out calc(var(--count-at) + 200ms) infinite;
+}
+.streak-medal-sparks i:nth-child(1) {
+  --sx: -34px;
+}
+.streak-medal-sparks i:nth-child(2) {
+  --sx: 30px;
+  width: 4px;
+  height: 4px;
+  animation-delay: calc(var(--count-at) + 1100ms);
+}
+.streak-medal-sparks i:nth-child(3) {
+  --sx: 6px;
+  width: 3px;
+  height: 3px;
+  animation-delay: calc(var(--count-at) + 1900ms);
+}
+@keyframes medal-spark {
+  0% {
+    opacity: 0;
+    transform: translate(calc(var(--sx) * 0.6), 0) scale(0.6);
+  }
+  12% {
+    opacity: 0.9;
+  }
+  60% {
+    opacity: 0;
+    transform: translate(var(--sx), -46px) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--sx), -46px) scale(1);
+  }
+}
+/* the streak in words: quiet while it is yesterday's, in full ink as the number rolls on */
+.streak-card-title {
   margin: 0;
-  line-height: 1;
+  font-family: var(--font-sans);
+  font-size: clamp(1.6rem, 7vw, 1.95rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  animation: streak-ink 260ms var(--ease-out) var(--count-at) both;
 }
-.end-week-count:focus {
+@keyframes streak-ink {
+  from {
+    color: var(--ink-4);
+  }
+}
+.streak-card-title:focus {
   outline: none;
 }
-/* the number in the flame's colours: a gradient through the letters, deep enough to read on the light page too */
-.end-week-number {
-  padding: 0 4px 4px;
-  background: linear-gradient(180deg, #ffd25e, #f3922b);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  font-size: clamp(4.5rem, 24vw, 6.5rem);
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+/* the rolling digits sit on the line the words are written on */
+.streak-card-title .roll {
+  vertical-align: bottom;
 }
-:root[data-theme='light'] .end-week-number {
-  background-image: linear-gradient(180deg, #d98500, #a84f00);
+.streak-card-title .roll-digit {
+  height: 1.15em;
+  line-height: 1.15;
 }
-.end-week-words {
-  color: #f3a23a;
-  font-family: var(--font-sans);
-  font-size: var(--text-section);
-  font-weight: 800;
+.streak-card-cheer {
+  max-width: 30ch;
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-body);
+  line-height: 1.4;
+  animation: streak-arrive var(--dur-slow) var(--ease-out) var(--words-at) both;
 }
-:root[data-theme='light'] .end-week-words {
-  color: #a84f00;
+/* each thing after the medal arrives the same way: up a few pixels, into place */
+@keyframes streak-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
 }
-/* the fire's stage, and the next one as a near goal */
+/* the way on: the last thing to arrive, once everything on the card has (learn/Results.tsx) */
+.end-bar-late {
+  display: contents;
+}
+.end-bar-late > * {
+  animation: streak-arrive var(--dur-slow) var(--ease-out) var(--onward-at, 0ms) both;
+}
+/* the card was finished with a click: the way on is there with the rest */
+.end-bar-late.is-settled > * {
+  animation: none;
+}
+/* the fire's stage and the next one, under the card: a near goal, said quietly */
 .end-week-stage {
-  margin: -4px 0 0;
-  color: var(--ink-2);
+  margin: 0;
+  color: var(--ink-3);
   font-size: var(--text-secondary);
   font-weight: 600;
+  animation: streak-arrive var(--dur-slow) var(--ease-out) var(--after-at) both;
 }
 .end-week-stage-name {
-  color: #f3a23a;
+  color: var(--ink-2);
   font-weight: 800;
 }
-:root[data-theme='light'] .end-week-stage-name {
-  color: #a84f00;
-}
 
-/* the week: each day's initial over a round mark, today's name in gold */
+/* the week: each day's name over its medal, or over its date while it is still to come */
 .end-days {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 4px;
-  width: min(420px, 100%);
-  margin: 8px 0 0;
+  gap: 2px;
+  width: 100%;
+  margin: 18px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -421,57 +541,40 @@
   gap: 8px;
 }
 .end-day-name {
-  color: var(--ink-3);
-  font-size: var(--text-secondary);
-  font-weight: 700;
+  color: var(--ink-4);
+  font-size: 0.86rem;
+  font-weight: 500;
+  animation: streak-light var(--dur-slow) var(--ease-out) var(--week-at) both;
 }
 .end-day.is-today .end-day-name {
-  color: var(--gold);
-}
-:root[data-theme='light'] .end-day.is-today .end-day-name {
-  color: var(--gold-ink);
+  color: var(--ink-2);
+  font-weight: 700;
 }
 .end-day-mark {
   display: grid;
   place-items: center;
-  /* narrower on a narrow screen, so today's ring stays clear of the days beside it */
-  width: min(40px, 100% - 6px);
-  aspect-ratio: 1;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
-  background: var(--surface-2);
-  color: transparent;
-  animation: day-in var(--dur-slow) var(--ease-spring) calc(300ms + var(--order, 0) * 70ms) both;
+  color: var(--ink);
+  font-size: 1.2rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  animation: day-in var(--dur-slow) var(--ease-spring) calc(var(--week-at) + var(--order, 0) * var(--day-step)) both;
 }
-.end-day.is-learned .end-day-mark {
-  background: var(--gold);
-  color: #2a1a00;
-}
-/* kept by a freeze: ice blue */
-.end-day.is-frozen .end-day-mark {
-  background: var(--gems);
-  color: #03213b;
-}
-:root[data-theme='light'] .end-day.is-frozen .end-day-mark {
-  color: #ffffff;
-}
+/* a day that went by without a lesson: its date, more quietly, and nothing said against it */
 .end-day.is-missed .end-day-mark {
-  background: var(--surface-2);
+  color: var(--ink-4);
 }
-.end-day.is-ahead .end-day-mark {
-  background: none;
-  box-shadow: inset 0 0 0 2px var(--surface-3);
+/* today, still to learn: ringed */
+.end-day.is-today:not(.is-learned):not(.is-frozen) .end-day-mark {
+  box-shadow: inset 0 0 0 2px var(--gold);
 }
-/* today: ringed, and the last to arrive, with a pop */
+/* today's medal is the last to arrive, with a pop */
 .end-day.is-today .end-day-mark {
-  box-shadow:
-    0 0 0 3px var(--app-bg),
-    0 0 0 5px var(--gold);
   animation-name: day-pop;
   animation-duration: 520ms;
-}
-.end-day.is-today:not(.is-learned) .end-day-mark {
-  background: none;
-  box-shadow: inset 0 0 0 3px var(--gold);
 }
 @keyframes day-in {
   from {
@@ -489,6 +592,38 @@
     transform: scale(1.18);
   }
 }
+/*
+ * Finished with a click, or over: everything where it ends, and nothing more
+ * to come but the medal's slow ride.
+ */
+.end-week.is-settled :is(.streak-medal-lit, .streak-card-title, .streak-card-cheer, .end-day-name, .end-day-mark, .end-week-stage, .end-freeze),
+.end-week.is-settled .end-freeze-bar > span,
+.end-week .celebrate.is-done .celebrate-glow {
+  animation: none;
+}
+/* the way on was taken: its words go, as the medal gathers itself and is gone (StreakMoment.tsx) */
+.end-week.is-leaving :is(.streak-card-title, .streak-card-cheer, .end-days, .end-week-stage, .end-freeze, .streak-panel-name) {
+  opacity: 0;
+  transition: opacity 180ms var(--ease-out);
+}
+.end-week.is-leaving .streak-medal-sparks {
+  display: none;
+}
+/* for a reader who asked for less motion: the grey medal cross-fades to the gold one, and the rest is simply there */
+.end-week.is-still :is(.streak-card-cheer, .end-day-name, .end-day-mark, .end-week-stage, .end-freeze, .streak-medal-float) {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .streak-card-cheer,
+  .end-day-name,
+  .end-day-mark,
+  .end-week-stage,
+  .end-freeze,
+  .streak-medal-float,
+  .streak-medal-sparks i {
+    animation: none;
+  }
+}
 
 /* the freezes: how far the sessions since the last have got towards the next */
 .end-freeze {
@@ -496,6 +631,7 @@
   gap: 8px;
   width: min(320px, 100%);
   margin-top: 6px;
+  animation: streak-arrive var(--dur-slow) var(--ease-out) calc(var(--after-at) + 90ms) both;
 }
 .end-freeze-bar {
   position: relative;
@@ -511,7 +647,7 @@
   background: var(--gems);
   transform: scaleX(var(--to, 0));
   transform-origin: left;
-  animation: freeze-fill var(--dur-progress) var(--ease-out) 900ms both;
+  animation: freeze-fill var(--dur-progress) var(--ease-out) calc(var(--after-at) + 260ms) both;
 }
 [dir='rtl'] .end-freeze-bar > span {
   transform-origin: right;

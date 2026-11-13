@@ -24,6 +24,7 @@ import { PRACTICE_TARGET, PRACTICE_MIN, selectPracticeItems } from './practice-s
 import { modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
 import { settleJump, type JumpOutcome, type JumpTarget } from '../jump/settle.js';
 import { moveQuests } from '../quests/service.js';
+import { earnWater, type WaterEarned } from '../trees/service.js';
 
 /** Practice sessions earn half the XP a fresh lesson does. */
 export const PRACTICE_XP_FACTOR = 0.5;
@@ -181,6 +182,8 @@ export interface PracticeResults {
   jump?: JumpOutcome;
   /** today's quests this session moved, before and after; absent when it moved none */
   quests?: QuestStep[];
+  /** the water this session earned the learner's tree, and what is held now; absent when it earned none */
+  tree?: WaterEarned;
 }
 
 /**
@@ -717,6 +720,7 @@ export class PracticeService {
     let claimedNow = false;
     let passedNow: boolean | null = null;
     let quests: QuestStep[] = [];
+    let water: WaterEarned | null = null;
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
@@ -754,6 +758,8 @@ export class PracticeService {
           if (learning) {
             const listeningRight = counts.rows[0]!.listening_right;
             quests = await moveQuests(client, userId, tz, { lesson: false, accuracy, perfect: false, listeningRight, xpToday: goal.earnedXp });
+            // practice is learning too: it waters the tree as a lesson does
+            water = await earnWater(client, userId);
           }
         }
         await client.query('COMMIT');
@@ -770,7 +776,11 @@ export class PracticeService {
       await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
     }
     // the days lately learned for the week row, and the quests this session moved
-    const shown = { streak: { ...streak, ...(await this.streaks.recent(userId, timeZone)) }, ...(quests.length > 0 ? { quests } : {}) };
+    const shown = {
+      streak: { ...streak, ...(await this.streaks.recent(userId, timeZone)) },
+      ...(quests.length > 0 ? { quests } : {}),
+      ...(water && water.gained > 0 ? { tree: water } : {}),
+    };
 
     if (!jumpTo) return { correct, total, accuracy, mistakes, xpAwarded, ...shown };
     // every item asked counts here, put off or not: a test is passed by answering it

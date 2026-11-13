@@ -36,6 +36,7 @@ import { knownTier, leagueName } from '../../leagues/format';
 import { QuestsScreen } from '../../quests/QuestsScreen';
 import type { Locale, TranslationKey } from '../../i18n/translations';
 import type { Exercise, SessionResults } from '../types';
+import { WaterDrop } from '../../tree/TreeArt';
 import { StreakMoment } from './StreakMoment';
 
 interface Props {
@@ -256,7 +257,7 @@ export function LessonResults({
             ) : null}
           </View>
 
-          <Rows moments={moments} travel={plan.travel} />
+          <Rows moments={moments} travel={plan.travel} water={results.tree?.gained ?? 0} />
 
           {/* after the moment, never during it */}
           {offerReminders ? <ReminderOffer ready={!moment.playing} /> : null}
@@ -396,7 +397,7 @@ function StatCard({
  * now (at `goalAtMs`), and the week's league place and a new level fading in
  * after it. A row whose numbers could not be read is left out, never guessed.
  */
-function Rows({ moments, travel }: { moments: LessonMoments; travel: boolean }): React.JSX.Element | null {
+function Rows({ moments, travel, water }: { moments: LessonMoments; travel: boolean; water: number }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
@@ -434,7 +435,7 @@ function Rows({ moments, travel }: { moments: LessonMoments; travel: boolean }):
     return () => run.stop();
   }, [later, travel, rows]);
 
-  if (!goal && !moments.goalMet && !league && moments.level === null) return null;
+  if (!goal && !moments.goalMet && !league && moments.level === null && water <= 0) return null;
   const met = goal ? goal.to >= goal.target : moments.goalMet;
   const goalWords = met
     ? t('learn.today.goalMet')
@@ -474,6 +475,13 @@ function Rows({ moments, travel }: { moments: LessonMoments; travel: boolean }):
         <Animated.View style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack, opacity: rows }]}>
           <Icon name="star-fill" size={18} color={colors.gold} />
           <Text style={[styles.rowText, dir.text, { color: colors.textPrimary }]}>{t('lesson.levelUp', { level: formatNumber(moments.level, locale) })}</Text>
+        </Animated.View>
+      ) : null}
+      {/* the water this session earned the learner's tree */}
+      {water > 0 ? (
+        <Animated.View style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.controlTrack, opacity: rows }]} testID="lesson-water">
+          <WaterDrop size={18} />
+          <Text style={[styles.rowText, dir.text, { color: colors.textPrimary }]}>{t('tree.results.water', { count: formatNumber(water, locale) })}</Text>
         </Animated.View>
       ) : null}
     </View>

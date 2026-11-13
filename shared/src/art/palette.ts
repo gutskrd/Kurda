@@ -33,8 +33,6 @@ export const GOLD: Metal = { hi: '#fff8d1', light: '#ffe16a', mid: '#ffbd1f', da
 export const TURQUOISE: Metal = { hi: '#e2fffb', light: '#72f6e6', mid: '#19d2c4', dark: '#0b8f9a', deep: '#063f52' };
 /** What a badge not yet earned is drawn in: a neutral that reads on both themes. */
 export const STONE: Metal = { hi: '#d5d9e2', light: '#b1b7c4', mid: '#8a91a1', dark: '#5f6676', deep: '#30343e' };
-/** The secret slot's midnight violet. */
-export const SHADOW: Metal = { hi: '#f1eaff', light: '#c9b5ff', mid: '#8f70f0', dark: '#4f34b0', deep: '#1a0e45' };
 
 export const TIER_METAL: Record<BadgeTier, Metal> = { 1: COPPER, 2: SILVER, 3: GOLD, 4: TURQUOISE };
 
@@ -46,11 +44,11 @@ export interface Field {
 }
 
 /**
- * The plates a badge's picture stands on: vivid, each badge its own, so a
- * page of them is as bright as a box of paints. `top` to `bottom` is the
- * face lit from above, `rim` its palest tint (the heart of the light a found
- * secret is held up in), `deep` the darkest tone — the plate's thickness,
- * the outline round the picture and the edge of the number.
+ * The colours a badge is made in: each badge its own, so a page of them is
+ * as varied as a box of paints. A badge softens these into the steps of its
+ * piece (badges.ts): `top` to `bottom` is the face lit from above, `rim` its
+ * palest tint (the plate set into it), `deep` the darkest tone — the piece's
+ * thickness and the foot of its symbol.
  */
 export interface Plate {
   top: string;

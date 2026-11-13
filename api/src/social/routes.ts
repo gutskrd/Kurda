@@ -21,12 +21,13 @@ import {
   type ReportCategory,
 } from './report-service.js';
 import type { ReportsService } from '../moderation/reports-service.js';
+import type { TreeService } from '../trees/service.js';
 
 /** User search + public profiles + privacy (KUR-082). */
 export function registerSocialRoutes(
   app: FastifyInstance,
   social: SocialService,
-  deps: { reports?: ReportsService } = {},
+  deps: { reports?: ReportsService; trees?: Pick<TreeService, 'glimpse'> } = {},
 ): void {
   const activity = new ProfileActivityService(app.db);
   const feed = new FeedService(app.db);
@@ -310,8 +311,10 @@ export function registerSocialRoutes(
       // directly from R2/static — the API never proxies images.
       const dto = toPublicProfileDto(profile, app.storage);
       // which sections this profile shows, so the client renders the right tabs
-      // instead of asking for each one to find out
-      return { ...dto, sections: profile.private ? null : await activity.sections(id) };
+      // instead of asking for each one to find out; and their tree, as it
+      // stands today, which a profile that shows nothing else keeps to itself too
+      const [sections, tree] = profile.private ? [null, null] : await Promise.all([activity.sections(id), deps.trees?.glimpse(id) ?? null]);
+      return { ...dto, sections, tree };
     },
   );
 }

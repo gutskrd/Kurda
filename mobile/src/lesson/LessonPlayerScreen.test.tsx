@@ -633,7 +633,6 @@ describe('the results', () => {
 
     // today kept the streak: its moment comes first, then the way on that was chosen
     fireEvent.click(screen.getByRole('button', { name: 'Practise these now' }));
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     expect(await screen.findByRole('heading', { name: '4 day streak' })).toBeTruthy();
     expect(screen.getByLabelText('2 of 5 sessions to your next freeze')).toBeTruthy();
     expect(onPractise).not.toHaveBeenCalled();

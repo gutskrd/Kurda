@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { SHOWCASE_SIZE, nearestBadges, type BadgeView, type BadgesResponse } from '@kurda/shared';
+import { SHOWCASE_SIZE, badgeColour, hasBadgeArt, nearestBadges, type BadgeView, type BadgesResponse } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -281,6 +281,10 @@ function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): R
   );
 }
 
+/** The stage a badge stands on in its sheet, and the ellipse of the sheet's surface that rises under it. */
+const STAGE = 196;
+const RISE = 150;
+
 /** display(22) sets 1.12 */
 const SUMMARY_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
 
@@ -315,7 +319,24 @@ function BadgeTile({ badge, width, fresh = false, onPress }: { badge: BadgeView;
   );
 }
 
-/** One badge up close: what it is, what it takes, each tier with when it was earned, how rare. */
+/** How strongly a badge's own colour washes the stage it stands on: a tint of the sheet, not a colour of its own. */
+const WASH = 0.18;
+
+/** A badge's colour as a wash over the sheet: the art's own (shared `badgeColour`), grey until earned, one violet for every secret not yet found. */
+function washOf(badge: BadgeView): string | null {
+  if (!hasBadgeArt(badge.key)) return null;
+  const hex = badgeColour(badge.key, badge.hidden ? 'secret' : badge.tier > 0 ? 'earned' : 'locked');
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+  return `rgba(${r},${g},${b},${WASH})`;
+}
+
+/**
+ * One badge up close, in a sheet from the foot of the screen: the badge on a
+ * soft wash of its own colour, the sheet's surface rising under it in a
+ * shallow curve; when it was earned (or how far there is to go), its name,
+ * what the name means, a short rule, what it takes; then each tier with when
+ * it was earned and how rare it is, and one button to put it away.
+ */
 function BadgeSheet({
   badge,
   showcase,
@@ -336,6 +357,10 @@ function BadgeSheet({
   const full = !shown && showcase.length >= SHOWCASE_SIZE;
   const name = badge.hidden ? t('badges.secretName') : badgeName(t, badge.key);
   const meaning = badge.hidden ? null : badgeMeaning(t, badge.key);
+  const wash = washOf(badge);
+  // when the tier it shows was earned; a badge not yet earned says how far there is to go instead
+  const earned = badge.tier > 0 ? dateOf(badge.tierEarnedAt[badge.tier - 1] ?? badge.earnedAt, locale) : '';
+  const kicker = badge.hidden ? null : earned ? t('badges.earnedOn', { date: earned }) : badge.tier > 0 ? null : progressText(t, badge);
 
   const toggle = async (): Promise<void> => {
     setBusy(true);
@@ -348,18 +373,27 @@ function BadgeSheet({
   };
 
   return (
-    <Sheet title={name} onClose={onClose}>
+    <Sheet onClose={onClose} footer={<ClayButton label={t('common.done')} tone="primary" size="large" onPress={onClose} />}>
       <View style={styles.sheetHero}>
-        <BadgeMedal
-          badgeKey={badge.key}
-          tier={badge.tier}
-          tierCount={badge.tierCount}
-          hidden={badge.hidden}
-          size={152}
-          label={badgeLabel(t, badge)}
-          shine="once"
-        />
+        <View style={[styles.stage, wash ? { backgroundColor: wash } : null]} testID="badge-stage">
+          {/* the sheet's own surface, rising under the badge: the top of a wide ellipse */}
+          <View style={[styles.stageRise, { backgroundColor: colors.background }]} />
+          <BadgeMedal
+            badgeKey={badge.key}
+            tier={badge.tier}
+            tierCount={badge.tierCount}
+            hidden={badge.hidden}
+            size={152}
+            label={badgeLabel(t, badge)}
+            shine="once"
+          />
+        </View>
+        {kicker ? <Text style={[styles.sheetKicker, { color: colors.textSecondary }]}>{kicker}</Text> : null}
+        <Text style={[styles.sheetName, { color: colors.textPrimary }]} accessibilityRole="header">
+          {name}
+        </Text>
         {meaning ? <Text style={[styles.sheetMeaning, { color: colors.textSecondary }]}>{meaning}</Text> : null}
+        <View style={[styles.sheetRule, { backgroundColor: colors.separator }]} />
         {badge.hidden ? (
           <Text style={[styles.sheetHow, { color: colors.textPrimary }]}>
             {badge.hintKey ? t('badges.hint', { hint: t(badgeTextKey(badge.key, 'hint')) }) : t('badges.secretBody')}
@@ -371,7 +405,8 @@ function BadgeSheet({
 
       {!badge.hidden && badge.next !== null ? (
         <View style={styles.sheetProgress}>
-          <Text style={[styles.sheetProgressText, { color: colors.textPrimary }]}>{progressText(t, badge)}</Text>
+          {/* said once: over the name it is already said for a badge not yet earned */}
+          {badge.tier > 0 ? <Text style={[styles.sheetProgressText, { color: colors.textPrimary }]}>{progressText(t, badge)}</Text> : null}
           <Meter fraction={nextFraction(badge)} tint={badgeTint(badge.tier + 1, scheme)} height={8} label={progressText(t, badge) ?? undefined} />
         </View>
       ) : null}
@@ -415,11 +450,12 @@ function BadgeSheet({
 
       {badge.tier > 0 && !badge.hidden ? (
         <View style={styles.showcaseAction}>
+          {/* the quieter of the sheet's two buttons: Done, at its foot, is the one that puts it away */}
           <ClayButton
             label={shown ? t('badges.showcaseRemove') : t('badges.showcaseAdd')}
             icon={shown ? 'check' : 'plus'}
-            tone={shown ? 'neutral' : 'primary'}
-            variant={shown ? 'outline' : 'solid'}
+            tone="neutral"
+            variant="outline"
             busy={busy}
             disabled={full}
             onPress={() => void toggle()}
@@ -534,8 +570,15 @@ const styles = StyleSheet.create({
   monthText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   legacy: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.md },
   legacyText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  sheetHero: { alignItems: 'center', gap: spacing.sm },
-  sheetMeaning: { fontSize: typography.sizes.md },
+  sheetHero: { alignItems: 'center', gap: spacing.xs + 2 },
+  // the wash the badge stands on: as wide as the sheet's column, its lower edge under the curve the surface rises in
+  stage: { alignSelf: 'stretch', height: STAGE, alignItems: 'center', justifyContent: 'flex-end', borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, overflow: 'hidden', marginBottom: spacing.xs },
+  stageRise: { position: 'absolute', left: '-14%', right: '-14%', bottom: -RISE * 0.58, height: RISE, borderRadius: radii.pill },
+  // small capitals, as a label on a medal is: when it was earned
+  sheetKicker: { fontSize: 12, fontWeight: typography.weights.semibold, letterSpacing: 1.2, textTransform: 'uppercase', textAlign: 'center' },
+  sheetName: { ...display(typography.sizes.xl), textAlign: 'center' },
+  sheetMeaning: { fontSize: typography.sizes.md, textAlign: 'center' },
+  sheetRule: { width: 132, height: StyleSheet.hairlineWidth * 2, marginVertical: spacing.sm },
   sheetHow: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 22 },
   sheetProgress: { gap: spacing.sm },
   sheetProgressText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },

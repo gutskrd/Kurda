@@ -1,17 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import {
-  ActivityIndicator,
-  FlatList,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { canModerateGroup, type GiftCard, type GiftTier, type GroupChatCleared } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
@@ -24,18 +13,21 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { EmptyState } from '../theme/EmptyState';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { GroupAvatar } from './GroupAvatar';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
-import { COMPOSER_FIELD, SendButton } from '../chat/SendButton';
-import { messageA11y, openMessageOptions } from '../chat/messageOptions';
+import { MessageField } from '../chat/SendButton';
 import { useI18n } from '../i18n/I18nContext';
+import { useReducedMotion } from '../a11y/useReducedMotion';
+import { RUN_FACE } from '../chat/Bubble';
+import { MessageRow } from '../chat/MessageRow';
+import { JumpToLatest, useAwayFromLatest, useUnseenBelow } from '../chat/ThreadParts';
+import { TypingBubble } from '../chat/TypingBubble';
+import { placeMessages } from '../chat/thread';
 import { groupDetail, groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupDetail, type GroupMessage } from './api';
 import { useRoomEvents } from '../realtime/useRoomEvents';
-import { typingLabel, useTypingSignal, useTypingWatch } from '../chat/typing';
-import { MessageContent, hasControls, isCardMessage } from '../chat/MessageContent';
+import { useTypingSignal, useTypingWatch } from '../chat/typing';
 import { giftBatchCard, openGift as openGiftApi, withCard, type ChatMessage } from '../gifts/api';
 import { useGiftEvents, useOpenChat } from '../gifts/events';
 import { GiftPickerSheet, skippedText, type GiftFriend } from '../gifts/GiftPickerSheet';
@@ -82,9 +74,11 @@ function bannedFrom(error: ApiError): Banned | null {
  * A group channel (KUR-085).
  *
  * The same thread the browser shows, and deliberately the same shape as the DM
- * screen next door — with the one difference a room forces: a message carries
- * who sent it. Two people need no names; twenty do, so the name and the face
- * belong to the message rather than to the header.
+ * screen next door (both draw chat/MessageRow.tsx) — with the one difference
+ * a room forces: a message carries who sent it. Two people need no names;
+ * twenty do, so each run of one member's messages has their name over it and
+ * their face at its foot. Whoever is writing shows as a bubble of dots under
+ * the newest message, with their name over it.
  *
  * History pages backwards on `before`, which is the oldest message held. The
  * window is the server's, not ours.
@@ -139,7 +133,8 @@ export function GroupThreadScreen({
   // mirrored in Soranî and Arabic, as a chat with one friend is
   const dir = useDirection();
   const bottom = useScreenBottomInset(spacing.md);
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const reduce = useReducedMotion();
   const me = user?.id ?? '';
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -157,6 +152,17 @@ export function GroupThreadScreen({
     ],
     [messages, outgoing, me, user?.username],
   );
+  // newest first, for the inverted list — once per change to the thread, not per keystroke
+  const newestFirst = useMemo<Message[]>(() => [...thread].reverse(), [thread]);
+  // where each message sits: its day, its place in its run, whether it says the time
+  const places = useMemo(
+    () => placeMessages(thread, new Date(), { locale, today: t('chat.day.today'), yesterday: t('chat.day.yesterday'), earlier: t('chat.day.earlier') }),
+    [thread, locale, t],
+  );
+  const list = useRef<FlatList<Message>>(null);
+  const { away, onScroll } = useAwayFromLatest();
+  const unseen = useUnseenBelow(messages, away, me);
+  const toLatest = useCallback(() => list.current?.scrollToOffset({ offset: 0, animated: !reduce }), [reduce]);
   const [draft, setDraft] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingOlder, setLoadingOlder] = useState(false);
@@ -459,13 +465,15 @@ export function GroupThreadScreen({
     setError(null);
     setSendError(null);
     haptic('tap');
+    // sending is what takes you back down to the newest message, wherever you were reading
+    toLatest();
     const refused = await post(body);
     if (!refused) return;
     haptic('error');
     // the draft comes back when the message did not go, before anything typed since, so nothing is lost
     setDraft((now) => restoredDraft(body, now));
     refusedSend(refused);
-  }, [draft, post, refusedSend]);
+  }, [draft, post, refusedSend, toLatest]);
 
   /** A greeting from the welcome, sent as it is. */
   const greet = useCallback(
@@ -579,41 +587,42 @@ export function GroupThreadScreen({
             </View>
           </ScrollView>
         ) : (
-          <FlatList
-            data={[...thread].reverse()}
-            inverted
-            keyExtractor={(m) => m.id}
-            contentContainerStyle={styles.list}
-            onEndReached={loadOlder}
-            onEndReachedThreshold={0.4}
-            // the top of the history: older messages on their way, or above all that is held, who cleared the chat
-            ListFooterComponent={
-              loadingOlder ? (
-                <Loading style={{ marginVertical: spacing.md }} />
-              ) : view.kind === 'everyone' ? (
-                <ClearedLine by={view.by} at={view.at} me={user?.username ?? ''} />
-              ) : null
-            }
-            renderItem={({ item }) => (
-              <Bubble
-                message={item}
-                mine={item.senderId === me}
-                onOpenGift={startUnwrap}
-                onReport={() =>
-                  setReporting({ target: { type: 'group_message', messageId: item.id }, senderId: item.senderId, sender: item.username })
-                }
-              />
-            )}
-          />
+          <View style={styles.flex}>
+            <FlatList
+              ref={list}
+              data={newestFirst}
+              inverted
+              keyExtractor={(m) => m.id}
+              contentContainerStyle={styles.list}
+              onScroll={onScroll}
+              scrollEventThrottle={64}
+              onEndReached={loadOlder}
+              onEndReachedThreshold={0.4}
+              // under the newest message, where theirs is about to land (the head of an inverted list is its foot)
+              ListHeaderComponent={<TypingBubble names={typing} named />}
+              // the top of the history: older messages on their way, or above all that is held, who cleared the chat
+              ListFooterComponent={
+                loadingOlder ? (
+                  <Loading style={{ marginVertical: spacing.md }} />
+                ) : view.kind === 'everyone' ? (
+                  <ClearedLine by={view.by} at={view.at} me={user?.username ?? ''} />
+                ) : null
+              }
+              renderItem={({ item }) => (
+                <MessageRow
+                  message={item}
+                  mine={item.senderId === me}
+                  place={places.get(item.id) ?? LONE}
+                  named
+                  senderName={item.username}
+                  onOpenGift={startUnwrap}
+                  onReport={() => setReporting({ target: { type: 'group_message', messageId: item.id }, senderId: item.senderId, sender: item.username })}
+                />
+              )}
+            />
+            {away ? <JumpToLatest unseen={unseen} onPress={toLatest} /> : null}
+          </View>
         )}
-
-        {/* above the composer, where the browser puts it, and announced when it
-            changes rather than read out on every ping */}
-        {typing.length > 0 ? (
-          <Text style={[styles.typing, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
-            {typingLabel(typing, t)}
-          </Text>
-        ) : null}
 
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
         {giftNote ? (
@@ -635,10 +644,7 @@ export function GroupThreadScreen({
               <Icon name="gift" size={22} color={colors.goldText} />
             </Pressable>
             <ChatGameButton target={{ kind: 'group', groupId }} />
-            <TextInput
-              style={[styles.input, dir.free, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-              placeholder={t('chat.messagePlaceholder')}
-              placeholderTextColor={colors.textSecondary}
+            <MessageField
               value={draft}
               onChangeText={(next) => {
                 setDraft(next);
@@ -646,11 +652,9 @@ export function GroupThreadScreen({
                 setGiftNote(null);
                 signalTyping();
               }}
+              onSend={() => void send()}
               maxLength={MAX_LEN}
-              multiline
-              accessibilityLabel={t('chat.messagePlaceholder')}
             />
-            <SendButton ready={draft.trim().length > 0} onPress={() => void send()} />
           </View>
         )}
       </KeyboardAvoidingView>
@@ -744,11 +748,11 @@ function ClubThreadSkeleton(): React.JSX.Element {
   return (
     <View style={[styles.flex, styles.list, styles.skeletonThread]} accessibilityLabel={t('common.loading')}>
       {shape.map(([mine, share], i) => (
-        <View key={i} style={[styles.bubbleRow, { flexDirection: dir.row, width: `${Math.round(share * 100)}%` }, mine !== mirrored ? styles.rowEnd : styles.rowStart]}>
-          {!mine ? <Skeleton width={28} height={28} radius={radii.pill} /> : null}
-          <View style={[styles.bubbleMain, styles.flex]}>
+        <View key={i} style={[styles.skeletonRow, { flexDirection: dir.row, width: `${Math.round(share * 100)}%` }, mine !== mirrored ? styles.rowEnd : styles.rowStart]}>
+          {!mine ? <Skeleton width={RUN_FACE} height={RUN_FACE} radius={radii.pill} /> : null}
+          <View style={[styles.skeletonMain, styles.flex]}>
             {!mine ? <SkeletonText size={typography.sizes.xs} width={56} style={[styles.senderSkeleton, { alignItems: mirrored ? 'flex-end' : 'flex-start' }]} /> : null}
-            <Skeleton height={spacing.sm * 2 + lineOf(typography.sizes.md)} radius={radii.lg} />
+            <Skeleton height={18 + lineOf(typography.sizes.md)} radius={radii.lg} />
           </View>
         </View>
       ))}
@@ -756,110 +760,25 @@ function ClubThreadSkeleton(): React.JSX.Element {
   );
 }
 
-/**
- * A deleted message keeps its place. Removing the row instead would renumber
- * the conversation around whoever was moderated, which reads as though nothing
- * happened — and the person who was replying to it is left talking to nobody.
- */
-function Bubble({
-  message,
-  mine,
-  onOpenGift,
-  onReport,
-}: {
-  message: Message;
-  mine: boolean;
-  onOpenGift: (giftId: string) => void;
-  onReport: () => void;
-}): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const dir = useDirection();
-  const mirrored = dir.row === 'row-reverse';
-  const card = isCardMessage(message) && !message.deleted;
-  // one element for a screen reader (sender and words), with Copy and Report
-  // among its actions, unless it holds a control of its own
-  const whole = message.deleted || !hasControls(message);
-  // the controls inside a message (a gift, an invite link) report it too
-  const report = mine || message.deleted ? undefined : onReport;
-  // held, a message offers its words to copy and, if it is someone else's, a report
-  const options = { words: card || message.deleted ? null : message.body, onReport: report };
-  return (
-    <Pressable
-      onLongPress={() => openMessageOptions(t, options)}
-      delayLongPress={350}
-      accessible={whole}
-      {...(whole ? messageA11y(t, options) : null)}
-      // on its way: said to a screen reader as busy, and drawn fainter until the server has it
-      accessibilityState={message.pending ? { busy: true } : undefined}
-      testID={message.pending ? 'message-sending' : undefined}
-      // your own words at the end of the line and theirs (with their face) at its start, whichever side that is
-      style={({ pressed }) => [
-        styles.bubbleRow,
-        { flexDirection: dir.row },
-        mine !== mirrored ? styles.rowEnd : styles.rowStart,
-        message.pending && styles.sending,
-        pressed && styles.held,
-      ]}
-    >
-      {!mine ? (
-        <InitialsAvatar name={message.username} id={message.senderId} size={28} photoUrl={message.avatarUrl} />
-      ) : null}
-      <View style={styles.bubbleMain}>
-        {!mine ? <Text style={[styles.sender, dir.text, { color: colors.textSecondary }]}>{message.username}</Text> : null}
-        {card ? (
-          <MessageContent message={message} mine={mine} senderName={message.username} onOpenGift={onOpenGift} onReport={report} />
-        ) : (
-          <View
-            style={[
-              styles.bubble,
-              mine
-                ? { backgroundColor: colors.primary }
-                : // a soft fill, no edge: the hairline had no colour of its own and drew black
-                  { backgroundColor: colors.controlTrack },
-            ]}
-          >
-            {message.deleted ? (
-              <View style={styles.deletedRow}>
-                <Icon name="close" size={13} tone="secondary" />
-                <Text style={[styles.deleted, { color: mine ? colors.textOnPrimary : colors.textSecondary }]}>
-                  {t('groups.messageDeleted')}
-                </Text>
-              </View>
-            ) : (
-              <MessageContent message={message} mine={mine} senderName={message.username} onOpenGift={onOpenGift} onReport={report} />
-            )}
-          </View>
-        )}
-      </View>
-    </Pressable>
-  );
-}
+/** A message the thread has not placed yet (it arrived between two draws): a bubble on its own. */
+const LONE = { day: null, first: true, last: true, timed: false } as const;
 
 const styles = StyleSheet.create({
-  // a held message sinks a little under the finger, so the hold is felt to be doing something
-  held: { transform: [{ scale: 0.97 }] },
-  // a message still on its way, as a comment being posted is drawn
-  sending: { opacity: 0.6 },
   flex: { flex: 1 },
-  skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden' },
+  skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden', gap: spacing.sm },
+  skeletonRow: { alignItems: 'flex-end', gap: spacing.sm, maxWidth: '86%' },
+  skeletonMain: { flexShrink: 1 },
   senderSkeleton: { marginBottom: 2, marginHorizontal: spacing.xs },
   screen: { flex: 1 },
-  list: { padding: spacing.lg, gap: spacing.sm },
+  // the runs keep their own distance (chat/MessageRow.tsx); the tails reach a little into the margin
+  list: { paddingHorizontal: spacing.md - 4, paddingVertical: spacing.md },
   headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
-  bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, maxWidth: '86%' },
   rowEnd: { alignSelf: 'flex-end' },
   rowStart: { alignSelf: 'flex-start' },
-  bubbleMain: { flexShrink: 1 },
-  sender: { fontSize: typography.sizes.xs, marginBottom: 2, marginHorizontal: spacing.xs },
-  bubble: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radii.lg },
-  deletedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  deleted: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   // a card in the middle of what the chat would fill
   centred: { flexGrow: 1, justifyContent: 'center', padding: spacing.md },
   welcome: { flexGrow: 1, paddingTop: spacing.sm },
-  typing: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   giftNote: { textAlign: 'center', fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   inputRow: {
@@ -873,6 +792,5 @@ const styles = StyleSheet.create({
   },
   // a plain glyph beside the field, as the tools by a message field are; the touch is still 44pt
   giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  input: COMPOSER_FIELD,
   picking: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
 });

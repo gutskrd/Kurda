@@ -4,7 +4,7 @@
  * mobile/src/auth/AuthContext.tsx) so the web app speaks the same protocol —
  * no new/duplicated backend logic.
  */
-import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge, StreakRepairOffer } from '@kurda/shared';
+import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge, StreakRepairOffer, TreeGlimpse } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
@@ -226,6 +226,8 @@ export interface PublicProfile extends ProfileCosmetics {
   achievements?: number;
   /** which activity sections this profile shows; null when it is private */
   sections?: ProfileSections | null;
+  /** their tree as it stands today; null before they plant one or when the profile is private, absent on a server without trees */
+  tree?: TreeGlimpse | null;
 }
 
 /** Who wrote a post or a comment, resolved for display. */

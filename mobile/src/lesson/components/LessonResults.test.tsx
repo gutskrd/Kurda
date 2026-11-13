@@ -70,6 +70,18 @@ describe('the results cards', () => {
   });
 });
 
+describe('water for the tree', () => {
+  it('says what the lesson earned the learner’s tree, and nothing where it earned none', async () => {
+    show({ results: { ...results, tree: { gained: 1, water: 3 } } });
+    expect(await screen.findByText('+1 water for your tree')).toBeTruthy();
+    cleanup();
+    // no tree planted, a replay, or a server without trees: the results carry nothing about it
+    show();
+    await screen.findByRole('button', { name: /Continue|Next lesson|Done|Back to the path/ });
+    expect(screen.queryByTestId('lesson-water')).toBeNull();
+  });
+});
+
 describe('the title', () => {
   it('says how it went, with a warm line about the course’s own Kurdish', async () => {
     show({ moments: { ...NO_MOMENTS, perfect: true }, results: { ...results, accuracy: 1, correct: 11 } });
@@ -122,9 +134,9 @@ describe('the way on', () => {
     });
     fireEvent.click(await screen.findByRole('button', { name: 'Next lesson' }));
 
-    // the flame first; a tap moves on to the week
-    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    // the streak on its card (the flame before it is for the day the fire grew, and the sixth is not one)
     expect(await screen.findByRole('heading', { name: '6 day streak' })).toBeTruthy();
+    expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     // then the quests this lesson moved, and on

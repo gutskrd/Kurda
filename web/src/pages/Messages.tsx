@@ -417,7 +417,7 @@ function Conversations({
           key={g.id}
           to={`/app/messages?group=${g.id}`}
           active={g.id === activeGroup}
-          avatar={<GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={40} />}
+          avatar={<GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={48} />}
           name={g.name}
           preview={membersLine(t, g.memberCount)}
           unread={groupUnread[g.id] ?? 0}
@@ -550,7 +550,7 @@ function GroupsList({ activeGroup, query = '', onNew }: { activeGroup: string | 
             to={`/app/messages?group=${g.id}`}
             className={`chat-convo${g.id === activeGroup ? ' active' : ''}`}
           >
-            <GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={40} />
+            <GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={48} />
             <span className="chat-convo-body">
               <span className="chat-convo-top">
                 <span className="chat-convo-name" dir="auto">{g.name}</span>

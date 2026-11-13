@@ -5,7 +5,7 @@
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
-    "lint": "eslint src",
+    "lint": "eslint src && node scripts/generate-badge-glyphs.mjs --check",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },

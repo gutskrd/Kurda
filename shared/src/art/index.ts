@@ -7,7 +7,10 @@
  * no images, fonts or links, nothing fetched.
  */
 export * from './keys.js';
-export { badgeSvg, badgeShineSvg, badgeShines, SMALL_BADGE, type BadgeOptions, type BadgeShineOptions, type BadgeState } from './badges.js';
+export { badgeSvg, badgeShineSvg, badgeShines, badgeColour, SMALL_BADGE, type BadgeOptions, type BadgeShineOptions, type BadgeState } from './badges.js';
+export { dayMedalSvg, streakMedalSvg, type DayMedal, type MedalOptions } from './medals.js';
+export { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg, type TreeOptions } from './trees.js';
+export { TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt, type TreeAir, type TreeSceneOptions, type TreeSky } from './tree-scene.js';
 export { rankEmblemSvg, placementEmblemSvg, PLACEMENT_GAMES, SMALL_EMBLEM, type PlacementEmblemOptions, type RankEmblemOptions } from './ranks.js';
 export { leagueEmblemSvg, SMALL_LEAGUE, type LeagueEmblemOptions } from './leagues.js';
 export { coinSvg, gemSvg, CURRENCY_CANVAS, type CurrencyOptions } from './currency.js';

@@ -21,8 +21,9 @@ import type { ChatMessage } from '../gifts/api';
  *   game message or as an old link in a text, is a quiet line saying the game
  *   is no longer played, with nothing to press.
  *
- * Returns the content alone: the screen draws the bubble around a text
- * message, and nothing around a card, which is its own surface.
+ * Returns the content alone: the thread's row (chat/MessageRow.tsx) draws
+ * the bubble around a text message, and nothing around a card, which is its
+ * own surface.
  *
  * `onReport` (someone else's message): a control inside the message — a gift
  * to open, a game to join — takes the touch, so the row's press-and-hold never
@@ -63,7 +64,7 @@ export function MessageContent({
 /** The words of a message, in the bubble's own colour. */
 function TextBody({ body, mine }: { body: string; mine: boolean }): React.JSX.Element {
   const { colors } = useTheme();
-  return <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{body}</Text>;
+  return <Text style={[styles.body, { color: mine ? colors.bubbleMineInk : colors.bubbleTheirsInk }]}>{body}</Text>;
 }
 
 /** Is this message drawn as its own card (no bubble around it)? A gift, a game card, or an old invite link. */
@@ -96,8 +97,8 @@ function GameMessage({
   return (
     <View style={[styles.game, mine ? styles.gameMine : null]}>
       {game.rest ? (
-        <View style={[styles.bubble, { backgroundColor: mine ? colors.primary : colors.controlTrack }]}>
-          <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{game.rest}</Text>
+        <View style={[styles.bubble, { backgroundColor: mine ? colors.bubbleMine : colors.bubbleTheirs }]}>
+          <Text style={[styles.body, { color: mine ? colors.bubbleMineInk : colors.bubbleTheirsInk }]}>{game.rest}</Text>
         </View>
       ) : null}
       <ChatGameCard game={game.game} lobbyId={game.lobbyId} from={from} onReport={onReport} />
@@ -130,8 +131,8 @@ function RetiredGame({ rest, mine, onReport }: { rest: string; mine: boolean; on
   return (
     <View style={[styles.game, mine ? styles.gameMine : null]}>
       {rest ? (
-        <View style={[styles.bubble, { backgroundColor: mine ? colors.primary : colors.controlTrack }]}>
-          <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{rest}</Text>
+        <View style={[styles.bubble, { backgroundColor: mine ? colors.bubbleMine : colors.bubbleTheirs }]}>
+          <Text style={[styles.body, { color: mine ? colors.bubbleMineInk : colors.bubbleTheirsInk }]}>{rest}</Text>
         </View>
       ) : null}
       <View style={[styles.card, { backgroundColor: colors.glassFill }]} accessible {...report} testID="retired-game">
@@ -156,10 +157,11 @@ function GoneCard({ onReport }: { onReport?: () => void }): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  body: { fontSize: typography.sizes.md },
+  body: { fontSize: typography.sizes.md, lineHeight: 23 },
   game: { gap: spacing.xs, alignItems: 'flex-start' },
   gameMine: { alignItems: 'flex-end' },
-  bubble: { borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
+  // the words sent with a card, in a bubble of the thread's own shape (chat/Bubble.tsx), with no tail: the card under it ends the message
+  bubble: { borderRadius: radii.lg, paddingVertical: 9, paddingHorizontal: spacing.md - 2 },
   card: {
     flexDirection: 'row',
     alignItems: 'center',

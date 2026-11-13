@@ -19,6 +19,7 @@ import { useCourses, type CourseEntry } from '../learn/useCourses';
 import { LearnHeader } from '../learn/LearnHeader';
 import { StreakSheet } from '../learn/StreakSheet';
 import { QuestsCard } from '../quests/QuestsCard';
+import { TreeCard } from '../tree/TreeCard';
 import { publishedDictionary } from '../layouts/navLinks';
 
 /** Three letters a beginner meets first: one familiar, one with a mark, one with a hat. */
@@ -338,6 +339,7 @@ function Lessons(): React.JSX.Element {
     <>
       <TodayStrip due={due} />
       <QuestsCard />
+      <TreeCard />
       {entries && entries.length > 1 && (
         <nav className="lp-courses learn-courses-switch" aria-label={t('coursemap.courses')}>
           {entries.map(({ course }) => (

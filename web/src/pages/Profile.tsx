@@ -6,6 +6,7 @@ import type { InventoryItem, MeProfile, ProfileSections, PublicProfile, UserSumm
 import { FullProfile, OnlyYou, ProfileFacts, type FullProfileView } from '../profile/FullProfile';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { ProfileProgress } from '../profile/ProfileProgress';
+import { ProfileTree } from '../tree/ProfileTree';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { CoinIcon } from '../components/icons';
@@ -40,7 +41,7 @@ export function Profile(): React.JSX.Element {
 
   const [sections, setSections] = useState<ProfileSections | null>(null);
   // badges, ranks, league and frame: /me does not carry them, your public profile does
-  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku' | 'frameUrl' | 'achievements'> | null>(null);
+  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku' | 'frameUrl' | 'achievements' | 'tree'> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,7 +75,7 @@ export function Profile(): React.JSX.Element {
       if (cancelled) return;
       if (p?.ok) {
         setSections(p.data.sections ?? null);
-        setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl, achievements: p.data.achievements });
+        setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl, achievements: p.data.achievements, tree: p.data.tree });
       }
       setLoading(false);
     })();
@@ -123,7 +124,14 @@ export function Profile(): React.JSX.Element {
           <ProfileMenu />
         </div>
       }
-      progress={shown ? <ProfileProgress ranks={shown.ranks} badges={shown.badges} league={shown.league} own /> : null}
+      progress={
+        shown ? (
+          <>
+            <ProfileTree tree={shown.tree} own />
+            <ProfileProgress ranks={shown.ranks} badges={shown.badges} league={shown.league} own />
+          </>
+        ) : null
+      }
       yours={
         <OnlyYou title={t('profile.yourProgress')}>
           <ProfileFacts

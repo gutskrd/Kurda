@@ -52,7 +52,8 @@ export function Sheet({
   footer,
   dialect,
 }: {
-  title: string;
+  /** none for a sheet whose content carries its own heading (a badge's, under its picture) */
+  title?: string;
   /** the title is a story's (read and set in the story's language) */
   dialect?: StoryDialect;
   onClose: () => void;

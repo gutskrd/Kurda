@@ -2,10 +2,8 @@
  * The glyphs still drawn as a few flat parts, in a 40-unit box centred on
  * 0,0: the four seasons' marks on a season's rank emblem — spring's flower,
  * summer's Kurdish sun of twenty-one rays, an autumn leaf, a snowflake —
- * painted in the emblem's metal (iconpaint.ts), and the "?" of a secret not
- * yet found. Every badge's own picture is drawn whole instead: what Hevalo
- * shows (props/), and the secrets and the pictures that stand alone
- * (pictures.ts).
+ * painted in the emblem's metal (iconpaint.ts). A badge's own symbol is one
+ * filled glyph instead (badge-glyphs.ts).
  *
  * A part says what it is rather than what colour it is: the main body, its
  * shaded face, a named accent, snow, a cut line, a stroked line, a
@@ -98,9 +96,3 @@ export const SEASON_ICONS: Readonly<Record<string, () => Part[]>> = {
     { k: 'd', d: 'M-6,7L-8,-3M-6,7L5,8M1,0L0,-10M1,0L11,-0.5M7,-7L6.5,-14', w: 1.1, fine: true },
   ],
 };
-
-/** The "?" a secret badge shows until it is found. */
-export const QUESTION: Part[] = [
-  { k: 'l', d: 'M-7.5,-8C-7.5,-15.5 7.5,-16.5 7.5,-8.5C7.5,-2.5 0,-2.5 0,4.5', w: 5.2 },
-  { k: 'f', d: circ(0, 12.5, 3.4) },
-];

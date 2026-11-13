@@ -13,12 +13,13 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
+import { Sheet } from '../components/Sheet';
 import { ErrorState } from '../components/states';
 import { BadgesSkeleton } from '../components/skeletons';
 import { CheckIcon, LockIcon, SparkleIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { FAMILY_KEY, badgeDesc, badgeHint, badgeNamed, badgeTierNamed, unitWord } from '../ranks/names';
-import { Medal, TierPips, progressFraction, progressText, tierClass } from './parts';
+import { Medal, TierPips, badgeWash, progressFraction, progressText, tierClass } from './parts';
 
 /**
  * Badges (contract 4 §B, §U): every badge in its family, what each tier
@@ -207,7 +208,7 @@ function BadgeTile({ view, onOpen }: { view: BadgeView; onOpen: () => void }): R
   const progress = progressText(t, view);
   const tierName = view.tier > 0 && view.tierKey && view.tierCount > 1 ? badgeTierNamed(t, view.tierKey).name : null;
   return (
-    <button type="button" className={`badge-tile ${tierClass(view)}`} onClick={onOpen}>
+    <button type="button" className={`badge-tile ${tierClass(view)}`} style={badgeWash(view)} onClick={onOpen}>
       <span className="badge-tile-art badge-medal">
         <Medal view={view} size={96} />
       </span>
@@ -234,7 +235,16 @@ function BadgeTile({ view, onOpen }: { view: BadgeView; onOpen: () => void }): R
   );
 }
 
-/** A badge up close: what it is, each tier and what it needs, and when it was earned. */
+/**
+ * A badge up close, in a sheet that rises from the foot of a phone: the badge
+ * on a soft wash of its own colour, when it was earned (or how far there is
+ * to go), its name, a short rule, what it is for, each tier and what it
+ * needs, and one button to put it away.
+ *
+ * The wash is the badge's colour and nothing else is: the words under it are
+ * the page's own ink on the page's own surface, so sixty sheets are sixty
+ * colours and one layout.
+ */
 function BadgeDetail({ view, onClose }: { view: BadgeView; onClose: () => void }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
@@ -242,61 +252,72 @@ function BadgeDetail({ view, onClose }: { view: BadgeView; onClose: () => void }
   const title = named ? named.name : t('badges.secretName');
   const def = badgeDef(view.key);
   const hint = view.hidden ? badgeHint(t, view.hintKey) : null;
-  const date = (iso: string | undefined) => (iso ? new Date(iso).toLocaleDateString(locale, { dateStyle: 'medium' }) : null);
+  const date = (iso: string | undefined | null) => (iso ? new Date(iso).toLocaleDateString(locale, { dateStyle: 'medium' }) : null);
+  const progress = progressText(t, view);
+  // when the tier it shows was earned; a badge not yet earned says how far there is to go instead
+  const earned = view.tier > 0 ? date(view.tierEarnedAt[view.tier - 1] ?? view.earnedAt) : null;
+  const kicker = view.hidden ? t('badges.secret') : earned ? t('badges.earnedOn', { date: earned }) : view.tier > 0 ? t('badges.earned') : progress;
   return (
-    <Modal open onClose={onClose} label={title}>
-      <div className={`badge-detail ${tierClass(view)}`}>
-        <div className="badge-detail-art badge-medal is-hovered">
-          <Medal view={view} size={148} playing />
-        </div>
-        <h2 className="badge-detail-name">{title}</h2>
-        {named?.meaning && <p className="badge-detail-meaning">{named.meaning}</p>}
-        <p className="badge-detail-desc">
-          {view.hidden ? (hint ? t('badges.hint', { hint }) : t('badges.secretKeep')) : badgeDesc(t, view.key)}
-        </p>
-        {!view.hidden && view.thresholds.length > 1 && def && (
-          <ol className="badge-ladder">
-            {view.thresholds.map((need, i) => {
-              const tierNo = i + 1;
-              const key = badgeTierKey(def, tierNo);
-              const reached = view.tier >= tierNo;
-              const rarity = view.rarity?.[i];
-              return (
-                <li key={tierNo} className={`badge-ladder-row${reached ? ' is-reached' : ''}${key ? ` metal-${key}` : ''}`}>
-                  <span className="badge-ladder-mark" aria-hidden="true">
-                    {reached ? <CheckIcon size={13} /> : <LockIcon size={12} />}
-                  </span>
-                  <span className="badge-ladder-tier">{key ? badgeTierNamed(t, key).name : tierNo}</span>
-                  <span className="badge-ladder-need">
-                    {need > 0 ? t('badges.need', { count: need.toLocaleString(), unit: unitWord(t, view.unit, need) }) : t('badges.needAll')}
-                  </span>
-                  <span className="badge-ladder-when">
-                    {reached ? date(view.tierEarnedAt[i]) : rarity != null ? t('badges.rarity', { percent: formatRarity(rarity) }) : null}
-                  </span>
-                </li>
-              );
-            })}
-          </ol>
-        )}
-        {!view.hidden && view.thresholds.length <= 1 && view.earnedAt && (
-          <p className="badge-detail-when">{t('badges.earnedOn', { date: date(view.earnedAt) ?? '' })}</p>
-        )}
-        {progressText(t, view) && (
-          <div className="badge-detail-progress">
-            <span className="badge-bar" aria-hidden="true">
-              <span style={{ width: `${Math.max(4, progressFraction(view) * 100)}%` }} />
-            </span>
-            <span>{progressText(t, view)}</span>
+    <Sheet open onClose={onClose} label={title} className="badge-sheet">
+      <div className={`badge-detail ${tierClass(view)}`} style={badgeWash(view)}>
+        <div className="badge-detail-top">
+          <div className="badge-detail-art badge-medal is-hovered">
+            <Medal view={view} size={148} playing />
           </div>
-        )}
-        {view.rarity && view.tier > 0 && view.rarity[view.tier - 1] != null && (
-          <p className="badge-detail-rarity">
-            <SparkleIcon size={14} />
-            {t('badges.rarity', { percent: formatRarity(view.rarity[view.tier - 1]!) })}
+        </div>
+        <div className="badge-detail-body">
+          {kicker && <p className="badge-detail-kicker">{kicker}</p>}
+          <h2 className="badge-detail-name">{title}</h2>
+          {named?.meaning && <p className="badge-detail-meaning">{named.meaning}</p>}
+          <span className="badge-detail-rule" aria-hidden="true" />
+          <p className="badge-detail-desc">
+            {view.hidden ? (hint ? t('badges.hint', { hint }) : t('badges.secretKeep')) : badgeDesc(t, view.key)}
           </p>
-        )}
+          {!view.hidden && view.thresholds.length > 1 && def && (
+            <ol className="badge-ladder">
+              {view.thresholds.map((need, i) => {
+                const tierNo = i + 1;
+                const key = badgeTierKey(def, tierNo);
+                const reached = view.tier >= tierNo;
+                const rarity = view.rarity?.[i];
+                return (
+                  <li key={tierNo} className={`badge-ladder-row${reached ? ' is-reached' : ''}${key ? ` metal-${key}` : ''}`}>
+                    <span className="badge-ladder-mark" aria-hidden="true">
+                      {reached ? <CheckIcon size={13} /> : <LockIcon size={12} />}
+                    </span>
+                    <span className="badge-ladder-tier">{key ? badgeTierNamed(t, key).name : tierNo}</span>
+                    <span className="badge-ladder-need">
+                      {need > 0 ? t('badges.need', { count: need.toLocaleString(), unit: unitWord(t, view.unit, need) }) : t('badges.needAll')}
+                    </span>
+                    <span className="badge-ladder-when">
+                      {reached ? date(view.tierEarnedAt[i]) : rarity != null ? t('badges.rarity', { percent: formatRarity(rarity) }) : null}
+                    </span>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+          {progress && (
+            <div className="badge-detail-progress">
+              <span className="badge-bar" aria-hidden="true">
+                <span style={{ width: `${Math.max(4, progressFraction(view) * 100)}%` }} />
+              </span>
+              {/* said once: the line over the name already says it for a badge not yet earned */}
+              {view.tier > 0 && <span>{progress}</span>}
+            </div>
+          )}
+          {view.rarity && view.tier > 0 && view.rarity[view.tier - 1] != null && (
+            <p className="badge-detail-rarity">
+              <SparkleIcon size={14} />
+              {t('badges.rarity', { percent: formatRarity(view.rarity[view.tier - 1]!) })}
+            </p>
+          )}
+          <Button size="lg" block className="badge-detail-done" onClick={onClose}>
+            {t('common.done')}
+          </Button>
+        </div>
       </div>
-    </Modal>
+    </Sheet>
   );
 }
 

@@ -3,18 +3,25 @@ import type { ChatMessageKind } from '@kurda/shared';
 import { MessageLine } from '../reports/MessageMenu';
 import { Avatar } from '../components/Avatar';
 import { MessageBody } from '../components/GameInviteCard';
-import { groupMessages, timeLabel, type Groupable } from './messageGroups';
+import { endsAMoment, groupMessages, isEmojiOnly, timeLabel, type Groupable } from './messageGroups';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
 /**
- * A chat thread rendered the way one should read: day separators, consecutive
- * messages from one sender folded into a single run, and each run introduced
- * ONCE by its author — avatar and name — rather than on every line.
+ * A chat thread rendered the way one should read: a pill for each day,
+ * consecutive messages from one sender folded into a single run of bubbles
+ * that sit close together, and each run with its author ONCE — a face at its
+ * foot, by the last thing they said, the way a speech bubble points at who
+ * is speaking.
  *
- * The avatar sits beside the run, not beside each bubble: repeating a face down
- * a burst of five messages is noise, and it is the burst that has an author.
- * Your own runs are labelled but carry no avatar; you know who you are, and the
- * space is better spent on the message.
+ * Whose words they are is said by side and colour: yours at the end of the
+ * line in the app's gold, theirs at its start. So the names are for those who
+ * cannot see that — a screen reader hears "You" and the other person's name
+ * on every run — and are printed only where the side does not settle it: in
+ * a group (`named`), over each run that is somebody else's.
+ *
+ * The time is printed where a moment of the conversation ends
+ * (`endsAMoment`), not under every run; a run without it still has its time
+ * for a screen reader, and a bubble shows its own to a pointer resting on it.
  *
  * Shared by the direct and group threads so the two cannot drift apart.
  */
@@ -41,6 +48,7 @@ export interface ChatMessage extends Groupable {
 export function MessageList<T extends ChatMessage>({
   messages,
   myId,
+  named = false,
   renderStatus,
   onOpenProfile,
   renderBody,
@@ -51,6 +59,8 @@ export function MessageList<T extends ChatMessage>({
   /** oldest first */
   messages: readonly T[];
   myId: string | undefined;
+  /** a group: other people's names are printed over their runs, since their side alone does not say who */
+  named?: boolean;
   /** trailing status for your own runs, e.g. a read receipt */
   renderStatus?: (last: T) => ReactNode;
   /** open a sender's profile — makes the avatar and name the way in */
@@ -88,15 +98,17 @@ export function MessageList<T extends ChatMessage>({
             <span>{section.label}</span>
           </div>
 
-          {section.runs.map((run) => {
+          {section.runs.map((run, at) => {
             const mine = run.senderId === myId;
             const first = run.messages[0]!;
             const last = run.messages[run.messages.length - 1]!;
             const name = mine ? t('chat.you') : (first.username ?? t('chat.someone'));
+            // the time is printed where a moment ends; a run that is still going out, or did not go, says that instead
+            const timed = endsAMoment(section.runs, at);
 
             return (
-              <div key={first.id} className={`chat-run${mine ? ' mine' : ''}`}>
-                {/* one face per burst, at the start of it */}
+              <div key={first.id} className={`chat-run${mine ? ' mine' : ''}${timed && !last.pending ? ' has-meta' : ''}`}>
+                {/* one face per burst, at the foot of it */}
                 {!mine &&
                   (onOpenProfile ? (
                     <button
@@ -114,15 +126,18 @@ export function MessageList<T extends ChatMessage>({
                   ))}
 
                 <div className="chat-run-body">
-                  <span className="chat-run-author">{name}</span>
+                  <span className={`chat-run-author${named && !mine ? '' : ' sr-only'}`}>{name}</span>
 
                   {run.messages.map((m, i) => {
+                    const words = !m.kind || m.kind === 'text' ? (m.body ?? null) : null;
+                    const isLast = i === run.messages.length - 1;
                     const bubble = (
                       <div
                         key={m.id}
-                        className={`bubble${mine ? ' mine' : ''}${
-                          i === run.messages.length - 1 ? ' bubble-tail' : ''
-                        }${m.kind && m.kind !== 'text' ? ' is-card' : ''}${m.pending ? ` is-${m.pending}` : ''}`}
+                        className={`bubble${mine ? ' mine' : ''}${i === 0 ? ' is-first' : ''}${isLast ? ' is-last bubble-tail' : ''}${
+                          m.kind && m.kind !== 'text' ? ' is-card' : ''
+                        }${!m.deleted && isEmojiOnly(words) ? ' is-emoji' : ''}${m.pending ? ` is-${m.pending}` : ''}`}
+                        title={timeLabel(m.createdAt, locale) || undefined}
                       >
                         {m.deleted ? (
                           <em className="muted">{t('chat.messageDeleted')}</em>
@@ -156,7 +171,6 @@ export function MessageList<T extends ChatMessage>({
                     }
                     // held, right-clicked or reached by keyboard: copy its words, report someone else's
                     if (m.deleted) return bubble;
-                    const words = !m.kind || m.kind === 'text' ? (m.body ?? null) : null;
                     const report = onReport && !mine ? () => onReport(m) : undefined;
                     return (
                       <MessageLine
@@ -179,7 +193,7 @@ export function MessageList<T extends ChatMessage>({
                     </div>
                   ) : (
                     !last.pending && (
-                      <div className="chat-run-meta">
+                      <div className={`chat-run-meta${timed ? '' : ' sr-only'}`}>
                         <time dateTime={last.createdAt}>{timeLabel(last.createdAt, locale)}</time>
                         {mine && renderStatus?.(last)}
                       </div>

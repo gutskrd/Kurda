@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { cleanup, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NO_LESSON_MOMENTS, type LessonMoments, type QuestStep } from '@kurda/shared';
 import { jsonResponse, renderApp } from '../test/utils';
@@ -9,8 +9,8 @@ import type { SessionResults } from './types';
 
 /*
  * The end of a lesson on its own: the three cards, the title by how it went,
- * and the screens after it — the streak's flame and week, today's quests and
- * a chest — against a scripted API.
+ * and the screens after it — the streak's card (after its flame, on the day
+ * the fire grew), today's quests and a chest — against a scripted API.
  */
 
 let calls: string[] = [];
@@ -144,6 +144,17 @@ describe('the title', () => {
   });
 });
 
+describe('water for the tree', () => {
+  it('says what the lesson earned the learner’s tree, and nothing where it earned none', () => {
+    show({ tree: { gained: 1, water: 3 } });
+    expect(screen.getByText('+1 water for your tree')).toBeInTheDocument();
+    cleanup();
+    // no tree planted, a replay, or a server without trees: the results carry nothing about it
+    show();
+    expect(screen.queryByText(/water for your tree/)).toBeNull();
+  });
+});
+
 describe('after the results', () => {
   const steps: QuestStep[] = [
     { id: 'q1', kind: 'streak', target: 1, chest: 'common', from: 0, to: 1, claimable: true },
@@ -160,16 +171,17 @@ describe('after the results', () => {
   };
   const kept: LessonMoments = { ...NO_LESSON_MOMENTS, streakKept: true };
 
-  it('goes on to the streak flame, the week and the quests of the day one tap at a time, and opens the chest there', async () => {
+  it('goes on to the streak’s card and the quests of the day one tap at a time, and opens the chest there', async () => {
     serve({ 'GET /me/quests': day, 'POST /me/quests/q1/claim': { questId: 'q1', tier: 'common', currency: 'zer', amount: 12, balance: 1252 } });
     show({ quests: steps }, { moments: kept });
 
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    // the flame has the screen, and moves on to the week by itself
+    // an ordinary day: no flame first, the card is the whole of the moment, with the way on from its first frame
     expect(await screen.findByRole('heading', { name: '4-day streak' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
-    expect(await screen.findByText('Another day learned. See you again tomorrow!', undefined, { timeout: 4000 })).toBeInTheDocument();
+    expect(document.querySelector('.end-flame')).toBeNull();
+    expect(screen.getByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
     expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Continue' })).toBeInTheDocument();
 
     // then today's three, the one this lesson finished called so
     await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
@@ -194,12 +206,40 @@ describe('after the results', () => {
   });
 
   it('moves on with Enter from anywhere without a use of its own for it, and the flame with Escape rather than leaving', async () => {
-    show({}, { moments: kept });
+    // the seventh day: the fire grew into a campfire, so its flame has the screen first
+    show({ streak: { ...base.streak, current: 7 } }, { moments: kept });
     await screen.findByRole('heading', { name: 'Great work!' });
     await userEvent.keyboard('{Enter}');
-    expect(await screen.findByRole('heading', { name: '4-day streak' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '7-day streak' })).toBeInTheDocument();
+    expect(document.querySelector('.end-flame')).not.toBeNull();
+    expect(screen.queryByRole('button', { name: 'Continue' })).not.toBeInTheDocument();
     await userEvent.keyboard('{Escape}');
     expect(await screen.findByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
+    // the number rolled on the flame's screen: on the card it stands at today's from the start
+    expect(document.querySelector('.end-week .roll-column')).toBeNull();
+  });
+
+  it('lets the streak’s card go before the next screen, and takes the way on at once for a reader who asked for less motion', async () => {
+    serve({ 'GET /me/quests': day });
+    show({ quests: steps }, { moments: kept });
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByRole('heading', { name: '4-day streak' });
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    // the card is still there, going: its words fading, its medal gathering itself
+    expect(document.querySelector('.end-week')).toHaveClass('is-leaving');
+    expect(await screen.findByRole('heading', { name: 'Quest complete!' })).toBeInTheDocument();
+    expect(document.querySelector('.end-week')).toBeNull();
+  });
+
+  it('takes the way on from the streak’s card at once under reduced motion', async () => {
+    reduceMotion();
+    serve({ 'GET /me/quests': day });
+    show({ quests: steps }, { moments: kept });
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    await screen.findByRole('heading', { name: '4-day streak' });
+    await userEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(document.querySelector('.end-week')).toBeNull();
+    expect(await screen.findByRole('heading', { name: 'Quest complete!' })).toBeInTheDocument();
   });
 
   it('leaves a chest shut for later and offers the way on instead', async () => {
