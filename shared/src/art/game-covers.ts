@@ -30,6 +30,7 @@ import { GAME_NAMES } from '../games/names.js';
 import { dab, form, ring, rr, type Tones } from './cutout.js';
 import type { Cover, Key, Part } from './game-acting.js';
 import { songbird } from './songbird.js';
+import { LETTER_BIRDS } from '../letters.js';
 import { letter, letterWidth, oval } from './ink.js';
 import { Drawing, n, tint } from './svg.js';
 
@@ -41,7 +42,6 @@ const WHITE = '#ffffff';
 const RED = '#d8493b';
 const GOLD = '#f2b632';
 const GREEN = '#3fa45b';
-const BLUE = '#3d8bd9';
 const STEEL = '#9aa5b4';
 const NIGHT = '#3b2f63';
 const BROWN = '#a8683a';
@@ -242,8 +242,8 @@ const rhyme: Cover = {
         form(dr, 'M52 97C50 103 53 107 58 108C60 103 57 99 52 97Z', tones(tint(GREEN, 0.12)), 1.4, 1);
       },
     },
-    { draw: (dr) => placed(dr, 30, PERCH, 0, 1.05, () => songbird(dr, BLUE, 1)), pivot: [30, PERCH], keys: [[0, {}], ...sings(0.1), [1, {}, 'hold']] },
-    { draw: (dr) => placed(dr, 90, PERCH - 0.8, 0, -1.05, () => songbird(dr, GOLD, -1)), pivot: [90, PERCH], keys: [[0, {}], ...sings(0.42), [1, {}, 'hold']] },
+    { draw: (dr) => placed(dr, 30, PERCH, 0, 1.05, () => songbird(dr, LETTER_BIRDS[1], 1)), pivot: [30, PERCH], keys: [[0, {}], ...sings(0.1), [1, {}, 'hold']] },
+    { draw: (dr) => placed(dr, 90, PERCH - 0.8, 0, -1.05, () => songbird(dr, LETTER_BIRDS[6], -1)), pivot: [90, PERCH], keys: [[0, {}], ...sings(0.42), [1, {}, 'hold']] },
     { draw: (dr) => sung(dr, 10, 20, 'DAR', 36, 42, 50), pivot: [38, 48], keys: popsIn(0.12) },
     { draw: (dr) => sung(dr, 70, 28, 'KAR', 86, 80, 58), pivot: [84, 56], keys: popsIn(0.44) },
   ],

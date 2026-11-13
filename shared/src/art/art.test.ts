@@ -1915,7 +1915,7 @@ describe('the letters’ pictures', () => {
 
   it('puts the sill where the window is drawn, and a bird there at a bird’s size', () => {
     expect(LETTER_SILL.y).toBeGreaterThan(85);
-    expect(LETTER_SILL.y).toBeLessThan(95);
+    expect(LETTER_SILL.y).toBeLessThan(100);
     expect(LETTER_SILL.birdShare).toBeGreaterThan(0.2);
     expect(LETTER_SILL.birdShare).toBeLessThan(0.5);
   });

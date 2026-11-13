@@ -93,9 +93,11 @@ export function letterProblem(text: string): LetterProblem | null {
 /**
  * The colours a bird can be: each member's own, picked from their id so it is
  * the same bird on every screen and every phone, without anything stored. The
- * apps draw it (art/letters.ts) from its number here.
+ * apps draw it (art/letters.ts) from its number here. Soft colours, the first
+ * the lavender of the owner's reference bird; its wing, tail and cheek are
+ * worked out from the one colour (art/songbird.ts).
  */
-export const LETTER_BIRDS = ['#3d8bd9', '#f2b632', '#d8493b', '#3fa45b', '#2fa7a0', '#e96a9c', '#f08a34', '#8a5bd6'] as const;
+export const LETTER_BIRDS = ['#8b86d9', '#6fa8e2', '#e88aa6', '#7dbf8f', '#f0a46c', '#55b7ae', '#e5bf55', '#b183d4'] as const;
 
 /** Somebody's bird: a number into `LETTER_BIRDS`, from their id. */
 export function letterBirdOf(userId: string): number {
