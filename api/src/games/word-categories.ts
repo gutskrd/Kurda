@@ -332,7 +332,7 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   {
     slug: 'stories',
     name: { kmr: 'çîrok', ckb: 'چیرۆک' },
-    meanings: { en: 'story', de: 'Geschichte', es: 'cuento', fr: 'conte', nl: 'verhaal', tr: 'masal', ar: 'حكاية' },
+    meanings: { en: 'story', de: 'Märchen', es: 'cuento', fr: 'conte', nl: 'verhaal', tr: 'masal', ar: 'حكاية' },
     words: [
       'story', 'tale', 'legend', 'king', 'prince', 'lord', 'giant', 'ogre', 'treasure', 'adventure', 'secret', 'storyteller', 'hero', 'princess',
       'queen', 'dragon', 'witch', 'fairy', 'magic', 'sword', 'shield', 'crown', 'trick', 'spell', 'curse', 'monster', 'ghost', 'fable', 'myth',
@@ -352,7 +352,7 @@ export const STARTER_CATEGORIES: readonly StarterCategory[] = [
   {
     slug: 'qualities',
     name: { kmr: 'taybetmendî', ckb: 'تایبەتمەندی' },
-    meanings: { en: 'quality', de: 'Eigenschaft', es: 'cualidad', fr: 'qualité', nl: 'eigenschap', tr: 'özellik', ar: 'صفة' },
+    meanings: { en: 'quality', de: 'Eigenschaft', es: 'cualidad', fr: 'caractéristique', nl: 'eigenschap', tr: 'özellik', ar: 'صفة' },
     words: [
       'big', 'small', 'new', 'old', 'young', 'long', 'short', 'clean', 'dirty', 'heavy', 'light', 'empty', 'full', 'easy', 'difficult', 'hard',
       'deep', 'high', 'tall', 'low', 'far', 'near', 'beautiful', 'pretty', 'nice', 'quiet', 'soft', 'open', 'closed', 'dark', 'wild', 'hidden',
