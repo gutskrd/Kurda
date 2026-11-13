@@ -88,7 +88,8 @@ import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeas
 import { SKIES, TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt, treeStudioSvg } from './tree-scene.js';
 import { TREE_SEASONS, treeSeasonAt } from '../tree.js';
 import { horizonSky, horizonSvg } from './horizon.js';
-import { LETTER_SILL, letterBirdSvg, letterEnvelopeSvg, letterWindowSvg } from './letters.js';
+import { LETTER_BIRD_FEET, LETTER_FLIGHT, LETTER_OPENING, LETTER_SILL, LETTER_WINDOW_DEPTH, LETTER_WINDOW_PARTS, letterBirdSvg, letterEnvelopeSvg, letterWindowSvg } from './letters.js';
+import { PIGEON_POSES } from './pigeon.js';
 import { LETTER_BIRDS } from '../letters.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
@@ -1893,32 +1894,68 @@ describe('the horizon over a profile', () => {
 });
 
 describe('the letters’ pictures', () => {
-  it('draws the window at every hour, every bird in every pose, and the envelope, each a valid picture', () => {
-    for (const sky of TREE_SKIES) checkSvg(letterWindowSvg({ sky, size: 120 }), 120);
+  it('draws the window at every hour, whole and layer by layer, every pigeon in every pose, and the envelope, each a valid picture', () => {
+    for (const sky of TREE_SKIES) {
+      checkSvg(letterWindowSvg({ sky, size: 120 }), 120);
+      for (const part of LETTER_WINDOW_PARTS) checkSvg(letterWindowSvg({ sky, part, size: 120 }), 120);
+    }
     for (let bird = 0; bird < LETTER_BIRDS.length; bird++) {
-      for (const pose of ['perched', 'flying', 'carrying'] as const) {
+      for (const pose of PIGEON_POSES) {
         checkSvg(letterBirdSvg({ bird, pose, size: 120 }), 120);
-        checkSvg(letterBirdSvg({ bird, pose, facingLeft: true, size: 120 }), 120);
+        checkSvg(letterBirdSvg({ bird, pose, letter: true, facingLeft: true, size: 120 }), 120);
       }
     }
     checkSvg(letterEnvelopeSvg({ size: 120 }), 120);
+    expect(() => letterWindowSvg({ part: 'roof' as never })).toThrow(RangeError);
   });
 
-  it('gives every bird its own colour, and a letter to carry only when it carries one', () => {
+  it('gives every pigeon its own colour, and a letter in its beak only when it carries one and is awake', () => {
     const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id');
     const perched = LETTER_BIRDS.map((_, bird) => strip(letterBirdSvg({ bird })));
     expect(new Set(perched).size).toBe(LETTER_BIRDS.length);
     // the wax on the letter in its beak
-    expect(letterBirdSvg({ bird: 0, pose: 'carrying' })).toContain('#d8493b');
-    expect(letterBirdSvg({ bird: 0, pose: 'flying' })).not.toContain('#d8493b');
+    expect(letterBirdSvg({ bird: 0, pose: 'wings-up', letter: true })).toContain('#d8493b');
+    expect(letterBirdSvg({ bird: 0, pose: 'wings-up' })).not.toContain('#d8493b');
+    expect(letterBirdSvg({ bird: 0, pose: 'sleep', letter: true })).not.toContain('#d8493b');
+    // each pose is its own picture, so an app can show them in turn
+    expect(new Set(PIGEON_POSES.map((pose) => strip(letterBirdSvg({ bird: 1, pose })))).size).toBe(PIGEON_POSES.length);
     expect(() => letterBirdSvg({ bird: LETTER_BIRDS.length })).toThrow(RangeError);
   });
 
-  it('puts the sill where the window is drawn, and a bird there at a bird’s size', () => {
-    expect(LETTER_SILL.y).toBeGreaterThan(85);
+  it('layers the window so the country moves behind a frame that holds still, the nearer the more', () => {
+    const d = LETTER_WINDOW_DEPTH;
+    expect([d.room, d.left, d.right, d.light]).toEqual([0, 0, 0, 0]);
+    expect(d.near).toBeGreaterThan(d.far);
+    expect(d.far).toBeGreaterThan(d.clouds);
+    expect(d.clouds).toBeGreaterThan(d.sky);
+    // the room is a wall with the window cut out of it, so whatever is behind shows only there
+    expect(letterWindowSvg({ part: 'room' })).toContain('fill-rule="evenodd"');
+  });
+
+  it('stands a pigeon on the sill at a pigeon’s size, and flies it out wholly through the window before it goes behind the room', () => {
+    expect(LETTER_SILL.y).toBeGreaterThan(LETTER_OPENING.y1);
     expect(LETTER_SILL.y).toBeLessThan(100);
-    expect(LETTER_SILL.birdShare).toBeGreaterThan(0.2);
+    expect(LETTER_SILL.birdShare).toBeGreaterThan(0.3);
     expect(LETTER_SILL.birdShare).toBeLessThan(0.5);
+    const keys = LETTER_FLIGHT.keys;
+    expect(keys[0]).toMatchObject({ at: 0, x: 0, y: 0, scale: 1, seen: 1 });
+    expect(keys[keys.length - 1]).toMatchObject({ at: 1, seen: 0 });
+    for (let i = 1; i < keys.length; i++) expect(keys[i]!.at).toBeGreaterThan(keys[i - 1]!.at);
+    // how far across its own square a pigeon with its wings up and a letter reaches, either way round
+    const reach = { x0: 0.2, x1: 0.86, y0: 0.17, y1: 0.87 };
+    const share = LETTER_SILL.birdShare;
+    const [cx, cy] = [LETTER_SILL.x / 120 - (share * LETTER_BIRD_FEET.x) / 120 + share / 2, LETTER_SILL.y / 120 - (share * LETTER_BIRD_FEET.y) / 120 + share / 2];
+    const open = { x0: LETTER_OPENING.x0 / 120, x1: LETTER_OPENING.x1 / 120, y0: LETTER_OPENING.y0 / 120, y1: LETTER_OPENING.y1 / 120 };
+    for (const k of keys.filter((key) => key.at >= LETTER_FLIGHT.behindAt)) {
+      const size = share * k.scale;
+      const [left, top] = [cx + k.x - size / 2, cy + k.y - size / 2];
+      for (const [r0, r1] of [[reach.x0, reach.x1], [1 - reach.x1, 1 - reach.x0]] as const) {
+        expect(left + size * r0).toBeGreaterThan(open.x0);
+        expect(left + size * r1).toBeLessThan(open.x1);
+      }
+      expect(top + size * reach.y0).toBeGreaterThan(open.y0);
+      expect(top + size * reach.y1).toBeLessThan(open.y1);
+    }
   });
 });
 

@@ -28,14 +28,20 @@ export {
 export { horizonSky, horizonSvg, type HorizonOptions } from './horizon.js';
 export {
   LETTER_BIRD_FEET,
+  LETTER_FLIGHT,
+  LETTER_OPENING,
   LETTER_SILL,
+  LETTER_WINDOW_DEPTH,
+  LETTER_WINDOW_PARTS,
   letterBirdSvg,
   letterEnvelopeSvg,
   letterWindowSvg,
   type LetterBirdOptions,
   type LetterEnvelopeOptions,
   type LetterWindowOptions,
+  type LetterWindowPart,
 } from './letters.js';
+export { PIGEON_POSES, type PigeonPose } from './pigeon.js';
 export type { SongbirdPose } from './songbird.js';
 export { rankEmblemSvg, placementEmblemSvg, PLACEMENT_GAMES, SMALL_EMBLEM, type PlacementEmblemOptions, type RankEmblemOptions } from './ranks.js';
 export { leagueEmblemSvg, SMALL_LEAGUE, type LeagueEmblemOptions } from './leagues.js';
