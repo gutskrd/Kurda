@@ -80,8 +80,9 @@ export function kindWithCount(t: Translate, kind: ItemCategory | 'all', count: n
   return t('shop.kind.a11y', { kind: t(KIND_LABEL[kind]), items: itemsText(t, count) });
 }
 
-export function currencyLabel(currency: Currency): string {
-  return currency === 'zer' ? 'Zêr' : 'Gems';
+/** A currency's name inside a sentence. Zêr is a name and is never translated; gems are a common noun, so they take the reader's own word. */
+export function currencyLabel(t: Translate, currency: Currency): string {
+  return currency === 'zer' ? 'Zêr' : t('gift.picker.gems');
 }
 
 /**

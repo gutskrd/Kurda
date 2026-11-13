@@ -82,11 +82,11 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
   },
   'verify-email-code': {
     en: { subject: "Your Hevalo verification code", text: "Welcome to Hevalo!\n\nTo finish setting up your account, please use this code:\n\n{code}\n\nThis code is valid for 15 minutes.\n\nIf you didn't ask for this, you can ignore this message. Your account is safe.\n\nThank you for choosing Hevalo.\n\n— The Hevalo team" },
-    ku: { subject: "Koda piştrastkirinê ya Hevalo", text: "Bi xêr hatî Hevalo!\n\nJi bo temamkirina tomarkirina xwe, ji kerema xwe vê kodê bikar bîne:\n\n{code}\n\nEv kod ji bo 15 xulekan derbasdar e.\n\nHeke te ev daxwaz nekiriye, tu dikarî vê peyamê paşguh bikî. Hesabê te ewle ye.\n\nSpas ji bo ku te Hevalo hilbijart.\n\n— Tîma Hevalo" },
+    ku: { subject: "Koda piştrastkirinê ya Hevalo", text: "Bi xêr hatî Hevalo!\n\nJi bo temamkirina tomarkirina xwe, ji kerema xwe vê kodê bi kar bîne:\n\n{code}\n\nEv kod ji bo 15 xulekan derbasdar e.\n\nHeke te ev daxwaz nekiriye, tu dikarî vê peyamê paşguh bikî. Hesabê te ewle ye.\n\nSpas ji bo ku te Hevalo hilbijart.\n\n— Tîma Hevalo" },
   },
   'password-reset': {
     en: { subject: "Reset your password", text: "Hello {username},\n\nWe received a request to update the password on your Hevalo account.\n\nTo update your password, use this link:\n\n{link}\n\nThis link is valid for one hour.\nFor the security of your account, it can only be used once.\n\nIf you didn't ask to reset your password, you can ignore this message.\nYour password will not change unless you use this link.\n\nIf several password-reset requests were sent without your knowledge,\nplease contact us about the security of your account.\n\n— The Hevalo team" },
-    ku: { subject: "Şîfreya xwe ji nû ve saz bike", text: "Silav {username},\n\nMe daxwazek ji bo nûvekirina şîfreya hesabê te yê Hevalo wergirt.\n\nJi bo nûvekirina şîfreya xwe, vê girêdanê bikar bîne:\n\n{link}\n\nEv girêdan ji bo saetekê derbasdar e.\nJi bo ewlehiya hesabê te, ew tenê carekê dikare were bikaranîn.\n\nHeke te daxwaza nûvekirina şîfreyê nekiriye, tu dikarî vê peyamê paşguh bikî.\nŞîfreya te wê neyê guhertin heta ku tu vê girêdanê bikar neynî.\n\nHeke bêyî destûra te çend daxwazên nûvekirina şîfreyê hatibin şandin, ji kerema xwe ji bo\newlehiya hesabê xwe bi me re têkilî daynin.\n\n— Tîma Hevalo" },
+    ku: { subject: "Şîfreya xwe ji nû ve saz bike", text: "Silav {username},\n\nMe daxwazek ji bo nûvekirina şîfreya hesabê te yê Hevalo wergirt.\n\nJi bo nûvekirina şîfreya xwe, vê girêdanê bi kar bîne:\n\n{link}\n\nEv girêdan ji bo saetekê derbasdar e.\nJi bo ewlehiya hesabê te, ew tenê carekê dikare were bikaranîn.\n\nHeke te daxwaza nûvekirina şîfreyê nekiriye, tu dikarî vê peyamê paşguh bikî.\nŞîfreya te wê neyê guhertin heta ku tu vê girêdanê bi kar neynî.\n\nHeke bêyî destûra te çend daxwazên nûvekirina şîfreyê hatibin şandin, ji kerema xwe ji bo\newlehiya hesabê xwe bi me re têkilî deyne.\n\n— Tîma Hevalo" },
   },
   'password-changed': {
     en: {
@@ -95,7 +95,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Şîfreya te hate guhertin',
-      text: 'Silav {username},\n\nŞîfreya te ya Hevalo nû hate guhertin.\n\nHeke ev tu bûyî, tiştek din ji bo kirinê nîne.\n\nHeke ne tu bûyî, tavilê şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre) û bi piştgiriyê re têkilî deyne.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\nŞîfreya te ya Hevalo nû hate guhertin.\n\nHeke ev tu bûyî, tiştekî din ji bo kirinê nîne.\n\nHeke ne tu bûyî, tavilê şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre) û bi piştgiriyê re têkilî deyne.\n\n— Tîma Hevalo',
     },
   },
   'username-changed': {
@@ -105,7 +105,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Navê te yê bikarhêner hate guhertin',
-      text: 'Silav {username},\n\nNavê bikarhêner ê hesabê te yê Hevalo nû ji {previous} bû {username} ({time}).\n\nHeke ev tu bûyî, tiştek din ji bo kirinê nîne. Navê te yê berê {holdDays} rojan ji bo te tê parastin, da ku kesek din nikaribe wî bigire, û tu dikarî piştî {cooldownDays} rojan navê xwe dîsa biguherînî.\n\nHeke ne tu bûyî, tavilê şîfreya xwe biguherîne (Mîheng, paşê Şîfre) û bi piştgiriyê re têkilî deyne.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\nNavê bikarhêner ê hesabê te yê Hevalo nû ji {previous} bû {username} ({time}).\n\nHeke ev tu bûyî, tiştekî din ji bo kirinê nîne. Navê te yê berê {holdDays} rojan ji bo te tê parastin, da ku kesekî din nikaribe wî bigire, û tu dikarî piştî {cooldownDays} rojan navê xwe dîsa biguherînî.\n\nHeke ne tu bûyî, tavilê şîfreya xwe biguherîne (Mîheng, paşê Şîfre) û bi piştgiriyê re têkilî deyne.\n\n— Tîma Hevalo',
     },
   },
   'oauth-no-password': {
@@ -115,7 +115,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Ji bo hesabê xwe şîfreyekê saz bike',
-      text: 'Silav {username},\n\nKesekî xwest şîfreya hesabê te yê Hevalo ji nû ve saz bike. Hesabê te hê şîfreyekê nîne, ji ber ku tu bi xizmeteke din têdikevî.\n\nHeke tu dixwazî bi navnîşana e-nameya xwe û şîfreyekê jî têkevî, li vir yekê saz bike: {link}\n\nEv girêdan ji bo saetekê derbasdar e. Heke te ev daxwaz nekiriye, tu dikarî vê e-nameyê paşguh bikî: tiştek nayê guhertin.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\nKesekî xwest şîfreya hesabê te yê Hevalo ji nû ve saz bike. Hesabê te hê bê şîfre ye, ji ber ku tu bi xizmeteke din têdikevî.\n\nHeke tu dixwazî bi navnîşana e-nameya xwe û şîfreyekê jî têkevî, li vir yekê saz bike: {link}\n\nEv girêdan ji bo saetekê derbasdar e. Heke te ev daxwaz nekiriye, tu dikarî vê e-nameyê paşguh bikî: tiştek nayê guhertin.\n\n— Tîma Hevalo',
     },
   },
   /**
@@ -146,7 +146,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Hişyariya ewlehiyê ya Hevalo: {headline}',
-      text: 'Tiştek li Hevalo hewceyî baldariya te ye:\n\n{list}\n\nTomara ewlehiyê veke da ku bibînî çi qewimî, û wê wekî nirxandî nîşan bide: {link}\n\nHeke ew tu bûyî, tiştek din ji bo kirinê nîne. Heke ne tu bûyî, niha şîfreya xwe biguherîne.\n\n— Ewlehiya Hevalo',
+      text: 'Tiştek li Hevalo hewceyî baldariya te ye:\n\n{list}\n\nTomara ewlehiyê veke da ku bibînî çi qewimî, û wê wekî nirxandî nîşan bide: {link}\n\nHeke ew tu bûyî, tiştekî din ji bo kirinê nîne. Heke ne tu bûyî, niha şîfreya xwe biguherîne.\n\n— Ewlehiya Hevalo',
     },
   },
   /*
@@ -177,7 +177,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     ku: {
       subject: 'Agahdariya te ya mafê nivîskariyê: me ew rakir ({reference})',
       text:
-        'Me li agahdariya te ya mafê nivîskariyê {reference} nêrî û naveroka ku te ragihandibû rakir, an jî gihîştina wê girt.\n\nKesê ku ew şandibû sedem hat agahdarkirin. Heke ew bersiveke dijber bişîne, em ê kopiyekê ji te re bişînin.\n\n— Hevalo',
+        'Me li agahdariya te ya mafê nivîskariyê {reference} nêrî û naveroka ku te ragihandibû rakir, an jî gihîştina wê girt.\n\nKesê ku ew şandibû ji sedemê hat agahdarkirin. Heke ew bersiveke dijber bişîne, em ê kopiyekê ji te re bişînin.\n\n— Hevalo',
     },
   },
   /*
@@ -195,7 +195,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     ku: {
       subject: 'Agahdariya te ya mafê nivîskariyê: biryara me ({reference})',
       text:
-        'Me li agahdariya te ya mafê nivîskariyê {reference} nêrî, me ew pejirand û me li dijî hesabê têkildar tedbîr girt.\n\nAgahdariya te ne li ser postekê bû ku em karibin rakin, ji ber vê yekê tiştek ji ber wê nehat rakirin. Heke materyal hîn li Hevalo be, lînka wê ya rast ji {contact} re binivîse û referansa xwe binivîse.\n\n— Hevalo',
+        'Me li agahdariya te ya mafê nivîskariyê {reference} nêrî, me ew pejirand û me li dijî hesabê têkildar tedbîr girt.\n\nAgahdariya te ne li ser postekê bû ku em karibin rakin, ji ber vê yekê tiştek ji ber wê nehat rakirin. Heke materyal hîn li Hevalo be, girêdana wê ya rast ji {contact} re binivîse û referansa xwe binivîse.\n\n— Hevalo',
     },
   },
   'copyright-kept': {
@@ -234,7 +234,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Têketineke nû li hesabê te yê Hevalo',
-      text: 'Silav {username},\n\nNiha ji amûreke ku berê qet bi hesabê te yê Hevalo re nehatibû bikaranîn têketin hate kirin ({time}).\n\nHeke ev tu bûyî, tiştek nayê kirin.\n\nHeke ne tu bûyî, niha şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre): bi vî awayî hemû amûr ji hesabê derdikevin.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\nNiha ji amûreke ku berê qet bi hesabê te yê Hevalo re nehatibû bikaranîn têketin hate kirin ({time}).\n\nHeke ev tu bûyî, tiştek ji bo kirinê nîne.\n\nHeke ne tu bûyî, niha şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre): bi vî awayî hemû amûr ji hesabê derdikevin.\n\n— Tîma Hevalo',
     },
   },
   'sign-in-attempts': {
@@ -244,7 +244,7 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     },
     ku: {
       subject: 'Gelek hewldanên têketinê yên têkçûyî li hesabê te yê Hevalo',
-      text: 'Silav {username},\n\nKesekî ji bo hesabê te yê Hevalo çend şîfreyên şaş ceribandine, ji ber vê yekê me ji bo demekê têketinên ji amûrên nû rawestandin ({time}). Amûrên ku tu jixwe bikar tînî bandor nabin.\n\nHeke ev tu bûyî, hinekî bisekine an şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre).\n\nHeke ne tu bûyî, şîfreya te nehatiye guhertin, lê hilbijartina şîfreyeke nû û yekta baş e.\n\n— Tîma Hevalo',
+      text: 'Silav {username},\n\nKesekî ji bo hesabê te yê Hevalo çend şîfreyên şaş ceribandine, ji ber vê yekê me ji bo demekê têketinên ji amûrên nû rawestandin ({time}). Amûrên ku tu jixwe bi kar tînî bandor nabin.\n\nHeke ev tu bûyî, hinekî bisekine an şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfreya xwe ji bîr kir?” hilbijêre).\n\nHeke ne tu bûyî, şîfreya te nehatiye guhertin, lê hilbijartina şîfreyeke nû û yekta baş e.\n\n— Tîma Hevalo',
     },
   },
   'deletion-notice': {
@@ -274,7 +274,7 @@ function interpolate(template: string, vars: Record<string, string>): string {
 const DESIGN: Record<EmailTemplate, { picture: EmailPicture; button?: Record<EmailLocale, string> }> = {
   'verify-email': { picture: 'letter', button: { en: 'Confirm your email', ku: 'E-nameya xwe piştrast bike' } },
   'verify-email-code': { picture: 'code' },
-  'password-reset': { picture: 'key', button: { en: 'Update password', ku: 'Şîfreyê Nû Bike' } },
+  'password-reset': { picture: 'key', button: { en: 'Update password', ku: 'Şîfreyê nû bike' } },
   'password-changed': { picture: 'lock' },
   'username-changed': { picture: 'badge' },
   'oauth-no-password': { picture: 'key', button: { en: 'Set a password', ku: 'Şîfreyekê saz bike' } },

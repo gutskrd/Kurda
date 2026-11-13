@@ -126,10 +126,10 @@ describe('a group’s news, in the reader’s language', () => {
     expect(news({ kind: 'group_request_approved', rejoined: 'false' }).body).toBe('Ein Admin kann dich wieder zu Newroz hinzufügen.');
     expect(news({ kind: 'group_request_approved', rejoined: 'false', privacy: 'open' }).body).toBe('Ein Admin kann dich wieder zu Newroz hinzufügen.');
     expect(news({ kind: 'group_request_declined', closed: 'true' }).body).toBe(
-      'Deine Bitte, zu Newroz zurückzukommen, wurde nicht angenommen. Die Admins nehmen für diese Gruppe keine Bitten mehr von dir an.',
+      'Deine Anfrage, zu Newroz zurückzukommen, wurde nicht angenommen. Die Admins nehmen für diese Gruppe keine Anfragen mehr von dir an.',
     );
     expect(news({ kind: 'group_request_declined', until: '2026-11-05T10:00:00.000Z' }).body).toMatch(
-      /^Deine Bitte, zu Newroz zurückzukommen, wurde nicht angenommen\. Du kannst am .+ wieder fragen\.$/,
+      /^Deine Anfrage, zu Newroz zurückzukommen, wurde nicht angenommen\. Du kannst am .+ wieder anfragen\.$/,
     );
   });
 

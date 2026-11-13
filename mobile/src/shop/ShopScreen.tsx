@@ -165,7 +165,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       if (needsConfirmation(item)) {
         Alert.alert(
           t('shop.confirmPurchase'),
-          `${t('shop.spendOn', { price: formatNumber(item.price, locale), currency: currencyLabel(item.currency), name: item.name })}\n\n${t('shop.finalNote')}`,
+          `${t('shop.spendOn', { price: formatNumber(item.price, locale), currency: currencyLabel(t, item.currency), name: item.name })}\n\n${t('shop.finalNote')}`,
           [
             { text: t('common.cancel'), style: 'cancel' },
             { text: t('shop.buy'), onPress: () => void buy(item) },
@@ -355,7 +355,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
 
         {gifting ? (
           <GiftSheet
-            item={{ sku: gifting.sku, name: gifting.name, price: gifting.price, currency: currencyLabel(gifting.currency) }}
+            item={{ sku: gifting.sku, name: gifting.name, price: gifting.price, currency: currencyLabel(t, gifting.currency) }}
             onClose={() => setGifting(null)}
             onSent={(balance, to) => {
               const item = gifting;
@@ -632,7 +632,7 @@ function ItemDetail({
       ) : (
         <View style={styles.insufficient}>
           <Text style={[styles.insufficientText, { color: colors.textSecondary }]}>
-            {t('shop.notEnough', { currency: currencyLabel(item.currency) })}{' '}
+            {t('shop.notEnough', { currency: currencyLabel(t, item.currency) })}{' '}
             {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.earnMoreGems')}
           </Text>
           {item.currency === 'zer' ? (

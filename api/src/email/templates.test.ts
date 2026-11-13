@@ -91,7 +91,7 @@ describe('branded auth emails', () => {
     const link = 'https://hevalo.app/reset-password?token=abc123';
     for (const [locale, button] of [
       ['en', 'Update password'],
-      ['ku', 'Şîfreyê Nû Bike'],
+      ['ku', 'Şîfreyê nû bike'],
     ] as const) {
       const r = renderEmail('password-reset', locale, { link });
       expect(r.html, locale).toContain(`href="${link}"`);
@@ -223,7 +223,7 @@ describe('every email, designed', () => {
   it('makes the link the one button, worded for what it does, with the address again underneath', () => {
     for (const [template, en, ku] of [
       ['verify-email', 'Confirm your email', 'E-nameya xwe piştrast bike'],
-      ['password-reset', 'Update password', 'Şîfreyê Nû Bike'],
+      ['password-reset', 'Update password', 'Şîfreyê nû bike'],
       ['oauth-no-password', 'Set a password', 'Şîfreyekê saz bike'],
       ['moderation-urgent', 'Open the report', 'Raporê veke'],
       ['security-alert', 'Open the security log', 'Tomara ewlehiyê veke'],

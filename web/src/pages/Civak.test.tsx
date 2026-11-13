@@ -280,7 +280,7 @@ describe('Civak', () => {
       expect(within(panel).getByRole('radiogroup', { name: 'Ordenar por' })).toBeInTheDocument();
       expect(within(panel).getByRole('radio', { name: 'Más populares' })).toBeInTheDocument();
       expect(within(panel).getByRole('radio', { name: 'Todo' })).toBeInTheDocument();
-      expect(within(panel).getByRole('group', { name: 'Escritos' })).toBeInTheDocument();
+      expect(within(panel).getByRole('group', { name: 'Textos' })).toBeInTheDocument();
       expect(within(panel).getByRole('radio', { name: 'Todas las imágenes' })).toBeInTheDocument();
       expect(within(panel).getByRole('button', { name: 'Mostrar publicaciones' })).toBeInTheDocument();
     });
