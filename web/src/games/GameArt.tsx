@@ -18,10 +18,9 @@ import './game-art.css';
  *
  * `moving` plays the cover's own acting: its parts are laid over one another
  * and each is given its part as one animation of the browser's, transforms
- * and opacity only, so nothing is drawn again while it plays. A part that is
- * only passing through the loop (a note sung, an answer given) is not shown
- * while nothing plays. A reader who asked for less motion is shown the still
- * cover, and so is a browser that cannot play it.
+ * and opacity only, so nothing is drawn again while it plays. A reader who
+ * asked for less motion is shown the still cover, and so is a browser that
+ * cannot play it.
  *
  * How much it plays is the caller's to say, by how many covers it shows. One
  * cover with the screen to itself — the game put forward on the Games page,
@@ -127,7 +126,7 @@ function MovingArt({ game, size, idPrefix, after, once, again }: { game: GameEmb
         <span
           key={i}
           className="gp-art-layer"
-          style={{ transformOrigin: `${(layer.pivot[0] / 120) * size}px ${(layer.pivot[1] / 120) * size}px`, opacity: layer.passing ? 0 : undefined }}
+          style={{ transformOrigin: `${(layer.pivot[0] / 120) * size}px ${(layer.pivot[1] / 120) * size}px` }}
           dangerouslySetInnerHTML={{ __html: layer.svg }}
         />
       ))}

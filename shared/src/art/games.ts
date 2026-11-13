@@ -62,12 +62,12 @@ export function gameEmblemTone(game: GameEmblem): string {
   return TONES[game];
 }
 
-/** A game's cover, still: every part where it is drawn, but for the ones that are only passing through. */
+/** A game's cover, still: every part where it is drawn. */
 export function gameEmblemSvg(opts: GameArtOptions & { game: GameEmblem }): string {
   const cover = coverOf(opts.game);
   const size = checkSize(opts.size, 120);
   const dr = new Drawing(prefixFor(opts.idPrefix, 'game-emblem', opts.game));
-  for (const part of cover.parts) if (!part.passing) part.draw(dr);
+  for (const part of cover.parts) part.draw(dr);
   return dr.svg(size, opts.title ?? cover.title);
 }
 
@@ -78,8 +78,6 @@ export interface GameEmblemLayer {
   pivot: readonly [number, number];
   /** GAME_EMBLEM_SAMPLES + 1 poses, evenly spaced over the loop; null for a part that never moves */
   poses: GamePose[] | null;
-  /** only there for a moment of the loop: while the cover is not playing, this part is not shown */
-  passing: boolean;
 }
 
 /** How long a game's cover takes to play once. */
@@ -99,6 +97,6 @@ export function gameEmblemLayers(opts: GameArtOptions & { game: GameEmblem }): G
   return cover.parts.map((part, i) => {
     const dr = new Drawing(`${prefix}l${i}`);
     part.draw(dr);
-    return { svg: dr.svg(size, opts.title ?? cover.title), pivot: part.pivot ?? [60, 60], poses: part.keys ? sample(part.keys) : null, passing: part.passing === true };
+    return { svg: dr.svg(size, opts.title ?? cover.title), pivot: part.pivot ?? [60, 60], poses: part.keys ? sample(part.keys) : null };
   });
 }

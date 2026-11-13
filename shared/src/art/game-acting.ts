@@ -93,8 +93,6 @@ export interface Part {
   pivot?: readonly [number, number];
   /** its acting; none, and it stays where it is drawn */
   keys?: readonly Key[];
-  /** left out of the still picture: something that is only there for a moment of the loop */
-  passing?: boolean;
 }
 
 /** A game's cover: its parts back to front, and how long its acting takes to go round once. */
@@ -103,10 +101,3 @@ export interface Cover {
   loopMs: number;
   parts: readonly Part[];
 }
-
-/** Something that pops into being at `at`, growing from nothing about its pivot and swinging in from `turn` degrees. */
-export const appears = (at: number, turn = 0): Key[] => [
-  [0, { s: 0, o: 0, r: turn }],
-  [at, {}, 'hold'],
-  [at + 0.09, { s: 1, o: 1, r: 0 }, 'back'],
-];

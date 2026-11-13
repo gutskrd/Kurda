@@ -29,18 +29,8 @@ describe('a game’s emblem', () => {
     expect(drawn).toHaveLength(layers.length);
     expect(container.querySelectorAll('svg')).toHaveLength(layers.length);
     // the torch's beam swings about the torch, not about the middle of the picture
-    expect(drawn[1]!.style.transformOrigin).toBe('29px 93.5px');
+    expect(drawn[1]!.style.transformOrigin).toBe('105px 72.6px');
     expect(container.querySelector('.gp-art--moving')?.getAttribute('aria-hidden')).toBe('true');
-  });
-
-  it('keeps a part that is only passing through the loop out of sight while nothing plays', () => {
-    lessMotion(false);
-    const { container } = render(<GameArt game="rhyme" size={120} moving="once" />);
-    const layers = gameEmblemLayers({ game: 'rhyme', size: 120 });
-    const drawn = [...container.querySelectorAll<HTMLElement>('.gp-art-layer')];
-    // the answering note is sung for a moment of the loop: at rest it is not in the picture
-    expect(layers.some((l) => l.passing)).toBe(true);
-    layers.forEach((layer, i) => expect(drawn[i]!.style.opacity).toBe(layer.passing ? '0' : ''));
   });
 
   it('gives every drawing ids of its own, so two of the same emblem on a page do not share a clip path', () => {

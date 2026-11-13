@@ -39,7 +39,7 @@ import {
   impostorWayTone,
 } from './impostor.js';
 import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
-import { LETTERS, brush, letter } from './ink.js';
+import { LETTERS, letter } from './ink.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import {
@@ -942,16 +942,27 @@ describe('the games’ emblems', () => {
     expect(new Set(grounds).size).toBe(GAME_EMBLEMS.length);
   });
 
-  it('writes only letters the brush knows, and says so when asked for another', () => {
+  it('writes only the letters it has been taught, each a clean line, and says so when asked for another', () => {
     // the letters the Kurdish alphabet adds to the Latin one are all there
     for (const ch of ['Ê', 'Î', 'Û', 'Ç', 'Ş']) expect(LETTERS).toContain(ch);
-    for (const ch of LETTERS) expect(letter(ch, 0, 0, 20, 3)).toMatch(/^M[-\d. ]+C[-\d. C]+Z/);
-    expect(() => letter('ß', 0, 0, 20, 3)).toThrow(RangeError);
-    // a stroke is a closed shape, thinner at its ends than in its middle
-    const stroke = brush([[0, 0], [20, 0], [40, 0]], 6, [0.2, 0.2]);
-    const ys = [...stroke.matchAll(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g)].map((m) => Number(m[2]));
-    expect(stroke.endsWith('Z')).toBe(true);
-    expect(Math.max(...ys)).toBeCloseTo(3, 0);
+    for (const ch of LETTERS) {
+      const drawn = letter(ch, 10, 20, 14, '#3a2b4d', 2);
+      expect(drawn).toMatch(/^<path d="M[^"]+" fill="none" stroke="#3a2b4d" stroke-width="[\d.]+" stroke-linecap="round" stroke-linejoin="round" transform="translate\(10 20\) scale\(1\.4\)"\/>$/);
+    }
+    // the line is as thick as asked whatever size the letter is: thinned by as much as the letter is scaled up
+    expect(letter('A', 0, 0, 20, '#000000', 3)).toContain('stroke-width="1.5"');
+    expect(() => letter('ß', 0, 0, 20, '#000000', 3)).toThrow(RangeError);
+  });
+
+  it('shows each word game as the game is: Peyvok five letters wide, and words from the first lessons', () => {
+    // every letter drawn on a cover is a path of the letters' own; counting them counts what is written
+    const written = (game: (typeof GAME_EMBLEMS)[number]): number => gameEmblemSvg({ game }).split('stroke-linejoin="round" transform="translate(').length - 1;
+    // dayik, silav, heval on the board, and the two letters standing beside the phone
+    expect(written('peyvok')).toBe(17);
+    // dar and kar
+    expect(written('rhyme')).toBe(6);
+    // şêr, roj, jin, sharing the letters they meet on
+    expect(written('last-letter')).toBe(7);
   });
 
   describe('in motion', () => {
@@ -1009,25 +1020,13 @@ describe('the games’ emblems', () => {
       }
     });
 
-    it('begins and ends as the still picture: a part that stays is where it was drawn, and one only passing through is not there', () => {
+    it('begins and ends as the still picture: every part is where it was drawn', () => {
       for (const game of GAME_EMBLEMS) {
         for (const layer of layersOf(game)) {
-          if (!layer.poses) {
-            expect(layer.passing, game).toBe(false);
-            continue;
-          }
-          for (const pose of [layer.poses[0]!, layer.poses[GAME_EMBLEM_SAMPLES]!]) {
-            if (layer.passing) expect(pose.o, game).toBe(0);
-            else expect(pose, game).toEqual({ x: 0, y: 0, r: 0, sx: 1, sy: 1, o: 1 });
-          }
+          if (!layer.poses) continue;
+          for (const pose of [layer.poses[0]!, layer.poses[GAME_EMBLEM_SAMPLES]!]) expect(pose, game).toEqual({ x: 0, y: 0, r: 0, sx: 1, sy: 1, o: 1 });
         }
       }
-      // the still picture is the parts that stay, and nothing of the ones passing through
-      const answer = layersOf('rhyme').filter((l) => l.passing);
-      expect(answer.length).toBeGreaterThan(0);
-      const stays = layersOf('rhyme').filter((l) => !l.passing).length;
-      expect(gameEmblemSvg({ game: 'rhyme' }).split('M0 0H120V120H0Z').length - 1).toBe(1);
-      expect(stays).toBeLessThan(layersOf('rhyme').length);
     });
 
     it('rests: for a good part of every loop nothing in the emblem moves at all', () => {
