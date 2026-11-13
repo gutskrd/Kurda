@@ -68,6 +68,8 @@ export function ProfileCard({
 }: ProfileCardProps): React.JSX.Element {
   const t = useT();
   const face = useAvatarSrc(avatarUrl);
+  // on a full profile the page is about this person, and their name is its heading; on a card among others it is a name
+  const Name = wide ? 'h1' : 'span';
   return (
     <div className={`pc${wide ? ' pc--wide' : ''}${background ? ' pc--has-bg' : ''}`}>
       <div className="pc-banner">
@@ -96,7 +98,9 @@ export function ProfileCard({
           </span>
           <div className="pc-names">
             <div className="pc-name-row">
-              <span className="pc-name">{name}</span>
+              <Name className="pc-name" dir="auto">
+                {name}
+              </Name>
               {premium && <PremiumPill />}
             </div>
             {username && <div className="pc-handle">@{username}</div>}

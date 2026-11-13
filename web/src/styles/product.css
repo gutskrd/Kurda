@@ -95,6 +95,7 @@
   min-width: 0;
 }
 .pc-name {
+  margin: 0;
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 600;
@@ -238,6 +239,10 @@
 .pc--wide .pc-banner {
   height: clamp(140px, 24vw, 230px);
 }
+/* nobody's picture to show: enough of a banner for the face to stand over, and no more empty wall than that */
+.pc--wide:not(.pc--has-bg) .pc-banner {
+  height: clamp(76px, 13vw, 116px);
+}
 .pc--wide .pc-body {
   padding: 0 clamp(18px, 3vw, 32px) 24px;
 }
@@ -248,9 +253,18 @@
    * until it no longer overlapped anything.
    */
   .pc--wide .pc-id {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
     column-gap: 22px;
+  }
+  /*
+   * What can be done sits under the name, not beside it. Beside it, three
+   * buttons took the name's room and a long name broke in the middle of a
+   * word; under it, the name has the whole line and the order is the phone's:
+   * who, in their own words, then what you can do.
+   */
+  .pc--wide .pc-aside {
+    grid-column: 2;
   }
   .pc--wide .pc-face {
     width: 120px;
@@ -265,7 +279,7 @@
     font-size: 1.85rem;
   }
   .pc--wide .pc-aside {
-    margin-top: 16px;
+    margin-top: 14px;
   }
   .pc--wide .pcard-level {
     max-width: 440px;

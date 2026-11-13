@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Routes, Route } from 'react-router-dom';
 import { UserProfile } from './UserProfile';
@@ -61,6 +61,31 @@ describe('UserProfile (other user, full page)', () => {
     expect(screen.queryByRole('link', { name: /edit profile/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /add friend/i }));
     expect(calls.some((c) => c.url.includes('/friends/requests'))).toBe(true);
+  });
+
+  /**
+   * Somebody's numbers are part of who they are, so they are in the card with
+   * their name: once they were a second card that a phone showed under every
+   * post the person had written.
+   */
+  it('shows their numbers with their name, as numbers and not as ways into your own pages', async () => {
+    render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'friends', private: false, bio: null, xp: 410, streak: 3, achievements: 5, online: true });
+    expect(await screen.findByRole('heading', { level: 1, name: 'Zana K' })).toBeInTheDocument();
+
+    const card = document.querySelector<HTMLElement>('.pc')!;
+    const figure = (label: string) => within(card).getByText(label, { selector: '.mkp-fact-label' }).parentElement?.querySelector('.mkp-fact-value')?.textContent;
+    expect(figure('Streak')).toBe('3');
+    expect(figure('XP')).toBe('410');
+    expect(figure('Badges')).toBe('5');
+    // how many friends they have was not sent, so it is not guessed at
+    expect(within(card).queryByText('Friends', { selector: '.mkp-fact-label' })).toBeNull();
+    expect(within(card).getByRole('list').querySelectorAll('a')).toHaveLength(0);
+
+    // here now is said once, by their name; an empty bio is not announced on somebody else's profile
+    expect(within(card).getAllByText('Online')).toHaveLength(1);
+    expect(screen.queryByText(/no bio/i)).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Add a few words about yourself' })).toBeNull();
+    expect(document.querySelector('aside')).toBeNull();
   });
 
   it('offers a friend a game, and only a friend', async () => {

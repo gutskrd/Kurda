@@ -3,24 +3,24 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { InventoryItem, MeProfile, ProfileSections, PublicProfile, UserSummary, WalletBalances } from '../lib/types';
-import { FullProfile, type FullProfileView } from '../profile/FullProfile';
+import { FullProfile, OnlyYou, ProfileFacts, type FullProfileView } from '../profile/FullProfile';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { ProfileProgress } from '../profile/ProfileProgress';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
-import { BookmarkIcon } from '../components/icons';
+import { CoinIcon } from '../components/icons';
 import { ProfileMenu, ShareProfile } from '../profile/ProfileMenu';
 import { ErrorState } from '../components/states';
 import { FullProfileSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 
-/** Faces in the friend stack. AvatarStack draws three; the rest is a number. */
-const FRIEND_FACES = 3;
-
 /**
- * The signed-in user's own full profile — a read-only, Hevalo showcase. All
- * editing lives on /app/profile/edit (reached from the Edit Profile button). The
- * sidebar adds private-to-you rows: Zêr, an owned-icon stack, and a friend stack.
+ * The signed-in user's own profile: the same page everybody else's is
+ * (profile/FullProfile), with what is yours to do in place of the friend
+ * actions — edit, share, and the menu of the shop, your friends, your badges
+ * and settings — and one section more that only you are shown: the streak
+ * numbers a missed day never takes away, your freezes and your Zêr. All
+ * editing lives on /app/profile/edit.
  */
 export function Profile(): React.JSX.Element {
   const { client, user } = useAuth();
@@ -31,10 +31,8 @@ export function Profile(): React.JSX.Element {
   // badges, frame) is asked for with the rest rather than after it
   const selfId = user?.id ?? null;
   const [zer, setZer] = useState<number | null>(null);
-  // three faces and a number is the whole of what this draws, so it asks for
-  // three; `friendCount` is the real total, which arrives with them
-  const [friends, setFriends] = useState<UserSummary[]>([]);
-  const [friendCount, setFriendCount] = useState(0);
+  // only how many: the faces are on the Friends page, one tap from the number
+  const [friendCount, setFriendCount] = useState<number | null>(null);
   const [icons, setIcons] = useState<InventoryItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,7 +40,7 @@ export function Profile(): React.JSX.Element {
 
   const [sections, setSections] = useState<ProfileSections | null>(null);
   // badges, ranks, league and frame: /me does not carry them, your public profile does
-  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku' | 'frameUrl'> | null>(null);
+  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku' | 'frameUrl' | 'achievements'> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,7 +50,7 @@ export function Profile(): React.JSX.Element {
       const [m, w, f, inv, early] = await Promise.all([
         client.get<{ user: MeProfile }>('/me'),
         client.get<{ balances: WalletBalances }>('/me/wallet'),
-        client.get<{ friends: UserSummary[]; total: number }>(`/friends?limit=${FRIEND_FACES}`),
+        client.get<{ friends: UserSummary[]; total: number }>('/friends?limit=1'),
         client.get<{ items: InventoryItem[] }>('/me/inventory'),
         selfId ? client.get<PublicProfile>(`/users/${selfId}`) : Promise.resolve(null),
       ]);
@@ -60,13 +58,9 @@ export function Profile(): React.JSX.Element {
       if (m.ok && m.data?.user?.username) setMe(m.data.user);
       else setError(m.ok ? t('profile.yoursNotLoaded') : describeError(m.error, t));
       if (w.ok) setZer(w.data.balances.zer);
-      if (f.ok) {
-        const list = f.data.friends ?? [];
-        setFriends(list);
-        // an API that predates paging sends no total and no limit — it sent
-        // the whole list, so its length IS the total
-        setFriendCount(f.data.total ?? list.length);
-      }
+      // an API that predates paging sends no total and no limit: it sent the
+      // whole list, so its length is the total
+      if (f.ok) setFriendCount(f.data.total ?? (f.data.friends ?? []).length);
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
 
       // your own activity sections: /me does not carry them, and the public
@@ -80,7 +74,7 @@ export function Profile(): React.JSX.Element {
       if (cancelled) return;
       if (p?.ok) {
         setSections(p.data.sections ?? null);
-        setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl });
+        setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku, frameUrl: p.data.frameUrl, achievements: p.data.achievements });
       }
       setLoading(false);
     })();
@@ -99,70 +93,63 @@ export function Profile(): React.JSX.Element {
     icon: me.icon ?? null,
     background: me.background ?? null,
     premium: me.premium,
-    level: me.level?.level ?? 1,
     levelInfo: me.level,
     xp: me.level?.xp ?? me.xp,
     streakDays: me.streak.current,
-    learning: {
-      longest: me.streak.longest,
-      daysLearned: me.streak.daysLearned ?? 0,
-      freezes: me.streak.freezes,
-      sessionsPerFreeze: me.streak.sessionsPerFreeze ?? 5,
-      maxFreezes: me.streak.maxFreezes ?? 1,
-    },
+    friends: friendCount,
+    badges: shown?.achievements ?? null,
     bio: me.bio,
     favPoem: me.favoritePoem ?? null,
     favStory: me.favoriteStory ?? null,
-    online: true, // viewing your own profile → you're online
     country: me.country ? { code: me.country, name: countryName(me.country, locale) ?? me.country } : null,
     frameSku: shown?.frameSku ?? null,
     frameUrl: shown?.frameUrl ?? null,
   };
+  const number = (n: number): string => n.toLocaleString(locale);
+  const maxFreezes = me.streak.maxFreezes ?? 1;
+  const sessionsPerFreeze = me.streak.sessionsPerFreeze ?? 5;
 
   return (
     <FullProfile
+      own
       view={view}
-      // your name at the top, and everything that is yours but is not this page behind the menu beside it
-      header={
-        <div className="profile-head">
-          <h1 className="profile-head-name" dir="auto">@{me.username}</h1>
+      // what is yours to do: edit, share, and everything that is yours but is not this page behind the menu
+      headerAction={
+        <div className="profile-actions-row">
+          <Link to="/app/profile/edit" className="btn btn-secondary btn-sm">
+            {t('profile.edit')}
+          </Link>
+          <ShareProfile userId={me.id} name={view.name} />
           <ProfileMenu />
         </div>
       }
-      headerAction={
-        <div className="profile-actions-row">
-          <Link to="/app/profile/edit" className="btn btn-secondary btn-sm">{t('profile.edit')}</Link>
-          <ShareProfile userId={me.id} name={view.name} />
-        </div>
-      }
-      activity={<ProfileActivity userId={me.id} sections={sections} own />}
       progress={shown ? <ProfileProgress ranks={shown.ranks} badges={shown.badges} league={shown.league} own /> : null}
-      sidebarExtra={
-        <>
-          <div className="mkp-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
-
+      yours={
+        <OnlyYou title={t('profile.yourProgress')}>
+          <ProfileFacts
+            facts={[
+              { key: 'longest', label: t('profile.stat.longestStreak'), value: number(me.streak.longest) },
+              { key: 'days', label: t('profile.stat.daysLearned'), value: number(me.streak.daysLearned ?? 0) },
+              { key: 'freezes', label: t('profile.stat.freezes'), value: number(me.streak.freezes) },
+              // the coin leads to where it is spent
+              { key: 'zer', label: 'Zêr', value: zer === null ? '—' : number(zer), icon: <CoinIcon size={15} />, to: '/app/shop' },
+            ]}
+          />
+          <p className="field-hint mkp-yours-hint">
+            {maxFreezes > 1 ? t('profile.freezeHintPlus', { count: sessionsPerFreeze, max: maxFreezes }) : t('profile.freezeHint', { count: sessionsPerFreeze })}
+          </p>
           {icons.length > 0 && (
             <div className="mkp-collection">
-              <div className="mkp-collection-head"><span className="l">{t('profile.stat.icons')}</span><span className="n">{icons.length}</span></div>
+              <div className="mkp-collection-head">
+                <span className="l">{t('profile.stat.icons')}</span>
+                <span className="n">{icons.length}</span>
+              </div>
               <AvatarStack urls={icons.map((i) => i.assetUrl)} total={icons.length} square emptyGlyph={false} />
             </div>
           )}
-
-          <Link className="mkp-collection mkp-collection-link" to="/app/friends">
-            <div className="mkp-collection-head"><span className="l">{t('nav.friends')}</span><span className="n">{friendCount}</span></div>
-            {friendCount > 0 && <AvatarStack urls={friends.map((f) => f.avatarUrl)} total={friendCount} />}
-          </Link>
-
-          {/* Saved lives here, with the rest of what is yours, rather than in
-              the social panel — that panel is other people */}
-          <Link className="mkp-collection mkp-collection-link" to="/app/saved">
-            <div className="mkp-collection-head">
-              <span className="l">{t('saved.title')}</span>
-              <BookmarkIcon size={17} />
-            </div>
-          </Link>
-        </>
+        </OnlyYou>
       }
+      activity={<ProfileActivity userId={me.id} sections={sections} own />}
     />
   );
 }

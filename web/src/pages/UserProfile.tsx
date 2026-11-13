@@ -75,17 +75,18 @@ export function UserProfile(): React.JSX.Element {
     icon: profile.icon ?? null,
     background: profile.background ?? null,
     premium: profile.premium,
-    level: profile.level?.level ?? 1,
     levelInfo: profile.level,
     xp: profile.level?.xp ?? profile.xp ?? 0,
     streakDays: profile.streak ?? 0,
+    // how many they know is theirs to show or not: where the list did not come, neither does the number; and
+    // "0 friends" on somebody's profile is a worse thing to publish than silence (profile/ProfileFriends)
+    friends: friends && friends.total > 0 ? friends.total : null,
+    badges: profile.achievements ?? null,
     bio: profile.bio,
     favPoem: profile.favoritePoem ?? null,
     favStory: profile.favoriteStory ?? null,
     online: profile.online ?? false,
-    country: profile.country
-      ? { code: profile.country, name: countryName(profile.country, locale) ?? profile.country }
-      : null,
+    country: profile.country ? { code: profile.country, name: countryName(profile.country, locale) ?? profile.country } : null,
     frameSku: profile.frameSku ?? null,
     frameUrl: profile.frameUrl ?? null,
   };
@@ -94,18 +95,9 @@ export function UserProfile(): React.JSX.Element {
     <FullProfile
       view={view}
       headerAction={<FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />}
-      activity={
-        <>
-          <ProfileFriends userId={profile.userId} initial={friends} />
-          <ProfileActivity userId={profile.userId} sections={profile.sections} />
-        </>
-      }
       progress={<ProfileProgress ranks={profile.ranks} badges={profile.badges} league={profile.league ?? (profile.tier ? { tier: profile.tier } : null)} />}
-      sidebarExtra={
-        <>
-          {profile.achievements !== undefined && <div className="mkp-info-row"><span className="l">{t('profile.stat.achievements')}</span><span className="n">{profile.achievements}</span></div>}
-        </>
-      }
+      people={<ProfileFriends userId={profile.userId} initial={friends} />}
+      activity={<ProfileActivity userId={profile.userId} sections={profile.sections} />}
     />
   );
 }

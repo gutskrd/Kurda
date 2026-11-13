@@ -1705,10 +1705,11 @@ button.feature {
   position: relative;
   width: 100%;
 }
+/* one column at every width: who this is, then what they have done (profile/FullProfile.tsx) */
 .mkp-wrap {
   position: relative;
   z-index: 1;
-  max-width: 940px;
+  max-width: 720px;
   margin: 0 auto;
   padding: 0 16px 80px;
 }
@@ -1736,19 +1737,187 @@ button.feature {
   flex: 1 1 auto;
 }
 
-/* body */
-.mkp-body {
+/* the sections under the card, in the order they are read */
+.mkp-sections {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 230px;
-  gap: 20px;
-  margin-top: 26px;
-}
-.mkp-main {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
+  gap: 22px;
+  margin-top: 22px;
   min-width: 0;
 }
+.mkp-sections > * {
+  min-width: 0;
+}
+
+/*
+ * The numbers about somebody: a figure with its word under it, side by side
+ * under a hairline, the way a profile shows them everywhere. The word is
+ * first in the markup, for whoever has it read to them, and the figure first
+ * on the screen.
+ */
+.mkp-facts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 18px 0 0;
+  padding: 14px 0 0;
+  border-top: 1px solid var(--separator);
+  list-style: none;
+}
+.mkp-facts > li {
+  min-width: 0;
+}
+.mkp-facts > li + li {
+  border-inline-start: 1px solid var(--separator);
+}
+.mkp-fact {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px;
+  height: 100%;
+  min-height: 48px;
+  margin-inline: 4px;
+  padding: 4px 4px 6px;
+  border-radius: var(--r-sm);
+  color: inherit;
+  text-align: center;
+  text-decoration: none;
+}
+.mkp-fact-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.mkp-fact-label {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  max-width: 100%;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.mkp-fact-icon {
+  display: inline-flex;
+  flex: none;
+  line-height: 0;
+}
+/* a streak that is alive has its flame lit */
+.mkp-fact-lit {
+  color: var(--gold-ink);
+}
+/* a number with a page behind it is the way into that page */
+.mkp-fact--link {
+  transition:
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+.mkp-fact--link .mkp-fact-label {
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 35%, transparent);
+  text-underline-offset: 3px;
+}
+@media (hover: hover) {
+  .mkp-fact--link:hover {
+    background: var(--surface-2);
+  }
+}
+.mkp-fact--link:active {
+  transform: scale(0.97);
+}
+/* four in a row is tight on a phone: the words stand without their icons there */
+@media (max-width: 479px) {
+  .mkp-fact-icon {
+    display: none;
+  }
+  .mkp-fact-value {
+    font-size: 1.15rem;
+  }
+}
+
+/* what they say about themselves, with their name; and on your own, the offer to say something */
+.pc .mkp-bio {
+  max-width: 62ch;
+  margin-top: 10px;
+  font-size: 0.95rem;
+}
+.mkp-bio-add {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 2px;
+  color: var(--gold-ink);
+  font-size: 0.92rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+@media (hover: hover) {
+  .mkp-bio-add:hover {
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+}
+
+/* the favourite poem and story stand side by side where there is room for both */
+.mkp-favs {
+  display: grid;
+  gap: 22px 16px;
+}
+@media (min-width: 560px) {
+  .mkp-favs:has(> :nth-child(2)) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* what only you are shown: it says so beside its heading */
+.mkp-yours-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 4px 12px;
+}
+.mkp-yours-title {
+  margin: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+}
+.mkp-yours-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.mkp-yours .mkp-facts {
+  margin: 0;
+  padding: 0;
+  border-top: 0;
+}
+.mkp-yours-hint {
+  margin: 14px 0 0;
+}
+/* two by two on a phone, where the longer words need the room */
+@media (max-width: 559px) {
+  .mkp-yours .mkp-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    row-gap: 14px;
+  }
+  .mkp-yours .mkp-facts > li:nth-child(odd) {
+    border-inline-start: 0;
+  }
+}
+
 /* the sections under the card are cards themselves, headed the way the front page heads one */
 .mkp-showcase-label {
   margin: 0 0 8px 2px;
@@ -1803,31 +1972,12 @@ button.feature {
   letter-spacing: -0.01em;
 }
 
-/* right info sidebar */
-.mkp-online {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  padding: 16px 18px;
-  box-shadow: var(--glass-rim);
-}
-/* online in the card's own green, the way the card above says it */
-.mkp-online-title {
-  color: var(--success);
-  font-size: 0.95rem;
-  font-weight: 650;
-  margin-bottom: 2px;
-}
-.mkp-online-title.is-offline {
-  color: var(--ink-3);
-}
-
-/* label + count with a thumbnail stack below (count + thumbnail stack) */
+/* the icons you own: a count, and the icons themselves in a row under it */
 .mkp-collection {
   display: block;
-  padding: 10px 0 4px;
-  border-top: 1px solid var(--border);
-  margin-top: 6px;
+  padding: 12px 0 2px;
+  border-top: 1px solid var(--separator);
+  margin-top: 14px;
   text-decoration: none;
   color: inherit;
 }
@@ -1847,9 +1997,6 @@ button.feature {
   font-weight: 650;
   font-variant-numeric: tabular-nums;
   line-height: 1;
-}
-.mkp-collection-link:hover .n {
-  color: var(--gold-ink);
 }
 
 /*
@@ -1906,32 +2053,6 @@ button.feature {
 }
 .avatar-stack-square .avatar-stack-more {
   margin-left: 5px;
-}
-.mkp-online-sub {
-  color: var(--ink-4);
-  font-size: 0.8rem;
-  margin-bottom: 14px;
-}
-.mkp-info-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
-  padding: 7px 0;
-  text-decoration: none;
-}
-.mkp-info-row .l {
-  color: var(--ink-2);
-}
-.mkp-info-row .n {
-  color: var(--ink);
-  font-size: 1.05rem;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-  line-height: 1;
-}
-.mkp-info-link:hover .n {
-  color: var(--gold-ink);
 }
 
 /* ---- Dîmen: the community's pictures ----------------------------------- */
@@ -2055,6 +2176,8 @@ button.feature {
 /* activity: what someone has posted and played, under the showcases */
 .mkp-activity {
   padding: 12px 14px 14px;
+  /* the tabs are sized by the room this panel has, not by the window */
+  container-type: inline-size;
 }
 .mkp-tabs {
   display: flex;
@@ -2099,6 +2222,34 @@ button.feature {
   border: 1px solid var(--border);
   border-radius: 3px;
   padding: 1px 5px;
+}
+/*
+ * Five tabs with their words are wider than a phone, and the last one used to
+ * be cut off at the panel's edge with nothing to say it was there. Where the
+ * panel is narrow the open tab keeps its word and the others are their
+ * pictures, each still a full target and still named for whoever has the page
+ * read to them, so every tab is on the screen at once.
+ */
+@container (max-width: 430px) {
+  .mkp-tabs {
+    justify-content: space-between;
+    gap: 2px;
+  }
+  .mkp-tab {
+    position: relative;
+    justify-content: center;
+    min-width: 44px;
+    min-height: 40px;
+    padding-inline: 10px;
+  }
+  .mkp-tab:not(.is-active) > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 .mkp-activity-note {
   margin: 10px 2px 4px;
@@ -2278,12 +2429,6 @@ a.mkp-activity-row:hover {
   color: var(--gold-ink);
 }
 
-@media (max-width: 760px) {
-
-  .mkp-body {
-    grid-template-columns: 1fr;
-  }
-}
 
 /* ---- Kurdish Wordle ---------------------------------------------------- */
 /*
@@ -4054,14 +4199,20 @@ a.mkp-activity-row:hover {
  * profile of an account rather than of a person. Faces rather than a list:
  * recognising someone is the point, and a name alone is not recognisable.
  */
-.mkp-friends {
-  margin-bottom: 26px;
+/* one of the profile's sections, headed as the others are: the column spaces it, and its heading is their label */
+.mkp-friends .friend-heading {
+  margin: 0 0 8px 2px;
+  font-size: 0.72rem;
+  letter-spacing: 0.12em;
+}
+[dir='rtl'] .mkp-friends .friend-heading {
+  letter-spacing: normal;
 }
 .mkp-friends-count {
-  margin-left: 6px;
+  margin-inline-start: 6px;
   color: var(--ink-3);
   font-weight: 500;
-  font-size: 0.9rem;
+  letter-spacing: 0;
 }
 .mkp-friends-list {
   list-style: none;

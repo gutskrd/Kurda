@@ -25,6 +25,9 @@ const meUser = {
   createdAt: '2026-01-01T00:00:00.000Z',
 };
 
+/** The figure under one of the profile's numbers, found by the word for it. */
+const fact = (label: string): string | null | undefined => screen.getByText(label, { selector: '.mkp-fact-label' }).parentElement?.querySelector('.mkp-fact-value')?.textContent;
+
 describe('Profile view (full, read-only)', () => {
   it('renders identity, stats and an Edit Profile link — no edit controls', async () => {
     vi.stubGlobal(
@@ -42,9 +45,9 @@ describe('Profile view (full, read-only)', () => {
     expect(await screen.findByText('Ada Lovelace')).toBeInTheDocument();
     expect(document.querySelector('.pc-handle')?.textContent).toBe('@ada');
     expect(screen.getByText('Learning Kurdish.', { selector: 'p.mkp-bio' })).toBeInTheDocument();
-    expect(screen.getByText('3,200')).toBeInTheDocument(); // XP in the info panel
-    expect(screen.getByText('450')).toBeInTheDocument(); // Zêr
-    expect(screen.getByText('2')).toBeInTheDocument(); // friend count
+    expect(fact('XP')).toBe('3,200');
+    expect(fact('Zêr')).toBe('450');
+    expect(fact('Friends')).toBe('2');
 
     const edit = screen.getByRole('link', { name: /edit profile/i });
     expect(edit).toHaveAttribute('href', '/app/profile/edit');
@@ -77,12 +80,74 @@ describe('Profile view (full, read-only)', () => {
     renderApp(<Profile />, ['/app/profile']);
     await screen.findByText('Ada Lovelace');
 
-    const row = (label: string) => screen.getByText(label, { selector: '.mkp-info-row .l' }).nextElementSibling?.textContent;
-    expect(row(en['profile.stat.streak'])).toBe('0');
-    expect(row(en['profile.stat.longestStreak'])).toBe('12');
-    expect(row(en['profile.stat.daysLearned'])).toBe('41');
-    expect(row(en['profile.stat.freezes'])).toBe('1');
+    expect(fact(en['profile.stat.streak'])).toBe('0');
+    expect(fact(en['profile.stat.longestStreak'])).toBe('12');
+    expect(fact(en['profile.stat.daysLearned'])).toBe('41');
+    expect(fact(en['profile.stat.freezes'])).toBe('1');
     expect(screen.getByText(en['profile.freezeHint'].replace('{count}', '5'))).toBeInTheDocument();
+  });
+
+  /**
+   * The numbers about you used to be a card in a side column, which a phone
+   * has no room for: it fell to the bottom of the page, under every post. They
+   * are in the card with your name now, ahead of everything else in the page.
+   */
+  it('keeps the numbers with the name, ahead of the activity, in one column', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        routedFetch({
+          '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] },
+          '/friends': { friends: [{ userId: 'a', username: 'x' }], total: 7 },
+          '/users/1': { userId: '1', username: 'ada', friendStatus: 'self', private: false, achievements: 4, sections: { posts: true, games: true, likes: true, reposts: true, saved: true } },
+          '/me': { user: meUser },
+        }),
+      ),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+    await screen.findByText('Ada Lovelace');
+
+    const card = document.querySelector<HTMLElement>('.pc')!;
+    const strip = within(card).getByRole('list');
+    expect(within(strip).getAllByRole('listitem').map((li) => li.querySelector('.mkp-fact-label')?.textContent)).toEqual(['Streak', 'XP', 'Friends', 'Badges']);
+    // a number with a page of its own is the way into it; the others are only numbers
+    expect(within(strip).getByRole('link', { name: /Friends/ })).toHaveAttribute('href', '/app/friends');
+    expect(within(strip).getByRole('link', { name: /Badges/ })).toHaveAttribute('href', '/app/badges');
+    expect(within(strip).queryByRole('link', { name: /XP/ })).toBeNull();
+    // read aloud, a streak is days
+    expect(within(strip).getByText('5 days')).toHaveClass('sr-only');
+
+    // nothing is put beside the page any more, and the activity is the last thing in it
+    expect(document.querySelector('aside')).toBeNull();
+    const tabs = await screen.findByRole('tablist');
+    expect(card.compareDocumentPosition(tabs) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const sections = [...document.querySelectorAll('.mkp-sections > *')];
+    expect(sections[sections.length - 1]).toContainElement(tabs);
+  });
+
+  it('says which part only you are shown, and does not say you are online on your own profile', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 450, gems: 0 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: meUser } })),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+    await screen.findByText('Ada Lovelace');
+
+    const yours = screen.getByRole('heading', { level: 2, name: 'Your progress' }).closest('section')!;
+    expect(within(yours).getByText('Only you can see this')).toBeInTheDocument();
+    expect(within(yours).getByRole('link', { name: /Zêr/ })).toHaveAttribute('href', '/app/shop');
+    expect(screen.queryByText('Online')).toBeNull();
+  });
+
+  it('offers to write a bio where there is none, instead of saying there is none', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(routedFetch({ '/me/wallet': { balances: { zer: 0, gems: 0 }, history: [] }, '/friends': { friends: [], total: 0 }, '/me': { user: { ...meUser, bio: null } } })),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+    await screen.findByText('Ada Lovelace');
+    expect(screen.getByRole('link', { name: 'Add a few words about yourself' })).toHaveAttribute('href', '/app/profile/edit');
+    expect(screen.queryByText(/no bio/i)).toBeNull();
   });
 
   it('renders the equipped background, resolved avatar, premium and level', async () => {
@@ -117,7 +182,7 @@ describe('Profile view (full, read-only)', () => {
     expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 3');
   });
 
-  it('puts your name at the top, and everything that is yours behind the menu beside it', async () => {
+  it('makes your name the page’s heading, and keeps everything that is yours behind the menu beside Edit and Share', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn(
@@ -130,8 +195,10 @@ describe('Profile view (full, read-only)', () => {
     );
     renderApp(<Profile />, ['/app/profile']);
 
-    expect(await screen.findByRole('heading', { level: 1, name: '@ada' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /share profile/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Ada Lovelace' })).toBeInTheDocument();
+    const actions = document.querySelector<HTMLElement>('.profile-actions-row')!;
+    expect(within(actions).getByRole('link', { name: /edit profile/i })).toBeInTheDocument();
+    expect(within(actions).getByRole('button', { name: /share profile/i })).toBeInTheDocument();
 
     // the button says what it holds, in the items’ own words, rather than “Menu”
     const menu = screen.getByRole('button', { name: 'Shop, Saved, Friends, Badges, Rankings, Settings' });

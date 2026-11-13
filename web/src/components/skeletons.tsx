@@ -887,31 +887,20 @@ export function ProfileCardSkeleton(): React.JSX.Element {
 }
 
 /**
- * The full profile page, as FullProfile lays it out: on your own, your name
- * and the menu above the card; the wide card with its banner, face, name and
- * handle, the buttons beside them and the level bar; then About, the second
- * showcase (your badges, or their friends) and the activity with its tabs,
- * beside the column of numbers.
+ * The full profile page, as FullProfile lays it out, in its one column: the
+ * wide card with its banner, face, name and handle, the buttons, the level
+ * bar and the row of numbers; then the second section (your badges, or their
+ * friends), on your own the section only you are shown, and the activity with
+ * its tabs.
  *
- * The banner is a plain shimmer: whether somebody has a background is not known
- * until their profile arrives, and the card's own default banner is what shows
- * when they do not.
+ * The banner is the short one: whether somebody has a background is not known
+ * until their profile arrives, and most people have none.
  */
 export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey; own?: boolean }): React.JSX.Element {
   const t = useT();
-  // your own column says more about you than anybody else's does
-  const rows = own ? [44, 28, 52, 92, 80, 64] : [44, 28, 52];
   return (
     <SkeletonRegion label={t(label ?? 'profile.loading')} className="mkp-page">
       <div className="mkp-wrap">
-        {own && (
-          <div className="profile-head">
-            <span className="profile-head-name">
-              <Skeleton line w={128} />
-            </span>
-            <Skeleton size={44} circle />
-          </div>
-        )}
         <div className="pc pc--wide">
           <Skeleton className="pc-banner" radius={0} />
           <div className="pc-body">
@@ -928,16 +917,9 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
                 <div className="pc-handle">
                   <Skeleton line w={84} />
                 </div>
-                {own && (
-                  <>
-                    <div className="pc-online">
-                      <Skeleton line w={56} />
-                    </div>
-                    <div className="mkp-country">
-                      <Skeleton line w={88} />
-                    </div>
-                  </>
-                )}
+                <p className="mkp-bio">
+                  <Skeleton line w={own ? 190 : 210} />
+                </p>
               </div>
               <div className="pc-aside">
                 <div className={own ? 'profile-actions-row' : 'mkp-actions'}>
@@ -955,22 +937,26 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
                 <Skeleton line w={104} />
               </span>
             </div>
+            <ul className="mkp-facts">
+              {times(4, (i) => (
+                <li key={i}>
+                  <span className="mkp-fact">
+                    <span className="mkp-fact-label">
+                      <Skeleton line w={[40, 22, 44, 42][i]} />
+                    </span>
+                    <span className="mkp-fact-value">
+                      <Skeleton line w={28} />
+                    </span>
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
 
-        <div className="mkp-body">
-          <div className="mkp-main">
-            <div className="mkp-showcase-block">
-              <div className="mkp-showcase-label">
-                <Skeleton line w={48} />
-              </div>
-              <div className="mkp-showcase">
-                <p className="mkp-bio">
-                  <Skeleton line w="46%" />
-                </p>
-              </div>
-            </div>
-            {own ? (
+        <div className="mkp-sections">
+          {own ? (
+            <>
               <div className="mkp-showcase-block">
                 <div className="mkp-showcase-label">
                   <Skeleton line w={56} />
@@ -981,76 +967,61 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
                   </p>
                 </div>
               </div>
-            ) : (
-              <div className="mkp-friends">
-                <div className="friend-heading">
-                  <Skeleton line w={72} />
+              <div className="mkp-showcase-block">
+                <div className="mkp-showcase-label">
+                  <Skeleton line w={96} />
                 </div>
-                <div className="mkp-friends-list">
-                  {times(2, (i) => (
-                    <Skeleton key={i} w={i === 0 ? 92 : 80} h={40} radius="var(--r-pill)" />
-                  ))}
+                <div className="mkp-showcase mkp-yours">
+                  <ul className="mkp-facts">
+                    {times(4, (i) => (
+                      <li key={i}>
+                        <span className="mkp-fact">
+                          <span className="mkp-fact-label">
+                            <Skeleton line w={[84, 76, 88, 28][i]} />
+                          </span>
+                          <span className="mkp-fact-value">
+                            <Skeleton line w={24} />
+                          </span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="field-hint mkp-yours-hint">
+                    <Skeleton line w="86%" />
+                  </p>
                 </div>
               </div>
-            )}
-            <div className="mkp-showcase-block">
-              <div className="mkp-showcase-label">
-                <Skeleton line w={60} />
+            </>
+          ) : (
+            <div className="mkp-friends">
+              <div className="friend-heading">
+                <Skeleton line w={72} />
               </div>
-              <div className="mkp-showcase mkp-activity">
-                <div className="mkp-tabs">
-                  {times(4, (i) => (
-                    <span className="mkp-tab" key={i}>
-                      <Skeleton line w={[44, 40, 36, 52][i]} />
-                    </span>
-                  ))}
-                </div>
-                {/* the first tab is their posts, as cards: two of them, as the tab itself loads */}
-                <div className="feed mkp-activity-feed">
-                  <FeedCards count={2} />
-                </div>
+              <div className="mkp-friends-list">
+                {times(2, (i) => (
+                  <Skeleton key={i} w={i === 0 ? 92 : 80} h={40} radius="var(--r-pill)" />
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="mkp-showcase-block">
+            <div className="mkp-showcase-label">
+              <Skeleton line w={60} />
+            </div>
+            <div className="mkp-showcase mkp-activity">
+              <div className="mkp-tabs">
+                {times(4, (i) => (
+                  <span className="mkp-tab" key={i}>
+                    <Skeleton line w={[44, 40, 36, 52][i]} />
+                  </span>
+                ))}
+              </div>
+              {/* the first tab is their posts, as cards: two of them, as the tab itself loads */}
+              <div className="feed mkp-activity-feed">
+                <FeedCards count={2} />
               </div>
             </div>
           </div>
-          <aside className="mkp-side">
-            <div className="mkp-online">
-              <div className="mkp-online-title">
-                <Skeleton line w={128} />
-              </div>
-              <div className="mkp-online-sub">
-                <Skeleton line w={72} />
-              </div>
-              {rows.map((w, i) => (
-                <div className="mkp-info-row" key={i}>
-                  <span className="l">
-                    <Skeleton line w={w} />
-                  </span>
-                  <span className="n">
-                    <Skeleton line w={28} />
-                  </span>
-                </div>
-              ))}
-              {own && (
-                <>
-                  <p className="field-hint" style={{ margin: '4px 0 0' }}>
-                    <Skeleton line w="80%" />
-                  </p>
-                  {times(2, (i) => (
-                    <div className="mkp-collection" key={i}>
-                      <div className="mkp-collection-head">
-                        <span className="l">
-                          <Skeleton line w={56} />
-                        </span>
-                        <span className="n">
-                          <Skeleton line w={16} />
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-          </aside>
         </div>
       </div>
     </SkeletonRegion>

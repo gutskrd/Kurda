@@ -1492,28 +1492,37 @@
 }
 
 /* ---- your profile ------------------------------------------------------ */
-.profile-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-.profile-head-name {
-  min-width: 0;
-  font-family: var(--font-sans);
-  font-size: var(--text-section);
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .profile-menu {
   position: relative;
 }
 .profile-menu-btn .nav-bell-dot {
   top: 10px;
   inset-inline-end: 10px;
+}
+/*
+ * In the row of what you can do with your profile the menu's button is drawn
+ * as the two beside it are, a bordered pill of their height, and as the "more"
+ * on anybody else's profile is. It is still a whole fingertip to press: the
+ * target reaches a little past what is drawn.
+ */
+.profile-actions-row {
+  align-items: center;
+}
+.profile-actions-row .profile-menu-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+}
+.profile-actions-row .profile-menu-btn::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.profile-actions-row .profile-menu-btn .nav-bell-dot {
+  top: 5px;
+  inset-inline-end: 5px;
 }
 /* it hangs from the button, down into the page, not up under the bar */
 .profile-menu-list {
@@ -1545,24 +1554,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-}
-
-/* ---- what stays in place while a page scrolls ------------------------- */
-
-/*
- * The bar is fixed to the top (layout.css) and the social column to the side
- * (rail.css). A page's own side column is the third: on a wide screen it stays
- * in view under the bar while the main column scrolls past it, the way the
- * alphabet's chart does — on a profile, the facts beside the posts.
- */
-@media (min-width: 761px) {
-  .mkp-body {
-    align-items: start;
-  }
-  .mkp-side {
-    position: sticky;
-    top: calc(var(--nav-bottom) + var(--space-4));
-  }
 }
 
 /*
@@ -1841,7 +1832,6 @@
  * end ("baran@"); each handle takes its direction from its own letters.
  */
 .pc-handle,
-.mkp-online-sub,
 .friend-handle,
 .list-row-sub,
 .invite-friend-handle {
