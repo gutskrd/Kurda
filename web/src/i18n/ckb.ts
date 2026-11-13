@@ -434,7 +434,6 @@ export const ckb: Catalogue = {
   'games.mode.online': 'لە ئینتەرنێتدا یاری بکە',
   'games.play': 'یاری بکە',
   'games.featured': 'هەڵبژاردە',
-  'games.filter.all': 'هەموو',
   'games.filter.solo': 'بە تەنها',
   'games.filter.friends': 'لەگەڵ هاوڕێیان',
   'games.card.wordle': 'وشە کوردییەکە بە شەش هەوڵ بدۆزەرەوە.',

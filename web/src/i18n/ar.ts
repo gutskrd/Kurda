@@ -422,7 +422,6 @@ export const ar: Catalogue = {
   'games.mode.online': 'العب عبر الإنترنت',
   'games.play': 'العب',
   'games.featured': 'مختارات',
-  'games.filter.all': 'الكل',
   'games.filter.solo': 'بمفردك',
   'games.filter.friends': 'مع الأصدقاء',
   'games.card.wordle': 'خمّن الكلمة الكردية في ست محاولات.',

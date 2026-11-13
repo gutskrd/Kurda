@@ -428,7 +428,6 @@ export const nl: Catalogue = {
   'games.mode.online': 'Online spelen',
   'games.play': 'Spelen',
   'games.featured': 'Uitgelicht',
-  'games.filter.all': 'Alles',
   'games.filter.solo': 'In je eentje',
   'games.filter.friends': 'Met vrienden',
   'games.card.wordle': 'Raad het Koerdische woord in zes pogingen.',

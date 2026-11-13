@@ -487,7 +487,7 @@ const detective: Cover = {
 
 // ───────────────────────────────────────────────────────────── the last letter
 
-const LAVENDER = '#9a84e3';
+const PERIWINKLE = '#9ba8ee';
 const CHAIN_TILE = 20;
 const CHAIN_STEP = 22.4;
 /**
@@ -519,7 +519,7 @@ const lastLetter: Cover = {
   title: GAME_NAMES['last-letter'],
   loopMs: 6000,
   parts: [
-    { draw: (dr) => ground(dr, LAVENDER, [60, 58, 50]) },
+    { draw: (dr) => ground(dr, PERIWINKLE, [60, 58, 50]) },
     ...CHAIN.map(({ ch, c, r, meets, laid }): Part => {
       const [x, y] = chainAt(c, r);
       const draw = (dr: Drawing): void => tile(dr, x, y, CHAIN_TILE, meets ? tones(GOLD) : CREAM, ch, INK);
@@ -577,8 +577,8 @@ const impostor: Cover = {
 
 // ───────────────────────────────────────────────────────────── who am I?
 
-const MINT = '#bfe8cf';
-const HIDDEN = '#1f6a50';
+const MINT = '#bde6dc';
+const HIDDEN = '#1d6a5f';
 const NOTE = '#ffd84d';
 
 /**

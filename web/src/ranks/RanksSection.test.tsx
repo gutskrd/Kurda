@@ -93,13 +93,25 @@ describe('RanksSection', () => {
     );
   }
 
-  it('shows a card per game and the season, calmly, with the way to its page and the badges', async () => {
+  it('shows a card per game begun and the season, calmly, with the way to its page and the badges', async () => {
     signIn(mine());
     renderApp(<RanksSection />);
     expect(await screen.findByRole('heading', { name: en['ranks.title'] })).toBeInTheDocument();
     expect(screen.getAllByRole('article')).toHaveLength(3);
     expect(screen.getByRole('link', { name: /Payîz 2026.*78 days left/ })).toHaveAttribute('href', '/app/season');
     expect(screen.getByRole('link', { name: en['badges.title'] })).toHaveAttribute('href', '/app/badges');
+  });
+
+  it('gives the games not begun one line between them, each name a way to its boards, rather than a card each', async () => {
+    const untouched = { tier: null, division: null, placement: { played: 0, of: 5 }, progress: null, points: 0 } as const;
+    signIn(mine({ ranks: [card(), card({ game: 'rhyme-match', ...untouched }), card({ game: 'stories', ...untouched })] }));
+    renderApp(<RanksSection />);
+    expect(await screen.findByRole('heading', { name: en['ranks.title'] })).toBeInTheDocument();
+    // only the game begun has its card
+    expect(screen.getAllByRole('article')).toHaveLength(1);
+    expect(screen.getByText(en['ranks.unplaced'])).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Stories' })).toHaveAttribute('href', '/app/ranks/stories');
+    expect(screen.getByText('Your first 5 rated games find your starting rank.')).toBeInTheDocument();
   });
 
   it('explains a rated-game cooldown, and that friendly games are open', async () => {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { gameEmblemTone, gameOfTheDay, type GameEmblem } from '@kurda/shared';
+import { gameEmblemTone, gameOfTheDay, gamePlayColours, type GameEmblem } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { LinkButton } from '../components/Button';
@@ -13,7 +13,7 @@ import { WEB_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { GameArt } from '../games/GameArt';
 import '../games/games-page.css';
 
-/** Who a game is played with: the page's filter sorts the games by it. */
+/** Who a game is played with, said on its card. */
 type Company = 'solo' | 'friends';
 
 /**
@@ -74,12 +74,6 @@ const CLASSICS: readonly GameEntry[] = [
   },
 ];
 
-const FILTERS: ReadonlyArray<{ id: 'all' | Company; labelKey: MessageKey }> = [
-  { id: 'all', labelKey: 'games.filter.all' },
-  { id: 'solo', labelKey: 'games.filter.solo' },
-  { id: 'friends', labelKey: 'games.filter.friends' },
-];
-
 /**
  * The game the page puts forward today: one of those that can be played,
  * a different one each day, the same one for everybody all day (pure, for the
@@ -109,8 +103,15 @@ const MEANING: Partial<Record<GameEmblem, MessageKey>> = {
   'who-am-i': 'games.whoAmI.meaning',
 };
 
-/** The colour a game's card takes at its edge under a hand: the game's own. */
-const toneOf = (id: GameEmblem): React.CSSProperties => ({ '--gp-tone': gameEmblemTone(id) }) as React.CSSProperties;
+/**
+ * A game's colours on its card: its edge under a hand (`--gp-tone`), and its
+ * Play button, which is the colour of its cover with its word in whichever ink
+ * reads on it (shared/src/art/games.ts checks every game clears 4.5 to 1).
+ */
+function toneOf(id: GameEmblem): React.CSSProperties {
+  const play = gamePlayColours(id);
+  return { '--gp-tone': gameEmblemTone(id), '--gp-face': play.face, '--gp-lip': play.lip, '--gp-ink': play.ink } as React.CSSProperties;
+}
 
 /** Who a game is played with, said in small beside a single way in. */
 function Company({ company }: { company: readonly Company[] }): React.JSX.Element {
@@ -128,13 +129,12 @@ function Company({ company }: { company: readonly Company[] }): React.JSX.Elemen
 }
 
 /**
- * A game's ways in. Signed in: one button for each page it has. Only the game
- * put forward has its first in gold (`large`): gold is the one thing to press
- * on a screen, and a shelf where every card had a gold button had eight of
- * them. On the shelf the ways in are the quiet buttons, all of one weight.
- * Signed out there is nothing to open — every game keeps its score on the
- * server against the player — so the one thing offered is the way to an
- * account.
+ * A game's ways in. Signed in: one button for each page it has, the first in
+ * the game's own colour — the colour of the cover beside it, so every card's
+ * Play is its own and the shelf is not a row of the same button — and a second
+ * way, where there is one, in a soft wash of that colour. Signed out there is
+ * nothing to open — every game keeps its score on the server against the
+ * player — so the one thing offered is the way to an account.
  */
 function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: boolean; large?: boolean }): React.JSX.Element {
   const t = useT();
@@ -151,7 +151,7 @@ function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: bo
   return (
     <div className="gp-ways">
       {game.ways.map((way, i) => (
-        <Link key={way.href} to={way.href} className={`btn ${i === 0 && large ? 'btn-primary gp-play' : 'btn-secondary'}${size}`}>
+        <Link key={way.href} to={way.href} className={`btn ${i === 0 ? 'gp-play' : 'gp-play-alt'}${size}`}>
           {t(way.labelKey)}
         </Link>
       ))}
@@ -195,7 +195,9 @@ function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry
  * top, a way in for somebody holding a friend's code, then every game as one
  * card — its drawn emblem, a line about it, and a button for each way it is
  * played. Nothing on a card needs a second step: a game with a page for
- * playing alone and another for playing online has a button for each.
+ * playing alone and another for playing online has a button for each. There
+ * is no filter: a handful of games, each saying who it is played with, is
+ * read faster than a control that sorts them.
  *
  * Every game needs an account, the solo rounds included: the server keeps the
  * score against the player (every route in api/src/game asks who is playing).
@@ -212,7 +214,6 @@ export function Games(): React.JSX.Element {
   const { status } = useAuth();
   const signedIn = status === 'signedIn';
   const t = useT();
-  const [filter, setFilter] = useState<'all' | Company>('all');
   // the learning games (games/learnGames.tsx): all of them, each with whether it can be played yet
   const learnGames = useListedLearnGames();
 
@@ -239,9 +240,9 @@ export function Games(): React.JSX.Element {
   );
   const open = games.filter((g) => g.ready);
   const soon = games.filter((g) => !g.ready);
-  // the game put forward stands above the shelf, and is not said twice on it; under a filter the shelf is whole
-  const featured = filter === 'all' ? featuredGame(games, Date.now()) : null;
-  const shelf = open.filter((g) => g !== featured && (filter === 'all' || g.company.includes(filter)));
+  // the game put forward stands above the shelf, and is not said twice on it
+  const featured = featuredGame(games, Date.now());
+  const shelf = open.filter((g) => g !== featured);
 
   return (
     <div className="container game-page gp">
@@ -262,14 +263,6 @@ export function Games(): React.JSX.Element {
           </span>
           <ChevronIcon size={16} className="games-rankings-go" />
         </Link>
-      </div>
-
-      <div className="gp-filter" role="group" aria-label={t('games.title')}>
-        {FILTERS.map((f) => (
-          <button key={f.id} type="button" className="gp-filter-chip" aria-pressed={filter === f.id} onClick={() => setFilter(f.id)}>
-            {t(f.labelKey)}
-          </button>
-        ))}
       </div>
 
       <div className="gp-shelf">

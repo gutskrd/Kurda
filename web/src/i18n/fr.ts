@@ -427,7 +427,6 @@ export const fr: Catalogue = {
   'games.mode.online': 'Jouer en ligne',
   'games.play': 'Jouer',
   'games.featured': 'À la une',
-  'games.filter.all': 'Tous',
   'games.filter.solo': 'Seul',
   'games.filter.friends': 'Avec des amis',
   'games.card.wordle': 'Devine le mot kurde en six essais.',

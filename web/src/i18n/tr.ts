@@ -423,7 +423,6 @@ export const tr: Catalogue = {
   'games.mode.online': 'Çevrimiçi oyna',
   'games.play': 'Oyna',
   'games.featured': 'Öne çıkan',
-  'games.filter.all': 'Tümü',
   'games.filter.solo': 'Tek başına',
   'games.filter.friends': 'Arkadaşlarla',
   'games.card.wordle': 'Kürtçe kelimeyi altı denemede bul.',

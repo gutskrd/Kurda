@@ -428,7 +428,6 @@ export const de: Catalogue = {
   'games.mode.online': 'Online spielen',
   'games.play': 'Spielen',
   'games.featured': 'Empfohlen',
-  'games.filter.all': 'Alle',
   'games.filter.solo': 'Allein',
   'games.filter.friends': 'Mit Freunden',
   'games.card.wordle': 'Errate das kurdische Wort in sechs Versuchen.',

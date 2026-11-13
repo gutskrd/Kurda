@@ -430,7 +430,6 @@ export const ku: Catalogue = {
   'games.mode.online': 'Serhêl bilîze',
   'games.play': 'Bilîze',
   'games.featured': 'Bijarte',
-  'games.filter.all': 'Hemû',
   'games.filter.solo': 'Bi tena serê xwe',
   'games.filter.friends': 'Bi hevalan re',
   'games.card.wordle': 'Peyva kurdî di şeş ceribandinan de texmîn bike.',

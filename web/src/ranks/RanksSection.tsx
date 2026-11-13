@@ -5,12 +5,14 @@ import { useAuth } from '../auth/AuthProvider';
 import { MedalIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { RankCard } from './RankCard';
-import { seasonDaysLeft, seasonNamed } from './names';
+import { gameName, seasonDaysLeft, seasonNamed } from './names';
 
 /**
- * "Your ranks" on the Games page: one card per game with opponents (Peyvok
- * Battle, Rhyme Match, Stories), the season they are in, and the way to the
- * season's rewards and the badges.
+ * "Your ranks" on the Games page: a card for each game with opponents that
+ * the player has begun to be ranked in, the season they are in, and the way
+ * to the season's rewards and the badges. The games not begun share one quiet
+ * line, each name a way to its boards: six cards that all said "Not placed
+ * yet" told a newcomer the same thing six times.
  *
  * Signed-in only, and quiet when it cannot load: the games below work without
  * it, so a failure here hides the section rather than putting an error above
@@ -37,6 +39,9 @@ export function RanksSection(): React.JSX.Element | null {
 
   if (status !== 'signedIn' || !ranks) return null;
   const season = seasonNamed(t, ranks.season);
+  // a game is begun once one rated game has been played in it, or a rank has been found
+  const begun = ranks.ranks.filter((r) => r.tier !== null || (r.placement?.played ?? 0) > 0);
+  const untouched = ranks.ranks.filter((r) => !begun.includes(r));
   const cooldown = ranks.cooldownUntil ? new Date(ranks.cooldownUntil) : null;
 
   return (
@@ -66,11 +71,26 @@ export function RanksSection(): React.JSX.Element | null {
           {t('ranks.cooldown', { time: cooldown.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) })}
         </p>
       )}
-      <div className="ranks-grid">
-        {ranks.ranks.map((r) => (
-          <RankCard key={r.game} rank={r} href={`/app/ranks/${r.game}`} />
-        ))}
-      </div>
+      {begun.length > 0 && (
+        <div className="ranks-grid">
+          {begun.map((r) => (
+            <RankCard key={r.game} rank={r} href={`/app/ranks/${r.game}`} />
+          ))}
+        </div>
+      )}
+      {untouched.length > 0 && (
+        <div className="ranks-untouched">
+          <p className="ranks-untouched-names">
+            <span className="ranks-untouched-label">{t('ranks.unplaced')}</span>
+            {untouched.map((r) => (
+              <Link key={r.game} to={`/app/ranks/${r.game}`} className="ranks-untouched-game">
+                {gameName(t, r.game)}
+              </Link>
+            ))}
+          </p>
+          <p className="ranks-untouched-hint">{t('ranks.placingHint', { of: untouched[0]!.placement?.of ?? 5 })}</p>
+        </div>
+      )}
     </section>
   );
 }

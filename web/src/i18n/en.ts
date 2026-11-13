@@ -465,7 +465,6 @@ export const en = {
   'games.mode.online': 'Play online',
   'games.play': 'Play',
   'games.featured': 'Featured',
-  'games.filter.all': 'All',
   'games.filter.solo': 'On your own',
   'games.filter.friends': 'With friends',
   'games.card.wordle': 'Guess the Kurdish word in six tries.',

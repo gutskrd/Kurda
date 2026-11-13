@@ -9,8 +9,11 @@
  * its side, picture first, so its words have room at any width: one to a row
  * on a phone, two and then three where the page has the room for them.
  *
- * Gold is for the one thing to press on the page: the game put forward
- * today's Play. The shelf's ways in are the quiet buttons. The featured
+ * Every game's Play is in the game's own colour (`--gp-face`, from its
+ * cover), standing on a darker lip of the same colour as the cut-outs on its
+ * cover stand on their edge; a second way in is a soft wash of that colour.
+ * So the shelf reads as games, each one its own, not as a row of one button.
+ * The featured
  * cover acts for as long as it is in view; a shelf card's plays through once
  * as it arrives and again under a hand, then rests (games/GameArt.tsx). On
  * this page only transform, opacity and colour move, and nothing moves for a
@@ -101,25 +104,43 @@
 .gp-ways .btn {
   flex: 0 1 auto;
 }
-/* the one thing to press: the stage's gold (tokens.css), standing off the card on its own edge, as the party games' Play does */
+/* a game's Play: its cover's colour, standing off the card on its own edge, as the party games' Play does */
 .gp-play.btn {
-  --lip: var(--stage-gold-lip);
   border: 0;
-  background: var(--stage-gold);
-  color: var(--stage-gold-ink);
+  background: var(--gp-face);
+  color: var(--gp-ink);
   font-weight: 800;
-  box-shadow: 0 3px 0 var(--lip);
+  box-shadow: 0 3px 0 var(--gp-lip);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur-fast) var(--ease-out),
+    filter var(--dur-fast) var(--ease-out);
+}
+.gp-play.btn:hover {
+  filter: brightness(1.06);
+}
+.gp-play.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 1px 0 var(--gp-lip);
+}
+/* a second way in to the same game: the same colour, washed out, the page's own ink on it */
+.gp-play-alt.btn {
+  border: 0;
+  background: color-mix(in srgb, var(--gp-face) 16%, var(--surface));
+  color: var(--ink);
+  font-weight: 700;
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--gp-face) 34%, var(--surface));
   transition:
     transform var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) var(--ease-out),
     background var(--dur-fast) var(--ease-out);
 }
-.gp-play.btn:hover {
-  background: color-mix(in srgb, var(--stage-gold) 82%, #fff);
+.gp-play-alt.btn:hover {
+  background: color-mix(in srgb, var(--gp-face) 24%, var(--surface));
 }
-.gp-play.btn:active {
+.gp-play-alt.btn:active {
   transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--lip);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--gp-face) 34%, var(--surface));
 }
 @media (hover: hover) {
   .gp-card:hover {
@@ -197,19 +218,23 @@
   font-size: 1.0625rem;
 }
 .gp-card--hero .gp-play.btn {
-  box-shadow: 0 5px 0 var(--lip);
+  box-shadow: 0 5px 0 var(--gp-lip);
 }
 .gp-card--hero .gp-play.btn:active {
   transform: translateY(3px);
-  box-shadow: 0 2px 0 var(--lip);
+  box-shadow: 0 2px 0 var(--gp-lip);
 }
+/* on the night, the second way is glass with the game's colour in it, and the night's own light ink */
+.gp-card--hero .gp-play-alt.btn,
 .gp-card--hero .btn-secondary {
-  border-color: rgba(255, 255, 255, 0.22);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: color-mix(in srgb, var(--gp-face) 18%, rgba(255, 255, 255, 0.08));
   color: var(--night-ink);
+  box-shadow: none;
 }
+.gp-card--hero .gp-play-alt.btn:hover,
 .gp-card--hero .btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: color-mix(in srgb, var(--gp-face) 26%, rgba(255, 255, 255, 0.12));
 }
 /* ---- the code and the rankings ------------------------------------------------------ */
 .gp-quick {
@@ -222,50 +247,6 @@
 }
 .gp-quick .games-rankings {
   margin-bottom: 0;
-}
-
-/* ---- the filter --------------------------------------------------------------------- */
-.gp-filter {
-  display: flex;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-  /* three short words fit a phone; in a language where they do not, they scroll rather than wrap */
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.gp-filter::-webkit-scrollbar {
-  display: none;
-}
-.gp-filter-chip {
-  flex: none;
-  min-height: 40px;
-  padding: 0 var(--space-4);
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--ink-2);
-  font: inherit;
-  font-size: var(--text-secondary);
-  font-weight: 600;
-  cursor: pointer;
-  transition:
-    background var(--dur-fast) ease,
-    border-color var(--dur-fast) ease,
-    color var(--dur-fast) ease;
-}
-.gp-filter-chip:hover {
-  border-color: var(--border-strong);
-}
-.gp-filter-chip[aria-pressed='true'] {
-  border-color: var(--ink);
-  background: var(--ink);
-  color: var(--surface-solid);
-}
-/* under a finger, a finger's height */
-@media (pointer: coarse) {
-  .gp-filter-chip {
-    min-height: 44px;
-  }
 }
 
 /* ---- the shelf ---------------------------------------------------------------------- */
