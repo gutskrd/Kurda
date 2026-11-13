@@ -16,7 +16,7 @@
  */
 import { GAME_EMBLEM_SAMPLES, sample, type Cover, type GamePose } from './game-acting.js';
 import { COVERS } from './game-covers.js';
-import { Drawing, checkSize, prefixFor, tint } from './svg.js';
+import { Drawing, checkSize, prefixFor } from './svg.js';
 
 export { GAME_EMBLEM_SAMPLES, type GamePose };
 
@@ -33,10 +33,9 @@ export interface GameArtOptions {
 }
 
 /**
- * The colour of each game's own page and of its Play button: the one its
- * cover is remembered by, bright enough to tint a surface in the light theme
- * and in the dark. No two games share one, so a shelf of their buttons is a
- * shelf of eight colours, each the colour of the cover beside it.
+ * The colour of each game's own page: the one its cover is remembered by,
+ * bright enough to tint a surface in the light theme and in the dark. No two
+ * games share one, so two games' pages are never the same page to the eye.
  */
 const TONES: Readonly<Record<GameEmblem, string>> = {
   peyvok: '#3fa45b',
@@ -48,44 +47,6 @@ const TONES: Readonly<Record<GameEmblem, string>> = {
   impostor: '#8a5bd6',
   'who-am-i': '#2fa7a0',
 };
-
-/** The deep ink a word is written in on a light game colour: the art's own, never black. */
-const DEEP_INK = '#21182e';
-const WHITE_INK = '#ffffff';
-
-/** How light a colour is to the eye (WCAG's relative luminance). */
-function luminance(hex: string): number {
-  const [r, g, b] = [1, 3, 5].map((i) => {
-    const c = parseInt(hex.slice(i, i + 2), 16) / 255;
-    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
-  }) as [number, number, number];
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/** How far apart two colours stand for reading, from 1 (the same) to 21 (black on white). */
-export function contrastRatio(a: string, b: string): number {
-  const [hi, lo] = [luminance(a), luminance(b)].sort((x, y) => y - x) as [number, number];
-  return (hi + 0.05) / (lo + 0.05);
-}
-
-/** A game's Play button: its face in the game's colour, the darker lip it stands on, and the ink its word is written in. */
-export interface GamePlayColours {
-  face: string;
-  lip: string;
-  ink: string;
-}
-
-/**
- * The colours of a game's Play button. The face is the game's own colour;
- * the word on it is white where white reads best and the deep ink where that
- * does (the gold and the sky are too light for white), which for every game
- * clears the 4.5 to 1 that ordinary text needs.
- */
-export function gamePlayColours(game: GameEmblem): GamePlayColours {
-  const face = gameEmblemTone(game);
-  const ink = contrastRatio(face, WHITE_INK) >= contrastRatio(face, DEEP_INK) ? WHITE_INK : DEEP_INK;
-  return { face, lip: tint(face, -0.32), ink };
-}
 
 export function isGameEmblem(v: unknown): v is GameEmblem {
   return (GAME_EMBLEMS as readonly unknown[]).includes(v);

@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { gameEmblemTone, gameOfTheDay, gamePlayColours, type GameEmblem } from '@kurda/shared';
+import { gameEmblemTone, gameOfTheDay, type GameEmblem } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { LinkButton } from '../components/Button';
@@ -103,15 +103,8 @@ const MEANING: Partial<Record<GameEmblem, MessageKey>> = {
   'who-am-i': 'games.whoAmI.meaning',
 };
 
-/**
- * A game's colours on its card: its edge under a hand (`--gp-tone`), and its
- * Play button, which is the colour of its cover with its word in whichever ink
- * reads on it (shared/src/art/games.ts checks every game clears 4.5 to 1).
- */
-function toneOf(id: GameEmblem): React.CSSProperties {
-  const play = gamePlayColours(id);
-  return { '--gp-tone': gameEmblemTone(id), '--gp-face': play.face, '--gp-lip': play.lip, '--gp-ink': play.ink } as React.CSSProperties;
-}
+/** The colour a game's card takes at its edge under a hand: the game's own. The cover carries the colour; the buttons do not. */
+const toneOf = (id: GameEmblem): React.CSSProperties => ({ '--gp-tone': gameEmblemTone(id) }) as React.CSSProperties;
 
 /** Who a game is played with, said in small beside a single way in. */
 function Company({ company }: { company: readonly Company[] }): React.JSX.Element {
@@ -129,12 +122,13 @@ function Company({ company }: { company: readonly Company[] }): React.JSX.Elemen
 }
 
 /**
- * A game's ways in. Signed in: one button for each page it has, the first in
- * the game's own colour — the colour of the cover beside it, so every card's
- * Play is its own and the shelf is not a row of the same button — and a second
- * way, where there is one, in a soft wash of that colour. Signed out there is
- * nothing to open — every game keeps its score on the server against the
- * player — so the one thing offered is the way to an account.
+ * A game's ways in. Signed in: one button for each page it has — Play the
+ * same solid button on every card, the app's own, and a second way, where
+ * there is one, the quiet button beside it. One Play everywhere, the colour
+ * left to the covers: a shelf of differently coloured buttons looked like a
+ * toy box, not like Hevalo. Signed out there is nothing to open — every game
+ * keeps its score on the server against the player — so the one thing
+ * offered is the way to an account.
  */
 function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: boolean; large?: boolean }): React.JSX.Element {
   const t = useT();
@@ -151,7 +145,7 @@ function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: bo
   return (
     <div className="gp-ways">
       {game.ways.map((way, i) => (
-        <Link key={way.href} to={way.href} className={`btn ${i === 0 ? 'gp-play' : 'gp-play-alt'}${size}`}>
+        <Link key={way.href} to={way.href} className={`btn ${i === 0 ? 'btn-primary gp-play' : 'btn-secondary'}${size}`}>
           {t(way.labelKey)}
         </Link>
       ))}

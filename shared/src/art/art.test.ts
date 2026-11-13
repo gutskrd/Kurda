@@ -39,7 +39,7 @@ import {
   impostorWaySvg,
   impostorWayTone,
 } from './impostor.js';
-import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, gamePlayColours, contrastRatio, isGameEmblem } from './games.js';
+import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
 import { LETTERS, letter } from './ink.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
@@ -1120,18 +1120,9 @@ describe('the games’ emblems', () => {
     });
   });
 
-  it('gives every game a Play button of its own colour, its word readable on it', () => {
-    const faces = GAME_EMBLEMS.map((game) => gamePlayColours(game).face);
-    // a shelf of buttons is a shelf of colours: no two games share one
-    expect(new Set(faces).size).toBe(GAME_EMBLEMS.length);
-    for (const game of GAME_EMBLEMS) {
-      const { face, lip, ink } = gamePlayColours(game);
-      expect(face).toBe(gameEmblemTone(game));
-      expect(contrastRatio(face, ink), game).toBeGreaterThanOrEqual(4.5);
-      // the lip it stands on is the same colour, darker
-      expect(contrastRatio(lip, '#000000')).toBeLessThan(contrastRatio(face, '#000000'));
-    }
-    expect(contrastRatio('#ffffff', '#000000')).toBeCloseTo(21, 5);
+  it('gives every game a colour of its own for its page', () => {
+    const tones = GAME_EMBLEMS.map((game) => gameEmblemTone(game));
+    expect(new Set(tones).size).toBe(GAME_EMBLEMS.length);
   });
 
   it('has a colour for every game’s card, and refuses a game it has never heard of', () => {

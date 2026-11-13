@@ -2,7 +2,7 @@ import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { gameOfTheDay, gamePlayColours, type GameEmblem, type IncomingInvite, type MyRanks } from '@kurda/shared';
+import { gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -43,21 +43,12 @@ const MODE_LABEL: Record<Mode, TranslationKey> = {
 };
 
 /**
- * A second way into a game, washed in the game's colour: its colour at about
- * a sixth over whatever is behind it, and its lip at a third, as two-digit
- * alpha on the hex the shared colours give.
+ * The game put forward's Play: on the night it is shown on, in either theme,
+ * the one light thing — white, with the night's own deep ink on it — sinking
+ * a little under a finger. Every other Play is the app's solid button; the
+ * covers carry the colour, the buttons stay one calm, consistent thing.
  */
-const WASH = '2b';
-const WASH_LIP = '57';
-
-/**
- * The game put forward's Play: the game's own colour standing on its darker
- * lip, as the party games' gold Play does, sinking onto the lip under a
- * finger. The word on it is white or the deep ink, whichever reads on the
- * colour (shared/src/art/games.ts checks every game clears 4.5 to 1).
- */
-function ToneButton({ game, label, onPress, testID }: { game: GameEmblem; label: string; onPress: () => void; testID?: string }): React.JSX.Element {
-  const play = gamePlayColours(game);
+function HeroPlay({ label, onPress, testID }: { label: string; onPress: () => void; testID?: string }): React.JSX.Element {
   return (
     <Pressable
       onPress={() => {
@@ -67,11 +58,11 @@ function ToneButton({ game, label, onPress, testID }: { game: GameEmblem; label:
       accessibilityRole="button"
       accessibilityLabel={label}
       testID={testID}
-      style={[styles.toneEdge, { backgroundColor: play.lip }]}
+      style={styles.heroPlay}
     >
       {({ pressed }) => (
-        <View style={[styles.toneFace, { backgroundColor: play.face }, pressed ? styles.toneDown : null]}>
-          <Text style={[styles.toneText, { color: play.ink }]}>{label}</Text>
+        <View style={[styles.heroPlayFace, pressed ? styles.heroPlayDown : null]}>
+          <Text style={styles.heroPlayText}>{label}</Text>
         </View>
       )}
     </Pressable>
@@ -102,9 +93,9 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
  * it, and a way in. A game with one way in opens
  * when its card is pressed; a game with a screen for playing alone and
  * another for playing a friend has a button for each, and so has Who Am I?,
- * played on this phone or with friends, so a game is one tap from here. Each
- * game's Play is in its own colour, the colour of its cover, so the cards do
- * not end in a row of one button. There is no filter: a handful of games,
+ * played on this phone or with friends, so a game is one tap from here. Every
+ * Play is the same solid button, and a second way in the quiet one: the
+ * covers carry the colour. There is no filter: a handful of games,
  * each saying who it is played with, is read faster than a control that sorts
  * them. A game still short of approved content is only named, under the cards.
  */
@@ -312,7 +303,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           <View style={styles.heroWays}>
             {featured.ways.map((way, i) =>
               i === 0 ? (
-                <ToneButton key={way.key} game={featured.emblem} label={t(way.label)} onPress={() => open(way)} testID={`game-${way.key}`} />
+                <HeroPlay key={way.key} label={t(way.label)} onPress={() => open(way)} testID={`game-${way.key}`} />
               ) : (
                 <PressableScale
                   key={way.key}
@@ -345,7 +336,6 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
             // what the name means, unless the interface is Kurdish and the two are the same words
             const meaning = meaningKey && t(meaningKey) !== name ? t(meaningKey) : null;
             const single = card.ways.length === 1 ? card.ways[0]! : null;
-            const play = gamePlayColours(card.emblem);
             const inside = (
               <>
                 <View style={styles.cardArt}>
@@ -360,8 +350,8 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   <Text style={[styles.cardLine, dir.text, { color: colors.textSecondary }]}>{t(card.line)}</Text>
                   {single ? (
                     <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
-                      <View style={[styles.play, { backgroundColor: play.face, borderBottomColor: play.lip }]}>
-                        <Text style={[styles.playText, { color: play.ink }]}>{t('games.play')}</Text>
+                      <View style={[styles.play, { backgroundColor: colors.primary }]}>
+                        <Text style={[styles.playText, { color: colors.textOnPrimary }]}>{t('games.play')}</Text>
                       </View>
                       <View style={[styles.mode, { flexDirection: dir.row }]}>
                         <Icon name={card.mode === 'solo' ? 'person' : 'people'} size={13} color={colors.textSecondary} />
@@ -380,14 +370,9 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                           accessibilityLabel={`${name}, ${t(way.label)}`}
                           hitSlop={WAY_SLOP}
                           testID={`game-${way.key}`}
-                          style={[
-                            styles.play,
-                            i === 0
-                              ? { backgroundColor: play.face, borderBottomColor: play.lip }
-                              : { backgroundColor: `${play.face}${WASH}`, borderBottomColor: `${play.face}${WASH_LIP}` },
-                          ]}
+                          style={[styles.play, { backgroundColor: i === 0 ? colors.primary : colors.controlTrack }]}
                         >
-                          <Text style={[styles.playText, { color: i === 0 ? play.ink : colors.textPrimary }]}>{t(way.label)}</Text>
+                          <Text style={[styles.playText, { color: i === 0 ? colors.textOnPrimary : colors.textPrimary }]}>{t(way.label)}</Text>
                         </PressableScale>
                       ))}
                     </View>
@@ -499,10 +484,10 @@ const styles = StyleSheet.create({
   heroOtherText: { color: TABLE.ink, fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
 
   // the game put forward's Play: the face in the game's colour on its lip, which it sinks onto when pressed
-  toneEdge: { alignSelf: 'stretch', borderRadius: radii.pill, paddingBottom: 5 },
-  toneFace: { minHeight: 56, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg, borderRadius: radii.pill },
-  toneDown: { transform: [{ translateY: 3 }] },
-  toneText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  heroPlay: { alignSelf: 'stretch', borderRadius: radii.pill },
+  heroPlayFace: { minHeight: 56, alignItems: 'center', justifyContent: 'center', paddingHorizontal: spacing.lg, borderRadius: radii.pill, backgroundColor: '#ffffff' },
+  heroPlayDown: { transform: [{ scale: 0.98 }], opacity: 0.92 },
+  heroPlayText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, color: TABLE.nightDeep },
 
   cards: { gap: layout.rowGap },
   // a card lies on its side, picture first, so its words have the width of the screen
@@ -513,8 +498,7 @@ const styles = StyleSheet.create({
   cardMeaning: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, marginTop: -2 },
   cardLine: { fontSize: typography.sizes.sm, lineHeight: 19 },
   cardFoot: { flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
-  // a card's way in stands on a lip of its own colour, as the cut-outs on its cover stand on their edge
-  play: { minHeight: PLAY_HEIGHT, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill, borderBottomWidth: 3 },
+  play: { minHeight: PLAY_HEIGHT, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill },
   playText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   mode: { flexShrink: 1, alignItems: 'center', gap: 4 },
   // a long "Solo or with friends" wraps beside the button rather than running off the card

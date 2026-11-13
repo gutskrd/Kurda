@@ -75,25 +75,23 @@ describe('Games hub', () => {
   });
 
   /**
-   * Deliberately changed. Gold used to be the game put forward's Play and
-   * nothing else, so every button on the shelf was the same grey. Each game's
-   * Play now wears its own cover's colour, with its word in an ink that reads
-   * on it, and a second way in is a wash of that colour.
+   * Deliberately changed. The game put forward had a gold Play and the shelf
+   * grey ones, and for a while each game had a Play of its own colour. Now
+   * every Play is the same solid button, and a second way in the quiet one:
+   * the covers carry the colour.
    */
-  it('gives every game’s Play the game’s own colour, so no two cards’ buttons look alike', async () => {
+  it('gives every game the same Play, and a second way in as the quiet button', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
     await screen.findAllByRole('link', { name: 'Play' });
 
     const plays = [...document.querySelectorAll<HTMLElement>('.gp-play')];
-    // one for every card, the one put forward among them
+    // one for every card, the one put forward among them, and all of one kind
     expect(plays).toHaveLength(document.querySelectorAll('.gp-card').length);
-    const faces = plays.map((play) => play.closest<HTMLElement>('.gp-card')!.style.getPropertyValue('--gp-face'));
-    for (const face of faces) expect(face).toMatch(/^#[0-9a-f]{6}$/);
-    expect(new Set(faces).size).toBe(faces.length);
-    // a game with a second page has its second way in as the softer button
+    for (const play of plays) expect(play).toHaveClass('btn-primary');
+    for (const card of document.querySelectorAll<HTMLElement>('.gp-card')) expect(card.style.getPropertyValue('--gp-face')).toBe('');
     const peyvok = screen.getByRole('heading', { name: 'Peyvok' }).closest('article')!;
-    expect(within(peyvok).getByRole('link', { name: 'Play online' })).toHaveClass('gp-play-alt');
+    expect(within(peyvok).getByRole('link', { name: 'Play online' })).toHaveClass('btn-secondary');
   });
 
   it('has no filter to work: a handful of games each say who they are played with', async () => {

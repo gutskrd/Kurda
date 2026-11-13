@@ -278,11 +278,11 @@ describe('the games list', () => {
   });
 
   /**
-   * Deliberately changed. Every card's Play was the party games' gold, so the
-   * cards ended in a row of the same button; each is now its own game's
-   * colour, and there is no filter to work.
+   * Deliberately changed. The cards' Play was the party games' gold, beside
+   * grey second ways; every Play is now the app's own solid button, the
+   * covers carrying the colour, and there is no filter to work.
    */
-  it('gives every game’s Play its own colour, and has no filter', async () => {
+  it('lists every game whoever it is played with, with no filter to work', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('memory-thief'), game('impostor')]) });
     testAuth.client = client;
     renderWithProviders(<GamesView />);
