@@ -2342,6 +2342,7 @@ export const de: Catalogue = {
   'play.error.notHost': 'Das kann nur der Host.',
   'play.error.notMember': 'Du bist nicht mehr in dieser Gruppe.',
   'play.error.notOnServer': 'Mit Freunden spielen gibt es auf dem Server noch nicht. Es klappt, sobald der Server aktualisiert ist.',
+  'play.error.serverBehind': 'Der Server hat diese Auswahl nicht angenommen. Vielleicht wurde die Seite gerade aktualisiert: Warte ein paar Minuten und versuch es noch einmal.',
   'play.invite.title': 'Zum Spielen einladen',
   'play.invite.withTitle': 'Mit {name} spielen',
   'play.invite.groupTitle': 'In {name} spielen',

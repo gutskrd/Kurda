@@ -2337,6 +2337,7 @@ export const tr: Catalogue = {
   'play.error.notHost': 'Bunu yalnızca kurucu yapabilir.',
   'play.error.notMember': 'Artık bu grupta değilsin.',
   'play.error.notOnServer': 'Arkadaşlarla oynama henüz sunucuda yok. Sunucu güncellenince çalışacak.',
+  'play.error.serverBehind': 'Sunucu bu seçimleri kabul etmedi. Site az önce güncellenmiş olabilir: birkaç dakika bekleyip yeniden dene.',
   'play.invite.title': 'Oyuna davet et',
   'play.invite.withTitle': '{name} ile oyna',
   'play.invite.groupTitle': '{name} grubunda oyna',

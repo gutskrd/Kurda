@@ -2340,6 +2340,7 @@ export const es: Catalogue = {
   'play.error.notHost': 'Solo el anfitrión puede hacerlo.',
   'play.error.notMember': 'Ya no estás en este grupo.',
   'play.error.notOnServer': 'Jugar con amigos aún no está en el servidor. Funcionará cuando se actualice el servidor.',
+  'play.error.serverBehind': 'El servidor no aceptó estas opciones. Puede que el sitio se acabe de actualizar: espera unos minutos y vuelve a intentarlo.',
   'play.invite.title': 'Invitar a jugar',
   'play.invite.withTitle': 'Jugar con {name}',
   'play.invite.groupTitle': 'Jugar en {name}',

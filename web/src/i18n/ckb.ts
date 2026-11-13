@@ -2348,6 +2348,7 @@ export const ckb: Catalogue = {
   'play.error.notHost': 'تەنها خانەخوێ دەتوانێت ئەمە بکات.',
   'play.error.notMember': 'تۆ ئیتر لەم گرووپەدا نیت.',
   'play.error.notOnServer': 'یاریکردن لەگەڵ هاوڕێیان هێشتا لەسەر سێرڤەر نییە. کاتێک سێرڤەر نوێ دەکرێتەوە کار دەکات.',
+  'play.error.serverBehind': 'سێرڤەر ئەم هەڵبژاردنانەی قبوڵ نەکرد. لەوانەیە ماڵپەڕ تازە نوێ کرابێتەوە: چەند خولەکێک چاوەڕێ بکە و دووبارە هەوڵ بدەوە.',
   'play.invite.title': 'بانگهێشت بۆ یاری',
   'play.invite.withTitle': 'لەگەڵ {name} یاری بکە',
   'play.invite.groupTitle': 'لە {name} یاری بکە',

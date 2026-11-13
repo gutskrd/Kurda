@@ -2441,6 +2441,7 @@ export const en = {
   'play.error.notHost': 'Only the host can do that.',
   'play.error.notMember': 'You’re not in this group any more.',
   'play.error.notOnServer': 'Playing with friends isn’t on the server yet. It will work once the server is updated.',
+  'play.error.serverBehind': 'The server didn’t accept these choices. The site may have just been updated: wait a few minutes and try again.',
   'play.invite.title': 'Invite to play',
   'play.invite.withTitle': 'Play with {name}',
   'play.invite.groupTitle': 'Play in {name}',

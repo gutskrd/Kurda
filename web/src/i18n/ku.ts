@@ -2344,6 +2344,7 @@ export const ku: Catalogue = {
   'play.error.notHost': 'Tenê mêvandar dikare vê bike.',
   'play.error.notMember': 'Tu êdî ne di vê komê de yî.',
   'play.error.notOnServer': 'Lîstina bi hevalan re hê li ser serverê nîne. Dema server were nûkirin, ew ê bixebite.',
+  'play.error.serverBehind': 'Serverê ev hilbijartin qebûl nekirin. Dibe ku malper nû hatibe nûkirin: çend deqeyan bisekine û dîsa biceribîne.',
   'play.invite.title': 'Ji bo lîstikê vexwîne',
   'play.invite.withTitle': 'Bi {name} re bilîze',
   'play.invite.groupTitle': 'Di {name} de bilîze',

@@ -2341,6 +2341,7 @@ export const fr: Catalogue = {
   'play.error.notHost': 'Seul l’hôte peut faire cela.',
   'play.error.notMember': 'Tu ne fais plus partie de ce groupe.',
   'play.error.notOnServer': 'Jouer avec des amis n’est pas encore sur le serveur. Ça marchera dès que le serveur sera mis à jour.',
+  'play.error.serverBehind': 'Le serveur n’a pas accepté ces choix. Le site vient peut-être d’être mis à jour : attends quelques minutes et réessaie.',
   'play.invite.title': 'Inviter à jouer',
   'play.invite.withTitle': 'Jouer avec {name}',
   'play.invite.groupTitle': 'Jouer dans {name}',

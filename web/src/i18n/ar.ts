@@ -2336,6 +2336,7 @@ export const ar: Catalogue = {
   'play.error.notHost': 'المضيف وحده يمكنه فعل ذلك.',
   'play.error.notMember': 'لم تعد عضوًا في هذه المجموعة.',
   'play.error.notOnServer': 'اللعب مع الأصدقاء غير متوفر على الخادم بعد. سيعمل بعد تحديث الخادم.',
+  'play.error.serverBehind': 'لم يقبل الخادم هذه الخيارات. ربما تم تحديث الموقع للتو: انتظر بضع دقائق وحاول مرة أخرى.',
   'play.invite.title': 'دعوة للعب',
   'play.invite.withTitle': 'العب مع {name}',
   'play.invite.groupTitle': 'العب في {name}',

@@ -2342,6 +2342,7 @@ export const nl: Catalogue = {
   'play.error.notHost': 'Alleen de host kan dat doen.',
   'play.error.notMember': 'Je zit niet meer in deze groep.',
   'play.error.notOnServer': 'Spelen met vrienden staat nog niet op de server. Het werkt zodra de server is bijgewerkt.',
+  'play.error.serverBehind': 'De server accepteerde deze keuzes niet. Misschien is de site net bijgewerkt: wacht een paar minuten en probeer het opnieuw.',
   'play.invite.title': 'Uitnodigen om te spelen',
   'play.invite.withTitle': 'Spelen met {name}',
   'play.invite.groupTitle': 'Spelen in {name}',
