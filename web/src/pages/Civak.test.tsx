@@ -767,7 +767,8 @@ describe('Civak', () => {
     renderApp(<Civak />, ['/app/civak']);
 
     const plus = await screen.findByRole('button', { name: 'Post something' });
-    await screen.findByText('Claimed today');
+    // the day's reward is in: its card steps aside, and the + keeps its fill
+    await waitFor(() => expect(document.querySelector('.zer-card')).toBeNull());
     expect(plus).not.toHaveClass('is-secondary');
   });
 
