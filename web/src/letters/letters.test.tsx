@@ -51,10 +51,9 @@ describe('letters by bird', () => {
     await userEvent.type(screen.getByLabelText('Your letter'), letter);
     await userEvent.click(screen.getByRole('button', { name: 'Send your bird' }));
     expect(calls.find((c) => c.method === 'POST' && c.url.includes('/letters/out'))?.body).toEqual({ body: letter });
-    // the flight ends (at once, with no animation in the test page) and the sill is empty
-    const flight = document.querySelector('.lw-flight--out');
-    flight?.dispatchEvent(new Event('animationend', { bubbles: true }));
+    // the flight ends at once in a page that cannot animate, and the sill is empty
     expect(await screen.findByText('Your bird is out')).toBeInTheDocument();
+    expect(document.querySelector('.lw-bird')).toBeNull();
   });
 
   it('shows the letter their bird brought, when the two birds meet', async () => {
@@ -69,8 +68,9 @@ describe('letters by bird', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Write a letter' }));
     await userEvent.type(screen.getByLabelText('Your letter'), letter);
     await userEvent.click(screen.getByRole('button', { name: 'Send your bird' }));
-    document.querySelector('.lw-flight--out')?.dispatchEvent(new Event('animationend', { bubbles: true }));
     expect(await screen.findByText('Silav Rojda! Ez Baran im.')).toBeInTheDocument();
+    // their pigeon has landed on your sill, and waves
+    await waitFor(() => expect(document.querySelector('.lw-bird--landed .lw-pose--wave')).not.toBeNull());
     expect(screen.getByText('Baran’s bird came to your window')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Write back to Baran' })).toHaveAttribute('href', `/app/letters/${met.threadId}`);
   });
