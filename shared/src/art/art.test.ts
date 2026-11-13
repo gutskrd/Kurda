@@ -1026,12 +1026,12 @@ describe('the games’ emblems', () => {
   it('shows each word game as the game is: Peyvok five letters wide, and words from the first lessons', () => {
     // every letter drawn on a cover is a path of the letters' own; counting them counts what is written
     const written = (game: (typeof GAME_EMBLEMS)[number]): number => gameEmblemSvg({ game }).split('stroke-linejoin="round" transform="translate(').length - 1;
-    // dayik, silav, heval on the board, and the two letters standing beside the phone
-    expect(written('peyvok')).toBe(17);
+    // dayik, silav and heval on the board
+    expect(written('peyvok')).toBe(15);
     // dar and kar
     expect(written('rhyme')).toBe(6);
-    // şêr and roj: the r is written twice, once where the first word ends and once where the second begins
-    expect(written('last-letter')).toBe(6);
+    // şêr, roj and jin: the letter two words share is written once, at the corner where they meet
+    expect(written('last-letter')).toBe(7);
     // the question on the note, and the two answers the table gives: erê and na
     expect(written('who-am-i')).toBe(6);
   });
