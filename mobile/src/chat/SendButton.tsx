@@ -111,8 +111,9 @@ const styles = StyleSheet.create({
     fontSize: typography.sizes.md,
     lineHeight: 22,
     textAlignVertical: 'center',
-    // the pill wears the ring (above)
+    // the pill wears the ring (above); a browser's own ignores a width, and has to be told there is none
     outlineWidth: 0,
+    ...({ outlineStyle: 'none' } as object),
   },
   button: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   disc: { width: DISC, height: DISC, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
