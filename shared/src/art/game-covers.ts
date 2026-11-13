@@ -799,53 +799,58 @@ const lastLetter: Cover = {
 // ───────────────────────────────────────────────────────────── the impostor
 
 const MUSTARD = '#f4b73b';
-/** His hat, and his face a tone lighter in the shadow of it. */
-const HAT = '#241a3d';
-const FACE = '#3d2e66';
+/** The dark he is cut out of: a keyhole, and all of him that is in shadow. */
+const DARK = '#2a1f47';
 const TRENCH = '#fff1d8';
-const BAND = '#a98bf2';
+const FELT = '#a98bf2';
+/**
+ * A keyhole: a round hole over a slot that widens to its foot. It is the
+ * shape of somebody in a hat and a long coat, seen from where nobody should
+ * be looking — which is who the impostor is.
+ */
+const KEYHOLE = `${ring(60, 47, 35)}M38.4 73L12.6 109.4C10.6 112.6 12.6 116.6 16.4 116.6H103.6C107.4 116.6 109.4 112.6 107.4 109.4L81.6 73Z`;
 /** His eyes: where each is, and the lid that makes it sly. The near one is the narrower. */
 const EYES: ReadonlyArray<readonly [number, number, number, Lid]> = [
-  [47.6, 60, 7.4, { colour: FACE, down: 0.44, slope: 9 }],
-  [72.4, 60, 7.4, { colour: FACE, down: 0.32, slope: -9 }],
+  [49.2, 57.6, 7, { colour: DARK, down: 0.44, slope: 9 }],
+  [70.8, 57.6, 7, { colour: DARK, down: 0.32, slope: -9 }],
 ];
 
 function stranger(dr: Drawing): void {
-  // the coat's shoulders, and his scarf in the opening of it
-  lit(dr, 'M3 124L12 105C15 96 25 90.6 38 88.6L52 85H68L82 88.6C95 90.6 105 96 108 105L117 124Z', TRENCH, 2.8, 0.1);
-  fill(dr, 'M33 76H87L60 104Z', BAND);
-  // his head, round, in the shadow of his hat
-  fill(dr, ring(60, 60, 26.4), FACE);
-  // the collar turned up: a wing either side of his chin, coming down to where the coat closes
-  fill(dr, 'M27.6 70L60 101L27 95Z', TRENCH);
-  fill(dr, 'M92.4 70L60 101L93 95Z', TRENCH);
-  // the coat done up
-  line(dr, 'M60 101V124', tint(TRENCH, -0.3), 1.8);
+  // the keyhole, standing a little off the wall
+  fill(dr, KEYHOLE, tint(MUSTARD, -0.2), at(0, 3.4));
+  fill(dr, KEYHOLE, DARK);
+  // his coat in the slot of it, in two halves: each with its collar turned up in a round wing beside his face
+  fill(dr, 'M19.6 111.6C17.4 111.6 16.4 109.6 17.6 107.8L38.6 81C37.4 76.6 37.6 72.6 40 69.8C42.6 67 46.8 67.6 48.4 70.8L58.2 91.6V111.6Z', TRENCH);
+  fill(dr, 'M100.4 111.6C102.6 111.6 103.6 109.6 102.4 107.8L81.4 81C82.6 76.6 82.4 72.6 80 69.8C77.4 67 73.2 67.6 71.6 70.8L61.8 91.6V111.6Z', TRENCH);
+  for (const [x, y] of [[69.6, 98.4], [70.6, 106]] as const) fill(dr, ring(x, y, 2.2), DARK);
   for (const [x, y, r] of EYES) fill(dr, ring(x, y, r), WHITE);
 }
+/** He is drawn about the middle of the keyhole's round and shown a little higher, so the whole keyhole sits in the middle of the cover. */
+const raised = (dr: Drawing, draw: () => void): void => placed(dr, 0, -2.4, 0, 1, draw);
+
 function strangerEyes(dr: Drawing): void {
   for (const [x, y, r] of EYES) {
-    fill(dr, ring(x - 2.6, y + 0.8, r * 0.46), INK);
-    fill(dr, ring(x - 1.8, y - 0.2, r * 0.13), WHITE);
+    fill(dr, ring(x - 2.4, y + 0.8, r * 0.46), INK);
+    fill(dr, ring(x - 1.6, y - 0.2, r * 0.13), WHITE);
   }
 }
 function strangerLids(dr: Drawing): void {
   for (const [x, y, r, lid] of EYES) eyelid(dr, x, y, r, lid);
 }
 function strangerHat(dr: Drawing): void {
-  turned(dr, -5, 60, 42, () => {
-    fill(dr, 'M15 43C29 37 91 37 105 43C105 47 91 50.6 60 50.6C29 50.6 15 47 15 43Z', HAT);
-    const crown = 'M36.6 42C35.6 29 40 15.6 49 13.6C54 12.6 57 17 60 17C63 17 66 12.6 71 13.6C80 15.6 84.4 29 83.4 42C70 45.6 50 45.6 36.6 42Z';
-    fill(dr, crown, HAT);
-    inside(dr, crown, () => fill(dr, 'M30 31.6H90V40.6H30Z', BAND));
-    line(dr, 'M17.6 44.6C33 49.6 87 49.6 102.4 44.6', tint(HAT, 0.24), 1.4);
+  turned(dr, -5, 60, 40, () => {
+    fill(dr, 'M27.6 41C39 36 81 36 92.4 41C92.4 45 79 48 60 48C41 48 27.6 45 27.6 41Z', FELT);
+    const crown = 'M40.6 40C39.6 30 43 19.4 51 17.6C55.2 16.8 57.4 20.6 60 20.6C62.6 20.6 64.8 16.8 69 17.6C77 19.4 80.4 30 79.4 40C69 43 51 43 40.6 40Z';
+    fill(dr, crown, FELT);
+    inside(dr, crown, () => fill(dr, 'M34 31.4H86V39.6H34Z', tint(FELT, -0.42)));
+    line(dr, 'M30.4 42.8C41 47 79 47 89.6 42.8', tint(FELT, -0.3), 1.3);
   });
 }
 
 /**
- * The impostor: a round-headed stranger with his hat down and his collar up.
- * His eyes go from one side to the other under their lids, because he is the
- * one who does not have the word.
+ * The impostor: a keyhole with somebody in it. A hat, a coat with its collar
+ * up, and between them nothing but two eyes — which go from one side to the
+ * other under their lids, because he is the one who does not have the word.
  */
 const impostor: Cover = {
   title: GAME_NAMES.impostor,
@@ -854,16 +859,15 @@ const impostor: Cover = {
     {
       draw: (dr) => {
         ground(dr, MUSTARD);
-        fill(dr, ring(60, 60, 47), tint(MUSTARD, -0.09));
-        stranger(dr);
+        raised(dr, () => stranger(dr));
       },
     },
     {
-      draw: strangerEyes,
-      keys: [[0, {}], [0.1, {}, 'hold'], [0.13, { x: 5 }, 'out'], [0.34, {}, 'hold'], [0.37, { x: 0 }, 'out'], [0.52, {}, 'hold'], [0.55, { x: 5 }, 'out'], [0.66, {}, 'hold'], [0.69, { x: 0 }, 'out'], [1, {}, 'hold']],
+      draw: (dr) => raised(dr, () => strangerEyes(dr)),
+      keys: [[0, {}], [0.1, {}, 'hold'], [0.13, { x: 4.6 }, 'out'], [0.34, {}, 'hold'], [0.37, { x: 0 }, 'out'], [0.52, {}, 'hold'], [0.55, { x: 4.6 }, 'out'], [0.66, {}, 'hold'], [0.69, { x: 0 }, 'out'], [1, {}, 'hold']],
     },
-    { draw: strangerLids },
-    { draw: strangerHat, pivot: [60, 44], keys: [[0, {}], [0.7, {}, 'hold'], [0.76, { y: 2.4, r: -3 }, 'out'], [0.86, {}, 'hold'], [0.93, { y: 0, r: 0 }, 'inOut'], [1, {}, 'hold']] },
+    { draw: (dr) => raised(dr, () => strangerLids(dr)) },
+    { draw: (dr) => raised(dr, () => strangerHat(dr)), pivot: [60, 40], keys: [[0, {}], [0.7, {}, 'hold'], [0.76, { y: 2, r: -3 }, 'out'], [0.86, {}, 'hold'], [0.93, { y: 0, r: 0 }, 'inOut'], [1, {}, 'hold']] },
   ],
 };
 
