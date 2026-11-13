@@ -1,6 +1,6 @@
 import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Animated, Easing, FlatList, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Animated, Easing, FlatList, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { FIRST_LEAGUE_TIER, LEAGUE_TIERS, leagueTierIndex, type LeagueTier, type LeagueView, type LeagueWeekXp } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -29,7 +29,7 @@ import { LeagueMoment } from './LeagueMoment';
 import { Leaderboard, type BoardType, type Scope } from './Leaderboard';
 import { springTo, timing, useListEntrance } from '../theme/animate';
 import { duration } from '../theme/motion';
-import { Rise } from '../theme/MotionParts';
+import { Rise, heldDim } from '../theme/MotionParts';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useDirection } from '../reports/direction';
 import { knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, weekLeftText, zoneRules, type TableItem } from './format';
@@ -395,9 +395,14 @@ const RESTING_HEIGHT = 170;
  * The way out, at the end of the page: asked once, in plain words — what
  * changes and that it can be undone — with Leave and Cancel side by side and
  * neither one dressed up to be chosen.
+ *
+ * It is a line of quiet words and not a button. A button under the week's
+ * one action read as the second thing to do on this page, and it is the
+ * thing almost nobody here came to do; it is in Settings too.
  */
 function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => void }): React.JSX.Element {
   const { t } = useI18n();
+  const { colors } = useTheme();
   const ask = () =>
     Alert.alert(t('leagues.leave.title'), t('leagues.leave.body'), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -405,7 +410,15 @@ function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => void })
     ]);
   return (
     <View style={styles.leave}>
-      <ClayButton label={t('leagues.leave')} icon="sign-out" variant="outline" busy={busy} onPress={ask} />
+      <Pressable
+        onPress={ask}
+        disabled={busy}
+        accessibilityRole="button"
+        accessibilityState={{ busy, disabled: busy }}
+        style={({ pressed }) => [styles.leaveLink, pressed && heldDim]}
+      >
+        <Text style={[styles.leaveText, { color: colors.textSecondary }]}>{t('leagues.leave')}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -686,6 +699,9 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: typography.sizes.md, lineHeight: 22, fontStyle: 'italic', textAlign: 'center' },
   daysPill: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, marginTop: spacing.sm },
   leave: { alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.md },
+  // a fingertip tall, however few its words
+  leaveLink: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },
+  leaveText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
   hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   heroTitle: { ...display(typography.sizes.xl) },
   heroMeaning: { fontSize: typography.sizes.md },
