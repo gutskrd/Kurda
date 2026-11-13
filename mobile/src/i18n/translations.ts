@@ -1533,7 +1533,6 @@ export type TranslationKey =
   | 'edit.avatar'
   | 'edit.chooseAvatar'
   | 'edit.noAvatar'
-  | 'edit.premiumAvatar'
   | 'edit.profileUpdated'
   | 'edit.photoUpdated'
 
@@ -4444,7 +4443,6 @@ const en: Catalog = {
   'edit.avatar': 'Avatar',
   'edit.chooseAvatar': 'Choose a default avatar',
   'edit.noAvatar': 'No avatar',
-  'edit.premiumAvatar': 'This avatar is only for Hevalo+ members.',
   'edit.profileUpdated': 'Profile updated.',
   'edit.photoUpdated': 'Profile picture updated.',
   'edit.avatarCleared': 'Avatar cleared.',
@@ -7912,7 +7910,6 @@ const ku: Catalog = {
   'edit.avatar': 'Avatar',
   'edit.chooseAvatar': 'Avatareke standard hilbijêre',
   'edit.noAvatar': 'Bê avatar',
-  'edit.premiumAvatar': 'Tenê endamên Hevalo+ dikarin vê avatarê bi kar bînin.',
   'edit.profileUpdated': 'Profîl hat nûkirin.',
   'edit.photoUpdated': 'Wêneyê profîlê hat nûkirin.',
   'edit.avatarCleared': 'Avatar hat rakirin.',
@@ -11379,7 +11376,6 @@ const de: Catalog = {
   'edit.avatar': 'Avatar',
   'edit.chooseAvatar': 'Standard-Avatar wählen',
   'edit.noAvatar': 'Kein Avatar',
-  'edit.premiumAvatar': 'Dieser Avatar ist nur für Hevalo+-Mitglieder.',
   'edit.profileUpdated': 'Profil aktualisiert.',
   'edit.photoUpdated': 'Profilbild aktualisiert.',
   'edit.avatarCleared': 'Avatar entfernt.',
@@ -14846,7 +14842,6 @@ const es: Catalog = {
   'edit.avatar': 'Avatar',
   'edit.chooseAvatar': 'Elige un avatar predeterminado',
   'edit.noAvatar': 'Sin avatar',
-  'edit.premiumAvatar': 'Este avatar es solo para miembros de Hevalo+.',
   'edit.profileUpdated': 'Perfil actualizado.',
   'edit.photoUpdated': 'Foto de perfil actualizada.',
   'edit.avatarCleared': 'Avatar quitado.',
@@ -18313,7 +18308,6 @@ const tr: Catalog = {
   'edit.avatar': 'Avatar',
   'edit.chooseAvatar': 'Varsayılan bir avatar seç',
   'edit.noAvatar': 'Avatar yok',
-  'edit.premiumAvatar': 'Bu avatar yalnızca Hevalo+ üyeleri içindir.',
   'edit.profileUpdated': 'Profil güncellendi.',
   'edit.photoUpdated': 'Profil fotoğrafı güncellendi.',
   'edit.avatarCleared': 'Avatar kaldırıldı.',
@@ -21780,7 +21774,6 @@ const ar: Catalog = {
   'edit.avatar': 'الصورة الرمزية',
   'edit.chooseAvatar': 'اختر صورة رمزية افتراضية',
   'edit.noAvatar': 'بلا صورة رمزية',
-  'edit.premiumAvatar': 'هذه الصورة الرمزية متاحة لأعضاء Hevalo+ فقط.',
   'edit.profileUpdated': 'تم تحديث الملف الشخصي.',
   'edit.photoUpdated': 'تم تحديث صورة الملف الشخصي.',
   'edit.avatarCleared': 'أُزيلت الصورة الرمزية.',
@@ -25247,7 +25240,6 @@ const fr: Catalog = {
   'edit.avatar': 'Avatar',
   'edit.chooseAvatar': 'Choisis un avatar par défaut',
   'edit.noAvatar': 'Aucun avatar',
-  'edit.premiumAvatar': 'Cet avatar est réservé aux membres Hevalo+.',
   'edit.profileUpdated': 'Profil mis à jour.',
   'edit.photoUpdated': 'Photo de profil mise à jour.',
   'edit.avatarCleared': 'Avatar retiré.',
@@ -28714,7 +28706,6 @@ const nl: Catalog = {
   'edit.avatar': 'Avatar',
   'edit.chooseAvatar': 'Kies een standaardavatar',
   'edit.noAvatar': 'Geen avatar',
-  'edit.premiumAvatar': 'Deze avatar is alleen voor Hevalo+-leden.',
   'edit.profileUpdated': 'Profiel bijgewerkt.',
   'edit.photoUpdated': 'Profielfoto bijgewerkt.',
   'edit.avatarCleared': 'Avatar verwijderd.',
@@ -32182,7 +32173,6 @@ const ckb: Catalog = {
   'edit.avatar': 'ئەڤاتار',
   'edit.chooseAvatar': 'ئەڤاتارێکی بنەڕەت هەڵبژێرە',
   'edit.noAvatar': 'بێ ئەڤاتار',
-  'edit.premiumAvatar': 'تەنها ئەندامانی Hevalo+ دەتوانن ئەم ئەڤاتارە بەکاربهێنن.',
   'edit.profileUpdated': 'پرۆفایل نوێ کرایەوە.',
   'edit.photoUpdated': 'وێنەی پرۆفایل نوێ کرایەوە.',
   'edit.avatarCleared': 'ئەڤاتار لابرا.',
