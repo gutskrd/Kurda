@@ -848,6 +848,7 @@ export const de: Catalogue = {
   'reports.target.imagePost': 'Ein Bildbeitrag',
   'reports.target.comment': 'Ein Kommentar',
   'reports.target.gamePlayer': 'Ein Spieler in einem Spiel',
+  'reports.target.letter': 'Ein Brief',
   'reports.appeal.ask': 'Um erneute Prüfung bitten',
   'reports.appeal.label': 'Was sollen wir uns noch einmal ansehen?',
   'reports.appeal.send': 'Senden',

@@ -183,6 +183,7 @@ const TARGET_NAME: Readonly<Record<ReportTargetType, string>> = {
   image_post: 'Picture post',
   image_comment: 'Comment on a picture',
   game_player: 'Player in a game',
+  letter: 'Letter to a pen pal',
 };
 
 export function targetName(target: string | null | undefined): string {

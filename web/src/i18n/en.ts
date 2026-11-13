@@ -908,6 +908,7 @@ export const en = {
   'reports.target.imagePost': 'A picture post',
   'reports.target.comment': 'A comment',
   'reports.target.gamePlayer': 'A player in a game',
+  'reports.target.letter': 'A letter',
   'reports.appeal.ask': 'Ask for another look',
   'reports.appeal.label': 'What should we look at again?',
   'reports.appeal.send': 'Send',

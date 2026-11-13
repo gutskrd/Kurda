@@ -842,6 +842,7 @@ export const ar: Catalogue = {
   'reports.target.imagePost': 'منشور بصورة',
   'reports.target.comment': 'تعليق',
   'reports.target.gamePlayer': 'لاعب في لعبة',
+  'reports.target.letter': 'رسالة من صديق مراسلة',
   'reports.appeal.ask': 'اطلب مراجعة أخرى',
   'reports.appeal.label': 'ما الذي يجب أن ننظر فيه مجددًا؟',
   'reports.appeal.send': 'إرسال',

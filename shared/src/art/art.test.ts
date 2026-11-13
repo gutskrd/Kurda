@@ -87,6 +87,8 @@ import { dayMedalSvg, streakMedalSvg } from './medals.js';
 import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
 import { SKIES, TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt } from './tree-scene.js';
 import { horizonSky, horizonSvg } from './horizon.js';
+import { LETTER_SILL, letterBirdSvg, letterEnvelopeSvg, letterWindowSvg } from './letters.js';
+import { LETTER_BIRDS } from '../letters.js';
 import { TREE_HEALTHS, TREE_SPECIES, TREE_STAGES, type TreeStage } from '../tree.js';
 import { escapeXml, wholePath } from './svg.js';
 import { characterArt } from '../characters/index.js';
@@ -1895,5 +1897,35 @@ describe('the horizon over a profile', () => {
     const a = checkSvg(horizonSvg({ seed: 'dilan', title: 'A horizon', idPrefix: 'a' }), 360);
     for (const id of checkSvg(horizonSvg({ seed: 'dilan', title: 'A horizon', idPrefix: 'b' }), 360)) expect(a.has(id)).toBe(false);
     expect(() => horizonSvg({ seed: 'dilan', size: 0 })).toThrow(RangeError);
+  });
+});
+
+describe('the letters’ pictures', () => {
+  it('draws the window at every hour, every bird in every pose, and the envelope, each a valid picture', () => {
+    for (const sky of TREE_SKIES) checkSvg(letterWindowSvg({ sky, size: 120 }), 120);
+    for (let bird = 0; bird < LETTER_BIRDS.length; bird++) {
+      for (const pose of ['perched', 'flying', 'carrying'] as const) {
+        checkSvg(letterBirdSvg({ bird, pose, size: 120 }), 120);
+        checkSvg(letterBirdSvg({ bird, pose, facingLeft: true, size: 120 }), 120);
+      }
+    }
+    checkSvg(letterEnvelopeSvg({ size: 120 }), 120);
+  });
+
+  it('gives every bird its own colour, and a letter to carry only when it carries one', () => {
+    const strip = (svg: string): string => svg.replace(/hv[0-9a-z]+/g, 'id');
+    const perched = LETTER_BIRDS.map((_, bird) => strip(letterBirdSvg({ bird })));
+    expect(new Set(perched).size).toBe(LETTER_BIRDS.length);
+    // the wax on the letter in its beak
+    expect(letterBirdSvg({ bird: 0, pose: 'carrying' })).toContain('#d8493b');
+    expect(letterBirdSvg({ bird: 0, pose: 'flying' })).not.toContain('#d8493b');
+    expect(() => letterBirdSvg({ bird: LETTER_BIRDS.length })).toThrow(RangeError);
+  });
+
+  it('puts the sill where the window is drawn, and a bird there at a bird’s size', () => {
+    expect(LETTER_SILL.y).toBeGreaterThan(85);
+    expect(LETTER_SILL.y).toBeLessThan(95);
+    expect(LETTER_SILL.birdShare).toBeGreaterThan(0.2);
+    expect(LETTER_SILL.birdShare).toBeLessThan(0.5);
   });
 });

@@ -854,6 +854,7 @@ export const ckb: Catalogue = {
   'reports.target.imagePost': 'پۆستێکی وێنە',
   'reports.target.comment': 'لێدوانێک',
   'reports.target.gamePlayer': 'یاریزانێک لە یارییەکدا',
+  'reports.target.letter': 'نامەیەک بە باڵندە',
   'reports.appeal.ask': 'داوای سەیرکردنەوە بکە',
   'reports.appeal.label': 'دەبێت سەیری چی بکەینەوە؟',
   'reports.appeal.send': 'بنێرە',

@@ -47,7 +47,8 @@ export type ReportTarget =
   | { type: 'library_comment'; commentId: string }
   | { type: 'image_post'; postId: string }
   | { type: 'image_comment'; commentId: string }
-  | { type: 'game_player'; game: PlayGame; gameId: string; seat: number };
+  | { type: 'game_player'; game: PlayGame; gameId: string; seat: number }
+  | { type: 'letter'; letterId: string };
 
 /**
  * The one report sheet, everywhere something can be reported.
@@ -158,6 +159,7 @@ const TITLE: Record<ReportTarget['type'], TranslationKey> = {
   image_post: 'report.title.post',
   image_comment: 'report.title.comment',
   game_player: 'report.title.player',
+  letter: 'report.title.message',
 };
 
 /** A step's heading, said aloud when the step changes — the sheet does not move focus by itself. */
@@ -470,6 +472,8 @@ export function requestFor(target: ReportTarget, category: ReportCategory, note:
       return { ...base, targetType: target.type, targetId: target.commentId };
     case 'game_player':
       return { ...base, targetType: 'game_player', targetId: target.gameId, game: target.game, seat: target.seat };
+    case 'letter':
+      return { ...base, targetType: 'letter', targetId: target.letterId };
   }
 }
 

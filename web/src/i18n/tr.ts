@@ -843,6 +843,7 @@ export const tr: Catalogue = {
   'reports.target.imagePost': 'Bir resim gönderisi',
   'reports.target.comment': 'Bir yorum',
   'reports.target.gamePlayer': 'Bir oyundaki oyuncu',
+  'reports.target.letter': 'Bir mektup',
   'reports.appeal.ask': 'Tekrar bakılmasını iste',
   'reports.appeal.label': 'Neye tekrar bakmalıyız?',
   'reports.appeal.send': 'Gönder',

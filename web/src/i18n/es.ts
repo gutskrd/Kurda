@@ -846,6 +846,7 @@ export const es: Catalogue = {
   'reports.target.imagePost': 'Una publicación con imagen',
   'reports.target.comment': 'Un comentario',
   'reports.target.gamePlayer': 'Un jugador en una partida',
+  'reports.target.letter': 'Una carta',
   'reports.appeal.ask': 'Pedir otra revisión',
   'reports.appeal.label': '¿Qué deberíamos volver a mirar?',
   'reports.appeal.send': 'Enviar',

@@ -2239,6 +2239,7 @@ export type TranslationKey =
   | 'reports.target.post'
   | 'reports.target.comment'
   | 'reports.target.player'
+  | 'reports.target.letter'
   | 'reports.status.open'
   | 'reports.status.actioned'
   | 'reports.status.noViolation'
@@ -5204,6 +5205,7 @@ const en: Catalog = {
   'reports.target.post': 'A post',
   'reports.target.comment': 'A comment',
   'reports.target.player': 'A player in a game',
+  'reports.target.letter': 'A letter',
   'reports.status.open': 'Waiting for review',
   'reports.status.actioned': 'We took action. Thanks for keeping Hevalo safe.',
   'reports.status.noViolation': 'We reviewed it and it doesn’t break our rules. You can still block them.',
@@ -8669,6 +8671,7 @@ const ku: Catalog = {
   'reports.target.post': 'Şandiyek',
   'reports.target.comment': 'Şîroveyek',
   'reports.target.player': 'Lîstikvanek di lîstikê de',
+  'reports.target.letter': 'Nameyek',
   'reports.status.open': 'Li benda nirxandinê',
   'reports.status.actioned': 'Me tedbîr girt. Spas ku tu Hevalo ewle dihêlî.',
   'reports.status.noViolation': 'Me lê nêrî û ew li dijî rêzikên me nîne. Tu hîn dikarî wan asteng bikî.',
@@ -12134,6 +12137,7 @@ const de: Catalog = {
   'reports.target.post': 'Ein Beitrag',
   'reports.target.comment': 'Ein Kommentar',
   'reports.target.player': 'Jemand in einem Spiel',
+  'reports.target.letter': 'Ein Brief',
   'reports.status.open': 'Wartet auf Prüfung',
   'reports.status.actioned': 'Wir haben gehandelt. Danke, dass du mithilfst, damit Hevalo sicher bleibt.',
   'reports.status.noViolation': 'Wir haben es geprüft – es verstößt nicht gegen unsere Regeln. Du kannst die Person trotzdem blockieren.',
@@ -15599,6 +15603,7 @@ const es: Catalog = {
   'reports.target.post': 'Una publicación',
   'reports.target.comment': 'Un comentario',
   'reports.target.player': 'Un jugador en una partida',
+  'reports.target.letter': 'Una carta',
   'reports.status.open': 'Pendiente de revisión',
   'reports.status.actioned': 'Hemos tomado medidas. Gracias por mantener Hevalo seguro.',
   'reports.status.noViolation': 'Lo revisamos y no incumple nuestras normas. Aun así puedes bloquear a esa persona.',
@@ -19064,6 +19069,7 @@ const tr: Catalog = {
   'reports.target.post': 'Bir gönderi',
   'reports.target.comment': 'Bir yorum',
   'reports.target.player': 'Bir oyundaki oyuncu',
+  'reports.target.letter': 'Bir mektup',
   'reports.status.open': 'İnceleme bekliyor',
   'reports.status.actioned': 'Önlem aldık. Hevalo’yu güvende tuttuğun için teşekkürler.',
   'reports.status.noViolation': 'İnceledik, kurallarımıza aykırı değil. Yine de engelleyebilirsin.',
@@ -22529,6 +22535,7 @@ const ar: Catalog = {
   'reports.target.post': 'منشور',
   'reports.target.comment': 'تعليق',
   'reports.target.player': 'لاعب في لعبة',
+  'reports.target.letter': 'رسالة من صديق مراسلة',
   'reports.status.open': 'بانتظار المراجعة',
   'reports.status.actioned': 'اتخذنا إجراءً. شكرًا لمساعدتك في إبقاء Hevalo آمنًا.',
   'reports.status.noViolation': 'راجعناه ولا يخالف قواعدنا. لا يزال بإمكانك حظر هذا الشخص.',
@@ -25994,6 +26001,7 @@ const fr: Catalog = {
   'reports.target.post': 'Une publication',
   'reports.target.comment': 'Un commentaire',
   'reports.target.player': 'Un joueur dans une partie',
+  'reports.target.letter': 'Une lettre',
   'reports.status.open': 'En attente d’examen',
   'reports.status.actioned': 'Nous avons agi. Merci d’aider Hevalo à rester sûr.',
   'reports.status.noViolation': 'Nous l’avons examiné : cela n’enfreint pas nos règles. Tu peux quand même bloquer la personne.',
@@ -29459,6 +29467,7 @@ const nl: Catalog = {
   'reports.target.post': 'Een post',
   'reports.target.comment': 'Een reactie',
   'reports.target.player': 'Een speler in een spel',
+  'reports.target.letter': 'Een brief',
   'reports.status.open': 'Wacht op controle',
   'reports.status.actioned': 'We hebben actie ondernomen. Bedankt dat je Hevalo veilig houdt.',
   'reports.status.noViolation': 'We hebben het bekeken en het is niet tegen onze regels. Je kunt deze persoon nog steeds blokkeren.',
@@ -32925,6 +32934,7 @@ const ckb: Catalog = {
   'reports.target.post': 'پۆستێک',
   'reports.target.comment': 'لێدوانێک',
   'reports.target.player': 'یاریزانێک لە یارییەکدا',
+  'reports.target.letter': 'نامەیەک بە باڵندە',
   'reports.status.open': 'چاوەڕێی پێداچوونەوە',
   'reports.status.actioned': 'هەنگاومان نا. سوپاس کە Hevalo پارێزراو دەهێڵیتەوە.',
   'reports.status.noViolation': 'پێیدا چووینەوە و پێچەوانەی یاساکانمان نییە. هێشتا دەتوانیت بلۆکی بکەیت.',

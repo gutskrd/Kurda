@@ -161,6 +161,7 @@ export const REPORT_TARGET_TYPES = [
   'image_post',
   'image_comment',
   'game_player',
+  'letter',
 ] as const;
 export type ReportTargetType = (typeof REPORT_TARGET_TYPES)[number];
 

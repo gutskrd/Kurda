@@ -27,8 +27,9 @@
  */
 import { deerSilhouetteSvg } from '../games/who-am-i/silhouette.js';
 import { GAME_NAMES } from '../games/names.js';
-import { at, dab, form, ring, rr, type Tones } from './cutout.js';
+import { dab, form, ring, rr, type Tones } from './cutout.js';
 import type { Cover, Key, Part } from './game-acting.js';
+import { songbird } from './songbird.js';
 import { letter, letterWidth, oval } from './ink.js';
 import { Drawing, n, tint } from './svg.js';
 
@@ -41,7 +42,6 @@ const RED = '#d8493b';
 const GOLD = '#f2b632';
 const GREEN = '#3fa45b';
 const BLUE = '#3d8bd9';
-const ORANGE = '#f08a34';
 const STEEL = '#9aa5b4';
 const NIGHT = '#3b2f63';
 const BROWN = '#a8683a';
@@ -93,18 +93,6 @@ function inside(dr: Drawing, d: string, draw: () => void): void {
   dr.add(`<g clip-path="url(#${dr.clip(d)})">`);
   draw();
   dr.add('</g>');
-}
-
-/**
- * A cut-out drawn in a mirror (`flip` -1): the same form as `form`, with its
- * sliver of light moved the other way inside the mirror, so that on the page
- * it still runs along the upper left, where the light is.
- */
-function cut(dr: Drawing, d: string, t: Tones, drop: number, rim: number, flip: 1 | -1): void {
-  if (flip === 1) return form(dr, d, t, drop, rim);
-  if (drop > 0) dr.add(`<path d="${d}" fill="${t.shade}"${at(0, drop)}/>`);
-  dr.add(`<path d="${d}" fill="${t.light}"/>`);
-  dr.add(`<g clip-path="url(#${dr.clip(d)})"><path d="${d}" fill="${t.base}"${at(-rim, rim)}/></g>`);
 }
 
 /** A four-pointed glint about a point, its arms `r` long. */
@@ -213,29 +201,6 @@ const ROSE = '#f6a6c1';
 const RHYME = '#c4417a';
 /** Where the bough is under each bird's feet. */
 const PERCH = 90;
-
-/**
- * A songbird standing at 0,0 and facing right (`flip` -1 faces it left): a
- * round body with its head, a tail and a folded wing in its own darker tone,
- * a pale breast, a beak, a dot of an eye and two short legs. The same bird
- * carries Hevalo's letters.
- */
-function songbird(dr: Drawing, hex: string, flip: 1 | -1): void {
-  const body = 'M-12 -11C-12 -19 -6 -24 1 -24C3 -30.5 8 -33.5 13 -33C18 -32.5 21 -28.6 20.6 -24C20.2 -20 17.8 -17.4 17.2 -13.6C16.4 -5.6 10 -1.5 2 -1.5C-6 -1.5 -12 -5 -12 -11Z';
-  const deep = tones(tint(hex, -0.14));
-  // the legs, behind the body, down to the bough
-  line(dr, 'M-1 -3L-2 0.8M5.6 -3L4.6 0.8', INK, 1.6);
-  // the tail: two rounded feathers, cocked up behind it
-  cut(dr, 'M-8 -14C-14 -17 -20 -21 -24.6 -21.4C-26.6 -21.4 -27 -19.4 -25.6 -18C-23 -15.4 -20.6 -13.4 -18.6 -11.6C-21.6 -11 -23.6 -9.6 -23 -8C-22.4 -6.6 -19 -6.4 -9 -6Z', deep, 1.6, 1.2, flip);
-  cut(dr, body, tones(hex), 1.8, 1.8, flip);
-  // the breast, paler, from the throat round under the belly
-  fill(dr, 'M17.4 -14.6C16.6 -5.6 10 -1.5 2 -1.5C-1.6 -1.5 -4.6 -2.3 -7 -3.6C1 -4.6 9.6 -8.6 13.4 -15.6C14.6 -17.8 17 -17.8 17.4 -14.6Z', tint(hex, 0.55));
-  // the wing folded along its side, its tip toward the tail
-  cut(dr, 'M-5 -18.6C1.6 -20.4 8.6 -17.6 9.2 -12.4C7 -8.6 0 -7.6 -9.6 -9.8C-12.6 -10.4 -14.4 -11.6 -15.4 -13C-12.6 -15.4 -9 -17.6 -5 -18.6Z', deep, 0, 1.4, flip);
-  fill(dr, 'M20.2 -27.6L26.6 -25L20.4 -22.4Z', ORANGE);
-  dot(dr, 14.4, -26.4, 2.1, INK);
-  dot(dr, 15.1, -27.1, 0.7, WHITE);
-}
 
 /** A bubble's outline: a rounded card with a short tail that leaves its foot at `from` and points at (toX, toY). */
 function bubble(x: number, y: number, w: number, h: number, from: number, toX: number, toY: number): string {

@@ -476,6 +476,29 @@ export {
   type BirthMonth,
 } from './age.js';
 
+/** Letters by bird: pen pals writing in Kurdish, within an age band, carried by each writer's bird. */
+export {
+  BIRD_OUT_DAYS,
+  LETTERS_PER_DAY,
+  LETTER_AGE_BANDS,
+  LETTER_BIRDS,
+  LETTER_MAX,
+  LETTER_MIN,
+  PEN_PALS_MAX,
+  letterAgeBand,
+  letterBirdOf,
+  letterProblem,
+  type BirdOutResult,
+  type LetterAgeBand,
+  type LetterItem,
+  type LetterPerson,
+  type LetterProblem,
+  type LetterThread,
+  type LettersHome,
+  type LettersRefusal,
+  type PenPal,
+} from './letters.js';
+
 /**
  * Stories and their quizzes (they replaced the ranked quiz): the presets, the
  * word bands, how a story is cut into paragraphs and sentences, and the shapes
@@ -724,6 +747,15 @@ export {
   horizonSky,
   horizonSvg,
   type HorizonOptions,
+  LETTER_BIRD_FEET,
+  LETTER_SILL,
+  letterBirdSvg,
+  letterEnvelopeSvg,
+  letterWindowSvg,
+  type LetterBirdOptions,
+  type LetterEnvelopeOptions,
+  type LetterWindowOptions,
+  type SongbirdPose,
 } from './art/index.js';
 /**
  * The art's metals, for the parts of a screen drawn around an emblem — a

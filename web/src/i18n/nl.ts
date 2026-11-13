@@ -848,6 +848,7 @@ export const nl: Catalogue = {
   'reports.target.imagePost': 'Een fotobericht',
   'reports.target.comment': 'Een reactie',
   'reports.target.gamePlayer': 'Een speler in een spel',
+  'reports.target.letter': 'Een brief',
   'reports.appeal.ask': 'Vraag om nog eens te kijken',
   'reports.appeal.label': 'Waar moeten we nog eens naar kijken?',
   'reports.appeal.send': 'Versturen',

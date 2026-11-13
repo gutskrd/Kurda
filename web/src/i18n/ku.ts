@@ -850,6 +850,7 @@ export const ku: Catalogue = {
   'reports.target.imagePost': 'Şandiyeke wêneyî',
   'reports.target.comment': 'Şîroveyek',
   'reports.target.gamePlayer': 'Lîstikvanek di lîstikê de',
+  'reports.target.letter': 'Nameyek',
   'reports.appeal.ask': 'Ji nû ve nêrînê bixwaze',
   'reports.appeal.label': 'Divê em li çi dîsa binêrin?',
   'reports.appeal.send': 'Bişîne',
