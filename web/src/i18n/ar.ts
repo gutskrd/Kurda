@@ -3707,7 +3707,7 @@ export const ar: Catalogue = {
   // ---- end of Game Ranks, leagues and badges ------------------------------
   // ---- the five places: the tab bar, Search, Learn's two halves, the bell, appearance ----
   'nav.search': 'بحث',
-  'nav.profile': 'الملف',
+  'nav.profile': 'الملف الشخصي',
   'nav.tabUnread': '{place}، {count} غير مقروءة',
   'nav.tabWaiting': '{place}، هناك ما ينتظرك',
   'notifications.bellUnread': 'الإشعارات، {count} جديدة',
@@ -3779,7 +3779,7 @@ export const ar: Catalogue = {
   'chat.allRead': 'قرأت كل شيء.',
   'chat.noMatch': 'لا شيء يطابق هذا الاسم.',
   'chat.newMessage.noneBody': 'الرسائل بين الأصدقاء. ابحث أولًا عن شخص تضيفه.',
-  'profile.share': 'شارك الملف',
+  'profile.share': 'شارك الملف الشخصي',
   'search.label': 'ابحث عن أشخاص أو كلمات',
   'search.clear': 'امسح البحث',
   'search.scopeLabel': 'ما الذي تبحث عنه',
