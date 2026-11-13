@@ -247,7 +247,8 @@ describe('the story page', () => {
     await screen.findByRole('heading', { level: 1 });
     expect(screen.getAllByText('Finish the story first.')).toHaveLength(2);
     expect(screen.getAllByRole('button', { name: 'Check what you understood' })[0]).toBeDisabled();
-    expect(observed).toHaveLength(2);
+    // the paragraphs are watched from an effect, which runs a moment after the page is drawn: on a busy machine the heading is there first
+    await waitFor(() => expect(observed).toHaveLength(2));
     show(0);
     await waitFor(() => expect(calls.filter((c) => c.method === 'PUT').map((c) => c.body)).toEqual([{ paragraph: 0, share: 0.5 }]));
     show(1);
