@@ -10,9 +10,10 @@ import { MessageList } from './MessageList';
 import { Composer } from './Composer';
 import { ChatGameButton } from '../play/PlayButtons';
 import { gameCardBody } from '../play/ChatGameCard';
-import { useStickyScroll } from './useStickyScroll';
+import { useStickyScroll, useUnseenBelow } from './useStickyScroll';
 import { useOutbox, type Unsent } from './useOutbox';
-import { useTypingSignal, useTypingWatch, typingLabel } from './useTyping';
+import { useTypingSignal, useTypingWatch } from './useTyping';
+import { TypingBubble } from './TypingBubble';
 import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { sendError } from './DmThread';
@@ -153,8 +154,12 @@ export function GroupThread({
     ],
     [messages, outbox.unsent, user?.id, user?.username],
   );
-  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(thread);
   const { typing, note } = useTypingWatch();
+  // the thread follows what is new at its foot: a message, or the bubble of somebody writing one
+  const isTyping = typing.length > 0;
+  const following = useMemo(() => ({ thread, isTyping }), [thread, isTyping]);
+  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(following);
+  const unseen = useUnseenBelow(thread, atBottom, user?.id);
   const signalTyping = useTypingSignal(
     useCallback(() => void client.post(`/groups/${groupId}/chat/typing`).catch(() => undefined), [client, groupId]),
   );
@@ -465,76 +470,73 @@ export function GroupThread({
         )}
       </Modal>
 
-      <div className="chat-messages" ref={scrollRef}>
-        {messages === null || !detailTried ? (
-          <ThreadSkeleton />
-        ) : missing && !gone ? (
-          <GroupMissing />
-        ) : outside ? (
-          <GroupOutside
-            group={{ id: groupId, name, photoUrl: detail?.photoUrl }}
-            banned={banned}
-            gone={gone}
-            onChanged={async () => {
-              setGone(false);
-              await loadDetail();
-              void load();
-            }}
-          />
-        ) : (
-          <>
-            {shown?.kind === 'everyone' && <ClearedLine by={shown.by} at={shown.at} mine={shown.by !== null && shown.by === user?.username} />}
-            {thread.length === 0 ? (
-              loadError ? (
-                <p className="muted chat-hint">{loadError}</p>
+      <div className="chat-scroll">
+        <div className="chat-messages" ref={scrollRef}>
+          {messages === null || !detailTried ? (
+            <ThreadSkeleton />
+          ) : missing && !gone ? (
+            <GroupMissing />
+          ) : outside ? (
+            <GroupOutside
+              group={{ id: groupId, name, photoUrl: detail?.photoUrl }}
+              banned={banned}
+              gone={gone}
+              onChanged={async () => {
+                setGone(false);
+                await loadDetail();
+                void load();
+              }}
+            />
+          ) : (
+            <>
+              {shown?.kind === 'everyone' && <ClearedLine by={shown.by} at={shown.at} mine={shown.by !== null && shown.by === user?.username} />}
+              {thread.length === 0 ? (
+                loadError ? (
+                  <p className="muted chat-hint">{loadError}</p>
+                ) : (
+                  <GroupWelcome
+                    group={{ id: groupId, name, photoUrl: detail?.photoUrl }}
+                    cleared={shown?.kind === 'me' ? shown : shown ? { kind: 'everyone' } : null}
+                    canPost={canPost}
+                    onGreet={greet}
+                    onAddFriends={alone ? () => setAddingFriends(true) : undefined}
+                  />
+                )
               ) : (
-                <GroupWelcome
-                  group={{ id: groupId, name, photoUrl: detail?.photoUrl }}
-                  cleared={shown?.kind === 'me' ? shown : shown ? { kind: 'everyone' } : null}
-                  canPost={canPost}
-                  onGreet={greet}
-                  onAddFriends={alone ? () => setAddingFriends(true) : undefined}
+                <MessageList
+                  messages={thread}
+                  myId={user?.id}
+                  named
+                  onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
+                  onReport={setReporting}
+                  renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
+                  onRetry={(m) => outbox.retry(m.id)}
+                  // taken back: its words return to the box, unless something else has been typed there since
+                  onDiscard={(m) => {
+                    const words = outbox.discard(m.id);
+                    if (words) setText((now) => now || words);
+                  }}
                 />
-              )
-            ) : (
-              <MessageList
-                messages={thread}
-                myId={user?.id}
-                onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
-                onReport={setReporting}
-                renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
-                onRetry={(m) => outbox.retry(m.id)}
-                // taken back: its words return to the box, unless something else has been typed there since
-                onDiscard={(m) => {
-                  const words = outbox.discard(m.id);
-                  if (words) setText((now) => now || words);
-                }}
-              />
+              )}
+            </>
+          )}
+          {!outside && <TypingBubble names={typing} named />}
+        </div>
+
+        {!atBottom && !outside && messages !== null && messages.length > 0 && (
+          <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')} aria-label={unseen > 0 ? t('chat.jumpToNew', { count: unseen }) : t('chat.jumpToLatest')} title={t('chat.jumpToLatest')}>
+            <ChevronIcon size={18} className="chat-jump-icon" />
+            {unseen > 0 && (
+              <span className="chat-jump-count" aria-hidden="true">
+                {unseen > 99 ? '99+' : unseen}
+              </span>
             )}
-          </>
+          </button>
         )}
       </div>
       <p className="sr-only" role="status">
         {said}
       </p>
-
-      {typing.length > 0 && (
-        <div className="chat-typing" aria-live="polite">
-          <span className="chat-typing-dots" aria-hidden>
-            <i />
-            <i />
-            <i />
-          </span>
-          {typingLabel(typing, t)}
-        </div>
-      )}
-
-      {!atBottom && !outside && messages !== null && messages.length > 0 && (
-        <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')}>
-          {t('chat.jumpToLatest')}
-          <ChevronIcon size={14} className="chat-jump-icon" />
-        </button>
-      )}
 
       {!outside && gifts.notice}
       {!outside && <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />}

@@ -148,3 +148,45 @@ export function groupMessages<T extends Groupable>(
 
   return sections;
 }
+
+/**
+ * Longer than this between the end of one run and the start of the next, and
+ * the conversation paused there: the run before the pause says when it was.
+ */
+const MOMENT_GAP_MS = 10 * 60 * 1000;
+
+/**
+ * Whether a run is where a moment of the conversation ends, and so the one
+ * that carries the time: the last of its day, or the last before a pause.
+ *
+ * A time under every run is a column of the same minute down the side of a
+ * lively exchange. People read a conversation in moments — this, then a while
+ * later that — so the time is printed once a moment, where it ends, and every
+ * other run keeps its own for a screen reader and for a pointer resting on it.
+ */
+export function endsAMoment<T extends Groupable>(runs: readonly Run<T>[], index: number): boolean {
+  const next = runs[index + 1];
+  if (!next) return true;
+  const run = runs[index]!;
+  const ended = new Date(run.messages[run.messages.length - 1]!.createdAt).getTime();
+  const resumed = new Date(next.messages[0]!.createdAt).getTime();
+  if (Number.isNaN(ended) || Number.isNaN(resumed)) return true;
+  return resumed - ended >= MOMENT_GAP_MS;
+}
+
+/** One emoji, with whatever joins and modifies it (a skin tone, a flag's second half, a family's joiners). */
+const EMOJI = /(?:\p{Regional_Indicator}{2}|[#*0-9]\uFE0F?\u20E3|\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{Emoji_Modifier})?)*)/gu;
+
+/**
+ * Whether a message is nothing but one to three emoji, which a chat shows
+ * large and without a bubble: a heart sent on its own is the whole message,
+ * and reads as one at that size.
+ */
+export function isEmojiOnly(body: string | null | undefined): boolean {
+  if (!body) return false;
+  const text = body.trim();
+  if (text.length === 0 || text.length > 40) return false;
+  const found = text.match(EMOJI);
+  if (!found || found.length > 3) return false;
+  return text.replace(EMOJI, '').replace(/\s+/g, '').length === 0;
+}

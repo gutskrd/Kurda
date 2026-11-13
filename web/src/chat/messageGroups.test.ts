@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { dayLabel, groupMessages, timeLabel } from './messageGroups';
+import { dayLabel, groupMessages, timeLabel, endsAMoment, isEmojiOnly } from './messageGroups';
 
 /** Build a message at a local time on a given day. */
 const msg = (id: string, senderId: string, iso: string) => ({ id, senderId, createdAt: iso });
@@ -111,5 +111,36 @@ describe('timeLabel', () => {
 
   it('is blank rather than "Invalid Date" for a bad timestamp', () => {
     expect(timeLabel('nonsense')).toBe('');
+  });
+});
+
+describe('endsAMoment', () => {
+  const iso = (h: number, m: number): string => {
+    const d = new Date(2026, 4, 20, h, m, 0, 0);
+    return d.toISOString();
+  };
+  const run = (senderId: string, ...times: string[]) => ({ senderId, messages: times.map((createdAt, i) => ({ id: `${senderId}-${createdAt}-${i}`, senderId, createdAt })) });
+
+  it('is the last run of a day, and the last before a pause of ten minutes', () => {
+    const runs = [run('a', iso(10, 0)), run('b', iso(10, 1), iso(10, 3)), run('a', iso(10, 12)), run('b', iso(10, 22))];
+    // 10:00 → 10:01 no pause; 10:03 → 10:12 nine minutes, still the same moment; 10:12 → 10:22 ten, a pause; and the last
+    expect(runs.map((_, i) => endsAMoment(runs, i))).toEqual([false, false, true, true]);
+  });
+
+  it('gives a run its time when a timestamp will not parse, rather than guess', () => {
+    const runs = [run('a', 'not a date'), run('b', iso(10, 1))];
+    expect(endsAMoment(runs, 0)).toBe(true);
+  });
+});
+
+describe('isEmojiOnly', () => {
+  it('is one to three emoji and nothing else', () => {
+    for (const body of ['❤️', '😄', '👋🏽', '🙋 😄', '🇳🇱', '👨‍👩‍👧', '👍👍👍']) expect(isEmojiOnly(body), body).toBe(true);
+  });
+
+  it('is not words, not words with an emoji, not four emoji, not nothing', () => {
+    for (const body of ['spas', 'spas ❤️', '😄😄😄😄', '', '   ', '123', ':)']) expect(isEmojiOnly(body), body).toBe(false);
+    expect(isEmojiOnly(null)).toBe(false);
+    expect(isEmojiOnly(undefined)).toBe(false);
   });
 });

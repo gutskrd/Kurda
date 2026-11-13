@@ -76,6 +76,15 @@
   --stage-gold: #f2b632;
   --stage-gold-lip: #a8791a;
   --stage-gold-ink: #2a1d05;
+  /*
+   * A conversation's bubbles (chat): the reader's own words in the app's gold,
+   * the other person's a step off the page. Said here once, with the ink each
+   * is read in, so a thread, its typing bubble and its send button agree.
+   */
+  --bubble-mine: #f2b632;
+  --bubble-mine-ink: #2a1d05;
+  --bubble-theirs: #262b34;
+  --bubble-theirs-ink: #ffffff;
   --gems: #7cc6ff;
   /* a heart that has been given: its own colour, apart from gold and the semantic pair */
   --like: #ff8fa3;
@@ -230,6 +239,10 @@
   --gold: #eba905;
   --gold-ink: #805c00;
   --gold-soft: rgba(235, 169, 5, 0.16);
+  --bubble-mine: #f5be3d;
+  --bubble-mine-ink: #2a1d05;
+  --bubble-theirs: #ececea;
+  --bubble-theirs-ink: #111111;
   --gems: #1f6fb2;
   /* 5.4:1 on a card, 5:1 on the page */
   --like: #c8285a;

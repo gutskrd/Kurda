@@ -1,5 +1,5 @@
 import { useEffect, useRef, type ReactNode } from 'react';
-import { Button } from '../components/Button';
+import { SendIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { useMediaQuery } from '../lib/useMediaQuery';
 
@@ -18,6 +18,12 @@ import { useMediaQuery } from '../lib/useMediaQuery';
  *
  * The box does not wait on the server: the thread shows a message the moment
  * it is sent (chat/useOutbox.ts), so Send is ready again at once.
+ *
+ * The field and its Send are one rounded shape: the words on the left, a
+ * round button at the end of them that lights up in the colour of the
+ * reader's own bubbles once there is something to send. It was a boxed input
+ * beside a wide button reading "Send", which on a phone left the words less
+ * than half the row.
  */
 
 /** Grow to this many lines, then scroll — past that it eats the thread. */
@@ -77,28 +83,30 @@ export function Composer({
       }}
     >
       {tools && <div className="chat-compose-tools">{tools}</div>}
-      <textarea
-        ref={ref}
-        className="input chat-compose-input"
-        rows={1}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        onKeyDown={(e) => {
-          // at a keyboard Enter sends and Shift+Enter (or a composing IME) writes a new line; on a touch screen Enter is the new line
-          if (touch) return;
-          if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-            e.preventDefault();
-            if (!empty) onSubmit();
-          }
-        }}
-        enterKeyHint={touch ? 'enter' : 'send'}
-        placeholder={placeholder}
-        maxLength={maxLength}
-        aria-label={t('chat.message')}
-      />
-      <Button type="submit" disabled={empty}>
-        {t('chat.send')}
-      </Button>
+      <div className="chat-compose-field">
+        <textarea
+          ref={ref}
+          className="chat-compose-input"
+          rows={1}
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          onKeyDown={(e) => {
+            // at a keyboard Enter sends and Shift+Enter (or a composing IME) writes a new line; on a touch screen Enter is the new line
+            if (touch) return;
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault();
+              if (!empty) onSubmit();
+            }
+          }}
+          enterKeyHint={touch ? 'enter' : 'send'}
+          placeholder={placeholder}
+          maxLength={maxLength}
+          aria-label={t('chat.message')}
+        />
+        <button type="submit" className="chat-send" disabled={empty} aria-label={t('chat.send')} title={t('chat.send')}>
+          <SendIcon size={18} />
+        </button>
+      </div>
     </form>
   );
 }

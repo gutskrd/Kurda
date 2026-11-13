@@ -189,3 +189,51 @@ describe('the message box on a touch screen', () => {
     vi.stubGlobal('matchMedia', undefined);
   });
 });
+
+describe('DmThread, who it is with and a first hello', () => {
+  /** A thread with Rojda that the way in knew only by her id, as a link from outside the list does. */
+  function linked(messages: unknown[], conversations: unknown[]): { sent: string[] } {
+    const sent: string[] = [];
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.endsWith('/me')) return jsonResponse(200, { user: { id: 'me', username: 'baran' } });
+        if (url.endsWith('/chat/conversations')) return jsonResponse(200, { conversations });
+        if (url.includes('/chat/u-rojda/messages') && init?.method === 'POST') {
+          const body = String((JSON.parse(String(init.body)) as { body: string }).body);
+          sent.push(body);
+          return delivered(body);
+        }
+        if (url.includes('/chat/u-rojda/messages')) return jsonResponse(200, { messages });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<DmThread otherId="u-rojda" onSent={() => undefined} />);
+    return { sent };
+  }
+
+  it('heads the thread with their name and that they are online, from the conversation list', async () => {
+    linked([], [{ userId: 'u-rojda', username: 'Rojda', avatarUrl: 'https://img/r.png', online: true, lastMessage: '', lastAt: '2026-10-14T10:00:00Z', lastFromMe: false, unread: 0 }]);
+    // it used to be headed "Conversation" whenever the address carried no name
+    const head = await screen.findByRole('button', { name: /Rojda/ });
+    expect(within(head).getByText('Online')).toBeInTheDocument();
+    expect(head.querySelector('img')?.getAttribute('src')).toBe('https://img/r.png');
+    expect(screen.queryByText('Conversation')).toBeNull();
+  });
+
+  it('names them from their own messages when the list does not have them', async () => {
+    linked([{ id: 'm1', senderId: 'u-rojda', username: 'Rojda', avatarUrl: null, body: 'silav', kind: 'text', createdAt: '2026-10-14T10:00:00Z', deliveredAt: null, readAt: null }], []);
+    expect(await screen.findByRole('button', { name: 'Rojda' })).toBeInTheDocument();
+  });
+
+  it('offers a first hello in Kurdish in a conversation nobody has written in, and sends the one tapped', async () => {
+    const { sent } = linked([], [{ userId: 'u-rojda', username: 'Rojda', avatarUrl: null, online: false, lastMessage: '', lastAt: '2026-10-14T10:00:00Z', lastFromMe: false, unread: 0 }]);
+    expect(await screen.findByText('This is the start of your conversation with Rojda.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Send “Silav! 👋”' }));
+    // it is in the thread at once, as anything sent is, and the welcome has made way for it
+    expect(await screen.findByText('Silav! 👋')).toBeInTheDocument();
+    expect(sent).toEqual(['Silav! 👋']);
+    expect(screen.queryByText('This is the start of your conversation with Rojda.')).toBeNull();
+  });
+});

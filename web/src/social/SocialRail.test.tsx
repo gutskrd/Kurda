@@ -312,7 +312,8 @@ describe('SocialRail', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Message zana' }));
 
     expect(container.querySelector('.rail-chat')).not.toBeNull();
-    expect(await screen.findByText(/No messages yet/)).toBeInTheDocument();
+    // an empty thread opens on who it is with and a first hello to send
+    expect(await screen.findByText('This is the start of your conversation with zana.')).toBeInTheDocument();
   });
 
   it('closes the docked conversation without leaving the page', async () => {
