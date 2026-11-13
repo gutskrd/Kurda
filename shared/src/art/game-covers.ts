@@ -142,7 +142,8 @@ function tile(dr: Drawing, x: number, y: number, size: number, face: Tones, ch: 
 
 // ───────────────────────────────────────────────────────────── Peyvok
 
-const PINE = '#1c5a47';
+const MEADOW = '#86d6a4';
+const PHONE = '#3b2f63';
 const MARK = { gray: STEEL, yellow: GOLD, green: GREEN } as const;
 /** A game that ends on `heval`, friend, scored by the real rules: the guesses the app's front page shows. */
 const GUESSES: ReadonlyArray<readonly [string, ReadonlyArray<keyof typeof MARK>]> = [
@@ -150,29 +151,40 @@ const GUESSES: ReadonlyArray<readonly [string, ReadonlyArray<keyof typeof MARK>]
   ['SILAV', ['gray', 'gray', 'yellow', 'green', 'yellow']],
   ['HEVAL', ['green', 'green', 'green', 'green', 'green']],
 ];
-/** How far the board leans, and the point it leans about. */
-const LEAN = -5;
-const LEAN_AT = [60, 60] as const;
-/** A square of the board, and how far apart two of them stand. */
-const SQUARE = 19;
-const PITCH = 22.4;
-const squareAt = (c: number, r: number): readonly [number, number] => [5.7 + c * PITCH, 9 + r * PITCH];
+/** How far the phone leans, and the point it leans about. */
+const LEAN = -7;
+const LEAN_AT = [60, 66] as const;
+/** A square of the board, and where each one is on the phone's screen. */
+const SQUARE = 12.4;
+const squareAt = (c: number, r: number): readonly [number, number] => [24.6 + c * 14.6, 27 + r * 14.8];
 const leaning = (dr: Drawing, draw: () => void): void => turned(dr, LEAN, LEAN_AT[0], LEAN_AT[1], draw);
 
 /** One square of a guess: its mark's colour, its letter in white. */
 function guessed(dr: Drawing, c: number, r: number): void {
   const [x, y] = squareAt(c, r);
   const [word, marks] = GUESSES[r]!;
-  tile(dr, x, y, SQUARE, tones(MARK[marks[c]!]), word[c]!, WHITE, 2.6);
+  tile(dr, x, y, SQUARE, tones(MARK[marks[c]!]), word[c]!, WHITE, 1.5);
+}
+
+function peyvokPhone(dr: Drawing): void {
+  leaning(dr, () => {
+    // the phone, taller than the picture: its foot runs off the bottom edge
+    form(dr, rr(17, 6, 86, 150, 13), tones(PHONE), 4, 2.4);
+    fill(dr, rr(21.6, 11, 76.8, 140, 8.6), '#fffdf8');
+    fill(dr, rr(51, 14.4, 18, 4.4, 2.2), PHONE);
+    // the rows still to be guessed
+    for (let r = 2; r < 7; r++) for (let c = 0; c < 5; c++) line(dr, rr(...squareAt(c, r), SQUARE, SQUARE, 2.7), '#e6dece', 1.3);
+    for (let r = 0; r < 2; r++) for (let c = 0; c < 5; c++) guessed(dr, c, r);
+  });
 }
 
 /** When each square of the last guess turns over. */
 const turnsAt = (c: number): number => 0.2 + c * 0.075;
 
 /**
- * Peyvok: the board itself, as large as the cover. Two guesses are made, and
- * the third turns over square by square, every one of them green: heval. Two
- * of the letters Kurmancî adds lie on the rows still to be played, and nod.
+ * Peyvok: a phone with the game on it. Two guesses are made, and the third
+ * turns over square by square, every one of them green: heval. Two of the
+ * letters Kurmancî adds stand beside it and nod.
  */
 const peyvok: Cover = {
   title: GAME_NAMES.peyvok,
@@ -180,14 +192,11 @@ const peyvok: Cover = {
   parts: [
     {
       draw: (dr) => {
-        ground(dr, PINE);
-        leaning(dr, () => {
-          // the rows still to be guessed, as places a square will go
-          for (let r = 3; r < 6; r++) for (let c = 0; c < 5; c++) fill(dr, rr(...squareAt(c, r), SQUARE, SQUARE, SQUARE * 0.22), tint(PINE, 0.1));
-          for (let r = 0; r < 2; r++) for (let c = 0; c < 5; c++) guessed(dr, c, r);
-        });
+        ground(dr, MEADOW);
+        fill(dr, ring(60, 62, 50), tint(MEADOW, 0.22));
       },
     },
+    { draw: peyvokPhone },
     ...[0, 1, 2, 3, 4].map((c): Part => {
       const [x, y] = squareAt(c, 2);
       const bows = 0.7 + c * 0.035;
@@ -211,13 +220,13 @@ const peyvok: Cover = {
       };
     }),
     {
-      draw: (dr) => placed(dr, 25, 98, -13, 1, () => tile(dr, -16, -16, 32, CREAM, 'Ê', INK)),
-      pivot: [25, 98],
+      draw: (dr) => placed(dr, 17, 97, -13, 1, () => tile(dr, -13, -13, 26, CREAM, 'Ê', INK)),
+      pivot: [17, 97],
       keys: [[0, {}], [0.58, {}, 'hold'], [0.64, { y: -4, r: 5 }, 'out'], [0.72, { y: 0, r: 0 }, 'back'], [1, {}, 'hold']],
     },
     {
-      draw: (dr) => placed(dr, 93, 101, 10, 1, () => tile(dr, -14.5, -14.5, 29, CREAM, 'Û', INK)),
-      pivot: [93, 101],
+      draw: (dr) => placed(dr, 102, 100, 11, 1, () => tile(dr, -12, -12, 24, CREAM, 'Ş', INK)),
+      pivot: [102, 100],
       keys: [[0, {}], [0.62, {}, 'hold'], [0.68, { y: -4, r: -5 }, 'out'], [0.76, { y: 0, r: 0 }, 'back'], [1, {}, 'hold']],
     },
   ],
@@ -457,33 +466,44 @@ const SACK = '#d8ae78';
 const CAP = '#6170dc';
 
 const FOX_HEAD = 'M51 40C51 28 60 21 71 21C81 21 88 27 90 35L101 46C103.6 49 102 53.4 98 53.6C90 57 81 59 71 59C59 59 51 51 51 40Z';
-const FOX_BODY = 'M56 55C68 50 83 57 84 70C85 81 78 89 67 89C56 89 49 83 49 73C49 65 51 59 56 55Z';
+/** His jersey, drawn upright; he wears it leaning into his step. */
+const FOX_CHEST = rr(48.5, 53, 27, 34, 13.5);
+const leansIn = (dr: Drawing, draw: () => void): void => turned(dr, 22, 62, 70, draw);
 
 /** The sack on his back, and two of the words he took, looking out of the top of it. */
 function sack(dr: Drawing): void {
-  placed(dr, 38, 36, 14, 1, () => tile(dr, -8, -8, 16, CREAM, 'J', INK, 1.8));
-  placed(dr, 22.6, 38.6, -16, 1, () => tile(dr, -9.5, -9.5, 19, tones(GOLD), 'Û', INK, 2));
-  lit(dr, 'M11 66C9 53 18 44 31 44C42 44 50 49 53 57C56 66 54 79 46 85C36 91 20 89 14 79C12 75 11.6 70 11 66Z', SACK, 3.4, 0.2);
+  placed(dr, 40.6, 25, 14, 1, () => tile(dr, -8, -8, 16, CREAM, 'J', INK, 1.8));
+  placed(dr, 25, 27.6, -16, 1, () => tile(dr, -9.5, -9.5, 19, tones(GOLD), 'Û', INK, 2));
+  lit(dr, 'M15 55C13 43 21 33 34 33C45 33 52 38 55 46C58 55 56 67 48 72C38 77 23 75 18 67C16 63 15.6 59 15 55Z', SACK, 3.2, 0.2);
   // the cord its neck is drawn in with
-  line(dr, 'M15.6 55C25 50.6 38 50.6 48.6 55.6', tint(SACK, -0.36), 1.8);
+  line(dr, 'M19 44C28 39.6 40 39.6 50.6 44.6', tint(SACK, -0.36), 1.8);
 }
 
+/** His brush, low behind him: red, with the white tip every fox has. */
 function foxTail(dr: Drawing): void {
-  const tail = 'M54 80C42 79 26 86 15 99C10 105 14 113 22 113C37 113 51 104 60 90Z';
-  lit(dr, tail, FOX, 2.4, 0.18);
-  inside(dr, tail, () => fill(dr, 'M8 96C16 92 23 93 26 95C26 102 30 107 36 110L20 118H6Z', FUR));
+  const tail = 'M58 79C46 73 28 78 14 92C9.6 96.4 10 103 16 104.6C32 108 48 100 60 90Z';
+  // it is behind him, so a tone darker than the leg that crosses it
+  lit(dr, tail, tint(FOX, -0.1), 2.4, 0.16);
+  inside(dr, tail, () => fill(dr, 'M4 84H27C25 93 28 101 35 107L8 114Z', FUR));
+}
+
+/** A leg: the thigh, the thinner shin below the knee, and a white-socked paw on the tips of its toes. */
+type FoxLeg = readonly [hip: readonly [number, number], knee: readonly [number, number], ankle: readonly [number, number], toe: readonly [number, number]];
+function foxLeg(dr: Drawing, [hip, knee, ankle, toe]: FoxLeg, hex: string): void {
+  line(dr, `M${n(hip[0])} ${n(hip[1])}L${n(knee[0])} ${n(knee[1])}`, hex, 9.4);
+  line(dr, `M${n(knee[0])} ${n(knee[1])}L${n(ankle[0])} ${n(ankle[1])}`, hex, 6.8);
+  const turn = (Math.atan2(toe[1] - ankle[1], toe[0] - ankle[0]) * 180) / Math.PI;
+  placed(dr, (ankle[0] + toe[0]) / 2, (ankle[1] + toe[1]) / 2, turn, 1, () => fill(dr, oval(0.6, 0, 5, 3.3), FUR));
 }
 
 function foxBody(dr: Drawing): void {
-  // his legs: one foot down on the tips of its toes, the other lifted for the next step
-  line(dr, 'M61 85L56 94L53.4 99.6', tint(FOX, -0.14), 6);
-  line(dr, 'M72 85L81 89.4L83 96.4', tint(FOX, -0.14), 6);
-  fill(dr, oval(51.6, 101.4, 5, 2.9), INK);
-  fill(dr, oval(85.4, 98.4, 5, 2.9), INK);
-  lit(dr, FOX_BODY, PAPER, 2.6, 0.14);
-  inside(dr, FOX_BODY, () => {
-    turned(dr, -10, 66, 72, () => {
-      for (let y = 51; y < 96; y += 9.4) fill(dr, `M40 ${n(y)}H92V${n(y + 4.6)}H40Z`, INK);
+  // the leg he stands on, a tone darker for being the far one, and the leg lifted for the next step
+  foxLeg(dr, [[56, 85], [60.6, 95.6], [54, 104], [59.6, 107.4]], tint(FOX, -0.22));
+  foxLeg(dr, [[59, 85], [74.6, 89.6], [77.6, 100], [84, 103.4]], FOX);
+  leansIn(dr, () => {
+    lit(dr, FOX_CHEST, PAPER, 2.4, 0.14);
+    inside(dr, FOX_CHEST, () => {
+      for (let y = 56.4; y < 88; y += 8.6) fill(dr, `M42 ${n(y)}H82V${n(y + 4.3)}H42Z`, INK);
     });
   });
 }
@@ -512,12 +532,12 @@ function foxHead(dr: Drawing): void {
 
 function foxTorch(dr: Drawing): void {
   // the arm he holds it out on, and the torch in his paw
-  line(dr, 'M71 64L80 73L88 77', FOX, 6.2);
-  turned(dr, 14, 90, 78, () => {
-    fill(dr, rr(84, 74, 14, 8, 2.6), STEEL);
-    fill(dr, rr(96, 72, 5, 12, 1.8), tint(STEEL, 0.34));
+  line(dr, 'M70 58L79.6 68.4L88 73', FOX, 6.4);
+  turned(dr, 10, 90, 74, () => {
+    fill(dr, rr(85, 70, 14, 8, 2.6), STEEL);
+    fill(dr, rr(97, 68, 5, 12, 1.8), tint(STEEL, 0.34));
   });
-  fill(dr, ring(88, 77.4, 3.7), INK);
+  inked(dr, ring(88.4, 73.6, 3.7), FUR, 1.3);
 }
 
 /**
@@ -544,26 +564,26 @@ const thief: Cover = {
     {
       draw: (dr) => {
         ground(dr, NIGHT);
-        // the moon, and the rise he creeps along
+        // the moon, a few stars, and the rise he creeps along
         fill(dr, ring(104, 19, 10), '#ffe9a6');
         fill(dr, ring(108, 16.4, 8), NIGHT);
-        for (const [x, y, r] of [[14, 14, 1.3], [44, 9, 1], [112, 50, 1.2]] as const) fill(dr, ring(x, y, r), '#aeb6ee');
+        for (const [x, y, r] of [[8, 12, 1.3], [58, 7, 1], [112, 50, 1.2]] as const) fill(dr, ring(x, y, r), '#aeb6ee');
         fill(dr, 'M0 104C30 96 80 98 120 106V120H0Z', tint(NIGHT, -0.3));
       },
     },
     {
       // the light of the torch, thrown ahead of him
       draw: (dr) => {
-        fill(dr, 'M100.6 77.8L124 62V112L99 85Z', '#ffe27a', ' fill-opacity="0.86"');
-        fill(dr, 'M100.4 79.6L124 73V99L99.6 83.6Z', '#fff5cc');
+        fill(dr, 'M101.6 72.4L124 57V108L100.4 81Z', '#ffe27a', ' fill-opacity="0.86"');
+        fill(dr, 'M101.6 74.6L124 68.6V95L100.8 79.4Z', '#fff5cc');
       },
-      pivot: [99, 81],
+      pivot: [100, 77],
       keys: creeps(0, 2.2, [[0.66, {}, 'hold'], [0.72, { r: -12 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut']]),
     },
-    { draw: foxTail, pivot: [58, 86], keys: creeps(0.04, 2.6, [[0.66, {}, 'hold'], [0.72, { r: 6 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut']]) },
-    { draw: sack, pivot: [50, 60], keys: creeps(0.03, 3.4) },
+    { draw: foxTail, pivot: [58, 85], keys: creeps(0.04, 2.6, [[0.66, {}, 'hold'], [0.72, { r: 6 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut']]) },
+    { draw: sack, pivot: [50, 52], keys: creeps(0.03, 3.4) },
     { draw: foxBody, keys: creeps(0, 2.2) },
-    { draw: foxTorch, pivot: [71, 64], keys: creeps(0, 2.2) },
+    { draw: foxTorch, pivot: [70, 58], keys: creeps(0, 2.2) },
     { draw: foxHead, pivot: [68, 54], keys: creeps(0.015, 2.6, [[0.64, {}, 'hold'], [0.69, { y: -2.4, r: -4 }, 'out'], [0.84, {}, 'hold'], [0.92, { y: 0, r: 0 }, 'inOut']]) },
   ],
 };
@@ -599,13 +619,13 @@ function pawPrint(dr: Drawing, cx: number, cy: number, k: number, hex: string, t
 }
 
 function houndCoat(dr: Drawing): void {
-  // his neck goes down into the coat: the head sits on it
-  fill(dr, 'M63 52H93L99 94H57Z', tint(HOUND, -0.12));
-  const cape = 'M32 124C34 100 44 86 60 82C72 79 92 79 102 83C114 88 119 102 121 124Z';
+  // what shows of his neck between his jaw and his collar, in the shade of his head
+  fill(dr, 'M64 58H96L100 84H60Z', tint(HOUND, -0.12));
+  const cape = 'M36 124C38 97 48 79 64 74C76 70 98 70 108 75C118 80 122 98 124 124Z';
   fill(dr, cape, TWEED);
-  check(dr, cape, [46, 62, 78, 94, 110], [97, 112]);
+  check(dr, cape, [50, 66, 82, 98, 114], [90, 106]);
   // the collar, turned down round his neck
-  const collar = 'M57 84C66 93.4 92 93.4 103 83C96 76.6 66 76.6 57 84Z';
+  const collar = 'M60 76C69 85.6 98 85.6 109 75C102 68.6 71 68.6 60 76Z';
   fill(dr, collar, tint(TWEED, -0.2));
 }
 
@@ -662,8 +682,8 @@ const detective: Cover = {
       },
     },
     { draw: houndCoat },
-    { draw: houndHead, pivot: [82, 60], keys: [[0, {}], [0.5, {}, 'hold'], [0.56, { r: -3 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
-    { draw: houndCap, pivot: [82, 60], keys: [[0, {}], [0.5, {}, 'hold'], [0.56, { r: -3 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
+    { draw: (dr) => placed(dr, 0, 3, 0, 1, () => houndHead(dr)), pivot: [82, 63], keys: [[0, {}], [0.5, {}, 'hold'], [0.56, { r: -3 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
+    { draw: (dr) => placed(dr, 0, 3, 0, 1, () => houndCap(dr)), pivot: [82, 63], keys: [[0, {}], [0.5, {}, 'hold'], [0.56, { r: -3 }, 'out'], [0.84, {}, 'hold'], [0.92, { r: 0 }, 'inOut'], [1, {}, 'hold']] },
     {
       draw: houndGlass,
       pivot: [62, 112],
@@ -691,7 +711,7 @@ const CHAIN: ReadonlyArray<readonly [string, number, number, number, boolean]> =
   ['O', 1, 1, -2.5, false],
   ['J', 1, 2, 3, false],
 ];
-const linkAt = (row: number, place: number): readonly [number, number] => [10 + place * STEP, 12 + row * 59];
+const linkAt = (row: number, place: number): readonly [number, number] => [10 + place * STEP, 8 + row * 69];
 function link(dr: Drawing, i: number): void {
   const [ch, row, place, turn, shared] = CHAIN[i]!;
   const [x, y] = linkAt(row, place);
@@ -713,7 +733,7 @@ const laid = (i: number): Key[] => {
 /**
  * The last letter: two words in tiles, and the rule of the game drawn between
  * them — the letter one word ends on is the letter the next begins with. Both
- * are gold, and an arrow goes from the one to the other.
+ * are gold, and a white arrow goes from the one to the other.
  */
 const lastLetter: Cover = {
   title: GAME_NAMES['last-letter'],
@@ -728,8 +748,9 @@ const lastLetter: Cover = {
     {
       // from the end of the first word round to the start of the second
       draw: (dr) => {
-        line(dr, 'M95 51V52C95 56.4 91.4 60 87 60H33C28.6 60 25 63.6 25 67', GOLD, 4);
-        line(dr, 'M18.6 62L25 68.4L31.4 62', GOLD, 4);
+        // it stops short of the tile it points at, so its head is seen whole
+        line(dr, 'M95 47.6V49.6C95 54 91.4 57.6 87 57.6H33C28.6 57.6 25 61.2 25 65.6V66', PAPER, 4.6);
+        dr.add(`<path d="M17.4 64.4H32.6L25 73Z" fill="${PAPER}" stroke="${PAPER}" stroke-width="2.4" stroke-linejoin="round"/>`);
       },
       pivot: [95, 50],
       keys: [[0, {}], [0.05, {}, 'hold'], [0.09, { o: 0 }, 'in'], [0.2, {}, 'hold'], [0.3, { o: 1 }, 'out'], [1, {}, 'hold']],
@@ -744,21 +765,22 @@ const lastLetter: Cover = {
 // ───────────────────────────────────────────────────────────── the impostor
 
 const MUSTARD = '#f4b73b';
-const COAT = '#2a1f47';
-const SHADOW = '#3d2e68';
-const BAND = '#8a5bd6';
+/** His hat, and his face in the shadow of it. */
+const DARK = '#2a1f47';
+const COAT = '#4c3a96';
+const BAND = '#b79cf5';
 
 function stranger(dr: Drawing): void {
-  // the coat, and its collar turned up to his ears
-  fill(dr, 'M8 124L20 98C26 86 42 81 60 81C78 81 94 86 100 98L112 124Z', COAT);
-  fill(dr, oval(60, 62, 23, 24), SHADOW);
-  // each side of the collar, standing up past his cheek, and the fold it is turned on
-  fill(dr, 'M26 92L32.6 52L60 84Z', COAT);
-  fill(dr, 'M94 92L87.4 52L60 84Z', COAT);
-  line(dr, 'M28.6 90.4L60 84L91.4 90.4', tint(COAT, 0.2), 1.4);
-  line(dr, 'M33.6 55L60 84L86.4 55', BAND, 1.8);
-  line(dr, 'M60 101V124', tint(COAT, 0.2), 1.6);
-  for (const y of [107, 116.6]) fill(dr, ring(67, y, 2.1), BAND);
+  // the coat's shoulders, and the head between them, in the shadow of his hat
+  fill(dr, 'M2 124L9 106C11 97 20 91 32 89L50 85H70L88 89C100 91 109 97 111 106L118 124Z', COAT);
+  fill(dr, oval(60, 62, 20.6, 21), DARK);
+  // the collar turned up: two wings that stand out past his cheeks and meet under his eyes
+  fill(dr, 'M30 54L60 76L90 54C88 70 83 82 76.6 90.6H43.4C37 82 32 70 30 54Z', tint(COAT, 0.14));
+  line(dr, 'M30.6 54.6L60 76L89.4 54.6', BAND, 1.8);
+  // where the two wings meet, the lapels below them, and the coat done up
+  line(dr, 'M60 77V124', tint(COAT, -0.3), 1.8);
+  line(dr, 'M43.6 91L60 105L76.4 91', tint(COAT, -0.3), 1.6);
+  for (const x of [52.6, 67.4]) fill(dr, ring(x, 111.6, 2.2), tint(COAT, -0.34));
 }
 /** The whites of his eyes under the brim, which cuts them off level. */
 function strangerWhites(dr: Drawing): void {
@@ -769,17 +791,17 @@ function strangerEyes(dr: Drawing): void {
 }
 function strangerHat(dr: Drawing): void {
   turned(dr, -5, 60, 48, () => {
-    fill(dr, 'M16 49C30 43.6 90 43.6 104 49C104 52.6 90 56 60 56C30 56 16 52.6 16 49Z', COAT);
+    fill(dr, 'M16 49C30 43.6 90 43.6 104 49C104 52.6 90 56 60 56C30 56 16 52.6 16 49Z', DARK);
     const crown = 'M38 48C37 32 41 16 50 14C54.6 13 57 17.6 60 17.6C63 17.6 65.4 13 70 14C79 16 83 32 82 48C70 51 50 51 38 48Z';
-    fill(dr, crown, COAT);
+    fill(dr, crown, DARK);
     inside(dr, crown, () => fill(dr, 'M30 37H90V46H30Z', BAND));
-    line(dr, 'M18.6 50.4C34 55 86 55 101.4 50.4', tint(COAT, 0.2), 1.4);
+    line(dr, 'M18.6 50.4C34 55 86 55 101.4 50.4', tint(DARK, 0.22), 1.4);
   });
 }
 
 /**
  * The impostor: a stranger with his hat down and his collar up, and nothing
- * of him to be seen but his eyes — which go from one side to the other,
+ * of his face to be seen but his eyes — which go from one side to the other,
  * because he is the one who does not have the word.
  */
 const impostor: Cover = {

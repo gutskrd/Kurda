@@ -957,7 +957,7 @@ describe('the games’ emblems', () => {
   it('shows each word game as the game is: Peyvok five letters wide, and words from the first lessons', () => {
     // every letter drawn on a cover is a path of the letters' own; counting them counts what is written
     const written = (game: (typeof GAME_EMBLEMS)[number]): number => gameEmblemSvg({ game }).split('stroke-linejoin="round" transform="translate(').length - 1;
-    // dayik, silav, heval on the board, and the two letters lying on the rows still to be played
+    // dayik, silav, heval on the board, and the two letters standing beside the phone
     expect(written('peyvok')).toBe(17);
     // dar and kar
     expect(written('rhyme')).toBe(6);
