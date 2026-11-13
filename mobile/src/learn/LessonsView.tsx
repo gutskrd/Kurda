@@ -29,6 +29,7 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { QuestsCard } from '../quests/QuestsCard';
+import { TreeCard } from '../tree/TreeCard';
 import { EventBanner } from '../events/EventBanner';
 import { LeagueLine } from '../leagues/LeagueLine';
 import type { CourseEntry } from '../coursemap/node';
@@ -356,6 +357,8 @@ export function LessonsView({
           </View>
           {/* today's three quests, slim, under the tools: a chest waiting shows here */}
           <QuestsCard />
+          {/* the learner's tree, under the quests: water to pour shows here */}
+          <TreeCard />
         </View>
 
         {courses && courses.length > 0 ? (

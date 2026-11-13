@@ -66,6 +66,7 @@ import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { RanksScreen } from './src/ranks/RanksScreen';
 import { SeasonScreen } from './src/ranks/SeasonScreen';
 import { BadgesScreen } from './src/badges/BadgesScreen';
+import { TreeScreen } from './src/tree/TreeScreen';
 import { BadgeCelebrationHost } from './src/badges/BadgeCelebrationHost';
 import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
@@ -434,6 +435,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Badges" options={{ presentation: 'card' }}>
         {({ navigation }) => <BadgesScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Tree" options={{ presentation: 'card' }}>
+        {({ navigation }) => <TreeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="UserProfile" options={{ presentation: 'card' }}>
         {({ route, navigation }) => (

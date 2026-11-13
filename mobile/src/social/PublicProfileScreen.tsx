@@ -18,10 +18,11 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
 import { knownTier, leagueName } from '../leagues/format';
+import { ProfileTree } from '../tree/ProfileTree';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { Framed } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { SEASON_FRAME_INNER, countryName, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { SEASON_FRAME_INNER, countryName, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { FavoriteRow, flagUrl } from '../profile/cosmetic-parts';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity, ProfileActivitySkeleton } from '../profile/ProfileActivity';
@@ -68,6 +69,8 @@ interface Profile {
   badges?: ShowcaseBadge[];
   /** which activity sections they let people see; null when private */
   sections?: ProfileSections | null;
+  /** their tree as it stands today; null before they plant one or when private, absent on a server without trees */
+  tree?: TreeGlimpse | null;
   /*
    * What they pinned to their profile. The API only sends these when the post
    * behind them is still published, so there is nothing to check here — an
@@ -284,6 +287,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                 <Stat label={t('profile.badges')} value={formatNumber(profile.achievements ?? 0, locale)} />
               </View>
 
+              <ProfileTree tree={profile.tree} />
               <ProgressShowcase
                 own={false}
                 ranks={profile.ranks ?? []}

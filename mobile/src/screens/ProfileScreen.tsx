@@ -24,8 +24,9 @@ import { SITE_ORIGIN } from '../feed/api';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { CosmeticBackground, FavoriteRow, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
-import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { SEASON_FRAME_INNER, countryName, fireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge, type TreeGlimpse } from '@kurda/shared';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
+import { ProfileTree } from '../tree/ProfileTree';
 import { AvatarStage } from '../profile/AvatarStage';
 import { OverviewGrid, OverviewSkeleton, type OverviewTile } from '../profile/OverviewGrid';
 import { Framed, LeagueEmblem } from '../ranks/art';
@@ -174,6 +175,8 @@ function AccountProfile() {
     frameSku: string | null;
     /** the picture of a frame from the shop; a season frame is drawn from its SKU */
     frameUrl: string | null;
+    /** their tree; null before one is planted, undefined on a server without trees */
+    tree: TreeGlimpse | null | undefined;
   } | null>(null);
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -242,9 +245,10 @@ function AccountProfile() {
             badges?: ShowcaseBadge[];
             frameSku?: string | null;
             frameUrl?: string | null;
+            tree?: TreeGlimpse | null;
           }>(`/users/${id}`);
           if (active && p.ok) {
-            setProgress({ ranks: p.data.ranks ?? [], league: p.data.league ?? null, badges: p.data.badges ?? [], frameSku: p.data.frameSku ?? null, frameUrl: p.data.frameUrl ?? null });
+            setProgress({ ranks: p.data.ranks ?? [], league: p.data.league ?? null, badges: p.data.badges ?? [], frameSku: p.data.frameSku ?? null, frameUrl: p.data.frameUrl ?? null, tree: p.data.tree });
           }
         }
         if (active) {
@@ -512,6 +516,7 @@ function AccountProfile() {
             <Skeleton height={MIN_TOUCH_TARGET} radius={radii.md} />
           </View>
         ) : null}
+        {progress ? <ProfileTree tree={progress.tree} onOpen={() => navigation.navigate('Tree')} /> : null}
         {progress ? (
           <ProgressShowcase
             own

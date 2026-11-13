@@ -70,6 +70,18 @@ describe('the results cards', () => {
   });
 });
 
+describe('water for the tree', () => {
+  it('says what the lesson earned the learner’s tree, and nothing where it earned none', async () => {
+    show({ results: { ...results, tree: { gained: 1, water: 3 } } });
+    expect(await screen.findByText('+1 water for your tree')).toBeTruthy();
+    cleanup();
+    // no tree planted, a replay, or a server without trees: the results carry nothing about it
+    show();
+    await screen.findByRole('button', { name: /Continue|Next lesson|Done|Back to the path/ });
+    expect(screen.queryByTestId('lesson-water')).toBeNull();
+  });
+});
+
 describe('the title', () => {
   it('says how it went, with a warm line about the course’s own Kurdish', async () => {
     show({ moments: { ...NO_MOMENTS, perfect: true }, results: { ...results, accuracy: 1, correct: 11 } });

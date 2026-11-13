@@ -147,6 +147,8 @@ export type RootStackParamList = {
   Words: undefined;
   /** Today's quests and any chest waiting, from Learn's quests card (quests/QuestsScreen). */
   Quests: undefined;
+  /** The learner's own tree: watering it, and the nursery (tree/TreeScreen), from Learn's tree card and the profile. */
+  Tree: undefined;
   /** One word set; `set` is checked where the screen is drawn, since a link can carry anything. */
   WordSet: { set: string; script?: AlphabetScript };
   Saved: undefined;
