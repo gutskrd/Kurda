@@ -90,6 +90,19 @@ describe('who somebody is', () => {
     expect(screen.queryByText(/bio/i)).toBeNull();
   });
 
+  /**
+   * The server sends somebody's XP inside their level. The screen read a field
+   * of its own that is not sent any more, so everybody else had 0 XP.
+   */
+  it('reads their XP from their level, where the server sends it', async () => {
+    testAuth.client = fakeClient({
+      'GET /users/u2': ok({ userId: 'u2', username: 'baran', displayName: 'Baran', friendStatus: 'friends', private: false, streak: 2, achievements: 1, level: { xp: 1385, level: 4 } }),
+      'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
+    });
+    renderWithProviders(<PublicProfileScreen userId="u2" onExit={() => undefined} />);
+    expect(await screen.findByText('1,385')).toBeTruthy();
+  });
+
   it('shows neither their words nor where they are from on a profile that is private', async () => {
     show({ private: true, friendStatus: 'none', bio: 'Ez ji çîrokan hez dikim.', country: 'NL' });
     expect(await screen.findByRole('heading', { name: 'Baran Şêx' })).toBeTruthy();

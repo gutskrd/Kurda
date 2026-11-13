@@ -48,7 +48,10 @@ interface Profile {
   avatarUrl?: string | null;
   friendStatus: FriendStatus;
   private: boolean;
+  /** their XP as older servers sent it; today it comes inside `level` */
   xp?: number;
+  /** their level and the XP behind it: where their XP is, on a profile you may see */
+  level?: { xp: number; level: number } | null;
   streak?: number;
   /** their league tier, or null for someone not in the leagues (never a made-up "bronze") */
   tier?: string | null;
@@ -273,7 +276,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
               <View style={styles.stats}>
                 {/* grouped, and in the reader's own digits, as the same numbers are on their own profile */}
                 <Stat label={t('profile.streak')} value={formatNumber(profile.streak ?? 0, locale)} fire={fireLevel(profile.streak ?? 0)} />
-                <Stat label={t('profile.stat.xp')} value={formatNumber(profile.xp ?? 0, locale)} />
+                <Stat label={t('profile.stat.xp')} value={formatNumber(profile.level?.xp ?? profile.xp ?? 0, locale)} />
                 {/* a league only while they take part, translated; nothing for somebody never in one */}
                 {knownTier(profile.league?.tier ?? profile.tier) ? (
                   <Stat label={t('profile.league')} value={leagueName(t, knownTier(profile.league?.tier ?? profile.tier)!)} />
