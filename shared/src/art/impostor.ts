@@ -570,8 +570,6 @@ const MASK_EYES = 'M-13 -4.5A4.6 3.4 0 1 0 -3.8 -4.5A4.6 3.4 0 1 0 -13 -4.5ZM3.8
 function mask(dr: Drawing, cx: number, cy: number, scale: number, hex: string): void {
   dr.add(`<g transform="translate(${n(cx)} ${n(cy)}) scale(${n(scale)})"><path d="${MASK}${MASK_EYES}" fill="${hex}" fill-rule="evenodd"/></g>`);
 }
-/** The game's mask, for the game's cover (game-covers.ts): the one on the back of every card, worn. */
-export { mask as impostorMask };
 
 /** A playing card standing up: its face in `face`, turned by `angle` about the foot of the fan. */
 function card(dr: Drawing, x: number, y: number, w: number, h: number, face: Tones, angle = 0, mark?: () => void): void {

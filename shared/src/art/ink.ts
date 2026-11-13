@@ -1,6 +1,6 @@
 /**
- * What the games' covers are written and outlined with (game-covers.ts):
- * smooth outlines through a few placed points, and capital letters.
+ * What the games' covers are written with (game-covers.ts): capital letters,
+ * and the oval the covers' round forms are cut from.
  *
  * The letters are drawn, not set: a font would be the one place the phone and
  * the browser disagree, so no drawing in `art/` uses `<text>`. Each letter is
@@ -11,49 +11,19 @@
  */
 import { n } from './svg.js';
 
-/** A point; a third value of 1 makes it a corner, where an outline turns sharply instead of bending. */
-export type P = readonly [number, number, (0 | 1)?];
-
-const sub = (a: P, b: P): [number, number] => [a[0] - b[0], a[1] - b[1]];
-
-/**
- * A curve through placed points: closed for a shape, open for a line. Each
- * bend is eased by its neighbours; at a corner the curve leaves straight for
- * the next point.
- */
-export function smooth(pts: readonly P[], closed = true): string {
-  const k = pts.length;
-  if (k < 2) return '';
-  const at = (i: number): P => (closed ? pts[((i % k) + k) % k]! : pts[Math.max(0, Math.min(k - 1, i))]!);
-  // how the curve leaves a point, and how it arrives at one
-  const leaves = (i: number): [number, number] => {
-    const [dx, dy] = at(i)[2] === 1 ? sub(at(i + 1), at(i)) : sub(at(i + 1), at(i - 1));
-    const f = at(i)[2] === 1 ? 1 / 3 : 1 / 6;
-    return [dx * f, dy * f];
-  };
-  const arrives = (i: number): [number, number] => {
-    const [dx, dy] = at(i)[2] === 1 ? sub(at(i), at(i - 1)) : sub(at(i + 1), at(i - 1));
-    const f = at(i)[2] === 1 ? 1 / 3 : 1 / 6;
-    return [dx * f, dy * f];
-  };
-  let d = `M${n(pts[0]![0])} ${n(pts[0]![1])}`;
-  const spans = closed ? k : k - 1;
-  for (let i = 0; i < spans; i++) {
-    const [p1, p2, out, into] = [at(i), at(i + 1), leaves(i), arrives(i + 1)];
-    d += `C${n(p1[0] + out[0])} ${n(p1[1] + out[1])} ${n(p2[0] - into[0])} ${n(p2[1] - into[1])} ${n(p2[0])} ${n(p2[1])}`;
-  }
-  return closed ? `${d}Z` : d;
-}
-
 /** An oval as a path. */
 export function oval(cx: number, cy: number, rx: number, ry: number): string {
   return `M${n(cx - rx)} ${n(cy)}A${n(rx)} ${n(ry)} 0 1 0 ${n(cx + rx)} ${n(cy)}A${n(rx)} ${n(ry)} 0 1 0 ${n(cx - rx)} ${n(cy)}Z`;
 }
 
-/** The hat of ê, î and û, above the letter's box. */
-const HAT = 'M1.7 -1.7L3.5 -3.3L5.3 -1.7';
-/** The cedilla of ç and ş, below it. */
-const TAIL = 'M3.6 10.1L3.3 11.3C4.5 11.3 4.6 12.9 3.1 12.9';
+/** The hat of ê, î and û, above the letter's box and clear of it, so that a heavy line does not close the gap. */
+const HAT = 'M1.8 -2.9L3.5 -4.6L5.2 -2.9';
+/**
+ * The cedilla of ç and ş, below the box and clear of it too: joined to the
+ * letter, a heavy line makes it the foot of a stroke through an S, and the
+ * letter is read as a sign for money.
+ */
+const TAIL = 'M4.1 12.5C5.1 13 4.9 14.6 3.2 14.5';
 const C = 'M6.2 2.3C5.6 0.9 4.7 0 3.6 0C1.9 0 0.8 1.9 0.8 5C0.8 8.1 1.9 10 3.6 10C4.7 10 5.6 9.1 6.2 7.7';
 const E = 'M6 0H1.1V10H6.2M1.1 5H5.2';
 const I = 'M3.5 0V10';
