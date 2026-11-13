@@ -4,28 +4,33 @@ import { prefersReducedMotion } from '../lib/motion';
 import './game-art.css';
 
 /**
- * A game's emblem on the website, drawn from the shared art
+ * A game's cover on the website, drawn from the shared art
  * (shared/src/art/games.ts) so the phone shows the same picture.
  *
+ * A cover is an illustration that fills its square, so it is shown edge to
+ * edge with its corners rounded here (game-art.css): the rounding also keeps
+ * a part that moves past the cover's edge from showing outside it.
+ *
  * It is decoration beside the game's name, so it is hidden from a screen
- * reader. A page can show the same emblem twice (the featured game, and its
+ * reader. A page can show the same cover twice (the featured game, and its
  * card under a filter), and a drawing's clip paths are found by id, so every
  * one drawn here gets ids of its own.
  *
- * `moving` plays the emblem's own acting: its layers are laid over one
- * another and each is given its part as one animation of the browser's,
- * transforms and opacity only, so nothing is drawn again while it plays. A
- * reader who asked for less motion is shown the still emblem, and so is a
- * browser that cannot play it.
+ * `moving` plays the cover's own acting: its parts are laid over one another
+ * and each is given its part as one animation of the browser's, transforms
+ * and opacity only, so nothing is drawn again while it plays. A part that is
+ * only passing through the loop (a note sung, an answer given) is not shown
+ * while nothing plays. A reader who asked for less motion is shown the still
+ * cover, and so is a browser that cannot play it.
  *
- * How much it plays is the caller's to say, by how many emblems it shows.
- * One emblem with the screen to itself — the game put forward on the Games
- * page, a game's own start — loops (`moving`), and `after` starts the loop
- * that far in. A shelf of them does not: eight drawings all acting for ever
- * is eight things asking to be looked at. There each plays through once as
- * it comes into view (`moving="once"`, `after` a moment later than the card
- * before it) and then rests, and plays once more each time `again` changes —
- * the card under it hovered, focused or pressed.
+ * How much it plays is the caller's to say, by how many covers it shows. One
+ * cover with the screen to itself — the game put forward on the Games page,
+ * a game's own start — loops (`moving`), and `after` starts the loop that far
+ * in. A shelf of them does not: eight drawings all acting for ever is eight
+ * things asking to be looked at. There each plays through once as it comes
+ * into view (`moving="once"`, `after` a moment later than the card before
+ * it) and then rests, and plays once more each time `again` changes — the
+ * card under it hovered, focused or pressed.
  */
 export function GameArt({
   game,
@@ -122,7 +127,7 @@ function MovingArt({ game, size, idPrefix, after, once, again }: { game: GameEmb
         <span
           key={i}
           className="gp-art-layer"
-          style={{ transformOrigin: `${(layer.pivot[0] / 120) * size}px ${(layer.pivot[1] / 120) * size}px` }}
+          style={{ transformOrigin: `${(layer.pivot[0] / 120) * size}px ${(layer.pivot[1] / 120) * size}px`, opacity: layer.passing ? 0 : undefined }}
           dangerouslySetInnerHTML={{ __html: layer.svg }}
         />
       ))}

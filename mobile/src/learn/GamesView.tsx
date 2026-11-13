@@ -2,7 +2,7 @@ import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { gameEmblemTone, gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
+import { gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -71,8 +71,8 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
  * night the party games are played on, and the way into a game a friend told
  * you the code of.
  *
- * Then the games themselves, each one card: its drawn emblem on a tile of its
- * own colour, a line about it, and a way in. A game with one way in opens
+ * Then the games themselves, each one card: its drawn cover, a line about
+ * it, and a way in. A game with one way in opens
  * when its card is pressed; a game with a screen for playing alone and
  * another for playing a friend has a button for each, and so has Who Am I?,
  * played on this phone or with friends, so a game is one tap from here. A
@@ -328,13 +328,12 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         <View style={styles.cards}>
           {shelf.map((card, place) => {
             const name = t(card.name);
-            const tone = gameEmblemTone(card.emblem);
             const single = card.ways.length === 1 ? card.ways[0]! : null;
             const inside = (
               <>
-                <View style={[styles.cardArt, { backgroundColor: `${tone}2e` }]}>
+                <View style={styles.cardArt}>
                   {/* each card a little after the one before, so the list never moves as one */}
-                  <GameArt game={card.emblem} size={76} moving={watching} after={900 + place * 1300} />
+                  <GameArt game={card.emblem} size={96} moving={watching} after={900 + place * 1300} />
                 </View>
                 <View style={styles.cardText}>
                   <Text style={[styles.cardName, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
@@ -483,7 +482,7 @@ const styles = StyleSheet.create({
   cards: { gap: layout.rowGap },
   // a card lies on its side, picture first, so its words have the width of the screen
   card: { alignItems: 'stretch', gap: spacing.md, borderRadius: radii.lg, padding: spacing.sm + 2 },
-  cardArt: { width: 100, minHeight: 100, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
+  cardArt: { alignItems: 'center', justifyContent: 'center' },
   cardText: { flex: 1, justifyContent: 'center', gap: 4, paddingVertical: 2 },
   cardName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   cardLine: { fontSize: typography.sizes.sm, lineHeight: 19 },

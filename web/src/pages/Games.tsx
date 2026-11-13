@@ -91,7 +91,7 @@ export function featuredGame(games: readonly GameEntry[], now: number): GameEntr
   return today === null ? null : ready[today]!;
 }
 
-/** The tint a game's card and picture tile wear: its emblem's own colour. */
+/** The colour a game's card takes at its edge under a hand: the game's own. */
 const toneOf = (id: GameEmblem): React.CSSProperties => ({ '--gp-tone': gameEmblemTone(id) }) as React.CSSProperties;
 
 /** Who a game is played with, said in small beside a single way in. */
@@ -141,7 +141,7 @@ function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: bo
   );
 }
 
-/** One game: its picture on a tile of its own colour, what it is, and its ways in. */
+/** One game: its cover, what it is, and its ways in. */
 function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry; signedIn: boolean; hero?: boolean; place?: number }): React.JSX.Element {
   const t = useT();
   // a hand on a shelf card — over it, on it, or the keyboard in it — plays its emblem through once more
@@ -150,9 +150,9 @@ function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry
   return (
     <article className={`gp-card${hero ? ' gp-card--hero' : ''}`} style={toneOf(game.id)} onPointerEnter={stir} onPointerDown={stir} onFocus={stir}>
       <div className="gp-card-art">
-        {/* the game put forward acts for as long as it is in view; on the shelf each emblem plays through once as it
+        {/* the game put forward acts for as long as it is in view; on the shelf each cover plays through once as it
             arrives, a moment after the card before it, and then rests — one thing moving at a time, never the shelf */}
-        {hero ? <GameArt game={game.id} size={148} moving /> : <GameArt game={game.id} size={84} moving="once" after={300 + place * 160} again={again} />}
+        {hero ? <GameArt game={game.id} size={164} moving /> : <GameArt game={game.id} size={104} moving="once" after={300 + place * 160} again={again} />}
       </div>
       <div className="gp-card-text">
         {hero && <p className="gp-kicker">{t('games.featured')}</p>}

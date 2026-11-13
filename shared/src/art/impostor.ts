@@ -632,21 +632,6 @@ const cards: Draw = (dr) => {
   card(dr, 41, 20, 38, 56, tones(NIGHT), 0, () => mask(dr, 60, 47, 0.74, GOLD));
 };
 
-/**
- * The hand's cards one at a time, each standing upright at the foot of the
- * fan: the games' emblem (games.ts) turns every one into its place, so the
- * hand can open and close. `IMPOSTOR_FAN_ANGLES` are the open cards' places,
- * left to right; the masked card stands in the middle.
- */
-export const IMPOSTOR_FAN_ANGLES = [-34, -17, 17, 34] as const;
-export const IMPOSTOR_FAN_FOOT = [60, 118] as const;
-export function impostorOpenCard(dr: Drawing): void {
-  card(dr, 44, 38, 32, 46, CREAM, 0, () => bead(dr, 60, 58, 7.5, GOLD, 2));
-}
-export function impostorMaskedCard(dr: Drawing): void {
-  card(dr, 41, 20, 38, 56, tones(NIGHT), 0, () => mask(dr, 60, 47, 0.74, GOLD));
-}
-
 /** The mask alone, in gold: what the back of every card wears. */
 const maskOnly: Draw = (dr) => {
   form(dr, ring(60, 60, 44), tones(NIGHT), 4, 2.6);

@@ -6,22 +6,30 @@ import { useScreenAwake } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 
 /**
- * A game's emblem on the phone, drawn from the shared art
+ * A game's cover on the phone, drawn from the shared art
  * (shared/src/art/games.ts) so the website shows the same picture.
  *
+ * A cover is an illustration that fills its square, so it is shown edge to
+ * edge with its corners rounded here, by a share of its size (`coverRadius`):
+ * the rounding also keeps a part that moves past the cover's edge from
+ * showing outside it.
+ *
  * It is decoration beside the game's name, so it is hidden from a screen
- * reader. A screen can show the same emblem twice (the featured game, and its
+ * reader. A screen can show the same cover twice (the featured game, and its
  * card under a filter), and a drawing's clip paths are found by id, so every
  * one drawn here gets ids of its own.
  *
- * `moving` plays the emblem's own loop: its layers are laid over one another,
+ * `moving` plays the cover's own loop: its parts are laid over one another,
  * each drawn once, and one clock running on the native driver moves them all
  * by their poses — position, turn, size and opacity, nothing drawn again.
- * `after` starts the loop that far in, so a list of emblems does not move as
- * one. With Reduce Motion on, the still emblem is shown — and so it is while
+ * `after` starts the loop that far in, so a list of covers does not move as
+ * one. With Reduce Motion on, the still cover is shown — and so it is while
  * the screen it is on is behind another or the app is in the background: a
  * loop nobody is watching is a cost and nothing else.
  */
+/** How round a cover's corners are at a size: the same shape small and large, and the same as the website's. */
+export const coverRadius = (size: number): number => Math.round(size * 0.22);
+
 export function GameArt({ game, size = 72, moving = false, after = 0 }: { game: GameEmblem; size?: number; moving?: boolean; after?: number }): React.JSX.Element {
   const idPrefix = `ga${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   const reduce = useReducedMotion();
@@ -32,7 +40,7 @@ export function GameArt({ game, size = 72, moving = false, after = 0 }: { game: 
 function StillArt({ game, size, idPrefix }: { game: GameEmblem; size: number; idPrefix: string }): React.JSX.Element {
   const xml = useMemo(() => gameEmblemSvg({ game, size, idPrefix }), [game, size, idPrefix]);
   return (
-    <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={[styles.cover, { width: size, height: size, borderRadius: coverRadius(size) }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <SvgXml xml={xml} width={size} height={size} />
     </View>
   );
@@ -67,7 +75,7 @@ function MovingArt({ game, size, idPrefix, after }: { game: GameEmblem; size: nu
 
   const unit = size / 120;
   return (
-    <View style={{ width: size, height: size }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View style={[styles.cover, { width: size, height: size, borderRadius: coverRadius(size) }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       {layers.map((layer, i) => {
         if (!layer.poses) {
           return (
@@ -109,3 +117,8 @@ function MovingArt({ game, size, idPrefix, after }: { game: GameEmblem; size: nu
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  // the corners clip: a part that moves past the cover's edge stops at it
+  cover: { overflow: 'hidden' },
+});

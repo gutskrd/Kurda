@@ -39,6 +39,7 @@ import {
   impostorWayTone,
 } from './impostor.js';
 import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
+import { LETTERS, brush, letter } from './ink.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import {
@@ -931,13 +932,26 @@ describe('the games’ emblems', () => {
     expect(new Set(all).size).toBe(all.length);
   });
 
-  it('writes nothing in a picture: no letters and no numerals, so it reads the same in every language', () => {
+  it('sets no type in a picture: what a cover says is written by hand, the same marks on the phone and in the browser', () => {
     for (const game of GAME_EMBLEMS) expect(gameEmblemSvg({ game })).not.toMatch(/<text\b/);
   });
 
-  it('gives Kurdish Impostor the hand of cards its own page shows', () => {
-    const strip = (svg: string): string => svg.replace(/ (id|aria-labelledby)="[^"]*"/g, '').replace(/url\(#[^)]*\)/g, 'url()');
-    expect(strip(gameEmblemSvg({ game: 'impostor', size: 120 }))).toBe(strip(impostorEmblemSvg({ emblem: 'cards', size: 120 })));
+  it('fills its square: every cover begins with a ground of its own colour, and no two grounds are alike', () => {
+    const grounds = GAME_EMBLEMS.map((game) => /<\/title>(?:<defs>.*?<\/defs>)?<path d="M0 0H120V120H0Z" fill="(#[0-9a-f]{6})"\/>/.exec(gameEmblemSvg({ game }))?.[1]);
+    for (const hex of grounds) expect(hex).toBeDefined();
+    expect(new Set(grounds).size).toBe(GAME_EMBLEMS.length);
+  });
+
+  it('writes only letters the brush knows, and says so when asked for another', () => {
+    // the letters the Kurdish alphabet adds to the Latin one are all there
+    for (const ch of ['Ê', 'Î', 'Û', 'Ç', 'Ş']) expect(LETTERS).toContain(ch);
+    for (const ch of LETTERS) expect(letter(ch, 0, 0, 20, 3)).toMatch(/^M[-\d. ]+C[-\d. C]+Z/);
+    expect(() => letter('ß', 0, 0, 20, 3)).toThrow(RangeError);
+    // a stroke is a closed shape, thinner at its ends than in its middle
+    const stroke = brush([[0, 0], [20, 0], [40, 0]], 6, [0.2, 0.2]);
+    const ys = [...stroke.matchAll(/(-?\d+(?:\.\d+)?) (-?\d+(?:\.\d+)?)/g)].map((m) => Number(m[2]));
+    expect(stroke.endsWith('Z')).toBe(true);
+    expect(Math.max(...ys)).toBeCloseTo(3, 0);
   });
 
   describe('in motion', () => {
@@ -995,15 +1009,36 @@ describe('the games’ emblems', () => {
       }
     });
 
+    it('begins and ends as the still picture: a part that stays is where it was drawn, and one only passing through is not there', () => {
+      for (const game of GAME_EMBLEMS) {
+        for (const layer of layersOf(game)) {
+          if (!layer.poses) {
+            expect(layer.passing, game).toBe(false);
+            continue;
+          }
+          for (const pose of [layer.poses[0]!, layer.poses[GAME_EMBLEM_SAMPLES]!]) {
+            if (layer.passing) expect(pose.o, game).toBe(0);
+            else expect(pose, game).toEqual({ x: 0, y: 0, r: 0, sx: 1, sy: 1, o: 1 });
+          }
+        }
+      }
+      // the still picture is the parts that stay, and nothing of the ones passing through
+      const answer = layersOf('rhyme').filter((l) => l.passing);
+      expect(answer.length).toBeGreaterThan(0);
+      const stays = layersOf('rhyme').filter((l) => !l.passing).length;
+      expect(gameEmblemSvg({ game: 'rhyme' }).split('M0 0H120V120H0Z').length - 1).toBe(1);
+      expect(stays).toBeLessThan(layersOf('rhyme').length);
+    });
+
     it('rests: for a good part of every loop nothing in the emblem moves at all', () => {
-      for (const game of GAME_EMBLEMS.filter((g) => g !== 'race' && g !== 'who-am-i')) {
+      for (const game of GAME_EMBLEMS.filter((g) => g !== 'race')) {
         const moving = layersOf(game).filter((l) => l.poses !== null);
         let still = 0;
         for (let at = 1; at <= GAME_EMBLEM_SAMPLES; at++) {
           const same = moving.every((l) => JSON.stringify(l.poses![at]) === JSON.stringify(l.poses![at - 1]));
           if (same) still++;
         }
-        // the race's hand and the asker's sway never stop; everything else has moments of rest between its beats
+        // the runners never stop; everything else has moments of rest between its beats
         expect(still / GAME_EMBLEM_SAMPLES, game).toBeGreaterThanOrEqual(0.08);
       }
     });
