@@ -88,9 +88,9 @@
   color: var(--ink);
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    transform 0.12s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 .ab-tile:hover {
   border-color: var(--border-strong);
@@ -147,7 +147,7 @@
   gap: 14px 22px;
   padding: 16px 18px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
@@ -193,7 +193,7 @@
   gap: 16px;
   padding: 22px;
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
@@ -327,7 +327,7 @@
 .ab-next {
   padding: 20px;
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
@@ -452,9 +452,9 @@
   color: var(--ink-2);
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 .ab-sound:hover {
   border-color: var(--border-strong);
@@ -587,7 +587,7 @@
   min-width: 84px;
   padding: 6px 16px 8px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r-md);
 }
 .ab-q-form small {
   font-family: var(--font-sans);
@@ -748,7 +748,6 @@
   height: 100%;
   border-radius: inherit;
   background: var(--success);
-  transition: width 0.35s ease;
 }
 .ab-progress-text {
   font-size: 0.82rem;

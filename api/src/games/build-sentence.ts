@@ -1,5 +1,5 @@
 /**
- * Build a Kurdish Sentence: a round of approved sentences to put in order
+ * Build a Sentence: a round of approved sentences to put in order
  * from word tiles.
  *
  * The sentences are published lessons' (translations into Kurdish with the

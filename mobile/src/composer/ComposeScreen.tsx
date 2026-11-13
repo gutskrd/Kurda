@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import * as ImagePicker from 'expo-image-picker';
@@ -473,7 +473,7 @@ export function ComposeScreen({
             onPress={requestClose}
             accessibilityRole="button"
             accessibilityLabel={t('common.cancel')}
-            style={styles.cancel}
+            style={({ pressed }) => [styles.cancel, pressed && heldDim]}
             hitSlop={4}
           >
             <Text style={[styles.cancelText, { color: colors.textPrimary }]}>{t('common.cancel')}</Text>
@@ -586,7 +586,7 @@ export function ComposeScreen({
                         accessibilityRole="radio"
                         accessibilityState={{ checked: on }}
                         accessibilityLabel={t(k.label)}
-                        style={[styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }]}
+                        style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }, pressed && heldDim]}
                       >
                         <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>{t(k.label)}</Text>
                       </Pressable>
@@ -757,7 +757,7 @@ function Tool({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled, selected: on }}
-      style={[styles.tool, on && { backgroundColor: colors.controlTrack }, disabled && styles.disabled]}
+      style={({ pressed }) => [styles.tool, on && { backgroundColor: colors.controlTrack }, disabled && styles.disabled, pressed && heldDim]}
     >
       <Icon name={icon} size={22} color={colors.primary} />
     </Pressable>
@@ -824,7 +824,7 @@ function PictureTile({
         onPress={onRemove}
         accessibilityRole="button"
         accessibilityLabel={t('composer.picture.remove', n)}
-        style={styles.tileRemove}
+        style={({ pressed }) => [styles.tileRemove, pressed && heldDim]}
       >
         <View style={[styles.tileRemoveDot, { backgroundColor: colors.background }]}>
           <Icon name="close" size={16} color={colors.textPrimary} />
@@ -834,7 +834,7 @@ function PictureTile({
         onPress={onDescribe}
         accessibilityRole="button"
         accessibilityLabel={described ? t('composer.alt.edit', n) : t('composer.alt.add', n)}
-        style={styles.tileAlt}
+        style={({ pressed }) => [styles.tileAlt, pressed && heldDim]}
       >
         <View style={[styles.altPill, { backgroundColor: colors.background }]}>
           {described ? <Icon name="check" size={12} color={colors.success} /> : null}

@@ -1,25 +1,16 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import {
-  Animated,
-  Dimensions,
-  Easing,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from 'react';
+import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';
+import { useEdgePanel } from '../navigation/edgePanel';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useReducedMotion } from '../a11y/useReducedMotion';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { TicketBadge } from '../play/Ticket';
 import { useI18n } from '../i18n/I18nContext';
@@ -29,8 +20,6 @@ import { elapsed, lastSeen } from './time';
 import { Loading } from '../theme/Loading';
 
 const WIDTH_RATIO = 0.86;
-const DURATION = 220;
-const EASE = Easing.bezier(0.2, 0, 0, 1);
 
 /**
  * Your people, over the side of the app.
@@ -41,11 +30,13 @@ const EASE = Easing.bezier(0.2, 0, 0, 1);
  * same problem and none of the answer: friends live on one tab, groups on
  * another, and who is *in a game right now* was not anywhere at all.
  *
- * It slides from the trailing edge because the leading one is the navigation
- * menu, and a panel that came from the same side would read as that menu having
- * changed its mind. No pan gesture for the same reason: the left edge already
- * owns the swipe, and two edge-swipes on one screen is a guess about which
- * panel you meant.
+ * It comes from the right, the side its button is on, and it moves as the
+ * profile's menu does (`useEdgePanel`): the same spring in and out, a drag or
+ * a flick towards its edge to shut it, and Android's back. The two are never
+ * open on one screen — the menu belongs to Profile, this to Messages — so
+ * there is no guessing which panel a swipe meant. It used to run a timing of
+ * its own and could only be tapped away, which made two panels from one edge
+ * feel like two different things.
  *
  * Everything it shows comes from one request. Six would not be a drawer anybody
  * opened twice.
@@ -56,23 +47,13 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
   const { colors } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
-  const reduceMotion = useReducedMotion();
 
   const [data, setData] = useState<SocialRailData | null>(null);
   const [loading, setLoading] = useState(false);
 
   const width = Math.round(Dimensions.get('window').width * WIDTH_RATIO);
-  const slide = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (reduceMotion) {
-      slide.setValue(open ? 1 : 0);
-      return;
-    }
-    // started and left alone: stopping it in a cleanup detaches the value from
-    // the view, which is the bug `SideMenu` documents next door
-    Animated.timing(slide, { toValue: open ? 1 : 0, duration: DURATION, useNativeDriver: true, easing: EASE }).start();
-  }, [open, reduceMotion, slide]);
+  // how far it is from open, towards the right edge: 0 is open, `width` is gone
+  const { away, panHandlers } = useEdgePanel({ open, onClose, width, sign: 1 });
 
   /*
    * Read when it opens, not on a timer.
@@ -143,7 +124,10 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
     >
       <Animated.View
-        style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim, opacity: slide }]}
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: colors.scrim, opacity: away.interpolate({ inputRange: [0, width], outputRange: [1, 0], extrapolate: 'clamp' }) },
+        ]}
         pointerEvents={open ? 'auto' : 'none'}
       >
         <Pressable
@@ -155,6 +139,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
       </Animated.View>
 
       <Animated.View
+        {...panHandlers}
         accessibilityViewIsModal={open}
         style={[
           styles.panel,
@@ -163,10 +148,12 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
             backgroundColor: colors.background,
             paddingTop: insets.top + spacing.md,
             paddingBottom: insets.bottom,
-            transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [width, 0] }) }],
+            transform: [{ translateX: away }],
           },
         ]}
       >
+        {/* past the screen's edge, so a panel pulled further open than it goes shows more panel, not a gap */}
+        <View pointerEvents="none" style={[styles.skirt, { width, backgroundColor: colors.background }]} />
         <View style={styles.head}>
           {/*
             Opened by Messages' new-message pencil: your people, by who is
@@ -175,7 +162,14 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
           <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
             {t('messages.new')}
           </Text>
-          <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('rail.closePanel')}>
+          <Pressable
+            onPress={onClose}
+            // a 20-point glyph, caught at a fingertip's 44
+            hitSlop={hitSlopFor(20, 20)}
+            accessibilityRole="button"
+            accessibilityLabel={t('rail.closePanel')}
+            style={({ pressed }) => pressed && heldDim}
+          >
             <Icon name="close" size={20} tone="secondary" />
           </Pressable>
         </View>
@@ -284,7 +278,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
             {data && friends.length === 0 ? (
               <Pressable
                 onPress={() => go(() => navigation.navigate('Tabs', { screen: 'Search' }))}
-                style={styles.empty}
+                style={({ pressed }) => [styles.empty, pressed && heldDim]}
                 accessibilityRole="button"
                 accessibilityLabel={t('rail.findPeople')}
               >
@@ -303,6 +297,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
 
 const styles = StyleSheet.create({
   panel: { position: 'absolute', top: 0, bottom: 0, right: 0 },
+  skirt: { position: 'absolute', top: 0, bottom: 0, left: '100%' },
   ticketBadge: { position: 'absolute', right: -5, bottom: -4 },
   head: {
     flexDirection: 'row',

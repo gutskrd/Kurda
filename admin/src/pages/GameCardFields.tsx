@@ -4,7 +4,7 @@ import { listWordCategories, searchVocabulary, type VocabularyPick } from '../ga
 import { Button, Field, Note, errorLine, useDebounced, useLoad } from '../ui';
 
 /**
- * The card editor of Kurdish Impostor, for the Game content page
+ * The card editor of Impostor, for the Game content page
  * (GameContent.tsx): a word card is made by picking its word from published
  * vocabulary — what published lessons and stories already teach, with its
  * meaning — so no Kurdish is typed again. What an editor writes is the
@@ -87,7 +87,7 @@ function meaningsOf(pick: VocabularyPick): Record<string, string> {
 }
 
 /**
- * A Kurdish Impostor word card: the word (picked), what it means, the category
+ * A Impostor word card: the word (picked), what it means, the category
  * it is filed under — whose name is the impostor's hint — and any forms of the
  * word a clue may not say either (picked too; the game already hears the
  * common endings).

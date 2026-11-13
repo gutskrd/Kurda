@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
-import { heldRow } from '../theme/MotionParts';
+import { heldRow, heldDim } from '../theme/MotionParts';
 import {
   CHARACTER_NAMES,
   PAID_STORY_REPEATS_PER_DAY,
@@ -46,6 +46,7 @@ import { useNarration } from './useNarration';
 import { COLUMN, Card, Note, Pill, SectionLabel, Sheet } from './ui';
 import { NarrationBar } from './NarrationBar';
 import { CHARACTER_SIZE, SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { pressedDim } from '../theme/motion';
 
 /** A reading position is sent to the server at most this often; also on leaving the text. */
 export const PROGRESS_EVERY_MS = 10_000;
@@ -406,7 +407,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
       accessibilityRole="button"
       accessibilityLabel={me?.bookmarked ? t('stories.library.bookmarked') : t('stories.library.bookmark')}
       accessibilityState={{ selected: me?.bookmarked ?? false }}
-      style={styles.headerButton}
+      style={({ pressed }) => [styles.headerButton, pressed && heldDim]}
     >
       <Icon name={me?.bookmarked ? 'bookmark-fill' : 'bookmark'} size={22} color={me?.bookmarked ? colors.gold : colors.textPrimary} />
     </Pressable>
@@ -421,7 +422,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
           accessibilityRole="button"
           accessibilityLabel={t('stories.reader.smaller')}
           accessibilityState={{ disabled: scaleIndex <= 0 }}
-          style={[styles.sizeButton, { opacity: scaleIndex <= 0 ? 0.35 : 1 }]}
+          style={({ pressed }) => [styles.sizeButton, { opacity: scaleIndex <= 0 ? 0.35 : 1 }, pressed && heldDim]}
         >
           <Text style={[styles.sizeSmall, { color: colors.primary }]}>A</Text>
         </Pressable>
@@ -431,7 +432,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
           accessibilityRole="button"
           accessibilityLabel={t('stories.reader.larger')}
           accessibilityState={{ disabled: scaleIndex >= TEXT_SCALES.length - 1 }}
-          style={[styles.sizeButton, { opacity: scaleIndex >= TEXT_SCALES.length - 1 ? 0.35 : 1 }]}
+          style={({ pressed }) => [styles.sizeButton, { opacity: scaleIndex >= TEXT_SCALES.length - 1 ? 0.35 : 1 }, pressed && heldDim]}
         >
           <Text style={[styles.sizeLarge, { color: colors.primary }]}>A</Text>
         </Pressable>
@@ -560,7 +561,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                     onPress={() => navigation.push('StoryReader', { slug: v.slug })}
                     accessibilityRole="button"
                     hitSlop={VERSION_SLOP}
-                    style={({ pressed }) => [styles.version, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+                    style={({ pressed }) => [styles.version, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                   >
                     <Icon name="translate" size={14} color={colors.primary} />
                     <Text style={[styles.versionText, { color: colors.primary }]}>{t('stories.overview.readIn', { variety: DIALECT_NAME[v.dialect] })}</Text>
@@ -619,7 +620,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                   setContinueFrom(null);
                 }}
                 accessibilityRole="button"
-                style={({ pressed }) => [styles.continueChip, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+                style={({ pressed }) => [styles.continueChip, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
               >
                 <Icon name="move-down" size={16} color={colors.primary} />
                 <Text style={[styles.continueChipText, { color: colors.primary }]}>{t('stories.reader.continueFrom', { n: continueFrom + 1 })}</Text>
@@ -853,7 +854,7 @@ function VocabularyRow({
           accessibilityRole="button"
           accessibilityLabel={t('stories.reader.playWord')}
           hitSlop={WORD_BUTTON_SLOP}
-          style={({ pressed }) => [styles.wordPlay, { backgroundColor: playing ? colors.primary : colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+          style={({ pressed }) => [styles.wordPlay, { backgroundColor: playing ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
         >
           <Icon name="speaker" size={18} color={playing ? colors.textOnPrimary : colors.primary} />
         </Pressable>
@@ -866,7 +867,7 @@ function VocabularyRow({
           accessibilityLabel={saved ? t('stories.reader.saved') : t('stories.reader.saveWord')}
           accessibilityState={{ selected: saved }}
           hitSlop={WORD_BUTTON_SLOP}
-          style={({ pressed }) => [styles.wordPlay, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+          style={({ pressed }) => [styles.wordPlay, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
         >
           <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={18} color={saved ? colors.gold : colors.primary} />
         </Pressable>

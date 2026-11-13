@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useId, useRef, useState, type CSSProperties } from 'react';
-import { formatJoinCode, type GameAccess, type PlayGame } from '@kurda/shared';
+import { buildJoinLink, formatJoinCode, type GameAccess, type PlayGame } from '@kurda/shared';
+import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { CheckIcon, CopyIcon, ShareIcon, TicketIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
@@ -15,9 +16,8 @@ import { GAME_NAME_KEY } from './playApi';
  * (ui/Ticket.tsx) stood on end, so it reads as one of a family with every
  * invite a friend is handed.
  *
- * Codes took the place of invite links. A link only works where it can be
- * tapped; a code can be read out across a room, typed on another phone or
- * written on a board, and the friend types it in Games → Join with a code
+ * A code can be read out across a room, typed on another phone or written on
+ * a board, and the friend types it in Games → Join with a code
  * (play/JoinCode.tsx). Friends already on Hevalo are still asked with
  * "Invite friends", which sits beside the code.
  *
@@ -25,10 +25,14 @@ import { GAME_NAME_KEY } from './playApi';
  * one after another the first time the ticket is shown. Every few seconds a
  * light crosses them, but only while the ticket is on the screen and the tab
  * is in front, and never under Reduce Motion. Copy, or a tap on the code,
- * puts "ABC234" on the clipboard and says so; Share hands the system's share
- * sheet a sentence with the code in it and no address, and copies that
- * sentence where there is no share sheet. A lobby that can no longer be
- * joined has no code (the server clears it), and the ticket goes with it.
+ * puts "ABC234" on the clipboard and says so. Share is for a friend who is
+ * somewhere else: it hands the system's share sheet one message, a sentence
+ * with the code in it and then the code's own link (shared join-link.ts),
+ * which a message shows as the game's card and which opens a page that joins
+ * with one tap; where there is no share sheet, the same message is copied. A sentence alone gave a friend
+ * outside Hevalo nothing to tap and three screens to find. A lobby that can
+ * no longer be joined has no code (the server clears it), and the ticket goes
+ * with it.
  */
 
 /** What Share sends, per game: each game says what you are asking your friend to do. */
@@ -69,6 +73,7 @@ export function CodeTicket({
   invite?: React.ReactNode;
 }): React.JSX.Element | null {
   const t = useT();
+  const { user } = useAuth();
   const id = useId();
   const ref = useRef<HTMLDivElement>(null);
   const inFront = useInFront(ref);
@@ -106,7 +111,12 @@ export function CodeTicket({
   }
 
   async function share(): Promise<void> {
-    const text = t(SHARE_KEY[game], { code: formatJoinCode(shown) });
+    const said = t(SHARE_KEY[game], { code: formatJoinCode(shown) });
+    // the code as a link, saying who is asking so a friend who is not one yet can ask to be
+    const url = buildJoinLink(game, shown, { from: user?.id, origin: window.location.origin });
+    // One message, with the link last. Handed over beside the words, a link is put wherever the receiving app likes
+    // and dropped by some; at the end of the words it is where a message draws it as the game's card.
+    const text = url ? `${said}\n${t('play.code.shareTap')} ${url}` : said;
     if (typeof navigator.share === 'function') {
       try {
         await navigator.share({ title: t(GAME_NAME_KEY[game]), text });

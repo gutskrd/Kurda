@@ -1,5 +1,5 @@
 /**
- * Kurdish Impostor: everyone at the table is dealt the same Kurdish word —
+ * Impostor: everyone at the table is dealt the same Kurdish word —
  * except one secret impostor, whose card shows only the category it belongs
  * to. In two rounds each player in turn gives one short clue in Kurdish, which
  * must not say the word; then everyone votes for who they think the impostor

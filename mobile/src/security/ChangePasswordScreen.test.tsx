@@ -123,6 +123,23 @@ describe('changing the password', () => {
     expect(await storage.get()).toEqual({ accessToken: 'acc-old', refreshToken: 'ref-1' });
   });
 
+  /*
+   * The line under a field is about what was in it. Once that is being put
+   * right the line goes — it used to stay, red, until the button was pressed
+   * again — and the other fields keep theirs.
+   */
+  it('takes a field’s line away as soon as that field is edited, and leaves the others', async () => {
+    await serve(() => json(200, {}));
+    open();
+    // nothing typed for the current password, and two new ones that differ
+    await fill('', 'berbang2026', 'berbang2027');
+    expect(within(fieldOf('current-password')).getByText('Required')).toBeTruthy();
+    expect(within(fieldOf('confirm-password')).getByText('Those passwords don’t match.')).toBeTruthy();
+    fireEvent.change(screen.getByTestId('confirm-password'), { target: { value: 'berbang2026' } });
+    expect(within(fieldOf('confirm-password')).queryByText('Those passwords don’t match.')).toBeNull();
+    expect(within(fieldOf('current-password')).getByText('Required')).toBeTruthy();
+  });
+
   it('says on the new field which rule it broke, or that it has been in a data leak', async () => {
     let answer = json(400, { code: 'WEAK_PASSWORD', message: 'password must be at least 10 characters', details: { reason: 'too-short' } });
     await serve(() => answer);

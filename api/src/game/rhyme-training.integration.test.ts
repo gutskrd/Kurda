@@ -1,4 +1,4 @@
-/** Rhyming Words training backend against real Postgres (CI job). KUR-299. */
+/** Peyvên Hevserwa training backend against real Postgres (CI job). KUR-299. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';
@@ -96,7 +96,7 @@ describe.skipIf(!DATABASE_URL)('rhyme training service (integration)', () => {
     if (noRhyme.ok) expect(noRhyme.result.reason).toBe('no-rhyme');
   });
 
-  it('ends the game and awards XP for accepted rhymes', async () => {
+  it('ends the game, and pays no XP for rhymes found alone', async () => {
     const userId = await makeUser();
     const t0 = new Date();
     const id = await insertGame(userId, 'gul', t0);
@@ -107,8 +107,9 @@ describe.skipIf(!DATABASE_URL)('rhyme training service (integration)', () => {
     expect(ended.ok).toBe(true);
     if (ended.ok) {
       expect(ended.game.status).toBe('ended');
-      expect(ended.game.xpAwarded).toBe(5); // 1 accepted * 5
+      expect(ended.game.xpAwarded).toBe(0);
     }
+    expect((await pool.query(`SELECT 1 FROM xp_ledger WHERE user_id = $1`, [userId])).rowCount).toBe(0);
 
     // no more submissions after it ends
     const after = await svc.submit(userId, id, 'kul');

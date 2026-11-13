@@ -31,6 +31,7 @@ import { Card, Note, SectionLabel, Sheet } from '../ui';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
 import { LobbyRated } from '../../ranks/Rated';
 import { seatNamer } from '../../play/lobby';
+import { heldDim } from '../../theme/MotionParts';
 
 /** A player's name as this viewer may see it: their own, a friend's, or "Player 3". */
 export function playerName(p: Pick<StoryGamePlayer, 'name' | 'seat' | 'isMe'>, t: (k: 'stories.player' | 'games.you', v?: Record<string, string | number>) => string): string {
@@ -177,7 +178,7 @@ export function Lobby({
                     disabled={busy === `remove-${p.seat}`}
                     accessibilityRole="button"
                     accessibilityLabel={t('stories.lobby.removeWho', { name })}
-                    style={styles.removeButton}
+                    style={({ pressed }) => [styles.removeButton, pressed && heldDim]}
                   >
                     <Icon name="close" size={18} color={colors.textSecondary} />
                   </Pressable>

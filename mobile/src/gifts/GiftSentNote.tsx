@@ -1,5 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { MenuIn, PressableScale } from '../theme/MotionParts';
+import { MenuIn, PressableScale, heldDim } from '../theme/MotionParts';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
@@ -46,7 +46,13 @@ export function GiftSentNote({
               {itemName} · {t('gift.shop.inChat', { name: to })}
             </Text>
           </View>
-          <Pressable onPress={onDismiss} hitSlop={12} accessibilityRole="button" accessibilityLabel={t('social.close')} style={styles.close}>
+          <Pressable
+            onPress={onDismiss}
+            hitSlop={12}
+            accessibilityRole="button"
+            accessibilityLabel={t('social.close')}
+            style={({ pressed }) => [styles.close, pressed && heldDim]}
+          >
             <Icon name="close" size={18} color={colors.textSecondary} />
           </Pressable>
         </View>

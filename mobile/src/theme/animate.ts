@@ -2,7 +2,22 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
 import { releaseVelocity, type DragSample } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
-import { ENTRANCE, POP_SCALE, PRESS_SCALE, SHAKE_MS, SHAKE_STEPS, countAt, countUpMs, curve, duration, easeOut, entranceDelay, spring } from './motion';
+import {
+  CARD_TURN_MS,
+  CARD_TURN_SETTLE,
+  ENTRANCE,
+  POP_SCALE,
+  PRESS_SCALE,
+  SHAKE_MS,
+  SHAKE_STEPS,
+  countAt,
+  countUpMs,
+  curve,
+  duration,
+  easeOut,
+  entranceDelay,
+  spring,
+} from './motion';
 
 /**
  * The motion tokens (motion.ts) as React Native easings and springs, and the
@@ -27,9 +42,20 @@ export function timing(
   return Animated.timing(value, { toValue, duration: ms, delay: opts.delay ?? 0, easing: opts.easing ?? ease.out, useNativeDriver: true });
 }
 
-/** One of the springs (motion.ts `spring`), on the native driver. */
+/** One of the springs (motion.ts `spring`), on the native driver: `chrome` for the interface, the others for moments. */
 export function springTo(value: Animated.Value, toValue: number, kind: keyof typeof spring = 'standard', delay = 0): Animated.CompositeAnimation {
   return Animated.spring(value, { toValue, ...spring[kind], delay, useNativeDriver: true });
+}
+
+/**
+ * A game's card turning over, `value` from 0 to 1: in the one time every such
+ * card takes (`CARD_TURN_MS`), arriving quickly, a touch past flat, and
+ * settling back — so it lands like a card put down, not like a slide. What is
+ * drawn from the value must not mind it passing 1 for a moment (clamp an
+ * opacity read from it). The caller leaves it at 1 under Reduce Motion.
+ */
+export function turnCard(value: Animated.Value): Animated.CompositeAnimation {
+  return timing(value, 1, CARD_TURN_MS, { easing: Easing.out(Easing.back(CARD_TURN_SETTLE)) });
 }
 
 /**
@@ -98,7 +124,8 @@ export function usePressScale(enabled = true): {
   }, [live, value]);
   const onPressOut = useCallback(() => {
     if (!live) return;
-    springTo(value, 1).start();
+    // back on the interface's own spring: a button is used all day, and is itself again at once
+    springTo(value, 1, 'chrome').start();
   }, [live, value]);
   return { scale: live ? value : 1, onPressIn, onPressOut };
 }

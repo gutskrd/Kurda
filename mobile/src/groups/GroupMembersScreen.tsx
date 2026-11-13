@@ -40,6 +40,7 @@ import {
   type GroupMember,
 } from './api';
 import { Loading } from '../theme/Loading';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * A group's own page (KUR-084): what it is, who is in it, and what you may do.
@@ -365,7 +366,13 @@ function MemberRow({
       {busy ? (
         <Loading style={styles.more} />
       ) : onMore ? (
-        <Pressable onPress={onMore} hitSlop={4} accessibilityRole="button" accessibilityLabel={t('post.menu')} style={styles.more}>
+        <Pressable
+          onPress={onMore}
+          hitSlop={4}
+          accessibilityRole="button"
+          accessibilityLabel={t('post.menu')}
+          style={({ pressed }) => [styles.more, pressed && heldDim]}
+        >
           <Icon name="more" size={22} color={colors.textSecondary} />
         </Pressable>
       ) : null}

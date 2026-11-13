@@ -323,8 +323,9 @@ function WordComposer({
         aria-describedby={hint || error || pasteNotice ? 'll-word-hint' : undefined}
         {...typeOnly}
       />
-      <Button type="submit" disabled={busy || !word.trim() || hint !== null}>
-        {busy ? '…' : t('games.lastLetter.send')}
+      {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
+      <Button type="submit" disabled={busy || !word.trim() || hint !== null} aria-busy={busy || undefined}>
+        {t('games.lastLetter.send')}
       </Button>
       {(pasteNotice ?? error ?? hint) && (
         <p id="ll-word-hint" className="ll-hint" role="status">

@@ -3,6 +3,7 @@ import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useDirection } from '../../reports/direction';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/tokens';
+import { heldDim } from '../../theme/MotionParts';
 
 /** One way out of a screen that holds an account until it is answered. */
 export interface WayOut {
@@ -27,7 +28,14 @@ export function WaysOut({ ways }: { ways: readonly WayOut[] }): React.JSX.Elemen
   return (
     <View style={[styles.ways, { flexDirection: dir.row }]}>
       {ways.map((way) => (
-        <Pressable key={way.label} onPress={way.onPress} accessibilityRole="button" hitSlop={8} style={styles.way} testID={way.testID}>
+        <Pressable
+          key={way.label}
+          onPress={way.onPress}
+          accessibilityRole="button"
+          hitSlop={8}
+          style={({ pressed }) => [styles.way, pressed && heldDim]}
+          testID={way.testID}
+        >
           <Text style={[styles.text, { color: way.danger ? colors.danger : colors.textSecondary }]}>{way.label}</Text>
         </Pressable>
       ))}

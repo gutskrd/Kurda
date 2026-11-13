@@ -17,6 +17,7 @@ import { AppealForm } from './AppealForm';
 import { useDirection } from './direction';
 import { CATEGORY_LABEL, REPORT_STATUS_LABEL, TARGET_LABEL } from './labels';
 import { formatDay } from './sendErrors';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * My reports: everything you reported and what became of it.
@@ -112,7 +113,7 @@ function ReportRow({ report }: { report: MyReport }): React.JSX.Element {
         asking ? (
           <AppealForm client={client} subject={{ caseId: report.caseId }} onFiled={() => setFiled(true)} />
         ) : (
-          <Pressable onPress={() => setAsking(true)} accessibilityRole="button" style={styles.ask}>
+          <Pressable onPress={() => setAsking(true)} accessibilityRole="button" style={({ pressed }) => [styles.ask, pressed && heldDim]}>
             <Text style={[styles.askText, dir.text, { color: colors.primary }]}>{t('reports.askSecondLook')}</Text>
           </Pressable>
         )

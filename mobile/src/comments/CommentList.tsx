@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
+import { SendButton } from '../chat/SendButton';
 import { MIN_TOUCH_TARGET, decorative } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -16,6 +17,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { authorOf, type ThreadComment } from './thread';
 import type { CommentThread } from './useCommentThread';
+import { pressedDim } from '../theme/motion';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * A post's comments, one level of replies under each, and the composer that
@@ -103,7 +106,7 @@ function CommentRow({
   return (
     <View style={[styles.comment, c.pending ? styles.pending : null]}>
       {/* the picture opens them too, for a thumb; a screen reader is offered the name alone, not the same button twice */}
-      <Pressable onPress={openProfile} disabled={c.pending} hitSlop={(MIN_TOUCH_TARGET - size) / 2} {...decorative()}>
+      <Pressable onPress={openProfile} disabled={c.pending} hitSlop={(MIN_TOUCH_TARGET - size) / 2} {...decorative()} style={({ pressed }) => pressed && heldDim}>
         <InitialsAvatar name={author.username} id={author.id} size={size} photoUrl={author.avatarUrl} />
       </Pressable>
       <View style={styles.main}>
@@ -114,7 +117,7 @@ function CommentRow({
             hitSlop={BYLINE_SLOP}
             accessibilityRole="button"
             accessibilityLabel={t('friends.openProfile', { username: author.username })}
-            style={styles.who}
+            style={({ pressed }) => [styles.who, pressed && heldDim]}
           >
             <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
               {author.username}
@@ -139,11 +142,22 @@ function CommentRow({
         {/* nothing to answer or take back until the server has it */}
         {!c.pending && !removed ? (
           <View style={styles.actions}>
-            <Pressable onPress={() => require('comment') && thread.reply(c)} hitSlop={ACTION_SLOP} accessibilityRole="button" style={styles.action}>
+            <Pressable
+              onPress={() => require('comment') && thread.reply(c)}
+              hitSlop={ACTION_SLOP}
+              accessibilityRole="button"
+              style={({ pressed }) => [styles.action, pressed && heldDim]}
+            >
               <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('comments.reply')}</Text>
             </Pressable>
             {mine ? (
-              <Pressable onPress={() => thread.confirmDelete(c)} hitSlop={ACTION_SLOP} accessibilityRole="button" style={styles.action}>
+              // at the far end of the line from Reply: the two were a thumb's slip apart, their reaches touching
+              <Pressable
+                onPress={() => thread.confirmDelete(c)}
+                hitSlop={ACTION_SLOP}
+                accessibilityRole="button"
+                style={({ pressed }) => [styles.action, styles.actionApart, pressed && heldDim]}
+              >
                 <Text style={[styles.actionText, { color: colors.danger }]}>{t('common.delete')}</Text>
               </Pressable>
             ) : (
@@ -152,7 +166,7 @@ function CommentRow({
                 hitSlop={ACTION_SLOP}
                 accessibilityRole="button"
                 accessibilityLabel={t('moderation.reportComment')}
-                style={styles.action}
+                style={({ pressed }) => [styles.action, pressed && heldDim]}
               >
                 <Icon name="flag" size={12} color={colors.textSecondary} />
                 <Text style={[styles.actionText, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
@@ -168,7 +182,7 @@ function CommentRow({
             hitSlop={ACTION_SLOP}
             accessibilityRole="button"
             accessibilityState={{ busy: loading }}
-            style={styles.more}
+            style={({ pressed }) => [styles.more, pressed && heldDim]}
           >
             <View style={[styles.moreRule, { backgroundColor: colors.separator }]} />
             <Text style={[styles.actionText, { color: colors.textSecondary }]}>
@@ -228,7 +242,7 @@ export function CommentComposer({
           accessibilityRole="button"
           accessibilityLabel={placeholder}
           testID="comment-composer-guest"
-          style={({ pressed }) => [styles.composer, { backgroundColor: colors.glassFill, opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [styles.composer, { backgroundColor: colors.glassFill, opacity: pressed ? pressedDim : 1 }]}
         >
           <Text style={[styles.input, { color: colors.textSecondary }]} numberOfLines={1}>
             {placeholder}
@@ -252,7 +266,7 @@ export function CommentComposer({
             hitSlop={(MIN_TOUCH_TARGET - 24) / 2}
             accessibilityRole="button"
             accessibilityLabel={t('comments.cancelReply')}
-            style={styles.cancel}
+            style={({ pressed }) => [styles.cancel, pressed && heldDim]}
           >
             <Icon name="close" size={16} color={colors.textSecondary} />
           </Pressable>
@@ -271,16 +285,8 @@ export function CommentComposer({
           multiline
           maxLength={maxLength}
         />
-        <Pressable
-          onPress={onSubmit}
-          disabled={!ready}
-          accessibilityRole="button"
-          accessibilityLabel={t('comments.post')}
-          accessibilityState={{ disabled: !ready }}
-          style={[styles.send, { opacity: ready ? 1 : 0.4 }]}
-        >
-          <Icon name="chevron-right" size={24} tone="primary" />
-        </Pressable>
+        {/* the one send control every field in the app has */}
+        <SendButton ready={ready} onPress={onSubmit} label={t('comments.post')} />
       </View>
     </View>
   );
@@ -320,6 +326,7 @@ const styles = StyleSheet.create({
   voiceText: { flexShrink: 1 },
   actions: { flexDirection: 'row', gap: spacing.md, paddingTop: 2 },
   action: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  actionApart: { marginLeft: 'auto' },
   actionText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   more: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingTop: spacing.sm, alignSelf: 'flex-start' },
   moreRule: { width: 24, height: StyleSheet.hairlineWidth },

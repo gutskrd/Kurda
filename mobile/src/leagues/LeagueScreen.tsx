@@ -1,12 +1,13 @@
 import { memo, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Animated, Easing, FlatList, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Animated, Easing, FlatList, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { FIRST_LEAGUE_TIER, LEAGUE_TIERS, leagueTierIndex, type LeagueTier, type LeagueView, type LeagueWeekXp } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { usePullRefresh } from '../net/usePullRefresh';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -28,7 +29,7 @@ import { LeagueMoment } from './LeagueMoment';
 import { Leaderboard, type BoardType, type Scope } from './Leaderboard';
 import { springTo, timing, useListEntrance } from '../theme/animate';
 import { duration } from '../theme/motion';
-import { Rise } from '../theme/MotionParts';
+import { Rise, heldDim } from '../theme/MotionParts';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useDirection } from '../reports/direction';
 import { knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, weekLeftText, zoneRules, type TableItem } from './format';
@@ -333,32 +334,25 @@ const BOB = { distance: 3, ms: 2600 } as const;
  * The learner's own emblem on the ladder, afloat: it rises and settles a few
  * points every couple of seconds, on the native driver, so the one league
  * that is theirs is the one thing on the row that is alive. It holds still
- * while the page is not in front (the loop is started on focus and stopped
- * on blur) and under Reduce Motion, where it is simply there.
+ * while the page is not in front or the app is in the background, and under
+ * Reduce Motion, where it is simply there (`useMotionAlive`).
  */
 function Bobbing({ children }: { children: ReactNode }): React.JSX.Element {
-  const reduce = useReducedMotion();
+  const alive = useMotionAlive();
   const ride = useRef(new Animated.Value(0)).current;
-  useFocusEffect(
-    useCallback(() => {
-      if (reduce) {
-        ride.setValue(0);
-        return;
-      }
-      const ease = Easing.inOut(Easing.sin);
-      const loop = Animated.loop(
-        Animated.sequence([
-          Animated.timing(ride, { toValue: 1, duration: BOB.ms / 2, easing: ease, useNativeDriver: true }),
-          Animated.timing(ride, { toValue: 0, duration: BOB.ms / 2, easing: ease, useNativeDriver: true }),
-        ]),
-      );
-      loop.start();
-      return () => {
-        loop.stop();
-        ride.setValue(0);
-      };
-    }, [reduce, ride]),
-  );
+  useEffect(() => {
+    if (!alive) {
+      ride.setValue(0);
+      return;
+    }
+    const ease = Easing.inOut(Easing.sin);
+    const loop = Animated.loop(Animated.sequence([timing(ride, 1, BOB.ms / 2, { easing: ease }), timing(ride, 0, BOB.ms / 2, { easing: ease })]));
+    loop.start();
+    return () => {
+      loop.stop();
+      ride.setValue(0);
+    };
+  }, [alive, ride]);
   const translateY = ride.interpolate({ inputRange: [0, 1], outputRange: [0, -BOB.distance] });
   return <Animated.View style={{ transform: [{ translateY }] }}>{children}</Animated.View>;
 }
@@ -401,9 +395,14 @@ const RESTING_HEIGHT = 170;
  * The way out, at the end of the page: asked once, in plain words — what
  * changes and that it can be undone — with Leave and Cancel side by side and
  * neither one dressed up to be chosen.
+ *
+ * It is a line of quiet words and not a button. A button under the week's
+ * one action read as the second thing to do on this page, and it is the
+ * thing almost nobody here came to do; it is in Settings too.
  */
 function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => void }): React.JSX.Element {
   const { t } = useI18n();
+  const { colors } = useTheme();
   const ask = () =>
     Alert.alert(t('leagues.leave.title'), t('leagues.leave.body'), [
       { text: t('common.cancel'), style: 'cancel' },
@@ -411,7 +410,15 @@ function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => void })
     ]);
   return (
     <View style={styles.leave}>
-      <ClayButton label={t('leagues.leave')} icon="sign-out" variant="outline" busy={busy} onPress={ask} />
+      <Pressable
+        onPress={ask}
+        disabled={busy}
+        accessibilityRole="button"
+        accessibilityState={{ busy, disabled: busy }}
+        style={({ pressed }) => [styles.leaveLink, pressed && heldDim]}
+      >
+        <Text style={[styles.leaveText, { color: colors.textSecondary }]}>{t('leagues.leave')}</Text>
+      </Pressable>
     </View>
   );
 }
@@ -692,6 +699,9 @@ const styles = StyleSheet.create({
   bubbleText: { fontSize: typography.sizes.md, lineHeight: 22, fontStyle: 'italic', textAlign: 'center' },
   daysPill: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 4, marginTop: spacing.sm },
   leave: { alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.md },
+  // a fingertip tall, however few its words
+  leaveLink: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },
+  leaveText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
   hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   heroTitle: { ...display(typography.sizes.xl) },
   heroMeaning: { fontSize: typography.sizes.md },

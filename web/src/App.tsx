@@ -33,6 +33,7 @@ const LibraryPostPage = lazy(() => import('./pages/LibraryPostPage').then((m) =>
 const Saved = lazy(() => import('./pages/Saved').then((m) => ({ default: m.Saved })));
 const DimenPost = lazy(() => import('./pages/DimenPost').then((m) => ({ default: m.DimenPost })));
 const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games })));
+const InvitePage = lazy(() => import('./play/InvitePage').then((m) => ({ default: m.InvitePage })));
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
 const LastLetter = lazy(() => import('./lastletter/LastLetter').then((m) => ({ default: m.LastLetter })));
 const Impostor = lazy(() => import('./impostor/Impostor').then((m) => ({ default: m.Impostor })));
@@ -96,6 +97,8 @@ import { BadgeCelebrations } from './badges/BadgeCelebrations';
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';
+import { RailProvider } from './social/RailProvider';
+import { PlayProvider } from './play/PlayProvider';
 import { I18nProvider } from './i18n/I18nProvider';
 import { AccountLocale } from './i18n/AccountLocale';
 
@@ -146,7 +149,7 @@ function StoriesMoved(): React.JSX.Element {
 }
 
 /**
- * The addresses Build a Kurdish Sentence and Hear It, Find It had while they
+ * The addresses Build a Sentence and Hear It, Find It had while they
  * were games: they are exercises of the lessons' practice now, under Learn.
  * A round left open and offered again (`?…`) comes along.
  */
@@ -186,6 +189,8 @@ export function AppRoutes(): React.JSX.Element {
         <Route path="/faq" element={<Faq />} />
         {/* what the lessons are built on, with the studies; see teaching/principles.ts */}
         <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
+        {/* a game's invite link from a message: what it is, and the way in (shared join-link.ts) */}
+        <Route path="/join/:game/:code" element={<InvitePage />} />
         <Route path="*" element={<NotFound />} />
       </Route>
       <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
@@ -227,7 +232,10 @@ export function AppRoutes(): React.JSX.Element {
       {/*
         * A lesson and a review, alone on the screen: no navigation, no social
         * column, no invite banner (layouts/FocusLayout.tsx). The learner
-        * leaves by the lesson's own ✕, and their answers are saved.
+        * leaves by the lesson's own ✕, and their answers are saved. The way
+        * to a new account's first lesson (pages/NextLesson.tsx) is here too:
+        * all it ever shows is the lesson's frame while it finds the lesson,
+        * and under the app's bar that frame would jump as the lesson opened.
         */}
       <Route
         path="/app"
@@ -237,6 +245,7 @@ export function AppRoutes(): React.JSX.Element {
           </AppGate>
         }
       >
+        <Route path="learn/next" element={<RequireAccount what="gate.what.course"><NextLesson /></RequireAccount>} />
         <Route path="learn/lesson/:lessonId" element={<RequireAccount what="gate.what.course"><Lesson /></RequireAccount>} />
         <Route path="learn/review" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
         <Route path="learn/review/:sessionId" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
@@ -266,17 +275,16 @@ export function AppRoutes(): React.JSX.Element {
             account themselves */}
         <Route path="learn/stories" element={<StoriesLibrary />} />
         <Route path="learn/stories/:slug" element={<StoryReader />} />
-        {/* the learning loop: a course's map, and the lesson a new account
-            starts with (see pages/NextLesson.tsx); the lesson itself and a
-            review are above, on a screen of their own */}
+        {/* the learning loop: a course's map; the lesson itself, a review and
+            the way to a new account's first lesson are above, on a screen of
+            their own */}
         <Route path="learn/course/:courseId" element={<RequireAccount what="gate.what.course"><CourseMap /></RequireAccount>} />
-        <Route path="learn/next" element={<RequireAccount what="gate.what.course"><NextLesson /></RequireAccount>} />
         <Route path="dictionary" element={<RequireAccount what="gate.what.course"><Dictionary /></RequireAccount>} />
         {/* the first thing a beginner needs, and open to everyone — see pages/Alphabet.tsx */}
         <Route path="alphabet" element={<Alphabet />} />
         {/* the words after the letters — colours, numbers, days, months — open to
             everyone too, each set on a page of its own (pages/Words.tsx, WordSet.tsx) */}
-        {/* the lessons' two exercises that were games once: Build a Kurdish Sentence
+        {/* the lessons' two exercises that were games once: Build a Sentence
             and Hear It, Find It. They are rounds made and checked on the server
             against the learner, so they need an account as a lesson does; the
             addresses they had among the games lead here, a round's `?…` kept */}
@@ -406,7 +414,13 @@ export function App(): React.JSX.Element {
         {/* outermost: while Hevalo is offline nothing below can load, a suspension's reasons included */}
         <MaintenanceGate>
         <SuspensionGate>
+        {/* the social column's data and the game invites, held once for every shell below: moving between
+            a lesson and the app keeps the purse, the face and the counts in the bar as they were */}
+        <RailProvider>
+        <PlayProvider>
         <AppRoutes />
+        </PlayProvider>
+        </RailProvider>
         </SuspensionGate>
         </MaintenanceGate>
         </MessagesProvider>

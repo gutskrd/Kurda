@@ -21,7 +21,7 @@
   gap: 16px;
   padding: 16px 18px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--glass-rim);
   color: var(--ink);
@@ -135,8 +135,8 @@
   background: var(--surface);
   color: var(--ink);
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
 }
 .wd-tile:hover {
   border-color: var(--border-strong);
@@ -159,7 +159,7 @@
   font: inherit;
   text-align: center;
   cursor: pointer;
-  transition: transform 0.12s ease;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 .wd-tile-open:active {
   transform: scale(var(--press-scale));

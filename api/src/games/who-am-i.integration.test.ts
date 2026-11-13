@@ -1,15 +1,15 @@
 /**
- * Who Am I? alone, and the cards made of picked words, against real Postgres
- * and Redis: a round of hidden identities sent without them, questions
- * answered from the facts and kept with the round, guesses judged and paid by
- * the kit; the admin picking approved words for Bluff cards and identities
+ * Ez kî me? beside its table, and the cards made of picked words, against
+ * real Postgres and Redis: the game on one phone (where it is offered, and a
+ * card for everyone in the room), no round of it alone any more and what
+ * becomes of one left open; the admin picking approved words for identities
  * without retyping the Kurdish; and the starter questions, drafts nobody
  * meets until they are approved.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import { checkGameContent, dictionaryKey, letterKey, type GameWordCandidate, type WhoAmIItemView } from '@kurda/shared';
+import { checkGameContent, dictionaryKey, letterKey, type GameWordCandidate, type WhoAmICouchDeals } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
@@ -27,16 +27,7 @@ const REDIS_URL = process.env.REDIS_URL;
 
 const FACTS = ['alive', 'animal', 'person', 'edible', 'place', 'can-fly', 'lives-in-water', 'four-legs', 'bigger-than-person', 'at-home', 'sweet', 'uses-electricity'];
 
-interface StoredItem {
-  identity: { id: string; facts: Record<string, boolean> };
-  questions: Array<{ id: string; fact: string }>;
-  tiles: Array<{ id: string }>;
-}
-
-/** What the player knows the identity's own tile by: its place among the round's tiles. */
-const handleOf = (item: StoredItem): string => String.fromCharCode(97 + item.tiles.findIndex((t) => t.id === item.identity.id));
-
-describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked words (integration)', () => {
+describe.skipIf(!DATABASE_URL || !REDIS_URL)('Ez kî me? and cards from picked words (integration)', () => {
   const config = loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;
@@ -48,7 +39,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
   const entryIds: string[] = [];
   let learner = '';
   let learnerId = '';
-  let other = '';
   let editor = '';
   let net = 0;
 
@@ -78,8 +68,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
 
   const call = (method: 'GET' | 'POST' | 'PUT', url: string, token: string, payload?: unknown) =>
     app.inject({ method, url, payload: payload as never, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.98.251.3' });
-
-  const stored = async (id: string): Promise<StoredItem[]> => (await pool.query<{ items: StoredItem[] }>(`SELECT items FROM game_sessions WHERE id = $1`, [id])).rows[0]!.items;
 
   beforeAll(async () => {
     app = buildApp(config);
@@ -134,7 +122,6 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
     await bustGamePools(app.cache);
     await bustAvailability(app.cache);
     ({ token: learner, id: learnerId } = await register('waLearner'));
-    ({ token: other } = await register('waOther'));
     ({ token: editor } = await register('waEditor', '{content_editor}'));
   });
 
@@ -158,61 +145,81 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Who Am I? and cards from picked wo
     await app.close();
   });
 
-  describe('a round alone', () => {
-    it('is offered once there are enough approved identities and questions', async () => {
+  describe('on one phone', () => {
+    it('is listed once there are enough approved identities and questions', async () => {
       const res = await app.inject({ method: 'GET', url: '/games/availability?dialect=kmr' });
       expect(res.json().games.find((g: { id: string }) => g.id === 'who-am-i')).toMatchObject({ available: true, difficulties: expect.arrayContaining(['beginner']) });
     });
 
-    it('is sent without its identities, answers questions from the facts once, and judges the guesses', async () => {
-      const made = await call('POST', '/games/solo/sessions', learner, { game: 'who-am-i', dialect: 'kmr', difficulty: 'beginner' });
-      expect(made.statusCode, made.body).toBe(201);
-      const session = made.json();
-      const items = session.items as WhoAmIItemView[];
-      expect(items.length).toBeGreaterThan(0);
-      expect(made.body).not.toContain('"facts"');
-      expect(made.body).not.toContain('"identity"');
-      expect(items[0]!.tiles.length).toBeGreaterThanOrEqual(3);
-      expect(items[0]!.asked).toEqual([]);
-
-      const kept = await stored(session.id);
-      const first = kept[0]!;
-      // a tile is known by its place in the round, never by the identity behind it
-      expect(items[0]!.tiles.map((t) => t.id)).toEqual(first.tiles.map((_, i) => String.fromCharCode(97 + i)));
-      for (const t of first.tiles) expect(made.body).not.toContain(t.id);
-      const q = first.questions[0]!;
-      const ask = (token: string, index: number, question: string) => call('POST', `/games/who-am-i/sessions/${session.id}/ask`, token, { index, question });
-      const asked = await ask(learner, 0, q.id);
-      expect(asked.statusCode, asked.body).toBe(200);
-      expect(asked.json()).toEqual({ index: 0, question: q.id, answer: first.identity.facts[q.fact] === true, asked: [{ question: q.id, answer: first.identity.facts[q.fact] === true }] });
-      // asked again: the same answer, counted once
-      expect((await ask(learner, 0, q.id)).json().asked).toHaveLength(1);
-      // nobody else's round, and nothing it does not offer
-      expect((await ask(other, 0, q.id)).statusCode).toBe(404);
-      expect((await ask(learner, 0, 'not-a-question')).statusCode).toBe(400);
-      // a round come back to shows what was asked
-      expect((await call('GET', `/games/solo/sessions/${session.id}`, learner)).json().items[0].asked).toHaveLength(1);
-
-      const wrong = items[0]!.tiles.find((t) => t.id !== handleOf(first))!;
-      const miss = (await call('POST', `/games/solo/sessions/${session.id}/answers`, learner, { index: 0, answer: { guess: wrong.id }, attempt: 1 })).json();
-      expect(miss).toMatchObject({ correct: false, done: false, hint: { notThis: wrong.id }, correction: null });
-      const hit = (await call('POST', `/games/solo/sessions/${session.id}/answers`, learner, { index: 0, answer: { guess: handleOf(first) }, attempt: 2 })).json();
-      expect(hit).toMatchObject({ correct: true, done: true, correction: { id: handleOf(first), category: 'animal' } });
-      // done: no more questions about it
-      expect((await ask(learner, 0, first.questions[1]!.id)).statusCode).toBe(409);
+    it('says where it can be played, to someone signed in', async () => {
+      expect((await app.inject({ method: 'GET', url: '/games/who-am-i/couch?dialect=kmr' })).statusCode).toBe(401);
+      const offer = (await call('GET', '/games/who-am-i/couch?dialect=kmr', learner)).json();
+      expect(offer).toMatchObject({ dialect: 'kmr', difficulties: expect.arrayContaining(['beginner']) });
+      // a variety with no identities is offered at no difficulty, rather than with a deal that would fail
+      expect((await call('GET', '/games/who-am-i/couch?dialect=ckb', learner)).json().difficulties).not.toContain('advanced');
     });
 
-    it('pays by the kit at the finish: right guesses by level, the first-try bonus, once', async () => {
-      const session = (await call('POST', '/games/solo/sessions', learner, { game: 'who-am-i', dialect: 'kmr', difficulty: 'beginner' })).json();
-      const kept = await stored(session.id);
-      for (const [index, item] of kept.entries()) {
-        await call('POST', `/games/solo/sessions/${session.id}/answers`, learner, { index, answer: { guess: handleOf(item) }, attempt: 1 });
+    it('deals a card for everyone in the room: each a different one, with the facts that answer its questions, and no tile another player wears', async () => {
+      const res = await call('POST', '/games/who-am-i/couch/deal', learner, { dialect: 'kmr', difficulty: 'beginner', players: 4 });
+      expect(res.statusCode, res.body).toBe(200);
+      expect(res.headers['cache-control']).toBe('no-store');
+      const dealt = res.json() as WhoAmICouchDeals;
+      expect(dealt).toMatchObject({ dialect: 'kmr', difficulty: 'beginner' });
+      expect(dealt.deals).toHaveLength(4);
+      const worn = dealt.deals.map((d) => d.identity.id);
+      expect(new Set(worn).size).toBe(4);
+      for (const d of dealt.deals) {
+        expect(d.candidates.some((c) => c.id === d.identity.id)).toBe(true);
+        expect(d.candidates.some((c) => c.id !== d.identity.id && worn.includes(c.id))).toBe(false);
+        expect(d.questions.length).toBeGreaterThanOrEqual(4);
+        // the phone answers a question from the card's own facts
+        for (const q of d.questions) expect(typeof d.identity.facts[q.fact]).toBe('boolean');
       }
-      const results = (await call('POST', `/games/solo/sessions/${session.id}/finish`, learner)).json();
-      expect(results).toMatchObject({ correct: kept.length, firstTry: kept.length, learningCounted: true });
-      const ledger = await pool.query<{ amount: number }>(`SELECT amount FROM xp_ledger WHERE source = 'game_who_am_i' AND ref_id = $1`, [`${session.id}:${learnerId}`]);
-      expect(ledger.rows[0]!.amount).toBe(results.xp);
-      expect((await call('POST', `/games/solo/sessions/${session.id}/finish`, learner)).json()).toEqual(results);
+      // another room is dealt differently
+      const again = (await call('POST', '/games/who-am-i/couch/deal', learner, { dialect: 'kmr', difficulty: 'beginner', players: 4 })).json() as WhoAmICouchDeals;
+      expect(again.deals.map((d) => d.candidates.map((c) => c.id).join()).join('|')).not.toBe(dealt.deals.map((d) => d.candidates.map((c) => c.id).join()).join('|'));
+    });
+
+    it('refuses a room of one or of seven, a difficulty with nothing to deal, and anything else in the body', async () => {
+      for (const players of [1, 7]) {
+        expect((await call('POST', '/games/who-am-i/couch/deal', learner, { dialect: 'kmr', difficulty: 'beginner', players })).statusCode).toBe(400);
+      }
+      expect((await call('POST', '/games/who-am-i/couch/deal', learner, { dialect: 'kmr', difficulty: 'beginner', players: 2, names: ['a', 'b'] })).statusCode).toBe(400);
+      const none = await call('POST', '/games/who-am-i/couch/deal', learner, { dialect: 'ckb', difficulty: 'advanced', players: 2 });
+      expect(none.statusCode).toBe(409);
+      expect(none.body).toContain('GAME_UNAVAILABLE');
+      expect((await app.inject({ method: 'POST', url: '/games/who-am-i/couch/deal', payload: { dialect: 'kmr', difficulty: 'beginner', players: 2 } })).statusCode).toBe(401);
+    });
+  });
+
+  describe('a round alone', () => {
+    it('cannot be made any more, and one left open is given up without paying', async () => {
+      const made = await call('POST', '/games/solo/sessions', learner, { game: 'who-am-i', dialect: 'kmr', difficulty: 'beginner' });
+      expect(made.statusCode).toBe(404);
+      expect(made.body).toContain('GAME_NOT_FOUND');
+
+      // a round from before, still open on the day the migration runs
+      const open = await pool.query<{ id: string }>(
+        `INSERT INTO game_sessions (user_id, game, dialect, difficulty, items, total_count, expires_at)
+         VALUES ($1, 'who-am-i', 'kmr', 'beginner', '[]'::jsonb, 5, now() + interval '1 day') RETURNING id`,
+        [learnerId],
+      );
+      // the migration as it is written (a path the compiler does not follow: a migration is plain JavaScript)
+      const path = '../../migrations/1751000470000_who-am-i-alone-ends.js';
+      const migration = (await import(/* @vite-ignore */ path)) as { up: (pgm: unknown) => void };
+      const statements: string[] = [];
+      migration.up({ sql: (q: string) => statements.push(q) });
+      expect(statements).toHaveLength(1);
+      for (const q of statements) await pool.query(q);
+      const row = (await pool.query<{ expired: boolean; abandoned: boolean; xp: number | null }>(
+        `SELECT expires_at <= now() AS expired, (meta->>'abandoned')::boolean AS abandoned, xp_awarded AS xp FROM game_sessions WHERE id = $1`,
+        [open.rows[0]!.id],
+      )).rows[0]!;
+      expect(row).toMatchObject({ expired: true, abandoned: true });
+      expect(row.xp ?? 0).toBe(0);
+      // it is not opened either: there is nothing here to play it with
+      expect((await call('GET', `/games/solo/sessions/${open.rows[0]!.id}`, learner)).statusCode).toBe(404);
+      await pool.query(`DELETE FROM game_sessions WHERE id = $1`, [open.rows[0]!.id]);
     });
   });
 

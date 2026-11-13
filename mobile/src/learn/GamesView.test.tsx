@@ -9,6 +9,8 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
+// the pull to refresh as a button: the web's control has nothing to pull
+vi.mock('../net/usePullRefresh', () => import('../net/testing/pullRefresh'));
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -17,7 +19,9 @@ import { navigation } from '../play/testing/navigation';
 import { setListsUpcomingGames } from '../games/learnGames';
 import { forgetLastLetterAvailability } from '../lastletter/availability';
 import { resetCourseDialect } from './courseDialect';
-import { GAME_CARDS, GamesView, featuredCard } from './GamesView';
+import { GAME_CARDS } from '../games/gameCards';
+import { joined } from '../play/joining';
+import { GamesView, featuredCard } from './GamesView';
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -56,12 +60,85 @@ afterEach(() => {
   vi.useRealTimers();
 });
 
+/*
+ * Join on an invite used to take the row away, wait for the server to accept
+ * it, and only then open the lobby. The lobby opens at once now, and its own
+ * first read waits for the accept already on its way (play/joining.ts).
+ */
+describe('an invite on the Games screen', () => {
+  const invite = {
+    id: 'inv1',
+    game: 'wordle-battle',
+    lobbyId: 'b7',
+    status: 'pending',
+    from: { name: 'azad', avatarUrl: null },
+    summary: {},
+    rematch: false,
+    createdAt: new Date(A_DAY_THE_RACE_IS_FEATURED - 10_000).toISOString(),
+    expiresAt: new Date(A_DAY_THE_RACE_IS_FEATURED + 100_000).toISOString(),
+  };
+
+  it('opens the lobby at once, before the server has answered, and holds the lobby’s first read until it has', async () => {
+    let accepted: (r: unknown) => void = () => undefined;
+    const client = fakeClient({
+      ...base,
+      'GET /play/invites': ok({ incoming: [invite], outgoing: [] }),
+      'POST /play/invites/inv1/accept': () => new Promise((resolve) => (accepted = resolve)),
+    } as never);
+    testAuth.client = client;
+    renderWithProviders(<GamesView />);
+    fireEvent.click(await screen.findByRole('button', { name: /azad/ }));
+    // the lobby is asked for in the same breath as the accept is sent
+    expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'b7' });
+    expect(client.calls.some((c) => c.path === '/play/invites/inv1/accept')).toBe(true);
+    // somebody not in it yet would be refused the lobby: its read waits
+    let read = false;
+    void joined('b7').then(() => (read = true));
+    await Promise.resolve();
+    expect(read).toBe(false);
+    accepted(ok({ game: 'wordle-battle', lobbyId: 'b7' }));
+    await joined('b7');
+    expect(read).toBe(true);
+  });
+});
+
 describe('the games list', () => {
+  /*
+   * Lessons and Stories, a swipe to either side, read again when pulled down;
+   * Games did not, so an invite sent a moment ago waited for a change of tab.
+   */
+  it('reads the rank and the invites again when pulled down, and shows an invite that has come since', async () => {
+    let incoming: unknown[] = [];
+    const client = fakeClient({ ...base, 'GET /play/invites': () => ok({ incoming, outgoing: [] }) } as never);
+    testAuth.client = client;
+    renderWithProviders(<GamesView />);
+    await settled(client);
+    const count = (path: string) => client.calls.filter((call) => call.path === path).length;
+    const before = [count('/ranks/me'), count('/play/invites')];
+    expect(screen.queryByRole('button', { name: /azad/ })).toBeNull();
+    incoming = [
+      {
+        id: 'inv2',
+        game: 'wordle-battle',
+        lobbyId: 'b8',
+        status: 'pending',
+        from: { name: 'azad', avatarUrl: null },
+        summary: {},
+        rematch: false,
+        createdAt: new Date(A_DAY_THE_RACE_IS_FEATURED - 10_000).toISOString(),
+        expiresAt: new Date(A_DAY_THE_RACE_IS_FEATURED + 100_000).toISOString(),
+      },
+    ];
+    fireEvent.click(screen.getByTestId('pull-to-refresh'));
+    expect(await screen.findByRole('button', { name: /azad/ })).toBeTruthy();
+    expect([count('/ranks/me'), count('/play/invites')]).toEqual([before[0]! + 1, before[1]! + 1]);
+  });
+
   it('adds a learning game as a card like the others once it can be played, one tap to open', async () => {
     testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('memory-thief')]) });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-memory-thief');
-    expect(card.getAttribute('aria-label')).toBe('The Memory Thief, Solo. Study a real passage, then give back the words the thief took.');
+    expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Solo. Study a real passage, then give back the words the thief took.');
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('MemoryThief');
     expect(screen.getByTestId('game-wordle')).toBeTruthy();
@@ -83,13 +160,13 @@ describe('the games list', () => {
     expect(await screen.findByTestId('game-wordle')).toBeTruthy();
     // named under the cards, and nothing to press
     const card = await screen.findByTestId('game-memory-thief');
-    expect(card.getAttribute('aria-label')).toBe('The Memory Thief, Coming soon');
+    expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Coming soon');
     expect(card.getAttribute('role')).not.toBe('button');
     fireEvent.click(card);
     expect(navigation.navigate).not.toHaveBeenCalledWith('MemoryThief');
   });
 
-  it('lists The Last Letter where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
+  it('lists Tîpa Dawî where its dictionary can check words in the learner’s Kurdish, and only there', async () => {
     forgetLastLetterAvailability();
     testAuth.client = fakeClient({
       ...base,
@@ -132,6 +209,18 @@ describe('the games list', () => {
     expect(GAME_CARDS.flatMap((c) => c.ways.map((w) => w.key))).toEqual(['wordle', 'battle', 'rhyme', 'rhymeMatch', 'race']);
   });
 
+  it('calls a game by its Kurmancî name and says what the name means under it; Peyvok means only itself', async () => {
+    const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([]) });
+    testAuth.client = client;
+    renderWithProviders(<GamesView />);
+    await settled(client);
+    // the card, and perhaps the featured game above it, each say both
+    expect(screen.getAllByText('Pêşbaziya Nivîsandinê').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Typing race').length).toBe(screen.getAllByText('Pêşbaziya Nivîsandinê').length);
+    expect(screen.getAllByText('Rhyming words').length).toBe(screen.getAllByText('Peyvên Hevserwa').length);
+    expect(screen.queryByText('Typing Race')).toBeNull();
+  });
+
   it('gives Peyvok one card with a button for playing alone and one for playing a friend', async () => {
     const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([]) });
     testAuth.client = client;
@@ -147,7 +236,35 @@ describe('the games list', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle');
     // one card for the game, not one for each way to play it
     expect(screen.getAllByText('Peyvok')).toHaveLength(1);
-    expect(screen.queryByText('Peyvok Battle')).toBeNull();
+    expect(screen.queryByText('Pêşbaziya Peyvan')).toBeNull();
+  });
+
+  it('gives Ez kî me? one card with a button for this phone and one for friends, each opening its screen on that way', async () => {
+    const client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability([game('who-am-i'), game('impostor')]) });
+    testAuth.client = client;
+    renderWithProviders(<GamesView />);
+    await settled(client);
+    const phone = await screen.findByTestId('game-who-am-i-phone');
+    expect(phone.getAttribute('aria-label')).toBe('Ez kî me?, On this phone');
+    fireEvent.click(phone);
+    expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'phone' });
+    const friends = screen.getByTestId('game-who-am-i-friends');
+    expect(friends.getAttribute('aria-label')).toBe('Ez kî me?, With friends');
+    fireEvent.click(friends);
+    expect(navigation.navigate).toHaveBeenCalledWith('WhoAmI', { way: 'friends' });
+    // one card for the game, which is not itself pressed, and no way to play it alone
+    expect(screen.getAllByText('Ez kî me?')).toHaveLength(1);
+    expect(screen.getByTestId('card-who-am-i').getAttribute('role')).not.toBe('button');
+    expect(screen.queryByTestId('game-who-am-i')).toBeNull();
+    // Xapînok's own screen asks how to play: its card is the one way in
+    fireEvent.click(screen.getByTestId('game-impostor'));
+    expect(navigation.navigate).toHaveBeenCalledWith('Impostor');
+
+    // it is a game for more than one: among the games with friends, and not among those played alone
+    fireEvent.click(screen.getByTestId('games-filter-friends'));
+    expect(screen.getByTestId('game-who-am-i-phone')).toBeTruthy();
+    fireEvent.click(screen.getByTestId('games-filter-solo'));
+    expect(screen.queryByTestId('game-who-am-i-phone')).toBeNull();
   });
 
   it('puts one game forward above the cards, a different one each day, and does not say it twice', async () => {
@@ -156,7 +273,7 @@ describe('the games list', () => {
     renderWithProviders(<GamesView />);
     await settled(client);
     expect(screen.getAllByText('Featured')).toHaveLength(1);
-    expect(screen.getAllByText('Typing Race')).toHaveLength(1);
+    expect(screen.getAllByText('Pêşbaziya Nivîsandinê')).toHaveLength(1);
     fireEvent.click(screen.getByTestId('game-race'));
     expect(navigation.navigate).toHaveBeenCalledWith('Race');
 
@@ -177,7 +294,7 @@ describe('the games list', () => {
     fireEvent.click(screen.getByTestId('games-filter-friends'));
     expect(screen.getByTestId('games-filter-friends').getAttribute('aria-pressed')).toBe('true');
     expect(screen.queryByText('Featured')).toBeNull();
-    // the race and The Memory Thief are played alone
+    // the race and Dizê Bîrê are played alone
     expect(screen.queryByTestId('game-race')).toBeNull();
     expect(screen.queryByTestId('game-memory-thief')).toBeNull();
     expect(screen.getByTestId('game-impostor')).toBeTruthy();
@@ -189,7 +306,7 @@ describe('the games list', () => {
     expect(screen.queryByTestId('game-impostor')).toBeNull();
   });
 
-  // Build a Kurdish Sentence and Hear It, Find It are practice now (practice/exercises.ts), listed with the lessons
+  // Build a Sentence and Hear It, Find It are practice now (practice/exercises.ts), listed with the lessons
   it('does not list the lessons’ two exercises, ready or coming soon', async () => {
     setListsUpcomingGames(true);
     const client = fakeClient({

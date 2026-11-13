@@ -5,6 +5,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * A post's pictures, one to four.
@@ -72,7 +73,8 @@ export function PostPictures({
           <Pressable
             onPress={onPress}
             onLongPress={onLongPress}
-            style={styles.fill}
+            // a picture cannot take a fill, so it fades under the finger: the tap is answered before the post opens
+            style={({ pressed }) => [styles.fill, pressed && heldDim]}
             accessibilityRole="button"
             accessibilityLabel={label}
             accessibilityHint={t('memes.openPost')}

@@ -123,7 +123,7 @@ function SetPage({ set }: { set: WordSetId }): React.JSX.Element {
           <p className="ab-summary">{summary}</p>
           <div className={`ab-progress${explored === order.length ? ' is-done' : ''}`}>
             <div className="ab-progress-track" aria-hidden="true">
-              <span style={{ width: `${(explored / order.length) * 100}%` }} />
+              <span style={{ '--p': order.length > 0 ? explored / order.length : 0 } as React.CSSProperties} />
             </div>
             <span className="ab-progress-text" aria-live="polite">
               {explored === order.length

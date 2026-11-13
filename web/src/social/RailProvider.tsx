@@ -81,8 +81,22 @@ export function useRail(): RailContext {
  * The toggle lives in the top nav and the panel lives after the page, so they
  * cannot share state by nesting — and polling in both would mean two requests
  * and two answers that could disagree.
+ *
+ * There is one for the whole app, above the routes (App.tsx). Each shell used
+ * to make its own, so leaving a lesson — which swaps the lesson's shell for
+ * the app's — started the rail from nothing: the purse went back to its grey
+ * bars, the face to an outline and the unread counts away, and all of it came
+ * back a moment later, after every lesson. A shell still wraps itself in one
+ * (it must work drawn alone, as in a test), and that one stands aside when
+ * there is already a provider above it.
  */
 export function RailProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
+  const above = useContext(Ctx);
+  if (above) return <>{children}</>;
+  return <OwnRail>{children}</OwnRail>;
+}
+
+function OwnRail({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { data, loading, failed, arrivals, dismiss, refresh } = useSocialRail();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);

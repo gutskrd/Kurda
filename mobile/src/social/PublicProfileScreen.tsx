@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { useAccountGate } from '../auth/AccountGate';
 import { haptic } from '../feedback/haptics';
@@ -20,8 +21,8 @@ import { knownTier, leagueName } from '../leagues/format';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { Framed } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { SEASON_FRAME_INNER, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
-import { FavoriteRow } from '../profile/cosmetic-parts';
+import { SEASON_FRAME_INNER, countryName, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { FavoriteRow, flagUrl } from '../profile/cosmetic-parts';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity, ProfileActivitySkeleton } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
@@ -30,19 +31,27 @@ import type { ProfileSections } from '../profile/sections';
 import { ReportSheet } from '../reports/ReportSheet';
 import { blockUser } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
 import { PlayWithButton } from '../play/PlayWithButton';
 import { useAnnouncer } from '../stories/ui';
 import { TicketSlip } from './FriendTicket';
+import { heldDim } from '../theme/MotionParts';
 
 interface Profile {
   userId: string;
   username: string;
   displayName: string | null;
+  /** what they say about themselves, and where they are from: sent with a profile you may see */
+  bio?: string | null;
+  country?: string | null;
   /** the server resolves this (uploaded photo → chosen avatar); the phone was dropping it */
   avatarUrl?: string | null;
   friendStatus: FriendStatus;
   private: boolean;
+  /** their XP as older servers sent it; today it comes inside `level` */
   xp?: number;
+  /** their level and the XP behind it: where their XP is, on a profile you may see */
+  level?: { xp: number; level: number } | null;
   streak?: number;
   /** their league tier, or null for someone not in the leagues (never a made-up "bronze") */
   tier?: string | null;
@@ -75,7 +84,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const { require } = useAccountGate();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [profile, setProfile] = useState<Profile | null>(null);
   const [busy, setBusy] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -209,41 +218,27 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           >
             <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
           </Framed>
-          <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
-          {profile.displayName ? <Text style={[styles.display, { color: colors.textSecondary }]}>{profile.displayName}</Text> : null}
+          {/*
+            The name they chose leads and the handle follows, as on your own
+            profile and on the website. It was the other way round here: the
+            handle large, and the name somebody picked for themselves small
+            under it.
+          */}
+          <Text style={[styles.username, { color: colors.textPrimary }]} accessibilityRole="header">
+            {profile.displayName ?? profile.username}
+          </Text>
+          <Text style={[styles.display, { color: colors.textSecondary }]}>{`@${profile.username}`}</Text>
+          {!profile.private && profile.country ? (
+            <View style={styles.country}>
+              <Image source={{ uri: flagUrl(profile.country) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden />
+              <Text style={[styles.countryName, { color: colors.textSecondary }]}>{countryName(profile.country, locale) ?? profile.country}</Text>
+            </View>
+          ) : null}
+          {/* their own words: the one part of a profile that is not a number */}
+          {!profile.private && profile.bio ? <Text style={[styles.bio, { color: colors.textPrimary }]}>{profile.bio}</Text> : null}
+          {profile.private ? <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.private')}</Text> : null}
 
-          {profile.private ? (
-            <Text style={[styles.dim, { color: colors.textSecondary }]}>{t('profile.private')}</Text>
-          ) : (
-            <>
-              <View style={styles.stats}>
-                <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} fire={fireLevel(profile.streak ?? 0)} />
-                <Stat label="XP" value={`${profile.xp ?? 0}`} />
-                {/* a league only while they take part, translated; nothing for somebody never in one */}
-                {knownTier(profile.league?.tier ?? profile.tier) ? (
-                  <Stat label={t('profile.league')} value={leagueName(t, knownTier(profile.league?.tier ?? profile.tier)!)} />
-                ) : null}
-                <Stat label={t('profile.badges')} value={`${profile.achievements ?? 0}`} />
-              </View>
-
-              <ProgressShowcase
-                own={false}
-                ranks={profile.ranks ?? []}
-                league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
-                badges={profile.badges ?? []}
-              />
-
-              {/* behind the same privacy check as the stats: pinning a poem is
-                  something you did for people who can see your profile */}
-              {profile.favoritePoem ? (
-                <FavoriteRow label={t('profile.favoritePoem')} title={profile.favoritePoem.title} />
-              ) : null}
-              {profile.favoriteStory ? (
-                <FavoriteRow label={t('profile.favoriteStory')} title={profile.favoriteStory.title} />
-              ) : null}
-            </>
-          )}
-
+          {/* what you can do sits with who they are, above the numbers, where a thumb finds it without scrolling */}
           {profile.friendStatus !== 'self' ? (
             <View style={styles.actions}>
               {profile.friendStatus === 'friends' ? (
@@ -273,18 +268,56 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                   />
                 </TicketSlip>
               ) : null}
+            </View>
+          ) : null}
+
+          {profile.private ? null : (
+            <>
+              <View style={styles.stats}>
+                {/* grouped, and in the reader's own digits, as the same numbers are on their own profile */}
+                <Stat label={t('profile.streak')} value={formatNumber(profile.streak ?? 0, locale)} fire={fireLevel(profile.streak ?? 0)} />
+                <Stat label={t('profile.stat.xp')} value={formatNumber(profile.level?.xp ?? profile.xp ?? 0, locale)} />
+                {/* a league only while they take part, translated; nothing for somebody never in one */}
+                {knownTier(profile.league?.tier ?? profile.tier) ? (
+                  <Stat label={t('profile.league')} value={leagueName(t, knownTier(profile.league?.tier ?? profile.tier)!)} />
+                ) : null}
+                <Stat label={t('profile.badges')} value={formatNumber(profile.achievements ?? 0, locale)} />
+              </View>
+
+              <ProgressShowcase
+                own={false}
+                ranks={profile.ranks ?? []}
+                league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
+                badges={profile.badges ?? []}
+              />
+
+              {/* behind the same privacy check as the stats: pinning a poem is
+                  something you did for people who can see your profile */}
+              {profile.favoritePoem ? (
+                <FavoriteRow label={t('profile.favoritePoem')} title={profile.favoritePoem.title} />
+              ) : null}
+              {profile.favoriteStory ? (
+                <FavoriteRow label={t('profile.favoriteStory')} title={profile.favoriteStory.title} />
+              ) : null}
+            </>
+          )}
+
+          {profile.friendStatus !== 'self' ? (
+            <View style={styles.safety}>
               {/*
                 Report and block sit together because they are what you reach
                 for in the same moment, and they do different halves of the
                 job: a block ends it for you and tells nobody, a report tells
                 a moderator and changes nothing you can see. Neither is
-                offered as a substitute for the other.
+                offered as a substitute for the other. Together, but not side
+                by side: one at each end of the line, each a fingertip tall, so
+                reaching for Report cannot land on Block.
               */}
               <View style={styles.danger}>
-                <Pressable onPress={() => setReporting(true)} style={styles.block} accessibilityRole="button">
+                <Pressable onPress={() => setReporting(true)} style={({ pressed }) => [styles.block, pressed && heldDim]} accessibilityRole="button">
                   <Text style={[styles.blockText, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
                 </Pressable>
-                <Pressable onPress={block} style={styles.block} accessibilityRole="button">
+                <Pressable onPress={block} style={({ pressed }) => [styles.block, pressed && heldDim]} accessibilityRole="button">
                   <Text style={[styles.blockText, { color: colors.danger }]}>{t('moderation.block')}</Text>
                 </Pressable>
               </View>
@@ -371,16 +404,23 @@ const styles = StyleSheet.create({
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   card: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, padding: spacing.xl },
-  username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  username: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center' },
   display: { fontSize: typography.sizes.md },
+  // the flag and the name of where they are from, as your own profile draws them
+  country: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, marginTop: 2 },
+  flag: { width: 22, height: 16 },
+  countryName: { fontSize: typography.sizes.sm },
+  bio: { fontSize: typography.sizes.sm, lineHeight: 20, textAlign: 'center', marginTop: spacing.xs, maxWidth: 320 },
   stats: { flexDirection: 'row', justifyContent: 'space-around', alignSelf: 'stretch', marginTop: spacing.md },
   stat: { alignItems: 'center', gap: 2 },
   statValueRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   statValue,
   statLabel: statCaption,
-  actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.lg },
-  block: { paddingVertical: spacing.sm, alignItems: 'center' },
-  danger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xl },
+  actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
+  // report and block close the card, a step away from everything else on it
+  safety: { alignSelf: 'stretch', marginTop: spacing.md },
+  block: { minHeight: MIN_TOUCH_TARGET, minWidth: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center' },
+  danger: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   blockText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   dim: { textAlign: 'center', marginTop: spacing.md },
 });

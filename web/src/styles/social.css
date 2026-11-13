@@ -45,7 +45,7 @@
   background: var(--scrim);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
-  animation: fade 0.15s ease;
+  animation: fade var(--dur-fast) var(--ease-out);
 }
 .sheet-panel {
   position: relative;
@@ -62,7 +62,8 @@
   backdrop-filter: blur(30px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);
   outline: none;
-  animation: sheet-rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  /* how long and on which curve is motion.css's to say: it springs in the middle of a wide screen, and slides without overshoot on a phone */
+  animation: sheet-rise var(--dur) var(--ease-out);
 }
 @keyframes sheet-rise {
   from {
@@ -70,28 +71,12 @@
     transform: translateY(12px) scale(0.98);
   }
 }
-.sheet-grip {
-  display: none;
-}
+/* where the close button goes; how it looks is the one close button's own (ui.css `.close-btn`) */
 .sheet-close {
   position: absolute;
   top: 12px;
   inset-inline-end: 12px;
   z-index: 3;
-  width: 44px;
-  height: 44px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: var(--surface);
-  color: var(--ink-2);
-  cursor: pointer;
-}
-.sheet-close:hover {
-  color: var(--ink);
-  background: var(--surface-2);
 }
 /* a phone: up from the bottom edge, where the thumb already is */
 @media (max-width: 640px) {
@@ -106,14 +91,6 @@
     border-bottom: 0;
     padding: 22px 16px calc(20px + env(safe-area-inset-bottom));
     animation-name: sheet-up;
-  }
-  .sheet-grip {
-    display: block;
-    width: 40px;
-    height: 4px;
-    margin: -8px auto 12px;
-    border-radius: var(--r-pill);
-    background: var(--border-strong);
   }
 }
 @keyframes sheet-up {
@@ -173,8 +150,8 @@
   border-radius: var(--r-md);
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
 }
 .report-cat:hover {
   background: var(--surface-2);
@@ -650,8 +627,6 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
   background: var(--panel-bg);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  backdrop-filter: blur(20px) saturate(1.2);
   box-shadow: var(--shadow-lg);
 }
 .msg-menu-list .user-menu-item {
@@ -673,7 +648,7 @@
 }
 .bubble-line > .bubble {
   min-width: 0;
-  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform var(--dur-slow) var(--ease-out);
 }
 /* the bubble sinks a little under a finger that holds it, so the hold is felt to be doing something */
 .bubble-line.is-pressing > .bubble {
@@ -728,10 +703,8 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
   background: var(--panel-bg);
-  -webkit-backdrop-filter: blur(20px) saturate(1.2);
-  backdrop-filter: blur(20px) saturate(1.2);
   box-shadow: var(--shadow-lg);
-  animation: bubble-menu-in 0.16s ease-out;
+  animation: bubble-menu-in var(--dur-fast) var(--ease-out);
 }
 .bubble-line.mine .bubble-menu {
   inset-inline-start: auto;
@@ -818,9 +791,9 @@
   color: var(--gold-ink);
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    transform 0.15s ease;
+    background var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 .chat-gift-btn:hover {
   background: var(--gold-soft);
@@ -865,7 +838,7 @@
   width: 100%;
   min-width: 220px;
   padding: 10px 14px 10px 10px;
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   border: 1px solid color-mix(in srgb, var(--gold) 38%, transparent);
   background:
     radial-gradient(120% 140% at 0% 0%, rgba(240, 194, 74, 0.2), transparent 60%),
@@ -877,9 +850,9 @@
 button.gift-bubble {
   cursor: pointer;
   transition:
-    transform 0.15s ease,
-    border-color 0.15s ease,
-    box-shadow 0.2s ease;
+    transform var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
 }
 button.gift-bubble:hover {
   border-color: var(--gold);
@@ -1184,7 +1157,7 @@ button.gift-bubble:active {
   background: var(--scrim);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
-  animation: fade 0.18s ease;
+  animation: fade var(--dur) var(--ease-out);
   cursor: pointer;
 }
 .gift-stage.is-revealed {
@@ -1263,7 +1236,7 @@ button.gift-bubble:active {
     max-width: none;
     border-radius: var(--r-xl) var(--r-xl) 0 0;
     padding-bottom: calc(24px + env(safe-area-inset-bottom));
-    animation: sheet-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    animation: sheet-up var(--dur-slow) var(--ease-emphasis);
   }
 }
 
@@ -1565,9 +1538,9 @@ button.gift-bubble:active {
   font: inherit;
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    transform 0.15s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
 }
 .gift-tile:hover:not(:disabled) {
   border-color: var(--border-strong);
@@ -1767,13 +1740,12 @@ button.gift-bubble:active {
   padding: 8px 8px 8px 10px;
   border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
   border-radius: var(--r-lg);
+  /* the scheme's own panel under a touch of the gift's gold: it was a fixed near-black, which the light scheme's dark ink could not be read on */
   background:
-    radial-gradient(120% 140% at 0% 0%, rgba(240, 194, 74, 0.22), transparent 60%),
-    rgba(18, 21, 27, 0.96);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
+    radial-gradient(120% 140% at 0% 0%, var(--gold-soft), transparent 60%),
+    var(--panel-bg);
   box-shadow: var(--shadow);
-  animation: gift-arrive 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: gift-arrive var(--dur-slow) var(--ease-out);
 }
 @keyframes gift-arrive {
   from {
@@ -1794,7 +1766,7 @@ button.gift-bubble:active {
 .gift-arrival-who .friend-avatar {
   width: 22px;
   height: 22px;
-  border: 2px solid rgba(18, 21, 27, 0.96);
+  border: 2px solid var(--panel-bg);
 }
 .gift-arrival-text {
   flex: 1;
@@ -1804,24 +1776,8 @@ button.gift-bubble:active {
   overflow-wrap: anywhere;
 }
 .gift-arrival-open {
-  min-height: 40px;
+  min-height: 44px;
   min-width: 64px;
-}
-.gift-arrival-close {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  display: inline-grid;
-  place-items: center;
-  border: 0;
-  border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-3);
-  cursor: pointer;
-}
-.gift-arrival-close:hover {
-  color: var(--ink);
-  background: var(--surface-2);
 }
 
 /* ---- a group gift some friends could not be given: who got it, and why not -- */
@@ -1880,11 +1836,11 @@ button.gift-bubble:active {
   .gift-reveal,
   .gift-stage,
   .gift-arrival {
-    animation: gift-fade 0.2s ease !important;
+    animation: gift-fade var(--dur) var(--ease-out) !important;
   }
   .gift-flight {
     background: rgba(4, 6, 10, 0.25);
-    animation: gift-fade-out 0.2s ease forwards !important;
+    animation: gift-fade-out var(--dur) var(--ease-out) forwards !important;
   }
   .gift-flight-item,
   .gift-flight-art,

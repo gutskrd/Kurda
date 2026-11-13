@@ -2,20 +2,30 @@
  * Motion tokens — how long things take and how they move, decided once.
  *
  * The same numbers the website keeps as `--dur-*` and `--ease-*` in
- * tokens.css, so a lesson feels the same on a phone and in a browser. Pure
- * numbers, with no React Native in this file, so the choreography built on
- * them can be tested without a screen; `animate.ts` turns them into easings,
- * springs and the few small animations every screen shares.
+ * tokens.css (120, 200, 280, 400 and 1600 ms), so a lesson feels the same on
+ * a phone and in a browser. Pure numbers, with no React Native in this file,
+ * so the choreography built on them can be tested without a screen;
+ * `animate.ts` turns them into easings, springs and the few small animations
+ * every screen shares.
  *
  * The rules they serve:
  *   - quick for a state change (a press, a switch), a little longer for
  *     something arriving, longest for a value moving to where it now is
+ *   - the interface itself is done inside 300 ms: a tab, a switch, a menu, a
+ *     sheet, a row arriving. Only a bar filling and a celebration take longer,
+ *     and they have tokens of their own
+ *   - what is used many times a day moves least: it arrives and stops, with
+ *     no bounce. Bounce is kept for what a finger has thrown and for moments
  *   - out-curves: things arrive fast and settle, they never ease in
  *   - only transform and opacity move, on the native driver, so a busy JS
  *     thread cannot make a moment stutter
  *   - under Reduce Motion nothing travels: a fade, or simply the end state
- *   - nothing loops except a loading shimmer, and nothing moves while
- *     somebody is reading
+ *   - a control never loops. What may go round is art and waiting: a
+ *     character breathing, the path's world, a chest that is ready, a
+ *     skeleton's light, a caret — and only while it is watched: every loop
+ *     stops when its screen is not the one in front or the app is in the
+ *     background (`useMotionAlive`), and under Reduce Motion
+ *   - nothing moves while somebody is reading
  */
 
 import { APPLE_SPRINGS, springFor } from '@kurda/shared';
@@ -25,8 +35,8 @@ export const duration = {
   quick: 120,
   /** something arriving or leaving: a banner, a menu, a row */
   base: 200,
-  /** something bigger arriving: a sheet, a card's details */
-  slow: 320,
+  /** something bigger arriving: a sheet, a card's details. Under the 300 ms a piece of interface may take */
+  slow: 280,
   /** a bar or a ring moving to its new value */
   progress: 400,
   /** the whole of a celebration, from the first frame to the last fleck */
@@ -46,15 +56,19 @@ export const curve = {
  * The springs, as Apple tunes them (`motion-physics.ts` in shared turns
  * Apple's duration and bounce into stiffness and damping).
  *
+ * `chrome` is the interface's own: no bounce, and there in a quarter of a
+ * second (99% of the way at 300 ms), for what is used all day — the capsule
+ * behind a tab or a segment, a step turning, the menu and a sheet opening.
  * `standard` is Apple's smooth spring: half a second, no bounce, so a thing
- * that arrives looks placed rather than thrown. `release` is the snappy one,
- * with a touch of bounce, for something a finger has just let go of with
- * momentum — a sheet, the menu — which is the one time Apple adds bounce to
- * a control. `bouncy` is for the moments that are allowed a little joy — an
- * emblem landing, a heart filling — at Apple's own bouncy, short of the
- * exaggerated.
+ * that arrives looks placed rather than thrown; it is for a moment's own
+ * parts, not for the interface. `release` is the snappy one, with a touch of
+ * bounce, for something a finger has just let go of with momentum — a sheet,
+ * the menu — which is the one time Apple adds bounce to a control. `bouncy`
+ * is for the moments that are allowed a little joy — an emblem landing, a
+ * heart filling — at Apple's own bouncy, short of the exaggerated.
  */
 export const spring = {
+  chrome: springFor({ duration: 0.25, bounce: 0 }),
   standard: springFor(APPLE_SPRINGS.smooth),
   release: springFor(APPLE_SPRINGS.snappy),
   bouncy: springFor(APPLE_SPRINGS.bouncy),
@@ -67,6 +81,15 @@ export const DRAG_SLOP = 10;
 export const PRESS_SCALE = 0.97;
 
 /**
+ * How faint a text link or an icon button goes while it is held: the one dim
+ * for everything that answers a finger by fading. There were seven (0.5, 0.6,
+ * 0.7, 0.75, 0.8, 0.85 and 0.92), each screen's own guess, and over a hundred
+ * things that did not answer at all. A card or a row gives or fills instead
+ * (`PressableScale`, `heldRow`).
+ */
+export const pressedDim = 0.6;
+
+/**
  * A wrong answer's shake: side to side three times, smaller each time, in
  * about 300 ms. Points from rest, then back to rest.
  */
@@ -75,6 +98,25 @@ export const SHAKE_MS = 300;
 
 /** A right answer's pop: up a little and back, once. */
 export const POP_SCALE = 1.05;
+
+/**
+ * A card turned over in a game — who the impostor was, who you are: how long
+ * the turn takes, the same for every card, and how far past flat it comes
+ * before it settles back (an out-back curve's overshoot; this much is about
+ * two hundredths of the turn). A moment, so it may take longer than the
+ * interface does. There were three such turns, at 520 and 480 ms, each easing
+ * in and out and stopping dead.
+ */
+export const CARD_TURN_MS = 480;
+export const CARD_TURN_SETTLE = 0.8;
+
+/**
+ * A slow pulse on something that waits to be noticed — never on a control —
+ * one way, there or back: `turn` for the mark on whose turn it is at a game's
+ * table, `breath` for a hero glyph breathing over a form. They were 900 and
+ * 1700 written where they were used.
+ */
+export const PULSE_MS = { turn: 900, breath: 1700 } as const;
 
 /** New content in a list: how far it rises, how the rows follow each other, and how many are greeted. */
 export const ENTRANCE = {

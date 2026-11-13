@@ -22,6 +22,7 @@
  * so the order, the keys and the merging are tested without a database.
  */
 import {
+  GAME_NAMES,
   ALPHABET_CLIP_GROUPS,
   CHARACTER_NAMES,
   CONVERSATION_ID,
@@ -93,8 +94,8 @@ const TYPE_LABEL: Record<string, string> = {
  */
 const GAME_KINDS = ['case_file', 'question_template'] as const;
 const GAME_NAME: Record<(typeof GAME_KINDS)[number], string> = {
-  case_file: 'Kurdish Detective',
-  question_template: 'Who Am I?',
+  case_file: GAME_NAMES.detective,
+  question_template: GAME_NAMES['who-am-i'],
 };
 
 // ---------- what the service hands in ----------

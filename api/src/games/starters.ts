@@ -1,6 +1,6 @@
 /**
  * Starter content written for the learning games, seeded once each: today,
- * Kurdish Detective's first case (api/content/games).
+ * Detective's first case (api/content/games).
  *
  * A starter case is written in the interface languages only — its title,
  * suspects, questions and solution — and its evidence names lines of the

@@ -12,6 +12,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import type { ClearedView } from './clearing';
 import { GroupAvatar } from './GroupAvatar';
 import { GREETINGS } from './greetings';
+import { pressedDim } from '../theme/motion';
 
 /**
  * A calm card in the middle of a group chat with nothing in it: the group's
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   chip: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill },
   chipText: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   add: { marginTop: spacing.md, alignSelf: 'stretch' },
   system: { alignItems: 'center', paddingVertical: spacing.sm },
   systemText: {

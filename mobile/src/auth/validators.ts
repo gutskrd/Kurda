@@ -5,6 +5,7 @@
  */
 
 import type { TranslationKey } from '../i18n/translations';
+import { cleanUsername } from '../username/validate';
 
 export const USERNAME_PATTERN = /^[A-Za-z0-9_êîûçşÊÎÛÇŞ]{3,30}$/; // 3–30, per USERNAME_MIN/MAX below
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -24,8 +25,19 @@ export type FieldError =
   | 'password_needs_number'
   | 'invalid_username';
 
+/**
+ * An address as it was meant, from what was typed: without the spaces round
+ * it, and without the full stop or comma a keyboard leaves after a word, or
+ * that came along with an address copied out of a sentence. An address cannot
+ * end in either, and "name@example.com." passed the check here and reached
+ * the server as typed. What is checked and what is sent are both this.
+ */
+export function cleanEmail(value: string): string {
+  return value.trim().replace(/[.,\s]+$/, '');
+}
+
 export function validateEmail(value: string): FieldError | null {
-  const v = value.trim();
+  const v = cleanEmail(value);
   if (!v) return 'required';
   return EMAIL_PATTERN.test(v) ? null : 'invalid_email';
 }
@@ -40,7 +52,7 @@ export function validatePassword(value: string): FieldError | null {
 }
 
 export function validateUsername(value: string): FieldError | null {
-  const v = value.normalize('NFC').trim();
+  const v = cleanUsername(value.normalize('NFC'));
   if (!v) return 'required';
   return USERNAME_PATTERN.test(v) ? null : 'invalid_username';
 }

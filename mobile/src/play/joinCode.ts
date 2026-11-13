@@ -79,17 +79,22 @@ export function codePath(t: Translate, rtl: boolean): string {
 
 /**
  * The message the share sheet sends: the game, where to type the code, and the
- * code as it is read out. No link: a code works in whichever app the friend
- * opens, and anywhere a link could not go — said aloud, written on a board.
+ * code as it is read out; then, on a line of its own and last, the code's
+ * link (shared join-link.ts) when there is one, said as the easier way. The sentence still works wherever
+ * a link could not go — said aloud, written on a board. The link is for the
+ * friend reading it in a message: it is drawn there as the game's own card,
+ * and a tap on it opens a page that says what the game is and joins it,
+ * where a sentence alone left a friend outside Hevalo three screens to find.
  */
 export function shareMessage(
-  { game, code, storyTitle }: { game: string; code: string; storyTitle?: string },
+  { game, code, storyTitle, link }: { game: string; code: string; storyTitle?: string; link?: string | null },
   t: Translate,
   rtl: boolean,
   format: (code: string) => string,
 ): string {
   const vars = { code: format(code), path: codePath(t, rtl) };
-  return storyTitle ? t('play.code.shareStory', { ...vars, title: storyTitle }) : t('play.code.shareText', { ...vars, game });
+  const said = storyTitle ? t('play.code.shareStory', { ...vars, title: storyTitle }) : t('play.code.shareText', { ...vars, game });
+  return link ? `${said}\n${t('play.code.shareTap')} ${link}` : said;
 }
 
 /**

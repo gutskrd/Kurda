@@ -12,7 +12,7 @@ import { useAudio, type AudioControls } from '../useAudio';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { springTo, timing } from '../../theme/animate';
-import { duration } from '../../theme/motion';
+import { duration, pressedDim } from '../../theme/motion';
 import { Icon } from '../../theme/Icon';
 import { DrawnCheck } from '../../theme/MotionParts';
 import { useScreenBottomInset } from '../../navigation/tabBarLayout';
@@ -353,7 +353,7 @@ const styles = StyleSheet.create({
   link: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
   linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
   undo: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textDecorationLine: 'underline' },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   banner: {
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.lg,

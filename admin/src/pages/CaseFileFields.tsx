@@ -14,7 +14,7 @@ import { publishedLines } from '../gameContent';
 import { Badge, Banner, Button, Field, Icon, Note, errorLine, useDebounced, useLoad } from '../ui';
 
 /**
- * The editor of Kurdish Detective's case files, on the Game content page
+ * The editor of Detective's case files, on the Game content page
  * (GameContent.tsx).
  *
  * It never has Kurdish typed into it. Every Kurdish line is copied from a
@@ -107,7 +107,7 @@ const nextId = (taken: readonly string[], stem: string): string => {
   for (let n = 1; ; n++) if (!taken.includes(`${stem}-${n}`)) return `${stem}-${n}`;
 };
 
-/** Kurdish Detective's case file: its story, suspects, evidence picked from published lines, deduction steps, solution and hints. */
+/** Detective's case file: its story, suspects, evidence picked from published lines, deduction steps, solution and hints. */
 export function CaseFileFields({ payload, onChange, dialect, readOnly }: { payload: Payload; onChange: (p: Payload) => void; dialect: GameDialect; readOnly: boolean }): React.JSX.Element {
   const [picking, setPicking] = useState(false);
   const suspects = (payload.suspects as Array<Payload & { id: string }> | undefined) ?? [];

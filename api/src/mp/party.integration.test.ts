@@ -1,5 +1,5 @@
 /**
- * Kurdish Impostor through the routes, against real Postgres and Redis: a
+ * Xapînok through the routes, against real Postgres and Redis: a
  * game dealt only from approved cards, what each seat's view may and may not
  * hold (the word never in the impostor's, the impostor in nobody else's),
  * every clue and guess through the chat pipeline's gate and then the game's
@@ -170,9 +170,9 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the party games (integration)', ()
   });
 
   // ---------------------------------------------------------------------------
-  // Kurdish Impostor
+  // Xapînok
 
-  describe('Kurdish Impostor', () => {
+  describe('Xapînok', () => {
     it('deals an approved card, keeps the word out of the impostor’s view and the impostor out of everyone else’s', async () => {
       const { id, people, host } = await table('impostor', 'imdeal', 4);
       const s = await state<ImpostorState>(id);

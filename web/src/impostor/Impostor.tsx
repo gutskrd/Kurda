@@ -13,7 +13,7 @@ import './impostor.css';
 const NEW_PATH = '/app/games/impostor';
 
 /**
- * Kurdish Impostor (/app/games/impostor): one word for everyone but the
+ * Impostor (/app/games/impostor): one word for everyone but the
  * impostor, two rounds of Kurdish clues, a vote. Without an id it is the
  * start (Start.tsx): the game in a line and one thing to press, offered only
  * where approved word cards are; with one, the room (play/MultiRoom.tsx) with

@@ -23,7 +23,7 @@ import { useCelebrationHold } from '../../badges/BadgeCelebrationHost';
 import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../../theme/CelebrationParts';
 import { BURST } from '../../theme/celebration';
 import { timing, useCountUp } from '../../theme/animate';
-import { duration } from '../../theme/motion';
+import { duration, pressedDim } from '../../theme/motion';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { TONES, type ToneColors } from '../../coursemap/path';
 import { NO_MOMENTS, type LessonMoments } from '../moments';
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
   mistakePrompt: { fontSize: typography.sizes.sm },
   mistakeAnswer: { fontSize: typography.sizes.md },
   mistakeAnswerValue: { fontWeight: typography.weights.bold },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   bar: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
   back: { alignSelf: 'center', minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.md },
   backText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textDecorationLine: 'underline' },

@@ -1,16 +1,20 @@
 /*
  * Learn's Games page (pages/Games.tsx): a shelf of games.
  *
- * Every game is one card: its emblem on a tile of the emblem's own colour
- * (`--gp-tone`, from shared/src/art/games.ts), a line about it, and a button
- * for each way it is played. The game put forward today is the same card
+ * Every game is one card: its cover (an illustration with a ground of its
+ * own, from shared/src/art/games.ts), a line about it, and a button for each
+ * way it is played. The card's edge takes the game's colour (`--gp-tone`)
+ * under a hand. The game put forward today is the same card
  * drawn large, on the night the party games are played in. A card lies on
  * its side, picture first, so its words have room at any width: one to a row
  * on a phone, two and then three where the page has the room for them.
  *
- * Gold is for the one thing to press on a card. Each emblem plays its own
- * short loop (games/GameArt.tsx); on this page only transform, opacity and
- * colour move, and nothing moves for a reader who asked for less motion.
+ * Gold is for the one thing to press on the page: the game put forward
+ * today's Play. The shelf's ways in are the quiet buttons. The featured
+ * cover acts for as long as it is in view; a shelf card's plays through once
+ * as it arrives and again under a hand, then rests (games/GameArt.tsx). On
+ * this page only transform, opacity and colour move, and nothing moves for a
+ * reader who asked for less motion.
  */
 .gp {
   --gp-gap: var(--space-3);
@@ -34,15 +38,10 @@
     transform var(--dur) var(--ease-out),
     box-shadow var(--dur) var(--ease-out);
 }
+/* the cover is its own tile: nothing is put behind it, and it keeps its square whatever the card's height */
 .gp-card-art {
   display: grid;
   place-items: center;
-  align-self: stretch;
-  min-width: 108px;
-  padding: var(--space-3);
-  border-radius: var(--r-lg);
-  /* the emblem's own colour, thinned onto the card: the same tile in the light and in the dark */
-  background: color-mix(in srgb, var(--gp-tone) 18%, transparent);
 }
 .gp-card-text {
   display: grid;
@@ -57,6 +56,18 @@
   font-weight: 700;
   letter-spacing: -0.01em;
   line-height: 1.25;
+}
+/* what the name means, in the reader's language: quiet, and close under the name it belongs to */
+.gp-card-meaning {
+  margin: -4px 0 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  line-height: 1.3;
+}
+.gp-card--hero .gp-card-meaning {
+  margin-top: -6px;
+  color: color-mix(in srgb, var(--night-ink) 72%, transparent);
 }
 .gp-card-body {
   margin: 0;
@@ -90,21 +101,21 @@
 .gp-ways .btn {
   flex: 0 1 auto;
 }
-/* the one thing to press: gold, standing off the card on its own edge, as the party games' Play does */
+/* the one thing to press: the stage's gold (tokens.css), standing off the card on its own edge, as the party games' Play does */
 .gp-play.btn {
-  --lip: #a8791a;
+  --lip: var(--stage-gold-lip);
   border: 0;
-  background: #f2b632;
-  color: #2a1d05;
+  background: var(--stage-gold);
+  color: var(--stage-gold-ink);
   font-weight: 800;
   box-shadow: 0 3px 0 var(--lip);
   transition:
     transform var(--dur-fast) var(--ease-out),
     box-shadow var(--dur-fast) var(--ease-out),
-    background var(--dur-fast) ease;
+    background var(--dur-fast) var(--ease-out);
 }
 .gp-play.btn:hover {
-  background: #f7c651;
+  background: color-mix(in srgb, var(--stage-gold) 82%, #fff);
 }
 .gp-play.btn:active {
   transform: translateY(2px);
@@ -140,10 +151,9 @@
   text-align: center;
   overflow: hidden;
 }
-.gp-card--hero .gp-card-art {
-  min-width: 0;
-  padding: 0;
-  background: none;
+/* on the night it stands a little off the card, as a book does on a dark shelf */
+.gp-card--hero .gp-art {
+  box-shadow: 0 14px 30px -14px rgba(0, 0, 0, 0.7);
 }
 .gp-card--hero .gp-card-text {
   justify-items: center;
@@ -250,6 +260,12 @@
   border-color: var(--ink);
   background: var(--ink);
   color: var(--surface-solid);
+}
+/* under a finger, a finger's height */
+@media (pointer: coarse) {
+  .gp-filter-chip {
+    min-height: 44px;
+  }
 }
 
 /* ---- the shelf ---------------------------------------------------------------------- */

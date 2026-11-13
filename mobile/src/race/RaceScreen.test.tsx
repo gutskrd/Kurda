@@ -42,7 +42,8 @@ function result(over: Partial<RaceResultView> = {}): RaceResultView {
     accented: 0,
     errors: 0,
     elapsedMs: 3100,
-    xpAwarded: 5,
+    // a race is run alone, so the server pays nothing for it
+    xpAwarded: 0,
     personalBest: false,
     ...over,
   };
@@ -128,6 +129,27 @@ describe('RaceScreen', () => {
     expect(client.calls.find((c) => c.path.endsWith('/finish'))?.body).toEqual({ typed: 'ez ji welat' });
     expect(screen.getByText('Personal best!')).toBeTruthy();
     expect(reportGameFinished).toHaveBeenCalledWith({ moment: 'personal_best', gaveUp: false });
+  });
+
+  it('gives the result as speed, accuracy and time, with one quiet line about XP and no XP figure', async () => {
+    await startRaceWith({ 'POST /race': ok(game()), [FINISH]: ok(result()) });
+    typeKeys('ez ji welat');
+    await screen.findByText('Perfect run!');
+    expect(screen.getByText('42.3')).toBeTruthy();
+    expect(screen.getByText('100%')).toBeTruthy();
+    expect(screen.getByText('3.1s')).toBeTruthy();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
+    // nothing earned is shown, not even a zero
+    expect(screen.queryByText('XP')).toBeNull();
+    expect(screen.queryByText(/^\+\d/)).toBeNull();
+  });
+
+  it('says a run nobody could have typed does not count for the rankings, without a word about XP it never earned', async () => {
+    await startRaceWith({ 'POST /race': ok(game()), [FINISH]: ok(result({ implausible: true, perfect: false, wpm: 400 })) });
+    typeKeys('ez ji welat');
+    await screen.findByText('Not scored');
+    expect(screen.getByText('That is faster than anyone types, so this run does not count for the rankings.')).toBeTruthy();
+    expect(screen.queryByText(/towards your XP/)).toBeNull();
   });
 
   it('shows a failed finish in the race, and lets it be finished again', async () => {

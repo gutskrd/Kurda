@@ -18,9 +18,8 @@ import {
   type UntypeableChar,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import type { XpService } from '../xp/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
-import { raceXp, scoreRace } from './race.js';
+import { scoreRace } from './race.js';
 
 /**
  * Typing race (solo time trial).
@@ -66,7 +65,7 @@ export interface StartOptions {
 export class RaceService {
   constructor(
     private readonly pool: pg.Pool,
-    private readonly deps: { xp?: XpService; milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
+    private readonly deps: { milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
   ) {}
 
   /**
@@ -120,7 +119,7 @@ export class RaceService {
 
   /**
    * Finish a race: score what was typed against the text, in the race's accent
-   * mode, from the server's own clock, and award XP once.
+   * mode, from the server's own clock. It pays no XP.
    */
   async finish(userId: string, gameId: string, typed: string): Promise<FinishResult> {
     const row = await this.pool.query<{
@@ -147,8 +146,6 @@ export class RaceService {
       accentMode: game.accent_mode,
       dialect: game.dialect,
     });
-    const xpAwarded = raceXp(score);
-
     // the best before this one, in the same mode; read before this one is saved
     const previous = await this.pool.query<{ best: number | null }>(
       `SELECT max(score) AS best FROM race_games
@@ -161,20 +158,15 @@ export class RaceService {
     // cannot both be scored, and the loser is told it was already over
     const saved = await this.pool.query(
       `UPDATE race_games
-          SET finished_at = now(), typed = $2, wpm = $3, accuracy = $4, score = $5, xp_awarded = $6,
-              accent_misses = $7, errors = $8
+          SET finished_at = now(), typed = $2, wpm = $3, accuracy = $4, score = $5,
+              accent_misses = $6, errors = $7
         WHERE id = $1 AND finished_at IS NULL`,
-      [gameId, typed, score.wpm, score.accuracy, score.score, xpAwarded, score.accentMisses, score.errors],
+      [gameId, typed, score.wpm, score.accuracy, score.score, score.accentMisses, score.errors],
     );
     if (saved.rowCount === 0) return { ok: false, reason: 'already-finished' };
 
-    if (xpAwarded > 0 && this.deps.xp) {
-      // (source, refId) is unique, so a retry cannot pay twice
-      await this.deps.xp
-        .award({ userId, source: 'race', amount: xpAwarded, refId: gameId })
-        .catch(() => undefined);
-    }
-    // the typing badges count it from the saved race; best-effort
+    // A race pays no XP: it is run alone, and XP is for lessons and for games online with other people.
+    // The typing badges count it from the saved race (one with a score: something typed, at a speed a person can type); best-effort
     await this.deps.milestones?.recordSoloGame?.(userId).catch(() => undefined);
 
     return {
@@ -183,7 +175,8 @@ export class RaceService {
         ...score,
         accentMode: game.accent_mode,
         elapsedMs,
-        xpAwarded,
+        // always nothing; kept for the app versions that still read it
+        xpAwarded: 0,
         // a first race beats nothing, so it is not a personal best
         personalBest: previousBest !== null && score.score > previousBest,
       },

@@ -10,7 +10,6 @@ import {
   type DetectiveItemView,
   type EvidenceKind,
   type GameDialect,
-  type SoloResults,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
@@ -24,7 +23,7 @@ import { useAvailability, useGameDialect } from './soloRounds';
 import './detective.css';
 
 /**
- * Kurdish Detective (/app/games/detective).
+ * Detective (/app/games/detective).
  *
  * The stage is a case board: the case file's title and story at the top, the
  * suspects' portraits (the app's own characters where one plays a suspect,
@@ -37,12 +36,12 @@ import './detective.css';
  *
  * A card's meaning is found by the deduction it proves (the correction
  * brings it, and the board keeps it) or bought with a hint, as is the case's
- * next written hint; each hint costs a point of XP at the finish, and the
- * board says so before it is spent. A wrong first try marks the cards to read
- * again. The verdict and the way on come right under the question
- * (`feedbackInRound`), not under the board. The accusation is the last item:
- * the suspects become the buttons, and once it is made the solution walks
- * back through every deduction.
+ * next written hint. A hint costs nothing but itself: a case has only a few,
+ * the board counts how many are left, and says before one is spent that they
+ * run out. A wrong first try marks the cards to read again. The verdict and
+ * the way on come right under the question (`feedbackInRound`), not under the
+ * board. The accusation is the last item: the suspects become the buttons,
+ * and once it is made the solution walks back through every deduction.
  *
  * The board is the round's (`board`), kept here as it changes: what a hint
  * bought comes back from the server as the whole board, and what a deduction
@@ -327,7 +326,7 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
           <h2 id="dt-hints-title" className="dt-hints-title">
             <HintIcon size={20} /> {t('games.detective.hintsLeft', { n: board.hintsLeft })}
           </h2>
-          <p className="dt-muted">{t('games.detective.hintCost')}</p>
+          <p className="dt-muted">{t('games.detective.hintsFew')}</p>
           {board.hints.map((h, i) => (
             <p key={i} className="dt-hint">
               {meaningIn(h, locale) ?? h.en}
@@ -350,7 +349,6 @@ export function Detective(): React.JSX.Element {
   const dialect: GameDialect = useGameDialect();
   const availability = useAvailability(dialect);
   const [open, setOpen] = useState<string | null>(null);
-  const [deducted, setDeducted] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -377,8 +375,6 @@ export function Detective(): React.JSX.Element {
         renderRound={(round) => <CaseRound key={round.sessionId} round={round} dialect={dialect} />}
         feedbackInRound
         explain={(why) => (why === 'step' ? t('games.detective.why.step') : why === 'accuse' ? t('games.detective.why.accuse') : null)}
-        onFinished={(results: SoloResults) => setDeducted(results.deducted ?? 0)}
-        resultsExtra={deducted > 0 ? <p className="dt-deducted">{t('games.detective.deducted', { xp: deducted })}</p> : null}
       />
     </div>
   );

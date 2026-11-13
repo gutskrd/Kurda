@@ -10,6 +10,8 @@ import { useI18n } from '../i18n/I18nContext';
 import { CHARACTER_SIZE } from '../characters/voice';
 import { paragraphSegments } from './segments';
 import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextProps, storyTextStyle } from './storyText';
+import { pressedDim } from '../theme/motion';
+import { heldDim } from '../theme/MotionParts';
 
 /** The reader's body size before the text-size control and the system's Dynamic Type. */
 export const STORY_BODY_SIZE = 18;
@@ -142,7 +144,7 @@ export function StoryText({
                   }
                   style={({ pressed }) => [
                     styles.listen,
-                    { backgroundColor: active ? colors.primary : colors.controlTrack, opacity: pressed ? 0.8 : 1 },
+                    { backgroundColor: active ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
                   ]}
                 >
                   <Icon name={active && playing ? 'audio-pause' : 'headphones'} size={16} color={active ? colors.textOnPrimary : colors.primary} />
@@ -200,7 +202,7 @@ export function StoryText({
                   accessibilityState={{ expanded: showTranslation }}
                   accessibilityLabel={showTranslation ? t('stories.reader.hideTranslationOf', { n: pi + 1 }) : t('stories.reader.translationOf', { n: pi + 1 })}
                   hitSlop={6}
-                  style={styles.translationToggle}
+                  style={({ pressed }) => [styles.translationToggle, pressed && heldDim]}
                 >
                   <Icon name="translate" size={14} color={colors.textSecondary} />
                   <Text style={[styles.translationToggleText, { color: colors.textSecondary }]}>

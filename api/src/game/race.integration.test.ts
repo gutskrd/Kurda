@@ -130,7 +130,9 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
     expect(result.perfect).toBe(true);
     expect(result.elapsedMs).toBeGreaterThan(0);
     expect(Number.isFinite(result.wpm)).toBe(true);
-    expect(result.xpAwarded).toBeGreaterThan(0);
+    // scored, and worth no XP: a race is run alone
+    expect(result.score).toBeGreaterThan(0);
+    expect(result.xpAwarded).toBe(0);
     expect(result.implausible).toBe(false);
   });
 
@@ -179,25 +181,19 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
     expect(res.statusCode).toBe(404);
   });
 
-  it('pays XP once, however many times a finish is retried', async () => {
-    const before = await pool.query<{ n: string }>(
-      `SELECT COALESCE(SUM(amount), 0)::text n FROM xp_ledger WHERE user_id = $1 AND source = 'race'`,
-      [playerId],
-    );
+  it('pays no XP, however well it was typed and however many times a finish is retried', async () => {
+    const paid = async (): Promise<number> =>
+      Number((await pool.query<{ n: string }>(`SELECT COALESCE(SUM(amount), 0)::text n FROM xp_ledger WHERE user_id = $1`, [playerId])).rows[0]!.n);
+    const before = await paid();
     const race = await call('POST', '/race', playerToken, { difficulty: 3 });
     const id = race.json().id as string;
-    await typedFor(id, 25); // a run that pays at all has to be one a person could type
-    await call('POST', `/race/${id}/finish`, playerToken, { typed: TEXT });
+    await typedFor(id, 25); // a run a person could type, so it is one that counts
+    expect((await call('POST', `/race/${id}/finish`, playerToken, { typed: TEXT })).json()).toMatchObject({ perfect: true, xpAwarded: 0 });
     await call('POST', `/race/${id}/finish`, playerToken, { typed: TEXT }); // rejected
-    const after = await pool.query<{ n: string }>(
-      `SELECT COALESCE(SUM(amount), 0)::text n FROM xp_ledger WHERE user_id = $1 AND source = 'race'`,
-      [playerId],
-    );
-    const paid = Number(after.rows[0]!.n) - Number(before.rows[0]!.n);
-    expect(paid).toBeGreaterThan(0);
-    // one race, one payment — (source, ref_id) is unique
-    const rows = await pool.query(`SELECT 1 FROM xp_ledger WHERE source = 'race' AND ref_id = $1`, [id]);
-    expect(rows.rowCount).toBe(1);
+    expect(await paid()).toBe(before);
+    expect((await pool.query(`SELECT 1 FROM xp_ledger WHERE source = 'race' AND ref_id = $1`, [id])).rowCount).toBe(0);
+    // it is still a race that counts for the typing badges: saved with its score
+    expect((await pool.query<{ score: number }>(`SELECT score FROM race_games WHERE id = $1`, [id])).rows[0]!.score).toBeGreaterThan(0);
   });
 
   it('lists a racer best runs', async () => {

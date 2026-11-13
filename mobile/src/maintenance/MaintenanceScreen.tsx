@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Animated, AppState, BackHandler, Easing, Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, AppState, BackHandler, Image, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MAINTENANCE_POLL_SECONDS, type MaintenanceNotice } from '@kurda/shared';
 import MASCOT from '../../assets/mascot-deer.png';
@@ -9,9 +9,11 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
 import { formatExpectedAt } from '../i18n/format';
 import { useDirection } from '../reports/direction';
+import { timing } from '../theme/animate';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { display } from '../theme/fonts';
+import { duration } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { checkStatus, useMaintenance } from './maintenance';
@@ -107,7 +109,7 @@ function OfflineNotice({ notice }: { notice: MaintenanceNotice }): React.JSX.Ele
       enter.setValue(1);
       return;
     }
-    Animated.timing(enter, { toValue: 1, duration: 260, easing: Easing.out(Easing.sin), useNativeDriver: Platform.OS !== 'web' }).start();
+    timing(enter, 1, duration.slow).start();
   }, [enter, reduceMotion]);
 
   // the screens under the notice stay where they were: Android's back does not move them unseen

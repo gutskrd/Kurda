@@ -1,18 +1,15 @@
-import { createContext, useCallback, useContext, useEffect, useRef, type ReactNode } from 'react';
-import { Animated, BackHandler, Dimensions, Platform, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { rubberBand, snapTarget } from '@kurda/shared';
+import { createContext, useCallback, useContext, type ReactNode } from 'react';
+import { Animated, Dimensions, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { useReducedMotion } from '../a11y/useReducedMotion';
-import { DragSamples, releaseSpring } from '../theme/animate';
 import { Icon, type IconName } from '../theme/Icon';
-import { DRAG_SLOP } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
+import { useEdgePanel } from './edgePanel';
 
 /**
  * How much of the screen the panel covers.
@@ -57,7 +54,8 @@ export interface MenuGroup {
  *
  * Built on `Animated` and `PanResponder` from React Native itself. The
  * alternative was `@react-navigation/drawer`, which needs Reanimated and
- * Gesture Handler: two native dependencies and a rebuild for one panel.
+ * Gesture Handler: two native dependencies and a rebuild for one panel. How
+ * it moves is `useEdgePanel`, which the new-message panel shares.
  */
 export function SideMenu({
   open,
@@ -83,101 +81,9 @@ export function SideMenu({
   const fromRight = (side === 'end') !== (dir.row === 'row-reverse');
   const sign = fromRight ? 1 : -1;
   const insets = useSafeAreaInsets();
-  const reduceMotion = useReducedMotion();
-
   const width = Math.round(Dimensions.get('window').width * WIDTH_RATIO);
-  // how far the panel is from open, towards its edge: 0 is open, `width` is gone
-  const away = useRef(new Animated.Value(open ? 0 : width)).current;
-  // the speed a drag let go at, for the spring that finishes what it started
-  const flick = useRef(0);
-
-  useEffect(() => {
-    const to = open ? 0 : width;
-    if (reduceMotion) {
-      away.setValue(to);
-      return;
-    }
-    const v = flick.current;
-    flick.current = 0;
-    /*
-     * Started and left alone.
-     *
-     * Stopping it in a cleanup looked tidy and was the bug: the effect re-runs
-     * when `open` flips, so the cleanup called stop() on the animation that had
-     * just finished — which detaches the value from the view. The next one ran,
-     * the number changed, and nothing on screen moved. Animated already
-     * supersedes an earlier animation on the same value when a new one starts,
-     * so there was never anything to clean up.
-     */
-    releaseSpring(away, to, v, { kind: v ? 'release' : 'standard' }).start();
-  }, [open, reduceMotion, away, width]);
-
-  // the system back gesture closes the panel before it leaves the screen
-  useEffect(() => {
-    // BackHandler is Android's; the web build logs an error if you touch it
-    if (!open || Platform.OS !== 'android') return;
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      onClose();
-      return true;
-    });
-    return () => sub.remove();
-  }, [open, onClose]);
-
-  // the responder is built once; these keep what it reads current
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
-  const signRef = useRef(sign);
-  signRef.current = sign;
-  const widthRef = useRef(width);
-  widthRef.current = width;
-
-  /**
-   * Drag it shut.
-   *
-   * Only horizontal movement claims the gesture, so a list inside the panel
-   * still scrolls. It follows the finger one to one towards its edge, and
-   * gives with the rubber band the other way, where there is nothing more to
-   * open. Let go, it goes where the flick would have carried it — shut, or
-   * back open — and the spring starts at the finger's speed.
-   */
-  const pan = useRef(
-    (() => {
-      const drag = { from: 0, at: 0, dx0: 0 };
-      const samples = new DragSamples();
-      const release = () => {
-        const v = samples.velocity();
-        if (snapTarget(drag.at, v, [0, widthRef.current]) > 0) {
-          flick.current = v;
-          onCloseRef.current();
-        } else {
-          releaseSpring(away, 0, v).start();
-        }
-      };
-      return PanResponder.create({
-        onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > DRAG_SLOP && Math.abs(g.dx) > Math.abs(g.dy),
-        onPanResponderGrant: (_e, g) => {
-          // from where the finger caught it, even mid-flight
-          drag.dx0 = g.dx;
-          drag.from = 0;
-          drag.at = 0;
-          away.stopAnimation((v) => {
-            drag.from = v;
-          });
-          samples.add(signRef.current * g.dx);
-        },
-        onPanResponderMove: (_e, g) => {
-          // positive is towards the edge it came from
-          samples.add(signRef.current * g.dx);
-          const p = drag.from + signRef.current * (g.dx - drag.dx0);
-          drag.at = p < 0 ? -rubberBand(-p, widthRef.current) : Math.min(p, widthRef.current);
-          away.setValue(drag.at);
-        },
-        onPanResponderRelease: release,
-        onPanResponderTerminate: release,
-        onPanResponderTerminationRequest: () => false,
-      });
-    })(),
-  ).current;
+  // in and out on the interface's spring, shut under a finger, and shut by Android's back: every edge panel's motion
+  const { away, panHandlers } = useEdgePanel({ open, onClose, width, sign });
 
   const renderLink = useCallback(
     (link: MenuLink) => (
@@ -228,7 +134,7 @@ export function SideMenu({
       </Animated.View>
 
       <Animated.View
-        {...pan.panHandlers}
+        {...panHandlers}
         accessibilityViewIsModal={open}
         style={[
           styles.panel,

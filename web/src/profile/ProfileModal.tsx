@@ -180,7 +180,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     // a league tier key, translated; none for someone not taking part (never a default tier)
     const leagueTier = toLeagueTier(other.league?.tier ?? other.tier ?? null);
     if (leagueTier) stats.push({ label: t('profile.stat.league'), value: leagueName(t, leagueTier) });
-    if (other.achievements !== undefined) stats.push({ label: t('profile.stat.achievements'), value: `${other.achievements}` });
+    if (other.achievements !== undefined) stats.push({ label: t('profile.badges'), value: `${other.achievements}` });
     actions = blocked ? (
       <div className="pcard-blocked" role="status">
         <p>{t('profile.blockedNote')}</p>

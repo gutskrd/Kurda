@@ -7,6 +7,7 @@ import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 import type { StepTools } from './StepFlow';
+import { heldDim } from '../../theme/MotionParts';
 
 /** iOS wants its own vocabulary for the same four things Android names plainly. */
 const TEXT_CONTENT_TYPE = {
@@ -100,7 +101,7 @@ export function GuideField({
           accessibilityLabel={reveal ? t('auth.hidePassword') : t('auth.showPassword')}
           accessibilityState={{ selected: reveal }}
           hitSlop={8}
-          style={[styles.eye, mirrored ? styles.eyeStart : styles.eyeEnd]}
+          style={({ pressed }) => [styles.eye, mirrored ? styles.eyeStart : styles.eyeEnd, pressed && heldDim]}
         >
           <Icon name={reveal ? 'eye-off' : 'eye'} size={22} color={colors.textSecondary} />
         </Pressable>

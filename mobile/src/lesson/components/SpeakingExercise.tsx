@@ -16,6 +16,7 @@ import { knownVoice } from '../../characters/SpeakingCharacter';
 import { CharacterStage } from '../../characters/CharacterStage';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { ModelButton } from './ModelButton';
+import { heldDim } from '../../theme/MotionParts';
 
 interface Props {
   exercise: Exercise;
@@ -167,7 +168,14 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
           >
             <View style={[styles.used, { width: `${used * 100}%`, backgroundColor: colors.danger }]} />
           </View>
-          <Pressable onPress={finish} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityRole="button" accessibilityLabel={t('lesson.speak.stop')}>
+          <Pressable
+            onPress={finish}
+            // drawn 36 points tall; its touch reaches a fingertip's 44
+            hitSlop={STOP_SLOP}
+            style={({ pressed }) => [styles.stop, { backgroundColor: colors.textPrimary }, pressed && heldDim]}
+            accessibilityRole="button"
+            accessibilityLabel={t('lesson.speak.stop')}
+          >
             <Icon name="stop" size={14} color={colors.background} />
             <Text style={[styles.stopText, { color: colors.background }]}>{t('lesson.speak.stop')}</Text>
           </Pressable>
@@ -202,6 +210,9 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
     </View>
   );
 }
+
+/** The Stop button is a 20-point line in 8 points of padding: four more each way makes a fingertip. */
+const STOP_SLOP = { top: 4, bottom: 4 };
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },

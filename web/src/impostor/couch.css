@@ -1,5 +1,5 @@
 /*
- * Kurdish Impostor on one phone (impostor/Couch.tsx).
+ * Impostor on one phone (impostor/Couch.tsx).
  *
  * The setup is three numbered steps a room can answer without reading
  * anything twice (who is playing, which game, what about), the rules folded
@@ -327,7 +327,7 @@
   display: grid;
   width: min(100%, 320px);
   aspect-ratio: 5 / 6;
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   box-shadow: 0 14px 34px rgba(18, 12, 40, 0.34);
   overflow: hidden;
 }
@@ -532,7 +532,7 @@
   justify-self: center;
   width: min(100%, 320px);
   padding: var(--space-5) var(--space-4);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: #fbf5e9;
   box-shadow: 0 14px 34px rgba(18, 12, 40, 0.3);
 }

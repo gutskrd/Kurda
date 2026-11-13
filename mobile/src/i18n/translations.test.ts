@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { APP_LOCALES, STORY_LEVELS, levelHintKey, levelNameKey } from '@kurda/shared';
+import { APP_LOCALES, GAME_NAMES, STORY_LEVELS, levelHintKey, levelNameKey } from '@kurda/shared';
 import { LOCALES, LOCALE_LABEL, TRANSLATIONS } from './translations.js';
 
 describe('translation catalogs', () => {
@@ -127,5 +127,54 @@ describe('translation catalogs', () => {
     }
     expect(STORY_LEVELS.map((l) => TRANSLATIONS.en[levelNameKey(l)])).toEqual(['Starter', 'Beginner', 'Intermediate', 'Confident', 'Advanced']);
     expect(STORY_LEVELS.map((l) => TRANSLATIONS.ku[levelNameKey(l)])).toEqual(['Destpêk', 'Bingehîn', 'Navîn', 'Jêhatî', 'Pêşketî']);
+  });
+});
+
+/**
+ * A game has one name, and it is Kurmancî (shared: games/names.ts): "Peyvok"
+ * was never translated, and neither is "Xapînok". Every language shows that
+ * name and says what it means beside it; the Soranî interface, which is
+ * Kurdish already, names the games in its own variety.
+ */
+describe('the games’ names', () => {
+  const NAME_KEY = {
+    'wordle-battle': 'games.battle.name',
+    rhyme: 'games.rhyme.name',
+    'rhyme-match': 'games.rhymeMatch.name',
+    race: 'games.race.name',
+    'memory-thief': 'games.memory.name',
+    detective: 'games.detective.name',
+    'last-letter': 'games.lastLetter.name',
+    impostor: 'games.impostor.name',
+    'who-am-i': 'games.whoAmI.name',
+  } as const;
+  const MEANING_KEYS = ['games.battle', 'games.rhyme', 'games.rhymeMatch', 'games.race', 'games.memory', 'games.detective', 'games.lastLetter', 'games.impostor', 'games.whoAmI'] as const;
+
+  it('are Kurmancî in every language but Soranî, which has its own', () => {
+    for (const locale of LOCALES) {
+      for (const [game, key] of Object.entries(NAME_KEY) as Array<[keyof typeof NAME_KEY, (typeof NAME_KEY)[keyof typeof NAME_KEY]]>) {
+        if (locale === 'ckb') expect(TRANSLATIONS[locale][key], `${locale} ${key}`).not.toBe(GAME_NAMES[game]);
+        else expect(TRANSLATIONS[locale][key], `${locale} ${key}`).toBe(GAME_NAMES[game]);
+      }
+    }
+  });
+
+  it('come with what they mean in the reader’s language, which only a Kurdish interface has no need of', () => {
+    for (const locale of LOCALES) {
+      for (const stem of MEANING_KEYS) {
+        const [name, meaning] = [TRANSLATIONS[locale][`${stem}.name`], TRANSLATIONS[locale][`${stem}.meaning`]];
+        if (locale === 'ku' || locale === 'ckb') expect(meaning, `${locale} ${stem}`).toBe(name);
+        else expect(meaning, `${locale} ${stem}`).not.toBe(name);
+      }
+    }
+  });
+
+  it('never say that a game is Kurdish: every game here is', () => {
+    const kurdish = /kurd|koerd|kürt|كرد|کورد/i;
+    for (const locale of LOCALES) {
+      for (const key of [...Object.values(NAME_KEY), 'games.wordle.name', 'games.sentence.name', 'games.hear.name', ...MEANING_KEYS.map((stem) => `${stem}.meaning` as const)] as const) {
+        expect(TRANSLATIONS[locale][key], `${locale} ${key}`).not.toMatch(kurdish);
+      }
+    }
   });
 });

@@ -1,5 +1,5 @@
 /**
- * Game Ranks in Rhyme Match and Stories, against real Postgres: each decides
+ * Game Ranks in Pêşbaziya Serwayan and Stories, against real Postgres: each decides
  * Rated or Friendly when it starts (Stories: when its questions start), rates
  * the finish by its own result, and counts a leave during the game.
  */
@@ -17,7 +17,7 @@ import { RankEvents, type RatedGameFinished } from './events.js';
 const DATABASE_URL = process.env.DATABASE_URL;
 const RHYMES = ['gul', 'kul', 'pul', 'bul'];
 
-describe.skipIf(!DATABASE_URL)('game ranks in Rhyme Match and Stories (integration)', () => {
+describe.skipIf(!DATABASE_URL)('game ranks in Pêşbaziya Serwayan and Stories (integration)', () => {
   let pool: pg.Pool;
   let ranks: RankService;
   let matches: RhymeMatchService;
@@ -68,7 +68,7 @@ describe.skipIf(!DATABASE_URL)('game ranks in Rhyme Match and Stories (integrati
     await pool.end();
   });
 
-  describe('Rhyme Match', () => {
+  describe('Pêşbaziya Serwayan', () => {
     const match = async (rated: boolean, players: string[]) => {
       const [host, ...rest] = players;
       for (const p of rest) await befriend(pool, host!, p);

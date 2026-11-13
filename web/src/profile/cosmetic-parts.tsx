@@ -46,7 +46,8 @@ export function LevelBar({ level }: { level: Pick<LevelInfo, 'level' | 'xp' | 'n
     <div className="pcard-level">
       <span className="pcard-level-badge">{t('profile.levelN', { level: level.level })}</span>
       <div className="pcard-level-track" role="progressbar" aria-label={next} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-        <div className="pcard-level-fill" style={{ width: `${pct}%` }} />
+        {/* a full-width fill moved along its track by `--p` (styles/motion.css), as the lesson's bar is */}
+        <div className="pcard-level-fill" style={{ '--p': pct / 100 } as React.CSSProperties} />
       </div>
       <span className="pcard-level-next" aria-hidden="true">{next}</span>
     </div>

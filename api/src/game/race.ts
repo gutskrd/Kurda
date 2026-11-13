@@ -130,14 +130,3 @@ export function scoreRace({
     errors: compared.errors,
   };
 }
-
-/** XP for a finished race: a flat entry plus a slice of the score. */
-export const RACE_PARTICIPATION_XP = 5;
-export const RACE_MAX_BONUS_XP = 25;
-
-export function raceXp(score: RaceScore): number {
-  if (score.correctChars === 0) return 0; // typing nothing is not playing
-  if (score.implausible) return 0; // nor is submitting a text nobody typed
-  const bonus = Math.min(Math.round(score.score / 4), RACE_MAX_BONUS_XP);
-  return RACE_PARTICIPATION_XP + bonus;
-}

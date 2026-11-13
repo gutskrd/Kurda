@@ -3,6 +3,7 @@ import { radii } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { Icon } from '../../theme/Icon';
 import { useI18n } from '../../i18n/I18nContext';
+import { pressedDim } from '../../theme/motion';
 
 /**
  * The native speaker's recording: the speaker alone in a round button, lit
@@ -19,7 +20,7 @@ export function ModelButton({ playing, onPress }: { playing: boolean; onPress: (
       accessibilityLabel={t('lesson.speak.playModel')}
       style={({ pressed }) => [
         styles.model,
-        { backgroundColor: colors.controlTrack, borderColor: playing ? colors.gold : 'transparent', opacity: pressed ? 0.7 : 1 },
+        { backgroundColor: colors.controlTrack, borderColor: playing ? colors.gold : 'transparent', opacity: pressed ? pressedDim : 1 },
       ]}
     >
       {/* the speaker points the same way in every language */}

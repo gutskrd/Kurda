@@ -25,7 +25,7 @@ import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability, useGameDialect } from './soloRounds';
 
 /**
- * Build a Kurdish Sentence (/app/learn/practice/build-sentence), an exercise
+ * Build a Sentence (/app/learn/practice/build-sentence), an exercise
  * of the lessons' practice. It is a round of the solo kit like the games
  * played alone, which is why it lives beside them; Learn's Lessons half is
  * where a learner finds it (learn/practiceTools.tsx).

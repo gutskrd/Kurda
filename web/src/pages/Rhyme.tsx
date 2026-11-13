@@ -41,6 +41,9 @@ const REJECT_KEY: Record<string, MessageKey> = {
  * long and begins when it is asked for, so nobody arrives to find ten seconds
  * of it already gone. Choosing the other variety comes back to the start for
  * the same reason.
+ *
+ * A round here is played alone, so it earns no XP: the result gives the
+ * score and the rhymes found, and one line on where XP is earned.
  */
 export function Rhyme(): React.JSX.Element {
   const { client } = useAuth();
@@ -144,7 +147,7 @@ export function Rhyme(): React.JSX.Element {
 
   return (
     <div className="container game-page gs" style={stageTone('rhyme')}>
-      <GameHead game="rhyme" title={t('games.rhyme.name')} />
+      <GameHead game="rhyme" title={t('games.rhyme.name')} meaning={t('games.rhyme.meaning')} />
 
       <div className="chat-tabs" role="tablist" aria-label={t('games.dialect')}>
         {(['kurmanci', 'sorani'] as const).map((d) => (
@@ -201,14 +204,16 @@ export function Rhyme(): React.JSX.Element {
                 autoFocus
                 {...typeOnly}
               />
-              <Button type="submit" disabled={busy || word.trim().length === 0}>
-                {busy ? '…' : t('games.submit')}
+              {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
+              <Button type="submit" disabled={busy || word.trim().length === 0} aria-busy={busy || undefined}>
+                {t('games.submit')}
               </Button>
             </form>
           ) : (
             <div className="wordle-result">
               <p className="wordle-result-title">{t('games.rhyme.roundOver', { score: game.score, count: game.accepted })}</p>
-              {game.xpAwarded ? <p className="gs-earned">+{game.xpAwarded} XP</p> : null}
+              {/* a round alone earns no XP: said once, where what it paid used to stand */}
+              <p className="gs-alone">{t('games.noXpAlone')}</p>
               <Button onClick={() => void start()}>{t('games.playAgain')}</Button>
             </div>
           )}

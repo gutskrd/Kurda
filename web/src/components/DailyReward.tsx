@@ -6,6 +6,7 @@ import type { ClaimResult, DailyRewardStatus, WalletBalances } from '../lib/type
 import { Button } from './Button';
 import { CoinIcon, GemIcon } from './icons';
 import { useT } from '../i18n/I18nProvider';
+import { haptic } from '../lib/haptics';
 import { useCountUp } from '../lib/motion';
 
 /**
@@ -20,8 +21,12 @@ import { useCountUp } from '../lib/motion';
  * A Hevalo+ member's claim also brings a few gems. The tile says so in one
  * quiet line: what the claim adds while it is there to take, and what it added
  * once it has been. Nobody else sees the line at all.
+ *
+ * While the claim is there to take, its button is the one filled button the
+ * page should have: `onClaimWaiting` tells the page so, and the page quietens
+ * what would compete with it (the wall's +, pages/Civak.tsx).
  */
-export function DailyReward(): React.JSX.Element | null {
+export function DailyReward({ onClaimWaiting }: { onClaimWaiting?: (waiting: boolean) => void } = {}): React.JSX.Element | null {
   const t = useT();
   const { client } = useAuth();
   const [status, setStatus] = useState<DailyRewardStatus | null>(null);
@@ -31,6 +36,8 @@ export function DailyReward(): React.JSX.Element | null {
   const [failed, setFailed] = useState(false);
   // the gems this claim added for a member; null until a claim has been made here
   const [plusClaimed, setPlusClaimed] = useState<number | null>(null);
+  // how many claims have landed here (one a day, so one): what the coin's pop and its sparks are keyed by
+  const [landed, setLanded] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,6 +67,9 @@ export function DailyReward(): React.JSX.Element | null {
     const res = await client.post<ClaimResult>('/rewards/daily/claim');
     setBusy(false);
     if (res.ok) {
+      // it lands: the coin pops with its sparks (styles/motion.css), and a phone gives its small buzz
+      setLanded((n) => n + 1);
+      haptic('celebrate');
       // the balance counts up from what it was to what it is now (lib/motion.ts)
       setCountFrom(balance);
       setBalance(res.data.balance);
@@ -71,10 +81,15 @@ export function DailyReward(): React.JSX.Element | null {
     }
   }
 
+  const canClaim = status?.canClaim ?? false;
+  // the page is told while a claim waits, and when it no longer does
+  useEffect(() => {
+    onClaimWaiting?.(canClaim);
+  }, [canClaim, onClaimWaiting]);
+
   // Don't render a broken tile if the reward status can't be loaded.
   if (failed && balance === null) return null;
 
-  const canClaim = status?.canClaim ?? false;
   // explicitly false only: an older server sends no learnedToday at all
   const learnFirst = status !== null && !status.alreadyClaimedToday && status.learnedToday === false;
   // what a claim adds for a member, before it; what this one added, after it
@@ -83,8 +98,9 @@ export function DailyReward(): React.JSX.Element | null {
   return (
     <div className="zer-card">
       <div className="zer-left">
-        <span className="zer-coin" aria-hidden="true">
+        <span className={`zer-coin${landed > 0 ? ' is-landed' : ''}`} aria-hidden="true">
           <CoinIcon size={40} />
+          {landed > 0 && <span key={landed} className="zer-burst" />}
         </span>
         <div>
           <div className="zer-balance">

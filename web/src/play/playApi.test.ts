@@ -63,6 +63,13 @@ describe('playError', () => {
     );
   });
 
+  it('says what to do when the server refuses the page’s own choices, instead of the server’s English', () => {
+    // a server on other rules than the page: it answers 400 BAD_SETTINGS in its own words
+    const refused = { kind: 'client' as const, code: 'BAD_SETTINGS', message: 'these settings are not offered', status: 400 };
+    expect(playError(refused, t)).toBe(t('play.error.serverBehind'));
+    expect(playError(refused, t)).not.toContain('these settings are not offered');
+  });
+
   it('says full, started and closed plainly', () => {
     expect(playError(err('BATTLE_FULL'), t)).toBe('This game is full.');
     expect(playError(err('GAME_STARTED'), t)).toBe('This game has already started.');

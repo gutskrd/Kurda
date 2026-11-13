@@ -5,7 +5,7 @@ import { playNotification } from './notifications';
 
 const note = (data: Record<string, unknown> | null) => ({
   title: 'Game invite',
-  body: 'Rojda invited you to play Peyvok Battle.',
+  body: 'Rojda invited you to play Pêşbaziya Peyvan.',
   data,
 });
 
@@ -34,12 +34,12 @@ describe('playNotification', () => {
 
   it('names who asked in the reader’s words while the invite is still known', () => {
     const view = playNotification(note({ kind: 'play_invite', inviteId: 'i1', game: 'wordle-battle', lobbyId: 'b1' }), t, [invite]);
-    expect(view?.title).toBe('Rojda invited you to Peyvok Battle');
+    expect(view?.title).toBe('Rojda invited you to Pêşbaziya Peyvan');
   });
 
   it('names just the game once the invite is gone, never the server’s English', () => {
     const view = playNotification(note({ kind: 'play_invite', inviteId: 'old', game: 'rhyme-match', lobbyId: 'r1' }), t, [invite]);
-    expect(view?.title).toBe('Rhyme Match invite');
+    expect(view?.title).toBe('Pêşbaziya Serwayan invite');
     expect(view?.body).toBeNull();
   });
 

@@ -31,7 +31,7 @@ describe('InviteBanner', () => {
     renderPlay(<InviteBanner />);
 
     const banner = await screen.findByRole('status');
-    expect(within(banner).getByText('Rojda invited you to Peyvok Battle')).toBeInTheDocument();
+    expect(within(banner).getByText('Rojda invited you to Pêşbaziya Peyvan')).toBeInTheDocument();
     expect(within(banner).getByText('Hard')).toBeInTheDocument();
     expect(within(banner).getByRole('button', { name: 'Join' })).toBeInTheDocument();
     expect(document.activeElement).toBe(before);
@@ -117,7 +117,7 @@ describe('InviteBanner', () => {
   it('says a rematch is one', async () => {
     fakeApi({ 'GET /play/invites': lists([incoming({ rematch: true, game: 'rhyme-match', summary: { dialect: 'sorani' } })]) });
     renderPlay(<InviteBanner />);
-    expect(await screen.findByText('Rojda wants to play Rhyme Match again')).toBeInTheDocument();
+    expect(await screen.findByText('Rojda wants to play Pêşbaziya Serwayan again')).toBeInTheDocument();
     expect(screen.getByText('Soranî')).toBeInTheDocument();
   });
 
@@ -164,7 +164,7 @@ describe('InviteBanner', () => {
     fakeApi({ 'GET /play/invites': lists() });
     renderPlay(<InviteBanner />);
     const chip = await screen.findByRole('status');
-    expect(within(chip).getByText('Rojda invited you to Peyvok Battle')).toBeInTheDocument();
+    expect(within(chip).getByText('Rojda invited you to Pêşbaziya Peyvan')).toBeInTheDocument();
     expect(within(chip).getByRole('button', { name: 'Join' })).toBeInTheDocument();
     // the settings and "Not now" wait behind "Show more", which is not "Not now"
     expect(within(chip).queryByText('Hard')).toBeNull();
@@ -236,7 +236,7 @@ describe('InviteBanner', () => {
 
     answer = lists();
     realtime.emit({ type: 'play_invite', invite: incoming() });
-    expect(await screen.findByText('Rojda invited you to Peyvok Battle')).toBeInTheDocument();
+    expect(await screen.findByText('Rojda invited you to Pêşbaziya Peyvan')).toBeInTheDocument();
   });
 
   it('arrives as a ticket in the game’s colour, the game’s mark on its stub', async () => {

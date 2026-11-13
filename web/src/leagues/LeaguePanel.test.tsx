@@ -413,10 +413,18 @@ describe('LeaguePanel', () => {
     expect(faces[1]!.querySelector('.rank-initials')?.textContent).toMatch(/^\S{1,2}$/);
   });
 
-  it('draws the way out as a button of its own, not a faint link', async () => {
+  it('keeps the way out as a quiet line at the very foot of the week, never a button under the page’s action', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, league('cem', 18, 12))));
-    renderApp(<LeaguePanel />);
+    const { container } = renderApp(<LeaguePanel />);
     const leave = await screen.findByRole('button', { name: en['leagues.leave'] });
-    expect(leave).toHaveClass('btn-secondary');
+    // words, not a button's weight: leaving is a setting (Settings → Weekly leagues), only findable here
+    expect(leave).toHaveClass('link-btn');
+    expect(leave).not.toHaveClass('btn');
+    // and the last thing on the page
+    const page = container.querySelector('.league-page')!;
+    expect(page.lastElementChild).toContainElement(leave);
+    // it still asks once before anything happens
+    await userEvent.click(leave);
+    expect(await screen.findByRole('dialog', { name: en['leagues.leave.title'] })).toBeInTheDocument();
   });
 });

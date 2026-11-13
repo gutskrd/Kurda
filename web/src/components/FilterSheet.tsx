@@ -22,6 +22,7 @@
  */
 import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { Button } from './Button';
+import { CloseButton } from './CloseButton';
 import { CheckIcon, CloseIcon, FunnelIcon } from './icons';
 import { useT } from '../i18n/I18nProvider';
 import { keepInView } from '../reports/keepInView';
@@ -209,14 +210,11 @@ export function FilterSheet<V>({
           {/* behind the sheet on a phone; nothing on a wider screen, where the panel is a popover */}
           <span className="ffilter-scrim" aria-hidden="true" />
           <div className="ffilter-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} id={id} ref={panelRef} onKeyDown={trap}>
-            <span className="ffilter-grip" aria-hidden="true" />
             <div className="ffilter-head">
               <h2 id={titleId} className="ffilter-title">
                 {title}
               </h2>
-              <button type="button" className="ffilter-close" aria-label={t('common.close')} title={t('common.close')} onClick={() => control.close(true)}>
-                <CloseIcon size={18} />
-              </button>
+              <CloseButton className="is-inline" label={t('common.close')} onClick={() => control.close(true)} />
             </div>
 
             <div className="ffilter-body">{children}</div>

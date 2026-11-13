@@ -104,7 +104,7 @@
   justify-content: center;
 }
 .lp-arrow {
-  transition: transform 0.2s ease;
+  transition: transform var(--dur) var(--ease-out);
 }
 .btn:hover .lp-arrow {
   transform: translateX(3px);
@@ -513,8 +513,6 @@
   margin-inline: 22px -10px;
   padding: 14px 16px;
   background: var(--panel-bg);
-  -webkit-backdrop-filter: blur(14px);
-  backdrop-filter: blur(14px);
   box-shadow: var(--glass-rim), 0 18px 40px rgba(0, 0, 0, 0.45);
 }
 .lp-rewardmock {
@@ -749,8 +747,8 @@
   border: 1px solid var(--border-strong);
   border-radius: 50%;
   transition:
-    transform 0.25s ease,
-    border-color 0.15s ease;
+    transform var(--dur) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
 }
 .faq-icon::before,
 .faq-icon::after {

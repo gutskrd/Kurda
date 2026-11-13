@@ -8,6 +8,7 @@
  * Pure data and functions, tested without a browser.
  */
 import {
+  GAME_NAMES,
   APEX_TIER,
   BADGE_TIERS,
   BADGE_TIER_META,
@@ -32,13 +33,14 @@ import type { Tone } from './ui';
 
 // ---- names -----------------------------------------------------------------------
 
+/** Each ranked game by its own name, which is Kurmancî in every language the apps speak. */
 export const GAME_NAME: Readonly<Record<RankedGame, string>> = {
-  'wordle-battle': 'Peyvok Battle',
-  'rhyme-match': 'Rhyme Match',
+  'wordle-battle': GAME_NAMES['wordle-battle'],
+  'rhyme-match': GAME_NAMES['rhyme-match'],
   stories: 'Stories',
-  'last-letter': 'The Last Letter',
-  impostor: 'Kurdish Impostor',
-  'who-am-i': 'Who Am I?',
+  'last-letter': GAME_NAMES['last-letter'],
+  impostor: GAME_NAMES.impostor,
+  'who-am-i': GAME_NAMES['who-am-i'],
 };
 
 /**

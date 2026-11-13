@@ -32,9 +32,15 @@ describe('typedCode', () => {
   });
 
   it('takes the code out of a whole message pasted in, not the first capitals of it', () => {
-    expect(typedCode('Play Peyvok Battle with me on Hevalo! Open Games → Join with a code and type ABC 234')).toBe('ABC234');
+    expect(typedCode('Play Pêşbaziya Peyvan with me on Hevalo! Open Games → Join with a code and type ABC 234')).toBe('ABC234');
     expect(typedCode('لە Hevalo لەگەڵم یاری بکە! یارییەکان ← بە کۆد بەشداربە بکەرەوە و XYZ 789 بنووسە')).toBe('XYZ789');
     expect(typedCode('Hevalo’da benimle oyna! ABC-234 yaz')).toBe('ABC234');
+  });
+
+  it('reads the code out of the whole invitation, link and all', () => {
+    const invitation = 'Play Xapînok with me on Hevalo! Open Games → Join with a code and type ABC 234\nOr tap to join: https://hevalo.app/join/impostor/ABC234?from=0b1e2d3c-4a5f-4c6d-8e7f-9a0b1c2d3e4f';
+    expect(typedCode(invitation)).toBe('ABC234');
+    expect(typedCode('Li Hevaloyê bi min re bilîze! Lîstik → Bi kodekê beşdar bibe veke û XYZ 789 binivîse\nAn jî li girêdanê bixe û beşdar bibe: https://hevalo.app/join/who-am-i/XYZ789')).toBe('XYZ789');
   });
 
   it('does not grow past six when a seventh character is typed onto a whole code', () => {
@@ -53,8 +59,8 @@ describe('the words round a code', () => {
   });
 
   it('shares the code as it is read out, with where to type it and no link', () => {
-    const game = shareMessage({ game: 'Peyvok Battle', code: 'ABC234' }, t, false, formatJoinCode);
-    expect(game).toBe('play.code.shareText {"code":"ABC 234","path":"learn.view.games → stories.join.open","game":"Peyvok Battle"}');
+    const game = shareMessage({ game: 'Pêşbaziya Peyvan', code: 'ABC234' }, t, false, formatJoinCode);
+    expect(game).toBe('play.code.shareText {"code":"ABC 234","path":"learn.view.games → stories.join.open","game":"Pêşbaziya Peyvan"}');
     const story = shareMessage({ game: 'Stories', code: 'ABC234', storyTitle: 'Nanê Germ' }, t, false, formatJoinCode);
     expect(story).toContain('play.code.shareStory');
     expect(story).toContain('"title":"Nanê Germ"');

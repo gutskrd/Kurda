@@ -5,6 +5,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * The letters a keyboard may not have, as keys: ç ê î ş û for Kurmancî, the
@@ -78,10 +79,11 @@ export function KeyBar({
           accessibilityRole="button"
           accessibilityLabel={t('keyboard.bar.shift')}
           accessibilityState={{ selected: shift, disabled }}
-          style={[
+          style={({ pressed }) => [
             styles.key,
             { backgroundColor: shift ? colors.primary : colors.controlTrack },
             disabled && styles.off,
+            pressed && heldDim,
           ]}
         >
           <Text style={[styles.keyText, { color: shift ? colors.textOnPrimary : colors.textPrimary }]}>⇧</Text>

@@ -16,7 +16,7 @@ import { TagsCard } from '../tags/TagsCard';
 import { ErrorState } from '../components/states';
 import { CardStackSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
-import { PersonGlyph } from '../components/icons';
+import { ArrowIcon, LockIcon, PersonGlyph } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
 
@@ -57,9 +57,13 @@ export function ProfileEdit(): React.JSX.Element {
   // the heading needs nothing from the account, so it is the page's from the first frame
   const header = (
     <div className="page-header">
+      {/* the way back, as every page draws it: the chevron that points back in the page's own direction, then the words */}
+      <Link to="/app/profile" className="back-link">
+        <ArrowIcon size={16} />
+        {t('edit.back')}
+      </Link>
       <span className="eyebrow">{t('edit.eyebrow')}</span>
       <h1 className="page-title">{t('profile.edit')}</h1>
-      <p className="page-sub"><Link to="/app/profile" className="link">{t('edit.back')}</Link></p>
     </div>
   );
 
@@ -254,7 +258,11 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
               onClick={() => onTile(a, locked)}
             >
               <img src={avatarAssetUrl(a.key, overrides)} alt="" loading="lazy" decoding="async" />
-              {locked && <span className="avatar-lock" aria-hidden="true">🔒</span>}
+              {locked && (
+                <span className="avatar-lock" aria-hidden="true">
+                  <LockIcon size={12} weight="fill" />
+                </span>
+              )}
             </button>
           );
         })}

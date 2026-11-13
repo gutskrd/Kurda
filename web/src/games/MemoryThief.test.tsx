@@ -59,7 +59,7 @@ interface Answer {
   attempt: number;
 }
 
-function server(round: SoloSessionView<MemoryThiefItemView> & { passages: Passage[] }, grade: (a: Answer) => unknown, available = true) {
+function server(round: SoloSessionView<MemoryThiefItemView> & { passages: Passage[] }, grade: (a: Answer) => unknown, available = true, finish: unknown = {}) {
   const sent: Answer[] = [];
   const begun: number[] = [];
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
@@ -84,6 +84,7 @@ function server(round: SoloSessionView<MemoryThiefItemView> & { passages: Passag
         sent.push(body);
         return jsonResponse(200, grade(body));
       }
+      if (url.includes('/finish')) return jsonResponse(200, finish);
       return jsonResponse(200, {});
     }),
   );
@@ -97,22 +98,64 @@ const correction = (verdicts: Array<'right' | 'typo' | 'wrong'>, given: string[]
   ],
 });
 
-describe('The Memory Thief', () => {
-  it('opens on its three steps and what a round of five can pay', async () => {
+describe('Dizê Bîrê', () => {
+  it('opens on its three steps, and promises no XP for a game played alone', async () => {
     server(session([item()]), () => ({}));
     renderApp(<MemoryThief />, ['/app/games/memory-thief']);
-    expect(await screen.findByRole('heading', { name: 'The Memory Thief' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Dizê Bîrê' })).toBeInTheDocument();
     expect(screen.getByText('Study the passage')).toBeInTheDocument();
     expect(screen.getByText('Words vanish')).toBeInTheDocument();
     expect(screen.getByText('Give them back')).toBeInTheDocument();
-    // five passages at beginner: one XP each and one for the first try
-    expect(await screen.findByText('Up to 10 XP')).toBeInTheDocument();
+    // the level can be chosen, and nothing under it says what a round could pay
+    expect(await screen.findByRole('radio', { name: 'Beginner' })).toBeChecked();
+    expect(screen.queryByText(/Up to \d+ XP/)).toBeNull();
+    expect(document.body).not.toHaveTextContent('XP');
+  });
+
+  /** One passage given back right at the first try, and the round finished with what the server says of it. */
+  async function playRound(finish: unknown): Promise<void> {
+    server(
+      session([item()]),
+      () => ({ index: 0, attempt: 1, correct: true, firstTry: true, done: true, hint: null, correction: correction(['right', 'right'], ['gund', 'çiya']), why: 'glossary', xp: 0, repeat: false }),
+      true,
+      finish,
+    );
+    renderApp(<MemoryThief />, ['/app/games/memory-thief']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'I’m ready' }));
+    const tray = await screen.findByRole('group', { name: 'Words to give back' });
+    await userEvent.click(within(tray).getByRole('button', { name: 'gund' }));
+    await userEvent.click(within(tray).getByRole('button', { name: 'çiya' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Check' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
+    await screen.findByRole('heading', { name: 'Round finished' });
+  }
+
+  it('says how a round went and that the day counts, with no figure of XP and one line that a game alone earns none', async () => {
+    await playRound({ correct: 1, total: 1, firstTry: 1, xp: 0, learningCounted: true, needed: 1, items: [{ index: 0, correct: true, firstTry: true, repeat: true }], streak: 3 });
+    expect(screen.getByText('1 of 1 right')).toBeInTheDocument();
+    expect(screen.getByText('On the first try: 1')).toBeInTheDocument();
+    expect(screen.getByText('Today counts for your streak.')).toBeInTheDocument();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeInTheDocument();
+    // never a figure of it, not even a zero, and no word on answers that paid nothing for being repeated
+    expect(screen.queryByText(/\+\s*\d+ XP/)).toBeNull();
+    expect(screen.queryByText(/\d+ XP/)).toBeNull();
+    expect(screen.queryByText('Answered right lately, so no XP this time')).toBeNull();
+  });
+
+  it('says what would make the day count when a round fell short, without a word on earning XP', async () => {
+    await playRound({ correct: 1, total: 1, firstTry: 0, xp: 0, learningCounted: false, needed: 1, items: [{ index: 0, correct: true, firstTry: false, repeat: false }], streak: 3 });
+    expect(screen.getByText('Get at least 1 right on the first try for today to count. This time: 0.')).toBeInTheDocument();
+    expect(screen.queryByText(/to earn XP/)).toBeNull();
+    expect(screen.queryByText('Today counts for your streak.')).toBeNull();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeInTheDocument();
+    expect(screen.queryByText(/\d+ XP/)).toBeNull();
   });
 
   it('opens on the games’ stage: its emblem over its name, and one gold way in', async () => {
     server(session([item()]), () => ({}));
     const { container } = renderApp(<MemoryThief />, ['/app/games/memory-thief']);
-    const title = await screen.findByRole('heading', { name: 'The Memory Thief' });
+    const title = await screen.findByRole('heading', { name: 'Dizê Bîrê' });
     const hero = title.closest('.gs-hero');
     expect(hero).not.toBeNull();
     // the emblem is decoration: drawn, and hidden from a screen reader
@@ -255,10 +298,10 @@ describe('The Memory Thief', () => {
 });
 
 describe('Learn’s games list', () => {
-  it('lists The Memory Thief once it can be played', async () => {
+  it('lists Dizê Bîrê once it can be played', async () => {
     server(session([item()]), () => ({}));
     renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'The Memory Thief' })).closest('article')!;
+    const card = (await screen.findByRole('heading', { name: 'Dizê Bîrê' })).closest('article')!;
     expect(card).toHaveClass('gp-card');
     expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/memory-thief');
   });

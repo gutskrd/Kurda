@@ -14,6 +14,7 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { formatCompact, formatNumber } from '../i18n/format';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * The Leaderboard tab of the league screen: everyone ranked, a page at a
@@ -328,7 +329,7 @@ function BoardList({
             disabled={loadingMore}
             accessibilityRole="button"
             accessibilityState={{ busy: loadingMore, disabled: loadingMore }}
-            style={[styles.more, loadingMore && styles.busy]}
+            style={({ pressed }) => [styles.more, loadingMore && styles.busy, pressed && heldDim]}
           >
             <Text style={[styles.moreText, { color: colors.primary }]}>{t('rankings.showMore', { count: more })}</Text>
           </Pressable>

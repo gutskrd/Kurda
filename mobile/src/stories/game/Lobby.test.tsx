@@ -79,14 +79,17 @@ describe('Lobby', () => {
     expect(screen.getByText('Report Player 3')).toBeTruthy();
   });
 
-  it('shares the story, the code and where to type it — and no link', async () => {
+  it('shares the story, the code and where to type it, then the code’s own link', async () => {
     testAuth.client = fakeClient(routes());
     const share = vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
     renderWithProviders(<Lobby view={lobby()} apply={() => null} onLeft={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     const message = (share.mock.calls[0]?.[0] as { message: string }).message;
-    expect(message).toBe('Play “Nanê Germ” with me on Hevalo! Open Games → Join with a code and type ABC 234');
-    expect(message).not.toMatch(/https?:|\/app\/games/);
+    const [sentence, link] = message.split('\n');
+    expect(sentence).toBe('Play “Nanê Germ” with me on Hevalo! Open Games → Join with a code and type ABC 234');
+    // the link is the invitation's own page, which anyone can open: never an address inside the app, which asks for a sign-in first
+    expect(link).toMatch(/^Or tap to join: https:\/\/hevalo\.app\/join\/stories\/ABC234(\?from=[0-9a-f-]{36})?$/);
+    expect(message).not.toMatch(/\/app\/games/);
   });
 
   it('shows no ticket once the game has no code', async () => {

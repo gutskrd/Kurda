@@ -15,6 +15,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { GAZE_AT_FIELD, HevaloGuide } from './HevaloGuide';
 import { useGuideReaction } from './reaction';
+import { heldDim } from '../../theme/MotionParts';
 
 /**
  * How a step's turn with the server ended: on to the next, or refused — with
@@ -66,9 +67,11 @@ export interface FlowStep {
  * one field; and the Continue button sits at the foot of the screen, above
  * the keyboard. Steps turn the way the reader reads (SlideSwap, mirrored for
  * Soranî and Arabic). An answer that is refused shakes, shows one line under
- * the field, and gets Hevalo's tilt of the head; one that passes gets a light
- * tick and his cheer, and the next question. Under Reduce Motion the bar,
- * the slides and the shake are simply the end state.
+ * the field, and gets Hevalo's tilt of the head — and, when it is the server
+ * that refused it (a wrong password, a wrong code), the buzz of something
+ * that did not go through; one that passes gets a light tick and his cheer,
+ * and the next question. Under Reduce Motion the bar, the slides and the
+ * shake are simply the end state.
  *
  * The flow owns which step is showing and the refusals; the screen owns the
  * answers, in its own state, and what each step is (`FlowStep`). A `notice`
@@ -135,6 +138,9 @@ export function StepFlow({
       const out = await step.commit();
       setBusy(false);
       if (!out.ok) {
+        // the server said no to something that was asked for (a wrong password, a wrong code): felt, as well as seen.
+        // An answer the screen itself turns back before asking is not: that field is still being typed in
+        haptic('error');
         // a refusal about an earlier answer: back to that step, with the line under its field
         const at = out.at !== undefined && out.at !== step.key ? steps.findIndex((s) => s.key === out.at) : -1;
         if (at >= 0) {
@@ -173,7 +179,14 @@ export function StepFlow({
         <View style={[styles.flex, { paddingTop: insets.top + spacing.sm }]} testID={testID}>
           <View style={[styles.bar, { flexDirection: dir.row }]}>
             {canBack ? (
-              <Pressable onPress={back} accessibilityRole="button" accessibilityLabel={t('common.back')} hitSlop={8} style={styles.back} testID="step-back">
+              <Pressable
+                onPress={back}
+                accessibilityRole="button"
+                accessibilityLabel={t('common.back')}
+                hitSlop={8}
+                style={({ pressed }) => [styles.back, pressed && heldDim]}
+                testID="step-back"
+              >
                 <Icon name="chevron-left" size={26} color={colors.textPrimary} style={dir.flip ?? undefined} />
               </Pressable>
             ) : (

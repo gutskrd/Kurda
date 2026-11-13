@@ -18,6 +18,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { groupBans, unbanMember } from './api';
 import { groupError } from './groupError';
+import { heldRow } from '../theme/MotionParts';
 
 /**
  * Who is banned from a group, for its owner and admins, newest first: until
@@ -105,7 +106,8 @@ export function GroupBansScreen({ groupId, onExit }: { groupId: string; onExit: 
                 onPress={() => navigation.navigate('UserProfile', { userId: b.userId })}
                 accessibilityRole="button"
                 accessibilityLabel={`${b.username}, ${until}`}
-                style={[styles.who, { flexDirection: dir.row }]}
+                // held, the row fills as a list row does: who they are opens their profile
+                style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
               >
                 <InitialsAvatar name={b.username} id={b.userId} size={44} photoUrl={b.avatarUrl} />
                 <View style={styles.names}>

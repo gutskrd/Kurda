@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import {
   FlatList,
   Image,
@@ -25,6 +25,7 @@ import { type Category, type ImagePost } from './types';
 import { Icon } from '../theme/Icon';
 import { noticeTime } from '../notifications/inbox';
 import { onPostDeleted } from '../composer/postDeleted';
+import { useQuietRefocus } from '../feed/keep';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -66,26 +67,45 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     [client, category, sort, posts],
   );
 
-  // reload whenever the filters change or the screen refocuses
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      void (async () => {
-        const res = await listPosts(client, { category, sort, limit: PAGE, offset: 0 });
-        if (!active) return;
-        if (res.ok) {
-          setError(null);
-          setEnd(res.data.posts.length < PAGE);
-          setPosts(res.data.posts);
-        } else {
-          setError(res.error);
-        }
-      })();
-      return () => {
-        active = false;
-      };
-    }, [client, category, sort]),
-  );
+  /*
+   * Come back to from a picture, the list is as it was left — every page that
+   * was loaded, at the same place — and is brought up to date quietly
+   * (feed/keep.ts). It used to be replaced by its first page each time.
+   */
+  const first = useCallback(() => listPosts(client, { category, sort, limit: PAGE, offset: 0 }), [client, category, sort]);
+  const { onScroll, forget } = useQuietRefocus<ImagePost>({
+    loaded: posts !== null,
+    list: first,
+    readFirst: async () => {
+      const res = await first();
+      return res.ok ? res.data.posts : null;
+    },
+    keyOf: postId,
+    pageSize: PAGE,
+    apply: (update) => setPosts((prev) => (prev ? update(prev) : prev)),
+    retry: error ? () => void load() : undefined,
+  });
+
+  // the list as it first opens, and again whenever the filters change
+  useEffect(() => {
+    let active = true;
+    forget();
+    void (async () => {
+      const res = await first();
+      if (!active) return;
+      if (res.ok) {
+        setError(null);
+        setEnd(res.data.posts.length < PAGE);
+        setPosts(res.data.posts);
+      } else {
+        setError(res.error);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // `forget` is the same function for as long as the screen is there
+  }, [first]);
 
   // a picture deleted on its own page is gone from here before the list reloads
   useEffect(
@@ -98,8 +118,11 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
+    // read afresh from its top: nothing is held back for the list before
+    forget();
     await load();
     setRefreshing(false);
+    // `forget` is the same function for as long as the screen is there
   }, [load]);
 
   const loadMore = useCallback(async () => {
@@ -178,6 +201,8 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             keyExtractor={(p) => p.id}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
+            onScroll={onScroll}
+            scrollEventThrottle={64}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
@@ -223,6 +248,9 @@ function MemesSkeleton(): React.JSX.Element {
     </View>
   );
 }
+
+/** A picture's own name in the list. */
+const postId = (post: ImagePost): string => post.id;
 
 const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: layout.gutter },

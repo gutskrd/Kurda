@@ -26,6 +26,7 @@ import type { IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import { DIALECT_NAME, LENGTH_KEY, categoryLabel, levelHint, levelName } from './labels';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * The stories library's sort and filter on the phone (Learn → Stories), built
@@ -147,7 +148,7 @@ export function LibraryFilterChips({
         <FilterChip key={p.key} icon={p.icon} label={p.label} clearLabel={p.clear} onOpen={onOpen} onClear={() => onUndo(p.undo)} />
       ))}
       {parts.length >= 2 ? (
-        <Pressable onPress={onClearAll} accessibilityRole="button" hitSlop={8} style={styles.clearAll}>
+        <Pressable onPress={onClearAll} accessibilityRole="button" hitSlop={8} style={({ pressed }) => [styles.clearAll, pressed && heldDim]}>
           <Text style={[styles.clearAllText, { color: colors.primary }]}>{t('stories.filter.clearAll')}</Text>
         </Pressable>
       ) : null}

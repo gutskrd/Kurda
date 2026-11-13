@@ -196,8 +196,7 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
                         autoCapitalize="none"
                         autoCorrect={false}
                         maxLength={USERNAME_MAX}
-                        placeholder="new_username"
-                        placeholderTextColor={colors.textSecondary}
+                        // no example in the field: one was written in English, and the line under the field already says what a name may be made of
                         accessibilityLabel={t('username.new')}
                         editable={!saving && !done}
                       />
@@ -246,7 +245,10 @@ export function ChangeUsernameScreen({ onExit }: { onExit: () => void }): React.
 
             {status.canChange ? (
               <ClayButton
-                label={done ? t('username.saved') : saving ? t('username.saving') : t('username.save')}
+                label={done ? t('username.saved') : t('username.save')}
+                // saving: the button turns and takes no second press, and a screen reader is told what it is doing
+                accessibilityLabel={saving ? t('username.saving') : undefined}
+                busy={saving}
                 tone="primary"
                 onPress={() => void submit()}
                 style={[styles.save, !canSubmit && !done && styles.saveDisabled]}

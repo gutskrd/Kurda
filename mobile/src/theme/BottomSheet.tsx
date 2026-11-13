@@ -26,12 +26,13 @@ import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { SHEET_MAX_WIDTH } from '../reports/sheet';
-import { DragSamples, releaseSpring } from './animate';
+import { DragSamples, releaseSpring, timing } from './animate';
 import { Icon } from './Icon';
-import { DRAG_SLOP } from './motion';
-import { SHEET_MAX, detentHeights, dragOffset, restingOffsets, settleSheet, type SheetDetent } from './sheetMotion';
+import { DRAG_SLOP, duration, pressedDim } from './motion';
+import { SHEET_MAX, detentHeights, dragOffset, leaveMs, restingOffsets, settleSheet, type SheetDetent } from './sheetMotion';
 import { useTheme } from './ThemeProvider';
 import { layout, radii, spacing, typography } from './tokens';
+import { heldDim } from './MotionParts';
 
 export type { SheetDetent } from './sheetMotion';
 
@@ -103,6 +104,11 @@ export function SheetScrollView({ onScroll, scrollEnabled = true, ref, ...props 
  * page above, the ✕, or the system's back gesture closes it too. The ✕ is
  * there with or without a title, so a sheet whose content carries its own
  * heading (an item, a letter) still has it.
+ *
+ * It opens on the interface's own spring, there within 300 ms, and leaves in
+ * the time anything leaving takes — sooner when a flick was already taking it
+ * faster (`leaveMs`). It is closed the moment it has left, so the page behind
+ * takes a tap as soon as it is back in sight.
  *
  * By default it is as tall as its content, never more than nine tenths of
  * the screen. With `detents` it rests at those heights instead — iOS's
@@ -186,13 +192,13 @@ export function BottomSheet({
       return;
     }
     y.setValue(screen);
-    const run = releaseSpring(y, lowest, 0, { kind: 'standard' });
+    const run = releaseSpring(y, lowest, 0, { kind: 'chrome' });
     run.start();
     return () => run.stop();
   }, [visible, reduce, screen, lowest, y]);
 
-  /** Close, unless it may not be closed yet; says whether it is going. `velocity` is a flick's, carried down. */
-  const dismiss = (velocity = 0): boolean => {
+  /** Close, unless it may not be closed yet; says whether it is going. `velocity` is a flick's, and `from` where the finger let go of it. */
+  const dismiss = (velocity = 0, from = rest.current): boolean => {
     if (closing.current) return true;
     if (!dismissible) return false;
     closing.current = true;
@@ -200,7 +206,9 @@ export function BottomSheet({
       onClose();
       return true;
     }
-    releaseSpring(y, (height || screen) + insets.bottom, velocity, { kind: 'standard', clamp: true }).start(() => onClose());
+    const gone = (height || screen) + insets.bottom;
+    // a time, not a spring: it is closed as it leaves the screen, and not most of a second after (`leaveMs`)
+    timing(y, gone, leaveMs(gone - from, velocity, duration.base, duration.quick)).start(() => onClose());
     return true;
   };
 
@@ -247,7 +255,7 @@ export function BottomSheet({
       const v = samples.velocity();
       const to = settleSheet(drag.at, v, now.current);
       // a sheet that may not close yet settles as one let go too soon does
-      if (to === 'close' && now.current.dismiss(v)) return;
+      if (to === 'close' && now.current.dismiss(v, drag.at)) return;
       now.current.settle(to === 'close' ? Math.max(...now.current.stops) : to, v);
     };
     const shared = {
@@ -327,7 +335,7 @@ export function BottomSheet({
               // with heights to move between, the grabber is a control: a tap moves to the next one
               <Pressable
                 onPress={cycle}
-                style={styles.grabberBox}
+                style={({ pressed }) => [styles.grabberBox, pressed && heldDim]}
                 hitSlop={GRABBER_SLOP}
                 accessibilityRole="button"
                 accessibilityLabel={t(growing ? 'sheet.expand' : 'sheet.collapse')}
@@ -344,7 +352,7 @@ export function BottomSheet({
               {onBack ? (
                 <Pressable
                   onPress={onBack}
-                  style={({ pressed }) => [styles.round, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.6 : 1 }]}
+                  style={({ pressed }) => [styles.round, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
                   hitSlop={ROUND_SLOP}
                   accessibilityRole="button"
                   accessibilityLabel={t('common.back')}
@@ -372,7 +380,7 @@ export function BottomSheet({
                 disabled={!dismissible}
                 style={({ pressed }) => [
                   styles.round,
-                  { backgroundColor: colors.controlTrack, opacity: !dismissible ? 0.4 : pressed ? 0.6 : 1 },
+                  { backgroundColor: colors.controlTrack, opacity: !dismissible ? 0.4 : pressed ? pressedDim : 1 },
                 ]}
                 hitSlop={ROUND_SLOP}
                 accessibilityRole="button"

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation, usePreventRemove, type NavigationAction } from '@react-navigation/native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { countriesIn, foldDiacritics } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -255,7 +255,10 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                 anything simply is not offered */}
             {dirty || busy ? (
               <ClayButton
-                label={busy ? t('edit.saving') : t('edit.saveChanges')}
+                label={t('edit.saveChanges')}
+                // saving: the button turns and takes no second press, and a screen reader is told what it is doing
+                accessibilityLabel={busy ? t('edit.saving') : undefined}
+                busy={busy}
                 tone="primary"
                 onPress={() => void save()}
                 style={styles.save}
@@ -345,7 +348,7 @@ function CountryChip({ label, on, onPress }: { label: string; on: boolean; onPre
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       hitSlop={{ top: 4, bottom: 4 }}
-      style={[styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }]}
+      style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }, pressed && heldDim]}
     >
       <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>{label}</Text>
     </Pressable>

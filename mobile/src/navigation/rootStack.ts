@@ -99,22 +99,25 @@ export type RootStackParamList = {
   WordleBattle: { id?: string } | undefined;
   Rhyme: undefined;
   Race: undefined;
-  /** Build a Kurdish Sentence, an exercise of the lessons' practice (games/BuildSentenceScreen, opened from practice/PracticeHubScreen) */
+  /** Build a Sentence, an exercise of the lessons' practice (games/BuildSentenceScreen, opened from practice/PracticeHubScreen) */
   BuildSentence: undefined;
   /** The Memory Thief (games/MemoryThiefScreen) */
   MemoryThief: undefined;
   /** Hear It, Find It, an exercise of the lessons' practice (games/HearItScreen, opened from practice/PracticeHubScreen) */
   HearIt: undefined;
-  /** Kurdish Detective (games/DetectiveScreen) */
+  /** Detective (games/DetectiveScreen) */
   Detective: undefined;
   /** An id when a join code, an invite or an old invite link opened it; nothing when you came to make one. */
   RhymeMatch: { id?: string } | undefined;
   /** The Last Letter: an id for a room (a code, an invite, a card); nothing for the start, with friends or against Hevalo. */
   LastLetter: { id?: string } | undefined;
-  /** Kurdish Impostor: an id for a room (a code, an invite, a card); nothing for the start. */
+  /** Impostor: an id for a room (a code, an invite, a card); nothing for the start. */
   Impostor: { id?: string } | undefined;
-  /** Who Am I?: an id for a race's room; nothing for the start, alone or a race (whoami/WhoAmIScreen) */
-  WhoAmI: { id?: string } | undefined;
+  /**
+   * Who Am I?: an id for a room with friends; nothing for the start. `way` is a card on the Games page asking for
+   * one of the game's two ways at once: on this phone, or with friends online (whoami/WhoAmIScreen).
+   */
+  WhoAmI: { id?: string; way?: 'phone' | 'friends' } | undefined;
   /** An id when an invite link opened it (`/app/games/stories?id=…`): it hands over to that game. */
   Stories: { id?: string } | undefined;
   StoryReader: { slug: string };

@@ -11,7 +11,6 @@ import {
   type DetectiveItemView,
   type EvidenceKind,
   type GameDialect,
-  type SoloResults,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -32,7 +31,7 @@ import { SoloGameShell, type SoloRound } from './SoloGameShell';
 import { useAvailability } from './learnGames';
 
 /**
- * Kurdish Detective on the phone.
+ * Detective on the phone.
  *
  * The case board, top to bottom: the case file's title and story, the
  * suspects' portraits in a row (the app's own characters where one plays a
@@ -43,11 +42,12 @@ import { useAvailability } from './learnGames';
  * look for; the hints and the notebook, which fills with each deduction
  * made, come after it.
  *
- * A card's meaning is found by the deduction it proves, or bought with a
- * hint, as is the case's next written hint; each hint costs a point of XP at
- * the finish, and the screen says so before it is spent. A wrong first try
- * marks the cards to read again, and the verdict comes right under the
- * question (`feedbackInRound`). Last, the accusation: the suspects become
+ * A card's meaning is found by the deduction it proves, or had for a hint,
+ * as is the case's next written hint. A hint costs nothing but itself: a case
+ * has only a few, the screen says how many are left before one is spent, and
+ * that they run out is the whole price. A wrong first try marks the cards to
+ * read again, and the verdict comes right under the question
+ * (`feedbackInRound`). Last, the accusation: the suspects become
  * the buttons, and the solution walks back through every deduction. Nothing
  * on the board moves. The website's games/Detective.tsx stages the same case.
  */
@@ -89,7 +89,7 @@ export function Portrait({ suspect, size = 60 }: { suspect: Pick<Suspect, 'id' |
   );
 }
 
-/** The board as it stands: the round's, with what hints bought and deductions found since. */
+/** The board as it stands: the round's, with what hints showed and deductions found since. */
 function useBoard(round: Round): { board: Board | null; spend: (evidence?: string) => Promise<void>; spending: boolean; error: string | null } {
   const { client } = useAuth();
   const { t } = useI18n();
@@ -366,7 +366,7 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
           <Icon name="lightbulb" size={20} color={colors.textPrimary} />
           <Text style={[...text, styles.panelTitle]}>{t('games.detective.hintsLeft', { n: board.hintsLeft })}</Text>
         </View>
-        <Text style={muted}>{t('games.detective.hintCost')}</Text>
+        <Text style={muted}>{t('games.detective.hintsFew')}</Text>
         {board.hints.map((h, i) => (
           <Text key={i} style={[...text, styles.hint, { backgroundColor: colors.controlTrack }]}>
             {meaningIn(h, locale) ?? h.en}
@@ -396,11 +396,10 @@ function CaseRound({ round, dialect }: { round: Round; dialect: GameDialect }): 
 export function DetectiveScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { t } = useI18n();
-  const { colors, scheme } = useTheme();
+  const { scheme } = useTheme();
   const dialect = useCourseDialect();
   const availability = useAvailability(dialect);
   const [open, setOpen] = useState<string | null>(null);
-  const [deducted, setDeducted] = useState(0);
 
   useEffect(() => {
     let live = true;
@@ -427,8 +426,6 @@ export function DetectiveScreen({ onExit }: { onExit: () => void }): React.JSX.E
       renderRound={(round) => <CaseRound key={round.sessionId} round={round} dialect={dialect} />}
       feedbackInRound
       explain={(why) => (why === 'step' ? t('games.detective.why.step') : why === 'accuse' ? t('games.detective.why.accuse') : null)}
-      onFinished={(results: SoloResults) => setDeducted(results.deducted ?? 0)}
-      resultsExtra={deducted > 0 ? <Text style={{ color: colors.textSecondary }}>{t('games.detective.deducted', { xp: deducted })}</Text> : null}
       onExit={onExit}
       tone={tone.fill}
     />

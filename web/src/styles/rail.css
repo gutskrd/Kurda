@@ -72,7 +72,7 @@
   right: -5px;
 }
 .rail-badge-pop {
-  animation: rail-pop 0.34s cubic-bezier(0.2, 1.5, 0.4, 1);
+  animation: rail-pop var(--dur) var(--ease-spring);
 }
 @keyframes rail-pop {
   from { transform: scale(0.3); opacity: 0; }
@@ -176,13 +176,9 @@
   text-transform: uppercase;
   color: var(--ink-3);
 }
+/* the one close button (ui.css `.close-btn`), here only when the rail is a drawer */
 .rail-close {
   display: none; /* the drawer needs it; the fixed rail does not */
-  border: 0;
-  background: transparent;
-  color: var(--ink-3);
-  cursor: pointer;
-  padding: 2px;
 }
 .rail-body {
   flex: 1;
@@ -223,7 +219,7 @@
 /* the glyph points right; a disclosure triangle points down when open */
 .rail-chevron {
   color: var(--ink-4);
-  transition: transform 0.18s ease;
+  transition: transform var(--dur) var(--ease-out);
 }
 .rail-chevron.is-open {
   transform: rotate(90deg);
@@ -336,7 +332,7 @@
 }
 /* it slid in because it is new — the movement is the "this just happened" */
 .rail-card-in {
-  animation: rail-slide-in 0.32s ease-out;
+  animation: rail-slide-in var(--dur) var(--ease-out);
 }
 @keyframes rail-slide-in {
   from { opacity: 0; transform: translateX(14px); }
@@ -357,7 +353,7 @@
 }
 /* points left to fold the column away, right to bring it back */
 .rail-fold-arrow {
-  transition: transform 0.18s ease;
+  transition: transform var(--dur) var(--ease-out);
 }
 .rail-fold-arrow.is-open {
   transform: rotate(180deg);
@@ -423,10 +419,8 @@
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
   background: var(--panel-bg);
-  -webkit-backdrop-filter: blur(16px);
-  backdrop-filter: blur(16px);
   box-shadow: var(--shadow-lg);
-  animation: rail-toast-in 0.38s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: rail-toast-in var(--dur) var(--ease-emphasis);
 }
 @keyframes rail-toast-in {
   from { opacity: 0; transform: translateX(26px) scale(0.98); }
@@ -485,16 +479,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* where the toast's close button goes (the one close button, ui.css `.close-btn`) */
 .rail-toast-x {
-  flex: none;
-  border: 0;
-  background: transparent;
-  color: var(--ink-4);
-  padding: 0 10px;
-  cursor: pointer;
-}
-.rail-toast-x:hover {
-  color: var(--ink);
+  align-self: center;
+  margin-inline-end: 6px;
 }
 .rail-toast-timer {
   position: absolute;
@@ -555,7 +543,7 @@
     padding-inline-end: calc(var(--rail-w) + 16px);
   }
   .social-rail {
-    transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: width var(--dur) var(--ease-emphasis);
   }
   /* it is above the page, so it needs an edge and a shadow to say so */
   .social-rail:not(.is-collapsed) {
@@ -586,7 +574,7 @@
   .social-rail {
     width: min(var(--rail-w), 86vw);
     transform: translateX(100%);
-    transition: transform 0.26s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform var(--dur) var(--ease-emphasis);
     box-shadow: var(--shadow-lg);
     visibility: hidden;
   }
@@ -595,7 +583,7 @@
     visibility: visible;
   }
   .rail-close {
-    display: block;
+    display: inline-grid;
   }
   .rail-scrim {
     display: block;
@@ -603,7 +591,7 @@
     inset: var(--nav-h) 0 0 0;
     background: rgba(0, 0, 0, 0.5);
     z-index: 39;
-    animation: rail-fade 0.2s ease-out;
+    animation: rail-fade var(--dur) var(--ease-out);
   }
   @keyframes rail-fade {
     from { opacity: 0; }
@@ -667,7 +655,7 @@
   display: flex;
   flex-direction: column;
   background: var(--bg);
-  animation: rail-chat-full-in 0.16s ease-out;
+  animation: rail-chat-full-in var(--dur) var(--ease-out);
 }
 /* room for the keyboard's own bar, and clear of the home indicator */
 .rail-chat .chat-compose {
@@ -703,7 +691,7 @@
     left: auto;
     right: calc(var(--rail-w) + 10px);
     bottom: 12px;
-    transition: right 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: right var(--dur) var(--ease-emphasis);
     z-index: 41;
     display: flex;
     flex-direction: column;
@@ -713,11 +701,9 @@
     border: 1px solid var(--border-strong);
     border-radius: var(--r-lg);
     background: var(--panel-bg);
-    -webkit-backdrop-filter: blur(18px) saturate(1.2);
-    backdrop-filter: blur(18px) saturate(1.2);
     box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
     overflow: hidden;
-    animation: rail-chat-in 0.18s ease-out;
+    animation: rail-chat-in var(--dur) var(--ease-out);
   }
   /* folded to the strip, the rail is 60px wide and the dock sits against that */
   .rail-chat.is-tight {
@@ -769,7 +755,7 @@
   /* quiet until the row is under the pointer, so a list of people stays a list
      of people rather than a list of buttons */
   opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease;
+  transition: opacity var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
 }
 /*
  * Any row, not just a friend's.
@@ -799,23 +785,9 @@
   background: var(--bg);
 }
 
-/* the dock's close sits where a window's close sits: the far end of its bar */
+/* the dock's close sits where a window's close sits: the far end of its bar (the one close button, ui.css `.close-btn`) */
 .chat-dock-close {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
   margin-inline-start: auto;
-  border: 0;
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--ink-4);
-  cursor: pointer;
-}
-.chat-dock-close:hover {
-  color: var(--ink);
-  background: var(--surface-2);
 }
 
 /* a group row is the friend row's shape: name links, bubble docks */
@@ -886,7 +858,7 @@
   [dir='rtl'] .rail-chat {
     right: auto;
     left: calc(var(--rail-w) + 10px);
-    transition: left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: left var(--dur) var(--ease-emphasis);
   }
   [dir='rtl'] .rail-chat.is-tight {
     right: auto;

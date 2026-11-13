@@ -4,6 +4,7 @@ import { layout, radii, spacing, typography } from './tokens';
 import { useTheme } from './ThemeProvider';
 import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
+import { pressedDim } from './motion';
 
 /**
  * A row of filter chips: All · Unread · Groups, People · Words · Lessons.
@@ -68,7 +69,7 @@ export function Chips<T extends string>({
             hitSlop={{ top: 4, bottom: 4 }}
             style={({ pressed }) => [
               styles.chip,
-              { backgroundColor: active ? colors.primary : colors.controlTrack, opacity: pressed ? 0.8 : 1 },
+              { backgroundColor: active ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
             ]}
           >
             <Text style={[styles.text, { color: active ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>

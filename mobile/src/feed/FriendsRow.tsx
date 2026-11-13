@@ -13,6 +13,7 @@ import { bucket, type RailFriend, type SocialRailData } from '../social/rail';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing } from '../theme/tokens';
+import { pressedDim } from '../theme/motion';
 
 /** The face in each circle, and the ring round it with a little air between. */
 const FACE = 58;
@@ -216,7 +217,7 @@ function Face({
 const styles = StyleSheet.create({
   row: { gap: spacing.sm + 4, paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
   face: { width: CIRCLE, alignItems: 'center', gap: 4 },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   ring: {
     width: CIRCLE,
     height: CIRCLE,

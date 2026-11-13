@@ -8,7 +8,7 @@ import { forgetImpostorCategories } from './categories';
 import { ImpostorScreen } from './ImpostorScreen';
 
 /**
- * Kurdish Impostor on the phone, phase by phase: the start where it is
+ * Xapînok on the phone, phase by phase: the start where it is
  * offered and where not, the lobby, a clue turn with the slips the box sees,
  * the impostor's card without the word, the vote, the caught impostor's
  * guess, and the reveal.
@@ -117,7 +117,7 @@ describe('ImpostorScreen', () => {
   it('says plainly where it is not offered, and explains the game where it is', async () => {
     testAuth.client = fakeClient({ ...quiet, ...offered(false) });
     renderWithProviders(<ImpostorScreen onExit={() => undefined} />);
-    expect(await screen.findByText('Kurdish Impostor isn’t offered in this Kurdish yet.')).toBeTruthy();
+    expect(await screen.findByText('Xapînok isn’t offered in this Kurdish yet.')).toBeTruthy();
     cleanup();
     forgetPartyOffers();
     testAuth.client = fakeClient({ ...quiet, ...offered(true) });

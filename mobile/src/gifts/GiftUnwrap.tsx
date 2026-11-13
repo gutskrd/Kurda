@@ -30,6 +30,7 @@ import { SendErrorNotice } from '../reports/SendError';
 import { openGift, wearGift } from './api';
 import { GiftBox, NewrozFlame, Seed, Spark } from './art';
 import { unwrapPlan, type Particle } from './motion';
+import { heldDim } from '../theme/MotionParts';
 
 /** A gift to unwrap: the recipient's own gift id, the card to show, who sent it. */
 export interface UnwrapTarget {
@@ -262,7 +263,7 @@ export function GiftUnwrap({
           ) : null}
           {/* a refused thank-you (a chat mute, the automatic pause) says why here, and the way to Account standing closes this first */}
           <SendErrorNotice error={thanksError} onDismiss={() => setThanksError(null)} onNavigate={onClose} style={styles.notice} />
-          <Pressable onPress={onClose} accessibilityRole="button" style={styles.close}>
+          <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => [styles.close, pressed && heldDim]}>
             <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
           </Pressable>
         </Animated.View>

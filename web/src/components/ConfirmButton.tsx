@@ -73,12 +73,14 @@ export function ConfirmButton({
       role={role}
       className={`${className}${armed ? ' is-armed' : ''}`}
       disabled={disabled || busy}
+      aria-busy={busy || undefined}
       title={title}
-      aria-label={armed ? `${title} — press again to confirm` : title}
+      aria-label={armed ? t('common.pressAgain', { what: title }) : title}
       onBlur={() => setArmed(false)}
       onClick={() => void press()}
     >
-      {busy ? (busyLabel ?? '…') : armed ? confirm : label}
+      {/* while it is being done the button keeps its word, and so its width: nothing beside it moves */}
+      {busy ? (busyLabel ?? label) : armed ? confirm : label}
     </button>
   );
 }

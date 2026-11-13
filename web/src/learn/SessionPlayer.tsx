@@ -32,6 +32,7 @@ import { CloseIcon } from '../components/icons';
 import { Modal } from '../components/Modal';
 import { ErrorState, Loading } from '../components/states';
 import { describeError } from '../lib/api';
+import { forgetAnswers } from '../lib/apiMemory';
 import { prefersReducedMotion } from '../lib/motion';
 import { play as playSound, stop } from '../lib/sound';
 import { haptic } from '../lib/haptics';
@@ -326,9 +327,10 @@ export function SessionPlayer({
   const ready = answering && readyStep === state.index;
 
   useEffect(() => writeReasked(sessionId, state.reasked), [sessionId, state.reasked]);
-  // each exercise opens at its top, its headline in view, wherever the last one was scrolled to
+  // each exercise opens at its top, its headline in view, wherever the last one was scrolled to — at once:
+  // the site scrolls smoothly, and a page gliding up under every Continue is movement nobody asked for
   useLayoutEffect(() => {
-    if (window.scrollY > 0) window.scrollTo({ top: 0 });
+    if (window.scrollY > 0) window.scrollTo({ top: 0, behavior: 'instant' });
   }, [state.index]);
   // leaving mid-sentence should not leave the sentence playing
   useEffect(() => () => stop(), []);
@@ -487,6 +489,9 @@ export function SessionPlayer({
     void client.post<SessionResults>(paths.complete(sessionId)).then((res) => {
       completing.current = false;
       if (res.ok) {
+        // the path, the streak, today's goal, what is due and the league have all just moved: what the app
+        // remembers of them goes, so the next screen is drawn from what this lesson made of them
+        forgetAnswers();
         // a perfect lesson is known from the results alone; the rest waits for where things stand now
         const outcome = { kind, accuracy: res.data.accuracy, skipped: state.skipped.length };
         setResults(res.data);

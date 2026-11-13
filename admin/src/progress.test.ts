@@ -39,7 +39,7 @@ describe('names', () => {
   });
 
   it('names a game on a stored row, one that is no longer played as it was called, and never a blank', () => {
-    expect(gameName('impostor')).toBe('Kurdish Impostor');
+    expect(gameName('impostor')).toBe('Xapînok');
     expect(gameName('bluff')).toBe('Kurdish Bluff (no longer played)');
     expect(gameName('what-would-you-say')).toBe('What Would You Say? (no longer played)');
     // a name nobody has heard of is shown as it is stored

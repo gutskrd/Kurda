@@ -21,6 +21,7 @@ import { NotificationBell } from '../notifications/NotificationBell';
 import { useUnread } from '../messages/unread';
 import { useDirection } from '../reports/direction';
 import { getFeed } from './api';
+import { useQuietRefocus } from './keep';
 import { FeedCard, FeedSkeleton } from './FeedCard';
 import { FriendsRow } from './FriendsRow';
 import type { FeedItem } from './types';
@@ -56,6 +57,10 @@ const PAGE = 20;
  * dot while any are unread. Under it, the row of friends' faces, then the
  * filters, then the posts, which run the full width of the screen: a picture
  * is the size of the phone, not of a card on it.
+ *
+ * The wall is read from its skeleton twice only: as it first opens, and when
+ * the way of reading it changes. Coming back to it keeps the posts and the
+ * place, and brings it up to date without a sign of doing so.
  */
 export function CivakScreen(): React.JSX.Element {
   const { client } = useAuth();
@@ -96,6 +101,27 @@ export function CivakScreen(): React.JSX.Element {
     [client, filter],
   );
 
+  /*
+   * Coming back to the wall — from a post, a profile, the composer, another
+   * tab — finds it as it was left: the same posts, at the same place, brought
+   * up to date without a sign of it (feed/keep.ts). It used to be emptied and
+   * asked for again on every return, so a reader twenty posts down opened
+   * one, came back, and was at the top of a grey page. A first load that
+   * failed is asked for again in full.
+   */
+  const { onScroll, forget } = useQuietRefocus<FeedItem>({
+    loaded: items !== null,
+    list: fetchPage,
+    readFirst: async () => {
+      const res = await fetchPage(0);
+      return res.ok ? (res.data.items ?? []) : null;
+    },
+    keyOf: feedKey,
+    pageSize: PAGE,
+    apply: (update) => setItems((prev) => (prev ? update(prev) : prev)),
+    retry: error ? () => void refresh() : undefined,
+  });
+
   // the bell's dot is worth getting right on the screen it sits on
   useFocusEffect(
     useCallback(() => {
@@ -103,36 +129,43 @@ export function CivakScreen(): React.JSX.Element {
     }, [refreshBadges]),
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      setItems(null);
-      void (async () => {
-        const res = await fetchPage(0);
-        if (!active) return;
-        if (res.ok) {
-          setItems(res.data.items ?? []);
-          setEnd((res.data.items ?? []).length < PAGE);
-          setError(null);
-        } else {
-          setError(res.error);
-        }
-      })();
-      return () => {
-        active = false;
-      };
-    }, [fetchPage]),
-  );
+  /*
+   * The wall as it first arrives, and from its skeleton again when the way
+   * of reading it changes (another order, another kind of post): those are
+   * the two times nothing that is on the screen is worth keeping.
+   */
+  useEffect(() => {
+    let active = true;
+    setItems(null);
+    forget();
+    void (async () => {
+      const res = await fetchPage(0);
+      if (!active) return;
+      if (res.ok) {
+        setItems(res.data.items ?? []);
+        setEnd((res.data.items ?? []).length < PAGE);
+        setError(null);
+      } else {
+        setError(res.error);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // `forget` is the same function for as long as the screen is there
+  }, [fetchPage]);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
     const res = await fetchPage(0);
     if (res.ok) {
+      forget();
       setItems(res.data.items ?? []);
       setEnd((res.data.items ?? []).length < PAGE);
       setError(null);
     }
     setRefreshing(false);
+    // `forget` is the same function for as long as the screen is there
   }, [fetchPage]);
 
   // a pull asks the friends row again too: who is online moves faster than the wall
@@ -210,6 +243,8 @@ export function CivakScreen(): React.JSX.Element {
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(onPull)} tintColor={colors.textSecondary} />}
           onEndReached={loadMore}
           onEndReachedThreshold={0.5}
+          onScroll={onScroll}
+          scrollEventThrottle={64}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
             <>
@@ -278,6 +313,9 @@ export function CivakScreen(): React.JSX.Element {
     </GradientBackground>
   );
 }
+
+/** A post's own name on the wall: a repost and the post it repeats are two. */
+const feedKey = (item: FeedItem): string => item.key;
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },

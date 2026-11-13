@@ -39,6 +39,7 @@ import {
   tierName,
   unitWord,
 } from './format';
+import { pressedDim } from '../theme/motion';
 
 /**
  * Badges (contract 4 §B, §U): every badge by family, the tier each has
@@ -190,7 +191,7 @@ function Showcase({ data, onPick, onOpen }: { data: BadgesResponse; onPick: () =
                 disabled={earned === 0}
                 accessibilityRole="button"
                 accessibilityLabel={t('badges.showcaseEmpty')}
-                style={({ pressed }) => [styles.slot, { opacity: pressed ? 0.7 : 1 }]}
+                style={({ pressed }) => [styles.slot, { opacity: pressed ? pressedDim : 1 }]}
               >
                 <View style={[styles.emptySlot, { backgroundColor: colors.controlTrack }]}>
                   <Icon name="plus" size={20} color={colors.textSecondary} />
@@ -480,7 +481,7 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
               accessibilityLabel={badgeLabel(t, b)}
               style={({ pressed }) => [
                 styles.pick,
-                { backgroundColor: colors.controlTrack, borderColor: on ? colors.textPrimary : 'transparent', opacity: pressed ? 0.8 : !on && keys.length >= SHOWCASE_SIZE ? 0.5 : 1 },
+                { backgroundColor: colors.controlTrack, borderColor: on ? colors.textPrimary : 'transparent', opacity: pressed ? pressedDim : !on && keys.length >= SHOWCASE_SIZE ? 0.5 : 1 },
               ]}
             >
               <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={b.tierCount} size={56} label={badgeLabel(t, b)} />

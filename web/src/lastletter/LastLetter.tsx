@@ -45,7 +45,7 @@ export function LastLetter(): React.JSX.Element {
   const id = params.get('id');
   return (
     <div className="container game-page ll-page gs" style={stageTone('last-letter')}>
-      <GameHead game="last-letter" title={t('games.lastLetter.name')} />
+      <GameHead game="last-letter" title={t('games.lastLetter.name')} meaning={t('games.lastLetter.meaning')} />
       {id ? <Room key={id} id={id} /> : <Start />}
     </div>
   );

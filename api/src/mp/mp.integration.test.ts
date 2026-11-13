@@ -1,5 +1,5 @@
 /**
- * The multiplayer learning games' engine and The Last Letter on it, through
+ * The multiplayer learning games' engine and Tîpa Dawî on it, through
  * the routes, against real Postgres: a lobby's life from invite to rematch,
  * turns that run out, players who go away or leave, what each player may see,
  * placement XP and Game Ranks, the join rule for minors and blocks, reports by
@@ -366,7 +366,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
     expect(evidence.rows[0]!.evidence.extra!.typed!.map((t) => t.text)).toEqual(['qzqzq']);
   });
 
-  it('plays one person against Hevalo, who plays only curated words, and pays per new word', async () => {
+  it('plays one person against Hevalo, who plays only curated words, and pays nothing for it', async () => {
     const me = await register('solo');
     const made = await call(me, 'POST', '/mp/last-letter/solo', { dialect: 'kmr', turnSeconds: 30 });
     expect(made.status).toBe(201);
@@ -386,12 +386,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('multiplayer learning games (integr
       const curated = await pool.query(`SELECT 1 FROM dict_entries WHERE dialect = 'kurmanji' AND in_games AND headword_folded = $1`, [dictionaryKey(w)]);
       expect(curated.rowCount, w).toBeGreaterThan(0);
     }
-    // the person leaves: the game ends, and each of their words paid once
+    // the person leaves: the game ends, and nothing is paid for it. Nobody else was playing, and XP is for games with other people.
     await call(me, 'POST', `/mp/last-letter/${v.id}/leave`);
     await vi.waitFor(async () => expect((await view(me, v.id)).status).toBe('finished'));
-    const words = (await view(me, v.id)).board!.chain.filter((w) => w.seat === v.me!.seat).length;
-    const paid = await pool.query(`SELECT count(*)::int AS n FROM xp_ledger WHERE user_id = $1 AND source = 'game_last_letter_solo'`, [me.id]);
-    expect(paid.rows[0]!.n).toBe(words);
+    const done = await view(me, v.id);
+    expect((done.results ?? []).every((r) => (r.xpAwarded ?? 0) === 0)).toBe(true);
+    const paid = await pool.query(`SELECT count(*)::int AS n FROM xp_ledger WHERE user_id = $1`, [me.id]);
+    expect(paid.rows[0]!.n).toBe(0);
   });
 
   it('says where the game is offered', async () => {

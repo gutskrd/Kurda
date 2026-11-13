@@ -83,6 +83,36 @@ describe('an empty group chat', () => {
     expect(screen.queryByText('Say hello in Kurdish')).toBeNull();
   });
 
+  it('shows a greeting in the thread at once, as one on its way, until the server has it', async () => {
+    let answer: (result: unknown) => void = () => undefined;
+    open({
+      'GET /groups/g1/chat': ok({ messages: [], cleared: { forEveryone: null, forMe: null } }),
+      'POST /groups/g1/chat': () => new Promise((resolve) => (answer = resolve)),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Rojbaş!' }));
+    // said, before the server has answered: the welcome gives way to the thread, with the message marked as on its way
+    const sending = await screen.findByTestId('message-sending');
+    expect(sending.textContent).toContain('Rojbaş!');
+    expect(screen.queryByText('Say hello in Kurdish')).toBeNull();
+    await act(async () => answer(ok(sent('Rojbaş!'))));
+    expect(screen.queryByTestId('message-sending')).toBeNull();
+    expect(screen.getAllByText('Rojbaş!')).toHaveLength(1);
+  });
+
+  it('takes a greeting the server refuses out of the thread again', async () => {
+    let answer: (result: unknown) => void = () => undefined;
+    open({
+      'GET /groups/g1/chat': ok({ messages: [] }),
+      'POST /groups/g1/chat': () => new Promise((resolve) => (answer = resolve)),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Rojbaş!' }));
+    expect(await screen.findByTestId('message-sending')).toBeTruthy();
+    await act(async () => answer(fail({ message: 'Could not send.' })));
+    // never left looking sent: the chat is empty again, and says why
+    expect(screen.queryByTestId('message-sending')).toBeNull();
+    expect(screen.getByText('Could not send.')).toBeTruthy();
+  });
+
   it('greets in Soranî for a learner of Soranî', async () => {
     rememberCourseDialect('sorani', memoryStore());
     open({ 'GET /groups/g1/chat': ok({ messages: [] }) });

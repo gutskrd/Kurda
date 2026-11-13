@@ -2,7 +2,7 @@ import { useId, useMemo } from 'react';
 import { impostorCategorySvg, impostorEmblemSvg, impostorWaySvg, type ImpostorEmblem, type ImpostorWay } from '@kurda/shared';
 
 /**
- * Kurdish Impostor's pictures on the website: a category's, a way to play's
+ * Impostor's pictures on the website: a category's, a way to play's
  * and the game's own emblem, drawn from the shared art
  * (shared/src/art/impostor.ts) so the phone shows the same ones.
  *

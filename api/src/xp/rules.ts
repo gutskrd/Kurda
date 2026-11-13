@@ -20,13 +20,21 @@ import { ACCURACY_BONUS_XP, BASE_LESSON_XP, LEARN_GAME_XP_SOURCES, REPEAT_XP_FAC
 /** Learning: these join the week's league and build streaks (see `isLearningSource`). */
 export const LEARNING_XP_SOURCES = ['lesson_complete', 'practice_complete', 'story'] as const;
 /**
- * Games: rated or friendly, solo or not — all of them share one daily league
- * cap. The learning games' sources come from their registry
- * (`LEARN_GAME_XP_SOURCES` in @kurda/shared), so a game added there is under
- * the cap the day it is added: a source missing from this list would escape
- * it. A solo learning round still counts for the streak and the daily goal
- * when at least half of it was right (games/rewards.ts), but its XP is game
- * XP here.
+ * Games: rated or friendly — all of them share one daily league cap. The
+ * learning games' sources come from their registry (`LEARN_GAME_XP_SOURCES`
+ * in @kurda/shared), so a game added there is under the cap the day it is
+ * added: a source missing from this list would escape it.
+ *
+ * Only a game played online with other people pays game XP now. A game played
+ * alone pays none: Peyvok (`wordle`), rhyme training (`rhyme`), the typing
+ * race (`race`), Memory Thief, Detective and The Last Letter against
+ * Hevalo no longer write to the ledger, and neither does a game on one phone
+ * passed round a room, which never did. Their sources stay in this list
+ * because the ledger still holds what they paid while they did: that XP keeps
+ * counting as game XP, under the cap, as it did the day it was earned. The
+ * lessons' own exercises (Build a Sentence, Hear It, Find It) still
+ * pay from game sources, and a solo round still counts for the streak and the
+ * daily goal when at least half of it was right (games/rewards.ts).
  */
 export const GAME_XP_SOURCES: readonly string[] = ['wordle', 'wordle_battle', 'rhyme', 'rhyme_match', 'race', ...LEARN_GAME_XP_SOURCES];
 

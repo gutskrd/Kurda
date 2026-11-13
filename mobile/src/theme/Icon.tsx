@@ -1,8 +1,11 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Animated, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Easing, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Path, SvgXml } from 'react-native-svg';
 import { coinSvg, gemSvg } from '@kurda/shared';
+import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { timing } from './animate';
+import { PULSE_MS } from './motion';
 import { useTheme } from './ThemeProvider';
 import { ICON_PATHS, ICON_VIEWBOX, type IconName } from './icon-paths';
 
@@ -100,19 +103,24 @@ export function BreathingIcon({
   const reduce = useReducedMotion();
   const opacity = useRef(new Animated.Value(1)).current;
 
+  // only while its page is the one in front: left behind another screen, it has nobody to breathe for
+  const alive = useMotionAlive();
   useEffect(() => {
-    if (reduce) return;
+    if (!alive) return;
     // a few breaths and then still: a hero that pulses for ever pulls at the eye while the form under it is filled in
     const loop = Animated.loop(
       Animated.sequence([
-        Animated.timing(opacity, { toValue: 0.4, duration: 1700, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 1, duration: 1700, useNativeDriver: true }),
+        timing(opacity, 0.4, PULSE_MS.breath, { easing: Easing.inOut(Easing.sin) }),
+        timing(opacity, 1, PULSE_MS.breath, { easing: Easing.inOut(Easing.sin) }),
       ]),
       { iterations: breaths },
     );
     loop.start();
-    return () => loop.stop();
-  }, [reduce, opacity, breaths]);
+    return () => {
+      loop.stop();
+      opacity.setValue(1);
+    };
+  }, [alive, opacity, breaths]);
 
   return (
     <Animated.View style={{ opacity: reduce ? 1 : opacity }}>

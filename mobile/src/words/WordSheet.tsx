@@ -31,6 +31,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import type { WordsAudio } from './audio';
 import { DayName, Digits, Swatch, WordText, dateIn, meaningOf } from './parts';
+import { pressedDim } from '../theme/motion';
 
 /**
  * One word, open, as a letter opens on the alphabet (LetterSheet): the word
@@ -282,7 +283,7 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
       }}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.step, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.step, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
       <Icon name={icon} size={20} color={colors.primary} style={dir.flip ?? undefined} />
     </Pressable>

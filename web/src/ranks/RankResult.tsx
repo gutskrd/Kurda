@@ -176,7 +176,7 @@ function CountedResult({
         {!placing && (
           <div className="rank-progress">
             <div className="rank-progress-bar" aria-hidden="true">
-              <span className={`rank-progress-fill${reduced ? '' : ' is-animated'}`} style={{ width: `${Math.max(3, bar * 100)}%` }} />
+              <span className={`rank-progress-fill${reduced ? '' : ' is-animated'}`} style={{ '--p': Math.min(1, Math.max(0.03, bar)) } as React.CSSProperties} />
             </div>
             <span className="rank-progress-label">
               {next ? t('ranks.toNext', { points: after.pointsToGo ?? 0, next }) : t('ranks.topOfClimb')}

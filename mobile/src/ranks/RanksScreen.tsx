@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   FEW_PLAYERS,
   RANKED_GAMES,
@@ -21,6 +21,7 @@ import { AsyncBoundary } from '../net/AsyncBoundary';
 import { usePullRefresh } from '../net/usePullRefresh';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { Chips } from '../theme/Chips';
 import { GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -36,6 +37,7 @@ import { TIER_NAME_KEY, cardHeadline, daysLeftText, nextStepText, rankLabel, ran
 import { Meter } from './Meter';
 import { ShieldPips } from './RankCard';
 import { PLACING_TINT, rankTint } from './tint';
+import { PressableScale } from '../theme/MotionParts';
 
 /**
  * One game's rank up close (contract 4 §R, §U): the emblem large, the points
@@ -80,17 +82,18 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
     <GradientBackground>
       <ScreenHeader title={t('ranks.title')} onBack={onExit} />
       <View style={styles.picker}>
-        <Segmented<RankedGame> options={RANKED_GAMES} value={game} onChange={setGame} labelOf={(g) => t(GAME_NAME_KEY[g])} groupLabel={t('play.sheet.game')} />
+        {/* six games, each as wide as its name and the row scrolling: shared out in sixths, every name was cut to its first letters */}
+        <Chips<RankedGame> options={RANKED_GAMES} value={game} onChange={setGame} labelOf={(g) => t(GAME_NAME_KEY[g])} />
       </View>
       <AsyncBoundary loading={!ranks && !error} error={!ranks ? error : null} onRetry={load} skeleton={<RanksSkeleton />}>
         {() =>
           ranks && card ? (
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} refreshControl={pull}>
               <Hero card={card} />
-              <Pressable
+              <PressableScale
                 onPress={() => navigation.navigate('Season')}
                 accessibilityRole="button"
-                style={({ pressed }) => [styles.seasonRow, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+                style={[styles.seasonRow, { backgroundColor: colors.controlTrack }]}
               >
                 <Icon name="calendar" size={18} color={colors.textSecondary} />
                 <View style={styles.flex}>
@@ -104,7 +107,7 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
                   </Text>
                 </View>
                 <Icon name="chevron-right" size={16} color={colors.textSecondary} />
-              </Pressable>
+              </PressableScale>
               <Ladder card={card} />
               <Boards game={game} />
             </ScrollView>

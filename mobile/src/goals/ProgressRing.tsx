@@ -1,5 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
+import { Icon } from '../theme/Icon';
 import { typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { goalPercentLabel, ringStroke } from './format';
@@ -40,7 +41,7 @@ export function ProgressRing({ progress, completed, caption, size = 140 }: Props
         />
       </Svg>
       <View style={styles.center}>
-        <Text style={[styles.pct, { color: tint }]}>{completed ? '✓' : goalPercentLabel(progress)}</Text>
+        {completed ? <Icon name="check" size={typography.sizes.xl + 4} color={tint} /> : <Text style={[styles.pct, { color: tint }]}>{goalPercentLabel(progress)}</Text>}
         <Text style={[styles.caption, { color: colors.textSecondary }]}>{caption}</Text>
       </View>
     </View>

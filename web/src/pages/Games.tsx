@@ -91,7 +91,25 @@ export function featuredGame(games: readonly GameEntry[], now: number): GameEntr
   return today === null ? null : ready[today]!;
 }
 
-/** The tint a game's card and picture tile wear: its emblem's own colour. */
+/**
+ * What each game's name means, said in the reader's language under it. A
+ * game's name is Kurmancî in every language the app speaks ("Xapînok", not
+ * "Impostor"), which teaches a word and tells a newcomer nothing: the line
+ * under it does the telling. Peyvok is a made-up word and means only itself;
+ * where the interface is Kurdish the meaning is the name again, and is not
+ * said twice.
+ */
+const MEANING: Partial<Record<GameEmblem, MessageKey>> = {
+  rhyme: 'games.rhyme.meaning',
+  race: 'games.race.meaning',
+  'memory-thief': 'games.memory.meaning',
+  detective: 'games.detective.meaning',
+  'last-letter': 'games.lastLetter.meaning',
+  impostor: 'games.impostor.meaning',
+  'who-am-i': 'games.whoAmI.meaning',
+};
+
+/** The colour a game's card takes at its edge under a hand: the game's own. */
 const toneOf = (id: GameEmblem): React.CSSProperties => ({ '--gp-tone': gameEmblemTone(id) }) as React.CSSProperties;
 
 /** Who a game is played with, said in small beside a single way in. */
@@ -110,9 +128,12 @@ function Company({ company }: { company: readonly Company[] }): React.JSX.Elemen
 }
 
 /**
- * A game's ways in. Signed in: one button for each page it has, the first in
- * gold. Signed out there is nothing to open — every game keeps its score on
- * the server against the player — so the one thing offered is the way to an
+ * A game's ways in. Signed in: one button for each page it has. Only the game
+ * put forward has its first in gold (`large`): gold is the one thing to press
+ * on a screen, and a shelf where every card had a gold button had eight of
+ * them. On the shelf the ways in are the quiet buttons, all of one weight.
+ * Signed out there is nothing to open — every game keeps its score on the
+ * server against the player — so the one thing offered is the way to an
  * account.
  */
 function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: boolean; large?: boolean }): React.JSX.Element {
@@ -130,7 +151,7 @@ function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: bo
   return (
     <div className="gp-ways">
       {game.ways.map((way, i) => (
-        <Link key={way.href} to={way.href} className={`btn ${i === 0 ? 'btn-primary gp-play' : 'btn-secondary'}${size}`}>
+        <Link key={way.href} to={way.href} className={`btn ${i === 0 && large ? 'btn-primary gp-play' : 'btn-secondary'}${size}`}>
           {t(way.labelKey)}
         </Link>
       ))}
@@ -138,18 +159,26 @@ function Ways({ game, signedIn, large = false }: { game: GameEntry; signedIn: bo
   );
 }
 
-/** One game: its picture on a tile of its own colour, what it is, and its ways in. */
+/** One game: its cover, what it is, and its ways in. */
 function GameCard({ game, signedIn, hero = false, place = 0 }: { game: GameEntry; signedIn: boolean; hero?: boolean; place?: number }): React.JSX.Element {
   const t = useT();
+  // a hand on a shelf card — over it, on it, or the keyboard in it — plays its emblem through once more
+  const [again, setAgain] = useState(0);
+  const stir = hero ? undefined : (): void => setAgain((n) => n + 1);
+  const name = t(game.nameKey);
+  const meaningKey = MEANING[game.id];
+  const meaning = meaningKey ? t(meaningKey) : null;
   return (
-    <article className={`gp-card${hero ? ' gp-card--hero' : ''}`} style={toneOf(game.id)}>
+    <article className={`gp-card${hero ? ' gp-card--hero' : ''}`} style={toneOf(game.id)} onPointerEnter={stir} onPointerDown={stir} onFocus={stir}>
       <div className="gp-card-art">
-        {/* every emblem plays its own loop, each card a little after the one before, so the shelf never moves as one */}
-        <GameArt game={game.id} size={hero ? 148 : 84} moving after={hero ? 0 : 900 + place * 1300} />
+        {/* the game put forward acts for as long as it is in view; on the shelf each cover plays through once as it
+            arrives, a moment after the card before it, and then rests — one thing moving at a time, never the shelf */}
+        {hero ? <GameArt game={game.id} size={164} moving /> : <GameArt game={game.id} size={104} moving="once" after={300 + place * 160} again={again} />}
       </div>
       <div className="gp-card-text">
         {hero && <p className="gp-kicker">{t('games.featured')}</p>}
-        <h3 className="gp-card-name">{t(game.nameKey)}</h3>
+        <h3 className="gp-card-name">{name}</h3>
+        {meaning && meaning !== name && <p className="gp-card-meaning">{meaning}</p>}
         <p className="gp-card-body">{t(hero ? game.bodyKey : game.lineKey)}</p>
         {/* two pages say who each is for on their buttons; one page for both says it here */}
         {game.ways.length === 1 && <Company company={game.company} />}

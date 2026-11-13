@@ -110,7 +110,7 @@ export interface SoloSessionView<Item, Board = unknown> {
   maxAttempts: number;
   finished: boolean;
   expiresAt: string;
-  /** what the whole round shares beside its items, for a game that has one (Kurdish Detective's case board) */
+  /** what the whole round shares beside its items, for a game that has one (Detective's case board) */
   board?: Board;
 }
 
@@ -147,8 +147,6 @@ export interface SoloResults {
   items: Array<{ index: number; correct: boolean; firstTry: boolean; xp: number; repeat: boolean }>;
   /** the streak after the round, when it counted */
   streak: number | null;
-  /** XP the round's own costs took off what its answers earned (Kurdish Detective's hints); absent when none */
-  deducted?: number;
 }
 
 /** Whether a game can be played now, per variety and content level (GET /games/availability). */

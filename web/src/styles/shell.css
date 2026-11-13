@@ -1029,16 +1029,43 @@
   font-weight: 600;
   text-decoration: none;
   white-space: nowrap;
+  /* the last of these is the press, let go (the end of this sheet) */
   transition:
     background var(--dur-fast) ease,
-    color var(--dur-fast) ease;
+    color var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
 }
 .switch-btn:hover {
   color: var(--ink);
 }
-.switch-btn.is-active {
+/*
+ * "This one", drawn one way.
+ *
+ * Picking one of a few was drawn four ways: the page's ink as a pill here, a
+ * raised grey card on League | Leaderboard one tap away, a grey pill on a
+ * profile's tabs and the photo editor's tools, the gold tint on the editor's
+ * second row. The same answer to the same question now looks the same
+ * wherever it is asked: the chosen half of a switch, the chosen tab, the
+ * chosen segment and the chosen option wear the page's ink, with the page's
+ * ground for their words — as a chosen chip already did (`.chip.active`,
+ * pages.css; the shop's tabs; the Games page's filter). It is said here, once,
+ * after each control's own rules, and nowhere else.
+ */
+.switch-btn.is-active,
+.rankings-tab.is-active,
+.rank-by-btn.is-active,
+.seg-btn.is-active,
+.mkp-tab.is-active,
+.wordle-layout-option.is-on {
+  border-color: var(--primary);
   background: var(--primary);
   color: var(--primary-ink);
+}
+/* what sits inside a chosen one takes its ink: a mark coloured for the page would be lost on it */
+.rank-by-btn.is-active .rank-by-xp,
+.mkp-tab.is-active .mkp-tab-hidden {
+  border-color: currentColor;
+  color: inherit;
 }
 @media (max-width: 768px) {
   .learn-head .switch {
@@ -1100,6 +1127,12 @@
 }
 .learn-strip-ring.is-met .learn-strip-ring-fill {
   stroke: var(--gold);
+}
+/* the mark of done beside what was earned, once today's goal is passed */
+.learn-strip-done {
+  flex: none;
+  margin-inline-start: -2px;
+  color: var(--success);
 }
 /* review waiting: the one item here that opens something */
 .learn-strip-chip {
@@ -1256,12 +1289,12 @@
 .games-rankings-title {
   font-weight: 700;
 }
+/* a sentence, so it wraps: on one line it lost its end on a phone, and the longer Arabic and Soranî lost more */
 .games-rankings-sub {
   font-size: var(--text-secondary);
+  line-height: 1.35;
   color: var(--ink-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-wrap: pretty;
 }
 .games-rankings-go {
   flex: none;
@@ -1459,28 +1492,37 @@
 }
 
 /* ---- your profile ------------------------------------------------------ */
-.profile-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-3);
-  margin-bottom: var(--space-4);
-}
-.profile-head-name {
-  min-width: 0;
-  font-family: var(--font-sans);
-  font-size: var(--text-section);
-  font-weight: 700;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 .profile-menu {
   position: relative;
 }
 .profile-menu-btn .nav-bell-dot {
   top: 10px;
   inset-inline-end: 10px;
+}
+/*
+ * In the row of what you can do with your profile the menu's button is drawn
+ * as the two beside it are, a bordered pill of their height, and as the "more"
+ * on anybody else's profile is. It is still a whole fingertip to press: the
+ * target reaches a little past what is drawn.
+ */
+.profile-actions-row {
+  align-items: center;
+}
+.profile-actions-row .profile-menu-btn {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--ink-2);
+}
+.profile-actions-row .profile-menu-btn::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.profile-actions-row .profile-menu-btn .nav-bell-dot {
+  top: 5px;
+  inset-inline-end: 5px;
 }
 /* it hangs from the button, down into the page, not up under the bar */
 .profile-menu-list {
@@ -1512,24 +1554,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-}
-
-/* ---- what stays in place while a page scrolls ------------------------- */
-
-/*
- * The bar is fixed to the top (layout.css) and the social column to the side
- * (rail.css). A page's own side column is the third: on a wide screen it stays
- * in view under the bar while the main column scrolls past it, the way the
- * alphabet's chart does — on a profile, the facts beside the posts.
- */
-@media (min-width: 761px) {
-  .mkp-body {
-    align-items: start;
-  }
-  .mkp-side {
-    position: sticky;
-    top: calc(var(--nav-bottom) + var(--space-4));
-  }
 }
 
 /*
@@ -1660,10 +1684,145 @@
     min-width: 44px;
     min-height: 44px;
   }
+  /* the ⋯ beside a person, undo and redo, the framer's zoom: small squares with room round them, so they grow */
+  .user-actions-btn,
+  .editor-history-btn,
+  .framer-zoom-btn {
+    width: 44px;
+    height: 44px;
+  }
+  .check,
+  .mkp-friend,
+  .learn-strip-chip,
+  .verify-address,
+  .btn.cosmetic-action {
+    min-height: 44px;
+  }
+  /*
+   * Words that are pressed — a quiet link in a sentence, the way back above a
+   * heading — and the round buttons that sit in a line of text or inside a
+   * field keep their size: growing them would push the lines round them
+   * apart. What grows is the area that answers a finger, out past their edges
+   * to 44px (each is its own anchor for it: the `:where` rule under this
+   * block).
+   */
+  .link-btn::after,
+  .link-button::after,
+  .back-link::after,
+  .rank-card-more::after,
+  .story-replay::after,
+  .chat-jump::after,
+  .ab-sound::after,
+  .settings-search-clear::after,
+  .nav-search-clear::after {
+    content: '';
+    position: absolute;
+    inset: -12px -8px;
+  }
+  /* 24px, in the story's own line */
+  .story-replay::after {
+    inset: -10px;
+  }
+  /* 32px tall, and already wide */
+  .chat-jump::after,
+  .rank-card-more::after {
+    inset: -6px 0;
+  }
+  /* 36px round */
+  .ab-sound::after,
+  .settings-search-clear::after {
+    inset: -4px;
+  }
+  /* 28px, in a letter's own row */
+  .ab-sound--sm::after {
+    inset: -8px;
+  }
+  /* 32px in the bar's field; 40px on a phone, where this is more than it needs and harms nothing */
+  .nav-search-clear::after {
+    inset: -6px;
+  }
   .profile-progress-link {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+  }
+  /* the anchor for the wider area above, at no weight at all: a control placed some other way by its own rule keeps that */
+  :where(.link-btn, .link-button, .back-link, .rank-card-more, .story-replay, .chat-jump, .ab-sound) {
+    position: relative;
+  }
+}
+
+/* ---- and an answer to every press ---------------------------------------- */
+/*
+ * A button gives under the finger (`.btn`, ui.css) and a lesson's tile sinks
+ * (motion.css). These are the rest of what can be pressed, which answered a
+ * mouse coming over them and nothing else — so on a phone, where there is no
+ * hover, they did not answer at all. Two rules, by what the thing is.
+ *
+ * A pill — a like, a tab, a segment, the + — gives the way a button does: a
+ * hair smaller under the finger, and it springs back when let go.
+ *
+ * A row and a bare icon are not scaled: a row a screen wide that shrank would
+ * lurch, and an icon has no edge to give. They answer in their ground, a step
+ * past the hover's, on the frame of the press rather than after a fade.
+ *
+ * Here, after every hover and every "this is the one you are on" these have to
+ * outrank, and not in motion.css, which comes before this sheet.
+ */
+.fcard-act,
+.seg-btn,
+.rankings-tab,
+.mkp-tab,
+.post-plus {
+  transition: transform var(--dur) var(--ease-spring);
+}
+.fcard-act:active:not(:disabled),
+.switch-btn:active,
+.seg-btn:active:not(:disabled),
+.rankings-tab:active:not(:disabled),
+.mkp-tab:active:not(:disabled),
+.post-plus:active:not(:disabled) {
+  transform: scale(var(--press-scale));
+  transition-duration: 80ms;
+}
+.nav-link:active,
+.list-row-main:active,
+.icon-btn:active:not(:disabled),
+.nav-bell:active,
+.nav-toggle:active,
+.user-menu-item:active:not(:disabled),
+.chat-convo:active,
+.learn-tool-link:active,
+.games-rankings:active {
+  background: var(--surface-3);
+  transition-duration: 0s;
+}
+/*
+ * For a reader who asked for less motion the pills stay their size and answer
+ * as the rows do, in their ground — but for the one that is already chosen,
+ * whose ground is its ink's opposite and has to stay that.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .fcard-act:active:not(:disabled),
+  .switch-btn:active,
+  .seg-btn:active:not(:disabled),
+  .rankings-tab:active:not(:disabled),
+  .mkp-tab:active:not(:disabled),
+  .post-plus:active:not(:disabled) {
+    transform: none;
+  }
+  .fcard-act:active:not(:disabled),
+  .switch-btn:active:not(.is-active),
+  .seg-btn:active:not(:disabled, .is-active),
+  .rankings-tab:active:not(:disabled, .is-active),
+  .mkp-tab:active:not(:disabled, .is-active) {
+    background: var(--surface-3);
+  }
+  .post-plus:active:not(:disabled) {
+    background: var(--primary-hover);
+  }
+  .post-plus.is-secondary:active:not(:disabled) {
+    background: var(--surface-3);
   }
 }
 
@@ -1673,7 +1832,6 @@
  * end ("baran@"); each handle takes its direction from its own letters.
  */
 .pc-handle,
-.mkp-online-sub,
 .friend-handle,
 .list-row-sub,
 .invite-friend-handle {

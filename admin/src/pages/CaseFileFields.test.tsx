@@ -7,7 +7,7 @@ import { withKit } from '../test/render';
 import { GameContent } from './GameContent';
 
 /**
- * Kurdish Detective's case files on the Game content page: a case's evidence
+ * Detektîf's case files on the Game content page: a case's evidence
  * is picked card by card from published lines, with its English and
  * recording key copied, and its Kurdish is shown and never typed.
  */

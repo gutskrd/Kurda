@@ -1,80 +1,71 @@
 /**
- * Who Am I? played alone: a round of WHO_AM_I_ROUND_ITEMS hidden identities.
- * For each, the player asks yes/no questions from the approved templates
- * (`POST /games/who-am-i/sessions/:id/ask`), the answers coming from the
- * identity's facts table, and then guesses from its tiles through the solo
- * kit's answer route — two guesses, as every solo item has two tries.
+ * Who Am I? on the server, beside the table itself (mp/games/who-am-i.ts):
+ * what a table is dealt from, how a whole table is dealt, and the game on one
+ * phone passed round a room (shared/src/games/who-am-i/couch.ts).
  *
- * Everything shown is approved: identities and question templates are
- * published `game_content` rows of the learner's variety (an identity's word
- * was picked in the admin panel from published lessons' vocabulary, never
- * typed), and the answers are the variety's own yes and no from each app's
- * catalogue. A round is dealt on the server (`dealWhoAmI`): never-met
- * identities first, each among tiles that share most of its facts, with only
- * the questions every tile can answer — so the list never gives it away. The
- * identity stays on the server until the item is done.
+ *   GET  /games/who-am-i/couch?dialect=kmr|ckb   the difficulties it can be played at on one phone
+ *   POST /games/who-am-i/couch/deal              { dialect, difficulty, players }: a card for everyone in the room (10 a minute)
  *
- * Pay is the kit's, by performance: a right guess pays by the identity's
- * level, with the first-try bonus for getting it with the first guess, and
- * nothing for an identity guessed right in the last two weeks. The game's own
- * score — fewer questions score more (`whoAmIPoints`) — is worked out by the
- * apps from the questions asked and the guesses made, which every view
- * carries.
+ * Everything dealt is approved: identities and question templates are
+ * published `game_content` rows of the variety, read through the trusted
+ * readers (an identity's word was picked from published lessons' vocabulary,
+ * never typed), so a draft or a row waiting for review never reaches a table.
  *
- * The questions asked are kept on the item itself in the session's `items`,
- * under the session's lock, so a question asked twice is answered once and a
- * round come back to shows what was asked.
+ * A table is dealt whole (`dealTable`). Every seat gets a different identity,
+ * and no seat's tiles hold an identity another seat wears: a player reads the
+ * others' cards, so a tile that was one of them would be a tile they could
+ * strike out without asking anything. Each seat's tiles and questions are
+ * drawn with a draw keyed by the server's own secret (`unitFor`), so their
+ * order says nothing of which tile is the hidden one.
  *
- * A tile is known to the player by its place in the round's own order
- * (`tileHandle`: a, b, c…), never by the id of the identity behind it, and
- * the card names what kind of thing it is only when every tile is that kind
- * (`sharedCategory`): nothing the item carries tells one tile from another
- * but its word.
+ * What the one-phone game does not do, on purpose. It is told nothing about
+ * the people in the room: no names, no result. The phone is sent every card,
+ * with the facts that answer its questions, so it cannot be trusted to say
+ * who won, and a game played this way is never paid or rated; there is no
+ * route here that a result could be sent to.
  */
+import { randomUUID } from 'node:crypto';
 import type { FastifyInstance } from 'fastify';
-import type pg from 'pg';
 import { z } from 'zod';
 import {
   DIFFICULTY_LEVELS,
-  SOLO_MAX_ATTEMPTS,
+  GAME_DIALECTS,
+  GAME_DIFFICULTIES,
   WHO_AM_I_CANDIDATES,
-  WHO_AM_I_ROUND_ITEMS,
-  answerFor,
+  WHO_AM_I_COUCH_MAX_PLAYERS,
+  WHO_AM_I_COUCH_MIN_PLAYERS,
+  WHO_AM_I_MIN_TEMPLATES,
+  availableDifficulties,
   dealWhoAmI,
   isWhoAmIFact,
-  sharedCategory,
+  learnGame,
   type GameDialect,
   type GameDifficulty,
-  type WhoAmIAnswer,
-  type WhoAmIAskResult,
-  type WhoAmIAsked,
-  type WhoAmICorrection,
-  type WhoAmIHint,
+  type GameLevel,
+  type WhoAmICouchDeals,
+  type WhoAmICouchOffer,
+  type WhoAmIDeal,
   type WhoAmIIdentity,
-  type WhoAmIItemView,
   type WhoAmITemplate,
 } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
-import { drawFor, unitFor } from './draw.js';
-import { freshestFirst, seenFor } from './seen.js';
+import { unitFor } from './draw.js';
 import type { TrustedSources } from './sources.js';
-import type { RoundAsk, SoloEngine, StoredItem } from './solo.js';
 
 export const WHO_AM_I = 'who-am-i' as const;
 
-/** A hidden identity as a round keeps it: the identity and its facts stay here. */
-export interface WhoAmIItem extends StoredItem {
-  identity: Pick<WhoAmIIdentity, 'id' | 'word' | 'meanings' | 'category' | 'facts'>;
-  tiles: Array<{ id: string; word: string; meanings: WhoAmIIdentity['meanings']; category?: string }>;
-  questions: Array<{ id: string; ku: string; meanings: WhoAmIIdentity['meanings']; fact: string }>;
-  /** a beginner sees what each tile means */
-  showMeanings: boolean;
-  asked: WhoAmIAsked[];
+const MINIMUM = learnGame(WHO_AM_I).minimum;
+const DEALS_PER_MINUTE = 10;
+
+/** What a table is dealt from: a variety's approved identities and question templates. */
+export interface WhoAmIPool {
+  identities: WhoAmIIdentity[];
+  templates: WhoAmITemplate[];
 }
 
 /** The approved identities and question templates of a variety, as a deal reads them. */
-export async function whoAmIPool(sources: TrustedSources, dialect: GameDialect): Promise<{ identities: WhoAmIIdentity[]; templates: WhoAmITemplate[] }> {
+export async function whoAmIPool(sources: TrustedSources, dialect: GameDialect): Promise<WhoAmIPool> {
   const [identities, templates] = await Promise.all([sources.content('identity', dialect), sources.content('question_template', dialect)]);
   return {
     identities: identities.map((r) => ({
@@ -97,139 +88,81 @@ export function identitiesAt(identities: readonly WhoAmIIdentity[], difficulty: 
   return identities.filter((i) => levels.includes(i.level));
 }
 
-const answerSchema: z.ZodType<WhoAmIAnswer> = z.object({ guess: z.string().min(1).max(80) });
-
-/** What the player knows a tile by: its place among the round's tiles, which are shuffled for the round. */
-export function tileHandle(place: number): string {
-  return place < 26 ? String.fromCharCode(97 + place) : `t${place}`;
+/** The difficulties a table can be played at: enough question templates, and levels that hold the game's minimum of identities. */
+export function tableDifficulties(pool: WhoAmIPool): GameDifficulty[] {
+  if (pool.templates.length < WHO_AM_I_MIN_TEMPLATES) return [];
+  const levels: Record<GameLevel, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const i of pool.identities) if (i.level >= 1 && i.level <= 5) levels[i.level as GameLevel]++;
+  return availableDifficulties(levels, MINIMUM);
 }
 
-/** The identity behind a tile the player named, or null for none of them. */
-function tileOf(item: Pick<WhoAmIItem, 'tiles'>, handle: string): WhoAmIItem['tiles'][number] | null {
-  const place = item.tiles.findIndex((_, i) => tileHandle(i) === handle);
-  return place < 0 ? null : item.tiles[place]!;
+/**
+ * A hidden identity for every seat, pure: each a different one, drawn in the
+ * seed's keyed order from the difficulty's identities, and dealt its tiles
+ * from a pool without the identities the other seats wear. Null when even one
+ * seat cannot be dealt, so a table is never begun without somebody.
+ */
+export function dealTable(pool: WhoAmIPool, difficulty: GameDifficulty, seats: readonly number[], seed: string): Array<{ seat: number; deal: WhoAmIDeal }> | null {
+  // every draw is keyed here: the order of a seat's tiles and questions says nothing of who is hidden, on any seat
+  const unit = unitFor(seed);
+  const order = identitiesAt(pool.identities, difficulty)
+    .map((i) => ({ i, k: unit(`target:${i.id}`) }))
+    .sort((a, b) => a.k - b.k)
+    .map((x) => x.i);
+  const want = WHO_AM_I_CANDIDATES[difficulty];
+  const deal = (target: WhoAmIIdentity, seat: number, among: readonly WhoAmIIdentity[]): WhoAmIDeal | null =>
+    dealWhoAmI(target, among, pool.templates, { seed, salt: `seat:${seat}`, want, unit });
+
+  // who wears what, first: a different identity (and a different word) on every seat, each one that can be dealt at all
+  const worn: Array<{ seat: number; target: WhoAmIIdentity }> = [];
+  for (const seat of seats) {
+    const target = order.find((i) => !worn.some((w) => w.target.id === i.id || w.target.word === i.word) && deal(i, seat, pool.identities) !== null);
+    if (!target) return null;
+    worn.push({ seat, target });
+  }
+  // then each seat's tiles, from a pool without the others' cards: a card a player can read is never one of their tiles
+  const out: Array<{ seat: number; deal: WhoAmIDeal }> = [];
+  for (const { seat, target } of worn) {
+    const theirs = worn.filter((w) => w.seat !== seat).map((w) => w.target);
+    const among = pool.identities.filter((p) => !theirs.some((t) => t.id === p.id || t.word === p.word));
+    const dealt = deal(target, seat, among);
+    if (!dealt) return null;
+    out.push({ seat, deal: dealt });
+  }
+  return out;
 }
 
-/** The handle of the identity's own tile. */
-function answerHandle(item: Pick<WhoAmIItem, 'tiles' | 'identity'>): string {
-  return tileHandle(item.tiles.findIndex((t) => t.id === item.identity.id));
-}
-const askParams = z.object({ id: z.uuid() });
-const askBody = z.object({ index: z.number().int().min(0).max(WHO_AM_I_ROUND_ITEMS * 4), question: z.string().min(1).max(80) });
+const offerQuery = z.object({ dialect: z.enum(GAME_DIALECTS) });
+const dealBody = z.strictObject({
+  dialect: z.enum(GAME_DIALECTS),
+  difficulty: z.enum(GAME_DIFFICULTIES),
+  players: z.number().int().min(WHO_AM_I_COUCH_MIN_PLAYERS).max(WHO_AM_I_COUCH_MAX_PLAYERS),
+});
 
-export class WhoAmIGame implements SoloEngine<WhoAmIItem, WhoAmIItemView, WhoAmIAnswer, WhoAmIHint, WhoAmICorrection> {
-  readonly game = WHO_AM_I;
-  readonly answer = answerSchema;
+export function registerWhoAmICouchRoutes(app: FastifyInstance, sources: TrustedSources): void {
+  app.get('/games/who-am-i/couch', { schema: { querystring: offerQuery }, preHandler: requireAuth }, async (req): Promise<WhoAmICouchOffer> => {
+    const { dialect } = req.query as z.infer<typeof offerQuery>;
+    return { dialect, difficulties: tableDifficulties(await whoAmIPool(sources, dialect)) };
+  });
 
-  constructor(private readonly sources: TrustedSources) {}
-
-  async build(ask: RoundAsk, db: Pick<pg.Pool, 'query'>): Promise<{ items: WhoAmIItem[]; meta: Record<string, unknown> } | null> {
-    const [{ identities, templates }, seen] = await Promise.all([whoAmIPool(this.sources, ask.dialect), seenFor(db, ask.userId, WHO_AM_I)]);
-    const here = identitiesAt(identities, ask.difficulty);
-    if (here.length < WHO_AM_I_ROUND_ITEMS) return null;
-    const targets = freshestFirst(drawFor(`${ask.seed}:targets`).shuffle(here), seen);
-    const want = WHO_AM_I_CANDIDATES[ask.difficulty];
-    const items: WhoAmIItem[] = [];
-    for (const target of targets) {
-      if (items.length >= WHO_AM_I_ROUND_ITEMS) break;
-      // the tiles come from the whole variety, so a small level still has company to hide among
-      const deal = dealWhoAmI(target, identities, templates, { seed: ask.seed, salt: String(items.length), want, unit: unitFor(ask.seed) });
-      if (!deal) continue;
-      items.push({
-        key: target.key,
-        level: target.level,
-        repeat: seen.get(target.key)?.recent === true,
-        identity: { id: target.id, word: target.word, meanings: target.meanings, category: target.category, facts: target.facts },
-        tiles: deal.candidates,
-        questions: deal.questions,
-        showMeanings: ask.difficulty === 'beginner',
-        asked: [],
-      });
-    }
-    // an identity no deal could be made for (too few questions every tile answers) is passed over; the round is what could be dealt
-    return items.length > 0 ? { items, meta: {} } : null;
-  }
-
-  view(item: WhoAmIItem, index: number): WhoAmIItemView {
-    return {
-      index,
-      category: sharedCategory(item.identity.category, item.tiles),
-      tiles: item.tiles.map((t, i) => ({ id: tileHandle(i), word: t.word, meanings: item.showMeanings ? t.meanings : null })),
-      questions: item.questions.map((q) => ({ id: q.id, ku: q.ku, meanings: q.meanings })),
-      asked: item.asked ?? [],
-    };
-  }
-
-  grade(item: WhoAmIItem, answer: WhoAmIAnswer): boolean {
-    return tileOf(item, answer.guess)?.id === item.identity.id;
-  }
-
-  hint(_item: WhoAmIItem, answer: WhoAmIAnswer): WhoAmIHint {
-    return { notThis: answer.guess };
-  }
-
-  correction(item: WhoAmIItem): WhoAmICorrection {
-    return { id: answerHandle(item), word: item.identity.word, meanings: item.identity.meanings, category: item.identity.category };
-  }
-
-  why(): string | null {
-    return null;
-  }
-
-  /**
-   * One question about one identity of a round: its answer from the facts,
-   * kept with the item. Refused once the item is done (guessed, or both
-   * guesses spent), and for a question it does not offer. Asking again what
-   * was asked answers the same, and counts once.
-   */
-  async ask(pool: pg.Pool, sessionId: string, userId: string, index: number, questionId: string): Promise<WhoAmIAskResult> {
-    const client = await pool.connect();
-    try {
-      await client.query('BEGIN');
-      const res = await client.query<{ game: string; items: WhoAmIItem[]; finished_at: Date | null; expired: boolean }>(
-        `SELECT game, items, finished_at, (expires_at <= now()) AS expired FROM game_sessions WHERE id = $1 AND user_id = $2 FOR UPDATE`,
-        [sessionId, userId],
-      );
-      const row = res.rows[0];
-      if (!row || row.game !== WHO_AM_I) throw new AppError('GAME_SESSION_NOT_FOUND', 404, 'no such round');
-      if (row.finished_at) throw new AppError('GAME_SESSION_FINISHED', 409, 'this round is finished');
-      if (row.expired) throw new AppError('GAME_SESSION_EXPIRED', 410, 'this round has expired; start a new one');
-      const item = row.items[index];
-      if (!item) throw new AppError('ITEM_NOT_IN_SESSION', 404, 'no such item in this round');
-      const tries = await client.query<{ correct: boolean }>(`SELECT correct FROM game_session_answers WHERE session_id = $1 AND item_index = $2`, [sessionId, index]);
-      if (tries.rows.some((t) => t.correct) || tries.rows.length >= SOLO_MAX_ATTEMPTS) throw new AppError('ITEM_DONE', 409, 'this identity has had its guesses');
-      const question = item.questions.find((q) => q.id === questionId);
-      if (!question) throw new AppError('BAD_REQUEST', 400, 'that question is not one this round offers');
-      const asked = item.asked ?? [];
-      let answer = asked.find((a) => a.question === questionId)?.answer;
-      if (answer === undefined) {
-        answer = answerFor(item.identity, question.fact);
-        asked.push({ question: questionId, answer });
-        await client.query(`UPDATE game_sessions SET items = jsonb_set(items, ARRAY[$2::text, 'asked'], $3::jsonb) WHERE id = $1`, [
-          sessionId,
-          String(index),
-          JSON.stringify(asked),
-        ]);
-      }
-      await client.query('COMMIT');
-      return { index, question: questionId, answer, asked };
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      throw err;
-    } finally {
-      client.release();
-    }
-  }
-}
-
-/** `POST /games/who-am-i/sessions/:id/ask` { index, question }: a question's answer, for the learner whose round it is. */
-export function registerWhoAmIRoutes(app: FastifyInstance, game: WhoAmIGame): void {
   app.post(
-    '/games/who-am-i/sessions/:id/ask',
-    { schema: { params: askParams, body: askBody }, config: { rateLimit: { max: 120, windowMs: 60_000 } }, preHandler: requireAuth },
-    async (req) => {
-      const b = req.body as z.infer<typeof askBody>;
-      return game.ask(app.db, (req.params as z.infer<typeof askParams>).id, req.user!.id, b.index, b.question);
+    '/games/who-am-i/couch/deal',
+    { schema: { body: dealBody }, config: { rateLimit: { max: DEALS_PER_MINUTE, windowMs: 60_000 } }, preHandler: requireAuth },
+    async (req, reply): Promise<WhoAmICouchDeals> => {
+      const b = req.body as z.infer<typeof dealBody>;
+      const pool = await whoAmIPool(sources, b.dialect);
+      const dealt = tableDifficulties(pool).includes(b.difficulty)
+        ? dealTable(
+            pool,
+            b.difficulty,
+            Array.from({ length: b.players }, (_, seat) => seat),
+            randomUUID(),
+          )
+        : null;
+      if (!dealt) throw new AppError('GAME_UNAVAILABLE', 409, 'there are not enough approved identities at this difficulty yet');
+      // the cards of a game about to be played: never kept by anything between here and the phone
+      void reply.header('cache-control', 'no-store');
+      return { dialect: b.dialect, difficulty: b.difficulty, deals: dealt.map((d) => d.deal) };
     },
   );
 }

@@ -3,7 +3,7 @@ import { GAME_DIALECTS, type GameDialect, type GameDifficulty, type GamesAvailab
 import { useAuth } from '../auth/AuthProvider';
 
 /**
- * Where Kurdish Impostor is offered now: per variety, the difficulties whose
+ * Where Impostor is offered now: per variety, the difficulties whose
  * approved cards reach the game's minimum (`GET /games/availability`, the same answer Learn's list reads). A
  * game is made only where it is offered, so the start page and the invite
  * sheet choose among these, and a game offered nowhere says so rather than

@@ -8,6 +8,7 @@ import { useMessages } from './MessagesProvider';
 import { MessageList } from './MessageList';
 import { Composer } from './Composer';
 import { useStickyScroll } from './useStickyScroll';
+import { useOutbox, type Unsent } from './useOutbox';
 import { useTypingSignal, useTypingWatch, typingLabel } from './useTyping';
 import { ReadReceipt } from './ReadReceipt';
 import { useT } from '../i18n/I18nProvider';
@@ -17,7 +18,8 @@ type Translate = (key: MessageKey, vars?: Record<string, string | number>) => st
 import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { ThreadSkeleton } from '../components/skeletons';
-import { ArrowIcon, CloseIcon } from '../components/icons';
+import { ArrowIcon, ChevronIcon } from '../components/icons';
+import { CloseButton } from '../components/CloseButton';
 import { ChatGameButton } from '../play/PlayButtons';
 import { gameCardBody } from '../play/ChatGameCard';
 import { SendError } from '../reports/SendError';
@@ -37,6 +39,9 @@ function byTime<T extends { createdAt: string }>(msgs: readonly T[] | undefined 
   if (!Array.isArray(msgs)) return [];
   return [...msgs].sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
 }
+
+/** A message as the thread draws it: the server's, or one of the reader's own that is not sent yet. */
+type Shown = DmMessage & { pending?: Unsent['pending'] };
 
 /**
  * Map moderation/anti-bot server codes to human copy (server stays authoritative).
@@ -91,14 +96,54 @@ export function DmThread({
   const [messages, setMessages] = useState<DmMessage[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
-  const [sending, setSending] = useState(false);
   const [sendErr, setSendErr] = useState<ApiError | null>(null);
   /** the message being reported, while the report sheet is open */
   const [reporting, setReporting] = useState<DmMessage | null>(null);
   /** blocked from the report's done screen: the thread closes with the sheet */
   const [blockedHere, setBlockedHere] = useState(false);
   const navigate = useNavigate();
-  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
+
+  /*
+   * A message is in the thread the moment it is sent, and the box is empty
+   * for the next one (chat/useOutbox.ts): the server is told behind that. One
+   * it refuses — moderation, a block, a limit — leaves the thread, the reason
+   * is said where it always was, and its words go back in the box if nothing
+   * has been typed there since; one it could not be reached for stays, marked
+   * as not sent, with a way to try again.
+   */
+  const outbox = useOutbox<DmMessage>({
+    post: (body) => client.post<DmMessage>(`/chat/${otherId}/messages`, { body }),
+    onDelivered: (message) => {
+      setMessages((m) => {
+        const list = m ?? [];
+        return list.some((x) => x.id === message.id) ? list : [...list, message];
+      });
+      onSent();
+    },
+    onRefused: (error, body) => {
+      setSendErr(error);
+      setText((now) => now || body);
+    },
+  });
+  // the thread as it is read: what the server has, then what is still the reader's alone
+  const shown = useMemo<Shown[]>(
+    () => [
+      ...(messages ?? []),
+      ...outbox.unsent.map((u) => ({
+        id: u.id,
+        senderId: user?.id ?? '',
+        username: user?.username ?? '',
+        avatarUrl: null,
+        body: u.body,
+        createdAt: u.createdAt,
+        deliveredAt: null,
+        readAt: null,
+        pending: u.pending,
+      })),
+    ],
+    [messages, outbox.unsent, user?.id, user?.username],
+  );
+  const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(shown);
   const { typing, note } = useTypingWatch();
   const signalTyping = useTypingSignal(
     useCallback(() => void client.post(`/chat/${otherId}/typing`).catch(() => undefined), [client, otherId]),
@@ -207,21 +252,13 @@ export function DmThread({
   );
   useRealtimeEvent('dm_typing', onTyping);
 
-  async function send(): Promise<void> {
+  function send(): void {
     const body = text.trim();
     if (!body) return;
-    setSending(true);
     setSendErr(null);
-    const res = await client.post<DmMessage>(`/chat/${otherId}/messages`, { body });
-    setSending(false);
-    if (res.ok) {
-      setText('');
-      setMessages((m) => [...(m ?? []), res.data]);
-      scrollToBottom('smooth'); // your own message always brings you back down
-      onSent();
-    } else {
-      setSendErr(res.error);
-    }
+    setText('');
+    outbox.send(body);
+    scrollToBottom('smooth'); // your own message always brings you back down
   }
 
   return (
@@ -241,26 +278,28 @@ export function DmThread({
         >
           {otherName ?? t('chat.conversation')}
         </button>
-        {onClose && (
-          <button type="button" className="chat-dock-close" onClick={onClose} aria-label={t('chat.closeWith', { name: otherName ?? t('chat.thisPerson') })}>
-            <CloseIcon size={16} />
-          </button>
-        )}
+        {onClose && <CloseButton className="chat-dock-close is-inline" label={t('chat.closeWith', { name: otherName ?? t('chat.thisPerson') })} onClick={onClose} />}
       </header>
 
       <div className="chat-messages" ref={scrollRef}>
-        {messages === null ? (
+        {messages === null && shown.length === 0 ? (
           <ThreadSkeleton />
-        ) : messages.length === 0 ? (
+        ) : shown.length === 0 ? (
           <p className="muted chat-hint">{loadError ?? t('chat.sayHello')}</p>
         ) : (
           <MessageList
-            messages={messages}
+            messages={shown}
             myId={user?.id}
             renderStatus={(m) => <ReadReceipt message={m} />}
             onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
             onReport={setReporting}
             renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
+            onRetry={(m) => outbox.retry(m.id)}
+            // taken back: its words return to the box, unless something else has been typed there since
+            onDiscard={(m) => {
+              const words = outbox.discard(m.id);
+              if (words) setText((now) => now || words);
+            }}
           />
         )}
       </div>
@@ -278,7 +317,8 @@ export function DmThread({
 
       {!atBottom && messages !== null && messages.length > 0 && (
         <button type="button" className="chat-jump" onClick={() => scrollToBottom('smooth')}>
-          Jump to latest ↓
+          {t('chat.jumpToLatest')}
+          <ChevronIcon size={14} className="chat-jump-icon" />
         </button>
       )}
 
@@ -306,8 +346,7 @@ export function DmThread({
           setText(next);
           if (next) signalTyping();
         }}
-        onSubmit={() => void send()}
-        sending={sending}
+        onSubmit={send}
         placeholder={t('chat.writeAMessage')}
         tools={
           <>

@@ -16,7 +16,7 @@ import { ImpostorBoardView, ImpostorReveal } from './ImpostorBoard';
 import { ImpostorStart, type CouchAsk } from './ImpostorStart';
 
 /**
- * Kurdish Impostor on the phone: without an id, the start (ImpostorStart.tsx:
+ * Impostor on the phone: without an id, the start (ImpostorStart.tsx:
  * the game in a line and one thing to press), offered only where approved
  * word cards are; with one, the room (play/GameRoom.tsx) with the table
  * inside. A code, an invite, a

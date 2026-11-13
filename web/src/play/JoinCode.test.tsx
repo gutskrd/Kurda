@@ -95,7 +95,7 @@ describe('the code boxes', () => {
     await waitFor(() => expect(joins(calls)).toHaveLength(1));
     await screen.findByRole('alert');
     await userEvent.clear(field());
-    await userEvent.paste('Play Peyvok Battle with me on Hevalo! Open Games → Join with a code and type ABC 234.');
+    await userEvent.paste('Play Pêşbaziya Peyvan with me on Hevalo! Open Games → Join with a code and type ABC 234.');
     await waitFor(() => expect(joins(calls).map((c) => c.body)).toEqual([{ code: 'XYZ789' }, { code: 'ABC234' }]));
   });
 

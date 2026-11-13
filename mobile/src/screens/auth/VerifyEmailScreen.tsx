@@ -8,7 +8,7 @@ import { GuideField } from '../../auth/guide/GuideField';
 import { StepFlow, type FlowStep } from '../../auth/guide/StepFlow';
 import { WaysOut } from '../../auth/guide/WaysOut';
 import { useConfirmDelete } from '../../auth/useConfirmDelete';
-import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, validateEmail } from '../../auth/validators';
+import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, cleanEmail, validateEmail } from '../../auth/validators';
 import { haptic } from '../../feedback/haptics';
 import { useI18n } from '../../i18n/I18nContext';
 import { useDirection } from '../../reports/direction';
@@ -186,11 +186,11 @@ export function VerifyEmailScreen(): React.JSX.Element {
     action: t('auth.verify.sendThere'),
     check: () => {
       // checked as sign-up checks an address, so a second typo is caught before another code is sent
-      const why = validateEmail(address.trim());
+      const why = validateEmail(address);
       return why ? t(FIELD_ERROR_COPY[why], FIELD_ERROR_VARS) : null;
     },
     commit: async () => {
-      const err = await changePendingEmail(address.trim());
+      const err = await changePendingEmail(cleanEmail(address));
       return err ? { ok: false, error: err } : { ok: true };
     },
     render: (tools) => (

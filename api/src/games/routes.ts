@@ -10,15 +10,16 @@
  *   GET  /games/solo/sessions/:id                      a round as it stands
  *   POST /games/solo/sessions/:id/answers              { index, answer, attempt? }: one try, checked here
  *   POST /games/solo/sessions/:id/finish               pay it once and say how it went
- *   POST /games/solo/sessions/:id/hints                { evidence? }: spend a hint (Kurdish Detective), answered with the board
+ *   POST /games/solo/sessions/:id/hints                { evidence? }: spend a hint (Detective), answered with the board
  *   POST /games/solo/sessions/:id/begin                { index }: an item's study gives way to its gaps (The Memory Thief), answered with the item
  *   GET  /games/solo/sessions/:id/clips/:clip          a round's recording by its opaque handle (no token: the address is the permission)
- *   POST /games/who-am-i/sessions/:id/ask              { index, question }: Who Am I?'s answer from the identity's facts
- *   GET  /games/impostor/couch?dialect=                Kurdish Impostor on one phone: the difficulties and categories it is offered in
+ *   GET  /games/who-am-i/couch?dialect=                 Who Am I? on one phone: the difficulties it is offered at
+ *   POST /games/who-am-i/couch/deal                     { dialect, difficulty, players }: a card for everyone in the room (10 a minute)
+ *   GET  /games/impostor/couch?dialect=                Impostor on one phone: the difficulties and categories it is offered in
  *   POST /games/impostor/couch/deck                    { dialect, difficulty, category?, count? }: an evening's cards (10 a minute)
  *
- * The games played alone: Build a Kurdish Sentence, The Memory Thief, Hear
- * It, Find It and Kurdish Detective, each an engine registered with the solo
+ * The games played alone: Build a Sentence, The Memory Thief, Hear
+ * It, Find It and Detective, each an engine registered with the solo
  * round, and each counting its own availability where rows alone do not say
  * it. What Would You Say? is no longer part of Hevalo: it has no engine here,
  * so a round of it cannot be made, and a round left in the table is not
@@ -75,7 +76,7 @@ import { GameAvailabilityService } from './availability.js';
 import { lastLetterCounts } from '../mp/games/last-letter.js';
 import { SoloService } from './solo.js';
 import { GameContentAdminService } from './content-admin.js';
-import { WhoAmIGame, registerWhoAmIRoutes } from './who-am-i.js';
+import { registerWhoAmICouchRoutes } from './who-am-i.js';
 import { registerGameWordRoutes } from './word-cards.js';
 import { registerCouchRoutes } from './couch.js';
 
@@ -175,19 +176,18 @@ export function learnGameServices(app: FastifyInstance, deps: LearnGameDeps) {
   solo.register(memory);
   solo.register(hearing);
   solo.register(new DetectiveGame(sources));
-  const whoAmI = new WhoAmIGame(sources);
-  solo.register(whoAmI);
   const content = new GameContentAdminService(app.db, sources, availability, cache);
-  return { sources, sentences, memory, hearing, availability, solo, content, whoAmI };
+  return { sources, sentences, memory, hearing, availability, solo, content };
 }
 
 export function registerLearnGameRoutes(app: FastifyInstance, deps: LearnGameDeps): ReturnType<typeof learnGameServices> {
   const services = learnGameServices(app, deps);
-  const { sentences, availability, solo, content, whoAmI } = services;
-  // Who Am I?'s questions, asked about an identity of a round; and the admin's cards made from approved words
-  registerWhoAmIRoutes(app, whoAmI);
+  const { sentences, availability, solo, content } = services;
+  // the admin's cards made from approved words
   registerGameWordRoutes(app, services.sources, content);
-  // Kurdish Impostor on one phone passed round a room: where it is offered, and an evening's cards
+  // Who Am I? on one phone passed round a room: where it is offered, and a card for everyone
+  registerWhoAmICouchRoutes(app, services.sources);
+  // Impostor on one phone passed round a room: where it is offered, and an evening's cards
   registerCouchRoutes(app, services.sources);
 
   // housekeeping: every 6 hours, and once 5 minutes after boot, like the other sweeps

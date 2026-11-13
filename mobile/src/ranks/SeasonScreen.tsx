@@ -34,6 +34,7 @@ import { RankEmblem, SeasonFramed, framedAvatarSize, frameTierOf } from './art';
 import { SEASON_MEANING_KEY, TIER_NAME_KEY, daysLeftText, rankLabel, seasonTitle } from './format';
 import { Meter } from './Meter';
 import { rankTint } from './tint';
+import { pressedDim } from '../theme/motion';
 
 interface OwnedItem {
   sku: string;
@@ -238,7 +239,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
                           accessibilityRole="button"
                           accessibilityState={{ selected: on }}
                           accessibilityLabel={`${t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}. ${on ? t('season.takeOff') : t('season.wear')}`}
-                          style={({ pressed }) => [styles.frameRow, { opacity: pressed ? 0.7 : 1 }]}
+                          style={({ pressed }) => [styles.frameRow, { opacity: pressed ? pressedDim : 1 }]}
                         >
                           <SeasonFramed tier={tier} size={64} label={t('season.frameOf', { tier: t(TIER_NAME_KEY[tier]) })}>
                             <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} size={framedAvatarSize(64)} />

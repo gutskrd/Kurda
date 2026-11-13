@@ -7,6 +7,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
+import { pressedDim } from '../theme/motion';
 
 /** How far a 26pt glyph sits inside its 44pt target: the header reaches out by this much so the glyph meets the gutter. */
 const EDGE_SLACK = (MIN_TOUCH_TARGET - 26) / 2;
@@ -54,6 +55,15 @@ const EDGE_SLACK = (MIN_TOUCH_TARGET - 26) / 2;
  * its chevron points right, which is the direction "back" is for a reader of
  * those languages.
  */
+/**
+ * How far a title may be set smaller to fit between the two sides before it
+ * is cut short. A game's name is Kurmancî in every language, and the longer
+ * ones ("Pêşbaziya Nivîsandinê") are a little wider than the room a narrow
+ * phone leaves beside a trailing action: a name a few points smaller reads
+ * better than a name with its end missing.
+ */
+const TITLE_FIT = 0.8;
+
 export function ScreenHeader({
   title,
   onBack,
@@ -158,12 +168,12 @@ export function ScreenHeader({
             style={({ pressed }) => [styles.titleRow, { flexDirection: dir.row }, pressed && styles.pressed]}
           >
             {titleAvatar}
-            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={TITLE_FIT}>
               {title}
             </Text>
           </Pressable>
         ) : title ? (
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
+          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={TITLE_FIT} accessibilityRole="header">
             {title}
           </Text>
         ) : null}
@@ -192,7 +202,7 @@ const styles = StyleSheet.create({
   sideFill: { flex: 1 },
   trailing: { alignItems: 'center' },
   leading: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
-  pressed: { opacity: 0.5 },
+  pressed: { opacity: pressedDim },
   title: { fontSize: typography.ios.row, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
   // the face and the name together, centred as the title alone is, a fingertip tall
   titleRow: { flexShrink: 1, alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },

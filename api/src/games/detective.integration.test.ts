@@ -1,5 +1,5 @@
 /**
- * Kurdish Detective against real Postgres and Redis: the line picker lists
+ * Detektîf against real Postgres and Redis: the line picker lists
  * published lines only; a case is put together from them without typing
  * Kurdish, and offered only once it is published; its board keeps every
  * meaning back until it is found or a hint buys it, and each hint costs a
@@ -28,7 +28,7 @@ import { removeCourses } from '../test/courses.js';
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 
-describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', () => {
+describe.skipIf(!DATABASE_URL || !REDIS_URL)('Detektîf (integration)', () => {
   const config = loadConfig({ ...process.env, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
   let app: FastifyInstance;
   let pool: pg.Pool;
@@ -153,7 +153,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', 
     });
   });
 
-  describe('Kurdish Detective', () => {
+  describe('Detektîf', () => {
     let caseId = '';
 
     it('puts a case together from published lines, and offers it only once it is published', async () => {
@@ -207,7 +207,7 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', 
       expect(after.difficulties).toContain('beginner');
     });
 
-    it('deals the case with its board, hides every meaning until found or bought, and charges each hint at the finish', async () => {
+    it('deals the case with its board, hides every meaning until found or bought with a hint, and pays no XP for a case solved alone', async () => {
       // any other published case was met lately, so this one, never met, is dealt first
       await pool.query(
         `INSERT INTO game_seen (user_id, game, item_key, attempts, correct, last_seen_at, last_correct_at)
@@ -254,10 +254,13 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', 
       expect(accused.json().correction.walk).toHaveLength(2);
 
       const done = (await call('POST', `/games/solo/sessions/${id}/finish`, learner)).json();
-      // level 2: two each for three items right first time, less a point for each of the two hints
-      expect(done).toMatchObject({ correct: 3, total: 3, learningCounted: true, deducted: 2, xp: 4 });
-      const ledger = await pool.query(`SELECT source, amount FROM xp_ledger WHERE ref_id = $1`, [`${id}:${learnerId}`]);
-      expect(ledger.rows).toEqual([{ source: 'game_detective', amount: 4 }]);
+      // solved, and a day learned; but a game played alone earns no XP, whatever was right and whatever hints were spent
+      expect(done).toMatchObject({ correct: 3, total: 3, learningCounted: true, xp: 0 });
+      expect(done).not.toHaveProperty('deducted');
+      expect(done.items.every((i: { xp: number }) => i.xp === 0)).toBe(true);
+      const ledger = await pool.query(`SELECT source, amount FROM xp_ledger WHERE user_id = $1 AND source LIKE 'game_%'`, [learnerId]);
+      expect(ledger.rows).toEqual([]);
+      expect((await pool.query(`SELECT xp_awarded, learning_counted FROM game_sessions WHERE id = $1`, [id])).rows[0]).toEqual({ xp_awarded: 0, learning_counted: true });
       expect((await call('POST', `/games/solo/sessions/${id}/hints`, learner, {})).statusCode).toBe(409);
     });
 
@@ -286,20 +289,20 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('Kurdish Detective (integration)', 
       expect(second.board).toMatchObject({ hintsUsed: 1, hintsLeft: DETECTIVE_HINTS - 1 });
       expect(second.board.evidence.find((e: { id: string }) => e.id === 'where').meanings.en).toBeTruthy();
 
-      // played through right: the carried hint is taken off what it pays
+      // played through right: the case is solved, with the one hint it began with spent
       for (let i = 0; i < 2; i++) {
         await call('POST', `/games/solo/sessions/${second.id}/answers`, sleuth, { index: i, answer: { choice: items[i]!.shown!.indexOf(items[i]!.correctIndex!) } });
       }
       await call('POST', `/games/solo/sessions/${second.id}/answers`, sleuth, { index: 2, answer: { choice: items[2]!.suspects!.indexOf('xezo') } });
       const done = (await call('POST', `/games/solo/sessions/${second.id}/finish`, sleuth)).json();
-      expect(done).toMatchObject({ correct: 3, learningCounted: true, deducted: 1, xp: 5 });
+      expect(done).toMatchObject({ correct: 3, learningCounted: true, xp: 0 });
 
       // a round after one that was finished starts with nothing spent
       await pool.query(`UPDATE game_seen SET last_seen_at = now() - interval '30 days' WHERE user_id = $1 AND item_key = $2`, [sleuthId, `gc:${caseId}:accuse`]);
       const third = (await call('POST', '/games/solo/sessions', sleuth, { game: 'detective', dialect: 'kmr', difficulty: 'beginner' })).json();
       expect(third.board).toMatchObject({ hintsUsed: 0 });
 
-      // a round finished empty earned nothing to pay its hint from: the hint is still owed in the next round of the case
+      // a round finished empty did not solve the case: its hint stays spent in the next round of it
       expect((await call('POST', `/games/solo/sessions/${third.id}/hints`, sleuth, { evidence: 'where' })).statusCode).toBe(200);
       const empty = (await call('POST', `/games/solo/sessions/${third.id}/finish`, sleuth)).json();
       expect(empty).toMatchObject({ correct: 0, learningCounted: false, xp: 0 });

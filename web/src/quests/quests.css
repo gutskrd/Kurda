@@ -246,7 +246,7 @@
   padding: 0;
   list-style: none;
   border: 2px solid var(--border);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   background: var(--panel-bg);
 }
 .quest-row {
@@ -260,7 +260,8 @@
 }
 /* a quest done stands on a ground of its own, so it can lift over its neighbours' lines */
 .quest-row.is-done {
-  border-radius: 18px;
+  /* the list's corner, less the list's edge it sits inside */
+  border-radius: calc(var(--r-xl) - 2px);
   background: linear-gradient(color-mix(in srgb, var(--gold) 7%, transparent), color-mix(in srgb, var(--gold) 7%, transparent)), var(--panel-bg);
 }
 .quest-row.is-done + .quest-row,
@@ -370,7 +371,7 @@
   position: absolute;
   inset: -2px;
   border: 2px solid var(--gold);
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   box-shadow: 0 0 22px color-mix(in srgb, var(--gold) 40%, transparent);
   pointer-events: none;
 }

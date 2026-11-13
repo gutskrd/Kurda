@@ -34,7 +34,8 @@ const SCOPES: readonly RestrictionScope[] = ['chat', 'post', 'media', 'account']
 export function AccountStanding(): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
-  const { data, loading, error, reload } = useApiGet<Standing>('/me/standing');
+  // where the account stands is asked every time, never remembered: a limit lifted or added must show at once
+  const { data, loading, error, reload } = useApiGet<Standing>('/me/standing', { fresh: true });
 
   const appeal = useCallback(
     async (sanctionId: string, text: string): Promise<AppealView | string> => {

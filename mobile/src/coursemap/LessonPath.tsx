@@ -28,7 +28,7 @@ import { useDirection } from '../reports/direction';
 import { timing, useEnter } from '../theme/animate';
 import { display, sectionLabel } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
-import { duration } from '../theme/motion';
+import { duration, pressedDim } from '../theme/motion';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -591,7 +591,7 @@ function Banner({ unit, tone, onRail }: { unit: Unit; tone: ToneColors; onRail?:
               accessibilityRole="button"
               accessibilityLabel={t('learn.map.title')}
               testID="lp-unit-rail"
-              style={({ pressed }) => [styles.railButton, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? 0.75 : 1 }]}
+              style={({ pressed }) => [styles.railButton, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? pressedDim : 1 }]}
             >
               <Icon name="flag" size={20} color={tone.ink} />
             </Pressable>
@@ -688,7 +688,7 @@ function PinFace({ unit, onRail }: { unit: UnitPlace; onRail?: () => void }): Re
             onPress={unit.openGuide}
             accessibilityRole="button"
             accessibilityLabel={t('coursemap.path.guideFor', { unit: unit.title })}
-            style={({ pressed }) => [styles.pinGuide, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? 0.75 : 1 }]}
+            style={({ pressed }) => [styles.pinGuide, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? pressedDim : 1 }]}
           >
             <Icon name="book" size={18} color={tone.ink} />
           </Pressable>
@@ -698,7 +698,7 @@ function PinFace({ unit, onRail }: { unit: UnitPlace; onRail?: () => void }): Re
             onPress={onRail}
             accessibilityRole="button"
             accessibilityLabel={t('learn.map.title')}
-            style={({ pressed }) => [styles.pinGuide, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? 0.75 : 1 }]}
+            style={({ pressed }) => [styles.pinGuide, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? pressedDim : 1 }]}
           >
             <Icon name="flag" size={18} color={tone.ink} />
           </Pressable>

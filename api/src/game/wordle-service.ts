@@ -1,6 +1,5 @@
 import type pg from 'pg';
 import { dictionaryKey } from '@kurda/shared';
-import { XpService } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 import {
@@ -80,20 +79,18 @@ export const MAX_ATTEMPTS = 6;
 /**
  * Daily & practice Peyvok backend (KUR-304). Server-authoritative: the target
  * lives in `wordle_games` and guesses are scored here (via the #303 engine) so
- * the answer is withheld until the game ends. Finishing a game folds XP (#030),
- * the daily streak (#031), and per-player stats in one transaction.
+ * the answer is withheld until the game ends. Finishing a game folds the daily
+ * streak (#031) and per-player stats in one transaction; it pays no XP.
  */
 export class WordleService {
-  private readonly xp: XpService;
   private readonly streaks: StreakService;
   private readonly now: () => Date;
   private readonly milestones?: MilestoneRecorder;
 
   constructor(
     private readonly pool: pg.Pool,
-    deps: { xp?: XpService; streaks?: StreakService; now?: () => Date; milestones?: MilestoneRecorder } = {},
+    deps: { streaks?: StreakService; now?: () => Date; milestones?: MilestoneRecorder } = {},
   ) {
-    this.xp = deps.xp ?? new XpService(pool);
     this.streaks = deps.streaks ?? new StreakService(pool);
     this.now = deps.now ?? (() => new Date());
     this.milestones = deps.milestones;
@@ -233,7 +230,12 @@ export class WordleService {
 
   // ---- internals -------------------------------------------------------------
 
-  /** Fold a finished game into stats + XP + streak, inside the caller's tx. */
+  /**
+   * Fold a finished game into the stats and the streak, inside the caller's
+   * transaction. It pays no XP: Peyvok is played alone, and XP is for lessons
+   * and for games online with other people. `xpAwarded` stays in what the
+   * apps are sent, always nothing, for the app versions that still read it.
+   */
   private async finish(
     client: pg.PoolClient,
     row: GameRow,
@@ -250,7 +252,7 @@ export class WordleService {
     );
     const prev = prevRes.rows[0] ? fromStatsRow(prevRes.rows[0]) : emptyStats();
 
-    const { stats: nextStats, xpAwarded } = applyGameResult(prev, {
+    const { stats: nextStats } = applyGameResult(prev, {
       won,
       guesses,
       timeMs,
@@ -259,16 +261,6 @@ export class WordleService {
     });
 
     await this.saveStats(client, row.user_id, nextStats);
-
-    // idempotent award: one per player per daily day, one per practice game.
-    // (source, ref_id) is unique across ALL users, so the daily key has to
-    // name the player — keyed on the day alone, only the first finisher each
-    // day was credited while everyone was told they had been.
-    const refId = daily ? `daily:${row.day_index}:${row.user_id}` : `game:${row.id}`;
-    await this.xp.award(
-      { userId: row.user_id, source: 'wordle', amount: xpAwarded, refId },
-      client,
-    );
 
     // a daily win also counts toward the global daily streak (#031) — but not
     // as a day learned, nor towards a freeze or the daily Zêr: those are paid
@@ -279,7 +271,7 @@ export class WordleService {
       streak = await this.streaks.recordPlayDay(row.user_id, tz, this.now(), client);
     }
 
-    return { xpAwarded, streak };
+    return { xpAwarded: 0, streak };
   }
 
   private async saveStats(client: pg.PoolClient, userId: string, s: WordleStats): Promise<void> {

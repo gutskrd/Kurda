@@ -5,7 +5,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { ClayButton } from '../../theme/glass';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../auth/AuthContext';
-import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, validateEmail, validatePassword } from '../../auth/validators';
+import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, cleanEmail, validateEmail, validatePassword } from '../../auth/validators';
 import { StepFlow, type FlowStep } from '../../auth/guide/StepFlow';
 import { GuideField } from '../../auth/guide/GuideField';
 import { AgeRuler } from '../../auth/guide/AgeRuler';
@@ -13,7 +13,7 @@ import { MonthChips } from '../../auth/guide/MonthChips';
 import { PasswordStrengthMeter } from '../../auth/guide/PasswordStrength';
 import { AnswerSummary } from '../../auth/guide/AnswerSummary';
 import { birthYearFrom } from '../../auth/guide/age';
-import { USERNAME_RULE_VARS, checkUsername } from '../../username/validate';
+import { USERNAME_RULE_VARS, checkUsername, cleanUsername } from '../../username/validate';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { LinkText } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
@@ -144,14 +144,14 @@ export function RegisterScreen({ navigation }: Props) {
     },
     {
       key: 'terms',
-      question: t('guide.register.terms.question', { name: username.normalize('NFC').trim() }),
+      question: t('guide.register.terms.question', { name: cleanUsername(username.normalize('NFC')) }),
       says: t('guide.register.terms.says'),
       action: t('auth.register.submit'),
       render: () => (
         <AnswerSummary
           rows={[
-            { label: t('auth.username'), value: username.normalize('NFC').trim() },
-            { label: t('auth.email'), value: email.trim() },
+            { label: t('auth.username'), value: cleanUsername(username.normalize('NFC')) },
+            { label: t('auth.email'), value: cleanEmail(email) },
           ]}
         />
       ),
@@ -163,8 +163,8 @@ export function RegisterScreen({ navigation }: Props) {
         if (month === null) return { ok: false, error: t('guide.register.month.required'), at: 'month' };
         setMayHaveAccount(false);
         const error = await register({
-          email: email.trim(),
-          username: username.normalize('NFC').trim(),
+          email: cleanEmail(email),
+          username: cleanUsername(username.normalize('NFC')),
           password,
           // the language chosen in the intro is the account's from the first
           // moment, so the confirmation email and a later sign-in on the web
@@ -198,12 +198,12 @@ export function RegisterScreen({ navigation }: Props) {
     <View style={[styles.notice, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite" testID="register-may-have-account">
       <Text style={[styles.noticeText, { color: colors.textPrimary }]}>{t('error.code.registrationFailed')}</Text>
       <View style={styles.noticeActions}>
-        <ClayButton label={t('auth.login.submit')} tone="primary" onPress={() => navigation.navigate('Login', { email: email.trim() })} style={styles.noticeAction} />
+        <ClayButton label={t('auth.login.submit')} tone="primary" onPress={() => navigation.navigate('Login', { email: cleanEmail(email) })} style={styles.noticeAction} />
         <ClayButton
           label={t('auth.reset.title')}
           variant="outline"
           tone="primary"
-          onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}
+          onPress={() => navigation.navigate('ForgotPassword', { email: cleanEmail(email) })}
           style={styles.noticeAction}
         />
       </View>

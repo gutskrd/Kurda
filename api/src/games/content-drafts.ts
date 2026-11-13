@@ -106,7 +106,7 @@ export async function conversationPassageDrafts(sources: TrustedSources, dialect
 }
 
 /**
- * Kurdish Impostor's starter cards: each word whose English meaning puts it
+ * Impostor's starter cards: each word whose English meaning puts it
  * in a starter category (word-categories.ts) becomes a word card — its word
  * and meaning copied, the category's name as the impostor's hint — and each
  * category used becomes a category row. Filed at level 1. A word that is its

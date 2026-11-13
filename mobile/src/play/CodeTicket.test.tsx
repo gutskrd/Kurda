@@ -58,12 +58,13 @@ describe('CodeTicket', () => {
     expect(screen.getByRole('button', { name: 'Copied' })).toBeTruthy();
   });
 
-  it('shares the game, where to type the code, and the code — and no link', () => {
+  it('shares the game, where to type the code and the code, with the code’s own link on a line under it', () => {
     const share = vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);
     renderWithProviders(<CodeTicket game="wordle-battle" code="ABC234" />);
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     const sent = share.mock.calls[0]?.[0] as { message: string; url?: string };
-    expect(sent.message).toBe('Play Peyvok Battle with me on Hevalo! Open Games → Join with a code and type ABC 234');
+    expect(sent.message).toBe('Play Pêşbaziya Peyvan with me on Hevalo! Open Games → Join with a code and type ABC 234\nOr tap to join: https://hevalo.app/join/peyvok-battle/ABC234');
+    // one message for every phone: a link sent beside the words is dropped by some share targets
     expect(sent.url).toBeUndefined();
   });
 
@@ -72,8 +73,7 @@ describe('CodeTicket', () => {
     renderWithProviders(<CodeTicket game="stories" code="ABC234" storyTitle="Nanê Germ" />);
     fireEvent.click(screen.getByRole('button', { name: 'Share' }));
     const { message } = share.mock.calls[0]?.[0] as { message: string };
-    expect(message).toBe('Play “Nanê Germ” with me on Hevalo! Open Games → Join with a code and type ABC 234');
-    expect(message).not.toMatch(/https?:|\/app\/games/);
+    expect(message).toBe('Play “Nanê Germ” with me on Hevalo! Open Games → Join with a code and type ABC 234\nOr tap to join: https://hevalo.app/join/stories/ABC234');
   });
 });
 

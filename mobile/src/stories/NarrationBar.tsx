@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View, type GestureResponderEvent } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { haptic } from '../feedback/haptics';
 import { Icon } from '../theme/Icon';
@@ -115,7 +115,7 @@ export function NarrationBar({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
-      style={[styles.round, { opacity: disabled ? 0.35 : 1 }]}
+      style={({ pressed }) => [styles.round, { opacity: disabled ? 0.35 : 1 }, pressed && heldDim]}
     >
       <Icon name={icon} size={20} color={onInk} />
     </Pressable>

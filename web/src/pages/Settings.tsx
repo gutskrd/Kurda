@@ -156,7 +156,9 @@ export function Settings(): React.JSX.Element {
   const t = useT();
   const location = useLocation();
   const wide = useMediaQuery(WIDE);
-  const { data, loading, error, reload } = useApiGet<{ user: MeProfile }>('/me');
+  // asked every time, never drawn from memory: each page's switches and fields start from this answer and
+  // keep what they started with, so an answer a moment old would leave them saying the wrong thing
+  const { data, loading, error, reload } = useApiGet<{ user: MeProfile }>('/me', { fresh: true });
   // what has been changed here since /me answered, so the list says it at once
   const [changed, setChanged] = useState<Partial<MeProfile>>({});
   const user = data ? { ...data.user, ...changed } : null;

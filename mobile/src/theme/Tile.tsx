@@ -95,6 +95,8 @@ export interface TileProps {
   accessibilityRole?: AccessibilityRole;
   accessibilityLabel?: string;
   accessibilityHint?: string;
+  /** the language its label is read in, when that is not the app's: a story's own words on an answer */
+  accessibilityLanguage?: string;
   selected?: boolean;
   style?: StyleProp<ViewStyle>;
   faceStyle?: StyleProp<ViewStyle>;
@@ -107,8 +109,9 @@ export interface TileProps {
 /**
  * A chunky tile that looks pressable and is: a rounded face with a 2-point
  * edge, standing on a darker 4-point lip it sinks onto when pressed. The
- * lesson's cards, options and word tiles are all one of these, so they feel
- * the same under a finger.
+ * lesson's cards, options and word tiles are all one of these, and so are a
+ * story quiz's answers, so an answer feels the same under a finger wherever
+ * it is given.
  *
  * Its state is told by its colours — the brand's ink when picked, green when
  * right, red when wrong — and by more than colour: a spent tile has lost its
@@ -126,6 +129,7 @@ export function Tile({
   accessibilityRole = 'button',
   accessibilityLabel,
   accessibilityHint,
+  accessibilityLanguage,
   selected,
   style,
   faceStyle,
@@ -168,6 +172,7 @@ export function Tile({
       accessibilityRole={accessibilityRole}
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityHint={accessibilityHint}
+      accessibilityLanguage={accessibilityLanguage}
       aria-disabled={!pressable}
       // one of a set of options is checked; a card or a word tile is selected
       aria-checked={accessibilityRole === 'radio' ? (selected ?? state === 'picked') : undefined}

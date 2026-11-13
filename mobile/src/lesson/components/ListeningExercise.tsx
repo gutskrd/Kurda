@@ -16,6 +16,7 @@ import { ExerciseHeadline } from './ExerciseHeadline';
 import { KurdishAnswerInput } from './KurdishAnswerInput';
 import { PromptScene } from './SpeechBubble';
 import { AnswerModeSwitch, WordBank } from './WordBank';
+import { pressedDim } from '../../theme/motion';
 
 interface Props {
   exercise: Exercise;
@@ -203,7 +204,7 @@ const styles = StyleSheet.create({
   bar: { width: 3, borderRadius: radii.pill },
   slow: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.sm },
   slowText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.4 },
-  pressed: { opacity: 0.5 },
+  pressed: { opacity: pressedDim },
   prompt: { fontSize: typography.sizes.md },
   input: {
     minHeight: MIN_TOUCH_TARGET,

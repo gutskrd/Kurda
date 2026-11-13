@@ -145,9 +145,15 @@
 .pc-face .cosmetic-icon-overlay {
   z-index: 2;
 }
-/* Lûtke and Stêrk: a soft gleam travels round the ring */
+/*
+ * Lûtke and Stêrk: a soft gleam travels round the ring — once, as the face
+ * arrives, and then it rests where it started. It used to turn for ever
+ * wherever that face was drawn: down a leaderboard, beside every message in a
+ * conversation, behind a tab nobody was looking at. A frame is seen to be a
+ * frame that gleams from the one turn; the rest was a loop for its own sake.
+ */
 .art-frame-shine {
-  animation: frame-turn 6s linear infinite;
+  animation: frame-turn var(--dur-celebrate) var(--ease-out) 1 both;
 }
 @keyframes frame-turn {
   to { rotate: 360deg; }
@@ -231,7 +237,7 @@
   border: 1px solid var(--border);
   background: var(--surface);
   cursor: pointer;
-  transition: border-color 160ms ease, background-color 160ms ease;
+  transition: border-color var(--dur-fast) var(--ease-out), background-color var(--dur-fast) var(--ease-out);
 }
 .rated-option:hover {
   border-color: var(--border-strong);
@@ -410,7 +416,7 @@
   text-decoration: none;
   color: inherit;
   line-height: 1.25;
-  transition: border-color 160ms ease;
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 .ranks-season-link:hover {
   border-color: var(--border-strong);
@@ -444,7 +450,7 @@
   gap: 16px;
   align-items: center;
   padding: 16px 18px 16px 14px;
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--border);
   background:
     radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--t-mid, #fff) 16%, transparent), transparent 60%),
@@ -557,9 +563,7 @@
 [dir='rtl'] .rank-progress-fill {
   background: linear-gradient(270deg, var(--t-mid, #fff), var(--t-hi, #fff));
 }
-.rank-progress-fill.is-animated {
-  transition: width 900ms cubic-bezier(0.22, 1, 0.36, 1);
-}
+/* where it stands, and how it gets there when a result moves it, are the lesson bar's: styles/motion.css, "progress" */
 .rank-progress-label {
   color: var(--ink-3);
   font-size: 0.8rem;
@@ -594,7 +598,7 @@
   max-width: 520px;
   margin: 4px auto;
   padding: 16px 18px;
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--border);
   background:
     radial-gradient(110% 150% at 0% 50%, color-mix(in srgb, var(--t-mid, #fff) 18%, transparent), transparent 62%),
@@ -773,7 +777,7 @@
 .badges-stats {
   margin: 0;
   padding: 18px;
-  border-radius: 20px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--border);
   background: var(--surface);
   box-shadow: var(--glass-rim);
@@ -898,7 +902,7 @@
   width: 100%;
   height: 100%;
   padding: 16px 12px 14px;
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   border: 1px solid var(--border);
   background:
     radial-gradient(90% 70% at 50% 18%, color-mix(in srgb, var(--t-mid, #fff) 14%, transparent), transparent 70%),
@@ -907,7 +911,7 @@
   font: inherit;
   text-align: center;
   cursor: pointer;
-  transition: border-color 160ms ease, transform 160ms ease;
+  transition: border-color var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
 }
 .badge-tile:hover {
   border-color: var(--border-strong);
@@ -953,8 +957,9 @@
   width: 100%;
   margin-top: 6px;
 }
+/* how far along, in the quietest ink of the scheme: the white it was typed as is that ink in the dark, and nothing on the light page */
 .badge-tile.is-locked .badge-bar > span {
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--ink-4);
 }
 .badge-tile-progress-text {
   color: var(--ink-3);
@@ -1411,11 +1416,7 @@
   /* a name too long for half a phone takes a second line rather than losing its end */
   overflow-wrap: break-word;
 }
-.rankings-tab.is-active {
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
+/* the tab you are on is drawn as every chosen one is: the shared rule in shell.css */
 @media (hover: hover) {
   .rankings-tab:not(.is-active):hover {
     color: var(--ink);
@@ -1491,11 +1492,7 @@
     line-height: 1.15;
   }
 }
-.rank-by-btn.is-active {
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
-}
+/* the chosen board, as the chosen tab above it: the shared rule in shell.css */
 @media (hover: hover) {
   .rank-by-btn:not(.is-active):hover {
     color: var(--ink);
@@ -1577,18 +1574,18 @@
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-/* the way out: a button of its own at the end, drawn as plainly as any other */
+/* the way out: a quiet line of words at the very foot of the week, well clear of the page's one action (leagues/LeaguePanel.tsx) */
 .league-leave {
   display: flex;
   justify-content: center;
-  padding: 16px 0 8px;
+  padding: var(--space-8) 0 var(--space-2);
 }
-.league-leave > .btn {
-  gap: 8px;
+.league-leave-link {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
 }
-/* the door's arrow points the way out, which is the other way in a right-to-left page */
-[dir='rtl'] .league-leave > .btn svg {
-  transform: scaleX(-1);
+.league-leave-link:hover {
+  color: var(--ink);
 }
 .league-leave-dialog {
   display: grid;
@@ -1778,12 +1775,14 @@
 .goal-ring > svg {
   display: block;
 }
+/* a track is the scheme's own: a white one could not be seen on the light page (the streak's ring uses the same token) */
 .goal-ring-track {
-  stroke: rgba(255, 255, 255, 0.1);
+  stroke: var(--surface-3);
 }
 .goal-ring-fill {
   stroke: var(--t-mid, #8fd2f7);
-  transition: stroke-dashoffset 800ms cubic-bezier(0.22, 1, 0.36, 1);
+  /* a ring cannot be slid by a transform; its arc is paint, not layout, and takes the same token a bar does */
+  transition: stroke-dashoffset var(--dur-progress) var(--ease-out);
 }
 .goal-ring.is-met .goal-ring-fill {
   stroke: var(--gold);
@@ -1827,7 +1826,7 @@
   box-shadow: var(--glass-rim);
   color: inherit;
   text-decoration: none;
-  transition: border-color 160ms ease;
+  transition: border-color var(--dur-fast) var(--ease-out);
 }
 .home-league:hover {
   border-color: var(--border-strong);
@@ -1969,7 +1968,7 @@
   position: relative;
   margin: 18px 0 26px;
   padding: 24px 22px;
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   border: 1px solid var(--border);
   overflow: hidden;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
@@ -2241,7 +2240,7 @@
   }
   .rank-result {
     /* a fade only (the keyframes are in motion.css, with the rest of the celebration) */
-    animation: celebrate-fade 300ms ease-out both;
+    animation: celebrate-fade var(--dur-slow) var(--ease-out) both;
   }
   .rank-progress-fill.is-animated,
   .goal-ring-fill,
@@ -2311,7 +2310,7 @@
   align-items: center;
   gap: 14px;
   padding: 6px 12px;
-  border-radius: 14px;
+  border-radius: var(--r-md);
 }
 .rank-rung.is-here {
   background: var(--bg);

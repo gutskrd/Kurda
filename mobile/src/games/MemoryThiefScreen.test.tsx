@@ -65,7 +65,7 @@ const session = (passages: Passage[], dialect: 'kmr' | 'ckb' = 'kmr', phase: 'st
 const availability = (dialect: 'kmr' | 'ckb', available = true) =>
   ok({ dialect, games: [{ id: 'memory-thief', available, difficulties: available ? ['beginner'] : [], levels: {}, levelled: true, minimum: 6 }] });
 
-function routes(round: Round, answers: unknown[]) {
+function routes(round: Round, answers: unknown[], results?: unknown) {
   let n = 0;
   const { passages, ...view } = round;
   return fakeClient({
@@ -74,7 +74,26 @@ function routes(round: Round, answers: unknown[]) {
     'POST /games/solo/sessions': ok(view),
     [`POST /games/solo/sessions/${ID}/begin`]: (body) => ok({ item: restored(passages[(body as { index: number }).index]!) }),
     [`POST /games/solo/sessions/${ID}/answers`]: () => ok(answers[n++]),
+    ...(results ? { [`POST /games/solo/sessions/${ID}/finish`]: ok(results) } : {}),
   });
+}
+
+/** The start is ready once the difficulties have arrived: Start can be pressed. */
+async function ready(): Promise<void> {
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Start' }).getAttribute('aria-disabled')).not.toBe('true'));
+}
+
+/** A round of one passage, its words given back rightly at the first try, taken to its results. */
+async function playToResults(): Promise<void> {
+  renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
+  await ready();
+  fireEvent.click(screen.getByRole('button', { name: 'Start' }));
+  const tray = await screen.findByTestId('memory-tray');
+  fireEvent.click(within(tray).getByRole('button', { name: 'gund' }));
+  fireEvent.click(within(tray).getByRole('button', { name: 'çiya' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
+  await screen.findByText('Round finished');
 }
 
 const correction = (verdicts: Array<'right' | 'typo' | 'wrong'>, given: string[]) => ({
@@ -84,6 +103,20 @@ const correction = (verdicts: Array<'right' | 'typo' | 'wrong'>, given: string[]
   ],
 });
 
+// what the server sends for a passage given back: a game played alone is scored, and every `xp` is 0
+const givenBack = {
+  index: 0,
+  attempt: 1,
+  correct: true,
+  firstTry: true,
+  done: true,
+  hint: null,
+  correction: correction(['right', 'right'], ['gund', 'çiya']),
+  why: null,
+  xp: 0,
+  repeat: false,
+};
+
 beforeEach(() => {
   localStorage.clear();
   resetCourseDialect();
@@ -92,13 +125,52 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('MemoryThiefScreen', () => {
-  it('opens on its three steps and what a round of five can pay', async () => {
+  it('opens on its three steps, and promises no XP for a game played alone', async () => {
     testAuth.client = routes(session([item()]), []);
     renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
     expect(await screen.findByText('Study the passage')).toBeTruthy();
     expect(screen.getByText('Words vanish')).toBeTruthy();
     expect(screen.getByText('Give them back')).toBeTruthy();
-    expect(await screen.findByText('Up to 10 XP')).toBeTruthy();
+    await ready();
+    expect(screen.queryByText(/XP/)).toBeNull();
+  });
+
+  it('ends a round with what counted and one quiet line about XP, and no XP figure', async () => {
+    testAuth.client = routes(session([item()], 'kmr', 'restore'), [givenBack], {
+      correct: 1,
+      total: 1,
+      firstTry: 1,
+      xp: 0,
+      learningCounted: true,
+      needed: 1,
+      items: [{ index: 0, correct: true, firstTry: true, xp: 0, repeat: true }],
+      streak: 3,
+    });
+    await playToResults();
+    expect(screen.getByText('1 of 1 right')).toBeTruthy();
+    expect(screen.getByText('Today counts for your streak.')).toBeTruthy();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
+    // nothing earned is shown, not even a zero, and nothing explains XP that was never on offer
+    expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
+    expect(screen.queryByText('Answered right lately, so no XP this time')).toBeNull();
+  });
+
+  it('says what it takes for the day to count when a round fell short, without a word about earning XP', async () => {
+    testAuth.client = routes(session([item()], 'kmr', 'restore'), [{ ...givenBack, firstTry: false }], {
+      correct: 1,
+      total: 1,
+      firstTry: 0,
+      xp: 0,
+      learningCounted: false,
+      needed: 1,
+      items: [{ index: 0, correct: true, firstTry: false, xp: 0, repeat: false }],
+      streak: 3,
+    });
+    await playToResults();
+    expect(screen.getByText('Get at least 1 right on the first try for today to count. This time: 0.')).toBeTruthy();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
+    expect(screen.queryByText(/earn XP and count today/)).toBeNull();
+    expect(screen.queryByText('Today counts for your streak.')).toBeNull();
   });
 
   it('opens on the night with its emblem, its name once as the heading, and one way in', async () => {
@@ -106,8 +178,8 @@ describe('MemoryThiefScreen', () => {
     const { container } = renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
     await waitFor(() => expect(container.querySelectorAll('svg[data-xml="drawn"]').length).toBeGreaterThan(0));
     // the screen's header is the heading; the name under the emblem is its caption, not a second heading
-    expect(await screen.findByRole('heading', { name: 'The Memory Thief' })).toBeTruthy();
-    expect(screen.getAllByText('The Memory Thief')).toHaveLength(2);
+    expect(await screen.findByRole('heading', { name: 'Dizê Bîrê' })).toBeTruthy();
+    expect(screen.getAllByText('Dizê Bîrê')).toHaveLength(2);
     expect(screen.getByText('In Kurmancî')).toBeTruthy();
     expect(await screen.findByRole('button', { name: 'Start' })).toBeTruthy();
   });
@@ -115,11 +187,11 @@ describe('MemoryThiefScreen', () => {
   it('shows the passage, takes its words, and lets them be given back from tiles', async () => {
     const client = routes(session([item()]), [
       { index: 0, attempt: 1, correct: false, firstTry: false, done: false, hint: { wrong: [1] }, correction: null, why: null, xp: 0, repeat: false },
-      { index: 0, attempt: 2, correct: true, firstTry: false, done: true, hint: null, correction: correction(['right', 'right'], ['gund', 'çiya']), why: 'glossary', xp: 1, repeat: false },
+      { index: 0, attempt: 2, correct: true, firstTry: false, done: true, hint: null, correction: correction(['right', 'right'], ['gund', 'çiya']), why: 'glossary', xp: 0, repeat: false },
     ]);
     testAuth.client = client;
     renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 10 XP');
+    await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
 
     // the whole passage is there to study, with the time running
@@ -159,11 +231,11 @@ describe('MemoryThiefScreen', () => {
 
   it('is typed at the advanced difficulty, a gap at a time with the key bar', async () => {
     const client = routes(session([item({ tiles: null })]), [
-      { index: 0, attempt: 1, correct: true, firstTry: true, done: true, hint: null, correction: correction(['right', 'typo'], ['gund', 'ciya']), why: 'vocabulary', xp: 2, repeat: false },
+      { index: 0, attempt: 1, correct: true, firstTry: true, done: true, hint: null, correction: correction(['right', 'typo'], ['gund', 'ciya']), why: 'vocabulary', xp: 0, repeat: false },
     ]);
     testAuth.client = client;
     renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 10 XP');
+    await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     fireEvent.click(await screen.findByRole('button', { name: 'I’m ready' }));
     fireEvent.change(await screen.findByLabelText('Missing word 1', { selector: 'input' }), { target: { value: 'gund' } });
@@ -180,7 +252,7 @@ describe('MemoryThiefScreen', () => {
     const client = routes(session([item()], 'kmr', 'restore'), []);
     testAuth.client = client;
     renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 10 XP');
+    await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     expect(await screen.findByRole('button', { name: 'Missing word 1, empty' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'I’m ready' })).toBeNull();
@@ -209,7 +281,7 @@ describe('MemoryThiefScreen', () => {
       [],
     );
     renderWithProviders(<MemoryThiefScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 10 XP');
+    await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     const page = await screen.findByTestId('memory-page');
     expect(within(page).getByText('Hamo')).toBeTruthy();
@@ -246,11 +318,11 @@ describe('the games list', () => {
     'GET /play/invites': ok({ incoming: [], outgoing: [] }),
   };
 
-  it('adds The Memory Thief as a card once it can be played, one tap to open', async () => {
+  it('adds Dizê Bîrê as a card once it can be played, one tap to open', async () => {
     testAuth.client = fakeClient({ ...base, 'GET /games/availability?dialect=kmr': availability('kmr') });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-memory-thief');
-    expect(card.getAttribute('aria-label')).toBe('The Memory Thief, Solo. Study a real passage, then give back the words the thief took.');
+    expect(card.getAttribute('aria-label')).toBe('Dizê Bîrê, Solo. Study a real passage, then give back the words the thief took.');
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('MemoryThief');
   });

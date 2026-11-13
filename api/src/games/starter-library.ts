@@ -9,10 +9,10 @@
  * archived, published or not yet):
  *
  *   passage        The Memory Thief          stories' paragraphs, and conversations a few lines at a time
- *   word_card      Kurdish Impostor          the course's words, sorted into the starter categories
- *   word_category  Kurdish Impostor          the categories themselves
+ *   word_card      Impostor          the course's words, sorted into the starter categories
+ *   word_category  Impostor          the categories themselves
  *   identity       Who Am I?                 the course's words for the things the starter table knows
- *   sentence       Build a Kurdish Sentence  the lessons' sentences, for the lessons' practice
+ *   sentence       Build a Sentence  the lessons' sentences, for the lessons' practice
  *
  * None of these rows holds Kurdish of its own. The words, lines and
  * paragraphs are copied from the course, as the admin panel's importers copy

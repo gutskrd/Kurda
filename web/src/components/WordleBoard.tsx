@@ -1,4 +1,6 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { LetterFeedback } from '../lib/types';
+import { playsMotion } from '../lib/motion';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { BackspaceIcon } from './icons';
@@ -29,13 +31,63 @@ interface Row {
   feedback: LetterFeedback[];
 }
 
-/** The guess grid: scored rows, then the in-progress row, then blanks. */
+/**
+ * How a judged row turns over, in the stylesheet's numbers (styles/motion.css,
+ * `.wordle-row.is-judged`): each tile a beat after the one before, turning
+ * edge-on and back with its colour changed while it is edge-on; and on the
+ * word found, a pop along the row once the last tile is down.
+ */
+const REVEAL = { stepMs: 75, flipMs: 440, popStepMs: 40, popMs: 280 };
+
+/** How long a row of `cols` tiles takes to turn over — and, when it is the word, to pop after that. */
+export function revealMs(cols: number, won: boolean): number {
+  const turned = (cols - 1) * REVEAL.stepMs + REVEAL.flipMs;
+  return won ? turned + (cols - 1) * REVEAL.popStepMs + REVEAL.popMs : turned;
+}
+
+/**
+ * Holding back what follows a guess until its row has turned over: the result
+ * of a game is said after the tiles have said it, not over them. `hold` starts
+ * the wait for a row of that length; `revealing` is true while it lasts. For a
+ * reader who asked for less motion, and wherever motion cannot be played, the
+ * row is simply judged and nothing waits.
+ */
+export function useReveal(): { revealing: boolean; hold: (cols: number, won: boolean) => void } {
+  const [revealing, setRevealing] = useState(false);
+  const timer = useRef<number | null>(null);
+  useEffect(
+    () => () => {
+      if (timer.current !== null) window.clearTimeout(timer.current);
+    },
+    [],
+  );
+  const hold = useCallback((cols: number, won: boolean): void => {
+    if (!playsMotion()) return;
+    if (timer.current !== null) window.clearTimeout(timer.current);
+    setRevealing(true);
+    timer.current = window.setTimeout(() => setRevealing(false), revealMs(cols, won));
+  }, []);
+  return { revealing, hold };
+}
+
+/**
+ * The guess grid: scored rows, then the in-progress row, then blanks.
+ *
+ * What a guess does is shown on the row it was typed in, the way the answers
+ * of a lesson are. A guess the game will not take — too short, not a word —
+ * shakes its row once (`refusals` counts them; the words under the board say
+ * why). A guess that is judged turns its tiles over one after another, each
+ * taking its colour while it is edge-on; only a row judged while the board is
+ * on the screen does, so a game opened again part-way is simply drawn. And
+ * the word found pops along its row after the last tile has turned.
+ */
 export function WordleBoard({
   targetLength,
   guesses,
   current,
   totalRows,
   showCurrent,
+  refusals = 0,
 }: {
   targetLength: number;
   guesses: Row[];
@@ -43,8 +95,17 @@ export function WordleBoard({
   totalRows: number;
   /** whether to render the typed-but-unsubmitted row */
   showCurrent: boolean;
+  /** how many guesses have been turned away so far: each one shakes the row being typed */
+  refusals?: number;
 }): React.JSX.Element {
   const t = useT();
+  // the row judged since the board was last drawn, if exactly one was: that one turns over
+  const [seen, setSeen] = useState(guesses.length);
+  const [judged, setJudged] = useState<number | null>(null);
+  if (seen !== guesses.length) {
+    setSeen(guesses.length);
+    setJudged(guesses.length === seen + 1 ? guesses.length - 1 : null);
+  }
   const currentLetters = Array.from(current);
   const rows: React.JSX.Element[] = [];
   for (let r = 0; r < totalRows; r++) {
@@ -67,16 +128,21 @@ export function WordleBoard({
           ? t('games.wordle.letterState', { letter, state: t(STATE_KEY[fb]) })
           : letter || t('games.wordle.emptyCell');
       cells.push(
-        <div key={c} className={`wordle-cell wordle-${fb}`} role="img" aria-label={label}>
+        <div key={c} className={`wordle-cell wordle-${fb}`} role="img" aria-label={label} style={{ '--i': c } as React.CSSProperties}>
           {letter}
         </div>,
       );
     }
+    const fresh = r === judged && !!done;
+    const found = fresh && done.feedback.length > 0 && done.feedback.every((f) => f === 'green');
+    // a refusal shakes the row being typed. The row has to stay the same element (its tiles turn over where they
+    // stand when the guess is taken), so each refusal shakes it anew by taking the other of two names for one shake
+    const refused = isCurrent && refusals > 0 ? ` is-refused ${refusals % 2 === 1 ? 'is-shake-a' : 'is-shake-b'}` : '';
     rows.push(
       // the row fills the width available and caps at its natural size, so an
       // 8-letter target shrinks to fit a phone instead of running off both edges
       <div
-        className="wordle-row"
+        className={`wordle-row${fresh ? ' is-judged' : ''}${found ? ' is-found' : ''}${refused}`}
         key={r}
         role="group"
         aria-label={t('games.wordle.guessNumber', { n: r + 1 })}

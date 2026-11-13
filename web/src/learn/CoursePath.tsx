@@ -21,7 +21,7 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { describeError } from '../lib/api';
-import { useApiGet } from '../lib/useApi';
+import { useApiGet, type ApiState } from '../lib/useApi';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { LinkButton } from '../components/Button';
 import { Sheet } from '../components/Sheet';
@@ -33,6 +33,7 @@ import type { MessageKey } from '../i18n/en';
 import { GrammarNote } from './GrammarNote';
 import { courseProgress, lessonStates } from './map';
 import { LearnerToken, PathHost, SideLights, StopArt, UnitLand, UnitRail, useDarkPage, useUnitsOnScreen, useWidth, type RailUnit } from './PathWorld';
+import { preloadLesson } from './preloadLesson';
 import type { CourseMap as Map, CourseSummary, PracticeDue, SkillNode } from './types';
 import './path.css';
 
@@ -430,14 +431,34 @@ const RISEN = new Set<string>();
  * back once it has been scrolled away. Skills open in order, as they do on the
  * phone (the rules are @kurda/shared's `lessonPath`, which the phone uses too).
  */
-export function CoursePath({ courseId, showHeader = true, home = null }: { courseId: string; showHeader?: boolean; home?: string | null }): React.JSX.Element {
+export function CoursePath({
+  courseId,
+  showHeader = true,
+  home = null,
+  given,
+}: {
+  courseId: string;
+  showHeader?: boolean;
+  home?: string | null;
+  /**
+   * What whoever draws the path already holds (Learn has the courses, their
+   * maps and what review has waiting): the path takes it and asks for none of
+   * it again. A map that could not be loaded there (`null`) is asked for here,
+   * so the path has its own way to say so and to try again.
+   */
+  given?: { map: Map | null; courses: CourseSummary[]; due: ApiState<PracticeDue> };
+}): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const rtl = localeDir(locale) === 'rtl';
   const reduceMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const { data, error, loading, reload } = useApiGet<Map>(`/courses/${encodeURIComponent(courseId)}/map`);
-  const due = useApiGet<PracticeDue>('/practice/due');
-  const courses = useApiGet<{ courses: CourseSummary[] }>('/courses');
+  const ownMap = useApiGet<Map>(given?.map ? null : `/courses/${encodeURIComponent(courseId)}/map`);
+  const data = given?.map ?? ownMap.data;
+  const { error, loading, reload } = ownMap;
+  const ownDue = useApiGet<PracticeDue>(given ? null : '/practice/due');
+  const due = given?.due ?? ownDue;
+  const ownCourses = useApiGet<{ courses: CourseSummary[] }>(given ? null : '/courses');
+  const courses = given ? { data: { courses: given.courses } } : ownCourses;
   const stopLabel = useStopLabel();
   const popId = useId();
   const dark = useDarkPage();
@@ -539,6 +560,11 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
     };
   }, [openKey, nodeOf]);
 
+  // an opened card is one press from a lesson: its code is asked for now, so that press does not wait for it
+  useEffect(() => {
+    if (openKey) preloadLesson();
+  }, [openKey]);
+
   // an opened card is brought fully into view, if it hangs below the screen
   useEffect(() => {
     if (!openKey) return;
@@ -632,7 +658,9 @@ export function CoursePath({ courseId, showHeader = true, home = null }: { cours
     <div className="lp">
       {showHeader && (
         <div className="page-header lp-head">
-          <Link to="/app/learn" className="eyebrow lp-back">
+          {/* the way back, as every page draws it: the chevron that points back in the page's own direction, then the words */}
+          <Link to="/app/learn" className="back-link">
+            <ArrowIcon size={16} />
             {t('coursemap.back')}
           </Link>
           <h1 className="page-title">{data.course.title}</h1>

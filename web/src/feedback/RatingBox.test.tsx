@@ -84,7 +84,9 @@ describe('the rating box', () => {
     renderApp(<RatingBox source="first_game" onClose={onClose} />);
 
     await user.click(screen.getByRole('radio', { name: '5 stars' }));
-    expect(screen.getByText('Thank you! 💛')).toBeInTheDocument();
+    // in words, with the heart drawn beside them rather than typed into them
+    expect(screen.getByText('Thank you!')).toBeInTheDocument();
+    expect(document.querySelector('.rb-follow .rb-heart')).not.toBeNull();
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();
     expect(screen.queryByRole('link')).not.toBeInTheDocument();
     // with nothing typed, "Done" is the only button: it sends the stars and

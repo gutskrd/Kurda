@@ -8,6 +8,8 @@
  * code typed in this tab arrives after two redirects that do not pass it on.
  * Kept for a day at most, and read once.
  */
+import { joinLinkPath, parseJoinLink } from '@kurda/shared';
+
 const KEY = 'hevalo.afterSignup';
 const KEEP_MS = 24 * 60 * 60 * 1000;
 
@@ -15,12 +17,18 @@ const KEEP_MS = 24 * 60 * 60 * 1000;
  * An in-app address only: a path in this app, never another origin. Navigation
  * state can be written by any page that links here, so it is checked rather
  * than trusted.
+ *
+ * One page outside the app counts: a game's invite link (/join/<game>/<CODE>),
+ * where a newcomer is asked to make an account and is promised the way back.
+ * It is rebuilt from what the link says rather than passed through as written.
  */
 export function safeFrom(value: unknown): string | null {
   if (typeof value !== 'string') return null;
-  if (!value.startsWith('/app') || value.startsWith('//')) return null;
-  if (/[\s\\]/.test(value)) return null;
-  return value;
+  if (value.startsWith('//') || /[\s\\]/.test(value)) return null;
+  if (value.startsWith('/app')) return value;
+  const q = value.indexOf('?');
+  const invite = parseJoinLink(q < 0 ? value : value.slice(0, q), q < 0 ? '' : value.slice(q));
+  return invite ? joinLinkPath(invite.game, invite.code, invite.from) : null;
 }
 
 export function rememberAfterSignup(from: unknown): void {

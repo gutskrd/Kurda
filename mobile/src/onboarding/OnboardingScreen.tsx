@@ -15,7 +15,7 @@ import { springTo } from '../theme/animate';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { BreathingIcon, Icon } from '../theme/Icon';
 import { ENTRANCE } from '../theme/motion';
-import { PressableScale, Rise } from '../theme/MotionParts';
+import { PressableScale, Rise, heldDim } from '../theme/MotionParts';
 import { SlideSwap, type SlideDirection } from '../theme/SlideSwap';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -158,7 +158,13 @@ export function OnboardingScreen({
         <View style={styles.topBar}>
           <Dots count={ONBOARDING_STEPS.length} index={state.stepIndex} mirrored={dir.rtl} />
           {!isLastStep(state) ? (
-            <Pressable onPress={() => end('skipped')} accessibilityRole="button" hitSlop={8}>
+            <Pressable
+              onPress={() => end('skipped')}
+              accessibilityRole="button"
+              // one 20-point line of words, caught at a fingertip's 44
+              hitSlop={12}
+              style={({ pressed }) => pressed && heldDim}
+            >
               <Text style={[styles.skip, { color: colors.textSecondary }]}>{t('common.skip')}</Text>
             </Pressable>
           ) : (
@@ -174,7 +180,7 @@ export function OnboardingScreen({
 
         <View style={styles.nav}>
           {!isFirstStep(state) ? (
-            <Pressable onPress={() => dispatch({ type: 'back' })} accessibilityRole="button" style={styles.back}>
+            <Pressable onPress={() => dispatch({ type: 'back' })} accessibilityRole="button" style={({ pressed }) => [styles.back, pressed && heldDim]}>
               <Text style={[styles.backText, { color: colors.textSecondary }]}>{t('common.back')}</Text>
             </Pressable>
           ) : (
@@ -221,7 +227,7 @@ function Dots({ count, index, mirrored }: { count: number; index: number; mirror
       x.setValue(to);
       return;
     }
-    const slide = springTo(x, to);
+    const slide = springTo(x, to, 'chrome');
     slide.start();
     return () => slide.stop();
   }, [index, count, mirrored, reduce, x]);

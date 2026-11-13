@@ -10,7 +10,7 @@ import { timing } from '../theme/animate';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { duration } from '../theme/motion';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim, heldRow } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 
@@ -102,7 +102,8 @@ export function FriendRequestTicket({
       onPress={onOpen}
       accessibilityRole="button"
       accessibilityLabel={person.displayName ? `${person.username}, ${person.displayName}` : person.username}
-      style={[styles.who, { flexDirection: dir.row }]}
+      // held, the row fills as a list row does: who they are opens their profile
+      style={({ pressed }) => [styles.who, { flexDirection: dir.row }, pressed && heldRow(colors.controlTrack)]}
     >
       <InitialsAvatar name={person.username} id={person.userId} size={compact ? 36 : 44} />
       <View style={styles.names}>
@@ -149,7 +150,7 @@ export function FriendRequestTicket({
             <Pressable
               onPress={onDecline}
               disabled={answer !== null}
-              style={styles.decline}
+              style={({ pressed }) => [styles.decline, pressed && heldDim]}
               accessibilityRole="button"
               accessibilityLabel={declineLabel}
             >

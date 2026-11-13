@@ -193,7 +193,7 @@
   justify-content: center;
   padding: 56px 64px 24px;
   background: rgba(2, 3, 6, 0.94);
-  animation: fade 0.15s ease;
+  animation: fade var(--dur-fast) var(--ease-out);
 }
 .pp-figure {
   display: flex;

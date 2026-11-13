@@ -591,9 +591,9 @@ function SignedInRoot() {
           </GuestWall>
         )}
       </RootStack.Screen>
-      {/* Who Am I? alone is learning, which a guest may do; its race keeps the play wall inside (whoami/WhoAmIScreen) */}
+      {/* Who Am I? on one phone reaches nobody else, so a guest may play it; its room with friends keeps the play wall inside (whoami/WhoAmIScreen) */}
       <RootStack.Screen name="WhoAmI" options={{ presentation: 'card' }}>
-        {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => <WhoAmIScreen id={route.params?.id} way={route.params?.way} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Race" options={{ presentation: 'card' }}>
         {({ navigation }) => (

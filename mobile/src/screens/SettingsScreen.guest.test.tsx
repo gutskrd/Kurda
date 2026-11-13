@@ -99,12 +99,33 @@ describe('Settings for a guest', () => {
     expect(logout).toHaveBeenCalledTimes(1);
   });
 
-  it('logs a full account out at once, with nothing to lose', () => {
+  /*
+   * An account loses nothing by signing out, but the row sits between "Sign
+   * out everywhere" and "Delete account": a stray tap used to end the session
+   * before the thumb had lifted. It is asked once, in a sheet of its own that
+   * says nothing is lost — never the guest's warning.
+   */
+  it('asks a full account before signing it out, saying nothing is lost', async () => {
     testAuth.user = FULL;
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
-    expect(logout).toHaveBeenCalledTimes(1);
+    const sheet = await screen.findByTestId('logout-ask');
+    expect(within(sheet).getByText('Sign out?')).toBeTruthy();
+    expect(within(sheet).getByText('Your lessons, streak and words stay with your account. Sign back in any time to carry on.')).toBeTruthy();
     expect(screen.queryByTestId('guest-logout')).toBeNull();
+    expect(logout).not.toHaveBeenCalled();
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Sign out' }));
+    expect(logout).toHaveBeenCalledTimes(1);
+  });
+
+  it('stays signed in when the account changes its mind', async () => {
+    testAuth.user = FULL;
+    testAuth.client = fakeClient();
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
+    const sheet = await screen.findByTestId('logout-ask');
+    fireEvent.click(within(sheet).getByRole('button', { name: 'Cancel' }));
+    expect(logout).not.toHaveBeenCalled();
   });
 });

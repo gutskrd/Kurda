@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import {
+  GAME_NAMES,
   DECLINE_COOLDOWN_MINUTES,
   INVITE_TTL_MINUTES,
   MAX_INVITEES_PER_REQUEST,
@@ -50,9 +51,9 @@ export interface PlayDeps {
 }
 
 /** How a game is named in the English fallback text of an inbox entry (clients write their own from `data`). */
-const GAME_NAMES: Record<PlayGame, string> = {
-  'wordle-battle': 'Peyvok Battle',
-  'rhyme-match': 'Rhyme Match',
+const INVITED_TO: Record<PlayGame, string> = {
+  'wordle-battle': GAME_NAMES['wordle-battle'],
+  'rhyme-match': GAME_NAMES['rhyme-match'],
   stories: 'a story quiz',
   ...MULTI_GAME_TITLES,
 };
@@ -370,7 +371,7 @@ export class PlayService {
       .record(row.invitee_id, {
         category: 'games',
         title: 'Game invite',
-        body: `${host.name} invited you to ${row.game === 'stories' ? '' : 'play '}${GAME_NAMES[row.game]}.`,
+        body: `${host.name} invited you to ${row.game === 'stories' ? '' : 'play '}${INVITED_TO[row.game]}.`,
         data: { kind: 'play_invite', inviteId: row.id, game: row.game, lobbyId: row.lobby_id },
       })
       .catch((err: unknown) => this.log.warn({ err }, 'invite not recorded in the inbox'));

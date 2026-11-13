@@ -11,6 +11,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
+import { SearchField } from '../theme/SearchField';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -20,7 +21,7 @@ import { wearFrame } from '../ranks/api';
 import { PictureFramed, SeasonFramed, framedAvatarSize, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
 import { KIND_LABEL, kindWithCount } from '../shop/format';
-import { ItemArt, KindChips, SearchField } from '../shop/ItemFilters';
+import { ItemArt, KindChips, SEARCH_MAX } from '../shop/ItemFilters';
 import { equip, inventory, setIconVisibility, type CosmeticSlot, type InventoryItem } from './cosmetics';
 import { InitialsAvatar } from './InitialsAvatar';
 import { Loading } from '../theme/Loading';
@@ -273,7 +274,7 @@ export function CosmeticPicker({
             options={kinds.map((k) => ({ key: k, label: t(KIND_LABEL[k]), count: counts[k], a11y: kindWithCount(t, k, counts[k]) }))}
           />
 
-          {searchable ? <SearchField value={query} onChange={setQuery} label={t('edit.items.search')} /> : null}
+          {searchable ? <SearchField value={query} onChangeText={setQuery} label={t('edit.items.search')} maxLength={SEARCH_MAX} /> : null}
 
           <View onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
             {ofKind.length === 0 && empty ? (

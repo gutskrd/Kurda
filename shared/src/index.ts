@@ -22,6 +22,7 @@ export {
   type GameInvite,
   type GameInviteType,
 } from './game-invites.js';
+export * from './join-link.js';
 export {
   APP_LOCALES,
   APP_LOCALE_CODES,
@@ -496,7 +497,7 @@ export * from './play.js';
 export * from './gifts.js';
 
 /**
- * The learning games (Build a Kurdish Sentence and the games after it): the
+ * The learning games (Build a Sentence and the games after it): the
  * one registry, the two varieties as 'kmr' | 'ckb' with their script rules,
  * the schemas of the games' own content and the shapes a round is sent in.
  */
@@ -777,7 +778,7 @@ export * from './games/last-letter/slip.js';
 
 /**
  * The games where players write their own Kurdish: what a clue or a guess
- * may be, and Kurdish Impostor's rules.
+ * may be, and Impostor's rules.
  */
 export * from './games/clues.js';
 export * from './games/multi/order.js';

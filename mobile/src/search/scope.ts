@@ -8,9 +8,12 @@
  *
  * Two of the scopes ask the server (`/users/search`, `/dictionary/search`) and
  * two are lists the app already has. This module is the part with no React in
- * it: the scopes, the two local lists, and the matching.
+ * it: the scopes, the two local lists, and the matching. The games come from
+ * the games' own register (games/gameCards.ts), so every game with a card is
+ * one a search finds.
  */
 import { foldDiacritics } from '@kurda/shared';
+import { GAME_CARDS, GAME_MEANING, type GameCard, type GameRoute } from '../games/gameCards';
 import type { TranslationKey } from '../i18n/translations';
 import type { IconName } from '../theme/icon-paths';
 
@@ -27,38 +30,80 @@ export const SCOPE_LABEL: Record<Scope, TranslationKey> = {
   games: 'search.scope.games',
 };
 
-/**
- * The game routes, all of which take no parameters.
- *
- * Spelled out rather than keyed off `RootStackParamList`, so this module
- * stays free of navigation types and the test can import it.
- */
-export type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race';
-
 /** A place in the app that a search can turn up, rather than a row of data. */
 export interface Destination {
   key: string;
   labelKey: TranslationKey;
+  /** what else finds it: a game's own name where this is one way into it, and what the name means in the reader's language */
+  alsoKeys?: readonly TranslationKey[];
   icon: IconName;
-  /** A param-less route on the root stack. */
+  /** A route on the root stack: one of a game's screens. */
   route: GameRoute;
+  /** the way the screen opens on, where one screen holds every way to play (Who Am I?) */
+  params?: { way: 'phone' | 'friends' };
 }
 
 /**
- * The games, as the Play screen lists them.
- *
- * Written out rather than read from that screen because the screen builds them
- * inside JSX with a card and a blurb each, and a search needs a name and a
- * route. If a game is added there and not here it simply will not be findable,
- * which is a smaller failure than this file importing a screen.
+ * A way into a game that has a name of its own. Peyvok against a friend is
+ * "Pêşbaziya Peyvan" everywhere else in the app, and is listed under that
+ * name; a way without one is listed under its game's.
  */
-export const GAMES: readonly Destination[] = [
-  { key: 'wordle', labelKey: 'games.wordle.name', icon: 'grid', route: 'Wordle' },
-  { key: 'battle', labelKey: 'games.battle.name', icon: 'people', route: 'WordleBattle' },
-  { key: 'rhyme', labelKey: 'games.rhyme.name', icon: 'speaker', route: 'Rhyme' },
-  { key: 'rhymeMatch', labelKey: 'games.rhymeMatch.name', icon: 'people', route: 'RhymeMatch' },
-  { key: 'race', labelKey: 'games.race.name', icon: 'bolt', route: 'Race' },
-];
+const WAY_NAME: Partial<Record<string, TranslationKey>> = {
+  battle: 'games.battle.name',
+  rhymeMatch: 'games.rhymeMatch.name',
+};
+
+/** What those names mean in the reader's language: "battle" still finds the battle. */
+const WAY_MEANING: Partial<Record<string, TranslationKey>> = {
+  battle: 'games.battle.meaning',
+  rhymeMatch: 'games.rhymeMatch.meaning',
+};
+
+/** The glyph beside a game in the results: its own where it has one, the games' own otherwise. */
+const GAME_GLYPH: Partial<Record<string, IconName>> = {
+  wordle: 'grid',
+  rhyme: 'speaker',
+  race: 'bolt',
+};
+
+/**
+ * Every way into the games a search can turn up, from the cards the Games
+ * screen shows (games/gameCards.ts).
+ *
+ * This was a list of its own, written out by hand: five ways into three
+ * games, and none of the games added after it, so somebody typing "impostor"
+ * or "who am i" was told nothing was found. One row for each way into each
+ * card that can be played now: a game played two ways is two rows (alone,
+ * with friends), each opening what its button on the card opens. A way with
+ * no name of its own is told apart by the word on its button, which
+ * `wayWord` hands back for the row's second line.
+ */
+export function gameDestinations(cards: readonly GameCard[]): Destination[] {
+  return cards
+    .filter((card) => !card.soon)
+    .flatMap((card) =>
+      card.ways.map((way) => ({
+        key: way.key,
+        labelKey: WAY_NAME[way.key] ?? card.name,
+        // a game's name is Kurmancî in every language: somebody who types "impostor", or "peyvok" for its battle, still finds it
+        alsoKeys: [card.name, ...(GAME_MEANING[card.emblem] ? [GAME_MEANING[card.emblem]!] : []), ...(WAY_MEANING[way.key] ? [WAY_MEANING[way.key]!] : [])],
+        icon: way.label === 'games.mode.friends' ? 'people' : (GAME_GLYPH[card.key] ?? 'play'),
+        route: way.route,
+        ...(way.params ? { params: way.params } : null),
+      })),
+    );
+}
+
+/** The word that tells one way into a game from another under the same name ("On one phone", "With friends"); null for a game with one way in, or a way with its own name. */
+export function wayWord(cards: readonly GameCard[], key: string): TranslationKey | null {
+  const card = cards.find((c) => c.ways.some((w) => w.key === key));
+  const way = card?.ways.find((w) => w.key === key);
+  if (!card || !way || card.ways.length < 2 || WAY_NAME[key]) return null;
+  return way.label;
+}
+
+/** The games with screens of their own, which need no answer from the server to be listed. */
+export const GAMES: readonly Destination[] = gameDestinations(GAME_CARDS);
 
 /**
  * Whether a piece of text answers a query.
@@ -101,3 +146,13 @@ export function scopesToRun(scope: Scope): readonly Exclude<Scope, 'all'>[] {
 export function readyForServer(query: string): boolean {
   return query.trim().length >= 2;
 }
+
+/**
+ * What the people search is asked for: the name without the "@" the app
+ * itself writes before a handle. Somebody copying "@dilan" off a profile, or
+ * typing it the way they have always seen it, is looking for dilan.
+ */
+export function peopleQuery(query: string): string {
+  return query.trim().replace(/^@+/, '').trim();
+}
+

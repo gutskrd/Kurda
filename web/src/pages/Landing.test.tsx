@@ -31,8 +31,8 @@ describe('Landing', () => {
     show();
     for (const [name, href] of [
       ['Peyvok', '/app/games/peyvok'],
-      ['Rhyming Words', '/app/games/rhyme'],
-      ['Typing Race', '/app/games/race'],
+      ['Peyvên Hevserwa', '/app/games/rhyme'],
+      ['Pêşbaziya Nivîsandinê', '/app/games/race'],
       ['Stories', '/app/learn/stories'],
     ]) {
       expect(screen.getByRole('link', { name }), name).toHaveAttribute('href', href);
@@ -76,8 +76,8 @@ describe('Landing', () => {
     expect(screen.getByRole('img', { name: /the learning path in the hevalo app/i })).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: /a peyvok battle in hevalo/i })).toBeNull();
 
-    fireEvent.click(within(tabs).getByRole('button', { name: 'Peyvok Battle' }));
-    expect(within(tabs).getByRole('button', { name: 'Peyvok Battle' })).toHaveAttribute('aria-pressed', 'true');
+    fireEvent.click(within(tabs).getByRole('button', { name: 'Games' }));
+    expect(within(tabs).getByRole('button', { name: 'Games' })).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByRole('img', { name: /a peyvok battle in hevalo/i })).toBeInTheDocument();
     expect(screen.queryByRole('img', { name: /the learning path in the hevalo app/i })).toBeNull();
   });
@@ -89,7 +89,7 @@ describe('Landing', () => {
     act(() => {
       vi.advanceTimersByTime(5300);
     });
-    expect(within(tabs).getByRole('button', { name: 'Peyvok Battle' })).toHaveAttribute('aria-pressed', 'true');
+    expect(within(tabs).getByRole('button', { name: 'Games' })).toHaveAttribute('aria-pressed', 'true');
 
     fireEvent.click(within(tabs).getByRole('button', { name: 'Stories' }));
     act(() => {

@@ -87,6 +87,12 @@ const PLAY_ERROR_KEY: Record<string, MessageKey> = {
   NOT_A_MEMBER: 'play.error.notMember',
   // CHAT_MUTED and MUTED are said by describeError (reports/restriction.ts), with the time
   NOT_FRIENDS: 'chat.error.notFriends',
+  // Every choice here is a chip the page itself offers, so a server that
+  // refuses one is a server on other rules than the page: the site is updated
+  // in seconds and the server takes minutes, or one was published without the
+  // other. The server's own words for it ("these settings are not offered")
+  // were shown as they came, in English, and told nobody what to do.
+  BAD_SETTINGS: 'play.error.serverBehind',
 };
 
 export function playError(error: ApiError, t: Translate): string {

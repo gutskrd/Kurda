@@ -66,17 +66,17 @@ describe('the code ticket', () => {
     expect(screen.getByRole('button', { name: 'Copy code' })).not.toHaveClass('is-done');
   });
 
-  it('shares a sentence with the code in it, and no address', async () => {
+  it('shares one message: a sentence with the code in it, then the code’s own link', async () => {
     const share = shareSheet();
     renderApp(<CodeTicket game="wordle-battle" code="ABC234" />);
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
+    // the link is last, where a message draws it as the game's card: the game and the code, on the site the ticket is on
     expect(share).toHaveBeenCalledWith({
-      title: 'Peyvok Battle',
-      text: 'Play Peyvok Battle with me on Hevalo! Open Games → Join with a code and type ABC 234.',
+      title: 'Pêşbaziya Peyvan',
+      text: `Play a Peyvok battle with me on Hevalo! Open Games → Join with a code and type ABC 234.\nOr tap to join: ${window.location.origin}/join/peyvok-battle/ABC234`,
     });
-    const sent = share.mock.calls[0]![0] as Record<string, string>;
-    expect(sent).not.toHaveProperty('url');
-    expect(sent.text).not.toMatch(/https?:|\/app\//);
+    // nothing is handed over beside the words: some share targets drop a link sent that way
+    expect(share.mock.calls[0]![0]).not.toHaveProperty('url');
   });
 
   it('says what each game is asking a friend to do', async () => {
@@ -85,15 +85,17 @@ describe('the code ticket', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
     expect(share.mock.calls[0]![0]).toEqual({
       title: 'Stories',
-      text: 'Read a Kurdish story with me on Hevalo! Open Games → Join with a code and type ABC 234.',
+      text: `Read a Kurdish story with me on Hevalo! Open Games → Join with a code and type ABC 234.\nOr tap to join: ${window.location.origin}/join/stories/ABC234`,
     });
   });
 
-  it('copies the sentence where there is no share sheet', async () => {
+  it('copies the same message where there is no share sheet', async () => {
     const writeText = clipboard();
     renderApp(<CodeTicket game="rhyme-match" code="ABC234" />);
     await userEvent.click(screen.getByRole('button', { name: 'Share' }));
-    expect(writeText).toHaveBeenCalledWith('Play Rhyme Match with me on Hevalo! Open Games → Join with a code and type ABC 234.');
+    expect(writeText).toHaveBeenCalledWith(
+      `Play a rhyme match with me on Hevalo! Open Games → Join with a code and type ABC 234.\nOr tap to join: ${window.location.origin}/join/rhyme-match/ABC234`,
+    );
     expect(screen.getByRole('status')).toHaveTextContent('Invite copied. Paste it in a message to your friend.');
   });
 
@@ -117,10 +119,12 @@ describe('the code ticket', () => {
   });
 
   it('is gone with the code, leaving Invite friends on its own', () => {
-    const { rerender } = renderApp(<CodeTicket game="wordle-battle" code={null} invite={<button type="button">Invite friends</button>} />);
+    const first = renderApp(<CodeTicket game="wordle-battle" code={null} invite={<button type="button">Invite friends</button>} />);
     expect(screen.queryByRole('group', { name: 'Join code' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Invite friends' })).toBeInTheDocument();
-    rerender(<CodeTicket game="wordle-battle" code={null} />);
+    // drawn afresh inside the app's own providers: the ticket reads who is signed in, for the link it shares
+    first.unmount();
+    renderApp(<CodeTicket game="wordle-battle" code={null} />);
     expect(document.querySelector('.code-ticket, .code-ticket-alone')).toBeNull();
   });
 

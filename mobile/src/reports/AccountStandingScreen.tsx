@@ -27,6 +27,7 @@ import {
   STANDING_STATUS_LABEL,
 } from './labels';
 import { formatDay, formatUntil } from './sendErrors';
+import { heldDim } from '../theme/MotionParts';
 
 const SCOPES: readonly RestrictionScope[] = ['account', 'chat', 'post', 'media'];
 
@@ -226,7 +227,7 @@ export function SanctionCard({
           />
         ) : (
           <View style={styles.askWrap}>
-            <Pressable onPress={() => setAsking(true)} accessibilityRole="button" style={styles.ask}>
+            <Pressable onPress={() => setAsking(true)} accessibilityRole="button" style={({ pressed }) => [styles.ask, pressed && heldDim]}>
               <Text style={[styles.askText, dir.text, { color: colors.primary }]}>{t('appeal.title')}</Text>
             </Pressable>
             <Text style={[styles.meta, dir.text, { color: colors.textSecondary }]}>

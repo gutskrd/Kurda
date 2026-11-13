@@ -82,9 +82,9 @@ const boardUrls = (fetchMock: ReturnType<typeof mount>): string[] =>
 describe('RanksPage', () => {
   it('opens on the game in its address, with its card, and the friends board first', async () => {
     const fetchMock = mount('/app/ranks/wordle-battle', { friends });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Peyvok Battle' })).toBeInTheDocument();
-    expect(screen.getByRole('article', { name: 'Peyvok Battle' })).toHaveTextContent('Gir II');
-    expect(screen.getByRole('link', { name: 'Peyvok Battle' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pêşbaziya Peyvan' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Pêşbaziya Peyvan' })).toHaveTextContent('Gir II');
+    expect(screen.getByRole('link', { name: 'Pêşbaziya Peyvan' })).toHaveAttribute('aria-current', 'page');
 
     const list = await screen.findByRole('list', { name: en['ranks.board.friends'] });
     const rows = within(list).getAllByRole('listitem');
@@ -155,9 +155,9 @@ describe('RanksPage', () => {
     const user = userEvent.setup();
     const fetchMock = mount('/app/ranks/wordle-battle', { friends });
     await screen.findByRole('list', { name: en['ranks.board.friends'] });
-    await user.click(screen.getByRole('link', { name: 'Rhyme Match' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Rhyme Match' })).toBeInTheDocument();
-    expect(screen.getByRole('article', { name: 'Rhyme Match' })).toHaveTextContent('Placing 2/5');
+    await user.click(screen.getByRole('link', { name: 'Pêşbaziya Serwayan' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Pêşbaziya Serwayan' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Pêşbaziya Serwayan' })).toHaveTextContent('Placing 2/5');
     await waitFor(() => expect(boardUrls(fetchMock).at(-1)).toContain('/ranks/boards/rhyme-match?scope=friends'));
     // still placing: no rung says you are on it
     const ladder = screen.getByRole('heading', { name: en['ranks.ladder'] }).closest('section')!;

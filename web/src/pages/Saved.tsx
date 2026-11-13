@@ -23,7 +23,8 @@ export function Saved(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const [items, setItems] = useState<FeedItem[] | null>(null);
-  const arriving = useArrival(!!items && items.length > 0);
+  // once in a tab: a list opened again does not rise in again (lib/motion.ts)
+  const arriving = useArrival(!!items && items.length > 0, 'saved');
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
 

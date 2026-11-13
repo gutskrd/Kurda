@@ -16,7 +16,7 @@ const PATH = '/app/games/impostor';
 const STEPS = ['games.impostor.how.card', 'games.impostor.how.clues', 'games.impostor.how.vote'] as const;
 
 /**
- * The start of Kurdish Impostor (/app/games/impostor): what the game is in
+ * The start of Impostor (/app/games/impostor): what the game is in
  * one line, and one thing to press.
  *
  * The page is laid out in the order a person decides: the hand of cards and

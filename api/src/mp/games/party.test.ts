@@ -31,7 +31,7 @@ function contentDb(rows: Array<{ kind: string; level: number; payload: unknown }
   } as never;
 }
 
-describe('Kurdish Impostor on the server', () => {
+describe('Xapînok on the server', () => {
   it('takes the presets a host may choose, and drops anything else sent', () => {
     const parsed = impostorModule.lobbySchema.parse({ dialect: 'ckb', difficulty: 'intermediate', clueSeconds: 45, deal: { card: { word: 'x' } } });
     expect(parsed.settings).toEqual({ dialect: 'ckb', difficulty: 'intermediate', clueSeconds: 45, category: null });

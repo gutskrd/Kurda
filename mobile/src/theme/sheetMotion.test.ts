@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { detentHeights, dragOffset, restingOffsets, settleSheet } from './sheetMotion';
+import { detentHeights, dragOffset, leaveMs, restingOffsets, settleSheet } from './sheetMotion';
 
 describe('the heights a sheet rests at', () => {
   it('makes medium half the screen and large the tallest a sheet may be', () => {
@@ -70,3 +70,25 @@ describe('a sheet let go', () => {
     expect(settleSheet(160, 0, plain)).toBe('close');
   });
 });
+
+describe('how long a sheet takes to leave', () => {
+  it('takes the time anything leaving takes when nothing was moving it', () => {
+    expect(leaveMs(500, 0, 200, 120)).toBe(200);
+    // a flick back up that still closed it (dragged past halfway) is no speed towards leaving
+    expect(leaveMs(500, -300, 200, 120)).toBe(200);
+  });
+
+  it('is sooner when the finger was already taking it faster, and never slower than that', () => {
+    // 300 points at 3000 a second is a tenth of a second: not shorter than the least, though
+    expect(leaveMs(300, 3000, 200, 120)).toBe(120);
+    expect(leaveMs(450, 3000, 200, 120)).toBe(150);
+    // a gentle let-go would take longer than everything else does: it does not
+    expect(leaveMs(450, 600, 200, 120)).toBe(200);
+  });
+
+  it('has nowhere to go once it is off the screen', () => {
+    expect(leaveMs(0, 0, 200, 120)).toBe(120);
+    expect(leaveMs(-20, 900, 200, 120)).toBe(120);
+  });
+});
+

@@ -39,6 +39,7 @@ import {
   impostorWayTone,
 } from './impostor.js';
 import { GAME_EMBLEMS, GAME_EMBLEM_SAMPLES, gameEmblemLayers, gameEmblemLoopMs, gameEmblemSvg, gameEmblemTone, isGameEmblem } from './games.js';
+import { LETTERS, letter } from './ink.js';
 import { EMAIL_PICTURES, emailPictureLoopMs, emailPictureStill, emailPictureSvg, emailPictureTone, type EmailPicture } from './email.js';
 import { TICKET_ART_BOX, TICKET_ART_TEAR, TICKET_ART_TILES } from './ticket.js';
 import {
@@ -931,13 +932,39 @@ describe('the games’ emblems', () => {
     expect(new Set(all).size).toBe(all.length);
   });
 
-  it('writes nothing in a picture: no letters and no numerals, so it reads the same in every language', () => {
+  it('sets no type in a picture: what a cover says is written by hand, the same marks on the phone and in the browser', () => {
     for (const game of GAME_EMBLEMS) expect(gameEmblemSvg({ game })).not.toMatch(/<text\b/);
   });
 
-  it('gives Kurdish Impostor the hand of cards its own page shows', () => {
-    const strip = (svg: string): string => svg.replace(/ (id|aria-labelledby)="[^"]*"/g, '').replace(/url\(#[^)]*\)/g, 'url()');
-    expect(strip(gameEmblemSvg({ game: 'impostor', size: 120 }))).toBe(strip(impostorEmblemSvg({ emblem: 'cards', size: 120 })));
+  it('fills its square: every cover begins with a ground of its own colour, and no two grounds are alike', () => {
+    const grounds = GAME_EMBLEMS.map((game) => /<\/title>(?:<defs>.*?<\/defs>)?<path d="M0 0H120V120H0Z" fill="(#[0-9a-f]{6})"\/>/.exec(gameEmblemSvg({ game }))?.[1]);
+    for (const hex of grounds) expect(hex).toBeDefined();
+    expect(new Set(grounds).size).toBe(GAME_EMBLEMS.length);
+  });
+
+  it('writes only the letters it has been taught, each a clean line, and says so when asked for another', () => {
+    // the letters the Kurdish alphabet adds to the Latin one are all there
+    for (const ch of ['Ê', 'Î', 'Û', 'Ç', 'Ş']) expect(LETTERS).toContain(ch);
+    for (const ch of LETTERS) {
+      const drawn = letter(ch, 10, 20, 14, '#3a2b4d', 2);
+      expect(drawn).toMatch(/^<path d="M[^"]+" fill="none" stroke="#3a2b4d" stroke-width="[\d.]+" stroke-linecap="round" stroke-linejoin="round" transform="translate\(10 20\) scale\(1\.4\)"\/>$/);
+    }
+    // the line is as thick as asked whatever size the letter is: thinned by as much as the letter is scaled up
+    expect(letter('A', 0, 0, 20, '#000000', 3)).toContain('stroke-width="1.5"');
+    expect(() => letter('ß', 0, 0, 20, '#000000', 3)).toThrow(RangeError);
+  });
+
+  it('shows each word game as the game is: Peyvok five letters wide, and words from the first lessons', () => {
+    // every letter drawn on a cover is a path of the letters' own; counting them counts what is written
+    const written = (game: (typeof GAME_EMBLEMS)[number]): number => gameEmblemSvg({ game }).split('stroke-linejoin="round" transform="translate(').length - 1;
+    // dayik, silav, heval on the board, and the two letters standing beside the phone
+    expect(written('peyvok')).toBe(17);
+    // dar and kar
+    expect(written('rhyme')).toBe(6);
+    // şêr and roj: the r is written twice, once where the first word ends and once where the second begins
+    expect(written('last-letter')).toBe(6);
+    // the question on the note, and the two answers the table gives: erê and na
+    expect(written('who-am-i')).toBe(6);
   });
 
   describe('in motion', () => {
@@ -995,15 +1022,24 @@ describe('the games’ emblems', () => {
       }
     });
 
+    it('begins and ends as the still picture: every part is where it was drawn', () => {
+      for (const game of GAME_EMBLEMS) {
+        for (const layer of layersOf(game)) {
+          if (!layer.poses) continue;
+          for (const pose of [layer.poses[0]!, layer.poses[GAME_EMBLEM_SAMPLES]!]) expect(pose, game).toEqual({ x: 0, y: 0, r: 0, sx: 1, sy: 1, o: 1 });
+        }
+      }
+    });
+
     it('rests: for a good part of every loop nothing in the emblem moves at all', () => {
-      for (const game of GAME_EMBLEMS.filter((g) => g !== 'race' && g !== 'who-am-i')) {
+      for (const game of GAME_EMBLEMS.filter((g) => g !== 'race')) {
         const moving = layersOf(game).filter((l) => l.poses !== null);
         let still = 0;
         for (let at = 1; at <= GAME_EMBLEM_SAMPLES; at++) {
           const same = moving.every((l) => JSON.stringify(l.poses![at]) === JSON.stringify(l.poses![at - 1]));
           if (same) still++;
         }
-        // the race's hand and the asker's sway never stop; everything else has moments of rest between its beats
+        // the runners never stop; everything else has moments of rest between its beats
         expect(still / GAME_EMBLEM_SAMPLES, game).toBeGreaterThanOrEqual(0.08);
       }
     });
@@ -1022,7 +1058,7 @@ describe('the games’ emblems', () => {
   });
 });
 
-describe('Kurdish Impostor’s pictures', () => {
+describe('Xapînok’s pictures', () => {
   // the starter categories (api/src/games/word-categories.ts): every one of them has a picture of its own
   const STARTER = [
     'animals', 'food', 'fruit', 'vegetables', 'drinks', 'family', 'body', 'clothes', 'home', 'jobs', 'nature', 'town', 'transport', 'colours',

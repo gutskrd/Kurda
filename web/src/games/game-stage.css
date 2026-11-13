@@ -23,9 +23,16 @@
   --gs-night: #2a2150;
   --gs-night-deep: #171231;
   --gs-night-ink: #f4efff;
-  --gs-gold: #f2b632;
-  --gs-gold-lip: #a8791a;
-  --gs-gold-ink: #2a1d05;
+  /* the stage's own gold, kept once in tokens.css: the Games page's Play is the same button */
+  --gs-gold: var(--stage-gold);
+  --gs-gold-lip: var(--stage-gold-lip);
+  --gs-gold-ink: var(--stage-gold-ink);
+  /* a letter in its place, and one not in the word: each with the edge it stands on, said here once for the board and the keys */
+  --gs-right: #3fa45b;
+  --gs-right-lip: #2b703e;
+  --gs-absent: #6f7a8a;
+  --gs-absent-lip: #4b5462;
+  --gs-on-colour: #ffffff;
 }
 
 /* ---- the start: the emblem on the night ------------------------------------------- */
@@ -309,16 +316,17 @@
   height: 52px;
 }
 
-/* what a round paid, where a game says it on its own card */
-.gs-earned {
-  justify-self: center;
+/*
+ * Where a game played alone would have said what it paid: one quiet line, that such a game earns no XP and where XP
+ * is earned. It takes its place and its alignment from the result it stands in.
+ */
+.gs-alone {
+  max-width: 44ch;
   margin: 0;
-  padding: 6px var(--space-4);
-  border-radius: var(--r-pill);
-  background: color-mix(in srgb, var(--gs-gold) 18%, transparent);
-  color: var(--gold-ink, var(--ink));
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  line-height: 1.4;
+  text-wrap: balance;
 }
 
 /* ---- a start that is the emblem and one button (a round against a clock) -------------- */
@@ -357,6 +365,12 @@
 .gs-back:active {
   transform: scale(0.94);
 }
+/* a page that asks before it lets go draws the way back as a button, in the same corner */
+button.gs-back {
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
 /* the arrow is drawn pointing on; back is the other way, and on a right-to-left page back is to the right */
 .gs-back svg {
   transform: rotate(180deg);
@@ -379,14 +393,14 @@
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
+/* a game's name is never cut short: the longer Kurmancî ones take a second line on a narrow screen */
 .gs-head-title {
   margin: 0;
-  overflow: hidden;
   font-family: var(--font-display);
   font-size: var(--text-section);
   line-height: 1.15;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
 }
 
 @media (min-width: 720px) {
@@ -432,9 +446,9 @@
   transform: none;
 }
 .gs .wordle-cell.wordle-green {
-  background: #3fa45b;
-  color: #ffffff;
-  box-shadow: 0 4px 0 #2b703e;
+  background: var(--gs-right);
+  color: var(--gs-on-colour);
+  box-shadow: 0 4px 0 var(--gs-right-lip);
 }
 .gs .wordle-cell.wordle-yellow {
   background: var(--gs-gold);
@@ -442,9 +456,9 @@
   box-shadow: 0 4px 0 var(--gs-gold-lip);
 }
 .gs .wordle-cell.wordle-gray {
-  background: #6f7a8a;
-  color: #ffffff;
-  box-shadow: 0 4px 0 #4b5462;
+  background: var(--gs-absent);
+  color: var(--gs-on-colour);
+  box-shadow: 0 4px 0 var(--gs-absent-lip);
 }
 .gs .wordle-key {
   border: 0;
@@ -461,9 +475,9 @@
   box-shadow: 0 1px 0 var(--border-strong);
 }
 .gs .wordle-key.wordle-green {
-  background: #3fa45b;
-  color: #ffffff;
-  box-shadow: 0 3px 0 #2b703e;
+  background: var(--gs-right);
+  color: var(--gs-on-colour);
+  box-shadow: 0 3px 0 var(--gs-right-lip);
 }
 .gs .wordle-key.wordle-yellow {
   background: var(--gs-gold);
@@ -655,23 +669,29 @@
   background: color-mix(in srgb, var(--gs-gold) 16%, var(--surface));
   box-shadow: 0 3px 0 var(--gs-gold-lip);
 }
-.gs .wa-guess > .btn {
-  justify-self: stretch;
+/* a tile that cannot be pressed now lies flat: the player's notes, not a choice */
+.gs .wa-tile:disabled {
+  box-shadow: none;
+}
+.gs .wa-guess-actions .btn {
   min-height: 52px;
 }
-/* the one who wears the card stands in the game's own light */
-.gs .wa-board > .wa-stage {
+/* the one who wears the card stands in the game's own light, small as they are beside their turn's headline */
+.gs .wa-turn .wa-stage {
   background: radial-gradient(closest-side, color-mix(in srgb, var(--gs-tone) 26%, transparent) 0%, transparent 100%);
 }
 .gs .wa-worth {
-  justify-self: center;
   padding: 6px var(--space-4);
   border-radius: var(--r-pill);
   background: color-mix(in srgb, var(--gs-gold) 16%, transparent);
-  font-weight: 700;
+}
+/* on the night the silhouette is the green of the game's own picture, in either theme: the same deer wherever it stands */
+.gs .gs-hero .wa-stage,
+.gs .wa-night .wa-stage {
+  color: #45a26a;
 }
 
-/* ---- Kurdish Detective: the case file lies on the night; an answer is a card to pick up ---- */
+/* ---- Detective: the case file lies on the night; an answer is a card to pick up ---- */
 .gs .dt-file {
   position: relative;
   padding: var(--space-5);

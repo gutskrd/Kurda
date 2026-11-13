@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, StyleSheet, Text, View } from 'react-native';
 import type { GiftCard } from '@kurda/shared';
 import { assetUrl } from '../api/env';
 import { useMotionAlive } from '../a11y/useMotionAlive';
@@ -7,6 +7,7 @@ import type { Translate } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
+import { PressableScale } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
 import { useReportAction } from '../reports/reportAction';
@@ -105,7 +106,8 @@ export function GiftBubble({
   }
   const giftId = card.myGiftId;
   return (
-    <Pressable
+    // a card, so it gives under the finger as every card does
+    <PressableScale
       onPress={() => onOpen(giftId)}
       // the bubble takes the touch, so the row's press-and-hold would never see it
       onLongPress={onReport}
@@ -114,8 +116,8 @@ export function GiftBubble({
       accessibilityLabel={label}
       {...report}
     >
-      {({ pressed }) => <View style={{ opacity: pressed ? 0.85 : 1 }}>{body}</View>}
-    </Pressable>
+      {body}
+    </PressableScale>
   );
 }
 

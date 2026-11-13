@@ -1,5 +1,5 @@
 /**
- * The Memory Thief's rules: easier rounds study longer and lose fewer words,
+ * Dizê Bîrê's rules: easier rounds study longer and lose fewer words,
  * always between two and six, only the advanced round is typed, and the
  * passage is studied with every word that will vanish in its place.
  */
@@ -8,7 +8,7 @@ import { GAME_DIFFICULTIES, SOLO_ROUND_ITEMS } from '../solo.js';
 import { PASSAGE_HIDDEN } from '../content.js';
 import { MEMORY_DECOYS, MEMORY_HIDDEN, MEMORY_ROUND_PASSAGES, memoryAnswerMode, memoryStudyLines, memoryTextLines, studySeconds } from './rules.js';
 
-describe('the Memory Thief’s rules', () => {
+describe('Dizê Bîrê’s rules', () => {
   it('takes two to six words, more as the difficulty rises', () => {
     for (const d of GAME_DIFFICULTIES) {
       const { min, max } = MEMORY_HIDDEN[d];

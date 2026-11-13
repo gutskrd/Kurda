@@ -7,6 +7,7 @@ import { display } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useDirection } from './direction';
+import { heldDim } from '../theme/MotionParts';
 
 /** A caring message to show: the notice as the moderators wrote it, and where help is. */
 export interface CaringMessage {
@@ -62,7 +63,7 @@ export function CaringMessageDialog({
             onPress={() => void Linking.openURL(message.helplineUrl)}
             style={styles.stretch}
           />
-          <Pressable onPress={onClose} accessibilityRole="button" style={styles.close}>
+          <Pressable onPress={onClose} accessibilityRole="button" style={({ pressed }) => [styles.close, pressed && heldDim]}>
             <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
           </Pressable>
         </View>

@@ -24,7 +24,8 @@ const round = (over: Record<string, unknown> = {}) => ({
   score: 0,
   accepted: 0,
   status: 'active',
-  xpAwarded: null,
+  // a round of training is played alone, so the server pays nothing for it
+  xpAwarded: 0,
   ...over,
 });
 
@@ -51,5 +52,20 @@ describe('RhymeTrainingScreen', () => {
     renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
     fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
     await waitFor(() => expect(reportGameFinished).toHaveBeenCalledWith({ moment: 'other', gaveUp: false }), { timeout: 3000 });
+  });
+
+  it('ends a round on its score, with one quiet line about XP and no XP figure', async () => {
+    testAuth.client = fakeClient({
+      'POST /rhyme/training': ok(round()),
+      'POST /rhyme/training/r1/end': ok({ game: round({ status: 'ended', remainingMs: 0, score: 7, accepted: 3 }) }),
+    });
+    renderWithProviders(<RhymeTrainingScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Start/ }));
+    fireEvent.click(await screen.findByRole('button', { name: 'End round' }));
+    expect(await screen.findByRole('heading', { name: 'Time’s up for this round.' })).toBeTruthy();
+    expect(screen.getByText('7 pts · 3 found')).toBeTruthy();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
+    // nothing earned is shown, not even a zero
+    expect(screen.queryByText(/\+\d+ XP/)).toBeNull();
   });
 });

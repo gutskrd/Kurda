@@ -27,14 +27,14 @@ describe('Games hub', () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Rhyming Words' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Peyvên Hevserwa' })).toBeInTheDocument();
     // the ranked quiz is gone, and the stories that took its place have a group of their own now
     expect(screen.queryByText('Ranked Quiz')).not.toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Stories' })).toBeNull();
     expect(screen.getByRole('link', { name: 'Stories' })).toHaveAttribute('href', '/app/learn/stories');
     // the separate per-mode cards are gone
-    expect(screen.queryByRole('heading', { name: 'Peyvok Battle' })).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'Rhyme Match' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Pêşbaziya Peyvan' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Pêşbaziya Serwayan' })).toBeNull();
   });
 
   it('gives a game with a page for each way to play a button for each, on its card', async () => {
@@ -60,7 +60,7 @@ describe('Games hub', () => {
     renderApp(<Games />, ['/app/games']);
     // wait for the session to land: until it does, the page is drawn for a
     // signed-out visitor, who has no Play links at all
-    const race = (await screen.findByRole('heading', { name: 'Typing Race' })).closest('article')!;
+    const race = (await screen.findByRole('heading', { name: 'Pêşbaziya Nivîsandinê' })).closest('article')!;
     expect(await within(race).findByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/race');
     // one page, so it says who it is for in words rather than on two buttons
     expect(within(race).getByText('On your own')).toBeInTheDocument();
@@ -71,7 +71,27 @@ describe('Games hub', () => {
     renderApp(<Games />, ['/app/games']);
     await screen.findAllByRole('link', { name: 'Play' });
     expect(screen.getAllByText('Featured')).toHaveLength(1);
-    for (const name of ['Peyvok', 'Rhyming Words', 'Typing Race']) expect(screen.getAllByRole('heading', { name })).toHaveLength(1);
+    for (const name of ['Peyvok', 'Peyvên Hevserwa', 'Pêşbaziya Nivîsandinê']) expect(screen.getAllByRole('heading', { name })).toHaveLength(1);
+  });
+
+  /**
+   * Every card's first button was gold, so the page had as many "press this
+   * one" buttons as it had games. Gold is the game put forward's Play and
+   * nothing else; the shelf's ways in are the quiet buttons.
+   */
+  it('keeps gold for the one game put forward: the shelf’s buttons are all quiet', async () => {
+    signIn();
+    renderApp(<Games />, ['/app/games']);
+    await screen.findAllByRole('link', { name: 'Play' });
+
+    const gold = [...document.querySelectorAll('.gp-play')];
+    expect(gold).toHaveLength(1);
+    expect(gold[0]!.closest('article')).toHaveClass('gp-card--hero');
+    // on the shelf, no button outweighs another
+    for (const way of document.querySelectorAll('.gp-shelf .gp-ways .btn')) expect(way).toHaveClass('btn-secondary');
+    // and under a filter, with nothing put forward, there is no gold button at all
+    await userEvent.click(screen.getByRole('button', { name: 'On your own' }));
+    expect(document.querySelector('.gp-play')).toBeNull();
   });
 
   it('shows only the games played the chosen way, the featured one among them', async () => {
@@ -84,13 +104,13 @@ describe('Games hub', () => {
     await userEvent.click(within(filter).getByRole('button', { name: 'With friends' }));
     expect(within(filter).getByRole('button', { name: 'With friends' })).toHaveAttribute('aria-pressed', 'true');
     // the race is played alone; the other two have a page for playing online
-    expect(screen.queryByRole('heading', { name: 'Typing Race' })).toBeNull();
+    expect(screen.queryByRole('heading', { name: 'Pêşbaziya Nivîsandinê' })).toBeNull();
     expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Rhyming Words' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Peyvên Hevserwa' })).toBeInTheDocument();
     expect(screen.queryByText('Featured')).toBeNull();
 
     await userEvent.click(within(filter).getByRole('button', { name: 'On your own' }));
-    expect(screen.getByRole('heading', { name: 'Typing Race' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Pêşbaziya Nivîsandinê' })).toBeInTheDocument();
   });
 
   /**
@@ -115,7 +135,7 @@ describe('Games hub', () => {
     renderApp(<Games />, ['/app/games']);
 
     // knowing what is here once you sign up is the reason to sign up
-    for (const name of ['Peyvok', 'Rhyming Words', 'Typing Race']) expect(await screen.findByRole('heading', { name })).toBeInTheDocument();
+    for (const name of ['Peyvok', 'Peyvên Hevserwa', 'Pêşbaziya Nivîsandinê']) expect(await screen.findByRole('heading', { name })).toBeInTheDocument();
     for (const link of screen.getAllByRole('link', { name: 'Sign in to play' })) expect(link).toHaveAttribute('href', '/login');
   });
 
@@ -134,8 +154,11 @@ describe('Games hub', () => {
     expect(screen.getByRole('link', { name: 'Spiele' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Lektionen' })).toHaveAttribute('href', '/app/learn');
     expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Reimwörter' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: 'Schreibwettlauf' })).toBeInTheDocument();
+    // a game keeps its Kurmancî name in every language, and says what it means in the reader's under it
+    const rhyme = screen.getByRole('heading', { name: 'Peyvên Hevserwa' }).closest('article')!;
+    expect(within(rhyme).getByText('Reimwörter')).toBeInTheDocument();
+    const race = screen.getByRole('heading', { name: 'Pêşbaziya Nivîsandinê' }).closest('article')!;
+    expect(within(race).getByText('Schreibwettlauf')).toBeInTheDocument();
     // the filter, and the way in a visitor is given
     expect(screen.getByRole('button', { name: 'Mit Freunden' })).toBeInTheDocument();
     expect(screen.getAllByText('Zum Spielen anmelden').length).toBeGreaterThan(0);
@@ -149,7 +172,8 @@ describe('Games hub', () => {
     // the game's name is the same in every language, so wait for the Turkish around it
     const wordle = (await screen.findByRole('heading', { name: 'Peyvok' })).closest('article')!;
     expect(await within(wordle).findByRole('link', { name: 'Tek başına oyna' })).toHaveAttribute('href', '/app/games/peyvok');
-    const race = screen.getByRole('heading', { name: 'Yazma yarışı' }).closest('article')!;
+    const race = screen.getByRole('heading', { name: 'Pêşbaziya Nivîsandinê' }).closest('article')!;
+    expect(within(race).getByText('Yazma yarışı')).toBeInTheDocument();
     expect(within(race).getByRole('link', { name: 'Oyna' })).toHaveAttribute('href', '/app/games/race');
   });
 });

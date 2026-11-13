@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiClient, createApiClient, describeError } from '../lib/api';
 import { persistTokens } from '../lib/tokenStorage';
+import { forgetAnswers } from '../lib/apiMemory';
 import { thisDeviceName } from '../lib/deviceName';
 import { pollWhileVisible } from '../lib/pollWhileVisible';
 import type { AuthPayload, SessionUser } from '../lib/types';
@@ -8,6 +9,7 @@ import { useT } from '../i18n/I18nProvider';
 import type { MaintenanceNotice, SuspendedErrorDetails } from '@kurda/shared';
 import { suspensionOf } from '../reports/restriction';
 import { sameNotice } from '../maintenance/notice';
+import { authErrorField, type AuthField } from './fieldProblem';
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
 
@@ -21,6 +23,13 @@ export interface RegisterInput {
   birthMonth: number;
 }
 
+/** Why a sign-in or a sign-up was refused: the words, the server's code, and the field it is about when it is about one. */
+export interface AuthRefusal {
+  message: string;
+  code?: string;
+  field: AuthField | null;
+}
+
 interface AuthContextValue {
   status: AuthStatus;
   user: SessionUser | null;
@@ -28,15 +37,16 @@ interface AuthContextValue {
   /**
    * Resolve to the error, or null on success. The code rides along because
    * some refusals need a way on beside the words: a paused sign-in offers a
-   * new password.
+   * new password. The field rides along so the form can say it there
+   * (auth/fieldProblem.ts).
    */
-  login(email: string, password: string, remember: boolean): Promise<{ message: string; code?: string } | null>;
+  login(email: string, password: string, remember: boolean): Promise<AuthRefusal | null>;
   /**
    * Resolve to the error, or null on success. The code rides along because one
    * refusal is not a message to show under a form: UNDER_MINIMUM_AGE replaces
    * the form with an explanation.
    */
-  register(input: RegisterInput): Promise<{ message: string; code?: string } | null>;
+  register(input: RegisterInput): Promise<AuthRefusal | null>;
   requestPasswordReset(email: string): Promise<void>;
   logout(): Promise<void>;
   /** Re-fetch the profile (e.g. after editing it elsewhere). */
@@ -75,15 +85,18 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
 
   // Build the client once. onLogout fires when a refresh fails mid-session;
   // onSuspended when that failure is a suspension, with its reasons;
-  // onMaintenance when Hevalo has been taken offline.
+  // onMaintenance when Hevalo has been taken offline. Whoever was signed in,
+  // what the app remembers of their answers goes with them (lib/apiMemory.ts).
   const { client, storage } = useMemo(
     () =>
       createApiClient(
         () => {
+          forgetAnswers();
           setUser(null);
           setStatus('signedOut');
         },
         (details) => {
+          forgetAnswers();
           setUser(null);
           setStatus('signedOut');
           setSuspension(details);
@@ -134,6 +147,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   }, [status, client]);
 
   const applyAuth = (payload: AuthPayload, remember: boolean): void => {
+    // a new person at this browser, or the same one again: nothing kept from before is theirs to see
+    forgetAnswers();
     persistTokens(payload.tokens, remember);
     setUser(payload.user);
     setStatus('signedIn');
@@ -152,7 +167,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
         // a suspended account gets the suspension screen, not a line under the form
         const suspended = suspensionOf(res.error);
         if (suspended) setSuspension(suspended);
-        return { message: describeError(res.error, t), code: res.error.code };
+        return { message: describeError(res.error, t), code: res.error.code, field: authErrorField(res.error) };
       }
       setSuspension(null);
       applyAuth(res.data, remember);
@@ -160,7 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     },
     register: async (input) => {
       const res = await client.post<AuthPayload>('/auth/register', { ...input, deviceName: thisDeviceName(), acceptTerms: true });
-      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
+      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code, field: authErrorField(res.error) };
       applyAuth(res.data, true);
       return null;
     },
@@ -173,6 +188,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       // not wait on a slow network
       void client.endSession();
       storage.clear();
+      // and nothing this account loaded stays behind for whoever is here next
+      forgetAnswers();
       setUser(null);
       setStatus('signedOut');
     },

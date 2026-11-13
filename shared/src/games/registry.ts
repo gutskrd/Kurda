@@ -13,8 +13,14 @@
  * their variety (`minimum`, at some difficulty), and only by an app that has
  * a screen for it; there is no "coming soon".
  *
+ * What a game pays: XP only when it is played online with other people. A
+ * round played alone, against Hevalo, or on one phone passed round a room
+ * pays none (`paysAlone`), so nothing here can be earned by one person at a
+ * screen with nobody to play against. The lessons' two exercises below are
+ * lessons, and pay as lessons do.
+ *
  * Two entries are not games any more but exercises of the lessons' practice
- * (`place: 'lessons'`): Build a Kurdish Sentence and Hear It, Find It. They
+ * (`place: 'lessons'`): Build a Sentence and Hear It, Find It. They
  * are still rounds of the solo kit, made, checked and paid by the same rules,
  * which is why they stay in this list; Learn's Games never lists them, and
  * the lessons' practice does.
@@ -26,7 +32,7 @@
  *
  * Per-game modules. The registry is data only and imports no game: a game's
  * own rules live in a folder of its own beside this file —
- * `build-sentence/` for Build a Kurdish Sentence, `last-letter/` for The Last
+ * `build-sentence/` for Build a Sentence, `last-letter/` for The Last
  * Letter, `multi/` for the multiplayer engine every game with friends shares — and are
  * exported through `games/index.ts`, one line per module. A new game adds its
  * entry here and its folder there; nothing else in this file changes.
@@ -66,11 +72,22 @@ export function isRetiredGame(v: unknown): v is RetiredGameId {
 }
 
 /**
- * The XP sources the retired games paid from. They are still game sources:
- * XP already in the ledger under one of them keeps counting as game XP, under
- * the league's daily cap, exactly as it did the day it was earned.
+ * The XP sources nothing pays from any more: the retired games', and the ones
+ * games paid from while a round played alone still earned XP (Who Am I?,
+ * Memory Thief and Detective alone, The Last Letter against Hevalo).
+ * They are still game sources: XP already in the ledger under one of them
+ * keeps counting as game XP, under the league's daily cap, exactly as it did
+ * the day it was earned.
  */
-export const RETIRED_GAME_XP_SOURCES: readonly string[] = ['game_dont_say_place', 'game_bluff_place', 'game_what_would_you_say'];
+export const RETIRED_GAME_XP_SOURCES: readonly string[] = [
+  'game_dont_say_place',
+  'game_bluff_place',
+  'game_what_would_you_say',
+  'game_who_am_i',
+  'game_memory_thief',
+  'game_detective',
+  'game_last_letter_solo',
+];
 
 /** How a game is played: alone, with others, or either. */
 export type LearnGameMode = 'solo' | 'multi' | 'both';
@@ -116,7 +133,12 @@ export interface LearnGame {
    * game to be offered at it: sentences, passages, case files, cards…
    */
   minimum: number;
-  /** the XP ledger sources it pays from; every one is a game source, under the league's daily cap */
+  /**
+   * The XP ledger sources it pays from; every one is a game source, under the
+   * league's daily cap. None for a game that is only ever played alone: XP is
+   * for lessons, their exercises, and games played online with other people
+   * (`paysAlone`).
+   */
   xpSources: readonly string[];
   /** the varieties it can be played in; dialects never mix in one game */
   dialects: readonly GameDialect[];
@@ -149,7 +171,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     sources: ['story-passages', 'conversations'],
     contentKinds: ['passage'],
     minimum: 6,
-    xpSources: ['game_memory_thief'],
+    xpSources: [],
     dialects: GAME_DIALECTS,
     glyph: 'eye',
     tone: 'saffron',
@@ -177,7 +199,7 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     sources: ['lesson-sentences', 'story-passages', 'recordings'],
     contentKinds: ['case_file'],
     minimum: 1,
-    xpSources: ['game_detective'],
+    xpSources: [],
     dialects: GAME_DIALECTS,
     glyph: 'search',
     tone: 'pine',
@@ -191,7 +213,8 @@ export const LEARN_GAMES: readonly LearnGame[] = [
     sources: ['dictionary', 'vocabulary'],
     contentKinds: [],
     minimum: 200,
-    xpSources: ['game_last_letter', 'game_last_letter_solo'],
+    // with friends; a game against Hevalo pays nothing
+    xpSources: ['game_last_letter'],
     dialects: GAME_DIALECTS,
     glyph: 'text-t',
     tone: 'saffron',
@@ -212,14 +235,15 @@ export const LEARN_GAMES: readonly LearnGame[] = [
   },
   {
     id: 'who-am-i',
-    mode: 'both',
+    // a card is read by somebody else: with friends online, or on one phone passed round a room; never alone
+    mode: 'multi',
     place: 'games',
-    players: { min: 1, max: 8 },
+    players: { min: 2, max: 6 },
     freeText: false,
     sources: ['vocabulary'],
     contentKinds: ['identity', 'question_template'],
     minimum: 10,
-    xpSources: ['game_who_am_i', 'game_who_am_i_place'],
+    xpSources: ['game_who_am_i_place'],
     dialects: GAME_DIALECTS,
     glyph: 'question',
     tone: 'meadow',
@@ -229,6 +253,18 @@ export const LEARN_GAMES: readonly LearnGame[] = [
 /** A game's entry; every id has one. */
 export function learnGame(id: LearnGameId): LearnGame {
   return LEARN_GAMES.find((g) => g.id === id)!;
+}
+
+/**
+ * Whether a round of this played alone earns XP. Only the lessons' own
+ * exercises do. A game played alone, against Hevalo, or on one phone passed
+ * round a room is practice: nobody else is there to play against, and XP that
+ * can be had that way is XP anyone can have for the asking. Game XP comes
+ * from games played online with other people.
+ */
+export function paysAlone(id: LearnGameId): boolean {
+  const game = learnGame(id);
+  return game.place === 'lessons' && game.xpSources.length > 0;
 }
 
 /**

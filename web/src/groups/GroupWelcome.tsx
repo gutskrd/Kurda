@@ -12,7 +12,8 @@ import { GREETINGS } from './standing';
  * What an empty group chat shows instead of nothing: the group's picture,
  * large, and its name; where the chat stands — brand new, or cleared by you
  * (cleared for everyone says so in its own line above this) — and three
- * greetings in the Kurdish the learner is learning, any of which a tap sends.
+ * greetings in the Kurdish the learner is learning, any of which a tap sends
+ * (it is in the thread at once, so this card is gone with the tap).
  * The greetings are left out for someone who cannot post now. The owner and
  * admins of a group that has nobody else in it yet are offered
  * to add friends, since nobody else can be in it otherwise.
@@ -21,7 +22,6 @@ export function GroupWelcome({
   group,
   cleared,
   canPost,
-  sending,
   onGreet,
   onAddFriends,
 }: {
@@ -29,7 +29,6 @@ export function GroupWelcome({
   /** whose clear left it empty, if anyone's: yours is said here, in place of "the start" */
   cleared: { kind: 'me'; at: string } | { kind: 'everyone' } | null;
   canPost: boolean;
-  sending: boolean;
   onGreet: (text: string) => void;
   onAddFriends?: () => void;
 }): React.JSX.Element {
@@ -64,7 +63,6 @@ export function GroupWelcome({
                 className="gwelcome-chip"
                 lang={lang}
                 dir={dir}
-                disabled={sending}
                 aria-label={t('groups.welcome.send', { text })}
                 onClick={() => onGreet(text)}
               >

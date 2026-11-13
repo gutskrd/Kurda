@@ -2,7 +2,7 @@ import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useIsFocused, useNavigation } from '@react-navigation/native';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
-import { gameEmblemTone, gameOfTheDay, type GameEmblem, type IncomingInvite, type MyRanks } from '@kurda/shared';
+import { gameOfTheDay, type IncomingInvite, type MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -20,73 +20,21 @@ import { getMyRanks } from '../ranks/api';
 import { daysLeftText, seasonTitle } from '../ranks/format';
 import { acceptInvite, listInvites } from '../play/api';
 import { applyInviteEvent, liveInvites } from '../play/invites';
+import { joining } from '../play/joining';
 import { JoinCodeCard } from '../play/JoinByCode';
 import { GAME_NAME_KEY } from '../play/labels';
 import { lobbyRoute } from '../play/routes';
+import { usePullRefresh } from '../net/usePullRefresh';
 import { useUserEvents } from '../realtime/useUserEvents';
-import { PHONE_LEARN_GAMES, useListedLearnGames, type LearnGameRoute } from '../games/learnGames';
+import { PHONE_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
+import { GAME_CARDS, GAME_MEANING, learnGameCard, type GameCard, type GameMode, type GameWay } from '../games/gameCards';
 import { GameArt } from '../games/GameArt';
 import { Cloth, GoldButton } from '../impostor/parts';
 import { TABLE } from '../impostor/table';
 
-type GameRoute = 'Wordle' | 'WordleBattle' | 'Rhyme' | 'RhymeMatch' | 'Race' | LearnGameRoute;
-type Mode = 'solo' | 'friends' | 'both';
+type Mode = GameMode;
+type Way = GameWay;
 type Filter = 'all' | 'solo' | 'friends';
-
-/** One way into a game: the screen it opens, and what its button says. */
-interface Way {
-  /** names its button for the tests (`game-<key>`) */
-  key: string;
-  route: GameRoute;
-  label: TranslationKey;
-}
-
-interface GameCard {
-  key: string;
-  /** the picture drawn for it (shared/src/art/games.ts) */
-  emblem: GameEmblem;
-  name: TranslationKey;
-  /** one line, what you do in it */
-  line: TranslationKey;
-  /** its ways in, one per screen it has; a game whose own screen asks how to play has one */
-  ways: readonly Way[];
-  mode: Mode;
-  /** still short of approved content: named under the cards as coming soon, and does not open */
-  soon?: boolean;
-}
-
-/**
- * The games that have screens of their own (the rest come from the shared
- * registry, games/learnGames.ts). Peyvok and the rhymes are each one card
- * with two ways in: alone, and against a friend. Stories are not among them
- * any more: reading is Learn's own middle group, and a story's quiz starts
- * from the story.
- */
-export const GAME_CARDS: readonly GameCard[] = [
-  {
-    key: 'wordle',
-    emblem: 'peyvok',
-    name: 'games.wordle.name',
-    line: 'games.card.wordle',
-    ways: [
-      { key: 'wordle', route: 'Wordle', label: 'games.mode.solo' },
-      { key: 'battle', route: 'WordleBattle', label: 'games.mode.friends' },
-    ],
-    mode: 'both',
-  },
-  {
-    key: 'rhyme',
-    emblem: 'rhyme',
-    name: 'games.rhyme.name',
-    line: 'games.card.rhyme',
-    ways: [
-      { key: 'rhyme', route: 'Rhyme', label: 'games.mode.solo' },
-      { key: 'rhymeMatch', route: 'RhymeMatch', label: 'games.mode.friends' },
-    ],
-    mode: 'both',
-  },
-  { key: 'race', emblem: 'race', name: 'games.race.name', line: 'games.card.race', ways: [{ key: 'race', route: 'Race', label: 'games.play' }], mode: 'solo' },
-];
 
 const MODE_LABEL: Record<Mode, TranslationKey> = {
   solo: 'games.mode.solo',
@@ -123,12 +71,13 @@ export function featuredCard(cards: readonly GameCard[], now: number): GameCard 
  * night the party games are played on, and the way into a game a friend told
  * you the code of.
  *
- * Then the games themselves, each one card: its drawn emblem on a tile of its
- * own colour, a line about it, and a way in. A game with one screen opens
+ * Then the games themselves, each one card: its drawn cover, a line about
+ * it, and a way in. A game with one way in opens
  * when its card is pressed; a game with a screen for playing alone and
- * another for playing a friend has a button for each, so a game is one tap
- * from here. A filter shows the games played alone or with friends, and a
- * game still short of approved content is only named, under the cards.
+ * another for playing a friend has a button for each, and so has Who Am I?,
+ * played on this phone or with friends, so a game is one tap from here. A
+ * filter shows the games played alone or with friends, and a game still
+ * short of approved content is only named, under the cards.
  */
 export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
@@ -151,36 +100,55 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
     ...learnGames.flatMap(({ game: g, ready }): GameCard[] => {
       const phone = PHONE_LEARN_GAMES[g.id];
       const mode: Mode = g.mode === 'solo' ? 'solo' : g.mode === 'multi' ? 'friends' : 'both';
-      if (!phone) return [];
-      return [{ key: g.id, emblem: g.id as GameEmblem, name: phone.name, line: phone.line, ways: [{ key: g.id, route: phone.route, label: 'games.play' }], mode, soon: !ready }];
+      return phone ? [learnGameCard({ id: g.id, ...phone, mode, ready })] : [];
     }),
   ];
   // the game put forward stands above the cards, and is not said twice among them; under a filter the cards are whole
   const featured = filter === 'all' ? featuredCard(cards, Date.now()) : null;
+  // what the featured game's name means, unless the interface is Kurdish and the two are the same words
+  const featuredMeaningKey = featured ? GAME_MEANING[featured.emblem] : undefined;
+  const featuredMeaning = featured && featuredMeaningKey && t(featuredMeaningKey) !== t(featured.name) ? t(featuredMeaningKey) : null;
   const shelf = cards.filter((c) => !c.soon && c !== featured && playedAs(c.mode, filter));
   const upcoming = cards.filter((c) => c.soon);
+
+  /**
+   * Reads the rank and the invites, for the screen coming into view and for a
+   * pull. `live` says whether the answer is still wanted: a screen left while
+   * it travelled takes none of it.
+   */
+  const read = useCallback(
+    async (live: () => boolean): Promise<void> => {
+      // a guest holds no rank and is sent no invites, and the server refuses both questions
+      if (isGuest) {
+        setRanksSettled(true);
+        return;
+      }
+      await Promise.all([
+        getMyRanks(client).then((res) => {
+          if (!live()) return;
+          if (res.ok) setRanks(res.data);
+          setRanksSettled(true);
+        }),
+        listInvites(client).then((res) => {
+          if (live() && res.ok) setInvites(res.data.incoming);
+        }),
+      ]);
+    },
+    [client, isGuest],
+  );
 
   useFocusEffect(
     useCallback(() => {
       let live = true;
-      // a guest holds no rank and is sent no invites, and the server refuses both questions
-      if (isGuest) {
-        setRanksSettled(true);
-      } else {
-        void getMyRanks(client).then((res) => {
-          if (!live) return;
-          if (res.ok) setRanks(res.data);
-          setRanksSettled(true);
-        });
-        void listInvites(client).then((res) => {
-          if (live && res.ok) setInvites(res.data.incoming);
-        });
-      }
+      void read(() => live);
       return () => {
         live = false;
       };
-    }, [client, isGuest]),
+    }, [read]),
   );
+
+  // pulled down, it reads again, as Lessons and Stories beside it do — an invite or a rank that changed elsewhere need not wait for a tab change
+  const pull = usePullRefresh(() => read(() => true));
 
   // an invite that arrives, or is answered somewhere else, while this is open
   useUserEvents(
@@ -190,14 +158,28 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
   );
 
   const join = useCallback(
-    async (invite: IncomingInvite) => {
+    (invite: IncomingInvite) => {
       setInvites((list) => list.filter((i) => i.id !== invite.id));
-      const res = await acceptInvite(client, invite.id);
-      // one that can no longer be accepted still opens the game, which says why
-      const route = res.ok ? lobbyRoute(res.data.game, res.data.lobbyId) : lobbyRoute(invite.game, invite.lobbyId);
+      /*
+       * The lobby opens at once, and the invite is accepted behind it: its
+       * first read waits for that (play/joining.ts). The row used to go, and
+       * then nothing happened for the length of a request. One that can no
+       * longer be accepted still opens the game, which says why.
+       */
+      joining(invite.lobbyId, acceptInvite(client, invite.id));
+      const route = lobbyRoute(invite.game, invite.lobbyId);
       navigation.navigate(route.name, route.params as never);
     },
     [client, navigation],
+  );
+
+  const open = useCallback(
+    (way: Way) => {
+      // only Who Am I?'s screen takes a way to open on; every other game has a screen for each of its ways
+      if (way.route === 'WhoAmI' && way.params) navigation.navigate('WhoAmI', way.params);
+      else navigation.navigate(way.route);
+    },
+    [navigation],
   );
 
   const shown = liveInvites(invites, Date.now());
@@ -212,6 +194,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
       ref={scrollRef}
       contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
       showsVerticalScrollIndicator={false}
+      refreshControl={pull}
     >
       {/* rankings and the league: small, at the top, for whoever looks for them */}
       <View style={[styles.entries, { flexDirection: dir.row }]}>
@@ -275,7 +258,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                   {headline}
                 </Text>
                 <PressableScale
-                  onPress={() => void join(invite)}
+                  onPress={() => join(invite)}
                   accessibilityRole="button"
                   accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name, game })}
                   hitSlop={JOIN_SLOP}
@@ -296,15 +279,16 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
           <Text style={styles.heroName} accessibilityRole="header">
             {t(featured.name)}
           </Text>
+          {featuredMeaning ? <Text style={styles.heroMeaning}>{featuredMeaning}</Text> : null}
           <Text style={styles.heroLine}>{t(featured.line)}</Text>
           <View style={styles.heroWays}>
             {featured.ways.map((way, i) =>
               i === 0 ? (
-                <GoldButton key={way.key} label={t(way.label)} onPress={() => navigation.navigate(way.route)} testID={`game-${way.key}`} />
+                <GoldButton key={way.key} label={t(way.label)} onPress={() => open(way)} testID={`game-${way.key}`} />
               ) : (
                 <PressableScale
                   key={way.key}
-                  onPress={() => navigation.navigate(way.route)}
+                  onPress={() => open(way)}
                   accessibilityRole="button"
                   accessibilityLabel={`${t(featured.name)}, ${t(way.label)}`}
                   testID={`game-${way.key}`}
@@ -348,18 +332,21 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         <View style={styles.cards}>
           {shelf.map((card, place) => {
             const name = t(card.name);
-            const tone = gameEmblemTone(card.emblem);
+            const meaningKey = GAME_MEANING[card.emblem];
+            // what the name means, unless the interface is Kurdish and the two are the same words
+            const meaning = meaningKey && t(meaningKey) !== name ? t(meaningKey) : null;
             const single = card.ways.length === 1 ? card.ways[0]! : null;
             const inside = (
               <>
-                <View style={[styles.cardArt, { backgroundColor: `${tone}2e` }]}>
+                <View style={styles.cardArt}>
                   {/* each card a little after the one before, so the list never moves as one */}
-                  <GameArt game={card.emblem} size={76} moving={watching} after={900 + place * 1300} />
+                  <GameArt game={card.emblem} size={96} moving={watching} after={900 + place * 1300} />
                 </View>
                 <View style={styles.cardText}>
                   <Text style={[styles.cardName, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
                     {name}
                   </Text>
+                  {meaning ? <Text style={[styles.cardMeaning, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
                   <Text style={[styles.cardLine, dir.text, { color: colors.textSecondary }]}>{t(card.line)}</Text>
                   {single ? (
                     <View style={[styles.cardFoot, { flexDirection: dir.row }]}>
@@ -378,7 +365,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                       {card.ways.map((way, i) => (
                         <PressableScale
                           key={way.key}
-                          onPress={() => navigation.navigate(way.route)}
+                          onPress={() => open(way)}
                           accessibilityRole="button"
                           accessibilityLabel={`${name}, ${t(way.label)}`}
                           hitSlop={WAY_SLOP}
@@ -393,11 +380,11 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                 </View>
               </>
             );
-            // one screen: the whole card opens it. Two: the card holds a button for each, and is not itself pressed.
+            // one way in: the whole card opens it. Two: the card holds a button for each, and is not itself pressed.
             return single ? (
               <PressableScale
                 key={card.key}
-                onPress={() => navigation.navigate(single.route)}
+                onPress={() => open(single)}
                 accessibilityRole="button"
                 accessibilityLabel={`${name}, ${t(MODE_LABEL[card.mode])}. ${t(card.line)}`}
                 testID={`game-${card.key}`}
@@ -483,6 +470,7 @@ const styles = StyleSheet.create({
   hero: { alignItems: 'center', gap: spacing.xs, borderRadius: radii.xl, paddingHorizontal: spacing.lg, paddingTop: spacing.lg, paddingBottom: spacing.lg },
   heroKicker: { marginTop: spacing.sm, color: TABLE.goldSoft, fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase' },
   heroName: { color: TABLE.ink, fontSize: typography.sizes.xxl, fontWeight: typography.weights.bold, textAlign: 'center' },
+  heroMeaning: { marginTop: -6, color: TABLE.inkSoft, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center' },
   heroLine: { color: TABLE.inkSoft, fontSize: typography.sizes.md, lineHeight: 22, textAlign: 'center' },
   heroWays: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
   heroOther: {
@@ -503,9 +491,10 @@ const styles = StyleSheet.create({
   cards: { gap: layout.rowGap },
   // a card lies on its side, picture first, so its words have the width of the screen
   card: { alignItems: 'stretch', gap: spacing.md, borderRadius: radii.lg, padding: spacing.sm + 2 },
-  cardArt: { width: 100, minHeight: 100, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
+  cardArt: { alignItems: 'center', justifyContent: 'center' },
   cardText: { flex: 1, justifyContent: 'center', gap: 4, paddingVertical: 2 },
   cardName: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  cardMeaning: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, marginTop: -2 },
   cardLine: { fontSize: typography.sizes.sm, lineHeight: 19 },
   cardFoot: { flexWrap: 'wrap', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
   play: { minHeight: PLAY_HEIGHT, justifyContent: 'center', paddingHorizontal: spacing.md, borderRadius: radii.pill },

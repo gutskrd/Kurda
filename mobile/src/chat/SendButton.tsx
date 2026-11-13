@@ -5,6 +5,7 @@ import { useDirection } from '../reports/direction';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
+import { pressedDim } from '../theme/motion';
 
 /** The filled circle the arrow sits in, inside the 44pt touch. */
 const DISC = 34;
@@ -32,14 +33,18 @@ export const COMPOSER_FIELD: TextStyle = {
 };
 
 /**
- * The composer's Send, the same in both: an arrow in a filled circle once
- * there is something to send, a faint arrow before — the shape every
- * message field has, so nobody has to look for it.
+ * The composer's Send, the same wherever something written is sent — a chat,
+ * a club's thread, a comment: an arrow in a filled circle once there is
+ * something to send, a faint arrow before — the shape every message field
+ * has, so nobody has to look for it. (A comment's used to be a bare chevron,
+ * the glyph that elsewhere means "go on to the next page".)
  *
  * Empty, it is disabled and says so to a screen reader, rather than taking
  * the tap and doing nothing with it. The arrow points the way the text runs.
+ * `label` is what it is called when it is not a message being sent ("Post
+ * comment").
  */
-export function SendButton({ ready, onPress }: { ready: boolean; onPress: () => void }): React.JSX.Element {
+export function SendButton({ ready, onPress, label }: { ready: boolean; onPress: () => void; label?: string }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
@@ -48,9 +53,9 @@ export function SendButton({ ready, onPress }: { ready: boolean; onPress: () => 
       onPress={onPress}
       disabled={!ready}
       accessibilityRole="button"
-      accessibilityLabel={t('chat.send')}
+      accessibilityLabel={label ?? t('chat.send')}
       accessibilityState={{ disabled: !ready }}
-      style={({ pressed }) => [styles.button, { opacity: pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.button, { opacity: pressed ? pressedDim : 1 }]}
     >
       <View style={[styles.disc, { backgroundColor: ready ? colors.primary : 'transparent' }]}>
         <View style={dir.rtl ? dir.flip : null}>

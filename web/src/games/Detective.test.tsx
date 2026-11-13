@@ -86,11 +86,11 @@ function server(handlers: { answer?: (body: { index: number; answer: { choice: n
   return sent;
 }
 
-describe('Kurdish Detective', () => {
+describe('Detektîf', () => {
   it('lays out the case board: the suspects’ portraits and the evidence in its Kurdish only', async () => {
     server({});
     renderApp(<Detective />, ['/app/games/detective']);
-    expect(await screen.findByRole('heading', { name: 'Kurdish Detective' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Detektîf' })).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
     expect(await screen.findByRole('heading', { name: 'The empty jar' })).toBeInTheDocument();
     const boardEl = screen.getByRole('region', { name: 'The case board' });
@@ -104,6 +104,18 @@ describe('Kurdish Detective', () => {
     expect(boardEl.querySelector('.dt-portrait--plain')).not.toBeNull();
     expect(screen.getByText('Hints left: 3')).toBeInTheDocument();
     expect(screen.getByText('Question 1 of 1')).toBeInTheDocument();
+    // a hint costs nothing but itself: the board says there are only a few, and names no price
+    expect(screen.getByText('A case has only a few hints, so use them where they help most.')).toBeInTheDocument();
+    expect(document.body).not.toHaveTextContent('XP');
+  });
+
+  it('opens without a word on what a case could pay or a hint could cost', async () => {
+    server({});
+    renderApp(<Detective />, ['/app/games/detective']);
+    expect(await screen.findByRole('heading', { name: 'Detektîf' })).toBeInTheDocument();
+    expect(screen.getByText('Every case is solved from Kurdish evidence. Answer each question, then accuse a suspect. Hints help, but a case has only a few.')).toBeInTheDocument();
+    expect(await screen.findByRole('radio', { name: 'Beginner' })).toBeChecked();
+    expect(document.body).not.toHaveTextContent('XP');
   });
 
   it('spends a hint on a card’s meaning, and another on the case’s own hint', async () => {
@@ -149,7 +161,7 @@ describe('Kurdish Detective', () => {
               walk: null,
             },
             why: 'step',
-            xp: 2,
+            xp: 0,
             repeat: false,
           };
         return {
@@ -169,11 +181,11 @@ describe('Kurdish Detective', () => {
             walk: [{ step: 0, prompt: en('What is forbidden?'), answer: en('Honey at night'), evidence: ['advice'] }],
           },
           why: 'accuse',
-          xp: 3,
+          xp: 0,
           repeat: false,
         };
       },
-      finish: { correct: 2, total: 2, firstTry: 1, xp: 4, learningCounted: true, needed: 1, items: [], streak: 3, deducted: 1 },
+      finish: { correct: 2, total: 2, firstTry: 1, xp: 0, learningCounted: true, needed: 1, items: [], streak: 3 },
     });
     renderApp(<Detective />, ['/app/games/detective']);
     await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
@@ -201,17 +213,22 @@ describe('Kurdish Detective', () => {
     expect(await screen.findByText('It was Hamo.')).toBeInTheDocument();
     expect(screen.getByText('Hamo ate the honey.')).toBeInTheDocument();
 
+    // the results: how it went and that the day counts, no XP earned and none taken off for hints
     await userEvent.click(screen.getByRole('button', { name: 'See how it went' }));
-    expect(await screen.findByText('+4 XP')).toBeInTheDocument();
-    expect(screen.getByText('The hints you used cost 1 XP.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Round finished' })).toBeInTheDocument();
+    expect(screen.getByText('2 of 2 right')).toBeInTheDocument();
+    expect(screen.getByText('Today counts for your streak.')).toBeInTheDocument();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeInTheDocument();
+    expect(screen.queryByText(/\d+ XP/)).toBeNull();
+    expect(screen.queryByText(/hints you used/)).toBeNull();
   });
 });
 
-describe('Kurdish Detective in Learn’s games', () => {
+describe('Detektîf in Learn’s games', () => {
   it('has its card once a case can be played', async () => {
     server({});
     renderApp(<Games />, ['/app/games']);
-    const card = (await screen.findByRole('heading', { name: 'Kurdish Detective' })).closest('article')!;
+    const card = (await screen.findByRole('heading', { name: 'Detektîf' })).closest('article')!;
     expect(within(card).getByRole('link', { name: 'Play' })).toHaveAttribute('href', '/app/games/detective');
   });
 });

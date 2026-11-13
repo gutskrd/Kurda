@@ -17,10 +17,13 @@ type Translate = (key: MessageKey, vars?: Record<string, string | number>) => st
  * describe the same message differently.
  *
  * A message is more than text now (shared `ChatMessageKind`): a gift or a
- * game card has no body at all, and is named for what it is — "🎁 Gift",
- * or "🎁 Sunset scarf" once the reader has unwrapped theirs (before that the
- * item is a surprise); a game card by its game. Pass the message, or just
- * its text.
+ * game card has no body at all, and is named for what it is — "Gift", or
+ * "Sunset scarf" once the reader has unwrapped theirs (before that the item
+ * is a surprise); a game card by its game. Pass the message, or just its
+ * text. The words carry no picture of their own: where there is room for
+ * one, the row draws the app's own gift or game icon beside them
+ * (`PreviewIcon`, chat/PreviewIcon.tsx), and an emoji typed into the string
+ * would have been a second, different drawing of the same thing.
  */
 export interface Previewable {
   body: string | null;
@@ -33,7 +36,7 @@ export function messagePreview(message: Previewable | string, t: Translate): str
   const m: Previewable = typeof message === 'string' ? { body: message } : message;
   // the item is a surprise until its recipient has unwrapped it, so a banner
   // or a list names it only once the reader has opened theirs
-  if (m.kind === 'gift') return m.gift?.myOpened ? t('chat.preview.giftNamed', { item: m.gift.name }) : t('chat.preview.gift');
+  if (m.kind === 'gift') return m.gift?.myOpened ? m.gift.name : t('chat.preview.gift');
   if (m.kind === 'game') {
     // a card for a game that is no longer part of Hevalo is still a game card, with no name to give it
     return m.game && isPlayGame(m.game.game) ? t('games.invite.preview', { game: t(INVITE_NAME_KEY[m.game.game]) }) : t('chat.preview.game');

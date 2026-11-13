@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { checkGameContent, type CaseFileContent } from '../content.js';
-import { answerXp } from '../solo.js';
-import { DETECTIVE_HINTS, DETECTIVE_HINT_XP, accusationEvidence, caseItems, caseXp, suspectPortrait, unusedEvidence, untranslated } from './rules.js';
+import { accusationEvidence, caseItems, suspectPortrait, unusedEvidence, untranslated } from './rules.js';
 
 const en = (text: string) => ({ en: text });
 
@@ -60,12 +59,3 @@ describe('the items of a case', () => {
   });
 });
 
-describe('what a case pays', () => {
-  it('is every correct deduction, less a hint’s cost each, never below nothing', () => {
-    const earned = answerXp(2, { correct: true, firstTry: true, repeat: false }) * 3;
-    expect(caseXp(earned, 0)).toBe(earned);
-    expect(caseXp(earned, 2)).toBe(earned - 2 * DETECTIVE_HINT_XP);
-    expect(caseXp(1, DETECTIVE_HINTS)).toBe(0);
-    expect(caseXp(5, -1)).toBe(5);
-  });
-});

@@ -8,6 +8,7 @@ import nothingHereDark from '../../assets/empty/nothing-here-dark.png';
 import nothingHereLight from '../../assets/empty/nothing-here-light.png';
 import offlineDark from '../../assets/empty/offline-dark.png';
 import offlineLight from '../../assets/empty/offline-light.png';
+import { pressedDim } from './motion';
 
 /**
  * Which drawing, and one for each theme.
@@ -104,7 +105,7 @@ export function EmptyState({
           onPress={secondary.onPress}
           accessibilityRole="button"
           accessibilityLabel={secondary.label}
-          style={({ pressed }) => [styles.secondary, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [styles.secondary, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
         >
           <Text style={[styles.actionText, { color: colors.textPrimary }]}>{secondary.label}</Text>
         </Pressable>

@@ -5,7 +5,7 @@ import { useAuth } from '../../auth/AuthContext';
 import { AnswerSummary } from '../../auth/guide/AnswerSummary';
 import { GuideField } from '../../auth/guide/GuideField';
 import { StepFlow, type FlowStep } from '../../auth/guide/StepFlow';
-import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, validateEmail } from '../../auth/validators';
+import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, cleanEmail, validateEmail } from '../../auth/validators';
 import { useI18n } from '../../i18n/I18nContext';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { useDirection } from '../../reports/direction';
@@ -68,7 +68,7 @@ export function ForgotPasswordForm({
         return why ? t(FIELD_ERROR_COPY[why], FIELD_ERROR_VARS) : null;
       },
       commit: async () => {
-        const failure = await requestPasswordReset(email.trim());
+        const failure = await requestPasswordReset(cleanEmail(email));
         return failure ? { ok: false, error: failure } : { ok: true };
       },
       render: (tools) => (
@@ -84,7 +84,7 @@ export function ForgotPasswordForm({
           testID="email"
         />
       ),
-      footer: onBackToLogin ? <LinkText label={t('auth.reset.backToLogin')} onPress={() => onBackToLogin(email.trim())} /> : undefined,
+      footer: onBackToLogin ? <LinkText label={t('auth.reset.backToLogin')} onPress={() => onBackToLogin(cleanEmail(email))} /> : undefined,
     },
     {
       key: 'sent',
@@ -96,7 +96,7 @@ export function ForgotPasswordForm({
           <Text style={[styles.lead, dir.text, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
             {t('auth.reset.sent')}
           </Text>
-          <AnswerSummary rows={[{ label: t('auth.email'), value: email.trim() }]} testID="reset-sent-to" />
+          <AnswerSummary rows={[{ label: t('auth.email'), value: cleanEmail(email) }]} testID="reset-sent-to" />
         </View>
       ),
     },
@@ -106,7 +106,7 @@ export function ForgotPasswordForm({
     <StepFlow
       steps={steps}
       progress={false}
-      onFinish={() => (onBackToLogin ? onBackToLogin(email.trim()) : onBack?.())}
+      onFinish={() => (onBackToLogin ? onBackToLogin(cleanEmail(email)) : onBack?.())}
       onExit={onBack}
       testID="reset-flow"
     />

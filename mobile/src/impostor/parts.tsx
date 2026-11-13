@@ -7,9 +7,10 @@ import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { TABLE, TABLE_CLOTH } from './table';
+import { pressedDim } from '../theme/motion';
 
 /**
- * The parts Kurdish Impostor's screens on the phone are built from, shared by
+ * The parts Impostor's screens on the phone are built from, shared by
  * its start (ImpostorStart.tsx), the game on one phone (CouchGame.tsx) and
  * the invite sheet's category choice: the table's cloth, the one gold thing
  * to press, a numbered step's title, and the choices drawn as pictures.
@@ -146,7 +147,7 @@ export function PictureCards<T extends string>({
             accessibilityState={{ checked: on }}
             aria-checked={on}
             accessibilityLabel={o.hint ? `${o.label}. ${o.hint}` : o.label}
-            style={({ pressed }) => [styles.card, { backgroundColor: wash(o.tone, on ? 0.3 : 0.14), borderColor: on ? o.tone : 'transparent', opacity: pressed ? 0.85 : 1 }]}
+            style={({ pressed }) => [styles.card, { backgroundColor: wash(o.tone, on ? 0.3 : 0.14), borderColor: on ? o.tone : 'transparent', opacity: pressed ? pressedDim : 1 }]}
           >
             <View style={[styles.cardArt, { backgroundColor: wash(o.tone, 0.22) }]}>{o.art}</View>
             <View style={styles.cardText}>
@@ -202,7 +203,7 @@ export function PictureTiles<T extends string>({
           accessibilityState={{ checked: on }}
           aria-checked={on}
           accessibilityLabel={o.hint ? `${o.label} · ${o.hint}` : o.label}
-          style={({ pressed }) => [styles.tile, { backgroundColor: wash(o.tone, on ? 0.32 : 0.14), borderColor: on ? o.tone : 'transparent', opacity: pressed ? 0.85 : 1 }]}
+          style={({ pressed }) => [styles.tile, { backgroundColor: wash(o.tone, on ? 0.32 : 0.14), borderColor: on ? o.tone : 'transparent', opacity: pressed ? pressedDim : 1 }]}
         >
           <View style={styles.tileTick}>{on ? <Tick on small /> : null}</View>
           {o.art}
@@ -231,7 +232,7 @@ export function PictureTiles<T extends string>({
         {tiles}
       </View>
       {folded ? (
-        <Pressable onPress={() => setAll(true)} accessibilityRole="button" style={({ pressed }) => [styles.more, { opacity: pressed ? 0.6 : 1 }]}>
+        <Pressable onPress={() => setAll(true)} accessibilityRole="button" style={({ pressed }) => [styles.more, { opacity: pressed ? pressedDim : 1 }]}>
           <Text style={[styles.moreText, { color: colors.textPrimary }]}>{moreLabel(options.length - shown.length)}</Text>
         </Pressable>
       ) : null}

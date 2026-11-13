@@ -18,6 +18,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import type { Streak } from './format';
 import { freezeSlots, keptKey, keptTitle, nextFreeze, streakKept } from './kept';
+import { pressedDim } from '../theme/motion';
 
 /**
  * It waits until the path has settled — the page scrolled to the lesson, and
@@ -146,7 +147,7 @@ function Kept({ streak, onStart, onClose }: { streak: Streak; onStart: () => voi
       <Pressable
         onPress={onClose}
         accessibilityRole="button"
-        style={({ pressed }) => [styles.notNow, { opacity: pressed ? 0.6 : 1 }]}
+        style={({ pressed }) => [styles.notNow, { opacity: pressed ? pressedDim : 1 }]}
       >
         <Text style={[styles.notNowText, { color: colors.textSecondary }]}>{t('learn.kept.notNow')}</Text>
       </Pressable>

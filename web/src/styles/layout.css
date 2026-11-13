@@ -65,8 +65,8 @@
   color: var(--ink-3);
   white-space: nowrap;
   transition:
-    color 0.15s ease,
-    background 0.15s ease;
+    color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out);
 }
 .nav-link:hover {
   color: var(--ink);
@@ -245,8 +245,13 @@ button.nav-link {
   object-fit: contain;
   /* the logo art is light — a soft shadow keeps it crisp on bright photo areas */
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
-  animation: brand-rise 0.9s cubic-bezier(0.2, 0.8, 0.3, 1) both;
-  transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.3, 1), filter 0.3s ease;
+  transition:
+    transform var(--dur) var(--ease-out),
+    filter var(--dur) var(--ease-out);
+}
+/* its entrance, once: as the site first draws, and not each time the bar is drawn again (components/Brand.tsx) */
+.brand.is-arriving .brand-mark {
+  animation: brand-rise var(--dur-slow) var(--ease-out) both;
 }
 .brand:hover .brand-mark {
   /* it used to turn, because it used to be a sun; the antlers lift instead */
@@ -255,7 +260,7 @@ button.nav-link {
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)) drop-shadow(0 0 7px rgba(184, 116, 240, 0.6));
 }
 .brand span {
-  transition: color 0.3s ease;
+  transition: color var(--dur) var(--ease-out);
 }
 .brand:hover span {
   color: var(--gold-ink);
@@ -279,7 +284,8 @@ button.nav-link {
  * leave it holding the transparent first frame.
  */
 @media (prefers-reduced-motion: reduce) {
-  .brand-mark {
+  .brand-mark,
+  .brand.is-arriving .brand-mark {
     animation: none;
     transition: none;
   }
@@ -652,7 +658,7 @@ button.nav-link {
   gap: 8px;
   color: var(--ink-3);
   white-space: nowrap;
-  transition: color 0.18s ease;
+  transition: color var(--dur) var(--ease-out);
 }
 .by-zagrosian:hover {
   color: var(--ink);
@@ -754,7 +760,7 @@ button.nav-link {
   /* a soft cast off the filled arc, so the ring has depth rather than looking
      like a flat stroke pasted on the avatar */
   filter: drop-shadow(0 0 3px rgba(240, 194, 74, 0.55));
-  transition: stroke-dasharray 0.4s ease;
+  transition: stroke-dasharray var(--dur-progress) var(--ease-out);
 }
 @media (prefers-reduced-motion: reduce) {
   .level-ring-fill {

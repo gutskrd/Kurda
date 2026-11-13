@@ -5,7 +5,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { ClayButton } from '../../theme/glass';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../auth/AuthContext';
-import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, validateEmail } from '../../auth/validators';
+import { FIELD_ERROR_COPY, FIELD_ERROR_VARS, cleanEmail, validateEmail } from '../../auth/validators';
 import { StepFlow, type FlowStep } from '../../auth/guide/StepFlow';
 import { GuideField } from '../../auth/guide/GuideField';
 import type { AuthStackParamList } from '../../navigation/authStack';
@@ -70,10 +70,10 @@ export function LoginScreen({ navigation, route }: Props) {
       render: (tools) => (
         <GuideField tools={tools} value={password} onChangeText={setPassword} label={t('auth.password')} secure complete="current-password" last testID="password" />
       ),
-      footer: <LinkText label={t('auth.login.forgot')} onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })} />,
+      footer: <LinkText label={t('auth.login.forgot')} onPress={() => navigation.navigate('ForgotPassword', { email: cleanEmail(email) })} />,
       commit: async () => {
         setHeldBack(null);
-        const error = await login(email.trim(), password);
+        const error = await login(cleanEmail(email), password);
         if (!error) return { ok: true };
         if (error.code && HELD_BACK.has(error.code)) {
           setHeldBack(error.message);
@@ -87,7 +87,7 @@ export function LoginScreen({ navigation, route }: Props) {
   const notice = heldBack ? (
     <View style={[styles.notice, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite" testID="login-held-back">
       <Text style={[styles.noticeText, { color: colors.textPrimary }]}>{heldBack}</Text>
-      <ClayButton label={t('auth.reset.title')} variant="outline" tone="primary" onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })} />
+      <ClayButton label={t('auth.reset.title')} variant="outline" tone="primary" onPress={() => navigation.navigate('ForgotPassword', { email: cleanEmail(email) })} />
     </View>
   ) : null;
 

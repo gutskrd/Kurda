@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SkeletonText } from '../theme/Skeleton';
 import { PressableScale, Rise } from '../theme/MotionParts';
@@ -17,6 +17,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { listPosts } from './api';
 import { bodyPreview, postName, type LibraryPost, type PostType } from './types';
 import { onPostDeleted } from '../composer/postDeleted';
+import { useQuietRefocus } from '../feed/keep';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 import { Loading } from '../theme/Loading';
@@ -47,25 +48,45 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     [client, type, sort],
   );
 
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      void (async () => {
-        const res = await fetchPage(0);
-        if (!active) return;
-        if (res.ok) {
-          setPosts(res.data.posts);
-          setEnd(res.data.posts.length < PAGE);
-          setError(null);
-        } else {
-          setError(res.error);
-        }
-      })();
-      return () => {
-        active = false;
-      };
-    }, [fetchPage]),
-  );
+  /*
+   * Come back to from a post, the list is as it was left — every page that
+   * was loaded, at the same place — and is brought up to date quietly
+   * (feed/keep.ts). It used to be replaced by its first page each time, so
+   * somebody reading the fortieth post came back to twenty and the top.
+   */
+  const { onScroll, forget } = useQuietRefocus<LibraryPost>({
+    loaded: posts !== null,
+    list: fetchPage,
+    readFirst: async () => {
+      const res = await fetchPage(0);
+      return res.ok ? res.data.posts : null;
+    },
+    keyOf: postId,
+    pageSize: PAGE,
+    apply: (update) => setPosts((prev) => (prev ? update(prev) : prev)),
+    retry: error ? () => void refresh() : undefined,
+  });
+
+  // the list as it first opens, and again for another kind of writing or another order
+  useEffect(() => {
+    let active = true;
+    forget();
+    void (async () => {
+      const res = await fetchPage(0);
+      if (!active) return;
+      if (res.ok) {
+        setPosts(res.data.posts);
+        setEnd(res.data.posts.length < PAGE);
+        setError(null);
+      } else {
+        setError(res.error);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+    // `forget` is the same function for as long as the screen is there
+  }, [fetchPage]);
 
   // a post deleted on its own page is gone from here before the list reloads
   useEffect(
@@ -80,11 +101,13 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     setRefreshing(true);
     const res = await fetchPage(0);
     if (res.ok) {
+      forget();
       setPosts(res.data.posts);
       setEnd(res.data.posts.length < PAGE);
       setError(null);
     }
     setRefreshing(false);
+    // `forget` is the same function for as long as the screen is there
   }, [fetchPage]);
 
   const loadMore = useCallback(async () => {
@@ -161,6 +184,9 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             keyExtractor={(p) => p.id}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
+            testID="library-list"
+            onScroll={onScroll}
+            scrollEventThrottle={64}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
@@ -213,6 +239,9 @@ function LibrarySkeleton(): React.JSX.Element {
 
 /** The glyph beside a count, at the height of the caption it sits with. */
 const STAT_GLYPH = 15;
+
+/** A post's own name in the list. */
+const postId = (post: LibraryPost): string => post.id;
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },

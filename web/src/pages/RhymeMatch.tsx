@@ -5,6 +5,7 @@ import { describeError } from '../lib/api';
 import type { RhymeResult } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
+import { TrophyIcon } from '../components/icons';
 import { GameHead, stageTone } from '../games/GameHead';
 import { useRail } from '../social/RailProvider';
 import { PlayerChip } from '../ui/PlayerChip';
@@ -92,7 +93,7 @@ export function RhymeMatch(): React.JSX.Element {
   const id = params.get('id');
   return (
     <div className="container game-page gs" style={stageTone('rhyme')}>
-      <GameHead game="rhyme" title={t('games.rhymeMatch.name')} />
+      <GameHead game="rhyme" title={t('games.rhymeMatch.name')} meaning={t('games.rhymeMatch.meaning')} />
       {id ? <MatchRoom key={id} id={id} /> : <CreateMatch />}
     </div>
   );
@@ -292,7 +293,10 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     const others = results?.ranking.filter((r) => !r.isMe) ?? [];
     return (
       <div className="match-results">
-        <h2 className="match-verdict">{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</h2>
+        <h2 className="match-verdict">
+          {mine?.rank === 1 && <TrophyIcon size={26} className="verdict-icon" />}
+          {mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}
+        </h2>
         {match.rated && <RatedBadge rated={shownRated(match.rated)} size="sm" className="match-rated" />}
         {/* what the game did to your rank, then the badges it earned */}
         {match.me != null && <RankResult game="rhyme-match" gameRef={id} />}
@@ -379,7 +383,10 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
             autoFocus
             {...typeOnly}
           />
-          <Button type="submit" disabled={busy || word.trim().length === 0}>{busy ? '…' : t('games.submit')}</Button>
+          {/* busy, it keeps its word and its width: an ellipsis in its place shrank the button and said nothing */}
+          <Button type="submit" disabled={busy || word.trim().length === 0} aria-busy={busy || undefined}>
+            {t('games.submit')}
+          </Button>
         </form>
       ) : (
         <p className="muted" style={{ textAlign: 'center' }}>{t('games.rhymeMatch.timeUpFinishing')}</p>

@@ -1,12 +1,13 @@
 /**
- * Who Am I?: the player has a hidden identity — an animal, a thing, a job, a
- * food or a place, each a word from published lessons — and finds out what it
- * is by asking yes/no questions from an approved list, then guessing from a
- * few tiles. The answers come from the identity's facts table, never from
- * anyone typing: "Does it fly?" asks the fact `can-fly`, and the identity's
- * row says yes or no. Fewer questions score more.
+ * Who Am I?: a player has a hidden identity — an animal, a thing, a job, a
+ * food or a place, each a word from published lessons — on a card the others
+ * can read, and finds out what it is by asking yes/no questions from an
+ * approved list, then guessing from a few tiles. What the card says to a
+ * question comes from the identity's facts table, never from anyone typing:
+ * "Does it fly?" asks the fact `can-fly`, and the identity's row says yes or
+ * no. Fewer questions score more.
  *
- * This module is what the solo round and the race share, pure:
+ * This module is what the game's rules (rules.ts) are played with, pure:
  *   - the facts an identity may have, and what each one means (the admin's
  *     facts table is these, and a question template asks exactly one of them);
  *   - how a hidden identity is dealt: the candidates shown as tiles (the
@@ -14,6 +15,8 @@
  *     offered — only those every candidate has an answer to, so the list
  *     itself never gives the identity away;
  *   - the points a solved identity is worth;
+ *   - which questions to suggest next, for a learner who does not know where
+ *     to begin (`suggestWhoAmIQuestions`);
  *   - the shapes a round travels in.
  *
  * The Kurdish here is none: the identities' words and the questions are
@@ -59,10 +62,13 @@ export function isWhoAmIFact(v: unknown): v is WhoAmIFact {
   return WHO_AM_I_FACTS.some((f) => f.key === v);
 }
 
-/** Identities in one solo round. */
-export const WHO_AM_I_ROUND_ITEMS = 5;
-/** Guesses at one identity: the solo round's tries. */
+/** Wrong guesses at an identity before its player is out. */
 export const WHO_AM_I_GUESSES = 2;
+/**
+ * The same, in one room, where there are no tiles to pick from: the player says who they are and anything may be
+ * said, so one more miss is allowed.
+ */
+export const WHO_AM_I_ROOM_GUESSES = 3;
 /** Tiles to guess from, by difficulty; beginners also see what each tile means. */
 export const WHO_AM_I_CANDIDATES: Readonly<Record<GameDifficulty, number>> = { beginner: 4, intermediate: 6, advanced: 8 };
 /** The fewest tiles a deal may fall back to when too few identities share enough facts. */
@@ -104,7 +110,7 @@ export interface WhoAmITemplate {
   fact: string;
 }
 
-/** A hidden identity, dealt: the server keeps all of it, and sends the player `candidates` and `questions` only. */
+/** A hidden identity, dealt: the server keeps all of it, and sends its player `candidates` and `questions` only. */
 export interface WhoAmIDeal {
   identity: WhoAmIIdentity;
   /** the tiles, shuffled; the identity is one of them (a deal made before tiles carried their category has none) */
@@ -219,6 +225,92 @@ export function answerFor(identity: Pick<WhoAmIIdentity, 'facts'>, fact: string)
   return identity.facts[fact] === true;
 }
 
+// ---------- questions worth asking next ----------
+
+/**
+ * What an answer settles besides itself: an animal is alive and is neither a
+ * person nor a place, and so on. Only ever used to choose which questions to
+ * suggest; what a card says to a question is its facts table's alone.
+ */
+const SETTLES: Partial<Record<WhoAmIFact, { yes?: Partial<Record<WhoAmIFact, boolean>>; no?: Partial<Record<WhoAmIFact, boolean>> }>> = {
+  animal: { yes: { alive: true, person: false, place: false } },
+  person: { yes: { alive: true, animal: false, place: false, edible: false } },
+  place: { yes: { alive: false, animal: false, person: false, edible: false } },
+  edible: { yes: { person: false, place: false } },
+  alive: { no: { animal: false, person: false } },
+};
+
+/** What the kind of thing on the card settles, when the card names its kind. */
+const KIND_SETTLES: Record<WhoAmICategory, Partial<Record<WhoAmIFact, boolean>>> = {
+  animal: { alive: true, animal: true, person: false, place: false },
+  object: { alive: false, animal: false, person: false, place: false, edible: false },
+  profession: { alive: true, person: true, animal: false, place: false, edible: false },
+  food: { edible: true, animal: false, person: false, place: false },
+  place: { place: true, alive: false, animal: false, person: false, edible: false },
+};
+
+/** Questions that are about one kind of thing: not worth asking once that kind is ruled out. */
+const ASKED_OF: Partial<Record<WhoAmIFact, ReadonlyArray<readonly [WhoAmIFact, boolean]>>> = {
+  'can-fly': [['animal', false], ['alive', false]],
+  'lives-in-water': [['animal', false], ['alive', false]],
+  'four-legs': [['animal', false], ['alive', false]],
+  sweet: [['edible', false]],
+  'works-outdoors': [['person', false]],
+  'uses-electricity': [['alive', true], ['edible', true], ['place', true]],
+  'helps-sick': [['animal', true], ['edible', true]],
+  'at-home': [['person', true], ['place', true]],
+  'bigger-than-person': [['person', true]],
+};
+
+/** How many questions are suggested at once: few enough to read at a glance. */
+export const WHO_AM_I_SUGGESTIONS = 3;
+
+/**
+ * The questions to suggest next, best first: the ones a player would ask if
+ * they knew the game. The wide ones come before the narrow ones ("Is it
+ * alive?" before "Does it fly?"), a question whose answer follows from what
+ * has been answered already is left out (an animal is not asked whether it
+ * is a place), and so is one about a kind of thing that has been ruled out
+ * (nothing that is not an animal is asked whether it flies) until nothing
+ * better is left. When every answer left is already known the list is empty.
+ *
+ * It reads only what the player can already see: the questions they were
+ * dealt, the answers they have had, and the kind of thing the card names
+ * when it names one. Nothing about the hidden identity goes into it, so the
+ * suggestions say nothing the list did not.
+ */
+export function suggestWhoAmIQuestions(
+  questions: ReadonlyArray<{ id: string; fact: string }>,
+  asked: readonly WhoAmIAsked[],
+  category: string | null,
+  count: number = WHO_AM_I_SUGGESTIONS,
+): string[] {
+  const known = new Map<string, boolean>();
+  const settle = (also: Partial<Record<WhoAmIFact, boolean>> | undefined): void => {
+    for (const [fact, value] of Object.entries(also ?? {})) if (!known.has(fact)) known.set(fact, value);
+  };
+  if (isWhoAmICategory(category)) settle(KIND_SETTLES[category]);
+  const factOf = new Map(questions.map((q) => [q.id, q.fact]));
+  for (const a of asked) {
+    const fact = factOf.get(a.question);
+    if (!fact) continue;
+    known.set(fact, a.answer);
+    if (isWhoAmIFact(fact)) settle(a.answer ? SETTLES[fact]?.yes : SETTLES[fact]?.no);
+  }
+  const done = new Set(asked.map((a) => a.question));
+  const order = (fact: string): number => {
+    const at = WHO_AM_I_FACTS.findIndex((f) => f.key === fact);
+    return at < 0 ? WHO_AM_I_FACTS.length : at;
+  };
+  const open = questions.filter((q) => !done.has(q.id)).sort((a, b) => order(a.fact) - order(b.fact));
+  const beside = (q: { fact: string }): boolean => isWhoAmIFact(q.fact) && (ASKED_OF[q.fact] ?? []).some(([fact, value]) => known.get(fact) === value);
+  // A question whose answer is already known is never suggested: it costs a point for nothing. One that is only
+  // beside the point comes after everything else, since a card can still surprise; when even those are gone the
+  // list is empty, which is its own advice.
+  const unknown = open.filter((q) => !known.has(q.fact));
+  return [...unknown.filter((q) => !beside(q)), ...unknown.filter(beside)].slice(0, Math.max(0, count)).map((q) => q.id);
+}
+
 // ---------- what the apps are sent ----------
 
 /** One tile to guess from: the word, and what it means when the difficulty shows that. */
@@ -239,44 +331,4 @@ export interface WhoAmIQuestion {
 export interface WhoAmIAsked {
   question: string;
   answer: boolean;
-}
-
-/** One hidden identity of a solo round, as the player is sent it: never the identity. */
-export interface WhoAmIItemView {
-  index: number;
-  /** what kind of thing it is, when every tile is that kind; null when the tiles are of several */
-  category: string | null;
-  tiles: WhoAmITile[];
-  questions: WhoAmIQuestion[];
-  asked: WhoAmIAsked[];
-}
-
-/** A guess at an identity: one of the tiles. */
-export interface WhoAmIAnswer {
-  guess: string;
-}
-
-/** After a wrong first guess: that tile is not it. */
-export interface WhoAmIHint {
-  notThis: string;
-}
-
-/**
- * Once an identity is done: who it was. What it scored is the apps' to work
- * out (`whoAmIPoints`) from the questions asked and the guesses made, which
- * the round already carries.
- */
-export interface WhoAmICorrection {
-  id: string;
-  word: string;
-  meanings: Meanings;
-  category: string;
-}
-
-/** `POST /games/who-am-i/sessions/:id/ask`: the answer, and every question asked about this identity so far. */
-export interface WhoAmIAskResult {
-  index: number;
-  question: string;
-  answer: boolean;
-  asked: WhoAmIAsked[];
 }

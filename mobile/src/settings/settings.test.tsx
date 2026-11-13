@@ -31,7 +31,8 @@ describe('Settings', () => {
   it('is one list in a few named sections, each row showing what it is set to', async () => {
     testAuth.client = fakeClient({ 'GET /me': ME() });
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    for (const name of ['Account', 'Preferences', 'Privacy', 'About Hevalo']) expect(screen.getByRole('heading', { name })).toBeTruthy();
+    // somewhere to ask is a section of its own now, not three rows in a list of ten under "About"
+    for (const name of ['Account', 'Preferences', 'Privacy', 'Help', 'About & legal']) expect(screen.getByRole('heading', { name })).toBeTruthy();
     // the account's own values arrive with /me; this phone's own are there at once
     expect(await screen.findByRole('button', { name: 'Username, @rojda' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Profile visibility, Hevalo members' })).toBeTruthy();

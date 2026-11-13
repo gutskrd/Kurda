@@ -2,7 +2,7 @@ import type { CouchWay } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
- * The three ways Kurdish Impostor is played on one phone, by the words the
+ * The three ways Impostor is played on one phone, by the words the
  * start and the setup both say them in: each one's name, and the one line
  * that tells what the impostor is told.
  */

@@ -44,7 +44,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
-import { CaretDownIcon, ChatsIcon, ImpostorIcon, PlusIcon, RedoIcon, SlidersIcon, TimerIcon } from '../components/icons';
+import { CaretDownIcon, ChatsIcon, CloseIcon, ImpostorIcon, PlusIcon, RedoIcon, SlidersIcon, TimerIcon } from '../components/icons';
 import { Loading } from '../components/states';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -59,7 +59,7 @@ import { WAY_KEY, WAY_NOTE } from './ways';
 import './couch.css';
 
 /**
- * Kurdish Impostor on one phone, passed round a room (/app/games/impostor?couch=1).
+ * Impostor on one phone, passed round a room (/app/games/impostor?couch=1).
  *
  * The rules are shared/src/games/impostor/couch.ts; this is the phone's part
  * in them. It asks who is playing and how, fetches an evening's cards (approved
@@ -291,7 +291,7 @@ function Setup({
                 />
                 {canRemove && (
                   <button type="button" className="couch-name-remove" aria-label={t('games.couch.removePlayer', { name: named[i]! })} onClick={() => setNames(names.filter((_, j) => j !== i))}>
-                    <span aria-hidden="true">×</span>
+                    <CloseIcon size={18} />
                   </button>
                 )}
               </li>

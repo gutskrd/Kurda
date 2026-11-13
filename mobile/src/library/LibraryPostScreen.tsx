@@ -28,6 +28,7 @@ import { PostPictures } from '../composer/PostPictures';
 import { onPostSaved } from '../composer/postSaved';
 import { CommentComposer, CommentList, CommentsSkeleton } from '../comments/CommentList';
 import { useCommentThread } from '../comments/useCommentThread';
+import { heldDim } from '../theme/MotionParts';
 
 /**
  * Read a library post (KUR-284): title + body, an inline audio player when it has
@@ -146,6 +147,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                   hitSlop={13}
                   accessibilityRole="button"
                   accessibilityLabel={t('moderation.reportPost')}
+                  style={({ pressed }) => pressed && heldDim}
                 >
                   <Icon name="flag" size={14} color={colors.textSecondary} />
                   <Text style={[styles.report, { color: colors.textSecondary }]}>{t('moderation.reportPost')}</Text>

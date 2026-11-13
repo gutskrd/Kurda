@@ -4,7 +4,7 @@ import { SvgXml } from 'react-native-svg';
 import { impostorCategorySvg, impostorEmblemSvg, impostorWaySvg, type ImpostorEmblem, type ImpostorWay } from '@kurda/shared';
 
 /**
- * Kurdish Impostor's pictures on the phone: a category's, a way to play's and
+ * Impostor's pictures on the phone: a category's, a way to play's and
  * the game's own emblem, drawn from the shared art
  * (shared/src/art/impostor.ts) so the website shows the same ones.
  *

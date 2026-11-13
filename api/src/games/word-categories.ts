@@ -1,5 +1,5 @@
 /**
- * The starter categories Kurdish Impostor's word cards are sorted into, for
+ * The starter categories Impostor's word cards are sorted into, for
  * the admin's "starter word cards" import (content-admin.ts): each a slug, its
  * name in each variety, what it means in the interface languages, and the
  * English meanings of the published words that belong in it.

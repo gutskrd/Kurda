@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, StyleSheet, useWindowDimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useMotionAlive } from '../../a11y/useMotionAlive';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useTheme } from '../../theme/ThemeProvider';
 import { LAUNCH, WASH } from './splash';
@@ -24,8 +25,10 @@ export function LightWash(): React.JSX.Element | null {
   const { width, height } = useWindowDimensions();
   const drift = useRef(new Animated.Value(0)).current;
 
+  // it stops while the app is in the background: a launch that is waiting on the network can be left there
+  const alive = useMotionAlive();
   useEffect(() => {
-    if (reduce) return;
+    if (!alive) return;
     const pass = Animated.loop(
       Animated.sequence([
         Animated.timing(drift, { toValue: 1, duration: LAUNCH.washMs, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
@@ -34,7 +37,7 @@ export function LightWash(): React.JSX.Element | null {
     );
     pass.start();
     return () => pass.stop();
-  }, [reduce, drift]);
+  }, [alive, drift]);
 
   if (reduce) return null;
 

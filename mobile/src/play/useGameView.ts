@@ -5,6 +5,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { ApiResult } from '../api/types';
 import { useRealtimeReconnect, useRealtimeState } from '../realtime/RealtimeProvider';
 import { useUserEvents } from '../realtime/useUserEvents';
+import { joined } from './joining';
 
 /** Waits between failed long-polls: quick at first, never hammering. */
 export const VIEW_BACKOFF_MS = [1_000, 2_000, 5_000] as const;
@@ -111,6 +112,8 @@ export function useGameView<Board, Outcome = unknown>(
 
   const read = useCallback(
     async (path: string): Promise<boolean> => {
+      // an invite to it accepted a moment ago is let land first: until it has, this is nobody's game (play/joining.ts)
+      await joined(id);
       const res = await client.get<MultiView<Board> | NoView>(path);
       if (!alive.current) return false;
       if (res.ok) {
@@ -120,7 +123,7 @@ export function useGameView<Board, Outcome = unknown>(
       fail(res.error.status, res.error.code);
       return res.error.status !== 404;
     },
-    [client, apply, fail],
+    [client, apply, fail, id],
   );
 
   const refresh = useCallback(() => {

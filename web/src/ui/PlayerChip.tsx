@@ -47,7 +47,8 @@ export function PlayerChip({
       {action}
       {progress !== undefined && (
         <span className="player-meter" aria-hidden="true">
-          <span style={{ width: `${Math.round(Math.max(0, Math.min(1, progress)) * 100)}%` }} />
+          {/* a full-width fill moved along its track by `--p` (styles/motion.css), as the lesson's bar is */}
+          <span style={{ '--p': Math.max(0, Math.min(1, progress)) } as React.CSSProperties} />
         </span>
       )}
     </div>

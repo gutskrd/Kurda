@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, TextInput, View } from 'react-native';
 import { codeDigits } from '@kurda/shared';
+import { useMotionAlive } from '../../a11y/useMotionAlive';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { springTo, timing } from '../../theme/animate';
 import { duration } from '../../theme/motion';
@@ -118,6 +119,7 @@ function Box({
   const reduce = useReducedMotion();
   const settle = useRef(new Animated.Value(digit ? 1 : 0)).current;
   const pulse = useRef(new Animated.Value(1)).current;
+  const alive = useMotionAlive();
 
   // a digit arrives with a small settle; one taken back is simply gone
   useEffect(() => {
@@ -130,21 +132,22 @@ function Box({
       return;
     }
     settle.setValue(0.6);
-    const run = springTo(settle, 1, 'standard');
+    // typing is the interface answering a key: there inside 300 ms, as a tab or a switch is
+    const run = springTo(settle, 1, 'chrome');
     run.start();
     return () => run.stop();
   }, [digit, reduce, settle]);
 
-  // the lit box's mark breathes, the way a caret does, so the eye finds where the next digit goes
+  // the lit box's mark breathes, the way a caret does, so the eye finds where the next digit goes — while the page is the one in front
   useEffect(() => {
-    if (!lit || reduce) {
+    if (!lit || !alive) {
       pulse.setValue(1);
       return;
     }
     const loop = Animated.loop(Animated.sequence([timing(pulse, 0.25, duration.progress), timing(pulse, 1, duration.progress)]));
     loop.start();
     return () => loop.stop();
-  }, [lit, reduce, pulse]);
+  }, [lit, alive, pulse]);
 
   const fill = refused && digit ? colors.dangerFill : lit ? colors.selectedFill : colors.controlTrack;
   return (

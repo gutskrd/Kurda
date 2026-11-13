@@ -1,5 +1,5 @@
 /**
- * The colours of Kurdish Impostor's own table: night blue with gold on it,
+ * The colours of Impostor's own table: night blue with gold on it,
  * the colours of the masked card in the game's emblem, and the paper a card
  * is printed on.
  *

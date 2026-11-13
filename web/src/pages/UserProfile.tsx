@@ -12,6 +12,8 @@ import { PlayWithButton } from '../play/PlayButtons';
 import { AddFriendButton } from '../social/FriendTickets';
 import { countryName } from '../lib/countries';
 import { ErrorState } from '../components/states';
+import { LockIcon } from '../components/icons';
+import { ProfileCard } from '../ui/ProfileCard';
 import { FullProfileSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -55,14 +57,24 @@ export function UserProfile(): React.JSX.Element {
 
   const name = profile.displayName || profile.username;
 
-  // privacy-hidden: identity is still shown so you can send a friend request
+  // privacy-hidden: who it is is still shown, in the same card as anybody's, so that you can ask to be friends
   if (profile.private) {
     return (
-      <div className="container container-narrow">
-        <div className="card" style={{ marginTop: 24, textAlign: 'center' }}>
-          <h1 className="page-title" style={{ marginTop: 0 }}>{name}</h1>
-          <p className="page-sub" style={{ margin: '8px auto 18px' }}>{t('profile.private')}</p>
-          <FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />
+      <div className="mkp-page">
+        <div className="mkp-wrap">
+          <ProfileCard
+            wide
+            name={name}
+            username={profile.username}
+            avatarUrl={profile.avatarUrl ?? profile.profilePhotoUrl}
+            aside={<FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />}
+            meta={
+              <p className="mkp-private">
+                <LockIcon size={15} />
+                {t('profile.private')}
+              </p>
+            }
+          />
         </div>
       </div>
     );
@@ -75,17 +87,18 @@ export function UserProfile(): React.JSX.Element {
     icon: profile.icon ?? null,
     background: profile.background ?? null,
     premium: profile.premium,
-    level: profile.level?.level ?? 1,
     levelInfo: profile.level,
     xp: profile.level?.xp ?? profile.xp ?? 0,
     streakDays: profile.streak ?? 0,
+    // how many they know is theirs to show or not: where the list did not come, neither does the number; and
+    // "0 friends" on somebody's profile is a worse thing to publish than silence (profile/ProfileFriends)
+    friends: friends && friends.total > 0 ? friends.total : null,
+    badges: profile.achievements ?? null,
     bio: profile.bio,
     favPoem: profile.favoritePoem ?? null,
     favStory: profile.favoriteStory ?? null,
     online: profile.online ?? false,
-    country: profile.country
-      ? { code: profile.country, name: countryName(profile.country, locale) ?? profile.country }
-      : null,
+    country: profile.country ? { code: profile.country, name: countryName(profile.country, locale) ?? profile.country } : null,
     frameSku: profile.frameSku ?? null,
     frameUrl: profile.frameUrl ?? null,
   };
@@ -94,18 +107,9 @@ export function UserProfile(): React.JSX.Element {
     <FullProfile
       view={view}
       headerAction={<FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />}
-      activity={
-        <>
-          <ProfileFriends userId={profile.userId} initial={friends} />
-          <ProfileActivity userId={profile.userId} sections={profile.sections} />
-        </>
-      }
       progress={<ProfileProgress ranks={profile.ranks} badges={profile.badges} league={profile.league ?? (profile.tier ? { tier: profile.tier } : null)} />}
-      sidebarExtra={
-        <>
-          {profile.achievements !== undefined && <div className="mkp-info-row"><span className="l">{t('profile.stat.achievements')}</span><span className="n">{profile.achievements}</span></div>}
-        </>
-      }
+      people={<ProfileFriends userId={profile.userId} initial={friends} />}
+      activity={<ProfileActivity userId={profile.userId} sections={profile.sections} />}
     />
   );
 }

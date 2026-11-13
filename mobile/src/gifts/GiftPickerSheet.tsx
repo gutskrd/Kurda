@@ -21,11 +21,13 @@ import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { useI18n } from '../i18n/I18nContext';
+import { formatNumber } from '../i18n/format';
 import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
+import { SearchField } from '../theme/SearchField';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { restrictionOf } from '../reports/sendErrors';
@@ -33,9 +35,10 @@ import { SendErrorNotice } from '../reports/SendError';
 import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
 import { KIND_LABEL, kindWithCount, withinBalance } from '../shop/format';
-import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from '../shop/ItemFilters';
+import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SEARCH_MAX, SortChip, ToggleChip } from '../shop/ItemFilters';
 import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type SentGift } from './api';
 import { Loading } from '../theme/Loading';
+import { pressedDim } from '../theme/motion';
 
 /** A friend a gift can go to. */
 export interface GiftFriend {
@@ -186,7 +189,7 @@ function CheckRow({
       aria-checked={checked}
       aria-disabled={disabled}
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.checkRow, { flexDirection: dir.row, opacity: disabled ? 0.45 : pressed ? 0.7 : 1 }]}
+      style={({ pressed }) => [styles.checkRow, { flexDirection: dir.row, opacity: disabled ? 0.45 : pressed ? pressedDim : 1 }]}
     >
       {avatar}
       <Text
@@ -343,7 +346,9 @@ function WhatStep({
   }
   if (!catalog) return <Loading style={styles.spinner} />;
 
-  const priceWords = (item: GiftCatalogItem): string => `${item.price} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
+  // every amount here is grouped and in the reader's own digits, as the shop's are
+  const amount = (n: number): string => formatNumber(n, locale);
+  const priceWords = (item: GiftCatalogItem): string => `${amount(item.price)} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
 
   const tile = (item: GiftCatalogItem): React.JSX.Element => {
     const own = owners(item);
@@ -376,7 +381,7 @@ function WhatStep({
           {
             backgroundColor: colors.controlTrack,
             borderColor: selected ? colors.gold : 'transparent',
-            opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
+            opacity: disabled ? 0.45 : pressed ? pressedDim : 1,
           },
         ]}
       >
@@ -395,7 +400,7 @@ function WhatStep({
         </Text>
         <View style={[styles.priceRow, { flexDirection: dir.row }]}>
           <Icon name={CURRENCY_ICON[item.currency]} size={14} color={item.currency === 'zer' ? colors.gold : colors.primary} />
-          <Text style={[styles.price, { color: colors.textPrimary }]}>{item.price}</Text>
+          <Text style={[styles.price, { color: colors.textPrimary }]}>{amount(item.price)}</Text>
         </View>
         {ownedLine ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
         {!canPay && !everyone ? (
@@ -407,15 +412,15 @@ function WhatStep({
 
   return (
     <>
-      <View style={[styles.balance, { flexDirection: dir.row }]} accessibilityLabel={t('gift.picker.balance', { zer: catalog.balance.zer, gems: catalog.balance.gems })}>
+      <View style={[styles.balance, { flexDirection: dir.row }]} accessibilityLabel={t('gift.picker.balance', { zer: amount(catalog.balance.zer), gems: amount(catalog.balance.gems) })}>
         <Text style={[styles.balanceLabel, { color: colors.textSecondary }]}>{t('gift.picker.youHave')}</Text>
         <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
           <Icon name="coin" size={14} color={colors.gold} />
-          <Text style={[styles.chipText, { color: colors.textPrimary }]}>{catalog.balance.zer}</Text>
+          <Text style={[styles.chipText, { color: colors.textPrimary }]}>{amount(catalog.balance.zer)}</Text>
         </View>
         <View style={[styles.chip, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
           <Icon name="gem" size={14} color={colors.primary} />
-          <Text style={[styles.chipText, { color: colors.textPrimary }]}>{catalog.balance.gems}</Text>
+          <Text style={[styles.chipText, { color: colors.textPrimary }]}>{amount(catalog.balance.gems)}</Text>
         </View>
       </View>
 
@@ -424,8 +429,9 @@ function WhatStep({
         <View style={styles.filters}>
           <SearchField
             value={filter.query}
-            onChange={(query) => setFilter((f) => ({ ...f, query }))}
+            onChangeText={(query) => setFilter((f) => ({ ...f, query }))}
             label={t('gift.picker.search')}
+            maxLength={SEARCH_MAX}
             style={styles.gutter}
           />
           <KindChips
@@ -483,7 +489,7 @@ function WhatStep({
               {t('gift.picker.selected', { name: picked.name })}
             </Text>
             <Icon name={CURRENCY_ICON[picked.currency]} size={14} color={picked.currency === 'zer' ? colors.gold : colors.primary} />
-            <Text style={[styles.price, { color: colors.textPrimary }]}>{picked.price}</Text>
+            <Text style={[styles.price, { color: colors.textPrimary }]}>{amount(picked.price)}</Text>
           </View>
         ) : null}
         <Text style={[styles.limits, styles.center, { color: colors.textSecondary }]}>
@@ -493,7 +499,7 @@ function WhatStep({
           label={
             picked
               ? recipients.length > 1
-                ? t('gift.picker.sendTotal', { total, currency: picked.currency === 'zer' ? 'Zêr' : t('gift.picker.gems') })
+                ? t('gift.picker.sendTotal', { total: amount(total), currency: picked.currency === 'zer' ? 'Zêr' : t('gift.picker.gems') })
                 : t('gift.picker.send')
               : t('gift.picker.pick')
           }

@@ -26,11 +26,14 @@ import type { SearchHit, SearchResult } from '../dictionary/types';
 import { EntryDetail } from '../dictionary/EntryDetail';
 import type { CourseMap, CourseSummary } from '../coursemap/types';
 import { flattenMap } from '../coursemap/node';
-import { GAMES, SCOPES, SCOPE_LABEL, filterByLabel, matches, readyForServer, scopesToRun, type Scope } from './scope';
+import { SCOPES, SCOPE_LABEL, filterByLabel, gameDestinations, matches, peopleQuery, readyForServer, scopesToRun, wayWord, type Scope } from './scope';
+import { GAME_CARDS, learnGameCard, type GameCard } from '../games/gameCards';
+import { PHONE_LEARN_GAMES, useListedLearnGames } from '../games/learnGames';
 import { EmptyState } from '../theme/EmptyState';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { DiscoverGrid } from './DiscoverGrid';
+import { heldDim } from '../theme/MotionParts';
 
 interface UserRow {
   userId: string;
@@ -66,14 +69,20 @@ interface LessonRow {
  * Four scopes. Two ask the server and two are lists the app already holds:
  *
  *   people   `/users/search`, which is rate-limited, so it waits for two
- *            characters and for you to stop typing
+ *            characters and for you to stop typing; a leading "@" is not
+ *            part of the name looked for
  *   words    `/dictionary/search`, same
- *   lessons  the skill nodes of your first course, fetched once
- *   games    a list in `scope.ts`, matched on the spot
+ *   lessons  the skill nodes of your first course, fetched once and matched
+ *            as each letter is typed
+ *   games    every game with a card on the Games screen (games/gameCards.ts),
+ *            matched on the spot
  *
  * The debounce is 250ms. Typing "kurd" at a normal speed is four keystrokes
  * inside 300ms; without it that is four calls against a budget of thirty a
- * minute, and the first three are answers to a question nobody asked.
+ * minute, and the first three are answers to a question nobody asked. From
+ * the last letter until the server has answered, the people and the words
+ * are held in grey where they will be: the page used to be blank for that
+ * long, which read as nothing found.
  *
  * The field is the screen's header, pinned at the top. With nothing in it the
  * screen is not blank: it offers the searches you made before (kept on this
@@ -104,8 +113,10 @@ export function SearchScreen(): React.JSX.Element {
   const [scope, setScope] = useState<Scope>('all');
   const [people, setPeople] = useState<UserRow[]>([]);
   const [words, setWords] = useState<SearchHit[]>([]);
-  const [lessons, setLessons] = useState<LessonRow[]>([]);
-  const [busy, setBusy] = useState(false);
+  // the search the server has answered (or been spared), as `asking` names one: until it is this one, it is still looked for
+  const [answered, setAnswered] = useState<string | null>(null);
+  // counts the searches asked, so an answer that comes back after a later one was asked is let go
+  const asked = useRef(0);
   // a search the server could not answer, which is not the same as one that found nothing
   const [failure, setFailure] = useState<ApiError | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -196,57 +207,76 @@ export function SearchScreen(): React.JSX.Element {
     };
   }, [client]);
 
+  // "all" is every scope a guest has, which is every scope but the people
+  const wanted = useMemo(() => scopesToRun(scope).filter((s) => s !== 'people' || !isGuest), [scope, isGuest]);
+  const term = query.trim();
+  // who is looked for, without the "@" the app writes before a handle
+  const person = peopleQuery(query);
+  const asksPeople = wanted.includes('people') && readyForServer(person);
+  const asksWords = wanted.includes('words') && readyForServer(term);
+  /** This search, by name: what is asked of the server, in which scope, and which try at it. */
+  const asking = `${scope}|${asksPeople ? person : ''}|${asksWords ? term : ''}|${attempt}`;
+
   const run = useCallback(
-    async (q: string, only: Scope) => {
-      // "all" is every scope a guest has, which is every scope but the people
-      const wanted = scopesToRun(only).filter((s) => s !== 'people' || !isGuest);
-      const trimmed = q.trim();
-
-      if (wanted.includes('lessons')) setLessons(filterByLabel(allLessons, (l) => l.title, trimmed));
-      if (!wanted.includes('lessons')) setLessons([]);
-      if (!wanted.includes('people')) setPeople([]);
-      if (!wanted.includes('words')) setWords([]);
-
+    async (name: string, who: string | null, what: string | null) => {
+      const mine = ++asked.current;
       setFailure(null);
-      if (!readyForServer(trimmed)) {
-        setPeople([]);
-        setWords([]);
-        return;
-      }
-
-      setBusy(true);
-      const qs = encodeURIComponent(trimmed);
       const [p, w] = await Promise.all([
-        wanted.includes('people') ? client.get<{ results: UserRow[] }>(`/users/search?q=${qs}`) : null,
-        wanted.includes('words') ? client.get<SearchResult>(`/dictionary/search?q=${qs}`) : null,
+        who !== null ? client.get<{ results: UserRow[] }>(`/users/search?q=${encodeURIComponent(who)}`) : null,
+        what !== null ? client.get<SearchResult>(`/dictionary/search?q=${encodeURIComponent(what)}`) : null,
       ]);
-      setBusy(false);
-      if (p?.ok) setPeople(p.data.results);
-      if (w?.ok) setWords(w.data.results);
+      // another search was asked meanwhile: this answer is to a question nobody is waiting on any more
+      if (mine !== asked.current) return;
+      setPeople(p?.ok ? p.data.results : []);
+      setWords(w?.ok ? w.data.results : []);
       const refused = [p, w].find((r) => r && !r.ok);
       if (refused && !refused.ok) setFailure(refused.error);
+      setAnswered(name);
     },
-    [client, allLessons, isGuest],
+    [client],
   );
 
   /* One timer, reset on every keystroke and on a change of scope. */
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(() => {
     if (timer.current) clearTimeout(timer.current);
-    timer.current = setTimeout(() => void run(query, scope), 250);
+    timer.current = setTimeout(() => void run(asking, asksPeople ? person : null, asksWords ? term : null), 250);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-    // a retry runs the same search again
-  }, [query, scope, run, attempt]);
+    // a retry runs the same search again: `asking` names the try as well
+  }, [asking, run]);
 
+  // the lessons are a list held here: matched on the letter just typed, with no wait
+  const lessons = useMemo(
+    () => (wanted.includes('lessons') ? filterByLabel(allLessons, (l) => l.title, term) : []),
+    [wanted, allLessons, term],
+  );
+
+  // every game with a card that can be played now: the ones with screens of their own, and the learning games listed for this learner
+  const learnGames = useListedLearnGames();
+  const cards = useMemo<GameCard[]>(
+    () => [
+      ...GAME_CARDS,
+      ...learnGames.flatMap(({ game: g, ready }): GameCard[] => {
+        const phone = PHONE_LEARN_GAMES[g.id];
+        return phone ? [learnGameCard({ id: g.id, ...phone, mode: g.mode === 'solo' ? 'solo' : g.mode === 'multi' ? 'friends' : 'both', ready })] : [];
+      }),
+    ],
+    [learnGames],
+  );
   const games = useMemo(() => {
-    if (!scopesToRun(scope).includes('games')) return [];
-    return GAMES.filter((g) => matches(t(g.labelKey), query.trim()));
-  }, [scope, query, t]);
+    if (!wanted.includes('games')) return [];
+    return gameDestinations(cards).filter((g) => [g.labelKey, ...(g.alsoKeys ?? [])].some((key) => matches(t(key), term)));
+  }, [wanted, cards, term, t]);
 
-  const typed = query.trim().length > 0;
-  const nothing = typed && !busy && !failure && people.length === 0 && words.length === 0 && lessons.length === 0 && games.length === 0;
+  const typed = term.length > 0;
+  // asked of the server and not answered yet: from the letter just typed, through the pause, to the answer
+  const looking = (asksPeople || asksWords) && answered !== asking;
+  // what the server last said is shown only where it is still what is asked for
+  const peopleShown = asksPeople ? people : NOBODY;
+  const wordsShown = asksWords ? words : NO_WORDS;
+  const nothing = typed && !looking && !failure && peopleShown.length === 0 && wordsShown.length === 0 && lessons.length === 0 && games.length === 0;
 
   const section = (labelKey: TranslationKey, rows: React.ReactNode[]) =>
     rows.length === 0 ? null : (
@@ -263,9 +293,9 @@ export function SearchScreen(): React.JSX.Element {
    * searches match (@kurda/shared search-highlight.ts): "serk" is marked
    * inside "berserker". A line the query is not in shows as written.
    */
-  const marked = (text: string): React.ReactNode =>
-    typed
-      ? matchedParts(text, query.trim()).map((part, i) =>
+  const marked = (text: string, found: string = term): React.ReactNode =>
+    typed && found
+      ? matchedParts(text, found).map((part, i) =>
           part.match ? (
             <Text key={i} style={[styles.match, { color: colors.textPrimary }]}>
               {part.text}
@@ -276,7 +306,7 @@ export function SearchScreen(): React.JSX.Element {
         )
       : text;
 
-  const row = (key: string, left: React.ReactNode, title: string, sub: string | null, onPress: () => void, label: string) => (
+  const row = (key: string, left: React.ReactNode, title: string, sub: string | null, onPress: () => void, label: string, found: string = term) => (
     <Pressable
       key={key}
       onPress={() => {
@@ -290,11 +320,11 @@ export function SearchScreen(): React.JSX.Element {
       {left}
       <View style={styles.rowMain}>
         <Text style={[styles.rowTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
-          {marked(title)}
+          {marked(title, found)}
         </Text>
         {sub ? (
           <Text style={[styles.rowSub, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
-            {marked(sub)}
+            {marked(sub, found)}
           </Text>
         ) : null}
       </View>
@@ -345,7 +375,14 @@ export function SearchScreen(): React.JSX.Element {
               <Text style={[styles.sectionTitle, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
                 {t('search.recent')}
               </Text>
-              <Pressable onPress={forgetRecents} accessibilityRole="button" accessibilityLabel={t('search.clearRecent')} hitSlop={8}>
+              <Pressable
+                onPress={forgetRecents}
+                accessibilityRole="button"
+                accessibilityLabel={t('search.clearRecent')}
+                // one 18-point line of words, caught at a fingertip's 44
+                hitSlop={13}
+                style={({ pressed }) => pressed && heldDim}
+              >
                 <Text style={[styles.sectionAction, { color: colors.textPrimary }]}>{t('search.clearRecent')}</Text>
               </Pressable>
             </View>
@@ -397,7 +434,7 @@ export function SearchScreen(): React.JSX.Element {
 
         {section(
           'search.scope.people',
-          people.map((u) =>
+          peopleShown.map((u) =>
             row(
               'p-' + u.userId,
               <InitialsAvatar name={u.username} id={u.userId} size={40} />,
@@ -406,13 +443,14 @@ export function SearchScreen(): React.JSX.Element {
               u.friend ? [u.displayName, t('search.friend')].filter(Boolean).join(' · ') : (u.displayName ?? null),
               () => navigation.navigate('UserProfile', { userId: u.userId }),
               u.username,
+              person,
             ),
           ),
         )}
 
         {section(
           'search.scope.words',
-          words.map((w) =>
+          wordsShown.map((w) =>
             row(
               'w-' + w.entryId,
               glyph('text'),
@@ -440,38 +478,58 @@ export function SearchScreen(): React.JSX.Element {
 
         {section(
           'search.scope.games',
-          games.map((g) =>
-            row(
+          games.map((g) => {
+            // two ways into one game under one name are told apart by the word on the card's button
+            const way = wayWord(cards, g.key);
+            const name = t(g.labelKey);
+            return row(
               'g-' + g.key,
               glyph(g.icon),
-              t(g.labelKey),
-              null,
-              () => navigation.navigate(g.route),
-              t(g.labelKey),
-            ),
-          ),
+              name,
+              way ? t(way) : null,
+              () => (g.route === 'WhoAmI' && g.params ? navigation.navigate('WhoAmI', g.params) : navigation.navigate(g.route)),
+              way ? `${name}, ${t(way)}` : name,
+            );
+          }),
         )}
 
+        {/* still looking, with nothing from the server to show yet: its rows in grey, where they will be */}
+        {looking && peopleShown.length === 0 && wordsShown.length === 0 ? <ResultsSkeleton /> : null}
+
         {nothing ? (
-          <EmptyState title={t('search.empty', { query: query.trim() })} />
+          <EmptyState title={t('search.empty', { query: term })} />
         ) : null}
 
-        {typed && !busy && failure ? <ErrorRetry message={describeError(failure, t)} onRetry={() => setAttempt((n) => n + 1)} /> : null}
+        {typed && !looking && failure ? <ErrorRetry message={describeError(failure, t)} onRetry={() => setAttempt((n) => n + 1)} /> : null}
       </ScrollView>
     </GradientBackground>
   );
 }
 
+/** No answer from the server, or none wanted: the same list each time, so nothing redraws for it. */
+const NOBODY: UserRow[] = [];
+const NO_WORDS: SearchHit[] = [];
+
 /** People you may know, in grey: the heading and five rows at the rows' own size. */
 function SuggestionsSkeleton(): React.JSX.Element {
+  return <RowsSkeleton rows={5} testID="search-suggestions-loading" />;
+}
+
+/** What a search is still looking for, in grey: a heading and three rows, where its first answers will be. */
+function ResultsSkeleton(): React.JSX.Element {
+  return <RowsSkeleton rows={3} testID="search-looking" />;
+}
+
+/** A section in grey: its heading and `rows` rows at the rows' own size. */
+function RowsSkeleton({ rows, testID }: { rows: number; testID: string }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
   return (
-    <View style={styles.section} accessibilityLabel={t('common.loading')}>
+    <View style={styles.section} accessibilityLabel={t('common.loading')} testID={testID}>
       <SkeletonText size={typography.sizes.xs} width={140} style={[styles.sectionTitleSkeleton, start]} />
       <View style={styles.rows}>
-        {[0, 1, 2, 3, 4].map((i) => (
+        {Array.from({ length: rows }, (_, i) => i).map((i) => (
           <View key={i} style={[styles.row, { flexDirection: dir.row }]}>
             <Skeleton width={40} height={40} radius={radii.pill} />
             <View style={styles.rowMain}>

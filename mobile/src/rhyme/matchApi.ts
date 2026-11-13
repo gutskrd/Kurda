@@ -1,6 +1,7 @@
 import type { RatedState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
+import { joined } from '../play/joining';
 
 export type Dialect = 'kurmanci' | 'sorani';
 export type RhymeQuality = 'perfect' | 'near' | 'none';
@@ -111,7 +112,8 @@ export const submitRhyme = (
   client.post(`/rhyme/matches/${id}/submissions`, { word });
 
 export const getMatch = (client: ApiClient, id: string): Promise<ApiResult<MatchState>> =>
-  client.get(`/rhyme/matches/${id}`);
+  // an invite to it accepted a moment ago is let land first: until it has, this is nobody's match (play/joining.ts)
+  joined(id).then(() => client.get(`/rhyme/matches/${id}`));
 
 /** 409s until the match is over — the prompt and everyone's words are in here. */
 export const getMatchResults = (client: ApiClient, id: string): Promise<ApiResult<MatchResults>> =>

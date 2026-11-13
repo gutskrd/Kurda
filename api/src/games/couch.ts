@@ -25,7 +25,7 @@ import { AppError } from '../plugins/errors.js';
 import type { PublishedContent, TrustedSources } from './sources.js';
 
 /**
- * Kurdish Impostor for one phone passed round a room
+ * Impostor for one phone passed round a room
  * (shared/src/games/impostor/couch.ts): where it can be played, and the cards
  * for an evening.
  *

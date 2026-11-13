@@ -1,11 +1,19 @@
 /*
- * A game's emblem (games/GameArt.tsx): still, one picture; moving, its layers
+ * A game's cover (games/GameArt.tsx): still, one picture; moving, its parts
  * laid over one another, each played by the browser on its own. The motion
  * itself is the art's (shared/src/art/games.ts); nothing here moves anything.
+ *
+ * A cover fills its square, and its corners are rounded here, by a share of
+ * its own size so that a small one and a large one are the same shape. The
+ * rounding clips: a part that moves past the cover's edge stops at it.
  */
 .gp-art {
   display: inline-grid;
+  overflow: hidden;
+  border-radius: 22%;
   line-height: 0;
+  /* a clipped box with moving children is its own layer, or a browser may let a corner show while they move */
+  isolation: isolate;
 }
 .gp-art--moving {
   position: relative;

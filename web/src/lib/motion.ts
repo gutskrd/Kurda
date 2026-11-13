@@ -20,6 +20,53 @@ export function prefersReducedMotion(): boolean {
   }
 }
 
+/** How long something that is closing takes to leave: `--dur` in styles/tokens.css, which its stylesheet uses. */
+export const LEAVE_MS = 200;
+
+/**
+ * Whether this browser will play a movement at all: it can be asked whether
+ * the reader wants less of it, and the answer is no. Where it cannot be asked
+ * (no `matchMedia`) nothing is waited for, and what would have moved is
+ * simply where it ends.
+ */
+export function playsMotion(): boolean {
+  try {
+    return typeof window !== 'undefined' && typeof window.matchMedia === 'function' && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Whether something that has just been closed is still leaving — a dialog or
+ * a sheet, which goes out the way it came in rather than vanishing.
+ *
+ * True from the very render in which `open` turns false, for `LEAVE_MS`,
+ * which is how long whatever closes stays drawn (with its closing class) so
+ * the stylesheet can take it away. It is false at once for a reader who asked
+ * for less motion, and wherever motion cannot be played: there the thing is
+ * simply gone. Opened again while leaving, it is no longer leaving.
+ *
+ * Only the picture stays. The caller hands the focus back and frees the page
+ * the moment `open` turns false, and marks what is still drawn as inert and
+ * hidden from assistive technology: nobody can reach into a dialog that has
+ * been closed.
+ */
+export function useLeaving(open: boolean): boolean {
+  const [was, setWas] = useState(open);
+  const [leaving, setLeaving] = useState(false);
+  if (was !== open) {
+    setWas(open);
+    setLeaving(!open && playsMotion());
+  }
+  useEffect(() => {
+    if (!leaving) return;
+    const id = window.setTimeout(() => setLeaving(false), LEAVE_MS);
+    return () => window.clearTimeout(id);
+  }, [leaving]);
+  return leaving && !open;
+}
+
 /** How long a number takes to count, by how far it moves (the phone's `countUpMs`). */
 export function countUpMs(delta: number, reduce: boolean): number {
   if (reduce) return 0;
@@ -96,17 +143,34 @@ export function useCelebrationMoment(delayMs = 0): { playing: boolean; skip: () 
 /** How long a list is "arriving" after its first content: its first rows rise in during it, once. */
 export const ARRIVAL_MS = 900;
 
+/** The lists that have risen in already, while the tab is open: each rises once (as a unit of the path does). */
+const ARRIVED = new Set<string>();
+
+/** Every list may arrive again: for the tests, where one tab is many visits. */
+export function forgetArrivals(): void {
+  ARRIVED.clear();
+}
+
 /**
  * Whether a list that has just been filled is still arriving — for the class
  * that lets its first screenful rise in. True for a moment after `ready`
  * first turns true and never again, so a later refresh, a filter or a row
  * added at the top simply appears.
+ *
+ * And once in a tab, by the list's `name`: Home and Messages are opened many
+ * times a day, and rows that rise in on every visit are movement on the most
+ * used screens for nobody's benefit. Rows that are already there when the
+ * list is first drawn — it was kept from the last visit (lib/apiMemory.ts) —
+ * have not arrived at all, and do not rise.
  */
-export function useArrival(ready: boolean): boolean {
+export function useArrival(ready: boolean, name: string): boolean {
   const [arriving, setArriving] = useState(false);
   const since = useRef<number | null>(null);
+  // decided as the list is first drawn: rows in hand then came from memory, and a list seen before has had its moment
+  const [may] = useState(() => !ready && !ARRIVED.has(name));
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !may) return;
+    ARRIVED.add(name);
     since.current ??= Date.now();
     const left = ARRIVAL_MS - (Date.now() - since.current);
     if (left <= 0) {
@@ -116,7 +180,7 @@ export function useArrival(ready: boolean): boolean {
     setArriving(true);
     const id = window.setTimeout(() => setArriving(false), left);
     return () => window.clearTimeout(id);
-  }, [ready]);
+  }, [ready, may, name]);
   return arriving;
 }
 

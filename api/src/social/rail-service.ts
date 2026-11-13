@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { GAME_NAMES } from '@kurda/shared';
 import { resolveSections } from './profile-activity.js';
 import { levelInfo, resolveAvatarUrl, type LevelInfo, type PublicUrl } from '../cosmetics/access.js';
 import { unseenGiftsSql } from '../shop/service.js';
@@ -58,29 +59,29 @@ interface ActivityRow {
  */
 const LIVE_GAMES_SQL = `
   SELECT DISTINCT ON (user_id) user_id, game, started_at FROM (
-    SELECT w.user_id, 'Peyvok' AS game, w.started_at
+    SELECT w.user_id, '${GAME_NAMES.peyvok}' AS game, w.started_at
       FROM wordle_games w
      WHERE w.user_id = ANY($1) AND w.status = 'playing' AND w.finished_at IS NULL
        AND w.started_at > now() - ($2 || ' minutes')::interval
     UNION ALL
-    SELECT r.user_id, 'Rhyming Words', r.started_at
+    SELECT r.user_id, '${GAME_NAMES.rhyme}', r.started_at
       FROM rhyme_games r
      WHERE r.user_id = ANY($1) AND r.status = 'active' AND r.ended_at IS NULL
        AND r.started_at > now() - ($2 || ' minutes')::interval
     UNION ALL
-    SELECT g.user_id, 'Typing Race', g.started_at
+    SELECT g.user_id, '${GAME_NAMES.race}', g.started_at
       FROM race_games g
      WHERE g.user_id = ANY($1) AND g.finished_at IS NULL
        AND g.started_at > now() - ($2 || ' minutes')::interval
     UNION ALL
-    SELECT p.user_id, 'Peyvok Battle', COALESCE(b.started_at, b.created_at)
+    SELECT p.user_id, '${GAME_NAMES['wordle-battle']}', COALESCE(b.started_at, b.created_at)
       FROM wordle_battle_players p
       JOIN wordle_battles b ON b.id = p.battle_id
      WHERE p.user_id = ANY($1) AND p.status = 'playing' AND p.finished_at IS NULL AND NOT p.removed
        AND b.finished_at IS NULL
        AND COALESCE(b.started_at, b.created_at) > now() - ($2 || ' minutes')::interval
     UNION ALL
-    SELECT p.user_id, 'Rhyme Match', COALESCE(m.started_at, m.created_at)
+    SELECT p.user_id, '${GAME_NAMES['rhyme-match']}', COALESCE(m.started_at, m.created_at)
       FROM rhyme_match_players p
       JOIN rhyme_matches m ON m.id = p.match_id
      WHERE p.user_id = ANY($1) AND m.finished_at IS NULL AND NOT p.removed AND p.left_at IS NULL

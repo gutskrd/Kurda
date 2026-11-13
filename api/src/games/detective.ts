@@ -1,5 +1,5 @@
 /**
- * Kurdish Detective: a round is one case, solved from Kurdish evidence.
+ * Detective: a round is one case, solved from Kurdish evidence.
  *
  * The cases are published `case_file` rows (approved by a reviewer, in one
  * variety). Each holds suspects, evidence cards whose Kurdish was picked from
@@ -13,16 +13,17 @@
  * (`board`), but what a card means stays here until the player has found it:
  * by making a deduction it proves (the correction brings the meanings, and
  * the notebook keeps the deduction), or by spending a hint on it. A hint can
- * instead read the case's next written hint. Each hint spent takes
- * DETECTIVE_HINT_XP off what the case pays at the finish (`deduction`). An
- * overheard remark plays in the voice it was recorded in (games/spoken.ts).
+ * instead read the case's next written hint. A case has DETECTIVE_HINTS of
+ * them and no more: that they run out is what a hint costs, since a case
+ * played alone pays no XP to take one from. An overheard remark plays in the
+ * voice it was recorded in (games/spoken.ts).
  *
- * Hints are not free for a round given up. A round of a case left unfinished
- * (replaced by a new round, or expired) keeps what its hints showed, and the
- * next round of the same case within GAME_REPEAT_XP_DAYS starts with them
- * spent (`carriedHints`): the cards it translated already translated, the
- * hints it read already read, and their cost taken off that round's pay — so
- * a case cannot be opened up with hints, dropped, and played again for free.
+ * Hints do not come back for a round given up. A round of a case left
+ * unfinished (replaced by a new round, or expired) keeps what its hints
+ * showed, and the next round of the same case within GAME_REPEAT_XP_DAYS
+ * starts with them spent (`carriedHints`): the cards it translated already
+ * translated, the hints it read already read — so a case cannot be opened up
+ * with hints, dropped, and played again with all of them to spend.
  *
  * A wrong first try is answered with the cards to read again, never the
  * answer; once an item is done, the right answer and the cards it rests on
@@ -33,7 +34,6 @@ import type pg from 'pg';
 import { z } from 'zod';
 import {
   DETECTIVE_HINTS,
-  DETECTIVE_HINT_XP,
   DIFFICULTY_LEVELS,
   GAME_REPEAT_XP_DAYS,
   accusationEvidence,
@@ -104,15 +104,14 @@ function metaOf(meta: Record<string, unknown>): CaseMeta | null {
 
 /**
  * The hints already spent on this case in the learner's last round of it,
- * when that round did not pay for them, within the repeat window: what the
- * next round of the case starts with. A round pays for its hints at its
- * finish, out of what its answers earned — so one left unfinished (given up
- * for another, or expired) did not, and neither did one finished without
- * counting, which earned nothing to take them from. Were that second kind
- * let go, a hint would be free to anyone who finished a round empty and
- * played the case again knowing what the hint had shown.
- * Nothing when the last round of it was finished and counted: its hints
- * were paid for.
+ * when that round was not played out, within the repeat window: what the
+ * next round of the case starts with. A round left unfinished (given up for
+ * another, or expired) keeps its hints spent, and so does one finished
+ * without counting: were that second kind let go, a case's hints would all
+ * come back to anyone who finished a round empty and played the case again
+ * knowing what they had shown.
+ * Nothing when the last round of it was finished and counted: that case was
+ * solved, and its next round begins afresh.
  */
 export async function carriedHints(db: Pick<pg.Pool, 'query'>, userId: string, dialect: string, caseId: string): Promise<CaseMeta['spent'] | null> {
   const res = await db.query<{ spent: CaseMeta['spent'] | null; paid: boolean }>(
@@ -256,10 +255,6 @@ export class DetectiveGame implements SoloEngine<CaseItem, DetectiveItemView, De
     }
     spent.used++;
     return { ...meta, spent } as unknown as Record<string, unknown>;
-  }
-
-  deduction(raw: Record<string, unknown>): number {
-    return (metaOf(raw)?.spent.used ?? 0) * DETECTIVE_HINT_XP;
   }
 
   view(item: CaseItem, index: number): DetectiveItemView {

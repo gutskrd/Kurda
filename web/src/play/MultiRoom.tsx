@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import type { MultiGame, MultiResult, MultiSeat, MultiView } from '@kurda/shared';
 import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
+import { TrophyIcon } from '../components/icons';
 import { ErrorState, Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -67,7 +68,8 @@ export interface GameRoomProps<Board> {
  * "Player N", Hevalo as Hevalo) with Remove for the host and a report beside
  * each other player, Rated or Friendly, Start for the host and Join for
  * someone the join rule lets in, and after the game its places, what it did to
- * your rank, and Play again.
+ * your rank, and Play again. The places show the XP a game with other people
+ * paid; a game against Hevalo pays none, and says so in one line under them.
  *
  * The game gives only its own staging (`playing`) and how a score reads.
  * Everything here works from the one view every game answers (`MultiView`),
@@ -233,6 +235,7 @@ export function GameRoom<Board>({
               score={scoreOf(r, view)}
               trailing={
                 <>
+                  {/* only XP that was earned is shown: a game against Hevalo pays none, and a row never reads "+0 XP" */}
                   {r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : null}
                   {p && !me && !p.bot && <PlayerReport game={game} gameId={id} seat={r.seat} name={name(r.seat)} />}
                 </>
@@ -241,6 +244,8 @@ export function GameRoom<Board>({
           );
         })}
       </RankList>
+      {/* against Hevalo nobody else is playing, so there is no XP on the rows above: say so once, and where it is earned */}
+      {view.mode === 'solo' && <p className="gs-alone">{t('games.noXpAlone')}</p>}
       {view.me !== null && view.mode === 'group' && (
         <RematchPanel game={game} lobbyId={id} otherName={others[0] ? name(others[0].seat) : t('games.opponent')} isHost={view.canControl} />
       )}
@@ -257,6 +262,7 @@ function Verdict({ won, label }: { won: boolean; label: string }): React.JSX.Ele
   useEffect(() => heading.current?.focus(), []);
   return (
     <h2 ref={heading} tabIndex={-1} className={`match-verdict${won ? ' is-won' : ''}`}>
+      {won && <TrophyIcon size={26} className="verdict-icon" />}
       {label}
     </h2>
   );

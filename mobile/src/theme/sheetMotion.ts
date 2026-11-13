@@ -64,3 +64,20 @@ export function settleSheet(y: number, velocity: number, { stops, height, dismis
   if (dismissible && shouldDismiss(y - lowest, velocity, height - lowest)) return 'close';
   return snapTarget(y, velocity, stops);
 }
+
+/**
+ * How long a sheet takes to leave, in milliseconds, over the `distance` it
+ * still has to go: the time anything leaving takes (`base`), or less when the
+ * finger let go of it already moving faster than that (`velocity`, points per
+ * second, down positive) — it never slows to wait, and never takes longer.
+ *
+ * A time rather than the spring a sheet settles on. A spring that has no
+ * bounce comes to rest for most of a second after it looks finished, and a
+ * sheet is closed when its leaving has ended: for that long the page behind
+ * was back in sight and could not be touched.
+ */
+export function leaveMs(distance: number, velocity: number, base: number, least: number): number {
+  if (!(distance > 0)) return least;
+  if (!(velocity > 0)) return base;
+  return Math.round(Math.min(base, Math.max(least, (distance / velocity) * 1000)));
+}

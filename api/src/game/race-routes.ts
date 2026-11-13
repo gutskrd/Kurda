@@ -3,7 +3,6 @@ import { z } from 'zod';
 import { ACCENT_MODES, DEFAULT_ACCENT_MODE, TYPING_DIALECTS, type RaceLength } from '@kurda/shared';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
-import type { XpService } from '../xp/service.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 import { RaceService, RaceTextService } from './race-service.js';
 
@@ -57,7 +56,7 @@ const textBody = z.object({
 
 export function registerRaceRoutes(
   app: FastifyInstance,
-  deps: { xp?: XpService; milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
+  deps: { milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
 ): void {
   const race = new RaceService(app.db, deps);
   const texts = new RaceTextService(app.db);
@@ -80,7 +79,7 @@ export function registerRaceRoutes(
     return game;
   });
 
-  /** Finish a race and be scored. Rate limited: it writes and awards XP. */
+  /** Finish a race and be scored. Rate limited: it writes. */
   app.post(
     '/race/:id/finish',
     {

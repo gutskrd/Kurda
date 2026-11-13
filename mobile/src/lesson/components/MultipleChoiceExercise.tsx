@@ -14,6 +14,7 @@ import { useAudio } from '../useAudio';
 import { ExerciseHeadline } from './ExerciseHeadline';
 import { PromptScene } from './SpeechBubble';
 import { PromptWords } from './PromptWords';
+import { pressedDim } from '../../theme/motion';
 
 interface Props {
   exercise: Exercise;
@@ -134,7 +135,7 @@ const styles = StyleSheet.create({
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   said: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   grow: { flexShrink: 1 },
-  pressed: { opacity: 0.6 },
+  pressed: { opacity: pressedDim },
   bubbleText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.medium },
   options: { gap: spacing.sm },
   option: { flexDirection: 'row', gap: spacing.sm, minHeight: 56, paddingHorizontal: spacing.lg },

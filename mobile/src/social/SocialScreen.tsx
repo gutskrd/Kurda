@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
@@ -257,7 +257,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             <Pressable
               onPress={() => navigation.navigate('Tabs', { screen: 'Messages' })}
               hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
-              style={styles.messagesLink}
+              style={({ pressed }) => [styles.messagesLink, pressed && heldDim]}
               accessibilityRole="button"
               accessibilityLabel={t('nav.messages')}
             >
@@ -321,6 +321,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                           hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
                           accessibilityRole="button"
                           accessibilityLabel={t('friends.cancelRequest', { name: u.displayName ?? u.username })}
+                          style={({ pressed }) => pressed && heldDim}
                         >
                           <Text style={[styles.cancel, { color: colors.textSecondary }]}>{t('friends.cancel')}</Text>
                         </Pressable>,

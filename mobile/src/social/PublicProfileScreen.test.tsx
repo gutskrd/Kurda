@@ -51,8 +51,63 @@ describe('the streak of another learner', () => {
     expect(screen.getByTestId('fire').dataset.stage).toBe('campfire');
     cleanup();
     visit(0);
-    expect(await screen.findByText('baran')).toBeTruthy();
+    expect(await screen.findByText('@baran')).toBeTruthy();
     expect(screen.getByTestId('fire').dataset.stage).toBe('cold');
+  });
+});
+
+/**
+ * A profile is somebody, before it is their numbers: the name they chose,
+ * their handle, where they are from and what they say about themselves, and
+ * what you can do — and only then the streak and the XP.
+ */
+describe('who somebody is', () => {
+  const show = (extra: Record<string, unknown>): void => {
+    testAuth.client = fakeClient({
+      'GET /users/u2': ok({ userId: 'u2', username: 'baran', displayName: 'Baran Şêx', friendStatus: 'friends', private: false, xp: 410, streak: 3, achievements: 5, ...extra }),
+      'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
+    });
+    renderWithProviders(<PublicProfileScreen userId="u2" onExit={() => undefined} />);
+  };
+
+  it('leads with the name they chose, with the handle under it, their country and their own words', async () => {
+    show({ bio: 'Ez ji çîrokan hez dikim.', country: 'NL' });
+    const name = await screen.findByRole('heading', { name: 'Baran Şêx' });
+    const handle = screen.getByText('@baran');
+    // the chosen name first, the handle after it
+    expect(name.compareDocumentPosition(handle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByText('Netherlands')).toBeTruthy();
+    expect(screen.getByText('Ez ji çîrokan hez dikim.')).toBeTruthy();
+  });
+
+  it('puts what you can do above the numbers, and falls back to the handle where no name was chosen', async () => {
+    show({ displayName: null });
+    expect(await screen.findByRole('heading', { name: 'baran' })).toBeTruthy();
+    const message = screen.getByRole('button', { name: 'Message' });
+    const xp = screen.getByText('410');
+    expect(message.compareDocumentPosition(xp) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // nothing is said about a bio that is not there
+    expect(screen.queryByText(/bio/i)).toBeNull();
+  });
+
+  /**
+   * The server sends somebody's XP inside their level. The screen read a field
+   * of its own that is not sent any more, so everybody else had 0 XP.
+   */
+  it('reads their XP from their level, where the server sends it', async () => {
+    testAuth.client = fakeClient({
+      'GET /users/u2': ok({ userId: 'u2', username: 'baran', displayName: 'Baran', friendStatus: 'friends', private: false, streak: 2, achievements: 1, level: { xp: 1385, level: 4 } }),
+      'GET /users/u2/activity?kind=posts&limit=12': ok({ items: [] }),
+    });
+    renderWithProviders(<PublicProfileScreen userId="u2" onExit={() => undefined} />);
+    expect(await screen.findByText('1,385')).toBeTruthy();
+  });
+
+  it('shows neither their words nor where they are from on a profile that is private', async () => {
+    show({ private: true, friendStatus: 'none', bio: 'Ez ji çîrokan hez dikim.', country: 'NL' });
+    expect(await screen.findByRole('heading', { name: 'Baran Şêx' })).toBeTruthy();
+    expect(screen.queryByText('Ez ji çîrokan hez dikim.')).toBeNull();
+    expect(screen.queryByText('Netherlands')).toBeNull();
   });
 });
 

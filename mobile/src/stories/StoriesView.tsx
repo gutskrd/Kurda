@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { categoryName, type StoryCategory, type StoryDialect, type StoryGameSummary, type StoryLibrary, type StoryListItem } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -19,7 +19,8 @@ import { useListEntrance } from '../theme/animate';
 import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton, ErrorRetry } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { PressableScale, Rise } from '../theme/MotionParts';
+import { PressableScale, Rise, heldDim } from '../theme/MotionParts';
+import { SearchField } from '../theme/SearchField';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -32,6 +33,7 @@ import { SetupSheet } from './SetupSheet';
 import { storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { COLUMN, Note, Pill } from './ui';
 import { usePullRefresh } from '../net/usePullRefresh';
+import { pressedDim } from '../theme/motion';
 
 /**
  * Which variety a game is set up in: Soranî when the interface is Soranî,
@@ -243,7 +245,7 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
           </Text>
           {/* with two chips or more, their "Clear all" already says this */}
           {parts.length < 2 ? (
-            <Pressable onPress={startOver} accessibilityRole="button" style={styles.clear} hitSlop={8}>
+            <Pressable onPress={startOver} accessibilityRole="button" style={({ pressed }) => [styles.clear, pressed && heldDim]} hitSlop={8}>
               <Text style={[styles.clearText, { color: colors.primary }]}>{t('stories.library.clearFilters')}</Text>
             </Pressable>
           ) : null}
@@ -350,25 +352,8 @@ export function StoriesView({ scrollRef, inTab = false }: { scrollRef?: Ref<Scro
         refreshControl={pull}
       >
         <View style={[styles.searchRow, { flexDirection: dir.row }]}>
-          <View style={[styles.search, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>
-            <Icon name="search" size={18} color={colors.textSecondary} />
-            <TextInput
-              value={q}
-              onChangeText={setQ}
-              placeholder={t('stories.library.search')}
-              placeholderTextColor={colors.textSecondary}
-              accessibilityLabel={t('stories.library.search')}
-              autoCorrect={false}
-              autoCapitalize="none"
-              returnKeyType="search"
-              style={[styles.searchInput, dir.text, { color: colors.textPrimary }]}
-            />
-            {q ? (
-              <Pressable onPress={() => setQ('')} accessibilityRole="button" accessibilityLabel={t('stories.library.clearSearch')} hitSlop={8} style={styles.searchClear}>
-                <Icon name="clear-fill" size={18} color={colors.textSecondary} />
-              </Pressable>
-            ) : null}
-          </View>
+          {/* the app's one search field, in place of a copy of it built here */}
+          <SearchField value={q} onChangeText={setQ} label={t('stories.library.search')} style={styles.search} />
           {/* sorting and narrowing is one button beside the search, filled while anything is on */}
           <HeaderButton
             icon={isPlainFilter(filter) ? 'filter' : 'filter-fill'}
@@ -426,7 +411,9 @@ function ShelfChip({ label, onPress, count }: { label: string; onPress: () => vo
       }}
       accessibilityRole="button"
       accessibilityLabel={`${label}, ${formatNumber(count, locale)}`}
-      style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.8 : 1 }]}
+      // drawn 36 points tall, caught at a fingertip's 44
+      hitSlop={{ top: 4, bottom: 4 }}
+      style={({ pressed }) => [styles.chip, { backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 }]}
     >
       <Text style={[styles.chipText, { color: colors.textPrimary }]} numberOfLines={1}>
         {label}
@@ -606,7 +593,7 @@ export function StoryCard({
         accessibilityLabel={bookmarked ? t('stories.library.bookmarked') : t('stories.library.bookmark')}
         accessibilityState={{ selected: bookmarked }}
         hitSlop={6}
-        style={({ pressed }) => [styles.bookmark, { backgroundColor: colors.surface, opacity: pressed ? 0.8 : 1 }]}
+        style={({ pressed }) => [styles.bookmark, { backgroundColor: colors.surface, opacity: pressed ? pressedDim : 1 }]}
       >
         <Icon name={bookmarked ? 'bookmark-fill' : 'bookmark'} size={18} color={bookmarked ? colors.gold : colors.textSecondary} />
       </Pressable>
@@ -673,9 +660,7 @@ const styles = StyleSheet.create({
   section: { gap: spacing.sm },
   heading: { ...sectionLabel },
   searchRow: { alignItems: 'center', gap: spacing.xs },
-  search: { flex: 1, alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md },
-  searchInput: { flex: 1, minHeight: MIN_TOUCH_TARGET, fontSize: typography.sizes.md },
-  searchClear: { minWidth: 28, minHeight: 28, alignItems: 'center', justifyContent: 'center' },
+  search: { flex: 1 },
   chip: {
     flexDirection: 'row',
     alignItems: 'center',

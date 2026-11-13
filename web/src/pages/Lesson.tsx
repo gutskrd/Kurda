@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { useApiGet } from '../lib/useApi';
-import { ErrorState, Loading } from '../components/states';
+import { ErrorState } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
+import { LessonPlaceholder } from '../learn/LessonPlaceholder';
 import { LESSON_PATHS, SessionPlayer } from '../learn/SessionPlayer';
 import type { LessonSessionView } from '../learn/types';
 import { rememberCourseDialect } from '../stories/prefs';
@@ -33,11 +34,15 @@ function LessonPage({ lessonId }: { lessonId: string }): React.JSX.Element {
   // opened from Learn's own path: back there, on the same course, rather than to the course's page
   const from = (state as { from?: unknown } | null)?.from;
   const learnHome = typeof from === 'string' && /^\/app\/learn(\?|$)/.test(from) ? from : null;
-  const { data, error, loading, reload } = useApiGet<LessonSessionView>(`/lessons/${encodeURIComponent(lessonId)}/session`);
+  // a lesson in progress is never drawn from memory: where it stands is the server's to say, every time it is opened
+  const { data, error, loading, reload } = useApiGet<LessonSessionView>(`/lessons/${encodeURIComponent(lessonId)}/session`, { fresh: true });
   // the course you are on is the variety Stories opens on (stories/prefs.ts)
   useEffect(() => rememberCourseDialect(data?.dialect), [data?.dialect]);
 
-  if (loading && !data) return <Loading label={t('lesson.loading')} />;
+  const exitTo = learnHome ?? (course ? `/app/learn/course/${encodeURIComponent(course)}` : '/app/learn');
+
+  // the lesson's own frame while its session is asked for, with the way out the lesson will have
+  if (loading && !data) return <LessonPlaceholder label={t('lesson.loading')} exitTo={exitTo} />;
   if (error || !data) {
     return (
       <div className="container">
@@ -58,7 +63,7 @@ function LessonPage({ lessonId }: { lessonId: string }): React.JSX.Element {
       // the results offer the course's next lesson, read from its map once this one is done
       courseId={course}
       lessonId={lessonId}
-      exitTo={learnHome ?? (course ? `/app/learn/course/${encodeURIComponent(course)}` : '/app/learn')}
+      exitTo={exitTo}
       exitLabel={course && !learnHome ? t('lesson.backToCourse') : t('lesson.backToLearn')}
       onPractise={(exerciseIds) => navigate('/app/learn/review', { state: { exerciseIds } })}
       onRestart={reload}

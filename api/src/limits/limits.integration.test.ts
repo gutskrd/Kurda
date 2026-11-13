@@ -48,7 +48,7 @@ import { FakeStorage } from '../test/fake-storage.js';
 const DATABASE_URL = process.env.DATABASE_URL;
 const REDIS_URL = process.env.REDIS_URL;
 
-/** Words for a Peyvok Battle and a Rhyme Match to be made from. */
+/** Words for a Pêşbaziya Peyvan and a Pêşbaziya Serwayan to be made from. */
 const WORDS = ['malan', 'kurdi', 'rojan', 'zarok', 'aveji', 'bajar', 'welat', 'zanik'];
 
 interface User {

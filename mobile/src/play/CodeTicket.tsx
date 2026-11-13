@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Animated, Easing, Pressable, Share, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import * as Clipboard from 'expo-clipboard';
-import { formatJoinCode, type PlayGame } from '@kurda/shared';
+import { buildJoinLink, formatJoinCode, type PlayGame } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useMotionAlive } from '../a11y/useMotionAlive';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -15,6 +16,7 @@ import { Icon } from '../theme/Icon';
 import { HeartBurst } from '../theme/MotionParts';
 import { LIP, SHINE } from '../theme/Tile';
 import type { TileTone } from '../theme/tileTones';
+import { pressedDim } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useAnnouncer } from '../stories/ui';
@@ -67,6 +69,7 @@ export function CodeTicket({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, rtl } = useI18n();
+  const { user } = useAuth();
   const dir = useDirection();
   const { announce, region } = useAnnouncer();
   const [copied, setCopied] = useState(false);
@@ -87,7 +90,9 @@ export function CodeTicket({
   };
 
   const share = (): void => {
-    const message = shareMessage({ game: t(GAME_NAME_KEY[game]), code, storyTitle }, t, rtl, formatJoinCode);
+    // the code as a link too, saying who is asking, so a friend who is not one yet can ask to be
+    const link = buildJoinLink(game, code, { from: user?.id });
+    const message = shareMessage({ game: t(GAME_NAME_KEY[game]), code, storyTitle, link }, t, rtl, formatJoinCode);
     // the sheet's own dismissal is not a failure, and has nothing to report
     void Share.share({ message }).catch(() => undefined);
   };
@@ -288,7 +293,8 @@ function CopyButton({ copied, fired, onPress }: { copied: boolean; fired: number
       onPressOut={press.onPressOut}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.action, { opacity: pressed ? 0.92 : 1 }]}
+      // it gives under the finger (the scale below); where nothing may move, it fades instead
+      style={({ pressed }) => [styles.action, { opacity: pressed && press.scale === 1 ? pressedDim : 1 }]}
     >
       <Animated.View style={[styles.copy, { backgroundColor: copied ? colors.successFill : colors.controlTrack, transform: [{ scale: press.scale }] }]}>
         <HeartBurst fired={fired} color={colors.success} size={20}>
@@ -345,7 +351,7 @@ const styles = StyleSheet.create({
   top: { alignItems: 'center', gap: spacing.md, paddingBottom: spacing.md },
   heading: { alignItems: 'center', gap: spacing.xs + 2 },
   tilesPress: { alignSelf: 'stretch', alignItems: 'center', borderRadius: radii.md },
-  pressed: { opacity: 0.85 },
+  pressed: { opacity: pressedDim },
   tiles: { direction: 'ltr', flexDirection: 'row' },
   tile: { position: 'absolute', top: 0 },
   lip: { position: 'absolute', top: LIP, left: 0, right: 0, bottom: 0, borderRadius: radii.md },

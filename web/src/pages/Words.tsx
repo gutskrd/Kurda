@@ -107,7 +107,7 @@ function Card({ id, to, dialect, title, name: names, body, seen, total }: CardPr
         </span>
         <span className={`wd-set-progress${all ? ' is-done' : ''}`} aria-hidden="true">
           <span className="ab-progress-track">
-            <span style={{ width: `${total > 0 ? Math.round((Math.min(seen, total) / total) * 100) : 0}%` }} />
+            <span style={{ '--p': total > 0 ? Math.min(seen, total) / total : 0 } as React.CSSProperties} />
           </span>
           {progress}
         </span>

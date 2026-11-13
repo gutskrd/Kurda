@@ -8,7 +8,7 @@ import { forgetImpostorCategories } from './categories';
 import { Impostor } from './Impostor';
 
 /**
- * Kurdish Impostor on the website, phase by phase: the start where it is
+ * Xapînok on the website, phase by phase: the start where it is
  * offered and where it is not, the lobby, a clue turn (yours, with the slips
  * the box sees, and someone else's in the light), the impostor's own card, the
  * vote, the caught impostor's guess, and the reveal.
@@ -141,11 +141,11 @@ const categories = {
   },
 };
 
-describe('Kurdish Impostor, the start', () => {
+describe('Xapînok, the start', () => {
   it('says plainly where it is not offered, with no promise', async () => {
     serve(offered(false));
     renderPlay(<Impostor />, { route: '/app/games/impostor' });
-    expect(await screen.findByText('Kurdish Impostor isn’t offered in this Kurdish yet.')).toBeInTheDocument();
+    expect(await screen.findByText('Xapînok isn’t offered in this Kurdish yet.')).toBeInTheDocument();
     expect(screen.queryByText(/soon/i)).toBeNull();
   });
 
@@ -182,7 +182,7 @@ describe('Kurdish Impostor, the start', () => {
   });
 });
 
-describe('Kurdish Impostor, the room', () => {
+describe('Xapînok, the room', () => {
   it('shows the lobby with its settings, and Start waiting for a third player', async () => {
     serve({ '/mp/impostor/g1': room({ players: [seat(1, { userId: 'me', isMe: true, isHost: true }), seat(2, { name: 'Rojda' })] }) });
     renderPlay(<Impostor />, { route: '/app/games/impostor?id=g1' });

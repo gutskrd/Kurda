@@ -1,5 +1,5 @@
 /**
- * Kurdish Detective without a database: a round is one published case of the
+ * Detektîf without a database: a round is one published case of the
  * difficulty's levels, its deduction steps then the accusation; the board
  * holds no answer and no card's meaning until it is found or a hint buys it;
  * hints are counted on the round and cost XP at the finish; the accusation's
@@ -8,7 +8,7 @@
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { DETECTIVE_HINTS, DETECTIVE_HINT_XP, checkGameContent, type CaseFileContent, type SoloItemState } from '@kurda/shared';
+import { DETECTIVE_HINTS, checkGameContent, type CaseFileContent, type SoloItemState } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { DetectiveGame, carriedHints, type CaseItem } from './detective.js';
 import { resolveStarterCase, type StarterCase, type StoredConversation } from './starters.js';
@@ -103,7 +103,7 @@ describe('hints', () => {
     board = game.board(round!.items, meta, states(3))!;
     expect(board.hints).toEqual([en('Who has a moustache?')]);
     expect(board.moreHints).toBe(false);
-    expect(game.deduction(meta)).toBe(2 * DETECTIVE_HINT_XP);
+    expect(board.hintsLeft).toBe(DETECTIVE_HINTS - 2);
 
     expect(() => game.spendHint(at(meta), {})).toThrow(AppError);
     expect(() => game.spendHint(at(meta), { evidence: 'away' })).toThrow(/already found/);
@@ -111,7 +111,8 @@ describe('hints', () => {
     expect(() => game.spendHint(at(meta), { evidence: 'nowhere' })).toThrow(/no such card/);
     meta = game.spendHint(at(meta), { evidence: 'apples' });
     expect(() => game.spendHint(at(meta), { evidence: 'advice' })).toThrow(/every hint/);
-    expect(game.deduction(meta)).toBe(DETECTIVE_HINTS * DETECTIVE_HINT_XP);
+    // the last hint is spent: that they run out is all a hint costs, since a case pays no XP to take one from
+    expect(game.board(round!.items, meta, states(3))!.hintsLeft).toBe(0);
   });
 });
 
@@ -183,15 +184,14 @@ describe('hints spent on a round given up', () => {
       query: async (sql: string) => (sql.includes("meta->'spent'") ? { rows: [{ spent, paid }] } : { rows: [] }),
     }) as never;
 
-  it('carry into the next round of the case: its cards translated, its hints read, their cost taken', async () => {
+  it('carry into the next round of the case: its cards translated, its hints read, and no more to spend than were left', async () => {
     const round = (await game.build(ask(), lastRound({ used: 2, read: 1, translated: ['away', 'gone-from-the-case'] }, false)))!;
     const board = game.board(round.items, round.meta, states(3))!;
     expect(board).toMatchObject({ hintsUsed: 2, hintsLeft: DETECTIVE_HINTS - 2, hints: [en('Who has a moustache?')] });
     expect(board.evidence.find((e) => e.id === 'away')!.meanings).toEqual(en('Baran is not at home today.'));
-    expect(game.deduction(round.meta)).toBe(2 * DETECTIVE_HINT_XP);
   });
 
-  it('do not carry from a round that was finished and counted, which paid for them', async () => {
+  it('do not carry from a round that was finished and counted: the case was solved', async () => {
     const round = (await game.build(ask(), lastRound({ used: 2, read: 1, translated: ['away'] }, true)))!;
     expect(game.board(round.items, round.meta, states(3))!.hintsUsed).toBe(0);
   });

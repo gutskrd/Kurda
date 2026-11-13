@@ -20,6 +20,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GlassCard } from '../theme/glass';
 import type { StoryDialect } from '@kurda/shared';
 import { storyTextProps, storyTextStyle } from './storyText';
+import { pressedDim } from '../theme/motion';
 
 /**
  * Small pieces the Stories and play screens share: a bottom sheet, a section
@@ -165,7 +166,7 @@ export function ChoiceChips<T extends string>({
             accessibilityLabel={labelOf(opt)}
             style={({ pressed }) => [
               styles.chip,
-              { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? 0.8 : 1 },
+              { backgroundColor: on ? colors.primary : colors.controlTrack, opacity: pressed ? pressedDim : 1 },
             ]}
           >
             <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]} numberOfLines={1}>

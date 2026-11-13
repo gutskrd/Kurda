@@ -54,6 +54,16 @@ export function ChangePasswordScreen({
   const nextRef = useRef<TextInput>(null);
   const confirmRef = useRef<TextInput>(null);
 
+  /**
+   * Typing in a field takes away the line that refused what was in it: the
+   * answer it was about is no longer the answer. It used to stay, red, under a
+   * password being put right, until the button was pressed again.
+   */
+  const edit = (field: keyof Errors, set: (value: string) => void) => (value: string) => {
+    set(value);
+    setErrors((e) => (e[field] ? { ...e, [field]: null } : e));
+  };
+
   const submit = async () => {
     if (busy) return;
     const rule = validatePassword(next);
@@ -127,7 +137,7 @@ export function ChangePasswordScreen({
                 <Field
                   label={t('auth.currentPassword')}
                   value={current}
-                  onChangeText={setCurrent}
+                  onChangeText={edit('current', setCurrent)}
                   error={errors.current}
                   secure
                   complete="current-password"
@@ -138,7 +148,7 @@ export function ChangePasswordScreen({
                 <Field
                   label={t('auth.newPassword')}
                   value={next}
-                  onChangeText={setNext}
+                  onChangeText={edit('next', setNext)}
                   error={errors.next}
                   secure
                   complete="new-password"
@@ -153,7 +163,7 @@ export function ChangePasswordScreen({
                 <Field
                   label={t('auth.reset.confirmNew')}
                   value={confirm}
-                  onChangeText={setConfirm}
+                  onChangeText={edit('confirm', setConfirm)}
                   error={errors.confirm}
                   secure
                   complete="new-password"

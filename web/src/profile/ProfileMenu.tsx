@@ -1,29 +1,24 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import {
-  BookmarkIcon,
-  FlagIcon,
-  GearIcon,
-  MedalIcon,
-  MoreIcon,
-  ShareIcon,
-  ShieldIcon,
-  ShopIcon,
-  TrophyIcon,
-  UsersIcon,
-} from '../components/icons';
-import { useT } from '../i18n/I18nProvider';
+import { localeDir } from '@kurda/shared';
+import { BookmarkIcon, GearIcon, MedalIcon, MoreIcon, ShareIcon, ShopIcon, TrophyIcon, UsersIcon } from '../components/icons';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
 import { keepInView } from '../reports/keepInView';
 
 /**
  * Everything that is yours but is not your profile, behind one button at the
  * top of it: the shop, what you saved, your friends, your badges and ranks,
- * settings, and the record of your reports and your account's standing.
+ * and settings.
  *
  * These used to be spread across the top bar — a shop icon, a gear, a face
  * that opened a popup — which on a phone either crowded the bar or hid in a
  * menu of their own. They are all about you, so they live with you.
+ *
+ * Six, and no more. The record of your reports and your account's standing
+ * were here as a seventh and an eighth; both are pages of Settings, two rows
+ * down its Safety section, and a menu that repeats what the page behind its
+ * last item holds only gets longer to read.
  *
  * A list of links behind a disclosure button rather than an ARIA menu: every
  * entry goes to a page, so each is an ordinary link, read and tabbed through
@@ -31,6 +26,7 @@ import { keepInView } from '../reports/keepInView';
  */
 export function ProfileMenu(): React.JSX.Element {
   const t = useT();
+  const locale = useLocale();
   const { data } = useRail();
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
@@ -69,10 +65,11 @@ export function ProfileMenu(): React.JSX.Element {
     { to: '/app/badges', label: t('badges.title'), icon: <MedalIcon size={20} /> },
     { to: '/app/rankings', label: t('nav.rankings'), icon: <TrophyIcon size={20} /> },
     { to: '/app/settings', label: t('nav.settings'), icon: <GearIcon size={20} /> },
-    { to: '/app/settings/reports', label: t('reports.mine.title'), icon: <FlagIcon size={20} /> },
-    { to: '/app/settings/standing', label: t('standing.title'), icon: <ShieldIcon size={20} weight="regular" /> },
   ];
   const waiting = gifts > 0 || requests > 0;
+  // the button is named for what it holds, in the items' own words, so the name cannot fall behind the list:
+  // "Menu" said nothing, and on a phone it was the name of the bar's menu button as well
+  const holds = items.map((item) => item.label).join(localeDir(locale) === 'rtl' ? '، ' : ', ');
 
   return (
     <div className="profile-menu" ref={wrap}>
@@ -81,8 +78,8 @@ export function ProfileMenu(): React.JSX.Element {
         type="button"
         className="icon-btn icon-btn-lg profile-menu-btn"
         aria-expanded={open}
-        aria-label={waiting ? t('nav.tabWaiting', { place: t('nav.menu') }) : t('nav.menu')}
-        title={t('nav.menu')}
+        aria-label={waiting ? t('nav.tabWaiting', { place: holds }) : holds}
+        title={holds}
         onClick={() => setOpen((v) => !v)}
       >
         {/* three dots, not three lines: on a phone the bar's menu above is the three lines */}

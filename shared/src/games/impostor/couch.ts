@@ -1,5 +1,5 @@
 /**
- * Kurdish Impostor on one phone, passed round a room.
+ * Impostor on one phone, passed round a room.
  *
  * The table's own game (rules.ts) is played apart, each on their own screen,
  * with typed clues the server judges. This one is for people sitting together:

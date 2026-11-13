@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { CloseButton } from '../components/CloseButton';
 import { useRealtimeEvent, useRealtimeRooms } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import type { Conversation, DmMessage, GroupMessage, MyGroup } from '../lib/types';
@@ -241,14 +242,7 @@ function MessageToasts(): React.JSX.Element | null {
             <span className="msg-toast-title">{toast.title}</span>
             <span className="msg-toast-body">{toast.body}</span>
           </button>
-          <button
-            type="button"
-            className="msg-toast-close"
-            aria-label={t('chat.dismissFrom', { name: toast.title })}
-            onClick={() => dismissToast(toast.id)}
-          >
-            ×
-          </button>
+          <CloseButton className="msg-toast-close" label={t('chat.dismissFrom', { name: toast.title })} onClick={() => dismissToast(toast.id)} />
         </div>
       ))}
     </div>

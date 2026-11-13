@@ -337,7 +337,7 @@
   margin: 0;
   padding: 14px 18px;
   border: 2px solid var(--border-strong);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--panel-bg);
   color: var(--ink);
   font-size: var(--text-body);

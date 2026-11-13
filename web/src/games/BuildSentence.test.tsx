@@ -89,11 +89,11 @@ const done = (index: number, correct: boolean, firstTry: boolean, attempt: numbe
   repeat: false,
 });
 
-describe('Build a Kurdish Sentence', () => {
+describe('Build a Sentence', () => {
   it('opens on the ladder, with the learner’s rung and only the difficulties that can be played', async () => {
     server(session('kmr', [['a', 'b']]), () => ({}), {});
     renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
-    expect(await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Build a Sentence' })).toBeInTheDocument();
     const rungs = within((await screen.findByText('The ladder')).closest('section')!).getAllByRole('listitem');
     expect(rungs).toHaveLength(6);
     const here = rungs.find((r) => r.getAttribute('aria-current') === 'step')!;
@@ -107,7 +107,7 @@ describe('Build a Kurdish Sentence', () => {
   it('keeps the lessons’ plain page: an exercise is not put on the games’ stage', async () => {
     server(session('kmr', [['a', 'b']]), () => ({}), {});
     const { container } = renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
-    expect(await screen.findByRole('heading', { name: 'Build a Kurdish Sentence' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Build a Sentence' })).toBeInTheDocument();
     expect(container.querySelector('.gs')).toBeNull();
     expect(container.querySelector('.gs-hero')).toBeNull();
     expect(container.querySelector('.gp-art')).toBeNull();
@@ -171,6 +171,28 @@ describe('Build a Kurdish Sentence', () => {
     expect(await screen.findByText('0 of 1 right')).toBeInTheDocument();
     expect(screen.getByText('Get at least 1 right on the first try to earn XP and count today. This time: 0.')).toBeInTheDocument();
     expect(screen.queryByText(/^\+\d+ XP$/)).toBeNull();
+  });
+
+  it('pays as a lesson does: what a round earned is on its results, and nothing calls it a game played alone', async () => {
+    server(session('kmr', [['a', 'b']]), () => done(0, true, true, 1), {
+      correct: 1,
+      total: 1,
+      firstTry: 1,
+      xp: 2,
+      learningCounted: true,
+      needed: 1,
+      items: [{ index: 0, correct: true, firstTry: true, xp: 2, repeat: true }],
+      streak: 4,
+    });
+    renderApp(<BuildSentence />, ['/app/learn/practice/build-sentence']);
+    await userEvent.click(await screen.findByRole('button', { name: 'Start' }));
+    await userEvent.click(within(await screen.findByRole('group', { name: 'Words to use' })).getByRole('button', { name: 'a' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Check' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'See how it went' }));
+    expect(await screen.findByText('+2 XP')).toBeInTheDocument();
+    expect(screen.getByText('Today counts for your streak.')).toBeInTheDocument();
+    expect(screen.getByText('Answered right lately, so no XP this time')).toBeInTheDocument();
+    expect(screen.queryByText(/Played alone, a game earns no XP/)).toBeNull();
   });
 
   /*

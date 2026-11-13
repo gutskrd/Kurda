@@ -12,7 +12,7 @@
 .pc {
   position: relative;
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: var(--surface);
   box-shadow: var(--glass-rim);
   overflow: hidden;
@@ -95,6 +95,7 @@
   min-width: 0;
 }
 .pc-name {
+  margin: 0;
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 600;
@@ -145,7 +146,6 @@
   height: 100%;
   border-radius: inherit;
   background: var(--gold);
-  transition: width 0.4s ease;
 }
 .pcard-level-next {
   font-size: 0.78rem;
@@ -239,6 +239,10 @@
 .pc--wide .pc-banner {
   height: clamp(140px, 24vw, 230px);
 }
+/* nobody's picture to show: enough of a banner for the face to stand over, and no more empty wall than that */
+.pc--wide:not(.pc--has-bg) .pc-banner {
+  height: clamp(76px, 13vw, 116px);
+}
 .pc--wide .pc-body {
   padding: 0 clamp(18px, 3vw, 32px) 24px;
 }
@@ -249,9 +253,18 @@
    * until it no longer overlapped anything.
    */
   .pc--wide .pc-id {
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     align-items: start;
     column-gap: 22px;
+  }
+  /*
+   * What can be done sits under the name, not beside it. Beside it, three
+   * buttons took the name's room and a long name broke in the middle of a
+   * word; under it, the name has the whole line and the order is the phone's:
+   * who, in their own words, then what you can do.
+   */
+  .pc--wide .pc-aside {
+    grid-column: 2;
   }
   .pc--wide .pc-face {
     width: 120px;
@@ -266,7 +279,7 @@
     font-size: 1.85rem;
   }
   .pc--wide .pc-aside {
-    margin-top: 16px;
+    margin-top: 14px;
   }
   .pc--wide .pcard-level {
     max-width: 440px;
@@ -314,7 +327,7 @@
   display: grid;
   gap: 2px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
@@ -462,7 +475,7 @@ a.rank-name:hover {
   min-width: 0;
   padding: 9px 10px;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--surface);
 }
 .player.is-done {
@@ -517,7 +530,6 @@ a.rank-name:hover {
   display: block;
   height: 100%;
   background: var(--ink-2);
-  transition: width 0.3s ease;
 }
 
 /* ---- a game invite --------------------------------------------------------- */
@@ -531,7 +543,7 @@ a.rank-name:hover {
   width: min(100%, 300px);
   color: var(--ink);
   text-decoration: none;
-  transition: transform 0.12s ease;
+  transition: transform var(--dur-fast) var(--ease-out);
 }
 a.invite-card:active {
   transform: translateY(1px);
@@ -579,7 +591,7 @@ a.invite-card:hover {
   align-items: center;
   height: 32px;
   padding: 0 14px;
-  border-radius: 9px;
+  border-radius: var(--r-sm);
   background: var(--primary);
   color: var(--primary-ink);
   font-size: 0.8rem;
@@ -634,9 +646,9 @@ a.invite-card:hover {
   background: var(--surface);
   overflow: hidden;
   transition:
-    border-color 0.2s ease,
-    background 0.2s ease,
-    transform 0.2s ease;
+    border-color var(--dur) var(--ease-out),
+    background var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
 }
 /* only a tile that is itself the link lifts; in the app the button is the way in */
 .game-tile:has(.game-stretch):hover {
@@ -753,7 +765,7 @@ a.invite-card:hover {
 /* ---- pieces of the pictures, shared with the screens ----------------------- */
 .lp-card {
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
@@ -789,7 +801,7 @@ a.invite-card:hover {
   justify-self: start;
   height: 32px;
   padding: 0 14px;
-  border-radius: 9px;
+  border-radius: var(--r-sm);
   background: var(--primary);
   color: var(--primary-ink);
   font-size: 0.8rem;
@@ -1058,7 +1070,7 @@ a.invite-card:hover {
   margin-bottom: 20px;
   padding: 14px 16px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }
@@ -1114,7 +1126,7 @@ a.invite-card:hover {
   gap: 10px;
   padding: 22px;
   border: 1px solid var(--border);
-  border-radius: 22px;
+  border-radius: var(--r-xl);
   background: var(--surface);
   box-shadow: var(--glass-rim);
 }

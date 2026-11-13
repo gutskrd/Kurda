@@ -22,6 +22,7 @@
  * server would refuse a save for are shown before it is tried.
  */
 import {
+  GAME_NAMES,
   GAME_CONTENT_KINDS,
   type AdminGameContent,
   type GameContentKind,
@@ -50,14 +51,20 @@ export const DEFAULT_GAME_FILTER: GameContentFilter = { game: 'all', kind: 'all'
 
 export const GAME_PAGE_SIZE = 50;
 
+/**
+ * What the panel calls each game: its own name, which is Kurmancî in every
+ * language the apps speak, so that what a reviewer reads here is what a
+ * player reads there. The lessons' two exercises are not games and keep
+ * plain names.
+ */
 export const GAME_NAME: Record<LearnGameId, string> = {
-  'build-sentence': 'Build a Kurdish Sentence',
-  'memory-thief': 'The Memory Thief',
+  'build-sentence': 'Build a Sentence',
+  'memory-thief': GAME_NAMES['memory-thief'],
   'hear-it': 'Hear It, Find It',
-  detective: 'Kurdish Detective',
-  'last-letter': 'The Last Letter',
-  impostor: 'Kurdish Impostor',
-  'who-am-i': 'Who Am I?',
+  detective: GAME_NAMES.detective,
+  'last-letter': GAME_NAMES['last-letter'],
+  impostor: GAME_NAMES.impostor,
+  'who-am-i': GAME_NAMES['who-am-i'],
 };
 
 export const KIND_NAME: Record<GameContentKind, string> = {

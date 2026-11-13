@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Animated, Pressable, View, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo, timing, useEnter, usePop, usePressScale, useShake } from './animate';
-import { ENTRANCE, duration } from './motion';
+import { ENTRANCE, duration, pressedDim } from './motion';
 import { Icon } from './Icon';
 import { radii, spacing } from './tokens';
 
@@ -65,7 +65,7 @@ export function PressableScale({
         if (reduce) setHeld(false);
         onPressOut?.(e);
       }}
-      style={[style, { transform: [{ scale: press.scale }] }, held && { opacity: 0.8 }]}
+      style={[style, { transform: [{ scale: press.scale }] }, held && { opacity: pressedDim }]}
     >
       {children}
     </AnimatedPressable>
@@ -81,6 +81,13 @@ export function PressableScale({
 export function heldRow(color: string): ViewStyle {
   return { backgroundColor: color, marginHorizontal: -spacing.sm, paddingHorizontal: spacing.sm, borderRadius: radii.sm };
 }
+
+/**
+ * A text link or an icon button held down: it fades to the one dim they all
+ * share (`pressedDim`). For a Pressable's style:
+ * `({ pressed }) => [styles.link, pressed && heldDim]`.
+ */
+export const heldDim: ViewStyle = { opacity: pressedDim };
 
 /**
  * A check mark that draws in, left to right, as an answer is accepted — a
@@ -115,7 +122,8 @@ export function DrawnCheck({ size, color, delayMs = 60 }: { size: number; color:
 
 /**
  * A menu, a small dialog or a banner's arrival: it grows from just under full
- * size and fades in. A fade alone under Reduce Motion.
+ * size and fades in, on the interface's own spring (there within 300 ms). A
+ * fade alone under Reduce Motion.
  *
  * It is the view it stands in for, so it takes what that view was told about
  * itself (a role, a live region) along with its style.
@@ -128,7 +136,7 @@ export function MenuIn({
   const reduce = useReducedMotion();
   const p = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    const run = reduce ? timing(p, 1, duration.base) : springTo(p, 1, 'standard');
+    const run = reduce ? timing(p, 1, duration.base) : springTo(p, 1, 'chrome');
     run.start();
     return () => run.stop();
   }, [reduce, p]);

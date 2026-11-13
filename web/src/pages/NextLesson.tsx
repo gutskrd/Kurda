@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Loading } from '../components/states';
 import { useT } from '../i18n/I18nProvider';
+import { LessonPlaceholder } from '../learn/LessonPlaceholder';
 import { courseProgress } from '../learn/map';
 import { useCourses } from '../learn/useCourses';
 
@@ -11,7 +11,8 @@ import { useCourses } from '../learn/useCourses';
  * of the first course. Where a new account lands after confirming its email:
  * the community wall can wait, and the reason most people came cannot.
  * Anything that stops it finding one goes to Learn instead, which shows every
- * course.
+ * course. While it looks it shows the lesson's own frame, in the lesson's own
+ * shell (App.tsx), so the lesson opens into a picture that is already there.
  */
 export function NextLesson(): React.JSX.Element {
   const t = useT();
@@ -37,5 +38,6 @@ export function NextLesson(): React.JSX.Element {
     navigate('/app/learn', { replace: true });
   }, [entries, error, navigate]);
 
-  return <Loading label={t('lesson.loading')} />;
+  // the lesson's frame from the first moment: this page only ever leads to one
+  return <LessonPlaceholder label={t('lesson.loading')} />;
 }

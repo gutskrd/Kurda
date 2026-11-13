@@ -12,17 +12,17 @@ describe('messagePreview', () => {
     // the whole point: a conversation row used to read
     // "https://hevalo.app/app/games/peyvok-battle?id=8f3c…"
     const out = messagePreview(wordle, t);
-    expect(out).toBe('Peyvok Battle invite');
+    expect(out).toBe('Pêşbaziya Peyvan invite');
     expect(out).not.toContain('http');
     expect(out).not.toContain('id=');
   });
 
   it('names the right game', () => {
-    expect(messagePreview(rhyme, t)).toBe('Rhyme Match invite');
+    expect(messagePreview(rhyme, t)).toBe('Pêşbaziya Serwayan invite');
   });
 
   it('keeps what the sender wrote around the link', () => {
-    expect(messagePreview(`join me! ${wordle} now`, t)).toBe('join me! now · Peyvok Battle invite');
+    expect(messagePreview(`join me! ${wordle} now`, t)).toBe('join me! now · Pêşbaziya Peyvan invite');
   });
 
   it('leaves an ordinary message alone', () => {
@@ -39,7 +39,7 @@ describe('messagePreview', () => {
   });
 
   it('handles a relative invite link, as an in-app share produces', () => {
-    expect(messagePreview('/app/games/rhyme-match?id=2ab41c9d-4b2e-4c77', t)).toBe('Rhyme Match invite');
+    expect(messagePreview('/app/games/rhyme-match?id=2ab41c9d-4b2e-4c77', t)).toBe('Pêşbaziya Serwayan invite');
   });
 
   /**
@@ -49,14 +49,14 @@ describe('messagePreview', () => {
    * reader's conversation row would be the only English thing on the screen.
    */
   it('names the game in the reader’s language', () => {
-    expect(messagePreview(wordle, translator(de))).toBe('Einladung zu Wort-Duell');
+    expect(messagePreview(wordle, translator(de))).toBe('Einladung zu Pêşbaziya Peyvan');
     expect(messagePreview(rhyme, translator(ku))).toBe('Vexwendina Pêşbaziya Serwayan');
   });
 
   it('strips every link when several are pasted', () => {
     // a global pattern is rebuilt per call; a shared one would skip matches
     // because lastIndex carries over between uses
-    expect(messagePreview(`${wordle} and ${rhyme}`, t)).toBe('and · Peyvok Battle invite');
+    expect(messagePreview(`${wordle} and ${rhyme}`, t)).toBe('and · Pêşbaziya Peyvan invite');
   });
 });
 
@@ -66,7 +66,7 @@ describe('messagePreview — a message that is a card', () => {
   });
 
   it('says a game invite when a conversation row knows only the kind', () => {
-    expect(messagePreview({ body: '', kind: 'game' }, t)).toBe('🎮 Game invite');
+    expect(messagePreview({ body: '', kind: 'game' }, t)).toBe('Game invite');
   });
 
   it('reads a text message the same whether given the message or its text', () => {
@@ -96,15 +96,16 @@ describe('truncate', () => {
 describe('messagePreview for every kind of message', () => {
   it('names a gift — by its item only once the reader has unwrapped it, so a banner never spoils it', () => {
     const gift = { batchId: 'b', sku: 's', name: 'Newroz fire', category: 'background', assetUrl: null, tier: 'legendary' as const, recipients: [], myGiftId: 'g1', myOpened: false, equippable: null };
-    expect(messagePreview({ body: null, kind: 'gift' }, t)).toBe('🎁 Gift');
-    expect(messagePreview({ body: null, kind: 'gift', gift }, t)).toBe('🎁 Gift');
-    expect(messagePreview({ body: null, kind: 'gift', gift: { ...gift, myOpened: true } }, t)).toBe('🎁 Newroz fire');
-    expect(messagePreview({ body: '🎁 Gift', kind: 'gift' }, translator(ku))).toBe('🎁 Diyarî');
+    // in words alone: the row draws the gift's icon beside them (chat/PreviewIcon.tsx)
+    expect(messagePreview({ body: null, kind: 'gift' }, t)).toBe('Gift');
+    expect(messagePreview({ body: null, kind: 'gift', gift }, t)).toBe('Gift');
+    expect(messagePreview({ body: null, kind: 'gift', gift: { ...gift, myOpened: true } }, t)).toBe('Newroz fire');
+    expect(messagePreview({ body: '🎁 Gift', kind: 'gift' }, translator(ku))).toBe('Diyarî');
   });
 
   it('names a game card by its game, or as an invite when it does not say', () => {
-    expect(messagePreview({ body: null, kind: 'game', game: { game: 'rhyme-match', lobbyId: 'l1' } }, t)).toBe('Rhyme Match invite');
-    expect(messagePreview({ body: null, kind: 'game' }, t)).toBe('🎮 Game invite');
+    expect(messagePreview({ body: null, kind: 'game', game: { game: 'rhyme-match', lobbyId: 'l1' } }, t)).toBe('Pêşbaziya Serwayan invite');
+    expect(messagePreview({ body: null, kind: 'game' }, t)).toBe('Game invite');
   });
 
   it('treats a message with no kind as text, as before', () => {

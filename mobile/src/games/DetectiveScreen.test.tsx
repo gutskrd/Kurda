@@ -88,7 +88,8 @@ const stepDone = {
     walk: null,
   },
   why: 'step',
-  xp: 2,
+  // a case solved alone is scored, and earns no XP: the server sends 0 for every answer and for the round
+  xp: 0,
   repeat: false,
 };
 
@@ -101,7 +102,7 @@ const accused = {
   hint: null,
   correction: { kind: 'accuse', correctIndex: 0, entry: null, evidence: [], culprit: 'hamo', solution: en('Hamo ate the honey.'), walk: [stepDone.correction.entry] },
   why: 'accuse',
-  xp: 3,
+  xp: 0,
   repeat: false,
 };
 
@@ -118,6 +119,11 @@ function routes(answers: unknown[], hints: unknown[] = [], finish: unknown = {})
   });
 }
 
+/** The start is ready once the difficulties have arrived: Start can be pressed. */
+async function ready(): Promise<void> {
+  await waitFor(() => expect(screen.getByRole('button', { name: 'Start' }).getAttribute('aria-disabled')).not.toBe('true'), SLOW);
+}
+
 beforeEach(() => {
   localStorage.clear();
   resetCourseDialect();
@@ -127,16 +133,22 @@ beforeEach(() => {
 afterEach(cleanup);
 
 describe('DetectiveScreen', () => {
-  it('lays out the board with the evidence in its Kurdish only, and buys a card’s meaning with a hint', async () => {
+  it('lays out the board with the evidence in its Kurdish only, and has a card’s meaning for a hint that costs nothing but itself', async () => {
     const client = routes([], [{ board: board({ hintsLeft: 2, hintsUsed: 1, evidence: board().evidence.map((e) => (e.id === 'away' ? { ...e, meanings: en('Baran is not at home today.') } : e)) }) }]);
     testAuth.client = client;
     renderWithProviders(<DetectiveScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 16 XP', {}, SLOW);
+    await ready();
+    // before the case: hints are few, and nothing says one costs XP, or that the case pays any
+    expect(screen.getByText(/Hints help, but a case has only a few\.$/)).toBeTruthy();
+    expect(screen.queryByText(/XP/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     expect(await screen.findByText('The empty jar', {}, { timeout: 15000 })).toBeTruthy();
     expect(screen.getAllByText('Meaning not found yet')).toHaveLength(2);
     expect(screen.getByText('Baran îro ne li malê ye.')).toBeTruthy();
+    // how many are left is the whole price of a hint
     expect(screen.getByText('Hints left: 3')).toBeTruthy();
+    expect(screen.getByText('A case has only a few hints, so use them where they help most.')).toBeTruthy();
+    expect(screen.queryByText(/XP/)).toBeNull();
     const away = screen.getByTestId('evidence-away');
     fireEvent.click(within(away).getByRole('button', { name: 'Translate it (hint)' }));
     await waitFor(() => expect(client.calls.filter((c) => c.path.endsWith('/hints'))).toHaveLength(1));
@@ -145,11 +157,11 @@ describe('DetectiveScreen', () => {
     expect(screen.getByText('Hints left: 2')).toBeTruthy();
   }, 20000);
 
-  it('notes a deduction, then solves the case and says what the hints cost', async () => {
-    const client = routes([stepDone, accused], [], { correct: 2, total: 2, firstTry: 2, xp: 4, learningCounted: true, needed: 1, items: [], streak: 2, deducted: 1 });
+  it('notes a deduction, then solves the case: the day counts, one quiet line says where XP comes from, and none is shown', async () => {
+    const client = routes([stepDone, accused], [], { correct: 2, total: 2, firstTry: 2, xp: 0, learningCounted: true, needed: 1, items: [], streak: 2 });
     testAuth.client = client;
     renderWithProviders(<DetectiveScreen onExit={() => undefined} />);
-    await screen.findByText('Up to 16 XP', {}, SLOW);
+    await ready();
     fireEvent.click(screen.getByRole('button', { name: 'Start' }));
     const options = await screen.findByTestId('detective-options', {}, { timeout: 15000 });
     fireEvent.click(within(options).getByRole('button', { name: 'Honey at night' }));
@@ -166,13 +178,17 @@ describe('DetectiveScreen', () => {
     expect(await screen.findByText('It was Hamo.', {}, SLOW)).toBeTruthy();
     expect(screen.getByText('Hamo ate the honey.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'See how it went' }));
-    expect(await screen.findByText('+4 XP', {}, SLOW)).toBeTruthy();
-    expect(screen.getByText('The hints you used cost 1 XP.')).toBeTruthy();
+    expect(await screen.findByText('2 of 2 right', {}, SLOW)).toBeTruthy();
+    expect(screen.getByText('Today counts for your streak.')).toBeTruthy();
+    expect(screen.getByText('Played alone, a game earns no XP. Play online with friends to earn it.')).toBeTruthy();
+    // no XP earned, none taken for hints, and no figure at all
+    expect(screen.queryByText(/\d+ XP/)).toBeNull();
+    expect(screen.queryByText(/cost/)).toBeNull();
   }, 20000);
 });
 
 describe('the games list', () => {
-  it('adds Kurdish Detective once a case can be played, one tap to open', async () => {
+  it('adds Detektîf once a case can be played, one tap to open', async () => {
     testAuth.client = fakeClient({
       'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
       'GET /play/invites': ok({ incoming: [], outgoing: [] }),
@@ -180,7 +196,7 @@ describe('the games list', () => {
     });
     renderWithProviders(<GamesView />);
     const card = await screen.findByTestId('game-detective', {}, SLOW);
-    expect(card.getAttribute('aria-label')).toBe('Kurdish Detective, Solo. Solve a case from Kurdish evidence, then name who did it.');
+    expect(card.getAttribute('aria-label')).toBe('Detektîf, Solo. Solve a case from Kurdish evidence, then name who did it.');
     fireEvent.click(card);
     expect(navigation.navigate).toHaveBeenCalledWith('Detective');
   });

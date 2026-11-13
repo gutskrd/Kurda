@@ -1,0 +1,82 @@
+/*
+ * The page a game's invite link opens (play/InvitePage.tsx): the game's
+ * picture and name on the night every game opens on (games/game-stage.css),
+ * the code as tiles, and the one thing to press under it. A page for one
+ * look and one tap, so it is narrow, centred and short on a phone.
+ */
+.invite-page {
+  display: grid;
+  gap: var(--space-5);
+  max-width: 520px;
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-8);
+}
+.invite-hero {
+  gap: var(--space-3);
+  padding-top: var(--space-8);
+}
+.invite-ticket {
+  width: 132px;
+  height: auto;
+}
+/* the code, as the lobby's own ticket shows it: a tile a character, a gap in the middle */
+.invite-code {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin: var(--space-2) 0 0;
+}
+.invite-code-tile {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 46px;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--gs-night-ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 3px 0 rgba(0, 0, 0, 0.28);
+}
+.invite-code-gap {
+  width: 10px;
+}
+.invite-actions {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+}
+.invite-login {
+  justify-self: stretch;
+  width: min(100%, 440px);
+  height: 48px;
+  margin-inline: auto;
+}
+.invite-note {
+  max-width: 44ch;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+  text-align: center;
+  text-wrap: balance;
+}
+.invite-note.is-refused {
+  color: var(--danger);
+}
+.invite-friend {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.invite-fallback {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  text-align: center;
+}

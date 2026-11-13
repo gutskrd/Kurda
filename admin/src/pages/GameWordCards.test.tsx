@@ -7,7 +7,7 @@ import { withKit } from '../test/render';
 import { GameContent } from './GameContent';
 
 /**
- * Who Am I? identities made by picking approved words, and the editors for
+ * Ez kî me? identities made by picking approved words, and the editors for
  * them and for question templates: the Kurdish is copied by
  * the server and read only here, an identity needs its category and four
  * facts, and a question is new Kurdish that waits for a native speaker.

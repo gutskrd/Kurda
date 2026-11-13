@@ -117,7 +117,7 @@ describe('event quests', () => {
       await act(async () => {
         fireEvent.click(claim);
       });
-      expect(await screen.findByText('✓ Claimed')).toBeTruthy();
+      expect(await screen.findByText('Claimed')).toBeTruthy();
       expect(felt).toContain('celebrate');
       expect(heard).toHaveLength(1);
     } finally {

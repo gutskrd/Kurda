@@ -64,7 +64,8 @@ function MyNotices(): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
   const { user } = useAuth();
-  const { data, error, loading, reload } = useApiGet<MyCopyrightNoticesPage>('/me/copyright/notices');
+  // notices against the account are asked every time, as its standing is
+  const { data, error, loading, reload } = useApiGet<MyCopyrightNoticesPage>('/me/copyright/notices', { fresh: true });
   const [open, setOpen] = useState<string | null>(null);
   const [adultRefused, setAdultRefused] = useState(false);
   const guardianOnly = user?.minor === true || adultRefused;

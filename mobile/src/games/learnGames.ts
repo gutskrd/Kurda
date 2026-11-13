@@ -16,7 +16,7 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
  * The rest can follow them as "coming soon", seen but not opened; that is
  * off on the phone (`listsUpcoming` below says why).
  *
- * Build a Kurdish Sentence and Hear It, Find It are rounds of the same kit
+ * Build a Sentence and Hear It, Find It are rounds of the same kit
  * but are not games: they are exercises of the lessons' practice, listed
  * there (practice/exercises.ts) and never here.
  */
@@ -24,20 +24,39 @@ import { LAST_LETTER_CARD, offeredDialects, useLastLetterAvailability } from '..
 /** The screens the learning games open on (root stack routes). */
 export type LearnGameRoute = 'MemoryThief' | 'Detective' | 'LastLetter' | 'Impostor' | 'WhoAmI';
 
+/** One way to play a game whose one screen holds several: what its button says, and the way the screen opens on. */
+export interface PhoneGameWay {
+  /** names its button for the tests (`game-<key>`) */
+  key: string;
+  label: TranslationKey;
+  way: 'phone' | 'friends';
+}
+
 export interface PhoneGame {
   route: LearnGameRoute;
   name: TranslationKey;
   /** one line, what you do in it */
   line: TranslationKey;
+  /** its ways to play, where its card offers a button for each rather than one Play */
+  ways?: readonly PhoneGameWay[];
 }
 
 export const PHONE_LEARN_GAMES: Partial<Record<LearnGameId, PhoneGame>> = {
   'memory-thief': { route: 'MemoryThief', name: 'games.memory.name', line: 'games.card.memory' },
   detective: { route: 'Detective', name: 'games.detective.name', line: 'games.card.detective' },
   'last-letter': { route: LAST_LETTER_CARD.route, name: LAST_LETTER_CARD.nameKey, line: LAST_LETTER_CARD.lineKey },
-  // Kurdish Impostor is listed where /games/availability finds enough approved cards for the learner's Kurdish
+  // Impostor is listed where /games/availability finds enough approved cards for the learner's Kurdish
   impostor: { route: 'Impostor', name: 'games.impostor.name', line: 'games.invite.blurb.impostor' },
-  'who-am-i': { route: 'WhoAmI', name: 'games.whoAmI.name', line: 'games.card.whoAmI' },
+  // never played alone: on one phone passed round a room, or with friends online, each a button on its card
+  'who-am-i': {
+    route: 'WhoAmI',
+    name: 'games.whoAmI.name',
+    line: 'games.card.whoAmI',
+    ways: [
+      { key: 'who-am-i-phone', label: 'games.whoAmI.onePhone', way: 'phone' },
+      { key: 'who-am-i-friends', label: 'games.mode.friends', way: 'friends' },
+    ],
+  },
 };
 
 const PLAYABLE = Object.keys(PHONE_LEARN_GAMES) as LearnGameId[];

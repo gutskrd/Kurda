@@ -305,9 +305,9 @@ html:has(.lesson-bar) {
   color: var(--ink);
   cursor: pointer;
   transition:
-    border-color 0.15s ease,
-    background 0.15s ease,
-    color 0.15s ease;
+    border-color var(--dur-fast) var(--ease-out),
+    background var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
 }
 .lesson-play-round:hover {
   border-color: var(--border-strong);
@@ -354,7 +354,7 @@ html:has(.lesson-bar) {
   margin: 0 0 var(--lip);
   padding: 8px 16px;
   border: 2px solid var(--tile-edge);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--tile-fill);
   box-shadow: 0 var(--lip) 0 var(--tile-lip);
   color: var(--tile-ink);
@@ -376,7 +376,7 @@ html:has(.lesson-bar) {
 .tile:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 3px;
-  border-radius: 14px;
+  border-radius: var(--r-md);
 }
 .tile:disabled {
   cursor: default;
@@ -612,7 +612,7 @@ html:has(.lesson-bar) {
   margin-inline-start: 10px;
   padding: 12px 18px;
   border: 2px solid var(--lesson-edge);
-  border-radius: 18px;
+  border-radius: var(--r-lg);
   background: var(--app-bg);
 }
 .lesson-bubble::before {
@@ -697,7 +697,7 @@ html:has(.lesson-bar) {
   min-width: 9em;
   max-width: min(18rem, calc(100vw - 32px));
   border: 2px solid var(--lesson-edge);
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--panel-bg);
   box-shadow: var(--shadow);
   font-family: var(--font-sans);
@@ -841,7 +841,7 @@ html:has(.lesson-bar) {
   margin-bottom: 4px;
   padding: 8px 14px;
   border: 2px solid transparent;
-  border-radius: 14px;
+  border-radius: var(--r-md);
   background: var(--surface-2);
   color: transparent;
   font-size: 1.1rem;
@@ -1088,7 +1088,7 @@ html:has(.lesson-bar) {
   min-width: 160px;
   margin-inline-start: auto;
   margin-bottom: 4px;
-  border-radius: 14px;
+  border-radius: var(--r-md);
   box-shadow: 0 4px 0 var(--go-lip);
   font-weight: 800;
   letter-spacing: 0.01em;
@@ -1098,7 +1098,7 @@ html:has(.lesson-bar) {
   box-shadow: 0 0 0 var(--go-lip);
 }
 .lesson-bar-go:focus-visible {
-  border-radius: 14px;
+  border-radius: var(--r-md);
 }
 /* nothing to check yet: flat and grey, not a faded white */
 .lesson-bar-go:disabled {
@@ -1132,6 +1132,26 @@ html:has(.lesson-bar) {
 }
 .lesson-bar.is-sheet {
   border-top-width: 2px;
+}
+/*
+ * A lesson before it is here (learn/LessonPlaceholder.tsx): the frame above is
+ * the lesson's own, so only what stands in for the answers and for the bar's
+ * one button is said here — the button where Check will be, at its width.
+ */
+.lesson-placeholder-options {
+  display: grid;
+  gap: 12px;
+}
+.skeleton.lesson-placeholder-go {
+  width: 160px;
+  margin-inline-start: auto;
+  margin-bottom: 4px;
+  border-radius: var(--r-md);
+}
+@media (max-width: 480px) {
+  .skeleton.lesson-placeholder-go {
+    width: 100%;
+  }
 }
 /*
  * The verdict's colour, and what is written on it: the page's own ground on

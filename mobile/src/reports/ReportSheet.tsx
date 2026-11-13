@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { PressableScale } from '../theme/MotionParts';
+import { PressableScale, heldDim } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import {
   HELPLINE_URL,
@@ -29,6 +29,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { fileReport } from './api';
 import { CATEGORY_LABEL } from './labels';
 import { useDirection } from './direction';
+import { pressedDim } from '../theme/motion';
 
 /**
  * What is being reported. The sheet turns it into `POST /reports`.
@@ -185,7 +186,7 @@ function CategoryStep({ onPick }: { onPick: (c: ReportCategoryInfo) => void }): 
             accessibilityLabel={t(CATEGORY_LABEL[c.key])}
             style={({ pressed }) => [
               styles.option,
-              { flexDirection: dir.row, backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 },
+              { flexDirection: dir.row, backgroundColor: colors.controlTrack, opacity: pressed ? pressedDim : 1 },
             ]}
           >
             <Text style={[styles.optionText, dir.text, { color: colors.textPrimary }]}>{t(CATEGORY_LABEL[c.key])}</Text>
@@ -266,7 +267,7 @@ function NoteStep({
         <Text style={[styles.chosenText, dir.text, { color: colors.textPrimary }]}>
           {t('report.chosen', { category: t(CATEGORY_LABEL[category.key]) })}
         </Text>
-        <Pressable onPress={onChange} accessibilityRole="button" hitSlop={10} style={styles.changeBtn}>
+        <Pressable onPress={onChange} accessibilityRole="button" hitSlop={10} style={({ pressed }) => [styles.changeBtn, pressed && heldDim]}>
           <Text style={[styles.link, { color: colors.primary }]}>{t('report.change')}</Text>
         </Pressable>
       </View>
@@ -439,7 +440,7 @@ function DoneStep({
             navigation.navigate('MyReports');
           }}
           accessibilityRole="link"
-          style={styles.footerLink}
+          style={({ pressed }) => [styles.footerLink, pressed && heldDim]}
         >
           <Text style={[styles.link, { color: colors.primary }]}>{t('reports.title')}</Text>
         </Pressable>

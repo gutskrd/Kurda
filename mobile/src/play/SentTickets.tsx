@@ -131,20 +131,25 @@ function HolderTicket({
   // held out while the invites are on their way, and set down again if they are refused
   const lift = useRef(new Animated.Value(0)).current;
   const fly = useRef(new Animated.Value(0)).current;
+  // sideways on a curve of its own, ahead of the rise: the ticket leaves on an arc, as one flicked from a hand does
+  const across = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     if (reduce) return;
-    if (phase === 'sending') springTo(lift, 1).start();
+    if (phase === 'sending') springTo(lift, 1, 'standard').start();
     if (phase === 'picking') springTo(lift, 0, 'bouncy').start();
     if (phase !== 'flying') return;
     const delay = Math.min(index, SHOWN - 1) * FLY_STAGGER_MS;
     const id = setTimeout(() => setBurst((n) => n + 1), delay);
-    const run = timing(fly, 1, FLY_MS, { delay, easing: Easing.in(Easing.quad) });
+    const run = Animated.parallel([
+      timing(fly, 1, FLY_MS, { delay, easing: Easing.in(Easing.quad) }),
+      timing(across, 1, FLY_MS, { delay, easing: Easing.out(Easing.quad) }),
+    ]);
     run.start();
     return () => {
       clearTimeout(id);
       run.stop();
     };
-  }, [phase, reduce, index, lift, fly]);
+  }, [phase, reduce, index, lift, fly, across]);
 
   const side = dir.row === 'row-reverse' ? -1 : 1;
   const writtenOut = {
@@ -157,12 +162,12 @@ function HolderTicket({
   const heldOut = {
     transform: [{ translateY: lift.interpolate({ inputRange: [0, 1], outputRange: [0, -5] }) }, { scale: lift.interpolate({ inputRange: [0, 1], outputRange: [1, 1.04] }) }],
   };
-  // off towards the friend: up, and out to the side a line ends on, turning as it goes
+  // off towards the friend: out to the side a line ends on first, and up faster and faster, turning as it goes
   const handedOver = {
     opacity: fly.interpolate({ inputRange: [0, 0.45, 1], outputRange: [1, 1, 0] }),
     transform: [
       { translateY: fly.interpolate({ inputRange: [0, 1], outputRange: [0, -150] }) },
-      { translateX: fly.interpolate({ inputRange: [0, 1], outputRange: [0, (24 + index * 10) * side] }) },
+      { translateX: across.interpolate({ inputRange: [0, 1], outputRange: [0, (24 + index * 10) * side] }) },
       { rotate: fly.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${17 * side}deg`] }) },
       { scale: fly.interpolate({ inputRange: [0, 1], outputRange: [1, 0.7] }) },
     ],

@@ -1,5 +1,5 @@
 /**
- * Kurdish Detective: how a case is played and paid, from either side.
+ * Detective: how a case is played, from either side.
  *
  * A case file (`case_file` content) holds a title and an introduction in the
  * interface languages, the suspects, evidence cards whose Kurdish is reused
@@ -11,23 +11,14 @@
  * What a card means is not on the board at first — understanding it is the
  * game. A card's meaning is found when a deduction it proves is made, or
  * bought with a hint; a hint can instead read the case's next written hint.
- * Hints cost XP: the round pays for every correct deduction as every solo
- * round does (`answerXp`), less DETECTIVE_HINT_XP for each hint spent, and
- * never less than nothing.
+ * A case has DETECTIVE_HINTS of them and no more: that they run out is what
+ * a hint costs. A case is played alone, so it pays no XP to take one from.
  */
 import { isSpeakerId, type SpeakerId } from '../../lipsync/speakers.js';
 import type { CaseFileContent, ContentOrigin, GameLevel, Meanings } from '../content.js';
 
 /** Hints one case allows, whatever they are spent on. */
 export const DETECTIVE_HINTS = 3;
-
-/** What each hint spent takes off the round's XP. */
-export const DETECTIVE_HINT_XP = 1;
-
-/** The round's XP once its hints are paid for: what the deductions earned, less the hints, never below nothing. */
-export function caseXp(earned: number, hintsUsed: number): number {
-  return Math.max(0, earned - Math.max(0, hintsUsed) * DETECTIVE_HINT_XP);
-}
 
 /** A case's items in the order they are played: every deduction step, then the accusation. */
 export type CaseItem = { kind: 'step'; step: number } | { kind: 'accuse' };

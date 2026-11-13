@@ -26,7 +26,6 @@ describe('the game button in a chat', () => {
         value="half a sentence"
         onChange={() => undefined}
         onSubmit={send}
-        sending={false}
         placeholder="Write a message"
         tools={<ChatGameButton target={{ kind: 'new', friend: { userId: 'u2', name: 'Rojda' } }} />}
       />,

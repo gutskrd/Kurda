@@ -1,5 +1,5 @@
 /*
- * Kurdish Detective (games/Detective.tsx): its card's picture, and the case
+ * Detective (games/Detective.tsx): its card's picture, and the case
  * board — the case file, the suspects' portraits, the evidence pinned up in
  * rows, the question in hand, the hints and the notebook — with the
  * accusation and the solution at the end.
@@ -370,10 +370,6 @@
 .dt-note-a {
   font-weight: 600;
 }
-.dt-deducted {
-  color: var(--ink-2);
-}
-
 @media (max-width: 480px) {
   .dt-cards {
     grid-template-columns: 1fr;

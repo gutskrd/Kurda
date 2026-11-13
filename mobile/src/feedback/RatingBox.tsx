@@ -21,6 +21,7 @@ import type { TranslationKey } from '../i18n/translations';
 import { HevaloDeer } from './HevaloDeer';
 import { dismissFeedback, sendFeedback } from './api';
 import { APP_VERSION, appPlatform } from './appInfo';
+import { heldDim } from '../theme/MotionParts';
 
 const CATEGORY_LABEL: Record<AppFeedbackCategory, TranslationKey> = {
   lessons: 'appFeedback.category.lessons',
@@ -187,7 +188,7 @@ export function RatingBox({
               accessibilityRole="radio"
               accessibilityState={{ checked: n === stars }}
               accessibilityLabel={t(STAR_LABEL[n]!)}
-              style={styles.star}
+              style={({ pressed }) => [styles.star, pressed && heldDim]}
             >
               <Icon name={on ? 'star-fill' : 'star'} size={36} color={on ? colors.gold : colors.textSecondary} />
             </Pressable>
@@ -216,7 +217,7 @@ export function RatingBox({
                 onPress={() => toggle(c)}
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: on }}
-                style={[styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }]}
+                style={({ pressed }) => [styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }, pressed && heldDim]}
               >
                 <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>
                   {t(CATEGORY_LABEL[c])}
@@ -264,7 +265,7 @@ export function RatingBox({
         />
       ) : null}
       {!settings ? (
-        <Pressable onPress={notNow} accessibilityRole="button" style={styles.notNow} hitSlop={6}>
+        <Pressable onPress={notNow} accessibilityRole="button" style={({ pressed }) => [styles.notNow, pressed && heldDim]} hitSlop={6}>
           <Text style={[styles.notNowText, { color: colors.textSecondary }]}>{t('appFeedback.notNow')}</Text>
         </Pressable>
       ) : null}
