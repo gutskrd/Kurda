@@ -1886,6 +1886,39 @@ export function treeColour(species: TreeSpecies): string {
   return KINDS[species].leaves[3];
 }
 
+/** What the wind carries past a tree in a season, and in which colours: the apps draw it blowing away to the left. */
+export interface TreeSeasonAir {
+  air: 'petals' | 'leaves' | 'snow';
+  colours: readonly [string, string, string];
+}
+
+/** A summer leaf the wind brings from somewhere else, for a tree that has none of its own to lose. */
+const SUMMER_LEAF = ['#4fae4a', '#79c95a', '#a6dd7a'] as const;
+
+/**
+ * What blows past a tree in a season, as in the owner's reference: blossom in
+ * spring, green leaves in summer, orange ones in autumn, and in winter snow.
+ * A grown tree that changes with the year loses its own leaves, in its own
+ * colours; past a young one or an evergreen the wind brings the season's from
+ * elsewhere. A tree left to wilt has still air round it, but snow falls on
+ * every tree alike.
+ */
+export function treeSeasonAir(species: TreeSpecies, stage: TreeStage, health: TreeHealth, season: TreeSeason): TreeSeasonAir | null {
+  if (season === 'winter') return { air: 'snow', colours: [SNOW[5], SNOW[4], SNOW[3]] };
+  if (health === 'wilting' || health === 'withered') return null;
+  const kind = KINDS[species];
+  const own = stage >= 3 && kind.habit !== 'tiers' && kind.habit !== 'column' && species !== 'sev';
+  const air = season === 'spring' ? 'petals' : 'leaves';
+  // blossom is pale, so spring's are taken a step deeper than the leaves, to show on a blush wall
+  if (own) {
+    const leaves = seasonal(kind, species, season).leaves;
+    return { air, colours: season === 'spring' ? [leaves[1], leaves[2], leaves[3]] : [leaves[2], leaves[3], leaves[4]] };
+  }
+  if (season === 'spring') return { air, colours: [SPRING[1], SPRING[2], SPRING[3]] };
+  if (season === 'autumn') return { air, colours: [AUTUMN[2], AUTUMN[3], AUTUMN[4]] };
+  return { air, colours: SUMMER_LEAF };
+}
+
 // ─────────────────────────────────────────────────────────────────── water
 
 /** Water's colours: deep, body, light, and the glint on it. */

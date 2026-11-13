@@ -84,7 +84,7 @@ import { SHAPES } from './shapes.js';
 import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE, hasBadgeGlyph } from './badges.js';
 import { dayMedalSvg, streakMedalSvg } from './medals.js';
-import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
+import { TREE_FOOT, TREE_TOP, TREE_WATER_LANDS, hasTreeArt, treeColour, treeSeasonAir, treeSvg, waterDropSvg, wateringCanSvg } from './trees.js';
 import { SKIES, TREE_SKIES, treeAir, treeCloudSvg, treeSceneSvg, treeSkyAt, treeStudioSvg } from './tree-scene.js';
 import { TREE_SEASONS, treeSeasonAt } from '../tree.js';
 import { horizonSky, horizonSvg } from './horizon.js';
@@ -1946,6 +1946,15 @@ describe('the tree through the seasons', () => {
     expect(crown('kaj', 'spring')).toBe(crown('kaj', 'summer'));
     expect(crown('kaj', 'autumn')).toBe(crown('kaj', 'summer'));
     expect(crown('kaj', 'winter')).not.toBe(crown('kaj', 'summer'));
+  });
+
+  it('blows the season past every tree: blossom, green, orange, and snow even on one that has wilted', () => {
+    expect(TREE_SEASONS.map((season) => treeSeasonAir('beru', 6, 'fresh', season)?.air)).toEqual(['petals', 'leaves', 'leaves', 'snow']);
+    // a grown oak loses its own leaves; a pine in autumn has the wind's
+    expect(treeSeasonAir('beru', 6, 'fresh', 'autumn')?.colours).not.toEqual(treeSeasonAir('kaj', 6, 'fresh', 'autumn')?.colours);
+    expect(treeSeasonAir('beru', 6, 'wilting', 'summer')).toBeNull();
+    expect(treeSeasonAir('beru', 6, 'withered', 'winter')?.air).toBe('snow');
+    for (const species of TREE_SPECIES) for (const season of TREE_SEASONS) for (const c of treeSeasonAir(species, 4, 'fresh', season)!.colours) expect(c).toMatch(/^#[0-9a-f]{6}$/);
   });
 
   it('stands a tree in a season on the floor, with its long shadow; without one it floats on its island as before', () => {

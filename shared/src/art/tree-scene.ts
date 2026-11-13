@@ -173,6 +173,14 @@ export const TREE_STUDIO: Readonly<Record<TreeSeason, { wall: readonly [string, 
 /** Where the wall meets the floor, as a share of the picture's height: under it lies the floor the tree's round and its shadow are on. */
 export const TREE_STUDIO_HORIZON = 0.62;
 
+/**
+ * Where a tree stands in its season's scene, the same on the phone as on the
+ * website: drawn at `share` of the scene's height, with its foot `foot` of
+ * the way down, so the round it stands on lies on the floor well under the
+ * horizon and there is air over the tallest crown.
+ */
+export const TREE_STUDIO_PLACE = { share: 0.8, foot: 0.84 } as const;
+
 export interface TreeStudioOptions {
   season: TreeSeason;
   /** how far the tree has gone dry, 0 (watered) to 1 (withered): the colours go to dust with it */
